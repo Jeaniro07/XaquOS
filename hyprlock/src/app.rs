@@ -804,17 +804,8 @@ fn to_pixmap(
         };
         let start = source_row.checked_mul(row_bytes)?;
         let source = bytes.get(start..start + width_px * 4)?;
-        for (to, from) in row.iter_mut().zip(source.chunks_exact(4)) {
-            let (b, g, r, a) = (
-                from.first().copied().unwrap_or(0),
-                from.get(1).copied().unwrap_or(0),
-                from.get(2).copied().unwrap_or(0),
-                if opaque {
-                    255
-                } else {
-                    from.get(3).copied().unwrap_or(0)
-                },
-            );
+        for (to, &[b, g, r, alpha]) in row.iter_mut().zip(source.as_chunks::<4>().0) {
+            let a = if opaque { 255 } else { alpha };
             if let Some(pixel) =
                 tiny_skia::PremultipliedColorU8::from_rgba(r.min(a), g.min(a), b.min(a), a)
             {

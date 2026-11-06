@@ -388,9 +388,8 @@ fn include_has_its_own_section_scope() {
         errors(&loaded),
         vec![
             "/f:3: [main].include: relative.ini: not an absolute path".to_owned(),
-            format!(
-                "/f:4: [main].include: ~/nope.ini: failed to open: No such file or directory (2)"
-            ),
+            "/f:4: [main].include: ~/nope.ini: failed to open: No such file or directory (2)"
+                .to_owned(),
         ]
     );
 }

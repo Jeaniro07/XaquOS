@@ -106,7 +106,7 @@ impl Fit {
             let Some(out) = pixels.get_mut(start..end) else {
                 break;
             };
-            for (pixel, &column) in out.chunks_exact_mut(4).zip(&self.columns) {
+            for (pixel, &column) in out.as_chunks_mut::<4>().0.iter_mut().zip(&self.columns) {
                 let shade = line.get(column).copied().unwrap_or(0);
                 let shade = if invert { 15 - shade.min(15) } else { shade };
                 let grey = grey_of(shade);

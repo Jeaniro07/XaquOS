@@ -135,8 +135,10 @@ impl Toplevels {
             handle::event::STATE => {
                 if let Some(Value::Array(bytes)) = args.first() {
                     let states: Vec<u32> = bytes
-                        .chunks_exact(4)
-                        .filter_map(|word| word.try_into().ok().map(u32::from_ne_bytes))
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .map(|word| u32::from_ne_bytes(*word))
                         .collect();
                     pending.active = states.contains(&handle::state::ACTIVATED);
                     pending.minimized = states.contains(&handle::state::MINIMIZED);

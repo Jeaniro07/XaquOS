@@ -891,10 +891,16 @@ mod tests {
             let mut map = BTreeMap::new();
             let mut left = Pixmap::new(12, 32).expect("a pixmap");
             // Fill the lower-right triangle: x >= 12 - 12*y/32.
-            for (at, px) in left.data_mut().chunks_exact_mut(4).enumerate() {
+            for (at, px) in left
+                .data_mut()
+                .as_chunks_mut::<4>()
+                .0
+                .iter_mut()
+                .enumerate()
+            {
                 let (x, y) = (at % 12, at / 12);
                 if x * 32 >= 12 * 32 - 12 * y {
-                    px.copy_from_slice(&[0x16, 0x27, 0x3c, 0xff]);
+                    *px = [0x16, 0x27, 0x3c, 0xff];
                 }
             }
             let _ = map.insert(PathBuf::from("/s/icons/cap-l.svg"), left);

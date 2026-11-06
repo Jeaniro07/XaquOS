@@ -161,7 +161,7 @@ fn draw(client: &mut Client, surface: SurfaceId, fit: &Fit, shades: &[u8]) {
     let drawn = client.draw(surface, |pixmap| {
         let pitch = pixmap.width() as usize * 4;
         let pixels = pixmap.data_mut();
-        for pixel in pixels.chunks_exact_mut(4) {
+        for pixel in pixels.as_chunks_mut::<4>().0 {
             pixel.copy_from_slice(&[0, 0, 0, 255]);
         }
         fit.draw(shades, pixels, pitch, 0..fit.height, invert);

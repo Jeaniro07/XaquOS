@@ -425,9 +425,7 @@ mod tests {
     #[test]
     fn a_flat_colour_stays_flat_through_an_ungraded_blur() {
         let mut plane = Plane::new(32, 16);
-        for pixel in &mut plane.pixels {
-            *pixel = [0.2, 0.4, 0.6, 1.0];
-        }
+        plane.pixels.fill([0.2, 0.4, 0.6, 1.0]);
         blur(
             &mut plane,
             &Params {

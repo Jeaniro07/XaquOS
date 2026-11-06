@@ -157,7 +157,7 @@ impl<'a> Video<'a> {
             .ok_or(Error::Short)?;
         let data = bytes.get(HEADER + entries * 4..).ok_or(Error::Short)?;
         let mut last = 0;
-        for entry in index.chunks_exact(4) {
+        for entry in index.as_chunks::<4>().0 {
             let at = u32_at(entry, 0)? as usize;
             if at < last || at > data.len() {
                 return Err(Error::Index);

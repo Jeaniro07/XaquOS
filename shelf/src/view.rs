@@ -1030,7 +1030,7 @@ fn crumbs_of(loc: &Loc, home: &Path) -> (Vec<String>, Vec<Loc>) {
     match loc {
         Loc::Dir(dir) => dir_crumbs(dir),
         Loc::Archive { file, inner } => {
-            let (mut labels, mut targets) = file.parent().map(&dir_crumbs).unwrap_or_default();
+            let (mut labels, mut targets) = file.parent().map(dir_crumbs).unwrap_or_default();
             labels.push(
                 file.file_name()
                     .map(|n| n.to_string_lossy().into_owned())
