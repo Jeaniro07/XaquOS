@@ -3,7 +3,7 @@ name = "ferrofetch"
 description = "Ferrix's fastfetch: the mark beside a few lines about the machine, the shell and the session"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99"
 license = "MIT"
 publish = false
 

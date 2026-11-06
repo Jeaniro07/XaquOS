@@ -3,7 +3,7 @@ name = "lode-viewer"
 description = "lode's log viewer: a desktop window over the log, the overview of a boot and its records"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99"
 license = "MIT"
 publish = false
 

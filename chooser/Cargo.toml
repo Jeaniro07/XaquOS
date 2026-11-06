@@ -3,7 +3,7 @@ name = "chooser"
 description = "Ferrix's file chooser: tole's FileDialog, after the customer's Key File Dialog design, in a window of its own, which portald opens for org.freedesktop.portal.FileChooser"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99"
 license = "MIT"
 publish = false
 

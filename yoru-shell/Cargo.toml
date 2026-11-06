@@ -3,7 +3,7 @@ name = "yoru-shell"
 description = "Yoru's shell: the dock, after the customer's Yoru WM design, as layer-shell surfaces drawn with tole"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99"
 license = "MIT"
 publish = false
 
