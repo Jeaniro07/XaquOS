@@ -244,9 +244,11 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
     if !(b >= 0xe0 && b > r + 0x10) {
         return Err(format!("no wallpaper's blue at 100,100: {r},{g},{b}"));
     }
+    // The dock's bar is translucent: over the light wallpaper its dark
+    // ground reads near #3e4552, still far below the wallpaper's #e0 and up.
     let row = screen.height - 6 - 30;
     let [r, g, b] = pixel(screen.width / 2, row);
-    if !(r < 0x30 && g < 0x30 && b < 0x40) {
+    if !(r < 0x60 && g < 0x60 && b < 0x70) {
         return Err(format!("the dock's middle is {r},{g},{b}, not its bar"));
     }
     let lit = (0..200).any(|x| {
