@@ -22,7 +22,7 @@ pub const OWN: &str = "Pictures/Wallpapers";
 pub const LOOSE: &str = "Mine";
 
 /// Yoru's own wallpaper, the one in force when nothing else was set.
-pub const DEFAULT: &str = "/usr/share/backgrounds/yoru/yoru-nocturne.svg";
+pub const DEFAULT: &str = "/usr/share/backgrounds/yoru/yoru-light-glass.png";
 
 /// The colour dots, as the design names them, with the hue each stands
 /// for (OKLCH degrees).
