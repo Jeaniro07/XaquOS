@@ -4,7 +4,7 @@
 //!
 //! Each `--line` is the value of a `wallpaper =` line
 //! (`compositor/config/src/wallpaper.rs`): which output, and a picture, a
-//! colour, a slideshow or a video, fitted as it says. hyprix starts this
+//! colour, a slideshow, a video or a gradient, fitted as it says. hyprix starts this
 //! program with the lines its configuration and the Settings app's file
 //! hold (`docs/RUNTIME-SETTINGS.md` §3.3), and starts it again when they
 //! change. `wallpaper FILE` is `--line ", picture FILE"`.
@@ -93,7 +93,7 @@ impl Shown {
             video: None,
         };
         match shown.line.source.clone() {
-            WallpaperSource::Colour => {}
+            WallpaperSource::Colour | WallpaperSource::Gradient { .. } => {}
             WallpaperSource::Picture(path) => {
                 shown.picture = load(&home(&path), shown.line.fit);
             }
@@ -173,7 +173,9 @@ impl Shown {
                 .slides
                 .get(self.at)
                 .and_then(|path| load(path, self.line.fit)),
-            WallpaperSource::Colour | WallpaperSource::Video(_) => None,
+            WallpaperSource::Colour
+            | WallpaperSource::Video(_)
+            | WallpaperSource::Gradient { .. } => None,
         };
     }
 
@@ -304,13 +306,17 @@ fn paint(
     let span = line.line.span.then(|| span_of(client, output)).flatten();
     let drawn = client
         .draw(surface, |target| {
-            compositor_wallpaper::draw_fitted(
-                line.picture.as_ref().map(Pixmap::as_ref),
-                target,
-                line.line.fit,
-                line.line.colour,
-                span,
-            );
+            if let WallpaperSource::Gradient { angle, stops } = &line.line.source {
+                compositor_wallpaper::draw_gradient(target, *angle, stops);
+            } else {
+                compositor_wallpaper::draw_fitted(
+                    line.picture.as_ref().map(Pixmap::as_ref),
+                    target,
+                    line.line.fit,
+                    line.line.colour,
+                    span,
+                );
+            }
         })
         .map_err(|error| error.to_string())?;
     if drawn && let Some((width, height)) = client.size(surface) {
@@ -330,6 +336,9 @@ fn what(line: &Wallpaper) -> String {
         WallpaperSource::Picture(path) => path.clone(),
         WallpaperSource::Slideshow { folder, .. } => format!("slideshow {folder}"),
         WallpaperSource::Video(path) => format!("video {path}"),
+        WallpaperSource::Gradient { angle, stops } => {
+            format!("gradient {angle}deg of {} colours", stops.len())
+        }
     }
 }
 

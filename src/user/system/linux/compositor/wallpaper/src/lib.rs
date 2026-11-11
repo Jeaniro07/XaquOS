@@ -8,11 +8,14 @@
 //! inside it (`fit`), pulled to its shape (`stretch`), repeated (`tile`) or
 //! at its own size in the middle (`centre`) -- over the line's colour, and,
 //! for `span`, the part of one picture across every screen that falls on
-//! this one. `main.rs` keeps one background layer surface per screen.
+//! this one; or a `gradient`, computed pixel by pixel into the screen's
+//! own buffer, so no picture is held. `main.rs` keeps one background layer
+//! surface per screen.
 
 use compositor_config::WallpaperFit;
 use compositor_image::tiny_skia::{
-    Color, FilterQuality, Pixmap, PixmapMut, PixmapPaint, PixmapRef, Transform,
+    Color, ColorU8, FilterQuality, Pixmap, PixmapMut, PixmapPaint, PixmapRef, PremultipliedColorU8,
+    Transform,
 };
 
 /// The scale and offset that make a `picture`-sized image cover `target`:
@@ -139,6 +142,51 @@ pub fn draw_fitted(
             }
         }
     }
+}
+
+/// Draw a `gradient` line on `target`, row by row: CSS's
+/// `linear-gradient(<angle>deg, …)`, the line through the middle and long
+/// enough that its ends meet the corners; `stops` are colours,
+/// `0xAARRGGBB`, at their places along it, 0 to 100, in order.
+pub fn draw_gradient(target: &mut PixmapMut<'_>, angle: u16, stops: &[(u8, u32)]) {
+    let (width, height) = (target.width() as f32, target.height() as f32);
+    let turn = f32::from(angle).to_radians();
+    let (dx, dy) = (turn.sin(), -turn.cos());
+    let length = (width * dx.abs() + height * dy.abs()).max(1.0);
+    let columns = usize::try_from(target.width()).unwrap_or(1).max(1);
+    for (y, row) in target.pixels_mut().chunks_mut(columns).enumerate() {
+        let down = (y as f32 + 0.5 - height / 2.0) * dy;
+        for (x, pixel) in row.iter_mut().enumerate() {
+            let along = ((x as f32 + 0.5 - width / 2.0) * dx + down) / length + 0.5;
+            *pixel = colour_at(stops, along * 100.0);
+        }
+    }
+}
+
+/// The colour `at` per cent along a gradient's `stops`, premultiplied.
+fn colour_at(stops: &[(u8, u32)], at: f32) -> PremultipliedColorU8 {
+    let mut from = stops.first().copied().unwrap_or((0, 0xff00_0000));
+    let mut to = from;
+    for &stop in stops {
+        to = stop;
+        if f32::from(stop.0) >= at {
+            break;
+        }
+        from = stop;
+    }
+    let span = f32::from(to.0) - f32::from(from.0);
+    let part = if span > 0.0 {
+        ((at - f32::from(from.0)) / span).clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
+    let (one, two) = (from.1.to_be_bytes(), to.1.to_be_bytes());
+    let mut mixed = [0_u8; 4];
+    for ((slot, a), b) in mixed.iter_mut().zip(one).zip(two) {
+        *slot = (f32::from(a) + (f32::from(b) - f32::from(a)) * part).round() as u8;
+    }
+    let [a, r, g, b] = mixed;
+    ColorU8::from_rgba(r, g, b, a).premultiply()
 }
 
 /// Draw `picture` over the whole of `target`, covering it.

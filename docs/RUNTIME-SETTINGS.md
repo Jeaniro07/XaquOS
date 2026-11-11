@@ -286,20 +286,22 @@ wallpaper = , picture /usr/share/ferrix/wallpapers/ferrix.png, fit fill, colour 
 wallpaper = DP-1, slideshow ~/Pictures/Wallpapers, every 30m, shuffle 1
 wallpaper = HDMI-A-1, colour rgb(203040)
 wallpaper = , video ~/Videos/rain.ivf
+wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9, colour e8e8ed
 wallpaper = DP-1, off
 ```
 
 The first field is the output (empty: every screen without a line of its
 own); then fields, each a word and a value (a path may hold spaces, not a
 comma): one of `picture PATH` (PNG, JPEG, SVG), `slideshow DIR` (its
-PNG/JPEG/SVG files by name), `video PATH` or a `colour` alone; `fit`
+PNG/JPEG/SVG files by name), `video PATH`, `gradient ANGLEdeg COLOUR
+[PLACE%] COLOUR [PLACE%]…` or a `colour` alone; `fit`
 `fill` (default, cover), `fit`, `stretch`, `tile`, `centre`; `colour`
 (`rgb()`, `rgba()`, `0xAARRGGBB`, `rrggbb`, and `#rrggbb` through hyprctl
 only, `#` being a comment in a file; default `1d2027`), shown alone and
 around a picture that does not cover; `every` (seconds, or `30m`, `1h`,
 `1d`; default 30 min) and `shuffle` (default 1) for a slideshow; `span 1`
 (the empty output's line only): one picture across every screen as they
-are placed; `pause_covered`, `pause_battery` (default 1): a slideshow does
+are placed (pictures only); `pause_covered`, `pause_battery` (default 1): a slideshow does
 not move on while a fullscreen window covers every screen it is on
 (`hyprctl monitors`/`workspaces`), or while a `Battery` power supply says
 `Discharging`. hyprix starts `wallpaper --line LINE…` (the program beside
@@ -311,7 +313,14 @@ picture as `wallpaper = , picture …` in `/etc/hyprland.conf`, which a
 Settings choice replaces. **Video, not yet in full**: the client hands an
 AV1-in-IVF file (what `cargo xtask wallpapers` makes) to `pattern --video`,
 which plays it on one screen, ignoring `fit` and both pauses; any other
-file shows the colour and says so. `hyprix:wallpaper_lock` (Ferrix's,
+file shows the colour and says so. **A gradient** is CSS's
+`linear-gradient`: the angle as CSS's (0deg up, 90deg right), the line
+through the screen's middle and long enough that its ends meet the
+corners, two colours or more (any form `colour` takes, without spaces),
+each at its place in per cent or, with none, placed evenly by its index.
+The client computes it pixel by pixel into the screen's buffer, holding no
+picture, so it costs no more memory than a colour; `fit` and `span` do
+not apply to it. `hyprix:wallpaper_lock` (Ferrix's,
 default 1): hyprix draws that client's background surfaces -- and no other
 client's -- under the lock screen's surfaces, where the lock leaves them
 see-through; 0 leaves it dark. hyprlock's own `background` widget, when

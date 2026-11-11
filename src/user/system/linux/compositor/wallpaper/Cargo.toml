@@ -1,6 +1,6 @@
 [package]
 name = "compositor-wallpaper"
-description = "wallpaper: a picture, a colour, a slideshow or a video behind everything on every screen, fitted as a wallpaper line says, a layer surface per screen that follows screens coming and going"
+description = "wallpaper: a picture, a colour, a gradient, a slideshow or a video behind everything on every screen, fitted as a wallpaper line says, a layer surface per screen that follows screens coming and going"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

@@ -156,3 +156,43 @@ fn a_screen_with_a_fullscreen_window_is_covered() {
     assert!(!covered(monitors, workspaces, "HDMI-A-1"));
     assert!(!covered(monitors, workspaces, "eDP-1"));
 }
+
+/// Yoru's gradient, as `yoru.conf` writes it: blue at the top left, sand
+/// at the bottom right, the lilac side of the first stop in the middle,
+/// every pixel opaque.
+#[test]
+fn a_gradient_is_drawn_corner_to_corner() {
+    let stops = [(0, 0xffa9_c6f5), (55, 0xffe8_d5f2), (100, 0xfff6_e3c9)];
+    let mut out = Pixmap::new(192, 108).expect("a pixmap");
+    super::draw_gradient(&mut out.as_mut(), 110, &stops);
+    let rgb = |out: &Pixmap, x: u32, y: u32| {
+        let pixel = out.pixel(x, y).expect("in the pixmap").demultiply();
+        [pixel.red(), pixel.green(), pixel.blue(), pixel.alpha()]
+    };
+    let near =
+        |seen: [u8; 4], wanted: [u8; 4]| seen.iter().zip(wanted).all(|(a, b)| a.abs_diff(b) <= 3);
+    assert!(
+        near(rgb(&out, 0, 0), [0xa9, 0xc6, 0xf5, 0xff]),
+        "{:?}",
+        rgb(&out, 0, 0)
+    );
+    assert!(
+        near(rgb(&out, 191, 107), [0xf6, 0xe3, 0xc9, 0xff]),
+        "{:?}",
+        rgb(&out, 191, 107)
+    );
+    // Half way along the line, 0.5 / 0.55 of the way from blue to lilac.
+    assert!(
+        near(rgb(&out, 96, 54), [0xe2, 0xd4, 0xf2, 0xff]),
+        "{:?}",
+        rgb(&out, 96, 54)
+    );
+    // 90deg: left to right, the same down every column.
+    super::draw_gradient(
+        &mut out.as_mut(),
+        90,
+        &[(0, 0xff00_0000), (100, 0xffff_ffff)],
+    );
+    assert!(near(rgb(&out, 0, 0), [0, 0, 0, 0xff]) && near(rgb(&out, 0, 107), [0, 0, 0, 0xff]));
+    assert!(near(rgb(&out, 191, 50), [0xff, 0xff, 0xff, 0xff]));
+}

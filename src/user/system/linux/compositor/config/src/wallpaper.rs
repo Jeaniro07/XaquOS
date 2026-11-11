@@ -9,6 +9,7 @@
 //! wallpaper = , picture /usr/share/ferrix/wallpapers/ferrix.png, fit fill, colour 1d2027
 //! wallpaper = DP-1, slideshow ~/Pictures/Wallpapers, every 1800, shuffle 1
 //! wallpaper = HDMI-A-1, colour rgb(203040)
+//! wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9, colour e8e8ed
 //! wallpaper = DP-1, off
 //! ```
 //!
@@ -81,6 +82,16 @@ pub enum WallpaperSource {
     },
     /// A video, played over and over.
     Video(String),
+    /// A linear gradient, drawn straight into the screen's buffer: CSS's
+    /// `linear-gradient`, its line through the middle, long enough that
+    /// its ends meet the corners.
+    Gradient {
+        /// The direction in degrees, as CSS's: 0 up, 90 right, clockwise.
+        angle: u16,
+        /// Each colour, `0xAARRGGBB`, and its place along the line, 0 to
+        /// 100, in order.
+        stops: Vec<(u8, u32)>,
+    },
 }
 
 /// One `wallpaper =` line, read.
@@ -145,7 +156,7 @@ impl Wallpaper {
             };
             let mut once = |chosen: WallpaperSource| -> Result<(), String> {
                 if source.replace(chosen).is_some() {
-                    Err("wallpaper: one of picture, slideshow and video".to_owned())
+                    Err("wallpaper: one of picture, slideshow, video and gradient".to_owned())
                 } else {
                     Ok(())
                 }
@@ -168,6 +179,10 @@ impl Wallpaper {
                         shuffle: false,
                     })?;
                 }
+                "gradient" => {
+                    wants("an angle and colours")?;
+                    once(gradient(rest)?)?;
+                }
                 "colour" | "color" => {
                     wants("a colour")?;
                     colour = Some(colour_of(rest)?);
@@ -183,7 +198,7 @@ impl Wallpaper {
                 other => {
                     return Err(format!(
                         "wallpaper: unknown field {other}; picture, colour, slideshow, video, \
-                         fit, every, shuffle, span, pause_covered, pause_battery or off"
+                         gradient, fit, every, shuffle, span, pause_covered, pause_battery or off"
                     ));
                 }
             }
@@ -204,7 +219,8 @@ impl Wallpaper {
             None if colour.is_some() => WallpaperSource::Colour,
             None => {
                 return Err(
-                    "wallpaper needs a picture, a slideshow, a video, a colour or off".to_owned(),
+                    "wallpaper needs a picture, a slideshow, a video, a gradient, a colour or off"
+                        .to_owned(),
                 );
             }
         };
@@ -240,8 +256,18 @@ impl Wallpaper {
                 fields.push(format!("every {every}"));
                 fields.push(format!("shuffle {}", u8::from(*shuffle)));
             }
+            WallpaperSource::Gradient { angle, stops } => {
+                let mut field = format!("gradient {angle}deg");
+                for (at, colour) in stops {
+                    field.push_str(&format!(" {colour:08x} {at}%"));
+                }
+                fields.push(field);
+            }
         }
-        if !matches!(self.source, WallpaperSource::Colour) {
+        if !matches!(
+            self.source,
+            WallpaperSource::Colour | WallpaperSource::Gradient { .. }
+        ) {
             fields.push(format!("fit {}", self.fit.word()));
         }
         fields.push(format!("colour {:08x}", self.colour));
@@ -272,6 +298,59 @@ fn colour_of(text: &str) -> Result<u32, String> {
         return u32::from_str_radix(bare, 16).map_err(|error| error.to_string());
     }
     value::parse_color(text).map(|colour| colour.0)
+}
+
+/// `110deg a9c6f5 e8d5f2 55% f6e3c9`: the angle, then two colours or more,
+/// each followed by its place in per cent or placed evenly by its index.
+fn gradient(text: &str) -> Result<WallpaperSource, String> {
+    let mut words = text.split_whitespace();
+    let angle = words
+        .next()
+        .and_then(|word| word.strip_suffix("deg"))
+        .and_then(|number| number.parse::<u16>().ok())
+        .filter(|&angle| angle < 360)
+        .ok_or_else(|| format!("wallpaper gradient {text}: first an angle, 0deg to 359deg"))?;
+    let mut placed: Vec<(Option<u8>, u32)> = Vec::new();
+    for word in words {
+        if let Some(number) = word.strip_suffix('%') {
+            let at = number
+                .parse::<u8>()
+                .ok()
+                .filter(|&at| at <= 100)
+                .ok_or_else(|| format!("wallpaper gradient {word}: 0% to 100%"))?;
+            match placed.last_mut() {
+                Some((place @ None, _)) => *place = Some(at),
+                _ => {
+                    return Err(format!(
+                        "wallpaper gradient {word}: a place follows a colour"
+                    ));
+                }
+            }
+        } else {
+            placed.push((None, colour_of(word)?));
+        }
+    }
+    let last = placed.len().saturating_sub(1);
+    if last == 0 {
+        return Err("wallpaper gradient needs two colours or more".to_owned());
+    }
+    let stops: Vec<(u8, u32)> = placed
+        .iter()
+        .enumerate()
+        .map(|(index, (at, colour))| {
+            let even = u8::try_from(index * 100 / last).unwrap_or(100);
+            (at.unwrap_or(even), *colour)
+        })
+        .collect();
+    if stops
+        .windows(2)
+        .any(|pair| matches!(pair, [a, b] if a.0 > b.0))
+    {
+        return Err(format!(
+            "wallpaper gradient {text}: each place at or after the one before"
+        ));
+    }
+    Ok(WallpaperSource::Gradient { angle, stops })
 }
 
 /// Seconds, at least one: `1800`, or with a unit, `30m`, `1h`, `1d`.

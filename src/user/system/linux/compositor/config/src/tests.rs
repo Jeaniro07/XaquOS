@@ -1946,6 +1946,49 @@ wallpaper = HDMI-A-1, off
     assert_eq!(config.wallpapers.len(), 2);
 }
 
+/// `gradient`: an angle, then colours, each with its place along the line
+/// or placed evenly by its index; read back as the client is handed it.
+#[test]
+fn a_gradient_line_reads_its_angle_and_stops() {
+    let (_, line) = Wallpaper::parse(", gradient 110deg a9c6f5 e8d5f2 55% f6e3c9, colour e8e8ed")
+        .expect("a gradient");
+    let line = line.expect("not off");
+    assert_eq!(
+        line.source,
+        WallpaperSource::Gradient {
+            angle: 110,
+            stops: vec![(0, 0xffa9_c6f5), (55, 0xffe8_d5f2), (100, 0xfff6_e3c9)],
+        }
+    );
+    assert_eq!(
+        line.line(),
+        ", gradient 110deg ffa9c6f5 0% ffe8d5f2 55% fff6e3c9 100%, colour ffe8e8ed"
+    );
+    let (_, again) = Wallpaper::parse(&line.line()).expect("its own line");
+    assert_eq!(again, Some(line));
+    // Three colours with no place: 0, 50 and 100.
+    let (_, even) = Wallpaper::parse("DP-1, gradient 0deg 000000 808080 ffffff").expect("even");
+    assert_eq!(
+        even.map(|line| line.source),
+        Some(WallpaperSource::Gradient {
+            angle: 0,
+            stops: vec![(0, 0xff00_0000), (50, 0xff80_8080), (100, 0xffff_ffff)],
+        })
+    );
+    for wrong in [
+        ", gradient",
+        ", gradient 110deg a9c6f5",
+        ", gradient a9c6f5 f6e3c9",
+        ", gradient 400deg a9c6f5 f6e3c9",
+        ", gradient 90deg a9c6f5 60% f6e3c9 40%",
+        ", gradient 90deg 50% a9c6f5 f6e3c9",
+        ", gradient 90deg a9c6f5 101% f6e3c9",
+        ", gradient 90deg a9c6f5 f6e3c9, picture a.png",
+    ] {
+        assert!(Wallpaper::parse(wrong).is_err(), "{wrong} was taken");
+    }
+}
+
 /// `parse_over` reads a second file on top of the first, with its
 /// variables, as the compositor reads the Settings app's file.
 #[test]
