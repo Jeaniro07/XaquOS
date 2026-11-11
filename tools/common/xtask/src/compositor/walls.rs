@@ -4,12 +4,16 @@
 //!
 //! On Yoru's desktop with the Settings app's six pictures installed,
 //! QEMU's keyboard presses SUPER I twice (open, then closed), then SUPER
-//! I, Left and Return. A script in the guest prints the wallpaper line of
+//! I, Right and Return. A script in the guest prints the wallpaper line of
 //! `settings.conf` every two seconds. The host keeps QEMU's screendumps
 //! as `walls-<step>.ppm` and requires: the switcher said it was up and
 //! closed on the second press; it was on the screen (the shade over the
 //! top of it); Return set the picture in hand with hyprix's `ok`, kept in
-//! `settings.conf`; and the desktop's ground changed to it.
+//! `settings.conf`; and the desktop's ground changed to it. Then SUPER I
+//! again, Left to the first card, Default, and Return: hyprix answers
+//! `setting reset wallpaper` with `ok`, `settings.conf` keeps the picture
+//! no longer, and the ground above the dock is the theme's gradient again,
+//! as it was before.
 
 use std::time::{Duration, Instant};
 
@@ -144,10 +148,11 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
         std::thread::sleep(Duration::from_secs(4));
         let open = dump(&mut qmp, arch, "open")?;
         let from = watching.after().len();
-        // The one in force is Yoru's, the last: one to the left.
-        press(&mut qmp, &["left"])?;
+        // The one in force is the theme's gradient, the Default card, the
+        // first: one to the right, a picture.
+        press(&mut qmp, &["right"])?;
         if !wait(watching, "yoru-shell: in hand:", from)? {
-            failures.push("Left moved nothing into hand".to_owned());
+            failures.push("Right moved nothing into hand".to_owned());
         }
         std::thread::sleep(Duration::from_secs(2));
         let from = watching.after().len();
@@ -204,9 +209,92 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
                 "the desktop's ground did not change: {ground} pixels"
             ));
         }
+        // Default after the picture: the theme's gradient back, by
+        // `setting reset wallpaper`.
+        let from = watching.after().len();
+        press(&mut qmp, &["meta_l", "i"])?;
+        if !wait(watching, "the wallpaper switcher is up", from)? {
+            return Err(with_the_transcript(
+                &Error::new(format!(
+                    "{arch}: walls: SUPER I opened no switcher the third time"
+                )),
+                watching,
+            ));
+        }
+        std::thread::sleep(Duration::from_secs(4));
+        let on_default = |watching: &Watching<'_>| {
+            watching
+                .after()
+                .iter()
+                .skip(from)
+                .any(|line| line.contains("yoru-shell: in hand: Default ("))
+        };
+        for _ in 0..16 {
+            if on_default(watching) {
+                break;
+            }
+            let at = watching.after().len();
+            press(&mut qmp, &["left"])?;
+            if !wait(watching, "yoru-shell: in hand:", at)? {
+                break;
+            }
+        }
+        if !on_default(watching) {
+            failures.push("Left never brought the Default card into hand".to_owned());
+        }
+        std::thread::sleep(Duration::from_secs(2));
+        let from = watching.after().len();
+        press(&mut qmp, &["ret"])?;
+        if !wait(watching, "yoru-shell: wallpaper set:", from)? {
+            return Err(with_the_transcript(
+                &Error::new(format!("{arch}: walls: Return set no Default")),
+                watching,
+            ));
+        }
+        let reset_line = watching
+            .after()
+            .iter()
+            .skip(from)
+            .find(|line| line.contains("yoru-shell: wallpaper set:"))
+            .cloned()
+            .unwrap_or_default();
+        println!("  {arch}: walls: {}", reset_line.trim());
+        if !reset_line.contains("wallpaper set: Default ()")
+            || !reset_line.trim_end().ends_with(": ok")
+        {
+            failures.push(format!(
+                "hyprix did not take the reset: {}",
+                reset_line.trim()
+            ));
+        }
+        let from = watching.after().len();
+        let dropped = watching.read_more(Instant::now() + Duration::from_secs(30), |lines| {
+            lines
+                .iter()
+                .skip(from)
+                .any(|line| line.contains("walls: conf") && !line.contains(&path))
+        })?;
+        if !dropped {
+            failures.push(format!("settings.conf still keeps {path} after Default"));
+        }
+        std::thread::sleep(Duration::from_secs(4));
+        let back = dump(&mut qmp, arch, "default")?;
+        // Below the second window's foot (its pattern changes as it runs),
+        // the strip of ground just above the dock.
+        let left = changed(
+            &before,
+            &back,
+            before.height.saturating_sub(120)..before.height.saturating_sub(80),
+        );
+        println!("  {arch}: walls: after Default, {left} pixels above the dock differ from before");
+        if left > before.width {
+            failures.push(format!(
+                "Default did not bring the gradient back: {left} pixels differ from before"
+            ));
+        }
         if failures.is_empty() {
             println!(
-                "  {arch}: walls: SUPER I opened and closed the switcher, Left and Return set the picture before, kept and drawn"
+                "  {arch}: walls: SUPER I opened and closed the switcher, Right and Return set the picture after, kept and drawn, and Default brought the gradient back"
             );
             Ok(())
         } else {

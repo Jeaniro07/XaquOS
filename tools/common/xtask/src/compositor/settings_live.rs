@@ -12,7 +12,7 @@
 //! * Appearance live: the 6-pixel red border the script asked for is on
 //!   the screen after, and was not before;
 //! * Windows live: with `hyprix:titlebars 0` the Settings window's bar
-//!   across the top of the screen is gone;
+//!   across the top of the screen, under the menu bar, is gone;
 //! * all of it kept in `settings.conf`.
 
 use std::time::{Duration, Instant};
@@ -144,12 +144,14 @@ pub(super) fn test_settings_live(arch: Arch, programs: &Programs, args: &Args) -
                 red(&appearance)
             ));
         }
+        // The bar's first 16 rows, under the menu bar's 24.
         let top_changed = appearance
             .pixels
             .as_chunks::<3>()
             .0
             .iter()
             .zip(windows.pixels.as_chunks::<3>().0)
+            .skip(appearance.width * 24)
             .take(appearance.width * 16)
             .filter(|(a, b)| a != b)
             .count();

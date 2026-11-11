@@ -155,12 +155,26 @@ pub(super) fn test_edge_drag(arch: Arch, programs: &Programs, args: &Args) -> Re
         let inside = |(px, py): (i64, i64), (x, y, w, h): (i64, i64, i64, i64)| {
             px >= x && px < x + w && py >= y - 2 * BAR_MIDDLE && py < y + h
         };
+        // Or, when the two sit closer than a bar's height (the first placed
+        // before the menu bar's exclusive zone came, centred 12 pixels
+        // higher than the second), the middle of the higher bar: both bars
+        // cross it, so it is the bar of whichever is on top, found after
+        // the drag by which one moved.
+        let higher = || {
+            let (one, two) = (one?, two?);
+            Some(if one.1 <= two.1 {
+                ("one", one)
+            } else {
+                ("two", two)
+            })
+        };
         let Some((title, (x, y, w, _))) = [("two", two, one), ("one", one, two)]
             .into_iter()
             .find_map(|(title, own, other)| {
                 let own = own?;
                 (!other.is_some_and(|other| inside(bar(own), other))).then_some((title, own))
             })
+            .or_else(higher)
         else {
             return Err(with_the_transcript(
                 &Error::new("edge-drag: no window with its bar uncovered"),
@@ -172,6 +186,10 @@ pub(super) fn test_edge_drag(arch: Arch, programs: &Programs, args: &Args) -> Re
         qmp.screendump(Some(crate::display::DEVICE_ID), &dump)?;
         drag(&mut qmp, (x + w / 2, y - BAR_MIDDLE), (0, 300))?;
         let from = wait(watching)?;
+        let title = [("one", one), ("two", two)]
+            .into_iter()
+            .find(|&(moved, before)| rect_of(watching, from, moved) != before)
+            .map_or(title, |(moved, _)| moved);
         let Some((sx, sy, sw, sh)) = rect_of(watching, from, title) else {
             return Err(with_the_transcript(
                 &Error::new("edge-drag: no rectangle after the snap"),
