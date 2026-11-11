@@ -166,12 +166,10 @@ pub(super) fn apply(config: String, args: &Args, files: &mut Vec<File>) -> Resul
         carry(themes.join(name), format!("{THEMES}/{name}"))?;
         head.push_str(&format!("source = /{THEMES}/{name}\n"));
     }
-    // Yoru's dock and its two widget sidebars, unless the configuration
+    // Yoru's dock, which starts its menu bar, unless the configuration
     // starts a bar of its own.
     if theme == Theme::Yoru && !starts_a_bar(&config) {
         head.push_str(&format!("exec-once = /{DOCK}\n"));
-        head.push_str(&format!("exec-once = /{DOCK} --sidebar left\n"));
-        head.push_str(&format!("exec-once = /{DOCK} --sidebar right\n"));
     }
     if theme == Theme::Yoru {
         // The launcher's look, which Yoru's keys and its dock start fuzzel
@@ -237,6 +235,9 @@ mod tests {
         let own = config.find("bind = SUPER, Q").expect("own line");
         assert!(yoru < keys && keys < own);
         assert!(config.contains("exec-once = /bin/yoru-shell"), "the dock");
+        // The sidebars left the desktop with A2 (spec §3): their boots start
+        // them themselves.
+        assert!(!config.contains("--sidebar"), "no sidebars: {config}");
         for path in [
             "usr/share/hyprix/themes/yoru.conf",
             "usr/share/hyprix/themes/yoru-fuzzel.ini",

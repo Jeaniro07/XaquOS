@@ -63,7 +63,6 @@ bind = SUPER, 2, workspace, 2
 bind = SUPER SHIFT, 1, movetoworkspace, 1
 bind = SUPER SHIFT, 2, movetoworkspace, 2
 bind = SUPER, C, exec, /bin/hyprctl clients
-bind = SUPER, W, exec, /bin/hyprctl activewindow
 ";
 
 /// Venus on the 3D card of an `--everything` desktop, where this host can

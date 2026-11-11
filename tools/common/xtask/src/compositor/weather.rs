@@ -24,6 +24,10 @@ use crate::{Error, Result};
 /// The screen, as the Yoru boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
+/// The panels' top: below the menu bar's 24 pixels of exclusive zone,
+/// the layer's margin of 8.
+const TOP: i64 = 24 + 8;
+
 /// Open-Meteo's geocoding answer for the place typed, made up.
 const GEOCODING: &str = r#"{"results":[{"name":"Hamburg","latitude":53.55073,"longitude":9.99302,"country":"Germany"}]}"#;
 
@@ -63,6 +67,10 @@ fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
 pub(super) fn test_weather(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
     config.push_str("env = YORU_WEATHER_FAKE,/etc/weather-fake\n");
+    config.push_str(&format!(
+        "exec-once = /{} --sidebar left\n",
+        super::theme::DOCK
+    ));
     for (path, text) in [
         ("etc/weather-fake/geocoding.json", GEOCODING),
         ("etc/weather-fake/forecast.json", FORECAST),
@@ -126,7 +134,7 @@ pub(super) fn test_weather(arch: Arch, programs: &Programs, args: &Args) -> Resu
             ));
         }
         std::thread::sleep(Duration::from_secs(3));
-        click(&mut qmp, (8 + 16 + 100, 8 + 90 + 92 + 17))?;
+        click(&mut qmp, (8 + 16 + 100, TOP + 90 + 92 + 17))?;
         std::thread::sleep(Duration::from_secs(1));
         for key in ["h", "a", "m", "b", "u", "r", "g"] {
             press(&mut qmp, &[key])?;
@@ -168,7 +176,7 @@ pub(super) fn test_weather(arch: Arch, programs: &Programs, args: &Args) -> Resu
         );
         // Off: nothing asked from now on.
         let from = watching.lines().len() + watching.after().len();
-        click(&mut qmp, (8 + 16 + 60, 8 + 90 + 358 + 15))?;
+        click(&mut qmp, (8 + 16 + 60, TOP + 90 + 358 + 15))?;
         std::thread::sleep(Duration::from_secs(10));
         let _ = watching.read_more(Instant::now() + Duration::from_secs(5), |_| false)?;
         if !watching.after().iter().any(|l| l.contains("WeatherOff")) {

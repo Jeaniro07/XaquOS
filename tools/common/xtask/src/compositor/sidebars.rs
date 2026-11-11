@@ -20,6 +20,10 @@ use crate::{Error, Result};
 /// The screen, as the Yoru boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
+/// The panels' top: below the menu bar's 24 pixels of exclusive zone,
+/// the layer's margin of 8.
+const TOP: i64 = 24 + 8;
+
 /// The guest's side.
 const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
@@ -61,6 +65,12 @@ fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
 pub(super) fn test_sidebars(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/sidebars.sh\n");
+    for side in ["left", "right"] {
+        config.push_str(&format!(
+            "exec-once = /{} --sidebar {side}\n",
+            super::theme::DOCK
+        ));
+    }
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
             .ok_or_else(|| Error::new(format!("{arch}: no busybox for the probe")))?,
@@ -136,7 +146,7 @@ pub(super) fn test_sidebars(arch: Arch, programs: &Programs, args: &Args) -> Res
         std::thread::sleep(Duration::from_secs(3));
         // The field under the empty list, 336 from the right edge.
         let left = SCREEN.0 - 336;
-        click(&mut qmp, (left + 8 + 16 + 100, 8 + 90 + 30 + 17))?;
+        click(&mut qmp, (left + 8 + 16 + 100, TOP + 90 + 30 + 17))?;
         std::thread::sleep(Duration::from_secs(1));
         for key in ["m", "i", "l", "k"] {
             press(&mut qmp, &[key])?;
@@ -156,7 +166,7 @@ pub(super) fn test_sidebars(arch: Arch, programs: &Programs, args: &Args) -> Res
         dump(&mut qmp, "todo")?;
         // The pin: the column stays, and the windows give it room.
         let from = watching.after().len();
-        click(&mut qmp, (left + 8 + 320 - 12 - 15, 8 + 12 + 15))?;
+        click(&mut qmp, (left + 8 + 320 - 12 - 15, TOP + 12 + 15))?;
         if !wait(watching, "Pin", from)? {
             failures.push("the pin took no press".to_owned());
         }

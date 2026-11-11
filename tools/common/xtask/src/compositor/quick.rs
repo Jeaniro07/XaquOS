@@ -3,13 +3,13 @@
 //! (the arrangement's file says so); focus mode, auto-tile, do not
 //! disturb, the volume (to half, then muted: `pulsed` runs beside the
 //! desktop as it does with a sound card, the card's sound going to a WAV
-//! file), the Sakura theme and the Light appearance are pressed in turn;
+//! file), the Sakura theme and the Dark appearance are pressed in turn;
 //! the microphone must read as none, `pulsed` having no source.
 //! Required, for each, the shell's line that it was taken and what it
 //! read back after; notifyd's line that do not disturb is on; and for
 //! the theme, the dock's and the sidebar's lines that they redrew in
-//! Sakura, dark then light, with no frame colour refused by the
-//! compositor. Kept as `quick.ppm`, in Sakura light.
+//! Sakura, light (the default appearance) then dark, with no frame colour
+//! refused by the compositor. Kept as `quick.ppm`, in Sakura dark.
 
 use std::time::{Duration, Instant};
 
@@ -24,12 +24,16 @@ use crate::{Error, Result};
 /// The screen, as the Yoru boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
+/// The panels' top: below the menu bar's 24 pixels of exclusive zone,
+/// the layer's margin of 8.
+const TOP: i64 = 24 + 8;
+
 /// The quick settings' left edge on the right sidebar: the layer's, the
 /// panel's margin, the widget's.
 const LEFT: i64 = SCREEN.0 - 336 + 8 + 16;
 
 /// The tiles' top.
-const TILES: i64 = 8 + 90 + 148;
+const TILES: i64 = TOP + 90 + 148;
 
 /// The pointer to `(x, y)`.
 fn at(qmp: &mut Qmp, (x, y): (i64, i64)) -> Result<()> {
@@ -60,7 +64,11 @@ fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
     reason = "one boot read top to bottom: each press and what it must have done"
 )]
 pub(super) fn test_quick(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    config.push_str(&format!(
+        "exec-once = /{} --sidebar right\n",
+        super::theme::DOCK
+    ));
     carried.ports.push(crate::ports::File {
         path: ".config/yoru-shell/sidebars".to_owned(),
         mode: 0o644,
@@ -135,29 +143,29 @@ pub(super) fn test_quick(arch: Arch, programs: &Programs, args: &Args) -> Result
             ),
             (
                 "the volume",
-                (LEFT + 144, 8 + 90 + 46 + 26),
+                (LEFT + 144, TOP + 90 + 46 + 26),
                 &["quick: volume 50%; ", "volume 50%, microphone none"],
             ),
             (
                 "the mute",
-                (LEFT + 40, 8 + 90 + 46 + 6),
+                (LEFT + 40, TOP + 90 + 46 + 6),
                 &["quick: volume muted; ", "volume 50% muted, microphone none"],
             ),
             (
                 "the theme colour",
-                (LEFT + 2 * 49 + 20, 8 + 90 + 402 + 14),
+                (LEFT + 2 * 49 + 20, TOP + 90 + 402 + 14),
                 &[
-                    "quick: theme Sakura; now focus true, tiled true, theme Sakura Dark, quiet true",
-                    "dock: theme Sakura dark",
+                    "quick: theme Sakura; now focus true, tiled true, theme Sakura Light, quiet true",
+                    "dock: theme Sakura light",
                 ],
             ),
             (
                 "the appearance",
-                (LEFT + 2 * 98 + 46, 8 + 90 + 342 + 14),
+                (LEFT + 98 + 46, TOP + 90 + 342 + 14),
                 &[
-                    "quick: appearance Light; now focus true, tiled true, theme Sakura Light",
-                    "dock: theme Sakura light",
-                    "right sidebar: theme Sakura light",
+                    "quick: appearance Dark; now focus true, tiled true, theme Sakura Dark",
+                    "dock: theme Sakura dark",
+                    "right sidebar: theme Sakura dark",
                 ],
             ),
         ];
