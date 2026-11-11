@@ -29,10 +29,9 @@ use crate::ui::{Action, HEIGHT, View};
 pub const NAMESPACE: &str = "yoru-dock";
 
 /// The launcher's look in Yoru's theme, which fuzzel is started with.
-#[expect(dead_code, reason = "the menu bar's search starts it (A2 Task 6)")]
 pub(crate) const PALETTE: &str = "/usr/share/hyprix/themes/yoru-fuzzel.ini";
 
-/// How far above the screen's foot the dock floats, and in from its sides.
+/// How far above the screen's foot the dock floats.
 const MARGIN: i32 = 6;
 
 /// Say one line of what the program did.
@@ -44,7 +43,6 @@ pub fn say(text: &str) {
 }
 
 /// Seconds since 1970 in the local zone.
-#[expect(dead_code, reason = "the menu bar's clock reads it (A2 Task 6)")]
 pub(crate) fn now() -> i64 {
     let utc = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -259,6 +257,8 @@ pub fn run() -> i32 {
                 "the dock is up, {w}x{h}, {} launchers",
                 state.launchers.len()
             ));
+            // The menu bar after the dock, so the dock is drawn first.
+            crate::menubar::start();
         }
         let mut changed = false;
         for event in happened {

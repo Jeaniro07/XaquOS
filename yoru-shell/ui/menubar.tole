@@ -1,0 +1,153 @@
+// The menu bar (spec §5): a strip of glass across the top of the screen,
+// the mark and the focused program's menus at the left, the search and the
+// clock at the right; an open menu drops below its title. Rust measures
+// the titles, says which is open and does what is picked
+// (`src/menubar.rs`).
+import Fx
+
+struct TopMenu {
+    label: string
+    bold: bool
+    on: bool
+    x: real
+    w: real
+}
+
+struct MenuLine {
+    label: string
+    keys: string
+    line: bool
+    enabled: bool
+}
+
+export component MenuBar : Item {
+    id: bar
+    property list<TopMenu> menus
+    property list<MenuLine> lines
+    property bool open
+    property real dropX
+    property string clock
+    property string searchIcon
+
+    signal pick(int index)
+    signal choose(int index)
+    signal dismiss()
+    signal search()
+
+    Rectangle {
+        x: 0; y: 0
+        width: bar.width
+        height: 24
+        color: alpha(Nocturne.surface, 0.8)
+        Repeater {
+            model: bar.menus
+            Rectangle {
+                x: modelData.x; y: 2
+                width: modelData.w; height: 20
+                radius: 5
+                color: modelData.on ? alpha(Nocturne.text, 0.1) : "transparent"
+                Text {
+                    anchors.centerIn: parent
+                    visible: modelData.bold
+                    text: modelData.label
+                    font: Nocturne.sans(13, 700)
+                    color: Nocturne.text
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: !modelData.bold
+                    text: modelData.label
+                    font: Nocturne.sans(13, 500)
+                    color: Nocturne.text
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: bar.pick(index)
+                }
+            }
+        }
+        Text {
+            id: clockText
+            x: bar.width - clockText.implicitWidth - 12
+            y: 4
+            text: bar.clock
+            font: Nocturne.sans(13, 500)
+            color: Nocturne.text
+        }
+        Text {
+            id: searchText
+            x: clockText.x - 30
+            y: 4
+            text: bar.searchIcon
+            font: Nocturne.icon(15)
+            color: Nocturne.text
+        }
+        MouseArea {
+            x: searchText.x - 6; y: 0
+            width: 28; height: 24
+            onClicked: bar.search()
+        }
+    }
+
+    // Below the strip while a menu is open: a press there closes it.
+    MouseArea {
+        visible: bar.open
+        x: 0; y: 24
+        width: bar.width
+        height: bar.height - 24
+        onClicked: bar.dismiss()
+    }
+
+    Rectangle {
+        visible: bar.open
+        x: bar.dropX; y: 26
+        width: 260
+        height: bar.height - 30
+        radius: 8
+        color: Nocturne.surface
+        border.width: 1
+        border.color: alpha(Nocturne.text, 0.14)
+        Column {
+            x: 5; y: 5
+            width: 250
+            Repeater {
+                model: bar.lines
+                Item {
+                    width: 250
+                    height: modelData.line ? 9 : 24
+                    Rectangle {
+                        visible: modelData.line
+                        x: 6; y: 4
+                        width: 238; height: 1
+                        color: Nocturne.divider
+                    }
+                    Rectangle {
+                        visible: !modelData.line
+                        anchors.fill: parent
+                        radius: 4
+                        color: lineArea.containsMouse && modelData.enabled ? Nocturne.accent : "transparent"
+                        Text {
+                            x: 10; y: 4
+                            text: modelData.label
+                            font: Nocturne.sans(13, 500)
+                            color: !modelData.enabled ? Nocturne.n500 : lineArea.containsMouse ? "#ffffff" : Nocturne.text
+                        }
+                        Text {
+                            id: keysText
+                            x: 240 - keysText.implicitWidth; y: 4
+                            text: modelData.keys
+                            font: Nocturne.sans(12, 500)
+                            color: lineArea.containsMouse && modelData.enabled ? "#ffffff" : Nocturne.n500
+                        }
+                        MouseArea {
+                            id: lineArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: bar.choose(index)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

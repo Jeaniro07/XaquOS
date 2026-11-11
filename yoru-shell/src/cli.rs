@@ -1,4 +1,5 @@
-//! The command line: `yoru-shell` puts the dock on the screen;
+//! The command line: `yoru-shell` puts the dock and its menu bar on the
+//! screen (`--menubar` the bar alone);
 //! `--render FILE` draws it into a PNG instead, as the design's sample
 //! desktop shows it, for the README and the tests; `--version`.
 
@@ -38,6 +39,27 @@ pub fn render(state: &State, scale: f32) -> Option<tole::Frame> {
     view.show(state);
     view.ui.update();
     let mut frame = tole::Frame::new((width, HEIGHT), scale, tole::Color::hex(0xe8_d5f2))?;
+    let _ = view.ui.render_into(&mut frame);
+    Some(frame)
+}
+
+/// The menu bar drawn `width` wide at `scale`, the Window menu's or
+/// another's dropped (`open`), with the terminal focused, over the
+/// gradient's middle colour.
+#[must_use]
+pub fn render_menubar(width: u32, open: Option<usize>, scale: f32) -> Option<tole::Frame> {
+    let mut view = crate::menubar::View::new(crate::look::fonts())?;
+    view.ui.set_scale(scale);
+    let menus = crate::menus::standard(Some("Terminal"), "/bin/yoru-shell");
+    let height = open
+        .and_then(|i| menus.get(i))
+        .map_or(crate::menubar::HEIGHT, |menu| {
+            crate::menubar::open_height(&menu.entries)
+        });
+    view.resize((width, height));
+    view.show(menus, open, "Thu 12 Nov  21:40");
+    view.ui.update();
+    let mut frame = tole::Frame::new((width, height), scale, tole::Color::hex(0xe8_d5f2))?;
     let _ = view.ui.render_into(&mut frame);
     Some(frame)
 }
@@ -342,6 +364,37 @@ pub fn main() -> ExitCode {
         let grid = arguments.iter().any(|word| word == "--grid");
         let Some(frame) = render_walls(&sample_walls(grid), (1600, 1000), 1.0) else {
             eprintln!("yoru-shell: the switcher could not be drawn");
+            return ExitCode::FAILURE;
+        };
+        let pixmap = frame.pixmap();
+        let png = tole::png::encode(pixmap.width(), pixmap.height(), pixmap.data());
+        return match std::fs::write(path, png) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("yoru-shell: {path}: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if arguments.iter().any(|word| word == "--menubar") {
+        return if crate::menubar::run() == 0 {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        };
+    }
+    if let Some(at) = arguments.iter().position(|word| word == "--render-menubar") {
+        let Some(path) = arguments.get(at + 1) else {
+            eprintln!("yoru-shell: --render-menubar needs a file");
+            return ExitCode::FAILURE;
+        };
+        let open = arguments
+            .iter()
+            .position(|word| word == "--open")
+            .and_then(|at| arguments.get(at + 1))
+            .and_then(|n| n.parse().ok());
+        let Some(frame) = render_menubar(1600, open, 2.0) else {
+            eprintln!("yoru-shell: the menu bar could not be drawn");
             return ExitCode::FAILURE;
         };
         let pixmap = frame.pixmap();
