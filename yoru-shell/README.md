@@ -13,27 +13,30 @@ Phosphor for icons. An app (Ferrix's
 
 ![The dock, drawn by `--render`](dock.png)
 
-- **The workspaces**, one to four always (code, docs, misc, free) and any
-  other that exists, the one shown lit in the accent, a dot for each of
-  its windows up to three. A press goes there.
-- **The launchers**: the terminal, and the browser, Files (shelf) and
-  Settings where the image has their desktop entries; nothing else is
-  shown; a mark under one whose window is on the
-  workspace shown. A press starts it through hyprix (`dispatch exec`).
-- **The tools**: the search (fuzzel, until Yoru's own palette), the
-  scratchpad terminal (`togglespecialworkspace scratch`), Settings.
-- **Focus mode**: every window but the focused one dimmed
-  (`decoration:dim_inactive`).
-- **The pomodoro**: 25 minutes of focus, then 5 of break, its progress
-  under it; a press starts or pauses it.
-- **The clock** and the date, in UTC or `TZ=UTC±h` (Ferrix keeps no zone
-  database).
-- **Power**, at the right end: `yoru-shell --power`, a card over the
-  dimmed screen with Lock, Restart and Shut down (Lock not in the live
-  session, whose person has no password). Restart and Shut down ask once
+## The dock and the menu bar
+
+- **Dock** - a bar of glass in the middle of the screen's foot. The launchers
+  (Terminal, Browser, Files, Settings) as tiles, a dot under each that has a
+  window on any desktop or minimized; the other programs with windows after
+  them; a line; the stash, where files can be dropped. A press brings the
+  window used last (a minimized one comes back) or starts the program.
+- **Menu bar** - a strip of glass across the top, on a thread of the same
+  program. At the left the FX menu (Settings, Wallpaper, Restart or Shut
+  Down), the focused program's (About, Hide, Quit) and Window (Minimize,
+  Full Screen, Move to Desktop 1-4, Close); at the right the search and the
+  clock. `--menubar` runs it alone; `--render-menubar FILE [--open N]` draws
+  it to a PNG.
+- **Wallpaper** - the switcher's first card, Default, is the theme's own
+  gradient; pictures (PNG, JPEG, SVG) and videos as before.
+- **Power** - the FX menu's Restart or Shut Down: `yoru-shell --power`, a
+  card over the dimmed screen with Lock, Restart and Shut down (Lock not in
+  the live session, whose person has no password). Restart and Shut down ask once
   more, then call `svc reboot` or `svc poweroff`, which the init allows the
   person at the machine (Ferrix's docs/INIT.md §10.1); a refusal is shown in
   the card. `--render-power FILE [--live] [--confirm]` draws it.
+
+The sidebars (`--sidebar left|right`) are no longer started by the theme;
+their contents move to Control Center and Notices (A4).
 
 It follows hyprix through Hyprland's IPC: `.socket2.sock`'s events, and
 `j/workspaces`, `j/activeworkspace` and `j/clients` after each one that
