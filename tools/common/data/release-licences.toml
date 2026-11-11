@@ -150,10 +150,9 @@ paths = [
     "usr/share/udhcpc/default.script",
     "usr/share/applications/*",
     "usr/share/backgrounds/ferrix/*",
-    # Yoru's own (docs/DESKTOP.md §6): hyprix's themes and the Nocturne
-    # wallpaper, a gradient of our own drawn as an SVG.
+    # Yoru's own (docs/DESKTOP.md §6): hyprix's themes; its wallpaper is a
+    # gradient line in them, no file.
     "usr/share/hyprix/themes/*",
-    "usr/share/backgrounds/yoru/*",
     # What xtask writes beside Chrome (chrome.rs, start_page.rs): the
     # fontconfig file naming the fonts below, the xdg-open that opens a
     # link in Chrome, and Chrome's start page.

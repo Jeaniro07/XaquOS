@@ -1987,6 +1987,10 @@ fn a_gradient_line_reads_its_angle_and_stops() {
     ] {
         assert!(Wallpaper::parse(wrong).is_err(), "{wrong} was taken");
     }
+    // Every pixel walks the stops: 16 colours at most.
+    let colours = |count: usize| vec!["a9c6f5"; count].join(" ");
+    assert!(Wallpaper::parse(&format!(", gradient 0deg {}", colours(16))).is_ok());
+    assert!(Wallpaper::parse(&format!(", gradient 0deg {}", colours(17))).is_err());
 }
 
 /// `parse_over` reads a second file on top of the first, with its

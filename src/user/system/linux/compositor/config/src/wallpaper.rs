@@ -302,6 +302,9 @@ fn colour_of(text: &str) -> Result<u32, String> {
 
 /// `110deg a9c6f5 e8d5f2 55% f6e3c9`: the angle, then two colours or more,
 /// each followed by its place in per cent or placed evenly by its index.
+/// The most colours a gradient line takes.
+const MAX_STOPS: usize = 16;
+
 fn gradient(text: &str) -> Result<WallpaperSource, String> {
     let mut words = text.split_whitespace();
     let angle = words
@@ -329,6 +332,12 @@ fn gradient(text: &str) -> Result<WallpaperSource, String> {
         } else {
             placed.push((None, colour_of(word)?));
         }
+    }
+    // Each pixel walks the stops, so a long list would stall a 4K frame.
+    if placed.len() > MAX_STOPS {
+        return Err(format!(
+            "wallpaper gradient takes {MAX_STOPS} colours at most"
+        ));
     }
     let last = placed.len().saturating_sub(1);
     if last == 0 {
