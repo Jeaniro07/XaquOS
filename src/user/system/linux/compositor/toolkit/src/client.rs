@@ -1113,6 +1113,26 @@ impl Client {
         self.present(surface, (pixel_width, pixel_height), scale, paint)
     }
 
+    /// Let go of what a surface keeps between draws: the frame
+    /// [`Client::draw`] paints into before copying it, and the buffers the
+    /// compositor has given back. The buffer it shows is kept. A surface
+    /// drawn once and seldom again -- a wallpaper -- would otherwise hold
+    /// two screens' worth of memory more than the one shown; the next draw
+    /// makes what it needs again, and a damaged one copies all of a new
+    /// buffer.
+    pub fn release_spare(&mut self, surface: SurfaceId) {
+        let Some(state) = self.surfaces.get_mut(&surface) else {
+            return;
+        };
+        state.scratch = Vec::new();
+        let (busy, free): (Vec<Slot>, Vec<Slot>) =
+            state.slots.drain(..).partition(|slot| slot.busy);
+        state.slots = busy;
+        for slot in free {
+            self.destroy_slot(slot);
+        }
+    }
+
     /// Draw a frame of a size of the program's own rather than the
     /// configured one: `width` × `height` buffer pixels at a buffer scale
     /// of 1, which is also the surface's size in logical pixels. For a

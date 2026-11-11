@@ -68,7 +68,9 @@ fn lines() -> Result<Vec<Wallpaper>, String> {
 /// One line, being shown.
 struct Shown {
     line: Wallpaper,
-    /// The picture now, if the line has one and it could be read.
+    /// The picture now, if the line has one and it could be read; let go
+    /// once every screen showing the line is drawn, since the compositor
+    /// keeps what was drawn, and read again for the next draw.
     picture: Option<Pixmap>,
     /// A slideshow's pictures, in the order they are shown.
     slides: Vec<PathBuf>,
@@ -160,6 +162,21 @@ impl Shown {
         self.show_slide();
     }
 
+    /// Read the picture shown now again, if it was let go.
+    fn reread(&mut self) {
+        if self.picture.is_some() {
+            return;
+        }
+        self.picture = match &self.line.source {
+            WallpaperSource::Picture(path) => load(&home(path), self.line.fit),
+            WallpaperSource::Slideshow { .. } => self
+                .slides
+                .get(self.at)
+                .and_then(|path| load(path, self.line.fit)),
+            WallpaperSource::Colour | WallpaperSource::Video(_) => None,
+        };
+    }
+
     /// Seconds between slides.
     fn every(&self) -> Option<Duration> {
         match self.line.source {
@@ -207,7 +224,7 @@ fn run() -> Result<(), String> {
                     }
                 }
                 Event::Configure { surface, .. } | Event::Scale { surface, .. } => {
-                    paint(&mut client, &surfaces, &shown, surface)?;
+                    paint(&mut client, &surfaces, &mut shown, surface)?;
                 }
                 Event::Closed(surface) => {
                     client.destroy(surface);
@@ -245,8 +262,23 @@ fn run() -> Result<(), String> {
                 .map(|(surface, _)| *surface)
                 .collect();
             for surface in ours {
-                paint(&mut client, &surfaces, &shown, surface)?;
+                paint(&mut client, &surfaces, &mut shown, surface)?;
             }
+        }
+        // What is drawn is the compositor's to show: a line's picture is
+        // let go once every screen showing it has been configured, and so
+        // drawn, and each surface's spare frame and buffers with it.
+        for (index, line) in shown.iter_mut().enumerate() {
+            if surfaces
+                .values()
+                .all(|(surface, at)| *at != index || client.size(*surface).is_some())
+            {
+                line.picture = None;
+            }
+        }
+        let ours: Vec<SurfaceId> = surfaces.values().map(|(surface, _)| *surface).collect();
+        for surface in ours {
+            client.release_spare(surface);
         }
     }
 }
@@ -255,7 +287,7 @@ fn run() -> Result<(), String> {
 fn paint(
     client: &mut Client,
     surfaces: &HashMap<OutputId, (SurfaceId, usize)>,
-    shown: &[Shown],
+    shown: &mut [Shown],
     surface: SurfaceId,
 ) -> Result<(), String> {
     let Some((output, index)) = surfaces
@@ -265,9 +297,10 @@ fn paint(
     else {
         return Ok(());
     };
-    let Some(line) = shown.get(index) else {
+    let Some(line) = shown.get_mut(index) else {
         return Ok(());
     };
+    line.reread();
     let span = line.line.span.then(|| span_of(client, output)).flatten();
     let drawn = client
         .draw(surface, |target| {
@@ -508,4 +541,30 @@ fn say(line: &str) {
     let mut out = std::io::stdout();
     let _ = writeln!(out, "{line}");
     let _ = out.flush();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Pixmap, Shown, Wallpaper};
+
+    /// A picture let go once drawn is read again, the same, for the next
+    /// draw.
+    #[test]
+    fn a_picture_let_go_is_read_again() {
+        let dir = std::env::temp_dir().join(format!("wallpaper-reread-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a folder");
+        let path = dir.join("one.png");
+        let mut pixmap = Pixmap::new(4, 2).expect("a pixmap");
+        pixmap.fill(compositor_image::tiny_skia::Color::from_rgba8(
+            10, 20, 30, 255,
+        ));
+        std::fs::write(&path, pixmap.encode_png().expect("a PNG")).expect("written");
+        let (_, line) = Wallpaper::parse(&format!(", picture {}", path.display())).expect("a line");
+        let mut shown = Shown::new(line.into_iter().next().expect("one line"));
+        let first = shown.picture.take().expect("read at the start");
+        shown.reread();
+        assert_eq!(shown.picture.as_ref().map(Pixmap::data), Some(first.data()));
+        shown.reread();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
