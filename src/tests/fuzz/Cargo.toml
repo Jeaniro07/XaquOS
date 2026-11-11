@@ -25,6 +25,7 @@ ferrix-fsproto = { path = "../../lib/fs/fsproto" }
 ferrix-netswitch = { path = "../../lib/proto/netswitch" }
 ferrix-fdt = { path = "../../lib/platform/fdt" }
 ferrix-frame = { path = "../../lib/kernel/frame" }
+ferrix-lz4 = { path = "../../lib/kernel/lz4" }
 ferrix-ustack = { path = "../../lib/kernel/ustack" }
 ferrix-linux-abi = { path = "../../lib/proto/linux-abi" }
 ferrix-native-abi = { path = "../../lib/proto/native-abi" }
@@ -373,6 +374,13 @@ bench = false
 [[bin]]
 name = "fsproto_serve"
 path = "fuzz_targets/fsproto_serve.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "lz4_roundtrip"
+path = "fuzz_targets/lz4_roundtrip.rs"
 test = false
 doc = false
 bench = false
