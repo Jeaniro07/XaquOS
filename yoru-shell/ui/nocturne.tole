@@ -1,44 +1,44 @@
 // Nocturne, the design system Yoru is drawn in, as tokens: the ground, the
 // surface, the text, and the 100-900 ramps of the neutrals and the three
-// accents (OKLCH on one lightness scale; accent-2 and accent-3 are the
-// "Nocturne" theme's hues 200 and 340 at the accent's chroma). Ferrix's
-// docs/DESKTOP.md §6 and hyprix's themes/yoru.conf carry the same values.
+// accents. Until the theme says otherwise (src/theme.rs, Tokens::GLASS),
+// Yoru's light glass: 100 the darkest, 900 the lightest. hyprix's
+// themes/yoru.conf carries the same look for the window frames.
 singleton Nocturne {
-    property color bg: "#161826"
-    property color surface: "#232532"
-    property color text: "#e9e9ed"
-    property color accent: "#9184d9"
-    property color divider: #e9e9ed29
+    property color bg: "#f2f2f5"
+    property color surface: "#ffffff"
+    property color text: "#1d1d1f"
+    property color accent: "#0a84ff"
+    property color divider: #1d1d1f29
 
-    property color n100: "#f3f5fe"
-    property color n200: "#e4e7f5"
-    property color n300: "#cfd3e5"
-    property color n400: "#b2b6ca"
-    property color n500: "#9397ab"
-    property color n600: "#75798c"
-    property color n700: "#595d6c"
-    property color n800: "#3f424d"
-    property color n900: "#292b31"
+    property color n100: "#1f2024"
+    property color n200: "#33353b"
+    property color n300: "#4a4d55"
+    property color n400: "#646872"
+    property color n500: "#868a94"
+    property color n600: "#a7abb4"
+    property color n700: "#c6c9d0"
+    property color n800: "#dcdee3"
+    property color n900: "#ecedf0"
 
-    property color a100: "#f5f4ff"
-    property color a200: "#e7e5fe"
-    property color a300: "#d2cefd"
-    property color a400: "#b5abfc"
-    property color a500: "#968ae0"
-    property color a600: "#796cbf"
-    property color a700: "#5d5294"
-    property color a800: "#423a6a"
-    property color a900: "#2b2741"
+    property color a100: "#062a57"
+    property color a200: "#0a3d7d"
+    property color a300: "#0d53a8"
+    property color a400: "#0a6fdc"
+    property color a500: "#0a84ff"
+    property color a600: "#4aa3ff"
+    property color a700: "#8cc4ff"
+    property color a800: "#c4e0ff"
+    property color a900: "#e6f1ff"
 
-    property color b300: "#87dfe4"
-    property color b400: "#46cad0"
-    property color b500: "#00b2ba"
+    property color b300: "#0b5d62"
+    property color b400: "#007980"
+    property color b500: "#00868d"
     property color b600: "#009199"
 
-    property color c300: "#f4b8df"
-    property color c400: "#e497cb"
-    property color c500: "#ce7bb4"
-    property color c600: "#ab5f93"
+    property color c300: "#8a2763"
+    property color c400: "#a8387b"
+    property color c500: "#c25294"
+    property color c600: "#d47fb0"
 
     // Inter at 500 for words, Phosphor for icons.
     property string sansFamily: "Inter Variable, Inter, sans-serif"

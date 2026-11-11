@@ -401,17 +401,17 @@ mod tests {
             let pixel = pixmap.pixel(x, y).expect("inside").demultiply();
             (pixel.red(), pixel.green(), pixel.blue())
         };
-        // Above the icons, below the bar's edge.
+        // Above the icons, below the bar's edge: the light glass.
         let (r, g, b) = at(400, 7);
         assert!(
-            r < 0x30 && g < 0x30 && b < 0x40,
+            r > 0xa0 && g > 0xa0 && b > 0xa0,
             "the bar's ground: {r} {g} {b}"
         );
-        // Workspace 1's button: its accent ring at the left edge.
+        // Workspace 1's button: its accent ring at the left edge, blue.
         let lit = (60..140).any(|x| {
             (12..18).any(|y| {
                 let (r, g, b) = at(x, y);
-                b > 0xb0 && r > 0x80 && g < r
+                b > 0xb0 && r < 0x60 && g < b
             })
         });
         assert!(lit, "the shown workspace is lit");

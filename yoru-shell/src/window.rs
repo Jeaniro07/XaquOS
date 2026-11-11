@@ -213,12 +213,10 @@ fn dragged(view: &mut View, state: &mut State, drag: crate::drop::Drag) {
 /// its choices; a refusal said.
 fn frames(hypr: Option<&Hypr>, tokens: &crate::theme::Tokens) {
     let Some(hypr) = hypr else { return };
-    for (key, value) in tokens.frame_settings() {
-        let said = hypr
-            .ask(&format!("setting {key} {value}"))
-            .unwrap_or_default();
+    for line in tokens.frame_requests() {
+        let said = hypr.ask(&line).unwrap_or_default();
         if said.trim() != "ok" {
-            say(&format!("theme: setting {key}: {}", said.trim()));
+            say(&format!("theme: {line}: {}", said.trim()));
         }
     }
 }

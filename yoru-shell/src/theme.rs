@@ -104,13 +104,13 @@ pub struct Theme {
     pub vibrance: f32,
 }
 
-/// Until a person chooses, Nocturne dark as the design system draws it
-/// (`Tokens::NOCTURNE`, the markup's own values).
+/// Until a person chooses, Yoru's light glass (`Tokens::GLASS`, the
+/// markup's own values; spec §4).
 impl Default for Theme {
     fn default() -> Self {
         Theme {
             mode: Mode::Named(0),
-            appearance: Appearance::Dark,
+            appearance: Appearance::Light,
             vibrance: 1.3,
         }
     }
@@ -378,11 +378,73 @@ impl Tokens {
         }
     };
 
-    /// The tokens of `theme` over `wall`: the default's are `NOCTURNE`.
+    /// Yoru's light glass, the default (spec §4): a white surface, ink near
+    /// black, a clear blue accent. The ramps run from 100 the darkest to
+    /// 900 the lightest, as the markup uses them on a light ground (hover
+    /// on `n900`, quiet ink on `n300`); accent-2's 600 is the stash badge's
+    /// teal, as before.
+    pub const GLASS: Tokens = {
+        const fn c(hex: u32) -> Rgb {
+            [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
+        }
+        Tokens {
+            light: true,
+            bg: c(0xf2_f2f5),
+            surface: c(0xff_ffff),
+            text: c(0x1d_1d1f),
+            accent: c(0x0a_84ff),
+            n: [
+                c(0x1f_2024),
+                c(0x33_353b),
+                c(0x4a_4d55),
+                c(0x64_6872),
+                c(0x86_8a94),
+                c(0xa7_abb4),
+                c(0xc6_c9d0),
+                c(0xdc_dee3),
+                c(0xec_edf0),
+            ],
+            a: [
+                c(0x06_2a57),
+                c(0x0a_3d7d),
+                c(0x0d_53a8),
+                c(0x0a_6fdc),
+                c(0x0a_84ff),
+                c(0x4a_a3ff),
+                c(0x8c_c4ff),
+                c(0xc4_e0ff),
+                c(0xe6_f1ff),
+            ],
+            b: [
+                c(0x05_3a3d),
+                c(0x08_494d),
+                c(0x0b_5d62),
+                c(0x00_7980),
+                c(0x00_868d),
+                c(0x00_9199),
+                c(0x55_c3c8),
+                c(0xa6_e2e5),
+                c(0xdc_f4f5),
+            ],
+            c: [
+                c(0x4f_1037),
+                c(0x6c_1a4c),
+                c(0x8a_2763),
+                c(0xa8_387b),
+                c(0xc2_5294),
+                c(0xd4_7fb0),
+                c(0xe3_a9cb),
+                c(0xf0_d0e3),
+                c(0xf9_ebf3),
+            ],
+        }
+    };
+
+    /// The tokens of `theme` over `wall`: the default's are `GLASS`.
     #[must_use]
     pub fn of(theme: &Theme, wall: &Wallpaper) -> Self {
         if *theme == Theme::default() {
-            return Tokens::NOCTURNE;
+            return Tokens::GLASS;
         }
         Tokens::new(hues(theme, wall), theme.vibrance, light(theme, wall))
     }
@@ -452,6 +514,24 @@ impl Tokens {
             ),
             ("hyprix:titlebar:col.separator", hex(self.text, 0x0f)),
         ]
+    }
+
+    /// What hyprix is asked so the window frames wear these tokens: for the
+    /// glass, the theme file's own frames back (each kept setting reset);
+    /// for any other, each setting said.
+    #[must_use]
+    pub fn frame_requests(&self) -> Vec<String> {
+        let glass = *self == Tokens::GLASS;
+        self.frame_settings()
+            .into_iter()
+            .map(|(key, value)| {
+                if glass {
+                    format!("setting reset {key}")
+                } else {
+                    format!("setting {key} {value}")
+                }
+            })
+            .collect()
     }
 }
 
@@ -574,14 +654,42 @@ pub fn said(theme: &Theme, tokens: &Tokens) -> String {
 mod tests {
     use super::{Appearance, Mode, Theme, Tokens, Wallpaper, hues, light};
 
-    /// The default is the markup's Nocturne; the engine's Nocturne triad
-    /// comes near it.
     #[test]
-    fn the_default_is_the_markups_nocturne_and_the_engine_near_it() {
+    fn the_default_is_the_light_glass_and_the_markup_says_so() {
         assert_eq!(
             Tokens::of(&Theme::default(), &Wallpaper::default()),
-            Tokens::NOCTURNE
+            Tokens::GLASS
         );
+        let g = Tokens::GLASS;
+        assert!(g.light);
+        let markup = include_str!("../ui/nocturne.tole");
+        let said = |name: &str| -> Option<[u8; 3]> {
+            let start = format!("property color {name}:");
+            let line = markup
+                .lines()
+                .find(|line| line.trim_start().starts_with(&start))?;
+            let hex = line.split('#').nth(1)?.get(..6)?;
+            let [_, r, g, b] = u32::from_str_radix(hex, 16).ok()?.to_be_bytes();
+            Some([r, g, b])
+        };
+        assert_eq!(said("bg"), Some(g.bg));
+        assert_eq!(said("surface"), Some(g.surface));
+        assert_eq!(said("text"), Some(g.text));
+        assert_eq!(said("accent"), Some(g.accent));
+        for i in 0..9 {
+            assert_eq!(said(&format!("n{}00", i + 1)), Some(g.n[i]), "n{}00", i + 1);
+            assert_eq!(said(&format!("a{}00", i + 1)), Some(g.a[i]), "a{}00", i + 1);
+        }
+        for i in 2..6 {
+            assert_eq!(said(&format!("b{}00", i + 1)), Some(g.b[i]), "b{}00", i + 1);
+            assert_eq!(said(&format!("c{}00", i + 1)), Some(g.c[i]), "c{}00", i + 1);
+        }
+        // The stash boot finds its badge by this colour.
+        assert_eq!(g.b[5], [0x00, 0x91, 0x99]);
+    }
+
+    #[test]
+    fn the_engine_stays_near_nocturne_for_its_hues() {
         let t = Tokens::new([289.0, 200.0, 340.0], 1.0, false);
         let near = |got: [u8; 3], want: [u8; 3]| {
             got.iter()
@@ -593,6 +701,22 @@ mod tests {
         }
         assert!(near(t.n[0], Tokens::NOCTURNE.n[0]));
         assert!(!t.light);
+    }
+
+    #[test]
+    fn the_glass_hands_the_frames_back_to_the_theme_file() {
+        let reset = Tokens::GLASS.frame_requests();
+        assert!(!reset.is_empty());
+        assert!(
+            reset.iter().all(|line| line.starts_with("setting reset ")),
+            "{reset:?}"
+        );
+        assert!(reset.contains(&"setting reset general:col.active_border".to_owned()));
+        let own = Tokens::new([289.0, 200.0, 340.0], 1.3, false).frame_requests();
+        assert!(
+            own.iter()
+                .all(|line| line.starts_with("setting ") && !line.starts_with("setting reset "))
+        );
     }
 
     #[test]
@@ -641,7 +765,7 @@ mod tests {
         assert_eq!(Theme::read(&theme.text()), theme);
         let odd = Theme::read("mode Disco\nappearance Dim\nvibrance 9\n");
         assert_eq!(odd.mode, Mode::Named(0));
-        assert_eq!(odd.appearance, Appearance::Dark);
+        assert_eq!(odd.appearance, Appearance::Light);
         assert!((odd.vibrance - 1.8).abs() < f32::EPSILON);
     }
 
