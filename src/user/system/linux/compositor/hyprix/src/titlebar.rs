@@ -265,8 +265,11 @@ pub struct Rendered {
 /// The bars drawn this frame, and the fonts their titles are set in.
 #[derive(Default)]
 pub struct Bars {
-    /// Loaded the first time a title is drawn.
+    /// Loaded the first time a title is drawn, or taken from `loading`.
     fonts: Option<Fonts>,
+    /// The system's fonts being read on a thread of their own, from
+    /// [`Bars::read_fonts_ahead`].
+    loading: Option<std::thread::JoinHandle<Fonts>>,
     /// Every bar drawn, by its id.
     rendered: BTreeMap<WindowId, Rendered>,
     /// Each titled window's bar rectangle on the last frame, in layout
@@ -287,6 +290,26 @@ impl core::fmt::Debug for Bars {
             .field("rendered", &self.rendered.len())
             .field("placed", &self.placed)
             .finish_non_exhaustive()
+    }
+}
+
+impl Bars {
+    /// Start reading the system's fonts on a thread, for the first title.
+    ///
+    /// Reading them is a walk of every font directory and a parse of each
+    /// face -- a quarter of a second at boot in a four-processor guest
+    /// (2026-11-11) -- and done on the loop at the first title it was a
+    /// quarter of a second in which no client was answered: the dock,
+    /// asking for the workspaces, waited for the terminal's title bar. On
+    /// a thread it overlaps the start. Nothing changes if it is not ready:
+    /// the first title waits for it, as it waited before.
+    pub fn read_fonts_ahead(&mut self) {
+        if self.fonts.is_none() && self.loading.is_none() {
+            self.loading = std::thread::Builder::new()
+                .name("fonts".to_owned())
+                .spawn(Fonts::system)
+                .ok();
+        }
     }
 }
 
@@ -576,7 +599,12 @@ impl Bars {
         // buttons.
         if !want.title.is_empty() {
             let margin = 14.0 * s;
-            let fonts = self.fonts.get_or_insert_with(Fonts::system);
+            let loading = self.loading.take();
+            let fonts = self.fonts.get_or_insert_with(|| {
+                loading
+                    .and_then(|thread| thread.join().ok())
+                    .unwrap_or_else(Fonts::system)
+            });
             let mut description = FontDescription::pango(&style.font_family);
             description.weight = Weight(style.font_weight);
             description.size = Size::Pixels(style.font_size * s);
@@ -905,6 +933,25 @@ mod tests {
             drawn.bytes.get(..4),
             Some([0xed, 0xeb, 0xeb, 0xff].as_slice())
         );
+    }
+
+    /// Fonts read ahead on their thread are the ones the first title is
+    /// set in, and read once.
+    #[test]
+    fn fonts_read_ahead_set_the_first_title() {
+        let mut bars = Bars::default();
+        bars.read_fonts_ahead();
+        assert!(bars.loading.is_some(), "the thread started");
+        bars.read_fonts_ahead();
+        let want = super::Wanted {
+            window: WindowId(3),
+            title: "term".to_owned(),
+        };
+        let drawn = bars.draw(&want, true, 300, 1.0).expect("drawn");
+        assert_eq!((drawn.width, drawn.height), (300, 50));
+        assert!(bars.loading.is_none() && bars.fonts.is_some(), "taken");
+        bars.read_fonts_ahead();
+        assert!(bars.loading.is_none(), "not read again");
     }
 }
 

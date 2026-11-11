@@ -650,6 +650,10 @@ impl<'r> Compositor<'r> {
         let state = lay_out(settings, &screens, &said, report)?;
         let (control, events) = bind_control(options)?;
         let plugins = crate::plugins::Plugins::new();
+        let mut bars = crate::titlebar::Bars::default();
+        if config.int("hyprix:titlebars").unwrap_or(0) != 0 {
+            bars.read_fonts_ahead();
+        }
         start_programs(&config, options, &listener, report);
         let mut wallpapers = crate::wallpaper::Wallpapers::default();
         let _ = wallpapers.follow(&config, options, listener.path(), report);
@@ -749,7 +753,7 @@ impl<'r> Compositor<'r> {
             switcher: crate::switcher::Switcher::default(),
             last_monitor: 0,
             restored: false,
-            bars: crate::titlebar::Bars::default(),
+            bars,
             carried: None,
             quit: false,
             swallow: false,
