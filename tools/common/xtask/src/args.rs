@@ -246,6 +246,9 @@ pub(crate) struct Args {
     pub(crate) data_nosuid: bool,
     /// `--seeds`, how many power failures `test-powerfail` makes.
     pub(crate) seeds: u64,
+    /// `--boots`, how many times `measure-desktop` boots in a row; `None`
+    /// for once.
+    pub(crate) boots: Option<u32>,
     /// `--accel`, which QEMU accelerator to boot under. `None` means `tcg`,
     /// except for an x86-64 guest on an x86-64 Linux host outside CI, where it
     /// means `kvm` (`qemu::accelerator`), and to `run`, which asks for `auto`
@@ -1020,7 +1023,9 @@ impl Args {
                 "--screens" => args.screens = number(&mut items, "--screens")?,
                 "--arch" => args.arch = Some(value(&mut items, "--arch")?),
                 "--smp" | "--memory" | "--timeout" => args.machine(&item, &mut items)?,
-                "--seeds" | "--jobs" | "--smp-threads" => args.counts(&item, &mut items)?,
+                "--seeds" | "--jobs" | "--smp-threads" | "--boots" => {
+                    args.counts(&item, &mut items)?;
+                }
                 flag if NAMED_FLAGS.contains(&flag) => args.named(flag, &mut items)?,
                 "--port" => args.port = Some(value(&mut items, "--port")?),
                 "--init" => args.init = Some(value(&mut items, "--init")?),
@@ -1078,6 +1083,7 @@ impl Args {
         match key {
             "--seeds" => self.seeds = number(items, key)?,
             "--smp-threads" => self.smp_threads = number(items, key)?,
+            "--boots" => self.boots = Some(count(items, key)?),
             _ => self.jobs = Some(count(items, key)?),
         }
         Ok(())

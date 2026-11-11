@@ -89,6 +89,7 @@ mod live;
 mod locked;
 mod lode_viewer;
 mod machine;
+mod measure;
 mod monitors;
 pub(crate) mod n150_box;
 mod picture;
@@ -154,6 +155,15 @@ pub(crate) const TASKS: &[Task] = &[
             "run-compositor  Boot src/user/system/linux/compositor/hyprix as init with a virtio-gpu, on a screen this host can show",
         ],
         run: |_, args| run_compositor(args),
+    },
+    Task {
+        name: "measure-desktop",
+        help_at: 121,
+        help: &[
+            "measure-desktop  Boot run-compositor's desktop and print QEMU start -> dock and -> graphical.target,",
+            "              the root line, and after 65 s idle the used memory and each process's RSS (--boots N)",
+        ],
+        run: |_, args| measure::measure_desktop(args),
     },
     Task {
         name: "iso",

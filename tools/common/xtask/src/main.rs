@@ -322,6 +322,7 @@ OPTIONS:
     --memory <MiB>                       Guest memory          [default: 512]
     --timeout <SECONDS>                  test-boot patience    [default: 120]
     --seeds <N>                          test-powerfail cuts   [default: 8]
+    --boots <N>                          measure-desktop: boots in a row, each measured [default: 1]
     --accel <auto|tcg|whpx|kvm|hvf>      QEMU accelerator      [default: auto for run
                                          without --gdb, tcg otherwise]
     --vtd-aw48                           x86-64: the VT-d unit with aw-bits=48, so the kernel walks

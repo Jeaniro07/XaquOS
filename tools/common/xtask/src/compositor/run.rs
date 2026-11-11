@@ -12,6 +12,8 @@ use super::desktop::{
     Backdrop, desktop, laid_out, with_chrome, with_steam, with_steam_volume, with_yserver,
 };
 use super::{Programs, gates_busybox, steam_window};
+use std::path::PathBuf;
+
 use crate::args::Args;
 use crate::paths::Arch;
 use crate::{Error, Result};
@@ -274,6 +276,20 @@ fn data_disk(arch: Arch, args: &mut Args) -> Result<()> {
 /// An architecture QEMU has no virtio-gpu for, a `--config` that cannot be
 /// read, or a QEMU that cannot show a screen at all.
 pub(crate) fn run_compositor(args: &Args) -> Result<()> {
+    let (arch, image, _kernel, args) = desktop_to_boot(args)?;
+    // On the 3060's own monitor: libvirt's domain, not a QEMU window.
+    if args.nvidia {
+        return crate::nvidia::run_desktop(&image, &args);
+    }
+    let args = screen(arch, &args)?;
+    println!("  {arch}: the compositor is init; its log is this terminal");
+    crate::qemu::run(arch, &image, &args)
+}
+
+/// `run-compositor`'s desktop, built: the architecture, the image, the
+/// kernel's ELF it was built from, and the arguments it was built with.
+/// `measure-desktop` boots the same.
+pub(super) fn desktop_to_boot(args: &Args) -> Result<(Arch, PathBuf, PathBuf, Args)> {
     let arch = args.single_arch()?;
     if crate::display::target(arch).is_none() {
         return Err(Error::new(format!(
@@ -384,15 +400,17 @@ pub(crate) fn run_compositor(args: &Args) -> Result<()> {
     // The desktop a person watches boots as a board's does: with its
     // self-checks skipped, which only the `desktop` boot of the judged ones
     // is.
-    let (image, _) = build_desktop_image(arch, &programs, &config, carried, args, &defaults)?;
-    // On the 3060's own monitor: libvirt's domain, not a QEMU window.
-    if args.nvidia {
-        return crate::nvidia::run_desktop(&image, args);
-    }
+    let (image, kernel) = build_desktop_image(arch, &programs, &config, carried, args, &defaults)?;
+    Ok((arch, image, kernel, args.clone()))
+}
+
+/// The arguments QEMU shows a desktop [`desktop_to_boot`] built with.
+pub(super) fn screen(arch: Arch, args: &Args) -> Result<Args> {
+    let size = args.size.unwrap_or(crate::wallpaper::SCREEN);
     // The host's GPU behind the card where it can be had: `window::watched_gl`
     // says when, and why it is the default for a desktop somebody watches.
     let args = crate::window::watched_gl(arch, args)?;
-    let args = Args {
+    Ok(Args {
         // The card, the keyboard and the tablet: `--display` is what puts a
         // virtio-gpu on the bus, and without one the compositor has no
         // `/dev/dri` to open. `test-compositor` sets it the same way.
@@ -403,9 +421,7 @@ pub(crate) fn run_compositor(args: &Args) -> Result<()> {
             .clone()
             .or_else(|| (!args.gdb).then(|| "auto".to_owned())),
         ..args
-    };
-    println!("  {arch}: the compositor is init; its log is this terminal");
-    crate::qemu::run(arch, &image, &args)
+    })
 }
 
 /// The file `release-image` writes into `--stage`, and the name the

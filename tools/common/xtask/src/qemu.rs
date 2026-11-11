@@ -2457,6 +2457,11 @@ impl std::fmt::Debug for Watching<'_> {
 }
 
 impl Watching<'_> {
+    /// How long since QEMU was started.
+    pub(crate) fn elapsed(&self) -> Duration {
+        self.started.elapsed()
+    }
+
     /// Every line up to and including the one the boot waited for.
     pub(crate) fn lines(&self) -> &[String] {
         self.lines

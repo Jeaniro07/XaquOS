@@ -450,7 +450,17 @@ cargo xtask run-compositor --arch x86_64             # a desktop in a window, wi
 cargo xtask run-compositor --arch x86_64 --vnc :0    # the same, served over VNC rather than shown
 cargo xtask run-compositor --arch x86_64 --gl        # the same, on the 3D card
 cargo xtask run-compositor --arch x86_64 --no-gl     # the same, drawn in software
+cargo xtask measure-desktop --arch x86_64 --boots 2  # the same desktop, timed, and its memory read
 ```
+
+`measure-desktop` boots `run-compositor`'s desktop as `--vnc :0 --no-gl
+--memory 4096` would, and prints how long from QEMU's start until the dock
+is drawn and until `graphical.target` is active, the kernel's `root     /`
+line, and, after 65 s idle, MemTotal - MemAvailable and each process's
+VmRSS, asked of the shell on the serial console. The first boot after the
+image is rebuilt installs the system on the btrfs root (its root line says
+so, and it is about 4 s slower); `--boots 2` boots twice in a row, so the
+second is a boot that kept it.
 
 `run-compositor` boots `/sbin/init`, which starts
 [`src/user/system/linux/compositor/hyprix`](../src/user/system/linux/compositor/README.md) as `hyprix.service` of
