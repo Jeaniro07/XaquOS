@@ -91,3 +91,151 @@ fn length(input: &[u8], at: &mut usize) -> Result<usize, Error> {
 
 /// The shortest match the format has.
 const MIN_MATCH: usize = 4;
+
+/// Bits of a position's hash.
+const HASH_BITS: u32 = 12;
+
+/// The input `compress` takes at most: positions fit a `u16`.
+pub const MAX_INPUT: usize = 65_535;
+
+/// The format's rule: the last match starts at least 12 bytes before the
+/// end, and the last 5 bytes are literals.
+const MATCH_LIMIT: usize = 12;
+const LAST_LITERALS: usize = 5;
+
+/// The compressor's hash table, which the caller owns (8 KiB), so that
+/// `compress` puts nothing large on a kernel stack.
+#[derive(Debug)]
+pub struct Table {
+    slots: [u16; 1 << HASH_BITS],
+}
+
+impl Table {
+    /// An empty table.
+    #[must_use]
+    pub const fn new() -> Self {
+        Table {
+            slots: [0; 1 << HASH_BITS],
+        }
+    }
+}
+
+impl Default for Table {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The largest output `compress` can write for `len` input bytes.
+#[must_use]
+pub const fn bound(len: usize) -> usize {
+    len + len / 255 + 16
+}
+
+/// Compress `input` into `out`; the bytes written, or `None` when `out` is
+/// too small or `input` is longer than [`MAX_INPUT`]. A caller keeping a
+/// page keeps it uncompressed on `None`.
+pub fn compress(input: &[u8], out: &mut [u8], table: &mut Table) -> Option<usize> {
+    if input.len() > MAX_INPUT {
+        return None;
+    }
+    table.slots.fill(0);
+    let mut writer = Writer { out, at: 0 };
+    let mut anchor = 0usize;
+    let mut at = 0usize;
+    let limit = input.len().saturating_sub(MATCH_LIMIT);
+    let match_end_limit = input.len().saturating_sub(LAST_LITERALS);
+    while at < limit {
+        let seen = read4(input, at)?;
+        let slot = table.slots.get_mut(hash(seen))?;
+        let candidate = usize::from(*slot);
+        *slot = u16::try_from(at).ok()?;
+        if candidate < at && read4(input, candidate) == Some(seen) {
+            let mut end = at + MIN_MATCH;
+            let mut from = candidate + MIN_MATCH;
+            while end < match_end_limit && input.get(end) == input.get(from) {
+                end += 1;
+                from += 1;
+            }
+            writer.sequence(input.get(anchor..at)?, at - candidate, end - at)?;
+            at = end;
+            anchor = end;
+        } else {
+            at += 1;
+        }
+    }
+    writer.last(input.get(anchor..)?)?;
+    Some(writer.at)
+}
+
+/// Four bytes at `at`, as one number.
+fn read4(input: &[u8], at: usize) -> Option<u32> {
+    match input.get(at..at.checked_add(4)?) {
+        Some(&[a, b, c, d]) => Some(u32::from_le_bytes([a, b, c, d])),
+        _ => None,
+    }
+}
+
+/// A position's slot in the table.
+fn hash(seen: u32) -> usize {
+    (seen.wrapping_mul(2_654_435_761) >> (32 - HASH_BITS)) as usize
+}
+
+/// The output, written forward.
+struct Writer<'a> {
+    out: &'a mut [u8],
+    at: usize,
+}
+
+impl Writer<'_> {
+    fn byte(&mut self, byte: u8) -> Option<()> {
+        *self.out.get_mut(self.at)? = byte;
+        self.at += 1;
+        Some(())
+    }
+
+    fn bytes(&mut self, bytes: &[u8]) -> Option<()> {
+        let end = self.at.checked_add(bytes.len())?;
+        self.out.get_mut(self.at..end)?.copy_from_slice(bytes);
+        self.at = end;
+        Some(())
+    }
+
+    /// A length of 15 or more: its extra bytes after the token's 15.
+    fn length(&mut self, mut rest: usize) -> Option<()> {
+        while rest >= 255 {
+            self.byte(255)?;
+            rest -= 255;
+        }
+        self.byte(u8::try_from(rest).ok()?)
+    }
+
+    /// One sequence: literals, then a match `matched` long `offset` back.
+    fn sequence(&mut self, literals: &[u8], offset: usize, matched: usize) -> Option<()> {
+        let extra = matched.checked_sub(MIN_MATCH)?;
+        self.byte((nibble(literals.len()) << 4) | nibble(extra))?;
+        if literals.len() >= 15 {
+            self.length(literals.len() - 15)?;
+        }
+        self.bytes(literals)?;
+        self.bytes(&u16::try_from(offset).ok()?.to_le_bytes())?;
+        if extra >= 15 {
+            self.length(extra - 15)?;
+        }
+        Some(())
+    }
+
+    /// The last sequence: literals only.
+    fn last(&mut self, literals: &[u8]) -> Option<()> {
+        self.byte(nibble(literals.len()) << 4)?;
+        if literals.len() >= 15 {
+            self.length(literals.len() - 15)?;
+        }
+        self.bytes(literals)
+    }
+}
+
+/// A length as a token's half: 15 means "more follows".
+fn nibble(len: usize) -> u8 {
+    u8::try_from(len.min(15)).unwrap_or(15)
+}
