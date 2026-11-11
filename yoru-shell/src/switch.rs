@@ -249,7 +249,7 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
         say("err: the switcher's tree could not be made");
         return 1;
     };
-    crate::theme::Live::new().tokens.apply(&mut view.ui);
+    view.wear(&crate::theme::Live::new().tokens);
     view.show(&picker);
     let layer = LayerOptions {
         output: None,

@@ -51,10 +51,11 @@ fn s(value: impl AsRef<str>) -> Rc<str> {
     Rc::from(value.as_ref())
 }
 
-/// The shade over the desktop: the design's gradient, the ground at 60%
-/// at the top, clear through the middle, 88% at the foot.
-fn shade() -> tole::CanvasPainter {
-    tole::CanvasPainter::new(|painter: &mut tole::Painter<'_>| {
+/// The shade over the desktop: the design's gradient, the theme's ground,
+/// at 60% at the top, clear through the middle, 88% at the foot,
+/// so the words on it read in the theme's ink.
+fn shade([r, g, b]: [u8; 3]) -> tole::CanvasPainter {
+    tole::CanvasPainter::new(move |painter: &mut tole::Painter<'_>| {
         let (width, height) = painter.size();
         let step = 4.0;
         let mut y = 0.0;
@@ -78,7 +79,7 @@ fn shade() -> tole::CanvasPainter {
                     h: step.min(height - y),
                 },
                 0.0,
-                Color::rgba(0x16, 0x18, 0x26, a),
+                Color::rgba(r, g, b, a),
             );
             y += step;
         }
@@ -181,7 +182,9 @@ impl View {
     pub fn new(fonts: tole::Fonts) -> Option<Self> {
         let mut ui = Ui::new(fonts);
         let walls = Walls::new(&mut ui, None)?;
-        walls.shade.set(&mut ui, shade());
+        walls
+            .shade
+            .set(&mut ui, shade(crate::theme::Tokens::GLASS.bg));
         walls.gradient.set(&mut ui, gradient());
         for (property, name) in [
             (&walls.ic_cards, "cards"),
@@ -201,6 +204,12 @@ impl View {
             shown: Vec::new(),
             size: (1280.0, 800.0),
         })
+    }
+
+    /// Draw in `tokens`: the markup's and the shade's ground.
+    pub fn wear(&mut self, tokens: &crate::theme::Tokens) {
+        tokens.apply(&mut self.ui);
+        self.walls.shade.set(&mut self.ui, shade(tokens.bg));
     }
 
     /// Its size in logical pixels.
@@ -453,6 +462,46 @@ mod tests {
         assert!(spread > 8, "it runs from blue toward sand: {spread}");
     }
 
+    /// The words over the shade read: the title and the name of the one in
+    /// hand stand from the ground behind them by WCAG's 4.5 to 1.
+    #[test]
+    fn the_switchers_words_read_on_its_shade() {
+        let picker = crate::cli::sample_walls(false);
+        let frame = crate::cli::render_walls(&picker, (1600, 1000), 1.0).expect("drawn");
+        let pixmap = frame.pixmap();
+        let lum = |x: u32, y: u32| {
+            let pixel = pixmap.pixel(x, y).expect("inside").demultiply();
+            let linear = |v: u8| {
+                let v = f32::from(v) / 255.0;
+                if v <= 0.040_45 {
+                    v / 12.92
+                } else {
+                    ((v + 0.055) / 1.055).powf(2.4)
+                }
+            };
+            0.2126 * linear(pixel.red())
+                + 0.7152 * linear(pixel.green())
+                + 0.0722 * linear(pixel.blue())
+        };
+        // "Wallpapers" at the panel's left, the ground right of it; "Dune"
+        // under the cover, the ground left of it.
+        for (what, xs, ys, ground) in [
+            ("the title", 300..420, 26..48, (560, 37)),
+            ("the name", 740..860, 652..676, (680, 664)),
+        ] {
+            let ink = xs
+                .flat_map(|x| ys.clone().map(move |y| (x, y)))
+                .map(|(x, y)| lum(x, y))
+                .fold(1.0_f32, f32::min);
+            let back = lum(ground.0, ground.1);
+            let contrast = (ink.max(back) + 0.05) / (ink.min(back) + 0.05);
+            assert!(
+                contrast >= 4.5,
+                "{what}: {contrast:.2} to 1 ({ink:.3} on {back:.3})"
+            );
+        }
+    }
+
     /// The picture: the cover's middle card drawn from the file, ringed.
     #[test]
     fn the_cover_draws_the_pictures() {
@@ -464,7 +513,7 @@ mod tests {
             (pixel.red(), pixel.green(), pixel.blue())
         };
         // Not the ground: a picture is in the middle card.
-        let ground = (0x2b, 0x27, 0x41);
+        let ground = (0xe8, 0xd5, 0xf2);
         let middle_y = super::place(&picker, 1600.0, 600.0)
             .last()
             .map(|p| p.2 + p.4 / 2.0)

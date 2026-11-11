@@ -104,7 +104,8 @@ pub fn sample_walls(grid: bool) -> crate::walls::Picker {
     picker
 }
 
-/// The switcher drawn `size` logical pixels at `scale`.
+/// The switcher drawn `size` logical pixels at `scale`, over the
+/// gradient's middle colour.
 #[must_use]
 pub fn render_walls(
     picker: &crate::walls::Picker,
@@ -116,7 +117,7 @@ pub fn render_walls(
     view.resize(size);
     view.show(picker);
     view.ui.update();
-    let mut frame = tole::Frame::new(size, scale, tole::Color::hex(0x2b_2741))?;
+    let mut frame = tole::Frame::new(size, scale, tole::Color::hex(0xe8_d5f2))?;
     let _ = view.ui.render_into(&mut frame);
     Some(frame)
 }
