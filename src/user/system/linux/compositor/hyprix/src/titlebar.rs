@@ -28,6 +28,14 @@ pub const HEIGHT: i64 = 38;
 /// The bit every bar's id has, and no client's window.
 const BAR: u64 = 1 << 62;
 
+/// No colour: a theme that sets none keeps the default look.
+const CLEAR: Rgba = Rgba {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0,
+};
+
 /// How a bar looks: `hyprix:titlebar:*`, whose defaults are Ferrix
 /// light's header (`docs/DESKTOP.md` §2.2) and which the Yoru theme sets
 /// to its own (§6). Lengths are logical pixels.
@@ -59,6 +67,17 @@ pub struct Style {
     pub button_margin: f32,
     /// `title_align`: `center`, or `left` beside the bar's left margin.
     pub title_left: bool,
+    /// `button_side`: `right` (the default), or `left`, where the buttons
+    /// stand from the bar's left edge as close, minimize, maximize.
+    pub buttons_left: bool,
+    /// `col.close`, `col.minimize`, `col.maximize`: a button's own disc,
+    /// drawn without a glyph; transparent (the default) for `col.button`
+    /// with the glyph.
+    pub close: Rgba,
+    /// The same, for minimize.
+    pub minimize: Rgba,
+    /// The same, for maximize.
+    pub maximize: Rgba,
     /// `font_family`, `font_size`, `font_weight`: the title's face.
     pub font_family: String,
     /// Its size.
@@ -93,6 +112,10 @@ impl Default for Style {
             button_gap: 9.0,
             button_margin: 9.0,
             title_left: false,
+            buttons_left: false,
+            close: CLEAR,
+            minimize: CLEAR,
+            maximize: CLEAR,
             font_family: "sans-serif".to_owned(),
             font_size: 14.0,
             font_weight: 700,
@@ -148,6 +171,10 @@ impl Style {
             button_gap: length("button_gap", defaults.button_gap),
             button_margin: length("button_margin", defaults.button_margin),
             title_left: config.str("hyprix:titlebar:title_align") == Some("left"),
+            buttons_left: config.str("hyprix:titlebar:button_side") == Some("left"),
+            close: colour("col.close", CLEAR),
+            minimize: colour("col.minimize", CLEAR),
+            maximize: colour("col.maximize", CLEAR),
             font_family: config
                 .str("hyprix:titlebar:font_family")
                 .filter(|family| !family.is_empty())
@@ -167,8 +194,33 @@ impl Style {
         }
     }
 
-    /// The centre of button `index` (0 close, 1 maximize, 2 minimize),
-    /// counted from the bar's right edge.
+    /// The buttons in the order they stand from the edge they are on.
+    const fn order(&self) -> [Hit; 3] {
+        if self.buttons_left {
+            [Hit::Close, Hit::Minimize, Hit::Maximize]
+        } else {
+            [Hit::Close, Hit::Maximize, Hit::Minimize]
+        }
+    }
+
+    /// How far the buttons reach in from their edge, margin included.
+    fn buttons_span(&self) -> f32 {
+        self.button_margin + 3.0 * self.button_size + 2.0 * self.button_gap
+    }
+
+    /// A button's own disc, when the theme gives one.
+    fn own_disc(&self, which: Hit) -> Option<Rgba> {
+        let colour = match which {
+            Hit::Close => self.close,
+            Hit::Minimize => self.minimize,
+            Hit::Maximize => self.maximize,
+            Hit::Bar => return None,
+        };
+        (colour.a != 0).then_some(colour)
+    }
+
+    /// The centre of the `index`th button of [`Style::order`], counted from
+    /// the edge the buttons are on.
     fn button_from_right(&self, index: usize) -> f32 {
         #[expect(clippy::cast_precision_loss, reason = "three buttons")]
         let index = index as f32;
@@ -368,15 +420,16 @@ impl Bars {
             if x < left || x >= right || y < top || y >= bottom {
                 return None;
             }
-            let from_right = right - x;
             let middle = (top + bottom) / 2.0;
             let half = f64::from(self.style.button_size) / 2.0;
-            for (index, hit) in [Hit::Close, Hit::Maximize, Hit::Minimize]
-                .into_iter()
-                .enumerate()
-            {
-                let centre = f64::from(self.style.button_from_right(index));
-                if (from_right - centre).abs() <= half + 1.0 && (y - middle).abs() <= half + 2.0 {
+            for (index, hit) in self.style.order().into_iter().enumerate() {
+                let offset = f64::from(self.style.button_from_right(index));
+                let centre = if self.style.buttons_left {
+                    left + offset
+                } else {
+                    right - offset
+                };
+                if (x - centre).abs() <= half + 1.0 && (y - middle).abs() <= half + 2.0 {
                     return Some((*window, hit));
                 }
             }
@@ -493,25 +546,29 @@ impl Bars {
         if focused && !style.line.is_empty() {
             rule(&mut pixmap, 0.0, s, full, &style.line, true);
         }
-        // The buttons, right to left: close, maximize, minimize.
+        // The buttons, from their edge: close first.
         let ink = if focused {
             style.text
         } else {
             style.text_inactive
         };
-        let mut right_edge = full;
-        for (index, which) in [Hit::Close, Hit::Maximize, Hit::Minimize]
-            .into_iter()
-            .enumerate()
-        {
-            let cx = full - style.button_from_right(index) * s;
-            right_edge = cx - style.button_size * s / 2.0;
+        let span = style.buttons_span() * s;
+        for (index, which) in style.order().into_iter().enumerate() {
+            let offset = style.button_from_right(index) * s;
+            let cx = if style.buttons_left {
+                offset
+            } else {
+                full - offset
+            };
+            let (disc, glyph) = style
+                .own_disc(which)
+                .map_or((style.disc, Some(ink)), |own| (own, None));
             button(
                 &mut pixmap,
                 (cx, middle),
                 style.button_size * s / 2.0,
                 which,
-                (style.disc, ink),
+                (disc, glyph),
                 s,
             );
         }
@@ -525,9 +582,9 @@ impl Bars {
             description.size = Size::Pixels(style.font_size * s);
             let font = fonts.resolve(&description);
             let room = if style.title_left {
-                right_edge - 2.0 * margin
+                full - span - 2.0 * margin
             } else {
-                (right_edge - 2.0 * margin).max(0.0) - (full - right_edge) - margin
+                (full - span - 2.0 * margin).max(0.0) - span - margin
             };
             let run = fonts.shape_ellipsized(
                 &font,
@@ -537,7 +594,11 @@ impl Bars {
             );
             let metrics = fonts.metrics(&font);
             let x = if style.title_left {
-                margin
+                if style.buttons_left {
+                    span + margin
+                } else {
+                    margin
+                }
             } else {
                 ((full - run.width) / 2.0).max(margin)
             };
@@ -653,13 +714,13 @@ pub const fn is_bar(window: WindowId) -> bool {
     window.0 & BAR != 0
 }
 
-/// One button: a faint disc and its glyph in `ink`.
+/// One button: its disc, and its glyph in `ink` when there is one.
 fn button(
     pixmap: &mut tiny_skia::Pixmap,
     (cx, cy): (f32, f32),
     radius: f32,
     which: Hit,
-    (disc_colour, ink): (Rgba, Rgba),
+    (disc_colour, ink): (Rgba, Option<Rgba>),
     s: f32,
 ) {
     use tiny_skia::{FillRule, LineCap, Paint, PathBuilder, Stroke, Transform};
@@ -677,6 +738,9 @@ fn button(
             None,
         );
     }
+    let Some(ink) = ink else {
+        return;
+    };
     let mut pen = Paint::default();
     pen.set_color(ink.to_skia());
     pen.anti_alias = true;
@@ -753,6 +817,34 @@ mod tests {
         assert_eq!(bars.hit((200.0, middle)), Some((WindowId(7), Hit::Bar)));
         assert_eq!(bars.hit((200.0, 99.0)), None);
         assert_eq!(bars.hit((200.0, 138.0)), None, "the window, not its bar");
+    }
+
+    /// With `button_side = left` the buttons stand from the bar's left edge
+    /// as macOS has them: close, minimize, maximize; the right end is bar.
+    #[test]
+    fn buttons_on_the_left_are_close_minimize_maximize() {
+        let mut bars = Bars::default();
+        bars.style.buttons_left = true;
+        bars.placed
+            .push((WindowId(7), Rect::new(100, 100, 400, super::HEIGHT)));
+        let middle = 100.0 + 19.0;
+        assert_eq!(
+            bars.hit((100.0 + 21.0, middle)),
+            Some((WindowId(7), Hit::Close))
+        );
+        assert_eq!(
+            bars.hit((100.0 + 54.0, middle)),
+            Some((WindowId(7), Hit::Minimize))
+        );
+        assert_eq!(
+            bars.hit((100.0 + 87.0, middle)),
+            Some((WindowId(7), Hit::Maximize))
+        );
+        assert_eq!(
+            bars.hit((500.0 - 21.0, middle)),
+            Some((WindowId(7), Hit::Bar)),
+            "nothing at the right end"
+        );
     }
 
     /// Who gets a bar: the one that asked for the compositor's, the one
