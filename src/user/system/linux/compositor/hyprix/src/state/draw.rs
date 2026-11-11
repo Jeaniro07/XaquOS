@@ -854,6 +854,20 @@ impl Compositor<'_> {
         // And the clients' own pixels: where on this screen each
         // commit since the last frame landed.
         let heard = self.commits.on(&plan, &self.sources);
+        // The software backdrop, two canvases the screen's size, only while
+        // this screen blurs in software: made when it starts to, with a
+        // whole frame owed so that all of it is taken, and let go when it
+        // stops. A GPU screen keeps its own.
+        let blurs = screen.gpu.is_none()
+            && self.style.blur.is_some()
+            && self.config.int("hyprix:blur_in_software").unwrap_or(1) != 0;
+        if !blurs {
+            screen.backdrop = None;
+        } else if screen.backdrop.is_none() {
+            let (width, height) = (screen.canvas.width(), screen.canvas.height());
+            screen.backdrop = compositor_render::Backdrop::new(width, height).ok();
+            screen.watch = crate::damage::Watch::default();
+        }
         let frame = screen.watch.frame(plan, &heard, screen.backend.age());
         drew.redrew = drew.redrew.saturating_add(frame.canvas.area());
         // What the report says of the slowest frame's damage: how much
@@ -882,7 +896,7 @@ impl Compositor<'_> {
         };
         let mut target = crate::frame::Output {
             canvas: &mut screen.canvas,
-            backdrop: &mut screen.backdrop,
+            backdrop: screen.backdrop.as_mut(),
             gpu: screen.gpu.as_mut(),
             backend: screen.backend.as_mut(),
             origin,

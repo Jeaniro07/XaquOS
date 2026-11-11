@@ -3983,7 +3983,7 @@ struct Screen {
     /// What the frame is composed on.
     canvas: Canvas,
     /// What is behind its windows, and the blur of that.
-    backdrop: compositor_render::Backdrop,
+    backdrop: Option<compositor_render::Backdrop>,
     /// The same two on a GPU, when there is one to draw the frame: the
     /// software pair is then what is fallen back to if it goes.
     gpu: Option<crate::frame::Gpu>,
@@ -4239,8 +4239,6 @@ impl Screen {
         // turned into the connector's own on the way out.
         let (width, height) = transform.size(backend.size());
         let canvas = Canvas::new(width, height).map_err(|error| format!("a canvas: {error:?}"))?;
-        let backdrop = compositor_render::Backdrop::new(width, height)
-            .map_err(|error| format!("a backdrop: {error:?}"))?;
         let mut gpu = gpu_for(renderer, &name, (width, height), report)?;
         // And if this screen can be pointed at what that renderer draws
         // into, point it: the frame is then shown where it was made,
@@ -4276,7 +4274,7 @@ impl Screen {
             made: backend.made(),
             backend,
             canvas,
-            backdrop,
+            backdrop: None,
             gpu,
             monitor: id,
             rect: Rect::new(at_x, at_y, logical_width, logical_height),
@@ -4317,13 +4315,11 @@ impl Screen {
     ) -> Result<(), String> {
         let (width, height) = self.transform.size(size);
         let canvas = Canvas::new(width, height).map_err(|error| format!("a canvas: {error:?}"))?;
-        let backdrop = compositor_render::Backdrop::new(width, height)
-            .map_err(|error| format!("a backdrop: {error:?}"))?;
         self.backend
             .resize(size, refresh)
             .map_err(|error| error.to_string())?;
         self.canvas = canvas;
-        self.backdrop = backdrop;
+        self.backdrop = None;
         // The old target first: it holds a render device of its own.
         let renderer = if self.gpu.take().is_some() {
             renderer

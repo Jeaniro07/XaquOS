@@ -24,8 +24,9 @@ pub struct Output<'a> {
     pub canvas: &'a mut Canvas,
     /// What is behind the windows and the blur of it, kept from frame to
     /// frame so that a tiled window's blur is a copy: `crate::damage` says
-    /// what that does to a frame's damage.
-    pub backdrop: &'a mut Backdrop,
+    /// what that does to a frame's damage. `None` on a screen that draws
+    /// no blur, which has nothing to keep it for.
+    pub backdrop: Option<&'a mut Backdrop>,
     /// The GPU's canvas and backdrop, when the frame is drawn there rather
     /// than on the two above.
     pub gpu: Option<&'a mut Gpu>,
@@ -411,8 +412,8 @@ fn draw_windows(
     // The same frame on whichever painter there is: what differs is where
     // its pixels are when it is done, which is `shown`'s business.
     target.overlay_took = match target.gpu.as_deref_mut() {
-        Some(gpu) => composed(&mut gpu.canvas, &mut gpu.backdrop, &scene),
-        None => composed(&mut *target.canvas, &mut *target.backdrop, &scene),
+        Some(gpu) => composed(&mut gpu.canvas, Some(&mut gpu.backdrop), &scene),
+        None => composed(&mut *target.canvas, target.backdrop.as_deref_mut(), &scene),
     };
     shown(target)
 }
@@ -643,7 +644,7 @@ fn scanned_out(
 /// How long the counter took.
 fn composed<P: Painter>(
     painter: &mut P,
-    backdrop: &mut P::Backdrop,
+    backdrop: Option<&mut P::Backdrop>,
     scene: &Scene<'_>,
 ) -> Duration {
     let (origin, scale, damage) = (scene.origin, scene.scale, scene.damage);
@@ -660,14 +661,7 @@ fn composed<P: Painter>(
         windows: scene.styles,
     };
     let _ = render_onto(
-        painter,
-        Some(backdrop),
-        output,
-        origin,
-        &styles,
-        &surfaces,
-        &drawn,
-        damage,
+        painter, backdrop, output, origin, &styles, &surfaces, &drawn, damage,
     );
     over_everything(painter, scene)
 }
