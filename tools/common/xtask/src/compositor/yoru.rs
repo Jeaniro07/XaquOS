@@ -197,10 +197,10 @@ fn judge_launcher(screen: &Image) -> core::result::Result<String, String> {
     Ok(format!("the launcher's card {card} pixels across"))
 }
 
-/// Whether `screen` is Yoru's desktop: Nocturne's ground in the lower
-/// right corner, which no window reaches; title bars on Nocturne's surface,
-/// `#232532`; and the focused one's accent line, accent to accent-2 to
-/// accent-3.
+/// Whether `screen` is Yoru's light-glass desktop: the wallpaper's sand in
+/// the lower right corner, which no window reaches; title bars on the light
+/// surface, `#f3f3f5`; a red close button; the wallpaper's blue near the
+/// top; and the dock, still Nocturne's until the dock's own change.
 fn judge(screen: &Image) -> core::result::Result<String, String> {
     if (screen.width, screen.height) != SCREEN {
         return Err(format!("a {}x{} screen", screen.width, screen.height));
@@ -213,45 +213,36 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
         }
     };
     let [r, g, b] = pixel(screen.width - 3, screen.height - 3);
-    if !(r < 0x30 && g < 0x30 && b < 0x48 && b >= r) {
-        return Err(format!("the corner is {r},{g},{b}, not Nocturne's ground"));
+    if !(r >= 0xe8 && b < r && b >= 0xb8) {
+        return Err(format!("the corner is {r},{g},{b}, not the wallpaper's sand"));
     }
     let near = |[r, g, b]: [i32; 3], [r0, g0, b0]: [i32; 3], by: i32| {
         (r - r0).abs() <= by && (g - g0).abs() <= by && (b - b0).abs() <= by
     };
     let mut surface = 0usize;
-    let mut accent = 0usize;
+    let mut close = 0usize;
     for y in 0..screen.height {
         for x in 0..screen.width {
             let seen = pixel(x, y);
-            if near(seen, [0x23, 0x25, 0x32], 2) {
+            if near(seen, [0xf3, 0xf3, 0xf5], 2) {
                 surface += 1;
             }
-            if near(seen, [0x91, 0x84, 0xd9], 24)
-                || near(seen, [0x00, 0xb2, 0xba], 24)
-                || near(seen, [0xce, 0x7b, 0xb4], 24)
-            {
-                accent += 1;
+            if near(seen, [0xff, 0x5f, 0x57], 24) {
+                close += 1;
             }
         }
     }
-    // A bar's worth at least 200 pixels wide and 30 high; a line along one.
+    // A bar's worth at least 200 pixels wide and 30 high; a close button.
     if surface < 200 * 30 {
         return Err(format!("{surface} pixels of the bars' surface"));
     }
-    if accent < 80 {
-        return Err(format!("{accent} pixels of the accent's line"));
+    if close < 40 {
+        return Err(format!("{close} pixels of a close button"));
     }
-    // The wallpaper's glow up right, which the compositor's own ground
-    // (the same colour as the wallpaper's corner) does not have: the
-    // wallpaper is drawn, not only started.
     let [r, g, b] = pixel(900, 100);
-    if !(b > 0x48 && b > r + 0x20) {
-        return Err(format!("no wallpaper's glow at 900,100: {r},{g},{b}"));
+    if !(b >= 0xe0 && b > r + 0x10) {
+        return Err(format!("no wallpaper's blue at 900,100: {r},{g},{b}"));
     }
-    // The dock: its bar's dark ground across the middle of its row, 36
-    // pixels above the screen's foot, and the shown workspace's button
-    // ringed in accent-500 at its left.
     let row = screen.height - 6 - 30;
     let [r, g, b] = pixel(screen.width / 2, row);
     if !(r < 0x30 && g < 0x30 && b < 0x40) {
@@ -264,7 +255,7 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
         return Err("no workspace lit in the dock".to_owned());
     }
     Ok(format!(
-        "Nocturne's ground, {surface} pixels of title bar, {accent} of the accent, the dock"
+        "the light-glass wallpaper, {surface} pixels of title bar, {close} of close buttons, the dock"
     ))
 }
 
@@ -273,43 +264,39 @@ mod tests {
     use super::{SCREEN, judge};
     use crate::display::Image;
 
-    /// A screen of the ground alone is not Yoru's desktop: it has no bars.
+    /// The wallpaper's corner colour, sand.
+    const CORNER: [u8; 3] = [0xf6, 0xe3, 0xc9];
+
+    /// A screen of the wallpaper alone is not Yoru's desktop: no bars.
     #[test]
-    fn the_ground_alone_has_no_bars() {
+    fn the_wallpaper_alone_has_no_bars() {
         let screen = Image {
             width: SCREEN.0,
             height: SCREEN.1,
-            pixels: [0x1a, 0x1c, 0x2a].repeat(SCREEN.0 * SCREEN.1),
+            pixels: CORNER.repeat(SCREEN.0 * SCREEN.1),
         };
         let said = judge(&screen).expect_err("no bars");
         assert!(said.contains("surface"), "{said}");
     }
 
-    /// Bars and a line on the ground are.
+    /// A light bar with a red close button, the wallpaper's blue near the
+    /// top, and the dock are.
     #[test]
-    fn bars_and_a_line_on_the_ground_are() {
-        let mut pixels = [0x1a, 0x1c, 0x2a].repeat(SCREEN.0 * SCREEN.1);
-        for y in 100..134 {
-            for x in 100..700 {
-                let at = (y * SCREEN.0 + x) * 3;
-                let colour: [u8; 3] = if y == 100 {
-                    [0x91, 0x84, 0xd9]
-                } else {
-                    [0x23, 0x25, 0x32]
-                };
-                pixels[at..at + 3].copy_from_slice(&colour);
+    fn a_light_bar_with_its_close_button_is() {
+        let mut pixels = CORNER.repeat(SCREEN.0 * SCREEN.1);
+        let mut paint = |xs: core::ops::Range<usize>, ys: core::ops::Range<usize>, colour: [u8; 3]| {
+            for y in ys {
+                for x in xs.clone() {
+                    let at = (y * SCREEN.0 + x) * 3;
+                    pixels[at..at + 3].copy_from_slice(&colour);
+                }
             }
-        }
-        // The wallpaper's glow.
-        let at = (100 * SCREEN.0 + 900) * 3;
-        pixels[at..at + 3].copy_from_slice(&[0x2c, 0x31, 0x5d]);
-        // The dock's lit workspace at the foot.
-        for y in SCREEN.1 - 50..SCREEN.1 - 48 {
-            for x in 80..110 {
-                let at = (y * SCREEN.0 + x) * 3;
-                pixels[at..at + 3].copy_from_slice(&[0x96, 0x8a, 0xe0]);
-            }
-        }
+        };
+        paint(100..700, 300..330, [0xf3, 0xf3, 0xf5]);
+        paint(110..120, 310..320, [0xff, 0x5f, 0x57]);
+        paint(900..901, 100..101, [0xc6, 0xcf, 0xf4]);
+        paint(SCREEN.0 / 2..SCREEN.0 / 2 + 1, SCREEN.1 - 36..SCREEN.1 - 35, [0x20, 0x22, 0x30]);
+        paint(80..110, SCREEN.1 - 50..SCREEN.1 - 48, [0x96, 0x8a, 0xe0]);
         let screen = Image {
             width: SCREEN.0,
             height: SCREEN.1,

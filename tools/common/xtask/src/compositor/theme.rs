@@ -23,7 +23,7 @@ use crate::{Error, Result};
 const THEMES: &str = "usr/share/hyprix/themes";
 
 /// Yoru's wallpaper, which `yoru.conf`'s `wallpaper =` line names.
-pub(super) const YORU_WALLPAPER: &str = "usr/share/backgrounds/yoru/yoru-nocturne.svg";
+pub(super) const YORU_WALLPAPER: &str = "usr/share/backgrounds/yoru/yoru-light-glass.png";
 
 /// The faces Yoru draws in, and where: Inter for its text, Phosphor for
 /// its icons, each with its licence (`assets/fonts/README.md`).
@@ -183,7 +183,7 @@ pub(super) fn apply(config: String, args: &Args, files: &mut Vec<File>) -> Resul
             format!("{THEMES}/yoru-fuzzel.ini"),
         )?;
         carry(
-            root.join("docs/brand/yoru/yoru-nocturne.svg"),
+            root.join("docs/brand/yoru/yoru-light-glass.png"),
             YORU_WALLPAPER.to_owned(),
         )?;
         for (from, to) in FACES {
@@ -246,7 +246,7 @@ mod tests {
         for path in [
             "usr/share/hyprix/themes/yoru.conf",
             "usr/share/hyprix/themes/yoru-fuzzel.ini",
-            "usr/share/backgrounds/yoru/yoru-nocturne.svg",
+            "usr/share/backgrounds/yoru/yoru-light-glass.png",
             "usr/share/fonts/phosphor/Phosphor.ttf",
             "usr/share/fonts/phosphor/LICENSE",
             "usr/share/fonts/inter/InterVariable.ttf",
