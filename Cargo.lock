@@ -974,6 +974,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferrix-lz4"
+version = "0.1.0"
+
+[[package]]
 name = "ferrix-mce-victim"
 version = "0.3.0"
 dependencies = [
