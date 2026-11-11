@@ -115,3 +115,29 @@ fn yoru_parses_floats_and_styles_its_frames() {
         config.wallpapers
     );
 }
+
+/// Yoru's keys do what yoru-shell's menu bar says they do: Super Q quits
+/// the focused program (`Quit`, killactive), Super W closes its window
+/// (`Close`), Super M minimizes it.
+#[test]
+fn yoru_keys_are_the_menu_bars_shortcuts() {
+    let parsed = parse(
+        "yoru-keys.conf",
+        include_str!("../themes/yoru-keys.conf"),
+        &mut NoSources,
+    );
+    assert_eq!(parsed.diagnostics, [], "the keys parse cleanly");
+    for (key, dispatcher) in [("Q", "killactive"), ("W", "killactive"), ("M", "minimize")] {
+        let bound: Vec<&str> = parsed
+            .config
+            .binds
+            .iter()
+            .filter(|bind| {
+                bind.mods == compositor_config::Mods::parse("SUPER")
+                    && bind.key == compositor_config::Key::Sym(key.to_owned())
+            })
+            .map(|bind| bind.dispatcher.as_str())
+            .collect();
+        assert_eq!(bound, [dispatcher], "SUPER {key}");
+    }
+}
