@@ -121,3 +121,29 @@ fn input_past_64_kib_is_refused() {
     let mut out = [0u8; 1024];
     assert_eq!(compress(&big, &mut out, &mut table), None);
 }
+
+/// Measured, not asserted: the ratio on a page of each kind. Run with
+/// `cargo test -p ferrix-lz4 --release -- --ignored --nocapture ratio`.
+#[test]
+#[ignore = "a measurement for docs/MEMORY-COMPRESSION.md"]
+#[expect(
+    clippy::print_stdout,
+    reason = "a measurement run by hand says its figures"
+)]
+fn ratio() {
+    extern crate std;
+    let mut text = [0u8; 4096];
+    for (byte, from) in text
+        .iter_mut()
+        .zip(b"fn main() { let x = 1; } // ".iter().cycle())
+    {
+        *byte = *from;
+    }
+    for (name, page) in [
+        ("zeros", [0u8; 4096]),
+        ("text", text),
+        ("noise", noise(4096)),
+    ] {
+        std::println!("{name}: 4096 -> {}", round_trip(&page));
+    }
+}

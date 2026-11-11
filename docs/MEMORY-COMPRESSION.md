@@ -58,3 +58,10 @@ mappings written through a shared VMO (first version).
 ## 5. Points (backlog units, a guess)
 
 B0 3, B1 13, B2 5, B3 8, B4 13, B5 3: about 45, sized again after review.
+
+The compressor's ratio, measured on the host and not yet on a real
+application's pages (`cargo test -p ferrix-lz4 --release -- --ignored
+--nocapture ratio`): a page of zeros 4096 -> 26 bytes; a page of one
+repeated 28-byte line of source text 4096 -> 54; a page of xorshift noise
+4096 -> 4114, 18 bytes over the page and within `bound`. The ratio on real
+application memory is B3's to measure.
