@@ -8,6 +8,7 @@ pub mod drop;
 pub mod hypr;
 pub mod json;
 pub mod look;
+pub mod menus;
 pub mod model;
 pub mod picker;
 pub mod power;
