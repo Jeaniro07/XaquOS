@@ -46,28 +46,23 @@ fn yoru_parses_floats_and_styles_its_frames() {
     let config = parsed.config;
     assert_eq!(config.str("general:layout"), Some("floating"));
     assert_eq!(config.int("hyprix:titlebars"), Some(1));
-    assert_eq!(config.int("hyprix:titlebar:height"), Some(34));
-    assert_eq!(config.str("hyprix:titlebar:title_align"), Some("left"));
-    assert_eq!(config.int("decoration:glow:enabled"), Some(1));
-    let line = config
-        .gradient("hyprix:titlebar:col.line")
-        .expect("the accent line");
-    assert_eq!(line.colors.len(), 3, "accent, accent-2, accent-3");
+    assert_eq!(config.int("hyprix:titlebar:height"), Some(30));
+    assert_eq!(config.str("hyprix:titlebar:title_align"), Some("center"));
+    assert_eq!(config.int("decoration:glow:enabled"), Some(0));
     let style = compositor_render::Style::from_config(&config);
-    assert!(style.glow.is_some(), "the focused window's glow");
+    assert!(style.glow.is_none(), "light glass draws no glow");
     assert!(
         style.shadow_inactive.is_some(),
         "a lighter shadow elsewhere"
     );
     // Software screens draw no blur under Yoru; its shell's layers, drawn
-    // for one, get a dark scrim behind them instead (the customer's
-    // unreadable wallpaper switcher over a white window, 2026-10-28).
+    // for one, get the light ground behind them instead, under dark text.
     assert_eq!(config.int("hyprix:blur_in_software"), Some(0));
     let scrim = style.blur_scrim.expect("a scrim where there is no blur");
     assert!(scrim.alpha() >= 0xC0, "near-opaque: {scrim:?}");
     assert!(
-        scrim.red() < 0x30 && scrim.green() < 0x30 && scrim.blue() < 0x40,
-        "dark, under light text: {scrim:?}"
+        scrim.red() > 0xE0 && scrim.green() > 0xE0 && scrim.blue() > 0xE0,
+        "light, under dark text: {scrim:?}"
     );
     let rules: Vec<_> = config
         .layer_rules
@@ -82,8 +77,12 @@ fn yoru_parses_floats_and_styles_its_frames() {
         );
     }
     let bars = hyprix::titlebar::Style::from_config(&config);
-    assert_eq!(bars.height, 34);
-    assert!(bars.title_left);
+    assert_eq!(bars.height, 30);
+    assert!(!bars.title_left);
+    assert!(bars.buttons_left, "close, minimize, maximize at the left");
+    for disc in [bars.close, bars.minimize, bars.maximize] {
+        assert_eq!(disc.a, 0xff, "each button its own opaque disc");
+    }
     assert_eq!(bars.disc.a, 0, "no disc behind the buttons");
     for bind in &config.binds {
         // SUPER is the Yoru key (the customer, 2026-10-24): no bind may take
@@ -109,7 +108,7 @@ fn yoru_parses_floats_and_styles_its_frames() {
     assert!(
         config.wallpapers.iter().any(|line| line.source
             == compositor_config::WallpaperSource::Picture(
-                "/usr/share/backgrounds/yoru/yoru-nocturne.svg".to_owned()
+                "/usr/share/backgrounds/yoru/yoru-light-glass.png".to_owned()
             )),
         "{:?}",
         config.wallpapers
