@@ -1,6 +1,6 @@
 # Compressed memory and swap
 
-**Design, 2026-11-11. Nothing in it is built but the compressor
+**Design, 2026-11-11. Nothing in it is built but the LZ4 codec
 (`src/lib/kernel/lz4`).** For the certification consultant's review before
 any change to `mm`. The customer wants many applications open at once with
 their memory held as macOS holds it: compressed in RAM first, the coldest

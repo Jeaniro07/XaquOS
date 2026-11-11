@@ -21,7 +21,9 @@ pub enum Error {
     OutputFull,
 }
 
-/// Decode `input` into `out`; the number of bytes written.
+/// Decode `input` into `out`; the number of bytes written, which may be
+/// less than `out.len()`: a caller filling a page must require the whole
+/// page, or a short block leaves the page's old bytes in it.
 pub fn decompress(input: &[u8], out: &mut [u8]) -> Result<usize, Error> {
     let mut at = 0usize;
     let mut written = 0usize;

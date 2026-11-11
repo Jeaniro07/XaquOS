@@ -15,6 +15,9 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|bytes: &[u8]| {
     let mut out = vec![0u8; 65_536];
     let _ = decompress(bytes, &mut out);
+    // A short output too, as a page's 4096 bytes are: OutputFull's paths.
+    let mut short = vec![0u8; bytes.first().map_or(0, |b| usize::from(*b) * 16)];
+    let _ = decompress(bytes, &mut short);
 
     let input = &bytes[..bytes.len().min(ferrix_lz4::MAX_INPUT)];
     let mut table = Table::new();
