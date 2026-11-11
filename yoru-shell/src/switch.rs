@@ -124,6 +124,7 @@ pub fn found(hypr: Option<&Hypr>) -> Picker {
             wall.look = Some(*look);
         }
     }
+    let (found, folders) = walls::with_default(found, folders);
     let current = hypr
         .and_then(|hypr| hypr.ask("settings"))
         .and_then(|text| walls::in_force(&text))
@@ -175,7 +176,7 @@ fn take_read(picker: &mut Picker, from: &std::sync::mpsc::Receiver<(String, Look
         let kept: BTreeMap<String, (u64, Look)> = picker
             .walls
             .iter()
-            .filter(|wall| !wall.video)
+            .filter(|wall| !wall.video && !wall.is_default())
             .filter_map(|wall| Some((wall.path.clone(), (mtime(&wall.path), wall.look?))))
             .collect();
         if let Some(dir) = path.parent() {
@@ -192,7 +193,7 @@ fn apply(hypr: Option<&Hypr>, picker: &Picker) -> bool {
     let Some(wall) = picker.held().and_then(|i| picker.walls.get(i)) else {
         return false;
     };
-    let line = format!("setting wallpaper {}", wall.setting());
+    let line = wall.request();
     let done = hypr
         .and_then(|hypr| hypr.ask(&line))
         .is_some_and(|said| said.trim() == "ok");

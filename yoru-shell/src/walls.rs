@@ -26,6 +26,66 @@ pub const LOOSE: &str = "Mine";
 /// (`yoru.conf`'s `wallpaper = , gradient ...`), so the first is in hand.
 pub const DEFAULT: &str = "";
 
+/// Yoru's own wallpaper as `themes/yoru.conf` draws it
+/// (`gradient 110deg a9c6f5 e8d5f2 55% f6e3c9`): (place 0 to 1, colour).
+pub const GRADIENT: [(f32, [u8; 3]); 3] = [
+    (0.0, [0xa9, 0xc6, 0xf5]),
+    (0.55, [0xe8, 0xd5, 0xf2]),
+    (1.0, [0xf6, 0xe3, 0xc9]),
+];
+
+/// The folder the default card is shown in.
+pub const DEFAULT_FOLDER: &str = "Ferrix";
+
+/// The gradient's colour `t` of the way along it.
+#[must_use]
+pub fn gradient_at(t: f32) -> [u8; 3] {
+    let t = t.clamp(0.0, 1.0);
+    let (from, to) = if t <= GRADIENT[1].0 {
+        (GRADIENT[0], GRADIENT[1])
+    } else {
+        (GRADIENT[1], GRADIENT[2])
+    };
+    let along = (t - from.0) / (to.0 - from.0);
+    let mix = |a: u8, b: u8| (f32::from(a) + (f32::from(b) - f32::from(a)) * along).round() as u8;
+    [
+        mix(from.1[0], to.1[0]),
+        mix(from.1[1], to.1[1]),
+        mix(from.1[2], to.1[2]),
+    ]
+}
+
+/// The theme's own wallpaper as a card: picked, the setting a person chose
+/// is taken back and `yoru.conf`'s gradient shows again. Its colour is
+/// read off the gradient itself, 48 by 27 as a picture's is.
+#[must_use]
+pub fn default_wall() -> Wall {
+    let mut sample = Vec::with_capacity(48 * 27);
+    for _row in 0..27 {
+        for column in 0..48_u16 {
+            let [r, g, b] = gradient_at((f32::from(column) + 0.5) / 48.0);
+            sample.push([r, g, b, 0xff]);
+        }
+    }
+    Wall {
+        path: DEFAULT.to_owned(),
+        name: "Default".to_owned(),
+        folder: DEFAULT_FOLDER.to_owned(),
+        video: false,
+        look: Some(look(&sample)),
+    }
+}
+
+/// `walls` and `folders` as found, the default card first.
+#[must_use]
+pub fn with_default(mut walls: Vec<Wall>, mut folders: Vec<String>) -> (Vec<Wall>, Vec<String>) {
+    walls.insert(0, default_wall());
+    if !folders.iter().any(|folder| folder == DEFAULT_FOLDER) {
+        folders.insert(0, DEFAULT_FOLDER.to_owned());
+    }
+    (walls, folders)
+}
+
 /// The colour dots, as the design names them, with the hue each stands
 /// for (OKLCH degrees).
 pub const HUES: [(&str, u16); 8] = [
@@ -246,6 +306,9 @@ impl Wall {
     /// The line under its name.
     #[must_use]
     pub fn meta(&self) -> String {
+        if self.is_default() {
+            return "Gradient · the theme's own".to_owned();
+        }
         if self.video {
             "Live wallpaper · video".to_owned()
         } else {
@@ -260,6 +323,22 @@ impl Wall {
             format!(", video {}", self.path)
         } else {
             format!(", picture {}, fit fill", self.path)
+        }
+    }
+
+    /// The theme's own gradient rather than a file.
+    #[must_use]
+    pub fn is_default(&self) -> bool {
+        self.path == DEFAULT
+    }
+
+    /// What hyprix is asked to show it everywhere.
+    #[must_use]
+    pub fn request(&self) -> String {
+        if self.is_default() {
+            "setting reset wallpaper".to_owned()
+        } else {
+            format!("setting wallpaper {}", self.setting())
         }
     }
 }
@@ -808,5 +887,52 @@ mod tests {
             ]
         );
         assert_eq!(folders, vec!["Ferrix", "Mine", "Empty", "Space art"]);
+    }
+
+    #[test]
+    fn the_default_card_is_the_themes_gradient() {
+        let own = default_wall();
+        assert!(own.is_default());
+        assert_eq!(own.name, "Default");
+        assert_eq!(own.request(), "setting reset wallpaper");
+        assert!(own.look.is_some(), "read without a file");
+        let picture = wall("dune", "Ferrix", None);
+        assert!(!picture.is_default());
+        assert_eq!(
+            picture.request(),
+            "setting wallpaper , picture /w/dune.jpg, fit fill"
+        );
+        let (walls, folders) = with_default(vec![picture], vec!["Mine".to_owned()]);
+        assert!(walls[0].is_default());
+        assert_eq!(folders, vec![DEFAULT_FOLDER.to_owned(), "Mine".to_owned()]);
+        // The gradient in force: in_force says nothing, so the default is held.
+        let picker = Picker::new(walls, folders, DEFAULT);
+        assert_eq!(picker.held(), Some(0));
+    }
+
+    #[test]
+    fn the_gradient_is_the_one_yoru_conf_draws() {
+        let conf = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../system/linux/compositor/hyprix/themes/yoru.conf"
+        );
+        let Ok(text) = std::fs::read_to_string(conf) else {
+            eprintln!("{conf} is not here (apps built alone): skipped");
+            return;
+        };
+        let line = text
+            .lines()
+            .find(|line| line.trim_start().starts_with("wallpaper") && line.contains("gradient"))
+            .expect("yoru.conf's wallpaper line");
+        let hex = |[r, g, b]: [u8; 3]| format!("{r:02x}{g:02x}{b:02x}");
+        for (at, colour) in GRADIENT {
+            assert!(line.contains(&hex(colour)), "{} in {line}", hex(colour));
+            if at > 0.0 && at < 1.0 {
+                let percent = format!("{}%", (at * 100.0).round());
+                assert!(line.contains(&percent), "{percent} in {line}");
+            }
+        }
+        assert_eq!(gradient_at(0.0), GRADIENT[0].1);
+        assert_eq!(gradient_at(1.0), GRADIENT[2].1);
     }
 }

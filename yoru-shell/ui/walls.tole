@@ -38,6 +38,7 @@ struct Card {
     inUse: bool
     video: bool
     dim: real
+    own: bool
 }
 
 export component Walls : FocusScope {
@@ -58,6 +59,7 @@ export component Walls : FocusScope {
     property real panelW
     property real stageY
     property painter shade
+    property painter gradient
     property string icCards
     property string icGrid
     property string icClose
@@ -476,6 +478,13 @@ export component Walls : FocusScope {
                         height: modelData.h - 2
                         source: modelData.source
                         fillMode: Image.PreserveAspectCrop
+                    }
+                    Canvas {
+                        visible: modelData.own
+                        x: 1; y: 1
+                        width: modelData.w - 2
+                        height: modelData.h - 2
+                        painter: walls.gradient
                     }
                     Rectangle {
                         visible: modelData.video

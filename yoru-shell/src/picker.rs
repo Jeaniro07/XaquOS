@@ -85,6 +85,30 @@ fn shade() -> tole::CanvasPainter {
     })
 }
 
+/// The default card's picture: Yoru's gradient across it in columns 2
+/// pixels wide. Upgrade path: the 110deg slant `yoru.conf` gives it, should
+/// a card ever be big enough to show the difference.
+fn gradient() -> tole::CanvasPainter {
+    tole::CanvasPainter::new(|painter: &mut tole::Painter<'_>| {
+        let (width, height) = painter.size();
+        let mut x = 0.0;
+        while x < width {
+            let [r, g, b] = crate::walls::gradient_at((x + 1.0) / width);
+            painter.fill_rect(
+                tole::Rect {
+                    x,
+                    y: 0.0,
+                    w: 2.0_f32.min(width - x),
+                    h: height,
+                },
+                0.0,
+                tole::Color::rgba(r, g, b, 0xff),
+            );
+            x += 2.0;
+        }
+    })
+}
+
 /// Where the cards go, in the stage's coordinates, for a stage `width` by
 /// `height`: `(index into the list shown, x, y, w, h, dimmed)`, drawn in
 /// this order (the one in hand last, on top).
@@ -158,6 +182,7 @@ impl View {
         let mut ui = Ui::new(fonts);
         let walls = Walls::new(&mut ui, None)?;
         walls.shade.set(&mut ui, shade());
+        walls.gradient.set(&mut ui, gradient());
         for (property, name) in [
             (&walls.ic_cards, "cards"),
             (&walls.ic_grid, "squares-four"),
@@ -248,7 +273,11 @@ impl View {
             .filter_map(|&(k, x, y, cw, ch, dim)| {
                 let wall = picker.walls.get(*list.get(k)?)?;
                 Some(Card {
-                    source: s(if wall.video { "" } else { wall.path.as_str() }),
+                    source: s(if wall.video || wall.is_default() {
+                        ""
+                    } else {
+                        wall.path.as_str()
+                    }),
                     name: s(&wall.name),
                     x,
                     y,
@@ -258,6 +287,7 @@ impl View {
                     in_use: wall.path == picker.current,
                     video: wall.video,
                     dim,
+                    own: wall.is_default(),
                 })
             })
             .collect::<Vec<_>>();
@@ -395,6 +425,32 @@ mod tests {
         assert_eq!(view.take(&mut picker), vec![Asked::Again]);
         key(&mut view, "Escape");
         assert_eq!(view.take(&mut picker), vec![Asked::Close]);
+    }
+
+    #[test]
+    fn the_default_card_draws_the_gradient() {
+        let (walls, folders) = crate::walls::with_default(Vec::new(), Vec::new());
+        let picker = crate::walls::Picker::new(walls, folders, crate::walls::DEFAULT);
+        let frame = crate::cli::render_walls(&picker, (1600, 1000), 1.0).expect("drawn");
+        let pixmap = frame.pixmap();
+        let at = |x: u32, y: u32| {
+            let pixel = pixmap.pixel(x, y).expect("inside").demultiply();
+            (pixel.red(), pixel.green(), pixel.blue())
+        };
+        let middle_y = super::place(&picker, 1600.0, 600.0)
+            .last()
+            .map(|p| p.2 + p.4 / 2.0)
+            .expect("placed");
+        let stage = 162.0_f32.max((1000.0 - 112.0 + 162.0) / 2.0 - 170.0);
+        let y = (stage + middle_y) as u32;
+        let light: Vec<(u8, u8, u8)> = (600..1000)
+            .map(|x| at(x, y))
+            .filter(|&(r, g, b)| r > 0xa0 && g > 0xc0 && b > 0xc0)
+            .collect();
+        assert!(light.len() > 150, "the gradient is drawn: {}", light.len());
+        let reds = light.iter().map(|p| p.0);
+        let spread = reds.clone().max().unwrap_or(0) - reds.min().unwrap_or(0);
+        assert!(spread > 8, "it runs from blue toward sand: {spread}");
     }
 
     /// The picture: the cover's middle card drawn from the file, ringed.
