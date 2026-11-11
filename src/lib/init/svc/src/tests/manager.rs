@@ -1655,3 +1655,29 @@ fn a_device_name_that_is_no_node_refuses_what_requires_it() {
     );
     assert!(device_actions(&rig, &refused).is_empty());
 }
+
+/// A slow one-shot the boot wants holds `multi-user.target` until it ends,
+/// unless it says `DefaultDependencies=no`: then the target is not after
+/// it (`lode-pstore.service`, which waits up to 2 min for a disk).
+#[test]
+fn a_oneshot_without_default_dependencies_does_not_hold_the_target() {
+    let unit = |defaults: &str| {
+        alloc::format!(
+            "[Unit]\n{defaults}After=sysinit.target\n[Service]\nType=oneshot\nExecStart=/bin/slow\n"
+        )
+    };
+    for (defaults, held) in [("", true), ("DefaultDependencies=no\n", false)] {
+        let text = unit(defaults);
+        let mut rig = Rig::new(&[
+            ("slow.service", text.as_str()),
+            ("multi-user.target.wants/slow.service", "->slow.service"),
+        ]);
+        let _ = rig.boot();
+        let _ = rig.spawned("slow.service");
+        assert_eq!(
+            rig.state("multi-user.target") == ActiveState::Active,
+            !held,
+            "DefaultDependencies {defaults:?}: the target is held while slow runs: {held}"
+        );
+    }
+}

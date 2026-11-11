@@ -5,8 +5,14 @@
 # waiting up to 2 min for the disk's driver; lode, which is uid 91 by then,
 # imports from the copy and never opens a disk. Not started unless an image
 # enables it (tools/common/xtask/src/lode.rs).
+#
+# DefaultDependencies=no: the wait must not hold multi-user.target and the
+# desktop's graphical.target behind it (a target is after what it wants
+# only when both have default dependencies, svc's graph.rs order_target).
+# It still runs after lode, which is after basic.target.
 [Unit]
 Description=Copy the loader's last kernel log for lode
+DefaultDependencies=no
 After=lode.service
 
 [Service]
