@@ -199,8 +199,9 @@ fn judge_launcher(screen: &Image) -> core::result::Result<String, String> {
 
 /// Whether `screen` is Yoru's light-glass desktop: the wallpaper's sand in
 /// the lower right corner, which no window reaches; title bars on the light
-/// surface, `#f3f3f5`; a red close button; the wallpaper's blue near the
-/// top; and the dock, still Nocturne's until the dock's own change.
+/// surface, `#f3f3f5`; a red close button; the wallpaper's blue at the
+/// top left, where the gradient starts; and the dock, still Nocturne's
+/// until the dock's own change.
 fn judge(screen: &Image) -> core::result::Result<String, String> {
     if (screen.width, screen.height) != SCREEN {
         return Err(format!("a {}x{} screen", screen.width, screen.height));
@@ -239,9 +240,9 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
     if close < 40 {
         return Err(format!("{close} pixels of a close button"));
     }
-    let [r, g, b] = pixel(900, 100);
+    let [r, g, b] = pixel(100, 100);
     if !(b >= 0xe0 && b > r + 0x10) {
-        return Err(format!("no wallpaper's blue at 900,100: {r},{g},{b}"));
+        return Err(format!("no wallpaper's blue at 100,100: {r},{g},{b}"));
     }
     let row = screen.height - 6 - 30;
     let [r, g, b] = pixel(screen.width / 2, row);
@@ -294,7 +295,7 @@ mod tests {
         };
         paint(100..700, 300..330, [0xf3, 0xf3, 0xf5]);
         paint(110..120, 310..320, [0xff, 0x5f, 0x57]);
-        paint(900..901, 100..101, [0xc6, 0xcf, 0xf4]);
+        paint(100..101, 100..101, [0xc6, 0xcf, 0xf4]);
         paint(SCREEN.0 / 2..SCREEN.0 / 2 + 1, SCREEN.1 - 36..SCREEN.1 - 35, [0x20, 0x22, 0x30]);
         paint(80..110, SCREEN.1 - 50..SCREEN.1 - 48, [0x96, 0x8a, 0xe0]);
         let screen = Image {
