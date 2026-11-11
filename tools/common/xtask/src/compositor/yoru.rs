@@ -67,12 +67,15 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
             let docked = lines
                 .iter()
                 .any(|line| line.contains("yoru-shell: the dock is up"));
-            drawn && framed && docked
+            let barred = lines
+                .iter()
+                .any(|line| line.contains("yoru-shell: the menu bar is up"));
+            drawn && framed && docked && barred
         })?;
         if !ready {
             return Err(with_the_transcript(
                 &Error::new(format!(
-                    "{arch}: yoru: the wallpaper, the second window or the dock never said it was up"
+                    "{arch}: yoru: the wallpaper, the second window, the dock or the menu bar never said it was up"
                 )),
                 watching,
             ));
@@ -174,36 +177,53 @@ pub(super) fn desktop(arch: Arch, args: &Args, launcher: bool) -> Result<(String
     Ok((config, carried))
 }
 
-/// Whether the launcher is open on `screen`: its card on Nocturne's
-/// surface across the middle of the screen's top half, wider than the
-/// windows' title bars leave of it.
+/// Whether the launcher is open on `screen`: its white card, a run of
+/// `#ffffff` 400 to 760 pixels long centred on the screen, somewhere in
+/// the rows fuzzel is put at (its top margin below the menu bar).
 fn judge_launcher(screen: &Image) -> core::result::Result<String, String> {
-    let row = 175;
-    let mut card = 0usize;
-    for x in 0..screen.width {
-        let at = (row * screen.width + x) * 3;
-        if let Some(&[r, g, b]) = screen.pixels.get(at..at + 3) {
-            let (r, g, b) = (i32::from(r), i32::from(g), i32::from(b));
-            // 8 either way: over the light scrim the card reads #292b37
-            // and #2a2c38, the checkered window behind it showing through.
-            if (r - 0x23).abs() <= 8 && (g - 0x25).abs() <= 8 && (b - 0x32).abs() <= 8 {
-                card += 1;
+    let white = |x: usize, y: usize| {
+        let at = (y * screen.width + x) * 3;
+        matches!(screen.pixels.get(at..at + 3), Some(&[r, g, b]) if r >= 0xfc && g >= 0xfc && b >= 0xfc)
+    };
+    let mut best = (0usize, 0usize, 0usize);
+    for y in 120..260 {
+        let mut x = 0;
+        while x < screen.width {
+            if !white(x, y) {
+                x += 1;
+                continue;
+            }
+            let start = x;
+            while x < screen.width && white(x, y) {
+                x += 1;
+            }
+            if x - start > best.0 {
+                best = (x - start, start, y);
             }
         }
     }
-    if card < 400 {
+    let (long, start, y) = best;
+    let middle = start + long / 2;
+    if !(400..=760).contains(&long) || middle.abs_diff(screen.width / 2) > 16 {
         return Err(format!(
-            "{card} pixels of the launcher's card across row {row}"
+            "the launcher's card: the longest white run is {long} at {start},{y}"
         ));
     }
-    Ok(format!("the launcher's card {card} pixels across"))
+    Ok(format!(
+        "the launcher's card {long} pixels across at row {y}"
+    ))
 }
 
 /// Whether `screen` is Yoru's light-glass desktop: the wallpaper's sand in
 /// the lower right corner, which no window reaches; title bars on the light
 /// surface, `#f3f3f5`; a red close button; the wallpaper's blue at the
-/// top left, where the gradient starts; and the dock, still Nocturne's
-/// until the dock's own change.
+/// top left, where the gradient starts; the menu bar's glass with words at
+/// both ends; and the dock, a centred bar of glass with the terminal's
+/// dark tile and a running dot.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one desktop read top to bottom: each part and what it must show"
+)]
 fn judge(screen: &Image) -> core::result::Result<String, String> {
     if (screen.width, screen.height) != SCREEN {
         return Err(format!("a {}x{} screen", screen.width, screen.height));
@@ -217,7 +237,9 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
     };
     let [r, g, b] = pixel(screen.width - 3, screen.height - 3);
     if !(r >= 0xe8 && b < r && b >= 0xb8) {
-        return Err(format!("the corner is {r},{g},{b}, not the wallpaper's sand"));
+        return Err(format!(
+            "the corner is {r},{g},{b}, not the wallpaper's sand"
+        ));
     }
     let near = |[r, g, b]: [i32; 3], [r0, g0, b0]: [i32; 3], by: i32| {
         (r - r0).abs() <= by && (g - g0).abs() <= by && (b - b0).abs() <= by
@@ -246,67 +268,201 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
     if !(b >= 0xe0 && b > r + 0x10) {
         return Err(format!("no wallpaper's blue at 100,100: {r},{g},{b}"));
     }
-    // The dock's bar is translucent: over the light wallpaper its dark
-    // ground reads near #3e4552, still far below the wallpaper's #e0 and up.
-    let row = screen.height - 6 - 30;
-    let [r, g, b] = pixel(screen.width / 2, row);
-    if !(r < 0x60 && g < 0x60 && b < 0x70) {
-        return Err(format!("the dock's middle is {r},{g},{b}, not its bar"));
+    // The menu bar: glass at the top middle, where no menu reaches, and
+    // words at both ends (the menus at the left, the clock at the right).
+    let glass = |[r, g, b]: [i32; 3], floor: i32, spread: i32| {
+        r.min(g).min(b) >= floor && r.max(g).max(b) - r.min(g).min(b) <= spread
+    };
+    let [r, g, b] = pixel(screen.width / 2, 3);
+    if !glass([r, g, b], 0xd8, 0x18) {
+        return Err(format!("the menu bar's glass at the top is {r},{g},{b}"));
     }
-    let lit = (0..200).any(|x| {
-        (screen.height - 66..screen.height - 6).any(|y| near(pixel(x, y), [0x96, 0x8a, 0xe0], 20))
-    });
-    if !lit {
-        return Err("no workspace lit in the dock".to_owned());
+    let words = |xs: core::ops::Range<usize>| {
+        xs.flat_map(|x| (4..20).map(move |y| (x, y)))
+            .filter(|&(x, y)| {
+                let [r, g, b] = pixel(x, y);
+                r + g + b < 0x150
+            })
+            .count()
+    };
+    let (left, right) = (words(4..160), words(screen.width - 160..screen.width - 4));
+    if left < 260 || right < 200 {
+        return Err(format!(
+            "the menu bar's words: {left} at the left, {right} at the right"
+        ));
+    }
+    // The dock: a bar of glass above its tiles, centred, far narrower than
+    // the screen; the terminal's dark tile; a running dot below a tile.
+    let row = screen.height - 70;
+    let run: Vec<usize> = (0..screen.width)
+        .filter(|&x| glass(pixel(x, row), 0xe0, 0x10))
+        .collect();
+    let (Some(&from), Some(&to)) = (run.first(), run.last()) else {
+        return Err(format!("no dock's glass across row {row}"));
+    };
+    let wide = to - from + 1;
+    if !(120..=screen.width - 200).contains(&wide) {
+        return Err(format!("the dock's glass is {wide} wide, from {from}"));
+    }
+    // Centred: the gaps to the screen's sides differ by a pixel when the
+    // width's parity differs from the screen's, so 4 is room for that and
+    // for the glass's soft edge.
+    let middle = (from + to) / 2;
+    let (gap_left, gap_right) = (from, screen.width - 1 - to);
+    if gap_left.abs_diff(gap_right) > 4 {
+        return Err(format!(
+            "the dock's gaps to the sides are {gap_left} and {gap_right}, not even"
+        ));
+    }
+    let count = |ys: core::ops::Range<usize>, want: [i32; 3], by: i32| {
+        (from..=to)
+            .flat_map(|x| ys.clone().map(move |y| (x, y)))
+            .filter(|&(x, y)| near(pixel(x, y), want, by))
+            .count()
+    };
+    let tile = count(
+        screen.height - 62..screen.height - 18,
+        [0x2b, 0x2b, 0x30],
+        6,
+    );
+    if tile < 1460 {
+        return Err(format!("{tile} pixels of the terminal's tile in the dock"));
+    }
+    let dots = count(
+        screen.height - 14..screen.height - 8,
+        [0x4a, 0x4d, 0x55],
+        24,
+    );
+    if dots < 9 {
+        return Err(format!("{dots} pixels of a running dot in the dock"));
     }
     Ok(format!(
-        "the light-glass wallpaper, {surface} pixels of title bar, {close} of close buttons, the dock"
+        "the light-glass wallpaper, {surface} pixels of title bar, {close} of close buttons, \
+         the menu bar ({left}/{right} of words), the dock {wide} wide at {middle} (gaps {gap_left}/{gap_right}), \
+         {tile} of the terminal's tile, {dots} of dots"
     ))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{SCREEN, judge};
+    use super::{SCREEN, judge, judge_launcher};
     use crate::display::Image;
 
     /// The wallpaper's corner colour, sand.
     const CORNER: [u8; 3] = [0xf6, 0xe3, 0xc9];
 
-    /// A screen of the wallpaper alone is not Yoru's desktop: no bars.
-    #[test]
-    fn the_wallpaper_alone_has_no_bars() {
-        let screen = Image {
-            width: SCREEN.0,
-            height: SCREEN.1,
-            pixels: CORNER.repeat(SCREEN.0 * SCREEN.1),
-        };
-        let said = judge(&screen).expect_err("no bars");
-        assert!(said.contains("surface"), "{said}");
+    fn paint(
+        pixels: &mut [u8],
+        xs: core::ops::Range<usize>,
+        ys: core::ops::Range<usize>,
+        colour: [u8; 3],
+    ) {
+        for y in ys {
+            for x in xs.clone() {
+                let at = (y * SCREEN.0 + x) * 3;
+                pixels[at..at + 3].copy_from_slice(&colour);
+            }
+        }
     }
 
-    /// A light bar with a red close button, the wallpaper's blue near the
-    /// top, and the dock are.
-    #[test]
-    fn a_light_bar_with_its_close_button_is() {
-        let mut pixels = CORNER.repeat(SCREEN.0 * SCREEN.1);
-        let mut paint = |xs: core::ops::Range<usize>, ys: core::ops::Range<usize>, colour: [u8; 3]| {
-            for y in ys {
-                for x in xs.clone() {
-                    let at = (y * SCREEN.0 + x) * 3;
-                    pixels[at..at + 3].copy_from_slice(&colour);
-                }
-            }
-        };
-        paint(100..700, 300..330, [0xf3, 0xf3, 0xf5]);
-        paint(110..120, 310..320, [0xff, 0x5f, 0x57]);
-        paint(100..101, 100..101, [0xc6, 0xcf, 0xf4]);
-        paint(SCREEN.0 / 2..SCREEN.0 / 2 + 1, SCREEN.1 - 36..SCREEN.1 - 35, [0x20, 0x22, 0x30]);
-        paint(80..110, SCREEN.1 - 50..SCREEN.1 - 48, [0x96, 0x8a, 0xe0]);
-        let screen = Image {
+    /// Yoru's desktop as A2 draws it: a light bar with its close button,
+    /// the wallpaper's blue near the top, the menu bar with words at both
+    /// ends, and the dock, `dock_w` wide and centred, the terminal's tile
+    /// first with its dot.
+    fn desktop(dock_w: usize, menu_bar: bool) -> Vec<u8> {
+        let (w, h) = SCREEN;
+        let mut pixels = CORNER.repeat(w * h);
+        paint(&mut pixels, 100..700, 300..330, [0xf3, 0xf3, 0xf5]);
+        paint(&mut pixels, 110..120, 310..320, [0xff, 0x5f, 0x57]);
+        paint(&mut pixels, 100..101, 100..101, [0xc6, 0xcf, 0xf4]);
+        if menu_bar {
+            paint(&mut pixels, 0..w, 0..24, [0xf0, 0xf0, 0xf2]);
+            paint(&mut pixels, 10..50, 8..16, [0x1d, 0x1d, 0x1f]);
+            paint(&mut pixels, w - 60..w - 20, 8..16, [0x1d, 0x1d, 0x1f]);
+        }
+        dock(&mut pixels, (w - dock_w) / 2, dock_w);
+        pixels
+    }
+
+    /// The dock, `wide` across from `left`: its glass, the terminal's tile
+    /// first, the running dot under it.
+    fn dock(pixels: &mut [u8], left: usize, wide: usize) {
+        let h = SCREEN.1;
+        paint(pixels, left..left + wide, h - 74..h - 6, [0xf4, 0xf4, 0xf6]);
+        paint(
+            pixels,
+            left + 10..left + 58,
+            h - 64..h - 16,
+            [0x2b, 0x2b, 0x30],
+        );
+        paint(
+            pixels,
+            left + 32..left + 36,
+            h - 13..h - 9,
+            [0x4a, 0x4d, 0x55],
+        );
+    }
+
+    fn screen(pixels: Vec<u8>) -> Image {
+        Image {
             width: SCREEN.0,
             height: SCREEN.1,
             pixels,
-        };
-        assert_eq!(judge(&screen).map(|_| ()), Ok(()));
+        }
+    }
+
+    /// A screen of the wallpaper alone is not Yoru's desktop: no bars.
+    #[test]
+    fn the_wallpaper_alone_has_no_bars() {
+        let said = judge(&screen(CORNER.repeat(SCREEN.0 * SCREEN.1))).expect_err("no bars");
+        assert!(said.contains("surface"), "{said}");
+    }
+
+    #[test]
+    fn the_a2_desktop_is() {
+        assert_eq!(judge(&screen(desktop(301, true))).map(|_| ()), Ok(()));
+    }
+
+    #[test]
+    fn no_menu_bar_is_not() {
+        let said = judge(&screen(desktop(301, false))).expect_err("no menu bar");
+        assert!(said.contains("menu bar"), "{said}");
+    }
+
+    #[test]
+    fn a_dock_across_the_screen_is_not() {
+        let said = judge(&screen(desktop(SCREEN.0 - 24, true))).expect_err("too wide");
+        assert!(said.contains("dock"), "{said}");
+    }
+
+    /// A dock 40 pixels right of the middle: its gaps to the screen's
+    /// sides differ by 80.
+    #[test]
+    fn a_dock_off_the_middle_is_not() {
+        let mut pixels = desktop(301, true);
+        let (w, h) = SCREEN;
+        paint(&mut pixels, 0..w, h - 74..h - 6, CORNER);
+        dock(&mut pixels, (w - 301) / 2 + 40, 301);
+        let said = judge(&screen(pixels)).expect_err("off the middle");
+        assert!(said.contains("gaps"), "{said}");
+    }
+
+    #[test]
+    fn the_old_dark_dock_is_not() {
+        let mut pixels = desktop(301, true);
+        let (w, h) = SCREEN;
+        paint(&mut pixels, 12..w - 12, h - 66..h - 6, [0x3e, 0x45, 0x52]);
+        let said = judge(&screen(pixels)).expect_err("dark dock");
+        assert!(said.contains("dock"), "{said}");
+    }
+
+    #[test]
+    fn the_launcher_is_a_white_card_in_the_middle() {
+        let mut pixels = desktop(301, true);
+        paint(&mut pixels, 212..812, 174..400, [0xff, 0xff, 0xff]);
+        assert_eq!(judge_launcher(&screen(pixels)).map(|_| ()), Ok(()));
+        let mut dark = desktop(301, true);
+        paint(&mut dark, 212..812, 174..400, [0x23, 0x25, 0x32]);
+        assert!(judge_launcher(&screen(dark)).is_err(), "the old dark card");
     }
 }
