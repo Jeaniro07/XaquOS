@@ -107,9 +107,10 @@ fn yoru_parses_floats_and_styles_its_frames() {
     }
     assert!(
         config.wallpapers.iter().any(|line| line.source
-            == compositor_config::WallpaperSource::Picture(
-                "/usr/share/backgrounds/yoru/yoru-light-glass.png".to_owned()
-            )),
+            == compositor_config::WallpaperSource::Gradient {
+                angle: 110,
+                stops: vec![(0, 0xffa9_c6f5), (55, 0xffe8_d5f2), (100, 0xfff6_e3c9)],
+            }),
         "{:?}",
         config.wallpapers
     );

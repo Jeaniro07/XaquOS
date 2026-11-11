@@ -3,8 +3,9 @@
 //! (§2); or none, hyprix's own defaults.
 //!
 //! A theme is a configuration file hyprix ships (`hyprix/themes/`), put in
-//! the image at `/usr/share/hyprix/themes/` with what it names -- Yoru's
-//! wallpaper, Inter and the Phosphor icons -- and `source`d *first*, so
+//! the image at `/usr/share/hyprix/themes/` with what it names -- Inter
+//! and the Phosphor icons; Yoru's wallpaper is a gradient the wallpaper
+//! client draws, no file -- and `source`d *first*, so
 //! that every line after it wins: the keyboard layout and the network
 //! `run-compositor` appends, and a person's own `hyprland.conf`. A desktop
 //! with no configuration of its own takes the theme's keys too
@@ -21,9 +22,6 @@ use crate::{Error, Result};
 
 /// Where the themes go in the image.
 const THEMES: &str = "usr/share/hyprix/themes";
-
-/// Yoru's wallpaper, which `yoru.conf`'s `wallpaper =` line names.
-pub(super) const YORU_WALLPAPER: &str = "usr/share/backgrounds/yoru/yoru-light-glass.png";
 
 /// The faces Yoru draws in, and where: Inter for its text, Phosphor for
 /// its icons, each with its licence (`assets/fonts/README.md`).
@@ -182,10 +180,6 @@ pub(super) fn apply(config: String, args: &Args, files: &mut Vec<File>) -> Resul
             themes.join("yoru-fuzzel.ini"),
             format!("{THEMES}/yoru-fuzzel.ini"),
         )?;
-        carry(
-            root.join("docs/brand/yoru/yoru-light-glass.png"),
-            YORU_WALLPAPER.to_owned(),
-        )?;
         for (from, to) in FACES {
             carry(root.join(from), to.to_owned())?;
         }
@@ -220,7 +214,7 @@ mod tests {
     use crate::args::Args;
 
     /// Yoru, on a desktop with no configuration of its own: both files
-    /// sourced before everything else, and the wallpaper and faces carried.
+    /// sourced before everything else, and the faces carried.
     #[test]
     fn yoru_comes_first_with_its_keys() {
         let args = Args {
@@ -246,7 +240,6 @@ mod tests {
         for path in [
             "usr/share/hyprix/themes/yoru.conf",
             "usr/share/hyprix/themes/yoru-fuzzel.ini",
-            "usr/share/backgrounds/yoru/yoru-light-glass.png",
             "usr/share/fonts/phosphor/Phosphor.ttf",
             "usr/share/fonts/phosphor/LICENSE",
             "usr/share/fonts/inter/InterVariable.ttf",

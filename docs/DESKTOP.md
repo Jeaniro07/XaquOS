@@ -738,7 +738,7 @@ notifications beyond the toast. Both are made in its tokens (§6.2).
 | Part | Piece | New or reused |
 |---|---|---|
 | Tokens | `yoru` theme for hyprix (`hyprix/themes/yoru.conf`) and a Nocturne token set for tole, generated from the same table | new theme; tole's `Theme` reused, given Nocturne's values |
-| Wallpaper | `/bin/wallpaper` (`wallpaper = , picture ...`): a Nocturne gradient of our own as an SVG; a person's picture or video through the same line | reused; the SVG is new |
+| Wallpaper | `/bin/wallpaper` (`wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9`): Yoru's light-glass gradient, blue to lilac to sand, computed into the screen's buffer with no picture held (since 2026-11-11; before, a PNG of the same gradient); a person's picture (PNG, JPEG, SVG) or video through the same line, `picture ...` or `video ...` | reused; the gradient source is new |
 | Video wallpaper | `pattern --video`, AV1 in IVF, decoded on the CPU by rav1d (dav1d in Rust); `cargo xtask wallpapers` converts a person's MP4 or WebM | reused. Cost: decoding and colour conversion on the CPU and a full-screen upload every frame, and the screen never idles, so the compositor composites every frame; an estimate of a third of an N150 core at 1080p30, to be measured in Y7, and real battery on a laptop. Not the default |
 | Window frames, shadows, rounding, glow | hyprix's renderer: `decoration:rounding`, `shadow`, `col.active_border` gradients | reused, configured |
 | Title bars | hyprix's `titlebar.rs` (§2.2), given `hyprix:titlebar:*` options for the colours, the height, the title's side and the top line | extended |
