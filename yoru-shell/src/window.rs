@@ -2,9 +2,9 @@
 //! surface by tole's window, and kept up to date from hyprix.
 //!
 //! One loop. hyprix's event socket is watched, and an event that moves a
-//! workspace or a window has the dock ask again (`j/workspaces`,
-//! `j/activeworkspace`, `j/clients`); a timer each second moves the clock
-//! and the pomodoro; a press becomes a dispatcher. What happens is said on
+//! workspace or a window has the dock ask again (`j/clients`); a timer
+//! each second looks at the stash and the theme; a press becomes a
+//! dispatcher. What happens is said on
 //! standard output, a line each, which is how a boot that drives the dock
 //! knows what it did.
 
@@ -21,7 +21,7 @@ use tole::window::{
 
 use crate::hypr::{self, Hypr};
 use crate::json::Json;
-use crate::model::{self, State, Tool};
+use crate::model::{self, State};
 use crate::ui::{Action, HEIGHT, View};
 
 /// The surface's namespace, which `layerrule`s match: Yoru's theme blurs
@@ -29,7 +29,8 @@ use crate::ui::{Action, HEIGHT, View};
 pub const NAMESPACE: &str = "yoru-dock";
 
 /// The launcher's look in Yoru's theme, which fuzzel is started with.
-const PALETTE: &str = "/usr/share/hyprix/themes/yoru-fuzzel.ini";
+#[expect(dead_code, reason = "the menu bar's search starts it (A2 Task 6)")]
+pub(crate) const PALETTE: &str = "/usr/share/hyprix/themes/yoru-fuzzel.ini";
 
 /// How far above the screen's foot the dock floats, and in from its sides.
 const MARGIN: i32 = 6;
@@ -43,7 +44,8 @@ pub fn say(text: &str) {
 }
 
 /// Seconds since 1970 in the local zone.
-fn now() -> i64 {
+#[expect(dead_code, reason = "the menu bar's clock reads it (A2 Task 6)")]
+pub(crate) fn now() -> i64 {
     let utc = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map_or(0, |since| i64::try_from(since.as_secs()).unwrap_or(0));
@@ -51,7 +53,7 @@ fn now() -> i64 {
 }
 
 /// The applications installed, as `(id, command, window class)`.
-fn installed() -> Vec<(String, String, Option<String>)> {
+pub(crate) fn installed() -> Vec<(String, String, Option<String>)> {
     let var = |name: &str| std::env::var(name).ok();
     let search = compositor_desktop::entry::Search::listing(&var);
     compositor_desktop::entry::find_programs(&search)
@@ -65,32 +67,25 @@ fn installed() -> Vec<(String, String, Option<String>)> {
 }
 
 /// This program, to start its wallpaper switcher with.
-fn own_path() -> String {
+pub(crate) fn own_path() -> String {
     std::env::current_exe()
         .ok()
         .and_then(|path| path.to_str().map(str::to_owned))
         .unwrap_or_else(|| "/bin/yoru-shell".to_owned())
 }
 
-/// Ask hyprix again for the workspaces and the windows.
+/// Ask hyprix again for the windows.
 fn refresh(hypr: Option<&Hypr>, state: &mut State) {
     let Some(hypr) = hypr else {
         return;
     };
-    let ask = |what: &str| hypr.ask(what).and_then(|text| Json::parse(&text));
-    let active = ask("j/activeworkspace")
-        .and_then(|json| json.get("id").and_then(Json::int))
-        .unwrap_or(1);
-    if let Some(list) = ask("j/workspaces") {
-        state.workspaces(&list, active);
-    }
-    if let Some(list) = ask("j/clients") {
+    if let Some(list) = hypr.ask("j/clients").and_then(|text| Json::parse(&text)) {
         state.clients(&list);
     }
 }
 
 /// Do what a press asked.
-fn act(hypr: Option<&Hypr>, state: &mut State, action: Action) {
+fn act(hypr: Option<&Hypr>, state: &State, action: Action) {
     let dispatch = |what: &str| {
         let done = hypr.is_some_and(|hypr| hypr.dispatch(what));
         say(&format!(
@@ -99,69 +94,34 @@ fn act(hypr: Option<&Hypr>, state: &mut State, action: Action) {
         ));
     };
     match action {
-        Action::Search | Action::Tool(Tool::Search) => {
-            // fuzzel in Yoru's look where the theme put it (step Y3).
-            if std::path::Path::new(PALETTE).exists() {
-                dispatch(&format!("exec /bin/fuzzel --config {PALETTE}"));
-            } else {
-                dispatch("exec /bin/fuzzel");
-            }
-        }
-        Action::Space(at) => {
-            if let Some(space) = state.spaces.get(at) {
-                dispatch(&format!("workspace {}", space.id));
-            }
-        }
+        // A window of it anywhere, minimized too, is brought; focusing a
+        // minimized window takes it out of special:minimized (§8.1).
         Action::Launch(at) => {
             if let Some(launcher) = state.launchers.get(at) {
-                let exec = launcher.exec.clone();
-                dispatch(&format!("exec {exec}"));
+                match &launcher.window {
+                    Some(address) => dispatch(&format!("focuswindow address:{address}")),
+                    None => dispatch(&format!("exec {}", launcher.exec)),
+                }
             }
         }
-        Action::Tool(Tool::Scratchpad) => dispatch("togglespecialworkspace scratch"),
-        Action::Tool(Tool::Settings) => dispatch("exec settings"),
-        Action::Tool(Tool::Walls) => dispatch(&format!("exec {} --walls", own_path())),
-        Action::Focus => {
-            // As the compositor has it: the sidebar's quick settings set it too.
-            let now = hypr
-                .and_then(|hypr| hypr.ask("getoption decoration:dim_inactive"))
-                .and_then(|answer| crate::quick::option_value(&answer))
-                .map(|value| value != "0");
-            state.focus = !now.unwrap_or(state.focus);
-            let line = format!("decoration:dim_inactive {}", i32::from(state.focus));
-            let done = hypr.is_some_and(|hypr| hypr.keyword(&line));
-            say(&format!(
-                "focus mode {}: {}",
-                if state.focus { "on" } else { "off" },
-                if done { "ok" } else { "refused" }
-            ));
+        Action::Other(at) => {
+            if let Some(other) = state.others.get(at) {
+                dispatch(&format!("focuswindow address:{}", other.window));
+            }
         }
         Action::Stash => dispatch(&format!("exec {} --stash-panel", own_path())),
-        Action::Power => dispatch(&format!("exec {} --power", own_path())),
-        // Said for the tooltip's sake, and for a boot that finds a launcher
-        // by moving the pointer along the dock.
+        // Said for the tooltip's sake, and for a boot that finds a tile by
+        // moving the pointer along the dock.
         Action::Hover(title) => {
             if !title.is_empty() {
                 say(&format!("over {title}"));
             }
         }
-        Action::Timer => {
-            state.pomodoro.toggle();
-            say(&format!(
-                "pomodoro {} at {}",
-                if state.pomodoro.running {
-                    "started"
-                } else {
-                    "paused"
-                },
-                state.pomodoro.label()
-            ));
-        }
     }
 }
 
 /// Read what the event socket has into `pending`; false when it closed.
-fn drain(stream: &mut std::os::unix::net::UnixStream, pending: &mut String) -> bool {
+pub(crate) fn drain(stream: &mut std::os::unix::net::UnixStream, pending: &mut String) -> bool {
     let mut bytes = [0u8; 4096];
     loop {
         match stream.read(&mut bytes) {
@@ -230,7 +190,7 @@ pub fn run() -> i32 {
             "no hyprix here (HYPRLAND_INSTANCE_SIGNATURE is not set): the workspaces stay as they are",
         );
     }
-    let mut state = State::new(model::launchers(&installed()), now());
+    let mut state = State::new(model::launchers(&installed()));
     state.stashed = crate::stash::folder().map_or(0, |dir| crate::stash::count(&dir));
     refresh(hypr.as_ref(), &mut state);
     let Some(mut view) = View::new(crate::look::fonts()) else {
@@ -240,28 +200,31 @@ pub fn run() -> i32 {
     let mut theme = crate::theme::Live::new();
     theme.tokens.apply(&mut view.ui);
     view.show(&state);
-    let layer = LayerOptions {
+    // Anchored to the foot alone, so the compositor centres it; as wide as
+    // its tiles, and set again when a program comes or goes.
+    let layer = |width: u32| LayerOptions {
         output: None,
         layer: Layer::Top,
         namespace: NAMESPACE.to_owned(),
-        size: (0, HEIGHT),
-        anchor: Anchor::BOTTOM.with(Anchor::LEFT).with(Anchor::RIGHT),
-        exclusive_zone: i32::try_from(HEIGHT).unwrap_or(60) + MARGIN,
+        size: (width, HEIGHT),
+        anchor: Anchor::BOTTOM,
+        exclusive_zone: i32::try_from(HEIGHT).unwrap_or(68) + MARGIN,
         margin: Margin {
             top: 0,
-            right: 2 * MARGIN,
+            right: 0,
             bottom: MARGIN,
-            left: 2 * MARGIN,
+            left: 0,
         },
         keyboard: KeyboardInteractivity::None,
     };
+    let mut width = crate::ui::width(&state);
     let options = WindowOptions {
         title: "Yoru".to_owned(),
         app_id: NAMESPACE.to_owned(),
-        size: (1280, HEIGHT),
+        size: (width, HEIGHT),
         background: Color::rgba(0, 0, 0, 0),
         clipboard: false,
-        layer: Some(layer),
+        layer: Some(layer(width)),
         ..WindowOptions::default()
     };
     let mut window = match Window::open(view.dock.common(), options) {
@@ -293,8 +256,7 @@ pub fn run() -> i32 {
         if !up && let Some((w, h)) = window.size() {
             up = true;
             say(&format!(
-                "the dock is up, {w}x{h}, {} workspaces, {} launchers",
-                state.spaces.len(),
+                "the dock is up, {w}x{h}, {} launchers",
                 state.launchers.len()
             ));
         }
@@ -303,11 +265,10 @@ pub fn run() -> i32 {
             match event {
                 Event::Closed(_) | Event::CloseRequested(_) => return 0,
                 Event::Timer(timer) if timer == tick => {
-                    state.clock = model::Clock::at(now());
-                    state.stashed =
-                        crate::stash::folder().map_or(0, |dir| crate::stash::count(&dir));
-                    if state.pomodoro.tick() {
-                        say(&format!("pomodoro: {} begins", state.pomodoro.mode()));
+                    let stashed = crate::stash::folder().map_or(0, |dir| crate::stash::count(&dir));
+                    if stashed != state.stashed {
+                        state.stashed = stashed;
+                        changed = true;
                     }
                     if let Some(tokens) = theme.poll() {
                         tokens.apply(&mut view.ui);
@@ -316,8 +277,8 @@ pub fn run() -> i32 {
                             "dock: {}",
                             crate::theme::said(&theme.theme, &tokens)
                         ));
+                        changed = true;
                     }
-                    changed = true;
                 }
                 Event::Object {
                     object,
@@ -359,7 +320,7 @@ pub fn run() -> i32 {
         }
         for action in view.actions() {
             let hover = matches!(action, Action::Hover(_));
-            act(hypr.as_ref(), &mut state, action);
+            act(hypr.as_ref(), &state, action);
             // A hover asks nothing of hyprix and changes nothing drawn.
             if !hover {
                 refresh(hypr.as_ref(), &mut state);
@@ -367,6 +328,11 @@ pub fn run() -> i32 {
             }
         }
         if changed {
+            let wanted = crate::ui::width(&state);
+            if wanted != width {
+                width = wanted;
+                window.set_layer(layer(width));
+            }
             view.show(&state);
             if let Err(error) = window.refresh(&mut view.ui) {
                 say(&format!("err: the compositor went away: {error}"));

@@ -7,43 +7,37 @@ use std::process::ExitCode;
 use crate::model::{State, launchers};
 use crate::ui::{HEIGHT, View};
 
-/// The dock as drawn for a picture: the design's sample desktop, with
-/// windows on the first two workspaces and a terminal running.
+/// The dock as drawn for a picture: the terminal running, the browser and
+/// Settings installed.
 #[must_use]
 pub fn sample() -> State {
-    let mut state = State::new(
-        launchers(&[
-            (
-                "google-chrome.desktop".to_owned(),
-                "/bin/chrome".to_owned(),
-                None,
-            ),
-            ("settings.desktop".to_owned(), "settings".to_owned(), None),
-        ]),
-        // 2026-10-24 21:40, Yoru's hour.
-        1_792_878_000,
-    );
-    let list = crate::json::Json::parse(
-        r#"[{"id":1,"windows":3},{"id":2,"windows":2},{"id":3,"windows":1}]"#,
+    let mut state = State::new(launchers(&[
+        (
+            "google-chrome.desktop".to_owned(),
+            "/bin/chrome".to_owned(),
+            None,
+        ),
+        ("settings.desktop".to_owned(), "settings".to_owned(), None),
+    ]));
+    let clients = crate::json::Json::parse(
+        r#"[{"address":"0x1","class":"rocks.magical.term","workspace":{"id":1},"focusHistoryID":0}]"#,
     )
     .unwrap_or(crate::json::Json::Null);
-    state.workspaces(&list, 1);
-    let clients =
-        crate::json::Json::parse(r#"[{"class":"rocks.magical.term","workspace":{"id":1}}]"#)
-            .unwrap_or(crate::json::Json::Null);
     state.clients(&clients);
     state
 }
 
-/// The dock drawn `width` logical pixels wide at `scale`, as RGBA rows.
+/// The dock drawn at `scale`, as wide as its tiles, over the gradient's
+/// middle colour, as RGBA rows.
 #[must_use]
-pub fn render(state: &State, width: u32, scale: f32) -> Option<tole::Frame> {
+pub fn render(state: &State, scale: f32) -> Option<tole::Frame> {
+    let width = crate::ui::width(state);
     let mut view = View::new(crate::look::fonts())?;
     view.ui.set_scale(scale);
     view.resize((width, HEIGHT));
     view.show(state);
     view.ui.update();
-    let mut frame = tole::Frame::new((width, HEIGHT), scale, tole::Color::hex(0x16_1826))?;
+    let mut frame = tole::Frame::new((width, HEIGHT), scale, tole::Color::hex(0xe8_d5f2))?;
     let _ = view.ui.render_into(&mut frame);
     Some(frame)
 }
@@ -365,7 +359,7 @@ pub fn main() -> ExitCode {
             eprintln!("yoru-shell: --render needs a file");
             return ExitCode::FAILURE;
         };
-        let Some(frame) = render(&sample(), 1600, 2.0) else {
+        let Some(frame) = render(&sample(), 2.0) else {
             eprintln!("yoru-shell: the dock could not be drawn");
             return ExitCode::FAILURE;
         };
@@ -390,30 +384,45 @@ pub fn main() -> ExitCode {
 mod tests {
     use super::{render, sample};
 
-    /// The sample dock draws at its size, with the bar's ground across
-    /// its middle and the workspace shown lit in the accent.
     #[test]
     fn the_dock_draws() {
-        let frame = render(&sample(), 800, 1.0).expect("drawn");
+        let state = sample();
+        let width = crate::ui::width(&state);
+        let frame = render(&state, 1.0).expect("drawn");
         let pixmap = frame.pixmap();
-        assert_eq!((pixmap.width(), pixmap.height()), (800, crate::ui::HEIGHT));
+        assert_eq!(
+            (pixmap.width(), pixmap.height()),
+            (width, crate::ui::HEIGHT)
+        );
         let at = |x: u32, y: u32| {
             let pixel = pixmap.pixel(x, y).expect("inside").demultiply();
             (pixel.red(), pixel.green(), pixel.blue())
         };
-        // Above the icons, below the bar's edge: the light glass.
-        let (r, g, b) = at(400, 7);
+        // The glass above the tiles: light and near grey.
+        let (r, g, b) = at(width / 2, 4);
+        let (lo, hi) = (r.min(g).min(b), r.max(g).max(b));
+        assert!(lo >= 0xe0 && hi - lo <= 0x10, "the glass: {r} {g} {b}");
+        // The terminal's dark tile comes first.
+        let pad = crate::ui::PAD;
+        let (r, g, b) = at(pad + 4, pad + 4);
         assert!(
-            r > 0xa0 && g > 0xa0 && b > 0xa0,
-            "the bar's ground: {r} {g} {b}"
+            (0x25..=0x31).contains(&r) && (0x25..=0x31).contains(&g) && (0x2a..=0x36).contains(&b),
+            "the terminal's tile: {r} {g} {b}"
         );
-        // Workspace 1's button: its accent ring at the left edge, blue.
-        let lit = (60..140).any(|x| {
-            (12..18).any(|y| {
+        // Its dot under it: it has a window.
+        let dot = (pad..pad + crate::ui::TILE).any(|x| {
+            (59..=65).any(|y| {
                 let (r, g, b) = at(x, y);
-                b > 0xb0 && r < 0x60 && g < b
+                r < 0x70 && g < 0x70 && b < 0x80
             })
         });
-        assert!(lit, "the shown workspace is lit");
+        assert!(dot, "the terminal's running dot");
+        // Settings has no window: nothing dark under its tile (the third).
+        let third = pad + 2 * (crate::ui::TILE + crate::ui::GAP);
+        let none = (third..third + crate::ui::TILE).all(|x| {
+            let (r, _, _) = at(x, 62);
+            r > 0xa0
+        });
+        assert!(none, "no dot under Settings");
     }
 }

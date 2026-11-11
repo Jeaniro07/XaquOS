@@ -1,23 +1,51 @@
-//! What the dock shows, apart from how: the workspaces and the windows on
-//! them, the launchers and whether each one's program is running, the
-//! tools that are on, the pomodoro, and the time.
+//! What the dock shows, apart from how: the launchers and whether each
+//! one's program has a window, the other programs with windows, and the
+//! stash; and the time, as the sidebar and the menu bar say it.
 
 use crate::json::Json;
 
-/// The workspaces the dock always shows, as the design names them.
-pub const NAMED: [(i64, &str); 4] = [(1, "code"), (2, "docs"), (3, "misc"), (4, "free")];
+/// A tile's colour (the dock's markup draws each).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Tile {
+    /// Near black, white glyph.
+    Dark = 0,
+    /// The theme's accent.
+    Accent = 1,
+    /// A sky blue.
+    Sky = 2,
+    /// A cool grey.
+    Grey = 3,
+}
 
-/// One workspace's button.
+/// A program with windows that has no launcher.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Space {
-    /// Its number.
-    pub id: i64,
-    /// Its name, said when the pointer is over it.
+pub struct Other {
+    /// Its window class.
+    pub class: String,
+    /// Its name as shown.
     pub name: String,
-    /// How many windows are on it.
-    pub windows: i64,
-    /// Whether it is the one shown.
-    pub on: bool,
+    /// Its window used last.
+    pub window: String,
+}
+
+/// A window class as a name: its last dotted part, the first letter up.
+#[must_use]
+pub fn shown_class(class: &str) -> String {
+    let last = class.rsplit('.').next().unwrap_or(class);
+    let mut chars = last.chars();
+    chars.next().map_or_else(String::new, |first| {
+        first.to_uppercase().chain(chars).collect()
+    })
+}
+
+impl Launcher {
+    /// Whether a window of `class` is this program's.
+    #[must_use]
+    pub fn is(&self, class: &str) -> bool {
+        self.classes
+            .iter()
+            .any(|wanted| class.eq_ignore_ascii_case(wanted))
+    }
 }
 
 /// A program the dock starts.
@@ -31,116 +59,18 @@ pub struct Launcher {
     pub classes: Vec<String>,
     /// What starts it, as `exec` takes it.
     pub exec: String,
-    /// Whether a window of it is on the workspace shown.
+    /// Whether it has a window anywhere, minimized ones included.
     pub running: bool,
+    /// Its name in the menu bar.
+    pub name: String,
+    /// Its tile's colour in the dock.
+    pub tile: Tile,
+    /// The window of it used last, minimized or not, as `0x..`; `None`
+    /// when it has none.
+    pub window: Option<String>,
 }
 
-/// What a tool does.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tool {
-    /// The palette: the launcher, fuzzel until Yoru's own.
-    Search,
-    /// The scratchpad terminal, dropped over everything.
-    Scratchpad,
-    /// Settings.
-    Settings,
-    /// The wallpaper switcher.
-    Walls,
-}
-
-impl Tool {
-    /// Every tool, in the dock's order, with its icon and words.
-    pub const ALL: [(Tool, &'static str, &'static str); 4] = [
-        (
-            Tool::Search,
-            "magnifying-glass",
-            "Search or run · Super Space",
-        ),
-        (Tool::Scratchpad, "terminal", "Scratchpad · Super S"),
-        (Tool::Walls, "image", "Wallpapers · Super I"),
-        (Tool::Settings, "sliders-horizontal", "Settings"),
-    ];
-}
-
-/// The pomodoro: 25 minutes of focus, then 5 of break.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Pomodoro {
-    /// The focus's length, in minutes.
-    pub minutes: u32,
-    /// Seconds left.
-    pub left: u32,
-    /// Whether it is counting.
-    pub running: bool,
-    /// Whether it is the break.
-    pub resting: bool,
-}
-
-impl Pomodoro {
-    /// The break's length, in seconds.
-    pub const BREAK: u32 = 5 * 60;
-
-    /// A timer of `minutes`, stopped at its start.
-    #[must_use]
-    pub fn new(minutes: u32) -> Self {
-        Pomodoro {
-            minutes,
-            left: minutes * 60,
-            running: false,
-            resting: false,
-        }
-    }
-
-    /// Start it, or pause it.
-    pub fn toggle(&mut self) {
-        self.running = !self.running;
-    }
-
-    /// A second gone: the focus ends in a running break, the break in a
-    /// stopped focus. Whether a period ended.
-    pub fn tick(&mut self) -> bool {
-        if !self.running {
-            return false;
-        }
-        self.left = self.left.saturating_sub(1);
-        if self.left > 0 {
-            return false;
-        }
-        if self.resting {
-            *self = Pomodoro::new(self.minutes);
-        } else {
-            self.resting = true;
-            self.left = Self::BREAK;
-        }
-        true
-    }
-
-    /// `mm:ss`.
-    #[must_use]
-    pub fn label(&self) -> String {
-        format!("{:02}:{:02}", self.left / 60, self.left % 60)
-    }
-
-    /// `focus` or `break`.
-    #[must_use]
-    pub fn mode(&self) -> &'static str {
-        if self.resting { "break" } else { "focus" }
-    }
-
-    /// How much of the period has gone, 0 to 1.
-    #[must_use]
-    pub fn done(&self) -> f32 {
-        let total = if self.resting {
-            Self::BREAK
-        } else {
-            self.minutes * 60
-        };
-        #[expect(clippy::cast_precision_loss, reason = "seconds of an hour")]
-        let share = 1.0 - self.left as f32 / total.max(1) as f32;
-        share.clamp(0.0, 1.0)
-    }
-}
-
-/// The time as the dock says it.
+/// The time as the sidebar says it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Clock {
     /// `14:05`.
@@ -213,16 +143,10 @@ pub fn offset(tz: Option<&str>) -> i64 {
 /// Everything the dock shows.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct State {
-    /// The workspaces: the four named ones, and any other that exists.
-    pub spaces: Vec<Space>,
     /// The launchers.
     pub launchers: Vec<Launcher>,
-    /// Whether focus mode is on: every window but the focused one dimmed.
-    pub focus: bool,
-    /// The pomodoro.
-    pub pomodoro: Pomodoro,
-    /// The time.
-    pub clock: Clock,
+    /// The programs with windows that have no launcher, by class.
+    pub others: Vec<Other>,
     /// How many files the stash holds.
     pub stashed: usize,
 }
@@ -230,79 +154,52 @@ pub struct State {
 impl State {
     /// The dock with `launchers` and nothing yet known of the compositor.
     #[must_use]
-    pub fn new(launchers: Vec<Launcher>, now: i64) -> Self {
-        let mut state = State {
-            spaces: Vec::new(),
+    pub fn new(launchers: Vec<Launcher>) -> Self {
+        State {
             launchers,
-            focus: false,
-            pomodoro: Pomodoro::new(25),
-            clock: Clock::at(now),
+            others: Vec::new(),
             stashed: 0,
-        };
-        state.workspaces(&Json::Array(Vec::new()), 1);
-        state
+        }
     }
 
-    /// The workspaces from `j/workspaces`, `active` the one shown.
-    pub fn workspaces(&mut self, list: &Json, active: i64) {
-        let mut spaces: Vec<Space> = NAMED
+    /// Which programs have windows, on any desktop or minimized, from
+    /// `j/clients`: each launcher's window used last, and the rest.
+    pub fn clients(&mut self, list: &Json) {
+        let mut windows: Vec<(i64, String, String)> = list
+            .items()
             .iter()
-            .map(|&(id, name)| Space {
-                id,
-                name: name.to_owned(),
-                windows: 0,
-                on: id == active,
+            .filter_map(|client| {
+                let class = client.get("class").and_then(Json::str)?;
+                let address = client.get("address").and_then(Json::str)?;
+                let order = client
+                    .get("focusHistoryID")
+                    .and_then(Json::int)
+                    .unwrap_or(i64::MAX);
+                (!class.is_empty()).then(|| (order, class.to_owned(), address.to_owned()))
             })
             .collect();
-        for item in list.items() {
-            let Some(id) = item.get("id").and_then(Json::int) else {
-                continue;
-            };
-            // A special workspace (the scratchpad's) is not a button.
-            if id <= 0 {
-                continue;
-            }
-            let windows = item.get("windows").and_then(Json::int).unwrap_or(0);
-            match spaces.iter_mut().find(|space| space.id == id) {
-                Some(space) => space.windows = windows,
-                None => spaces.push(Space {
-                    id,
-                    name: item
-                        .get("name")
-                        .and_then(Json::str)
-                        .unwrap_or_default()
-                        .to_owned(),
-                    windows,
-                    on: id == active,
-                }),
-            }
-        }
-        spaces.sort_by_key(|space| space.id);
-        self.spaces = spaces;
-    }
-
-    /// Which launchers' programs have a window on the workspace shown,
-    /// from `j/clients`.
-    pub fn clients(&mut self, list: &Json) {
-        let shown = self
-            .spaces
-            .iter()
-            .find(|space| space.on)
-            .map(|space| space.id);
+        windows.sort_by_key(|window| window.0);
         for launcher in &mut self.launchers {
-            launcher.running = list.items().iter().any(|client| {
-                let on = client
-                    .get("workspace")
-                    .and_then(|workspace| workspace.get("id"))
-                    .and_then(Json::int);
-                let class = client.get("class").and_then(Json::str).unwrap_or_default();
-                on == shown
-                    && launcher
-                        .classes
-                        .iter()
-                        .any(|wanted| class.eq_ignore_ascii_case(wanted))
-            });
+            launcher.window = windows
+                .iter()
+                .find(|(_, class, _)| launcher.is(class))
+                .map(|(_, _, address)| address.clone());
+            launcher.running = launcher.window.is_some();
         }
+        let mut others: Vec<Other> = Vec::new();
+        for (_, class, address) in &windows {
+            let known = self.launchers.iter().any(|launcher| launcher.is(class))
+                || others.iter().any(|other| other.class == *class);
+            if !known {
+                others.push(Other {
+                    class: class.clone(),
+                    name: shown_class(class),
+                    window: address.clone(),
+                });
+            }
+        }
+        others.sort_by(|a, b| a.class.cmp(&b.class));
+        self.others = others;
     }
 }
 
@@ -316,6 +213,9 @@ pub fn launchers(installed: &[(String, String, Option<String>)]) -> Vec<Launcher
         classes: vec!["rocks.magical.term".to_owned(), "foot".to_owned()],
         exec: "/bin/term /bin/zinc".to_owned(),
         running: false,
+        name: "Terminal".to_owned(),
+        tile: Tile::Dark,
+        window: None,
     }];
     let find = |words: &[&str]| {
         installed.iter().find(|(id, _, _)| {
@@ -327,6 +227,9 @@ pub fn launchers(installed: &[(String, String, Option<String>)]) -> Vec<Launcher
         out.push(Launcher {
             icon: "globe-simple",
             title: "Browser".to_owned(),
+            name: "Browser".to_owned(),
+            tile: Tile::Sky,
+            window: None,
             classes: class
                 .iter()
                 .cloned()
@@ -340,6 +243,9 @@ pub fn launchers(installed: &[(String, String, Option<String>)]) -> Vec<Launcher
         out.push(Launcher {
             icon: "folder-simple",
             title: "Files".to_owned(),
+            name: "Files".to_owned(),
+            tile: Tile::Accent,
+            window: None,
             classes: class
                 .iter()
                 .cloned()
@@ -353,6 +259,9 @@ pub fn launchers(installed: &[(String, String, Option<String>)]) -> Vec<Launcher
         out.push(Launcher {
             icon: "gear-six",
             title: "Settings".to_owned(),
+            name: "Settings".to_owned(),
+            tile: Tile::Grey,
+            window: None,
             classes: class
                 .iter()
                 .cloned()
@@ -376,57 +285,45 @@ pub fn command(exec: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{Clock, Pomodoro, State, command, launchers, offset};
+    use super::{Clock, Other, State, command, launchers, offset, shown_class};
     use crate::json::Json;
 
-    /// The four named workspaces are always there; another that exists is
-    /// added; the scratchpad's is not.
     #[test]
-    fn workspaces_and_their_windows() {
-        let mut state = State::new(launchers(&[]), 0);
+    fn running_wherever_the_windows_are() {
+        let mut state = State::new(launchers(&[(
+            "settings.desktop".to_owned(),
+            "settings".to_owned(),
+            None,
+        )]));
         let list = Json::parse(
-            r#"[{"id":1,"name":"1","windows":2},{"id":6,"name":"6","windows":1},{"id":-98,"name":"special:scratch","windows":1}]"#,
+            r#"[
+              {"address":"0xa","class":"foot","workspace":{"id":2,"name":"2"},"focusHistoryID":1},
+              {"address":"0xb","class":"foot","workspace":{"id":-99,"name":"special:minimized"},"focusHistoryID":0},
+              {"address":"0xc","class":"org.example.Notes","workspace":{"id":1,"name":"1"},"focusHistoryID":2},
+              {"address":"0xd","class":"org.example.Notes","workspace":{"id":3,"name":"3"},"focusHistoryID":3}
+            ]"#,
         )
         .expect("json");
-        state.workspaces(&list, 6);
-        let ids: Vec<i64> = state.spaces.iter().map(|space| space.id).collect();
-        assert_eq!(ids, [1, 2, 3, 4, 6]);
-        assert_eq!(state.spaces[0].windows, 2);
-        assert_eq!(state.spaces[0].name, "code");
-        assert!(state.spaces[4].on);
-        let clients = Json::parse(
-            r#"[{"class":"rocks.magical.term","workspace":{"id":6}},{"class":"foot","workspace":{"id":1}}]"#,
-        )
-        .expect("json");
-        state.clients(&clients);
-        assert!(
-            state.launchers[0].running,
-            "a terminal on the workspace shown"
+        state.clients(&list);
+        let term = &state.launchers[0];
+        assert_eq!(term.name, "Terminal");
+        assert!(term.running, "a window on desktop 2 counts");
+        assert_eq!(
+            term.window.as_deref(),
+            Some("0xb"),
+            "the one used last, minimized or not"
         );
-        state.workspaces(&list, 2);
-        state.clients(&clients);
-        assert!(!state.launchers[0].running, "none on workspace 2");
-    }
-
-    /// Twenty-five minutes of focus, then five of break, then a stopped
-    /// focus again.
-    #[test]
-    fn a_pomodoro() {
-        let mut timer = Pomodoro::new(1);
-        assert!(!timer.tick(), "stopped");
-        timer.toggle();
-        assert_eq!(timer.label(), "01:00");
-        for _ in 0..59 {
-            assert!(!timer.tick());
-        }
-        assert!(timer.done() > 0.98);
-        assert!(timer.tick(), "the focus ends");
-        assert_eq!((timer.mode(), timer.label().as_str()), ("break", "05:00"));
-        for _ in 0..299 {
-            timer.tick();
-        }
-        assert!(timer.tick(), "the break ends");
-        assert_eq!(timer, Pomodoro::new(1));
+        assert!(!state.launchers[1].running, "Settings has no window");
+        assert_eq!(
+            state.others,
+            vec![Other {
+                class: "org.example.Notes".to_owned(),
+                name: "Notes".to_owned(),
+                window: "0xc".to_owned(),
+            }]
+        );
+        assert_eq!(shown_class("rocks.magical.shelf"), "Shelf");
+        assert_eq!(shown_class("foot"), "Foot");
     }
 
     /// The design's clock and date.

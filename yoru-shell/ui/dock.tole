@@ -1,385 +1,130 @@
-// Yoru's dock, as the design draws it (Ferrix's docs/DESKTOP.md §6): a
-// bar 52 pixels high in a frame of the three accents, floating above the
-// foot of the screen. At the left the search and the workspaces, each
-// with a dot a window; in the middle the launchers, a running one marked,
-// and the tools; at the right focus mode, the pomodoro and the clock.
-// Rust hands it what to show and turns its signals into the compositor's
-// dispatchers (`src/ui.rs`).
+// Yoru's dock (spec §4): a bar of glass in the middle of the screen's
+// foot. The launchers as tiles with a dot under each that has a window
+// anywhere, the other programs with windows after them, a line, and the
+// stash. Rust hands it what to show and turns its signals into the
+// compositor's dispatchers (`src/ui.rs`).
 import Fx
 
-struct SpaceRow {
-    label: string
+struct AppRow {
+    glyph: string
+    letter: string
+    tile: int
     title: string
-    on: bool
-    dots: int
-}
-
-struct IconRow {
-    icon: string
-    title: string
-    on: bool
+    running: bool
 }
 
 export component Dock : Item {
     id: dock
-    property list<SpaceRow> spaces
-    property list<IconRow> launchers
-    property list<IconRow> tools
-    property bool focusOn
-    property string timerIcon
-    property string timerText
-    property string timerMode
-    property real timerDone
-    property bool timerRunning
-    property string clock
-    property string date
-    property string searchIcon
-    property string focusIcon
-    property painter frame
+    property list<AppRow> apps
     property string stashIcon
     property string stashBadge
-    property string powerIcon
     property bool overStash: stashArea.containsMouse
 
-    signal search()
-    signal space(int index)
-    signal launch(int index)
-    signal tool(int index)
-    signal focusMode()
-    signal timer()
+    signal app(int index)
     signal stash()
-    signal power()
-    // What the pointer is over: a launcher's or a tool's title, said for
-    // its tooltip (empty when it leaves).
+    // What the pointer is over: a tile's title, said for its tooltip
+    // (empty when it leaves).
     signal hover(string title)
 
-    // The frame: the accents' gradient under the compositor's blur.
-    Canvas {
+    Rectangle {
         anchors.fill: parent
-        painter: dock.frame
+        radius: 18
+        color: alpha(Nocturne.surface, 0.8)
+        border.width: 1
+        border.color: alpha(Nocturne.text, 0.12)
     }
 
-    Rectangle {
-        id: bar
-        x: 4; y: 4
-        width: dock.width - 8
-        height: 52
-        radius: 14
-        color: alpha(Nocturne.bg, 0.78)
-        border.width: 1
-        border.color: Nocturne.n700
-
-        // The search and the workspaces.
-        Row {
-            id: left
-            x: 8; y: 8
-            height: 36
-            spacing: 4
+    Row {
+        x: 10; y: 10
+        height: 56
+        spacing: 8
+        Repeater {
+            model: dock.apps
             Item {
-                width: 44; height: 36
+                width: 48; height: 56
                 Rectangle {
-                    x: 4
-                    width: 36; height: 36
-                    radius: 18
-                    color: searchArea.containsMouse ? Nocturne.a800 : Nocturne.a900
-                    border.width: 1
-                    border.color: searchArea.containsMouse ? Nocturne.a400 : Nocturne.n700
+                    width: 48; height: 48
+                    radius: 11
+                    color: modelData.tile == 0 ? "#2b2b30" : modelData.tile == 1 ? Nocturne.accent : modelData.tile == 2 ? "#5aa9f0" : modelData.tile == 3 ? "#8e9198" : Nocturne.n900
                     Text {
                         anchors.centerIn: parent
-                        text: dock.searchIcon
-                        font: Nocturne.icon(18)
-                        color: Nocturne.a200
+                        visible: modelData.glyph != ""
+                        text: modelData.glyph
+                        font: Nocturne.icon(26)
+                        color: "#ffffff"
                     }
-                    MouseArea {
-                        id: searchArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: dock.search()
+                    Text {
+                        anchors.centerIn: parent
+                        visible: modelData.glyph == ""
+                        text: modelData.letter
+                        font: Nocturne.sans(20, 600)
+                        color: Nocturne.text
                     }
                 }
-            }
-            Rectangle {
-                y: 5
-                width: 1; height: 26
-                color: Nocturne.divider
-            }
-            Item { width: 4; height: 36 }
-            Repeater {
-                model: dock.spaces
                 Rectangle {
-                    id: spaceButton
-                    y: 2
-                    width: 30; height: 32
-                    radius: 4
-                    color: modelData.on ? alpha(Nocturne.accent, 0.18) : spaceArea.containsMouse ? Nocturne.n900 : "transparent"
-                    border.width: modelData.on ? 1 : 0
-                    border.color: Nocturne.a500
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 6
-                        text: modelData.label
-                        font: Nocturne.sans(12, 500)
-                        color: modelData.on ? Nocturne.a200 : Nocturne.n400
-                    }
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 25
-                        spacing: 2
-                        Repeater {
-                            model: modelData.dots
-                            Rectangle {
-                                width: 3; height: 3
-                                radius: 1.5
-                                color: spaceButton.border.width > 0 ? Nocturne.a300 : Nocturne.n600
-                            }
-                        }
-                    }
-                    MouseArea {
-                        id: spaceArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: dock.space(index)
-                    }
+                    x: 22; y: 51
+                    width: modelData.running ? 4 : 0
+                    height: 4
+                    radius: 2
+                    color: Nocturne.n300
+                }
+                MouseArea {
+                    x: 0; y: 0
+                    width: 48; height: 48
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: dock.app(index)
+                    onEntered: dock.hover(modelData.title)
+                    onExited: dock.hover("")
                 }
             }
         }
-
-        // The launchers and the tools.
-        Row {
-            id: middle
-            x: (bar.width - width) / 2
+        Rectangle {
             y: 8
-            height: 36
-            spacing: 2
-            Repeater {
-                model: dock.launchers
-                Rectangle {
-                    width: 36; height: 36
-                    radius: 8
-                    color: launchArea.containsMouse ? Nocturne.n900 : "transparent"
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.icon
-                        font: Nocturne.icon(19)
-                        color: launchArea.containsMouse ? Nocturne.text : Nocturne.n300
-                    }
-                    Rectangle {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 31
-                        width: modelData.on ? 5 : 0
-                        height: 3
-                        radius: 1.5
-                        color: Nocturne.b400
-                    }
-                    MouseArea {
-                        id: launchArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: dock.launch(index)
-                        onEntered: dock.hover(modelData.title)
-                        onExited: dock.hover("")
-                    }
-                }
-            }
-            Item { width: 4; height: 36 }
+            width: 1; height: 32
+            color: Nocturne.divider
+        }
+        // The stash: files dropped here are put aside; a press opens the
+        // panel of them.
+        Item {
+            width: 48; height: 56
             Rectangle {
-                y: 5
-                width: 1; height: 26
-                color: Nocturne.divider
-            }
-            Item { width: 4; height: 36 }
-            Repeater {
-                model: dock.tools
-                Rectangle {
-                    y: 2
-                    width: 32; height: 32
-                    radius: 8
-                    color: modelData.on ? alpha(Nocturne.accent, 0.16) : toolArea.containsMouse ? Nocturne.n900 : "transparent"
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.icon
-                        font: Nocturne.icon(16)
-                        color: modelData.on ? Nocturne.a300 : toolArea.containsMouse ? Nocturne.text : Nocturne.n400
-                    }
-                    MouseArea {
-                        id: toolArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: dock.tool(index)
-                        onEntered: dock.hover(modelData.title)
-                        onExited: dock.hover("")
-                    }
-                }
-            }
-            // The stash: files dropped here are put aside; a press opens
-            // the panel of them.
-            Rectangle {
-                y: 2
-                width: 32; height: 32
-                radius: 8
-                color: stashArea.containsMouse ? Nocturne.n900 : "transparent"
+                width: 48; height: 48
+                radius: 11
+                color: stashArea.containsMouse ? Nocturne.n800 : Nocturne.n900
                 Text {
                     anchors.centerIn: parent
                     text: dock.stashIcon
-                    font: Nocturne.icon(17)
-                    color: stashArea.containsMouse ? Nocturne.text : Nocturne.n400
-                }
-                Rectangle {
-                    visible: dock.stashBadge != ""
-                    x: 32 - width + 2; y: -2
-                    width: max(16, badgeText.implicitWidth + 8)
-                    height: 16
-                    radius: 8
-                    color: Nocturne.b600
-                    border.width: 2
-                    border.color: Nocturne.bg
-                    Text {
-                        id: badgeText
-                        anchors.centerIn: parent
-                        text: dock.stashBadge
-                        font: Nocturne.sans(9.5, 600)
-                        color: "#e6fbfc"
-                    }
-                }
-                MouseArea {
-                    id: stashArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: dock.stash()
-                    onEntered: dock.hover("Stash · drop files here")
-                    onExited: dock.hover("")
+                    font: Nocturne.icon(24)
+                    color: Nocturne.n300
                 }
             }
-        }
-
-        // Focus mode, the pomodoro and the clock.
-        Row {
-            id: right
-            x: bar.width - width - 8
-            y: 8
-            height: 36
-            spacing: 4
             Rectangle {
-                y: 2
-                width: 32; height: 32
+                visible: dock.stashBadge != ""
+                x: 48 - width + 2; y: -2
+                width: max(16, badgeText.implicitWidth + 8)
+                height: 16
                 radius: 8
-                color: dock.focusOn ? alpha(Nocturne.accent, 0.16) : focusArea.containsMouse ? Nocturne.n900 : "transparent"
+                color: Nocturne.b600
+                border.width: 2
+                border.color: Nocturne.surface
                 Text {
+                    id: badgeText
                     anchors.centerIn: parent
-                    text: dock.focusIcon
-                    font: Nocturne.icon(16)
-                    color: dock.focusOn ? Nocturne.a300 : Nocturne.n400
-                }
-                MouseArea {
-                    id: focusArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: dock.focusMode()
+                    text: dock.stashBadge
+                    font: Nocturne.sans(9.5, 600)
+                    color: "#e6fbfc"
                 }
             }
-            Rectangle {
-                y: 5
-                width: 1; height: 26
-                color: Nocturne.divider
-            }
-            Rectangle {
-                id: pomodoro
-                width: timerRow.width + 20
-                height: 36
-                radius: 8
-                color: dock.timerRunning ? alpha(Nocturne.accent, 0.12) : timerArea.containsMouse ? Nocturne.n900 : "transparent"
-                Row {
-                    id: timerRow
-                    x: 10
-                    height: 32
-                    spacing: 6
-                    Text {
-                        height: 32
-                        text: dock.timerIcon
-                        font: Nocturne.icon(16)
-                        color: dock.timerRunning ? Nocturne.a200 : Nocturne.n300
-                    }
-                    Text {
-                        height: 32
-                        text: dock.timerText
-                        font: Nocturne.sans(12.5, 500)
-                        color: dock.timerRunning ? Nocturne.a200 : Nocturne.n300
-                    }
-                    Text {
-                        height: 32
-                        text: dock.timerMode
-                        font: Nocturne.sans(10.5, 500)
-                        color: Nocturne.n500
-                    }
-                }
-                Rectangle {
-                    x: 10; y: 30
-                    width: pomodoro.width - 20
-                    height: 2
-                    radius: 1
-                    color: Nocturne.n800
-                    Rectangle {
-                        width: parent.width * dock.timerDone
-                        height: 2
-                        radius: 1
-                        color: Nocturne.b400
-                    }
-                }
-                MouseArea {
-                    id: timerArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: dock.timer()
-                }
-            }
-            Item {
-                width: max(clockText.implicitWidth, dateText.implicitWidth) + 10
-                height: 36
-                Text {
-                    id: clockText
-                    x: parent.width - 4 - implicitWidth
-                    y: 1
-                    text: dock.clock
-                    font: Nocturne.sans(13, 500)
-                    color: Nocturne.text
-                }
-                Text {
-                    id: dateText
-                    x: parent.width - 4 - implicitWidth
-                    y: 19
-                    text: dock.date
-                    font: Nocturne.sans(10.5, 500)
-                    color: Nocturne.n500
-                }
-            }
-            // Power: Lock, Restart and Shut down (`src/power.rs`).
-            Rectangle {
-                y: 2
-                width: 32; height: 32
-                radius: 8
-                color: powerArea.containsMouse ? Nocturne.n900 : "transparent"
-                Text {
-                    anchors.centerIn: parent
-                    text: dock.powerIcon
-                    font: Nocturne.icon(17)
-                    color: powerArea.containsMouse ? Nocturne.c300 : Nocturne.n400
-                }
-                MouseArea {
-                    id: powerArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: dock.power()
-                    onEntered: dock.hover("Power · restart or shut down")
-                    onExited: dock.hover("")
-                }
+            MouseArea {
+                id: stashArea
+                x: 0; y: 0
+                width: 48; height: 48
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: dock.stash()
+                onEntered: dock.hover("Stash · drop files here")
+                onExited: dock.hover("")
             }
         }
     }
