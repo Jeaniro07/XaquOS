@@ -184,7 +184,9 @@ fn judge_launcher(screen: &Image) -> core::result::Result<String, String> {
         let at = (row * screen.width + x) * 3;
         if let Some(&[r, g, b]) = screen.pixels.get(at..at + 3) {
             let (r, g, b) = (i32::from(r), i32::from(g), i32::from(b));
-            if (r - 0x23).abs() <= 6 && (g - 0x25).abs() <= 6 && (b - 0x32).abs() <= 6 {
+            // 8 either way: over the light scrim the card reads #292b37
+            // and #2a2c38, the checkered window behind it showing through.
+            if (r - 0x23).abs() <= 8 && (g - 0x25).abs() <= 8 && (b - 0x32).abs() <= 8 {
                 card += 1;
             }
         }
