@@ -21,8 +21,10 @@ pub const OWN: &str = "Pictures/Wallpapers";
 /// The folder a picture straight in the person's folder is in.
 pub const LOOSE: &str = "Mine";
 
-/// Yoru's own wallpaper, the one in force when nothing else was set.
-pub const DEFAULT: &str = "/usr/share/backgrounds/yoru/yoru-light-glass.png";
+/// The wallpaper in force when nothing else was set: none of the files
+/// found, since Yoru's own is a gradient the wallpaper client draws
+/// (`yoru.conf`'s `wallpaper = , gradient ...`), so the first is in hand.
+pub const DEFAULT: &str = "";
 
 /// The colour dots, as the design names them, with the hue each stands
 /// for (OKLCH degrees).
