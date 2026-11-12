@@ -1282,13 +1282,16 @@ fn draw_layer<P: Painter>(
         return;
     };
     // Under `layerrule = ignore_alpha`, the blur and the scrim cover the
-    // surface's opaque part only, so a rounded bar's clear corners stay
-    // clear; else the whole rectangle.
-    let (under, rounding) = layer
-        .ignore_alpha
-        .filter(|_| layer.blur)
-        .and_then(|floor| opaque_shape(surface, rect, floor))
-        .unwrap_or((rect, Rounding::none()));
+    // surface's opaque parts only, so a rounded bar's clear corners stay
+    // clear, as does the clear band round an open menu; else the whole
+    // rectangle. Read only where one of them is drawn.
+    let shapes = || {
+        layer
+            .ignore_alpha
+            .and_then(|floor| opaque_shapes(surface, rect, floor))
+            .unwrap_or_else(|| vec![(rect, Rounding::none())])
+    };
+    let mut backdrop = backdrop;
     // Only for a surface that can be seen through: blurring behind an
     // opaque bar costs a pyramid of passes and changes nothing.
     if let Some(blur) = style.blur.filter(|_| layer.blur)
@@ -1299,9 +1302,11 @@ fn draw_layer<P: Painter>(
         // blur of the frame as it stands with the windows in it. The caller
         // hands over a backdrop only for a surface that asked and is drawn
         // above the windows.
-        match backdrop {
-            Some(behind) => canvas.blur_backdrop(behind, under, rounding, &blur, damage),
-            None => canvas.blur(under, rounding, &blur, damage),
+        for (under, rounding) in shapes() {
+            match backdrop.as_deref_mut() {
+                Some(behind) => canvas.blur_backdrop(behind, under, rounding, &blur, damage),
+                None => canvas.blur(under, rounding, &blur, damage),
+            }
         }
     } else if let Some(scrim) = style
         .blur_scrim
@@ -1310,10 +1315,12 @@ fn draw_layer<P: Painter>(
     {
         // No blur on this screen, and the surface was drawn for one: the
         // scrim instead, over what the blur would have covered.
-        if rounding.radius == 0 {
-            canvas.fill(under, scrim, damage);
-        } else {
-            canvas.fill_rounded(under, rounding, scrim, damage);
+        for (under, rounding) in shapes() {
+            if rounding.radius == 0 {
+                canvas.fill(under, scrim, damage);
+            } else {
+                canvas.fill_rounded(under, rounding, scrim, damage);
+            }
         }
     }
     // Stretched to its rectangle, as a window is: a client that drew at
@@ -1324,18 +1331,20 @@ fn draw_layer<P: Painter>(
     canvas.composite_scaled(surface, rect, Rounding::none(), 1.0, false, damage);
 }
 
-/// The part of `surface`, stretched to `rect`, at least `floor` opaque
-/// (`layerrule = ignore_alpha`): the box round those pixels, its corners
-/// cut as far as the surface's own top-left corner is clear. An empty
-/// rectangle where no pixel is that opaque; `None` where the pixels cannot
-/// be read here (a buffer on a GPU), which keeps the whole rectangle.
+/// The parts of `surface`, stretched to `rect`, at least `floor` opaque
+/// (`layerrule = ignore_alpha`): one box for each run of rows with such a
+/// pixel, runs parted by rows with none, each box's corners cut as far as
+/// its own top-left corner is clear. A menu bar with a menu open is two:
+/// the strip and the dropdown below it. None at all where no pixel is that
+/// opaque; `None` where the pixels cannot be read here (a buffer on a
+/// GPU), which keeps the whole rectangle.
 ///
-/// Simplified on purpose: the opaque part is taken to be one rectangle
-/// with circular corners, the radius read from one corner's diagonal, which
-/// is what a shell's bar or card is, and the scan stops at the first opaque
-/// row and column from each side. Upgrade path: the surface's own alpha as
-/// a mask under the blur and the scrim would follow any shape.
-fn opaque_shape(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<(Rect, Rounding)> {
+/// Simplified on purpose: each part is taken to be one rectangle with
+/// circular corners, the radius read from one corner's diagonal, which is
+/// what a shell's bar, card or dropdown is, and parts side by side in the
+/// same rows share a box. Upgrade path: the surface's own alpha as a mask
+/// under the blur and the scrim would follow any shape.
+fn opaque_shapes(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<Vec<(Rect, Rounding)>> {
     if !surface.has_pixels() || surface.format() != Format::Argb8888 {
         return None;
     }
@@ -1354,10 +1363,35 @@ fn opaque_shape(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<(Rect, 
         .is_some_and(|&alpha| f32::from(alpha) >= floor)
     };
     let row = |y: usize| (0..width).any(|x| solid(x, y));
-    let Some(top) = (0..height).find(|&y| row(y)) else {
-        return Some((Rect::new(rect.x, rect.y, 0, 0), Rounding::none()));
-    };
-    let bottom = (top..height).rev().find(|&y| row(y)).unwrap_or(top);
+    let mut shapes = Vec::new();
+    let mut from = 0;
+    while let Some(top) = (from..height).find(|&y| row(y)) {
+        let bottom = (top..height)
+            .find(|&y| !row(y))
+            .unwrap_or(height)
+            .saturating_sub(1);
+        shapes.push(opaque_box(
+            &solid,
+            (top, bottom),
+            width,
+            (surface.width(), surface.height()),
+            rect,
+        ));
+        from = bottom.saturating_add(2);
+    }
+    Some(shapes)
+}
+
+/// The box round the solid pixels of rows `top..=bottom` of a surface
+/// `width` pixels wide, `size` in all, stretched to `rect`, its corners cut
+/// as far as its top-left corner is clear.
+fn opaque_box(
+    solid: &impl Fn(usize, usize) -> bool,
+    (top, bottom): (usize, usize),
+    width: usize,
+    size: (u32, u32),
+    rect: Rect,
+) -> (Rect, Rounding) {
     let column = |x: usize| (top..=bottom).any(|y| solid(x, y));
     let left = (0..width).find(|&x| column(x)).unwrap_or(0);
     let right = (left..width).rev().find(|&x| column(x)).unwrap_or(left);
@@ -1368,8 +1402,8 @@ fn opaque_shape(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<(Rect, 
     // A circle of radius r leaves r (1 - 1/sqrt 2) clear along its
     // corner's diagonal.
     let radius = clear as f64 / (1.0 - std::f64::consts::FRAC_1_SQRT_2);
-    let sx = rect.width as f64 / width as f64;
-    let sy = rect.height as f64 / height as f64;
+    let sx = rect.width as f64 / f64::from(size.0);
+    let sy = rect.height as f64 / f64::from(size.1);
     let at =
         |from: i64, by: usize, scale: f64| from.saturating_add((by as f64 * scale).round() as i64);
     let x = at(rect.x, left, sx);
@@ -1380,10 +1414,10 @@ fn opaque_shape(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<(Rect, 
         at(rect.x, right.saturating_add(1), sx).saturating_sub(x),
         at(rect.y, bottom.saturating_add(1), sy).saturating_sub(y),
     );
-    Some((
+    (
         shape,
         Rounding::circle((radius * sx.min(sy)).round() as i64),
-    ))
+    )
 }
 
 /// A colour option that is an integer in Hyprland's table with -1 for

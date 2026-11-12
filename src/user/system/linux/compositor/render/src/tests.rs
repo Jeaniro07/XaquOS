@@ -4884,11 +4884,44 @@ const BAR: (u32, u32) = (120, 48);
 /// The rounded bar over a green ground on a screen that draws no blur,
 /// asking for one, with `ignore_alpha` as given.
 fn rounded_bar_over_ground(ignore_alpha: Option<f32>) -> Canvas {
-    let (width, height) = BAR;
+    over_ground(&rounded_bar_pixels(), BAR, ignore_alpha)
+}
+
+/// A menu bar with a menu open, `OPEN_MENU` large: a strip 24 rows tall across
+/// the whole width, two clear rows, then a dropdown 80 wide at x 20 with
+/// corners cut 8 round, both white at 30%, clear everywhere else -- the
+/// layer yoru-shell's menu bar grows to while a menu is open.
+fn strip_and_dropdown_pixels() -> Vec<u8> {
+    let (width, height) = OPEN_MENU;
+    let (left, top, right, bottom, radius) = (20.0_f32, 26.0_f32, 100.0_f32, 76.0_f32, 8.0_f32);
+    let mut bytes = Vec::with_capacity((width * height * 4) as usize);
+    for y in 0..height {
+        for x in 0..width {
+            let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
+            let cx = px.clamp(left + radius, right - radius);
+            let cy = py.clamp(top + radius, bottom - radius);
+            let dropped = px >= left
+                && py >= top
+                && px <= right
+                && py <= bottom
+                && (px - cx).hypot(py - cy) <= radius;
+            let byte = if y < 24 || dropped { 0x4D } else { 0 };
+            bytes.extend([byte; 4]);
+        }
+    }
+    bytes
+}
+
+/// The open menu bar's size.
+const OPEN_MENU: (u32, u32) = (200, 80);
+
+/// `pixels`, `size` large, over a green ground on a screen that draws no
+/// blur, asking for one, with `ignore_alpha` as given.
+fn over_ground(pixels: &[u8], size: (u32, u32), ignore_alpha: Option<f32>) -> Canvas {
+    let (width, height) = size;
     let ground = [0x20_u8, 0xA0, 0x40, 0xFF].repeat((width * height) as usize);
     let ground = Surface::new(&ground, width, height, width * 4, Format::Xrgb8888).unwrap();
-    let bar = rounded_bar_pixels();
-    let bar = Surface::new(&bar, width, height, width * 4, Format::Argb8888).unwrap();
+    let bar = Surface::new(pixels, width, height, width * 4, Format::Argb8888).unwrap();
     let screen = Rect::new(0, 0, i64::from(width), i64::from(height));
     let layers = [
         LayerFrame {
@@ -4965,6 +4998,31 @@ fn ignore_alpha_keeps_the_scrim_out_of_a_rounded_bars_clear_corners() {
         Some(ground),
         "without the rule the corner has the scrim too"
     );
+}
+
+/// An open menu bar's layer is the whole width and the menu's height, and
+/// under `layerrule = ignore_alpha` the scrim is laid under the strip and
+/// under the dropdown, each its own shape: the clear rows between them and
+/// the wallpaper beside the dropdown stay untouched, as do the dropdown's
+/// cut corners. One box round both scrimmed a full-width band.
+#[test]
+fn ignore_alpha_scrims_a_strip_and_a_dropdown_apart() {
+    let ground = 0xFF40_A020;
+    let open = over_ground(&strip_and_dropdown_pixels(), OPEN_MENU, Some(0.05));
+    let at = |x: u32, y: u32| open.pixel(x, y).map(|p| p | 0xFF00_0000);
+    for (x, y, what) in [
+        (10, 24, "between the strip and the dropdown"),
+        (150, 25, "between, to the right"),
+        (150, 50, "beside the dropdown"),
+        (10, 50, "left of the dropdown"),
+        (60, 78, "below the dropdown"),
+        (21, 27, "the dropdown's cut corner"),
+    ] {
+        assert_eq!(at(x, y), Some(ground), "{x},{y}: {what} stays clear");
+    }
+    for (x, y, what) in [(150, 10, "the strip"), (60, 50, "the dropdown")] {
+        assert_ne!(at(x, y), Some(ground), "{x},{y}: {what} has the scrim");
+    }
 }
 
 /// `hyprix:blur_scrim` is read as a colour, unset by default, as every
