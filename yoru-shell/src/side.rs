@@ -773,6 +773,11 @@ pub fn run(side: Side) -> i32 {
                         themed = true;
                     }
                     shown.quick.theme = theme.theme;
+                    // What a reload dropped under the toggles, read back
+                    // while they are shown.
+                    if shown.open {
+                        let _ = crate::quick::follow(hypr.as_ref(), &mut shown.quick);
+                    }
                     let stamps = (stamp(file.as_deref()), stamp(todo.as_deref()));
                     if stamps != seen {
                         seen = stamps;

@@ -209,6 +209,34 @@ pub fn requests(quick: &Quick, change: &Change) -> Vec<String> {
     }
 }
 
+/// Focus mode and auto-tile as the compositor has them now, from its
+/// `getoption` answers to `ask`. A reload -- returning to the default
+/// theme resets its frames' settings and reads the configuration again --
+/// drops what `keyword` put in force, as Hyprland's does, so focus mode
+/// may be off under a toggle that still says on.
+#[must_use]
+pub fn in_force(ask: impl Fn(&str) -> Option<String>) -> (bool, bool) {
+    let option =
+        |key: &str| ask(&format!("getoption {key}")).and_then(|answer| option_value(&answer));
+    (
+        option("decoration:dim_inactive").is_some_and(|v| v != "0"),
+        option("general:layout").is_some_and(|v| v != "floating"),
+    )
+}
+
+/// `quick`'s focus mode and auto-tile read again from the compositor;
+/// whether either changed.
+pub fn follow(hypr: Option<&Hypr>, quick: &mut Quick) -> bool {
+    let Some(hypr) = hypr else {
+        return false;
+    };
+    let (focus, tiled) = in_force(|line| hypr.ask(line));
+    let changed = (focus, tiled) != (quick.focus, quick.tiled);
+    quick.focus = focus;
+    quick.tiled = tiled;
+    changed
+}
+
 /// Read what is in force: the compositor's options, notifyd's file, the
 /// machine's devices.
 #[must_use]
@@ -217,13 +245,10 @@ pub fn read(hypr: Option<&Hypr>) -> Quick {
         Ok((sink, source)) => (sink, source, None),
         Err(why) => (None, None, Some(why)),
     };
-    let option = |key: &str| {
-        hypr.and_then(|h| h.ask(&format!("getoption {key}")))
-            .and_then(|answer| option_value(&answer))
-    };
+    let (focus, tiled) = in_force(|line| hypr.and_then(|h| h.ask(line)));
     Quick {
-        focus: option("decoration:dim_inactive").is_some_and(|v| v != "0"),
-        tiled: option("general:layout").is_some_and(|v| v != "floating"),
+        focus,
+        tiled,
         theme: crate::theme::theme_file()
             .and_then(|f| std::fs::read_to_string(f).ok())
             .map_or_else(crate::theme::Theme::default, |text| {
@@ -354,7 +379,25 @@ pub fn change(hypr: Option<&Hypr>, quick: &Quick, change: &Change) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{Backlight, Change, Quick, backlight, option_value, requests};
+    use super::{Backlight, Change, Quick, backlight, in_force, option_value, requests};
+
+    /// A reload drops what `keyword` put in force, as Hyprland's does: focus
+    /// mode is read back off after one even though the toggle was on.
+    #[test]
+    fn focus_mode_and_auto_tile_are_read_from_the_compositor() {
+        let reloaded = |line: &str| match line {
+            "getoption decoration:dim_inactive" => Some("int: 0\nset: false\n".to_owned()),
+            "getoption general:layout" => Some("str: floating\nset: true\n".to_owned()),
+            _ => None,
+        };
+        assert_eq!(in_force(reloaded), (false, false));
+        let dimmed = |line: &str| match line {
+            "getoption decoration:dim_inactive" => Some("int: 1\nset: true\n".to_owned()),
+            "getoption general:layout" => Some("str: dwindle\nset: true\n".to_owned()),
+            _ => None,
+        };
+        assert_eq!(in_force(dimmed), (true, true));
+    }
 
     #[test]
     fn an_options_answer_is_its_value() {

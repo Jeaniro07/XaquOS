@@ -517,20 +517,19 @@ impl Tokens {
     }
 
     /// What hyprix is asked so the window frames wear these tokens: for the
-    /// glass, the theme file's own frames back (each kept setting reset);
-    /// for any other, each setting said.
+    /// glass, the theme file's own frames back, every kept setting reset in
+    /// one request so hyprix reads its configuration again once; for any
+    /// other, each setting said.
     #[must_use]
     pub fn frame_requests(&self) -> Vec<String> {
-        let glass = *self == Tokens::GLASS;
-        self.frame_settings()
+        let settings = self.frame_settings();
+        if *self == Tokens::GLASS {
+            let keys: Vec<&str> = settings.iter().map(|(key, _)| *key).collect();
+            return vec![format!("setting reset {}", keys.join(", "))];
+        }
+        settings
             .into_iter()
-            .map(|(key, value)| {
-                if glass {
-                    format!("setting reset {key}")
-                } else {
-                    format!("setting {key} {value}")
-                }
-            })
+            .map(|(key, value)| format!("setting {key} {value}"))
             .collect()
     }
 }
@@ -705,13 +704,16 @@ mod tests {
 
     #[test]
     fn the_glass_hands_the_frames_back_to_the_theme_file() {
+        // One request, so hyprix reads its configuration again once.
         let reset = Tokens::GLASS.frame_requests();
-        assert!(!reset.is_empty());
-        assert!(
-            reset.iter().all(|line| line.starts_with("setting reset ")),
-            "{reset:?}"
-        );
-        assert!(reset.contains(&"setting reset general:col.active_border".to_owned()));
+        assert_eq!(reset.len(), 1, "{reset:?}");
+        let keys: Vec<&str> = reset[0]
+            .strip_prefix("setting reset ")
+            .expect("a reset")
+            .split(", ")
+            .collect();
+        assert_eq!(keys.len(), Tokens::GLASS.frame_settings().len());
+        assert!(keys.contains(&"general:col.active_border"), "{keys:?}");
         let own = Tokens::new([289.0, 200.0, 340.0], 1.3, false).frame_requests();
         assert!(
             own.iter()
