@@ -80,6 +80,15 @@ fn refresh(hypr: Option<&Hypr>, state: &mut State) {
     if let Some(list) = hypr.ask("j/clients").and_then(|text| Json::parse(&text)) {
         state.clients(&list);
     }
+    // No wider than the screen, a margin each side.
+    let screen = hypr
+        .ask("j/monitors")
+        .and_then(|text| Json::parse(&text))
+        .and_then(|list| crate::ui::screen_width(&list));
+    if let Some(screen) = screen {
+        let margins = 2 * u32::try_from(MARGIN).unwrap_or(0);
+        crate::ui::fit(state, screen.saturating_sub(margins));
+    }
 }
 
 /// Do what a press asked.
@@ -318,9 +327,11 @@ pub fn run() -> i32 {
                 _ => {}
             }
         }
+        // Read against the dock as drawn: the tiles' indices are of the
+        // state last shown, which a refresh above may have changed since.
         for action in view.actions() {
             let hover = matches!(action, Action::Hover(_));
-            act(hypr.as_ref(), &state, action);
+            act(hypr.as_ref(), view.shown().unwrap_or(&state), action);
             // A hover asks nothing of hyprix and changes nothing drawn.
             if !hover {
                 refresh(hypr.as_ref(), &mut state);

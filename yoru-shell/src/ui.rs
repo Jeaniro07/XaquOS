@@ -28,6 +28,37 @@ pub fn width(state: &State) -> u32 {
     2 * PAD + tiles * (TILE + GAP) + 1
 }
 
+/// `state` made to fit `room` pixels: the programs without a launcher that
+/// do not fit are left off the end, the launchers and the stash kept.
+/// Upgrade path: smaller tiles, or an overflow tile, before any is left
+/// off.
+pub fn fit(state: &mut State, room: u32) {
+    while width(state) > room && state.others.pop().is_some() {}
+}
+
+/// The focused screen's width in logical pixels from `j/monitors`, or the
+/// first screen's where none is focused.
+#[must_use]
+pub fn screen_width(list: &crate::json::Json) -> Option<u32> {
+    let screens = list.items();
+    let screen = screens
+        .iter()
+        .find(|screen| {
+            screen
+                .get("focused")
+                .is_some_and(|focused| matches!(focused, crate::json::Json::Bool(true)))
+        })
+        .or_else(|| screens.first())?;
+    let pixels = screen.get("width").and_then(crate::json::Json::num)?;
+    let scale = screen
+        .get("scale")
+        .and_then(crate::json::Json::num)
+        .filter(|scale| *scale > 0.0)
+        .unwrap_or(1.0);
+    let logical = (pixels / scale).round();
+    (logical >= 0.0 && logical <= f64::from(u32::MAX)).then_some(logical as u32)
+}
+
 /// What a press in the dock asks.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action {
@@ -122,7 +153,14 @@ impl View {
         self.shown = Some(state.clone());
     }
 
-    /// What the tree asked since the last call.
+    /// The state last shown, which the tree's indices are of.
+    #[must_use]
+    pub fn shown(&self) -> Option<&State> {
+        self.shown.as_ref()
+    }
+
+    /// What the tree asked since the last call: indices into
+    /// [`View::shown`], which a refresh since does not move.
     pub fn actions(&mut self) -> Vec<Action> {
         let emitted = self.ui.take_signals();
         let launchers = self.shown.as_ref().map_or(0, |state| state.launchers.len());
@@ -145,5 +183,68 @@ impl View {
             actions.extend(action);
         }
         actions
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{View, fit, screen_width, width};
+    use crate::json::Json;
+    use crate::model::{Other, State, launchers};
+
+    fn other(n: usize) -> Other {
+        Other {
+            class: format!("org.example.App{n:02}"),
+            name: format!("App{n:02}"),
+            window: format!("0x{n:x}"),
+        }
+    }
+
+    /// The dock is never wider than the room it is given: the programs
+    /// without a launcher that do not fit are left off, the launchers and
+    /// the stash kept.
+    #[test]
+    fn the_dock_drops_the_tiles_that_do_not_fit() {
+        let mut state = State::new(launchers(&[]));
+        state.others = (0..40).map(other).collect();
+        assert!(width(&state) > 1268);
+        fit(&mut state, 1268);
+        assert!(width(&state) <= 1268, "{} wide", width(&state));
+        assert_eq!(state.launchers.len(), 1, "the terminal stays");
+        assert_eq!(state.others.first(), Some(&other(0)));
+        let kept = state.others.len();
+        fit(&mut state, 4000);
+        assert_eq!(state.others.len(), kept, "room to spare drops none");
+    }
+
+    /// The focused screen's width in logical pixels, from `j/monitors`.
+    #[test]
+    fn the_screen_is_read_in_logical_pixels() {
+        let list = Json::parse(
+            r#"[{"name":"DP-2","width":3840,"scale":2.0,"focused":false},
+               {"name":"DP-1","width":2560,"scale":2.0,"focused":true}]"#,
+        )
+        .expect("json");
+        assert_eq!(screen_width(&list), Some(1280));
+        let one = Json::parse(r#"[{"name":"Virtual-1","width":1280,"scale":1.0}]"#).expect("json");
+        assert_eq!(
+            screen_width(&one),
+            Some(1280),
+            "the only one, focused or not"
+        );
+    }
+
+    /// A press is read against the dock as it was drawn: a refresh between
+    /// the drawing and the press does not move which tile it was.
+    #[test]
+    fn a_press_is_read_against_the_dock_it_was_drawn_from() {
+        let mut view = View::new(crate::look::fonts()).expect("tree");
+        let mut drawn = State::new(launchers(&[]));
+        drawn.others = vec![other(1), other(2)];
+        view.show(&drawn);
+        let mut now = drawn.clone();
+        now.others.remove(0);
+        assert_eq!(view.shown(), Some(&drawn));
+        assert_ne!(view.shown(), Some(&now));
     }
 }
