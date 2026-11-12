@@ -16,9 +16,11 @@
 //!   for the same key, and then puts it in force at once, as `keyword`
 //!   does. An answer other than `ok` is what was wrong, and nothing was
 //!   written or changed.
-//! * `hyprctl setting reset KEY` takes the key's line out of the file and
-//!   reads the configuration again, so the key is back to what
-//!   `hyprland.conf` or Hyprland's default says.
+//! * `hyprctl setting reset KEY[, KEY...]` takes the keys' lines out of
+//!   the file and reads the configuration again, once, so the keys are back
+//!   to what `hyprland.conf` or Hyprland's default says. When none of them
+//!   was in the file nothing is read again: a reload also drops what
+//!   `hyprctl keyword` put in force, as Hyprland's does.
 //! * `hyprctl settings` lists the file's settings; `-j` as JSON.
 //!
 //! A key is an option (`general:gaps_in`) or a `wallpaper` line, which is
@@ -79,13 +81,25 @@ pub fn answer(request: &Request, path: Option<&Path>) -> Option<Answered> {
                 ));
             };
             let argument = request.argument.trim();
-            if let Some(key) = argument.strip_prefix("reset ") {
-                return Some(match forget(path, key.trim()) {
-                    Ok(_) => Answered {
-                        answer: "ok\n".to_owned(),
-                        then: Some(Reply::Reload),
-                    },
-                    Err(error) => said(format!("setting reset: {}: {error}\n", path.display())),
+            if let Some(keys) = argument.strip_prefix("reset ") {
+                // Several keys, a comma between them (no key has one), and
+                // one reload for them all; none where nothing was in the
+                // file, since a reload also drops every runtime keyword.
+                let mut changed = false;
+                for key in keys.split(',').map(str::trim).filter(|key| !key.is_empty()) {
+                    match forget(path, key) {
+                        Ok(gone) => changed |= gone,
+                        Err(error) => {
+                            return Some(said(format!(
+                                "setting reset: {}: {error}\n",
+                                path.display()
+                            )));
+                        }
+                    }
+                }
+                return Some(Answered {
+                    answer: "ok\n".to_owned(),
+                    then: changed.then_some(Reply::Reload),
                 });
             }
             let (name, value) = argument
@@ -118,7 +132,7 @@ pub fn answer(request: &Request, path: Option<&Path>) -> Option<Answered> {
 /// What is wrong with the key or the value.
 pub fn checked(name: &str, value: &str) -> Result<String, String> {
     if name.is_empty() || value.is_empty() {
-        return Err("setting KEY VALUE, or setting reset KEY".to_owned());
+        return Err("setting KEY VALUE, or setting reset KEY[, KEY...]".to_owned());
     }
     if name == "wallpaper" {
         return match Wallpaper::parse(value)? {
@@ -340,6 +354,28 @@ mod tests {
         assert!(listed(&path, Format::Json).starts_with(
             "[{\"key\": \"general:gaps_in\", \"name\": \"general:gaps_in\", \"value\": \"10\"}"
         ));
+        let _ = std::fs::remove_dir_all(path.parent().and_then(Path::parent).expect("a dir"));
+    }
+
+    /// `setting reset` takes several keys, a comma between them, out in
+    /// one request and asks for one reload; a request whose keys none of
+    /// them were in the file asks for none, since nothing would change and
+    /// a reload drops every runtime keyword.
+    #[test]
+    fn several_keys_reset_in_one_reload_and_none_without_a_change() {
+        let path = scratch("reset-several");
+        save(&path, "general:gaps_in", "5").expect("written");
+        save(&path, "decoration:rounding", "8").expect("written");
+        save(&path, "wallpaper", "DP-1, off").expect("written");
+        let request =
+            Request::parse("setting reset general:gaps_in, wallpaper DP-1, general:gaps_out");
+        let answered = answer(&request, Some(&path)).expect("ours");
+        assert_eq!(answered.answer, "ok\n");
+        assert_eq!(answered.then, Some(Reply::Reload), "one reload for the lot");
+        assert_eq!(listed(&path, Format::Readable), "decoration:rounding = 8\n");
+        let again = answer(&request, Some(&path)).expect("ours");
+        assert_eq!(again.answer, "ok\n");
+        assert_eq!(again.then, None, "nothing was in the file: no reload");
         let _ = std::fs::remove_dir_all(path.parent().and_then(Path::parent).expect("a dir"));
     }
 
