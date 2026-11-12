@@ -94,6 +94,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "compositor-appmenu"
+version = "0.1.0"
+
+[[package]]
 name = "compositor-blank"
 version = "0.1.0"
 dependencies = [

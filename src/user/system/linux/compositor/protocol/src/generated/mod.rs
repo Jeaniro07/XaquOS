@@ -5,6 +5,7 @@
 //! gate. This file is the only hand-written one in the directory.
 
 pub mod alpha_modifier;
+pub mod appmenu;
 pub mod background_effect;
 pub mod capture_source;
 pub mod commit_timing;

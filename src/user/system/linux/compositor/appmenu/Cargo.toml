@@ -1,0 +1,11 @@
+[package]
+name = "compositor-appmenu"
+description = "An application's own menus: the tree, its limits, its wire steps and its IPC text"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

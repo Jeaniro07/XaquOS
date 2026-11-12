@@ -647,6 +647,14 @@ ext_image_copy_capture_cursor_session_v1 1 event 0 enter
 ext_image_copy_capture_cursor_session_v1 1 event 1 leave 
 ext_image_copy_capture_cursor_session_v1 1 event 2 position ii
 ext_image_copy_capture_cursor_session_v1 1 event 3 hotspot ii
+ferrix_appmenu_manager_v1 1 request 0 destroy 
+ferrix_appmenu_manager_v1 1 request 1 get_menu no
+ferrix_appmenu_v1 1 request 0 destroy 
+ferrix_appmenu_v1 1 request 1 add_menu s
+ferrix_appmenu_v1 1 request 2 add_item ussu
+ferrix_appmenu_v1 1 request 3 add_separator 
+ferrix_appmenu_v1 1 request 4 commit 
+ferrix_appmenu_v1 1 event 0 activated u
 zwp_linux_dmabuf_v1 5 request 0 destroy 
 zwp_linux_dmabuf_v1 5 request 1 create_params n
 zwp_linux_dmabuf_v1 5 request 2 get_default_feedback 4n

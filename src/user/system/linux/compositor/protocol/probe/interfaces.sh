@@ -32,7 +32,7 @@ scan "$protocols/ext-session-lock-v1.xml" ext-session-lock
 # the tablet protocol is compiled in for the symbol. It is not one of the
 # generator's `FILES`: this compositor has no tablet tool, and a table
 # nothing offers is a table nothing checks.
-scan "/usr/share/wayland-protocols/stable/tablet/tablet-v2.xml" tablet
+scan "$protocols/tablet-v2.xml" tablet
 scan "$protocols/cursor-shape-v1.xml" cursor-shape
 scan "$protocols/primary-selection-unstable-v1.xml" primary-selection
 scan "$protocols/xdg-activation-v1.xml" xdg-activation
@@ -80,6 +80,7 @@ scan "$protocols/security-context-v1.xml" security-context
 scan "$protocols/vicinae-hotkey-v1.xml" vicinae-hotkey
 scan "$protocols/ext-image-capture-source-v1.xml" ext-image-capture-source
 scan "$protocols/ext-image-copy-capture-v1.xml" ext-image-copy-capture
+scan "$protocols/ferrix-appmenu-v1.xml" ferrix-appmenu-v1
 scan "$protocols/linux-dmabuf-v1.xml" linux-dmabuf
 
 gcc -O0 -Wall -Werror -I"$work" \

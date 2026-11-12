@@ -109,6 +109,8 @@
 //!   so the compositor can tell a flatpak's clients from the rest.
 //! * **`hotkey`** is `vicinae`'s, a launcher that asks for a key by keysym
 //!   rather than registering a name.
+//! * **`appmenu`** is Ferrix's own `ferrix_appmenu_v1`: an application's
+//!   menus for the menu bar, and the item a person picked from them.
 //!
 //! * **`capture_source`** and **`image_copy`** are screenshots as the
 //!   `ext` namespace has them: a *source* -- a screen, or a window from
@@ -137,7 +139,7 @@ mod generated;
 
 pub use compositor_wire::Interface;
 pub use generated::{
-    alpha_modifier, background_effect, capture_source, commit_timing, content_type, core,
+    alpha_modifier, appmenu, background_effect, capture_source, commit_timing, content_type, core,
     cursor_shape, data_control, ext_data_control, ext_workspace, fifo, focus_grab, foreign_list,
     foreign_toplevel, fractional_scale, gamma_control, global_shortcuts, hotkey, hyprland_surface,
     idle_inhibit, idle_notify, image_copy, input_method, kde_decoration, layer_shell, linux_dmabuf,
@@ -214,6 +216,7 @@ pub const GLOBALS: &[&Interface] = &[
     &capture_source::EXT_OUTPUT_IMAGE_CAPTURE_SOURCE_MANAGER_V1,
     &capture_source::EXT_FOREIGN_TOPLEVEL_IMAGE_CAPTURE_SOURCE_MANAGER_V1,
     &image_copy::EXT_IMAGE_COPY_CAPTURE_MANAGER_V1,
+    &appmenu::FERRIX_APPMENU_MANAGER_V1,
     // Offered only where there is a GPU whose buffers can be imported, and
     // so last: a machine without one announces every other global under the
     // name it always had.

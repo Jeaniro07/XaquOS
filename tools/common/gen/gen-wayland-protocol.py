@@ -94,6 +94,7 @@ FILES = [
     ("vicinae-hotkey-v1.xml", "hotkey"),
     ("ext-image-capture-source-v1.xml", "capture_source"),
     ("ext-image-copy-capture-v1.xml", "image_copy"),
+    ("ferrix-appmenu-v1.xml", "appmenu"),
     ("linux-dmabuf-v1.xml", "linux_dmabuf"),
 ]
 
