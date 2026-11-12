@@ -374,6 +374,8 @@ pub fn run(options: &Options) -> i32 {
     // once the window has a size.
     let mut focus = state.page == Page::Game;
     let mut up = false;
+    // The page the bar's View menu was last given checked.
+    let mut menued = None;
     while !window.is_closed() {
         let events = match window.dispatch(&mut view.ui, None) {
             Ok(events) => events,
@@ -406,7 +408,17 @@ pub fn run(options: &Options) -> i32 {
             focus = false;
             let _ = window.refresh(&mut view.ui);
         }
-        let actions = view.actions();
+        if menued != Some(state.page) {
+            let _ = window.set_menu(&crate::menu::tree(state.page));
+            menued = Some(state.page);
+        }
+        let mut actions = view.actions();
+        actions.extend(
+            window
+                .take_menu_picks()
+                .into_iter()
+                .filter_map(crate::menu::action),
+        );
         if actions.is_empty() {
             continue;
         }

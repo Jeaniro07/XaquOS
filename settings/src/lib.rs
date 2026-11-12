@@ -21,6 +21,7 @@ pub mod cli;
 pub mod desktop;
 pub mod look;
 pub mod machine;
+pub mod menu;
 pub mod pages;
 pub mod store;
 pub mod ui;
