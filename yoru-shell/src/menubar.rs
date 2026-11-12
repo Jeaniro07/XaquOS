@@ -105,6 +105,7 @@ impl View {
         let bar = MenuBar::new(&mut ui, None)?;
         bar.search_icon
             .set(&mut ui, s(crate::look::icon("magnifying-glass")));
+        bar.check_icon.set(&mut ui, s(crate::look::icon("check")));
         Some(View {
             ui,
             bar,
@@ -186,12 +187,19 @@ impl View {
                             keys: s(""),
                             line: true,
                             enabled: false,
+                            checked: false,
                         },
-                        Entry::Item { label, keys, does } => MenuLine {
+                        Entry::Item {
+                            label,
+                            keys,
+                            checked,
+                            does,
+                        } => MenuLine {
                             label: s(label),
                             keys: s(keys),
                             line: false,
                             enabled: does.is_some(),
+                            checked: *checked,
                         },
                     })
                     .collect::<Vec<_>>()
@@ -245,6 +253,16 @@ fn ask_focused(hypr: Option<&Hypr>) -> Option<Focused> {
         .ask("j/activewindow")
         .and_then(|text| Json::parse(&text))
         .and_then(|json| menus::focused(&json))
+}
+
+/// The focused window's own menus, asked of hyprix; `None` when it has
+/// none or the answer is another window's.
+// Ponytail: one `appmenu` request per change of focus or menus. Upgrade
+// path: a cache by address, should a profile show the cost.
+fn ask_menu(hypr: Option<&Hypr>, focused: Option<&Focused>) -> Option<tole::appmenu::Tree> {
+    let focused = focused?;
+    let (address, tree) = tole::appmenu::from_text(&hypr?.ask("appmenu")?)?;
+    (format!("0x{address:x}") == focused.address).then_some(tree)
 }
 
 /// The time as the bar shows it.
@@ -310,15 +328,21 @@ pub fn run() -> i32 {
     };
     let mut theme = crate::theme::Live::new();
     theme.tokens.apply(&mut view.ui);
-    let standard = |focused: Option<&Focused>| {
+    let standard = |focused: Option<&Focused>, mine: Option<&tole::appmenu::Tree>| {
         let name = focused.map(|f| menus::app_name(&f.class, &launchers));
-        menus::standard(name.as_deref(), &own)
+        let menus = menus::standard(name.as_deref(), &own);
+        match (mine, focused) {
+            (Some(tree), Some(window)) => menus::with_app(menus, tree, &window.address),
+            _ => menus,
+        }
     };
     let mut focused = ask_focused(hypr.as_ref());
+    let mut mine = ask_menu(hypr.as_ref(), focused.as_ref());
+    let mut said_titles = String::new();
     let mut clock = clock_now();
     let mut open: Option<usize> = None;
     let mut height = HEIGHT;
-    view.show(standard(focused.as_ref()), open, &clock);
+    view.show(standard(focused.as_ref(), mine.as_ref()), open, &clock);
     let options = WindowOptions {
         title: "Yoru menu bar".to_owned(),
         app_id: NAMESPACE.to_owned(),
@@ -383,10 +407,11 @@ pub fn run() -> i32 {
                             .for_each(|w| window.client().unwatch_fd(w));
                         events = None;
                     }
-                    let mut moved = false;
+                    let (mut moved, mut menued) = (false, false);
                     while let Some(end) = pending.find('\n') {
                         let line: String = pending.drain(..=end).collect();
                         moved |= hypr::wanted(line.trim_end());
+                        menued |= line.starts_with("appmenu>>");
                     }
                     let now = if moved {
                         ask_focused(hypr.as_ref())
@@ -397,6 +422,12 @@ pub fn run() -> i32 {
                         focused = now;
                         open = None;
                         changed = true;
+                        menued = true;
+                    }
+                    if menued {
+                        let asked = ask_menu(hypr.as_ref(), focused.as_ref());
+                        changed |= asked != mine;
+                        mine = asked;
                     }
                 }
                 _ => {}
@@ -404,7 +435,12 @@ pub fn run() -> i32 {
         }
         for asked in view.asked() {
             match asked {
-                Asked::Open(i) => open = Some(i),
+                Asked::Open(i) => {
+                    if let Some(menu) = view.menus.get(i) {
+                        say(&format!("menu bar: open {}", menu.label));
+                    }
+                    open = Some(i);
+                }
                 Asked::Close => open = None,
                 Asked::Search => {
                     open = None;
@@ -418,7 +454,7 @@ pub fn run() -> i32 {
             changed = true;
         }
         if changed {
-            let menus = standard(focused.as_ref());
+            let menus = standard(focused.as_ref(), mine.as_ref());
             let wanted = open
                 .and_then(|i| menus.get(i))
                 .map_or(HEIGHT, |menu| open_height(&menu.entries));
@@ -427,6 +463,17 @@ pub fn run() -> i32 {
                 window.set_layer(layer(height));
             }
             view.show(menus, open, &clock);
+            let titles = view
+                .menus
+                .iter()
+                .zip(&view.places)
+                .map(|(menu, (x, w))| format!("{}@{x:.0}+{w:.0}", menu.label))
+                .collect::<Vec<_>>()
+                .join("|");
+            if titles != said_titles {
+                say(&format!("menu bar: titles {titles}"));
+                said_titles = titles;
+            }
             let width = window.size().map_or(1280, |(w, _)| w);
             window.set_input_region(view.input_region(width, height).as_deref());
             if let Err(error) = window.refresh(&mut view.ui) {

@@ -1,6 +1,7 @@
 //! The menu bar's menus (spec §5): the mark's, the focused program's and
 //! Window, as data. `menubar.rs` draws them and does what is picked.
-//! Upgrade path: a program's own menus come with `ferrix_appmenu_v1` (A3).
+//! A program's own menus come with `ferrix_appmenu_v1` and go between its
+//! name and Window (`with_app`).
 
 use crate::json::Json;
 use crate::model::Launcher;
@@ -31,6 +32,8 @@ pub enum Entry {
         label: String,
         /// The keys, as shown.
         keys: String,
+        /// Whether it shows a check mark.
+        checked: bool,
         /// What picking it does.
         does: Option<Does>,
     },
@@ -88,6 +91,7 @@ fn item(label: &str, keys: &str, does: Option<Does>) -> Entry {
     Entry::Item {
         label: label.to_owned(),
         keys: keys.to_owned(),
+        checked: false,
         does,
     }
 }
@@ -159,6 +163,38 @@ pub fn standard(app: Option<&str>, own: &str) -> Vec<Menu> {
         bold: false,
         entries: window,
     });
+    menus
+}
+
+/// `menus` with the application's own `tree` placed before Window. A pick
+/// becomes `dispatch appmenu <address> <id>`; a disabled item does nothing.
+#[must_use]
+pub fn with_app(mut menus: Vec<Menu>, tree: &tole::appmenu::Tree, address: &str) -> Vec<Menu> {
+    use tole::appmenu::Entry as Own;
+    let own = tree.menus.iter().map(|menu| Menu {
+        label: menu.label.clone(),
+        bold: false,
+        entries: menu
+            .entries
+            .iter()
+            .map(|entry| match entry {
+                Own::Line => Entry::Line,
+                Own::Item(item) => Entry::Item {
+                    label: item.label.clone(),
+                    keys: item.keys.clone(),
+                    checked: item.checked,
+                    does: item
+                        .enabled
+                        .then(|| Does::Dispatch(format!("appmenu {address} {}", item.id))),
+                },
+            })
+            .collect(),
+    });
+    let at = menus
+        .iter()
+        .position(|menu| menu.label == "Window")
+        .unwrap_or(menus.len());
+    let _ = menus.splice(at..at, own);
     menus
 }
 
@@ -294,5 +330,29 @@ mod tests {
         let menus = standard(Some("Files"), "/x");
         let places = place(&menus, |label, _| label.len() as f32 * 10.0);
         assert_eq!(places, [(10.0, 38.0), (48.0, 68.0), (116.0, 78.0)]);
+    }
+
+    #[test]
+    fn an_app_menu_goes_between_the_app_and_window_and_picks_through_hyprix() {
+        use tole::appmenu::{Entry as Own, Item, Menu as OwnMenu, Tree};
+        let tree = Tree {
+            menus: vec![OwnMenu {
+                label: "File".to_owned(),
+                entries: vec![
+                    Own::Item(Item::new(1, "New Tab").with_keys("Ctrl T").with_check(true)),
+                    Own::Line,
+                    Own::Item(Item::new(3, "Close Tab").with_enabled(false)),
+                ],
+            }],
+        };
+        let menus = with_app(standard(Some("Files"), "/x"), &tree, "0xab");
+        let labels: Vec<&str> = menus.iter().map(|menu| menu.label.as_str()).collect();
+        assert_eq!(labels, [MARK, "Files", "File", "Window"]);
+        let file = &menus[2];
+        assert!(matches!(&file.entries[0],
+            Entry::Item { label, keys, checked: true, does: Some(Does::Dispatch(what)) }
+            if label == "New Tab" && keys == "Ctrl T" && what == "appmenu 0xab 1"));
+        assert!(matches!(file.entries[1], Entry::Line));
+        assert!(matches!(&file.entries[2], Entry::Item { does: None, .. }));
     }
 }

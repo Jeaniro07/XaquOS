@@ -18,6 +18,7 @@ struct MenuLine {
     keys: string
     line: bool
     enabled: bool
+    checked: bool
 }
 
 export component MenuBar : Item {
@@ -28,6 +29,7 @@ export component MenuBar : Item {
     property real dropX
     property string clock
     property string searchIcon
+    property string checkIcon
 
     signal pick(int index)
     signal choose(int index)
@@ -126,6 +128,13 @@ export component MenuBar : Item {
                         anchors.fill: parent
                         radius: 4
                         color: lineArea.containsMouse && modelData.enabled ? Nocturne.accent : "transparent"
+                        Text {
+                            x: -2; y: 5
+                            visible: modelData.checked
+                            text: bar.checkIcon
+                            font: Nocturne.icon(12)
+                            color: lineArea.containsMouse && modelData.enabled ? "#ffffff" : Nocturne.text
+                        }
                         Text {
                             x: 10; y: 4
                             text: modelData.label
