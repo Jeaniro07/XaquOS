@@ -8,7 +8,7 @@ use std::os::fd::AsRawFd as _;
 use std::rc::Rc;
 use std::time::Duration;
 
-use compositor_toolkit::Event;
+use compositor_toolkit::{Event, Rect};
 use tole::window::{
     Anchor, KeyboardInteractivity, Layer, LayerOptions, Margin, Window, WindowOptions,
 };
@@ -112,6 +112,39 @@ impl View {
             open: None,
             places: Vec::new(),
         })
+    }
+
+    /// Where the surface, `width` by `height`, takes presses: with a
+    /// menu open, the strip with the two rows under it and the dropdown
+    /// (`ui/menubar.tole` puts it at its title's x, 26 down, 260 wide), so
+    /// the clear band beside it lets presses through to the windows; with
+    /// none, the whole surface.
+    ///
+    /// A press outside the menu goes to another client, and the compositor
+    /// tells this one nothing of it (the pointer's leave is the tree's), so
+    /// the menu closes on a pick, on its title, on the focus moving -- a
+    /// press on another window -- but not on a press on the wallpaper or
+    /// the focused window. Upgrade path: an xdg_popup with a grab, or a
+    /// leave the program sees.
+    #[must_use]
+    pub fn input_region(&self, width: u32, height: u32) -> Option<Vec<Rect>> {
+        let x = self.places.get(self.open?)?.0.round() as i32;
+        let width = i32::try_from(width).unwrap_or(i32::MAX);
+        let height = i32::try_from(height).unwrap_or(i32::MAX);
+        Some(vec![
+            Rect {
+                x: 0,
+                y: 0,
+                width,
+                height: 26,
+            },
+            Rect {
+                x,
+                y: 26,
+                width: 260,
+                height: height.saturating_sub(30),
+            },
+        ])
     }
 
     /// The bar's size in logical pixels.
@@ -394,6 +427,8 @@ pub fn run() -> i32 {
                 window.set_layer(layer(height));
             }
             view.show(menus, open, &clock);
+            let width = window.size().map_or(1280, |(w, _)| w);
+            window.set_input_region(view.input_region(width, height).as_deref());
             if let Err(error) = window.refresh(&mut view.ui) {
                 say(&format!("err: the compositor went away: {error}"));
                 return 1;
@@ -421,6 +456,41 @@ pub fn start() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// While a menu is open the layer is the screen's width and the
+    /// menu's height, but takes presses on the strip (and the two rows
+    /// under it) and on the dropdown alone, so the clear band beside the
+    /// dropdown lets them through to the windows; closed, the whole
+    /// surface, which is the strip.
+    #[test]
+    fn an_open_menu_takes_presses_on_the_strip_and_the_dropdown_alone() {
+        let menus = menus::standard(Some("Terminal"), "/bin/yoru-shell");
+        let mut view = View::new(crate::look::fonts()).expect("tree");
+        view.resize((1024, HEIGHT));
+        view.show(menus.clone(), None, "Thu 12 Nov  21:40");
+        assert_eq!(view.input_region(1024, HEIGHT), None);
+        let height = open_height(&menus[2].entries);
+        view.show(menus.clone(), Some(2), "Thu 12 Nov  21:40");
+        let x = view.places[2].0.round() as i32;
+        let region = view.input_region(1024, height).expect("a region");
+        assert_eq!(
+            region,
+            vec![
+                Rect {
+                    x: 0,
+                    y: 0,
+                    width: 1024,
+                    height: 26
+                },
+                Rect {
+                    x,
+                    y: 26,
+                    width: 260,
+                    height: i32::try_from(height).unwrap() - 30
+                },
+            ]
+        );
+    }
 
     #[test]
     fn the_bar_draws_glass_and_words() {
