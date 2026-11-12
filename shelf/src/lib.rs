@@ -12,6 +12,7 @@ pub mod archive;
 pub mod cli;
 pub mod demo;
 pub mod fsops;
+pub mod menu;
 pub mod sizes;
 pub mod store;
 pub mod trash;

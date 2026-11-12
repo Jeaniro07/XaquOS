@@ -79,6 +79,9 @@ pub fn run(mut app: App) -> i32 {
     let timer = window.client().add_timer(TICK, Some(TICK));
     let mut toast_since: Option<Instant> = None;
     let mut up = false;
+    // The View checks the bar was last given, so a tree goes out only
+    // when one turns over.
+    let mut menued = None;
     while !window.is_closed() {
         let events = match window.dispatch(&mut view.ui, None) {
             Ok(events) => events,
@@ -143,9 +146,18 @@ pub fn run(mut app: App) -> i32 {
             }
         }
         actions.extend(view.actions());
+        for id in window.take_menu_picks() {
+            say(&format!("menu: picked {id}"));
+            actions.extend(crate::menu::action(id, app.focus(), app.active));
+        }
         for action in actions {
             app.act(action);
             dirty = true;
+        }
+        let checks = (app.tab().dual, app.settings.hidden);
+        if menued != Some(checks) {
+            let _ = window.set_menu(&crate::menu::tree(checks.0, checks.1));
+            menued = Some(checks);
         }
         if app.toast.is_some() && toast_since.is_none() {
             toast_since = Some(Instant::now());
