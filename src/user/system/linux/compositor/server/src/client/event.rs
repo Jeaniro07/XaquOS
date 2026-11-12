@@ -215,6 +215,10 @@ pub enum Event {
         /// The offer.
         offer: ObjectId,
     },
+    /// A toplevel's own menus changed. hyprix tells socket2 `appmenu>>`.
+    // Ponytail: no window in the event; the bar asks `appmenu` for the
+    // focused one. Upgrade path: carry the toplevel when a listener needs it.
+    MenuChanged,
     /// `xdg_system_bell_v1.ring`: the terminal bell, for the surface that
     /// rang it or for the whole seat.
     Bell {

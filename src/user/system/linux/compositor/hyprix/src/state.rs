@@ -1161,6 +1161,18 @@ impl<'r> Compositor<'r> {
         }
         if !whole.is_empty() {
             let snapshot = self.snapshot();
+            let menu = snapshot
+                .active_window
+                .and_then(|address| {
+                    let source = self.sources.get(&WindowId(address))?;
+                    let tree = self
+                        .slots
+                        .get(source.client)?
+                        .client()
+                        .menu_of(source.surface)?;
+                    Some(compositor_appmenu::to_text(address, tree))
+                })
+                .unwrap_or_else(|| "none\n".to_owned());
             for pending in whole {
                 match crate::control::serve(
                     pending,
@@ -1168,6 +1180,7 @@ impl<'r> Compositor<'r> {
                     &mut self.plugins,
                     self.options.settings.as_deref(),
                     self.prompts.up(),
+                    &menu,
                 ) {
                     Ok(todo) => asked.extend(todo),
                     Err(_) => {
@@ -7886,6 +7899,12 @@ fn globals(outputs: usize, dmabuf: Option<Vec<u64>>) -> Globals {
             &compositor_protocol::toplevel_tag::XDG_TOPLEVEL_TAG_MANAGER_V1,
             1,
             Role::ToplevelTagManager,
+        ),
+        // An application's own menus, for the menu bar.
+        (
+            &compositor_protocol::appmenu::FERRIX_APPMENU_MANAGER_V1,
+            1,
+            Role::AppMenuManager,
         ),
         // KDE's own `xdg-decoration`, which a good deal of software still
         // asks first and warns about when it is not there.

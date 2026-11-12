@@ -158,6 +158,32 @@ impl Around<'_> {
     }
 }
 
+/// `dispatch appmenu <address> <id>`: the menu bar picked `id` from the own
+/// menus of the window at `address`.
+fn appmenu(argument: &str, around: &mut Around<'_>) -> bool {
+    let mut words = argument.split_whitespace();
+    let address = words
+        .next()
+        .and_then(|word| u64::from_str_radix(word.trim_start_matches("0x"), 16).ok());
+    let id = words.next().and_then(|word| word.parse::<u32>().ok());
+    let (Some(address), Some(id)) = (address, id) else {
+        around.say("appmenu: want <address> <id>");
+        return false;
+    };
+    let Some(source) = around.sources.get(&WindowId(address)).copied() else {
+        around.say("appmenu: no such window");
+        return false;
+    };
+    let picked = around
+        .slots
+        .get_mut(source.client)
+        .is_some_and(|slot| slot.client_mut().activate_menu(source.surface, id));
+    if !picked {
+        around.say("appmenu: no such item");
+    }
+    picked
+}
+
 /// Run `name` if it is one of the compositor's own dispatchers.
 ///
 /// Gives `None` when the name belongs to the layout, so the caller hands it
@@ -186,6 +212,7 @@ pub fn compositor(
             Some(true)
         }
         "event" => Some(event(argument, around)),
+        "appmenu" => Some(appmenu(argument, around)),
         "global" => Some(global(argument, around)),
         "dpms" => Some(dpms(argument, around)),
         "overview" => Some(crate::overview::dispatch_in(

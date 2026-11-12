@@ -669,6 +669,12 @@ impl Compositor<'_> {
                     effects.modals.push((*window, modal));
                 }
             }
+            // An application's own menus changed: the bar asks for them.
+            Event::MenuChanged => {
+                if let Some(events) = self.events.as_mut() {
+                    events.say("appmenu>>\n");
+                }
+            }
             // There is nothing to ring: this compositor has no sound.
             // Saying so is more than the warning a toolkit logs when
             // the global is missing.

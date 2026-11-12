@@ -4244,3 +4244,213 @@ fn a_window_that_asks_for_fullscreen_before_its_first_commit_gets_it() {
     );
     assert!(workspaces.contains("windows: 1"), "{workspaces}");
 }
+
+/// A File menu with one item, 7, behind a shortcut.
+fn menu_tree() -> compositor_appmenu::Tree {
+    use compositor_appmenu::{Entry, Item, Menu, Tree};
+    Tree {
+        menus: vec![Menu {
+            label: "File".to_owned(),
+            entries: vec![Entry::Item(Item::new(7, "New Tab").with_keys("Ctrl T"))],
+        }],
+    }
+}
+
+/// A mapped toolkit toplevel and its `ferrix_appmenu_v1`, built from `tree`.
+fn menued(
+    socket: &Path,
+    tree: &compositor_appmenu::Tree,
+) -> (compositor_toolkit::Client, ObjectId) {
+    use compositor_appmenu::Step;
+    use compositor_toolkit::protocol::appmenu::{
+        self as appmenu, ferrix_appmenu_manager_v1 as manager, ferrix_appmenu_v1 as menu,
+    };
+    use compositor_toolkit::{Client, Event, ToplevelOptions, Value};
+    let mut client = Client::connect_to(socket).expect("a client");
+    let surface = client
+        .toplevel(&ToplevelOptions {
+            app_id: "test.menu".to_owned(),
+            ..ToplevelOptions::default()
+        })
+        .expect("a toplevel");
+    until("the toplevel configured and drawn", || {
+        let events = client
+            .dispatch(Some(Duration::from_millis(50)))
+            .map_err(|error| format!("{error:?}"))?;
+        if events
+            .iter()
+            .any(|event| matches!(event, Event::Configure { surface: s, .. } if *s == surface))
+            && client
+                .draw(surface, |pixmap| {
+                    pixmap.fill(compositor_toolkit::tiny_skia::Color::WHITE);
+                })
+                .map_err(|error| format!("{error:?}"))?
+        {
+            Ok(())
+        } else {
+            Err("not configured yet".to_owned())
+        }
+    });
+    let toplevel = client.toplevel_object(surface).expect("its xdg_toplevel");
+    let (bound, _) = client
+        .bind(&appmenu::FERRIX_APPMENU_MANAGER_V1, 1, None)
+        .expect("the global");
+    let made = client.new_object(&appmenu::FERRIX_APPMENU_V1, 1);
+    client
+        .request(
+            bound,
+            manager::request::GET_MENU,
+            &[Value::NewId(made), Value::Object(toplevel)],
+        )
+        .expect("get_menu");
+    for step in tree.steps() {
+        let (opcode, args) = match step {
+            Step::Menu(label) => (menu::request::ADD_MENU, vec![Value::Str(Some(label))]),
+            Step::Item {
+                id,
+                label,
+                keys,
+                flags,
+            } => (
+                menu::request::ADD_ITEM,
+                vec![
+                    Value::Uint(id),
+                    Value::Str(Some(label)),
+                    Value::Str(Some(keys)),
+                    Value::Uint(flags),
+                ],
+            ),
+            Step::Line => (menu::request::ADD_SEPARATOR, vec![]),
+            Step::Commit => (menu::request::COMMIT, vec![]),
+        };
+        client.request(made, opcode, &args).expect("a step");
+    }
+    let _ = client.roundtrip().expect("the compositor took it");
+    (client, made)
+}
+
+/// A client's own menus reach the event socket as `appmenu>>`, `appmenu`
+/// answers them for the focused window, and a pick of an enabled item comes
+/// back to the client as `activated`, while one of an id it has not is not.
+#[test]
+fn a_client_menu_reaches_the_bar_and_a_pick_comes_back() {
+    use compositor_toolkit::protocol::appmenu::ferrix_appmenu_v1 as menu;
+    use compositor_toolkit::{Event, Value};
+    let desk = Desk::new("appmenu", "");
+    let read = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let reading = std::sync::Arc::clone(&read);
+    let (_, picked) = running(&desk, &desk.options(), move |ends| {
+        let listening = ends.events.clone();
+        let _reader = std::thread::spawn(move || {
+            let _ = compositor_ctl::subscribe(&listening, &mut |line| {
+                reading.lock().expect("the lines").push(line.to_owned());
+            });
+        });
+        until("the subscriber taken on", || {
+            if read.lock().expect("the lines").is_empty() {
+                Err("nothing read yet".to_owned())
+            } else {
+                Ok(())
+            }
+        });
+        let (mut client, made) = menued(&ends.socket, &menu_tree());
+        until("an appmenu event", || {
+            let lines = read.lock().expect("the lines").clone();
+            if lines.iter().any(|line| line.starts_with("appmenu>>")) {
+                Ok(())
+            } else {
+                Err(format!("{lines:?}"))
+            }
+        });
+        let (address, got) = until("the focused window's menu", || {
+            let answer = ends.ask("appmenu");
+            compositor_appmenu::from_text(&answer).ok_or(answer)
+        });
+        assert_eq!(got, menu_tree());
+        // 99 first: had it been sent, its `activated` would come before 7's.
+        let _ = ends.ask(&format!("dispatch appmenu 0x{address:x} 99"));
+        assert_eq!(
+            ends.ask(&format!("dispatch appmenu 0x{address:x} 7"))
+                .trim(),
+            "ok"
+        );
+        let picked = until("an activated", || {
+            let events = client
+                .dispatch(Some(Duration::from_millis(100)))
+                .map_err(|error| format!("{error:?}"))?;
+            events
+                .iter()
+                .find_map(|event| match event {
+                    Event::Object {
+                        object,
+                        opcode,
+                        args,
+                        ..
+                    } if *object == made && *opcode == menu::event::ACTIVATED => {
+                        args.first().and_then(Value::as_uint)
+                    }
+                    _ => None,
+                })
+                .ok_or_else(|| "not yet".to_owned())
+        });
+        ends.stop();
+        picked
+    })
+    .expect("the compositor ran");
+    assert_eq!(picked, 7, "the first pick back is the enabled item");
+}
+
+/// The control the other test lacks: a `wl_surface` named as the toplevel
+/// is a protocol error and leaves the first client's menus alone, and a
+/// tree over the limits is refused.
+#[test]
+fn a_surface_is_not_a_toplevel_and_too_many_menus_are_refused() {
+    use compositor_toolkit::protocol::appmenu::{
+        self as appmenu, ferrix_appmenu_manager_v1 as manager,
+    };
+    use compositor_toolkit::{Client, ToplevelOptions, Value};
+    let desk = Desk::new("appmenu-refused", "");
+    let _ = running(&desk, &desk.options(), move |ends| {
+        let (_first, _) = menued(&ends.socket, &menu_tree());
+        let mut other = Client::connect_to(&ends.socket).expect("a client");
+        let surface = other
+            .toplevel(&ToplevelOptions::default())
+            .expect("a toplevel");
+        let wl_surface = other.surface_object(surface).expect("its wl_surface");
+        let (bound, _) = other
+            .bind(&appmenu::FERRIX_APPMENU_MANAGER_V1, 1, None)
+            .expect("the global");
+        let made = other.new_object(&appmenu::FERRIX_APPMENU_V1, 1);
+        let _ = other.request(
+            bound,
+            manager::request::GET_MENU,
+            &[Value::NewId(made), Value::Object(wl_surface)],
+        );
+        // The toolkit reads up to the hang-up before it parses, so the error
+        // and the close can come back as `Closed` alone; either way the
+        // compositor has ended the connection, which it does only on a
+        // protocol error.
+        let refused = other.roundtrip();
+        assert!(
+            matches!(
+                refused,
+                Err(compositor_toolkit::Error::Protocol { .. } | compositor_toolkit::Error::Closed)
+            ),
+            "{refused:?}"
+        );
+        assert!(compositor_appmenu::from_text(&ends.ask("appmenu")).is_some());
+        let many = compositor_appmenu::Tree {
+            menus: (0..=compositor_appmenu::MAX_MENUS)
+                .map(|n| compositor_appmenu::Menu {
+                    label: format!("M{n}"),
+                    entries: vec![],
+                })
+                .collect(),
+        };
+        let socket = ends.socket.clone();
+        let over = std::panic::catch_unwind(move || menued(&socket, &many));
+        assert!(over.is_err(), "17 menus must be a protocol error");
+        ends.stop();
+    })
+    .expect("the compositor ran");
+}

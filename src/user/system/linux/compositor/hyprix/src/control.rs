@@ -209,6 +209,7 @@ pub fn serve(
     plugins: &mut crate::plugins::Plugins,
     settings: Option<&Path>,
     prompting: bool,
+    menu: &str,
 ) -> std::io::Result<Vec<compositor_ipc::Reply>> {
     let Pending {
         mut stream, line, ..
@@ -229,6 +230,13 @@ pub fn serve(
     let mut todo = Vec::new();
     let mut answer = String::new();
     for request in Request::parse_batch(&line) {
+        // `appmenu`: the focused window's own menus, worked out before.
+        // Ponytail: worked out once a batch whether asked or not; a few KB
+        // at most. Upgrade path: a closure that works it out when asked.
+        if request.command == "appmenu" {
+            answer.push_str(menu);
+            continue;
+        }
         // `setting` and `settings`: the Settings app's file, which only
         // the compositor knows the place of.
         if let Some(answered) = crate::settings::answer(&request, settings) {

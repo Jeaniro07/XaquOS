@@ -312,6 +312,7 @@ dependencies = [
 name = "compositor-server"
 version = "0.1.0"
 dependencies = [
+ "compositor-appmenu",
  "compositor-protocol",
  "compositor-socket",
  "compositor-wire",
@@ -606,6 +607,7 @@ name = "hyprix"
 version = "0.1.0"
 dependencies = [
  "compositor-anim",
+ "compositor-appmenu",
  "compositor-clip",
  "compositor-config",
  "compositor-ctl",
@@ -625,6 +627,7 @@ dependencies = [
  "compositor-shot",
  "compositor-socket",
  "compositor-text",
+ "compositor-toolkit",
  "compositor-virgl",
  "compositor-wire",
  "compositor-xkb",

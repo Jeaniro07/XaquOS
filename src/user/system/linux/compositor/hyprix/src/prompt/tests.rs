@@ -348,6 +348,7 @@ fn the_control_socket_changes_nothing_while_a_prompt_is_up() {
             &mut plugins,
             None,
             true,
+            "none\n",
         )
         .unwrap();
         let mut answer = String::new();

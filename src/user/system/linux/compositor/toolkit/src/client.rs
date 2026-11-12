@@ -1073,6 +1073,15 @@ impl Client {
         self.surfaces.get(&surface).map(|state| state.surface)
     }
 
+    /// The `xdg_toplevel` behind `surface`, for protocols that name it.
+    #[must_use]
+    pub fn toplevel_object(&self, surface: SurfaceId) -> Option<ObjectId> {
+        match &self.surfaces.get(&surface)?.kind {
+            Kind::Toplevel { toplevel, .. } => Some(*toplevel),
+            _ => None,
+        }
+    }
+
     /// The seat's `wl_pointer`, once the compositor's seat has one, for a
     /// request of the program's own that names it: an X server's
     /// `zwp_relative_pointer_manager_v1.get_relative_pointer` and

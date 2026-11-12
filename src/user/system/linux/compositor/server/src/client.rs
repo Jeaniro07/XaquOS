@@ -17,6 +17,7 @@ use compositor_wire::{
     Arg, ArgType, Error as WireError, Fd, ObjectError, ObjectId, Objects, Reader, Writer,
 };
 
+mod appmenu;
 mod buffers;
 mod capture;
 mod clipboard;
@@ -216,6 +217,12 @@ pub struct Client {
     params: BTreeMap<ObjectId, dmabuf::Params>,
     xdg_surfaces: BTreeMap<ObjectId, XdgSurface>,
     toplevels: BTreeMap<ObjectId, Toplevel>,
+    /// The toplevel each `ferrix_appmenu_v1` is for.
+    // Ponytail: two maps, not one of pairs. Upgrade path:
+    // `BTreeMap<ObjectId, (ObjectId, Builder)>` once a third field comes.
+    appmenus: BTreeMap<ObjectId, ObjectId>,
+    /// The tree each of those is building until its next `commit`.
+    builders: BTreeMap<ObjectId, compositor_appmenu::Builder>,
     subsurfaces: BTreeMap<ObjectId, Subsurface>,
     layers: BTreeMap<ObjectId, LayerSurface>,
     /// What the seat announces: `wl_seat.capability` bits.
@@ -433,6 +440,8 @@ impl Client {
             params: BTreeMap::new(),
             xdg_surfaces: BTreeMap::new(),
             toplevels: BTreeMap::new(),
+            appmenus: BTreeMap::new(),
+            builders: BTreeMap::new(),
             subsurfaces: BTreeMap::new(),
             layers: BTreeMap::new(),
             capabilities: 0,
@@ -691,6 +700,7 @@ impl Client {
                 let _ = self.xdg_surfaces.remove(&id);
             }
             Role::XdgToplevel => {
+                self.forget_menus_of(id);
                 if let Some(top) = self.toplevels.remove(&id)
                     && let Some(xdg) = self.xdg_surfaces.get_mut(&top.xdg_surface)
                 {
@@ -744,6 +754,10 @@ impl Client {
                         );
                     }
                 }
+            }
+            Role::AppMenu => {
+                let _ = self.appmenus.remove(&id);
+                let _ = self.builders.remove(&id);
             }
             other => {
                 self.forget_desktop(id, other);
@@ -852,7 +866,8 @@ impl Client {
                     || self.workspaces(sender, other, opcode)
                     || self.hypr(sender, other, version, opcode, args)
                     || self.frames(sender, other, version, opcode, args)
-                    || self.capture(sender, other, version, opcode, args);
+                    || self.capture(sender, other, version, opcode, args)
+                    || self.appmenu(sender, other, version, opcode, args);
             }
         }
     }

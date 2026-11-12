@@ -20,6 +20,8 @@ path = "src/main.rs"
 compositor-evecho = { path = "../evecho" }
 # The keymap the seat hands every client.
 compositor-xkb = { path = "../xkb" }
+# An application's own menus: the tree, its text answer.
+compositor-appmenu = { path = "../appmenu" }
 compositor-anim = { path = "../anim" }
 compositor-config = { path = "../config" }
 compositor-regex = { path = "../regex" }
@@ -69,6 +71,8 @@ compositor-lock = { path = "../lock" }
 compositor-shm = { path = "../shm" }
 # lode's screenshot protocol, for the crash-screenshot test.
 ferrix-lode-capture = { path = "../../../../../lib/proto/lode-capture" }
+# A toolkit client with its own menus, for the appmenu tests.
+compositor-toolkit = { path = "../toolkit" }
 
 [features]
 default = ["settings-prompt"]

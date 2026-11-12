@@ -8,6 +8,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# An application's own menus: the tree and its limits.
+compositor-appmenu = { path = "../appmenu" }
 compositor-protocol = { path = "../protocol" }
 compositor-wire = { path = "../wire" }
 # The keymap the seat hands out, and what a modifier mask means in it.
