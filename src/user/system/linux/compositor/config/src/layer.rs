@@ -55,9 +55,13 @@
 //! `CScreenshareFrame::renderMonitor` does, and the screen itself is drawn
 //! as ever.
 //!
+//! `ignore_alpha` keeps the blur, or the scrim drawn where there is no
+//! blur, to the surface's opaque part, so a rounded bar's clear corners
+//! stay clear.
+//!
 //! The rest are read, kept and not acted on. `no_anim` has nothing to turn
-//! off, because a layer surface is not animated here; `ignore_alpha` and
-//! `animation` likewise. They are parsed rather than refused so that a
+//! off, because a layer surface is not animated here; `animation`
+//! likewise. They are parsed rather than refused so that a
 //! person's configuration is not a wall of diagnostics, and recorded so
 //! that the compositor can act on them when it can.
 

@@ -280,6 +280,10 @@ pub struct LayerRules {
     /// `order`: where it goes among its own layer's surfaces, a higher
     /// number nearer the top.
     pub order: i64,
+    /// `ignore_alpha`, in thousandths: how opaque a pixel has to be for the
+    /// blur, or the scrim, to be laid under it. Thousandths rather than the
+    /// fraction so that the rules stay `Eq`.
+    pub ignore_alpha: Option<u16>,
 }
 
 /// Which client and which surface a window's pixels come from.
@@ -730,6 +734,10 @@ fn gathered<'a>(
             dim_around: placed.rules.dim_around,
             blur: placed.rules.blur,
             xray: placed.rules.xray,
+            ignore_alpha: placed
+                .rules
+                .ignore_alpha
+                .map(|thousandths| f32::from(thousandths) / 1000.0),
         })
         .collect();
     (surfaces, drawn)

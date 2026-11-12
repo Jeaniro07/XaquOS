@@ -195,6 +195,7 @@ fn blurred_scene(name: &str, kept: bool) -> Option<(Vec<u8>, Vec<u8>)> {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let style = Style {
         blur: Some(Blur {
@@ -322,6 +323,7 @@ fn a_frame_drawn_inside_its_damage_is_the_same_picture() {
             dim_around: false,
             blur: false,
             xray: false,
+            ignore_alpha: None,
         }];
         let _ = render_onto(
             &mut software,
@@ -562,6 +564,7 @@ fn yoru_frame_cost() {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     };
     let dock = |blur: bool| LayerFrame {
         rect: Rect::new(12, i64::from(BIG.1) - 66, i64::from(BIG.0) - 24, 60),
@@ -570,6 +573,7 @@ fn yoru_frame_cost() {
         dim_around: false,
         blur,
         xray: false,
+        ignore_alpha: None,
     };
     let none = Style {
         shadow: None,

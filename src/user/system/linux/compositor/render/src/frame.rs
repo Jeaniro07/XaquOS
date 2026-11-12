@@ -396,6 +396,11 @@ pub struct LayerFrame<'pixels> {
     /// them is part of what the backdrop is a copy of, and a blur of the
     /// backdrop there would be a blur of itself.
     pub xray: bool,
+    /// `layerrule = ignore_alpha`: how opaque a pixel of the surface has to
+    /// be for the blur, or the scrim standing in for it, to be laid under
+    /// it. `None` lays them under the whole rectangle, as Hyprland does
+    /// with no such rule.
+    pub ignore_alpha: Option<f32>,
 }
 
 /// What one window is drawn with, where a `windowrule` asked for something
@@ -1276,6 +1281,14 @@ fn draw_layer<P: Painter>(
     let Some(surface) = layer.surface.as_ref() else {
         return;
     };
+    // Under `layerrule = ignore_alpha`, the blur and the scrim cover the
+    // surface's opaque part only, so a rounded bar's clear corners stay
+    // clear; else the whole rectangle.
+    let (under, rounding) = layer
+        .ignore_alpha
+        .filter(|_| layer.blur)
+        .and_then(|floor| opaque_shape(surface, rect, floor))
+        .unwrap_or((rect, Rounding::none()));
     // Only for a surface that can be seen through: blurring behind an
     // opaque bar costs a pyramid of passes and changes nothing.
     if let Some(blur) = style.blur.filter(|_| layer.blur)
@@ -1287,8 +1300,8 @@ fn draw_layer<P: Painter>(
         // hands over a backdrop only for a surface that asked and is drawn
         // above the windows.
         match backdrop {
-            Some(behind) => canvas.blur_backdrop(behind, rect, Rounding::none(), &blur, damage),
-            None => canvas.blur(rect, Rounding::none(), &blur, damage),
+            Some(behind) => canvas.blur_backdrop(behind, under, rounding, &blur, damage),
+            None => canvas.blur(under, rounding, &blur, damage),
         }
     } else if let Some(scrim) = style
         .blur_scrim
@@ -1296,8 +1309,12 @@ fn draw_layer<P: Painter>(
         && surface.format() == Format::Argb8888
     {
         // No blur on this screen, and the surface was drawn for one: the
-        // scrim instead, over the rectangle the blur would have covered.
-        canvas.fill(rect, scrim, damage);
+        // scrim instead, over what the blur would have covered.
+        if rounding.radius == 0 {
+            canvas.fill(under, scrim, damage);
+        } else {
+            canvas.fill_rounded(under, rounding, scrim, damage);
+        }
     }
     // Stretched to its rectangle, as a window is: a client that drew at
     // scale 1 on a screen at scale 2 -- every one the compositor has not
@@ -1305,6 +1322,68 @@ fn draw_layer<P: Painter>(
     // pixel for pixel it covered a quarter of it, under a reserved zone of
     // the whole. The exact path when the sizes agree.
     canvas.composite_scaled(surface, rect, Rounding::none(), 1.0, false, damage);
+}
+
+/// The part of `surface`, stretched to `rect`, at least `floor` opaque
+/// (`layerrule = ignore_alpha`): the box round those pixels, its corners
+/// cut as far as the surface's own top-left corner is clear. An empty
+/// rectangle where no pixel is that opaque; `None` where the pixels cannot
+/// be read here (a buffer on a GPU), which keeps the whole rectangle.
+///
+/// Simplified on purpose: the opaque part is taken to be one rectangle
+/// with circular corners, the radius read from one corner's diagonal, which
+/// is what a shell's bar or card is, and the scan stops at the first opaque
+/// row and column from each side. Upgrade path: the surface's own alpha as
+/// a mask under the blur and the scrim would follow any shape.
+fn opaque_shape(surface: &Surface<'_>, rect: Rect, floor: f32) -> Option<(Rect, Rounding)> {
+    if !surface.has_pixels() || surface.format() != Format::Argb8888 {
+        return None;
+    }
+    let width = usize::try_from(surface.width()).ok()?;
+    let height = usize::try_from(surface.height()).ok()?;
+    let stride = usize::try_from(surface.stride()).ok()?;
+    let data = surface.data();
+    let floor = (floor.clamp(0.0, 1.0) * 255.0).ceil().max(1.0);
+    // The alpha byte of an `ARGB8888` pixel in memory order: B, G, R, A.
+    let solid = |x: usize, y: usize| {
+        data.get(
+            y.saturating_mul(stride)
+                .saturating_add(x.saturating_mul(4))
+                .saturating_add(3),
+        )
+        .is_some_and(|&alpha| f32::from(alpha) >= floor)
+    };
+    let row = |y: usize| (0..width).any(|x| solid(x, y));
+    let Some(top) = (0..height).find(|&y| row(y)) else {
+        return Some((Rect::new(rect.x, rect.y, 0, 0), Rounding::none()));
+    };
+    let bottom = (top..height).rev().find(|&y| row(y)).unwrap_or(top);
+    let column = |x: usize| (top..=bottom).any(|y| solid(x, y));
+    let left = (0..width).find(|&x| column(x)).unwrap_or(0);
+    let right = (left..width).rev().find(|&x| column(x)).unwrap_or(left);
+    let reach = right.saturating_sub(left).min(bottom.saturating_sub(top)) / 2;
+    let clear = (0..reach)
+        .take_while(|&step| !solid(left.saturating_add(step), top.saturating_add(step)))
+        .count();
+    // A circle of radius r leaves r (1 - 1/sqrt 2) clear along its
+    // corner's diagonal.
+    let radius = clear as f64 / (1.0 - std::f64::consts::FRAC_1_SQRT_2);
+    let sx = rect.width as f64 / width as f64;
+    let sy = rect.height as f64 / height as f64;
+    let at =
+        |from: i64, by: usize, scale: f64| from.saturating_add((by as f64 * scale).round() as i64);
+    let x = at(rect.x, left, sx);
+    let y = at(rect.y, top, sy);
+    let shape = Rect::new(
+        x,
+        y,
+        at(rect.x, right.saturating_add(1), sx).saturating_sub(x),
+        at(rect.y, bottom.saturating_add(1), sy).saturating_sub(y),
+    );
+    Some((
+        shape,
+        Rounding::circle((radius * sx.min(sy)).round() as i64),
+    ))
 }
 
 /// A colour option that is an integer in Hyprland's table with -1 for

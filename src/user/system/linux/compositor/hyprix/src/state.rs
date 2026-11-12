@@ -7482,6 +7482,9 @@ fn place_layers(
                     no_screen_share: named.no_screen_share,
                     blur_popups: named.blur_popups,
                     order: named.order,
+                    ignore_alpha: named
+                        .ignore_alpha
+                        .map(|fraction| (fraction.clamp(0.0, 1.0) * 1000.0).round() as u16),
                 },
                 compositor_layout::layers::Request {
                     top: anchors.top,

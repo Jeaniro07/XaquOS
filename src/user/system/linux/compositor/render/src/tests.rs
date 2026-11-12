@@ -643,6 +643,7 @@ fn bar_frame_with_menu(menu: Option<bool>) -> Vec<u8> {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     if let Some(blur) = menu {
         layers.push(menu_frame(&menu_pixels, bar.rect, blur));
@@ -691,6 +692,7 @@ fn a_layer_drawn_at_half_its_rectangles_size_is_stretched_over_it() {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let _ = render_with_layers(
         &mut canvas,
@@ -1241,6 +1243,7 @@ fn menu_frame(pixels: &[u8], parent: Rect, blur: bool) -> LayerFrame<'_> {
         dim_around: false,
         blur,
         xray: false,
+        ignore_alpha: None,
     }
 }
 
@@ -1276,6 +1279,7 @@ fn a_locked_screen_is_the_lock_surface_and_nothing_else() {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let _ = render_with_layers(
         &mut canvas,
@@ -2657,6 +2661,7 @@ fn graded_frame(style: &Style) -> Vec<u8> {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let mut canvas = Canvas::new(width, height).unwrap();
     let full = Damage::full(width, height);
@@ -3190,6 +3195,7 @@ fn frame_over(
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let _ = render_onto(
         canvas,
@@ -3419,6 +3425,7 @@ fn an_xray_window_blurs_the_wallpaper_and_not_the_window_under_it() {
             dim_around: false,
             blur: false,
             xray: false,
+            ignore_alpha: None,
         }];
         let mut ruled = BTreeMap::new();
         let _previous = ruled.insert(
@@ -3730,6 +3737,7 @@ fn an_xray_bar_blurs_the_wallpaper_and_not_the_windows_under_it() {
                 dim_around: false,
                 blur: false,
                 xray: false,
+                ignore_alpha: None,
             },
             LayerFrame {
                 rect: strip,
@@ -3747,6 +3755,7 @@ fn an_xray_bar_blurs_the_wallpaper_and_not_the_windows_under_it() {
                 dim_around: false,
                 blur: true,
                 xray,
+                ignore_alpha: None,
             },
         ];
         let mut canvas = Canvas::new(WIDTH, HEIGHT).unwrap();
@@ -4297,6 +4306,7 @@ fn an_opaque_fullscreen_window_is_drawn_alone() {
         dim_around: false,
         blur: true,
         xray: true,
+        ignore_alpha: None,
     };
     let read = asked_with(&style, &full, (1920, 1080), Format::Xrgb8888, None, &[bar]);
     assert_eq!((read.cleared, read.kept, read.shadows), (screen, screen, 0));
@@ -4443,6 +4453,7 @@ fn a_window_drawn_alone_is_the_frame_presented() {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     };
     assert!(crate::alone(&layout, (0, 0), &styles, &surfaces, &[bar], &damage, bounds).is_none());
     let (maximized, _) = one_window(Rect::new(0, 0, 96, 64), 2, true);
@@ -4687,6 +4698,7 @@ fn switcher_over_white(style: &Style) -> Canvas {
             dim_around: false,
             blur: false,
             xray: false,
+            ignore_alpha: None,
         },
         LayerFrame {
             rect: screen,
@@ -4695,6 +4707,7 @@ fn switcher_over_white(style: &Style) -> Canvas {
             dim_around: false,
             blur: true,
             xray: false,
+            ignore_alpha: None,
         },
     ];
     let layout = MonitorLayout {
@@ -4805,6 +4818,7 @@ fn the_scrim_is_laid_only_where_a_blur_was_asked_for_and_none_is_drawn() {
         dim_around: false,
         blur,
         xray: false,
+        ignore_alpha: None,
     };
     let (layout, _) = one_window(Rect::new(100, 100, 400, 300), 0, false);
     let asked = |style: &Style, blur: bool| {
@@ -4838,6 +4852,119 @@ fn the_scrim_is_laid_only_where_a_blur_was_asked_for_and_none_is_drawn() {
         ..unblurred
     };
     assert_eq!(asked(&unset, true), (0, 0), "no scrim configured");
+}
+
+/// A rounded bar, `BAR` large: clear outside a rectangle 4 pixels in from
+/// its edges with corners cut 16 pixels round, white at 30% inside it,
+/// premultiplied, as yoru-shell's dock draws its glass.
+fn rounded_bar_pixels() -> Vec<u8> {
+    let (width, height) = BAR;
+    let (inset, radius) = (4.0_f32, 16.0_f32);
+    let mut bytes = Vec::with_capacity((width * height * 4) as usize);
+    for y in 0..height {
+        for x in 0..width {
+            let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
+            let cx = px.clamp(inset + radius, width as f32 - inset - radius);
+            let cy = py.clamp(inset + radius, height as f32 - inset - radius);
+            let inside = px >= inset
+                && py >= inset
+                && px <= width as f32 - inset
+                && py <= height as f32 - inset
+                && (px - cx).hypot(py - cy) <= radius;
+            let byte = if inside { 0x4D } else { 0 };
+            bytes.extend([byte; 4]);
+        }
+    }
+    bytes
+}
+
+/// The rounded bar's size.
+const BAR: (u32, u32) = (120, 48);
+
+/// The rounded bar over a green ground on a screen that draws no blur,
+/// asking for one, with `ignore_alpha` as given.
+fn rounded_bar_over_ground(ignore_alpha: Option<f32>) -> Canvas {
+    let (width, height) = BAR;
+    let ground = [0x20_u8, 0xA0, 0x40, 0xFF].repeat((width * height) as usize);
+    let ground = Surface::new(&ground, width, height, width * 4, Format::Xrgb8888).unwrap();
+    let bar = rounded_bar_pixels();
+    let bar = Surface::new(&bar, width, height, width * 4, Format::Argb8888).unwrap();
+    let screen = Rect::new(0, 0, i64::from(width), i64::from(height));
+    let layers = [
+        LayerFrame {
+            rect: screen,
+            above: false,
+            surface: Some(ground),
+            dim_around: false,
+            blur: false,
+            xray: false,
+            ignore_alpha: None,
+        },
+        LayerFrame {
+            rect: screen,
+            above: true,
+            surface: Some(bar),
+            dim_around: false,
+            blur: true,
+            xray: false,
+            ignore_alpha,
+        },
+    ];
+    let layout = MonitorLayout {
+        monitor: MonitorId(1),
+        workspace: compositor_layout::WorkspaceId(1),
+        windows: Vec::new(),
+    };
+    let style = Style {
+        blur: None,
+        blur_scrim: Some(SCRIM),
+        ..plain_style()
+    };
+    let mut canvas = Canvas::new(width, height).unwrap();
+    let _ = render_with_layers(
+        &mut canvas,
+        &layout,
+        (0, 0),
+        &Styles::plain(&style),
+        &BTreeMap::new(),
+        &layers,
+        &Damage::full(width, height),
+    );
+    canvas
+}
+
+/// Under `layerrule = ignore_alpha` the scrim is laid under a bar's opaque
+/// part only: its clear margin and the clear corners its rounding cuts
+/// show the ground untouched, while its middle has the scrim (Yoru's dock
+/// on a software screen, which showed a light square round its rounded
+/// glass). Without the rule the scrim covers the whole rectangle, as
+/// Hyprland's blur does.
+#[test]
+fn ignore_alpha_keeps_the_scrim_out_of_a_rounded_bars_clear_corners() {
+    let ground = 0xFF40_A020;
+    let ruled = rounded_bar_over_ground(Some(0.05));
+    let (width, height) = BAR;
+    for (x, y) in [
+        (1, 1),
+        (6, 6),
+        (width - 7, 6),
+        (6, height - 7),
+        (width - 7, height - 7),
+    ] {
+        assert_eq!(
+            ruled.pixel(x, y).map(|p| p | 0xFF00_0000),
+            Some(ground),
+            "{x},{y} is clear of the bar"
+        );
+    }
+    let middle = ruled.pixel(width / 2, height / 2).unwrap() | 0xFF00_0000;
+    assert_ne!(middle, ground, "the middle has the scrim");
+    let whole = rounded_bar_over_ground(None);
+    assert_ne!(
+        whole.pixel(6, 6).map(|p| p | 0xFF00_0000),
+        Some(ground),
+        "without the rule the corner has the scrim too"
+    );
 }
 
 /// `hyprix:blur_scrim` is read as a colour, unset by default, as every
