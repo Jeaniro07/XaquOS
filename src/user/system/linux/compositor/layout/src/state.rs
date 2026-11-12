@@ -1331,12 +1331,30 @@ impl State {
             return Err(Error::UnknownMonitor(monitor));
         }
         Ok(self.run(|state| {
+            let mut changed = false;
             if let Some(output) = state
                 .outputs
                 .iter_mut()
                 .find(|output| output.monitor.id == monitor)
             {
+                changed = output.monitor.reserved != reserved;
                 output.monitor.reserved = reserved;
+            }
+            // A strip reserved after the windows came -- a bar that maps
+            // late -- takes its place from them: a floating window it now
+            // covers moves out from under it, and a snapped one is snapped
+            // to the smaller area, as Hyprland re-arranges a monitor's
+            // windows when a layer's exclusive zone changes.
+            if changed {
+                let on: Vec<WorkspaceId> = state
+                    .workspaces
+                    .iter()
+                    .filter(|(_, ws)| ws.monitor == monitor)
+                    .map(|(id, _)| *id)
+                    .collect();
+                for workspace in on {
+                    state.keep_floating_inside(workspace);
+                }
             }
             Vec::new()
         }))

@@ -4691,3 +4691,35 @@ fn a_removed_monitors_floating_windows_are_pulled_inside_the_one_left() {
     let _shown = dispatch(&mut state, "workspace", &workspace.0.to_string());
     assert_eq!(rects(&state), [(1, r(920, 580, 1000, 500))]);
 }
+
+/// A layer surface that comes to reserve a strip after the windows are up
+/// -- yoru-shell's menu bar across the top -- moves a floating window its
+/// strip now covers down out of it, as Hyprland's `arrangeLayersForMonitor`
+/// does; a window clear of the strip stays where it is.
+#[test]
+fn a_newly_reserved_strip_moves_the_floating_windows_it_covers() {
+    let mut state = setup(BARE);
+    let _changes = state
+        .open_floating(WindowId(1), r(100, 10, 300, 200))
+        .unwrap();
+    let _changes = state
+        .open_floating(WindowId(2), r(600, 300, 300, 200))
+        .unwrap();
+    let top = Gaps {
+        top: 24,
+        right: 0,
+        bottom: 0,
+        left: 0,
+    };
+    let _changes = state.set_reserved(M1, top).unwrap();
+    let got = rects_on(&state, M1);
+    assert!(
+        got.iter()
+            .any(|&(id, rect)| id == 1 && rect.y >= 24 && rect.height == 200),
+        "the covered window moved below the strip: {got:?}"
+    );
+    assert!(
+        got.contains(&(2, r(600, 300, 300, 200))),
+        "the clear one stayed: {got:?}"
+    );
+}
