@@ -314,6 +314,25 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
             "the dock's gaps to the sides are {gap_left} and {gap_right}, not even"
         ));
     }
+    // Its corners are cut round and show the wallpaper: the box round the
+    // glass, at its top left, is not glass and matches the wallpaper just
+    // outside it, where a scrim or a blur laid over the layer's whole
+    // rectangle showed a light square.
+    let waist = screen.height - 40;
+    let Some(edge) = (0..screen.width).find(|&x| glass(pixel(x, waist), 0xe0, 0x10)) else {
+        return Err(format!("no dock's glass across row {waist}"));
+    };
+    let Some(top) =
+        (screen.height - 120..waist).find(|&y| glass(pixel(screen.width / 2, y), 0xe0, 0x10))
+    else {
+        return Err(format!("no dock's glass above row {waist}"));
+    };
+    let (corner, outside) = (pixel(edge, top), pixel(edge.saturating_sub(8), top));
+    if glass(corner, 0xe0, 0x10) || !near(corner, outside, 6) {
+        return Err(format!(
+            "the dock's corner at {edge},{top} is {corner:?}, not the wallpaper's {outside:?}"
+        ));
+    }
     let count = |ys: core::ops::Range<usize>, want: [i32; 3], by: i32| {
         (from..=to)
             .flat_map(|x| ys.clone().map(move |y| (x, y)))
@@ -338,7 +357,8 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
     }
     Ok(format!(
         "the light-glass wallpaper, {surface} pixels of title bar, {close} of close buttons, \
-         the menu bar ({left}/{right} of words), the dock {wide} wide at {middle} (gaps {gap_left}/{gap_right}), \
+         the menu bar ({left}/{right} of words), the dock {wide} wide at {middle} (gaps {gap_left}/{gap_right}, \
+         its corner at {edge},{top} the wallpaper), \
          {tile} of the terminal's tile, {dots} of dots"
     ))
 }
@@ -389,6 +409,12 @@ mod tests {
     fn dock(pixels: &mut [u8], left: usize, wide: usize) {
         let h = SCREEN.1;
         paint(pixels, left..left + wide, h - 74..h - 6, [0xf4, 0xf4, 0xf6]);
+        // Its corners cut round: the wallpaper shows in each.
+        for xs in [left..left + 6, left + wide - 6..left + wide] {
+            for ys in [h - 74..h - 68, h - 12..h - 6] {
+                paint(pixels, xs.clone(), ys, CORNER);
+            }
+        }
         paint(
             pixels,
             left + 10..left + 58,
@@ -433,6 +459,22 @@ mod tests {
     fn a_dock_across_the_screen_is_not() {
         let said = judge(&screen(desktop(SCREEN.0 - 24, true))).expect_err("too wide");
         assert!(said.contains("dock"), "{said}");
+    }
+
+    /// A dock whose glass is a square box -- a scrim or a blur laid over
+    /// the layer's whole rectangle, round its rounded glass -- is not.
+    #[test]
+    fn a_dock_with_square_corners_is_not() {
+        let mut pixels = desktop(301, true);
+        let (w, h) = SCREEN;
+        let left = (w - 301) / 2;
+        for xs in [left..left + 6, left + 301 - 6..left + 301] {
+            for ys in [h - 74..h - 68, h - 12..h - 6] {
+                paint(&mut pixels, xs.clone(), ys, [0xf4, 0xf4, 0xf6]);
+            }
+        }
+        let said = judge(&screen(pixels)).expect_err("square corners");
+        assert!(said.contains("corner"), "{said}");
     }
 
     /// A dock 40 pixels right of the middle: its gaps to the screen's
