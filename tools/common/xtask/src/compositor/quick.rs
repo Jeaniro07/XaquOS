@@ -43,7 +43,7 @@ fn at(qmp: &mut Qmp, (x, y): (i64, i64)) -> Result<()> {
 }
 
 /// A left press at `(x, y)`, the pointer there a moment first.
-fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
+pub(super) fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
     at(qmp, point)?;
     std::thread::sleep(Duration::from_millis(800));
     let button = |down: bool| {

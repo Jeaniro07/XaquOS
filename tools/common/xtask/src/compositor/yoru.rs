@@ -100,6 +100,13 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
             let still = last.as_ref() == Some(&screen);
             match verdict {
                 Ok(said) if still => {
+                    let said = if launcher {
+                        said
+                    } else {
+                        let menu = open_menu(&mut qmp, &screen, &dump)
+                            .map_err(|error| with_the_transcript(&error, watching))?;
+                        format!("{said}, {menu}")
+                    };
                     println!("  {arch}: yoru: {said}; the picture is {}", dump.display());
                     return Ok(());
                 }
@@ -130,6 +137,57 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
     };
     let _ = crate::qemu::watch_then(arch, &image, &kernel, &qemu_args, MARKER, hook)?;
     Ok(())
+}
+
+/// Press the first menu's title and judge the screen against `before`,
+/// dumped beside `dump` as `yoru-menu.ppm`; the menu is left open, the
+/// boot's last step.
+fn open_menu(qmp: &mut Qmp, before: &Image, dump: &std::path::Path) -> Result<String> {
+    super::quick::click(qmp, (18, 12))?;
+    let dump = dump.with_file_name("yoru-menu.ppm");
+    let mut why = String::new();
+    for _ in 0..5 {
+        std::thread::sleep(Duration::from_secs(1));
+        qmp.screendump(Some(DEVICE_ID), &dump)?;
+        let bytes = std::fs::read(&dump)
+            .map_err(|error| Error::new(format!("reading {}: {error}", dump.display())))?;
+        match judge_menu(before, &parse_ppm(&bytes)?) {
+            Ok(said) => return Ok(said),
+            Err(said) => why = said,
+        }
+    }
+    Err(Error::new(format!(
+        "yoru: {why}; the screen is {}",
+        dump.display()
+    )))
+}
+
+/// The first menu open on `after`: its dropdown (x 10 to 270, 26 down)
+/// changed what `before` had there, and the wallpaper beside it, right of
+/// it under the strip, is unchanged -- a blur or a scrim over the whole
+/// width of the open menu's layer changed it.
+fn judge_menu(before: &Image, after: &Image) -> core::result::Result<String, String> {
+    let changed = |xs: core::ops::Range<usize>, ys: core::ops::Range<usize>| {
+        xs.flat_map(|x| ys.clone().map(move |y| (x, y)))
+            .filter(|&(x, y)| {
+                let at = (y * before.width + x) * 3;
+                before.pixels.get(at..at + 3) != after.pixels.get(at..at + 3)
+            })
+            .count()
+    };
+    let dropped = changed(20..260, 40..140);
+    if dropped < 240 * 100 / 2 {
+        return Err(format!(
+            "no dropdown below the first menu: {dropped} pixels changed"
+        ));
+    }
+    let beside = changed(300..before.width - 24, 30..150);
+    if beside > 0 {
+        return Err(format!("{beside} pixels beside the dropdown changed"));
+    }
+    Ok(format!(
+        "the first menu dropped ({dropped} changed), the wallpaper beside it clear"
+    ))
 }
 
 /// A program built for `arch`, carried at `/<path>`.
@@ -365,8 +423,32 @@ fn judge(screen: &Image) -> core::result::Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{SCREEN, judge, judge_launcher};
+    use super::{SCREEN, judge, judge_launcher, judge_menu};
     use crate::display::Image;
+
+    /// The first menu open: its dropdown changed what was under it, and
+    /// the wallpaper beside it is as it was before the press. A layer as
+    /// wide as the screen scrimmed whole changes it there too; no menu at
+    /// all changes nothing.
+    #[test]
+    fn an_open_menu_leaves_the_wallpaper_beside_it_clear() {
+        let before = screen(CORNER.repeat(SCREEN.0 * SCREEN.1));
+        let paint = |right: usize| {
+            let mut pixels = before.pixels.clone();
+            for y in 26..150 {
+                for x in 10..right {
+                    let at = (y * SCREEN.0 + x) * 3;
+                    pixels[at..at + 3].copy_from_slice(&[0xf3, 0xf3, 0xf5]);
+                }
+            }
+            screen(pixels)
+        };
+        assert!(judge_menu(&before, &paint(270)).is_ok());
+        let band = judge_menu(&before, &paint(SCREEN.0)).expect_err("a band");
+        assert!(band.contains("beside"), "{band}");
+        let none = judge_menu(&before, &before).expect_err("no menu");
+        assert!(none.contains("dropdown"), "{none}");
+    }
 
     /// The wallpaper's corner colour, sand.
     const CORNER: [u8; 3] = [0xf6, 0xe3, 0xc9];
