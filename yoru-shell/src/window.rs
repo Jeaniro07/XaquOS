@@ -64,6 +64,45 @@ pub(crate) fn installed() -> Vec<(String, String, Option<String>)> {
         .collect()
 }
 
+/// The applications installed, as Spotlight and the Launchpad show them:
+/// exec lines with the codes stripped, the names as they are written, and
+/// the icons the dock's mapping widened gives.
+pub(crate) fn entries() -> Vec<crate::search::App> {
+    let var = |name: &str| std::env::var(name).ok();
+    let search = compositor_desktop::entry::Search::listing(&var);
+    compositor_desktop::entry::find_programs(&search)
+        .into_iter()
+        .filter(|app| app.visible)
+        .filter_map(|app| {
+            let exec = model::command(app.exec.as_deref()?);
+            let name = app.title_string();
+            let id = app.id?;
+            let key = id.strip_suffix(".desktop").unwrap_or(&id);
+            Some(crate::search::App {
+                exec,
+                title: if name.is_empty() { words(key) } else { name },
+                icon: model::icon_for(key, app.app_id.as_deref()),
+            })
+        })
+        .collect()
+}
+
+/// An id's words, as a name: `google-chrome` gives `Google Chrome`.
+fn words(id: &str) -> String {
+    let mut name = String::new();
+    for word in id.split(['-', '_', '.']).filter(|word| !word.is_empty()) {
+        if !name.is_empty() {
+            name.push(' ');
+        }
+        let mut letters = word.chars();
+        if let Some(first) = letters.next() {
+            name.extend(first.to_uppercase());
+            name.push_str(letters.as_str());
+        }
+    }
+    name
+}
+
 /// This program, to start its wallpaper switcher with.
 pub(crate) fn own_path() -> String {
     std::env::current_exe()

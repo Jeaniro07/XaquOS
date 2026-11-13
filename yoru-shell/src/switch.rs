@@ -31,7 +31,7 @@ use crate::window::say;
 pub const NAMESPACE: &str = "yoru-walls";
 
 /// The socket a second start finds the first by.
-fn socket(name: &str) -> Option<PathBuf> {
+pub(crate) fn socket(name: &str) -> Option<PathBuf> {
     if let Some(dir) = std::env::var("XDG_RUNTIME_DIR")
         .ok()
         .filter(|d| !d.is_empty())

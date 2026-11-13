@@ -19,6 +19,7 @@ pub mod search;
 pub mod shelf;
 pub mod side;
 pub mod sound;
+pub mod spotlight;
 pub mod stash;
 pub mod switch;
 pub mod theme;

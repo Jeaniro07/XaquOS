@@ -122,6 +122,40 @@ pub fn render_walls(
     Some(frame)
 }
 
+/// The spotlight as drawn for a picture: the sample query `te` and its
+/// rows, over a clear ground.
+#[must_use]
+pub fn render_spotlight(size: (u32, u32), scale: f32) -> Option<tole::Frame> {
+    let apps = vec![
+        crate::search::App {
+            exec: "/bin/term /bin/zinc".to_owned(),
+            title: "Terminal".to_owned(),
+            icon: "terminal-window",
+        },
+        crate::search::App {
+            exec: "/bin/shelf".to_owned(),
+            title: "Files".to_owned(),
+            icon: "folder-simple",
+        },
+        crate::search::App {
+            exec: "/bin/chrome".to_owned(),
+            title: "Chrome for Testing".to_owned(),
+            icon: "globe-simple",
+        },
+    ];
+    let mut state = crate::spotlight::State::new(apps);
+    state.set_windows(vec![("0x9".to_owned(), "notes.md — Files".to_owned())]);
+    state.type_in("te");
+    let mut view = crate::spotlight::View::new(crate::look::fonts())?;
+    view.ui.set_scale(scale);
+    view.resize(size);
+    view.show(&state);
+    view.ui.update();
+    let mut frame = tole::Frame::new(size, scale, tole::Color::rgba(0, 0, 0, 0))?;
+    let _ = view.ui.render_into(&mut frame);
+    Some(frame)
+}
+
 /// The stash panel as drawn for a picture: five files of the four tinted
 /// kinds.
 #[must_use]
@@ -350,11 +384,37 @@ pub fn main() -> ExitCode {
             }
         };
     }
+    if arguments.iter().any(|word| word == "--spotlight") {
+        return if crate::spotlight::run() == 0 {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        };
+    }
     if arguments.iter().any(|word| word == "--walls") {
         return if crate::switch::run() == 0 {
             ExitCode::SUCCESS
         } else {
             ExitCode::FAILURE
+        };
+    }
+    if let Some(at) = arguments.iter().position(|word| word == "--render-spotlight") {
+        let Some(path) = arguments.get(at + 1) else {
+            eprintln!("yoru-shell: --render-spotlight needs a file");
+            return ExitCode::FAILURE;
+        };
+        let Some(frame) = render_spotlight((1024, 768), 1.0) else {
+            eprintln!("yoru-shell: the spotlight could not be drawn");
+            return ExitCode::FAILURE;
+        };
+        let pixmap = frame.pixmap();
+        let png = tole::png::encode(pixmap.width(), pixmap.height(), pixmap.data());
+        return match std::fs::write(path, png) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("yoru-shell: {path}: {error}");
+                ExitCode::FAILURE
+            }
         };
     }
     if let Some(at) = arguments.iter().position(|word| word == "--render-walls") {

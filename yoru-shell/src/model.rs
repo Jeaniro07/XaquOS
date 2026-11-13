@@ -274,6 +274,29 @@ pub fn launchers(installed: &[(String, String, Option<String>)]) -> Vec<Launcher
     out
 }
 
+/// The Phosphor icon for an application, from its desktop-file id and its
+/// window class: the dock's mapping, widened. Empty for the letter tile.
+#[must_use]
+pub fn icon_for(id: &str, class: Option<&str>) -> &'static str {
+    let mut both = id.to_lowercase();
+    if let Some(class) = class {
+        both.push(' ');
+        both.push_str(&class.to_lowercase());
+    }
+    let has = |words: &[&str]| words.iter().any(|word| both.contains(word));
+    if has(&["chrome", "chromium", "firefox"]) {
+        "globe-simple"
+    } else if has(&["shelf", "nautilus", "finder"]) {
+        "folder-simple"
+    } else if has(&["settings"]) {
+        "gear-six"
+    } else if has(&["term", "console"]) {
+        "terminal-window"
+    } else {
+        ""
+    }
+}
+
 /// A desktop entry's `Exec` without its field codes (`%U`, `%f`).
 #[must_use]
 pub fn command(exec: &str) -> String {
