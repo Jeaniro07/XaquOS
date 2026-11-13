@@ -35,6 +35,12 @@ Phosphor for icons. An app (Ferrix's
   person at the machine (Ferrix's docs/INIT.md §10.1); a refusal is shown in
   the card. `--render-power FILE [--live] [--confirm]` draws it.
 
+An application with menus of its own (`ferrix_appmenu_v1`, tole's
+`Window::set_menu`) gets them in the bar between its name and Window while
+it is focused: the bar asks `hyprctl appmenu` when the focus moves or
+socket2 says `appmenu>>`, and a pick goes back as
+`hyprctl dispatch appmenu <address> <id>`. A checked item shows a check.
+
 The sidebars (`--sidebar left|right`) are no longer started by the theme;
 their contents move to Control Center and Notices (A4).
 
