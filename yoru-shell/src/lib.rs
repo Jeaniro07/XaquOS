@@ -15,6 +15,7 @@ pub mod model;
 pub mod picker;
 pub mod power;
 pub mod quick;
+pub mod search;
 pub mod shelf;
 pub mod side;
 pub mod sound;
