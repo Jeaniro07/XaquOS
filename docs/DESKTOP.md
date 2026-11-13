@@ -1052,3 +1052,24 @@ The stash, the wallpaper picker and the widgets (the weather and most
 quick settings with them) are built, as the customer asked them in that order; and Files is
 shelf, wired into Yoru: the dock's Files, the stash's folder and a folder's
 default handler (`inode/directory`, `xdg-open`) open it (boot `files`).
+
+### 6.8 Application menus
+
+An application can put its own menus in the menu bar with
+`ferrix_appmenu_v1` (`compositor/protocol/protocols/ferrix-appmenu-v1.xml`):
+`get_menu` for one of its toplevels, then `add_menu`, `add_item`,
+`add_separator` and `commit`. At most 16 menus, 256 entries, 128-byte labels;
+anything else is a protocol error. tole wraps it as `Window::set_menu` and
+`Window::take_menu_picks`.
+
+hyprix tells socket2 `appmenu>>` when any menu changes. `hyprctl appmenu`
+answers the focused window's tree as tab-separated lines (`window`, `menu`,
+`item <id> <flags> <label> <keys>`, `line`) or `none`.
+`hyprctl dispatch appmenu <address> <id>` sends `activated` to the owner.
+
+The bar puts the application's menus between its name and Window. A window
+without its own menus keeps the standard ones. Submenus are not in version 1.
+Files has File, Edit, View and Go; Settings has View, one item per page.
+
+The `appmenu` boot opens Files, checks File reaches the bar, drops it and
+picks New Tab.

@@ -58,6 +58,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+mod appmenu;
 mod apps;
 mod bench;
 mod boot;
@@ -809,7 +810,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 72] = [
+const BOOTS: [(&str, Boot); 73] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
@@ -865,6 +866,7 @@ const BOOTS: [(&str, Boot); 72] = [
     ("stash", stash::test_stash),
     ("sidebars", sidebars::test_sidebars),
     ("files", files::test_files),
+    ("appmenu", appmenu::test_appmenu),
     ("weather", weather::test_weather),
     ("quick", quick::test_quick),
     ("chrome-yoru", chrome_yoru::test_chrome_yoru),
