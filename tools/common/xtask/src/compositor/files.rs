@@ -41,14 +41,14 @@ done
 "#;
 
 /// The pointer to `(x, y)`.
-fn at(qmp: &mut Qmp, (x, y): (i64, i64)) -> Result<()> {
+pub(super) fn at(qmp: &mut Qmp, (x, y): (i64, i64)) -> Result<()> {
     let ax = i32::try_from(x.clamp(0, SCREEN.0 - 1) * 0x7fff / (SCREEN.0 - 1)).unwrap_or(0);
     let ay = i32::try_from(y.clamp(0, SCREEN.1 - 1) * 0x7fff / (SCREEN.1 - 1)).unwrap_or(0);
     qmp.input_send_event(&[absolute("x", ax), absolute("y", ay)])
 }
 
 /// A left press where the pointer is.
-fn press_here(qmp: &mut Qmp) -> Result<()> {
+pub(super) fn press_here(qmp: &mut Qmp) -> Result<()> {
     let button = |down: bool| {
         format!("{{\"type\":\"btn\",\"data\":{{\"down\":{down},\"button\":\"left\"}}}}")
     };
