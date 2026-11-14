@@ -86,8 +86,17 @@ export component Launchpad : Item {
         }
     }
 
+    // The gap between the dots is a press of its own, so it does nothing.
+    MouseArea {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: pad.height - 44
+        width: dotsRow.implicitWidth
+        height: 16
+    }
+
     // The pages, as dots at the foot.
     Row {
+        id: dotsRow
         anchors.horizontalCenter: parent.horizontalCenter
         y: pad.height - 40
         spacing: 12

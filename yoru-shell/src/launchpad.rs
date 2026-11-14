@@ -27,6 +27,9 @@ use crate::window::{entries, say};
 /// The surface's namespace.
 pub const NAMESPACE: &str = "yoru-launchpad";
 
+// Ponytail: the grid is a fixed eight by five -- no row of leftovers and
+// no scrolling; the applications past the fortieth are on the next page.
+// Upgrade path: a last page with the room left, when the grid grows.
 /// The columns on a page.
 pub const COLUMNS: usize = 8;
 /// The rows on a page.
@@ -150,11 +153,24 @@ fn s(value: impl AsRef<str>) -> Rc<str> {
 }
 
 /// A word's first letter, for the tile where there is no icon.
+// Ponytail: an application with no Phosphor name is a letter tile, as the
+// dock's is. Upgrade path: the application's own icon, rasterised, once
+// tole reads SVG.
 fn first(text: &str) -> String {
     text.chars()
         .next()
         .map(|letter| letter.to_uppercase().collect())
         .unwrap_or_default()
+}
+
+/// Where the tiles go on the page in hand, as a boot test reads them:
+/// `x,y,w,h` for each tile, in tile order.
+fn tiles_line(grid: &Grid, width: f32, height: f32) -> String {
+    let tiles: Vec<String> = place(grid, width, height)
+        .iter()
+        .map(|(x, y, w, h)| format!("{x:.0},{y:.0},{w:.0},{h:.0}"))
+        .collect();
+    format!("launchpad: tiles {}", tiles.join(" "))
 }
 
 /// The tree and what the program keeps of it.
@@ -287,6 +303,9 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
             .with(Anchor::RIGHT),
         exclusive_zone: -1,
         margin: Margin::default(),
+        // Ponytail: the pad takes no keyboard (the plan's decision 5): it
+        // closes on SUPER L again or on a press off the grid. Upgrade path:
+        // arrow keys and a type-ahead, when the plan asks for them.
         keyboard: KeyboardInteractivity::None,
     };
     let options = WindowOptions {
@@ -321,15 +340,18 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
         if let Some(now) = window.size()
             && size != Some(now)
         {
-            if size.is_none() {
+            let up = size.is_none();
+            size = Some(now);
+            view.resize(now);
+            if up {
                 say(&format!(
                     "launchpad is up, {} apps, {} pages",
                     grid.apps.len(),
                     grid.pages()
                 ));
+                // Where the tiles are, so a boot test can click one.
+                say(&tiles_line(&grid, now.0 as f32, now.1 as f32));
             }
-            size = Some(now);
-            view.resize(now);
             changed = true;
         }
         for event in happened {
@@ -355,7 +377,10 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
             let done = hypr
                 .as_ref()
                 .is_some_and(|hypr| hypr.dispatch(&format!("exec {exec}")));
-            say(&format!("launchpad: run {exec}"));
+            say(&format!(
+                "launchpad: run {exec}: {}",
+                if done { "ok" } else { "refused" }
+            ));
             if done {
                 return 0;
             }
@@ -481,5 +506,51 @@ mod tests {
         assert!(exec.is_none());
         assert!(!close && changed, "the dot turned the page");
         assert_eq!(grid.page(), 1);
+    }
+
+    #[test]
+    fn a_press_in_the_gap_between_the_dots_does_nothing() {
+        let many: Vec<crate::search::App> = (0..80)
+            .map(|n| crate::search::App {
+                exec: format!("/bin/app{n}"),
+                title: format!("App {n:02}"),
+                icon: "",
+            })
+            .collect();
+        let mut grid = Grid::new(many, 8, 5);
+        let mut view = View::new(crate::look::fonts()).expect("made");
+        view.ui.set_window_active(true);
+        view.resize((1024, 768));
+        view.show(&grid);
+        view.ui.update();
+        // Between the two dots: the pad stays up and the page stays.
+        view.ui.pointer_move(1024.0 / 2.0, 768.0 - 40.0 + 4.0);
+        view.ui.pointer_press();
+        view.ui.pointer_release();
+        let (exec, close, changed) = view.take(&mut grid);
+        assert!(exec.is_none());
+        assert!(!close, "the gap between the dots does not close the pad");
+        assert!(!changed);
+        assert_eq!(grid.page(), 0);
+    }
+
+    #[test]
+    fn the_tiles_are_announced_where_they_are() {
+        let grid = Grid::new(apps(), 8, 5);
+        let line = super::tiles_line(&grid, 1024.0, 768.0);
+        assert!(line.starts_with("launchpad: tiles "), "{line}");
+        let tiles: Vec<&str> = line
+            .trim_start_matches("launchpad: tiles ")
+            .split(' ')
+            .collect();
+        assert_eq!(tiles.len(), 2, "one rectangle per application");
+        let first: Vec<f32> = tiles[0]
+            .split(',')
+            .map(|n| n.parse().expect("a number"))
+            .collect();
+        assert_eq!(first.len(), 4, "x,y,w,h");
+        let placed = super::place(&grid, 1024.0, 768.0);
+        assert_eq!(first[0], placed[0].0.round());
+        assert_eq!(first[1], placed[0].1.round());
     }
 }
