@@ -8,6 +8,7 @@
 
 pub mod bridge;
 pub mod bus;
+pub mod feed;
 pub mod paint;
 pub mod store;
 

@@ -2,6 +2,10 @@
 //! driver's death becomes one (`docs/DESKTOP.md` §4.2). Pure: no socket,
 //! no surface, no clock but the one passed in.
 
+use std::sync::Arc;
+
+use crate::feed::Shared;
+
 /// How urgent a notification is: the `urgency` hint's byte.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Urgency {
@@ -101,11 +105,15 @@ pub struct Asked {
 #[derive(Clone, Debug, Default)]
 pub struct Store {
     shown: Vec<Note>,
-    history: Vec<Note>,
+    /// The history, which the shell's Notices reads over the socket.
+    feed: Shared,
     next_id: u32,
     /// Do not disturb: a notification goes to the list without a banner,
     /// unless it is critical.
     quiet: bool,
+    /// Someone else draws the banners (the shell's Notices), so this one
+    /// keeps its notes to the history alone.
+    elsewhere: bool,
 }
 
 /// The do-not-disturb file, which the desktop's quick settings make and
@@ -122,7 +130,7 @@ pub fn quiet_file(config_home: Option<&str>, home: Option<&str>) -> Option<std::
 }
 
 /// How many notifications the list keeps.
-pub const HISTORY: usize = 20;
+pub const HISTORY: usize = 50;
 
 /// How many banners show at once; the oldest goes first past this.
 pub const SHOWN: usize = 3;
@@ -136,8 +144,28 @@ impl Store {
 
     /// The recent notifications, newest first.
     #[must_use]
-    pub fn history(&self) -> &[Note] {
-        &self.history
+    pub fn history(&self) -> Vec<Note> {
+        self.feed
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .list(HISTORY)
+    }
+
+    /// The history, as the socket's threads share it.
+    #[must_use]
+    pub fn feed(&self) -> Shared {
+        Arc::clone(&self.feed)
+    }
+
+    /// Someone else draws the banners: the notes go to the history alone.
+    pub fn set_elsewhere(&mut self, elsewhere: bool) {
+        self.elsewhere = elsewhere;
+    }
+
+    /// Whether someone else draws the banners.
+    #[must_use]
+    pub fn elsewhere(&self) -> bool {
+        self.elsewhere
     }
 
     /// A notification from the bus, at `now_ms`: its id, which is
@@ -228,10 +256,11 @@ impl Store {
 
     fn put(&mut self, note: Note) -> (u32, Vec<u32>) {
         let id = note.id;
-        self.history.retain(|kept| kept.id != id);
-        self.history.insert(0, note.clone());
-        self.history.truncate(HISTORY);
-        if self.quiet && note.urgency != Urgency::Critical {
+        self.feed
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .put(note.clone());
+        if self.elsewhere || (self.quiet && note.urgency != Urgency::Critical) {
             return (id, Vec::new());
         }
         match self.shown.iter_mut().find(|shown| shown.id == id) {
@@ -268,7 +297,10 @@ impl Store {
 
     /// Forget the list.
     pub fn clear_history(&mut self) {
-        self.history.clear();
+        self.feed
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clear();
     }
 }
 

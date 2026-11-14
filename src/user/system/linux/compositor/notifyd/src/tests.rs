@@ -114,7 +114,7 @@ fn banners_are_drawn_and_clicked() {
     assert_eq!(paint::hit(&areas, 30.0, 30.0), Some(Hit::Banner(id)));
     assert_eq!(paint::hit(&areas, 2.0, 2.0), None, "the gap round it");
     assert!(paint::banners(&mut fonts, &[], 1).is_none());
-    let (_, _, areas) = paint::list(&mut fonts, store.history(), 1).expect("the list");
+    let (_, _, areas) = paint::list(&mut fonts, &store.history(), 1).expect("the list");
     assert!(
         areas
             .iter()

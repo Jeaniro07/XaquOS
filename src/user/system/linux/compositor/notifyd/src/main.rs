@@ -15,11 +15,14 @@ use std::os::linux::net::SocketAddrExt as _;
 use std::os::unix::fs::MetadataExt as _;
 use std::os::unix::net::{SocketAddr, UnixStream};
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use compositor_dbus::{Connection, Message, session_path};
 use compositor_notifyd::bridge::{Lines, SOCKET};
 use compositor_notifyd::bus::{self, NAME, closed, invoked};
+use compositor_notifyd::feed;
 use compositor_notifyd::paint::{self, Area, Hit};
 use compositor_notifyd::store::{Reason, Store, from_alert_line, from_driver_line, quiet_file};
 use compositor_text::Fonts;
@@ -125,14 +128,46 @@ fn run() -> Result<(), String> {
     daemon.connect_bus();
     daemon.connect_events();
     daemon.connect_alerts();
+    // The socket the shell's Notices reads the history from, and the
+    // count of those watching it: while one is, it draws the banners.
+    let subscribers = Arc::new(AtomicUsize::new(0));
+    serve_socket(daemon.store.feed(), &subscribers);
     loop {
         let events = daemon
             .client
             .dispatch(None)
             .map_err(|error| error.to_string())?;
+        let watching = subscribers.load(Ordering::SeqCst) > 0;
+        if watching != daemon.store.elsewhere() {
+            daemon.store.set_elsewhere(watching);
+            daemon.changed();
+        }
         for event in events {
             daemon.on(event);
         }
+    }
+}
+
+/// The socket the shell reads the notices from, on a thread of its own.
+fn serve_socket(feed: feed::Shared, subscribers: &Arc<AtomicUsize>) {
+    let Some(path) = feed::socket_path() else {
+        say("notifyd: no runtime folder: the notices are not served");
+        return;
+    };
+    let feed = Arc::clone(&feed);
+    let subscribers = Arc::clone(subscribers);
+    let spawned = std::thread::Builder::new()
+        .name("notifyd-socket".to_owned())
+        .spawn(move || {
+            if let Err(error) = feed::serve(&path, feed, subscribers) {
+                say(&format!(
+                    "notifyd: the socket at {}: {error}",
+                    path.display()
+                ));
+            }
+        });
+    if let Err(error) = spawned {
+        say(&format!("notifyd: the socket's thread: {error}"));
     }
 }
 
@@ -288,7 +323,7 @@ impl Daemon {
             .as_ref()
             .map_or(1, |shown| self.client.scale(shown.surface));
         let painted = if self.list_open {
-            paint::list(&mut self.fonts, self.store.history(), scale)
+            paint::list(&mut self.fonts, &self.store.history(), scale)
         } else {
             paint::banners(&mut self.fonts, self.store.shown(), scale)
         };
