@@ -97,6 +97,8 @@ struct Daemon {
     alerts: Option<(UnixStream, WatchId)>,
     alert_lines: Lines,
     ever_connected: bool,
+    /// Whether someone watches the history: it draws the banners then.
+    watching: bool,
     expiry: Option<TimerId>,
     retry: TimerId,
 }
@@ -121,6 +123,7 @@ fn run() -> Result<(), String> {
         alerts: None,
         alert_lines: Lines::default(),
         ever_connected: false,
+        watching: false,
         expiry: None,
         retry,
     };
@@ -138,8 +141,8 @@ fn run() -> Result<(), String> {
             .dispatch(None)
             .map_err(|error| error.to_string())?;
         let watching = subscribers.load(Ordering::SeqCst) > 0;
-        if watching != daemon.store.elsewhere() {
-            daemon.store.set_elsewhere(watching);
+        if watching != daemon.watching {
+            daemon.watching = watching;
             daemon.changed();
         }
         for event in events {
@@ -325,7 +328,8 @@ impl Daemon {
         let painted = if self.list_open {
             paint::list(&mut self.fonts, &self.store.history(), scale)
         } else {
-            paint::banners(&mut self.fonts, self.store.shown(), scale)
+            // Someone watching the history draws the banners then.
+            paint::banners_unless(&mut self.fonts, self.store.shown(), scale, self.watching)
         };
         let Some((pixmap, _height, areas)) = painted else {
             if let Some(shown) = self.shown.take() {

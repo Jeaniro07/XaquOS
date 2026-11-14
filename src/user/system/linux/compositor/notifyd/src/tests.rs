@@ -2,6 +2,7 @@
 //! drawing and clicks.
 
 use compositor_dbus::{Kind, Message, Writer};
+use compositor_text::Fonts;
 
 use crate::bus::{CAPABILITIES, NAME, PATH, handle};
 use crate::paint::{self, Hit};
@@ -91,7 +92,7 @@ fn the_server_says_what_it_is() {
 /// the action, the cross or the banner, innermost first.
 #[test]
 fn banners_are_drawn_and_clicked() {
-    let mut fonts = compositor_text::Fonts::system();
+    let mut fonts = Fonts::system();
     let mut store = Store::default();
     let _ = handle(
         &mut store,
@@ -119,6 +120,51 @@ fn banners_are_drawn_and_clicked() {
         areas
             .iter()
             .any(|area| area.hit == Hit::Action(0, "clear".to_owned()))
+    );
+}
+
+/// While the shell watches the history, it draws the banners: notifyd
+/// paints none, and the notes are still where they were — a replacement
+/// still replaces, and a driver's banner still carries its count.
+#[test]
+fn a_watcher_takes_the_banners_and_the_notes_stay() {
+    let mut store = Store::default();
+    let (first, _) = store.notify(
+        crate::store::Asked {
+            app: "Files".to_owned(),
+            summary: "one".to_owned(),
+            timeout_ms: -1,
+            ..crate::store::Asked::default()
+        },
+        0,
+    );
+    let _ = store.notify_keyed(
+        "driver:0x00000010",
+        "Graphics driver crashed, restarting".to_owned(),
+        String::new(),
+        Urgency::Normal,
+        0,
+    );
+    assert_eq!(store.shown().len(), 2, "the notes are still shown");
+    let mut again = crate::store::Asked {
+        app: "Files".to_owned(),
+        summary: "one again".to_owned(),
+        timeout_ms: -1,
+        replaces: first,
+        ..crate::store::Asked::default()
+    };
+    again.replaces = first;
+    let (same, _) = store.notify(again, 10);
+    assert_eq!(same, first, "the replacement keeps its id");
+    assert_eq!(store.shown().len(), 2, "and its place");
+    let mut fonts = Fonts::system();
+    assert!(
+        paint::banners_unless(&mut fonts, store.shown(), 1, true).is_none(),
+        "no banners while someone watches"
+    );
+    assert!(
+        paint::banners_unless(&mut fonts, store.shown(), 1, false).is_some(),
+        "the banners are back"
     );
 }
 

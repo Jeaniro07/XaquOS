@@ -92,6 +92,20 @@ pub fn banners(fonts: &mut Fonts, notes: &[Note], scale: u32) -> Option<(Pixmap,
     Some((pixmap, total.ceil() as u32, areas))
 }
 
+/// The banners painted, or none while someone else draws them: the
+/// shell's Notices does, when it watches the history.
+pub fn banners_unless(
+    fonts: &mut Fonts,
+    notes: &[Note],
+    scale: u32,
+    watching: bool,
+) -> Option<(Pixmap, u32, Vec<Area>)> {
+    if watching {
+        return None;
+    }
+    banners(fonts, notes, scale)
+}
+
 /// The list of recent notifications, newest first, under a "Clear"
 /// button: the pixmap, its height and its areas. The clear button's hit is
 /// `Action(0, "clear")`.

@@ -111,9 +111,6 @@ pub struct Store {
     /// Do not disturb: a notification goes to the list without a banner,
     /// unless it is critical.
     quiet: bool,
-    /// Someone else draws the banners (the shell's Notices), so this one
-    /// keeps its notes to the history alone.
-    elsewhere: bool,
 }
 
 /// The do-not-disturb file, which the desktop's quick settings make and
@@ -155,17 +152,6 @@ impl Store {
     #[must_use]
     pub fn feed(&self) -> Shared {
         Arc::clone(&self.feed)
-    }
-
-    /// Someone else draws the banners: the notes go to the history alone.
-    pub fn set_elsewhere(&mut self, elsewhere: bool) {
-        self.elsewhere = elsewhere;
-    }
-
-    /// Whether someone else draws the banners.
-    #[must_use]
-    pub fn elsewhere(&self) -> bool {
-        self.elsewhere
     }
 
     /// A notification from the bus, at `now_ms`: its id, which is
@@ -244,8 +230,16 @@ impl Store {
     }
 
     /// Do not disturb on or off. Banners already up stay until they go.
+    ///
+    /// The feed is told too: the shell is told, so that it lists the
+    /// notices but does not banner them. The do-not-disturb stays here,
+    /// at the source; the shell only follows it.
     pub fn set_quiet(&mut self, quiet: bool) {
         self.quiet = quiet;
+        self.feed
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .set_quiet(quiet);
     }
 
     /// Whether do not disturb is on.
@@ -260,7 +254,7 @@ impl Store {
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .put(note.clone());
-        if self.elsewhere || (self.quiet && note.urgency != Urgency::Critical) {
+        if self.quiet && note.urgency != Urgency::Critical {
             return (id, Vec::new());
         }
         match self.shown.iter_mut().find(|shown| shown.id == id) {
@@ -432,6 +426,26 @@ mod tests {
         let (_, pushed) = store.notify(asked("d"), 0);
         assert_eq!(pushed, [1]);
         assert_eq!(store.shown().len(), 3);
+    }
+
+    /// The do-not-disturb is at the store, and the feed is told, so that
+    /// the shell lists the notices but does not banner them.
+    #[test]
+    fn the_do_not_disturb_reaches_the_feed() {
+        let mut store = Store::default();
+        let quiet = |store: &Store| {
+            store
+                .feed()
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .quiet()
+        };
+        assert!(!quiet(&store), "not yet");
+        store.set_quiet(true);
+        assert!(store.quiet());
+        assert!(quiet(&store), "the feed is told");
+        store.set_quiet(false);
+        assert!(!quiet(&store));
     }
 
     /// A driver's lines become one notification per device, counted, and a
