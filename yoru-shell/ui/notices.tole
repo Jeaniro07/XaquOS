@@ -15,6 +15,7 @@ export component Notices : Item {
     property list<NoticeTile> banners
     property list<NoticeTile> tiles
     property bool open
+    property bool quiet
     property string status
     property real bannerH
     property real tileH
@@ -90,7 +91,7 @@ export component Notices : Item {
         border.color: alpha(Nocturne.text, 0.14)
         Text {
             x: 18; y: 14
-            text: "Notifications"
+            text: notices.quiet ? "Notifications (do not disturb)" : "Notifications"
             font: Nocturne.sans(13, 600)
             color: Nocturne.text
         }

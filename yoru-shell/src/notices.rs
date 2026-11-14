@@ -36,6 +36,8 @@ const GAP: f32 = 8.0;
 /// A tile's height in the panel.
 const TILE: f32 = 54.0;
 /// How many tiles the panel shows.
+// Ponytail: five of the fifty the history holds. Upgrade path: a
+// flickable column, when the older half of the history is wanted.
 const TILES: usize = 5;
 /// How many banners are up at once; the oldest goes first past this.
 const MAX_BANNERS: usize = 3;
@@ -49,6 +51,8 @@ const TICK: Duration = Duration::from_millis(200);
 const RETRY: Duration = Duration::from_secs(2);
 
 /// Whether the panel is open; the menu bar's clock asks for it.
+// Ponytail: a flag in the process, as the menu bar is a thread of the
+// dock's program. Upgrade path: a socket, if the bar ever runs alone.
 static OPEN: AtomicBool = AtomicBool::new(false);
 
 /// One notice, as the socket carries it.
@@ -114,6 +118,11 @@ pub struct State {
     banners: Vec<(Notice, Instant)>,
     open: bool,
     connected: bool,
+    /// Whether the history has been replayed and what follows is new.
+    live: bool,
+    /// Whether notifyd's do-not-disturb is on: the notices are listed,
+    /// but they do not banner.
+    quiet: bool,
 }
 
 impl State {
@@ -123,16 +132,50 @@ impl State {
         State::default()
     }
 
-    /// A notice comes in: into the history and up as a banner.
+    /// A notice comes in: into the history always, and up as a banner
+    /// when it is new and the do-not-disturb is off.
+    ///
+    /// The replayed history — what notifyd sends when the connection is
+    /// made — is listed but never bannered: those notices are old, and
+    /// the newest ones are the ones that should be shown.
     pub fn push(&mut self, notice: Notice, now: Instant) {
         self.history.retain(|kept| kept.id != notice.id);
         self.history.insert(0, notice.clone());
         self.history.truncate(HISTORY);
+        if !self.live || self.quiet {
+            return;
+        }
         self.banners.retain(|(_, until)| *until > now);
         self.banners.insert(0, (notice, now + LIFETIME));
         while self.banners.len() > MAX_BANNERS {
             self.banners.pop();
         }
+    }
+
+    /// The replay of the history has ended; what follows is new.
+    pub fn set_live(&mut self, live: bool) -> bool {
+        let changed = self.live != live;
+        self.live = live;
+        changed
+    }
+
+    /// Whether what comes is new.
+    #[must_use]
+    pub fn live(&self) -> bool {
+        self.live
+    }
+
+    /// Notifyd's do-not-disturb, on or off; whether it changed.
+    pub fn set_quiet(&mut self, quiet: bool) -> bool {
+        let changed = self.quiet != quiet;
+        self.quiet = quiet;
+        changed
+    }
+
+    /// Whether notifyd's do-not-disturb is on.
+    #[must_use]
+    pub fn quiet(&self) -> bool {
+        self.quiet
     }
 
     /// The banners whose time is up; whether any went.
@@ -207,11 +250,15 @@ fn s(value: impl AsRef<str>) -> Rc<str> {
 }
 
 /// The panel's place under the banners.
+// Ponytail: a fixed place, so the panel does not jump when a banner
+// comes or goes. Upgrade path: the panel below the banners that are up.
 fn panel_y() -> f32 {
     MAX_BANNERS as f32 * (BANNER + GAP)
 }
 
-/// The panel's height.
+/// The panel's height: its head, the tiles and the Clear button.
+// Ponytail: no scrolling — the card is as tall as the tiles it shows.
+// Upgrade path: a flickable column, when the history is longer.
 fn panel_h() -> f32 {
     44.0 + TILES as f32 * TILE + 8.0
 }
@@ -278,6 +325,7 @@ impl View {
         self.notices.banners.set(ui, banners);
         self.notices.tiles.set(ui, tiles);
         self.notices.open.set(ui, state.open());
+        self.notices.quiet.set(ui, state.quiet());
         self.notices.status.set(
             ui,
             s(if state.connected() {
@@ -480,12 +528,15 @@ fn connect_later(
     };
     *socket = Some(stream);
     *watch = Some(id);
+    // The history comes again: it is a replay, and only what follows it
+    // is new.
+    let _ = state.set_live(false);
     let _ = state.set_connected(true);
     say("notices: notifyd is there");
     true
 }
 
-/// The socket's lines, read into notices; whether anything came.
+/// The socket's lines, read into notices; whether anything changed.
 fn read_from(
     window: &mut Window,
     socket: &mut Option<UnixStream>,
@@ -496,7 +547,7 @@ fn read_from(
     let Some(stream) = socket.as_mut() else {
         return false;
     };
-    let mut came = 0;
+    let mut changed = false;
     if crate::window::drain(stream, pending) {
         while let Some(end) = pending.find('\n') {
             let line: String = pending.drain(..=end).collect();
@@ -504,9 +555,23 @@ fn read_from(
             if line.is_empty() {
                 continue;
             }
+            // The end of the replay: what follows is new.
+            if line == "live" {
+                changed |= state.set_live(true);
+                continue;
+            }
+            // The do-not-disturb, which stays at notifyd's source.
+            if line == "quiet on" {
+                changed |= state.set_quiet(true);
+                continue;
+            }
+            if line == "quiet off" {
+                changed |= state.set_quiet(false);
+                continue;
+            }
             for notice in parse(&[line]) {
                 state.push(notice, Instant::now());
-                came += 1;
+                changed = true;
             }
         }
     } else {
@@ -515,9 +580,10 @@ fn read_from(
             window.client().unwatch_fd(id);
         }
         *socket = None;
-        let _ = state.set_connected(false);
+        state.set_connected(false);
+        changed = true;
     }
-    came > 0
+    changed
 }
 
 /// Every notice closed.
@@ -574,20 +640,25 @@ mod tests {
         assert!(parse(&["notice", "notice x", "other 1 a b c"]).is_empty());
     }
 
+    /// A notice of the socket's own.
+    fn notice(id: u32) -> Notice {
+        Notice {
+            id,
+            app: "Files".to_owned(),
+            summary: format!("n{id}"),
+            body: String::new(),
+        }
+    }
+
     /// A notice comes in: the history keeps it, and a banner goes up for
     /// five seconds, at most three at a time.
     #[test]
     fn a_notice_is_kept_and_shown_as_a_banner() {
         let now = std::time::Instant::now();
         let mut state = State::new();
+        state.set_live(true);
         for id in 1..=4 {
-            let notice = Notice {
-                id,
-                app: "Files".to_owned(),
-                summary: format!("n{id}"),
-                body: String::new(),
-            };
-            state.push(notice, now);
+            state.push(notice(id), now);
         }
         assert_eq!(state.ids().len(), 4, "the history keeps them all");
         assert_eq!(state.banner(0).map(|notice| notice.id), Some(4));
@@ -600,11 +671,42 @@ mod tests {
         );
     }
 
+    /// The replayed history is listed but never bannered: only what is
+    /// new is shown, and not while the do-not-disturb is on — which
+    /// stays at notifyd's source, and the shell only follows.
+    #[test]
+    fn the_replay_is_listed_and_does_not_banner() {
+        let now = std::time::Instant::now();
+        let mut state = State::new();
+        state.push(notice(1), now);
+        assert_eq!(state.ids(), vec![1], "the history has it");
+        assert!(
+            state.banner(0).is_none(),
+            "but no banner: the history is the replay"
+        );
+        state.set_live(true);
+        state.push(notice(2), now);
+        assert_eq!(
+            state.banner(0).map(|notice| notice.id),
+            Some(2),
+            "the new one banners"
+        );
+        state.set_quiet(true);
+        state.push(notice(3), now);
+        assert_eq!(
+            state.banner(0).map(|notice| notice.id),
+            Some(2),
+            "the quiet one does not banner"
+        );
+        assert_eq!(state.ids().len(), 3, "but it is listed");
+    }
+
     /// The surface draws the banners and the panel.
     #[test]
     fn the_notices_draw() {
         let now = std::time::Instant::now();
         let mut state = State::new();
+        state.set_live(true);
         state.push(
             Notice {
                 id: 7,
@@ -640,16 +742,9 @@ mod tests {
     fn a_notice_is_closed_and_the_rest_kept() {
         let now = std::time::Instant::now();
         let mut state = State::new();
+        state.set_live(true);
         for id in 1..=3 {
-            state.push(
-                Notice {
-                    id,
-                    app: "Files".to_owned(),
-                    summary: format!("n{id}"),
-                    body: String::new(),
-                },
-                now,
-            );
+            state.push(notice(id), now);
         }
         assert!(state.close(2));
         assert_eq!(state.ids(), vec![3, 1]);
