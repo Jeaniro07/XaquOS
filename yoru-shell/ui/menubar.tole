@@ -35,6 +35,7 @@ export component MenuBar : Item {
     signal choose(int index)
     signal dismiss()
     signal search()
+    signal notices()
 
     Rectangle {
         x: 0; y: 0
@@ -88,6 +89,14 @@ export component MenuBar : Item {
             x: searchText.x - 6; y: 0
             width: 28; height: 24
             onClicked: bar.search()
+        }
+
+        // The clock opens the notices.
+        MouseArea {
+            x: clockText.x - 4; y: 0
+            width: clockText.implicitWidth + 16; height: 24
+            cursorShape: Qt.PointingHandCursor
+            onClicked: bar.notices()
         }
     }
 

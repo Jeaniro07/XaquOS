@@ -13,6 +13,7 @@ pub mod look;
 pub mod menubar;
 pub mod menus;
 pub mod model;
+pub mod notices;
 pub mod picker;
 pub mod power;
 pub mod quick;

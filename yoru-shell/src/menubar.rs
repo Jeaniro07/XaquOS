@@ -77,6 +77,8 @@ pub enum Asked {
     Do(Does),
     /// The search.
     Search,
+    /// The clock: the notices.
+    Notices,
 }
 
 /// The tree and what the program keeps of it.
@@ -241,6 +243,7 @@ impl View {
                 }
                 MenuBarSignal::Dismiss => out.push(Asked::Close),
                 MenuBarSignal::Search => out.push(Asked::Search),
+                MenuBarSignal::Notices => out.push(Asked::Notices),
             }
         }
         out
@@ -443,6 +446,10 @@ pub fn run() -> i32 {
                 Asked::Search => {
                     open = None;
                     search(hypr.as_ref());
+                }
+                Asked::Notices => {
+                    open = None;
+                    crate::notices::toggle();
                 }
                 Asked::Do(does) => {
                     open = None;

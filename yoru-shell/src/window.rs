@@ -304,6 +304,9 @@ pub fn run() -> i32 {
             ));
             // The menu bar after the dock, so the dock is drawn first.
             crate::menubar::start();
+            // The notices after the bar: the banners at the top right and
+            // the history behind the clock.
+            crate::notices::start();
         }
         let mut changed = false;
         for event in happened {
