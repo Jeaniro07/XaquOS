@@ -122,6 +122,41 @@ pub fn render_walls(
     Some(frame)
 }
 
+/// The launchpad as drawn for a picture: twelve applications on one page.
+#[must_use]
+pub fn render_launchpad(size: (u32, u32), scale: f32) -> Option<tole::Frame> {
+    let apps = [
+        ("Terminal", "terminal-window", "/bin/term /bin/zinc"),
+        ("Files", "folder-simple", "/bin/shelf"),
+        ("Chrome for Testing", "globe-simple", "/bin/chrome"),
+        ("Settings", "gear-six", "/bin/settings"),
+        ("Notepad", "", "/bin/notepad"),
+        ("Calendar", "", "/bin/calendar"),
+        ("Photos", "", "/bin/photos"),
+        ("Music", "", "/bin/music"),
+        ("Mail", "", "/bin/mail"),
+        ("Maps", "", "/bin/maps"),
+        ("Clock", "", "/bin/clock"),
+        ("Calculator", "", "/bin/calc"),
+    ]
+    .into_iter()
+    .map(|(title, icon, exec)| crate::search::App {
+        exec: exec.to_owned(),
+        title: title.to_owned(),
+        icon,
+    })
+    .collect();
+    let grid = crate::launchpad::Grid::new(apps, crate::launchpad::COLUMNS, crate::launchpad::ROWS);
+    let mut view = crate::launchpad::View::new(crate::look::fonts())?;
+    view.ui.set_scale(scale);
+    view.resize(size);
+    view.show(&grid);
+    view.ui.update();
+    let mut frame = tole::Frame::new(size, scale, tole::Color::rgba(0, 0, 0, 0))?;
+    let _ = view.ui.render_into(&mut frame);
+    Some(frame)
+}
+
 /// The spotlight as drawn for a picture: the sample query `te` and its
 /// rows, over a clear ground.
 #[must_use]
@@ -384,6 +419,13 @@ pub fn main() -> ExitCode {
             }
         };
     }
+    if arguments.iter().any(|word| word == "--launchpad") {
+        return if crate::launchpad::run() == 0 {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        };
+    }
     if arguments.iter().any(|word| word == "--spotlight") {
         return if crate::spotlight::run() == 0 {
             ExitCode::SUCCESS
@@ -398,7 +440,32 @@ pub fn main() -> ExitCode {
             ExitCode::FAILURE
         };
     }
-    if let Some(at) = arguments.iter().position(|word| word == "--render-spotlight") {
+    if let Some(at) = arguments
+        .iter()
+        .position(|word| word == "--render-launchpad")
+    {
+        let Some(path) = arguments.get(at + 1) else {
+            eprintln!("yoru-shell: --render-launchpad needs a file");
+            return ExitCode::FAILURE;
+        };
+        let Some(frame) = render_launchpad((1024, 768), 1.0) else {
+            eprintln!("yoru-shell: the launchpad could not be drawn");
+            return ExitCode::FAILURE;
+        };
+        let pixmap = frame.pixmap();
+        let png = tole::png::encode(pixmap.width(), pixmap.height(), pixmap.data());
+        return match std::fs::write(path, png) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("yoru-shell: {path}: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if let Some(at) = arguments
+        .iter()
+        .position(|word| word == "--render-spotlight")
+    {
         let Some(path) = arguments.get(at + 1) else {
             eprintln!("yoru-shell: --render-spotlight needs a file");
             return ExitCode::FAILURE;

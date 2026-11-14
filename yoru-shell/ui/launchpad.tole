@@ -1,0 +1,111 @@
+// Yoru's Launchpad (SUPER L): every installed application as a tile on
+// a grid over the whole screen, eight columns and five rows a page, the
+// pages as dots at the foot. Rust sorts the applications, places the
+// tiles and holds the page (`src/launchpad.rs`); this draws them and says
+// what was pressed.
+import Fx
+
+struct PadTile {
+    icon: string
+    letter: string
+    name: string
+    x: real
+    y: real
+    w: real
+    h: real
+}
+
+struct PageDot {
+    on: bool
+}
+
+export component Launchpad : Item {
+    id: pad
+    property list<PadTile> tiles
+    property list<PageDot> dots
+
+    signal run(int index)
+    signal page(int index)
+    signal dismissed()
+
+    // The shade over the desktop; the compositor's blur comes with the
+    // namespace.
+    Rectangle {
+        anchors.fill: parent
+        color: alpha(Nocturne.bg, 0.55)
+    }
+
+    // A press off a tile goes away.
+    MouseArea {
+        anchors.fill: parent
+        onClicked: pad.dismissed()
+    }
+
+    // The tiles, where Rust put them.
+    Repeater {
+        model: pad.tiles
+        Item {
+            x: modelData.x
+            y: modelData.y
+            width: modelData.w
+            height: modelData.h + 30
+            Rectangle {
+                width: modelData.w
+                height: modelData.h
+                radius: 20
+                color: Nocturne.n900
+                Text {
+                    anchors.centerIn: parent
+                    visible: modelData.icon != ""
+                    text: modelData.icon
+                    font: Nocturne.icon(40)
+                    color: Nocturne.text
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: modelData.icon == ""
+                    text: modelData.letter
+                    font: Nocturne.sans(34, 600)
+                    color: Nocturne.text
+                }
+            }
+            Text {
+                y: modelData.h + 6
+                width: modelData.w
+                horizontalAlignment: Text.AlignHCenter
+                text: modelData.name
+                elide: Text.ElideRight
+                font: Nocturne.sans(12, 500)
+                color: Nocturne.text
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: pad.run(index)
+            }
+        }
+    }
+
+    // The pages, as dots at the foot.
+    Row {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: pad.height - 40
+        spacing: 12
+        Repeater {
+            model: pad.dots
+            Item {
+                width: 8; height: 8
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 4
+                    color: modelData.on ? Nocturne.a200 : Nocturne.n500
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: pad.page(index)
+                }
+            }
+        }
+    }
+}

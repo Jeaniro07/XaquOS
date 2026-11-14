@@ -8,6 +8,7 @@ pub mod cli;
 pub mod drop;
 pub mod hypr;
 pub mod json;
+pub mod launchpad;
 pub mod look;
 pub mod menubar;
 pub mod menus;
