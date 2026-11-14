@@ -6,9 +6,11 @@
 //! The feed itself is pure: what is kept, and what is closed. The socket
 //! is a thread that serves it, one thread per connection.
 //!
-//! The lines it carries: a notice is `notice <id> <app>\t<summary>\t<body>`,
-//! the do-not-disturb is `quiet on` or `quiet off`, and `live` ends the
-//! history — what follows it is new, and only that is bannered.
+//! The lines it carries: a notice is
+//! `notice <id> <app>\t<summary>\t<body>`, with `\tquiet` after the body
+//! when the source kept that notice quiet — the do-not-disturb is
+//! notifyd's own, and the shell follows what the wire says of each
+//! notice, so a critical one still banners while the rest stay quiet.
 
 use std::collections::VecDeque;
 use std::io::{self, Read as _, Write as _};
@@ -24,16 +26,26 @@ use crate::store::{HISTORY, Note, Urgency};
 const POLL: Duration = Duration::from_millis(200);
 
 /// The line that ends the history: what follows it is new.
+// Ponytail: a line of its own, so the shell knows the replay from the
+// live stream. Upgrade path: a flag on every notice, when the notices
+// themselves must say which are new.
 const LIVE: &str = "live";
-/// The line that says the do-not-disturb is on.
-// Ponytail: the do-not-disturb travels as a line of its own, so the shell
-// lists the notices but does not banner them. Upgrade path: a flag on
-// every notice, when a quiet notice and a loud one must be told apart.
-const QUIET_ON: &str = "quiet on";
-/// The line that says the do-not-disturb is off.
-const QUIET_OFF: &str = "quiet off";
+
 /// The line that answers a command that is not one.
 const ERROR: &str = "error unknown command";
+
+/// A note as the feed keeps it: the note, and what the source decided
+/// about it.
+#[derive(Clone, Debug)]
+pub struct Entry {
+    /// The note itself.
+    pub note: Note,
+    /// Whether the source kept it quiet: the do-not-disturb was on and
+    /// the note is not critical. It is listed, but it does not banner —
+    /// and a critical note, which the source would have shown, banners
+    /// all the same.
+    pub quiet: bool,
+}
 
 /// The history: the notes kept, oldest first, each with the number the
 /// feed gave it.
@@ -41,8 +53,7 @@ const ERROR: &str = "error unknown command";
 pub struct Feed {
     cap: usize,
     sequence: u64,
-    items: VecDeque<(u64, Note)>,
-    quiet: bool,
+    items: VecDeque<(u64, Entry)>,
 }
 
 impl Default for Feed {
@@ -59,32 +70,35 @@ impl Feed {
             cap,
             sequence: 0,
             items: VecDeque::new(),
-            quiet: false,
         }
     }
 
     /// A note of its own, the plainest there is.
     pub fn push(&mut self, id: u32, app: &str, summary: &str, body: &str) {
-        self.put(Note {
-            id,
-            app: app.to_owned(),
-            summary: summary.to_owned(),
-            body: body.to_owned(),
-            actions: Vec::new(),
-            urgency: Urgency::Normal,
-            until_ms: None,
-            key: None,
-            count: 1,
-            on_bus: false,
-        });
+        self.put(
+            Note {
+                id,
+                app: app.to_owned(),
+                summary: summary.to_owned(),
+                body: body.to_owned(),
+                actions: Vec::new(),
+                urgency: Urgency::Normal,
+                until_ms: None,
+                key: None,
+                count: 1,
+                on_bus: false,
+            },
+            false,
+        );
     }
 
-    /// A note as it is: one under the same id replaces the old.
-    pub fn put(&mut self, note: Note) {
+    /// A note as it is, and what the source decided about it: one under
+    /// the same id replaces the old.
+    pub fn put(&mut self, note: Note, quiet: bool) {
         self.sequence = self.sequence.wrapping_add(1);
         let sequence = self.sequence;
-        self.items.retain(|(_, kept)| kept.id != note.id);
-        self.items.push_back((sequence, note));
+        self.items.retain(|(_, kept)| kept.note.id != note.id);
+        self.items.push_back((sequence, Entry { note, quiet }));
         while self.items.len() > self.cap {
             let _ = self.items.pop_front();
         }
@@ -97,17 +111,29 @@ impl Feed {
             .iter()
             .rev()
             .take(cap)
-            .map(|(_, note)| note.clone())
+            .map(|(_, entry)| entry.note.clone())
             .collect()
     }
 
-    /// The notes after the number `sequence`, newest first, with their
+    /// The history as the socket carries it, newest first, at most `cap`
+    /// of it.
+    #[must_use]
+    pub fn entries(&self, cap: usize) -> Vec<Entry> {
+        self.items
+            .iter()
+            .rev()
+            .take(cap)
+            .map(|(_, entry)| entry.clone())
+            .collect()
+    }
+
+    /// The entries after the number `sequence`, newest first, with their
     /// own numbers.
     // Ponytail: the feed's own numbers, not the notices' ids. Upgrade
     // path: none needed — a notice may take an id that is older than the
     // one before it, and the numbers keep the order right.
     #[must_use]
-    pub fn after(&self, sequence: u64) -> Vec<(u64, Note)> {
+    pub fn after(&self, sequence: u64) -> Vec<(u64, Entry)> {
         self.items
             .iter()
             .rev()
@@ -125,25 +151,13 @@ impl Feed {
     /// Take a note away; whether it was there.
     pub fn close(&mut self, id: u32) -> bool {
         let before = self.items.len();
-        self.items.retain(|(_, kept)| kept.id != id);
+        self.items.retain(|(_, kept)| kept.note.id != id);
         self.items.len() != before
     }
 
     /// Forget them all.
     pub fn clear(&mut self) {
         self.items.clear();
-    }
-
-    /// Whether the do-not-disturb is on: the shell is told, so that it
-    /// lists the notices but does not banner them.
-    #[must_use]
-    pub fn quiet(&self) -> bool {
-        self.quiet
-    }
-
-    /// The do-not-disturb, on or off.
-    pub fn set_quiet(&mut self, quiet: bool) {
-        self.quiet = quiet;
     }
 }
 
@@ -210,10 +224,10 @@ fn connection(
     feed: Shared,
     subscribers: Arc<AtomicUsize>,
 ) -> io::Result<()> {
-    let said = said(&mut stream)?;
+    let (said, rest) = said(&mut stream)?;
     if said == "subscribe" {
         let _ = subscribers.fetch_add(1, Ordering::SeqCst);
-        let result = subscribe(&mut stream, &feed);
+        let result = subscribe(&mut stream, &feed, rest);
         let _ = subscribers.fetch_sub(1, Ordering::SeqCst);
         return result;
     }
@@ -224,8 +238,8 @@ fn connection(
         return Ok(());
     }
     if said == "list" {
-        for note in locked(&feed).list(HISTORY) {
-            stream.write_all(line(&note).as_bytes())?;
+        for entry in locked(&feed).entries(HISTORY) {
+            stream.write_all(line(&entry).as_bytes())?;
         }
         return Ok(());
     }
@@ -234,22 +248,25 @@ fn connection(
     stream.write_all(format!("{ERROR}\n").as_bytes())
 }
 
-/// A subscriber: the do-not-disturb, the history, the end of the
-/// history, and then every new note as it comes — until the shell goes
-/// away. The commands it carries (`close <id>`) are answered as they
-/// come.
-fn subscribe(stream: &mut UnixStream, feed: &Shared) -> io::Result<()> {
-    let mut quiet = locked(feed).quiet();
-    stream.write_all(quiet_line(quiet).as_bytes())?;
-    for note in locked(feed).list(HISTORY) {
-        stream.write_all(line(&note).as_bytes())?;
+/// A subscriber: the history, the end of the history, and then every new
+/// note as it comes — until the shell goes away. The commands it carries
+/// (`close <id>`) are answered as they come.
+fn subscribe(stream: &mut UnixStream, feed: &Shared, rest: Vec<u8>) -> io::Result<()> {
+    // The history and the number it ends at, taken together: a note
+    // pushed between the two would be lost.
+    let (sequence, entries) = {
+        let feed = locked(feed);
+        (feed.sequence(), feed.entries(HISTORY))
+    };
+    for entry in entries {
+        stream.write_all(line(&entry).as_bytes())?;
     }
     // The history ends here: what follows is new.
     stream.write_all(format!("{LIVE}\n").as_bytes())?;
     // A short read is how the shell's going away is seen.
     stream.set_read_timeout(Some(Duration::from_millis(1)))?;
-    let mut sequence = locked(feed).sequence();
-    let mut said = Vec::new();
+    let mut sequence = sequence;
+    let mut said = rest;
     let mut chunk = [0_u8; 256];
     loop {
         match stream.read(&mut chunk) {
@@ -272,22 +289,17 @@ fn subscribe(stream: &mut UnixStream, feed: &Shared) -> io::Result<()> {
             }
         }
         // The new notes.
-        for (at, note) in locked(feed).after(sequence) {
+        for (at, entry) in locked(feed).after(sequence) {
             sequence = sequence.max(at);
-            stream.write_all(line(&note).as_bytes())?;
-        }
-        // The do-not-disturb, when it changed.
-        let now = locked(feed).quiet();
-        if now != quiet {
-            quiet = now;
-            stream.write_all(quiet_line(quiet).as_bytes())?;
+            stream.write_all(line(&entry).as_bytes())?;
         }
         std::thread::sleep(POLL);
     }
 }
 
-/// The line the connection carries, up to its newline.
-fn said(stream: &mut UnixStream) -> io::Result<String> {
+/// The line the connection carries: its first line, and whatever came
+/// after it.
+fn said(stream: &mut UnixStream) -> io::Result<(String, Vec<u8>)> {
     let mut got = Vec::new();
     let mut chunk = [0_u8; 128];
     loop {
@@ -300,23 +312,40 @@ fn said(stream: &mut UnixStream) -> io::Result<String> {
             break;
         }
     }
-    Ok(String::from_utf8_lossy(&got).trim().to_owned())
+    // Only the first line is the command: a client that wrote two lines
+    // at once meant the first to be the command.
+    // Ponytail: the first line, and the rest is kept for the subscriber's
+    // own buffer. Upgrade path: a length-prefixed frame, when a command
+    // may carry a body of its own.
+    let at = got.iter().position(|byte| *byte == b'\n');
+    let command = match at {
+        Some(at) => String::from_utf8_lossy(got.get(..at).unwrap_or_default())
+            .trim()
+            .to_owned(),
+        None => String::from_utf8_lossy(got.get(..).unwrap_or_default())
+            .trim()
+            .to_owned(),
+    };
+    let rest = got.split_off(at.map_or(got.len(), |at| at + 1));
+    Ok((command, rest))
 }
 
-/// A note as the line carries it: `notice <id> <app>\t<summary>\t<body>`.
-fn line(note: &Note) -> String {
-    format!(
-        "notice {} {}\t{}\t{}\n",
+/// An entry as the line carries it: `notice <id> <app>\t<summary>\t<body>`,
+/// with `\tquiet` after the body when the source kept it quiet.
+fn line(entry: &Entry) -> String {
+    let note = &entry.note;
+    let mut said = format!(
+        "notice {} {}\t{}\t{}",
         note.id,
         label(&note.app),
         label(&note.summary),
         label(&note.body)
-    )
-}
-
-/// The do-not-disturb as the line carries it.
-fn quiet_line(quiet: bool) -> String {
-    format!("{}\n", if quiet { QUIET_ON } else { QUIET_OFF })
+    );
+    if entry.quiet {
+        said.push_str("\tquiet");
+    }
+    said.push('\n');
+    said
 }
 
 /// A label as the line carries it: no tab, no newline.
@@ -352,6 +381,27 @@ mod tests {
             let _ = accept(listener, served, Arc::clone(&subscribers));
         });
         (path, feed, thread)
+    }
+
+    /// Read what the socket says, until `wanted` is in it or the socket
+    /// is quiet for a while.
+    fn read_until(stream: &mut UnixStream, wanted: &str) -> String {
+        let mut buf = [0_u8; 256];
+        let mut said = String::new();
+        for _ in 0..100 {
+            let count = stream.read(&mut buf).unwrap_or(0);
+            if count == 0 {
+                break;
+            }
+            said.push_str(&String::from_utf8_lossy(
+                buf.get(..count).unwrap_or_default(),
+            ));
+            if said.contains(wanted) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        said
     }
 
     #[test]
@@ -397,8 +447,9 @@ mod tests {
             notes.last().map(|note| note.summary.as_str()),
             Some("Copy done again")
         );
+        let entries = feed.entries(50);
         assert_eq!(
-            notes.first().map(line),
+            entries.first().map(line),
             Some("notice 2 devmgr\tGPU driver is up\t\n".to_owned())
         );
         assert_eq!(label("a\tb\nc"), "a b c");
@@ -433,40 +484,43 @@ mod tests {
         assert!(!said.contains("notice"), "not the history");
     }
 
-    /// A subscriber gets the do-not-disturb, the history, the end of the
-    /// history, and then the new notices as they come.
+    /// A client that writes two lines at once meant the first to be the
+    /// command: the subscription still starts, and the second line is
+    /// read as what it is.
+    #[test]
+    fn two_lines_at_once_are_two_commands() {
+        let (path, feed, thread) = serving("twolines");
+        let mut stream = UnixStream::connect(&path).expect("the socket");
+        let _ = write!(stream, "subscribe\nclose 2\n");
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+        let said = read_until(&mut stream, LIVE);
+        assert!(said.contains(LIVE), "the subscription started: {said}");
+        let mut gone = false;
+        for _ in 0..50 {
+            std::thread::sleep(Duration::from_millis(20));
+            if !locked(&feed).list(HISTORY).iter().any(|note| note.id == 2) {
+                gone = true;
+                break;
+            }
+        }
+        assert!(gone, "the second line was read as a close");
+        drop(thread);
+    }
+
+    /// A subscriber gets the history, the end of the history, and then
+    /// the new notices as they come.
     #[test]
     fn a_subscriber_gets_the_new_notices() {
         let (path, feed, thread) = serving("subscribe");
         let mut stream = UnixStream::connect(&path).expect("the socket");
         let _ = writeln!(stream, "subscribe");
         let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-        let mut buf = [0_u8; 256];
-        let mut said = String::new();
-        while !said.contains(LIVE) {
-            let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
-                break;
-            }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-        }
-        assert!(said.starts_with(QUIET_OFF), "the quiet state first: {said}");
+        let said = read_until(&mut stream, LIVE);
         assert!(said.contains("notice 2 devmgr\tGPU driver is up\t\n"));
         assert!(said.contains("notice 1 Files\tCopy done\tnotes.md to the stash\n"));
         assert!(said.contains(LIVE), "the end of the history");
         locked(&feed).push(3, "Files", "Copy done", "notes.md");
-        let mut said = String::new();
-        while !said.contains("Copy done") {
-            let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
-                break;
-            }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-        }
+        let said = read_until(&mut stream, "Copy done");
         assert!(
             said.contains("notice 3 Files\tCopy done\tnotes.md\n"),
             "the new notice: {said}"
@@ -475,40 +529,72 @@ mod tests {
         drop(thread);
     }
 
-    /// The do-not-disturb is told to the subscriber, so that it lists the
-    /// notices but does not banner them.
+    /// A note pushed while the history is being sent is neither lost nor
+    /// sent twice.
     #[test]
-    fn the_do_not_disturb_is_told_to_the_subscriber() {
-        let (path, feed, thread) = serving("quiet");
+    fn a_note_pushed_while_the_history_is_sent_is_not_lost() {
+        let (path, feed, thread) = serving("race");
         let mut stream = UnixStream::connect(&path).expect("the socket");
         let _ = writeln!(stream, "subscribe");
         let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-        let mut buf = [0_u8; 256];
-        let mut said = String::new();
-        while !said.contains(LIVE) {
-            let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
-                break;
-            }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-        }
-        assert!(said.starts_with(QUIET_OFF), "the quiet state first: {said}");
-        locked(&feed).set_quiet(true);
-        let mut said = String::new();
-        while !said.contains(QUIET_ON) {
-            let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
-                break;
-            }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-        }
-        assert!(said.contains(QUIET_ON), "the quiet state is told: {said}");
-        // The thread that serves the socket ends with the program.
+        let said = read_until(&mut stream, LIVE);
+        assert!(said.contains(LIVE));
+        // A note that arrives right after the history was sent is streamed.
+        locked(&feed).push(3, "Files", "Copy done", "notes.md");
+        let said = read_until(&mut stream, "Copy done");
+        assert!(
+            said.contains("notice 3 Files\tCopy done\tnotes.md\n"),
+            "the new notice: {said}"
+        );
         drop(thread);
+    }
+
+    /// A note the source kept quiet says so on the wire, and a critical
+    /// one does not: the shell follows what the wire says.
+    #[test]
+    fn a_quiet_note_says_so_and_a_critical_one_does_not() {
+        let mut feed = Feed::new(50);
+        feed.put(
+            Note {
+                id: 1,
+                app: "Files".to_owned(),
+                summary: "Copy done".to_owned(),
+                body: String::new(),
+                actions: Vec::new(),
+                urgency: Urgency::Normal,
+                until_ms: None,
+                key: None,
+                count: 1,
+                on_bus: false,
+            },
+            true,
+        );
+        feed.put(
+            Note {
+                id: 2,
+                app: "devmgr".to_owned(),
+                summary: "GPU driver is up".to_owned(),
+                body: String::new(),
+                actions: Vec::new(),
+                urgency: Urgency::Critical,
+                until_ms: None,
+                key: None,
+                count: 1,
+                on_bus: false,
+            },
+            false,
+        );
+        let entries = feed.entries(50);
+        assert_eq!(
+            entries.first().map(line),
+            Some("notice 2 devmgr\tGPU driver is up\t\n".to_owned()),
+            "the critical one is shown all the same"
+        );
+        assert_eq!(
+            entries.last().map(line),
+            Some("notice 1 Files\tCopy done\t\tquiet\n".to_owned()),
+            "the quiet one says so"
+        );
     }
 
     /// A close on the connection the shell watches with reaches the
@@ -520,17 +606,8 @@ mod tests {
         let _ = writeln!(stream, "subscribe");
         let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
         // The history and the end of it.
-        let mut buf = [0_u8; 256];
-        let mut said = String::new();
-        while !said.contains(LIVE) {
-            let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
-                break;
-            }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-        }
+        let said = read_until(&mut stream, LIVE);
+        assert!(said.contains(LIVE));
         // The close, on the same connection.
         let _ = writeln!(stream, "close 2");
         let mut gone = false;

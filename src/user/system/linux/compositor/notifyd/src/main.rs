@@ -143,6 +143,11 @@ fn run() -> Result<(), String> {
         let watching = subscribers.load(Ordering::SeqCst) > 0;
         if watching != daemon.watching {
             daemon.watching = watching;
+            if !watching {
+                // The notes on screen were the shell's to show: it is
+                // gone, and they are not painted again.
+                daemon.store.clear_shown();
+            }
             daemon.changed();
         }
         for event in events {
@@ -329,6 +334,10 @@ impl Daemon {
             paint::list(&mut self.fonts, &self.store.history(), scale)
         } else {
             // Someone watching the history draws the banners then.
+            //
+            // Ponytail: the decision is made when the banners are
+            // painted. Upgrade path: a mark on each note, when the
+            // banners already on screen are to finish first.
             paint::banners_unless(&mut self.fonts, self.store.shown(), scale, self.watching)
         };
         let Some((pixmap, _height, areas)) = painted else {

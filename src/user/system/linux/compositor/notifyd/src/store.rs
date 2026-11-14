@@ -231,15 +231,12 @@ impl Store {
 
     /// Do not disturb on or off. Banners already up stay until they go.
     ///
-    /// The feed is told too: the shell is told, so that it lists the
-    /// notices but does not banner them. The do-not-disturb stays here,
-    /// at the source; the shell only follows it.
+    /// The decision is made here, at the source, and it is made of every
+    /// note: a critical one is shown all the same. The wire says of each
+    /// note what was decided, so that the shell follows the same rule
+    /// and does not read the file itself.
     pub fn set_quiet(&mut self, quiet: bool) {
         self.quiet = quiet;
-        self.feed
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .set_quiet(quiet);
     }
 
     /// Whether do not disturb is on.
@@ -250,11 +247,15 @@ impl Store {
 
     fn put(&mut self, note: Note) -> (u32, Vec<u32>) {
         let id = note.id;
+        // The do-not-disturb is decided here, at the source: a critical
+        // note is shown all the same, and the wire says of each note
+        // whether it was kept quiet.
+        let quiet = self.quiet && note.urgency != Urgency::Critical;
         self.feed
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .put(note.clone());
-        if self.quiet && note.urgency != Urgency::Critical {
+            .put(note.clone(), quiet);
+        if quiet {
             return (id, Vec::new());
         }
         match self.shown.iter_mut().find(|shown| shown.id == id) {
@@ -287,6 +288,15 @@ impl Store {
     #[must_use]
     pub fn next_expiry(&self) -> Option<u64> {
         self.shown.iter().filter_map(|note| note.until_ms).min()
+    }
+
+    /// Take the notes off the screen: they were the shell's to show, and
+    /// it has gone, so they are not painted again.
+    ///
+    /// Ponytail: all of them at once, when the last watcher goes. Upgrade
+    /// path: a mark on each note, when only some of them were shown.
+    pub fn clear_shown(&mut self) {
+        self.shown.clear();
     }
 
     /// Forget the list.
@@ -428,24 +438,36 @@ mod tests {
         assert_eq!(store.shown().len(), 3);
     }
 
-    /// The do-not-disturb is at the store, and the feed is told, so that
-    /// the shell lists the notices but does not banner them.
+    /// The do-not-disturb is decided of every note, at the source: a
+    /// normal one is kept quiet and a critical one is shown all the
+    /// same — and the wire says which is which.
     #[test]
-    fn the_do_not_disturb_reaches_the_feed() {
+    fn the_do_not_disturb_is_decided_of_every_note() {
         let mut store = Store::default();
-        let quiet = |store: &Store| {
-            store
-                .feed()
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner())
-                .quiet()
-        };
-        assert!(!quiet(&store), "not yet");
         store.set_quiet(true);
-        assert!(store.quiet());
-        assert!(quiet(&store), "the feed is told");
-        store.set_quiet(false);
-        assert!(!quiet(&store));
+        let _ = store.notify_keyed("a", "Quiet".to_owned(), String::new(), Urgency::Normal, 0);
+        let _ = store.notify_keyed("b", "Disk".to_owned(), String::new(), Urgency::Critical, 0);
+        let entries = store
+            .feed()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .entries(50);
+        assert_eq!(entries.len(), 2);
+        assert!(
+            entries.first().is_some_and(|entry| !entry.quiet),
+            "the critical one is shown all the same"
+        );
+        assert!(
+            entries.last().is_some_and(|entry| entry.quiet),
+            "the normal one is quiet"
+        );
+        assert!(
+            store
+                .shown()
+                .iter()
+                .any(|note| note.urgency == Urgency::Critical),
+            "and it is on screen"
+        );
     }
 
     /// A driver's lines become one notification per device, counted, and a

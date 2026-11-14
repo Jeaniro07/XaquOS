@@ -166,6 +166,16 @@ fn a_watcher_takes_the_banners_and_the_notes_stay() {
         paint::banners_unless(&mut fonts, store.shown(), 1, false).is_some(),
         "the banners are back"
     );
+    // The shell is gone: the notes it showed are not painted again.
+    store.clear_shown();
+    assert!(
+        store.shown().is_empty(),
+        "the notes the shell showed are taken off"
+    );
+    assert!(
+        paint::banners_unless(&mut fonts, store.shown(), 1, false).is_none(),
+        "and nothing is painted again"
+    );
 }
 
 /// A line of lode's alerts is a banner keyed by the alert and its source.
