@@ -104,7 +104,10 @@ pub fn parse(lines: &[&str]) -> Vec<Notice> {
             let mut fields = rest.splitn(4, '\t');
             let app = fields.next()?;
             let summary = fields.next()?;
-            let body = fields.next()?;
+            // The body may be missing: a notice with nothing to say is
+            // written with an empty body, and a line that was trimmed
+            // has lost the tab that said so.
+            let body = fields.next().unwrap_or("");
             // `quiet` after the body: notifyd kept that notice quiet.
             let quiet = fields.next().is_some_and(|flag| flag == "quiet");
             Some(Notice {
@@ -549,6 +552,29 @@ fn connect_later(
     true
 }
 
+/// A line of the socket, read into the notices; whether anything
+/// changed.
+///
+/// Only the terminator is trimmed: a notice with an empty body keeps its
+/// tab, and a line that was trimmed of it still parses as a notice with
+/// an empty body.
+fn take(state: &mut State, line: &str) -> bool {
+    let line = line.trim_end_matches(['\r', '\n']);
+    if line.is_empty() {
+        return false;
+    }
+    // The end of the replay: what follows is new.
+    if line == "live" {
+        return state.set_live(true);
+    }
+    let mut changed = false;
+    for notice in parse(&[line]) {
+        state.push(notice, Instant::now());
+        changed = true;
+    }
+    changed
+}
+
 /// The socket's lines, read into notices; whether anything changed.
 fn read_from(
     window: &mut Window,
@@ -564,19 +590,7 @@ fn read_from(
     if crate::window::drain(stream, pending) {
         while let Some(end) = pending.find('\n') {
             let line: String = pending.drain(..=end).collect();
-            let line = line.trim_end();
-            if line.is_empty() {
-                continue;
-            }
-            // The end of the replay: what follows is new.
-            if line == "live" {
-                changed |= state.set_live(true);
-                continue;
-            }
-            for notice in parse(&[line]) {
-                state.push(notice, Instant::now());
-                changed = true;
-            }
+            changed |= take(state, &line);
         }
     } else {
         say("notices: notifyd's socket closed");
@@ -622,7 +636,7 @@ fn close(socket: &mut Option<UnixStream>, id: u32) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Notice, State, View, parse};
+    use super::{Notice, State, View, parse, take};
 
     fn lines() -> Vec<Notice> {
         parse(&[
@@ -725,6 +739,48 @@ mod tests {
             Some(2),
             "the other one banners"
         );
+    }
+
+    /// A notice with an empty body is a notice: the runtime path keeps
+    /// it, lists it, and a critical one still banners — while a quiet
+    /// one is listed and stays silent.
+    #[test]
+    fn a_notice_with_an_empty_body_is_kept() {
+        // The line as the socket writes it, with the body's tab.
+        let mut state = State::new();
+        state.set_live(true);
+        assert!(
+            take(&mut state, "notice 6 devmgr\tGPU driver is up\t"),
+            "the notice is taken"
+        );
+        assert_eq!(state.ids(), vec![6], "and it is listed");
+        assert_eq!(
+            state.banner(0).map(|notice| notice.id),
+            Some(6),
+            "and it banners: it is not quiet"
+        );
+        // The same line, trimmed of the body's tab.
+        let mut state = State::new();
+        state.set_live(true);
+        assert!(
+            take(&mut state, "notice 6 devmgr\tGPU driver is up"),
+            "the trimmed line is taken too"
+        );
+        assert_eq!(state.ids(), vec![6], "and it is listed");
+        assert_eq!(
+            state.banner(0).map(|notice| notice.id),
+            Some(6),
+            "and it banners"
+        );
+        // A quiet one with an empty body: listed, and silent.
+        let mut state = State::new();
+        state.set_live(true);
+        assert!(take(
+            &mut state,
+            "notice 7 devmgr\tGPU driver is up\t\tquiet"
+        ));
+        assert_eq!(state.ids(), vec![7], "it is listed");
+        assert!(state.banner(0).is_none(), "but it does not banner");
     }
 
     /// The wire says of every notice whether notifyd kept it quiet.
