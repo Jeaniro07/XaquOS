@@ -305,15 +305,13 @@ fn done(hypr: Option<&Hypr>, focused: Option<&Focused>, does: Does) {
     dispatch_all(hypr, &lines);
 }
 
-/// The search: fuzzel in Yoru's look, as SUPER Space starts it.
+/// The search: Spotlight in this shell, as SUPER Space starts it.
 fn search(hypr: Option<&Hypr>) {
     let Some(hypr) = hypr else { return };
-    let what = if std::path::Path::new(crate::window::PALETTE).exists() {
-        format!("exec /bin/fuzzel --config {}", crate::window::PALETTE)
-    } else {
-        "exec /bin/fuzzel".to_owned()
-    };
-    dispatch_all(hypr, &[what]);
+    // Ponytail: the fuzzel fallback is dropped; `/bin/yoru-shell` is always
+    // present. Upgrade path: dispatch another launcher here if the shell
+    // ever becomes optional.
+    dispatch_all(hypr, &["exec /bin/yoru-shell --spotlight".to_owned()]);
 }
 
 /// Run the menu bar until the compositor goes away; the exit status.

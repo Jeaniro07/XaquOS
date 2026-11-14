@@ -28,9 +28,6 @@ use crate::ui::{Action, HEIGHT, View};
 /// what is behind every `yoru-` surface.
 pub const NAMESPACE: &str = "yoru-dock";
 
-/// The launcher's look in Yoru's theme, which fuzzel is started with.
-pub(crate) const PALETTE: &str = "/usr/share/hyprix/themes/yoru-fuzzel.ini";
-
 /// How far above the screen's foot the dock floats.
 const MARGIN: i32 = 6;
 
