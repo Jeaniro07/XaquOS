@@ -13,10 +13,10 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use compositor_toolkit::Event;
-use tole::{Color, Element as _, Ui};
 use tole::window::{
     Anchor, KeyboardInteractivity, Layer, LayerOptions, Margin, Window, WindowOptions,
 };
+use tole::{Color, Element as _, Ui};
 
 use crate::hypr::Hypr;
 use crate::search::{self, App, Hit};
@@ -154,12 +154,9 @@ impl State {
             .enumerate()
             .map(|(at, hit)| {
                 let (icon, letter, text, detail) = match hit {
-                    Hit::App { title, icon, .. } => (
-                        *icon,
-                        first(title),
-                        title.clone(),
-                        "Application".to_owned(),
-                    ),
+                    Hit::App { title, icon, .. } => {
+                        (*icon, first(title), title.clone(), "Application".to_owned())
+                    }
                     Hit::Window { title, .. } => {
                         ("", first(title), title.clone(), "Window".to_owned())
                     }
@@ -169,9 +166,7 @@ impl State {
                         let dir = rest.strip_suffix('/').unwrap_or(rest);
                         ("", first(name), name.to_owned(), dir.to_owned())
                     }
-                    Hit::Value(value) => {
-                        ("", first(value), value.clone(), "Calculator".to_owned())
-                    }
+                    Hit::Value(value) => ("", first(value), value.clone(), "Calculator".to_owned()),
                 };
                 HitRow {
                     icon: s(icon),
@@ -197,9 +192,7 @@ impl State {
             Hit::Window { address, .. } => {
                 Some(Outcome::Dispatch(format!("focuswindow address:{address}")))
             }
-            Hit::File { path } => {
-                Some(Outcome::Dispatch(format!("exec /bin/xdg-open {path}")))
-            }
+            Hit::File { path } => Some(Outcome::Dispatch(format!("exec /bin/xdg-open {path}"))),
             Hit::Value(_) => None,
         }
     }
@@ -253,7 +246,8 @@ impl View {
     pub fn new(fonts: tole::Fonts) -> Option<Self> {
         let mut ui = Ui::new(fonts);
         let spot = Spotlight::new(&mut ui, None)?;
-        spot.ic_search.set(&mut ui, s(crate::look::icon("magnifying-glass")));
+        spot.ic_search
+            .set(&mut ui, s(crate::look::icon("magnifying-glass")));
         Some(View { ui, spot })
     }
 

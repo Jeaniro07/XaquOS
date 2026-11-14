@@ -48,12 +48,7 @@ pub enum Hit {
 /// windows, files. Apps are `installed()`'s list, windows `j/clients`'s,
 /// files [`scan`]'s.
 #[must_use]
-pub fn hits(
-    query: &str,
-    apps: &[App],
-    windows: &[(String, String)],
-    files: &[String],
-) -> Vec<Hit> {
+pub fn hits(query: &str, apps: &[App], windows: &[(String, String)], files: &[String]) -> Vec<Hit> {
     let query = query.trim();
     let mut found = Vec::new();
     if query.is_empty() {
@@ -66,25 +61,38 @@ pub fn hits(
     // (where it matches, which kind, the words for the order, the hit).
     let mut ranked: Vec<(usize, u8, String, Hit)> = Vec::new();
     for app in apps {
-        let Some(at) = app.title.to_lowercase().find(&folded).or_else(|| {
-            app.exec.to_lowercase().find(&folded)
-        }) else {
+        let Some(at) = app
+            .title
+            .to_lowercase()
+            .find(&folded)
+            .or_else(|| app.exec.to_lowercase().find(&folded))
+        else {
             continue;
         };
-        ranked.push((at, 0, app.title.clone(), Hit::App {
-            exec: app.exec.clone(),
-            title: app.title.clone(),
-            icon: app.icon,
-        }));
+        ranked.push((
+            at,
+            0,
+            app.title.clone(),
+            Hit::App {
+                exec: app.exec.clone(),
+                title: app.title.clone(),
+                icon: app.icon,
+            },
+        ));
     }
     for (address, title) in windows {
         let Some(at) = title.to_lowercase().find(&folded) else {
             continue;
         };
-        ranked.push((at, 1, title.clone(), Hit::Window {
-            address: address.clone(),
-            title: title.clone(),
-        }));
+        ranked.push((
+            at,
+            1,
+            title.clone(),
+            Hit::Window {
+                address: address.clone(),
+                title: title.clone(),
+            },
+        ));
     }
     for path in files {
         let Some(at) = path.to_lowercase().find(&folded) else {
@@ -318,7 +326,9 @@ mod tests {
             })
         );
         let found = hits("o", &apps(), &[], &[]);
-        assert!(matches!(found.first(), Some(Hit::App { title, .. }) if title == "Chrome for Testing"));
+        assert!(
+            matches!(found.first(), Some(Hit::App { title, .. }) if title == "Chrome for Testing")
+        );
     }
 
     #[test]
@@ -391,15 +401,13 @@ mod tests {
         let found = scan(&base, 5000, 5_000_000_000);
         assert_eq!(
             found,
-            vec![
-                "a",
-                "a/b",
-                "a/notes.md",
-                "a/b/c",
-                "a/b/plan.md",
-            ]
+            vec!["a", "a/b", "a/notes.md", "a/b/c", "a/b/plan.md",]
         );
-        assert_eq!(scan(&base, 1, 5_000_000_000), vec!["a"], "the count bound cuts");
+        assert_eq!(
+            scan(&base, 1, 5_000_000_000),
+            vec!["a"],
+            "the count bound cuts"
+        );
         let _ = std::fs::remove_dir_all(&base);
     }
 }
