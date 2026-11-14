@@ -176,6 +176,7 @@ fn screen(argb: &[u8], width: u32, height: u32) -> Vec<u8> {
         dim_around: false,
         blur: false,
         xray: false,
+        ignore_alpha: None,
     }];
     let mut canvas = Canvas::new(WIDTH, HEIGHT).expect("a canvas");
     let full = Damage::full(WIDTH, HEIGHT);
