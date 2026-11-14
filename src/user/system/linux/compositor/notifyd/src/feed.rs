@@ -190,6 +190,11 @@ pub fn bind(path: &Path) -> io::Result<UnixListener> {
     UnixListener::bind(path)
 }
 
+/// A hook the tests put inside the snapshot of the history, so that a
+/// note can be pushed exactly between the number of the history and the
+/// history itself.
+type SnapshotHook = Arc<dyn Fn() + Send + Sync>;
+
 /// The socket's server: a thread per connection, until the listener is
 /// gone. `subscribers` counts those that watch for the new notices, so
 /// that the daemon knows it is not the only one drawing them.
@@ -200,14 +205,26 @@ pub fn serve(path: &Path, feed: Shared, subscribers: Arc<AtomicUsize>) -> io::Re
 
 /// The connections, one thread each.
 fn accept(listener: UnixListener, feed: Shared, subscribers: Arc<AtomicUsize>) -> io::Result<()> {
+    accept_with(listener, feed, subscribers, None)
+}
+
+/// The connections, one thread each, with a hook inside the snapshot of
+/// the history.
+fn accept_with(
+    listener: UnixListener,
+    feed: Shared,
+    subscribers: Arc<AtomicUsize>,
+    hook: Option<SnapshotHook>,
+) -> io::Result<()> {
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };
         let feed = Arc::clone(&feed);
         let subscribers = Arc::clone(&subscribers);
+        let hook = hook.clone();
         let spawned = std::thread::Builder::new()
             .name("notifyd-feed".to_owned())
             .spawn(move || {
-                let _ = connection(stream, feed, subscribers);
+                let _ = connection(stream, feed, subscribers, hook);
             });
         if spawned.is_err() {
             return Err(io::Error::other(
@@ -223,11 +240,12 @@ fn connection(
     mut stream: UnixStream,
     feed: Shared,
     subscribers: Arc<AtomicUsize>,
+    hook: Option<SnapshotHook>,
 ) -> io::Result<()> {
     let (said, mut rest) = said(&mut stream)?;
     if said == "subscribe" {
         let _ = subscribers.fetch_add(1, Ordering::SeqCst);
-        let result = subscribe(&mut stream, &feed, rest);
+        let result = subscribe(&mut stream, &feed, rest, hook);
         let _ = subscribers.fetch_sub(1, Ordering::SeqCst);
         return result;
     }
@@ -267,12 +285,29 @@ fn commands(said: &mut Vec<u8>, feed: &Shared) {
 /// A subscriber: the history, the end of the history, and then every new
 /// note as it comes — until the shell goes away. The commands it carries
 /// (`close <id>`) are answered as they come.
-fn subscribe(stream: &mut UnixStream, feed: &Shared, rest: Vec<u8>) -> io::Result<()> {
+fn subscribe(
+    stream: &mut UnixStream,
+    feed: &Shared,
+    rest: Vec<u8>,
+    hook: Option<SnapshotHook>,
+) -> io::Result<()> {
     // The history and the number it ends at, taken together: a note
     // pushed between the two would be lost.
     let (sequence, entries) = {
         let feed = locked(feed);
-        (feed.sequence(), feed.entries(HISTORY))
+        let sequence = feed.sequence();
+        // The seam the tests race: a hook between the number and the
+        // history, called while the feed is held — so a note pushed
+        // there cannot land between the two.
+        // Ponytail: a hook that is off unless a test asks for it.
+        // Upgrade path: none needed — the test that races the snapshot
+        // is what keeps it honest.
+        if let Some(hook) = hook.as_ref() {
+            let call: &dyn Fn() = &**hook;
+            call();
+        }
+        let entries = feed.entries(HISTORY);
+        (sequence, entries)
     };
     for entry in entries {
         stream.write_all(line(&entry).as_bytes())?;
@@ -379,15 +414,26 @@ mod tests {
     /// A socket of its own, with the feed and the thread that serves it.
     fn serving(name: &str) -> (PathBuf, Shared, std::thread::JoinHandle<()>) {
         let feed: Shared = Arc::new(Mutex::new(feed()));
+        let (path, thread) = serving_with(name, Arc::clone(&feed), None);
+        (path, feed, thread)
+    }
+
+    /// A socket of its own, with the feed, the thread that serves it, and
+    /// a hook the server calls inside its snapshot of the history.
+    fn serving_with(
+        name: &str,
+        feed: Shared,
+        hook: Option<SnapshotHook>,
+    ) -> (PathBuf, std::thread::JoinHandle<()>) {
         let subscribers = Arc::new(AtomicUsize::new(0));
         let path =
             std::env::temp_dir().join(format!("notifyd-feed-{}-{name}.sock", std::process::id()));
         let listener = bind(&path).expect("the socket");
         let served = Arc::clone(&feed);
         let thread = std::thread::spawn(move || {
-            let _ = accept(listener, served, Arc::clone(&subscribers));
+            let _ = accept_with(listener, served, Arc::clone(&subscribers), hook);
         });
-        (path, feed, thread)
+        (path, thread)
     }
 
     /// Read what the socket says, until `wanted` is in it or the socket
@@ -538,30 +584,106 @@ mod tests {
 
     /// A note pushed while the history is being sent is neither lost nor
     /// sent twice: it is in the replay or in the live stream, once.
+    ///
+    /// The push is not hoped for: the server is held inside its snapshot
+    /// — between the number of the history and the history itself — and
+    /// the note is pushed exactly there. The snapshot holds the feed
+    /// while it is taken, so the note cannot land between the number and
+    /// the history: it lands after the snapshot, in the live stream.
+    /// Were the snapshot ever taken in two steps — the number first and
+    /// the history after — the feed would be free inside the window and
+    /// the note would land there, in the replay *and* in the live stream,
+    /// and this test would fail.
     #[test]
-    fn a_note_pushed_while_the_history_is_sent_arrives_once() {
-        let (path, feed, thread) = serving("race");
+    fn a_note_pushed_while_the_history_is_sent_is_not_lost() {
+        use std::sync::atomic::AtomicBool;
+        use std::sync::mpsc::channel;
+
+        let feed: Shared = Arc::new(Mutex::new(feed()));
+        // What the window saw: the feed free while the snapshot was
+        // taken, and the note landing inside the window.
+        let free = Arc::new(AtomicBool::new(false));
+        let landed = Arc::new(AtomicBool::new(false));
+        let inside = Arc::new(AtomicBool::new(false));
+        // The server is inside the snapshot, and the push starts there.
+        let (signalled, at_inside) = channel::<()>();
+        let (starting, at_starting) = channel::<()>();
+        let at_starting = Mutex::new(at_starting);
+        let seen_feed = Arc::clone(&feed);
+        let seen_free = Arc::clone(&free);
+        let seen_landed = Arc::clone(&landed);
+        let seen_inside = Arc::clone(&inside);
+        let hook: SnapshotHook = Arc::new(move || {
+            // The feed is held while the snapshot is taken, so a note
+            // cannot land between the number and the history. If the
+            // feed is free here, the snapshot is in two steps.
+            if let Ok(guard) = seen_feed.try_lock() {
+                drop(guard);
+                seen_free.store(true, Ordering::SeqCst);
+            }
+            // The server is inside the snapshot: the push may start.
+            let _ = signalled.send(());
+            // The push starts now.
+            let _ = at_starting.lock().unwrap().recv();
+            // The push waits for the snapshot to end. If it lands
+            // inside the window, the snapshot was in two steps.
+            std::thread::sleep(Duration::from_millis(300));
+            seen_inside.store(seen_landed.load(Ordering::SeqCst), Ordering::SeqCst);
+        });
+
+        let (path, thread) = serving_with("race", Arc::clone(&feed), Some(hook));
         let mut stream = UnixStream::connect(&path).expect("the socket");
         let _ = writeln!(stream, "subscribe");
-        // The push races the server's reading of the history: it may
-        // land before the reading (and be in the replay) or after it
-        // (and be streamed), but never both and never neither.
-        locked(&feed).push(3, "Files", "Copy done", "notes.md");
-        let _ = stream.set_read_timeout(Some(Duration::from_millis(200)));
+        at_inside
+            .recv_timeout(Duration::from_secs(5))
+            .expect("the server is inside the snapshot");
+
+        // The push, while the server is inside the snapshot.
+        let pushed_feed = Arc::clone(&feed);
+        let push = std::thread::spawn(move || {
+            let _ = starting.send(());
+            locked(&pushed_feed).push(3, "Files", "Copy done", "notes.md");
+            landed.store(true, Ordering::SeqCst);
+        });
+
+        // The note is in the replay or in the live stream, once. The read
+        // waits well past the poll, so a second copy would be seen.
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(1)));
         let mut buf = [0_u8; 256];
         let mut said = String::new();
-        for _ in 0..75 {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        while std::time::Instant::now() < deadline {
             let count = stream.read(&mut buf).unwrap_or(0);
-            if count == 0 {
+            if count > 0 {
+                said.push_str(&String::from_utf8_lossy(
+                    buf.get(..count).unwrap_or_default(),
+                ));
+            }
+            if said.contains(LIVE) && said.matches("notice 3 ").count() > 0 {
+                // The live stream has said it; a second copy would come
+                // with the next poll.
+                std::thread::sleep(POLL * 2);
+                let count = stream.read(&mut buf).unwrap_or(0);
+                if count > 0 {
+                    said.push_str(&String::from_utf8_lossy(
+                        buf.get(..count).unwrap_or_default(),
+                    ));
+                }
                 break;
             }
-            said.push_str(&String::from_utf8_lossy(
-                buf.get(..count).unwrap_or_default(),
-            ));
-            std::thread::sleep(Duration::from_millis(20));
+            std::thread::sleep(Duration::from_millis(10));
         }
+        assert!(
+            !free.load(Ordering::SeqCst),
+            "the snapshot was taken in two steps: the feed was free between the number and the history"
+        );
+        assert!(
+            !inside.load(Ordering::SeqCst),
+            "the snapshot was taken in two steps: the note landed between the number and the history"
+        );
         let times = said.matches("notice 3 ").count();
         assert_eq!(times, 1, "the notice is sent once: {said}");
+        drop(push);
         drop(thread);
     }
 
