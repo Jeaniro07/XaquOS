@@ -166,15 +166,39 @@ fn a_watcher_takes_the_banners_and_the_notes_stay() {
         paint::banners_unless(&mut fonts, store.shown(), 1, false).is_some(),
         "the banners are back"
     );
-    // The shell is gone: the notes it showed are not painted again.
-    store.clear_shown();
+    // The shell is gone: the notes it showed are not painted again, but
+    // they stay, so that a keyed note keeps its count and a close is
+    // still answered.
+    store.take_shown();
+    assert_eq!(store.shown().len(), 2, "the notes stay");
     assert!(
-        store.shown().is_empty(),
-        "the notes the shell showed are taken off"
+        paint::banners_unless(&mut fonts, &store.paint_shown(), 1, false).is_none(),
+        "and nothing is painted again"
+    );
+    let (same, _) = store.notify_keyed(
+        "driver:0x00000010",
+        "Graphics driver crashed, restarting".to_owned(),
+        String::new(),
+        Urgency::Normal,
+        20,
+    );
+    let held = store
+        .shown()
+        .iter()
+        .find(|note| note.key.as_deref() == Some("driver:0x00000010"));
+    assert_eq!(
+        held.map(|note| note.count),
+        Some(2),
+        "the count is carried on"
+    );
+    assert_eq!(
+        held.map(|note| note.id),
+        Some(same),
+        "and it is the same banner"
     );
     assert!(
-        paint::banners_unless(&mut fonts, store.shown(), 1, false).is_none(),
-        "and nothing is painted again"
+        store.close(same).is_some(),
+        "and the close is still answered"
     );
 }
 

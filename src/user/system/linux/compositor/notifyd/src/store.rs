@@ -105,6 +105,10 @@ pub struct Asked {
 #[derive(Clone, Debug, Default)]
 pub struct Store {
     shown: Vec<Note>,
+    /// The notes the shell took while it watched: they are not painted
+    /// again, but they stay, so that a keyed note keeps its count and a
+    /// close is still answered.
+    taken: Vec<u32>,
     /// The history, which the shell's Notices reads over the socket.
     feed: Shared,
     next_id: u32,
@@ -290,13 +294,24 @@ impl Store {
         self.shown.iter().filter_map(|note| note.until_ms).min()
     }
 
-    /// Take the notes off the screen: they were the shell's to show, and
-    /// it has gone, so they are not painted again.
+    /// The shell has taken the notes that are on screen: they are not
+    /// painted again when it goes, but they stay where they are, so that
+    /// a keyed note keeps its count and a close is still answered.
     ///
     /// Ponytail: all of them at once, when the last watcher goes. Upgrade
     /// path: a mark on each note, when only some of them were shown.
-    pub fn clear_shown(&mut self) {
-        self.shown.clear();
+    pub fn take_shown(&mut self) {
+        self.taken = self.shown.iter().map(|note| note.id).collect();
+    }
+
+    /// The notes to paint: those the shell did not take.
+    #[must_use]
+    pub fn paint_shown(&self) -> Vec<Note> {
+        self.shown
+            .iter()
+            .filter(|note| !self.taken.contains(&note.id))
+            .cloned()
+            .collect()
     }
 
     /// Forget the list.

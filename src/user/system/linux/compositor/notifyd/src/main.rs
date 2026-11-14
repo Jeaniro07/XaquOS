@@ -145,8 +145,10 @@ fn run() -> Result<(), String> {
             daemon.watching = watching;
             if !watching {
                 // The notes on screen were the shell's to show: it is
-                // gone, and they are not painted again.
-                daemon.store.clear_shown();
+                // gone, and they are not painted again — but they stay,
+                // so that a keyed note keeps its count and a close is
+                // still answered.
+                daemon.store.take_shown();
             }
             daemon.changed();
         }
@@ -338,7 +340,12 @@ impl Daemon {
             // Ponytail: the decision is made when the banners are
             // painted. Upgrade path: a mark on each note, when the
             // banners already on screen are to finish first.
-            paint::banners_unless(&mut self.fonts, self.store.shown(), scale, self.watching)
+            paint::banners_unless(
+                &mut self.fonts,
+                &self.store.paint_shown(),
+                scale,
+                self.watching,
+            )
         };
         let Some((pixmap, _height, areas)) = painted else {
             if let Some(shown) = self.shown.take() {

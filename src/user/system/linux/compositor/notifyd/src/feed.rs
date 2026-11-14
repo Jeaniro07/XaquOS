@@ -224,28 +224,44 @@ fn connection(
     feed: Shared,
     subscribers: Arc<AtomicUsize>,
 ) -> io::Result<()> {
-    let (said, rest) = said(&mut stream)?;
+    let (said, mut rest) = said(&mut stream)?;
     if said == "subscribe" {
         let _ = subscribers.fetch_add(1, Ordering::SeqCst);
         let result = subscribe(&mut stream, &feed, rest);
         let _ = subscribers.fetch_sub(1, Ordering::SeqCst);
         return result;
     }
-    if let Some(rest) = said.strip_prefix("close ") {
-        if let Ok(id) = rest.trim().parse() {
-            let _ = locked(&feed).close(id);
-        }
-        return Ok(());
-    }
     if said == "list" {
         for entry in locked(&feed).entries(HISTORY) {
             stream.write_all(line(&entry).as_bytes())?;
         }
-        return Ok(());
+    } else if let Some(rest) = said.strip_prefix("close ") {
+        if let Ok(id) = rest.trim().parse() {
+            let _ = locked(&feed).close(id);
+        }
+    } else {
+        // A command that is not one is said so, not answered with the
+        // history.
+        stream.write_all(format!("{ERROR}\n").as_bytes())?;
     }
-    // A command that is not one is said so, not answered with the
-    // history.
-    stream.write_all(format!("{ERROR}\n").as_bytes())
+    // The rest of the write may carry more commands.
+    commands(&mut rest, &feed);
+    Ok(())
+}
+
+/// The commands in the buffer, applied: a `close <id>` takes a notice
+/// away.
+fn commands(said: &mut Vec<u8>, feed: &Shared) {
+    while let Some(end) = said.iter().position(|byte| *byte == b'\n') {
+        let command: Vec<u8> = said.drain(..=end).collect();
+        let command = String::from_utf8_lossy(&command);
+        let command = command.trim();
+        if let Some(rest) = command.strip_prefix("close ")
+            && let Ok(id) = rest.trim().parse()
+        {
+            let _ = locked(feed).close(id);
+        }
+    }
 }
 
 /// A subscriber: the history, the end of the history, and then every new
@@ -278,16 +294,7 @@ fn subscribe(stream: &mut UnixStream, feed: &Shared, rest: Vec<u8>) -> io::Resul
             Err(error) => return Err(error),
         }
         // The shell's commands, on the connection it watches with.
-        while let Some(end) = said.iter().position(|byte| *byte == b'\n') {
-            let command: Vec<u8> = said.drain(..=end).collect();
-            let command = String::from_utf8_lossy(&command);
-            let command = command.trim();
-            if let Some(rest) = command.strip_prefix("close ")
-                && let Ok(id) = rest.trim().parse()
-            {
-                let _ = locked(feed).close(id);
-            }
-        }
+        commands(&mut said, feed);
         // The new notes.
         for (at, entry) in locked(feed).after(sequence) {
             sequence = sequence.max(at);
@@ -530,22 +537,50 @@ mod tests {
     }
 
     /// A note pushed while the history is being sent is neither lost nor
-    /// sent twice.
+    /// sent twice: it is in the replay or in the live stream, once.
     #[test]
-    fn a_note_pushed_while_the_history_is_sent_is_not_lost() {
+    fn a_note_pushed_while_the_history_is_sent_arrives_once() {
         let (path, feed, thread) = serving("race");
         let mut stream = UnixStream::connect(&path).expect("the socket");
         let _ = writeln!(stream, "subscribe");
-        let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-        let said = read_until(&mut stream, LIVE);
-        assert!(said.contains(LIVE));
-        // A note that arrives right after the history was sent is streamed.
+        // The push races the server's reading of the history: it may
+        // land before the reading (and be in the replay) or after it
+        // (and be streamed), but never both and never neither.
         locked(&feed).push(3, "Files", "Copy done", "notes.md");
-        let said = read_until(&mut stream, "Copy done");
-        assert!(
-            said.contains("notice 3 Files\tCopy done\tnotes.md\n"),
-            "the new notice: {said}"
-        );
+        let _ = stream.set_read_timeout(Some(Duration::from_millis(200)));
+        let mut buf = [0_u8; 256];
+        let mut said = String::new();
+        for _ in 0..75 {
+            let count = stream.read(&mut buf).unwrap_or(0);
+            if count == 0 {
+                break;
+            }
+            said.push_str(&String::from_utf8_lossy(
+                buf.get(..count).unwrap_or_default(),
+            ));
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let times = said.matches("notice 3 ").count();
+        assert_eq!(times, 1, "the notice is sent once: {said}");
+        drop(thread);
+    }
+
+    /// Two closes in one write are two closes.
+    #[test]
+    fn two_closes_at_once_are_two_closes() {
+        let (path, feed, thread) = serving("twoclose");
+        let mut stream = UnixStream::connect(&path).expect("the socket");
+        let _ = write!(stream, "close 1\nclose 2\n");
+        let mut gone = false;
+        for _ in 0..50 {
+            std::thread::sleep(Duration::from_millis(20));
+            let notes = locked(&feed).list(HISTORY);
+            if notes.iter().all(|note| note.id != 1 && note.id != 2) {
+                gone = true;
+                break;
+            }
+        }
+        assert!(gone, "both notices are out of the history");
         drop(thread);
     }
 
