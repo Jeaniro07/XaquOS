@@ -26,8 +26,12 @@ use crate::window::say;
 pub const NAMESPACE: &str = "yoru-notices";
 
 /// The surface's width, in logical pixels.
+// Ponytail: a fixed width, so the compositor is never asked to resize it.
+// Upgrade path: the width the panel needs, when the history is wider.
 pub const WIDTH: u32 = 360;
 /// The surface's height: the banners and the panel under them.
+// Ponytail: a fixed height, as the width. Upgrade path: the height the
+// banners and the panel need.
 pub const HEIGHT: u32 = 560;
 /// A banner's height.
 const BANNER: f32 = 64.0;
@@ -40,14 +44,24 @@ const TILE: f32 = 54.0;
 // flickable column, when the older half of the history is wanted.
 const TILES: usize = 5;
 /// How many banners are up at once; the oldest goes first past this.
+// Ponytail: three, as many as notifyd shows of its own. Upgrade path:
+// as many as the screen has room for.
 const MAX_BANNERS: usize = 3;
 /// How many notices the history keeps.
+// Ponytail: fifty, as many as notifyd keeps. Upgrade path: as many as
+// notifyd keeps.
 const HISTORY: usize = 50;
 /// How long a banner stays up.
+// Ponytail: five seconds, as long as notifyd's own banners. Upgrade
+// path: the notice's own timeout, when the socket carries it.
 const LIFETIME: Duration = Duration::from_secs(5);
 /// How often the panel and the banners are looked at.
+// Ponytail: five times a second, so that the clock opens the panel at
+// once. Upgrade path: a signal from the menu bar, when it is pressed.
 const TICK: Duration = Duration::from_millis(200);
 /// How often notifyd is looked for, when it is not there.
+// Ponytail: every two seconds. Upgrade path: the compositor's own
+// retry, when they are one.
 const RETRY: Duration = Duration::from_secs(2);
 
 /// Whether the panel is open; the menu bar's clock asks for it.
@@ -66,6 +80,15 @@ pub struct Notice {
     pub summary: String,
     /// Its body.
     pub body: String,
+    /// Whether notifyd kept it quiet: the do-not-disturb was on and the
+    /// note is not critical. It is listed, but it does not banner — and
+    /// a critical note, which notifyd would have shown, banners all the
+    /// same. The rule is notifyd's; the shell follows what the wire says
+    /// of each notice and never reads the file itself.
+    //
+    // Ponytail: a flag after the body on the same line. Upgrade path: a
+    // field of its own, when the wire grows more than one.
+    pub quiet: bool,
 }
 
 /// The socket's lines, read into notices; a line that is not one is
@@ -78,13 +101,18 @@ pub fn parse(lines: &[&str]) -> Vec<Notice> {
             let rest = line.strip_prefix("notice ")?;
             let (id, rest) = rest.split_once(' ')?;
             let id = id.parse().ok()?;
-            let (app, rest) = rest.split_once('\t')?;
-            let (summary, body) = rest.split_once('\t')?;
+            let mut fields = rest.splitn(4, '\t');
+            let app = fields.next()?;
+            let summary = fields.next()?;
+            let body = fields.next()?;
+            // `quiet` after the body: notifyd kept that notice quiet.
+            let quiet = fields.next().is_some_and(|flag| flag == "quiet");
             Some(Notice {
                 id,
                 app: app.to_owned(),
                 summary: summary.to_owned(),
                 body: body.to_owned(),
+                quiet,
             })
         })
         .collect()
@@ -120,9 +148,6 @@ pub struct State {
     connected: bool,
     /// Whether the history has been replayed and what follows is new.
     live: bool,
-    /// Whether notifyd's do-not-disturb is on: the notices are listed,
-    /// but they do not banner.
-    quiet: bool,
 }
 
 impl State {
@@ -133,7 +158,7 @@ impl State {
     }
 
     /// A notice comes in: into the history always, and up as a banner
-    /// when it is new and the do-not-disturb is off.
+    /// when it is new and notifyd did not keep it quiet.
     ///
     /// The replayed history — what notifyd sends when the connection is
     /// made — is listed but never bannered: those notices are old, and
@@ -142,7 +167,9 @@ impl State {
         self.history.retain(|kept| kept.id != notice.id);
         self.history.insert(0, notice.clone());
         self.history.truncate(HISTORY);
-        if !self.live || self.quiet {
+        // The rule is notifyd's, and it says of every notice whether it
+        // was kept quiet: a critical one still banners.
+        if !self.live || notice.quiet {
             return;
         }
         self.banners.retain(|(_, until)| *until > now);
@@ -163,19 +190,6 @@ impl State {
     #[must_use]
     pub fn live(&self) -> bool {
         self.live
-    }
-
-    /// Notifyd's do-not-disturb, on or off; whether it changed.
-    pub fn set_quiet(&mut self, quiet: bool) -> bool {
-        let changed = self.quiet != quiet;
-        self.quiet = quiet;
-        changed
-    }
-
-    /// Whether notifyd's do-not-disturb is on.
-    #[must_use]
-    pub fn quiet(&self) -> bool {
-        self.quiet
     }
 
     /// The banners whose time is up; whether any went.
@@ -325,7 +339,6 @@ impl View {
         self.notices.banners.set(ui, banners);
         self.notices.tiles.set(ui, tiles);
         self.notices.open.set(ui, state.open());
-        self.notices.quiet.set(ui, state.quiet());
         self.notices.status.set(
             ui,
             s(if state.connected() {
@@ -560,15 +573,6 @@ fn read_from(
                 changed |= state.set_live(true);
                 continue;
             }
-            // The do-not-disturb, which stays at notifyd's source.
-            if line == "quiet on" {
-                changed |= state.set_quiet(true);
-                continue;
-            }
-            if line == "quiet off" {
-                changed |= state.set_quiet(false);
-                continue;
-            }
             for notice in parse(&[line]) {
                 state.push(notice, Instant::now());
                 changed = true;
@@ -581,6 +585,9 @@ fn read_from(
         }
         *socket = None;
         state.set_connected(false);
+        // The tiles were notifyd's: they go with it, and the panel says
+        // so.
+        state.clear();
         changed = true;
     }
     changed
@@ -647,6 +654,15 @@ mod tests {
             app: "Files".to_owned(),
             summary: format!("n{id}"),
             body: String::new(),
+            quiet: false,
+        }
+    }
+
+    /// A notice notifyd kept quiet.
+    fn quiet_notice(id: u32) -> Notice {
+        Notice {
+            quiet: true,
+            ..notice(id)
         }
     }
 
@@ -672,8 +688,7 @@ mod tests {
     }
 
     /// The replayed history is listed but never bannered: only what is
-    /// new is shown, and not while the do-not-disturb is on — which
-    /// stays at notifyd's source, and the shell only follows.
+    /// new is shown.
     #[test]
     fn the_replay_is_listed_and_does_not_banner() {
         let now = std::time::Instant::now();
@@ -691,14 +706,38 @@ mod tests {
             Some(2),
             "the new one banners"
         );
-        state.set_quiet(true);
-        state.push(notice(3), now);
+    }
+
+    /// The rule is notifyd's, and it travels of every notice: a quiet
+    /// one does not banner, and a critical one — which notifyd would
+    /// have shown — banners all the same.
+    #[test]
+    fn a_quiet_notice_does_not_banner_and_a_critical_one_does() {
+        let now = std::time::Instant::now();
+        let mut state = State::new();
+        state.set_live(true);
+        state.push(quiet_notice(1), now);
+        assert!(state.banner(0).is_none(), "the quiet one does not banner");
+        assert_eq!(state.ids().len(), 1, "but it is listed");
+        state.push(notice(2), now);
         assert_eq!(
             state.banner(0).map(|notice| notice.id),
             Some(2),
-            "the quiet one does not banner"
+            "the other one banners"
         );
-        assert_eq!(state.ids().len(), 3, "but it is listed");
+    }
+
+    /// The wire says of every notice whether notifyd kept it quiet.
+    #[test]
+    fn the_wire_says_which_notices_are_quiet() {
+        let notices = parse(&[
+            "notice 7 Files\tCopy done\tnotes.md to the stash",
+            "notice 6 devmgr\tGPU driver is up\t\tquiet",
+        ]);
+        assert_eq!(notices.len(), 2);
+        assert!(!notices[0].quiet, "the first is shown");
+        assert!(notices[1].quiet, "the second is quiet");
+        assert_eq!(notices[1].body, "", "the body is still the third field");
     }
 
     /// The surface draws the banners and the panel.
@@ -713,6 +752,7 @@ mod tests {
                 app: "Files".to_owned(),
                 summary: "Copy done".to_owned(),
                 body: "notes.md to the stash".to_owned(),
+                quiet: false,
             },
             now,
         );
