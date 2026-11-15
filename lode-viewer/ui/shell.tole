@@ -317,7 +317,7 @@ export component Shell : Rectangle {
             color: Theme.ink4
         }
         // No minimize, maximize or close of the window's own: the
-        // compositor's title bar has them (Yoru's, hyprix:titlebars), as
+        // compositor's title bar has them (Xaqu's, hyprix:titlebars), as
         // Settings leaves them to it. Drawn here too, the window had two
         // rows of them (the customer, N150, 2026-10-28).
         // Light | Dark.

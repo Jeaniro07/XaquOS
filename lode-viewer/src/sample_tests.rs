@@ -1030,7 +1030,7 @@ fn a_screenshot_lode_could_not_keep_is_said_and_an_old_stores_file_still_read() 
 }
 
 /// The window's own header has no minimize, maximize or close: the
-/// compositor's title bar has them (Yoru's), and with both the window had
+/// compositor's title bar has them (Xaqu's), and with both the window had
 /// two rows of them (the N150, 2026-10-28). A click where each of the three
 /// was, at the header's right end, asks nothing of the window; the Light
 /// and Dark switch moved there still works.

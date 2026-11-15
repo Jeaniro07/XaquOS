@@ -1090,10 +1090,10 @@ mod in_force_tests {
         assert!(!got.contains_key("nothing"));
     }
 
-    /// Under Yoru (floating, own frames, no blur in software) the rows say
+    /// Under Xaqu (floating, own frames, no blur in software) the rows say
     /// why a change cannot show; and the pages show what is in force.
     #[test]
-    fn rows_say_what_cannot_show_under_yoru() {
+    fn rows_say_what_cannot_show_under_xaqu() {
         let mut state = State::new(Page::Appearance);
         for (k, v) in [
             ("general:layout", "floating"),
@@ -1120,6 +1120,6 @@ mod in_force_tests {
             .into_iter()
             .find(|r| r.key == Key::Setting("hyprix:titlebars"))
             .unwrap();
-        assert!(titlebars.on, "Yoru's bars are on, and the switch says so");
+        assert!(titlebars.on, "Xaqu's bars are on, and the switch says so");
     }
 }

@@ -3,7 +3,7 @@
 Ferrix's file chooser: tole's `FileDialog` (`Fx.Controls`, after the
 customer's Key File Dialog design) in a window of its own. `portald`, the
 desktop portal, opens it for `org.freedesktop.portal.FileChooser`, so on a
-Yoru desktop GTK 3 (`GTK_USE_PORTAL=1`), GTK 4 (`GDK_DEBUG=portals`) and
+Xaqu desktop GTK 3 (`GTK_USE_PORTAL=1`), GTK 4 (`GDK_DEBUG=portals`) and
 Chrome open and save through it instead of GTK's own dialog.
 
     chooser [--save] [--title T] [--name N] [--folder DIR]

@@ -84,7 +84,7 @@ pub fn state(
             Err(error) => say(&format!("err: {}: {error}", path.display())),
         }
     }
-    // What is in force -- Yoru's theme, the person's hyprland.conf -- and
+    // What is in force -- Xaqu's theme, the person's hyprland.conf -- and
     // over it what Settings itself kept, as the pages compare them.
     state.values = system.options(crate::backend::OPTION_KEYS);
     state.values.extend(system.settings());

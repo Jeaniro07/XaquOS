@@ -1,5 +1,5 @@
 // Nocturne, the desktop's design system (Ferrix's docs/DESKTOP.md §6,
-// yoru-shell's ui/nocturne.tole), as the installer's tokens, in Settings'
+// xaqu-shell's ui/nocturne.tole), as the installer's tokens, in Settings'
 // faces, Figtree and JetBrains Mono, so the two apps read as one family.
 // The installer is dark only, as the live session is.
 singleton Look {
