@@ -11,9 +11,11 @@
 //! Open and Save are Ferrix's own dialog, tole's `FileDialog`, so GTK's and
 //! Chrome's dialogs on Xaqu are that one.
 //!
-//! What it says is fixed at its start (`--light` for a light desktop):
-//! nothing is read from the person, nothing is written, and no other
-//! portal is offered -- a program that asks for a screenshot gets the
+//! What it says starts as `--light` or `--dark` and follows the file the
+//! shell's menu bar keeps the resolved look in ([`appearance_file`]): when
+//! that changes it sends `SettingChanged` ([`changed`]), which GTK 4,
+//! libadwaita and Chrome follow while running. Nothing else is read from
+//! the person, nothing is written, and no other portal is offered -- a program that asks for a screenshot gets the
 //! bus's "no such interface" and falls back as it does where no portal
 //! runs.
 
@@ -134,6 +136,51 @@ fn write_keys(out: &mut Writer, all: &[(&str, &str, Value)], namespace: &str) {
         out.string(key);
         value.write_variant(out);
     }
+}
+
+/// The file the shell's menu bar keeps the resolved look in, `dark` or
+/// `light`: `$XDG_CONFIG_HOME/xaqu-shell/appearance`, else under
+/// `$HOME/.config`. portald reads it again as it changes.
+#[must_use]
+pub fn appearance_file() -> Option<std::path::PathBuf> {
+    let config = std::env::var_os("XDG_CONFIG_HOME")
+        .filter(|d| !d.is_empty())
+        .map(std::path::PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .filter(|h| !h.is_empty())
+                .map(|h| std::path::Path::new(&h).join(".config"))
+        })?;
+    Some(config.join("xaqu-shell/appearance"))
+}
+
+/// What the appearance file says: `Some(true)` for `dark`, `Some(false)`
+/// for `light`, `None` for anything else.
+#[must_use]
+pub fn parse_appearance(text: &str) -> Option<bool> {
+    match text.trim() {
+        "dark" => Some(true),
+        "light" => Some(false),
+        _ => None,
+    }
+}
+
+/// The `SettingChanged` signals for the look going from `before` to `now`:
+/// one for each setting whose value is not the same.
+#[must_use]
+pub fn changed(before: bool, now: bool) -> Vec<Message> {
+    settings(now)
+        .into_iter()
+        .zip(settings(before))
+        .filter(|(new, old)| new.2 != old.2)
+        .map(|((namespace, key, value), _)| {
+            let mut body = Writer::new();
+            body.string(namespace);
+            body.string(key);
+            value.write_variant(&mut body);
+            Message::signal(PATH, SETTINGS, "SettingChanged").with_body("ssv", body)
+        })
+        .collect()
 }
 
 /// A file chooser's call: the reply naming its request, the request's
@@ -396,6 +443,54 @@ mod tests {
             &["org.gnome.desktop.interface"],
             "org.freedesktop.appearance"
         ));
+    }
+
+    #[test]
+    fn the_appearance_file_says_dark_or_light() {
+        assert_eq!(super::parse_appearance("dark\n"), Some(true));
+        assert_eq!(super::parse_appearance(" light "), Some(false));
+        assert_eq!(super::parse_appearance(""), None);
+        assert_eq!(super::parse_appearance("sepia"), None);
+    }
+
+    #[test]
+    fn a_change_of_look_signals_each_setting_that_moved() {
+        assert!(super::changed(true, true).is_empty());
+        let signals = super::changed(true, false);
+        let keys: Vec<(String, String)> = signals
+            .iter()
+            .map(|signal| {
+                assert_eq!(signal.kind, Some(Kind::Signal));
+                assert_eq!(signal.member.as_deref(), Some("SettingChanged"));
+                assert_eq!(signal.signature, "ssv");
+                let mut reader = signal.reader();
+                let namespace = reader.string().expect("namespace").to_owned();
+                let key = reader.string().expect("key").to_owned();
+                (namespace, key)
+            })
+            .collect();
+        assert_eq!(
+            keys,
+            vec![
+                (
+                    "org.freedesktop.appearance".to_owned(),
+                    "color-scheme".to_owned()
+                ),
+                (
+                    "org.gnome.desktop.interface".to_owned(),
+                    "color-scheme".to_owned()
+                ),
+                (
+                    "org.gnome.desktop.interface".to_owned(),
+                    "gtk-theme".to_owned()
+                ),
+            ]
+        );
+        // The first carries the new value: 2, light.
+        let mut reader = signals[0].reader();
+        let _ = (reader.string(), reader.string());
+        assert_eq!(reader.signature(), Ok("u"));
+        assert_eq!(reader.u32(), Ok(2));
     }
 
     #[test]
