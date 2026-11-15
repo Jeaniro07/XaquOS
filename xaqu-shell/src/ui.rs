@@ -77,6 +77,167 @@ fn s(value: impl AsRef<str>) -> Rc<str> {
     Rc::from(value.as_ref())
 }
 
+/// The rows of the quick settings: the sidebar's tab and the Control
+/// Center draw the same ones.
+pub struct QuickRows {
+    /// Brightness, volume, microphone.
+    pub sliders: Vec<QuickSlider>,
+    /// The six tiles.
+    pub tiles: Vec<QuickTile>,
+    /// The theme colours.
+    pub accents: Vec<QuickAccent>,
+    /// The appearances.
+    pub looks: Vec<QuickLook>,
+}
+
+/// The rows `quick` shows.
+#[must_use]
+pub fn quick_rows(quick: &crate::quick::Quick) -> QuickRows {
+    let slider = |name: &str, label: &str, value: u32, shown: String, enabled: bool| QuickSlider {
+        icon: s(icon(name)),
+        label: s(label),
+        value: value as f32,
+        shown: s(shown),
+        enabled,
+    };
+    let brightness = quick
+        .backlight
+        .as_ref()
+        .map(crate::quick::Backlight::percent);
+    let sound_slider =
+        |name: &str, label: &str, device: Option<&crate::sound::Device>, none: &str| QuickSlider {
+            icon: s(icon(if device.is_some_and(|d| d.muted) {
+                if name == "microphone" {
+                    "microphone-slash"
+                } else {
+                    "speaker-slash"
+                }
+            } else {
+                name
+            })),
+            label: s(label),
+            value: device.map_or(0.0, |d| d.percent.min(100) as f32),
+            shown: s(device.map_or_else(
+                || none.to_owned(),
+                |d| {
+                    if d.muted {
+                        "Muted".to_owned()
+                    } else {
+                        format!("{}%", d.percent)
+                    }
+                },
+            )),
+            enabled: device.is_some(),
+        };
+    let sliders = vec![
+        slider(
+            "sun",
+            "Brightness",
+            brightness.unwrap_or(0),
+            brightness.map_or_else(|| "No backlight".to_owned(), |p| format!("{p}%")),
+            brightness.is_some(),
+        ),
+        sound_slider(
+            "speaker-high",
+            "Volume",
+            quick.sink.as_ref(),
+            quick
+                .sound
+                .as_ref()
+                .map_or("No sound card", |_| "No sound server"),
+        ),
+        sound_slider(
+            "microphone",
+            "Microphone",
+            quick.source.as_ref(),
+            quick
+                .sound
+                .as_ref()
+                .map_or("No microphone", |_| "No sound server"),
+        ),
+    ];
+    let on_off = |on: bool| if on { "On" } else { "Off" };
+    let tile = |name: &str, label: &str, sub: &str, on: bool, enabled: bool| QuickTile {
+        icon: s(icon(name)),
+        label: s(label),
+        sub: s(sub),
+        on,
+        enabled,
+    };
+    let tiles = vec![
+        tile(
+            "wifi-high",
+            "Wi-Fi",
+            if quick.wireless {
+                "Not yet"
+            } else {
+                "None found"
+            },
+            false,
+            false,
+        ),
+        tile("bluetooth", "Bluetooth", "Not yet", false, false),
+        tile(
+            "bell-slash",
+            "Do not disturb",
+            on_off(quick.quiet),
+            quick.quiet,
+            true,
+        ),
+        tile("moon", "Night light", "Not yet", false, false),
+        tile(
+            "crosshair-simple",
+            "Focus mode",
+            on_off(quick.focus),
+            quick.focus,
+            true,
+        ),
+        tile(
+            "squares-four",
+            "Auto-tile",
+            if quick.tiled { "Tiling" } else { "Off" },
+            quick.tiled,
+            true,
+        ),
+    ];
+    let theme = &quick.theme;
+    let accents = crate::theme::Mode::all()
+        .into_iter()
+        .map(|mode| {
+            let hue = match mode {
+                crate::theme::Mode::Named(n) => {
+                    crate::theme::TRIADS.get(n).map_or(289.0, |t| t.1[0])
+                }
+                crate::theme::Mode::Wallpaper => 289.0,
+            };
+            let [r, g, b] = crate::quick::oklch(0.72, (0.14 * theme.vibrance).min(0.26), hue);
+            QuickAccent {
+                name: s(mode.name()),
+                colour: tole::Color::rgba(r, g, b, 0xff),
+                icon: s(if mode == crate::theme::Mode::Wallpaper {
+                    icon("image")
+                } else {
+                    String::new()
+                }),
+                on: theme.mode == mode,
+            }
+        })
+        .collect();
+    let looks = crate::theme::Appearance::ALL
+        .into_iter()
+        .map(|look| QuickLook {
+            name: s(look.name()),
+            on: theme.appearance == look,
+        })
+        .collect();
+    QuickRows {
+        sliders,
+        tiles,
+        accents,
+        looks,
+    }
+}
+
 /// The tree and what the program keeps of it.
 pub struct View {
     /// The tree.
@@ -246,5 +407,34 @@ mod tests {
         now.others.remove(0);
         assert_eq!(view.shown(), Some(&drawn));
         assert_ne!(view.shown(), Some(&now));
+    }
+
+    use super::quick_rows;
+    use crate::quick::Quick;
+
+    /// With nothing found the rows still stand, the unavailable ones off.
+    #[test]
+    fn the_quick_rows_stand_with_nothing_found() {
+        let rows = quick_rows(&Quick::default());
+        assert_eq!(rows.sliders.len(), 3);
+        assert!(rows.sliders.iter().all(|r| !r.enabled));
+        assert_eq!(rows.tiles.len(), 6);
+        let on: Vec<bool> = rows.tiles.iter().map(|t| t.enabled).collect();
+        assert_eq!(on, [false, false, true, false, true, true]);
+        assert_eq!(rows.looks.len(), crate::theme::Appearance::ALL.len());
+        assert_eq!(rows.accents.len(), crate::theme::Mode::all().len());
+    }
+
+    /// A tile is on when its setting is, and one look and one accent are marked.
+    #[test]
+    fn the_chosen_look_is_the_one_marked() {
+        let quick = Quick {
+            quiet: true,
+            ..Quick::default()
+        };
+        let rows = quick_rows(&quick);
+        assert!(rows.tiles[2].on);
+        assert_eq!(rows.looks.iter().filter(|l| l.on).count(), 1);
+        assert_eq!(rows.accents.iter().filter(|a| a.on).count(), 1);
     }
 }

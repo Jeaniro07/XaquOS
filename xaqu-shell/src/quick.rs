@@ -177,6 +177,41 @@ pub enum Change {
     MicMute,
 }
 
+/// The change a slider's move asks: row `i` (brightness, volume,
+/// microphone) to `value` per cent.
+#[must_use]
+pub fn slide_change(i: usize, value: f32) -> Option<Change> {
+    let percent = value.clamp(0.0, 100.0).round() as u32;
+    match i {
+        0 => Some(Change::Brightness(percent)),
+        1 => Some(Change::Volume(percent)),
+        2 => Some(Change::Mic(percent)),
+        _ => None,
+    }
+}
+
+/// The change a slider's icon press asks: volume or microphone muted.
+#[must_use]
+pub fn mute_change(i: usize) -> Option<Change> {
+    match i {
+        1 => Some(Change::Mute),
+        2 => Some(Change::MicMute),
+        _ => None,
+    }
+}
+
+/// The change a tile's press asks; Wi-Fi, Bluetooth and Night light are
+/// drawn disabled and ask nothing.
+#[must_use]
+pub fn tile_change(i: usize) -> Option<Change> {
+    match i {
+        2 => Some(Change::Quiet),
+        4 => Some(Change::Focus),
+        5 => Some(Change::Tile),
+        _ => None,
+    }
+}
+
 /// The value of a `getoption` answer (`int: 1`, then `set: true`): `1`.
 #[must_use]
 pub fn option_value(answer: &str) -> Option<String> {
@@ -379,7 +414,28 @@ pub fn change(hypr: Option<&Hypr>, quick: &Quick, change: &Change) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{Backlight, Change, Quick, backlight, in_force, option_value, requests};
+    use super::{
+        Backlight, Change, Quick, backlight, in_force, mute_change, option_value, requests,
+        slide_change, tile_change,
+    };
+
+    /// The quick rows' presses map to the same changes wherever they are drawn.
+    #[test]
+    fn a_press_in_the_rows_is_the_change_it_names() {
+        assert_eq!(slide_change(0, 41.6), Some(Change::Brightness(42)));
+        assert_eq!(slide_change(1, 250.0), Some(Change::Volume(100)));
+        assert_eq!(slide_change(2, -3.0), Some(Change::Mic(0)));
+        assert_eq!(slide_change(3, 50.0), None);
+        assert_eq!(mute_change(1), Some(Change::Mute));
+        assert_eq!(mute_change(2), Some(Change::MicMute));
+        assert_eq!(mute_change(0), None);
+        assert_eq!(tile_change(2), Some(Change::Quiet));
+        assert_eq!(tile_change(4), Some(Change::Focus));
+        assert_eq!(tile_change(5), Some(Change::Tile));
+        assert_eq!(tile_change(0), None);
+        assert_eq!(tile_change(1), None);
+        assert_eq!(tile_change(3), None);
+    }
 
     /// A reload drops what `keyword` put in force, as Hyprland's does: focus
     /// mode is read back off after one even though the toggle was on.
