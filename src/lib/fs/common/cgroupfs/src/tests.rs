@@ -7,7 +7,7 @@ use crate::controllers::{self, Change, Controller, Set, Standing};
 use crate::files::{self, Kind};
 use crate::name;
 use crate::render;
-use crate::write::{self, Limit, Target};
+use crate::write::{self, Limit, Reclaim, Swappiness, Target};
 
 fn text(fill: impl FnOnce(&mut Vec<u8>)) -> Vec<u8> {
     let mut out = Vec::new();
@@ -406,20 +406,76 @@ fn memory_max_reads_sizes_as_memparse_does() {
 
 #[test]
 fn memory_reclaim_reads_a_size_and_never_max() {
-    assert_eq!(write::parse_reclaim(b"1M\n"), Ok(Some(1 << 20)));
-    assert_eq!(write::parse_reclaim(b" 4096 "), Ok(Some(4096)));
-    assert_eq!(write::parse_reclaim(b"0"), Ok(Some(0)));
-    assert_eq!(write::parse_reclaim(b"0x2000"), Ok(Some(0x2000)));
+    let only = |bytes: Option<u64>| Reclaim {
+        bytes,
+        swappiness: None,
+    };
+    assert_eq!(write::parse_reclaim(b"1M\n"), Ok(only(Some(1 << 20))));
+    assert_eq!(write::parse_reclaim(b" 4096 "), Ok(only(Some(4096))));
+    assert_eq!(write::parse_reclaim(b"0"), Ok(only(Some(0))));
+    assert_eq!(write::parse_reclaim(b"0x2000"), Ok(only(Some(0x2000))));
     // `page_counter_memparse(buf, "", …)`: the empty text is its "max".
-    assert_eq!(write::parse_reclaim(b"\n"), Ok(None));
+    assert_eq!(write::parse_reclaim(b"\n"), Ok(only(None)));
     assert_eq!(write::parse_reclaim(b"max"), Err(Refusal::Invalid));
     assert_eq!(write::parse_reclaim(b"plenty"), Err(Refusal::Invalid));
     assert_eq!(write::parse_reclaim(b"-4096"), Err(Refusal::Invalid));
-    // No swap, so no `swappiness=` to take after the size.
+}
+
+#[test]
+fn memory_reclaim_reads_the_swappiness_after_the_size() {
+    let with = |bytes: Option<u64>, swappiness: Option<Swappiness>| Reclaim { bytes, swappiness };
     assert_eq!(
         write::parse_reclaim(b"1M swappiness=0"),
+        Ok(with(Some(1 << 20), Some(Swappiness::Value(0))))
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness=200"),
+        Ok(with(Some(1 << 20), Some(Swappiness::Value(200))))
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness=max"),
+        Ok(with(Some(1 << 20), Some(Swappiness::AnonOnly)))
+    );
+    // A write of only the swappiness asks for everything.
+    assert_eq!(
+        write::parse_reclaim(b"swappiness=0"),
+        Ok(with(None, Some(Swappiness::Value(0))))
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness=201"),
         Err(Refusal::Invalid)
     );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness=-1"),
+        Err(Refusal::Invalid)
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness="),
+        Err(Refusal::Invalid)
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness"),
+        Err(Refusal::Invalid)
+    );
+    assert_eq!(
+        write::parse_reclaim(b"1M swappiness=0 and more"),
+        Err(Refusal::Invalid)
+    );
+}
+
+#[test]
+fn memory_swap_files_are_the_memory_controllers_and_not_the_roots() {
+    let memory = Set::EMPTY.with(Controller::Memory);
+    assert_eq!(
+        files::named(b"memory.swap.current", false, memory).map(|file| (file.kind, file.mode())),
+        Some((Kind::MemorySwapCurrent, 0o444))
+    );
+    assert_eq!(
+        files::named(b"memory.swap.max", false, memory).map(|file| (file.kind, file.mode())),
+        Some((Kind::MemorySwapMax, 0o644))
+    );
+    assert_eq!(files::named(b"memory.swap.max", true, memory), None);
+    assert_eq!(files::named(b"memory.swap.max", false, Set::EMPTY), None);
 }
 
 #[test]
@@ -619,13 +675,16 @@ fn the_controller_files_print_as_linux_prints_them() {
                 kernel: 8192,
                 pagetables: 4096,
                 shmem: 12288,
+                swapcached: 4096,
+                zswap: 2048,
+                zswapped: 8192,
                 pgscan: 5,
                 pgsteal: 4,
                 pgfault: 99,
                 pgmajfault: 7,
             }
         )),
-        b"anon 16384\nfile 4096\nkernel 8192\npagetables 4096\nshmem 12288\npgscan 5\npgsteal 4\npgfault 99\npgmajfault 7\n"
+        b"anon 16384\nfile 4096\nkernel 8192\npagetables 4096\nshmem 12288\nzswap 2048\nzswapped 8192\nswapcached 4096\npgscan 5\npgsteal 4\npgfault 99\npgmajfault 7\n"
     );
     assert_eq!(
         rendered(|out| render::memory_events(

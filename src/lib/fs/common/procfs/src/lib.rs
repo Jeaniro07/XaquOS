@@ -33,6 +33,7 @@
 //! * [`net`] — `/proc/net`: `dev`, `route`, `tcp`, `udp` and `arp`, which
 //!   `route`, `netstat` and `ifconfig` read with `sscanf` and fixed columns.
 //! * [`partitions`] — `/proc/partitions`.
+//! * [`swaps`] — `/proc/swaps`.
 //! * [`sysctl`] — the values under `/proc/sys`, and what a write to a string
 //!   one stores.
 
@@ -52,6 +53,7 @@ pub mod net;
 pub mod partitions;
 pub mod stat;
 pub mod status;
+pub mod swaps;
 pub mod sysctl;
 mod text;
 

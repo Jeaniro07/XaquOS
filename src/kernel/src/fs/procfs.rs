@@ -396,7 +396,7 @@ static DRIVER_NVIDIA: [Entry<Kernel>; 2] = [
 ];
 
 /// `/proc`, less the process directories that follow these in a listing.
-pub(crate) static TOP: [Entry<Kernel>; 21] = [
+pub(crate) static TOP: [Entry<Kernel>; 22] = [
     Entry {
         name: b"self",
         permissions: 0o777,
@@ -426,6 +426,7 @@ pub(crate) static TOP: [Entry<Kernel>; 21] = [
     reporting_directory(b"net", &NET),
     file(b"stat", render::kstat),
     file(b"partitions", render::partitions),
+    file(b"swaps", render::swaps),
     file(b"uptime", render::uptime),
     file(b"version", render::version),
     sysctl_directory(b"sys", &SYS),

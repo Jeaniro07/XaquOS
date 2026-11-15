@@ -17,6 +17,7 @@ use crate::mounts::{self, Mount};
 use crate::partitions::{self, Partition};
 use crate::stat::{self, Stat};
 use crate::status::{self, SignalMasks, State, Status};
+use crate::swaps::{self, Swap, SwapKind};
 use crate::sysctl;
 
 fn rendered(render: impl FnOnce(&mut Vec<u8>)) -> Vec<u8> {
@@ -1235,4 +1236,71 @@ fn a_status_in_a_pid_namespace_lists_every_number_from_the_readers_down() {
         text.contains("Groups:\t \nNStgid:\t4242\t1\nNSpid:\t4242\t1\nNSpgid:\t4242\t1\nNSsid:\t4242\t1\nVmSize:"),
         "{text}"
     );
+}
+
+#[test]
+fn swaps_is_the_header_and_a_row_as_a_real_linux_printed_it() {
+    // Copied from /proc/swaps of a Linux 6.6 (WSL2) machine.
+    let host = [Swap {
+        path: b"/dev/sdc",
+        kind: SwapKind::Partition,
+        size_kib: 2_097_152,
+        used_kib: 3864,
+        priority: -2,
+    }];
+    let out = rendered(|out| swaps::render(out, &host));
+    assert_eq!(
+        show(&out),
+        show(
+            b"Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/dev/sdc                                partition\t2097152\t\t3864\t\t-2\n"
+        ),
+        "the host's /proc/swaps"
+    );
+}
+
+#[test]
+fn swaps_with_no_area_is_only_the_header() {
+    let out = rendered(|out| swaps::render(out, &[]));
+    assert_eq!(
+        show(&out),
+        show(b"Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n")
+    );
+}
+
+#[test]
+fn a_swaps_row_of_a_wide_number_drops_the_tab_linux_drops() {
+    // `swap_show` prints a tab before the size and the use only while the
+    // number is under ten million, so a wide area has one tab fewer.
+    let host = [Swap {
+        path: b"/dev/sdc",
+        kind: SwapKind::Partition,
+        size_kib: 20_000_000,
+        used_kib: 10_000_000,
+        priority: -1,
+    }];
+    let out = rendered(|out| swaps::render(out, &host));
+    assert_eq!(
+        show(&out),
+        show(
+            b"Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/dev/sdc                                partition\t20000000\t10000000\t-1\n"
+        ),
+        "a wide area"
+    );
+}
+
+#[test]
+fn a_swaps_path_of_forty_bytes_or_more_is_followed_by_one_space() {
+    let path = [b'p'; 45];
+    let host = [Swap {
+        path: &path,
+        kind: SwapKind::File,
+        size_kib: 8,
+        used_kib: 0,
+        priority: 5,
+    }];
+    let out = rendered(|out| swaps::render(out, &host));
+    let row = out.split(|b| *b == b'\n').nth(1).unwrap_or(&[]);
+    assert!(row.starts_with(&path));
+    assert_eq!(row.get(45), Some(&b' '));
+    assert_eq!(row.get(46), Some(&b'f'));
 }
