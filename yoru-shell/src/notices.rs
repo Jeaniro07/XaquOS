@@ -10,7 +10,7 @@ use std::io::Write as _;
 use std::os::fd::AsRawFd as _;
 use std::os::unix::net::UnixStream;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use compositor_toolkit::{Event, Rect, WatchId};
@@ -68,6 +68,10 @@ const RETRY: Duration = Duration::from_secs(2);
 // Ponytail: a flag in the process, as the menu bar is a thread of the
 // dock's program. Upgrade path: a socket, if the bar ever runs alone.
 static OPEN: AtomicBool = AtomicBool::new(false);
+
+/// How many notices the history holds, for the clock's line to say; the
+/// notices' own thread keeps it up to date.
+static SHOWN: AtomicUsize = AtomicUsize::new(0);
 
 /// One notice, as the socket carries it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -129,6 +133,13 @@ pub fn toggle() {
         "notices: the panel is {}",
         if open { "open" } else { "closed" }
     ));
+    // What the panel shows, for a boot that waits for it.
+    if open {
+        say(&format!(
+            "notices: up, {} shown",
+            SHOWN.load(Ordering::SeqCst)
+        ));
+    }
 }
 
 /// What a press in the notices asks.
@@ -488,6 +499,8 @@ pub fn run() -> i32 {
                 Event::Timer(timer) if timer == tick => {
                     changed |= state.expire(Instant::now());
                     changed |= state.set_open(OPEN.load(Ordering::SeqCst));
+                    // What the panel shows, for the clock's line to say.
+                    SHOWN.store(state.history.len(), Ordering::SeqCst);
                     // Notifyd, when it is not there yet.
                     changed |=
                         connect_later(&mut window, &mut socket, &mut watch, &mut again, &mut state);
@@ -569,7 +582,14 @@ fn take(state: &mut State, line: &str) -> bool {
     }
     let mut changed = false;
     for notice in parse(&[line]) {
+        let before = state.banner(0).map(|banner| banner.id);
         state.push(notice, Instant::now());
+        // A banner that came up is said, so a boot can wait for it.
+        if let Some(banner) = state.banner(0)
+            && Some(banner.id) != before
+        {
+            say(&format!("notices: banner {}", banner.summary));
+        }
         changed = true;
     }
     changed

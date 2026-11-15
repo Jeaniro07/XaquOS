@@ -51,3 +51,21 @@ behind it (`layerrule = blur true, match:namespace ^(yoru-.*)$`).
 
 `yoru-shell --render FILE` draws the dock of a sample desktop into a PNG,
 as above; `cargo test` checks the model, the IPC's events and a drawn dock.
+
+## Spotlight, Launchpad and Notices
+
+- **Spotlight** - the search card over the desktop, on SUPER Space:
+  `yoru-shell --spotlight`. The query is read as arithmetic first and then
+  matched against the installed applications, the open windows and the
+  names under `~` (at most 5000 of them, 300 ms, scanned when the card
+  opens). Enter runs the chosen row; a file opens with its default handler.
+  Started again while it is up, it closes.
+- **Launchpad** - the grid of every installed application over the whole
+  screen, on SUPER L: `yoru-shell --launchpad`. Eight columns, paged, click
+  to run; it closes on another SUPER L or on a click off the grid.
+- **Notices** - the desktop's notifications as the shell shows them, on a
+  thread of the dock's program, with no argument of its own: the glass
+  banners at the top right (at most three, five seconds each) and the
+  history behind the clock, which the clock opens. notifyd serves the
+  history on `$XDG_RUNTIME_DIR/notifyd.sock`; while the shell is subscribed
+  it draws the banners and notifyd draws none of its own.
