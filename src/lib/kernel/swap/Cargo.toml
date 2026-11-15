@@ -1,0 +1,13 @@
+[package]
+name = "ferrix-swap"
+description = "Swap entries, page aging, the compressed pool and disk swap: the logic of docs/MEMORY-COMPRESSION.md, host tested"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true
