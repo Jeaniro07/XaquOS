@@ -1,0 +1,131 @@
+// Xaqu's dock (spec §4): a bar of glass in the middle of the screen's
+// foot. The launchers as tiles with a dot under each that has a window
+// anywhere, the other programs with windows after them, a line, and the
+// stash. Rust hands it what to show and turns its signals into the
+// compositor's dispatchers (`src/ui.rs`).
+import Fx
+
+struct AppRow {
+    glyph: string
+    letter: string
+    tile: int
+    title: string
+    running: bool
+}
+
+export component Dock : Item {
+    id: dock
+    property list<AppRow> apps
+    property string stashIcon
+    property string stashBadge
+    property bool overStash: stashArea.containsMouse
+
+    signal app(int index)
+    signal stash()
+    // What the pointer is over: a tile's title, said for its tooltip
+    // (empty when it leaves).
+    signal hover(string title)
+
+    Rectangle {
+        anchors.fill: parent
+        radius: 18
+        color: alpha(Nocturne.surface, 0.8)
+        border.width: 1
+        border.color: alpha(Nocturne.text, 0.12)
+    }
+
+    Row {
+        x: 10; y: 10
+        height: 56
+        spacing: 8
+        Repeater {
+            model: dock.apps
+            Item {
+                width: 48; height: 56
+                Rectangle {
+                    width: 48; height: 48
+                    radius: 11
+                    color: modelData.tile == 0 ? "#2b2b30" : modelData.tile == 1 ? Nocturne.accent : modelData.tile == 2 ? "#5aa9f0" : modelData.tile == 3 ? "#8e9198" : Nocturne.n900
+                    Text {
+                        anchors.centerIn: parent
+                        visible: modelData.glyph != ""
+                        text: modelData.glyph
+                        font: Nocturne.icon(26)
+                        color: "#ffffff"
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        visible: modelData.glyph == ""
+                        text: modelData.letter
+                        font: Nocturne.sans(20, 600)
+                        color: Nocturne.text
+                    }
+                }
+                Rectangle {
+                    x: 22; y: 51
+                    width: modelData.running ? 4 : 0
+                    height: 4
+                    radius: 2
+                    color: Nocturne.n300
+                }
+                MouseArea {
+                    x: 0; y: 0
+                    width: 48; height: 48
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: dock.app(index)
+                    onEntered: dock.hover(modelData.title)
+                    onExited: dock.hover("")
+                }
+            }
+        }
+        Rectangle {
+            y: 8
+            width: 1; height: 32
+            color: Nocturne.divider
+        }
+        // The stash: files dropped here are put aside; a press opens the
+        // panel of them.
+        Item {
+            width: 48; height: 56
+            Rectangle {
+                width: 48; height: 48
+                radius: 11
+                color: stashArea.containsMouse ? Nocturne.n800 : Nocturne.n900
+                Text {
+                    anchors.centerIn: parent
+                    text: dock.stashIcon
+                    font: Nocturne.icon(24)
+                    color: Nocturne.n300
+                }
+            }
+            Rectangle {
+                visible: dock.stashBadge != ""
+                x: 48 - width + 2; y: -2
+                width: max(16, badgeText.implicitWidth + 8)
+                height: 16
+                radius: 8
+                color: Nocturne.b600
+                border.width: 2
+                border.color: Nocturne.surface
+                Text {
+                    id: badgeText
+                    anchors.centerIn: parent
+                    text: dock.stashBadge
+                    font: Nocturne.sans(9.5, 600)
+                    color: "#e6fbfc"
+                }
+            }
+            MouseArea {
+                id: stashArea
+                x: 0; y: 0
+                width: 48; height: 48
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: dock.stash()
+                onEntered: dock.hover("Stash · drop files here")
+                onExited: dock.hover("")
+            }
+        }
+    }
+}
