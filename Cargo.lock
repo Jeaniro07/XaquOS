@@ -1357,6 +1357,9 @@ version = "0.3.0"
 [[package]]
 name = "ferrix-swap"
 version = "0.1.0"
+dependencies = [
+ "ferrix-lz4",
+]
 
 [[package]]
 name = "ferrix-sync"
