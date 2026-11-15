@@ -14,6 +14,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+ferrix-lz4 = { path = "../../lib/kernel/lz4" }
 ferrix-acpi = { path = "../../lib/platform/acpi" }
 ferrix-cpio = { path = "../../lib/fs/common/cpio" }
 ferrix-partition-desc = { path = "../../lib/proto/partition-desc" }
@@ -373,6 +374,13 @@ bench = false
 [[bin]]
 name = "fsproto_serve"
 path = "fuzz_targets/fsproto_serve.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "lz4_roundtrip"
+path = "fuzz_targets/lz4_roundtrip.rs"
 test = false
 doc = false
 bench = false
