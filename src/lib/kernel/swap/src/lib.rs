@@ -8,11 +8,15 @@
 
 extern crate alloc;
 
+mod age;
 mod anon;
 mod entry;
 
+pub use age::Ager;
 pub use anon::{Anon, Slot};
 pub use entry::Entry;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_age;
