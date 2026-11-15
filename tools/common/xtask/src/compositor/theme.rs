@@ -172,8 +172,8 @@ pub(super) fn apply(config: String, args: &Args, files: &mut Vec<File>) -> Resul
         head.push_str(&format!("exec-once = /{DOCK}\n"));
     }
     if theme == Theme::Yoru {
-        // The launcher's look, which Yoru's keys and its dock start fuzzel
-        // with (`--config`).
+        // The launcher's look, which Yoru's keys start fuzzel with
+        // (`--config`); SUPER Space opens the shell's Spotlight now.
         carry(
             themes.join("yoru-fuzzel.ini"),
             format!("{THEMES}/yoru-fuzzel.ini"),

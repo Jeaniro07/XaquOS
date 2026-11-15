@@ -85,6 +85,7 @@ mod idle;
 mod kept_settings;
 mod lane;
 mod latency;
+mod launchpad;
 mod layout;
 mod live;
 mod locked;
@@ -93,6 +94,7 @@ mod machine;
 mod measure;
 mod monitors;
 pub(crate) mod n150_box;
+mod notices;
 mod picture;
 mod pointer;
 mod portal_desktop;
@@ -103,6 +105,7 @@ mod settings;
 mod settings_live;
 mod settings_prompt;
 mod sidebars;
+mod spotlight;
 mod stash;
 mod steam_store;
 pub(crate) mod steam_window;
@@ -810,7 +813,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 73] = [
+const BOOTS: [(&str, Boot); 76] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
@@ -867,6 +870,9 @@ const BOOTS: [(&str, Boot); 73] = [
     ("sidebars", sidebars::test_sidebars),
     ("files", files::test_files),
     ("appmenu", appmenu::test_appmenu),
+    ("spotlight", spotlight::test_spotlight),
+    ("launchpad", launchpad::test_launchpad),
+    ("notices", notices::test_notices),
     ("weather", weather::test_weather),
     ("quick", quick::test_quick),
     ("chrome-yoru", chrome_yoru::test_chrome_yoru),

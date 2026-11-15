@@ -1033,7 +1033,7 @@ built and the size of what is not (points as the backlog counts them).
 | Widgets: weather (Open-Meteo, opt-in, §6.6) | yes: off until a place is typed, a name looked up once and kept as rounded coordinates, now and feels like, seven days, eight hours (boot `weather`) | |
 | Widgets: quick settings (brightness, volume, mic, appearance, theme colour, Wi-Fi, Bluetooth, DND, night light, focus, auto-tile) | yes but what Ferrix has no backend for: focus, auto-tile (for every workspace), theme colour and appearance, DND, brightness on a backlight, volume and mute through pulsed, the microphone where a source is (boot `quick`); Wi-Fi, Bluetooth and night light faint | a microphone (capture in pulsed) -- 1; night light (gamma) -- 1; auto-tile per workspace -- 1 |
 | Widgets: to-do | yes, kept in the person's file | |
-| Command palette: windows, actions, workspaces, fuzzy | applications only, fuzzel (Y3) | 5 |
+| Command palette: windows, actions, workspaces, fuzzy | applications, windows and files, the shell's Spotlight on SUPER Space | actions, workspaces, the shortcut sheet -- 5 |
 | Switcher cards | hyprix's own | restyle -- 2 |
 | Jump hints (letters on windows) | no | 3 |
 | Shortcut sheet | no | 2 |
@@ -1041,7 +1041,7 @@ built and the size of what is not (points as the backlog counts them).
 | Scratchpad drop-down terminal | special workspace (keys, dock) | the slide from the top -- 2 |
 | Focus mode (others dimmed and blurred) | dimmed (dock) | blur of the others -- 2 |
 | Pomodoro | yes (dock) | |
-| Toasts | no | 2 (on notifyd) |
+| Toasts | yes, the shell's banners on notifyd (the design's place is the top centre) | |
 | Night light and brightness overlays | no | 3 |
 | Wallpaper picker: cover flow and grid, folders, colour filters, sorts, add pictures and videos | yes, SUPER I (boot `walls`): cover and grid, folders and a new one, the colour dots, the sorts, live (IVF) wallpapers listed | adding pictures from the picker -- 2 |
 | Video wallpapers | `pattern --video`, and the picker sets an IVF | |
@@ -1073,3 +1073,25 @@ Files has File, Edit, View and Go; Settings has View, one item per page.
 
 The `appmenu` boot opens Files, checks File reaches the bar, drops it and
 picks New Tab.
+
+### 6.9 Spotlight, Launchpad, Notices
+
+SUPER Space opens Spotlight (`yoru-shell --spotlight`): the query is read as
+arithmetic first, then matched against the installed applications
+(`compositor_desktop::entry`), the open windows (`j/clients`) and the names
+under `~` (at most 5000 entries, 300 ms, scanned when it opens, no index).
+Enter runs the chosen row; a file opens with its default handler.
+
+SUPER L opens Launchpad (`yoru-shell --launchpad`): a fullscreen grid of
+every installed application, 8 columns, paged, click to run. It closes on
+another SUPER L or a click outside the grid.
+
+notifyd keeps the last 50 notifications and serves them on a line socket
+(`$XDG_RUNTIME_DIR/notifyd.sock`: `list`, `subscribe`, `close <id>`). While
+yoru-shell is subscribed it draws the glass banners at the top right (at
+most 3, 5 s each) and the history behind the clock, and notifyd pauses its
+own banners. With the shell down, notifyd draws again.
+
+The `spotlight` boot types "fi" into the card and runs Files; the
+`launchpad` boot clicks the first tile and runs it; the `notices` boot waits
+for a banner, presses the clock and opens the panel behind it.
