@@ -97,7 +97,7 @@ fn point(x: usize, y: usize) -> (i64, i64) {
 /// Files' menus did not reach the bar, File did not drop, or New Tab did
 /// not reach Files.
 pub(super) fn test_appmenu(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/appmenu-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -186,7 +186,7 @@ pub(super) fn test_appmenu(arch: Arch, programs: &Programs, args: &Args) -> Resu
 mod tests {
     use super::*;
 
-    /// The screen, as the Yoru boot sets it.
+    /// The screen, as the Xaqu boot sets it.
     const SCREEN: (usize, usize) = (1024, 768);
 
     fn screen(drop: bool) -> Image {
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn the_titles_line_gives_where_file_is() {
-        let line = "yoru-shell: menu bar: titles FX@10+30|Files@58+40|File@116+36|Edit@170+36";
+        let line = "xaqu-shell: menu bar: titles FX@10+30|Files@58+40|File@116+36|Edit@170+36";
         assert_eq!(title(line, "File"), Some((116, 36)));
         assert_eq!(title(line, "Go"), None);
     }

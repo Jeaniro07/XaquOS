@@ -37,7 +37,7 @@ const CLEAR: Rgba = Rgba {
 };
 
 /// How a bar looks: `hyprix:titlebar:*`, whose defaults are Ferrix
-/// light's header (`docs/DESKTOP.md` §2.2) and which the Yoru theme sets
+/// light's header (`docs/DESKTOP.md` §2.2) and which the Xaqu theme sets
 /// to its own (§6). Lengths are logical pixels.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Style {

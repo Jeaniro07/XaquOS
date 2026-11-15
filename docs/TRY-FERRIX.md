@@ -1,7 +1,7 @@
 # Try Ferrix
 
 Ferrix is an operating system with its own Rust microkernel that runs
-ordinary Linux programs. The live ISO starts its desktop, Yoru, from memory,
+ordinary Linux programs. The live ISO starts its desktop, Xaqu, from memory,
 so you can try it without touching your disks, and it carries an installer
 if you want to keep it.
 
@@ -146,7 +146,7 @@ The desktop starts logged in as the user `ferrix`, with no password, and
 the installer opens. **Try Ferrix** closes it; "Install Ferrix" is in the
 launcher to open it again.
 
-* The desktop is Yoru, in the live session and on the installed system.
+* The desktop is Xaqu, in the live session and on the installed system.
 * SUPER+RETURN opens a terminal running zinc, Ferrix's shell.
 * SUPER+Q closes a window, SUPER+1 to 4 switch workspaces.
 * Try `ferrofetch`, `btop`, `curl https://example.com`, `git`.
@@ -168,7 +168,7 @@ It asks, page by page:
 6. a summary of every change, then **Install**;
 7. the progress, and a page to restart from.
 
-The installed system starts Yoru with your session locked: your password
+The installed system starts Xaqu with your session locked: your password
 opens it. Its disk has an EFI system partition and a btrfs root. It
 isolates its drivers behind the IOMMU (above).
 

@@ -72,7 +72,7 @@ _Generated from docs/sysml/. Every element carries the maturity keyword the mode
   - [S22 — Stage 22 steam](#s22-stage-22-steam)
   - [S23 — Stage 23 endfield](#s23-stage-23-endfield)
   - [S24 — Stage 24 game path](#s24-stage-24-game-path)
-  - [S25 — Stage 25 yoru](#s25-stage-25-yoru)
+  - [S25 — Stage 25 xaqu](#s25-stage-25-xaqu)
   - [S20 — Stage 20 self hosting](#s20-stage-20-self-hosting)
   - [Ordering](#ordering)
 - [Assurance](#assurance)
@@ -3112,7 +3112,7 @@ flowchart TB
   n26_FerrixRoadmap_stage22Steam["S22  Stage 22 steam<br>InProgress · unsized, over 300 points"]
   n27_FerrixRoadmap_stage23Endfield["S23  Stage 23 endfield<br>InProgress · about 205 points as a first guess, step 5 unknown"]
   n28_FerrixRoadmap_stage24GamePath["S24  Stage 24 game path<br>InProgress · about 68 points before the game domain, about 190 with it and the later rows"]
-  n29_FerrixRoadmap_stage25Yoru["S25  Stage 25 yoru<br>InProgress · 63 points estimated, about 27 built; the Files app unsized"]
+  n29_FerrixRoadmap_stage25Xaqu["S25  Stage 25 xaqu<br>InProgress · 63 points estimated, about 27 built; the Files app unsized"]
   n30_FerrixRoadmap_stage20SelfHosting["S20  Stage 20 self hosting<br>InProgress · longer"]
   n0_FerrixRoadmap_stage0Foundation -. "depends on" .-> n1_FerrixRoadmap_stage1Boot
   n1_FerrixRoadmap_stage1Boot -. "depends on" .-> n2_FerrixRoadmap_stage2Memory
@@ -3157,12 +3157,12 @@ flowchart TB
   n25_FerrixRoadmap_stage21BareMetalGpu -. "depends on" .-> n27_FerrixRoadmap_stage23Endfield
   n25_FerrixRoadmap_stage21BareMetalGpu -. "depends on" .-> n28_FerrixRoadmap_stage24GamePath
   n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n28_FerrixRoadmap_stage24GamePath
-  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n29_FerrixRoadmap_stage25Yoru
+  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n29_FerrixRoadmap_stage25Xaqu
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
   classDef planned fill:#e4e7ea,stroke:#6a737e,color:#16191d
   class n0_FerrixRoadmap_stage0Foundation,n1_FerrixRoadmap_stage1Boot,n2_FerrixRoadmap_stage2Memory,n3_FerrixRoadmap_stage3TrapsInterruptsTime,n4_FerrixRoadmap_stage4Smp,n5_FerrixRoadmap_armv7aPort,n6_FerrixRoadmap_stage5Scheduler,n7_FerrixRoadmap_stage6UserMode,n8_FerrixRoadmap_stage7LinuxAbi,n9_FerrixRoadmap_stage8Vfs,n10_FerrixRoadmap_stage9NativeAbi,n11_FerrixRoadmap_stage10UserspaceDrivers,n12_FerrixRoadmap_stage11BtrfsRead,n13_FerrixRoadmap_stageNetworking,n14_FerrixRoadmap_stageDynamicLinking,n15_FerrixRoadmap_stageSysfs,n17_FerrixRoadmap_stage12BtrfsWrite,n18_FerrixRoadmap_stage13Isolation,n21_FerrixRoadmap_stage16Rustc,n22_FerrixRoadmap_stage17DisplayAndInput,n23_FerrixRoadmap_stage18Compositor implemented
-  class n16_FerrixRoadmap_stageChrome,n20_FerrixRoadmap_stage15Userland,n24_FerrixRoadmap_stage19HyprlandFidelity,n25_FerrixRoadmap_stage21BareMetalGpu,n26_FerrixRoadmap_stage22Steam,n27_FerrixRoadmap_stage23Endfield,n28_FerrixRoadmap_stage24GamePath,n29_FerrixRoadmap_stage25Yoru,n30_FerrixRoadmap_stage20SelfHosting inProgress
+  class n16_FerrixRoadmap_stageChrome,n20_FerrixRoadmap_stage15Userland,n24_FerrixRoadmap_stage19HyprlandFidelity,n25_FerrixRoadmap_stage21BareMetalGpu,n26_FerrixRoadmap_stage22Steam,n27_FerrixRoadmap_stage23Endfield,n28_FerrixRoadmap_stage24GamePath,n29_FerrixRoadmap_stage25Xaqu,n30_FerrixRoadmap_stage20SelfHosting inProgress
   class n19_FerrixRoadmap_stage14RealTime planned
 ```
 
@@ -3199,7 +3199,7 @@ flowchart TB
 | `S22` | 22 | Stage 22 steam | InProgress | unsized, over 300 points | `#inProgress` |
 | `S23` | 23 | Stage 23 endfield | InProgress | about 205 points as a first guess, step 5 unknown | `#inProgress` |
 | `S24` | 24 | Stage 24 game path | InProgress | about 68 points before the game domain, about 190 with it and the later rows | `#inProgress` |
-| `S25` | 25 | Stage 25 yoru | InProgress | 63 points estimated, about 27 built; the Files app unsized | `#inProgress` |
+| `S25` | 25 | Stage 25 xaqu | InProgress | 63 points estimated, about 27 built; the Files app unsized | `#inProgress` |
 | `S20` | 20 | Stage 20 self hosting | InProgress | longer | `#inProgress` |
 
 Sizes are order-of-magnitude and not a schedule.
@@ -3374,7 +3374,7 @@ Placed after stage 12 without a number of its own, built on 2026-09-24 in the sh
 
 **InProgress**  ·  size headless and a window spent; the DK1 about 45 to 55 points  ·  `#inProgress`
 
-Placed after sysfs without a number of its own, asked for by the customer on 2026-09-23 (docs/CHROME.md). Google's prebuilt Chrome for Testing on Debian's glibc from a btrfs volume, by the customer's choice of 2026-09-24. Exit met on x86-64: cargo xtask test-chrome runs it headless, and cargo xtask test-chrome-window in a window on the compositor. On ferrousli in glibc's place, headless and in a window, since 2026-09-26: cargo xtask test-chrome and test-chrome-window with --interpreter ferrousli --library ferrousli. On the persistent btrfs root since 2026-09-26. With its zygote since 2026-09-26, once SCM_CREDENTIALS carried its children's pids; idle at 13% of a processor where it took 443%, after the futex, clock, munmap, shootdown and doorbell fixes and a vDSO (cargo xtask bench-chrome); and playing sound through /dev/snd (cargo xtask test-chrome-audio). Since 2026-10-25 a second volume (GTK 3) lets Chrome draw in Nocturne under the Yoru desktop (test-compositor --boot chrome-yoru), and a third (GSettings schemas, the MIME database, gdk-pixbuf's loaders) gives GTK's file chooser (--boot chrome-save opens Save-as with Ctrl+S); the first volume is left as it was (docs/CHROME.md). Owed: the GPU (inotify landed on 2026-09-27); and the STM32MP157D-DK1, where nothing has run yet. Debian's armhf Chromium runs headless on ARMv7-A under QEMU in 512 MiB (2026-10-08, after ARM's send and recv, cacheflush and mmap of a read-only btrfs were fixed); the SD card has a ring-3 SDMMC1 driver (2026-10-08); the cgroup controllers (2026-10-07) let the page cache give back a read-only btrfs's clean pages.
+Placed after sysfs without a number of its own, asked for by the customer on 2026-09-23 (docs/CHROME.md). Google's prebuilt Chrome for Testing on Debian's glibc from a btrfs volume, by the customer's choice of 2026-09-24. Exit met on x86-64: cargo xtask test-chrome runs it headless, and cargo xtask test-chrome-window in a window on the compositor. On ferrousli in glibc's place, headless and in a window, since 2026-09-26: cargo xtask test-chrome and test-chrome-window with --interpreter ferrousli --library ferrousli. On the persistent btrfs root since 2026-09-26. With its zygote since 2026-09-26, once SCM_CREDENTIALS carried its children's pids; idle at 13% of a processor where it took 443%, after the futex, clock, munmap, shootdown and doorbell fixes and a vDSO (cargo xtask bench-chrome); and playing sound through /dev/snd (cargo xtask test-chrome-audio). Since 2026-10-25 a second volume (GTK 3) lets Chrome draw in Nocturne under the Xaqu desktop (test-compositor --boot chrome-xaqu), and a third (GSettings schemas, the MIME database, gdk-pixbuf's loaders) gives GTK's file chooser (--boot chrome-save opens Save-as with Ctrl+S); the first volume is left as it was (docs/CHROME.md). Owed: the GPU (inotify landed on 2026-09-27); and the STM32MP157D-DK1, where nothing has run yet. Debian's armhf Chromium runs headless on ARMv7-A under QEMU in 512 MiB (2026-10-08, after ARM's send and recv, cacheflush and mmap of a read-only btrfs were fixed); the SD card has a ring-3 SDMMC1 driver (2026-10-08); the cgroup controllers (2026-10-07) let the page cache give back a read-only btrfs's clean pages.
 
 **Allocated to: **`ferrix.userland`
 
@@ -3466,7 +3466,7 @@ Gears, the customer's order of 2026-09-24 (docs/GPU.md 6): vkgears through Venus
 
 The desktop's own clients, begun on 2026-09-26 at the customer's request: waybar, fuzzel, hyprlock and hypridle in Rust, reading their own configuration files unchanged, over a shared foundation of 21 points. waybar and fuzzel are on main (2026-09-27) and run the customer's own configuration on run-compositor --everything, and hypridle is on main (2026-09-26); hyprlock is on main too (2026-10-03), its lock over authd.
 
-The Yoru desktop (docs/DESKTOP.md section 6) carries Nocturne for GTK 3 and GTK 4 and starts portald, which answers org.freedesktop.portal.Settings on the session bus (dark, the accent, the theme's name) and no other portal.
+The Xaqu desktop (docs/DESKTOP.md section 6) carries Nocturne for GTK 3 and GTK 4 and starts portald, which answers org.freedesktop.portal.Settings on the session bus (dark, the accent, the theme's name) and no other portal.
 
 ### S21 — Stage 21 bare metal gpu
 
@@ -3494,11 +3494,11 @@ The Windows game Arknights: Endfield on Ferrix, through Wine with DXVK on NVIDIA
 
 The game path: a fullscreen game faster on Ferrix than on a stock Linux desktop on the same hardware, in the time from an input to the picture that shows it and in how even the frames are under a background load. docs/GAME-PATH.md is the design and the build plan, written on 2026-10-10; the customer made it a stage the same day. R1, the frame recorder, R2, the latency probe, and R3, the load and the pinned guests, landed on 2026-10-14; nothing is measured on the card yet. In order: the measuring rig (R1 to R5, 19 to 21 points), the same binaries on both systems; then the first cut that can be compared with Linux, 47 points: the flip's time, the game lane (a fullscreen client's buffer scanned out as it is), input on its own thread, tearing, the just-in-time hold, a session with what the scheduler has, and drawing backwards from the deadline. The game domain (G1 to G5, 52 points) is stage 14's ground, in the item's core ring, and is outside this stage's points until the customer decides whether it may open stage 14 early; later rows, 73 points, are each built only on a measurement. It stands on stage 21's zero-copy work, which is not landed: displayctl v9, yserver's dmabuf hand-over and a hardware cursor, other sessions' and counted elsewhere. Nine of the design's ten questions are open. Exit, by the stage's own rig on the RTX 3060 at 1920x1080 and 60 Hz: input to scan-out with vsync on at a median of at most half a refresh plus the game's frame time plus 2 ms, and at least one refresh under stock Linux; and under the background load at most one missed refresh a minute, and fewer than stock Linux. A recorded run on the card, not a boot in CI.
 
-### S25 — Stage 25 yoru
+### S25 — Stage 25 xaqu
 
 **InProgress**  ·  size 63 points estimated, about 27 built; the Files app unsized  ·  `#inProgress`
 
-The customer's design "Yoru WM" as the desktop's look and shell on hyprix (docs/DESKTOP.md section 6, 2026-10-24; docs/roadmap/stage-25-yoru.md). Kernel lines: 0. Built, each with a test-compositor boot: Y1, the tokens (boot yoru); Y2, the dock, and its stash (yoru-dock, stash); the launcher in Yoru's look, Y3's first half (yoru-launcher); Y4, the widget sidebars, whose weather and quick settings tabs say "not kept yet" (sidebars); the wallpaper picker of Y7 (walls); Settings showing what hyprix has in force; Nocturne for GTK 3 and 4 with portald; and Chrome's GTK volumes (chrome-yoru, chrome-save). Still to do: the palette (Y3, 5 points), snapping as the design has it (Y5, 13), the helpers (Y6, 8), the accent from the wallpaper and parallax (Y7), lock, notifications and the switcher in the tokens, and sounds (Y8, 5), the weather and quick settings of Y4, Y1's square bottom corners and undrawn animations, Y2's FX mark, tooltips and Bar layout, and a Files app as a follow-up. Exit: every slice of section 6.3 landed with its boot. Not met.
+The customer's design "Xaqu WM" as the desktop's look and shell on hyprix (docs/DESKTOP.md section 6, 2026-10-24; docs/roadmap/stage-25-xaqu.md). Kernel lines: 0. Built, each with a test-compositor boot: Y1, the tokens (boot xaqu); Y2, the dock, and its stash (xaqu-dock, stash); the launcher in Xaqu's look, Y3's first half (xaqu-launcher); Y4, the widget sidebars, whose weather and quick settings tabs say "not kept yet" (sidebars); the wallpaper picker of Y7 (walls); Settings showing what hyprix has in force; Nocturne for GTK 3 and 4 with portald; and Chrome's GTK volumes (chrome-xaqu, chrome-save). Still to do: the palette (Y3, 5 points), snapping as the design has it (Y5, 13), the helpers (Y6, 8), the accent from the wallpaper and parallax (Y7), lock, notifications and the switcher in the tokens, and sounds (Y8, 5), the weather and quick settings of Y4, Y1's square bottom corners and undrawn animations, Y2's FX mark, tooltips and Bar layout, and a Files app as a follow-up. Exit: every slice of section 6.3 landed with its boot. Not met.
 
 **Allocated to: **`ferrix.userland`
 
@@ -3540,7 +3540,7 @@ Every stage ends in something that runs, and nothing is stubbed that a later sta
 - `stage22Steam` depends on `stage19HyprlandFidelity`, `stageDynamicLinking`, `stage12BtrfsWrite`, `stage13Isolation` and `stageNetworking`
 - `stage23Endfield` depends on `stage22Steam` and `stage21BareMetalGpu`
 - `stage24GamePath` depends on `stage21BareMetalGpu` and `stage19HyprlandFidelity`
-- `stage25Yoru` depends on `stage19HyprlandFidelity`
+- `stage25Xaqu` depends on `stage19HyprlandFidelity`
 - `stage5Scheduler` depends on `hostsRustc::kernelThreads`
 - `stage6UserMode` depends on `hostsRustc::addressSpaceScale`
 - `stage7LinuxAbi` depends on `hostsRustc::signalDelivery` and `hostsRustc::processSpawn`
@@ -3705,7 +3705,7 @@ flowchart LR
   n25_FerrixRoadmap_stageSysfs["SY  Stage sysfs"]
   n26_FerrixRoadmap_stageChrome["SC  Stage chrome"]
   n27_FerrixStructure_Ferrix_userland["userland<br>ferrix.userland"]
-  n28_FerrixRoadmap_stage25Yoru["S25  Stage 25 yoru"]
+  n28_FerrixRoadmap_stage25Xaqu["S25  Stage 25 xaqu"]
   n29_FerrixRoadmap_stage9NativeAbi["S9  Stage 9 native ABI"]
   n30_FerrixStructure_Kernel_native["native<br>ferrix.kernel.native"]
   n31_FerrixRoadmap_stage10UserspaceDrivers["S10  Stage 10 userspace drivers"]
@@ -3742,7 +3742,7 @@ flowchart LR
   n22_FerrixRoadmap_stage8Vfs -. "allocate" .-> n24_FerrixStructure_Kernel_filesystems
   n25_FerrixRoadmap_stageSysfs -. "allocate" .-> n24_FerrixStructure_Kernel_filesystems
   n26_FerrixRoadmap_stageChrome -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
-  n28_FerrixRoadmap_stage25Yoru -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
+  n28_FerrixRoadmap_stage25Xaqu -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
   n29_FerrixRoadmap_stage9NativeAbi -. "allocate" .-> n30_FerrixStructure_Kernel_native
   n31_FerrixRoadmap_stage10UserspaceDrivers -. "allocate" .-> n32_FerrixStructure_Machine_devices
   n31_FerrixRoadmap_stage10UserspaceDrivers -. "allocate" .-> n33_FerrixStructure_Machine_iommu
@@ -3760,7 +3760,7 @@ flowchart LR
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
   classDef planned fill:#e4e7ea,stroke:#6a737e,color:#16191d
   class n0_FerrixRoadmap_stage1Boot,n2_FerrixRoadmap_stage2Memory,n3_FerrixStructure_Kernel_mm,n4_FerrixStructure_Kernel_vmap,n5_FerrixRoadmap_stage3TrapsInterruptsTime,n6_FerrixStructure_Kernel_trap,n7_FerrixStructure_Kernel_irq,n8_FerrixStructure_Kernel_timer,n9_FerrixRoadmap_stage4Smp,n10_FerrixStructure_Kernel_smp,n11_FerrixRoadmap_armv7aPort,n13_FerrixRoadmap_stage5Scheduler,n14_FerrixStructure_Kernel_sched,n15_FerrixStructure_Kernel_tasks,n16_FerrixRoadmap_stage6UserMode,n17_FerrixStructure_Kernel_vm,n18_FerrixRoadmap_stage7LinuxAbi,n19_FerrixStructure_Kernel_syscalls,n20_FerrixStructure_Kernel_signals,n21_FerrixStructure_Kernel_futex,n22_FerrixRoadmap_stage8Vfs,n23_FerrixStructure_Kernel_vfs,n24_FerrixStructure_Kernel_filesystems,n25_FerrixRoadmap_stageSysfs,n29_FerrixRoadmap_stage9NativeAbi,n30_FerrixStructure_Kernel_native,n31_FerrixRoadmap_stage10UserspaceDrivers,n34_FerrixRoadmap_stage11BtrfsRead,n35_FerrixStructure_Kernel_blockCore,n36_FerrixRoadmap_stageNetworking,n37_FerrixStructure_Kernel_netCore,n38_FerrixRoadmap_stageDynamicLinking,n39_FerrixRoadmap_stage13Isolation,n40_FerrixStructure_Kernel_namespaces,n41_FerrixStructure_Kernel_cgroups,n42_FerrixStructure_Kernel_seccomp,n45_FerrixRoadmap_stage16Rustc,n46_FerrixStructure_Userland_rustc implemented
-  class n26_FerrixRoadmap_stageChrome,n27_FerrixStructure_Ferrix_userland,n28_FerrixRoadmap_stage25Yoru,n44_FerrixRoadmap_stage15Userland inProgress
+  class n26_FerrixRoadmap_stageChrome,n27_FerrixStructure_Ferrix_userland,n28_FerrixRoadmap_stage25Xaqu,n44_FerrixRoadmap_stage15Userland inProgress
   class n43_FerrixRoadmap_stage14RealTime planned
 ```
 
@@ -3842,7 +3842,7 @@ flowchart LR
 | `stage8Vfs` | `ferrix.kernel.filesystems` |
 | `stageSysfs` | `ferrix.kernel.filesystems` |
 | `stageChrome` | `ferrix.userland` |
-| `stage25Yoru` | `ferrix.userland` |
+| `stage25Xaqu` | `ferrix.userland` |
 | `stage9NativeAbi` | `ferrix.kernel.native` |
 | `stage10UserspaceDrivers` | `ferrix.kernel.devices` |
 | `stage10UserspaceDrivers` | `ferrix.kernel.iommu` |
@@ -3960,7 +3960,7 @@ flowchart LR
 | `S22` | `stage22Steam` | `dependency` | — | `#inProgress` |
 | `S23` | `stage23Endfield` | — | — | `#inProgress` |
 | `S24` | `stage24GamePath` | — | — | `#inProgress` |
-| `S25` | `stage25Yoru` | `allocate` | — | `#inProgress` |
+| `S25` | `stage25Xaqu` | `allocate` | — | `#inProgress` |
 | `S20` | `stage20SelfHosting` | — | — | `#inProgress` |
 | `D.fuzz` | `fuzzTargetsOwed` | — | — | `#planned` |
 | `D.miri` | `miriOwed` | — | — | `#planned` |

@@ -140,7 +140,7 @@ debs=(
     "main/libu/libunistring/libunistring5_1.3-2_amd64.deb 6dd3490bef06ea1096f32d10766b7e016cf579bfae8451d1b7df15ce05b8aa46"
     "main/k/keyutils/libkeyutils1_1.6.3-6_amd64.deb 0b11ad17be0300b63ad4eeb4c6450fed24d34b7b740f23e5363dcb29ee6d5eba"
     # GTK 3, which Chrome loads for its system look, its dark mode and its
-    # file chooser (Yoru's Nocturne, docs/DESKTOP.md §6), and what it loads.
+    # file chooser (Xaqu's Nocturne, docs/DESKTOP.md §6), and what it loads.
     # SVG for gdk-pixbuf: the Adwaita icons GTK's file chooser draws are SVG.
     # And the MIME database, without which gdk-pixbuf cannot tell an SVG.
     "main/s/shared-mime-info/shared-mime-info_2.4-5+b2_amd64.deb d7d061df29326b0ca6b273ac9332168659ff1562659f0a33609657a143dd7881"

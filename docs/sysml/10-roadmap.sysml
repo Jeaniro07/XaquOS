@@ -457,8 +457,8 @@ package FerrixRoadmap {
              * fixes and a vDSO (cargo xtask bench-chrome); and playing
              * sound through /dev/snd (cargo xtask test-chrome-audio).
              * Since 2026-10-25 a second volume (GTK 3) lets Chrome draw in
-             * Nocturne under the Yoru desktop (test-compositor --boot
-             * chrome-yoru), and a third (GSettings schemas, the MIME
+             * Nocturne under the Xaqu desktop (test-compositor --boot
+             * chrome-xaqu), and a third (GSettings schemas, the MIME
              * database, gdk-pixbuf's loaders) gives GTK's file chooser
              * (--boot chrome-save opens Save-as with Ctrl+S); the first
              * volume is left as it was (docs/CHROME.md).
@@ -724,7 +724,7 @@ package FerrixRoadmap {
              * on run-compositor --everything, and hypridle is on main
              * (2026-09-26); hyprlock is on main too (2026-10-03), its lock over authd.
              *
-             * The Yoru desktop (docs/DESKTOP.md section 6) carries Nocturne
+             * The Xaqu desktop (docs/DESKTOP.md section 6) carries Nocturne
              * for GTK 3 and GTK 4 and starts portald, which answers
              * org.freedesktop.portal.Settings on the session bus (dark,
              * the accent, the theme's name) and no other portal. */
@@ -894,20 +894,20 @@ package FerrixRoadmap {
              * stock Linux. A recorded run on the card, not a boot in CI. */
     }
 
-    #inProgress requirement <'S25'> stage25Yoru : Stage {
+    #inProgress requirement <'S25'> stage25Xaqu : Stage {
         attribute :>> number = 25;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "63 points estimated, about 27 built; the Files app unsized";
-        doc /* The customer's design "Yoru WM" as the desktop's look and
+        doc /* The customer's design "Xaqu WM" as the desktop's look and
              * shell on hyprix (docs/DESKTOP.md section 6, 2026-10-24;
-             * docs/roadmap/stage-25-yoru.md). Kernel lines: 0. Built, each
-             * with a test-compositor boot: Y1, the tokens (boot yoru); Y2,
-             * the dock, and its stash (yoru-dock, stash); the launcher in
-             * Yoru's look, Y3's first half (yoru-launcher); Y4, the widget
+             * docs/roadmap/stage-25-xaqu.md). Kernel lines: 0. Built, each
+             * with a test-compositor boot: Y1, the tokens (boot xaqu); Y2,
+             * the dock, and its stash (xaqu-dock, stash); the launcher in
+             * Xaqu's look, Y3's first half (xaqu-launcher); Y4, the widget
              * sidebars, whose weather and quick settings tabs say "not kept
              * yet" (sidebars); the wallpaper picker of Y7 (walls); Settings
              * showing what hyprix has in force; Nocturne for GTK 3 and 4
-             * with portald; and Chrome's GTK volumes (chrome-yoru,
+             * with portald; and Chrome's GTK volumes (chrome-xaqu,
              * chrome-save). Still to do: the palette (Y3, 5 points),
              * snapping as the design has it (Y5, 13), the helpers (Y6, 8),
              * the accent from the wallpaper and parallax (Y7), lock,
@@ -976,7 +976,7 @@ package FerrixRoadmap {
         stage12BtrfsWrite, stage13Isolation, stageNetworking;
     dependency from stage23Endfield to stage22Steam, stage21BareMetalGpu;
     dependency from stage24GamePath to stage21BareMetalGpu, stage19HyprlandFidelity;
-    dependency from stage25Yoru to stage19HyprlandFidelity;
+    dependency from stage25Xaqu to stage19HyprlandFidelity;
 
     #planned requirement <'D.fuzz'> fuzzTargetsOwed : Principles::DesignRule {
         doc /* src/tests/fuzz/ has two targets, elf_parse and frame_alloc. Every
@@ -1012,7 +1012,7 @@ package FerrixRoadmap {
     allocate stage8Vfs to ferrix.kernel.filesystems;
     allocate stageSysfs to ferrix.kernel.filesystems;
     allocate stageChrome to ferrix.userland;
-    allocate stage25Yoru to ferrix.userland;
+    allocate stage25Xaqu to ferrix.userland;
     allocate stage9NativeAbi to ferrix.kernel.native;
     allocate stage10UserspaceDrivers to ferrix.kernel.devices;
     allocate stage10UserspaceDrivers to ferrix.kernel.iommu;

@@ -51,7 +51,7 @@ pub struct Style {
     /// `decoration:glow:*`, or `None` when `glow:enabled` is off: a second
     /// shadow round the focused window, centred on it, in its own colour
     /// -- an accent's halo where the shadow is ambient darkness
-    /// (`docs/DESKTOP.md` §6, Yoru). Drawn as the shadow is.
+    /// (`docs/DESKTOP.md` §6, Xaqu). Drawn as the shadow is.
     pub glow: Option<Shadow>,
     /// `decoration:glow:color_inactive`: the glow round a window that is
     /// not focused; `None` (the option's -1) draws none there.
@@ -79,7 +79,7 @@ pub struct Style {
     ///
     /// A shell drawn for a blurred backdrop is translucent, its text light
     /// on a little of its own ground: over a bright window and no blur,
-    /// that text is unreadable (Yoru's wallpaper switcher over a white
+    /// that text is unreadable (Xaqu's wallpaper switcher over a white
     /// window, the customer, 2026-10-28). A near-opaque dark colour behind
     /// it keeps it readable for the price of one blend a pixel,
     /// where even a downscaled blur is most of a software frame.
@@ -1508,7 +1508,7 @@ fn window<P: Painter>(
     // `decoration:shadow:ignore_window`, on unless a configuration turns it
     // off, as in Hyprland: the shadow and the glow are drawn around the
     // window and not under it, under any window. Under one with alpha --
-    // a toolkit's, every tole window, Yoru's Settings and installer -- the
+    // a toolkit's, every tole window, Xaqu's Settings and installer -- the
     // shadow and the glow were blended under every pixel of it, all but
     // the rim written over again by the window: 20 ms of a 900x640
     // window's frame while it was dragged, on nazuna; a frame on the N150
@@ -1941,7 +1941,7 @@ fn decoration_reach(style: &Style) -> i64 {
 ///
 /// The shadow and the glow reach far outside the ring: a focus change that
 /// recolours them -- `shadow:color_inactive`, or a glow round the focused
-/// window only, both Yoru's -- owes the window's whole decorated box, or
+/// window only, both Xaqu's -- owes the window's whole decorated box, or
 /// the old focus's shadow stays on the screen beside the new one's (the
 /// N150, 2026-10-28: hard-edged dark slabs and stale strips under a window
 /// after the focus moved).

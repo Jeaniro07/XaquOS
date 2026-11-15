@@ -138,9 +138,9 @@ Now [`docs/roadmap/stage-23-arknights-endfield.md`](roadmap/stage-23-arknights-e
 
 Now [`docs/roadmap/stage-24-game-path.md`](roadmap/stage-24-game-path.md).
 
-## Stage 25 — Yoru, the main UI  ·  *63 points estimated; about 30 built*
+## Stage 25 — Xaqu, the main UI  ·  *63 points estimated; about 30 built*
 
-Now [`docs/roadmap/stage-25-yoru.md`](roadmap/stage-25-yoru.md).
+Now [`docs/roadmap/stage-25-xaqu.md`](roadmap/stage-25-xaqu.md).
 
 ## Microkernel M0 — the build flags, the baselines, the checks  ·  *≈ 45–60 points*
 

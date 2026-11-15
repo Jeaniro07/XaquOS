@@ -347,7 +347,7 @@ OPTIONS:
     --everything                         run-compositor: all of it at once -- --gl, --release,
                                          --clipboard, --chrome, and rustc and cargo in the shell,
                                          from one volume made of the rustc and Chrome ones, with
-                                         claude too once fetch-claude-code.sh has run; on Yoru,
+                                         claude too once fetch-claude-code.sh has run; on Xaqu,
                                          its keys, dock and sidebars; under --theme none or
                                          ferrix-light, this machine's ~/.config/hypr/hyprland.conf
                                          with its dotfiles unless --config or --no-dotfiles says
@@ -446,8 +446,8 @@ OPTIONS:
     --wallpaper <NAME>                   run-compositor: which kept wallpaper to show, by part of its
                                          name, or `none`; one of them, another each run, otherwise
     --theme <NAME>                       run-compositor, flash --compositor, release-image: the
-                                         desktop's look, `yoru`, `ferrix-light` or `none` [default:
-                                         yoru]; under a configuration of its own, its look alone
+                                         desktop's look, `xaqu`, `ferrix-light` or `none` [default:
+                                         xaqu]; under a configuration of its own, its look alone
     --edid <DESCRIPTION>                 run-compositor: give the screen the EDID of this machine's
                                          monitor whose description starts so, as Linux's
                                          drm.edid_firmware= does, so `monitor = desc:` and waybar

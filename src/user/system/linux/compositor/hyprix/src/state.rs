@@ -1448,7 +1448,7 @@ impl<'r> Compositor<'r> {
         // into the bar.
         //
         // Neither is the compositor's where a layer surface above the
-        // windows covers the pointer -- a launcher, a panel, Yoru's stash
+        // windows covers the pointer -- a launcher, a panel, Xaqu's stash
         // or wallpaper switcher: the press is that surface's, and a title
         // bar or a border under it took the press from it, and the release
         // after (the customer's stash, 2026-10-25: a pick over a window's
@@ -3680,7 +3680,7 @@ fn as_input(what: compositor_server::Injected) -> Option<crate::seat::Input> {
 /// maximized window with no border, shadow or rounding at all
 /// (`docs/DESKTOP.md` §2.2).
 ///
-/// A maximized window -- snapped to its whole work area, Yoru's maximize
+/// A maximized window -- snapped to its whole work area, Xaqu's maximize
 /// button -- is drawn as Hyprland draws a fullscreen one: with no shadow,
 /// and at `decoration:fullscreen_opacity` (`maximized`) rather than the
 /// inactive opacity, unless a rule gave it an opacity of its own. Nothing

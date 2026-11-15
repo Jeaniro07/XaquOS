@@ -1,7 +1,7 @@
 //! `org.freedesktop.portal.FileChooser`: `OpenFile` and `SaveFile` answered
 //! by Ferrix's own dialog, the `chooser` app (tole's `FileDialog`, the
 //! customer's Key File Dialog design), so GTK's and Chrome's Open and Save
-//! on Yoru are that one.
+//! on Xaqu are that one.
 //!
 //! A call is answered at once with its request's object path; the dialog
 //! runs as a program of its own, and when it ends portald sends the

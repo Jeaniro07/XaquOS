@@ -64,7 +64,7 @@ mod bench;
 mod boot;
 mod browser;
 mod chrome_save;
-mod chrome_yoru;
+mod chrome_xaqu;
 pub(crate) mod claude_desktop;
 mod desktop;
 mod direct_scanout;
@@ -116,7 +116,7 @@ mod user_desktop;
 mod walls;
 mod weather;
 pub(crate) mod wine;
-mod yoru;
+mod xaqu;
 
 pub(crate) use apps::{test_foot, test_vkgears, test_xwindow};
 pub(crate) use bench::{bench_chrome, bench_chrome_video};
@@ -461,7 +461,7 @@ struct Programs {
     /// `notifyd`, the notifications and devmgr's driver events
     /// (docs/DESKTOP.md §4), which the Ferrix light theme starts.
     notifyd: PathBuf,
-    /// `portald`, the settings portal Yoru starts: dark, its accent, and
+    /// `portald`, the settings portal Xaqu starts: dark, its accent, and
     /// Nocturne for GTK and Chrome.
     portald: PathBuf,
     /// `wallpaper`, a picture behind everything on every screen.
@@ -672,10 +672,10 @@ fn build_ahead(arch: Arch, args: &Args) -> Result<()> {
     if asked(&["lode-viewer", "lode-viewer-ssh"]) {
         lode_viewer::build_ahead(arch)?;
     }
-    if asked(&["yoru", "yoru-launcher"]) {
-        let _ = crate::apps::program(arch, "yoru-shell", "yoru-shell")?;
+    if asked(&["xaqu", "xaqu-launcher"]) {
+        let _ = crate::apps::program(arch, "xaqu-shell", "xaqu-shell")?;
     }
-    if asked(&["yoru-launcher"]) {
+    if asked(&["xaqu-launcher"]) {
         let _ = crate::apps::program(arch, "fuzzel", "fuzzel")?;
     }
     if asked(&["tole-demo"]) {
@@ -854,8 +854,8 @@ const BOOTS: [(&str, Boot); 76] = [
     ("idle-user", idle::test_idle_user),
     ("caption", test_caption),
     ("wallpaper", test_wallpaper),
-    ("yoru", yoru::test_yoru),
-    ("yoru-launcher", yoru::test_yoru_launcher),
+    ("xaqu", xaqu::test_xaqu),
+    ("xaqu-launcher", xaqu::test_xaqu_launcher),
     ("waybar", test_waybar),
     ("waybar-volume", test_waybar_volume),
     ("fuzzel", test_fuzzel),
@@ -875,7 +875,7 @@ const BOOTS: [(&str, Boot); 76] = [
     ("notices", notices::test_notices),
     ("weather", weather::test_weather),
     ("quick", quick::test_quick),
-    ("chrome-yoru", chrome_yoru::test_chrome_yoru),
+    ("chrome-xaqu", chrome_xaqu::test_chrome_xaqu),
     ("chrome-save", chrome_save::test_chrome_save),
     ("gtk-chooser", gtk_chooser::test_gtk_chooser),
     ("kept-settings", kept_settings::test_kept_settings),

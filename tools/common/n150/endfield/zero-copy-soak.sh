@@ -6,7 +6,7 @@
 # which must not be in use: a fresh prefix made by Proton's wine alone does
 # not start the program), DXVK on anv, presenting through yserver's
 # zero-copy path, for SECONDS (default 120). Half way it maximizes the
-# window, as Yoru's title bar button does, and at three quarters restores it.
+# window, as Xaqu's title bar button does, and at three quarters restores it.
 #
 # The program presents far faster than hyprix repaints, so yserver replaces
 # owed presents in the pass they were owed in, hands others to hyprix, and

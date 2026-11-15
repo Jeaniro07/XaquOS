@@ -691,7 +691,7 @@ branch feature/live-iso).** [TRY-FERRIX.md](TRY-FERRIX.md) is the user's
 page.
 
 * `cargo xtask iso` writes `build/x86_64/ferrix-live.iso`: the release
-  desktop (Yoru, the default apps) as a live session from memory
+  desktop (Xaqu, the default apps) as a live session from memory
   (`ferrix.root=tmpfs ferrix.live`), logged in as uid 1000 `ferrix` with no
   password (§10 decision 2), in a hybrid ISO written in Rust
   (`tools/common/xtask/src/iso.rs`): El Torito's EFI entry and a GUID

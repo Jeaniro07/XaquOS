@@ -1504,7 +1504,7 @@ fn is_whole_checkerboard(frame: &[u8]) -> Result<(), String> {
 
 /// A fullscreen window covers the top layer: a bar or a dock is drawn over
 /// the windows, but not over a fullscreen one, as in Hyprland, where only
-/// the overlay layer, the popups and the lock are. On the N150 yoru-shell's
+/// the overlay layer, the popups and the lock are. On the N150 xaqu-shell's
 /// dock stayed over a fullscreen game, and kept its buffer from being shown
 /// directly besides.
 ///

@@ -446,9 +446,9 @@ package FerrixStructure {
                  * org.freedesktop.portal.Settings on the session bus as
                  * org.freedesktop.portal.Desktop, dark or light, Nocturne's
                  * accent and the GTK theme's name, fixed at its start; no
-                 * other portal is offered. The Yoru theme starts it
+                 * other portal is offered. The Xaqu theme starts it
                  * (exec-once), and cargo xtask test-compositor --boot
-                 * chrome-yoru requires Chrome's toolbar dark under it
+                 * chrome-xaqu requires Chrome's toolbar dark under it
                  * (docs/DESKTOP.md section 6). */
         }
         #implemented part drivers : DriverProcess[0..*];

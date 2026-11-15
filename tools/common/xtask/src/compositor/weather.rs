@@ -4,7 +4,7 @@
 //! geocoding for the place and then its forecast, and shows it; "Turn off
 //! weather" stops it.
 //!
-//! The guest has no network here: `YORU_WEATHER_FAKE` names a folder whose
+//! The guest has no network here: `XAQU_WEATHER_FAKE` names a folder whose
 //! two answers stand in for Open-Meteo's two hosts, and the shell says each
 //! host it asks. The left sidebar opens on the weather (the arrangement's
 //! file says so). Required: no host asked before the place was typed; the
@@ -21,7 +21,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// The panels' top: below the menu bar's 24 pixels of exclusive zone,
@@ -65,8 +65,8 @@ fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
     reason = "one boot read top to bottom: each step and what it must have done"
 )]
 pub(super) fn test_weather(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
-    config.push_str("env = YORU_WEATHER_FAKE,/etc/weather-fake\n");
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
+    config.push_str("env = XAQU_WEATHER_FAKE,/etc/weather-fake\n");
     config.push_str(&format!(
         "exec-once = /{} --sidebar left\n",
         super::theme::DOCK
@@ -76,7 +76,7 @@ pub(super) fn test_weather(arch: Arch, programs: &Programs, args: &Args) -> Resu
         ("etc/weather-fake/forecast.json", FORECAST),
         // The left sidebar opens on the weather.
         (
-            ".config/yoru-shell/sidebars",
+            ".config/xaqu-shell/sidebars",
             "left clock weather\nshown left weather\nright settings todo\nshown right todo\n",
         ),
     ] {

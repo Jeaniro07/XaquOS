@@ -499,7 +499,7 @@ mod tests {
         .expect("group");
         std::fs::write(
             root.join("etc/hyprland.conf"),
-            "exec-once = /bin/yoru-shell\n",
+            "exec-once = /bin/xaqu-shell\n",
         )
         .expect("conf");
         let filled = Filled {

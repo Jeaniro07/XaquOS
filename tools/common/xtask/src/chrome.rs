@@ -560,7 +560,7 @@ pub(crate) fn opener(arch: Arch, profile: &str, nvidia: bool) -> crate::ports::F
 }
 
 /// What [`opener`] hands Files (shelf) rather than Chrome: a folder, as a
-/// path or a `file://` URI -- the default for `inode/directory` on Yoru,
+/// path or a `file://` URI -- the default for `inode/directory` on Xaqu,
 /// the customer's choice that Files is shelf.
 const OPENER_FOLDER: &str = r#"folder=${1#file://}
 [ -d "$folder" ] && [ -x /bin/shelf ] && exec /bin/shelf "$folder"

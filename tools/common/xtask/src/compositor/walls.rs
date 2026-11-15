@@ -1,8 +1,8 @@
-//! `test-compositor --boot walls`: Yoru's wallpaper switcher (the design's
-//! picker, `yoru-shell --walls`) opens on SUPER I, closes on it again,
+//! `test-compositor --boot walls`: Xaqu's wallpaper switcher (the design's
+//! picker, `xaqu-shell --walls`) opens on SUPER I, closes on it again,
 //! browses with the arrows and sets the wallpaper with Return.
 //!
-//! On Yoru's desktop with the Settings app's six pictures installed,
+//! On Xaqu's desktop with the Settings app's six pictures installed,
 //! QEMU's keyboard presses SUPER I twice (open, then closed), then SUPER
 //! I, Right and Return. A script in the guest prints the wallpaper line of
 //! `settings.conf` every two seconds. The host keeps QEMU's screendumps
@@ -72,7 +72,7 @@ fn changed(a: &Image, b: &Image, rows: std::ops::Range<usize>) -> usize {
     reason = "one boot read top to bottom: each key and what it must have done"
 )]
 pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/walls.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -102,7 +102,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
         let up = watching.read_more(Instant::now() + SETTLE, |lines| {
             lines
                 .iter()
-                .any(|l| l.contains("yoru-shell: the dock is up"))
+                .any(|l| l.contains("xaqu-shell: the dock is up"))
                 && lines.iter().any(|l| l.contains("walls: conf"))
         })?;
         if !up {
@@ -151,13 +151,13 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
         // The one in force is the theme's gradient, the Default card, the
         // first: one to the right, a picture.
         press(&mut qmp, &["right"])?;
-        if !wait(watching, "yoru-shell: in hand:", from)? {
+        if !wait(watching, "xaqu-shell: in hand:", from)? {
             failures.push("Right moved nothing into hand".to_owned());
         }
         std::thread::sleep(Duration::from_secs(2));
         let from = watching.after().len();
         press(&mut qmp, &["ret"])?;
-        if !wait(watching, "yoru-shell: wallpaper set:", from)? {
+        if !wait(watching, "xaqu-shell: wallpaper set:", from)? {
             return Err(with_the_transcript(
                 &Error::new(format!("{arch}: walls: Return set no wallpaper")),
                 watching,
@@ -167,7 +167,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
             .after()
             .iter()
             .skip(from)
-            .find(|line| line.contains("yoru-shell: wallpaper set:"))
+            .find(|line| line.contains("xaqu-shell: wallpaper set:"))
             .cloned()
             .unwrap_or_default();
         println!("  {arch}: walls: {}", set_line.trim());
@@ -227,7 +227,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
                 .after()
                 .iter()
                 .skip(from)
-                .any(|line| line.contains("yoru-shell: in hand: Default ("))
+                .any(|line| line.contains("xaqu-shell: in hand: Default ("))
         };
         for _ in 0..16 {
             if on_default(watching) {
@@ -235,7 +235,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
             }
             let at = watching.after().len();
             press(&mut qmp, &["left"])?;
-            if !wait(watching, "yoru-shell: in hand:", at)? {
+            if !wait(watching, "xaqu-shell: in hand:", at)? {
                 break;
             }
         }
@@ -245,7 +245,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
         std::thread::sleep(Duration::from_secs(2));
         let from = watching.after().len();
         press(&mut qmp, &["ret"])?;
-        if !wait(watching, "yoru-shell: wallpaper set:", from)? {
+        if !wait(watching, "xaqu-shell: wallpaper set:", from)? {
             return Err(with_the_transcript(
                 &Error::new(format!("{arch}: walls: Return set no Default")),
                 watching,
@@ -255,7 +255,7 @@ pub(super) fn test_walls(arch: Arch, programs: &Programs, args: &Args) -> Result
             .after()
             .iter()
             .skip(from)
-            .find(|line| line.contains("yoru-shell: wallpaper set:"))
+            .find(|line| line.contains("xaqu-shell: wallpaper set:"))
             .cloned()
             .unwrap_or_default();
         println!("  {arch}: walls: {}", reset_line.trim());

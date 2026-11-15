@@ -1,4 +1,4 @@
-//! `test-compositor --boot chrome-save`: Chrome's Save-as on Yoru's
+//! `test-compositor --boot chrome-save`: Chrome's Save-as on Xaqu's
 //! desktop is Ferrix's own file chooser. Chrome asks the desktop portal --
 //! `org.freedesktop.portal.FileChooser`, on the session bus -- and portald
 //! opens the `chooser` app, tole's `FileDialog` after the customer's Key File

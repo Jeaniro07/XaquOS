@@ -1622,12 +1622,12 @@ impl Blended {
     /// for every window of one style. Made afresh for each shadow drawn,
     /// they were 256 blends each, some two hundred tables a window's shadow
     /// and as many for its glow: on the N150 most of a frame dragged under
-    /// Yoru (2026-10-28). The bytes are the ones made afresh.
+    /// Xaqu (2026-10-28). The bytes are the ones made afresh.
     fn kept(colour: [u8; 3], alpha: f32) -> Option<Rc<Self>> {
         if alpha <= 0.0 {
             return None;
         }
-        /// Tables kept at most: Yoru's shadow and glow, focused and not,
+        /// Tables kept at most: Xaqu's shadow and glow, focused and not,
         /// are a few hundred.
         const KEPT: usize = 4096;
         BLENDS.with(|kept| {
@@ -1772,7 +1772,7 @@ fn over_row(into: &mut [u8], pixels: &[u8], opaque: bool, opacity: f32, fade: Op
 /// pixel's, at one opacity less than one: a byte for every pair, by the
 /// canvas byte and then the source byte.
 ///
-/// A window drawn at `decoration:inactive_opacity` -- Yoru's see-through
+/// A window drawn at `decoration:inactive_opacity` -- Xaqu's see-through
 /// windows -- is blended whole, every frame it changes, and on a screen
 /// drawn in software the arithmetic for each channel of each pixel was most
 /// of a frame: a 1878x966 game window behind the focused one took 40 to 85

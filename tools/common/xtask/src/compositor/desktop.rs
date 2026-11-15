@@ -28,9 +28,9 @@ const DESKTOP_APPS: &[(&str, &str)] = &[
     ("waybar", "waybar"),
     ("fuzzel", "fuzzel"),
     ("hyprlock", "hyprlock"),
-    // Yoru's dock (docs/DESKTOP.md §6), which its theme starts.
-    ("yoru-shell", "yoru-shell"),
-    // The file chooser portald opens for GTK and Chrome on Yoru.
+    // Xaqu's dock (docs/DESKTOP.md §6), which its theme starts.
+    ("xaqu-shell", "xaqu-shell"),
+    // The file chooser portald opens for GTK and Chrome on Xaqu.
     ("chooser", "chooser"),
 ];
 
@@ -282,7 +282,7 @@ pub(super) fn desktop(
         Backdrop::Any => crate::wallpaper::file(args, size)?,
         Backdrop::Board(screen) => crate::wallpaper::for_board(args, screen)?,
     };
-    // Yoru has a wallpaper of its own, Ferrix's too: it stands where the
+    // Xaqu has a wallpaper of its own, Ferrix's too: it stands where the
     // shipped one would have been chosen, and a kept one still wins.
     let chosen = chosen.filter(|chosen| {
         !(matches!(chosen, crate::wallpaper::Chosen::Brand(_))

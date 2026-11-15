@@ -27,22 +27,22 @@ kernel logged `mce: cpu 2 bank 1 corrected ... total=1` on the serial
 console within its 5 s poll, and `/proc/ferrix-mce` counts it. The
 scrubber's line and the resident set split by kind follow.
 
-## The Yoru hero and the live ISO, 2026-10-28
+## The Xaqu hero and the live ISO, 2026-10-28
 
 **hero-n150.png** (1920x1080) replaces the 2026-10-23 hero below. It was
 captured from hyprix's own output on the Intel N150 mini PC, which was
 running image `main-7a0a357d3`. On screen: Arknights: Endfield from Steam
 through Proton in a 1280x720 window, at The Hub, drawn by Ferrix's ring-3
 Intel GPU driver. Beside it, `btop` shows the process list (Endfield.exe,
-wineserver, steamwebhelper, hyprix, intel, yoru-shell), and a zinc terminal
-shows `ferrofetch`. Yoru's dock runs along the bottom. That image had no
-Yoru files, so its theme, wallpaper and fonts were copied to the box's
+wineserver, steamwebhelper, hyprix, intel, xaqu-shell), and a zinc terminal
+shows `ferrofetch`. Xaqu's dock runs along the bottom. That image had no
+Xaqu files, so its theme, wallpaper and fonts were copied to the box's
 `/tmp` and applied with `hyprctl` for this shot. Inter was not visible to
 hyprix, so the title bars use IBM Plex Sans. `ferrofetch` names the
 image's version string, 0.1.0. Nothing was edited.
 
 **live-installer.png** and **installer-summary.png** (1920x1080) show the
-v0.2.0 candidate live ISO in QEMU's virtio machine: Yoru with the
+v0.2.0 candidate live ISO in QEMU's virtio machine: Xaqu with the
 installer's welcome page, then the summary page before Install. The user
 "Ada Lovelace" is a test entry.
 

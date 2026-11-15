@@ -1,10 +1,10 @@
-//! `test-compositor --boot stash`: Yoru's stash (the customer's, after the
+//! `test-compositor --boot stash`: Xaqu's stash (the customer's, after the
 //! design's dock, 2026-10-25): files put in it show as a count on the
 //! dock's Stash button; a press on it opens the panel of them; a pick
 //! opens one; the bin clears it, and the count goes.
 //!
 //! A script in the guest makes four files of the four tinted kinds and
-//! puts them in with `yoru-shell --stash`, as a drop on the button does.
+//! puts them in with `xaqu-shell --stash`, as a drop on the button does.
 //! The host finds the button by its badge (Nocturne's accent-2 600, which
 //! nothing else on the desktop is) in QEMU's screendump, presses it, then
 //! the first tile and the bin, and keeps `stash-<step>.ppm`. Required: the
@@ -24,7 +24,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// The guest's side: four files into the stash.
@@ -35,7 +35,7 @@ mkdir -p "$HOME/Documents"
 cd "$HOME/Documents" || exit 1
 for f in receipt-0417.pdf night-drive.flac layout.rs plan.md; do echo "$f" > "$f"; done
 sleep 2
-/bin/yoru-shell --stash receipt-0417.pdf night-drive.flac layout.rs plan.md
+/bin/xaqu-shell --stash receipt-0417.pdf night-drive.flac layout.rs plan.md
 echo "stash-probe: put in"
 "#;
 
@@ -105,7 +105,7 @@ fn click(qmp: &mut Qmp, (x, y): (i64, i64)) -> Result<()> {
     reason = "one boot read top to bottom: each press and what it must have done"
 )]
 pub(super) fn test_stash(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/stash-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -132,7 +132,7 @@ pub(super) fn test_stash(arch: Arch, programs: &Programs, args: &Args) -> Result
         let up = watching.read_more(Instant::now() + SETTLE, |lines| {
             lines
                 .iter()
-                .any(|l| l.contains("yoru-shell: the dock is up"))
+                .any(|l| l.contains("xaqu-shell: the dock is up"))
                 && lines.iter().any(|l| l.contains("stash-probe: put in"))
         })?;
         if !up {
@@ -181,13 +181,13 @@ pub(super) fn test_stash(arch: Arch, programs: &Programs, args: &Args) -> Result
         let top = SCREEN.1 - 84 - (80 + 96 + 12);
         let from = watching.after().len();
         click(&mut qmp, (left + 14 + 36, top + 80 + 30))?;
-        let _ = wait(watching, "yoru-shell: stash: open ", from)?;
+        let _ = wait(watching, "xaqu-shell: stash: open ", from)?;
         let _ = dump(&mut qmp, arch, "picked")?;
         if !watching
             .after()
             .iter()
             .skip(from)
-            .any(|l| l.contains("yoru-shell: stash: open "))
+            .any(|l| l.contains("xaqu-shell: stash: open "))
         {
             failures.push("a pick on the first tile opened nothing".to_owned());
         } else if !watching
@@ -217,7 +217,7 @@ pub(super) fn test_stash(arch: Arch, programs: &Programs, args: &Args) -> Result
         // The bin: the middle of the head's three buttons.
         let from = watching.after().len();
         click(&mut qmp, (left + 340 - 14 - 28 - 6 - 14, top + 28))?;
-        if !wait(watching, "yoru-shell: stash: cleared", from)? {
+        if !wait(watching, "xaqu-shell: stash: cleared", from)? {
             failures.push("the bin did not clear the stash".to_owned());
         }
         std::thread::sleep(Duration::from_secs(1));

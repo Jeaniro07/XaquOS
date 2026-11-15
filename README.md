@@ -30,9 +30,9 @@ tests run in QEMU.
 [Boot Ferrix](#boot-ferrix) · [Read the technical guide](docs/GUIDE.md) ·
 [Visit the website](https://ferrix-os.org/)
 
-![Ferrix's Yoru desktop on an Intel N150 mini PC: Arknights: Endfield in a window, btop and ferrofetch beside it](docs/brand/screenshots/hero-n150.png)
+![Ferrix's Xaqu desktop on an Intel N150 mini PC: Arknights: Endfield in a window, btop and ferrofetch beside it](docs/brand/screenshots/hero-n150.png)
 
-*Ferrix's desktop, Yoru, on an Intel N150 mini PC: Arknights: Endfield from
+*Ferrix's desktop, Xaqu, on an Intel N150 mini PC: Arknights: Endfield from
 Steam, in a window, through Ferrix's own Intel GPU driver, with btop and
 ferrofetch beside it.*
 
@@ -47,7 +47,7 @@ ferrofetch beside it.*
 - **A desktop:** hyprix, Ferrix's Wayland compositor, reads `hyprland.conf`
   and tiles windows. It also has a floating layout with snapping, an
   activities overview, title bars it draws itself, and screens added and
-  removed while it runs. Yoru, Ferrix's default desktop, adds a dock and
+  removed while it runs. Xaqu, Ferrix's default desktop, adds a dock and
   sidebars on top of it
   ([docs/DESKTOP.md](docs/DESKTOP.md)). A fullscreen program's own buffer can
   go straight to the screen. Each display driver lists the modes its screen
@@ -137,11 +137,11 @@ open and closed findings alike, is in
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/brand/screenshots/live-installer.png" alt="The live ISO's Yoru desktop with the Ferrix installer's welcome page"></td>
+    <td width="50%"><img src="docs/brand/screenshots/live-installer.png" alt="The live ISO's Xaqu desktop with the Ferrix installer's welcome page"></td>
     <td width="50%"><img src="docs/brand/screenshots/installer-summary.png" alt="The installer's summary page before it erases the chosen disk"></td>
   </tr>
   <tr>
-    <td>The live ISO: Yoru and the installer.</td>
+    <td>The live ISO: Xaqu and the installer.</td>
     <td>The installer's last page, before anything is written.</td>
   </tr>
   <tr>
@@ -226,7 +226,7 @@ this tree at the commits [`components.toml`](components.toml) names.
 
 ## Try it without building
 
-From v0.2.0 on, each release also carries a live ISO: Yoru's desktop
+From v0.2.0 on, each release also carries a live ISO: Xaqu's desktop
 from a CD, a virtual disk or a USB stick, with an installer that puts
 Ferrix on a disk of its own. Download it from
 [the latest release](https://github.com/ferrix-os/ferrix/releases/latest)

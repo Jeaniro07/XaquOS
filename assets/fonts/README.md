@@ -32,7 +32,7 @@ the characters the first choice lacks. The one collection holds every
 weight from Thin to Black for all five regions, which share most of their
 glyphs, in 33 MB, and fontconfig picks the region by the page's language.
 
-**Phosphor** is the icon set of the Yoru desktop (`docs/DESKTOP.md` §6),
+**Phosphor** is the icon set of the Xaqu desktop (`docs/DESKTOP.md` §6),
 as its design system asks: the dock's, the title bars' and the widgets'
 icons are its glyphs, drawn as text in the colour of the text around them.
 A program names an icon by Phosphor's name and looks its code point up in

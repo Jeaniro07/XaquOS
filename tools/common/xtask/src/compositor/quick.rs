@@ -21,7 +21,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// The panels' top: below the menu bar's 24 pixels of exclusive zone,
@@ -64,13 +64,13 @@ pub(super) fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
     reason = "one boot read top to bottom: each press and what it must have done"
 )]
 pub(super) fn test_quick(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str(&format!(
         "exec-once = /{} --sidebar right\n",
         super::theme::DOCK
     ));
     carried.ports.push(crate::ports::File {
-        path: ".config/yoru-shell/sidebars".to_owned(),
+        path: ".config/xaqu-shell/sidebars".to_owned(),
         mode: 0o644,
         content: crate::ports::Content::Bytes(
             b"left clock weather\nshown left clock\nright settings todo\nshown right settings\n"

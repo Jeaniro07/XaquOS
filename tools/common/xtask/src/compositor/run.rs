@@ -124,7 +124,7 @@ pub(super) fn everything_config(args: &mut Args) -> Result<Option<String>> {
     )))
 }
 
-/// [`everything_config`], except under Yoru: there `--everything` is Yoru's
+/// [`everything_config`], except under Xaqu: there `--everything` is Xaqu's
 /// desktop, its keys, its dock and its sidebars, which a host's own config
 /// would keep out (it starts a bar of its own, and an own config takes a
 /// theme's look and not its keys). The host's config is `--theme none`'s,
@@ -132,7 +132,7 @@ pub(super) fn everything_config(args: &mut Args) -> Result<Option<String>> {
 fn host_config(args: &mut Args) -> Result<Option<String>> {
     if matches!(
         super::theme::Theme::of(args)?,
-        Some(super::theme::Theme::Yoru)
+        Some(super::theme::Theme::Xaqu)
     ) {
         return Ok(None);
     }
@@ -296,7 +296,7 @@ pub(super) fn desktop_to_boot(args: &Args) -> Result<(Arch, PathBuf, PathBuf, Ar
         )));
     }
     let mut args = args.clone();
-    // Yoru's look unless `--theme` says another (docs/DESKTOP.md §6).
+    // Xaqu's look unless `--theme` says another (docs/DESKTOP.md §6).
     super::theme::default_for_a_person(&mut args);
     // The layout of the keyboard in front of the window, when the command
     // line does not name one: `crate::keyboard` says why and from where.
@@ -484,7 +484,7 @@ pub(crate) fn release_image(args: &Args) -> Result<()> {
         variant: None,
         edid: Some("none".to_owned()),
         wallpaper: Some(crate::wallpaper::BRAND.to_owned()),
-        theme: Some(args.theme.clone().unwrap_or_else(|| "yoru".to_owned())),
+        theme: Some(args.theme.clone().unwrap_or_else(|| "xaqu".to_owned())),
         net: true,
         ..args.clone()
     };
@@ -636,7 +636,7 @@ pub(crate) fn board_files(arch: Arch, args: &Args) -> Result<crate::flash::Board
         .or_else(|| gates_busybox(arch));
     let args = &Args {
         net: false,
-        theme: Some(args.theme.clone().unwrap_or_else(|| "yoru".to_owned())),
+        theme: Some(args.theme.clone().unwrap_or_else(|| "xaqu".to_owned())),
         init,
         session_user: args.session.then(|| crate::session::USER.to_owned()),
         ..args.clone()

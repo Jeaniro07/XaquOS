@@ -1,6 +1,6 @@
-/* Nocturne for GTK 3: Yoru's tokens (Ferrix's docs/DESKTOP.md §6) over
+/* Nocturne for GTK 3: Xaqu's tokens (Ferrix's docs/DESKTOP.md §6) over
  * GTK's own dark Adwaita, which every GTK 3 carries compiled in. Only the
- * colours are Yoru's; the shapes are Adwaita's. */
+ * colours are Xaqu's; the shapes are Adwaita's. */
 @import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
 
 @define-color theme_bg_color #161826;

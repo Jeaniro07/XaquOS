@@ -485,10 +485,10 @@ fn a_waiting_draw_keeps_the_pixels_it_was_written_with() {
     assert_eq!(at(40, 8), Some(vec![0xff, 0x00, 0x00]), "the second");
 }
 
-/// Yoru's decorations (Ferrix's docs/DESKTOP.md §6): the focused window's
+/// Xaqu's decorations (Ferrix's docs/DESKTOP.md §6): the focused window's
 /// glow over its deep shadow, a lighter shadow under the other, drawn the
 /// same by the GPU as by the software renderer.
-fn yoru_style() -> Style {
+fn xaqu_style() -> Style {
     let config = compositor_config::parse(
         "test",
         "decoration:rounding = 8\n\
@@ -510,13 +510,13 @@ fn yoru_style() -> Style {
 }
 
 #[test]
-fn yoru_glow_and_shadows_are_the_same_picture() {
+fn xaqu_glow_and_shadows_are_the_same_picture() {
     let (_, layout) = two_clients_on(SIZE, Settings::default());
     let buffers = client_buffers(&layout);
     let Some((software, gpu)) = both(
-        "yoru",
+        "xaqu",
         &layout,
-        &yoru_style(),
+        &xaqu_style(),
         &surfaces(&buffers),
         &[],
         true,
@@ -530,9 +530,9 @@ fn yoru_glow_and_shadows_are_the_same_picture() {
     );
 }
 
-/// What Yoru's decorations cost a 1920x1080 frame on the GPU path, against
+/// What Xaqu's decorations cost a 1920x1080 frame on the GPU path, against
 /// the same frame with none (`cargo test -p compositor-render --release
-/// -- --ignored yoru_frame_cost --nocapture`): two windows, then with the
+/// -- --ignored xaqu_frame_cost --nocapture`): two windows, then with the
 /// shadows, with the glow too, and with the blur behind a translucent bar
 /// across the foot, as the dock is. Measured on virglrenderer's test
 /// server over this host's GL, which is the path a guest's frames take
@@ -540,7 +540,7 @@ fn yoru_glow_and_shadows_are_the_same_picture() {
 #[test]
 #[ignore = "a measurement, not a check"]
 #[expect(clippy::print_stderr, reason = "the measurement is the output")]
-fn yoru_frame_cost() {
+fn xaqu_frame_cost() {
     const BIG: (u32, u32) = (1920, 1080);
     let (_, layout) = two_clients_on(BIG, Settings::default());
     let buffers = client_buffers(&layout);
@@ -579,23 +579,23 @@ fn yoru_frame_cost() {
         shadow: None,
         glow: None,
         blur: None,
-        ..yoru_style()
+        ..xaqu_style()
     };
     let shadows = Style {
         glow: None,
         blur: None,
-        ..yoru_style()
+        ..xaqu_style()
     };
     let glow = Style {
         blur: None,
-        ..yoru_style()
+        ..xaqu_style()
     };
     let blurred = Style {
         blur: Some(Blur {
             noise: 0.0,
             ..Blur::new(6, 2)
         }),
-        ..yoru_style()
+        ..xaqu_style()
     };
     let cases: [(&str, &Style, bool); 4] = [
         ("no decorations", &none, false),
@@ -604,7 +604,7 @@ fn yoru_frame_cost() {
         ("+ the dock's blur", &blurred, true),
     ];
     for (what, style, blur) in cases {
-        let Some(server) = server("yoru-cost") else {
+        let Some(server) = server("xaqu-cost") else {
             return;
         };
         let mut gpu = Canvas::new(server, BIG.0, BIG.1).expect("a GPU canvas");
@@ -654,7 +654,7 @@ fn yoru_frame_cost() {
         }
         cpu.sort();
         let on_cpu = cpu[cpu.len() / 2];
-        eprintln!("yoru frame cost, 1920x1080: {what}: GPU {median:?}, software {on_cpu:?}");
+        eprintln!("xaqu frame cost, 1920x1080: {what}: GPU {median:?}, software {on_cpu:?}");
     }
 }
 

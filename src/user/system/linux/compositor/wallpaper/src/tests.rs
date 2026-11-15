@@ -157,7 +157,7 @@ fn a_screen_with_a_fullscreen_window_is_covered() {
     assert!(!covered(monitors, workspaces, "eDP-1"));
 }
 
-/// Yoru's gradient, as `yoru.conf` writes it: blue at the top left, sand
+/// Xaqu's gradient, as `xaqu.conf` writes it: blue at the top left, sand
 /// at the bottom right, the lilac side of the first stop in the middle,
 /// every pixel opaque.
 #[test]

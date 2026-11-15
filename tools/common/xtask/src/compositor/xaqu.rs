@@ -1,4 +1,4 @@
-//! The Yoru boots (`docs/DESKTOP.md` §6): the desktop in the customer's
+//! The Xaqu boots (`docs/DESKTOP.md` §6): the desktop in the customer's
 //! design, as `run-compositor` now draws it by default, screenshotted.
 
 use std::time::{Duration, Instant};
@@ -11,37 +11,37 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen the Yoru boots are drawn on.
+/// The screen the Xaqu boots are drawn on.
 const SCREEN: (usize, usize) = (1024, 768);
 
 /// The theme's look on two floating windows that asked for the
 /// compositor's frame: Nocturne's wallpaper, title bars on the surface with
 /// the focused one's accent line, the focused window's glow.
 const CONFIG: &str = "\
-# Written into the initramfs by `cargo xtask test-compositor`'s yoru boot.
+# Written into the initramfs by `cargo xtask test-compositor`'s xaqu boot.
 exec-once = /bin/pattern gradient one
 exec-once = /bin/pattern checkerboard two --after one
 # No grain in the blur, so the picture is the same each run.
 decoration:blur:noise = 0
 ";
 
-/// A boot of Yoru's look (steps Y1 and Y2): the theme sourced as
+/// A boot of Xaqu's look (steps Y1 and Y2): the theme sourced as
 /// `run-compositor` sources it, the wallpaper drawn, two pattern windows
-/// with Yoru's title bars, the dock at the foot, and the picture judged by
+/// with Xaqu's title bars, the dock at the foot, and the picture judged by
 /// its colours -- Nocturne's ground, the bars' surface, the accent's line,
 /// the dock's bar with the shown workspace lit.
-pub(super) fn test_yoru(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
+pub(super) fn test_xaqu(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     boot(arch, programs, args, false)
 }
 
 /// The same desktop with the launcher open over it (step Y3): fuzzel in
-/// Yoru's look, as Ctrl K starts it, listing the image's applications --
+/// Xaqu's look, as Ctrl K starts it, listing the image's applications --
 /// the palette's card on the surface, high on the screen.
-pub(super) fn test_yoru_launcher(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
+pub(super) fn test_xaqu_launcher(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     boot(arch, programs, args, true)
 }
 
-/// A Yoru boot, with the launcher open or not.
+/// A Xaqu boot, with the launcher open or not.
 fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<()> {
     let (config, carried) = desktop(arch, args, launcher)?;
     let (image, kernel) = build_image(arch, programs, &config, carried, args)?;
@@ -50,9 +50,9 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
     qemu_args.display = true;
     qemu_args.qmp_port = Some(port);
     let dump = paths::build_dir(arch).join(if launcher {
-        "yoru-launcher.ppm"
+        "xaqu-launcher.ppm"
     } else {
-        "yoru.ppm"
+        "xaqu.ppm"
     });
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
         watching.stop_when_done();
@@ -66,22 +66,22 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
                 .any(|line| line.contains("pattern: two decorations server"));
             let docked = lines
                 .iter()
-                .any(|line| line.contains("yoru-shell: the dock is up"));
+                .any(|line| line.contains("xaqu-shell: the dock is up"));
             let barred = lines
                 .iter()
-                .any(|line| line.contains("yoru-shell: the menu bar is up"));
+                .any(|line| line.contains("xaqu-shell: the menu bar is up"));
             drawn && framed && docked && barred
         })?;
         if !ready {
             return Err(with_the_transcript(
                 &Error::new(format!(
-                    "{arch}: yoru: the wallpaper, the second window, the dock or the menu bar never said it was up"
+                    "{arch}: xaqu: the wallpaper, the second window, the dock or the menu bar never said it was up"
                 )),
                 watching,
             ));
         }
         // Judged once the screen has stopped changing: two dumps a second
-        // apart, the same and both Yoru's, so the picture kept is not one
+        // apart, the same and both Xaqu's, so the picture kept is not one
         // caught while the second window was being placed.
         let deadline = Instant::now() + SETTLE;
         let mut last: Option<Image> = None;
@@ -107,13 +107,13 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
                             .map_err(|error| with_the_transcript(&error, watching))?;
                         format!("{said}, {menu}")
                     };
-                    println!("  {arch}: yoru: {said}; the picture is {}", dump.display());
+                    println!("  {arch}: xaqu: {said}; the picture is {}", dump.display());
                     return Ok(());
                 }
                 Err(why) if Instant::now() >= deadline => {
                     return Err(with_the_transcript(
                         &Error::new(format!(
-                            "{arch}: yoru: {why}; the screen is {}",
+                            "{arch}: xaqu: {why}; the screen is {}",
                             dump.display()
                         )),
                         watching,
@@ -122,7 +122,7 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
                 Ok(_) if Instant::now() >= deadline => {
                     return Err(with_the_transcript(
                         &Error::new(format!(
-                            "{arch}: yoru: the screen never stopped changing; it is {}",
+                            "{arch}: xaqu: the screen never stopped changing; it is {}",
                             dump.display()
                         )),
                         watching,
@@ -140,11 +140,11 @@ fn boot(arch: Arch, programs: &Programs, args: &Args, launcher: bool) -> Result<
 }
 
 /// Press the first menu's title and judge the screen against `before`,
-/// dumped beside `dump` as `yoru-menu.ppm`; the menu is left open, the
+/// dumped beside `dump` as `xaqu-menu.ppm`; the menu is left open, the
 /// boot's last step.
 fn open_menu(qmp: &mut Qmp, before: &Image, dump: &std::path::Path) -> Result<String> {
     super::quick::click(qmp, (18, 12))?;
-    let dump = dump.with_file_name("yoru-menu.ppm");
+    let dump = dump.with_file_name("xaqu-menu.ppm");
     let mut why = String::new();
     for _ in 0..5 {
         std::thread::sleep(Duration::from_secs(1));
@@ -157,7 +157,7 @@ fn open_menu(qmp: &mut Qmp, before: &Image, dump: &std::path::Path) -> Result<St
         }
     }
     Err(Error::new(format!(
-        "yoru: {why}; the screen is {}",
+        "xaqu: {why}; the screen is {}",
         dump.display()
     )))
 }
@@ -203,12 +203,12 @@ fn program(arch: Arch, app: &str, path: &str) -> Result<crate::ports::File> {
     })
 }
 
-/// A Yoru boot's configuration and what its image carries: the theme as
+/// A Xaqu boot's configuration and what its image carries: the theme as
 /// `run-compositor` sources it, the dock, and with `launcher` fuzzel and
 /// the applications it lists.
 pub(super) fn desktop(arch: Arch, args: &Args, launcher: bool) -> Result<(String, Carried)> {
     let themed = Args {
-        theme: Some("yoru".to_owned()),
+        theme: Some("xaqu".to_owned()),
         config: None,
         ..args.clone()
     };
@@ -216,7 +216,7 @@ pub(super) fn desktop(arch: Arch, args: &Args, launcher: bool) -> Result<(String
     // The dock, as every desktop carries it (step Y2).
     carried
         .ports
-        .push(program(arch, "yoru-shell", super::theme::DOCK)?);
+        .push(program(arch, "xaqu-shell", super::theme::DOCK)?);
     // The file chooser, which portald opens for GTK's and Chrome's dialogs.
     carried.ports.push(program(arch, "chooser", "bin/chooser")?);
     let mut config = format!(
@@ -227,7 +227,7 @@ pub(super) fn desktop(arch: Arch, args: &Args, launcher: bool) -> Result<(String
         carried.ports.push(program(arch, "fuzzel", "bin/fuzzel")?);
         carried.ports.extend(crate::fuzzel::files(None, false)?);
         config.push_str(
-            "exec-once = /bin/fuzzel --config /usr/share/hyprix/themes/yoru-fuzzel.ini \
+            "exec-once = /bin/fuzzel --config /usr/share/hyprix/themes/xaqu-fuzzel.ini \
              --log-level=info\n",
         );
     }
@@ -272,7 +272,7 @@ fn judge_launcher(screen: &Image) -> core::result::Result<String, String> {
     ))
 }
 
-/// Whether `screen` is Yoru's light-glass desktop: the wallpaper's sand in
+/// Whether `screen` is Xaqu's light-glass desktop: the wallpaper's sand in
 /// the lower right corner, which no window reaches; title bars on the light
 /// surface, `#f3f3f5`; a red close button; the wallpaper's blue at the
 /// top left, where the gradient starts; the menu bar's glass with words at
@@ -467,7 +467,7 @@ mod tests {
         }
     }
 
-    /// Yoru's desktop as A2 draws it: a light bar with its close button,
+    /// Xaqu's desktop as A2 draws it: a light bar with its close button,
     /// the wallpaper's blue near the top, the menu bar with words at both
     /// ends, and the dock, `dock_w` wide and centred, the terminal's tile
     /// first with its dot.
@@ -519,7 +519,7 @@ mod tests {
         }
     }
 
-    /// A screen of the wallpaper alone is not Yoru's desktop: no bars.
+    /// A screen of the wallpaper alone is not Xaqu's desktop: no bars.
     #[test]
     fn the_wallpaper_alone_has_no_bars() {
         let said = judge(&screen(CORNER.repeat(SCREEN.0 * SCREEN.1))).expect_err("no bars");

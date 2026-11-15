@@ -1,6 +1,6 @@
 //! `test-compositor --boot settings-live`: what the Settings app's
 //! Appearance and Windows pages ask of hyprix takes effect at once on
-//! Yoru's desktop (the customer, 2026-10-24: "appearance and windows have
+//! Xaqu's desktop (the customer, 2026-10-24: "appearance and windows have
 //! no effect whatsoever").
 //!
 //! A script hyprix starts does exactly what the app does -- `hyprctl
@@ -67,7 +67,7 @@ echo "live: done"
     reason = "one boot read top to bottom: the probe, its three screendumps and their judgement"
 )]
 pub(super) fn test_settings_live(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/settings-live.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)

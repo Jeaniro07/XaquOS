@@ -3800,7 +3800,7 @@ fn rows(data: &[u8], rect: Rect) -> Vec<u8> {
 /// surface) against tiny-skia's pattern shader, which drew every expected
 /// image: every alpha, every colour a pixel of that alpha can have, over
 /// every byte a canvas can hold, at full opacity and at three others --
-/// 0.9 is Yoru's see-through windows, drawn through [`crate::canvas`]'s
+/// 0.9 is Xaqu's see-through windows, drawn through [`crate::canvas`]'s
 /// fade table for every opaque pixel.
 #[test]
 fn a_translucent_surface_blends_as_tiny_skia_blends_it() {
@@ -4553,7 +4553,7 @@ fn a_window_over_a_fullscreen_one_is_undecorated() {
     assert!(asked.gradients.is_empty(), "{:?}", asked.gradients);
 }
 
-/// Yoru's decorations change with the focus beyond the border: the shadow
+/// Xaqu's decorations change with the focus beyond the border: the shadow
 /// is darker under the focused window (`shadow:color_inactive`) and the
 /// glow is the focused one's alone. A focus change drawn through the damage
 /// a compositor owes it -- what moved or recoloured grown by the shadow's
@@ -4628,7 +4628,7 @@ fn a_focus_change_recolouring_shadow_and_glow_redraws_them() {
 
 // -- The scrim behind a shell drawn for a blur, where there is none ---------
 
-/// The scrim Yoru's theme lays (`hyprix:blur_scrim`): Nocturne's ground at
+/// The scrim Xaqu's theme lays (`hyprix:blur_scrim`): Nocturne's ground at
 /// 85%.
 const SCRIM: Color = Color(0xD916_1826);
 
@@ -4640,7 +4640,7 @@ const SHELL: (u32, u32) = (400, 300);
 const HEAD_TEXT: Rect = Rect::new(40, 20, 120, 10);
 const FOOT_TEXT: Rect = Rect::new(140, 270, 120, 10);
 
-/// A premultiplied `ARGB8888` picture of Yoru's wallpaper switcher, drawn
+/// A premultiplied `ARGB8888` picture of Xaqu's wallpaper switcher, drawn
 /// for a blurred backdrop: `picker.rs`'s shade of Nocturne's ground -- 60%
 /// at the top, clear through the middle, 88% at the foot -- and on it two
 /// lines of light text (`#e9e9ed`) in the head and at the foot.
@@ -4681,7 +4681,7 @@ fn switcher_pixels() -> Vec<u8> {
 }
 
 /// The switcher over the whole of a white window -- the lode viewer's,
-/// in the customer's screenshot -- drawn with `style`, as Yoru's
+/// in the customer's screenshot -- drawn with `style`, as Xaqu's
 /// `layerrule`s ask: blurred behind.
 fn switcher_over_white(style: &Style) -> Canvas {
     let (width, height) = SHELL;
@@ -4754,8 +4754,8 @@ fn switcher_contrasts(canvas: &Canvas) -> [f32; 2] {
     })
 }
 
-/// Yoru's wallpaper switcher over a white window on a screen that draws no
-/// blur -- every software screen under Yoru's `blur_in_software = 0`, every
+/// Xaqu's wallpaper switcher over a white window on a screen that draws no
+/// blur -- every software screen under Xaqu's `blur_in_software = 0`, every
 /// PC the live ISO boots on -- has its scrim behind it, and its text reads:
 /// WCAG's 4.5:1 or better against the ground beside it, head and foot.
 /// The scrim covers the rectangle a blur would have, the shade's clear
@@ -4856,7 +4856,7 @@ fn the_scrim_is_laid_only_where_a_blur_was_asked_for_and_none_is_drawn() {
 
 /// A rounded bar, `BAR` large: clear outside a rectangle 4 pixels in from
 /// its edges with corners cut 16 pixels round, white at 30% inside it,
-/// premultiplied, as yoru-shell's dock draws its glass.
+/// premultiplied, as xaqu-shell's dock draws its glass.
 fn rounded_bar_pixels() -> Vec<u8> {
     let (width, height) = BAR;
     let (inset, radius) = (4.0_f32, 16.0_f32);
@@ -4890,7 +4890,7 @@ fn rounded_bar_over_ground(ignore_alpha: Option<f32>) -> Canvas {
 /// A menu bar with a menu open, `OPEN_MENU` large: a strip 24 rows tall across
 /// the whole width, two clear rows, then a dropdown 80 wide at x 20 with
 /// corners cut 8 round, both white at 30%, clear everywhere else -- the
-/// layer yoru-shell's menu bar grows to while a menu is open.
+/// layer xaqu-shell's menu bar grows to while a menu is open.
 fn strip_and_dropdown_pixels() -> Vec<u8> {
     let (width, height) = OPEN_MENU;
     let (left, top, right, bottom, radius) = (20.0_f32, 26.0_f32, 100.0_f32, 76.0_f32, 8.0_f32);
@@ -4968,7 +4968,7 @@ fn over_ground(pixels: &[u8], size: (u32, u32), ignore_alpha: Option<f32>) -> Ca
 
 /// Under `layerrule = ignore_alpha` the scrim is laid under a bar's opaque
 /// part only: its clear margin and the clear corners its rounding cuts
-/// show the ground untouched, while its middle has the scrim (Yoru's dock
+/// show the ground untouched, while its middle has the scrim (Xaqu's dock
 /// on a software screen, which showed a light square round its rounded
 /// glass). Without the rule the scrim covers the whole rectangle, as
 /// Hyprland's blur does.

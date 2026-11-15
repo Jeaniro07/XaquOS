@@ -146,7 +146,7 @@ REMAINING = [
     # *Estimated 2026-11-03*, says each one's range and basis).
     ("Stage 23, Endfield's rest", 101, "est"),
     ("Stage 24, the game path's rest", 175, "est"),
-    ("Stage 25, Yoru's rest", 46, "est"),
+    ("Stage 25, Xaqu's rest", 46, "est"),
     ("Developing Ferrix on Ferrix, the rest", 39, "est"),
     ("Microkernel, M1's rest to M8", 477, "est"),
     ("Microkernel, maximum-certification streams", 950, "est"),
@@ -262,7 +262,7 @@ ACTIVE = [
     ("Microkernel", D(2026, 10, 13),
      ["Microkernel, M1's rest to M8", "Microkernel, maximum-certification streams"]),
     ("lode's rest, tole's U10", D(2026, 10, 23), ["lode's rest, tole's U10"]),
-    ("Stage 25, Yoru", D(2026, 10, 24), ["Stage 25, Yoru's rest"]),
+    ("Stage 25, Xaqu", D(2026, 10, 24), ["Stage 25, Xaqu's rest"]),
     ("Product signing, S5 and S6", D(2026, 10, 24), ["Product signing, S5 and S6"]),
     ("Stage 14: classes on PRs #38, #40", D(2026, 10, 26), ["Stage 14, real-time"]),
 ]

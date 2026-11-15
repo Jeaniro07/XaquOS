@@ -1,7 +1,7 @@
 //! The live ISO (`docs/INSTALLER.md` §3, `docs/TRY-FERRIX.md`): `cargo
 //! xtask iso` and its gate, `test-iso`.
 //!
-//! The medium is the release desktop -- Yoru on hyprix, the apps a person's
+//! The medium is the release desktop -- Xaqu on hyprix, the apps a person's
 //! image carries, the release profile with the kernel stripped -- with four
 //! differences:
 //!
@@ -137,7 +137,7 @@ const UNITS: [(&str, &str); 2] = [
 ];
 
 /// The lock screen an installed system's session starts behind, which is
-/// its login: hyprlock in Yoru's Nocturne colours, where hyprlock looks for
+/// its login: hyprlock in Xaqu's Nocturne colours, where hyprlock looks for
 /// a system-wide file (`/etc/xdg/hypr`).
 const HYPRLOCK_CONF: &str =
     "# The installed system's login (cargo xtask iso): hyprlock in Nocturne.
@@ -256,7 +256,7 @@ pub(crate) fn build(args: &Args) -> Result<Built> {
         variant: None,
         edid: Some("none".to_owned()),
         wallpaper: Some(crate::wallpaper::BRAND.to_owned()),
-        theme: Some(args.theme.clone().unwrap_or_else(|| "yoru".to_owned())),
+        theme: Some(args.theme.clone().unwrap_or_else(|| "xaqu".to_owned())),
         net: true,
         session_user: Some("1000".to_owned()),
         ..args.clone()
@@ -399,7 +399,7 @@ const README: &str = "Ferrix live medium
 ==================
 
 Ferrix is an operating system with its own Rust microkernel that runs
-ordinary Linux programs. This medium starts its desktop, Yoru, from memory:
+ordinary Linux programs. This medium starts its desktop, Xaqu, from memory:
 nothing on the machine's disks is touched unless you install.
 
 This is a development preview. It is not signed for Secure Boot, so turn
@@ -615,9 +615,9 @@ fn tzdata_version() -> Result<String> {
         .ok_or_else(|| Error::new(format!("{path} has no `# version` line")))
 }
 
-/// What Yoru, the desktop both the live session and the installed system
-/// start by default, says when its dock is up (`yoru-shell`).
-const YORU_DOCK: &str = "yoru-shell: the dock is up";
+/// What Xaqu, the desktop both the live session and the installed system
+/// start by default, says when its dock is up (`xaqu-shell`).
+const XAQU_DOCK: &str = "xaqu-shell: the dock is up";
 
 /// `cargo xtask test-iso`: see the module documentation.
 pub(crate) fn test_iso(args: &Args) -> Result<()> {
@@ -642,8 +642,8 @@ pub(crate) fn test_iso(args: &Args) -> Result<()> {
                 "the graphical installer never opened its window",
             ),
             (
-                YORU_DOCK,
-                "Yoru, the default desktop, never put up its dock",
+                XAQU_DOCK,
+                "Xaqu, the default desktop, never put up its dock",
             ),
             (
                 UNISOLATED_SAID,
@@ -715,7 +715,7 @@ fn seat_power(arch: Arch, built: &Built, args: &Args, power: Power) -> Result<()
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
         let mut qmp = Qmp::connect(port, Instant::now() + Duration::from_secs(10))?;
         let up = watching.read_more(Instant::now() + Duration::from_secs(240), |lines| {
-            lines.iter().any(|line| line.contains(YORU_DOCK))
+            lines.iter().any(|line| line.contains(XAQU_DOCK))
                 && lines.iter().any(|line| line.contains("sessiond: "))
         })?;
         if !up {
@@ -740,7 +740,7 @@ fn seat_power(arch: Arch, built: &Built, args: &Args, power: Power) -> Result<()
             }
             Power::Restart => {
                 restarted = watching.read_more(deadline, |lines| {
-                    lines.iter().filter(|line| line.contains(YORU_DOCK)).count() >= 2
+                    lines.iter().filter(|line| line.contains(XAQU_DOCK)).count() >= 2
                 })?;
                 watching.stop_when_done();
             }
@@ -820,7 +820,7 @@ fn boot_live(arch: Arch, built: &Built, args: &Args, how: &str) -> Result<Vec<St
                 .iter()
                 .any(|line| line.contains("ferrix-installer: the window is up"))
                 && lines.iter().any(|line| line.contains("sessiond: "))
-                && lines.iter().any(|line| line.contains(YORU_DOCK))
+                && lines.iter().any(|line| line.contains(XAQU_DOCK))
         })?;
         std::thread::sleep(Duration::from_secs(15));
         qmp.screendump(Some(DEVICE_ID), &dump)?;
@@ -1116,8 +1116,8 @@ const INSTALLED_SAYS: [(&str, &str); 6] = [
     ),
     ("hyprlock: locked", "the session did not start locked"),
     (
-        YORU_DOCK,
-        "the installed system's session is not Yoru (no dock)",
+        XAQU_DOCK,
+        "the installed system's session is not Xaqu (no dock)",
     ),
     (
         "hyprlock: authenticated",
@@ -1188,7 +1188,7 @@ pub(crate) fn test_iso_install(args: &Args) -> Result<()> {
         let _ = watching.read_more(Instant::now() + Duration::from_secs(90), |lines| {
             lines.iter().any(|line| line.contains("hyprlock: unlocked"))
         })?;
-        // The desktop behind the lock, for whoever reads the run: Yoru's.
+        // The desktop behind the lock, for whoever reads the run: Xaqu's.
         std::thread::sleep(Duration::from_secs(5));
         qmp.screendump(Some(DEVICE_ID), &unlocked)?;
         said = watching
@@ -1217,7 +1217,7 @@ pub(crate) fn test_iso_install(args: &Args) -> Result<()> {
     installed_isolates(arch, &said)?;
     println!(
         "  {arch}: the installed disk booted alone to {GATE_USER}'s locked session, and \
-         {GATE_USER}'s password opened it to Yoru ({}, {})",
+         {GATE_USER}'s password opened it to Xaqu ({}, {})",
         dump.display(),
         unlocked.display()
     );
@@ -1326,7 +1326,7 @@ mod live_config_tests {
     #[test]
     fn host_programs_are_found_in_names_links_and_launchers() {
         let clean: [(&str, Option<&[u8]>); 4] = [
-            ("bin/yoru-shell", None),
+            ("bin/xaqu-shell", None),
             (
                 "usr/share/applications/shelf.desktop",
                 Some(b"Exec=/bin/shelf\n"),

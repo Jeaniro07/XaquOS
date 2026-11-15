@@ -1,6 +1,6 @@
 //! `portald`: the one XDG desktop portal interface a desktop's look
 //! needs, `org.freedesktop.portal.Settings`, on the session bus as
-//! `org.freedesktop.portal.Desktop` (Ferrix's `docs/DESKTOP.md` §6, Yoru's
+//! `org.freedesktop.portal.Desktop` (Ferrix's `docs/DESKTOP.md` §6, Xaqu's
 //! "Chrome and GTK apps in the tokens"). GTK 4 and libadwaita read
 //! `org.freedesktop.appearance` from it for dark or light and the accent,
 //! GTK 3 the GNOME keys for the theme's name, and Chrome its colour scheme
@@ -9,7 +9,7 @@
 //!
 //! It also answers `org.freedesktop.portal.FileChooser` ([`chooser`]):
 //! Open and Save are Ferrix's own dialog, tole's `FileDialog`, so GTK's and
-//! Chrome's dialogs on Yoru are that one.
+//! Chrome's dialogs on Xaqu are that one.
 //!
 //! What it says is fixed at its start (`--light` for a light desktop):
 //! nothing is read from the person, nothing is written, and no other

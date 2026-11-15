@@ -262,9 +262,9 @@ pub(crate) fn image(args: &Args) -> Result<(PathBuf, PathBuf)> {
 /// `net` off for `desktop`: the script's unit, not an `exec-once`, asks for
 /// the lease. No moving or shipped wallpaper unless one is named: each
 /// frame is drawn in software on four small cores. The desktop is
-/// `ferrix`'s session, never root's. And it is Yoru, as the live ISO and the
+/// `ferrix`'s session, never root's. And it is Xaqu, as the live ISO and the
 /// system it installs are, unless `--theme` names another: before
-/// 2026-10-28 the box's image had no theme at all, so Yoru's dock, started
+/// 2026-10-28 the box's image had no theme at all, so Xaqu's dock, started
 /// by hand, drew every icon as a box (no Phosphor face), and its title
 /// bars, wallpaper and Inter were missing too.
 fn box_args(args: &Args, busybox: String) -> Args {
@@ -273,7 +273,7 @@ fn box_args(args: &Args, busybox: String) -> Args {
         net: false,
         init: Some(busybox),
         wallpaper: args.wallpaper.clone().or_else(|| Some("none".to_owned())),
-        theme: Some(args.theme.clone().unwrap_or_else(|| "yoru".to_owned())),
+        theme: Some(args.theme.clone().unwrap_or_else(|| "xaqu".to_owned())),
         session_user: Some(crate::session::USER.to_owned()),
         ..args.clone()
     }
@@ -281,14 +281,14 @@ fn box_args(args: &Args, busybox: String) -> Args {
 
 #[cfg(test)]
 mod tests {
-    /// The box's desktop is Yoru, as the live ISO's is, unless `--theme`
+    /// The box's desktop is Xaqu, as the live ISO's is, unless `--theme`
     /// says otherwise: its fonts, wallpaper and dock come with the theme.
     #[test]
-    fn the_box_is_yoru_unless_a_theme_is_named() {
+    fn the_box_is_xaqu_unless_a_theme_is_named() {
         use crate::args::Args;
         let busybox = "busybox".to_owned();
         let made = super::box_args(&Args::default(), busybox.clone());
-        assert_eq!(made.theme.as_deref(), Some("yoru"));
+        assert_eq!(made.theme.as_deref(), Some("xaqu"));
         let named = Args {
             theme: Some("none".to_owned()),
             ..Args::default()

@@ -1000,7 +1000,7 @@ mod tests {
         assert!(!terminal.contains(20.9, 400.0), "left of it");
     }
 
-    /// The customer's Yoru desktop on the N150, 2026-10-28: Settings floats
+    /// The customer's Xaqu desktop on the N150, 2026-10-28: Settings floats
     /// over a terminal as big as the screen. The pointer on Settings' title
     /// bar, its buttons or the ring its border is grabbed by is on Settings,
     /// so `follow_mouse` leaves the focus there, no client is told the

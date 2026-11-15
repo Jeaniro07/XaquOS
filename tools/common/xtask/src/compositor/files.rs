@@ -1,4 +1,4 @@
-//! `test-compositor --boot files`: Files is shelf on Yoru (the customer's
+//! `test-compositor --boot files`: Files is shelf on Xaqu (the customer's
 //! choice). The dock's Files button opens shelf's window, and the stash's
 //! folder button opens another, on the stash's folder.
 //!
@@ -21,7 +21,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// The class shelf's windows have.
@@ -33,7 +33,7 @@ exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
 mkdir -p "$HOME/Documents"
 echo notes > "$HOME/Documents/notes.md"
-/bin/yoru-shell --stash "$HOME/Documents/notes.md"
+/bin/xaqu-shell --stash "$HOME/Documents/notes.md"
 while :; do
   echo "files-probe: windows $(hyprctl clients | grep -E '^[[:space:]]*(class|title):' | tr '\n' ';')"
   sleep 2
@@ -77,7 +77,7 @@ fn shelves(watching: &Watching<'_>) -> usize {
     reason = "one boot read top to bottom: each press and what it must have done"
 )]
 pub(super) fn test_files(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/files-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -101,7 +101,7 @@ pub(super) fn test_files(arch: Arch, programs: &Programs, args: &Args) -> Result
         let up = watching.read_more(Instant::now() + SETTLE, |lines| {
             lines
                 .iter()
-                .any(|l| l.contains("yoru-shell: the dock is up"))
+                .any(|l| l.contains("xaqu-shell: the dock is up"))
                 && lines.iter().any(|l| l.contains("files-probe: windows"))
         })?;
         if !up {
@@ -122,7 +122,7 @@ pub(super) fn test_files(arch: Arch, programs: &Programs, args: &Args) -> Result
                     lines
                         .iter()
                         .skip(from)
-                        .any(|l| l.contains("yoru-shell: over Files"))
+                        .any(|l| l.contains("xaqu-shell: over Files"))
                 })?;
             if said {
                 found = Some(x);
@@ -171,7 +171,7 @@ pub(super) fn test_files(arch: Arch, programs: &Programs, args: &Args) -> Result
                     lines
                         .iter()
                         .skip(since)
-                        .any(|l| l.contains("yoru-shell: over Stash"))
+                        .any(|l| l.contains("xaqu-shell: over Stash"))
                 })?;
             if over {
                 std::thread::sleep(Duration::from_millis(500));

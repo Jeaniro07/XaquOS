@@ -26,7 +26,7 @@ before 2026-10-24). What is still on a branch is at the end of this section.
   (`docs/backlog/branches.md`).
 * **v0.2.0, the first live ISO** (tagged, notes dated 2026-10-29,
   `docs/RELEASES.md`, `docs/TRY-FERRIX.md`). `cargo xtask iso` writes a
-  hybrid ISO in Rust (dc95c66f8, 2026-10-25): Yoru from memory as uid 1000,
+  hybrid ISO in Rust (dc95c66f8, 2026-10-25): Xaqu from memory as uid 1000,
   the graphical installer as the one window at login, the licence inventory
   in it. A PC shows the desktop on the firmware's framebuffer
   (`ferrix.efifb`, `ferrix.fbcon`, ac9eae331); the live session drives a
@@ -59,7 +59,7 @@ before 2026-10-24). What is still on a branch is at the end of this section.
   models, states and animations, controls with the theme, popups, canvas
   painters) landed on 2026-10-23, and U8 (the lode viewer) and U9 (Settings)
   on 2026-10-24, a GPU renderer with a fallback on 2026-10-24 and its pacing
-  with it. Settings, the file manager `shelf`, the clients of Yoru and the
+  with it. Settings, the file manager `shelf`, the clients of Xaqu and the
   lode viewer are drawn with it.
 * **Settings and the settings writer** (`docs/SETTINGS-WRITER.md`,
   `docs/RUNTIME-SETTINGS.md`). `settingsd` is root and socket-activated: a
@@ -83,8 +83,8 @@ before 2026-10-24). What is still on a branch is at the end of this section.
   run of 3h is the coordinator's and is not recorded. Every display driver
   lists every mode, the core sets only a listed one, and hyprix changes mode
   while it runs (`docs/DISPLAY.md` §9, 9475d13ea).
-* **Stage 25, Yoru** is as the stage's page says (reconciled 2026-10-25),
-  and the live ISO's and the N150's desktop are Yoru's (e4ee1da17); on
+* **Stage 25, Xaqu** is as the stage's page says (reconciled 2026-10-25),
+  and the live ISO's and the N150's desktop are Xaqu's (e4ee1da17); on
   2026-10-28 hyprix learned a maximized window without a shadow, a dragged
   window that keeps its snap distance, and a fullscreen window that covers
   the top layer.
@@ -1050,7 +1050,7 @@ on 2026-10-21 it is 28 open and 62 closed, of 90. CI on `main` is green again (r
 37331100176, after a rerun of a flaky job), after the Windows gateway test
 `a_lost_segment_is_sent_again_alone` stopped racing the gateway's timer
 (39e520e31); another gateway test, `resets_a_connection_to_a_port_nothing_listens_on`,
-flaked once on Windows and has a row in `docs/BACKLOG.md`. Stage 25 is Yoru, the main UI: the customer's design "Yoru WM" as the desktop's look and shell on hyprix (`docs/DESKTOP.md` §6, 2026-10-24). The tokens, the dock with its stash, the launcher's look, the widget sidebars and the wallpaper picker are built, each with a `test-compositor` boot, and so are Nocturne for GTK, `portald` and Chrome's GTK volumes; the palette, snapping, the helpers, the lock, notifications and switcher in the tokens, and a Files app are not ([its page](stage-25-yoru.md)).
+flaked once on Windows and has a row in `docs/BACKLOG.md`. Stage 25 is Xaqu, the main UI: the customer's design "Xaqu WM" as the desktop's look and shell on hyprix (`docs/DESKTOP.md` §6, 2026-10-24). The tokens, the dock with its stash, the launcher's look, the widget sidebars and the wallpaper picker are built, each with a `test-compositor` boot, and so are Nocturne for GTK, `portald` and Chrome's GTK volumes; the palette, snapping, the helpers, the lock, notifications and switcher in the tokens, and a Files app are not ([its page](stage-25-xaqu.md)).
 
 Stage 17's display iteration is done: `/dev/dri/card0` served by a ring-3
 virtio-gpu driver, with `cargo xtask test-display` requiring a compositor's

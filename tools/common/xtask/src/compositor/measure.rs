@@ -134,7 +134,7 @@ fn seconds(at: Option<Duration>) -> String {
     )
 }
 
-/// yoru-shell's line once its dock is drawn.
+/// xaqu-shell's line once its dock is drawn.
 fn dock_drawn(line: &str) -> bool {
     line.contains("the dock is up")
 }
@@ -211,10 +211,10 @@ mod tests {
     #[test]
     fn the_dock_and_graphical_target_are_told_by_their_lines() {
         assert!(dock_drawn(
-            "yoru-shell: the dock is up, 1896x60, 4 workspaces, 3 launchers"
+            "xaqu-shell: the dock is up, 1896x60, 4 workspaces, 3 launchers"
         ));
         assert!(!dock_drawn(
-            "yoru-shell: the right sidebar is up, 2 widgets"
+            "xaqu-shell: the right sidebar is up, 2 widgets"
         ));
         assert!(graphical_active("  init     graphical.target: active"));
         assert!(!graphical_active("  init     graphical.target: starting"));

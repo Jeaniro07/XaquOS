@@ -686,12 +686,12 @@ blessed image); `test-compositor` boots for the floating layout and for
 title-bar and output-management changes (`hyprix/probe/real-client.sh`);
 `test-restart --boot all` with `notifyd` for part 4.
 
-## 6. Yoru, the main UI
+## 6. Xaqu, the main UI
 
-The customer's request of 2026-10-24: their design "Yoru WM" (Claude
+The customer's request of 2026-10-24: their design "Xaqu WM" (Claude
 Design project c2446633-7510-48b1-be87-c1906fddac9b, kept with its
 `support.js`, the Nocturne token sheet and a render at 1920x1080 in
-`~/.local/share/ferrix/design/yoru-wm/`) becomes the look of Ferrix's
+`~/.local/share/ferrix/design/xaqu-wm/`) becomes the look of Ferrix's
 desktop on hyprix: the default for `run-compositor --everything` and the
 desktop image, with Ferrix light (§2) still selectable, and a person's own
 `~/.config/hypr` and `~/.config/waybar` still winning where they exist.
@@ -701,7 +701,7 @@ outside the certified item, so no consultant review is owed.
 
 ### 6.1 What the design is
 
-A floating window manager with tiling, keyboard first ("Alt is the Yoru
+A floating window manager with tiling, keyboard first ("Alt is the Xaqu
 key", every action also has a place to click), dark and compact, on the
 Nocturne design system: ground `#161826`, surface `#232532`, text
 `#e9e9ed`, accent `#9184d9`, 100-900 OKLCH ramps for neutral, accent and
@@ -737,8 +737,8 @@ notifications beyond the toast. Both are made in its tokens (§6.2).
 
 | Part | Piece | New or reused |
 |---|---|---|
-| Tokens | `yoru` theme for hyprix (`hyprix/themes/yoru.conf`) and a Nocturne token set for tole, generated from the same table | new theme; tole's `Theme` reused, given Nocturne's values |
-| Wallpaper | `/bin/wallpaper` (`wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9`): Yoru's light-glass gradient, blue to lilac to sand, computed into the screen's buffer with no picture held (since 2026-11-11; before, a PNG of the same gradient); a person's picture (PNG, JPEG, SVG) or video through the same line, `picture ...` or `video ...` | reused; the gradient source is new |
+| Tokens | `xaqu` theme for hyprix (`hyprix/themes/xaqu.conf`) and a Nocturne token set for tole, generated from the same table | new theme; tole's `Theme` reused, given Nocturne's values |
+| Wallpaper | `/bin/wallpaper` (`wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9`): Xaqu's light-glass gradient, blue to lilac to sand, computed into the screen's buffer with no picture held (since 2026-11-11; before, a PNG of the same gradient); a person's picture (PNG, JPEG, SVG) or video through the same line, `picture ...` or `video ...` | reused; the gradient source is new |
 | Video wallpaper | `pattern --video`, AV1 in IVF, decoded on the CPU by rav1d (dav1d in Rust); `cargo xtask wallpapers` converts a person's MP4 or WebM | reused. Cost: decoding and colour conversion on the CPU and a full-screen upload every frame, and the screen never idles, so the compositor composites every frame; an estimate of a third of an N150 core at 1080p30, to be measured in Y7, and real battery on a laptop. Not the default |
 | Window frames, shadows, rounding, glow | hyprix's renderer: `decoration:rounding`, `shadow`, `col.active_border` gradients | reused, configured |
 | Title bars | hyprix's `titlebar.rs` (§2.2), given `hyprix:titlebar:*` options for the colours, the height, the title's side and the top line | extended |
@@ -747,11 +747,11 @@ notifications beyond the toast. Both are made in its tokens (§6.2).
 | Auto-tile | the per-workspace layout (`workspace = N, layout:master`) switched by a dispatcher | reused, one dispatcher new |
 | Workspace slide, parallax | hyprix animations; the parallax is new | |
 | Focus mode | `decoration:dim_inactive` through `hyprctl keyword` | reused |
-| Dock and bar, sidebars, palette, cheat sheet, wallpaper picker, toasts | **`yoru-shell`**, a new app on tole: layer-shell surfaces (dock at the bottom with its exclusive zone, a sidebar per edge, an overlay for the palette, sheet and picker), hyprix's IPC sockets for workspaces, clients and events as waybar's hyprland modules read them | new; tole gains layer-shell windows |
-| Launcher | fuzzel in Nocturne colours first (its `fuzzel.ini`); the full palette (windows and actions) in `yoru-shell` after | reused, then new |
+| Dock and bar, sidebars, palette, cheat sheet, wallpaper picker, toasts | **`xaqu-shell`**, a new app on tole: layer-shell surfaces (dock at the bottom with its exclusive zone, a sidebar per edge, an overlay for the palette, sheet and picker), hyprix's IPC sockets for workspaces, clients and events as waybar's hyprland modules read them | new; tole gains layer-shell windows |
+| Launcher | fuzzel in Nocturne colours first (its `fuzzel.ini`); the full palette (windows and actions) in `xaqu-shell` after | reused, then new |
 | Switcher, overview | hyprix's own (1d, SUPER+Tab), drawn in Nocturne | restyled |
 | Scratchpad | a special workspace with a terminal, slid from the top | reused |
-| Clipboard history | `yoru-shell` reading the selection through `ext_data_control_v1` | new |
+| Clipboard history | `xaqu-shell` reading the selection through `ext_data_control_v1` | new |
 | Lock | hyprlock with a Nocturne `hyprlock.conf` | reused |
 | Notifications | notifyd's banners in the tokens | restyled |
 | Quick settings | volume through pulsed, Wi-Fi and Bluetooth through what Settings reaches; brightness and night light where a backlight or gamma exists | partly later |
@@ -769,23 +769,23 @@ boot that screenshots it:
 
 | Slice | What | Points |
 |---|---|---|
-| Y1 | tokens: `yoru.conf` (floating, rounding, shadows, glow border, blur, curves) and its keys, themable title bars, the Nocturne wallpaper, Phosphor vendored; Yoru the default of `--everything` and the desktop image; boot `yoru` | 5 |
-| Y2 | the dock: tole layer-shell windows; `yoru-shell` with workspaces, launchers, tools, pomodoro, clock; boot `yoru-dock` | 8 |
-| Y3 | the launcher: fuzzel in Nocturne; then the palette in `yoru-shell` | 3 + 5 |
-| Y4 | widget sidebars: clock and calendar, quick settings, to-do (built: `yoru-shell --sidebar left` and `right`, edge reveal, pin, tabs, move and remove, clock and month, to-do kept in the person's file, boot `sidebars`; the weather, opt-in, boot `weather`; quick settings: focus mode, auto-tile, theme colour, do not disturb, brightness on a backlight, boot `quick`) | 8 |
+| Y1 | tokens: `xaqu.conf` (floating, rounding, shadows, glow border, blur, curves) and its keys, themable title bars, the Nocturne wallpaper, Phosphor vendored; Xaqu the default of `--everything` and the desktop image; boot `xaqu` | 5 |
+| Y2 | the dock: tole layer-shell windows; `xaqu-shell` with workspaces, launchers, tools, pomodoro, clock; boot `xaqu-dock` | 8 |
+| Y3 | the launcher: fuzzel in Nocturne; then the palette in `xaqu-shell` | 3 + 5 |
+| Y4 | widget sidebars: clock and calendar, quick settings, to-do (built: `xaqu-shell --sidebar left` and `right`, edge reveal, pin, tabs, move and remove, clock and month, to-do kept in the person's file, boot `sidebars`; the weather, opt-in, boot `weather`; quick settings: focus mode, auto-tile, theme colour, do not disturb, brightness on a backlight, boot `quick`) | 8 |
 | Y5 | snapping as the design has it: quarters, layouts picker, guides, linked edges; tabs in the title bar | 13 |
 | Y6 | helpers: scratchpad, focus mode, shortcut sheet, jump hints, clipboard history, toasts | 8 |
-| Y7 | wallpaper picker (built: `yoru-shell --walls` on SUPER I, cover and grid, folders, colour filter and sorts, boot `walls`) and the accent from the wallpaper; parallax | 8 |
+| Y7 | wallpaper picker (built: `xaqu-shell --walls` on SUPER I, cover and grid, folders, colour filter and sorts, boot `walls`) and the accent from the wallpaper; parallax | 8 |
 | Y8 | lock, notifications and switcher in the tokens; sounds | 5 |
 
-GTK and Chrome in the tokens: a Yoru desktop carries Nocturne for GTK 3
+GTK and Chrome in the tokens: a Xaqu desktop carries Nocturne for GTK 3
 and GTK 4 (hyprix's `themes/gtk`, as `/usr/share/themes/Nocturne` and
 `/etc/gtk-{3,4}.0/settings.ini`), and starts `portald`, which answers
 `org.freedesktop.portal.Settings` on the session bus: dark, Nocturne's
 accent, the theme's name -- what GTK 4, libadwaita and Chrome read for
 their own dark mode. It offers no other portal.
 
-The file chooser is Ferrix's own on Yoru: portald answers
+The file chooser is Ferrix's own on Xaqu: portald answers
 `org.freedesktop.portal.FileChooser` (OpenFile and SaveFile, the filters,
 the current folder and name) by opening the `chooser` app, tole's
 `FileDialog` after the customer's Key File Dialog design, with a name
@@ -798,7 +798,7 @@ once (`multiple` answers one), and choosing a folder as such.
 The Files app of the same design language is shelf, after the customer's
 File Explorer v2 design (tabs, list and grid with thumbnails, Back, Up and
 Forward, the breadcrumbs, Places, and Quick access, which the first
-version called Pinned); on Yoru the dock's Files, the stash's folder button
+version called Pinned); on Xaqu the dock's Files, the stash's folder button
 and the default handler of a folder open it.
 
 Measured on the GPU path where it costs: the dock's and sidebars' blur
@@ -807,13 +807,13 @@ as frame times from hyprix's frame statistics with and without each.
 
 ### 6.4 The questions, answered (the customer, 2026-10-24)
 
-1. **SUPER is the Yoru key, never Alt.** Alt+letter binds would take
+1. **SUPER is the Xaqu key, never Alt.** Alt+letter binds would take
    those keys from every program (a terminal's Alt+B, an editor's Alt+F),
-   so Yoru binds none, and no Ctrl key either: the palette is `SUPER
+   so Xaqu binds none, and no Ctrl key either: the palette is `SUPER
    Space`, the workspaces `SUPER 1-4`, snapping `SUPER+arrows`, the
    scratchpad `SUPER S`. The design's `Alt` hints are drawn as `Super`.
-2. **A person's own configuration wins.** Yoru is sourced first and their
-   `hyprland.conf` after it; their own binds are the only ones (Yoru's
+2. **A person's own configuration wins.** Xaqu is sourced first and their
+   `hyprland.conf` after it; their own binds are the only ones (Xaqu's
    keys are left out); the dock starts only where their file starts no
    bar; `--theme` overrides.
 3. **The dock shows only what is installed**: the terminal always, the
@@ -827,8 +827,8 @@ as frame times from hyprix's frame statistics with and without each.
 
 **Y1, the tokens, is built** (5 points estimated):
 
-* `hyprix/themes/yoru.conf` (the look) and `yoru-keys.conf` (SUPER as the
-  Yoru key; Alt bound at first, dropped on the customer's answer, §6.4): floating, rounding 8, the focused
+* `hyprix/themes/xaqu.conf` (the look) and `xaqu-keys.conf` (SUPER as the
+  Xaqu key; Alt bound at first, dropped on the customer's answer, §6.4): floating, rounding 8, the focused
   window's accent-600 ring, its deep drop shadow and accent glow, a lighter
   shadow elsewhere, blur for the shell's layers, Nocturne's curve, the
   ground `#161826`;
@@ -840,19 +840,19 @@ as frame times from hyprix's frame statistics with and without each.
   buttons' size and discs, the title's side and face, a top line of the
   accent's gradient fading over 48 px, a hairline at the foot); the
   defaults are Ferrix light's, so its look is unchanged;
-* `docs/brand/yoru/yoru-nocturne.svg`, the wallpaper: the design's Nocturne
+* `docs/brand/xaqu/xaqu-nocturne.svg`, the wallpaper: the design's Nocturne
   gradient in the tokens, with a faint grain against banding (0.25 s to
   draw at 1080p);
 * Phosphor 2.1.1 vendored in `assets/fonts/phosphor` with its licence;
-* `--theme yoru|ferrix-light|none` on `run-compositor`, `flash
-  --compositor` and `release-image`, Yoru by default: the theme is
+* `--theme xaqu|ferrix-light|none` on `run-compositor`, `flash
+  --compositor` and `release-image`, Xaqu by default: the theme is
   sourced first, so the person's own lines win, and a configuration of
-  their own takes its look and not its keys; Yoru's wallpaper stands where
+  their own takes its look and not its keys; Xaqu's wallpaper stands where
   the shipped Ferrix one would have been chosen, and a kept picture or
   video still wins;
-* `test-compositor --boot yoru`: two pattern windows in the theme,
+* `test-compositor --boot xaqu`: two pattern windows in the theme,
   screenshotted and judged by Nocturne's ground, the bars' surface and the
-  accent's line (`~/.local/share/ferrix/yoru/shots/Y1-yoru-1024x768.png`).
+  accent's line (`~/.local/share/ferrix/xaqu/shots/Y1-xaqu-1024x768.png`).
 
 Left of Y1: a window under a title bar has square bottom corners (as in
 Ferrix light: the renderer rounds all four corners or none); the
@@ -863,8 +863,8 @@ by hyprix, which moves windows and does not yet slide workspaces.
 
 * tole windows can be layer-shell surfaces (`WindowOptions::layer`,
   `Window::set_layer`, `Window::set_input_region`; ferrix-os/tole);
-* `yoru-shell`, a new app (ferrix-os/apps) on tole: the design's dock as
-  a `yoru-dock` layer surface 60 px high, 6 px above the foot, its
+* `xaqu-shell`, a new app (ferrix-os/apps) on tole: the design's dock as
+  a `xaqu-dock` layer surface 60 px high, 6 px above the foot, its
   exclusive zone keeping windows clear of it; the frame of the three
   accents; the search; the workspaces 1 to 4 (and any other that exists)
   with a dot a window and the shown one lit; the launchers found among the
@@ -876,15 +876,15 @@ by hyprix, which moves windows and does not yet slide workspaces.
   `j/activeworkspace` and `j/clients` after each event that moves
   something; a press is a dispatcher. `--render FILE` draws a sample dock;
   host tests for the model, the IPC events and a drawn dock;
-* every desktop carries `/bin/yoru-shell` as it carries waybar; Yoru's
+* every desktop carries `/bin/xaqu-shell` as it carries waybar; Xaqu's
   theme starts it unless the configuration starts a bar of its own
   (`exec-once` of waybar);
 * the title bars' face is `Inter Variable`, the family name of the
   vendored Inter;
-* the `yoru` boot now carries the dock and judges it too, once the screen
-  has stopped changing (`~/.local/share/ferrix/yoru/shots/Y2-yoru-dock-1024x768.png`).
+* the `xaqu` boot now carries the dock and judges it too, once the screen
+  has stopped changing (`~/.local/share/ferrix/xaqu/shots/Y2-xaqu-dock-1024x768.png`).
 
-**What it costs** (`compositor-render`'s ignored `yoru_frame_cost`, a
+**What it costs** (`compositor-render`'s ignored `xaqu_frame_cost`, a
 whole 1920x1080 frame of two windows over a wallpaper, the median of 20 on
 virglrenderer's test server over this host's GL -- the path a guest's
 frames take through QEMU -- and of 7 in software on this host):
@@ -892,18 +892,18 @@ frames take through QEMU -- and of 7 in software on this host):
 | Frame | GPU path | Software |
 |---|---|---|
 | no decorations | 8.0 ms | 8.0 ms |
-| + Yoru's shadows | 8.7 ms | 11.8 ms |
+| + Xaqu's shadows | 8.7 ms | 11.8 ms |
 | + the focused window's glow | 8.3 ms | 13.3 ms |
 | + the dock's blur behind it | 8.6 ms | 39.5 ms |
 
 On the GPU path the look is within the noise of none; in software the
 dock's blur is three quarters of the frame. A guest drawing in software
 (no `--gl`) should keep the blur off: a layer rule after the theme,
-`layerrule = blur false, match:namespace ^(yoru-.*)$`, or `decoration:blur:enabled = false`.
+`layerrule = blur false, match:namespace ^(xaqu-.*)$`, or `decoration:blur:enabled = false`.
 A host test also checks that the glow and the inactive shadow are the same
 picture on the GPU as in software.
 
-Yoru's theme does keep it off in software (`hyprix:blur_in_software = 0`),
+Xaqu's theme does keep it off in software (`hyprix:blur_in_software = 0`),
 and since 2026-10-28 lays `hyprix:blur_scrim` instead: Nocturne's ground at
 85% behind every layer surface whose rule asks for a blur -- the dock, the
 sidebars, the wallpaper switcher, the launcher -- on a screen that draws
@@ -916,7 +916,7 @@ one of nazuna's cores, where the blur was most of a frame. `compositor-render`'s
 picture (`blur-scrim-switcher`) and the text's contrast, 4.5:1 or better
 with the scrim and 2.7:1 without.
 
-On the answers to §6.4: no Alt or Ctrl bind in `yoru-keys.conf` (the
+On the answers to §6.4: no Alt or Ctrl bind in `xaqu-keys.conf` (the
 theme's test refuses one), the dock's hints say `Super`, Files is shelf,
 and the shell has the weather's opt-in rule (§6.6) and its test.
 
@@ -925,21 +925,21 @@ the dock's tooltips, its popovers (the stash) and the `Bar`
 layout; auto-tile, the shortcut sheet, clipboard and wallpaper tools come
 with their slices (Y5 to Y7); the clock is UTC or `TZ=UTC±h`, as waybar's.
 
-**Y3's first half, the launcher in Yoru's look, is built** (3 points
-estimated): `hyprix/themes/yoru-fuzzel.ini`, fuzzel drawn as the design's
+**Y3's first half, the launcher in Xaqu's look, is built** (3 points
+estimated): `hyprix/themes/xaqu-fuzzel.ini`, fuzzel drawn as the design's
 command palette -- a card on the surface high on the screen, Phosphor's
 search glyph as its prompt in accent-300, the picked row tinted with the
 accent, Inter, radius 14 -- which `SUPER Space` and the dock's
 search start fuzzel with (`--config`); a person's own `fuzzel.ini` is what
-their own binds use. `test-compositor --boot yoru-launcher` opens it over
-the Yoru desktop and judges its card
-(`~/.local/share/ferrix/yoru/shots/Y3-yoru-launcher-1024x768.png`). The
+their own binds use. `test-compositor --boot xaqu-launcher` opens it over
+the Xaqu desktop and judges its card
+(`~/.local/share/ferrix/xaqu/shots/Y3-xaqu-launcher-1024x768.png`). The
 palette's second half -- windows, actions and workspaces beside the
-applications, in `yoru-shell` -- is still to come (5 points).
+applications, in `xaqu-shell` -- is still to come (5 points).
 
 **Built since, 2026-10-24 and 25:**
 
-* **Settings live**: under Yoru Appearance and Windows take effect at once
+* **Settings live**: under Xaqu Appearance and Windows take effect at once
   and are kept in `~/.config/hypr/settings.conf`, read after the theme;
   Settings shows what hyprix has in force (`hyprctl --batch getoption`)
   and says when a change cannot show (spacing under the floating layout, a
@@ -948,12 +948,12 @@ applications, in `yoru-shell` -- is still to come (5 points).
   a window snapped to the edge is dragged again by its bar; a press under
   a layer surface (a panel, the stash, the switcher) is that surface's,
   not a bar's or a border's under it. Boot `edge-drag`.
-* **The wallpaper switcher** (Y7's picker): `yoru-shell --walls`, SUPER I
+* **The wallpaper switcher** (Y7's picker): `xaqu-shell --walls`, SUPER I
   or the dock's button; boot `walls`.
 * **The stash** on the dock: the button and its count, files dropped on it
-  (a drag's `text/uri-list`) or given to `yoru-shell --stash`, the panel of
+  (a drag's `text/uri-list`) or given to `xaqu-shell --stash`, the panel of
   tiles that opens them; boot `stash`.
-* **The widget sidebars** (Y4): `yoru-shell --sidebar left` and `right`,
+* **The widget sidebars** (Y4): `xaqu-shell --sidebar left` and `right`,
   edge reveal, pin, tabs, move and remove, the clock and month, the to-do,
   and the weather, opt-in (§6.6; boot `weather`); quick settings (boot `quick`): focus
   mode (`decoration:dim_inactive`, as the dock's button), auto-tile
@@ -966,11 +966,11 @@ applications, in `yoru-shell` -- is still to come (5 points).
   appearance, which are the theme engine's; Wi-Fi, Bluetooth and night
   light are drawn faint with why (no wireless or Bluetooth stack, no
   gamma). Boot `sidebars`.
-* **The theme engine** (`yoru-shell`'s `theme.rs`, the design's
+* **The theme engine** (`xaqu-shell`'s `theme.rs`, the design's
   `applyTheme`): a theme is one of the design's triads (Nocturne, Sakura,
   Mint, Sky, Sunset) or the wallpaper's own three hues, dark, light, or
   Auto by the wallpaper's luminance, at a vibrance; every Nocturne token
-  follows. It is `~/.config/yoru-shell/theme`, chosen in the quick
+  follows. It is `~/.config/xaqu-shell/theme`, chosen in the quick
   settings; the dock, the sidebars, the switcher and the stash draw in it,
   the dock and the sidebars again within a second of it or the wallpaper
   changing, and the dock hands hyprix the frames' and title bars' colours.
@@ -981,16 +981,16 @@ applications, in `yoru-shell` -- is still to come (5 points).
   settings naming it; `portald`, answering `org.freedesktop.portal.Settings`
   (dark, the accent, the theme) and `FileChooser` with Ferrix's own dialog
   (the `chooser` app, tole's FileDialog), which GTK 3 (`GTK_USE_PORTAL`),
-  GTK 4 (`GDK_DEBUG=portals`) and Chrome use on Yoru; Chrome's volume in
+  GTK 4 (`GDK_DEBUG=portals`) and Chrome use on Xaqu; Chrome's volume in
   four versions side by side under `~/.local/share/ferrix` -- 2 GTK 3, 3
   GTK's file chooser's schemas, MIME data and loaders, 4 a session bus, GTK
   4 and zenity -- each named by `chrome::VOLUME` only in the commit that
-  landed it. Boots `chrome-yoru`, `chrome-save`, `gtk-chooser`.
+  landed it. Boots `chrome-xaqu`, `chrome-save`, `gtk-chooser`.
 
 ### 6.6 Privacy: the weather
 
 The design's weather widget (Y4) asks Open-Meteo, on these terms (the
-customer, 2026-10-24), which `yoru-shell`'s `weather.rs` holds before any
+customer, 2026-10-24), which `xaqu-shell`'s `weather.rs` holds before any
 widget exists:
 
 * **Off by default.** No network request of any kind until the person
@@ -1012,7 +1012,7 @@ widget exists:
 
 ### 6.7 The design against what is built (2026-10-24, brought up to 2026-10-25)
 
-Every feature of `Yoru WM.dc.html`, in the design's order, with what is
+Every feature of `Xaqu WM.dc.html`, in the design's order, with what is
 built and the size of what is not (points as the backlog counts them).
 
 | Feature (the design's) | Built | Left, and its size |
@@ -1046,11 +1046,11 @@ built and the size of what is not (points as the backlog counts them).
 | Wallpaper picker: cover flow and grid, folders, colour filters, sorts, add pictures and videos | yes, SUPER I (boot `walls`): cover and grid, folders and a new one, the colour dots, the sorts, live (IVF) wallpapers listed | adding pictures from the picker -- 2 |
 | Video wallpapers | `pattern --video`, and the picker sets an IVF | |
 | Sounds on snap, open, close | no | 2 |
-| Chrome and GTK apps in the tokens | yes: Nocturne for GTK 3 and 4, portald's settings, GTK in Chrome's volume (boot `chrome-yoru`), and Ferrix's file chooser for GTK and Chrome through the portal (boots `chrome-save`, `gtk-chooser`) | |
+| Chrome and GTK apps in the tokens | yes: Nocturne for GTK 3 and 4, portald's settings, GTK in Chrome's volume (boot `chrome-xaqu`), and Ferrix's file chooser for GTK and Chrome through the portal (boots `chrome-save`, `gtk-chooser`) | |
 
 The stash, the wallpaper picker and the widgets (the weather and most
 quick settings with them) are built, as the customer asked them in that order; and Files is
-shelf, wired into Yoru: the dock's Files, the stash's folder and a folder's
+shelf, wired into Xaqu: the dock's Files, the stash's folder and a folder's
 default handler (`inode/directory`, `xdg-open`) open it (boot `files`).
 
 ### 6.8 Application menus
@@ -1076,19 +1076,19 @@ picks New Tab.
 
 ### 6.9 Spotlight, Launchpad, Notices
 
-SUPER Space opens Spotlight (`yoru-shell --spotlight`): the query is read as
+SUPER Space opens Spotlight (`xaqu-shell --spotlight`): the query is read as
 arithmetic first, then matched against the installed applications
 (`compositor_desktop::entry`), the open windows (`j/clients`) and the names
 under `~` (at most 5000 entries, 300 ms, scanned when it opens, no index).
 Enter runs the chosen row; a file opens with its default handler.
 
-SUPER L opens Launchpad (`yoru-shell --launchpad`): a fullscreen grid of
+SUPER L opens Launchpad (`xaqu-shell --launchpad`): a fullscreen grid of
 every installed application, 8 columns, paged, click to run. It closes on
 another SUPER L or a click outside the grid.
 
 notifyd keeps the last 50 notifications and serves them on a line socket
 (`$XDG_RUNTIME_DIR/notifyd.sock`: `list`, `subscribe`, `close <id>`). While
-yoru-shell is subscribed it draws the glass banners at the top right (at
+xaqu-shell is subscribed it draws the glass banners at the top right (at
 most 3, 5 s each) and the history behind the clock, and notifyd pauses its
 own banners. With the shell down, notifyd draws again.
 

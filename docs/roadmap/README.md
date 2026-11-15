@@ -76,7 +76,7 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   (2026-10-15). The first release, v0.1.0, was tagged on 2026-10-20 and built
   none of its assets; v0.1.1 (2026-10-21) carries the x86-64 desktop as a zip
   that plain QEMU boots (`docs/RELEASES.md`). v0.2.0 (2026-10-29) is the
-  first live ISO: Yoru from memory and the graphical installer, checked on
+  first live ISO: Xaqu from memory and the graphical installer, checked on
   QEMU machines and not yet booted on a real PC. `test-install` failed in the
   live medium's boot; its stated cause is fixed (0d9f41949) and no passing run
   is recorded (a BACKLOG row).
@@ -132,14 +132,14 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   68 points before the game domain; the game domain (52) is stage 14's
   ground and an open decision, as eight more are. It stands on stage 21's
   unlanded zero-copy work ([its page](stage-24-game-path.md)).
-- **Stage 25 (Yoru, the main UI):** the customer's design "Yoru WM" as the
+- **Stage 25 (Xaqu, the main UI):** the customer's design "Xaqu WM" as the
   desktop's look and shell on hyprix (`docs/DESKTOP.md` §6, 2026-10-24).
   Built: the tokens, the dock and its stash, the launcher's look, the
   sidebars with the weather and the quick settings, the wallpaper picker and
   the theme engine, Files (`shelf`), Nocturne for GTK and `portald`, and
   Chrome's GTK volumes; to do: the palette, snapping beyond halves, the
   helpers, and the lock, notifications and switcher in the tokens
-  ([its page](stage-25-yoru.md)).
+  ([its page](stage-25-xaqu.md)).
 - **Since 2026-10-21, besides the stages (details in [Where it stands](where-it-stands.md)):**
   the repository flow (landings on `develop`, `main` moved by a fast-forward
   promotion); `lode`, a log manager, and tole, a UI framework in a repository
@@ -233,7 +233,7 @@ single file across.
 | 22 | [Steam](stage-22-steam.md) | ◐ in progress | unsized, over 300 points |
 | 23 | [Arknights: Endfield](stage-23-arknights-endfield.md) | ◐ in progress | ≈ 205 points as a first guess, step 5 unknown |
 | 24 | [The game path](stage-24-game-path.md) | ◐ in progress | ≈ 68 points before the game domain, about 190 with it and the later rows |
-| 25 | [Yoru, the main UI](stage-25-yoru.md) | ◐ in progress | 63 points estimated; about 30 built |
+| 25 | [Xaqu, the main UI](stage-25-xaqu.md) | ◐ in progress | 63 points estimated; about 30 built |
 |  | [Microkernel M0 — the build flags, the baselines, the checks](microkernel-m0.md) | ◐ in progress | ≈ 45–60 points |
 |  | [Written ahead of their stage](written-ahead.md) |  |  |
 |  | [Continuously, from stage 1](continuously.md) |  |  |

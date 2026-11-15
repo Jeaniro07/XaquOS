@@ -22,7 +22,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (usize, usize) = (1024, 768);
 
 /// The panel's place on the screen: the notices surface is 360 wide and 8
@@ -126,7 +126,7 @@ fn shown(line: &str) -> Option<usize> {
 /// No notification came, the clock opened nothing, or the panel was not
 /// on the screen.
 pub(super) fn test_notices(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/notices-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -225,7 +225,7 @@ pub(super) fn test_notices(arch: Arch, programs: &Programs, args: &Args) -> Resu
 mod tests {
     use super::{Image, PANEL_H, PANEL_W, PANEL_X, PANEL_Y, RULES, SCRIPT, clock, judge, shown};
 
-    /// The screen, as the Yoru boot sets it.
+    /// The screen, as the Xaqu boot sets it.
     const SCREEN: (usize, usize) = (1024, 768);
 
     /// The mark the script writes into the kernel log.
@@ -298,9 +298,9 @@ mod tests {
 
     #[test]
     fn the_history_count_is_read_from_the_shells_line() {
-        assert_eq!(shown("yoru-shell: notices: up, 1 shown"), Some(1));
-        assert_eq!(shown("yoru-shell: notices: up, 12 shown"), Some(12));
-        assert_eq!(shown("yoru-shell: notices: the panel is open"), None);
-        assert_eq!(shown("yoru-shell: notices: up, none shown"), None);
+        assert_eq!(shown("xaqu-shell: notices: up, 1 shown"), Some(1));
+        assert_eq!(shown("xaqu-shell: notices: up, 12 shown"), Some(12));
+        assert_eq!(shown("xaqu-shell: notices: the panel is open"), None);
+        assert_eq!(shown("xaqu-shell: notices: up, none shown"), None);
     }
 }

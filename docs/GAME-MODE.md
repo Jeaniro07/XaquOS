@@ -67,7 +67,7 @@ wait that fires with nothing to do.
 | sessiond | Linux, root | 200 ms loop | keep: seat and lock relay |
 | hyprix | Linux, ferrix | paced to the refresh; input thread every 100 ms; `frames` line each second | keep; quiet the line |
 | yserver | Linux, ferrix | Present clock at the refresh | keep |
-| yoru-shell dock and two sidebars | Linux, ferrix | (source outside the tree) | freeze |
+| xaqu-shell dock and two sidebars | Linux, ferrix | (source outside the tree) | freeze |
 | notifyd, portald | Linux, ferrix | 5 s and 200 ms retries until connected | freeze |
 | wallpaper; `pattern --video` | Linux, ferrix | event-driven; the video decodes continuously | freeze |
 | term | Linux, ferrix | **a 4 ms poll loop** (`apps/term/src/client.rs:360`) | freeze; and a fix of its own |
@@ -572,7 +572,7 @@ Raw files: `~/.local/share/ferrix/logs/t0h/` on nazuna.
   past the object's end. A scaled mode, the second scanout and any failure
   stay on the processor.
 * **What H5 showed of hyprix.** It composited every frame in both runs,
-  12.5 to 28% of a core: never direct scanout, because the yoru dock and
+  12.5 to 28% of a core: never direct scanout, because the xaqu dock and
   sidebars (layer level "top") count as over the fullscreen game, and on
   the title screen because the pointer is drawn into the frame (card0 has
   no cursor plane). Neither is H5's; both are the compositor's and card0's

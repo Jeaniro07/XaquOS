@@ -1,6 +1,6 @@
-//! `test-compositor --boot chrome-yoru`: Google's Chrome on Yoru's desktop
+//! `test-compositor --boot chrome-xaqu`: Google's Chrome on Xaqu's desktop
 //! in Nocturne. The Chrome volume carries GTK 3 (`fetch-chrome.sh`), which
-//! Chrome loads for its system look; Yoru carries Nocturne for GTK and
+//! Chrome loads for its system look; Xaqu carries Nocturne for GTK and
 //! GTK's settings naming it, dark. So Chrome's own frame -- its tab strip
 //! and toolbar -- is drawn in Nocturne's dark colours rather than Chrome's
 //! light default.
@@ -9,7 +9,7 @@
 //! page by its yellow in QEMU's screendump and requires the toolbar above
 //! it dark: the mean of a row 20 pixels above the page under 0x80, where Chrome's
 //! light default is about 0xc7. The
-//! screen is kept as `chrome-yoru.ppm`. Skipped where the machine has no
+//! screen is kept as `chrome-xaqu.ppm`. Skipped where the machine has no
 //! Chrome volume.
 
 use std::time::{Duration, Instant};
@@ -58,37 +58,37 @@ fn row_mean(screen: &Image, y: usize, left: usize, right: usize) -> u32 {
     u32::try_from(sum / n.max(1)).unwrap_or(u32::MAX)
 }
 
-/// `test-compositor --boot chrome-yoru`.
+/// `test-compositor --boot chrome-xaqu`.
 ///
 /// # Errors
 ///
 /// Chrome never drew its page, or its toolbar is not dark.
-pub(super) fn test_chrome_yoru(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
+pub(super) fn test_chrome_xaqu(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     if arch != Arch::X86_64 {
-        println!("  {arch}: chrome-yoru skipped: Chrome for Testing is linux64 alone");
+        println!("  {arch}: chrome-xaqu skipped: Chrome for Testing is linux64 alone");
         return Ok(());
     }
     let Ok(volume) = crate::chrome::volume() else {
         println!(
-            "  {arch}: chrome-yoru skipped: no Chrome volume (tools/common/fetch/fetch-chrome.sh)"
+            "  {arch}: chrome-xaqu skipped: no Chrome volume (tools/common/fetch/fetch-chrome.sh)"
         );
         return Ok(());
     };
     if !volume.is_file() {
         println!(
-            "  {arch}: chrome-yoru skipped: {} is not there",
+            "  {arch}: chrome-xaqu skipped: {} is not there",
             volume.display()
         );
         return Ok(());
     }
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str(crate::chrome::WINDOW_ENV);
     config.push_str(&crate::chrome::window_library_path(false));
     config.push_str(&format!(
         "exec-once = {}\n",
         crate::chrome::window_command(super::browser::CHROME_WINDOW_PAGE)
     ));
-    // The volume's links beside Yoru's own files: its fonts beside Inter
+    // The volume's links beside Xaqu's own files: its fonts beside Inter
     // and Phosphor, as the desktop links them.
     let links = super::desktop::chrome_links(arch, &carried.ports);
     carried.ports.extend(links);
@@ -98,13 +98,13 @@ pub(super) fn test_chrome_yoru(arch: Arch, programs: &Programs, args: &Args) -> 
     if !args.memory_given {
         args.memory = crate::chrome::MEMORY;
     }
-    println!("  {arch}: chrome-yoru: Chrome from {}", volume.display());
+    println!("  {arch}: chrome-xaqu: Chrome from {}", volume.display());
     let (image, kernel) = build_image(arch, programs, &config, carried, &args)?;
     let port = free_port()?;
     let mut qemu_args = args;
     qemu_args.display = true;
     qemu_args.qmp_port = Some(port);
-    let dump = paths::build_dir(arch).join("chrome-yoru.ppm");
+    let dump = paths::build_dir(arch).join("chrome-xaqu.ppm");
     let mut best: Option<Image> = None;
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
         watching.stop_when_done();
@@ -143,25 +143,25 @@ pub(super) fn test_chrome_yoru(arch: Arch, programs: &Programs, args: &Args) -> 
     };
     let _ = crate::qemu::watch_then(arch, &image, &kernel, &qemu_args, MARKER, hook)?;
     let Some(screen) = best else {
-        return Err(Error::new(format!("{arch}: chrome-yoru: no screen")));
+        return Err(Error::new(format!("{arch}: chrome-xaqu: no screen")));
     };
     let (found, bounds) = page(&screen);
     let Some((left, top, right, _)) = bounds.filter(|_| found >= 78_643) else {
         return Err(Error::new(format!(
-            "{arch}: chrome-yoru: Chrome's page never came: {found} yellow pixels (the screen is {})",
+            "{arch}: chrome-xaqu: Chrome's page never came: {found} yellow pixels (the screen is {})",
             dump.display()
         )));
     };
     let toolbar = row_mean(&screen, top.saturating_sub(20), left, right);
     println!(
-        "  {arch}: chrome-yoru: the page at {left},{top}, the toolbar above it {toolbar:#04x} on average (the screen is {})",
+        "  {arch}: chrome-xaqu: the page at {left},{top}, the toolbar above it {toolbar:#04x} on average (the screen is {})",
         dump.display()
     );
     if toolbar >= 0x80 {
         return Err(Error::new(format!(
-            "{arch}: chrome-yoru: Chrome's toolbar is light ({toolbar:#04x}), not Nocturne: no GTK under it"
+            "{arch}: chrome-xaqu: Chrome's toolbar is light ({toolbar:#04x}), not Nocturne: no GTK under it"
         )));
     }
-    println!("  {arch}: chrome-yoru: Chrome drew its frame in Nocturne, through GTK");
+    println!("  {arch}: chrome-xaqu: Chrome drew its frame in Nocturne, through GTK");
     Ok(())
 }

@@ -495,7 +495,7 @@ pub(crate) struct Args {
     /// shows, by any part of its name, or `none` for a plain background.
     /// Given nothing it shows one of them, another each run.
     pub(crate) wallpaper: Option<String>,
-    /// `--theme <NAME>`: the look a watched desktop is drawn in -- `yoru`
+    /// `--theme <NAME>`: the look a watched desktop is drawn in -- `xaqu`
     /// (the default), `ferrix-light`, or `none` for hyprix's own defaults
     /// (`docs/DESKTOP.md` §6). A desktop with its own configuration takes
     /// the theme's look under its own lines, and not its keys.

@@ -214,7 +214,7 @@ the landings were large and few, and are sized by cluster (the table lists
 them). The estimates are the design documents' own points, written before the
 work: `docs/LOGGING.md` §17 (79 for its plan), `docs/UI-FRAMEWORK.md` §8 (U1 to
 U9, 61), `docs/DESKTOP.md` (parts 1, 2 and 4 at 18, 13 and 18, 3h at 21),
-`docs/roadmap/stage-25-yoru.md` (30 built), `docs/NVIDIA.md` (N3c, 8), stage 24's
+`docs/roadmap/stage-25-xaqu.md` (30 built), `docs/NVIDIA.md` (N3c, 8), stage 24's
 R1 to R3 and I1, the Claude desktop app's C1 to C4, and the round trip's 59.
 
 | day | estimated before | sized afterwards | what |
@@ -237,8 +237,8 @@ R1 to R3 and I1, the Claude desktop app's C1 to C4, and the round trip's 59.
 | 2026-10-21 | 0 | 34 | after: i915's frequency policy, hyprix's fullscreen paths, pstore, `bench-rows`, F-64 and F-73, v0.1.1 |
 | 2026-10-22 | 0 | 54 | after: GNOME's gaps 1 and 2 and G1, the render core, the Intel driver's restart, the power core and `msrlog`, wake-affine |
 | 2026-10-23 | 179 | 38 | est: lode's plan steps 1 to 5, 8, 2a and 2b 61, tole's U1 to U7 48, the GNOME-like desktop's parts 1, 2, 4 and 3h 70; after: lode's rest, hyprix's multi-monitor, `linux_abi`, the kernel split S3, the kernel log as Linux's records, `dmesg`, `ETXTBSY`, power |
-| 2026-10-24 | 33 | 36 | est: lode's step 9 4, tole's U8 and U9 13, Yoru's Y1 to Y3 16; after: tombstones 1 to 3, `settingsd` and the trusted prompt, the product signing S1 to S3, the repository flow's workflows, the GPU renderer |
-| 2026-10-25 | 22 | 85 | est: Yoru's Y4 and Y7 14, N3c 8; after: the live ISO, product signing S4, USB serial (FTDI, USB-Blaster), pty fixes, portald, GTK and Chrome volumes, the quick settings, `nvrm`'s hot-plug and quiesce |
+| 2026-10-24 | 33 | 36 | est: lode's step 9 4, tole's U8 and U9 13, Xaqu's Y1 to Y3 16; after: tombstones 1 to 3, `settingsd` and the trusted prompt, the product signing S1 to S3, the repository flow's workflows, the GPU renderer |
+| 2026-10-25 | 22 | 85 | est: Xaqu's Y4 and Y7 14, N3c 8; after: the live ISO, product signing S4, USB serial (FTDI, USB-Blaster), pty fixes, portald, GTK and Chrome volumes, the quick settings, `nvrm`'s hot-plug and quiesce |
 | 2026-10-26 | 0 | 50 | cluster: time namespaces 8, N5 and `test-bwrap` 8, the caches' reclaim 5, the `seccomp_bpf` selftest 5, `memory.reclaim` 5, `cpu.max.burst` 3, `cpu.idle` 3, `io.weight` and `io.latency` 8, `memory.stat` 3, L.object.187 2; power's `auto` plan |
 | 2026-10-27 | 0 | 3 | cluster: `/proc/<pid>/maps` in blocks (F-97) |
 | 2026-10-28 | 0 | 32 | after: `hyprix-gpu` and its protocol, the render backend, hyprix's window rules, v0.2.0's checks, yserver pin |

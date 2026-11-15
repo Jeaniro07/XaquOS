@@ -114,7 +114,7 @@ paths = ["usr/share/zoneinfo/**"]
 [components.phosphor]
 licence = "MIT"
 upstream = "https://github.com/phosphor-icons/web"
-note = "Phosphor icons 2.1.1 as a font, the Yoru desktop's icons (assets/fonts/README.md)"
+note = "Phosphor icons 2.1.1 as a font, the Xaqu desktop's icons (assets/fonts/README.md)"
 paths = ["usr/share/fonts/phosphor/*"]
 
 [components.liberation]
@@ -150,7 +150,7 @@ paths = [
     "usr/share/udhcpc/default.script",
     "usr/share/applications/*",
     "usr/share/backgrounds/ferrix/*",
-    # Yoru's own (docs/DESKTOP.md §6): hyprix's themes; its wallpaper is a
+    # Xaqu's own (docs/DESKTOP.md §6): hyprix's themes; its wallpaper is a
     # gradient line in them, no file.
     "usr/share/hyprix/themes/*",
     # What xtask writes beside Chrome (chrome.rs, start_page.rs): the
@@ -161,7 +161,7 @@ paths = [
     "usr/share/ferrix/start/*",
     "usr/share/icons/hicolor/index.theme",
     "usr/share/icons/hicolor/scalable/apps/ferrix-*.svg",
-    # Nocturne for GTK (hyprix's themes/gtk), on a Yoru desktop.
+    # Nocturne for GTK (hyprix's themes/gtk), on a Xaqu desktop.
     "usr/share/themes/Nocturne/**",
     ".ferrix/**",
     "bin/hyprix",

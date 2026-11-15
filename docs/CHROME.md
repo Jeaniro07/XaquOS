@@ -1264,9 +1264,9 @@ Adwaita icons to the volume's, as it does the fonts.
 A volume with new contents is made under a directory of its own, so that a
 machine keeps running the one it had until the commit naming the new one
 lands: `~/.local/share/ferrix/chrome-2` (`chrome::VOLUME`), the first,
-`chrome`, left as it was. Under Yoru, whose image carries Nocturne for GTK
+`chrome`, left as it was. Under Xaqu, whose image carries Nocturne for GTK
 and GTK's settings naming it, Chrome draws its frame in Nocturne's dark
-colours; `test-compositor --boot chrome-yoru` requires the toolbar above
+colours; `test-compositor --boot chrome-xaqu` requires the toolbar above
 the page dark (about 0x5e on average, against 0xc7 for Chrome's light
 default on the first volume).
 
@@ -1280,7 +1280,7 @@ Adwaita's `image-missing.svg`; and gdk-pixbuf's loaders' cache, by the
 volume's own `gdk-pixbuf-query-loaders` run on its glibc, with librsvg's
 loader for the SVG icons. The image links `usr/share/glib-2.0` and
 `usr/share/mime` to the volume's. `test-compositor --boot chrome-save`
-presses Ctrl+S in Chrome under Yoru and requires GTK's "Save File" window,
+presses Ctrl+S in Chrome under Xaqu and requires GTK's "Save File" window,
 gone again at Escape with Chrome still running.
 
 The fourth, `chrome-4`, carries what Ferrix's own file chooser is shown

@@ -1073,7 +1073,7 @@ lode keeps nothing the caller may read.
 Built 2026-10-29 for v0.2.0 (`src/user/system/linux/init/init/src/seat.rs`).
 The person at the machine -- the user of the graphical session on seat0, or
 of a login on the console -- may `svc poweroff` and `svc reboot` (and
-`poweroff`, `reboot`, `shutdown`, and Yoru's power menu, which call them)
+`poweroff`, `reboot`, `shutdown`, and Xaqu's power menu, which call them)
 without a password, as systemd-logind's `allow_active` lets the active
 local session's user. Nobody else who is not root may: not an ssh session,
 not another user, not a service.

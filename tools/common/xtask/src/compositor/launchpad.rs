@@ -45,9 +45,9 @@ const CAP: usize = 40;
 
 /// The surface the launchpad draws on: not an application, so never the
 /// window the boot waits for.
-const PAD: &str = "yoru-launchpad";
+const PAD: &str = "xaqu-launchpad";
 
-/// The colour of a tile: Nocturne's n900 in Yoru's glass theme, the
+/// The colour of a tile: Nocturne's n900 in Xaqu's glass theme, the
 /// theme the shell draws with until a person chooses one of their own
 /// (`theme.rs`'s `Tokens::GLASS`).
 const TILE: [u8; 3] = [0xec, 0xed, 0xf0];
@@ -62,7 +62,7 @@ const NEAR: i32 = 4;
 const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
-hyprctl dispatch exec '/bin/yoru-shell --launchpad'
+hyprctl dispatch exec '/bin/xaqu-shell --launchpad'
 while :; do
   echo "launchpad-probe: windows $(hyprctl clients | grep -E '^[[:space:]]*class:' | tr '\n' ';')"
   sleep 2
@@ -221,7 +221,7 @@ fn tile_light(screen: &Image, tile: Tile) -> usize {
     reason = "one boot read top to bottom: the grid, the tile and what the press did"
 )]
 pub(super) fn test_launchpad(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/launchpad-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -347,13 +347,13 @@ pub(super) fn test_launchpad(arch: Arch, programs: &Programs, args: &Args) -> Re
 mod tests {
     use super::{Image, Tile, judge, tiles, up};
 
-    /// The screen, as the Yoru boot sets it.
+    /// The screen, as the Xaqu boot sets it.
     const SCREEN: (usize, usize) = (1024, 768);
 
     /// What the shell says when the grid is up with one application.
-    const UP: &str = "yoru-shell: launchpad is up, 1 apps, 1 pages";
+    const UP: &str = "xaqu-shell: launchpad is up, 1 apps, 1 pages";
     /// Where its one tile is.
-    const TILES: &str = "yoru-shell: launchpad: tiles 81,40,87,87";
+    const TILES: &str = "xaqu-shell: launchpad: tiles 81,40,87,87";
 
     /// The tile the shell named.
     fn tile() -> Tile {
@@ -388,17 +388,17 @@ mod tests {
     fn the_up_line_says_how_many_apps_and_pages() {
         assert_eq!(up(UP), Some((1, 1)));
         assert_eq!(
-            up("yoru-shell: launchpad is up, 12 apps, 2 pages"),
+            up("xaqu-shell: launchpad is up, 12 apps, 2 pages"),
             Some((12, 2))
         );
-        assert_eq!(up("yoru-shell: the dock is up"), None);
+        assert_eq!(up("xaqu-shell: the dock is up"), None);
     }
 
     #[test]
     fn the_tiles_line_names_where_the_tiles_are() {
         assert_eq!(tiles(TILES), Some(vec![tile()]));
         assert_eq!(
-            tiles("yoru-shell: launchpad: tiles 81,40,87,87 191,40,87,87"),
+            tiles("xaqu-shell: launchpad: tiles 81,40,87,87 191,40,87,87"),
             Some(vec![
                 tile(),
                 Tile {
@@ -409,7 +409,7 @@ mod tests {
                 }
             ])
         );
-        assert_eq!(tiles("yoru-shell: launchpad is up, 1 apps, 1 pages"), None);
+        assert_eq!(tiles("xaqu-shell: launchpad is up, 1 apps, 1 pages"), None);
     }
 
     #[test]
@@ -432,13 +432,13 @@ mod tests {
 
     #[test]
     fn a_launchpad_with_no_applications_is_no_launchpad() {
-        let said = "yoru-shell: launchpad is up, 0 apps, 0 pages";
+        let said = "xaqu-shell: launchpad is up, 0 apps, 0 pages";
         assert!(judge(said, TILES, &screen(Some(tile()))).is_err());
     }
 
     #[test]
     fn the_tiles_must_be_as_many_as_the_apps() {
-        let said = "yoru-shell: launchpad: tiles 81,40,87,87 191,40,87,87";
+        let said = "xaqu-shell: launchpad: tiles 81,40,87,87 191,40,87,87";
         assert!(judge(UP, said, &screen(Some(tile()))).is_err());
     }
 }

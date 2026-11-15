@@ -532,7 +532,7 @@ pub(super) fn build_parts(
     // 3060, by virglrenderer's test server on NVIDIA's EGL, and read back
     // for nvrm's copying card (docs/NVIDIA.md §4.6, N3c). The card's render
     // node speaks NVIDIA's ioctls, not virgl's, so `auto` draws in software.
-    // Opt-in for now: on 2026-10-25 it took Yoru from 95 ms a frame to 23 ms
+    // Opt-in for now: on 2026-10-25 it took Xaqu from 95 ms a frame to 23 ms
     // but Chrome's WebGL from 51-61 fps to 15-19, which is still to be found.
     if args.nvidia && std::env::var_os("FERRIX_NVIDIA_VTEST").is_some_and(|value| value == "1") {
         arguments.extend(["--renderer", "vtest"]);

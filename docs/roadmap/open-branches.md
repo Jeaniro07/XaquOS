@@ -64,7 +64,7 @@ note says so):
 | `wip/stability-try` | 2 | the nightly stability workflow and `test-kmem`, `test-stall`; one commit tries it on push |
 | `park/f95-option-a` | 2 | F-95's second landing with the consultant's L1-L12 written (the landing itself is 7fdc1c99d on `develop`) |
 | `docs/enclave-design`, `docs/fx0830-recurrence`, `docs/intel-display` | 1 each | a design page, a BACKLOG row, and a paused modeset design (3h's code is on `develop`) |
-| `land/everything-yoru` | 1 | `--everything` merges Chrome's volume 4: on `develop` as d789924e2 (rebased, so it counts) |
+| `land/everything-xaqu` | 1 | `--everything` merges Chrome's volume 4: on `develop` as d789924e2 (rebased, so it counts) |
 
 **The microkernel's M1 and M2** (`feature/mk/k2`, `k2b`, `k3`, `k4`, `k5`, `k6`,
 `k6-r`, `k7`, `k10`, `k12`, `k12b`, `mk-m0rest/*`, `mk/smt-off`,

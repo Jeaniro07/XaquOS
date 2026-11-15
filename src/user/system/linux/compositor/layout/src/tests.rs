@@ -2577,7 +2577,7 @@ fn a_border_is_grabbed_around_a_window_and_not_inside_it() {
 /// A press on a floating window's own pixels is its own even where the
 /// ring of a window beneath it reaches: Settings floating over a terminal
 /// the size of the screen, pressed just inside its left edge, is not a
-/// grab of the terminal's border (the customer's Yoru desktop, 2026-10-28).
+/// grab of the terminal's border (the customer's Xaqu desktop, 2026-10-28).
 #[test]
 fn a_floating_window_over_a_border_ring_keeps_its_press() {
     const ON: &str = "general:layout = floating\ngeneral:border_size = 1\n\
@@ -4693,7 +4693,7 @@ fn a_removed_monitors_floating_windows_are_pulled_inside_the_one_left() {
 }
 
 /// A layer surface that comes to reserve a strip after the windows are up
-/// -- yoru-shell's menu bar across the top -- moves a floating window its
+/// -- xaqu-shell's menu bar across the top -- moves a floating window its
 /// strip now covers down out of it, as Hyprland's `arrangeLayersForMonitor`
 /// does; a window clear of the strip stays where it is.
 #[test]

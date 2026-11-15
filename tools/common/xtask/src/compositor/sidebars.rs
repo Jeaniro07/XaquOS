@@ -1,4 +1,4 @@
-//! `test-compositor --boot sidebars`: Yoru's widget sidebars (Y4). The
+//! `test-compositor --boot sidebars`: Xaqu's widget sidebars (Y4). The
 //! pointer at the left edge opens the left one, on its clock; away from
 //! it, it closes; the right one takes a task typed into its to-do list and
 //! keeps it in the person's file; its pin keeps it open.
@@ -17,7 +17,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// The panels' top: below the menu bar's 24 pixels of exclusive zone,
@@ -29,7 +29,7 @@ const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
 while :; do
-  echo "side: todo $(cat ${XDG_DATA_HOME:-$HOME/.local/share}/yoru-shell/todo 2>/dev/null | tr '\n' ';')"
+  echo "side: todo $(cat ${XDG_DATA_HOME:-$HOME/.local/share}/xaqu-shell/todo 2>/dev/null | tr '\n' ';')"
   sleep 2
 done
 "#;
@@ -63,7 +63,7 @@ fn click(qmp: &mut Qmp, point: (i64, i64)) -> Result<()> {
     reason = "one boot read top to bottom: each move and what it must have done"
 )]
 pub(super) fn test_sidebars(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/sidebars.sh\n");
     for side in ["left", "right"] {
         config.push_str(&format!(

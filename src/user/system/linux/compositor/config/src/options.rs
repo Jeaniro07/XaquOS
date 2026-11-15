@@ -304,7 +304,7 @@ pub(crate) static OPTIONS: &[(&str, Initial)] = &[
     // rounding of the compositor's, as a floating window manager leaves it.
     ("hyprix:own_frames", Int(0)),
     // How those bars look (docs/DESKTOP.md §6): the defaults are Ferrix
-    // light's header; the Yoru theme sets its own.
+    // light's header; the Xaqu theme sets its own.
     ("hyprix:titlebar:button_gap", Int(9)),
     ("hyprix:titlebar:button_margin", Int(9)),
     ("hyprix:titlebar:button_side", Str("right")),

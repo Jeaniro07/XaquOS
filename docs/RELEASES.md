@@ -155,7 +155,7 @@ screen). Real PCs, VirtualBox and VMware were not checked.
 
 ## v0.2.0 (2026-10-29), the first live ISO
 
-A live ISO you can boot: Ferrix's desktop, Yoru, starts from memory, with
+A live ISO you can boot: Ferrix's desktop, Xaqu, starts from memory, with
 an installer that puts Ferrix on a disk of its own. Download
 `ferrix-v0.2.0-x86_64.iso` below, check it against `SHA256SUMS`, and follow
 [Try Ferrix](https://github.com/ferrix-os/ferrix/blob/v0.2.0/docs/TRY-FERRIX.md):
@@ -180,7 +180,7 @@ What is in it:
   USB stick: El Torito and a GUID partition table over the same EFI system
   partition. `/` is in memory and the session logs in as `ferrix` with no
   password; nothing on the machine's disks is touched.
-- **Yoru on hyprix**, the default desktop of both the live session and the
+- **Xaqu on hyprix**, the default desktop of both the live session and the
   installed system: Ferrix's own Wayland compositor, with the dock,
   sidebars, launcher and wallpaper picker in the Nocturne design; a
   terminal running zinc, the zsh-compatible shell; Settings, the Files app
@@ -190,7 +190,7 @@ What is in it:
   language, keyboard, the disk -- erase it whole, with a warning in red, or
   install into free space or one partition you choose, leaving the others
   alone --, your account, the time zone, a summary, progress, and restart.
-  The installed system starts Yoru with your session locked behind your
+  The installed system starts Xaqu with your session locked behind your
   password.
 - **Drivers outside the kernel**: disk, network, graphics, input and
   console drivers run as processes and are restarted when they crash.
@@ -217,14 +217,14 @@ What was checked for this release, in QEMU 10.2 with OVMF (UEFI):
 - **Try Ferrix's virtio machine** (KVM, virtio-gpu, virtio input, disk and
   network, an Intel IOMMU): the live desktop as a CD, as a USB stick and as
   a virtual disk, and an install onto a blank virtual disk that then boots
-  alone to the person's locked Yoru session -- the release's gates
+  alone to the person's locked Xaqu session -- the release's gates
   `test-iso` and `test-iso-install`, the latter run repeatedly.
 - **A machine shaped like a PC** (a plain VGA adapter, a USB keyboard and
   mouse on xHCI, e1000e), with and without an IOMMU: the live desktop at
   the firmware's resolution from the ISO as a USB stick, driven by the USB
   keyboard and mouse; and, with the ISO attached as a SATA disk, the whole
   graphical install onto an NVMe disk, which then booted alone, isolated,
-  and opened Yoru to the password typed on the USB keyboard.
+  and opened Xaqu to the password typed on the USB keyboard.
 - **Not checked for this release:** real PCs, VirtualBox and VMware.
   Ferrix itself has run on the Intel N150 mini PC it is developed on (its
   AHCI SATA disk and Motorcomm YT6801 Ethernet), but this ISO has not been

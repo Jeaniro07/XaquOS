@@ -1,7 +1,7 @@
 //! `test-compositor --boot gtk-chooser`: a plain GTK 3 program's and a GTK
-//! 4 program's file dialogs on Yoru's desktop are Ferrix's own chooser.
+//! 4 program's file dialogs on Xaqu's desktop are Ferrix's own chooser.
 //! The session's environment has `GTK_USE_PORTAL=1` and
-//! `GDK_DEBUG=portals` (Yoru's theme), so GTK 3's `GtkFileChooserNative`
+//! `GDK_DEBUG=portals` (Xaqu's theme), so GTK 3's `GtkFileChooserNative`
 //! and GTK 4's `GtkFileDialog` ask the desktop portal, and portald opens
 //! the `chooser` app.
 //!

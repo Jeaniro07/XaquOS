@@ -168,13 +168,13 @@ fn the_users_icons_render() {
     assert!(seen > 0);
 }
 
-/// Yoru's wallpaper (`docs/brand/yoru/yoru-nocturne.svg`, docs/DESKTOP.md
+/// Xaqu's wallpaper (`docs/brand/xaqu/xaqu-nocturne.svg`, docs/DESKTOP.md
 /// §6) renders as the design's Nocturne gradient: the ground at the foot
 /// on the right, the section glow's blue up right, a whole 1920x1080
 /// screen opaque; and quickly enough to start a desktop with.
 #[test]
-fn the_yoru_wallpaper_is_nocturne() {
-    let bytes = include_bytes!("../../../../../../../docs/brand/yoru/yoru-nocturne.svg");
+fn the_xaqu_wallpaper_is_nocturne() {
+    let bytes = include_bytes!("../../../../../../../docs/brand/xaqu/xaqu-nocturne.svg");
     let started = std::time::Instant::now();
     let drawn = svg(bytes, Fit::Exactly(1920, 1080)).expect("renders");
     let took = started.elapsed();

@@ -40,7 +40,7 @@ const INK: usize = 1;
 const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
-hyprctl dispatch exec '/bin/yoru-shell --spotlight'
+hyprctl dispatch exec '/bin/xaqu-shell --spotlight'
 while :; do
   echo "spotlight-probe: windows $(hyprctl clients | grep -E '^[[:space:]]*class:' | tr '\n' ';')"
   sleep 2
@@ -114,7 +114,7 @@ fn judge(screen: &Image, said: (u32, u32)) -> Result<Judged> {
 ///
 /// The card never came, or the query it was given ran nothing.
 pub(super) fn test_spotlight(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/spotlight-probe.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -196,7 +196,7 @@ pub(super) fn test_spotlight(arch: Arch, programs: &Programs, args: &Args) -> Re
 mod tests {
     use super::{HEAD, Image, TOP, WIDTH, judge, said_size};
 
-    /// The screen, as the Yoru boot sets it.
+    /// The screen, as the Xaqu boot sets it.
     const SCREEN: (usize, usize) = (1024, 768);
 
     /// The wallpaper's own colour where the card sits: the gradient's
@@ -243,9 +243,9 @@ mod tests {
 
     #[test]
     fn the_size_line_says_how_big_the_card_is() {
-        let line = "yoru-shell: the spotlight is up, 1024x768, 12 apps";
+        let line = "xaqu-shell: the spotlight is up, 1024x768, 12 apps";
         assert_eq!(said_size(line), Some((1024, 768)));
-        assert_eq!(said_size("yoru-shell: the spotlight closed"), None);
+        assert_eq!(said_size("xaqu-shell: the spotlight closed"), None);
     }
 
     #[test]

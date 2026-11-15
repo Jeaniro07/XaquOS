@@ -1,5 +1,5 @@
 //! What the boots of Ferrix's file chooser through the desktop portal
-//! share: Yoru's desktop on the Chrome volume, with a session bus -- the
+//! share: Xaqu's desktop on the Chrome volume, with a session bus -- the
 //! volume's `dbus-daemon` -- that portald answers on, and a script saying
 //! the windows' classes and titles every two seconds.
 
@@ -44,7 +44,7 @@ pub(super) fn image(
         println!("  {arch}: {name} skipped: no Chrome volume (tools/common/fetch/fetch-chrome.sh)");
         return Ok(None);
     };
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str(crate::chrome::WINDOW_ENV);
     config.push_str(&crate::chrome::window_library_path(false));
     config.push_str(&format!("env = DBUS_SESSION_BUS_ADDRESS,{BUS}\n"));

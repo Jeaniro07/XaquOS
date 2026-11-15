@@ -3,7 +3,7 @@
 //! press and drag (the customer on the TV, 2026-10-25: after a drag to the
 //! edge "the window's title bar stops responding to clicks and drags").
 //!
-//! On Yoru's desktop, QEMU's tablet presses on the bar of the window on top
+//! On Xaqu's desktop, QEMU's tablet presses on the bar of the window on top
 //! (the two open cascaded, either first), drags it to
 //! the left edge and lets go; then presses on the bar where the snapped
 //! window now draws it and drags it right. A script in the guest prints
@@ -20,7 +20,7 @@ use crate::paths::Arch;
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// The screen, as the Yoru boot sets it.
+/// The screen, as the Xaqu boot sets it.
 const SCREEN: (i64, i64) = (1024, 768);
 
 /// How far above a window's rectangle the middle of its bar is.
@@ -103,7 +103,7 @@ fn rect_of(watching: &Watching<'_>, from: usize, title: &str) -> Option<(i64, i6
     reason = "one boot read top to bottom: two drags and what each left"
 )]
 pub(super) fn test_edge_drag(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
-    let (mut config, mut carried) = super::yoru::desktop(arch, args, false)?;
+    let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/edge-drag.sh\n");
     carried.busybox = Some(
         crate::busybox::installed_program(arch)
@@ -200,7 +200,7 @@ pub(super) fn test_edge_drag(arch: Arch, programs: &Programs, args: &Args) -> Re
         let dump = crate::paths::build_dir(arch).join("edge-drag-1.ppm");
         qmp.screendump(Some(crate::display::DEVICE_ID), &dump)?;
         let snapped = sx <= 8 && sw >= SCREEN.0 / 2 - 40 && sw <= SCREEN.0 / 2 + 40;
-        // Let go at the left edge, the pointer opened Yoru's left sidebar
+        // Let go at the left edge, the pointer opened Xaqu's left sidebar
         // over the snapped window's bar: away from the edge, it closes.
         at(&mut qmp, (SCREEN.0 / 2 + 100, SCREEN.1 / 2))?;
         std::thread::sleep(Duration::from_secs(2));

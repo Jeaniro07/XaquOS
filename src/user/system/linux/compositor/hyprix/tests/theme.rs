@@ -31,17 +31,17 @@ fn ferrix_light_parses_and_floats() {
     }
 }
 
-/// Yoru (docs/DESKTOP.md §6): every option and bind is one this
+/// Xaqu (docs/DESKTOP.md §6): every option and bind is one this
 /// compositor knows, its title bars and glow are set, and its wallpaper
 /// line names the shipped picture.
 #[test]
-fn yoru_parses_floats_and_styles_its_frames() {
+fn xaqu_parses_floats_and_styles_its_frames() {
     let text = format!(
         "{}\n{}",
-        include_str!("../themes/yoru.conf"),
-        include_str!("../themes/yoru-keys.conf")
+        include_str!("../themes/xaqu.conf"),
+        include_str!("../themes/xaqu-keys.conf")
     );
-    let parsed = parse("yoru.conf", &text, &mut NoSources);
+    let parsed = parse("xaqu.conf", &text, &mut NoSources);
     assert_eq!(parsed.diagnostics, [], "the theme parses cleanly");
     let config = parsed.config;
     assert_eq!(config.str("general:layout"), Some("floating"));
@@ -55,7 +55,7 @@ fn yoru_parses_floats_and_styles_its_frames() {
         style.shadow_inactive.is_some(),
         "a lighter shadow elsewhere"
     );
-    // Software screens draw no blur under Yoru; its shell's layers, drawn
+    // Software screens draw no blur under Xaqu; its shell's layers, drawn
     // for one, get the light ground behind them instead, under dark text.
     assert_eq!(config.int("hyprix:blur_in_software"), Some(0));
     let scrim = style.blur_scrim.expect("a scrim where there is no blur");
@@ -69,7 +69,7 @@ fn yoru_parses_floats_and_styles_its_frames() {
         .iter()
         .filter_map(|raw| compositor_config::LayerRule::parse(&raw.value).ok())
         .collect();
-    for namespace in ["yoru-walls", "yoru-dock", "yoru-sidebar-left", "launcher"] {
+    for namespace in ["xaqu-walls", "xaqu-dock", "xaqu-sidebar-left", "launcher"] {
         let layered = compositor_config::Layered::of(&rules, namespace);
         assert!(
             layered.blur,
@@ -85,7 +85,7 @@ fn yoru_parses_floats_and_styles_its_frames() {
     }
     assert_eq!(bars.disc.a, 0, "no disc behind the buttons");
     for bind in &config.binds {
-        // SUPER is the Yoru key (the customer, 2026-10-24): no bind may take
+        // SUPER is the Xaqu key (the customer, 2026-10-24): no bind may take
         // a program's Alt or Ctrl keys.
         assert_eq!(
             bind.mods.0 & (compositor_config::Mods::ALT | compositor_config::Mods::CTRL),
@@ -116,14 +116,14 @@ fn yoru_parses_floats_and_styles_its_frames() {
     );
 }
 
-/// Yoru's keys do what yoru-shell's menu bar says they do: Super Q quits
+/// Xaqu's keys do what xaqu-shell's menu bar says they do: Super Q quits
 /// the focused program (`Quit`, killactive), Super W closes its window
 /// (`Close`), Super M minimizes it.
 #[test]
-fn yoru_keys_are_the_menu_bars_shortcuts() {
+fn xaqu_keys_are_the_menu_bars_shortcuts() {
     let parsed = parse(
-        "yoru-keys.conf",
-        include_str!("../themes/yoru-keys.conf"),
+        "xaqu-keys.conf",
+        include_str!("../themes/xaqu-keys.conf"),
         &mut NoSources,
     );
     assert_eq!(parsed.diagnostics, [], "the keys parse cleanly");

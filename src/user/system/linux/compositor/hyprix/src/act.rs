@@ -1448,7 +1448,7 @@ mod tests {
     }
 
     /// A drag moves a window by the pointer's distance, snapping or not:
-    /// Settings, nearly as tall as the screen above Yoru's dock, has its
+    /// Settings, nearly as tall as the screen above Xaqu's dock, has its
     /// bottom snapped to the dock's edge, and dragged up a few pixels at a
     /// time it goes up with the pointer, as far as the pointer goes. Each
     /// step on its own was snapped back to the dock, and the window did
