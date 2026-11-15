@@ -58,3 +58,8 @@ mappings written through a shared VMO (first version).
 ## 5. Points (backlog units, a guess)
 
 B0 3, B1 13, B2 5, B3 8, B4 13, B5 3: about 45, sized again after review.
+
+Compressor ratio, measured on the host with a 4096-byte page, not on real
+app pages (those are measured in B3): zeros 4096 -> 26, repeating source
+text 4096 -> 54, noise 4096 -> 4114 (past the page, so it stays in RAM
+uncompressed).
