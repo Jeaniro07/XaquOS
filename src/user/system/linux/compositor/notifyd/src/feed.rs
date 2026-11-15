@@ -25,6 +25,9 @@ use crate::store::{HISTORY, Note, Urgency};
 /// How often a subscriber looks for the new notices.
 const POLL: Duration = Duration::from_millis(200);
 
+/// How long a client has to say its command before it is let go.
+const SAID: Duration = Duration::from_secs(2);
+
 /// The line that ends the history: what follows it is new.
 // Ponytail: a line of its own, so the shell knows the replay from the
 // live stream. Upgrade path: a flag on every notice, when the notices
@@ -342,6 +345,8 @@ fn subscribe(
 /// The line the connection carries: its first line, and whatever came
 /// after it.
 fn said(stream: &mut UnixStream) -> io::Result<(String, Vec<u8>)> {
+    // A client that says nothing times out, and is let go.
+    stream.set_read_timeout(Some(SAID))?;
     let mut got = Vec::new();
     let mut chunk = [0_u8; 128];
     loop {
@@ -751,6 +756,21 @@ mod tests {
             entries.last().map(line),
             Some("notice 1 Files\tCopy done\t\tquiet\n".to_owned()),
             "the quiet one says so"
+        );
+    }
+
+    /// A client that connects and says nothing is let go: its thread does
+    /// not wait for it forever.
+    #[test]
+    fn a_silent_client_is_dropped() {
+        let (path, _feed, _thread) = serving("silent");
+        let mut stream = UnixStream::connect(&path).expect("the socket");
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
+        let mut buf = [0_u8; 16];
+        assert_eq!(
+            stream.read(&mut buf).expect("the server closed, not us"),
+            0,
+            "the server hung up"
         );
     }
 
