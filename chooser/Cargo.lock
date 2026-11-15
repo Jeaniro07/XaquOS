@@ -54,6 +54,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "compositor-appmenu"
+version = "0.1.0"
+
+[[package]]
 name = "compositor-image"
 version = "0.1.0"
 dependencies = [
@@ -403,6 +407,7 @@ dependencies = [
 name = "tole"
 version = "0.1.0"
 dependencies = [
+ "compositor-appmenu",
  "compositor-image",
  "compositor-regex",
  "compositor-text",
