@@ -41,8 +41,6 @@ pub const FOAM: f32 = 14.0;
 pub enum Outcome {
     /// A line to hand hyprix: `exec ...` or `focuswindow address:...`.
     Dispatch(String),
-    /// Close without running anything.
-    Close,
 }
 
 /// The keys the card is edited with, as the tree reports them.
@@ -181,10 +179,9 @@ impl State {
 
     /// What running row `at` asks; `None` for a row that is not runnable,
     /// and for a row there is not. A file opens with its default handler.
-    // Ponytail: paths come from the scan, never typed, so they are not
-    // quoted here. Upgrade path: shell-quoting when a name ever holds a
-    // space that matters -- xdg-open takes one argument, and hyprix's exec
-    // splits words.
+    // Ponytail: the path is double-quoted for hyprix's exec, which splits
+    // words as `sh` would for quoting alone (`hyprix/src/command.rs`), so a
+    // path with spaces stays one argument. Upgrade path: none needed.
     #[must_use]
     pub fn run(&self, at: usize) -> Option<Outcome> {
         match self.hits.get(at)? {
@@ -192,7 +189,16 @@ impl State {
             Hit::Window { address, .. } => {
                 Some(Outcome::Dispatch(format!("focuswindow address:{address}")))
             }
-            Hit::File { path } => Some(Outcome::Dispatch(format!("exec /bin/xdg-open {path}"))),
+            Hit::File { path } => {
+                let mut quoted = String::from("\"");
+                for c in path.chars() {
+                    if matches!(c, '"' | '\\' | '$' | '`') {
+                        quoted.push('\\');
+                    }
+                    quoted.push(c);
+                }
+                Some(Outcome::Dispatch(format!("exec /bin/xdg-open {quoted}\"")))
+            }
             Hit::Value(_) => None,
         }
     }
@@ -287,7 +293,7 @@ impl View {
             };
             match signal {
                 SpotlightSignal::Typed(text) => {
-                    let text = text.trim();
+                    let text = text.trim_matches(['\n', '\r']);
                     if !text.is_empty() {
                         state.type_in(text);
                         changed = true;
@@ -365,14 +371,20 @@ fn scan_home() -> Option<std::sync::mpsc::Receiver<Vec<String>>> {
     Some(receive)
 }
 
-/// Take the names read so far; whether any came.
+/// Take the names read so far; whether the scan is over: its names came,
+/// or its thread is gone without them.
 fn take_scan(state: &mut State, from: &std::sync::mpsc::Receiver<Vec<String>>) -> bool {
-    let mut came = false;
-    while let Ok(files) = from.try_recv() {
-        state.set_files(files);
-        came = true;
+    let mut over = false;
+    loop {
+        match from.try_recv() {
+            Ok(files) => {
+                state.set_files(files);
+                over = true;
+            }
+            Err(std::sync::mpsc::TryRecvError::Empty) => return over,
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => return true,
+        }
     }
-    came
 }
 
 /// Run the spotlight until it is closed; the exit status.
@@ -491,7 +503,6 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
                         return 0;
                     }
                 }
-                Outcome::Close => {}
             }
         }
         if close {
@@ -593,6 +604,72 @@ mod tests {
         assert!(view.ui.key_press(&tole::KeyEvent::named("Escape")));
         let (_, close, _) = view.take(&mut state);
         assert!(close);
+    }
+
+    #[test]
+    fn a_scan_that_ended_without_names_is_over() {
+        let mut state = State::new(Vec::new());
+        let (send, receive) = std::sync::mpsc::channel::<Vec<String>>();
+        assert!(!super::take_scan(&mut state, &receive), "still scanning");
+        drop(send);
+        assert!(super::take_scan(&mut state, &receive), "the thread is gone");
+    }
+
+    #[test]
+    fn a_typed_space_stays_in_the_query() {
+        let mut state = State::new(apps());
+        let mut view = View::new(crate::look::fonts()).expect("made");
+        view.ui.set_window_active(true);
+        view.resize((1024, 768));
+        view.show(&state);
+        view.ui.update();
+        assert!(view.ui.key_press(&tole::KeyEvent::named("a")));
+        assert!(view.ui.key_press(&tole::KeyEvent::named(" ")));
+        assert!(view.ui.key_press(&tole::KeyEvent::named("b")));
+        let _ = view.take(&mut state);
+        assert_eq!(state.query(), "a b");
+    }
+
+    #[test]
+    fn a_file_with_a_space_opens_as_one_argument() {
+        let mut state = State::new(Vec::new());
+        state.set_files(vec![r#"/home/a b/my "x" file.txt"#.to_owned()]);
+        state.type_in("file");
+        let Some(Outcome::Dispatch(line)) = state.run(0) else {
+            panic!("a file runs");
+        };
+        let command = line.strip_prefix("exec ").expect("an exec line");
+        assert_eq!(
+            hyprix_words(command),
+            vec!["/bin/xdg-open", r#"/home/a b/my "x" file.txt"#]
+        );
+    }
+
+    /// The words of a line as hyprix's `command::words` splits it, for the
+    /// quoting this file writes: double quotes keep spaces, and a backslash
+    /// in them keeps the next character.
+    fn hyprix_words(line: &str) -> Vec<String> {
+        let mut words = Vec::new();
+        let mut word: Option<String> = None;
+        let mut chars = line.chars();
+        while let Some(c) = chars.next() {
+            match c {
+                c if c.is_whitespace() => words.extend(word.take()),
+                '"' => {
+                    let w = word.get_or_insert_with(String::new);
+                    while let Some(c) = chars.next() {
+                        match c {
+                            '"' => break,
+                            '\\' => w.push(chars.next().expect("escaped")),
+                            c => w.push(c),
+                        }
+                    }
+                }
+                c => word.get_or_insert_with(String::new).push(c),
+            }
+        }
+        words.extend(word);
+        words
     }
 
     #[test]
