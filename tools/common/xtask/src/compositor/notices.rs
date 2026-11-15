@@ -212,7 +212,7 @@ pub(super) fn test_notices(arch: Arch, programs: &Programs, args: &Args) -> Resu
             return Err(fail(&error.to_string(), watching));
         }
         println!(
-            "  {arch}: notices: the driver died, the clock opened the panel (the screen is {})",
+            "  {arch}: notices: the clock opened the panel (the screen is {})",
             dump.display()
         );
         Ok(())
