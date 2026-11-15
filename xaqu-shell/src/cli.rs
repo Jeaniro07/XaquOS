@@ -191,6 +191,20 @@ pub fn render_spotlight(size: (u32, u32), scale: f32) -> Option<tole::Frame> {
     Some(frame)
 }
 
+/// The control center as drawn for a picture: the quick settings with
+/// nothing found, over a clear ground.
+#[must_use]
+pub fn render_control(size: (u32, u32), scale: f32) -> Option<tole::Frame> {
+    let mut view = crate::control::View::new(crate::look::fonts())?;
+    view.ui.set_scale(scale);
+    view.resize(size);
+    view.show(&crate::quick::Quick::default());
+    view.ui.update();
+    let mut frame = tole::Frame::new(size, scale, tole::Color::rgba(0, 0, 0, 0))?;
+    let _ = view.ui.render_into(&mut frame);
+    Some(frame)
+}
+
 /// The stash panel as drawn for a picture: five files of the four tinted
 /// kinds.
 #[must_use]
@@ -433,6 +447,13 @@ pub fn main() -> ExitCode {
             ExitCode::FAILURE
         };
     }
+    if arguments.iter().any(|word| word == "--control") {
+        return if crate::control::run() == 0 {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        };
+    }
     if arguments.iter().any(|word| word == "--walls") {
         return if crate::switch::run() == 0 {
             ExitCode::SUCCESS
@@ -472,6 +493,25 @@ pub fn main() -> ExitCode {
         };
         let Some(frame) = render_spotlight((1024, 768), 1.0) else {
             eprintln!("xaqu-shell: the spotlight could not be drawn");
+            return ExitCode::FAILURE;
+        };
+        let pixmap = frame.pixmap();
+        let png = tole::png::encode(pixmap.width(), pixmap.height(), pixmap.data());
+        return match std::fs::write(path, png) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("xaqu-shell: {path}: {error}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if let Some(at) = arguments.iter().position(|word| word == "--render-control") {
+        let Some(path) = arguments.get(at + 1) else {
+            eprintln!("xaqu-shell: --render-control needs a file");
+            return ExitCode::FAILURE;
+        };
+        let Some(frame) = render_control((1024, 768), 1.0) else {
+            eprintln!("xaqu-shell: the control center could not be drawn");
             return ExitCode::FAILURE;
         };
         let pixmap = frame.pixmap();

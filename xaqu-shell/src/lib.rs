@@ -5,6 +5,7 @@
 //! from hyprix's IPC.
 
 pub mod cli;
+pub mod control;
 pub mod drop;
 pub mod hypr;
 pub mod json;
