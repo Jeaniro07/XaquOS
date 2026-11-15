@@ -97,7 +97,11 @@ fn every_short_length_round_trips() {
     for len in 0..300 {
         let mut mixed = [0u8; 300];
         for (at, byte) in mixed.iter_mut().enumerate().take(len) {
-            *byte = if at % 7 < 3 { b'z' } else { *page.get(at).expect("within") };
+            *byte = if at % 7 < 3 {
+                b'z'
+            } else {
+                *page.get(at).expect("within")
+            };
         }
         let _ = round_trip(mixed.get(..len).expect("within"));
     }
@@ -126,10 +130,17 @@ fn input_past_64_kib_is_refused() {
 fn ratio() {
     extern crate std;
     let mut text = [0u8; 4096];
-    for (byte, from) in text.iter_mut().zip(b"fn main() { let x = 1; } // ".iter().cycle()) {
+    for (byte, from) in text
+        .iter_mut()
+        .zip(b"fn main() { let x = 1; } // ".iter().cycle())
+    {
         *byte = *from;
     }
-    for (name, page) in [("zeros", [0u8; 4096]), ("text", text), ("noise", noise(4096))] {
+    for (name, page) in [
+        ("zeros", [0u8; 4096]),
+        ("text", text),
+        ("noise", noise(4096)),
+    ] {
         std::println!("{name}: 4096 -> {}", round_trip(&page));
     }
 }
