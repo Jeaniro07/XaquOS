@@ -1358,7 +1358,9 @@ version = "0.3.0"
 name = "ferrix-swap"
 version = "0.1.0"
 dependencies = [
+ "ferrix-crng",
  "ferrix-lz4",
+ "ferrix-sha256",
 ]
 
 [[package]]

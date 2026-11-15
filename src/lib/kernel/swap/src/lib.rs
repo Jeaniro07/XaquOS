@@ -10,11 +10,13 @@ extern crate alloc;
 
 mod age;
 mod anon;
+mod area;
 mod entry;
 mod pool;
 
 pub use age::Ager;
 pub use anon::{Anon, Slot};
+pub use area::{Area, Device, DeviceError, ReadError, SwapOnError, WriteError};
 pub use entry::Entry;
 pub use pool::{LoadError, PAGE, Pool, Refused, Stats};
 
@@ -22,5 +24,7 @@ pub use pool::{LoadError, PAGE, Pool, Refused, Stats};
 mod tests;
 #[cfg(test)]
 mod tests_age;
+#[cfg(test)]
+mod tests_area;
 #[cfg(test)]
 mod tests_pool;

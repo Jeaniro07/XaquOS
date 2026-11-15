@@ -8,7 +8,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
+ferrix-crng.workspace = true
 ferrix-lz4.workspace = true
+ferrix-sha256.workspace = true
 
 [lints]
 workspace = true
