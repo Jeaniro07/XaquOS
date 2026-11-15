@@ -329,6 +329,8 @@ pub fn run() -> i32 {
     };
     let mut theme = crate::theme::Live::new();
     theme.tokens.apply(&mut view.ui);
+    // The bar is always up: it tells portald and GTK the look.
+    crate::theme::publish(theme.tokens.light);
     let standard = |focused: Option<&Focused>, mine: Option<&tole::appmenu::Tree>| {
         let name = focused.map(|f| menus::app_name(&f.class, &launchers));
         let menus = menus::standard(name.as_deref(), &own);
@@ -395,6 +397,7 @@ pub fn run() -> i32 {
                     }
                     if let Some(tokens) = theme.poll() {
                         tokens.apply(&mut view.ui);
+                        crate::theme::publish(tokens.light);
                         changed = true;
                     }
                 }
