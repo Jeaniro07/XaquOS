@@ -14,7 +14,7 @@
 use std::time::{Duration, Instant};
 
 use super::boot::{build_image, press, with_the_transcript};
-use super::{MARKER, Programs, SETTLE};
+use super::{MARKER, Programs};
 use crate::args::Args;
 use crate::display::{DEVICE_ID, Image, Qmp, free_port, parse_ppm};
 use crate::paths::{self, Arch};
@@ -62,8 +62,6 @@ struct Card {
 /// What the screen shows of the cards.
 #[derive(Debug)]
 struct Judged {
-    /// The cards that are drawn.
-    drawn: usize,
     /// The cards in all.
     cards: usize,
 }
@@ -188,10 +186,7 @@ fn judge(screen: &Image, cards: &[Card]) -> Result<Judged> {
         .iter()
         .filter(|card| card_is_drawn(screen, card))
         .count();
-    let judged = Judged {
-        drawn,
-        cards: cards.len(),
-    };
+    let judged = Judged { cards: cards.len() };
     println!("mission: the cards drawn: {drawn} of {}", judged.cards);
     if drawn == judged.cards && drawn > 0 {
         Ok(judged)
@@ -419,7 +414,7 @@ mod tests {
             );
         }
         let judged = judge(&screen, &cards()).expect("the cards are drawn");
-        assert_eq!(judged.drawn, judged.cards);
+        assert!(judged.cards > 0, "there are cards to judge: {judged:?}");
     }
 
     #[test]
