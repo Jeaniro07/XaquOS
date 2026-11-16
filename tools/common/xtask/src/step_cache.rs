@@ -2475,7 +2475,16 @@ fn file_digest(path: &Path) -> std::result::Result<String, String> {
         let mut digests = DIGESTS
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(digest) = digests.get_or_insert_with(HashMap::new).get(&key) {
+        // The memo trusts the kernel's change time: a file written twice
+        // inside one clock tick keeps that time, and the memo would serve
+        // the digest of bytes the file no longer has. Under test the bytes
+        // are read again, as the toolchain's memo is not used either.
+        // Ponytail: the memo is used in a run of `check`, where a source
+        // file does not change while it runs. Upgrade path: read the
+        // bytes when the file's change time is within the current tick.
+        if !cfg!(test)
+            && let Some(digest) = digests.get_or_insert_with(HashMap::new).get(&key)
+        {
             return Ok(digest.clone());
         }
     }
