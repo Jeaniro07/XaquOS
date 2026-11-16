@@ -19,6 +19,7 @@ use tole::window::{
 };
 use tole::{Color, Element as _, Ui};
 
+use crate::hypr::Hypr;
 use crate::ui::{NoticeTile, Notices, NoticesSignal};
 use crate::window::say;
 
@@ -63,6 +64,8 @@ const TICK: Duration = Duration::from_millis(200);
 // Ponytail: every two seconds. Upgrade path: the compositor's own
 // retry, when they are one.
 const RETRY: Duration = Duration::from_secs(2);
+/// How often the compositor is asked about the memory.
+const MEMORY: Duration = Duration::from_secs(2);
 
 /// Whether the panel is open; the menu bar's clock asks for it.
 // Ponytail: a flag in the process, as the menu bar is a thread of the
@@ -123,6 +126,42 @@ pub fn parse(lines: &[&str]) -> Vec<Notice> {
             })
         })
         .collect()
+}
+
+/// The banner the desktop's memory shortage makes, from the compositor's
+/// answer; nothing when the memory is not short.
+///
+/// The compositor answers `hemat` with `{"pressure": true, "apps":
+/// [{"name": "foot", "bytes": 12345}]}`; the banner names the apps and
+/// what they hold.
+#[must_use]
+pub fn memory_notice(answer: &str) -> Option<Notice> {
+    let json = crate::json::Json::parse(answer.trim())?;
+    if json.get("pressure") != Some(&crate::json::Json::Bool(true)) {
+        return None;
+    }
+    let mut body = String::new();
+    for app in json.get("apps")?.items() {
+        let name = app
+            .get("name")
+            .and_then(crate::json::Json::str)
+            .unwrap_or("an app");
+        let bytes = app
+            .get("bytes")
+            .and_then(crate::json::Json::int)
+            .unwrap_or(0);
+        if !body.is_empty() {
+            body.push('\n');
+        }
+        body.push_str(&format!("{name} holds {bytes} bytes"));
+    }
+    Some(Notice {
+        id: 0,
+        app: "Hemat".to_owned(),
+        summary: "Memori aplikasi habis".to_owned(),
+        body,
+        quiet: false,
+    })
 }
 
 /// The panel, opened or closed; the clock's doing.
@@ -211,6 +250,16 @@ impl State {
         let before = self.banners.len();
         self.banners.retain(|(_, until)| *until > now);
         self.banners.len() != before
+    }
+
+    /// A banner goes up, without the history: what the desktop says about
+    /// itself, which is not a notice anybody sent.
+    pub fn banner_now(&mut self, notice: Notice, now: Instant) {
+        self.banners.retain(|(_, until)| *until > now);
+        self.banners.insert(0, (notice, now + LIFETIME));
+        while self.banners.len() > MAX_BANNERS {
+            self.banners.pop();
+        }
     }
 
     /// The panel, open or closed; whether it changed.
@@ -480,6 +529,10 @@ pub fn run() -> i32 {
     let mut watch: Option<WatchId> = None;
     let mut pending = String::new();
     let mut again = Instant::now();
+    // The compositor, for the memory it says about.
+    let hypr = Hypr::from_env();
+    let mut asked_memory = Instant::now();
+    let mut short = false;
     view.show(&state);
     // Nothing is drawn yet: the surface takes no presses, so the windows
     // under it are reached.
@@ -504,6 +557,11 @@ pub fn run() -> i32 {
                     // Notifyd, when it is not there yet.
                     changed |=
                         connect_later(&mut window, &mut socket, &mut watch, &mut again, &mut state);
+                    // The memory the compositor says is short.
+                    if asked_memory.elapsed() >= MEMORY {
+                        asked_memory = Instant::now();
+                        changed |= check_memory(&hypr, &mut state, &mut short);
+                    }
                 }
                 Event::Readable(id) if Some(id) == watch => {
                     changed |= read_from(
@@ -537,6 +595,30 @@ pub fn run() -> i32 {
                 return 1;
             }
         }
+    }
+}
+
+/// The memory the compositor says about, as a banner when it is short;
+/// whether anything changed.
+///
+/// The banner goes up when the memory first runs short, and not again
+/// while it stays short: the banner itself lasts five seconds.
+fn check_memory(hypr: &Option<Hypr>, state: &mut State, short: &mut bool) -> bool {
+    let Some(hypr) = hypr else {
+        return false;
+    };
+    let Some(answer) = hypr.ask("hemat") else {
+        return false;
+    };
+    let notice = memory_notice(&answer);
+    let was = *short;
+    *short = notice.is_some();
+    match notice {
+        Some(notice) if !was => {
+            state.banner_now(notice, Instant::now());
+            true
+        }
+        _ => false,
     }
 }
 
@@ -814,6 +896,26 @@ mod tests {
         assert!(!notices[0].quiet, "the first is shown");
         assert!(notices[1].quiet, "the second is quiet");
         assert_eq!(notices[1].body, "", "the body is still the third field");
+    }
+
+    /// The memory the compositor says about becomes a banner naming the
+    /// apps and what they hold.
+    #[test]
+    fn the_memory_notice_is_read_from_the_hemat_state() {
+        let notice = super::memory_notice(
+            r#"{"pressure": true, "apps": [{"name": "foot", "bytes": 12345}]}"#,
+        )
+        .expect("the banner is there");
+        assert_eq!(notice.summary, "Memori aplikasi habis");
+        assert!(notice.body.contains("foot"), "{}", notice.body);
+        assert!(notice.body.contains("12345"), "{}", notice.body);
+        // The memory that is not short makes no banner.
+        assert!(
+            super::memory_notice(r#"{"pressure": false, "apps": []}"#).is_none(),
+            "there is no banner while the memory is there"
+        );
+        // And an answer that is not the hemat's says nothing.
+        assert!(super::memory_notice("unknown request hemat").is_none());
     }
 
     /// The surface draws the banners and the panel.
