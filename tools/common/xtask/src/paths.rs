@@ -108,11 +108,21 @@ impl std::fmt::Display for Arch {
     }
 }
 
-/// The workspace root, found from this crate's manifest directory.
+/// The workspace root, found from the working directory.
 pub(crate) fn workspace_root() -> PathBuf {
+    // The tree this run belongs to, found from where it was run: the cargo
+    // target directory is shared between worktrees, so a binary built in one
+    // of them must not point at another one's tree.
+    if let Ok(current) = std::env::current_dir() {
+        for dir in current.ancestors() {
+            if dir.join("Cargo.toml").is_file() && dir.join("src").join("kernel").is_dir() {
+                return dir.to_path_buf();
+            }
+        }
+    }
+    // Outside the tree: the one the binary was built in.
     // `CARGO_MANIFEST_DIR` is tools/common/xtask/, so the workspace is three
-    // levels up. Resolved at compile time, which means it is right even when
-    // xtask is run from somewhere else in the tree.
+    // levels up.
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(3)
@@ -545,6 +555,16 @@ mod tests {
             let (stem, extension) = name.split_once('.').unwrap();
             assert!(stem.len() <= 8 && extension.len() <= 3, "{name}");
         }
+    }
+
+    #[test]
+    fn the_workspace_root_is_the_tree_the_run_is_in() {
+        let current = std::env::current_dir().expect("a working directory");
+        let root = workspace_root();
+        assert!(
+            current.starts_with(&root),
+            "{current:?} is not in {root:?}"
+        );
     }
 
     #[test]
