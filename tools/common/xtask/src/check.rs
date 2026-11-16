@@ -2853,28 +2853,43 @@ fn kernel_clippy_every_build() -> Result<()> {
     let (lift_output, lift_result) = lint_one_setting(&lift_args, &lift_dir, &lifted);
     print!("{lift_output}");
     lift_result?;
-    let (results, off_result) = std::thread::scope(|scope| {
-        let running: Vec<_> = builds
+    let (results, off_result) = if lint_jobs() == 1 {
+        // One at a time: a host with little memory, where all the
+        // profiles at once is more than it has (`FERRIX_KERNEL_LINT_JOBS`).
+        let results = builds
             .iter()
             .zip(&lint_dirs)
-            .map(|((_, resolved), lint_dir)| {
-                let every_arch = &every_arch;
-                scope.spawn(move || lint_one_setting(every_arch, lint_dir, resolved))
-            })
+            .map(|((_, resolved), lint_dir)| lint_one_setting(&every_arch, lint_dir, resolved))
             .collect();
-        let off_running = scope.spawn(|| clippy_captured(&without, &cargo::flag_environment(&off)));
-        let lost = || {
-            (
-                String::new(),
-                Err(Error::new("a kernel clippy thread panicked")),
-            )
-        };
-        let results: Vec<_> = running
-            .into_iter()
-            .map(|handle| handle.join().unwrap_or_else(|_| lost()))
-            .collect();
-        (results, off_running.join().unwrap_or_else(|_| lost()))
-    });
+        (
+            results,
+            clippy_captured(&without, &cargo::flag_environment(&off)),
+        )
+    } else {
+        std::thread::scope(|scope| {
+            let running: Vec<_> = builds
+                .iter()
+                .zip(&lint_dirs)
+                .map(|((_, resolved), lint_dir)| {
+                    let every_arch = &every_arch;
+                    scope.spawn(move || lint_one_setting(every_arch, lint_dir, resolved))
+                })
+                .collect();
+            let off_running =
+                scope.spawn(|| clippy_captured(&without, &cargo::flag_environment(&off)));
+            let lost = || {
+                (
+                    String::new(),
+                    Err(Error::new("a kernel clippy thread panicked")),
+                )
+            };
+            let results: Vec<_> = running
+                .into_iter()
+                .map(|handle| handle.join().unwrap_or_else(|_| lost()))
+                .collect();
+            (results, off_running.join().unwrap_or_else(|_| lost()))
+        })
+    };
     let mut first_failure = None;
     for ((name, resolved), (said, result)) in builds.iter().zip(results) {
         println!("\n   -- {name}: {}", resolved.cfg_words());
@@ -2960,6 +2975,19 @@ fn lint_one_setting(
     let mut environment = cargo::flag_environment(resolved).to_vec();
     environment.push(("CARGO_INCREMENTAL", "0".to_owned()));
     clippy_captured(&arguments, &environment)
+}
+
+/// Set to how many of the kernel's lint profiles may run at once; all of
+/// them, as they always ran, when it is not set. One runs them one after
+/// another, for a host whose memory cannot hold them all at once.
+const LINT_JOBS: &str = "FERRIX_KERNEL_LINT_JOBS";
+
+/// [`LINT_JOBS`], or every profile at once.
+fn lint_jobs() -> usize {
+    match std::env::var(LINT_JOBS).ok().as_deref().map(str::trim) {
+        None | Some("") => usize::MAX,
+        Some(text) => text.parse().unwrap_or(1).max(1),
+    }
 }
 
 /// Where one of the kernel's flag settings is linted: a directory of its own
