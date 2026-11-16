@@ -1,5 +1,5 @@
 //! `service-enable-persistent` (B1, B6): init's `enable` or `disable` for a
-//! unit on [`ferrix_settings_proto::SWITCHABLE_UNITS`], asked over init's
+//! unit on [`xaqu_settings_proto::SWITCHABLE_UNITS`], asked over init's
 //! control socket as `svc` asks it, and with `now` its `start` or `stop`
 //! after. init makes the links and runs the unit; this asks.
 
@@ -7,8 +7,8 @@ use std::io::{Read as _, Write as _};
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 
-use ferrix_settings_proto::{Refusal, RefusalKind};
-use ferrix_svc_proto::control::{Answer, Call, Framer};
+use xaqu_settings_proto::{Refusal, RefusalKind};
+use xaqu_svc_proto::control::{Answer, Call, Framer};
 
 use super::{Action, Plan, System};
 

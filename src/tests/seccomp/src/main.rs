@@ -340,7 +340,7 @@ const GETSID: c_long = libc::SYS_getsid as c_long;
 const GETTID: c_long = libc::SYS_gettid as c_long;
 /// `write`.
 const WRITE: c_long = libc::SYS_write as c_long;
-/// `clone3`, which no libc here defines: 435 on every ABI Ferrix has.
+/// `clone3`, which no libc here defines: 435 on every ABI Xaqu has.
 const CLONE3: c_long = 435;
 
 /// **probes**.

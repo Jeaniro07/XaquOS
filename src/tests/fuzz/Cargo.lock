@@ -42,329 +42,329 @@ name = "compositor-wire"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-acpi"
+name = "xaqu-acpi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-argon2"
+name = "xaqu-argon2"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-blkring"
+name = "xaqu-blkring"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-block"
+name = "xaqu-block"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-btrfs"
+name = "xaqu-btrfs"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-cgroupfs"
+name = "xaqu-cgroupfs"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-cpio"
+name = "xaqu-cpio"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-display-modes"
+name = "xaqu-display-modes"
 version = "0.1.0"
 dependencies = [
- "ferrix-displayctl",
+ "xaqu-displayctl",
 ]
 
 [[package]]
-name = "ferrix-displayctl"
+name = "xaqu-displayctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-elf"
+name = "xaqu-elf"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-fallible"
+name = "xaqu-fallible"
 version = "0.1.0"
 dependencies = [
- "ferrix-sync",
+ "xaqu-sync",
 ]
 
 [[package]]
-name = "ferrix-fat"
+name = "xaqu-fat"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-fdt"
+name = "xaqu-fdt"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-frame"
+name = "xaqu-frame"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-fsproto"
+name = "xaqu-fsproto"
 version = "0.3.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-vfs",
+ "xaqu-linux-abi",
+ "xaqu-vfs",
 ]
 
 [[package]]
-name = "ferrix-fuzz"
+name = "xaqu-fuzz"
 version = "0.0.0"
 dependencies = [
  "compositor-config",
  "compositor-wire",
- "ferrix-acpi",
- "ferrix-argon2",
- "ferrix-auth-proto",
- "ferrix-blkring",
- "ferrix-block",
- "ferrix-btrfs",
- "ferrix-cgroupfs",
- "ferrix-cpio",
- "ferrix-display-modes",
- "ferrix-displayctl",
- "ferrix-elf",
- "ferrix-fat",
- "ferrix-fdt",
- "ferrix-frame",
- "ferrix-fsproto",
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-lz4",
- "ferrix-native-abi",
- "ferrix-net",
- "ferrix-netlink",
- "ferrix-netswitch",
- "ferrix-nettcp",
- "ferrix-netwire",
- "ferrix-objects",
- "ferrix-partition-desc",
- "ferrix-pci",
- "ferrix-renderctl",
- "ferrix-seccomp",
- "ferrix-sigverify",
- "ferrix-sndctl",
- "ferrix-svc",
- "ferrix-svc-proto",
- "ferrix-sync",
- "ferrix-sysfs",
- "ferrix-ustack",
- "ferrix-vfs",
- "ferrix-virtio",
- "ferrix-virtio-blk",
- "ferrix-virtio-gpu",
- "ferrix-virtio-input",
- "ferrix-virtio-net",
+ "xaqu-acpi",
+ "xaqu-argon2",
+ "xaqu-auth-proto",
+ "xaqu-blkring",
+ "xaqu-block",
+ "xaqu-btrfs",
+ "xaqu-cgroupfs",
+ "xaqu-cpio",
+ "xaqu-display-modes",
+ "xaqu-displayctl",
+ "xaqu-elf",
+ "xaqu-fat",
+ "xaqu-fdt",
+ "xaqu-frame",
+ "xaqu-fsproto",
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-lz4",
+ "xaqu-native-abi",
+ "xaqu-net",
+ "xaqu-netlink",
+ "xaqu-netswitch",
+ "xaqu-nettcp",
+ "xaqu-netwire",
+ "xaqu-objects",
+ "xaqu-partition-desc",
+ "xaqu-pci",
+ "xaqu-renderctl",
+ "xaqu-seccomp",
+ "xaqu-sigverify",
+ "xaqu-sndctl",
+ "xaqu-svc",
+ "xaqu-svc-proto",
+ "xaqu-sync",
+ "xaqu-sysfs",
+ "xaqu-ustack",
+ "xaqu-vfs",
+ "xaqu-virtio",
+ "xaqu-virtio-blk",
+ "xaqu-virtio-gpu",
+ "xaqu-virtio-input",
+ "xaqu-virtio-net",
  "libfuzzer-sys",
 ]
 
 [[package]]
-name = "ferrix-heap"
+name = "xaqu-heap"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-inputctl"
+name = "xaqu-inputctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-kmem"
+name = "xaqu-kmem"
 version = "0.1.0"
 dependencies = [
- "ferrix-heap",
- "ferrix-sync",
+ "xaqu-heap",
+ "xaqu-sync",
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-lz4"
+name = "xaqu-lz4"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-net"
+name = "xaqu-net"
 version = "0.1.0"
 dependencies = [
- "ferrix-kmem",
- "ferrix-nettcp",
- "ferrix-netwire",
+ "xaqu-kmem",
+ "xaqu-nettcp",
+ "xaqu-netwire",
 ]
 
 [[package]]
-name = "ferrix-netlink"
+name = "xaqu-netlink"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-netswitch"
+name = "xaqu-netswitch"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-nettcp"
+name = "xaqu-nettcp"
 version = "0.1.0"
 dependencies = [
- "ferrix-kmem",
- "ferrix-netwire",
+ "xaqu-kmem",
+ "xaqu-netwire",
 ]
 
 [[package]]
-name = "ferrix-netwire"
+name = "xaqu-netwire"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-objects"
+name = "xaqu-objects"
 version = "0.1.0"
 dependencies = [
- "ferrix-fallible",
- "ferrix-native-abi",
- "ferrix-sync",
+ "xaqu-fallible",
+ "xaqu-native-abi",
+ "xaqu-sync",
 ]
 
 [[package]]
-name = "ferrix-partition-desc"
+name = "xaqu-partition-desc"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-pci"
+name = "xaqu-pci"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-renderctl"
+name = "xaqu-renderctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-native-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-restart"
+name = "xaqu-restart"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-seccomp"
+name = "xaqu-seccomp"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-sha256"
+name = "xaqu-sha256"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-sigverify"
+name = "xaqu-sigverify"
 version = "0.1.0"
 dependencies = [
- "ferrix-sha256",
+ "xaqu-sha256",
 ]
 
 [[package]]
-name = "ferrix-sndctl"
+name = "xaqu-sndctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-svc"
+name = "xaqu-svc"
 version = "0.1.0"
 dependencies = [
- "ferrix-restart",
+ "xaqu-restart",
 ]
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-sync"
+name = "xaqu-sync"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-sysfs"
+name = "xaqu-sysfs"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-ustack"
+name = "xaqu-ustack"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-vfs"
+name = "xaqu-vfs"
 version = "0.1.0"
 dependencies = [
- "ferrix-cpio",
- "ferrix-fallible",
- "ferrix-kmem",
- "ferrix-linux-abi",
- "ferrix-sync",
+ "xaqu-cpio",
+ "xaqu-fallible",
+ "xaqu-kmem",
+ "xaqu-linux-abi",
+ "xaqu-sync",
 ]
 
 [[package]]
-name = "ferrix-virtio"
+name = "xaqu-virtio"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-virtio-blk"
+name = "xaqu-virtio-blk"
 version = "0.1.0"
 dependencies = [
- "ferrix-virtio",
+ "xaqu-virtio",
 ]
 
 [[package]]
-name = "ferrix-virtio-gpu"
+name = "xaqu-virtio-gpu"
 version = "0.1.0"
 dependencies = [
- "ferrix-displayctl",
- "ferrix-virtio",
+ "xaqu-displayctl",
+ "xaqu-virtio",
 ]
 
 [[package]]
-name = "ferrix-virtio-input"
+name = "xaqu-virtio-input"
 version = "0.1.0"
 dependencies = [
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-virtio",
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-virtio",
 ]
 
 [[package]]
-name = "ferrix-virtio-net"
+name = "xaqu-virtio-net"
 version = "0.1.0"
 dependencies = [
- "ferrix-virtio",
+ "xaqu-virtio",
 ]
 
 [[package]]

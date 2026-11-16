@@ -1,6 +1,6 @@
 # Security Target
 
-Common Criteria (ISO/IEC 15408) Security Target for the Ferrix certified item.
+Common Criteria (ISO/IEC 15408) Security Target for the Xaqu certified item.
 Claimed assurance level **EAL5 augmented with ALC_FLR.2**.
 
 This document closes finding F-21. It is a Security Target in structure and in
@@ -9,8 +9,8 @@ would not survive one.
 
 | | |
 |---|---|
-| ST title | Ferrix Kernel Core Security Target |
-| TOE | Ferrix certified item, as defined by `tools/common/data/certification-item.json` |
+| ST title | Xaqu Kernel Core Security Target |
+| TOE | Xaqu certified item, as defined by `tools/common/data/certification-item.json` |
 | TOE version | `48d58fb0`, reference configuration in the manifest |
 | CC version | 3.1 Revision 5 |
 | Assurance level | EAL5+ (ALC_FLR.2) |
@@ -36,13 +36,13 @@ tables), the scheduler, the capability object system (handles, channels, ports,
 jobs, interrupts, I/O mappings), the trap and system-call entry paths, the
 IOMMU drivers (VT-d, SMMUv3), SMP bring-up and TLB shootdown, firmware table
 parsing, device enumeration, and the panic path. Since 2026-10-02 it also
-comprises the btrfs reader and write path, the library crates `ferrix-btrfs`
-and `ferrix-btrfs-write`: from the `Device`
+comprises the btrfs reader and write path, the library crates `xaqu-btrfs`
+and `xaqu-btrfs-write`: from the `Device`
 and `WriteDevice` traits the kernel's block layer answers, up to `Volume` and
 `WriteVolume`.
 
 **Outside the TOE**, running on it without being trusted by it: the VFS, the
-btrfs glue on it (`ferrix-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`: the
+btrfs glue on it (`xaqu-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`: the
 page cache, the commit interval, what `fsync` commits), procfs, sysfs and
 tmpfs; the TCP/IP stack; the Linux system-call personality,
 from its dispatcher to its `mmap`, `futex`, rlimits and POSIX threads; the
@@ -131,14 +131,14 @@ driver answering the TOE's reads with bytes of its choosing.
 | T.EXHAUST | A process consumes memory, CPU or object-table capacity so as to deny service to others. |
 | T.CONFUSE | A process induces the TOE to act on a user-supplied pointer or length without validation. |
 | T.MEDIA | A volume crafted or damaged by whoever wrote the medium, or bytes a ring-3 block driver returns, induce the TOE's btrfs code to read or write outside its buffers, panic, loop without bound, or return damaged data as valid. |
-| T.CLIENT | Under `fs=server`, a Linux partition's `linuxd` sends `btrfsd` requests crafted to read or write outside the volume its channel names, or another partition's. Mapped when `fs=server` enters a claim (M7): bounded and hostile-read by `ferrix-fsproto`, one volume per channel. |
+| T.CLIENT | Under `fs=server`, a Linux partition's `linuxd` sends `btrfsd` requests crafted to read or write outside the volume its channel names, or another partition's. Mapped when `fs=server` enters a claim (M7): bounded and hostile-read by `xaqu-fsproto`, one volume per channel. |
 
 ### 3.3 Assumptions
 
 | Id | Assumption |
 |---|---|
 | A.PHYSICAL | The platform is physically protected. No defence is claimed against an attacker with bus access, cold-boot or fault injection. |
-| A.FIRMWARE | UEFI, TF-A and the loader behave as specified and deliver an unmodified TOE image: the kernel and its initramfs, which carries pid 1's program (VULNERABILITY-ANALYSIS V-12), and on the Pixel 7 ABL and Ferrix's own loader, which carries both. The TOE performs no secure or measured boot (§9.2), and no Android Verified Boot claim is made. On a disk with A/B system slots (`docs/AB-BOOT.md`) the UEFI loader delivers the image of the slot its boot control record selects -- the trial slot only after the record with one try fewer is written and read back, otherwise the good slot -- verified against that slot header's SHA-256 digests, and else the ESP's `FERRIX/` files as the rescue path; it says which path it took, and writes nothing but one block of the control record. Unless its command line says `ferrix.pstore=off`, the UEFI loader also takes one region of RAM at an address it derives from the memory map the same way each boot, reports on its console what a previous kernel left there (a valid header's count, and its last panic or last line, as unchecked text), writes a fresh header and hands the region to the kernel, which mirrors its log into it (`docs/POSTMORTEM.md` §3); RAM is the only thing it writes for this, except that on a boot disk with an event-log partition (GPT type `0a0323e0-d79d-498d-a4d6-dbea6af3bab0`, exactly one) it first appends a previous record that holds a panic report to that partition, writing nothing but blocks inside it, and renews the region only once the append is durable (`docs/POSTMORTEM.md` §4, EL1-EL4); and when it finds a previous kernel's log it keeps it on its own volume, through firmware's FAT, as `FERRIX/LASTKERNEL.TXT` -- its report lines and then the whole text -- moving the file there before to `FERRIX/LASTKERNEL.PRV`, the only files it writes (`docs/POSTMORTEM.md` §3.5); on a volume firmware will not write, as iPXE's, the attempt fails, is said, and writes nothing. When iPXE started it and its volume (iPXE's read-only file system) holds a report URL, `FERRIX/REPORT.TXT`, the loader also sends its own boot log in clear to that URL through iPXE's download protocol before it leaves firmware (`docs/NETBOOT.md` §6), a development path outside the reference configuration; it still writes nothing but the control record's block. Who writes a slot is root, through the raw device, who can already overwrite the ESP: a slot is verified only against its own header, which detects a torn or misdirected write and makes no authenticity claim (SAFETY-MANUAL AoU-29). Since slice S4 of `docs/SIGNING.md` the loader also verifies a header-version-2 slot's signed manifest against the anchors compiled into it, and refuses it on any refusal whatever the profile; but every profile buildable today has `slot_signing = "off"`, so a header-version-1 slot still boots unsigned, `present` included, and this is a residual: no authenticity claim is made for slots until `slot_signing = "required"` (S6, `docs/SIGNING.md` §10.6). |
+| A.FIRMWARE | UEFI, TF-A and the loader behave as specified and deliver an unmodified TOE image: the kernel and its initramfs, which carries pid 1's program (VULNERABILITY-ANALYSIS V-12), and on the Pixel 7 ABL and Xaqu's own loader, which carries both. The TOE performs no secure or measured boot (§9.2), and no Android Verified Boot claim is made. On a disk with A/B system slots (`docs/AB-BOOT.md`) the UEFI loader delivers the image of the slot its boot control record selects -- the trial slot only after the record with one try fewer is written and read back, otherwise the good slot -- verified against that slot header's SHA-256 digests, and else the ESP's `XAQU/` files as the rescue path; it says which path it took, and writes nothing but one block of the control record. Unless its command line says `xaqu.pstore=off`, the UEFI loader also takes one region of RAM at an address it derives from the memory map the same way each boot, reports on its console what a previous kernel left there (a valid header's count, and its last panic or last line, as unchecked text), writes a fresh header and hands the region to the kernel, which mirrors its log into it (`docs/POSTMORTEM.md` §3); RAM is the only thing it writes for this, except that on a boot disk with an event-log partition (GPT type `0a0323e0-d79d-498d-a4d6-dbea6af3bab0`, exactly one) it first appends a previous record that holds a panic report to that partition, writing nothing but blocks inside it, and renews the region only once the append is durable (`docs/POSTMORTEM.md` §4, EL1-EL4); and when it finds a previous kernel's log it keeps it on its own volume, through firmware's FAT, as `XAQU/LASTKERNEL.TXT` -- its report lines and then the whole text -- moving the file there before to `XAQU/LASTKERNEL.PRV`, the only files it writes (`docs/POSTMORTEM.md` §3.5); on a volume firmware will not write, as iPXE's, the attempt fails, is said, and writes nothing. When iPXE started it and its volume (iPXE's read-only file system) holds a report URL, `XAQU/REPORT.TXT`, the loader also sends its own boot log in clear to that URL through iPXE's download protocol before it leaves firmware (`docs/NETBOOT.md` §6), a development path outside the reference configuration; it still writes nothing but the control record's block. Who writes a slot is root, through the raw device, who can already overwrite the ESP: a slot is verified only against its own header, which detects a torn or misdirected write and makes no authenticity claim (SAFETY-MANUAL AoU-29). Since slice S4 of `docs/SIGNING.md` the loader also verifies a header-version-2 slot's signed manifest against the anchors compiled into it, and refuses it on any refusal whatever the profile; but every profile buildable today has `slot_signing = "off"`, so a header-version-1 slot still boots unsigned, `present` included, and this is a residual: no authenticity claim is made for slots until `slot_signing = "required"` (S6, `docs/SIGNING.md` §10.6). |
 | A.ADMIN | Whoever composes the system image and selects which drivers run is trusted to do so competently. |
 | A.HARDWARE | The MMU, IOMMU and interrupt controller behave as their specifications state. |
 | A.STORAGE | The storage device under the TOE's `WriteDevice` keeps its flush and FUA promises: every write that returned before a flush is durable when the flush returns ([SAFETY-MANUAL.md](SAFETY-MANUAL.md) AoU-16). |
@@ -383,10 +383,10 @@ claim.
 audit record of the following auditable events: a) start-up of the audit
 functions -- **the start-up record, and, as the last record before a power
 action, the power action**; b) **the TOE's configuration at start-up:
-`ferrix.checks`, `ferrix.devmgr`, the mitigations, `ipc_fastpath` from
+`xaqu.checks`, `xaqu.devmgr`, the mitigations, `ipc_fastpath` from
 `Config::Build`, KASLR, whether the
-kernel log is kept across a reset (`ferrix.pstore`) and
-`ferrix.efifb`, and the build
+kernel log is kept across a reset (`xaqu.pstore`) and
+`xaqu.efifb`, and the build
 flags the kernel was compiled with**; c) **a
 native call its handle's rights refused, a widening of rights refused, a
 charge a job's limit refused, a native process made, a job handle given for
@@ -480,8 +480,8 @@ How the TOE meets each objective, with the evidence that exists today.
 | O.QUOTA | A quota slot per job in `src/kernel/src/object/quota.rs`, charged hierarchically at every task, frame and native object a job's programs make and uncharged wherever each goes (the frame record keeps its slot); the kernel heap the Linux personality holds for its programs charged as memory, in bytes, by a `src/lib/kernel/kmem` token kept in each object (F-37); a per-job weight applied to each task's in `sched`. Set by `job_set_limit` or cgroupfs. What is bounded otherwise is in §9.7. | `object/quota_check.rs`, every boot: *"a fork loop refused at its job's 8 tasks; faults refused at 47 pages (3 of them page tables, beside 512 bytes of its regions' heap) while a sibling job faulted in 48; objects refused at 5; one task alone in its job kept 50.0% of a processor against eight in another; every counter back to zero and every quota slot given back"*; `fs/kmem_check.rs`, every boot: *"at a 32 KiB memory limit a job made 34 files, 14 pipes, 5 socket pairs, 70 descriptors in flight, 128 epoll registrations, 31 eventfds, 255 regions of one mapping and 454 record locks, and was refused one more of each -- ENOMEM, ENOLCK for a lock -- while a sibling made one; every byte of heap charged came back"* (x86-64, 2026-09-26); eight negative controls (W-13, W-15) |
 | O.VALIDATE | `src/kernel/src/syscall/uaccess.rs`, backed on x86-64 by SMEP and SMAP since 2026-09-25, and on AArch64 by PAN where the CPU has it. The reference `cortex-a72` does not, and ARMv7-A cannot (V-01). | `syscall/check.rs`, 9,537 lines, 427 refusal assertions; the boot reports *SMEP on, SMAP on* |
 | O.FAILSAFE | `src/kernel/src/panic.rs` with a catalogue of explanations. | `tools/common/check/check-panic-audit.py`; `gen-panic-catalog.py --check` |
-| O.MEDIA | `src/lib/fs/btrfs/format` (`ferrix-btrfs`): `forbid(unsafe_code)`, every field read through `slice::get` and checked length arithmetic, a node or data sector read from the first copy that passes its checksum and its parent's expectations; `src/lib/fs/btrfs/write`, which edits only nodes the reader has parsed and checked. | host tests naming `H.STORE.1`, `H.STORE.2` and the reader's `L.btrfs.*` (part 24's Superblocks to DataSectors packages; TRACEABILITY.md); the `btrfs_read` fuzz target over resealed real images; stage 11's and 12's boot checks |
-| O.AUDIT | `src/kernel/src/audit.rs`, in the core ring: two rings of static storage under leaf `IrqSpinLock`s, fairness per budget, the boot's own records pinned; a record at each decision's site; `Object::Audit` and `audit_read`, the handle only pid 1 holds; init keeping the records in `/var/log/audit/<id>.bin` ([AUDIT.md](AUDIT.md)). | `audit/check.rs`, every boot: the store on stores of its own and the kernel's, and at the end of boot *"13 kinds of decision the boot's checks made are recorded, each with its outcome and the subject that decided it"* (x86-64, 2026-09-27), with a negative control for every recording site; `syscall/native_check.rs`: the handle reads, refuses without `READ` and cannot be sent; `test-init`: the record read back from the volume, the power-off's number, and a `ferrix.checks=skip` boot's record read from outside; `H.AUD.1` to `H.AUD.13` |
+| O.MEDIA | `src/lib/fs/btrfs/format` (`xaqu-btrfs`): `forbid(unsafe_code)`, every field read through `slice::get` and checked length arithmetic, a node or data sector read from the first copy that passes its checksum and its parent's expectations; `src/lib/fs/btrfs/write`, which edits only nodes the reader has parsed and checked. | host tests naming `H.STORE.1`, `H.STORE.2` and the reader's `L.btrfs.*` (part 24's Superblocks to DataSectors packages; TRACEABILITY.md); the `btrfs_read` fuzz target over resealed real images; stage 11's and 12's boot checks |
+| O.AUDIT | `src/kernel/src/audit.rs`, in the core ring: two rings of static storage under leaf `IrqSpinLock`s, fairness per budget, the boot's own records pinned; a record at each decision's site; `Object::Audit` and `audit_read`, the handle only pid 1 holds; init keeping the records in `/var/log/audit/<id>.bin` ([AUDIT.md](AUDIT.md)). | `audit/check.rs`, every boot: the store on stores of its own and the kernel's, and at the end of boot *"13 kinds of decision the boot's checks made are recorded, each with its outcome and the subject that decided it"* (x86-64, 2026-09-27), with a negative control for every recording site; `syscall/native_check.rs`: the handle reads, refuses without `READ` and cannot be sent; `test-init`: the record read back from the volume, the power-off's number, and a `xaqu.checks=skip` boot's record read from outside; `H.AUD.1` to `H.AUD.13` |
 
 ---
 
@@ -617,7 +617,7 @@ centralised; on Arm it still has no hardware defence in depth.
 
 ### 9.4 The design evidence does not yet reach the TOE's modules
 `ADV_TDS.3` needs a semiformal design decomposing the TSF into subsystems and
-modules. `docs/sysml/` is the right notation and describes Ferrix rather than
+modules. `docs/sysml/` is the right notation and describes Xaqu rather than
 the TOE, at system granularity (F-15).
 
 ### 9.5 The TSF randomises its layout but neither hides nor partitions

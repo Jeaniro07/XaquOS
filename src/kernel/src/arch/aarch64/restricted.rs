@@ -5,12 +5,12 @@
 //! frame to rewrite. `TTBR0_EL1` holds the restricted space alone in restricted
 //! mode and the normal root in normal mode; the kernel stays in `TTBR1_EL1`.
 
-use ferrix_bootinfo::is_user_address;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::restricted::{CONTEXT_BYTES, Context, FaultKind, Reason, SHARED_BASE};
-use ferrix_native_abi::restricted::{ENTER_ALL_CALLS_EXIT, ENTER_COPY_MISS_EXITS, may_continue};
-use ferrix_native_abi::status;
+use xaqu_bootinfo::is_user_address;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::restricted::{CONTEXT_BYTES, Context, FaultKind, Reason, SHARED_BASE};
+use xaqu_native_abi::restricted::{ENTER_ALL_CALLS_EXIT, ENTER_COPY_MISS_EXITS, may_continue};
+use xaqu_native_abi::status;
 
 use super::switch::UserState;
 use super::trap::TrapFrame;
@@ -433,7 +433,7 @@ pub fn context_bytes() -> Result<[u8; CONTEXT_BYTES], Errno> {
 /// # Errors
 ///
 /// `BAD_STATE` with no context held.
-pub fn vector_bytes() -> Result<[u8; ferrix_native_abi::restricted::VECTORS_BYTES], Errno> {
+pub fn vector_bytes() -> Result<[u8; xaqu_native_abi::restricted::VECTORS_BYTES], Errno> {
     let state = own_state()?;
     if !state.held {
         return Err(status::BAD_STATE);
@@ -447,7 +447,7 @@ pub fn vector_bytes() -> Result<[u8; ferrix_native_abi::restricted::VECTORS_BYTE
 ///
 /// `INVALID_ARGS` for reserved bits in `FPCR` or `FPSR`; `NO_MEMORY`.
 pub fn set_vector_bytes(
-    image: &[u8; ferrix_native_abi::restricted::VECTORS_BYTES],
+    image: &[u8; xaqu_native_abi::restricted::VECTORS_BYTES],
 ) -> Result<(), Errno> {
     let state = own_state()?;
     state
@@ -472,7 +472,7 @@ pub(super) fn on_system_call(frame: &mut TrapFrame) -> Option<Result<(), &'stati
 }
 
 /// The Linux call `number` names, for a thread that has a personality to answer.
-pub(super) fn decoded_unless_bare(number: usize) -> Option<ferrix_linux_abi::nr::Syscall> {
+pub(super) fn decoded_unless_bare(number: usize) -> Option<xaqu_linux_abi::nr::Syscall> {
     if sched::running_bare() {
         return None;
     }

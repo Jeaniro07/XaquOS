@@ -8,7 +8,7 @@
 //! conversions either side of them. At 30 fps behind a wallpaper that moves,
 //! that was on the order of a thousand threads started and ended a second.
 //!
-//! What a thread costs is not only the starting. Ferrix frees an exited
+//! What a thread costs is not only the starting. Xaqu frees an exited
 //! task's kernel stack by invalidating the address on every processor and
 //! waiting for each to answer, so a program whose threads are short-lived
 //! interrupts every *other* program on the machine, and the desktop stuttered

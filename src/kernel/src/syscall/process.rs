@@ -52,14 +52,14 @@ use core::sync::atomic::{AtomicBool, AtomicI32, AtomicU32, Ordering};
 
 use crate::fallible::{self, AllocError};
 use crate::sync::SpinLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::signals::Signals as ObjectSignals;
-use ferrix_sync::{SleepLock, SleepLockGuard};
-use ferrix_vfs::fd::FdTable;
-use ferrix_vfs::writers::{DenyWrite, deny_write_access};
-use ferrix_vfs::{Context, Location, OpenFile};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::signals::Signals as ObjectSignals;
+use xaqu_sync::{SleepLock, SleepLockGuard};
+use xaqu_vfs::fd::FdTable;
+use xaqu_vfs::writers::{DenyWrite, deny_write_access};
+use xaqu_vfs::{Context, Location, OpenFile};
+use xaqu_vma::VmaFlags;
 
 use crate::fs;
 use crate::fs::console::Reading;
@@ -76,7 +76,7 @@ use crate::syscall::signal::{Origin, Posted, Signals};
 use crate::syscall::thread::{self, Thread};
 use crate::syscall::{attributes, futex, kill, sem, timens, uaccess};
 use crate::user::space::{AddressSpace, MMAP_MIN_ADDR, SpaceError};
-use ferrix_linux_abi::types::SIGCHLD;
+use xaqu_linux_abi::types::SIGCHLD;
 
 /// A program, as far as the system call layer is concerned.
 #[derive(Debug)]
@@ -246,7 +246,7 @@ pub struct Process {
     /// How many of its threads are parked by `cgroup.freeze`, waiting on
     /// their way back to user mode (`docs/CGROUPS.md` §11).
     parked: AtomicU32,
-    /// The fault signal it is held for while `/dev/ferrix-crashes` reads
+    /// The fault signal it is held for while `/dev/xaqu-crashes` reads
     /// it, or zero (`fs::crashes`): a third park, and the status every end
     /// takes while it is set.
     held: AtomicU32,
@@ -350,7 +350,7 @@ struct Identity {
     /// `/proc/<pid>/exe` leads, as a magic link, whatever became of the path.
     exe_at: Option<Location>,
     /// Its word that nobody may write that file while it runs (`ETXTBSY`,
-    /// `ferrix_vfs::writers`): Linux's denial held by `mm->exe_file`. Taken
+    /// `xaqu_vfs::writers`): Linux's denial held by `mm->exe_file`. Taken
     /// again by a fork child's copy, and given back at the next `execve` and
     /// when the process is released, not when it is reaped.
     exe_denied: Option<DenyWrite>,
@@ -1080,14 +1080,14 @@ fn round_up(at: u64) -> Option<u64> {
 }
 
 /// What a change of `$process`'s parent owes a thread armed on the old answer (ledger 6998, X6).
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 macro_rules! drop_arms_of {
     ($process:expr) => {
         $process.drop_arms()
     };
 }
 /// See the other: no window in the build, nothing owed.
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 macro_rules! drop_arms_of {
     ($process:expr) => {};
 }
@@ -2011,7 +2011,7 @@ impl Process {
         self.is_stopped() || self.core().is_frozen() || self.is_held()
     }
 
-    /// Whether a fault of it is held for `/dev/ferrix-crashes`: a park
+    /// Whether a fault of it is held for `/dev/xaqu-crashes`: a park
     /// `SIGCONT` and a thaw do not undo, no parent is told of, and every
     /// end releases (`fs::crashes`).
     #[inline(always)]
@@ -2146,7 +2146,7 @@ impl Process {
             self,
             SIGCHLD,
             kill::CLD_CONTINUED,
-            ferrix_linux_abi::types::SIGCONT as i32,
+            xaqu_linux_abi::types::SIGCONT as i32,
         );
     }
 
@@ -2181,7 +2181,7 @@ impl Process {
     }
 
     /// Bring every thread out of a run of stubs, its change already written (ledger 6998, X6).
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     pub(crate) fn drop_arms(&self) {
         self.core().drop_arms();
     }
@@ -2201,14 +2201,14 @@ impl Process {
     }
 
     /// What [`Process::parent_pid_kept`] kept, `u32::MAX` for none.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     #[inline(always)]
     pub(crate) fn parent_view(&self) -> u32 {
         self.parent_view.load(Ordering::Acquire)
     }
 
     /// Nothing about it asks a thread to stop on its way back, without a branch.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     #[inline(always)]
     pub(crate) fn quiet_for(&self, thread: &Thread) -> bool {
         let replacing = self.exec_thread.load(Ordering::Acquire);

@@ -198,22 +198,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-lode-core"
+name = "xaqu-lode-core"
 version = "0.3.0"
 dependencies = [
- "ferrix-slots",
+ "xaqu-slots",
  "ruzstd",
 ]
 
 [[package]]
-name = "ferrix-sha256"
+name = "xaqu-sha256"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-slots"
+name = "xaqu-slots"
 version = "0.3.0"
 dependencies = [
- "ferrix-sha256",
+ "xaqu-sha256",
 ]
 
 [[package]]
@@ -279,7 +279,7 @@ version = "0.1.0"
 dependencies = [
  "chacha20poly1305",
  "ed25519-dalek",
- "ferrix-lode-core",
+ "xaqu-lode-core",
  "hmac",
  "libc",
  "rcgen",

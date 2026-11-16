@@ -6,10 +6,10 @@
 //! * [`slot`]: a slot's header and its three blobs, and when a slot
 //!   verifies (§2).
 //! * [`gpt`]: finding the control partition and the two slots in a GUID
-//!   partition table by their Ferrix type GUIDs.
+//!   partition table by their Xaqu type GUIDs.
 //! * [`plan`]: what the loader tries, in which order, and the command-line
 //!   words it puts first (§4).
-//! * [`crc`]: the CRCs the formats use; [`sha256`] is `ferrix-sha256`,
+//! * [`crc`]: the CRCs the formats use; [`sha256`] is `xaqu-sha256`,
 //!   the one SHA-256 of the item (`docs/SIGNING.md` §5.3).
 //!
 //! Pure functions of bytes, with no allocation and no `unsafe`, so the
@@ -26,7 +26,7 @@ pub mod record;
 pub mod slot;
 
 /// The SHA-256 the slot header uses, re-exported so its callers keep one path.
-pub use ferrix_sha256 as sha256;
+pub use xaqu_sha256 as sha256;
 
 #[cfg(test)]
 mod tests;
@@ -81,7 +81,7 @@ impl Slot {
         }
     }
 
-    /// The slot `ferrix.slot=` names.
+    /// The slot `xaqu.slot=` names.
     #[must_use]
     pub fn from_letter(letter: &str) -> Option<Slot> {
         match letter {

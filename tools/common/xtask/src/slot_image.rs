@@ -3,15 +3,15 @@
 //! and the loader boots.
 //!
 //! `cargo xtask slot-image` is `build` that also writes
-//! `build/<arch>/ferrix-slot.img` beside `ferrix.img`, from the same bytes:
-//! so "rebuild Ferrix inside Ferrix" is `cargo xtask slot-image` and then
-//! `bootctl try build/x86_64/ferrix-slot.img` (`bootctl` takes
-//! `ferrix.img` itself too).
+//! `build/<arch>/xaqu-slot.img` beside `xaqu.img`, from the same bytes:
+//! so "rebuild Xaqu inside Xaqu" is `cargo xtask slot-image` and then
+//! `bootctl try build/x86_64/xaqu-slot.img` (`bootctl` takes
+//! `xaqu.img` itself too).
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU16, Ordering};
 
-use ferrix_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1, VERSION_2};
+use xaqu_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1, VERSION_2};
 
 use crate::paths::{self, Arch};
 use crate::task::Task;
@@ -29,7 +29,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "slot-image",
         help_at: 20,
         help: &[
-            "slot-image    build, and also write build/<arch>/ferrix-slot.img: the image's kernel, initramfs and command line",
+            "slot-image    build, and also write build/<arch>/xaqu-slot.img: the image's kernel, initramfs and command line",
             "              as a system slot, for `bootctl try` (docs/AB-BOOT.md)",
         ],
         run: build,
@@ -39,7 +39,7 @@ pub(crate) const TASKS: &[Task] = &[
         help_at: 21,
         help: &[
             "signed-slot-image  slot-image as header version 2 (docs/SIGNING.md §1.3), its manifest block left",
-            "              for the signer, and build/<arch>/ferrix-slot.payload, the 4064 bytes it signs",
+            "              for the signer, and build/<arch>/xaqu-slot.payload, the 4064 bytes it signs",
         ],
         run: build,
     },
@@ -61,7 +61,7 @@ pub(crate) fn build(command: &str, args: &crate::args::Args) -> Result<()> {
     super::build(args)
 }
 
-/// Write the slot image for `arch` beside its `ferrix.img` when
+/// Write the slot image for `arch` beside its `xaqu.img` when
 /// `slot-image` or `signed-slot-image` asked for one ([`build`]); the command line is `cmdline`'s words then
 /// `defaults`', as the loader joins the two files.
 pub(crate) fn write_if_wanted(
@@ -80,7 +80,7 @@ pub(crate) fn write_if_wanted(
         .flatten()
         .flat_map(str::split_whitespace)
         .collect();
-    let path = paths::build_dir(arch).join("ferrix-slot.img");
+    let path = paths::build_dir(arch).join("xaqu-slot.img");
     let header = write(
         &path,
         version,
@@ -92,7 +92,7 @@ pub(crate) fn write_if_wanted(
     if version == VERSION_2 {
         // What a slot manifest signs: header bytes 0..4064, the seal's
         // input (docs/SIGNING.md §1.2), for the signer's --payload.
-        let payload = paths::build_dir(arch).join("ferrix-slot.payload");
+        let payload = paths::build_dir(arch).join("xaqu-slot.payload");
         let encoded = header.encode();
         std::fs::write(&payload, encoded.get(..HEADER_LEN - 32).unwrap_or_default())
             .map_err(|error| Error::new(format!("{}: {error}", payload.display())))?;
@@ -140,7 +140,7 @@ pub(crate) fn write(
     Ok(header)
 }
 
-/// `ferrix <arch> <commit>`, or without the commit outside a checkout.
+/// `xaqu <arch> <commit>`, or without the commit outside a checkout.
 fn label(arch: Arch) -> String {
     let commit = std::process::Command::new("git")
         .args(["rev-parse", "--short=9", "HEAD"])
@@ -150,7 +150,7 @@ fn label(arch: Arch) -> String {
         .filter(|out| out.status.success())
         .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_owned())
         .unwrap_or_default();
-    format!("ferrix {} {commit}", arch.name()).trim().to_owned()
+    format!("xaqu {} {commit}", arch.name()).trim().to_owned()
 }
 
 /// The soft signer's slot key and its anchor (`docs/SIGNING.md` §6.4).
@@ -160,7 +160,7 @@ const DEV_SLOT_ANCHOR: &str = "32768";
 
 /// A version-2 image of these blobs, signed for `arch`'s generic family by the soft signer:
 /// what a profile with `slot_signing = "required"` boots at level none, as the ESP's
-/// `FERRIX/RESCUE.SLT` (ledger 7011 LV.2). One leaf of the development key an image; a host
+/// `XAQU/RESCUE.SLT` (ledger 7011 LV.2). One leaf of the development key an image; a host
 /// without the key's state refuses by name, and no option goes round it.
 ///
 /// # Errors
@@ -184,12 +184,12 @@ pub(crate) fn signed_for_profile(
     };
     let dir = paths::build_dir(arch);
     std::fs::create_dir_all(&dir)?;
-    let path = dir.join("ferrix-profile-slot.img");
+    let path = dir.join("xaqu-profile-slot.img");
     let header = write(&path, VERSION_2, &label(arch), kernel, initramfs, words)?;
-    let payload = dir.join("ferrix-profile-slot.payload");
+    let payload = dir.join("xaqu-profile-slot.payload");
     let encoded = header.encode();
     std::fs::write(&payload, encoded.get(..HEADER_LEN - 32).unwrap_or_default())?;
-    let manifest = dir.join("ferrix-profile-slot.manifest");
+    let manifest = dir.join("xaqu-profile-slot.manifest");
     let status = std::process::Command::new(crate::cargo::cargo())
         .current_dir(paths::workspace_root())
         .args([
@@ -197,7 +197,7 @@ pub(crate) fn signed_for_profile(
             "-q",
             "--release",
             "-p",
-            "ferrix-softsign",
+            "xaqu-softsign",
             "--",
             "sign",
             DEV_SLOT_KEY,
@@ -245,23 +245,23 @@ mod tests {
         let _ = write(
             &path,
             VERSION_1,
-            "ferrix test",
+            "xaqu test",
             &[1; 5000],
             &[2; 9000],
-            b"ferrix.root=btrfs",
+            b"xaqu.root=btrfs",
         )
         .unwrap();
         let bytes = std::fs::read(&path).unwrap();
         let header = SlotHeader::decode(&bytes, bytes.len() as u64).unwrap();
         let cmdline = header.cmdline;
         let at = usize::try_from(cmdline.offset).unwrap();
-        assert_eq!(&bytes[at..at + 17], b"ferrix.root=btrfs");
-        assert_eq!(header.label_text(), "ferrix test");
+        assert_eq!(&bytes[at..at + 17], b"xaqu.root=btrfs");
+        assert_eq!(header.label_text(), "xaqu test");
         // Version 2: the blobs after the manifest block, which stays zero.
         let signed = write(
             &path,
             VERSION_2,
-            "ferrix test",
+            "xaqu test",
             &[1; 5000],
             &[2; 9000],
             b"x",

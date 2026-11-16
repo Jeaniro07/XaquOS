@@ -1,12 +1,12 @@
 /*
- * Ferrix — SysML v2 model, part 12: views.
+ * Xaqu — SysML v2 model, part 12: views.
  *
  * How to read the one model as two: what runs today, and what the roadmap
  * still owes. The filters key on the lifecycle keywords every element
  * carries.
  */
-package FerrixViews {
-    private import FerrixLifecycle::*;
+package XaquViews {
+    private import XaquLifecycle::*;
 
     viewpoint def MaintainerViewpoint {
         doc /* Someone changing src/kernel/ or src/lib/ who wants to see the parts
@@ -27,24 +27,24 @@ package FerrixViews {
              * done, and parts of dynamic linking and stages 15 and 19 run.
              * Stages 0 to 12 are in the boot test on all three
              * architectures. */
-        expose FerrixStructure::**;
-        expose FerrixBoot::**;
-        expose FerrixMemory::**;
-        expose FerrixScheduling::**;
-        expose FerrixObjects::**;
-        expose FerrixIsolation::**;
-        expose FerrixDrivers::**;
-        expose FerrixStorage::**;
-        expose FerrixAssurance::**;
+        expose XaquStructure::**;
+        expose XaquBoot::**;
+        expose XaquMemory::**;
+        expose XaquScheduling::**;
+        expose XaquObjects::**;
+        expose XaquIsolation::**;
+        expose XaquDrivers::**;
+        expose XaquStorage::**;
+        expose XaquAssurance::**;
         filter @implemented;
     }
 
     view writtenAhead : TreeView {
         doc /* Crates and types that exist and are host-tested but that
              * nothing running calls yet. */
-        expose FerrixStructure::Workspace::**;
-        expose FerrixStorage::**;
-        expose FerrixScheduling::**;
+        expose XaquStructure::Workspace::**;
+        expose XaquStorage::**;
+        expose XaquScheduling::**;
         filter @writtenAhead;
     }
 
@@ -52,28 +52,28 @@ package FerrixViews {
         doc /* What the roadmap still owes: stage 13's isolation, stage 14's
              * real-time domains, stage 15's init, and the pieces finished
              * stages name as not yet built. */
-        expose FerrixStructure::**;
-        expose FerrixMemory::**;
-        expose FerrixScheduling::**;
-        expose FerrixObjects::**;
-        expose FerrixIsolation::**;
-        expose FerrixDrivers::**;
-        expose FerrixStorage::**;
-        expose FerrixAssurance::**;
+        expose XaquStructure::**;
+        expose XaquMemory::**;
+        expose XaquScheduling::**;
+        expose XaquObjects::**;
+        expose XaquIsolation::**;
+        expose XaquDrivers::**;
+        expose XaquStorage::**;
+        expose XaquAssurance::**;
         filter @planned;
     }
 
     view deferredWork : TreeView {
         doc /* What finished stages explicitly left behind, with reasons. */
-        expose FerrixStructure::**;
-        expose FerrixMemory::**;
-        expose FerrixScheduling::**;
-        expose FerrixRoadmap::**;
+        expose XaquStructure::**;
+        expose XaquMemory::**;
+        expose XaquScheduling::**;
+        expose XaquRoadmap::**;
         filter @deferred;
     }
 
     view roadmap : TreeView {
-        expose FerrixRoadmap::**;
-        expose FerrixRequirements::**;
+        expose XaquRoadmap::**;
+        expose XaquRequirements::**;
     }
 }

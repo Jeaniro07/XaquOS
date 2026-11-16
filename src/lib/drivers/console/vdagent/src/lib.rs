@@ -44,7 +44,7 @@
 //! # Example
 //!
 //! ```
-//! use ferrix_vdagent::message::{ClipboardType, Message, Selection, Shape};
+//! use xaqu_vdagent::message::{ClipboardType, Message, Selection, Shape};
 //!
 //! // The shape QEMU's `qemu-vdagent` with `clipboard=on` agrees to.
 //! let shape = Shape::QEMU_CLIPBOARD;
@@ -60,7 +60,7 @@
 //!     Message::decode(&out[..written], shape)?,
 //!     Message::ClipboardRequest { selection: Selection::Clipboard, .. }
 //! ));
-//! # Ok::<(), ferrix_vdagent::Error>(())
+//! # Ok::<(), xaqu_vdagent::Error>(())
 //! ```
 
 #![no_std]

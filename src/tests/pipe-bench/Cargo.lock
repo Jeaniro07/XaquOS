@@ -3,22 +3,22 @@
 version = 4
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-native"
+name = "xaqu-native"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -31,6 +31,6 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 name = "pipe-bench-test"
 version = "0.1.0"
 dependencies = [
- "ferrix-native",
+ "xaqu-native",
  "libc",
 ]

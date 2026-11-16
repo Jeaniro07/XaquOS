@@ -9,10 +9,10 @@
 #                                       Unity quality level 0; backup first
 #   sh ef-settings.sh restore FILE      put a backup of user.reg back
 #
-# Env: WINEPREFIX (default: the first that exists of ferrix's Proton prefix
-# /home/ferrix/cd-dwp/pfx and ~ferrix's and ~root's gryphlink prefix),
+# Env: WINEPREFIX (default: the first that exists of xaqu's Proton prefix
+# /home/xaqu/cd-dwp/pfx and ~xaqu's and ~root's gryphlink prefix),
 # PROTON (default /data/dwproton, else /data/proton),
-# OUT (default /home/ferrix/ef-settings-<time>).
+# OUT (default /home/xaqu/ef-settings-<time>).
 #
 # Where the game keeps them. Endfield is Unity 2021.3 (IL2CPP); its
 # Endfield_Data/app.info says company "Gryphline", product "Endfield", so
@@ -40,7 +40,7 @@
 set -u
 cmd=${1:-dump}
 if [ -z "${WINEPREFIX:-}" ]; then
-    for p in /home/ferrix/cd-dwp/pfx /home/ferrix/.local/share/gryphlink/prefix /root/.local/share/gryphlink/prefix; do
+    for p in /home/xaqu/cd-dwp/pfx /home/xaqu/.local/share/gryphlink/prefix /root/.local/share/gryphlink/prefix; do
         [ -e "$p/user.reg" ] && { WINEPREFIX=$p; break; }
     done
 fi
@@ -56,7 +56,7 @@ export WINEDEBUG=-all
 wine=$PROTON/files/bin/wine
 key='HKCU\Software\Gryphline\Endfield'
 stamp=$(date +%Y%m%d-%H%M%S)
-OUT=${OUT:-/home/ferrix/ef-settings-$stamp}
+OUT=${OUT:-/home/xaqu/ef-settings-$stamp}
 
 # The game, its launcher and any Wine of this prefix must be stopped: a
 # running wineserver keeps the registry in memory and writes it back.

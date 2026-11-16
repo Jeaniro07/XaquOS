@@ -1,11 +1,11 @@
 # USB serial adapters: the FT232H and the USB-Blaster, from ring 3
 
-Ferrix drives FTDI's USB UARTs -- the FT232H (`0403:6014`, "Single
+Xaqu drives FTDI's USB UARTs -- the FT232H (`0403:6014`, "Single
 RS232-HS"), the FT232B/R (`0403:6001`, which QEMU's `usb-serial` emulates)
 -- and Altera's original USB-Blaster (`09fb:6001`, an FT245B in front of a
 CPLD) from a class driver process of their own. This document says how,
 what works on what evidence, what is still worse than Linux and why, and
--- because the customer asked for it plainly -- what in Ferrix's design
+-- because the customer asked for it plainly -- what in Xaqu's design
 made the job harder than it should be.
 
 Branch `ftdi-driver`, 2026-10-25, on `develop` since the same day (97de20f7a to
@@ -19,8 +19,8 @@ libusb-style claim (R3) and the by-id names (R4); each has a
 
 ## 1. Where the driver is
 
-Ferrix's kernel knows nothing of USB. devmgr hands the xHCI controller to
-`usbhid`, which runs the USB stack (`ferrix-usb-host`). Keyboards, mice and
+Xaqu's kernel knows nothing of USB. devmgr hands the xHCI controller to
+`usbhid`, which runs the USB stack (`xaqu-usb-host`). Keyboards, mice and
 sticks are class drivers inside it; **every other interface is exported**
 (§6.1, R2):
 
@@ -37,7 +37,7 @@ sticks are class drivers inside it; **every other interface is exported**
 | Export | `usb-host/src/bus.rs` (`Bus::export_*`) | An interface that is no hub, HID or disk is exported with its identity and strings; control requests filtered; streams only on its own bulk endpoints; whatever a driver opened closed when it goes. |
 | Streams | `usb-host/src/xhci.rs` | Bulk IN: four 512-byte requests queued, re-queued only as read (back-pressure). Bulk OUT (R1): at most six requests in flight per endpoint, never waited for; a stall stops and resets the endpoint before any buffer is reused and counts what was lost. |
 | Server | `usbhid/src/export.rs` | Each export's channel and VMO; the host owns the DMA memory and copies, no class-driver page is pinned. A driver's end closing re-attaches the interface. |
-| Matching | `devmgr/src/usb.rs` | An image-time table (FTDI's vendor, the Blaster) names `usbserial`; a sealed job per driver; the number of the class (`ttyUSB<N>`) stays a device's across restarts; the same `ferrix-restart` policy and budget as every restarted driver. |
+| Matching | `devmgr/src/usb.rs` | An image-time table (FTDI's vendor, the Blaster) names `usbserial`; a sealed job per driver; the number of the class (`ttyUSB<N>`) stays a device's across restarts; the same `xaqu-restart` policy and budget as every restarted driver. |
 | Chips | `src/lib/drivers/usb/usb-serial` | `ftdi` (families, divisors, requests, status bytes), `port` (the chip as `ftdi_sio` sets it up, per-byte flags as `ftdi_process_packet`, `TIOCGICOUNT` counters, break, latency, DTR/DSR flow), `blaster` (the CPLD protocol, scans, IDCODE chain, command lines), `mpsse` (the loopback). |
 | Class driver | `usbserial` | The link over the channel, the chip, a pseudoterminal linked as `/tmp/ttyUSB<N>` or `/tmp/jtag<N>`. |
 | Gates | `xtask/src/usb_serial.rs`, `ft232h.rs` | `test-usb-serial` (QEMU), `test-ft232h` (the real chip). |
@@ -61,7 +61,7 @@ be published as `/dev/ttyUSB<N>` by devmgr (§5).
 A USB-Blaster's terminal, `/tmp/jtag<N>`, takes command lines (`reset`,
 `idcode`, `ir <bits> <hex>`, `dr <bits> <hex>`), answered `= ...` or
 `! ...`; the chain is read and said on the console when the cable comes.
-This stays a Ferrix-only name (the consultant's R-e); Linux parity for JTAG
+This stays a Xaqu-only name (the consultant's R-e); Linux parity for JTAG
 tools is R3's claim.
 
 ## 3. What works, and the evidence
@@ -90,8 +90,8 @@ RI DCD all 0, nothing wired); and loops 4096 bytes through its MPSSE
 engine back as sent, then is a UART again. Its TX and RX are wired to
 nothing, so bytes on the pins and the rate on the wire are not shown.
 
-**The model, `cargo test -p ferrix-usb-host -p ferrix-usb-serial -p
-ferrix-usbif`**: the export filter, release and rebind, unplug under a new
+**The model, `cargo test -p xaqu-usb-host -p xaqu-usb-serial -p
+xaqu-usbif`**: the export filter, release and rebind, unplug under a new
 key, the FT232H's requests, 12 Mbaud and 250000 exact, line errors flagged
 as Linux flags them, modem-line counters, a megabyte through a reader
 taking a chunk every 3 ms with nothing lost, a chip that NAKs OUT while a
@@ -108,7 +108,7 @@ the host after Quartus's `jtagd`; it waits for the customer's replug), and
 
 ## 4. What is still worse than Linux
 
-| Linux `ftdi_sio` + tty | Ferrix now | Verdict |
+| Linux `ftdi_sio` + tty | Xaqu now | Verdict |
 | --- | --- | --- |
 | Binds by id table, per interface | devmgr's image-time table, per interface, own process (R2) | better: a fault ends only its interface |
 | Driver restart after a crash | devmgr restarts it, same number, budgeted | better (Linux has none for a crashed module) |
@@ -177,7 +177,7 @@ run from `syscall::check`'s handler checks on every `test-boot`.
 
 Not built, with the conditions they carry (ledger 4317 (5)-(10), (15)-(19)):
 
-* **K2, driver packet mode**: a Ferrix ioctl of its own on the master;
+* **K2, driver packet mode**: a Xaqu ioctl of its own on the master;
   coalesced state records master-bound (settings with numeric speeds,
   DTR/RTS, break, drain, throttle, HUPCL's drop) and slave-bound (CTS, DSR,
   RI, DCD, the driver's `TIOCGICOUNT` counters, the drain acknowledgement,
@@ -240,12 +240,12 @@ themselves (OpenOCD's `ftdi` driver) R3's claim is the way.
 ## 8. Running it
 
 ```
-cargo test -p ferrix-usb-host -p ferrix-usb-serial -p ferrix-usbif
+cargo test -p xaqu-usb-host -p xaqu-usb-serial -p xaqu-usbif
 cargo xtask test-usb-serial --timeout 300     # QEMU, end to end, with the kills
 cargo xtask test-ft232h --timeout 240         # the host's FT232H, passed through
 ```
 
-On a booted Ferrix with an adapter plugged in:
+On a booted Xaqu with an adapter plugged in:
 
 ```
 stty -F /tmp/ttyUSB0 115200 raw -echo

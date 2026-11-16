@@ -1,7 +1,7 @@
-# Ferrix — roadmap
+# Xaqu — roadmap
 
-Ferrix is an operating system in Rust for x86-64, AArch64 and ARMv7-A. Its
-first goal, compiling Rust on Ferrix, is met; the goal since is a
+Xaqu is an operating system in Rust for x86-64, AArch64 and ARMv7-A. Its
+first goal, compiling Rust on Xaqu, is met; the goal since is a
 Hyprland-shaped desktop, then Steam, and after Steam a Windows game,
 *Arknights: Endfield* (stage 23, 2026-10-10). This page is the short version; each
 stage has its own page, and the details are linked at the end.
@@ -14,7 +14,7 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
 
 - Stages 0–12 run in every boot test on all three architectures; ARMv7-A also
   boots on an STM32MP157D-DK1 board.
-- The first goal is met: `rustc` compiles and runs a program on Ferrix
+- The first goal is met: `rustc` compiles and runs a program on Xaqu
   (stage 16).
 - Display, input and the compositor (stages 17 and 18), networking, dynamic
   linking and sysfs.
@@ -44,8 +44,8 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   `zwp_linux_dmabuf_v1` with a GBM-shaped allocator on 2026-10-08). waybar, fuzzel, hypridle and hyprlock,
   rewritten in Rust, run the customer's own config on `run-compositor
   --everything` (its X11 link landed on 2026-10-05).
-- **Stage 20:** Ferrix builds its own x86-64 image, and since 2026-10-03 its
-  own AArch64 image on Arm hardware: inside Ferrix on a Pixel 7, in crosvm.
+- **Stage 20:** Xaqu builds its own x86-64 image, and since 2026-10-03 its
+  own AArch64 image on Arm hardware: inside Xaqu on a Pixel 7, in crosvm.
   Its matrix's plan mode is complete since 2026-10-05 (S-2).
 - **Stage 22 (Steam):** sound plays through `/dev/snd` and a PulseAudio-protocol
   server, Chrome plays video with sound, 32-bit x86 programs run, and Valve's
@@ -68,11 +68,11 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   about 60 ns on the general path until a cheaper hold is written. On
   ARMv7-A a switch between two programs that never used VFP moves none
   (lazy VFP, §9.15), not yet timed.
-- **The installer:** an MVP installs Ferrix on a VM's disk (2026-09-28); the
+- **The installer:** an MVP installs Xaqu on a VM's disk (2026-09-28); the
   root volume is made to its partition's size (I3, 2026-10-19); A/B system
   slots give an update a trial boot and a way back (2026-10-11); NVMe, AHCI and
   a PC's xHCI have drivers (the NVMe driver has driven a real WD SN720 through
-  VFIO and installed Ferrix onto it); a netboot stick boots a bare-metal PC
+  VFIO and installed Xaqu onto it); a netboot stick boots a bare-metal PC
   (2026-10-15). The first release, v0.1.0, was tagged on 2026-10-20 and built
   none of its assets; v0.1.1 (2026-10-21) carries the x86-64 desktop as a zip
   that plain QEMU boots (`docs/RELEASES.md`). v0.2.0 (2026-10-29) is the
@@ -80,7 +80,7 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   QEMU machines and not yet booted on a real PC. `test-install` failed in the
   live medium's boot; its stated cause is fixed (0d9f41949) and no passing run
   is recorded (a BACKLOG row).
-- **The customer's N150 box (stage 21):** Ferrix booted on it on 2026-10-15
+- **The customer's N150 box (stage 21):** Xaqu booted on it on 2026-10-15
   to a desktop on the firmware framebuffer, `/` on its SATA drive and the
   network up, on a branch; its drivers (AHCI, the YT6801's network, the
   framebuffer, VT-d, SMBIOS, an event log for panics) and an Intel GPU render
@@ -98,7 +98,7 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   orphan step, and its other work (K2 to K4 and the rest of M1, K13, K15, K1,
   K11, `linuxd` booting Linux programs, K8, K14, `btrfsd`) is on unlanded local
   branches, not gated.
-- **Chrome** runs headless and in a window, on glibc and on ferrousli, Ferrix's
+- **Chrome** runs headless and in a window, on glibc and on ferrousli, Xaqu's
   own C library. On ARMv7-A, Debian's armhf Chromium runs headless in 512 MiB
   under QEMU, and the DK1's SD card has a driver; neither has run on the board.
 - **Live driver updates:** `devmgr` replaces the display driver with a new
@@ -110,11 +110,11 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   through Wine with DXVK on NVIDIA's Vulkan, put on the roadmap by the
   customer on 2026-10-10; about 205 points as a first guess. Step 0 answered
   on 2026-10-13: the game's anti-cheat refuses to run in a virtual machine,
-  so steps 4 to 6 wait for Ferrix on the machine. Wine starts on Ferrix,
+  so steps 4 to 6 wait for Xaqu on the machine. Wine starts on Xaqu,
   Direct3D 11 draws through DXVK and a Unity game starts in it, with no card,
   and Endfield's launcher draws its install dialog in Debian's Wine and in
   GE-Proton11-7's (2026-10-14); the game's download stopped on ENOSPC from
-  Ferrix's btrfs, whose cause (a writable mount's page cache was never
+  Xaqu's btrfs, whose cause (a writable mount's page cache was never
   reclaimed) is fixed on `main` since 2026-10-15.
   Syscall User Dispatch and seccomp's `TRAP`, which Proton's Wine and the
   anti-cheat's direct calls need, landed on 2026-10-18. Since 2026-10-23
@@ -124,7 +124,7 @@ The sidebar marks each stage: ✓ done, ◐ in progress, ○ not started.
   (`docs/GAME-MODE.md`); the page's steps 4 to 6 are not yet brought up to
   the box's runs ([its page](stage-23-arknights-endfield.md)).
 - **Stage 24 (the game path):** where a fullscreen game can be faster on
-  Ferrix than on a stock Linux desktop: input to scan-out, and even frames
+  Xaqu than on a stock Linux desktop: input to scan-out, and even frames
   under a background load. A design (`docs/GAME-PATH.md`) the customer made a
   stage on 2026-10-10; its rig's R1 to R3 (the frame recorder, the latency
   probe, the load and the pinned guests) landed on 2026-10-14, I1 (input's
@@ -218,8 +218,8 @@ single file across.
 |  | [Dynamic linking — PIE, `PT_INTERP`, a loader](dynamic-linking.md) | ✓ done | done 2026-09-23: 39 points, and ferrousli's port at ≈ 34 |
 | 12 | [btrfs, write](stage-12-btrfs-write.md) | ✓ done | ≈ 60 points, spent |
 |  | [sysfs — the device tree, fed by the services that own it](sysfs.md) | ✓ done | 26 points, spent |
-|  | [Chrome — a browser on Ferrix](chrome.md) | ◐ in progress | headless and in a window, 2026-09-24; the DK1 ≈ 45–55 points |
-|  | [Claude Code — Anthropic's coding agent on Ferrix](claude-code.md) | ◐ in progress | the command line, 2026-09-30; the desktop app assessed, 2026-10-14 |
+|  | [Chrome — a browser on Xaqu](chrome.md) | ◐ in progress | headless and in a window, 2026-09-24; the DK1 ≈ 45–55 points |
+|  | [Claude Code — Anthropic's coding agent on Xaqu](claude-code.md) | ◐ in progress | the command line, 2026-09-30; the desktop app assessed, 2026-10-14 |
 | 13 | [Namespaces, cgroups v2, seccomp](stage-13-namespaces-cgroups-v2-seccomp.md) | ✓ done | month |
 |  | [Namespace and cgroup follow-ons](follow-ons.md) | ✓ done | unsized; built and landed 2026-10-26 |
 | 14 | [Real-time domains](stage-14-real-time-domains.md) | ◐ in progress | month |
@@ -229,7 +229,7 @@ single file across.
 | 18 | [The compositor](stage-18-compositor.md) | ✓ done | 96 points, spent |
 | 19 | [Hyprland fidelity, and the GPU](stage-19-hyprland-fidelity-gpu.md) | ◐ in progress | 178 points, about 8 left |
 | 20 | [Self-hosting](stage-20-self-hosting.md) | ◐ in progress |  |
-| 21 | [Bare metal, and a GPU of Ferrix's own](stage-21-bare-metal-gpu-ferrix.md) | ◐ in progress | unsized, over 100 points |
+| 21 | [Bare metal, and a GPU of Xaqu's own](stage-21-bare-metal-gpu-xaqu.md) | ◐ in progress | unsized, over 100 points |
 | 22 | [Steam](stage-22-steam.md) | ◐ in progress | unsized, over 300 points |
 | 23 | [Arknights: Endfield](stage-23-arknights-endfield.md) | ◐ in progress | ≈ 205 points as a first guess, step 5 unknown |
 | 24 | [The game path](stage-24-game-path.md) | ◐ in progress | ≈ 68 points before the game domain, about 190 with it and the later rows |

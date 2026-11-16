@@ -20,7 +20,7 @@ manifest a Settings app reads to show a page fixed by its build (ledger
 
 ```
 Settings app (uid 1000)          settingsd (root)                authd (uid 90)
-  ferrix-settings-client
+  xaqu-settings-client
   REQUEST set-hostname "box" -->  validate (refuse before asking)
                                   peer uid from SO_PEERCRED
                                   account of that uid
@@ -28,16 +28,16 @@ Settings app (uid 1000)          settingsd (root)                authd (uid 90)
                                                        policy: wheel? password?
             <-- PROMPT "Password:"  <-- relayed --------- PROMPT
   RESPOND secret ------------------ relayed --------------> RESPOND
-                                  <----------------------- ACCEPTED ferrix 1000
+                                  <----------------------- ACCEPTED xaqu 1000
                                   verdict names exactly the peer? apply:
                                   write /etc/hostname.tmp, fsync, rename,
                                   fsync /etc, sethostname
                                   audit line -> init -> lode
-            <-- DONE "the computer is called box (was ferrix)"
+            <-- DONE "the computer is called box (was xaqu)"
 ```
 
 * **One helper, one socket.** `/sbin/settingsd`, root, started by init on
-  the first connection to `/run/ferrix/settings` (`settings.socket`,
+  the first connection to `/run/xaqu/settings` (`settings.socket`,
   `SOCK_SEQPACKET`, mode 0666: anyone may ask, `SO_PEERCRED` says who).
 * **A closed list of typed requests.** Each is a variant of one Rust enum
   with typed fields; there is no path, no file content, no command and no
@@ -53,7 +53,7 @@ Settings app (uid 1000)          settingsd (root)                authd (uid 90)
 * **Written atomically, applied, recorded.** Temporary file, `fsync`,
   `rename`, `fsync` of the directory; then the live effect; then one audit
   record to lode with who, what, before, after and the verdict.
-* **A client crate** (`ferrix-settings-client`) gives the app a step-wise
+* **A client crate** (`xaqu-settings-client`) gives the app a step-wise
   conversation it can drive from its event loop, a dry run, and errors in
   kinds the UI can word.
 
@@ -65,7 +65,7 @@ Settings app (uid 1000)          settingsd (root)                authd (uid 90)
 | A "write this file" helper (`pkexec tee`) | a request names a path and bytes, so the helper's policy is "anything an admin may write": the narrowness is gone |
 | `su -c 'svc enable ...'` from the app | needs a terminal for the password (U5), a shell, and a command line built from strings |
 | One set-uid program per setting | as many programs to audit as settings; each repeats `su`'s U1-U5 |
-| polkit + D-Bus | Ferrix has `authd` and its policy files already (`docs/AUTH.md` §4.5 named this shape for phase 3); no system bus exists |
+| polkit + D-Bus | Xaqu has `authd` and its policy files already (`docs/AUTH.md` §4.5 named this shape for phase 3); no system bus exists |
 
 `settingsd` is the mechanism half of polkit's split: the mechanism is small,
 privileged and typed; the policy is `authd`'s.
@@ -75,7 +75,7 @@ privileged and typed; the policy is `authd`'s.
 Records on a `SOCK_SEQPACKET` connection, one per packet, at most 4 KiB.
 One connection carries one request. Little-endian, every string a `u16`
 length and UTF-8, every field read with its bounds; a packet with bytes left
-over is refused. The layouts are in `ferrix-settings-proto`
+over is refused. The layouts are in `xaqu-settings-proto`
 (`src/user/system/linux/settingsd/proto`).
 
 ```
@@ -115,14 +115,14 @@ and clocks" without loosening "accounts".
 | Request | Fields | Validation | Writes | Live effect | Area | Row |
 |---|---|---|---|---|---|---|
 | `set-hostname` | name | 1-64 bytes; dot-separated labels of 1-63 ASCII letters, digits and `-`, no label starting or ending with `-` (RFC 1123) | `/etc/hostname` (`name\n`, 0644) | `sethostname` | `hostname` | **B1 (built)** |
-| `service-enable-persistent` | unit, enabled | the unit is one of the compiled list a Settings page may switch: `sshd.service`, `sshd.socket` | init's `enable`/`disable` (links under `/etc/ferrix/units`) | none: next boot (`now` is B6's to add) | `services` | **B1 (built)** |
+| `service-enable-persistent` | unit, enabled | the unit is one of the compiled list a Settings page may switch: `sshd.service`, `sshd.socket` | init's `enable`/`disable` (links under `/etc/xaqu/units`) | none: next boot (`now` is B6's to add) | `services` | **B1 (built)** |
 | `set-time` | seconds since the epoch | within 2000..2200 | none | `clock_settime(CLOCK_REALTIME)` | `time` | B3, **parked**: `authd`'s throttle keeps wall-clock time (ledger 3636 (19)) |
 | `set-timezone` | zone name | a file under `/usr/share/zoneinfo` by name, no `..`, no `/` at the start | `/etc/localtime` link, `/etc/TZ` (the zone's POSIX footer, which lode reads) | none | `time` | **B3 (built)** |
 | `user-add` | name, full name, type (standard/administrator) | name as `useradd`'s; not taken; uid from the free range, never reused; never uid 0, a system account or the auth store | `/etc/passwd`, `/etc/group` (both atomic, one lock) | none | `users` | B4, design review first |
 | `user-remove` | name | exists, uid >= 1000, not the caller's own last administrator | the same | none | `users` | B4 |
 | `user-set-type` | name, type | as above; never removes the last member of `wheel` | `/etc/group` | none | `users` | B4 |
 | `user-auto-login` | name or none | exists, uid >= 1000 | sessiond's file (B4 names it) | none | `users` | B4 |
-| `set-boot-word` | key, value or none | a closed list of keys and values generated at build time from the **`present` profile** (`tools/common/data/profiles/present.toml`), with a check that fails when they disagree; **no key whose permitted value is `*`** (`ferrix.init`, `ferrix.root`, `ferrix.onexit`, `console`, `drm.edid_firmware`) can be set; "none" only for a key whose default is the reference value; no permit table, no request. So a Settings page sets no boot word `present` does not permit | `\FERRIX\CMDLINE.TXT` on the EFI system partition, the one key replaced, every other word kept; B5's design says what the loader does with a truncated or missing file after a crash | none: next boot | `boot` | B5, design review first |
+| `set-boot-word` | key, value or none | a closed list of keys and values generated at build time from the **`present` profile** (`tools/common/data/profiles/present.toml`), with a check that fails when they disagree; **no key whose permitted value is `*`** (`xaqu.init`, `xaqu.root`, `xaqu.onexit`, `console`, `drm.edid_firmware`) can be set; "none" only for a key whose default is the reference value; no permit table, no request. So a Settings page sets no boot word `present` does not permit | `\XAQU\CMDLINE.TXT` on the EFI system partition, the one key replaced, every other word kept; B5's design says what the loader does with a truncated or missing file after a crash | none: next boot | `boot` | B5, design review first |
 | `service-enable-persistent` for `sshd` | as B1 | as B1 | as B1 | with `now`, init's `start` or `stop` once the links are made; a failed start keeps the link and says so | `services` | **B6 (built)** |
 
 Rules every request keeps:
@@ -155,7 +155,7 @@ Rules every request keeps:
    account (U3). Any other verdict, or an ACCEPTED for anyone else, refuses
    the request; nothing is written.
 
-The shipped policies, one per area, in `/lib/ferrix/auth/services/`:
+The shipped policies, one per area, in `/lib/xaqu/auth/services/`:
 
 ```ini
 # settings.hostname (and settings.services, settings.time, settings.users, settings.boot)
@@ -191,7 +191,7 @@ there** (`docs/AUTH.md` §4.2, TA.CLIENT). An administrator who wants polkit's "
 password" for, say, the time writes a drop-in:
 
 ```ini
-# /etc/ferrix/auth/services/settings.time.d/10-no-password.conf
+# /etc/xaqu/auth/services/settings.time.d/10-no-password.conf
 [Service]
 Methods=none
 ```
@@ -226,11 +226,11 @@ for later, not a default.
 
 ## 7. The client, the UI and dry runs
 
-`ferrix-settings-client` (`src/user/system/linux/settingsd/client`), which
+`xaqu-settings-client` (`src/user/system/linux/settingsd/client`), which
 the Settings app reaches by path as it reaches tole:
 
 ```rust
-use ferrix_settings_client::{Client, Request, Step, Refusal, RefusalKind};
+use xaqu_settings_client::{Client, Request, Step, Refusal, RefusalKind};
 
 let request = Request::SetHostname { name: "box".into() };
 request.validate()?;                         // the same rules settingsd applies; no socket
@@ -252,11 +252,11 @@ loop {
 * **Errors in the UI.** `Refusal { kind, text, retry_after_ms }`;
   `kind.title()` is the heading ("Not allowed", "Wrong password", ...), and
   `text` is the line under it, written for a person by `settingsd` or
-  `authd` ("ferrix is not in wheel"). `authentication-failed` with a
+  `authd` ("xaqu is not in wheel"). `authentication-failed` with a
   `retry_after_ms` greys the button out for that long.
 * **Dry run.** `begin(&request, true)` sends the request with the dry-run
   flag: `settingsd` validates it, reads the system, and answers DONE with
-  what it would do ("would call the computer box; it is called ferrix")
+  what it would do ("would call the computer box; it is called xaqu")
   and `changed` saying whether anything would change. A dry run asks no
   one, writes nothing, records nothing, and is allowed to anyone, since it
   reveals only what the files it reads already show. A page uses it to
@@ -284,7 +284,7 @@ lode (`docs/LOGGING.md` §5; `svc log settings.service` reads it back, from
 init's own ring when lode is not running):
 
 ```
-settings: request=set-hostname peer-pid=678 peer-uid=1000 comm=settingsctl account=ferrix auth=password result=done before=ferrix after=box
+settings: request=set-hostname peer-pid=678 peer-uid=1000 comm=settingsctl account=xaqu auth=password result=done before=xaqu after=box
 settings: request=set-hostname peer-pid=662 peer-uid=1001 comm=settingsctl account=guest auth=- result=not-permitted before=- after=-
 ```
 
@@ -298,14 +298,14 @@ recorded: nothing was asked and nothing changed.
 **B1 built** (2026-10-24):
 
 * `src/user/system/linux/settingsd/`, a workspace of its own with the
-  auth workspace's lints: `proto` (`ferrix-settings-proto`: the records,
+  auth workspace's lints: `proto` (`xaqu-settings-proto`: the records,
   the `Request` enum and its rules, pure, host-tested), `client`
-  (`ferrix-settings-client`), `settingsd` and `settingsctl`, and
+  (`xaqu-settings-client`), `settingsd` and `settingsctl`, and
   `units/settings.{socket,service}`.
 * `authd`: `Methods=none` as §5 bounds it, with host tests; the two
   policies `settings.hostname` and `settings.services` in
   `src/user/system/linux/auth/services`; `talks_to_authd` (U1) moved into
-  `ferrix-auth-client`, so `su` and `settingsd` share one check.
+  `xaqu-auth-client`, so `su` and `settingsd` share one check.
 * xtask: `settingsd::carried(arch)` in the desktop's images, beside authd;
   `cargo xtask test-settings`; `check`'s `settingsd` unit; `gate-rows`.
 
@@ -326,7 +326,7 @@ recorded: nothing was asked and nothing changed.
    (`Account=any`, `Callers=root`, `TargetGroup=wheel`, `Methods=password`),
    and its line in authd's `the_shipped_policies_read_cleanly`.
 4. `settingsctl`'s verb in `parse`.
-5. Its lines in `test-settings`: refused for `guest`, done for `ferrix`,
+5. Its lines in `test-settings`: refused for `guest`, done for `xaqu`,
    the file checked; and a control for each new refusal.
 
 ### 9.1 How it is tested
@@ -347,15 +347,15 @@ recorded: nothing was asked and nothing changed.
   prompting, locked, password-less and non-member accounts still refused,
   and settings failures counting against the throttle `su` shares.
 * **`cargo xtask test-settings`** boots init, `authd` and `settingsd`
-  with three accounts: `root`, `ferrix` (uid 1000, in `wheel`) and `guest`
+  with three accounts: `root`, `xaqu` (uid 1000, in `wheel`) and `guest`
   (uid 1001, not), both with seeded passwords. At the console: `guest` is
   refused `set-hostname` and `service-enable-persistent` with its own right
   password, and `/etc/hostname`, `hostname` and the links are unchanged;
-  `ferrix` with a wrong password is refused; `ferrix` with the right one
+  `xaqu` with a wrong password is refused; `xaqu` with the right one
   renames the machine (`/etc/hostname` and `hostname` agree) and enables
   `sshd.service` (the link exists); a unit off the list, sent as given, is
   refused `invalid` by `settingsd`; a dry run as `guest` changes nothing; a
-  `Methods=none` drop-in on `settings.hostname` lets `ferrix` in with no
+  `Methods=none` drop-in on `settings.hostname` lets `xaqu` in with no
   prompt and still refuses `guest`, and one on `gate-mechanism`, a root-only
   wheel service that is not a settings one, still asks for the password;
   the audit lines are in `svc log settings.service` and hold no password.
@@ -365,12 +365,12 @@ recorded: nothing was asked and nothing changed.
   | | Edit | Sentence it must make |
   |---|---|---|
   | N1 | `settingsd/src/conversation.rs`: `if peer.uid == 0 {` becomes `if peer.uid < u32::MAX {`, every peer root | `guest, outside wheel, was not refused with its own password` |
-  | N2 | `settingsd/src/authority.rs`: FAILED taken as ACCEPTED | `ferrix's wrong password was not refused` |
+  | N2 | `settingsd/src/authority.rs`: FAILED taken as ACCEPTED | `xaqu's wrong password was not refused` |
   | N3 | `proto/src/request.rs`: the unit list skipped | `settingsd did not refuse a unit off its list` |
   | N4 | `auth/authd/src/policy.rs`: `Methods=none`'s bound removed | `Methods=none loosened gate-mechanism` |
 
   All four **FIRED** (`control: FIRED (line, no panic)`) on d549d2e92,
-  2026-10-24, logs `~/.local/share/ferrix/logs/queue/settings-b1-n{1,2,3,4}.log`
+  2026-10-24, logs `~/.local/share/xaqu/logs/queue/settings-b1-n{1,2,3,4}.log`
   on the gate host; the same commit's `test-settings --arch x86_64`
   passed unedited.
 
@@ -438,7 +438,7 @@ B3 to B6 build on §9's recipe; B4 and B5 start with a design review.
 once `/` is settled, beside `/etc/machine-id`
 (`src/user/system/linux/init/init/src/hostname.rs`). It reads at most 256
 bytes and takes the first line, trimmed, and only a name
-`ferrix-settings-proto::valid_hostname` takes -- the function
+`xaqu-settings-proto::valid_hostname` takes -- the function
 `set-hostname` is checked with -- is set; a missing, empty or invalid file
 leaves the kernel's default name and one line, "the computer keeps its
 default name: ...", and never stops the boot. `test-settings`' image is
@@ -536,7 +536,7 @@ pixel; a client cannot write to it, read its memory (no `ptrace`, no
 ```
 settingsd (root)                    sessiond (root, the seat's owner)          hyprix (uid 1000)
   peer is the seat's account?
-  connect /run/ferrix/prompt -----> listener 0600 root, peer uid must be 0
+  connect /run/xaqu/prompt -----> listener 0600 root, peer uid must be 0
                                     "seat <uid>" for the session's account
   ASK id, area, program, what ----> uid is the session's? ----fd 5------>  draws the prompt on every screen
   (authd's PROMPT "Password:")      relays, line for line                  physical keys and pointer only
@@ -548,13 +548,13 @@ settingsd (root)                    sessiond (root, the seat's owner)          h
 ```
 
 * **settingsd to sessiond** on a `SOCK_SEQPACKET` socket at
-  `/run/ferrix/prompt`, mode 0600, owned by root, which `sessiond` binds
+  `/run/xaqu/prompt`, mode 0600, owned by root, which `sessiond` binds
   when the session starts and removes when it ends. Each side checks the
   other by `SO_PEERCRED`: `sessiond` serves only uid 0, `settingsd` talks
   only to a listener of uid 0 (U1's shape). One connection carries one
   prompt.
 * **sessiond to hyprix** on a third socket pair, descriptor 5
-  (`compositor_seat::prompt`, `FERRIX_PROMPT_FD`), beside the devices' 3
+  (`compositor_seat::prompt`, `XAQU_PROMPT_FD`), beside the devices' 3
   and the lock's 4 and made the same way: no path, close-on-exec in hyprix
   at once, not reopenable through `/proc`. A separate pair, so §3.7's rule
   that any line on 4 but `locked`/`unlocked` ends the session stands.
@@ -581,7 +581,7 @@ settingsd (root)                    sessiond (root, the seat's owner)          h
 * **P2. Its text is `settingsd`'s.** The heading names the program as the
   kernel recorded it (P-S2 below: its executable's path and the one that
   started it), and the body is the dry run's own `would` line ("would
-  call the computer box; it is called ferrix") with the account's name.
+  call the computer box; it is called xaqu") with the account's name.
   Nothing in it is the requesting program's words.
 * **P3. Physical input only.** Keys and pointer events from the seat's
   devices go to the prompt and to nothing else: no bind fires (a
@@ -611,7 +611,7 @@ settingsd (root)                    sessiond (root, the seat's owner)          h
   nothing but show that the prompt is real (the prompt's footer says so);
   with none, hyprix shows for three seconds, drawn as P1, "No system
   prompt is waiting — a window asking for your password now is not
-  Ferrix". So a person unsure of a dialog presses the key: a real prompt
+  Xaqu". So a person unsure of a dialog presses the key: a real prompt
   stays, a picture of one is replaced by hyprix's own screen. Every prompt
   says "Ctrl+Alt+Delete shows that this prompt is real" in its footer.
 * **P9. One at a time, and ended by its owner.** One prompt is up at once.
@@ -638,7 +638,7 @@ before the next:
    programs, by absolute path, that may ask for it; any other is refused
    `not-permitted` ("… may not ask to change the computer's name"),
    recorded `result=not-listed`, with nothing shown. The lists are image
-   content, one file `/lib/ferrix/settings/apps` (`area = /bin/settings
+   content, one file `/lib/xaqu/settings/apps` (`area = /bin/settings
    /bin/settingsctl`, a line an area), read on every request as authd's
    policies are. An entry counts only if it is an absolute path to a
    root-owned file that is not group- or world-writable, in directories
@@ -650,10 +650,10 @@ before the next:
 4. **S4. The seat's accounts ask on the seat, from the image's word, not
    the socket's** (ledger 3636 (1)). `settingsd` reads which accounts have
    the seat from the configuration `sessiond` is started from: the
-   `hyprix.service` unit (`/etc/ferrix/units`, else `/lib/ferrix/units`),
+   `hyprix.service` unit (`/etc/xaqu/units`, else `/lib/xaqu/units`),
    whose `ExecStart=` runs `sessiond --user NAME`. Then:
    * **a seat account** is served only through the prompt: `settingsd`
-     connects to `/run/ferrix/prompt`, and the conversation's person is
+     connects to `/run/xaqu/prompt`, and the conversation's person is
      the prompt (§12.3); the client is sent only `INFO` ("confirm on the
      screen") and the end. With no session of it up (no socket, or one
      whose session is another account's) it is refused `unavailable`,
@@ -731,7 +731,7 @@ hyprix -> settingsd    answer ID SECRET               the field's text, with All
   account with no seat is asked at its terminal, as `su` asks, and an
   acceptance with no password typed is refused.
 * **Physical input** is what arrives on the evdev descriptors `sessiond`
-  opened for hyprix (descriptor 3). Ferrix has no `uinput`; a
+  opened for hyprix (descriptor 3). Xaqu has no `uinput`; a
   user-creatable input device would need its own review. The machine's
   host -- QEMU's or crosvm's window, a KVM switch -- is in the trusted
   base, as the keyboard is; a VNC or RDP server *inside* the session is a
@@ -743,16 +743,16 @@ hyprix -> settingsd    answer ID SECRET               the field's text, with All
 ### 12.8 Absent where `settings_writer = absent` (ledger 3558 (13))
 
 What the writer key leaves out of an image, this included: `settingsd`,
-`settingsctl`, the `settings.*` policies, `/lib/ferrix/settings/apps`, and
+`settingsctl`, the `settings.*` policies, `/lib/xaqu/settings/apps`, and
 **the prompt itself** -- hyprix's, `sessiond`'s and `compositor_seat`'s
 prompt code is the cargo feature `settings-prompt` of each, which xtask
 alone sets from the image's writer (ledger 3636 (10)): the image build
 refuses an image whose `settingsd` and prompt feature disagree, either
-way, and an image check (`settingsd::check_prompt`) finds no `FERRIX_PROMPT_FD` mark
+way, and an image check (`settingsd::check_prompt`) finds no `XAQU_PROMPT_FD` mark
 in an absent-writer image's hyprix and sessiond, and finds it in a
 present-writer image's. Without the
 feature hyprix opens no descriptor 5 and has no prompt to draw; P8's key is
-then plain input again; `sessiond` binds no `/run/ferrix/prompt` and makes
+then plain input again; `sessiond` binds no `/run/xaqu/prompt` and makes
 no fifth descriptor. xtask's `settingsd::writer()` reads the key from
 the image manifest's own source (`flags::this_image`, `docs/BUILD-FLAGS.md`
 §5.1).
@@ -781,9 +781,9 @@ the image manifest's own source (`flags::this_image`, `docs/BUILD-FLAGS.md`
   unknown request `unsupported` with words, and the client's words when
   there is no `settingsd`.
 * **`cargo xtask test-compositor --boot settings-prompt`**, a session
-  desktop as `ferrix` (wheel) with authd, settingsd and sessiond; the
+  desktop as `xaqu` (wheel) with authd, settingsd and sessiond; the
   person's keys are QEMU's. A bind runs `/etc/ask.sh`, a program of
-  `ferrix`'s, which runs `settingsctl` and, while its prompt is up, types
+  `xaqu`'s, which runs `settingsctl` and, while its prompt is up, types
   the password and Return with `vkbd` and takes a screenshot with `shot`.
   Required: the prompt comes up; a bind pressed while it is up does not
   fire; QEMU's own screendump shows the prompt's background at every
@@ -823,7 +823,7 @@ the image manifest's own source (`flags::this_image`, `docs/BUILD-FLAGS.md`
 ### 12.10 The design review
 
 Design review before code, 2026-10-24: **OK IF (1)-(20)**, ledger line
-3636 (`~/.local/share/ferrix/cert-consultant/reviews.md`). S4's `ENOENT`
+3636 (`~/.local/share/xaqu/cert-consultant/reviews.md`). S4's `ENOENT`
 fallback is replaced by routing from the image's seat configuration, with
 no passwordless relay ((1)-(2)); whether the console/ssh relay stays is
 the customer's question ((3)); controls T1-T10 ((11)). §13: OK IF
@@ -882,18 +882,18 @@ The conditions this section does not already state in its own words:
 Ledger 3558 (14): a Settings app "reads a machine-readable image manifest
 (profile, runtime_settings, settings_writer) and shows such pages
 read-only, 'fixed by this build (profile max)'". The flag and the key are
-another agent's (the `ferrix-kernel-settings` crate, `runtime_settings` in
+another agent's (the `xaqu-kernel-settings` crate, `runtime_settings` in
 `build-flags.toml` and the profiles, `settings_writer` beside
 `driver_updates`); this is the small interface between them and the app,
 so that whichever lands second connects to the other.
 
 * **The file** is the settings crate's (`docs/BUILD-FLAGS.md` §5.1, on
-  its branch): `/etc/ferrix/image-manifest`, `key=value` lines --
+  its branch): `/etc/xaqu/image-manifest`, `key=value` lines --
   `format=1`, `profile`, `level`, `claim`, `runtime_settings`, then the
   image keys, `settings_writer` among them -- written by xtask into every
   image, `max` included, from the values that write the build line and
   the image key (ledger 3636 (15)). This side only reads it.
-* **The reader.** `ferrix_settings_client::manifest`: `Manifest::read()`
+* **The reader.** `xaqu_settings_client::manifest`: `Manifest::read()`
   (`read_at(path)` for tests) gives the keys. **A missing file, or one
   whose `format` is not 1, reads as unknown**, and unknown is fixed: the
   pages a request backs are shown read-only. `Manifest::fixed()` is

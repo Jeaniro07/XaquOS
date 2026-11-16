@@ -1,4 +1,4 @@
-//! The previous boot's end, from the loader's `FERRIX/LASTKERNEL.TXT`
+//! The previous boot's end, from the loader's `XAQU/LASTKERNEL.TXT`
 //! (`docs/LOGGING.md` §5, `docs/POSTMORTEM.md` §3.5): what is a pure function
 //! of bytes.
 //!
@@ -25,7 +25,7 @@ use crate::ingest::{self, Now};
 use crate::record::Record;
 
 /// Where the loader keeps it on its volume.
-pub const PATH: &str = "FERRIX/LASTKERNEL.TXT";
+pub const PATH: &str = "XAQU/LASTKERNEL.TXT";
 
 /// The most the file may be: the region's ring and the report's lines.
 pub const MOST: usize = 1024 * 1024 + 1024;

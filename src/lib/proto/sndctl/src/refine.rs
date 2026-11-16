@@ -10,7 +10,7 @@
 //! and `sound/core/pcm_native.c` (`snd_pcm_hw_refine`,
 //! `constrain_mask_params`, `constrain_interval_params`,
 //! `fixup_unreferenced_params`, `snd_pcm_hw_params_choose`), copied to
-//! `~/.local/share/ferrix/audio-ref/kernel/` on 2026-09-26.
+//! `~/.local/share/xaqu/audio-ref/kernel/` on 2026-09-26.
 //!
 //! # One departure, and why it changes no answer
 //!
@@ -24,7 +24,7 @@
 //! before looking at `rmask`, and `cmask` gains the bit of every parameter
 //! that changed, as a rule's target gains it.
 
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::sound::{
     HW_PARAM_FIRST_INTERVAL, HW_PARAM_FIRST_MASK, HW_PARAM_FORMAT, HW_PARAM_RATE,
     HW_PARAM_SAMPLE_BITS, HwParams, INTERVAL_EMPTY, INTERVAL_INTEGER, INTERVAL_OPENMAX,
     INTERVAL_OPENMIN, INTERVALS, Interval, MASKS, Mask,
@@ -291,7 +291,7 @@ pub const ALL_PARAMS: u32 = u32::MAX;
 /// `snd_pcm_format_width` for the formats a card here offers: the bits of a
 /// sample that carry sound.
 fn format_width(format: u32) -> Option<u32> {
-    use ferrix_linux_abi::sound::{
+    use xaqu_linux_abi::sound::{
         FORMAT_FLOAT_LE, FORMAT_S8, FORMAT_S16_LE, FORMAT_S32_LE, FORMAT_U8, FORMAT_U16_LE,
         FORMAT_U32_LE,
     };

@@ -171,7 +171,7 @@ mod tests {
     #[test]
     fn the_bus_options_come_out_before_the_program() {
         let (bus, rest) = split(&words(
-            "--user ferrix --session-bus /data/usr/bin/dbus-daemon /etc/ferrix/session-bus.conf \
+            "--user xaqu --session-bus /data/usr/bin/dbus-daemon /etc/xaqu/session-bus.conf \
              --session-env XDG_DATA_DIRS=/data/usr/share:/usr/share -- /bin/hyprix --session-bus x y",
         ))
         .unwrap();
@@ -179,7 +179,7 @@ mod tests {
             bus,
             Some(Bus {
                 daemon: "/data/usr/bin/dbus-daemon".to_owned(),
-                config: "/etc/ferrix/session-bus.conf".to_owned(),
+                config: "/etc/xaqu/session-bus.conf".to_owned(),
                 env: vec![(
                     "XDG_DATA_DIRS".to_owned(),
                     "/data/usr/share:/usr/share".to_owned()
@@ -189,9 +189,9 @@ mod tests {
         // The program's own words, after `--`, are its own.
         assert_eq!(
             rest,
-            words("--user ferrix -- /bin/hyprix --session-bus x y")
+            words("--user xaqu -- /bin/hyprix --session-bus x y")
         );
-        let (none, rest) = split(&words("--user ferrix -- /bin/hyprix")).unwrap();
+        let (none, rest) = split(&words("--user xaqu -- /bin/hyprix")).unwrap();
         assert_eq!(none, None);
         assert_eq!(rest.len(), 4);
         assert!(split(&words("--session-bus /bin/x")).is_err());

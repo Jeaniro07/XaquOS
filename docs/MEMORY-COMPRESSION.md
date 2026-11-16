@@ -23,7 +23,7 @@ slot of the swap area. A fault on the entry brings it back.
    in RAM uncompressed at first (the proof of concept of APP-SUSPEND §3.2).
 2. **B2 ageing.** Accessed bits and active/inactive lists, so reclaim takes
    cold pages.
-3. **B3 pool.** `ferrix-lz4` compresses a page into a pool capped at 25% of
+3. **B3 pool.** `xaqu-lz4` compresses a page into a pool capped at 25% of
    RAM; a page compressing worse than 50% goes on to B4 or stays. Prefetch
    of a job's pages when its application comes back to the front.
 4. **B4 disk.** A preallocated, no-COW swap file on `/data`, encrypted with

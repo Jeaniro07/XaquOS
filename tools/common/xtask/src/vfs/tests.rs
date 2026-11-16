@@ -11,7 +11,7 @@ fn every_command() -> impl Iterator<Item = &'static Command> {
 
 /// The log a kernel that passes every command would write.
 fn passing_log() -> Vec<String> {
-    let mut log = owned(&["FERRIX-BOOT-OK stages 1-12"]);
+    let mut log = owned(&["XAQU-BOOT-OK stages 1-12"]);
     for (index, command) in every_command().enumerate() {
         log.push(format!("  init     command {index}: {}", command.argv[0]));
         match command.expect {
@@ -164,14 +164,14 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
         4,
         &["sysctl: error setting key 'kernel.ostype': Permission denied"],
     ),
-    (5, &["kernel.ostype = Ferrix"]),
+    (5, &["kernel.ostype = Xaqu"]),
     (6, &["kernel.pid_max = 32768"]),
     (
         7,
         &[
             "kernel.hostname = applets",
             "applets",
-            "kernel.hostname = ferrix",
+            "kernel.hostname = xaqu",
             "hostname: restored",
         ],
     ),
@@ -219,7 +219,7 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
     (
         12,
         &[
-            "Linux 6.1.0-ferrix (ferrix)\t01/01/70\t_x86_64_\t(4 CPU)",
+            "Linux 6.1.0-xaqu (xaqu)\t01/01/70\t_x86_64_\t(4 CPU)",
             "",
             "00:00:05     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  \
              %guest   %idle",
@@ -230,7 +230,7 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
     (
         13,
         &[
-            "Linux 6.1.0-ferrix (ferrix) \t01/01/70 \t_x86_64_\t(4 CPU)",
+            "Linux 6.1.0-xaqu (xaqu) \t01/01/70 \t_x86_64_\t(4 CPU)",
             "",
             "avg-cpu:  %user   %nice %system %iowait  %steal   %idle",
             "          18.27    0.00    0.00    0.00    0.00   81.73",
@@ -243,7 +243,7 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
     (
         17,
         &[
-            "uid=1000(ferrix) gid=1000(ferrix) groups=1000(ferrix)",
+            "uid=1000(xaqu) gid=1000(xaqu) groups=1000(xaqu)",
             "cat: /tmp/dac-private: Permission denied",
             "owned by 1000 1000",
             "rm: cannot remove '/tmp/dac-private': Permission denied",
@@ -259,7 +259,7 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
             "hostname: failed to set hostname: Permission denied",
             "zsh:kill:14: kill 1 failed: operation not permitted",
             "mknod: Operation not permitted (os error 1)",
-            "login shell -zsh in /home/ferrix as 1000",
+            "login shell -zsh in /home/xaqu as 1000",
             "root still reads: secret",
         ],
     ),
@@ -373,7 +373,7 @@ const APPLETS_ON_X86_64: &[(usize, &[&str])] = &[
 /// A log of the applets alone, numbered after the criterion's commands, each
 /// printing `output` and exiting with its expected status.
 fn applets_log(outputs: &[(usize, &[&str])]) -> Vec<String> {
-    let mut log = owned(&["FERRIX-BOOT-OK stages 1-12"]);
+    let mut log = owned(&["XAQU-BOOT-OK stages 1-12"]);
     for (index, output) in outputs {
         let command = &APPLETS[index - COMMANDS.len()];
         log.push(format!("  init     command {index}: {}", command.argv[0]));
@@ -387,7 +387,7 @@ fn applets_log(outputs: &[(usize, &[&str])]) -> Vec<String> {
 }
 
 #[test]
-fn the_applets_pass_on_what_busybox_printed_on_ferrix() {
+fn the_applets_pass_on_what_busybox_printed_on_xaqu() {
     assert_eq!(APPLETS_ON_X86_64.len(), APPLETS.len());
     let log = applets_log(APPLETS_ON_X86_64);
     let passed = judge(APPLETS, COMMANDS.len(), &log).unwrap();
@@ -457,7 +457,7 @@ fn kernel_lines_about_commands_are_read() {
 #[test]
 fn a_log_splits_into_each_commands_output_and_unanswered_calls() {
     let log = owned(&[
-        "FERRIX-BOOT-OK stages 1-12",
+        "XAQU-BOOT-OK stages 1-12",
         "  init     /bin/busybox is 857 KiB, running 2 commands",
         "  init     command 0: ls -R /proc",
         "  syscall  Getdents64 (number 217) answered ENOSYS",
@@ -582,7 +582,7 @@ fn maps_must_ascend_without_overlap_and_not_be_empty() {
     ]);
     assert!(maps(&overlapping).is_err());
     assert!(maps(&[]).is_err());
-    assert!(maps(&owned(&["FERRIX says hello"])).is_err());
+    assert!(maps(&owned(&["XAQU says hello"])).is_err());
 }
 
 #[test]
@@ -643,7 +643,7 @@ fn an_unreadable_program_is_the_whole_report() {
 /// What the permissions row printed on `aarch64`, whose image carries busybox
 /// and no uutils, from `cargo xtask test-vfs --arch aarch64`.
 const PERMISSIONS_ON_AARCH64: &[&str] = &[
-    "uid=1000(ferrix) gid=1000(ferrix) groups=1000(ferrix)",
+    "uid=1000(xaqu) gid=1000(xaqu) groups=1000(xaqu)",
     "cat: can't open '/tmp/dac-private': Permission denied",
     "owned by 1000 1000",
     "rm: can't remove '/tmp/dac-private': Operation not permitted",
@@ -659,7 +659,7 @@ const PERMISSIONS_ON_AARCH64: &[&str] = &[
     "hostname: sethostname: Operation not permitted",
     "zsh:kill:14: kill 1 failed: operation not permitted",
     "mknod: /tmp/dac-null: Operation not permitted",
-    "login shell -zsh in /home/ferrix as 1000",
+    "login shell -zsh in /home/xaqu as 1000",
     "root still reads: secret",
 ];
 

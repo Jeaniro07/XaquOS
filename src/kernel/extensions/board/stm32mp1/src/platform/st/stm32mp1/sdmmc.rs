@@ -49,10 +49,10 @@
 use alloc::format;
 use core::fmt;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_fdt::{Fdt, GicInterrupt, Node};
-use ferrix_native_abi::types::TREE_STM32_SDMMC;
-use ferrix_sync::Once;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_fdt::{Fdt, GicInterrupt, Node};
+use xaqu_native_abi::types::TREE_STM32_SDMMC;
+use xaqu_sync::Once;
 
 use super::{
     HSI_HZ, Mhz, PLL_ON, PLL_READY, RCC_HSICFGR, RCC_PLL4CFGR2, RCC_PLL4CR, RCC_RCK4SELR, Window,

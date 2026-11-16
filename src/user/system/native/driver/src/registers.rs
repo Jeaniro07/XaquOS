@@ -8,17 +8,17 @@
 //! "the value less one", so a driver writes `.frame_size(8)` for eight-bit
 //! frames, never 7.
 //!
-//! The types are `ferrix-registers`', re-exported here; this module adds
+//! The types are `xaqu-registers`', re-exported here; this module adds
 //! the mapping of a device's aperture they are laid over, [`Registers`].
 
 use core::ops::Deref;
 
-use ferrix_native_abi::types::IoMappingSpec;
-pub use ferrix_registers::{
+use xaqu_native_abi::types::IoMappingSpec;
+pub use xaqu_registers::{
     Access, OffsetByOne, OutOfRange, ReadOnly, ReadWrite, RegisterMap, Value, Width, WriteOnly,
 };
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device, IoMapping};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device, IoMapping};
 
 use crate::model::{Errno, Result};
 

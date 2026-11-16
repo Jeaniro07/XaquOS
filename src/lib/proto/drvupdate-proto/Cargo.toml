@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-drvupdate-proto"
+name = "xaqu-drvupdate-proto"
 description = "A driver update's messages between /bin/drvupdate, drvupdated and devmgr, as docs/DEVMGR.md 4.1 fixes them"
 version.workspace = true
 edition.workspace = true

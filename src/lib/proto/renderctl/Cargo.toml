@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-renderctl"
+name = "xaqu-renderctl"
 description = "The render control protocol between the kernel's render core and a ring-3 GPU driver, whatever the GPU is"
 version = "0.1.0"
 edition = "2024"
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-native-abi = { workspace = true }
+xaqu-native-abi = { workspace = true }
 
 [lints]
 workspace = true

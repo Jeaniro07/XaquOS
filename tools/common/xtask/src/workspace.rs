@@ -172,13 +172,13 @@ mod tests {
     #[test]
     fn the_real_workspace_sorts_every_native_program_out_of_the_host_gates() {
         let sorted = members(&paths::workspace_root()).expect("the workspace sorts");
-        for package in ["ferrix-kernel", "ferrix-boot"] {
+        for package in ["xaqu-kernel", "xaqu-boot"] {
             assert!(
                 sorted.kernel_and_loader.iter().any(|name| name == package),
                 "{package}"
             );
         }
-        for package in ["ferrix-rt", "ferrix-devmgr", "ferrix-gpu", "ferrix-blk"] {
+        for package in ["xaqu-rt", "xaqu-devmgr", "xaqu-gpu", "xaqu-blk"] {
             assert!(
                 sorted.native.iter().any(|name| name == package),
                 "{package}"
@@ -186,7 +186,7 @@ mod tests {
             assert!(!sorted.host.iter().any(|name| name == package), "{package}");
         }
         assert!(sorted.host.iter().any(|name| name == "xtask"));
-        assert!(sorted.host.iter().any(|name| name == "ferrix-net"));
+        assert!(sorted.host.iter().any(|name| name == "xaqu-net"));
     }
 
     #[test]
@@ -218,17 +218,17 @@ mod tests {
         assert!(!is_kernel_place("src/kernelish"));
         assert!(!is_kernel_place("src/lib/kernel/sched"));
         let sorted = members(&paths::workspace_root()).expect("the workspace sorts");
-        assert!(sorted.kernel.iter().any(|name| name == "ferrix-kernel"));
+        assert!(sorted.kernel.iter().any(|name| name == "xaqu-kernel"));
         for package in &sorted.kernel {
             assert!(sorted.kernel_and_loader.contains(package), "{package}");
             assert!(!sorted.host.contains(package), "{package}");
         }
-        assert!(!sorted.kernel.iter().any(|name| name == "ferrix-boot"));
+        assert!(!sorted.kernel.iter().any(|name| name == "xaqu-boot"));
     }
 
     #[test]
     fn a_freestanding_program_outside_user_is_refused() {
-        let root = std::env::temp_dir().join(format!("ferrix-workspace-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("xaqu-workspace-{}", std::process::id()));
         let program = root.join("src").join("lib").join("stray");
         std::fs::create_dir_all(program.join("src")).expect("a scratch workspace");
         std::fs::write(
@@ -260,7 +260,7 @@ mod tests {
 
     #[test]
     fn the_package_name_is_the_one_under_package() {
-        let manifest = "[package]\nname = \"ferrix-thing\"\nversion.workspace = true\n\n[dependencies]\nname = \"not this\"\n";
-        assert_eq!(package_name(manifest).as_deref(), Some("ferrix-thing"));
+        let manifest = "[package]\nname = \"xaqu-thing\"\nversion.workspace = true\n\n[dependencies]\nname = \"not this\"\n";
+        assert_eq!(package_name(manifest).as_deref(), Some("xaqu-thing"));
     }
 }

@@ -10,7 +10,7 @@
 //! an LLC part with softpin and no fence registers none of them changes what
 //! the GPU or the CPU sees.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::drm::{Call, put, unserved};
 use super::fence::{Hold, WaitKind};
@@ -805,7 +805,7 @@ pub fn dmabuf_import<M>(
     kind: u32,
     value: u64,
 ) -> Result<(), Errno> {
-    use ferrix_chardevctl_consts::{IMPORT_FOREIGN, IMPORT_OWN, IMPORT_SIGNALLED};
+    use xaqu_chardevctl_consts::{IMPORT_FOREIGN, IMPORT_OWN, IMPORT_SIGNALLED};
     const READ: u32 = 1;
     const WRITE: u32 = 2;
     if flags & !(READ | WRITE) != 0 || flags == 0 {
@@ -834,10 +834,10 @@ pub fn dmabuf_import<M>(
     Ok(())
 }
 
-/// The chardev protocol's import kinds (`ferrix_chardevctl::message`),
+/// The chardev protocol's import kinds (`xaqu_chardevctl::message`),
 /// spelt here so this crate needs no dependency on it; the driver's tests
 /// hold the two to the same numbers.
-pub mod ferrix_chardevctl_consts {
+pub mod xaqu_chardevctl_consts {
     /// `IMPORT_OWN`.
     pub const IMPORT_OWN: u32 = 1;
     /// `IMPORT_SIGNALLED`.

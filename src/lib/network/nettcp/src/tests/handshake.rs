@@ -98,17 +98,17 @@ fn a_reset_to_a_connection_request_is_a_refusal() {
         .poll_transmit(0, &mut payload)
         .expect("the request goes out first");
 
-    let reset = ferrix_netwire::tcp::Header {
+    let reset = xaqu_netwire::tcp::Header {
         source_port: 80,
         destination_port: 40_000,
         sequence: 0,
         acknowledgment: syn.header.sequence.wrapping_add(1),
-        flags: ferrix_netwire::tcp::Flags::RST.union(ferrix_netwire::tcp::Flags::ACK),
+        flags: xaqu_netwire::tcp::Flags::RST.union(xaqu_netwire::tcp::Flags::ACK),
         window: 0,
         urgent_pointer: 0,
-        options: ferrix_netwire::tcp::Options::default(),
+        options: xaqu_netwire::tcp::Options::default(),
     };
-    let segment = ferrix_netwire::tcp::Segment {
+    let segment = xaqu_netwire::tcp::Segment {
         header: reset,
         payload: &[],
     };
@@ -138,13 +138,13 @@ fn a_listener_answers_a_request_with_the_numbers_it_was_given() {
         answer
             .header
             .flags
-            .contains(ferrix_netwire::tcp::Flags::SYN)
+            .contains(xaqu_netwire::tcp::Flags::SYN)
     );
     assert!(
         answer
             .header
             .flags
-            .contains(ferrix_netwire::tcp::Flags::ACK)
+            .contains(xaqu_netwire::tcp::Flags::ACK)
     );
     assert_eq!(answer.header.sequence, 77);
     assert_eq!(answer.header.acknowledgment, 5_001);

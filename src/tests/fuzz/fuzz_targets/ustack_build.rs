@@ -24,8 +24,8 @@
 
 #![no_main]
 
-use ferrix_ustack::read::Walk;
-use ferrix_ustack::{RANDOM_BYTES, Spec, Width, build};
+use xaqu_ustack::read::Walk;
+use xaqu_ustack::{RANDOM_BYTES, Spec, Width, build};
 use libfuzzer_sys::fuzz_target;
 
 /// A byte the builder must never write.
@@ -204,7 +204,7 @@ fuzz_target!(|data: &[u8]| {
     // AT_EXECFN must resolve to the string it was given.
     let execfn_addr = seen
         .iter()
-        .find(|&&(k, _)| k == ferrix_linux_abi::types::AT_EXECFN)
+        .find(|&&(k, _)| k == xaqu_linux_abi::types::AT_EXECFN)
         .map(|&(_, v)| v)
         .expect("AT_EXECFN is always supplied");
     assert_eq!(
@@ -216,7 +216,7 @@ fuzz_target!(|data: &[u8]| {
     // AT_RANDOM must point at the sixteen bytes the caller chose.
     let random_addr = seen
         .iter()
-        .find(|&&(k, _)| k == ferrix_linux_abi::types::AT_RANDOM)
+        .find(|&&(k, _)| k == xaqu_linux_abi::types::AT_RANDOM)
         .map(|&(_, v)| v)
         .expect("AT_RANDOM is always supplied");
     let offset = (random_addr - base) as usize;

@@ -1,4 +1,4 @@
-# Booting Ferrix on an STM32MP157-DK
+# Booting Xaqu on an STM32MP157-DK
 
 What to do with a DK board and an SD card, and what to expect at each step.
 
@@ -10,8 +10,8 @@ below the 2 GiB split when the loader cannot be mapped where it is, does not
 help them: all of their RAM is above the split, so there is no such page.
 
 **What has run on hardware.** An STM32MP157D-DK1, with the firmware described
-in step 1, has booted Ferrix through stage 5 (2026-09-12, `6df0925`) and then
-through stage 9 at both processors, reporting `FERRIX-BOOT-OK stages 1-9`,
+in step 1, has booted Xaqu through stage 5 (2026-09-12, `6df0925`) and then
+through stage 9 at both processors, reporting `XAQU-BOOT-OK stages 1-9`,
 with busybox started as init running `test-shell`'s script (2026-09-13,
 `fd4442e`). That run also found that the last line before power-off was cut
 off. The console now drains before shutting down, and a build with that drain
@@ -19,7 +19,7 @@ and polled receive, run on the same board that day, sent the last line whole
 and answered a command typed at busybox's prompt. That evening, flashed from a
 Windows host, the board ran the `stage-9.1-console-and-iommu` tag with receive
 by interrupt and took pasted lines of up to 1000 characters whole; reset itself
-back to U-Boot under `ferrix.onexit=reset`; and booted the loader with its
+back to U-Boot under `xaqu.onexit=reset`; and booted the loader with its
 switch in a copyable block. On 2026-09-23 the board ran main again at two
 processors, and drove a monitor over HDMI: first one colour from a Linux
 program through `/dev/dri/card0`, then the `hyprix` Wayland compositor with a
@@ -46,7 +46,7 @@ STM32MP> load mmc 0:4 0xc2000000 EFI/BOOT/BOOTARM.EFI
 STM32MP> bootefi 0xc2000000 ${fdtcontroladdr}
 ```
 
-Success is a line beginning `FERRIX-BOOT-OK` — the stages after it say how far
+Success is a line beginning `XAQU-BOOT-OK` — the stages after it say how far
 the boot got — and `deploy` exits 0 on it.
 
 If it goes wrong, three arguments in order of usefulness:
@@ -79,13 +79,13 @@ this document is why, and what to do when the short version does not work.
 
 ## 1. Put firmware on the card
 
-Ferrix does not replace TF-A, OP-TEE or U-Boot, and cannot: the ROM loads TF-A
+Xaqu does not replace TF-A, OP-TEE or U-Boot, and cannot: the ROM loads TF-A
 from a GPT partition it finds by name, TF-A loads OP-TEE and U-Boot, and only
 then is there anything that can read a filesystem.
 
 Two firmware chains can do that. ST's **OpenSTLinux starter package** is the
-vendor's; its image is EULA-gated and has not been used with Ferrix. The chain
-Ferrix has actually booted on is built from **mainline**, and it is the one this
+vendor's; its image is EULA-gated and has not been used with Xaqu. The chain
+Xaqu has actually booted on is built from **mainline**, and it is the one this
 document describes.
 
 ### The mainline chain
@@ -135,11 +135,11 @@ Two settings in there each cost a day to find:
   is already running from `SR_ONF` only on silicon with `IWDG_VERR >= 0x31`;
   below that it writes `RLR`, polls `RVU`, and treats success as proof. The DK1
   this was written against reads `VERR = 0x30`, the heuristic false-positives,
-  and U-Boot force-starts a 32-second watchdog that nothing services once Ferrix
+  and U-Boot force-starts a 32-second watchdog that nothing services once Xaqu
   runs. Every boot is then cut off at about 30 s with no panic and no output,
   which reads exactly like a hang. Rebuilding OP-TEE without its IWDG driver
   does **not** fix it. The consequence of turning it off is the one to remember:
-  a Ferrix that panics stays halted until someone presses the board's reset
+  a Xaqu that panics stays halted until someone presses the board's reset
   button, and one that powered the board off needs its USB-C power unplugged
   and plugged in again.
 
@@ -150,7 +150,7 @@ Two settings in there each cost a day to find:
 | 1 | `fsbl1`  | 2 MiB   | `tf-a-stm32mp157a-dk1.stm32` (BL2) |
 | 2 | `fsbl2`  | 2 MiB   | an identical copy, the ROM's fallback |
 | 3 | `fip`    | 4 MiB   | `fip.bin`, plus U-Boot's saved environment in the top 16 KiB |
-| 4 | `bootfs` | 128 MiB | FAT32: Ferrix's loader, kernel and initramfs |
+| 4 | `bootfs` | 128 MiB | FAT32: Xaqu's loader, kernel and initramfs |
 
 The ROM finds partitions 1 and 2 by name, so the GPT names matter. U-Boot's
 own device tree sets `u-boot,mmc-env-partition = "fip"`, so `saveenv` writes to
@@ -192,7 +192,7 @@ cargo xtask deploy --arch armv7a --init /path/to/{arch}/bin/busybox.static
 ```
 
 The kernel is built to start `sh -i` on the console, and the initramfs carries
-busybox at `/bin/busybox` with a link beside it for every applet. `FERRIX_INIT`
+busybox at `/bin/busybox` with a link beside it for every applet. `XAQU_INIT`
 works in place of `--init`. The binary must be static and hard-float ARMv7;
 Alpine's `busybox-static` for `armv7` is.
 
@@ -208,8 +208,8 @@ Three files are copied, which are the three the image contains:
 
 ```
 EFI/BOOT/BOOTARM.EFI    the loader, where firmware looks with no boot entry
-FERRIX/KERNEL.ELF       the kernel, where the loader looks
-FERRIX/INITRD.IMG       the initramfs, beside the kernel; busybox, given --init
+XAQU/KERNEL.ELF       the kernel, where the loader looks
+XAQU/INITRD.IMG       the initramfs, beside the kernel; busybox, given --init
 ```
 
 Nothing else on the card is touched. The kernel goes on without its debug
@@ -268,12 +268,12 @@ first driven from Windows on 2026-09-13.
    with that drive's letter. `--to` must be the root of a FAT volume with a
    drive letter, and one Windows boots from or that is an EFI system partition
    is refused. Each file is flushed as it is written and the volume with
-   `Write-VolumeCache` at the end. `FERRIX\CMDLINE.TXT`, which only a `--reset`
+   `Write-VolumeCache` at the end. `XAQU\CMDLINE.TXT`, which only a `--reset`
    build has, is not copied, on this host or any other: extract it with
-   `7z x build\armv7a\ferrix.img` and copy it by hand.
+   `7z x build\armv7a\xaqu.img` and copy it by hand.
 3. **Boot.** Ctrl-C at the console ends mass-storage mode; then the three lines
    of step 3 below, one at a time. `cargo xtask watch-serial` exits 0 when the
-   kernel says `FERRIX-BOOT-OK`.
+   kernel says `XAQU-BOOT-OK`.
 
 ## 3. Tell U-Boot to boot it
 
@@ -317,7 +317,7 @@ the card in the board says, or the USB keyboard and mouse are not found.
 
 ### Resetting the board from the host
 
-**After Ferrix powers the board off, reset does nothing.** Every `test-shell`
+**After Xaqu powers the board off, reset does nothing.** Every `test-shell`
 run, and any exit of the shell, ends in PSCI `SYSTEM_OFF`. From there the reset
 button brings nothing back, as seen on the DK1 with the serial port watched
 throughout; unplugging the USB-C power and plugging it in again does. The
@@ -342,29 +342,29 @@ failure when the board is off: OpenOCD reaches the ST-LINK, reports
 to the target)`. A reading of 0 V means the board has no power — a reset cannot
 help, and someone has to restore it.
 
-**Or let Ferrix reset the board itself.** With
+**Or let Xaqu reset the board itself.** With
 
 ```
-STM32MP> setenv bootargs 'ferrix.onexit=reset'
+STM32MP> setenv bootargs 'xaqu.onexit=reset'
 ```
 
 the end of boot — a `test-shell` script finishing, or the shell exiting — is
 PSCI `SYSTEM_RESET` rather than `SYSTEM_OFF`, and the board comes back through
 TF-A to `STM32MP>` for the next image with no hand at it. The boot says
-`power    ferrix.onexit=reset: the machine resets when boot ends`, and the end
-says `power    resetting, as ferrix.onexit=reset asks`. U-Boot keeps `bootargs`
+`power    xaqu.onexit=reset: the machine resets when boot ends`, and the end
+says `power    resetting, as xaqu.onexit=reset asks`. U-Boot keeps `bootargs`
 in RAM, so an option set there survives that reset only if it was saved with
 `saveenv`.
 
 **Or put it on the card.** The loader reads a kernel command line from
-`FERRIX/CMDLINE.TXT`, beside the kernel, which survives every reset:
+`XAQU/CMDLINE.TXT`, beside the kernel, which survives every reset:
 
 ```
-ferrix.onexit=reset
+xaqu.onexit=reset
 ```
 
 UTF-8, at most 3872 bytes, surrounding whitespace dropped. The loader says
-`cmdline  ferrix.onexit=reset  (from /FERRIX/CMDLINE.TXT)` when it reads one; a
+`cmdline  xaqu.onexit=reset  (from /XAQU/CMDLINE.TXT)` when it reads one; a
 missing file says nothing, and a file it cannot use is reported and ignored,
 since every option has a safe default. The kernel prefers the file's options to
 U-Boot's `bootargs`. `flash` does not write the file: copy it by hand, or build
@@ -372,7 +372,7 @@ the image with `--reset`, which puts exactly that line in it.
 `cargo xtask test-boot --reset` boots such an image and requires QEMU to see the
 machine reset rather than power off, on every architecture.
 
-**The image's own options** go beside it, in `FERRIX/DEFAULTS.TXT`, which is
+**The image's own options** go beside it, in `XAQU/DEFAULTS.TXT`, which is
 the image's and not yours: every `flash` rewrites it, or deletes it when the
 image has none, so a self-check image flashed over a desktop does not boot
 with the desktop's options. The loader reads `CMDLINE.TXT` first and
@@ -380,8 +380,8 @@ with the desktop's options. The loader reads `CMDLINE.TXT` first and
 value of a key, so a line in `CMDLINE.TXT` always wins. It says both:
 
 ```
-  cmdline  ferrix.onexit=reset  (from /FERRIX/CMDLINE.TXT)
-  cmdline  ferrix.checks=skip  (from /FERRIX/DEFAULTS.TXT, the image's defaults)
+  cmdline  xaqu.onexit=reset  (from /XAQU/CMDLINE.TXT)
+  cmdline  xaqu.checks=skip  (from /XAQU/DEFAULTS.TXT, the image's defaults)
 ```
 
 Only `flash --compositor` writes one today (step 4).
@@ -398,9 +398,9 @@ cargo xtask flash --arch armv7a --compositor --to E:\
 ```
 
 then boot as in step 3. The image carries a busybox, which is what the
-terminal's shell runs `ls` and `mkdir` from: `--init` or `FERRIX_INIT` names
+terminal's shell runs `ls` and `mkdir` from: `--init` or `XAQU_INIT` names
 one, and without either it is Alpine's static one where the gates keep it,
-`~/.local/share/ferrix/busybox/armv7a/bin/busybox.static` (step 2). Without
+`~/.local/share/xaqu/busybox/armv7a/bin/busybox.static` (step 2). Without
 any the terminal has only zinc's builtins -- which is how the board's first
 desktop, on 2026-09-23, answered `command not found: mkdir`, since the
 busybox `run-compositor` picks up unasked is ferrousli's, which has no ARM
@@ -417,10 +417,10 @@ the screen as the desktop lays it out -- 720x1280 for a monitor turned
 `--wallpaper none` is a bare desktop. The boot says:
 
 ```
-  cmdline  ferrix.checks=skip  (from /FERRIX/DEFAULTS.TXT, the image's defaults)
+  cmdline  xaqu.checks=skip  (from /XAQU/DEFAULTS.TXT, the image's defaults)
   ...
   stage 1  loader hand-off verified
-  checks   ferrix.checks=skip: stages 2 to 12 are brought up and not checked; this boot is not a boot test
+  checks   xaqu.checks=skip: stages 2 to 12 are brought up and not checked; this boot is not a boot test
   ...
   display  LTDC at 0x5a001000, HDMI bridge at 0x39 on I2C 0x40012000, pixel clock 74.250 MHz (at most 74.250), 30 pins muxed
 ltdc: monitor DELL U2415, EDID 1.3, 1 extension block, HDMI
@@ -437,7 +437,7 @@ ltdc: running 1920x1080 at 30.000 Hz, 74.250 MHz, VIC 34, HDMI
   display  card0 scanout 0: 1920x1080
   display  card0 runs 1920x1080 at 30 Hz, 6 modes listed
   devmgr   2 devices, 7 drivers, 2 started, 0 failed
-FERRIX-BOOT-UNCHECKED stages 1-12 brought up, the self-checks of 2 to 12 skipped as ferrix.checks=skip asks
+XAQU-BOOT-UNCHECKED stages 1-12 brought up, the self-checks of 2 to 12 skipped as xaqu.checks=skip asks
 hyprix: 1 monitor [card0 HDMI-A-1 1280x720 1280x720]
 ltdc: now running 1280x720 at 60.000 Hz, 74.250 MHz, VIC 4
 hyprix: started /bin/term /bin/zinc as 190
@@ -447,18 +447,18 @@ hyprix: started /bin/term /bin/zinc as 190
 the driver's and the kernel's lines depends on who writes first.)
 
 **The desktop's image skips the kernel's self-checks.** `flash --compositor`
-writes `ferrix.checks=skip` to `FERRIX/DEFAULTS.TXT` (step 3), and the kernel
+writes `xaqu.checks=skip` to `XAQU/DEFAULTS.TXT` (step 3), and the kernel
 then brings every stage up -- the allocators, the processors, the scheduler,
 the root from the initramfs, the device nodes, `devmgr`, the net core, the
 reclaim -- without the checks that prove each one works. They were most of
 the kernel's 6.5 s from its banner to its marker on 2026-09-24; under QEMU at
 two processors the same boot takes 0.34 s from the banner to the marker where
-the checks take 4.9 s. The marker is `FERRIX-BOOT-UNCHECKED` rather than
-`FERRIX-BOOT-OK`, so nothing that waits for the second is fooled by such a
+the checks take 4.9 s. The marker is `XAQU-BOOT-UNCHECKED` rather than
+`XAQU-BOOT-OK`, so nothing that waits for the second is fooled by such a
 boot: `test-boot` fails at once, and `watch-serial` fails too unless it is
 `deploy --compositor` watching the desktop it has just flashed. For a boot
 test on this card, flash without `--compositor` (which deletes the file), or
-keep the desktop and put `ferrix.checks=run` in `CMDLINE.TXT`, which wins.
+keep the desktop and put `xaqu.checks=run` in `CMDLINE.TXT`, which wins.
 `cargo xtask test-compositor --boot desktop` is the gate that a desktop still
 comes up with the checks skipped.
 
@@ -503,7 +503,7 @@ monitor that shows "out of range" or nothing at the mode chosen: the
 `ltdc: edid` lines are its EDID, which is what to look into; a `monitor =`
 line naming 1280x720 runs 720p meanwhile. If `devmgr`
 reports the driver failed, the bridge most likely did not answer on I2C: its
-supplies are the PMIC's `ldo2` and `ldo6`, which Ferrix does not touch and
+supplies are the PMIC's `ldo2` and `ldo6`, which Xaqu does not touch and
 which were on in every boot so far.
 
 ### The desktop on every reset, and the way back to U-Boot
@@ -514,7 +514,7 @@ it. Set them once, one line at a time, and save them:
 
 ```
 STM32MP> setenv bootcmd 'regulator dev vdd_usb; regulator enable; load mmc 0:4 0xc2000000 EFI/BOOT/BOOTARM.EFI; bootefi 0xc2000000 ${fdtcontroladdr}'
-STM32MP> setenv altbootcmd 'echo Ferrix asked for the U-Boot prompt, type boot to start it again; setenv bootdelay -1'
+STM32MP> setenv altbootcmd 'echo Xaqu asked for the U-Boot prompt, type boot to start it again; setenv bootdelay -1'
 STM32MP> saveenv
 ```
 
@@ -528,9 +528,9 @@ The desktop's image has a shell on the serial port beside the screen
 arguments as systemd's does:
 
 ```
-ferrix# reboot --firmware-setup   # back at STM32MP>, no autoboot
-ferrix# reboot ums                # the card on USB, ready for flash
-ferrix# reboot                    # the desktop again
+xaqu# reboot --firmware-setup   # back at STM32MP>, no autoboot
+xaqu# reboot ums                # the card on USB, ready for flash
+xaqu# reboot                    # the desktop again
 ```
 
 The word goes where Linux sends it, `reboot(2)`'s `RESTART2` command, and the
@@ -544,7 +544,7 @@ that one start -- `ums` is 0x10, `fastboot` 1. The boot log says which:
 reboot: Restarting system with command 'firmware'
 reboot: U-Boot runs altbootcmd, which stops at its prompt
 ...
-Ferrix asked for the U-Boot prompt, type boot to start it again
+Xaqu asked for the U-Boot prompt, type boot to start it again
 STM32MP>
 ```
 
@@ -558,10 +558,10 @@ Abridged. The stage 5 lines are the board's own, from its 2026-09-12 run; the
 lines after stage 5 have so far only been seen under QEMU.
 
 ```
-Ferrix loader 0.1.0 (armv7a)
+Xaqu loader 0.1.0 (armv7a)
   device tree copied, ...
   direct map of 0xc0000000..0xe0000000, kernel at ...
-Ferrix 0.1.0 on armv7a
+Xaqu 0.1.0 on armv7a
   memory   511 MiB total, ...
   fdt      st,stm32mp157...
   stage 1  loader hand-off verified
@@ -573,10 +573,10 @@ Ferrix 0.1.0 on armv7a
   tasks    1000 threads run to completion on 2 processors (0b11), 2798 switches, 73 steals
   stage 5  1000 threads scheduled fairly across 2 processors
   ...
-FERRIX-BOOT-OK stages 1-9
+XAQU-BOOT-OK stages 1-9
 ```
 
-`watch-serial` exits 0 on that last line and non-zero on `FERRIX-PANIC`, so it
+`watch-serial` exits 0 on that last line and non-zero on `XAQU-PANIC`, so it
 is a test rather than something to read. Stage 5 took 0.9 s of an 8.4 s boot,
 counted from U-Boot's `reset`.
 
@@ -585,7 +585,7 @@ counted from U-Boot's `reset`.
 ### Nothing on the serial port at all
 
 The loader's own lines come from firmware's console, so if even
-`Ferrix loader` is missing the problem is before us. In order:
+`Xaqu loader` is missing the problem is before us. In order:
 
 * **Is the board powered?** The ST-LINK's port exists whether it is or not.
   `openocd -f board/stm32mp15x_dk2.cfg -c "init; shutdown"` reports the target
@@ -677,28 +677,28 @@ tasks onto one queue reads many times slower there than on the board.
 | Claim | How |
 |---|---|
 | Stages 1-5 run on an STM32MP157D-DK1 | booted at `6df0925` on 2026-09-12, mainline firmware above |
-| Stages 1-9 run on the same board, at two processors | booted at `fd4442e` on 2026-09-13: `FERRIX-BOOT-OK stages 1-9` |
+| Stages 1-9 run on the same board, at two processors | booted at `fd4442e` on 2026-09-13: `XAQU-BOOT-OK stages 1-9` |
 | Busybox runs as init on the board | `test-shell`'s script at `fd4442e`, its output on the console up to the cut last line |
 | `ums 0 mmc 0` exposes the card to the host | on the board, 2026-09-13 |
 | A command typed at busybox's prompt runs on the board | 2026-09-13, polled receive: `echo rx-$((6*7))`, a byte every 100 ms, echoed and printed `rx-42` |
-| The `stage-9.1-console-and-iommu` tag runs on the board, receiving by interrupt | `ec549f2`, 2026-09-13 evening: `the port receives by interrupt 84`, `FERRIX-BOOT-OK stages 1-9`, `test-shell`'s script typed into `sh -i` line by line with all seven lines in order |
+| The `stage-9.1-console-and-iommu` tag runs on the board, receiving by interrupt | `ec549f2`, 2026-09-13 evening: `the port receives by interrupt 84`, `XAQU-BOOT-OK stages 1-9`, `test-shell`'s script typed into `sh -i` line by line with all seven lines in order |
 | Pasted input arrives whole on the board | the same run: a 65-character line of three commands that lost 37 characters under polled receive ran whole; 300 and 1000 characters in one write reached `wc -c` as 301 and 1001 |
-| `ferrix.onexit=reset` resets the board to U-Boot | `board-reset-3c`, the same evening: `exit 7`, then TF-A's banner 0.44 s later and `STM32MP>` with no hand at the board |
-| The loader with its switch in a copyable block boots the board | `armv7a-2gib` with the instruction-cache invalidation, the same evening: the in-place path, `FERRIX-BOOT-OK stages 1-9` at two processors |
-| `CMDLINE.TXT` on the card reaches the kernel, and resets the board | 2026-09-14, U-Boot's `bootargs` undefined: `cmdline  ferrix.onexit=reset  (from /FERRIX/CMDLINE.TXT)`, `FERRIX-BOOT-OK stages 1-9`, then TF-A's banner and `STM32MP>` with no hand at the board |
+| `xaqu.onexit=reset` resets the board to U-Boot | `board-reset-3c`, the same evening: `exit 7`, then TF-A's banner 0.44 s later and `STM32MP>` with no hand at the board |
+| The loader with its switch in a copyable block boots the board | `armv7a-2gib` with the instruction-cache invalidation, the same evening: the in-place path, `XAQU-BOOT-OK stages 1-9` at two processors |
+| `CMDLINE.TXT` on the card reaches the kernel, and resets the board | 2026-09-14, U-Boot's `bootargs` undefined: `cmdline  xaqu.onexit=reset  (from /XAQU/CMDLINE.TXT)`, `XAQU-BOOT-OK stages 1-9`, then TF-A's banner and `STM32MP>` with no hand at the board |
 | `test-boot --reset` sees a reset under QEMU | `cargo xtask test-boot --reset` on x86_64, aarch64 and armv7a, and armv7a at `--smp 2`: after `power    resetting` each shows the loader start again, which a power-off, pausing QEMU under `-action shutdown=pause`, cannot |
 | Flashing from Windows through `ums` | the same evening, three times: the files copied to `bootfs`, flushed, and their SHA-256 checked on the card |
 | The console drains before power-off | the same run: after `exit 7`, `init     the shell exited with 7` arrived whole with nothing after it, where the earlier run stopped mid-word |
 | Both processors come up and share work | the same boot: `2 online`, `1000 threads ... on 2 processors (0b11)` |
 | `${fdtcontroladdr}` is the tree to pass; `${fdt_addr_r}` fails | on the board |
-| Main still boots the board, 2026-09-23 | `f03e210e` plus the HDMI stack, busybox as init: `FERRIX-BOOT-OK stages 1-11` at two processors, the shell answered `uname -a`, and `exit` reset the board to `STM32MP>` under `CMDLINE.TXT`'s `ferrix.onexit=reset` |
+| Main still boots the board, 2026-09-23 | `f03e210e` plus the HDMI stack, busybox as init: `XAQU-BOOT-OK stages 1-11` at two processors, the shell answered `uname -a`, and `exit` reset the board to `STM32MP>` under `CMDLINE.TXT`'s `xaqu.onexit=reset` |
 | PLL4's Q output is 74.25 MHz on this firmware | read from U-Boot: `PLL4CR 0x73`, `PLL4CFGR1 0x00030062`, `PLL4CFGR2 0x00070705`, no fraction, `RCK4SELR` the HSE: 24 MHz / 4 x 99 / 8. The kernel reads the same registers and prints `pixel clock 74.250 MHz` |
-| The pixel clock's divider can be changed while Ferrix runs, and modes other than 720p60 show | **not yet on the board** (2026-09-24). What stands behind it: `PLL4CFGR2 0x00070705` above is DIVQ 7 in bits 14:8 with P and R beside it; TF-A's `pll4_cfg1` gives P to SDMMC1 only; Linux's clock tree gates `pll4_q` with `PLL4CR` bit 5 around its divider; the mode choice is host-tested against two Dells' EDIDs |
+| The pixel clock's divider can be changed while Xaqu runs, and modes other than 720p60 show | **not yet on the board** (2026-09-24). What stands behind it: `PLL4CFGR2 0x00070705` above is DIVQ 7 in bits 14:8 with P and R beside it; TF-A's `pll4_cfg1` gives P to SDMMC1 only; Linux's clock tree gates `pll4_q` with `PLL4CR` bit 5 around its divider; the mode choice is host-tested against two Dells' EDIDs |
 | The RCC is the normal world's to write | OP-TEE's boot line `RCC tzen:0` |
 | HDMI out at 1280x720 from a Linux program | `src/user/system/linux/compositor/blank` as init drew `0x1e1e2e` over `/dev/dri/card0`, seen on a monitor, 2026-09-23 (`docs/DISPLAY.md` §6) |
 | The Wayland compositor on the board | `hyprix` as init: `1 monitor [card0 HDMI-A-1 1280x720 1280x720]`, a terminal window tiled, seen on the monitor, about 100 ms a frame |
 | A monitor in portrait | `monitor = HDMI-A-1, 1280x720@60, 0x0, 1, transform, 3`: `hyprix: 1 monitor [card0 HDMI-A-1 1280x720 1280x720 transform 3]`, a terminal of 678x1238 pixels over a second window, upright on the customer's monitor, 2026-09-23 |
-| A reset starts the desktop; `reboot --firmware-setup` comes back to U-Boot | 2026-09-23 23:16, the environment above saved: `reset` autobooted to `hyprix: 1 monitor [... transform 3]` with the serial shell's `ferrix#` beside it; `reboot --firmware-setup` there printed `reboot: U-Boot runs altbootcmd, which stops at its prompt`, and after TF-A U-Boot said `Ferrix asked for the U-Boot prompt, type boot to start it again` at `STM32MP>`; `boot` brought the desktop back |
+| A reset starts the desktop; `reboot --firmware-setup` comes back to U-Boot | 2026-09-23 23:16, the environment above saved: `reset` autobooted to `hyprix: 1 monitor [... transform 3]` with the serial shell's `xaqu#` beside it; `reboot --firmware-setup` there printed `reboot: U-Boot runs altbootcmd, which stops at its prompt`, and after TF-A U-Boot said `Xaqu asked for the U-Boot prompt, type boot to start it again` at `STM32MP>`; `boot` brought the desktop back |
 | The TAMP boot context is the normal world's to write | U-Boot's `mw.l 0x5c00a150 0x00011102` read back, took effect at the next start and was cleared to `00011100`; `PWR_CR1` reads `0x100`, the backup domain writable |
 | Both boot switches ON boots the SD card; the prompt is `STM32MP>` | on the board |
 | U-Boot's IWDG heuristic starts a 32 s watchdog on `VERR = 0x30` | on the board; gone with `WDT_STM32MP` off, and survives an OP-TEE without IWDG |

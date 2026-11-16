@@ -4,7 +4,7 @@
 //!
 //! The one reader it was made for is the Pixel 7's USB serial port
 //! (`docs/vendor/google/pixel7/USB-HANDOVER.md`, phase 4): its driver, `usbdev`, streams the
-//! boot's lines and `ferrix-statd`'s output to the host live. A driver holding
+//! boot's lines and `xaqu-statd`'s output to the host live. A driver holding
 //! a device whose binding may read the log asks for a control channel with
 //! `log_control_create`, then asks for bytes with READ and is answered with
 //! DATA, one at a time, from the oldest byte the kernel still keeps: a driver

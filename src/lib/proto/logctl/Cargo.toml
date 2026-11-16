@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-logctl"
+name = "xaqu-logctl"
 description = "The log control protocol: how a ring-3 driver reads the kernel log over a control channel"
 version = "0.1.0"
 edition = "2024"

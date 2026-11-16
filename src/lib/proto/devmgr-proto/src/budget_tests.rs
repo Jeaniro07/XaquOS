@@ -8,7 +8,7 @@ use std::format;
 use std::string::String;
 use std::vec::Vec;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::budget::{GIB_PAGES, GpuBudget, NVRM_MIN_PIN_PAGES, PAGE_BYTES};
 
@@ -162,8 +162,8 @@ fn functions(source: &str) -> Vec<(String, &str)> {
 /// `SET_LIMIT`, and nothing in devmgr asks for the same rights it holds.
 #[test]
 fn every_launch_path_narrows_the_device_to_a_drivers_rights() {
-    assert!(!ferrix_blkring::control::DEVICE_RIGHTS.contains(Rights::SET_LIMIT));
-    assert!(!ferrix_netring::control::DEVICE_RIGHTS.contains(Rights::SET_LIMIT));
+    assert!(!xaqu_blkring::control::DEVICE_RIGHTS.contains(Rights::SET_LIMIT));
+    assert!(!xaqu_netring::control::DEVICE_RIGHTS.contains(Rights::SET_LIMIT));
     assert!(
         !DEVMGR.contains("SAME_RIGHTS") && !DEVMGR.contains("Requested::Same"),
         "a handle is passed on with the rights devmgr holds"

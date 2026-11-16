@@ -5,7 +5,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::*;
 use crate::session::*;
@@ -238,7 +238,7 @@ fn every_message() -> Vec<Message> {
 }
 
 /// A made-up timing for a size at `refresh_mhz`, as drivers make one
-/// (`ferrix-display-modes`'s `synthetic`): the tests' own, since the core
+/// (`xaqu-display-modes`'s `synthetic`): the tests' own, since the core
 /// makes none.
 pub(crate) fn synthetic(width: u32, height: u32, refresh_mhz: u32) -> Timing {
     let clamp = |value: u32| u16::try_from(value).unwrap_or(u16::MAX);

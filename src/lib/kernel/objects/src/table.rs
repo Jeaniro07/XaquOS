@@ -43,9 +43,9 @@
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_sync::nospec;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_sync::nospec;
 
 /// Bits of a handle value that hold the generation.
 const GENERATION_BITS: u32 = 12;
@@ -78,8 +78,8 @@ pub enum TableError {
     NoMemory,
 }
 
-impl From<ferrix_fallible::AllocError> for TableError {
-    fn from(_: ferrix_fallible::AllocError) -> TableError {
+impl From<xaqu_fallible::AllocError> for TableError {
+    fn from(_: xaqu_fallible::AllocError) -> TableError {
         TableError::NoMemory
     }
 }
@@ -210,10 +210,10 @@ impl<T> HandleTable<T> {
     /// [`TableError::NoMemory`]; nothing has changed.
     pub fn reserve(&mut self, count: usize) -> Result<(), TableError> {
         let fresh = count.saturating_sub(self.free.len());
-        ferrix_fallible::try_reserve(&mut self.slots, fresh)?;
+        xaqu_fallible::try_reserve(&mut self.slots, fresh)?;
         let slots = self.slots.len().saturating_add(fresh);
         let additional = slots.saturating_sub(self.free.len());
-        ferrix_fallible::try_reserve_deque(&mut self.free, additional)?;
+        xaqu_fallible::try_reserve_deque(&mut self.free, additional)?;
         Ok(())
     }
 
@@ -404,11 +404,11 @@ impl<T> HandleTable<T> {
                 return Err(TableError::Repeated);
             }
         }
-        let mut taken = ferrix_fallible::try_with_capacity(handles.len())?;
+        let mut taken = xaqu_fallible::try_with_capacity(handles.len())?;
         for &handle in handles {
             // Validated above, and removing one cannot invalidate another:
             // they are distinct, so they are in distinct slots.
-            if ferrix_fallible::push_within(&mut taken, self.remove(handle)?).is_err() {
+            if xaqu_fallible::push_within(&mut taken, self.remove(handle)?).is_err() {
                 return Err(TableError::NoMemory);
             }
         }
@@ -436,13 +436,13 @@ impl<T> HandleTable<T> {
         if self.reserve(objects.len()).is_err() {
             return Err((TableError::NoMemory, objects));
         }
-        let Ok(mut handles) = ferrix_fallible::try_with_capacity(objects.len()) else {
+        let Ok(mut handles) = xaqu_fallible::try_with_capacity(objects.len()) else {
             return Err((TableError::NoMemory, objects));
         };
         for (object, rights) in objects {
             // Reserved above: neither the table nor the list can need memory.
             if let Ok(handle) = self.insert_with_room(object, rights) {
-                let _ = ferrix_fallible::push_within(&mut handles, handle);
+                let _ = xaqu_fallible::push_within(&mut handles, handle);
             }
         }
         Ok(handles)

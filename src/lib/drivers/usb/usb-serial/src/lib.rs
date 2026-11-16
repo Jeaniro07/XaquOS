@@ -5,8 +5,8 @@
 //! with the one interface it was given: control requests, a bulk OUT
 //! stream that never waits, and a bulk IN stream read a chunk at a time.
 //! `src/user/system/native/drivers/usb/usbserial` gives it over the
-//! interface channel `usbhid` exports (`ferrix-usbif`); the tests in
-//! `ferrix-usb-host` give it over the bus itself, against a model
+//! interface channel `usbhid` exports (`xaqu-usbif`); the tests in
+//! `xaqu-usb-host` give it over the bus itself, against a model
 //! controller and a model chip.
 //!
 //! * [`ftdi`]: the chips, their vendor requests, divisors and status bytes;

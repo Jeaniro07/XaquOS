@@ -13,7 +13,7 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::object::job::Job;
 use crate::object::quota::Resource;

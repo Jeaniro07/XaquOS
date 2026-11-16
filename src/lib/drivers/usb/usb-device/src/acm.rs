@@ -52,9 +52,9 @@ pub const PRODUCT: u16 = 0x0001;
 pub const RELEASE: u16 = 0x0100;
 
 /// String 1.
-pub const MANUFACTURER_STRING: &str = "Ferrix";
+pub const MANUFACTURER_STRING: &str = "Xaqu";
 /// String 2.
-pub const PRODUCT_STRING: &str = "Ferrix console";
+pub const PRODUCT_STRING: &str = "Xaqu console";
 
 /// The communication interface's number.
 pub const COMMUNICATION_INTERFACE: u8 = 0;

@@ -33,10 +33,10 @@ the customer's direction for B1 (keep devmgr's restart set in the kernel,
 as MINIX 3's `service -c` and Fuchsia's bootfs do).
 
 **Measured on the box image** (`main-image/1bcaf5652`, built 2026-10-30
-from the box's tree; `FERRIX/INITRD.IMG`, command line `ferrix.init=/sbin/init
-ferrix.devmgr=init`): the archive is 95,615,684 bytes, 23,343 whole pages;
+from the box's tree; `XAQU/INITRD.IMG`, command line `xaqu.init=/sbin/init
+xaqu.devmgr=init`): the archive is 95,615,684 bytes, 23,343 whole pages;
 it holds 3,003 entries (2,120 files, 502 directories, 381 links, no
-`.ferrix` inputs) whose file bytes, unpacked into the tmpfs a page at a
+`.xaqu` inputs) whose file bytes, unpacked into the tmpfs a page at a
 time, are 24,639 pages (100,921,344 bytes). `lib/firmware` holds nothing.
 
 ### The kept set (B1)
@@ -45,7 +45,7 @@ On devmgr's first start `read_files` reads `/sbin/devmgr` into a
 `vmap::Buffer`, the manifest, and every driver it names into a VMO of its
 own (`Files`). From now on the kernel keeps them: a `KEPT` set in
 `discovery/devmgr.rs`, made by that first read when it read every file,
-and only under `ferrix.devmgr=init` -- on the kernel path nothing starts a
+and only under `xaqu.devmgr=init` -- on the kernel path nothing starts a
 second devmgr, so nothing is kept there (the consultant's C1) -- and every
 later start --
 pid 1's `devmgr_start` after a `svc restart devmgr.service` or after devmgr
@@ -81,10 +81,10 @@ in a job of its own, so the root disk never stops serving.
 
 Once, when the root is final:
 
-* the kernel path (`ferrix.devmgr` not `init`): in `kmain` after
+* the kernel path (`xaqu.devmgr` not `init`): in `kmain` after
   `finish_memory`, after every boot check and before `say_booted`'s memory
   line and pid 1;
-* `ferrix.devmgr=init`: at the end of `root_disk`'s `after_devmgr` task, on
+* `xaqu.devmgr=init`: at the end of `root_disk`'s `after_devmgr` task, on
   every way out of it (switched, no root disk, devmgr late), so after the
   install.
 
@@ -93,7 +93,7 @@ What goes:
 | Boot | Archive | tmpfs |
 |---|---|---|
 | a switch to a root disk happened | given back | the archive's entries unlinked |
-| no root disk, `ferrix.root=tmpfs`, the live ISO | given back | kept: it is `/` |
+| no root disk, `xaqu.root=tmpfs`, the live ISO | given back | kept: it is `/` |
 | test boots (no root disk) | given back | kept: the checks' fixtures live there |
 
 A boot with checks that switched (`test-restart --boot blk`, `--boot nvme`,
@@ -119,7 +119,7 @@ a caller that may not block is refused with `None`.
 Every reader, and where it runs:
 
 1. `fs::init`: the unpack, `init_entries` for pid 1's inputs and the AoU-24
-   check (`/.ferrix` absent) -- at bring-up, before anything can release.
+   check (`/.xaqu` absent) -- at bring-up, before anything can release.
 2. `root_disk::install` (the stamp's CRC and `unpack_over`) -- inside the
    switch, which comes before the release on both paths.
 3. `init::Inputs` (program, script, commands) and `InputEntry::data`:
@@ -149,12 +149,12 @@ nothing.
 ### The tmpfs, after a switch (B3)
 
 **The list.** The archive's own entries, read under the lock just before it
-goes: `ferrix_vfs::initramfs::remove(ns, ctx, archive, spare)` walks them in
+goes: `xaqu_vfs::initramfs::remove(ns, ctx, archive, spare)` walks them in
 reverse order (a directory's contents before it), unlinks each file, link
 and node and removes each directory, skipping pid 1's inputs (never
 unpacked) and every name `spare` keeps. A directory something is mounted on
 answers `EBUSY` and one that still holds a spared name `ENOTEMPTY`; both
-stay, counted. Host-tested in `ferrix_vfs`. What the checks made in the
+stay, counted. Host-tested in `xaqu_vfs`. What the checks made in the
 tmpfs themselves is not in the archive and stays (only check boots make
 any).
 
@@ -186,12 +186,12 @@ filesystems' own mounts at bring-up. Processes started before the switch:
 * the kernel path: devmgr (reads `/proc/cmdline` once, at its start, before
   the switch; no other path call) and its drivers (native processes, no path
   calls); the checks' processes have ended;
-* `ferrix.devmgr=init`: pid 1, which the switch moves onto the volume
+* `xaqu.devmgr=init`: pid 1, which the switch moves onto the volume
   (`root_disk`'s module comment): everything it opens after resolves there,
   and what it had open stays open; devmgr and the drivers as above.
 
 So after the release the tmpfs is reached only through files already open
-or mapped: pid 1's own program on `ferrix.devmgr=init` (`/sbin/init`,
+or mapped: pid 1's own program on `xaqu.devmgr=init` (`/sbin/init`,
 1,310,720 bytes, 320 pages, mapped while pid 1 runs). An unlinked tmpfs
 file lives as long as an `OpenFile` or its VMO is held, and its pages go
 with the last.
@@ -204,8 +204,8 @@ with the last.
 | MemTotal, MemFree, `sysinfo` | `procfs/render.rs`, `syscall/system.rs` | read live each call |
 | a tmpfs's `statfs` size, half the managed frames | `fs/pages.rs` `capacity` | read live each call |
 | the pin ceiling (a quarter) and the Intel GPU's pin budget | `object/pin.rs` `count_ceiling`, once at stage 10 | kept: up to 23,343/4 frames lower than it could be; a lower ceiling only refuses a pin sooner, and the GPU's budget may already be a domain's |
-| the `memory` boot line | `say_booted` | on the kernel path printed after the release, so it shows the new total; under `ferrix.devmgr=init` printed before it (the release waits for devmgr, which pid 1 starts after `say_booted`), so it shows the total before, and the `release` line the one after |
-| quotas, `memory.max`, kmem defaults | `object/quota.rs`, `ferrix_kmem` | none derive from the managed frames (`git grep managed_frames`) |
+| the `memory` boot line | `say_booted` | on the kernel path printed after the release, so it shows the new total; under `xaqu.devmgr=init` printed before it (the release waits for devmgr, which pid 1 starts after `say_booted`), so it shows the total before, and the `release` line the one after |
+| quotas, `memory.max`, kmem defaults | `object/quota.rs`, `xaqu_kmem` | none derive from the managed frames (`git grep managed_frames`) |
 
 ### Requirements
 
@@ -221,9 +221,9 @@ The reserved ids, written in `docs/sysml` by the landing and released from
   them lies in the released pages.
 * **L.user.173**: reserved for the tmpfs's release and released unwritten
   (the consultant's ruling, ledger 5038, U1-U3): that release is
-  `fs::release` (load ring) and `ferrix_vfs::initramfs::remove` (no ring),
+  `fs::release` (load ring) and `xaqu_vfs::initramfs::remove` (no ring),
   and no item code relies on what the tmpfs holds after it. It is load-ring
-  behaviour and carries no claim; the ferrix-vfs host test and the release
+  behaviour and carries no claim; the xaqu-vfs host test and the release
   check's tmpfs half on `test-restart --boot blk` are development evidence
   only. **The assumption this rests on (U3):** no item-ring code resolves a
   path in the kernel's first namespace after the release; a change that does
@@ -250,9 +250,9 @@ just after:
 
 Gates:
 
-* `test-restart --boot blk`: the check above on a ferrix-root boot, then its
+* `test-restart --boot blk`: the check above on a xaqu-root boot, then its
   two rounds of disk drivers killed and restarted after the release;
-* `test-init` (`ferrix.devmgr=init`, a fresh root disk): its
+* `test-init` (`xaqu.devmgr=init`, a fresh root disk): its
   `svc restart devmgr.service`, after the release, now also requires the
   restart line to say "from the kept set" and a file written on `/`,
   synced and read back afterwards, which needs the restarted `blk` (L.user.174);
@@ -311,7 +311,7 @@ an O(log n) remove; `CLEAN_NODES` is unchanged as the ceiling.
   every writable volume not busy at the time, never a dirty one.
 * N2: `MemAvailable` and `SReclaimable` include the clean nodes' bytes.
 
-**Evidence planned.** Host tests in `ferrix-btrfs-write` (oldest-first,
+**Evidence planned.** Host tests in `xaqu-btrfs-write` (oldest-first,
 dirty kept, the counts); a boot check under `test-btrfs`: read a tree wide
 enough to fill the cache, reclaim, the bytes come back to the heap and the
 next lookup reads from the disk with the same result; a busy volume
@@ -328,7 +328,7 @@ an inode's deletion, the orphan list) ended early or skipped items. Now
 `load` drops nothing (`volume.rs`), `next_item`'s climb answers an error for
 anything but a level's last pointer (`tree.rs`, `next_leaf`), and the cache
 is trimmed only between operations: by `Shared::lock` in the writable
-mount's glue (`ferrix-btrfs-vfs` `rw.rs`), the one place the kernel takes a
+mount's glue (`xaqu-btrfs-vfs` `rw.rs`), the one place the kernel takes a
 volume for anything, each time it is taken (F1). The overshoot is argued per
 operation rather than evicting what the operation has not touched (F2,
 `docs/certification/MEMORY-AND-TIMING.md` §1.8).
@@ -354,7 +354,7 @@ operation holds it.
 grow) and asks each in turn (`drop_clean`, `clean_bytes`). The fs shrinker
 (`fs::shrink_dentries`) asks for the nodes after the dentry cache, and only
 when `takes(quota::NONE)`: the nodes are charged to no job (neither btrfs
-crate makes a `ferrix_kmem` charge), so only a reclaim of the whole machine
+crate makes a `xaqu_kmem` charge), so only a reclaim of the whole machine
 admits their owner. `/proc/meminfo` gains `SReclaimable`, and `MemAvailable`
 adds the same bytes.
 
@@ -363,14 +363,14 @@ first, never a dirty node), `L.btrfs.120` (the machine's reclaim only, busy
 volumes skipped, 64 a hold), `L.btrfs.121` (the exact count), `L.user.175`
 (`SReclaimable` and `MemAvailable`).
 
-**Evidence.** Host tests, `ferrix-btrfs-write` `tests/clean.rs`: with the
+**Evidence.** Host tests, `xaqu-btrfs-write` `tests/clean.rs`: with the
 cache at `CLEAN_NODES`, the fs tree's root held and a leaf not, `next_item`
 from a gap between two leaves, `prev_item` from slot 0 of a leaf (whose
 pointer key the test lowers: only such a tree reaches that climb) and
 `read_dir` from the gap answer what they should -- all three fail with the
 old `clear()` put back; a trim drops the oldest and no dirty node; batches
 until empty leave every dirty node and the edit commits; the count equals
-the sum over the nodes after loads, edits and commits. `ferrix-btrfs-vfs`
+the sum over the nodes after loads, edits and commits. `xaqu-btrfs-vfs`
 `tests/rw.rs`: a mount asked for nodes from inside its own read gives none
 and returns, and gives them all between operations in batches. The boot
 check `fs/btrfs_write_check/clean_check.rs` (test-btrfs's `reclaim` line):
@@ -443,12 +443,12 @@ below are the branch's:
   L.user.173 released unwritten under U1-U3, 5038; code review OK IF
   (1)-(6), 5073 (verdict 5077).
 * Controls on 8d4b089d6, each `control: FIRED [accel x86_64:kvm]`, logs
-  `~/.local/share/ferrix/logs/queue/<tag>.log`: r1b-ctl-norelease (no
+  `~/.local/share/xaqu/logs/queue/<tag>.log`: r1b-ctl-norelease (no
   give-back), r1b-ctl-inputs (inputs left in the archive), r1b-ctl-kept
   (the archive read, not taken), r1b-ctl-watermark (not recomputed),
   r1b-ctl-tmpfs (every name spared), r1b-ctl-region (the range test taking
   every range), r1b-ctl-rounddown (the first page rounded down), each a
-  FERRIX-PANIC of the release check; r1b-ctl-keptset (the kept set never
+  XAQU-PANIC of the release check; r1b-ctl-keptset (the kept set never
   read: "svc restart devmgr.service did not start a second devmgr") and
   r1b-ctl-fingerprint (the stored fingerprint altered: "the kept set is not
   as it was kept"), test-init's lines.

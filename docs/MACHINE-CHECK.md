@@ -1,7 +1,7 @@
 # Machine check: a log of hardware errors, and surviving a bad user page
 
 Design version 1, 2026-10-30, branch `feature/mce-log`. The customer's
-brief (2026-10-30): Ferrix stops on every machine check and reads no
+brief (2026-10-30): Xaqu stops on every machine check and reads no
 error bank, so it is worse than Linux for finding an unstable overclock
 or failing memory. Build what Linux's MCE code gives: (1) a machine-check
 log -- read the banks, report corrected errors through lode, count them
@@ -86,7 +86,7 @@ stop as before. Each processor:
 
 The kernel has no periodic tick (`sched/vtime.rs`), so the poll is one
 kernel task per processor, pinned there (`sched::spawn_on`, as `msrlog`
-does), started after the scheduler. It wakes every `ferrix.mce.poll`
+does), started after the scheduler. It wakes every `xaqu.mce.poll`
 seconds (1 to 3600 of one to four ASCII digits; 5 by default and for any
 value not understood, which a line says -- `msrlog`'s chooser, shared).
 Linux polls every 300 s and halves on a find; a fixed short period is
@@ -118,7 +118,7 @@ across processors) and unmasks its local APIC's CMCI entry; a corrected or
 no-action record in a claimed bank then wakes the task at once. The period
 stays as the backstop and for unclaimed banks; a storm of interrupts masks
 the entry and polls once a second until a round finds nothing.
-`ferrix.mce.cmci=off` turns it off. Shown under TCG on QEMU with patch
+`xaqu.mce.cmci=off` turns it off. Shown under TCG on QEMU with patch
 0008, the only machine here that offers it.
 
 ### 3.3 The `#MC` itself
@@ -142,7 +142,7 @@ broadcast this processor did not cause, or one with no valid bank at all --
 returns, counted as spurious, where `RIPV` is set, and stops where it is
 clear (the consultant's M1).
 
-**From ring 0** (on the IST stack, as today): `ferrix_paranoid_entry`
+**From ring 0** (on the IST stack, as today): `xaqu_paranoid_entry`
 calls `mce::on_kernel_stack`, which reads `MCG_STATUS` and every bank
 (`read_msr`: bring-up proved them with the checked read), folds the
 actions, and either stops -- the report prints each valid bank (`mce:
@@ -150,14 +150,14 @@ bank <b> status=.. addr=.. misc=.. <class>`) and stops as FX-9005 -- or
 defers the action-optional banks to its processor's pending slots, clears
 them and `MCG_STATUS`, and returns. It takes no lock, allocates nothing
 and prints nothing unless it stops. A machine check on a processor
-without a record, with `ferrix.mce.recover=off`, or with no free slot,
+without a record, with `xaqu.mce.recover=off`, or with no free slot,
 stops.
 
 **From ring 3**: the stub's `4:` branch, which moves a ring-3 `#DB` to
 the task's kernel stack, takes vector 18 too, and only 1 and 18, as
 Linux's `exc_machine_check_user` runs on the task stack since 5.9.
-`ferrix_trap_from_user` does the entry hardening the branch skips. On the
-task stack `ferrix_trap_entry` calls `mce::from_user` first, before the
+`xaqu_trap_from_user` does the entry hardening the branch skips. On the
+task stack `xaqu_trap_entry` calls `mce::from_user` first, before the
 trap path's accounting and with interrupts masked; `MCIP` is still set
 until it has read the banks. It decides as above and:
 
@@ -224,7 +224,7 @@ every boot (slice 8b, §9 there, H.FAIL.13).
   reference, disowning its charge (`disown_frame`) so its job's counters
   come back to zero. A multi-frame block holding one is split
   (`split_frames`) and the rest freed one by one.
-* `/proc/ferrix-mce` lists the retired frames (§3.6).
+* `/proc/xaqu-mce` lists the retired frames (§3.6).
 
 ### 3.5 SRAR from ring 3
 
@@ -256,7 +256,7 @@ is §6's.
 
 ### 3.6 Counts for ring 3
 
-`/proc/ferrix-mce` (beside `/proc/ferrix-seam`, `fs/procfs.rs`'s table),
+`/proc/xaqu-mce` (beside `/proc/xaqu-seam`, `fs/procfs.rs`'s table),
 mode 0444, computed when read, with no address in it (the consultant's
 M9):
 
@@ -268,7 +268,7 @@ cpu1 ...
 
 `checks` counts machine checks taken, `recovered` the ones that returned,
 `spurious` those with nothing for this processor, `left` the records the
-boot before left. `/proc/ferrix-mce-retired`, mode 0400, lists the retired
+boot before left. `/proc/xaqu-mce-retired`, mode 0400, lists the retired
 frames' physical addresses, one a line. lode reads the `mce:` lines for
 history and alerts; the files are for tools and the Settings app.
 
@@ -283,8 +283,8 @@ Reserved on `develop` in 971dd7f2a and written in the model
   spurious rule; .226 an action-optional check handed to the poll; .227
   the fatal report prints the banks; .228 a program's poison is its
   `SIGBUS` (the consumer's own mapping stays, late kill: §3.4); .229 the
-  kernel's poison stops; .230 `/proc/ferrix-mce`; .231
-  `ferrix.mce.recover=off`; .232 the bank cap and the checked accesses;
+  kernel's poison stops; .230 `/proc/xaqu-mce`; .231
+  `xaqu.mce.recover=off`; .232 the bank cap and the checked accesses;
 * L.mm.91 a retired frame is never allocated again; L.mm.92 the full set;
 * L.x86_64.175's criterion now requires the report's `mce: bank` line.
 
@@ -298,8 +298,8 @@ Reserved on `develop` in 971dd7f2a and written in the model
   and gains three modes, each its own boot, under KVM and under TCG:
   * `--corrected`: a corrected error injected into bank 1 of every
     processor; each must print one `mce: cpu <n> bank 1 corrected` line
-    within two poll periods (`ferrix.mce.poll=1`), and no more for the
-    same injection; `/proc/ferrix-mce` reads `corrected 1` on each.
+    within two poll periods (`xaqu.mce.poll=1`), and no more for the
+    same injection; `/proc/xaqu-mce` reads `corrected 1` on each.
   * `--srar`: on one processor (`--smp 1`), a ring-3 test program
     (`mce-victim`) maps a page, writes it, prints the page's virtual
     address and spins reading it. The gate finds the physical address
@@ -307,7 +307,7 @@ Reserved on `develop` in 971dd7f2a and written in the model
     on the processor), injects SRAR at it, and requires: the program's
     parent prints its child ended by `SIGBUS` with `si_code` 4 and the
     printed address; the kernel goes on (a second command runs);
-    `/proc/ferrix-mce` lists the frame retired and `recovered 1`.
+    `/proc/xaqu-mce` lists the frame retired and `recovered 1`.
   * `--srao`: SRAO with a physical address the kernel uses nowhere
     special (one the program's page again); the kernel goes on, prints
     the `uncorrected` record from the poll task, and lists the frame
@@ -355,7 +355,7 @@ Reserved on `develop` in 971dd7f2a and written in the model
 ## 7. Where it stands
 
 Design v1 reviewed by the certification consultant on 2026-10-30
-(`~/.local/share/ferrix/cert-consultant/reviews.md` line 4772): **OK IF
+(`~/.local/share/xaqu/cert-consultant/reviews.md` line 4772): **OK IF
 M1-M14**, before any code. Internal review, not independent verification
 (F-27).
 
@@ -366,7 +366,7 @@ accepted (M8); (d) ids `L.x86_64.221-232`, `L.mm.91-92` and `H.FAIL.8`, to be
 reserved before they are written (M11); (e) no new ring-3 control input, but
 physical addresses must not be world-readable (M9) and continuing after an
 uncorrected error changes the fail-safe argument, so a new `H.FAIL.8`, a
-SAFETY-MANUAL statement and a `ferrix.mce.recover=off` switch (M10).
+SAFETY-MANUAL statement and a `xaqu.mce.recover=off` switch (M10).
 
 The conditions in short: M1 broadcast `#MC` and shared banks (an unaffected
 processor, `EIPV` clear and `RIPV` set, neither stops nor clears; a `#MC`
@@ -378,7 +378,7 @@ cover, at most 32 banks); M4 the retired test and the retirement's claim
 under the allocator's lock; M5 section 4's "mappings gone" removed or made
 true, residuals written; M6 a `RIPV`-clear kill never returns, the VA walk's
 lock and bound; M7 a single-writer protocol for the pending slots; M8 the
-poll's limits; M9 `/proc/ferrix-mce`'s addresses root-only and the
+poll's limits; M9 `/proc/xaqu-mce`'s addresses root-only and the
 vulnerability analysis; M10 `H.FAIL.8` and the switch; M11 the id mapping;
 M12 MSR accesses traced and the bring-up writes checked; M13 checks and
 negative controls, `--srar`'s flake rate measured; M14 code review before
@@ -423,7 +423,7 @@ FX-9005, as designed. Recovery has run under TCG only, which emulates
 by an earlier boot. The flake measurement was also engineering only:
 `test-mce-srar` and `test-mce-broadcast` passed 20 of 20 each under TCG
 once the gate stopped the VM around the injection
-(`~/.local/share/ferrix/logs/mce/mce-flake.out`).
+(`~/.local/share/xaqu/logs/mce/mce-flake.out`).
 
 **V1, V2 and V3 done** (after 8091d0865): `mce::signal_for` clears the
 frame's error code before the signal is raised, the victim prints its
@@ -434,7 +434,7 @@ CMCI, AMD recovery and the coverage run, and BACKLOG's machine-check
 gate row extended.
 
 **Landing record (V4, V5, V7).** Rows by `gate.sh`, logs in
-`~/.local/share/ferrix/logs/queue/<tag>.log`, each with its header:
+`~/.local/share/xaqu/logs/queue/<tag>.log`, each with its header:
 
 * on b60911804 (the change and its coverage carry), every one `run:
   PASSED`: `mce-land-build-all`; `mce-land-boot-x86-kvm`, `-x86-tcg`,

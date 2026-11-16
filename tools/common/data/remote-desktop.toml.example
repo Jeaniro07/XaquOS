@@ -1,9 +1,9 @@
 # The answers `cargo xtask remote-desktop` asks for. Copy this to one of
 #
 #   ./remote-desktop.toml            (this checkout; git ignores it)
-#   ~/.config/ferrix/remote.toml     (every checkout on this machine)
+#   ~/.config/xaqu/remote.toml     (every checkout on this machine)
 #
-# or name one with --config, or with $FERRIX_REMOTE. One file is one machine;
+# or name one with --config, or with $XAQU_REMOTE. One file is one machine;
 # a second machine is a second file and a --config that names it. A machine
 # tried once needs no file: `--host <ssh destination>` is enough.
 #
@@ -25,19 +25,19 @@ host = "the-name-in-your-ssh-config"
 # the remote home unless it starts with `/`. It holds a `target/` directory
 # too, which is why reusing one matters: the second boot builds almost
 # nothing.
-dir = "ferrix-desktop"
+dir = "xaqu-desktop"
 
 # `cargo`, if it is not on a non-interactive shell's PATH over there. The
 # script already puts ~/.cargo/bin, ~/.local/bin and /usr/local/bin on it.
 cargo = "cargo"
 
-# Anything the remote boot should have in its environment. FERRIX_QEMU names
+# Anything the remote boot should have in its environment. XAQU_QEMU names
 # a QEMU that is not the one on PATH -- a directory of binaries or one
 # binary. A served desktop already takes the first QEMU on PATH that has
 # virglrenderer, so this is for a machine where none on PATH has.
 [remote.env]
-# FERRIX_QEMU = "/opt/qemu/bin" # Uncomment if this machine's QEMU lacks virgl.
-# FERRIX_WALLPAPERS = "/home/you/.local/share/ferrix/wallpapers"
+# XAQU_QEMU = "/opt/qemu/bin" # Uncomment if this machine's QEMU lacks virgl.
+# XAQU_WALLPAPERS = "/home/you/.local/share/xaqu/wallpapers"
 
 [boot]
 # `run-compositor` for the desktop; `run` for a program of your own, with

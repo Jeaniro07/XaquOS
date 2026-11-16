@@ -29,7 +29,7 @@ pub(crate) fn parse(arguments: &[String]) -> Option<Asked> {
             "-s" | "--shell" => asked.shell = Some(words.next()?.clone()),
             "-c" | "--command" => asked.command = Some(words.next()?.clone()),
             flag if flag.starts_with('-') => return None,
-            user if !named && ferrix_auth_account::is_a_name(user) => {
+            user if !named && xaqu_auth_account::is_a_name(user) => {
                 asked.user = user.to_owned();
                 named = true;
             }
@@ -54,11 +54,11 @@ mod tests {
     fn the_forms_the_gates_and_people_use() {
         let asked = parse(&words("")).unwrap();
         assert_eq!((asked.user.as_str(), asked.login), ("root", false));
-        let asked = parse(&words("- ferrix")).unwrap();
-        assert_eq!((asked.user.as_str(), asked.login), ("ferrix", true));
-        let asked = parse(&["ferrix".into(), "-c".into(), "svc stop x".into()]).unwrap();
+        let asked = parse(&words("- xaqu")).unwrap();
+        assert_eq!((asked.user.as_str(), asked.login), ("xaqu", true));
+        let asked = parse(&["xaqu".into(), "-c".into(), "svc stop x".into()]).unwrap();
         assert_eq!(asked.command.as_deref(), Some("svc stop x"));
-        let asked = parse(&words("-s /bin/sh ferrix -c id")).unwrap();
+        let asked = parse(&words("-s /bin/sh xaqu -c id")).unwrap();
         assert_eq!(asked.shell.as_deref(), Some("/bin/sh"));
         assert_eq!(asked.command.as_deref(), Some("id"));
         assert!(parse(&words("-l")).is_some_and(|a| a.login && a.user == "root"));
@@ -66,7 +66,7 @@ mod tests {
 
     #[test]
     fn what_su_does_not_take() {
-        for bad in ["-x", "-c", "-s", "a b", "ferrix other", "-m"] {
+        for bad in ["-x", "-c", "-s", "a b", "xaqu other", "-m"] {
             assert_eq!(parse(&words(bad)), None, "{bad:?}");
         }
     }

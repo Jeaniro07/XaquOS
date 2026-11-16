@@ -17,7 +17,7 @@
 
 mod naive;
 
-use ferrix_seccomp::{Insn, verify};
+use xaqu_seccomp::{Insn, verify};
 
 const PROGRAMS: [(&[u8], &str); 6] = [
     (

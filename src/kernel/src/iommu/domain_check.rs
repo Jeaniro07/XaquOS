@@ -17,8 +17,8 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
 
 use crate::device::{self, DeviceNode, Location};
 use crate::panic::{catalog, fatal};
@@ -336,8 +336,8 @@ fn check_queue(
 ///
 /// Verifies: L.iommu.99, L.iommu.100
 fn check_exempt_pin() -> Result<Option<alloc::string::String>, &'static str> {
-    use ferrix_native_abi::nr;
-    use ferrix_native_abi::rights::Rights;
+    use xaqu_native_abi::nr;
+    use xaqu_native_abi::rights::Rights;
 
     let Some(node) = device::devices().iter().find(|node| {
         matches!(node.location(), Location::Pci(function) if super::amdvi_check::exempt(function))
@@ -618,10 +618,10 @@ fn check_console_line() -> Result<Option<alloc::string::String>, &'static str> {
 ///
 /// Verifies: L.device.27, L.iommu.55, H.DMA.9
 fn check_isolation_mark() -> Result<Option<alloc::string::String>, &'static str> {
-    use ferrix_native_abi::nr;
-    use ferrix_native_abi::rights::Rights;
-    use ferrix_native_abi::status;
-    use ferrix_native_abi::types::{
+    use xaqu_native_abi::nr;
+    use xaqu_native_abi::rights::Rights;
+    use xaqu_native_abi::status;
+    use xaqu_native_abi::types::{
         DEVICE_ISOLATION_DMA_TRANSLATED, DEVICE_ISOLATION_INTERRUPTS,
         DEVICE_LIMIT_ISOLATED_INTERRUPTS,
     };
@@ -718,9 +718,9 @@ fn check_isolation_mark() -> Result<Option<alloc::string::String>, &'static str>
 ///
 /// Verifies: L.device.55
 fn check_isolation_before_pin() -> Result<Option<alloc::string::String>, &'static str> {
-    use ferrix_native_abi::nr;
-    use ferrix_native_abi::rights::Rights;
-    use ferrix_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED;
+    use xaqu_native_abi::nr;
+    use xaqu_native_abi::rights::Rights;
+    use xaqu_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED;
 
     let Some(node) = device::devices().iter().find(|node| {
         node.pci_function().is_some() && node.reaches_memory() && node.domain_made().is_none()
@@ -784,10 +784,10 @@ fn check_isolation_before_pin() -> Result<Option<alloc::string::String>, &'stati
 ///
 /// Verifies: L.device.57
 fn check_no_dma() -> Result<alloc::string::String, &'static str> {
-    use ferrix_native_abi::nr;
-    use ferrix_native_abi::rights::Rights;
-    use ferrix_native_abi::status;
-    use ferrix_native_abi::types::DEVICE_ISOLATION_NO_DMA;
+    use xaqu_native_abi::nr;
+    use xaqu_native_abi::rights::Rights;
+    use xaqu_native_abi::status;
+    use xaqu_native_abi::types::DEVICE_ISOLATION_NO_DMA;
 
     let side = object::check::Side::new()?;
     let outcome = (|| {
@@ -881,7 +881,7 @@ fn check_entry_never_rewritten() -> Result<usize, &'static str> {
         return Ok(0);
     };
     let handle = u16::from(new.wrapping_sub(0x40));
-    let elsewhere = ferrix_paging::vtd::remap::Remap {
+    let elsewhere = xaqu_paging::vtd::remap::Remap {
         vector: super::CHECK_VECTOR,
         destination: 0,
         level: false,
@@ -899,8 +899,8 @@ fn check_entry_never_rewritten() -> Result<usize, &'static str> {
 
 /// The region [`check_rmrr_identity`] honoured on QEMU's unit, for
 /// [`check_rmrr_frames`] to read again after the reclaim.
-static CHECKED_RMRR: ferrix_sync::Once<ferrix_paging::vtd::rmrr::Identity> =
-    ferrix_sync::Once::new();
+static CHECKED_RMRR: xaqu_sync::Once<xaqu_paging::vtd::rmrr::Identity> =
+    xaqu_sync::Once::new();
 
 /// Stage 10: an RMRR's identity domain, on the first translating VT-d unit,
 /// unless the boot skips its checks (`vtd-design.md` §3.9(b)).
@@ -922,7 +922,7 @@ static CHECKED_RMRR: ferrix_sync::Once<ferrix_paging::vtd::rmrr::Identity> =
 /// Verifies: L.iommu.76
 /// Verifies: L.iommu.77
 /// Verifies: L.iommu.78
-pub fn check_rmrr_identity(memory: &[ferrix_bootinfo::MemRegion]) {
+pub fn check_rmrr_identity(memory: &[xaqu_bootinfo::MemRegion]) {
     if !crate::boot_checks::run() {
         return;
     }
@@ -939,9 +939,9 @@ pub fn check_rmrr_identity(memory: &[ferrix_bootinfo::MemRegion]) {
 /// [`check_rmrr_identity`]'s steps; `None` on a machine with no translating
 /// VT-d unit.
 fn rmrr_identity(
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
 ) -> Result<Option<alloc::string::String>, &'static str> {
-    use ferrix_paging::vtd::rmrr;
+    use xaqu_paging::vtd::rmrr;
 
     let Some(programmed) = super::PROGRAMMED.get() else {
         return Ok(None);
@@ -952,13 +952,13 @@ fn rmrr_identity(
     rmrr_over_the_allocator_refused(memory)?;
 
     // The synthetic RMRR, honoured and attached as bring-up does.
-    let reach = 1_u64 << ferrix_paging::vtd::unit::DOMAIN_BITS;
+    let reach = 1_u64 << xaqu_paging::vtd::unit::DOMAIN_BITS;
     let region = rmrr::identity(reach - 2 * rmrr::PAGE, reach - 1, ram(memory))
         .map_err(|_| "the check's RMRR, the two pages below 2^39, was refused")?;
     if super::frames_outside_allocator(region).is_err() {
         return Err("the check's RMRR holds a frame the allocator holds");
     }
-    let function = ferrix_pci::Address::new(0, 0xFF, 0x1F, 7).ok_or("no address ff:1f.7")?;
+    let function = xaqu_pci::Address::new(0, 0xFF, 0x1F, 7).ok_or("no address ff:1f.7")?;
     let attached = unit.attach_identity(function, &[region])?;
     let _ = CHECKED_RMRR.call_once(|| region);
     // FATAL-ALLOC: boot only: the check's identity domain is made once and, as every identity domain, kept for the boot.
@@ -997,7 +997,7 @@ fn rmrr_identity(
 }
 
 /// Every region the memory map calls RAM, as `(base, len)`.
-fn ram(memory: &[ferrix_bootinfo::MemRegion]) -> impl Iterator<Item = (u64, u64)> + '_ {
+fn ram(memory: &[xaqu_bootinfo::MemRegion]) -> impl Iterator<Item = (u64, u64)> + '_ {
     memory
         .iter()
         .filter(|region| region.kind.is_ram())
@@ -1006,21 +1006,21 @@ fn ram(memory: &[ferrix_bootinfo::MemRegion]) -> impl Iterator<Item = (u64, u64)
 
 /// Whether `domain` maps exactly `region`'s pages, each at its own address:
 /// the page below it unmapped (the one above is past 2^39).
-fn exact(domain: &Domain, region: ferrix_paging::vtd::rmrr::Identity) -> bool {
+fn exact(domain: &Domain, region: xaqu_paging::vtd::rmrr::Identity) -> bool {
     region
         .page_addresses()
         .all(|page| domain.resolve(page) == Some(page))
         && domain
-            .resolve(region.base - ferrix_paging::vtd::rmrr::PAGE)
+            .resolve(region.base - xaqu_paging::vtd::rmrr::PAGE)
             .is_none()
 }
 
 /// The rules refuse an RMRR over a frame the allocator holds: by the
 /// memory map, and by the frame's own state (`L.iommu.74`, `L.iommu.75`).
 fn rmrr_over_the_allocator_refused(
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
 ) -> Result<(), &'static str> {
-    use ferrix_paging::vtd::rmrr::{self, Identity};
+    use xaqu_paging::vtd::rmrr::{self, Identity};
 
     let taken = mm::allocate_frames(0).ok_or("no frame for the RMRR check")?;
     let over = Identity {
@@ -1043,7 +1043,7 @@ fn rmrr_over_the_allocator_refused(
 /// pins and unpins as into any domain, a driver's (`L.iommu.76`).
 fn rmrr_pins_refused(
     domain: &Domain,
-    region: ferrix_paging::vtd::rmrr::Identity,
+    region: xaqu_paging::vtd::rmrr::Identity,
 ) -> Result<(), &'static str> {
     let rmrr_frame = region.base / PAGE_SIZE;
     if !matches!(
@@ -1084,7 +1084,7 @@ fn rmrr_pins_refused(
 /// (`L.iommu.77`).
 fn rmrr_unpin_refused(
     domain: &Domain,
-    region: ferrix_paging::vtd::rmrr::Identity,
+    region: xaqu_paging::vtd::rmrr::Identity,
 ) -> Result<(), &'static str> {
     let forged = super::Pinned {
         domain: domain.id(),
@@ -1111,7 +1111,7 @@ fn rmrr_never_detached(
     identity: &'static super::IdentityDomain,
     unit: &'static super::vtd::Unit,
     domain: Domain,
-    region: ferrix_paging::vtd::rmrr::Identity,
+    region: xaqu_paging::vtd::rmrr::Identity,
 ) -> Result<(), &'static str> {
     if domain.detach_translation().is_ok() {
         return Err("an RMRR identity domain was detached");

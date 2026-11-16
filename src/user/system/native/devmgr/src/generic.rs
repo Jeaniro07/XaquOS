@@ -10,13 +10,13 @@
 //! [`requirements::SECTION`]; an image without one is not started, since
 //! devmgr then cannot say what the node must give.
 
-use ferrix_devmgr_proto::requirements::{self, Offered, Table};
-use ferrix_fdt::identity::{RECORD_BYTES, Record};
-use ferrix_native_abi::types::DeviceInfo;
-use ferrix_rt::Kernel;
-use ferrix_rt::log::Level;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::vmo::Vmo;
+use xaqu_devmgr_proto::requirements::{self, Offered, Table};
+use xaqu_fdt::identity::{RECORD_BYTES, Record};
+use xaqu_native_abi::types::DeviceInfo;
+use xaqu_rt::Kernel;
+use xaqu_rt::log::Level;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::vmo::Vmo;
 
 use super::{GENERIC_DRIVERS, Kind, MAX_DRIVERS, NAME_BYTES, driver_name, image_index, say};
 

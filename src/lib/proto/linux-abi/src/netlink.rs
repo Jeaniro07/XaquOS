@@ -13,8 +13,8 @@
 //!
 //! Netlink was designed to be read the same by 32- and 64-bit programs: every
 //! header here is built from 8-, 16- and 32-bit fields, so each is one layout
-//! on every architecture Ferrix runs, and the codecs take bytes alone. The
-//! fields are host order, which under Ferrix is little-endian -- unlike the
+//! on every architecture Xaqu runs, and the codecs take bytes alone. The
+//! fields are host order, which under Xaqu is little-endian -- unlike the
 //! addresses the attributes carry, which are network order and which these
 //! headers do not read.
 //!

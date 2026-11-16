@@ -188,7 +188,7 @@ shadow and, under a rounded window, its border's fill in it, and Hyprland's
 has neither. `docs/COMPOSITOR-DAMAGE-HANDOFF.md` has the measurements.
 
 A cheap frame then showed what a dear one had hidden: nothing paced them. A
-frame for every report of the mouse, each ending on Ferrix's virtio-gpu in
+frame for every report of the mouse, each ending on Xaqu's virtio-gpu in
 the whole framebuffer sent to the host, and the pointer stuttered over
 everything in `run-compositor`. A change is owed a frame at the screen's
 refresh now (`hyprix::pace`), and a virtio-gpu is one buffer told what
@@ -247,7 +247,7 @@ were wrong, and only the first is about drawing at all.
   on a condition variable between frames. The thread that asks for the work
   is one of them, which is why the pool starts one fewer than there are
   cores and a single-processor guest starts none.
-* **Every one of those exits interrupted the whole machine.** Ferrix frees an
+* **Every one of those exits interrupted the whole machine.** Xaqu frees an
   exited task's kernel stack by invalidating its address on every processor
   and waiting for each to answer, and the idle loop's reaper did that one
   stack at a time -- so a program whose threads were short-lived spent every
@@ -261,7 +261,7 @@ were wrong, and only the first is about drawing at all.
 * **Nothing could be told to matter less.** `setpriority` stored a nice value
   and the scheduler never read it, and `sched_setscheduler` refused every
   policy but `SCHED_OTHER`, so a video decoder and the compositor drawing its
-  frames competed on exactly equal terms. `ferrix_sched` has carried weights
+  frames competed on exactly equal terms. `xaqu_sched` has carried weights
   since stage 5; a nice value now becomes one, on every task of the process
   and on the threads it starts afterwards. `RunQueue::set_weight` keeps what
   an entity is owed in *real* time across the change, as Linux's
@@ -443,7 +443,7 @@ screen's.
 
 Two are not offered, and the module says why. `hyprland-input-capture-v1`'s
 whole conversation is a `libei` socket the compositor hands over, and there
-is no `libei` on Ferrix; offering the global and never sending the
+is no `libei` on Xaqu; offering the global and never sending the
 descriptor would leave a client waiting for ever.
 `hyprland-ctm-control-v1`'s `blocked` event has a `<description>` with no
 `summary`, which this `wayland-scanner` refuses -- so its table could not be
@@ -560,7 +560,7 @@ has gone". The slave answers every terminal request, including the
 session and process-group ones, with a pair's own session and foreground
 group; the master answers those that act on the pair, as Linux's does.
 
-The term app (ferrix-os/apps since 2026-10-04) is the terminal: a character grid with the escape
+The term app (xaqu-os/apps since 2026-10-04) is the terminal: a character grid with the escape
 sequences a shell and its programs actually send (the cursor, the erases,
 the colours, the cursor's visibility), drawn with Hack, antialiased --
 The app's `tools/gen-font.py` rasterises the TrueType faces vendored beside
@@ -640,7 +640,7 @@ on the screen is one a person cannot use, and there was none: `wl_pointer`
 carried motion and buttons to the clients and nothing was ever drawn.
 
 The arrow is in `src/user/system/linux/compositor/render`, in code, as a shape rather than as a
-file: Hyprland loads an XCursor or a `hyprcursor` theme and Ferrix has
+file: Hyprland loads an XCursor or a `hyprcursor` theme and Xaqu has
 neither the files nor a library to read them with, so the one this draws is
 written out -- a 24x24 left-pointing arrow with a black outline and a white
 fill, every pixel opaque or clear, its tip at the pointer. A client replaces
@@ -724,7 +724,7 @@ held is sent `finished` and refused.
 
 `src/user/system/linux/compositor/lock` is `hyprlock` with the password taken out: it locks, draws
 a checkerboard over every screen, holds it, and unlocks. It asks for no
-password because Ferrix has no notion of one yet; the part that can be
+password because Xaqu has no notion of one yet; the part that can be
 tested is the part that matters to the compositor.
 
 `cargo xtask test-compositor` boots a fifteenth time and takes three
@@ -981,7 +981,7 @@ it. Drag-and-drop is the other half of the same four interfaces; it was not
 done when this landed, and a drag between two clients was carried later the
 same day (`src/user/system/linux/compositor/hyprix/src/dragging.rs`).
 
-`src/user/system/linux/compositor/clip` is `wl-copy` and `wl-paste`, neither of which is on Ferrix:
+`src/user/system/linux/compositor/clip` is `wl-copy` and `wl-paste`, neither of which is on Xaqu:
 `clip copy <text>` offers the text as `text/plain;charset=utf-8` and stays
 alive to answer, because it must; `clip paste` waits to be told what the
 selection holds, asks for it on a pipe it makes, and prints what comes back.
@@ -1008,7 +1008,7 @@ against the compositor in one process.
 **Begun — plugins (2026-09-17).** A plugin is a program the compositor
 starts and talks to, not a shared object it loads into itself. Hyprland's
 plugins are C++ objects `dlopen`ed into the compositor, which hook its own
-functions. When this was decided Ferrix had no dynamic loader to `dlopen`
+functions. When this was decided Xaqu had no dynamic loader to `dlopen`
 with; ferrousli's loader has had `dlopen` since 2026-09-22, but the
 compositor is still a static binary, which loads nothing. The reason that
 remains is the other half: a `dlopen`ed plugin takes the compositor down with
@@ -1199,7 +1199,7 @@ reads. The event socket says `togglegroup>>1,<head>` when one is made,
 `moveintogroup>><window>` and `moveoutofgroup>><window>` as it fills and
 empties, and `togglegroup>>0,<head>` when it goes. `hyprctl --batch` landed
 with them, because one keybind running three dispatchers over the control
-socket is how the Ferrix proof presses them.
+socket is how the Xaqu proof presses them.
 
 `cargo xtask test-compositor` boots a fourth time: two windows tiled, one
 keybind, and then both of them in one slot with the one that was moved in
@@ -1308,8 +1308,8 @@ Those are shaders. This stage brings the GPU, and the choice the earlier text
 here left to the customer was made on 2026-09-18 (`docs/GPU.md`, and the
 decision in `docs/BACKLOG.md`): **the host's GPU driver first, through
 virtio-gpu's 3D commands**, which puts the NVIDIA driver of the machine
-Ferrix is watched on behind the guest's rendering without porting a line of
-it; and a driver for a card of Ferrix's own later, in stage 21, when Ferrix
+Xaqu is watched on behind the guest's rendering without porting a line of
+it; and a driver for a card of Xaqu's own later, in stage 21, when Xaqu
 runs on bare metal. Every effect keeps its software fallback with a stated
 frame-time bound, so the compositor is never GPU-only.
 
@@ -1366,8 +1366,8 @@ window stretched a 1920 × 1080 desktop to its own size, a pixel at a time,
 and small text looked unsmoothed. A resized window, or a VNC viewer's
 resize request, now reaches the compositor. It goes from the device's
 display event through the driver's new `MODES` message (display protocol
-version 6) and the card's preferred mode, with Ferrix's own DRM event
-`EVENT_FERRIX_CONNECTORS` on the card's descriptor. hyprix sets the new mode
+version 6) and the card's preferred mode, with Xaqu's own DRM event
+`EVENT_XAQU_CONNECTORS` on the card's descriptor. hyprix sets the new mode
 on a monitor whose line says `preferred`, the GPU path included, and
 `run-compositor` writes `preferred` unless given `--size`
 (`docs/DISPLAY.md` §2.3).
@@ -1393,11 +1393,11 @@ drag-and-drop and `hyprctl getoption` -- have all landed, each written the
 way the four before them were: the XML vendored, the tables checked against
 libwayland's own, a program in `src/user/system/linux/compositor/` that speaks it with no screen,
 a host test against the image the renderer blesses, and a boot of `cargo
-xtask test-compositor` that does it on Ferrix.
+xtask test-compositor` that does it on Xaqu.
 
 **Begun -- the desktop's own clients, in Rust (2026-09-26).** The
 customer asked for waybar, fuzzel, hyprlock and hypridle, written for
-Ferrix and reading their own files unchanged: five streams, one a program
+Xaqu and reading their own files unchanged: five streams, one a program
 and one for the foundation they share -- `src/user/system/linux/compositor/toolkit` (a Wayland
 client runtime), `src/user/system/linux/compositor/text` (fonts, shaping, layout, Pango markup),
 `src/user/system/linux/compositor/hyprlang` and `src/user/system/linux/compositor/image`. `docs/DESKTOP-CLIENTS.md`.
@@ -1435,7 +1435,7 @@ QEMU with independent workspaces; a plugin-shaped extension loaded from the
 configuration.
 
 **waybar in Rust draws the user's bar (2026-09-27).**
-The waybar app (ferrix-os/apps since 2026-10-04) reads the user's own `~/.config/waybar/config.jsonc`
+The waybar app (xaqu-os/apps since 2026-10-04) reads the user's own `~/.config/waybar/config.jsonc`
 and `style.css` as waybar does: jsoncpp's JSONC, `src/config.cpp`'s search
 path, `include` merging and `output` matching, libfmt's format strings, a
 GTK3 stylesheet with `@define-color`, `alpha()`, `calc()`, layered `url()`
@@ -1449,7 +1449,7 @@ carries it as `/bin/waybar`, and `cargo xtask test-compositor --boot waybar`
 boots it with the user's stylesheet and icons over a test config whose
 scripts print fixed answers: the guest's screen shows exactly the pixels
 the host's `waybar --render` draws from the same files. What is not
-carried out on Ferrix -- the user's three Python scripts, a sound server
+carried out on Xaqu -- the user's three Python scripts, a sound server
 where `pulsed` does not run, load averages, wifi, a D-Bus tray -- is listed
 in `docs/DESKTOP-CLIENTS.md` §3, and `waybar-probe` lists it from the real
 files.
@@ -1499,7 +1499,7 @@ aarch64 7.4 s against 5 s; logs `batch-20261005T174424Z-1` and
 compositor's frame budget, and this day's sightings are not in it yet.
 
 **Where the points stand (reviewed 2026-09-30).** The X server is done: it
-is yserver, a Rust X11 server with a rootless Wayland backend of Ferrix's
+is yserver, a Rust X11 server with a rootless Wayland backend of Xaqu's
 own, 36 points against the 40 guessed for XWayland here (`docs/YSERVER.md`,
 done 2026-09-29), so about 16 of the 178 are left -- client pages as
 texture backing (8) and the small remainder (about 8). The count of
@@ -1511,7 +1511,7 @@ small remainder, whose items have changed since it was counted, as below. The GP
 is left of that road is `zwp_linux_dmabuf` and a Mesa on ferrousli, for
 clients that render for themselves. What remains of the stage besides is XWayland,
 40 as a first guess -- `xwayland_shell_v1` on the
-compositor's side and an X server on Ferrix, which stage 22 is what finally
+compositor's side and an X server on Xaqu, which stage 22 is what finally
 needs; and the small remainder `docs/COMPOSITOR-DAMAGE-HANDOFF.md` §5 lists,
 about 8 when it was counted, of which `resize_on_border` and
 `extend_border_grab_area` landed on 2026-09-18 -- with the tiled resize

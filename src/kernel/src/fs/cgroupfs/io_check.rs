@@ -30,8 +30,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::initramfs::makedev;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::initramfs::makedev;
 
 use super::reclaim_check::Group;
 use super::{Checked, Harness};
@@ -40,7 +40,7 @@ use crate::fs::block::BlockDevice;
 use crate::fs::devfs::{self, Origin};
 use crate::sync::SpinLock;
 
-/// The disk's major number: one no driver of Ferrix's uses.
+/// The disk's major number: one no driver of Xaqu's uses.
 const MAJOR: u32 = 251;
 /// Its minor.
 const MINOR: u32 = 0;

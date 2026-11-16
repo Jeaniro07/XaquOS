@@ -378,7 +378,7 @@ fn a_dup_node_whose_first_copy_fails_is_read_from_the_second() {
     let (_, first) = volume.chunks().map_copy(root.bytenr, 0).unwrap();
     let (_, second) = volume.chunks().map_copy(root.bytenr, 1).unwrap();
     assert_ne!(first, second);
-    // What a volume Ferrix wrote suffered: the first copy of an fs tree leaf
+    // What a volume Xaqu wrote suffered: the first copy of an fs tree leaf
     // overwritten by a superblock mirror.
     let mut superblock = [0u8; SUPERBLOCK_SIZE];
     device

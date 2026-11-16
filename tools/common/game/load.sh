@@ -1,6 +1,6 @@
 #!/bin/sh
 # The game path's background load (docs/GAME-PATH.md §2.4, stage 24's R3):
-# the same script on the Linux guest and on Ferrix, run as an ordinary
+# the same script on the Linux guest and on Xaqu, run as an ordinary
 # user's job and started before the game.
 #
 #   load.sh start      start it and return
@@ -22,7 +22,7 @@
 #   RIG_WRITE_MIB  MiB the writer writes a pass   1024
 #   RIG_PARTS  the parts started                  compile write hold
 #
-# The script uses no glob: zinc, Ferrix's shell, stops on one that matches
+# The script uses no glob: zinc, Xaqu's shell, stops on one that matches
 # nothing, as zsh does.
 #
 # Every line it prints for a gate starts with "load:". `rig busy 10` while
@@ -47,7 +47,7 @@ start)
 		n=$("$rig" cpus) || exit 1
 		# One build first, alone, so that the compiler and its libraries
 		# are read from the disk before the writer and the holder compete
-		# for it: the load is the steady state, not a cold start. On Ferrix
+		# for it: the load is the steady state, not a cold start. On Xaqu
 		# a cold start under both made no build in 50 s (docs/GAME-PATH.md
 		# §12, 2026-10-14).
 		mkdir -p "$work/warm"

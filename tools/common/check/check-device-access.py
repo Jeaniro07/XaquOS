@@ -172,7 +172,7 @@ def check(measured: dict[str, int], policy: dict) -> list[str]:
     return problems
 
 
-# ferrix.msrlog is read-only (L.x86_64.187, the consultant's condition 5 of
+# xaqu.msrlog is read-only (L.x86_64.187, the consultant's condition 5 of
 # ledger line 3075): no line of its files may write an MSR, by the kernel's
 # helper or by the instruction. Comments included, so a write cannot hide
 # behind a doc line either.
@@ -188,7 +188,7 @@ def read_only_msr_problems(root: pathlib.Path) -> list[str]:
             continue
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if MSR_WRITE.search(line):
-                problems.append(f"{path.relative_to(root)}:{number}: ferrix.msrlog writes an MSR; it must only read (L.x86_64.187)")
+                problems.append(f"{path.relative_to(root)}:{number}: xaqu.msrlog writes an MSR; it must only read (L.x86_64.187)")
     return problems
 
 
@@ -300,9 +300,9 @@ def checked_write_problems(root: pathlib.Path) -> list[str]:
             if ANY_MSR_ACCESS.search(line):
                 problems.append(f"{relative}:{number}: the power core's decisions, fake or checks reach an MSR (L.x86_64.207)")
     cpu = (root / CPU_FILE).read_text(encoding="utf-8")
-    body = re.search(r"fn ferrix_wrmsr_checked\(.*?\n}\n", cpu, re.S)
-    if body is None or len(ASM_WRMSR.findall(body.group(0))) != 1 or not re.search(r'"ferrix_wrmsr_checked_insn:",\s*"wrmsr",', body.group(0)):
-        problems.append(f"{CPU_FILE}: ferrix_wrmsr_checked must hold exactly one wrmsr, at ferrix_wrmsr_checked_insn (L.x86_64.192)")
+    body = re.search(r"fn xaqu_wrmsr_checked\(.*?\n}\n", cpu, re.S)
+    if body is None or len(ASM_WRMSR.findall(body.group(0))) != 1 or not re.search(r'"xaqu_wrmsr_checked_insn:",\s*"wrmsr",', body.group(0)):
+        problems.append(f"{CPU_FILE}: xaqu_wrmsr_checked must hold exactly one wrmsr, at xaqu_wrmsr_checked_insn (L.x86_64.192)")
     if len(ASM_WRMSR.findall(cpu)) != 2:
         problems.append(f"{CPU_FILE}: {len(ASM_WRMSR.findall(cpu))} wrmsr; only write_msr's and the checked write's (L.x86_64.192)")
     return problems

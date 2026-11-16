@@ -116,7 +116,7 @@ pub(crate) struct Thread {
     /// Linux's `dup_task_struct` copies `cpus_mask`; `None`, the whole
     /// domain, for a process's first thread made any other way. Read once,
     /// by `sched::prepare_user`; the task's own mask is what changes after.
-    start_affinity: Option<ferrix_sched::CpuSet>,
+    start_affinity: Option<xaqu_sched::CpuSet>,
 }
 
 /// The mask of the task running `creator`, if `creator` is the running
@@ -124,7 +124,7 @@ pub(crate) struct Thread {
 /// whole, never half of one mask and half of another (`sched::task`'s
 /// `Affinity`). `None` where `creator` is not running here, as for a boot
 /// check's thread, which makes a thread with the whole domain.
-fn creator_mask(creator: &Thread) -> Option<ferrix_sched::CpuSet> {
+fn creator_mask(creator: &Thread) -> Option<xaqu_sched::CpuSet> {
     sched::with_current(|task| {
         of_task(task)
             .filter(|running| core::ptr::eq(*running, creator))
@@ -536,7 +536,7 @@ impl UserThread for Thread {
         Thread::slice_request(self)
     }
 
-    fn start_affinity(&self) -> Option<ferrix_sched::CpuSet> {
+    fn start_affinity(&self) -> Option<xaqu_sched::CpuSet> {
         self.start_affinity
     }
 }
@@ -588,13 +588,13 @@ pub(crate) fn with_current<R>(lend: impl FnOnce(&Thread) -> R) -> Option<R> {
 /// nothing of signals or thread ids; this is the way back to the rest.
 #[inline(always)]
 pub(crate) fn of_task(task: &Task) -> Option<&Thread> {
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if let Some(thread) = of_task_known(task) {
         return Some(thread);
     }
     let held = task.thread()?;
     let found = of_task_asked(held);
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if let Some(thread) = found {
         task.keep_thread(core::ptr::from_ref(thread).cast());
     }
@@ -611,7 +611,7 @@ fn of_task_asked(held: &Arc<dyn UserThread>) -> Option<&Thread> {
 
 /// [`of_task`] by what its first ask kept, as no indirect call: `None` sends a straight
 /// call to the general path, which keeps it.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 #[inline(always)]
 pub(crate) fn of_task_known(task: &Task) -> Option<&Thread> {
     // SAFETY: `Task::keep_thread` is told only `of_task`'s downcast's answer, a `Thread` the

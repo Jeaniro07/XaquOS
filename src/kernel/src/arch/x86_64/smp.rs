@@ -24,9 +24,9 @@
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_acpi::MadtEntry;
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_paging::MapFlags;
+use xaqu_acpi::MadtEntry;
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_paging::MapFlags;
 
 use super::{ROOT_SLOTS, UPPER_HALF_SLOT, apic, cpu};
 use crate::smp::Described;
@@ -82,7 +82,7 @@ pub(crate) fn describe_cpus(view: &BootView<'_>) -> Result<Described, &'static s
 /// A topology that cannot be read (`topology::read`).
 fn to_park(ids: &[u64]) -> Result<Vec<u64>, &'static str> {
     let (shift, _) = topology::discover()?;
-    if !cfg!(ferrix_smt = "off") {
+    if !cfg!(xaqu_smt = "off") {
         return Ok(Vec::new());
     }
     Ok(ids
@@ -149,7 +149,7 @@ static BOOT_CR4: AtomicU64 = AtomicU64::new(0);
 // it woke up in, through the identity map.
 //
 // Before `CR0` turns paging on, it writes `IA32_PAT` with the header's
-// `pat` -- `ferrix_paging::X86_PAT`, put there only when the boot
+// `pat` -- `xaqu_paging::X86_PAT`, put there only when the boot
 // processor's own table read back as that, zero otherwise, and then nothing
 // is written: a `wrmsr` that faulted here, with no IDT, would be a triple
 // fault. So this processor's first translation of anything, the kernel's
@@ -166,53 +166,53 @@ static BOOT_CR4: AtomicU64 = AtomicU64::new(0);
 // tables.
 core::arch::global_asm!(
     r#"
-.pushsection .rodata.ferrix_trampoline, "a"
+.pushsection .rodata.xaqu_trampoline, "a"
 .balign 16
-.globl ferrix_trampoline
-ferrix_trampoline:
+.globl xaqu_trampoline
+xaqu_trampoline:
 .code16
     cli
     cld
     mov %cs, %ax
     mov %ax, %ds
-    movl ferrix_trampoline_header + 20 - ferrix_trampoline, %eax
+    movl xaqu_trampoline_header + 20 - xaqu_trampoline, %eax
     movl %eax, %cr4
-    movl ferrix_trampoline_header + 16 - ferrix_trampoline, %eax
+    movl xaqu_trampoline_header + 16 - xaqu_trampoline, %eax
     movl %eax, %cr3
     movl $0xC0000080, %ecx
-    movl ferrix_trampoline_header + 28 - ferrix_trampoline, %eax
+    movl xaqu_trampoline_header + 28 - xaqu_trampoline, %eax
     xorl %edx, %edx
     wrmsr
-    movl ferrix_trampoline_header + 88 - ferrix_trampoline, %eax
+    movl xaqu_trampoline_header + 88 - xaqu_trampoline, %eax
     testl %eax, %eax
     jz 1f
-    movl ferrix_trampoline_header + 92 - ferrix_trampoline, %edx
+    movl xaqu_trampoline_header + 92 - xaqu_trampoline, %edx
     movl ${pat}, %ecx
     wrmsr
 1:
-    lgdtl ferrix_trampoline_header - ferrix_trampoline
-    movl ferrix_trampoline_header + 24 - ferrix_trampoline, %eax
+    lgdtl xaqu_trampoline_header - xaqu_trampoline
+    movl xaqu_trampoline_header + 24 - xaqu_trampoline, %eax
     movl %eax, %cr0
-    ljmpl *ferrix_trampoline_header + 8 - ferrix_trampoline
+    ljmpl *xaqu_trampoline_header + 8 - xaqu_trampoline
 .code64
-.globl ferrix_trampoline_long
-ferrix_trampoline_long:
+.globl xaqu_trampoline_long
+xaqu_trampoline_long:
     mov ${data}, %eax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %ss
-    movq ferrix_trampoline_header + 32(%rip), %rsp
-    movq ferrix_trampoline_header + 48(%rip), %rdi
-    movq ferrix_trampoline_header + 40(%rip), %rax
+    movq xaqu_trampoline_header + 32(%rip), %rsp
+    movq xaqu_trampoline_header + 48(%rip), %rdi
+    movq xaqu_trampoline_header + 40(%rip), %rax
     xorl %ebp, %ebp
     pushq $0
     jmpq *%rax
 .balign 8
-.globl ferrix_trampoline_header
-ferrix_trampoline_header:
+.globl xaqu_trampoline_header
+xaqu_trampoline_header:
     .fill 96, 1, 0
-.globl ferrix_trampoline_end
-ferrix_trampoline_end:
+.globl xaqu_trampoline_end
+xaqu_trampoline_end:
 .popsection
 "#,
     data = const super::gdt::KERNEL_DATA,
@@ -222,13 +222,13 @@ ferrix_trampoline_end:
 
 unsafe extern "C" {
     /// The trampoline's first byte: where a start-up IPI begins executing.
-    static ferrix_trampoline: [u8; 0];
+    static xaqu_trampoline: [u8; 0];
     /// Its first 64-bit instruction, where the far jump goes.
-    static ferrix_trampoline_long: [u8; 0];
+    static xaqu_trampoline_long: [u8; 0];
     /// The header `CpuStarter` fills in.
-    static ferrix_trampoline_header: [u8; 0];
+    static xaqu_trampoline_header: [u8; 0];
     /// One past its last byte.
-    static ferrix_trampoline_end: [u8; 0];
+    static xaqu_trampoline_end: [u8; 0];
 }
 
 /// What the trampoline reads. Offsets are the assembly's.
@@ -259,7 +259,7 @@ struct Header {
     /// selectors for both.
     gdt: [u64; 4],
     /// The page attribute table the trampoline writes before paging is on:
-    /// [`ferrix_paging::X86_PAT`] when the boot processor's read back so,
+    /// [`xaqu_paging::X86_PAT`] when the boot processor's read back so,
     /// zero for none written. The assembly tests the low half alone, which
     /// is not zero in `X86_PAT` (a const assertion holds it).
     pat: u64,
@@ -270,7 +270,7 @@ const _: () = assert!(
     "the trampoline reserves ninety-six bytes for its header"
 );
 const _: () = assert!(
-    ferrix_paging::X86_PAT & 0xFFFF_FFFF != 0,
+    xaqu_paging::X86_PAT & 0xFFFF_FFFF != 0,
     "the trampoline tells a table to write from none by the low half of `pat`"
 );
 // The offsets the assembly reads each field at.
@@ -316,10 +316,10 @@ impl CpuStarter {
     /// Runs on the boot processor, whose control registers every secondary
     /// starts with.
     pub(crate) fn new(_view: &BootView<'_>) -> Result<CpuStarter, &'static str> {
-        let base = (&raw const ferrix_trampoline) as u64;
-        let long_offset = (&raw const ferrix_trampoline_long) as u64 - base;
-        let header_offset = (&raw const ferrix_trampoline_header) as u64 - base;
-        let len = (&raw const ferrix_trampoline_end) as u64 - base;
+        let base = (&raw const xaqu_trampoline) as u64;
+        let long_offset = (&raw const xaqu_trampoline_long) as u64 - base;
+        let header_offset = (&raw const xaqu_trampoline_header) as u64 - base;
+        let len = (&raw const xaqu_trampoline_end) as u64 - base;
         if len > PAGE_SIZE {
             return Err("the trampoline does not fit in a page");
         }
@@ -336,7 +336,7 @@ impl CpuStarter {
         // trampoline's `len` bytes in this image, which fit in the page.
         unsafe {
             core::ptr::copy_nonoverlapping(
-                (&raw const ferrix_trampoline).cast::<u8>(),
+                (&raw const xaqu_trampoline).cast::<u8>(),
                 crate::mm::direct_map(code) as *mut u8,
                 len as usize,
             );
@@ -375,7 +375,7 @@ impl CpuStarter {
             argument: 0,
             gdt: [0, 0, TRAMPOLINE_CODE64, TRAMPOLINE_DATA],
             pat: if super::boot_pat_programmed() {
-                ferrix_paging::X86_PAT
+                xaqu_paging::X86_PAT
             } else {
                 0
             },
@@ -474,7 +474,7 @@ extern "C" fn secondary_start(record: u64) -> ! {
     if super::boot_pat_programmed()
         // SAFETY: (SYSREG) the boot processor's PAT was programmed, so CPUID
         // reports the register on processors of its kind.
-        && unsafe { cpu::read_msr(cpu::IA32_PAT) } == ferrix_paging::X86_PAT
+        && unsafe { cpu::read_msr(cpu::IA32_PAT) } == xaqu_paging::X86_PAT
     {
         let _ = super::PAT_AT_ENTRY.fetch_add(1, Ordering::AcqRel);
     }

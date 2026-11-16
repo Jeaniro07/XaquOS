@@ -1,6 +1,6 @@
 //! What `svc enable`, `disable`, `mask`, `unmask` and `set-property` change
 //! on disk (§4.4, §10), as systemd's `systemctl` changes it: links and
-//! drop-ins in `/etc/ferrix/units`, or in `/run/ferrix/units` for what is
+//! drop-ins in `/etc/xaqu/units`, or in `/run/xaqu/units` for what is
 //! not meant to outlive the boot. The caller reloads the units afterwards.
 
 use std::fs;
@@ -8,7 +8,7 @@ use std::io;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 
-use ferrix_svc::source::{Layer, Source};
+use xaqu_svc::source::{Layer, Source};
 
 /// The administrator's directory.
 fn admin() -> PathBuf {
@@ -157,7 +157,7 @@ const PROPERTIES: [&str; 6] = [
 ];
 
 /// `svc set-property`: write the assignments to a drop-in, in
-/// `/etc/ferrix/units` when `persistent` and in `/run/ferrix/units`
+/// `/etc/xaqu/units` when `persistent` and in `/run/xaqu/units`
 /// otherwise, in the section the unit's kind reads them from.
 pub(crate) fn set_property(
     name: &str,

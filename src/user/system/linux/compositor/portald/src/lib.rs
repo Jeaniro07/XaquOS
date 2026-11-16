@@ -1,6 +1,6 @@
 //! `portald`: the one XDG desktop portal interface a desktop's look
 //! needs, `org.freedesktop.portal.Settings`, on the session bus as
-//! `org.freedesktop.portal.Desktop` (Ferrix's `docs/DESKTOP.md` §6, Xaqu's
+//! `org.freedesktop.portal.Desktop` (Xaqu's `docs/DESKTOP.md` §6, Xaqu's
 //! "Chrome and GTK apps in the tokens"). GTK 4 and libadwaita read
 //! `org.freedesktop.appearance` from it for dark or light and the accent,
 //! GTK 3 the GNOME keys for the theme's name, and Chrome its colour scheme
@@ -8,7 +8,7 @@
 //! `Read`, whose answer is a variant in a variant.
 //!
 //! It also answers `org.freedesktop.portal.FileChooser` ([`chooser`]):
-//! Open and Save are Ferrix's own dialog, tole's `FileDialog`, so GTK's and
+//! Open and Save are Xaqu's own dialog, tole's `FileDialog`, so GTK's and
 //! Chrome's dialogs on Xaqu are that one.
 //!
 //! What it says starts as `--light` or `--dark` and follows the file the
@@ -73,7 +73,7 @@ impl Value {
 /// Every setting: `(namespace, key, value)`.
 #[must_use]
 pub fn settings(dark: bool) -> Vec<(&'static str, &'static str, Value)> {
-    // Nocturne's accent, #9184d9, and Ferrix Light's (the same hue).
+    // Nocturne's accent, #9184d9, and Xaqu Light's (the same hue).
     let accent = Value::Colour(
         f64::from(0x91_u8) / 255.0,
         f64::from(0x84_u8) / 255.0,

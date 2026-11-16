@@ -9,10 +9,10 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::items::CHUNK_TREE_OBJECTID;
-use ferrix_btrfs::tree::{BtrfsKey, KeyPtr, Node};
-use ferrix_btrfs::volume::ReadKind;
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::items::CHUNK_TREE_OBJECTID;
+use xaqu_btrfs::tree::{BtrfsKey, KeyPtr, Node};
+use xaqu_btrfs::volume::ReadKind;
 
 use crate::chunks::Chunks;
 use crate::clean::CleanNodes;

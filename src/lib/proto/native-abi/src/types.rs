@@ -565,7 +565,7 @@ pub const DEVICE_TREE_BLOCKS: u16 = 2;
 /// [`DeviceInfo::virtio`] of a generic device-tree node: one the kernel
 /// publishes without knowing its binding (`docs/DRIVER-MODEL.md` §3).
 /// [`DeviceInfo::device_id`] holds its identity record's flags
-/// (`ferrix_fdt::identity::FLAG_*`, `FLAG_KERNEL_DEPENDS` among them),
+/// (`xaqu_fdt::identity::FLAG_*`, `FLAG_KERNEL_DEPENDS` among them),
 /// [`DeviceInfo::class`] the record's length in bytes, and the blocks its
 /// first two apertures, whole pages. The record itself -- the `compatible`
 /// list, the path, the references as provider node and specifier cells,
@@ -612,7 +612,7 @@ pub const TREE_GS201_DWC3: u16 = 4;
 pub const TREE_STM32_SDMMC: u16 = 5;
 /// [`DeviceInfo::device_id`] of the firmware's framebuffer: the screen the
 /// loader handed the kernel, published as a node only when the command line
-/// says `ferrix.efifb` and the framebuffer is outside the allocator's
+/// says `xaqu.efifb` and the framebuffer is outside the allocator's
 /// memory (`docs/DISPLAY.md` §8). It is no device tree node: its one window
 /// in `common` is the framebuffer's visible lines, whole pages, its first
 /// pixel at the block's `offset`; nothing in `device`; no vector; and no
@@ -626,9 +626,9 @@ pub const TREE_STM32_SDMMC: u16 = 5;
 /// type the kernel holds it at.
 pub const TREE_FIRMWARE_FB: u16 = 6;
 /// [`DeviceInfo::device_id`] of the x86-64 power node (`docs/POWERCTL.md`
-/// §4.1): published only under `ferrix.powerctl` on a processor the
+/// §4.1): published only under `xaqu.powerctl` on a processor the
 /// kernel's model table names, or under the test-only
-/// `ferrix.powerctl.fake`. No window, no vector, nothing that reaches
+/// `xaqu.powerctl.fake`. No window, no vector, nothing that reaches
 /// memory: its one use is `power_control_create`.
 pub const TREE_X86_POWER: u16 = 7;
 /// Words `power_read` writes.

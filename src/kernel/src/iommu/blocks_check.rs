@@ -18,8 +18,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
 
 use crate::mm;
 

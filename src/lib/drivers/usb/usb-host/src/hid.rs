@@ -31,10 +31,10 @@
 //! the logical range is no position and is dropped, as Linux drops one from
 //! a field with a null state; one that repeats the last is not sent again.
 
-use ferrix_inputctl::message::{
+use xaqu_inputctl::message::{
     AXES, AxisRange, Bitmaps, DeviceId, Hello, MAX_EVENTS, RawEvent, Text, VERSION,
 };
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_WHEEL, ABS_X, ABS_Y, BTN_MISC, BTN_MOUSE, BUS_USB, EV_ABS, EV_KEY, EV_LED, EV_REL, EV_SYN,
     KEY_CNT, REL_HWHEEL, REL_WHEEL, REL_X, REL_Y, SYN_REPORT,
 };

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Stands in for the Steam Linux Runtime 3 ("steamrt64") entry point, which the
 # Steam client runs steamwebhelper through (docs/STEAM.md). Valve's starts
-# pressure-vessel, which builds a container with bubblewrap, and Ferrix has
+# pressure-vessel, which builds a container with bubblewrap, and Xaqu has
 # no user namespaces yet. This one runs the command directly, on Debian 13's
 # libraries first and the runtime's own after them. `cargo xtask run-steam`
 # carries it at /steam/steamrt, which client.sh names in

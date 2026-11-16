@@ -41,7 +41,7 @@ pub(crate) const fn entry_frame(_abi: Abi, _in_call: bool) -> Option<EntryFrame>
     None
 }
 
-/// `ferrix_switch` is `push {r4-r11, lr}` then `sub sp, sp, #4`: the saved
+/// `xaqu_switch` is `push {r4-r11, lr}` then `sub sp, sp, #4`: the saved
 /// stack pointer names the padding word, r4 is one word above, the frame
 /// pointer r11 eight, and the link register nine.
 pub(crate) const SWITCH_FRAME: SwitchFrame = SwitchFrame {

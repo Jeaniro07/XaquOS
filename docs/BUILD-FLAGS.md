@@ -1,7 +1,7 @@
 # Build flags and kernel profiles
 
 **Design for review, 2026-10-13.** This is M0's configuration system from
-`docs/MICROKERNEL.md` §12: the flags that select what a Ferrix kernel
+`docs/MICROKERNEL.md` §12: the flags that select what a Xaqu kernel
 contains, and the three profiles built from them. It passed the
 certification consultant's design review before any code, as
 `MICROKERNEL.md` requires of M0's configuration system; what is built is in
@@ -24,7 +24,7 @@ IPC fast path becomes a build flag: "Build-time flag". Asked whether the
 
 `max` and `fast` have the same shape: only the kernel in ring 0, the Linux
 layer in `linuxd`, btrfs in `btrfsd`. They differ in what they relax for
-speed (§3). `desktop` is today's Ferrix, kept: the same Linux layer built
+speed (§3). `desktop` is today's Xaqu, kept: the same Linux layer built
 into ring 0 through the shim (`MICROKERNEL.md` §4), so it never pays the
 restricted-mode round trip.
 
@@ -71,7 +71,7 @@ These come from `MICROKERNEL.md` §12 and the consultant's conditions on it
    `kernel_crates` of `certification-item.json`, each compiled with the
    flags by their one build script, `src/kernel/build.rs`, and the binary
    requiring the four crates' flag words equal at compile time (ledger line
-   3282, (K1), (K4)) -- and a check fails if any crate under `src/lib` names a `ferrix_`
+   3282, (K1), (K4)) -- and a check fails if any crate under `src/lib` names a `xaqu_`
    cfg (a crate built without the cfg would silently take the other branch,
    which `--check-cfg` cannot see), with a planted use as its negative
    control; (c) a build whose `--set` differs from its profile is refused by
@@ -101,7 +101,7 @@ Three words, kept apart (`docs/microkernel/FLIP.md`):
 
 ## 3. The flags
 
-`cfg` names take the form `ferrix_<flag>="<value>"`. "Today" says where the
+`cfg` names take the form `xaqu_<flag>="<value>"`. "Today" says where the
 flag's choice lives now; "Lands" is the `MICROKERNEL.md` stage that builds
 the second value. **"Allows" lists, for each value, the levels it allows**,
 explicitly (§4: levels compare standard by standard, so `sc4` covers
@@ -112,20 +112,20 @@ explicitly (§4: levels compare standard by standard, so `sc4` covers
 |---|---|---|---|---|---|---|---|---|---|
 | `personality` | `user`, `kernel`, `none` | where the Linux ABI runs (its placement flag, `LINUX-ABI-SEPARATION.md` §11.7): as `linuxd` in user space, built into ring 0, or nowhere. `none` requires `linux_abi=off`, and `off` requires `none` | `user` | `user` | `kernel` | `kernel` (dated exception, ends at M5's flip) | `user`: all; `kernel`: `none`; `none`: `none` (until a profile carries it, ledger 3257 (1)) | in ring 0, or `none` | M5 |
 | `fs` | `server`, `kernel`, `none` | btrfs as `btrfsd`, the btrfs crates in ring 0 with today's glue, or no filesystem (the VFS is the Linux ABI's). `kernel` requires `personality=kernel`, `none` requires `personality=none` | `server` | `server` | `kernel` | `kernel` (the same exception) | `server`: all; `kernel`: `none`; `none`: `none` (the same) | in ring 0, or `none` | M5 |
-| `mitigations` | `on`, `off` | F-31's speculation defences (Zenbleed's and GDS's fixes are outside it, below) | `on` | `on` | `on` | `on` | `on`: all; `off`: `none` | `--cfg ferrix_mitigations_off`, renamed | M0 |
+| `mitigations` | `on`, `off` | F-31's speculation defences (Zenbleed's and GDS's fixes are outside it, below) | `on` | `on` | `on` | `on` | `on`: all; `off`: `none` | `--cfg xaqu_mitigations_off`, renamed | M0 |
 | `partition_speculation` | `exit`, `partition` | `exit`: an IBPB (with IBPB_BRTYPE's semantics) on every restricted exit, none on entry, the full IBPB at every switch between programs and partitions; on a processor reporting SRSO_NO, BTC_NO, no BHI (`speculation::bhi` answering not affected, never `BHI_NO` alone; F-85) and no ITS, with the return predictor cleared at the root switch, the exit IBPB may be skipped, decided at boot, printed, failing closed (`MICROKERNEL.md` §7, ledger 941; nazuna does not qualify); on AArch64 the Spectre-BHB clearing sequence on every exit. `partition`: barriers only at partition switches. Requires `personality=user` | `exit` (the customer: 1.5x seL4 for `max`, 660 ns) | `partition` | not applicable | not applicable | `exit`: all; `partition`: `sc2`, `none` | — | M3 |
-| `ipc_fastpath` | `off`, `on` | the fast path for `channel_write_read` (0x1013) | `off` until the 2026-10-02 rule is met, then `on` | `on` (the rule binds `max` only) | `on` | `off` (today's certified default) | `off`: all; `on`: `sc2`, `none`, and `sc4` and `present` once the rule is met | the boot option `ferrix.fastpath` until BF6; the flag since (L.x86_64.159) | M0, built |
+| `ipc_fastpath` | `off`, `on` | the fast path for `channel_write_read` (0x1013) | `off` until the 2026-10-02 rule is met, then `on` | `on` (the rule binds `max` only) | `on` | `off` (today's certified default) | `off`: all; `on`: `sc2`, `none`, and `sc4` and `present` once the rule is met | the boot option `xaqu.fastpath` until BF6; the flag since (L.x86_64.159) | M0, built |
 | `restricted_fastpath` | `off`, `on` | K1's fastpath for the restricted exit and re-entry. Requires `personality=user` | per K1's review | `on` | not applicable | not applicable | per K1's review | — | M3 |
 | `restricted_window` | `off`, `on` | An armed call answered by a kernel-written stub with no root write, while no other processor is in the space (`microkernel/RESTRICTED-EXIT.md`, ledger 6787, 6998). `on` requires `restricted_fastpath=on`, and is built on x86-64 only | `off` | `off` | not applicable | not applicable | `off` | — | M3 |
 | `fault_ahead` | `off`, `on` | linuxd: a read fault brings the file pages its object holds in the aligned 16-page group, and a write fault on a walk through plain private anonymous memory commits the next seven with it. Under `on`, up to seven pages a walking region are charged before they are touched, a stated residual as Linux's THP is. `fast` on; `max` off, since a job there is charged for what it touched (ledger 6537, A6). Requires `personality=user` |
 | `kernel_memory` | `retyped`, `heap` | K16's memory from the job's own reservation, or today's fallible, charged shared heap | `retyped` | `heap` | `heap` | `heap` | `retyped`: all; `heap`: `present` (AoU-5), `sc2` (under `fast`'s justification), `none` | `heap` only | M6 |
-| `schedule` | `windows`, `edf`, `fair` | K9's static windows with fixed priorities inside them (C6) and no fair class (C3); partitioned EDF with a hard CBS above the fair class (`ferrix-sched-edf`, K9 §2a), stage 14's HardRt in its first form; or today's fair scheduler | `windows` | `edf` | `fair` | `fair` | `windows`: all; `edf`: `sc2`, `present`, `none`; `fair`: `present` (with AoU-4: no timing claim), `none` | `edf` ad hoc, `fair` | M3 |
-| `checks` | `on`, `off` | the in-kernel boot checks compiled in. With `on`, the boot option `ferrix.checks` still chooses whether they run, as today; a certified profile permits it only with the checks running. `off` is for ad-hoc builds only, and `xtask check` builds an `off` variant on every architecture so it cannot rot (BF7) | `on` | `on` | `on` | `on` | `on`: all; `off`: `none` | always compiled in | M0 |
+| `schedule` | `windows`, `edf`, `fair` | K9's static windows with fixed priorities inside them (C6) and no fair class (C3); partitioned EDF with a hard CBS above the fair class (`xaqu-sched-edf`, K9 §2a), stage 14's HardRt in its first form; or today's fair scheduler | `windows` | `edf` | `fair` | `fair` | `windows`: all; `edf`: `sc2`, `present`, `none`; `fair`: `present` (with AoU-4: no timing claim), `none` | `edf` ad hoc, `fair` | M3 |
+| `checks` | `on`, `off` | the in-kernel boot checks compiled in. With `on`, the boot option `xaqu.checks` still chooses whether they run, as today; a certified profile permits it only with the checks running. `off` is for ad-hoc builds only, and `xtask check` builds an `off` variant on every architecture so it cannot rot (BF7) | `on` | `on` | `on` | `on` | `on`: all; `off`: `none` | always compiled in | M0 |
 | `program_barrier` | `switch`, `session` | `switch`: the barrier at every switch between programs not in one marked speculation domain (today's rule, SPECULATION §3). `session`: §3.1 below | `switch` | `switch` | `session` | `switch` | `switch`: all; `session`: `none` | `switch` | M0 |
 | `ssbd` | `always`, `on_request` | Speculative Store Bypass Disable for every program (today), or per thread for programs that ask (§3.1) | `always` | `always` | `on_request` | `always` | `always`: all; `on_request`: `none` | `always` | M0 |
 | `smt` | `off`, `stibp` | `off`: the kernel runs one hardware thread per core (§3.1); `stibp`: sibling threads run, with STIBP or eIBRS/AutoIBRS's own cover | `off` | `stibp` | `stibp` | `stibp` | `off`: all; `stibp`: `sc2`, `present`, `none` | `stibp` (SMT runs today; AoU-11 asks the integrator to disable it only on MDS-affected parts) | M0 |
 | `runtime_trades` | `none`, `game_mode` | whether the image contains game mode's privileged, per-application run-time trades (§3.1); with `none` their code is absent | `none` | `none` | `game_mode` | `none` | `none`: all; `game_mode`: `none` | not built | with game mode's design |
-| `runtime_settings` | `fixed`, `live` | whether the kernel contains the entries by which a program changes a system setting at run time (`KERNEL-CRATES.md` §6.2: `sethostname`, `setdomainname`, `/proc/sys` writes, `clock_settime`, `settimeofday`, `syslog`'s clears, `/proc/sysrq-trigger`, sysfs `bind`/`unbind`, `reboot(RESTART2)`). `fixed`: the removable crate `ferrix-kernel-settings` is not linked and each entry answers `EPERM` at its dispatch, before any argument check; `live`: it is, and they act as today. **Not removed by `fixed` today**: powerctl (still in the kernel, deactivated by `ferrix.powerctl`, which no profile permits; step 2 moves it, with native entries answering `NOT_SUPPORTED`), and cgroupfs's budget writes (a residual: a claimed fixed profile reaching the kernel's cgroupfs needs a budget-sealing design review first). A `fixed` kernel is link-only until a fixed profile builds. With `personality=user` the Linux entries are linuxd's, which binds its own the same way (M5). Ledger 3558 (5), (9)-(11), 3623 | `fixed` | `fixed` | `live` | `live` | `fixed`: all; `live`: `present`, `none` | `live` (today's tree) | this landing |
+| `runtime_settings` | `fixed`, `live` | whether the kernel contains the entries by which a program changes a system setting at run time (`KERNEL-CRATES.md` §6.2: `sethostname`, `setdomainname`, `/proc/sys` writes, `clock_settime`, `settimeofday`, `syslog`'s clears, `/proc/sysrq-trigger`, sysfs `bind`/`unbind`, `reboot(RESTART2)`). `fixed`: the removable crate `xaqu-kernel-settings` is not linked and each entry answers `EPERM` at its dispatch, before any argument check; `live`: it is, and they act as today. **Not removed by `fixed` today**: powerctl (still in the kernel, deactivated by `xaqu.powerctl`, which no profile permits; step 2 moves it, with native entries answering `NOT_SUPPORTED`), and cgroupfs's budget writes (a residual: a claimed fixed profile reaching the kernel's cgroupfs needs a budget-sealing design review first). A `fixed` kernel is link-only until a fixed profile builds. With `personality=user` the Linux entries are linuxd's, which binds its own the same way (M5). Ledger 3558 (5), (9)-(11), 3623 | `fixed` | `fixed` | `live` | `live` | `fixed`: all; `live`: `present`, `none` | `live` (today's tree) | this landing |
 | `linux_abi` | `on`, `off` | whether the kernel offers the Linux ABI beside the native one (`LINUX-ABI-SEPARATION.md` §11.6-11.8); its levels are its placement's, `personality`. `off` compiles the Linux layer (`syscall`'s personality modules, `fs`, `net`, `interfaces`), `stages_check` and the check modules that run a Linux program out; it is build-only and boots nothing useful until that document's §7 rows land (§11.11), and `xtask check` builds it on every architecture | `on` | `on` | `on` | `on` | `on`: all, its level carried by `personality`; `off`: `none`, until a profile carries it with its own evidence, the board glue then classified or cut (ledger 3257 (1), 3208 (6)(g)) | `on` | §11.11 (build-only) |
 
 **`restricted_window=on`, as the resolver takes it (ledger 7224):** with `restricted_fastpath=off`, or `max`'s values:
@@ -191,7 +191,7 @@ Not flags, and why:
 * **The architecture** is a build axis, not a flag: every profile builds for
   x86-64, AArch64 and ARMv7-A, and each profile names the architectures its
   claim covers (`max` and `fast`: AArch64 for now, `MICROKERNEL.md` §6.5).
-* **`ferrix.devmgr=kernel|init`** retires with `DEVMGR_START` at M5
+* **`xaqu.devmgr=kernel|init`** retires with `DEVMGR_START` at M5
   (`MICROKERNEL.md` §3). Until then it stays the boot option it is.
 * **`driver_updates`** (whether the image carries `drvupdated`) is image
   content, not kernel code. It stays in `reference_configuration` and each
@@ -214,8 +214,8 @@ Not flags, and why:
 * **`bad_frames`** (`persist` | `choice`; ledger 5579) is loader content:
   whether the UEFI loader's bad-frame mode is fixed at build time
   (`persist`: `max`, `fast`, `present`; its loader compiles no read of
-  `ferrix.badframes`) or chosen by that boot word (`choice`: `desktop`
-  alone). `loader_env` passes it as `FERRIX_BAD_FRAMES`, read from the
+  `xaqu.badframes`) or chosen by that boot word (`choice`: `desktop`
+  alone). `loader_env` passes it as `XAQU_BAD_FRAMES`, read from the
   resolved base profile, so an ad-hoc build keeps its base profile's value
   and the manifest agrees (`docs/MACHINE-CHECK-RESTART.md` §10). Each value
   allows: `persist` all, `choice` `none` alone.
@@ -257,33 +257,33 @@ Not flags, and why:
   stand-in and this sentence's entry; DF8's check that desktop's line names
   `session`, `on_request` and `game_mode` stays throughout.
 * **The boot options that stay** are a **registry** in `build-flags.toml`
-  (BF4): `ferrix.checks`, `ferrix.root`, `ferrix.init`, `ferrix.onexit`,
-  `ferrix.fbcon`, `ferrix.btrfs` and `ferrix.btrfs.seed` (test-only),
+  (BF4): `xaqu.checks`, `xaqu.root`, `xaqu.init`, `xaqu.onexit`,
+  `xaqu.fbcon`, `xaqu.btrfs` and `xaqu.btrfs.seed` (test-only),
   `console=` (ARMv7-A, `arch/armv7a/console.rs`), `drm.edid_firmware`
-  (`interfaces/display/edid.rs`), `nokaslr`, `nosmp`, and `ferrix.devmgr`
-  until M5; and, read since the design, `ferrix.fbcon.small`,
-  `ferrix.pstore` (read by the loader, through
-  `ferrix_bootinfo::pstore::switch`), `ferrix.efifb`, `ferrix.apic`
-  (x86-64), `ferrix.epp` (x86-64, the four names in `present`, any value
-  in `desktop`; L.x86_64.182) and `ferrix.panic` (`halt` in every certified profile; `reset`,
+  (`interfaces/display/edid.rs`), `nokaslr`, `nosmp`, and `xaqu.devmgr`
+  until M5; and, read since the design, `xaqu.fbcon.small`,
+  `xaqu.pstore` (read by the loader, through
+  `xaqu_bootinfo::pstore::switch`), `xaqu.efifb`, `xaqu.apic`
+  (x86-64), `xaqu.epp` (x86-64, the four names in `present`, any value
+  in `desktop`; L.x86_64.182) and `xaqu.panic` (`halt` in every certified profile; `reset`,
   SAFETY-MANUAL AoU-32's stop-gap, in `desktop` alone). Beside the scan of
-  reads, `check-build-flags.py` scans every `"ferrix.` string literal in
+  reads, `check-build-flags.py` scans every `"xaqu.` string literal in
   `src/lib` and `src/boot` outside their tests: each is a declared option,
   in a file its `LIBRARY_READERS` names, or on its `NOT_OPTIONS` list with
-  a reason (the loader's `ferrix.slot` words for `bootctl`,
-  `ferrix.devmgr.update`, `ferrix.test`). **What the scan cannot see** is an
-  option a library reads whose name does not start with `ferrix.` and is
+  a reason (the loader's `xaqu.slot` words for `bootctl`,
+  `xaqu.devmgr.update`, `xaqu.test`). **What the scan cannot see** is an
+  option a library reads whose name does not start with `xaqu.` and is
   not yet a registry key, such as a new Linux-style word like `console=`;
   such an option is found only by a reviewer, or by the scan of reads once
   the reading file is in `LIBRARY_READERS`. Each profile names the **values** of each it permits, not only
-  the names: a certified profile permits `ferrix.checks` only with the
-  checks running, and never `ferrix.btrfs.seed`. A check fails on any read
+  the names: a certified profile permits `xaqu.checks` only with the
+  checks running, and never `xaqu.btrfs.seed`. A check fails on any read
   of an option the registry does not declare, with a planted reader as its
   negative control. `ITEM.md` §5 counts them per profile.
 * **Build settings that change code without a cfg** are recorded in each
   profile and compared like the flags: the Cargo profile, the toolchain,
   the RUSTFLAGS and codegen options xtask passes, and the link mode
-  (`build.rs` chooses it from `CARGO_CFG_FERRIX_MITIGATIONS_OFF` today).
+  (`build.rs` chooses it from `CARGO_CFG_XAQU_MITIGATIONS_OFF` today).
 
 **The fast path's rule** (the customer's call of 2026-10-02,
 `OPAQUE-KERNEL.md` §9.7, kept with the mechanism changed from a boot option
@@ -301,7 +301,7 @@ L.x86_64.161 restated; the composition-root hook entry in
 `certification-item.json` and `ITEM.md` §2's link-time hooks; whether the
 system-call entry's flag test compiles out (a core and architecture change);
 stage 9's boot line; FAU_GEN.1 b); the gate rows that pass
-`--kernel-option ferrix.fastpath=on` until BF6 (`--set ipc_fastpath=on --no-claim` since) (BACKLOG row 436 among them),
+`--kernel-option xaqu.fastpath=on` until BF6 (`--set ipc_fastpath=on --no-claim` since) (BACKLOG row 436 among them),
 moved to profile builds; the fast path's negative controls fired again under
 the flag; coverage per profile, since the code is absent from `max`'s image
 while the flag is off; and `ITEM.md` §5's count of boot options.
@@ -353,7 +353,7 @@ level = "none"        # until M7, which writes "sc2" here and takes target_level
 target_level = "sc2"
 claim_architectures = ["aarch64"]
 image = { driver_updates = "absent" }
-boot_options = { "ferrix.checks" = ["run"], "ferrix.root" = ["*"], "ferrix.onexit" = ["*"] }
+boot_options = { "xaqu.checks" = ["run"], "xaqu.root" = ["*"], "xaqu.onexit" = ["*"] }
 build = { cargo_profile = "release", toolchain = "1.99.1" }
 link = { x86_64 = "static PIE, PIC code model", aarch64 = "static PIE", armv7a = "fixed address with relocations" }
 
@@ -391,7 +391,7 @@ prints `profile=none level=none`.
 
 ### 5.1 The image manifest
 
-Every image carries `/etc/ferrix/image-manifest`, written by xtask from the
+Every image carries `/etc/xaqu/image-manifest`, written by xtask from the
 resolved build (the same `Resolved` that sets the kernel's cfgs) and the
 profile's `image` table, mode 0644, root's. It is what a ring-3 program
 reads to know what the image is, without the privilege `/dev/kmsg` needs
@@ -431,8 +431,8 @@ builds:
    four profile files: `present`, `desktop`, `max` and `fast`.
 2. The resolver in xtask, the `--check-cfg` generation, and `unexpected_cfgs`
    denied.
-3. `mitigations` moved onto the new scheme (`ferrix_mitigations="off"` in
-   place of `ferrix_mitigations_off`), `build.rs`'s link-mode choice with it,
+3. `mitigations` moved onto the new scheme (`xaqu_mitigations="off"` in
+   place of `xaqu_mitigations_off`), `build.rs`'s link-mode choice with it,
    and **byte-identical images** as its check.
 4. `ipc_fastpath` moved from the boot option to the flag (the item change
    of §3, under its own review).
@@ -442,7 +442,7 @@ builds:
 7. The profile rule in `check-item-boundary.py`, with
    `certification-item.json` gaining the levels, the flags' levels and the
    components' levels, and `present` as today's reference configuration.
-8. The checks of §2 and §3: no `ferrix_` cfg outside the kernel's crates, no
+8. The checks of §2 and §3: no `xaqu_` cfg outside the kernel's crates, no
    undeclared boot option read, a `--set` build refused, each with its
    negative control.
 9. `xtask check` building `present` and `desktop` on three architectures.
@@ -473,7 +473,7 @@ resolver and the boot line have been on `develop` since 2026-10-17 (see
 are still validated, not built; `--personality user` is `feature/mk-lift`'s.
 
 * First design review before code: **OK IF** BF1 to BF9, ledger line 914 of
-  `~/.local/share/ferrix/cert-consultant/reviews.md`. This text folds them
+  `~/.local/share/xaqu/cert-consultant/reviews.md`. This text folds them
   in: the interim `present` profile (BF1); levels as target sets (BF2); the
   resolver's four rules (BF3); the boot-option registry and the build
   settings (BF4); `ipc_fastpath` in `fast` per the customer's "Only max"
@@ -518,7 +518,7 @@ are still validated, not built; `--personality user` is `feature/mk-lift`'s.
   value, only at level `none`, and the line still names it, which
   overstates what the image relaxes and never understates it; (2) the
   registry also declares `noactlr` (ARMv7-A, read today) and
-  `ferrix.fastpath` (until BF6 moved it; retired since); (3) `ferrix-sync`'s clamp reads no
+  `xaqu.fastpath` (until BF6 moved it; retired since); (3) `xaqu-sync`'s clamp reads no
   cfg any more (rule 6 b), so `mitigations=off` keeps the two library
   clamps; (4) `max` has `restricted_fastpath=off` until K1's review; (5) a
   `--set` boot is refused by the gate unless `--no-claim` names it ad hoc.
@@ -550,10 +550,10 @@ are still validated, not built; `--personality user` is `feature/mk-lift`'s.
   the start-up record and seven items would otherwise push "the boot brought
   up" out of them; and four boot options read
   since the design, declared in the registry (above). `present` permits
-  `ferrix.fbcon.small`, `ferrix.pstore=on` (the reference) and
-  `ferrix.apic`, not `ferrix.efifb` (SAFETY-MANUAL AoU-31); `desktop` permits
+  `xaqu.fbcon.small`, `xaqu.pstore=on` (the reference) and
+  `xaqu.apic`, not `xaqu.efifb` (SAFETY-MANUAL AoU-31); `desktop` permits
   all four; `fast` and `max` none of them. Then rebased onto main 3a29477a7
-  (panic-reboot): `ferrix.panic` declared, `halt` permitted in `present`,
+  (panic-reboot): `xaqu.panic` declared, `halt` permitted in `present`,
   `max` and `fast`, `halt` and `reset` in `desktop`.
 * Diff check of that rebase: **OK IF** (1) to (5), ledger line 2208 (on
   90084bf64). Accepted: `BOOT_RECORDS` 9 with H.AUD.2 restated (this branch,
@@ -561,14 +561,14 @@ are still validated, not built; `--personality user` is `feature/mk-lift`'s.
   ledger 2179 (4)); the permits as proposed; `checks=off`'s constant in the
   core's `boot_checks.rs`. Owed and done on the landing commit: (1) rebased
   onto main 241b704d5, conflicts in derived files alone, regenerated; (2)
-  the general `"ferrix.` literal scan in `check-build-flags.py`, with its
+  the general `"xaqu.` literal scan in `check-build-flags.py`, with its
   `NOT_OPTIONS` list, a self-test case and a control; (3) a boot control
   for H.AUD.2 with `BOOT_RECORDS` left at 8; (4) `coverage-owed.json`
   names `pinned()`'s edited lines and the new units for the next coverage
   run; (5) this entry. The landing hash and the rows' tags are in the
   landing commit's message. `check-build-flags.py` now
   follows `module::CONST` to the reader file of that module, and reads the
-  library files named in its `LIBRARY_READERS` (`ferrix_bootinfo::pstore`),
+  library files named in its `LIBRARY_READERS` (`xaqu_bootinfo::pstore`),
   each with a self-test case. For the consultant's diff check before
   landing.
 * **`linux_abi` (2026-10-23)**, the flag of `docs/LINUX-ABI-SEPARATION.md`
@@ -581,7 +581,7 @@ are still validated, not built; `--personality user` is `feature/mk-lift`'s.
   crate allows dead code and unused dependencies: removing that allow is a
   precondition of any profile carrying `linux_abi=off`, it shrinks as the
   checks that run a Linux program are re-homed, and any allow not
-  predicated on `ferrix_linux_abi="off"`, or any widening of it, is a new
+  predicated on `xaqu_linux_abi="off"`, or any widening of it, is a new
   review.
 * **The kernel split (2026-10-23, branch `kernel-split-s3`)**: the flags now
   reach four crates, the binary and the core, item and load libraries, so

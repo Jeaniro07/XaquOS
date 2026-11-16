@@ -22,7 +22,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use compositor_layout::{MonitorLayout, Placed, Rect, Snap, State, WindowId};
 use compositor_text::{FontDescription, Fonts, Rgba, Size, Weight};
 
-/// How high a bar is by default, in logical pixels: Ferrix light's.
+/// How high a bar is by default, in logical pixels: Xaqu light's.
 pub const HEIGHT: i64 = 38;
 
 /// The bit every bar's id has, and no client's window.
@@ -36,7 +36,7 @@ const CLEAR: Rgba = Rgba {
     a: 0,
 };
 
-/// How a bar looks: `hyprix:titlebar:*`, whose defaults are Ferrix
+/// How a bar looks: `hyprix:titlebar:*`, whose defaults are Xaqu
 /// light's header (`docs/DESKTOP.md` §2.2) and which the Xaqu theme sets
 /// to its own (§6). Lengths are logical pixels.
 #[derive(Clone, Debug, PartialEq)]

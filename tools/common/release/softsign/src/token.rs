@@ -460,7 +460,7 @@ impl Token for SoftToken {
                 log,
                 "{} {q} {}",
                 hex(&state.key.id),
-                hex(&ferrix_sha256::digest(data))
+                hex(&xaqu_sha256::digest(data))
             )?;
             log.sync_all()?;
         }

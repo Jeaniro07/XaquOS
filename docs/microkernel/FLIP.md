@@ -25,12 +25,12 @@ Its loader starts only a verifying slot, so each image built for it signs one le
 | both | `fs=server` | `yes`, x86-64 and AArch64 | ARMv7-A, as `personality=user` | Widened at 9ebe69358 with B.3's rows on its hash: `mkf3b-btrfs-*`, `mkf3b-restart2-*`, `mkf3b-init-*` PASSED |
 | `fast` | `partition_speculation=partition` | `yes`, x86-64 and AArch64 | | Flipped at 9ebe69358. Host: `syscall::region_check` on a Bare caller, every image (7184 B4.1). None at an exit: the regions line, held by `regions_problem`, `mkf2j-c-partition` FIRED. One at a partition switch: cases 193, 194, `domains.rs` (ledger 7216 T.1, 7249 N.1), which replace 7011 B.4's `test-netd` for this row; `test-netd`'s second partition stays M8's. No shipped job is marked (`JOB_SPECULATION_DOMAIN`), so every switch between spaces takes the full barrier, safe and stronger than the flag says; partmgr marking is an M5 row |
 | `max` | `partition_speculation=exit` | `adhoc` | a row of the value | B.4: the host and `regions_problem` are in: barriers equal exits, on KVM; AArch64 reads "decided" on TCG, labelled, BACKLOG's real core |
-| `fast` | `restricted_fastpath=on` | `yes`, x86-64 and AArch64 | AArch64 holds no fast path: the general way, as its `why` says | Flipped at 9ebe69358. Code review given (ledger 7216). 6747 (2b)'s "drops the word term" withdrawn (7275). V.1-V.9, G.1, Z2-Z4 built: K1 §7.1's table, `check-linuxd-binary.py`, `check-kernel-shape.py`'s absent symbol. Rows on the flip's hash: `test-linuxd`, `test-threads --smp 2`, `test-shell`, `test-rustc` (x86-64) PASSED. nm: `ferrix_syscall_fast` and `fast_check` in under `fast` on x86-64, out under `off`, none on AArch64. `L.x86_64.272`-`.275` tagged, out of the baseline, with `.282` split from `.275` (7363 F.4); the anchors are the 20 units of 7363 (7008's "six" was never counted); coverage carried, none dropped; VULNERABILITY-ANALYSIS's entry (7249 (2), 7008 (4)) |
+| `fast` | `restricted_fastpath=on` | `yes`, x86-64 and AArch64 | AArch64 holds no fast path: the general way, as its `why` says | Flipped at 9ebe69358. Code review given (ledger 7216). 6747 (2b)'s "drops the word term" withdrawn (7275). V.1-V.9, G.1, Z2-Z4 built: K1 §7.1's table, `check-linuxd-binary.py`, `check-kernel-shape.py`'s absent symbol. Rows on the flip's hash: `test-linuxd`, `test-threads --smp 2`, `test-shell`, `test-rustc` (x86-64) PASSED. nm: `xaqu_syscall_fast` and `fast_check` in under `fast` on x86-64, out under `off`, none on AArch64. `L.x86_64.272`-`.275` tagged, out of the baseline, with `.282` split from `.275` (7363 F.4); the anchors are the 20 units of 7363 (7008's "six" was never counted); coverage carried, none dropped; VULNERABILITY-ANALYSIS's entry (7249 (2), 7008 (4)) |
 | `max` | `restricted_fastpath=off` | `adhoc` | | B.5: general path, nm shows no fast function |
 | `fast` | `fault_ahead=on` | `yes`, x86-64 and AArch64 | | Flipped at 9ebe69358. B.6: E1 and E4's W+X built, controls FIRED; E3 on and off (`mkf3c-cont`, `-cont-off`, `mkf3f-threads2`, `mkf3c-threads-off`). E4's foreign half by argument, A6 a BACKLOG row at linuxd's first adoption (7275). nm: `fault_around`, `write_ahead` in `linuxd` under `on`, out under `off` |
 | `max` | `fault_ahead=off` | `adhoc` | | B.6: `test-threads`, `test-container`, the walk's control silent |
-| `fast` | `schedule=edf` | `yes`, x86-64 and AArch64 | | Flipped at 9ebe69358: `test-flags` both, AArch64's `test-shell`, `test-threads --smp 2` PASSED; `test-kernel-symbols` re-read (`mkf3b-sym-*-present`). The fast path's decline on a channel: case 197, `restricted-check`, with its control. nm: `ferrix_sched_edf` in under `edf`, out under `fair`. `G.1`'s generic set over all three tiers with `windows` |
-| `max` | `schedule=windows` | `no` | no code | S.1, S.2, S.3, S.6: `ferrix-sched-windows`, fixed priorities inside windows (C6), no task on a fair run queue (C3) |
+| `fast` | `schedule=edf` | `yes`, x86-64 and AArch64 | | Flipped at 9ebe69358: `test-flags` both, AArch64's `test-shell`, `test-threads --smp 2` PASSED; `test-kernel-symbols` re-read (`mkf3b-sym-*-present`). The fast path's decline on a channel: case 197, `restricted-check`, with its control. nm: `xaqu_sched_edf` in under `edf`, out under `fair`. `G.1`'s generic set over all three tiers with `windows` |
+| `max` | `schedule=windows` | `no` | no code | S.1, S.2, S.3, S.6: `xaqu-sched-windows`, fixed priorities inside windows (C6), no task on a fair run queue (C3) |
 | `max` | `kernel_memory=retyped` | `adhoc` | `Load(Copy(Fault))` unexplained; K16.5, K16.7, K16.9, F.8 | R.1 to R.5 |
 
 ## What refuses them after every value is `built`
@@ -39,7 +39,7 @@ Its loader starts only a verifying slot, so each image built for it signs one le
 |---|---|
 | Done (this landing). LV.1: rule 3's second half fails `check`: `core` and `item` are at `present`, fsproto and blkclient at none | `level = "none"`, `target_level = "sc2"`/`"sc4"`; values, requires, stand-ins and boot options judged against the target; `component_problems` at the target printed as a note; line reads `level=none`; hand-editing `level` to the target fails `check`, controls FIRED |
 | Done (this landing). LV.2: `fast`'s `slot_signing=required`, families `aarch64-uefi-virt` only | Read the rows' boot path; a development-signed slot at level none; x86_64-uefi-pc joins the list if x86-64 boots `fast`, with a check that a family lies inside `claim_architectures` at level != none |
-| LV.3: `flag_nodes` keyed on `ferrix_level` would go dark at level none | Keyed on the profile: done. The certified-list writer and K14.12's framing test: done, development-only, refused above level none (`mkf2k-c-level`). Real nodes by a plant: `mkf2d-k14-pass`, `mkf2d-k14-off` |
+| LV.3: `flag_nodes` keyed on `xaqu_level` would go dark at level none | Keyed on the profile: done. The certified-list writer and K14.12's framing test: done, development-only, refused above level none (`mkf2k-c-level`). Real nodes by a plant: `mkf2d-k14-pass`, `mkf2d-k14-off` |
 | LV.4: `settings_writer=absent` needs lode reload's writer out (3623 R18) | Done: a build value of `lode`, refused in an `absent` image |
 | LV.5: `test-flags`, `test-kaslr`, `test-netboot` under the profiles; a row's boot options against a profile's permitted set | Read and run each. `check-stack-depth` on `personality=user`, both architectures: it walks a region's process made, a Linux call being linuxd's |
 | B.7: `fast_and_max_stay_not_buildable_with_the_lift_in` | The shrinking list is in: done. Owed at the flip commit: a flag-file copy with one value flipped fails it, control FIRED, and rule 3 on raising `level` FIRED; on empty, both profiles build at level none with their targets |
@@ -77,7 +77,7 @@ M5's flip and M7 keep all of theirs: nothing here is dropped by being moved off 
 
 ## `test-boot` is `test-flags` here
 
-`gate.sh`'s verdict of `test-boot` requires `FERRIX-BOOT-OK`, which a user kernel never prints, by design (5714 (20)), so B.3's test-boot row is `test-flags`, per accelerator and architecture: it runs `test_boot` whole, and its static checks. Ledger 7184. The sweep's test-boot row names this.
+`gate.sh`'s verdict of `test-boot` requires `XAQU-BOOT-OK`, which a user kernel never prints, by design (5714 (20)), so B.3's test-boot row is `test-flags`, per accelerator and architecture: it runs `test_boot` whole, and its static checks. Ledger 7184. The sweep's test-boot row names this.
 
 ## §12's failing rows
 
@@ -92,7 +92,7 @@ test-log-remote, test-removable, test-mce-driver, test-postmortem, test-selfhost
 ## B.8: `fast`'s sweep on its flip's hash (9ebe69358, ledger 7011 B.8, 7363 F.9, 7485)
 
 Through `gate.sh`, `GATE_PRIORITY=1`, `--kernel-profile fast`, tags `mkf3b-*`, logs in
-`~/.local/share/ferrix/logs/queue/`. x86-64 on KVM, AArch64 on TCG. Rows that ran on 146a44cbc, the same
+`~/.local/share/xaqu/logs/queue/`. x86-64 on KVM, AArch64 on TCG. Rows that ran on 146a44cbc, the same
 flip before a conflict-free rebase onto b50e88907, carry (2026-10-14's rule). The flip as landed, 4d8242298 on e39ff3dc6 (a clean rebase), differs from 9ebe69358 only by `personality=user`'s `built_on` (`["aarch64"]`), its test's x86-64 assertion and one sentence of VULNERABILITY-ANALYSIS (7485 D.1 (b)): no image's values or code. `check` and B.7's control (b) ran again on it (`mkf3b-check3`, `mkf3b-b2`).
 
 | Row | x86-64 KVM | AArch64 TCG |
@@ -124,9 +124,9 @@ First runs of `test-vfs`, `test-btrfsd-restart` and `test-net` without `--init` 
 (`mkf3b-vfs-*`, `-restart-*`, `-net-x86`): the command, not the hash; re-run with it as named.
 
 **nm, by value: local, not evidence** (6155 (12); debug builds of this hash on this host, outside `gate.sh`, `--kernel-profile fast` against `--personality user`
-with `partition_speculation=exit restricted_fastpath=off fault_ahead=off schedule=fair`): `ferrix_syscall_fast`
+with `partition_speculation=exit restricted_fastpath=off fault_ahead=off schedule=fair`): `xaqu_syscall_fast`
 and `fast_check::restricted_fast_counts` 1 and 1 under `fast` on x86-64, 0 under `off`, 0 on AArch64;
-`speculation_check::switch_barrier_offered` 1 under `partition`, 0 under `exit`, on both; `ferrix_sched_edf` 46 (x86-64),
+`speculation_check::switch_barrier_offered` 1 under `partition`, 0 under `exit`, on both; `xaqu_sched_edf` 46 (x86-64),
 42 (AArch64) under `edf`, 0 under `fair`; `linuxd`'s `fault_around`, `write_ahead` 1 each under `on`, 0 under `off`, on both.
 `arch_prctl` 0 everywhere (Z2). The gate's rows for it: `mkf3b-shape-a64` and `-shape-x86` (`check-kernel-shape.py`'s absent symbol on AArch64 and x86-64), and each value's own landing's rows by tag, `mkf3m-fast-part`, `-fast-exit`, `-edf`, `-window` PASSED on 49b859a0f, `mkf3m-edf-decline` FIRED (ledger 7337 RB.1).
 

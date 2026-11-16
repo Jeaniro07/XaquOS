@@ -5,7 +5,7 @@
 //! the segment's sequence and time range, its record count, its priority
 //! range, and every value it holds of the fields queries name most --
 //! `SYSLOG_IDENTIFIER`, `UNIT`, `_SYSTEMD_UNIT`, `_TRANSPORT`,
-//! `SESSION_ID`, `_FERRIX_DRIVER`, `_SYSTEMD_INVOCATION_ID` -- with a count
+//! `SESSION_ID`, `_XAQU_DRIVER`, `_SYSTEMD_INVOCATION_ID` -- with a count
 //! each. A reader skips a
 //! segment whose summary says the query cannot match ([`Summary::may_match`]),
 //! and lists boots and top talkers from summaries alone. A segment with no
@@ -44,7 +44,7 @@ pub const FIELDS: [&str; 7] = [
     "_SYSTEMD_UNIT",
     "_TRANSPORT",
     "SESSION_ID",
-    "_FERRIX_DRIVER",
+    "_XAQU_DRIVER",
     "_SYSTEMD_INVOCATION_ID",
 ];
 

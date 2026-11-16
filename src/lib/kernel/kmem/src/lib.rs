@@ -14,7 +14,7 @@
 //!
 //! # Why a crate, and a hook
 //!
-//! The allocations are in libraries -- `ferrix-vfs`, `ferrix-vma` -- as much
+//! The allocations are in libraries -- `xaqu-vfs`, `xaqu-vma` -- as much
 //! as in the kernel, and a library cannot name the kernel's quota table. So
 //! the token is here, and what it calls is an [`Account`] the kernel
 //! [`install`]s once at boot. Until one is, and in a host test that installs
@@ -51,8 +51,8 @@ use alloc::vec::Vec;
 use core::alloc::Layout;
 use core::sync::atomic::AtomicUsize;
 
-use ferrix_heap::{CLASS_SIZES, Heap, PAGE_SIZE, Request};
-use ferrix_sync::Once;
+use xaqu_heap::{CLASS_SIZES, Heap, PAGE_SIZE, Request};
+use xaqu_sync::Once;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;

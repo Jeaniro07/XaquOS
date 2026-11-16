@@ -8,16 +8,16 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_native::call::Syscall as _;
-use ferrix_native::channel::{self, Channel};
-use ferrix_native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_native::port::{self, Port as KernelPort};
-use ferrix_native::vmo::Vmo as KernelVmo;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
-use ferrix_rt::Kernel;
+use xaqu_native::call::Syscall as _;
+use xaqu_native::channel::{self, Channel};
+use xaqu_native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_native::port::{self, Port as KernelPort};
+use xaqu_native::vmo::Vmo as KernelVmo;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
+use xaqu_rt::Kernel;
 
 use crate::object::channel::{Endpoint, Sender};
 use crate::object::port::Port;
@@ -36,8 +36,8 @@ fn owned<T>(make: impl FnOnce(OwnedHandle<Kernel>) -> T, handle: Handle) -> T {
 /// What a kernel handle is, as a local object. A kernel VMO comes to be the
 /// frames of a local one above the arena; a port and a channel get a bridge.
 pub fn import(handle: Handle) -> Option<Transfer> {
-    use ferrix_native_abi::lift::{KIND_CHANNEL, KIND_PORT, KIND_VMO};
-    let (kind, rights) = ferrix_native::lift_calls::object_kind(Kernel, handle).ok()?;
+    use xaqu_native_abi::lift::{KIND_CHANNEL, KIND_PORT, KIND_VMO};
+    let (kind, rights) = xaqu_native::lift_calls::object_kind(Kernel, handle).ok()?;
     let rights = Rights(rights);
     match kind {
         KIND_VMO => {
@@ -48,7 +48,7 @@ pub fn import(handle: Handle) -> Option<Transfer> {
             let mapped = vmo.map(
                 Some(at as usize),
                 pages as usize * PAGE,
-                ferrix_native::pending::Protection::ReadWrite,
+                xaqu_native::pending::Protection::ReadWrite,
                 0,
             );
             if mapped.is_err() {
@@ -123,13 +123,13 @@ pub fn export(object: Object, rights: Rights) -> Option<Handle> {
 /// stays mapped for linuxd's life (M5-LIFT.md §11).
 fn export_vmo(local: &Arc<Vmo>, rights: Rights) -> Option<Handle> {
     let pages = local.len_pages();
-    let kernel = ferrix_native::vmo::create(Kernel, pages as usize * PAGE).ok()?;
+    let kernel = xaqu_native::vmo::create(Kernel, pages as usize * PAGE).ok()?;
     let (first, at) = crate::mm::foreign_window(pages)?;
     let _ = kernel
         .map(
             Some(at as usize),
             pages as usize * PAGE,
-            ferrix_native::pending::Protection::ReadWrite,
+            xaqu_native::pending::Protection::ReadWrite,
             0,
         )
         .ok()?;
@@ -208,7 +208,7 @@ fn carry_in(local: &Endpoint, kernel: Handle, gone: &AtomicBool) {
             Deadline::At(until),
         ) {
             Ok(_) => {}
-            Err(ferrix_native::error::Error::TimedOut) => continue,
+            Err(xaqu_native::error::Error::TimedOut) => continue,
             Err(_) => return,
         }
         let Ok(got) = channel.read(&mut bytes, &mut handles) else {

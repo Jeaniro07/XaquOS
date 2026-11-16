@@ -30,8 +30,8 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
 
 use crate::syscall::attributes::{self, int, subject};
 use crate::syscall::process::Process;
@@ -484,7 +484,7 @@ pub(crate) fn dispatch(
 
 /// `getuid`, `geteuid`, `getgid` and `getegid` for `process`, or `None` for
 /// any other call. The lock is taken only for one of the four.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub(crate) fn identity(call: Syscall, process: &Process) -> Option<u32> {
     if !matches!(
         call,
@@ -501,7 +501,7 @@ pub(crate) fn identity(call: Syscall, process: &Process) -> Option<u32> {
 }
 
 /// See the other: by a function, as the ring-0 load's frame was measured with.
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) fn identity(call: Syscall, process: &Process) -> Option<u32> {
     let pick: fn(&Credentials) -> u32 = match call {
         Syscall::Getuid => |credentials| credentials.shown(Kind::User, credentials.user.real),

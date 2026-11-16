@@ -40,18 +40,18 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_blkring::kernel::Ending;
-use ferrix_blkring::{Device, DeviceFlags, DiskName, Hello, Identity, Message, Refusal};
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{DEVICE_INFO_BYTES, DEVICE_VIRTIO_PCI};
-use ferrix_pci::header::{COMMAND, COMMAND_BUS_MASTER};
-use ferrix_vfs::initramfs::makedev;
+use xaqu_blkring::kernel::Ending;
+use xaqu_blkring::{Device, DeviceFlags, DiskName, Hello, Identity, Message, Refusal};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{DEVICE_INFO_BYTES, DEVICE_VIRTIO_PCI};
+use xaqu_pci::header::{COMMAND, COMMAND_BUS_MASTER};
+use xaqu_vfs::initramfs::makedev;
 
 use super::{VIRTIO_BLK_MAJOR, forget_parked, is_parked, location_of, start_for};
 use crate::device::{self, DeviceNode};
@@ -401,7 +401,7 @@ fn refusals(
     side: &Side,
     node: &Arc<DeviceNode>,
     device: Handle,
-    location: ferrix_blkring::Location,
+    location: xaqu_blkring::Location,
     counter: &mut Counter,
 ) -> Result<(), &'static str> {
     // A device handle carries no DUPLICATE, so a second one is placed the way
@@ -493,7 +493,7 @@ pub(super) fn end(
     device: Handle,
     control: Handle,
     rdev: u64,
-    location: ferrix_blkring::Location,
+    location: xaqu_blkring::Location,
     ending: Ending,
     counter: &mut Counter,
 ) -> Result<(), &'static str> {
@@ -593,7 +593,7 @@ fn described(
     side: &Side,
     node: &Arc<DeviceNode>,
     device: Handle,
-    location: ferrix_blkring::Location,
+    location: xaqu_blkring::Location,
 ) -> Result<(), &'static str> {
     let _ = side
         .call(nr::DEVICE_INFO, &[reg(device), INFO])
@@ -683,8 +683,8 @@ pub(super) fn ring(side: &Side, device: Handle) -> Result<Handle, &'static str> 
 /// # Errors
 ///
 /// A disk the crate no longer accepts, or a name it no longer numbers: a
-/// change in `ferrix-blkring` the boot then reports.
-pub(super) fn hello(location: ferrix_blkring::Location) -> Result<Hello, &'static str> {
+/// change in `xaqu-blkring` the boot then reports.
+pub(super) fn hello(location: xaqu_blkring::Location) -> Result<Hello, &'static str> {
     let device = Device::new(
         BLOCK_SIZE,
         CAPACITY,
@@ -696,7 +696,7 @@ pub(super) fn hello(location: ferrix_blkring::Location) -> Result<Hello, &'stati
     let name = DiskName::for_index(0).ok_or("the crate has no name for disk 0")?;
     let identity = Identity {
         location,
-        serial: [0; ferrix_blkring::identity::SERIAL_BYTES],
+        serial: [0; xaqu_blkring::identity::SERIAL_BYTES],
         name,
     };
     Ok(Hello::new(&device, &identity))
@@ -736,8 +736,8 @@ pub(super) fn objects(side: &Side, reduced: bool) -> Result<[Handle; 3], &'stati
     if !reduced {
         return Ok([ring, data, port]);
     }
-    let vmo_rights = u64::from(ferrix_blkring::control::VMO_RIGHTS.0);
-    let port_rights = u64::from(ferrix_blkring::control::PORT_RIGHTS.0);
+    let vmo_rights = u64::from(xaqu_blkring::control::VMO_RIGHTS.0);
+    let port_rights = u64::from(xaqu_blkring::control::PORT_RIGHTS.0);
     Ok([
         side.handle(
             nr::HANDLE_REPLACE,
@@ -808,7 +808,7 @@ fn receive(side: &Side, control: Handle) -> Result<(Message, u32), &'static str>
             &[
                 reg(control),
                 INBOX,
-                ferrix_blkring::control::MAX_BYTES as u64,
+                xaqu_blkring::control::MAX_BYTES as u64,
                 IN_HANDLES,
                 4,
                 ACTUAL,

@@ -64,7 +64,7 @@ jobs:
         run: cargo xtask signed-slot-image --arch x86_64 --release --kernel-profile desktop
 
       - name: Build the soft signer
-        run: cargo build --release -p ferrix-softsign
+        run: cargo build --release -p xaqu-softsign
 
       - name: Fetch every earlier run's signature log
         env:
@@ -107,21 +107,21 @@ jobs:
             fetched=$((fetched + 1))
           done < "$RUNNER_TEMP/artifacts.txt"
           echo "fetched $fetched earlier signature log(s)"
-          target/release/ferrix-softsign ci-audit "$RUNNER_TEMP/prior.log"
+          target/release/xaqu-softsign ci-audit "$RUNNER_TEMP/prior.log"
 
       - name: Sign
         env:
-          FERRIX_CI_SIGNING_KEY: ${{ secrets.FERRIX_CI_SIGNING_KEY }}
+          XAQU_CI_SIGNING_KEY: ${{ secrets.XAQU_CI_SIGNING_KEY }}
         run: |
-          target/release/ferrix-softsign ci-sign \
+          target/release/xaqu-softsign ci-sign \
             --run-number "$GITHUB_RUN_NUMBER" --run-attempt "$GITHUB_RUN_ATTEMPT" \
             --prior-logs "$RUNNER_TEMP/prior.log" --log signing-ci.log \
             --anchors tools/common/data/signing-anchors.toml \
             --workflow .github/workflows/signing-ci.yml \
             --kind slot --anchor-id 36864 --profile 4 --arch 1 --family 257 \
-            --security-version 1 --label "ferrix ci $GITHUB_RUN_NUMBER" \
-            --payload build/x86_64/ferrix-slot.payload \
-            --out build/x86_64/ferrix-slot.manifest --into build/x86_64/ferrix-slot.img
+            --security-version 1 --label "xaqu ci $GITHUB_RUN_NUMBER" \
+            --payload build/x86_64/xaqu-slot.payload \
+            --out build/x86_64/xaqu-slot.manifest --into build/x86_64/xaqu-slot.img
 
       - name: Keep the signature log
         if: always()
@@ -135,7 +135,7 @@ jobs:
       - name: Audit every log with this one
         run: |
           cat "$RUNNER_TEMP/prior.log" signing-ci.log > "$RUNNER_TEMP/all.log"
-          target/release/ferrix-softsign ci-audit "$RUNNER_TEMP/all.log"
+          target/release/xaqu-softsign ci-audit "$RUNNER_TEMP/all.log"
 
       - name: The signing gate's loader would start it
         run: cargo xtask verify-signed-slot --arch x86_64 --release --kernel-profile desktop
@@ -143,9 +143,9 @@ jobs:
       - name: Upload the signed slot
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ferrix-x86_64-signed-slot
+          name: xaqu-x86_64-signed-slot
           path: |
-            build/x86_64/ferrix-slot.img
-            build/x86_64/ferrix-slot.manifest
+            build/x86_64/xaqu-slot.img
+            build/x86_64/xaqu-slot.manifest
           retention-days: 30
           if-no-files-found: error

@@ -21,7 +21,7 @@ use crate::{
 type TestDriver = Driver<Regs, FakeClock, Mem, Mem>;
 type TestParts = Parts<Regs, FakeClock, Mem, Mem>;
 
-/// The YT6801's options, as `ferrix-yt6801` passes them.
+/// The YT6801's options, as `xaqu-yt6801` passes them.
 fn yt6801() -> Options {
     Options {
         mac: [0x00, 0x0A, 0x35, 0x01, 0x02, 0x03],

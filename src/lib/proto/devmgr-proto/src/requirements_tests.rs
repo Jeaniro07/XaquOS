@@ -13,9 +13,9 @@ use std::string::ToString;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_fdt::Fdt;
-use ferrix_fdt::identity::{self, RECORD_BYTES, Record};
-use ferrix_fdt::write::Writer;
+use xaqu_fdt::Fdt;
+use xaqu_fdt::identity::{self, RECORD_BYTES, Record};
+use xaqu_fdt::write::Writer;
 
 use crate::requirements::{Offered, Requirement, Table, What, check, encode, find_section, size};
 
@@ -41,7 +41,7 @@ fn record_bytes(with_clock: bool) -> Vec<u8> {
     w.begin("default-pins").cells("phandle", &[2]).end();
     w.end();
     w.begin("seconds@9010000")
-        .strings("compatible", &["ferrix,test-seconds"])
+        .strings("compatible", &["xaqu,test-seconds"])
         .cells("reg", &[0x901_0000, 0x1000])
         .cells("clocks", &[1])
         .strings("clock-names", &["apb_pclk"])
@@ -160,7 +160,7 @@ fn registers_and_interrupts_are_counted_and_absent_ones_named() {
 
 /// A minimal ELF image with one named section holding `payload`.
 fn elf(wide: bool, payload: &[u8]) -> Vec<u8> {
-    let names = b"\0.shstrtab\0.ferrix.requirements\0";
+    let names = b"\0.shstrtab\0.xaqu.requirements\0";
     let header = if wide { 64 } else { 52 };
     let entry = if wide { 64 } else { 40 };
     let names_at = header;

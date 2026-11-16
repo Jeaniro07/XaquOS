@@ -3,7 +3,7 @@
 //!
 //! Run bare, it is the daemon: it owns `org.freedesktop.Notifications` on
 //! the session bus when there is one, reads `devmgr`'s driver events from
-//! `\0ferrix.devmgr.events` and the log's alerts from lode's
+//! `\0xaqu.devmgr.events` and the log's alerts from lode's
 //! `/run/lode/alerts` (`docs/LOGGING.md` §7.4), and shows them as banners
 //! at the top centre of the focused screen. `SIGUSR1` opens and closes the list of recent ones.
 //! `--toggle-list` sends that signal to the running daemon, which is what

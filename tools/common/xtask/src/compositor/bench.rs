@@ -91,7 +91,7 @@ pub(crate) fn bench_chrome(args: &Args) -> Result<()> {
         args.memory = crate::chrome::MEMORY;
     }
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("bench-chrome needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("bench-chrome needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let mut ports = crate::rustc::files(crate::chrome::LINKS);
@@ -370,7 +370,7 @@ fn bench_report(said: &[String]) -> Result<String> {
 }
 
 /// Where `bench-chrome-video`'s page and video are in the guest.
-const VIDEO_DIRECTORY: &str = "usr/share/ferrix/bench";
+const VIDEO_DIRECTORY: &str = "usr/share/xaqu/bench";
 
 /// The page `bench-chrome-video` opens: the video, playing with its sound
 /// and looping, and once a second a console line with where it is and the
@@ -426,17 +426,17 @@ done
 echo "bench: end"
 "#;
 
-/// The video `bench-chrome-video` plays: `FERRIX_BENCH_VIDEO` when it names
+/// The video `bench-chrome-video` plays: `XAQU_BENCH_VIDEO` when it names
 /// one -- a clip fetched from a video site, say -- or else one made here with
 /// the host's `ffmpeg`, once, and kept: forty seconds of a moving test
 /// picture at 1280x720 and 30 frames a second in VP9, as a video site sends
 /// to a window of that size, with a 440 Hz tone in Opus, stereo at 48 kHz.
 fn bench_video() -> Result<PathBuf> {
-    if let Some(path) = std::env::var_os("FERRIX_BENCH_VIDEO") {
+    if let Some(path) = std::env::var_os("XAQU_BENCH_VIDEO") {
         return Ok(PathBuf::from(path));
     }
     let home = std::env::var_os("HOME").ok_or_else(|| Error::new("HOME is not set"))?;
-    let directory = PathBuf::from(home).join(".local/share/ferrix/bench-video");
+    let directory = PathBuf::from(home).join(".local/share/xaqu/bench-video");
     let video = directory.join("tone-720p30-vp9-opus.webm");
     if video.is_file() {
         return Ok(video);
@@ -549,7 +549,7 @@ pub(crate) fn bench_chrome_video(args: &Args) -> Result<()> {
     }
     let busybox = gates_busybox(arch).ok_or_else(|| {
         Error::new(
-            "bench-chrome-video needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`",
+            "bench-chrome-video needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`",
         )
     })?;
     let programs = Programs::build(arch)?;

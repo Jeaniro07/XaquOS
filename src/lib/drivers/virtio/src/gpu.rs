@@ -7,7 +7,7 @@
 //! and tell the device which rectangle changed. Each of those is a command
 //! here, encoded into bytes, and each response is parsed back. What drives a
 //! device — the queue, the order of commands, what to do when it misbehaves —
-//! is `ferrix-virtio-gpu`'s. The 3D commands and capability sets came with
+//! is `xaqu-virtio-gpu`'s. The 3D commands and capability sets came with
 //! `docs/GPU.md`'s Path A and the cursor queue's two commands ([`Cursor`])
 //! with its §3.10, and blob resources, which Venus makes every host-visible
 //! Vulkan allocation as, with §6.1. `GET_EDID` came for the refresh a

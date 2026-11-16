@@ -1,5 +1,5 @@
 /* framerec: the frame recorder, an LD_PRELOAD library for stage 24's rig
- * (docs/GAME-PATH.md §2.4, R1). The same binary runs on Ferrix and on the
+ * (docs/GAME-PATH.md §2.4, R1). The same binary runs on Xaqu and on the
  * Linux baseline guest, under any x86-64 glibc program that draws through
  * GLX or EGL.
  *

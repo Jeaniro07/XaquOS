@@ -1,7 +1,7 @@
 #!/bin/busybox sh
-# GRYPHLINK and Endfield as user ferrix, Endfield on the N150's iGPU:
+# GRYPHLINK and Endfield as user xaqu, Endfield on the N150's iGPU:
 # ef-player.sh (ef-cache's version) with Mesa's anv beside lavapipe.
-# Started by /data/ef-start-anv.sh, which drops root to ferrix first.
+# Started by /data/ef-start-anv.sh, which drops root to xaqu first.
 #
 # EF_VK picks the Vulkan devices (default split):
 #   split  the launcher and every other program on lavapipe, only
@@ -36,21 +36,21 @@
 #   between them, e.g. "dxgi.syncInterval = 0; dxgi.maxFrameRate = 30";
 #   EF_GAME_DXVK=none adds nothing (once the driver agent's fix is in).
 # * Mesa's shader cache has its own directory for this script.
-# * DXVK logs at info level to /home/ferrix/plog/dxvk/<exe>_<dll>.log, and
+# * DXVK logs at info level to /home/xaqu/plog/dxvk/<exe>_<dll>.log, and
 #   Wine's fps channel is on for Endfield.exe alone ("Endfield.exe:+fps",
 #   a per-process WINEDEBUG channel), so proton.out carries one
 #   "trace:fps:... @ approx N fps" line about every 1.5 s of the game.
-[ "$(id -u)" = 1000 ] || { echo "ef-player-anv.sh: run as ferrix (/data/ef-start-anv.sh)" >&2; exit 1; }
-export HOME=/home/ferrix USER=ferrix LOGNAME=ferrix DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/ferrix-run
-export STEAM_COMPAT_DATA_PATH=/home/ferrix/cd-dwp STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/ferrix/steam
+[ "$(id -u)" = 1000 ] || { echo "ef-player-anv.sh: run as xaqu (/data/ef-start-anv.sh)" >&2; exit 1; }
+export HOME=/home/xaqu USER=xaqu LOGNAME=xaqu DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/xaqu-run
+export STEAM_COMPAT_DATA_PATH=/home/xaqu/cd-dwp STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/xaqu/steam
 export SteamGameId=0 UMU_ID=umu-endfield
 export PATH=/data/dwproton/files/bin:/usr/bin:/bin
-plog=/home/ferrix/plog
+plog=/home/xaqu/plog
 mkdir -p $plog $plog/dxvk
 mode=${EF_VK:-split}
 fps='Endfield.exe:+fps'
 if [ "${EF_PROTON_LOG:-0}" = 1 ]; then
-    export PROTON_LOG=1 PROTON_LOG_DIR=/tmp/ferrix-plog
+    export PROTON_LOG=1 PROTON_LOG_DIR=/tmp/xaqu-plog
     # Proton's own list (proton, init_session), plus the game's fps.
     export WINEDEBUG="+timestamp,+pid,+tid,+seh,+unwind,+threadname,+debugstr,+loaddll,+mscoree,$fps"
 else
@@ -65,11 +65,11 @@ if [ "$mode" != lvp ]; then
         [ -e "$candidate" ] && node=$candidate
     done
     if [ -z "$node" ]; then
-        echo "no render node: is the kernel started with ferrix.intelgpu? $(date +%T)" > $plog/status
+        echo "no render node: is the kernel started with xaqu.intelgpu? $(date +%T)" > $plog/status
         exit 2
     fi
     if [ ! -r "$node" ] || [ ! -w "$node" ]; then
-        echo "ferrix cannot open $node ($(ls -l $node)) $(date +%T)" > $plog/status
+        echo "xaqu cannot open $node ($(ls -l $node)) $(date +%T)" > $plog/status
         exit 2
     fi
     [ -e $anv ] || { echo "no $anv: run anv-box-install.sh" > $plog/status; exit 2; }
@@ -113,11 +113,11 @@ anv)   export VK_ICD_FILENAMES=$anv MESA_VK_WSI_DEBUG=sw ;;
 lvp)   export VK_ICD_FILENAMES=$lvp; unset MESA_VK_WSI_DEBUG ;;
 esac
 if [ "$mode" = lvp ]; then
-    export MESA_SHADER_CACHE_DIR=/home/ferrix/.cache MESA_SHADER_CACHE_MAX_SIZE=8G
+    export MESA_SHADER_CACHE_DIR=/home/xaqu/.cache MESA_SHADER_CACHE_MAX_SIZE=8G
 else
     # One directory for both drivers in a split run: Mesa keys entries by
     # driver, and the launcher's lavapipe entries are small.
-    export MESA_SHADER_CACHE_DIR=/home/ferrix/.cache/anv MESA_SHADER_CACHE_MAX_SIZE=8G
+    export MESA_SHADER_CACHE_DIR=/home/xaqu/.cache/anv MESA_SHADER_CACHE_MAX_SIZE=8G
     if [ -x /data/usr/bin/vulkaninfo ]; then
         /data/usr/bin/vulkaninfo --summary > $plog/vulkaninfo.txt 2>&1
     fi

@@ -27,22 +27,22 @@ mod fake;
 #[path = "../../intel/src/serve.rs"]
 mod serve;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_intel_xelp::device_info;
-use ferrix_intel_xelp::frontend::Frontend;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::port;
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_intel_xelp::device_info;
+use xaqu_intel_xelp::frontend::Frontend;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::port;
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
 use crate::serve::AsVmo;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Where a run stopped, as the exit status.
 #[derive(Clone, Copy, Debug)]
@@ -80,7 +80,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(never) => match never {},
         Err(step) => {
-            ferrix_rt::err!("intel-fake: stopped at {step:?}");
+            xaqu_rt::err!("intel-fake: stopped at {step:?}");
             step as i32
         }
     }
@@ -109,7 +109,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let device = started(boot)?;
     let info = device.info().map_err(|_| Step::Identity)?;
     if device_info::lookup(info.vendor_id, info.device_id).is_none() {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel-fake: {:04x}:{:04x} is not ADL-N",
             info.vendor_id,
             info.device_id
@@ -118,7 +118,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     }
     let revision = device.config_read(0x08, 1).map_or(0, |value| value as u8);
     let facts = fake::facts(info.device_id, revision, SYSTEM_MEMORY);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel-fake: {:#010x} {:04x}:{:04x} rev {revision}: facts {} EUs, DSS {:#x}, CS {} Hz; {}",
         info.location,
         info.vendor_id,
@@ -139,7 +139,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     match serve::serve(&mut host, &port, &mut frontend, &mut |_, _, _| {}) {
         Ok(never) => match never {},
         Err(stopped) => {
-            ferrix_rt::err!("intel-fake: serving stopped: {stopped:?}");
+            xaqu_rt::err!("intel-fake: serving stopped: {stopped:?}");
             Err(Step::Serve)
         }
     }

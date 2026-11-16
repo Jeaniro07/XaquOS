@@ -54,8 +54,8 @@
 
 use core::sync::atomic::{AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_acpi::hpet::{self, Capabilities};
-use ferrix_acpi::{Acpi, GenericAddress};
+use xaqu_acpi::hpet::{self, Capabilities};
+use xaqu_acpi::{Acpi, GenericAddress};
 
 use super::cpu;
 use crate::discovery::acpi::DirectMap;

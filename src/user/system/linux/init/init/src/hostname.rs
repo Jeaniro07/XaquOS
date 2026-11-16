@@ -6,7 +6,7 @@
 //! `settingsd`, which also sets the running name; this is what makes the
 //! name outlive a restart. The file is read bounded, at most [`READ_MAX`]
 //! bytes, and its first line, trimmed, is checked by the very function
-//! `settingsd` checks a new name with ([`ferrix_settings_proto::valid_hostname`];
+//! `settingsd` checks a new name with ([`xaqu_settings_proto::valid_hostname`];
 //! the certification consultant's ledger line 3636, condition 18). A file
 //! that is missing, empty, too long or holds a name that is not one is
 //! said, and the kernel keeps the name it started with: a damaged file
@@ -40,7 +40,7 @@ pub(crate) fn from_text(text: &str, set: &mut dyn FnMut(&str) -> io::Result<()>)
     if name.is_empty() {
         return Applied::Refused("its first line is empty".to_owned());
     }
-    if let Err(invalid) = ferrix_settings_proto::valid_hostname(name) {
+    if let Err(invalid) = xaqu_settings_proto::valid_hostname(name) {
         return Applied::Refused(invalid.0);
     }
     match set(name) {

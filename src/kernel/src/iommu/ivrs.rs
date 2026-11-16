@@ -8,12 +8,12 @@
 //! name every devid with an ALL entry. A function is behind the unit whose
 //! entries name it as its own -- the last entry naming it decides, as
 //! Linux's walk leaves it -- and that enumeration places as its own
-//! requester (`ferrix_pci::topology::claims`); one an alias entry names, or
+//! requester (`xaqu_pci::topology::claims`); one an alias entry names, or
 //! one under an aliasing bridge, is unresolved; one a unit's ALL entry
 //! reaches is that unit's when no explicit entry names it. The decision is
 //! `topology::place`, the one VT-d's placements make, so the report and the
 //! domains cannot disagree. An IVRS that cannot be read whole
-//! (`ferrix_acpi::ivrs::Ivrs::whole`) places nothing: every function is
+//! (`xaqu_acpi::ivrs::Ivrs::whole`) places nothing: every function is
 //! unresolved.
 //!
 //! # The two functions no entry need name (D10, ledger 3923)
@@ -28,11 +28,11 @@
 
 use alloc::vec::Vec;
 
-use ferrix_acpi::ivrs::{self, Entry, Ivrs, Named, SPECIAL_IOAPIC};
-use ferrix_paging::vtd::rmrr::{self, Identity};
-use ferrix_pci::Address;
-use ferrix_pci::topology::{self, Bridge};
-use ferrix_sync::Once;
+use xaqu_acpi::ivrs::{self, Entry, Ivrs, Named, SPECIAL_IOAPIC};
+use xaqu_paging::vtd::rmrr::{self, Identity};
+use xaqu_pci::Address;
+use xaqu_pci::topology::{self, Bridge};
+use xaqu_sync::Once;
 
 use super::amdvi;
 use super::{IdentityDomain, Programmed, claims};
@@ -113,7 +113,7 @@ pub(crate) use ivrs::Exempt;
 
 /// Whether `function`, of `class` and with bus mastering `bus_master` as
 /// enumeration found it, is one of D10's two
-/// (`ferrix_acpi::ivrs::exempt`, host-tested there).
+/// (`xaqu_acpi::ivrs::exempt`, host-tested there).
 pub(crate) fn exempt(
     units: &[Placing],
     function: Address,
@@ -160,20 +160,20 @@ pub(crate) enum Plan {
     /// None reaches it.
     None,
     /// Each function's identity domain, with its pages and permissions.
-    Honour(Vec<(Address, Vec<Identity>, ferrix_paging::MapFlags)>),
+    Honour(Vec<(Address, Vec<Identity>, xaqu_paging::MapFlags)>),
     /// It is held to remapping only, for this reason.
     Hold(&'static str),
 }
 
 /// Whether `table`'s IVMDs that reach the unit `unit` can be honoured, by
-/// the RMRR rules (`ferrix_paging::vtd::rmrr`): whole pages, in reach, over
+/// the RMRR rules (`xaqu_paging::vtd::rmrr`): whole pages, in reach, over
 /// no RAM, no frame the allocator holds, none overlapping another of the
 /// function's. An all-peripherals IVMD, one naming a devid this unit does
 /// not name as its own, or any that is refused, holds the unit.
 pub(crate) fn plan(
     table: &Ivrs<'_>,
     unit: &Placing,
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
 ) -> Plan {
     let ram = || {
         memory
@@ -181,7 +181,7 @@ pub(crate) fn plan(
             .filter(|region| region.kind.is_ram())
             .map(|region| (region.base, region.len))
     };
-    let mut functions: Vec<(Address, Vec<Identity>, ferrix_paging::MapFlags)> = Vec::new();
+    let mut functions: Vec<(Address, Vec<Identity>, xaqu_paging::MapFlags)> = Vec::new();
     for region in table.memory().filter(ivrs::Ivmd::kept) {
         if region.kind == ivrs::IVMD_ALL {
             return Plan::Hold("an IVMD for every peripheral");
@@ -201,10 +201,10 @@ pub(crate) fn plan(
             return Plan::Hold("an IVMD over a frame the allocator holds");
         }
         let exclusion = region.flags & ivrs::IVMD_EXCLUSION != 0;
-        let flags = ferrix_paging::MapFlags {
+        let flags = xaqu_paging::MapFlags {
             read: exclusion || region.flags & ivrs::IVMD_READ != 0,
             write: exclusion || region.flags & ivrs::IVMD_WRITE != 0,
-            ..ferrix_paging::MapFlags::DMA
+            ..xaqu_paging::MapFlags::DMA
         };
         for devid in region.devid..=last {
             if ivrs::names_among(unit.entries.iter().copied(), devid) != Named::Own {
@@ -246,7 +246,7 @@ pub(crate) fn plan(
 /// not come up is left alone, and placement says so (`None` index).
 pub(crate) fn bring_up(
     table: &Ivrs<'_>,
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
     switched_off: bool,
     programmed: &mut Programmed,
     report: &mut super::BringUp,
@@ -257,7 +257,7 @@ pub(crate) fn bring_up(
              PCI function is unresolved"
         );
         // FATAL-ALLOC: boot only: IOMMU units are found, placed and programmed once, before any program runs.
-        super::remapping::record(alloc::vec![ferrix_paging::vtd::remap::UnitState {
+        super::remapping::record(alloc::vec![xaqu_paging::vtd::remap::UnitState {
             remapping: false,
             compatibility_blocked: false,
         }]);
@@ -265,13 +265,13 @@ pub(crate) fn bring_up(
     };
     let mut states = Vec::new();
     for (unit, ivhd) in units.iter_mut().zip(table.units()) {
-        let mut state = ferrix_paging::vtd::remap::UnitState {
+        let mut state = xaqu_paging::vtd::remap::UnitState {
             remapping: false,
             compatibility_blocked: false,
         };
         let plan = plan(table, unit, memory);
         let opened = if switched_off {
-            Err("ferrix.amdvi=off asked for every unit to be left alone")
+            Err("xaqu.amdvi=off asked for every unit to be left alone")
         } else {
             amdvi::Unit::open(&ivhd, matches!(plan, Plan::Hold(_)))
         };
@@ -313,7 +313,7 @@ pub(crate) fn bring_up(
     }
     if switched_off {
         println!(
-            "  iommu    ferrix.amdvi=off: every AMD-Vi unit is left alone, so no DMA is \
+            "  iommu    xaqu.amdvi=off: every AMD-Vi unit is left alone, so no DMA is \
              translated and no interrupt remapped; this is a recovery configuration, not an \
              evaluated one"
         );
@@ -341,7 +341,7 @@ fn attach(unit: &amdvi::Unit, plan: &Plan) -> Result<Vec<IdentityDomain>, &'stat
 }
 
 /// A unit's bring-up line.
-fn say(unit: &amdvi::Unit, plan: &Plan, state: ferrix_paging::vtd::remap::UnitState) {
+fn say(unit: &amdvi::Unit, plan: &Plan, state: xaqu_paging::vtd::remap::UnitState) {
     let remap = if state.remapping {
         "remapping on (512 entries per function, 32-bit format)"
     } else {

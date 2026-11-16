@@ -54,7 +54,7 @@ note says so):
 
 | Branch | Ahead | State |
 |---|---|---|
-| `feature/ferrix-roadmap-completion-hkxlpp` | 61 | the roadmap agent's branch: stage 14 (the scheduler's classes) past the stage 13 follow-ons, which are on `develop`; its `SoftRt` domain made at run time (35bd297ec) is the newest; 163 commits behind `develop` |
+| `feature/xaqu-roadmap-completion-hkxlpp` | 61 | the roadmap agent's branch: stage 14 (the scheduler's classes) past the stage 13 follow-ons, which are on `develop`; its `SoftRt` domain made at run time (35bd297ec) is the newest; 163 commits behind `develop` |
 | `feature/sched-softrt-domain` | 62 | the same line of work, one commit further; resume from one of the two, not both |
 | `docs/sched-classes-reservations` | 1 | `H.SCHED.18-23` and `L.sched.102-130` for stage 14's classes (99bbdd0d0), a reservation `develop` does not have yet |
 | `feature/hyprix-gpu-backend`, `-r2`, `land/hyprix-gpu-backend` | 3 each | hyprix's `hyprix:gpu` option and the helper's environment lines, and `test-compositor --boot helper-desktop`; the helper, its protocol and its renderer are on `develop` (`docs/GPU-COMPOSITOR.md`) |
@@ -94,7 +94,7 @@ now (they still count 6, 11 and 14 by patch id, because the port rebased them).
 **Landed and still on origin.** The 21 branches that count 0 by patch id,
 checked on 2026-11-02 against `origin/develop` e51fc67fd with `git merge-base
 --is-ancestor`, and against GitHub's open pull requests (three: #38 from
-`feature/ferrix-roadmap-completion-hkxlpp`, #39 from
+`feature/xaqu-roadmap-completion-hkxlpp`, #39 from
 `docs/sched-classes-reservations` and #40 from `feature/sched-softrt-domain`;
 none uses a branch below). "Contained" is whether the tip is an ancestor of
 `develop`. Where it is not, the branch's single commit has an equivalent on
@@ -186,7 +186,7 @@ older sections below, whose branch tips and *unlanded* counts are as of their
 dates (the repository holds over 800 local branches, and `git cherry main
 <branch>` is the way to ask about any one). Tips and counts are read from
 `git branch` on 2026-10-15; the state, the gates and the scratch are in each
-branch's handover, `~/.local/share/ferrix/handover/<branch>.md`. Nothing
+branch's handover, `~/.local/share/xaqu/handover/<branch>.md`. Nothing
 below is landed unless it says so, and the coordinator lands.
 
 Landed on `main` since the last section (209 commits after d884add58 in all)
@@ -200,14 +200,14 @@ refresh per msc (e34851de3, e31ba0c8e), `netboot` (da37eb541, `docs/NETBOOT.md`,
 |---|---|---|---|---|---|
 | `mm-pcache` | efcfb8785 | 77e87403a | 1 | work | The fix for the Endfield download's ENOSPC: a writable mount's clean pages are reclaimed, `/proc/meminfo` is truthful, writebacks go in slices (L.object.188-190, reserved on `main`). Its handover (written at d4378e691) records the rig comparison: fill wait 149,230 ms before and 20,538 after. Gates were queued under `pc2-*`; it changes kernel code (37 files), so a consultant review precedes landing. `pc2-dd-before` and `pc2-dd-after` are measurement refs that never land. |
 | `net-gw` | 7c1dcb538 | 17ebb8a4e | 1 | work | The gateway in `xtask` scales the guest's TCP window and probes a shut one (persist timer). Its findings: the gateway is not the limit (guest downloads to tmpfs run at host line rate, 29-38 MB/s), the btrfs root is (8-32 MB/s and noisy, window-0 stalls of 0.9-4.6 s), which is `mm-pcache`'s. Left, per the handover: tests and negative controls, nettcp's 64 KiB receive capacity measured, BACKLOG row 547's figures. |
-| `g24-i1` | d5d2e13a0 | da37eb541 | 3 | work | Stage 24's I1: hyprix reads input on a thread of its own, a pointer lock's relative motion goes straight to the client with the device's stamp, `test-compositor --boot lane`, per-hop ages in `test-xlatency`. The branch holds the pin to yserver's `i1-input-time` fork (6dbdc78f5, e13992e3), which is pushed to origin but not merged into yserver's `ferrix` branch; landing the per-hop numbers in CI needs that merge and a pin bump (the product owner's call). |
+| `g24-i1` | d5d2e13a0 | da37eb541 | 3 | work | Stage 24's I1: hyprix reads input on a thread of its own, a pointer lock's relative motion goes straight to the client with the device's stamp, `test-compositor --boot lane`, per-hop ages in `test-xlatency`. The branch holds the pin to yserver's `i1-input-time` fork (6dbdc78f5, e13992e3), which is pushed to origin but not merged into yserver's `xaqu` branch; landing the per-hop numbers in CI needs that merge and a pin bump (the product owner's call). |
 | `claude-desktop` | 79995c949 | 42d2dca8a | 5 | work | Stage C1 to C4 of `docs/CLAUDE-CODE.md` §7: the Claude desktop app on the `--everything` desktop (`test-claude-desktop`), natively on ferrousli, to its sign-in screen, no account used; C5 to C7 are not built. Two landings in order: ferrousli's `ld-rpath-origin` (113c587, not on GitHub when written) first, then this branch with the pin commit (7cf531a27). The consultant's OK IF has three conditions, the first a PASSED `check --ferrousli` on the landing hash, which failed twice only on ferrousli's `c_mount` 30 s limit under host load. |
 | `claude-desktop-assess` | e27e97494 | 170ea1572 | 0 | history | Its one commit assesses the desktop app (CLAUDE-CODE §7, 2026-10-14); `git cherry` counts 0, so it is landed under another hash or dropped. |
-| `net-yt6801` | 7911a8616 | 17ebb8a4e | 5 | work | The Motorcomm YT6801's driver (`ferrix-dwmac`, `ferrix-yt6801`, the ring-3 process, devmgr's row) and the kernel item change that holds MSI-X off for `MSI_PREFERRED` function 1F0A:6801 and grants its table page (L.device.35-37). Consultant: design OK IF D1-D9, variant V accepted under V1-V6 (ledger lines 1097 and 1110-1116). `9dcbc66e7`, the reservation, lands alone and first (also as `net-yt6801-reserve`). Nothing has run on the box; that needs the product owner's hardware approval. Its SysML structure parts are not written. |
-| `net-restart-stall` | 18e60878d | 77e87403a | 4 | work | The virtio-net driver's stall after a `devmgr` restart on the Endfield download (2026-10-15 00:22): the net ring's indices were composed from bytes and tore across a byte boundary (status 7 about every 35 minutes), and a ring the kernel ended made the driver spin without exiting. The fix makes every shared index one aligned load or store in the driver, `ferrix-netring` and the kernel's `net_ring`, and the driver leaves with status 9 when its ring is ended; `test-net` gains a fault-armed driver. It changes kernel code (`net_ring/mod.rs`), so a consultant review precedes landing; NET-RING.md §3 carries a ledger line. `net-restart-stall-stress-before` and `-after` are scratch stress runs and never land. |
+| `net-yt6801` | 7911a8616 | 17ebb8a4e | 5 | work | The Motorcomm YT6801's driver (`xaqu-dwmac`, `xaqu-yt6801`, the ring-3 process, devmgr's row) and the kernel item change that holds MSI-X off for `MSI_PREFERRED` function 1F0A:6801 and grants its table page (L.device.35-37). Consultant: design OK IF D1-D9, variant V accepted under V1-V6 (ledger lines 1097 and 1110-1116). `9dcbc66e7`, the reservation, lands alone and first (also as `net-yt6801-reserve`). Nothing has run on the box; that needs the product owner's hardware approval. Its SysML structure parts are not written. |
+| `net-restart-stall` | 18e60878d | 77e87403a | 4 | work | The virtio-net driver's stall after a `devmgr` restart on the Endfield download (2026-10-15 00:22): the net ring's indices were composed from bytes and tore across a byte boundary (status 7 about every 35 minutes), and a ring the kernel ended made the driver spin without exiting. The fix makes every shared index one aligned load or store in the driver, `xaqu-netring` and the kernel's `net_ring`, and the driver leaves with status 9 when its ring is ended; `test-net` gains a fault-armed driver. It changes kernel code (`net_ring/mod.rs`), so a consultant review precedes landing; NET-RING.md §3 carries a ledger line. `net-restart-stall-stress-before` and `-after` are scratch stress runs and never land. |
 | `ef-night` | 67390a52e | 77e87403a | 3 | never land | Three SCRATCH commits to `endfield.rs`: parity mode, a kept volume, the launcher's `/tmp/wine` on the volume so a restart can resume the download (not shown to do so), and a kept volume booting with the yserver it was made with. The running Endfield download boot (xtask 2500808, QEMU 2504549, worktree `endfield-install`) is left alone. |
 | `endfield-esync` | c26938824 | da37eb541 | 1 | work | Stage 23 E1.4: Debian's Wine 10.0 has no esync, fsync or ntsync (checked against its source and the volume's `wineserver64`), so `WINEESYNC=1` is ignored; E1.4's esync stays open, moved to a Wine that has it (Proton's builds). Docs only (WINE.md and the stage page). |
-| `bm-h6-gop` | 44177cea9 | 42d2dca8a | 2 | work in progress | Stage 21's H6: the firmware framebuffer as a card behind `ferrix.efifb`, with a new ring-3 driver `efifb`, gated by `test-compositor --boot firmware-screen`. Its own commit says "not built yet". |
+| `bm-h6-gop` | 44177cea9 | 42d2dca8a | 2 | work in progress | Stage 21's H6: the firmware framebuffer as a card behind `xaqu.efifb`, with a new ring-3 driver `efifb`, gated by `test-compositor --boot firmware-screen`. Its own commit says "not built yet". |
 | `btrfs-enospc` | 3491d9c86 | 170ea1572 | 1 | never land | A SCRATCH large-volume write through the writable mount, the evidence for `mm-pcache`. |
 
 The older sections below are unchanged by this reconciliation.
@@ -215,7 +215,7 @@ The older sections below are unchanged by this reconciliation.
 ## 2026-10-09: what landed on the night of 2026-10-08
 
 Against `main` d884add58, by the product owner's landing log
-(`~/.local/share/ferrix/fleet/log`). These landed after 9ed9e8428:
+(`~/.local/share/xaqu/fleet/log`). These landed after 9ed9e8428:
 
 - `po11/cpumax` (po11-cpumax), as df7ee418c: `cpu.stat`'s charge kept back per
   run queue, L.object.180.
@@ -333,7 +333,7 @@ newer word.
 **Origin was cleaned on 2026-10-05.** 122 branches were deleted from GitHub
 (landed, patch-equal, or pre-rebase copies of work that is on `main`); origin
 holds 119 branches besides `main` now. Every deleted tip is in
-`~/.local/share/ferrix/branch-archive-2026-10-05/origin-all.bundle` on the
+`~/.local/share/xaqu/branch-archive-2026-10-05/origin-all.bundle` on the
 gate host (its lists are `safe.txt` and `superseded.tsv`; the cleanup of
 nazuna's worktrees and target dirs is in `nazuna-cleanup.log` there). So
 many branches the tables name are no longer on origin. This page drops a row
@@ -478,7 +478,7 @@ progress 2026-10-05: session po5-red. Batch
 - `test-init --arch all`: aarch64 only, "the revoke stage's reader was not
   waiting (state R)" (b0-2), a timing check of console-revoke's under load.
   The same tip's own `test-init --arch aarch64` passed. Owner: console-revoke's
-  session (ferrix-da); make the wait robust or file it as a flake with its row.
+  session (xaqu-da); make the wait robust or file it as a flake with its row.
 - `test-init` in a gate slot also fails "no sshdt built for x86_64" unless the
   slot has `cargo xtask build-apps --arch x86_64 --app sshdt`; slots 3 and 4
   have it since tonight, slot 2 has it, check 1 and 5. The batch should build
@@ -540,19 +540,19 @@ In this order:
    its own row. Both are on branch `po5/docs` since 2026-10-05.
 
 Leftovers on nazuna, to delete by exact name: `~/target-os7c-land-n6`,
-`~/Documents/projects/os/ferrix/target-os7c-l13-init`,
-`~/.local/share/ferrix/target-os7c-selfhost-matrix`, and the worktrees
+`~/Documents/projects/os/xaqu/target-os7c-l13-init`,
+`~/.local/share/xaqu/target-os7c-selfhost-matrix`, and the worktrees
 `.claude/worktrees/os7c-n6`, `os7c-l13-init` and `os7c-shm` in
-`~/Documents/projects/os/ferrix`. On 2026-10-05 `~/target-os7c-land-n6` was
+`~/Documents/projects/os/xaqu`. On 2026-10-05 `~/target-os7c-land-n6` was
 removed (`nazuna-cleanup.log` in the branch archive), and on this refresh
 `target-os7c-l13-init`, `target-os7c-selfhost-matrix` and the `os7c-shm`
 worktree are not there either; `os7c-n6` and `os7c-l13-init` are still listed
 as worktrees. The open queue's entries set aside during
-the hold are in `~/.local/share/ferrix/fleet/batch/po-aside-2026-10-04/`.
+the hold are in `~/.local/share/xaqu/fleet/batch/po-aside-2026-10-04/`.
 
 ## Wind-down 2026-10-04: start here
 
-Written by the product owner (ferrix-d7) at the customer's wind-down on
+Written by the product owner (xaqu-d7) at the customer's wind-down on
 2026-10-04, from each session's own entry; `main` was 900c2e8c6, pushed. Every
 branch below is on GitHub. Landed that day, through `fleet/batch.sh`
 (`AGENTS.md`, *Batching full runs*): console-revoke and `stage13-netns`
@@ -563,8 +563,8 @@ In this order:
 Since 2026-10-05: every branch of this list has landed but `land-n6`
 (session po5-n6), `l13b`, `l13c` and `nvidia-n2`.
 
-1. **LANDED** (cb872a732). **`selfhost-components`** first: `main`'s CI job "rustc on Ferrix, and
-   Ferrix built on Ferrix" is red until it lands (since 2263225e1, the
+1. **LANDED** (cb872a732). **`selfhost-components`** first: `main`'s CI job "rustc on Xaqu, and
+   Xaqu built on Xaqu" is red until it lands (since 2263225e1, the
    components split). The Windows job's red was a flake, fixed in 900c2e8c6.
 2. The batch that was running at the wind-down, 20261004T135748Z
    (`stage13-s3-on-netns`, `l13-init`, `selfhost-components` and the
@@ -582,7 +582,7 @@ Gate pool notes, for whoever runs it:
   70-80% idle while runs queued (the `product-owner` skill, *Busy slots on an idle
   processor*).
 - Something on the host ended QEMUs 7-8 s into a boot three times on
-  2026-10-04 (ferrix-da twice, the batch once), with no OOM in the kernel log
+  2026-10-04 (xaqu-da twice, the batch once), with no OOM in the kernel log
   and not xtask's own orphan killer. Not found; when it happens, take `ps -eo
   pid,ppid,lstart,args` at once.
 - `batch.sh` gaps, rows for the product owner: `batch.sh wait` restarts the
@@ -594,7 +594,7 @@ Gate pool notes, for whoever runs it:
   nothing heavy start until it says so; check with the customer before the
   first gate.
 
-### Stage 13 and init's L13 (ferrix-21; handover `~/.local/share/ferrix/l13-coord/HANDOVER.md`)
+### Stage 13 and init's L13 (xaqu-21; handover `~/.local/share/xaqu/l13-coord/HANDOVER.md`)
 
 - `stage13-s3-on-netns` (0527dd365; **landed 2026-10-04** from
   `tonight/stage13-s3-on-netns`, 248799bdd through 3e8b759d3; what follows is
@@ -605,7 +605,7 @@ Gate pool notes, for whoever runs it:
   batch 20261004T135748Z . The other 16 controls carry under the line-321
   rule; evidence `git range-diff 65a33486c..6c539b276 22384874f..0527dd365
   -- src tools/common/data`, saved at
-  `~/.local/share/ferrix/logs/s3-range-diff.txt`. Next: send the batch
+  `~/.local/share/xaqu/logs/s3-range-diff.txt`. Next: send the batch
   verdict with the range-diff to the consultant for the final OK, then
   update SECCOMP.md §12 and the roadmap. Trap: a boot check's user tasks
   must be listed (`check::spawn_in`), or main's pending-work word panics
@@ -624,11 +624,11 @@ Gate pool notes, for whoever runs it:
 - `l13c` (91045526a), SystemCallFilter=, SystemCallErrorNumber= and
   SystemCallArchitectures= as per-ABI BPF, on S3 plus l13b. A local x86
   test-init passed; its negative controls were cut off by the wind-down
-  (script `~/.local/share/ferrix/logs/l13c-ctl.py`). Next: run them, rebase
+  (script `~/.local/share/xaqu/logs/l13c-ctl.py`). Next: run them, rebase
   after S3 and l13b land, then a batch with `check` and `test-init --arch
   all`.
 
-### Authentication phase 2 (ferrix-da)
+### Authentication phase 2 (xaqu-da)
 
 - `np-land` (403b05626; **landed 2026-10-04** from `tonight/np-land` as
   7e9a2806f, 4538d75b6 and a18b3fd33; what follows is as written before;
@@ -655,14 +655,14 @@ Gate pool notes, for whoever runs it:
 - `console-revoke` **landed 2026-10-04** as 0f94a6d1a in batch
   20261004T133714Z (main 22384874f); consultant lines 329, 339, 341 met.
 
-### Stage 20: Ferrix built on Ferrix (ferrix-d4)
+### Stage 20: Xaqu built on Xaqu (xaqu-d4)
 
 - `selfhost-matrix` (e8b57ed4f; **landed 2026-10-04**, tip 77783565a, the
   owed list below is as written before it): pid 1's inputs (init program, `sh -c`
   script, command list) move from the kernel into the initramfs under
-  `.ferrix/init/`, so one kernel serves every test (stage 20's plan: 66
+  `.xaqu/init/`, so one kernel serves every test (stage 20's plan: 66
   kernel builds to 6, 271 builds to 188; about 2 s a gate on nazuna), plus
-  the stage 20 harness outside the item (`FERRIX_BUILDS=plan:`, the 57-row
+  the stage 20 harness outside the item (`XAQU_BUILDS=plan:`, the 57-row
   `selfhost-matrix.sh plan|record|replay`, script apps recorded,
   test-selfhost --plan vendoring). Consultant OK IF, ledger lines 328,
   331-333, 340, 343. Passed: host tests, kernel clippy x3, traceability,
@@ -670,9 +670,9 @@ Gate pool notes, for whoever runs it:
   and test-vfs on x86_64 by hand; controls b, c1-c7 and e FIRED on
   5e2eca4b2. Owed: (1) `cargo xtask check` on the head (stopped at the
   wind-down), (2) every control in
-  `~/.local/share/ferrix/logs/linit-controls.md` again on the landing hash,
+  `~/.local/share/xaqu/logs/linit-controls.md` again on the landing hash,
   with the spec's re-run notes for a, g, e-host, f and f2, (3) `batch.sh
-  join ... --gate ~/.local/share/ferrix/selfhost-matrix/batch-gate.txt`,
+  join ... --gate ~/.local/share/xaqu/selfhost-matrix/batch-gate.txt`,
   then the one-line report to the PO (all controls FIRED, the four boots'
   transcripts equal main's apart from the `inputs` line and sizes). Traps:
   5e2eca4b2 failed `cargo fmt --check` in src/lib/fs/common/vfs/src/tests.rs (fixed
@@ -686,11 +686,11 @@ Gate pool notes, for whoever runs it:
   first boot (approved), then the weekly CI job. Handover:
   `docs/handover/2026-10-04-stage20-selfhost.md` on the branch.
 
-### Components, apps and main's red CI (ferrix-db)
+### Components, apps and main's red CI (xaqu-db)
 
 - `selfhost-components` (1fcbe409e, 1 commit; **landed 2026-10-04** as
   cb872a732): fixes main's red "rustc on
-  Ferrix, and Ferrix built on Ferrix" CI job, broken by the components split
+  Xaqu, and Xaqu built on Xaqu" CI job, broken by the components split
   (2263225e1, landed by components-flip). test-selfhost now copies each
   component checkout's tracked files into the volume, and
   `components::ensure()` skips a tree with no `.git`, so the guest never
@@ -716,7 +716,7 @@ Gate pool notes, for whoever runs it:
   earlier frame (62057 of 196608 pixels wrong), hyprix drawing in software
   on armv7a. The window path was only gated on x86_64.
 
-### NVIDIA on the RTX 3060 (ferrix-74)
+### NVIDIA on the RTX 3060 (xaqu-74)
 
 - `land-n6` (3d6621a64, one squashed commit; carried since 2026-10-05 by
   session po5-n6 from `tonight/land-n6`, 2e936ad65): resume the NVIDIA landing
@@ -738,7 +738,7 @@ Gate pool notes, for whoever runs it:
   294/300 rows; F-61 open.
 - `nvidia-n2` (dbb23fd6f): continue NVIDIA work here; handover
   `docs/handover/2026-10-03-nvidia-n6.md` with its 2026-10-04 update.
-  Everything in land-n6, plus `FERRIX_NVIDIA_INPUT` evdev keyboard/mouse
+  Everything in land-n6, plus `XAQU_NVIDIA_INPUT` evdev keyboard/mouse
   passthrough (worked on the TV), plus N3b in progress: Chrome GPU
   compositing over dmabuf for 60 fps (design OK IF, ledger 316 B1-B14).
   Done: nvrm's nvidia-drm subset `os/glue/drm.c` and the nvos bindings.
@@ -756,7 +756,7 @@ Gate pool notes, for whoever runs it:
 | `l13c` | 2026-10-04 | 10 | work: this is the pre-rebase tip; resume from the gate host's local `l13c` (3f0501d1e, 7 unlanded, rebased onto `main`), po6-l13 | test-init: filter checks for SystemCallFilter= and its two keys |
 | `land-n6` | 2026-10-04 | 1 | history: resume from `po5/land-n6` on the gate host (47b0a2294, 7 unlanded, not on origin), po5-n6; ready, waiting for the G3 fix | NVIDIA on the RTX 3060: Vulkan, NVKMS and the card's own monitor; Chrome renders WebGL there |
 | `tonight/land-n6` | 2026-10-04 | 6 | history: land-n6's earlier state on origin; `po5/land-n6` is later | docs: regenerate the model and traceability after the rebase onto f55e8ab28 |
-| `nvidia-n1c` | 2026-10-03 | 1 | work: not named before this refresh; NVIDIA N1c | WIP (N1c, wind-down): nvrm's OS layer, ferrix-nvos and the kept C |
+| `nvidia-n1c` | 2026-10-03 | 1 | work: not named before this refresh; NVIDIA N1c | WIP (N1c, wind-down): nvrm's OS layer, xaqu-nvos and the kept C |
 | `nvidia-n2` | 2026-10-04 | 21 | work | Handover update: land-n6 dropped by a docs/generated conflict, input passthrough works, the customer's performance order |
 
 ## Stage 13: namespaces, cgroups, seccomp
@@ -791,7 +791,7 @@ Every namespace and seccomp branch got the same blocker once:
 `launch::load_native` must give a native child the creator's whole namespace
 set, pid namespace, seccomp chain and `no_new_privs`. netns and S3 (both
 landed) carry it. The consultant's ledger
-is `~/.local/share/ferrix/cert-consultant/reviews.md` on nazuna.
+is `~/.local/share/xaqu/cert-consultant/reviews.md` on nazuna.
 
 | Branch | Last commit | Unlanded | Kind | Tip |
 |---|---|---:|---|---|
@@ -854,7 +854,7 @@ customer's call.
   left at `u32`, and the new `regroup` loom model's control, which has not
   run); SPECULATION.md §3, coverage, the full gate and `bench-ipc`; then the
   consultant. About 3 to 4 hours. Worktree `.claude/worktrees/ipc-step1`
-  (warm target dir); logs `~/.local/share/ferrix/logs/step2a/`.
+  (warm target dir); logs `~/.local/share/xaqu/logs/step2a/`.
 - `bench-exact` (81409fd7a): step 0's exact `bench-ipc`, a fenced counter,
   p50 from sorted samples, one pinned processor and `--alternate <ref>`.
   Outside the item. Its gate was not confirmed at the wind-down: run a
@@ -862,7 +862,7 @@ customer's call.
   first, since today's p50 moves in 233 ns steps and hides 2a's, 2c's and
   2e's savings.
 - `step4-prep` (fe424cd81, three commits on the `step4-ids` reservation,
-  now on `main`): step 4's groundwork. `ferrix.fastpath` (off by default,
+  now on `main`): step 4's groundwork. `xaqu.fastpath` (off by default,
   printed at stage 9, L.x86_64.150); the `loom` model of the park protocol
   (§9.7 condition 9, three controls); `ipc-equiv` and `cargo xtask
   test-ipc-equiv`, passing on the general path, with the cases that need
@@ -921,7 +921,7 @@ still needs its own landing.
 ## Verification audit
 
 `audit-2`: the second verification audit, WIP, with its mutants untriaged.
-The ledger is `~/.local/share/ferrix/verification-audit/ledger.md` on nazuna;
+The ledger is `~/.local/share/xaqu/verification-audit/ledger.md` on nazuna;
 read its last section first.
 
 On 2026-10-07 (f8b44e04c, C1) seven rows of the audit table in
@@ -1078,7 +1078,7 @@ gate and the untriaged mutants stay open.
 | `backup/2026-10-01/wip-init-l4` | 2026-10-01 | 1 | snapshot | Backup of uncommitted work in init-l4 (init/l4) before a PC switch, 2026-10-01 |
 | `w8-armv7a` | 2026-09-27 | 1 | work | wip: W-8 file 24 drafts (arch/armv7a, arch/arm_common), parked for the wind-down |
 | `f46-power-off` | 2026-09-27 | 2 | work | WIP F-46: controls run, qemu.rs .get() fix, evidence edits; not reviewed, not rebased |
-| `boot-21b` | 2026-09-27 | 1 | work | Write the boot's low-level requirements, and count ferrix.checks as product (W-8 boot, 21b |
+| `boot-21b` | 2026-09-27 | 1 | work | Write the boot's low-level requirements, and count xaqu.checks as product (W-8 boot, 21b |
 | `wip/init-l4` | 2026-09-24 | 1 | snapshot | WIP snapshot of worktree init-l4, 2026-09-24, before switching PCs |
 | `sysml-studio-submodule` | 2026-09-23 | 4 | work | Move SysML Studio to its settings and shortcuts |
 | `os-8d/stage20-before-rebase` | 2026-09-23 | 11 | history | wip: plan test covers reads |
@@ -1092,7 +1092,7 @@ gate and the untriaged mutants stay open.
 | `stage9/log-header` | 2026-09-14 | 1 | work | WIP: Name the tree a gate ran on as the first line of its log |
 | `stage8-filemmap` | 2026-09-14 | 4 | work | WIP: file mmap, what is left of MAP_SHARED and MAP_PRIVATE (8 + 8 points) |
 | `worktree-agent-aa3e651b1a5027598` | 2026-09-13 | 3 | never land | WIP: temporary hang instrumentation for single-CPU Arm, not for landing |
-| `worktree-agent-a33c10946b6721065` | 2026-09-13 | 1 | work | WIP: port Linux's drm_panic_qr as ferrix-qr, for drawing a panic report |
+| `worktree-agent-a33c10946b6721065` | 2026-09-13 | 1 | work | WIP: port Linux's drm_panic_qr as xaqu-qr, for drawing a panic report |
 | `worktree-agent-a293f44fe214785df` | 2026-09-13 | 4 | work | WIP: check the leak counters the fuzz-hardened handlers only printed |
 | `vmo-map-wip` | 2026-09-13 | 2 | history | WIP: keep vmo_map's check and remap under clippy's length limit |
 | `stage8-diag` | 2026-09-13 | 2 | never land | DIAGNOSTIC, not for landing: count frames by release route across two self-check windows |
@@ -1116,7 +1116,7 @@ its older copies; delete them.
 
 Every change on these branches was on `main` under another hash. All of them
 were deleted from origin on 2026-10-05 (tips in
-`~/.local/share/ferrix/branch-archive-2026-10-05/origin-all.bundle`; see
+`~/.local/share/xaqu/branch-archive-2026-10-05/origin-all.bundle`; see
 *2026-10-05, evening: refreshed*): `backup/2026-10-01/os5d/gate-rows`,
 `backup/2026-10-01/os5d/profile-iterate`, `backup/2026-10-01/po-winddown`,
 `os5d/compositor-skip`, `stage13-n4-userns`, `stage13-s1`, `stage13-todos`,
@@ -1134,9 +1134,9 @@ were deleted from origin on 2026-10-05 (tips in
 - **The test-badapple armv7a window boot is red**, not owned: red since at
   least 594d69146; "holding frame 359" while the dump shows an earlier frame
   (62057 of 196608 pixels wrong), hyprix drawing in software on armv7a. The
-  window path was only ever gated on x86_64 (ferrix-db, 2026-10-04).
+  window path was only ever gated on x86_64 (xaqu-db, 2026-10-04).
 
-- **The gate pool's deadlock fix** for `~/.local/share/ferrix/fleet/gate.sh`
+- **The gate pool's deadlock fix** for `~/.local/share/xaqu/fleet/gate.sh`
   on nazuna, which is not in the repository: a run held to one slot
   (`GATE_SLOT`) must not hold the queue (`docs/TEST-TIME.md`, *Deadlock*).
   Not installed.

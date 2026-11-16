@@ -126,7 +126,7 @@ def landing_refs() -> tuple[str, list[str]]:
     Since 2026-10-23 landings go to `develop` and `main` moves only when a
     promotion merges (docs/REPO-FLOW.md), so a branch is compared with the
     landing branch, not with a `main` that lags it: a reservation landed on
-    develop counts at once. In order: `FERRIX_MAIN_REF` when set; a pull
+    develop counts at once. In order: `XAQU_MAIN_REF` when set; a pull
     request's base in CI; on the gate host, the branch `fleet/land-branch`
     names; in any clone that has it, `origin/develop`; else `main`. Not
     `main` for a promotion: its ids were written and their reservations
@@ -134,12 +134,12 @@ def landing_refs() -> tuple[str, list[str]]:
     against develop, which the promotion is, nothing is new. (CI's shallow
     checkout has neither, and says so.)
     """
-    if os.environ.get("FERRIX_MAIN_REF"):
-        return os.environ["FERRIX_MAIN_REF"], [os.environ["FERRIX_MAIN_REF"]]
+    if os.environ.get("XAQU_MAIN_REF"):
+        return os.environ["XAQU_MAIN_REF"], [os.environ["XAQU_MAIN_REF"]]
     if os.environ.get("GITHUB_BASE_REF"):
         name = os.environ["GITHUB_BASE_REF"]
         return name, [name, f"origin/{name}"]
-    fleet = Path(os.environ.get("FERRIX_FLEET_DIR", Path.home() / ".local/share/ferrix/fleet"))
+    fleet = Path(os.environ.get("XAQU_FLEET_DIR", Path.home() / ".local/share/xaqu/fleet"))
     try:
         name = (fleet / "land-branch").read_text(encoding="utf-8").strip()
     except OSError:

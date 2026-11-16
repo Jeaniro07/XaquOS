@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 17: the low-level requirements of memory.
+ * Xaqu — SysML v2 model, part 17: the low-level requirements of memory.
  *
  * What each unit of the item's memory management does, as `ItemLowLevel`
  * requirements (part 13 defines the format, part 14 is the pilot this
@@ -24,7 +24,7 @@
  *
  * L.user.173 was reserved for the tmpfs root's release after a switch to a
  * root disk (docs/RAM-RELEASE.md §2) and released unwritten: that is
- * fs/mod.rs and ferrix-vfs, the load ring and no ring, and no item code
+ * fs/mod.rs and xaqu-vfs, the load ring and no ring, and no item code
  * relies on what the tmpfs holds after it (consultant ruling, ledger 5038).
  *
  * The frame, heap, paging and vma arithmetic itself is src/lib/kernel/frame,
@@ -37,8 +37,8 @@
  * requirement of its own; and check code living in a product file is listed
  * in tools/common/data/traceability-units.json, not required.
  */
-package FerrixMemoryRequirements {
-    private import FerrixItemRequirements::*;
+package XaquMemoryRequirements {
+    private import XaquItemRequirements::*;
 
     package MemoryManagement {
         doc /* src/kernel/src/mm.rs: the frame allocator's interface, the kernel heap's
@@ -190,7 +190,7 @@ package FerrixMemoryRequirements {
             attribute :>> criterion = "Around the heap check -- a Box, a Vec grown to
                 4096 values and a BTreeMap of 2048 inserts, all dropped -- the heap's
                 live bytes come back to what they were, and its pages grow by no more
-                than ferrix_heap::CLASSES.";
+                than xaqu_heap::CLASSES.";
             attribute :>> parent = "H.MEM.9";
             attribute :>> unit = ("mm::KernelAllocator::dealloc",
                 "mm::KernelPages::deallocate_pages", "mm::heap_allocated",
@@ -668,7 +668,7 @@ package FerrixMemoryRequirements {
                 memory is at least twice the watermark, and another free block
                 of the claimed block's order or larger exists; otherwise it
                 shall skip the frame, and stop the batch at the watermark.";
-            attribute :>> criterion = "ferrix-frame's host test
+            attribute :>> criterion = "xaqu-frame's host test
                 a_claim_leaves_another_block_of_its_order; check_scrubber: a
                 frame the check holds is skipped, its contents untouched, and
                 a clean frame's batch leaves the free count and every order's
@@ -737,7 +737,7 @@ package FerrixMemoryRequirements {
                 certified profile's command line, is honoured only where a
                 hypervisor is positively seen (x86-64's hypervisor bit,
                 AArch64's hvc conduit or /hypervisor node).";
-            attribute :>> criterion = "ferrix-smbios's host test
+            attribute :>> criterion = "xaqu-smbios's host test
                 the_memory_arrays_say_whether_memory_corrects; test-scrub: the
                 boot without the override stands down for QEMU's multi-bit
                 ECC, the override taken under QEMU's hypervisor, ARMv7-A's
@@ -747,7 +747,7 @@ package FerrixMemoryRequirements {
             attribute :>> unit = ("mm::scrub::decide", "mm::scrub::verdict", "mm::scrub::standing", "mm::scrub::override_asked", "mm::scrub::Standing::reason", "mm::scrub::Standing::from_number");
         }
         requirement <'L.mm.107'> theScrubbersCountsShowCoverage : ItemLowLevel {
-            attribute :>> statement = "/proc/ferrix-scrub, readable by all, shall give the frames
+            attribute :>> statement = "/proc/xaqu-scrub, readable by all, shall give the frames
                 managed, the frames tested in all and this sweep, the sweeps,
                 the suspects, bad, retired and held counts, and the standing
                 with its reason, and no address.";
@@ -1322,12 +1322,12 @@ package FerrixMemoryRequirements {
         }
         requirement <'L.mm.63'> aLibraryMapInsertRunsInASection : ItemLowLevel {
             attribute :>> statement = "A library crate's map insert through
-                ferrix_fallible shall run in a reserved section the kernel installs at
+                xaqu_fallible shall run in a reserved section the kernel installs at
                 boot: completed from the reserve when the heap refuses, refused before
                 it starts when the reserve cannot be filled, and refused when its nodes
                 are larger than any size class.";
             attribute :>> criterion = "With every allocation inside a section sent to the
-                reserve, 200 inserts through ferrix_fallible::try_map_insert complete,
+                reserve, 200 inserts through xaqu_fallible::try_map_insert complete,
                 hold what was inserted and draw on the reserve at least twice; with the
                 checking processor's fills refused, an insert is refused, the refused
                 count rises and the map is unchanged; a map of 256-byte values is
@@ -3151,11 +3151,11 @@ package FerrixMemoryRequirements {
                 the free frames and reclaimable pages by that count within half the
                 volume's clean bytes (the `reclaim` line of test-btrfs).";
             attribute :>> parent = "H.QUOTA.12";
-            attribute :>> unit = "ferrix_btrfs_write::volume::WriteVolume::clean_bytes";
+            attribute :>> unit = "xaqu_btrfs_write::volume::WriteVolume::clean_bytes";
         }
         // docs/RAM-RELEASE.md §2, R1 (consultant ledger 4971, 5022, 5038).
         requirement <'L.user.174'> devmgrStartsAgainFromTheKeptSet : ItemLowLevel {
-            attribute :>> statement = "Under ferrix.devmgr=init every devmgr start
+            attribute :>> statement = "Under xaqu.devmgr=init every devmgr start
                 after the first shall be made from the program, names and driver
                 images the first start read, kept by the kernel, never from a path,
                 and shall be refused when their fingerprint is not the one taken
@@ -3351,15 +3351,15 @@ package FerrixMemoryRequirements {
         }
 
         requirement <'L.user.203'> theFirstStackIsPlaced : ItemLowLevel {
-            attribute :>> statement = "first_image::load shall place the stack and its guards where ferrix-native-abi's constants say, as the loader library does.";
+            attribute :>> statement = "first_image::load shall place the stack and its guards where xaqu-native-abi's constants say, as the loader library does.";
             attribute :>> criterion = "The three regions read back at their addresses and permissions (the `build` line); a compile-time assertion against exec.rs's constants.";
             attribute :>> parent = "H.MEM.27";
             attribute :>> unit = ("discovery::first_image::place_stack");
         }
 
         requirement <'L.user.204'> theElfParserValidates : ItemLowLevel {
-            attribute :>> statement = "ferrix-elf's parse, validate_segments_within and load_span shall refuse a header or segment outside the image.";
-            attribute :>> criterion = "ferrix-elf's host tests and the elf_parse fuzz target, gate-level rows.";
+            attribute :>> statement = "xaqu-elf's parse, validate_segments_within and load_span shall refuse a header or segment outside the image.";
+            attribute :>> criterion = "xaqu-elf's host tests and the elf_parse fuzz target, gate-level rows.";
             attribute :>> parent = "H.MEM.27";
             attribute :>> unit = ("discovery::first_image::elf_bytes");
         }

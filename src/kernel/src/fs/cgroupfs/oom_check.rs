@@ -13,11 +13,11 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_linux_abi::types::EPOLLPRI;
-use ferrix_vfs::{OpenFile, Whence};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_linux_abi::types::EPOLLPRI;
+use xaqu_vfs::{OpenFile, Whence};
+use xaqu_vma::VmaFlags;
 
 use super::events_check::{
     LISTED_LOOK_NANOS, PATIENCE_NANOS, WAITER_ANSWER, WAITER_DONE, WAITER_SET, waiter,
@@ -133,7 +133,7 @@ fn program(harness: &Harness) -> Checked<Arc<Process>> {
         image::Shape::Good,
         arch::USER_OOM_PROGRAM,
     );
-    let program = exec::load(&file, &[b"/oom"], &[], [0x6d; ferrix_ustack::RANDOM_BYTES])
+    let program = exec::load(&file, &[b"/oom"], &[], [0x6d; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "the OOM check's program could not be loaded")?;
     let listed = alloc::format!("{}\n", program.pid());
     let _ = harness
@@ -291,7 +291,7 @@ fn run_watched(
 ) -> Checked<Watched> {
     *WAITER_ANSWER.lock() = None;
     *WAITER_SET.lock() = Some(Arc::clone(set));
-    let task = crate::sched::spawn("oom-events-waiter", waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let task = crate::sched::spawn("oom-events-waiter", waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
     let deadline = crate::timer::now_nanos().saturating_add(PATIENCE_NANOS);
     while watching.queue().listed() == 0
         && WAITER_ANSWER.lock().is_none()

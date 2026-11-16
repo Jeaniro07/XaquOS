@@ -9,12 +9,12 @@
 # rather than running something unchecked; take the new revision's hash
 # from its APKINDEX and change the two lines below.
 #
-# The program lands at `$FERRIX_ALPINE_I386/x86/bin/busybox.static`
-# (default ~/.local/share/ferrix/busybox), beside the per-architecture
+# The program lands at `$XAQU_ALPINE_I386/x86/bin/busybox.static`
+# (default ~/.local/share/xaqu/busybox), beside the per-architecture
 # ones, and runs as:
 #
 #   cargo xtask test-shell --arch x86_64 \
-#       --init ~/.local/share/ferrix/busybox/x86/bin/busybox.static
+#       --init ~/.local/share/xaqu/busybox/x86/bin/busybox.static
 #
 # Needs curl, sha256sum and tar. A mirror other than dl-cdn.alpinelinux.org
 # can be named with ALPINE_MIRROR.
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 mirror=${ALPINE_MIRROR:-https://dl-cdn.alpinelinux.org/alpine}
-out=${FERRIX_ALPINE_I386:-$HOME/.local/share/ferrix/busybox}
+out=${XAQU_ALPINE_I386:-$HOME/.local/share/xaqu/busybox}
 
 package=v3.22/main/x86/busybox-static-1.37.0-r20.apk
 sha256=1c7ed0ce5f367dbab335bb66d32b8762be4deea969b19190382a65c01314825c

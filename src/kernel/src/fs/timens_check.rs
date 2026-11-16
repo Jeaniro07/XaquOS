@@ -33,12 +33,12 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::mem::size_of;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     CLOCK_BOOTTIME, CLOCK_MONOTONIC, CLOCK_MONOTONIC_COARSE, CLOCK_MONOTONIC_RAW, CLOCK_REALTIME,
     TFD_TIMER_ABSTIME,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Page, Report as Counts, Tally, by_number, page_for};
 use crate::fs::namespace_check::{read_file, read_link, unshare};
@@ -629,7 +629,7 @@ fn vdso_views(
     let before = vdso::mapped_views(parent.space());
     counted(
         tally,
-        before == [Some(mapped - ferrix_bootinfo::PAGE_SIZE), None],
+        before == [Some(mapped - xaqu_bootinfo::PAGE_SIZE), None],
         "the time check's process did not map the first vDSO where it was mapped",
     )?;
     let after = vdso::mapped_views(child.space());
@@ -640,7 +640,7 @@ fn vdso_views(
     )?;
     counted(
         tally,
-        vdso::shifted_mode() == Some(ferrix_vdso::MODE_SYSCALL),
+        vdso::shifted_mode() == Some(xaqu_vdso::MODE_SYSCALL),
         "the shifted vDSO's data page did not say system call",
     )?;
     counted(

@@ -23,21 +23,21 @@
 #     maintainer script that would have set one (`setcap`,
 #     `dpkg-statoverride`, a `chmod` to a set-id mode): those scripts never
 #     run, but a package that wants either is not one G1 takes.
-# The volume is mounted `nosuid,nodev` on Ferrix as well (the gate's
+# The volume is mounted `nosuid,nodev` on Xaqu as well (the gate's
 # `data-nosuid.service`).
 #
 # Three caches the packages' triggers would write are written here, by
 # the tree's own programs run on its own loader (GLib's schema compiler is
 # this machine's): GLib's compiled GSettings schemas, gdk-pixbuf's list of
 # image loaders (with the tree's path taken out, so it names them where
-# Ferrix's root links them, /usr/lib/x86_64-linux-gnu), and the MIME
+# Xaqu's root links them, /usr/lib/x86_64-linux-gnu), and the MIME
 # database. After unpacking, every library each ELF
 # file in the tree needs is looked for in it, so a dependency this list
-# lacks fails here rather than on Ferrix.
+# lacks fails here rather than on Xaqu.
 #
-# Writes $FERRIX_GNOME_APPS_VOLUME/tree, gnome-apps.img beside it and,
+# Writes $XAQU_GNOME_APPS_VOLUME/tree, gnome-apps.img beside it and,
 # once both are whole, gnome-apps.stamp (default
-# ~/.local/share/ferrix/gnome-apps). Needs curl, sha256sum, dpkg-deb,
+# ~/.local/share/xaqu/gnome-apps). Needs curl, sha256sum, dpkg-deb,
 # readelf, python3, cc, mkfs.btrfs and btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-gnome-apps.sh
@@ -47,9 +47,9 @@ set -euo pipefail
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 SNAPSHOT_DEBIAN=20261019T203124Z
 SNAPSHOT_SECURITY=20261019T110620Z
-data=${XDG_DATA_HOME:-$HOME/.local/share}/ferrix
-out=${FERRIX_GNOME_APPS_VOLUME:-$data/gnome-apps}
-pool=${FERRIX_GNOME_APPS_POOL:-$out/pool}
+data=${XDG_DATA_HOME:-$HOME/.local/share}/xaqu
+out=${XAQU_GNOME_APPS_VOLUME:-$data/gnome-apps}
+pool=${XAQU_GNOME_APPS_POOL:-$out/pool}
 
 # What the closure was resolved from, on 2026-10-22: GTK 4 and libadwaita,
 # their demos, Mesa's EGL, GLES, gbm and Gallium drivers (virgl), the
@@ -375,7 +375,7 @@ test -f "$tree/usr/share/glib-2.0/schemas/gschemas.compiled" \
     || { say "the schemas did not compile"; exit 1; }
 
 # gdk-pixbuf's loaders, listed by the tree's own query program on the
-# tree's own loader, then named where Ferrix's root links them.
+# tree's own loader, then named where Xaqu's root links them.
 pixbuf="$lib/gdk-pixbuf-2.0/2.10.0"
 "$loader" --library-path "$lib" "$lib/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" \
     "$pixbuf"/loaders/*.so > "$pixbuf/loaders.cache.part"
@@ -443,7 +443,7 @@ truncate -s "${size}M" "$image"
 chmod 0755 "$tree"
 # Every file root's on the volume (the certification consultant's A1,
 # ledger line 3137): mkfs.btrfs --rootdir copies the owner it reads, which
-# is this machine's user -- uid 1000, the guest's `ferrix` -- and this
+# is this machine's user -- uid 1000, the guest's `xaqu` -- and this
 # host refuses an unprivileged user namespace (`unshare -r`) and fakeroot
 # cannot reach glibc's own fstatat inside nftw. So mkfs.btrfs is given a
 # copy of each file's stat with uid and gid 0, by a preloaded nftw that

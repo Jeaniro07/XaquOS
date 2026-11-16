@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="2390" viewBox="0 0 1040 2390" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#1f2328">
-<title>Ferrix Gantt</title>
+<title>Xaqu Gantt</title>
 <rect width="1040" height="2390" fill="#ffffff"/>
-<text x="24.0" y="28.0" text-anchor="start" font-size="16" fill="#1f2328" font-weight="bold">Ferrix: done, in progress, and a forecast</text>
+<text x="24.0" y="28.0" text-anchor="start" font-size="16" fill="#1f2328" font-weight="bold">Xaqu: done, in progress, and a forecast</text>
 <text x="24.0" y="46.0" text-anchor="start" font-size="12" fill="#656d76" font-weight="normal">The forecast is one queue at 20 points a day, built rows first, then shortest first: the size of the work, not a plan; hollow rows have no session on them</text>
 <text x="24.0" y="62.0" text-anchor="start" font-size="12" fill="#656d76" font-weight="normal">In progress: solid is the time since it started; the faint bar is the wait for the queue below, the light dashed bar the work itself</text>
 <line x1="310.0" y1="94.0" x2="310.0" y2="2350.0" stroke="#d8dee4" stroke-width="1"/>
@@ -75,7 +75,7 @@
 <rect x="353.0" y="502.0" width="5.7" height="14.0" rx="2" fill="#8c959f"/>
 <text x="300.0" y="535.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Mount namespaces N1 to N3 (19)</text>
 <rect x="353.0" y="524.0" width="8.6" height="14.0" rx="2" fill="#8c959f"/>
-<text x="300.0" y="557.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Claude Code on Ferrix</text>
+<text x="300.0" y="557.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Claude Code on Xaqu</text>
 <rect x="355.8" y="546.0" width="8.6" height="14.0" rx="2" fill="#8c959f"/>
 <text x="300.0" y="579.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Speculation domain, round trip</text>
 <rect x="361.6" y="568.0" width="8.6" height="14.0" rx="2" fill="#8c959f"/>
@@ -179,7 +179,7 @@
 <rect x="468.5" y="1236.0" width="3.0" height="14.0" rx="2" fill="#b6e3ff" stroke="#0969da" stroke-width="1" stroke-dasharray="4 2"/>
 <rect x="488.3" y="1236.0" width="3.7" height="14.0" rx="2" fill="#b6e3ff" stroke="#0969da" stroke-width="1" stroke-dasharray="4 2"/>
 <text x="498.0" y="1247.0" text-anchor="start" font-size="11" fill="#0969da" font-weight="normal">39 pts left, ~11-16</text>
-<text x="300.0" y="1269.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Developing Ferrix on Ferrix</text>
+<text x="300.0" y="1269.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Developing Xaqu on Xaqu</text>
 <rect x="387.3" y="1258.0" width="71.6" height="14.0" rx="2" fill="#0969da"/>
 <rect x="458.9" y="1258.0" width="57.4" height="14.0" rx="2" fill="#eef6fd" stroke="#b6d4f2" stroke-width="1" stroke-dasharray="1 3"/>
 <rect x="516.4" y="1258.0" width="5.6" height="14.0" rx="2" fill="#b6e3ff" stroke="#0969da" stroke-width="1" stroke-dasharray="4 2"/>
@@ -278,7 +278,7 @@
 <rect x="505.8" y="1970.0" width="5.3" height="14.0" rx="2" fill="#54aeff" stroke="#0969da" stroke-width="1" stroke-dasharray="3 2"/>
 <text x="300.0" y="2003.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">lode's rest, tole's U10 (37, est)</text>
 <rect x="511.1" y="1992.0" width="5.3" height="14.0" rx="2" fill="#54aeff" stroke="#0969da" stroke-width="1" stroke-dasharray="3 2"/>
-<text x="300.0" y="2025.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Developing Ferrix on Ferrix, the rest (39, est)</text>
+<text x="300.0" y="2025.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Developing Xaqu on Xaqu, the rest (39, est)</text>
 <rect x="516.4" y="2014.0" width="5.6" height="14.0" rx="2" fill="#54aeff" stroke="#0969da" stroke-width="1" stroke-dasharray="3 2"/>
 <text x="300.0" y="2047.0" text-anchor="end" font-size="12" fill="#1f2328" font-weight="normal">Stage 14, real-time (40)</text>
 <rect x="521.9" y="2036.0" width="5.7" height="14.0" rx="2" fill="#54aeff" stroke="#0969da" stroke-width="1" stroke-dasharray="3 2"/>

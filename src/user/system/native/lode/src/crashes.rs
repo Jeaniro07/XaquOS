@@ -7,11 +7,11 @@ use alloc::collections::BTreeSet;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::blob::{self, BlobId};
-use ferrix_lode_core::cursor;
-use ferrix_lode_core::format::{self, Output};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::tombstone;
+use xaqu_lode_core::blob::{self, BlobId};
+use xaqu_lode_core::cursor;
+use xaqu_lode_core::format::{self, Output};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::tombstone;
 
 use crate::cli::{self, Options, complain, out, usage};
 use crate::{blobs, sys};

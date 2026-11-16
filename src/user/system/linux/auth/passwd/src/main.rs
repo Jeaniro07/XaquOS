@@ -12,7 +12,7 @@
 use std::io::Write as _;
 use std::process::ExitCode;
 
-use ferrix_auth_client::{Connection, Terminal, Verdict, converse};
+use xaqu_auth_client::{Connection, Terminal, Verdict, converse};
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();

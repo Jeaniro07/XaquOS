@@ -25,10 +25,10 @@
 use std::path::PathBuf;
 
 /// The settings file, under the home directory.
-const KEPT: &[&str] = &[".config", "ferrix", "wallpaper.toml"];
+const KEPT: &[&str] = &[".config", "xaqu", "wallpaper.toml"];
 
 /// The variable that names it, where it is not the usual one.
-const VAR: &str = "FERRIX_WALLPAPER_CONFIG";
+const VAR: &str = "XAQU_WALLPAPER_CONFIG";
 
 /// Frames a second kept of a video, when nothing says otherwise.
 ///
@@ -57,7 +57,7 @@ const SCALE_MOST: f64 = 4.0;
 /// The commented file written where there is none, so that the settings can
 /// be found by looking rather than by reading this source.
 const EXAMPLE: &str = "\
-# Ferrix -- the wallpaper `cargo xtask run-compositor` shows.
+# Xaqu -- the wallpaper `cargo xtask run-compositor` shows.
 #
 # `cargo xtask wallpapers --from <directory>` reads this when it converts,
 # and a command-line flag beats anything written here. Delete a line to go

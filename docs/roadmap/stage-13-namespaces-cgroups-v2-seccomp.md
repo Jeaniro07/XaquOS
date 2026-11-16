@@ -27,7 +27,7 @@ in Linux's own interface:
 Init's first boot needs only C1 to C5, the first five items; the controllers
 can land one at a time, `memory` and `pids` first.
 
-One requirement there is Ferrix's rather than Linux's, and the customer
+One requirement there is Xaqu's rather than Linux's, and the customer
 accepted it on 2026-09-23: C8, **every cgroup backed by a `Job`**. It makes
 `ARCHITECTURE.md` §3's "where resource limits and kill authority live" one
 object seen through two ABIs. `devmgr`'s driver jobs then appear in cgroupfs,
@@ -89,7 +89,7 @@ removed cgroup refuses moves, `ENODEV`. The no-internal-process rule is
 built and host-tested, and waits for a controller to be reachable. The
 `cgroups` boot check covers `CLONE_INTO_CGROUP` from a program on all three
 architectures and the delegation rules, and a `test-vfs` command runs them
-as the user `ferrix` in a subtree `chown`ed to it; each has a negative
+as the user `xaqu` in a subtree `chown`ed to it; each has a negative
 control. Init's C3 and C7 are met, so C1 to C5 and C7 are: nothing of stage
 13 stands before init's first boot any more.
 
@@ -305,7 +305,7 @@ unprivileged mounting (N5), the dentry and inode caches' reclaim and Linux's
 `seccomp_bpf` selftest were the [follow-ons](follow-ons.md); with
 `memory.reclaim`, `cpu.max.burst`, `cpu.idle`, `io.weight`, `io.latency`,
 and `anon` and `pagetables` in `memory.stat`, every one of them was built on
-2026-10-26 (L.object.182 to 187) on `claude/ferrix-roadmap-completion-hkxlpp`, and
+2026-10-26 (L.object.182 to 187) on `claude/xaqu-roadmap-completion-hkxlpp`, and
 they are on `main` since then (3a65627b9 to 71a51fc11). Each commit named
 what the gate host owed before it landed; whether those runs were made is not
 recorded in the tree, and eb2ddbfd6 (2026-10-26) brought `cargo xtask check`
@@ -319,7 +319,7 @@ small namespaces and `setns`, pid namespaces, and the reservation of
 `L.trap.8` for S4. Everything else is pushed to `origin` as a branch, gated as
 the table says, and stopped at the customer's wind-down. Evidence is cited by
 fleet/gate.sh INDEX tags on nazuna; the certification consultant's verdicts and
-conditions are in `~/.local/share/ferrix/cert-consultant/reviews.md` there.
+conditions are in `~/.local/share/xaqu/cert-consultant/reviews.md` there.
 
 | Branch (origin) | What | State at the wind-down |
 |---|---|---|

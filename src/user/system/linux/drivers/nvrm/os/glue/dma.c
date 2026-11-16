@@ -2,7 +2,7 @@
  * RM's DMA mapping calls (NVIDIA's kernel-open/nvidia/nv-dma.c), for a GPU
  * behind the IOMMU (docs/NVIDIA.md §4.3).
  *
- * ferrix-nvos pins system memory into the card's domain as it allocates it
+ * xaqu-nvos pins system memory into the card's domain as it allocates it
  * (os/nvos/src/pages.rs), and the domain maps each page at its own physical
  * address. So the "physical" addresses nv_alloc_pages gave RM are already
  * the card's DMA addresses, and mapping an allocation for the device
@@ -14,7 +14,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 /* What nv_dma_map_alloc hands back as *priv, for nv_dma_unmap_alloc. */
 struct nvos_dma_map {

@@ -22,7 +22,7 @@
 //!
 //! What QEMU cannot show is the FT232H itself: its emulation is the B
 //! family's, so the H divisor, the 512-byte high-speed packets and the
-//! USB-Blaster are held by `ferrix-usb-host`'s tests against its model
+//! USB-Blaster are held by `xaqu-usb-host`'s tests against its model
 //! instead (`src/lib/drivers/usb/usb-host/src/tests/serial.rs`).
 
 #![cfg_attr(not(unix), allow(dead_code, unused_imports))]
@@ -138,7 +138,7 @@ fn script(lines: [&str; 3], len: usize) -> String {
 
 /// The rate an FT232H runs at for `baud`, by the driver's own divisor.
 pub(crate) fn h_rate(baud: u32) -> u32 {
-    use ferrix_usb_serial::ftdi::{Chip, divisor, rate};
+    use xaqu_usb_serial::ftdi::{Chip, divisor, rate};
     divisor(Chip::H, baud)
         .and_then(|value| rate(Chip::H, value))
         .unwrap_or(0)
@@ -164,7 +164,7 @@ pub(crate) fn busybox(arch: Arch, args: &Args) -> Result<PathBuf> {
         .map(PathBuf::from)
         .unwrap_or_default();
     let alpine = home
-        .join(".local/share/ferrix/busybox")
+        .join(".local/share/xaqu/busybox")
         .join(arch.name())
         .join("bin/busybox.static");
     if alpine.is_file() {
@@ -431,12 +431,12 @@ pub(crate) fn test(args: &Args) -> Result<()> {
         ));
     }
     let seed = nonce();
-    let from_guest = format!("ferrix-to-host-{seed:016x}");
-    let to_guest = format!("host-to-ferrix-{:016x}", seed.rotate_left(17) ^ 0x5A5A);
-    let from_again = format!("ferrix-to-host-{:016x}", seed.rotate_left(29) ^ 0xA5A5);
-    let to_again = format!("host-to-ferrix-{:016x}", seed.rotate_left(41) ^ 0x3C3C);
-    let from_third = format!("ferrix-to-host-{:016x}", seed.rotate_left(7) ^ 0x1E1E);
-    let to_third = format!("host-to-ferrix-{:016x}", seed.rotate_left(53) ^ 0xE1E1);
+    let from_guest = format!("xaqu-to-host-{seed:016x}");
+    let to_guest = format!("host-to-xaqu-{:016x}", seed.rotate_left(17) ^ 0x5A5A);
+    let from_again = format!("xaqu-to-host-{:016x}", seed.rotate_left(29) ^ 0xA5A5);
+    let to_again = format!("host-to-xaqu-{:016x}", seed.rotate_left(41) ^ 0x3C3C);
+    let from_third = format!("xaqu-to-host-{:016x}", seed.rotate_left(7) ^ 0x1E1E);
+    let to_third = format!("host-to-xaqu-{:016x}", seed.rotate_left(53) ^ 0xE1E1);
     let shell = busybox(arch, args)?;
     println!(
         "  {arch}: busybox {} as init, with the gate's script",
@@ -459,7 +459,7 @@ pub(crate) fn test(args: &Args) -> Result<()> {
     // directory is past: the socket and its trace go in the temporary
     // directory, named for this process.
     let socket =
-        std::env::temp_dir().join(format!("ferrix-usb-serial-{}.sock", std::process::id()));
+        std::env::temp_dir().join(format!("xaqu-usb-serial-{}.sock", std::process::id()));
     let trace = crate::qemu::usb_serial_trace(&socket);
     for stale in [&socket, &trace] {
         if stale.exists() {

@@ -1,6 +1,6 @@
 ---
 name: optimize-ipc-round-trip
-description: How to optimize Ferrix's native channel round trip (channel_write_read, 0x1013, to a waiting server and back) end to end, on x86-64 or ported to AArch64 and ARMv7-A. Load it before measuring, profiling or changing the IPC path -- the syscall entry and exit, the channel's write/wait/read, the scheduler's wake and switch, the address-space switch, user register state, the fast path -- or before porting steps 1 to 5 of OPAQUE-KERNEL.md §9 to another architecture. It gives the figure and its exact measuring protocol, what may never be traded away, the budget, every attempt so far with its measured result (dead ends included), what each x86-64 step maps to on Arm, and how to hand a result back.
+description: How to optimize Xaqu's native channel round trip (channel_write_read, 0x1013, to a waiting server and back) end to end, on x86-64 or ported to AArch64 and ARMv7-A. Load it before measuring, profiling or changing the IPC path -- the syscall entry and exit, the channel's write/wait/read, the scheduler's wake and switch, the address-space switch, user register state, the fast path -- or before porting steps 1 to 5 of OPAQUE-KERNEL.md §9 to another architecture. It gives the figure and its exact measuring protocol, what may never be traded away, the budget, every attempt so far with its measured result (dead ends included), what each x86-64 step maps to on Arm, and how to hand a result back.
 ---
 
 # Optimizing the IPC round trip
@@ -11,7 +11,7 @@ facts in machine-readable form, and the full list of attempts, are in
 `docs/hotpaths/results/ipc-round-trip/<hardware hash>/`. The history it is
 written from is `docs/OPAQUE-KERNEL.md` §9 (read §9.1, §9.5 to §9.10),
 `docs/handover/2026-10-03-ipc.md`, and the certification consultant's
-ledger (`~/.local/share/ferrix/cert-consultant/reviews.md` on nazuna,
+ledger (`~/.local/share/xaqu/cert-consultant/reviews.md` on nazuna,
 2026-10-01 to 2026-10-06).
 
 Every figure below is marked **(measured)**, with where, or **(guessed)**,
@@ -37,7 +37,7 @@ Read branches with `git show <branch>:<path>`; do not edit them. Check
 ## 1. The path
 
 - **Entry:** the client's `SYSCALL` (`SVC` on Arm) of `channel_write_read`
-  (0x1013) in `ferrix_rt`'s stub, `src/user/system/native/rt/src/arch/<isa>.rs`.
+  (0x1013) in `xaqu_rt`'s stub, `src/user/system/native/rt/src/arch/<isa>.rs`.
 - **Exit:** the client's next instruction after `SYSRET` (`ERET`), the
   server's echo in its return registers.
 - **One direction:** one side's entry into 0x1013 to the other side's return
@@ -97,8 +97,8 @@ defence at all **(measured, §9.6a)**.
    against its base:
 
    ```
-   FERRIX_HOTPATH_LOG=<log> cargo xtask bench-ipc --release --accel kvm --smp 1 --arch x86_64 \
-       --init ~/.local/share/ferrix/busybox/{arch}/bin/busybox.static \
+   XAQU_HOTPATH_LOG=<log> cargo xtask bench-ipc --release --accel kvm --smp 1 --arch x86_64 \
+       --init ~/.local/share/xaqu/busybox/{arch}/bin/busybox.static \
        --alternate <base ref> --rounds 5 --record 2>&1 | tee <log>
    ```
 
@@ -127,7 +127,7 @@ defence at all **(measured, §9.6a)**.
    commit, and the configuration (`docs/HOTPATHS.md` §6). Commit the record
    on your branch with the change it measures.
 8. **Against seL4:** `--against-sel4` alternates with
-   `~/.local/share/ferrix/sel4/run.sh matched-nopcid` (seL4 at c6ce4d2a,
+   `~/.local/share/xaqu/sel4/run.sh matched-nopcid` (seL4 at c6ce4d2a,
    sel4bench-manifest 80add415). seL4's own one-way figures read a `cpuid`
    per sample, which exits the VM; compare its root task's round trip.
    Run seL4's `run.sh` with the same QEMU binary as bench-ipc. Called bare
@@ -155,7 +155,7 @@ defence at all **(measured, §9.6a)**.
 
       It never lands; use it as a base or cherry-pick it onto a timing
       tree.
-    - **The perf scripts.** On the gate host, `~/.local/share/ferrix/logs/os76/`
+    - **The perf scripts.** On the gate host, `~/.local/share/xaqu/logs/os76/`
       holds:
       - `perf-vcpu.sh`, which finds the vCPU thread and runs `perf stat
         -I 250` with `:G` events;
@@ -311,7 +311,7 @@ nothing. What each x86-64 step maps to:
 | Selector skip (`DS`/`ES`) | none | none | No segment state on Arm; the 140 to 160 ns x86 item does not exist there. |
 | `CR3` write without PCID; step 3's PCIDs | Today every space is ASID 0 and each switch writes `TTBR0_EL1` and runs `TLBI ASIDE1` (`aarch64/cpu.rs`, `write_ttbr0`, `flush_user_tlb`). Port: ASIDs (8 or 16 bits, `ID_AA64MMFR0_EL1.ASIDBits`) with a generation allocator (Linux's arm64 allocator is the model), the ASID in `TTBR0_EL1`, no flush on switch, a rollover flush. | ASID 0 and `TLBIASID` today (`armv7a/cpu.rs`; with LPAE the ASID is `TTBR0` bits 55 to 48). Port: 8-bit ASIDs, the same allocator. | Unlike nazuna's missing PCID, every ARMv8-A and ARMv7-A core has ASIDs: likely the largest Arm win **(guessed)**. Must be built with the lazy TLB (FX-0009) and every shootdown reaching every ASID a space holds; break-before-make on remaps. |
 | `IBPB` between domains | `ARCH_WORKAROUND_1` (SMCCC) on an address-space switch where the core lacks `CSV2` and firmware says it needs it (`aarch64/speculation.rs`). | `BPIALL` (A8, A9, A12, A17) or `ICIALLU` (A15) on switch (`armv7a/speculation.rs`). | The speculation domain skips them exactly as it skips `IBPB`. Cortex-A72 under QEMU has no firmware to call, so the reference machine pays nothing; cost on hardware unmeasured. |
-| Return-stack refill (A2), ERAPS | none | none | Ferrix has no return-stack stuffing on Arm. Arm's per-entry cost instead is the **Spectre-BHB loop** on every entry from EL0 (8 branches on Cortex-A72; `ECBHB` cores skip it): budget it where x86 budgets the refill. |
+| Return-stack refill (A2), ERAPS | none | none | Xaqu has no return-stack stuffing on Arm. Arm's per-entry cost instead is the **Spectre-BHB loop** on every entry from EL0 (8 branches on Cortex-A72; `ECBHB` cores skip it): budget it where x86 budgets the refill. |
 | `SYSCALL`/`SYSRET`, entry hardening | `SVC`/`ERET`, the vector table, `x0`-`x30` saved | `SVC`, banked registers, `r0`-`r14` | §9.7 condition 2's table of entry measures has to be rewritten per ISA. |
 | Step 4, direct switch and fast path | Part 1 (`hand_over`) and the park are arch-neutral; the entry insertion point and the frame tail (return words to `x0`-`x3`) are not. | Same, return words to `r0`-`r3`. | §9.7 answer 13: the park is compiled for x86-64 only if that touches just its own sites, otherwise argued coverage on Arm. An Arm fast path is a new design for the consultant. |
 | `arm_timer`'s APIC reprogram exit | The generic timer's compare register is written without a trap under KVM **(guessed)**. | Same. | If so, the p90 tail of x86 has no Arm equivalent; measure. |
@@ -319,7 +319,7 @@ nothing. What each x86-64 step maps to:
 
 **Where to measure on Arm** (each needs the product owner's OK before the
 device is touched, with the address list; never a persistent write):
-the Pixel 7 runs Ferrix's AArch64 image in crosvm under KVM (Tensor G2:
+the Pixel 7 runs Xaqu's AArch64 image in crosvm under KVM (Tensor G2:
 Cortex-X1, A78, A55; no SVE) **(argued from the self-hosting work)**; the
 STM32MP157D-DK1 is ARMv7-A, two Cortex-A7 at up to 800 MHz; test ARMv7-A at
 `--smp 2` as the board has two cores. seL4 needs the same treatment there
@@ -401,7 +401,7 @@ added after the fact, so each measurement records it when it is taken.
     - the hardware hash.
 11. **Raw data kept.** The record (`--record`) carries the figure. The
     serial logs, perf CSVs and scripts stay on the gate host under
-    `~/.local/share/ferrix/logs/<session>/`, and the record or commit
+    `~/.local/share/xaqu/logs/<session>/`, and the record or commit
     message names their paths. Nothing is deleted.
 
 ## 8. Handing a result back

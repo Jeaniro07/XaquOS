@@ -2,7 +2,7 @@
 
 use std::io;
 
-use ferrix_settings_proto::{Refusal, RefusalKind};
+use xaqu_settings_proto::{Refusal, RefusalKind};
 
 use super::{Action, Plan, System};
 use crate::atomic::write_atomic;
@@ -11,7 +11,7 @@ use crate::atomic::write_atomic;
 const FILE: &str = "etc/hostname";
 
 /// What calling the computer `name` would change. The name has passed
-/// [`ferrix_settings_proto::valid_hostname`].
+/// [`xaqu_settings_proto::valid_hostname`].
 ///
 /// # Errors
 ///

@@ -29,8 +29,8 @@
 //! it is held.
 //!
 //! ```
-//! use ferrix_linux_abi::netlink::{IFLA_IFNAME, IFLA_MTU, NlMsgHdr, RTM_NEWLINK};
-//! use ferrix_netlink::{Attr, Messages, Value, Writer};
+//! use xaqu_linux_abi::netlink::{IFLA_IFNAME, IFLA_MTU, NlMsgHdr, RTM_NEWLINK};
+//! use xaqu_netlink::{Attr, Messages, Value, Writer};
 //!
 //! let mut buffer = [0_u8; 128];
 //! let mut writer = Writer::new(&mut buffer);
@@ -59,7 +59,7 @@
 //!     .collect();
 //! assert_eq!(names, [b"lo"]);
 //! assert!(walk.next().is_none());
-//! # Ok::<(), ferrix_netlink::Error>(())
+//! # Ok::<(), xaqu_netlink::Error>(())
 //! ```
 
 #![no_std]
@@ -77,7 +77,7 @@ mod tests;
 pub use build::{Attr, Value, Writer};
 pub use walk::{Attribute, Attributes, Message, Messages};
 
-use ferrix_linux_abi::socket::{AF_INET, AF_INET6};
+use xaqu_linux_abi::socket::{AF_INET, AF_INET6};
 
 /// Why a buffer could not be walked, or a message could not be written.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

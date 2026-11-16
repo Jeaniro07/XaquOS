@@ -11,7 +11,7 @@ const RESERVED: usize = 32;
 const FAT_SECTORS: usize = 8;
 const CLUSTERS: usize = 400;
 
-/// An image with `FERRIX/LASTKERNEL.TXT` holding `text` (long name with its
+/// An image with `XAQU/LASTKERNEL.TXT` holding `text` (long name with its
 /// short alias `LASTKE~1.TXT`), and `checksum_off` to plant a long name whose
 /// pieces carry the wrong checksum.
 fn image(text: &[u8], checksum_off: bool) -> Vec<u8> {
@@ -34,7 +34,7 @@ fn image(text: &[u8], checksum_off: bool) -> Vec<u8> {
         let at = RESERVED * 512 + cluster * 4;
         disk[at..at + 4].copy_from_slice(&value.to_le_bytes());
     };
-    // Root (2) and FERRIX (3) one cluster each; the file from 4 on.
+    // Root (2) and XAQU (3) one cluster each; the file from 4 on.
     set(&mut disk, 2, 0x0FFF_FFFF);
     set(&mut disk, 3, 0x0FFF_FFFF);
     let needed = text.len().div_ceil(512).max(1);
@@ -57,7 +57,7 @@ fn image(text: &[u8], checksum_off: bool) -> Vec<u8> {
         raw
     };
     let root = data;
-    disk[root..root + 32].copy_from_slice(&entry(b"FERRIX     ", 0x10, 3, 0));
+    disk[root..root + 32].copy_from_slice(&entry(b"XAQU     ", 0x10, 3, 0));
     let short = *b"LASTKE~1TXT";
     let mut sum = super::checksum(&short);
     if checksum_off {
@@ -101,20 +101,20 @@ fn a_long_named_file_reads_back_whole_whatever_its_case() {
     let disk = image(&text(), false);
     let mut volume = Volume::open(disk.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20).unwrap(),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20).unwrap(),
         text()
     );
     assert_eq!(
-        volume.read_file("ferrix/lastkernel.txt", 1 << 20).unwrap(),
+        volume.read_file("xaqu/lastkernel.txt", 1 << 20).unwrap(),
         text()
     );
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.PRV", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.PRV", 1 << 20),
         Err(Error::NotFound)
     );
-    assert_eq!(volume.read_file("FERRIX", 1 << 20), Err(Error::NotAFile));
+    assert_eq!(volume.read_file("XAQU", 1 << 20), Err(Error::NotAFile));
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 100),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 100),
         Err(Error::TooLarge)
     );
 }
@@ -124,11 +124,11 @@ fn a_long_name_with_the_wrong_checksum_is_its_short_name() {
     let disk = image(&text(), true);
     let mut volume = Volume::open(disk.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::NotFound)
     );
     assert_eq!(
-        volume.read_file("FERRIX/LASTKE~1.TXT", 1 << 20).unwrap(),
+        volume.read_file("XAQU/LASTKE~1.TXT", 1 << 20).unwrap(),
         text()
     );
 }
@@ -142,32 +142,32 @@ fn a_chain_that_loops_or_leaves_the_volume_is_refused() {
     let mut looped = image(&text(), false);
     cluster(&mut looped, 6, 4);
     // The file's size stops the read before the loop would: a directory has
-    // no size, so the loop is planted in FERRIX's own chain.
+    // no size, so the loop is planted in XAQU's own chain.
     cluster(&mut looped, 3, 3);
     let mut volume = Volume::open(looped.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::Corrupt("a chain that loops"))
     );
     let mut outside = image(&text(), false);
     cluster(&mut outside, 4, 5000);
     let mut volume = Volume::open(outside.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::Corrupt("a cluster outside the volume"))
     );
     let mut free = image(&text(), false);
     cluster(&mut free, 5, 0);
     let mut volume = Volume::open(free.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::Corrupt("a free cluster in a chain"))
     );
     let mut short = image(&text(), false);
     cluster(&mut short, 5, 0x0FFF_FFFF);
     let mut volume = Volume::open(short.as_slice()).unwrap();
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::Corrupt("a chain shorter than its file"))
     );
 }
@@ -222,7 +222,7 @@ fn a_volume_longer_than_its_table_reads_the_clusters_the_table_numbers() {
     long[32..36].copy_from_slice(&(claimed as u32).to_le_bytes());
     let mut volume = Volume::open(long.as_slice()).expect("opens, clamped");
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Ok(text())
     );
     // The file's first cluster pointed at 1024, the first past the table.
@@ -232,7 +232,7 @@ fn a_volume_longer_than_its_table_reads_the_clusters_the_table_numbers() {
     past[short + 26..short + 28].copy_from_slice(&1024_u16.to_le_bytes());
     let mut volume = Volume::open(past.as_slice()).expect("opens, clamped");
     assert_eq!(
-        volume.read_file("FERRIX/LASTKERNEL.TXT", 1 << 20),
+        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
         Err(Error::Corrupt("a cluster outside the volume"))
     );
 }

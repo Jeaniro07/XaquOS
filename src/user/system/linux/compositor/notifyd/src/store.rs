@@ -216,7 +216,7 @@ impl Store {
         };
         self.put(Note {
             id,
-            app: "Ferrix".to_owned(),
+            app: "Xaqu".to_owned(),
             summary,
             body,
             actions: Vec::new(),

@@ -55,7 +55,7 @@
 //!   past, for the tables in these libraries a program indexes.
 //!
 //! ```
-//! use ferrix_sync::SpinLock;
+//! use xaqu_sync::SpinLock;
 //!
 //! static COUNTER: SpinLock<u64> = SpinLock::new(0);
 //!
@@ -96,7 +96,7 @@ use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicU32, AtomicUsize, Ordering
 /// documentation for why, and for [`IrqSpinLock`], which can be.
 ///
 /// ```
-/// # use ferrix_sync::SpinLock;
+/// # use xaqu_sync::SpinLock;
 /// let lock = SpinLock::new([0_u8; 4]);
 /// lock.lock()[0] = 1;
 /// assert!(lock.try_lock().is_some(), "the guard above was temporary");
@@ -998,7 +998,7 @@ const ONCE_COMPLETE: u32 = 2;
 /// wants to check panic behaviour should not use this type.
 ///
 /// ```
-/// # use ferrix_sync::Once;
+/// # use xaqu_sync::Once;
 /// static CONFIG: Once<u32> = Once::new();
 ///
 /// assert!(CONFIG.get().is_none(), "nothing has initialised it yet");
@@ -1236,7 +1236,7 @@ const RW_READERS: usize = !RW_WRITER;
 /// writer, which waits for the outer one.
 ///
 /// ```
-/// # use ferrix_sync::RwSpinLock;
+/// # use xaqu_sync::RwSpinLock;
 /// let table = RwSpinLock::new(0_u32);
 /// {
 ///     let first = table.read();
@@ -1559,7 +1559,7 @@ impl<T: ?Sized + fmt::Display> fmt::Display for RwSpinLockWriteGuard<'_, T> {
 /// from inside [`with_mut`](Self::with_mut).
 ///
 /// ```
-/// # use ferrix_sync::SpinLockedCell;
+/// # use xaqu_sync::SpinLockedCell;
 /// static CONSOLE: SpinLockedCell<u32> = SpinLockedCell::new();
 ///
 /// assert!(!CONSOLE.is_set(), "nothing is installed before boot runs");
@@ -1755,7 +1755,7 @@ impl Parking for SpinParking {
 /// `!Send`, as a spin lock's is.
 ///
 /// ```
-/// use ferrix_sync::{SleepLock, SpinParker};
+/// use xaqu_sync::{SleepLock, SpinParker};
 ///
 /// let lock = SleepLock::new(0_u32, &SpinParker);
 /// *lock.lock() += 1;

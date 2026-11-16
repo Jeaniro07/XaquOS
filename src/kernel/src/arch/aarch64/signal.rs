@@ -16,14 +16,14 @@
 //!
 //! The handler returns to `x30`, the restorer. Linux points it at the vDSO's
 //! `__kernel_rt_sigreturn` when the handler has no `SA_RESTORER`, and so does
-//! Ferrix: signal delivery hands this the vDSO's trampoline as the restorer
+//! Xaqu: signal delivery hands this the vDSO's trampoline as the restorer
 //! then (`syscall::vdso::sigreturn`). musl sets `SA_RESTORER` for every
 //! handler; glibc on AArch64 never does, having no trampoline of its own, and
 //! before the vDSO had one every glibc handler returned to address zero.
 
-use ferrix_bootinfo::is_user_address;
-use ferrix_linux_abi::types::SA_RESTORER;
-use ferrix_native_abi::exception::Aarch64Registers as ExceptionRegisters;
+use xaqu_bootinfo::is_user_address;
+use xaqu_linux_abi::types::SA_RESTORER;
+use xaqu_native_abi::exception::Aarch64Registers as ExceptionRegisters;
 
 use super::switch::{self, UserState};
 use super::trap::{TrapFrame, USER_SPSR};
@@ -113,7 +113,7 @@ impl UserContext {
         let _ = orig_nr;
         self.0.x[0] = orig_arg0;
         if restart_block {
-            self.0.x[8] = ferrix_linux_abi::nr::aarch64::RESTART_SYSCALL as u64;
+            self.0.x[8] = xaqu_linux_abi::nr::aarch64::RESTART_SYSCALL as u64;
         }
         self.0.elr = self.0.elr.wrapping_sub(4);
     }

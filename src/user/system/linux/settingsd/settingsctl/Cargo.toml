@@ -8,8 +8,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-ferrix-settings-client = { path = "../client" }
-ferrix-auth-client = { path = "../../auth/client" }
+xaqu-settings-client = { path = "../client" }
+xaqu-auth-client = { path = "../../auth/client" }
 
 [lints]
 workspace = true

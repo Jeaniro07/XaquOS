@@ -59,7 +59,7 @@ use core::sync::atomic::AtomicU32;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
 
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 use crate::arch;
 
@@ -265,7 +265,7 @@ const fn covers(word: u64, delta: u64) -> bool {
     count_of(word) >= count_of(delta) && held_of(word) >= held_of(delta)
 }
 
-/// The kernel's half of `ferrix_sync::PreemptControl`: this processor's
+/// The kernel's half of `xaqu_sync::PreemptControl`: this processor's
 /// count.
 #[derive(Debug)]
 pub struct Preempt;
@@ -274,7 +274,7 @@ pub struct Preempt;
 // switches nothing while it is raised; `enable` lowers it and makes the
 // decision that was deferred. Both are no-ops before the scheduler keeps a
 // count, when nothing can be switched out.
-unsafe impl ferrix_sync::PreemptControl for Preempt {
+unsafe impl xaqu_sync::PreemptControl for Preempt {
     #[track_caller]
     fn disable() {
         let _ = raise(ONE_LOCK, Location::caller());
@@ -286,15 +286,15 @@ unsafe impl ferrix_sync::PreemptControl for Preempt {
 }
 
 /// [`Preempt`]'s two halves as functions, for the locks of the libraries
-/// below the kernel, which cannot name it: `ferrix_sync::HookedPreempt`.
-static HOOKS: ferrix_sync::PreemptHooks = ferrix_sync::PreemptHooks {
+/// below the kernel, which cannot name it: `xaqu_sync::HookedPreempt`.
+static HOOKS: xaqu_sync::PreemptHooks = xaqu_sync::PreemptHooks {
     disable: |site| {
         let _ = raise(ONE_LOCK, site);
     },
     enable: || enable_from(true),
 };
 
-/// Put this processor's count behind every `ferrix_sync::HookedPreempt`
+/// Put this processor's count behind every `xaqu_sync::HookedPreempt`
 /// lock: the VFS's dentries, mounts, open files and tmpfs renames, and
 /// btrfs's inodes and caches. Until then they are plain ticket locks, whose
 /// holders and waiters a timer interrupt switches out; on 2026-10-03 that
@@ -319,7 +319,7 @@ fn install_library_hooks() {
     // library lock exists (`fs::init` runs after the scheduler starts), so
     // no library guard is alive across the install, as `install_preempt_hooks`
     // asks.
-    let installed = unsafe { ferrix_sync::install_preempt_hooks(&HOOKS) };
+    let installed = unsafe { xaqu_sync::install_preempt_hooks(&HOOKS) };
     debug_assert!(installed, "the library hooks are installed once");
 }
 

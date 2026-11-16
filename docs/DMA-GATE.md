@@ -56,13 +56,13 @@ master.
 1. **`DEVICE_ISOLATION_NO_DMA` (bit 2)**: set when `!node.reaches_memory()`.
    Bits 0 and 1 are unchanged. About 4 lines in `syscall/native.rs`, plus
    the constant in `native-abi`. Requirement `L.device.57`.
-2. **The opt-out word**, `ferrix.unisolated` (a flag, registered in
+2. **The opt-out word**, `xaqu.unisolated` (a flag, registered in
    `build-flags.toml`'s `boot_options`):
-   * no certified profile permits it (as `ferrix.efifb`, `ferrix.intelgpu`
-     and `ferrix.powerctl`): a boot with it carries no claim, so a claimed
+   * no certified profile permits it (as `xaqu.efifb`, `xaqu.intelgpu`
+     and `xaqu.powerctl`): a boot with it carries no claim, so a claimed
      image is exactly one booted without it;
    * the kernel reads it with `option_in`, prints one line at stage 10 --
-     `devmgr   ferrix.unisolated: devmgr may start drivers of devices whose
+     `devmgr   xaqu.unisolated: devmgr may start drivers of devices whose
      DMA is not translated or whose interrupts are not isolated; their
      drivers are trusted with all of memory; this configuration carries no
      claim` -- writes an audit record (a new `audit` event,
@@ -94,7 +94,7 @@ With it, beside the kernel's stage 10 line, one line per device started
 unisolated:
 
 ```
-  devmgr   UNISOLATED: net 08:00.0 started with device_isolation 0x0 under ferrix.unisolated: its driver is trusted with all of memory
+  devmgr   UNISOLATED: net 08:00.0 started with device_isolation 0x0 under xaqu.unisolated: its driver is trusted with all of memory
 ```
 
 The REPORT line counts devices refused and devices started unisolated.
@@ -111,19 +111,19 @@ machine.
 | QEMU aarch64 rows (SMMUv3 under ACPI, GICv2m) | translated, interrupts not isolated (bit 1 never set under v2m) | **every driver refused** | decision T1 below |
 | QEMU armv7a rows (no SMMU driven) | untranslated, degraded | **every driver refused** | decision T1 below |
 | the N150 (two VT-d units, both translating and remapping, 0 bypassing, 0 unresolved: box log 2026-10-24) | 0x3 everywhere | unchanged | nothing |
-| nazuna before AMD-Vi | no unit found, every function bypassing | **every driver refused**: the RTL8111H and the SN720's NVMe too | the dev image's GRUB entry carries `ferrix.unisolated` until AMD-Vi lands |
+| nazuna before AMD-Vi | no unit found, every function bypassing | **every driver refused**: the RTL8111H and the SN720's NVMe too | the dev image's GRUB entry carries `xaqu.unisolated` until AMD-Vi lands |
 | nazuna with AMD-Vi | translated and remapped, if the root complex and the unit's own function do not count as bypassing (`docs/AMD-VI.md`, decision D10) | unchanged | AMD-Vi |
 | the Pixel 7 (crosvm, virtio-mmio), the DK1 (STM32MP157, no IOMMU driven) | untranslated, degraded | **every driver refused** | the word in their dev images, or decision T1 |
 
 **Decision T1, asked of the consultant and the customer.** Every Arm row
-loses its drivers without the word, because Ferrix cannot yet isolate
+loses its drivers without the word, because Xaqu cannot yet isolate
 interrupts on GICv2m or translate on ARMv7-A. There are three ways:
 
 * **(a)** Arm's claimed rows boot with the word and lose their claim until
   Arm isolation exists. That is honest, but the Arm evidence stops
   counting.
 * **(b)** A dated exception, as `present`'s `personality=kernel` has: the
-  `present` profile permits `ferrix.unisolated` on aarch64 and armv7a only,
+  `present` profile permits `xaqu.unisolated` on aarch64 and armv7a only,
   and V-03's degraded residual (already stated for both) covers it. It
   ends when each architecture isolates: GICv3 ITS rows and an SMMU on
   ARMv7-A.
@@ -157,7 +157,7 @@ rule at once.
 | id | statement in short |
 |---|---|
 | 57 | `device_isolation` answers bit 2 for a node that reaches no memory |
-| 58 | `ferrix.unisolated` is forwarded to devmgr in DEVICES' flags, said on a line, and audited; no certified profile permits it |
+| 58 | `xaqu.unisolated` is forwarded to devmgr in DEVICES' flags, said on a line, and audited; no certified profile permits it |
 | 59 | devmgr starts a driver of a node that reaches memory only with bits 0 and 1, or under the forwarded opt-out, with a line for every device it starts so |
 
 ## 7. Kernel lines
@@ -173,7 +173,7 @@ rule at once.
 ## 8. Handed to other sessions
 
 * **The bare-metal preparation for nazuna** (SN720 slot B): the dev image's
-  GRUB entry needs `ferrix.unisolated` until AMD-Vi lands, or nazuna's NIC
+  GRUB entry needs `xaqu.unisolated` until AMD-Vi lands, or nazuna's NIC
   and NVMe drivers are refused once this lands. With AMD-Vi, no word.
 * **The NIC agent** (nazuna's RTL8111H): the same word, for the same
   reason.
@@ -183,7 +183,7 @@ rule at once.
 
 * **G1** the rule of §1, and `admit` as its one place.
 * **G2** `NO_DMA` as bit 2, from `reaches_memory`.
-* **G3** `ferrix.unisolated`: its name, permitted by no certified profile,
+* **G3** `xaqu.unisolated`: its name, permitted by no certified profile,
   forwarded as a DEVICES flag, said and audited by the kernel.
 * **G4** T1: (a), (b) or (c).
 * **G5** test-nvrm's unisolated row: new expectations, or booted with the
@@ -193,7 +193,7 @@ rule at once.
 ## Consultant verdict
 
 2026-10-24, design review before code (ledger
-`~/.local/share/ferrix/cert-consultant/reviews.md` line 3906; the customer's
+`~/.local/share/xaqu/cert-consultant/reviews.md` line 3906; the customer's
 decision is recorded at 3905): **OK IF (1)-(9)**. This is an internal
 review, not independent verification (F-27).
 
@@ -275,8 +275,8 @@ and how this branch meets them:
 2. The bare word and a valued form together are said, and give no opt-out
    (`admission::opt_out`, the kernel's `read_unisolated`; host test
    `the_opt_out_is_the_bare_word_alone`).
-3. A recovery boot with `ferrix.vtd=off` or `ferrix.amdvi=off` needs
-   `ferrix.unisolated` too (RUNTIME-SETTINGS, SAFETY-MANUAL AoU-8). The PO
+3. A recovery boot with `xaqu.vtd=off` or `xaqu.amdvi=off` needs
+   `xaqu.unisolated` too (RUNTIME-SETTINGS, SAFETY-MANUAL AoU-8). The PO
    has been told about the GRUB recovery entries of the N150 and nazuna.
 4. That no driver passes a device handle on to a child is argued, not
    checked (below).
@@ -289,7 +289,7 @@ and how this branch meets them:
 
 **Final review** (2026-10-25, at 4944e918c; ledger line 4180): **OK**.
 
-Pool round dg3 (logs `~/.local/share/ferrix/logs/queue/dg3-*.log`), every
+Pool round dg3 (logs `~/.local/share/xaqu/logs/queue/dg3-*.log`), every
 one on the landing patch:
 
 * **Rows, PASSED:** check; test-boot x86_64 kvm, aarch64 and armv7a
@@ -340,7 +340,7 @@ interrupt routes. A refused device's handle is never sent at all.
   `BOOT_RECORDS` is now 12 and `CONFIG_ITEMS` 10, and H.AUD.2 says "twelve".
 * devmgr's REPORT message is unchanged. A refused device counts as failed
   in it. The devices started under the word are counted on devmgr's own
-  line, `devmgr   N devices started under ferrix.unisolated: ...`, which
+  line, `devmgr   N devices started under xaqu.unisolated: ...`, which
   test-boot holds equal to the number of `UNISOLATED` lines.
 * devmgr's one architecture difference, translation alone on AArch64, is
   `arch::AARCH64` behind the program's own `src/arch/` facade, as the
@@ -349,7 +349,7 @@ interrupt routes. A refused device's handle is never sent at all.
   (`Admitted::starts`).
 * The `UNISOLATED` line does not print the bits. Its text is
   `devmgr   UNISOLATED: <kind> <bus:dev.fn> started under
-  ferrix.unisolated: its DMA is not translated or its interrupts are not
+  xaqu.unisolated: its DMA is not translated or its interrupts are not
   isolated, and its driver is trusted with all of memory`.
 * The registry check that refuses the word in a certified profile is a key
   of the word's own registry entry, `claimless = true`, read by
@@ -358,7 +358,7 @@ interrupt routes. A refused device's handle is never sent at all.
   xtask writes the word into every ARMv7-A image (`arch_cmdline`) and into
   a board card's `DEFAULTS.TXT` (the DK1). The Pixel 7 loader puts the word
   in both its command lines, the phone's and the crosvm guest's. An AArch64
-  image booted with `FERRIX_ARM_MACHINE=acpi=off` carries it too: the
+  image booted with `XAQU_ARM_MACHINE=acpi=off` carries it too: the
   device-tree path brings no SMMU up.
 
 **Checks and controls**

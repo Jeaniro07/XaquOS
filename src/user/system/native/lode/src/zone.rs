@@ -4,7 +4,7 @@
 //! string, uClibc's convention), and the POSIX string at the end of a
 //! version 2 `/etc/localtime`. Failing those, UTC.
 
-use ferrix_lode_core::time::{Zone, tzif_footer};
+use xaqu_lode_core::time::{Zone, tzif_footer};
 
 use crate::sys;
 

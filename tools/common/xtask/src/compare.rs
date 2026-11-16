@@ -353,10 +353,10 @@ mod tests {
 
     #[test]
     fn a_builds_binary_is_read() {
-        let output = "built x\n  x86_64 kernel sha256 ab12 (/t/ferrix-kernel)\n";
+        let output = "built x\n  x86_64 kernel sha256 ab12 (/t/xaqu-kernel)\n";
         assert_eq!(
             binary_of(output).as_deref(),
-            Some(std::path::Path::new("/t/ferrix-kernel"))
+            Some(std::path::Path::new("/t/xaqu-kernel"))
         );
     }
 

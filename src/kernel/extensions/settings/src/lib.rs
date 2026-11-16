@@ -1,16 +1,16 @@
-//! The Ferrix kernel's run-time setting entries: every system call and file
+//! The Xaqu kernel's run-time setting entries: every system call and file
 //! write by which a program changes a system setting while the machine runs.
 //!
 //! A removable crate of the load ring (`docs/KERNEL-CRATES.md` §6; the
 //! certification consultant's ledger lines 3558 (9) and 3623). It depends on
-//! `ferrix-kernel-load` and nothing depends on it but the binary, whose
+//! `xaqu-kernel-load` and nothing depends on it but the binary, whose
 //! composition root names it only in a `runtime_settings = "live"` build:
 //! there it binds [`Live`] as the load's `setters::Setters`, and in
 //! a `fixed` build it names this crate nowhere, so none of it is linked.
 //!
 //! The entries moved here whole from the load files that dispatch them, each
 //! file's body unchanged but for the paths it names
-//! (`crate::` became `ferrix_kernel_load::`); what each changes, and the
+//! (`crate::` became `xaqu_kernel_load::`); what each changes, and the
 //! mechanism it changes it through, stayed in the load. This crate defines no
 //! exported, `#[used]` or section-placed item and no link-time hook, so a
 //! build that does not name it links nothing of it (ledger 3623 (R2)).
@@ -20,7 +20,7 @@
 // and every entry here is the Linux personality's. Never in a build with
 // `linux_abi=on`.
 #![cfg_attr(
-    ferrix_load_built = "none",
+    xaqu_load_built = "none",
     allow(
         dead_code,
         unused_imports,
@@ -40,10 +40,10 @@ extern crate alloc;
     reason = "named by its crate's path, so the interface's list sees the core's fn used here"
 )]
 pub const SETTINGS_FLAG_WORD: u64 =
-    ferrix_kernel_core::flag_word(&ferrix_kernel_core::build_flag_word!());
+    xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
 
 /// The entries, by what they set.
-#[cfg(any(ferrix_load_built = "ring0", ferrix_load_built = "lift"))]
+#[cfg(any(xaqu_load_built = "ring0", xaqu_load_built = "lift"))]
 pub mod settings {
     pub mod clock;
     pub mod cpu_online;
@@ -58,18 +58,18 @@ pub mod settings {
 
 /// This crate's implementation of the load's run-time setting entries, which
 /// a `runtime_settings = "live"` composition root binds
-/// (`ferrix_kernel_load::bind_setters!`).
-#[cfg(any(ferrix_load_built = "ring0", ferrix_load_built = "lift"))]
+/// (`xaqu_kernel_load::bind_setters!`).
+#[cfg(any(xaqu_load_built = "ring0", xaqu_load_built = "lift"))]
 #[derive(Debug, Clone, Copy)]
 pub struct Live;
 
-#[cfg(any(ferrix_load_built = "ring0", ferrix_load_built = "lift"))]
+#[cfg(any(xaqu_load_built = "ring0", xaqu_load_built = "lift"))]
 mod live {
-    use ferrix_kernel_load::setters::{Bus, Errno, Kernel, Process, Setters, TimeWidth};
+    use xaqu_kernel_load::setters::{Bus, Errno, Kernel, Process, Setters, TimeWidth};
 
     use super::{Live, settings};
 
-    // Out of line, so each `__ferrix_setters_*` symbol of a `live` kernel
+    // Out of line, so each `__xaqu_setters_*` symbol of a `live` kernel
     // shows the call into this crate (check-removable-symbols, ledger 3934
     // (4)).
     impl Setters for Live {

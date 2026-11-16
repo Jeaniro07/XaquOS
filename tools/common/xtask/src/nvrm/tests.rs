@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types;
 
 use super::{TOO_SMALL, UNISOLATED, judge_handed, judge_refused, place_after, report};
 
 // Recorded 2026-10-03 with nvrm loading its core from the volume
-// (x86-64, KVM, the patched ferrix-cfi QEMU): devmgr's lines, nvrm's and
+// (x86-64, KVM, the patched xaqu-cfi QEMU): devmgr's lines, nvrm's and
 // nvos's, and the kernel's report, as `run` returns them. nvrm waits for the
 // volume, which mounts after devmgr's report, so the report comes before the
 // core is loaded.
@@ -17,7 +17,7 @@ devmgr   gpu 00:04.0: pin budget 488 MiB, cut from 1024 MiB: the 1 GiB floor yie
 nvrm: started on 00:04.0, 1b36:0005 class 00ff00, 2 apertures, 0 vectors; its device over bootstrap\n\
 nvrm: device_isolation 0x3: interrupts isolated (bit 1), DMA translated\n\
 nvrm: pin budget 124928 pages (488 MiB), isolated-interrupts mark 1\n\
-nvrm: waiting up to 60 s for the NVIDIA volume (/data/usr/lib/ferrix/nvrm-core)\n\
+nvrm: waiting up to 60 s for the NVIDIA volume (/data/usr/lib/xaqu/nvrm-core)\n\
   devmgr   14 devices, 12 drivers, 5 started, 0 failed\n\
 nvos: core loaded: sha256 be83e087cb7787b7..., 13445824 bytes, base 0x40000000, 17 exports, build-id cfe4ba34e3a74eba6216b6bb82cfa0bd754aba81\n\
 nvrm: aperture 0: BAR 0, 0x81415000, 4 KiB\n\
@@ -39,7 +39,7 @@ devmgr   gpu 00:04.0: pin budget 488 MiB, cut from 1024 MiB: the 1 GiB floor yie
 nvrm: started on 00:04.0, 1b36:0005 class 00ff00, 2 apertures, 0 vectors; its device over bootstrap\n\
 nvrm: device_isolation 0x3: interrupts isolated (bit 1), DMA translated\n\
 nvrm: pin budget 124928 pages (488 MiB), isolated-interrupts mark 1\n\
-nvrm: waiting up to 60 s for the NVIDIA volume (/data/usr/lib/ferrix/nvrm-core)\n\
+nvrm: waiting up to 60 s for the NVIDIA volume (/data/usr/lib/xaqu/nvrm-core)\n\
   devmgr   14 devices, 12 drivers, 5 started, 0 failed\n\
 nvos: core loaded: sha256 be83e087cb7787b7..., 13445824 bytes, base 0x40000000, 17 exports, build-id cfe4ba34e3a74eba6216b6bb82cfa0bd754aba81\n\
 nvrm: aperture 0: BAR 0, 0x81415000, 4 KiB\n\

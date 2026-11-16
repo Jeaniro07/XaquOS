@@ -1,7 +1,7 @@
 //! The calls M5's shim makes that nobody else has (`docs/microkernel/M5-LIFT.md` §2).
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode, decode_unit};
@@ -55,7 +55,7 @@ pub fn bootstrap_move<S: Syscall>(
 pub fn space_window<S: Syscall>(sys: S, space: Handle) -> Result<(), Error> {
     decode_unit(Call::new(nr::SPACE_WINDOW).value(register(space)).make(sys))
 }
-/// `SPACE_PLACE`: `entries`, 16 bytes each (`ferrix_native_abi::lift`): how many went in.
+/// `SPACE_PLACE`: `entries`, 16 bytes each (`xaqu_native_abi::lift`): how many went in.
 pub fn space_place<S: Syscall>(
     sys: S,
     space: Handle,

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-partition-desc"
+name = "xaqu-partition-desc"
 description = "The partition manager's static description: fixed-width, little-endian, one bounded parser for the kernel's device list and the manager's rest"
 version.workspace = true
 edition.workspace = true

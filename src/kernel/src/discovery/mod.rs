@@ -19,7 +19,7 @@
 //! | [`devmgr`] | nothing: it starts `devmgr` and tells it what was found |
 //!
 //! The parsers themselves are host-testable crates in `src/lib/platform/`
-//! (`ferrix-acpi`, `ferrix-fdt`, `ferrix-pci`); these modules reach them to
+//! (`xaqu-acpi`, `xaqu-fdt`, `xaqu-pci`); these modules reach them to
 //! physical memory.
 //!
 //! # Only declarations here
@@ -33,21 +33,21 @@
 //! else -- no `pub use`, no items. A re-export here would let a core path
 //! reach an item name without the item-boundary check seeing a path to it.
 
-pub use ferrix_kernel_core::discovery::board;
-pub(crate) use ferrix_kernel_core::discovery::description;
+pub use xaqu_kernel_core::discovery::board;
+pub(crate) use xaqu_kernel_core::discovery::description;
 pub mod devmgr;
 pub(crate) mod first_image;
 pub mod first_image_check;
-pub use ferrix_kernel_core::discovery::fdt;
-pub use ferrix_kernel_core::discovery::finder;
-#[cfg(not(ferrix_personality = "user"))]
+pub use xaqu_kernel_core::discovery::fdt;
+pub use xaqu_kernel_core::discovery::finder;
+#[cfg(not(xaqu_personality = "user"))]
 pub mod firmware;
 /// The firmware framebuffer in a `personality=user` kernel: nothing lent
-/// (`docs/microkernel/M6.md` §2, ledger 5942 M.9). `ferrix.efifb` is a word no
+/// (`docs/microkernel/M6.md` §2, ledger 5942 M.9). `xaqu.efifb` is a word no
 /// profile with this shape permits, so what it lends is not built.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub mod firmware {
-    use ferrix_bootinfo::BootView;
+    use xaqu_bootinfo::BootView;
 
     use crate::user::memory_type::MemoryType;
 
@@ -70,8 +70,8 @@ pub mod firmware {
     }
 }
 pub mod pci;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub mod powerctl;
 pub mod smbios;
 pub mod smbios_check;
-pub use ferrix_kernel_core::discovery::tree;
+pub use xaqu_kernel_core::discovery::tree;

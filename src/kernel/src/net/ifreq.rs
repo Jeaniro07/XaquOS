@@ -32,18 +32,18 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::inet::InetAddress;
-use ferrix_linux_abi::netlink::{ARPHRD_ETHER, ARPHRD_LOOPBACK, IFF_ALLMULTI, IFF_PROMISC};
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::inet::InetAddress;
+use xaqu_linux_abi::netlink::{ARPHRD_ETHER, ARPHRD_LOOPBACK, IFF_ALLMULTI, IFF_PROMISC};
+use xaqu_linux_abi::socket::{
     AF_INET, IFNAMSIZ, IFREQ_BYTES, IFREQ_UNION, SIOCDIFADDR, SIOCGIFADDR, SIOCGIFBRDADDR,
     SIOCGIFCONF, SIOCGIFCOUNT, SIOCGIFDSTADDR, SIOCGIFFLAGS, SIOCGIFHWADDR, SIOCGIFINDEX,
     SIOCGIFMETRIC, SIOCGIFMTU, SIOCGIFNAME, SIOCGIFNETMASK, SIOCGIFTXQLEN, SIOCSIFADDR,
     SIOCSIFBRDADDR, SIOCSIFDSTADDR, SIOCSIFFLAGS, SIOCSIFMETRIC, SIOCSIFMTU, SIOCSIFNETMASK,
     SIOCSIFTXQLEN,
 };
-use ferrix_net::addr::{IpAddress, IpCidr, Ipv4};
-use ferrix_net::iface::{Address, IFF_MULTICAST, IFF_NOARP, IFF_POINTOPOINT, IFF_UP, Medium};
-use ferrix_vfs::Errno;
+use xaqu_net::addr::{IpAddress, IpCidr, Ipv4};
+use xaqu_net::iface::{Address, IFF_MULTICAST, IFF_NOARP, IFF_POINTOPOINT, IFF_UP, Medium};
+use xaqu_vfs::Errno;
 
 use crate::net::NetNamespace;
 use crate::net::namespace;
@@ -198,7 +198,7 @@ fn get_u16(process: &Process, at: u64) -> Result<u16, Errno> {
 fn with_interface<T>(
     ns: &NetNamespace,
     index: u32,
-    read: impl FnOnce(&ferrix_net::iface::Interface) -> T,
+    read: impl FnOnce(&xaqu_net::iface::Interface) -> T,
 ) -> Result<T, Errno> {
     ns.core()
         .with(|stack, _| stack.interface(index).map(read))
@@ -466,7 +466,7 @@ fn config(ns: &NetNamespace, process: &Process, arg: u64) -> Result<usize, Errno
     let length = uaccess::get_u32(process.space(), arg)? as usize;
     let buffer = uaccess::get_word(process.space(), arg.wrapping_add(word))?;
 
-    let entries: Vec<(ferrix_net::iface::Name, Ipv4)> = ns.core().with(|stack, _| {
+    let entries: Vec<(xaqu_net::iface::Name, Ipv4)> = ns.core().with(|stack, _| {
         stack
             .interfaces()
             .iter()

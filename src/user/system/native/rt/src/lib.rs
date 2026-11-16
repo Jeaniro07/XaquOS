@@ -1,4 +1,4 @@
-//! The runtime a Ferrix native program links.
+//! The runtime a Xaqu native program links.
 //!
 //! Everything a native program needs that cannot be a pure function, and so
 //! cannot live in `src/lib/`:
@@ -23,12 +23,12 @@
 //! #![no_std]
 //! #![no_main]
 //!
-//! use ferrix_rt::{Bootstrap, native::channel};
+//! use xaqu_rt::{Bootstrap, native::channel};
 //!
-//! ferrix_rt::entry!(main);
+//! xaqu_rt::entry!(main);
 //!
 //! fn main(bootstrap: Bootstrap) -> i32 {
-//!     match channel::create(ferrix_rt::Kernel) { Ok(_) => 0, Err(_) => 1 }
+//!     match channel::create(xaqu_rt::Kernel) { Ok(_) => 0, Err(_) => 1 }
 //! }
 //! ```
 //!
@@ -36,7 +36,7 @@
 //! it with the runtime's linker script:
 //!
 //! ```text
-//! println!("cargo::rustc-link-arg-bins=-T{}", env!("DEP_FERRIX_RT_LINKER_SCRIPT"));
+//! println!("cargo::rustc-link-arg-bins=-T{}", env!("DEP_XAQU_RT_LINKER_SCRIPT"));
 //! ```
 //!
 //! # The bootstrap handle
@@ -56,9 +56,9 @@ pub mod log;
 
 #[allow(unused_imports, unreachable_pub, reason = "ARMv7-A has none of these")]
 pub use arch::modes::*;
-pub use ferrix_native as native;
-use ferrix_native::channel::Channel;
-use ferrix_native::{Handle, OwnedHandle, Raw, Syscall};
+pub use xaqu_native as native;
+use xaqu_native::channel::Channel;
+use xaqu_native::{Handle, OwnedHandle, Raw, Syscall};
 
 /// The exit status a panic ends the process with: 101, as Rust's `std` uses.
 pub const PANIC_STATUS: i32 = 101;
@@ -127,14 +127,14 @@ pub fn start(bootstrap: usize, main: fn(Bootstrap) -> i32) -> ! {
 
 /// Name a program's `main`, a `fn(Bootstrap) -> i32`.
 ///
-/// Defines `ferrix_rt_start`, the symbol `_start` calls with the bootstrap
+/// Defines `xaqu_rt_start`, the symbol `_start` calls with the bootstrap
 /// register. A program that forgets this fails to link, by name.
 #[macro_export]
 macro_rules! entry {
     ($main:path) => {
         /// The first Rust function the process runs, called by `_start`.
         #[unsafe(no_mangle)]
-        extern "C" fn ferrix_rt_start(bootstrap: usize) -> ! {
+        extern "C" fn xaqu_rt_start(bootstrap: usize) -> ! {
             $crate::start(bootstrap, $main)
         }
     };

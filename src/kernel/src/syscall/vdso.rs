@@ -27,7 +27,7 @@
 //! namespace with offsets must not map it: it would read the clock unshifted
 //! (`docs/NAMESPACES.md` §12.1). Such a process is given a second object
 //! instead, the same image over a data page whose mode is
-//! [`ferrix_vdso::MODE_SYSCALL`], where every function makes the system call
+//! [`xaqu_vdso::MODE_SYSCALL`], where every function makes the system call
 //! and the system call applies the offsets. Built the first time a process in
 //! such a namespace is started or forked, and kept; nothing in the image
 //! differs.
@@ -41,7 +41,7 @@
 
 use alloc::sync::Arc;
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 use crate::console::println;
 use crate::sync::SpinLock;
@@ -73,10 +73,10 @@ impl Vdso {
     /// The data page's word at `offset`, through the direct map.
     fn word(&self, offset: usize) -> Option<&core::sync::atomic::AtomicU64> {
         let frame = *self.held.frames().first()?;
-        if !offset.is_multiple_of(8) || offset + 8 > ferrix_vdso::IMAGE_BYTES {
+        if !offset.is_multiple_of(8) || offset + 8 > xaqu_vdso::IMAGE_BYTES {
             return None;
         }
-        let at = crate::mm::direct_map(frame * ferrix_bootinfo::PAGE_SIZE) + offset as u64;
+        let at = crate::mm::direct_map(frame * xaqu_bootinfo::PAGE_SIZE) + offset as u64;
         // SAFETY: the data page's frame is held for as long as `self` lives,
         // which is the kernel's life; the direct map maps it writable; `at`
         // is inside it and eight-byte aligned; and every access to it, the
@@ -99,17 +99,17 @@ fn build(shifted: bool) -> Option<Vdso> {
     let spec = crate::arch::vdso_spec()?;
     let vmo = Vmo::new_anonymous(2).ok()?;
     let held = vmo.hold(0, 2).ok()?;
-    let mut image = alloc::vec![0_u8; ferrix_vdso::IMAGE_BYTES];
-    ferrix_vdso::build(&spec, &mut image).ok()?;
+    let mut image = alloc::vec![0_u8; xaqu_vdso::IMAGE_BYTES];
+    xaqu_vdso::build(&spec, &mut image).ok()?;
     vmo.write_page(1, 0, &image).ok()?;
     let vdso = Vdso { vmo, held };
     let mode = if crate::arch::vdso_can_read_counter() && !shifted {
-        ferrix_vdso::MODE_TSC
+        xaqu_vdso::MODE_TSC
     } else {
-        ferrix_vdso::MODE_SYSCALL
+        xaqu_vdso::MODE_SYSCALL
     };
-    vdso.store(ferrix_vdso::VVAR_COUNTER_HZ, crate::timer::counter_hz());
-    vdso.store(ferrix_vdso::VVAR_MODE, mode);
+    vdso.store(xaqu_vdso::VVAR_COUNTER_HZ, crate::timer::counter_hz());
+    vdso.store(xaqu_vdso::VVAR_MODE, mode);
     Some(vdso)
 }
 
@@ -147,7 +147,7 @@ pub(crate) fn map_into(space: &AddressSpace, shifted: bool) -> Option<u64> {
     let at = space
         .map_shared_code(Arc::clone(&vdso.vmo), super::exec::VDSO_END)
         .ok()?;
-    if at + ferrix_bootinfo::PAGE_SIZE != super::exec::VDSO_END {
+    if at + xaqu_bootinfo::PAGE_SIZE != super::exec::VDSO_END {
         println!(
             "  vdso     the vDSO's place below {:#x} was taken; mapped at {at:#x} instead",
             super::exec::VDSO_END
@@ -194,7 +194,7 @@ pub(crate) fn retarget(space: &AddressSpace, shifted: bool) -> Result<(), ()> {
 /// The name of the return trampoline a signal handler without
 /// `SA_RESTORER` goes back through: the crate's, which the architecture's
 /// image names too.
-pub(crate) use ferrix_vdso::SIGRETURN;
+pub(crate) use xaqu_vdso::SIGRETURN;
 
 /// Where `space`'s vDSO has [`SIGRETURN`], if the architecture's image has
 /// one and `space` maps the vDSO: the address a handler without
@@ -212,8 +212,8 @@ pub(crate) fn sigreturn(space: &AddressSpace) -> Option<u64> {
         .flatten()
         .filter_map(Option::as_ref)
         .find_map(|vdso| space.shared_code_at(&vdso.vmo))?;
-    let offset = u64::try_from(ferrix_vdso::CODE_AT + function.offset).ok()?;
-    data.checked_add(ferrix_bootinfo::PAGE_SIZE)?
+    let offset = u64::try_from(xaqu_vdso::CODE_AT + function.offset).ok()?;
+    data.checked_add(xaqu_bootinfo::PAGE_SIZE)?
         .checked_add(offset)
 }
 
@@ -224,7 +224,7 @@ pub(crate) fn publish_realtime_offset(change: impl FnOnce()) {
     change();
     if let Some(Some(vdso)) = VDSO.get() {
         let offset = super::time::realtime_offset();
-        vdso.store(ferrix_vdso::VVAR_REALTIME_OFFSET, offset.cast_unsigned());
+        vdso.store(xaqu_vdso::VVAR_REALTIME_OFFSET, offset.cast_unsigned());
     }
 }
 
@@ -232,10 +232,10 @@ pub(crate) fn publish_realtime_offset(change: impl FnOnce()) {
 pub(crate) fn image() -> Option<alloc::vec::Vec<u8>> {
     let vdso = vdso()?;
     let frame = *vdso.held.frames().get(1)?;
-    let at = crate::mm::direct_map(frame * ferrix_bootinfo::PAGE_SIZE) as *const u8;
+    let at = crate::mm::direct_map(frame * xaqu_bootinfo::PAGE_SIZE) as *const u8;
     // SAFETY: the image's frame is held for the kernel's life and mapped by
     // the direct map; nothing writes it after `build`.
-    let bytes = unsafe { core::slice::from_raw_parts(at, ferrix_vdso::IMAGE_BYTES) };
+    let bytes = unsafe { core::slice::from_raw_parts(at, xaqu_vdso::IMAGE_BYTES) };
     Some(bytes.to_vec())
 }
 
@@ -243,7 +243,7 @@ pub(crate) fn image() -> Option<alloc::vec::Vec<u8>> {
 pub(crate) fn shifted_mode() -> Option<u64> {
     let vdso = shifted_vdso()?;
     Some(
-        vdso.word(ferrix_vdso::VVAR_MODE)?
+        vdso.word(xaqu_vdso::VVAR_MODE)?
             .load(core::sync::atomic::Ordering::Acquire),
     )
 }
@@ -267,8 +267,8 @@ pub(crate) fn data() -> Option<[u64; 3]> {
             .map(|word| word.load(core::sync::atomic::Ordering::Acquire))
     };
     Some([
-        read(ferrix_vdso::VVAR_MODE)?,
-        read(ferrix_vdso::VVAR_COUNTER_HZ)?,
-        read(ferrix_vdso::VVAR_REALTIME_OFFSET)?,
+        read(xaqu_vdso::VVAR_MODE)?,
+        read(xaqu_vdso::VVAR_COUNTER_HZ)?,
+        read(xaqu_vdso::VVAR_REALTIME_OFFSET)?,
     ])
 }

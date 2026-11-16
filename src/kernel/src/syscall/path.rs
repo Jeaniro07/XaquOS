@@ -2,7 +2,7 @@
 //! reading a link, the working directory, and changing what `stat` reports.
 //!
 //! Stage 8 of `docs/ROADMAP.md`. Each call here is a thin layer over one
-//! [`Namespace`](ferrix_vfs::Namespace) operation, and deliberately so. The
+//! [`Namespace`](xaqu_vfs::Namespace) operation, and deliberately so. The
 //! namespace is the half of the VFS that host tests, Miri and a fuzzer have
 //! walked; what is left for this module is the part only the kernel can do —
 //! copy a path out of a program, work out where a relative one starts, decode
@@ -35,17 +35,17 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_EMPTY_PATH, AT_FDCWD, AT_HANDLE_CONNECTABLE, AT_HANDLE_FID, AT_HANDLE_MNT_ID_UNIQUE,
     AT_REMOVEDIR, AT_SYMLINK_FOLLOW, AT_SYMLINK_NOFOLLOW, RENAME_EXCHANGE, RENAME_NOREPLACE,
     RENAME_WHITEOUT, S_IFBLK, S_IFCHR, S_IFDIR, S_IFIFO, S_IFMT, S_IFREG, S_IFSOCK, UTIME_NOW,
     UTIME_OMIT,
 };
-use ferrix_vfs::access::{Access, MAY_EXEC};
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{
+use xaqu_vfs::access::{Access, MAY_EXEC};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{
     Context, FileType, Location, Namespace, NewNode, OpenFile, RenameMode, SetAttributes, Stat,
     Timespec,
 };
@@ -329,7 +329,7 @@ fn watched_name(named: &Named) -> Option<(Location, Vec<u8>)> {
     if !inotify::watching() {
         return None;
     }
-    let (dir, name) = ferrix_vfs::path::split_last(&named.path);
+    let (dir, name) = xaqu_vfs::path::split_last(&named.path);
     if name.is_empty() || name == b"." || name == b".." || name == b"/" {
         return None;
     }
@@ -567,7 +567,7 @@ fn sys_inotify_add_watch(process: &Process, fd: i32, at: u64, mask: u32) -> Resu
     named
         .ctx
         .who
-        .require(&node.inode()?.metadata(), ferrix_vfs::access::MAY_READ)?;
+        .require(&node.inode()?.metadata(), xaqu_vfs::access::MAY_READ)?;
     let wd = inotify::add_watch(&instance, &node, mask)?;
     usize::try_from(wd).map_err(|_| Errno::EINVAL)
 }

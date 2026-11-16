@@ -2,7 +2,7 @@
 //! `ipc_fastpath` (`docs/BUILD-FLAGS.md`, BF6; `docs/OPAQUE-KERNEL.md` §9.7,
 //! part 6).
 //!
-//! Selected when the kernel is built and never at boot: `ferrix_fast_ipc`, the
+//! Selected when the kernel is built and never at boot: `xaqu_fast_ipc`, the
 //! flag on x86-64, is the one predicate over the fast path's code, so that a
 //! build without it holds none. **Off in the certified configuration** the Safety
 //! Manual names (the customer's call of 2026-10-02), on in `fast` and `desktop`.
@@ -12,14 +12,14 @@
 use crate::console::println;
 
 /// Whether this image has the fast path.
-pub const BUILT: bool = cfg!(ferrix_fast_ipc);
+pub const BUILT: bool = cfg!(xaqu_fast_ipc);
 
 /// A symbol the fast path's image holds and no other, whatever is inlined, for
 /// the check that an `off` image has none of it (ledger 1001 (3)).
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 #[used]
 #[unsafe(no_mangle)]
-static FERRIX_FAST_IPC_BUILT: u8 = 1;
+static XAQU_FAST_IPC_BUILT: u8 = 1;
 
 /// Stage 9's line: which path `channel_write_read` takes.
 pub fn report() {
@@ -28,7 +28,7 @@ pub fn report() {
             "  fastpath ipc fast path for channel_write_read: on (built with ipc_fastpath=on); \
              taken from x86-64's SYSCALL entry"
         );
-    } else if cfg!(ferrix_ipc_fastpath = "on") {
+    } else if cfg!(xaqu_ipc_fastpath = "on") {
         println!(
             "  fastpath ipc fast path for channel_write_read: on (built with ipc_fastpath=on); \
              x86-64 only, so every call here takes the general path"
@@ -46,9 +46,9 @@ pub fn report() {
 /// them.
 pub(crate) fn report_counts() {
     // An image without the fast path holds no count to read, and says so as one.
-    #[cfg(not(ferrix_fast_ipc))]
+    #[cfg(not(xaqu_fast_ipc))]
     println!("  fastpath counts: trips=0");
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     {
         let [
             trips,

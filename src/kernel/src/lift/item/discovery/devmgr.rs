@@ -27,30 +27,30 @@ use core::sync::atomic::AtomicBool;
 use core::sync::atomic::AtomicU16;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::Ordering;
-use ferrix_blkring::Location;
-use ferrix_blkring::control::DEVICE_RIGHTS;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_bootinfo::option_in;
-use ferrix_devmgr_proto::ANSWER_BUSY;
-use ferrix_devmgr_proto::ANSWER_DONE;
-use ferrix_devmgr_proto::ANSWER_FAILED;
-use ferrix_devmgr_proto::ANSWER_NO_DEVICE;
-use ferrix_devmgr_proto::BUS_PCI;
-use ferrix_devmgr_proto::BUS_PLATFORM;
-use ferrix_devmgr_proto::DEVICES_MAX_BYTES;
-use ferrix_devmgr_proto::Devices;
-use ferrix_devmgr_proto::Message;
-use ferrix_devmgr_proto::NAME_BYTES;
-use ferrix_devmgr_proto::SHORT_BYTES;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_BYTES;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
-use ferrix_sync::Once;
+use xaqu_blkring::Location;
+use xaqu_blkring::control::DEVICE_RIGHTS;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::option_in;
+use xaqu_devmgr_proto::ANSWER_BUSY;
+use xaqu_devmgr_proto::ANSWER_DONE;
+use xaqu_devmgr_proto::ANSWER_FAILED;
+use xaqu_devmgr_proto::ANSWER_NO_DEVICE;
+use xaqu_devmgr_proto::BUS_PCI;
+use xaqu_devmgr_proto::BUS_PLATFORM;
+use xaqu_devmgr_proto::DEVICES_MAX_BYTES;
+use xaqu_devmgr_proto::Devices;
+use xaqu_devmgr_proto::Message;
+use xaqu_devmgr_proto::NAME_BYTES;
+use xaqu_devmgr_proto::SHORT_BYTES;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_BYTES;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_sync::Once;
 pub type ReadFile = fn(&[u8]) -> Result<vmap::Buffer, Errno>;
 pub fn register_reader(read: ReadFile) {}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,7 +59,7 @@ pub enum Bus {
     Platform,
 }
 /// A row's kill of a device's driver (`settings::driver_bind`).
-pub const KILL_DRIVER: u16 = ferrix_devmgr_proto::KILL_DRIVER;
+pub const KILL_DRIVER: u16 = xaqu_devmgr_proto::KILL_DRIVER;
 const REQUEST_PATIENCE_NANOS: u64 = 30_000_000_000;
 
 /// What devmgr has said about its drivers, as in the hybrid's `Bindings`.
@@ -97,7 +97,7 @@ impl core::ops::Deref for DriverName {
 /// The names of `/lib/drivers/MANIFEST`, in its order, which is a driver's number
 /// in what devmgr tells: the kernel read the same archive to start it.
 pub fn read_manifest(archive: &[u8]) {
-    let Some(manifest) = ferrix_vfs::initramfs::file_named(archive, b"lib/drivers/MANIFEST") else {
+    let Some(manifest) = xaqu_vfs::initramfs::file_named(archive, b"lib/drivers/MANIFEST") else {
         return;
     };
     let mut bindings = BINDINGS.lock();

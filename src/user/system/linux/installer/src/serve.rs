@@ -1,10 +1,10 @@
-//! `ferrix-install --serve`: the live session's installer daemon, which the
-//! graphical installer (`ferrix-installer`, the apps repository) asks for
+//! `xaqu-install --serve`: the live session's installer daemon, which the
+//! graphical installer (`xaqu-installer`, the apps repository) asks for
 //! the disks and the install over a Unix socket.
 //!
-//! It runs as root, as `ferrix-installd.service`, and only on a live
+//! It runs as root, as `xaqu-installd.service`, and only on a live
 //! session: it exits at once unless the kernel's command line says
-//! `ferrix.live`, which the live medium's `CMDLINE.TXT` does and the copy
+//! `xaqu.live`, which the live medium's `CMDLINE.TXT` does and the copy
 //! on an installed disk no longer does (`installed_cmdline`). The live
 //! session's user is the medium's owner, as Ubuntu's live user may `sudo`
 //! without a password, so a peer of uid 1000 or 0 may ask; any other uid is
@@ -25,15 +25,15 @@ use std::os::fd::AsRawFd;
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 
-use ferrix_install::{disk, layout};
-use ferrix_partition::ESP;
+use xaqu_install::{disk, layout};
+use xaqu_partition::ESP;
 
 use crate::engine::{self, Event, Plan, Space};
 use crate::setup::Answers;
 use crate::{SECTOR, find_live, live_disk};
 
 /// Where it listens.
-pub const SOCKET: &str = "/run/ferrix-installer.sock";
+pub const SOCKET: &str = "/run/xaqu-installer.sock";
 
 /// The uids that may ask: root, and the live session's user.
 const ALLOWED: [u32; 2] = [0, 1000];
@@ -41,18 +41,18 @@ const ALLOWED: [u32; 2] = [0, 1000];
 /// `--serve`.
 pub fn serve() -> Result<(), String> {
     let cmdline = std::fs::read_to_string("/proc/cmdline").unwrap_or_default();
-    if !cmdline.split_whitespace().any(|word| word == "ferrix.live") {
-        println!("ferrix-installd: not a live session (no ferrix.live); not serving");
+    if !cmdline.split_whitespace().any(|word| word == "xaqu.live") {
+        println!("xaqu-installd: not a live session (no xaqu.live); not serving");
         return Ok(());
     }
-    let path = std::env::var("FERRIX_INSTALLER_SOCKET").unwrap_or_else(|_| SOCKET.into());
+    let path = std::env::var("XAQU_INSTALLER_SOCKET").unwrap_or_else(|_| SOCKET.into());
     let _ = std::fs::remove_file(&path);
     let listener = UnixListener::bind(&path).map_err(|e| format!("{path}: {e}"))?;
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o666))
         .map_err(|e| format!("{path}: {e}"))?;
-    println!("ferrix-installd: listening on {path}");
+    println!("xaqu-installd: listening on {path}");
     if let Some((disk, fields)) = unattended() {
-        println!("ferrix-installd: unattended answers on {disk}; installing without asking");
+        println!("xaqu-installd: unattended answers on {disk}; installing without asking");
         let mut console = Console;
         let ok = run_install(&fields, &mut console, &[disk.as_str()]);
         let then = fields
@@ -61,14 +61,14 @@ pub fn serve() -> Result<(), String> {
             .find(|(key, _)| key == "then")
             .map_or("", |(_, value)| value.as_str());
         if ok && then == "poweroff" {
-            println!("ferrix-installd: powering off, as the answers ask");
+            println!("xaqu-installd: powering off, as the answers ask");
             power_off();
         }
     }
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };
         if let Err(why) = connection(stream) {
-            println!("ferrix-installd: {why}");
+            println!("xaqu-installd: {why}");
         }
     }
     Ok(())
@@ -127,7 +127,7 @@ fn connection(stream: UnixStream) -> Result<(), String> {
         }
         "reboot" => {
             let _ = writeln!(out, "ok");
-            println!("ferrix-installd: restarting, as the installer asked");
+            println!("xaqu-installd: restarting, as the installer asked");
             reboot();
             Ok(())
         }
@@ -159,12 +159,12 @@ fn read_fields(reader: &mut impl BufRead) -> io::Result<Vec<(String, String)>> {
 }
 
 /// What the window says when the system to copy cannot be read: the
-/// medium was started as a CD or a USB stick, which Ferrix does not read
-/// as a disk yet (docs/TRY-FERRIX.md). Nothing has been written then.
-const NO_MEDIUM: &str = "Ferrix cannot read the medium it was started from: it was started \
+/// medium was started as a CD or a USB stick, which Xaqu does not read
+/// as a disk yet (docs/TRY-XAQU.md). Nothing has been written then.
+const NO_MEDIUM: &str = "Xaqu cannot read the medium it was started from: it was started \
 from a CD or a USB stick, which this version cannot read as a disk yet, so there is nothing \
 to copy. Nothing was written to any disk. To install, attach the ISO to a virtual machine as a \
-disk (virtio, SATA or NVMe) instead of a CD, as Try Ferrix on GitHub shows.";
+disk (virtio, SATA or NVMe) instead of a CD, as Try Xaqu on GitHub shows.";
 
 /// The `disks` answer.
 fn disks(out: &mut UnixStream) -> Result<(), String> {
@@ -297,8 +297,8 @@ fn unattended() -> Option<(String, Vec<(String, String)>)> {
 }
 
 /// The answers partition's name and its first line.
-const ANSWERS_NAME: &str = "FERRIX-ANSWERS";
-const ANSWERS_MAGIC: &str = "ferrix-answers 1\n";
+const ANSWERS_NAME: &str = "XAQU-ANSWERS";
+const ANSWERS_MAGIC: &str = "xaqu-answers 1\n";
 
 /// Where an unattended install says what it does: the console.
 struct Console;
@@ -307,7 +307,7 @@ impl Write for Console {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         let text = String::from_utf8_lossy(bytes);
         for line in text.lines().filter(|line| !line.starts_with("progress ")) {
-            println!("ferrix-installd: {line}");
+            println!("xaqu-installd: {line}");
         }
         Ok(bytes.len())
     }
@@ -383,11 +383,11 @@ fn run_install(fields: &[(String, String)], out: &mut dyn Write, busy: &[&str]) 
     };
     let result = plan().and_then(|plan| {
         let live = find_live().map_err(|why| {
-            println!("ferrix-installd: {why}");
+            println!("xaqu-installd: {why}");
             NO_MEDIUM.to_owned()
         })?;
         println!(
-            "ferrix-installd: installing onto {} from {live} for {}",
+            "xaqu-installd: installing onto {} from {live} for {}",
             plan.target,
             plan.answers.as_ref().map_or("", |a| a.user.as_str())
         );
@@ -406,7 +406,7 @@ fn run_install(fields: &[(String, String)], out: &mut dyn Write, busy: &[&str]) 
             true
         }
         Err(why) => {
-            println!("ferrix-installd: the install failed: {why}");
+            println!("xaqu-installd: the install failed: {why}");
             say(out, format!("error {}\n", why.replace('\n', " ")));
             false
         }

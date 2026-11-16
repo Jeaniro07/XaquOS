@@ -37,7 +37,7 @@
 use core::mem::offset_of;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_sched::MAX_CPUS;
+use xaqu_sched::MAX_CPUS;
 
 use crate::smp::PerCpu;
 use crate::trap::{Abi, Outcome};
@@ -129,7 +129,7 @@ const _: () = assert!(
 
 /// A user program's registers, as the trampoline saves them.
 ///
-/// Laid out to match the pushes in `ferrix_syscall_stub` exactly, in reverse:
+/// Laid out to match the pushes in `xaqu_syscall_stub` exactly, in reverse:
 /// the last thing pushed is the first field. `repr(C)` because assembly is the
 /// other half of this type's definition.
 #[derive(Debug, Clone, Copy)]
@@ -178,12 +178,12 @@ core::arch::global_asm!(
 // time, because only the processor can say whether it needs it; the flags it
 // clobbers are about to be replaced from R11 or the interrupt frame. Used by
 // every return to ring 3, here and in `super::trap`. See `super::speculation`.
-.macro FERRIX_CLEAR_BUFFERS
+.macro XAQU_CLEAR_BUFFERS
 .if {hardened}
     testb $1, {clear}(%rip)
     jnz 3f
 4:
-.pushsection .text.ferrix_unusual,"ax"
+.pushsection .text.xaqu_unusual,"ax"
 3:  verw {selector}(%rip)
     jmp 4b
 .popsection
@@ -192,7 +192,7 @@ core::arch::global_asm!(
 
 // Off the user stack and into a `SyscallFrame`, with every register the
 // program chose cleared: the first half of both system call entries below.
-.macro FERRIX_SYSCALL_SAVE
+.macro XAQU_SYSCALL_SAVE
     // Off the user stack first, before anything can be pushed. `swapgs` makes
     // GS the kernel's; the two GS-relative words are the only memory this
     // code can name without a stack.
@@ -252,9 +252,9 @@ core::arch::global_asm!(
 // EAX and ECX zero. Called by the entries below and in `super::trap` when
 // `super::speculation` planned it.
 .section .text
-.globl ferrix_clear_bhb
+.globl xaqu_clear_bhb
 .align 64
-ferrix_clear_bhb:
+xaqu_clear_bhb:
     movl ${bhb_outer}, %ecx
     call 1f
     jmp 5f
@@ -277,19 +277,19 @@ ferrix_clear_bhb:
 
 .section .text
 // The entry `LSTAR` names on a processor that needs no branch-history loop.
-.globl ferrix_syscall_stub
+.globl xaqu_syscall_stub
 .align 16
-ferrix_syscall_stub:
-    FERRIX_SYSCALL_SAVE
-ferrix_syscall_common:
+xaqu_syscall_stub:
+    XAQU_SYSCALL_SAVE
+xaqu_syscall_common:
     cld
     movq %rsp, %rdi
 .if {fast_crossings}
-    callq ferrix_syscall_fast
+    callq xaqu_syscall_fast
     testl %eax, %eax
     jz 5f
 .else
-    callq ferrix_syscall_entry
+    callq xaqu_syscall_entry
 .endif
 6:
     popq %r15
@@ -309,18 +309,18 @@ ferrix_syscall_common:
     popq %rcx             // user rip, back where SYSRET wants it
     popq %rsp             // user stack, straight into RSP
 
-    FERRIX_CLEAR_BUFFERS
+    XAQU_CLEAR_BUFFERS
     swapgs
     // Named for the boot check that breaks here: ring 0, the program's stack
     // and GS, which only the paranoid entry survives. See `super::paranoid`.
-.globl ferrix_syscall_sysret
-ferrix_syscall_sysret:
+.globl xaqu_syscall_sysret
+xaqu_syscall_sysret:
     sysretq
 
 .if {fast_crossings}
-.pushsection .text.ferrix_unusual,"ax"
+.pushsection .text.xaqu_unusual,"ax"
 5:  movq %rsp, %rdi
-    callq ferrix_syscall_entry
+    callq xaqu_syscall_entry
     jmp 6b
 .popsection
 .endif
@@ -330,20 +330,20 @@ ferrix_syscall_sysret:
 // way on. Chosen by the MSR rather than by a test of the plan here, so no
 // mispredicted branch can carry a system call past the loop to the
 // kernel's indirect branches.
-.globl ferrix_syscall_stub_bhb
+.globl xaqu_syscall_stub_bhb
 .align 16
-ferrix_syscall_stub_bhb:
-    FERRIX_SYSCALL_SAVE
-    call ferrix_clear_bhb
-    jmp ferrix_syscall_common
+xaqu_syscall_stub_bhb:
+    XAQU_SYSCALL_SAVE
+    call xaqu_clear_bhb
+    jmp xaqu_syscall_common
 
 // Enter ring 3 for the first time.
 //   rdi = entry point, rsi = user stack pointer
 // Never returns: a program leaves ring 3 through a system call or a trap, and
 // for good through `exit_group`, which ends its task in the scheduler.
-.globl ferrix_enter_user
+.globl xaqu_enter_user
 .align 16
-ferrix_enter_user:
+xaqu_enter_user:
     // Masked from here to the `sysretq`, which opens them from R11. Between
     // loading the user stack pointer and dropping privilege this is ring 0 on a
     // user stack, and an interrupt taken there would be pushed onto it.
@@ -378,13 +378,13 @@ ferrix_enter_user:
     xorq %r14, %r14
     xorq %r15, %r15
 
-    FERRIX_CLEAR_BUFFERS
+    XAQU_CLEAR_BUFFERS
     swapgs
     sysretq
 
 // `SYSCALL` from compatibility mode, which only AMD processors take: Intel
 // raises `#UD` for it. Neither libc enters this way without an `AT_SYSINFO`
-// that points here, and Ferrix passes none (`docs/I386.md` §2), so it is
+// that points here, and Xaqu passes none (`docs/I386.md` §2), so it is
 // answered `ENOSYS` rather than supported. It cannot be left at zero: any
 // program can far-jump into the 32-bit code segment, and `CSTAR` zero would
 // be a ring-0 jump to address zero on the program's stack.
@@ -396,20 +396,20 @@ ferrix_enter_user:
 // other way into 32-bit code is `IRETQ` (`enter_user`); here that is harmless,
 // because `SYSCALL` has just loaded them and nothing between it and the
 // return can leave `SS` null.
-.globl ferrix_syscall32_stub
+.globl xaqu_syscall32_stub
 .align 16
-ferrix_syscall32_stub:
+xaqu_syscall32_stub:
     movq $-{enosys}, %rax
-    FERRIX_CLEAR_BUFFERS
+    XAQU_CLEAR_BUFFERS
     sysretl
 
 // Resume a program from a saved system call frame.
 //   rdi = a `SyscallFrame`, in the order the stub above pushed it
 // Never returns. The frame is popped exactly as the stub pops its own, so a
 // fork child leaves the kernel by the same instructions its parent will.
-.globl ferrix_resume_user
+.globl xaqu_resume_user
 .align 16
-ferrix_resume_user:
+xaqu_resume_user:
     cli
     movq %rdi, %rsp
     popq %r15
@@ -428,24 +428,24 @@ ferrix_resume_user:
     popq %r11
     popq %rcx
     popq %rsp
-    FERRIX_CLEAR_BUFFERS
+    XAQU_CLEAR_BUFFERS
     swapgs
     sysretq
 "#,
-    fast_crossings = const if cfg!(ferrix_restricted_fastpath = "on") { 1 } else { 0 },
+    fast_crossings = const if cfg!(xaqu_restricted_fastpath = "on") { 1 } else { 0 },
     hardened = const super::speculation::ENTRY_HARDENING,
     clear = sym super::speculation::CLEAR_CPU_BUFFERS,
     selector = sym super::speculation::VERW_SELECTOR,
     bhb_outer = const super::speculation::BHB_LOOP_OUTER,
     bhb_inner = const super::speculation::BHB_LOOP_INNER,
-    enosys = const ferrix_linux_abi::errno::Errno::ENOSYS.0,
+    enosys = const xaqu_linux_abi::errno::Errno::ENOSYS.0,
     options(att_syntax)
 );
 
 /// Where the `CSTAR` entry point is: the stub that refuses a `SYSCALL` from
 /// compatibility mode.
 fn cstar_stub_address() -> u64 {
-    ferrix_syscall32_stub as *const () as usize as u64
+    xaqu_syscall32_stub as *const () as usize as u64
 }
 
 // CHECKS-ONLY: arch/x86_64/switch/check.rs, arch/x86_64/paranoid/check.rs; home: super
@@ -455,7 +455,7 @@ fn cstar_stub_address() -> u64 {
 /// The one place outside the assembly that names the symbol. Two `extern`
 /// declarations of one symbol with different types are merged by the release
 /// profile's link-time optimisation into one of them and a renamed
-/// `ferrix_syscall_stub.1` nothing defines, which is how the release build
+/// `xaqu_syscall_stub.1` nothing defines, which is how the release build
 /// stopped linking once the window check declared it as a `static`.
 ///
 /// Which of the two entries: the one that runs the branch-history loop where
@@ -463,9 +463,9 @@ fn cstar_stub_address() -> u64 {
 #[doc(hidden)]
 pub fn stub_address() -> u64 {
     if super::speculation::clears_branch_history() {
-        ferrix_syscall_stub_bhb as *const () as usize as u64
+        xaqu_syscall_stub_bhb as *const () as usize as u64
     } else {
-        ferrix_syscall_stub as *const () as usize as u64
+        xaqu_syscall_stub as *const () as usize as u64
     }
 }
 
@@ -490,15 +490,15 @@ pub(super) fn entry_is_planned() -> bool {
 
 unsafe extern "C" {
     /// The `LSTAR` entry point, defined in the block above.
-    fn ferrix_syscall_stub();
+    fn xaqu_syscall_stub();
     /// The `LSTAR` entry point that runs the branch-history loop.
-    fn ferrix_syscall_stub_bhb();
+    fn xaqu_syscall_stub_bhb();
     /// Enter ring 3 at `entry` on `stack`.
-    fn ferrix_enter_user(entry: u64, stack: u64, argument: u64) -> !;
+    fn xaqu_enter_user(entry: u64, stack: u64, argument: u64) -> !;
     /// The `CSTAR` entry point, defined in the block above.
-    fn ferrix_syscall32_stub();
+    fn xaqu_syscall32_stub();
     /// Resume ring 3 from a saved system call frame.
-    fn ferrix_resume_user(frame: *const SyscallFrame) -> !;
+    fn xaqu_resume_user(frame: *const SyscallFrame) -> !;
 }
 
 /// A program's registers as its system call saved them.
@@ -568,7 +568,7 @@ pub unsafe fn resume_user(regs: &UserRegs) -> ! {
     match regs {
         // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract; the frame
         // is read before anything is pushed below it.
-        UserRegs::Syscall(frame) => unsafe { ferrix_resume_user(core::ptr::from_ref(frame)) },
+        UserRegs::Syscall(frame) => unsafe { xaqu_resume_user(core::ptr::from_ref(frame)) },
         UserRegs::Trap(frame) => {
             let context = super::signal::UserContext::from_trap(frame).sanitised();
             // SAFETY: (CONTEXT) the caller's guarantee; a trap frame from ring 3, whose
@@ -588,16 +588,16 @@ pub unsafe fn resume_user(regs: &UserRegs) -> ! {
 ///
 /// # Safety
 ///
-/// Called only from `ferrix_syscall_stub`, with `frame` pointing at the frame
+/// Called only from `xaqu_syscall_stub`, with `frame` pointing at the frame
 /// it just built on this processor's kernel stack.
-#[cfg(ferrix_restricted_fastpath = "on")]
+#[cfg(xaqu_restricted_fastpath = "on")]
 /// K1's two fast crossings, ahead of everything else, and small so that each runs straight
 /// down: `true` when one has answered, with `frame` ready for `SYSRET`. Masked since the
 /// entry, and neither takes the general way's look: a kick sent since waits for `SYSRET`
 /// and lands in ring 3, where it looks.
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_syscall_fast(frame: &mut SyscallFrame) -> u32 {
-    #[cfg(ferrix_restricted_window = "on")]
+extern "C" fn xaqu_syscall_fast(frame: &mut SyscallFrame) -> u32 {
+    #[cfg(xaqu_restricted_window = "on")]
     if super::restricted::window_close_if_open(frame) {
         return 1;
     }
@@ -611,7 +611,7 @@ extern "C" fn ferrix_syscall_fast(frame: &mut SyscallFrame) -> u32 {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_syscall_entry(frame: &mut SyscallFrame) {
+extern "C" fn xaqu_syscall_entry(frame: &mut SyscallFrame) {
     // Restricted mode first, before the fast path and the filter: a restricted
     // thread's call reaches neither (`docs/microkernel/K1.md` §3). One byte of
     // the processor's record, and a branch not taken.
@@ -632,8 +632,8 @@ extern "C" fn ferrix_syscall_entry(frame: &mut SyscallFrame) {
     // in for, and with interrupts still masked. Every entry measure has run in
     // the stub by here (`docs/OPAQUE-KERNEL.md` §9.7, condition 2). A declined
     // call goes on below as any other.
-    #[cfg(ferrix_fast_ipc)]
-    if frame.rax as usize == ferrix_native_abi::nr::CHANNEL_WRITE_READ {
+    #[cfg(xaqu_fast_ipc)]
+    if frame.rax as usize == xaqu_native_abi::nr::CHANNEL_WRITE_READ {
         // The call blocks, and lets the vector registers go across it (3a).
         mark_vectors_dead(true);
         let args = [
@@ -669,7 +669,7 @@ extern "C" fn ferrix_syscall_entry(frame: &mut SyscallFrame) {
     crate::sched::vtime::leaving();
 }
 
-/// [`ferrix_syscall_entry`] for every call the fast path does not answer:
+/// [`xaqu_syscall_entry`] for every call the fast path does not answer:
 /// the filter, the two calls answered here, and the dispatcher. Between the
 /// entry's kernel-time stamps (`sched::vtime`); the two ways out that never
 /// return here end the stint themselves.
@@ -743,7 +743,7 @@ fn general_entry(frame: &mut SyscallFrame) {
 /// the stub's own exit runs. Otherwise the general branch: interrupts
 /// opened, the `may_block` check, the call's way back as `trap::system_call`
 /// makes it, and the entry's way out. With interrupts masked.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn frame_tail(frame: &mut SyscallFrame, outcome: Outcome) {
     if crate::sched::nothing_due_here() && crate::trap::filter_quiet() {
         // No decision was asked of this processor (`nothing_due_here`), so
@@ -795,7 +795,7 @@ pub(super) fn look_on_the_way_out(frame: &mut SyscallFrame) {
 /// Whether a reply of words writes `RAX`, `RSI`, `RDX` and `R10` of a frame and
 /// no other register (`L.x86_64.160`): the fast path's tail leaves the rest as the
 /// program left them, as the general path does, and a transcript would not say so.
-#[cfg(all(ferrix_fast_ipc, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_ipc, xaqu_checks = "on"))]
 #[doc(hidden)]
 pub fn reply_writes_four_registers() -> bool {
     let before = SyscallFrame {
@@ -879,7 +879,7 @@ fn write_outcome(frame: &mut SyscallFrame, outcome: Outcome) {
 /// `int $0x80`.
 #[doc(hidden)]
 pub const fn vectors_die_in(number: usize) -> bool {
-    use ferrix_native_abi::nr::{CHANNEL_WRITE_READ, OBJECT_WAIT_ONE, PORT_WAIT};
+    use xaqu_native_abi::nr::{CHANNEL_WRITE_READ, OBJECT_WAIT_ONE, PORT_WAIT};
     matches!(number, CHANNEL_WRITE_READ | OBJECT_WAIT_ONE | PORT_WAIT)
 }
 
@@ -900,7 +900,7 @@ pub(super) enum Early {
     Native,
     /// A Linux number, decoded once against x86-64's table behind its clamp:
     /// `None` for a number the table does not hold.
-    Linux(Option<ferrix_linux_abi::nr::Syscall>),
+    Linux(Option<xaqu_linux_abi::nr::Syscall>),
 }
 
 /// Sort a number from `SYSCALL`'s entry: the native range first, by a
@@ -909,7 +909,7 @@ pub(super) enum Early {
 /// Linux number is decoded once, and [`answer_here`] matches that one answer
 /// against both of its calls.
 pub(super) fn early(number: usize) -> Early {
-    if ferrix_native_abi::nr::is_native(number) {
+    if xaqu_native_abi::nr::is_native(number) {
         return Early::Native;
     }
     Early::Linux(super::decode_syscall(number))
@@ -921,7 +921,7 @@ pub(super) fn early(number: usize) -> Early {
 fn answer_here(
     frame: &mut SyscallFrame,
     args: &crate::trap::SyscallArgs,
-    call: ferrix_linux_abi::nr::Syscall,
+    call: xaqu_linux_abi::nr::Syscall,
 ) -> bool {
     // One call is answered before dispatch, because it is a fact about this
     // processor rather than about the process: `arch_prctl(ARCH_SET_FS)` writes
@@ -936,8 +936,8 @@ fn answer_here(
     // No such writer in a user kernel: K1 §7.1's fast path rests on normal mode's FS
     // record not moving while the mark is up (ledger 6464 Z2, 6981), and no program there
     // is a Linux one. `test-kernel-shape` reads the symbol's absence.
-    #[cfg(not(ferrix_personality = "user"))]
-    if call == ferrix_linux_abi::nr::Syscall::ArchPrctl
+    #[cfg(not(xaqu_personality = "user"))]
+    if call == xaqu_linux_abi::nr::Syscall::ArchPrctl
         && let Some(answer) = arch_prctl(args.args[0], args.args[1])
     {
         frame.rax = answer as u64;
@@ -947,7 +947,7 @@ fn answer_here(
     // `rt_sigreturn` puts back every register a signal interrupted, `RCX` and
     // `R11` among them, which `SYSRET` cannot load: it leaves through the trap
     // stub's `IRETQ` instead, and never returns here. See `super::signal`.
-    if call == ferrix_linux_abi::nr::Syscall::RtSigreturn {
+    if call == xaqu_linux_abi::nr::Syscall::RtSigreturn {
         let mut context = super::signal::UserContext::from_syscall(frame);
         super::enable_interrupts();
         if let Some(path) = crate::trap::return_path() {
@@ -977,7 +977,7 @@ fn enter_program(frame: &mut SyscallFrame, entry: u64, stack: u64, abi: Abi) {
     }
     // The registers this frame holds belong to a program that no longer exists,
     // so they are replaced rather than returned into. Everything else is
-    // cleared for the same reason `ferrix_enter_user` clears it -- a register
+    // cleared for the same reason `xaqu_enter_user` clears it -- a register
     // carrying a kernel value into ring 3 is a leak nothing tests.
     *frame = SyscallFrame {
         r15: 0,
@@ -995,7 +995,7 @@ fn enter_program(frame: &mut SyscallFrame, entry: u64, stack: u64, abi: Abi) {
         rax: 0,
         // `SYSRET` takes the flags from R11 and the address from RCX, which is
         // why an entry point can be delivered by returning. Interrupts open, as
-        // `ferrix_enter_user` leaves them.
+        // `xaqu_enter_user` leaves them.
         r11: 0x202,
         rcx: entry,
         user_rsp: stack,
@@ -1016,7 +1016,7 @@ fn enter_compat_after_execve(entry: u64, stack: u64) -> ! {
     }
     crate::sched::vtime::leaving();
     // SAFETY: (CONTEXT) the running task's own system call, on its own kernel stack,
-    // where `ferrix_syscall_entry` owns nothing; `context` holds ring 3's
+    // where `xaqu_syscall_entry` owns nothing; `context` holds ring 3's
     // 32-bit selectors and the entry and stack `execve` placed in the new
     // image, both user addresses, or the process ended and `return_to_user`
     // did not come back.
@@ -1024,10 +1024,10 @@ fn enter_compat_after_execve(entry: u64, stack: u64) -> ! {
 }
 
 /// `ARCH_SET_GS`: set the base a program's `GS` resolves against.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 const ARCH_SET_GS: u64 = 0x1001;
 /// `ARCH_SET_FS`: set the base `FS` resolves against, the thread pointer.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 const ARCH_SET_FS: u64 = 0x1002;
 /// `ARCH_GET_FS`: write the `FS` base to the address given.
 const ARCH_GET_FS: u64 = 0x1003;
@@ -1048,18 +1048,18 @@ const ARCH_GET_GS: u64 = 0x1004;
 /// Both writes go to the register and to the running task's record
 /// together, with interrupts masked: the entry answers this call before it
 /// opens them, so no switch comes between the two.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 // If this ever builds in a user kernel, it has a symbol for `check-kernel-shape.py` to refuse.
-#[cfg_attr(ferrix_personality = "user", inline(never))]
+#[cfg_attr(xaqu_personality = "user", inline(never))]
 fn arch_prctl(code: u64, value: u64) -> Option<isize> {
-    use ferrix_linux_abi::errno::Errno;
+    use xaqu_linux_abi::errno::Errno;
 
     let answer = match code {
         ARCH_SET_FS => {
             // A thread pointer must be a user address. Nothing here follows
             // it, but a program that set it to a kernel address would have
             // every `FS`-relative access it made afterwards resolve there.
-            if !ferrix_bootinfo::is_user_address(value) {
+            if !xaqu_bootinfo::is_user_address(value) {
                 return Some(Errno::EPERM.as_return_value());
             }
             // A null selector first, as Linux's `ARCH_SET_FS` loads one and as
@@ -1091,7 +1091,7 @@ fn arch_prctl(code: u64, value: u64) -> Option<isize> {
             // program's by its sign bit (`super::paranoid`), so a program
             // must never hold an upper-half one: refused as Linux refuses
             // it, and a non-canonical address with it.
-            if !ferrix_bootinfo::is_user_address(value) {
+            if !xaqu_bootinfo::is_user_address(value) {
                 return Some(Errno::EPERM.as_return_value());
             }
             // A null selector first, as Linux's `ARCH_SET_GS` loads one: a
@@ -1382,7 +1382,7 @@ pub(crate) unsafe fn set_entry_stack(top: u64) {
 pub(crate) unsafe fn enter_user(entry: u64, stack: u64, argument: u64, abi: Abi) -> ! {
     match abi {
         // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract.
-        Abi::Native => unsafe { ferrix_enter_user(entry, stack, argument) },
+        Abi::Native => unsafe { xaqu_enter_user(entry, stack, argument) },
         Abi::Compat => {
             super::switch::enter_compat_segments();
             let context = super::signal::UserContext::entering(entry, stack, abi);

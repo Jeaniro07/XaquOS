@@ -3,13 +3,13 @@ name = "quarantine-test"
 description = "Probes for test-quarantine: a write to a processor's online file as a user that is not root, and as root of a user namespace of its own"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
 
-# A workspace of its own, not a member of Ferrix's, for the reason zinc and the
-# compositor are: it is a Linux user program built with std, and the Ferrix
+# A workspace of its own, not a member of Xaqu's, for the reason zinc and the
+# compositor are: it is a Linux user program built with std, and the Xaqu
 # workspace's dependency policy is written for a kernel.
 [workspace]
 
@@ -23,7 +23,7 @@ libc = "0.2"
 # ---------------------------------------------------------------------------
 # Lints
 #
-# The Ferrix discipline, as `sud-test` keeps it: every failure is a line on the
+# The Xaqu discipline, as `sud-test` keeps it: every failure is a line on the
 # console and a status, never a panic. `unsafe` is allowed: the calls under
 # test are libc's, and every block says what it relies on.
 # ---------------------------------------------------------------------------

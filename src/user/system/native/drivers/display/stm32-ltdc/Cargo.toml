@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-ltdc"
-description = "The STM32MP15 DK board's HDMI driver process: the display control channel's driver end over the LTDC and its SiI9022 bridge, on ferrix-rt"
+name = "xaqu-ltdc"
+description = "The STM32MP15 DK board's HDMI driver process: the display control channel's driver end over the LTDC and its SiI9022 bridge, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,11 +14,11 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-displayctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-stm32-display.workspace = true
+xaqu-blkring.workspace = true
+xaqu-displayctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-stm32-display.workspace = true
 
 [lints]
 workspace = true

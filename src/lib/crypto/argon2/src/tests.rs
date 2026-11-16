@@ -236,7 +236,7 @@ fn argon2id_at_the_floor() {
         19_456,
         2,
         1,
-        b"ferrix",
+        b"xaqu",
         b"0123456789abcdef",
         "99261f0377abb9fc3f51662b61b141016639a1ac1acb124b21e2a57706cd506f",
     );

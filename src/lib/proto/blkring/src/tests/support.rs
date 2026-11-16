@@ -31,7 +31,7 @@ pub(super) fn device() -> Device {
 pub(super) fn identity() -> Identity {
     Identity {
         location: Location::new(0, 0, 3 << 3),
-        serial: *b"ferrix-test-disk\0\0\0\0",
+        serial: *b"xaqu-test-disk\0\0\0\0",
         name: DiskName::for_index(0).expect("vda"),
     }
 }

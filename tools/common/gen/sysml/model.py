@@ -14,7 +14,7 @@ the parser did not recognise still lands here with its raw text intact and
 how drift in the notation announces itself rather than silently dropping a
 section from the document.
 
-Names are qualified the way the model cites them -- `FerrixStructure::Kernel`
+Names are qualified the way the model cites them -- `XaquStructure::Kernel`
 -- and every lookup and every iteration is sorted or insertion-ordered, because
 the generated document has to be byte-identical for the same input.
 """
@@ -107,7 +107,7 @@ class Element:
 
     @property
     def qualified_name(self) -> str:
-        """`FerrixStructure::Kernel::mm`, skipping anonymous ancestors."""
+        """`XaquStructure::Kernel::mm`, skipping anonymous ancestors."""
         parts: list[str] = []
         node: Element | None = self
         while node is not None:
@@ -260,7 +260,7 @@ class Model:
 
         References are written unqualified (`stage5Scheduler`), partly
         qualified (`Principles::DesignRule`) or as a feature chain
-        (`ferrix.kernel.sched`). Exact qualified names win; then a match inside
+        (`xaqu.kernel.sched`). Exact qualified names win; then a match inside
         `scope`, then inside each scope containing it; then a suffix match
         anywhere; then the last segment on its own.
 
@@ -344,8 +344,8 @@ class Model:
         return [relation for relation in self.relations if relation.kind == kind]
 
     def lifecycle_doc(self) -> str:
-        """The doc comment `FerrixLifecycle` uses to define its vocabulary."""
-        package = self.package("FerrixLifecycle")
+        """The doc comment `XaquLifecycle` uses to define its vocabulary."""
+        package = self.package("XaquLifecycle")
         if package is None:
             return ""
         if package.doc:
@@ -399,7 +399,7 @@ ACRONYMS = {
     # capitalises every word, so there is no structural way to tell `Linux`
     # from `Interrupts`; the ones that matter are listed rather than guessed.
     "linux": "Linux",
-    "ferrix": "Ferrix",
+    "xaqu": "Xaqu",
     "rust": "Rust",
     "rustc": "rustc",
     "btrfs": "btrfs",

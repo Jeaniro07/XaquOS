@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-gc400-driver"
-description = "The STM32MP157's GPU driver process: identifies the Vivante GC400T, brings it up, and runs a command buffer to an interrupt, on ferrix-rt"
+name = "xaqu-gc400-driver"
+description = "The STM32MP157's GPU driver process: identifies the Vivante GC400T, brings it up, and runs a command buffer to an interrupt, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,10 +14,10 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-gc400.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-gc400.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

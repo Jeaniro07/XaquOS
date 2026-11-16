@@ -190,7 +190,7 @@ fn limits_take_max_or_a_count() {
 }
 
 #[test]
-fn type_takes_only_threaded_and_ferrix_has_none() {
+fn type_takes_only_threaded_and_xaqu_has_none() {
     assert_eq!(write::parse_type(b"threaded\n"), Err(Refusal::NotSupported));
     assert_eq!(write::parse_type(b"domain"), Err(Refusal::Invalid));
     assert_eq!(write::parse_freeze(b"1"), Ok(true));

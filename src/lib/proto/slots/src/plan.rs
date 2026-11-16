@@ -20,7 +20,7 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// The kind `ferrix.slot.boot=` names.
+    /// The kind `xaqu.slot.boot=` names.
     #[must_use]
     pub fn from_word(word: &str) -> Option<Kind> {
         match word {
@@ -31,7 +31,7 @@ impl Kind {
         }
     }
 
-    /// The word `ferrix.slot.boot=` says.
+    /// The word `xaqu.slot.boot=` says.
     #[must_use]
     pub const fn word(self) -> &'static str {
         match self {
@@ -146,7 +146,7 @@ impl fmt::Display for LoaderWords {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "ferrix.slot={} ferrix.slot.boot={} ferrix.slot.seq={} ferrix.slot.disk={} ferrix.slot.sig=",
+            "xaqu.slot={} xaqu.slot.boot={} xaqu.slot.seq={} xaqu.slot.disk={} xaqu.slot.sig=",
             self.slot.letter(),
             self.kind.word(),
             self.sequence,
@@ -165,7 +165,7 @@ impl fmt::Display for LoaderWords {
 /// slot's own command line after the loader's words cannot override them.
 /// `None` unless the first four are there and each is well formed: a boot
 /// that did not come from a slot, or one whose words cannot be trusted.
-/// `ferrix.slot.sig` is read when it is there; a loader from before it
+/// `xaqu.slot.sig` is read when it is there; a loader from before it
 /// (2026-10-24) wrote none, and its slots were unsigned, so a missing word
 /// reads as `none`. A malformed one is `None` for the whole.
 #[must_use]
@@ -176,11 +176,11 @@ pub fn parse_words(cmdline: &str) -> Option<LoaderWords> {
             .find_map(|word| word.strip_prefix(key))
     };
     Some(LoaderWords {
-        slot: Slot::from_letter(first("ferrix.slot=")?)?,
-        kind: Kind::from_word(first("ferrix.slot.boot=")?)?,
-        sequence: first("ferrix.slot.seq=")?.parse().ok()?,
-        disk: crate::gpt::parse_guid(first("ferrix.slot.disk=")?)?,
-        sig: match first("ferrix.slot.sig=") {
+        slot: Slot::from_letter(first("xaqu.slot=")?)?,
+        kind: Kind::from_word(first("xaqu.slot.boot=")?)?,
+        sequence: first("xaqu.slot.seq=")?.parse().ok()?,
+        disk: crate::gpt::parse_guid(first("xaqu.slot.disk=")?)?,
+        sig: match first("xaqu.slot.sig=") {
             None | Some("none") => None,
             Some(anchor) => Some(anchor.parse().ok()?),
         },

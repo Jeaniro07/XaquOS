@@ -10,7 +10,7 @@ use std::cell::Cell;
 use std::io::BufRead;
 use std::path::Path;
 
-use ferrix_elf::Elf;
+use xaqu_elf::Elf;
 
 use crate::args::Args;
 use crate::task::Task;
@@ -21,7 +21,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     name: "symbolize",
     help_at: 505,
     help: &[
-        "symbolize     name each `[<0>] 0x...` line of a /proc/<pid>/task/<tid>/stack read on Ferrix, from stdin,",
+        "symbolize     name each `[<0>] 0x...` line of a /proc/<pid>/task/<tid>/stack read on Xaqu, from stdin,",
         "              with the kernel this tree built (--arch, --release as the image was built; docs/DEBUG.md)",
     ],
     run: |_, args| symbolize_stack(args),
@@ -137,7 +137,7 @@ fn trace_address(line: &str) -> Option<u64> {
 /// This toolchain mangles with the v0 scheme, whose grammar carries generics,
 /// lifetimes, and back-references to earlier substrings of the same symbol. A
 /// backtrace wants the function's name, so the path is decoded and the rest
-/// skipped: `ferrix_kernel_core::backtrace::walk`, not the closure type it was
+/// skipped: `xaqu_kernel_core::backtrace::walk`, not the closure type it was
 /// instantiated with. Anything the grammar does not cover gives `None`, and
 /// the raw symbol is printed instead, which is still searchable.
 fn v0(name: &str) -> Option<String> {

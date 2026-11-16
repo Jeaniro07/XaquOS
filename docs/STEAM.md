@@ -1,13 +1,13 @@
-# Steam's window on Ferrix
+# Steam's window on Xaqu
 
 Valve's Steam client, unchanged, draws its sign-in window on hyprix through
-yserver, on Ferrix, in a guest under KVM. This is the first step of stage
-22's exit ("the Steam client starts on Ferrix, logs in and shows its store,
+yserver, on Xaqu, in a guest under KVM. This is the first step of stage
+22's exit ("the Steam client starts on Xaqu, logs in and shows its store,
 with the browser helper drawing"): the client and its browser helper start
 and draw, and nobody has signed in yet. Input has not been tried.
 
 It runs with launch-side workarounds: stand-ins and flags, each for
-something Ferrix does not do yet. The table in §3 lists every one, the real
+something Xaqu does not do yet. The table in §3 lists every one, the real
 fix that retires it, and who owns that fix. None of them is in the kernel,
 and no library is preloaded into the client any more.
 
@@ -66,9 +66,9 @@ frame, which has enough colours for `test-steam-window`, does not pass. The
 second step needs a Steam account kept for the gate, with Steam Guard off:
 a mobile authenticator needs the phone, and email Steam Guard sends a code
 for every new machine, which every boot is. Put its name and its password,
-one a line, in `~/.config/ferrix/steam-test-account` on the machine that
+one a line, in `~/.config/xaqu/steam-test-account` on the machine that
 runs the gate, readable by its owner alone (`chmod 600`), or name another
-file with `FERRIX_STEAM_ACCOUNT_FILE`; never in a checkout. Then the gate
+file with `XAQU_STEAM_ACCOUNT_FILE`; never in a checkout. Then the gate
 clicks into the sign-in window's fields, types both through QMP on a US
 layout, presses Sign in, waits for the main window titled "Steam", and
 passes when that window shows the store: at least 15% of it the store's
@@ -143,7 +143,7 @@ while both still have it attached. The kernel answers those calls since
 | `_v2-entry-point` stand-in | Valve's steamrt64 entry point starts pressure-vessel, which needs user and mount namespaces for bubblewrap | namespaces | N2–N6 (`docs/NAMESPACES.md`) |
 | `-no-cef-sandbox` | Chromium's sandbox is two layers: user and pid namespaces (network ones optional), and a seccomp-bpf filter in every child. Measured on the host (`docs/SECCOMP.md` §1.2): with `CLONE_NEWPID` refused, Chrome with its sandbox on does not start at all | user namespaces, pid namespaces and seccomp together | N4 (`docs/NAMESPACES.md`); pid namespaces and a loopback-only network namespace, os-98 after N4 (the customer's decision of 2026-09-30); seccomp S1–S6, os-7c, and S7–S8, Steam's own filters (`docs/SECCOMP.md`) |
 | `-cef-disable-gpu -cef-disable-gpu-compositing` | yserver on the Wayland backend offers no DRI3, so the web helper's GL is llvmpipe, which CEF 126 rejects: its GPU process falls back to SwiftShader after three or four restarts | ANGLE on Vulkan through Venus, presenting with `MESA_VK_WSI_DEBUG=sw`: user copies through a device window's own mapping (F-55's second landing), the render node opened to a `render` group, and the helper's flags (§6) | not started; os-9f's conditions are in §6 |
-| `logger-0.bash` stand-in | The Steam Runtime's logger failed on Ferrix under `steamwebhelper.sh`; this one logs nothing | whatever the logger meets: `/dev/fd` through process substitution, and the `/proc` gaps below | steam-proc-gaps |
+| `logger-0.bash` stand-in | The Steam Runtime's logger failed on Xaqu under `steamwebhelper.sh`; this one logs nothing | whatever the logger meets: `/dev/fd` through process substitution, and the `/proc` gaps below | steam-proc-gaps |
 | (not worked around) `lsof` warns "unsupported format" for `/proc/net/tcp6` and `udp6`, and cannot identify Unix sockets | the IPv6 tables' columns differ from Linux's, and `/proc/net/unix` names no inodes | Linux's formats | steam-proc-gaps |
 | `test-steam-game` unticks the Install dialog's "Create an application shortcut" | With it ticked, Steam ran `xdg-icon-resource`, which the volume does not have, and the client then aborted, "pure virtual method called" (exit 134, 2026-10-01) | `xdg-utils` on the volume, and the client's abort without it understood | open |
 | 16 GiB guest | At 8 GiB several processes died of `SIGBUS` on execute faults of mapped library pages while Chromium started | find and fix the refault | steam-sigbus |
@@ -300,10 +300,10 @@ installs to btrfs, launches and draws through the GPU path with sound. On
 2026-10-01 the gate for its first part, `test-steam-game` (§1), got as far
 as the install's download; it did not pass then. In order:
 
-**Update, 2026-10-21 (the customer's word):** Steam is running on Ferrix and
+**Update, 2026-10-21 (the customer's word):** Steam is running on Xaqu and
 a game has also run. No test name or log of that is recorded in this
 document, so the list below stays as the 2026-10-01 account of the stall and
-of the way around it (`--steam-preinstall`, `ferrix_direct`, 2026-10-10), not
+of the way around it (`--steam-preinstall`, `xaqu_direct`, 2026-10-10), not
 as the result.
 
 1. **The game.** Teeworlds (app 380840): free, `isfreeapp`, so steamcmd's
@@ -358,15 +358,15 @@ as the result.
    host's i386 loader): Teeworlds and the Steam Linux Runtime 1.0 by
    default, each as Steam lays out a library -- `steamapps/appmanifest_<app>.acf`
    at `StateFlags` 4 and the files in `steamapps/common/<installdir>` --
-   under `~/.local/share/ferrix/steam-preinstall/tree/steam`
-   (`FERRIX_STEAM_PREINSTALL`). `run-compositor --everything
+   under `~/.local/share/xaqu/steam-preinstall/tree/steam`
+   (`XAQU_STEAM_PREINSTALL`). `run-compositor --everything
    --steam-preinstall` and `test-steam-game --steam-preinstall` merge that
    tree into the everything volume last, so Steam in the guest finds both
    installed at `/data/steam/steamapps` and neither downloads nor stages
    them; `game-watch.sh` then skips `steam://install` and hands the client
    `steam://rungameid/380840` at once. The volume is made again whenever the
    flag is given or left out, so a run that wants to keep the default
-   volume names its own with `FERRIX_EVERYTHING_VOLUME`.
+   volume names its own with `XAQU_EVERYTHING_VOLUME`.
 
 Two things on the way were not Steam's. Steam's sign-in window showed game
 art in red while it loaded, which the store gate took for a refused
@@ -393,13 +393,13 @@ than half busy. What was in the way, in the order it was found:
 1. **yserver rendered on Venus.** Once the `--everything` desktop had Venus,
    Mesa's virtio ICD came before lavapipe. The Wayland backend reads every
    changed window back to the CPU, and Venus's host-visible memory is
-   write-combining, which Ferrix maps uncached; on an AMD host that is
+   write-combining, which Xaqu maps uncached; on an AMD host that is
    uncached indeed. A maximized frame took 22 ms to read back, and copying
    clients' images in was half the server's time. yserver is pinned to
    lavapipe (`VK_ICD_FILENAMES`, 9363fa75d).
 2. **yserver's loop woke 9,000 times a second.** It kept every client's
    socket in its poller for READABLE although a reader thread owns the
-   reads, and Ferrix's `EPOLLET` counts traffic in both directions of a
+   reads, and Xaqu's `EPOLLET` counts traffic in both directions of a
    socket, so every byte either way woke it: 50,000 system calls a second,
    two thirds of the server's time in the kernel. The fork's branch
    `steam-perf` registers a client's socket only while output waits.
@@ -425,7 +425,7 @@ than half busy. What was in the way, in the order it was found:
    have heard of a reset but for that read.
 
 How it was measured, and how to measure it again: a copy of the
-`--everything` volume kept between boots (`FERRIX_EVERYTHING_VOLUME`, and
+`--everything` volume kept between boots (`XAQU_EVERYTHING_VOLUME`, and
 the data disk attached without `snapshot=on`), so Steam installs and signs
 in once; Steam started with `-cef-enable-debugging`, whose DevTools port
 (8080 in the guest) gives traces and a `requestAnimationFrame` probe; and a

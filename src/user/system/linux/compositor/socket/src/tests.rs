@@ -2,8 +2,8 @@
 //! descriptors.
 //!
 //! These run on the development host and are the one part of the compositor
-//! whose behaviour on Ferrix is a different question from its behaviour here:
-//! what they check is that the framing is right, and Ferrix's own
+//! whose behaviour on Xaqu is a different question from its behaviour here:
+//! what they check is that the framing is right, and Xaqu's own
 //! `AF_UNIX` tests check that the kernel carries it.
 
 use std::io::Read;
@@ -276,7 +276,7 @@ fn the_socket_path_follows_wayland_s_rule() {
 #[test]
 fn a_listener_makes_its_socket_and_takes_it_away_again() {
     let directory =
-        std::env::temp_dir().join(format!("ferrix-compositor-socket-{}", std::process::id()));
+        std::env::temp_dir().join(format!("xaqu-compositor-socket-{}", std::process::id()));
     let path = directory.join("wayland-test");
     let name = path.to_str().expect("a utf-8 path").to_owned();
 

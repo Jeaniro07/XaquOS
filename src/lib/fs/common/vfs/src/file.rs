@@ -18,7 +18,7 @@
 //! racing on one description get consecutive bytes rather than the same
 //! ones, and the offset ends where the last I/O ended, in order. That is
 //! Linux's `f_pos_lock`, since 3.14. It can be held across a sleep because
-//! it is a [`ferrix_sync::SleepLock`], whose waiters sleep on what the
+//! it is a [`xaqu_sync::SleepLock`], whose waiters sleep on what the
 //! kernel lent the mount the file was opened on (see [`crate::Mount::parker`]);
 //! on the host they spin.
 //!
@@ -35,9 +35,9 @@
 use alloc::sync::Arc;
 use core::fmt;
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::SleepLock;
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::SleepLock;
 
 use crate::Result;
 use crate::SpinLock;

@@ -15,9 +15,9 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vfs::{Errno, Namespace, OpenFile, OpenFlags};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vfs::{Errno, Namespace, OpenFile, OpenFlags};
+use xaqu_vma::VmaFlags;
 
 use crate::fs;
 use crate::fs::epoll::{self, Interest};
@@ -435,7 +435,7 @@ fn veth_pairs(tree: &Arc<Job>) -> Result<usize, &'static str> {
     let _ = as_task_of(&job, || veth::create((&one, None), (&two, None)))
         .map_err(|_| "kmem: a job could not make a veth pair")?;
     let cost = used(&job, Resource::Kernel).saturating_sub(before);
-    let least = veth::record_cost() + 2 * size_of::<ferrix_net::Interface>();
+    let least = veth::record_cost() + 2 * size_of::<xaqu_net::Interface>();
     drop((one, two));
     if cost < least as u64 {
         return Err("kmem: a veth pair was not charged to its job for its record and ends");
@@ -725,10 +725,10 @@ fn namespace_files(tree: &Arc<Job>) -> Result<usize, &'static str> {
 /// held unattached, as a chain's older filters are held by the threads that
 /// still point at them.
 fn filters(tree: &Arc<Job>) -> Result<usize, &'static str> {
-    use ferrix_seccomp::Insn;
+    use xaqu_seccomp::Insn;
     let program = [
         Insn::new(0x20, 0, 0, 0),
-        Insn::new(0x06, 0, 0, ferrix_seccomp::ALLOW),
+        Insn::new(0x06, 0, 0, xaqu_seccomp::ALLOW),
     ];
     kind(tree, "seccomp filters", |_| {
         crate::syscall::seccomp::prepare(&program, false)

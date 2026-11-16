@@ -7,7 +7,7 @@
 //! error on the way to the panic report -- which is the one moment nothing
 //! else has run the formatting code. Derived `Debug` is written by the
 //! compiler, but what it calls is not: every lock's `Debug` formats without
-//! waiting (`ferrix_sync`), and a report that waited for the lock the failure
+//! waiting (`xaqu_sync`), and a report that waited for the lock the failure
 //! was holding would never be written. So each object here is formatted whole,
 //! through every lock it holds, and each error's text is compared with what
 //! it has to say.
@@ -19,9 +19,9 @@
 use alloc::sync::Arc;
 use core::fmt::{self, Debug, Display, Write};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_native_abi::signals::Signals;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_native_abi::signals::Signals;
+use xaqu_vma::VmaFlags;
 
 use crate::console::println;
 use crate::mm::MemoryError;
@@ -143,7 +143,7 @@ fn memory_errors() -> Result<u32, &'static str> {
         ),
         (VmapError::OutOfMemory, "no frame available"),
         (
-            VmapError::MapFailed(ferrix_paging::MapError::OutOfMemory),
+            VmapError::MapFailed(xaqu_paging::MapError::OutOfMemory),
             "the mapping was refused: ",
         ),
         (
@@ -164,7 +164,7 @@ fn memory_errors() -> Result<u32, &'static str> {
         (VmapError::NoAddressSpace(8), "NoAddressSpace(8)"),
         (VmapError::OutOfMemory, "OutOfMemory"),
         (
-            VmapError::MapFailed(ferrix_paging::MapError::OutOfMemory),
+            VmapError::MapFailed(xaqu_paging::MapError::OutOfMemory),
             "MapFailed(OutOfMemory)",
         ),
         (VmapError::NotAllocated(4), "NotAllocated(4)"),

@@ -324,9 +324,9 @@ pub enum Role {
     /// `ext_image_copy_capture_cursor_session_v1`: the cursor by itself,
     /// which this compositor draws into the frame instead.
     CursorCaptureSession,
-    /// `ferrix_appmenu_manager_v1`: an application that has menus of its own.
+    /// `xaqu_appmenu_manager_v1`: an application that has menus of its own.
     AppMenuManager,
-    /// `ferrix_appmenu_v1`: one toplevel's own menus.
+    /// `xaqu_appmenu_v1`: one toplevel's own menus.
     AppMenu,
 }
 

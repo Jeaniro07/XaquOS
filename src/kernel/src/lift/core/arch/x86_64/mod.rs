@@ -8,13 +8,13 @@ pub mod trap;
 use crate::object::channel::Endpoint;
 use crate::sync::SpinLock;
 use alloc::sync::Arc;
-use ferrix_bootinfo::Arch;
-use ferrix_bootinfo::BootView;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types;
-use ferrix_linux_abi::types::OpenFlagBits;
+use xaqu_bootinfo::Arch;
+use xaqu_bootinfo::BootView;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types;
+use xaqu_linux_abi::types::OpenFlagBits;
 pub use signal::SIGNAL_RED_ZONE;
 pub use signal::UserContext;
 pub use signal::restore_signal_frame;
@@ -42,7 +42,7 @@ pub const USER_RMAP_PROGRAM: &[u8] = &[
     0xe7, 0x00, 0x00, 0x00, 0x0f, 0x05, 0x0f, 0x0b,
 ];
 pub fn decode_syscall(number: usize) -> Option<Syscall> {
-    ferrix_linux_abi::nr::from_x86_64(number)
+    xaqu_linux_abi::nr::from_x86_64(number)
 }
 pub const fn audit_arch(abi: crate::trap::Abi) -> u32 {
     match abi {
@@ -50,16 +50,16 @@ pub const fn audit_arch(abi: crate::trap::Abi) -> u32 {
         crate::trap::Abi::Compat => 0x4000_0003,
     }
 }
-pub fn image_abi(class: ferrix_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
+pub fn image_abi(class: xaqu_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
     match (class, machine) {
-        (ferrix_elf::Class::Elf64, ferrix_elf::EM_X86_64) => Some(crate::trap::Abi::Native),
-        (ferrix_elf::Class::Elf32, 3) => Some(crate::trap::Abi::Compat),
+        (xaqu_elf::Class::Elf64, xaqu_elf::EM_X86_64) => Some(crate::trap::Abi::Native),
+        (xaqu_elf::Class::Elf32, 3) => Some(crate::trap::Abi::Compat),
         _ => None,
     }
 }
 pub const COMPAT_USER_END: u64 = 0xFFFF_E000;
 pub fn decode_compat_syscall(number: usize) -> Option<Syscall> {
-    ferrix_linux_abi::nr::from_i386(number)
+    xaqu_linux_abi::nr::from_i386(number)
 }
 pub const OPEN_FLAGS: OpenFlagBits = types::OPEN_FLAGS_GENERIC;
 pub const USER_TEST_PROGRAM: &[u8] = &[
@@ -155,16 +155,16 @@ pub const fn user_platform(abi: crate::trap::Abi) -> Option<&'static [u8]> {
     }
 }
 pub fn shutdown() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_HALT)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_HALT)
 }
 pub fn power_off() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_POWER_OFF)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_POWER_OFF)
 }
 pub fn reset() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_RESTART)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_RESTART)
 }
 pub fn halt() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_HALT)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_HALT)
 }
 pub fn enable_interrupts() {}
 pub fn disable_interrupts() {}
@@ -178,7 +178,7 @@ pub fn thread_core(hardware_id: u64) -> Option<(u64, u32)> {
 pub struct Irq;
 // SAFETY: a program has no interrupts to mask: a spin lock's holder may be
 // preempted by the kernel, which the shim's locks allow for (M5-LIFT.md §4.5).
-unsafe impl ferrix_sync::IrqControl for Irq {
+unsafe impl xaqu_sync::IrqControl for Irq {
     fn disable() -> usize {
         0
     }
@@ -199,7 +199,7 @@ pub(crate) fn tsc_hz() -> u64 {
 #[cold]
 #[inline(never)]
 fn tsc_hz_asked(kept: &core::sync::atomic::AtomicU64) -> u64 {
-    let asked = crate::sys::clock(ferrix_native_abi::lift::CLOCK_COUNTER_HZ);
+    let asked = crate::sys::clock(xaqu_native_abi::lift::CLOCK_COUNTER_HZ);
     kept.store(asked, core::sync::atomic::Ordering::Relaxed);
     asked
 }
@@ -218,7 +218,7 @@ fn counter_by_call() -> u64 {
     crate::sys::clock(0)
 }
 /// `getppid` on the table this architecture's programs call: what a straight answer is for.
-pub const GETPPID_NUMBER: usize = ferrix_linux_abi::nr::x86_64::GETPPID;
+pub const GETPPID_NUMBER: usize = xaqu_linux_abi::nr::x86_64::GETPPID;
 pub fn counter_hz() -> u64 {
     match tsc_hz() {
         0 => 1_000_000_000,
@@ -251,7 +251,7 @@ pub const USER_GETUID_PROGRAM: &[u8] = &[
     0x0f, 0x05, // syscall
 ];
 
-pub type PageEncoding = ferrix_paging::x86_64::X86_64;
+pub type PageEncoding = xaqu_paging::x86_64::X86_64;
 
 pub const fn flush_cache_lines(_virt: u64, _len: u64) {}
 pub const fn write_combining_processors() -> Option<usize> {

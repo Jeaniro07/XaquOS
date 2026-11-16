@@ -25,9 +25,9 @@
 //! pretends to succeed, is how a program ends up wrong much later for reasons
 //! nobody can trace back here.
 
-use ferrix_linux_abi::errno::{self, Errno};
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{AT_FDCWD, O_CREAT, O_TRUNC, O_WRONLY};
+use xaqu_linux_abi::errno::{self, Errno};
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{AT_FDCWD, O_CREAT, O_TRUNC, O_WRONLY};
 
 use super::{
     Personality, attributes, compat, credentials, epoll, eventfd, exec, family, fd, file, flock,
@@ -69,7 +69,7 @@ fn dispatch(call: Syscall, args: &SyscallArgs, regs: Option<&arch::UserRegs>) ->
     crate::fs::seam::syscall();
     // Under `linuxd` every taken branch runs cold after the exit's barrier, so a call none of
     // `answer_as` is about goes straight to its table.
-    #[cfg(ferrix_load_built = "lift")]
+    #[cfg(xaqu_load_built = "lift")]
     if args.abi != Abi::Compat && plain_calls::plain(args.number) {
         return sched::with_current(|task| {
             plain_calls::answered(call, args, thread::of_task(task))
@@ -237,7 +237,7 @@ fn answer_as(
 }
 
 /// What goes round [`answer_as`] under `linuxd`.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub mod plain_calls {
     use super::{
         Errno, Outcome, Process, Syscall, SyscallArgs, arch, errno, handle, sched, signal, thread,
@@ -317,8 +317,8 @@ pub mod plain_calls {
 /// because the honest failure is "there is no process here", which is true of
 /// every call today and will be true of none once stage 6's transition lands.
 #[cfg_attr(
-    ferrix_load_built = "lift",
-    unsafe(link_section = ".text.ferrix_straight")
+    xaqu_load_built = "lift",
+    unsafe(link_section = ".text.xaqu_straight")
 )]
 pub(crate) fn handle(
     call: Syscall,
@@ -377,7 +377,7 @@ fn stateless(call: Syscall, args: &SyscallArgs) -> Option<Result<usize, Errno>> 
     let _ = args;
     let answer = match call {
         Syscall::Gettid => Ok(current_id()),
-        // Ferrix has one process tree and no init yet, so the boot task's
+        // Xaqu has one process tree and no init yet, so the boot task's
         // parent is itself. A program that walks up from here terminates.
         Syscall::Getppid => Ok(1),
         // Root's ids, for a caller with no process: the boot checks, calling
@@ -634,7 +634,7 @@ pub(crate) fn native_signed(value: u64) -> i64 {
 /// `linux-user/user-internals.h`, true for ARM EABI).
 ///
 /// The only 32-bit ABI this kernel has is the EABI, so the word size decides
-/// it, as it does for `ferrix_ustack`'s layout.
+/// it, as it does for `xaqu_ustack`'s layout.
 pub(crate) fn wide(a: &[u64; 6], slot: usize) -> i64 {
     if size_of::<usize>() == 8 {
         return a.get(slot).copied().unwrap_or(0) as i64;

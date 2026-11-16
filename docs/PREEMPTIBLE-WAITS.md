@@ -22,11 +22,11 @@ to each core plus one unpinned:
 
 ### 1.2 Reproduced without the game
 
-The program is `stallrep` (`~/.local/share/ferrix/sched-wake/stallrep.c`),
+The program is `stallrep` (`~/.local/share/xaqu/sched-wake/stallrep.c`),
 run as init on two guests:
 
 - develop f05996a79 (release) under KVM: `--smp 4`, 4 GiB, vCPUs pinned to
-  host processors 20-23, `ferrix.checks=skip`;
+  host processors 20-23, `xaqu.checks=skip`;
 - Linux 7.0 in the same QEMU shape, as a baseline.
 
 The canaries are 10 ms sleepers, one pinned to each processor and one
@@ -42,7 +42,7 @@ unpinned, each in its own process. Each 15 s phase adds one load process:
 | bigunmap | 6 fault8 threads (8 MiB) plus one that maps, fills and unmaps 1 GiB |
 | forkbig | 1 GiB touched, 6 fault8 threads, and the main thread forking a child that exits at once, in a loop |
 
-**What these logs are.** Every Ferrix log's header reads f05996a79, base and
+**What these logs are.** Every Xaqu log's header reads f05996a79, base and
 prototype alike: the prototype was a local patch on that hash. So they are
 the consultant's I1, diagnosis only, and evidence for nothing the fix will
 claim; `test-stall` on the landing hashes is. The host, nazuna, carried a
@@ -52,10 +52,10 @@ phase; Linux's quiet2 98 ms in `linux1`). Runs marked nice 10 ran QEMU at
 nice 10, which makes that noise worse.
 
 Worst canary lateness per phase, from each log under
-`~/.local/share/ferrix/sched-wake/` (the logs named; Ferrix and Linux run
+`~/.local/share/xaqu/sched-wake/` (the logs named; Xaqu and Linux run
 back to back on host processors 20-23):
 
-| phase | Ferrix develop: nice 10 (`base2`, `diag1`) | nice 0 (`diag3`, `baseq1`, `baseh1`) | Linux 7.0 (`linux1`, `linux2`, `linuxh1`) |
+| phase | Xaqu develop: nice 10 (`base2`, `diag1`) | nice 0 (`diag3`, `baseq1`, `baseh1`) | Linux 7.0 (`linux1`, `linux2`, `linuxh1`) |
 |---|---|---|---|
 | quiet | 6-199 ms | 6-42 ms | 9-18 ms |
 | hog16 | 2-326 ms | 19-334 ms | 10-48 ms |
@@ -140,7 +140,7 @@ The space lock's waiters wait preemptibly:
    meanwhile.
 3. Watch the lock with the count at zero until it looks free, then go to 1.
 
-Only the holder keeps preemption off. That is ~25 lines in `ferrix-sync`,
+Only the holder keeps preemption off. That is ~25 lines in `xaqu-sync`,
 plus `space.rs`'s 28 call sites. Same loads, same host processors, at nice
 0; `proto1` ran at a host load of 120 and is left out:
 
@@ -197,7 +197,7 @@ lock of a task.
   waiter that has watched longer than W (one slice) sets a handoff flag.
   While it is set, only that waiter may take the lock, which bounds its wait
   (Linux's mutex handoff).
-- Cost: about 40-60 lines in `ferrix-sync` (the path, the handoff flag, the
+- Cost: about 40-60 lines in `xaqu-sync` (the path, the handoff flag, the
   `#[track_caller]` site kept), no call sites changed, and a host test of the
   handoff.
 - Every `crate::sync::SpinLock` changes behaviour. The consultant may prefer
@@ -398,7 +398,7 @@ landing updates this section. What the verdict settled:
   census of holds a program can make long.
 - FM-8 and AoU-4 pointed at F-95.
 
-**The row's own figures on develop** (`~/.local/share/ferrix/sched-wake/`
+**The row's own figures on develop** (`~/.local/share/xaqu/sched-wake/`
 `row-dev1.log` on c07af7a45, host load 33-42; `row-dev2.log` on 25be7e42d,
 load 51-71, with the fault phase lengthened to 12 s for the try):
 

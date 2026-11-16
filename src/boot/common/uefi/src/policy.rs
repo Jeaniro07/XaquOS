@@ -1,14 +1,14 @@
 //! The loader's trust policy (`docs/SIGNING.md` §10.6): the 512-byte block
 //! in `.fxanch`, and what the build is.
 //!
-//! xtask names the block (`FERRIX_ANCHORS`) and the build
-//! (`FERRIX_SLOT_BUILD`); `build.rs` refuses a build without either. The
+//! xtask names the block (`XAQU_ANCHORS`) and the build
+//! (`XAQU_SLOT_BUILD`); `build.rs` refuses a build without either. The
 //! block is read through [`core::hint::black_box`] of its address, so that
 //! no anchor is folded into code outside the section: the signing gate
 //! relinks the loader with only this section changed and compares the two
 //! byte for byte outside it (ledger 4016 (5)).
 
-use ferrix_boot_policy::{BLOCK_LEN, Build};
+use xaqu_boot_policy::{BLOCK_LEN, Build};
 
 include!(concat!(env!("OUT_DIR"), "/slot_build.rs"));
 
@@ -38,5 +38,5 @@ pub(crate) const BUILD: Build<'static> = Build {
 /// every machine is its arch's generic family, which a claimed profile
 /// without it refuses (ledger 4016 (6)).
 pub(crate) const fn family() -> u32 {
-    ferrix_boot_policy::generic_family(ARCH)
+    xaqu_boot_policy::generic_family(ARCH)
 }

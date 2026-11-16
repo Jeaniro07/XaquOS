@@ -7,7 +7,7 @@
 //! already in memory: the entry frame the way in from user mode saved at the
 //! top of the task's kernel stack ([`arch::entry_frame`]), whether it was in
 //! a call ([`Task::in_call`], stored by `carry_in_call`), and the frame
-//! `ferrix_switch` left at its saved stack pointer ([`arch::SWITCH_FRAME`]).
+//! `xaqu_switch` left at its saved stack pointer ([`arch::SWITCH_FRAME`]).
 //!
 //! # Sampled under the queue's lock, read without it
 //!
@@ -35,7 +35,7 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 use super::Task;
 use crate::arch;

@@ -2,15 +2,15 @@
 //! §3.3): find it where the memory map says it goes, report what the previous
 //! kernel left in it, and hand it to this boot's kernel with a fresh header.
 //!
-//! The format is `ferrix_bootinfo::pstore`'s, which the kernel compiles too.
+//! The format is `xaqu_bootinfo::pstore`'s, which the kernel compiles too.
 //! Every failure here is one line and a boot without a region: what goes
 //! wrong with a post-mortem aid never stops a boot.
 
 use core::ptr;
 
-use ferrix_bootinfo::pstore::{self, Found, HEADER_BYTES, Switch, Text};
+use xaqu_bootinfo::pstore::{self, Found, HEADER_BYTES, Switch, Text};
 
-use ferrix_eventlog::{self as eventlog, Durability};
+use xaqu_eventlog::{self as eventlog, Durability};
 
 use crate::console::println;
 use crate::events;
@@ -26,8 +26,8 @@ const SHOWN: usize = 160;
 /// The marker a kernel's failure report starts with: left off the line that
 /// shows it, so that a reader of this boot's log does not take the previous
 /// boot's panic for this one's (and `pstore::defuse` makes any other
-/// `FERRIX-` in a quoted line harmless too).
-const PANIC_MARKER: &[u8] = b"FERRIX-PANIC ";
+/// `XAQU-` in a quoted line harmless too).
+const PANIC_MARKER: &[u8] = b"XAQU-PANIC ";
 
 /// The end of every line that says there is no region this boot: what
 /// `xtask` waits for after the loader's banner, beside `goes to`.
@@ -69,7 +69,7 @@ pub(crate) fn take(
         println!("  pstore   no place for the region below the direct map's end: {NONE}");
         return None;
     };
-    let Some(region) = services.allocate_at(address, pstore::LEN, MemoryType::FERRIX_PSTORE) else {
+    let Some(region) = services.allocate_at(address, pstore::LEN, MemoryType::XAQU_PSTORE) else {
         println!("  pstore   firmware would not give {address:#x}: {NONE}");
         return None;
     };
@@ -329,8 +329,8 @@ fn report(region: Allocation, found: &Found) -> Lines {
 /// Where the previous kernel's log is kept on the loader's own volume, and
 /// the one before it (`docs/POSTMORTEM.md` §3.5), for `lode` to import as the
 /// end of that boot (`docs/LOGGING.md` §5).
-const LAST: &str = "FERRIX/LASTKERNEL.TXT";
-const PREVIOUS: &str = "FERRIX/LASTKERNEL.PRV";
+const LAST: &str = "XAQU/LASTKERNEL.TXT";
+const PREVIOUS: &str = "XAQU/LASTKERNEL.PRV";
 
 /// Move the file read as `old`, `len` bytes, to [`PREVIOUS`], and free it.
 fn move_aside(services: &Services, old: Allocation, len: u64) {

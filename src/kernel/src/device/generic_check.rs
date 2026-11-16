@@ -2,9 +2,9 @@
 //! (`docs/DRIVER-MODEL.md` §3; the consultant's D3-D10 and D21, ledger
 //! 4475), run by [`super::publish`] on every boot, on every architecture.
 //!
-//! Most machines Ferrix boots have no tree, or a tree with nothing in it to
+//! Most machines Xaqu boots have no tree, or a tree with nothing in it to
 //! show a rule on, so the rules are held on a made-up tree first, built
-//! here with `ferrix_fdt::write` and walked by the very code that walks the
+//! here with `xaqu_fdt::write` and walked by the very code that walks the
 //! machine's: [`Ownership::derive`] over the uses a check names,
 //! [`find_generic`] after a node a binding holds, then the shared-page rule
 //! [`super::withhold_shared_pages`]. Then the published nodes are held to
@@ -14,11 +14,11 @@
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_fdt::Fdt;
-use ferrix_fdt::identity::{FLAG_KERNEL_DEPENDS, RECORD_MAGIC, Record};
-use ferrix_fdt::write::Writer;
-use ferrix_native_abi::types::DEVICE_TREE_GENERIC;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_fdt::Fdt;
+use xaqu_fdt::identity::{FLAG_KERNEL_DEPENDS, RECORD_MAGIC, Record};
+use xaqu_fdt::write::Writer;
+use xaqu_native_abi::types::DEVICE_TREE_GENERIC;
 
 use super::{DeviceNode, Failure, Location, Reserved, page_span, withhold_shared_pages};
 use crate::discovery::tree::{
@@ -53,7 +53,7 @@ const EDGE: u32 = 0x7400_0F00;
 const RESERVED: u64 = 0x7400_0000;
 const BOUND: u32 = 0x7500_0000;
 /// The shared line the made-up tree names: SPI 900, GIC identifier 932,
-/// which no device of any machine Ferrix boots raises.
+/// which no device of any machine Xaqu boots raises.
 const SHARED_LINE: u32 = 900;
 
 /// The made-up tree, into `out`.
@@ -429,7 +429,7 @@ fn check_sealed() -> Result<(), Failure> {
         ));
     }
     // The console, and every window early boot mapped, is a claimed use.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     for (start, end) in crate::early::device_windows() {
         if !tree::sealed() || !tree::covered(start, end) || tree::use_window(start, end).is_err() {
             return Err(made_up_failure(
@@ -456,8 +456,8 @@ pub(super) fn check(nodes: &[DeviceNode]) -> Result<GenericChecks, Failure> {
 /// Early boot's windows, in a kernel that records them; none in one that does
 /// not.
 fn cfg_early_windows() -> impl Iterator<Item = (u64, u64)> {
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     return crate::early::device_windows();
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     return core::iter::empty();
 }

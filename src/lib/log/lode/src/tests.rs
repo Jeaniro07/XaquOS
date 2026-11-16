@@ -238,7 +238,7 @@ fn levels_by_name_and_number() {
 fn kmsg_records_parse_as_the_kernel_writes_them() {
     let mut buf = [0_u8; 256];
     let length =
-        ferrix_linux_abi_kmsg_record(14, 42, 12_345_678, b"init     hi\\there\x01", &mut buf);
+        xaqu_linux_abi_kmsg_record(14, 42, 12_345_678, b"init     hi\\there\x01", &mut buf);
     let parsed = kmsg::parse(&buf[..length]).unwrap();
     assert_eq!(parsed.facility, 1);
     assert_eq!(parsed.level, 6);
@@ -250,7 +250,7 @@ fn kmsg_records_parse_as_the_kernel_writes_them() {
 /// What the kernel's `devkmsg_record` writes, spelled out here so the test
 /// does not depend on the kernel's crate: `prio,seq,usec,-;` and the text
 /// with every byte outside printable ASCII, and the backslash, as `\xNN`.
-fn ferrix_linux_abi_kmsg_record(
+fn xaqu_linux_abi_kmsg_record(
     priority: u8,
     seq: u64,
     usec: u64,
@@ -526,7 +526,7 @@ fn formats() {
     assert_eq!(
         show(Output::Verbose),
         "Thu 2025-10-23 14:01:02.123456 +00:00 [i=9;b=00000000000000000000000000000000]\n    \
-         PRIORITY=3\n    FERRIX_LEVEL=3\n    _HOSTNAME=box\n    MESSAGE=it \"broke\"\n    \
+         PRIORITY=3\n    XAQU_LEVEL=3\n    _HOSTNAME=box\n    MESSAGE=it \"broke\"\n    \
          SYSLOG_IDENTIFIER=hyprix\n    SYSLOG_PID=812\n"
     );
     assert_eq!(Output::named("verbose"), Some(Output::Verbose));
@@ -925,9 +925,9 @@ mod protocols {
         // No `<PRI>`: no level, and user's facility.
         let plain = protocols::syslog(b"just text, no tag", 1, 2);
         assert_eq!(plain.priority, crate::record::UNSPECIFIED);
-        assert_eq!(plain.get_str("FERRIX_PRIORITY_SOURCE"), Some("unspecified"));
+        assert_eq!(plain.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         assert_eq!(plain.get_str("SYSLOG_FACILITY"), Some("1"));
-        assert_eq!(bare.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(bare.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         assert_eq!(plain.get("SYSLOG_IDENTIFIER"), None);
         assert_eq!(plain.message(), b"just text, no tag");
     }
@@ -962,15 +962,15 @@ mod protocols {
         datagram.extend_from_slice(b"a\nb\0c\n");
         let record = protocols::native(&datagram, 1, 2).unwrap();
         assert_eq!(record.priority, 3);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         assert_eq!(record.message(), b"hello");
         assert_eq!(record.get("_PID"), None);
         let unsaid =
-            protocols::native(b"MESSAGE=hi\nFERRIX_PRIORITY_SOURCE=stated\n", 1, 2).unwrap();
+            protocols::native(b"MESSAGE=hi\nXAQU_PRIORITY_SOURCE=stated\n", 1, 2).unwrap();
         assert_eq!(unsaid.priority, crate::record::UNSPECIFIED);
         // The sender's own claim is dropped; lode says what it found.
         assert_eq!(
-            unsaid.get_str("FERRIX_PRIORITY_SOURCE"),
+            unsaid.get_str("XAQU_PRIORITY_SOURCE"),
             Some("unspecified")
         );
         assert_eq!(record.get_str("CODE_LINE"), Some("12"));
@@ -1001,7 +1001,7 @@ mod protocols {
         assert_eq!(&bytes[used..used + 8], b"<3>broke");
         let fine = protocols::stream_line(&header, b"fine", 1, 2);
         assert_eq!(fine.priority, crate::record::UNSPECIFIED);
-        assert_eq!(fine.get_str("FERRIX_PRIORITY_SOURCE"), Some("unspecified"));
+        assert_eq!(fine.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         assert!(protocols::stream_header(b"half\nheader\n").is_none());
     }
 }
@@ -1118,8 +1118,8 @@ mod field_quality {
     fn levels_from_the_words_and_where_they_came_from() {
         let record = ingest::from_kernel(&kernel(1, b"ahci: port 2 failed to spin up"), NOW);
         assert_eq!(record.priority, 3);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_WORD"), Some("failed"));
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("derived"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), Some("failed"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("derived"));
         let record = ingest::from_kernel(&kernel(1, b"sshd: connection refused"), NOW);
         assert_eq!(record.priority, 4);
         let record = ingest::from_kernel(&kernel(1, b"gpu: table written: 0 rows refused"), NOW);
@@ -1127,10 +1127,10 @@ mod field_quality {
         let record = ingest::from_kernel(&kernel(1, b"net: 0 dropped, 0 lost"), NOW);
         assert_eq!(record.priority, UNSPECIFIED);
         assert_eq!(
-            record.get_str("FERRIX_PRIORITY_SOURCE"),
+            record.get_str("XAQU_PRIORITY_SOURCE"),
             Some("unspecified")
         );
-        assert_eq!(record.get_str("FERRIX_PRIORITY_WORD"), None);
+        assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), None);
         // The kernel's boot checks say what they refused on purpose.
         let record = ingest::from_kernel(&kernel(0, b"check: a bad pointer was refused"), NOW);
         assert_eq!(record.priority, UNSPECIFIED);
@@ -1144,16 +1144,16 @@ mod field_quality {
             NOW,
         );
         assert_eq!(record.priority, 3);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_WORD"), None);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), None);
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         // A level a program wrote to `/dev/kmsg` is its own: `LOG_USER` at
         // another level than the console's info.
         let mut quiet = kernel(1, b"x: failed on purpose");
         quiet.level = 7;
         let record = ingest::from_kernel(&quiet, NOW);
         assert_eq!(record.priority, 7);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
-        assert_eq!(record.get_str("FERRIX_PRIORITY_WORD"), None);
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), None);
     }
 
     #[test]
@@ -1163,7 +1163,7 @@ mod field_quality {
         let mut daemon = kernel(3, b"intel: render node published (1 node)");
         let record = ingest::from_kernel(&daemon, NOW);
         assert_eq!(record.priority, 6);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         assert_eq!(record.get_str("SYSLOG_IDENTIFIER"), Some("intel"));
         assert_eq!(record.get_str("SYSLOG_FACILITY"), Some("3"));
         daemon.text =
@@ -1171,13 +1171,13 @@ mod field_quality {
         daemon.level = 3;
         let record = ingest::from_kernel(&daemon, NOW);
         assert_eq!(record.priority, 3);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
-        assert_eq!(record.get_str("FERRIX_PRIORITY_WORD"), None);
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), None);
         daemon.level = 7;
         daemon.text = Vec::from(&b"intel: freqlog: asked 300 MHz, failed nothing"[..]);
         let record = ingest::from_kernel(&daemon, NOW);
         assert_eq!(record.priority, 7);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         // LOG_USER at info is a console line or a `<6>` write: not stated.
         let record = ingest::from_kernel(&kernel(1, b"usbhid: keyboard on port 3"), NOW);
         assert_eq!(record.priority, UNSPECIFIED);
@@ -1186,7 +1186,7 @@ mod field_quality {
         own.level = 4;
         let record = ingest::from_kernel(&own, NOW);
         assert_eq!(record.priority, 4);
-        assert_eq!(record.get_str("FERRIX_PRIORITY_SOURCE"), Some("kernel"));
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("kernel"));
     }
 
     #[test]
@@ -1194,7 +1194,7 @@ mod field_quality {
         let subsystem = |facility, text: &[u8]| {
             String::from(
                 ingest::from_kernel(&kernel(facility, text), NOW)
-                    .get_str("FERRIX_SUBSYSTEM")
+                    .get_str("XAQU_SUBSYSTEM")
                     .unwrap_or("-"),
             )
         };
@@ -1385,13 +1385,13 @@ mod unspecified {
         assert!(show(&none, Output::Human).contains(" ? a: m"));
         let json = show(&none, Output::Json);
         assert!(!json.contains("\"PRIORITY\""), "{json}");
-        assert!(json.contains("\"FERRIX_LEVEL\":\"unspecified\""));
-        assert!(json.contains("\"FERRIX_PRIORITY_SOURCE\":\"unspecified\""));
+        assert!(json.contains("\"XAQU_LEVEL\":\"unspecified\""));
+        assert!(json.contains("\"XAQU_PRIORITY_SOURCE\":\"unspecified\""));
         let export = show(&none, Output::Export);
         assert!(!export.contains("\nPRIORITY="));
-        assert!(export.contains("\nFERRIX_LEVEL=unspecified\n"));
+        assert!(export.contains("\nXAQU_LEVEL=unspecified\n"));
         let known = show(&at(3, "a"), Output::Json);
-        assert!(known.contains("\"PRIORITY\":\"3\"") && known.contains("\"FERRIX_LEVEL\":\"3\""));
+        assert!(known.contains("\"PRIORITY\":\"3\"") && known.contains("\"XAQU_LEVEL\":\"3\""));
     }
 
     #[test]
@@ -1420,16 +1420,16 @@ mod unspecified {
     fn a_stored_record_always_says_where_its_level_came_from() {
         let mut own = Record::new(5, 0, 0);
         own.stamp_level_source();
-        assert_eq!(own.get_str("FERRIX_PRIORITY_SOURCE"), Some("stated"));
+        assert_eq!(own.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         let mut none = Record::new(UNSPECIFIED, 0, 0);
         none.stamp_level_source();
-        assert_eq!(none.get_str("FERRIX_PRIORITY_SOURCE"), Some("unspecified"));
+        assert_eq!(none.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         none.set_level(UNSPECIFIED, LevelSource::Derived);
-        assert_eq!(none.get_str("FERRIX_PRIORITY_SOURCE"), Some("unspecified"));
+        assert_eq!(none.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         assert_eq!(
             none.fields
                 .iter()
-                .filter(|field| field.name == "FERRIX_PRIORITY_SOURCE")
+                .filter(|field| field.name == "XAQU_PRIORITY_SOURCE")
                 .count(),
             1
         );
@@ -2075,7 +2075,7 @@ fn json_pretty_short_full_and_the_rest_print_as_journalctl_does() {
     assert_eq!(
         text,
         alloc::format!(
-            "{{\n\t\"__CURSOR\" : \"{cursor}\",\n\t\"__REALTIME_TIMESTAMP\" : \"1700000000000007\",\n\t\"__MONOTONIC_TIMESTAMP\" : \"7\",\n\t\"__SEQNUM\" : \"7\",\n\t\"_BOOT_ID\" : \"11111111111111111111111111111111\",\n\t\"PRIORITY\" : \"6\",\n\t\"FERRIX_LEVEL\" : \"6\",\n\t\"_HOSTNAME\" : \"box\",\n\t\"MESSAGE\" : \"hello \\b\\f\u{7f}\",\n\t\"SYSLOG_IDENTIFIER\" : \"test\",\n\t\"SYSLOG_PID\" : \"42\",\n\t\"BLOB\" : [\n\t\t255,\n\t\t1\n\t]\n}}\n"
+            "{{\n\t\"__CURSOR\" : \"{cursor}\",\n\t\"__REALTIME_TIMESTAMP\" : \"1700000000000007\",\n\t\"__MONOTONIC_TIMESTAMP\" : \"7\",\n\t\"__SEQNUM\" : \"7\",\n\t\"_BOOT_ID\" : \"11111111111111111111111111111111\",\n\t\"PRIORITY\" : \"6\",\n\t\"XAQU_LEVEL\" : \"6\",\n\t\"_HOSTNAME\" : \"box\",\n\t\"MESSAGE\" : \"hello \\b\\f\u{7f}\",\n\t\"SYSLOG_IDENTIFIER\" : \"test\",\n\t\"SYSLOG_PID\" : \"42\",\n\t\"BLOB\" : [\n\t\t255,\n\t\t1\n\t]\n}}\n"
         )
     );
     // The one-line forms carry the same object.
@@ -2281,15 +2281,15 @@ fn every_named_field_is_named_once_and_the_rest_are_other() {
 #[test]
 fn the_kernels_identity_line_names_a_crashed_process() {
     let who = console::identity(
-        b"  signal   pid 4284 is steamwebhelper exe /home/ferrix/steam/steamwebhelper (deleted) at /home/ferrix/steam/libcef.so+0x1a01a1 cmdline ./steamwebhelper --type=gpu-process",
+        b"  signal   pid 4284 is steamwebhelper exe /home/xaqu/steam/steamwebhelper (deleted) at /home/xaqu/steam/libcef.so+0x1a01a1 cmdline ./steamwebhelper --type=gpu-process",
     )
     .unwrap();
     assert_eq!(who.pid, 4284);
     assert_eq!(who.comm, "steamwebhelper");
-    assert_eq!(who.exe, "/home/ferrix/steam/steamwebhelper (deleted)");
+    assert_eq!(who.exe, "/home/xaqu/steam/steamwebhelper (deleted)");
     assert_eq!(
         who.module.as_deref(),
-        Some("/home/ferrix/steam/libcef.so+0x1a01a1")
+        Some("/home/xaqu/steam/libcef.so+0x1a01a1")
     );
     assert_eq!(who.cmdline, "./steamwebhelper --type=gpu-process");
     let anonymous = console::identity(b"  signal   pid 9 is a.out exe ? at ? cmdline ").unwrap();
@@ -2311,13 +2311,13 @@ fn events_conf_switches_kinds_and_a_person_overrides_them() {
     events
         .apply(
             "# system\nwindow-opened on info\napp-error on err\n",
-            "/etc/ferrix/lode.d/events.conf",
+            "/etc/xaqu/lode.d/events.conf",
         )
         .unwrap();
     assert!(events.on("window-opened"));
     assert_eq!(events.level("app-error"), 3);
     events
-        .apply("window-opened off\n", "~/.config/ferrix/lode/events.conf")
+        .apply("window-opened off\n", "~/.config/xaqu/lode/events.conf")
         .unwrap();
     assert!(!events.on("window-opened"));
     assert!(
@@ -2347,7 +2347,7 @@ fn an_echoed_stream_line_is_kept_once_as_the_streams() {
         .0;
     assert!(header.echoed);
     let echoed = crate::protocols::stream_line(&header, b"bar ready", 1, 2);
-    assert_eq!(echoed.get("FERRIX_ECHOED"), Some(&b"1"[..]));
+    assert_eq!(echoed.get("XAQU_ECHOED"), Some(&b"1"[..]));
     let mut echoes = Echoes::default();
     let mut out = Vec::new();
     echoes.echoed(echoed, 10, &mut out);
@@ -2788,10 +2788,10 @@ fn crash_screenshots_are_binned_by_program() {
     named.push("CRASH_COMM", b"steamwebhelper");
     assert_eq!(bin_of(&named), "steamwebhelper");
     let mut first = Record::new(3, 0, 0);
-    first.push("FERRIX_SUBSYSTEM", b"devmgr");
+    first.push("XAQU_SUBSYSTEM", b"devmgr");
     first.push("MESSAGE", b"driver net0 (pid 712) died");
     let mut second = Record::new(3, 0, 0);
-    second.push("FERRIX_SUBSYSTEM", b"devmgr");
+    second.push("XAQU_SUBSYSTEM", b"devmgr");
     second.push("MESSAGE", b"driver net1 (pid 980) died");
     assert_eq!(bin_of(&first), bin_of(&second));
     assert_eq!(bin_of(&first), "devmgr: driver net (pid ) died");

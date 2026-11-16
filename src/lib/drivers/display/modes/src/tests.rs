@@ -11,7 +11,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_displayctl::message::*;
+use xaqu_displayctl::message::*;
 
 use crate::scale::Scaler;
 use crate::*;

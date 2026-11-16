@@ -4,7 +4,7 @@
 //! and at what priority (`console::log`). Read through `syslog(2)` a line is
 //! `<6>[   12.345678] text` (`syscall::system::sys_syslog`); read through
 //! `/dev/kmsg` it is one record a `read`, `6,42,12345678,-;text`, as Linux
-//! v7.0's `devkmsg_read` gives it (`ferrix_linux_abi::kmsg` writes both).
+//! v7.0's `devkmsg_read` gives it (`xaqu_linux_abi::kmsg` writes both).
 //! journald, systemd and util-linux's `dmesg` read the second.
 //!
 //! What an open of `/dev/kmsg` does, after `kernel/printk/printk.c`:
@@ -38,9 +38,9 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_linux_abi::kmsg;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result, Timespec, Whence};
+use xaqu_linux_abi::kmsg;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result, Timespec, Whence};
 
 use crate::console::log::{self, Line};
 use crate::sync::SpinLock;

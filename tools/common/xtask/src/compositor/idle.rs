@@ -11,7 +11,7 @@
 //! listener's `on-resume` runs `hyprctl dispatch dpms on`.
 //!
 //! The first also presses a key bound to `loginctl lock-session`, which is
-//! how the user's file locks, and requires the whole chain Ferrix has for
+//! how the user's file locks, and requires the whole chain Xaqu has for
 //! it: `loginctl` reaching hypridle over its socket, `lock_cmd` starting
 //! `/bin/lock`, the compositor telling hypridle through
 //! `hyprland-lock-notify-v1` that the session locked and unlocked, and
@@ -21,7 +21,7 @@
 //! for, so a key bound to `hyprctl dispatch forceidle` says the seat has
 //! been idle one second longer than its longest timeout: every listener
 //! fires as it would have, and what each one did is printed as the record
-//! of the user's file on Ferrix.
+//! of the user's file on Xaqu.
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -105,14 +105,14 @@ const TEST_SAID: [&str; 9] = [
     "Locking with pidof lock || lock 3",
     "hypridle-test: on_lock_cmd ran",
     "hypridle-test: on_unlock_cmd ran",
-    "[WARN] general:before_sleep_cmd: Ferrix has no suspend",
+    "[WARN] general:before_sleep_cmd: Xaqu has no suspend",
 ];
 
 /// `idle`: hypridle's own configuration, every part of it carried out.
 pub(super) fn test_idle(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let Some(busybox) = gates_busybox(arch) else {
         println!(
-            "  {arch}: no busybox at ~/.local/share/ferrix/busybox/{arch}/bin/busybox.static, so \
+            "  {arch}: no busybox at ~/.local/share/xaqu/busybox/{arch}/bin/busybox.static, so \
              hypridle has no /bin/sh to run its commands with; skipped"
         );
         return Ok(());
@@ -182,7 +182,7 @@ fn longest_timeout(text: &str) -> u64 {
         .unwrap_or(0)
 }
 
-/// `idle-user`: the user's own file, carried out as far as Ferrix can.
+/// `idle-user`: the user's own file, carried out as far as Xaqu can.
 pub(super) fn test_idle_user(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let Some(path) = users_file() else {
         println!("  {arch}: no ~/.config/hypr/hypridle.conf on this machine; skipped");
@@ -466,7 +466,7 @@ fn boot(
         Ok(())
     };
     let _ = crate::qemu::watch_then(arch, &image, &kernel, &qemu_args, EITHER, hook)?;
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while hypridle ran: {}",
             line.trim()

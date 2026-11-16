@@ -1,4 +1,4 @@
-//! `test-wine`: Debian's 64-bit Wine on Ferrix (stage 23, step 1;
+//! `test-wine`: Debian's 64-bit Wine on Xaqu (stage 23, step 1;
 //! docs/WINE.md).
 //!
 //! Wine is fetched, not built: `tools/common/fetch/fetch-wine.sh` unpacks
@@ -136,7 +136,7 @@ pub(crate) const MEMORY: u32 = 6144;
 ///
 /// The volume has not been made, or was made with another yserver.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_WINE_VOLUME") {
+    let directory = match std::env::var_os("XAQU_WINE_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("wine")?,
     };
@@ -204,7 +204,7 @@ pub(crate) fn test_wine(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running Wine on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running Wine on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -224,7 +224,7 @@ pub(crate) fn test_wine(args: &Args) -> Result<()> {
                 .find(|line| line.contains(VERSION))
                 .unwrap_or(VERSION);
             println!(
-                "  {arch}: Wine made a prefix on Ferrix, its cmd answered `{version}` and its \
+                "  {arch}: Wine made a prefix on Xaqu, its cmd answered `{version}` and its \
                  32-bit cmd `{version32}`"
             );
             crate::compositor::wine::test_wine_window(&args, volume()?)

@@ -95,9 +95,9 @@ impl<T> Slot<T> {
     ///
     /// # Errors
     ///
-    /// [`ferrix_fallible::AllocError`] when there is no memory for one.
-    pub fn new() -> Result<Slot<T>, ferrix_fallible::AllocError> {
-        ferrix_fallible::try_box(Node {
+    /// [`xaqu_fallible::AllocError`] when there is no memory for one.
+    pub fn new() -> Result<Slot<T>, xaqu_fallible::AllocError> {
+        xaqu_fallible::try_box(Node {
             entity: Entity {
                 id: 0,
                 weight: 0,

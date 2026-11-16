@@ -9,9 +9,9 @@
 use core::alloc::{GlobalAlloc, Layout};
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_frame::MAX_ORDER;
-use ferrix_native::vmo;
-use ferrix_rt::Kernel;
+use xaqu_frame::MAX_ORDER;
+use xaqu_native::vmo;
+use xaqu_rt::Kernel;
 
 const PAGE: usize = 4096;
 /// What is mapped for the time before the arena. Untouched pages cost a table
@@ -93,7 +93,7 @@ impl Heap {
     }
 
     /// Map the early memory: before the first allocation.
-    pub fn init(&self) -> Result<(), ferrix_native::error::Error> {
+    pub fn init(&self) -> Result<(), xaqu_native::error::Error> {
         let memory = vmo::create(Kernel, EARLY_BYTES).map_err(|why| {
             crate::println!("linuxd: the heap's VMO: {why:?}");
             why
@@ -102,7 +102,7 @@ impl Heap {
             .map(
                 None,
                 EARLY_BYTES,
-                ferrix_native::pending::Protection::ReadWrite,
+                xaqu_native::pending::Protection::ReadWrite,
                 0,
             )
             .map_err(|why| {

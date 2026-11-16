@@ -130,7 +130,7 @@ impl<H, S> MessageQueue<H, S> {
     ///
     /// [`SendError::NoMemory`].
     pub fn reserve(&mut self) -> Result<(), SendError> {
-        ferrix_fallible::try_reserve_deque(&mut self.queue, 1).map_err(|_| SendError::NoMemory)
+        xaqu_fallible::try_reserve_deque(&mut self.queue, 1).map_err(|_| SendError::NoMemory)
     }
 
     /// Queue a message.
@@ -145,7 +145,7 @@ impl<H, S> MessageQueue<H, S> {
         if self.is_full() {
             return Err((SendError::Full, message));
         }
-        if ferrix_fallible::try_reserve_deque(&mut self.queue, 1).is_err() {
+        if xaqu_fallible::try_reserve_deque(&mut self.queue, 1).is_err() {
             return Err((SendError::NoMemory, message));
         }
         self.queue.push_back(message);
@@ -202,7 +202,7 @@ impl<H, S> MessageQueue<H, S> {
     pub fn unpop(&mut self, message: Message<H, S>) -> Result<(), Message<H, S>> {
         // A write may have taken the slot the message came out of, so the
         // queue can need to grow to take it back.
-        if ferrix_fallible::try_reserve_deque(&mut self.queue, 1).is_err() {
+        if xaqu_fallible::try_reserve_deque(&mut self.queue, 1).is_err() {
             return Err(message);
         }
         self.queue.push_front(message);

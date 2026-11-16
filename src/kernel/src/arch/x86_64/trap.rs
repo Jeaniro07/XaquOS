@@ -29,7 +29,7 @@ pub mod gate_check;
 const VECTORS: usize = 256;
 
 /// Bytes each entry stub occupies. The stubs are `.align 16`, so stub `n` lives
-/// at `ferrix_trap_stubs + n * STUB_SIZE` and the table can be built by
+/// at `xaqu_trap_stubs + n * STUB_SIZE` and the table can be built by
 /// arithmetic rather than by 256 symbols.
 const STUB_SIZE: usize = 16;
 
@@ -104,9 +104,9 @@ impl TrapFrame {
 core::arch::global_asm!(
     r#"
 .section .text
-.globl ferrix_trap_stubs
+.globl xaqu_trap_stubs
 .align 16
-ferrix_trap_stubs:
+xaqu_trap_stubs:
     .set vector, 0
     .rept 256
     .align 16
@@ -114,11 +114,11 @@ ferrix_trap_stubs:
     pushq $0
     .endif
     pushq $vector
-    jmp ferrix_trap_common
+    jmp xaqu_trap_common
     .set vector, vector + 1
     .endr
 
-ferrix_trap_common:
+xaqu_trap_common:
     pushq %rax
     pushq %rbx
     pushq %rcx
@@ -145,7 +145,7 @@ ferrix_trap_common:
     testb $3, 144(%rsp)
     jz 1f
     swapgs
-ferrix_trap_from_user:
+xaqu_trap_from_user:
     // From ring 3, the registers are the program's: every one of them is in
     // the frame, none is anything the handler needs, and a register left
     // holding a value the program chose is an operand a mispredicted branch
@@ -173,7 +173,7 @@ ferrix_trap_from_user:
     // there until the test resolves and sends it back to the call.
     testb $1, {bhb}(%rip)
     jz 1f
-    call ferrix_clear_bhb
+    call xaqu_clear_bhb
 .endif
 1:
     // Both ways out of the test above, a fence: a processor that mispredicts
@@ -182,18 +182,18 @@ ferrix_trap_from_user:
 .if {hardened}
     lfence
 .endif
-ferrix_trap_dispatch:
+xaqu_trap_dispatch:
     movq %rsp, %rdi
-    callq ferrix_trap_entry
+    callq xaqu_trap_entry
 
     // And back, on exactly the paths that swapped. The same test, because the
     // handler cannot have changed where the frame says it came from.
-.globl ferrix_trap_return
-ferrix_trap_return:
+.globl xaqu_trap_return
+xaqu_trap_return:
     testb $3, 144(%rsp)
-    jz ferrix_trap_restore
+    jz xaqu_trap_restore
     swapgs
-ferrix_trap_restore:
+xaqu_trap_restore:
     popq %r15
     popq %r14
     popq %r13
@@ -225,38 +225,38 @@ ferrix_trap_restore:
 // Resume ring 3 from a whole frame, as `rt_sigreturn` must: every register,
 // through the restore half above.
 //   rdi = a `TrapFrame` from ring 3, on the running task's kernel stack
-.globl ferrix_resume_trap_frame
-ferrix_resume_trap_frame:
+.globl xaqu_resume_trap_frame
+xaqu_resume_trap_frame:
     cli
     movq %rdi, %rsp
-    jmp ferrix_trap_return
+    jmp xaqu_trap_return
 
 // The paranoid entries: the four vectors on interrupt stacks of their own.
 // The same frame as every other stub builds, and then three things the CS test
 // cannot do. See `super::paranoid` for why each is there.
-.globl ferrix_paranoid_stubs
+.globl xaqu_paranoid_stubs
 .align 16
-ferrix_paranoid_stubs:
-ferrix_paranoid_debug:
+xaqu_paranoid_stubs:
+xaqu_paranoid_debug:
     pushq $0
     pushq $1
-    jmp ferrix_paranoid_common
+    jmp xaqu_paranoid_common
 .align 16
-ferrix_paranoid_nmi:
+xaqu_paranoid_nmi:
     pushq $0
     pushq $2
-    jmp ferrix_paranoid_common
+    jmp xaqu_paranoid_common
 .align 16
-ferrix_paranoid_double_fault:
+xaqu_paranoid_double_fault:
     pushq $8
-    jmp ferrix_paranoid_common
+    jmp xaqu_paranoid_common
 .align 16
-ferrix_paranoid_machine_check:
+xaqu_paranoid_machine_check:
     pushq $0
     pushq $18
-    jmp ferrix_paranoid_common
+    jmp xaqu_paranoid_common
 
-ferrix_paranoid_common:
+xaqu_paranoid_common:
     pushq %rax
     pushq %rbx
     pushq %rcx
@@ -295,7 +295,7 @@ ferrix_paranoid_common:
 .if {hardened}
     testb $1, {bhb}(%rip)
     jz 5f
-    call ferrix_clear_bhb
+    call xaqu_clear_bhb
 5:
     lfence
 .endif
@@ -324,7 +324,7 @@ ferrix_paranoid_common:
 
     movq %rsp, %rdi
     movq 176(%rsp), %rsi
-    callq ferrix_paranoid_entry
+    callq xaqu_paranoid_entry
 
     mov %r12, %dr7
     testl %ebx, %ebx
@@ -332,7 +332,7 @@ ferrix_paranoid_common:
     swapgs
 3:
     decq 176(%rsp)
-    jmp ferrix_trap_restore
+    jmp xaqu_trap_restore
 
 4:
     swapgs
@@ -344,7 +344,7 @@ ferrix_paranoid_common:
     movl $22, %ecx
     rep movsq
     movq %rbx, %rsp
-    jmp ferrix_trap_from_user
+    jmp xaqu_trap_from_user
 "#,
     hardened = const super::speculation::ENTRY_HARDENING,
     clear = sym super::speculation::CLEAR_CPU_BUFFERS,
@@ -381,10 +381,10 @@ const _: () = assert!(
 
 unsafe extern "C" {
     /// The first of 256 entry stubs, each [`STUB_SIZE`] bytes apart.
-    static ferrix_trap_stubs: [u8; VECTORS * STUB_SIZE];
+    static xaqu_trap_stubs: [u8; VECTORS * STUB_SIZE];
     /// The four paranoid entries, `#DB`, NMI, `#DF` and `#MC` in that order,
     /// [`STUB_SIZE`] bytes apart.
-    static ferrix_paranoid_stubs: [u8; 4 * STUB_SIZE];
+    static xaqu_paranoid_stubs: [u8; 4 * STUB_SIZE];
 }
 
 /// One interrupt descriptor table entry.
@@ -475,8 +475,8 @@ struct DescriptorTablePointer {
 pub(crate) unsafe fn init() {
     // SAFETY: (SHARED) single-threaded early boot, and this is the only writer.
     let table = unsafe { &mut *IDT.0.get() };
-    let stubs = (&raw const ferrix_trap_stubs) as u64;
-    let paranoid_stubs = (&raw const ferrix_paranoid_stubs) as u64;
+    let stubs = (&raw const xaqu_trap_stubs) as u64;
+    let paranoid_stubs = (&raw const xaqu_paranoid_stubs) as u64;
 
     for (vector, gate) in table.iter_mut().enumerate() {
         // Four vectors cannot share the interrupted stack. The double fault,
@@ -537,8 +537,8 @@ pub(crate) unsafe fn load_on_this_cpu() {
 ///
 /// Not called from Rust — the `callq` in the assembly above is its only caller.
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_trap_entry(frame: &mut TrapFrame) {
-    #[cfg(ferrix_restricted_window = "on")]
+extern "C" fn xaqu_trap_entry(frame: &mut TrapFrame) {
+    #[cfg(xaqu_restricted_window = "on")]
     if frame.came_from_user() && frame.vector != NMI as u64 {
         super::restricted::window_trap_check(frame.vector);
     }
@@ -560,7 +560,7 @@ extern "C" fn ferrix_trap_entry(frame: &mut TrapFrame) {
     }
     // A checked MSR read the processor refused (`L.x86_64.188`), or the
     // checked MSR write (`L.x86_64.192`): a `#GP` from ring 0 at exactly
-    // `cpu::ferrix_rdmsr_checked`'s `rdmsr` or `cpu::ferrix_wrmsr_checked`'s
+    // `cpu::xaqu_rdmsr_checked`'s `rdmsr` or `cpu::xaqu_wrmsr_checked`'s
     // `wrmsr` resumes at that one's fault label. Every other `#GP` goes on
     // to dispatch, as before.
     if frame.vector == GENERAL_PROTECTION
@@ -672,7 +672,7 @@ pub(crate) const fn exception_code(frame: &TrapFrame) -> u64 {
 /// `SIGSEGV` from the kernel with no address.
 pub(crate) fn fault_signal(frame: &TrapFrame, trap: &crate::trap::Trap) -> (u32, i32, u64) {
     use crate::trap::Trap;
-    use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
+    use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
 
     /// `si_code`: raised by the kernel for its own reasons.
     const SI_KERNEL: i32 = 0x80;

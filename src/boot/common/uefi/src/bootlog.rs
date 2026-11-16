@@ -5,7 +5,7 @@
 //! the console prints is also kept here (`docs/POSTMORTEM.md` §2, PM2), and
 //! a loader started over the network sends the lot to the server it came
 //! from before it leaves firmware (`netreport.rs`, `docs/NETBOOT.md` §6).
-//! Writing it to the ESP as `FERRIX/BOOTLOG.TXT` is PM2's, still to come.
+//! Writing it to the ESP as `XAQU/BOOTLOG.TXT` is PM2's, still to come.
 //!
 //! **Nothing here can stop a boot.** The buffer stops taking bytes when it is
 //! full, and says so at its end.

@@ -10,7 +10,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_netwire::tcp;
+use xaqu_netwire::tcp;
 
 use crate::input::pseudo_of;
 use crate::socket::{Socket, SocketId};

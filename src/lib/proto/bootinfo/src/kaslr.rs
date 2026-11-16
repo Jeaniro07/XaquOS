@@ -5,7 +5,7 @@
 //! its own random word, so that learning one says nothing about the others:
 //!
 //! * **the kernel image**, anywhere in its region above the link address in
-//!   steps of the granule its fixups allow (`ferrix_elf::Elf::fixup_granule`),
+//!   steps of the granule its fixups allow (`xaqu_elf::Elf::fixup_granule`),
 //!   the link address itself excluded, so that a moved kernel can check it
 //!   moved;
 //! * **the direct map**, in steps of [`Layout::physmap_granule`]: a gibibyte

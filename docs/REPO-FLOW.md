@@ -287,11 +287,11 @@ time and a verdict for each commit that reaches `main`.
 
 **One required check.** The rulesets require only `CI result`, a job that
 waits for all the others. It fails if any of them failed, so the required
-list does not change every time a job is added. **"rustc on Ferrix" is
+list does not change every time a job is added. **"rustc on Xaqu" is
 advisory for now.** On the hosted runner's KVM it fails most runs with two
 kernel self-check panics that no other host shows:
 
-* `FERRIX-PANIC stage 7 self-check failed: getrusage(RUSAGE_THREAD) counted
+* `XAQU-PANIC stage 7 self-check failed: getrusage(RUSAGE_THREAD) counted
   more time than passed on the wall clock` (runs 39930865642,
   39921684010). It has no backlog row yet.
 * The stage 9 XINUSE wake check (runs 39927490414, 39814853954), which
@@ -358,7 +358,7 @@ The product owner does this at a moment when no agent is mid-landing:
 3. The customer runs `github-flow-setup.sh setup --apply`.
 4. `land.sh status` shows FREE with an empty queue, and no batch is
    running (`batch.sh status`).
-5. `echo develop > ~/.local/share/ferrix/fleet/land-branch`. Point the gate
+5. `echo develop > ~/.local/share/xaqu/fleet/land-branch`. Point the gate
    host's and the root checkout's `develop` at `origin/develop`.
 6. The customer runs `github-flow-setup.sh switch --apply`.
 7. Land the process-docs commit (AGENTS.md, CONVENTIONS.md, BACKLOG.md and
@@ -371,7 +371,7 @@ again.
 
 ## Best practice consulted
 
-| Topic | What GitHub (or the common practice) says | What Ferrix does |
+| Topic | What GitHub (or the common practice) says | What Xaqu does |
 |---|---|---|
 | Branching model | GitHub Flow: short branches off the default branch, merged by pull request ([GitHub Flow][gh-flow]). Git-flow: a `develop` integration branch with `feature/`, `release/` and `hotfix/` branches ([nvie][gitflow]). Trunk-based: everyone integrates into one branch at least daily, behind feature flags ([trunkbaseddevelopment.com][tbd]). | A hybrid. Trunk-based on `develop`, where the fleet integrates many times an hour under its own gates. `main` is a continuously promoted, CI-verified trunk, with no fixed release train. Git-flow's prefixes are used for names, but there are no long-lived feature branches. |
 | Protecting branches | Rulesets replace branch protection. They layer, can be read by anyone with read access, and support bypass lists ([about rulesets][gh-rulesets]). | Rulesets on `main` and `develop`. Classic branch protection is not used. |
@@ -390,7 +390,7 @@ again.
 Every branch in the root checkout on nazuna, and on `origin` (the only
 remote), was classified by `git patch-id` and commit subject against
 `origin/main`, by age, and by whether any memory note, handover
-(`~/.local/share/ferrix/handoff/`, `docs/handover/`) or backlog file names
+(`~/.local/share/xaqu/handoff/`, `docs/handover/`) or backlog file names
 it. The full map is
 [`docs/repo-flow/branch-map-2026-10-23.tsv`](repo-flow/branch-map-2026-10-23.tsv):
 one row per branch, giving its old name, its action, its new name, its

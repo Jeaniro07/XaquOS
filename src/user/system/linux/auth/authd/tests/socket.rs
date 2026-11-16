@@ -12,8 +12,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 
-use ferrix_auth_client::{Answer, Connection, Person, State, Verdict, converse};
-use ferrix_auth_proto::{Record, Secret, method};
+use xaqu_auth_client::{Answer, Connection, Person, State, Verdict, converse};
+use xaqu_auth_proto::{Record, Secret, method};
 
 /// A person who gives one answer to every prompt.
 struct Answers(&'static str);
@@ -47,17 +47,17 @@ fn write(path: &Path, text: &str) {
 
 /// A floor-cost Argon2id of `password`.
 fn hash(password: &str) -> String {
-    let params = ferrix_argon2::Params {
+    let params = xaqu_argon2::Params {
         memory_kib: 19_456,
         passes: 2,
         lanes: 1,
     };
     let salt = *b"socket-test-salt";
-    let mut memory = vec![ferrix_argon2::Block::ZERO; params.blocks().unwrap()];
+    let mut memory = vec![xaqu_argon2::Block::ZERO; params.blocks().unwrap()];
     let mut tag = [0_u8; 32];
-    ferrix_argon2::hash(
+    xaqu_argon2::hash(
         &params,
-        &ferrix_argon2::Inputs {
+        &xaqu_argon2::Inputs {
             password: password.as_bytes(),
             salt: &salt,
             secret: &[],
@@ -67,7 +67,7 @@ fn hash(password: &str) -> String {
         &mut tag,
     )
     .unwrap();
-    ferrix_argon2::phc::Encoded::new(params, &salt, &tag)
+    xaqu_argon2::phc::Encoded::new(params, &salt, &tag)
         .unwrap()
         .to_string()
 }
@@ -87,11 +87,11 @@ fn start(name: &str) -> Running {
     );
     let shipped = Path::new(env!("CARGO_MANIFEST_DIR")).join("../services/hyprlock");
     write(
-        &root.join("lib/ferrix/auth/services/hyprlock"),
+        &root.join("lib/xaqu/auth/services/hyprlock"),
         &std::fs::read_to_string(shipped).unwrap(),
     );
     write(
-        &root.join("lib/ferrix/auth/seed/tester"),
+        &root.join("lib/xaqu/auth/seed/tester"),
         &format!("{}\n", hash("secret")),
     );
     let socket = root.join("s");
@@ -162,14 +162,14 @@ fn a_conversation_over_the_socket() {
     let raw = open();
     let odd = Record::Info("a client may not send this");
     raw.send(&odd).unwrap();
-    let mut buffer = [0_u8; ferrix_auth_proto::MAX_RECORD + 1];
+    let mut buffer = [0_u8; xaqu_auth_proto::MAX_RECORD + 1];
     assert!(matches!(
         raw.receive(&mut buffer),
         Ok(Record::Unavailable(_))
     ));
 
     // The audit log has every attempt, and neither password.
-    let log = std::fs::read_to_string(authd.root.join("var/log/ferrix/auth.log")).unwrap();
+    let log = std::fs::read_to_string(authd.root.join("var/log/xaqu/auth.log")).unwrap();
     assert!(
         log.contains("result=accepted") && log.contains("result=failed"),
         "{log}"

@@ -25,11 +25,11 @@ pub const MESSAGE_MAX: usize = 256 * 1024;
 pub const UNSPECIFIED: u8 = 8;
 
 /// The field that says where a record's level came from.
-pub const LEVEL_SOURCE: &str = "FERRIX_PRIORITY_SOURCE";
+pub const LEVEL_SOURCE: &str = "XAQU_PRIORITY_SOURCE";
 
 /// The level every record shows in `json`, `export` and `verbose`, a
 /// number 0 to 7 or `unspecified`; made from the record, never stored.
-pub const LEVEL_FIELD: &str = "FERRIX_LEVEL";
+pub const LEVEL_FIELD: &str = "XAQU_LEVEL";
 
 /// Where a record's level came from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

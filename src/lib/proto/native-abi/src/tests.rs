@@ -2,7 +2,7 @@
 
 use core::mem::{offset_of, size_of};
 
-use ferrix_linux_abi::nr::{from_aarch64, from_arm, from_x86_64};
+use xaqu_linux_abi::nr::{from_aarch64, from_arm, from_x86_64};
 
 use crate::bootstrap::{
     INIT_HELLO_BYTES, INIT_HELLO_HANDLES, INIT_HELLO_VERSION, init_hello, init_hello_version,

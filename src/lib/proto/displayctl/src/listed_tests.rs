@@ -231,12 +231,12 @@ fn a_mode_list_in_hellos_place_is_no_hello() {
 
 // -- The core's match of a SETCRTC ---------------------------------------------------
 
-fn info_of(timing: &Timing) -> ferrix_linux_abi::drm::ModeInfo {
-    use ferrix_linux_abi::drm::Field as _;
-    use ferrix_linux_abi::drm::{
+fn info_of(timing: &Timing) -> xaqu_linux_abi::drm::ModeInfo {
+    use xaqu_linux_abi::drm::Field as _;
+    use xaqu_linux_abi::drm::{
         MODE_FLAG_NHSYNC, MODE_FLAG_NVSYNC, MODE_FLAG_PHSYNC, MODE_FLAG_PVSYNC,
     };
-    let mut mode = ferrix_linux_abi::drm::ModeInfo::ZERO;
+    let mut mode = xaqu_linux_abi::drm::ModeInfo::ZERO;
     mode.clock = timing.clock_khz;
     mode.hdisplay = timing.hdisplay;
     mode.hsync_start = timing.hsync_start;

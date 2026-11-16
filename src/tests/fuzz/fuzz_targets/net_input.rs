@@ -22,12 +22,12 @@
 
 #![no_main]
 
-use ferrix_net::addr::{Endpoint, IpAddress, IpCidr, Ipv4};
-use ferrix_net::iface::{Address, Interface};
-use ferrix_net::route::{Origin, Route};
-use ferrix_net::socket::Family;
-use ferrix_net::stack::{Config, Stack};
-use ferrix_netwire::ethernet;
+use xaqu_net::addr::{Endpoint, IpAddress, IpCidr, Ipv4};
+use xaqu_net::iface::{Address, Interface};
+use xaqu_net::route::{Origin, Route};
+use xaqu_net::socket::Family;
+use xaqu_net::stack::{Config, Stack};
+use xaqu_netwire::ethernet;
 use libfuzzer_sys::fuzz_target;
 
 /// This host's address.
@@ -87,19 +87,19 @@ fn check(frame: &[u8]) {
     match header.ethertype {
         ethernet::ethertype::IPV4 => {
             assert!(
-                ferrix_netwire::ipv4::Header::parse(payload).is_ok(),
+                xaqu_netwire::ipv4::Header::parse(payload).is_ok(),
                 "the stack produced an IPv4 packet it cannot read back"
             );
         }
         ethernet::ethertype::IPV6 => {
             assert!(
-                ferrix_netwire::ipv6::Header::parse(payload).is_ok(),
+                xaqu_netwire::ipv6::Header::parse(payload).is_ok(),
                 "the stack produced an IPv6 packet it cannot read back"
             );
         }
         ethernet::ethertype::ARP => {
             assert!(
-                ferrix_netwire::arp::Packet::parse(payload).is_ok(),
+                xaqu_netwire::arp::Packet::parse(payload).is_ok(),
                 "the stack produced an ARP packet it cannot read back"
             );
         }
@@ -140,7 +140,7 @@ fuzz_target!(|data: &[u8]| {
             check(&outgoing.frame);
         }
         assert!(
-            stack.reassembly_held() <= ferrix_net::reassembly::MAX_BYTES,
+            stack.reassembly_held() <= xaqu_net::reassembly::MAX_BYTES,
             "reassembly held more than its ceiling"
         );
     }

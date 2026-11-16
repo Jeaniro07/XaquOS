@@ -29,7 +29,7 @@ OUT = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "src" / "te
 
 # The constants tools/common/xtask/src/initramfs.rs writes with.
 FIXED_MTIME = 1_767_225_600
-MARKER_PATH = "etc/ferrix/initramfs"
+MARKER_PATH = "etc/xaqu/initramfs"
 MARKER = b"unpacked by the kernel from a cpio archive the loader handed it\n"
 
 S_IFIFO, S_IFCHR, S_IFDIR, S_IFBLK, S_IFREG, S_IFLNK = (
@@ -94,10 +94,10 @@ def boot_archive(program=None, applets=()):
     archive.directory(".", 0o755)
     for name, permissions in [
         ("bin", 0o755), ("dev", 0o755), ("etc", 0o755),
-        ("etc/ferrix", 0o755), ("proc", 0o555), ("tmp", 0o1777),
+        ("etc/xaqu", 0o755), ("proc", 0o555), ("tmp", 0o1777),
     ]:
         archive.directory(name, permissions)
-    archive.file("etc/hostname", 0o644, b"ferrix\n")
+    archive.file("etc/hostname", 0o644, b"xaqu\n")
     archive.hard_linked([MARKER_PATH, MARKER_PATH + ".link"], 0o644, MARKER)
     archive.symlink(MARKER_PATH + ".symlink", "initramfs")
     if program is not None:

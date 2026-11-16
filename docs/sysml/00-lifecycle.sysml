@@ -1,12 +1,12 @@
 /*
- * Ferrix — SysML v2 model, part 0: lifecycle vocabulary.
+ * Xaqu — SysML v2 model, part 0: lifecycle vocabulary.
  *
  * Every other package marks its elements with one of the keywords defined
  * here, so a reader can tell what runs today from what docs/ROADMAP.md still
  * owes. The model is one model; the keywords are the seam between "current"
  * and "future".
  */
-package FerrixLifecycle {
+package XaquLifecycle {
     private import ScalarValues::*;
 
     doc /* Four maturities and the stage that owns an element.

@@ -5,8 +5,8 @@ extern crate std;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
 
 use crate::message::{Limits, Message, MessageQueue, ReceiveError, SendError};
 use crate::reach::{Reach, reaches};
@@ -512,7 +512,7 @@ fn a_drained_queue_keeps_its_order() {
     assert!(q.is_empty());
 }
 
-/// Allocation failure, injected through `ferrix_fallible`: a queue refuses
+/// Allocation failure, injected through `xaqu_fallible`: a queue refuses
 /// room with `NoMemory` when it cannot grow, and once it has room, a push is
 /// not refused however the allocator answers -- the write asks before it
 /// takes the sender's handles, and the push after cannot lose them.
@@ -524,8 +524,8 @@ fn room_made_first_cannot_be_refused_for_memory() {
     fn policy() -> bool {
         FAIL.with(core::cell::Cell::get)
     }
-    let _ = ferrix_fallible::set_injector(policy);
-    ferrix_fallible::arm(true);
+    let _ = xaqu_fallible::set_injector(policy);
+    xaqu_fallible::arm(true);
 
     // A new queue has no room, so its first message needs an allocation.
     let mut q: MessageQueue<u32> = MessageQueue::new(LIMITS);

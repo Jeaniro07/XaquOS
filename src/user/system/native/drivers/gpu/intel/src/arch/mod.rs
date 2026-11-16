@@ -3,7 +3,7 @@
 /// `clflush` the cache line at `address`, fenced on both sides: i915's
 /// `invalidate_csb_entries` and `drm_clflush_virt_range` for the status
 /// page the GPU writes and this driver reads. On the N150 box (2026-10-21,
-/// Endfield on anv under `ferrix.intelgpu.uapitrace`) a request whose batch
+/// Endfield on anv under `xaqu.intelgpu.uapitrace`) a request whose batch
 /// had finished stayed unseen for seconds while the box was idle, and was
 /// seen within milliseconds of the console's drawing (which evicts lines):
 /// the processor kept reading a stale status page from its own cache. i915

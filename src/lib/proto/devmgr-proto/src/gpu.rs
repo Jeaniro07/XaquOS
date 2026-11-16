@@ -16,7 +16,7 @@
 //!    handed over at all: the kernel would refuse `nvrm` its vectors and
 //!    pins anyway, and a driver started only to be refused is a launch that
 //!    hides why. This is where F-57's closure is checked for the
-//!    `ferrix-3060` domain at N1's first boot. Without bit 0 it is not
+//!    `xaqu-3060` domain at N1's first boot. Without bit 0 it is not
 //!    handed over either (`L.device.56`): a GPU executes what programs hand
 //!    it, so with its DMA untranslated -- a unit held to interrupt
 //!    remapping only, by an RMRR, an IVMD, or no translation -- one bad
@@ -38,12 +38,12 @@ use crate::budget::GpuBudget;
 use crate::isolation::{self, Launch, Refusal};
 
 /// `device_isolation`'s bit for interrupts isolated:
-/// `ferrix_native_abi::types::DEVICE_ISOLATION_INTERRUPTS`, which a host test
+/// `xaqu_native_abi::types::DEVICE_ISOLATION_INTERRUPTS`, which a host test
 /// holds this to.
 pub const INTERRUPTS_ISOLATED: u64 = 1 << 1;
 
 /// `device_isolation`'s bit for DMA translated:
-/// `ferrix_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED`.
+/// `xaqu_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED`.
 pub const DMA_TRANSLATED: u64 = 1 << 0;
 
 /// A call the kernel did not answer with what was asked: any refusal, which

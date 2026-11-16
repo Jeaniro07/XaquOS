@@ -1,5 +1,5 @@
 //! `test-compositor --boot gpu-helper`: hyprix-gpu, the compositor's
-//! Vulkan helper (`docs/GPU-COMPOSITOR.md`), on Ferrix.
+//! Vulkan helper (`docs/GPU-COMPOSITOR.md`), on Xaqu.
 //!
 //! Two things are run as the desktop comes up, both from `exec-once`:
 //!
@@ -9,7 +9,7 @@
 //!   (`compositor::tole_demo`). They draw every painter call and compare it
 //!   with the software painter, and draw a frame sent over a socket into an
 //!   output that is then mapped and read -- a memfd, since lavapipe on
-//!   Ferrix exports no dmabufs -- on Ferrix's kernel, its memfds and its
+//!   Xaqu exports no dmabufs -- on Xaqu's kernel, its memfds and its
 //!   sockets. Required: libtest's
 //!   `test result: ok. 3 passed`, and no test skipped.
 //! * the helper as an image carries it (`crate::hyprix_gpu`, under
@@ -196,7 +196,7 @@ fn judge(arch: Arch, said: &[String], packaged: bool) -> Result<()> {
             "{arch}: the helper's tests on lavapipe did not pass: {result}"
         )));
     }
-    println!("  {arch}: hyprix-gpu's tests passed on lavapipe on Ferrix");
+    println!("  {arch}: hyprix-gpu's tests passed on lavapipe on Xaqu");
     if packaged {
         if !said.iter().any(|line| line.contains(NO_DEVICE)) {
             return Err(Error::new(format!(

@@ -12,17 +12,17 @@ use std::collections::BTreeMap;
 use std::sync::Mutex;
 use std::vec;
 
-use ferrix_btrfs::chunk::ChunkMapEntry;
-use ferrix_btrfs::volume::{Device, ReadKind, Volume};
-use ferrix_sync::SpinParker;
-use ferrix_vfs::tmpfs::HeapStorage;
-use ferrix_vfs::tmpfs::Storage;
-use ferrix_vfs::{Clock, Errno, FileSystem, FileType, Inode, Metadata, NewNode, Timespec};
+use xaqu_btrfs::chunk::ChunkMapEntry;
+use xaqu_btrfs::volume::{Device, ReadKind, Volume};
+use xaqu_sync::SpinParker;
+use xaqu_vfs::tmpfs::HeapStorage;
+use xaqu_vfs::tmpfs::Storage;
+use xaqu_vfs::{Clock, Errno, FileSystem, FileType, Inode, Metadata, NewNode, Timespec};
 
 use alloc::boxed::Box;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use ferrix_btrfs::BtrfsError;
+use xaqu_btrfs::BtrfsError;
 
 use super::{BLOCK, IMAGE_SIZE};
 use crate::rw::RwBtrfs;
@@ -88,13 +88,13 @@ impl Device for Disk {
     }
 }
 
-impl ferrix_btrfs_write::WriteDevice for Disk {
-    fn write_at(&mut self, physical: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+impl xaqu_btrfs_write::WriteDevice for Disk {
+    fn write_at(&mut self, physical: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         if physical
             .checked_add(data.len() as u64)
             .is_none_or(|end| end > IMAGE_SIZE)
         {
-            return Err(ferrix_btrfs_write::Error::DeviceWrite { physical });
+            return Err(xaqu_btrfs_write::Error::DeviceWrite { physical });
         }
         let mut blocks = self
             .0
@@ -113,7 +113,7 @@ impl ferrix_btrfs_write::WriteDevice for Disk {
         Ok(())
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         Ok(())
     }
 }
@@ -209,8 +209,8 @@ fn read_back_with_the_reader(disk: &Disk, path: &[&[u8]]) -> Option<Metadata> {
             .lookup(&mut device, ino, part, &mut node)
             .unwrap()?;
         match entry.target {
-            ferrix_btrfs::fs::Target::Inode(next) => ino = next,
-            ferrix_btrfs::fs::Target::Subvolume(_) => return None,
+            xaqu_btrfs::fs::Target::Inode(next) => ino = next,
+            xaqu_btrfs::fs::Target::Subvolume(_) => return None,
         }
     }
     let item = subvolume.inode(&mut device, ino, &mut node).unwrap()?;
@@ -286,7 +286,7 @@ struct MappedStorage(HeapStorage);
 
 #[derive(Debug)]
 struct Mapped {
-    pages: Box<dyn ferrix_vfs::tmpfs::Pages>,
+    pages: Box<dyn xaqu_vfs::tmpfs::Pages>,
     /// Pages written through the "mapping", and whether one was made.
     written: Mutex<(BTreeMap<u64, ()>, bool)>,
 }
@@ -309,11 +309,11 @@ impl Mapped {
 #[derive(Debug)]
 struct MappedPages(Arc<Mapped>);
 
-impl ferrix_vfs::tmpfs::Pages for MappedPages {
-    fn read(&self, offset: u64, buf: &mut [u8]) -> ferrix_vfs::Result<()> {
+impl xaqu_vfs::tmpfs::Pages for MappedPages {
+    fn read(&self, offset: u64, buf: &mut [u8]) -> xaqu_vfs::Result<()> {
         self.0.pages.read(offset, buf)
     }
-    fn write(&self, offset: u64, data: &[u8]) -> ferrix_vfs::Result<()> {
+    fn write(&self, offset: u64, data: &[u8]) -> xaqu_vfs::Result<()> {
         self.0.pages.write(offset, data)
     }
     fn discard_from(&self, offset: u64) {
@@ -328,7 +328,7 @@ impl ferrix_vfs::tmpfs::Pages for MappedPages {
     fn object(&self) -> Option<Arc<dyn core::any::Any + Send + Sync>> {
         Some(Arc::clone(&self.0) as Arc<dyn core::any::Any + Send + Sync>)
     }
-    fn mapped_writes(&self) -> ferrix_vfs::Result<(Vec<u64>, bool)> {
+    fn mapped_writes(&self) -> xaqu_vfs::Result<(Vec<u64>, bool)> {
         let mut written = self.0.written.lock().map_err(|_| Errno::EIO)?;
         let pages = if core::mem::take(&mut written.1) {
             written.0.keys().copied().collect()
@@ -340,13 +340,13 @@ impl ferrix_vfs::tmpfs::Pages for MappedPages {
 }
 
 impl Storage for MappedStorage {
-    fn allocate(&self) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+    fn allocate(&self) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         self.wrap(self.0.allocate()?)
     }
     fn allocate_with(
         &self,
-        source: Arc<dyn ferrix_vfs::tmpfs::PageSource>,
-    ) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+        source: Arc<dyn xaqu_vfs::tmpfs::PageSource>,
+    ) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         self.wrap(self.0.allocate_with(source)?)
     }
     fn max_file_size(&self) -> u64 {
@@ -358,8 +358,8 @@ impl MappedStorage {
     #[expect(clippy::unnecessary_wraps, reason = "the shape `Storage` wants")]
     fn wrap(
         &self,
-        pages: Box<dyn ferrix_vfs::tmpfs::Pages>,
-    ) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+        pages: Box<dyn xaqu_vfs::tmpfs::Pages>,
+    ) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         Ok(Box::new(MappedPages(Arc::new(Mapped {
             pages,
             written: Mutex::new((BTreeMap::new(), false)),
@@ -659,7 +659,7 @@ fn a_full_volume_answers_enospc_and_stays_usable() {
 /// What the volume on `disk` can take, as a fresh open of its last commit
 /// measures it.
 fn volume_room(disk: &Disk) -> u64 {
-    ferrix_btrfs_write::WriteVolume::open(disk.clone())
+    xaqu_btrfs_write::WriteVolume::open(disk.clone())
         .unwrap()
         .data_room()
 }
@@ -686,15 +686,15 @@ impl Device for Failing {
     }
 }
 
-impl ferrix_btrfs_write::WriteDevice for Failing {
-    fn write_at(&mut self, physical: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+impl xaqu_btrfs_write::WriteDevice for Failing {
+    fn write_at(&mut self, physical: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         if self.fail.load(std::sync::atomic::Ordering::Relaxed) {
-            return Err(ferrix_btrfs_write::Error::DeviceWrite { physical });
+            return Err(xaqu_btrfs_write::Error::DeviceWrite { physical });
         }
         self.disk.write_at(physical, data)
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         Ok(())
     }
 }
@@ -1005,15 +1005,15 @@ impl Device for Starved {
     }
 }
 
-impl ferrix_btrfs_write::WriteDevice for Starved {
-    fn write_at(&mut self, physical: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+impl xaqu_btrfs_write::WriteDevice for Starved {
+    fn write_at(&mut self, physical: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         if self.is_starved() {
-            return Err(ferrix_btrfs_write::Error::OutOfMemory);
+            return Err(xaqu_btrfs_write::Error::OutOfMemory);
         }
         self.disk.write_at(physical, data)
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         Ok(())
     }
 }
@@ -1056,17 +1056,17 @@ fn memory_running_out_is_enomem_and_the_mount_keeps_its_last_commit() {
 #[derive(Debug)]
 struct Sources(
     HeapStorage,
-    Mutex<Vec<Arc<dyn ferrix_vfs::tmpfs::PageSource>>>,
+    Mutex<Vec<Arc<dyn xaqu_vfs::tmpfs::PageSource>>>,
 );
 
 impl Storage for Sources {
-    fn allocate(&self) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+    fn allocate(&self) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         self.0.allocate()
     }
     fn allocate_with(
         &self,
-        source: Arc<dyn ferrix_vfs::tmpfs::PageSource>,
-    ) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+        source: Arc<dyn xaqu_vfs::tmpfs::PageSource>,
+    ) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         self.1
             .lock()
             .map_err(|_| Errno::EIO)?
@@ -1094,7 +1094,7 @@ fn mount_keeping_sources(disk: &Disk) -> (Arc<RwBtrfs<Disk>>, Arc<Sources>) {
 }
 
 /// What reclaim would be handed of pages 0 to 2, and what it gave back.
-fn handed(source: &Arc<dyn ferrix_vfs::tmpfs::PageSource>) -> (Vec<u64>, u64) {
+fn handed(source: &Arc<dyn xaqu_vfs::tmpfs::PageSource>) -> (Vec<u64>, u64) {
     let mut seen = Vec::new();
     let mut pages = vec![0, 1, 2];
     let stolen = source.reclaim_clean(&mut pages, &mut |clean| {
@@ -1185,7 +1185,7 @@ fn a_commit_written_back_in_slices_reads_back_whole() {
 /// consultant, ledger line 2336 (6)).
 #[test]
 fn an_unlinked_kept_file_goes_with_its_last_user() {
-    use ferrix_vfs::{Namespace, OpenFlags};
+    use xaqu_vfs::{Namespace, OpenFlags};
     let disk = Disk::new(BLANK);
     let fs = mount(&disk);
     let ns = Namespace::with_cache(
@@ -1339,12 +1339,12 @@ impl Default for Poisoning {
 
 #[derive(Debug)]
 struct PoisonedPages {
-    pages: Box<dyn ferrix_vfs::tmpfs::Pages>,
+    pages: Box<dyn xaqu_vfs::tmpfs::Pages>,
     failing: Option<Arc<std::sync::atomic::AtomicBool>>,
 }
 
-impl ferrix_vfs::tmpfs::Pages for PoisonedPages {
-    fn read(&self, offset: u64, buf: &mut [u8]) -> ferrix_vfs::Result<()> {
+impl xaqu_vfs::tmpfs::Pages for PoisonedPages {
+    fn read(&self, offset: u64, buf: &mut [u8]) -> xaqu_vfs::Result<()> {
         if self
             .failing
             .as_ref()
@@ -1354,7 +1354,7 @@ impl ferrix_vfs::tmpfs::Pages for PoisonedPages {
         }
         self.pages.read(offset, buf)
     }
-    fn write(&self, offset: u64, data: &[u8]) -> ferrix_vfs::Result<()> {
+    fn write(&self, offset: u64, data: &[u8]) -> xaqu_vfs::Result<()> {
         self.pages.write(offset, data)
     }
     fn discard_from(&self, offset: u64) {
@@ -1369,14 +1369,14 @@ impl ferrix_vfs::tmpfs::Pages for PoisonedPages {
 }
 
 impl Storage for Poisoning {
-    fn allocate(&self) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+    fn allocate(&self) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         let pages = self.heap.allocate()?;
         Ok(self.wrap(pages))
     }
     fn allocate_with(
         &self,
-        source: Arc<dyn ferrix_vfs::tmpfs::PageSource>,
-    ) -> ferrix_vfs::Result<Box<dyn ferrix_vfs::tmpfs::Pages>> {
+        source: Arc<dyn xaqu_vfs::tmpfs::PageSource>,
+    ) -> xaqu_vfs::Result<Box<dyn xaqu_vfs::tmpfs::Pages>> {
         let pages = self.heap.allocate_with(source)?;
         Ok(self.wrap(pages))
     }
@@ -1386,7 +1386,7 @@ impl Storage for Poisoning {
 }
 
 impl Poisoning {
-    fn wrap(&self, pages: Box<dyn ferrix_vfs::tmpfs::Pages>) -> Box<dyn ferrix_vfs::tmpfs::Pages> {
+    fn wrap(&self, pages: Box<dyn xaqu_vfs::tmpfs::Pages>) -> Box<dyn xaqu_vfs::tmpfs::Pages> {
         let poisoned = self.next.swap(false, std::sync::atomic::Ordering::SeqCst);
         Box::new(PoisonedPages {
             pages,
@@ -1466,12 +1466,12 @@ impl Device for Asking {
     }
 }
 
-impl ferrix_btrfs_write::WriteDevice for Asking {
-    fn write_at(&mut self, physical: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+impl xaqu_btrfs_write::WriteDevice for Asking {
+    fn write_at(&mut self, physical: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         self.disk.write_at(physical, data)
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         self.disk.flush()
     }
 }

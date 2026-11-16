@@ -1,6 +1,6 @@
 //! The bad-frame switch (`docs/MACHINE-CHECK-RESTART.md` §10): what a
 //! `bad_frames = choice` loader keeps out across a restart, read from
-//! `ferrix.badframes`, and which of the frames it kept out first it then
+//! `xaqu.badframes`, and which of the frames it kept out first it then
 //! releases. A `bad_frames = persist` loader calls nothing here: its mode is
 //! [`Mode::Persist`], fixed by its build.
 
@@ -52,12 +52,12 @@ impl Choice<'_> {
 }
 
 /// The option [`choice`] reads.
-pub const OPTION: &str = "ferrix.badframes";
+pub const OPTION: &str = "xaqu.badframes";
 
 /// Read [`OPTION`] from `cmdline`, as `pstore::switch` reads its option.
 #[must_use]
 pub fn choice(cmdline: &str) -> Choice<'_> {
-    match ferrix_bootinfo::option_in(cmdline, OPTION) {
+    match xaqu_bootinfo::option_in(cmdline, OPTION) {
         None => Choice::Absent,
         Some("persist") => Choice::Chosen(Mode::Persist),
         Some("reset") => Choice::Chosen(Mode::Reset),
@@ -88,19 +88,19 @@ mod tests {
     fn the_word_is_read_and_anything_else_is_persist() {
         assert_eq!(choice("console=ttyS0"), Choice::Absent);
         assert_eq!(
-            choice("ferrix.badframes=reset"),
+            choice("xaqu.badframes=reset"),
             Choice::Chosen(Mode::Reset)
         );
         assert_eq!(
-            choice("a ferrix.badframes=off b"),
+            choice("a xaqu.badframes=off b"),
             Choice::Chosen(Mode::Off)
         );
         assert_eq!(
-            choice("ferrix.badframes=persist"),
+            choice("xaqu.badframes=persist"),
             Choice::Chosen(Mode::Persist)
         );
-        assert_eq!(choice("ferrix.badframes=Off"), Choice::NotUnderstood("Off"));
-        assert_eq!(choice("ferrix.badframes=Off").mode(), Mode::Persist);
+        assert_eq!(choice("xaqu.badframes=Off"), Choice::NotUnderstood("Off"));
+        assert_eq!(choice("xaqu.badframes=Off").mode(), Mode::Persist);
         assert_eq!(Choice::Absent.mode(), Mode::Persist);
     }
 

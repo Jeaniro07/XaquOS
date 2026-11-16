@@ -4,14 +4,14 @@
 //!
 //! One seed is two boots of the same image with the same writable disk:
 //!
-//! 1. `ferrix.btrfs=churn`: the guest mounts the blank volume and rewrites
+//! 1. `xaqu.btrfs=churn`: the guest mounts the blank volume and rewrites
 //!    files and makes them durable, with `fsync` (a log commit) and `sync` (a
 //!    whole commit) both, until it is stopped. This waits for it to say it has
 //!    started, waits a random time the seed picks, and kills QEMU — no
 //!    shutdown, no chance to finish anything.
 //! 2. Host `btrfs check` over what was left. A log the crash left behind is
 //!    part of a consistent volume and not a fault.
-//! 3. `ferrix.btrfs=replay`: the guest mounts the disk again, which replays
+//! 3. `xaqu.btrfs=replay`: the guest mounts the disk again, which replays
 //!    the log, checks every file whose trailer says its body was promised
 //!    (`src/kernel/src/fs/btrfs_powerfail.rs` says why that is a sound thing to
 //!    ask), and unmounts.
@@ -128,7 +128,7 @@ fn churn(arch: Arch, built: &Built, args: &Args, seed: u64) -> Result<()> {
     let image = boot_image(
         arch,
         built,
-        &format!("ferrix.btrfs=churn ferrix.btrfs.seed={seed}"),
+        &format!("xaqu.btrfs=churn xaqu.btrfs.seed={seed}"),
     )?;
     let delay = LONGEST.mul_f64(fraction(seed));
     let _ = qemu::watch_then(arch, &image, &built.kernel, args, CHURNING, |watching| {
@@ -158,7 +158,7 @@ fn churn(arch: Arch, built: &Built, args: &Args, seed: u64) -> Result<()> {
 /// again. Answers whether the cut left a log for the replay.
 fn replay(arch: Arch, built: &Built, args: &Args, checker: &Checker) -> Result<bool> {
     let disk = btrfs_disk::blank_path(arch);
-    let image = boot_image(arch, built, "ferrix.btrfs=replay")?;
+    let image = boot_image(arch, built, "xaqu.btrfs=replay")?;
     let lines = qemu::watch_then(arch, &image, &built.kernel, args, REPLAYED, |_| Ok(()))?;
     if lines.iter().any(|line| line.contains(SKIPPED)) {
         return Err(Error::new(format!(

@@ -9,7 +9,7 @@
 # redirects to Hypergryph's CDN, launcher.hg-cdn.com). It is a 32-bit NSIS
 # installer; what it installs is 64-bit (a Qt 5.15 program with
 # QtWebEngine, Chromium 87). The 32-bit installer cannot run in Debian's
-# Wine on Ferrix until 32-bit Windows programs do (stage 23's E1.6), so it
+# Wine on Xaqu until 32-bit Windows programs do (stage 23's E1.6), so it
 # is not run: 7-Zip unpacks its payload on the host, and the files are laid
 # out as the installer lays them out, `GRYPHLINK/Launcher.exe` beside the
 # versioned directory `GRYPHLINK/1.6.0/` it starts `Games.exe` from.
@@ -21,8 +21,8 @@
 # installer's URL names its version; Gryphline replaces the file when the
 # launcher moves on, and then the pin below is moved with it.
 #
-# Writes $FERRIX_ENDFIELD_VOLUME/endfield.img (default
-# ~/.local/share/ferrix/endfield-launcher/endfield.img): the Wine volume's
+# Writes $XAQU_ENDFIELD_VOLUME/endfield.img (default
+# ~/.local/share/xaqu/endfield-launcher/endfield.img): the Wine volume's
 # tree with `/GRYPHLINK` added, and room for what the launcher writes. The
 # tree is this volume's own, made by fetch-wine.sh under `wine/` here when
 # it is missing or carries another yserver than the pin's; the packages
@@ -33,14 +33,14 @@
 # carries. Needs curl, sha256sum, tar, xz, od, cmp and fetch-wine.sh's tools;
 # no root.
 #
-# With FERRIX_ENDFIELD_WINE=proton the tree is fetch-proton.sh's instead
+# With XAQU_ENDFIELD_WINE=proton the tree is fetch-proton.sh's instead
 # (GE-Proton at `/proton` beside Debian's Wine, docs/WINE.md §10), made
 # again when it is missing or holds another Proton or yserver than the
-# pins, and the volume goes to ~/.local/share/ferrix/endfield-launcher-proton
+# pins, and the volume goes to ~/.local/share/xaqu/endfield-launcher-proton
 # with proton.version beside it: the disk `cargo xtask test-endfield-proton`
 # starts the launcher from.
 #
-# Usage: [FERRIX_ENDFIELD_WINE=proton] tools/common/fetch/fetch-endfield-launcher.sh
+# Usage: [XAQU_ENDFIELD_WINE=proton] tools/common/fetch/fetch-endfield-launcher.sh
 
 set -euo pipefail
 
@@ -51,15 +51,15 @@ installer_sum=b4b06cdb45c88c43fc3952f9810332f2709c3d7250a93016e9a4dc2c5ebaca73
 sevenzip_url=https://www.7-zip.org/a/7z2501-linux-x64.tar.xz
 sevenzip_sum=4ca3b7c6f2f67866b92622818b58233dc70367be2f36b498eb0bdeaaa44b53f4
 
-wine_kind=${FERRIX_ENDFIELD_WINE:-debian}
+wine_kind=${XAQU_ENDFIELD_WINE:-debian}
 case $wine_kind in
-    debian) out=${FERRIX_ENDFIELD_VOLUME:-$HOME/.local/share/ferrix/endfield-launcher} ;;
-    proton) out=${FERRIX_ENDFIELD_VOLUME:-$HOME/.local/share/ferrix/endfield-launcher-proton} ;;
-    *) echo "fetch-endfield-launcher: FERRIX_ENDFIELD_WINE is debian or proton, not $wine_kind" >&2; exit 1 ;;
+    debian) out=${XAQU_ENDFIELD_VOLUME:-$HOME/.local/share/xaqu/endfield-launcher} ;;
+    proton) out=${XAQU_ENDFIELD_VOLUME:-$HOME/.local/share/xaqu/endfield-launcher-proton} ;;
+    *) echo "fetch-endfield-launcher: XAQU_ENDFIELD_WINE is debian or proton, not $wine_kind" >&2; exit 1 ;;
 esac
-proton=${FERRIX_PROTON_VOLUME:-$HOME/.local/share/ferrix/proton}
-shared=$HOME/.local/share/ferrix/wine
-yserver=${FERRIX_YSERVER_VOLUME:-$HOME/.local/share/ferrix/yserver}
+proton=${XAQU_PROTON_VOLUME:-$HOME/.local/share/xaqu/proton}
+shared=$HOME/.local/share/xaqu/wine
+yserver=${XAQU_YSERVER_VOLUME:-$HOME/.local/share/xaqu/yserver}
 
 for tool in curl sha256sum tar xz od cmp mkfs.btrfs; do
     command -v "$tool" > /dev/null || { echo "fetch-endfield-launcher: $tool is not installed" >&2; exit 1; }
@@ -100,7 +100,7 @@ if [ "$wine_kind" = proton ]; then
 elif [ ! -d "$wine/tree" ] || [ "$(cat "$wine/yserver.commit" 2> /dev/null)" != "$pinned" ]     || ! cmp -s "$wine/tree/yserver/yserver" "$yserver/tree/yserver/yserver"; then
     mkdir -p "$wine/pool"
     [ ! -d "$shared/pool" ] || cp -n "$shared/pool/"*.deb "$wine/pool/" 2> /dev/null || true
-    FERRIX_WINE_VOLUME="$wine" "$(dirname "$0")/fetch-wine.sh"
+    XAQU_WINE_VOLUME="$wine" "$(dirname "$0")/fetch-wine.sh"
     rm -f "$wine/wine.img"
 fi
 

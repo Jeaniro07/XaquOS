@@ -10,8 +10,8 @@
 //! and `DROP_MASTER` move it as Linux's `drm_setmaster_ioctl` and
 //! `drm_dropmaster_ioctl` do.
 
-use ferrix_linux_abi::drm;
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::drm;
+use xaqu_linux_abi::errno::Errno;
 
 /// What an ioctl needs of the open that makes it.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

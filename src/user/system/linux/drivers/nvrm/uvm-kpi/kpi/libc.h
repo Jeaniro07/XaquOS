@@ -8,8 +8,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#ifndef FERRIX_KPI_LIBC_H
-#define FERRIX_KPI_LIBC_H
+#ifndef XAQU_KPI_LIBC_H
+#define XAQU_KPI_LIBC_H
 
 void *malloc(size_t);
 void *calloc(size_t, size_t);

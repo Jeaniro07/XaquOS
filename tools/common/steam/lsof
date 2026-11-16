@@ -1,5 +1,5 @@
 #!/bin/sh
-# lsof for the Steam client on Ferrix (docs/STEAM.md): Debian's lsof on the
+# lsof for the Steam client on Xaqu (docs/STEAM.md): Debian's lsof on the
 # volume. The client looks for lsof only at /sbin, /bin, /usr/sbin and
 # /usr/bin, and the initramfs cannot link into the volume from those, so
 # `cargo xtask run-steam` carries this at /usr/bin/lsof.

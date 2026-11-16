@@ -9,16 +9,16 @@
 //! Two mechanisms, the kernel's own (`src/kernel/src/fallible.rs`):
 //!
 //! * a `Vec` is reserved with `try_reserve` before it grows, through
-//!   `ferrix_fallible`;
+//!   `xaqu_fallible`;
 //! * a `BTreeMap` or `BTreeSet` insert cannot be made fallible from outside
 //!   `alloc`, so it runs inside the section the kernel installs with
-//!   `ferrix_fallible::set_section`: the kernel fills this processor's
+//!   `xaqu_fallible::set_section`: the kernel fills this processor's
 //!   reserve first, which is where failure is reported, and serves the
 //!   insert's nodes from it if the heap refuses. Each insert is its own
 //!   section, so the reserve's depth bounds one insert, never a loop of them;
 //!   a map is copied one insert at a time ([`copy_map`]) for that reason.
 //!
-//! Failure is injected through the same `ferrix_fallible` policy the kernel's
+//! Failure is injected through the same `xaqu_fallible` policy the kernel's
 //! allocation checks use, which is how the host tests fail each allocation of
 //! an operation in turn.
 //!
@@ -44,7 +44,7 @@
 use alloc::collections::{BTreeMap, BTreeSet, VecDeque};
 use alloc::vec::Vec;
 
-pub(crate) use ferrix_fallible::AllocError;
+pub(crate) use xaqu_fallible::AllocError;
 
 use crate::{Error, Result};
 
@@ -56,47 +56,47 @@ impl From<AllocError> for Error {
 
 /// `vec![0u8; len]`.
 pub(crate) fn zeroed(len: usize) -> Result<Vec<u8>> {
-    Ok(ferrix_fallible::try_filled(0u8, len)?)
+    Ok(xaqu_fallible::try_filled(0u8, len)?)
 }
 
 /// `vec![value; len]`.
 pub(crate) fn filled<T: Clone>(value: T, len: usize) -> Result<Vec<T>> {
-    Ok(ferrix_fallible::try_filled(value, len)?)
+    Ok(xaqu_fallible::try_filled(value, len)?)
 }
 
 /// `items.to_vec()`.
 pub(crate) fn copy<T: Clone>(items: &[T]) -> Result<Vec<T>> {
-    Ok(ferrix_fallible::try_to_vec(items)?)
+    Ok(xaqu_fallible::try_to_vec(items)?)
 }
 
 /// `Vec::with_capacity(capacity)`.
 pub(crate) fn with_capacity<T>(capacity: usize) -> Result<Vec<T>> {
-    Ok(ferrix_fallible::try_with_capacity(capacity)?)
+    Ok(xaqu_fallible::try_with_capacity(capacity)?)
 }
 
 /// `vec.push(value)`.
 pub(crate) fn push<T>(vec: &mut Vec<T>, value: T) -> Result<()> {
-    Ok(ferrix_fallible::try_push(vec, value)?)
+    Ok(xaqu_fallible::try_push(vec, value)?)
 }
 
 /// `vec.insert(index, value)`; `index` is at most the length.
 pub(crate) fn insert_at<T>(vec: &mut Vec<T>, index: usize, value: T) -> Result<()> {
-    Ok(ferrix_fallible::try_insert(vec, index, value)?)
+    Ok(xaqu_fallible::try_insert(vec, index, value)?)
 }
 
 /// `vec.extend_from_slice(items)`.
 pub(crate) fn extend_from_slice<T: Clone>(vec: &mut Vec<T>, items: &[T]) -> Result<()> {
-    Ok(ferrix_fallible::try_extend_from_slice(vec, items)?)
+    Ok(xaqu_fallible::try_extend_from_slice(vec, items)?)
 }
 
 /// `vec.resize(len, value)`.
 pub(crate) fn resize<T: Clone>(vec: &mut Vec<T>, len: usize, value: T) -> Result<()> {
-    Ok(ferrix_fallible::try_resize(vec, len, value)?)
+    Ok(xaqu_fallible::try_resize(vec, len, value)?)
 }
 
 /// `items.collect::<Vec<_>>()`.
 pub(crate) fn collect<T>(items: impl IntoIterator<Item = T>) -> Result<Vec<T>> {
-    Ok(ferrix_fallible::try_collect(items)?)
+    Ok(xaqu_fallible::try_collect(items)?)
 }
 
 /// `items.collect::<Result<Vec<_>>>()`: the first error, or every item.
@@ -121,12 +121,12 @@ pub(crate) fn split_off<T>(vec: &mut Vec<T>, at: usize) -> Result<Vec<T>> {
 
 /// Room for `additional` more entries in `queue`.
 pub(crate) fn reserve_deque<T>(queue: &mut VecDeque<T>, additional: usize) -> Result<()> {
-    Ok(ferrix_fallible::try_reserve_deque(queue, additional)?)
+    Ok(xaqu_fallible::try_reserve_deque(queue, additional)?)
 }
 
 /// `map.insert(key, value)`, inside the kernel's section.
 pub(crate) fn insert<K: Ord, V>(map: &mut BTreeMap<K, V>, key: K, value: V) -> Result<Option<V>> {
-    Ok(ferrix_fallible::try_map_insert(map, key, value)?)
+    Ok(xaqu_fallible::try_map_insert(map, key, value)?)
 }
 
 /// `map.entry(key).or_insert_with(make)`, inside the kernel's section;
@@ -136,12 +136,12 @@ pub(crate) fn entry<K: Ord, V>(
     key: K,
     make: impl FnOnce() -> V,
 ) -> Result<&mut V> {
-    Ok(ferrix_fallible::try_map_entry(map, key, make)?)
+    Ok(xaqu_fallible::try_map_entry(map, key, make)?)
 }
 
 /// `set.insert(value)`, inside the kernel's section.
 pub(crate) fn insert_into_set<T: Ord>(set: &mut BTreeSet<T>, value: T) -> Result<bool> {
-    Ok(ferrix_fallible::try_set_insert(set, value)?)
+    Ok(xaqu_fallible::try_set_insert(set, value)?)
 }
 
 /// A copy of `map`, one insert, and one section, at a time.

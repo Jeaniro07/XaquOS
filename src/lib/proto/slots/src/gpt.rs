@@ -1,10 +1,10 @@
 //! Finding the control partition and the two slots in a GUID partition
-//! table (UEFI 2.10 §5.3), by their Ferrix type GUIDs.
+//! table (UEFI 2.10 §5.3), by their Xaqu type GUIDs.
 //!
 //! Only the primary table is read, and nothing in it is trusted: the
 //! header's signature, size, CRC-32 and own address, the entry array's
 //! CRC-32, and each partition's range against the disk are all checked.
-//! `ferrix-partition` does the same for the kernel and the installer with
+//! `xaqu-partition` does the same for the kernel and the installer with
 //! an allocator; the loader has none, so this walks the array in place.
 
 use crate::crc::crc32;
@@ -29,15 +29,15 @@ pub const fn guid(a: u32, b: u16, c: u16, d: u16, e: u64) -> Guid {
     ]
 }
 
-/// The partition type of a Ferrix system slot,
+/// The partition type of a Xaqu system slot,
 /// `5475b681-82f5-47da-a5a1-55db0e7e2bd3`.
 pub const SLOT_TYPE: Guid = guid(0x5475_b681, 0x82f5, 0x47da, 0xa5a1, 0x55db_0e7e_2bd3);
 
-/// The partition type of the Ferrix boot control record,
+/// The partition type of the Xaqu boot control record,
 /// `c29aa8c5-c19c-4147-838f-01accca28be4`.
 pub const CONTROL_TYPE: Guid = guid(0xc29a_a8c5, 0xc19c, 0x4147, 0x838f, 0x01ac_cca2_8be4);
 
-/// The partition type of the Ferrix event log (`docs/POSTMORTEM.md` §4),
+/// The partition type of the Xaqu event log (`docs/POSTMORTEM.md` §4),
 /// `0a0323e0-d79d-498d-a4d6-dbea6af3bab0`.
 pub const EVENTS_TYPE: Guid = guid(0x0a03_23e0, 0xd79d, 0x498d, 0xa4d6, 0xdbea_6af3_bab0);
 
@@ -200,7 +200,7 @@ pub fn parse_header(sector: &[u8], blocks: u64, block_size: u32) -> Result<Heade
 
 /// Find the control partition and the two slots in the entry array.
 ///
-/// `blocks` and `block_size` describe the disk; every partition of a Ferrix
+/// `blocks` and `block_size` describe the disk; every partition of a Xaqu
 /// type must lie inside it, and the control partition and the slots must
 /// be large enough for their formats.
 pub fn find(
@@ -230,13 +230,13 @@ pub fn find(
         if kind != SLOT_TYPE && kind != CONTROL_TYPE {
             continue;
         }
-        // A Ferrix partition only inside the usable blocks: a control
+        // A Xaqu partition only inside the usable blocks: a control
         // partition over the GPT's own sectors would put the loader's one
         // write on the table (the consultant's G1).
         if part.first_lba < header.first_usable || part.last_lba > header.last_usable {
             return Err(GptError::Range);
         }
-        // Hostile input: a Ferrix partition overlapping any other entry
+        // Hostile input: a Xaqu partition overlapping any other entry
         // would let a write to it land in someone else's.
         for (other_index, other) in entries() {
             if other_index == index {
@@ -291,7 +291,7 @@ pub enum Lookup {
 }
 
 /// The one partition of type `kind` in the entry array, checked as [`find`]
-/// checks a Ferrix partition: the array's CRC-32, a range inside the disk
+/// checks a Xaqu partition: the array's CRC-32, a range inside the disk
 /// and the usable blocks, and no overlap with any other entry.
 pub fn find_one(header: &Header, array: &[u8], blocks: u64, kind: Guid) -> Result<Part, Lookup> {
     let array = usize::try_from(header.array_bytes())

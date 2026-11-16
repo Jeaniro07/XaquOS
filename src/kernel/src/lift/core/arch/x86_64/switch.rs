@@ -332,7 +332,7 @@ impl UserState {
         }
     }
     /// Take the bases, TLS slots and selectors from K1's context.
-    pub fn read_context(&mut self, context: &ferrix_native::region::Context) {
+    pub fn read_context(&mut self, context: &xaqu_native::region::Context) {
         self.thread_pointer = context.fs_base;
         self.gs_base = context.gs_base;
         self.tls = context.tls;
@@ -344,7 +344,7 @@ impl UserState {
         ];
     }
     /// Give the bases, TLS slots and selectors to K1's context.
-    pub fn write_context(&self, context: &mut ferrix_native::region::Context) {
+    pub fn write_context(&self, context: &mut xaqu_native::region::Context) {
         context.fs_base = self.thread_pointer;
         context.gs_base = self.gs_base;
         context.tls = self.tls;

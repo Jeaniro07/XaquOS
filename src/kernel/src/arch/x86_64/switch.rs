@@ -20,7 +20,7 @@
 use core::arch::global_asm;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_sched::MAX_CPUS;
+use xaqu_sched::MAX_CPUS;
 
 use super::cpu;
 use super::gdt;
@@ -51,7 +51,7 @@ const FRAME_BYTES: u64 = 7 * 8;
 // toward its callers -- the six callee-saved registers pushed and popped, the
 // arguments in rdi and rsi -- and returns on the stack `next` names.
 #[unsafe(naked)]
-unsafe extern "C" fn ferrix_switch(save: *mut u64, next: u64) {
+unsafe extern "C" fn xaqu_switch(save: *mut u64, next: u64) {
     core::arch::naked_asm!(
         "pushq %rbp",
         "pushq %rbx",
@@ -79,8 +79,8 @@ global_asm!(
 // Where a task starts the first time it is switched to: `prepare_stack` left
 // its entry point in r12 and its argument in r13, and the stack is aligned as
 // the ABI wants it at a call.
-.globl ferrix_task_entry
-ferrix_task_entry:
+.globl xaqu_task_entry
+xaqu_task_entry:
     movq %r13, %rdi
     callq *%r12
     ud2
@@ -90,7 +90,7 @@ ferrix_task_entry:
 
 unsafe extern "C" {
     /// The first instruction a new task runs.
-    fn ferrix_task_entry();
+    fn xaqu_task_entry();
 }
 
 /// Stop running on this stack and continue on `next`, writing this context's
@@ -105,7 +105,7 @@ unsafe extern "C" {
 /// exist.
 pub(crate) unsafe fn switch_to(save: *mut u64, next: u64) {
     // SAFETY: (CONTEXT) the caller's guarantee is exactly the assembly's contract.
-    unsafe { ferrix_switch(save, next) };
+    unsafe { xaqu_switch(save, next) };
 }
 
 /// Lay out a stack so that switching to it calls `entry(argument)`.
@@ -131,7 +131,7 @@ pub(crate) unsafe fn prepare_stack(
         entry as usize as u64, // r12
         0,                     // rbx
         0,                     // rbp
-        ferrix_task_entry as *const () as usize as u64,
+        xaqu_task_entry as *const () as usize as u64,
     ];
     let stack_pointer = top - FRAME_BYTES;
     // SAFETY: (CONTEXT) the caller guarantees the stack is mapped, writable and theirs,
@@ -248,7 +248,7 @@ impl UserState {
     /// (CONTEXT) The registers are this record's, with interrupts masked and `CR0.TS` clear.
     pub(super) unsafe fn save_vectors_only(&mut self) {
         // SAFETY: (CONTEXT) a whole area, and the processor's enabled components.
-        unsafe { ferrix_fpu_save(&raw mut self.fpu, cpu::extended_state_components()) };
+        unsafe { xaqu_fpu_save(&raw mut self.fpu, cpu::extended_state_components()) };
     }
 
     /// Load the vector registers alone from here.
@@ -258,7 +258,7 @@ impl UserState {
     /// (CONTEXT) As [`UserState::save_vectors_only`], the area written by the processor.
     pub(super) unsafe fn restore_vectors_only(&mut self) {
         // SAFETY: (CONTEXT) the caller's guarantee.
-        unsafe { ferrix_fpu_restore(&raw const self.fpu, cpu::extended_state_components()) };
+        unsafe { xaqu_fpu_restore(&raw const self.fpu, cpu::extended_state_components()) };
     }
 
     /// The next save leaves the area alone.
@@ -622,7 +622,7 @@ impl FpuArea {
 pub(super) unsafe fn load_fpu(state: &UserState) {
     // SAFETY: (CONTEXT) an area inside a 64-byte-aligned structure, whose `MXCSR`
     // the caller has masked and whose header only names enabled components.
-    unsafe { ferrix_fpu_restore(&raw const state.fpu, cpu::extended_state_components()) };
+    unsafe { xaqu_fpu_restore(&raw const state.fpu, cpu::extended_state_components()) };
 }
 
 /// `XSAVE64` of `components` into `area`, or `FXSAVE64` for none: the
@@ -633,7 +633,7 @@ pub(super) unsafe fn load_fpu(state: &UserState) {
 ///
 /// (CONTEXT) `area` must be a whole [`FpuArea`], and `components` zero or a subset
 /// of `XCR0`, which `cpu::extended_state_components` is.
-unsafe fn ferrix_fpu_save(area: *mut FpuArea, components: u64) {
+unsafe fn xaqu_fpu_save(area: *mut FpuArea, components: u64) {
     let at = area.cast::<u8>();
     if components == 0 {
         // SAFETY: (CONTEXT) 512 bytes, sixteen-byte aligned, inside the area.
@@ -649,10 +649,10 @@ unsafe fn ferrix_fpu_save(area: *mut FpuArea, components: u64) {
 ///
 /// # Safety
 ///
-/// (CONTEXT) As [`ferrix_fpu_save`], and the area's `MXCSR` and header must be ones
+/// (CONTEXT) As [`xaqu_fpu_save`], and the area's `MXCSR` and header must be ones
 /// the processor accepts: written by it, built by [`UserState::new`], or
 /// masked by `rt_sigreturn`.
-unsafe fn ferrix_fpu_restore(area: *const FpuArea, components: u64) {
+unsafe fn xaqu_fpu_restore(area: *const FpuArea, components: u64) {
     let at = area.cast::<u8>();
     if components == 0 {
         // SAFETY: (CONTEXT) the caller's guarantee.
@@ -708,7 +708,7 @@ pub(crate) unsafe fn save_user_state(state: &mut UserState, blocked: bool) {
     }
     // SAFETY: (CONTEXT) an area of the standard form's size for the enabled
     // components, 64-byte aligned, which is what `XSAVE64` and `FXSAVE64` write.
-    unsafe { ferrix_fpu_save(&raw mut state.fpu, components) };
+    unsafe { xaqu_fpu_save(&raw mut state.fpu, components) };
 }
 
 /// Load `state` onto this processor for the task about to run, and point the
@@ -754,7 +754,7 @@ pub(crate) unsafe fn restore_user_state(state: &mut UserState, entry_stack: u64)
     } else {
         // SAFETY: (CONTEXT) an area this module initialised or `XSAVE64` wrote, so every
         // reserved bit `XRSTOR64` checks is clear.
-        unsafe { ferrix_fpu_restore(&raw const state.fpu, cpu::extended_state_components()) };
+        unsafe { xaqu_fpu_restore(&raw const state.fpu, cpu::extended_state_components()) };
     }
     // SAFETY: (ENTRY) the caller guarantees the stack.
     unsafe { super::syscall::set_entry_stack(entry_stack) };
@@ -911,7 +911,7 @@ unsafe fn reset_vectors(state: &mut UserState) {
         if cpu::x87_in_use() {
             // SAFETY: (CONTEXT) the caller's guarantee: the image's header
             // names no component, so the x87 is initialised.
-            unsafe { ferrix_fpu_restore(&raw const state.fpu, cpu::XSTATE_X87) };
+            unsafe { xaqu_fpu_restore(&raw const state.fpu, cpu::XSTATE_X87) };
             count(&X87_RESETS);
         } else {
             count(&X87_LEFT);
@@ -919,7 +919,7 @@ unsafe fn reset_vectors(state: &mut UserState) {
     } else {
         // SAFETY: (CONTEXT) the caller's guarantee: the image's `MXCSR` is one the
         // processor held, and its header names no component.
-        unsafe { ferrix_fpu_restore(&raw const state.fpu, components) };
+        unsafe { xaqu_fpu_restore(&raw const state.fpu, components) };
     }
     let control = u16::from_le_bytes([state.fpu.legacy[FCW_AT], state.fpu.legacy[FCW_AT + 1]]);
     if control != INITIAL_X87_CONTROL {
@@ -956,7 +956,7 @@ pub unsafe fn reset_user_state() {
         let _ = unsafe { crate::sched::with_own_user_state(|state| state.set_bases(0, 0)) };
     });
     // SAFETY: (CONTEXT) an area built by `UserState::new`, whose reserved bits are clear.
-    unsafe { ferrix_fpu_restore(&raw const fresh.fpu, cpu::extended_state_components()) };
+    unsafe { xaqu_fpu_restore(&raw const fresh.fpu, cpu::extended_state_components()) };
 }
 
 /// Load a program's four data selectors, each checked against `tls`, and

@@ -17,7 +17,7 @@
 //! [`PRODUCT`] at most `p * (2^w - 1)` = 765 chain hashes, the K and Q
 //! hashes, and `h` tree hashes (`docs/SIGNING.md` §8.5).
 
-use ferrix_sha256::{Sha256, finish_192};
+use xaqu_sha256::{Sha256, finish_192};
 
 /// The hash length `n` (and `m`) of every allowed set: SHA-256/192.
 pub const N: usize = 24;

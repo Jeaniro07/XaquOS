@@ -5,7 +5,7 @@
 //! planes of a blur, the block a blur is cut out of the canvas into, the
 //! tight rows a padded surface is gathered into before it is blended. Each
 //! was a fresh `Vec` and was dropped when its operation ended -- which on a
-//! Linux host is cheap enough to go unnoticed, and on Ferrix is not. These
+//! Linux host is cheap enough to go unnoticed, and on Xaqu is not. These
 //! programs are linked against musl, whose `malloc` maps every block over
 //! 128 KiB on its own and unmaps it on `free` (`ferrousli`'s does the same,
 //! by design), so each of them was an `mmap`, a page fault for every 4 KiB

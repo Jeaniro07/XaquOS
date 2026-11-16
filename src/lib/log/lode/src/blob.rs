@@ -56,7 +56,7 @@ pub type BlobId = [u8; 32];
 /// The id of `bytes`.
 #[must_use]
 pub fn id_of(bytes: &[u8]) -> BlobId {
-    ferrix_slots::sha256::digest(bytes)
+    xaqu_slots::sha256::digest(bytes)
 }
 
 /// `id` in hex.

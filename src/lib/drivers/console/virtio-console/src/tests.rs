@@ -1,6 +1,6 @@
 //! The driver against a device played by the test.
 //!
-//! The device's side of a virtqueue is `ferrix_virtio::SplitQueueDevice`, the
+//! The device's side of a virtqueue is `xaqu_virtio::SplitQueueDevice`, the
 //! same code the kernel uses when it serves a userspace driver, so what these
 //! tests drive the driver with is a real ring and not a mock of one. The
 //! control messages are written out by hand from virtio 1.2 §5.3.6, not built
@@ -14,12 +14,12 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     DEVICE_FEATURE, DEVICE_FEATURE_SELECT, DEVICE_STATUS, DRIVER_FEATURE, DRIVER_FEATURE_SELECT,
     FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, NO_VECTOR, QUEUE_ENABLE, QUEUE_NOTIFY_OFF,
     QUEUE_SELECT, QUEUE_SIZE as QUEUE_SIZE_REGISTER, STATUS_DRIVER_OK,
 };
-use ferrix_virtio::{Descriptor, Layout, SplitQueueDevice};
+use xaqu_virtio::{Descriptor, Layout, SplitQueueDevice};
 
 use super::*;
 

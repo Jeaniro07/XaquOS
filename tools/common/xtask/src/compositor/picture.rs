@@ -59,7 +59,7 @@ pub(super) fn expected(relative: &str) -> Result<Vec<u8>> {
             .ok_or_else(|| Error::new(format!("{} ends inside a word", path.display())))?;
         Ok(u32::from_le_bytes(slice))
     };
-    if bytes.get(..16) != Some(b"ferrix-xrgb-rle\n") {
+    if bytes.get(..16) != Some(b"xaqu-xrgb-rle\n") {
         return Err(Error::new(format!(
             "{} is not an expected image",
             path.display()

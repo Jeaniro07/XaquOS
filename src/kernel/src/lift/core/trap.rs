@@ -7,8 +7,8 @@ use core::sync::atomic::AtomicBool;
 use core::sync::atomic::AtomicPtr;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::Ordering;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::Once;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::Once;
 pub fn handled_fault_count() -> u64 {
     0
 }
@@ -71,7 +71,7 @@ pub fn return_path() -> Option<&'static ReturnPath> {
 }
 static RETURN_PATH: core::sync::atomic::AtomicPtr<ReturnPath> =
     core::sync::atomic::AtomicPtr::new(core::ptr::null_mut());
-static SYSCALL_FILTER: ferrix_sync::Once<SyscallFilter> = ferrix_sync::Once::new();
+static SYSCALL_FILTER: xaqu_sync::Once<SyscallFilter> = xaqu_sync::Once::new();
 pub type SyscallFilter = fn(&SyscallArgs) -> Verdict;
 /// As the kernel's entry asks it, on the same terms.
 pub fn filter_system_call(args: &SyscallArgs) -> Option<Outcome> {

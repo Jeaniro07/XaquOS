@@ -6,7 +6,7 @@ the machine-check follow-ups (2026-10-30: "cheap restart after a crash:
 fast boot, pstore crash log, 'left from before' record surfaced"). It
 builds on `docs/MACHINE-CHECK.md` (§3.1 the left records, §3.4 the retired
 set), `docs/POSTMORTEM.md` (PM3's pstore region, PM4's event log, S1's stop
-word) and `ferrix.panic=reset` (`panic/reset.rs`, BACKLOG's panic-reboot
+word) and `xaqu.panic=reset` (`panic/reset.rs`, BACKLOG's panic-reboot
 row).
 
 **Landed:** slice 8a as 368e7f5e9 (pstore header version 3, the kernel's records) and 8b as fa6e08d0d (the loader's bad-frame set, across a power cycle), both on `develop` on 2026-10-31; e51fc67fd makes the mechanism `off`, `reset` or `persist` (§10). Reconciled 2026-11-02.
@@ -22,7 +22,7 @@ customer's R1.
 
 * **A fatal machine check** stops the kernel through the panic path
   (`trap::fatal`, catalogue FX-9005), whose report prints the banks. With
-  `ferrix.panic=reset` (off by default) the machine resets 10 s later.
+  `xaqu.panic=reset` (off by default) the machine resets 10 s later.
 * **The record**: pstore keeps the log's tail and S1's stop word, here 1,
   "a panic". Code 7 is the lockup detector's (POSTMORTEM §6.2, reserved by
   the lockup branch).
@@ -45,7 +45,7 @@ customer's R1.
    (L.console.59): bytes 128..648, a count word and 64 entries, each the
    frame's address and its complement (the stop word's rule; an entry
    whose halves do not match is ignored). The layout lives in
-   `ferrix_bootinfo::pstore`; `encode` zeroes the whole table; `fresh`
+   `xaqu_bootinfo::pstore`; `encode` zeroes the whole table; `fresh`
    refuses version 2 and any non-zero table byte; `validate` reads versions
    1, 2 and 3; a loader and kernel of different versions fail closed (no
    table is read or written where the header is not version 3, shown by
@@ -72,7 +72,7 @@ customer's R1.
 5. **The loader keeps each page out** ((7), outside the item): before it
    touches the pstore region it reads the banks ((8), (9)); then it reads
    the table of a valid version-3 header; for each frame named by either it
-   calls `AllocatePages(AllocateAddress)` with a Ferrix memory type of its
+   calls `AllocatePages(AllocateAddress)` with a Xaqu memory type of its
    own (0x8000_0008; 0x8000_0007 is already the loader's SMBIOS copy), before it stages the kernel or the boot info, so
    nothing of the loader's lands there; a refusal is one boot-log line. The
    map hands the page to the kernel as a new **`MemKind::BadFrame` (16,
@@ -89,7 +89,7 @@ customer's R1.
 7. **The bank read** ((9)): read-only, only banks below `MCG_CAP`'s count,
    only on a vendor it names (Intel, AMD); Intel's rule (UC, `ADDRV`,
    `MISCV` with a page-sized or finer grain) and AMD's (UC, `ADDRV`, the
-   poison code); pure decoding in `ferrix-mce-decode`-style host-tested
+   poison code); pure decoding in `xaqu-mce-decode`-style host-tested
    functions shared with the kernel's rules where they can be.
 8. **The kernel leaves them out** (L.mm.110): the frame allocator's
    initialisation gives no `BadFrame` page to its free lists (they are not
@@ -101,7 +101,7 @@ customer's R1.
    before `NotCovered`, so the poll's later retirement of the same left
    record says `already retired` (its line), not `not retired`.
 9. **The restart's cost, measured**: from the stop to the next boot's
-   `FERRIX-BOOT-OK` under `ferrix.panic=reset`, its parts named (the 10 s
+   `XAQU-BOOT-OK` under `xaqu.panic=reset`, its parts named (the 10 s
    hold, firmware, the loader, the boot); QEMU in the gate, the N150 a
    BACKLOG row.
 
@@ -132,11 +132,11 @@ evidence, not the item's.
   check-owned header copy, the live count unchanged; `retire_frame` of a
   kept-out frame answers `Already`.
 * **`test-mce-restart`** (x86-64, TCG with Intel's records; without
-  `-no-reboot`; `ferrix.panic=reset`): a fatal record at the victim's page
+  `-no-reboot`; `xaqu.panic=reset`): a fatal record at the victim's page
   (test-mce's victim, `PCC`); required: the stop's report; the reset; the
   next boot's `boot N ended: a machine check`; `bad frame <f> kept out
   (table)` and `(left)`; `mm   1 frames left out as bad`; `<f>` in
-  `/proc/ferrix-mce-retired` before any program allocated; the poll's
+  `/proc/xaqu-mce-retired` before any program allocated; the poll's
   `left from before this boot` and `already retired`; the restart's time
   and parts said. Under KVM if injection survives its reset (QEMU keeps
   the banks under KVM too: `kvm_put_msrs` restores them), else said why.
@@ -180,7 +180,7 @@ VULNERABILITY-ANALYSIS V-14 (the table); BACKLOG (the N150 restart time;
   where a page already the loader's is a refusal line; boot 1's checks hold
   the table (`mm::hold_table`, released by the checks' undo), so the stage 2
   and stage 12 retirements never reach it; test-mce-restart judges boot 2 up
-  to its poll's `already retired` line, not `FERRIX-BOOT-OK`, since stage
+  to its poll's `already retired` line, not `XAQU-BOOT-OK`, since stage
   12's write check needs the fresh writable disk xtask makes per QEMU start,
   and measures the restart to boot 2's poll (13.6 s locally, 11.0 s of it to
   the loader); boots after boot 2 keep the frame out from the table the
@@ -193,7 +193,7 @@ VULNERABILITY-ANALYSIS V-14 (the table); BACKLOG (the N150 restart time;
   (a table frame the boot info area or firmware holds is not kept out, said
   as `is in use`); (4) stage 2's live-table comparison from before
   `check_retired`; (5)-(6) the landing. Rulings: (a) the restart measured to
-  boot 2's poll, the N150 row owing it to `FERRIX-BOOT-OK`; (b) KVM not owed
+  boot 2's poll, the N150 row owing it to `XAQU-BOOT-OK`; (b) KVM not owed
   (TCG only; KVM injection across a reset not tried, a BACKLOG line); (c)
   the postmortem cases leaving the machine check to this gate; (d) the late
   `&raw const` token; (e) a frame above 2^32 answering Full. The loader reads
@@ -256,7 +256,7 @@ header copy (one block, as PM4):
   pstore table or machine-check banks name a frame not already in the
   log's set. A boot whose set is unchanged writes nothing: a healthy
   machine's disk is never written by the loader.
-* **The set only grows** in Ferrix: no loader or kernel path removes a
+* **The set only grows** in Xaqu: no loader or kernel path removes a
   frame. A frame the loader could not keep out ("in use") still goes into
   the set: the set records what the evidence named, the map what could be
   done about it.
@@ -268,7 +268,7 @@ header copy (one block, as PM4):
   bad frames not read`. A copy without the extension's magic but with a
   non-zero byte in 64..344 is invalid, not an empty set. (POSTMORTEM
   §4.3's "a fresh header when neither is valid" is amended to this.)
-* **The write** (`ferrix_eventlog::add_bad_frames`, host-tested): read the
+* **The write** (`xaqu_eventlog::add_bad_frames`, host-tested): read the
   header (a fresh one, both copies, only as above);
   merge the new frames (sorted, deduplicated, at most 64); if nothing
   changed, no write; else copy A with generation + 1, flushed, then copy
@@ -283,14 +283,14 @@ header copy (one block, as PM4):
   there is no disk copy to wait for, and the kernel's attach rewrites every
   kept-out page into the new table, so the frames still cross warm resets.
   The decision is a host-tested pure function the loader calls
-  (`ferrix_eventlog::may_renew(record, frames)`), with its control. A torn write: the set only grows, so the older copy is a subset
+  (`xaqu_eventlog::may_renew(record, frames)`), with its control. A torn write: the set only grows, so the older copy is a subset
   of the newer; falling back to it loses only this boot's additions, which
   the un-renewed table still holds.
 * **Full**: a 65th frame is not added, said (`events   bad frame <f> not
   kept in the event log: its 64 are`); it still stays out across warm
   resets through 8a's table (the kernel's attach rewrites it), and the
   region is renewed (not a failure).
-* **Where there is no log** (the bare FAT image, `ferrix.pstore=off`, an
+* **Where there is no log** (the bare FAT image, `xaqu.pstore=off`, an
   unusable or damaged partition): nothing is written; 8a's warm-reset path
   only.
 * **A frame at or above 16 TiB** never reaches the set: the kernel's
@@ -315,11 +315,11 @@ The summary line gains the set:
 ### 9.4 Who clears it (B1: the clear tool's authority)
 
 Only a person who is root on a host with the disk, after replacing the
-memory: `ferrix-eventlog clear-bad-frames DEVICE` (the inspection Linux
+memory: `xaqu-eventlog clear-bad-frames DEVICE` (the inspection Linux
 image carries it) writes both copies with an empty set and generation + 1,
-and prints the frames it dropped. `ferrix-eventlog list` prints the set;
-`append` carries it. Raw-device access is root's (V-15). Ferrix never
-clears it, and no Ferrix interface asks to.
+and prints the frames it dropped. `xaqu-eventlog list` prints the set;
+`append` carries it. Raw-device access is root's (V-15). Xaqu never
+clears it, and no Xaqu interface asks to.
 
 ### 9.5 Residuals (named)
 
@@ -340,7 +340,7 @@ clears it, and no Ferrix interface asks to.
   boot (the region rule): the post-mortem record is lost until the log is
   repaired, said every boot; BACKLOG row.
 * **Another boot disk, or a reinstall** starts with an empty set.
-* **The tool's commands unrun**: no gate runs `ferrix-eventlog list` or
+* **The tool's commands unrun**: no gate runs `xaqu-eventlog list` or
   `clear-bad-frames` as a binary; the gate calls the functions they wrap.
 * **The banks' early write unchecked** (ledger 5531 C1): the write of the
   banks' frames right after the pstore switch is not part of the region
@@ -355,7 +355,7 @@ clears it, and no Ferrix interface asks to.
 
 ### 9.6 How it is checked
 
-* **Host tests (`ferrix-eventlog`)**: the extension's encoding, a copy
+* **Host tests (`xaqu-eventlog`)**: the extension's encoding, a copy
   with no extension read as empty, every refused field (CRC, version,
   count > 64, order, duplicates, a non-zero tail) making the copy invalid
   and the other copy taken; an extension moved to the other copy refused
@@ -373,7 +373,7 @@ clears it, and no Ferrix interface asks to.
   second process boots cold: boot 3's loader says `kept out (log)`, no
   `(table)` and no `(left)`; its kernel `1 frames left out as bad`; a warm
   boot 4 writes nothing (the header's generation, read by the host tool
-  before and after, unchanged); the host's `ferrix-eventlog list` on the
+  before and after, unchanged); the host's `xaqu-eventlog list` on the
   image prints the frame; after the host's `clear-bad-frames`, a cold boot
   5's loader keeps nothing out. The gate's host side reads and clears the
   set by the library functions the tool calls (`read_header`,
@@ -502,15 +502,15 @@ loader hands it; the switch is the loader's alone.
     from the resolved base profile, so the image manifest and the loader
     agree. The choice-mode gates run with `--kernel-profile desktop`; every
     other gate, H.FAIL.12/13's among them, stays on a `persist` loader.
-* **Into the loader**: `loader_env` adds `FERRIX_BAD_FRAMES`. The loader's
+* **Into the loader**: `loader_env` adds `XAQU_BAD_FRAMES`. The loader's
   `build.rs` refuses a build without it or with an unknown value, and emits
   a `cfg` declared with `rustc-check-cfg`. **A `persist` loader compiles no
   read of the word and no release code**: it says `badframes persist
   (fixed by this build)` on every boot, and nothing about the word.
-* **The boot word `ferrix.badframes = persist | reset | off`**, registered
+* **The boot word `xaqu.badframes = persist | reset | off`**, registered
   in `build-flags.toml` with the `choice` loader as its only reader, and
   permitted by `desktop` alone. It is read through
-  `ferrix_bootinfo::option_in`, as `pstore::switch` reads its word. Absent,
+  `xaqu_bootinfo::option_in`, as `pstore::switch` reads its word. Absent,
   it means `persist`; a value not understood is said as `... is not
   understood, so persist`.
 
@@ -535,9 +535,9 @@ loader hands it; the switch is the loader's alone.
    * `persist`: none.
 
    Each freed frame is said `badframe <a> released
-   (ferrix.badframes=<mode>)`. A FreePages failure is said, and that frame
+   (xaqu.badframes=<mode>)`. A FreePages failure is said, and that frame
    stays out.
-5. The mode is said once: `badframes <mode> (ferrix.badframes)`, or `...
+5. The mode is said once: `badframes <mode> (xaqu.badframes)`, or `...
    (the word absent)`.
 
 ### 10.4 Settings
@@ -548,7 +548,7 @@ loader hands it; the switch is the loader's alone.
 * **On desktop the word is set by B5's `set-boot-word`.** Its list becomes
   `present`'s list plus the boot words whose registry entry says
   `settable = true` and that the image's profile permits.
-  * `ferrix.badframes` is the only settable word.
+  * `xaqu.badframes` is the only settable word.
   * check-build-flags refuses `settable` on a test-only or claimless word.
   * A BACKLOG row for B5's owner says this, and B5's design also decides
     what a slot boot does with the word: its command line comes from the
@@ -576,11 +576,11 @@ loader hands it; the switch is the loader's alone.
 
 * **check-build-flags**: every profile names `bad_frames`; `choice` at a
   certified level and the key unset are refused (self-tests);
-  `ferrix.badframes` is permitted by desktop alone (a self-test refuses it
+  `xaqu.badframes` is permitted by desktop alone (a self-test refuses it
   elsewhere); `settable` is refused on a test-only or claimless word.
-* **The loader's build** refuses a missing or unknown `FERRIX_BAD_FRAMES`.
+* **The loader's build** refuses a missing or unknown `XAQU_BAD_FRAMES`.
 * **The strings check**, on every architecture's loader, both ways: no
-  `ferrix.badframes` in a `persist` loader, and the text present in a
+  `xaqu.badframes` in a `persist` loader, and the text present in a
   `choice` loader.
 * **Host tests**: the release set for each mode (a log frame the table
   names stays out under `reset`); the word's parse (absent, unknown).
@@ -604,23 +604,23 @@ loader hands it; the switch is the loader's alone.
 
 ### 10.7 As built
 
-* **The pure part lives in `ferrix-eventlog`** (`badframes`: `Mode`, the
+* **The pure part lives in `xaqu-eventlog`** (`badframes`: `Mode`, the
   word's parse `choice`, the release predicate `released`), not in
-  `ferrix-bootinfo` as a first draft had it: `ferrix-bootinfo` is compiled
+  `xaqu-bootinfo` as a first draft had it: `xaqu-bootinfo` is compiled
   into the kernel, and the switch is the loader's alone (0 core, 0 item).
   check-build-flags names the file among its library readers, as it names
   `pstore::switch`.
 * **The lines**: `badframe mode persist (fixed by this build)` (every
   `persist` loader, every boot); on a `choice` loader `badframe mode <m>
-  (ferrix.badframes)`, `... (the word absent)`, or `badframe
-  ferrix.badframes=<v> is not understood, so persist`; `badframe <a>
-  released (ferrix.badframes=<m>)`, or `not released ...: firmware refused`.
+  (xaqu.badframes)`, `... (the word absent)`, or `badframe
+  xaqu.badframes=<v> is not understood, so persist`; `badframe <a>
+  released (xaqu.badframes=<m>)`, or `not released ...: firmware refused`.
 * **"Claimless" in 5579 (8b)** is taken as a free-form word (`*`, which
   B5's closed list never takes): check-build-flags refuses `settable` on a
   `test_only` word and on one whose values hold `*`, and refuses
-  `ferrix.badframes` in a profile whose `bad_frames` is not `choice`.
+  `xaqu.badframes` in a profile whose `bad_frames` is not `choice`.
 * **The strings check** is a step of `cargo xtask check` per architecture:
-  this run's (`persist`) loader holds no `ferrix.badframes` and says `fixed
+  this run's (`persist`) loader holds no `xaqu.badframes` and says `fixed
   by this build`; a `choice` build in a target directory of its own lints
   clean (`clippy -D warnings`) and holds the word.
 * **The `off` gate** (`test-mce-restart-off`) uses 8a's fatal record: its
@@ -629,13 +629,13 @@ loader hands it; the switch is the loader's alone.
   recovered retirement leaves nothing in the banks and, under `off`, the
   table is not read, so nothing would be kept to release.
 * **The word on a `persist` build** is appended to `PowerCycle`'s image
-  (`ferrix.badframes=off`), which also requires `badframe mode persist
+  (`xaqu.badframes=off`), which also requires `badframe mode persist
   (fixed by this build)` on boot 2: no boot or time added.
 * **The controls** (on c4bab0fe7, each `control: FIRED`): sw-d1, `off`'s
   release removed: "boot 2's loader did not release the page"; sw-d2,
   `reset` writing the log: "boot 2's loader wrote the event log under
   reset"; sw-d3, a `persist` build compiled with the parser: the strings
-  step's own "the bad_frames = persist loader carries `ferrix.badframes`";
+  step's own "the bad_frames = persist loader carries `xaqu.badframes`";
   sw-d4, `reset`'s release taking a table-named frame: host test
   `reset_releases_the_log_alone_and_off_releases_all`; sw-d5, `reset`
   handing the region rule `Failed`: "boot 2's loader did not renew the

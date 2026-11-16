@@ -12,6 +12,6 @@ body:
   - type: textarea
     id: result
     attributes:
-      label: What it does on Ferrix
+      label: What it does on Xaqu
       description: Output, or the unimplemented system call the kernel logs.
       render: text

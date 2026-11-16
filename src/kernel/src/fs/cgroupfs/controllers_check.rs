@@ -11,7 +11,7 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::{Checked, Harness};
 use crate::object::job::{Job, KILLED_STATUS};
@@ -147,10 +147,10 @@ fn job_of(harness: &Harness, name: &[u8]) -> Checked<Arc<Job>> {
             &harness.ctx,
             None,
             &Harness::path(&path),
-            &ferrix_vfs::OpenFlags {
+            &xaqu_vfs::OpenFlags {
                 read: true,
                 directory: true,
-                ..ferrix_vfs::OpenFlags::default()
+                ..xaqu_vfs::OpenFlags::default()
             },
             0,
         )

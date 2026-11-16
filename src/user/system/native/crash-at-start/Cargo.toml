@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-crash-at-start"
+name = "xaqu-crash-at-start"
 description = "A test driver that dies at every start, a page pinned: devmgr's crash-loop escalation's gate (test-restart --boot crashloop)"
 version.workspace = true
 edition.workspace = true
@@ -14,9 +14,9 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

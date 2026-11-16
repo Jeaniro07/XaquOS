@@ -3,8 +3,8 @@
 
 use std::fs::{File, OpenOptions};
 
-use ferrix_slots::Slot;
-use ferrix_slots::record::{COPY_OFFSETS, Record};
+use xaqu_slots::Slot;
+use xaqu_slots::record::{COPY_OFFSETS, Record};
 
 use crate::{disk, record, slotio};
 
@@ -26,7 +26,7 @@ fn scratch(name: &str, bytes: u64) -> File {
 fn records_alternate_copies_and_a_torn_newest_falls_back() {
     let mut file = scratch("control", 2 << 20);
     // A control partition from sector 2048 to the end.
-    let part = ferrix_slots::gpt::Part {
+    let part = xaqu_slots::gpt::Part {
         index: 2,
         unique: [0; 16],
         first_lba: 2048,
@@ -66,7 +66,7 @@ fn image() -> slotio::Image {
     slotio::Image {
         kernel: vec![0x7F; 70_000],
         initrd: (0..300_000_u32).map(|i| i as u8).collect(),
-        cmdline: b"ferrix.root=btrfs".to_vec(),
+        cmdline: b"xaqu.root=btrfs".to_vec(),
         from: "a test".into(),
     }
 }
@@ -79,7 +79,7 @@ fn a_written_slot_verifies_and_a_flipped_byte_does_not() {
         slotio::verify(&mut slot, 0, bytes).is_err(),
         "an empty slot verifies"
     );
-    let written = slotio::write(&mut slot, 0, bytes, &image(), 3, "ferrix test").unwrap();
+    let written = slotio::write(&mut slot, 0, bytes, &image(), 3, "xaqu test").unwrap();
     assert_eq!(slotio::verify(&mut slot, 0, bytes), Ok(written));
     let at = written.initrd.offset + 1234;
     disk::write_at(&mut slot, at, &[0x55]).unwrap();

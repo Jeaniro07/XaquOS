@@ -37,15 +37,15 @@ use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vma::VmaFlags;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
 
 use crate::fallible;
 use crate::mm;
@@ -224,7 +224,7 @@ fn check_a_section_completes_on_the_reserve() -> Result<u64, &'static str> {
     Ok(drawn)
 }
 
-/// A library crate's map insert -- `ferrix_fallible::try_map_insert`, which
+/// A library crate's map insert -- `xaqu_fallible::try_map_insert`, which
 /// the btrfs writer makes all its inserts through -- runs in the reserved
 /// section the kernel installed at boot (`fallible::install_library_sections`):
 /// with the heap refusing every allocation inside sections, a run of inserts
@@ -241,7 +241,7 @@ fn check_a_library_insert_runs_in_a_section() -> Result<u64, &'static str> {
     let mut map = BTreeMap::new();
     let mut inserted = Ok(());
     for key in 0..200_u64 {
-        if let Err(error) = ferrix_fallible::try_map_insert(&mut map, key, !key) {
+        if let Err(error) = xaqu_fallible::try_map_insert(&mut map, key, !key) {
             inserted = Err(error);
             break;
         }
@@ -261,19 +261,19 @@ fn check_a_library_insert_runs_in_a_section() -> Result<u64, &'static str> {
     // Preemption off, so the refusal and the insert are on one processor.
     crate::sched::preempt_disable();
     mm::refuse_reserve_fills(true);
-    let refused = ferrix_fallible::try_map_insert(&mut map, 1000, 0);
+    let refused = xaqu_fallible::try_map_insert(&mut map, 1000, 0);
     mm::refuse_reserve_fills(false);
     crate::sched::preempt_enable();
     let (_, refused_after) = mm::reserve_counts();
     if refused.is_ok() || refused_after <= refused_before || map.len() != 200 {
         return Err("a library map insert went ahead in a section that could not be entered");
     }
-    if ferrix_fallible::try_map_insert(&mut map, 1000, 0).is_err() || map.len() != 201 {
+    if xaqu_fallible::try_map_insert(&mut map, 1000, 0).is_err() || map.len() != 201 {
         return Err("a library map insert was refused once fills were allowed again");
     }
 
     let mut wide: BTreeMap<u64, [u8; 256]> = BTreeMap::new();
-    if ferrix_fallible::try_map_insert(&mut wide, 1, [0; 256]).is_ok() || !wide.is_empty() {
+    if xaqu_fallible::try_map_insert(&mut wide, 1, [0; 256]).is_ok() || !wide.is_empty() {
         return Err("a library map whose nodes no size class holds was not refused");
     }
     Ok(drawn)

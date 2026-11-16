@@ -61,10 +61,10 @@ use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use crate::sync::SpinLock;
 
-use ferrix_cgroupfs::controllers::{self, Change, Set, Standing};
-use ferrix_cgroupfs::write::Limit;
-use ferrix_native_abi::signals::Signals;
-use ferrix_sync::Once;
+use xaqu_cgroupfs::controllers::{self, Change, Set, Standing};
+use xaqu_cgroupfs::write::Limit;
+use xaqu_native_abi::signals::Signals;
+use xaqu_sync::Once;
 
 use super::exception::Supervisor;
 use super::port::{Observer, Observers, PortError, deliver, register, trigger};
@@ -468,7 +468,7 @@ impl Job {
             measured: AtomicBool::new(false),
             granted_below: AtomicBool::new(false),
             supervised_outside: AtomicBool::new(false),
-            level: ferrix_native_abi::types::JOB_LEVEL_TOP,
+            level: xaqu_native_abi::types::JOB_LEVEL_TOP,
             declared: false,
             supervisor: Supervisor::new(),
         })
@@ -817,7 +817,7 @@ impl Job {
     }
 
     /// Set its `cpu.max`. Whether it could be: the tree's root takes none.
-    #[cfg(not(ferrix_restricted_window = "on"))]
+    #[cfg(not(xaqu_restricted_window = "on"))]
     pub fn set_bandwidth(&self, quota: u64, period: u64) -> bool {
         self.quota
             .as_ref()
@@ -828,7 +828,7 @@ impl Job {
     /// Set its `cpu.max`, and bring its members out of a run of stubs. Listed first, as a change
     /// that could not reach an armed thread may not be made; the state before the kick, as a
     /// thread armed before it is charged at no exit until one comes (ledger 6787 W4, 6998 X6).
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     pub fn set_bandwidth(&self, quota: u64, period: u64) -> bool {
         let Ok(members) = process::live() else {
             return false;
@@ -1471,7 +1471,7 @@ impl Job {
     /// new members all the same, through the killed job above it.
     pub fn kill(self: &Arc<Job>, status: i32) -> Result<usize, AllocError> {
         let jobs = self.walk(|_| {})?;
-        #[cfg(ferrix_load_built = "lift")]
+        #[cfg(xaqu_load_built = "lift")]
         for job in &jobs {
             crate::sched::kill_kernel_job(Arc::as_ptr(job) as usize);
         }
@@ -1502,7 +1502,7 @@ impl Job {
     /// [`AllocError`] when the jobs or the processes could not be listed;
     /// nothing has been ended, and every job is as it was.
     pub fn kill_members(self: &Arc<Job>) -> Result<usize, AllocError> {
-        #[cfg(ferrix_load_built = "lift")]
+        #[cfg(xaqu_load_built = "lift")]
         crate::sched::kill_kernel_job(Arc::as_ptr(self) as usize);
         let jobs = self.walk(|_| {})?;
         for job in &jobs {
@@ -1529,7 +1529,7 @@ impl Drop for Job {
     /// taken out first, and dropping it then has nothing above it to recurse
     /// into.
     fn drop(&mut self) {
-        #[cfg(ferrix_load_built = "lift")]
+        #[cfg(xaqu_load_built = "lift")]
         crate::sched::forget_kernel_job(core::ptr::from_ref(self) as usize);
         let mut next = self.parent.take();
         while let Some(parent) = next {

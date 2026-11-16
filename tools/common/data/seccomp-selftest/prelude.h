@@ -1,4 +1,4 @@
-/* Included before seccomp_bpf.c by Ferrix's musl build (tools/common/fetch/fetch-seccomp-selftest.sh): musl has SIGSYS in
+/* Included before seccomp_bpf.c by Xaqu's musl build (tools/common/fetch/fetch-seccomp-selftest.sh): musl has SIGSYS in
  * siginfo_t (what glibc 2.26 added), and its <sys/prctl.h> already declares
  * what <linux/prctl.h> would declare again. */
 #define __GLIBC_PREREQ(major, minor) 1

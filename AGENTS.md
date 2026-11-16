@@ -1,6 +1,6 @@
 # Agents
 
-Ferrix is built by many agent sessions at once. Most of them own an area: a
+Xaqu is built by many agent sessions at once. Most of them own an area: a
 stage, a subsystem, a port. Some roles span the whole fleet instead. The
 **product owner** and the **certification consultant** are held now. The
 **quality roles** below are each held only when the customer names a session
@@ -20,7 +20,7 @@ nobody. `ListAgents` shows who is alive. The owners table in
 
 ## The customer
 
-The customer owns Ferrix. The customer decides scope and priority, says
+The customer owns Xaqu. The customer decides scope and priority, says
 which session holds which role, and settles everything listed under
 *Waiting on the customer* in `docs/BACKLOG.md`. A decision the customer gave
 in one session is real only once it is written down as a dated entry under
@@ -53,7 +53,7 @@ The image row of *What a landing runs* (`docs/BACKLOG.md`) is the long one:
 `check`, the release build, and boots on every architecture with x86_64 under
 KVM and under TCG. Run alone per branch, it fills the gate pool's slots
 with near-identical work while 20 more runs wait half an hour each for a
-slot. `~/.local/share/ferrix/fleet/batch.sh` runs it once for several
+slot. `~/.local/share/xaqu/fleet/batch.sh` runs it once for several
 branches (customer, 2026-10-04):
 
 * **Join when ready.** A branch that is rebased onto the landing branch
@@ -105,7 +105,7 @@ consultant: a session that needs a review briefs its own consultant subagent
 with this section and the ledger on the gate host, instead of sending to one
 standing consultant session. The role's rules below are unchanged.
 
-Ferrix's certification targets are required, not optional (customer,
+Xaqu's certification targets are required, not optional (customer,
 2026-10-01): Common Criteria EAL5+, DO-178C DAL C, IEC 62304 Class C and
 EN 50716 SIL 2. The consultant's goal is to reach them. Its evidence is in
 [docs/certification/](docs/certification/README.md), and its reviews keep
@@ -181,7 +181,7 @@ and tells the product owner if the skipped change is serious.
 ### Its ledger
 
 The review ledger is on the gate host:
-`~/.local/share/ferrix/cert-consultant/reviews.md`, with each review, its
+`~/.local/share/xaqu/cert-consultant/reviews.md`, with each review, its
 conditions and its outcome, and its open queue at the end. Beside it is
 `HANDOVER.md`. A new consultant tells the product owner its session name,
 works the open queue top to bottom, then audits `main` back to the last
@@ -191,7 +191,7 @@ recorded verdict.
 
 ## Quality roles
 
-Each role below closes a gap that Ferrix's history shows, and the evidence is
+Each role below closes a gap that Xaqu's history shows, and the evidence is
 given with each. None of them writes features. The verification auditor and
 the acceptance tester also never fix what they find: they report it, with a
 row, to the owner of the area. A finder that fixes things stops being a second
@@ -370,7 +370,7 @@ the customer's priorities.
 
 **The gap.** The certification targets ask for a process that is checked as
 well as followed: software quality assurance in DO-178C, configuration
-management and problem resolution in IEC 62304. Ferrix's process has slipped
+management and problem resolution in IEC 62304. Xaqu's process has slipped
 where nobody checked it. Item changes skipped review, the root checkout was
 left dirty, and pinned outside software (the yserver fork, the toolchain, the
 fetched volumes) changes by hand.

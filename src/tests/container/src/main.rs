@@ -48,7 +48,7 @@ const CTN: &str = "/sys/fs/cgroup/ctn";
 const LIMIT: usize = 8 * 1024 * 1024;
 /// The uid the container's owner has outside.
 const OWNER: u32 = 1000;
-/// Every namespace kind Ferrix gives, as `/proc/<pid>/ns/` names it.
+/// Every namespace kind Xaqu gives, as `/proc/<pid>/ns/` names it.
 const KINDS: [&str; 7] = ["mnt", "user", "pid", "net", "ipc", "uts", "cgroup"];
 /// The btrfs test disk every QEMU machine carries as `vdb`, read-only
 /// (`tools/common/xtask/src/btrfs_disk.rs`).

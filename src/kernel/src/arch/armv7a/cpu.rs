@@ -7,7 +7,7 @@
 
 use core::arch::asm;
 
-use ferrix_fdt::PsciConduit;
+use xaqu_fdt::PsciConduit;
 
 /// `CPSR.A`, `CPSR.I` and `CPSR.F`: asynchronous aborts, IRQs and FIQs masked.
 const CPSR_MASK_BITS: u32 = (1 << 8) | (1 << 7) | (1 << 6);
@@ -864,7 +864,7 @@ pub(crate) fn read_cntkctl() -> u32 {
 /// for its clock without a system call; the physical counter, and both
 /// timers' compare and control registers, stay the kernel's. `EVNTEN`,
 /// `EVNTDIR` and `EVNTI` are left as found: they are the event stream, which
-/// wakes a `wfe` and gives no program a register, and nothing in Ferrix turns
+/// wakes a `wfe` and gives no program a register, and nothing in Xaqu turns
 /// it on. A processor's own register: every processor runs this before it
 /// can run a program -- the boot processor from `timer::init`, each
 /// secondary in `smp::secondary_start` -- and it is the only writer of

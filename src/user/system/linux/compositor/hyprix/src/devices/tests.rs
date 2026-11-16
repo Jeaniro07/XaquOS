@@ -1,6 +1,6 @@
 //! evdev's numbering turned into the seat's, without a device.
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_X, ABS_Y, BTN_LEFT, BTN_TOUCH, EV_ABS, EV_KEY, EV_MSC, EV_REL, EV_SYN, Event, KEY_A,
     MSC_SCAN, REL_HWHEEL, REL_WHEEL, REL_X, REL_Y, SYN_REPORT,
 };
@@ -217,7 +217,7 @@ fn what_the_seat_has_no_use_for_is_dropped() {
 #[test]
 fn the_lights_follow_the_locked_mask_once_per_change() {
     use compositor_xkb::generated::{LOCK, MOD2};
-    use ferrix_linux_abi::input::{LED_CAPSL, LED_NUML};
+    use xaqu_linux_abi::input::{LED_CAPSL, LED_NUML};
 
     let mut lights = super::Lights::default();
     assert_eq!(

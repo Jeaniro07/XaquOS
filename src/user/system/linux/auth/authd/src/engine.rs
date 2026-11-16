@@ -33,7 +33,7 @@
 
 use std::time::Duration;
 
-use ferrix_auth_proto::{Record, Secret, method};
+use xaqu_auth_proto::{Record, Secret, method};
 
 use crate::accounts::{self, Account};
 use crate::audit::{Audit, say};
@@ -337,7 +337,7 @@ impl Engine {
             if !matches!(self.store.credential(&name), Ok(None)) {
                 continue;
             }
-            let usable = ferrix_argon2::phc::Encoded::parse(&hash).is_ok()
+            let usable = xaqu_argon2::phc::Encoded::parse(&hash).is_ok()
                 || hash.starts_with("$6$")
                 || hash.starts_with("$5$");
             if !usable {
@@ -649,7 +649,7 @@ impl Engine {
                 target,
                 first,
             } => {
-                if !ferrix_argon2::equal(first.expose(), secret.expose()) {
+                if !xaqu_argon2::equal(first.expose(), secret.expose()) {
                     return (
                         Step::Over,
                         Out::now(Reply::Failed {

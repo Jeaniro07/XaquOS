@@ -1,4 +1,4 @@
-//! A user's own segments, handed over (`ferrix_lode_core::access`,
+//! A user's own segments, handed over (`xaqu_lode_core::access`,
 //! `docs/LOGGING.md` §12.1).
 //!
 //! `/run/lode/read`, a `SOCK_SEQPACKET` socket made by lode while it is
@@ -11,7 +11,7 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::access::{self, Packet};
+use xaqu_lode_core::access::{self, Packet};
 
 use crate::sys;
 
@@ -127,7 +127,7 @@ fn files_of(uid: u32, stores: &[usize]) -> Vec<(usize, String)> {
                 continue;
             };
             let segment = name.strip_suffix(".sum").unwrap_or(&name);
-            if !name.starts_with('.') && ferrix_lode_core::segment::is_segment_name(segment) {
+            if !name.starts_with('.') && xaqu_lode_core::segment::is_segment_name(segment) {
                 files.push((store, alloc::format!("{user}/{name}")));
             }
         }

@@ -35,7 +35,7 @@ pub mod lock;
 pub mod prompt;
 
 /// The variable naming the channel's descriptor.
-pub const FD_VARIABLE: &str = "FERRIX_SEAT_FD";
+pub const FD_VARIABLE: &str = "XAQU_SEAT_FD";
 
 /// The descriptor `sessiond` gives the channel in the compositor.
 pub const CHANNEL_FD: i32 = 3;

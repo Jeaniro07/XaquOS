@@ -6,7 +6,7 @@
 
 use core::arch::{asm, naked_asm};
 
-use ferrix_linux_abi::nr::aarch64::{CLOCK_GETTIME, EXIT_GROUP, UNLINKAT};
+use xaqu_linux_abi::nr::aarch64::{CLOCK_GETTIME, EXIT_GROUP, UNLINKAT};
 
 use crate::linux::CLOCK_MONOTONIC;
 
@@ -15,7 +15,7 @@ use crate::linux::CLOCK_MONOTONIC;
 /// A number is this architecture's, so the table it comes from is named here
 /// and nowhere else; `crate::linux` spells every call the same on all three.
 pub(crate) mod nr {
-    pub(crate) use ferrix_linux_abi::nr::aarch64::{
+    pub(crate) use xaqu_linux_abi::nr::aarch64::{
         ACCEPT4, BIND, CLOSE, FCNTL, GETSOCKOPT, LISTEN, MUNMAP, READ, REBOOT, SETSOCKOPT, SOCKET,
         WRITE,
     };
@@ -23,20 +23,20 @@ pub(crate) mod nr {
 
 /// This architecture's whole table, for a program that makes a call
 /// `crate::linux` has no function for (`crate::linux::call`).
-pub use ferrix_linux_abi::nr::aarch64 as numbers;
+pub use xaqu_linux_abi::nr::aarch64 as numbers;
 
 /// `AT_FDCWD`: start from the current directory, which an absolute path then
 /// ignores.
 const AT_FDCWD: usize = (-100_isize) as usize;
-use ferrix_native::Raw;
+use xaqu_native::Raw;
 
 /// The process's first instruction.
 ///
-/// `ferrix_enter_user` starts a program with `eret`, which leaves the frame
+/// `xaqu_enter_user` starts a program with `eret`, which leaves the frame
 /// pointer and link register as whatever it put in them rather than a caller's
 /// frame. They are zeroed so a frame-pointer walk ends here, the stack pointer
 /// is brought to a multiple of 16 in case a starter did not, and
-/// `ferrix_rt_start` is called. The bootstrap handle's register, X0, is already
+/// `xaqu_rt_start` is called. The bootstrap handle's register, X0, is already
 /// the first argument.
 // SAFETY: (ENTRY) the body is the whole function and the process's first
 // instructions: nothing calls it, and it never returns.
@@ -49,7 +49,7 @@ pub(crate) extern "C" fn _start() -> ! {
         "mov x9, sp",
         "bic x9, x9, #15",
         "mov sp, x9",
-        "bl ferrix_rt_start",
+        "bl xaqu_rt_start",
         "udf #0",
     )
 }
@@ -197,7 +197,7 @@ pub(crate) fn exit(status: i32) -> ! {
     }
 }
 
-/// The ELF machine of a native program here (`ferrix-process-builder`).
+/// The ELF machine of a native program here (`xaqu-process-builder`).
 pub const ELF_MACHINE: u16 = 183;
 /// Make `RESTRICTED_ENTER`, `RESTRICTED_RESUME` or `RESTRICTED_CONTINUE`, with
 /// one argument, and answer what an exit leaves (`docs/microkernel/K1.md`
@@ -245,9 +245,9 @@ pub(crate) unsafe fn restricted(
 // `linuxd`'s copies of a program's memory, in the copy window
 // (`docs/microkernel/K1.md` §2.5): zero, or what the kernel landed with.
 core::arch::global_asm!(
-    ".section .text.ferrix_program_copy, \"ax\"",
-    ".globl ferrix_program_copy",
-    "ferrix_program_copy:",
+    ".section .text.xaqu_program_copy, \"ax\"",
+    ".globl xaqu_program_copy",
+    "xaqu_program_copy:",
     "cbz x2, 2f",
     "1:",
     "ldrb w3, [x1], #1",
@@ -256,11 +256,11 @@ core::arch::global_asm!(
     "b.ne 1b",
     "2:",
     "mov x0, #0",
-    ".globl ferrix_program_copy_end",
-    "ferrix_program_copy_end:",
+    ".globl xaqu_program_copy_end",
+    "xaqu_program_copy_end:",
     "nop",
-    ".globl ferrix_program_copy_landing",
-    "ferrix_program_copy_landing:",
+    ".globl xaqu_program_copy_landing",
+    "xaqu_program_copy_landing:",
     "ret",
     ".text",
 );

@@ -143,9 +143,9 @@ def scan(root: str, gate) -> tuple[dict, list[str]]:
 def built_files(directory: str) -> set[str]:
     read = set()
     for crate, root in (
-        ("ferrix_kernel_core", "kernel_core.rs"),
-        ("ferrix_kernel_item", "kernel_item.rs"),
-        ("ferrix_kernel", "main.rs"),
+        ("xaqu_kernel_core", "kernel_core.rs"),
+        ("xaqu_kernel_item", "kernel_item.rs"),
+        ("xaqu_kernel", "main.rs"),
     ):
         best = None
         for path in glob.glob(f"{directory}/deps/{crate}-*.d"):

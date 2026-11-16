@@ -29,7 +29,7 @@ and later serves the Intel GPU's render node:
 
 * A driver asks for a control channel (`ChardevControlCreate`). Its end
   carries no `TRANSFER` or `DUPLICATE`. HELLO lists the minors it serves;
-  `ferrix_chardevctl::session` judges it, and the kernel names each node.
+  `xaqu_chardevctl::session` judges it, and the kernel names each node.
 * open, ioctl, mmap and release become REQUESTs on the channel. The
   program's thread sleeps killably until `ChardevReply`.
 * While a request is outstanding, the driver may copy to and from the
@@ -46,7 +46,7 @@ and later serves the Intel GPU's render node:
   only after the answer (`MapReply`).
 * **What it lacks:** read and write answer `EINVAL`; poll is never ready;
   names are pinned to major 195 (`nvidia<N>`, `nvidiactl`, `nvidia-modeset`)
-  and one render node (`ferrix_chardevctl::node`); a control needs `MANAGE`
+  and one render node (`xaqu_chardevctl::node`); a control needs `MANAGE`
   on a device with isolated interrupts, which a USB class driver or a
   purely software driver does not have.
 
@@ -71,7 +71,7 @@ Linux parity, as a program sees it:
    `candump` (via a char-device bridge), OpenOCD/libftdi/flashrom over
    libusb on `/dev/bus/usb/BBB/DDD`, `minicom` on a non-tty UART.
 
-Ferrix's own rules:
+Xaqu's own rules:
 
 5. Keep the kernel slim (customer, 2026-10-22): no device class, vendor,
    name or ioctl number is known to the kernel. Policy is ring 3's,
@@ -145,7 +145,7 @@ kernel checks generic rules only, failing closed, in order:
 
 A cap on published nodes per grant and system-wide is stated (proposed: 256
 per grant, 4,096 in all). NVIDIA's and Intel's fixed names **stay pinned in
-`ferrix_chardevctl::node` in this work** (§8 Q4). They are the only Tier 2
+`xaqu_chardevctl::node` in this work** (§8 Q4). They are the only Tier 2
 drivers, and moving their names gets a later landing with its own review.
 
 The conditions:
@@ -331,7 +331,7 @@ Poll must not cost a channel round trip per `poll()`. So the driver
 | The generic name rule; node set in the grant; HELLO version 3 | `src/lib/proto/chardevctl` | none |
 | Publishing under nested names | `src/kernel/src/fs/devfs.rs` | load |
 | The grant as a restricted channel end; `ChardevControlCreate` spending it; the kernel-end table | `src/kernel/src/interfaces/chardev/` | load |
-| New call numbers (`chardev_window_follow`, `chardev_ready`, a grant mint for devmgr) | appended to `ferrix_native_abi::nr`; their SERVED rows, dispatch arms and audit arm in `syscall/native.rs` | **item**, but no new function, so no L id (ledger 316, B13) |
+| New call numbers (`chardev_window_follow`, `chardev_ready`, a grant mint for devmgr) | appended to `xaqu_native_abi::nr`; their SERVED rows, dispatch arms and audit arm in `syscall/native.rs` | **item**, but no new function, so no L id (ledger 316, B13) |
 | The root grant in DEVICES | `discovery/devmgr.rs`, through a hook the load ring registers | **item**: `L.discovery.7` |
 | devmgr's table, minting grants | `src/user/system/native/devmgr` | ring 3 |
 
@@ -340,7 +340,7 @@ behaviours would hide them from the audit arm.
 
 ## 5. Compared with Linux
 
-| | Linux (in-kernel driver) | Linux CUSE | Ferrix (this design) |
+| | Linux (in-kernel driver) | Linux CUSE | Xaqu (this design) |
 |---|---|---|---|
 | A driver fault | crashes or corrupts the kernel | kills the server; files `ENODEV` | kills the driver; files `ENODEV`; devmgr restarts it |
 | Memory a driver can reach | everything | the ioctl's declared ranges, or with the server's unrestricted-ioctl option the caller's whole memory | only the call's buffers and what they point to (Tier 0/1) |
@@ -350,7 +350,7 @@ behaviours would hide them from the audit arm.
 | A tty | yes | no | no (K1-K6 cover ttys) |
 | Data copies per read | 1 | 2 (FUSE) | 1 above 4 KiB (copy-out from the driver); 2 at or below 4 KiB (via the reply) |
 
-Where Ferrix is still slower: a blocking read is one IPC round trip
+Where Xaqu is still slower: a blocking read is one IPC round trip
 (about 1 µs at today's IPC figure). Bulk paths use mmap, as on Linux.
 
 ## 6. Evidence the landing must bring
@@ -440,4 +440,4 @@ land in either order; whichever is first brings the shared devfs checker.
 3. **A new object type or a channel end?** A restricted channel end. A new
    native object type would be a core change, NOT YET without a reason.
 4. **Move NVIDIA/Intel names now?** No. They stay pinned in
-   `ferrix_chardevctl::node` in this work; moving them is a later landing.
+   `xaqu_chardevctl::node` in this work; moving them is a later landing.

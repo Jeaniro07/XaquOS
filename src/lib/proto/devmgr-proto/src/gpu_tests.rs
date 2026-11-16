@@ -85,11 +85,11 @@ impl Node for Fake {
 fn the_bit_is_the_abis() {
     assert_eq!(
         gpu::INTERRUPTS_ISOLATED,
-        ferrix_native_abi::types::DEVICE_ISOLATION_INTERRUPTS
+        xaqu_native_abi::types::DEVICE_ISOLATION_INTERRUPTS
     );
     assert_eq!(
         gpu::DMA_TRANSLATED,
-        ferrix_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED
+        xaqu_native_abi::types::DEVICE_ISOLATION_DMA_TRANSLATED
     );
 }
 

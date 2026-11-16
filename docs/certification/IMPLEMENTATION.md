@@ -457,16 +457,16 @@ VERIFICATION.md §3.4. The corrected figures, on main at a6d505a2, are 74.7%
 Reproduction, with QEMU's drcov plugin built from its source tree:
 
 ```
-FERRIX_DRCOV=/home/johndoe/Documents/qemu/qemu/build/contrib/plugins/libdrcov.so \
+XAQU_DRCOV=/home/johndoe/Documents/qemu/qemu/build/contrib/plugins/libdrcov.so \
   cargo xtask coverage --arch x86_64 \
-    --init "$HOME/.local/share/ferrix/busybox/{arch}/bin/busybox.static"
+    --init "$HOME/.local/share/xaqu/busybox/{arch}/bin/busybox.static"
 ```
 
 It runs each gate with `--accel tcg` (a TCG plugin observes nothing under KVM)
 and `--smp 2` on ARMv7-A, keeps every boot's trace and the kernel it ran in
 `build/coverage/<arch>`, and runs `coverage-report.py` over the lot against the
 floor in `coverage-floor.json`. One gate by hand is still
-`FERRIX_QEMU_PLUGIN="<libdrcov.so>,filename=<dir>/x.drcov" cargo xtask <gate>
+`XAQU_QEMU_PLUGIN="<libdrcov.so>,filename=<dir>/x.drcov" cargo xtask <gate>
 --accel tcg`.
 
 1. **AArch64 and ARMv7-A** (F-12) — done, and since 2026-09-26 the suite.
@@ -875,7 +875,7 @@ scoped shootdown with nobody to ask (`.25`); `add_cpus` (`.28`);
 `stop_others` and where a processor looks for the stop (`.30`, `.31`); and
 the scheduler's kick reaching its one target (`.32`). Every stuck-processor
 case needs the same thing, a boot that expects its panic -- as
-`test-init-file`'s `ferrix.onexit=panic` boot does -- with a kernel switch
+`test-init-file`'s `xaqu.onexit=panic` boot does -- with a kernel switch
 that makes one processor stop answering.
 
 **2026-10-07, FX-0001 under load (stage 20 S-1).** A wait now has a late
@@ -891,7 +891,7 @@ late answers reported only once the wait has returned and the turn is free,
 at a few lines a boot, is written unverified and in the baseline: a boot
 that starves a processor shows it, as the starved `test-selfhost --accel kvm
 --smp 8` of the FX-0001 commit did (`g3-selfhost.log` in
-`~/ferrix-logs/fx0001/2026-10-07-po10/` on nazuna: four lines, then the
+`~/xaqu-logs/fx0001/2026-10-07-po10/` on nazuna: four lines, then the
 summaries at 8 and 16, each after the wait). smp now has 34, 10 verified and 24
 that need a check.
 
@@ -1033,7 +1033,7 @@ What this slice found, for review:
   well, so a run that faults on its way down passes as powered off
   (`L.x86_64.98`, `H.BOOT.6`); telling them apart needs the kernel's own
   power-off line. Closed on 2026-10-11 as F-46: the kernel prints
-  `FERRIX-POWER-OFF` and `watch_to_power_off` requires it, with status 33.
+  `XAQU-POWER-OFF` and `watch_to_power_off` requires it, with status 33.
 * `check_compat` accepts SIGILL for SYSCALL from compatibility mode, so the
   return from 0x23 to 0x33 is proved only on the -ENOSYS path.
 * **Time.** Drafted by five agents in parallel, one per group of files,
@@ -1317,7 +1317,7 @@ function is the unit a boot line reports.
 **The chain closes at run time too.** A requirement is verified on the
 reference configuration only if (1) a check names it, (2) that check's lines
 are reached in the coverage evidence for the architecture (drcov already
-records it, F-10), and (3) the boot reaches `FERRIX-BOOT-OK`. The matrix shows
+records it, F-10), and (3) the boot reaches `XAQU-BOOT-OK`. The matrix shows
 all three per architecture, so a check compiled out on one architecture shows
 as unverified there rather than passing everywhere by its name.
 
@@ -1371,15 +1371,15 @@ written; 21 (boot) has its first landing, 21a, which moved main.rs's stage
 checks into `stages_check.rs`.
 
 *In flight, each with the certification consultant's conditions in
-`~/.local/share/ferrix/cert-consultant/reviews.md`:*
-- **21b** (ferrix-15's audit/init session): file 21's requirements for the
+`~/.local/share/xaqu/cert-consultant/reviews.md`:*
+- **21b** (xaqu-15's audit/init session): file 21's requirements for the
   crate root, init, power, random and the self-check switch, with new
   `H.BOOT.10` to `.14`, `random::check` moved to `random/check.rs`, and F-51
   closed. `H.BOOT.14` also becomes a parent of `L.aarch64.44` to `.46`. The
   list is agreed; the diff is not yet reviewed.
 - **21c**: `devmgr`'s 33 functions as their own package of file 21. Not
   started.
-- **24** (ferrix-55b's virtio/seam session): `arch/armv7a` and
+- **24** (xaqu-55b's virtio/seam session): `arch/armv7a` and
   `arch/arm_common`, written after F-48 and F-49 are fixed, with every
   requirement stating the correct behaviour.
 
@@ -1824,7 +1824,7 @@ the global tables netlink writes, which get the privilege check Linux has.
   and a byte count, which uncharges as it drops. The object it pays for
   holds it, so every path that frees the object frees the charge, as W-13's
   object tokens do. It is a crate and not a kernel type because half the
-  sites are in libraries (`ferrix-vfs`, `ferrix-vma`, `ferrix-net`) that
+  sites are in libraries (`xaqu-vfs`, `xaqu-vma`, `xaqu-net`) that
   cannot name the kernel. The kernel installs the account it calls through
   at boot; a library's host tests install a recording one; with none, a
   charge is to nobody, which is also what the root job's programs get.
@@ -1989,7 +1989,7 @@ Two candidates from the brief did not survive the survey. *Inline assembly
 per architecture* is not a reason, it is a means: the item's `asm!` blocks
 write a translation root, a vector base, a speculation control or a timer,
 and each is filed under what it writes. *FFI and linker symbols* are the
-same: `ferrix_switch` is `CONTEXT`, `ferrix_vdso_len` is `BOOT-DATA`. An id
+same: `xaqu_switch` is `CONTEXT`, `xaqu_vdso_len` is `BOOT-DATA`. An id
 that says *how* instead of *why* traces to no requirement.
 
 The classification rule for a site that could be two things: the id is the

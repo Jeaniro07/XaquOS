@@ -21,11 +21,11 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_vfs::fd::MAX_LIMIT;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_vfs::fd::MAX_LIMIT;
 
-use ferrix_sched::CpuSet;
+use xaqu_sched::CpuSet;
 
 use crate::sched;
 use crate::smp;
@@ -417,7 +417,7 @@ pub(crate) fn sys_sched_setaffinity(
         // A Linux thread always runs on a task with a thread; a task with
         // none is the kernel's, and refused (L.sched.96).
         Err(sched::AffinityRefusal::KernelThread) => Err(Errno::EINVAL),
-        #[cfg(ferrix_schedule = "edf")]
+        #[cfg(xaqu_schedule = "edf")]
         Err(sched::AffinityRefusal::Reserved) => Err(Errno::EBUSY),
     }
 }
@@ -470,13 +470,13 @@ const SCHED_FLAG_KEEP_POLICY: u64 = 0x08;
 const SCHED_FLAG_KEEP_PARAMS: u64 = 0x10;
 /// The longest `sched_runtime` a fair task may ask for, 100 ms: Linux's
 /// ceiling in `__setparam_fair`. What the queue then grants is never longer
-/// than its own slice (`ferrix_sched::effective_request`).
+/// than its own slice (`xaqu_sched::effective_request`).
 const MAX_REQUEST_NS: u64 = 100_000_000;
 
 /// `SCHED_DEADLINE`'s two doors under `schedule=edf`: the calling thread alone takes a
 /// reservation, deadline equal to period, or falls back to `SCHED_OTHER`; `CAP_SYS_NICE` here,
 /// and the kernel's own authority below it (ledger 7088 E.2). `None` for what is not its.
-#[cfg(ferrix_schedule = "edf")]
+#[cfg(xaqu_schedule = "edf")]
 fn deadline_setattr(process: &Process, pid: i32, attr: &SchedAttr) -> Option<Result<usize, Errno>> {
     const SCHED_DEADLINE: u32 = 6;
     let held = sched::reserve::holds_own();
@@ -545,7 +545,7 @@ pub(crate) fn sys_sched_setattr(
         return Err(Errno::EINVAL);
     }
     let attr = read_sched_attr(process, at)?;
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     if let Some(answer) = deadline_setattr(process, pid, &attr) {
         return answer;
     }
@@ -570,7 +570,7 @@ pub(crate) fn sys_sched_setattr(
     }
     let request = match attr.runtime {
         0 => 0,
-        asked => asked.clamp(ferrix_sched::MIN_REQUEST_NS, MAX_REQUEST_NS),
+        asked => asked.clamp(xaqu_sched::MIN_REQUEST_NS, MAX_REQUEST_NS),
     };
     thread.set_nice(nice);
     if let Some(task) = attributes::task_of(&thread) {
@@ -642,10 +642,10 @@ struct SchedAttr {
     /// `sched_runtime`, in nanoseconds.
     runtime: u64,
     /// `sched_deadline`.
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     deadline: u64,
     /// `sched_period`.
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     period: u64,
 }
 
@@ -691,9 +691,9 @@ fn read_sched_attr(process: &Process, at: u64) -> Result<SchedAttr, Errno> {
         nice: i32::from_ne_bytes(word(16)),
         priority: u32::from_ne_bytes(word(20)),
         runtime: u64::from_ne_bytes(long(24)),
-        #[cfg(ferrix_schedule = "edf")]
+        #[cfg(xaqu_schedule = "edf")]
         deadline: u64::from_ne_bytes(long(32)),
-        #[cfg(ferrix_schedule = "edf")]
+        #[cfg(xaqu_schedule = "edf")]
         period: u64::from_ne_bytes(long(40)),
     })
 }

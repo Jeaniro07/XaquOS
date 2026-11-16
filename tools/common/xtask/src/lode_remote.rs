@@ -1,4 +1,4 @@
-//! `cargo xtask test-log-remote`: a Ferrix machine's log sent over TLS to
+//! `cargo xtask test-log-remote`: a Xaqu machine's log sent over TLS to
 //! `lode-receive` on this host, and every record kept there once, through
 //! the receiver's outage (`docs/LOGGING.md` §10.2, §10.3).
 //!
@@ -303,7 +303,7 @@ fn halves(
         ));
     }
     let listing = check(program, root).unwrap_or_default();
-    if !listing.contains("\"hostname\":\"ferrix\"") {
+    if !listing.contains("\"hostname\":\"xaqu\"") {
         return Err(format!("the machine's host name was not kept: {listing}"));
     }
     Ok(())
@@ -317,7 +317,7 @@ fn image_files(arch: Arch, root: &Path, port: u16) -> Result<Vec<File>> {
         std::fs::read(&path)
             .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))
     };
-    let relative = format!("etc/ferrix/lode-upload.d/{MACHINE}");
+    let relative = format!("etc/xaqu/lode-upload.d/{MACHINE}");
     let remote = format!("/{relative}");
     let script = SCRIPT.replace("PORT", &port.to_string());
     let config = format!(
@@ -344,12 +344,12 @@ fn image_files(arch: Arch, root: &Path, port: u16) -> Result<Vec<File>> {
     files.extend([
         bytes("bin/busybox", 0o755, busybox),
         crate::lode::enabled(),
-        link("etc/ferrix/units/getty@.service", "/dev/null"),
+        link("etc/xaqu/units/getty@.service", "/dev/null"),
         link(
-            "etc/ferrix/units/multi-user.target.wants/lode-upload.service",
-            "/lib/ferrix/units/lode-upload.service",
+            "etc/xaqu/units/multi-user.target.wants/lode-upload.service",
+            "/lib/xaqu/units/lode-upload.service",
         ),
-        bytes("etc/ferrix/lode-upload.conf", 0o644, config.into_bytes()),
+        bytes("etc/xaqu/lode-upload.conf", 0o644, config.into_bytes()),
         bytes(
             &format!("{relative}/ca.pem"),
             0o644,
@@ -366,19 +366,19 @@ fn image_files(arch: Arch, root: &Path, port: u16) -> Result<Vec<File>> {
             read(pki.join(format!("clients/{MACHINE}.key")))?,
         ),
         bytes(
-            "etc/ferrix/lode.d/remote.rules",
+            "etc/xaqu/lode.d/remote.rules",
             0o644,
             RULES.as_bytes().to_vec(),
         ),
         bytes("lib/lode-remote.sh", 0o755, script.into_bytes()),
         bytes(
-            "etc/ferrix/units/lode-remote.service",
+            "etc/xaqu/units/lode-remote.service",
             0o644,
             UNIT.as_bytes().to_vec(),
         ),
         link(
-            "etc/ferrix/units/multi-user.target.wants/lode-remote.service",
-            "/etc/ferrix/units/lode-remote.service",
+            "etc/xaqu/units/multi-user.target.wants/lode-remote.service",
+            "/etc/xaqu/units/lode-remote.service",
         ),
     ]);
     files.extend(crate::dhcp::carried(arch)?);

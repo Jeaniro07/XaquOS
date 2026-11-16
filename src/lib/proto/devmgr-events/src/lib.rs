@@ -20,7 +20,7 @@
 //!   "quarantined <driver> <location> <restarts>\n"
 //! ```
 //!
-//! A crate of its own: the kernel links `ferrix-devmgr-proto` and has no
+//! A crate of its own: the kernel links `xaqu-devmgr-proto` and has no
 //! use for this, and the kernel is not where these events go
 //! (`docs/DESKTOP.md` §4.2: `devmgr` publishes, the kernel adds nothing).
 //! Pure functions over bytes, tested on the host.
@@ -36,7 +36,7 @@ pub const MAGIC: [u8; 4] = *b"FXDE";
 pub const EVENT_BYTES: usize = 48;
 /// The abstract `AF_UNIX` name the helper listens on, without its leading
 /// NUL.
-pub const SOCKET_NAME: &[u8] = b"ferrix.devmgr.events";
+pub const SOCKET_NAME: &[u8] = b"xaqu.devmgr.events";
 /// The longest line an event becomes.
 pub const LINE_BYTES: usize = 80;
 

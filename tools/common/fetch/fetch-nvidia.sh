@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch NVIDIA's driver at the release Ferrix pins, build its two OS-agnostic
+# Fetch NVIDIA's driver at the release Xaqu pins, build its two OS-agnostic
 # cores as freestanding objects, and put its userspace and GSP firmware on a
 # btrfs volume (docs/NVIDIA.md §3, slice N1a).
 #
@@ -7,7 +7,7 @@
 #
 #  1. The sources: open-gpu-kernel-modules at the 580.173.02 tag, as GitHub's
 #     tarball of it, pinned by its SHA-256 and by the commit its pax header
-#     names, unpacked into src/. `FERRIX_NVIDIA_SRC` points
+#     names, unpacked into src/. `XAQU_NVIDIA_SRC` points
 #     `cargo xtask test-uvm` and uvm-kpi's Makefile at another tree; by
 #     default they use this one.
 #  2. The objects: nv-kernel.o (RM) and nv-modeset-kernel.o (NVKMS), built by
@@ -19,7 +19,7 @@
 #     SHA-256 NVIDIA publishes beside it, extracted with --extract-only into
 #     run/. Nothing is installed: the .run's installer never runs.
 #  4. The volume: nvidia.img, a btrfs image of tree/, Debian-shaped like
-#     Chrome's and yserver's, which Ferrix mounts at /data:
+#     Chrome's and yserver's, which Xaqu mounts at /data:
 #       usr/lib/x86_64-linux-gnu/  the x86-64 libraries and their links,
 #                                  as NVIDIA's installer names them, and
 #                                  Debian 13's glibc (the pin
@@ -35,7 +35,7 @@
 #       usr/share/doc/nvidia-driver/LICENSE
 #     The 32-bit libraries, the X driver, nvidia-settings and its GTK
 #     libraries, the installer and the Windows DLLs are left out.
-#     It does not carry usr/lib/ferrix/nvrm-core, RM's core nvrm loads
+#     It does not carry usr/lib/xaqu/nvrm-core, RM's core nvrm loads
 #     (docs/NVIDIA.md §4.1, "The core"): the core is pinned to one nvrm
 #     build, so xtask writes it into the volume beside nvrm's own build
 #     and remakes the image when it is stale (run-nvidia, N1d).
@@ -46,14 +46,14 @@
 # userspace and its firmware are under the NVIDIA Driver License Agreement
 # (run/LICENSE, and on the volume): proprietary, redistributable only
 # unmodified. They are fetched by whoever runs this and never committed:
-# everything this script writes is under $FERRIX_NVIDIA (default
-# ~/.local/share/ferrix/nvidia), and it refuses to write inside a git
+# everything this script writes is under $XAQU_NVIDIA (default
+# ~/.local/share/xaqu/nvidia), and it refuses to write inside a git
 # checkout.
 #
 # Where nazuna's own driver is the same release, the extracted nvidia-smi,
 # libraries and firmware are compared with the installed ones, read only.
 #
-# Writes $FERRIX_NVIDIA/580.173.02/: downloads/, src/, objects/, run/, tree/,
+# Writes $XAQU_NVIDIA/580.173.02/: downloads/, src/, objects/, run/, tree/,
 # nvidia.img and nvidia.version; virgl_test_server comes from fetch-virgl-server.sh
 # (and what it needs, meson and ninja). Needs curl, sha256sum, git, tar, make, gcc,
 # nm, size, readelf, dpkg-deb and mkfs.btrfs; no root, and it writes nothing
@@ -113,7 +113,7 @@ EXTRA_DEBS=(
     "pool/main/w/wayland/libwayland-server0_1.23.1-3_amd64.deb 2967212bd582e0dffca443fdc44f4c660e7368d41f7ee3a7f6314e0c3abfe9ea"
     # What virglrenderer's test server loads, for hyprix drawing its frames
     # on the 3060 through NVIDIA's EGL (docs/NVIDIA.md §4.6, N3c): hyprix's
-    # `--renderer vtest` starts it. The server itself is Ferrix's build of
+    # `--renderer vtest` starts it. The server itself is Xaqu's build of
     # virglrenderer 1.2.0 with the dmabuf import (fetch-virgl-server.sh,
     # libvirglrenderer linked in), not Debian's virgl-server and
     # libvirglrenderer1, so neither they nor libva are here. libgbm1 and
@@ -129,7 +129,7 @@ expected=(
     "nv-modeset-kernel.o 1502689 2694 69"
 )
 
-root=${FERRIX_NVIDIA:-$HOME/.local/share/ferrix/nvidia}
+root=${XAQU_NVIDIA:-$HOME/.local/share/xaqu/nvidia}
 out=$root/$VERSION
 
 for tool in curl sha256sum git tar make gcc nm size readelf dpkg-deb mkfs.btrfs; do
@@ -139,7 +139,7 @@ done
 mkdir -p "$out/downloads"
 # NVIDIA's userspace must never land in a repository.
 if git -C "$out" rev-parse --show-toplevel > /dev/null 2>&1; then
-    echo "fetch-nvidia: $out is inside a git checkout; set FERRIX_NVIDIA to a directory outside it" >&2
+    echo "fetch-nvidia: $out is inside a git checkout; set XAQU_NVIDIA to a directory outside it" >&2
     exit 1
 fi
 
@@ -163,11 +163,11 @@ commit=$({ gzip -dc "$tarball" 2> /dev/null || true; } | git get-tar-commit-id)
 [ "$commit" = "$SOURCES_COMMIT" ] \
     || { echo "fetch-nvidia: $tarball is commit $commit, not $SOURCES_COMMIT" >&2; exit 1; }
 src=$out/src
-if [ "$(cat "$src/.ferrix-sources" 2> /dev/null)" != "$SOURCES_SHA256" ]; then
+if [ "$(cat "$src/.xaqu-sources" 2> /dev/null)" != "$SOURCES_SHA256" ]; then
     rm -rf "$src" "$src.new"
     mkdir -p "$src.new"
     tar -xzf "$tarball" -C "$src.new" --strip-components=1
-    echo "$SOURCES_SHA256" > "$src.new/.ferrix-sources"
+    echo "$SOURCES_SHA256" > "$src.new/.xaqu-sources"
     mv "$src.new" "$src"
 fi
 
@@ -192,10 +192,10 @@ done
 installer=$out/downloads/$RUN_NAME
 fetch "$RUN_URL" "$installer" "$RUN_SHA256"
 run=$out/run
-if [ "$(cat "$run/.ferrix-run" 2> /dev/null)" != "$RUN_SHA256" ]; then
+if [ "$(cat "$run/.xaqu-run" 2> /dev/null)" != "$RUN_SHA256" ]; then
     rm -rf "$run" "$run.new"
     sh "$installer" --extract-only --target "$run.new" > /dev/null
-    echo "$RUN_SHA256" > "$run.new/.ferrix-run"
+    echo "$RUN_SHA256" > "$run.new/.xaqu-run"
     mv "$run.new" "$run"
 fi
 for entry in "${contents[@]}"; do
@@ -220,9 +220,9 @@ done
 # changed.
 image=$out/nvidia.img
 # The test server, built (or found up to date) by its own script, under its
-# own directory: FERRIX_VIRGL_SERVER, default ~/.local/share/ferrix/virgl-server.
+# own directory: XAQU_VIRGL_SERVER, default ~/.local/share/xaqu/virgl-server.
 "$(dirname "$0")/fetch-virgl-server.sh"
-virgl_server=${FERRIX_VIRGL_SERVER:-$HOME/.local/share/ferrix/virgl-server}/out
+virgl_server=${XAQU_VIRGL_SERVER:-$HOME/.local/share/xaqu/virgl-server}/out
 virgl_stamp=$(sha256sum < "$virgl_server/virgl-server.version" | cut -d' ' -f1)
 
 stamp="$VERSION virgl=$virgl_stamp run=$RUN_SHA256 libc=$libc_sha256 extra=$(echo "$extra_sums" | sha256sum | cut -d' ' -f1) script=$(sha256sum < "$0" | cut -d' ' -f1)"
@@ -265,7 +265,7 @@ if [ ! -f "$image" ] || [ "$(cat "$out/nvidia.version" 2> /dev/null)" != "$stamp
         fi
     done
 
-    # Ferrix's virgl_test_server, with virglrenderer's licence beside it.
+    # Xaqu's virgl_test_server, with virglrenderer's licence beside it.
     cp "$virgl_server/usr/bin/virgl_test_server" "$tree/usr/bin/virgl_test_server"
     mkdir -p "$tree/usr/share/doc/virgl-server"
     cp "$virgl_server"/usr/share/doc/virgl-server/* "$tree/usr/share/doc/virgl-server/"

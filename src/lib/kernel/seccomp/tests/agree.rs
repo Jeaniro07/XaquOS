@@ -11,7 +11,7 @@
 
 mod naive;
 
-use ferrix_seccomp::{Insn, verify};
+use xaqu_seccomp::{Insn, verify};
 
 /// A xorshift generator: the same programs every run.
 struct Rng(u64);

@@ -25,13 +25,13 @@
 
 use alloc::sync::Arc;
 
-use ferrix_blkring::Refusal;
-use ferrix_blkring::kernel::Ending;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::TREE_STM32_SDMMC;
-use ferrix_vfs::initramfs::makedev;
+use xaqu_blkring::Refusal;
+use xaqu_blkring::kernel::Ending;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::TREE_STM32_SDMMC;
+use xaqu_vfs::initramfs::makedev;
 
 use super::check::{
     Counter, end, expect_ready, expect_refusal, hello, objects, published, refused, ring, send,
@@ -79,7 +79,7 @@ pub(crate) fn run() -> Result<(), &'static str> {
     // A HELLO naming a PCI location for a tree node is refused, and the
     // node is free again after.
     let control = ring(&side, one)?;
-    let elsewhere = ferrix_blkring::Location(0x0000_0008);
+    let elsewhere = xaqu_blkring::Location(0x0000_0008);
     send(&side, control, &hello(elsewhere)?, &objects(&side, true)?)?;
     expect_refusal(&side, control, Refusal::WrongLocation, &mut counter)?;
     super::check::settle()?;

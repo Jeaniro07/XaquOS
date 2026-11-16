@@ -17,12 +17,12 @@
 use alloc::sync::Arc;
 use core::sync::atomic::Ordering;
 
-use ferrix_sched::CpuSet;
-pub use ferrix_sched_edf::{Refusal, Reservation};
+use xaqu_sched::CpuSet;
+pub use xaqu_sched_edf::{Refusal, Reservation};
 
 use super::{Task, affinity, current, queue_of, this_cpu};
 use crate::arch;
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 /// Whether `task` holds a reservation.
 pub(crate) fn holds(task: &Task) -> bool {
@@ -120,7 +120,7 @@ pub fn give_back() -> Result<(), Refusal> {
 }
 
 /// The share admitted on `cpu`, and its throttles and refills so far.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[must_use]
 pub(crate) fn state_of(cpu: usize) -> Option<(u64, u64, u64)> {
     let lock = queue_of(cpu)?;

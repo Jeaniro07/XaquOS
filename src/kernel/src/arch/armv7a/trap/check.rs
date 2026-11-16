@@ -19,10 +19,10 @@
 
 #![cfg(target_arch = "arm")]
 
-use ferrix_kernel_core::arch::armv7a as core_armv7a;
-use ferrix_kernel_core::arch::armv7a::trap as core_trap;
+use xaqu_kernel_core::arch::armv7a as core_armv7a;
+use xaqu_kernel_core::arch::armv7a::trap as core_trap;
 
-use ferrix_linux_abi::types::{SIGBUS, SIGILL, SIGTRAP};
+use xaqu_linux_abi::types::{SIGBUS, SIGILL, SIGTRAP};
 
 use crate::console::println;
 
@@ -134,7 +134,7 @@ const PAST_END: &[u8] = &[
 /// `kill` is the proof that the handler returned through a trampoline and the
 /// call, and not merely that the program survived. Assembled by GNU `as` for
 /// ARMv7-A and read back out of the object file
-/// (`~/.local/share/ferrix/f48/returning.s` on example has the source).
+/// (`~/.local/share/xaqu/f48/returning.s` on example has the source).
 const RETURNING: &[u8] = &[
     0x18, 0xd0, 0x4d, 0xe2, 0x00, 0x50, 0xa0, 0xe3, 0x01, 0x00, 0x15, 0xe3, 0xc8, 0x00, 0x8f, 0x12,
     0x01, 0x00, 0x80, 0x13, 0xb4, 0x00, 0x8f, 0x02, 0x00, 0x00, 0x8d, 0xe5, 0x02, 0x00, 0x15, 0xe3,
@@ -244,7 +244,7 @@ fn sigpage_is_code() -> Result<(), &'static str> {
     let flags = page.flags;
     if !(flags.read && flags.execute && flags.shared)
         || flags.write
-        || page.end != at + ferrix_bootinfo::PAGE_SIZE
+        || page.end != at + xaqu_bootinfo::PAGE_SIZE
     {
         return Err("the signal return page is not one read-and-run, unwritable, shared page");
     }
@@ -254,12 +254,12 @@ fn sigpage_is_code() -> Result<(), &'static str> {
 /// Build `code` into a program called `name`, run it, and answer its status.
 fn run_program(name: &[u8], code: &[u8]) -> Result<i32, &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         core_armv7a::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         code,
     );
-    crate::syscall::exec::run(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+    crate::syscall::exec::run(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that faults on purpose could not be started")
 }
 
@@ -280,7 +280,7 @@ pub fn drive_system_call(
     args: [u64; 6],
     ip: u64,
 ) -> Option<isize> {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     if abi != crate::trap::Abi::Native {
         return None;
@@ -316,7 +316,7 @@ pub fn drive_system_call(
 /// thread of a check's process, as [`drive_system_call`] is run. An entry
 /// that refuses the frame answers `ENOSYS` with the registers as sent.
 pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     let mut frame = core_trap::TrapFrame {
         kind: 2,
@@ -338,7 +338,7 @@ pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
     let value = if done.is_ok() {
         frame.r[0] as i32 as isize
     } else {
-        ferrix_linux_abi::errno::Errno::ENOSYS.as_return_value()
+        xaqu_linux_abi::errno::Errno::ENOSYS.as_return_value()
     };
     (
         value,

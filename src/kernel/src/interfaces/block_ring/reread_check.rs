@@ -25,12 +25,12 @@
 
 use core::cell::Cell;
 
-use ferrix_blkring::layout::{completion, header};
-use ferrix_blkring::{
+use xaqu_blkring::layout::{completion, header};
+use xaqu_blkring::{
     Completed, Consumed, Device, DeviceFlags, DriverSide, KernelSide, RingLayout, RingMemory, Slot,
     Status, Submission,
 };
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 use super::Pages;
 use crate::user::vmo::Vmo;

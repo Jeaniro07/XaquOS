@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-sync"
+name = "xaqu-sync"
 description = "Kernel synchronisation primitives: ticket spin locks, RCU-free once, reader-writer locks"
 version = "0.1.0"
 edition = "2024"

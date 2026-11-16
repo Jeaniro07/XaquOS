@@ -1,7 +1,7 @@
 //! The image manifest (`docs/SETTINGS-WRITER.md` §13; ledger 3558 (14),
 //! 3636 (14)-(16)): what this build lets a Settings page change.
 //!
-//! `/etc/ferrix/image-manifest`, written by xtask into every image
+//! `/etc/xaqu/image-manifest`, written by xtask into every image
 //! (`docs/BUILD-FLAGS.md` §5.1): `key=value` lines, `format=1`, then
 //! `profile`, `level`, `claim`, `runtime_settings` and the image keys,
 //! `settings_writer` among them. Unknown keys are ignored. A missing file,
@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 /// Where it is.
-pub const PATH: &str = "/etc/ferrix/image-manifest";
+pub const PATH: &str = "/etc/xaqu/image-manifest";
 
 /// The only format this reads.
 const FORMAT: &str = "1";

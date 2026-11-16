@@ -1,27 +1,27 @@
 //! The virtio-input driver process: a ring-3 program that serves one input
 //! device to the kernel's input core.
 //!
-//! Everything that knows anything is a library. `ferrix-virtio-input` drives
+//! Everything that knows anything is a library. `xaqu-virtio-input` drives
 //! the device and turns its events into the messages the core reads, and
-//! `ferrix-driver` is the rest: START, the virtio transport, pinned memory,
+//! `xaqu-driver` is the rest: START, the virtio transport, pinned memory,
 //! and `inputctl` with the core (`docs/INPUT.md` §3.2). What is here is the
 //! one thing only this driver knows: how the logic crate comes up on a
 //! virtio-input device, and how its answers map to the input subsystem's.
 //!
-//! The exit status is the `ferrix_driver::Step` that failed, 0 a clean STOP.
+//! The exit status is the `xaqu_driver::Step` that failed, 0 a clean STOP.
 
 #![no_std]
 #![no_main]
 
-use ferrix_driver::dma::{Dma, PAGE};
-use ferrix_driver::input::{self, Answer, Fault};
-use ferrix_driver::virtio;
-use ferrix_driver::{Probe, Step, Stopped, Stuck};
-use ferrix_inputctl::message::{Events, Hello, Message};
-use ferrix_rt::Bootstrap;
-use ferrix_virtio_input::{AREA_BYTES, Control, Options, Parts, Rings, Teardown};
+use xaqu_driver::dma::{Dma, PAGE};
+use xaqu_driver::input::{self, Answer, Fault};
+use xaqu_driver::virtio;
+use xaqu_driver::{Probe, Step, Stopped, Stuck};
+use xaqu_inputctl::message::{Events, Hello, Message};
+use xaqu_rt::Bootstrap;
+use xaqu_virtio_input::{AREA_BYTES, Control, Options, Parts, Rings, Teardown};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Pages of queue memory: one 64-entry split queue's rings fit in one page,
 /// and two leaves room for the alignment the layout asks for.
@@ -37,7 +37,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
 type Device = virtio::Device<virtio::Input>;
 
 /// The device logic, on the virtio transport and pinned memory.
-struct VirtioInput(ferrix_virtio_input::Driver<Device, Dma, Dma>);
+struct VirtioInput(xaqu_virtio_input::Driver<Device, Dma, Dma>);
 
 impl Probe for VirtioInput {
     type Device = Device;
@@ -50,7 +50,7 @@ impl Probe for VirtioInput {
             rings,
             area,
         };
-        match ferrix_virtio_input::Driver::init(parts, Options::default()) {
+        match xaqu_virtio_input::Driver::init(parts, Options::default()) {
             Ok(driver) => Ok(VirtioInput(driver)),
             Err(failure) => {
                 // The parts come back as a stop would give them: freed only

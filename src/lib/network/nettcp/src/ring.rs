@@ -15,7 +15,7 @@
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, Refused, buffer_footprint};
+use xaqu_kmem::{Charge, Refused, buffer_footprint};
 
 use crate::seq::SeqNumber;
 

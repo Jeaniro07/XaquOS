@@ -9,11 +9,11 @@
 # -- glib, NSS, D-Bus, the X11 client libraries, gbm, udev, ALSA and what
 # those load -- which are Debian 13's here, as are the glibc and the loader
 # that run it: the same glibc tools/common/fetch/fetch-rustc-sysroot.sh pins. That is
-# the fast way to a browser on Ferrix; ferrousli standing in for that glibc
+# the fast way to a browser on Xaqu; ferrousli standing in for that glibc
 # is the other, and the same volume serves both.
 #
 # The volume holds a Debian-shaped tree at its root -- `usr/lib64`,
-# `usr/lib/x86_64-linux-gnu` -- and Chrome under `chrome/`. Ferrix mounts it
+# `usr/lib/x86_64-linux-gnu` -- and Chrome under `chrome/`. Xaqu mounts it
 # at `/data`, and the test's image links the directories glibc names into
 # it, as test-rustc's does.
 #
@@ -22,10 +22,10 @@
 # downloaded on 2026-09-24 (its own index publishes no digest). After
 # unpacking, every library each ELF file on the volume needs is looked for
 # on it, so a dependency Debian has and this list lacks fails here rather
-# than on Ferrix.
+# than on Xaqu.
 #
-# Writes $FERRIX_CHROME_VOLUME/chrome.img (default
-# ~/.local/share/ferrix/chrome-4/chrome.img). Needs curl, sha256sum, dpkg-deb,
+# Writes $XAQU_CHROME_VOLUME/chrome.img (default
+# ~/.local/share/xaqu/chrome-4/chrome.img). Needs curl, sha256sum, dpkg-deb,
 # unzip, readelf, mkfs.btrfs, glib-compile-schemas, update-mime-database and
 # a C compiler (cc); no root.
 #
@@ -40,21 +40,21 @@ chrome_dist=${CHROME_FOR_TESTING:-https://storage.googleapis.com/chrome-for-test
 # chrome-2 added GTK 3, chrome-3 GTK's file chooser (its schemas, SVG and
 # gdk-pixbuf's loaders' cache), chrome-4 a session bus, GTK 4 and zenity,
 # and gtk3-open; the earlier ones are left as they were.
-out=${FERRIX_CHROME_VOLUME:-$HOME/.local/share/ferrix/chrome-4}
+out=${XAQU_CHROME_VOLUME:-$HOME/.local/share/xaqu/chrome-4}
 # Where a pinned Debian file comes from once the mirror has dropped it, as
 # trixie-security drops a package's update when the next one comes:
 # snapshot.debian.org's archive as it was on the days the pins were taken,
 # tried in turn. The SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_times=(20260924T235959Z 20260927T235959Z)
-# The downloads, kept between runs; FERRIX_CHROME_POOL names another
+# The downloads, kept between runs; XAQU_CHROME_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_CHROME_POOL:-$out/pool}
+pool=${XAQU_CHROME_POOL:-$out/pool}
 
 CHROME_VERSION=154.0.8037.57
 CHROME_SHA256=5a6979d0ab7cf952ea575d35164e7bdce4872b2ced8f8a215c8f8e8eda00ee09
 # The same version's full browser, which draws windows: Ozone's Wayland
-# backend, with its own libwayland, talks to Ferrix's compositor.
+# backend, with its own libwayland, talks to Xaqu's compositor.
 CHROME_WINDOW_SHA256=ceee2972074d441ea7c4ba8bcc0eaab77e7e87680f6653d73d3065851fe10302
 
 # Pool path and SHA-256 of each Debian 13 package from the main archive.
@@ -304,7 +304,7 @@ rm -rf "$tree/usr/share/doc" "$tree/usr/share/man" "$tree/usr/share/lintian"
 # database, by which gdk-pixbuf tells an SVG from other files; GSettings'
 # compiled schemas, which GTK's file chooser asks for and GLib aborts without,
 # and gdk-pixbuf's loaders' cache, which names the loaders by the paths they
-# have on Ferrix (the volume's, linked at /usr/lib/x86_64-linux-gnu). The
+# have on Xaqu (the volume's, linked at /usr/lib/x86_64-linux-gnu). The
 # cache is the volume's own gdk-pixbuf-query-loaders, run on its own glibc.
 glib-compile-schemas "$tree/usr/share/glib-2.0/schemas"
 update-mime-database "$tree/usr/share/mime"
@@ -327,7 +327,7 @@ test -e "$tree/usr/lib64/ld-linux-x86-64.so.2" \
     || { echo "fetch-chrome: no linker at usr/lib64" >&2; exit 1; }
 
 # gtk3-open (gtk3-open.c beside this script): GTK 3's native file chooser,
-# for the boot that shows a GTK 3 program's dialog is Ferrix's. Linked
+# for the boot that shows a GTK 3 program's dialog is Xaqu's. Linked
 # against the volume's GTK, by the host's compiler: it calls four of GTK's
 # functions and printf.
 mkdir -p "$tree/usr/local/bin"

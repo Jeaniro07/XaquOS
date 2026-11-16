@@ -23,9 +23,9 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_net::iface::{Backing, IFF_LOWER_UP, IFF_RUNNING, Interface};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_net::iface::{Backing, IFF_LOWER_UP, IFF_RUNNING, Interface};
 
 use super::NetNamespace;
 use crate::sync::SpinLock;

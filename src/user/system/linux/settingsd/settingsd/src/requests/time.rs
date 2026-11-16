@@ -7,7 +7,7 @@
 //!   `/usr/share/zoneinfo` (ferrousli, as musl, reads `/etc/localtime` when
 //!   `TZ` is unset), and writes the file's POSIX footer to `/etc/TZ`, which
 //!   lode reads first (`docs/RUNTIME-SETTINGS.md` §3.2). A zone is a name
-//!   that has passed [`ferrix_settings_proto::valid_zone`] -- no `/` at the
+//!   that has passed [`xaqu_settings_proto::valid_zone`] -- no `/` at the
 //!   start, no `..` -- and its file must resolve inside the zone directory
 //!   and start with `TZif`. Both are read from world-readable places, so a
 //!   dry run tells nobody anything they could not read themselves.
@@ -15,7 +15,7 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use ferrix_settings_proto::{Refusal, RefusalKind};
+use xaqu_settings_proto::{Refusal, RefusalKind};
 
 use super::{Action, Plan, System};
 use crate::atomic::{link_atomic, write_atomic};

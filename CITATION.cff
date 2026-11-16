@@ -1,10 +1,10 @@
 cff-version: 1.2.0
-message: If you use Ferrix in your research, please cite this repository.
-title: "Ferrix: an experimental Rust operating system"
+message: If you use Xaqu in your research, please cite this repository.
+title: "Xaqu: an experimental Rust operating system"
 type: software
 authors:
   - name: Sebastian Dauenhauer
-repository-code: https://github.com/ferrix-os/ferrix
-url: https://ferrix-os.github.io/
+repository-code: https://github.com/xaqu-os/xaqu
+url: https://xaqu-os.github.io/
 license: MIT
 keywords: [operating system, Rust, Linux ABI, userland drivers, btrfs, Wayland]

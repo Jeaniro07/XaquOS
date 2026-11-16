@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-yt6801-driver"
-description = "The Motorcomm YT6801 driver process: the net ring's driver end over the chip's DesignWare QoS core, on ferrix-rt"
+name = "xaqu-yt6801-driver"
+description = "The Motorcomm YT6801 driver process: the net ring's driver end over the chip's DesignWare QoS core, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,13 +14,13 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-dwmac.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-netring.workspace = true
-ferrix-netserve.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio-net.workspace = true
-ferrix-yt6801.workspace = true
+xaqu-dwmac.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-netring.workspace = true
+xaqu-netserve.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio-net.workspace = true
+xaqu-yt6801.workspace = true
 
 [lints]
 workspace = true

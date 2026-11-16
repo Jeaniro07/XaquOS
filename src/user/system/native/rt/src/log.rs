@@ -17,17 +17,17 @@
 //! for a program that says when its lines will not get there.
 //!
 //! ```text
-//! ferrix_rt::warn!("intel: uapi refused {name} ({errno})");
-//! ferrix_rt::log::line(Level::Info, format_args!("intel: GT up"));
+//! xaqu_rt::warn!("intel: uapi refused {name} ({errno})");
+//! xaqu_rt::log::line(Level::Info, format_args!("intel: GT up"));
 //! ```
 
 use core::fmt::{self, Write as _};
 use core::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
-pub use ferrix_linux_abi::kmsg::{LOG_DAEMON, Level};
+pub use xaqu_linux_abi::kmsg::{LOG_DAEMON, Level};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
 
 use crate::linux::{self, numbers};
 
@@ -54,17 +54,17 @@ static DEBUG_LOG: AtomicU32 = AtomicU32::new(0);
 
 /// A first message on a bootstrap channel whose one handle is the debug log's: what
 /// a devmgr with no `/dev/kmsg` puts ahead of a driver's START.
-pub const BOOTSTRAP_MARK: &[u8] = b"ferrix-debug-log";
+pub const BOOTSTRAP_MARK: &[u8] = b"xaqu-debug-log";
 
 /// Take [`BOOTSTRAP_MARK`]'s message off `channel` if it is the first: by its sizes
 /// first, which takes nothing, so no other program's first message is touched.
-pub(crate) fn take_from_bootstrap(channel: &ferrix_native::channel::Channel<crate::Kernel>) {
+pub(crate) fn take_from_bootstrap(channel: &xaqu_native::channel::Channel<crate::Kernel>) {
     let mut mark = [0_u8; BOOTSTRAP_MARK.len()];
     let mut log = [Handle::INVALID; 1];
     let shape = channel.read(&mut [], &mut []);
     let fits = matches!(
         shape,
-        Err(ferrix_native::channel::ReadError::TooSmall { bytes, handles })
+        Err(xaqu_native::channel::ReadError::TooSmall { bytes, handles })
             if bytes == BOOTSTRAP_MARK.len() && handles == 1
     );
     if fits
@@ -98,7 +98,7 @@ pub fn line(level: Level, arguments: fmt::Arguments<'_>) {
     if debug != 0 {
         let _ = text.write_str("\n");
         let _ =
-            ferrix_native::lift_calls::debug_write(crate::Kernel, Handle(debug), text.as_bytes());
+            xaqu_native::lift_calls::debug_write(crate::Kernel, Handle(debug), text.as_bytes());
         return;
     }
     let Some(fd) = kmsg() else {

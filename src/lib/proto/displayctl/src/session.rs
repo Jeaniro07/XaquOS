@@ -25,7 +25,7 @@ use crate::message::{
     MAX_SCANOUTS, MODES_A_PAGE, Message, ModePage, Rect, Refusal, ScanoutMode, Status, Timing,
     validate_modes,
 };
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 /// The most buffers one session tracks, attached or on their way.
 pub const MAX_BUFFERS: usize = 32;

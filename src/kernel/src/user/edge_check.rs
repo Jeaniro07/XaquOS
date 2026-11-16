@@ -15,8 +15,8 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_vma::VmaFlags;
 
 use crate::mm;
 use crate::smp;
@@ -425,8 +425,8 @@ fn check_object_refusals(space: &AddressSpace) -> Result<u32, &'static str> {
 ///
 /// Verifies: L.mm.5, L.mm.6
 fn check_frame_runs_and_splits() -> Result<(), &'static str> {
-    use ferrix_frame::State;
-    let block = 1_u64 << ferrix_frame::MAX_ORDER;
+    use xaqu_frame::State;
+    let block = 1_u64 << xaqu_frame::MAX_ORDER;
     let run = mm::allocate_frame_run(2).ok_or("no run of two blocks")?;
     let heads = [run, run + block];
     if heads
@@ -436,7 +436,7 @@ fn check_frame_runs_and_splits() -> Result<(), &'static str> {
         return Err("a run of two blocks was not two allocated blocks");
     }
     for head in heads {
-        mm::deallocate_frames(head, ferrix_frame::MAX_ORDER);
+        mm::deallocate_frames(head, xaqu_frame::MAX_ORDER);
     }
 
     let pair = mm::allocate_frames(1).ok_or("no block of two frames")?;
@@ -487,9 +487,9 @@ fn check_a_window_settles_while_frames_move() -> Result<(), &'static str> {
         "frame churn",
         churn_frames,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
         there,
-        ferrix_sched::CpuSet::of(there),
+        xaqu_sched::CpuSet::of(there),
     )
     .inspect_err(|_| CHURNING.store(false, Ordering::Release))?;
     let deadline = crate::timer::now_nanos().saturating_add(PATIENCE_NANOS);
@@ -522,7 +522,7 @@ fn check_a_window_settles_while_frames_move() -> Result<(), &'static str> {
 ///
 /// Verifies: L.mm.47
 fn check_kernel_arena_refusals() -> Result<u32, &'static str> {
-    match vmap::allocate(0, ferrix_paging::MapFlags::KERNEL_DATA) {
+    match vmap::allocate(0, xaqu_paging::MapFlags::KERNEL_DATA) {
         Err(VmapError::BadLength(0)) => Ok(1),
         _ => Err("the kernel arena took a length of nothing"),
     }

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-partmgr"
+name = "xaqu-partmgr"
 description = "The partition manager: starts the safety partitions a static description names, holds their authority and supervises them (docs/microkernel/BOOT-AUTHORITY.md)"
 version.workspace = true
 edition.workspace = true
@@ -14,10 +14,10 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-partition-desc.workspace = true
-ferrix-process-builder.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-partition-desc.workspace = true
+xaqu-process-builder.workspace = true
 
 [lints]
 workspace = true

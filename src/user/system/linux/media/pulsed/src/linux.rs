@@ -64,8 +64,8 @@ fn serve() -> io::Result<()> {
     let latency =
         Duration::from_micros(u64::from(config.buffer) * 1_000_000 / u64::from(config.rate.max(1)));
     let card = Card {
-        name: c"ferrix".to_owned(),
-        description: c"Ferrix sound card".to_owned(),
+        name: c"xaqu".to_owned(),
+        description: c"Xaqu sound card".to_owned(),
         spec: Spec {
             format: SampleFormat::S16Le,
             channels: u8::try_from(config.channels).unwrap_or(2),

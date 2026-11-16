@@ -1,8 +1,8 @@
 //! The virtio-net driver process: a ring-3 program that carries one
 //! interface's frames between the kernel and a virtio-net device.
 //!
-//! Everything that knows anything is a library. `ferrix-virtio-net` drives the
-//! device, `ferrix-netring` speaks the ring, and `ferrix-netserve` joins the
+//! Everything that knows anything is a library. `xaqu-virtio-net` drives the
+//! device, `xaqu-netring` speaks the ring, and `xaqu-netserve` joins the
 //! two; all three are tested on the host. This program is the handles those
 //! libraries were written to be wrapped in, and nothing else:
 //!
@@ -36,33 +36,33 @@
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{DeviceBlock, DeviceInfo, IoMappingSpec};
-use ferrix_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::layout::VERSION;
-use ferrix_netring::{Message, RingMemory, Wait};
-use ferrix_netserve::{Nic, Serve};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio::DeviceConfig;
-use ferrix_virtio::QueueMemory;
-use ferrix_virtio::pci::CommonConfig;
-use ferrix_virtio_net::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{DeviceBlock, DeviceInfo, IoMappingSpec};
+use xaqu_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::layout::VERSION;
+use xaqu_netring::{Message, RingMemory, Wait};
+use xaqu_netserve::{Nic, Serve};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio::DeviceConfig;
+use xaqu_virtio::QueueMemory;
+use xaqu_virtio::pci::CommonConfig;
+use xaqu_virtio_net::{
     DeviceError, DevicePages, Driver, Event, Frame, Options, Parts, RequestArea, Slot, SubmitError,
     Teardown, Transport,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -115,7 +115,7 @@ const KEY_CONTROL: u64 = 4;
 const INTERFACE_NAME: &[u8] = b"eth0";
 
 /// A fault for `cargo xtask test-net` to ask for, compiled in only when the
-/// build sets `FERRIX_NET_FAULT` (`native::arm_net_fault` in xtask), and
+/// build sets `XAQU_NET_FAULT` (`native::arm_net_fault` in xtask), and
 /// nothing at all otherwise: a frame anyone can send must not be able to take
 /// a real machine's network down.
 ///
@@ -126,16 +126,16 @@ const INTERFACE_NAME: &[u8] = b"eth0";
 /// on the night of 2026-10-15; the gate then requires this driver to leave
 /// with [`Step::Ended`] and `devmgr` to start it again mid-transfer.
 mod fault {
-    use ferrix_netring::RingMemory;
+    use xaqu_netring::RingMemory;
 
     /// Whether this build carries the fault.
-    pub(super) const ARMED: bool = match option_env!("FERRIX_NET_FAULT") {
+    pub(super) const ARMED: bool = match option_env!("XAQU_NET_FAULT") {
         Some(value) => !value.is_empty(),
         None => false,
     };
 
     /// What a sent frame holds to ask for it (xtask's `net::FAULT_MARKER`).
-    const MARKER: &[u8] = b"ferrix-netring-fault";
+    const MARKER: &[u8] = b"xaqu-netring-fault";
 
     /// Where the completion tail is in the ring's header (`docs/NET-RING.md`
     /// §3).
@@ -253,7 +253,7 @@ impl Mapped {
     }
 
     /// The little-endian `u32` at `offset`, in one access where it is aligned
-    /// (`ferrix-netring`'s `RingMemory` says why), composed from bytes where
+    /// (`xaqu-netring`'s `RingMemory` says why), composed from bytes where
     /// it is not, which only a hostile layout reaches.
     fn read_u32(&self, offset: usize) -> u32 {
         if offset.checked_add(4).is_none_or(|end| end > self.len) {
@@ -431,7 +431,7 @@ impl RingMemory for Ring {
     // The indices the kernel moves while this side reads them are `u32`s, and
     // each is one access here: composed from bytes, a tail stepping from
     // 0x00ff to 0x0100 reads 0x01ff on the other side, which is "the peer's
-    // tail ran more than a ring ahead" and ends the ring (`ferrix-netring`'s
+    // tail ran more than a ring ahead" and ends the ring (`xaqu-netring`'s
     // `RingMemory`).
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -473,7 +473,7 @@ impl RingMemory for Data {
     // The indices the kernel moves while this side reads them are `u32`s, and
     // each is one access here: composed from bytes, a tail stepping from
     // 0x00ff to 0x0100 reads 0x01ff on the other side, which is "the peer's
-    // tail ran more than a ring ahead" and ends the ring (`ferrix-netring`'s
+    // tail ran more than a ring ahead" and ends the ring (`xaqu-netring`'s
     // `RingMemory`).
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -628,7 +628,7 @@ impl Transport for Registers {
         if self.msix {
             0
         } else {
-            ferrix_virtio::pci::NO_VECTOR
+            xaqu_virtio::pci::NO_VECTOR
         }
     }
 
@@ -638,7 +638,7 @@ impl Transport for Registers {
             // undelivered, which the serve loop's next wait shows as a hang,
             // and nothing better can be done from inside the driver.
             let _ = self.interrupt.ack();
-            ferrix_virtio_net::ISR_QUEUE
+            xaqu_virtio_net::ISR_QUEUE
         } else {
             let status: u8 = self.isr.read(0);
             let _ = self.interrupt.ack();
@@ -1009,7 +1009,7 @@ fn serve(
         if turn.busy {
             continue;
         }
-        // The handshake is `ferrix-netserve`'s, not this program's: the
+        // The handshake is `xaqu-netserve`'s, not this program's: the
         // kernel rings only a driver that has asked to be rung, and the rule
         // about a frame waiting for the device's queue belongs with the queue.
         let wait = serve

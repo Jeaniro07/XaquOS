@@ -33,7 +33,7 @@ use alloc::sync::Arc;
 use core::fmt;
 use core::sync::atomic::{AtomicIsize, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::Result;
 use crate::node::Inode;

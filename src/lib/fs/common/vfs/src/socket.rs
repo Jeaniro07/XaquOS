@@ -42,8 +42,8 @@
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, buffer_footprint};
-use ferrix_linux_abi::socket::SOCKET_BUFFER_MIN;
+use xaqu_kmem::{Charge, buffer_footprint};
+use xaqu_linux_abi::socket::SOCKET_BUFFER_MIN;
 
 /// Whether a buffer keeps the boundaries between writes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

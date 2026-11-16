@@ -105,9 +105,9 @@ pub(crate) fn set_steam_preinstall(on: bool) {
 }
 
 /// The preinstalled library's stamp and its tree, beside each other in
-/// `FERRIX_STEAM_PREINSTALL` (default `~/.local/share/ferrix/steam-preinstall`).
+/// `XAQU_STEAM_PREINSTALL` (default `~/.local/share/xaqu/steam-preinstall`).
 fn steam_preinstall() -> Result<(PathBuf, PathBuf)> {
-    let directory = match std::env::var_os("FERRIX_STEAM_PREINSTALL") {
+    let directory = match std::env::var_os("XAQU_STEAM_PREINSTALL") {
         Some(directory) => PathBuf::from(directory),
         None => crate::paths::volume_directory("steam-preinstall")?,
     };
@@ -331,7 +331,7 @@ fn sources() -> Result<(Vec<(PathBuf, PathBuf)>, u64)> {
     let endfield = fetched_with(
         crate::compositor::endfield::proton_volume,
         "fetch-endfield-launcher.sh",
-        &[("FERRIX_ENDFIELD_WINE", "proton")],
+        &[("XAQU_ENDFIELD_WINE", "proton")],
     )?;
     let endfield = beside(endfield, "fetch-endfield-launcher.sh", |tree| {
         tree.join("usr/bin/gryphlink").is_file() && tree.join("proton/files/bin/wine").is_file()
@@ -380,8 +380,8 @@ fn sources() -> Result<(Vec<(PathBuf, PathBuf)>, u64)> {
 
 /// The image `volume` finds, after running `tools/common/fetch/<script>`
 /// when it finds none. The script writes where `volume` looks: both read the
-/// same `FERRIX_*_VOLUME`, and default to the same place under
-/// `~/.local/share/ferrix`. A script that fails, or that leaves no image,
+/// same `XAQU_*_VOLUME`, and default to the same place under
+/// `~/.local/share/xaqu`. A script that fails, or that leaves no image,
 /// stops the run.
 fn fetched(volume: fn() -> Result<PathBuf>, script: &str) -> Result<PathBuf> {
     fetched_with(volume, script, &[])
@@ -449,7 +449,7 @@ fn beside(image: PathBuf, script: &str, whole: fn(&Path) -> bool) -> Result<(Pat
 /// [`volume`] on Windows, where the trees are WSL's, full of symbolic links,
 /// and `mkfs.btrfs` is Linux's: xtask's Linux build makes the volume there
 /// (`cargo xtask everything-volume`), and this one boots it from WSL's home.
-/// `FERRIX_EVERYTHING_VOLUME` is not passed on, so the volume is always at
+/// `XAQU_EVERYTHING_VOLUME` is not passed on, so the volume is always at
 /// the Linux run's default place, and this looks for it there.
 fn volume_in_wsl() -> Result<PathBuf> {
     crate::wsl::require_toolchain(
@@ -485,12 +485,12 @@ fn volume_in_wsl() -> Result<PathBuf> {
     Ok(image)
 }
 
-/// `~/.local/share/ferrix/everything`, or `FERRIX_EVERYTHING_VOLUME`.
+/// `~/.local/share/xaqu/everything`, or `XAQU_EVERYTHING_VOLUME`.
 ///
 /// Beside the two volumes by default, which is what lets the tree be hard
 /// links into theirs: one file system, and no second copy of 1.6 GiB.
 fn directory() -> Result<PathBuf> {
-    if let Some(directory) = std::env::var_os("FERRIX_EVERYTHING_VOLUME") {
+    if let Some(directory) = std::env::var_os("XAQU_EVERYTHING_VOLUME") {
         return Ok(PathBuf::from(directory));
     }
     crate::paths::volume_directory("everything")
@@ -824,7 +824,7 @@ mod tests {
     /// as a file and each `(path, target)` as a symbolic link.
     fn tree(name: &str, files: &[(&str, &[u8])], links: &[(&str, &str)]) -> PathBuf {
         let root =
-            std::env::temp_dir().join(format!("ferrix-everything-{}-{name}", std::process::id()));
+            std::env::temp_dir().join(format!("xaqu-everything-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         for (path, bytes) in files {
             let path = root.join(path);

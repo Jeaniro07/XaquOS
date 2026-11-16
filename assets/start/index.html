@@ -1,10 +1,10 @@
 <!doctype html>
 <!--
-  The page Chrome opens on a Ferrix desktop: `run-compositor --chrome` and
-  `flash --compositor --chrome` carry it to /usr/share/ferrix/start/ and
+  The page Chrome opens on a Xaqu desktop: `run-compositor --chrome` and
+  `flash --compositor --chrome` carry it to /usr/share/xaqu/start/ and
   start the browser on it (tools/common/xtask/src/start_page.rs).
 
-  xtask replaces the `{}` in the script element named `ferrix` with what it
+  xtask replaces the `{}` in the script element named `xaqu` with what it
   knows of the boot: the architecture, the commit, the libc Chrome runs on,
   and the keys the desktop's own hyprland.conf binds. Opened on its own the
   page still works, and says it was given nothing.
@@ -16,9 +16,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ferrix</title>
+<title>Xaqu</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='28' fill='%230d0f12'/%3E%3Cpath d='M64 22 101 43v42l-37 21-37-21V43Z M27 43l37 21 37-21 M64 64v42' fill='none' stroke='%239aa4b2' stroke-width='6' stroke-linejoin='round'/%3E%3Ccircle cx='64' cy='64' r='12' fill='%23ff7a2b'/%3E%3C/svg%3E">
-<script id="ferrix" type="application/json">{}</script>
+<script id="xaqu" type="application/json">{}</script>
 <style>
 :root {
   --ink: #0d0f12;
@@ -178,7 +178,7 @@ footer b { color: var(--text); font-weight: 600; }
         <path fill="var(--mark)" d="M0,0H460L370,98H103V173H300L573,498H434L242,271H103V498H0ZM127.5,414L238,296L295,364L172,498H127.5Z"/>
         <path fill="var(--rust)" d="M492,0H613L385,246L328,177Z"/>
       </svg>
-      <div><b>Ferrix</b><span>an experimental Rust OS</span></div>
+      <div><b>Xaqu</b><span>an experimental Rust OS</span></div>
     </div>
     <div class="time"><b id="clock">--:--</b><span id="date"></span></div>
   </header>
@@ -202,7 +202,7 @@ footer b { color: var(--text); font-weight: 600; }
     <div class="stack">
       <section id="machine">
         <h2>This machine</h2>
-        <p class="lede">Ferrix's own file tree, as Chrome lists a directory. Every tile is a real path in this guest.</p>
+        <p class="lede">Xaqu's own file tree, as Chrome lists a directory. Every tile is a real path in this guest.</p>
         <nav class="places" id="places"></nav>
         <div class="facts" id="facts"></div>
       </section>
@@ -210,12 +210,12 @@ footer b { color: var(--text); font-weight: 600; }
       <section id="links">
         <h2>Out there</h2>
         <ul class="links">
-          <li><a href="https://ferrix-os.github.io/"><b>Ferrix's website</b><span>what runs, and how</span></a></li>
-          <li><a href="https://github.com/ferrix-os/ferrix"><b>The source</b><span>github.com/ferrix-os/ferrix</span></a></li>
-          <li><a href="https://github.com/ferrix-os/ferrix/tree/main/docs/roadmap"><b>The roadmap</b><span>done, and next</span></a></li>
-          <li><a href="https://github.com/ferrix-os/ferrix/blob/main/docs/CHROME.md"><b>How Chrome got here</b><span>docs/CHROME.md</span></a></li>
+          <li><a href="https://xaqu-os.github.io/"><b>Xaqu's website</b><span>what runs, and how</span></a></li>
+          <li><a href="https://github.com/xaqu-os/xaqu"><b>The source</b><span>github.com/xaqu-os/xaqu</span></a></li>
+          <li><a href="https://github.com/xaqu-os/xaqu/tree/main/docs/roadmap"><b>The roadmap</b><span>done, and next</span></a></li>
+          <li><a href="https://github.com/xaqu-os/xaqu/blob/main/docs/CHROME.md"><b>How Chrome got here</b><span>docs/CHROME.md</span></a></li>
           <li><a href="https://en.wikipedia.org/wiki/Rust_(programming_language)"><b>Wikipedia</b><span>a real page to try</span></a></li>
-          <li><a href="https://github.com/ferrix-os/ferrix/issues"><b>Something broke?</b><span>the issues</span></a></li>
+          <li><a href="https://github.com/xaqu-os/xaqu/issues"><b>Something broke?</b><span>the issues</span></a></li>
         </ul>
       </section>
     </div>
@@ -239,7 +239,7 @@ footer b { color: var(--text); font-weight: 600; }
   </div>
 
   <footer>
-    <span id="build">Ferrix</span>
+    <span id="build">Xaqu</span>
     <span>Experimental: tested Linux programs run unchanged here, and plenty of others do not yet.</span>
   </footer>
 </main>
@@ -247,7 +247,7 @@ footer b { color: var(--text); font-weight: 600; }
 <script>
 "use strict";
 var boot = {};
-try { boot = JSON.parse(document.getElementById("ferrix").textContent) || {}; } catch (e) {}
+try { boot = JSON.parse(document.getElementById("xaqu").textContent) || {}; } catch (e) {}
 
 function el(tag, attrs, children) {
   var node = document.createElement(tag);
@@ -300,7 +300,7 @@ var places = [
   ["/etc", "Settings", "Users, mounts, the host's name"],
   ["/dev", "Devices", "Every node the drivers made"],
   ["/data", "The data disk", "Chrome's btrfs volume"],
-  ["/usr/share/ferrix", "Ferrix's files", "Fonts, this page, and the rest"]
+  ["/usr/share/xaqu", "Xaqu's files", "Fonts, this page, and the rest"]
 ];
 var nav = document.getElementById("places");
 places.forEach(function (place) {
@@ -353,7 +353,7 @@ if (boot.config) {
 var build = [];
 if (boot.arch) build.push(boot.arch);
 if (boot.commit) build.push("built from " + boot.commit);
-document.getElementById("build").textContent = "Ferrix" + (build.length ? " · " + build.join(" · ") : "");
+document.getElementById("build").textContent = "Xaqu" + (build.length ? " · " + build.join(" · ") : "");
 
 // The tone, as the first page had it: sound from Chrome to the host's
 // speakers under `--audio` (docs/AUDIO.md §4). Again stops it.

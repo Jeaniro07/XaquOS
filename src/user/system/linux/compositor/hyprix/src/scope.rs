@@ -1,6 +1,6 @@
 //! A scope for each program the compositor starts (`docs/INIT.md` §5.6).
 //!
-//! Under Ferrix's init the compositor is `hyprix.service`, and what it
+//! Under Xaqu's init the compositor is `hyprix.service`, and what it
 //! starts -- `exec-once`, `exec`, a keybind's program -- would otherwise be
 //! in the compositor's own cgroup, charged to it and stopped with it. Each
 //! one is asked into `app.slice/app-<name>-<pid>.scope` instead, over the
@@ -15,7 +15,7 @@ use std::io::{Read as _, Write as _};
 use std::os::unix::net::UnixStream;
 use std::time::Duration;
 
-use ferrix_svc_proto::control::{Answer, Call, Framer, SOCKET};
+use xaqu_svc_proto::control::{Answer, Call, Framer, SOCKET};
 
 /// The slice the scopes go under, systemd's own name for it.
 pub const SLICE: &str = "app.slice";

@@ -20,7 +20,7 @@
 //!    the kernel counts) and starts `nvrm-test`, which reads its device
 //!    from bootstrap, prints `device_isolation` with both bits, its budget -- the one devmgr set --, its apertures, the
 //!    configuration window, BAR0's first register, runs a thread, maps
-//!    and unmaps BAR0's first page through ferrix-nvos more times than a
+//!    and unmaps BAR0's first page through xaqu-nvos more times than a
 //!    mapping that outlived its unmap would allow, and idles. `nvrm-hold`
 //!    then asks it to quiesce (`docs/NVIDIA.md` §13), and the skeleton says
 //!    it has no GPU to shut down and that it is done.
@@ -65,10 +65,10 @@ const HANDED: &str = "(interrupts isolated); handing it to nvrm";
 /// The prefix of every line `nvrm` prints.
 const NVRM: &str = "nvrm: ";
 
-/// ferrix-nvos's line when it refuses nvrm's core.
+/// xaqu-nvos's line when it refuses nvrm's core.
 const REFUSED: &str = "nvos: core refused: ";
 
-/// The prefix of the lines ferrix-nvos prints in nvrm, its core's load
+/// The prefix of the lines xaqu-nvos prints in nvrm, its core's load
 /// among them; [`STEPS`] holds both kinds in one order.
 const NVOS: &str = "nvos: ";
 
@@ -123,16 +123,16 @@ const SMALL_MEMORY: u32 = 512;
 /// NVIDIA's release, as `tools/common/fetch/fetch-nvidia.sh` writes it.
 const RELEASE: &str = "580.173.02";
 
-/// Where `fetch-nvidia.sh` wrote the release: `$FERRIX_NVIDIA/580.173.02`,
-/// by default under `~/.local/share/ferrix/nvidia`. Refused without RM's
+/// Where `fetch-nvidia.sh` wrote the release: `$XAQU_NVIDIA/580.173.02`,
+/// by default under `~/.local/share/xaqu/nvidia`. Refused without RM's
 /// core in it.
 pub(crate) fn fetched() -> Result<PathBuf> {
-    let root = match std::env::var_os("FERRIX_NVIDIA") {
+    let root = match std::env::var_os("XAQU_NVIDIA") {
         Some(root) => PathBuf::from(root),
         None => PathBuf::from(std::env::var_os("HOME").unwrap_or_default())
             .join(".local")
             .join("share")
-            .join("ferrix")
+            .join("xaqu")
             .join("nvidia"),
     };
     let release = root.join(RELEASE);
@@ -140,7 +140,7 @@ pub(crate) fn fetched() -> Result<PathBuf> {
     if !core.is_file() {
         return Err(Error::new(format!(
             "no NVIDIA {RELEASE} objects at {} (no {}): tools/common/fetch/fetch-nvidia.sh \
-             fetches and builds them, or set FERRIX_NVIDIA",
+             fetches and builds them, or set XAQU_NVIDIA",
             release.display(),
             core.display()
         )));
@@ -210,13 +210,13 @@ pub(crate) fn build() -> Result<Programs> {
     Ok(programs)
 }
 
-/// Where nvrm reads its core on the NVIDIA volume, which Ferrix mounts at
+/// Where nvrm reads its core on the NVIDIA volume, which Xaqu mounts at
 /// `/data` (`src/main.c`, `CORE_PATH`).
-pub(crate) const CORE_IN_VOLUME: &str = "usr/lib/ferrix/nvrm-core";
+pub(crate) const CORE_IN_VOLUME: &str = "usr/lib/xaqu/nvrm-core";
 
 /// Make `image`, a btrfs volume holding `files` -- each a path in the
 /// volume and the file to copy there -- with `mkfs.btrfs --rootdir` from a
-/// tree beside it. The kernel mounts a volume with no `ferrix-root` label
+/// tree beside it. The kernel mounts a volume with no `xaqu-root` label
 /// at `/data`.
 pub(crate) fn volume(image: &Path, files: &[(&str, PathBuf)]) -> Result<()> {
     let tree = image.with_extension("tree");

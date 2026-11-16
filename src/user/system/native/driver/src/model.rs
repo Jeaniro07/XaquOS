@@ -13,23 +13,23 @@
 //! What this slice builds, step 1's (`docs/DRIVER-MODEL.md` §9): the
 //! traits, [`run`], registers, interrupts and the requirement table, for a
 //! generic device-tree node. What it stubs, saying so where it does: the
-//! providers' clients (step 2, in `ferrix-platform`), pin states (step 2),
+//! providers' clients (step 2, in `xaqu-platform`), pin states (step 2),
 //! child devices and parent buses (step 4), and classes (`CHARDEV.md`'s
 //! grant to drivers); each answers `ENOSYS` until its step.
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-pub use ferrix_devmgr_proto::requirements::{Requirement, What};
-use ferrix_fdt::identity::{RECORD_BYTES, Record};
-pub use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::DEVICE_TREE_GENERIC;
-use ferrix_rt::native::device::{Device, Interrupt as InterruptHandle};
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+pub use xaqu_devmgr_proto::requirements::{Requirement, What};
+use xaqu_fdt::identity::{RECORD_BYTES, Record};
+pub use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::DEVICE_TREE_GENERIC;
+use xaqu_rt::native::device::{Device, Interrupt as InterruptHandle};
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::{Bootstrap, Kernel};
 
 use crate::class::{ClassPublisher, Request};
 
@@ -66,7 +66,7 @@ pub trait Resources: Sized {
     /// Every resource, as devmgr checks it.
     const REQUIREMENTS: &'static [Requirement<'static>];
 
-    /// The table as the image carries it, in `.ferrix.requirements`.
+    /// The table as the image carries it, in `.xaqu.requirements`.
     fn requirement_table() -> &'static [u8];
 
     /// Resolve every field from `node`.
@@ -166,7 +166,7 @@ impl Node {
     ///
     /// `ENOENT` when the node has no such name.
     pub fn place(&self, requirement: &Requirement<'_>, names: &str) -> Result<u16> {
-        if requirement.index != ferrix_devmgr_proto::requirements::BY_NAME {
+        if requirement.index != xaqu_devmgr_proto::requirements::BY_NAME {
             return Ok(requirement.index);
         }
         let record = self.record().ok_or(Errno::ENODEV)?;
@@ -193,7 +193,7 @@ impl Node {
         if !found.resolved() {
             return Err(Errno::ENXIO);
         }
-        let mut cells = [0u32; ferrix_fdt::generic::MAX_SPECIFIER_CELLS];
+        let mut cells = [0u32; xaqu_fdt::generic::MAX_SPECIFIER_CELLS];
         let mut count = 0;
         for (slot, cell) in cells.iter_mut().zip(found.cells()) {
             *slot = cell;
@@ -213,7 +213,7 @@ impl Node {
 pub struct Reference {
     /// The provider node's id.
     pub provider: u32,
-    cells: [u32; ferrix_fdt::generic::MAX_SPECIFIER_CELLS],
+    cells: [u32; xaqu_fdt::generic::MAX_SPECIFIER_CELLS],
     count: usize,
 }
 
@@ -509,7 +509,7 @@ impl Digits for u16 {
 /// raw handle; 0 when there is none.
 static BOOTSTRAP: AtomicU32 = AtomicU32::new(0);
 
-/// Keep the bootstrap channel for [`run`]: what `ferrix_driver::entry!()`
+/// Keep the bootstrap channel for [`run`]: what `xaqu_driver::entry!()`
 /// does before it calls `main`.
 #[doc(hidden)]
 pub fn keep_bootstrap(bootstrap: Bootstrap) {
@@ -543,7 +543,7 @@ pub fn run<D: Driver>() -> ! {
         Ok(()) => 0,
         Err(stopped) => stopped as i32,
     };
-    ferrix_rt::exit(status)
+    xaqu_rt::exit(status)
 }
 
 fn serve<D: Driver>() -> core::result::Result<(), Stopped> {
@@ -552,7 +552,7 @@ fn serve<D: Driver>() -> core::result::Result<(), Stopped> {
         return Err(Stopped::Start);
     }
     let boot =
-        ferrix_rt::native::channel::Channel::from_owned(OwnedHandle::from_raw(Kernel, Handle(raw)));
+        xaqu_rt::native::channel::Channel::from_owned(OwnedHandle::from_raw(Kernel, Handle(raw)));
     let _ = boot
         .wait_one(Signals::READABLE, Deadline::Never)
         .map_err(|_| Stopped::Start)?;
@@ -573,7 +573,7 @@ fn serve<D: Driver>() -> core::result::Result<(), Stopped> {
     let device = Device::from_owned(OwnedHandle::from_raw(Kernel, handle));
     let mut node = Node::read(device).map_err(|_| Stopped::Node)?;
     let resources = D::Resources::resolve(&mut node).map_err(|error| {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "driver: {}: a resource could not be had ({error:?})",
             node.record().map_or("?", |record| record.path())
         );
@@ -596,7 +596,7 @@ fn serve<D: Driver>() -> core::result::Result<(), Stopped> {
     let mut copy = [0u8; 256];
     let shown = copy_str(path, &mut copy);
     let mut driver = D::bind(context).map_err(|error| {
-        ferrix_rt::err!("driver: {shown}: bind failed ({error:?})");
+        xaqu_rt::err!("driver: {shown}: bind failed ({error:?})");
         Stopped::Bind
     })?;
     // No class or provider events reach a driver yet: it serves until devmgr

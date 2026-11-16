@@ -2,7 +2,7 @@
 //!
 //! lode stamps it on every record and lode-upload sends it, so a receiver
 //! keeps a machine's log in a store named by it rather than by its host
-//! name, and two machines both called `ferrix` stay apart. Ferrix images
+//! name, and two machines both called `xaqu` stay apart. Xaqu images
 //! carry none; init makes one when `/` is settled and holds none, as
 //! systemd does on a first boot: 128 bits from the kernel's random, marked
 //! as a version 4 UUID, written as 32 lowercase hex digits and a newline,

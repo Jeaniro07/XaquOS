@@ -1,4 +1,4 @@
-//! What an alert does (`ferrix_lode_core::alert`, `docs/LOGGING.md`
+//! What an alert does (`xaqu_lode_core::alert`, `docs/LOGGING.md`
 //! §7.4), without lode doing anything to the system itself (§11.2):
 //!
 //! * `notify`: a line on `/run/lode/alerts` to every reader -- the
@@ -15,10 +15,10 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::alert::{Action, Fired, MESSAGE_ID_ALERT};
-use ferrix_lode_core::ingest::{self, Now};
-use ferrix_lode_core::record::Record;
-use ferrix_svc_proto::control::{Answer, Call, Framer};
+use xaqu_lode_core::alert::{Action, Fired, MESSAGE_ID_ALERT};
+use xaqu_lode_core::ingest::{self, Now};
+use xaqu_lode_core::record::Record;
+use xaqu_svc_proto::control::{Answer, Call, Framer};
 
 use crate::sys;
 
@@ -26,7 +26,7 @@ use crate::sys;
 pub(crate) const SOCKET: &[u8] = b"/run/lode/alerts";
 
 /// init's control socket.
-const CONTROL: &[u8] = b"/run/ferrix/control";
+const CONTROL: &[u8] = b"/run/xaqu/control";
 
 /// How long init may take to answer a start, in microseconds.
 const ANSWER_US: u64 = 30_000_000;

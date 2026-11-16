@@ -24,7 +24,7 @@ use crate::{Error, Result};
 
 /// The instance the control socket is under, which `hyprctl` finds by
 /// looking when `HYPRLAND_INSTANCE_SIGNATURE` is not set.
-const INSTANCE: &str = "ferrix";
+const INSTANCE: &str = "xaqu";
 
 /// The two binds that ask the compositor about itself, pressed after the
 /// three pictures so that what they print describes the last of them.
@@ -371,7 +371,7 @@ fn say_where_processors_are(qmp: &mut Qmp, watching: &Watching<'_>, arch: Arch) 
 /// That neither the kernel nor the compositor stopped during a boot whose
 /// pictures matched.
 pub(super) fn judge_still_running(arch: Arch, said: &[String]) -> Result<()> {
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while the compositor ran: {}",
             line.trim()
@@ -451,14 +451,14 @@ pub(super) fn build_image(
     Ok((image, kernel.elf))
 }
 
-/// Init's command line, with `ferrix.checks=skip` after it when
+/// Init's command line, with `xaqu.checks=skip` after it when
 /// [`Args::checks_skipped`] says this boot is not its architecture's first.
 /// No gate or report counts a compositor boot as the self-checks' evidence:
 /// that is `test-boot`'s, on every row.
 fn command_line(args: &Args) -> String {
     let init = crate::init::command_line();
     if args.checks_skipped {
-        format!("{} ferrix.checks=skip\n", init.trim_end())
+        format!("{} xaqu.checks=skip\n", init.trim_end())
     } else {
         init
     }
@@ -466,7 +466,7 @@ fn command_line(args: &Args) -> String {
 
 /// [`build_image`] for a desktop: the same image, carrying `defaults` --
 /// [`DESKTOP_DEFAULTS`], and whatever `run-compositor` adds to them -- as
-/// `FERRIX/DEFAULTS.TXT`, so that the kernel skips its self-checks as a
+/// `XAQU/DEFAULTS.TXT`, so that the kernel skips its self-checks as a
 /// board's desktop does.
 ///
 /// [`DESKTOP_DEFAULTS`]: super::run::DESKTOP_DEFAULTS
@@ -528,13 +528,13 @@ pub(super) fn build_parts(
     // it.
     let config_path = format!("/{CONFIG_PATH}");
     let mut arguments = vec!["--config", config_path.as_str(), "--instance", INSTANCE];
-    // `--nvidia` with `FERRIX_NVIDIA_VTEST=1`: the frames are drawn on the
+    // `--nvidia` with `XAQU_NVIDIA_VTEST=1`: the frames are drawn on the
     // 3060, by virglrenderer's test server on NVIDIA's EGL, and read back
     // for nvrm's copying card (docs/NVIDIA.md §4.6, N3c). The card's render
     // node speaks NVIDIA's ioctls, not virgl's, so `auto` draws in software.
     // Opt-in for now: on 2026-10-25 it took Xaqu from 95 ms a frame to 23 ms
     // but Chrome's WebGL from 51-61 fps to 15-19, which is still to be found.
-    if args.nvidia && std::env::var_os("FERRIX_NVIDIA_VTEST").is_some_and(|value| value == "1") {
+    if args.nvidia && std::env::var_os("XAQU_NVIDIA_VTEST").is_some_and(|value| value == "1") {
         arguments.extend(["--renderer", "vtest"]);
     }
     let mut carried = crate::init::desktop_files(
@@ -546,19 +546,19 @@ pub(super) fn build_parts(
         args.session_user.as_deref(),
         (args.session_bus.as_ref(), args.data_nosuid),
     )?;
-    // `FERRIX_VTEST_PROTOCOL` and `FERRIX_VTEST_SCANOUT` from the host, for
+    // `XAQU_VTEST_PROTOCOL` and `XAQU_VTEST_SCANOUT` from the host, for
     // hyprix's test-server client under `--nvidia`: protocol `0` keeps the
     // frames on the socket, which is how protocol 2's shared memory is
     // measured against it (N3c); scanout `1` draws frames into nvidia-drm's
     // own buffers (zerocopy).
-    for name in ["FERRIX_VTEST_PROTOCOL", "FERRIX_VTEST_SCANOUT"] {
+    for name in ["XAQU_VTEST_PROTOCOL", "XAQU_VTEST_SCANOUT"] {
         let Some(value) = std::env::var(name).ok().filter(|value| {
             args.nvidia && !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit())
         }) else {
             continue;
         };
         for file in &mut carried {
-            if file.path == "etc/ferrix/units/hyprix.service"
+            if file.path == "etc/xaqu/units/hyprix.service"
                 && let crate::ports::Content::Bytes(bytes) = &mut file.content
             {
                 let unit = String::from_utf8_lossy(bytes).replacen(
@@ -571,7 +571,7 @@ pub(super) fn build_parts(
             }
         }
     }
-    // `FERRIX_GPU_HELPER=1`: hyprix-gpu and the Mesa it draws with, under
+    // `XAQU_GPU_HELPER=1`: hyprix-gpu and the Mesa it draws with, under
     // their own prefix (`crate::hyprix_gpu`); off, the image is as before.
     if crate::hyprix_gpu::wanted(arch) {
         carried.extend(crate::hyprix_gpu::carried()?);
@@ -677,7 +677,7 @@ fn binds_the_asked(config: &str) -> bool {
 /// Ask the compositor about itself, from inside the guest.
 ///
 /// `hyprctl` is carried in the initramfs and a keybind `exec`s it, because
-/// Hyprland's own is not on Ferrix's image and `exec` is how a person starts
+/// Hyprland's own is not on Xaqu's image and `exec` is how a person starts
 /// anything.
 fn ask_the_sockets(qmp: &mut Qmp, watching: &mut Watching<'_>, arch: Arch) -> Result<()> {
     for (name, keys) in ASKED {

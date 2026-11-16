@@ -67,7 +67,7 @@ fn the_service_keys_of_section_4_4() {
          OOMPolicy=continue\nDelegate=yes\nUser=daemon\nGroup=daemon\nWorkingDirectory=-/var/lib/d\n\
          Environment=A=1 \"B=2 3\"\nEnvironment=C=4\nEnvironmentFile=-/etc/default/d\n\
          StandardInput=tty\nStandardOutput=journal+console\nStandardError=file:/var/log/d\n\
-         TTYPath=/dev/ttyS1\nOffers=ferrix.clipboard\nUses=ferrix.vfs ferrix.log\nNotifyFd=3\nPIDFile=/run/d.pid\n",
+         TTYPath=/dev/ttyS1\nOffers=xaqu.clipboard\nUses=xaqu.vfs xaqu.log\nNotifyFd=3\nPIDFile=/run/d.pid\n",
     );
     assert!(warnings.is_empty(), "{warnings:?}");
     assert_eq!(s.service_type, ServiceType::Notify);
@@ -123,8 +123,8 @@ fn the_service_keys_of_section_4_4() {
     assert_eq!(s.standard_output, Output::Log);
     assert_eq!(s.standard_error, Output::File(String::from("/var/log/d")));
     assert_eq!(s.tty(), Some("/dev/ttyS1"));
-    assert_eq!(s.offers, ["ferrix.clipboard"]);
-    assert_eq!(s.uses, ["ferrix.vfs", "ferrix.log"]);
+    assert_eq!(s.offers, ["xaqu.clipboard"]);
+    assert_eq!(s.uses, ["xaqu.vfs", "xaqu.log"]);
     assert_eq!(s.notify_fd, Some(3));
     assert_eq!(s.pid_file.as_deref(), Some("/run/d.pid"));
 }
@@ -181,13 +181,13 @@ fn what_service_verify_refuses() {
 #[test]
 fn a_native_service_may_name_its_user() {
     let (native, warnings) = service(
-        "[Service]\nType=native\nExecStart=/a\nUser=ferrix\nGroup=ferrix\n\
+        "[Service]\nType=native\nExecStart=/a\nUser=xaqu\nGroup=xaqu\n\
          SupplementaryGroups=wheel\n",
     );
     assert!(warnings.is_empty(), "{warnings:?}");
     assert_eq!(native.service_type, ServiceType::Native);
-    assert_eq!(native.user.as_deref(), Some("ferrix"));
-    assert_eq!(native.group.as_deref(), Some("ferrix"));
+    assert_eq!(native.user.as_deref(), Some("xaqu"));
+    assert_eq!(native.group.as_deref(), Some("xaqu"));
     assert_eq!(native.supplementary_groups, ["wheel"]);
 }
 

@@ -1,6 +1,6 @@
 # Stage 22 — Steam  ·  *unsized, over 300 points*
 
-Steam runs on Ferrix, logs in, and a game bought there plays. Put on the
+Steam runs on Xaqu, logs in, and a game bought there plays. Put on the
 roadmap by the customer on 2026-09-18 as the step after the GPU decision. It
 does not wait for stage 21: it is a guest's stage first, on the GPU of Path
 A, and moves to bare metal when stage 21 does.
@@ -10,7 +10,7 @@ is why it is the right exit for `docs/ARCHITECTURE.md` §2's promise: a
 closed client that is a 32-bit program starting 64-bit helpers, one of them
 a whole browser; a runtime that containerises every game with bubblewrap;
 and games that draw with Vulkan through Wine. Everything below is something
-Steam needs that Ferrix does not have, in the order it can be tested. The
+Steam needs that Xaqu does not have, in the order it can be tested. The
 dynamic linking section above already says the first part; the rest was not
 staged until now.
 
@@ -53,7 +53,7 @@ staged until now.
   under `qemu-i386` before booting it. Still to do: what Steam finds
   missing, which is I5. **I5a** follows (2026-09-27): Valve's steamcmd,
   the client's core without its display, updates itself and logs in to
-  Steam anonymously on Ferrix (`cargo xtask test-steamcmd`, under KVM, with
+  Steam anonymously on Xaqu (`cargo xtask test-steamcmd`, under KVM, with
   the network): the i386 `stat64` family, `waitid`, `cpu MHz` in
   `/proc/cpuinfo`, and a certificate bundle on its volume. Still to do: the
   client's bootstrapper (I5b), which needed an X server for its window and
@@ -97,16 +97,16 @@ staged until now.
   MIT: GLX, DRI3, Present, RENDER, XI2, RandR, SHM, Composite; it runs
   Plasma, Chromium and Electron), not C Xwayland with xwayland-satellite.
   yserver has DRM/KMS, nested-on-X11 and headless backends and no Wayland
-  one, so Ferrix adds a rootless Wayland backend behind its backend trait:
+  one, so Xaqu adds a rootless Wayland backend behind its backend trait:
   each top-level X window an `xdg_toplevel` on hyprix, with input and the
   clipboard bridged. xwayland-satellite (Rust, MPL-2.0) is the reference
   for how X windows map to xdg surfaces, read and not copied. In order:
   a feasibility pass (a pinned yserver release, its headless backend built
-  for x86-64 on Ferrix, an X client run against it), a written design for
+  for x86-64 on Xaqu, an X client run against it), a written design for
   the backend, then the backend in small landings. **The feasibility pass was met
   on 2026-09-28**: `cargo xtask test-yserver` boots yserver headless on
   Mesa's lavapipe from the volume `tools/common/fetch/fetch-yserver.sh` builds,
-  and `xdpyinfo` reaches it and lists 21 extensions. Ferrix did not change
+  and `xdpyinfo` reaches it and lists 21 extensions. Xaqu did not change
   for it. **The design is `docs/YSERVER.md`**, approved the same day: the
   backend wraps yserver's Vulkan renderer, hands frames to hyprix as
   `wl_shm` copies until hyprix has dmabuf, and is built in seven slices, 36
@@ -145,7 +145,7 @@ staged until now.
   `C0`, a dead driver's DMA pins kept by the kernel until the next driver has
   reset the device (F-38, 2026-09-26). alsa-lib and `aplay` are built on
   ferrousli and play through it (U1, 2026-09-27). What stage 22 still needs
-  of it is the server. As it was written: Ferrix had no audio at all: a `virtio-snd` driver in ring 3,
+  of it is the server. As it was written: Xaqu had no audio at all: a `virtio-snd` driver in ring 3,
   an audio core with a `/dev/snd` shaped enough for a client library, and a
   server speaking the PulseAudio or PipeWire protocol over a Unix socket,
   which is what Steam and every game link against. 30 points as a first
@@ -161,13 +161,13 @@ staged until now.
   8 points on top of Path A, and Mesa's Venus driver on ferrousli or a Rust
   Vulkan loader over it, which is Path A's 3a question asked a second
   time.
-* **Wine and Proton.** Not Ferrix's to write and everything Ferrix's to
+* **Wine and Proton.** Not Xaqu's to write and everything Xaqu's to
   run: Proton is Wine plus DXVK plus the runtime, and every one of its
   kernel needs is one of the bullets above. What it will find missing is
   found by running it.
 
 **Exit,** in three steps, each a boot of its own the way stage 18's and
-19's are: the Steam client starts on Ferrix, logs in and shows its store,
+19's are: the Steam client starts on Xaqu, logs in and shows its store,
 with the browser helper drawing; a native Linux game from the library
 installs to btrfs, launches and draws through the GPU path with sound; and
 a Windows game runs through Proton. The first two are a guest's exit on
@@ -188,9 +188,9 @@ its store. The customer signed in first with the Steam app's QR code
 test-steam-store` did it with no one there (`docs/STEAM.md` §1): it boots
 that desktop's Steam on ferrousli, requires the sign-in window drawn, types
 in a test account's name and password from
-`~/.config/ferrix/steam-test-account` on the gate host (Steam Guard off,
+`~/.config/xaqu/steam-test-account` on the gate host (Steam Guard off,
 never in a checkout), and requires the store on the screen. It passes on
-nazuna with the account `ferrixsteamtest` since 2026-09-30. fuzzel lists
+nazuna with the account `xaqusteamtest` since 2026-09-30. fuzzel lists
 Steam on that desktop, so a closed client can be started again (not yet
 tried on a live desktop).
 
@@ -223,11 +223,11 @@ sound.
 Since 2026-10-10 there is a way around the stall for a native game:
 `--steam-preinstall` installs Teeworlds and the scout runtime with `steamcmd`
 on the host and merges them into the `--everything` volume, where Steam finds
-them installed (ee9eade0b, 62d6369b5), and `ferrix_direct`, a compatibility
+them installed (ee9eade0b, 62d6369b5), and `xaqu_direct`, a compatibility
 tool the client script maps a game to, starts the game outside the runtime's
 container (3a2740642), so pressure-vessel and N5 to N7 are not needed for it.
 The in-guest install's staging stall is still unexplained, and
-`docs/STEAM.md` does not record the gate passing, but the customer reports (2026-10-21) that Steam runs on Ferrix and a game has also run.
+`docs/STEAM.md` does not record the gate passing, but the customer reports (2026-10-21) that Steam runs on Xaqu and a game has also run.
 
 None of it is sized past a first guess, and the sum of the first guesses is
 already over 300 points, so the stage is written as a list of what has to be

@@ -154,7 +154,7 @@ pub fn handle(store: &mut Store, message: &Message, now_ms: u64) -> Outcome {
     } else if message.is_call(NAME, "GetServerInformation") {
         let mut body = Writer::new();
         body.string("notifyd");
-        body.string("Ferrix");
+        body.string("Xaqu");
         body.string(env!("CARGO_PKG_VERSION"));
         body.string("1.2");
         reply = reply.with_body("ssss", body);

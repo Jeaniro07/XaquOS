@@ -139,7 +139,7 @@ impl Model {
             hmmaxd: 0,
             refuse_host_memory: false,
             granted_queues: 64,
-            model_name: b"Ferrix Model Controller",
+            model_name: b"Xaqu Model Controller",
             vendor: 0x1B36,
             drop_io: 0,
             abort_works: false,

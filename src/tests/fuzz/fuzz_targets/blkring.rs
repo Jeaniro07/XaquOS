@@ -36,14 +36,14 @@
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
 
-use ferrix_blkring::driver::{CompleteError, Consumed, DriverSide};
-use ferrix_blkring::geometry::{Device, DeviceFlags};
-use ferrix_blkring::kernel::{DataVmo, Ending, KernelSide, Slot, SubmitError};
-use ferrix_blkring::layout::{
+use xaqu_blkring::driver::{CompleteError, Consumed, DriverSide};
+use xaqu_blkring::geometry::{Device, DeviceFlags};
+use xaqu_blkring::kernel::{DataVmo, Ending, KernelSide, Slot, SubmitError};
+use xaqu_blkring::layout::{
     COMPLETION_BYTES, Op, RawCompletion, RawSubmission, RingLayout, SUBMISSION_BYTES, Status,
     Submission, header, write_header,
 };
-use ferrix_blkring::RingMemory;
+use xaqu_blkring::RingMemory;
 use libfuzzer_sys::fuzz_target;
 
 /// The most operations one input may run.

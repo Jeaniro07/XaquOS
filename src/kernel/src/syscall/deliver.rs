@@ -54,9 +54,9 @@
 //! It is made before any handler frame is built, so the frame saves the
 //! resolved resume point and `rt_sigreturn` returns straight into it.
 
-use ferrix_bootinfo::is_user_address;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{SA_RESTART, SA_RESTORER, SIG_DFL, SIG_IGN, SIGSEGV};
+use xaqu_bootinfo::is_user_address;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{SA_RESTART, SA_RESTORER, SIG_DFL, SIG_IGN, SIGSEGV};
 
 use crate::arch;
 use crate::console::println;
@@ -76,14 +76,14 @@ use crate::syscall::uaccess;
 
 use crate::signal_frame::{BadFrame, FrameRequest, StackRecord};
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod hold_check;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) use check::check_the_delivery_cap;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub use hold_check::{Report as HoldReport, check_the_crash_hold};
 
 /// How many signals one round of the way back to user mode acts on before it
@@ -182,10 +182,10 @@ pub fn install() {
 /// `getppid`, straight through, when nothing about the caller is unusual: nothing a
 /// filter or a probe would ask, nothing [`needs_attention`] would find. `u64::MAX`
 /// for the general path. Only `linuxd`'s restricted loop asks, on a program's thread.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 #[unsafe(no_mangle)]
-#[unsafe(link_section = ".text.ferrix_straight")]
-pub fn ferrix_lift_hot_answer(number: usize) -> u64 {
+#[unsafe(link_section = ".text.xaqu_straight")]
+pub fn xaqu_lift_hot_answer(number: usize) -> u64 {
     #[cold]
     #[inline(always)]
     const fn unusual() {}
@@ -227,12 +227,12 @@ pub fn needs_attention() -> bool {
     // the thread is four locked operations (po10-pipe P2, B1).
     thread::with_current(|thread| {
         let process = thread.process();
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         {
             (!process.quiet_for(thread))
                 | thread.with_signals(|shared, own| signal::needs_attention(shared, own))
         }
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         {
             process.must_leave(thread)
                 || process.must_park()
@@ -638,7 +638,7 @@ pub(crate) fn force(signal: u32, origin: Origin) -> Option<Posted> {
 }
 
 /// [`force`] for a fault of the program's own instruction: a fatal one is
-/// first held for `/dev/ferrix-crashes` while a reader is armed, at most
+/// first held for `/dev/xaqu-crashes` while a reader is armed, at most
 /// [`crate::fs::crashes::HOLD_NANOS`] (LOGGING.md §21.7 crash-2), then ended as
 /// [`force`] ends it. Only `fault_signal` calls this: seccomp's ends,
 /// `kill`, limits and the OOM end are never held.

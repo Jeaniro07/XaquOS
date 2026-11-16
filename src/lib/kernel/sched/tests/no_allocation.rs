@@ -8,8 +8,8 @@
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 
-use ferrix_fallible as _;
-use ferrix_sched::{Config, EntityState, NICE_0_WEIGHT, RunQueue, Slot, Timeline};
+use xaqu_fallible as _;
+use xaqu_sched::{Config, EntityState, NICE_0_WEIGHT, RunQueue, Slot, Timeline};
 
 std::thread_local! {
     /// Allocations this thread has made while counting.

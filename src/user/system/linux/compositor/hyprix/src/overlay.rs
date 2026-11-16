@@ -841,16 +841,16 @@ fn srgb([big_l, a, b]: [f32; 3]) -> Color {
 /// premultiplied ARGB, and their width and height.
 fn text(text: &str, color: Color, size: Size, times: i64) -> (Vec<u8>, i64, i64) {
     let scale = usize::try_from(size.times().saturating_mul(times)).unwrap_or(1);
-    let glyph_width = ferrix_fbtext::GLYPH_WIDTH * scale;
-    let glyph_height = ferrix_fbtext::GLYPH_HEIGHT * scale;
+    let glyph_width = xaqu_fbtext::GLYPH_WIDTH * scale;
+    let glyph_height = xaqu_fbtext::GLYPH_HEIGHT * scale;
     let width = text.chars().count() * glyph_width;
     let mut pixels = vec![0u8; width * glyph_height * 4];
     // Opaque, so premultiplied is the colour itself; ARGB8888 is B, G, R, A
     // in memory.
     let bytes = [color.blue(), color.green(), color.red(), 0xff];
     for (column, character) in text.chars().enumerate() {
-        for (row, bits) in ferrix_fbtext::glyph(character).iter().enumerate() {
-            let lit = (0..ferrix_fbtext::GLYPH_WIDTH).filter(|bit| bits & (0x80 >> bit) != 0);
+        for (row, bits) in xaqu_fbtext::glyph(character).iter().enumerate() {
+            let lit = (0..xaqu_fbtext::GLYPH_WIDTH).filter(|bit| bits & (0x80 >> bit) != 0);
             for bit in lit {
                 // One of Spleen's pixels is a `scale`-sided square.
                 let x = column * glyph_width + bit * scale;

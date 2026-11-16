@@ -35,9 +35,9 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{NSIG, SIGALRM, SIGCHLD, SIGCONT};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{NSIG, SIGALRM, SIGCHLD, SIGCONT};
 
 use crate::sched::{self, WaitQueue};
 use crate::syscall::credentials;
@@ -393,7 +393,7 @@ fn alarms_changed() {
         *running = true;
         start
     };
-    if start && sched::spawn("itimers", run_alarm_clock, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if start && sched::spawn("itimers", run_alarm_clock, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         // Nothing runs, and whoever arrived meanwhile was told it did: the
         // next `setitimer` tries again, as it always did after a failed
         // spawn. Only out of memory reaches here.

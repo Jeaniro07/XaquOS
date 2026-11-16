@@ -500,7 +500,7 @@ enum Bhi {
     NotAffected(&'static str),
     /// `BHI_DIS_S` set in `IA32_SPEC_CTRL`, and read back like its other bits.
     HistoryDisabled,
-    /// The branch history overwritten by `ferrix_clear_bhb` on every entry
+    /// The branch history overwritten by `xaqu_clear_bhb` on every entry
     /// from ring 3.
     Loop,
 }
@@ -976,7 +976,7 @@ const fn decide_vector_leak(facts: &VectorFacts) -> VectorLeak {
 pub(super) static CLEAR_CPU_BUFFERS: AtomicU8 = AtomicU8::new(0);
 
 /// Whether every entry from ring 3 overwrites the branch history with
-/// `ferrix_clear_bhb` before any indirect branch (BHI). Read by the trap
+/// `xaqu_clear_bhb` before any indirect branch (BHI). Read by the trap
 /// entries, from assembly, as a byte, where a test of it mispredicted the
 /// other way meets the entry's `lfence`; and by `syscall::stub_address`,
 /// which points `LSTAR` at the system call entry that runs the loop, so the
@@ -990,7 +990,7 @@ pub(super) fn clears_branch_history() -> bool {
 }
 
 /// The branch-history loop's outer count: how many calls deep
-/// `ferrix_clear_bhb` goes. Linux 6.18.54's `clear_bhb_loop`, for every part
+/// `xaqu_clear_bhb` goes. Linux 6.18.54's `clear_bhb_loop`, for every part
 /// it runs the loop on.
 pub(super) const BHB_LOOP_OUTER: u32 = 5;
 /// The loop's inner count: taken jumps at each depth, as there.
@@ -1038,7 +1038,7 @@ pub(crate) fn init() {
         Ordering::Relaxed,
     );
     ERAPS_EMPTIES.store(plan.defences.contains(Defences::ERAPS), Ordering::Relaxed);
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     {
         IBPB_CLEARS_RETURNS.store(cpu::ibpb_clears_returns(), Ordering::Relaxed);
         // Reviewed on AMD's 1Ah alone (ledger 6787 W2, W7).
@@ -1171,7 +1171,7 @@ fn apply_vector_cover() -> bool {
 
 /// Apply the boot processor's plan on a secondary, as it starts.
 pub(crate) fn apply_this_cpu() {
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     super::restricted::window_decide_here();
     if !HARDENED {
         // The vector covers are no speed trade and stay in every build
@@ -1227,10 +1227,10 @@ pub(crate) fn exit_barrier(_cpu: usize) -> bool {
         issued = HARDENED;
     }
     // Only K1's fast crossings go without the refill, on the evidence ledger 6747 asks.
-    if !cfg!(ferrix_restricted_fastpath = "on") || !ERAPS_EMPTIES.load(Ordering::Relaxed) {
+    if !cfg!(xaqu_restricted_fastpath = "on") || !ERAPS_EMPTIES.load(Ordering::Relaxed) {
         unusual();
         fill_return_stack();
-        #[cfg(all(ferrix_restricted_fastpath = "on", ferrix_checks = "on"))]
+        #[cfg(all(xaqu_restricted_fastpath = "on", xaqu_checks = "on"))]
         {
             let _ = EXIT_REFILLS.fetch_add(1, Ordering::Relaxed);
         }
@@ -1241,7 +1241,7 @@ pub(crate) fn exit_barrier(_cpu: usize) -> bool {
 /// The barrier at a window's trip: as [`exit_barrier`], with no root write after it, so the
 /// refill stands unless `CPUID` itself says an `IBPB` clears the return predictor, read here
 /// and failing closed (IBPB_RET, CPUID 0x8000_0008 EBX bit 30).
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[inline(always)]
 pub(crate) fn window_barrier(_cpu: usize) -> bool {
     if !SWITCH_IBPB.load(Ordering::Relaxed) {
@@ -1257,12 +1257,12 @@ pub(crate) fn window_barrier(_cpu: usize) -> bool {
 }
 
 /// See [`window_barrier`]: set at boot from `CPUID`.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 static IBPB_CLEARS_RETURNS: AtomicBool = AtomicBool::new(false);
 
 /// Refills at restricted exits, for `region_check` (ledger 6747 (1d)): where ERAPS does not
 /// empty the predictor at the root write, every exit's barrier makes one.
-#[cfg(all(ferrix_restricted_fastpath = "on", ferrix_checks = "on"))]
+#[cfg(all(xaqu_restricted_fastpath = "on", xaqu_checks = "on"))]
 pub(in crate::arch) static EXIT_REFILLS: AtomicU64 = AtomicU64::new(0);
 
 /// Whether `CPUID` said `IA32_PRED_CMD` takes `IBPB`, which is what sets
@@ -1419,13 +1419,13 @@ pub(crate) fn check() -> Result<(), &'static str> {
 /// BHI-affected processor without `BHI_CTRL`: for the boot check, which
 /// shows it returns, with the stack as it was, wherever no entry runs it.
 pub(crate) fn clear_branch_history() {
-    // SAFETY: (PROTECT) `ferrix_clear_bhb` takes no argument, touches only
+    // SAFETY: (PROTECT) `xaqu_clear_bhb` takes no argument, touches only
     // `EAX`, `ECX`, the flags and the stack below the stack pointer, which
     // its returns give back, and ends in `lfence`. The kernel's target has
     // no red zone to overwrite.
     unsafe {
         asm!(
-            "call ferrix_clear_bhb",
+            "call xaqu_clear_bhb",
             out("rax") _,
             out("rcx") _,
         );

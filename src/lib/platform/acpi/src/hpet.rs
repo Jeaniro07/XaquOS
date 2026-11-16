@@ -11,7 +11,7 @@
 //! millennia.
 //!
 //! ```
-//! # use ferrix_acpi::hpet::{Capabilities, ticks_between};
+//! # use xaqu_acpi::hpet::{Capabilities, ticks_between};
 //! let caps = Capabilities(0x0429_B17F_8086_0701); // an AMD part: 32-bit counter
 //! assert!(!caps.counter_is_64_bit());
 //! assert_eq!(ticks_between(0xFFFF_FF00, 0x0000_0100, caps.counter_mask()), 0x200);

@@ -1,4 +1,4 @@
-# test-devloop's language-server session (docs/DEV-ON-FERRIX.md, D1): what
+# test-devloop's language-server session (docs/DEV-ON-XAQU.md, D1): what
 # an editor asks rust-analyzer first, on the fixture, with nothing but the
 # standard library. Usage: python3 lsp.py SERVER WORKSPACE FILE
 #

@@ -131,7 +131,7 @@ pub(crate) fn in_image(address: u64) -> bool {
 /// that it names the ELF's, as the panic report's `kaslr slide` line lets
 /// `xtask` do.
 pub(crate) fn slide() -> u64 {
-    image_start().wrapping_sub(ferrix_bootinfo::KERNEL_VIRT_BASE)
+    image_start().wrapping_sub(xaqu_bootinfo::KERNEL_VIRT_BASE)
 }
 
 /// The image's length, from its first byte to its last.

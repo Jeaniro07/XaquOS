@@ -7,7 +7,7 @@
 //! grace periods from its park (`smp::PerCpu::is_online`), but no task and
 //! no interrupt is placed on it (`sched::in_service`).
 
-use ferrix_sync::{Once, SleepLock};
+use xaqu_sync::{Once, SleepLock};
 
 use crate::audit;
 use crate::sched::{self, ServiceRefusal};
@@ -30,8 +30,8 @@ impl Door {
     /// Its number in a `CPU_SERVICE` record.
     const fn number(self) -> u32 {
         match self {
-            Door::Root => ferrix_audit::cpu_service::ROOT,
-            Door::Lode => ferrix_audit::cpu_service::LODE,
+            Door::Root => xaqu_audit::cpu_service::ROOT,
+            Door::Lode => xaqu_audit::cpu_service::LODE,
         }
     }
 

@@ -10,9 +10,9 @@
 
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::{MemKind, MemRegion, PAGE_SIZE};
-use ferrix_vfs::initramfs;
-use ferrix_vfs::{FileType, OpenFile, OpenFlags};
+use xaqu_bootinfo::{MemKind, MemRegion, PAGE_SIZE};
+use xaqu_vfs::initramfs;
+use xaqu_vfs::{FileType, OpenFile, OpenFlags};
 
 use super::{Released, namespace, release, root_disk, spared};
 use crate::console::println;

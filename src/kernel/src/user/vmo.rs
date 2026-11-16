@@ -76,9 +76,9 @@ use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 use crate::fallible::AllocError;
 use crate::sync::SpinLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_frame::Frame;
-use ferrix_sched::CpuSet;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_frame::Frame;
+use xaqu_sched::CpuSet;
 
 use crate::mm;
 use crate::object::pager::PagerLink;
@@ -111,20 +111,20 @@ pub enum VmoError {
 /// The frame plus one whose next read [`Vmo::read_present`] answers as
 /// poisoned, for stage 12's poison check (QEMU's memory never fails a
 /// load); 0 for none. Check builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 static INJECT_READ_POISON: AtomicU64 = AtomicU64::new(0);
 
 // CHECKS-ONLY: fs/btrfs_write_check/poison_check.rs; home: user::vmo
 /// Make the next read of `frame` through [`Vmo::read_present`] answer
 /// [`VmoError::Poisoned`], once (`docs/MACHINE-CHECK-PAGECACHE.md` §6).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 pub fn inject_read_poison(frame: Frame) {
     INJECT_READ_POISON.store(frame + 1, Ordering::SeqCst);
 }
 
 /// Whether the check asked for this read of `frame` to be poisoned; the
 /// request is used up.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn injected_read_poison(frame: Frame) -> bool {
     INJECT_READ_POISON
         .compare_exchange(frame + 1, 0, Ordering::SeqCst, Ordering::SeqCst)
@@ -134,11 +134,11 @@ fn injected_read_poison(frame: Frame) -> bool {
 /// A product build has no injection: nothing is stored, and no read is ever
 /// answered as poisoned by it. The check that asks is not run there.
 // CHECKS-ONLY: fs/btrfs_write_check/poison_check.rs; home: user::vmo
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 pub const fn inject_read_poison(_frame: Frame) {}
 
 /// A product build has no injection.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 const fn injected_read_poison(_frame: Frame) -> bool {
     false
 }
@@ -247,7 +247,7 @@ pub trait Filler: Send + Sync + fmt::Debug {
     ///
     /// The filesystem's: `EIO` for a page it could not read, `ENOMEM` for
     /// frames.
-    fn fill(&self, vmo: &Vmo, index: u64) -> Result<(), ferrix_vfs::Errno>;
+    fn fill(&self, vmo: &Vmo, index: u64) -> Result<(), xaqu_vfs::Errno>;
 
     /// Fill page `index` of `vmo` alone, if the file has it and `vmo` lacks
     /// it: no run after it. For a write the kernel makes itself into one page
@@ -258,7 +258,7 @@ pub trait Filler: Send + Sync + fmt::Debug {
     /// # Errors
     ///
     /// As [`Filler::fill`].
-    fn fill_one(&self, vmo: &Vmo, index: u64) -> Result<(), ferrix_vfs::Errno>;
+    fn fill_one(&self, vmo: &Vmo, index: u64) -> Result<(), xaqu_vfs::Errno>;
 
     /// Whether pages this object holds may be dropped and filled again from
     /// the source, as they are: every page, for a read-only file; the clean
@@ -327,7 +327,7 @@ const OVERLAP_CHUNK: usize = 64;
 pub struct Vmo {
     /// Pages of it are placed in a window space, with no region and no rmap behind
     /// them (ledger 6411, W2): sticky, and no path may take or change a page.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     placed: AtomicBool,
     /// Which pages hold a frame, and which of those are held in place.
     pages: SpinLock<Pages>,
@@ -389,7 +389,7 @@ pub struct Vmo {
     /// as it exists (`object::quota`). Nothing for a file's page cache, which
     /// is the file's; its pages are charged as memory all the same.
     #[cfg_attr(
-        not(ferrix_personality = "user"),
+        not(xaqu_personality = "user"),
         expect(
             dead_code,
             reason = "AUDIT: held for its drop, which uncharges the job"
@@ -462,7 +462,7 @@ struct Mapper {
     object: u64,
     /// What the name holds of the heap, charged to the job that mapped the
     /// object ([`MAPPER_HEAP`], certification finding F-37).
-    _charge: ferrix_kmem::Charge,
+    _charge: xaqu_kmem::Charge,
 }
 
 /// The heap one id a space names an object by holds, at its largest: its
@@ -666,7 +666,7 @@ impl Levels {
     /// Nothing yet.
     const fn new() -> Levels {
         Levels {
-            lowest_writer: ferrix_native_abi::types::JOB_LEVEL_TOP,
+            lowest_writer: xaqu_native_abi::types::JOB_LEVEL_TOP,
             highest_mapper: 0,
             pager: None,
             declared: None,
@@ -777,7 +777,7 @@ impl Vmo {
     }
 
     /// Mark it placed, for good: `false`, for an object that cannot be (ledger 6411, W2).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub(crate) fn mark_placed(&self) -> bool {
         if self.is_pager_backed() {
             return false;
@@ -786,7 +786,7 @@ impl Vmo {
         true
     }
     /// Whether a page of it may be in a window space.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub(crate) fn is_placed(&self) -> bool {
         self.placed.load(Ordering::Acquire)
     }
@@ -916,7 +916,7 @@ impl Vmo {
     /// The object [`Vmo::new_filled`] allocates.
     fn unfilled(pages: u64, source: Option<Source>, charge: Charge) -> Vmo {
         Vmo {
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             placed: AtomicBool::new(false),
             pages: SpinLock::new(Pages::default()),
             writable_regions: AtomicU64::new(0),
@@ -941,7 +941,7 @@ impl Vmo {
     /// # Errors
     ///
     /// As [`Filler::fill`].
-    pub(crate) fn fill_for_fault(&self, index: u64) -> Result<(), ferrix_vfs::Errno> {
+    pub(crate) fn fill_for_fault(&self, index: u64) -> Result<(), xaqu_vfs::Errno> {
         match self.filler() {
             Some(filler) => filler.fill(self, index),
             None => Ok(()),
@@ -954,7 +954,7 @@ impl Vmo {
     /// # Errors
     ///
     /// As [`Filler::fill_one`].
-    pub(crate) fn fill_one_page(&self, index: u64) -> Result<(), ferrix_vfs::Errno> {
+    pub(crate) fn fill_one_page(&self, index: u64) -> Result<(), xaqu_vfs::Errno> {
         match self.filler() {
             Some(filler) => filler.fill_one(self, index),
             None => Ok(()),
@@ -1007,7 +1007,7 @@ impl Vmo {
     /// wrote is left to be evicted over what a write-combining store put in
     /// memory, and nothing reads the object through the direct map again
     /// (`vmo_read` and `vmo_write` refuse it, as a coherent one).
-    #[cfg(not(all(ferrix_personality = "user", ferrix_load_built = "none")))]
+    #[cfg(not(all(xaqu_personality = "user", xaqu_load_built = "none")))]
     pub fn make_combining(&self) -> bool {
         if !crate::arch::user_combining()
             || !crate::object::io_mapping::combining_ready()
@@ -1176,7 +1176,7 @@ impl Vmo {
         object: u64,
         sharing: Sharing,
     ) -> Result<(), AllocError> {
-        let charge = ferrix_kmem::Charge::bytes(MAPPER_HEAP).map_err(|_| AllocError)?;
+        let charge = xaqu_kmem::Charge::bytes(MAPPER_HEAP).map_err(|_| AllocError)?;
         let mut mappers = self.mappers.lock();
         mappers.retain(|mapper| mapper.space.strong_count() > 0);
         compact(&mut mappers);
@@ -1295,7 +1295,7 @@ impl Vmo {
         // An object that cannot be allocated drops its frames as it goes,
         // which gives back every reference and copy taken above.
         crate::fallible::try_arc(Vmo {
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             placed: AtomicBool::new(false),
             pages: SpinLock::new(Pages {
                 frames,
@@ -1906,7 +1906,7 @@ impl Vmo {
     /// Must not be called holding a spin lock; a caller holding an address
     /// space's lock uses [`Vmo::take_page`] and [`Vmo::retire`] instead.
     pub fn replace(&self, index: u64, frame: Frame) -> Option<Frame> {
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_placed() {
             return None;
         }
@@ -1929,7 +1929,7 @@ impl Vmo {
         let mut retired = Retired::with_room(1).map_err(|_| Kept::NoMemory)?;
         // SEAL: refused
         let mut pages = self.pages.lock();
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_placed() {
             return Err(Kept::Held);
         }
@@ -1995,7 +1995,7 @@ impl Vmo {
     /// -- and the same in the end. With `clean`, for reclaim, a chunk leaves every
     /// page a mapping wrote ([`Pages::take_clean_into`]).
     fn decommit_in_chunks(&self, first: u64, end: u64, clean: bool) -> usize {
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_placed() {
             return 0;
         }
@@ -2047,7 +2047,7 @@ impl Vmo {
         if self.source.is_some() || self.bound.load(Ordering::SeqCst) != u64::MAX {
             return Err(RunError::NotAnonymous);
         }
-        if pages == 0 || pages > 1 << ferrix_frame::MAX_ORDER {
+        if pages == 0 || pages > 1 << xaqu_frame::MAX_ORDER {
             return Err(RunError::TooLong);
         }
         let end = first
@@ -2058,7 +2058,7 @@ impl Vmo {
         if self.pages.lock().frames.range(first..end).next().is_some() {
             return Err(RunError::Committed);
         }
-        let order = (0..=ferrix_frame::MAX_ORDER)
+        let order = (0..=xaqu_frame::MAX_ORDER)
             .find(|&order| 1u64 << order >= pages)
             .ok_or(RunError::TooLong)?;
         let block = mm::allocate_user_run(order).ok_or(RunError::OutOfMemory)?;
@@ -2119,7 +2119,7 @@ impl Vmo {
             return (0, 0);
         }
         let end = first.saturating_add(pages).min(self.len_pages());
-        let mut cap = order.min(ferrix_frame::MAX_ORDER);
+        let mut cap = order.min(xaqu_frame::MAX_ORDER);
         let mut index = first;
         while index < end {
             let mut o = cap;
@@ -2690,9 +2690,9 @@ impl Vmo {
 
     /// Freeze with no hash, as a seal stands between its two steps, for the
     /// boot check alone.
-    #[cfg(not(ferrix_load_built = "lift"))]
+    #[cfg(not(xaqu_load_built = "lift"))]
     #[doc(hidden)]
-    #[cfg(not(ferrix_load_built = "lift"))]
+    #[cfg(not(xaqu_load_built = "lift"))]
     pub fn freeze_for_check(&self) -> Result<(), &'static str> {
         if !crate::boot_checks::run() {
             return Err("an object is frozen so only while boot checks run");
@@ -2813,7 +2813,7 @@ impl Vmo {
             crate::sched::locks_here().map_or(u32::MAX, |(_, held, _)| held),
             Ordering::Relaxed,
         );
-        let mut hash = ferrix_sha256::Sha256::new();
+        let mut hash = xaqu_sha256::Sha256::new();
         hash.update(&self.len_bytes().to_le_bytes());
         for frame in frames {
             // SAFETY: (FRAME) the frame is this object's and, frozen, stays
@@ -2874,7 +2874,7 @@ impl Vmo {
             vmo: Arc::clone(self),
             first,
             frames,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             counted: AtomicBool::new(false),
         })
     }
@@ -2906,7 +2906,7 @@ impl Vmo {
     /// [`VmoError::OutOfMemory`] when a frame cannot be had. Pages committed
     /// before a failure stay committed, as [`Vmo::commit`] would leave them,
     /// and none is held.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn hold_whole_on_payer(self: &Arc<Self>) -> Result<Held, VmoError> {
         let pages = self.len_pages();
         let payer = self.charge.owner();
@@ -2973,7 +2973,7 @@ impl Vmo {
             vmo: Arc::clone(self),
             first,
             frames,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             counted: AtomicBool::new(false),
         })
     }
@@ -3177,11 +3177,11 @@ impl Pages {
 /// How many pages [`Vmo::hold_whole_on_payer`] holds now, for the row that holds a dead
 /// driver's to going back (BTRFSD H.4): a dead job's charge ends with it, so no job's figure
 /// shows a hold left behind.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 static SERVER_HELD_PAGES: AtomicU64 = AtomicU64::new(0);
 
 /// See [`SERVER_HELD_PAGES`].
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub fn server_held_pages() -> u64 {
     SERVER_HELD_PAGES.load(Ordering::Relaxed)
 }
@@ -3196,7 +3196,7 @@ pub struct Held {
     /// The frame holding each page, in page order.
     frames: Vec<Frame>,
     /// Counted in [`SERVER_HELD_PAGES`].
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     counted: AtomicBool,
 }
 
@@ -3212,7 +3212,7 @@ impl Drop for Held {
         let end = self.first.saturating_add(self.frames.len() as u64);
         // SEAL: read
         self.vmo.pages.lock().uncount_held(self.first, end);
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.counted.load(Ordering::Relaxed) {
             let _ = SERVER_HELD_PAGES.fetch_sub(self.frames.len() as u64, Ordering::Relaxed);
         }
@@ -3634,7 +3634,7 @@ impl Vmo {
     ///
     /// [`AllocError`] with no room to list them; nothing taken.
     pub fn decommit_clean(&self, first: u64, count: u64) -> Result<u64, AllocError> {
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_placed() {
             return Ok(0);
         }

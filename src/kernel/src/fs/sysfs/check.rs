@@ -21,9 +21,9 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_smbios::{Field, Smbios};
-use ferrix_sysfs::attr;
-use ferrix_vfs::{Access, Context, DirEntry, Errno, FileType, Namespace, OpenFlags};
+use xaqu_smbios::{Field, Smbios};
+use xaqu_sysfs::attr;
+use xaqu_vfs::{Access, Context, DirEntry, Errno, FileType, Namespace, OpenFlags};
 
 use super::Sysfs;
 use crate::device::{self, Location};
@@ -84,7 +84,7 @@ impl Harness {
     }
 
     /// The file at `tail`, read to its end.
-    fn read(&self, tail: &[u8]) -> ferrix_vfs::Result<Vec<u8>> {
+    fn read(&self, tail: &[u8]) -> xaqu_vfs::Result<Vec<u8>> {
         let flags = OpenFlags {
             read: true,
             ..OpenFlags::default()
@@ -178,7 +178,7 @@ pub fn run() -> Checked<Report> {
         .resolve(&ctx, None, CHECK_AT, true)
         .map_err(|_| "the sysfs check's mount point did not resolve")?;
     let sysfs = Arc::new(Sysfs::new());
-    let device = ferrix_vfs::FileSystem::device(sysfs.as_ref());
+    let device = xaqu_vfs::FileSystem::device(sysfs.as_ref());
     let _mount = ns.mount(sysfs, &at).map_err(|_| "sysfs did not mount")?;
     let mut harness = Harness {
         ns,
@@ -244,7 +244,7 @@ fn check_drivers_sealed() -> Checked<()> {
             .map_err(|_| "no memory to walk drivers.slice")?;
         pending.extend(below);
     }
-    // Under `ferrix.devmgr=init` init has not started devmgr yet, and
+    // Under `xaqu.devmgr=init` init has not started devmgr yet, and
     // drivers.slice may be all there is to read.
     Ok(())
 }

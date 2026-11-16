@@ -9,7 +9,7 @@
 //! `tools/common/game/framegl.c` is its test client: a GLX window paced to the
 //! server's msc as a program with vsync on is. Both are built here, by the
 //! host's C compiler, against nothing but the C library: the same two
-//! binaries go to Ferrix and to the Linux baseline guest.
+//! binaries go to Xaqu and to the Linux baseline guest.
 //!
 //! [`summarise`] reads a record: the frame times between swaps (median, 99th
 //! and 99.9th percentile, worst), and the missed refreshes counted two ways.
@@ -26,7 +26,7 @@
 //! `cargo xtask frames` builds both into the build directory and prints
 //! their paths and SHA-256; `cargo xtask frames --from <record>` summarises
 //! a record from either system. `cargo xtask test-frames`
-//! (`crate::compositor::frames`) is the gate on Ferrix.
+//! (`crate::compositor::frames`) is the gate on Xaqu.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;

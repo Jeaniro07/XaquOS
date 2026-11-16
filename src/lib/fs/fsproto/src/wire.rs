@@ -3,8 +3,8 @@
 //! A request is [`REQUEST_HEADER`] bytes and then up to two names; an answer is
 //! always [`ANSWER_BYTES`]. Nothing here trusts a length it did not compare.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::{FileType, Metadata, SetAttributes, StatFs, Timespec};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::{FileType, Metadata, SetAttributes, StatFs, Timespec};
 
 /// Bytes of a request before its names.
 pub const REQUEST_HEADER: usize = 40;
@@ -533,7 +533,7 @@ pub struct DiskUp {
     pub sectors: u64,
     /// Bytes of a sector.
     pub sector_size: u32,
-    /// `ferrix_blkring`'s device flags.
+    /// `xaqu_blkring`'s device flags.
     pub flags: u32,
     /// Where the device is: its location's word.
     pub location: u32,

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-linuxd"
+name = "xaqu-linuxd"
 description = "linuxd: the Linux personality in user space, the load's one source built against the shim (docs/microkernel/M5-LIFT.md)"
 version.workspace = true
 edition.workspace = true
@@ -15,16 +15,16 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-kernel-core = { package = "ferrix-lift-core", path = "../../../../kernel/lift/core" }
-ferrix-kernel-item = { package = "ferrix-lift-item", path = "../../../../kernel/lift/item" }
-ferrix-kernel-load = { package = "ferrix-lift-load", path = "../../../../kernel/lift/load" }
-ferrix-native-abi.workspace = true
-ferrix-kernel-settings = { package = "ferrix-lift-settings", path = "../../../../kernel/extensions/settings/lift" }
-ferrix-kernel-logctl = { package = "ferrix-lift-logctl", path = "../../../../kernel/extensions/device/logctl/lift" }
-ferrix-kernel-net-ring = { package = "ferrix-lift-net-ring", path = "../../../../kernel/extensions/device/net-ring/lift" }
-ferrix-rt.workspace = true
-ferrix-native.workspace = true
-ferrix-bootinfo.workspace = true
+xaqu-kernel-core = { package = "xaqu-lift-core", path = "../../../../kernel/lift/core" }
+xaqu-kernel-item = { package = "xaqu-lift-item", path = "../../../../kernel/lift/item" }
+xaqu-kernel-load = { package = "xaqu-lift-load", path = "../../../../kernel/lift/load" }
+xaqu-native-abi.workspace = true
+xaqu-kernel-settings = { package = "xaqu-lift-settings", path = "../../../../kernel/extensions/settings/lift" }
+xaqu-kernel-logctl = { package = "xaqu-lift-logctl", path = "../../../../kernel/extensions/device/logctl/lift" }
+xaqu-kernel-net-ring = { package = "xaqu-lift-net-ring", path = "../../../../kernel/extensions/device/net-ring/lift" }
+xaqu-rt.workspace = true
+xaqu-native.workspace = true
+xaqu-bootinfo.workspace = true
 
 [lints]
 workspace = true

@@ -4,7 +4,7 @@
 recommends and decides nothing. **Nothing here is gated evidence**: every run was by hand at
 `nice -n 19`, no threshold moved, no slot's file was written, the 3090 was only read by `nvidia-smi`,
 and `logs/queue/vram-closed` stays. "By inference" marks what was reasoned and not measured. Scripts,
-logs and raw figures: `~/.local/share/ferrix/mk-look/`.*
+logs and raw figures: `~/.local/share/xaqu/mk-look/`.*
 
 ## 1. The `max` row
 
@@ -60,7 +60,7 @@ So 170 cycles, about 30 ns at that clock, come with 8.6 more taken branches, 5 m
 walks, in about the same instructions. `RESTRICTED-EXIT.md`'s 3 ns a branch would make the branches 25 ns
 of it, by inference.
 
-**Tried and no gain.** The linuxd half is visibly worse than `f2`'s: `ferrix_lift_hot_answer` is a call
+**Tried and no gain.** The linuxd half is visibly worse than `f2`'s: `xaqu_lift_hot_answer` is a call
 about 2.4 MiB away from `straight_run`, though its comment expects LTO to take it in line. Forcing it in line
 (the symbol is gone), and placing it beside `straight_run`, read 680 and 690 against develop's 680 (five boots,
 load 7 to 14, `logs/ab-hot.*`). **So the far call is not the 30 ns**, and this was the leading guess. The TCG
@@ -164,7 +164,7 @@ on pull requests. The comment's own exit, "when both have their fix", was met on
 |---|---:|---:|---:|---|---|
 | Stage 9 XINUSE wake check | 34 | 14 | 3 | 10-08 to 10-24 | The check's assumption, fixed |
 | Stage 9 "a task resumed from a blocking" | 11 | 2 | 1 | 10-06 to 10-31 | Not traced here; last seen 10-31 |
-| btrfs check refused the volume Ferrix wrote | 11 | 11 | 0 | 09-23 | Not traced here |
+| btrfs check refused the volume Xaqu wrote | 11 | 11 | 0 | 09-23 | Not traced here |
 | Stage 7 `getrusage` | 10 | 5 | 4 | 10-21 to 10-24 | The check's precision, fixed |
 | **Case 138, FX-0925** | **8** | **8** | **6** | **11-04** | **A vacuous case: real** |
 | Component clone | 7 | 2 | 0 | 10-03 to 10-04 | Infrastructure |
@@ -294,7 +294,7 @@ from a target on btrfs to a worktree on ext4 (V3's `EXDEV` note). Any gate chang
 
 | Candidate | Size | State | Verdict |
 |---|---:|---|---|
-| **`nvme1n1p6`**, on the WD SN720 | 190 G | `lsblk`: NTFS "New Volume", partition label "Basic data partition", not mounted, by-partlabel link dated 15 minutes after this boot | **The candidate.** But it was `ferrix-root` btrfs on 2026-10-11, the root of nazuna's bare-metal plan, so someone changed it since. Only the customer knows what is on it |
+| **`nvme1n1p6`**, on the WD SN720 | 190 G | `lsblk`: NTFS "New Volume", partition label "Basic data partition", not mounted, by-partlabel link dated 15 minutes after this boot | **The candidate.** But it was `xaqu-root` btrfs on 2026-10-11, the root of nazuna's bare-metal plan, so someone changed it since. Only the customer knows what is on it |
 | LVM on `nvme2n1` | | The LV fills the PV, within 5,000 sectors | None free. ext4 `/` shrinks only offline |
 | Loop file on `/` | | 60 GB free, shed line 40 | No room, and each write would pay two file systems, by inference. Mounting it needs root too |
 | `nvme0n1` | 931 G | BitLocker, live Windows | Never (customer, 2026-10-11) |
@@ -309,10 +309,10 @@ the limit as well; it brings no checksum and no time-safe sharing.
 1. Say what `nvme1n1p6` holds, and whether nazuna's bare-metal plan still roots there.
 2. With root, once:
    ```
-   mkfs.btrfs -f -L ferrix-store /dev/nvme1n1p6
-   mkdir -p /mnt/ferrix-store
-   # fstab: LABEL=ferrix-store /mnt/ferrix-store btrfs compress=zstd:1,noatime,discard=async 0 0
-   mount /mnt/ferrix-store && chown sebastian: /mnt/ferrix-store
+   mkfs.btrfs -f -L xaqu-store /dev/nvme1n1p6
+   mkdir -p /mnt/xaqu-store
+   # fstab: LABEL=xaqu-store /mnt/xaqu-store btrfs compress=zstd:1,noatime,discard=async 0 0
+   mount /mnt/xaqu-store && chown sebastian: /mnt/xaqu-store
    apt install duperemove   # only if dedupe follows
    ```
 3. Agree the slots get cold once.
@@ -329,9 +329,9 @@ since. Rings: 52,768 core, 10,886 item. `check-item-boundary.py --report` still 
 (124,008 lines of item and core): M6 §3's per-profile size ratchet is not built, so nothing holds this figure down.
 
 **Not in that count:** library crates in ring 0, up to 39,684 lines by rustc's lists, far less linked. Debug text
-bytes: `ferrix_fdt` 64,568, `ferrix_native_abi` 47,588, `ferrix_paging` 45,922, `ferrix_sync` 35,057,
-`ferrix_objects` 28,116, `ferrix_acpi` 27,689, `ferrix_fallible` 26,132, `ferrix_pci` 25,328, `ferrix_sched` 21,788,
-`ferrix_linux_abi` 19,757. Whole text: x86-64 1.79 MB, AArch64 1.57 MB.
+bytes: `xaqu_fdt` 64,568, `xaqu_native_abi` 47,588, `xaqu_paging` 45,922, `xaqu_sync` 35,057,
+`xaqu_objects` 28,116, `xaqu_acpi` 27,689, `xaqu_fallible` 26,132, `xaqu_pci` 25,328, `xaqu_sched` 21,788,
+`xaqu_linux_abi` 19,757. Whole text: x86-64 1.79 MB, AArch64 1.57 MB.
 
 | Module (x86-64) | Lines | Largest files |
 |---|---:|---|
@@ -355,20 +355,20 @@ bytes: `ferrix_fdt` 64,568, `ferrix_native_abi` 47,588, `ferrix_paging` 45,922, 
 |---|---:|---|
 | VT-d, AMD-Vi and IVRS on AArch64: `nm` of the Arm kernel finds both drivers (27 KB of text). SMMUv3 on x86-64 | 1,934 on AArch64, 396 on x86-64 | A `cfg` by architecture. **The cheapest** |
 | `user/cache.rs` (the name in `feature/mk-boot`'s notes and BACKLOG): its list is empty here, and a machine check's retirement runs through `drop_poisoned` | 408 | A retirement path of its own; the consultant, for it is poison handling |
-| FDT on x86-64, ACPI where a board needs none: `ferrix_fdt` is 64 KB of x86-64's text, `tree.rs` 630 | Up to about 3,200 with the crate | Why `iommu.rs` and `device.rs` reach it there, to be read first |
+| FDT on x86-64, ACPI where a board needs none: `xaqu_fdt` is 64 KB of x86-64's text, `tree.rs` 630 | Up to about 3,200 with the crate | Why `iommu.rs` and `device.rs` reach it there, to be read first |
 | `panic/catalog.rs`'s explanations, kept by code in a host tool | Up to 2,227 built | The customer: the panic report loses its prose in ring 0. Data, no logic, so it flatters a count more than it shrinks risk |
-| `msrlog` and its decoder: `ferrix.msrlog`, a diagnostic for the N150's GT clock | 321 | Out under this shape |
-| SMBIOS: M.1 keeps `smbios.rs` and `ferrix-smbios` for type 16's one answer | 102, and 553 in the crate | The loader hands the answer over; L.mm.106 moves |
+| `msrlog` and its decoder: `xaqu.msrlog`, a diagnostic for the N150's GT clock | 321 | Out under this shape |
+| SMBIOS: M.1 keeps `smbios.rs` and `xaqu-smbios` for type 16's one answer | 102, and 553 in the crate | The loader hands the answer over; L.mm.106 moves |
 | `arch/x86_64/signal.rs`: only `UserContext` is asked for here, and `vdso.rs` | About 300, 200 | Reading what `restricted.rs` needs; M.2 |
 | `object/oom.rs` (cgroup `memory.max`, a policy), `sched/inspect.rs` | 326, 158 | Whether a user kernel has either at all |
-| PCI enumeration to devmgr: `pci.rs`, `devmgr.rs` | About 2,000, and `ferrix_pci` | A design: §2.1 keeps PCI host bridges, and ECAM would be granted before any IOMMU rule covers it. The customer's "keep the kernel slim" favours it |
+| PCI enumeration to devmgr: `pci.rs`, `devmgr.rs` | About 2,000, and `xaqu_pci` | A design: §2.1 keeps PCI host bridges, and ECAM would be granted before any IOMMU rule covers it. The customer's "keep the kernel slim" favours it |
 
 Counting only `src/kernel/src` and leaving FDT where a board needs it, that is about 7,000 lines on either
 architecture, to perhaps 56,500 on x86-64 and 51,000 on AArch64, by inference.
 `schedule=windows` may take the fair scheduler out and adds K9, net unknown.
 
 **What it does not reach.** `object/`, `user/`, `sched/` and `syscall/native.rs` are 25,000 lines of what §2.1 keeps:
-spaces, VMOs, threads, jobs, handles, channels. seL4 is about 8,700 lines of C (`MICROKERNEL.md`'s effort note). Moving modules will not make Ferrix's ring 0 that kind of small; a smaller mechanism would, and nobody has
+spaces, VMOs, threads, jobs, handles, channels. seL4 is about 8,700 lines of C (`MICROKERNEL.md`'s effort note). Moving modules will not make Xaqu's ring 0 that kind of small; a smaller mechanism would, and nobody has
 designed one. Whether 51,000 is "truly tiny" is the customer's word, and no count above is a limit.
 
 **The customer decides:** what `nvme1n1p6` is; whether the panic catalog's prose may leave; whether PCI leaves

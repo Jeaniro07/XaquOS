@@ -1,11 +1,11 @@
 //! What the kernel's raw readings mean (`power_read`'s words,
-//! `ferrix_native_abi::types::POWER_READ_*`). Layouts as Linux's
+//! `xaqu_native_abi::types::POWER_READ_*`). Layouts as Linux's
 //! `msr-index.h` and `intel_rapl_common.c`, and turbostat's names for the
-//! limit reasons, as `ferrix.msrlog` prints them.
+//! limit reasons, as `xaqu.msrlog` prints them.
 
 use core::fmt;
 
-use ferrix_native_abi::types::{
+use xaqu_native_abi::types::{
     POWER_READ_CEILING, POWER_READ_FIRMWARE, POWER_READ_FIRST, POWER_READ_FLAGS,
     POWER_READ_PRESENT, POWER_READ_VR, POWER_READ_WORDS,
 };
@@ -161,7 +161,7 @@ where
 }
 
 /// A current in eighths of an ampere, as amperes with three decimals, as
-/// `ferrix.vrcurrent` printed them.
+/// `xaqu.vrcurrent` printed them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Amps(pub u64);
 

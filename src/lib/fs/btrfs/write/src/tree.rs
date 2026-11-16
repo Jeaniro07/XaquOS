@@ -20,7 +20,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_btrfs::tree::{BtrfsKey, KeyPtr, MAX_LEVEL};
+use xaqu_btrfs::tree::{BtrfsKey, KeyPtr, MAX_LEVEL};
 
 use crate::node::{Body, LeafItem};
 use crate::volume::{Root, TreeId};
@@ -169,8 +169,8 @@ impl<D: WriteDevice> WriteVolume<D> {
         replace: bool,
     ) -> Result<()> {
         let largest = (self.nodesize() as usize)
-            .saturating_sub(ferrix_btrfs::tree::HEADER_SIZE)
-            .saturating_sub(ferrix_btrfs::tree::ITEM_SIZE);
+            .saturating_sub(xaqu_btrfs::tree::HEADER_SIZE)
+            .saturating_sub(xaqu_btrfs::tree::ITEM_SIZE);
         if data.len() > largest {
             return Err(Error::ItemTooLarge);
         }

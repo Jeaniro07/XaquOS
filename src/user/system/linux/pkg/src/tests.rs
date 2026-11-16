@@ -9,8 +9,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use ferrix_pkg::manifest;
-use ferrix_pkg::record::{self, Installed, Record};
+use xaqu_pkg::manifest;
+use xaqu_pkg::record::{self, Installed, Record};
 
 use super::{Package, info_lines, install, install_replacing, installed, read, remove, this_arch};
 

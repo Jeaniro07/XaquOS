@@ -1,4 +1,4 @@
-/* uvm-kpi: what Ferrix's Linux-compatible layer provides (see ferrix_kpi.h).
+/* uvm-kpi: what Xaqu's Linux-compatible layer provides (see xaqu_kpi.h).
  * Each NV_*_PRESENT below answers one of NVIDIA's conftests for uvm-kpi,
  * as conftest.sh would for a kernel that has the interface. */
 #define NV_KTIME_GET_RAW_TS64_PRESENT

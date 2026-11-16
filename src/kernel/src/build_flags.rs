@@ -2,7 +2,7 @@
 //! it was compiled with (`docs/BUILD-FLAGS.md`, rule 6).
 //!
 //! Every word of the `build` boot line comes from a `cfg!` here: the same
-//! `cfg(ferrix_<flag> = "<value>")` predicates that select the code, never
+//! `cfg(xaqu_<flag> = "<value>")` predicates that select the code, never
 //! data the build tool wrote. The gate (`tools/common/check/check-boot-line.py`)
 //! compares the line with the profile file the image claims to be, and ties
 //! the image's hash to the run, so a resolver that set a wrong value makes a
@@ -27,60 +27,60 @@ struct Flag {
 }
 
 /// The profile, then the level, then every flag in the flag file's order.
-const FLAGS: [Flag; 17 + 2 * cfg!(ferrix_personality = "user") as usize] = [
+const FLAGS: [Flag; 17 + 2 * cfg!(xaqu_personality = "user") as usize] = [
     Flag {
         name: "profile",
         values: &[
-            (cfg!(ferrix_profile = "present"), "present"),
-            (cfg!(ferrix_profile = "desktop"), "desktop"),
-            (cfg!(ferrix_profile = "fast"), "fast"),
-            (cfg!(ferrix_profile = "max"), "max"),
-            (cfg!(ferrix_profile = "none"), "none"),
+            (cfg!(xaqu_profile = "present"), "present"),
+            (cfg!(xaqu_profile = "desktop"), "desktop"),
+            (cfg!(xaqu_profile = "fast"), "fast"),
+            (cfg!(xaqu_profile = "max"), "max"),
+            (cfg!(xaqu_profile = "none"), "none"),
         ],
     },
     Flag {
         name: "level",
         values: &[
-            (cfg!(ferrix_level = "none"), "none"),
-            (cfg!(ferrix_level = "present"), "present"),
-            (cfg!(ferrix_level = "sc2"), "sc2"),
-            (cfg!(ferrix_level = "sc4"), "sc4"),
+            (cfg!(xaqu_level = "none"), "none"),
+            (cfg!(xaqu_level = "present"), "present"),
+            (cfg!(xaqu_level = "sc2"), "sc2"),
+            (cfg!(xaqu_level = "sc4"), "sc4"),
         ],
     },
     Flag {
         name: "personality",
         values: &[
-            (cfg!(ferrix_personality = "user"), "user"),
-            (cfg!(ferrix_personality = "kernel"), "kernel"),
-            (cfg!(ferrix_personality = "none"), "none"),
+            (cfg!(xaqu_personality = "user"), "user"),
+            (cfg!(xaqu_personality = "kernel"), "kernel"),
+            (cfg!(xaqu_personality = "none"), "none"),
         ],
     },
     Flag {
         name: "fs",
         values: &[
-            (cfg!(ferrix_fs = "server"), "server"),
-            (cfg!(ferrix_fs = "kernel"), "kernel"),
-            (cfg!(ferrix_fs = "none"), "none"),
-            (cfg!(ferrix_fs = "lift"), "lift"),
+            (cfg!(xaqu_fs = "server"), "server"),
+            (cfg!(xaqu_fs = "kernel"), "kernel"),
+            (cfg!(xaqu_fs = "none"), "none"),
+            (cfg!(xaqu_fs = "lift"), "lift"),
         ],
     },
     Flag {
         name: "mitigations",
         values: &[
-            (cfg!(ferrix_mitigations = "on"), "on"),
-            (cfg!(ferrix_mitigations = "off"), "off"),
+            (cfg!(xaqu_mitigations = "on"), "on"),
+            (cfg!(xaqu_mitigations = "off"), "off"),
         ],
     },
     Flag {
         name: "partition_speculation",
         values: &[
-            (cfg!(ferrix_partition_speculation = "exit"), "exit"),
+            (cfg!(xaqu_partition_speculation = "exit"), "exit"),
             (
-                cfg!(ferrix_partition_speculation = "partition"),
+                cfg!(xaqu_partition_speculation = "partition"),
                 "partition",
             ),
             (
-                cfg!(ferrix_partition_speculation = "not_applicable"),
+                cfg!(xaqu_partition_speculation = "not_applicable"),
                 "not_applicable",
             ),
         ],
@@ -88,17 +88,17 @@ const FLAGS: [Flag; 17 + 2 * cfg!(ferrix_personality = "user") as usize] = [
     Flag {
         name: "ipc_fastpath",
         values: &[
-            (cfg!(ferrix_ipc_fastpath = "off"), "off"),
-            (cfg!(ferrix_ipc_fastpath = "on"), "on"),
+            (cfg!(xaqu_ipc_fastpath = "off"), "off"),
+            (cfg!(xaqu_ipc_fastpath = "on"), "on"),
         ],
     },
     Flag {
         name: "restricted_fastpath",
         values: &[
-            (cfg!(ferrix_restricted_fastpath = "off"), "off"),
-            (cfg!(ferrix_restricted_fastpath = "on"), "on"),
+            (cfg!(xaqu_restricted_fastpath = "off"), "off"),
+            (cfg!(xaqu_restricted_fastpath = "on"), "on"),
             (
-                cfg!(ferrix_restricted_fastpath = "not_applicable"),
+                cfg!(xaqu_restricted_fastpath = "not_applicable"),
                 "not_applicable",
             ),
         ],
@@ -106,59 +106,59 @@ const FLAGS: [Flag; 17 + 2 * cfg!(ferrix_personality = "user") as usize] = [
     Flag {
         name: "kernel_memory",
         values: &[
-            (cfg!(ferrix_kernel_memory = "retyped"), "retyped"),
-            (cfg!(ferrix_kernel_memory = "heap"), "heap"),
+            (cfg!(xaqu_kernel_memory = "retyped"), "retyped"),
+            (cfg!(xaqu_kernel_memory = "heap"), "heap"),
         ],
     },
     Flag {
         name: "schedule",
         values: &[
-            (cfg!(ferrix_schedule = "windows"), "windows"),
-            (cfg!(ferrix_schedule = "edf"), "edf"),
-            (cfg!(ferrix_schedule = "fair"), "fair"),
+            (cfg!(xaqu_schedule = "windows"), "windows"),
+            (cfg!(xaqu_schedule = "edf"), "edf"),
+            (cfg!(xaqu_schedule = "fair"), "fair"),
         ],
     },
     Flag {
         name: "checks",
         values: &[
-            (cfg!(ferrix_checks = "on"), "on"),
-            (cfg!(ferrix_checks = "off"), "off"),
+            (cfg!(xaqu_checks = "on"), "on"),
+            (cfg!(xaqu_checks = "off"), "off"),
         ],
     },
     Flag {
         name: "program_barrier",
         values: &[
-            (cfg!(ferrix_program_barrier = "switch"), "switch"),
-            (cfg!(ferrix_program_barrier = "session"), "session"),
+            (cfg!(xaqu_program_barrier = "switch"), "switch"),
+            (cfg!(xaqu_program_barrier = "session"), "session"),
         ],
     },
     Flag {
         name: "ssbd",
         values: &[
-            (cfg!(ferrix_ssbd = "always"), "always"),
-            (cfg!(ferrix_ssbd = "on_request"), "on_request"),
+            (cfg!(xaqu_ssbd = "always"), "always"),
+            (cfg!(xaqu_ssbd = "on_request"), "on_request"),
         ],
     },
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     Flag {
         name: "fault_ahead",
         values: &[
-            (cfg!(ferrix_fault_ahead = "off"), "off"),
-            (cfg!(ferrix_fault_ahead = "on"), "on"),
+            (cfg!(xaqu_fault_ahead = "off"), "off"),
+            (cfg!(xaqu_fault_ahead = "on"), "on"),
             (
-                cfg!(ferrix_fault_ahead = "not_applicable"),
+                cfg!(xaqu_fault_ahead = "not_applicable"),
                 "not_applicable",
             ),
         ],
     },
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     Flag {
         name: "restricted_window",
         values: &[
-            (cfg!(ferrix_restricted_window = "off"), "off"),
-            (cfg!(ferrix_restricted_window = "on"), "on"),
+            (cfg!(xaqu_restricted_window = "off"), "off"),
+            (cfg!(xaqu_restricted_window = "on"), "on"),
             (
-                cfg!(ferrix_restricted_window = "not_applicable"),
+                cfg!(xaqu_restricted_window = "not_applicable"),
                 "not_applicable",
             ),
         ],
@@ -166,29 +166,29 @@ const FLAGS: [Flag; 17 + 2 * cfg!(ferrix_personality = "user") as usize] = [
     Flag {
         name: "smt",
         values: &[
-            (cfg!(ferrix_smt = "off"), "off"),
-            (cfg!(ferrix_smt = "stibp"), "stibp"),
+            (cfg!(xaqu_smt = "off"), "off"),
+            (cfg!(xaqu_smt = "stibp"), "stibp"),
         ],
     },
     Flag {
         name: "runtime_trades",
         values: &[
-            (cfg!(ferrix_runtime_trades = "none"), "none"),
-            (cfg!(ferrix_runtime_trades = "game_mode"), "game_mode"),
+            (cfg!(xaqu_runtime_trades = "none"), "none"),
+            (cfg!(xaqu_runtime_trades = "game_mode"), "game_mode"),
         ],
     },
     Flag {
         name: "linux_abi",
         values: &[
-            (cfg!(ferrix_linux_abi = "on"), "on"),
-            (cfg!(ferrix_linux_abi = "off"), "off"),
+            (cfg!(xaqu_linux_abi = "on"), "on"),
+            (cfg!(xaqu_linux_abi = "off"), "off"),
         ],
     },
     Flag {
         name: "runtime_settings",
         values: &[
-            (cfg!(ferrix_runtime_settings = "fixed"), "fixed"),
-            (cfg!(ferrix_runtime_settings = "live"), "live"),
+            (cfg!(xaqu_runtime_settings = "fixed"), "fixed"),
+            (cfg!(xaqu_runtime_settings = "live"), "live"),
         ],
     },
 ];
@@ -238,10 +238,10 @@ const fn chosen(values: &'static [(bool, &'static str)]) -> (&'static str, u32) 
 /// Whether this build's line says it carries no claim: an ad-hoc one (rule 5), or `fast`
 /// or `max` before M7 gives them their level (ledger 7011 LV.1).
 const AD_HOC: bool = cfg!(any(
-    ferrix_profile = "none",
+    xaqu_profile = "none",
     all(
-        ferrix_level = "none",
-        any(ferrix_profile = "fast", ferrix_profile = "max")
+        xaqu_level = "none",
+        any(xaqu_profile = "fast", xaqu_profile = "max")
     ),
 ));
 

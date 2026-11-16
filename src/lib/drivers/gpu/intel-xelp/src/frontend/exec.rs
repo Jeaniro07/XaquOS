@@ -19,8 +19,8 @@
 //! Departure from i915, because Mesa never needs it: an object not
 //! `EXEC_OBJECT_PINNED` is refused (i915 would choose its address).
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::kmsg::Level;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::kmsg::Level;
 
 use super::backend::Engine;
 use super::drm::{Call, Outcome, put, unserved};

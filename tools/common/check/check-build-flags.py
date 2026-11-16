@@ -4,10 +4,10 @@ are read, which boot options are, and the kernel's own table of flags.
 
 1. **Flags are read in the kernel's crates alone** (rule 6 b). A library built
    without a `cfg` takes its other branch without a word, which `--check-cfg`
-   cannot see, so no crate under src/lib may name a `ferrix_` cfg at all, and
+   cannot see, so no crate under src/lib may name a `xaqu_` cfg at all, and
    no crate outside the kernel's may name a declared flag's cfg
-   (`ferrix_<flag>`, `ferrix_profile`, `ferrix_level`), nor read one through
-   a build script's `CARGO_CFG_FERRIX_*`. The kernel's crates are the four
+   (`xaqu_<flag>`, `xaqu_profile`, `xaqu_level`), nor read one through
+   a build script's `CARGO_CFG_XAQU_*`. The kernel's crates are the four
    under src/kernel (`kernel_crates` in certification-item.json), and their
    one build script, src/kernel/build.rs, is where the flags become `cfg`s
    for each of them. That they all build with it, and nothing else does, is
@@ -25,11 +25,11 @@ are read, which boot options are, and the kernel's own table of flags.
    named in LIBRARY_READERS. A read the check cannot name fails it: it never
    reports an absence it did not establish.
 
-   And the general scan (ledger 2208 (2)): every `"ferrix.` string literal,
+   And the general scan (ledger 2208 (2)): every `"xaqu.` string literal,
    and every literal that is a registry key, in src/lib and src/boot outside
    their tests (tests.rs, tests/, inline #[cfg(test)] modules) is a declared
    option, in a LIBRARY_READERS file, or on NOT_OPTIONS with its reason. It
-   cannot see a new option without the `ferrix.` prefix that a library reads.
+   cannot see a new option without the `xaqu.` prefix that a library reads.
 
 3. **The kernel's flag table follows the flag file**: `build_flags.rs` names
    the profiles, the levels and every flag with every value, in the flag
@@ -39,7 +39,7 @@ are read, which boot options are, and the kernel's own table of flags.
    each of the kernel's crates expands it, and the binary requires the four
    words equal (ledger line 3282, (K4)).
 
-The first two have a planted negative control (a `ferrix_` cfg in a library; a reader
+The first two have a planted negative control (a `xaqu_` cfg in a library; a reader
 of an undeclared option), run with `gate.sh control` over `cargo xtask
 test-flags`.
 
@@ -67,8 +67,8 @@ KERNEL = ("src/kernel/", *(r + "/" for r in kernel_roots.outside("src/kernel")))
 READERS = ("src/kernel", "src/boot", *kernel_roots.outside("src/kernel", "src/boot"))
 # Library files that read the command line on the loader's or the kernel's
 # behalf, through a function of their own the loader or kernel calls:
-# `ferrix_bootinfo::pstore::switch` reads `ferrix.pstore` for the loader, and
-# `ferrix_eventlog::badframes::choice` reads `ferrix.badframes` for a
+# `xaqu_bootinfo::pstore::switch` reads `xaqu.pstore` for the loader, and
+# `xaqu_eventlog::badframes::choice` reads `xaqu.badframes` for a
 # `bad_frames = choice` loader (docs/MACHINE-CHECK-RESTART.md §10). A
 # library's own reads are not otherwise scanned (the libraries also hold the
 # parsers and their tests), so a new one is named here.
@@ -79,8 +79,8 @@ QUALIFIED = re.compile(r"(?:[a-z_][a-z0-9_]*::)*([a-z_][a-z0-9_]*)::([A-Z][A-Z0-
 # `rustc-cfg=` / `rustc-check-cfg=` and `CARGO_CFG_` reads, which live in
 # strings.
 CFG_OPEN = re.compile(r"\bcfg(?:_attr)?\s*!?\s*\(")
-FERRIX_IDENT = re.compile(r"\bferrix_[a-z0-9_]+")
-IN_STRINGS = re.compile(r"rustc-(?:check-)?cfg=\s*(?:cfg\()?\s*(ferrix_[a-z0-9_]+)|CARGO_CFG_(FERRIX_[A-Z0-9_]+)")
+XAQU_IDENT = re.compile(r"\bxaqu_[a-z0-9_]+")
+IN_STRINGS = re.compile(r"rustc-(?:check-)?cfg=\s*(?:cfg\()?\s*(xaqu_[a-z0-9_]+)|CARGO_CFG_(XAQU_[A-Z0-9_]+)")
 
 READ = re.compile(
     r"\.(?:option|flag)\s*\(\s*(?P<a>[^()]*?)\s*\)"
@@ -115,14 +115,14 @@ def closing(text: str, open_at: int) -> int:
 
 
 def cfg_names(source: str) -> list[tuple[int, str]]:
-    """Every `ferrix_` name a cfg in `source` names, with its line."""
+    """Every `xaqu_` name a cfg in `source` names, with its line."""
     code = comments_blanked(source)
     masked = rustlex.mask(source)
     found = []
     for match in CFG_OPEN.finditer(masked):
         start = match.end() - 1
         inside = masked[start : closing(masked, start) + 1]
-        for name in FERRIX_IDENT.finditer(inside):
+        for name in XAQU_IDENT.finditer(inside):
             found.append((masked.count("\n", 0, start) + 1, name.group()))
     for match in IN_STRINGS.finditer(code):
         name = match.group(1) or match.group(2).lower()
@@ -132,19 +132,19 @@ def cfg_names(source: str) -> list[tuple[int, str]]:
 
 def flag_cfg_problems(rust_files: list[tuple[str, str]], flags: set[str]) -> list[str]:
     """Rule 6 b over (path, source) pairs."""
-    declared = {f"ferrix_{flag}" for flag in flags} | {"ferrix_profile", "ferrix_level"}
+    declared = {f"xaqu_{flag}" for flag in flags} | {"xaqu_profile", "xaqu_level"}
     problems = []
     for rel, source in rust_files:
         if rel.startswith(KERNEL):
             continue
         for line, name in cfg_names(source):
-            if rel.startswith("src/user/system/native/linuxd/") and name == "ferrix_runtime_settings":
+            if rel.startswith("src/user/system/native/linuxd/") and name == "xaqu_runtime_settings":
                 # linuxd is the second composition root of one source, its crates
                 # the kernel's built again (docs/microkernel/M5-LIFT.md §1).
                 continue
             if rel.startswith("src/lib/"):
                 problems.append(f"{rel}:{line}: a library names the cfg `{name}`; flags are read in the kernel's crates alone")
-            elif name in declared or name.startswith("ferrix_mitigations"):
+            elif name in declared or name.startswith("xaqu_mitigations"):
                 problems.append(f"{rel}:{line}: names the build flag `{name}` outside the kernel's crates")
     return problems
 
@@ -228,24 +228,24 @@ def option_problems(rust_files: list[tuple[str, str]], registry: dict, forwarder
     return problems, counts
 
 
-# The general scan (the consultant, ledger 2208 (2)): every `"ferrix.`
+# The general scan (the consultant, ledger 2208 (2)): every `"xaqu.`
 # literal, and every literal that is a registry key, in a library or loader
 # file outside its tests is a declared option, a literal of a file in
 # LIBRARY_READERS, or a name below that is no boot option, each with why.
 LITERAL_SCAN = ("src/lib/", "src/boot/")
 NOT_OPTIONS = {
-    "ferrix.slot": "the loader's A/B slot word on the command line it writes, read by ring-3 bootctl from /proc/cmdline; no kernel or loader read (docs/AB-BOOT.md)",
-    "ferrix.slot.boot": "as ferrix.slot: the slot booted, written by the loader for bootctl",
-    "ferrix.slot.seq": "as ferrix.slot: the boot control record's sequence, written by the loader for bootctl",
-    "ferrix.slot.disk": "as ferrix.slot: the disk the slots are on, written by the loader for bootctl",
-    "ferrix.slot.sig": "as ferrix.slot: the anchor whose signature let the slot start, or none, written by the loader after its other words (docs/SIGNING.md §10.6)",
-    "ferrix.devmgr.update": "drvupdate-proto's service name, not a command-line option",
-    "ferrix.devmgr.events": "devmgr-events-proto's abstract socket name, not a command-line option",
-    "ferrix.test": "native-abi's test name, not a command-line option",
+    "xaqu.slot": "the loader's A/B slot word on the command line it writes, read by ring-3 bootctl from /proc/cmdline; no kernel or loader read (docs/AB-BOOT.md)",
+    "xaqu.slot.boot": "as xaqu.slot: the slot booted, written by the loader for bootctl",
+    "xaqu.slot.seq": "as xaqu.slot: the boot control record's sequence, written by the loader for bootctl",
+    "xaqu.slot.disk": "as xaqu.slot: the disk the slots are on, written by the loader for bootctl",
+    "xaqu.slot.sig": "as xaqu.slot: the anchor whose signature let the slot start, or none, written by the loader after its other words (docs/SIGNING.md §10.6)",
+    "xaqu.devmgr.update": "drvupdate-proto's service name, not a command-line option",
+    "xaqu.devmgr.events": "devmgr-events-proto's abstract socket name, not a command-line option",
+    "xaqu.test": "native-abi's test name, not a command-line option",
 }
-# The bare prefix `"ferrix."` (the Pixel 7 loader keeps every word that
+# The bare prefix `"xaqu."` (the Pixel 7 loader keeps every word that
 # starts with it) names no option.
-FERRIX_LITERAL = re.compile(r"ferrix\.[A-Za-z0-9_][A-Za-z0-9_.-]*")
+XAQU_LITERAL = re.compile(r"xaqu\.[A-Za-z0-9_][A-Za-z0-9_.-]*")
 TEST_MODULE = re.compile(r"#\[cfg\(test\)\]\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+\w+\s*\{")
 
 
@@ -271,7 +271,7 @@ def is_test_file(rel: str) -> bool:
 
 
 def option_literals(source: str, registry: dict) -> list[tuple[int, str]]:
-    """(line, name) for each `"ferrix.` literal and each literal that is a
+    """(line, name) for each `"xaqu.` literal and each literal that is a
     registry key, outside the source's inline test modules."""
     masked = rustlex.mask(source)
     regions = test_regions(masked)
@@ -281,7 +281,7 @@ def option_literals(source: str, registry: dict) -> list[tuple[int, str]]:
             continue
         text = source[start:end]
         body = text[text.index('"') + 1 : text.rindex('"')]
-        named = FERRIX_LITERAL.match(body)
+        named = XAQU_LITERAL.match(body)
         name = named.group().rstrip(".") if named else (body if body in registry else None)
         if name:
             found.append((source.count("\n", 0, start) + 1, name))
@@ -303,7 +303,7 @@ def literal_problems(rust_files: list[tuple[str, str]], registry: dict) -> list[
 
 
 KERNEL_TABLE = "src/kernel/src/build_flags.rs"
-TABLE_ENTRY = re.compile(r'name:\s*"([a-z0-9_]+)"|cfg!\(\s*ferrix_([a-z0-9_]+)\s*=\s*"([a-z0-9_]+)"\s*\)\s*,\s*"([a-z0-9_]+)"')
+TABLE_ENTRY = re.compile(r'name:\s*"([a-z0-9_]+)"|cfg!\(\s*xaqu_([a-z0-9_]+)\s*=\s*"([a-z0-9_]+)"\s*\)\s*,\s*"([a-z0-9_]+)"')
 
 
 def kernel_table_problems(source: str, flag_file: dict, profiles: list[str]) -> list[str]:
@@ -319,7 +319,7 @@ def kernel_table_problems(source: str, flag_file: dict, profiles: list[str]) -> 
         elif table:
             flag, value, word = match.group(2), match.group(3), match.group(4)
             if flag != table[-1][0] or value != word:
-                problems.append(f"{KERNEL_TABLE}: cfg!(ferrix_{flag} = \"{value}\") is filed as {table[-1][0]}={word}")
+                problems.append(f"{KERNEL_TABLE}: cfg!(xaqu_{flag} = \"{value}\") is filed as {table[-1][0]}={word}")
             table[-1][1].append(value)
     wanted = [("profile", profiles), ("level", list(flag_file.get("levels", {})))]
     wanted += [(flag, list(entry.get("values", {}))) for flag, entry in flag_file.get("flags", {}).items()]
@@ -334,7 +334,7 @@ def kernel_table_problems(source: str, flag_file: dict, profiles: list[str]) -> 
 
 
 KERNEL_WORD = "src/kernel/src/kernel_core.rs"
-WORD_ENTRY = re.compile(r'cfg!\(\s*ferrix_([a-z0-9_]+)\s*=\s*"([a-z0-9_]+)"\s*\)')
+WORD_ENTRY = re.compile(r'cfg!\(\s*xaqu_([a-z0-9_]+)\s*=\s*"([a-z0-9_]+)"\s*\)')
 
 
 def flag_word_problems(source: str, flag_file: dict, profiles: list[str]) -> list[str]:
@@ -387,7 +387,7 @@ def removable_flags() -> set[str]:
 
 def composition_root_problems(rust_files: list[tuple[str, str]], flags: set[str]) -> list[str]:
     """Rule 6e over (path, source) pairs."""
-    names = {f"ferrix_{flag}" for flag in flags}
+    names = {f"xaqu_{flag}" for flag in flags}
     allowed = {COMPOSITION_ROOT, KERNEL_TABLE, KERNEL_WORD, "src/kernel/src/lift_core.rs"}
     problems = []
     for rel, source in rust_files:
@@ -433,7 +433,7 @@ def image_key_problems(flag_file: dict, profiles: dict[str, dict]) -> list[str]:
 def settable_problems(registry: dict, profiles: dict[str, dict]) -> list[str]:
     """The boot words a Settings page may set (ledger 5579 (8)): `settable`
     only on a word that is neither test-only nor free-form (`*`, which B5's
-    closed list never takes); and `ferrix.badframes`, the bad-frame switch
+    closed list never takes); and `xaqu.badframes`, the bad-frame switch
     (docs/MACHINE-CHECK-RESTART.md §10), permitted only by a profile whose
     image key `bad_frames` is `choice`, since a `persist` loader compiles no
     read of it."""
@@ -447,8 +447,8 @@ def settable_problems(registry: dict, profiles: dict[str, dict]) -> list[str]:
             problems.append(f"boot option {name} is settable and takes any word (`*`)")
     for name, profile in sorted(profiles.items()):
         permits = profile.get("boot_options", {})
-        if "ferrix.badframes" in permits and profile.get("image", {}).get("bad_frames") != "choice":
-            problems.append(f"profiles/{name}.toml permits ferrix.badframes, but its bad_frames is not choice")
+        if "xaqu.badframes" in permits and profile.get("image", {}).get("bad_frames") != "choice":
+            problems.append(f"profiles/{name}.toml permits xaqu.badframes, but its bad_frames is not choice")
     return problems
 
 
@@ -469,44 +469,44 @@ def rust_files() -> list[tuple[str, str]]:
 def self_test() -> list[str]:
     failures = []
     files = [
-        ("src/lib/x/src/lib.rs", '#[cfg(ferrix_mitigations = "off")]\nfn a() {}\n'),
-        ("src/lib/y/src/lib.rs", '// cfg(ferrix_checks = "off") in a comment\nfn b() {}\n'),
-        ("src/kernel/src/k.rs", 'const X: bool = cfg!(ferrix_checks = "off");\n'),
-        ("src/user/z/build.rs", 'fn main() { println!("cargo::rustc-check-cfg=cfg(ferrix_auth_sabotage)"); }\n'),
-        ("src/user/w/src/main.rs", 'fn w() { let _ = std::env::var("CARGO_CFG_FERRIX_CHECKS"); }\n'),
+        ("src/lib/x/src/lib.rs", '#[cfg(xaqu_mitigations = "off")]\nfn a() {}\n'),
+        ("src/lib/y/src/lib.rs", '// cfg(xaqu_checks = "off") in a comment\nfn b() {}\n'),
+        ("src/kernel/src/k.rs", 'const X: bool = cfg!(xaqu_checks = "off");\n'),
+        ("src/user/z/build.rs", 'fn main() { println!("cargo::rustc-check-cfg=cfg(xaqu_auth_sabotage)"); }\n'),
+        ("src/user/w/src/main.rs", 'fn w() { let _ = std::env::var("CARGO_CFG_XAQU_CHECKS"); }\n'),
     ]
     problems = flag_cfg_problems(files, {"checks", "mitigations"})
     if not any("src/lib/x" in p for p in problems):
-        failures.append("a library's ferrix_ cfg was not found")
+        failures.append("a library's xaqu_ cfg was not found")
     if any("src/lib/y" in p or "src/kernel" in p or "src/user/z" in p for p in problems):
         failures.append(f"a comment, the kernel's own cfg or a non-flag cfg outside src/lib was refused: {problems}")
     if not any("src/user/w" in p for p in problems):
         failures.append("a build script's read of a flag was not found")
     reader = (
         "src/kernel/src/r.rs",
-        'const OPTION: &str = "ferrix.checks";\n'
-        'fn r(v: &V) { v.option(OPTION); v.flag("nosmp"); option_in(t.bootargs()?, OPTION); v.flag(name); v.option("ferrix.new"); }\n',
+        'const OPTION: &str = "xaqu.checks";\n'
+        'fn r(v: &V) { v.option(OPTION); v.flag("nosmp"); option_in(t.bootargs()?, OPTION); v.flag(name); v.option("xaqu.new"); }\n',
     )
-    problems, counts = option_problems([reader], {"ferrix.checks": {}, "nosmp": {}}, {})
-    if counts != {"ferrix.checks": 2, "nosmp": 1}:
+    problems, counts = option_problems([reader], {"xaqu.checks": {}, "nosmp": {}}, {})
+    if counts != {"xaqu.checks": 2, "nosmp": 1}:
         failures.append(f"declared reads were counted wrong: {counts}")
-    if not any("ferrix.new" in p for p in problems) or not any("cannot name" in p for p in problems):
+    if not any("xaqu.new" in p for p in problems) or not any("cannot name" in p for p in problems):
         failures.append(f"an undeclared or unnamed read was not refused: {problems}")
     qualified = [
-        ("src/kernel/src/arch/apic.rs", 'pub(crate) const OPTION: &str = "ferrix.apic";\n'),
+        ("src/kernel/src/arch/apic.rs", 'pub(crate) const OPTION: &str = "xaqu.apic";\n'),
         ("src/kernel/src/arch/mod.rs", 'fn m(v: &V) { v.option(apic::OPTION); v.option(other::OPTION); }\n'),
-        ("src/lib/proto/bootinfo/src/pstore.rs", 'pub const OPTION: &str = "ferrix.pstore";\nfn s(c: &str) { crate::option_in(c, OPTION); }\n'),
+        ("src/lib/proto/bootinfo/src/pstore.rs", 'pub const OPTION: &str = "xaqu.pstore";\nfn s(c: &str) { crate::option_in(c, OPTION); }\n'),
     ]
-    problems, counts = option_problems(qualified, {"ferrix.apic": {}, "ferrix.pstore": {}}, {})
-    if counts != {"ferrix.apic": 1, "ferrix.pstore": 1} or not any("other::OPTION" in p for p in problems):
+    problems, counts = option_problems(qualified, {"xaqu.apic": {}, "xaqu.pstore": {}}, {})
+    if counts != {"xaqu.apic": 1, "xaqu.pstore": 1} or not any("other::OPTION" in p for p in problems):
         failures.append(f"a module's const or a library reader was not followed, or an unknown path passed: {problems} {counts}")
     scanned = [
-        ("src/lib/x/src/lib.rs", 'pub const A: &str = "ferrix.newopt";\nconst B: &str = "ferrix.slot.boot";\n'
-                                 'const C: &str = "ferrix.pstore=on";\nfn f(w: &str) -> bool { w.starts_with("ferrix.") }\n#[cfg(test)]\nmod tests {\n    const D: &str = "ferrix.intest";\n}\n'),
-        ("src/lib/x/src/tests.rs", 'const E: &str = "ferrix.tested";\n'),
+        ("src/lib/x/src/lib.rs", 'pub const A: &str = "xaqu.newopt";\nconst B: &str = "xaqu.slot.boot";\n'
+                                 'const C: &str = "xaqu.pstore=on";\nfn f(w: &str) -> bool { w.starts_with("xaqu.") }\n#[cfg(test)]\nmod tests {\n    const D: &str = "xaqu.intest";\n}\n'),
+        ("src/lib/x/src/tests.rs", 'const E: &str = "xaqu.tested";\n'),
     ]
-    found = literal_problems(scanned, {"ferrix.pstore": {}})
-    if len(found) != 1 or "ferrix.newopt" not in found[0]:
+    found = literal_problems(scanned, {"xaqu.pstore": {}})
+    if len(found) != 1 or "xaqu.newopt" not in found[0]:
         failures.append(f"the general literal scan missed an undeclared option or refused a declared, listed or test one: {found}")
     forwarded = ("src/kernel/src/f.rs", 'let flag = |name: &str| view.flag(name) || flag_in(args, name);\nif flag("noactlr") {}\n')
     problems, counts = option_problems([forwarded], {"noactlr": {}}, {"src/kernel/src/f.rs": "flag"})
@@ -514,25 +514,25 @@ def self_test() -> list[str]:
         failures.append(f"a forwarder's read was not followed: {problems} {counts}")
     word_file = {"levels": {"none": {}, "sc4": {}}, "flags": {"checks": {"values": {"on": {}, "off": {}}}}}
     word = (
-        'macro_rules! build_flag_word {\n    () => { f(&[cfg!(ferrix_profile = "none"), cfg!(ferrix_level = "none"), '
-        'cfg!(ferrix_level = "sc4"), cfg!(ferrix_checks = "on"), cfg!(ferrix_checks = "off")]) };\n}\n'
+        'macro_rules! build_flag_word {\n    () => { f(&[cfg!(xaqu_profile = "none"), cfg!(xaqu_level = "none"), '
+        'cfg!(xaqu_level = "sc4"), cfg!(xaqu_checks = "on"), cfg!(xaqu_checks = "off")]) };\n}\n'
     )
     if flag_word_problems(word, word_file, ["none"]):
         failures.append(f"a complete flag word was refused: {flag_word_problems(word, word_file, ['none'])}")
     for what, broken in [
-        ("a missing value", word.replace(', cfg!(ferrix_checks = "off")', "")),
-        ("a reordered flag", word.replace('cfg!(ferrix_level = "none"), cfg!(ferrix_level = "sc4"), ', "")
-         .replace('cfg!(ferrix_checks = "off")]', 'cfg!(ferrix_checks = "off"), cfg!(ferrix_level = "none"), '
-                  'cfg!(ferrix_level = "sc4")]')),
+        ("a missing value", word.replace(', cfg!(xaqu_checks = "off")', "")),
+        ("a reordered flag", word.replace('cfg!(xaqu_level = "none"), cfg!(xaqu_level = "sc4"), ', "")
+         .replace('cfg!(xaqu_checks = "off")]', 'cfg!(xaqu_checks = "off"), cfg!(xaqu_level = "none"), '
+                  'cfg!(xaqu_level = "sc4")]')),
         ("no macro", "fn nothing() {}\n"),
     ]:
         if not flag_word_problems(broken, word_file, ["none"]):
             failures.append(f"the flag word check passed {what}")
     rooted = [
-        ("src/kernel/src/main.rs", '#[cfg(ferrix_runtime_settings = "live")]\nconst A: u8 = 0;\n'),
-        ("src/kernel/src/build_flags.rs", 'const B: bool = cfg!(ferrix_runtime_settings = "live");\n'),
-        ("src/kernel/src/fs/x.rs", '#[cfg(ferrix_runtime_settings = "live")]\nfn x() {}\n'),
-        ("src/kernel/src/fs/y.rs", '#[cfg(ferrix_linux_abi = "on")]\nfn y() {}\n'),
+        ("src/kernel/src/main.rs", '#[cfg(xaqu_runtime_settings = "live")]\nconst A: u8 = 0;\n'),
+        ("src/kernel/src/build_flags.rs", 'const B: bool = cfg!(xaqu_runtime_settings = "live");\n'),
+        ("src/kernel/src/fs/x.rs", '#[cfg(xaqu_runtime_settings = "live")]\nfn x() {}\n'),
+        ("src/kernel/src/fs/y.rs", '#[cfg(xaqu_linux_abi = "on")]\nfn y() {}\n'),
     ]
     found = composition_root_problems(rooted, {"runtime_settings"})
     if len(found) != 1 or "fs/x.rs" not in found[0]:
@@ -557,19 +557,19 @@ def self_test() -> list[str]:
     ]:
         if not any(expect in p for p in image_key_problems(bad, {"p": profile})):
             failures.append(f"the image-key rule passed {what}")
-    registry = {"ferrix.badframes": {"values": ["persist", "reset", "off"], "settable": True},
+    registry = {"xaqu.badframes": {"values": ["persist", "reset", "off"], "settable": True},
                 "t": {"values": ["a"], "settable": True, "test_only": True},
                 "w": {"values": ["*"], "settable": True}}
     found = settable_problems(registry, {
-        "desktop": {"image": {"bad_frames": "choice"}, "boot_options": {"ferrix.badframes": ["off"]}},
-        "present": {"image": {"bad_frames": "persist"}, "boot_options": {"ferrix.badframes": ["off"]}},
+        "desktop": {"image": {"bad_frames": "choice"}, "boot_options": {"xaqu.badframes": ["off"]}},
+        "present": {"image": {"bad_frames": "persist"}, "boot_options": {"xaqu.badframes": ["off"]}},
     })
     for expect in ["t is settable and test-only", "w is settable and takes any word",
-                   "present.toml permits ferrix.badframes"]:
+                   "present.toml permits xaqu.badframes"]:
         if not any(expect in p for p in found):
             failures.append(f"the settable rule missed: {expect}")
     if any("desktop" in p for p in found):
-        failures.append(f"the settable rule refused desktop's ferrix.badframes: {found}")
+        failures.append(f"the settable rule refused desktop's xaqu.badframes: {found}")
     return failures
 
 

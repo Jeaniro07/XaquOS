@@ -137,7 +137,7 @@ pub fn parse_limit(text: &[u8]) -> Result<Limit, Refusal> {
 }
 
 /// Parse a write to `cgroup.type`. Linux takes `threaded` and nothing else,
-/// not even `domain`, which a cgroup is until made threaded; Ferrix has no
+/// not even `domain`, which a cgroup is until made threaded; Xaqu has no
 /// threaded cgroups.
 ///
 /// # Errors

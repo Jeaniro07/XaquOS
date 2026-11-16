@@ -1,7 +1,7 @@
-//! `test-devloop`: a component is changed on Ferrix, from a clone to a push,
-//! and the running system takes the change (`docs/DEV-ON-FERRIX.md`).
+//! `test-devloop`: a component is changed on Xaqu, from a clone to a push,
+//! and the running system takes the change (`docs/DEV-ON-XAQU.md`).
 //!
-//! What a developer at a Ferrix desktop does, with nothing of the host's but
+//! What a developer at a Xaqu desktop does, with nothing of the host's but
 //! the far end of the network:
 //!
 //! 1. **Clone.** git, the app, clones the fixture repository over HTTP
@@ -37,7 +37,7 @@
 //! no dependency: the guest reaches this process's stubs and nothing else.
 //! The push goes to a bare repository in the guest, since the stub serves
 //! git's dumb protocol, which takes no push; a push over the network is
-//! `docs/DEV-ON-FERRIX.md`'s to prove, with credentials.
+//! `docs/DEV-ON-XAQU.md`'s to prove, with credentials.
 //!
 //! x86-64 on a Linux host: the volume holds x86-64 programs, and
 //! `fetch-rustc-sysroot.sh` makes it there.
@@ -57,9 +57,9 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-selfhost",
         help_at: 910,
         help: &[
-            "test-selfhost  Run `cargo xtask build` on Ferrix from that toolchain and this checkout, and boot the image it made;",
-            "              with --plan DIR, have Ferrix make every build a FERRIX_BUILDS=record:DIR run wrote down;",
-            "              with --volume IMG, judge a volume Ferrix built on elsewhere (the Pixel 7's selfhost.sh):",
+            "test-selfhost  Run `cargo xtask build` on Xaqu from that toolchain and this checkout, and boot the image it made;",
+            "              with --plan DIR, have Xaqu make every build a XAQU_BUILDS=record:DIR run wrote down;",
+            "              with --volume IMG, judge a volume Xaqu built on elsewhere (the Pixel 7's selfhost.sh):",
             "              btrfs check, then boot the image it holds",
         ],
         run,
@@ -68,7 +68,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-devloop",
         help_at: 920,
         help: &[
-            "test-devloop  Walk the development loop on Ferrix (docs/DEV-ON-FERRIX.md): clone a fixture over HTTP, build and",
+            "test-devloop  Walk the development loop on Xaqu (docs/DEV-ON-XAQU.md): clone a fixture over HTTP, build and",
             "              test it with the volume's Cargo, run it as a service, change it, commit and push, and require",
             "              `svc restart` to put the new build in the running system (on ferrousli's loader and libc.so.6,",
             "              as run-compositor --everything runs the toolchain, unless --interpreter glibc; x86_64)",
@@ -89,7 +89,7 @@ const FIXTURE: &[(&str, &str)] = &[
 const LSP: &str = include_str!("devloop/lsp.py");
 
 /// Where it goes in the image.
-const LSP_PATH: &str = "etc/ferrix/devloop-lsp.py";
+const LSP_PATH: &str = "etc/xaqu/devloop-lsp.py";
 
 /// Its first commit's subject, which the guest prints after cloning.
 const SUBJECT: &str = "greeter: say version one";
@@ -115,12 +115,12 @@ const WALK_UNIT: &str = "[Unit]\n\
      Description=The development loop, walked once\n\
      \n\
      [Service]\n\
-     ExecStart=/bin/busybox sh /etc/ferrix/devloop.sh\n\
+     ExecStart=/bin/busybox sh /etc/xaqu/devloop.sh\n\
      StandardOutput=console\n\
      StandardError=console\n";
 
 /// Where the script goes in the image.
-const SCRIPT_PATH: &str = "etc/ferrix/devloop.sh";
+const SCRIPT_PATH: &str = "etc/xaqu/devloop.sh";
 
 /// The search path that finds ferrousli's `libc.so.6` in `/lib` before the
 /// volume's libraries.
@@ -187,8 +187,8 @@ sed -i 's/version one/version two/' src/lib.rs || fail "the edit"
 cargo build || fail "the second build"
 cargo test || fail "the second tests"
 say "tests passed (two)"
-git config user.name "Ferrix Developer" || fail "git config"
-git config user.email developer@ferrix.test || fail "git config"
+git config user.name "Xaqu Developer" || fail "git config"
+git config user.email developer@xaqu.test || fail "git config"
 git commit -q -a -m "greeter: say version two" || fail "the commit"
 git init -q --bare /tmp/remote.git || fail "the remote"
 git push -q /tmp/remote.git main || fail "the push"
@@ -297,19 +297,19 @@ fn text_file(path: &str, text: &str) -> File {
 /// `multi-user.target`, the script, and the console's getty masked.
 fn walk_files(script: &str) -> Vec<File> {
     vec![
-        text_file("etc/ferrix/units/greeter.service", GREETER_UNIT),
-        text_file("etc/ferrix/units/devloop.service", WALK_UNIT),
+        text_file("etc/xaqu/units/greeter.service", GREETER_UNIT),
+        text_file("etc/xaqu/units/devloop.service", WALK_UNIT),
         File {
-            path: "etc/ferrix/units/multi-user.target.wants/devloop.service".to_owned(),
+            path: "etc/xaqu/units/multi-user.target.wants/devloop.service".to_owned(),
             mode: 0o777,
-            content: Content::Link("/etc/ferrix/units/devloop.service".to_owned()),
+            content: Content::Link("/etc/xaqu/units/devloop.service".to_owned()),
         },
         text_file(SCRIPT_PATH, script),
         text_file(LSP_PATH, LSP),
         // No shell on the console, as on a desktop that wants none: its
         // prompt would be drawn into the walk's lines.
         File {
-            path: "etc/ferrix/units/getty@.service".to_owned(),
+            path: "etc/xaqu/units/getty@.service".to_owned(),
             mode: 0o777,
             content: Content::Link("/dev/null".to_owned()),
         },
@@ -337,7 +337,7 @@ fn toolchain_files(arch: Arch, args: &Args, ferrousli: bool) -> Result<Vec<File>
     Ok(files)
 }
 
-/// The two gates of working on Ferrix from within it: `test-devloop`, and
+/// The two gates of working on Xaqu from within it: `test-devloop`, and
 /// `test-selfhost`, whose build of the whole image is the loop's long way
 /// round.
 ///
@@ -352,7 +352,7 @@ pub(crate) fn run(command: &str, args: &Args) -> Result<()> {
     }
 }
 
-/// Boot Ferrix and walk the development loop there.
+/// Boot Xaqu and walk the development loop there.
 ///
 /// # Errors
 ///
@@ -429,7 +429,7 @@ fn test_devloop(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
 
     println!(
-        "  {arch}: cloning, building, testing, replacing and pushing on Ferrix with {} MiB \
+        "  {arch}: cloning, building, testing, replacing and pushing on Xaqu with {} MiB \
          (timeout {}s)",
         args.memory, args.timeout
     );
@@ -470,7 +470,7 @@ fn volume_steps() -> (bool, bool) {
 /// What a walk that closed did.
 fn closed_line(lint: bool, edit: bool) -> String {
     format!(
-        "Ferrix cloned the fixture, built and tested it{}{}, ran it as a service, changed it, \
+        "Xaqu cloned the fixture, built and tested it{}{}, ran it as a service, changed it, \
          pushed the change, and replaced the running service with the new build",
         if lint {
             ", found it formatted and free of clippy's warnings"
@@ -680,7 +680,7 @@ mod tests {
         assert!(!on_glibc.contains("LD_LIBRARY_PATH"));
         assert!(on_ferrousli.contains("cargo fmt --check") && !on_glibc.contains("cargo fmt"));
         assert!(on_ferrousli.contains("hx --health rust") && !on_glibc.contains("hx "));
-        assert!(on_ferrousli.contains("python3 /etc/ferrix/devloop-lsp.py"));
+        assert!(on_ferrousli.contains("python3 /etc/xaqu/devloop-lsp.py"));
         for placeholder in [
             "@PORT@",
             "@REPO@",
@@ -716,9 +716,9 @@ mod tests {
     fn the_walk_is_a_service_of_multi_user_target() {
         let files = walk_files("true\n");
         let paths: Vec<&str> = files.iter().map(|file| file.path.as_str()).collect();
-        assert!(paths.contains(&"etc/ferrix/units/greeter.service"));
-        assert!(paths.contains(&"etc/ferrix/units/multi-user.target.wants/devloop.service"));
+        assert!(paths.contains(&"etc/xaqu/units/greeter.service"));
+        assert!(paths.contains(&"etc/xaqu/units/multi-user.target.wants/devloop.service"));
         assert!(paths.contains(&SCRIPT_PATH));
-        assert!(paths.contains(&"etc/ferrix/units/getty@.service"));
+        assert!(paths.contains(&"etc/xaqu/units/getty@.service"));
     }
 }

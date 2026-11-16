@@ -4,13 +4,13 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_native_abi::lift::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_native_abi::lift::{
     BOOT_MAGIC, BootPage, COMMAND_LINE_AT, COMMAND_LINE_MOST, DEVICES_AT, DEVICES_MOST, DeviceFact,
 };
-use ferrix_native_abi::restricted::SHARED_BASE;
-use ferrix_native_abi::rights::Rights;
-use ferrix_vma::VmaFlags;
+use xaqu_native_abi::restricted::SHARED_BASE;
+use xaqu_native_abi::rights::Rights;
+use xaqu_vma::VmaFlags;
 
 use crate::console::println;
 use crate::first_rows::{FURTHER, Held, LINUXD};
@@ -18,7 +18,7 @@ use crate::object::Object;
 use crate::object::bare::Bare;
 use crate::object::job;
 use crate::object::process::Host;
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 use crate::object::quota;
 use crate::object::region::Region;
 use crate::syscall::uaccess;
@@ -66,14 +66,14 @@ impl Further {
 }
 
 /// Start linuxd, or say why not. Its end is the kernel's end: `power::finish`.
-pub(crate) fn run(view: &ferrix_bootinfo::BootView<'_>) {
+pub(crate) fn run(view: &xaqu_bootinfo::BootView<'_>) {
     run_with(view, None, None, &[]);
 }
 
 /// [`run`], with `devmgr` when something started it first: what the boot
 /// authority hands over (`docs/microkernel/BOOT-AUTHORITY.md`).
 pub(crate) fn run_with(
-    view: &ferrix_bootinfo::BootView<'_>,
+    view: &xaqu_bootinfo::BootView<'_>,
     devmgr: Option<crate::discovery::devmgr::Detached>,
     files: Option<Arc<crate::object::channel::Endpoint>>,
     further: &[Further],
@@ -130,7 +130,7 @@ fn write_devices(page: &Arc<Vmo>) -> Result<u32, &'static str> {
 /// K16 §4: the partition's memory is a promise, its kernel objects and its arena alike.
 /// What is left over is the pool's, the watermark's and the kernel's own; a further
 /// partition's is its own row's, and is taken out first. Answers the frames promised.
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 fn promise_for_partition(partition: &job::Job) -> Result<u64, &'static str> {
     // What can be promised at all, which the allocator knows and says: an eighth stays
     // for the pool and what the kernel asks at a job's expense, and further partition
@@ -282,7 +282,7 @@ fn start(
             println!("  linuxd {} did not start: {why}", index + 1);
         }
     }
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     let promised = promise_for_partition(&partition)?;
     if !further.is_empty() {
         println!(
@@ -304,9 +304,9 @@ fn start(
     // leaves room in the reservation for them. Not measured: an eighth is the conservative
     // side of what they take. Without `retyped` there is no reservation, and the one
     // eighth of the free count is all.
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     let memory_frames = promised / 8 * 7;
-    #[cfg(not(ferrix_kernel_memory = "retyped"))]
+    #[cfg(not(xaqu_kernel_memory = "retyped"))]
     let memory_frames = crate::mm::free_frames() / 8 * 7;
     let boot = boot_page(
         &region,
@@ -328,7 +328,7 @@ fn start(
     let partition_of_linuxd = Arc::clone(&partition);
     let host = Bare::new(restricted, partition, Some(Arc::clone(&region)))
         .map_err(|_| "no memory for the process")?;
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     {
         crate::mm::seal::note_payer(&partition_of_linuxd);
         crate::boot_authority::seal();
@@ -343,7 +343,7 @@ fn start(
     let _ = core.exited().wait_trusting(|| core.is_terminated());
     crate::audit::first_process_ended(core);
     println!("  linuxd   ended with {:?}", core.exit_status());
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     crate::mm::seal::report();
     // Its programs go with it (L.object.327): what is left of the `linux` job has
     // nobody to answer its system calls.
@@ -351,23 +351,23 @@ fn start(
     println!("  linuxd   its job killed: {killed} processes left");
     // What `reboot(2)` asked of the machine, which only the kernel can do. Otherwise
     // init ended, and the kernel's own rule for that follows (`power::finish`).
-    use ferrix_bootinfo::pstore::Stop;
-    use ferrix_native_abi::lift::{EXIT_HALT, EXIT_POWER_OFF, EXIT_RESTART};
+    use xaqu_bootinfo::pstore::Stop;
+    use xaqu_native_abi::lift::{EXIT_HALT, EXIT_POWER_OFF, EXIT_RESTART};
     match core.exit_status() {
         Some(EXIT_RESTART) => {
-            crate::audit::power(crate::audit::Subject::KERNEL, ferrix_audit::power::RESTART);
+            crate::audit::power(crate::audit::Subject::KERNEL, xaqu_audit::power::RESTART);
             crate::watchdog::stop_for_shutdown("a restart");
             let _ = crate::console::pstore::stop(Stop::Restart);
             crate::arch::reset();
         }
         Some(EXIT_POWER_OFF) => {
-            crate::audit::power(crate::audit::Subject::KERNEL, ferrix_audit::power::OFF);
+            crate::audit::power(crate::audit::Subject::KERNEL, xaqu_audit::power::OFF);
             crate::watchdog::stop_for_shutdown("a power-off");
             let _ = crate::console::pstore::stop(Stop::PowerOff);
             crate::arch::power_off();
         }
         Some(EXIT_HALT) => {
-            crate::audit::power(crate::audit::Subject::KERNEL, ferrix_audit::power::HALT);
+            crate::audit::power(crate::audit::Subject::KERNEL, xaqu_audit::power::HALT);
             crate::watchdog::stop_for_shutdown("a halt");
             let _ = crate::console::pstore::stop(Stop::Halt);
             crate::arch::shutdown();
@@ -433,7 +433,7 @@ fn start_further(
         .new_child_as(true, false)
         .map_err(|_| "no job for it")?;
     // K16 §4: this partition's memory is a promise, as the first's is.
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     partition
         .set_reservation(row.frames * PAGE_SIZE)
         .map_err(|why| {
@@ -449,7 +449,7 @@ fn start_further(
         .ok_or("no initramfs")??;
     let page = Vmo::new_anonymous(1).map_err(|_| "no memory for the boot page")?;
     let mut line = alloc::string::String::new();
-    let _ = write!(line, "{cmdline} ferrix.partition={index}");
+    let _ = write!(line, "{cmdline} xaqu.partition={index}");
     let boot = BootPage {
         magic: BOOT_MAGIC,
         region: give(
@@ -538,7 +538,7 @@ fn start_further(
             core.exit_status()
         );
     }
-    crate::sched::spawn("partition watch", watch, 0, ferrix_sched::NICE_0_WEIGHT)
+    crate::sched::spawn("partition watch", watch, 0, xaqu_sched::NICE_0_WEIGHT)
         .map(|_| ())
         .map_err(|_| "no task to watch it")
 }
@@ -549,7 +549,7 @@ fn load(
     archive: &[u8],
     path: &[u8],
 ) -> Result<crate::syscall::native::EntryPoint, &'static str> {
-    let image = ferrix_cpio::file_named(archive, path).ok_or("no such image")?;
+    let image = xaqu_cpio::file_named(archive, path).ok_or("no such image")?;
     crate::discovery::first_image::load_at(space, image, IMAGE_BASE).map_err(|why| {
         println!("  linuxd   image refused: {why:?}");
         "linuxd's image was refused"

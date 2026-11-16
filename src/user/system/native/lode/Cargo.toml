@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lode"
+name = "xaqu-lode"
 description = "lode: the log manager -- the service init starts in a sealed job, and the reader (docs/LOGGING.md)"
 version.workspace = true
 edition.workspace = true
@@ -14,16 +14,16 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-linux-abi.workspace = true
-ferrix-lode-capture.workspace = true
-ferrix-fat.workspace = true
-ferrix-lode-core.workspace = true
-ferrix-log-shed.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-partition.workspace = true
-ferrix-rt.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-lode-capture.workspace = true
+xaqu-fat.workspace = true
+xaqu-lode-core.workspace = true
+xaqu-log-shed.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-partition.workspace = true
+xaqu-rt.workspace = true
 # init's control records, for an alert's `start` (docs/LOGGING.md §7.4).
-ferrix-svc-proto.workspace = true
+xaqu-svc-proto.workspace = true
 
 # `lode reload`, the settings writer's part in lode (ledger 3623 (R18)): an image whose
 # profile has settings_writer = "absent" builds lode without it, and xtask refuses one

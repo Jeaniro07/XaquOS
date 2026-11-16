@@ -58,7 +58,7 @@
 //! from it, minted the same way: `INTx` off, the message programmed and
 //! masked. Ampere GPUs signal this way (`docs/NVIDIA.md` §2.3).
 //!
-//! So does a function in `ferrix_pci::msix::MSI_PREFERRED` -- the Motorcomm
+//! So does a function in `xaqu_pci::msix::MSI_PREFERRED` -- the Motorcomm
 //! YT6801, whose MSI-X table shares a page with registers its driver needs.
 //! Stage 10 holds its MSI-X off before the node is built (Enable 0,
 //! Function Mask 1, read back), and the kernel never enables it: the device
@@ -91,9 +91,9 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::{BootView, MemKind, PAGE_SIZE};
-use ferrix_fdt::{GicInterrupt, Trigger as TreeTrigger};
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::{BootView, MemKind, PAGE_SIZE};
+use xaqu_fdt::{GicInterrupt, Trigger as TreeTrigger};
+use xaqu_native_abi::types::{
     APERTURE_BAR_64,
     APERTURE_NOT_BAR,
     APERTURE_PREFETCHABLE,
@@ -113,21 +113,21 @@ use ferrix_native_abi::types::{
     TREE_X86_POWER,
     USB_INPUT_FUNCTIONS,
 };
-use ferrix_pci::Address;
-use ferrix_pci::ConfigSpace as _;
-use ferrix_pci::bar::{Bar, Region};
-use ferrix_pci::capability::{Capability, MSIX_ENTRY_SIZE, MsiX};
-use ferrix_pci::header::{
+use xaqu_pci::Address;
+use xaqu_pci::ConfigSpace as _;
+use xaqu_pci::bar::{Bar, Region};
+use xaqu_pci::capability::{Capability, MSIX_ENTRY_SIZE, MsiX};
+use xaqu_pci::header::{
     BAR0, COMMAND, COMMAND_BUS_MASTER, COMMAND_INTERRUPT_DISABLE, COMMAND_MEMORY_SPACE, Identity,
 };
-use ferrix_pci::msi::{self, Msi};
-use ferrix_pci::msix::{
+use xaqu_pci::msi::{self, Msi};
+use xaqu_pci::msix::{
     self, CAPABILITY_CONTROL, CONTROL_ENABLE, CONTROL_FUNCTION_MASK, ENTRY_ADDRESS_HIGH,
     ENTRY_ADDRESS_LOW, ENTRY_DATA, ENTRY_VECTOR_CONTROL, VECTOR_CONTROL_MASKED,
 };
-use ferrix_pci::virtio::{Location as VirtioLocation, SharedMemory, Transport};
-use ferrix_pci::window::Writable;
-use ferrix_sync::{IrqSpinLock, IrqSpinLockGuard, Once};
+use xaqu_pci::virtio::{Location as VirtioLocation, SharedMemory, Transport};
+use xaqu_pci::window::Writable;
+use xaqu_sync::{IrqSpinLock, IrqSpinLockGuard, Once};
 
 use crate::discovery::description::{self, Description};
 use crate::discovery::finder::{Context, Finder, OutOfMemory};
@@ -179,7 +179,7 @@ enum Source {
         /// Whether the BAR is 64 bits wide.
         wide: bool,
     },
-    /// The firmware's framebuffer, lent to the node `ferrix.efifb`
+    /// The firmware's framebuffer, lent to the node `xaqu.efifb`
     /// publishes for it ([`DeviceNode::firmware_framebuffer`]): the one
     /// aperture [`Reserved`] lets overlap a range it holds.
     Framebuffer,
@@ -480,7 +480,7 @@ impl Reserved {
         }
         // The console the kernel brought up, whichever it is -- the command
         // line's, `console=`, the first UART -- as early boot mapped it.
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         for (start, end) in crate::early::device_windows() {
             reserved.add(start, end - start);
         }
@@ -493,7 +493,7 @@ impl Reserved {
     /// device-tree node overlapping one of them is kernel-owned
     /// (`docs/DRIVER-MODEL.md` §3, D3).
     #[cfg_attr(
-        not(ferrix_personality = "user"),
+        not(xaqu_personality = "user"),
         allow(
             dead_code,
             reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -617,13 +617,13 @@ const fn page_span(phys: u64, len: u64) -> Option<(u64, u64)> {
 /// A PCI function's MSI capability, for one that has no MSI-X table, and
 /// the one vector minted from it.
 ///
-/// One message, never more (`ferrix_pci::msi`). Minting turns `INTx` off in
+/// One message, never more (`xaqu_pci::msi`). Minting turns `INTx` off in
 /// the command register, so a function whose MSI is masked by its enable bit
 /// cannot fall back to a pin nothing listens on, and leaves the message
 /// masked. A function that can mask its vector is masked by its mask bit; one
 /// that cannot is masked by turning MSI off, which drops -- rather than
 /// defers, as MSI-X's pending bit would -- what it raises meanwhile. The
-/// registers are `ferrix_pci::msi`'s to choose. `object::interrupt` masks a
+/// registers are `xaqu_pci::msi`'s to choose. `object::interrupt` masks a
 /// coalescing vector only past `STORM_BOUND` unacknowledged deliveries,
 /// before a claim, and at a holder's drop, so what is dropped is a message
 /// raised while its driver had not acknowledged the last: a driver of such a
@@ -700,7 +700,7 @@ impl MsiFunction {
     ///
     /// The first mint maps configuration space, turns `INTx` off under the
     /// node's configuration lock, and programs the message, masked
-    /// (`ferrix_pci::msi::Msi::program`), under it again. An architecture
+    /// (`xaqu_pci::msi::Msi::program`), under it again. An architecture
     /// whose message address a 32-bit capability cannot hold is refused
     /// before a vector is allocated, since an allocated vector is never
     /// given back.
@@ -867,8 +867,8 @@ impl MappedConfig {
 ///
 /// Made only by [`DeviceNode::config_writes`] and
 /// [`DeviceNode::config_writes_mapped`], which take the lock, so a write
-/// without the lock does not compile. It implements `ferrix_pci::ConfigSpace`
-/// for `ferrix_pci::msi`'s sequences, and holds the [`ConfigState`] those
+/// without the lock does not compile. It implements `xaqu_pci::ConfigSpace`
+/// for `xaqu_pci::msi`'s sequences, and holds the [`ConfigState`] those
 /// writes change. The lock is a leaf and masks interrupts: an MSI vector is
 /// masked from interrupt handlers. Nothing is mapped, allocated, waited for
 /// or locked while it is held (MEMORY-AND-TIMING §2.2h).
@@ -917,7 +917,7 @@ impl ConfigWrites<'_> {
     }
 }
 
-impl ferrix_pci::ConfigSpace for ConfigWrites<'_> {
+impl xaqu_pci::ConfigSpace for ConfigWrites<'_> {
     fn read8(&self, _: Address, offset: u16) -> u8 {
         self.space.read(offset, 1) as u8
     }
@@ -1186,7 +1186,7 @@ pub struct Seen<'a> {
     pub msi: Option<Msi>,
     /// Whether enumeration held its MSI-X off -- Enable clear and Function
     /// Mask set, read back so -- because it is in
-    /// `ferrix_pci::msix::MSI_PREFERRED` (or is stage 10's check case): its
+    /// `xaqu_pci::msix::MSI_PREFERRED` (or is stage 10's check case): its
     /// table and pending-bit pages are then granted as aperture and its MSI
     /// vector offered instead. Set only by `discovery::pci` before the node
     /// is built, never from anything a program supplies.
@@ -1206,7 +1206,7 @@ pub struct ConfigFound {
     /// [`DeviceNode::verify_config`] holds its bits against until the
     /// kernel writes them.
     pub command: u16,
-    /// The bytes its driver may write (`ferrix_pci::window`).
+    /// The bytes its driver may write (`xaqu_pci::window`).
     pub writable: Writable,
 }
 
@@ -1298,7 +1298,7 @@ pub struct DmaShape {
 
 impl DmaShape {
     /// Scatter-gather and coherent: every virtio device, and every PCI
-    /// device on the machines Ferrix runs on.
+    /// device on the machines Xaqu runs on.
     pub(crate) const ORDINARY: DmaShape = DmaShape {
         contiguous: false,
         coherent: true,
@@ -1307,7 +1307,7 @@ impl DmaShape {
 
 /// Whether this kernel's nodes need an explicit bind: the profile's answer
 /// (`docs/microkernel/K8.md` §2, `L.device.71`).
-pub const EXPLICIT_BIND: bool = cfg!(ferrix_personality = "user");
+pub const EXPLICIT_BIND: bool = cfg!(xaqu_personality = "user");
 
 /// Why a native call found no domain to reach.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1326,7 +1326,7 @@ pub enum BindRefusal {
     /// It is bound.
     Already,
     /// The domain it would have does not translate, and the boot carries no
-    /// `ferrix.unisolated`.
+    /// `xaqu.unisolated`.
     Untranslated,
     /// The only domain the function can have is held already (an RMRR
     /// identity domain).
@@ -1388,7 +1388,7 @@ pub struct DeviceNode {
     /// Bytes of configuration space the function has; zero for a node that
     /// is not a PCI function.
     config_bytes: u16,
-    /// The bytes a driver may write (`ferrix_pci::window`), computed at
+    /// The bytes a driver may write (`xaqu_pci::window`), computed at
     /// stage 10.
     writable: Writable,
     /// Each memory BAR enumeration found assigned, by slot: what the BAR
@@ -1426,7 +1426,7 @@ pub struct DeviceNode {
     binding: u16,
     /// For a generic device-tree node (`DEVICE_TREE_GENERIC`,
     /// `docs/DRIVER-MODEL.md` §3), its identity record as
-    /// `ferrix_fdt::identity` lays it out: what `device_config_read` reads,
+    /// `xaqu_fdt::identity` lays it out: what `device_config_read` reads,
     /// as a PCI function's identity is read from its configuration space.
     /// Empty for every other node.
     identity: Vec<u8>,
@@ -1547,7 +1547,7 @@ impl DeviceNode {
         }
     }
 
-    /// The node for the firmware's framebuffer, which `ferrix.efifb`
+    /// The node for the firmware's framebuffer, which `xaqu.efifb`
     /// asks for (`docs/DISPLAY.md` §8): one aperture, the framebuffer's
     /// visible lines in whole pages, uncached like the kernel's own x86-64
     /// mapping of them for the panic screen; no vector; and nothing that
@@ -1558,7 +1558,7 @@ impl DeviceNode {
     /// first pixel off a page boundary, a size that does not hold its lines,
     /// or an aperture [`Reserved`] withholds.
     pub fn firmware_framebuffer(
-        framebuffer: &ferrix_bootinfo::Framebuffer,
+        framebuffer: &xaqu_bootinfo::Framebuffer,
         reserved: &Reserved,
     ) -> Result<Self, &'static str> {
         let (len, mode) = lendable(framebuffer)?;
@@ -1606,13 +1606,13 @@ impl DeviceNode {
     /// that may not be lent it.
     pub(crate) fn lend_framebuffer_here(
         &mut self,
-        framebuffer: &ferrix_bootinfo::Framebuffer,
+        framebuffer: &xaqu_bootinfo::Framebuffer,
         reserved: &Reserved,
         allowed: bool,
     ) -> Result<(), &'static str> {
         if !self.intel_gpu() || !allowed || !self.holds_framebuffer {
             return Err(
-                "only the Intel GPU holding it is lent the framebuffer, under ferrix.intelgpu",
+                "only the Intel GPU holding it is lent the framebuffer, under xaqu.intelgpu",
             );
         }
         let (len, _) = lendable(framebuffer)?;
@@ -1635,7 +1635,7 @@ impl DeviceNode {
     /// Why not, as for [`DeviceNode::lend_framebuffer_here`], or `hold`'s.
     pub fn lend_framebuffer_held(
         &mut self,
-        framebuffer: &ferrix_bootinfo::Framebuffer,
+        framebuffer: &xaqu_bootinfo::Framebuffer,
         reserved: &Reserved,
         allowed: bool,
         hold: impl FnOnce(u64, u64) -> Result<(), &'static str>,
@@ -1677,11 +1677,11 @@ impl DeviceNode {
 /// be lent at all: what [`DeviceNode::firmware_framebuffer`] and
 /// [`DeviceNode::lend_framebuffer_here`] lend.
 fn lendable(
-    framebuffer: &ferrix_bootinfo::Framebuffer,
+    framebuffer: &xaqu_bootinfo::Framebuffer,
 ) -> Result<(u64, FramebufferMode), &'static str> {
     {
-        use ferrix_bootinfo::PixelFormat;
-        use ferrix_native_abi::types::{FRAMEBUFFER_BGRX, FRAMEBUFFER_RGBX};
+        use xaqu_bootinfo::PixelFormat;
+        use xaqu_native_abi::types::{FRAMEBUFFER_BGRX, FRAMEBUFFER_RGBX};
         if !framebuffer.is_present() {
             return Err("firmware left no framebuffer");
         }
@@ -2100,7 +2100,7 @@ impl DeviceNode {
         true
     }
 
-    /// Give a generic node its identity record (`ferrix_fdt::identity`).
+    /// Give a generic node its identity record (`xaqu_fdt::identity`).
     pub(crate) fn set_identity(&mut self, record: Vec<u8>) {
         self.identity = record;
     }
@@ -2115,7 +2115,7 @@ impl DeviceNode {
         !self.identity.is_empty()
     }
 
-    /// A generic node's record flags (`ferrix_fdt::identity::FLAG_*`); 0
+    /// A generic node's record flags (`xaqu_fdt::identity::FLAG_*`); 0
     /// for any other node.
     pub(crate) fn identity_flags(&self) -> u16 {
         match (self.identity.get(6), self.identity.get(7)) {
@@ -2390,7 +2390,7 @@ impl DeviceNode {
 
     /// Write the low `width` bytes of `value` at `offset`, for
     /// `device_config_write`: only when every byte lies in the function's
-    /// driver-writable ranges (`ferrix_pci::window`), under the
+    /// driver-writable ranges (`xaqu_pci::window`), under the
     /// configuration lock. Any other write is refused whole and changes
     /// nothing. The first refusal at each dword is printed once the lock is
     /// dropped, naming the register.
@@ -2501,7 +2501,7 @@ impl DeviceNode {
     /// its firmware rewrote it, and then the frames a dead driver's pins kept
     /// go back (`object::pin::quarantine_release`), whose device can no
     /// longer reach them either way.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn served(&self) -> Result<(), Breach> {
         self.verify_config()?;
         crate::object::pin::quarantine_release(self);
@@ -2651,11 +2651,11 @@ impl DeviceNode {
     /// certified driver holds (K14 §5).
     pub fn derived_rights(
         &self,
-        rights: ferrix_native_abi::rights::Rights,
-    ) -> ferrix_native_abi::rights::Rights {
+        rights: xaqu_native_abi::rights::Rights,
+    ) -> xaqu_native_abi::rights::Rights {
         if self.needs_certified() {
-            ferrix_native_abi::rights::Rights(
-                rights.0 & !ferrix_native_abi::rights::Rights::TRANSFER.0,
+            xaqu_native_abi::rights::Rights(
+                rights.0 & !xaqu_native_abi::rights::Rights::TRANSFER.0,
             )
         } else {
             rights
@@ -2701,7 +2701,7 @@ impl DeviceNode {
 
     /// Attach the function to a domain the kernel makes and keeps
     /// (`device_bind_domain`, `H.DEV.9`). `unisolated` is the boot's
-    /// `ferrix.unisolated`: without it a domain that would not translate is
+    /// `xaqu.unisolated`: without it a domain that would not translate is
     /// refused and not kept (`L.device.72`), whatever `devmgr`'s admission
     /// said, since nothing confines an untranslated function.
     ///
@@ -2718,7 +2718,7 @@ impl DeviceNode {
             return Err(BindRefusal::NoDma);
         }
         let mut held = self.domain.lock();
-        // A domain the boot made first (`ferrix.intelgpu`) or an earlier
+        // A domain the boot made first (`xaqu.intelgpu`) or an earlier
         // driver's start: bound is bound, and devmgr goes on (K8.4). It is
         // still held to the rule below.
         if let Some(domain) = held.as_ref() {
@@ -2911,7 +2911,7 @@ pub enum ConfigRefusal {
 fn config_access(offset: u64, width: u64) -> Result<(u16, u16), ConfigRefusal> {
     if !matches!(width, 1 | 2 | 4)
         || !offset.is_multiple_of(width)
-        || offset >= u64::from(ferrix_pci::CONFIG_SPACE_SIZE)
+        || offset >= u64::from(xaqu_pci::CONFIG_SPACE_SIZE)
     {
         return Err(ConfigRefusal::Arguments);
     }
@@ -3256,7 +3256,7 @@ fn widen_lone_partial_bars(
 /// rules they had, virtio-mmio's packed transports among them. How many
 /// apertures were withheld.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "a hybrid's check alone calls it, and only where checks are built"
@@ -3293,7 +3293,7 @@ fn withhold_shared_pages(nodes: &mut [DeviceNode]) -> usize {
         let withheld = before - node.apertures.len();
         node.withheld += withheld;
         if withheld != 0 && node.is_generic() {
-            node.flag_identity(ferrix_fdt::identity::FLAG_REGISTERS_WITHHELD);
+            node.flag_identity(xaqu_fdt::identity::FLAG_REGISTERS_WITHHELD);
         }
     }
     shared.len()
@@ -3307,7 +3307,7 @@ fn begin() -> Result<(), Stopped<'static>> {
     if PUBLISHING.swap(true, Ordering::AcqRel) {
         return Err(Stopped::Again);
     }
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     crate::discovery::tree::claim_early_windows().map_err(|_| {
         Stopped::Node(Failure {
             location: Location::Tree(0),
@@ -3424,7 +3424,7 @@ fn yield_framebuffer_holder(nodes: &mut [DeviceNode]) {
 /// The command-line word that lets the Intel integrated GPU be driven
 /// (`docs/INTEL-GPU.md` §4.4 (b)): off unless said, and no profile a claim
 /// is made of permits it.
-pub const INTEL_GPU_OPTION: &str = "ferrix.intelgpu";
+pub const INTEL_GPU_OPTION: &str = "xaqu.intelgpu";
 
 /// Whether the command line said [`INTEL_GPU_OPTION`], as stage 10 read it
 /// before publishing.
@@ -3573,11 +3573,11 @@ pub fn publish<'f, P: check::Policy>(
     }
     // The kernel-owned set is sealed once every finder has run, whether or
     // not the machine has a tree to derive it from (`L.discovery.8`).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     crate::discovery::tree::seal();
     // Only where nodes are published: in a hybrid no tree node is, and the check calls it
     // on made-up ones (ledger 6448 K.1).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     {
         report.shared_pages = withhold_shared_pages(&mut nodes);
     }

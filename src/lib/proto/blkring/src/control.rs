@@ -36,7 +36,7 @@
 
 use core::fmt;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::geometry::{Device, DeviceFlags};
 use crate::identity::{DiskName, Identity, Location, NAME_BYTES, SERIAL_BYTES};

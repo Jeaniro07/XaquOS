@@ -20,13 +20,13 @@
 //! flags in the kernel crate alone, since a library built without a `cfg`
 //! would take its other branch without a word. So the flags are not
 //! rustflags, which reach every crate: xtask hands the resolved set to the
-//! kernel's build script in `FERRIX_BUILD_FLAGS`, and the declared flags and
-//! values in `FERRIX_FLAG_VALUES`; the script turns them into
-//! `cargo::rustc-cfg=ferrix_<flag>="<value>"` and
+//! kernel's build script in `XAQU_BUILD_FLAGS`, and the declared flags and
+//! values in `XAQU_FLAG_VALUES`; the script turns them into
+//! `cargo::rustc-cfg=xaqu_<flag>="<value>"` and
 //! `cargo::rustc-check-cfg` for the kernel crate alone. The workspace denies
 //! `unexpected_cfgs`, so a `cfg` naming an undeclared flag or value fails the
 //! kernel's build, and one in any other crate fails that crate's, which has
-//! no `ferrix_` cfg declared at all. `mitigations=off` also changes codegen
+//! no `xaqu_` cfg declared at all. `mitigations=off` also changes codegen
 //! for every crate (the static relocation model), which stays a target
 //! rustflag ([`crate::cargo`]).
 
@@ -107,7 +107,7 @@ pub(crate) struct FlagValue {
 /// One flag.
 #[derive(Debug, Clone)]
 pub(crate) struct Flag {
-    /// Its name: the `cfg` is `ferrix_<name>`.
+    /// Its name: the `cfg` is `xaqu_<name>`.
     pub(crate) name: String,
     /// Its values, in the file's order.
     pub(crate) values: Vec<FlagValue>,
@@ -385,7 +385,7 @@ impl Resolved {
         self.value("mitigations") == Some("off")
     }
 
-    /// `FERRIX_BUILD_FLAGS`: the `cfg`s, as `name=value` words.
+    /// `XAQU_BUILD_FLAGS`: the `cfg`s, as `name=value` words.
     pub(crate) fn cfg_words(&self) -> String {
         let mut words = vec![
             format!("profile={}", self.profile),
@@ -399,7 +399,7 @@ impl Resolved {
         words.join(" ")
     }
 
-    /// `FERRIX_FLAG_VALUES`: every declared flag and its values, as
+    /// `XAQU_FLAG_VALUES`: every declared flag and its values, as
     /// `name=a,b` words, for the kernel build script's `--check-cfg`.
     pub(crate) fn declared_words(&self) -> String {
         self.declared
@@ -752,7 +752,7 @@ pub(crate) fn command() -> Result<()> {
     println!("the kernel is compiled with:");
     for word in resolved.cfg_words().split(' ') {
         if let Some((flag, value)) = word.split_once('=') {
-            println!("  --cfg ferrix_{flag}=\"{value}\"");
+            println!("  --cfg xaqu_{flag}=\"{value}\"");
         }
     }
     println!(
@@ -767,7 +767,7 @@ pub(crate) fn command() -> Result<()> {
 }
 
 /// Where every image carries its manifest (docs/BUILD-FLAGS.md §5.1).
-pub(crate) const IMAGE_MANIFEST: &str = "etc/ferrix/image-manifest";
+pub(crate) const IMAGE_MANIFEST: &str = "etc/xaqu/image-manifest";
 
 /// The flags the image manifest names, after `profile`, `level` and
 /// `claim`: those a ring-3 program shows a page for (§5.1).

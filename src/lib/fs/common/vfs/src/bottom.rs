@@ -19,7 +19,7 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::Result;
 use crate::node::{DirEntry, FileSystem, FileType, Inode, Metadata, Timespec};

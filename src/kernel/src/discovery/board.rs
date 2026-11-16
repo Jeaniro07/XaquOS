@@ -13,13 +13,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_bootinfo::BootView;
-use ferrix_fdt::{Fdt, GicInterrupt};
+use xaqu_bootinfo::BootView;
+use xaqu_fdt::{Fdt, GicInterrupt};
 
 use crate::device::{DeviceNode, DmaShape, Location, Reserved};
 use crate::discovery::description::{self, Description};
 use crate::discovery::finder::{Context, Failed, Finder, OutOfMemory};
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 use crate::discovery::tree::Ownership;
 use crate::discovery::tree::{self, GenericReport};
 use crate::fallible;
@@ -74,7 +74,7 @@ pub struct BoardBinding {
 }
 
 /// Every registered [`BoardBinding`], in the order their nodes are published.
-/// Eight is five more than the one board Ferrix knows registers.
+/// Eight is five more than the one board Xaqu knows registers.
 static BOARD: Hooks<BoardBinding, 8> = Hooks::new();
 
 /// Publish a node for `binding`'s peripheral whenever the tree has it,
@@ -201,13 +201,13 @@ impl Finder for Boards {
         // Publication is `personality=user`'s (`docs/microkernel/K8.md` §7): a
         // hybrid kernel publishes the bindings alone, and no board meets any
         // of what follows.
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         return Ok(());
         // What the kernel uses is registered and sealed before anything
         // generic is published (`L.discovery.8`, `L.discovery.10`).
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         let registered = tree::claim_tree_uses(tree, cx.reserved);
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         {
             tree::seal();
             let ownership = registered

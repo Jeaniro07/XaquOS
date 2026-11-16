@@ -2,7 +2,7 @@
 # Host side: one frame record on the Linux baseline guest (docs/GAME-PATH.md §2.4, R1).
 #   measure-frames.sh <label> <seconds> [stall ms]
 # Builds the recorder and its client with `cargo xtask frames` -- the same two binaries test-frames
-# carries into Ferrix --, copies them and frames.sh into the guest's ~/rig, runs frames.sh there,
+# carries into Xaqu --, copies them and frames.sh into the guest's ~/rig, runs frames.sh there,
 # fetches the record to results/linux/<label>.rec under the baseline's directory and summarises it.
 # GUEST names the ssh wrapper (`<wrapper> ssh <command>`): the baseline's card-ssh.sh by default,
 # or its smoke-kvm.sh for the image without the card, with HEADLESS=1 (frames.sh says why). GL is
@@ -11,7 +11,7 @@ set -u
 l=$1 secs=$2 stall=${3:-0}
 S=$(cd "$(dirname "$0")" && pwd)
 T=$(cd "$S/../../../.." && pwd)
-B=${FERRIX_LINUX_BASELINE:-$HOME/.local/share/ferrix/linux-baseline}
+B=${XAQU_LINUX_BASELINE:-$HOME/.local/share/xaqu/linux-baseline}
 G=${GUEST:-$B/card-ssh.sh}
 R=$B/results/linux; mkdir -p "$R"
 F=$T/build/x86_64/frames

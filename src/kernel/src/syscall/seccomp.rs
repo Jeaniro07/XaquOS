@@ -33,17 +33,17 @@
 //! a filter that makes it believe it had dropped privileges.
 
 pub(crate) mod user_dispatch;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod user_dispatch_check;
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint, buffer_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_seccomp::{
+use xaqu_kmem::{Charge, arc_footprint, buffer_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_seccomp::{
     ACTION_FULL, ALLOW, DATA, ERRNO, Insn, KILL_PROCESS, KILL_THREAD, LOG, MAX_INSNS, Program,
     SeccompData, TRACE, TRAP, USER_NOTIF,
 };
@@ -132,7 +132,7 @@ const PR_SPEC_DISABLE: u64 = 1 << 2;
 const PR_SPEC_FORCE_DISABLE: u64 = 1 << 3;
 
 /// `prctl(PR_GET_SPECULATION_CTRL, which)`: what a program is told about the
-/// mitigations of store bypass and indirect branches. On Ferrix they are on for
+/// mitigations of store bypass and indirect branches. On Xaqu they are on for
 /// every program and no program may turn them off (`docs/certification/
 /// SPECULATION.md`), so both answer "force-disabled", the state Linux reports
 /// for a task whose mitigation was forced on: Chromium's `DisableIBSpec` reads
@@ -312,7 +312,7 @@ pub(crate) fn release_stack_span() -> usize {
 /// value the filter judged or not at all (SR2). The native range is decided by
 /// the dispatcher's own predicate, so the token and the route agree.
 pub(crate) fn data(args: &SyscallArgs) -> SeccompData {
-    let native = args.abi == Abi::Native && ferrix_native_abi::nr::is_native(args.number);
+    let native = args.abi == Abi::Native && xaqu_native_abi::nr::is_native(args.number);
     SeccompData {
         nr: args.number as i32,
         arch: if native {
@@ -465,7 +465,7 @@ fn dispatch_first(thread: &Thread, args: &SyscallArgs) -> Option<Verdict> {
 /// With interrupts masked; takes no lock and no reference.
 /// [`quiet`] where no thread is filtered, without a branch: anything else is the
 /// general path's.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 #[inline(always)]
 pub(crate) fn quiet_here() -> bool {
     (PROBE_TASK.load(Ordering::Acquire) == 0) & (!any_filtered())
@@ -576,8 +576,8 @@ fn run_chain(head: &Arc<Filter>, data: &SeccompData) -> (u32, bool) {
     let mut log = false;
     let mut cursor = Some(head);
     while let Some(filter) = cursor {
-        let result = ferrix_seccomp::run(&filter.program, data);
-        if ferrix_seccomp::more_restrictive(result, best) {
+        let result = xaqu_seccomp::run(&filter.program, data);
+        if xaqu_seccomp::more_restrictive(result, best) {
             best = result;
             log = filter.log;
         }
@@ -737,7 +737,7 @@ static LOG_LINES: AtomicU32 = AtomicU32::new(0);
 /// the process, the architecture token, the number and the instruction. The
 /// command name is left out, because it is a heap allocation and the hook
 /// makes none
-/// (`docs/SECCOMP.md` §3.5a, Q4). Linux writes these to its audit log; Ferrix's
+/// (`docs/SECCOMP.md` §3.5a, Q4). Linux writes these to its audit log; Xaqu's
 /// `audit.rs` records the item's decisions, and a filter's is the
 /// personality's.
 fn report(thread: &Thread, args: &SyscallArgs, what: &str, action: u32) {
@@ -796,7 +796,7 @@ pub(crate) fn prepare(raw: &[Insn], log: bool) -> Result<Arc<Filter>, Errno> {
         arc_footprint::<Filter>().saturating_add(buffer_footprint::<Insn>(raw.len())),
     )
     .map_err(|_| Errno::ENOMEM)?;
-    let program = ferrix_seccomp::verify(raw).map_err(|_| Errno::EINVAL)?;
+    let program = xaqu_seccomp::verify(raw).map_err(|_| Errno::EINVAL)?;
     drop(scratch);
     let cost = u32::try_from(program.len().saturating_add(4)).map_err(|_| Errno::ENOMEM)?;
     crate::fallible::try_arc(Filter {
@@ -857,7 +857,7 @@ fn attach_to(thread: &Thread, filter: &mut Arc<Filter>) -> Result<(), Errno> {
         let before = state.filter.as_ref().map_or(0, |newest| newest.cost);
         let program = filter.program.len();
         let earlier = usize::try_from(before).unwrap_or(usize::MAX);
-        if !ferrix_seccomp::fits_path(earlier, program) {
+        if !xaqu_seccomp::fits_path(earlier, program) {
             return Err(Errno::ENOMEM);
         }
         // Nobody else holds the new filter, so this cannot fail; if it did,
@@ -865,7 +865,7 @@ fn attach_to(thread: &Thread, filter: &mut Arc<Filter>) -> Result<(), Errno> {
         let Some(mine) = Arc::get_mut(filter) else {
             return Err(Errno::ENOMEM);
         };
-        mine.cost = u32::try_from(ferrix_seccomp::path_cost(earlier, program)).unwrap_or(u32::MAX);
+        mine.cost = u32::try_from(xaqu_seccomp::path_cost(earlier, program)).unwrap_or(u32::MAX);
         mine.depth = state.filter.as_ref().map_or(0, |newest| newest.depth) + 1;
         mine.previous = state.filter.take();
         state.filter = Some(Arc::clone(filter));
@@ -1022,7 +1022,7 @@ fn set_filter(
     }
     // `TSYNC_ESRCH` changes how `TSYNC` reports its failure, and without
     // `TSYNC` changes nothing: Linux accepts it alone, as its selftest's
-    // `detect_seccomp_filter_flags` requires (2026-10-26; Ferrix refused it).
+    // `detect_seccomp_filter_flags` requires (2026-10-26; Xaqu refused it).
     let (length, pointer) = read_header(process, uargs, abi)?;
     if length == 0 || length > MAX_INSNS {
         return Err(Errno::EINVAL);
@@ -1033,7 +1033,7 @@ fn set_filter(
     // Charged before the copy, and dropped with it: the bytes read from the
     // program and the instructions made of them are this call's own.
     let _transient = Charge::bytes(
-        buffer_footprint::<u8>(length * ferrix_seccomp::INSN_BYTES)
+        buffer_footprint::<u8>(length * xaqu_seccomp::INSN_BYTES)
             .saturating_add(buffer_footprint::<Insn>(length)),
     )
     .map_err(|_| Errno::ENOMEM)?;
@@ -1171,7 +1171,7 @@ pub(crate) fn attach_sync(
             Ok(Round::Done(answer)) => {
                 // Every thread's chain is written: now the arms that were read without it
                 // (ledger 6787 W4, 6998 X6).
-                #[cfg(ferrix_restricted_window = "on")]
+                #[cfg(xaqu_restricted_window = "on")]
                 process.drop_arms();
                 return answer;
             }
@@ -1426,9 +1426,9 @@ fn read_header(process: &Process, at: u64, abi: Abi) -> Result<(usize, u64), Err
 fn read_program(process: &Process, at: u64, length: usize) -> Result<Vec<Insn>, Errno> {
     let mut bytes = Vec::new();
     bytes
-        .try_reserve_exact(length * ferrix_seccomp::INSN_BYTES)
+        .try_reserve_exact(length * xaqu_seccomp::INSN_BYTES)
         .map_err(|_| Errno::ENOMEM)?;
-    bytes.resize(length * ferrix_seccomp::INSN_BYTES, 0);
+    bytes.resize(length * xaqu_seccomp::INSN_BYTES, 0);
     uaccess::copy_from_user(process.space(), at, &mut bytes).map_err(|_| Errno::EFAULT)?;
     let mut program = Vec::new();
     program
@@ -1436,10 +1436,10 @@ fn read_program(process: &Process, at: u64, length: usize) -> Result<Vec<Insn>, 
         .map_err(|_| Errno::ENOMEM)?;
     program.extend(
         bytes
-            .as_chunks::<{ ferrix_seccomp::INSN_BYTES }>()
+            .as_chunks::<{ xaqu_seccomp::INSN_BYTES }>()
             .0
             .iter()
-            .map(<[u8; ferrix_seccomp::INSN_BYTES]>::as_slice)
+            .map(<[u8; xaqu_seccomp::INSN_BYTES]>::as_slice)
             .filter_map(Insn::from_bytes),
     );
     Ok(program)

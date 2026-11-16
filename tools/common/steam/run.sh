@@ -9,7 +9,7 @@ YSERVER_BACKEND=wayland YSERVER_ALLOW_SOFTWARE_VULKAN=1 RUST_LOG=${YRUST_LOG:-in
 waited=0
 while [ ! -S /tmp/.X11-unix/X0 ] && [ $waited -lt 120 ]; do sleep 1; waited=$((waited + 1)); done
 echo "steam-window: yserver's socket after ${waited}s"
-# Ferrix's own DHCP client where the image carries it, busybox's where not.
+# Xaqu's own DHCP client where the image carries it, busybox's where not.
 dhcp=udhcpc
 [ -x /bin/dhcpc ] && dhcp=dhcpc
 if ! $dhcp -i eth0 -n -q -t 5 -T 2 > /dev/null 2>&1; then
@@ -36,7 +36,7 @@ chown -R 1000:1000 /data/home /data/steam
                 # as the client runs it, whom it finds on the port.
                 tail -n 40 /data/steam/logs/transport_client.txt 2>/dev/null \
                     | sed 's/^/steam-window: transport_client.txt: /'
-                su -s /bin/sh ferrix -c '/usr/bin/lsof -P -F upnR -i TCP@127.0.0.1' 2>&1 \
+                su -s /bin/sh xaqu -c '/usr/bin/lsof -P -F upnR -i TCP@127.0.0.1' 2>&1 \
                     | head -n 40 | sed 's/^/steam-window: lsof: /'
                 ls -l /proc/*/fd 2>/dev/null | grep socket | head -n 20 \
                     | sed 's/^/steam-window: fd: /'
@@ -45,7 +45,7 @@ chown -R 1000:1000 /data/home /data/steam
         sleep 3
     done
 ) &
-su -s /bin/sh ferrix -c '/bin/busybox sh /steam/client.sh' 2>&1
+su -s /bin/sh xaqu -c '/bin/busybox sh /steam/client.sh' 2>&1
 for log in bootstrap_log.txt console_log.txt transport_client.txt webhelper.txt; do
     [ -f /data/steam/logs/$log ] && tail -n 40 /data/steam/logs/$log | sed "s/^/steam-window: $log: /"
 done

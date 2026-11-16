@@ -3,16 +3,16 @@
 //! `/run/lode/seat`, made by lode while it is still root and left root's,
 //! mode 0600, so only root can connect; lode also refuses a peer whose uid is
 //! not 0. A seat's owner -- `sessiond` -- writes one line when a session
-//! begins and one when it ends ([`ferrix_lode_core::session`]). lode keeps
+//! begins and one when it ends ([`xaqu_lode_core::session`]). lode keeps
 //! the open sessions in `/run/lode/sessions`, its own file, so a restarted
 //! lode takes them up again.
 
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::ingest::{self, Now};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::session::{self, Sessions};
+use xaqu_lode_core::ingest::{self, Now};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::session::{self, Sessions};
 
 use crate::sys;
 

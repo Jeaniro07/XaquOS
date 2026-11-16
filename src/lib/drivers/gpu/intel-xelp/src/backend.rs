@@ -1467,8 +1467,8 @@ const fn ppgtt_error(error: crate::ppgtt::PpgttError) -> Error {
 
 /// The errno the uAPI gives for each refusal.
 #[must_use]
-pub const fn errno(error: Error) -> ferrix_linux_abi::errno::Errno {
-    use ferrix_linux_abi::errno::Errno;
+pub const fn errno(error: Error) -> xaqu_linux_abi::errno::Errno {
+    use xaqu_linux_abi::errno::Errno;
     match error {
         Error::NoMemory => Errno::ENOMEM,
         Error::Quota => Errno::EDQUOT,
@@ -1496,11 +1496,11 @@ impl<P: Platform> crate::frontend::Backend for XelpBackend<P> {
         XelpBackend::facts(self)
     }
 
-    fn create_memory(&mut self, bytes: u64) -> Result<P::Memory, ferrix_linux_abi::errno::Errno> {
+    fn create_memory(&mut self, bytes: u64) -> Result<P::Memory, xaqu_linux_abi::errno::Errno> {
         self.platform.get_mut().create_memory(bytes).map_err(errno)
     }
 
-    fn populate(&mut self, memory: &P::Memory) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    fn populate(&mut self, memory: &P::Memory) -> Result<(), xaqu_linux_abi::errno::Errno> {
         // The first page's address pins the whole object.
         self.platform
             .get_mut()
@@ -1509,7 +1509,7 @@ impl<P: Platform> crate::frontend::Backend for XelpBackend<P> {
             .map_err(errno)
     }
 
-    fn vm_create(&mut self) -> Result<crate::frontend::VmId, ferrix_linux_abi::errno::Errno> {
+    fn vm_create(&mut self) -> Result<crate::frontend::VmId, xaqu_linux_abi::errno::Errno> {
         XelpBackend::vm_create(self)
             .map(|vm| crate::frontend::VmId(vm as u32))
             .map_err(errno)
@@ -1526,7 +1526,7 @@ impl<P: Platform> crate::frontend::Backend for XelpBackend<P> {
         memory: &P::Memory,
         bytes: u64,
         pat_index: u8,
-    ) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    ) -> Result<(), xaqu_linux_abi::errno::Errno> {
         XelpBackend::bind(self, vm.0 as usize, address, memory, bytes, pat_index).map_err(errno)
     }
 
@@ -1539,7 +1539,7 @@ impl<P: Platform> crate::frontend::Backend for XelpBackend<P> {
         vm: crate::frontend::VmId,
         engine: crate::frontend::Engine,
         params: crate::frontend::ContextParams,
-    ) -> Result<crate::frontend::HwContext, ferrix_linux_abi::errno::Errno> {
+    ) -> Result<crate::frontend::HwContext, xaqu_linux_abi::errno::Errno> {
         let engine = UapiEngine {
             class: engine.class,
             instance: engine.instance,
@@ -1618,7 +1618,7 @@ impl<P: Platform> crate::frontend::Backend for XelpBackend<P> {
         address: u64,
         pages: &[u64],
         pat_index: u8,
-    ) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    ) -> Result<(), xaqu_linux_abi::errno::Errno> {
         XelpBackend::bind_pages(self, vm.0 as usize, address, pages, pat_index).map_err(errno)
     }
 

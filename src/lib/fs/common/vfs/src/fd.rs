@@ -33,9 +33,9 @@
 
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, NOBODY, buffer_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::nospec;
+use xaqu_kmem::{Charge, NOBODY, buffer_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::nospec;
 
 use crate::Result;
 
@@ -106,7 +106,7 @@ impl<T: Clone> FdTable<T> {
     pub fn try_clone(&self) -> Result<Self> {
         let mut room = crate::charge(0)?;
         let mut slots = Vec::new();
-        ferrix_kmem::reserve(&mut slots, self.slots.len(), &mut room).map_err(|_| Errno::ENOMEM)?;
+        xaqu_kmem::reserve(&mut slots, self.slots.len(), &mut room).map_err(|_| Errno::ENOMEM)?;
         // Room was had just above: this does not grow the vector.
         slots.extend(
             self.slots
@@ -154,7 +154,7 @@ impl<T> FdTable<T> {
         if self.room.owner() == NOBODY {
             self.room = crate::charge(buffer_footprint::<Option<Slot<T>>>(self.slots.capacity()))?;
         }
-        ferrix_kmem::reserve(&mut self.slots, len - now, &mut self.room)
+        xaqu_kmem::reserve(&mut self.slots, len - now, &mut self.room)
             .map_err(|_| Errno::ENOMEM)?;
         self.slots.resize_with(len, || None);
         Ok(())

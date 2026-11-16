@@ -1,7 +1,7 @@
 //! The picture `cargo xtask run-compositor` puts behind the desktop, and
 //! `cargo xtask wallpapers`, which is how pictures get to where it looks.
 //!
-//! A desktop somebody is looking at has a wallpaper. Ferrix has no JPEG
+//! A desktop somebody is looking at has a wallpaper. Xaqu has no JPEG
 //! decoder and no video decoder, and carrying either to show one picture is
 //! the wrong trade; what it has is `src/user/system/linux/compositor/pattern --wallpaper`, a
 //! background layer surface that shows raw `XRGB8888` rows behind a
@@ -17,7 +17,7 @@
 //! Two halves, and the line between them is the network.
 //!
 //! * `run-compositor` reads **this machine's** wallpapers directory --
-//!   `$FERRIX_WALLPAPERS`, or `~/.local/share/ferrix/wallpapers` -- and
+//!   `$XAQU_WALLPAPERS`, or `~/.local/share/xaqu/wallpapers` -- and
 //!   nothing else. It names no host and opens no connection, so it does the
 //!   same thing on a train as at a desk; with nothing there it draws
 //!   [`ember`], a picture of its own, and a line says how to change that.
@@ -55,24 +55,24 @@ pub(crate) const TASKS: &[Task] = &[Task {
 
 /// The variable that names the wallpapers directory, where it is not the
 /// usual one.
-const VAR: &str = "FERRIX_WALLPAPERS";
+const VAR: &str = "XAQU_WALLPAPERS";
 
 /// The usual one, under the home directory.
-const KEPT: &[&str] = &[".local", "share", "ferrix", "wallpapers"];
+const KEPT: &[&str] = &[".local", "share", "xaqu", "wallpapers"];
 
 /// The screen a picture is cut for when `wallpapers` is not told another.
 pub(crate) const SCREEN: (u32, u32) = (1920, 1080);
 
-/// The name `--wallpaper` gives [`ember`], Ferrix's own, whatever is kept:
+/// The name `--wallpaper` gives [`ember`], Xaqu's own, whatever is kept:
 /// what `release-image` shows, since a kept picture is somebody else's art.
 pub(crate) const EMBER: &str = "ember";
 
-/// The name of Ferrix's shipped wallpaper, the brand's
+/// The name of Xaqu's shipped wallpaper, the brand's
 /// (`docs/brand/wallpaper/`): what a desktop shows with nothing kept and
 /// nothing asked for, and what `release-image` shows.
-pub(crate) const BRAND: &str = "ferrix";
+pub(crate) const BRAND: &str = "xaqu";
 
-/// The shipped wallpaper's renders, each `ferrix-wallpaper-WxH.png`, as
+/// The shipped wallpaper's renders, each `xaqu-wallpaper-WxH.png`, as
 /// `tools/common/gen/gen-brand-images.py wallpaper` writes them.
 pub(crate) const BRAND_SIZES: [(u32, u32); 3] = [(1920, 1080), (2560, 1440), (3840, 2160)];
 
@@ -91,7 +91,7 @@ pub(crate) fn brand(size: (u32, u32)) -> Result<Vec<u8>> {
         .unwrap_or((3840, 2160));
     let path = crate::paths::workspace_root()
         .join("docs/brand/wallpaper")
-        .join(format!("ferrix-wallpaper-{width}x{height}.png"));
+        .join(format!("xaqu-wallpaper-{width}x{height}.png"));
     std::fs::read(&path).map_err(|error| Error::new(format!("{}: {error}", path.display())))
 }
 
@@ -113,7 +113,7 @@ const MOVING: [&str; 4] = ["mp4", "webm", "mkv", "gif"];
 
 // How finely and how much of a video is kept -- the frame rate, the length
 // and the frame size -- is `config`'s, because it is a person's to change:
-// `~/.config/ferrix/wallpaper.toml`, over the defaults that module holds.
+// `~/.config/xaqu/wallpaper.toml`, over the defaults that module holds.
 
 /// What `ffmpeg` can take a frame from, among what a pictures directory
 /// holds.
@@ -208,11 +208,11 @@ fn pick(args: &Args, size: (u32, u32), stills_only: bool) -> Result<Option<Chose
         return Ok(None);
     }
     if asked.is_some_and(|asked| asked.name == BRAND) {
-        println!("  wallpaper ferrix, the shipped one, as asked");
+        println!("  wallpaper xaqu, the shipped one, as asked");
         return Ok(Some(Chosen::Brand(brand(size)?)));
     }
     if asked.is_some_and(|asked| asked.name == EMBER) {
-        println!("  wallpaper ember, Ferrix's own, as asked");
+        println!("  wallpaper ember, Xaqu's own, as asked");
         return Ok(Some(Chosen::Still(ember(size))));
     }
     let Some(dir) = kept_dir() else {
@@ -512,18 +512,18 @@ fn refuse_or_none(asked: Option<Asked<'_>>, size: (u32, u32), why: &str) -> Resu
         ))),
         None => match brand(size) {
             Ok(png) => {
-                println!("  wallpaper ferrix, the shipped one: {why}");
+                println!("  wallpaper xaqu, the shipped one: {why}");
                 Ok(Some(Chosen::Brand(png)))
             }
             Err(error) => {
-                println!("  wallpaper ember, Ferrix's own ({error}): {why}");
+                println!("  wallpaper ember, Xaqu's own ({error}): {why}");
                 Ok(Some(Chosen::Still(ember(size))))
             }
         },
     }
 }
 
-/// Ferrix's own wallpaper, drawn here rather than kept, so that it belongs
+/// Xaqu's own wallpaper, drawn here rather than kept, so that it belongs
 /// to the project and costs the tree no picture: the brand's dark iron
 /// (`docs/brand/BRAND.md`) under a rust-coloured glow rising from the
 /// lower left, a fainter one at the upper right, and a cool navy one at
@@ -912,7 +912,7 @@ mod tests {
     }
 
     /// A name that was asked for and cannot be met stops the run; asked for
-    /// nothing, the same emptiness shows Ferrix's own picture.
+    /// nothing, the same emptiness shows Xaqu's own picture.
     ///
     /// The difference is the whole of the rule: a boot told to show a
     /// particular wallpaper and showing none is a different scene, and
@@ -941,7 +941,7 @@ mod tests {
         // which file to go and change rather than naming a flag nobody typed.
         let written = Asked {
             name: "amiya",
-            source: "`name` in /home/u/.config/ferrix/wallpaper.toml",
+            source: "`name` in /home/u/.config/xaqu/wallpaper.toml",
         };
         let message = refuse_or_none(Some(written), (64, 36), "nothing is kept")
             .expect_err("a stale name in the file stops the same way")

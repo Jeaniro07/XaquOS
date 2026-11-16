@@ -617,7 +617,7 @@ closure.
 * **x2APIC** left on by firmware taken back to xAPIC on every processor, or
   the boot stopped by name (`L.x86_64.131`).
 * **The reference configuration on QEMU** is the patched QEMU 10.2.1
-  (`ferrix-cfi`), whose unit implements `CFI`/`CFIS` and blocks
+  (`xaqu-cfi`), whose unit implements `CFI`/`CFIS` and blocks
   compatibility format with fault 0x25: stock QEMU passes it through
   whatever `CFI` says, so without the patch no QEMU configuration isolates
   interrupts. xtask boots x86-64 only on it, with `intremap=on,eim=off` and
@@ -636,13 +636,13 @@ recorded with commit, tree, cleanliness, diff and the line that fired, as
 the consultant's ruling of 2026-10-02 (ledger line 262) asks. INIT is never
 forged, since a delivered INIT would stop a processor.
 
-*The `ferrix-3060` domain* runs the same patched QEMU as its emulator, so
+*The `xaqu-3060` domain* runs the same patched QEMU as its emulator, so
 the closure covers it, and N1's hand-over is fail-closed: `devmgr` marks the
 GPU, and the kernel refuses its vectors and pins unless `device_isolation`'s
 bit 1 holds in that guest. The domain's isolation is verified at N1's first
 boot by that bit. **Verified 2026-10-03**: the first boot of the RTX 3060 in
-`ferrix-3060` (`cargo xtask run-nvidia`, the patched QEMU at
-`/usr/local/lib/ferrix/qemu`) printed `nvrm: device_isolation 0x3:
+`xaqu-3060` (`cargo xtask run-nvidia`, the patched QEMU at
+`/usr/local/lib/xaqu/qemu`) printed `nvrm: device_isolation 0x3:
 interrupts isolated (bit 1), DMA translated` for the card at guest
 `02:00.0`, behind a root port, in a translated VT-d domain.
 
@@ -656,8 +656,8 @@ be driven on AArch64 until the ITS path sets it. That fails closed.
 
 ### F-56 — the btrfs crates joined the item without the item's evidence
 **Major**, opened 2026-10-02 (the certification consultant, at the review of
-the boundary landing). The customer put `ferrix-btrfs` and
-`ferrix-btrfs-write` in the item that day: 14,291 lines of product code
+the boundary landing). The customer put `xaqu-btrfs` and
+`xaqu-btrfs-write` in the item that day: 14,291 lines of product code
 ([ITEM.md](ITEM.md) §2), about a sixth of it. The boundary, unsafe, panic,
 complexity and fallible-allocation gates read them from that landing on. What
 the kernel's part of the item has and they do not:
@@ -675,7 +675,7 @@ the kernel's part of the item has and they do not:
   fuzzer (V-09).
 * **Closed 2026-10-02: allocations that stopped the machine.** The write
   path's 166 were made fallible (branch `btrfs-fallible`): vectors through
-  `ferrix-fallible`'s `try_reserve` helpers, map inserts in the kernel's
+  `xaqu-fallible`'s `try_reserve` helpers, map inserts in the kernel's
   reserved section through a dispatch the kernel installs at boot
   (`L.mm.63`), and a refusal answered `OutOfMemory` and `ENOMEM`. The
   reader's 19 name matches are argued `NOALLOC:`. The gate counts 0 in
@@ -691,8 +691,8 @@ the kernel's part of the item has and they do not:
   (and panics under `dev` and `iterate`, which keep them); clippy's
   `arithmetic_side_effects` reports 112 sites in the two crates and is not
   denied (`L.btrfs.23`).
-* **Infrastructure in no ring.** The crates may depend on `ferrix-fallible`
-  and `ferrix-sync` through the manifest's `infrastructure_allowlist`, which
+* **Infrastructure in no ring.** The crates may depend on `xaqu-fallible`
+  and `xaqu-sync` through the manifest's `infrastructure_allowlist`, which
   the core already links. Neither is classified, and the item's unsafe,
   panic and complexity gates do not read them, though both are `unsafe` code
   the core's soundness rests on (9 and 50 lines naming `unsafe`, by grep).
@@ -701,8 +701,8 @@ the kernel's part of the item has and they do not:
 and ratcheted with the residual argued (TODO.md §4.7 item 3); every
 `L.btrfs.*` and `H.STORE.*` is named by a check and the baseline holds none
 of them; the fallible-allocation gate records no site in either crate (met
-2026-10-02); the overflow lint is denied for both with no site left; and `ferrix-fallible`
-and `ferrix-sync` are classified `core` and read by the gates, or argued out.
+2026-10-02); the overflow lint is denied for both with no site left; and `xaqu-fallible`
+and `xaqu-sync` are classified `core` and read by the gates, or argued out.
 
 ---
 
@@ -844,7 +844,7 @@ built by rustc 1.99.1, while Ferrocene's newest release, 26.05, is Rust
 upstream 1.95.0 and so shows only that the source compiles there, not that
 the object code Ferrocene would make is the product's. The gap's present
 cost in the source is three `#[expect(clippy::manual_isolate_lowest_one)]`
-(ferrix-pci's BAR sizing and two in `arch/x86_64/powerctl/check.rs`), kept
+(xaqu-pci's BAR sizing and two in `arch/x86_64/powerctl/check.rs`), kept
 because `isolate_lowest_one` is newer than 1.95. F-17 stays open.
 
 ### F-18 — six code generators produce product code and are unqualified
@@ -969,8 +969,8 @@ the derivation in a comment — the same two words Linux emits.
 
 And the reference configuration's CPU does not have the feature. `cortex-a72`
 is ARMv8.0; PAN is 8.1. The boot correctly reports *"PAN unavailable"* and
-carries on. Demonstrated on a CPU that has it via `FERRIX_ARM_CPU=max`, which
-prints *"PAN on"* and reaches `FERRIX-BOOT-OK`. Whether to move the Arm
+carries on. Demonstrated on a CPU that has it via `XAQU_ARM_CPU=max`, which
+prints *"PAN on"* and reaches `XAQU-BOOT-OK`. Whether to move the Arm
 reference CPU is a project decision about what every Arm test runs on, not a
 certification fix, and it is left open deliberately.
 
@@ -1032,7 +1032,7 @@ from its own word of `EFI_RNG_PROTOCOL`. That is 18, 16 and 17 bits on x86-64
 and AArch64, and 11, 8 and 9 on ARMv7-A. The kernel is linked as a static PIE
 on the 64-bit pair. On ARMv7-A, whose prebuilt `core` rules a PIE out, it is
 linked with `--emit-relocs`, and the loader applies the fixups
-`ferrix_elf::Elf::fixups` reads. Stage 1 refuses a kernel that is not where
+`xaqu_elf::Elf::fixups` reads. Stage 1 refuses a kernel that is not where
 the loader says, a claimed move that did not happen, and a kernel built to
 move that arrived without its fixups (FX-0101). Every `test-boot` requires the
 move on `on` and the fixed image on `off`. `cargo xtask test-kaslr` requires
@@ -1084,7 +1084,7 @@ direct map's base was enough to find the alias.
 
 *Now:* both loaders (`src/boot/common/uefi/` and the Pixel 7 loader) cut each direct-map run
 around the physical span of the image's non-writable segments
-(`ferrix_bootinfo::read_only_span` and `split_run`, host-tested) and map that
+(`xaqu_bootinfo::read_only_span` and `split_run`, host-tested) and map that
 span `KERNEL_RODATA`. `.data` and `.bss` stay writable in the alias: they are
 writable in the image anyway, never executable in either, and the kernel's
 early page tables are in `.bss` and are written through the direct map. No
@@ -1198,7 +1198,7 @@ FAU_SAR.2, FAU_STG.1 and FAU_STG.4 (overwrite the oldest, counted and
 reported; not .3) under
 O.AUDIT, for P.ACCOUNTABILITY, and O.AUDIT's thirteen `H.AUD` requirements
 are each verified by a check -- boot checks, `test-init` and a
-`ferrix.checks=skip` boot read from outside -- with a negative control for
+`xaqu.checks=skip` boot read from outside -- with a negative control for
 every recording site. A record costs 21 ns under KVM (MEMORY-AND-TIMING
 §1.7). The records once on disk are OE.AUDIT_STORE's, and a DMA fault after
 boot is recorded only when something reads the unit, which the ST states.
@@ -1217,7 +1217,7 @@ this review and written 2026-09-27, not built: the TSF's own decisions
 recorded at their choke points in two fixed rings -- one for grants, changes,
 ends and system events that refusals cannot evict, one for refusals with
 per-job fairness -- read only through a capability pid 1 is given, with the
-boot's configuration, `ferrix.checks=skip` included, among the records. Open
+boot's configuration, `xaqu.checks=skip` included, among the records. Open
 until it is built with the checks its §6 names. FIA stays the
 personality's.
 
@@ -1378,7 +1378,7 @@ Cost under KVM: an open and close 60 ns (1.5%) dearer in the root job and
 tmpfs create, 4 KiB write and unlink 4.0% and 4.8% dearer.
 
 ### F-38 — a device can write a dead driver's frames after the kernel gave them back
-**Found and closed 2026-09-26** (found by the audio work, ferrix-90).
+**Found and closed 2026-09-26** (found by the audio work, xaqu-90).
 
 *Was:* **Moderate.** `object/pin.rs` gives a pinned buffer's frames back the moment the pin closes.
 The order it closes in is right for the hardware the claim names: the domain's
@@ -1437,7 +1437,7 @@ alone is not a reliable negative control, since QEMU's late status writes go
 through the mapping it took at pop and do not fault.
 
 ### F-39 — a native process made by any user ran as root
-**Found and closed 2026-09-26** (f84a8d3c, found by the init work, ferrix-15).
+**Found and closed 2026-09-26** (f84a8d3c, found by the init work, xaqu-15).
 
 *Was:* **Major.** `process_create` loaded its child through `Process::new`,
 which gives a process root's credentials, and nothing replaced them. It asks
@@ -1463,7 +1463,7 @@ the ids comparison skipped to show the `getuid` half alone -- stop the boot,
 and are quoted in the commit.
 
 ### F-40 — a delegated job can lift its own limits
-**Found and closed 2026-09-26.** Found by the init work (ferrix-15) while
+**Found and closed 2026-09-26.** Found by the init work (xaqu-15) while
 checking this review's condition on delegation, read from the code, and
 closed there with the fix this review designed with it.
 
@@ -1506,7 +1506,7 @@ write the limit files"*.
 
 ### F-41 — a page mprotect made writable after a fork wrote into the other process's copy
 **Found and closed 2026-09-27** (c9661d5c, with its boot check 469bf17c; found
-by the Pixel 7 work, ferrix-d4, as a Chromium zygote's "stack smashing
+by the Pixel 7 work, xaqu-d4, as a Chromium zygote's "stack smashing
 detected").
 
 *Was:* **Major.** A private file mapping's page is copied into an anonymous
@@ -1535,7 +1535,7 @@ and mprotect made writable reached the other process's page"*. A host test in
 `src/lib/kernel/vma` holds the mark itself.
 ### F-42 — a write refused for memory closed the handles it carried
 **Found and closed 2026-09-27** (found by the F-10 coverage work on
-`object/channel.rs`, ferrix-90: the arm `Endpoint::write` called
+`object/channel.rs`, xaqu-90: the arm `Endpoint::write` called
 unreachable was reached).
 
 *Was:* **Minor.** `channel_write` promises that the handles a message
@@ -1695,7 +1695,7 @@ locked: a wake-up from an interrupt handler could stop the machine.
   16 objects of every size class and fails there, before anything starts. A
   heap refusal inside the section is then served from the reserve. The depth
   argument is in the module: one `Arc` is one allocation of a layout
-  `ferrix_fallible` computes and tests, and a map insert is at most height + 2
+  `xaqu_fallible` computes and tests, and a map insert is at most height + 2
   nodes, which the host tests measure against the pinned standard library.
 * Every site in the item uses one or the other, and returns `NO_MEMORY` from a
   native call, `ENOMEM` from a Linux one, `EAGAIN` from `madvise`, or a
@@ -1812,7 +1812,7 @@ rather than in the tree. Matching a bare name called 124 architecture-facade
 shims recursive, because `fn flush_tlb` forwarding to `aarch64::flush_tlb`
 names itself. `drop(x)` inside a `Drop::drop` body is `core::mem::drop`. And
 taking the next `{` after a signature gave every `extern "C"` declaration the
-*following* item's body, which is how the assembly symbol `ferrix_switch` came
+*following* item's body, which is how the assembly symbol `xaqu_switch` came
 out recursive with borrowed complexity and length scores.
 
 A fourth was found on 2026-09-26, and it was the largest. The pattern that
@@ -1872,7 +1872,7 @@ under the primitive it calls) is IMPLEMENTATION.md W-16's.
 ---
 
 ### F-44 — the item's virtqueue barrier was empty
-**Found and closed 2026-09-27** (found by ferrix-55b while fixing F-45, and
+**Found and closed 2026-09-27** (found by xaqu-55b while fixing F-45, and
 raised by the certification review).
 
 *Was:* **Minor.** `QueueMemory::barrier` must order every access before it
@@ -1921,7 +1921,7 @@ That run shows AArch64 only; ARMv7-A's `dmb osh` stays on the argument and
 the disassembly.
 
 ### F-50 — two cores changing neighbouring GICv2 lines could lose one's setting
-**Found and closed 2026-09-27** (found by ferrix-b5 reading arch/arm_common
+**Found and closed 2026-09-27** (found by xaqu-b5 reading arch/arm_common
 for W-8's ARMv7-A slice).
 
 *Was:* **Major.** A GICv2 distributor keeps four lines' priorities, or four
@@ -1962,13 +1962,13 @@ another driver's, and x86-64 say the check did not run. A confirmation on
 the DK1, a two-core GICv2, is a daytime row in `docs/BACKLOG.md`.
 
 ### F-48 — an ARMv7-A handler without SA_RESTORER could not return
-**Found and closed 2026-09-27** (found by ferrix-b5 reading arch/armv7a for
+**Found and closed 2026-09-27** (found by xaqu-b5 reading arch/armv7a for
 W-8's ARMv7-A slice).
 
 *Was:* **Minor.** A signal handler installed without `SA_RESTORER` returns
 wherever the kernel left its link register. Linux's ARM kernel points it at
 its `sigpage`, a page of return sequences mapped into every process.
-Ferrix's ARMv7-A had no such page and pointed it at the frame's own copy of
+Xaqu's ARMv7-A had no such page and pointed it at the frame's own copy of
 the sequence, on the user stack. The stack is mapped read-write and never
 executable (every user page not asked to run gets `XN`), so a handler that
 returned took a permission fault on its first instruction back and the
@@ -2001,7 +2001,7 @@ allocation sweep maps and unmaps such a page on every architecture.
 
 ### F-45 — a virtqueue's shared indices were read and written a byte at a time
 **Found and closed 2026-09-27** (found by the stage 10 seam investigation,
-ferrix-55b, reading `ferrix_virtio::QueueMemory` for a "virtio-blk missing
+xaqu-55b, reading `xaqu_virtio::QueueMemory` for a "virtio-blk missing
 headers" sighting, which it does not explain).
 
 *Was:* **Minor.** `QueueMemory` provided `read_u16` and `write_u16` in terms
@@ -2039,7 +2039,7 @@ ledger 95; the fix was built that day and parked on branch
 `f46-power-off`, and was carried onto `main` and its controls run again when
 it landed).
 
-*Was:* **Minor.** `watch_to_power_off`, which `test-shell`'s `ferrix.init=`
+*Was:* **Minor.** `watch_to_power_off`, which `test-shell`'s `xaqu.init=`
 boot, its K7 write boot under busybox and `test-selfhost` use to know that
 what the guest wrote to `/data` is committed, required the run's marker and
 then QEMU exiting by itself with status 0 or 33. Both are what a genuine
@@ -2050,7 +2050,7 @@ from a fault or a reset on the way down, so a regression that crashed after
 the marker instead of shutting down would have passed as a power-off, and
 been reported as data safely on disk.
 
-*Now:* every `arch::shutdown` prints `FERRIX-POWER-OFF` as the kernel's last
+*Now:* every `arch::shutdown` prints `XAQU-POWER-OFF` as the kernel's last
 line (`console::announce_power_off` in `src/kernel/src/console.rs`), after
 `power::finish` or `reboot(2)` has committed every registered `Flush`, and
 before the console drains and the architecture's own power-off write. The
@@ -2060,11 +2060,11 @@ stopping the machine -- a firmware without PSCI `SYSTEM_OFF`, a PC without
 QEMU's debug-exit device -- is said too: `console::announce_power_off_failed`
 waits a second (QEMU 10.2's debug-exit device only asks its main loop to
 stop, and the processor runs on until it does) and prints
-`FERRIX-POWER-OFF-FAILED` before the processor halts.
+`XAQU-POWER-OFF-FAILED` before the processor halts.
 `watch_to_power_off` (`power_off_problem` in
 `tools/common/xtask/src/qemu.rs`) requires all three together: QEMU exited by
-itself, `FERRIX-POWER-OFF` came as a whole line after the run's marker with
-no `FERRIX-POWER-OFF-FAILED` after it, and the status is the one the
+itself, `XAQU-POWER-OFF` came as a whole line after the run's marker with
+no `XAQU-POWER-OFF-FAILED` after it, and the status is the one the
 architecture's power-off gives, 33 on x86-64 and 0 on AArch64 and ARMv7-A.
 `L.x86_64.98` and `L.aarch64.47` say so. `test-boot` is not a power-off gate
 and is unchanged: it stops a QEMU that has not exited after its grace.
@@ -2073,28 +2073,28 @@ and is unchanged: it stops a QEMU that has not exited after its grace.
 `only_the_kernels_power_off_is_a_power_off` in
 `tools/common/xtask/src/qemu.rs`, over the line missing, the line before the
 run's marker, a quoted echo of it rather than the kernel's own line,
-`FERRIX-POWER-OFF-FAILED` after it, a status that is not the architecture's,
+`XAQU-POWER-OFF-FAILED` after it, a status that is not the architecture's,
 and a QEMU that had to be stopped. And by five negative controls on
 f283aa0b6 (kept as branch `land-f46-controls`), whose kernel and whose
 `qemu.rs` are the landing's, each a
 `gate.sh control` over `test-shell` that failed on the line meant to catch it
-(the logs are `~/.local/share/ferrix/logs/queue/<tag>.log` on nazuna):
+(the logs are `~/.local/share/xaqu/logs/queue/<tag>.log` on nazuna):
 
 - **x86-64's `shutdown` without the line** (`f46-ctl-x86-nomarker`, KVM):
-  "QEMU exited by itself with status 33 after `FERRIX-BOOT-OK`, but the
-  kernel never printed FERRIX-POWER-OFF: a fault or a reset on the way down,
+  "QEMU exited by itself with status 33 after `XAQU-BOOT-OK`, but the
+  kernel never printed XAQU-POWER-OFF: a fault or a reset on the way down,
   not a power-off".
 - **x86-64's `shutdown` triple-faulting after the line, in place of the
   debug-exit write** (`f46-ctl-x86-triple`, KVM): "QEMU exited with status 0
-  after FERRIX-POWER-OFF, not the 33 x86_64's power-off gives: something else
+  after XAQU-POWER-OFF, not the 33 x86_64's power-off gives: something else
   ended the run". This is the run the old judge passed.
 - **AArch64's `shutdown` without the line** (`f46-ctl-a64-nomarker`, TCG):
   the first sentence, with status 0.
 - **AArch64's `shutdown` not asking PSCI for `SYSTEM_OFF`, as a firmware
   without it returns** (`f46-ctl-a64-returned`, TCG): the guest printed
-  `FERRIX-POWER-OFF` at 42.47 s and `FERRIX-POWER-OFF-FAILED` at 43.47 s,
+  `XAQU-POWER-OFF` at 42.47 s and `XAQU-POWER-OFF-FAILED` at 43.47 s,
   and the gate said "the kernel's power-off returned
-  (FERRIX-POWER-OFF-FAILED), and the machine was left running".
+  (XAQU-POWER-OFF-FAILED), and the machine was left running".
 - **ARMv7-A's `shutdown` without the line** (`f46-ctl-v7-nomarker-r2`, TCG,
   two processors): the first sentence, with status 0.
 
@@ -2266,13 +2266,13 @@ stream table, queues and tables are written through the cached direct
 map.
 
 *Now:* a VT-d unit with `C` clear has every write to a table it walks
-noted in a record (`ferrix_paging::coherence::Unpublished`), and cleaned
+noted in a record (`xaqu_paging::coherence::Unpublished`), and cleaned
 to memory -- `clflush` of each line, then `mfence`
 (`arch::clean_for_walker`, its line size read from `CPUID` once) -- before
 the change that wrote it is published: before the invalidation that
 publishes an attach or a detach, and before a map or an unmap returns,
 since outside caching mode no invalidation follows a map. The mapper's own
-writes go through the record (`ferrix_paging::coherence::Walked`), and a
+writes go through the record (`xaqu_paging::coherence::Walked`), and a
 fresh table frame is cleaned whole before anything links it (`vtd::table`,
 which N0g's interrupt remapping table and invalidation queue use too).
 Each change checks its record is empty at its own publish point and is
@@ -2310,7 +2310,7 @@ the tables the boot's pins add -- and fails the boot (FX-1003) on a change
 refused for a write not cleaned, or on a unit that does not snoop and
 cleaned nothing; test-boot requires the line on x86-64. The check proves
 that each change's noted writes were cleaned; that every write is noted is
-the construction above. Host tests in `ferrix-paging` show every entry the
+the construction above. Host tests in `xaqu-paging` show every entry the
 mapper writes, on a map and an unmap, cleaned after it is written, each
 table it adds cleaned whole before its link is written, and nothing
 cleaned for a walker that snoops. On AArch64 the `SMMUv3` comes up with
@@ -2449,7 +2449,7 @@ leave's scan". Only stage 9 arms the hook, the case disarms it, and a boot
 check before the success marker stops the machine with FX-0908, naming
 the check, if a hook is still armed. Negative controls, run by hand in the
 branch's worktree and not committed (logs in
-`~/.local/share/ferrix/logs/f60/`): `answer_leaving` made a no-op stopped
+`~/.local/share/xaqu/logs/f60/`): `answer_leaving` made a no-op stopped
 the x86-64 boot with "case 11: a processor that recorded the domain after
 the leave's scan issued no barrier before the leave returned"; and the
 case's disarm removed stopped it with FX-0908 ("a check's hook was still
@@ -2501,7 +2501,7 @@ that the review reads `TRACEABILITY.md`'s reached and not-reached changes.
 
 *Checked by the build:* `--check` in every `check` and `check-docs`.
 Controls, run with the new scripts copied onto older trees (logs in
-`~/.local/share/ferrix/logs/po5-c1/ctl-carry-*.log` and
+`~/.local/share/xaqu/logs/po5-c1/ctl-carry-*.log` and
 `ctl-gcj-check-5dddc1981.log`): on devtty's 5dddc1981 and console-revoke's
 0f94a6d1a it fails on all three `coverage-<arch>.json`, "anchors not
 carried since 14fafd03c201", where the old scripts passed; through
@@ -2650,7 +2650,7 @@ that the interleaving happens unforced.
 consultant, ledger lines 509 and 511; shown reachable and fixed by po10-obj,
 design ledger line 520).
 
-*Was:* **Moderate**, the certified item, x86-64 with `ferrix.fastpath=on`;
+*Was:* **Moderate**, the certified item, x86-64 with `xaqu.fastpath=on`;
 pre-existing since step 4 landed (98fdf69cc). The fast path of
 `channel_write_read` (`syscall::native::fast_write_read`) holds the
 caller's `Arc<Endpoint>` from its lookup across its park, with interrupts
@@ -2666,7 +2666,7 @@ free through the heap lock, all inside the span that §9.7 part 2 says waits
 on no lock (G4: a grace period waits at most that span). A diagnostic case
 (branch `po10/endpoint-drop` 51629d17f, never landed) made it on x86-64
 under KVM through both resumes, the frame tail's and the continuation's,
-and the boot passed: nothing looked (`~/.local/share/ferrix/logs/po10-obj/lastdrop-1.log`).
+and the boot passed: nothing looked (`~/.local/share/xaqu/logs/po10-obj/lastdrop-1.log`).
 
 *Now:* the continuation lets go of the reference inside its own unmasked
 span, before it masks again; the frame tail's return and the decline go
@@ -2737,7 +2737,7 @@ ledger 2026-10-08 line 606, L5; pre-existing since the ARMv7-A port).
 its address). `LR_und` is an undefined instruction's address plus 4 in ARM
 state and plus 2 in Thumb state, a 32-bit Thumb instruction included (ARM
 ARM, the exception return offsets; QEMU's `offset = thumb ? 2 : 4`; Linux's
-`__und_usr_thumb`). `ferrix_stub_undefined` subtracted 4 in both, so a Thumb
+`__und_usr_thumb`). `xaqu_stub_undefined` subtracted 4 in both, so a Thumb
 program's `SIGILL` named, in `si_addr` and the signal frame's `pc`, the
 halfword before the instruction, and a handler returning without changing
 the `pc` resumed there. Busybox and every hard-float ARMv7-A Linux program
@@ -2911,7 +2911,7 @@ line 2247, Q2; pre-existing since `MAX_DRIVERS` 16 was chosen, made live by
 ee2d5bf0f on 2026-10-15).
 
 **Minor**, verification; the certified item (`discovery/devmgr.rs`) and the
-devmgr protocol it links (`ferrix-devmgr-proto`); all architectures.
+devmgr protocol it links (`xaqu-devmgr-proto`); all architectures.
 
 *Was.* The core's DEVICES writer (`write_devices`) names every driver in
 `/lib/drivers` in its first message, at most `MAX_DRIVERS`, then 16. That
@@ -2935,14 +2935,14 @@ enforcement (`docs/DEVMGR.md` §2). The buffer the limit sizes is argued in
 [MEMORY-AND-TIMING.md](MEMORY-AND-TIMING.md) §1.1 and held by a const
 assertion in `devmgr.rs`.
 
-*Evidence* (gate.sh logs in `~/.local/share/ferrix/logs/queue/`):
+*Evidence* (gate.sh logs in `~/.local/share/xaqu/logs/queue/`):
 `fx1006-main-test-nvrm` on main 95e49aaff (tree d86a7b250): `run: FAILED`,
-"FERRIX-PANIC stage 10 devmgr self-check failed: more drivers than one
+"XAQU-PANIC stage 10 devmgr self-check failed: more drivers than one
 DEVICES message names"; `fx1006-test-nvrm` on 08194da68 (tree a11969bd6):
 `run: PASSED [x86_64:kvm]`, all three boots; the control
 `fx1006-control-max16b` on 08194da68, `MAX_DRIVERS` set back to 16:
 "control: FIRED (host): xtask: this image carries 17 drivers in lib/drivers,
-more than the 16 one DEVICES message names (ferrix_devmgr_proto::MAX_DRIVERS):
+more than the 16 one DEVICES message names (xaqu_devmgr_proto::MAX_DRIVERS):
 the kernel would stop at stage 10 with FX-1006".
 
 *Still open: detection.* It closes when `check` holds every image `xtask`
@@ -2954,7 +2954,7 @@ no gate time and is preferred. BACKLOG holds the row.
 ### F-84 — RFDS was not modelled, and an affected part read as covered
 **Found 2026-10-17, open** (found by the N150 session's stalls report,
 `STALLS.md` item 5, from the box's Linux capture
-`~/.local/share/ferrix/n150-linux/box-2026-10-16/`; confirmed and numbered
+`~/.local/share/xaqu/n150-linux/box-2026-10-16/`; confirmed and numbered
 by its certification consultant, ledger 2026-10-17 line 2294; pre-existing
 since F-31's x86-64 table).
 
@@ -3010,7 +3010,7 @@ covered", on the N150 too, which has no `BHI_CTRL`.
 `cpu_set_bug_bits` does: every part but AMD's and Hygon's with eIBRS or
 under a hypervisor, `BHI_NO` notwithstanding. Where `BHI_CTRL` is offered
 the plan sets `BHI_DIS_S` in `IA32_SPEC_CTRL`, read back with its other
-bits; elsewhere `ferrix_clear_bhb`, Linux's `clear_bhb_loop` at its counts,
+bits; elsewhere `xaqu_clear_bhb`, Linux's `clear_bhb_loop` at its counts,
 runs on every entry from ring 3 before any indirect branch: `SYSCALL`
 through an `LSTAR` pointed at the entry that calls it and read back on
 every processor, traps and interrupts behind the SWAPGS fence, NMIs and
@@ -3037,10 +3037,10 @@ while the job held hundreds of megabytes of clean cache, and
 `memory.events` read `oom 0 oom_kill 0`. The program was neither given its
 page after a reclaim nor OOM-killed, against H.QUOTA.12. It was seen on
 main f16c98ae7 and with the btrfs-pressure fix alike, in bare xtask
-transcripts (`~/.local/share/ferrix/n150-linux/pressure-gate/` run9, run8
+transcripts (`~/.local/share/xaqu/n150-linux/pressure-gate/` run9, run8
 and run11) that are the record's narrative, not cited evidence.
 
-*Closes when* the `FERRIX_PRESSURE_BOOTS=cgroup` boot of
+*Closes when* the `XAQU_PRESSURE_BOOTS=cgroup` boot of
 `test-btrfs-pressure` passes under `gate.sh` with no step ended by a
 signal, and a control restoring the defect fires. BACKLOG holds the row.
 
@@ -3185,7 +3185,7 @@ provisions offer Linux is unavailable to a kernel this young.
 
 ### F-00 — the kernel had no structural coverage measurement
 **Closed 2026-09-25** by `tools/common/gen/coverage-report.py` and the
-`FERRIX_QEMU_PLUGIN` hook. Superseded by F-10 to F-13, which are about the
+`XAQU_QEMU_PLUGIN` hook. Superseded by F-10 to F-13, which are about the
 *level* of coverage rather than its absence.
 
 ### F-0A — the certified item's SOUP was unenumerated
@@ -3227,9 +3227,9 @@ Steam's staging stall; numbered by the certification consultant, ledger
 2026-10-10 lines 642-643; reviewed at ledger 2026-10-11 line 731; pre-existing since `memory.high` reached tmpfs reads, b97f4db71,
 and the plain ticket lock 875b66f3b left on a tmpfs inode).
 
-*Is:* **Major**, the load ring (`ferrix-vfs` tmpfs, `fs/pages.rs`), every
+*Is:* **Major**, the load ring (`xaqu-vfs` tmpfs, `fs/pages.rs`), every
 architecture. A tmpfs inode's `state` stayed a plain ticket lock when the
-rest of `ferrix-vfs` became preemption-holding on 2026-10-03, because a
+rest of `xaqu-vfs` became preemption-holding on 2026-10-03, because a
 truncation cut mappings under it. Every data operation held it across its
 pages: `read_at` across `VmoPages::read`, which calls `oom::throttle`,
 which sleeps when the reader's job is over `memory.high` and reclaim finds
@@ -3244,7 +3244,7 @@ with about eighty staging threads: its download stood still at 4.8 of
 `top`, and 31 of 40 `info registers -a` samples over four vCPUs at one
 address, CPL 0, interrupts on: `SpinLock<tmpfs::State>::acquire` inlined
 in `tmpfs::Node::metadata`, one more in `read_dir`
-(~/ferrix-logs/steam-stall/). A `find` over the directory from another
+(~/xaqu-logs/steam-stall/). A `find` over the directory from another
 process never returned (docs/STEAM.md §7).
 
 *Fix (consultant OK IF A1-A7, ledger 642; code review OK IF T1-T6, ledger
@@ -3269,7 +3269,7 @@ lends: stage 8 stopped the machine, "tmpfs's store lends a parker that is
 not the scheduler's". a4770a15d's product and check files are the
 landing's but for two doc comments in `tmpfs.rs` that no longer link the
 private `FileIo` (rustdoc refused the links; no code moved); 86085f3a4's
-differ from a4770a15d's by one host test in `ferrix-vfs`'s `tests.rs` only. An earlier control, `stall-f70-ctl1` on a31cb409c, did not
+differ from a4770a15d's by one host test in `xaqu-vfs`'s `tests.rs` only. An earlier control, `stall-f70-ctl1` on a31cb409c, did not
 fire and is not cited.
 
 ### F-71 — the paranoid entries' conditional `swapgs` is not fenced
@@ -3279,7 +3279,7 @@ line 668, W5; pre-existing since the paranoid entries).
 
 **Minor**, the certified item, x86-64. The NMI, `#DB` and `#MC` entries
 decide whether to `swapgs` by reading `GS_BASE` and branching on its sign
-(`ferrix_paranoid_common`, `arch/x86_64/trap.rs`). Neither way out of
+(`xaqu_paranoid_common`, `arch/x86_64/trap.rs`). Neither way out of
 that branch has an `lfence`. The ordinary interrupt stub, which decides
 from the saved `CS`, has one after its conditional `swapgs`, and
 `SPECULATION.md` §3 said "`lfence` after the conditional `swapgs` on
@@ -3300,23 +3300,23 @@ reach the sign branch: a `#DB` from ring 3 leaves the IST stack for the
 ordinary path, and gets there through two conditional branches of its
 own, the test of the saved `CS` and the test of the vector ahead of the
 count of the stack's occupants, to a `swapgs` (label 4 of
-`ferrix_paranoid_common`) with no fence after either. So the program has
+`xaqu_paranoid_common`) with no fence after either. So the program has
 a lever it can pull as often as it likes, on a path with the same gap.
 
 *Widened 2026-10-17* (rfds-bhi, consultant ledger 2026-10-17 line 2305,
-Q5): `ferrix_paranoid_common` has **two** unfenced branches ahead of
-`ferrix_paranoid_entry`, not one: the ring test of the saved `CS`
+Q5): `xaqu_paranoid_common` has **two** unfenced branches ahead of
+`xaqu_paranoid_entry`, not one: the ring test of the saved `CS`
 (`testb $3, 144(%rsp); jz 1f`) and the `GS_BASE` sign test. Since F-85's
 fix the ring test also decides whether an NMI or machine check from ring 3
-runs the branch-history loop (`ferrix_clear_bhb`, behind its own fenced
+runs the branch-history loop (`xaqu_clear_bhb`, behind its own fenced
 test of the BHI plan). Mispredicted to ring 0, that branch skips the loop
-and its fence and runs `ferrix_paranoid_entry` speculatively with the
+and its fence and runs `xaqu_paranoid_entry` speculatively with the
 program's branch history, until the frame load resolves (store-forwarded,
 a short window). Still **Minor**.
 
-*Closes when* both branches of `ferrix_paranoid_common`, the `CS` ring
+*Closes when* both branches of `xaqu_paranoid_common`, the `CS` ring
 test and the `GS_BASE` sign test, are fenced on both ways out before
-`ferrix_paranoid_entry`, and the ring-3 `#DB`'s way to its `swapgs` is
+`xaqu_paranoid_entry`, and the ring-3 `#DB`'s way to its `swapgs` is
 fenced too, with
 the same evidence the ordinary stub's fence has (`SPECULATION.md` §3 and
 the `speculation` self-check's line), and the §3 row is restored. Until
@@ -3401,7 +3401,7 @@ reads the bit set is counted.
 - **`cargo xtask test-mce`.** After stage 4, QEMU's monitor injects an
   uncorrected error into each processor in turn, the last first (`mce
   <cpu>`; QEMU refuses the broadcast, `-b`, on the gates' processor models),
-  and the kernel must stop with FERRIX-PANIC and FX-9005; a processor with
+  and the kernel must stop with XAQU-PANIC and FX-9005; a processor with
   the bit clear would make QEMU take a triple fault instead, under KVM
   (`m0f73-mce-kvm`) and TCG (`m0f73-mce-tcg`).
 - **Negative control, FIRED:** `enable_machine_check`'s write of the bit
@@ -3435,7 +3435,7 @@ put the residual's closing brace of a moved `check_switch_state` on
 reached on three architectures with no run reaching it; `carry-coverage
 --check` and `gen-coverage-justification --check` both passed on that
 carry. The landing carried the moves by span instead, item by item
-(`~/ferrix-logs/bs-a/split/carry_moves.py` on nazuna), and its requirement
+(`~/xaqu-logs/bs-a/split/carry_moves.py` on nazuna), and its requirement
 statuses equal `main`'s. An older drift of the same kind is why the
 argument for `arch/x86_64/mod.rs` 273 named `check_exception_entry` while
 its line was `check_switch_state`'s brace.
@@ -3458,14 +3458,14 @@ no gate asked which ring a library is in unless a classified crate depended
 on it. The split gave the core and the item manifests of their own, and the
 dependency rule (ledger 1531, D2) then asked: the core's files name 21
 libraries and the item's 16 that `tools/common/data/certification-item.json`
-classifies in no ring and does not allowlist -- 25 in all (`ferrix-acpi`,
-`ferrix-audit`, `ferrix-blkring`, `ferrix-bootinfo`, `ferrix-cgroupfs`,
-`ferrix-crng`, `ferrix-description`, `ferrix-devmgr-proto`, `ferrix-elf`,
-`ferrix-fbtext`, `ferrix-fdt`, `ferrix-frame`, `ferrix-heap`,
-`ferrix-kmem`, `ferrix-linux-abi`, `ferrix-native-abi`, `ferrix-objects`,
-`ferrix-paging`, `ferrix-pci`, `ferrix-qr`, `ferrix-sched`, `ferrix-vdso`,
-`ferrix-vfs`, `ferrix-virtio`, `ferrix-vma`), the heap and frame
-allocators and the fair scheduler's logic among them. `ferrix-heap` holds the
+classifies in no ring and does not allowlist -- 25 in all (`xaqu-acpi`,
+`xaqu-audit`, `xaqu-blkring`, `xaqu-bootinfo`, `xaqu-cgroupfs`,
+`xaqu-crng`, `xaqu-description`, `xaqu-devmgr-proto`, `xaqu-elf`,
+`xaqu-fbtext`, `xaqu-fdt`, `xaqu-frame`, `xaqu-heap`,
+`xaqu-kmem`, `xaqu-linux-abi`, `xaqu-native-abi`, `xaqu-objects`,
+`xaqu-paging`, `xaqu-pci`, `xaqu-qr`, `xaqu-sched`, `xaqu-vdso`,
+`xaqu-vfs`, `xaqu-virtio`, `xaqu-vma`), the heap and frame
+allocators and the fair scheduler's logic among them. `xaqu-heap` holds the
 per-processor heap cache too since 2026-10-30 (`CpuCache`,
 docs/HEAP-CACHES.md), safe Rust and run under Miri; which ring it belongs
 in is the customer's decision. Their code runs in the
@@ -3474,10 +3474,10 @@ fallible allocation, traceability, coverage -- reads it. Two of them break
 the core ring's own rule that nothing in it depends on a filesystem,
 which ITEM.md says `check-item-boundary.py` asserts rather than trusts:
 `user/vmo.rs` and
-`user/space.rs` use `ferrix_vfs::Errno`, and `object/job.rs` uses
-`ferrix_cgroupfs::controllers`; the file-level rule did not see them
+`user/space.rs` use `xaqu_vfs::Errno`, and `object/job.rs` uses
+`xaqu_cgroupfs::controllers`; the file-level rule did not see them
 because a library in no ring is in no ring's way. ITEM.md §2 named five of
-these crates (`ferrix-pci`, `ferrix-acpi`, `ferrix-paging`, and the two
+these crates (`xaqu-pci`, `xaqu-acpi`, `xaqu-paging`, and the two
 allowlisted ones); F-56 is the btrfs crates' evidence, not this list.
 
 The split does not hide it: each core or item kernel crate lists exactly
@@ -3529,10 +3529,10 @@ then wakes it again with the condition true, and the waiter must finish.
 Every multi-processor boot prints "a wake that drains a waiter as it is
 listed: woken again by the next". The negative control, the mark moved
 after the list's lock, FIRED on x86-64 under KVM (`pipe-epipe-c1-kvm`):
-"control: FIRED (panic): 4.04 | FERRIX-PANIC stage 5 self-check failed: a
+"control: FIRED (panic): 4.04 | XAQU-PANIC stage 5 self-check failed: a
 wake that drained a waiter as it was listed left it blocked on no list:
 the next wake missed it". Supporting only: the `test-net` repro of
-`~/ferrix-logs/pipe-epipe/` (KVM, `--release --smp 4`, three spinners)
+`~/xaqu-logs/pipe-epipe/` (KVM, `--release --smp 4`, three spinners)
 stuck 1 of 15 times before and 0 of 30 after.
 
 ### F-78 — a throttled task's looks were charged to the quota they waited out
@@ -3585,7 +3585,7 @@ trampoline loaded the boot processor's `CR0` as it was, so `NE`, `MP`,
 goes out on the legacy `FERR#` line instead of raising `#MF`, so
 `L.x86_64.77` (`#MF` gives `SIGFPE`) was not met on that machine. Stage 3
 said so -- "CR0.NE is clear, so an x87 exception is not an exception"
-(FX-0301) -- but the box normally boots with `ferrix.checks=skip`, and
+(FX-0301) -- but the box normally boots with `xaqu.checks=skip`, and
 QEMU's firmware sets the bit, so no gate saw it. Stage 3's look ran on the
 boot processor alone.
 
@@ -3609,7 +3609,7 @@ write removed (`cr0ne-ctl-b`, stage 4); C, `NE` cleared just before stage
 self-checks on, this change's kernel source (test commit 00083338b), said
 "CR0.NE set, which firmware had left clear", read the controls on 4 of 4
 processors in stage 4, and stage 3's x87 program ended with `SIGFPE`
-(`~/.local/share/ferrix/n150-linux/evidence/cr0ne-n150-pstore-2026-10-17.log`
+(`~/.local/share/xaqu/n150-linux/evidence/cr0ne-n150-pstore-2026-10-17.log`
 on the gate host).
 
 **Same class, recorded and not fixed.** Two more control bits are still
@@ -3642,7 +3642,7 @@ command register reads 0x0006 with Interrupt Pin 0: `INTx` Disable is
 read-only 0, and memory and Bus Master Enable are read-only 1. The rewrite
 never landed and bus mastering could not go off, so the boot stopped at
 FX-1011. W7's evidence rested on QEMU's write masks alone, an emulator
-property stated nowhere. The box normally boots with `ferrix.checks=skip`,
+property stated nowhere. The box normally boots with `xaqu.checks=skip`,
 which hid it.
 
 *Now:* the check's own mapping, never the kernel's paths under test, is
@@ -3730,7 +3730,7 @@ has a driver in that image and whether it came up.
 
 ### F-90 — the page cache's life was tied to the dentry queue's count of names
 **Found 2026-10-18, closed 2026-10-18** (found by the n150 pagecache-evict
-session from the customer's N150, `~/.local/share/ferrix/n150-linux/FINDINGS.md`,
+session from the customer's N150, `~/.local/share/xaqu/n150-linux/FINDINGS.md`,
 "Page cache evicted whole under a write at the floor"; numbered by its
 certification consultant, ledger 2026-10-18 line 2336, Q2; pre-existing since
 btrfs files' pages lived in their inodes and the dentry cache was a bounded
@@ -3768,8 +3768,8 @@ if `Cached` falls below half.
   (`pce-ctl`).
 * Bare transcripts at 4 GiB: main 4010940 to 55508 kB; the fix 4010920 to
   3980204 kB.
-* Host tests: ferrix-vfs `dentries_of_files_with_cached_pages_are_kept_until_the_pages_or_the_name_go`;
-  ferrix-btrfs-vfs `a_cached_file_outlives_its_dentry_leaving_the_queue`
+* Host tests: xaqu-vfs `dentries_of_files_with_cached_pages_are_kept_until_the_pages_or_the_name_go`;
+  xaqu-btrfs-vfs `a_cached_file_outlives_its_dentry_leaving_the_queue`
   (unmount releases the kept dentries) and
   `an_unlinked_kept_file_goes_with_its_last_user`.
 
@@ -3823,7 +3823,7 @@ privileged writer in the initial cgroup namespace has, and
 as root: `/proc/434/cgroup` read `0::/drivers.slice/job-10244/job-10246`
 for the GPU's worker, `echo 434 > /sys/fs/cgroup/cgroup.procs` succeeded,
 and it read `0::/` after
-(`~/.local/share/ferrix/logs/gpu-opaque-s1-2026-10-23/serial.log`, lines
+(`~/.local/share/xaqu/logs/gpu-opaque-s1-2026-10-23/serial.log`, lines
 436-440). The moved process survives the job's kill.
 
 *Now:* sealed jobs (`docs/CGROUPS.md` §3.3). A job made with `JOB_SEALED`,
@@ -3888,11 +3888,11 @@ neither new one uses an interrupt stack, as on Linux, and the kernel's own
 `SIGTRAP`, trap 3 for `int3`) and `gates` line (all 256 gates read, DPL 3 on
 3, 4 and `0x80` alone). Negative controls, `gate.sh control --expect`,
 x86_64 under KVM, on 9647eb130: both gates back to DPL 0 -- `control: FIRED
-(panic): 13.46 | FERRIX-PANIC stage 3 self-check failed: a program's int3
+(panic): 13.46 | XAQU-PANIC stage 3 self-check failed: a program's int3
 was a general protection fault, not a breakpoint`; `#OF`'s alone --
-`control: FIRED (panic): 15.05 | FERRIX-PANIC stage 3 self-check failed: an
+`control: FIRED (panic): 15.05 | XAQU-PANIC stage 3 self-check failed: an
 i386 program's into was not trap 4, or its int3 not trap 3`; vector 5 also
-at DPL 3 -- `control: FIRED (panic): 13.29 | FERRIX-PANIC stage 3
+at DPL 3 -- `control: FIRED (panic): 13.29 | XAQU-PANIC stage 3
 self-check failed: a gate's DPL is not as on Linux: ring 3 raises #BP, #OF,
 int $0x80 alone`.
 
@@ -3932,10 +3932,10 @@ out to be one of the two) and `a_record_is_a_line_of_its_own` (the
 recent-output ring holds the cut's newline before the record, and none
 before a record with no line open). Negative controls, `gate.sh control
 --expect`, aarch64 `--smp 4`, TCG, on 83ef0caf2: the old flag test put back
--- `control: FIRED (panic): 4.11 | FERRIX-PANIC console log self-check
+-- `control: FIRED (panic): 4.11 | XAQU-PANIC console log self-check
 failed: a line was handed out cut short, or run into the line after it,
 while a writer on another processor wrote`; the port's newline disabled --
-`control: FIRED (panic): 4.13 | FERRIX-PANIC console log self-check failed:
+`control: FIRED (panic): 4.13 | XAQU-PANIC console log self-check failed:
 a record that cut a half-written line was not sent a newline before it`.
 
 ### F-96 — a file renamed over another could reach the disk empty
@@ -3953,7 +3953,7 @@ dirty pages into extents only at a writeback, and the periodic commit
 (`root_disk::commit_forever`, every 30 s) writes back every file first. But
 an `fsync` or `fdatasync` of *any* file while the tree's shape has changed
 since the last commit commits that shape -- the rename among it -- and
-writes back only the file it was called on (`ferrix-btrfs-vfs`
+writes back only the file it was called on (`xaqu-btrfs-vfs`
 `rw.rs`, `Node::fsync`). The rename then reached the disk with the moved
 inode as it was at its creation, 0 bytes long, and a crash before the next
 periodic commit left it so. Linux's btrfs (`btrfs_rename`'s
@@ -3977,7 +3977,7 @@ the power cut at once, must read back old or new and whole; host `btrfs
 check` passes. With the fix it passed; with the writeback at the rename
 taken out the second boot's file was 0 bytes and the gate failed
 (`/rc-fsync was 0 bytes ... the rename reached the disk without the file's
-bytes`). Host tests, ferrix-btrfs-vfs:
+bytes`). Host tests, xaqu-btrfs-vfs:
 `a_file_renamed_over_another_is_committed_with_its_bytes` (fails without
 the fix: 0 bytes), `a_rename_over_a_file_not_yet_committed_leaves_the_old_file`,
 `a_file_renamed_over_another_is_whole_after_a_sync_and_reads_back_meanwhile`.
@@ -4005,7 +4005,7 @@ rendered into one buffer).
 
 *Was:* **Major**, freedom from interference (CLAIM §3; O.QUOTA,
 T.EXHAUST). Opening `/proc/<pid>/maps` rendered the whole file at open into
-one `Vec<u8>` (`render::maps`, through `ferrix_procfs::text::put`), grown
+one `Vec<u8>` (`render::maps`, through `xaqu_procfs::text::put`), grown
 infallibly. The kernel heap serves at most one buddy block, 4 MiB, per
 request, so once the text passed 4 MiB the next doubling asked for 8 MiB
 and the allocation error handler stopped the machine with FX-0008, however
@@ -4016,7 +4016,7 @@ AoU-5's transfer): the snapshot was charged only after the render.
 
 *Now:* each line is formatted into room reserved fallibly for its longest
 form (`maps::longest_line`), by a writer that refuses rather than grows
-(`maps::render` returns `Full`), and appended to `ferrix_fallible::Chunks`:
+(`maps::render` returns `Full`), and appended to `xaqu_fallible::Chunks`:
 page-sized blocks, every one charged to the opener's job through a
 caller-supplied `Meter` before it is taken, all given back when the open
 file goes. A refusal of the charge or of an allocation ends the open with
@@ -4033,8 +4033,8 @@ kernel before the fix the same check stops the boot with
 because stage 8 runs before the boot completes (control f97d-k1). The kmem
 check (`H.QUOTA.7`) opens maps of 167,936 bytes in a job limited to 32 KiB,
 which is refused `ENOMEM` with nothing left charged, while a sibling reads
-it whole. Host tests: ferrix-fallible's `chunks_*` (also under Miri) and
-ferrix-procfs's `a_maps_line_never_passes_its_longest_line` and
+it whole. Host tests: xaqu-fallible's `chunks_*` (also under Miri) and
+xaqu-procfs's `a_maps_line_never_passes_its_longest_line` and
 `a_maps_line_without_room_is_refused_and_nothing_allocated`.
 
 *Residual:* this closes F-97 for `maps` only. mountinfo and mounts (up to
@@ -4071,7 +4071,7 @@ at its last pointer; anything else is an error, never the end of the tree.
 Within one operation the cache holds `CLEAN_NODES` and what the operation
 loads, argued per operation in MEMORY-AND-TIMING §1.8 (F2).
 
-*Checked by the build:* `ferrix-btrfs-write`'s `tests/clean.rs`, with the
+*Checked by the build:* `xaqu-btrfs-write`'s `tests/clean.rs`, with the
 cache at 4,096 nodes, the fs tree's root among them and a leaf not:
 `next_item` from a gap between two leaves, `prev_item` from slot 0 of a
 leaf, and `read_dir` from the gap answer the next item, the previous one,

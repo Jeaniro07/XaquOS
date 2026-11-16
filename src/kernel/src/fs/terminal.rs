@@ -51,13 +51,13 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     B115200, BAUD_RATES, BOTHER, CBAUD, CLOCAL, CREAD, CS8, ECHO, ECHOCTL, ECHOE, ECHOK, ECHOKE,
     ECHONL, IBSHIFT, ICANON, ICRNL, IEXTEN, IGNCR, INLCR, ISIG, ISTRIP, IXON, NCCS, NOFLSH, ONLCR,
     OPOST, SIGINT, SIGQUIT, SIGTSTP, TERMIOS_BYTES, TERMIOS2_BYTES, VEOF, VEOL, VEOL2, VERASE,
     VINTR, VKILL, VMIN, VQUIT, VSUSP, VTIME, VWERASE,
 };
-use ferrix_vfs::{Errno, Readiness};
+use xaqu_vfs::{Errno, Readiness};
 
 use crate::arch;
 use crate::console;
@@ -928,7 +928,7 @@ fn start_pumping() {
     if PUMPING.swap(true, Ordering::AcqRel) {
         return;
     }
-    if crate::sched::spawn("console", run_pump, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if crate::sched::spawn("console", run_pump, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         PUMPING.store(false, Ordering::Release);
     }
 }

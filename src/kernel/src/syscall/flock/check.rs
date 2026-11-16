@@ -4,7 +4,7 @@
 
 use alloc::sync::Arc;
 
-use ferrix_vfs::{Errno, OpenFile};
+use xaqu_vfs::{Errno, OpenFile};
 
 use super::{OFFSET_MAX, Owner, RECORDS, carve, key_of, place, record_charge};
 

@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
-# Stage 20's exit: every test, booting only what Ferrix compiled.
+# Stage 20's exit: every test, booting only what Xaqu compiled.
 #
 #     tools/common/test/selfhost-matrix.sh record DIR    # the matrix, writing DIR/plan
 #     cargo xtask test-selfhost --accel kvm --plan DIR
-#                                              # Ferrix makes every build in it
+#                                              # Xaqu makes every build in it
 #     tools/common/test/selfhost-matrix.sh replay DIR    # the matrix again, every build
 #                                              # answered from DIR/store
 #
 # `plan DIR` writes the same plan as `record DIR` without booting anything
-# (FERRIX_BUILDS=plan:DIR): minutes, no QEMU, and none of the volumes the
+# (XAQU_BUILDS=plan:DIR): minutes, no QEMU, and none of the volumes the
 # boots need, which is what lets a scheduled CI job make one. Every row then
 # ends at its first boot, so a row for `--arch all` runs once per
 # architecture, and a row's exit says nothing.
 #
 # Each row is a test command of the gate matrix, run with
-# FERRIX_BUILDS=record:DIR or replay:DIR/store (tools/common/xtask/src/builds.rs). Both
+# XAQU_BUILDS=record:DIR or replay:DIR/store (tools/common/xtask/src/builds.rs). Both
 # runs use a home of their own, DIR/home, so that the programs the script
 # builds install -- busybox, uutils and the ports, which a replay puts back
 # from the store -- never reach the ones other checkouts on this machine use.
-# That home links everything in ~/.local/share/ferrix but those three, whose
+# That home links everything in ~/.local/share/xaqu but those three, whose
 # source archives alone are copied; Cargo and rustup keep their own homes.
 #
 # The summary is DIR/<mode>-run/summary, a row's log beside it. Judge a run by
-# `grep "exit [1-9]"` in the summary, and by FERRIX-PANIC in the logs.
+# `grep "exit [1-9]"` in the summary, and by XAQU-PANIC in the logs.
 set -u
 mode=${1:?record or replay}
 mkdir -p "${2:?the plan directory}" && dir=$(cd "$2" && pwd) || exit 2
@@ -45,9 +45,9 @@ elif [ "$(cat "$dir/tree" 2>/dev/null)" != "$tree" ]; then
     exit 2
 fi
 
-real=$HOME/.local/share/ferrix
+real=$HOME/.local/share/xaqu
 home=$dir/home
-data=$home/.local/share/ferrix
+data=$home/.local/share/xaqu
 if [ ! -d "$data" ]; then
     mkdir -p "$data"
     for entry in "$real"/*; do
@@ -67,9 +67,9 @@ if [ ! -d "$data" ]; then
 fi
 export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 export RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
-export FERRIX_RUSTC_SYSROOT=${FERRIX_RUSTC_SYSROOT:-$real/rustc}
+export XAQU_RUSTC_SYSROOT=${XAQU_RUSTC_SYSROOT:-$real/rustc}
 export HOME=$home
-export FERRIX_BUILDS=$builds
+export XAQU_BUILDS=$builds
 
 # The logs of a run, never DIR/plan, which is the plan itself.
 log=$dir/$mode-run

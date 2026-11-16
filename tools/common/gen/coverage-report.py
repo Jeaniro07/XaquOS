@@ -13,10 +13,10 @@ records every basic block the guest translates and executes; the kernel's own
 DWARF line table says which source statement each address belongs to. Intersect
 the two and you have statement coverage of ring 0, per certification ring.
 
-    cargo xtask test-boot --arch x86_64 --accel tcg   # with FERRIX_QEMU_PLUGIN
+    cargo xtask test-boot --arch x86_64 --accel tcg   # with XAQU_QEMU_PLUGIN
     python3 tools/common/gen/coverage-report.py \
-        --drcov /tmp/ferrix-cov.drcov \
-        --elf target/x86_64-unknown-none/debug/ferrix-kernel
+        --drcov /tmp/xaqu-cov.drcov \
+        --elf target/x86_64-unknown-none/debug/xaqu-kernel
 
 What is being counted
 ---------------------
@@ -313,10 +313,10 @@ def read_floor(path: Path, arch: str | None) -> float:
 
 
 # The cargo profiles a measured kernel can come from, by the directory cargo
-# builds it into (target/<triple>/<profile>/ferrix-kernel). `cargo xtask
-# coverage` keeps each boot's kernel as ferrix-kernel-<profile>-<digest>.elf.
+# builds it into (target/<triple>/<profile>/xaqu-kernel). `cargo xtask
+# coverage` keeps each boot's kernel as xaqu-kernel-<profile>-<digest>.elf.
 PROFILES = ("debug", "coverage", "release", "iterate")
-KEPT_KERNEL = re.compile(r"ferrix-kernel-(" + "|".join(PROFILES) + r")-[0-9a-f]{16}\.elf")
+KEPT_KERNEL = re.compile(r"xaqu-kernel-(" + "|".join(PROFILES) + r")-[0-9a-f]{16}\.elf")
 
 
 def profile_of(elf: Path) -> str:
@@ -334,9 +334,9 @@ def profile_of(elf: Path) -> str:
         return kept.group(1)
     raise SystemExit(
         f"{elf}: cannot tell which cargo profile built it: give the ELF where "
-        f"cargo wrote it (target/<triple>/<profile>/ferrix-kernel, profile one "
+        f"cargo wrote it (target/<triple>/<profile>/xaqu-kernel, profile one "
         f"of {', '.join(PROFILES)}) or as `cargo xtask coverage` keeps it "
-        f"(ferrix-kernel-<profile>-<16 hex>.elf)"
+        f"(xaqu-kernel-<profile>-<16 hex>.elf)"
     )
 
 

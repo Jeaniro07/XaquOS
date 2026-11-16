@@ -31,12 +31,12 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     CLOCK_BOOTTIME, CLOCK_MONOTONIC, CLOCK_MONOTONIC_COARSE, CLOCK_MONOTONIC_RAW,
 };
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 use crate::sync::SpinLock;
 use crate::syscall::credentials::Credentials;

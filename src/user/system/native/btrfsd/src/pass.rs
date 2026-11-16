@@ -7,8 +7,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
 
 /// The most pages asked of a source at once, as a heap store does.
 const RUN_PAGES: usize = 32;

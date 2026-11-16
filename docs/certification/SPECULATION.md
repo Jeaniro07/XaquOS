@@ -23,13 +23,13 @@ cargo xtask <anything that builds a kernel> --mitigations off
 ```
 
 **`on` is the certified reference configuration and the default.** It is what a
-plain `cargo build -p ferrix-kernel` makes, what every gate boots, and the only
+plain `cargo build -p xaqu-kernel` makes, what every gate boots, and the only
 setting [SAFETY-MANUAL.md](SAFETY-MANUAL.md) AoU-8 and AoU-11 cover. **`off`
 is an explicit opt-out**, for measuring what the defences cost and for a
 machine whose owner has decided it runs nothing that distrusts anything else.
 
 Since M0 the switch is the build flag `mitigations` (`docs/BUILD-FLAGS.md`):
-`off` builds the kernel crate with `cfg(ferrix_mitigations = "off")`, set
+`off` builds the kernel crate with `cfg(xaqu_mitigations = "off")`, set
 only by `xtask` from a profile file or `--set mitigations=off` (which
 `--mitigations off` is by its older name), and an `off` build is ad hoc:
 `profile=none`, no claim. It is not a Cargo feature, deliberately: the
@@ -78,9 +78,9 @@ mispredicted path reads slot zero.
 
 | Site | Index | Clamp |
 |---|---|---|
-| `arch/*/mod.rs` `decode_syscall` | Linux system call number, into a `match` the compiler makes a jump table of | `arch::nospec_index`, to the table's end (`ferrix_linux_abi::nr::X86_64_END` and kin; a host test holds each end to its table) |
+| `arch/*/mod.rs` `decode_syscall` | Linux system call number, into a `match` the compiler makes a jump table of | `arch::nospec_index`, to the table's end (`xaqu_linux_abi::nr::X86_64_END` and kin; a host test holds each end to its table) |
 | `syscall/native.rs` `decode` | native call number | the same, to the native range |
-| `src/lib/kernel/objects/src/table.rs` | handle slot, in `get`, `remove`, `replace` | `ferrix_sync::nospec::bounded` |
+| `src/lib/kernel/objects/src/table.rs` | handle slot, in `get`, `remove`, `replace` | `xaqu_sync::nospec::bounded` |
 | `src/lib/fs/common/vfs/src/fd.rs` | descriptor slot | the same |
 | `syscall/uaccess.rs` `user_address` | a user address, before the software table walk that follows it into the direct map | `arch::nospec_below`, to the top of the user half |
 
@@ -128,7 +128,7 @@ processor, read back on each (`arch/x86_64/speculation.rs`).
 | Speculative store bypass | `SSBD`, through `IA32_SPEC_CTRL` or AMD's `VIRT_SPEC_CTRL` | unless `SSB_NO` | Intel SA-00115, AMD SSBD whitepaper |
 | MDS | `VERW` on every return to ring 3 | Intel, `MD_CLEAR`, no `MDS_NO`; an affected part without `MD_CLEAR` is reported NOT covered | Intel SA-00233 |
 | RFDS (Register File Data Sampling): a program samples stale register-file values the kernel or another program left, on Intel Atom cores | the same `VERW` on every return to ring 3 -- `SYSRET`, `IRET` and the paranoid entries' restore -- which clears the register file too where microcode says `RFDS_CLEAR`; without it, reported NOT covered | Intel, no `RFDS_NO`, and any of: `RFDS_CLEAR`; a model Linux lists (Goldmont, Goldmont D and Plus, Tremont, D and L, Gracemont, and the Alder and Raptor Lakes that carry Gracemont cores, 0x97 and 0xb7 only where hybrid or on an Atom core); a family 6 model neither of Linux's tables names, or another family; a guest, whose model need not be the host's. Since 2026-10-17 (F-84, `L.x86_64.179`) | CVE-2023-28746, Intel SA-00898 |
-| BHI (Branch History Injection): a program's branch history steers the kernel's indirect branches past eIBRS | `BHI_DIS_S` (`IA32_SPEC_CTRL[10]`) where `BHI_CTRL` (`CPUID.(7,2):EDX[4]`) offers it, read back on every processor; else `ferrix_clear_bhb`, Linux's `clear_bhb_loop` (5 calls deep, 5 taken jumps each, an `lfence`), on every entry from ring 3 before any indirect branch: `SYSCALL` through an `LSTAR` that names the entry calling it, so no branch can be mispredicted past it; every trap and interrupt from ring 3 behind a test of the plan whose mispredicted way meets the SWAPGS fence; an NMI or machine check from ring 3 the same, with a fence of its own | every processor but AMD's and Hygon's that has eIBRS or runs under a hypervisor; `BHI_NO` decoded and not trusted alone, as Linux does not trust it (intra-mode BHI). Since 2026-10-17 (F-85, `L.x86_64.180`) | CVE-2024-2201, Intel *Branch History Injection and Intra-mode Branch Target Injection* |
+| BHI (Branch History Injection): a program's branch history steers the kernel's indirect branches past eIBRS | `BHI_DIS_S` (`IA32_SPEC_CTRL[10]`) where `BHI_CTRL` (`CPUID.(7,2):EDX[4]`) offers it, read back on every processor; else `xaqu_clear_bhb`, Linux's `clear_bhb_loop` (5 calls deep, 5 taken jumps each, an `lfence`), on every entry from ring 3 before any indirect branch: `SYSCALL` through an `LSTAR` that names the entry calling it, so no branch can be mispredicted past it; every trap and interrupt from ring 3 behind a test of the plan whose mispredicted way meets the SWAPGS fence; an NMI or machine check from ring 3 the same, with a fence of its own | every processor but AMD's and Hygon's that has eIBRS or runs under a hypervisor; `BHI_NO` decoded and not trusted alone, as Linux does not trust it (intra-mode BHI). Since 2026-10-17 (F-85, `L.x86_64.180`) | CVE-2024-2201, Intel *Branch History Injection and Intra-mode Branch Target Injection* |
 | Meltdown, L1TF | **none** — reported | — | §6 |
 | ITS, MMIO stale data, SRBDS, TAA, Retbleed, SRSO, TSA | **none**, but Intel's Retbleed is covered where eIBRS is planned, and SRSO between programs by `IBPB` with `IBPB_BRTYPE` on a part that says `SRSO_USER_KERNEL_NO`; every other affected part reported NOT covered on the second exposure line | decided as Linux's `cpu_set_bug_bits` and `vulnerable_to_its` do, every stepping of a listed model affected; since 2026-10-17 (`L.x86_64.181`) | Linux 6.18.54 |
 | VMSCAPE | **not applicable**, reported so | the item runs no guests: VMSCAPE is a guest steering its host's user space, and the item is no hypervisor | Linux 6.18.54's `VMSCAPE` |
@@ -188,7 +188,7 @@ it beside `IBPB`). Why that gives the protection the refill gave (§9.3a's A2),
 an argument and not a check, since no boot can see the predictor:
 - AMD's APM vol. 2 (as quoted in the KVM ERAPS series, v6, 2025-11) has the
   predictor cleared at every `MOV CR3`, every `INVPCID` but type 0, and every
-  implicit TLB invalidation. Without PCIDs Ferrix's `install_user_root` is
+  implicit TLB invalidation. Without PCIDs Xaqu's `install_user_root` is
   a plain `MOV CR3`, and the skip is taken only with `CR4.PCIDE` clear,
   which is stricter than the APM asks. Where PCIDs are on
   (`docs/PCID.md`), `CR4.PCIDE` is set before the plan is made, so ERAPS is
@@ -391,8 +391,8 @@ with the ID registers overridden (a scratch edit, not committed) as a Pixel 7
   cpu      speculation exposure: 3 x Cortex-X1: Spectre v2 not affected (CSV2); Spectre-BHB covered (32 branches); store bypass covered; Meltdown not affected
 ```
 
-On the phone itself, f70b2516 was confirmed by session ferrix-0a's hardware
-run on a Pixel 7 started on all eight cores (`~/.local/share/ferrix/pixel7/run11-v2/run.log`,
+On the phone itself, f70b2516 was confirmed by session xaqu-0a's hardware
+run on a Pixel 7 started on all eight cores (`~/.local/share/xaqu/pixel7/run11-v2/run.log`,
 built from f70b2516 exactly, `commit.txt` there and an empty `tree.diff`): four
 Cortex-A55s, two A78s and two X1s, each kind reported for itself, the big cores
 with the loop, and the boot check reading every processor's defences back:
@@ -414,7 +414,7 @@ content unchanged.)
 That is honest for real Cortex-A72 silicon without TF-A's workarounds, and it
 is what AoU-11 turns into an obligation: real hardware must run firmware that
 implements them. Under TCG nothing speculates, so the test platform is not a
-counter-example. `FERRIX_ARM_CPU=max` boots the `SSBS` path (`DSSBS` written and
+counter-example. `XAQU_ARM_CPU=max` boots the `SSBS` path (`DSSBS` written and
 read back on four cores) and reports Spectre v2 not affected by `CSV2`.
 
 A second simulation gave one secondary a Cortex-A72's registers and firmware's
@@ -466,7 +466,7 @@ regions, each from its own random word, so that learning one gives away one:
 | the top of the vmap arena, where its top-down search starts | 64 KiB | the arena's top 8 GiB; ARMv7-A's top 32 MiB | **17** | **9** |
 
 The bits are the base-two logarithm of the number of places, rounded down
-(`ferrix_bootinfo::Slots::bits`), as the boot log prints them; a machine with
+(`xaqu_bootinfo::Slots::bits`), as the boot log prints them; a machine with
 more RAM has a larger direct map and a few fewer places for it. For
 comparison, Linux on x86-64 moves its image in 2 MiB steps within 1 GiB: 9
 bits.
@@ -515,7 +515,7 @@ links:
   (`CALL`, `JUMP24`, ...) are right wherever the image goes. A relocation
   against an absolute, undefined or null symbol is a number and stays.
 
-`ferrix_elf::Elf::fixups` reads both forms into one stream and refuses
+`xaqu_elf::Elf::fixups` reads both forms into one stream and refuses
 anything it does not know, rather than skipping it: a missed fixup is a
 pointer that was never moved. The linker script loads `.rela.dyn` in the
 read-only segment, where lld puts every allocated section, and declares no
@@ -554,8 +554,8 @@ from the firmware's own generator, TF-A's `SMCCC_TRNG_RND64`, asked through an
 go to the kernel's seed; the source prints as `SMCCC TRNG`. If the call is
 absent or fails there is no fallback to a counter: the loader says the kernel is not
 randomised. On the phone, two boots of one image took two layouts, each
-reaching `FERRIX-BOOT-OK` on all eight cores
-(`~/.local/share/ferrix/pixel7/run17-kaslr/run.log` and
+reaching `XAQU-BOOT-OK` on all eight cores
+(`~/.local/share/xaqu/pixel7/run17-kaslr/run.log` and
 `run17-kaslr-2/run.log`):
 
 ```
@@ -674,7 +674,7 @@ entirely. Building it would need, in order:
 1. a second root per address space on x86-64 holding the user half, the entry
    and exit trampolines, the IDT, GDT, TSS and per-CPU entry stacks, and nothing
    else of the kernel's (`mm::share_kernel_slots` shares all 256 today);
-2. a `CR3` switch as the first act of `ferrix_syscall_stub`, the trap stubs and
+2. a `CR3` switch as the first act of `xaqu_syscall_stub`, the trap stubs and
    the paranoid entry, and back before `sysretq`/`iretq`, with PCID so the switch
    does not flush the TLB twice per call;
 3. on AArch64, `TTBR1_EL1` swapped to a trampoline table on exit to EL0 and a
@@ -707,7 +707,7 @@ Gracemont is to print, from its own `CPUID` and `IA32_ARCH_CAPABILITIES`:
 ```
 
 That boot is owed (`docs/BACKLOG.md`, F-84 and F-85's row). An Intel model
-under TCG (`FERRIX_X86_CPU=Snowridge-v4,...`, a Tremont without
+under TCG (`XAQU_X86_CPU=Snowridge-v4,...`, a Tremont without
 `IA32_ARCH_CAPABILITIES`, since TCG emulates none) prints "BHB loop on
 entry", "RFDS NOT covered: microcode without RFDS_CLEAR (AoU-11)" and, being a
 guest, "ITS NOT covered", and passes every stage with the loop on every entry. Every secondary applies
@@ -767,7 +767,7 @@ average 6 to 9), with two commands added for the measurement and not committed:
 
 The boot's own cost lines, three boots each, did not move beyond their noise:
 stage 7's `handlers` 103 → 104 ms, `procs` 13 → 13, `fork` 177 → 178, `execve`
-37 → 38 (medians), and time to `FERRIX-BOOT-OK` varied more between boots of
+37 → 38 (medians), and time to `XAQU-BOOT-OK` varied more between boots of
 one setting than between settings.
 
 **RFDS's and BHI's cost** (2026-10-17, rfds-bhi). `bench-ipc --release
@@ -796,7 +796,7 @@ static and fixed, a build made for the measurement and not committed. Each
 figure is the median of three alternating `test-boot --accel kvm` boots,
 stage 7's cost lines in ms:
 
-| Profile | Build | `handlers` | `fork` | `signals` | `execve` | to `FERRIX-BOOT-OK` |
+| Profile | Build | `handlers` | `fork` | `signals` | `execve` | to `XAQU-BOOT-OK` |
 |---|---|---:|---:|---:|---:|---:|
 | release (the reference) | `on`, static, fixed | 96 | 165 | 66 | 34 | 4.60 s |
 | release (the reference) | `on`, PIE, moved | 96 | 168 | 66 | 34 | 4.63 s |
@@ -823,7 +823,7 @@ symbol rustc cannot prove local. The table's debug rows predate both. The
 release kernel, linked with fat LTO, is one module either way: 5,093
 such calls against 5,129, its text 6.88 MB against 6.85 (`llvm-size`).
 Counted again for the redo of the split on 2026-10-23 (`cargo build -p
-ferrix-kernel`, the `present` flags, `develop` 49bdf0d73 against branch
+xaqu-kernel`, the `present` flags, `develop` 49bdf0d73 against branch
 `feature/kernel-split-s3`): debug 35,413 against 77,756; release 5,544
 against 5,524, its `.text` 6.54 MB against 6.58.
 
@@ -849,7 +849,7 @@ chore/rust-1.99.1 6a1249cc1 under 1.99.1 against 5,818 on 3ef2e61c7 under
 function-pointer statics. By target, 1.99.1 against 1.97.1: `memcpy` 1,993
 against 2,035, `__udivti3` 1,660 against 1,655, `memmove` 1,092 against
 1,097, `memcmp` 664 against 417, `memset` 594 against 589, `__divti3` 16
-both, `ferrix_copy_mc` 6 and `ferrix_enter_user` 1 both. The rise is
+both, `xaqu_copy_mc` 6 and `xaqu_enter_user` 1 both. The rise is
 `memcmp`'s, not traced call by call: the compiler's, the series'
 `as_chunks` rewrites (which compare fixed-size arrays) or both; the tip
 also carries develop's 5399b6e8e and d34d7a278 (S0 and S1 of the crate
@@ -864,7 +864,7 @@ longer move these cost lines at all.
 FX-1004 *"quiescing the instant a driver died was refused: its channel was
 still open"* in the first `test-shell` runs of this work, which is more than
 that race's background rate, so an alternating control was run on x86-64 TCG
-(2026-09-26, logs in `~/ferrix-logs/f31/fx1004-ctl/`):
+(2026-09-26, logs in `~/xaqu-logs/f31/fx1004-ctl/`):
 
 | | `test-boot` | `test-shell` (four boots a run) |
 |---|---:|---:|
@@ -957,7 +957,7 @@ instructions per clamp.
   branch-history loop where BHI's plan has it. The branch that decides it
   came from ring 3, the saved `CS`'s ring test, is unfenced, as is the
   `GS_BASE` sign test after it (F-71, as widened 2026-10-17, ledger line
-  2305): mispredicted to ring 0, the ring test runs `ferrix_paranoid_entry`
+  2305): mispredicted to ring 0, the ring test runs `xaqu_paranoid_entry`
   without the loop until the frame load resolves. F-71 closes only when
   both are fenced.
 * **RFDS without `RFDS_CLEAR`, and MDS without `MD_CLEAR`.** `VERW` clears

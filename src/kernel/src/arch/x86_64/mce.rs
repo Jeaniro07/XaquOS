@@ -9,7 +9,7 @@
 //!   a register the processor refuses turns the log off on that processor
 //!   and is said, rather than stopping it (`L.x86_64.232`).
 //! * **The poll** ([`start`], `L.x86_64.223`): one task pinned to each
-//!   processor reads its banks every `ferrix.mce.poll` seconds, prints each
+//!   processor reads its banks every `xaqu.mce.poll` seconds, prints each
 //!   corrected or no-action record as an `mce:` line for lode, counts it, and
 //!   clears it; and prints and retires what a machine check handed it.
 //! * **The machine check** ([`on_kernel_stack`] from ring 0, on the IST
@@ -19,7 +19,7 @@
 //! * **CMCI** (`cmci`, `docs/MACHINE-CHECK-CMCI.md`, `L.x86_64.249`-`252`):
 //!   on Intel processors that have it, a corrected or no-action record in a
 //!   bank the processor claimed wakes its poll task at once.
-//! * **The counts** ([`render`], `/proc/ferrix-mce`, `L.x86_64.230`).
+//! * **The counts** ([`render`], `/proc/xaqu-mce`, `L.x86_64.230`).
 //!
 //! Nothing here runs on the IST stack but [`on_kernel_stack`] and what it
 //! calls, which take no lock, allocate nothing and print nothing (the
@@ -33,8 +33,8 @@ pub(super) mod decode;
 use core::fmt::Write;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_bootinfo::BootView;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use super::trap::TrapFrame;
 use super::{copy_mc, cpu};
@@ -54,16 +54,16 @@ const MC0_CTL: u32 = 0x400;
 /// 255; no part has more than 32, and a count above is clamped and said.
 pub(super) const MAX_BANKS: usize = 32;
 /// The processors the per-processor state covers: the scheduler's limit.
-const PROCESSORS: usize = ferrix_sched::MAX_CPUS;
+const PROCESSORS: usize = xaqu_sched::MAX_CPUS;
 /// Pending records per processor, handed from a machine check or the
 /// bring-up to the poll (`L.x86_64.226`).
 pub(super) const SLOTS: usize = 8;
 
 /// The boot word that turns recovery off: every machine check stops, as
 /// before this module (`L.x86_64.231`).
-const RECOVER_OPTION: &str = "ferrix.mce.recover";
+const RECOVER_OPTION: &str = "xaqu.mce.recover";
 /// The poll period's option, read by `msrlog`'s chooser.
-const POLL_OPTION: &str = "ferrix.mce.poll";
+const POLL_OPTION: &str = "xaqu.mce.poll";
 
 /// Bank `bank`'s register `which` (0 `CTL`, 1 `STATUS`, 2 `ADDR`, 3 `MISC`).
 const fn bank_msr(bank: usize, which: u32) -> u32 {
@@ -129,7 +129,7 @@ static REFUSED: [AtomicBool; PROCESSORS] = [const { AtomicBool::new(false) }; PR
 /// Whether a recoverable machine check may return (`L.x86_64.231`).
 static RECOVER: AtomicBool = AtomicBool::new(true);
 
-/// Per-processor counts, for `/proc/ferrix-mce`.
+/// Per-processor counts, for `/proc/xaqu-mce`.
 struct Counts {
     /// Machine checks taken.
     checks: AtomicU64,
@@ -670,7 +670,7 @@ pub(super) fn start(view: &BootView<'_>) {
     }
 }
 
-/// `ferrix.mce.recover` and `ferrix.mce.poll`, each said where it is not
+/// `xaqu.mce.recover` and `xaqu.mce.poll`, each said where it is not
 /// the default; the poll's period in seconds.
 fn read_options(view: &BootView<'_>) -> u64 {
     if view.option(RECOVER_OPTION) == Some("off") {
@@ -884,7 +884,7 @@ fn retirable(proc: Proc, bank: usize, status: u64, address: u64, misc: u64) -> O
             .then(|| decode::cut_address(address, status, smca, config))
             .flatten(),
         (_, Vendor::Intel | Vendor::NoRecovery) => decode::usable_address(status, misc, proc.ser)
-            .then_some(address & !(ferrix_bootinfo::PAGE_SIZE - 1)),
+            .then_some(address & !(xaqu_bootinfo::PAGE_SIZE - 1)),
     }
 }
 
@@ -991,7 +991,7 @@ const ERROR: u8 = 3;
 /// records and a system call's poisoned copy, with interrupts open and no
 /// lock held.
 pub(super) fn retire(address: u64) {
-    let _ = crate::user::cache::drop_poisoned(address / ferrix_bootinfo::PAGE_SIZE);
+    let _ = crate::user::cache::drop_poisoned(address / xaqu_bootinfo::PAGE_SIZE);
 }
 
 // ---------------------------------------------------------------------------
@@ -1028,7 +1028,7 @@ fn signal_page(proc: Proc, bank: usize, status: u64) -> Option<u64> {
     let address = address_of(bank, status);
     match proc.vendor {
         Vendor::Amd { smca, .. } => decode::cut_address(address, status, smca, proc.config(bank)),
-        Vendor::Intel | Vendor::NoRecovery => Some(address & !(ferrix_bootinfo::PAGE_SIZE - 1)),
+        Vendor::Intel | Vendor::NoRecovery => Some(address & !(xaqu_bootinfo::PAGE_SIZE - 1)),
     }
 }
 
@@ -1227,7 +1227,7 @@ fn record_stopping_pages() {
         // names no frame (ledger 5487 (1)).
         let (address, misc) = (address_of(bank, status), misc_of(bank, status));
         if let Some(page) = retirable(proc, bank, status, address, misc) {
-            let _ = crate::console::pstore::record_bad_frame(page / ferrix_bootinfo::PAGE_SIZE);
+            let _ = crate::console::pstore::record_bad_frame(page / xaqu_bootinfo::PAGE_SIZE);
         }
     }
 }
@@ -1245,14 +1245,14 @@ const BUS_MCEERR_AR: i32 = 4;
 /// at the address the running program maps it at (0 when the walk finds
 /// none), and whether it must end the program rather than run a handler.
 pub(super) fn signal_for(frame: &mut TrapFrame) -> Option<(u32, i32, u64, bool)> {
-    let page = frame.error_code & !(ferrix_bootinfo::PAGE_SIZE - 1);
+    let page = frame.error_code & !(xaqu_bootinfo::PAGE_SIZE - 1);
     let kill = frame.error_code & MARKED_KILL != 0;
     // The mark held a physical address, and the signal frame copies the
     // trap's error code into the program's context (`uc_mcontext.err`):
     // cleared before the signal is raised, as the processor's own 0 for a
     // machine check (the consultant's V1, `L.x86_64.228`).
     frame.error_code = 0;
-    let poisoned = page / ferrix_bootinfo::PAGE_SIZE;
+    let poisoned = page / xaqu_bootinfo::PAGE_SIZE;
     let space = crate::sched::current().and_then(|task| task.address_space().cloned());
     let before = space.as_ref().and_then(|space| space.find_frame(poisoned));
     let dropped = crate::user::cache::drop_poisoned(poisoned);
@@ -1261,7 +1261,7 @@ pub(super) fn signal_for(frame: &mut TrapFrame) -> Option<(u32, i32, u64, bool)>
         return None;
     }
     Some((
-        ferrix_linux_abi::types::SIGBUS,
+        xaqu_linux_abi::types::SIGBUS,
         BUS_MCEERR_AR,
         before.unwrap_or(0),
         kill,
@@ -1332,9 +1332,9 @@ pub(super) fn report() {
     }
 }
 
-/// `/proc/ferrix-mce`'s text (`L.x86_64.230`): the bank count, then one line
+/// `/proc/xaqu-mce`'s text (`L.x86_64.230`): the bank count, then one line
 /// of counts per processor. No address: the retired frames are in
-/// `/proc/ferrix-mce-retired`, readable by root alone.
+/// `/proc/xaqu-mce-retired`, readable by root alone.
 pub(crate) fn render(out: &mut impl Write) -> core::fmt::Result {
     let Some(topology) = crate::smp::topology() else {
         return Ok(());

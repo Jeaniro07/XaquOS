@@ -1,4 +1,4 @@
-# A static program for Ferrix's initramfs, linkable from any host: the musl
+# A static program for Xaqu's initramfs, linkable from any host: the musl
 # targets carry their own C runtime and `libc.a`, so rust-lld is the whole
 # toolchain and Windows needs no Linux C compiler.
 # `relocation-model=static` links a fixed-address executable rather than a

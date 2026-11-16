@@ -16,9 +16,9 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::ethernet::{self, ethertype};
-use ferrix_netwire::{arp, icmpv4, icmpv6, ipv4, ipv6, ndp, tcp, udp};
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::ethernet::{self, ethertype};
+use xaqu_netwire::{arp, icmpv4, icmpv6, ipv4, ipv6, ndp, tcp, udp};
 
 use crate::addr::{Endpoint, IpAddress, Ipv4, Ipv6};
 use crate::iface::Medium;

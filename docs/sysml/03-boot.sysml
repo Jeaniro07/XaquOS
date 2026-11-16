@@ -1,13 +1,13 @@
 /*
- * Ferrix — SysML v2 model, part 3: boot.
+ * Xaqu — SysML v2 model, part 3: boot.
  *
  * The hand-off ABI, the two address layouts, the loader's sequence, the
  * kernel's bring-up with every stage's self-check to stage 12, and the trap
  * path. All of this runs today on all three architectures.
  */
-package FerrixBoot {
+package XaquBoot {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
+    private import XaquLifecycle::*;
 
     // -----------------------------------------------------------------------
     // The hand-off structure (src/lib/proto/bootinfo)
@@ -69,7 +69,7 @@ package FerrixBoot {
              * so the layout is one layout. The kernel validates it once
              * through BootInfo::validate into a BootView whose accessors are
              * safe. */
-        attribute magic : String = "FERRIXBI";
+        attribute magic : String = "XAQUBI";
         attribute version : Natural = 4;
         attribute arch : Arch;
         attribute regions : MemRegion[1..*] ordered {
@@ -109,13 +109,13 @@ package FerrixBoot {
                  * read /chosen/bootargs from the device tree, which is where
                  * the Arm boards carry it. Options today: console=pl011|stm32,
                  * nosmp (describe_cpus returns the boot CPU only), noactlr,
-                 * ferrix.onexit=reset (a board resets rather than powering
-                 * off), ferrix.root=tmpfs (/ stays in memory),
-                 * ferrix.checks=skip|run (stages 2 to 12 brought up without
-                 * their self-checks, for a desktop), and ferrix.btrfs with
-                 * ferrix.btrfs.seed for the power-fail test. The loader reads
-                 * the card owner's /FERRIX/CMDLINE.TXT and then the image's
-                 * /FERRIX/DEFAULTS.TXT, joined, so the owner's value of a key
+                 * xaqu.onexit=reset (a board resets rather than powering
+                 * off), xaqu.root=tmpfs (/ stays in memory),
+                 * xaqu.checks=skip|run (stages 2 to 12 brought up without
+                 * their self-checks, for a desktop), and xaqu.btrfs with
+                 * xaqu.btrfs.seed for the power-fail test. The loader reads
+                 * the card owner's /XAQU/CMDLINE.TXT and then the image's
+                 * /XAQU/DEFAULTS.TXT, joined, so the owner's value of a key
                  * comes first and wins. */
         }
     }
@@ -192,10 +192,10 @@ package FerrixBoot {
         }
         then action prepareCpu;
         then action stageKernel {
-            doc /* Read /FERRIX/KERNEL.ELF from the volume the loader came from,
+            doc /* Read /XAQU/KERNEL.ELF from the volume the loader came from,
                  * parse it with src/lib/platform/elf, copy the segments to their link
                  * address. Malformed segments are refused here rather than
-                 * discovered by the MMU. /FERRIX/INITRD.IMG, when the volume
+                 * discovered by the MMU. /XAQU/INITRD.IMG, when the volume
                  * has one, is read into memory of its own kind, Initrd, which
                  * nothing reclaims; absent is not an error. */
         }
@@ -254,10 +254,10 @@ package FerrixBoot {
         doc /* kmain. Every stage's exit criterion runs here on every boot, and
              * each failure panics with its own message so the boot test
              * fails with a reason rather than a timeout. The marker at the end
-             * reads FERRIX-BOOT-OK stages 1-12. ferrix.checks=skip (a
+             * reads XAQU-BOOT-OK stages 1-12. xaqu.checks=skip (a
              * desktop's image, src/kernel/src/checks.rs) keeps every bring-up
              * step and leaves out the checks, and the marker then reads
-             * FERRIX-BOOT-UNCHECKED, which no boot test accepts. Stages 1 to
+             * XAQU-BOOT-UNCHECKED, which no boot test accepts. Stages 1 to
              * 5 are broken down into their checks below; from stage 6 on each step names the
              * check function in src/kernel/src/main.rs, in the order kmain calls
              * them, which is not the stages' order. */
@@ -626,7 +626,7 @@ package FerrixBoot {
         }
         action report {
             doc /* Anything else is a kernel bug at this stage: print the
-                 * frame and halt with FERRIX-PANIC. */
+                 * frame and halt with XAQU-PANIC. */
         }
         first start;
         then decide;
@@ -643,7 +643,7 @@ package FerrixBoot {
              * to show the fault path recovers; stage 6 inherits it rather than
              * writing it, replacing the fixed window with the VMA lookup. The
              * kernel's own window is still here; a user-mode fault goes to
-             * its address space (DemandFault in FerrixMemory), and one that
+             * its address space (DemandFault in XaquMemory), and one that
              * cannot be resolved becomes SIGSEGV or SIGBUS for the program
              * that took it. Anything else reaches reportFault. */
         in fault : PageFault;

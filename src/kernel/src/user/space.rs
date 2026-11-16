@@ -105,13 +105,13 @@ use core::ops::Deref;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
-use ferrix_frame::Frame;
-use ferrix_native_abi::restricted::SHARED_BASE;
-use ferrix_paging::MapFlags;
-use ferrix_sched::CpuSet;
-use ferrix_sync::{Once, SleepLock, SleepLockGuard};
-use ferrix_vma::{Backing, PageRange, Unmapping, Vma, VmaFlags};
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
+use xaqu_frame::Frame;
+use xaqu_native_abi::restricted::SHARED_BASE;
+use xaqu_paging::MapFlags;
+use xaqu_sched::CpuSet;
+use xaqu_sync::{Once, SleepLock, SleepLockGuard};
+use xaqu_vma::{Backing, PageRange, Unmapping, Vma, VmaFlags};
 
 use crate::arch;
 use crate::fallible;
@@ -222,7 +222,7 @@ impl Access {
 #[derive(Debug)]
 struct Inner {
     /// What is mapped where.
-    map: ferrix_vma::AddressSpace,
+    map: xaqu_vma::AddressSpace,
     /// The objects those regions name, by the id the region carries. Every id
     /// in here is attached to its object, and detached as it leaves.
     objects: BTreeMap<u64, Arc<Vmo>>,
@@ -268,7 +268,7 @@ const REACH_STARTED: u8 = 8;
 pub mod certified {
     use alloc::boxed::Box;
 
-    use ferrix_sync::Once;
+    use xaqu_sync::Once;
 
     static LIST: Once<Box<[[u8; 32]]>> = Once::new();
 
@@ -448,7 +448,7 @@ pub struct AddressSpace {
     cpus: CpuMask,
     /// Whether a processor holds this space's window (ledger 6998): written by its opener
     /// and closer alone, under no lock.
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     window_held: AtomicBool,
     /// Its shootdowns: those not yet returned, and those ever begun.
     flushes: Flushes,
@@ -473,9 +473,9 @@ pub struct AddressSpace {
     normal: Once<NormalRoot>,
     /// A window: no regions, pages placed by `SPACE_PLACE` (ledger 6411). The objects
     /// they come from, held until its tables are gone (W3).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     window: AtomicBool,
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     placed: SpinLock<Vec<Arc<Vmo>>>,
     /// Whether its top tables stay as they emptied, so that [`NormalRoot`]'s
     /// copies of its root entries can never name a freed table: set before
@@ -507,29 +507,29 @@ struct NormalRoot {
 const FIRST_SHARED_SLOT: usize = (SHARED_BASE >> ROOT_SLOT_SHIFT) as usize;
 /// The top of a program's space: the user half, or under `linuxd`, where the
 /// region sits above it, `SHARED_BASE` (`docs/microkernel/K11.md` §2.1).
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub const PROGRAM_TOP: u64 = USER_VIRT_END;
 /// The same.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub const PROGRAM_TOP: u64 = SHARED_BASE;
 
 /// One past a region's last root slot: [`USER_VIRT_END`]'s, less the window's where the
 /// build has one (`restricted_window`, K11 §2.1).
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 const END_SHARED_SLOT: usize = (USER_VIRT_END >> ROOT_SLOT_SHIFT) as usize;
 /// The same.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 const END_SHARED_SLOT: usize = 255;
 /// A read of `$space`'s master root at `$at`: as it always was with no window in the build, the
 /// same tokens, so that such a kernel is unchanged; with one, by [`AddressSpace::translate_master`].
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 macro_rules! master_translate {
     ($space:expr, $root:expr, $at:expr) => {
         mm::translate_in($root, $at)
     };
 }
 /// See the macro of this name with no window in the build.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 macro_rules! master_translate {
     ($space:expr, $root:expr, $at:expr) => {{
         let _ = $root;
@@ -537,14 +537,14 @@ macro_rules! master_translate {
     }};
 }
 /// [`master_translate`]'s for a leaf's flags.
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 macro_rules! master_flags {
     ($space:expr, $root:expr, $at:expr) => {
         mm::flags_in($root, $at)
     };
 }
 /// See the macro of this name with no window in the build.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 macro_rules! master_flags {
     ($space:expr, $root:expr, $at:expr) => {{
         let _ = $root;
@@ -553,10 +553,10 @@ macro_rules! master_flags {
 }
 
 /// One past a region's last byte: as far as any user address goes without a window.
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 const REGION_END: u64 = USER_VIRT_END;
 /// One past a region's last byte: below the window's slot.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 const REGION_END: u64 = (END_SHARED_SLOT as u64) << ROOT_SLOT_SHIFT;
 /// The root slots of a region. Empty on ARMv7-A, which has none, whose user half ends
 /// below [`SHARED_BASE`].
@@ -587,7 +587,7 @@ impl AddressSpace {
         // before it ran would have nowhere to go.
         arch::prepare_user_root(root * PAGE_SIZE);
 
-        let map = ferrix_vma::AddressSpace::new(MMAP_MIN_ADDR, PROGRAM_TOP).map_err(|_| {
+        let map = xaqu_vma::AddressSpace::new(MMAP_MIN_ADDR, PROGRAM_TOP).map_err(|_| {
             // The window is a compile-time constant of the layout, so this is
             // unreachable in practice; reported rather than panicked because a
             // kernel has no supervisor to restart it.
@@ -751,12 +751,12 @@ impl AddressSpace {
         // NOALLOC: a `CpuMask` is a fixed bitmap; joining sets a bit.
         self.cpus.join(cpu);
         // No root write here while another processor has the window open (ledger 6998).
-        #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+        #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
         self.wait_for_the_window();
         // This processor's bit is up, so no opener can pass from here on: an empty slot now, and
         // until it leaves. The flag alone would not say so, as a decliner raises it for an instant.
         // A stale read through a missing wait is too rare to catch by racing.
-        #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+        #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
         if self.normal.get().is_some() && self.window_entry().load(Ordering::SeqCst) != 0 {
             crate::panic::fatal!(
                 crate::panic::catalog::WINDOW_HELD,
@@ -843,7 +843,7 @@ impl AddressSpace {
             id: next_id(),
             me: me.clone(),
             cpus: CpuMask::new(),
-            #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+            #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
             window_held: AtomicBool::new(false),
             flushes: Flushes::new(),
             layout: SleepLock::new((), &crate::sync::SchedParker),
@@ -853,9 +853,9 @@ impl AddressSpace {
             reach: AtomicU8::new(0),
             domain: AtomicU64::new(UNCLAIMED),
             normal: Once::new(),
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             window: AtomicBool::new(false),
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             placed: SpinLock::new(Vec::new()),
             keep_top: AtomicBool::new(false),
             region: AtomicBool::new(false),
@@ -876,7 +876,7 @@ impl AddressSpace {
         space.keep_top.store(true, Ordering::Release);
         {
             let mut inner = space.inner.lock();
-            inner.map = ferrix_vma::AddressSpace::new(SHARED_BASE, REGION_END)
+            inner.map = xaqu_vma::AddressSpace::new(SHARED_BASE, REGION_END)
                 .map_err(|_| SpaceError::BadRange)?;
         }
         for slot in shared_root_slots() {
@@ -892,13 +892,13 @@ impl AddressSpace {
     }
 
     /// Whether its pages are placed, with no regions (ledger 6411).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn is_window(&self) -> bool {
         self.window.load(Ordering::Acquire)
     }
 
     /// Make this a window: a restricted space, not measured, with nothing in it (W6).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn open_window(&self) -> Result<(), SpaceError> {
         let inner = self.inner.lock();
         if !self.is_bound() || self.is_measured() || inner.map.iter().next().is_some() {
@@ -910,7 +910,7 @@ impl AddressSpace {
 
     /// A copy's touch of a placed page: as the page table says, under the lock a place
     /// takes, so the frame cannot be changed under it.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     fn with_placed<R>(
         &self,
         address: u64,
@@ -936,7 +936,7 @@ impl AddressSpace {
     /// the refusal. Each is a virtual page and a page of `vmo`, checked as a mapping by
     /// handle is, and what replaced or lost a right is shot down before this returns
     /// (W4, W5). A window has no region and no rmap: the object is held instead (W3).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn place(
         &self,
         vmo: &Arc<Vmo>,
@@ -1016,7 +1016,7 @@ impl AddressSpace {
     /// processor (W4): only what came down is named, and a shootdown still out from another
     /// call, which may be of a leaf this one found gone, asks for everything; a range with
     /// nothing in it and none out begins none, and `begun` stays (ledger 6421).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     fn window_take_down(&self, range: PageRange) -> (TlbPages, Option<CpuSet>) {
         let inner = self.inner.lock();
         let mut pages = mm::unmap_placed(self.root * PAGE_SIZE, range.start(), range.bytes());
@@ -1134,7 +1134,7 @@ impl AddressSpace {
     }
 
     #[cfg_attr(
-        not(ferrix_restricted_fastpath = "on"),
+        not(xaqu_restricted_fastpath = "on"),
         allow(dead_code, reason = "K1's fast crossings alone ask it")
     )]
     /// Put this space's root for `restricted` on the running processor: a
@@ -1152,10 +1152,10 @@ impl AddressSpace {
         // Only a space with a normal root is flipped. Under K1's fast path, whose conditions
         // are what keep that true, an image stops on another (ledger 6747 (3c)), at the cost of
         // one branch: a fatal no case reaches, by what a fast crossing's conditions imply.
-        #[cfg(not(ferrix_fast_restricted))]
+        #[cfg(not(xaqu_fast_restricted))]
         // SAFETY: only a space with a normal root is flipped.
         let normal = unsafe { self.normal.get().unwrap_unchecked() };
-        #[cfg(ferrix_fast_restricted)]
+        #[cfg(xaqu_fast_restricted)]
         let Some(normal) = self.normal.get() else {
             crate::panic::fatal!(
                 crate::panic::catalog::FLIP_WITH_NO_NORMAL_ROOT,
@@ -1188,7 +1188,7 @@ impl AddressSpace {
     /// Take the window, if this processor is the only one in the space: the flag first,
     /// then the set, as [`AddressSpace::wait_for_the_window`] joins and then reads. `false`
     /// leaves the flag down and nothing written.
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     #[inline(always)]
     pub(crate) fn window_take(&self, cpu: usize) -> bool {
         self.window_held.store(true, Ordering::SeqCst);
@@ -1200,7 +1200,7 @@ impl AddressSpace {
     }
 
     /// Give the window back, after its slot is clear and its pages invalidated.
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     #[inline(always)]
     pub(crate) fn window_give(&self) {
         self.window_held.store(false, Ordering::Release);
@@ -1208,7 +1208,7 @@ impl AddressSpace {
 
     /// Wait out a window another processor holds on this space: one masked run of a
     /// stub, which waits on nobody. Past the deadline the holder is dead, and that is named.
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     fn wait_for_the_window(&self) {
         /// About two seconds at the guest's clock: a descheduled vCPU, and no more.
         const PATIENCE: u64 = 10_000_000_000;
@@ -1230,7 +1230,7 @@ impl AddressSpace {
     }
 
     /// Its restricted root's top table's entry for the window.
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     pub(crate) fn window_entry(&self) -> &AtomicU64 {
         let entry = mm::root_slot_pointer(self.root * PAGE_SIZE, mm::WINDOW_ROOT_SLOT);
         // SAFETY: (FRAME) a word of this space's own root, which lives as long as it, aligned,
@@ -1241,7 +1241,7 @@ impl AddressSpace {
 
     /// Whether a software read of the window's two pages is refused, as the check asks it many
     /// times from a processor outside the set while another runs stubs (ledger 6998, X1).
-    #[cfg(all(ferrix_restricted_window = "on", not(ferrix_load_built = "lift")))]
+    #[cfg(all(xaqu_restricted_window = "on", not(xaqu_load_built = "lift")))]
     #[doc(hidden)]
     pub fn window_readers_refuse(&self, stub: u64, data: u64) -> bool {
         self.translate_master(stub).is_none()
@@ -1253,7 +1253,7 @@ impl AddressSpace {
     /// A read of this space's own master root by software, on any processor, whose set
     /// bit nothing asks for: a restricted root holds nothing at or above [`SHARED_BASE`] but
     /// a window, while it is open, so that much is refused before the walk (ledger 6998, X1).
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     #[inline(always)]
     fn translate_master(&self, at: u64) -> Option<u64> {
         if self.master_refuses(at) {
@@ -1263,7 +1263,7 @@ impl AddressSpace {
     }
 
     /// See [`AddressSpace::translate_master`].
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     #[inline(always)]
     fn flags_master(&self, at: u64) -> Option<MapFlags> {
         if self.master_refuses(at) {
@@ -1273,7 +1273,7 @@ impl AddressSpace {
     }
 
     /// See [`AddressSpace::translate_master`].
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     #[inline(always)]
     fn master_refuses(&self, at: u64) -> bool {
         at >= SHARED_BASE && self.normal.get().is_some()
@@ -1546,7 +1546,7 @@ fn copy_on_write(
 /// Where a file mapping of `len` bytes goes: at a fixed address, or wherever
 /// the map has room nearest the hint.
 fn file_placement(
-    map: &ferrix_vma::AddressSpace,
+    map: &xaqu_vma::AddressSpace,
     place: FilePlace,
     len: u64,
 ) -> Result<PageRange, SpaceError> {
@@ -1628,9 +1628,9 @@ fn attach_child(child: &Arc<AddressSpace>) -> Result<(), SpaceError> {
 
 /// The error a refused map change is reported as: running out of memory is
 /// said, and the rest is a range the map would not take.
-fn map_error(error: ferrix_vma::VmaError) -> SpaceError {
+fn map_error(error: xaqu_vma::VmaError) -> SpaceError {
     match error {
-        ferrix_vma::VmaError::NoMemory => SpaceError::OutOfMemory,
+        xaqu_vma::VmaError::NoMemory => SpaceError::OutOfMemory,
         _ => SpaceError::BadRange,
     }
 }
@@ -1756,7 +1756,7 @@ impl AddressSpace {
 
     /// Take this space's translations of every copy-on-write region out of
     /// its tables, for `fork`: the pages its shootdown must cover.
-    fn unmap_copied_on_write(&self, map: &ferrix_vma::AddressSpace) -> TlbPages {
+    fn unmap_copied_on_write(&self, map: &xaqu_vma::AddressSpace) -> TlbPages {
         let mut pages = TlbPages::new();
         for region in map.iter().filter(|region| region.cow) {
             self.unmap_range(region.range, &mut pages);
@@ -1804,7 +1804,7 @@ impl AddressSpace {
     /// nothing in the child to forget.
     ///
     /// Device regions are shared, not copied: they own no frames, and
-    /// `ferrix_vma`'s `needs_cow` never marks them copy-on-write, so a child
+    /// `xaqu_vma`'s `needs_cow` never marks them copy-on-write, so a child
     /// that touches one faults in the same registers its parent reaches.
     ///
     /// # Errors
@@ -2287,7 +2287,7 @@ impl AddressSpace {
         };
         match filled {
             Ok(()) => Ok(()),
-            Err(ferrix_vfs::Errno::ENOMEM) => Err(SpaceError::OutOfMemory),
+            Err(xaqu_vfs::Errno::ENOMEM) => Err(SpaceError::OutOfMemory),
             Err(_) => Err(SpaceError::Unreadable(address)),
         }
     }
@@ -2527,7 +2527,7 @@ impl AddressSpace {
         access: Access,
         touch: impl FnOnce(u64) -> R,
     ) -> Result<R, SpaceError> {
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_window() {
             return self
                 .with_placed(address, access, touch)?
@@ -2582,7 +2582,7 @@ impl AddressSpace {
         access: Access,
         touch: impl FnOnce(u64) -> R,
     ) -> Result<Option<R>, SpaceError> {
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_window() {
             return self.with_placed(address, access, touch);
         }
@@ -2659,7 +2659,7 @@ impl AddressSpace {
     /// [`SpaceError::BadRange`] if the range is malformed.
     pub fn unmap(&self, at: u64, len: u64) -> Result<(), SpaceError> {
         let range = PageRange::from_len(at, len).map_err(|_| SpaceError::BadRange)?;
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.is_window() {
             let (mut pages, cpus) = self.window_take_down(range);
             if let Some(cpus) = cpus {
@@ -3181,7 +3181,7 @@ fn typed(flags: MapFlags, vmo: &Vmo) -> MapFlags {
 
 /// linuxd's own: what a fault brings with it (`BUILD-FLAGS.md`, `fault_ahead`). Shape-specific,
 /// and in no kernel's image.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 impl AddressSpace {
     /// Map for reading, in this space's tables alone, the pages of a file mapping in the
     /// aligned group around `address` that the file's object already holds, and answer
@@ -3256,7 +3256,7 @@ impl AddressSpace {
         // How far this region goes, if it is plain and the walk has a page behind it.
         let end = {
             let inner = self.inner.lock();
-            let plain = |region: &ferrix_vma::Vma| {
+            let plain = |region: &xaqu_vma::Vma| {
                 let Backing::Anonymous { id, .. } = region.backing else {
                     return false;
                 };
@@ -3300,20 +3300,20 @@ impl AddressSpace {
 }
 
 /// The window's boot check: a window's unmap's decisions (ledger 6421, U4).
-#[cfg(ferrix_personality = "user")]
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(xaqu_personality = "user")]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod window_check;
 
 /// How many pages a fault may bring in: the aligned group around it (`fault_around`).
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub(crate) const AROUND_PAGES: u64 = 16;
 
 /// How many pages past a walking write fault are committed with it (`write_ahead`).
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub(crate) const AHEAD_PAGES: u64 = 7;
 
 /// The most objects one window's pages may come from.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 const PLACED_OBJECTS: usize = 4096;
 
 /// The translation flags of a user page.
@@ -3745,7 +3745,7 @@ struct Resize {
 /// Where an `mremap` of `old_range` to `new_len` bytes goes, or `None` if it
 /// stays exactly as it is.
 fn remap_target(
-    map: &ferrix_vma::AddressSpace,
+    map: &xaqu_vma::AddressSpace,
     destination: Destination,
     old_range: PageRange,
     new_len: u64,
@@ -3785,7 +3785,7 @@ fn user_range(at: u64, len: u64) -> Option<PageRange> {
 ///
 /// Asked of `find_free` with the extension as its hint, which answers with
 /// the hint exactly when that much fits there, and somewhere else otherwise.
-fn grows_in_place(map: &ferrix_vma::AddressSpace, old: u64, old_len: u64, new_len: u64) -> bool {
+fn grows_in_place(map: &xaqu_vma::AddressSpace, old: u64, old_len: u64, new_len: u64) -> bool {
     let Some(extension) = old.checked_add(old_len) else {
         return false;
     };
@@ -3795,7 +3795,7 @@ fn grows_in_place(map: &ferrix_vma::AddressSpace, old: u64, old_len: u64, new_le
 }
 
 /// Whether any region names object `id` at a byte offset in `start..end`.
-fn named_elsewhere(map: &ferrix_vma::AddressSpace, id: u64, start: u64, end: u64) -> bool {
+fn named_elsewhere(map: &xaqu_vma::AddressSpace, id: u64, start: u64, end: u64) -> bool {
     map.iter().any(|region| match region.backing {
         Backing::Anonymous { id: named, offset } if named == id => {
             offset < end && start < offset.saturating_add(region.range.bytes())
@@ -3860,7 +3860,7 @@ fn permits(flags: VmaFlags, access: Access) -> bool {
 /// place and private in another; when that happens the object is the shared
 /// one and the private mapping of it has to see the shared writes, because
 /// that is what the other mapping was promised.
-fn shared_object(map: &ferrix_vma::AddressSpace, id: u64) -> bool {
+fn shared_object(map: &xaqu_vma::AddressSpace, id: u64) -> bool {
     map.iter().any(|region| {
         region.flags.shared
             && match region.backing {
@@ -5433,7 +5433,7 @@ fn writable_in_place(inner: &Inner, region: &Vma, address: u64, frame: Frame) ->
 }
 
 /// Whether any region still names object `id`.
-fn still_named(map: &ferrix_vma::AddressSpace, id: u64) -> bool {
+fn still_named(map: &xaqu_vma::AddressSpace, id: u64) -> bool {
     map.iter().any(|region| naming(region) == Some(id))
 }
 
@@ -5458,7 +5458,7 @@ fn touched_ids(removed: &[Unmapping]) -> Option<Vec<(u64, bool)>> {
 /// the map with a binary search per region, so n log k for n regions and k ids,
 /// under the space's lock, stopping when each has been found. Not a pass per id,
 /// which is what [`Named`] was made to end.
-fn all_still_named(map: &ferrix_vma::AddressSpace, mut ids: Vec<(u64, bool)>) -> bool {
+fn all_still_named(map: &xaqu_vma::AddressSpace, mut ids: Vec<(u64, bool)>) -> bool {
     ids.sort_unstable();
     ids.dedup();
     let mut left = ids.len();
@@ -5498,12 +5498,12 @@ enum Named<'a> {
     Sorted(Vec<u64>),
     /// No memory to list them in: each id is asked of the map itself, as
     /// slowly as before and with the same answer (finding F-23).
-    Scan(&'a ferrix_vma::AddressSpace),
+    Scan(&'a xaqu_vma::AddressSpace),
 }
 
 impl<'a> Named<'a> {
     /// The ids `map` names as it stands.
-    fn of(map: &'a ferrix_vma::AddressSpace) -> Named<'a> {
+    fn of(map: &'a xaqu_vma::AddressSpace) -> Named<'a> {
         let Ok(mut ids) = fallible::try_with_capacity(map.region_count()) else {
             return Named::Scan(map);
         };
@@ -5575,7 +5575,7 @@ impl Drop for AddressSpace {
 
         // A window's entries are in no region: the tables go, its objects keep their
         // frames, and those objects' references go with this struct, after this.
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if self.window.load(Ordering::Acquire) {
             let _ = mm::unmap_unwalked(self.root * PAGE_SIZE, 0, SHARED_BASE);
         }

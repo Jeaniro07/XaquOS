@@ -1,6 +1,6 @@
-# Ferrix as a certifiable microkernel
+# Xaqu as a certifiable microkernel
 
-**Revision 15, 2026-10-13.** The customer asked for a plan to switch Ferrix
+**Revision 15, 2026-10-13.** The customer asked for a plan to switch Xaqu
 to a microkernel whose ring 0 can be certified whole. This document is that
 plan. **The customer answered most of §11 on 2026-10-13** (recorded under
 *Decisions* in `docs/BACKLOG.md` on this branch; §11 has the words and the
@@ -19,7 +19,7 @@ earlier positions:
 * the 2026-09-16 decision (a monolithic core, capability seams, device
   drivers in ring 3);
 * the 2026-09-27 shelving of `docs/OPAQUE-KERNEL.md`'s option B;
-* `docs/ARCHITECTURE.md` §2, which says the Linux ABI is Ferrix's own and
+* `docs/ARCHITECTURE.md` §2, which says the Linux ABI is Xaqu's own and
   "not a compatibility layer over something else". Under this plan it is
   served by a user-space process on top of the native kernel (§2.2, §11 Q2).
 
@@ -78,7 +78,7 @@ for information.
 Ring 0 also holds the in-kernel boot checks, 84,025 lines of verification
 code today (36,706 of them the item's and the core's). Those that test the
 kernel stay: they are verification code run in ring 0 by the reference
-images (`ferrix.checks`), held to the fallible-allocation, `unsafe`-trace and
+images (`xaqu.checks`), held to the fallible-allocation, `unsafe`-trace and
 panic rules, and argued as executed code, not deactivated code. Those that
 test the load leave with it, after the evidence they carry has been re-homed
 (§6.2, B5).
@@ -196,7 +196,7 @@ two outcomes:
 ### 2.4 Programs that use both ABIs
 
 `ARCHITECTURE.md` §2 lets one process make native calls beside Linux ones.
-init does (`DEVMGR_START` under `ferrix.devmgr=init`, the audit handle,
+init does (`DEVMGR_START` under `xaqu.devmgr=init`, the audit handle,
 `JOB_FOR_CGROUP`), and so does `nvrm` (`CHARDEV_*`). From restricted mode:
 
 * **A native call goes straight to the kernel**, against the calling Linux
@@ -305,7 +305,7 @@ before any code leaves ring 0.
 | K6 | **Kernel-attested sender identity** on a channel message | built (`docs/microkernel/K6.md`): every write stamped with the writer's never-reused process id and its job; read by `channel_read_attested` (0x1014), matched by `object_id` (0x100A); none on 0x1013 until K7 | `OPAQUE-KERNEL.md` §2 point 4: the job and process written by the kernel, never taken from the body |
 | K7 | **Charging that follows the client** | F-35/F-37 charge the caller's job | `OPAQUE-KERNEL.md` §2 point 5 and ledger 35-36: a token tied to one outstanding request, valid until the reply, so a server never names a job to charge |
 | K8 | **Device authority for devmgr**, by handle | the kernel enumerates PCI and claims for devmgr | devmgr gets the right to bind a function to an IOMMU domain, never an IOMMU unit: **IOMMU registers and tables are never mapped to ring 3.** Configuration writes stay kernel-mediated (`DEVICE_CONFIG_WRITE`'s rule); BAR placement, MSI/MSI-X, ATS/PRI/ACS and bus mastering stay kernel-owned, bus mastering only with a domain attached (AoU-12, AoU-21/22/23, `device.rs`'s `verify_config`, `keep_ats_off`). PCI enumeration stays in the kernel, so `ITEM.md`'s "device enumeration is inside" holds; what changes is that devmgr, not the kernel's own matching, decides which driver gets a function |
-| K9 | **Time budgets per job** | `cpu.max` throttling (a cap only); `ferrix-sched` answers `ModeUnavailable` for SoftRt and HardRt | **Stage 14's HardRt** (`ARCHITECTURE.md` §5: partitioned EDF with CBS admission; `CLAIM.md` M3), not a second model. Plus the two halves stage 14 lacks: a server's time on a client's request is charged to the client's budget (K7's temporal twin, as seL4 MCS donates a scheduling context), and interrupt time is charged to the line's holder or bounded per partition (`MEMORY-AND-TIMING.md` §2.2: today the victim pays). Under maximum certification (§6.5) a **static time-partition schedule** is added beside EDF (fixed windows per partition in a major frame, the ARINC 653 shape avionics integrators expect), and AoU-4/F-24's "no WCET claimed" is replaced by §6.5's timing work |
+| K9 | **Time budgets per job** | `cpu.max` throttling (a cap only); `xaqu-sched` answers `ModeUnavailable` for SoftRt and HardRt | **Stage 14's HardRt** (`ARCHITECTURE.md` §5: partitioned EDF with CBS admission; `CLAIM.md` M3), not a second model. Plus the two halves stage 14 lacks: a server's time on a client's request is charged to the client's budget (K7's temporal twin, as seL4 MCS donates a scheduling context), and interrupt time is charged to the line's holder or bounded per partition (`MEMORY-AND-TIMING.md` §2.2: today the victim pays). Under maximum certification (§6.5) a **static time-partition schedule** is added beside EDF (fixed windows per partition in a major frame, the ARINC 653 shape avionics integrators expect), and AoU-4/F-24's "no WCET claimed" is replaced by §6.5's timing work |
 | K10 | **Timer objects** | the Linux personality's timers in the load | a deadline object signalled to a port, with slack. **Built** (`docs/microkernel/K10.md`, OK IF ledger 2538): `timer_create`/`timer_set`/`timer_cancel` (0x1071-0x1073), one-shot on the monotonic or boot counter, filed on the scheduler's sleeper sets beside sleeping tasks and fired by the timer interrupt; stage 9's `timers` line. Left to `linuxd` at M5: periodic timers, `CLOCK_REALTIME`, overruns, and retiring the `timerfds` and `itimers` threads |
 | K11 | **Shared processes**: a process created with another's shared region mapped, and its own restricted space | none | **Two handle tables per process.** The *shared* table is the partition's (`linuxd`'s server channels, the cgroup jobs, the pager ports) and serves calls made in normal mode, from `linuxd`'s code; the *private* table is the Linux program's and serves calls made from restricted mode. The kernel picks the table from the mode the call came from, never from an argument. A handle moves between the two only through an explicit call that checks its rights (the way `PORT_FD`'s port reaches `linuxd`, §2.4). A check with a negative control shows that neither side can name the other's handles. The creating `linuxd` gets no handle into the new process's restricted space beyond K2's rights on it |
 | K12 | **Kernel-memory reservation**: a job's reserved frames and kernel heap, guaranteed, beside its limit | limits only (F-35, F-37); the frame watermark of the endfield-oom review (ledger 797) is the first step. Design `docs/microkernel/K12.md` (OK IF, ledger 2550); K12a, the frames and page tables, on branch `mk/k12`; K12b, the kernel heap, next | a QM partition cannot take the kernel memory a certified partition was promised |
@@ -331,7 +331,7 @@ Each retired call's requirements are withdrawn, never reused.
 | 0x104F | `DEVICE_CLOCK` | stays |
 | 0x1050 | `SOUND_CONTROL_CREATE` | retired, as 0x104C |
 | 0x1051 | `LOG_CONTROL_CREATE` | retired: drivers log to the log server over a channel, and to the kernel's debug log before it exists |
-| 0x1052 | `DEVMGR_START` | retired with `ferrix.devmgr=init`: the kernel starts devmgr (§5), so device authority never passes through init or `linuxd` |
+| 0x1052 | `DEVMGR_START` | retired with `xaqu.devmgr=init`: the kernel starts devmgr (§5), so device authority never passes through init or `linuxd` |
 | 0x1053 | `AUDIT_READ` | stays |
 | 0x1054 | `DEVICE_APERTURE` | stays |
 | 0x1055 | `DEVICE_CONFIG_READ` | stays |
@@ -398,7 +398,7 @@ processes from the initramfs**: the **partition manager** (below), devmgr, with 
 today (K8's handles, never through init or `linuxd`: the L12 rulings, ledger
 33-34; `OPAQUE-KERNEL.md` §3), and `linuxd`, whose first program is init.
 That is the reference configuration's shape today (the kernel starts devmgr;
-`ferrix.devmgr=init` is outside it, `ITEM.md` §5, AoU-8, AoU-13), so the
+`xaqu.devmgr=init` is outside it, `ITEM.md` §5, AoU-8, AoU-13), so the
 reference does not move to a devmgr the kernel does not start. `btrfsd` and
 any certified user-space item are started under K14.
 
@@ -423,9 +423,9 @@ statically, from the description; devmgr serves only the Linux side.
 |---|---|
 | the partition manager | the safety partitions' devices (K8 handles, statically, as the description names them), their images' sealed VMOs, the K9 windows and K12 reservations to hand out, the debug log's write handle |
 | devmgr | the device authority it holds today, less the safety partitions' devices, as K8's handles (the right to bind a function to a domain, apertures, interrupts, I/O mappings, configuration reads and the mediated writes, quiesce, limits, isolation); the debug log's write handle |
-| `linuxd` | **init's three inputs as read-only VMOs**, read by the kernel from `.ferrix/init/program`, `.ferrix/init/script` and `.ferrix/init/commands` (`init.rs`), so L.init.2, choosing pid 1's inputs, stays the kernel's; the initramfs as a read-only VMO for the rest of the root; the Linux partition's job; the audit-read handle pid 1 holds today, which `linuxd` moves into init's private table (K11) and holds no use of itself; a channel to devmgr; the time page's VMO; the debug log's write handle |
+| `linuxd` | **init's three inputs as read-only VMOs**, read by the kernel from `.xaqu/init/program`, `.xaqu/init/script` and `.xaqu/init/commands` (`init.rs`), so L.init.2, choosing pid 1's inputs, stays the kernel's; the initramfs as a read-only VMO for the rest of the root; the Linux partition's job; the audit-read handle pid 1 holds today, which `linuxd` moves into init's private table (K11) and holds no use of itself; a channel to devmgr; the time page's VMO; the debug log's write handle |
 
-AoU-24 is about the initramfs unpacker in `ferrix-vfs`, which leaves ring 0
+AoU-24 is about the initramfs unpacker in `xaqu-vfs`, which leaves ring 0
 with `linuxd`; it becomes an assumption on `linuxd`, outside the TSF, and
 the kernel no longer discharges it.
 
@@ -449,7 +449,7 @@ disk path, and §11 Q9 puts it to the customer.
   a threat agent outside the TSF (ST §3.2). What leaves the TSF with the load
   is stated in ST §1.3 and §3.2: the audit of the switch of `/`; any
   file-level event. The audit records change as follows: FAU_GEN.1 b) loses
-  the `ferrix.devmgr` record with the option (§3, 0x1052); in c), the
+  the `xaqu.devmgr` record with the option (§3, 0x1052); in c), the
   cgroup-kill and cgroup-file-limit records become job records whose subject
   is the Linux process the job holds; the OOM-kill record stays the kernel's.
   **Who may read the audit log (FAU_SAR.2):** the audit-read handle reaches
@@ -610,7 +610,7 @@ x86-64 carries no timing claim. **The claim**, for `CLAIM.md` §1, for the
 new kernel from M7 (the consultant's draft, ledger 886, fitted to SIL 4
 first; until the flip `CLAIM.md`'s present sentence stands):
 
-> Ferrix is a Rust microkernel being developed as a compliant item to IEC
+> Xaqu is a Rust microkernel being developed as a compliant item to IEC
 > 61508-3 with systematic capability SC 4, with a safety manual for compliant
 > items (IEC 61508-3 Annex D), and as a Safety Element out of Context to ISO
 > 26262 ASIL D. Everything that runs in the processor's privileged mode is
@@ -737,7 +737,7 @@ this table before any stream is sized on it.
     and DO-333 assessors. Under CC:2022, ADV_SPM.1 requires a formal model of the **entire TSF** (CC:2022 Part 3, ADV_SPM.1.3C: "The formal model shall cover the complete set of SFRs that define the TSF"; JIL's interim sub-TSF reading is limited to IC and Java Card protection profiles; the only other route is a multi-assurance ST with ADV_SPM.1 on named sub-TSFs), so F1 covers every kernel interface, not only
     `core`.
   * **F2 in Verus.** It is the only Rust verifier with an end-to-end verified
-    microkernel close to Ferrix's shape (Atmosphere, SOSP 2025: capabilities,
+    microkernel close to Xaqu's shape (Atmosphere, SOSP 2025: capabilities,
     IPC, address spaces, IOMMU, with refinement and noninterference proofs,
     about 3.3 lines of proof per line of code), it handles the raw pointers
     and interior mutability the core needs, and the verified source builds
@@ -773,18 +773,18 @@ this table before any stream is sized on it.
   from it; there is no MPAM, so the shared L3 is partitioned only by the DSU-AE's way partitioning (CLUSTERPARTCR_EL1 with the per-core scheme IDs of CLUSTERTHREADSID_EL1: groups of four ways, at most four private partitions), which restricts allocation (victim selection), not lookup; a lockstep mismatch is reported to the SoC, which owns the fault reaction; errors detected in Lock-mode "cannot be contained", and Arm says the fault reaction time cannot be quantified (TRM §2.11.1.6-7), both AoUs for the integrator. Cortex-A720AE and Neoverse V3AE are a later extension.
   **The boards** (the customer, 2026-10-13: "i thought more of a board in
   the range of 200€ max. Ideally something used, not a 15k$ board"). A used
-  Jetson Orin Nano (six Cortex-A78AE, split mode only, an SMMUv2 Ferrix does
+  Jetson Orin Nano (six Cortex-A78AE, split mode only, an SMMUv2 Xaqu does
   not drive) was proposed first.
   The customer then found a used Orin Nano at €450, over budget ("the :
   NVIDIA's Jetson Orin Nano used is 450€!"). So:
   * **The Pixel 7 (already owned, €0)** for the A78 family's measurements:
     two Cortex-A78 cores (Tensor G2, the A78AE's core without split-lock),
-    Ferrix already boots on it. It serves the barrier, CSV2 and BHB
+    Xaqu already boots on it. It serves the barrier, CSV2 and BHB
     measurements and the timing method's development on the A78 core. Its
-    IOMMU is Samsung's own, which Ferrix does not drive, so it carries no
+    IOMMU is Samsung's own, which Xaqu does not drive, so it carries no
     isolation evidence.
   * **No board is bought now.** A board with the CIX P1 (Arm SMMUv3
-    instances described by ACPI's IORT, which Ferrix drives; EDK2 UEFI,
+    instances described by ACPI's IORT, which Xaqu drives; EDK2 UEFI,
     Arm SystemReady SR; Cortex-A720 and A520 cores, the A720 being the
     non-safety twin of the A720AE, this plan's later extension class) is
     the right kind for AArch64 bring-up on real hardware with device
@@ -826,7 +826,7 @@ this table before any stream is sized on it.
 * **The boards carry no evidence** (OB4, ledger 958). On the Pixel 7 and the
   CIX P1 board only ad-hoc or `desktop` builds run, so their boot lines say
   `profile=none level=none` (or `desktop`) and no certified profile's rule is
-  exercised there; where Ferrix does not drive the board's IOMMU (the Pixel
+  exercised there; where Xaqu does not drive the board's IOMMU (the Pixel
   7's), the boot line says so (degraded trusted mode, V-03); and every log
   from a board is filed as a measurement, never as a gate row or a FIRED
   control.
@@ -1085,7 +1085,7 @@ in the ledger, and not a gate.
 
 *M5 and the kernel's crates* (2026-10-15, `docs/KERNEL-CRATES.md`): the
 kernel is built as four crates along the rings, and the load is one of
-them, `ferrix-kernel-load`, built against the core's and the item's `pub`
+them, `xaqu-kernel-load`, built against the core's and the item's `pub`
 items, which `docs/generated/KERNEL-INTERFACE.md` lists. The lift moves what
 that crate holds out of ring 0; the interface it calls is the items the list
 shows named by `load`, and the 26 checks raised into it (`raised_checks`) are the
@@ -1105,7 +1105,7 @@ before the claim:
 Total *guess*: about 470 to 560 points for M0 to M8, plus stage 14's HardRt,
 plus 600 to 1,300 for V1, V2, T1, F1 and F2: **about 1,050 to 1,900 points**,
 most of it the formal work. That is many times option B's 117, and the
-largest piece of work Ferrix has planned. M1 to M4 and the four streams can
+largest piece of work Xaqu has planned. M1 to M4 and the four streams can
 run as parallel streams split by file ownership (CONVENTIONS, *Splitting
 one piece of work across several agents*). M5 is one stream with one owner;
 its shim is one interface. F2 should start only after M6, on the code that
@@ -1118,12 +1118,12 @@ between these, not a yes or no:
 
 | Route | What it gives | Cost (*guess*) | What "Linux software" means |
 |---|---|---|---|
-| **C, this plan**: the kernel is the item whole; Ferrix's own Linux layer in user space | all four isolations of `CLAIM.md` §3.1 by the privilege boundary; restartable services; SIL 2 within reach, SIL 3 on a further ratchet | 375 to 445, plus stage 14 | Ferrix's own Linux layer, as today |
-| **2b**: the item as a separation kernel, real Linux as a guest | all four isolations; SIL 3 with industry precedent | 80 to 150 | a Linux VM; Ferrix's Linux layer becomes unnecessary |
-| **5 + 4 + 3 (btrfs)**, `CLAIM.md` §3.3's SIL 2 proposal: software compartments in ring 0, the IPC fast path, btrfs in ring 3 | resources, memory by language, time if the load is made preemptible; isolation by hardware only for btrfs | 90 to 160, plus stage 14 | Ferrix's own Linux layer, as today |
+| **C, this plan**: the kernel is the item whole; Xaqu's own Linux layer in user space | all four isolations of `CLAIM.md` §3.1 by the privilege boundary; restartable services; SIL 2 within reach, SIL 3 on a further ratchet | 375 to 445, plus stage 14 | Xaqu's own Linux layer, as today |
+| **2b**: the item as a separation kernel, real Linux as a guest | all four isolations; SIL 3 with industry precedent | 80 to 150 | a Linux VM; Xaqu's Linux layer becomes unnecessary |
+| **5 + 4 + 3 (btrfs)**, `CLAIM.md` §3.3's SIL 2 proposal: software compartments in ring 0, the IPC fast path, btrfs in ring 3 | resources, memory by language, time if the load is made preemptible; isolation by hardware only for btrfs | 90 to 160, plus stage 14 | Xaqu's own Linux layer, as today |
 
 **The customer chose C on 2026-10-13** ("Linux =use space => ok").
-C is the only route that both keeps Ferrix's own Linux layer and takes it out
+C is the only route that both keeps Xaqu's own Linux layer and takes it out
 of ring 0. 2b is cheaper and proven, and gives up the Linux layer as a
 product. 5 is cheapest and leaves the load in ring 0, with §3.1's arguments
 still to write.
@@ -1253,7 +1253,7 @@ still to write.
     pilot refinement of one core module, CertiK only if no group can
     contract; a Common Criteria lab after the assessor has answered and F1
     exists. The customer sends the messages; drafts are kept outside the
-    repository (`~/.local/share/ferrix/microkernel/contacts/`).
+    repository (`~/.local/share/xaqu/microkernel/contacts/`).
   * **Q18, the board** (revised by the customer, 2026-10-13: "i thought more
     of a board in the range of 200€ max. Ideally something used, not a 15k$
     board", then, of a used Orin Nano: "450€!"): **the Pixel 7 (owned)** for
@@ -1290,7 +1290,7 @@ code in that profile, which is why compile time is the right place for
 this, as `ITEM.md` §5 already argues for `--mitigations`.
 
 **The IPC fast path becomes a flag** (the customer, 2026-10-13, asked:
-"Build-time flag"). It was a boot option until BF6 (`ferrix.fastpath`, retired;
+"Build-time flag"). It was a boot option until BF6 (`xaqu.fastpath`, retired;
 L.x86_64.159), and the customer's call of 2026-10-02
 (`OPAQUE-KERNEL.md` §9.7, *The customer's calls*) keeps its rule with the
 mechanism changed: `max` builds with `ipc_fastpath=off` until one coverage
@@ -1393,7 +1393,7 @@ The list below is the plan's review history. B5's orphan step is on `develop`
 
 * Revision 1 (060d59ce0): the certification consultant's design review,
   **NOT YET** (B1 to B7, C1 to C16), ledger line 812 of
-  `~/.local/share/ferrix/cert-consultant/reviews.md`, 2026-10-13. It accepted
+  `~/.local/share/xaqu/cert-consultant/reviews.md`, 2026-10-13. It accepted
   the direction.
 * Revision 2 (2ae2d74f1) folded in B1 to B7 and C1 to C16 and added
   `tools/common/gen/microkernel-surface.py`, which reproduces the

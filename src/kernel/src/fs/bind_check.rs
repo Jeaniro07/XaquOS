@@ -31,13 +31,13 @@
 use alloc::format;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::socket::{AF_UNIX, SOCK_STREAM};
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::socket::{AF_UNIX, SOCK_STREAM};
+use xaqu_linux_abi::types::{
     AT_FDCWD, AT_REMOVEDIR, MNT_DETACH, MS_BIND, MS_MOVE, MS_PRIVATE, MS_RDONLY, MS_REC,
     MS_REMOUNT, MS_SHARED, MS_SLAVE, MS_UNBINDABLE, O_CREAT, O_PATH, O_RDONLY, O_WRONLY,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Page, READ_ROOM, Report, Tally, by_number, close, open, page_for};
 use crate::syscall::process;

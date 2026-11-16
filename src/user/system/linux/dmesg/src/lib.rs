@@ -1,4 +1,4 @@
-//! Ferrix's `dmesg`: the kernel log, as util-linux's `dmesg` shows it.
+//! Xaqu's `dmesg`: the kernel log, as util-linux's `dmesg` shows it.
 //!
 //! Installed as `/bin/dmesg` itself, in busybox's place, so that a person and
 //! a script get util-linux's output and flags rather than busybox's subset.
@@ -10,7 +10,7 @@
 //! after them as it comes, or with `-W` only those. Through `syslog(2)`'s
 //! `READ_ALL` otherwise, or with `-S`. Both give a record's priority and its
 //! time since boot in microseconds; the kernel writes them
-//! (`ferrix_linux_abi::kmsg`), and [`record`] reads them back.
+//! (`xaqu_linux_abi::kmsg`), and [`record`] reads them back.
 //!
 //! # What it shows
 //!
@@ -26,7 +26,7 @@
 //! `-l`/`--level` and `-f`/`--facility` keep the records named, by name or
 //! number, `-k` the kernel's and `-u` the rest. `-c` clears after printing,
 //! `-C` only clears, and `-n`, `-D` and `-E` set the console's level; those
-//! need root, as reading does on Ferrix. The parts that are not I/O are here,
+//! need root, as reading does on Xaqu. The parts that are not I/O are here,
 //! tested on the host; `main.rs` and `sys.rs` read and write.
 
 pub mod args;

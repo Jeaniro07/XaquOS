@@ -45,7 +45,7 @@
 //!
 //! * **ASPM and `CLKREQ#` off in the chip** (Config5, Config2, MAC OCP
 //!   0xE092). Linux turns L1 off for this family unless the board vendor
-//!   flagged it safe; a Ferrix driver may not write the link's control
+//!   flagged it safe; a Xaqu driver may not write the link's control
 //!   register, so the chip's own side is turned off instead.
 //! * **EEE off**, in the PHY's advertisement and the MAC, where Linux
 //!   turns it on.
@@ -54,7 +54,7 @@
 //!   without it if it is not. With EEE off it has nothing to patch; whether
 //!   to ship it is the customer's decision (backlog row).
 //! * **The ASPM entry latency and the read request size are firmware's**:
-//!   both are configuration-space writes a Ferrix driver may not make.
+//!   both are configuration-space writes a Xaqu driver may not make.
 //!
 //! # Trust
 //!

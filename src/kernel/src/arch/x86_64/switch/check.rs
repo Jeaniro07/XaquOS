@@ -35,14 +35,14 @@
     reason = "a raised check: it calls methods made pub for it alone"
 )]
 
-use ferrix_kernel_core::arch::x86_64 as core_x86_64;
-use ferrix_kernel_core::arch::x86_64::switch as core_switch;
+use xaqu_kernel_core::arch::x86_64 as core_x86_64;
+use xaqu_kernel_core::arch::x86_64::switch as core_switch;
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::types::SIGUSR1;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::types::SIGUSR1;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Rights;
 
 use crate::console::println;
 use crate::object::Object;
@@ -711,7 +711,7 @@ pub(crate) fn run() -> Result<Report, &'static str> {
 ///
 /// Verifies: `L.x86_64.152`
 fn check_the_three_numbers() -> Result<(), &'static str> {
-    use ferrix_native_abi::nr::{CHANNEL_WRITE_READ, FIRST, LAST, OBJECT_WAIT_ONE, PORT_WAIT};
+    use xaqu_native_abi::nr::{CHANNEL_WRITE_READ, FIRST, LAST, OBJECT_WAIT_ONE, PORT_WAIT};
 
     use core_x86_64::syscall::vectors_die_in;
 
@@ -1219,12 +1219,12 @@ fn load(name: &[u8], code: &[u8]) -> Result<Arc<Process>, &'static str> {
         return Err("a switch-state fixture is longer than the loader's text segment holds");
     }
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_x86_64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         code,
     );
-    crate::syscall::exec::load(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+    crate::syscall::exec::load(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a switch-state program could not be loaded")
 }
 
@@ -1370,7 +1370,7 @@ const WRGSBASE: &[u8] = &[
 ];
 
 /// What a process ended by `SIGILL` is waited for with.
-const KILLED_BY_SIGILL: i32 = 128 + ferrix_linux_abi::types::SIGILL as i32;
+const KILLED_BY_SIGILL: i32 = 128 + xaqu_linux_abi::types::SIGILL as i32;
 
 /// No program writes its `GS` base without the call that can refuse the
 /// address: `CR4.FSGSBASE` read clear at every processor's bring-up; where
@@ -1383,7 +1383,7 @@ const KILLED_BY_SIGILL: i32 = 128 + ferrix_linux_abi::types::SIGILL as i32;
 ///
 /// Verifies: `L.x86_64.172`
 fn check_no_program_writes_a_base() -> Result<(usize, bool, usize), &'static str> {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     let count = crate::smp::count();
     let forbidden = core_x86_64::BASE_WRITES_FORBIDDEN.load(core::sync::atomic::Ordering::Acquire);
@@ -1471,10 +1471,10 @@ fn read_twice(_argument: usize) {
     if let Some(handle) = taken {
         for _ in 0..2 {
             let _ = core_x86_64::syscall::check::drive_native_words(
-                ferrix_native_abi::nr::CHANNEL_WRITE_READ,
+                xaqu_native_abi::nr::CHANNEL_WRITE_READ,
                 [
                     u64::from(handle.0),
-                    ferrix_native_abi::nr::WRITE_READ_NOTHING as u64,
+                    xaqu_native_abi::nr::WRITE_READ_NOTHING as u64,
                     0,
                     0,
                     0,
@@ -1499,7 +1499,7 @@ fn read_twice(_argument: usize) {
 ///
 /// Verifies: `L.x86_64.155`
 fn run_sending_vector_case(wake: Wake) -> Result<(), &'static str> {
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     use crate::sched::direct::{Count, counts};
     // On one processor the check's own task is runnable beside the victim as
     // it starts -- the victim's arrival preempts it -- so the victim's send
@@ -1507,9 +1507,9 @@ fn run_sending_vector_case(wake: Wake) -> Result<(), &'static str> {
     // made once, holding the general path to the reset.
     let fast = crate::fastpath::BUILT && crate::smp::count() >= 2;
     for _ in 0..6 {
-        #[cfg(ferrix_fast_ipc)]
+        #[cfg(xaqu_fast_ipc)]
         let trips = || counts().get(Count::Trip as usize).copied().unwrap_or(0);
-        #[cfg(not(ferrix_fast_ipc))]
+        #[cfg(not(xaqu_fast_ipc))]
         let trips = || 0_u64;
         let before = trips();
         send_then_wake(wake)?;
@@ -1751,7 +1751,7 @@ const SELECTOR_ROUNDS: u32 = 1_000;
 const COMPAT_ROUNDS: u32 = 20;
 
 /// The status `SIGSEGV` ends a program with, as `wait4` reports it.
-const KILLED_BY_SIGSEGV: i32 = 128 + ferrix_linux_abi::types::SIGSEGV as i32;
+const KILLED_BY_SIGSEGV: i32 = 128 + xaqu_linux_abi::types::SIGSEGV as i32;
 
 /// What the `DS`/`ES` skip's cases counted, for the boot line.
 #[derive(Debug, Default)]
@@ -1872,7 +1872,7 @@ fn check_32_and_64_bit_programs_keep_their_selectors() -> Result<(), &'static st
     }
     patch(&mut code, 1, &SELECTOR_ROUNDS.to_le_bytes())?;
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         &code,
@@ -1881,7 +1881,7 @@ fn check_32_and_64_bit_programs_keep_their_selectors() -> Result<(), &'static st
         &file,
         &[b"/selectors-i386"],
         &[],
-        [0x7e; ferrix_ustack::RANDOM_BYTES],
+        [0x7e; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the i386 selector program could not be loaded")?;
     let narrow = selector_program(b'R', 0, SELECTOR_ROUNDS)?;
@@ -2420,7 +2420,7 @@ fn check_i386_fs_gs_beside_a_64_bit_program() -> Result<(), &'static str> {
     }
     patch(&mut code, 1, &SELECTOR_ROUNDS.to_le_bytes())?;
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         &code,
@@ -2429,7 +2429,7 @@ fn check_i386_fs_gs_beside_a_64_bit_program() -> Result<(), &'static str> {
         &file,
         &[b"/fs-gs-i386"],
         &[],
-        [0x7e; ferrix_ustack::RANDOM_BYTES],
+        [0x7e; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the i386 FS/GS program could not be loaded")?;
     let narrow = fs_gs_program(b'R', 0, SELECTOR_ROUNDS)?;
@@ -2839,10 +2839,10 @@ const INHERIT: &[u8] = &[
 ///
 /// Verifies: `L.x86_64.11`, `L.x86_64.12`
 pub(crate) fn run_inherit() -> Result<(), &'static str> {
-    use ferrix_vfs::OpenFlags;
+    use xaqu_vfs::OpenFlags;
 
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_x86_64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         INHERIT,
@@ -2872,7 +2872,7 @@ pub(crate) fn run_inherit() -> Result<(), &'static str> {
         &file,
         &[INHERIT_PATH],
         &[],
-        [0x7e; ferrix_ustack::RANDOM_BYTES],
+        [0x7e; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the inheritance program could not be started");
     ns.unlink(&ctx, None, INHERIT_PATH)

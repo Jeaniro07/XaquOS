@@ -1,5 +1,5 @@
 //! `cargo xtask test-display`: iteration 1 of the compositor, a blank screen
-//! on Ferrix, judged pixel by pixel.
+//! on Xaqu, judged pixel by pixel.
 //!
 //! `docs/DISPLAY.md` §3. The compositor's first program, `src/user/system/linux/compositor/blank`,
 //! is built static for the architecture and booted as init with a virtio-gpu

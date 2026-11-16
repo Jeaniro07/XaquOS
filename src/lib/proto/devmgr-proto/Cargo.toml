@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-devmgr-proto"
+name = "xaqu-devmgr-proto"
 description = "The messages between the kernel and devmgr on its bootstrap channel, as docs/DEVMGR.md fixes them"
 version.workspace = true
 edition.workspace = true
@@ -8,12 +8,12 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-ferrix-fdt.workspace = true
+xaqu-fdt.workspace = true
 
 [dev-dependencies]
-ferrix-blkring.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-netring.workspace = true
+xaqu-blkring.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-netring.workspace = true
 
 [lints]
 workspace = true

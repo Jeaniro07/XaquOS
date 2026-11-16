@@ -80,7 +80,7 @@ impl fmt::Display for Instant {
     }
 }
 
-/// Linux's signal names, by number; the same on every architecture Ferrix
+/// Linux's signal names, by number; the same on every architecture Xaqu
 /// runs on.
 pub const SIGNALS: [(&str, u8); 31] = [
     ("HUP", 1),

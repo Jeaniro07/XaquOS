@@ -13,7 +13,7 @@
 
 use core::cell::UnsafeCell;
 
-use ferrix_bootinfo::{KERNEL_VMAP_BASE, PAGE_SIZE};
+use xaqu_bootinfo::{KERNEL_VMAP_BASE, PAGE_SIZE};
 
 use crate::early::{EarlyError, EarlyMemory};
 

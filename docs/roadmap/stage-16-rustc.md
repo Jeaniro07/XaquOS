@@ -3,7 +3,7 @@
 The remaining syscall surface, the memory scale, the process spawn path for
 `rust-lld`, and a sysroot on btrfs. Then run it.
 
-**Exit:** `rustc hello.rs && ./hello` on Ferrix, in CI.
+**Exit:** `rustc hello.rs && ./hello` on Xaqu, in CI.
 
 **Met on 2026-09-22,** on example under KVM, with `cargo xtask test-rustc`;
 the CI job `rustc` runs the same command on every push, and has passed on
@@ -20,7 +20,7 @@ From the shell's first line to `hello` is under two seconds:
 ```
 rustc 1.99.1 (58cf8f9c3 2026-10-13)
 ...
-rustc-gate: hello from rustc on Ferrix
+rustc-gate: hello from rustc on Xaqu
   init     the shell exited with 16
 ```
 
@@ -41,7 +41,7 @@ Debian's busybox. The sysroot on btrfs is stage 12's write path and the
   and runs the same program, which is what separates a broken sysroot from
   a broken kernel.
 * **The gate.** `cargo xtask test-rustc` attaches the image under QEMU's
-  `snapshot=on`, so a run never changes it. The image has no `ferrix-root`
+  `snapshot=on`, so a run never changes it. The image has no `xaqu-root`
   label, so the kernel mounts it at `/data`. The initramfs carries five
   links for the absolute paths glibc and gcc name:
   `/lib64`, `/lib/x86_64-linux-gnu`, `/usr/lib/x86_64-linux-gnu`,
@@ -71,14 +71,14 @@ Debian's busybox. The sysroot on btrfs is stage 12's write path and the
 
 `AArch64` is the same script with arm64 packages and is not needed for the
 exit. Neither is compiling anything larger than `hello.rs`: Cargo, a crate
-graph and a build of Ferrix itself are stage 20's.
+graph and a build of Xaqu itself are stage 20's.
 
 
 **Done — `rustc` on ferrousli, 2026-09-26.** `cargo xtask test-rustc
 --interpreter ferrousli --library ferrousli` runs the same volume with
 ferrousli's loader and `libc.so.6` in glibc's place, so that every program
 of the compile -- `rustc`, `cargo`, the gcc driver, `collect2`, `rust-lld`
-and the program they make -- runs on ferrousli, and passes on Ferrix under
+and the program they make -- runs on ferrousli, and passes on Xaqu under
 KVM. What it found, each fixed with a test that fails without it: in the
 loader, `$ORIGIN` in `DT_RUNPATH`, program headers past a file's first page
 (BOLT's `librustc_driver`), constructors run dependencies first, and a

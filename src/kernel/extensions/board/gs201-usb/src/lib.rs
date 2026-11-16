@@ -1,4 +1,4 @@
-//! The Ferrix kernel's gs201 USB glue (the Pixel 7's Tensor G2): the load
+//! The Xaqu kernel's gs201 USB glue (the Pixel 7's Tensor G2): the load
 //! ring's part in the chip's USB controller, found in the device tree at boot
 //! and a no-op on a machine without one.
 //!
@@ -21,17 +21,17 @@ extern crate alloc;
     reason = "named by its crate's path, so the interface's list sees the core's fn used here"
 )]
 pub const BOARD_GS201_USB_FLAG_WORD: u64 =
-    ferrix_kernel_core::flag_word(&ferrix_kernel_core::build_flag_word!());
+    xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
 
 // Held to the item's word, which main.rs holds to the binary's: the assert
 // lives here, not in main.rs, so that a part adds no line to a
 // `personality=user` ring 0 (test-ring0-budget, TINY-KERNEL.md).
 const _: () = assert!(
     BOARD_GS201_USB_FLAG_WORD == ITEM_FLAG_WORD,
-    "ferrix-kernel-board-gs201-usb was compiled with other build flags than the item"
+    "xaqu-kernel-board-gs201-usb was compiled with other build flags than the item"
 );
 
-pub use ferrix_kernel_item::*;
+pub use xaqu_kernel_item::*;
 
 /// What belongs to one system on chip rather than to an architecture: the kernel's part in a board's devices.
 /// Unlike §2.1's shape, no glob of the item's `platform` or `google`: all

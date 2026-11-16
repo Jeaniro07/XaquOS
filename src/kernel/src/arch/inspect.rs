@@ -1,6 +1,6 @@
 //! Where a task that is not running keeps what `sched::inspect` reads of it
 //! (`docs/DEBUG.md` §1.1): the frame its entry from user mode saved at the
-//! top of its kernel stack, and the two slots of the frame `ferrix_switch`
+//! top of its kernel stack, and the two slots of the frame `xaqu_switch`
 //! left at its saved stack pointer that start its call chain.
 //!
 //! Every offset is a byte offset taken with `offset_of!` from the struct the
@@ -30,8 +30,8 @@ pub(crate) struct EntryFrame {
 /// chain, as byte offsets from its saved stack pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct SwitchFrame {
-    /// The frame pointer `ferrix_switch`'s caller ran with.
+    /// The frame pointer `xaqu_switch`'s caller ran with.
     pub(crate) frame_pointer: usize,
-    /// Where `ferrix_switch` returns to.
+    /// Where `xaqu_switch` returns to.
     pub(crate) return_address: usize,
 }

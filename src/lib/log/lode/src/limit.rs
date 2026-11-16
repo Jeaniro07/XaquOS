@@ -3,7 +3,7 @@
 //!
 //! Every record a source sends passes here before it is stored:
 //!
-//! 1. **The rules** (`/etc/ferrix/lode.d/*.rules`, [`Rule`]), in order: the
+//! 1. **The rules** (`/etc/xaqu/lode.d/*.rules`, [`Rule`]), in order: the
 //!    first whose filter matches decides -- `drop`, `sample 1/N`, `level P`
 //!    (drop what is less urgent than P), `fold DURATION` (this source's
 //!    repeats folded over a window of its own), `limit BURST/DURATION`.
@@ -24,7 +24,7 @@
 //! back: the kernel decides what it says.
 //!
 //! A source is the record's `UNIT`, else its `SYSLOG_IDENTIFIER`, else its
-//! `FERRIX_SUBSYSTEM`, else its `_TRANSPORT`.
+//! `XAQU_SUBSYSTEM`, else its `_TRANSPORT`.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -65,7 +65,7 @@ pub fn source(record: &Record) -> Vec<u8> {
     [
         "UNIT",
         "SYSLOG_IDENTIFIER",
-        "FERRIX_SUBSYSTEM",
+        "XAQU_SUBSYSTEM",
         "_TRANSPORT",
     ]
     .iter()

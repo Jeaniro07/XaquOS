@@ -34,7 +34,7 @@
 use alloc::format;
 use core::hint::black_box;
 
-use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
+use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
 
 use super::trap::{TrapFrame, UserRegs, classify, fault_signal};
 use crate::console::println;
@@ -538,7 +538,7 @@ fn check_described_version() -> Result<usize, &'static str> {
 ///
 /// Verifies: L.aarch64.8
 fn check_restart_rewind() -> Result<(), &'static str> {
-    use ferrix_linux_abi::nr::aarch64::{CLOCK_NANOSLEEP, RESTART_SYSCALL};
+    use xaqu_linux_abi::nr::aarch64::{CLOCK_NANOSLEEP, RESTART_SYSCALL};
 
     for restart_block in [false, true] {
         let mut trap = frame(FROM_USER, 0b01_0101, 0);

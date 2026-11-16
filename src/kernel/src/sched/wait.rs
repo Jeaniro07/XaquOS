@@ -55,7 +55,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sync::IrqSpinLock;
+use xaqu_sync::IrqSpinLock;
 
 use crate::arch;
 use crate::fallible;
@@ -646,7 +646,7 @@ impl WaitQueue {
 
     /// How many marks are listed, read without a lock: what a debug build's
     /// assertion on the fast path reads (`object::channel::sendable`).
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub(crate) fn hooked_now(&self) -> u32 {
         self.hooked.load(Ordering::Relaxed)
     }
@@ -1052,7 +1052,7 @@ impl Drop for WaitQueue {
     }
 }
 
-/// A wait queue is what the kernel lends a `ferrix_sync::SleepLock` to sleep
+/// A wait queue is what the kernel lends a `xaqu_sync::SleepLock` to sleep
 /// on, through `sync::SchedParker`.
 ///
 /// `park_until` is `wait_until_deadline` with no deadline worth the name: the
@@ -1062,7 +1062,7 @@ impl Drop for WaitQueue {
 /// allows. The order that closes the lost wake-up -- on the queue and marked
 /// blocked before the last look at `ready` -- is the one above, and it is
 /// what the contract asks of a parking.
-impl ferrix_sync::Parking for WaitQueue {
+impl xaqu_sync::Parking for WaitQueue {
     fn park_until(&self, ready: &mut dyn FnMut() -> bool) {
         let _ = self.wait_until_deadline(ready, u64::MAX);
     }

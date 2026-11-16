@@ -2,7 +2,7 @@
 //! (`docs/DISPLAY.md` §8).
 //!
 //! The kernel maps the boot framebuffer write-combining from its first map,
-//! on every boot that has one, lent under `ferrix.efifb` or not: the boot
+//! on every boot that has one, lent under `xaqu.efifb` or not: the boot
 //! processor programs its PAT before the map ([`super::program_memory_types`]),
 //! and every secondary in its trampoline, before it turns paging on
 //! (`smp`), so no processor translates the window's leaves by any other
@@ -28,7 +28,7 @@ use core::arch::asm;
 use core::arch::x86_64::__cpuid;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_paging::MapFlags;
+use xaqu_paging::MapFlags;
 
 use super::cpu;
 
@@ -48,7 +48,7 @@ fn has_clflush() -> bool {
 
 /// The flags the kernel's framebuffer window is mapped with, first thing in
 /// `kmain` and after [`super::program_memory_types`]: write-combining when
-/// the boot processor's PAT read back [`ferrix_paging::X86_PAT`] and it can
+/// the boot processor's PAT read back [`xaqu_paging::X86_PAT`] and it can
 /// flush the window's cache lines first, device memory otherwise
 /// ([`MapFlags::x86_framebuffer`]). The table read is kept for stage 9.
 pub(crate) fn framebuffer_flags() -> MapFlags {
@@ -175,7 +175,7 @@ pub(crate) fn pat() -> Option<u64> {
 
 /// The memory type this processor's MTRRs give every page of
 /// `phys..phys + len`, when it is one type for all of them
-/// ([`ferrix_paging::mtrr::range_type`]); `None` when the processor has no
+/// ([`xaqu_paging::mtrr::range_type`]); `None` when the processor has no
 /// MTRRs, more than [`MAX_VARIABLE`] variable ranges, or the range has no
 /// one type.
 ///
@@ -203,7 +203,7 @@ pub fn mtrr_type(phys: u64, len: u64) -> Option<u8> {
         let mask = unsafe { cpu::read_msr(at + 1) };
         *slot = (base, mask);
     }
-    ferrix_paging::mtrr::range_type(default, ranges.get(..count)?, phys, len)
+    xaqu_paging::mtrr::range_type(default, ranges.get(..count)?, phys, len)
 }
 
 /// Make every write-combining store this processor has made globally

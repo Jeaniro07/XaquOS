@@ -16,8 +16,8 @@ use alloc::format;
 use alloc::string::String;
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sched::NICE_0_WEIGHT;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sched::NICE_0_WEIGHT;
 
 use crate::claim::{Claims, Numbers, StillServed};
 use crate::device::{DeviceNode, Location};
@@ -531,7 +531,7 @@ fn an_unanswered_call_is_reported_by_name() {
     crate::console::println!(
         "  services the next line is an ENOSYS report asked for by the check, not a program's"
     );
-    let call = ferrix_linux_abi::nr::Syscall::Acct;
+    let call = xaqu_linux_abi::nr::Syscall::Acct;
     let number = (0..=600)
         .find(|&number| crate::arch::decode_syscall(number) == Some(call))
         .unwrap_or_default();

@@ -1,9 +1,9 @@
 # The block ring: kernel ↔ ring-3 block driver
 
-Version 1. Written by ferrix-61 (stage 11, formerly ferrix-4d), the ring's first
-consumer; reviewed and approved with changes by ferrix-d9 (stage 10, formerly
-ferrix-8b), who owns the ring, `devmgr` and the driver; identity and naming
-decided by the product owner, ferrix-32. `src/lib/proto/blkring` (`ferrix-blkring`)
+Version 1. Written by xaqu-61 (stage 11, formerly xaqu-4d), the ring's first
+consumer; reviewed and approved with changes by xaqu-d9 (stage 10, formerly
+xaqu-8b), who owns the ring, `devmgr` and the driver; identity and naming
+decided by the product owner, xaqu-32. `src/lib/proto/blkring` (`xaqu-blkring`)
 implements it, host-tested, under Miri and fuzzed. `src/kernel/src/interfaces/block_ring`
 is the kernel glue; the driver process is not built yet.
 
@@ -27,7 +27,7 @@ It is **not** the virtio protocol. The driver speaks virtio-blk to the device
 (`src/lib/drivers/virtio::blk`); this is what the kernel speaks to the driver. The shapes
 are deliberately similar so one request here becomes one virtio request.
 
-### Constraints (from ferrix-d9, formerly ferrix-8b)
+### Constraints (from xaqu-d9, formerly xaqu-8b)
 
 1. v1 copies data through **one shared data VMO** the driver creates and pins
    (`VMO_PIN`, 0x1025) and the kernel maps or reads and writes through. Entries
@@ -320,7 +320,7 @@ handles: [ring VMO (READ|WRITE|MAP), data VMO (READ|WRITE|MAP),
 features (RO, FLUSH, and write-cache or FUA support as negotiated), never from
 the merely offered ones. `queues` other than 1 is refused in v1.
 
-**Naming and identity** (decided by ferrix-32, fields by ferrix-d9). The kernel
+**Naming and identity** (decided by xaqu-32, fields by xaqu-d9). The kernel
 creates the block device node in devfs when it accepts HELLO, under `name`.
 **The kernel, not HELLO, chooses the numbers** — a driver that picked its own
 minor could collide with another's: the major is the kernel's one virtio-blk
@@ -358,13 +358,13 @@ driver resets the device and exits. The kernel sends REFUSED for:
 * a handle whose rights differ from §2's.
 
 
-**Refusal reasons for identity** (ferrix-blkring's numbering; 1–6 are the
+**Refusal reasons for identity** (xaqu-blkring's numbering; 1–6 are the
 header, rights and device refusals above): 7 `Name` — the name is not `vd` and
 1 to 3 lowercase letters followed only by NUL; 8 `NameInUse` — a node of that
 name is already published; 9 `LocationInUse` — another accepted driver already
 serves that location; 10 `WrongLocation` — `location` is not the PCI address
 of the device node the ring was created for, or `DEVICE_NOT_PCI` for a device tree
-node's ring. 7 is checked by `ferrix-blkring`'s
+node's ring. 7 is checked by `xaqu-blkring`'s
 pure validation; 10, 8 and 9 need what only the kernel knows — which node the
 ring is bound to, and the registry — so the ring glue reports them. 8 is what
 the devfs block registry's `NameInUse` refusal becomes.
@@ -403,7 +403,7 @@ and `serial` are carried as given: stage 11 validates neither beyond size.
   untranslated domain — which is every domain today — the device can still DMA
   to those frames. The pages stay held (leaked) until devmgr has reset the
   device, or a translated domain has unmapped them. The kernel's own copies are
-  already safe. (ferrix-d9 documents the same rule on `Domain::unpin`.)
+  already safe. (xaqu-d9 documents the same rule on `Domain::unpin`.)
 * **A disk that stops answering** (since 2026-10-25, BACKLOG p1-034; the
   certification consultant's design review, ledger 4260). A driver that is
   alive but whose device hangs -- or that cannot recover it -- cannot say so,
@@ -416,7 +416,7 @@ and `serial` are carried as given: stage 11 validates neither beyond size.
   handler's last step, taking the device offline:
   * **The rule.** When a request's 30-second patience runs out unanswered
     and the driver has completed nothing at all for 30 seconds while a
-    request waited (`ferrix_blkring::kernel::gone_silent`), the disk is
+    request waited (`xaqu_blkring::kernel::gone_silent`), the disk is
     offline. A driver that answered anything else in that time is alive:
     only the request that waited out its patience fails, as before. The
     edge: one command a slow but live device takes longer than 30 s over
@@ -461,7 +461,7 @@ and `serial` are carried as given: stage 11 validates neither beyond size.
 * **Reset before release, owned by devmgr** (the product owner's decision, before the
   driver lands). When a driver's Job is killed or the driver ends, **devmgr
   resets its device before any pinned frame is freed**. devmgr learns of the
-  end through process observers on a port (ferrix-4b, formerly ferrix-2a).
+  end through process observers on a port (xaqu-4b, formerly xaqu-2a).
   * Until that reset, the data VMO's pinned pages stay held — leaked by design
     — and the kernel prints a console line saying so.
   * After devmgr confirms the reset, the pins may be released and the data VMO
@@ -473,7 +473,7 @@ and `serial` are carried as given: stage 11 validates neither beyond size.
 ### 6.4 devmgr → driver: START (type 6)
 
 The first and only message on a driver's bootstrap channel — `Handle(1)`,
-which `ferrix-rt`'s `Bootstrap` adopts — sent by whoever started the driver:
+which `xaqu-rt`'s `Bootstrap` adopts — sent by whoever started the driver:
 `devmgr`, or the boot check in its stead. A driver handed anything else first
 exits.
 
@@ -517,7 +517,7 @@ rights shown, checked as HELLO's are (`Start::validate`). The driver carries
   query.
 * `src/lib/fs/btrfs/vfs` → reads through a `Device` handle over `src/lib/fs/common/block`.
 
-## 8. Implementation: `ferrix-blkring`
+## 8. Implementation: `xaqu-blkring`
 
 A `src/lib/` crate — no_std, forbid(unsafe) — with:
 
@@ -535,9 +535,9 @@ A `src/lib/` crate — no_std, forbid(unsafe) — with:
   VMO, re-read its own fields, or accept an id twice.
 
 The kernel glue (ports, VMO mapping, the data VMO allocator, the leak-until-
-quiesced rule) and the driver process glue stay with ferrix-d9.
+quiesced rule) and the driver process glue stay with xaqu-d9.
 
-## 9. Review decisions (ferrix-d9, formerly ferrix-8b)
+## 9. Review decisions (xaqu-d9, formerly xaqu-8b)
 
 * **Q1 flooding** — ports are bounded (`PORT_CAPACITY` 1024). Full counts as
   rung, and the kernel receiver treats any number of bells as one (§5).

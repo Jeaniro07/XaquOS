@@ -1,4 +1,4 @@
-//! `test-bwrap`: Debian's bubblewrap on Ferrix, as root and as uid 1000
+//! `test-bwrap`: Debian's bubblewrap on Xaqu, as root and as uid 1000
 //! (`docs/NAMESPACES.md` §8, landings N3 and N5).
 //!
 //! bubblewrap is what Steam's container is made with: scout's requirements
@@ -36,7 +36,7 @@
 //! As uid 1000 bubblewrap makes a user namespace too (`clone(CLONE_NEWUSER |
 //! CLONE_NEWNS)`, `uid_map`, `setgroups`, `gid_map`, `tmpfs` with `nosuid,nodev`,
 //! binds whose flags it remounts, two `pivot_root`s): the same lists run again
-//! under `su ferrix`, and the container must report uid 1000, the same
+//! under `su xaqu`, and the container must report uid 1000, the same
 //! mounts, and a write through its writable bind.
 
 use std::path::PathBuf;
@@ -58,7 +58,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     run: |_, args| test_bwrap(args),
 }];
 
-/// Where `fetch-bwrap.sh` writes, unless `FERRIX_BWRAP` names another
+/// Where `fetch-bwrap.sh` writes, unless `XAQU_BWRAP` names another
 /// directory, and what it writes there.
 const FETCHED: &[&str] = &[
     "bwrap",
@@ -113,7 +113,7 @@ echo "bwrap-gate{label}: written back: $(cat /tmp/bwrap-src/back)"
 }
 
 /// The script init runs: what the sandboxes bind, then [`body`] as root, then
-/// again as the image's user `ferrix`, uid 1000.
+/// again as the image's user `xaqu`, uid 1000.
 fn script() -> String {
     format!(
         r#"export PATH=/bin:/usr/bin
@@ -125,7 +125,7 @@ chmod 777 /tmp/bwrap-src
 chmod 644 /tmp/bwrap-data /tmp/bwrap-file /tmp/bwrap-src/inside
 sh /{root}
 rm -f /tmp/bwrap-src/back
-su ferrix -c 'sh /{user}'
+su xaqu -c 'sh /{user}'
 exit 21
 "#,
         root = BODIES[0].0,
@@ -168,7 +168,7 @@ const MOUNTED: &[&str] = &[
 
 /// The directory `fetch-bwrap.sh` wrote.
 fn fetched() -> Result<PathBuf> {
-    let directory = match std::env::var_os("FERRIX_BWRAP") {
+    let directory = match std::env::var_os("XAQU_BWRAP") {
         Some(directory) => PathBuf::from(directory),
         None => crate::paths::volume_directory("bwrap")?,
     }

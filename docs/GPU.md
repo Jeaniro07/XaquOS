@@ -1,15 +1,15 @@
-# The GPU: the host's driver first, a card of Ferrix's own later
+# The GPU: the host's driver first, a card of Xaqu's own later
 
 Decided by the customer on 2026-09-18. `docs/ROADMAP.md` stage 19 left the
 GPU path as the customer's choice and said where it would be recorded; this
 is the reasoning, the order and the sizes, and `docs/BACKLOG.md` carries the
 decision and the rows.
 
-**Path A first**: GPU acceleration for Ferrix *as a guest*, through
+**Path A first**: GPU acceleration for Xaqu *as a guest*, through
 virtio-gpu's 3D commands, which puts the host's own GPU driver -- NVIDIA's, on
 both machines this is developed on -- behind the guest's rendering without a
 line of it being ported. **Path B later**, in a stage of its own
-(`docs/ROADMAP.md` stage 21), when the customer wants Ferrix on bare metal
+(`docs/ROADMAP.md` stage 21), when the customer wants Xaqu on bare metal
 with an NVIDIA card: a driver for the card itself.
 
 The two are not alternatives and A is not a stopgap. Everything A builds
@@ -38,7 +38,7 @@ shaders. Hyprland is fast on the same desktop because a GPU runs them.
 * The Linux gate host's QEMU, 9.2.4, was built headless and offered no
   `-gl` device, though `libvirglrenderer` was installed there. It has been
   rebuilt since, and does now: §3.1.
-* Ferrix drives virtio-gpu in 2D only: `src/lib/drivers/virtio::gpu` has the 2D control
+* Xaqu drives virtio-gpu in 2D only: `src/lib/drivers/virtio::gpu` has the 2D control
   commands, `/dev/dri/card0` has dumb buffers, `SETCRTC`, `PAGE_FLIP` and
   `DIRTYFB`, and there is no render node (`docs/DISPLAY.md`).
 
@@ -86,13 +86,13 @@ real constraint on the plan.
   `-Werror=discarded-qualifiers`. Nothing to do with the GPU, and no reason
   to patch someone else's tree over it.
 
-* **`xtask --gl` boots.** Ferrix comes up on `virtio-gpu-gl-pci` exactly as
+* **`xtask --gl` boots.** Xaqu comes up on `virtio-gpu-gl-pci` exactly as
   on the 2D device -- the 3D card is a superset, and the 2D driver drives it
   unchanged. That is the whole of the host half working.
 
-* **`FERRIX_QEMU` points at the rebuilt one.** A hand-built QEMU does not
+* **`XAQU_QEMU` points at the rebuilt one.** A hand-built QEMU does not
   have to be installed over the machine's, which needs root and replaces
-  something a person may be relying on. `FERRIX_QEMU=~/Documents/qemu/qemu/build
+  something a person may be relying on. `XAQU_QEMU=~/Documents/qemu/qemu/build
   cargo xtask test-display --gl` is the whole invocation on this host.
 
 * **`screendump` cannot read a GL console, and this is not a setting.**
@@ -312,7 +312,7 @@ serial copy (`docs/COMPOSITOR-DAMAGE-HANDOFF.md` §2.7). 60 fps (16.7 ms) is
 below that floor; only the GPU drawing the pixels reaches it. This is the
 path, in the order each piece can be *tested*, with the wire details already
 looked up so the next session does not repeat the reading. Reference sources
-are cloned at `~/.local/share/ferrix/virgl-ref`: virglrenderer 1.2.0
+are cloned at `~/.local/share/xaqu/virgl-ref`: virglrenderer 1.2.0
 (`src/virgl_protocol.h`, `src/virgl_hw.h`) and Mesa's virgl driver
 (`src/gallium/drivers/virgl/virgl_encode.c`, the encoder to copy). QEMU's
 `hw/display/virtio-gpu-virgl.c` at `~/Documents/qemu/qemu` shows the host
@@ -512,7 +512,7 @@ a GL console (§3.1).
 
 **The shaders are GLSL, and Mesa compiles them -- on the gate host**
 (pieces 3 and 5, 2026-09-19). virgl carries a shader as TGSI assembly, and
-there is no Mesa on Ferrix to make it. So `src/user/system/linux/compositor/virgl/shaders/` is
+there is no Mesa on Xaqu to make it. So `src/user/system/linux/compositor/virgl/shaders/` is
 GLSL, `tools/regenerate.sh` compiles each with Mesa's own virgl driver run
 against the test server (`GALLIUM_DRIVER=virpipe`, `VIRGL_DEBUG=tgsi`), and
 the TGSI text that driver sends is what is committed under `src/tgsi/`: the
@@ -886,7 +886,7 @@ Destroy virgl resources on virtio-gpu reset"), in 11.1.0.
 The fix is `tools/common/data/qemu/0001-*.patch`: the reset's bottom half, which
 already runs in the main thread, disables the GL scanouts. On Windows,
 `tools/common/fetch/fetch-qemu-windows.sh` builds 11.1.0 with it into
-`~/.local/share/ferrix/qemu`, which xtask takes before `PATH`. With it the
+`~/.local/share/xaqu/qemu`, which xtask takes before `PATH`. With it the
 `--everything` desktop draws on the GPU on Windows. Current QEMU master
 (v11.1.0-1860) is not the base: built there, devmgr never reported, with
 or without the 3D card.
@@ -980,7 +980,7 @@ stride, its modifier (linear, which is the only layout virgl's resources
 have from the guest's side), its handle and resource for a program's own
 virgl stream, a dmabuf descriptor of it, and `write`, which is
 `gbm_bo_write`: the bytes into its backing and a transfer to the device.
-It is a crate rather than a C library because nothing on Ferrix that would
+It is a crate rather than a C library because nothing on Xaqu that would
 link `libgbm` exists yet; Mesa's own GBM comes with 3a.
 
 **The protocol: `zwp_linux_dmabuf_v1` version 3 in hyprix.** The server
@@ -1152,13 +1152,13 @@ on, recorded here so that it can be overruled by name.
 
 ---
 
-## 4. Path B: an NVIDIA card under Ferrix itself
+## 4. Path B: an NVIDIA card under Xaqu itself
 
 The customer chose this path on 2026-10-02, with NVIDIA's own driver and
 userspace. Its feasibility pass and design are `docs/NVIDIA.md`, which
 supersedes the sketch below.
 
-For the day Ferrix runs on bare metal with an NVIDIA card in it. Not sized:
+For the day Xaqu runs on bare metal with an NVIDIA card in it. Not sized:
 well over a hundred points, most of them unknowns, and it accelerates nothing
 that runs today -- the one real board in this tree, the DK1, has no NVIDIA
 GPU. What it would take:
@@ -1168,9 +1168,9 @@ GPU. What it would take:
   how a FreeBSD driver exists. What it plugs into on this side is
   `src/lib/proto/renderctl` and the render node above it, which §3.3 built to take a
   second implementation. Reusing them means writing that layer for
-  Ferrix: PCI configuration and BARs, MSI-X, DMA mappings under the IOMMU,
+  Xaqu: PCI configuration and BARs, MSI-X, DMA mappings under the IOMMU,
   threads, timers, locks, allocation and firmware loading, and then the
-  modesetting and DRM halves. On Ferrix that is a very large C program in a
+  modesetting and DRM halves. On Xaqu that is a very large C program in a
   ring-3 driver process. The device objects stage 10 built -- apertures,
   vectors, IOMMU domains -- are the right shape for it, and the decision of
   2026-09-13 that drivers stay in ring 3 applies to it as to any other.
@@ -1207,11 +1207,11 @@ a GPU's picture. What B adds is a second thing under the render node.
 
 ## 6. Gears: Vulkan through Venus, and the board's own GPU (decided 2026-09-24)
 
-The customer asked for vkgears on Ferrix, as a 3D demo that tests Vulkan and
+The customer asked for vkgears on Xaqu, as a 3D demo that tests Vulkan and
 GPU acceleration, and then for the same on the DK1. Two facts shaped the
 answer, and the customer chose on them:
 
-* **Ferrix has no Vulkan driver**, and there is no Mesa on ferrousli (§3a).
+* **Xaqu has no Vulkan driver**, and there is no Mesa on ferrousli (§3a).
   Under virtio-gpu, a Vulkan that the host's GPU executes is **Venus**:
   Mesa's `virtio` Vulkan driver in the guest serialises Vulkan calls, and
   virglrenderer's render server replays them into the host's own Vulkan
@@ -1233,7 +1233,7 @@ Both are first guesses in points, recorded here the way §3 was.
 `virtio-gpu-gl-pci`, its virglrenderer was built with Venus and ships
 `virgl_render_server`, and RADV drives the AMD node (`renderD128`) that
 `--gl` already uses. The source-built QEMU 9.2.4 first on `PATH` has none of
-it, so `FERRIX_QEMU=/usr/bin` again.
+it, so `XAQU_QEMU=/usr/bin` again.
 
 **What Mesa's Venus driver asks of the kernel**, read from
 `src/virtio/vulkan/vn_renderer_virtgpu.c` of Mesa 26.2.3:
@@ -1270,7 +1270,7 @@ prerequisite.
 object through the Khronos loader and `dlopen`. ferrousli's ports are all
 static, and its `dlopen` refuses a library with its own TLS, which Mesa has.
 So the Venus driver is built as a static archive, and a small static loader
-of Ferrix's own hands vkgears its `vkGetInstanceProcAddr` through the
+of Xaqu's own hands vkgears its `vkGetInstanceProcAddr` through the
 driver's `vk_icdGetInstanceProcAddr`. vkgears is built from its three source
 files (`vkgears.c`, `wsi/wsi.c`, `wsi/wayland.c`) rather than through
 mesa-demos' meson, which requires desktop GL. It needs `libwayland-client`,
@@ -1337,7 +1337,7 @@ over 3,000 a second. Each step, and what differed from the plan:
   in a GL-composited desktop, and counting frames drawn on the named device
   is the claim. With the node's fences made never to signal, the boot fails
   "found `Virtio-GPU Venus (...)` and drew no frames".
-* **Two things found on the way that were not Ferrix's.** vkgears polled its
+* **Two things found on the way that were not Xaqu's.** vkgears polled its
   display and then read it with `wl_display_dispatch`, which waits for an
   event another thread -- Mesa's -- may already have taken; patched. And
   hyprix offers `wp_fifo_v1` and `wp_commit_timing_v1` without holding a
@@ -1357,7 +1357,7 @@ waits on `dlopen` of a library with thread-local storage.
 The core is at `0x5900_0000` (0x800 bytes of registers), interrupt SPI 109,
 with a bus and a core clock and a reset line in the RCC (Linux's
 `stm32mp157.dtsi`, `gpu@59000000`, `compatible = "vivante,gc"`). Nothing in
-Ferrix touches it yet: the board's display is the LTDC alone
+Xaqu touches it yet: the board's display is the LTDC alone
 (`docs/DISPLAY.md` §6).
 
 Vivante's command stream and state registers are documented by the etnaviv
@@ -1394,7 +1394,7 @@ devmgr now counts 8 drivers.
 * `src/kernel/extensions/board/stm32mp1/src/platform/st/stm32mp1/gpu.rs` (G1), a sibling of `platform/st/stm32mp1/usb.rs` rather
   than a part of `platform/st/stm32mp1.rs`, which the display's session is changing. It
   finds the enabled `vivante,gc` node at `0x5900_0000`, reads its interrupt
-  through `ferrix_fdt`, checks that PLL2 is on and locked and that its Q
+  through `xaqu_fdt`, checks that PLL2 is on and locked and that its Q
   output (`DIVQEN`), the GPU's core clock, is enabled, and computes its rate
   as `stm32mp1`'s `pll4_q` does for PLL4, from `RCC_PLL2CFGR1`/`CFGR2`/
   `FRACR` and the reference `RCC_RCK12SELR` selects. Only then does it write

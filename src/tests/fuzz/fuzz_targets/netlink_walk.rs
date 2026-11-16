@@ -23,8 +23,8 @@
 
 #![no_main]
 
-use ferrix_linux_abi::netlink::{NlAttr, NlMsgHdr};
-use ferrix_netlink::{Address, Attr, Attributes, Messages, Value, Writer};
+use xaqu_linux_abi::netlink::{NlAttr, NlMsgHdr};
+use xaqu_netlink::{Address, Attr, Attributes, Messages, Value, Writer};
 use libfuzzer_sys::fuzz_target;
 
 /// Property 2: `inner` lies wholly inside `outer`.

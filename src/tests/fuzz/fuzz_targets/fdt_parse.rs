@@ -30,7 +30,7 @@
 
 #![no_main]
 
-use ferrix_fdt::{
+use xaqu_fdt::{
     DEFAULT_ADDRESS_CELLS, DEFAULT_SIZE_CELLS, FDT_BEGIN_NODE, FDT_END, FDT_END_NODE, FDT_NOP,
     FDT_PROP, Fdt, MAX_CELLS, Node, PSCI_COMPATIBLES, Property, TimerInterrupt,
     VIRTIO_MMIO_COMPATIBLE,

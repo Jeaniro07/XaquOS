@@ -3,8 +3,8 @@
 
 #[cfg(target_os = "linux")]
 mod names {
-    use ferrix_linux_abi::drm::ModeInfo;
-    use ferrix_linux_abi::layout::Field;
+    use xaqu_linux_abi::drm::ModeInfo;
+    use xaqu_linux_abi::layout::Field;
 
     use crate::{Plan, rename};
 
@@ -183,13 +183,13 @@ fn a_connector_change_is_found_among_page_flips_by_each_events_length() {
         bytes[4..8].copy_from_slice(&length.to_le_bytes());
         bytes
     };
-    let flip = event(ferrix_linux_abi::drm::EVENT_FLIP_COMPLETE, 32);
-    let change = event(ferrix_linux_abi::drm::EVENT_FERRIX_CONNECTORS, 8);
+    let flip = event(xaqu_linux_abi::drm::EVENT_FLIP_COMPLETE, 32);
+    let change = event(xaqu_linux_abi::drm::EVENT_XAQU_CONNECTORS, 8);
     assert!(!connectors_changed(&flip));
     assert!(connectors_changed(&[change.clone(), flip.clone()].concat()));
     assert!(connectors_changed(&[flip.clone(), change.clone()].concat()));
     // A length shorter than a header ends the walk rather than loop on it.
-    let broken = event(ferrix_linux_abi::drm::EVENT_FLIP_COMPLETE, 4 + 4);
+    let broken = event(xaqu_linux_abi::drm::EVENT_FLIP_COMPLETE, 4 + 4);
     let mut stuck = broken.clone();
     stuck[4..8].copy_from_slice(&0u32.to_le_bytes());
     assert!(!connectors_changed(&[stuck, change].concat()));

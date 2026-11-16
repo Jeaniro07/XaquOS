@@ -66,12 +66,12 @@
 //!
 //! Capacity is fixed: the session allocates nothing per message.
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_CNT, ABS_MT_SLOT, AbsInfo, EV_ABS, EV_KEY, EV_LED, EV_MSC, EV_REL, EV_REP, EV_SW, EV_SYN,
     KEY_RESERVED, REP_CNT, REP_DELAY, REP_MAX, REP_PERIOD, SYN_REPORT,
 };
-use ferrix_linux_abi::socket::Width;
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::socket::Width;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::{
     AXES, AxisRange, Bitmaps, DeviceId, Events, Hello, KEY_BYTES, LED_BYTES, Message, RawEvent,

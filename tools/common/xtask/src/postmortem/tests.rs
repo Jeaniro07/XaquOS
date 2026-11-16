@@ -21,14 +21,14 @@ fn lines(text: &[&str]) -> Vec<String> {
 /// unlogged lines.
 fn serial() -> Vec<String> {
     lines(&[
-        "Ferrix loader 0.1",
+        "Xaqu loader 0.1",
         "  pstore   at 0x1000000, 1 MiB: no previous kernel log (nothing there)",
         "",
-        "Ferrix 0.1.0 on x86_64",
+        "Xaqu 0.1.0 on x86_64",
         "  kernel   0xffffffff80000000 -> 0x200000, 4096 KiB",
         "  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 1; 40 bytes so far",
         "",
-        "FERRIX-PANIC init exited",
+        "XAQU-PANIC init exited",
         "  kaslr     slide 0x1000",
         "  see       src/kernel/src/power.rs",
         "  pstore    written back for the next boot",
@@ -36,7 +36,7 @@ fn serial() -> Vec<String> {
 }
 
 /// What boot 1's kernel logged of that.
-const LOGGED: &[u8] = b"\nFerrix 0.1.0 on x86_64\n  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 1; 40 bytes so far\n\nFERRIX-PANIC init exited\n  see       src/kernel/src/power.rs\n";
+const LOGGED: &[u8] = b"\nXaqu 0.1.0 on x86_64\n  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 1; 40 bytes so far\n\nXAQU-PANIC init exited\n  see       src/kernel/src/power.rs\n";
 
 #[test]
 fn the_log_less_its_unlogged_lines_passes() {
@@ -49,14 +49,14 @@ fn the_log_less_its_unlogged_lines_passes() {
 
 #[test]
 fn an_unlogged_line_in_the_region_fails() {
-    let mirrored = b"\nFerrix 0.1.0 on x86_64\n  kaslr     slide 0x1000\n";
+    let mirrored = b"\nXaqu 0.1.0 on x86_64\n  kaslr     slide 0x1000\n";
     let problem = region_problem(&serial(), &region(1, mirrored)).unwrap();
     assert!(problem.contains("unlogged line"), "{problem}");
 }
 
 #[test]
 fn a_missing_logged_line_fails() {
-    let short = b"\nFerrix 0.1.0 on x86_64\n\nFERRIX-PANIC init exited\n";
+    let short = b"\nXaqu 0.1.0 on x86_64\n\nXAQU-PANIC init exited\n";
     let problem = region_problem(&serial(), &region(1, short)).unwrap();
     assert!(problem.contains("missing from the region"), "{problem}");
 }
@@ -91,8 +91,8 @@ fn the_address_comes_from_the_mirror_line() {
 #[test]
 fn a_quoted_panic_is_rendered_as_the_loader_renders_it() {
     assert_eq!(
-        rendered("init exited, FERRIX-BOOT-OK"),
-        "init exited, FERRIX_BOOT-OK",
+        rendered("init exited, XAQU-BOOT-OK"),
+        "init exited, XAQU_BOOT-OK",
         "defused"
     );
     assert_eq!(rendered(&"x".repeat(200)).len(), SHOWN, "cut");
@@ -102,7 +102,7 @@ fn a_quoted_panic_is_rendered_as_the_loader_renders_it() {
 #[test]
 fn the_switch_must_take_no_region() {
     let good = lines(&[
-        "  pstore   off (ferrix.pstore=off): no region this boot",
+        "  pstore   off (xaqu.pstore=off): no region this boot",
         "  pstore   none (the loader gave no region)",
     ]);
     assert_eq!(off_problem(&good), None, "off on both sides");
@@ -137,7 +137,7 @@ fn a_region_that_starts_nowhere_in_the_serial_log_fails() {
 
 #[test]
 fn a_region_that_stops_early_fails() {
-    let early = b"\nFerrix 0.1.0 on x86_64\n";
+    let early = b"\nXaqu 0.1.0 on x86_64\n";
     let problem = region_problem(&serial(), &region(1, early)).unwrap();
     assert!(
         problem.contains("missing from the region's end"),
@@ -147,7 +147,7 @@ fn a_region_that_stops_early_fails() {
 
 #[test]
 fn a_region_without_the_log_so_far_fails() {
-    let late = b"  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 1; 40 bytes so far\n\nFERRIX-PANIC init exited\n  see       src/kernel/src/power.rs\n";
+    let late = b"  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 1; 40 bytes so far\n\nXAQU-PANIC init exited\n  see       src/kernel/src/power.rs\n";
     let problem = region_problem(&serial(), &region(1, late)).unwrap();
     assert!(problem.contains("does not start with"), "{problem}");
 }
@@ -155,7 +155,7 @@ fn a_region_without_the_log_so_far_fails() {
 #[test]
 fn a_reset_is_judged_by_its_wait_its_line_and_the_quote() {
     let boot_1: Vec<String> = [
-        "FERRIX-PANIC init exited, and ferrix.onexit=panic asks for a panic",
+        "XAQU-PANIC init exited, and xaqu.onexit=panic asks for a panic",
         STOPPED_RESETS,
         RESET_LINE,
     ]
@@ -163,7 +163,7 @@ fn a_reset_is_judged_by_its_wait_its_line_and_the_quote() {
     .map(|line| (*line).to_owned())
     .collect();
     let after = vec![
-        "  pstore   boot 1's last report: panicked: init exited, and ferrix.onexit=panic asks for a panic"
+        "  pstore   boot 1's last report: panicked: init exited, and xaqu.onexit=panic asks for a panic"
             .to_owned(),
     ];
     let enough = Some(Duration::from_secs(11));
@@ -204,7 +204,7 @@ fn stop_boots(stopping: &str, ended: &str) -> (Vec<String>, Vec<String>) {
     let mut boot_1 = serial();
     boot_1.push(stopping.to_owned());
     let after = lines(&[
-        "Ferrix loader 0.1",
+        "Xaqu loader 0.1",
         "  pstore   at 0x1000000, 1 MiB: boot 1's kernel log, 900 bytes, 900 kept (unchecked)",
         ended,
         "  pstore   mirroring the log to 0x1000000, 1024 KiB, boot 2; 40 bytes so far",

@@ -6,9 +6,9 @@
 
 use core::ptr;
 
-use ferrix_native_abi::types::IoMappingSpec;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device, IoMapping};
+use xaqu_native_abi::types::IoMappingSpec;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device, IoMapping};
 
 /// How much of BAR 0 is mapped: every display register Alder Lake-N has
 /// lies below 2 MiB (the transcoders and DDIs at `0x6xxxx`, the pipes at
@@ -51,7 +51,7 @@ impl Regs {
     }
 }
 
-impl ferrix_intel_xelp::io::Mmio for Regs {
+impl xaqu_intel_xelp::io::Mmio for Regs {
     fn read32(&mut self, offset: u32) -> u32 {
         let Some(address) = self.at(offset) else {
             return 0;

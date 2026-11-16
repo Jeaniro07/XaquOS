@@ -4,13 +4,13 @@
 //!
 //! # When a cgroup has emptied
 //!
-//! The manager waits for [`Event::Emptied`](ferrix_svc::event::Event) only
+//! The manager waits for [`Event::Emptied`](xaqu_svc::event::Event) only
 //! for a cgroup it believes populated: one it spawned into or moved
 //! processes into, and has not yet heard is empty. This backend keeps the
 //! same belief and reports `Emptied` exactly when a cgroup believed
 //! populated reads `populated 0`. It reads every cgroup after every wake,
 //! not only the one whose `cgroup.events` raised `EPOLLPRI`, because the
-//! read is what clears that event (kernfs's rule, which Ferrix keeps), and
+//! read is what clears that event (kernfs's rule, which Xaqu keeps), and
 //! because a process that is spawned and gone between two waits raises no
 //! event that says so afterwards.
 
@@ -23,8 +23,8 @@ use std::os::unix::fs::FileExt as _;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use ferrix_svc::event::{GroupPath, UnitId};
-use ferrix_svc::limits::{Controller, CpuWeight, Limits, Memory, Tasks};
+use xaqu_svc::event::{GroupPath, UnitId};
+use xaqu_svc::limits::{Controller, CpuWeight, Limits, Memory, Tasks};
 
 use crate::sys;
 
@@ -69,7 +69,7 @@ const RETRY_EVERY: Duration = Duration::from_millis(50);
 const RETRY_FOR: Duration = Duration::from_secs(5);
 
 /// A cgroup whose unit let it go while something beneath it was still held:
-/// on Ferrix, the job a native process made for its own children lives as
+/// on Xaqu, the job a native process made for its own children lives as
 /// long as anything holds it, and a process that has ended holds its job
 /// until the kernel has let go of the process, a moment after the cgroup
 /// reads empty. Tried again until it goes, as systemd trims a cgroup it

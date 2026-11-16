@@ -26,7 +26,7 @@ fn main() {
     linux::run();
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/snd`.
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/snd`.
 #[cfg(not(target_os = "linux"))]
 fn main() {}
 
@@ -35,9 +35,9 @@ mod linux {
     use std::ffi::CString;
     use std::io::Write as _;
 
-    use ferrix_linux_abi::layout::{Field, Layout};
-    use ferrix_linux_abi::socket::Width;
-    use ferrix_linux_abi::sound::{
+    use xaqu_linux_abi::layout::{Field, Layout};
+    use xaqu_linux_abi::socket::Width;
+    use xaqu_linux_abi::sound::{
         ACCESS_RW_INTERLEAVED, Ctl, CtlCardInfo, FORMAT_S16_LE, HW_PARAM_FIRST_INTERVAL,
         HW_PARAM_RATE, HwParams, Interval, Mask, PCM_VERSION, Pcm, SUBFORMAT_STD, Status, SwParams,
         TSTAMP_TYPE_MONOTONIC, Xferi, protocol_version,

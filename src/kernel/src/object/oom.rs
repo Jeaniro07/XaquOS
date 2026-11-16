@@ -5,7 +5,7 @@
 //! a system call made for an object -- a descriptor, a pipe's buffer, a
 //! region -- that stays `ENOMEM`, as Linux's `__GFP_ACCOUNT` allocations
 //! fail. A page of the program's own memory is different: a fault has no
-//! error to return, and Linux, when reclaim cannot help (Ferrix has none
+//! error to return, and Linux, when reclaim cannot help (Xaqu has none
 //! yet, M2), kills inside the cgroup that is full. So does this:
 //!
 //! * `memory.events`' `oom` counts, in the job whose limit refused and in
@@ -60,7 +60,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
 
 use super::job::{Job, KILLED_STATUS};
 use super::process::{self, Host};

@@ -124,8 +124,8 @@ impl<T: ?Sized + fmt::Debug> fmt::Debug for SpinLockGuard<'_, T> {
 /// Where the kernel's wait queues park a sleeping lock's waiters.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SchedParker;
-impl ferrix_sync::Parker for SchedParker {
-    fn new_parking(&self) -> Option<alloc::boxed::Box<dyn ferrix_sync::Parking>> {
+impl xaqu_sync::Parker for SchedParker {
+    fn new_parking(&self) -> Option<alloc::boxed::Box<dyn xaqu_sync::Parking>> {
         let queue = crate::fallible::try_box(crate::sched::WaitQueue::new()).ok()?;
         Some(queue)
     }

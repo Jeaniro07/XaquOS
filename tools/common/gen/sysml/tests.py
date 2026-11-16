@@ -180,15 +180,15 @@ class Relations(unittest.TestCase):
     def test_satisfy_allocate_and_dependency(self):
         _, relations, _ = parse(
             "package P {"
-            " satisfy stage1 by ferrix.loader;"
-            " allocate stage6 to ferrix.kernel.vm;"
+            " satisfy stage1 by xaqu.loader;"
+            " allocate stage6 to xaqu.kernel.vm;"
             " dependency from stage2 to stage1, stage0;"
             " }"
         )
         by_kind = {relation.kind: relation for relation in relations}
         self.assertEqual(by_kind["satisfy"].source, "stage1")
-        self.assertEqual(by_kind["satisfy"].targets, ["ferrix.loader"])
-        self.assertEqual(by_kind["allocate"].targets, ["ferrix.kernel.vm"])
+        self.assertEqual(by_kind["satisfy"].targets, ["xaqu.loader"])
+        self.assertEqual(by_kind["allocate"].targets, ["xaqu.kernel.vm"])
         self.assertEqual(by_kind["dependency"].targets, ["stage1", "stage0"])
 
     def test_verify_records_the_enclosing_verification(self):
@@ -602,8 +602,8 @@ class Mermaid(unittest.TestCase):
     def test_every_node_gets_an_identifier_mermaid_accepts(self):
         """A qualified name is not an identifier; the folded form has to be."""
         graph = figure.Figure(name="f", title="F", kind="block")
-        graph.add(figure.Node(id="Ferrix::Kernel.mm", label="mm"))
-        graph.add(figure.Node(id="Ferrix::Kernel.vm", label="vm"))
+        graph.add(figure.Node(id="Xaqu::Kernel.mm", label="mm"))
+        graph.add(figure.Node(id="Xaqu::Kernel.vm", label="vm"))
         identifiers = {render_mermaid.node_id(graph, node) for node in graph.nodes}
         self.assertEqual(len(identifiers), len(graph.nodes))
         for identifier in identifiers:
@@ -628,8 +628,8 @@ class TheRealModel(unittest.TestCase):
 
     def test_the_packages_all_loaded(self):
         names = {root.name for root in self.model.roots}
-        self.assertIn("FerrixStructure", names)
-        self.assertIn("FerrixRoadmap", names)
+        self.assertIn("XaquStructure", names)
+        self.assertIn("XaquRoadmap", names)
         self.assertEqual(len(self.model.roots), len(self.model.files))
 
     def test_every_maturity_keyword_the_lifecycle_defines_is_recognised(self):
@@ -681,8 +681,8 @@ class TheRealModel(unittest.TestCase):
                     )
 
     def test_the_flow_of_the_loader_matches_the_figure_drawn_of_it(self):
-        action = self.model.find("FerrixBoot::LoaderSequence")
-        drawn = diagrams.flow(self.model, "FerrixBoot::LoaderSequence")
+        action = self.model.find("XaquBoot::LoaderSequence")
+        drawn = diagrams.flow(self.model, "XaquBoot::LoaderSequence")
         self.assertEqual(len(drawn.edges), len(action.successions))
 
     def test_every_committed_output_is_current(self):

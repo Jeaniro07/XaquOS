@@ -18,7 +18,7 @@
 //! and wraps. The kernel links without a warning and the loader rejects it:
 //!
 //! ```text
-//! FERRIX-PANIC loader: the kernel has a malformed segment
+//! XAQU-PANIC loader: the kernel has a malformed segment
 //! ```
 //!
 //! which is `src/lib/platform/elf`'s `validate_segments` doing its job on an image that
@@ -65,8 +65,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // ledger 3282 (K1), (K2)): each gets the same flags as cfgs, and only the
     // binary links. Any other package naming this script is refused.
     match std::env::var("CARGO_PKG_NAME")?.as_str() {
-        "ferrix-kernel" => {}
-        "ferrix-kernel-core" | "ferrix-kernel-item" | "ferrix-kernel-load" => {
+        "xaqu-kernel" => {}
+        "xaqu-kernel-core" | "xaqu-kernel-item" | "xaqu-kernel-load" => {
             let _ = build_flags()?;
             println!("cargo::rerun-if-changed=../build.rs");
             return Ok(());
@@ -74,24 +74,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         // The load's root built for linuxd, and the shim under it
         // (docs/microkernel/M5-LIFT.md §1); an optional part under
         // src/kernel/extensions/<name>/ (docs/microkernel/CRATE-SPLIT.md §2.1).
-        "ferrix-lift-core" | "ferrix-lift-item" | "ferrix-lift-load" | "ferrix-kernel-settings" => {
+        "xaqu-lift-core" | "xaqu-lift-item" | "xaqu-lift-load" | "xaqu-kernel-settings" => {
             let _ = build_flags()?;
             println!("cargo::rerun-if-changed=../../build.rs");
             return Ok(());
         }
         // An optional part's lift twin, in the part's own lift/ directory, and
         // a part one group deeper (`board/<name>/`).
-        "ferrix-lift-settings"
-        | "ferrix-kernel-board-stm32mp1"
-        | "ferrix-kernel-board-gs201-usb"
-        | "ferrix-kernel-logctl"
-        | "ferrix-kernel-net-ring" => {
+        "xaqu-lift-settings"
+        | "xaqu-kernel-board-stm32mp1"
+        | "xaqu-kernel-board-gs201-usb"
+        | "xaqu-kernel-logctl"
+        | "xaqu-kernel-net-ring" => {
             let _ = build_flags()?;
             println!("cargo::rerun-if-changed=../../../build.rs");
             return Ok(());
         }
         // A twin one group deeper (`device/<name>/lift/`).
-        "ferrix-lift-logctl" | "ferrix-lift-net-ring" => {
+        "xaqu-lift-logctl" | "xaqu-lift-net-ring" => {
             let _ = build_flags()?;
             println!("cargo::rerun-if-changed=../../../../build.rs");
             return Ok(());
@@ -133,7 +133,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo::rerun-if-changed=build.rs");
 
     // Pid 1's program, script and commands are not built in: an image carries
-    // them in its initramfs under `.ferrix/init/` (`src/kernel/src/init.rs`),
+    // them in its initramfs under `.xaqu/init/` (`src/kernel/src/init.rs`),
     // so that one kernel serves every test and a different init is a new
     // initramfs rather than a new kernel (stage 20, 2026-10-04).
     Ok(())
@@ -156,7 +156,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 ///   addresses with `movw`/`movt` pairs, which no dynamic relocation
 ///   expresses, so the link fails. It is linked at its fixed address and
 ///   keeps its relocations with `--emit-relocs`; the loader applies the
-///   absolute ones (`ferrix_elf::Elf::fixups`).
+///   absolute ones (`xaqu_elf::Elf::fixups`).
 fn relocatable_link(flags: &[(String, String)]) -> Result<&'static [&'static str], Box<dyn Error>> {
     if flags
         .iter()
@@ -177,10 +177,10 @@ fn relocatable_link(flags: &[(String, String)]) -> Result<&'static [&'static str
 /// `cfg`s (each of the kernel's crates runs this script), and
 /// every declared flag and value made into its `--check-cfg`s.
 ///
-/// xtask gives them in two variables: `FERRIX_BUILD_FLAGS`, the chosen
+/// xtask gives them in two variables: `XAQU_BUILD_FLAGS`, the chosen
 /// `name=value` words (`profile` and `level` among them), and
-/// `FERRIX_FLAG_VALUES`, each declared flag as `name=a,b,c`. They become
-/// `cfg(ferrix_<name> = "<value>")` for the kernel's crates alone: a flag is
+/// `XAQU_FLAG_VALUES`, each declared flag as `name=a,b,c`. They become
+/// `cfg(xaqu_<name> = "<value>")` for the kernel's crates alone: a flag is
 /// read only in them (rule 6 b), and no other library is ever compiled with one,
 /// so none can take a branch on it. The workspace denies `unexpected_cfgs`,
 /// so a `cfg` naming a flag or value not declared fails the build. Without
@@ -188,22 +188,22 @@ fn relocatable_link(flags: &[(String, String)]) -> Result<&'static [&'static str
 /// compute no `build` line, and is no configuration anybody declared.
 fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
     // A row's image alone, and linuxd's crates alone (ledger 6268, L9).
-    println!("cargo::rustc-check-cfg=cfg(ferrix_row_driver_kill)");
-    println!("cargo::rerun-if-env-changed=FERRIX_ROW_DRIVER_KILL");
-    if std::env::var_os("FERRIX_ROW_DRIVER_KILL").is_some()
-        && std::env::var("CARGO_PKG_NAME").is_ok_and(|name| name.starts_with("ferrix-lift-"))
+    println!("cargo::rustc-check-cfg=cfg(xaqu_row_driver_kill)");
+    println!("cargo::rerun-if-env-changed=XAQU_ROW_DRIVER_KILL");
+    if std::env::var_os("XAQU_ROW_DRIVER_KILL").is_some()
+        && std::env::var("CARGO_PKG_NAME").is_ok_and(|name| name.starts_with("xaqu-lift-"))
     {
-        println!("cargo::rustc-cfg=ferrix_row_driver_kill");
+        println!("cargo::rustc-cfg=xaqu_row_driver_kill");
     }
-    println!("cargo::rerun-if-env-changed=FERRIX_BUILD_FLAGS");
-    println!("cargo::rerun-if-env-changed=FERRIX_FLAG_VALUES");
+    println!("cargo::rerun-if-env-changed=XAQU_BUILD_FLAGS");
+    println!("cargo::rerun-if-env-changed=XAQU_FLAG_VALUES");
     let (Ok(chosen), Ok(declared)) = (
-        std::env::var("FERRIX_BUILD_FLAGS"),
-        std::env::var("FERRIX_FLAG_VALUES"),
+        std::env::var("XAQU_BUILD_FLAGS"),
+        std::env::var("XAQU_FLAG_VALUES"),
     ) else {
         return Err(
             "the kernel is built through `cargo xtask`, which gives it its build flags \
-                    (FERRIX_BUILD_FLAGS and FERRIX_FLAG_VALUES; docs/BUILD-FLAGS.md)"
+                    (XAQU_BUILD_FLAGS and XAQU_FLAG_VALUES; docs/BUILD-FLAGS.md)"
                 .into(),
         );
     };
@@ -211,14 +211,14 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
     for word in declared.split_whitespace() {
         let (name, list) = word
             .split_once('=')
-            .ok_or_else(|| format!("FERRIX_FLAG_VALUES: `{word}` is not name=a,b"))?;
+            .ok_or_else(|| format!("XAQU_FLAG_VALUES: `{word}` is not name=a,b"))?;
         let list: Vec<String> = list.split(',').map(str::to_owned).collect();
         for item in std::iter::once(name).chain(list.iter().map(String::as_str)) {
             plain(item)?;
         }
         let quoted: Vec<String> = list.iter().map(|value| format!("\"{value}\"")).collect();
         println!(
-            "cargo::rustc-check-cfg=cfg(ferrix_{name}, values({}))",
+            "cargo::rustc-check-cfg=cfg(xaqu_{name}, values({}))",
             quoted.join(", ")
         );
         values.push((name.to_owned(), list));
@@ -227,7 +227,7 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
     for word in chosen.split_whitespace() {
         let (name, value) = word
             .split_once('=')
-            .ok_or_else(|| format!("FERRIX_BUILD_FLAGS: `{word}` is not name=value"))?;
+            .ok_or_else(|| format!("XAQU_BUILD_FLAGS: `{word}` is not name=value"))?;
         let known = values
             .iter()
             .any(|(flag, list)| flag == name && list.iter().any(|item| item == value));
@@ -237,42 +237,42 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
                 .any(|(flag, _): &(String, String)| flag == name)
         {
             return Err(
-                format!("FERRIX_BUILD_FLAGS: `{word}` is undeclared or given twice").into(),
+                format!("XAQU_BUILD_FLAGS: `{word}` is undeclared or given twice").into(),
             );
         }
         // linuxd carries no boot checks of the kernel's: the load's own checks
         // drive a ring-0 harness (docs/microkernel/M5-LIFT.md §1).
-        let lifted = std::env::var("CARGO_PKG_NAME")?.starts_with("ferrix-lift-");
+        let lifted = std::env::var("CARGO_PKG_NAME")?.starts_with("xaqu-lift-");
         let value = if lifted && name == "checks" {
             "off"
         } else {
             value
         };
-        println!("cargo::rustc-cfg=ferrix_{name}=\"{value}\"");
+        println!("cargo::rustc-cfg=xaqu_{name}=\"{value}\"");
         flags.push((name.to_owned(), value.to_owned()));
         // The one predicate for the fast path's code (BF6, ledger 1001 (1)): the
         // flag on x86-64. Never retyped at a site.
-        println!("cargo::rustc-check-cfg=cfg(ferrix_fast_ipc)");
+        println!("cargo::rustc-check-cfg=cfg(xaqu_fast_ipc)");
         // As it, for K1's fast path, whose code is x86-64's (ledger 1001 (1)).
-        println!("cargo::rustc-check-cfg=cfg(ferrix_fast_restricted)");
+        println!("cargo::rustc-check-cfg=cfg(xaqu_fast_restricted)");
         if name == "restricted_fastpath"
             && value == "on"
             && std::env::var("CARGO_CFG_TARGET_ARCH").as_deref() == Ok("x86_64")
         {
-            println!("cargo::rustc-cfg=ferrix_fast_restricted");
+            println!("cargo::rustc-cfg=xaqu_fast_restricted");
         }
         if name == "ipc_fastpath"
             && value == "on"
             && std::env::var("CARGO_CFG_TARGET_ARCH").as_deref() == Ok("x86_64")
         {
-            println!("cargo::rustc-cfg=ferrix_fast_ipc");
+            println!("cargo::rustc-cfg=xaqu_fast_ipc");
         }
     }
     if let Some((missing, _)) = values
         .iter()
         .find(|(flag, _)| !flags.iter().any(|(name, _)| name == flag))
     {
-        return Err(format!("FERRIX_BUILD_FLAGS gives no value for `{missing}`").into());
+        return Err(format!("XAQU_BUILD_FLAGS gives no value for `{missing}`").into());
     }
     let personality = flags
         .iter()
@@ -288,10 +288,10 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
 /// linuxd, whichever the package says.
 fn load_built(personality: &str) -> Result<(), Box<dyn Error>> {
     println!(
-        "cargo::rustc-check-cfg=cfg(ferrix_load_built, values(\"ring0\", \"none\", \"lift\"))"
+        "cargo::rustc-check-cfg=cfg(xaqu_load_built, values(\"ring0\", \"none\", \"lift\"))"
     );
     let package = std::env::var("CARGO_PKG_NAME")?;
-    let built = if package.starts_with("ferrix-lift-") {
+    let built = if package.starts_with("xaqu-lift-") {
         "lift"
     } else {
         match personality {
@@ -300,17 +300,17 @@ fn load_built(personality: &str) -> Result<(), Box<dyn Error>> {
             other => return Err(format!("personality={other}: no place for the load").into()),
         }
     };
-    println!("cargo::rustc-cfg=ferrix_load_built=\"{built}\"");
+    println!("cargo::rustc-cfg=xaqu_load_built=\"{built}\"");
     // The shape of what this crate is built into: `micro` for the ring-0 crates
     // of a `personality=user` kernel (`docs/microkernel/M6.md`), `hybrid` for every
     // other, the crates built for linuxd among them.
-    println!("cargo::rustc-check-cfg=cfg(ferrix_shape, values(\"micro\", \"hybrid\"))");
+    println!("cargo::rustc-check-cfg=cfg(xaqu_shape, values(\"micro\", \"hybrid\"))");
     let shape = if personality == "user" && built != "lift" {
         "micro"
     } else {
         "hybrid"
     };
-    println!("cargo::rustc-cfg=ferrix_shape=\"{shape}\"");
+    println!("cargo::rustc-cfg=xaqu_shape=\"{shape}\"");
     Ok(())
 }
 

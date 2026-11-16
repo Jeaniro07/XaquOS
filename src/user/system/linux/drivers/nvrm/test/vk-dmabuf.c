@@ -15,7 +15,7 @@
  * It also prints what the kernel says of the descriptor: its size, and
  * whether mmap refuses it (a name-only dmabuf of video memory is ENODEV).
  *
- * Built on the host against the system's Vulkan headers and run on Ferrix
+ * Built on the host against the system's Vulkan headers and run on Xaqu
  * from the NVIDIA volume with Debian's loader and NVIDIA's ICD. Every line
  * starts "vk-dmabuf:"; it exits 0 only if every pixel came back.
  *

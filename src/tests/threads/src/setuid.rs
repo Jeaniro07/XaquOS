@@ -7,7 +7,7 @@
 //! the threads' ids would differ, and musl kills the whole process with
 //! `SIGKILL` rather than go on (`src/unistd/setxid.c`).
 //!
-//! Ferrix keeps credentials per process, a written deviation from Linux
+//! Xaqu keeps credentials per process, a written deviation from Linux
 //! (`docs/BACKLOG.md`, stage 7). The first leg already changes every thread's
 //! ids, so the other legs run as uid 1000 and ask for 1000. They succeed only
 //! because setting an id to one the process already has is permitted without

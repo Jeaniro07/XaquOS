@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-vdso"
+name = "xaqu-vdso"
 description = "The vDSO: the ELF image a Linux program reads the clock through, and its code"
 version = "0.1.0"
 edition = "2024"

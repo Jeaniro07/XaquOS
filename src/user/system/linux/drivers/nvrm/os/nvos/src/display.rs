@@ -18,19 +18,19 @@
 
 use core::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
-use ferrix_displayctl::message::{
+use xaqu_displayctl::message::{
     EDID_BYTES, Edid, Hello, Listed, MAX_BYTES, MAX_LISTED_MODES, MAX_SCANOUTS, MODES_A_PAGE,
     Message, ModePage, PORT_RIGHTS, Rect, ScanoutMode, Status, Timing, Timings, VERSION,
 };
-use ferrix_linux_abi::drm;
-use ferrix_native::channel::{Channel, ReadError};
-use ferrix_native::handle::{Object, OwnedHandle};
-use ferrix_native::pending::Protection;
-use ferrix_native::port;
-use ferrix_native::vmo::Vmo;
-use ferrix_native::{Deadline, Error, Handle, Requested};
-use ferrix_native_abi::nr;
-use ferrix_native_abi::signals::Signals;
+use xaqu_linux_abi::drm;
+use xaqu_native::channel::{Channel, ReadError};
+use xaqu_native::handle::{Object, OwnedHandle};
+use xaqu_native::pending::Protection;
+use xaqu_native::port;
+use xaqu_native::vmo::Vmo;
+use xaqu_native::{Deadline, Error, Handle, Requested};
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
 
 use crate::device;
 use crate::futex::{self, Kernel};
@@ -500,7 +500,7 @@ fn rect_into(event: &mut Event, rect: Rect) {
 
 /// Map an ATTACH's buffer VMO read-only: where, or `None` for a buffer that
 /// does not fit its VMO or will not map.
-fn map_buffer(attach: &ferrix_displayctl::message::Attach, vmo: &Vmo<Kernel>) -> Option<usize> {
+fn map_buffer(attach: &xaqu_displayctl::message::Attach, vmo: &Vmo<Kernel>) -> Option<usize> {
     let bytes = vmo.size().ok()?;
     attach.validate(bytes).ok()?;
     let length = usize::try_from(attach.length).ok()?;
@@ -634,7 +634,7 @@ pub unsafe extern "C" fn nvos_display_next(out: *mut Event) -> NvStatus {
     };
     let mut bytes = [0_u8; MAX_BYTES];
     loop {
-        let mut handles = [Handle(0); ferrix_displayctl::message::Attach::HANDLES];
+        let mut handles = [Handle(0); xaqu_displayctl::message::Attach::HANDLES];
         let event = match channel.read(&mut bytes, &mut handles) {
             Ok(received) => match (
                 Message::decode(bytes.get(..received.bytes).unwrap_or(&[])),

@@ -7,7 +7,7 @@ zstd/zlib/lzo.
 The item parsing is `src/lib/` code — pure functions over bytes, fuzzed against
 images `mkfs.btrfs` produced.
 
-**Exit:** Ferrix mounts an image made by real `mkfs.btrfs`, and reads a file
+**Exit:** Xaqu mounts an image made by real `mkfs.btrfs`, and reads a file
 tree out of it that byte-for-byte matches what the host wrote.
 
 **Done — the read path, host-side, against real images.** Started while
@@ -47,7 +47,7 @@ logic `cargo test`, Miri and a fuzzer can reach.
   back-references yet: lookups and listings use directory entries.
 * **A bounded cache of metadata reads.** Every lookup descends a tree from its
   root, and each descent used to read every node on the way from the device
-  again. `ferrix-btrfs`'s `Device` now says what each read is for —
+  again. `xaqu-btrfs`'s `Device` now says what each read is for —
   `ReadKind::Metadata` for the superblock and tree nodes, `ReadKind::Data` for
   an extent's bytes — and `src/lib/fs/btrfs/vfs` keeps metadata reads in a CLOCK cache
   of 1024 entries every handle of a mount shares: a hit hands out a shared
@@ -78,7 +78,7 @@ logic `cargo test`, Miri and a fuzzer can reach.
 * **A lock a walk may sleep under.** The namespace's rename lock is held
   across a rename's two path walks, and a walk into btrfs waits for a disk;
   it was a spin lock, so the first such wait would have stalled every CPU
-  queued for it. It is now `ferrix_sync::SleepLock`, a lock whose waiters
+  queued for it. It is now `xaqu_sync::SleepLock`, a lock whose waiters
   sleep on a `Parking` the kernel lends — a `sched::WaitQueue` per lock,
   through `sync::SchedParker` — and which spins on the host. The open file's
   offset is the same kind of lock, held across the read, write or directory
@@ -131,18 +131,18 @@ understates the seam. `cargo xtask bench-seam` boots a stock Linux kernel
 (Debian 13's cloud kernel, 6.12.107, by SHA-256 from
 `tools/common/fetch/fetch-linux-reference.sh`) on the same QEMU machine, IOMMU
 included, and reads the same disk with `dd iflag=direct`. Measured on
-2026-09-27 in pairs, each Linux run straight before its Ferrix run, at host
+2026-09-27 in pairs, each Linux run straight before its Xaqu run, at host
 loads of 20 to 28. The numbers move with the host's load, so these are the
 ranges over four pairs on x86-64 and one on AArch64:
 
-| Mean 4 KiB read | Stock Linux, driver in ring 0 | Ferrix, driver in ring 3 |
+| Mean 4 KiB read | Stock Linux, driver in ring 0 | Xaqu, driver in ring 3 |
 |---|---|---|
 | x86-64, KVM, depth 1 | 27 to 48 us | 300 to 844 us (p99 1.1 to 5 ms); in one run the driver's submit-to-drain was 159 us of 304 |
 | x86-64, KVM, depth 32 | 243 to 1,773 us | 5.8 to 6.6 ms (p99 156 to 183 ms) |
 | AArch64, TCG, depth 1 | 145 us | 453 us (p50 346, p99 4,031) |
 | AArch64, TCG, depth 32 | 734 us | 12,539 us (p50 4,306, p99 231,038) |
 
-In QEMU a cold disk request costs Ferrix ten to twenty times Linux's on
+In QEMU a cold disk request costs Xaqu ten to twenty times Linux's on
 x86-64 at depth 1, and three times on AArch64. At depth 32 a stall of 150 to 230 ms
 reaches the 99th percentile on both architectures. That stall was the block
 queue's elevator starving a read behind the head until `mq-deadline`'s 500 ms
@@ -167,7 +167,7 @@ kernel counts, from boot:
 - file pages served from a page cache against pages filled from a source,
   and of those the pages read from a disk;
 - block-ring submissions and completions (`src/kernel/src/fs/seam.rs`,
-  `/proc/ferrix-seam`).
+  `/proc/xaqu-seam`).
 
 `test-vfs` prints the line at its end. `test-rustc` prints it after its cold
 run, and again after compiling `hello.rs` once more on a warm page cache.

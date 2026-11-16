@@ -1,5 +1,5 @@
 //! Which programs may ask for each area (`docs/SETTINGS-WRITER.md` §12.5,
-//! S3; ledger 3636 (4)): `/lib/ferrix/settings/apps`, image content, read
+//! S3; ledger 3636 (4)): `/lib/xaqu/settings/apps`, image content, read
 //! on every request.
 //!
 //! ```text
@@ -17,7 +17,7 @@ use std::os::unix::fs::MetadataExt as _;
 use std::path::Path;
 
 /// Where the lists are, below the root.
-pub(crate) const FILE: &str = "lib/ferrix/settings/apps";
+pub(crate) const FILE: &str = "lib/xaqu/settings/apps";
 
 /// Whether `path` (and every directory above it, below `root`) belongs to
 /// `owner` and is writable by nobody else.
@@ -107,15 +107,15 @@ mod tests {
         let root =
             std::env::temp_dir().join(format!("settingsd-apps-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
-        for dir in ["bin", "lib/ferrix/settings", "home"] {
+        for dir in ["bin", "lib/xaqu/settings", "home"] {
             std::fs::create_dir_all(root.join(dir)).unwrap();
         }
         for dir in [
             "",
             "bin",
             "lib",
-            "lib/ferrix",
-            "lib/ferrix/settings",
+            "lib/xaqu",
+            "lib/xaqu/settings",
             "home",
         ] {
             std::fs::set_permissions(root.join(dir), std::fs::Permissions::from_mode(0o755))

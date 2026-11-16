@@ -454,7 +454,7 @@ pub fn check_response(bytes: &[u8]) -> Result<(), SndError> {
 /// `struct virtio_snd_pcm_info`: what one stream can do.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PcmInfo {
-    /// The HDA function group node, which Ferrix does not use.
+    /// The HDA function group node, which Xaqu does not use.
     pub hda_fn_nid: u32,
     /// `PCM_FEATURE_*` offered.
     pub features: u32,

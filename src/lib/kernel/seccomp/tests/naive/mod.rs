@@ -10,7 +10,7 @@
     reason = "a checker written to be obviously the rules"
 )]
 
-use ferrix_seccomp::{DATA_BYTES, Insn, MAX_INSNS, MEMWORDS};
+use xaqu_seccomp::{DATA_BYTES, Insn, MAX_INSNS, MEMWORDS};
 
 /// Every opcode `seccomp_check_filter` lets through, spelled out.
 pub(crate) fn allowed(code: u16) -> bool {

@@ -38,13 +38,13 @@ use std::collections::BTreeMap;
 use std::ops::ControlFlow;
 use std::sync::OnceLock;
 
-use ferrix_btrfs::compress::MAX_UNCOMPRESSED;
-use ferrix_btrfs::compress::zstd::Workspace;
-use ferrix_btrfs::fs::{ExtentBuffers, ReadBuffers, Subvolume};
-use ferrix_btrfs::items::{INODE_ITEM_KEY, S_IFDIR, S_IFLNK, S_IFMT, S_IFREG};
-use ferrix_btrfs::superblock::PRIMARY_OFFSET;
-use ferrix_btrfs::volume::{Device, ReadKind, Volume};
-use ferrix_btrfs::{BtrfsError, BtrfsKey, ChunkMapEntry, crc32c};
+use xaqu_btrfs::compress::MAX_UNCOMPRESSED;
+use xaqu_btrfs::compress::zstd::Workspace;
+use xaqu_btrfs::fs::{ExtentBuffers, ReadBuffers, Subvolume};
+use xaqu_btrfs::items::{INODE_ITEM_KEY, S_IFDIR, S_IFLNK, S_IFMT, S_IFREG};
+use xaqu_btrfs::superblock::PRIMARY_OFFSET;
+use xaqu_btrfs::volume::{Device, ReadKind, Volume};
+use xaqu_btrfs::{BtrfsError, BtrfsKey, ChunkMapEntry, crc32c};
 use libfuzzer_sys::fuzz_target;
 
 const PACKED: [&[u8]; 4] = [

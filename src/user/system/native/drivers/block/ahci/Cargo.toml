@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-ahci-driver"
-description = "The AHCI driver process: the block ring's driver end over the first SATA disk of an AHCI controller, on ferrix-rt"
+name = "xaqu-ahci-driver"
+description = "The AHCI driver process: the block ring's driver end over the first SATA disk of an AHCI controller, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,13 +14,13 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-ahci.workspace = true
-ferrix-blkring.workspace = true
-ferrix-blkserve.workspace = true
-ferrix-driver = { workspace = true, features = ["block"] }
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio-blk.workspace = true
+xaqu-ahci.workspace = true
+xaqu-blkring.workspace = true
+xaqu-blkserve.workspace = true
+xaqu-driver = { workspace = true, features = ["block"] }
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio-blk.workspace = true
 
 [lints]
 workspace = true

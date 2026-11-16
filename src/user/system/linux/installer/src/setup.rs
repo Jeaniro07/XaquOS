@@ -1,11 +1,11 @@
 //! The person's answers, carried from the live session to the installed
-//! system's first boot in `FERRIX/SETUP.TXT` on the installed disk's EFI
+//! system's first boot in `XAQU/SETUP.TXT` on the installed disk's EFI
 //! system partition (`docs/INSTALLER.md` §11, the live ISO).
 //!
 //! The live medium's volume carries the file as a placeholder of
 //! [`SETUP_BYTES`] bytes, so the installer fills it in place in its byte
 //! copy of the volume, as it rewrites `CMDLINE.TXT`, with no FAT writer.
-//! The installed system's `ferrix-setup.service` runs `ferrix-install
+//! The installed system's `xaqu-setup.service` runs `xaqu-install
 //! --apply` at every boot, before the session: it reads the file back and
 //! makes the system the person's -- the account uid 1000 renamed to their
 //! user name with their password seeded for `authd`, the computer's name,
@@ -15,7 +15,7 @@
 //!
 //! The password is never written: the installer hashes it with Argon2id at
 //! the parameters `xtask`'s seeds use, and the PHC string goes in the file
-//! and in `/lib/ferrix/auth/seed/<user>`, which `authd` imports once, when
+//! and in `/lib/xaqu/auth/seed/<user>`, which `authd` imports once, when
 //! the account has no record yet (`docs/AUTH.md` §5.3). The partition is
 //! read only by root.
 
@@ -25,13 +25,13 @@ use std::os::unix::fs::{PermissionsExt, chown, symlink};
 use std::path::Path;
 
 use crate::{SECTOR, fat_in_place, live_disk};
-use ferrix_install::disk;
-use ferrix_partition::ESP;
+use xaqu_install::disk;
+use xaqu_partition::ESP;
 
 /// The placeholder's size, and the most the answers take.
 pub const SETUP_BYTES: usize = 4096;
 /// The file's first line once filled in.
-const MAGIC: &str = "ferrix-setup 1";
+const MAGIC: &str = "xaqu-setup 1";
 /// The account the image's session runs as, by uid (`sessiond --user 1000`).
 const UID: u32 = 1000;
 
@@ -63,7 +63,7 @@ const RESERVED: &[&str] = &[
     "render",
     "users",
     "admin",
-    "ferrix-setup",
+    "xaqu-setup",
 ];
 
 impl Answers {
@@ -151,7 +151,7 @@ impl Answers {
 /// The password's PHC string: Argon2id at the seeds' parameters
 /// (`tools/common/xtask/src/auth.rs`), with a random salt.
 pub fn hash(password: &str) -> Result<String, String> {
-    let params = ferrix_argon2::Params {
+    let params = xaqu_argon2::Params {
         memory_kib: 19_456,
         passes: 2,
         lanes: 1,
@@ -161,11 +161,11 @@ pub fn hash(password: &str) -> Result<String, String> {
         .and_then(|mut random| random.read_exact(&mut salt))
         .map_err(|e| format!("/dev/urandom: {e}"))?;
     let blocks = params.blocks().map_err(|why| format!("{why:?}"))?;
-    let mut memory = vec![ferrix_argon2::Block::ZERO; blocks];
+    let mut memory = vec![xaqu_argon2::Block::ZERO; blocks];
     let mut tag = [0_u8; 32];
-    ferrix_argon2::hash(
+    xaqu_argon2::hash(
         &params,
-        &ferrix_argon2::Inputs {
+        &xaqu_argon2::Inputs {
             password: password.as_bytes(),
             salt: &salt,
             secret: &[],
@@ -175,7 +175,7 @@ pub fn hash(password: &str) -> Result<String, String> {
         &mut tag,
     )
     .map_err(|why| format!("hashing the password: {why:?}"))?;
-    let encoded = ferrix_argon2::phc::Encoded::new(params, &salt, &tag)
+    let encoded = xaqu_argon2::phc::Encoded::new(params, &salt, &tag)
         .map_err(|why| format!("the password's hash: {why:?}"))?;
     Ok(encoded.to_string())
 }
@@ -220,16 +220,16 @@ pub fn parse(bytes: &[u8]) -> Option<Filled> {
     (checked.check().is_ok() && filled.hash.starts_with("$argon2id$")).then_some(filled)
 }
 
-/// `ferrix-install --apply`: find this system's setup file and apply it.
+/// `xaqu-install --apply`: find this system's setup file and apply it.
 pub fn apply() -> Result<(), String> {
     let Some(filled) = find()? else {
-        println!("ferrix-setup: no answers on any EFI system partition; nothing to set up");
+        println!("xaqu-setup: no answers on any EFI system partition; nothing to set up");
         return Ok(());
     };
     apply_to(Path::new("/"), &filled)?;
     set_hostname(&filled.answers.hostname);
     println!(
-        "ferrix-setup: this system is {}'s, named {}, keyboard {}, time zone {}",
+        "xaqu-setup: this system is {}'s, named {}, keyboard {}, time zone {}",
         filled.answers.user,
         filled.answers.hostname,
         filled.answers.keyboard,
@@ -261,7 +261,7 @@ fn find() -> Result<Option<Filled>, String> {
                 continue;
             };
             if let Some(filled) = parse(&bytes) {
-                println!("ferrix-setup: the answers are on {path}'s EFI system partition");
+                println!("xaqu-setup: the answers are on {path}'s EFI system partition");
                 return Ok(Some(filled));
             }
         }
@@ -270,7 +270,7 @@ fn find() -> Result<Option<Filled>, String> {
 }
 
 /// Where the file is on the volume, as 8.3 names.
-pub const SETUP: &[&[u8; 11]] = &[b"FERRIX     ", b"SETUP   TXT"];
+pub const SETUP: &[&[u8; 11]] = &[b"XAQU     ", b"SETUP   TXT"];
 
 /// Apply `filled` to the system whose `/` is `root`. Every step leaves a
 /// file as it was when it already says what it should.
@@ -286,7 +286,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
         }
-        let new = path.with_extension("ferrix-setup");
+        let new = path.with_extension("xaqu-setup");
         fs::write(&new, text).map_err(|e| format!("{}: {e}", new.display()))?;
         fs::set_permissions(&new, fs::Permissions::from_mode(mode))
             .map_err(|e| format!("{}: {e}", new.display()))?;
@@ -321,7 +321,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
         .lines()
         .find(|line| line.split(':').nth(2) == Some(&UID.to_string()))
         .and_then(|line| line.split(':').next())
-        .unwrap_or("ferrix")
+        .unwrap_or("xaqu")
         .to_owned();
     let groups: Vec<String> = group
         .lines()
@@ -353,7 +353,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
 
     // The password, for authd to import once.
     write(
-        &at(&format!("lib/ferrix/auth/seed/{user}")),
+        &at(&format!("lib/xaqu/auth/seed/{user}")),
         &format!("{}\n", filled.hash),
         0o600,
     )?;
@@ -383,7 +383,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
     // The keyboard and the lock at the session's start, in the desktop's
     // configuration: a file of their own, sourced at its end.
     let mut installed = format!(
-        "# Written by ferrix-install --apply from the installer's answers.\n\
+        "# Written by xaqu-install --apply from the installer's answers.\n\
          input:kb_layout = {}\n",
         answers.keyboard
     );
@@ -392,7 +392,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
     }
     installed.push_str(
         "# The session starts locked: the person's password opens it.\n\
-         exec-once = /bin/busybox sh /etc/ferrix/login-lock.sh\n",
+         exec-once = /bin/busybox sh /etc/xaqu/login-lock.sh\n",
     );
     write(&at(INSTALLED_CONF), &installed, 0o644)?;
     let config = at("etc/hyprland.conf");
@@ -405,7 +405,7 @@ pub fn apply_to(root: &Path, filled: &Filled) -> Result<(), String> {
 }
 
 /// The installed system's own desktop lines.
-const INSTALLED_CONF: &str = "etc/ferrix/installed-hyprland.conf";
+const INSTALLED_CONF: &str = "etc/xaqu/installed-hyprland.conf";
 
 /// A `TZif` file's POSIX footer, as settingsd reads it.
 fn footer(bytes: &[u8]) -> Option<String> {
@@ -484,17 +484,17 @@ mod tests {
 
     #[test]
     fn applying_renames_the_account_twice_the_same() {
-        let root = std::env::temp_dir().join(format!("ferrix-setup-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("xaqu-setup-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join("etc")).expect("etc");
         std::fs::write(
             root.join("etc/passwd"),
-            "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\nauth:x:90:90:authd:/var/lib/ferrix/auth:/sbin/nologin\n",
+            "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\nauth:x:90:90:authd:/var/lib/xaqu/auth:/sbin/nologin\n",
         )
         .expect("passwd");
         std::fs::write(
             root.join("etc/group"),
-            "root:x:0:\nferrix:x:1000:\nauth:x:90:\nwheel:x:10:ferrix\n",
+            "root:x:0:\nxaqu:x:1000:\nauth:x:90:\nwheel:x:10:xaqu\n",
         )
         .expect("group");
         std::fs::write(
@@ -510,21 +510,21 @@ mod tests {
         apply_to(&root, &filled).expect("applied again");
         let passwd = std::fs::read_to_string(root.join("etc/passwd")).expect("passwd");
         assert!(passwd.contains("kira:x:1000:1000:Kira Example:/home/kira:/bin/zsh"));
-        assert!(!passwd.contains("ferrix:"));
+        assert!(!passwd.contains("xaqu:"));
         let group = std::fs::read_to_string(root.join("etc/group")).expect("group");
         assert!(group.contains("kira:x:1000:"));
         assert!(group.contains("wheel:x:10:kira"));
         let conf = std::fs::read_to_string(root.join("etc/hyprland.conf")).expect("conf");
         assert_eq!(
-            conf.matches("source = /etc/ferrix/installed-hyprland.conf")
+            conf.matches("source = /etc/xaqu/installed-hyprland.conf")
                 .count(),
             1
         );
         let installed =
-            std::fs::read_to_string(root.join("etc/ferrix/installed-hyprland.conf")).expect("ours");
+            std::fs::read_to_string(root.join("etc/xaqu/installed-hyprland.conf")).expect("ours");
         assert!(installed.contains("input:kb_layout = de"));
         assert!(installed.contains("login-lock.sh"));
-        let seed = std::fs::read_to_string(root.join("lib/ferrix/auth/seed/kira")).expect("seed");
+        let seed = std::fs::read_to_string(root.join("lib/xaqu/auth/seed/kira")).expect("seed");
         assert!(seed.starts_with("$argon2id$"));
         assert_eq!(
             std::fs::read_to_string(root.join("etc/hostname")).expect("hostname"),

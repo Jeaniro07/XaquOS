@@ -22,18 +22,18 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/nv-usermap.c at 580.173.02, under the MIT licence
  * above: the mapping context an NV_ESC_RM_MAP_MEMORY leaves on a file for
- * its later mmap (§4.4). Changes: nv-ferrix.h in place of nv-linux.h; the
- * NUMA-onlined page array is never recorded, since Ferrix never onlines
+ * its later mmap (§4.4). Changes: nv-xaqu.h in place of nv-linux.h; the
+ * NUMA-onlined page array is never recorded, since Xaqu never onlines
  * GPU memory as a NUMA node (§4.2).
  */
 
 #define  __NO_VERSION__
 
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 NV_STATUS NV_API_CALL nv_add_mapping_context_to_file(
     nv_state_t *nv,
@@ -96,7 +96,7 @@ NV_STATUS NV_API_CALL nv_add_mapping_context_to_file(
         os_mem_copy(nvamc->memArea.pRanges, nvuap->memArea.pRanges,
             sizeof(MemoryRange) * nvuap->memArea.numRanges);
 
-        /* Ferrix: no NUMA-onlined GPU memory, so no page array. */
+        /* Xaqu: no NUMA-onlined GPU memory, so no page array. */
         (void)nvl;
         nvamc->access_start = nvuap->access_start;
         nvamc->access_size = nvuap->access_size;

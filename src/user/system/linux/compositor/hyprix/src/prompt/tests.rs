@@ -34,8 +34,8 @@ fn ask(id: u64) -> ToSeat {
         area: "hostname".to_owned(),
         program: "/bin/settingsctl".to_owned(),
         parent: "/bin/zinc\u{202e}gnp.exe\u{2028}next".to_owned(),
-        account: "ferrix".to_owned(),
-        what: "would call the computer box; it is called ferrix".to_owned(),
+        account: "xaqu".to_owned(),
+        what: "would call the computer box; it is called xaqu".to_owned(),
     }
 }
 

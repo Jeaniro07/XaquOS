@@ -2,10 +2,10 @@
 
 use core::ptr;
 
-use ferrix_blkring::control::Block as StartBlock;
-use ferrix_native_abi::types::IoMappingSpec;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device, IoMapping};
+use xaqu_blkring::control::Block as StartBlock;
+use xaqu_native_abi::types::IoMappingSpec;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device, IoMapping};
 
 use crate::Step;
 

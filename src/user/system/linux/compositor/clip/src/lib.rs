@@ -1,7 +1,7 @@
 //! The clipboard from a program's side.
 //!
 //! `wl-copy` and `wl-paste` are what a person uses on Wayland, and neither
-//! is on Ferrix. This is both, in the smallest honest form:
+//! is on Xaqu. This is both, in the smallest honest form:
 //!
 //! * `clip copy <text>` offers the text as `text/plain;charset=utf-8`, sets
 //!   it as the selection, and stays alive to answer whoever pastes -- which

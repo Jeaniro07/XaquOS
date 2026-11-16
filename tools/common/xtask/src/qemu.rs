@@ -21,43 +21,43 @@ use crate::test_disk;
 use crate::{Error, Result};
 
 /// What the kernel prints when it has finished its self-checks.
-pub(crate) const SUCCESS_MARKER: &str = "FERRIX-BOOT-OK";
+pub(crate) const SUCCESS_MARKER: &str = "XAQU-BOOT-OK";
 /// What the panic handler prints. Seeing this ends the test immediately: the
 /// kernel will not recover, and waiting out the timeout only hides the reason.
-pub(crate) const PANIC_MARKER: &str = "FERRIX-PANIC";
+pub(crate) const PANIC_MARKER: &str = "XAQU-PANIC";
 /// What the kernel prints instead of [`SUCCESS_MARKER`] when
-/// `ferrix.checks=skip` had it bring every stage up without checking it. Never
+/// `xaqu.checks=skip` had it bring every stage up without checking it. Never
 /// a pass: a boot waiting for the success marker that sees this one fails at
 /// once, and says why, rather than waiting out its timeout.
-pub(crate) const UNCHECKED_MARKER: &str = "FERRIX-BOOT-UNCHECKED";
+pub(crate) const UNCHECKED_MARKER: &str = "XAQU-BOOT-UNCHECKED";
 
 /// What the kernel prints last before it powers the machine off
 /// (`src/kernel/src/console.rs`, `announce_power_off`), matched as a whole
 /// line. A QEMU that exits by itself without it was not powered off: a triple
 /// fault under `-no-reboot`, or a reset there, ends it as quietly (F-46).
-const POWER_OFF_MARKER: &str = "FERRIX-POWER-OFF";
+const POWER_OFF_MARKER: &str = "XAQU-POWER-OFF";
 /// What the kernel prints when its power-off write returned instead.
-const POWER_OFF_FAILED: &str = "FERRIX-POWER-OFF-FAILED";
+const POWER_OFF_FAILED: &str = "XAQU-POWER-OFF-FAILED";
 
 /// The option `--reset` puts in the image's `CMDLINE.TXT`.
-pub(crate) const RESET_OPTION: &str = "ferrix.onexit=reset";
+pub(crate) const RESET_OPTION: &str = "xaqu.onexit=reset";
 
 /// The option that has the kernel start pid 1 from the file at `path` in the
 /// image, rather than from the program built into it (`src/kernel/src/init.rs`):
 /// what `--init-path` puts in `CMDLINE.TXT`, and what a test that boots a
 /// program from a file puts there itself.
 pub(crate) fn init_option(path: &str) -> String {
-    format!("ferrix.init={path}")
+    format!("xaqu.init={path}")
 }
 
 /// What the kernel says once it has read that option.
-const RESET_ARMED: &str = "power    ferrix.onexit=reset: the machine resets when boot ends";
+const RESET_ARMED: &str = "power    xaqu.onexit=reset: the machine resets when boot ends";
 
 /// What it says as it acts on it.
-const RESETTING: &str = "power    resetting, as ferrix.onexit=reset asks";
+const RESETTING: &str = "power    resetting, as xaqu.onexit=reset asks";
 
 /// The loader's first line, which only a machine that really reset prints twice.
-const LOADER_BANNER: &str = "Ferrix loader ";
+const LOADER_BANNER: &str = "Xaqu loader ";
 /// How long to keep reading after the panic marker. The marker line names the
 /// failure; the lines after it say where and on which processor, and a log
 /// that stops at the marker loses them.
@@ -209,7 +209,7 @@ fn judge_boot_time(arch: Arch, args: &Args) -> Result<()> {
         && args.kernel_profile.is_none()
         && args.sets.is_empty()
         && args.init.is_none()
-        && std::env::var_os("FERRIX_QEMU_PLUGIN").is_none();
+        && std::env::var_os("XAQU_QEMU_PLUGIN").is_none();
     let ratchet = BOOT_FORM
         .with(core::cell::Cell::get)
         .filter(|_| plain)
@@ -284,7 +284,7 @@ pub(crate) fn test_boot_lines(
                         watched.log.display()
                     )));
                 }
-                println!("  {arch}: the machine reset, as ferrix.onexit=reset asked");
+                println!("  {arch}: the machine reset, as xaqu.onexit=reset asked");
             }
             println!("  {arch}: boot ok");
             judge_boot_time(arch, args)?;
@@ -384,7 +384,7 @@ pub(crate) fn judge(
     } else if let Some(problem) = crate::kaslr::problem(lines, off, declined) {
         return Err(failed(problem));
     }
-    let own_model = std::env::var_os("FERRIX_X86_CPU").is_none();
+    let own_model = std::env::var_os("XAQU_X86_CPU").is_none();
     let qemu = machine == Machine::QemuVirt;
     let user_kernel = crate::flags::this_run()?.value("personality") == Some("user");
     let built = if user_kernel {
@@ -814,7 +814,7 @@ fn user_gate(
 /// What a user kernel's boot must print (5714 (20)): the third text, its checks that are built,
 /// and its first processes. A flag names the value the line needs, or none for every boot.
 const USER_BOOT_LINES: &[(Option<(&str, &str)>, &str)] = &[
-    (None, "FERRIX-BOOT-UNCHECKED"),
+    (None, "XAQU-BOOT-UNCHECKED"),
     (None, "  build    profile="),
     (None, "  stage 5  "),
     (None, "  window   an unmap's "),
@@ -968,7 +968,7 @@ const R8_LINE: &str = " processors looked at their local APIC's mode before usin
 ///
 /// The kernel puts the first application processor in x2APIC mode where the
 /// processor offers it. A boot with one processor has no application
-/// processor, and a boot whose CPU model is replaced (`FERRIX_X86_CPU`, as
+/// processor, and a boot whose CPU model is replaced (`XAQU_X86_CPU`, as
 /// `boot-legacy` does with a model that offers no x2APIC) has none to put,
 /// so on those the line says 0 put and the check had nothing to do; every
 /// other boot must say 1 (2026-10-16: the line was demanded as "1 put" on
@@ -991,7 +991,7 @@ fn r8_problem(own_model: bool, lines: &[String]) -> Option<String> {
 }
 
 /// What check R8's processors line says instead in x2APIC mode
-/// (`ferrix.apic=x2apic`), where every processor is put there and none is
+/// (`xaqu.apic=x2apic`), where every processor is put there and none is
 /// switched back.
 const X2APIC_ALL: &str =
     "processors looked at their local APIC's mode before using it; all run in x2APIC mode";
@@ -1028,7 +1028,7 @@ fn remap_problem(
         ));
     }
     // Check R8 switches a processor back to xAPIC mode, which a boot in
-    // x2APIC mode (`ferrix.apic=x2apic`) has no use for: there every
+    // x2APIC mode (`xaqu.apic=x2apic`) has no use for: there every
     // processor must say it runs in x2APIC mode instead.
     let x2apic = lines.iter().any(|line| line.contains(X2APIC_ALL));
     for (text, problem) in REMAP_LINES {
@@ -1327,7 +1327,7 @@ const XSTATE_SURVIVED: &str = "without a fault";
 ///
 /// The `xstate` line has a quiet variant, for a processor with no `XSAVE`
 /// area in its frames, which the coverage suite's `qemu64` is meant to be
-/// and names with `FERRIX_X86_CPU`. [`x86_cpu`]'s model has AVX, so there
+/// and names with `XAQU_X86_CPU`. [`x86_cpu`]'s model has AVX, so there
 /// the line with the survived return is the evidence for `L.x86_64.122` the
 /// certification review asked be kept, and it must not go missing quietly.
 fn xstate_problem(arch: Arch, own_model: bool, lines: &[String]) -> Option<String> {
@@ -1353,12 +1353,12 @@ const DEVMGR_FAILED: &str = " failed";
 /// Every machine this tool boots has a virtio-blk disk for it. An image
 /// without `devmgr` prints that it was not started, which is not a failure.
 fn devmgr_problem(lines: &[String]) -> Option<String> {
-    // The kernel's report, not its line for `ferrix.unisolated`, which
+    // The kernel's report, not its line for `xaqu.unisolated`, which
     // comes first on a boot with the word, nor a user kernel's two lines
     // on starting it (`boot_authority::run`), which come before the count.
     let Some(line) = lines.iter().find(|line| {
         line.contains("  devmgr   ")
-            && !line.contains("ferrix.unisolated")
+            && !line.contains("xaqu.unisolated")
             && !line.contains("kept back")
             && !line.contains("started: its channels")
     }) else {
@@ -1382,17 +1382,17 @@ fn devmgr_problem(lines: &[String]) -> Option<String> {
     }
 }
 
-/// The kernel's line for `ferrix.unisolated` (`discovery/devmgr.rs`).
-const UNISOLATED_SAID: &str = "devmgr   ferrix.unisolated: devmgr may start drivers";
+/// The kernel's line for `xaqu.unisolated` (`discovery/devmgr.rs`).
+const UNISOLATED_SAID: &str = "devmgr   xaqu.unisolated: devmgr may start drivers";
 
 /// devmgr's line for each device it starts only under the word
 /// (`devmgr-proto::admission`).
 const UNISOLATED_STARTED: &str = "devmgr   UNISOLATED: ";
 
 /// devmgr's count of them.
-const UNISOLATED_COUNTED: &str = " devices started under ferrix.unisolated";
+const UNISOLATED_COUNTED: &str = " devices started under xaqu.unisolated";
 
-/// Why a boot's `ferrix.unisolated` lines are wrong, if they are
+/// Why a boot's `xaqu.unisolated` lines are wrong, if they are
 /// (`docs/DMA-GATE.md`, `L.device.58`, `L.device.59`).
 ///
 /// Every ARMv7-A image carries the word (outside the claim, the customer's
@@ -1429,7 +1429,7 @@ fn unisolated_problem(arch: Arch, lines: &[String]) -> Option<String> {
         .unwrap_or(0);
     if counted != started || (arch == Arch::Armv7a && started == 0) {
         return Some(format!(
-            "under ferrix.unisolated devmgr said {started} devices started unisolated and \
+            "under xaqu.unisolated devmgr said {started} devices started unisolated and \
              counted {counted}"
         ));
     }
@@ -1445,7 +1445,7 @@ fn unisolated_problem(arch: Arch, lines: &[String]) -> Option<String> {
 /// criterion states as degraded trusted mode — so it is not asked.
 ///
 /// Nor is an AArch64 boot that found its PCI hosts in the device tree, which
-/// `FERRIX_ARM_MACHINE=acpi=off` asks for: the kernel brings an `SMMUv3` up
+/// `XAQU_ARM_MACHINE=acpi=off` asks for: the kernel brings an `SMMUv3` up
 /// from ACPI's IORT alone (`src/kernel/src/iommu.rs`), so on that path it is
 /// ARMv7-A's case, and says so in the same degraded-trusted-mode line. The
 /// coverage suite boots it for the Pixel 7's path, which has no ACPI.
@@ -1916,7 +1916,7 @@ pub(crate) fn test_vfs(
             utilities,
             commands.len() + applets.len() + shell.len(),
             "uutils commands",
-            "the uutils family ran on Ferrix",
+            "the uutils family ran on Xaqu",
         ),
         (
             seam,
@@ -2977,7 +2977,7 @@ fn send_line(sender: &mpsc::Sender<String>, bytes: &[u8]) -> bool {
 fn skipped_its_checks(arch: Arch, log: &Path) -> Error {
     Error::new(format!(
         "{arch}: the kernel skipped its self-checks (`{UNCHECKED_MARKER}`): the command \
-         line asked for ferrix.checks=skip, and a boot that was waited on for \
+         line asked for xaqu.checks=skip, and a boot that was waited on for \
          `{SUCCESS_MARKER}` needs them run.\n  Serial output is in {}",
         log.display()
     ))
@@ -3216,10 +3216,10 @@ pub(crate) fn accelerator_arguments(
 ) -> Result<Vec<String>> {
     let mut arguments = vec!["-accel".to_owned(), accelerator.to_owned()];
 
-    if let Ok(plugin) = std::env::var("FERRIX_QEMU_PLUGIN") {
+    if let Ok(plugin) = std::env::var("XAQU_QEMU_PLUGIN") {
         if accelerator != "tcg" {
             return Err(Error::new(format!(
-                "FERRIX_QEMU_PLUGIN needs `--accel tcg`: a TCG plugin observes \
+                "XAQU_QEMU_PLUGIN needs `--accel tcg`: a TCG plugin observes \
                  translated blocks, and under {accelerator} the guest never \
                  translates any, so coverage would read as zero rather than as \
                  an error."
@@ -3271,12 +3271,12 @@ pub(crate) fn accelerator_arguments(
 /// one of leaf 0xD's sub-leaf 1 features, and answers the kernel's write of
 /// it by running the write again, forever (QEMU 9.2 and 10.2, 2026-09-30).
 ///
-/// `FERRIX_X86_CPU` replaces the model, as `FERRIX_ARM_CPU` does on Arm: the
+/// `XAQU_X86_CPU` replaces the model, as `XAQU_ARM_CPU` does on Arm: the
 /// coverage suite boots a processor with `RDRAND` and no `RDSEED` that way,
 /// which is the only one that takes `cpu::hardware_random`'s other
 /// instruction.
 pub(crate) fn x86_cpu(accelerator: &str) -> String {
-    if let Ok(model) = std::env::var("FERRIX_X86_CPU") {
+    if let Ok(model) = std::env::var("XAQU_X86_CPU") {
         return model;
     }
     let base = "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand,+rdseed,+ssse3,+sse4.1,+sse4.2,+popcnt,\
@@ -3327,10 +3327,10 @@ fn x86_model(args: &Args, binary: &Path, accelerator: &str) -> String {
 /// panicked the kernel. Ubuntu 24.04's QEMU is 8.2, which is what GitHub's
 /// runners install, and why CI's boot job failed from 2026-09-24. The
 /// kernel runs without SMAP, and says so; KVM uses the processor, which
-/// has no such fault, and `FERRIX_X86_CPU` still names any model at all.
+/// has no such fault, and `XAQU_X86_CPU` still names any model at all.
 pub(crate) fn x86_cpu_for(binary: &Path, accelerator: &str) -> String {
     let model = x86_cpu(accelerator);
-    if accelerator != "tcg" || std::env::var_os("FERRIX_X86_CPU").is_some() {
+    if accelerator != "tcg" || std::env::var_os("XAQU_X86_CPU").is_some() {
         return model;
     }
     match qemu_version(binary) {
@@ -3355,7 +3355,7 @@ fn qemu_version(binary: &Path) -> Option<(u32, u32)> {
 
 /// What `tools/common/fetch/fetch-qemu-linux.sh` builds QEMU with
 /// (`--with-pkgversion`), and so what its `--version` says in brackets.
-const PATCHED_QEMU: &str = "(ferrix-cfi";
+const PATCHED_QEMU: &str = "(xaqu-cfi";
 
 /// Refuse an x86-64 boot on a QEMU that does not block compatibility-format
 /// interrupts (F-57, `docs/NVIDIA.md` §12.3).
@@ -3405,7 +3405,7 @@ fn parse_qemu_version(text: &str) -> Option<(u32, u32)> {
 /// The PC QEMU emulates under `accelerator`: `q35`, with KVM's interrupt
 /// controller split so that the I/O APIC is QEMU's (QEMU refuses
 /// `intremap=on` beside a whole in-kernel irqchip, `x86-iommu.c`), and with
-/// `FERRIX_X86_MACHINE` added as `FERRIX_ARM_MACHINE` is added to `virt` --
+/// `XAQU_X86_MACHINE` added as `XAQU_ARM_MACHINE` is added to `virt` --
 /// `hpet=off` for a PC without an HPET, whose clock is then the TSC measured
 /// against the PIT.
 pub(crate) fn x86_machine(accelerator: &str) -> String {
@@ -3414,7 +3414,7 @@ pub(crate) fn x86_machine(accelerator: &str) -> String {
     } else {
         "q35"
     };
-    match std::env::var("FERRIX_X86_MACHINE") {
+    match std::env::var("XAQU_X86_MACHINE") {
         Ok(extra) => format!("{base},{extra}"),
         Err(_) => base.to_owned(),
     }
@@ -3450,12 +3450,12 @@ pub(crate) const INTEL_IOMMU_AW48: &str = "intel-iommu,intremap=on,eim=off,aw-bi
 ///
 /// `cortex-a72` is ARMv8.0 and so has no PAN -- the feature the kernel uses to
 /// keep EL1 out of user pages -- and QEMU exposes no property to add one to
-/// this model the way x86-64's `+smap` adds SMAP to `qemu64`. `FERRIX_ARM_CPU`
+/// this model the way x86-64's `+smap` adds SMAP to `qemu64`. `XAQU_ARM_CPU`
 /// swaps the model, which is how `docs/certification/FINDINGS.md` F-32
 /// demonstrates that path on `max` without changing what every Arm test runs
 /// on. ARMv7-A's Cortex-A7 cannot have PAN at all: it is an ARMv8.1 feature.
 pub(crate) fn arm_cpu(arch: Arch) -> String {
-    if let Ok(model) = std::env::var("FERRIX_ARM_CPU") {
+    if let Ok(model) = std::env::var("XAQU_ARM_CPU") {
         return model;
     }
     if arch == Arch::AArch64 {
@@ -3673,7 +3673,7 @@ fn qemu_command(
             // QEMU merges a second `-machine` into the first, so this adds to
             // `virt` rather than replacing it: `gic-version=3` for the GICv3
             // driver, `acpi=off` for the device-tree path the Pixel 7 takes.
-            if let Ok(extra) = std::env::var("FERRIX_ARM_MACHINE") {
+            if let Ok(extra) = std::env::var("XAQU_ARM_MACHINE") {
                 let _ = command.args(["-machine", &extra]);
             }
             attach_device_tree(&mut command, args);
@@ -3821,31 +3821,31 @@ fn attach_firmware_data(command: &mut Command, arch: Arch) {
 fn attach_rng(command: &mut Command, arch: Arch) {
     let rng = match arch {
         Arch::Armv7a => "virtio-rng-pci,disable-legacy=on",
-        Arch::X86_64 => "virtio-rng-pci,disable-legacy=on,iommu_platform=on,bus=ferrix.port0",
+        Arch::X86_64 => "virtio-rng-pci,disable-legacy=on,iommu_platform=on,bus=xaqu.port0",
         Arch::AArch64 => "virtio-rng-pci,disable-legacy=on,iommu_platform=on",
     };
     if arch == Arch::X86_64 {
         let _ = command.args([
             "-device",
-            "pcie-root-port,id=ferrix.port0,chassis=1,slot=1",
+            "pcie-root-port,id=xaqu.port0,chassis=1,slot=1",
             "-device",
-            "pcie-root-port,id=ferrix.port1,chassis=2,slot=2",
+            "pcie-root-port,id=xaqu.port1,chassis=2,slot=2",
             // Its DMA mask widened to 32 bits from its own 28, so the
             // AMD-Vi row's checks can aim its DMA at any frame of the
             // guest's memory (`iommu/amdvi_check.rs`).
             "-device",
-            "edu,bus=ferrix.port1,dma_mask=0xffffffff",
+            "edu,bus=xaqu.port1,dma_mask=0xffffffff",
             // QEMU's e1000e, both MSI and MSI-X, with QEMU's subsystem
             // (the properties `hw/net/e1000e.c` declares), which no real
             // 82574L carries: stage 10's held-off check runs on it
             // (`device::check::check_held_off`), and no driver does. Its
             // netdev is a hub port with nothing else on the hub.
             "-device",
-            "pcie-root-port,id=ferrix.port2,chassis=9,slot=9",
+            "pcie-root-port,id=xaqu.port2,chassis=9,slot=9",
             "-netdev",
-            "hubport,id=ferrix.nonet,hubid=9",
+            "hubport,id=xaqu.nonet,hubid=9",
             "-device",
-            "e1000e,bus=ferrix.port2,subsys_ven=0x1af4,subsys=0x1100,netdev=ferrix.nonet",
+            "e1000e,bus=xaqu.port2,subsys_ven=0x1af4,subsys=0x1100,netdev=xaqu.nonet",
             // A 64-bit prefetchable BAR of 8 GiB, which firmware can only
             // place above 4 GiB: what `device_aperture` must report whole
             // (`docs/NVIDIA.md` §12.1, check W1).
@@ -4633,7 +4633,7 @@ fn attach_root_disk(command: &mut Command, arch: Arch, args: &Args) -> Result<()
 }
 
 /// The serial number of the N150 box's drive under `test-n150`.
-pub(crate) const NVME_BOOT_SERIAL: &str = "ferrix-n150";
+pub(crate) const NVME_BOOT_SERIAL: &str = "xaqu-n150";
 
 /// Attach `image` as the machine's one boot disk: an NVMe drive on a root
 /// port of its own, first in the firmware's boot order, as the N150 box's
@@ -4652,9 +4652,9 @@ fn attach_boot_nvme(command: &mut Command, arch: Arch, image: &Path) {
             display(image)
         ),
         "-device",
-        "pcie-root-port,id=ferrix.n150.port,chassis=6,slot=6",
+        "pcie-root-port,id=xaqu.n150.port,chassis=6,slot=6",
         "-device",
-        &format!("nvme,drive=n150,serial={NVME_BOOT_SERIAL},bus=ferrix.n150.port,bootindex=0"),
+        &format!("nvme,drive=n150,serial={NVME_BOOT_SERIAL},bus=xaqu.n150.port,bootindex=0"),
     ]);
 }
 
@@ -4679,9 +4679,9 @@ fn attach_boot_sata(command: &mut Command, arch: Arch, image: &Path) {
 }
 
 /// The serial number of the NVMe drive the root is on under `--nvme`.
-pub(crate) const NVME_ROOT_SERIAL: &str = "ferrix-nvme-root";
+pub(crate) const NVME_ROOT_SERIAL: &str = "xaqu-nvme-root";
 /// The serial number of `test-nvme`'s scratch drive.
-pub(crate) const NVME_SCRATCH_SERIAL: &str = "ferrix-nvme-4k";
+pub(crate) const NVME_SCRATCH_SERIAL: &str = "xaqu-nvme-4k";
 
 /// Attach the drive `btrfsroot` as an NVMe drive below a PCIe switch: a
 /// root port, the switch's upstream port, one downstream port, and the
@@ -4700,19 +4700,19 @@ fn attach_nvme_root(command: &mut Command, arch: Arch) {
     );
     let _ = command.args([
         "-device",
-        "pcie-root-port,id=ferrix.nvme.root,chassis=3,slot=3",
+        "pcie-root-port,id=xaqu.nvme.root,chassis=3,slot=3",
         "-device",
-        "x3130-upstream,id=ferrix.nvme.up,bus=ferrix.nvme.root",
+        "x3130-upstream,id=xaqu.nvme.up,bus=xaqu.nvme.root",
         "-device",
-        "xio3130-downstream,id=ferrix.nvme.down,bus=ferrix.nvme.up,chassis=4,slot=4",
+        "xio3130-downstream,id=xaqu.nvme.down,bus=xaqu.nvme.up,chassis=4,slot=4",
         "-device",
-        &format!("nvme,drive=btrfsroot,serial={NVME_ROOT_SERIAL},bus=ferrix.nvme.down"),
+        &format!("nvme,drive=btrfsroot,serial={NVME_ROOT_SERIAL},bus=xaqu.nvme.down"),
     ]);
 }
 
 /// Attach `test-nvme`'s scratch image as a second NVMe drive, with
 /// 4096-byte logical blocks, on a root port of its own (the root bus on
-/// AArch64, unless `FERRIX_NVME_BELOW_PORT` is set); through blkdebug
+/// AArch64, unless `XAQU_NVME_BELOW_PORT` is set); through blkdebug
 /// when the gate injects a fault, and with QEMU's trace of the NVMe model
 /// when it asks for the witness.
 fn attach_nvme_scratch(command: &mut Command, arch: Arch, args: &Args) {
@@ -4758,12 +4758,12 @@ fn attach_nvme_scratch(command: &mut Command, arch: Arch, args: &Args) {
     // function below a bridge there has its DMA faulted by the SMMUv3
     // (`docs/BACKLOG.md`, found by this gate on 2026-10-10), and nothing
     // else on that machine sits below one.
-    let bus = if std::env::var_os("FERRIX_NVME_BELOW_PORT").is_some() || arch == Arch::X86_64 {
+    let bus = if std::env::var_os("XAQU_NVME_BELOW_PORT").is_some() || arch == Arch::X86_64 {
         let _ = command.args([
             "-device",
-            "pcie-root-port,id=ferrix.nvme.port,chassis=5,slot=5",
+            "pcie-root-port,id=xaqu.nvme.port,chassis=5,slot=5",
         ]);
-        ",bus=ferrix.nvme.port"
+        ",bus=xaqu.nvme.port"
     } else {
         ""
     };
@@ -4776,7 +4776,7 @@ fn attach_nvme_scratch(command: &mut Command, arch: Arch, args: &Args) {
     ]);
 }
 
-/// Attach `home`, a btrfs volume labelled `ferrix-home`, written through:
+/// Attach `home`, a btrfs volume labelled `xaqu-home`, written through:
 /// the kernel mounts it at `/home` by its label, wherever it is on the bus.
 fn attach_home(command: &mut Command, arch: Arch, home: &Path, said: &str) {
     println!("  {arch}: btrfs home {}, {said}", display(home));
@@ -4917,7 +4917,7 @@ pub(crate) fn accelerator(arch: Arch, binary: &Path, requested: Option<&str>) ->
 /// What a boot runs under when `--accel` is not given: `kvm` for an x86-64
 /// guest on an x86-64 Linux host whose QEMU has it and whose `/dev/kvm` this
 /// user may open, outside CI (`$CI` set) and outside a coverage run
-/// (`FERRIX_QEMU_PLUGIN` set); `tcg` everywhere else.
+/// (`XAQU_QEMU_PLUGIN` set); `tcg` everywhere else.
 ///
 /// GitHub's Linux runners have a `/dev/kvm` these days, which is why CI is
 /// asked about by name rather than left to the device: its boots stay
@@ -4928,7 +4928,7 @@ fn default_accelerator(arch: Arch, binary: &Path) -> &'static str {
     let kvm = cfg!(all(target_os = "linux", target_arch = "x86_64"))
         && arch == Arch::X86_64
         && std::env::var_os("CI").is_none()
-        && std::env::var_os("FERRIX_QEMU_PLUGIN").is_none()
+        && std::env::var_os("XAQU_QEMU_PLUGIN").is_none()
         && std::fs::OpenOptions::new()
             .read(true)
             .write(true)
@@ -4958,7 +4958,7 @@ fn default_accelerator(arch: Arch, binary: &Path) -> &'static str {
 /// processor that walk intermittently answers "not mapped" for a mapping that
 /// is there, and the fault it raises reaches the guest as error code 12 at
 /// address 0: `/sbin/blk` dies reading its virtio registers, and stage 10's
-/// driver check panics. Ferrix's own page tables and `CR3` were checked at the
+/// driver check panics. Xaqu's own page tables and `CR3` were checked at the
 /// fault and are right; `docs/BACKLOG.md` has the analysis.
 ///
 /// A memory-access exit is only taken after the processor's own walk of the
@@ -4992,7 +4992,7 @@ pub(crate) fn processors(accelerator: &str, binary: &Path, args: &Args) -> u32 {
 
 /// Whether `binary` is a QEMU whose WHPX emulator translates a guest's
 /// addresses with Hyper-V's walk: `fetch-qemu-windows.sh`'s, which says so
-/// in its `--version` (`QEMU emulator version 11.1.0 (ferrix: whpx-gva)`).
+/// in its `--version` (`QEMU emulator version 11.1.0 (xaqu: whpx-gva)`).
 pub(crate) fn translates_with_hyper_v(binary: &Path) -> bool {
     Command::new(binary)
         .arg("--version")
@@ -5703,7 +5703,7 @@ mod tests {
     #[test]
     fn only_the_patched_qemu_blocks_compatibility_format() {
         assert!(blocks_compatibility_format(
-            "QEMU emulator version 10.2.1 (ferrix-cfi)\nCopyright (c) 2003-2025\n"
+            "QEMU emulator version 10.2.1 (xaqu-cfi)\nCopyright (c) 2003-2025\n"
         ));
         assert!(!blocks_compatibility_format(
             "QEMU emulator version 10.2.1 (Debian 1:10.2.1+ds-1ubuntu3.2)\n"
@@ -5781,7 +5781,7 @@ mod tests {
             None,
             "PSCI SYSTEM_OFF"
         );
-        let crlf = lines(&[SUCCESS_MARKER, "FERRIX-POWER-OFF\r"]);
+        let crlf = lines(&[SUCCESS_MARKER, "XAQU-POWER-OFF\r"]);
         assert_eq!(
             problem(Arch::Armv7a, &crlf, true, Some(0)),
             None,
@@ -5791,12 +5791,12 @@ mod tests {
         let faulted = lines(&["boot", SUCCESS_MARKER, "reboot: Power down"]);
         let why = problem(Arch::X86_64, &faulted, true, Some(0)).unwrap_or_default();
         assert!(
-            why.contains("never printed FERRIX-POWER-OFF"),
+            why.contains("never printed XAQU-POWER-OFF"),
             "a triple fault: {why}"
         );
         let why = problem(Arch::AArch64, &faulted, true, Some(0)).unwrap_or_default();
         assert!(
-            why.contains("never printed FERRIX-POWER-OFF"),
+            why.contains("never printed XAQU-POWER-OFF"),
             "a PSCI reset: {why}"
         );
         let before = lines(&[POWER_OFF_MARKER, SUCCESS_MARKER]);
@@ -5804,7 +5804,7 @@ mod tests {
             problem(Arch::Armv7a, &before, true, Some(0)).is_some(),
             "only after the marker"
         );
-        let quoted = lines(&[SUCCESS_MARKER, "echo FERRIX-POWER-OFF"]);
+        let quoted = lines(&[SUCCESS_MARKER, "echo XAQU-POWER-OFF"]);
         assert!(
             problem(Arch::Armv7a, &quoted, true, Some(0)).is_some(),
             "a whole line only"
@@ -5845,7 +5845,7 @@ mod tests {
         assert!(devmgr_problem(&failed).is_some(), "one failed");
         let absent = lines(&["  devmgr   not started: the image carries no /sbin/devmgr"]);
         assert_eq!(devmgr_problem(&absent), None, "an image without devmgr");
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(devmgr_problem(&silent).is_some(), "no line at all");
     }
 
@@ -5861,16 +5861,16 @@ mod tests {
             "the quiet variant"
         );
         assert!(
-            xstate_problem(x86, true, &lines(&["FERRIX-BOOT-OK stages 1-12"])).is_some(),
+            xstate_problem(x86, true, &lines(&["XAQU-BOOT-OK stages 1-12"])).is_some(),
             "no line at all"
         );
         assert_eq!(
             xstate_problem(x86, false, &lines(&[quiet])),
             None,
-            "a model FERRIX_X86_CPU named"
+            "a model XAQU_X86_CPU named"
         );
         assert_eq!(
-            xstate_problem(Arch::AArch64, true, &lines(&["FERRIX-BOOT-OK"])),
+            xstate_problem(Arch::AArch64, true, &lines(&["XAQU-BOOT-OK"])),
             None,
             "another architecture"
         );
@@ -5906,7 +5906,7 @@ mod tests {
                 &format!(
                     "  pci      2 functions, 1 virtio transports, {count} entropy bytes read by DMA, 1 completions by MSI-X"
                 ),
-                "FERRIX-BOOT-OK stages 1-12",
+                "XAQU-BOOT-OK stages 1-12",
             ]);
             assert_eq!(entropy_problem(&boot, true, false), None, "{count} bytes");
         }
@@ -6063,7 +6063,7 @@ mod tests {
     fn a_boot_that_read_none_or_never_said_fails() {
         let none = lines(&["  pci      1 virtio transports, 0 entropy bytes read by DMA"]);
         assert!(entropy_problem(&none, true, false).is_some(), "zero bytes");
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(
             entropy_problem(&silent, true, false).is_some(),
             "no line at all"
@@ -6102,7 +6102,7 @@ mod tests {
             "  iommu    26 entry writes and 10 fresh tables noted and cleaned to memory on 1 VT-d units that do not snoop; 12 changes each found them cleaned before its own publish point",
         ]);
         assert_eq!(cleaning_problem(Arch::X86_64, &cleaned), None);
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(cleaning_problem(Arch::X86_64, &silent).is_some());
         assert_eq!(
             cleaning_problem(Arch::AArch64, &silent),
@@ -6219,7 +6219,7 @@ mod tests {
             "  iommu    4 context-cache and 16 IOTLB invalidations queued and each waited for, none by register on 1 VT-d units; 0 failed as check R7 made it, its 0 pages kept; a queue left on as firmware leaves it turned off on 1",
         ]);
         assert!(queue_problem(Arch::X86_64, &none_failed).is_some());
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(queue_problem(Arch::X86_64, &silent).is_some());
         assert_eq!(queue_problem(Arch::AArch64, &silent), None, "no VT-d");
     }
@@ -6230,9 +6230,9 @@ mod tests {
             "  msix-off 0000:03:00.0 held off: Enable 0, table and pending bits granted, one MSI vector minted, MSI-X turned on refused",
         ]);
         assert_eq!(held_off_problem(Arch::X86_64, &passed), None);
-        assert!(held_off_problem(Arch::X86_64, &lines(&["FERRIX-BOOT-OK"])).is_some());
+        assert!(held_off_problem(Arch::X86_64, &lines(&["XAQU-BOOT-OK"])).is_some());
         assert_eq!(
-            held_off_problem(Arch::AArch64, &lines(&["FERRIX-BOOT-OK"])),
+            held_off_problem(Arch::AArch64, &lines(&["XAQU-BOOT-OK"])),
             None,
             "no e1000e on Arm"
         );
@@ -6256,7 +6256,7 @@ mod tests {
                 "{unexercised}"
             );
         }
-        assert!(msi_problem(Arch::X86_64, &lines(&["FERRIX-BOOT-OK"])).is_some());
+        assert!(msi_problem(Arch::X86_64, &lines(&["XAQU-BOOT-OK"])).is_some());
         let arm = devices("0 MSI capabilities (0 vectors minted, 0 deliveries)");
         assert_eq!(msi_problem(Arch::AArch64, &arm), None, "no edu on Arm");
     }
@@ -6281,7 +6281,7 @@ mod tests {
             None,
             "no testdev on Arm"
         );
-        assert!(config_problem(Arch::AArch64, &lines(&["FERRIX-BOOT-OK"])).is_some());
+        assert!(config_problem(Arch::AArch64, &lines(&["XAQU-BOOT-OK"])).is_some());
         let unbreached = lines(&[
             "  config   4 apertures reported whole by device_aperture, 0 above 4 GiB and longer than it; 9 reads of 2 functions answered as enumerated",
         ]);
@@ -6314,7 +6314,7 @@ mod tests {
             "  iommu    1 VT-d units, 0 SMMUv3s; 10 PCI functions behind one, 2 bypassing, 0 unresolved",
         ]);
         assert!(iommu_problem(&bypassing).is_some(), "two bypassing");
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(iommu_problem(&silent).is_some(), "no line at all");
         let held = lines(&[
             "  iommu    2 VT-d units, 0 SMMUv3s; 6 PCI functions behind one, 1 of them untranslated, 0 bypassing, 0 unresolved",
@@ -6374,7 +6374,7 @@ mod tests {
             fault_problem(Arch::AArch64, &none, false).is_some(),
             "nothing faulted"
         );
-        let silent = lines(&["FERRIX-BOOT-OK stages 1-12"]);
+        let silent = lines(&["XAQU-BOOT-OK stages 1-12"]);
         assert!(
             fault_problem(Arch::X86_64, &silent, false).is_some(),
             "no line at all"
@@ -6414,7 +6414,7 @@ mod tests {
     /// under WHPX: the released one, and ours from before 0005, keep one.
     #[test]
     fn only_a_qemu_that_says_whpx_gva_translates_with_hyper_v() {
-        let ours = "QEMU emulator version 11.1.0 (ferrix: whpx-gva)\nCopyright (c) 2003-2026";
+        let ours = "QEMU emulator version 11.1.0 (xaqu: whpx-gva)\nCopyright (c) 2003-2026";
         assert!(version_translates(ours));
         assert!(!version_translates(
             "QEMU emulator version 11.1.0 (v11.1.0-dirty)\n"
@@ -6436,9 +6436,9 @@ mod tests {
                 .map(|line| (*line).to_owned())
                 .collect::<Vec<_>>()
         };
-        let said = "  devmgr   ferrix.unisolated: devmgr may start drivers of devices whose DMA";
-        let one = "devmgr   UNISOLATED: net 00:01.0 started under ferrix.unisolated: its DMA";
-        let count = "devmgr   1 devices started under ferrix.unisolated: their drivers are";
+        let said = "  devmgr   xaqu.unisolated: devmgr may start drivers of devices whose DMA";
+        let one = "devmgr   UNISOLATED: net 00:01.0 started under xaqu.unisolated: its DMA";
+        let count = "devmgr   1 devices started under xaqu.unisolated: their drivers are";
         assert_eq!(
             unisolated_problem(Arch::Armv7a, &lines(&[said, one, count])),
             None

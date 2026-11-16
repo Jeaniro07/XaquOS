@@ -1,9 +1,9 @@
 //! The virtio-snd driver process: a ring-3 program that serves one sound
 //! card to the kernel's audio core.
 //!
-//! Everything that knows anything is a library. `ferrix-virtio-snd` drives
+//! Everything that knows anything is a library. `xaqu-virtio-snd` drives
 //! the device and turns its completions into the messages the core reads, and
-//! `ferrix-sndctl` is the conversation with the core; both are tested on the
+//! `xaqu-sndctl` is the conversation with the core; both are tested on the
 //! host. This program is the handles those libraries were written to be
 //! wrapped in (`docs/AUDIO.md` §3.2 and §3.3):
 //!
@@ -32,30 +32,30 @@ use core::mem::ManuallyDrop;
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_sndctl::message::{MAX_BYTES, MAX_PUBLISHED, Message, PORT_RIGHTS, Ready};
-use ferrix_virtio::QueueMemory;
-use ferrix_virtio::pci::{CommonConfig, NO_VECTOR};
-use ferrix_virtio::snd::DeviceConfig;
-use ferrix_virtio_snd::{
+use xaqu_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_sndctl::message::{MAX_BYTES, MAX_PUBLISHED, Message, PORT_RIGHTS, Ready};
+use xaqu_virtio::QueueMemory;
+use xaqu_virtio::pci::{CommonConfig, NO_VECTOR};
+use xaqu_virtio::snd::DeviceConfig;
+use xaqu_virtio_snd::{
     Control, DevicePages, Driver, ISR_QUEUE, MAX_BUFFER_PAGES, Options, Parts, SCRATCH_BYTES,
     Scratch, Teardown, Transport, WATCH_NANOS,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -354,7 +354,7 @@ impl Block {
     }
 }
 
-/// The device as `ferrix-virtio-snd` drives it.
+/// The device as `xaqu-virtio-snd` drives it.
 struct Registers {
     common: Block,
     notify: Block,
@@ -428,7 +428,7 @@ impl Transport for Registers {
     /// Sleep a little rather than spin: the device's answer comes from
     /// QEMU's main loop, which a spinning processor only takes time from.
     fn spin(&mut self) {
-        match ferrix_rt::linux::monotonic_nanos() {
+        match xaqu_rt::linux::monotonic_nanos() {
             Ok(now) => {
                 let _ = self.nap.wait(Deadline::At(now.saturating_add(NAP_NANOS)));
             }
@@ -708,7 +708,7 @@ fn watch(driver: &Snd) -> Deadline {
     if driver.in_flight() == 0 {
         return Deadline::Never;
     }
-    match ferrix_rt::linux::monotonic_nanos() {
+    match xaqu_rt::linux::monotonic_nanos() {
         Ok(now) => Deadline::At(now.saturating_add(WATCH_NANOS)),
         Err(_) => Deadline::Never,
     }

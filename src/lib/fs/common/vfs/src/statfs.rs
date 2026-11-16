@@ -27,8 +27,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::mem::{offset_of, size_of};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{ArmStatfs, ArmStatfs64, ST_VALID, Statfs};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{ArmStatfs, ArmStatfs64, ST_VALID, Statfs};
 
 use crate::Result;
 use crate::node::StatFs;

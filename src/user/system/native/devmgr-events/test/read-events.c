@@ -2,7 +2,7 @@
  * read-events: a reader of devmgr-events (docs/DESKTOP.md §4.2), for
  * `cargo xtask test-restart --boot crashloop`.
  *
- * Connects to the abstract AF_UNIX name ferrix.devmgr.events -- trying
+ * Connects to the abstract AF_UNIX name xaqu.devmgr.events -- trying
  * again each 100 ms until the helper listens -- and writes every line the
  * helper sends to standard output, each after "devmgr-event: ". It exits 0
  * once a line starts with the word given as its first argument, and 1 when
@@ -21,7 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 
-static const char NAME[] = "ferrix.devmgr.events";
+static const char NAME[] = "xaqu.devmgr.events";
 
 static double now(void)
 {

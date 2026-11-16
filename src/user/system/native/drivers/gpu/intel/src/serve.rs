@@ -1,5 +1,5 @@
 //! The render node, served: the chardev control (`docs/NVIDIA.md` §4.4),
-//! the front end of `ferrix-intel-xelp` over a back end, and one event loop
+//! the front end of `xaqu-intel-xelp` over a back end, and one event loop
 //! on a port.
 //!
 //! The driver asks for its device's chardev control, says HELLO listing the
@@ -17,25 +17,25 @@
 //! image carries (consultant C2, ledger 2352).
 
 use core::fmt;
-use ferrix_rt::log::Level;
+use xaqu_rt::log::Level;
 
-use ferrix_chardevctl::message::{
+use xaqu_chardevctl::message::{
     self, Hello, MAP_VMO, MAP_WRITE_COMBINING, MAX_NODES, Message, Op, Request, VERSION_INTERRUPTS,
 };
-use ferrix_chardevctl::node::RENDER_MINOR;
-use ferrix_intel_xelp::frontend::{Backend, Frontend, Host, Installed};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{DMABUF_CLOEXEC, DMABUF_WRITABLE, SYNC_CLOEXEC};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::chardev;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object};
-use ferrix_rt::native::port::Port;
-use ferrix_rt::native::vmo::Vmo;
+use xaqu_chardevctl::node::RENDER_MINOR;
+use xaqu_intel_xelp::frontend::{Backend, Frontend, Host, Installed};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{DMABUF_CLOEXEC, DMABUF_WRITABLE, SYNC_CLOEXEC};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::chardev;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object};
+use xaqu_rt::native::port::Port;
+use xaqu_rt::native::vmo::Vmo;
 
 /// The port key of the control channel's signals.
 pub(crate) const KEY_CONTROL: u64 = 1;
@@ -66,7 +66,7 @@ fn with_wake(port: &Port<Kernel>, deadline: Option<u64>) -> Option<u64> {
     if due == 0 {
         return deadline;
     }
-    if ferrix_rt::linux::monotonic_nanos().unwrap_or(0) >= due {
+    if xaqu_rt::linux::monotonic_nanos().unwrap_or(0) >= due {
         WAKE_AT.store(0, Ordering::Relaxed);
         let _ = port.queue(KEY_WAKE, [0, 0]);
         return deadline;
@@ -74,9 +74,9 @@ fn with_wake(port: &Port<Kernel>, deadline: Option<u64>) -> Option<u64> {
     Some(deadline.map_or(due, |deadline| deadline.min(due)))
 }
 
-/// A line of the driver's log at `level` (`ferrix_rt::log`).
+/// A line of the driver's log at `level` (`xaqu_rt::log`).
 pub(crate) fn say(level: Level, arguments: fmt::Arguments<'_>) {
-    ferrix_rt::log::line(level, arguments);
+    xaqu_rt::log::line(level, arguments);
 }
 
 /// A back end's object memory, as the chardev core needs it: the VMO that
@@ -142,7 +142,7 @@ pub(crate) struct ChardevHost {
     control: Channel<Kernel>,
     /// The effective user id of the request being answered.
     euid: u32,
-    /// The ioctl counts, when `ferrix.intelgpu.ioctlstat` asks for them.
+    /// The ioctl counts, when `xaqu.intelgpu.ioctlstat` asks for them.
     stats: Option<IoctlStats>,
 }
 
@@ -166,7 +166,7 @@ struct IoctlSlot {
     reply_ns: u64,
 }
 
-/// The render node's ioctls counted by number (`ferrix.intelgpu.ioctlstat`,
+/// The render node's ioctls counted by number (`xaqu.intelgpu.ioctlstat`,
 /// `docs/INTEL-GPU.md` §13): calls, the driver's time in each, the copies
 /// and replies they cost, and the loop's busy time, said every 10 s. A
 /// call's time as its program sees it is this plus the kernel's forwarding,
@@ -245,7 +245,7 @@ impl IoctlStats {
     fn awake_long(&self, now: u64, what: &str) {
         let ms = now.saturating_sub(self.awake_at) / 1_000_000;
         if ms >= 100 {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: ioctlstat the loop was awake {ms} ms on {what} (last ioctl {:#04x} {})",
                 self.last_cmd & 0xff,
                 ioctl_name((self.last_cmd & 0xff) as u8)
@@ -275,7 +275,7 @@ impl IoctlStats {
         let calls: u64 = self.slots.iter().map(|slot| u64::from(slot.calls)).sum();
         let ns: u64 = self.slots.iter().map(|slot| slot.ns).sum();
         let span_ms = (span / 1_000_000).max(1);
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: ioctlstat {} ms: {} ioctls ({}/s), driver {} us in them ({} per mille of a core), loop busy {} per mille, {} copies ({} KiB), {} replies",
             span_ms,
             calls,
@@ -291,7 +291,7 @@ impl IoctlStats {
             if slot.calls == 0 {
                 continue;
             }
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "intel: ioctlstat {:#04x} {}: {} calls, {} held, avg {} ns ({} to the reply), max {} us",
                 number,
                 ioctl_name(number as u8),
@@ -361,13 +361,13 @@ impl ChardevHost {
     #[allow(dead_code, reason = "the keeper and intel-fake do not count")]
     pub(crate) fn count_ioctls(&mut self) {
         self.stats = Some(IoctlStats::new(now_ns()));
-        ferrix_rt::info!("intel: ioctl counts every 10 s (ferrix.intelgpu.ioctlstat)");
+        xaqu_rt::info!("intel: ioctl counts every 10 s (xaqu.intelgpu.ioctlstat)");
     }
 }
 
 /// `CLOCK_MONOTONIC` in nanoseconds.
 fn now_ns() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 impl<M: AsVmo> Host<M> for ChardevHost {
@@ -461,7 +461,7 @@ impl<M: AsVmo> Host<M> for ChardevHost {
     }
 
     fn now_ns(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn privileged(&self, _request: u64) -> bool {
@@ -481,7 +481,7 @@ impl<M: AsVmo> Host<M> for ChardevHost {
 /// the kernel's reason said.
 pub(crate) fn publish(device: &Device<Kernel>, location: u32) -> Result<ChardevHost, Stopped> {
     let control = device.chardev_control().map_err(|error| {
-        ferrix_rt::err!("intel: no chardev control ({error:?})");
+        xaqu_rt::err!("intel: no chardev control ({error:?})");
         Stopped::Control
     })?;
     let mut minors = [0; MAX_NODES];
@@ -508,7 +508,7 @@ pub(crate) fn publish(device: &Device<Kernel>, location: u32) -> Result<ChardevH
         .map_err(|_| Stopped::Hello)?;
     match Message::decode(bytes.get(..received.bytes).unwrap_or(&[])) {
         Ok(Message::Ready(count)) => {
-            ferrix_rt::info!("intel: render node published ({count} node)");
+            xaqu_rt::info!("intel: render node published ({count} node)");
             Ok(ChardevHost {
                 control,
                 euid: 0,
@@ -516,7 +516,7 @@ pub(crate) fn publish(device: &Device<Kernel>, location: u32) -> Result<ChardevH
             })
         }
         Ok(Message::Refused(refusal)) => {
-            ferrix_rt::err!("intel: render node refused: {refusal}");
+            xaqu_rt::err!("intel: render node refused: {refusal}");
             Err(Stopped::Refused)
         }
         _ => Err(Stopped::Hello),
@@ -631,7 +631,7 @@ where
         };
         match Message::decode(bytes.get(..received.bytes).unwrap_or(&[])) {
             Ok(Message::Request(request)) => answer(host, frontend, &request),
-            _ => ferrix_rt::warn!("intel: a control message that is not a REQUEST"),
+            _ => xaqu_rt::warn!("intel: a control message that is not a REQUEST"),
         }
     }
 }

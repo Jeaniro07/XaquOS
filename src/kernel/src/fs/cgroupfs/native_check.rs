@@ -20,14 +20,14 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::PACKET_SIGNAL;
-use ferrix_vfs::OpenFlags;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::PACKET_SIGNAL;
+use xaqu_vfs::OpenFlags;
 
 use super::{Checked, Harness};
 use crate::object::Object;

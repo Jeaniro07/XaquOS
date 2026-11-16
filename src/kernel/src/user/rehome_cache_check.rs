@@ -15,9 +15,9 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vfs::Errno;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vfs::Errno;
+use xaqu_vma::VmaFlags;
 
 use crate::mm;
 use crate::object::job::Job;
@@ -730,10 +730,10 @@ fn check_a_poisoned_read() -> Result<(), &'static str> {
 /// for the frames other processors free meanwhile. Sized by blocks, not
 /// frames: a list of every free frame was 64 MiB of heap on a 16 GiB
 /// machine, more than the heap's largest block, and the check stopped the
-/// boot on its own list (CI's "rustc on Ferrix", 2026-11-08).
+/// boot on its own list (CI's "rustc on Xaqu", 2026-11-08).
 fn held_room(free: u64) -> usize {
-    let largest = free >> ferrix_frame::MAX_ORDER;
-    let spare = 1024 * (u64::from(ferrix_frame::MAX_ORDER) + 1);
+    let largest = free >> xaqu_frame::MAX_ORDER;
+    let spare = 1024 * (u64::from(xaqu_frame::MAX_ORDER) + 1);
     usize::try_from(largest.saturating_mul(2).saturating_add(spare)).unwrap_or(usize::MAX / 32)
 }
 
@@ -741,7 +741,7 @@ fn held_room(free: u64) -> usize {
 /// `held` until it is full: each as `(frame, order)`, given back by
 /// [`mm::deallocate_frames`] at its order.
 fn hold_every_free_frame(held: &mut Vec<(u64, u8)>) {
-    for order in (0..=ferrix_frame::MAX_ORDER).rev() {
+    for order in (0..=xaqu_frame::MAX_ORDER).rev() {
         while held.len() < held.capacity() {
             match mm::allocate_frames(order) {
                 Some(frame) => held.push((frame, order)),

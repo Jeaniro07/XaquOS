@@ -4,7 +4,7 @@ The customer's priority one from 2026-09-27: *"we seriously need to bring down
 test run time."* This is phase 1's record -- where a landing gate's time goes --
 and the cuts it points to. Cut since: the Arm firmware waits (item 4),
 the waits on finished guests (item 3, "Cut 2") and the architectures one
-after another (item 2, "Cut 3"). Owner: os-98 (was ferrix-90); phase 3,
+after another (item 2, "Cut 3"). Owner: os-98 (was xaqu-90); phase 3,
 from 2026-10-01, os-5d.
 
 Targets to argue with (the coordinator's): a standard item gate within 5 min
@@ -15,7 +15,7 @@ catches, a TCG variant stays in CI.
 ## Measured, 2026-09-27
 
 On main 11532464, one step at a time in a worktree of its own
-(`~/ferrix-logs/gate-time/`: `measure.sh`, `summary.txt`, and a log per step
+(`~/xaqu-logs/gate-time/`: `measure.sh`, `summary.txt`, and a log per step
 whose lines `stamp.py` stamped with seconds since the step began). The host
 was **not** quiet: the load average at each step's start is given, and the
 fleet's other gates ran beside it. So the figures are upper bounds. Their
@@ -69,9 +69,9 @@ next build's cargo invocations. So 56% of test-compositor is not the guest.
 ## Measured, 2026-09-28: switching the built-in init
 
 On main a0772269, in a worktree and target dir of their own, at load 1.5 to
-9 (`~/ferrix-logs/gate-time/tt-cut1/`: `before-summary.txt`,
+9 (`~/xaqu-logs/gate-time/tt-cut1/`: `before-summary.txt`,
 `switch-builds.txt` and a log per step). The kernel step is cargo's own
-"Finished in" for `ferrix-kernel`:
+"Finished in" for `xaqu-kernel`:
 
 | Build | Kernel step | Load |
 |---|---:|---:|
@@ -103,16 +103,16 @@ the ports of the host's stub servers, so its digest changes every run and
 each run would make a new dir that is never reused; a rebuilt busybox would
 start cold; and a digest in `--target-dir` enters `builds.rs`'s build keys,
 so test-selfhost's replay would miss whenever the init is an earlier build's
-output, whose bytes Ferrix makes differently. The two variants left, dirs
+output, whose bytes Xaqu makes differently. The two variants left, dirs
 per flavour for `--release` only and the init carried in the image rather
 than built into the kernel (a `src/kernel/` change, for the certification
 consultant), are sound but not worth it today: neither takes time off a
 gate as the gates are.
 
 test-shell's 45 s is not the kernel build (1.5 s). With `--init` it boots
-four times: the built-in script, the same shell started by `ferrix.init=`,
+four times: the built-in script, the same shell started by `xaqu.init=`,
 `poweroff -f -n` after writing `/data/k7`, and reading it back under
-`ferrix.onexit=panic`. Each guest runs about 9.2 s, and the last one's panic
+`xaqu.onexit=panic`. Each guest runs about 9.2 s, and the last one's panic
 is followed by the 5 s power-off grace before QEMU is stopped (cost 3). The
 31 s in C above was test-shell with zinc, which boots twice.
 
@@ -122,7 +122,7 @@ From a read of `tools/common/xtask/src` and `src/kernel/src` (file and line in t
 kept in the owner's handover), checked against the timings above:
 
 1. **The kernel crate rebuilds whenever a gate embeds a different init.**
-   `FERRIX_INIT`, `FERRIX_INIT_SCRIPT`, `FERRIX_INIT_COMMANDS` and their
+   `XAQU_INIT`, `XAQU_INIT_SCRIPT`, `XAQU_INIT_COMMANDS` and their
    digests are `rerun-if-env-changed` (`src/kernel/build.rs`), and every flavour
    builds into one target dir. **Measured and dropped** (above, *Measured,
    2026-09-28*): in the debug profile, which every test gate boots, the
@@ -133,11 +133,11 @@ kept in the owner's handover), checked against the timings above:
    Cut 1 was dropped by the product owner on 2026-09-28. **Closed by
    another route, 2026-10-04 (stage 20):** a test's init is no longer
    compiled in at all. Its program, script and commands go in the image's
-   initramfs under `.ferrix/init/` (`init::set_inputs`), so one kernel serves
-   every test and `src/kernel/build.rs` reads no `FERRIX_INIT*`. A gate saves
+   initramfs under `.xaqu/init/` (`init::set_inputs`), so one kernel serves
+   every test and `src/kernel/build.rs` reads no `XAQU_INIT*`. A gate saves
    only the 2 s relink measured above; what it was for is stage 20's
    self-hosted builds, where the plan of the 57-row matrix fell from 66
-   kernel builds to 6 (271 builds to 188) and Ferrix no longer writes some
+   kernel builds to 6 (271 builds to 188) and Xaqu no longer writes some
    sixty 125 MB kernel ELFs onto the btrfs volume whose pages it keeps in
    memory.
 2. **Every `--arch all` loop is sequential**: `build`, `test-boot`,
@@ -153,7 +153,7 @@ kept in the owner's handover), checked against the timings above:
    for, and fixed settles become waits on the line they wait for. **Cut**
    by the PO session on 2026-09-28, for the gates below ("Cut 2").
 4. **Firmware waits on every Arm boot**: EDK2 5.3 s on aarch64, U-Boot's 2 s
-   autoboot on armv7a. **Cut** by ferrix-79 (was ferrix-e4) on 2026-09-27:
+   autoboot on armv7a. **Cut** by xaqu-79 (was xaqu-e4) on 2026-09-27:
    to 0.37 s and 0.18 s (the BACKLOG's done row).
 5. **TCG by default everywhere** (`qemu::accelerator`), for reproducibility
    and because CI has no hypervisor. It costs less than expected on a warm
@@ -169,8 +169,8 @@ Also found, smaller or later:
   after another. The fuzz job spends 30 s on each of 37 targets.
 - **The guest's own fixed waits are small**: the boot self-checks sleep
   about 1.5 s in all. The ~6 s of checks on an Arm boot is emulated work.
-  test-compositor's boots wait for `hyprix:`, not `FERRIX-BOOT-OK`, so they
-  could boot with `ferrix.checks=skip`: the checks are proved by test-boot.
+  test-compositor's boots wait for `hyprix:`, not `XAQU-BOOT-OK`, so they
+  could boot with `xaqu.checks=skip`: the checks are proved by test-boot.
 
 ## Cut 2: a finished guest stopped, not waited for (2026-09-28)
 
@@ -227,7 +227,7 @@ xtask only; owner the PO session. Each wait was read for what it protects
   `STATUS=` shows, and judged there as before; the grandchild's poll is
   0.5 s apart rather than 1.5 s, for the same 30 s in all.
 
-Measured with `~/ferrix-logs/gate-time/tt2/measure.sh` (the same
+Measured with `~/xaqu-logs/gate-time/tt2/measure.sh` (the same
 `stamp.py`), each step alone, x86_64 under TCG, before on main a0772269 in
 a worktree of its own and after on the branch, both warm. The host carried
 other sessions' work (a Miri run, Steam's end-to-end): loads as given.
@@ -276,7 +276,7 @@ itself again with the same arguments and that one `--arch`, each child's
 output goes to `build/<arch>/xtask-<command>.log`, each is said as it ends,
 and when the last has ended every log is printed whole, in the
 architectures' order, and then each one's verdict; a failure on one hides
-none of the others. `FERRIX_ARCHES_IN_TURN=1` keeps the old order.
+none of the others. `XAQU_ARCHES_IN_TURN=1` keeps the old order.
 
 What the boots wrote in one place is one an architecture now: stage 12's
 writable disk, `test-init`'s volumes and the fresh root a test boots are
@@ -285,7 +285,7 @@ written whole and renamed into place. `run`'s own root, `build/root.img`,
 stays where a person's system is. cargo takes its own lock on the target
 directory, so the builds queue while the boots overlap.
 
-Measured with `~/ferrix-logs/os98-par-measure.sh` on nazuna, main 70ad8969
+Measured with `~/xaqu-logs/os98-par-measure.sh` on nazuna, main 70ad8969
 against the branch, alternating, each warm, the host carrying other
 sessions' work:
 
@@ -316,7 +316,7 @@ The customer, 2026-10-01: confirming that a feature works takes too long.
 os-5d read the gate logs on nazuna and asked eight sessions what their last
 verifications cost (os-79, os-ad, os-c7, os-c8, os-db, os-e8, os-fb and
 os-3c). Most of the time is not spent in the guest, whose boot reaches
-`FERRIX-BOOT-OK` in 8 to 10 s. It goes to four things around it:
+`XAQU-BOOT-OK` in 8 to 10 s. It goes to four things around it:
 
 | Cost | Seen | Where |
 |---|---|---|
@@ -352,13 +352,13 @@ consultant before they land.
 
 | # | Cut | Takes off | Points |
 |---|---|---|---:|
-| A1 | **A pool of warm gate slots** (`~/.local/share/ferrix/fleet/gate.sh`): each slot a worktree at a fixed path with a target dir that is kept, a run takes the first free one. Slot 1 is the stage-13 queue's, so `os7c-queue.sh` keeps working | the queue's wait: os-ad's 40 min to about 15 | 3 |
+| A1 | **A pool of warm gate slots** (`~/.local/share/xaqu/fleet/gate.sh`): each slot a worktree at a fixed path with a target dir that is kept, a run takes the first free one. Slot 1 is the stage-13 queue's, so `os7c-queue.sh` keeps working | the queue's wait: os-ad's 40 min to about 15 | 3 |
 | A2 | **A disk guard**: a run is refused, not started, under 20 GB free; a report of target dirs and worktrees nothing has used for a day, for their owners | gates that fail on a full disk and read as code failures | 1 |
 | A3 | **Controls the runner logs**: commit, the diff that ran, the expected text and a FIRED / DID NOT FIRE line | re-runs for evidence that was not kept | 1 |
 | A4 | **Builds that are kept**: ports rebuilt only when stale (BACKLOG row, `os-12/ports-autobuild`), and the cost of a cold target dir measured against sccache for a new worktree | 5 to 10 min where a change touches ports or apps; most of a first `check` | 3 |
 | B1 | **`xtask gate --since main`**: the changed paths pick the rows of *What a landing runs*, and the rows it chose are printed for the report; `check` skips a workspace the branch does not touch; a docs-only diff runs only the steps that read docs, generated docs still regenerated; after a rebase, only rows whose paths the new commits touched | a docs landing 3.5-9 min to under 1; most of a re-gate | 3 |
 | C1 | **`check` at once**: one clippy call with every `--target`, the Python audits beside cargo, a time printed for each step | 154 s to about 70-90 s (to measure) | 2 |
-| C2 | **`test-compositor` with `ferrix.checks=skip`**: its boots wait for `hyprix:`; the checks are proved by the gate's `test-boot` | 4 to 5 min an architecture | 1 |
+| C2 | **`test-compositor` with `xaqu.checks=skip`**: its boots wait for `hyprix:`; the checks are proved by the gate's `test-boot` | 4 to 5 min an architecture | 1 |
 | C3 | **KVM by default on x86-64** (item 5, *Next* below); CI keeps TCG | the long x86 guests: compositor, chrome, steam | 2 |
 | C4 | **`--profile iterate`**: release with thin LTO and 16 codegen units, for working on a kernel; gates keep fat LTO | 2-3 min to about 30-45 s a kernel edit | 1 |
 | C5 | **A guest saved and resumed at a named point** (QEMU savevm or migrate to file) for gates that boot long, Steam and Chrome first, and `--hold` to keep a guest up after its verdict; a spike first, since the GL devices may refuse migration | a Steam round 8 min to 1-2 | 5 |
@@ -390,11 +390,11 @@ verdict, log), for the auditor and the consultant, and
 `logs/queue/pool-summary` a line a run with the seconds waited and run.
 
 **Verdicts.** `run: PASSED` only when xtask exited 0 and, for `test-boot`,
-the output holds `FERRIX-BOOT-OK`. A control's edit is refused when its text
+the output holds `XAQU-BOOT-OK`. A control's edit is refused when its text
 matches nowhere, more than once (unless `--all`), or changes nothing; the
 log keeps the matched line numbers and the diff that ran. `--expect TEXT`
 ends `control: FIRED (panic): <the line>` only when xtask failed and a line
-of its output, never the header, holds both `FERRIX-PANIC` and TEXT.
+of its output, never the header, holds both `XAQU-PANIC` and TEXT.
 `--expect-line` drops the panic, for a control whose failure is not a kernel
 panic, and then also needs a guest's serial line (`  <seconds> | ...`) in
 the output, proof that the build finished and a guest started; it ends
@@ -408,9 +408,9 @@ control evidence was cited, with these runs on main 204f7214 and ff5e45ef
 
 | Run | Edit | Verdict |
 |---|---|---|
-| fires | the last-message check's comparison turned around | `control: FIRED: 5.55 \| FERRIX-PANIC stage 9 self-check failed: a closed peer's messages were not read back in order` |
+| fires | the last-message check's comparison turned around | `control: FIRED: 5.55 \| XAQU-PANIC stage 9 self-check failed: a closed peer's messages were not read back in order` |
 | passes | a comment changed | `control: DID NOT FIRE (xtask passed)` |
-| nobuild | `compile_error!` carrying the expected text, which the compiler's output quotes four times | `control: DID NOT FIRE (xtask failed with exit 1, but no output line with FERRIX-PANIC holds the expected text)` |
+| nobuild | `compile_error!` carrying the expected text, which the compiler's output quotes four times | `control: DID NOT FIRE (xtask failed with exit 1, but no output line with XAQU-PANIC holds the expected text)` |
 | nochange | old and new the same | `control: REFUSED (the edit changed nothing)` |
 | twice | a text that matches more than once | `control: REFUSED (matches more than once; --all not given)` |
 | run | `test-boot --arch x86_64 --accel kvm` | `run: PASSED` |
@@ -445,7 +445,7 @@ name; slot 1 stays the stage-13 queue's, and its owner keeps or deletes it.
 To take load off nazuna, `check` ran cold on the Windows PC, in fresh
 worktrees `win-slot-1` (367047688) and `win-slot-2` (main 020dc9b2). The
 compositor's, zinc's and ferrousli's steps run there in WSL's Ubuntu,
-whose cargo target dirs are `~/.cache/ferrix/target/<worktree path>`.
+whose cargo target dirs are `~/.cache/xaqu/target/<worktree path>`.
 Neither run finished:
 
 | Run | Ended | After | Why |
@@ -485,7 +485,7 @@ whose header gives the tree, the slot, the load and the free space at the
 start, and whose output gives the crates compiled. The host was sampled
 with `vmstat 5` and `/proc/pressure` for two minutes at 01:03Z. The scripts,
 the parsed runs and the sample are in
-`~/.local/share/ferrix/logs/gate-throughput-1015/`.
+`~/.local/share/xaqu/logs/gate-throughput-1015/`.
 
 ### Where the time goes
 
@@ -610,7 +610,7 @@ come and go, is the other answer, and the right one if the disk stays at
 T1 to T5 together take about 11,260 s, 3.1 of the night's 12.6 run-hours
 (25%). With the slots 84% busy, the queue shortens by about as much.
 
-**`gate.sh.proposed`** (`~/.local/share/ferrix/fleet/`, not installed; the
+**`gate.sh.proposed`** (`~/.local/share/xaqu/fleet/`, not installed; the
 coordinator decides, and installs it with `mv` once no run is waiting,
 *Changing the pool* in the product-owner skill) carries T1, T2 and T6. It
 keeps every verdict, log and line format the same; a run taken out of turn,
@@ -626,7 +626,7 @@ kernel crate, profiles, the linker) is `bs-a-*`'s. Measured in a worktree of
 `main` 4605abd72 with a target directory of its own, at a load of 27 to 41 on
 24 threads (the pool was full and an Endfield guest was writing to the
 disk), so the figures are a loaded host's; the logs and the scripts are in
-`~/ferrix-logs/bs-b/`.
+`~/xaqu-logs/bs-b/`.
 
 ### A warm `build --arch x86_64`, and what happens after cargo
 
@@ -635,7 +635,7 @@ disk), so the figures are a loaded host's; the logs and the scripts are in
 | Cold, new target dir (components cloned) | 107 s | | | |
 | No-op | 33.0 s | 3.4 s | 0.3 s | **28.8 s** |
 | One string in `src/kernel/src/main.rs` changed | 125.1 s | 6.3 s | 53.4 s | **65.1 s** |
-| `test-boot --arch x86_64`, no-op, to `FERRIX-BOOT-OK` | 75.1 s | 3.9 s | | **22.6 s**, then 1.5 s copying the writable btrfs disk, then a 46 s boot |
+| `test-boot --arch x86_64`, no-op, to `XAQU-BOOT-OK` | 75.1 s | 3.9 s | | **22.6 s**, then 1.5 s copying the writable btrfs disk, then a 46 s boot |
 
 **The image write is the largest cost a warm build has.** `fat.rs` builds
 the 512 MiB FAT image in memory and writes it with one `write` of 536,870,912
@@ -741,7 +741,7 @@ of the six fail.
 
 ### Cut B2: `check`'s units by their inputs (bs-b-stepcache)
 
-`FERRIX_STEP_CACHE=on` makes each of `check`'s workspaces of their own --
+`XAQU_STEP_CACHE=on` makes each of `check`'s workspaces of their own --
 the compositor's, init's, auth's, pkg's, the installer's, media's, adbd's,
 nvos's and every app's -- a unit that is skipped when a run that passed read
 exactly the inputs it would read now (`tools/common/xtask/src/step_cache.rs`
@@ -763,7 +763,7 @@ read the certified item (the certification consultant, ledger lines 1447,
 **It is off unless asked for**, and release runs and the baseline keep it
 off: a gate turns it on only once its end-to-end control has fired through
 `gate.sh`'s host-side control mode (proposed with the pool's T1/T2,
-`~/.local/share/ferrix/fleet/gate.sh.proposed-bsb`).
+`~/.local/share/xaqu/fleet/gate.sh.proposed-bsb`).
 
 `cargo xtask check-side` in one worktree and target directory, at a load of
 about 20 to 30:
@@ -792,7 +792,7 @@ the compositor a cached pass, init missed, ran and failed with E0425); a
 broken assertion in hyprix's `plane.rs` **FIRED** (`bsb-e2e2-ctl-test`: the
 compositor missed, ran, and its test failed). With the edits undone, every
 unit was a cached pass again (`bsb-e2e2-after`, 8 s). The first attempt found
-that `gate.sh`'s `FERRIX_GATE_TAG`, a new name every run, was in the
+that `gate.sh`'s `XAQU_GATE_TAG`, a new name every run, was in the
 environment's digest, so no record held from one gate run to the next; it
 and gate.sh's `GATE_*` settings are left out now (nothing in the tree reads
 them; the tag stays in the record as its origin). Gates may turn the cache
@@ -841,8 +841,8 @@ new to slot 1 by one commit; `bsb-sc8-check`, new by several):
 | clippy, cross-target (kernel both settings, loaders, natives) | ~2 s | ~8 s | 44 s |
 | beside: the audits (the architecture document 26-41 s) | 39 s | 26 s | 41 s |
 
-Of the tests' running time, `ferrix-btrfs-write` takes 17-20 s, `ferrix-btrfs`
-7-13 s, xtask 3-9 s and `ferrix-qr` 1-2 s; the other ~85 binaries are under
+Of the tests' running time, `xaqu-btrfs-write` takes 17-20 s, `xaqu-btrfs`
+7-13 s, xtask 3-9 s and `xaqu-qr` 1-2 s; the other ~85 binaries are under
 a second each, about 10 s together with their start-up. **cargo 1.97 lets two
 `cargo test` runs in one target directory overlap** (its build lock is not
 held while test binaries run): the two btrfs crates' tests took 30.3 s one
@@ -858,7 +858,7 @@ build under cargo's lock; then it waits for every binary, prints each one's
 output whole in the order cargo started them, and fails if any failed (every
 binary runs to its end, where cargo stopped at the first failing one).
 Expected: the tests' 33-68 s overlap the 10-360 s of what follows them, and
-the binaries' own time falls to about the longest one's (`ferrix-btrfs-write`,
+the binaries' own time falls to about the longest one's (`xaqu-btrfs-write`,
 20 s).
 
 **P2, a test binary's run keyed by its inputs (needs its own design review:
@@ -892,14 +892,14 @@ signal, could not start or never reported, one whose binary or
 `CARGO_BIN_EXE_*` files changed while it ran (their SHA-256 at its start and
 end), a "Running" line of cargo's without its record or the other way
 round, and no binary at all, each fail `check`; a binary whose `check` is
-gone is killed. `FERRIX_TESTS_IN_TURN=1` runs them as cargo does, for
+gone is killed. `XAQU_TESTS_IN_TURN=1` runs them as cargo does, for
 diagnosing a test; release runs and the reference configuration's baseline
 run them side by side too, since the gate's rows on one hash gave the same
 results both ways (`bsb-mp-check` and `bsb-mp-check-turn` on 3ff35caae: 183
 binaries, 5,242 tests passed, each binary's result the same), the
 certification consultant's design and code reviews, ledger lines 1594 and
 1619. The controls through `gate.sh`'s host-side mode fired: a broken test in
-an item crate (`bsb-mp-ctl-item`, `ferrix-sync`), five failing binaries all
+an item crate (`bsb-mp-ctl-item`, `xaqu-sync`), five failing binaries all
 reported (`bsb-mp-ctl-two`), and binaries that never report
 (`bsb-mp-ctl-silent`).
 
@@ -915,7 +915,7 @@ same both ways.
 
 ### Cut B5: the test binaries outside the item, cached (P2, bs-b2-p2)
 
-With `FERRIX_STEP_CACHE=on`, each host test binary of a package the item
+With `XAQU_STEP_CACHE=on`, each host test binary of a package the item
 does not link is a unit of the step cache (`tools/common/xtask/src/test_cache.rs`):
 `check` writes the cache's plan into the test runs' directory before cargo
 starts, and `test-wait` keys each such binary's run on the binary's SHA-256,
@@ -930,7 +930,7 @@ package one of them links, through dependencies or build dependencies on any
 target -- which takes in the libraries the kernel links that the
 classification does not name yet (F-76); a package any of whose files says
 `Verifies:` a requirement (host tests outside the item that are item evidence:
-ferrix-native's verifies L.device.24, xtask's carry 28 tags); a package whose
+xaqu-native's verifies L.device.24, xtask's carry 28 tags); a package whose
 manifest the reader does not take whole, or that names a dependency the
 workspace's `[workspace.dependencies]` renames; one depending on a crate that
 draws new inputs each run (`proptest`, `quickcheck`, `rand` and the like) or
@@ -963,14 +963,14 @@ One worktree, warm, unchanged tree, alternating (load 19-34):
 | Run | `check` | test binaries after cargo returned | binaries run |
 |---|---:|---:|---:|
 | cache off (P1 only) | 104.1 s, 115.7 s | 22.4 s, 14.7 s | 80 |
-| cache on, every record standing | **45.2 s, 47.4 s** | 18.1 s, 16.9 s | 54 (26 cached passes, xtask and ferrix-native among them before the review's fixes) |
+| cache on, every record standing | **45.2 s, 47.4 s** | 18.1 s, 16.9 s | 54 (26 cached passes, xtask and xaqu-native among them before the review's fixes) |
 | the same after them (`p2-hit4`) | | 16.1 s | 55 (25 cached passes) |
 | cache on, recording (first run after an xtask change) | 408.7 s | 22.1 s | 80 |
 
 (The whole `check` falls mostly by the side workspaces' cache, Cut B2.) **What
 P2 itself saves is small:** the 26 cached binaries ran 2.9 s of the 55.1 s the
 80 binaries ran in all (`p2-offB`), and the tests' wall time is set by the item's
-`ferrix-btrfs-write` (18-23 s), which always runs. P2 removes work, not the
+`xaqu-btrfs-write` (18-23 s), which always runs. P2 removes work, not the
 critical path; what remains on it is the item's tests and the audits beside
 (*P3*).
 
@@ -980,11 +980,11 @@ package and place, the manifest reader failing closed, a keyed unit reading
 its keyed files only, the not-traced memo, the `Verifies:` tags, the
 workspace's renames, an item not held whole, a randomizing crate in the lock,
 and no unit reading the item before P3; each of 17 sabotages of those checks
-fails a test (`~/ferrix-logs/bs-b2/sabotage/`).
+fails a test (`~/xaqu-logs/bs-b2/sabotage/`).
 
 ### Cut B6: the audits as units keyed on the whole item (P3a, bs-b2-p3)
 
-With `FERRIX_STEP_CACHE=on`, each of `check`'s audits beside the main
+With `XAQU_STEP_CACHE=on`, each of `check`'s audits beside the main
 workspace is a unit of the step cache, `audit:<name>`: on a miss it runs as
 `cargo xtask check-audit` under `strace` (Python writing no byte-code), and
 when it passes the record keeps what it read **and the digest of every file
@@ -1024,7 +1024,7 @@ One worktree, warm, unchanged tree (load 22-45):
 | cache on, every record standing (`p3-hit4`, `p3-hit5`) | **2.0 s, 2.3 s** | **39.9 s, 39.9 s** |
 
 With the audits at 2 s, `check`'s critical path on an unchanged tree is the
-test binaries (the item's `ferrix-btrfs-write`, 18-28 s at this load, always
+test binaries (the item's `xaqu-btrfs-write`, 18-28 s at this load, always
 run) and the side workspaces' hit checks beside (35-37 s here, most of it
 re-hashing their recorded inputs).
 
@@ -1033,7 +1033,7 @@ new or renamed file in the item, the classification, the model, an audit's or
 a generator's script, and not with a file outside them or Python's byte-code;
 an unreadable root fails it; a record keyed on one digest misses on another;
 only `item_keyed` sets `reads_item`, keying on the digest in the same
-expression. Each of 5 sabotages fails a test (`~/ferrix-logs/bs-b2/sabotage/p3.log`).
+expression. Each of 5 sabotages fails a test (`~/xaqu-logs/bs-b2/sabotage/p3.log`).
 
 ## The compile: the baseline, 2026-10-15 (bs-a)
 
@@ -1044,10 +1044,10 @@ on `main` 4605abd72 in a worktree and target directory of its own, at
 factor of three with the other sessions' load and disk writeback, so each
 comparison below alternates its two sides edit by edit and also gives the
 processor time (`user`) and the bytes written (`/usr/bin/time %O`), which
-the load does not move. The edit is `~/ferrix-logs/bs-a/scripts/edit.sh`:
+the load does not move. The edit is `~/xaqu-logs/bs-a/scripts/edit.sh`:
 a new `let _ = core::hint::black_box(N_u32);` in `sys_eventfd`
 (`src/kernel/src/syscall/eventfd.rs`, load ring), clean for rustfmt and
-clippy; logs and scripts in `~/ferrix-logs/bs-a/`.
+clippy; logs and scripts in `~/xaqu-logs/bs-a/`.
 
 ### Where an edit's compile goes (x86-64, debug)
 
@@ -1074,8 +1074,8 @@ the **kernel clippy**, 38 s, six passes (three targets, mitigations on and
 off) of 6.3 CPU-s each, 4.5 s of which is clippy's lint pass over the whole
 crate and 2.4 s the dep graph again; and **the Ferrocene type check**, 18 s
 for three targets (105 s the first time after a cold build). The rest is not
-compiling: the host tests' run time, 45 s (`ferrix-btrfs-write` 20 s, xtask
-14 s, `ferrix-btrfs` 6 s), and, beside them, the audits (29 s) and the side
+compiling: the host tests' run time, 45 s (`xaqu-btrfs-write` 20 s, xtask
+14 s, `xaqu-btrfs` 6 s), and, beside them, the audits (29 s) and the side
 workspaces (114 s, the compositor's tests 39 s; bs-b's section above). A
 warm `check` after a kernel edit spends about 300 CPU-s in all.
 
@@ -1134,12 +1134,12 @@ build is ThinLTO across the crate's own 256 codegen units, which after a
 one-line edit re-optimises the whole kernel. The debug kernel the coverage
 figures measured is kept as `[profile.coverage]`, the dev profile with
 `lto = false` (rustc's default, crate-local ThinLTO), and xtask builds it
-for every boot a TCG plugin traces (`FERRIX_QEMU_PLUGIN`, which `cargo xtask
+for every boot a TCG plugin traces (`XAQU_QEMU_PLUGIN`, which `cargo xtask
 coverage` sets for each gate it runs), so no traced boot can measure the
 other build. This is route B of the certification consultant's ruling
 (ledger line 1472); the coverage scripts now name the profile from the
 ELF's path, `target/<triple>/<profile>/` or the suite's kept copy
-`ferrix-kernel-<profile>-<digest>.elf`, and refuse a path that names none,
+`xaqu-kernel-<profile>-<digest>.elf`, and refuse a path that names none,
 where any path without `/release/` used to be reported as debug.
 
 | Kernel rustc after the edit, x86-64, 4 rounds alternated | dev profile, no LTO | `coverage` profile (crate-local ThinLTO) |
@@ -1167,7 +1167,7 @@ that build; `docs/certification/VERIFICATION.md` §3.2 says so.
 **What boots the `coverage` build.** No gate does: the suite's own run
 does, under the plugin. On this branch a traced `test-boot --arch x86_64
 --accel tcg` built the `coverage` profile (xtask says `traced: the coverage
-profile`), booted to `FERRIX-BOOT-OK` and was reported by both scripts as
+profile`), booted to `XAQU-BOOT-OK` and was reported by both scripts as
 `coverage profile` (one boot: certified item 8,398 of 9,971 statements,
 84.2%). A whole `cargo xtask coverage --arch all` on nazuna did not get
 that far, for the host, not the build: at loads of 30 to 60 its x86-64 boots
@@ -1184,7 +1184,7 @@ ARMv7-A with two processors, and `test-threads --arch all` passed (gate
 tags `bsa-lo-*`). `test-container --arch all` failed once, on a new
 sentence of stage 5's moving lock check on ARMv7-A (a `docs/BACKLOG.md`
 row), and passed when run again. A dev kernel without LTO is slower in
-the guest (one boot each: ARMv7-A to `FERRIX-BOOT-OK` 25.7 against 42.2
+the guest (one boot each: ARMv7-A to `XAQU-BOOT-OK` 25.7 against 42.2
 guest seconds, x86-64 under KVM 19.2 against 26.4, at different loads), and
 the stage 13 checks that measure a share of the wall clock fail under a
 loaded host (their rows in `docs/BACKLOG.md`). So 49 ARMv7-A boots were
@@ -1200,7 +1200,7 @@ gate slot made again, CI. Measured on `main` 89a7cf74c in a worktree of its
 own (`.claude/worktrees/bs-c`), each run in an empty target directory, at
 `nice 10`, loads 9 to 30 on 24 threads. cargo was a wrapper (`CARGO=`) that
 adds `--timings` to every build, clippy, test and doc call and logs each
-call's wall time; logs, timing reports and scripts in `~/ferrix-logs/bs-c/`.
+call's wall time; logs, timing reports and scripts in `~/xaqu-logs/bs-c/`.
 The warm loop is bs-a's and bs-b's (the sections above).
 
 ### `build --arch all`, dev and release
@@ -1290,7 +1290,7 @@ reuse, so it is for one-time builds; gate slots already trim the
 incremental caches when the disk is short (`gate.sh`).
 
 **One target directory for the nine apps** (an experiment, not landed:
-`~/ferrix-logs/bs-c/apps-shared-experiment.patch`), alternated:
+`~/xaqu-logs/bs-c/apps-shared-experiment.patch`), alternated:
 
 | `check-apps`, cold | own directories | one shared |
 |---|---:|---:|
@@ -1305,7 +1305,7 @@ shared directories.
 ### Cut D1: the documentation written in memory (bs-c-doc)
 
 The documentation step makes `<target>/doc` a link to
-`$XDG_RUNTIME_DIR/ferrix-doc/<SHA-256 of the target directory's path>` (a
+`$XDG_RUNTIME_DIR/xaqu-doc/<SHA-256 of the target directory's path>` (a
 tmpfs) before `cargo doc` runs; nothing reads the pages, the step wants
 rustdoc's verdict. The pages, about 160 MB, stay there, so a warm run
 documents only what changed, as before; when the runtime directory is
@@ -1340,12 +1340,12 @@ cold tree, the whole critical path of a cold `check` once D1 had cut the
 documentation. Now the steps that are not units run first as before (auth's
 no-sabotage check, the apps' manifests and the directories they share, each
 app's search of the tree), and then the units run in lanes,
-`FERRIX_SIDE_JOBS` lanes at once (4 by default; 1 runs them in turn in one
+`XAQU_SIDE_JOBS` lanes at once (4 by default; 1 runs them in turn in one
 process as before). A lane is one unit, or the apps of one shared target
 directory (Cut D3) in turn; lanes start heaviest first, by the packages in
 their `Cargo.lock`, which a cold tree has no timings to replace. Each unit
 runs as a child, `cargo xtask check-unit`, given its name and, for an app,
-the directory it builds in (`FERRIX_CHECK_APP_DIR`), under `strace` when
+the directory it builds in (`XAQU_CHECK_APP_DIR`), under `strace` when
 the step cache is on (`step_cache::unit_logged`: the same lookup, made in
 the worker, and the same record), with its output in
 `<target>/check-side/<unit>.log`. Every unit runs to its end; each log is
@@ -1383,7 +1383,7 @@ it likelier.
 `cargo xtask check-side`, cold, each run in an empty target directory,
 alternated, loads 33 to 43 (the host saturated; with D3 in both):
 
-| | In turn (`FERRIX_SIDE_JOBS=1`) | At once (default) |
+| | In turn (`XAQU_SIDE_JOBS=1`) | At once (default) |
 |---|---:|---:|
 | Wall | 787, 416 s | **267, 220 s** |
 | CPU (user) | 1,163, 1,189 s | 1,212, 1,222 s |
@@ -1398,10 +1398,10 @@ false pass: the compositor's and waybar's flake rows say to run the units in
 turn to diagnose (`docs/BACKLOG.md`).
 
 **Release runs and the baseline** run the units at once too: on one hash,
-`bsc-d2-check` (at once) and `bsc-d2-check-seq` (`FERRIX_SIDE_JOBS=1`) both
+`bsc-d2-check` (at once) and `bsc-d2-check-seq` (`XAQU_SIDE_JOBS=1`) both
 passed with the same 142 test results, 1,516 tests passed in each, and the
 certification consultant lifted the in-turn requirement (R3, ledger line
-1722, as for the test runner at line 1622). `FERRIX_SIDE_JOBS=1` stays the
+1722, as for the test runner at line 1622). `XAQU_SIDE_JOBS=1` stays the
 switch for diagnosing a flake; the step cache stays off in both.
 
 Twenty sabotages of the new checks (units not reported in the order they always ran in, the change-time guard, a path found
@@ -1472,7 +1472,7 @@ LTO and gain nothing.
 `cargo xtask phone-boot --arch aarch64` builds `test-boot`'s image, wraps
 its kernel and initramfs in the Pixel 7 loader as crosvm's `Image`, pushes
 it and `test-boot`'s three disks (only what changed) to
-`/data/local/tmp/ferrix-gate`, boots it in the phone's own crosvm as root,
+`/data/local/tmp/xaqu-gate`, boots it in the phone's own crosvm as root,
 and judges the serial log with `test-boot`'s `qemu::judge`, less what
 crosvm's machine lacks: KASLR's layout (no TRNG for the loader: it must
 say so), completions by MSI-X (INTx only), an IOMMU and SMBIOS. It
@@ -1481,7 +1481,7 @@ and the script on the phone kills only its own crosvm, by PID.
 
 Same tree, warm build, 4 processors and 512 MiB each:
 
-| | build | push | boot to `FERRIX-BOOT-OK` | total |
+| | build | push | boot to `XAQU-BOOT-OK` | total |
 |---|---:|---:|---:|---:|
 | `test-boot`, TCG, load 2 | | | 23.4 s | 24.4 s |
 | `test-boot`, TCG, load 17-20 | | | 24.5 s | 31.2 s |
@@ -1526,7 +1526,7 @@ gates could use one at all.
 Everything GPU ran on the RTX 3090 through OpenCL against the driver as bound
 (3060 hidden by UUID, no install), at `nice 19`, with utilisation and memory
 read before and during; digests were asserted equal to the CPU's. Scripts,
-outputs and logs: `~/.local/share/ferrix/mk-gpu-bench/` (`run2.txt`, `tp/`,
+outputs and logs: `~/.local/share/xaqu/mk-gpu-bench/` (`run2.txt`, `tp/`,
 `ab-*.txt`, `*sample*.txt`).
 
 **Where the time goes.** Pool rows since 2026-10-20, 622,572 row-seconds:
@@ -1579,7 +1579,7 @@ expands macros as it parses, so the parse cannot be lifted out whole.
 
 So the ceiling is lexing and parsing at **infinite speed: at most 11
 crate-seconds of a cold build**, about 3 s of wall at four rustcs at once, and
-next to nothing warm (`ferrix_kernel_load`: parse 3 ms and expansion 0.33 s of
+next to nothing warm (`xaqu_kernel_load`: parse 3 ms and expansion 0.33 s of
 14.9 s). Type checking, borrow checking and LLVM's passes are pointer-chasing
 over irregular graphs with no GPU implementation. Query hashing decides what
 runs next, one tiny value at a time, so it cannot be batched without rewriting
@@ -1605,7 +1605,7 @@ The customer asked whether the 36 GB of VRAM could add one or two gate slots.
 **It adds none, because VRAM is not what limits the slots: free disk space is.**
 Freeing space adds two slots without a GPU, and tmpfs beats VRAM as a fast tier.
 Everything ran on the 3090. The 3060 was not used, since the idea failed before
-it was due. Scripts and logs: `~/.local/share/ferrix/mk-gpu-bench/vram/`.
+it was due. Scripts and logs: `~/.local/share/xaqu/mk-gpu-bench/vram/`.
 
 **What limits a slot.** On 2026-11-04 the pool ran 7 slots from 00:05Z to 04:00Z
 and 5 from 05:00Z to 12:00Z. Different rows ran, so this is a guide:
@@ -1621,7 +1621,7 @@ load 15, the CPU was 48% idle and 6% in iowait.
 
 **A slot's I/O.** Over 40 busy minutes a slot rewrote 10.7-13.2 GB of its target
 dir: incremental 6.1-6.6 GB, `deps` 3.3-4.6, build scripts 0.6-0.7, plus images
-under `build/` (`ferrix.img` 512 MiB, `root-test.img` 1 GiB). The disk took
+under `build/` (`xaqu.img` 512 MiB, `root-test.img` 1 GiB). The disk took
 writes at 101 ms each while reads took 0.3 ms, so readers are not what waits. One
 512 MiB write with fsync did 924 MB/s at load 21, one of 2 GiB did 105 MB/s at
 load 15: the disk is bursty and not broken (40 C, last trimmed 2026-11-02).
@@ -1781,7 +1781,7 @@ with one boot judged from inside the guest. The rows stay as they are.
 ## The microkernel run's night, 2026-11-03/04 (mk-ci)
 
 Five agents and their gates on nazuna, measured from `logs/queue/` and a 30 s
-sample of the host (`~/.local/share/ferrix/po-2026-11-03/mk-ci/sample.log`). No
+sample of the host (`~/.local/share/xaqu/po-2026-11-03/mk-ci/sample.log`). No
 check, row, control or timeout changed. The host was never quiet, so each figure
 gives its load. Reviews: ledger lines 5878, 5937, 5939.
 
@@ -1806,7 +1806,7 @@ output whole in the old order, first failure in that order the error.
 
 The 629 s fell in the hour's worst IO. One sample at once is not a mean. With the
 caches trimmed a setting's directory is 80-108 MB. Controls: a lint inside
-`cfg(ferrix_linux_abi = "off")` and a `disallowed-types` entry in `.clippy.toml`
+`cfg(xaqu_linux_abi = "off")` and a `disallowed-types` entry in `.clippy.toml`
 with no source edit. Both FIRED, in slot 2 after `mk-ci-b-base` passed there: `mk-ci-b-c1b` with all five settings shown and only `linux_abi=off` failing, `mk-ci-b-c2` with every setting failing. Other runs used slot 2 between them, so its `kernel-lint-*` directories were warm from the base run but not untouched in between. `disallowed-methods` is one
 TOML key, in kernel-interface's checked block, so the entry outside it is that
 sibling key.
@@ -1893,10 +1893,10 @@ Local full `check`s were the largest cost: four running cold at once held load a
 ## Boot time, 2026-11-05 (mk-boot-time)
 
 The customer's order: find out why boots are getting slower, and *"the max boot
-time should be 10s"*. "Boot" here is QEMU's start to `FERRIX-BOOT-OK` under
+time should be 10s"*. "Boot" here is QEMU's start to `XAQU-BOOT-OK` under
 `test-boot`: the debug profile with the in-kernel checks on (ledger 7021 T1; the
 limit's meaning is in `fleet/morning-questions.md`, default every `IMAGE_ROW` form).
-The figures below are the guest's serial stamps. A boot with `ferrix.checks=skip`
+The figures below are the guest's serial stamps. A boot with `xaqu.checks=skip`
 reaches its end in 1.43 s under KVM and 2.19, 1.47, 1.72 s on x86-64, AArch64 and
 ARMv7-A under TCG: 95 to 98% of a boot is checks. `test-boot --arch x86_64` means
 KVM here since 2026-10-01; TCG needs `--accel tcg`. Readings of the old form under
@@ -2007,7 +2007,7 @@ default on x86-64. For (5), read on 2026-09-30 and not started: the choice
 is `qemu::accelerator`, whose `None` means `tcg` today. The plan is `kvm`
 for an x86-64 guest on an x86-64 Linux host whose QEMU lists it, and `tcg`
 otherwise, so CI, which has no `/dev/kvm`, keeps its TCG boots unchanged;
-`tcg` whenever `FERRIX_QEMU_PLUGIN` is set, since a coverage plugin sees
+`tcg` whenever `XAQU_QEMU_PLUGIN` is set, since a coverage plugin sees
 only translated blocks; and `seam.rs` passing `tcg` itself, since its
 measurement was made under it. The frame budgets of `test-compositor`
 are written for emulation and stay as they are, looser than KVM needs. Cut 1 was measured and

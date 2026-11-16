@@ -35,8 +35,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sched::{CpuSet, LOAD_SCALE, NICE_0_WEIGHT, weight_of_nice};
-use ferrix_sync::IrqControl;
+use xaqu_sched::{CpuSet, LOAD_SCALE, NICE_0_WEIGHT, weight_of_nice};
+use xaqu_sync::IrqControl;
 
 use super::task::{BLOCKED, Task};
 use super::{MIN_SLICE_NS, SLICE_NS, WaitQueue};
@@ -70,7 +70,7 @@ const AFFINITY_WATCH_NANOS: u64 = 60_000_000;
 
 /// How long to let a load average settle before reading it.
 ///
-/// Three of `ferrix_sched`'s 33-millisecond half-lives, which takes a
+/// Three of `xaqu_sched`'s 33-millisecond half-lives, which takes a
 /// permanently busy processor to about seven eighths of full — comfortably
 /// past the half the check asks for, and not the near-perfect convergence it
 /// used to wait for.

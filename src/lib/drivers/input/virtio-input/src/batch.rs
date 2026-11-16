@@ -29,9 +29,9 @@
 //! [`MAX_EVENTS`] events or more always has a message to give, so taking
 //! messages always makes room.
 
-use ferrix_inputctl::message::{Events, MAX_EVENTS, RawEvent};
-use ferrix_inputctl::session::MAX_REPORT;
-use ferrix_linux_abi::input::{EV_SYN, SYN_REPORT};
+use xaqu_inputctl::message::{Events, MAX_EVENTS, RawEvent};
+use xaqu_inputctl::session::MAX_REPORT;
+use xaqu_linux_abi::input::{EV_SYN, SYN_REPORT};
 
 /// Events a batch holds.
 pub const CAPACITY: usize = 256;

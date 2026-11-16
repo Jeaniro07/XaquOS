@@ -6,7 +6,7 @@
 //! and an object's lifetime. Nothing here knows virgl or virtio. What a resource's format words mean is the renderer's
 //! own language, and it passes through as bytes; what userspace learns from
 //! this node is the driver's *name*, which is how it picks a back end, on
-//! Ferrix exactly as on Linux.
+//! Xaqu exactly as on Linux.
 //!
 //! # Many opens, unlike a card
 //!
@@ -71,17 +71,17 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_linux_abi::drm::{self, GemClose, GetCap, PrimeHandle, Version};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::types;
-use ferrix_linux_abi::virtgpu::{
+use xaqu_linux_abi::drm::{self, GemClose, GetCap, PrimeHandle, Version};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::types;
+use xaqu_linux_abi::virtgpu::{
     self, ContextInit, ContextSetParam, ExecBuffer, Field, GetCaps, GetParam, Layout, Map,
     ResourceCreate, ResourceCreateBlob, ResourceInfo, TransferToHost, Wait,
 };
-use ferrix_renderctl::message::{Direction, MAX_RINGS, NO_RING, Region, Status, Transfer, flags};
-use ferrix_renderctl::session::RequestError;
-use ferrix_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
+use xaqu_renderctl::message::{Direction, MAX_RINGS, NO_RING, Region, Status, Transfer, flags};
+use xaqu_renderctl::session::RequestError;
+use xaqu_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
 
 use super::{COMMAND_BYTES, Placed, RenderError, Renderer};
 use crate::sync::SpinLock;
@@ -447,7 +447,7 @@ impl Inode for RenderFile {
     /// No queue to wake, and none needed: nothing [`Inode::poll`] reports
     /// ever changes, so a wait over it is ended by its other descriptors,
     /// its timeout or a signal.
-    fn poll_queues(&self, _visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, _visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         true
     }
 
@@ -839,7 +839,7 @@ fn resource_create_blob(
     {
         return Err(Errno::EINVAL);
     }
-    let page = ferrix_bootinfo::PAGE_SIZE;
+    let page = xaqu_bootinfo::PAGE_SIZE;
     let size = create
         .size
         .checked_add(page - 1)

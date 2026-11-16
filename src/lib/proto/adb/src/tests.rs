@@ -60,10 +60,10 @@ fn the_checksum_is_the_sum_of_the_bytes() {
 
 #[test]
 fn the_banner_names_the_device_and_offers_no_features() {
-    let banner = message::banner("ferrix", "Pixel 7", "panther");
+    let banner = message::banner("xaqu", "Pixel 7", "panther");
     assert_eq!(
         banner,
-        "device::ro.product.name=ferrix;ro.product.model=Pixel 7;ro.product.device=panther;features="
+        "device::ro.product.name=xaqu;ro.product.model=Pixel 7;ro.product.device=panther;features="
     );
 }
 

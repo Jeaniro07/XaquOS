@@ -28,12 +28,12 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_net::Stack;
-use ferrix_net::iface::Backing;
-use ferrix_net::stack::Config;
-use ferrix_sync::Once;
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_net::Stack;
+use xaqu_net::iface::Backing;
+use xaqu_net::stack::Config;
+use xaqu_sync::Once;
 
 use super::NetCore;
 use crate::sched::WaitQueue;
@@ -303,13 +303,13 @@ pub(crate) fn transfer(
         .look(|stack| {
             stack
                 .interface(index)
-                .map(|each| (each.name, each.medium == ferrix_net::Medium::Loopback))
+                .map(|each| (each.name, each.medium == xaqu_net::Medium::Loopback))
         })
         .ok_or(Errno::ENODEV)?;
     if loopback {
         return Err(Errno::EINVAL);
     }
-    let name = rename.map_or(name, ferrix_net::iface::Name::new);
+    let name = rename.map_or(name, xaqu_net::iface::Name::new);
     to.roomy(1)?;
     to.admit()?;
     if to

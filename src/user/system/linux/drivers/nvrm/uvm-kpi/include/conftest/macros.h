@@ -1,1 +1,1 @@
-/* uvm-kpi: what Ferrix's Linux-compatible layer provides (see ferrix_kpi.h). */
+/* uvm-kpi: what Xaqu's Linux-compatible layer provides (see xaqu_kpi.h). */

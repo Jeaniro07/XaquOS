@@ -214,7 +214,7 @@ The day the above landed, the pointer stuttered over *everything* in
 `cargo xtask run-compositor`, worse than before. A frame that took 120 ms had
 been pacing of a kind; at 0.06 ms the loop drew one for every report the
 mouse sent, and a frame is not only drawing. On a card it ends in a page
-flip, and Ferrix's virtio-gpu answers a flip by setting the scanout and
+flip, and Xaqu's virtio-gpu answers a flip by setting the scanout and
 sending the **whole** framebuffer to the host, waited for (`show` in
 `src/kernel/src/interfaces/display/drm.rs`). A guest with one processor spent it doing
 that.
@@ -240,7 +240,7 @@ Still to be looked at there: the first frames of a boot take about a second
 each in the guest (`frames 4 slowest of the last 4 1142353 us`) where the
 host draws the same frame in tens of milliseconds. Not the blur's
 arithmetic; probably what a fresh fifteen megabytes of planes costs in page
-faults on Ferrix. It is paid once a boot now rather than once a frame,
+faults on Xaqu. It is paid once a boot now rather than once a frame,
 which is why it is a note and not a fix.
 
 ### 2.5 What is left
@@ -288,7 +288,7 @@ the path. Timed a stage at a time, 1920x1080, release:
   `a_frame_is_the_same_bytes_on_one_thread_as_on_seven` on any. Every
   processor of a small machine, half of a large one's to at most eight:
   past eight, on twelve cores, a thread bought a millisecond for a core.
-  Ferrix answers `sched_getaffinity`, so a guest draws on as many threads
+  Xaqu answers `sched_getaffinity`, so a guest draws on as many threads
   as it was given processors, and on one under `whpx`, which gives it one.
 * **The stale tiles are blurred in the groups that read least**
   (`gathered` in `backdrop.rs`) rather than in one box round all of them: a
@@ -326,7 +326,7 @@ passes), the block a blur is cut out of the canvas into (8 MB), the tight
 rows a padded surface is gathered into (8 MB) -- and these programs are
 linked against musl, whose `malloc` maps every block over 128 KiB on its
 own and unmaps it on `free`. So a frame was some 25,000 page faults, each
-a trap into Ferrix and its address space's one lock, taken by the four
+a trap into Xaqu and its address space's one lock, taken by the four
 threads of the blur at once, and seven TLB shootdowns across every
 processor for the unmaps. `src/user/system/linux/compositor/render/src/scratch.rs` keeps those
 buffers now, per thread, handed out with whatever they last held (every
@@ -365,7 +365,7 @@ by a timeout, and every time woken by the same three descriptors -- the
 Wayland display socket and hyprctl's two, which are the compositor's three
 *listening* sockets.
 
-Ferrix answered `poll` on a listening Unix socket as hung up: a stream
+Xaqu answered `poll` on a listening Unix socket as hung up: a stream
 socket with no peer is `POLLHUP`, and a listener never has one. Linux's
 `unix_poll` answers a listener as readable while a connection waits and
 nothing else, which is what the kernel answers now

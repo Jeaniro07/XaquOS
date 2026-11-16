@@ -144,10 +144,10 @@ at all, because the local APIC's one-shot never refires. The mistake that would
 make it refire, a timer programmed periodic, was tried there: it hangs the boot
 before the check reports, and the boot test's timeout catches it instead.
 
-The boot marker reads `FERRIX-BOOT-OK stages 1-3`, and it is now the whole
+The boot marker reads `XAQU-BOOT-OK stages 1-3`, and it is now the whole
 truth.
 
-**Deferred, and none of it is reachable from a machine Ferrix boots on
+**Deferred, and none of it is reachable from a machine Xaqu boots on
 today.** The first two are hardware variants rather than gaps in the stage:
 the facade above them does not change, and neither is on any later stage's
 path. The third is stage 4's by definition.

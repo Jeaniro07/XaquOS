@@ -2,10 +2,10 @@
 //! (`docs/LOGGING.md` §18 "Events"; the customer, 2026-10-23: each new
 //! kind can be switched, so not every program start or window is logged).
 //!
-//! `/etc/ferrix/lode.d/events.conf`, one kind a line, read by lode at start
+//! `/etc/xaqu/lode.d/events.conf`, one kind a line, read by lode at start
 //! and on `lode reload`, and by the programs that make the events -- hyprix
 //! for windows and its programs' streams -- each time they would make one;
-//! a person's `~/.config/ferrix/lode/events.conf` overrides the kinds made
+//! a person's `~/.config/xaqu/lode/events.conf` overrides the kinds made
 //! in their session:
 //!
 //! ```text
@@ -17,7 +17,7 @@
 //!
 //! Which records of a kind are kept is the rules' (`*.rules`): `drop where
 //! event = window-opened and id = waybar` is one line. A kind's record says
-//! its kind in `FERRIX_EVENT`.
+//! its kind in `XAQU_EVENT`.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -29,7 +29,7 @@ use crate::record::level;
 /// what it is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Kind {
-    /// As `events.conf` and `FERRIX_EVENT` name it.
+    /// As `events.conf` and `XAQU_EVENT` name it.
     pub name: &'static str,
     /// On unless a file says otherwise.
     pub on: bool,
@@ -105,7 +105,7 @@ pub const KINDS: [Kind; 9] = [
         on: true,
         level: 5,
         made_by: "lode",
-        what: "the loader's FERRIX/LASTKERNEL.TXT: the previous boot's last kernel lines lode had not stored",
+        what: "the loader's XAQU/LASTKERNEL.TXT: the previous boot's last kernel lines lode had not stored",
     },
 ];
 

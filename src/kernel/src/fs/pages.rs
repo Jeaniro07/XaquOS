@@ -50,11 +50,11 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_frame::Frame;
-use ferrix_kmem::{Charge, arc_footprint, boxed_footprint};
-use ferrix_vfs::tmpfs::{PageSource, Pages, Storage};
-use ferrix_vfs::{Errno, Result};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_frame::Frame;
+use xaqu_kmem::{Charge, arc_footprint, boxed_footprint};
+use xaqu_vfs::tmpfs::{PageSource, Pages, Storage};
+use xaqu_vfs::{Errno, Result};
 
 use crate::mm;
 use crate::object::quota::{self, Counter};
@@ -101,7 +101,7 @@ impl Storage for VmoStorage {
     /// The scheduler's: a task waiting for a tmpfs file's I/O lock behind a
     /// write that commits frames, a read throttled at `memory.high` or a
     /// truncation's shootdown sleeps, as every kernel `SleepLock` does.
-    fn parker(&self) -> &dyn ferrix_sync::Parker {
+    fn parker(&self) -> &dyn xaqu_sync::Parker {
         &crate::sync::SchedParker
     }
 

@@ -11,32 +11,32 @@
 # are ported onto it with (tools/ports).
 [ferrousli]
 path = "src/user/system/linux/ferrousli"
-repo = "https://github.com/ferrix-os/ferrousli"
+repo = "https://github.com/xaqu-os/ferrousli"
 commit = "ef6e0fe301c028af4f39649ef195a9636a2390dc"
 
 # The shell.
 [zinc]
 path = "src/user/system/linux/zinc"
-repo = "https://github.com/ferrix-os/zinc"
+repo = "https://github.com/xaqu-os/zinc"
 commit = "cf0af0b77aed37f2c9a755d8d2f140c82e3a939a"
 
 # The Pixel 7's desktop build, release packaging, monitor and Android app.
 [pixel7]
 path = "tools/vendor/google/pixel7"
-repo = "https://github.com/ferrix-os/pixel7"
+repo = "https://github.com/xaqu-os/pixel7"
 commit = "4cd45a66a5848ba4daa404f38bf0dad4b1b622a8"
 
-# The website, served at https://ferrix-os.org/.
+# The website, served at https://xaqu-os.org/.
 [website]
 path = "docs/website"
-repo = "https://github.com/ferrix-os/ferrix-os.github.io"
+repo = "https://github.com/xaqu-os/xaqu-os.github.io"
 commit = "1d3f1b304d2235adf16292ed473415e2156f540b"
 
-# Every program a person starts: Ferrix's own and those ported onto
+# Every program a person starts: Xaqu's own and those ported onto
 # ferrousli, one folder an app (docs/APPS.md).
 [apps]
 path = "src/user/apps"
-repo = "https://github.com/ferrix-os/apps"
+repo = "https://github.com/xaqu-os/apps"
 commit = "3598f84784b224acdbf89bfd784c734635b11837"
 
 # tole, the UI framework (docs/UI-FRAMEWORK.md), beside the compositor's
@@ -44,5 +44,5 @@ commit = "3598f84784b224acdbf89bfd784c734635b11837"
 # that draw with it (the lode viewer, Settings) reach it by path here.
 [tole]
 path = "src/user/system/linux/tole"
-repo = "https://github.com/ferrix-os/tole"
+repo = "https://github.com/xaqu-os/tole"
 commit = "a8b356c50fc9cd00c16f767a392fea355423da90"

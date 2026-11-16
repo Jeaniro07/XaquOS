@@ -18,7 +18,7 @@ pub const DEFAULT_MSS: u16 = 536;
 ///
 /// A peer may advertise an MSS larger than any path will carry; the standard
 /// lets the sender clamp it, and this is the clamp. 1460 is Ethernet's payload
-/// less the two headers, which is what every path Ferrix will meet supports.
+/// less the two headers, which is what every path Xaqu will meet supports.
 pub const MAX_MSS: u16 = 1460;
 
 /// The most a window may be scaled by: RFC 7323's ceiling of 14.
@@ -411,8 +411,8 @@ impl Connection {
     ///
     /// # Errors
     ///
-    /// [`ferrix_kmem::Refused`] past that job's limit.
-    pub fn charge_to(&mut self, owner: u32) -> Result<(), ferrix_kmem::Refused> {
+    /// [`xaqu_kmem::Refused`] past that job's limit.
+    pub fn charge_to(&mut self, owner: u32) -> Result<(), xaqu_kmem::Refused> {
         self.send.charge_to(owner)?;
         self.recv.charge_to(owner)?;
         self.holes.charge_to(owner)

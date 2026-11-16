@@ -4,7 +4,7 @@
 //! the driver's (`docs/POWERCTL.md`; the consultant's design review, ledger
 //! line 3130; the customer's "keep the kernel slim", 2026-10-22).
 //!
-//! Without `ferrix.powerctl` (or the test-only `ferrix.powerctl.fake`)
+//! Without `xaqu.powerctl` (or the test-only `xaqu.powerctl.fake`)
 //! nothing here reads, writes, publishes or prints. With it, stage 10's
 //! finder asks [`probe`], which publishes a node only on a processor the
 //! model table names, in one package, with 0x601 unlocked and `TjMax`
@@ -35,10 +35,10 @@ use alloc::sync::{Arc, Weak};
 use core::arch::x86_64::{__cpuid, __cpuid_count};
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_native_abi::types as abi;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_native_abi::types as abi;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::Once;
 
 use super::cpu;
 use crate::console::println;
@@ -47,8 +47,8 @@ use crate::sync::SpinLock;
 use logic::{Row, Trip};
 
 /// The boot word, and its test-only twin over the fake register file.
-pub(crate) const OPTION: &str = "ferrix.powerctl";
-pub(crate) const FAKE_OPTION: &str = "ferrix.powerctl.fake";
+pub(crate) const OPTION: &str = "xaqu.powerctl";
+pub(crate) const FAKE_OPTION: &str = "xaqu.powerctl.fake";
 
 /// `MSR_VR_CURRENT_CONFIG`: the one register the core writes.
 const VR_CURRENT_CONFIG: u32 = 0x601;
@@ -64,7 +64,7 @@ const TEMPERATURE_TARGET: u32 = 0x1a2;
 const THERM_STATUS: u32 = 0x19c;
 const PACKAGE_THERM_STATUS: u32 = 0x1b1;
 
-// `power_read`'s layout is the driver's (`ferrix_native_abi::types`) too.
+// `power_read`'s layout is the driver's (`xaqu_native_abi::types`) too.
 const _: () = {
     assert!(
         abi::POWER_READ_WORDS == abi::POWER_READ_FIRST + READINGS.len(),
@@ -615,9 +615,9 @@ impl Cells for Msr {
     fn masked<T>(&self, body: impl FnOnce() -> T) -> T {
         // A panic's stop is a fixed-delivery IPI: masked, this processor
         // finishes the write's last check before it can be stopped (§6.7).
-        let was = <super::Irq as ferrix_sync::IrqControl>::disable();
+        let was = <super::Irq as xaqu_sync::IrqControl>::disable();
         let done = body();
-        <super::Irq as ferrix_sync::IrqControl>::restore(was);
+        <super::Irq as xaqu_sync::IrqControl>::restore(was);
         done
     }
 }
@@ -647,7 +647,7 @@ fn package_shift() -> Option<u32> {
 }
 
 /// Whether `CPUID.0` names Intel, and `CPUID.1:EAX`; the fake's own
-/// under `ferrix.powerctl.fake`.
+/// under `xaqu.powerctl.fake`.
 fn identity(fake: bool) -> (bool, u32) {
     if fake {
         return (true, fake_check::SIGNATURE);
@@ -713,7 +713,7 @@ pub(crate) fn probe(view: &BootView<'_>) -> bool {
 }
 
 /// Run `$body` with `$cells` the boot's register file: the MSR, or the
-/// fake under `ferrix.powerctl.fake`.
+/// fake under `xaqu.powerctl.fake`.
 macro_rules! on_cells {
     ($machine:expr, $cells:ident => $body:expr) => {
         if $machine.fake {

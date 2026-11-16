@@ -20,7 +20,7 @@ needed none of the kernel.
 
 ```
 src/user/
-  system/            first party: what Ferrix needs to be useful
+  system/            first party: what Xaqu needs to be useful
     native/          the runtime, devmgr, the drivers
     linux/           init, auth, zinc, ferrousli, the compositor, adbd, the installer
   apps/              optional, each self-contained, found by xtask
@@ -35,7 +35,7 @@ src/user/
 were `src/user/native/` and `src/user/linux/`, which older documents and
 commits name.
 
-The line between the two is whether Ferrix is still useful without it. The
+The line between the two is whether Xaqu is still useful without it. The
 runtime, devmgr, the drivers, init, auth, the shell, the C library and the
 compositor are the system. A fetch program, Bad Apple!!'s player, the stat
 service and the ported programs (curl, btop, git, foot, vkgears, ALSA's
@@ -94,9 +94,9 @@ and Mozilla's CA bundle with it). `[build]`, `[image]`, `[check]` and
 `[[smoke]]` stay in the tree; they are how the package is made and judged.
 
 The manifest is a small subset of TOML -- tables, arrays of tables, and
-string, boolean and array-of-string values -- read by `ferrix-pkg`'s own
+string, boolean and array-of-string values -- read by `xaqu-pkg`'s own
 reader, because xtask takes nothing from crates.io and the package manager
-on Ferrix will read the same records.
+on Xaqu will read the same records.
 
 ### 3.1 Building
 
@@ -141,9 +141,9 @@ folder, and apps never refer to each other's folders. A Linux app needs
 nothing of the tree.
 
 An app never has to grow the SDK to make a system call.
-`ferrix_rt::linux::call` makes any Linux call by number, and
-`ferrix_rt::linux::numbers` is the running architecture's table of them, from
-`ferrix-linux-abi`. The app spells the calls it makes in its own folder.
+`xaqu_rt::linux::call` makes any Linux call by number, and
+`xaqu_rt::linux::numbers` is the running architecture's table of them, from
+`xaqu-linux-abi`. The app spells the calls it makes in its own folder.
 
 ## 4. The rules
 
@@ -168,8 +168,8 @@ An app never has to grow the SDK to make a system call.
 
 `tools/common/xtask/src/apps.rs` reads `src/user/apps/*/app.toml`, and nothing
 in xtask names an app's folder. Since 2026-10-03 `src/user/apps` is the
-ferrix-os/apps repository, checked out there at the commit `components.toml`
-pins (the customer's decision): every program a person starts, Ferrix's own
+xaqu-os/apps repository, checked out there at the commit `components.toml`
+pins (the customer's decision): every program a person starts, Xaqu's own
 and those ported onto ferrousli, which build with ferrousli's `tools/ports/`
 from where they sit.
 A system test that boots a program an app
@@ -202,17 +202,17 @@ A package is a newc cpio archive, `<name>-<version>-<arch>.fxpkg`, holding:
 
 * each file at its `to` path, with its mode, and a tree's files, symbolic
   links and directories beneath its `to`, in name order;
-* its record, `lib/ferrix/packages/<name>.toml`: the manifest's
+* its record, `lib/xaqu/packages/<name>.toml`: the manifest's
   `[package]`, and a `[[files]]` entry for each file with its path, mode,
-  size and BLAKE2b-256 digest (`ferrix-argon2`'s); a symbolic link's entry
+  size and BLAKE2b-256 digest (`xaqu-argon2`'s); a symbolic link's entry
   has its target as `link`, and its size and digest are the target's.
 
 Installing is unpacking, so the record lands with the files, and a running
-Ferrix knows what it was built with. `ferrix-pkg` (`src/lib/proto/pkg`)
+Xaqu knows what it was built with. `xaqu-pkg` (`src/lib/proto/pkg`)
 holds the manifest reader, the record and the installer's plan -- the
 dependencies met, no two packages owning a path, no path outside the root --
 where `cargo test` reaches it. xtask builds with it on the host; the package
-manager will be the same code on Ferrix.
+manager will be the same code on Xaqu.
 
 ## 7. The package manager
 
@@ -233,13 +233,13 @@ An install reads each archive with the kernel's own cpio reader and refuses
 it, before one file is written, when it is for another architecture, when an
 entry is not what its record says or a file its record lists is missing,
 when it is installed already, when what it depends on is neither installed
-nor coming with it (`ferrix_pkg::plan`), or when it would put down a path
+nor coming with it (`xaqu_pkg::plan`), or when it would put down a path
 that is there -- another package's or the system's. The record is written
 last and removed first, so a package half put down is not installed. A
 removal is refused while an installed package depends on it; it deletes what
 the record lists and the directories it leaves empty.
 
-`pkg install --replace` (2026-10-11, `docs/DEV-ON-FERRIX.md` D5) takes an
+`pkg install --replace` (2026-10-11, `docs/DEV-ON-XAQU.md` D5) takes an
 installed package's place in one transaction instead of refusing it. Every
 check is made first, against the set as it will be; a path that is there may
 be put down only where the version being replaced owns it. Then every new
@@ -268,9 +268,9 @@ What this leaves room for, and deliberately does not build yet:
   records from phase 1.
 * **Resolution.** Minimum versions and no solver, as apk has, until
   something needs more.
-* **Atomic upgrades.** Ferrix writes btrfs; a snapshot before a transaction
+* **Atomic upgrades.** Xaqu writes btrfs; a snapshot before a transaction
   is the natural rollback.
-* **Building on Ferrix.** Stage 20 wants the recipes run in the guest.
+* **Building on Xaqu.** Stage 20 wants the recipes run in the guest.
   `cargo` recipes can be; `script` recipes need gcc on the host until the
   ports build natively.
 * **The system as packages.** Only once a broken install of init or the
@@ -278,7 +278,7 @@ What this leaves room for, and deliberately does not build yet:
 
 ## 8. The phases
 
-1. **The mechanism**: `apps.rs`, `ferrix-pkg`, the SDK's `linux::call`,
+1. **The mechanism**: `apps.rs`, `xaqu-pkg`, the SDK's `linux::call`,
    the `check` steps, image installs, `test-apps`, rule 1, and the fetch
    program `ferrofetch` as the first app. Landed.
 2. **The optional programs move in**: the stat service and btop first, one
@@ -302,13 +302,13 @@ Agreed on 2026-09-30, as the draft proposed them:
 
 1. The names `src/user/system/` and `src/user/apps/`.
 2. The split of §2; adbd and the installer stay in the system.
-3. One generic `ferrix_rt::linux::call` is the one change to the system an
+3. One generic `xaqu_rt::linux::call` is the one change to the system an
    app needs.
 4. The test rows' images do not carry apps; `test-apps` does.
 
 ## 10. Where it stands
 
-2026-09-30: phase 1. `ferrix-pkg`, `apps.rs`, `ferrix_rt::linux::call`,
+2026-09-30: phase 1. `xaqu-pkg`, `apps.rs`, `xaqu_rt::linux::call`,
 and `ferrofetch` as the first app. On x86-64 `test-apps` boots zinc as init
 and passes the app's three smoke checks, the first a native program started
 from a shell by `execve` and reading `uname` and `/proc`; with one `expect`
@@ -376,7 +376,7 @@ lock on its work directory, the BACKLOG row two gates' btop builds filed.
 
 That landed as 4fd62d8a, and with it the last of phase 2. Then phase 4's
 first part: `/bin/pkg` (§7), a first-party Linux program in
-`src/user/system/linux/pkg` on `ferrix-pkg` and the kernel's cpio reader,
+`src/user/system/linux/pkg` on `xaqu-pkg` and the kernel's cpio reader,
 with `list`, `info`, `install` of local packages and `remove`, host tests
 against a directory as the root, and `test-pkg`, which boots it on every
 architecture to install, run and remove the stat service and to refuse a
@@ -386,7 +386,7 @@ lines that refusal should have printed. Every image a person runs carries
 `pkg`.
 
 What is left is §7's list: upgrades, a repository with a signed index,
-atomic transactions on btrfs, building on Ferrix, and the system as
+atomic transactions on btrfs, building on Xaqu, and the system as
 packages. None is started; each waits on the customer's order.
 
 The root checkout's `main`, left at c1bd87fb on 2026-09-30 because another

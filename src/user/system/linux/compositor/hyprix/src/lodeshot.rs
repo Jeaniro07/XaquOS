@@ -1,7 +1,7 @@
 //! hyprix as a crash-screenshot provider for lode (`docs/LOGGING.md` §19).
 //!
 //! When `sessiond` started this compositor for a session it left the
-//! session's token in `FERRIX_SESSION_TOKEN`; [`adopt`] takes it out of the
+//! session's token in `XAQU_SESSION_TOKEN`; [`adopt`] takes it out of the
 //! environment first thing in `main`, so nothing the compositor starts
 //! inherits it. With a token, the compositor connects to lode's
 //! `/run/lode/capture`, registers for seat0 with it, and answers each
@@ -20,10 +20,10 @@ use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use ferrix_lode_capture::{FORMAT_QOI, Message, SOCKET, qoi};
+use xaqu_lode_capture::{FORMAT_QOI, Message, SOCKET, qoi};
 
 /// Where `sessiond` leaves the token.
-pub const TOKEN_VARIABLE: &str = "FERRIX_SESSION_TOKEN";
+pub const TOKEN_VARIABLE: &str = "XAQU_SESSION_TOKEN";
 
 /// How often a lode that went away is looked for again.
 const RETRY: Duration = Duration::from_secs(5);
@@ -192,7 +192,7 @@ impl Provider {
         let message = match picture {
             Ok((width, height, stride, pixels)) => match qoi::encode(width, height, stride, pixels)
             {
-                Some(bytes) if bytes.len() < ferrix_lode_capture::FRAME_MAX - 64 => {
+                Some(bytes) if bytes.len() < xaqu_lode_capture::FRAME_MAX - 64 => {
                     Message::Image {
                         request: request.request,
                         format: FORMAT_QOI,

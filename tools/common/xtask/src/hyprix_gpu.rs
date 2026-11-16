@@ -14,7 +14,7 @@
 //! copyright file goes beside them, under `usr/share/doc/hyprix-gpu/`.
 //!
 //! Opt-in (the product owner, 2026-10-28): an image carries it only when
-//! `FERRIX_GPU_HELPER=1` is set as it is built -- the N150 box's image and
+//! `XAQU_GPU_HELPER=1` is set as it is built -- the N150 box's image and
 //! the GPU helper's own boot -- so the default image and the ISO stay as
 //! they are until hyprix's `gpu` option defaults to `auto`. x86-64 only:
 //! the volume and the sysroot are x86-64.
@@ -32,7 +32,7 @@ pub(crate) const PREFIX: &str = "usr/lib/hyprix-gpu";
 pub(crate) const PROGRAM: &str = "usr/libexec/hyprix-gpu";
 
 /// The variable that asks for it.
-const WANTED: &str = "FERRIX_GPU_HELPER";
+const WANTED: &str = "XAQU_GPU_HELPER";
 
 /// The helper's workspace.
 const DIR: &str = "src/user/system/linux/hyprix-gpu";

@@ -5,8 +5,8 @@
 //! `src/user/system/linux/init/` is a workspace of its own, built as zinc is: a static program
 //! against the target's own musl, linked by rust-lld, so any host builds it.
 //! [`carried`] returns what an image carries for it: `/sbin/init`,
-//! `/sbin/getty`, the getty generator in `/lib/ferrix/generators`, and the
-//! units of `src/user/system/linux/init/units` in `/lib/ferrix/units`, with `default.target` a link
+//! `/sbin/getty`, the getty generator in `/lib/xaqu/generators`, and the
+//! units of `src/user/system/linux/init/units` in `/lib/xaqu/units`, with `default.target` a link
 //! to `multi-user.target`.
 //!
 //! Only images that name `/sbin/init` carry it. With nothing named and
@@ -17,8 +17,8 @@
 //! # The test
 //!
 //! One boot per architecture, of a kernel with no program in it,
-//! `ferrix.init=/sbin/init` on the command line, zinc at `/bin/sh`, the
-//! test's own units in `/etc/ferrix/units`, and a fresh blank btrfs volume at
+//! `xaqu.init=/sbin/init` on the command line, zinc at `/bin/sh`, the
+//! test's own units in `/etc/xaqu/units`, and a fresh blank btrfs volume at
 //! `/data`. It types at the console the getty gives, as `test-jobs` does, and
 //! everything it judges is either the manager's own lines or a line the
 //! guest printed in answer to what was typed. A marker is built from a shell
@@ -70,7 +70,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     run: |_, args| test_init(args),
 }];
 
-/// Where the init is, and what `ferrix.init=` names.
+/// Where the init is, and what `xaqu.init=` names.
 pub(crate) const PATH: &str = "/sbin/init";
 
 /// The shipped units, beside this module in the tree.
@@ -89,7 +89,7 @@ const GONE_TRIES: usize = 60;
 /// The volume the boot writes and `btrfs check` reads, under `build/`.
 const VOLUME: &str = "init-data.img";
 
-/// What the getty prints once it holds the terminal: `Ferrix <host> on
+/// What the getty prints once it holds the terminal: `Xaqu <host> on
 /// /dev/console`.
 const BANNER: &str = " on /dev/console";
 
@@ -112,7 +112,7 @@ const STOP_ORDER: [&str; 4] = [
     "sysinit.target: stopped",
 ];
 
-/// The test's own units, in `/etc/ferrix/units`.
+/// The test's own units, in `/etc/xaqu/units`.
 const TEST_UNITS: &[(&str, &str)] = &[
     (
         "flaky.service",
@@ -252,7 +252,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          Description=Manages its own cgroup as uid 1000\n\
          \n\
          [Service]\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Delegate=yes\n\
          ExecStart=:/bin/sh -c 'mkdir /sys/fs/cgroup/system.slice/deleg.service/sub && echo delegated-ok; read x < /dev/ptmx'\n",
     ),
@@ -275,39 +275,39 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=native\n\
          ExecStart=/sbin/pong\n\
-         Offers=ferrix.test\n",
+         Offers=xaqu.test\n",
     ),
     (
         "pong-as-user.service",
         "[Unit]\n\
-         Description=A native service run as ferrix, by a helper that became it\n\
+         Description=A native service run as xaqu, by a helper that became it\n\
          \n\
          [Service]\n\
          Type=native\n\
          ExecStart=/sbin/pong\n\
-         User=ferrix\n",
+         User=xaqu\n",
     ),
     (
         "asker.service",
         "[Unit]\n\
-         Description=Opens ferrix.test, which it declares\n\
+         Description=Opens xaqu.test, which it declares\n\
          \n\
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         Uses=ferrix.test\n\
-         ExecStart=/bin/dirclient ferrix.test\n",
+         Uses=xaqu.test\n\
+         ExecStart=/bin/dirclient xaqu.test\n",
     ),
     (
         "rogue.service",
         "[Unit]\n\
-         Description=Opens ferrix.test, having declared only ferrix.other\n\
+         Description=Opens xaqu.test, having declared only xaqu.other\n\
          \n\
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         Uses=ferrix.other\n\
-         ExecStart=/bin/dirclient ferrix.test\n",
+         Uses=xaqu.other\n\
+         ExecStart=/bin/dirclient xaqu.test\n",
     ),
     (
         "boxed.service",
@@ -317,7 +317,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=boxed\n\
          NoNewPrivileges=yes\n\
          PrivateTmp=yes\n\
@@ -332,7 +332,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=open\n\
          ExecStart=:/bin/suid-sh -c 'echo \"$P-ids $UID $EUID\"; while read k v; do [ \"$k\" = NoNewPrivs: ] && echo \"$P-nnp $v\"; done < /proc/self/status; [ -e /tmp/l13-host ] && echo \"$P-tmp-shared\" || echo \"$P-tmp-private\"; echo in > /tmp/l13-$P && echo \"$P-tmp-writable\"; echo in > /run/l13-open/$P && echo \"$P-run-writable\" || echo \"$P-run-refused\"; echo \"$P-done\"'\n",
     ),
@@ -344,7 +344,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=netns\n\
          PrivateNetwork=yes\n\
          ExecStart=:/bin/sh -c 'n=0; while read i rest; do [ \"$i\" = lo ] && n=1; done < /proc/net/route; echo \"$P-lo-route $n\"; while read i rest; do case $i in *:) echo \"$P-dev $i\";; esac; done < /proc/net/dev; echo ping | nc 127.0.0.1 7777; echo \"$P-net-done\"'\n",
@@ -357,7 +357,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=netopen\n\
          ExecStart=:/bin/sh -c 'n=0; while read i rest; do [ \"$i\" = lo ] && n=1; done < /proc/net/route; echo \"$P-lo-route $n\"; while read i rest; do case $i in *:) echo \"$P-dev $i\";; esac; done < /proc/net/dev; echo ping | nc 127.0.0.1 7777; echo \"$P-net-done\"'\n",
     ),
@@ -369,7 +369,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=plain\n\
          ExecStart=:/bin/sh -c 'mkdir /tmp/sc-$P; echo \"$P-mkdir $?\"; hostname l13; echo \"$P-hostname $?\"; while read k v; do case $k in NoNewPrivs:|Seccomp:) echo \"$P-$k $v\";; esac; done < /proc/self/status; echo \"$P-done\"'\n",
     ),
@@ -381,7 +381,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=kill\n\
          SystemCallFilter=~mkdir mkdirat\n\
          ExecStart=:/bin/sh -c 'mkdir /tmp/sc-$P; echo \"$P-mkdir $?\"; hostname l13; echo \"$P-hostname $?\"; while read k v; do case $k in NoNewPrivs:|Seccomp:) echo \"$P-$k $v\";; esac; done < /proc/self/status; echo \"$P-done\"'\n",
@@ -394,7 +394,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=eperm\n\
          SystemCallFilter=~mkdir:EPERM mkdirat:EPERM\n\
          ExecStart=:/bin/sh -c 'mkdir /tmp/sc-$P; echo \"$P-mkdir $?\"; hostname l13; echo \"$P-hostname $?\"; while read k v; do case $k in NoNewPrivs:|Seccomp:) echo \"$P-$k $v\";; esac; done < /proc/self/status; echo \"$P-done\"'\n",
@@ -407,7 +407,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=errno\n\
          SystemCallFilter=~mkdir mkdirat\n\
          SystemCallErrorNumber=EACCES\n\
@@ -421,7 +421,7 @@ const TEST_UNITS: &[(&str, &str)] = &[
          [Service]\n\
          Type=oneshot\n\
          RemainAfterExit=yes\n\
-         User=ferrix\n\
+         User=xaqu\n\
          Environment=P=allow\n\
          SystemCallFilter=@system-service\n\
          SystemCallArchitectures=native\n\
@@ -451,14 +451,14 @@ const WANTED: [&str; 13] = [
     "rogue.service",
 ];
 
-/// Who the test's user is: root, and `ferrix`, whom `su` becomes to be
+/// Who the test's user is: root, and `xaqu`, whom `su` becomes to be
 /// refused what only root may do.
-const PASSWD: &str = "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/:/bin/sh\n\
+const PASSWD: &str = "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/:/bin/sh\n\
                       plain:x:1001:1001:plain:/:/bin/sh\n\
-                      auth:x:90:90:authd:/var/lib/ferrix/auth:/sbin/nologin\n";
+                      auth:x:90:90:authd:/var/lib/xaqu/auth:/sbin/nologin\n";
 
 /// Their groups.
-const GROUP: &str = "root:x:0:\nferrix:x:1000:\nplain:x:1001:\nauth:x:90:\nwheel:x:10:ferrix\n";
+const GROUP: &str = "root:x:0:\nxaqu:x:1000:\nplain:x:1001:\nauth:x:90:\nwheel:x:10:xaqu\n";
 
 /// The three programs of `src/user/system/linux/init/` for one architecture.
 #[derive(Debug)]
@@ -535,7 +535,7 @@ pub(crate) fn carried(arch: Arch) -> Result<Vec<File>> {
     let mut files = vec![
         program("sbin/init", &built.init)?,
         program("sbin/getty", &built.getty)?,
-        program("lib/ferrix/generators/getty-generator", &built.generator)?,
+        program("lib/xaqu/generators/getty-generator", &built.generator)?,
         program("bin/svc", &built.svc)?,
     ];
     // The commands a person types to turn the machine off, which `svc`
@@ -564,13 +564,13 @@ pub(crate) fn carried(arch: Arch) -> Result<Vec<File>> {
             continue;
         };
         files.push(File {
-            path: format!("lib/ferrix/units/{name}"),
+            path: format!("lib/xaqu/units/{name}"),
             mode: 0o644,
             content: Content::Bytes(read(&path)?),
         });
     }
     files.push(File {
-        path: "lib/ferrix/units/default.target".to_owned(),
+        path: "lib/xaqu/units/default.target".to_owned(),
         mode: 0o777,
         content: Content::Link("multi-user.target".to_owned()),
     });
@@ -600,7 +600,7 @@ pub(crate) fn command_line_of(arch: Arch) -> String {
 }
 
 /// The kernel option that has pid 1 start `devmgr`.
-const DEVMGR_OPTION: &str = "ferrix.devmgr=init";
+const DEVMGR_OPTION: &str = "xaqu.devmgr=init";
 
 /// A word of `ExecStart=`, quoted as systemd reads one.
 fn exec_word(word: &str) -> String {
@@ -635,7 +635,7 @@ const fn restart_line(session: bool) -> &'static str {
 fn console_getty(session: bool, shell: bool) -> Vec<File> {
     if session {
         vec![File {
-            path: "etc/ferrix/units/getty@.service.d/login.conf".to_owned(),
+            path: "etc/xaqu/units/getty@.service.d/login.conf".to_owned(),
             mode: 0o644,
             content: Content::Bytes(crate::auth::LOGIN_DROP_IN.as_bytes().to_vec()),
         }]
@@ -643,7 +643,7 @@ fn console_getty(session: bool, shell: bool) -> Vec<File> {
         Vec::new()
     } else {
         vec![File {
-            path: "etc/ferrix/units/getty@.service".to_owned(),
+            path: "etc/xaqu/units/getty@.service".to_owned(),
             mode: 0o777,
             content: Content::Link("/dev/null".to_owned()),
         }]
@@ -764,7 +764,7 @@ pub(crate) fn desktop_files(
         // sessiond, the unit's own process, takes the seat channel and arms
         // each lock at authd (docs/AUTH.md §3.7): init routes the name to
         // this unit alone.
-        "Uses=ferrix.auth.seat\n"
+        "Uses=xaqu.auth.seat\n"
     } else {
         "# Root's home, which the kernel gave hyprix as pid 1 and a unit with\n\
          # no User= is not given; the clients find ~/.config through it.\n\
@@ -814,14 +814,14 @@ pub(crate) fn desktop_files(
         mode: 0o755,
         content: Content::Bytes(hyprix.to_vec()),
     });
-    files.push(unit_file("etc/ferrix/units/hyprix.service", &unit));
+    files.push(unit_file("etc/xaqu/units/hyprix.service", &unit));
     files.push(link(
-        "etc/ferrix/units/graphical.target.wants/hyprix.service",
-        "/etc/ferrix/units/hyprix.service",
+        "etc/xaqu/units/graphical.target.wants/hyprix.service",
+        "/etc/xaqu/units/hyprix.service",
     ));
     files.push(link(
-        "etc/ferrix/units/default.target",
-        "/lib/ferrix/units/graphical.target",
+        "etc/xaqu/units/default.target",
+        "/lib/xaqu/units/graphical.target",
     ));
     files.extend(console_getty(session_user.is_some(), shell));
     // The desktop keeps its log (docs/LOGGING.md): lode with basic.target,
@@ -833,7 +833,7 @@ pub(crate) fn desktop_files(
     // And tests its free memory while it idles (docs/RAM-SCRUBBER.md §5).
     files.push(crate::scrub::enabled());
     // And can send it on (docs/LOGGING.md §10.2): `lode-upload`, which runs
-    // when `/etc/ferrix/lode-upload.conf` names a collector and the unit is
+    // when `/etc/xaqu/lode-upload.conf` names a collector and the unit is
     // enabled (`lode-receive pair` says how).
     files.extend(crate::lode_net::carried(arch)?);
     files.extend(session_files(bus, data_nosuid));
@@ -844,7 +844,7 @@ pub(crate) fn desktop_files(
             content: Content::Bytes(pulsed.to_vec()),
         });
         files.push(unit_file(
-            "etc/ferrix/units/pulsed.service",
+            "etc/xaqu/units/pulsed.service",
             &format!(
                 "# The sound server, a service of graphical.target (docs/AUDIO.md, U2d).\n\
                  [Unit]\n\
@@ -859,8 +859,8 @@ pub(crate) fn desktop_files(
             ),
         ));
         files.push(link(
-            "etc/ferrix/units/graphical.target.wants/pulsed.service",
-            "/etc/ferrix/units/pulsed.service",
+            "etc/xaqu/units/graphical.target.wants/pulsed.service",
+            "/etc/xaqu/units/pulsed.service",
         ));
     }
     Ok(files)
@@ -883,16 +883,16 @@ fn test_files(shell: &[u8], busybox: &[u8], dirclient: &[u8]) -> Vec<File> {
         .collect();
     for (name, text) in TEST_UNITS {
         files.push(File {
-            path: format!("etc/ferrix/units/{name}"),
+            path: format!("etc/xaqu/units/{name}"),
             mode: 0o644,
             content: Content::Bytes(text.as_bytes().to_vec()),
         });
     }
     for name in WANTED {
         files.push(File {
-            path: format!("etc/ferrix/units/multi-user.target.wants/{name}"),
+            path: format!("etc/xaqu/units/multi-user.target.wants/{name}"),
             mode: 0o777,
-            content: Content::Link(format!("/etc/ferrix/units/{name}")),
+            content: Content::Link(format!("/etc/xaqu/units/{name}")),
         });
     }
     // The sandboxing stage's set-uid shell: zinc, set-uid root, which a
@@ -981,7 +981,7 @@ fn test_arch(arch: Arch, args: &Args, checker: &Checker) -> Result<()> {
         .unwrap_or_default();
     files.extend(test_files(&shell, &busybox, &dirclient));
     // authd, `/bin/login` and the `login` service, with no password for
-    // anyone: the `login` stage sets ferrix's first one at the console.
+    // anyone: the `login` stage sets xaqu's first one at the console.
     files.extend(crate::auth::carried(arch, None)?);
     // L9's gate as designed: real sshd under socket activation, where
     // `sshdt` is built, which is x86-64 alone.
@@ -1176,22 +1176,22 @@ fn after_stage_one(at: &mut Watching<'_>, failures: &mut Vec<String>, sshd: bool
     power_off(at, failures)
 }
 
-/// ferrix's first password, chosen at the console by the `login` stage.
+/// xaqu's first password, chosen at the console by the `login` stage.
 const FIRST_PASSWORD: &str = "chosen at the console";
 
-/// What `/proc/self/status` says of a process whose ids are all ferrix's.
-const FERRIX_IDS: &str = "Uid:\t1000\t1000\t1000\t1000";
+/// What `/proc/self/status` says of a process whose ids are all xaqu's.
+const XAQU_IDS: &str = "Uid:\t1000\t1000\t1000\t1000";
 
 /// The `login` stage (`docs/AUTH.md` P2.3): from root's shell on the
 /// console, `/bin/login` against `authd`.
 ///
 /// First the console's own `tty_nr`, read back, so the number `authd` takes
 /// for the console is the target's and not only Linux's formula. Then, with
-/// no controlling terminal (`setsid`), `login ferrix` is not offered a first
+/// no controlling terminal (`setsid`), `login xaqu` is not offered a first
 /// password -- the certification consultant's F4, before any is set. Then at
 /// the console it is: chosen, typed twice, and the shell that follows is
-/// ferrix's in every id and in `session-1.scope`. Last, a wrong password is
-/// refused and the chosen one lets ferrix in again, in `session-2.scope`.
+/// xaqu's in every id and in `session-1.scope`. Last, a wrong password is
+/// refused and the chosen one lets xaqu in again, in `session-2.scope`.
 fn login(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     at.redact(FIRST_PASSWORD);
     match ask(
@@ -1220,22 +1220,22 @@ fn login(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     // session of its own while the shell carries on, so its answer is waited
     // for as a line.
     let before = at.after().len();
-    at.type_in(b"setsid login ferrix </dev/null\n")?;
+    at.type_in(b"setsid login xaqu </dev/null\n")?;
     let deadline = Instant::now() + PATIENCE;
     let _ = at.read_more(deadline, |lines| {
         lines.get(before..).unwrap_or_default().iter().any(|line| {
-            line.contains("login: no password is set for ferrix") || line.contains("Choose one now")
+            line.contains("login: no password is set for xaqu") || line.contains("Choose one now")
         })
     })?;
     let since = at.after().get(before..).unwrap_or_default().to_vec();
-    if has(&since, "Choose one now") || !has(&since, "login: no password is set for ferrix") {
+    if has(&since, "Choose one now") || !has(&since, "login: no password is set for xaqu") {
         failures.push(
             "login with no controlling terminal was not refused with `no password is set`: a first \
              password was offered off the console"
                 .into(),
         );
     } else {
-        println!("  login: with no controlling terminal, ferrix was not offered a first password");
+        println!("  login: with no controlling terminal, xaqu was not offered a first password");
     }
     // At the console: the offer, the password twice, the session.
     let first = log_in(
@@ -1243,7 +1243,7 @@ fn login(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
         failures,
         &[FIRST_PASSWORD, FIRST_PASSWORD],
         "session-1.scope",
-        Some("ferrix has no password. Choose one now:"),
+        Some("xaqu has no password. Choose one now:"),
     )?;
     if first && !has(at.after(), "first-password,tty_nr=1281") {
         failures.push(
@@ -1261,9 +1261,9 @@ fn login(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     Ok(())
 }
 
-/// `login ferrix` at the console, the `answers` given at its prompts in
+/// `login xaqu` at the console, the `answers` given at its prompts in
 /// turn ([`answer_prompts`]), and the shell that follows checked and left:
-/// whether it ran as ferrix in `scope`.
+/// whether it ran as xaqu in `scope`.
 fn log_in(
     at: &mut Watching<'_>,
     failures: &mut Vec<String>,
@@ -1274,7 +1274,7 @@ fn log_in(
     let before = at.after().len();
     let _ = ask(
         at,
-        "m=login; echo \"$m-starts\"; login ferrix\n",
+        "m=login; echo \"$m-starts\"; login xaqu\n",
         "login-starts",
     )?;
     if let Some(offer) = offer {
@@ -1312,7 +1312,7 @@ fn log_in(
         }
     }
     let deadline = Instant::now() + PATIENCE;
-    let wanted = format!("login: ferrix in user-1000.slice/{scope}");
+    let wanted = format!("login: xaqu in user-1000.slice/{scope}");
     let _ = at.read_more(deadline, |lines| {
         lines
             .get(before..)
@@ -1332,9 +1332,9 @@ fn log_in(
     )?;
     let said = at.after().get(shell..).unwrap_or_default().to_vec();
     let mut good = true;
-    if !has(&said, FERRIX_IDS) {
+    if !has(&said, XAQU_IDS) {
         failures.push(format!(
-            "the shell login started is not ferrix's in every id (`{FERRIX_IDS}`)"
+            "the shell login started is not xaqu's in every id (`{XAQU_IDS}`)"
         ));
         good = false;
     }
@@ -1354,7 +1354,7 @@ fn log_in(
     }
     if good {
         println!(
-            "  login: ferrix logged in at the console, every id 1000, in user-1000.slice/{scope}"
+            "  login: xaqu logged in at the console, every id 1000, in user-1000.slice/{scope}"
         );
     }
     Ok(good)
@@ -1367,14 +1367,14 @@ const PLAIN_PASSWORD: &str = "plain chose this";
 const ROOT_IDS: &str = "Uid:\t0\t0\t0\t0";
 
 /// The `su` stage (`docs/AUTH.md` P2.6, decision 5), after `login`: in
-/// ferrix's own session, `/bin/su` is set-uid root in the image (U6); with
-/// ferrix's password the shell `su` starts is root's in every id; a wrong
-/// one is refused; ferrix may not become another user; with no
+/// xaqu's own session, `/bin/su` is set-uid root in the image (U6); with
+/// xaqu's password the shell `su` starts is root's in every id; a wrong
+/// one is refused; xaqu may not become another user; with no
 /// controlling terminal `su` asks nothing (U5); and `plain`, not in wheel,
 /// is refused before any prompt.
 fn su(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     at.redact(PLAIN_PASSWORD);
-    if !enter(at, failures, "ferrix", &[FIRST_PASSWORD])? {
+    if !enter(at, failures, "xaqu", &[FIRST_PASSWORD])? {
         return Ok(());
     }
     match ask(
@@ -1399,10 +1399,10 @@ fn su(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let _ = wait_for(at, before, "su-root")?;
     let said = at.after().get(before..).unwrap_or_default().to_vec();
     if has(&said, ROOT_IDS) && has(&said, "su-root") {
-        println!("  su: ferrix, in wheel, became root with ferrix's own password");
+        println!("  su: xaqu, in wheel, became root with xaqu's own password");
     } else {
         failures.push(format!(
-            "su with ferrix's password did not give root in every id (`{ROOT_IDS}`)"
+            "su with xaqu's password did not give root in every id (`{ROOT_IDS}`)"
         ));
     }
     // A wrong one.
@@ -1434,9 +1434,9 @@ fn su(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
             if has(since(at, before), "only root may become another user")
                 && !has(since(at, before), "su-other-plain") =>
         {
-            println!("  su: ferrix may not become plain");
+            println!("  su: xaqu may not become plain");
         }
-        _ => failures.push("su let ferrix become another user than root".into()),
+        _ => failures.push("su let xaqu become another user than root".into()),
     }
     // No controlling terminal: refused before connecting (U5).
     let before = at.after().len();
@@ -1486,8 +1486,8 @@ fn dev_tty(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
             .iter()
             .any(|line| line.trim_start().starts_with(marker))
     };
-    let probe = "su ferrix -c 'setsid sh -c \"exec 3<>/dev/tty || { echo probe-tty-open-refused; exit; }; \
-                 echo probe-tty-opened; echo probe-tty-written-by-ferrix >&3; timeout 2 cat <&3 >/dev/null; \
+    let probe = "su xaqu -c 'setsid sh -c \"exec 3<>/dev/tty || { echo probe-tty-open-refused; exit; }; \
+                 echo probe-tty-opened; echo probe-tty-written-by-xaqu >&3; timeout 2 cat <&3 >/dev/null; \
                  echo probe-tty-read-status \\$?\"' </dev/null\n";
     let before = at.after().len();
     at.type_in(probe.as_bytes())?;
@@ -1500,7 +1500,7 @@ fn dev_tty(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let said = since(at, before).to_vec();
     if said_by_probe(&said, "probe-tty-open-refused")
         && !said_by_probe(&said, "probe-tty-opened")
-        && !said_by_probe(&said, "probe-tty-written-by-ferrix")
+        && !said_by_probe(&said, "probe-tty-written-by-xaqu")
     {
         println!("  /dev/tty: refused to a uid-1000 process with no controlling terminal");
     } else {
@@ -1542,7 +1542,7 @@ exec cat >> /tmp/stolen
 /// main 634c7ed0e). Nothing typed in the stage says it.
 const REVOKED_READ: &str = "cat: read error: I/O error";
 
-/// The console revoke stage's thief: run by ferrix under `setsid -c`, which
+/// The console revoke stage's thief: run by xaqu under `setsid -c`, which
 /// tries to steal the console with `TIOCSCTTY` 1 through a descriptor that
 /// can read it, then asks whether `/dev/tty` is now its.
 const REVOKE_STEAL: &str = "#!/bin/sh
@@ -1558,7 +1558,7 @@ fi
 /// shell's console descriptors is moved into a scope of its own and seen
 /// blocked in `read`; root's shell exits, and getty, restarting, hangs the
 /// console up. The reader must end, its read refused, and a line typed at
-/// the new shell must not reach it. Then ferrix, in a session of its own,
+/// the new shell must not reach it. Then xaqu, in a session of its own,
 /// may not steal the console from root's live session.
 ///
 /// The reader is judged on the one look at its `stat` that ended the wait
@@ -1577,7 +1577,7 @@ fn console_revoke(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
             .any(|line| line.trim_start().starts_with(marker))
     };
     let before = at.after().len();
-    let start = "su ferrix -c 'setsid /bin/revoke-reader' & \
+    let start = "su xaqu -c 'setsid /bin/revoke-reader' & \
                  until [ -s /tmp/revoke-reader ]; do :; done; \
                  p=$(cat /tmp/revoke-reader); \
                  svc scope --unit revoke-reader.scope $p && : > /tmp/revoke-moved; \
@@ -1591,7 +1591,7 @@ fn console_revoke(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
             let script = line.contains("(revoke-reader)") || line.contains("(sh)");
             if state.as_deref() == Some("S") && !script {
                 println!(
-                    "  revoke: ferrix's reader, in a scope of its own, waits in read on the console"
+                    "  revoke: xaqu's reader, in a scope of its own, waits in read on the console"
                 );
             } else {
                 failures.push(format!(
@@ -1639,10 +1639,10 @@ fn console_revoke(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
         )),
         None => failures.push("the revoke stage's /tmp/stolen was never measured".into()),
     }
-    // R0: ferrix, a session leader holding a console descriptor that can
+    // R0: xaqu, a session leader holding a console descriptor that can
     // read, may not take the console from root's live session.
     let before = at.after().len();
-    at.type_in(b"su ferrix -c 'setsid -c /bin/revoke-steal'\n")?;
+    at.type_in(b"su xaqu -c 'setsid -c /bin/revoke-steal'\n")?;
     let deadline = Instant::now() + PATIENCE;
     let _ = at.read_more(deadline, |lines| {
         let lines = lines.get(before..).unwrap_or_default();
@@ -1650,7 +1650,7 @@ fn console_revoke(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
     })?;
     let said = since(at, before).to_vec();
     if said_by_probe(&said, "revoke-steal-refused") && !said_by_probe(&said, "revoke-steal-took") {
-        println!("  revoke: ferrix could not steal the console from root's session");
+        println!("  revoke: xaqu could not steal the console from root's session");
     } else {
         failures.push("a uid-1000 process stole the console from a live session".into());
     }
@@ -1710,7 +1710,7 @@ const PROMPT: &str = "assword: ";
 ///
 /// So each answer is typed once, when its prompt is the console's unfinished
 /// line ([`Watching::unfinished_line`]): the program echoes nothing and
-/// flushes before it prints the prompt (`ferrix-auth-client`'s `Terminal`),
+/// flushes before it prints the prompt (`xaqu-auth-client`'s `Terminal`),
 /// so what is typed after the prompt is all read. A password prompt's line
 /// ends once its answer has been read -- the echo is off, and the program
 /// writes the newline itself -- so a prompt has taken its answer when a
@@ -1947,7 +1947,7 @@ fn judge_audit_power(after: &[String]) -> std::result::Result<(), String> {
 /// skipped its checks (`iommu::report_unchecked_faults`).
 const UNCHECKED_FAULTS: &str = " faults recorded in an unchecked boot, ";
 
-/// A boot with `ferrix.checks=skip` records that its self-checks were
+/// A boot with `xaqu.checks=skip` records that its self-checks were
 /// skipped (AUDIT.md §6), which no check inside that boot can see: its own
 /// `svc audit` shows the checks' configuration record saying 0.
 ///
@@ -1966,13 +1966,13 @@ fn checks_skipped(
         );
         return Ok(());
     }
-    let options = format!("{} ferrix.checks=skip\n", command_line_of(arch).trim_end());
+    let options = format!("{} xaqu.checks=skip\n", command_line_of(arch).trim_end());
     let image = fat::write_image_with(arch, loader, kernel, archive, Some(&options))?;
     let volume = btrfs_disk::blank_copy(arch, VOLUME)?;
     let mut with_volume = args.clone();
     with_volume.data_image = Some(volume);
     with_volume.data_image_kept = true;
-    println!("  {arch}: booting again with ferrix.checks=skip, to read that it was recorded");
+    println!("  {arch}: booting again with xaqu.checks=skip, to read that it was recorded");
     let mut failures: Vec<String> = Vec::new();
     let _ = qemu::watch_then(
         arch,
@@ -1997,14 +1997,14 @@ fn checks_skipped(
             // line of its own.
             if !has(&everything(at), UNCHECKED_FAULTS) {
                 failures.push(
-                    "a boot with ferrix.checks=skip did not say what faults its units recorded"
+                    "a boot with xaqu.checks=skip did not say what faults its units recorded"
                         .into(),
                 );
             }
             let lines = audit_lines(at)?;
             if !recorded(&lines, "CONFIG", "detail 1 0 0") {
                 failures.push(
-                    "a boot with ferrix.checks=skip did not record that its checks were skipped"
+                    "a boot with xaqu.checks=skip did not record that its checks were skipped"
                         .into(),
                 );
             }
@@ -2022,11 +2022,11 @@ fn checks_skipped(
 }
 
 /// The directory (L8, stage five): the kernel greeted init on its
-/// bootstrap channel; `asker.service`, which declares `Uses=ferrix.test`,
+/// bootstrap channel; `asker.service`, which declares `Uses=xaqu.test`,
 /// opened it and was answered by `pong.service`, a native service started
 /// by that OPEN in its own cgroup; `rogue.service`, which does not declare
 /// it, was REFUSED; and `pong-as-user.service`, `Type=native` with
-/// `User=ferrix`, runs as uid and gid 1000 in every role: made by a helper
+/// `User=xaqu`, runs as uid and gid 1000 in every role: made by a helper
 /// that became the user, since a native process runs as its maker (P0b).
 fn directory(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     if !has(
@@ -2052,13 +2052,13 @@ fn directory(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
             .map(|line| line.trim().to_owned())
     };
     match line_of("asker.service") {
-        Some(line) if line.ends_with("dir-answer: pong ferrix.test to asker.service") => {}
+        Some(line) if line.ends_with("dir-answer: pong xaqu.test to asker.service") => {}
         other => failures.push(format!(
-            "asker.service's OPEN of ferrix.test was not answered by pong.service: {other:?}"
+            "asker.service's OPEN of xaqu.test was not answered by pong.service: {other:?}"
         )),
     }
     match line_of("rogue.service") {
-        Some(line) if line.contains("dir-refused: ferrix.test") => {}
+        Some(line) if line.contains("dir-refused: xaqu.test") => {}
         other => failures.push(format!(
             "rogue.service's OPEN of a name it does not declare was not REFUSED: {other:?}"
         )),
@@ -2100,7 +2100,7 @@ fn directory(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
         match ask(at, &asked, &answer)? {
             Some(line) if line.trim() == format!("{name}-of 1000 1000 1000 1000") => {}
             other => failures.push(format!(
-                "pong-as-user.service, Type=native with User=ferrix, does not run as 1000 in \
+                "pong-as-user.service, Type=native with User=xaqu, does not run as 1000 in \
                  every {name} role: {other:?}"
             )),
         }
@@ -2456,7 +2456,7 @@ fn judge_sandbox(said: &[String]) -> Vec<String> {
     wrong
 }
 
-/// `devmgr` started by pid 1 (L12, §7.3), under `ferrix.devmgr=init`: the
+/// `devmgr` started by pid 1 (L12, §7.3), under `xaqu.devmgr=init`: the
 /// kernel gave init the starter and init only a process handle back; `/`
 /// moved onto the fresh root disk with pid 1 once `devmgr` had reported;
 /// `devmgr.service` is active, and a `svc restart` of it has the kernel start
@@ -2826,7 +2826,7 @@ fn control(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     }
     let refused = ask(
         at,
-        "su ferrix -c 'svc stop echoer.service'; r=$?; m=su; echo \"$m-status $r\"\n",
+        "su xaqu -c 'svc stop echoer.service'; r=$?; m=su; echo \"$m-status $r\"\n",
         "su-status ",
     )?;
     match refused {
@@ -2862,7 +2862,7 @@ fn administer(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
             "svc set-property TasksMax=7 did not reach echoer.service's pids.max: {other:?}"
         )),
     }
-    let link = "/etc/ferrix/units/multi-user.target.wants/spare.service";
+    let link = "/etc/xaqu/units/multi-user.target.wants/spare.service";
     let enabled = ask(
         at,
         &format!("svc enable spare.service; [ -L {link} ] && m=on || m=off; echo \"enable-$m\"\n"),
@@ -2923,15 +2923,15 @@ fn sshd_files() -> Result<Vec<File>> {
     ];
     for (name, text) in units {
         files.push(File {
-            path: format!("etc/ferrix/units/{name}"),
+            path: format!("etc/xaqu/units/{name}"),
             mode: 0o644,
             content: Content::Bytes(text.into_bytes()),
         });
     }
     files.push(File {
-        path: "etc/ferrix/units/multi-user.target.wants/sshd.socket".to_owned(),
+        path: "etc/xaqu/units/multi-user.target.wants/sshd.socket".to_owned(),
         mode: 0o777,
-        content: Content::Link("/etc/ferrix/units/sshd.socket".to_owned()),
+        content: Content::Link("/etc/xaqu/units/sshd.socket".to_owned()),
     });
     Ok(files)
 }
@@ -3087,9 +3087,9 @@ fn judge_units(after: &[String]) -> std::result::Result<(), String> {
         .map(|line| line.trim())
         .filter(|line| {
             [
-                "/lib/ferrix/units/",
-                "/etc/ferrix/units/",
-                "/run/ferrix/units/",
+                "/lib/xaqu/units/",
+                "/etc/xaqu/units/",
+                "/run/xaqu/units/",
             ]
             .iter()
             .any(|directory| line.starts_with(&format!("init     {directory}")))
@@ -3365,8 +3365,8 @@ mod tests {
     #[test]
     fn a_session_compositor_goes_headless_without_card0() {
         assert_eq!(
-            compositor_command(Some("ferrix"), None).join(" "),
-            "/bin/sessiond --user ferrix --headless 1920x1200 --display-wait 60 -- /bin/hyprix"
+            compositor_command(Some("xaqu"), None).join(" "),
+            "/bin/sessiond --user xaqu --headless 1920x1200 --display-wait 60 -- /bin/hyprix"
         );
         assert!(!unit_device(true).contains("Requires="));
         assert_eq!(compositor_command(None, None), ["/bin/hyprix"]);
@@ -3442,7 +3442,7 @@ mod tests {
         let clean = lines(&["  init     booting default.target"]);
         assert_eq!(judge_units(&clean), Ok(()));
         let warned = lines(&[
-            "  init     /etc/ferrix/units/getty@.service.d/test.conf:2: Failed to resolve",
+            "  init     /etc/xaqu/units/getty@.service.d/test.conf:2: Failed to resolve",
         ]);
         assert!(judge_units(&warned).unwrap_err().contains("test.conf"));
     }
@@ -3465,7 +3465,7 @@ mod tests {
             "forker.service: stopped"
         ));
         assert!(starts(
-            "ferrix# \u{1b}[J\u{1b}[8C  init     forker.service: stopped",
+            "xaqu# \u{1b}[J\u{1b}[8C  init     forker.service: stopped",
             "forker.service: stopped"
         ));
         assert!(starts("stat-self 5 (sh)", "stat-self "));

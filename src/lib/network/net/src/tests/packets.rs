@@ -3,7 +3,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::ethernet::{self, ethertype};
+use xaqu_netwire::ethernet::{self, ethertype};
 
 use crate::packet::{ALL_PROTOCOLS, LinkAddress, PacketKind, PacketType};
 use crate::socket::{Error, Family, SocketId};
@@ -37,7 +37,7 @@ fn frames(stack: &mut Stack, id: SocketId) -> Vec<crate::packet::Received> {
 /// An IPv4 packet to `destination` carrying `protocol`, with a valid header
 /// and nothing after it, which is all a link needs to carry.
 fn ipv4_packet(destination: [u8; 4], protocol: u8) -> Vec<u8> {
-    let header = ferrix_netwire::ipv4::Header {
+    let header = xaqu_netwire::ipv4::Header {
         dscp: 0,
         ecn: 0,
         identification: 7,
@@ -49,7 +49,7 @@ fn ipv4_packet(destination: [u8; 4], protocol: u8) -> Vec<u8> {
         source: [0, 0, 0, 0],
         destination,
     };
-    let mut packet = vec![0_u8; ferrix_netwire::ipv4::MIN_HEADER_LEN + 8];
+    let mut packet = vec![0_u8; xaqu_netwire::ipv4::MIN_HEADER_LEN + 8];
     let _ = header
         .emit(&[], 8, &mut packet)
         .expect("an IPv4 header fits");

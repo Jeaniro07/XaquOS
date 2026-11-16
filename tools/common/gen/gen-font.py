@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the framebuffer font from the Spleen BDF.
 
-`ferrix-fbtext` draws the panic screen, which runs on a machine already in a bad
+`xaqu-fbtext` draws the panic screen, which runs on a machine already in a bad
 state: there is no filesystem to load a font from and no allocator to decode
 one into. So the font is Rust source, a table of rows the drawing code indexes
 directly -- and a table of rows is exactly what nobody should type by hand.

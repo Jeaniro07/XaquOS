@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#ifndef FERRIX_KPI_MISC_H
-#define FERRIX_KPI_MISC_H
+#ifndef XAQU_KPI_MISC_H
+#define XAQU_KPI_MISC_H
 
 /* ---- Character devices: registered with the forwarding core. ---- */
 #define MINORBITS 20

@@ -11,7 +11,7 @@
 
 #![no_std]
 
-use ferrix_driver::{Errno, FromNode, Node, Reference, Requirement, Result, What};
+use xaqu_driver::{Errno, FromNode, Node, Reference, Requirement, Result, What};
 
 /// The reference `requirement` names in `property`, its place found by
 /// index or by its tree name in `names`: `ENOENT` when the node has none,

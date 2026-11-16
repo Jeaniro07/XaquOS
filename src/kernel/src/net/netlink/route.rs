@@ -31,8 +31,8 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::netlink::{
     ARPHRD_ETHER, ARPHRD_LOOPBACK, IFA_ADDRESS, IFA_F_PERMANENT, IFA_LABEL, IFA_LOCAL, IFF_UP,
     IFLA_ADDRESS, IFLA_IFNAME, IFLA_LINKINFO, IFLA_MTU, IfAddrMsg, IfInfoMsg, NDA_DST, NDA_LLADDR,
     NLM_F_ACK, NLM_F_MULTI, NLM_F_REQUEST, NLMSG_MIN_TYPE, NdMsg, NlMsgHdr, RT_SCOPE_HOST,
@@ -41,11 +41,11 @@ use ferrix_linux_abi::netlink::{
     RTM_GETROUTE, RTM_NEWADDR, RTM_NEWLINK, RTM_NEWNEIGH, RTM_NEWROUTE, RTM_SETLINK, RTN_UNICAST,
     RtMsg,
 };
-use ferrix_linux_abi::socket::{AF_INET, AF_INET6, AF_UNSPEC};
-use ferrix_net::iface::{Address as IfaceAddress, Medium};
-use ferrix_net::route::{Origin, Route};
-use ferrix_net::{IpAddress, IpCidr, Ipv4, Ipv6, Stack};
-use ferrix_netlink::{Address, Attr, Attributes, Message, Messages, Value, Writer};
+use xaqu_linux_abi::socket::{AF_INET, AF_INET6, AF_UNSPEC};
+use xaqu_net::iface::{Address as IfaceAddress, Medium};
+use xaqu_net::route::{Origin, Route};
+use xaqu_net::{IpAddress, IpCidr, Ipv4, Ipv6, Stack};
+use xaqu_netlink::{Address, Attr, Attributes, Message, Messages, Value, Writer};
 
 use super::link;
 use crate::net::NetNamespace;
@@ -276,7 +276,7 @@ fn dump_links(
         ));
         attributes.push(Attr::new(IFLA_MTU, Value::U32(interface.mtu)));
         // A virtual pair says what it is, as `ip -d link` reads it.
-        if matches!(interface.backing, ferrix_net::iface::Backing::Veth { .. }) {
+        if matches!(interface.backing, xaqu_net::iface::Backing::Veth { .. }) {
             attributes.push(Attr::new(IFLA_LINKINFO, Value::Bytes(&VETH_KIND)));
         }
         if writer
@@ -446,7 +446,7 @@ fn set_link(stack: &mut Stack, message: &Message<'_>) -> Result<bool, Errno> {
             stack
                 .rename_interface(index, name)
                 .map_err(|error| match error {
-                    ferrix_net::Error::AddressInUse => Errno::EEXIST,
+                    xaqu_net::Error::AddressInUse => Errno::EEXIST,
                     _ => Errno::ENODEV,
                 })?;
         }

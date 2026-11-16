@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-usbif"
+name = "xaqu-usbif"
 description = "The protocol a USB host's driver exports a device interface by: to devmgr, which starts its class driver, and to that driver, whose transfers it carries (docs/USB-SERIAL.md §6.1)"
 version = "0.1.0"
 edition = "2024"

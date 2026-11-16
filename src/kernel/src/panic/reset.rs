@@ -1,4 +1,4 @@
-//! `ferrix.panic=reset`: the machine resets itself 10 seconds after a
+//! `xaqu.panic=reset`: the machine resets itself 10 seconds after a
 //! panic's report, instead of halting.
 //!
 //! **A stop-gap** (2026-10-17, for the customer's N150 box, which has no
@@ -15,13 +15,13 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
+use xaqu_bootinfo::BootView;
 
 use crate::arch;
 use crate::console::{self, println};
 
 /// The command-line option, and the one value that arms the reset.
-pub(crate) const OPTION: &str = "ferrix.panic";
+pub(crate) const OPTION: &str = "xaqu.panic";
 const RESET: &str = "reset";
 /// The value said for the default.
 const HALT: &str = "halt";
@@ -30,7 +30,7 @@ const HALT: &str = "halt";
 /// to read the code or photograph the QR code. One fixed value.
 pub(crate) const WAIT_SECONDS: u64 = 10;
 
-/// Whether `ferrix.panic=reset` was asked for.
+/// Whether `xaqu.panic=reset` was asked for.
 static ARMED: AtomicBool = AtomicBool::new(false);
 
 /// Whether the first report has announced its reset ([`announce`]).
@@ -51,7 +51,7 @@ static REPORTER_KNOWN: AtomicBool = AtomicBool::new(false);
 /// slowest is 10 MHz, the TSC's GHz -- and a second or so of reads.
 const STUCK_READS: u32 = 50_000_000;
 
-/// Read `ferrix.panic` from the loader's command line: once, after stage 1's
+/// Read `xaqu.panic` from the loader's command line: once, after stage 1's
 /// check, on the boot processor. Exactly `reset` arms it; `halt` or no
 /// option is the default; anything else is said and taken as `halt`, so a
 /// misspelt option never turns into a reset nobody asked for.
@@ -96,7 +96,7 @@ pub(crate) fn reporting_here() {
 }
 
 /// Whether this processor is the one making the first report, under
-/// `ferrix.panic=reset`: a report abridged on it is one the first report
+/// `xaqu.panic=reset`: a report abridged on it is one the first report
 /// will never finish, wherever it faulted, so it resets. Before 2026-11-08
 /// only a fault after [`announce`] did, and one earlier -- in the trace, the
 /// explanation, the power restore -- halted a machine that had asked to be

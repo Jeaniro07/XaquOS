@@ -217,7 +217,7 @@ pub struct Client {
     params: BTreeMap<ObjectId, dmabuf::Params>,
     xdg_surfaces: BTreeMap<ObjectId, XdgSurface>,
     toplevels: BTreeMap<ObjectId, Toplevel>,
-    /// The toplevel each `ferrix_appmenu_v1` is for.
+    /// The toplevel each `xaqu_appmenu_v1` is for.
     // Ponytail: two maps, not one of pairs. Upgrade path:
     // `BTreeMap<ObjectId, (ObjectId, Builder)>` once a third field comes.
     appmenus: BTreeMap<ObjectId, ObjectId>,

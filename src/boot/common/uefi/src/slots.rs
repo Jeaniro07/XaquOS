@@ -1,7 +1,7 @@
 //! A/B system slots (`docs/AB-BOOT.md` §4): which slot to boot, and its
 //! kernel, initramfs and command line, read through Block I/O and verified.
 //!
-//! What is decided here is decided by `ferrix-slots`, as pure functions the
+//! What is decided here is decided by `xaqu-slots`, as pure functions the
 //! host tests reach: the GPT scan, the current record, the plan, the
 //! record write with its read-back, the slot header and its hashes, and the
 //! command line. This file only moves blocks between firmware and them, in
@@ -9,7 +9,7 @@
 //!
 //! 1. no partition table on the boot disk, or no control partition: today's
 //!    path, from the ESP;
-//! 2. each attempt of the plan: read the slot, ask `ferrix-boot-policy`
+//! 2. each attempt of the plan: read the slot, ask `xaqu-boot-policy`
 //!    whether it may start -- its header version, its signed manifest, the
 //!    trust-policy block (`docs/SIGNING.md` §10.6) -- and match every blob
 //!    on the copy it hands over (H.SIGN.7); a trial only after the record
@@ -18,11 +18,11 @@
 //!    `slot_signing = required`, the ESP's `RESCUE.SLT` instead, decided as
 //!    a slot, and the unsigned files are not read (§9.2).
 
-use ferrix_boot_policy::{Refusal, Rescue, Start};
-use ferrix_slots::gpt::{self, GptError, Layout, Part};
-use ferrix_slots::plan::{self, Kind, LoaderWords};
-use ferrix_slots::record::{self, Current, Record};
-use ferrix_slots::slot::{Blob, HEADER_LEN, MANIFEST_LEN, SlotHeader};
+use xaqu_boot_policy::{Refusal, Rescue, Start};
+use xaqu_slots::gpt::{self, GptError, Layout, Part};
+use xaqu_slots::plan::{self, Kind, LoaderWords};
+use xaqu_slots::record::{self, Current, Record};
+use xaqu_slots::slot::{Blob, HEADER_LEN, MANIFEST_LEN, SlotHeader};
 
 use crate::console::println;
 use crate::policy;
@@ -42,7 +42,7 @@ const MAX_BLOCK: u32 = HEADER_LEN as u32;
 const HEAD_LEN: u64 = (HEADER_LEN + MANIFEST_LEN) as u64;
 
 /// The ESP's rescue slot image, read only under `slot_signing = required`.
-const RESCUE_PATH: &str = "/FERRIX/RESCUE.SLT";
+const RESCUE_PATH: &str = "/XAQU/RESCUE.SLT";
 
 /// What the loader boots.
 #[derive(Debug)]
@@ -71,7 +71,7 @@ pub(crate) struct SlotBoot {
 pub(crate) fn choose(services: &Services, cmdline: &mut [u8]) -> Result<Choice> {
     match choose_slot(services, cmdline)? {
         Choice::Slot(slot) => Ok(Choice::Slot(slot)),
-        other => match ferrix_boot_policy::rescue(policy::block()) {
+        other => match xaqu_boot_policy::rescue(policy::block()) {
             Ok(Rescue::UnsignedFiles) => Ok(other),
             Ok(Rescue::SlotImage) => rescue_slot(services, cmdline).map(Choice::Slot),
             Err(why) => {
@@ -193,7 +193,7 @@ fn report(current: &Current) {
             "  slots    control record seq {} (copy {copy}): good {}, trial {}, {} tries left",
             record.sequence,
             record.good.letter(),
-            record.trial.map_or("none", ferrix_slots::Slot::letter),
+            record.trial.map_or("none", xaqu_slots::Slot::letter),
             record.tries
         ),
     }
@@ -238,13 +238,13 @@ impl core::fmt::Display for ReasonText {
 /// Why slots are not used, or a slot did not verify.
 #[derive(Clone, Copy, Debug)]
 enum Why {
-    /// `ferrix-boot-policy` refused it; the manifest's anchor id and
+    /// `xaqu-boot-policy` refused it; the manifest's anchor id and
     /// version, when it has one.
     Policy(Refusal, Option<(u16, u32)>),
     /// The partition table.
     Gpt(GptError),
     /// The slot's header.
-    Header(ferrix_slots::slot::SlotError),
+    Header(xaqu_slots::slot::SlotError),
     /// A blob's bytes do not hash to its header's digest.
     Hash(&'static str),
     /// The command line is not UTF-8, or does not fit with the loader's words.
@@ -312,7 +312,7 @@ fn decide(head: &[u8], slot_bytes: u64) -> core::result::Result<Start, Why> {
         )
     });
     let began = crate::arch::counter();
-    let start = ferrix_boot_policy::decide(
+    let start = xaqu_boot_policy::decide(
         policy::block(),
         &policy::BUILD,
         policy::family(),
@@ -343,7 +343,7 @@ fn decide(head: &[u8], slot_bytes: u64) -> core::result::Result<Start, Why> {
 
 /// Whether a header page claims version 2, for what a refusal line names.
 fn head_is_signed(page: &[u8]) -> bool {
-    page.get(8..10) == Some(&ferrix_slots::slot::VERSION_2.to_le_bytes()[..])
+    page.get(8..10) == Some(&xaqu_slots::slot::VERSION_2.to_le_bytes()[..])
 }
 
 /// Read and verify one slot, and compose its command line into `cmdline`.
@@ -398,7 +398,7 @@ fn load_slot(
             disk,
             part,
             &header.initrd,
-            MemoryType::FERRIX_INITRD,
+            MemoryType::XAQU_INITRD,
             "initramfs",
         ) {
             Ok(initrd) => Some((initrd, header.initrd.length)),
@@ -417,7 +417,7 @@ fn load_slot(
 
 /// The ESP's `RESCUE.SLT`, decided as a slot and its blobs matched, with
 /// its own command line (no slot words: it is neither A nor B) and
-/// `ferrix.slot.sig` (§9.2).
+/// `xaqu.slot.sig` (§9.2).
 fn rescue_slot(services: &Services, cmdline: &mut [u8]) -> Result<SlotBoot> {
     let (file, len) = match services.read_file(RESCUE_PATH, MemoryType::LOADER_DATA) {
         Ok(read) => read,
@@ -466,7 +466,7 @@ fn copy_rescue(
     image: &[u8],
     header: &SlotHeader,
     cmdline: &mut [u8],
-    signed: Option<ferrix_boot_policy::Signed>,
+    signed: Option<xaqu_boot_policy::Signed>,
 ) -> core::result::Result<SlotBoot, Why> {
     let blob_of = |blob: &Blob| {
         let start = usize::try_from(blob.offset).ok()?;
@@ -491,10 +491,10 @@ fn copy_rescue(
     let written = match signed {
         Some(signed) => write!(
             cursor,
-            "ferrix.slot.sig={}{separator}{line}",
+            "xaqu.slot.sig={}{separator}{line}",
             signed.anchor_id
         ),
-        None => write!(cursor, "ferrix.slot.sig=none{separator}{line}"),
+        None => write!(cursor, "xaqu.slot.sig=none{separator}{line}"),
     };
     written.map_err(|_| Why::CommandLine)?;
     let cmdline_len = cursor.used as u64;
@@ -513,7 +513,7 @@ fn copy_rescue(
             services,
             header.initrd,
             blob_of(&header.initrd),
-            MemoryType::FERRIX_INITRD,
+            MemoryType::XAQU_INITRD,
             "initramfs",
         ) {
             Ok(initrd) => Some((initrd, header.initrd.length)),

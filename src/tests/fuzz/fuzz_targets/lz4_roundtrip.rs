@@ -9,14 +9,14 @@
 
 #![no_main]
 
-use ferrix_lz4::{Table, bound, compress, decompress};
+use xaqu_lz4::{Table, bound, compress, decompress};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
     let mut out = vec![0u8; 65_536];
     let _ = decompress(bytes, &mut out);
 
-    let input = &bytes[..bytes.len().min(ferrix_lz4::MAX_INPUT)];
+    let input = &bytes[..bytes.len().min(xaqu_lz4::MAX_INPUT)];
     let mut table = Table::new();
     let mut packed = vec![0u8; bound(input.len())];
     let size = compress(input, &mut packed, &mut table).expect("bound is enough");

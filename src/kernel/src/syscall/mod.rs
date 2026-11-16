@@ -1,7 +1,7 @@
 //! The system call dispatch layer.
 //!
 //! Stage 7 of `docs/ROADMAP.md`. Everything below this point is the kernel
-//! talking to itself; this is where a program that was not written for Ferrix
+//! talking to itself; this is where a program that was not written for Xaqu
 //! asks it for something, using the numbers and the conventions Linux fixed.
 //!
 //! # The seam
@@ -51,14 +51,14 @@ pub mod native;
 pub(crate) mod native_side_check;
 pub mod program;
 pub mod region_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod rehome_check;
-pub use ferrix_kernel_core::syscall::uaccess;
+pub use xaqu_kernel_core::syscall::uaccess;
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_linux_abi::errno::{self, Errno};
-use ferrix_linux_abi::nr::Syscall;
+use xaqu_linux_abi::errno::{self, Errno};
+use xaqu_linux_abi::nr::Syscall;
 
 use crate::arch;
 use crate::console::println;
@@ -71,7 +71,7 @@ pub(crate) use crate::trap::Abi;
 pub use crate::trap::{Outcome, SyscallArgs};
 
 /// What no usual call under `linuxd` is, out of its line: every taken branch there runs cold.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 macro_rules! unusual_under_linuxd {
     () => {{
         #[cold]
@@ -81,7 +81,7 @@ macro_rules! unusual_under_linuxd {
     }};
 }
 /// See the other: nothing in the ring-0 load.
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 macro_rules! unusual_under_linuxd {
     () => {};
 }
@@ -103,10 +103,10 @@ macro_rules! unusual_under_linuxd {
 pub fn dispatch_with<P: Personality>(args: &SyscallArgs, regs: Option<&arch::UserRegs>) -> Outcome {
     // The native ABI first, by range, before any Linux table is asked: the
     // two ABIs never have to agree about a number, and `arch::decode_syscall`
-    // never sees one of Ferrix's own. See `native`. Only from the native
+    // never sees one of Xaqu's own. See `native`. Only from the native
     // entry: the native ABI is 64-bit words, and a 32-bit program's
     // `int $0x80` reaches the i386 table alone.
-    if args.abi == Abi::Native && ferrix_native_abi::nr::is_native(args.number) {
+    if args.abi == Abi::Native && xaqu_native_abi::nr::is_native(args.number) {
         unusual_under_linuxd!();
         return native_call(args);
     }
@@ -153,7 +153,7 @@ fn native_call(args: &SyscallArgs) -> Outcome {
         .and_then(sched::Task::thread)
         .map(|thread| thread.process());
     // The one call that answers in more than one register.
-    if args.number == ferrix_native_abi::nr::CHANNEL_WRITE_READ
+    if args.number == xaqu_native_abi::nr::CHANNEL_WRITE_READ
         && let Some(caller) = caller
     {
         return write_read_outcome(native::dispatch_write_read(args, caller));

@@ -6,11 +6,11 @@ use crate::panic::catalog;
 use crate::panic::fatal;
 use core::sync::atomic::AtomicU8;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::option_in;
-use ferrix_bootinfo::pstore::Stop;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::option_in;
+use xaqu_bootinfo::pstore::Stop;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::Once;
 #[derive(Debug)]
 pub struct Flush {
     pub mount: &'static str,

@@ -8,20 +8,20 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::filter::{self, Expr, Op, Test};
-use ferrix_lode_core::format::{self, Output};
-use ferrix_lode_core::ingest;
-use ferrix_lode_core::record::{Record, UNSPECIFIED};
-use ferrix_lode_core::regex::{self, Regex};
-use ferrix_lode_core::segment::{self, Header};
-use ferrix_lode_core::summary::Summary;
-use ferrix_lode_core::time::{self, Civil, Zone};
-use ferrix_lode_core::{console, cursor};
+use xaqu_lode_core::filter::{self, Expr, Op, Test};
+use xaqu_lode_core::format::{self, Output};
+use xaqu_lode_core::ingest;
+use xaqu_lode_core::record::{Record, UNSPECIFIED};
+use xaqu_lode_core::regex::{self, Regex};
+use xaqu_lode_core::segment::{self, Header};
+use xaqu_lode_core::summary::Summary;
+use xaqu_lode_core::time::{self, Civil, Zone};
+use xaqu_lode_core::{console, cursor};
 
 use crate::admin::Vacuum;
 use crate::store::{self, Dir, Segment};
 use crate::{sys, zone};
-use ferrix_lode_core::retention::{size_bytes, span_seconds};
+use xaqu_lode_core::retention::{size_bytes, span_seconds};
 
 /// What `lode --help` says.
 const HELP: &str = "\
@@ -294,7 +294,7 @@ pub(crate) fn complain(text: &str) {
 /// Bytes on standard output; a reader that went away ends lode quietly.
 pub(crate) fn out(bytes: &[u8]) {
     if sys::write_all(1, bytes).is_err() {
-        ferrix_rt::exit(0);
+        xaqu_rt::exit(0);
     }
 }
 
@@ -710,7 +710,7 @@ fn duration(text: &str) -> Option<u64> {
 
 /// Where a read finds its segments: store directories it opens itself, or
 /// for a user who cannot, the user's own, which lode hands over
-/// (`ferrix_lode_core::access`).
+/// (`xaqu_lode_core::access`).
 pub(crate) struct Source {
     /// The directories.
     pub(crate) dirs: Vec<Dir>,
@@ -994,8 +994,8 @@ fn field_group(group: &[(String, Vec<u8>)], record: &Record) -> bool {
             .filter(|(each, _)| each == name)
             .any(|(_, value)| match *name {
                 // Not stored as fields: the level is the record's own.
-                "PRIORITY" | "FERRIX_LEVEL" => {
-                    let known = record.priority != UNSPECIFIED || *name == "FERRIX_LEVEL";
+                "PRIORITY" | "XAQU_LEVEL" => {
+                    let known = record.priority != UNSPECIFIED || *name == "XAQU_LEVEL";
                     known && record.level_text().as_bytes() == value.as_slice()
                 }
                 _ => record.get(name) == Some(value.as_slice()),
@@ -1501,7 +1501,7 @@ fn delete(options: &Options) -> i32 {
         }
         // A compressed segment stays compressed.
         let rest = if store::segment_compressed(&each.segment) {
-            ferrix_lode_core::compress::compress(rest.clone()).unwrap_or(rest)
+            xaqu_lode_core::compress::compress(rest.clone()).unwrap_or(rest)
         } else {
             rest
         };
@@ -1534,7 +1534,7 @@ fn delete(options: &Options) -> i32 {
 /// Put `bytes` in place of `segment`: a new file beside it, synced, then
 /// renamed over it, so a crash leaves the old one or the new one whole.
 fn replace(segment: &Segment, bytes: &[u8]) -> Result<(), String> {
-    let temporary = ferrix_lode_core::access::temporary(&segment.name, ".new");
+    let temporary = xaqu_lode_core::access::temporary(&segment.name, ".new");
     let _ = sys::unlinkat(segment.dir, temporary.as_bytes());
     let fd = sys::openat(
         segment.dir,
@@ -1565,7 +1565,7 @@ fn announce(words: &[String]) -> i32 {
             );
         }
     };
-    if ferrix_lode_core::session::parse(line.trim_end()).is_none() {
+    if xaqu_lode_core::session::parse(line.trim_end()).is_none() {
         return usage("that is not a session line lode takes");
     }
     let sent = connect(crate::seat::SOCKET).and_then(|fd| {
@@ -1587,15 +1587,15 @@ fn announce(words: &[String]) -> i32 {
 }
 
 /// `lode events`: each kind of event, on or off, its level and where that
-/// was set -- the defaults, `/etc/ferrix/lode.d/events.conf`, then the
-/// reader's own `~/.config/ferrix/lode/events.conf`, which overrides the
+/// was set -- the defaults, `/etc/xaqu/lode.d/events.conf`, then the
+/// reader's own `~/.config/xaqu/lode/events.conf`, which overrides the
 /// kinds made in their session.
 fn events() -> i32 {
-    let mut events = ferrix_lode_core::events::Events::default();
-    let system = "/etc/ferrix/lode.d/events.conf";
+    let mut events = xaqu_lode_core::events::Events::default();
+    let system = "/etc/xaqu/lode.d/events.conf";
     let mut files = alloc::vec![String::from(system)];
     if let Some(home) = environment("HOME") {
-        files.push(alloc::format!("{home}/.config/ferrix/lode/events.conf"));
+        files.push(alloc::format!("{home}/.config/xaqu/lode/events.conf"));
     }
     for path in files {
         let Some(bytes) = sys::read_small(path.as_bytes()) else {
@@ -1624,12 +1624,12 @@ fn environment(name: &str) -> Option<String> {
 
 /// Connect to a stream socket at `path`, blocking: the descriptor.
 pub(crate) fn connect(path: &[u8]) -> Result<usize, sys::Errno> {
-    connect_kind(path, ferrix_rt::linux::SOCK_STREAM)
+    connect_kind(path, xaqu_rt::linux::SOCK_STREAM)
 }
 
 /// Connect to a socket of `kind` at `path`, blocking: the descriptor.
 pub(crate) fn connect_kind(path: &[u8], kind: usize) -> Result<usize, sys::Errno> {
-    use ferrix_rt::linux as rt;
+    use xaqu_rt::linux as rt;
     let fd = rt::socket(rt::AF_UNIX, kind | sys::O_CLOEXEC, 0)?;
     let Some((address, length)) = rt::sockaddr_un(path) else {
         sys::close(fd);
@@ -1653,8 +1653,8 @@ pub(crate) fn connect_kind(path: &[u8], kind: usize) -> Result<usize, sys::Errno
 
 /// Read frames from `fd` into `buf` until one is whole: it, or `None` at
 /// the end or on a frame that does not read.
-fn next_frame(fd: usize, buf: &mut Vec<u8>) -> Option<ferrix_lode_capture::Message> {
-    use ferrix_lode_capture::Message;
+fn next_frame(fd: usize, buf: &mut Vec<u8>) -> Option<xaqu_lode_capture::Message> {
+    use xaqu_lode_capture::Message;
     let mut chunk = [0_u8; 4096];
     loop {
         match Message::decode(buf) {
@@ -1676,7 +1676,7 @@ fn next_frame(fd: usize, buf: &mut Vec<u8>) -> Option<ferrix_lode_capture::Messa
 /// for a test or a provider's author: registers with `TOKEN`, says whether
 /// lode accepted it, then answers every request with a 2x2 picture.
 fn provide_stub(words: &[String]) -> i32 {
-    use ferrix_lode_capture::{FORMAT_QOI, Message, qoi};
+    use xaqu_lode_capture::{FORMAT_QOI, Message, qoi};
     let Some(token) = words.first().and_then(|word| segment::parse_id(word)) else {
         return usage("provide-stub needs the session's token, 32 hex digits");
     };
@@ -1829,7 +1829,7 @@ fn send_native(fd: usize, identifier: &str, priority: Option<u8>, line: &[u8]) {
 
 /// A datagram socket connected to `path`.
 pub(crate) fn connect_datagram(path: &[u8]) -> Result<usize, sys::Errno> {
-    use ferrix_rt::linux as rt;
+    use xaqu_rt::linux as rt;
     let fd = rt::socket(rt::AF_UNIX, 2, 0)?;
     let Some((address, length)) = rt::sockaddr_un(path) else {
         sys::close(fd);
@@ -1856,7 +1856,7 @@ pub(crate) fn connect_datagram(path: &[u8]) -> Result<usize, sys::Errno> {
 /// (`/tmp/lode-bench`), then time `-u <a rare unit> -n 50` read through the
 /// summaries and by reading every segment. Step 5's benchmark.
 fn bench(words: &[String]) -> i32 {
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
     let Some(count) = words.first().and_then(|word| word.parse::<u64>().ok()) else {
         return usage("bench needs a number of records");
     };

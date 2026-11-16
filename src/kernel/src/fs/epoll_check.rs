@@ -41,15 +41,15 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::socket::{AF_UNIX, SOCK_STREAM};
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::socket::{AF_UNIX, SOCK_STREAM};
+use xaqu_linux_abi::types::{
     AT_FDCWD, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLL_CTL_MOD, EPOLLET, EPOLLEXCLUSIVE,
     EPOLLHUP, EPOLLIN, EPOLLONESHOT, EPOLLOUT, F_GETFD, FD_CLOEXEC, MAP_ANONYMOUS, MAP_PRIVATE,
     O_DIRECTORY, O_RDONLY, PROT_READ, PROT_WRITE, SEEK_CUR, SEEK_SET,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs;
 use crate::fs::epoll;
@@ -87,10 +87,10 @@ const KERNEL_ADDRESS: u64 = u64::MAX - 0xFFF;
 const AT_ADDRESS: u64 = 1024;
 
 /// The abstract name the refused-gathering case listens on.
-const GATHER_NAME: &[u8] = b"ferrix-epoll-check-gather";
+const GATHER_NAME: &[u8] = b"xaqu-epoll-check-gather";
 
 /// The abstract name the ready list's `connect` case listens on.
-const LISTEN_NAME: &[u8] = b"ferrix-epoll-check";
+const LISTEN_NAME: &[u8] = b"xaqu-epoll-check";
 
 /// How many pipes the ready list's cases register.
 const MANY: usize = 64;
@@ -992,15 +992,15 @@ fn with_a_waiter(
             "epoll-meet-waiter",
             ready_list_waiter,
             0,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
             cpu,
-            ferrix_sched::CpuSet::of(cpu),
+            xaqu_sched::CpuSet::of(cpu),
         )?,
         None => crate::sched::spawn(
             "epoll-ready-waiter",
             ready_list_waiter,
             0,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
         )?,
     };
     let deadline = crate::timer::now_nanos().saturating_add(PATIENCE_NANOS);

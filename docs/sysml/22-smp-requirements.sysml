@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 22: the low-level requirements of smp.
+ * Xaqu — SysML v2 model, part 22: the low-level requirements of smp.
  *
  * What each unit of src/kernel/src/smp.rs does, as `ItemLowLevel` requirements
  * (part 13 defines the format, part 14 is the pilot this copies): finding
@@ -39,8 +39,8 @@
  * Ids are `L.smp.<n>`, numbered through the subsystem; the package gives the
  * part of it. They are never renumbered once a check names them.
  */
-package FerrixSmpRequirements {
-    private import FerrixItemRequirements::*;
+package XaquSmpRequirements {
+    private import XaquItemRequirements::*;
 
     package Processors {
         doc /* The processors firmware describes, the record each is given,

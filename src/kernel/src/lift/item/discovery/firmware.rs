@@ -7,9 +7,9 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::sync::atomic::AtomicBool;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::Framebuffer;
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::Framebuffer;
+use xaqu_sync::Once;
 pub fn may_lend() -> bool {
     false
 }

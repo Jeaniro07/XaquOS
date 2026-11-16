@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # GitHub settings for the develop -> main flow (docs/REPO-FLOW.md). Run by the
-# owner, with `gh auth login` as an administrator of ferrix-os/ferrix. Nothing
+# owner, with `gh auth login` as an administrator of xaqu-os/xaqu. Nothing
 # changes without --apply: without it, every call is printed instead.
 #
 #   tools/common/release/github-flow-setup.sh setup  [--apply]
@@ -33,7 +33,7 @@
 # not touch it, and an outside contributor, who has no write access, cannot
 # post one.
 set -euo pipefail
-repo=ferrix-os/ferrix
+repo=xaqu-os/xaqu
 actions_app=15368   # GitHub Actions' app id: required checks must come from it
 
 cmd=${1:-show}; apply=0; [ "${2:-}" = --apply ] && apply=1

@@ -1,7 +1,7 @@
 //! Sleeping on the files a `poll` or an `epoll_wait` watches.
 //!
 //! Each pollable object names the wait queues it wakes when its readiness may
-//! have changed, through [`ferrix_vfs::Inode::poll_queues`]. A wait gathers
+//! have changed, through [`xaqu_vfs::Inode::poll_queues`]. A wait gathers
 //! them into [`Sources`] and sleeps on all of them at once, so a pipe written,
 //! a datagram arriving or an eventfd bumped ends the wait at that moment, as
 //! it does on Linux, rather than at the next look of a wait that asks again
@@ -17,7 +17,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_vfs::{OpenFile, WakeSource};
+use xaqu_vfs::{OpenFile, WakeSource};
 
 use crate::fallible;
 use crate::sched::WaitQueue;

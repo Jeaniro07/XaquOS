@@ -18,7 +18,7 @@
 //! `include/standard-headers/linux/virtio_input.h`, and the devices it builds
 //! from it in `hw/input/virtio-input.c` and `virtio-input-hid.c`. The evdev
 //! numbers (`EV_*`, `SYN_REPORT`) are not this module's: they are
-//! re-exported from `ferrix_linux_abi::input`, whose probe pins them against
+//! re-exported from `xaqu_linux_abi::input`, whose probe pins them against
 //! `input-event-codes.h`, so the driver and the evdev nodes read one copy.
 //!
 //! # What QEMU's devices answer
@@ -391,14 +391,14 @@ pub const EVENT_LEN: usize = 8;
 
 // The event types and codes are evdev's, and virtio-input does not renumber
 // them: a virtio event is an `input_event` without its timestamp. So they are
-// not written down here but taken from `ferrix-linux-abi`'s input module,
+// not written down here but taken from `xaqu-linux-abi`'s input module,
 // where the probe compiled against Linux's `input-event-codes.h` pins every
 // one; a second copy here could only drift from it.
 
 /// `EV_*`, the event types, and `SYN_REPORT`, the `EV_SYN` code that ends a
 /// report. `EV_LED` and `EV_SND` are the ones a driver sends on
 /// [`STATUS_QUEUE`].
-pub use ferrix_linux_abi::input::{
+pub use xaqu_linux_abi::input::{
     EV_ABS, EV_KEY, EV_LED, EV_MAX, EV_MSC, EV_REL, EV_REP, EV_SND, EV_SYN, SYN_REPORT,
 };
 

@@ -9,14 +9,14 @@
 //! compositor starts is then that account's too.
 //!
 //! The devices stay `0660 root`. The compositor inherits one end of a socket
-//! pair as descriptor 3, named by `FERRIX_SEAT_FD`, and asks over it for a
+//! pair as descriptor 3, named by `XAQU_SEAT_FD`, and asks over it for a
 //! card, a render node or an input node; this opens it and hands the
 //! descriptor back (`compositor_seat`). No path leads to the channel, so no
 //! other program of the account can ask for the keyboard.
 //!
 //! The lock is spoken of on a second socket pair, descriptor 4
 //! (`compositor_seat::lock`), and relayed to and from `authd` over
-//! `ferrix.auth.seat` (§3.7, P2.5): this arms each lock the compositor takes
+//! `xaqu.auth.seat` (§3.7, P2.5): this arms each lock the compositor takes
 //! for the session's uid, and passes on only a grant for that uid and that
 //! lock ([`relay`]). Init gives the seat channel's bootstrap to this
 //! process, the unit's own; the compositor cannot take it.
@@ -52,7 +52,7 @@ use compositor_seat::lock::{LOCK_FD, LOCK_FD_VARIABLE, MAX_LINE};
 use compositor_seat::prompt::{PROMPT_FD, PROMPT_FD_VARIABLE};
 use compositor_socket::{Connection, RecvError};
 use compositor_wire::Fd;
-use ferrix_auth_proto::Record;
+use xaqu_auth_proto::Record;
 
 use crate::authd::{Authd, Heard};
 use crate::relay::{Act, Relay};
@@ -176,7 +176,7 @@ const SKEL: &str = "/etc/skel";
 /// What the image puts under `/home` itself -- the host paths a carried
 /// configuration names -- which the home disk's mount hides: copied back
 /// in place at every start.
-const HOME_COPY: &str = "/usr/share/ferrix/home";
+const HOME_COPY: &str = "/usr/share/xaqu/home";
 
 /// The deepest a seeded tree goes, against a loop of links.
 const DEEPEST: usize = 16;
@@ -197,7 +197,7 @@ struct Account {
 ///
 /// A `name` of digits alone is a uid, and the account is the one with it:
 /// the live medium's image names its session `--user 1000`, so the account
-/// an installed system's first boot renames (`ferrix-install --apply`,
+/// an installed system's first boot renames (`xaqu-install --apply`,
 /// docs/INSTALLER.md) is the one its session starts as, whatever name the
 /// person chose. An account's own name is never digits alone.
 fn account(name: &str, passwd: &str, group: &str) -> Option<Account> {
@@ -818,7 +818,7 @@ fn serve(
             for heard in seat.drain() {
                 acts.extend(match heard {
                     Heard::Ready => {
-                        say("ferrix.auth.seat is up: the session's locks are granted by authd");
+                        say("xaqu.auth.seat is up: the session's locks are granted by authd");
                         relay.seat_ready()
                     }
                     Heard::Gone => {
@@ -1063,8 +1063,8 @@ mod tests {
     }
 
     const PASSWD: &str =
-        "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\n";
-    const GROUP: &str = "root:x:0:\nferrix:x:1000:\naudio:x:29:ferrix,other\nvideo:x:44:other\n";
+        "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n";
+    const GROUP: &str = "root:x:0:\nxaqu:x:1000:\naudio:x:29:xaqu,other\nvideo:x:44:other\n";
 
     #[test]
     fn a_uid_names_the_account_that_has_it() {
@@ -1075,14 +1075,14 @@ mod tests {
         assert_eq!(found.home, "/home/kira");
         assert_eq!(found.groups, vec![1000, 10]);
         assert!(account("1001", renamed, group).is_none());
-        assert_eq!(account("ferrix", PASSWD, GROUP).map(|a| a.uid), Some(1000));
+        assert_eq!(account("xaqu", PASSWD, GROUP).map(|a| a.uid), Some(1000));
     }
 
     #[test]
     fn headless_options_are_split_off_before_the_program() {
         let words = |text: &str| -> Vec<String> { text.split(' ').map(str::to_owned).collect() };
         let (headless, rest) = split_headless(&words(
-            "--user ferrix --headless 1920x1200 --display-wait 5 -- /bin/hyprix --headless",
+            "--user xaqu --headless 1920x1200 --display-wait 5 -- /bin/hyprix --headless",
         ))
         .unwrap();
         assert_eq!(
@@ -1092,11 +1092,11 @@ mod tests {
                 wait: Duration::from_secs(5)
             })
         );
-        assert_eq!(rest, words("--user ferrix -- /bin/hyprix --headless"));
-        let (none, rest) = split_headless(&words("--user ferrix -- /bin/hyprix")).unwrap();
+        assert_eq!(rest, words("--user xaqu -- /bin/hyprix --headless"));
+        let (none, rest) = split_headless(&words("--user xaqu -- /bin/hyprix")).unwrap();
         assert_eq!(none, None);
         assert_eq!(rest.len(), 4);
-        assert!(split_headless(&words("--user ferrix --headless")).is_err());
+        assert!(split_headless(&words("--user xaqu --headless")).is_err());
     }
 
     /// The nvrm case: card0 comes 30 s in, and nothing falls back before the
@@ -1115,12 +1115,12 @@ mod tests {
     #[test]
     fn an_account_has_its_ids_home_shell_and_groups() {
         assert_eq!(
-            account("ferrix", PASSWD, GROUP),
+            account("xaqu", PASSWD, GROUP),
             Some(Account {
-                name: "ferrix".to_owned(),
+                name: "xaqu".to_owned(),
                 uid: 1000,
                 gid: 1000,
-                home: "/home/ferrix".to_owned(),
+                home: "/home/xaqu".to_owned(),
                 shell: "/bin/zsh".to_owned(),
                 groups: vec![1000, 29],
             })
@@ -1166,14 +1166,14 @@ mod tests {
         let words = |text: &str| text.split(' ').map(str::to_owned).collect::<Vec<_>>();
         assert_eq!(
             parse(&words(
-                "--user ferrix -- /bin/hyprix --config /etc/hyprland.conf"
+                "--user xaqu -- /bin/hyprix --config /etc/hyprland.conf"
             )),
             Some((
-                "ferrix".to_owned(),
+                "xaqu".to_owned(),
                 words("/bin/hyprix --config /etc/hyprland.conf")
             ))
         );
-        assert_eq!(parse(&words("--user ferrix --")), None);
-        assert_eq!(parse(&words("ferrix -- /bin/hyprix")), None);
+        assert_eq!(parse(&words("--user xaqu --")), None);
+        assert_eq!(parse(&words("xaqu -- /bin/hyprix")), None);
     }
 }

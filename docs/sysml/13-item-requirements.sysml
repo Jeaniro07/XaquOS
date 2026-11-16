@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 13: the certified item's requirements.
+ * Xaqu — SysML v2 model, part 13: the certified item's requirements.
  *
  * The high-level requirements of the certified item (the `core` and `item`
  * rings of docs/certification/ITEM.md): what each subsystem promises at its
@@ -11,9 +11,9 @@
  * tools/common/check/check-traceability.py the gate that reads these and writes
  * docs/certification/TRACEABILITY.md.
  */
-package FerrixItemRequirements {
+package XaquItemRequirements {
     private import ScalarValues::*;
-    private import FerrixStructure::Kernel;
+    private import XaquStructure::Kernel;
 
     requirement def ItemRequirement {
         doc /* A requirement of the certified item. Unlike the goal and the
@@ -57,7 +57,7 @@ package FerrixItemRequirements {
             doc /* `path::function` or `path::Type::method`, relative to
                  * src/kernel/src: `mm::zero_frame`; or, for a library crate
                  * of the item, the same from the crate's src/ led by the
-                 * crate's name: `ferrix_btrfs::volume::Volume::read_node`. */
+                 * crate's name: `xaqu_btrfs::volume::Volume::read_node`. */
         }
     }
 
@@ -292,7 +292,7 @@ package FerrixItemRequirements {
                 kernel itself starts, and constants of the in-kernel checks.";
             attribute :>> criterion = "check-item-boundary.py's loader rule: first_image::load is
                 called only from discovery/devmgr.rs and check files, with a planted caller
-                failing it. In present and desktop ferrix.devmgr=init still parses what pid 1
+                failing it. In present and desktop xaqu.devmgr=init still parses what pid 1
                 left at /sbin/devmgr, as ITEM.md section 5 and VULNERABILITY-ANALYSIS.md say.";
             attribute :>> parent = ("O.VALIDATE");
         }
@@ -868,7 +868,7 @@ package FerrixItemRequirements {
                 processor, nothing else waiting and no sleeper due.";
             attribute :>> criterion = "RunQueue::hand_over equals enqueue, the
                 rescale, remove_curr and pick_next field for field on 200,000 random
-                queues (the ferrix-sched host test); a spinner beside the trips keeps
+                queues (the xaqu-sched host test); a spinner beside the trips keeps
                 its share, and an echo pinned to another processor never runs on the
                 caller's (the `fastcase` line).";
             attribute :>> parent = ("G.1", "ASR-8");
@@ -1100,12 +1100,12 @@ package FerrixItemRequirements {
             attribute :>> statement = "While the unit behind the Intel integrated
                 GPU does not translate its DMA, the TSF shall publish no node
                 through which a program can reach that GPU, and the GPU shall be
-                driven at all only where the command line says ferrix.intelgpu.";
+                driven at all only where the command line says xaqu.intelgpu.";
             attribute :>> criterion = "A HELLO for the Intel GPU's function is
                 refused Untranslated with nothing published while its domain does
                 not translate, whatever it lists, and taken where it does
                 (L.object.192); the GPU is yielded without
-                ferrix.intelgpu (L.device.44).";
+                xaqu.intelgpu (L.device.44).";
             attribute :>> parent = ("O.DMA", "ASR-4");
         }
     }
@@ -1263,7 +1263,7 @@ package FerrixItemRequirements {
                 to the caller and shall not fault the kernel.";
             attribute :>> criterion = "Copies to an unmapped and to a read-only user
                 page, and from an unmapped one, each return EFAULT, and the boot goes
-                on to FERRIX-BOOT-OK.";
+                on to XAQU-BOOT-OK.";
             attribute :>> parent = ("O.VALIDATE", "ASR-7");
         }
         requirement <'H.TRAP.3'> indicesClampedUnderSpeculation : ItemHighLevel {
@@ -1536,12 +1536,12 @@ package FerrixItemRequirements {
         }
         requirement <'H.BOOT.2'> aBootSaysWhetherItChecked : ItemHighLevel {
             attribute :>> statement = "Every boot shall run every stage's self-checks
-                unless told not to, and shall print FERRIX-BOOT-OK only when all of
+                unless told not to, and shall print XAQU-BOOT-OK only when all of
                 them passed; a boot that skipped them shall end with
-                FERRIX-BOOT-UNCHECKED instead.";
-            attribute :>> criterion = "`cargo xtask test-boot` finds FERRIX-BOOT-OK
-                on each architecture; a boot with `ferrix.checks=skip` ends with
-                FERRIX-BOOT-UNCHECKED and never prints FERRIX-BOOT-OK.";
+                XAQU-BOOT-UNCHECKED instead.";
+            attribute :>> criterion = "`cargo xtask test-boot` finds XAQU-BOOT-OK
+                on each architecture; a boot with `xaqu.checks=skip` ends with
+                XAQU-BOOT-UNCHECKED and never prints XAQU-BOOT-OK.";
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
         requirement <'H.BOOT.3'> layoutIsRandomised : ItemHighLevel {
@@ -1579,7 +1579,7 @@ package FerrixItemRequirements {
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
         requirement <'H.BOOT.6'> endsPoweredOff : ItemHighLevel {
-            attribute :>> statement = "When init exits and ferrix.onexit asks for
+            attribute :>> statement = "When init exits and xaqu.onexit asks for
                 nothing else, the machine shall power itself off after the console
                 has drained.";
             attribute :>> criterion = "After init exits, QEMU exits by itself within
@@ -1587,10 +1587,10 @@ package FerrixItemRequirements {
             attribute :>> parent = "O.FAILSAFE";
         }
         requirement <'H.BOOT.7'> resetsWhenAsked : ItemHighLevel {
-            attribute :>> statement = "When init exits and ferrix.onexit=reset asks
+            attribute :>> statement = "When init exits and xaqu.onexit=reset asks
                 for it, the machine shall restart from firmware after the console
                 has drained.";
-            attribute :>> criterion = "Under ferrix.onexit=reset the kernel says it
+            attribute :>> criterion = "Under xaqu.onexit=reset the kernel says it
                 is resetting and the loader's banner is printed again after it.";
             attribute :>> parent = "O.FAILSAFE";
         }
@@ -1599,7 +1599,7 @@ package FerrixItemRequirements {
                 lines out, and a person's typed bytes in to the program reading
                 them, in order and without waiting unboundedly on the port.";
             attribute :>> criterion = "test-boot reads every stage's line and
-                FERRIX-BOOT-OK from the serial port, and test-jobs's 18 typed steps
+                XAQU-BOOT-OK from the serial port, and test-jobs's 18 typed steps
                 each have their answer after them.";
             attribute :>> parent = "O.FAILSAFE";
         // Added by W-8 step 4 (console): the KASLR half of F-31 is worth only as
@@ -1618,8 +1618,8 @@ package FerrixItemRequirements {
         }
         requirement <'H.BOOT.15'> pid1IsWhatTheImageNames : ItemHighLevel {
             attribute :>> statement = "Pid 1 shall be the program the boot names: the
-                file ferrix.init= names, else the commands or the program the boot
-                initramfs carries under .ferrix/init, else /sbin/init; an input that
+                file xaqu.init= names, else the commands or the program the boot
+                initramfs carries under .xaqu/init, else /sbin/init; an input that
                 cannot be one shall be refused with a line saying which and why,
                 and never replaced by a guess.";
             attribute :>> criterion = "Each way of starting pid 1 boots as named
@@ -2014,7 +2014,7 @@ package FerrixItemRequirements {
         requirement <'H.AUD.12'> anUncheckedBootSaysSo : ItemHighLevel {
             attribute :>> statement = "A boot that skips its self-checks shall
                 record that it did, where a reader outside it can see.";
-            attribute :>> criterion = "A boot with ferrix.checks=skip, read back
+            attribute :>> criterion = "A boot with xaqu.checks=skip, read back
                 through svc audit, holds the checks' configuration record with
                 value 0.";
             attribute :>> parent = "O.AUDIT";
@@ -2040,7 +2040,7 @@ package FerrixItemRequirements {
                 user mode, or, where H.FAIL.5 applies, reset the machine after the
                 report.";
             attribute :>> criterion = "A boot told to panic at its end
-                (`ferrix.onexit=panic`) ends with the FX-1501 report and no program
+                (`xaqu.onexit=panic`) ends with the FX-1501 report and no program
                 output after it; every panic site in the item has a catalogue entry
                 (`check-panic-audit.py`).";
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
@@ -2088,17 +2088,17 @@ package FerrixItemRequirements {
         // Added 2026-10-17 by panic-reboot (consultant ledger line 2143): the
         // N150 stop-gap, outside the reference configuration (ITEM.md §5).
         requirement <'H.FAIL.5'> resetAfterTheReportWhenAsked : ItemHighLevel {
-            attribute :>> statement = "With ferrix.panic=reset read after stage 1's
+            attribute :>> statement = "With xaqu.panic=reset read after stage 1's
                 check, the first failure report shall, once its diagnostic and the
                 reset line are on the port, in the pstore record and on the screen,
                 wait 10 seconds on the free-running counter where its rate is known
                 and reset the machine; with no value, halt, any other value, or in a
                 report on another processor, it shall halt.";
             attribute :>> criterion = "In cargo xtask test-postmortem (x86-64 under
-                KVM, AArch64): a boot with ferrix.onexit=panic ferrix.panic=reset
+                KVM, AArch64): a boot with xaqu.onexit=panic xaqu.panic=reset
                 prints the reset line and the loader's banner comes again at least 9.5
                 s and at most 60 s later, quoting the panic; the same boot without the
-                option and with ferrix.panic=Reset says it halts and prints no reset
+                option and with xaqu.panic=Reset says it halts and prints no reset
                 line.";
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
@@ -2180,7 +2180,7 @@ package FerrixItemRequirements {
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
         requirement <'H.FAIL.12'> aBadFrameStaysOutAcrossAWarmReset : ItemHighLevel {
-            doc /* docs/MACHINE-CHECK-RESTART.md slice 8a (customer, 2026-10-30, item 8; consultant OK IF ledger 5467, code OK IF ledger 5487). Arm has nothing that retires frames today. Residual: a table frame the boot info area or firmware holds by the time the loader reads the table is not kept out (said). TCG only; KVM injection across a reset not tried. A bad_frames = choice image (desktop, no claim; MACHINE-CHECK-RESTART §10, ledger 5579) gives it only with ferrix.badframes absent or persist. */
+            doc /* docs/MACHINE-CHECK-RESTART.md slice 8a (customer, 2026-10-30, item 8; consultant OK IF ledger 5467, code OK IF ledger 5487). Arm has nothing that retires frames today. Residual: a table frame the boot info area or firmware holds by the time the loader reads the table is not kept out (said). TCG only; KVM injection across a reset not tried. A bad_frames = choice image (desktop, no claim; MACHINE-CHECK-RESTART §10, ledger 5579) gives it only with xaqu.badframes absent or persist. */
             attribute :>> statement = "In an image built bad_frames=persist, whatever its
                 command line, after a warm reset, the kernel shall hand out no frame the
                 boot before retired, nor the frame of an uncorrected record the
@@ -2190,17 +2190,17 @@ package FerrixItemRequirements {
                 drops one).";
             attribute :>> criterion = "L.console.58-59, L.mm.109-110 and L.x86_64.254 each
                 verified; test-mce-restart under TCG with Intel's records: a fatal
-                record under ferrix.panic=reset, then boot 2's loader says boot 1
+                record under xaqu.panic=reset, then boot 2's loader says boot 1
                 ended in a machine check and keeps the page out (left and table),
                 its kernel leaves the frame out and its poll finds it already
                 retired; test-mce-restart-retired: a frame a recovered machine
                 check retired kept out of boots 2 and 3 from the table alone. TCG
                 only; KVM injection across a reset not tried; xtask check: the persist loader carries no
-                ferrix.badframes on any architecture, the choice loader does.";
+                xaqu.badframes on any architecture, the choice loader does.";
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
         requirement <'H.FAIL.13'> aBadFrameStaysOutAcrossAPowerCycle : ItemHighLevel {
-            doc /* docs/MACHINE-CHECK-RESTART.md §9, slice 8b (customer, 2026-10-30, item 8; consultant design OK IF ledger 5511). The kernel is unchanged: the loader (outside the item) keeps the set in the boot disk's event log and marks it left out (AoU-39). Residuals: a frame retired in a run that ended by a power cut or a power-off before any warm reset is not in the set; another boot disk or a reinstall starts with an empty set; an older writer (a loader or inspection tool from before 8b) drops the set on its first header write; a set frame firmware holds is not kept out (said); TCG only; nothing retires frames on Arm. A bad_frames = choice image (desktop, no claim; MACHINE-CHECK-RESTART §10, ledger 5579) gives it only with ferrix.badframes absent or persist. */
+            doc /* docs/MACHINE-CHECK-RESTART.md §9, slice 8b (customer, 2026-10-30, item 8; consultant design OK IF ledger 5511). The kernel is unchanged: the loader (outside the item) keeps the set in the boot disk's event log and marks it left out (AoU-39). Residuals: a frame retired in a run that ended by a power cut or a power-off before any warm reset is not in the set; another boot disk or a reinstall starts with an empty set; an older writer (a loader or inspection tool from before 8b) drops the set on its first header write; a set frame firmware holds is not kept out (said); TCG only; nothing retires frames on Arm. A bad_frames = choice image (desktop, no claim; MACHINE-CHECK-RESTART §10, ledger 5579) gives it only with xaqu.badframes absent or persist. */
             attribute :>> statement = "In an image built bad_frames=persist, whatever its
                 command line, after a power cycle, the kernel shall hand out no frame
                 of the boot disk's event-log bad-frame set, where the loader marked
@@ -2213,21 +2213,21 @@ package FerrixItemRequirements {
                 an attempt whose victim page firmware holds at boot 2's table read
                 or boot 3's log read (the loader's exact in-use line, the frame
                 still in the log) is inconclusive and made again from a fresh
-                disk, at most 3, all 3 inconclusive failing; with ferrix.badframes=off
+                disk, at most 3, all 3 inconclusive failing; with xaqu.badframes=off
                 on the command line, ignored. xtask check: the persist loader carries
-                no ferrix.badframes on any architecture, the choice loader does. TCG
+                no xaqu.badframes on any architecture, the choice loader does. TCG
                 only.";
             attribute :>> parent = ("O.FAILSAFE", "ASR-6");
         }
         // Added 2026-11-08 by box-watchdog / crash-tools (consultant ledger
         // lines 7925, 8078): the N150 box's watchdog, outside the reference
-        // configuration (ferrix.watchdog off).
+        // configuration (xaqu.watchdog off).
         requirement <'H.FAIL.14'> aStarvedFeederIsReported : ItemHighLevel {
             doc /* docs/POSTMORTEM.md §6.11. Software only: the deadline is looked
                 at by a kernel task, so a kernel that stops is not detected (the
                 lockup detector, S4a, and the chipset's TCO are parked), and a
-                report resets the machine only under ferrix.panic=reset. */
-            attribute :>> statement = "With ferrix.watchdog=on, once a privileged
+                report resets the machine only under xaqu.panic=reset. */
+            attribute :>> statement = "With xaqu.watchdog=on, once a privileged
                 program has opened /dev/watchdog, a timeout that passes with no
                 feed while the kernel runs shall end in a failure report under
                 FX-9008; a feed shall prove only that the feeder's own loop
@@ -2266,12 +2266,12 @@ package FerrixItemRequirements {
     }
 
     package Storage {
-        doc /* The btrfs reader and write path, `ferrix-btrfs` and
-             * `ferrix-btrfs-write`, in the item since 2026-10-02: O.MEDIA and
+        doc /* The btrfs reader and write path, `xaqu-btrfs` and
+             * `xaqu-btrfs-write`, in the item since 2026-10-02: O.MEDIA and
              * ASR-9 (FPT_TDC.1, FDP_SDI.2). Their interface below is the
              * `Device` and `WriteDevice` traits the kernel's block layer
              * answers, above it `Volume` and `WriteVolume`; the VFS glue on top
-             * (`ferrix-btrfs-vfs`, src/kernel/src/fs/btrfs*.rs) is load, so
+             * (`xaqu-btrfs-vfs`, src/kernel/src/fs/btrfs*.rs) is load, so
              * these promise what the two crates do at `Volume` and
              * `WriteVolume`, not what a program sees through a mount. The
              * low-level requirements are part 24. Some sit under a requirement

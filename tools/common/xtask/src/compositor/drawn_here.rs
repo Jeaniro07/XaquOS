@@ -22,7 +22,7 @@ use crate::{Error, Result};
 /// What the `caption` boot draws: a clock's digits, letters with kerning
 /// pairs, and a character (`…`) the lock screen's font may take from
 /// another face.
-const CAPTION_TEXT: &str = "Ferrix 12:34 — AVATAR To…";
+const CAPTION_TEXT: &str = "Xaqu 12:34 — AVATAR To…";
 
 /// The size it draws at, in points.
 const CAPTION_POINTS: &str = "32";

@@ -1,6 +1,6 @@
 //! Tests for the mount, through the [`Inode`] trait the VFS calls.
 //!
-//! The images are the real `mkfs.btrfs` ones `ferrix-btrfs` tests with, and the
+//! The images are the real `mkfs.btrfs` ones `xaqu-btrfs` tests with, and the
 //! expectations are its manifest: every path resolves one component at a time,
 //! every file reads back with the right size and CRC-32C, every link's target
 //! does, and every directory lists exactly its children — in pieces, resuming
@@ -12,8 +12,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::string::String;
 use std::thread;
 
-use ferrix_btrfs::crc32c;
-use ferrix_vfs::tmpfs::HeapStorage;
+use xaqu_btrfs::crc32c;
+use xaqu_vfs::tmpfs::HeapStorage;
 
 use super::*;
 
@@ -21,7 +21,7 @@ use super::*;
 fn heap() -> Arc<dyn Storage> {
     Arc::new(HeapStorage::new(1 << 30))
 }
-use ferrix_btrfs::volume::ReadKind;
+use xaqu_btrfs::volume::ReadKind;
 
 mod namespace;
 mod rw;

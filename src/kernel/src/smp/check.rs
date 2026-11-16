@@ -9,10 +9,10 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::Once;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::Once;
 
 use crate::sync::SpinLock;
 

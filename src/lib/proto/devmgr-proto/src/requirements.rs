@@ -5,7 +5,7 @@
 //! A driver of a generic node says what it needs from the node -- register
 //! ranges, interrupts, a clock by its tree name, a pin state, a supply --
 //! in a table embedded in its image, in the section [`SECTION`].
-//! `ferrix-driver`'s `#[derive(Resources)]` writes it with [`encode`]; a
+//! `xaqu-driver`'s `#[derive(Resources)]` writes it with [`encode`]; a
 //! driver may write one by hand the same way. devmgr reads it out of the
 //! image with [`find_section`] and holds the node's identity record to it
 //! with [`check`] before it starts anything, so a node that lacks a clock
@@ -25,10 +25,10 @@
 
 use core::fmt;
 
-use ferrix_fdt::identity::{Record, RecordReference};
+use xaqu_fdt::identity::{Record, RecordReference};
 
 /// The section of a driver image the table is in.
-pub const SECTION: &str = ".ferrix.requirements";
+pub const SECTION: &str = ".xaqu.requirements";
 
 /// The table's first word: `FXRQ` in memory order.
 pub const MAGIC: u32 = u32::from_le_bytes(*b"FXRQ");
@@ -495,7 +495,7 @@ impl fmt::Write for Writer<'_> {
 /// Where the section `name` lies in an ELF image read through `read`
 /// (`read(offset, buffer)` fills `buffer` from the image at `offset`, or
 /// says it could not): `(offset, size)` in the file. 32- and 64-bit
-/// little-endian images, the ones Ferrix's drivers are.
+/// little-endian images, the ones Xaqu's drivers are.
 pub fn find_section(
     mut read: impl FnMut(u64, &mut [u8]) -> bool,
     name: &str,

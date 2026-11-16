@@ -3,7 +3,7 @@
 //! The kernel's whole share of a mode list: it holds the list the driver
 //! sent, finds the entry a request names, and sends that entry back in
 //! `SET_MODE`. It makes no timing and reads no EDID; the drivers do
-//! (`ferrix-display-modes`).
+//! (`xaqu-display-modes`).
 
 use crate::message::{Listed, Timing};
 
@@ -14,8 +14,8 @@ use crate::message::{Listed, Timing};
 /// is sent the driver is always the listed entry, never the request's
 /// bytes (the consultant's condition 3, ledger 3117).
 #[must_use]
-pub fn listed_match(list: &[Listed], wanted: &ferrix_linux_abi::drm::ModeInfo) -> Option<Timing> {
-    use ferrix_linux_abi::drm::{MODE_FLAG_PHSYNC, MODE_FLAG_PVSYNC};
+pub fn listed_match(list: &[Listed], wanted: &xaqu_linux_abi::drm::ModeInfo) -> Option<Timing> {
+    use xaqu_linux_abi::drm::{MODE_FLAG_PHSYNC, MODE_FLAG_PVSYNC};
     let exact = |timing: &Timing| {
         timing.clock_khz == wanted.clock
             && [

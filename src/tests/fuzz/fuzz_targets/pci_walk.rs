@@ -34,13 +34,13 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use ferrix_pci::bar::{self, Region};
-use ferrix_pci::capability::{Capabilities, ExtendedCapabilities, ID_MSIX, MsiX};
-use ferrix_pci::header::{COMMAND, HEADER_TYPE, HeaderKind};
-use ferrix_pci::msix;
-use ferrix_pci::virtio::Transport;
-use ferrix_pci::walk::Walk;
-use ferrix_pci::{Address, ConfigSpace};
+use xaqu_pci::bar::{self, Region};
+use xaqu_pci::capability::{Capabilities, ExtendedCapabilities, ID_MSIX, MsiX};
+use xaqu_pci::header::{COMMAND, HEADER_TYPE, HeaderKind};
+use xaqu_pci::msix;
+use xaqu_pci::virtio::Transport;
+use xaqu_pci::walk::Walk;
+use xaqu_pci::{Address, ConfigSpace};
 use libfuzzer_sys::fuzz_target;
 
 /// Bytes of space each function is given; the rest reads zero.
@@ -214,7 +214,7 @@ fuzz_target!(|data: &[u8]| {
             ExtendedCapabilities::new(&bus, address).take(1025).count() <= 1024,
             "the extended list outran its space"
         );
-        let table = match ferrix_pci::capability::find(&bus, address, ID_MSIX) {
+        let table = match xaqu_pci::capability::find(&bus, address, ID_MSIX) {
             Ok(Some(capability)) => MsiX::read(&bus, capability).ok(),
             _ => None,
         };

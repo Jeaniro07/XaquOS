@@ -27,7 +27,7 @@ Everything below was measured on 2026-09-13 against Alpine's `busybox-static`
   read readonly return set shift source test times trap true type ulimit umask
   unalias unset wait` — nothing that makes a directory, renames or removes.
 
-  So **a single shell script cannot manipulate files under tmpfs on Ferrix
+  So **a single shell script cannot manipulate files under tmpfs on Xaqu
   until `clone`, `execve` and `wait4` exist**, if "manipulate" includes making
   directories, renaming, linking or removing. A script *can* create, append,
   truncate, read back and test files with redirections and builtins, and it
@@ -154,14 +154,14 @@ as always ready.
 
 ## Not measured
 
-* Whether each call does what Linux does. What is known from Ferrix itself is
-  below, under "What Ferrix answers today".
-* What the calls do against Ferrix's own procfs layout: the host's `/proc` has
+* Whether each call does what Linux does. What is known from Xaqu itself is
+  below, under "What Xaqu answers today".
+* What the calls do against Xaqu's own procfs layout: the host's `/proc` has
   thousands of entries, so `ls -R` was traced over a small fixture with the
   same shape (`self` a link to `1`, `1/maps` a file). The calls per entry do not
   depend on how many entries there are.
 
-## What Ferrix answers today
+## What Xaqu answers today
 
 From `cargo xtask test-vfs --arch all` on this branch, before the descriptor
 table, path calls and procfs land. The kernel prints each call it answered
@@ -174,12 +174,12 @@ table, path calls and procfs land. The kernel prints each call it answered
   after**, on every architecture. It does not care about the answer.
 * The shell's `getcwd` at startup is not load-bearing; its `chdir` is.
 * `ioctl(TIOCGWINSZ)` on descriptors 0 and 1 is the first call `ls` makes that
-  Ferrix refuses, and `ls` carries on.
+  Xaqu refuses, and `ls` carries on.
 
 ## Repeating it
 
 ```sh
-BB=~/.local/share/ferrix/busybox/x86_64/bin/busybox.static
+BB=~/.local/share/xaqu/busybox/x86_64/bin/busybox.static
 
 # Which applets ash runs in-process: none. Builtins only.
 env -i "$BB" sh -c help
@@ -195,8 +195,8 @@ strace -o /dev/null -e inject=getdents64:error=ENOSYS "$BB" ls -R /proc; echo $?
 strace -o /dev/null -e inject=sendfile:error=ENOSYS "$BB" cat /proc/self/maps
 
 # The other two architectures' names for the same calls.
-qemu-aarch64 -strace ~/.local/share/ferrix/busybox/aarch64/bin/busybox.static cat /proc/self/maps
-qemu-arm -strace ~/.local/share/ferrix/busybox/armv7a/bin/busybox.static cat /proc/self/maps
+qemu-aarch64 -strace ~/.local/share/xaqu/busybox/aarch64/bin/busybox.static cat /proc/self/maps
+qemu-arm -strace ~/.local/share/xaqu/busybox/armv7a/bin/busybox.static cat /proc/self/maps
 ```
 
 For the scripts, run `"$BB" sh -c "…"` under `strace -f` with each script from

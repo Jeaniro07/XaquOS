@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 16: the low-level requirements of iommu.
+ * Xaqu — SysML v2 model, part 16: the low-level requirements of iommu.
  *
  * What each unit of src/kernel/src/iommu.rs and src/kernel/src/iommu/ does, as
  * `ItemLowLevel` requirements (part 13 defines the format): where firmware
@@ -31,8 +31,8 @@
  * Ids are `L.iommu.<n>`, numbered through the subsystem; the package gives
  * the part of it.
  */
-package FerrixIommuRequirements {
-    private import FerrixItemRequirements::*;
+package XaquIommuRequirements {
+    private import XaquItemRequirements::*;
 
     package Discovery {
         doc /* src/kernel/src/iommu.rs, the first half: every unit firmware
@@ -140,7 +140,7 @@ package FerrixIommuRequirements {
         requirement <'L.iommu.8'> aUnitItCannotDriveIsLeftAlone : ItemLowLevel {
             attribute :>> statement = "bring_up shall leave alone, count and say why,
                 a unit that is not what the driver needs -- a VT-d unit
-                ferrix_paging::vtd::unit::accept refuses (a major version other
+                xaqu_paging::vtd::unit::accept refuses (a major version other
                 than 1, 4 or 5, neither three- nor four-level tables, a guest
                 address width below 39 bits, a write buffer to flush, no
                 invalidation queue, fault records or IOTLB register past its first
@@ -560,7 +560,7 @@ package FerrixIommuRequirements {
                 translate.";
             attribute :>> criterion = "With 1 stray fault left in a unit's record,
                 the audit reports 1 unit read, 1 stray and that fault as the first.";
-            attribute :>> criterion = "ferrix_paging::vtd::unit::audited answers
+            attribute :>> criterion = "xaqu_paging::vtd::unit::audited answers
                 true for a unit that translates, remaps or both, and false only for
                 one that does neither.";
             attribute :>> parent = "H.DMA.6";
@@ -597,7 +597,7 @@ package FerrixIommuRequirements {
                 on a bus two bridges claim, on a bus no bridge explains below a named
                 bridge, or under a loop of bus numbers is not; only Express port
                 types 4, 5 and 6 forward a requester ID; a scope path with an odd
-                byte is not whole. ferrix_pci::topology::claims, which iommu::claims
+                byte is not whole. xaqu_pci::topology::claims, which iommu::claims
                 answers with, claims a two-hop endpoint through a PCIe-to-PCI bridge,
                 a function on a bus no bridge explains below a named bridge and one on
                 a bus two bridges claim as aliased, what PCIe ports alone reach as
@@ -614,7 +614,7 @@ package FerrixIommuRequirements {
                 scope reaches under an alias, or by a path that is not whole, shall
                 be unresolved and get no domain. A function no explicit scope
                 reaches is placed as L.iommu.62 says, through the same
-                ferrix_pci::topology::place for the report and the domains.";
+                xaqu_pci::topology::place for the report and the domains.";
             attribute :>> criterion = "On x86-64 under KVM and TCG every PCI
                 function, the virtio-rng and edu below PCIe root ports included, is
                 placed behind the unit with 0 bypassing and 0 unresolved, and the
@@ -782,7 +782,7 @@ package FerrixIommuRequirements {
                 "iommu::smmuv3::Unit::program", "iommu::smmuv3::Unit::attach");
         }
         requirement <'L.iommu.59'> aUnitIsOfAVersionReadAgainst : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::unit::accept shall take a
+            attribute :>> statement = "xaqu_paging::vtd::unit::accept shall take a
                 VT-d unit whose VER major version is 1, 4 or 5 -- the revisions
                 whose legacy-mode register interface the driver was read against:
                 QEMU's unit and the N150's dmar0 and dmar1 -- and refuse any other
@@ -818,7 +818,7 @@ package FerrixIommuRequirements {
                 "iommu::vtd::Unit::unmap", "iommu::vtd::Unit::resolve");
         }
         requirement <'L.iommu.61'> fourLevelTablesWalkAsTheUnitWalks : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::VtdFourLevel shall walk
+            attribute :>> statement = "xaqu_paging::vtd::VtdFourLevel shall walk
                 four levels from the 512 GiB level over 48 bits with the same
                 entries as VtdSecondLevel: table entries granting read and write,
                 leaves read and write as asked, the superpage bit only on 2 MiB and
@@ -861,7 +861,7 @@ package FerrixIommuRequirements {
             attribute :>> unit = ("iommu::vtd_unit_for", "iommu::bring_up_vtd");
         }
         requirement <'L.iommu.64'> everyFaultRecordIsRead : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::unit::fault_records shall
+            attribute :>> statement = "xaqu_paging::vtd::unit::fault_records shall
                 give every one of a unit's CAP.NFR + 1 fault recording registers
                 once, from the one FSTS.FRI names round, at most 256, and take_fault
                 shall read them in that order.";
@@ -943,8 +943,8 @@ package FerrixIommuRequirements {
             attribute :>> unit = ("iommu::vtd::Unit::open",
                 "iommu::vtd::Unit::fault_events_masked");
         }
-        requirement <'L.iommu.71'> ferrixVtdOffLeavesEveryUnitAlone : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::unit::switched_off shall
+        requirement <'L.iommu.71'> xaquVtdOffLeavesEveryUnitAlone : ItemLowLevel {
+            attribute :>> statement = "xaqu_paging::vtd::unit::switched_off shall
                 answer true for the command-line value 'off' alone; with it,
                 bring_up shall leave every VT-d unit alone with one line calling it
                 a recovery configuration, not an evaluated one, and the audit
@@ -960,7 +960,7 @@ package FerrixIommuRequirements {
                 every unit's fault records last, as audit_faults does, and print
                 one line of how many it found, interrupt requests' faults among
                 them, and the first; never stopping the boot.";
-            attribute :>> criterion = "test-init's boot with ferrix.checks=skip
+            attribute :>> criterion = "test-init's boot with xaqu.checks=skip
                 (checks_skipped) prints the 'faults recorded in an unchecked boot'
                 line; with the line renamed that boot fails.";
             attribute :>> parent = ("H.DMA.6", "H.AUD.12");
@@ -1000,7 +1000,7 @@ package FerrixIommuRequirements {
                 and its identity domain is made. Otherwise the unit shall be held as
                 L.iommu.67 states, its line naming the RMRR, the function and the
                 reason.";
-            attribute :>> criterion = "Host tests (ferrix_paging::vtd::rmrr):
+            attribute :>> criterion = "Host tests (xaqu_paging::vtd::rmrr):
                 base and limit unaligned, limit below base, limit at and past 2^39,
                 2^18 + 1 pages, RAM over the first, last and middle page refused,
                 touching RAM and empty regions allowed, two RMRRs for one function
@@ -1400,7 +1400,7 @@ package FerrixIommuRequirements {
             attribute :>> unit = ("iommu::ivrs::placed", "iommu::ivrs_behind", "iommu::amdvi_placed", "iommu::amdvi_unit_for");
         }
         requirement <'L.iommu.98'> amdviOff : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::amdvi::unit::switched_off shall answer true for the
+            attribute :>> statement = "xaqu_paging::amdvi::unit::switched_off shall answer true for the
                 command-line value 'off' alone; with it, bring-up shall leave every
                 AMD-Vi unit alone with one line calling it a recovery configuration,
                 not an evaluated one, and the audit record's configuration shall
@@ -1437,7 +1437,7 @@ package FerrixIommuRequirements {
                 entry shall change its destination field alone, in one aligned
                 store -- VT-d's low quadword, AMD-Vi's four-byte entry -- keeping
                 the vector, the trigger, presence and the source check.";
-            attribute :>> criterion = "ferrix-paging's host tests
+            attribute :>> criterion = "xaqu-paging's host tests
                 retarget_changes_only_the_destination, for VT-d and AMD-Vi:
                 the destination alone changes, presence, vector, trigger and
                 source check kept (and a mask whose precedence wiped the
@@ -1479,7 +1479,7 @@ package FerrixIommuRequirements {
                 shall be refused before the park, and put back if one is found
                 after it.";
             attribute :>> criterion = "test-quarantine-unremapped (VT-d's interrupt
-                remapping off, devmgr starting drivers under ferrix.unisolated,
+                remapping off, devmgr starting drivers under xaqu.unisolated,
                 so messages are in compatibility format and aimed at the
                 processors in turn): root's take-out of each secondary holding
                 one is refused, each left in service; and the native boot
@@ -1492,7 +1492,7 @@ package FerrixIommuRequirements {
                 "smp::service::take_out", "smp::service::immovable_aimed_at");
         }
         requirement <'L.iommu.105'> blocksWhereSllpsOffersThem : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::unit::accept shall
+            attribute :>> statement = "xaqu_paging::vtd::unit::accept shall
                 report a unit's domains as taking 2 MiB entries exactly where its
                 CAP.SLLPS bit 34 is set, and the unit shall keep what accept
                 reported.";
@@ -1567,7 +1567,7 @@ package FerrixIommuRequirements {
                 "iommu::unwind", "iommu::vtd::Unit::unmap_run", "mm::unmap_io_run");
         }
         requirement <'L.iommu.109'> noPageSelectiveIotlbInvalidation : ItemLowLevel {
-            attribute :>> statement = "ferrix_paging::vtd::queue::iotlb shall build
+            attribute :>> statement = "xaqu_paging::vtd::queue::iotlb shall build
                 only global and domain-selective IOTLB invalidations, and it shall
                 be the only IOTLB invalidation the item submits, so no flush
                 misses a 2 MiB entry.";

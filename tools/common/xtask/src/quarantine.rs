@@ -8,7 +8,7 @@
 //! processor 2's bank 1, one a poll; lode must take the processor out
 //! through its token. The unit then reads the Linux surface -- `cpu2/online`
 //! 0, `online` without 2, `nproc` one less, no task's `/proc/<pid>/stat` on
-//! processor 2, `/proc/ferrix-service` saying `service out drained 0` -- brings
+//! processor 2, `/proc/xaqu-service` saying `service out drained 0` -- brings
 //! the processor back as root with `echo 1`, and reads `online` whole again.
 
 use std::time::{Duration, Instant};
@@ -254,7 +254,7 @@ interrupts traffic
 busybox kill -9 $(readers | busybox cut -d' ' -f1) 2>/dev/null
 busybox sleep 1
 say "readers left: $(readers | busybox wc -l)"
-say "service $(busybox grep '^cpu@T@ ' /proc/ferrix-service)"
+say "service $(busybox grep '^cpu@T@ ' /proc/xaqu-service)"
 say "siblings $(busybox cat $cpu/cpu@T@/topology/thread_siblings_list)"
 for probe in @PROBE@; do
     /bin/quarantine-test nonroot $cpu/cpu$probe/online | busybox sed 's/^/quarantine-test: /'
@@ -280,7 +280,7 @@ done
 alive=0
 for pid in $busy; do busybox kill -0 $pid 2>/dev/null && alive=$((alive + 1)); done
 say "cycles 50 failures $failures loops alive $alive online $(busybox cat $cpu/online)"
-say "$(busybox grep '^move-hold-max-ns' /proc/ferrix-service)"
+say "$(busybox grep '^move-hold-max-ns' /proc/xaqu-service)"
 busybox kill $busy $pinned 2>/dev/null
 say done
 "#;
@@ -311,7 +311,7 @@ pub(crate) fn image_files(arch: Arch, script: String) -> Result<Vec<File>> {
     });
     // No shell for a console getty to start: masked, as test-log does.
     files.push(File {
-        path: "etc/ferrix/units/getty@.service".to_owned(),
+        path: "etc/xaqu/units/getty@.service".to_owned(),
         mode: 0o777,
         content: Content::Link("/dev/null".to_owned()),
     });
@@ -321,14 +321,14 @@ pub(crate) fn image_files(arch: Arch, script: String) -> Result<Vec<File>> {
         content: Content::Bytes(script.into_bytes()),
     });
     files.push(File {
-        path: "etc/ferrix/units/quarantine-test.service".to_owned(),
+        path: "etc/xaqu/units/quarantine-test.service".to_owned(),
         mode: 0o644,
         content: Content::Bytes(UNIT.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/units/multi-user.target.wants/quarantine-test.service".to_owned(),
+        path: "etc/xaqu/units/multi-user.target.wants/quarantine-test.service".to_owned(),
         mode: 0o777,
-        content: Content::Link("/etc/ferrix/units/quarantine-test.service".to_owned()),
+        content: Content::Link("/etc/xaqu/units/quarantine-test.service".to_owned()),
     });
     Ok(files)
 }
@@ -352,7 +352,7 @@ fn test_quarantine(args: &Args, mode: Mode) -> Result<()> {
     let kernel = cargo::build_kernel(arch, args.release)?;
     let natives = native::build(arch, args.release)?;
     let archive = initramfs::build(None, &natives, None, &files)?;
-    let options = format!("{} ferrix.mce.poll=1\n", init::command_line().trim_end());
+    let options = format!("{} xaqu.mce.poll=1\n", init::command_line().trim_end());
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
     let port = free_port()?;
     let mut qemu_args = args.clone();
@@ -536,7 +536,7 @@ fn judge(lines: &[String], mode: Mode) -> std::result::Result<(), String> {
         ));
     }
     let mce = said("quarantine-test: service ")
-        .ok_or_else(|| format!("no /proc/ferrix-service line for cpu{t}"))?;
+        .ok_or_else(|| format!("no /proc/xaqu-service line for cpu{t}"))?;
     if !mce.contains("service out drained 0") {
         return Err(format!(
             "a task was queued on processor {t} while it was out, and drained: {mce}"
@@ -656,7 +656,7 @@ say done
 "#;
 
 /// Boot with VT-d's interrupt remapping off and devmgr told to start
-/// drivers anyway (`ferrix.unisolated`), so devices' messages are in
+/// drivers anyway (`xaqu.unisolated`), so devices' messages are in
 /// compatibility format and aimed at the processors in turn: root's
 /// take-out of one holding a message must be refused, the processor left
 /// in service, and the native boot check's refusal arm runs
@@ -674,7 +674,7 @@ fn test_unremapped(args: &Args) -> Result<()> {
     let kernel = cargo::build_kernel(arch, args.release)?;
     let natives = native::build(arch, args.release)?;
     let archive = initramfs::build(None, &natives, None, &files)?;
-    let options = format!("{} ferrix.unisolated\n", init::command_line().trim_end());
+    let options = format!("{} xaqu.unisolated\n", init::command_line().trim_end());
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
     let mut qemu_args = args.clone();
     qemu_args.unisolated_interrupts = true;

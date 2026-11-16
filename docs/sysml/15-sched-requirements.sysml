@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 15: the low-level requirements of sched/.
+ * Xaqu — SysML v2 model, part 15: the low-level requirements of sched/.
  *
  * What each unit of src/kernel/src/sched/ does, as `ItemLowLevel` requirements
  * (part 13 defines the format, part 14's pilot settled how they are cut).
@@ -13,8 +13,8 @@
  *
  * Ids are `L.sched.<n>`, numbered through the subsystem.
  */
-package FerrixSchedRequirements {
-    private import FerrixItemRequirements::*;
+package XaquSchedRequirements {
+    private import XaquItemRequirements::*;
 
     package Decisions {
         doc /* src/kernel/src/sched/queue.rs and src/kernel/src/sched/mod.rs: when a
@@ -101,7 +101,7 @@ package FerrixSchedRequirements {
             attribute :>> criterion = "At 12 counter rates from 1 Hz to u64::MAX
                 and 10 tick values at each, from 0 to u64::MAX across a second's
                 boundaries and the saturation point, the two-division conversion
-                equals the 128-bit formula (ferrix-vdso's host test).";
+                equals the 128-bit formula (xaqu-vdso's host test).";
             attribute :>> parent = "H.SCHED.9";
             attribute :>> unit = ("timer::now_nanos", "timer::ticks_to_nanos");
         }
@@ -344,14 +344,14 @@ package FerrixSchedRequirements {
                 that fails shall leave its processor's count and locks held as it
                 found them, and with interrupts masked shall not switch; one that
                 succeeds shall raise both by one until its guard drops; and
-                ferrix_sync::SpinLock::try_lock_manually shall take no ticket when
+                xaqu_sync::SpinLock::try_lock_manually shall take no ticket when
                 it fails.";
             attribute :>> criterion = "With a lock held, a try_lock of it with
                 interrupts on and with them masked leaves the count and the locks
                 held unchanged and, masked, the task's switches unchanged; a
                 try_lock_manually of a held plain lock fails and changes neither;
                 a successful try_lock raises both by one until it drops (the
-                stage-5 checks, and ferrix-sync's host test of try_lock_manually).";
+                stage-5 checks, and xaqu-sync's host test of try_lock_manually).";
             attribute :>> parent = "H.SCHED.1";
             attribute :>> unit = ("sched::preempt::Preempt::disable",
                 "sched::preempt::Preempt::enable");
@@ -576,7 +576,7 @@ package FerrixSchedRequirements {
                 holders have the node or a node is lost, and fails both its controls
                 (a take by a load and a store; a give-back by a plain store); a slot
                 taken apart and put together serves a queue as the same node (the
-                ferrix-sched host test).";
+                xaqu-sched host test).";
             attribute :>> parent = ("H.SCHED.13", "H.FAIL.1");
             attribute :>> unit = ("sched::task::Task::take_run_slot",
                 "sched::task::Task::return_run_slot", "sched::task::Task::take_sleep_slot",
@@ -628,7 +628,7 @@ package FerrixSchedRequirements {
                 caller's leave has answered: by the net in one adjustment when the
                 leave answered as planned, and otherwise by the peer's join and then
                 the caller's leave, each in its own job.";
-            attribute :>> criterion = "ferrix-sched's host test drives the kernel's
+            attribute :>> criterion = "xaqu-sched's host test drives the kernel's
                 plan and settlement against a model of quota::adjust over 40,000
                 random job trees of depth 1 to 8 with siblings and nested jobs, the
                 two tasks in one job, siblings, nested either way and apart, equal
@@ -780,7 +780,7 @@ package FerrixSchedRequirements {
             attribute :>> parent = "H.SCHED.14";
             attribute :>> unit = ("sched::vtime::leaving", "sched::vtime::settle",
                 "sched::vtime::init", "trap::dispatch",
-                "arch::x86_64::syscall::ferrix_syscall_entry");
+                "arch::x86_64::syscall::xaqu_syscall_entry");
         }
         requirement <'L.sched.81'> aSystemCallIsKernelTime : ItemLowLevel {
             attribute :>> statement = "On a boot that counts kernel time, a task's
@@ -812,7 +812,7 @@ package FerrixSchedRequirements {
             attribute :>> parent = "H.SCHED.14";
             attribute :>> unit = ("sched::vtime::entered", "sched::vtime::settle",
                 "sched::vtime::direct_switch",
-                "arch::x86_64::syscall::ferrix_syscall_entry",
+                "arch::x86_64::syscall::xaqu_syscall_entry",
                 "arch::x86_64::syscall::general_entry",
                 "arch::x86_64::syscall::frame_tail", "trap::dispatch");
         }
@@ -974,7 +974,7 @@ package FerrixSchedRequirements {
                 checking processor, woken from a call made there, runs there; the
                 same task pinned at home, with its home idle, woken by its
                 sleep's end, or busy for 40 ms of its life before it blocked,
-                runs at home (three attempts each); ferrix-sched's host tests
+                runs at home (three attempts each); xaqu-sched's host tests
                 hold the load comparison; with the pull removed from the wake,
                 with the pinned and affinity tests dropped, or with the task's
                 load left out, the boot fails with the case's own sentence.";
@@ -996,7 +996,7 @@ package FerrixSchedRequirements {
             attribute :>> criterion = "Stage 5's wake-affine case: with the waker's
                 flips set wide and the wakee's at the domain's processor count, the
                 wake that is pulled otherwise runs the task at home (three
-                attempts); ferrix-sched's host tests hold the bound and the
+                attempts); xaqu-sched's host tests hold the bound and the
                 halving; with the refusal ignored, the boot fails with the case's
                 own sentence.";
             attribute :>> parent = "H.SCHED.1";
@@ -1056,7 +1056,7 @@ package FerrixSchedRequirements {
                 arm off to processors in service, under the two queues' locks,
                 keeping each sleeper's and arm's due time; a task found there
                 while parked shall be drained and counted.";
-            attribute :>> criterion = "test-quarantine: /proc/ferrix-service says
+            attribute :>> criterion = "test-quarantine: /proc/xaqu-service says
                 service out drained 0 for the target after the CPU-bound
                 loops and the readers; the loops go on on the others; fifty
                 times out and back with the loops running, none lost, the
@@ -1395,7 +1395,7 @@ package FerrixSchedRequirements {
                 a deadline equal to its period, a budget of 0.1 ms up to the period, a period of 1 ms
                 to 10 s, and, on the processor it names, reservations' shares summing to at most
                 95% in at most 32 entries; anything else shall be refused by name, changing nothing.";
-            attribute :>> criterion = "ferrix-sched-edf's host tests; the `edf` boot line's refused set
+            attribute :>> criterion = "xaqu-sched-edf's host tests; the `edf` boot line's refused set
                 on kernel threads; test-reserve's `malformed` and `unschedulable`. Control: the sum
                 not tested fails the boot check and the row.";
             attribute :>> parent = "H.SCHED.28";
@@ -1406,7 +1406,7 @@ package FerrixSchedRequirements {
                 shall run no more until its period's end, when the budget comes back and the deadline
                 moves on a period, including on an idle processor; a thread that wakes with more
                 budget left than the time to its deadline allows shall start a fresh period.";
-            attribute :>> criterion = "ferrix-sched-edf's host tests; the `edf` line's throttles and
+            attribute :>> criterion = "xaqu-sched-edf's host tests; the `edf` line's throttles and
                 refills; test-reserve's `budget`, across linuxd's time. Control: no throttle fails the line.";
             attribute :>> parent = "H.SCHED.28";
             attribute :>> unit = ("sched::queue::CpuQueue::account_with", "sched::queue::CpuQueue::arm_timer");
@@ -1415,7 +1415,7 @@ package FerrixSchedRequirements {
             attribute :>> statement = "The pick shall be the earliest deadline among reservations with
                 budget, then the fair class, whose tasks shall run whenever no reservation has budget;
                 no steal, balance, push or direct switch shall pass over or move a reservation.";
-            attribute :>> criterion = "ferrix-sched-edf's host tests; the `edf` line's shares; test-reserve's
+            attribute :>> criterion = "xaqu-sched-edf's host tests; the `edf` line's shares; test-reserve's
                 `child`. Controls: the pick not by deadline, and the direct switch's decline removed.";
             attribute :>> parent = "H.SCHED.28";
             attribute :>> unit = ("sched::queue::CpuQueue::pick_next", "sched::direct::begin");

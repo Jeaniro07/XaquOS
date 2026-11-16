@@ -1,6 +1,6 @@
 //! What the greeter says, and its tests.
 //!
-//! The development loop's gate changes [`WORDS`] on Ferrix, builds and tests
+//! The development loop's gate changes [`WORDS`] on Xaqu, builds and tests
 //! again, and requires the running service to say the new words after its
 //! restart. The tests do not name the words, so they pass before and after.
 

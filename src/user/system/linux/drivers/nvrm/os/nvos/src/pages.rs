@@ -17,9 +17,9 @@ use core::ffi::c_void;
 use core::ptr;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_native::pending::Protection;
-use ferrix_native::pin::{DeviceAddress, Pin, PinAccess};
-use ferrix_native::vmo::{self, Vmo};
+use xaqu_native::pending::Protection;
+use xaqu_native::pin::{DeviceAddress, Pin, PinAccess};
+use xaqu_native::vmo::{self, Vmo};
 
 use crate::device;
 use crate::futex::Kernel;
@@ -137,7 +137,7 @@ const CONTIGUOUS_MAX: usize = 1024 * PAGE;
 /// with one run of fresh frames or refuses (docs/NVIDIA.md §4.3); the run is
 /// still checked, as RM is about to hand its first address to the GPU.
 fn pinned(
-    device: &ferrix_native::device::Device<Kernel>,
+    device: &xaqu_native::device::Device<Kernel>,
     bytes: usize,
     contiguous: bool,
     out: &mut [u64],
@@ -182,7 +182,7 @@ fn pinned(
 
 /// One VMO of `bytes`, pinned into the device's domain.
 fn pin_once(
-    device: &ferrix_native::device::Device<Kernel>,
+    device: &xaqu_native::device::Device<Kernel>,
     bytes: usize,
     access: PinAccess,
 ) -> Result<(Vmo<Kernel>, Pin<Kernel>), NvStatus> {

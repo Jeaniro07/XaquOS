@@ -10,7 +10,7 @@ publish.workspace = true
 [dependencies]
 libc = "0.2.189"
 # The request and the answer, as drvupdated and devmgr read them.
-ferrix-drvupdate-proto = { path = "../../../../../lib/proto/drvupdate-proto" }
+xaqu-drvupdate-proto = { path = "../../../../../lib/proto/drvupdate-proto" }
 
 [lints]
 workspace = true

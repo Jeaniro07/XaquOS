@@ -1,4 +1,4 @@
-//! `cargo xtask test-compositor`: the compositor itself, on Ferrix, on a
+//! `cargo xtask test-compositor`: the compositor itself, on Xaqu, on a
 //! screen.
 //!
 //! `cargo xtask test-display` boots `src/user/system/linux/compositor/blank`, which fills the card
@@ -35,7 +35,7 @@
 //! # The two sockets
 //!
 //! `hyprctl` is carried in the initramfs beside the clients, because
-//! Hyprland's own is not on Ferrix's image. The configuration's first
+//! Hyprland's own is not on Xaqu's image. The configuration's first
 //! `exec-once` subscribes to `.socket2.sock` and prints every line, which is
 //! what a bar does, so the transcript holds the compositor's whole event
 //! stream: the monitor, the workspace, each window arriving, and the focus
@@ -176,7 +176,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "iso",
         help_at: 126,
         help: &[
-            "iso           Write build/x86_64/ferrix-live.iso: the release desktop as a live session from memory, with the",
+            "iso           Write build/x86_64/xaqu-live.iso: the release desktop as a live session from memory, with the",
             "              installer, in a hybrid ISO that boots as a CD and, written with dd, as a USB stick (UEFI)",
         ],
         run: |_, args| live::iso(args),
@@ -256,8 +256,8 @@ pub(crate) const TASKS: &[Task] = &[
         help_at: 685,
         help: &[
             "test-gnome-apps  Debian 13's GTK 4 and libadwaita, which tools/common/fetch/fetch-gnome-apps.sh pins, as",
-            "              clients of hyprix in a session of ferrix with sessiond's session bus: require /data nosuid,nodev,",
-            "              the bus ferrix's and no system bus, adwaita-1-demo's window drawn and its name on the bus, and",
+            "              clients of hyprix in a session of xaqu with sessiond's session bus: require /data nosuid,nodev,",
+            "              the bus xaqu's and no system bus, adwaita-1-demo's window drawn and its name on the bus, and",
             "              neither left after the session's end (docs/GNOME.md, G1; x86_64)",
         ],
         run: |_, args| test_gnome_apps(args),
@@ -294,7 +294,7 @@ pub(crate) const TASKS: &[Task] = &[
         help_at: 740,
         help: &[
             "test-steam-store  Steam as run-compositor --everything starts it, its 64-bit side on ferrousli: require its sign-in",
-            "              window, then, with the test account in ~/.config/ferrix/steam-test-account (FERRIX_STEAM_ACCOUNT_FILE),",
+            "              window, then, with the test account in ~/.config/xaqu/steam-test-account (XAQU_STEAM_ACCOUNT_FILE),",
             "              sign in and require its store on the screen; without the file the store step is skipped (docs/STEAM.md)",
         ],
         run: test_steam_store,
@@ -348,7 +348,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-endfield-proton",
         help_at: 810,
         help: &[
-            "test-endfield-proton  The same in GE-Proton's Wine, on the volume FERRIX_ENDFIELD_WINE=proton",
+            "test-endfield-proton  The same in GE-Proton's Wine, on the volume XAQU_ENDFIELD_WINE=proton",
             "              tools/common/fetch/fetch-endfield-launcher.sh makes, after the 32-bit cmd /c ver (docs/WINE.md §10;",
             "              --everything: on run-compositor --everything's merged volume, started by its gryphlink)",
         ],
@@ -462,7 +462,7 @@ struct Programs {
     /// `sessiond`, which starts a session as its user (`crate::session`).
     sessiond: PathBuf,
     /// `notifyd`, the notifications and devmgr's driver events
-    /// (docs/DESKTOP.md §4), which the Ferrix light theme starts.
+    /// (docs/DESKTOP.md §4), which the Xaqu light theme starts.
     notifyd: PathBuf,
     /// `portald`, the settings portal Xaqu starts: dark, its accent, and
     /// Nocturne for GTK and Chrome.
@@ -635,7 +635,7 @@ pub(crate) fn test_compositor(args: &Args) -> Result<()> {
 /// Build, before the first boot, every program a boot of [`BOOTS`] that
 /// `--boot` asked for builds for itself beyond [`Programs`]: each boot still
 /// builds it where it did, which is then cargo saying it is current. A run
-/// under `FERRIX_BUILDS=plan:`, which records the builds and stops at the
+/// under `XAQU_BUILDS=plan:`, which records the builds and stops at the
 /// first boot, then has every build the whole test makes (stage 20, S-2).
 /// What a boot carries only when this machine has it -- the user's own
 /// desktop for `fuzzel-user` and `everything-desktop` -- is built by those
@@ -787,7 +787,7 @@ impl Carried {
 }
 
 /// The static busybox the gates boot as `--init`, at
-/// `~/.local/share/ferrix/busybox/<arch>/bin/busybox.static` (Alpine's
+/// `~/.local/share/xaqu/busybox/<arch>/bin/busybox.static` (Alpine's
 /// `busybox-static`), if this machine has one; and otherwise ferrousli's,
 /// where one is installed (`--init ferrousli`'s, [`crate::busybox`]).
 ///
@@ -800,7 +800,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
         .or_else(|| std::env::var_os("USERPROFILE"))
         .map(|home| {
             Path::new(&home)
-                .join(".local/share/ferrix/busybox")
+                .join(".local/share/xaqu/busybox")
                 .join(arch.name())
                 .join("bin/busybox.static")
         })
@@ -816,7 +816,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 78] = [
+const BOOTS: [(&str, Boot); 79] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
@@ -907,14 +907,14 @@ const ALWAYS_UNCHECKED: &str = "desktop";
 
 /// The boot that always runs the self-checks, whatever its place: the
 /// firmware-screen boot's machine has no virtio-gpu and lends the firmware
-/// framebuffer (`ferrix.efifb`), so the checks of that node run on no other
+/// framebuffer (`xaqu.efifb`), so the checks of that node run on no other
 /// boot, and the boot requires their lines (`docs/DISPLAY.md` §8).
 const ALWAYS_CHECKED: &str = "firmware-screen";
 
 /// Whether the boot `name` just made ran the kernel's self-checks as it was
 /// meant to, read from its serial log: an architecture's `first` boot must
-/// end them with `FERRIX-BOOT-OK`, so a boot meant to be checked can never
-/// skip them unseen, and each one after it with `FERRIX-BOOT-UNCHECKED`. A
+/// end them with `XAQU-BOOT-OK`, so a boot meant to be checked can never
+/// skip them unseen, and each one after it with `XAQU-BOOT-UNCHECKED`. A
 /// self-check that fails panics, which ends the boot as a failure before
 /// this is reached.
 fn judge_checks(arch: Arch, name: &str, first: bool) -> Result<()> {

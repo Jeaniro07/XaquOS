@@ -27,10 +27,10 @@ still has to happen. It happens at the integrator, and this item's certificate
 
 | | |
 |---|---|
-| Element | Ferrix certified item, `core` + `item` rings |
+| Element | Xaqu certified item, `core` + `item` rings |
 | Size | 79,079 lines of product code: 64,788 in the kernel, 56,644 of it in `core`, and 14,291 in the two btrfs crates ([ITEM.md](ITEM.md) §2, 2026-10-02) |
-| Scope | memory protection, scheduling, capability objects, trap and syscall entry, IOMMU, SMP, device enumeration; since 2026-10-02 the btrfs reader and write path (`ferrix-btrfs`, `ferrix-btrfs-write`) |
-| Not in scope | VFS, the btrfs glue on it (`ferrix-btrfs-vfs`, `src/kernel/src/fs/btrfs*.rs`), network stack, Linux personality, ring-3 drivers — 64,036 lines of uncertified load in the kernel |
+| Scope | memory protection, scheduling, capability objects, trap and syscall entry, IOMMU, SMP, device enumeration; since 2026-10-02 the btrfs reader and write path (`xaqu-btrfs`, `xaqu-btrfs-write`) |
+| Not in scope | VFS, the btrfs glue on it (`xaqu-btrfs-vfs`, `src/kernel/src/fs/btrfs*.rs`), network stack, Linux personality, ring-3 drivers — 64,036 lines of uncertified load in the kernel |
 | Reference configuration | x86-64, AArch64, ARMv7-A; release profile; rustc 1.99.1; zero Cargo features; built `--mitigations on`, the default |
 
 The boundary is enforced on every build by `tools/common/check/check-item-boundary.py`, so
@@ -168,7 +168,7 @@ in the system, or provide external means to reach a safe outcome from it.
 ### AoU-3 — the uncertified load is untrusted
 The VFS, the network stack, the Linux personality and all ring-3 drivers are
 outside the element and carry no assurance claim. So is the btrfs glue the
-VFS calls -- `ferrix-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`, its page
+VFS calls -- `xaqu-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`, its page
 cache, its commit interval and when an `fsync` commits -- though the btrfs
 reader and write path beneath it are in the element since 2026-10-02 (ASR-9).
 The integrator shall not place a safety function in the load, and shall treat
@@ -278,9 +278,9 @@ element. (Finding F-21b.)
 The claims hold for the reference configuration and no other. Changing the
 toolchain, enabling a Cargo feature, building with `--mitigations off` (which takes every speed-trade defence out, not
 Zenbleed's and GDS's covers),
-booting with `ferrix.devmgr=init` (AoU-13), `ferrix.efifb` (AoU-31) or
-`ferrix.vtd=off` or `ferrix.amdvi=off` or `ferrix.unisolated`, or moving a
-file between rings changes what is claimed. `ferrix.unisolated` lets devmgr
+booting with `xaqu.devmgr=init` (AoU-13), `xaqu.efifb` (AoU-31) or
+`xaqu.vtd=off` or `xaqu.amdvi=off` or `xaqu.unisolated`, or moving a
+file between rings changes what is claimed. `xaqu.unisolated` lets devmgr
 start the drivers of bus masters that are not isolated -- their DMA not
 translated, or (but on AArch64) their interrupts not isolated -- each said on
 an `UNISOLATED` line, after the kernel's stage 10 line and the audit
@@ -288,11 +288,11 @@ record's `Unisolated` 1; such a driver is trusted with all of memory
 (`L.device.58`, `L.device.59`, `docs/DMA-GATE.md`). No certified profile
 permits it. Every ARMv7-A image carries it, ARMv7-A being outside the claim
 until an SMMU is driven there (the customer's G4, CLAIM.md). With every
-unit left alone, `ferrix.vtd=off` and `ferrix.amdvi=off` leave no bus master
+unit left alone, `xaqu.vtd=off` and `xaqu.amdvi=off` leave no bus master
 isolated, so devmgr starts no driver: a recovery boot carries
-`ferrix.unisolated` as well (ledger 4153 (3)). `ferrix.amdvi=off` does to every AMD-Vi unit what
-`ferrix.vtd=off` does to VT-d's, and its boot line says it was taken
-(`L.iommu.98`). `ferrix.vtd=off` leaves every VT-d unit alone, so
+`xaqu.unisolated` as well (ledger 4153 (3)). `xaqu.amdvi=off` does to every AMD-Vi unit what
+`xaqu.vtd=off` does to VT-d's, and its boot line says it was taken
+(`L.iommu.98`). `xaqu.vtd=off` leaves every VT-d unit alone, so
 no DMA is translated and no interrupt remapped and the isolated-interrupts
 mark is refused: it is for recovering a machine whose units break its boot,
 never an evaluated configuration; the boot line and the audit record's
@@ -355,7 +355,7 @@ x86-64 the processor shall offer UMIP (`UMIP on`), without which `SIDT` reads
 the image's slide. The integrator shall not rely on KASLR for separation: without
 KPTI a program with a timer can locate the kernel, and no ASR rests on it; and
 shall treat a program that can read the framebuffer the boot console drew on
-as able to read the slide the log printed there -- under `ferrix.efifb` that
+as able to read the slide the log printed there -- under `xaqu.efifb` that
 is `efifb`, which maps the framebuffer before it draws over the console's
 lines (AoU-31). (Finding F-31.)
 
@@ -376,7 +376,7 @@ the element's.
 A dead driver's pins on a translated domain are not given back until its
 device's next driver has reset it and been accepted; until then they stay
 mapped, their frames held and charged to no job. For the Intel integrated
-GPU (`00:02.0` under `ferrix.intelgpu`), whose display must not be reset,
+GPU (`00:02.0` under `xaqu.intelgpu`), whose display must not be reset,
 "reset it" means that the next driver resets by its domain alone each
 engine a predecessor left pointed at a status page (`RING_HWS_PGA` not 0),
 never the GT (`GRDOM_FULL`) and never the function (FLR, which the kernel
@@ -423,13 +423,13 @@ pages' addresses and maps a large GPU page only where it finds one -- and
 an integrator's driver that needs one run asks `PIN_CONTIGUOUS`, which
 refuses rather than pin anything else.
 ### AoU-13 — the disk checks of stages 10 to 12 run only when the kernel starts devmgr
-Under `ferrix.devmgr=init` pid 1 starts `devmgr` (`docs/INIT.md` §7.3), so
+Under `xaqu.devmgr=init` pid 1 starts `devmgr` (`docs/INIT.md` §7.3), so
 the kernel has no driver to read a disk through before pid 1 runs, and the
 boot checks of stages 10 to 12 that do -- `devmgr`'s own REPORT at bring-up,
 the block driver, btrfs read and btrfs write -- are not run; the kernel says
 so on the console (*"left to pid 1: the disk checks of stages 10 to 12 are
 the kernel path's"*). The evidence for those stages comes from boots with the
-reference setting, `ferrix.devmgr=kernel`. The integrator shall use the
+reference setting, `xaqu.devmgr=kernel`. The integrator shall use the
 reference setting, or accept that a boot with `init` does not prove those
 stages itself.
 
@@ -571,27 +571,27 @@ its own requester, or accept that those functions run without interrupts.
 
 ### AoU-24 — the initramfs unpacker reads pid 1's inputs and creates none of them
 Pid 1's program, its `sh -c` script and the list of commands come from the
-boot initramfs, under `.ferrix/init/` (`L.init.2`, ITEM.md §2). The item takes
+boot initramfs, under `.xaqu/init/` (`L.init.2`, ITEM.md §2). The item takes
 them from the archive itself, so which program runs as pid 1 does not depend
 on the unpacker; what does is that no writable copy of them sits beside it in
-a filesystem a program can open. `ferrix-vfs`'s `initramfs::unpack`, which is
-in no ring of the item, creates nothing named `.ferrix` or beneath it in any
+a filesystem a program can open. `xaqu-vfs`'s `initramfs::unpack`, which is
+in no ring of the item, creates nothing named `.xaqu` or beneath it in any
 root it unpacks an archive into -- the tmpfs root and a persistent volume's
 alike -- and `initramfs::init_entries` lists exactly those entries, parsed as
 `unpack` parses every other. Its host test
 (`pid_1s_inputs_are_read_from_the_archive_and_never_unpacked`) and two gate
 controls, the unpacker made to create the entries on a tmpfs-root boot
 (`test-shell`) and on a root-disk boot (`test-init`), are the evidence. The
-integrator shall use `ferrix-vfs` as this tree builds it, or show the same of
+integrator shall use `xaqu-vfs` as this tree builds it, or show the same of
 the unpacker it uses.
 
 ### AoU-25 — a native program keeps no vector register live across a blocking native call (x86-64)
 On x86-64, `channel_write_read`, `object_wait_one` and `port_wait` made with
 `SYSCALL` destroy every vector register the System V AMD64 ABI makes
 caller-saved, keeping `MXCSR` and the x87 control word (H.SCHED.12;
-`ferrix_native_abi::nr`, *The vector-state contract*). A program resumed from
+`xaqu_native_abi::nr`, *The vector-state contract*). A program resumed from
 one finds those registers in their initial state, never another program's
-values. The native runtime (`ferrix_rt`) declares the loss on its trap, so
+values. The native runtime (`xaqu_rt`) declares the loss on its trap, so
 code built on it keeps no value there; a program that issues these calls by
 other means shall declare the same clobbers, or it loses the values it kept,
 which harms only itself. No Linux call is affected.
@@ -615,7 +615,7 @@ On ARMv7-A, `channel_write_read`, `object_wait_one` and `port_wait` made with
 `svc` -- by any program, native or Linux, since every program enters through
 the one `svc` -- lose `d0`-`d7` and `d16`-`d31`, the VFP registers the AAPCS
 makes caller-saved, and keep `d8`-`d15` and `FPSCR` (H.SCHED.12;
-`ferrix_native_abi::nr`; `docs/OPAQUE-KERNEL.md` §9.14). A program resumed
+`xaqu_native_abi::nr`; `docs/OPAQUE-KERNEL.md` §9.14). A program resumed
 from one finds zero there, never another program's values. A C program that
 makes them through `syscall()` loses nothing it may keep across a call. The
 native runtime declares no clobber, because a native program is built soft
@@ -654,7 +654,7 @@ outside the element (SECURITY-TARGET A.FIRMWARE), is specified to:
 * **P3** start a slot only if its header and every blob verify;
 * **P4** write only the control record's two blocks, inside a partition that
   overlaps no other GPT entry, and, on the ESP through firmware's FAT, the
-  previous kernel's log as `FERRIX/LASTKERNEL.TXT` and `.PRV`
+  previous kernel's log as `XAQU/LASTKERNEL.TXT` and `.PRV`
   (`docs/POSTMORTEM.md` §3.5);
 * **P5** begin a slot boot's command line with its slot words, and never
   truncate it.
@@ -673,7 +673,7 @@ options apply to a slot's command line as they do to the ESP's
 it (AoU-15's argument: root, through the raw device).
 
 ### AoU-30 — the previous boot's log is reported only when RAM survived
-With `ferrix.pstore=on`, the reference, the kernel mirrors its log into a
+With `xaqu.pstore=on`, the reference, the kernel mirrors its log into a
 region of RAM the loader gives and writes it back from the caches at the
 end of a panic report and before every other stop it makes on purpose,
 recording how it stopped in the header's stop word (`docs/POSTMORTEM.md`
@@ -689,7 +689,7 @@ The integrator shall not rely on the record for any safety function: it is
 a diagnostic, and the safe state (§3) does not depend on it.
 
 ### AoU-31 — no claim is made of a boot that lends the firmware framebuffer
-Under `ferrix.efifb` on x86-64 the element lends the boot framebuffer's
+Under `xaqu.efifb` on x86-64 the element lends the boot framebuffer's
 visible lines to a ring-3 driver, `efifb`, as the one aperture of a node of
 its own (`docs/DISPLAY.md` §8; L.device.38 to L.device.43). The pages are
 the memory of a PCI function -- a PC's integrated GPU, QEMU's VGA -- which
@@ -703,11 +703,11 @@ processor has programmed its PAT, so a panic's last stores are drained with
 a board run is to show (`docs/BACKLOG.md`). The reference configuration
 leaves the option off, and the boots that carry the evidence never give it,
 but for `test-compositor --boot firmware-screen`'s. The integrator shall not
-give `ferrix.efifb` on a configuration a claim is made of; the audit store's
+give `xaqu.efifb` on a configuration a claim is made of; the audit store's
 configuration record (`Config::Efifb`) says whether a boot did.
 
 ### AoU-32 — a reset after a panic is the integrator's choice, with its limits
-`ferrix.panic=reset` (H.FAIL.5, `src/kernel/src/panic/reset.rs`) makes the
+`xaqu.panic=reset` (H.FAIL.5, `src/kernel/src/panic/reset.rs`) makes the
 first panic report end in a reset 10 seconds after its last line, instead of
 the halt of §3: a stop-gap for a machine with no console and nobody at it,
 so that a warm reset keeps the pstore record (AoU-30) for the next boot's
@@ -724,7 +724,7 @@ measured warm). No claim is made of a boot that gives it.
 
 ### AoU-33 — power limits and thermal protection are the platform's
 On an Intel processor with hardware P-states each core asks for its whole
-performance range with the energy and performance preference `ferrix.epp`
+performance range with the energy and performance preference `xaqu.epp`
 chooses, performance (0) unless the command line names another
 (L.x86_64.177, L.x86_64.182). The element writes no power-limit, RAPL,
 `IA32_PERF_CTL` or `IA32_HWP_REQUEST_PKG` register -- save the one
@@ -736,7 +736,7 @@ thermal budget, and shall rely on no time figure that assumes a processor
 clock (MEMORY-AND-TIMING).
 
 The exception is the power core (`docs/POWERCTL.md`, L.x86_64.194-207,
-L.device.51-53), present only under the boot word `ferrix.powerctl`, on
+L.device.51-53), present only under the boot word `xaqu.powerctl`, on
 the N150 alone (Intel family 6 model 0xBE, one package). Its driver may set
 `MSR_VR_CURRENT_CONFIG`'s current limit, through typed calls, between
 firmware's own value and the model table's ceiling: 48 A, at most 23 A above
@@ -753,7 +753,7 @@ until reboot, and a value firmware changed is never written over. The
 backstop, the lease and the death watch run only while the scheduler runs
 the core's task; an unorderly reset (a watchdog, a triple fault, the reset
 button) writes nothing back (VULNERABILITY-ANALYSIS V-16). The integrator
-shall not set `ferrix.powerctl` on a system of which a claim is made.
+shall not set `xaqu.powerctl` on a system of which a claim is made.
 
 ### AoU-45 — a safety partition's device stands on hardware that keeps root ports apart
 
@@ -781,17 +781,17 @@ provides the line, or relies on pstore and says so.
 
 ### AoU-48 — the watchdog reports a starved feeder, and the feeder is the integrator's
 
-`ferrix.watchdog=on` (H.FAIL.14, `src/kernel/src/watchdog.rs`, `docs/POSTMORTEM.md` §6.11) serves
+`xaqu.watchdog=on` (H.FAIL.14, `src/kernel/src/watchdog.rs`, `docs/POSTMORTEM.md` §6.11) serves
 `/dev/watchdog`: a privileged program's open arms a deadline, each write or `WDIOC_KEEPALIVE` moves it,
 and a timeout that passes with no feed ends in a failure report under FX-9008. The reference configuration
 does not give it. An integrator who does accepts that:
 
 * **the integrator chooses the feeder**, and a feed proves only that the feeder's own loop turned: nothing
   else the machine runs is watched unless the feeder makes its feed wait on it (init's
-  `ferrix.init.watchdog=` feeds from its own loop);
+  `xaqu.init.watchdog=` feeds from its own loop);
 * **the magic close and `WDIOS_DISABLECARD` disarm it** on purpose, and a feeder that does either before
   it stops leaves nothing watched;
-* **a report resets the machine only under `ferrix.panic=reset`** (AoU-32, with its limits); otherwise it
+* **a report resets the machine only under `xaqu.panic=reset`** (AoU-32, with its limits); otherwise it
   halts as every report does;
 * **a kernel that stops is not detected**: the deadline is looked at by a kernel task, so every processor
   masked, a scheduler that no longer runs, or a report that never ends stops the watchdog too. The lockup
@@ -840,7 +840,7 @@ program that consumed poison receives `SIGBUS` (`BUS_MCEERR_AR`) or is
 ended (`docs/MACHINE-CHECK.md`). The integrator shall decide, in the
 system hazard analysis, whether a program losing a page and going on, or
 being ended, is acceptable for every program the system runs; where it is
-not, the integrator shall boot with `ferrix.mce.recover=off`, under which
+not, the integrator shall boot with `xaqu.mce.recover=off`, under which
 every machine check halts (L.x86_64.231). Either way:
 
 * a retired frame stays mapped in every process that maps it and has not
@@ -869,7 +869,7 @@ every machine check halts (L.x86_64.231). Either way:
   `BUS_MCEERR_AR` at the page as a ring-3 consumption does
   (`docs/MACHINE-CHECK-COPY.md`, H.FAIL.10); a read of another process's
   memory (`/proc/<pid>/environ`) ends short and signals nobody. This holds
-  only under `ferrix.mce.recover`, only on x86-64, and only where the record
+  only under `xaqu.mce.recover`, only on x86-64, and only where the record
   names the very page the copy was loading with both `RIPV` and `EIPV`
   (on AMD with `SUCCOR` and `TCC` clear); anything else halts. Under QEMU the
   injected record is believed and no real poison is loaded, so the gate shows
@@ -889,14 +889,14 @@ every machine check halts (L.x86_64.231). Either way:
   shares with them -- `interfaces/block_ring`, `net_ring`, `display`,
   `audio` -- which stop the machine on poison as any ring-0 consumption
   outside a copy does (a BACKLOG row);
-* corrected errors are found by a poll every `ferrix.mce.poll` seconds (5
+* corrected errors are found by a poll every `xaqu.mce.poll` seconds (5
   by default), and at once by CMCI where an Intel processor reports
   `MCG_CMCI_P` (`docs/MACHINE-CHECK-CMCI.md`); a record a bank overwrites
   before a round reads it is counted once with `OVER` set. A bank whose
   `CMCI_EN` firmware already set is left to firmware and polled only. More
   than 15 interrupt-driven rounds in a second mask the CMCI entry and the
   poll goes on once a second until a round finds nothing. A CMCI on a
-  processor out of service is held until its return. `ferrix.mce.cmci=off`
+  processor out of service is held until its return. `xaqu.mce.cmci=off`
   leaves the poll alone. CMCI is shown on a patched emulator only, not on
   hardware;
 * AArch64 and ARMv7-A make no such claim: their external aborts and
@@ -909,7 +909,7 @@ every machine check halts (L.x86_64.231). Either way:
   `MCA_CONFIG`) by argument and stage-3 tables only, since no emulator has
   SMCA. On an SMCA processor the kernel sets `MCA_CONFIG.McaX` on every
   bank, which AMD requires before an uncorrectable error can be survived;
-  `ferrix.mce.recover=off` halts on AMD as on Intel.
+  `xaqu.mce.recover=off` halts on AMD as on Intel.
 
 Under `smt=off` a machine check taken on a parked thread stops the machine: such a
 thread has no bring-up record to recover with, and the kernel has no local machine
@@ -941,7 +941,7 @@ memory that corrects errors where that matters. In particular:
 
 * it tests only free memory: a program's pages, the heap, page tables,
   the page cache and DMA buffers are never tested, and memory held for
-  the whole boot is never tested at all; `/proc/ferrix-scrub` shows how
+  the whole boot is never tested at all; `/proc/xaqu-scrub` shows how
   much was tested (`tested-this-sweep` against `managed`);
 * detection stops at the point of coherency: a fault in a cache past it,
   or one that only shows under a pattern the four do not make, is missed;
@@ -964,7 +964,7 @@ memory that corrects errors where that matters. In particular:
 * a bad frame is retired and stays out until the next boot, at most 192
   of the 256 retired places taken by the scrubber; past that it stops and
   says so. A frame that fails is a hardware fault to be serviced.
-* `ferrix.scrub=test` is a test-only boot option for the gate: it is
+* `xaqu.scrub=test` is a test-only boot option for the gate: it is
   honoured only where a hypervisor is positively seen, a certified
   profile's command line may not carry it, and the integrator shall not
   pass it;
@@ -985,7 +985,7 @@ lost, never wrong data. The integrator:
 
 * uses an image whose manifest says `bad_frames=persist`
   (`docs/MACHINE-CHECK-RESTART.md` §10, ledger 5579), every certified
-  profile's: its loader compiles no read of `ferrix.badframes`. A
+  profile's: its loader compiles no read of `xaqu.badframes`. A
   `bad_frames = choice` image (`desktop`, no claim) set to `reset` keeps
   out no frame the event log's set alone names, and set to `off` keeps out
   none: then the loader hands the kernel a page a bank's uncorrected record
@@ -998,16 +998,16 @@ lost, never wrong data. The integrator:
   frame from the set, that writes the set durably before it renews the
   pstore header, and that reads no pstore page a bank names; a loader and
   kernel of different header versions fail closed (no region that boot);
-* ships the inspection tool (`ferrix-eventlog`) with the loader: a loader
+* ships the inspection tool (`xaqu-eventlog`) with the loader: a loader
   or tool from before slice 8b drops the set on its first header write
-  (the records survive); and clears the set (`ferrix-eventlog
+  (the records survive); and clears the set (`xaqu-eventlog
   clear-bad-frames`, root on a host) only after replacing the memory;
 * knows that a frame retired in a run that ended by a power cut or a
   power-off before any warm reset is not in the set (only a loader writes
   the disk, and only a warm reset carries the table to one); that another
   boot disk or a reinstall starts with an empty set; that a log which keeps
   refusing writes keeps the pstore region off every boot, said; and that a
-  fatal machine check resets only under `ferrix.panic=reset`, after its 10 s
+  fatal machine check resets only under `xaqu.panic=reset`, after its 10 s
   hold (the customer's R1);
 * knows that a frame the table could not take (past 64 in one boot) or the
   retired set had no room for is not kept out after a reset, which the

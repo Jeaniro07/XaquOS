@@ -28,12 +28,12 @@
 
 use alloc::vec::Vec;
 
-use ferrix_btrfs::items::{
+use xaqu_btrfs::items::{
     CHUNK_TREE_OBJECTID, CSUM_TREE_OBJECTID, DEV_TREE_OBJECTID, EXTENT_TREE_OBJECTID,
     FS_TREE_OBJECTID, ROOT_ITEM_KEY, ROOT_TREE_OBJECTID,
 };
-use ferrix_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_OFFSETS, SUPERBLOCK_SIZE};
-use ferrix_btrfs::tree::{BtrfsKey, HEADER_SIZE};
+use xaqu_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_OFFSETS, SUPERBLOCK_SIZE};
+use xaqu_btrfs::tree::{BtrfsKey, HEADER_SIZE};
 
 use crate::bytes::{get_u64, put_u8, put_u32, put_u64};
 use crate::extent::{
@@ -522,8 +522,8 @@ fn check_main_key(key: &BtrfsKey, head: &Head, flags: u64) -> Result<()> {
 /// written to any copy of it, and what makes the rest of it believed.
 pub(crate) fn sealed(mut block: Vec<u8>) -> Result<Vec<u8>> {
     let bad = Error::Inconsistent("superblock field out of range");
-    let sum = ferrix_btrfs::crc32c(block.get(ferrix_btrfs::CSUM_SIZE..).ok_or(bad)?);
-    block.get_mut(..ferrix_btrfs::CSUM_SIZE).ok_or(bad)?.fill(0);
+    let sum = xaqu_btrfs::crc32c(block.get(xaqu_btrfs::CSUM_SIZE..).ok_or(bad)?);
+    block.get_mut(..xaqu_btrfs::CSUM_SIZE).ok_or(bad)?.fill(0);
     put_u32(&mut block, 0, sum).ok_or(bad)?;
     Ok(block)
 }

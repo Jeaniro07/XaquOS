@@ -28,8 +28,8 @@
 #
 # Pinned by SHA-256: Debian's trixie Packages files of 2026-09-28.
 #
-# Writes $FERRIX_STEAM_WINDOW_VOLUME/steam-window.img (default
-# ~/.local/share/ferrix/steam-window/steam-window.img). Needs what
+# Writes $XAQU_STEAM_WINDOW_VOLUME/steam-window.img (default
+# ~/.local/share/xaqu/steam-window/steam-window.img). Needs what
 # fetch-steam.sh and fetch-yserver.sh need. No root.
 #
 # Usage: tools/common/fetch/fetch-steam-window.sh
@@ -38,7 +38,7 @@ set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-out=${FERRIX_STEAM_WINDOW_VOLUME:-$HOME/.local/share/ferrix/steam-window}
+out=${XAQU_STEAM_WINDOW_VOLUME:-$HOME/.local/share/xaqu/steam-window}
 yserver=$out/yserver
 bootstrap=$out/bootstrap
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
@@ -129,8 +129,8 @@ fetch() {
     printf '%s\n' "$file"
 }
 
-FERRIX_YSERVER_VOLUME=$yserver "$repo/tools/common/fetch/fetch-yserver.sh"
-FERRIX_STEAM_VOLUME=$bootstrap "$repo/tools/common/fetch/fetch-steam.sh"
+XAQU_YSERVER_VOLUME=$yserver "$repo/tools/common/fetch/fetch-yserver.sh"
+XAQU_STEAM_VOLUME=$bootstrap "$repo/tools/common/fetch/fetch-steam.sh"
 
 mkdir -p "$out/pool"
 tree="$out/tree"

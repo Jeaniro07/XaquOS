@@ -10,7 +10,7 @@
 //! The checkout is a download rather than something in this repository, for
 //! the reason busybox and the ports are: it is another project's tree, under
 //! another project's licence, changing on their schedule and not on ours. It
-//! is installed under `~/.local/share/ferrix/oh-my-zsh` (or `$FERRIX_OMZ`) by
+//! is installed under `~/.local/share/xaqu/oh-my-zsh` (or `$XAQU_OMZ`) by
 //! `cargo xtask omz --from <DIRECTORY-OR-URL>`, the one thing here that
 //! reaches the network, and then only because it was asked for by name. An
 //! image built on a machine without it says so and boots without it.
@@ -45,7 +45,7 @@ pub(crate) const TASKS: &[Task] = &[
 pub(crate) const FUNCTIONS: &str = "usr/share/zsh/functions";
 
 /// Where the checkout goes in the image. Shared rather than in a home
-/// directory, because root and `ferrix` start the same shell and the tree is
+/// directory, because root and `xaqu` start the same shell and the tree is
 /// megabytes of the guest's memory, which it should be once.
 pub(crate) const DIRECTORY: &str = "usr/share/oh-my-zsh";
 
@@ -58,7 +58,7 @@ pub(crate) const DIRECTORY: &str = "usr/share/oh-my-zsh";
 /// the kernel starts a shell as is `/`, and a start-up that writes into the
 /// root of the filesystem is not one to have on every boot.
 pub(crate) const ZSHRC: &[u8] = b"\
-# Ferrix starts its shells with oh-my-zsh, from the copy the image carries.
+# Xaqu starts its shells with oh-my-zsh, from the copy the image carries.
 # A user's own ~/.zshrc is sourced after this one and can undo any of it.
 export ZSH=/usr/share/oh-my-zsh
 export HOME=${HOME:-/}
@@ -110,22 +110,22 @@ fn skipped(name: &str) -> bool {
 
 /// Where the checkout is installed on this machine.
 fn root() -> Result<PathBuf> {
-    installed_under("FERRIX_OMZ", "oh-my-zsh")
+    installed_under("XAQU_OMZ", "oh-my-zsh")
 }
 
 /// Where zsh's function tree is installed on this machine.
 fn functions_root() -> Result<PathBuf> {
-    installed_under("FERRIX_ZSH_FUNCTIONS", "zsh-functions")
+    installed_under("XAQU_ZSH_FUNCTIONS", "zsh-functions")
 }
 
-/// `$variable` when it is set, `~/.local/share/ferrix/<name>` otherwise.
+/// `$variable` when it is set, `~/.local/share/xaqu/<name>` otherwise.
 fn installed_under(variable: &str, name: &str) -> Result<PathBuf> {
     if let Some(dir) = std::env::var_os(variable) {
         return Ok(PathBuf::from(dir));
     }
     std::env::home_dir()
         .map(|home| {
-            [".local", "share", "ferrix", name]
+            [".local", "share", "xaqu", name]
                 .iter()
                 .fold(home, |dir, name| dir.join(name))
         })
@@ -205,7 +205,7 @@ pub(crate) fn beside(zinc: Option<&[u8]>) -> Result<Vec<File>> {
 ///
 /// # Errors
 ///
-/// Either tree missing where `FERRIX_OMZ` or `FERRIX_ZSH_FUNCTIONS` (or
+/// Either tree missing where `XAQU_OMZ` or `XAQU_ZSH_FUNCTIONS` (or
 /// their defaults) say.
 pub(crate) fn require_installed() -> Result<()> {
     let root = root()?;

@@ -96,7 +96,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "check-unit",
         help_at: 1140,
         help: &[
-            "check-unit    one of check-side's units, the one FERRIX_CHECK_UNIT names, as the step cache runs it under strace (FERRIX_STEP_CACHE=on caches passed units by their inputs, docs/TEST-TIME.md)",
+            "check-unit    one of check-side's units, the one XAQU_CHECK_UNIT names, as the step cache runs it under strace (XAQU_STEP_CACHE=on caches passed units by their inputs, docs/TEST-TIME.md)",
         ],
         run: command,
     },
@@ -104,7 +104,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "check-audit",
         help_at: 1150,
         help: &[
-            "check-audit   one of check's audits, the one FERRIX_CHECK_UNIT names (audit:<name>), as the step cache runs it under strace keyed on the whole item",
+            "check-audit   one of check's audits, the one XAQU_CHECK_UNIT names (audit:<name>), as the step cache runs it under strace keyed on the whole item",
         ],
         run: command,
     },
@@ -737,7 +737,7 @@ fn side_workspaces(root: &std::path::Path) -> Result<()> {
 /// Set to how many of `check-side`'s units may run at once; 1 runs them one
 /// after another in the order they always ran, as release runs and the
 /// baseline do.
-const SIDE_JOBS: &str = "FERRIX_SIDE_JOBS";
+const SIDE_JOBS: &str = "XAQU_SIDE_JOBS";
 
 /// [`SIDE_JOBS`], or 4: the side workspaces were 464 s one after another on
 /// a cold tree, the critical path of `check` (`docs/TEST-TIME.md`, *Cut
@@ -1134,7 +1134,7 @@ impl Counts {
 }
 
 /// A system bus address with nothing at it.
-const NO_SYSTEM_BUS: &str = "unix:path=/nonexistent/ferrix-check-has-no-system-bus";
+const NO_SYSTEM_BUS: &str = "unix:path=/nonexistent/xaqu-check-has-no-system-bus";
 
 /// The Linux-ABI workspaces `check` reaches as units, by name and place.
 const LINUX_WORKSPACES: &[(&str, &str)] = &[
@@ -1156,11 +1156,11 @@ const LINUX_WORKSPACES: &[(&str, &str)] = &[
     ("hyprix-gpu", "src/user/system/linux/hyprix-gpu"),
 ];
 
-/// `cargo xtask check-unit`: the one unit `FERRIX_CHECK_UNIT` names, as
+/// `cargo xtask check-unit`: the one unit `XAQU_CHECK_UNIT` names, as
 /// [`step_cache`] runs it under `strace`.
 fn check_unit(root: &std::path::Path) -> Result<()> {
     let name = std::env::var(step_cache::UNIT_VARIABLE)
-        .map_err(|_| Error::new("check-unit: FERRIX_CHECK_UNIT names no unit"))?;
+        .map_err(|_| Error::new("check-unit: XAQU_CHECK_UNIT names no unit"))?;
     let apps = if name.starts_with("app:") {
         crate::apps::discover()?
     } else {
@@ -1401,7 +1401,7 @@ fn vector_verdict_named(args: &Args) -> Result<()> {
 /// certification-item.json, `docs/KERNEL-CRATES.md` §6): each crate, its
 /// flag, the value that links it and the values that leave it out.
 const REMOVABLE: [(&str, &str, &str, &[&str]); 1] = [(
-    "ferrix-kernel-settings",
+    "xaqu-kernel-settings",
     "runtime_settings",
     "live",
     &["fixed"],
@@ -1468,7 +1468,7 @@ fn test_removable(args: &Args) -> Result<()> {
 }
 
 /// The item crates that must make every allocation fallibly, by package.
-const FALLIBLE_CRATES: [&str; 2] = ["ferrix-btrfs", "ferrix-btrfs-write"];
+const FALLIBLE_CRATES: [&str; 2] = ["xaqu-btrfs", "xaqu-btrfs-write"];
 
 /// The btrfs crates allocate nothing that cannot fail: the fallible-allocation
 /// gate finds no unmarked allocating call in either. Its ratchet alone would
@@ -1530,7 +1530,7 @@ fn cross_target_clippy() -> Result<()> {
             let env = crate::signing::loader_env()?;
             let env: Vec<(&str, String)> = env.into_iter().collect();
             clippy_with(
-                &["-p", "ferrix-boot", "--target", arch.loader_target()],
+                &["-p", "xaqu-boot", "--target", arch.loader_target()],
                 &env,
             )
         })?;
@@ -1545,12 +1545,12 @@ fn cross_target_clippy() -> Result<()> {
     }
     // The Pixel 7's loader is a binary of its own for one target, outside
     // the per-architecture loop. Linted without a payload, which is how it
-    // builds when FERRIX_PIXEL7_KERNEL is unset. It went unlinted until an
+    // builds when XAQU_PIXEL7_KERNEL is unset. It went unlinted until an
     // unsafe block with two operations in it was found by hand.
     step("clippy (Pixel 7 loader, aarch64)", || {
         clippy(&[
             "-p",
-            "ferrix-boot-pixel7",
+            "xaqu-boot-pixel7",
             "--target",
             Arch::AArch64.kernel_target(),
         ])
@@ -1943,12 +1943,12 @@ fn app_steps(app: &crate::apps::App, dir: &std::path::Path) -> Result<()> {
 }
 
 /// Every image build inherits this environment, and a set
-/// `FERRIX_AUTH_SABOTAGE` would build its authd with a refusal turned off
+/// `XAQU_AUTH_SABOTAGE` would build its authd with a refusal turned off
 /// (`src/user/system/linux/auth/authd/src/sabotage.rs`).
 fn no_sabotage() -> Result<()> {
-    match std::env::var_os("FERRIX_AUTH_SABOTAGE") {
+    match std::env::var_os("XAQU_AUTH_SABOTAGE") {
         Some(_) => Err(Error::new(
-            "FERRIX_AUTH_SABOTAGE is set; unset it: only test-auth --sabotage may sabotage authd",
+            "XAQU_AUTH_SABOTAGE is set; unset it: only test-auth --sabotage may sabotage authd",
         )),
         None => Ok(()),
     }
@@ -2028,7 +2028,7 @@ fn adbd(root: &std::path::Path) -> Result<()> {
     })
 }
 
-/// ferrix-nvos's gates: `src/user/system/linux/drivers/nvrm/os/nvos/` is a
+/// xaqu-nvos's gates: `src/user/system/linux/drivers/nvrm/os/nvos/` is a
 /// workspace of its own, the OS layer nvrm links. Its host tests hold every
 /// refusal of the core loader (`rmcore`) and the `rdcr4` answer (`cpu`),
 /// which `test-nvrm-link` meets only in part on the machine (`docs/NVIDIA.md`
@@ -2048,7 +2048,7 @@ fn nvos(root: &std::path::Path) -> Result<()> {
     };
     if cfg!(windows) {
         step("nvos: WSL", || {
-            crate::wsl::require_toolchain("ferrix-nvos is built for the Linux ABI")
+            crate::wsl::require_toolchain("xaqu-nvos is built for the Linux ABI")
         })?;
     }
     step("nvos: formatting", || {
@@ -2150,7 +2150,7 @@ pub(crate) fn host_test() -> Result<()> {
 
 /// [`host_test`] with the test binaries started through this program as
 /// cargo's runner and left running (`crate::test_runs`), or `None` when
-/// they ran in turn, as `FERRIX_TESTS_IN_TURN` or a non-Unix host asks.
+/// they ran in turn, as `XAQU_TESTS_IN_TURN` or a non-Unix host asks.
 fn launch_host_tests() -> Result<Option<crate::test_runs::Launched>> {
     if !crate::test_runs::side_by_side() {
         host_test()?;
@@ -2191,7 +2191,7 @@ pub(crate) fn host_doc() -> Result<()> {
 }
 
 /// Make `<target>/doc`, where `cargo doc` writes, a link to a directory in
-/// memory: `$XDG_RUNTIME_DIR/ferrix-doc/<the SHA-256 of the target
+/// memory: `$XDG_RUNTIME_DIR/xaqu-doc/<the SHA-256 of the target
 /// directory's path>`.
 ///
 /// The documentation step wants rustdoc's verdict, not its pages, which
@@ -2222,7 +2222,7 @@ fn documentation_in_memory(target: &std::path::Path) -> Result<()> {
                 && runtime.is_dir()
                 && free_bytes(&runtime).is_some_and(|free| free >= MEMORY_KEPT_FREE) =>
         {
-            prune_pages(&runtime.join("ferrix-doc"))?;
+            prune_pages(&runtime.join("xaqu-doc"))?;
             doc_link(target, &runtime)
         }
         _ => doc_on_disk(target),
@@ -2263,7 +2263,7 @@ fn doc_on_disk(target: &std::path::Path) -> Result<()> {
 }
 
 /// [`documentation_in_memory`] with the runtime directory given:
-/// `<target>/doc` made a link to `<runtime>/ferrix-doc/<digest>`, whatever
+/// `<target>/doc` made a link to `<runtime>/xaqu-doc/<digest>`, whatever
 /// was there before (a directory of pages, a link elsewhere) removed first,
 /// and `<digest>.target` beside the pages naming the target directory, for
 /// [`prune_pages`]. The pages' directory is made last, so pruning never
@@ -2271,7 +2271,7 @@ fn doc_on_disk(target: &std::path::Path) -> Result<()> {
 fn doc_link(target: &std::path::Path, runtime: &std::path::Path) -> Result<()> {
     let target = std::path::absolute(target)?;
     let digest = crate::sha256::hex(target.as_os_str().as_encoded_bytes());
-    let store = runtime.join("ferrix-doc");
+    let store = runtime.join("xaqu-doc");
     let pages = store.join(&digest);
     std::fs::create_dir_all(&store)?;
     std::fs::write(
@@ -2347,7 +2347,7 @@ pub(crate) fn native_clippy(arch: Arch) -> Result<()> {
     // with it, in `check`'s pass for `personality=user`.
     let mut arguments: Vec<&str> = native
         .iter()
-        .filter(|package| package.as_str() != "ferrix-linuxd")
+        .filter(|package| package.as_str() != "xaqu-linuxd")
         .flat_map(|package| ["-p", package.as_str()])
         .collect();
     arguments.extend(["--target", arch.kernel_target()]);
@@ -2380,25 +2380,25 @@ fn host_cargo(
 /// disagree, so a step added to one and not the other is found by `cargo
 /// xtask check` rather than by a contributor who trusted `--miri`.
 const MIRI_PACKAGES: [&str; 19] = [
-    "ferrix-elf",
-    "ferrix-sched-edf",
-    "ferrix-bootinfo",
-    "ferrix-ustack",
-    "ferrix-objects",
-    "ferrix-vfs",
-    "ferrix-pci",
-    "ferrix-block",
-    "ferrix-blkring",
-    "ferrix-native",
-    "ferrix-virtio-blk",
-    "ferrix-frame",
-    "ferrix-heap",
-    "ferrix-fallible",
-    "ferrix-paging",
-    "ferrix-svc",
-    "ferrix-argon2",
-    "ferrix-seccomp",
-    "ferrix-btrfs",
+    "xaqu-elf",
+    "xaqu-sched-edf",
+    "xaqu-bootinfo",
+    "xaqu-ustack",
+    "xaqu-objects",
+    "xaqu-vfs",
+    "xaqu-pci",
+    "xaqu-block",
+    "xaqu-blkring",
+    "xaqu-native",
+    "xaqu-virtio-blk",
+    "xaqu-frame",
+    "xaqu-heap",
+    "xaqu-fallible",
+    "xaqu-paging",
+    "xaqu-svc",
+    "xaqu-argon2",
+    "xaqu-seccomp",
+    "xaqu-btrfs",
 ];
 
 /// CI's Miri steps: every crate in [`MIRI_PACKAGES`], `jobs` at a time.
@@ -2686,12 +2686,12 @@ fn audit_traced(
     Ok(said)
 }
 
-/// `cargo xtask check-audit`: the step of [`AUDITS`] `FERRIX_CHECK_UNIT`
+/// `cargo xtask check-audit`: the step of [`AUDITS`] `XAQU_CHECK_UNIT`
 /// names (`audit:<name>`), its scripts in turn, as `check` runs it under
 /// `strace`.
 fn check_audit() -> Result<()> {
     let unit = std::env::var(step_cache::UNIT_VARIABLE)
-        .map_err(|_| Error::new("check-audit: FERRIX_CHECK_UNIT names no audit"))?;
+        .map_err(|_| Error::new("check-audit: XAQU_CHECK_UNIT names no audit"))?;
     let name = unit.strip_prefix("audit:").unwrap_or_default();
     let (_, scripts) = AUDITS
         .iter()
@@ -2755,16 +2755,16 @@ fn python_captured(script: &str, arguments: &[&str], said: &mut Vec<u8>) -> Resu
 )]
 fn kernel_clippy_every_build() -> Result<()> {
     let packages = workspace::members(&paths::workspace_root())?.kernel;
-    if !packages.iter().any(|name| name == "ferrix-kernel") {
+    if !packages.iter().any(|name| name == "xaqu-kernel") {
         return Err(Error::new(
-            "the workspace has no ferrix-kernel package under src/kernel to lint",
+            "the workspace has no xaqu-kernel package under src/kernel to lint",
         ));
     }
     // The lift's crates are built only for x86-64 under personality=user: their own
     // pass below, after the kernel's every build.
     let (lift, packages): (Vec<String>, Vec<String>) = packages
         .into_iter()
-        .partition(|name| name.starts_with("ferrix-lift"));
+        .partition(|name| name.starts_with("xaqu-lift"));
     let mut every_arch: Vec<&str> = Vec::new();
     for package in &packages {
         every_arch.extend(["-p", package.as_str()]);
@@ -2844,7 +2844,7 @@ fn kernel_clippy_every_build() -> Result<()> {
     for package in packages.iter().chain(&lift) {
         lift_args.extend(["-p", package.as_str()]);
     }
-    lift_args.extend(["-p", "ferrix-linuxd"]);
+    lift_args.extend(["-p", "xaqu-linuxd"]);
     lift_args.extend(["--target", Arch::X86_64.kernel_target()]);
     lift_args.extend(["--target", Arch::AArch64.kernel_target()]);
     let lift_dir = kernel_lint_dir("personality user")
@@ -2855,7 +2855,7 @@ fn kernel_clippy_every_build() -> Result<()> {
     lift_result?;
     let (results, off_result) = if lint_jobs() == 1 {
         // One at a time: a host with little memory, where all the
-        // profiles at once is more than it has (`FERRIX_KERNEL_LINT_JOBS`).
+        // profiles at once is more than it has (`XAQU_KERNEL_LINT_JOBS`).
         let results = builds
             .iter()
             .zip(&lint_dirs)
@@ -2940,7 +2940,7 @@ fn test_gpu_node(drm: &std::path::Path) -> Option<String> {
 fn test_gpu_pin(node: &str) -> [(&'static str, String); 2] {
     [
         ("TOLE_GPU_DEVICE", "3090".to_owned()),
-        ("FERRIX_VTEST_RENDERNODE", format!("/dev/dri/{node}")),
+        ("XAQU_VTEST_RENDERNODE", format!("/dev/dri/{node}")),
     ]
 }
 
@@ -2980,7 +2980,7 @@ fn lint_one_setting(
 /// Set to how many of the kernel's lint profiles may run at once; all of
 /// them, as they always ran, when it is not set. One runs them one after
 /// another, for a host whose memory cannot hold them all at once.
-const LINT_JOBS: &str = "FERRIX_KERNEL_LINT_JOBS";
+const LINT_JOBS: &str = "XAQU_KERNEL_LINT_JOBS";
 
 /// [`LINT_JOBS`], or every profile at once.
 fn lint_jobs() -> usize {
@@ -3031,7 +3031,7 @@ fn clippy_captured(arguments: &[&str], flags: &[(&str, String)]) -> (String, Res
 /// The UEFI loader's `build.rs` refuses a build that names no trust-policy
 /// block, rather than taking a default (`docs/SIGNING.md` §10.6; ledger
 /// 4016 (4), 4082 (3) k-env): `cargo check` of the loader without
-/// `FERRIX_ANCHORS` must fail, and say why.
+/// `XAQU_ANCHORS` must fail, and say why.
 fn loader_needs_its_build_inputs() -> Result<()> {
     let output = Command::new(cargo_binary())
         .current_dir(paths::workspace_root())
@@ -3039,22 +3039,22 @@ fn loader_needs_its_build_inputs() -> Result<()> {
             "check",
             "-q",
             "-p",
-            "ferrix-boot",
+            "xaqu-boot",
             "--target",
             Arch::X86_64.loader_target(),
         ])
-        .env_remove("FERRIX_ANCHORS")
-        .env("FERRIX_SLOT_BUILD", "profile=3 claimed=1 families=257")
+        .env_remove("XAQU_ANCHORS")
+        .env("XAQU_SLOT_BUILD", "profile=3 claimed=1 families=257")
         .stdin(Stdio::null())
         .output()
         .map_err(|error| Error::new(format!("could not run cargo check: {error}")))?;
     let said = String::from_utf8_lossy(&output.stderr);
-    if !output.status.success() && said.contains("FERRIX_ANCHORS is not set") {
-        println!("  the loader without FERRIX_ANCHORS: refused, as it must be");
+    if !output.status.success() && said.contains("XAQU_ANCHORS is not set") {
+        println!("  the loader without XAQU_ANCHORS: refused, as it must be");
         Ok(())
     } else {
         Err(Error::new(
-            "the UEFI loader built without FERRIX_ANCHORS: its build.rs must refuse a build \
+            "the UEFI loader built without XAQU_ANCHORS: its build.rs must refuse a build \
              that names no trust-policy block (docs/SIGNING.md 10.6)",
         ))
     }
@@ -3062,26 +3062,26 @@ fn loader_needs_its_build_inputs() -> Result<()> {
 
 /// The loader's bad-frame mode both ways (`docs/MACHINE-CHECK-RESTART.md`
 /// §10.6, ledger 5579 (3)): this run's loader, a `bad_frames = persist`
-/// build, carries no `ferrix.badframes` text -- it compiles no read of the
+/// build, carries no `xaqu.badframes` text -- it compiles no read of the
 /// word -- and says its mode is fixed; a `choice` build of the same loader,
 /// in a target directory of its own so the two never rebuild each other,
 /// lints clean and carries the word.
 fn loader_bad_frames(arch: Arch) -> Result<()> {
-    const WORD: &[u8] = b"ferrix.badframes";
+    const WORD: &[u8] = b"xaqu.badframes";
     let holds = |bytes: &[u8], text: &[u8]| bytes.windows(text.len()).any(|at| at == text);
     let persist = cargo::build_loader(arch, false)?;
     let bytes = std::fs::read(&persist)
         .map_err(|error| Error::new(format!("reading {}: {error}", persist.display())))?;
     if holds(&bytes, WORD) || !holds(&bytes, b"fixed by this build") {
         return Err(Error::new(format!(
-            "{arch}: the bad_frames = persist loader carries `ferrix.badframes` or does not say \
+            "{arch}: the bad_frames = persist loader carries `xaqu.badframes` or does not say \
              its mode is fixed by this build (docs/MACHINE-CHECK-RESTART.md 10.6)"
         )));
     }
     let target_dir = paths::target_dir().join("bad-frames-choice");
     let mut env = crate::signing::loader_env()?;
-    env.retain(|(key, _)| *key != "FERRIX_BAD_FRAMES");
-    env.push(("FERRIX_BAD_FRAMES", "choice".to_owned()));
+    env.retain(|(key, _)| *key != "XAQU_BAD_FRAMES");
+    env.push(("XAQU_BAD_FRAMES", "choice".to_owned()));
     for verb in ["clippy", "build"] {
         let mut command = Command::new(cargo_binary());
         let _ = command
@@ -3090,7 +3090,7 @@ fn loader_bad_frames(arch: Arch) -> Result<()> {
                 verb,
                 "-q",
                 "-p",
-                "ferrix-boot",
+                "xaqu-boot",
                 "--target",
                 arch.loader_target(),
             ])
@@ -3102,9 +3102,9 @@ fn loader_bad_frames(arch: Arch) -> Result<()> {
         cargo::run(command, "cargo (the choice loader)")?;
     }
     let name = if arch.loader_is_elf() {
-        "ferrix-boot"
+        "xaqu-boot"
     } else {
-        "ferrix-boot.efi"
+        "xaqu-boot.efi"
     };
     let choice = target_dir
         .join(arch.loader_target())
@@ -3114,12 +3114,12 @@ fn loader_bad_frames(arch: Arch) -> Result<()> {
         .map_err(|error| Error::new(format!("reading {}: {error}", choice.display())))?;
     if !holds(&bytes, WORD) {
         return Err(Error::new(format!(
-            "{arch}: the bad_frames = choice loader carries no `ferrix.badframes`: it does not \
+            "{arch}: the bad_frames = choice loader carries no `xaqu.badframes`: it does not \
              read the word (docs/MACHINE-CHECK-RESTART.md 10.6)"
         )));
     }
     println!(
-        "  {arch}: the persist loader carries no ferrix.badframes and says fixed; the choice \
+        "  {arch}: the persist loader carries no xaqu.badframes and says fixed; the choice \
          loader lints clean and reads the word"
     );
     Ok(())
@@ -3194,7 +3194,7 @@ pub(crate) fn python_interpreter() -> Option<&'static str> {
 mod tests {
     #[test]
     fn gpu_tests_go_to_the_3090_and_a_host_without_one_gets_nothing() {
-        let dir = std::env::temp_dir().join(format!("ferrix-gpu-pin-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("xaqu-gpu-pin-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let card = |name: &str, device: &str| {
             let at = dir.join(name).join("device");
@@ -3212,7 +3212,7 @@ mod tests {
             test_gpu_pin("renderD130"),
             [
                 ("TOLE_GPU_DEVICE", "3090".to_owned()),
-                ("FERRIX_VTEST_RENDERNODE", "/dev/dri/renderD130".to_owned()),
+                ("XAQU_VTEST_RENDERNODE", "/dev/dri/renderD130".to_owned()),
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);
@@ -3251,12 +3251,12 @@ mod tests {
         let link = target.join("doc");
 
         // Pages cargo wrote before: replaced by the link.
-        std::fs::create_dir_all(link.join("ferrix_elf")).unwrap();
-        std::fs::write(link.join("ferrix_elf/index.html"), "old").unwrap();
+        std::fs::create_dir_all(link.join("xaqu_elf")).unwrap();
+        std::fs::write(link.join("xaqu_elf/index.html"), "old").unwrap();
         doc_link(&target, &runtime).unwrap();
         let pages = std::fs::read_link(&link).unwrap();
         assert!(
-            pages.starts_with(runtime.join("ferrix-doc")),
+            pages.starts_with(runtime.join("xaqu-doc")),
             "{}",
             pages.display()
         );
@@ -3274,7 +3274,7 @@ mod tests {
         // A link elsewhere, and the runtime directory emptied: made again.
         std::fs::remove_file(&link).unwrap();
         std::os::unix::fs::symlink(root.join("elsewhere"), &link).unwrap();
-        std::fs::remove_dir_all(runtime.join("ferrix-doc")).unwrap();
+        std::fs::remove_dir_all(runtime.join("xaqu-doc")).unwrap();
         doc_link(&target, &runtime).unwrap();
         assert_eq!(std::fs::read_link(&link).unwrap(), pages);
         assert!(pages.is_dir());
@@ -3287,7 +3287,7 @@ mod tests {
 
         // Pruning keeps both while each links to its pages; the other's
         // directory deleted, its pages and the file naming it go.
-        let store = runtime.join("ferrix-doc");
+        let store = runtime.join("xaqu-doc");
         prune_pages(&store).unwrap();
         assert!(pages.is_dir() && others.is_dir());
         std::fs::remove_dir_all(&other).unwrap();

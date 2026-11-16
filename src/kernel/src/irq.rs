@@ -23,8 +23,8 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_sched::MAX_CPUS;
-use ferrix_sync::{IrqControl, IrqSpinLock};
+use xaqu_sched::MAX_CPUS;
+use xaqu_sync::{IrqControl, IrqSpinLock};
 
 /// Interrupt numbers the table can hold.
 ///
@@ -118,7 +118,7 @@ pub(crate) fn serviced<R>(service: impl FnOnce() -> R) -> R {
 ///
 /// Every hardware interrupt the kernel handles reaches [`serviced`]: on all
 /// three architectures a device's, the local timer's and an IPI's arrive
-/// through the one entry (`ferrix_trap_entry`) at `trap::dispatch`, which
+/// through the one entry (`xaqu_trap_entry`) at `trap::dispatch`, which
 /// marks the service loop. What does not: on x86-64 the paranoid entries
 /// (`#DB`, NMI, `#MC`), which count or stop and
 /// allocate nothing, and the spurious and interrupt-remapping check

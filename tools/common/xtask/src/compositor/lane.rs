@@ -72,7 +72,7 @@ pub(super) fn test_lane(arch: Arch, programs: &Programs, args: &Args) -> Result<
                 })?),
             },
             crate::ports::File {
-                path: "etc/ferrix/units/hyprix.service.d/lane.conf".to_owned(),
+                path: "etc/xaqu/units/hyprix.service.d/lane.conf".to_owned(),
                 mode: 0o644,
                 content: crate::ports::Content::Bytes(drop_in().into_bytes()),
             },
@@ -191,7 +191,7 @@ fn millis(micros: u64) -> String {
 /// Pass when the motions arrived under the lock, and at the median well
 /// inside a held frame.
 fn judge(arch: Arch, lines: &[String]) -> Result<()> {
-    if let Some(line) = lines.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = lines.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while the compositor ran: {}",
             line.trim()

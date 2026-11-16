@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use ferrix_partition::{ESP, parse_entries, parse_header};
+use xaqu_partition::{ESP, parse_entries, parse_header};
 
 use super::{BLOCK, CATALOG, Extra, lay_out};
 use crate::fat::Fat32;
@@ -17,14 +17,14 @@ fn iso() -> (Vec<u8>, super::Layout) {
     let esp = volume();
     let extras = [Extra {
         name: "README.TXT".to_owned(),
-        data: b"Ferrix\n".to_vec(),
+        data: b"Xaqu\n".to_vec(),
     }];
     let mut out = Cursor::new(Vec::new());
     let layout = lay_out(
         &mut Cursor::new(esp.clone()),
         esp.len() as u64,
         &extras,
-        "FERRIX_LIVE",
+        "XAQU_LIVE",
         &mut out,
     )
     .expect("an ISO");
@@ -71,7 +71,7 @@ fn a_name_that_is_not_level_2_is_refused() {
         &mut Cursor::new(esp.clone()),
         esp.len() as u64,
         &extras,
-        "FERRIX_LIVE",
+        "XAQU_LIVE",
         &mut Cursor::new(Vec::new()),
     );
     assert!(refused.is_err());
@@ -92,7 +92,7 @@ fn xorriso_reads_it() {
         return;
     }
     let (bytes, layout) = iso();
-    let dir = std::env::temp_dir().join(format!("ferrix-iso-test-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("xaqu-iso-test-{}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("a directory");
     let path = dir.join("t.iso");
     std::fs::write(&path, &bytes).expect("written");

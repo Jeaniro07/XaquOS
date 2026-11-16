@@ -1,8 +1,8 @@
 //! A ring-3 block driver's serve loop.
 //!
 //! Two libraries already know everything about their side of a block driver:
-//! `ferrix-blkring`'s [`DriverSide`] consumes the kernel's submissions and
-//! produces its completions, and `ferrix-virtio-blk`'s [`Driver`] turns a
+//! `xaqu-blkring`'s [`DriverSide`] consumes the kernel's submissions and
+//! produces its completions, and `xaqu-virtio-blk`'s [`Driver`] turns a
 //! request into descriptor chains and a used entry into a completion. What is
 //! left between them is a loop — take a submission, hand it to the device,
 //! take what the device finished, hand it back, ring the bell, sleep — and
@@ -46,12 +46,12 @@ mod tests;
 
 use core::fmt;
 
-use ferrix_blkring::bell::{Doorbell, Wait};
-use ferrix_blkring::driver::{CompleteError, Consumed, DriverSide};
-use ferrix_blkring::layout::{Op as RingOp, Status as RingStatus, Submission};
-use ferrix_blkring::{Corruption, RingMemory};
-use ferrix_virtio::QueueMemory;
-use ferrix_virtio_blk::{
+use xaqu_blkring::bell::{Doorbell, Wait};
+use xaqu_blkring::driver::{CompleteError, Consumed, DriverSide};
+use xaqu_blkring::layout::{Op as RingOp, Status as RingStatus, Submission};
+use xaqu_blkring::{Corruption, RingMemory};
+use xaqu_virtio::QueueMemory;
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, DevicePages, Drained, Driver, Op, Request, RequestArea,
     Slot, Status, SubmitError, Transport,
 };

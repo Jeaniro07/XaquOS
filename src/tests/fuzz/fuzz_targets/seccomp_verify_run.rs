@@ -24,7 +24,7 @@
 
 #![no_main]
 
-use ferrix_seccomp::{DATA_BYTES, Insn, MAX_INSNS, SeccompData, run_counted, verify};
+use xaqu_seccomp::{DATA_BYTES, Insn, MAX_INSNS, SeccompData, run_counted, verify};
 use libfuzzer_sys::fuzz_target;
 
 /// The second checker, shared with the crate's own agreement test.

@@ -49,8 +49,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Why a build without `FERRIX_ANCHORS` is refused, never given a default.
-const ANCHORS_NOT_SET: &str = "FERRIX_ANCHORS is not set: the loader is built by xtask, which names its \
+/// Why a build without `XAQU_ANCHORS` is refused, never given a default.
+const ANCHORS_NOT_SET: &str = "XAQU_ANCHORS is not set: the loader is built by xtask, which names its \
      trust-policy block (docs/SIGNING.md §10.6)";
 
 /// The trust-policy blocks `tools/common/gen/gen-anchors.py` writes.
@@ -62,21 +62,21 @@ const TABLES: [&str; 4] = [
 ];
 
 /// The loader's bad-frame mode (`docs/MACHINE-CHECK-RESTART.md` §10.2,
-/// ledger 5579 (3)): `FERRIX_BAD_FRAMES` is the image key `bad_frames`,
+/// ledger 5579 (3)): `XAQU_BAD_FRAMES` is the image key `bad_frames`,
 /// `persist` or `choice`, which xtask always sets; a build without it, or
-/// with another value, fails. It becomes `cfg(ferrix_bad_frames = "...")`,
-/// under which a `persist` loader compiles no read of `ferrix.badframes`.
+/// with another value, fails. It becomes `cfg(xaqu_bad_frames = "...")`,
+/// under which a `persist` loader compiles no read of `xaqu.badframes`.
 fn bad_frames() -> Result<(), Box<dyn Error>> {
-    println!("cargo::rerun-if-env-changed=FERRIX_BAD_FRAMES");
-    println!("cargo::rustc-check-cfg=cfg(ferrix_bad_frames, values(\"persist\", \"choice\"))");
-    let value = std::env::var("FERRIX_BAD_FRAMES").map_err(|_| {
-        "FERRIX_BAD_FRAMES is not set: the loader is built by xtask, which sets it from the \
+    println!("cargo::rerun-if-env-changed=XAQU_BAD_FRAMES");
+    println!("cargo::rustc-check-cfg=cfg(xaqu_bad_frames, values(\"persist\", \"choice\"))");
+    let value = std::env::var("XAQU_BAD_FRAMES").map_err(|_| {
+        "XAQU_BAD_FRAMES is not set: the loader is built by xtask, which sets it from the \
          profile's image key bad_frames (docs/MACHINE-CHECK-RESTART.md §10.2)"
     })?;
     if !["persist", "choice"].contains(&value.as_str()) {
-        return Err(format!("FERRIX_BAD_FRAMES is {value:?}, not persist or choice").into());
+        return Err(format!("XAQU_BAD_FRAMES is {value:?}, not persist or choice").into());
     }
-    println!("cargo::rustc-cfg=ferrix_bad_frames=\"{value}\"");
+    println!("cargo::rustc-cfg=xaqu_bad_frames=\"{value}\"");
     Ok(())
 }
 
@@ -85,12 +85,12 @@ fn bad_frames() -> Result<(), Box<dyn Error>> {
 /// Cargo feature or `cfg`, and a build without them fails rather than
 /// taking a default (ledger 4016 (4)):
 ///
-/// * `FERRIX_ANCHORS` names one of [`TABLES`], which goes into `.fxanch`;
-/// * `FERRIX_SLOT_BUILD` is `profile=<byte> claimed=<0|1> families=<ids>`,
+/// * `XAQU_ANCHORS` names one of [`TABLES`], which goes into `.fxanch`;
+/// * `XAQU_SLOT_BUILD` is `profile=<byte> claimed=<0|1> families=<ids>`,
 ///   the ids decimal and comma-separated, of which this arch's are kept.
 fn trust_policy() -> Result<(), Box<dyn Error>> {
-    println!("cargo::rerun-if-env-changed=FERRIX_ANCHORS");
-    println!("cargo::rerun-if-env-changed=FERRIX_SLOT_BUILD");
+    println!("cargo::rerun-if-env-changed=XAQU_ANCHORS");
+    println!("cargo::rerun-if-env-changed=XAQU_SLOT_BUILD");
     let manifest = std::env::var("CARGO_MANIFEST_DIR")?;
     let dir = Path::new(&manifest).join("anchors");
     for table in TABLES {
@@ -99,12 +99,12 @@ fn trust_policy() -> Result<(), Box<dyn Error>> {
             dir.join(format!("{table}.bin")).display()
         );
     }
-    let table = std::env::var("FERRIX_ANCHORS").ok();
+    let table = std::env::var("XAQU_ANCHORS").ok();
     let Some(table) = table else {
         return Err(ANCHORS_NOT_SET.into());
     };
     if !TABLES.contains(&table.as_str()) {
-        return Err(format!("FERRIX_ANCHORS is {table:?}, not one of {TABLES:?}").into());
+        return Err(format!("XAQU_ANCHORS is {table:?}, not one of {TABLES:?}").into());
     }
     // The block as an array literal, not include_bytes!: a byte-string
     // literal is an allocation of its own, which a debug build keeps beside
@@ -131,8 +131,8 @@ fn trust_policy() -> Result<(), Box<dyn Error>> {
         "arm" => 3,
         other => return Err(format!("no arch byte for {other}").into()),
     };
-    let line = std::env::var("FERRIX_SLOT_BUILD").map_err(|_| {
-        "FERRIX_SLOT_BUILD is not set: the loader is built by xtask, which says \
+    let line = std::env::var("XAQU_SLOT_BUILD").map_err(|_| {
+        "XAQU_SLOT_BUILD is not set: the loader is built by xtask, which says \
          what the build is (docs/SIGNING.md §10.6)"
     })?;
     let (mut profile, mut claimed, mut families) = (None, None, None);
@@ -150,12 +150,12 @@ fn trust_policy() -> Result<(), Box<dyn Error>> {
                         .collect::<Result<Vec<_>, _>>()?,
                 );
             }
-            _ => return Err(format!("FERRIX_SLOT_BUILD: {word:?} is not understood").into()),
+            _ => return Err(format!("XAQU_SLOT_BUILD: {word:?} is not understood").into()),
         }
     }
     let (Some(profile), Some(claimed), Some(families)) = (profile, claimed, families) else {
         return Err(
-            format!("FERRIX_SLOT_BUILD {line:?} lacks profile, claimed or families").into(),
+            format!("XAQU_SLOT_BUILD {line:?} lacks profile, claimed or families").into(),
         );
     };
     let ours: Vec<String> = families
@@ -165,7 +165,7 @@ fn trust_policy() -> Result<(), Box<dyn Error>> {
         .collect();
     if ours.len() > 4 {
         return Err(format!(
-            "FERRIX_SLOT_BUILD names {} families of this arch; at most 4",
+            "XAQU_SLOT_BUILD names {} families of this arch; at most 4",
             ours.len()
         )
         .into());

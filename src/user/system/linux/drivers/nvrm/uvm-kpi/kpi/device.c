@@ -11,7 +11,7 @@
  * What only K1 can do -- putting pages into a client and taking them out
  * again (vm_insert_page, unmap_mapping_range) -- answers -ENOSYS until
  * C3 (§11.5). Pageable-memory access (get_user_pages and friends, HMM)
- * is off in the Ferrix profile and answers as a kernel without it would.
+ * is off in the Xaqu profile and answers as a kernel without it would.
  *
  * SPDX-License-Identifier: MIT
  */

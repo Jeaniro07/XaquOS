@@ -6,11 +6,11 @@
 //! host, so every boot runs whatever this tree last built.
 //!
 //! * `netboot-stick --server HOST[:PORT]` writes
-//!   `build/x86_64/ferrix-netboot-stick.img`: a GUID partition table whose
+//!   `build/x86_64/xaqu-netboot-stick.img`: a GUID partition table whose
 //!   EFI system partition holds iPXE's `snp.efi` -- iPXE driving the network
 //!   card through the firmware's own UEFI driver, so it needs no driver of
 //!   its own for the card -- as `EFI/BOOT/BOOTX64.EFI`, with a script built
-//!   in that runs `dhcp` and chains `http://HOST:PORT/ferrix/boot.ipxe`.
+//!   in that runs `dhcp` and chains `http://HOST:PORT/xaqu/boot.ipxe`.
 //!   iPXE is built from its pinned release source (`fetch-ipxe.sh`).
 //! * `netboot [--listen ADDR:PORT]` builds the image as `build` does and
 //!   serves its files, and a `boot.ipxe` that fetches them, over HTTP until
@@ -23,7 +23,7 @@
 //!
 //! # How the loader reads its files
 //!
-//! The loader reads `\FERRIX\KERNEL.ELF`, `INITRD.IMG` and `CMDLINE.TXT`
+//! The loader reads `\XAQU\KERNEL.ELF`, `INITRD.IMG` and `CMDLINE.TXT`
 //! through the `SimpleFileSystem` of the device it was loaded from. When
 //! iPXE starts an EFI program it installs one of its own on that device,
 //! listing every image it has fetched by its name, and a name may hold a
@@ -35,7 +35,7 @@
 //!
 //! Nothing can be written there, nor to the machine's disk, so the loader
 //! sends its boot log to this server instead (`docs/NETBOOT.md` §5):
-//! `boot.ipxe` fetches `FERRIX\REPORT.TXT`, the URL to send to, from
+//! `boot.ipxe` fetches `XAQU\REPORT.TXT`, the URL to send to, from
 //! `report/hello/<MAC>`, and the loader sends the log through iPXE as GETs
 //! to `report/box/<MAC>/BOOTLOG.TXT`, which `report.rs` checks, puts
 //! together, keeps in a directory per machine and prints. `test-netboot`
@@ -55,7 +55,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use ferrix_partition::{ESP, Guid, Partition, write_table};
+use xaqu_partition::{ESP, Guid, Partition, write_table};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -77,8 +77,8 @@ pub(crate) const TASKS: &[Task] = &[
         name: "netboot-stick",
         help_at: 50,
         help: &[
-            "netboot-stick Write build/x86_64/ferrix-netboot-stick.img: iPXE on a GUID partition table, chaining",
-            "              http://<--server>/ferrix/boot.ipxe (tools/common/fetch/fetch-ipxe.sh first)",
+            "netboot-stick Write build/x86_64/xaqu-netboot-stick.img: iPXE on a GUID partition table, chaining",
+            "              http://<--server>/xaqu/boot.ipxe (tools/common/fetch/fetch-ipxe.sh first)",
         ],
         run,
     },
@@ -105,7 +105,7 @@ const IPXE_PROGRAM: &str = "bin-x86_64-efi/snp.efi";
 /// QEMU's, VNC's or the gateway's.
 const DEFAULT_PORT: u16 = 8086;
 /// Every URL served is under this path.
-const PREFIX: &str = "/ferrix/";
+const PREFIX: &str = "/xaqu/";
 /// The script the stick chains, under [`PREFIX`].
 const SCRIPT_NAME: &str = "boot.ipxe";
 /// Where `boot.ipxe` sends what it finds on the PCI bus, under [`PREFIX`]:
@@ -113,23 +113,23 @@ const SCRIPT_NAME: &str = "boot.ipxe";
 const REPORT: &str = "report/";
 
 /// What a boot that could not fetch its files prints, from either script.
-const FAILED: &str = "FERRIX-NETBOOT-FAILED";
+const FAILED: &str = "XAQU-NETBOOT-FAILED";
 /// What the stick prints before `ifstat`'s list of the cards it drives:
 /// an empty list is a firmware whose network stack is off (`docs/NETBOOT.md`).
 const NO_CARD: &str = "Network cards iPXE drives (none: the firmware's UEFI network stack is off):";
 /// Where `boot.ipxe` fetches the URL the loader sends its boot log to, on
 /// iPXE's file system (`netreport.rs` in the loader reads it there).
-const REPORT_FILE: &str = "FERRIX\\REPORT.TXT";
+const REPORT_FILE: &str = "XAQU\\REPORT.TXT";
 /// What the loader prints once its boot log reached the server.
 const REPORT_SENT: &str = "report   boot log sent to the netboot server";
 /// What the loader prints when it did not.
 const REPORT_NOT_SENT: &str = "report   boot log not sent";
 
 /// What `boot.ipxe` prints first, so a log says the served script ran.
-const SERVED: &str = "Ferrix netboot: commit";
+const SERVED: &str = "Xaqu netboot: commit";
 
 /// The stick's EFI system partition's name.
-const STICK_NAME: &str = "FERRIX-NETBOOT";
+const STICK_NAME: &str = "XAQU-NETBOOT";
 /// The stick's FAT volume: 64 MiB, the smallest round size FAT32 takes.
 const STICK_BYTES: usize = 64 << 20;
 /// Where the partition starts: 1 MiB, as every partitioning tool aligns it.
@@ -163,7 +163,7 @@ pub(crate) fn run(command: &str, args: &Args) -> Result<()> {
                 )
             })?;
             let server = server_of(server)?;
-            let path = paths::build_dir(Arch::X86_64).join("ferrix-netboot-stick.img");
+            let path = paths::build_dir(Arch::X86_64).join("xaqu-netboot-stick.img");
             write_stick(&server, &path)?;
             println!(
                 "  write it to a USB stick whole (docs/NETBOOT.md §2); it boots \
@@ -209,7 +209,7 @@ fn build_served(args: &Args) -> Result<Served> {
 
 /// `boot.ipxe`: report the PCI bus, fetch every file of the image under the
 /// name of its path, then the URL the loader sends its boot log to as
-/// `FERRIX\REPORT.TXT` (`docs/NETBOOT.md` §5), and start the loader.
+/// `XAQU\REPORT.TXT` (`docs/NETBOOT.md` §5), and start the loader.
 ///
 /// Relative URLs, which iPXE resolves against the script's own: the server
 /// need not know the address it is reached at.
@@ -228,7 +228,7 @@ fn boot_script(files: &BTreeMap<String, Vec<u8>>, commit: &str) -> Result<String
     // Not fatal: without it the loader boots and keeps its log to itself.
     script.push_str(&format!(
         "imgfetch --name {REPORT_FILE} {REPORT}hello/${{netX/mac:hexhyp}} || \
-         echo Ferrix netboot: no report URL, the boot log stays on the screen\n"
+         echo Xaqu netboot: no report URL, the boot log stays on the screen\n"
     ));
     script.push_str(&format!(
         "chain --name {} {loader} || goto failed\n\
@@ -244,7 +244,7 @@ fn boot_script(files: &BTreeMap<String, Vec<u8>>, commit: &str) -> Result<String
 /// location, vendor and device, and class, on the screen and to the
 /// server, which logs them. Every boot does it, because it costs a few
 /// requests and says which network and storage chips a machine has before
-/// Ferrix has a driver for either.
+/// Xaqu has a driver for either.
 ///
 /// `pciscan` leaves the location as a number, which `${pci/N.offset.len}`
 /// reads configuration space at; `hexraw` prints the bytes without colons.
@@ -265,7 +265,7 @@ goto pci\n\
 fn embedded_script(server: &str) -> String {
     format!(
         "#!ipxe\n\
-         echo Ferrix netboot stick (iPXE {IPXE_VERSION}): http://{server}{PREFIX}{SCRIPT_NAME}\n\
+         echo Xaqu netboot stick (iPXE {IPXE_VERSION}): http://{server}{PREFIX}{SCRIPT_NAME}\n\
          :retry\n\
          dhcp || goto failed\n\
          chain http://{server}{PREFIX}{SCRIPT_NAME} || goto failed\n\
@@ -480,7 +480,7 @@ fn ipxe(script: &str) -> Result<Vec<u8>> {
 fn write_stick(server: &str, path: &Path) -> Result<()> {
     let program = ipxe(&embedded_script(server))?;
     let note = format!(
-        "Ferrix netboot stick: iPXE {IPXE_VERSION} ({IPXE_PROGRAM}) as EFI/BOOT/BOOTX64.EFI.\r\n\
+        "Xaqu netboot stick: iPXE {IPXE_VERSION} ({IPXE_PROGRAM}) as EFI/BOOT/BOOTX64.EFI.\r\n\
          It takes an address by DHCP and boots http://{server}{PREFIX}{SCRIPT_NAME},\r\n\
          which `cargo xtask netboot` serves. See docs/NETBOOT.md.\r\n"
     );
@@ -651,10 +651,10 @@ fn check_reported(lines: &[String], reports: &[report::Report]) -> Result<String
         .collect();
     if !sent
         .first()
-        .is_some_and(|line| line.starts_with("Ferrix loader"))
+        .is_some_and(|line| line.starts_with("Xaqu loader"))
     {
         return Err(Error::new(format!(
-            "the boot log that reached the server does not start with `Ferrix loader`: {:?}",
+            "the boot log that reached the server does not start with `Xaqu loader`: {:?}",
             sent.first()
         )));
     }
@@ -734,7 +734,7 @@ fn check_refused(lines: &[String], requests: &[http::Request]) -> Result<String>
         .any(|line| qemu::reached(line, qemu::SUCCESS_MARKER))
     {
         return Err(Error::new(
-            "the negative control booted a kernel from a server serving nothing at /ferrix/",
+            "the negative control booted a kernel from a server serving nothing at /xaqu/",
         ));
     }
     let script = format!("{PREFIX}{SCRIPT_NAME}");

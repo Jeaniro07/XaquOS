@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Roadmap
-    url: https://github.com/ferrix-os/ferrix/tree/main/docs/roadmap
+    url: https://github.com/xaqu-os/xaqu/tree/main/docs/roadmap
     about: What is planned, in which order, and what each stage has left.
   - name: Question or idea
-    url: https://github.com/ferrix-os/ferrix/discussions
-    about: Ask anything, show what you ran on Ferrix.
+    url: https://github.com/xaqu-os/xaqu/discussions
+    about: Ask anything, show what you ran on Xaqu.

@@ -3,7 +3,7 @@
 **A review, 2026-10-23, read-only, on `main` b8b8871d6.** The customer
 asked: is the Linux compatibility layer truly well separated from the rest
 of the kernel, and could it easily be stripped to build a kernel that
-offers only the native Ferrix ABI? This document answers with evidence:
+offers only the native Xaqu ABI? This document answers with evidence:
 a dependency map built with the item-boundary gate's own resolver, a
 compile experiment that cuts the layer out, and line counts. Nothing here
 changes code on `main`. The experiment is the WIP commit 94a41c2af on the
@@ -42,16 +42,16 @@ not for landing.
   tables behind `decode_syscall`, i386's `int 0x80` entry,
   `arch_prctl`/`rt_sigreturn` answered in the x86-64 entry, the vDSO and
   the ARMv7-A sigpage, POSIX signal numbers on the fault path, the core
-  `Job` as a cgroup (`ferrix_cgroupfs`), and native status codes that are
+  `Job` as a cgroup (`xaqu_cgroupfs`), and native status codes that are
   Linux errno values. None of these is large, but each is a Linux concept
   in code the item certifies.
-* **Ferrix's own userland is almost all Linux programs.** init, authd,
+* **Xaqu's own userland is almost all Linux programs.** init, authd,
   sessiond, hyprix, zinc, dhcp, pulsed and nvrm are musl/ferrousli programs.
   Only devmgr, the drivers, drvupdated and the IPC test programs are
   native, and every one of those also makes Linux calls.
 
 So stripping the layer to get a kernel that *builds* is cheap (about 5
-points). Stripping it to get a kernel that *boots, runs Ferrix's native
+points). Stripping it to get a kernel that *boots, runs Xaqu's native
 programs and carries its own evidence* is **about 85 points** (a guess,
 range 65 to 120), and about a quarter of that is already planned as
 `docs/MICROKERNEL.md`'s K5, K10 and K15. A native-only kernel that runs
@@ -88,9 +88,9 @@ one went unused in the experiment's build): btrfs, btrfs-write,
 btrfs-vfs, block, partition, net, nettcp, netwire, netlink, procfs,
 sysfs, seccomp, ustack, displayctl, renderctl, inputctl, sndctl,
 chardevctl, logctl, netring. Together that is **48,739 lines**. Of
-these, `ferrix-btrfs` and `ferrix-btrfs-write` (14,830 lines) are in
+these, `xaqu-btrfs` and `xaqu-btrfs-write` (14,830 lines) are in
 the *item* ring (2026-10-02), even though only the load ring reaches them.
-`ferrix-linux-abi` (12,883 lines) is still linked: the core uses it for
+`xaqu-linux-abi` (12,883 lines) is still linked: the core uses it for
 errno, signal numbers and the decode tables (§3).
 
 ## 2. Couplings from the Linux layer into the rest
@@ -116,18 +116,18 @@ That subsystem by subsystem, as the customer listed them:
 |---|---|---|---|
 | Syscall entry and dispatch | `syscall/linux.rs` (621) | The item decodes the number and hands the call through `Personality::answer` (`syscall/mod.rs:241`). `main.rs:134` composes `dispatch_with::<Linux>`. The native range is split off first (`syscall/mod.rs:136`) | **Shallow**: one trait, one line |
 | Early answers in the arch entry | `arch/x86_64/syscall.rs:768-811` | `arch_prctl(ARCH_SET_FS)` and `rt_sigreturn` are answered in the core's entry, before dispatch. i386's `int 0x80` entry is its own `Abi::Compat` (`trap.rs`, `arch::decode_compat_syscall`) | Medium: Linux numbers inside the core |
-| Seccomp | `syscall/seccomp*` | The core holds a filter pointer (`trap.rs:330`) and a link-time hook (`trap.rs:401`, `main.rs:142` `ferrix_filter_quiet`) | Shallow |
+| Seccomp | `syscall/seccomp*` | The core holds a filter pointer (`trap.rs:330`) and a link-time hook (`trap.rs:401`, `main.rs:142` `xaqu_filter_quiet`) | Shallow |
 | Signals and the return to user mode | `syscall/deliver.rs`, `signal.rs`, `kill.rs` | `trap::ReturnPath` (`trap.rs:558`): `needs_attention`, `return_to_user`, `sigreturn`, `fault_signal`. Registered at `main.rs:179`. With none registered, a user fault is a kernel panic (`trap.rs:640`). Frames are written by the core's `arch/*/signal.rs` | **Deep**: the core has no other way to end a faulting or killed thread |
 | Processes and threads | `syscall/process.rs` (`impl Host`, :2193), `thread.rs`, `family.rs` (clone/fork) | The core's `object::process::Host` (`object/process.rs:777`) and `sched::UserThread` (`sched/task.rs:45`) are traits. Only the Linux `Process` implements them, so every native process is one | **Deep** |
 | Futex | `syscall/futex.rs` | No core primitive. K5 (wait on a user address) is designed and WIP on `mk/k5` | Native has none |
 | exec / ELF loading | `syscall/exec.rs`, `image.rs`, `load.rs`, `launch.rs` | Native `process_create`/`process_start`, `devmgr`'s start and pid 1 all go through `syscall::native::Processes` (`syscall/native.rs:244`), which `syscall::launch::install` registers (`main.rs:1388`) | **Deep**: the only loader is the personality's |
-| VFS and fd tables | `fs/**`, `syscall/fd.rs`, `file.rs`, `path.rs` | `init::Launcher` (`init.rs:160`, opens `/sbin/init` through the VFS), `devmgr::register_reader` (`discovery/devmgr.rs:104`, reads `/sbin/devmgr` and drivers), `power` flush hooks, `syscall/program.rs:27` (`ferrix_vfs::OpenFile`), `user/vmo.rs:174` (a page source fails with `ferrix_vfs::Errno`) | Deep at boot; shallow in the code |
+| VFS and fd tables | `fs/**`, `syscall/fd.rs`, `file.rs`, `path.rs` | `init::Launcher` (`init.rs:160`, opens `/sbin/init` through the VFS), `devmgr::register_reader` (`discovery/devmgr.rs:104`, reads `/sbin/devmgr` and drivers), `power` flush hooks, `syscall/program.rs:27` (`xaqu_vfs::OpenFile`), `user/vmo.rs:174` (a page source fails with `xaqu_vfs::Errno`) | Deep at boot; shallow in the code |
 | mmap / brk | `syscall/memory.rs` | Argument decoding onto `user::space::AddressSpace`, which is core. Native has `VMO_MAP` but no unmap or protect | Shallow (K2 extends it) |
 | Sockets | `net/**`, `fs/socket.rs` | Only the `net_ring` device core and `PORT_FD` touch native | Shallow |
 | ptrace / prctl | none / `syscall/attributes.rs`, `thread_area.rs` | `sched/work.rs` reserves a tracer bit; the arch keeps TLS registers | Shallow |
-| /proc, /sys, cgroupfs | `fs/procfs*`, `sysfs*`, `cgroupfs*` | `object/job.rs:64` uses `ferrix_cgroupfs` controllers: **the core's job *is* a cgroup** (freeze, ownership and mode of its cgroupfs nodes, `cgroup.max.depth`) | Medium, and it points the wrong way (§3) |
+| /proc, /sys, cgroupfs | `fs/procfs*`, `sysfs*`, `cgroupfs*` | `object/job.rs:64` uses `xaqu_cgroupfs` controllers: **the core's job *is* a cgroup** (freeze, ownership and mode of its cgroupfs nodes, `cgroup.max.depth`) | Medium, and it points the wrong way (§3) |
 | Namespaces | `syscall/namespace.rs`, `nsproxy.rs`, `pidns.rs`, `userns.rs`, `net/namespace.rs` | Entirely in the load | Shallow |
-| vDSO | `syscall/vdso.rs`, `sigpage.rs` | The time page is the core's (`timer.rs` uses `ferrix_vdso`). `arch::vdso_spec`/`sigpage_code` (`arch/aarch64/mod.rs:1610`, `arch/armv7a/mod.rs:1617,1629`, `arch/x86_64/vdso.rs`) are core | Medium |
+| vDSO | `syscall/vdso.rs`, `sigpage.rs` | The time page is the core's (`timer.rs` uses `xaqu_vdso`). `arch::vdso_spec`/`sigpage_code` (`arch/aarch64/mod.rs:1610`, `arch/armv7a/mod.rs:1617,1629`, `arch/x86_64/vdso.rs`) are core | Medium |
 | Wall clock | `syscall/time.rs` | `main.rs:1277` sets `CLOCK_REALTIME` from firmware through the personality | Shallow, but a native-only kernel loses it |
 | Boot path | `fs::init` (initramfs into tmpfs), `fs::root_disk`, `syscall::launch` | pid 1 is a Linux ELF started by `init::Launcher`. devmgr's image is read through the VFS. `register_load` (`main.rs:1387`) stops the boot if no launcher, devmgr reader or native-process maker is registered (`main.rs:1418`), or if a served native call has no handler (`main.rs:1432`) | **Deep** |
 
@@ -152,10 +152,10 @@ remains is Linux *semantics* in code that is not the layer:
    the device calls. A deadline is "in `CLOCK_MONOTONIC` nanoseconds", but
    the clock is read through Linux.
 3. **Native status codes are Linux errno values.**
-   `native-abi/src/status.rs:9` imports `ferrix_linux_abi::errno`.
+   `native-abi/src/status.rs:9` imports `xaqu_linux_abi::errno`.
    `BAD_HANDLE` is `EBADF`, `PEER_CLOSED` is `EPIPE`, and so on, by design
-   ("so that musl's `strerror` prints something"). `ferrix-native-abi`
-   depends on `ferrix-linux-abi`. In the kernel, 13 core/item product files
+   ("so that musl's `strerror` prints something"). `xaqu-native-abi`
+   depends on `xaqu-linux-abi`. In the kernel, 13 core/item product files
    carry `Errno` (`syscall/native.rs`, `program.rs`, `uaccess.rs`,
    `discovery/devmgr.rs`, `init.rs`, `power.rs`, `trap.rs`, `audit.rs:713`,
    `arch/x86_64/syscall.rs` ...). This is harmless as numbers, but the
@@ -163,7 +163,7 @@ remains is Linux *semantics* in code that is not the layer:
 4. **The core's `Job` is a cgroup v2.** `object/job.rs` (50 mentions)
    holds `cgroup.freeze`, `cgroup.events`, `cgroup.max.depth`, and the
    owner and mode `chown`/`chmod` gave its cgroupfs nodes, through
-   `ferrix_cgroupfs::controllers`. The native call `JOB_FOR_CGROUP` exists
+   `xaqu_cgroupfs::controllers`. The native call `JOB_FOR_CGROUP` exists
    for init.
 5. **The fault path speaks POSIX signals.** The three `arch/*/trap.rs`
    files map faults to `SIGSEGV`/`SIGBUS`/`SIGILL`/`SIGFPE`/`SIGTRAP` with
@@ -177,7 +177,7 @@ remains is Linux *semantics* in code that is not the layer:
    `armv7a/mod.rs:244`), restart-syscall numbers written into frames
    (`arch/x86_64/signal.rs:197`), `arch_prctl`, the i386 GDT TLS slots
    (`arch/x86_64/gdt.rs:59`), the AArch64 and ARMv7-A hwcaps
-   (`ferrix_linux_abi::hwcap`), the vDSO spec and the sigpage.
+   (`xaqu_linux_abi::hwcap`), the vDSO spec and the sigpage.
 7. **Product files carry Linux test programs.** `arch/*/mod.rs` hold the
    hand-assembled programs the boot checks run (`exit_group(98)`, a
    `clone3` into a cgroup), which is why "cgroup" and "exit_group" show
@@ -199,7 +199,7 @@ selected by it. There is no `none` value. `fs=kernel` requires
 
 **The experiment** (worktree `.claude/worktrees/linux-abi-sep`,
 `CARGO_TARGET_DIR` of its own, the `present` profile's flag words in
-the environment, `cargo check -p ferrix-kernel`, about 7 s a run):
+the environment, `cargo check -p xaqu-kernel`, about 7 s a run):
 
 | Step | Result |
 |---|---|
@@ -239,7 +239,7 @@ process. That is §7's work.
 | nvrm (`linux/drivers/nvrm`) | 7,286 | **Linux** | `CHARDEV_*` (5 files) | all else |
 | zinc, ferrousli, apps (components) | | **Linux** | | |
 
-**A Ferrix-only kernel can run today's devmgr and drivers only after**
+**A Xaqu-only kernel can run today's devmgr and drivers only after**
 (a) `rt` moves `exit`, the monotonic clock, the log line and `munmap`
 onto native calls that do not exist yet, and (b) drvupdated, vport and
 usbdev move from Unix sockets to channels. It cannot run init, authd,
@@ -317,7 +317,7 @@ gated.
 
 * **Build-only option** (`personality=none` compiles and is checked on
   three architectures, but does not boot usefully): **5 points**.
-* **Ferrix-only-ABI kernel** that boots on four boots, starts devmgr and
+* **Xaqu-only-ABI kernel** that boots on four boots, starts devmgr and
   the drivers natively, runs native test programs, and carries its own
   checks and evidence: **about 85 points** (65 to 120, a guess). About 25
   of those are rows the microkernel plan already has (K5, K10, K15 and
@@ -375,15 +375,15 @@ gated.
 * Compile experiment: check out `linux-abi-strip-experiment` (94a41c2af
   for the cut; c33730632 adds the scripts, with `autocut.py` for the
   cascade and `present-env.sh` for the flags),
-  set `FERRIX_BUILD_FLAGS` to the `present` profile's words
+  set `XAQU_BUILD_FLAGS` to the `present` profile's words
   (`profile=present level=present personality=kernel fs=kernel
   mitigations=on partition_speculation=not_applicable ipc_fastpath=off
   restricted_fastpath=not_applicable kernel_memory=heap schedule=fair
   checks=on program_barrier=switch ssbd=always smt=stibp
-  runtime_trades=none`) and `FERRIX_FLAG_VALUES` to every declared flag's
+  runtime_trades=none`) and `XAQU_FLAG_VALUES` to every declared flag's
   values (with `profile=none,present,fast,max,desktop` and
   `level=none,present,sc2,sc4`). Then run
-  `cargo check -p ferrix-kernel --target <t>` for the three targets.
+  `cargo check -p xaqu-kernel --target <t>` for the three targets.
 * Line counts: `check-item-boundary.py --report` on b8b8871d6, and `wc -l`
   over the crates named in `src/kernel/Cargo.toml`, `src/` without tests.
 
@@ -392,11 +392,11 @@ gated.
 The customer asked whether the kernel could offer two ABIs, with a build
 flag choosing which one, and with both able to coexist. As the
 coordinator framed it: one flag with three values. `native` would offer
-the Ferrix ABI only, `linux` the Linux ABI only, and `both` would be
+the Xaqu ABI only, `linux` the Linux ABI only, and `both` would be
 today's kernel and the default.
 
 **Short answer.** `native` and `both` are coherent. `linux`, read
-literally, is not, because Ferrix's drivers *are* native programs. Read as
+literally, is not, because Xaqu's drivers *are* native programs. Read as
 "native only for the system's own driver processes, Linux for everything
 else", it is coherent and cheap, but it saves attack surface, not code.
 
@@ -412,7 +412,7 @@ else", it is coherent and cheap, but it saves attack surface, not code.
 
 This is §7's rows 1 to 14, written in terms of the flag:
 
-* `abi=native` puts `#[cfg(not(ferrix_abi = "native"))]` on the 3 module
+* `abi=native` puts `#[cfg(not(xaqu_abi = "native"))]` on the 3 module
   declarations in `main.rs`, the 52 personality modules in
   `syscall/mod.rs`, the load's ~15 sites in `main.rs`, and the 25 check
   modules that borrow a Linux program until row 13 re-homes them (rows 1
@@ -457,7 +457,7 @@ IOMMU domain, and has its configuration space mediated by
 `verify_config`, the pin quarantine). The Linux ABI has none of this.
 Linux's own answer is VFIO (container, group and device files; `mmap` of
 BARs; DMA mapping by `ioctl`; interrupts through `eventfd`/`irqfd`). For
-`linux` to mean "no native ABI", Ferrix would have to:
+`linux` to mean "no native ABI", Xaqu would have to:
 
 * build a VFIO-shaped device surface in the Linux personality, which is
   device authority, today the item's, now reached through the uncertified
@@ -479,7 +479,7 @@ building it.**
 drivers, Linux for everything else".** The native range is refused
 (`ENOSYS`, audited) to any process without a **native-ABI right**. The
 kernel grants that right to the processes it starts as drivers: devmgr,
-which it starts under `ferrix.devmgr=kernel`, and whatever devmgr starts
+which it starts under `xaqu.devmgr=kernel`, and whatever devmgr starts
 in the drivers job. Today's mixed programs need it as well: init for
 `DEVMGR_START` (retired once the kernel starts devmgr) and for
 `AUDIT_READ` and `JOB_FOR_CGROUP`, authd and sessiond for their channels,
@@ -559,7 +559,7 @@ done alone.
 * **Name and values.** (Superseded by §11.6: the flag is `linux-abi =
   on | off`.) A new flag, `abi = native | linux | both`, in
   `tools/common/data/build-flags.toml`, turned by xtask into
-  `--cfg ferrix_abi="..."`. That follows the existing rule: a `--cfg`,
+  `--cfg xaqu_abi="..."`. That follows the existing rule: a `--cfg`,
   never a Cargo feature (`kernel_cargo_features` stays 0); every value
   declared for `--check-cfg`; `unexpected_cfgs` denied. I advise against
   reusing `personality`. It already means *where* the Linux layer runs
@@ -655,7 +655,7 @@ is there as well:
 * There is no Linux-only value. §11.2's "drivers only" right is not a
   build value but part of `on`: Linux programs get no native calls unless
   granted (devmgr, the drivers job, init, authd, sessiond, nvrm).
-* `--cfg ferrix_linux_abi="on"` or `="off"`, always passed, both values
+* `--cfg xaqu_linux_abi="on"` or `="off"`, always passed, both values
   declared for `--check-cfg`, the boot line computed from `cfg!`; the row
   in `build-flags.toml` is `linux_abi`. A bare `cfg` left out for `off`
   would let a forgotten flag select a configuration silently (BUILD-FLAGS
@@ -677,7 +677,7 @@ easily". So the Linux ABI is the first of a kind, not a special case:
 
 * **One boolean flag per foreign ABI**, all of one shape:
   `linux-abi = on | off` now, `windows-abi = on | off` (or any other)
-  later, each turned into its own key-value `--cfg ferrix_<name>_abi="on"|"off"`,
+  later, each turned into its own key-value `--cfg xaqu_<name>_abi="on"|"off"`,
   always passed (§11.6, ledger 3218 (9)). The native
   ABI is in every kernel and has no flag. Adding an ABI is: a flag row in
   `build-flags.toml` with its levels and requires rules, a module behind
@@ -703,7 +703,7 @@ easily". So the Linux ABI is the first of a kind, not a special case:
 * **A Windows ABI here means NT syscalls in the kernel or in a ring-3
   server**, which is a large undertaking (Wine's approach, NT syscalls
   translated in user space on top of the Linux ABI, already runs Windows
-  programs on Ferrix). The design only keeps the door open; nothing is
+  programs on Xaqu). The design only keeps the door open; nothing is
   planned.
 * **Where each ABI runs** (ledger 3219 (11)): one placement flag per
   foreign ABI, `<name>_abi_ring = kernel | user` (Linux's is today's
@@ -747,18 +747,18 @@ include the switch surface, so that if we want to get certified we just
 remove the lib from the source and we are good".
 
 **The rule.** Everything that exists only for the Linux ABI lives in one
-crate, `ferrix-linux-abi` (under `src/kernel/linux-abi/`, its own package
+crate, `xaqu-linux-abi` (under `src/kernel/linux-abi/`, its own package
 in the kernel workspace). Nothing outside it names it except the
 composition root. The switch surface is exactly two places:
 
 1. the kernel binary's `Cargo.toml`: the dependency on
-   `ferrix-linux-abi`, optional, enabled by the `linux_abi` flag;
+   `xaqu-linux-abi`, optional, enabled by the `linux_abi` flag;
 2. `main.rs`: one registry line that adds the crate's personality to the
-   core's compile-time registry (§11.7), behind `cfg(ferrix_linux_abi =
+   core's compile-time registry (§11.7), behind `cfg(xaqu_linux_abi =
    "on")`.
 
 No other `cfg` on the ABI anywhere in the core, item or native code. A
-later `ferrix-windows-abi` is the same shape: one crate, one dependency
+later `xaqu-windows-abi` is the same shape: one crate, one dependency
 line, one registry line.
 
 **The certified source tree has no Linux code in it.** For a certified
@@ -790,7 +790,7 @@ exported tree's hash, not the development tree's.
 **Relation to `docs/KERNEL-CRATES.md`.** That plan already splits the kernel
 into core, item, load and the binary along the rings. The Linux ABI crate
 is the load crate's Linux part: the load ring splits into
-`ferrix-linux-abi` and whatever load code serves the native side (the
+`xaqu-linux-abi` and whatever load code serves the native side (the
 device cores' native halves move to the item or stay load, as the
 consultant rules). Doing KERNEL-CRATES' steps first makes this a smaller
 step, not a parallel one.
@@ -831,7 +831,7 @@ a622d2266 and the branches §11.9 names):
 | M0 part A: `build-flags.toml`, the four profiles (`tools/common/data/profiles/`), the resolver, `--check-cfg`, the `build` boot line from `cfg!` and its gate (`check-boot-line.py`), the profile rule, `check-build-flags.py`, the load ratchet | `m0-flags` → landed as d98ab2314 and b91a85311 (`m0-flags-land` has nothing beyond `main`) | **on `main`**; the `linux_abi` row is added to it, nothing is rebuilt |
 | `MICROKERNEL.md` (M0-M8, K1-K17), `BUILD-FLAGS.md` | `microkernel-plan` | on `main` (nothing beyond it) |
 | KERNEL-CRATES S1, S2, S3a; the dev and coverage profiles | `bs-a-s1`, `bs-a-s2`, `bs-a-s3`, `bs-a-dev-profile`, `bs-a-coverage-profile` | on `main` |
-| KERNEL-CRATES S3, the kernel as four crates (2,609 `pub`, 26 raised checks, F-76) | `bs-a-s3b` (also on origin) | code review OK IF (S3.1)-(S3.8), ledger 1777 and 1795, S3.2a/b built; **stopped mid-rebase** on 2026-10-15 (WIP 166cdb0e5 does not build), 440 commits behind `main`, 83 of its kernel files changed on `main` since. Not usable as a rebase; usable as a recipe: its scripts (`~/ferrix-logs/bs-a/s3b/split.py`, `raise.py`, `bodies.py`, `span_check.py`, `floor_proof.py`) redo it on a new base, and then (S3.1)'s full row set is owed again |
+| KERNEL-CRATES S3, the kernel as four crates (2,609 `pub`, 26 raised checks, F-76) | `bs-a-s3b` (also on origin) | code review OK IF (S3.1)-(S3.8), ledger 1777 and 1795, S3.2a/b built; **stopped mid-rebase** on 2026-10-15 (WIP 166cdb0e5 does not build), 440 commits behind `main`, 83 of its kernel files changed on `main` since. Not usable as a rebase; usable as a recipe: its scripts (`~/xaqu-logs/bs-a/s3b/split.py`, `raise.py`, `bodies.py`, `span_check.py`, `floor_proof.py`) redo it on a new base, and then (S3.1)'s full row set is owed again |
 | `os7s/k1-flags-after-program` | origin | not build-profile work: a seccomp negative control of stage 7 (2026-10-01), never for landing |
 | M1's K5, K6, K7, K10, K12; K2, K3, K4; smt=off; F-73, F-64 | `mk/*`, `mk-m0rest/*` (and origin) | designs on `main` with OK IF; code WIP and unlanded, 98 to 130 commits behind |
 
@@ -902,7 +902,7 @@ forbid" (3208 (7)). `personality` keeps its name here; the
 rename to a per-ABI placement flag (§11.7) is left to the trait's landing,
 which changes the flag's meaning anyway.
 
-**What `off` compiles out**, each by `#[cfg(ferrix_linux_abi = "on")]` on
+**What `off` compiles out**, each by `#[cfg(xaqu_linux_abi = "on")]` on
 a declaration or a statement:
 
 * `main.rs`: the modules `fs`, `net`, `interfaces`, `service_check` and
@@ -922,13 +922,13 @@ a declaration or a statement:
   their two calls in `smp/check.rs`.
 
 `main.rs` composes `NoLinux` (every Linux number `ENOSYS`, the native range
-answered as always). The link-time hook `ferrix_filter_quiet` stays one
+answered as always). The link-time hook `xaqu_filter_quiet` stays one
 definition, one forwarding call, to `filter_quiet_of_personality`:
 `syscall::seccomp::quiet` imported under that name with `on`, `false` with
 `off`, where no filter is registered (`composition_root.hooks` says so) and a `register_load` of its own that registers board
 support alone and requires only its bindings and the boot mode (§7 rows 1,
 2, 5). An `off` kernel never prints the success marker: its boot ends with
-`FERRIX-BOOT-UNCHECKED ... the self-checks that run a Linux program not
+`XAQU-BOOT-UNCHECKED ... the self-checks that run a Linux program not
 built: linux_abi=off`. Under `off` alone the crate allows `dead_code`,
 `unused_imports`, `unused_variables`, `unfulfilled_lint_expectations` and
 `unused_crate_dependencies`, with a reason: about 750 items only the cut code
@@ -936,7 +936,7 @@ used, and the 20 library crates only the Linux ABI reaches, which stay
 ordinary dependencies (3220 (14) option (a)). The allow is `off`-only and
 temporary (3257 (3)): removing it is a precondition of any profile carrying
 `linux_abi=off`, it shrinks as row 13 re-homes the checks, and any allow not
-predicated on `ferrix_linux_abi="off"`, or any widening of it, is a new
+predicated on `xaqu_linux_abi="off"`, or any widening of it, is a new
 review. It silences lints, not name resolution: a reference to a module
 `off` cuts is still an error, which the control below shows.
 
@@ -990,7 +990,7 @@ roots, as each is now compiled with the flag, and the module declarations'
 `main.rs` outside any `cfg`: `control: FIRED (host): error[E0432]:
 unresolved import \`fs\``, from the `linux_abi=off` lint alone, after
 `present`, `desktop` and `checks=off` passed with it
-(`~/.local/share/ferrix/logs/queue/lao-ctl-off4.log`, on 6064977d5).
+(`~/.local/share/xaqu/logs/queue/lao-ctl-off4.log`, on 6064977d5).
 
 **Rows** on 6064977d5 (3257 (5)), each `fleet/gate.sh run: PASSED`:
 `lao-check4` (check, with the `off` lint on three architectures, the

@@ -30,7 +30,7 @@
 //! A static busybox is built by somebody else for each architecture, and
 //! which one to trust is a decision for whoever runs this; `--init` names it.
 //! Alpine's `busybox-static` package is what this was first run against:
-//! static musl, one build per architecture, and no knowledge of Ferrix.
+//! static musl, one build per architecture, and no knowledge of Xaqu.
 //!
 //! The transcript below is the same under either. It did not move when zinc
 //! took over, which is the whole of what `docs/UUTILS.md` S4 had to prove
@@ -38,7 +38,7 @@
 
 use std::path::{Path, PathBuf};
 
-use ferrix_elf::Elf;
+use xaqu_elf::Elf;
 
 use crate::paths::{self, Arch};
 use crate::{Error, Result, ports};
@@ -49,9 +49,9 @@ n=0
 for i in 1 2 3 4 5; do n=$((n + i)); done
 echo "script: the sum is $n"
 greet() { echo "script: hello, $1"; }
-greet ferrix
+greet xaqu
 if [ "$n" -eq 15 ]; then echo "script: test agrees"; fi
-case ferrix in fer*) echo "script: case matched";; esac
+case xaqu in fer*) echo "script: case matched";; esac
 set -- a b c
 echo "script: $# positional parameters"
 printf 'script: %s %d\n' printf 42
@@ -119,7 +119,7 @@ exit 9
 /// second has its own by hand, and pings the first through the switch.
 pub(crate) const NETD_TWO_SCRIPT: &str = r#"read line < /proc/cmdline
 case "$line" in
-*ferrix.partition=1*)
+*xaqu.partition=1*)
   until ip link set int0 up 2>/dev/null; do sleep 1; done
   ip addr add 10.9.0.2/24 dev int0; ip -o link show
   ok=1; n=0; while [ $n -lt 30 ]; do ping -c 1 -W 1 10.9.0.1 > /dev/null && { ok=0; break; }; sleep 1; n=$((n+1)); done
@@ -148,7 +148,7 @@ exit 9
 /// first outlives it, and says so after.
 pub(crate) const PARTITIONS_SCRIPT: &str = r#"read line < /proc/cmdline
 case "$line" in
-*ferrix.partition=1*) echo "partition-row: the second runs programs: $(echo forked)"; exit 3 ;;
+*xaqu.partition=1*) echo "partition-row: the second runs programs: $(echo forked)"; exit 3 ;;
 esac
 echo "partition-row: the first is up"
 sleep 5
@@ -249,7 +249,7 @@ pub(crate) const LIFT_EXPECTED: &[&str] = &[
 pub(crate) const EXPECTED: &[&str] = &[
     "script: started",
     "script: the sum is 15",
-    "script: hello, ferrix",
+    "script: hello, xaqu",
     "script: test agrees",
     "script: case matched",
     "script: 3 positional parameters",
@@ -403,7 +403,7 @@ pub(crate) fn ferrousli_shared(arch: Arch) -> Result<PathBuf> {
         }
         return Ok(out);
     }
-    // A build `FERRIX_BUILDS` may record or replay, as busybox's is.
+    // A build `XAQU_BUILDS` may record or replay, as busybox's is.
     let mut build = crate::builds::Build::bash(
         "src/user/system/linux/ferrousli/tools/build-shared.sh",
         &ferrousli,

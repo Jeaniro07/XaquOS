@@ -1,6 +1,6 @@
 # btrfs under memory pressure (`test-btrfs-pressure`)
 
-**2026-11-08, against Linux.** Ferrix's btrfs failure paths read against
+**2026-11-08, against Linux.** Xaqu's btrfs failure paths read against
 Linux v7.0's `fs/btrfs`: see "Against Linux's btrfs", and its work items
 W1-W7 in `docs/BACKLOG.md`.
 
@@ -73,15 +73,15 @@ logs `btp-pressure` and `btp-ctl` (below), ledger line 2314.
 With 16 GB of game files cached (MemFree at the floor), a full-speed `tar`
 unpack of GE-Proton onto `/data` took `Cached` from 15.97 GB to 0.13 GB in
 about 13 s, and the box answered slowly for 16-27 s: ssh logins failed, ping
-took 20-80 ms (`~/.local/share/ferrix/n150-linux/FINDINGS.md`, "Page cache
+took 20-80 ms (`~/.local/share/xaqu/n150-linux/FINDINGS.md`, "Page cache
 evicted whole under a write at the floor").
 
 Reclaim was not the cause: a machine-wide reclaim asks for a run and the
 watermark's shortfall, at most 8224 pages, and on the box it gave back about
 60 MB at a time for a minute before the drop. The dentry cache was. It keeps
-at most 4096 dentries nobody holds (`ferrix_vfs::namespace::DEFAULT_CACHE`),
+at most 4096 dentries nobody holds (`xaqu_vfs::namespace::DEFAULT_CACHE`),
 oldest out first, and a btrfs file's page cache lives in its inode, which
-only its dentries and its open files hold (`ferrix_btrfs_vfs`, `Node`; the
+only its dentries and its open files hold (`xaqu_btrfs_vfs`, `Node`; the
 mount's map of inodes is weak). Every name `tar` made pushed one old dentry
 out, and once the game files' came to the front of the queue each one's
 whole cache went with its inode: a gigabyte at a time. The count of names
@@ -110,7 +110,7 @@ commands read its programs again from the disk, behind `tar`'s writeback.
 That it goes with the drop is the box run's to show (below).
 
 The `evict` boot of the gate (below) shows it, KVM, x86-64, debug kernel,
-logs in `~/.local/share/ferrix/n150-linux/pagecache-evict/`:
+logs in `~/.local/share/xaqu/n150-linux/pagecache-evict/`:
 
 | Kernel | Memory | Cached before | Cached at its least | Probe | Log |
 |---|---|---|---|---|---|
@@ -133,7 +133,7 @@ queue's.
 
 Three hangs during Endfield play on 2026-11-08. The third left its kernel
 log in the loader's kept panic log
-(`~/.local/share/ferrix/bw-repro/catch1/LASTKERNEL-hang3.TXT`, lines about
+(`~/.local/share/xaqu/bw-repro/catch1/LASTKERNEL-hang3.TXT`, lines about
 12087-12271, uptime 2126-2140 s; the lode store's copy is `hang3.txt`
 beside it):
 
@@ -142,7 +142,7 @@ btrfs    a transaction was aborted (out of memory), and the last commit cannot b
 init     lode.service: reading /sbin/lode: I/O error (os error 5)
 signal   pid 31 is hyprix exe /bin/hyprix ... ended by signal 7 ... PageFault { execute: true, present: false }
 init     auth.service: execve failed: I/O error (os error 5)
-FERRIX-PANIC user space stopped feeding /dev/watchdog ... FX-9008
+XAQU-PANIC user space stopped feeding /dev/watchdog ... FX-9008
 ```
 
 Every program whose next text page was not in the cache died of `SIGBUS`
@@ -153,7 +153,7 @@ lode stores end without the notice, since lode wrote to the same root.
 **Three things went wrong, one after the other.**
 
 1. *The kernel let an allocation fail with gigabytes of clean cache.* In
-   every load run (`~/.local/share/ferrix/ef-load/runs/*/samples-world.txt.gz`)
+   every load run (`~/.local/share/xaqu/ef-load/runs/*/samples-world.txt.gz`)
    the box plays at its floor: `MemFree` 33-460 MB, `Cached` about 5.9 GB,
    `MemAvailable` about 5.8 GB, the processes' resident sets about 11.5 GB
    (Endfield about 5 GB of it). A program's frame is refused at the
@@ -164,7 +164,7 @@ lode stores end without the notice, since lode wrote to the same root.
    btrfs transaction holds up to `COMMIT_THRESHOLD` (32 MiB) of changed
    tree nodes, about twice that in heap, and a commit writes each through a
    16 KiB buffer -- ran out.
-2. *The writer aborted.* Every allocation of `ferrix-btrfs-write` is
+2. *The writer aborted.* Every allocation of `xaqu-btrfs-write` is
    fallible, and one failing inside an edit or a commit aborts the
    transaction (`fallible.rs`, "What a failure does to a transaction"):
    the edit cannot be undone half-way. The notice names the cause, out of
@@ -180,7 +180,7 @@ lode stores end without the notice, since lode wrote to the same root.
 A fourth hang, about 4 min into play on main-cfde84d79 (develop
 589fcb096 and a diagnostic), went the same way: the notice, `SIGBUS` on
 text page-ins, `EIO` to lode and auth, FX-9008
-(`~/.local/share/ferrix/bw-repro/catch2/records.txt`, record 1; the notice
+(`~/.local/share/xaqu/bw-repro/catch2/records.txt`, record 1; the notice
 at line 550, and no memory or allocation line before it: the kernel logs
 none).
 
@@ -200,10 +200,10 @@ consultant's review: OK IF BO.1-BO.12, ledger line 7988).**
   watermark, in two calls of the reclaim the page cache already has; the
   policy of what to take stays in `user::cache`. A reclaim that found
   nothing is not tried again for 10 ms.
-* `ferrix-btrfs-write`, L.btrfs.122: `reload_read_only` lets go of the
+* `xaqu-btrfs-write`, L.btrfs.122: `reload_read_only` lets go of the
   aborted transaction's nodes, delayed references and clean nodes before
   it reads the last commit, and can be called again after it failed.
-* `ferrix-btrfs-vfs`, L.btrfs.123: a reload that ran out of memory is
+* `xaqu-btrfs-vfs`, L.btrfs.123: a reload that ran out of memory is
   tried again at the next use, answering `EIO` until then and saying so
   once; only one that could not read the disk stays final. (Since W3,
   below: `ENOMEM` rather than `EIO` until then.)
@@ -233,7 +233,7 @@ abort came first. Both are the kernel's heap empty at the floor with the
 cache full.
 
 Left over, as rows in `docs/BACKLOG.md`: a writable btrfs `getdents`
-copies the whole directory from its cursor; `ferrix-btrfs-vfs`'s
+copies the whole directory from its cursor; `xaqu-btrfs-vfs`'s
 infallible allocations under spin locks; the writeback's run buffer
 halved instead of `ENOMEM`; and the box run of the fix.
 
@@ -245,7 +245,7 @@ nothing back, and the heap's refusal still aborts a btrfs transaction.
 
 **What the box holds during play.** `mp-sample.sh` (the whole
 `/proc/meminfo` every second, each process's `RssAnon`/`RssFile`/`RssShmem`
-every ten; `~/.local/share/ferrix/ef-load/runs/mp-play/`) on
+every ten; `~/.local/share/xaqu/ef-load/runs/mp-play/`) on
 main-cfde84d79, Endfield in the world, uptime 1727 s, in MiB of 16036:
 
 | | MiB |
@@ -264,7 +264,7 @@ early exits ~4 s after the embedded browser's fork (`es-dev-2`,
 `fp-fix-1`) are not memory's: `MemFree` was never below 7.6 GB in those
 runs, while every run that reached the world sat at the floor.
 
-**What the kernel does at the floor, against Linux.** Ferrix has one mark,
+**What the kernel does at the floor, against Linux.** Xaqu has one mark,
 the watermark (a 128th of memory, 1 to 32 MiB): a program's frame is
 refused below it and the program's fault reclaims clean cache, then, after
 16 reclaims with no room, kills the largest process (`object::oom`); the
@@ -272,7 +272,7 @@ kernel's own frames go on to the last one. Linux has three marks per zone:
 kswapd wakes at `low` and reclaims in the background to `high`; an
 allocation below `min` reclaims directly; one that still finds nothing
 calls the OOM killer, except a `GFP_ATOMIC` one, which may dip under
-`min`. Ferrix has no background reclaim and no active/inactive lists (its
+`min`. Xaqu has no background reclaim and no active/inactive lists (its
 reclaim is a clock with no accessed bits), no swap and no overcommit
 heuristic (pages are taken at first touch, so a program is refused at
 its fault, not its `mmap`). Dirty pages are written by the filesystem's
@@ -282,14 +282,14 @@ periodic commit, not by reclaim.
 `MemAvailable` but 16 MiB as anonymous memory (its 644 MiB buffer, blocked
 on a pipe nobody reads), then the shell makes 24576 names as the `commit`
 boot does. KVM, x86-64, debug kernel, 768 MiB; logs in
-`~/.local/share/ferrix/mem-pressure/`:
+`~/.local/share/xaqu/mem-pressure/`:
 
 | Kernel | Result | Log |
 |---|---|---|
 | bugfix/btrfs-abort-oom's tip (L.mm.136-137) | name 4151 `Out of memory`, then `a transaction was aborted (out of memory)`; no kill | `hog-before-1.log` |
 | with L.mm.138 (first form) | `oom pid 815 killed, 165185 pages resident`; 24576 of 24576 names, 384 of 384 found again, the committed file whole, no abort; 58 s | `hog-after-1.log` |
-| L.mm.138's kill alone off (gate.sh `mp-ctl-nokill`, ef4880252) | FIRED: `a transaction was aborted (out of memory)` | `~/.local/share/ferrix/logs/queue/mp-ctl-nokill.log` |
-| the first form, grace alone between kills (gate.sh `mp2-btp`, d45670ed5) | the hog killed, then the AHCI driver 0.8 s later (a false kill); the names all made | `~/.local/share/ferrix/logs/queue/mp2-btp.log` |
+| L.mm.138's kill alone off (gate.sh `mp-ctl-nokill`, ef4880252) | FIRED: `a transaction was aborted (out of memory)` | `~/.local/share/xaqu/logs/queue/mp-ctl-nokill.log` |
+| the first form, grace alone between kills (gate.sh `mp2-btp`, d45670ed5) | the hog killed, then the AHCI driver 0.8 s later (a false kill); the names all made | `~/.local/share/xaqu/logs/queue/mp2-btp.log` |
 | the kill waits while its last victim's space is held | one kill (`6 frames free, the watermark 1487`), 24576 of 24576 names, no abort | `hog-dbg-4.log` |
 
 **The fix (L.mm.138).** A heap allocation that may block, refused after
@@ -318,7 +318,7 @@ from L.mm.137's refill, when its reclaim found nothing, was tried and
 taken out (ledger 8015 B2): with it removed the hog boot still passed
 (gate.sh `mp-ctl-norefill`, DID NOT FIRE), and it would kill after an
 allocation that succeeded. This is Linux's `__alloc_pages_may_oom` for an
-allocation that may not fail, with the victim choice Ferrix already had;
+allocation that may not fail, with the victim choice Xaqu already had;
 no new policy enters the kernel.
 
 **What it leaves** (BACKLOG rows, ledger 8015 MP.8). The process making
@@ -343,7 +343,7 @@ The hog boot stopped on `bugfix/fault-relanding` (90713ad5b, gate.sh
 `fr-pressure`) with FX-0008, `memory allocation of 204 bytes failed`, in
 `openat`, and no kill before it. With a diagnostic in `mm::heap_or_kill`
 and `object::oom::for_kernel_heap` (logs
-`~/.local/share/ferrix/mem-pressure/bp-diag-fr*.log`), the branch failed 3 of 8 hog boots, in two ways;
+`~/.local/share/xaqu/mem-pressure/bp-diag-fr*.log`), the branch failed 3 of 8 hog boots, in two ways;
 develop passed 6 of 6 the same afternoon (gate.sh `bp-dev-pressure` and
 five local hog boots), and the difference is timing, not code:
 
@@ -364,7 +364,7 @@ five local hog boots), and the difference is timing, not code:
 The fix of the first (bugfix/vfs-no-alloc-under-lock):
 
 * the dentry cache makes what it keeps before its locks, fallibly
-  (`ferrix_fallible::try_boxed_slice`), and the map's node under the lock
+  (`xaqu_fallible::try_boxed_slice`), and the map's node under the lock
   inside the host's reserved section (`try_map_insert`):
   `insert_looked_up` and `fill` (whose failure unhashes the name, so the
   next walk asks the filesystem) answer `ENOMEM`; `move_child`, past the
@@ -396,7 +396,7 @@ out its 1800 s for `pressure: done`.
 
 ## Against Linux's btrfs (2026-11-08, btrfs-reference)
 
-The customer asked whether Ferrix's btrfs was checked against Linux's, so
+The customer asked whether Xaqu's btrfs was checked against Linux's, so
 as not to repeat mistakes Linux already fixed. It was not: the write path's
 error and memory handling (`fallible.rs`, `WriteVolume::guarded`,
 L.btrfs.122-123) was designed without reading `fs/btrfs`. This section
@@ -407,15 +407,15 @@ reads it now, on the failure paths that failed on 2026-11-08.
 host runs 7.0.0), tag object `3131ff5a1174`: a sparse, blobless clone of
 `fs/btrfs`, `include/linux/gfp*.h`, `include/linux/sched/mm.h`,
 `include/linux/mempool.h` and `mm/{page_alloc,oom_kill,mempool,internal}`,
-with history since 2019, in `~/.local/share/ferrix/btrfs-ref/linux`
+with history since 2019, in `~/.local/share/xaqu/btrfs-ref/linux`
 (`README.txt` beside it). It is GPL-2.0: read for design and behaviour,
-and no line of it is copied into Ferrix. Paths below are relative to it;
-Ferrix's are to this tree at develop 29e3b47c2.
+and no line of it is copied into Xaqu. Paths below are relative to it;
+Xaqu's are to this tree at develop 29e3b47c2.
 
 ### The one difference behind most of the others
 
 Linux's btrfs is written as if a small allocation does not fail, and in
-Linux it nearly never does. Ferrix's is written so that every allocation
+Linux it nearly never does. Xaqu's is written so that every allocation
 may fail, and treats each failure inside an edit like a disk error.
 
 * `mm/page_alloc.c`, `__alloc_pages_slowpath`: an allocation of order 3 or
@@ -444,7 +444,7 @@ may fail, and treats each failure inside an edit like a disk error.
   8bb808c6ad91 (2022) stopped printing a stack trace for it, because the
   syzbot reports of it were "an artificial condition".
 
-In Ferrix every allocation of `ferrix-btrfs-write` is fallible
+In Xaqu every allocation of `xaqu-btrfs-write` is fallible
 (`src/lib/fs/btrfs/write/src/fallible.rs`), and `guarded_with`
 (`write/src/volume.rs:259`) aborts the transaction on every error but
 `Exists` and `NotFound`, the commit included (`write/src/commit.rs:91`). A
@@ -454,40 +454,40 @@ and then kills before it refuses an allocation that may block
 (`src/kernel/src/mm.rs:1555`, `heap_or_reclaim`; `mm.rs:1603`,
 `heap_or_kill`), but both are bounded: eight reclaims, then at most 1024
 answers of the kill, about a second, after which the refusal stands and
-the volume aborts. Where Linux waits, Ferrix aborts after a second.
+the volume aborts. Where Linux waits, Xaqu aborts after a second.
 
 ### Item by item
 
-| # | Linux | Ferrix | Gap |
+| # | Linux | Xaqu | Gap |
 |---|---|---|---|
 | L1 | **Abort.** `transaction.h`, `btrfs_abort_transaction`: the first abort sets `BTRFS_FS_STATE_TRANS_ABORTED` and logs the error with function and line; `transaction.c`, `__btrfs_abort_transaction`, stores the error in the handle and the transaction and calls `messages.c`, `__btrfs_handle_fs_error`, which sets `fs_info->fs_error` and forces `SB_RDONLY`. `transaction.c`, `cleanup_transaction` -> `disk-io.c`, `btrfs_cleanup_one_transaction`: delayed refs destroyed, dirty extent buffers cleared and marked stale (`btrfs_destroy_marked_extents`), pinned extents returned. Nothing is read from disk. | `volume.rs:224`, `abort_with` (first cause kept); `vfs/src/rw.rs:399`, `Shared::lock`, reloads the last commit read-only at the next use (`write/src/open.rs:185`, `reload_read_only`) and tells the notice. | Same outcome (read-only at the last commit); different cost. The notice says the cause, never the site: Linux logs `function:line` for every abort. |
-| L2 | **Which errors abort.** Call sites abort after the tree was changed and return before; 828ec765f796 (2025) stopped aborting on an `alloc_bitmap` ENOMEM in the free-space tree's conversion ("just an optimization"); 8793ed87b376 (2023) stopped failing a tree-mod-log allocation that turns out not to be needed. Writes after an abort answer `EROFS` (`file.c`, `btrfs_do_write_iter`'s `BTRFS_FS_ERROR` check; `inode.c`, `btrfs_start_delalloc_roots`); metadata writeback is ended at once (`extent_io.c`, `BTRFS_FS_ERROR` before `btrfs_submit_bbio`). | `guarded_with` aborts on any error but two; `operation_with` (`volume.rs`) aborts once an edit succeeded. `check_writable` (`volume.rs:213`) refuses edits; `errno` (`rw.rs:1773`) maps `ReadOnly` to `EROFS`. | Ferrix cannot tell work an edit needs from work that only helps (a clean-cache insert, a buffer for a heuristic): both abort. Linux has been taking such sites out one by one since 2023. |
-| L3 | **Reading after an abort.** No read path checks `BTRFS_FS_ERROR`. The roots in memory and the extent buffers they hold stay; file data is in the page cache, read through extent maps. Going read-only allocates nothing, and reads go on as before. 597441b3436a (2023): the abort's cleanup runs under NOFS, so reclaim does not re-enter the filesystem from it. | Reads of a writable mount go through the volume (`rw.rs:399`); after an abort they wait for `reload_read_only`, which reads the chunk tree, the roots and the free-space tree again. A reload short of memory is retried (L.btrfs.123), and until it works every answer is `EIO`: `Aborted` maps to `EIO` (`rw.rs:1773`), which a page-in turns into `SIGBUS` (`src/kernel/src/user/space.rs:2290`, only `ENOMEM` becomes `OutOfMemory`). | **The largest structural gap.** Ferrix needs memory to go read-only, at the moment memory is gone, and answers `EIO` (a fatal signal on a page-in) for want of memory. Linux needs none. |
+| L2 | **Which errors abort.** Call sites abort after the tree was changed and return before; 828ec765f796 (2025) stopped aborting on an `alloc_bitmap` ENOMEM in the free-space tree's conversion ("just an optimization"); 8793ed87b376 (2023) stopped failing a tree-mod-log allocation that turns out not to be needed. Writes after an abort answer `EROFS` (`file.c`, `btrfs_do_write_iter`'s `BTRFS_FS_ERROR` check; `inode.c`, `btrfs_start_delalloc_roots`); metadata writeback is ended at once (`extent_io.c`, `BTRFS_FS_ERROR` before `btrfs_submit_bbio`). | `guarded_with` aborts on any error but two; `operation_with` (`volume.rs`) aborts once an edit succeeded. `check_writable` (`volume.rs:213`) refuses edits; `errno` (`rw.rs:1773`) maps `ReadOnly` to `EROFS`. | Xaqu cannot tell work an edit needs from work that only helps (a clean-cache insert, a buffer for a heuristic): both abort. Linux has been taking such sites out one by one since 2023. |
+| L3 | **Reading after an abort.** No read path checks `BTRFS_FS_ERROR`. The roots in memory and the extent buffers they hold stay; file data is in the page cache, read through extent maps. Going read-only allocates nothing, and reads go on as before. 597441b3436a (2023): the abort's cleanup runs under NOFS, so reclaim does not re-enter the filesystem from it. | Reads of a writable mount go through the volume (`rw.rs:399`); after an abort they wait for `reload_read_only`, which reads the chunk tree, the roots and the free-space tree again. A reload short of memory is retried (L.btrfs.123), and until it works every answer is `EIO`: `Aborted` maps to `EIO` (`rw.rs:1773`), which a page-in turns into `SIGBUS` (`src/kernel/src/user/space.rs:2290`, only `ENOMEM` becomes `OutOfMemory`). | **The largest structural gap.** Xaqu needs memory to go read-only, at the moment memory is gone, and answers `EIO` (a fatal signal on a page-in) for want of memory. Linux needs none. |
 | L4 | **Space before the transaction.** `block-rsv.c`, `space-info.c`, `btrfs_reserve_metadata_bytes` -> `reserve_bytes`: a handle reserves its worst case at `btrfs_start_transaction(root, num_items)`; a shortfall queues a ticket and flushes (`enum btrfs_flush_state`: delayed items, delayed refs, delalloc, chunk allocation, commit), `FLUSH_ALL_STEAL` may take the global reserve; the delayed-refs reserve is its own. | `volume.rs:326`, `admit`: an operation's nodes plus `commit_reserve` (`volume.rs:345`) plus `GLOBAL_RESERVE` (`volume.rs:67`), refused with `ENOSPC` before any change; data room taken at `write` (`rw.rs`, "Room is taken at the write"), one commit and a retry. | Close in kind, coarser (one commit, no flush ladder). Disk space only, in both. Low risk on the box (hundreds of GB free). |
-| L5 | **Memory contexts.** `GFP_NOFS` on everything under a transaction, `memalloc_nofs_save` around code that calls generic allocators (`free-space-tree.c`, `file-item.c`, `acl.c`; 351cbf6e4410, d1825752e307): reclaim from inside a transaction must not re-enter the filesystem. Preallocate before the spin lock, fall back to `GFP_ATOMIC` under it, and on failure drop the lock, `cond_resched` and retry (`extent-io-tree.c`, `set_extent_bit`, `alloc_extent_state_atomic`, `search_again`). Mempools for I/O (`bio.c`, `btrfs_failed_bio_pool`; bios from the block layer's `bio_set`s). | Re-entry is answered by `drop_clean`'s `try_lock` (`rw.rs:344`) and the task's reclaiming mark (`mm.rs`, `heap_may_reclaim`): the equivalent of NOFS, and sound. Spin-locked infallible allocations remain (`rw.rs:793`, `Node::get`'s insert; `rw.rs:520`, the live-node collect; BACKLOG, "infallible allocations under spin locks"). No mempool: the block ring copied every write request's bytes into the heap, infallibly, 128 KiB a request on NVMe (`interfaces/block_ring/mod.rs`, `RingDisk::write`; the reserve since W4); a writeback run takes up to 1 MiB contiguous (`rw.rs:1036`, fallible), a commit its node buffer and address list (`commit.rs:349`). (Corrected 2026-11-08: `Disk`'s bounce buffer in `fs/btrfs.rs` is only for an unaligned request, which btrfs never makes.) | NOFS: no gap. Preallocation: known rows. **I/O with no reserve:** at an empty heap Ferrix can neither read a page in nor write a commit out. Linux's I/O path always makes progress. |
+| L5 | **Memory contexts.** `GFP_NOFS` on everything under a transaction, `memalloc_nofs_save` around code that calls generic allocators (`free-space-tree.c`, `file-item.c`, `acl.c`; 351cbf6e4410, d1825752e307): reclaim from inside a transaction must not re-enter the filesystem. Preallocate before the spin lock, fall back to `GFP_ATOMIC` under it, and on failure drop the lock, `cond_resched` and retry (`extent-io-tree.c`, `set_extent_bit`, `alloc_extent_state_atomic`, `search_again`). Mempools for I/O (`bio.c`, `btrfs_failed_bio_pool`; bios from the block layer's `bio_set`s). | Re-entry is answered by `drop_clean`'s `try_lock` (`rw.rs:344`) and the task's reclaiming mark (`mm.rs`, `heap_may_reclaim`): the equivalent of NOFS, and sound. Spin-locked infallible allocations remain (`rw.rs:793`, `Node::get`'s insert; `rw.rs:520`, the live-node collect; BACKLOG, "infallible allocations under spin locks"). No mempool: the block ring copied every write request's bytes into the heap, infallibly, 128 KiB a request on NVMe (`interfaces/block_ring/mod.rs`, `RingDisk::write`; the reserve since W4); a writeback run takes up to 1 MiB contiguous (`rw.rs:1036`, fallible), a commit its node buffer and address list (`commit.rs:349`). (Corrected 2026-11-08: `Disk`'s bounce buffer in `fs/btrfs.rs` is only for an unaligned request, which btrfs never makes.) | NOFS: no gap. Preallocation: known rows. **I/O with no reserve:** at an empty heap Xaqu can neither read a page in nor write a commit out. Linux's I/O path always makes progress. |
 | L6 | **ENOMEM in write and commit.** Small allocations wait (above); the commit writes extent buffers already in the btree inode's page cache (`transaction.c`, `btrfs_write_and_wait_transaction`), so writing allocates only bios, from mempools. | Any ENOMEM in `commit` aborts (`commit.rs:91`); after the heap's bounded reclaims and kills. | Bounded retry then abort, against an unbounded wait. See W1 for why the answer is a reserve, not an unbounded wait. |
-| L7 | **Dirty metadata under pressure.** Dirty extent buffers are pages of the btree inode, counted in `dirty_metadata_bytes`; past `BTRFS_DIRTY_METADATA_THRESH` (32 MiB, `fs.h`) `disk-io.c`, `__btrfs_btree_balance_dirty`, throttles the writer into writeback, and `extent_io.c`, `btree_writepages`, can write them before the commit; `ctree.c`, `should_cow_block`, COWs again any block with `BTRFS_HEADER_FLAG_WRITTEN`. A written buffer is clean page cache that `disk-io.c`, `btree_release_folio`, gives to reclaim once nothing references it. Clean buffers not referenced by a path are reclaimable at any time. 956a17d9d050 / ae1e766f623f (2024): the extent-map shrinker, made kswapd-only after direct-reclaim contention. | Dirty nodes are kernel heap (`WriteVolume::dirty`) until the commit, up to `COMMIT_THRESHOLD` 32 MiB of nodes (`rw.rs:195`), about twice that in heap, checked before a change of shape (`rw.rs:656`) and at a write (`rw.rs:1102`). Clean nodes are dropped only between operations and only by a reclaim that finds the lock free (`rw.rs:344`; F-99), so a task inside an operation cannot have its own volume's clean nodes back. | Ferrix pins up to ~64 MiB of unreclaimable heap per volume per transaction against a 32 MiB headroom, the mechanism of the 11-08 aborts. The threshold is Linux's number, but Linux's 32 MiB is a throttle on reclaimable page cache, not a cap on pinned heap. |
-| L8 | **Readers keep working.** Readers do not take the transaction; tree locks are per node, commit roots let some searches skip them; a reader never waits for a commit to finish its writeback. | Every read of a page the cache does not hold takes the volume's sleep lock, which a commit holds for its last slice and the commit itself (`rw.rs`, "A writeback lets the lock go between slices"). A writer that allocates while holding it, and the kill it asks for, wait on a victim that may be waiting for the same lock (BACKLOG, MP.3 and ledger 8172). | Under pressure the reader's progress depends on the writer's. Linux's OOM reaper (`mm/oom_kill.c`, `oom_reap_task_mm`) empties a victim's anonymous memory even while it sleeps in the kernel; Ferrix's empties it only once the victim let go of everything else (`src/kernel/src/object/oom.rs`, module text). |
+| L7 | **Dirty metadata under pressure.** Dirty extent buffers are pages of the btree inode, counted in `dirty_metadata_bytes`; past `BTRFS_DIRTY_METADATA_THRESH` (32 MiB, `fs.h`) `disk-io.c`, `__btrfs_btree_balance_dirty`, throttles the writer into writeback, and `extent_io.c`, `btree_writepages`, can write them before the commit; `ctree.c`, `should_cow_block`, COWs again any block with `BTRFS_HEADER_FLAG_WRITTEN`. A written buffer is clean page cache that `disk-io.c`, `btree_release_folio`, gives to reclaim once nothing references it. Clean buffers not referenced by a path are reclaimable at any time. 956a17d9d050 / ae1e766f623f (2024): the extent-map shrinker, made kswapd-only after direct-reclaim contention. | Dirty nodes are kernel heap (`WriteVolume::dirty`) until the commit, up to `COMMIT_THRESHOLD` 32 MiB of nodes (`rw.rs:195`), about twice that in heap, checked before a change of shape (`rw.rs:656`) and at a write (`rw.rs:1102`). Clean nodes are dropped only between operations and only by a reclaim that finds the lock free (`rw.rs:344`; F-99), so a task inside an operation cannot have its own volume's clean nodes back. | Xaqu pins up to ~64 MiB of unreclaimable heap per volume per transaction against a 32 MiB headroom, the mechanism of the 11-08 aborts. The threshold is Linux's number, but Linux's 32 MiB is a throttle on reclaimable page cache, not a cap on pinned heap. |
+| L8 | **Readers keep working.** Readers do not take the transaction; tree locks are per node, commit roots let some searches skip them; a reader never waits for a commit to finish its writeback. | Every read of a page the cache does not hold takes the volume's sleep lock, which a commit holds for its last slice and the commit itself (`rw.rs`, "A writeback lets the lock go between slices"). A writer that allocates while holding it, and the kill it asks for, wait on a victim that may be waiting for the same lock (BACKLOG, MP.3 and ledger 8172). | Under pressure the reader's progress depends on the writer's. Linux's OOM reaper (`mm/oom_kill.c`, `oom_reap_task_mm`) empties a victim's anonymous memory even while it sleeps in the kernel; Xaqu's empties it only once the victim let go of everything else (`src/kernel/src/object/oom.rs`, module text). |
 
-### Bug fixes in Linux's history that match what Ferrix hit
+### Bug fixes in Linux's history that match what Xaqu hit
 
 From `git log -- fs/btrfs` since 2019 (174 subjects mention ENOMEM, abort,
 memory, NOFS, NOFAIL, OOM or read-only):
 
 * **ENOMEM aborting the filesystem for optional work**: 828ec765f796,
   8793ed87b376, 162d053e15fe and a580fb2c3479 (no `BUG_ON` on ENOMEM).
-  Ferrix's equivalent is L2: no classification yet.
-* **The abort's own cleanup allocating into reclaim**: 597441b3436a. Ferrix's
+  Xaqu's equivalent is L2: no classification yet.
+* **The abort's own cleanup allocating into reclaim**: 597441b3436a. Xaqu's
   reload allocating at the floor is the same class, worse, since it reads
   the disk (L3).
 * **Allocations under spin locks**: 7dde7a8ab324 and the extent-state
   preallocation; 905a95f3dd25, 8d54518b5e52 and 4addc1ffd67a (2023-2024)
-  took `GFP_ATOMIC` out by preallocating. Ferrix's `Node::get` and
+  took `GFP_ATOMIC` out by preallocating. Xaqu's `Node::get` and
   `Dentry::insert_looked_up` (fixed on bugfix/vfs-no-alloc-under-lock) are
   this class.
 * **Shrinkers in direct reclaim**: ae1e766f623f (spin-lock contention when
   every allocating task ran the extent-map shrinker; kswapd only since).
-  Ferrix runs `drop_clean` and the page-cache clock in the allocating task
+  Xaqu runs `drop_clean` and the page-cache clock in the allocating task
   (no background reclaim, BACKLOG mem-pressure row).
 * **NOFAIL that loops for ever**: 9f0eac070d23. Linux keeps NOFAIL where no
   error path exists and takes it out elsewhere: the reason W1 below is a
@@ -500,7 +500,7 @@ The load: 16 GB, Endfield in the world at the floor (`MemFree` 33-460 MB,
 dirty nodes. Risk is how likely the gap is to stop play there.
 
 1. **W1, a memory reservation for an edit (high).** What Linux gets from
-   NOFAIL tree nodes, Ferrix should get as `block_rsv` gets disk space:
+   NOFAIL tree nodes, Xaqu should get as `block_rsv` gets disk space:
    reserve before the first change, never fail inside. A pool of node
    buffers, as first proposed, does not fit: a `TreeNode` is a parsed
    list, a leaf up to a few hundred heap allocations of every size class.
@@ -527,7 +527,7 @@ dirty nodes. Risk is how likely the gap is to stop play there.
      promised frame raises every unreserved program's floor (L.mm.77), so
      MEMORY-AND-TIMING states the worst outstanding promise. Unmount
      unbinds; a reload read-only (L.btrfs.123) shrinks it to nothing.
-   * **W1-c, the writer (`ferrix-btrfs-write`, item; L.btrfs.124-125).**
+   * **W1-c, the writer (`xaqu-btrfs-write`, item; L.btrfs.124-125).**
      `admit`, at the outermost operation and before any change, grows the
      reservation to what is drawn already plus the operation's worst case
      in frames -- a per-node bound measured by a host test on worst-case
@@ -602,7 +602,7 @@ dirty nodes. Risk is how likely the gap is to stop play there.
    Writing dirty nodes before the commit with Linux's WRITTEN-flag re-COW
    is the full answer and a new subsystem; not proposed now.
 6. **W6, classify allocations as needed or helpful (medium).** Audit
-   `ferrix-btrfs-write` for allocations whose failure need not abort (the
+   `xaqu-btrfs-write` for allocations whose failure need not abort (the
    clean cache's insert in `load` when the node can be used uncached, the
    commit's address list, lookups that only speed things up) and answer
    them without the abort, as 828ec765f796 does; record each abort's site
@@ -620,7 +620,7 @@ dirty nodes. Risk is how likely the gap is to stop play there.
    background reclaim (kswapd), and reaping a victim that sleeps in the
    kernel, which belongs to the mem-pressure rows.
 
-Left as they are: the space reservation (L4) is close enough; Ferrix's
+Left as they are: the space reservation (L4) is close enough; Xaqu's
 answer to reclaim re-entering the filesystem (try-lock and the reclaiming
 mark) is as good as NOFS for it.
 
@@ -634,7 +634,7 @@ cargo xtask test-btrfs-pressure --accel kvm --init '<busybox>/{arch}/bin/busybox
 A boot of the image with a static busybox as init and a fresh sparse
 32 GiB `mkfs.btrfs` volume at `/data`, 768 MiB of memory unless `--memory`
 says otherwise, at the machine's own floor (no cgroup).
-`FERRIX_PRESSURE_BOOTS=cgroup` (or `all`) runs the same with the writers and
+`XAQU_PRESSURE_BOOTS=cgroup` (or `all`) runs the same with the writers and
 readers in a cgroup whose `memory.max` is half the machine; see "At
 memory.max" for why that is not part of the gate yet.
 
@@ -665,7 +665,7 @@ listing: a btrfs `getdents` copies the directory from its cursor, see
 line saying a transaction was aborted. A fourth boot, `hog` (since 2026-11-08), holds all of `MemAvailable` but
 16 MiB in a program's anonymous memory and then makes the same names, so
 that the heap grows with no clean cache to reclaim; it fails as `commit`
-does. `FERRIX_PRESSURE_BOOTS` is a comma list of `floor`, `evict`,
+does. `XAQU_PRESSURE_BOOTS` is a comma list of `floor`, `evict`,
 `commit`, `hog` and `cgroup`; the first four are the gate.
 
 `--cpu-quota PCT` runs QEMU in a transient `systemd-run --user --scope`
@@ -679,7 +679,7 @@ writers and two readers fail it every time.
 ## Results (2026-10-17, nazuna, KVM, x86-64, debug kernel)
 
 The cited evidence, through `gate.sh` (logs under
-`~/.local/share/ferrix/logs/queue/`):
+`~/.local/share/xaqu/logs/queue/`):
 
 | Tag | Commit | Run | Result |
 |---|---|---|---|
@@ -690,7 +690,7 @@ The control is `--expect-line`, since the failure is a guest's line and
 not a kernel panic, which `gate.sh`'s `--expect` requires.
 
 History, not cited (bare xtask transcripts with no `gate.sh` header,
-`~/.local/share/ferrix/n150-linux/pressure-gate/`): main f16c98ae7 failed
+`~/.local/share/xaqu/n150-linux/pressure-gate/`): main f16c98ae7 failed
 the same way in 59 s (`run14-main-control.log`); the starved form with the
 fix (`--smp 2 --cpu-quota 40 --pin 22,23`) wrote 7584 MiB in 480 s and
 deleted it in 6 s with the probe at most 42 cs late (`run13-A-starved.log`).

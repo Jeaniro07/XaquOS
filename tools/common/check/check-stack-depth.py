@@ -29,25 +29,25 @@ PAGE = 4096
 # What the entry and the interrupt each save before any function runs: `SyscallFrame` and each
 # architecture's `TrapFrame`; AArch64's interrupt with its vector state, as ledger 6623's walk.
 FRAMES = {
-    "x86_64": {"entry": 128, "interrupt": 176, "first": "ferrix_syscall_entry"},
-    "aarch64": {"entry": 304, "interrupt": 896, "first": "ferrix_kernel_core::trap::dispatch"},
-    "armv7a": {"entry": 80, "interrupt": 80, "first": "ferrix_kernel_core::trap::dispatch"},
+    "x86_64": {"entry": 128, "interrupt": 176, "first": "xaqu_syscall_entry"},
+    "aarch64": {"entry": 304, "interrupt": 896, "first": "xaqu_kernel_core::trap::dispatch"},
+    "armv7a": {"entry": 80, "interrupt": 80, "first": "xaqu_kernel_core::trap::dispatch"},
 }
 # After the architecture's way in. "system_call" is not on x86-64's way.
 COMMON = [
-    "ferrix_kernel_item::syscall::native_call",
-    "ferrix_kernel_item::syscall::native::dispatch",
+    "xaqu_kernel_item::syscall::native_call",
+    "xaqu_kernel_item::syscall::native::dispatch",
     "ticket::charging_for_call",
-    "ferrix_kernel_item::syscall::native::answer",
+    "xaqu_kernel_item::syscall::native::answer",
 ]
-NATIVE = COMMON + ["ferrix_kernel_load::syscall::launch::make_native"]
-SUBTREE = "ferrix_kernel_load::syscall::exec::make_native_in"
-LINUX = ["ferrix_kernel_item::syscall::dispatch_with", "syscall::linux::answer_as", "family::sys_clone"]
+NATIVE = COMMON + ["xaqu_kernel_load::syscall::launch::make_native"]
+SUBTREE = "xaqu_kernel_load::syscall::exec::make_native_in"
+LINUX = ["xaqu_kernel_item::syscall::dispatch_with", "syscall::linux::answer_as", "family::sys_clone"]
 LINUX_SUBTREE = "process::Process>::new"
 # A kernel with no load in it (`personality=user`, FLIP.md LV.5): no Linux call runs on a kernel
 # stack there, as `linuxd`'s are its own, so its deepest named call is a region's process made.
 USER_NATIVE = COMMON + ["syscall::native::region::process_create_shared"]
-USER_SUBTREE = "ferrix_kernel_core::object::process::Process>::new"
+USER_SUBTREE = "xaqu_kernel_core::object::process::Process>::new"
 # What this row asks to be left on AArch64's stack, whose figures are the real ones (ledger 7033 D2).
 FLOOR = {"aarch64": 4096}
 # ARMv7-A's calls through a long-branch thunk are not followed: its figures are not figures (D4).
@@ -60,18 +60,18 @@ CLONE_CANNOT = "ShadowCopies>::finish"
 HANDED_OVER = re.compile(
     r"panic|fmt::|leftovers::hand_over|Leftovers"
     r"|object::process::Process|user::space::AddressSpace|UserThread|UserState|RestrictedState"
-    r"|ferrix_sched::tree::Slot<|ferrix_sched::tree::Node<|ferrix_sched::Entity<"
+    r"|xaqu_sched::tree::Slot<|xaqu_sched::tree::Node<|xaqu_sched::Entity<"
 )
 # What sleeps, or waits on another processor. A way to any of these from what is left is F-104 again.
 MAY_SLEEP = re.compile(r"WaitQueue>::wait|sched::block|sched::schedule|sched::sleep|flush_tlb_everywhere|flush_tlb_pages")
-# The stack `ferrix_stack_stop` says its one line on: `trap::STACK_STOP_SIZE`.
+# The stack `xaqu_stack_stop` says its one line on: `trap::STACK_STOP_SIZE`.
 STOP_STACK = 4096
 LEAVE_OUT = re.compile(
     r"panic|rust_begin_unwind|unwrap_failed|expect_failed|slice_.*fail|alloc_error|fmt::|drop_slow"
     r"|drop_glue|Drop>::drop|ops::drop|job::notify|Once<"
 )
-TIMER = "ferrix_kernel_core::sched::fire_timers"
-TIMER_ABOVE = "ferrix_kernel_core::sched::timer_expired"
+TIMER = "xaqu_kernel_core::sched::fire_timers"
+TIMER_ABOVE = "xaqu_kernel_core::sched::timer_expired"
 
 
 def objdump():
@@ -141,7 +141,7 @@ def drop_rest(frames, calls, problems):
     """What a task's last drop still does where it may not sleep (F-104, ledger 7103 (8)): its deepest
     direct chain, with the fields it hands the reaper left out, and a refusal of any way from there to
     a wait. Answers the depth, or 0 if the image has no such drop."""
-    start = next((name for name in frames if "drop_glue::<ferrix_kernel_core::sched::task::Task>" in name), None)
+    start = next((name for name in frames if "drop_glue::<xaqu_kernel_core::sched::task::Task>" in name), None)
     if start is None:
         return 0
 
@@ -179,15 +179,15 @@ def judge(frames, calls, arch, stack_bytes):
     if arch == "x86_64":
         way_in.append(frame["first"])
     else:
-        ways = [frame["first"], f"ferrix_kernel_core::arch::{arch}::trap::system_call"]
+        ways = [frame["first"], f"xaqu_kernel_core::arch::{arch}::trap::system_call"]
         found = [way for way in ways if any(way in name for name in frames)]
         way_in += found or ways
-        way_in.append("ferrix_kernel_core::trap::system_call")
+        way_in.append("xaqu_kernel_core::trap::system_call")
     timer = named(frames, TIMER, problems)
     above = next((n for n in frames if TIMER_ABOVE in n), None)
     rest = drop_rest(frames, calls, problems)
     lines.append(f"stack-depth: {arch}: what a task's last drop leaves, under an interrupt: {rest}{remark}")
-    user = not any("ferrix_kernel_load::" in name for name in frames)
+    user = not any("xaqu_kernel_load::" in name for name in frames)
     paths = (
         (("a region's process made", way_in + USER_NATIVE, USER_SUBTREE),)
         if user

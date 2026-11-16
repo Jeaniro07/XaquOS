@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::time::Duration;
 
-use ferrix_restart::SIGNALS;
+use xaqu_restart::SIGNALS;
 
 /// A value that does not parse.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -276,7 +276,7 @@ pub fn permyriad(text: &str, bounded: bool) -> Result<u64, ValueError> {
     Ok(value)
 }
 
-pub use ferrix_restart::Signal;
+pub use xaqu_restart::Signal;
 
 /// A signal as `signal_from_string` reads one: `SIGTERM`, `TERM` or `15`,
 /// from 1 to 64.

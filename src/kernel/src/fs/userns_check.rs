@@ -27,9 +27,9 @@
 use alloc::format;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{AT_FDCWD, AT_REMOVEDIR, MNT_DETACH, MS_BIND, MS_RDONLY, MS_REMOUNT};
-use ferrix_vfs::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{AT_FDCWD, AT_REMOVEDIR, MNT_DETACH, MS_BIND, MS_RDONLY, MS_REMOUNT};
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Page, Report as Counts, Tally, by_number, close, open, page_for};
 use crate::fs::namespace_check::{read_file, read_link, staged, unshare};
@@ -99,7 +99,7 @@ pub(super) fn write_to(
     // it beside who writes.
     let process = registry::find(page.process.pid()).ok_or("the check's process is gone")?;
     let opened = userns::acting_as(&process, || {
-        open(page, path, ferrix_linux_abi::types::O_WRONLY, 0)
+        open(page, path, xaqu_linux_abi::types::O_WRONLY, 0)
     })??;
     let fd = match opened {
         Ok(fd) => fd,
@@ -240,7 +240,7 @@ fn user_namespace(page: &mut Page<'_>, tally: &mut Tally<'_>) -> Result<(), &'st
 /// may do, holds every capability in its own namespace, and can drop one.
 fn fake_root(page: &mut Page<'_>, tally: &mut Tally<'_>) -> Result<(), &'static str> {
     let process = page.process;
-    let name = page.put(b"ferrix")?;
+    let name = page.put(b"xaqu")?;
     tally.refused(
         call(process, Syscall::Sethostname, [name, 6, 0, 0, 0, 0]),
         Errno::EPERM,
@@ -319,7 +319,7 @@ fn root_made(tally: &mut Tally<'_>) -> Result<(), &'static str> {
         unshare(&root, CLONE_NEWUSER),
         "unshare(CLONE_NEWUSER) was refused to root",
     )?;
-    let name = page.put(b"ferrix")?;
+    let name = page.put(b"xaqu")?;
     tally.refused(
         call(&root, Syscall::Sethostname, [name, 6, 0, 0, 0, 0]),
         Errno::EPERM,
@@ -658,7 +658,7 @@ fn refused_what_it_does_not_own(
 /// (CVE-2013-1858) or `CLONE_THREAD`. `unshare` with a shared fs context stands
 /// on its code.
 fn clone_flags(tally: &mut Tally<'_>) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{CLONE_FS, CLONE_THREAD};
+    use xaqu_linux_abi::types::{CLONE_FS, CLONE_THREAD};
     let parent =
         process::new_for_check().map_err(|_| "could not make the clone check's process")?;
     let asked = |flags: u64| family::namespaces_asked(&parent, flags).map(|()| 0);
@@ -811,7 +811,7 @@ fn nested(tally: &mut Tally<'_>) -> Result<(), &'static str> {
     tally.report.calls += 1;
     // `clone` with a shared fs context, and from a chrooted process (above).
     let answers = [
-        family::namespaces_asked(&parent, CLONE_NEWUSER | ferrix_linux_abi::types::CLONE_FS),
+        family::namespaces_asked(&parent, CLONE_NEWUSER | xaqu_linux_abi::types::CLONE_FS),
         Err(refusal),
     ];
     if answers

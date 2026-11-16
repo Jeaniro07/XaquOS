@@ -1,4 +1,4 @@
-//! `ferrix-install`: put the live system on a disk of its own.
+//! `xaqu-install`: put the live system on a disk of its own.
 //!
 //! The minimum `docs/INSTALLER.md` §11 calls the MVP. The target disk is
 //! wiped and given a GUID partition table with two partitions:
@@ -6,22 +6,22 @@
 //! 1. an EFI system partition holding a byte copy of the live disk's FAT
 //!    volume -- the loader, the kernel and the initramfs the machine booted;
 //! 2. a root partition, the rest of the disk, holding an empty btrfs volume
-//!    labelled `ferrix-root` made to its size (`ferrix-btrfs-mkfs`).
+//!    labelled `xaqu-root` made to its size (`xaqu-btrfs-mkfs`).
 //!
 //! The kernel does the rest at the installed disk's first boot, as it does
-//! for every `run`: it finds `ferrix-root`, now on a partition, and unpacks
+//! for every `run`: it finds `xaqu-root`, now on a partition, and unpacks
 //! the initramfs onto it. The live medium's command line keeps `/` in
-//! memory (`ferrix.root=tmpfs`); the copy on the installed disk says
-//! `ferrix.root=btrfs` instead, rewritten in place in the copied volume.
+//! memory (`xaqu.root=tmpfs`); the copy on the installed disk says
+//! `xaqu.root=btrfs` instead, rewritten in place in the copied volume.
 //!
 //! ```text
-//! ferrix-install [--yes] [--from /dev/vdX] /dev/vdY
+//! xaqu-install [--yes] [--from /dev/vdX] /dev/vdY
 //! ```
 //!
 //! Without `--from` the live system is found by itself: the partition named
-//! `FERRIX-LIVE` that `xtask live` writes (`docs/INSTALLER.md` §3.1), or a
+//! `XAQU-LIVE` that `xtask live` writes (`docs/INSTALLER.md` §3.1), or a
 //! whole disk whose first sector is the FAT32 boot sector `xtask` writes
-//! (OEM name `FERRIX`), the image of `build --installer`, taken only when no
+//! (OEM name `XAQU`), the image of `build --installer`, taken only when no
 //! disk has a live partition. Either way it must be the only one. A target that is the live disk, or holds the live
 //! partition, is refused. Without `--yes` it asks before it erases anything.
 
@@ -30,33 +30,33 @@ use std::io::{self, BufRead, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use ferrix_install::fat::Fat;
+use xaqu_install::fat::Fat;
 
 mod engine;
 mod fat_in_place;
 mod serve;
 mod setup;
 mod slots;
-use ferrix_partition::{ESP, Guid, Partition, parse_entries, parse_header};
+use xaqu_partition::{ESP, Guid, Partition, parse_entries, parse_header};
 
 /// The live medium's EFI system partition's name (`tools/common/xtask/src/installer.rs`).
-pub(crate) const LIVE_NAME: &str = "FERRIX-LIVE";
+pub(crate) const LIVE_NAME: &str = "XAQU-LIVE";
 /// The live session's root option, and what the installed system's says in
 /// its place: the same length, so the file is rewritten in place.
-const LIVE_ROOT: &[u8] = b"ferrix.root=tmpfs";
-const INSTALLED_ROOT: &[u8] = b"ferrix.root=btrfs";
+const LIVE_ROOT: &[u8] = b"xaqu.root=tmpfs";
+const INSTALLED_ROOT: &[u8] = b"xaqu.root=btrfs";
 /// The live session's own word, which starts the installer's daemon and
 /// its window; blanked on the installed disk, the same length.
-const LIVE_WORD: &[u8] = b"ferrix.live";
+const LIVE_WORD: &[u8] = b"xaqu.live";
 /// The words only the live session carries, each blanked on the installed
-/// disk: [`LIVE_WORD`], and `ferrix.unisolated`, which lets the live session
+/// disk: [`LIVE_WORD`], and `xaqu.unisolated`, which lets the live session
 /// drive a machine with no IOMMU (its drivers then trusted with all of
 /// memory, as on Linux) and which the installed system never keeps -- it
 /// isolates its drivers, or does not start them.
-const LIVE_ONLY_WORDS: [&[u8]; 2] = [LIVE_WORD, b"ferrix.unisolated"];
+const LIVE_ONLY_WORDS: [&[u8]; 2] = [LIVE_WORD, b"xaqu.unisolated"];
 
 /// The root volume's label, which is how the kernel finds it.
-const ROOT_LABEL: &[u8] = b"ferrix-root";
+const ROOT_LABEL: &[u8] = b"xaqu-root";
 /// The smallest root partition: the system unpacked, with room to work.
 pub(crate) const ROOT_BYTES: u64 = 1 << 30;
 /// Bytes in a sector: virtio's unit.
@@ -81,7 +81,7 @@ fn main() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(why) => {
-            eprintln!("ferrix-install: {why}");
+            eprintln!("xaqu-install: {why}");
             ExitCode::FAILURE
         }
     }
@@ -122,7 +122,7 @@ fn parse() -> Result<Asked, String> {
             "--from" => from = Some(args.next().ok_or("--from needs a disk")?),
             "--help" | "-h" => {
                 return Err(
-                    "usage: ferrix-install [--yes] [--from /dev/vdX] [--slots [--swap-mib N] \
+                    "usage: xaqu-install [--yes] [--from /dev/vdX] [--slots [--swap-mib N] \
                             [--esp-mib N] [--slot-mib N]] /dev/vdY"
                         .into(),
                 );
@@ -147,7 +147,7 @@ fn run() -> Result<(), String> {
         Some(from) => from,
         None => {
             let found = find_live()?;
-            println!("ferrix-install: the live system is on {found}");
+            println!("xaqu-install: the live system is on {found}");
             found
         }
     };
@@ -176,7 +176,7 @@ fn run() -> Result<(), String> {
         answers,
     };
     println!(
-        "ferrix-install: {} ({} MiB) will be erased; the system comes from {live}",
+        "xaqu-install: {} ({} MiB) will be erased; the system comes from {live}",
         asked.target,
         File::open(&asked.target)
             .and_then(|mut disk| disk.seek(SeekFrom::End(0)))
@@ -230,7 +230,7 @@ pub(crate) fn live_disk() -> Option<String> {
 
 /// Run a step, saying what it is and what went wrong.
 fn step(what: &str, work: impl FnOnce() -> io::Result<()>) -> Result<(), String> {
-    println!("ferrix-install: {what}");
+    println!("xaqu-install: {what}");
     work().map_err(|e| format!("{what}: {e}"))
 }
 
@@ -262,7 +262,7 @@ pub(crate) fn find_live() -> Result<String, String> {
     } else {
         if !whole.is_empty() {
             println!(
-                "ferrix-install: {} not taken for the live system: a live medium's partition is",
+                "xaqu-install: {} not taken for the live system: a live medium's partition is",
                 whole.join(", ")
             );
         }
@@ -283,7 +283,7 @@ fn is_xtask_volume(disk: &mut File, lba: u64) -> bool {
     let mut sector = [0_u8; 512];
     disk.seek(SeekFrom::Start(lba * SECTOR)).is_ok()
         && disk.read_exact(&mut sector).is_ok()
-        && &sector[3..11] == b"FERRIX  "
+        && &sector[3..11] == b"XAQU  "
         && &sector[82..90] == b"FAT32   "
 }
 
@@ -314,7 +314,7 @@ fn holds(target: &str, live: &str) -> bool {
         .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()))
 }
 
-/// Rewrite `FERRIX/CMDLINE.TXT` in the FAT32 volume at byte `at` of `disk`
+/// Rewrite `XAQU/CMDLINE.TXT` in the FAT32 volume at byte `at` of `disk`
 /// so that the installed system keeps `/` on its disk: [`LIVE_ROOT`] becomes
 /// [`INSTALLED_ROOT`]. Whether there was one to rewrite: the MVP's image
 /// carries no command line, and needs none.
@@ -324,7 +324,7 @@ fn holds(target: &str, live: &str) -> bool {
 /// takes its place.
 pub(crate) fn installed_cmdline(disk: &mut File, at: u64) -> io::Result<bool> {
     let volume = Fat::read(disk, at)?;
-    let Some(directory) = volume.find(disk, volume.root, b"FERRIX     ")? else {
+    let Some(directory) = volume.find(disk, volume.root, b"XAQU     ")? else {
         return Ok(false);
     };
     let Some(file) = volume.find(disk, directory.cluster, b"CMDLINE TXT")? else {
@@ -428,7 +428,7 @@ fn copy_esp(source: &mut File, disk: &mut File, bytes: u64, first: u64) -> io::R
 }
 
 /// Make an empty btrfs volume labelled [`ROOT_LABEL`] of `bytes` at byte
-/// `at` of `disk`: the whole root partition (`ferrix-btrfs-mkfs`). The
+/// `at` of `disk`: the whole root partition (`xaqu-btrfs-mkfs`). The
 /// kernel unpacks the system onto it at the installed disk's first boot.
 pub(crate) fn write_root(disk: &mut File, at: u64, bytes: u64) -> io::Result<()> {
     let mut random = [[0_u8; 16]; 4];
@@ -439,23 +439,23 @@ pub(crate) fn write_root(disk: &mut File, at: u64, bytes: u64) -> io::Result<()>
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |since| since.as_secs());
-    let options = ferrix_btrfs_mkfs::Options::new(bytes, ROOT_LABEL, random, now);
-    let image = ferrix_btrfs_mkfs::make(&options).map_err(|e| io::Error::other(e.to_string()))?;
+    let options = xaqu_btrfs_mkfs::Options::new(bytes, ROOT_LABEL, random, now);
+    let image = xaqu_btrfs_mkfs::make(&options).map_err(|e| io::Error::other(e.to_string()))?;
     println!(
-        "ferrix-install: a btrfs volume of {} MiB labelled {}",
+        "xaqu-install: a btrfs volume of {} MiB labelled {}",
         image.size >> 20,
         String::from_utf8_lossy(ROOT_LABEL)
     );
     image.write_to(&mut Volume { disk, at })
 }
 
-/// A volume at byte `at` of a disk, for `ferrix-btrfs-mkfs` to write.
+/// A volume at byte `at` of a disk, for `xaqu-btrfs-mkfs` to write.
 struct Volume<'a> {
     disk: &'a mut File,
     at: u64,
 }
 
-impl ferrix_btrfs_mkfs::Target for Volume<'_> {
+impl xaqu_btrfs_mkfs::Target for Volume<'_> {
     type Error = io::Error;
 
     fn write_at(&mut self, at: u64, data: &[u8]) -> io::Result<()> {
@@ -481,7 +481,7 @@ pub(crate) fn random_guid() -> Result<Guid, String> {
 }
 
 fn confirm() -> Result<bool, String> {
-    print!("Erase it and install Ferrix? Type yes: ");
+    print!("Erase it and install Xaqu? Type yes: ");
     io::stdout().flush().map_err(|e| e.to_string())?;
     let mut line = String::new();
     io::stdin()
@@ -497,7 +497,7 @@ mod live_words {
 
     #[test]
     fn the_installed_line_keeps_no_live_word() {
-        let mut text = b"ferrix.init=/sbin/init ferrix.root=btrfs ferrix.live ferrix.unisolated ferrix.efifb ferrix.fbcon\n".to_vec();
+        let mut text = b"xaqu.init=/sbin/init xaqu.root=btrfs xaqu.live xaqu.unisolated xaqu.efifb xaqu.fbcon\n".to_vec();
         let length = text.len();
         blank_live_words(&mut text);
         assert_eq!(text.len(), length);
@@ -508,21 +508,21 @@ mod live_words {
         assert_eq!(
             words,
             [
-                &b"ferrix.init=/sbin/init"[..],
-                b"ferrix.root=btrfs",
-                b"ferrix.efifb",
-                b"ferrix.fbcon"
+                &b"xaqu.init=/sbin/init"[..],
+                b"xaqu.root=btrfs",
+                b"xaqu.efifb",
+                b"xaqu.fbcon"
             ]
         );
     }
 
     #[test]
     fn only_whole_words_are_blanked() {
-        let mut text = b"ferrix.lively ferrix.unisolated.x xferrix.live ferrix.live".to_vec();
+        let mut text = b"xaqu.lively xaqu.unisolated.x xxaqu.live xaqu.live".to_vec();
         blank_live_words(&mut text);
         assert_eq!(
             &text[..],
-            b"ferrix.lively ferrix.unisolated.x xferrix.live            "
+            b"xaqu.lively xaqu.unisolated.x xxaqu.live            "
         );
     }
 }

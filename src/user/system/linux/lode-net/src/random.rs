@@ -1,6 +1,6 @@
 //! Random numbers: the kernel's, through `getrandom(2)`, and nothing else.
 //!
-//! On Ferrix that is the kernel's ChaCha20 generator, seeded at boot from
+//! On Xaqu that is the kernel's ChaCha20 generator, seeded at boot from
 //! firmware's and the processor's random bytes (`src/kernel/src/random.rs`);
 //! on Linux, the kernel's pool. There is no seeding in user space and no
 //! fallback to `/dev/urandom` or anything else: a read that fails is an

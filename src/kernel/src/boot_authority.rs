@@ -9,13 +9,13 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::first::{self, READY_MAGIC};
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
-use ferrix_partition_desc::{Description, Device as Described, KIND_PCI, ROLE_FILES, ROLE_LINUX};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::first::{self, READY_MAGIC};
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
+use xaqu_partition_desc::{Description, Device as Described, KIND_PCI, ROLE_FILES, ROLE_LINUX};
 
 use crate::console::println;
 use crate::device::{self, DeviceNode, Location};
@@ -36,7 +36,7 @@ use crate::vmap;
 
 /// The boot's check of regions and restricted mode, which `main.rs` hands in: product code
 /// names no check (ledger 7184 B4.1, B4.3).
-static REGION_CHECK: ferrix_sync::Once<fn()> = ferrix_sync::Once::new();
+static REGION_CHECK: xaqu_sync::Once<fn()> = xaqu_sync::Once::new();
 
 /// Hand in [`REGION_CHECK`].
 pub fn set_region_check(check: fn()) {
@@ -45,7 +45,7 @@ pub fn set_region_check(check: fn()) {
 
 /// Start the first processes, in `MICROKERNEL.md` §5's order, `linuxd` last:
 /// its first program is init, which expects its devices' drivers to be there.
-pub fn run(view: &ferrix_bootinfo::BootView<'_>) {
+pub fn run(view: &xaqu_bootinfo::BootView<'_>) {
     if crate::mm::keep_initrd(view).is_err() {
         println!("  initrd   outside the direct map: no first process can start");
     }
@@ -93,20 +93,20 @@ pub(crate) fn not_measured(what: &str) -> ! {
 }
 
 /// The seal's check, which the composition root hands in: product code names no check.
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub type SealCheck = fn(&job::Job, &job::Job) -> Result<(), &'static str>;
-#[cfg(ferrix_kernel_memory = "retyped")]
-static SEAL_CHECK: ferrix_sync::Once<SealCheck> = ferrix_sync::Once::new();
+#[cfg(xaqu_kernel_memory = "retyped")]
+static SEAL_CHECK: xaqu_sync::Once<SealCheck> = xaqu_sync::Once::new();
 
 /// Hand in the seal's check, before [`run`].
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub fn set_seal_check(check: SealCheck) {
     let _ = SEAL_CHECK.call_once(|| check);
 }
 
 /// K16: from here on the shared heap refuses, after the first processes are made and
 /// before they run, and the seal holds itself to its rule (`docs/microkernel/K16.md`).
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub(crate) fn seal() {
     /// The kernel pool: its name, its size, and past it a refusal (K16.4).
     const KERNEL_POOL: u64 = 16 << 20;
@@ -134,7 +134,7 @@ pub(crate) fn seal() {
             crate::mm::seal::report();
         }
     }
-    if crate::sched::spawn("seal report", report, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if crate::sched::spawn("seal report", report, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         println!("  retyped  no task to report on");
     }
     println!("  retyped  sealed");
@@ -144,7 +144,7 @@ pub(crate) fn seal() {
 fn read_file(path: &[u8]) -> Result<vmap::Buffer, Errno> {
     let name = path.strip_prefix(b"/").unwrap_or(path);
     crate::mm::with_initrd(|archive| {
-        let file = ferrix_cpio::file_named(archive, name).ok_or(Errno::ENOENT)?;
+        let file = xaqu_cpio::file_named(archive, name).ok_or(Errno::ENOENT)?;
         let mut buffer = vmap::Buffer::zeroed(file.len()).map_err(|_| Errno::ENOMEM)?;
         buffer.copy_from_slice(file);
         Ok(buffer)
@@ -180,7 +180,7 @@ fn make(creator: Option<&dyn Host>, _name: &[u8]) -> Result<Arc<dyn Host>, Errno
             // driver is shown there too (BA.4, ledger 6316 P1.4).
             let job = job::root().new_child().map_err(|_| status::NO_MEMORY)?;
             job.make_measured();
-            #[cfg(ferrix_kernel_memory = "retyped")]
+            #[cfg(xaqu_kernel_memory = "retyped")]
             job.set_reservation(16 << 20)
                 .map_err(|_| status::NO_MEMORY)?;
             job
@@ -228,7 +228,7 @@ const TOO_MANY: &str = "a description names more than the manager's first messag
 /// The manager's path in the archive.
 const MANAGER_PATH: &[u8] = b"sbin/partmgr";
 /// The description's.
-const DESCRIPTION: &[u8] = b"etc/ferrix/partitions";
+const DESCRIPTION: &[u8] = b"etc/xaqu/partitions";
 /// How long the manager has to say READY: a bound, and a miss stops the boot
 /// (`BOOT-AUTHORITY.md`, Q1). READY means started, not healthy.
 const READY_PATIENCE_NANOS: u64 = 20_000_000_000;
@@ -237,7 +237,7 @@ const NANOS_PER_MILLI: u64 = 1_000_000;
 /// A copy of a file of the archive in a sealed VMO, or `None` without the file.
 fn sealed_file(path: &[u8]) -> Result<Option<(Arc<Vmo>, usize)>, &'static str> {
     crate::mm::with_initrd(|archive| {
-        let Some(file) = ferrix_cpio::file_named(archive, path) else {
+        let Some(file) = xaqu_cpio::file_named(archive, path) else {
             return Ok(None);
         };
         devmgr::vmo_of(file).map(|vmo| Some((vmo, file.len())))
@@ -263,7 +263,7 @@ fn node_of(described: &Described<'_>) -> Result<Arc<DeviceNode>, &'static str> {
         .ok_or("a device matches no node")?;
     // DMA that nothing translates is in reach of everything, and a function behind an
     // aliasing bridge shares its requester id: `iommu::would_translate` reads false for both
-    // (`ferrix_pci::topology::claims`). On an `SMMUv3` the stream is requester arithmetic and
+    // (`xaqu_pci::topology::claims`). On an `SMMUv3` the stream is requester arithmetic and
     // `domain_placed` asks no `claims`, so an own domain is no proof there; this test and the
     // two below are what refuse an aliased function (ledger 7166 F.2).
     let Location::Pci(function) = node.location() else {
@@ -313,7 +313,7 @@ struct Served {
 
 /// The manager's and its partitions' promise, one entry (K12's one level), each partition's
 /// job drawing on it by inheritance; a file server keeps its heap there too (§1, K16 §4).
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 fn promise_for_partitions(job: &job::Job, parsed: &Description<'_>) -> Result<(), &'static str> {
     const MANAGER_OWN: u64 = 16 << 20;
     const FILE_SERVER: u64 = 128 << 20;
@@ -375,7 +375,7 @@ fn manager_transfers(
         for described in partition.devices() {
             let node = node_of(&described)?;
             // Held to K14's grant from here, whatever the profile (ledger 6564 Y.1, 6803 (iv)).
-            if described.flags() & ferrix_partition_desc::FLAG_NEEDS_CERTIFIED != 0 {
+            if described.flags() & xaqu_partition_desc::FLAG_NEEDS_CERTIFIED != 0 {
                 node.require_certified();
                 println!("  certified a description holds a device to K14's grant");
             }
@@ -414,7 +414,7 @@ fn manager_transfers(
         .partitions()
         .any(|partition| partition.role() == ROLE_FILES)
     {
-        if !cfg!(ferrix_fs = "server") {
+        if !cfg!(xaqu_fs = "server") {
             return Err("a file server in a description of a kernel that has its own");
         }
         let (block_cores, server_cores) =
@@ -441,7 +441,7 @@ fn try_start_manager() -> Result<Option<Served>, &'static str> {
     };
     // Read back whole from the archive, and parsed by the one parser.
     let bytes = crate::mm::with_initrd(|archive| {
-        ferrix_cpio::file_named(archive, DESCRIPTION)
+        xaqu_cpio::file_named(archive, DESCRIPTION)
             .and_then(|file| fallible::try_to_vec(file).ok())
     })
     .flatten()
@@ -454,7 +454,7 @@ fn try_start_manager() -> Result<Option<Served>, &'static str> {
         .map_err(|_| "no job for the partitions")?;
     job.make_measured();
     must_be_measured(&job);
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     promise_for_partitions(&job, &parsed)?;
     let (images, devices, served) = manager_transfers(&parsed, &job, description, &mut transfers)?;
     MANAGER.judge(transfers.iter().map(|(object, rights)| (object, *rights)))?;
@@ -574,24 +574,24 @@ fn watch_manager(bare: Arc<Bare>) {
             core.exit_status()
         );
     }
-    if crate::sched::spawn("manager watch", watch, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if crate::sched::spawn("manager watch", watch, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         fatal!(catalog::FIRST_PROCESSES, "no task to watch the manager on");
     }
 }
 
 /// The certified list's path in the archive.
-const CERTIFIED: &[u8] = b"etc/ferrix/certified";
+const CERTIFIED: &[u8] = b"etc/xaqu/certified";
 
 /// Read the certified list, once, before any process runs (K14 §5). A malformed
 /// one is an empty list and a line, never a stop: a list names what may hold a
 /// grant, so an empty one grants nothing.
 fn read_certified_list() {
     let Some(Some(bytes)) = crate::mm::with_initrd(|archive| {
-        ferrix_cpio::file_named(archive, CERTIFIED).and_then(|file| fallible::try_to_vec(file).ok())
+        xaqu_cpio::file_named(archive, CERTIFIED).and_then(|file| fallible::try_to_vec(file).ok())
     }) else {
         return;
     };
-    let Some(list) = ferrix_partition_desc::certified::parse(&bytes) else {
+    let Some(list) = xaqu_partition_desc::certified::parse(&bytes) else {
         println!("  certified the list is malformed: nothing is on it");
         return;
     };
@@ -612,13 +612,13 @@ fn read_certified_list() {
 /// translate, before any handle exists (K14.4, G.5). An over-approximation of
 /// "DMA-capable": every node but the two the kernel synthesises. `fast` and `max` flag them
 /// from now, at level none until M7 too; another profile flags none, whatever
-/// `ferrix.unisolated` says.
+/// `xaqu.unisolated` says.
 fn flag_nodes() {
     if !cfg!(any(
-        ferrix_level = "sc2",
-        ferrix_level = "sc4",
-        ferrix_profile = "fast",
-        ferrix_profile = "max",
+        xaqu_level = "sc2",
+        xaqu_level = "sc4",
+        xaqu_profile = "fast",
+        xaqu_profile = "max",
     )) {
         return;
     }

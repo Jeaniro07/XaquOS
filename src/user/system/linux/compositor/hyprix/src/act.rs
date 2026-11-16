@@ -733,7 +733,7 @@ fn placed_rect(state: &State, window: WindowId) -> Option<compositor_layout::Rec
 pub const PREVIEW: WindowId = WindowId(u64::MAX);
 
 /// The tile preview's colour, `0xAARRGGBB` as a configuration's colours
-/// are: a light blue at 30% -- Ferrix light's own accent, not any
+/// are: a light blue at 30% -- Xaqu light's own accent, not any
 /// toolkit's.
 const PREVIEW_COLOR: u32 = 0x4d4a_90d9;
 

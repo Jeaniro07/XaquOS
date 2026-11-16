@@ -1897,7 +1897,7 @@ fn a_monitor_named_by_a_rule_is_not_the_catch_alls_even_above_it() {
 #[test]
 fn wallpaper_lines_keep_one_for_each_output() {
     let text = "\
-wallpaper = , picture /usr/share/ferrix/wallpapers/ferrix.png, fit centre, colour 102030
+wallpaper = , picture /usr/share/xaqu/wallpapers/xaqu.png, fit centre, colour 102030
 wallpaper = DP-1, slideshow ~/Pictures/Wallpapers, every 30m, shuffle 0
 wallpaper = HDMI-A-1, colour rgb(203040)
 wallpaper = HDMI-A-1, off
@@ -1909,7 +1909,7 @@ wallpaper = HDMI-A-1, off
     assert_eq!(
         lines,
         [
-            ", picture /usr/share/ferrix/wallpapers/ferrix.png, fit centre, colour ff102030",
+            ", picture /usr/share/xaqu/wallpapers/xaqu.png, fit centre, colour ff102030",
             "DP-1, slideshow ~/Pictures/Wallpapers, every 1800, shuffle 0, fit fill, \
              colour ff1d2027, pause_covered 1, pause_battery 1",
         ]

@@ -15,7 +15,7 @@
 //!   directory that already exists is kept and has its attributes updated.
 //! * **A directory with entries where the archive has something else**
 //!   (a link or a file) cannot be removed, and is moved aside instead, to
-//!   `<name>.ferrix-old` (or `.ferrix-old.1` to `.9` when that is taken), so
+//!   `<name>.xaqu-old` (or `.xaqu-old.1` to `.9` when that is taken), so
 //!   the archive's entry takes the name and nothing in the directory is
 //!   lost. Only an unpack onto a filesystem that already holds files meets
 //!   it: the kernel's install onto a btrfs root a user has written to
@@ -31,8 +31,8 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_cpio::{Archive, CpioError, Entry, FileType as CpioType};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_cpio::{Archive, CpioError, Entry, FileType as CpioType};
+use xaqu_linux_abi::errno::Errno;
 
 use crate::file::OpenFlags;
 use crate::namespace::{Context, Namespace, RenameMode};
@@ -67,19 +67,19 @@ pub struct Unpacked {
     /// Entries left out because they are pid 1's inputs ([`is_init_input`]),
     /// which the kernel's init reads from the archive and nothing unpacks.
     pub init_inputs: u32,
-    /// Directories with entries moved aside to `<name>.ferrix-old` for an
+    /// Directories with entries moved aside to `<name>.xaqu-old` for an
     /// entry that is not a directory (the module comment).
     pub set_aside: u32,
 }
 
 /// The suffix a directory moved aside gets, before any `.1` to `.9`.
-pub const SET_ASIDE: &[u8] = b".ferrix-old";
+pub const SET_ASIDE: &[u8] = b".xaqu-old";
 
 /// The directory an image carries pid 1's inputs under: the program, the
 /// script for its `sh -c` and the list of commands that `cargo xtask` once
 /// compiled into the kernel (`src/kernel/src/init.rs`). Read from the archive
 /// by the kernel, never created in a filesystem it is unpacked into.
-pub const INIT_INPUTS: &[u8] = b".ferrix";
+pub const INIT_INPUTS: &[u8] = b".xaqu";
 
 /// Whether `name`, as an archive gives it, is [`INIT_INPUTS`] or anything
 /// beneath it, matched as [`unpack`] matches a name: `./` and `/` prefixes
@@ -129,7 +129,7 @@ pub fn init_entries(archive: &[u8]) -> impl Iterator<Item = InitEntry<'_>> {
 /// does; `None` past its first malformed header, as [`init_entries`].
 #[must_use]
 pub fn file_named<'a>(archive: &'a [u8], name: &[u8]) -> Option<&'a [u8]> {
-    ferrix_cpio::file_named(archive, name)
+    xaqu_cpio::file_named(archive, name)
 }
 
 /// Why an unpack stopped.

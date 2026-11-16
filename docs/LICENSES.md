@@ -1,6 +1,6 @@
 # Licences in a release
 
-Ferrix is MIT licensed, and so are ferrousli, zinc and the apps written for
+Xaqu is MIT licensed, and so are ferrousli, zinc and the apps written for
 it. A release's images also carry other people's programs: busybox, git and
 alsa-utils under the GPL, alsa-lib under the LGPL, and many permissive C
 libraries and Rust crates. Two things go with every release so that it can
@@ -9,9 +9,9 @@ be shipped:
 - **A licence inventory**, `THIRD-PARTY-LICENSES.md`: every part of the
   image, the licence it is shipped under, and every licence text. It is
   inside the x86-64 desktop's zip, and an asset of its own for each image
-  (`ferrix-<tag>-THIRD-PARTY-LICENSES.md`,
-  `ferrix-pixel7-<edition>-THIRD-PARTY-LICENSES.md`).
-- **The corresponding sources**, `ferrix-<tag>-sources.tar.gz`: for each GPL
+  (`xaqu-<tag>-THIRD-PARTY-LICENSES.md`,
+  `xaqu-pixel7-<edition>-THIRD-PARTY-LICENSES.md`).
+- **The corresponding sources**, `xaqu-<tag>-sources.tar.gz`: for each GPL
   and LGPL program, and what is linked statically into one, the exact
   upstream tarball its build used, its build script with every patch, and
   for busybox its config; ferrousli at its pinned commit; and `SOURCES.md`,
@@ -27,22 +27,22 @@ in either is written by hand.
 `flash --stage`'s directory for the Pixel 7. Every regular file in it is
 claimed by one of:
 
-1. **a package record** (`lib/ferrix/packages/<app>.toml`), which names the
+1. **a package record** (`lib/xaqu/packages/<app>.toml`), which names the
    app, whose licence is its `app.toml`'s `license`;
 2. **an app's program** (`bin/<app>`), for the apps built with cargo;
 3. **a rule** in `tools/common/data/release-licences.toml`'s
-   `[components]`: busybox, zinc, oh-my-zsh, zsh's functions, and Ferrix's
+   `[components]`: busybox, zinc, oh-my-zsh, zsh's functions, and Xaqu's
    own programs and configuration.
 
 For each C program it lists the upstream tarballs its build script pins
 (`tools/common/release/pinned.py` reads them out of the scripts) and copies
 the licence texts out of those tarballs. For Rust it reads every
-`Cargo.lock` of a workspace that builds programs for Ferrix -- the main
+`Cargo.lock` of a workspace that builds programs for Xaqu -- the main
 workspace, each one under `src/user/system/linux/`, each app's, and the
 lockfile inside a crate an app builds from crates.io -- and takes each
 crate's licence and licence files from its own sources in cargo's cache.
 That list is a superset of what one image links: it is every crate any
-Ferrix image can carry. Where a part offers a choice, `A OR B`, the
+Xaqu image can carry. Where a part offers a choice, `A OR B`, the
 inventory takes the first alternative that is permissive and says which it
 took: curl's and Mbed TLS's `Apache-2.0`, FreeType's `FTL`.
 
@@ -85,7 +85,7 @@ directory. Why each is there:
 
 alsa-lib is linked statically into alsa-utils' two programs, both GPL, and
 into nothing else: the alsa-lib package itself puts only its configuration
-files on the image, and Ferrix's own audio code (`src/user/system/linux/media`)
+files on the image, and Xaqu's own audio code (`src/user/system/linux/media`)
 is a Rust implementation of the parts it needs, not a link. So LGPL-2.1's
 relinking terms (§6) are met by the GPL programs' own source.
 
@@ -101,7 +101,7 @@ BSD-2-Clause-Patent).
 
 ## The Pixel 7's Chromium volume
 
-The `full` edition's `ferrix-pixel7-chromium.img.gz` is Debian 13's
+The `full` edition's `xaqu-pixel7-chromium.img.gz` is Debian 13's
 Chromium for arm64 and its libraries, unpacked unchanged from Debian's
 packages by `tools/common/fetch/fetch-chromium-arm64.sh`. The sources asset
 lists each package, its version and hash, its source package, and the
@@ -114,7 +114,7 @@ the source packages of the GPL and LGPL ones is the open step.
 
 ## hyprix-gpu's Mesa
 
-An image built with `FERRIX_GPU_HELPER=1` (the N150 box's, and
+An image built with `XAQU_GPU_HELPER=1` (the N150 box's, and
 `test-compositor --boot gpu-helper`'s; not the default image or the ISO,
 the product owner, 2026-10-28) carries the compositor's Vulkan helper at
 `/usr/libexec/hyprix-gpu` with what it draws with under

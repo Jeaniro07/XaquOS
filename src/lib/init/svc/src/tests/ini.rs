@@ -8,7 +8,7 @@ use crate::Warnings;
 use crate::ini::{self, Document};
 
 fn parse(text: &str) -> (Document, Warnings) {
-    let file: Arc<str> = Arc::from("/lib/ferrix/units/t.service");
+    let file: Arc<str> = Arc::from("/lib/xaqu/units/t.service");
     let mut warnings = Warnings::new();
     let document = ini::parse(&file, text.as_bytes(), &mut warnings).unwrap();
     (document, warnings)

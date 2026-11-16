@@ -46,7 +46,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     run: |_, args| test_jobs(args),
 }];
 
-/// What the getty prints as it gives the console a session: `Ferrix <host>
+/// What the getty prints as it gives the console a session: `Xaqu <host>
 /// on /dev/console`.
 const BANNER: &str = " on /dev/console";
 

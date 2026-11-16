@@ -1,4 +1,4 @@
-"""The pinned downloads Ferrix's build scripts fetch, read out of the scripts.
+"""The pinned downloads Xaqu's build scripts fetch, read out of the scripts.
 
 Every C program an image carries is built by a shell script that fetches
 its upstream tarballs through one `fetch` function, refusing a file whose
@@ -131,13 +131,13 @@ def ports_linked(app: str) -> list[str]:
 
 def cache_dirs() -> list[pathlib.Path]:
     """Where the build scripts keep what they fetched, as they name it."""
-    home = pathlib.Path.home() / ".local" / "share" / "ferrix"
-    ports = pathlib.Path(os.environ.get("FERRIX_PORTS", home / "ports" / "ferrousli"))
-    busybox = pathlib.Path(os.environ.get("FERRIX_BUSYBOX", home / "busybox" / "ferrousli"))
+    home = pathlib.Path.home() / ".local" / "share" / "xaqu"
+    ports = pathlib.Path(os.environ.get("XAQU_PORTS", home / "ports" / "ferrousli"))
+    busybox = pathlib.Path(os.environ.get("XAQU_BUSYBOX", home / "busybox" / "ferrousli"))
     found = [ports / "src", busybox / "src"]
     # tools/common/fetch/fetch-shell-trees.sh's, where package-desktop.py ran it.
-    if os.environ.get("FERRIX_SHELL_TREES"):
-        found.append(pathlib.Path(os.environ["FERRIX_SHELL_TREES"]) / "src")
+    if os.environ.get("XAQU_SHELL_TREES"):
+        found.append(pathlib.Path(os.environ["XAQU_SHELL_TREES"]) / "src")
     return found
 
 

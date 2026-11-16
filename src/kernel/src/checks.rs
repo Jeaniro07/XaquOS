@@ -11,7 +11,7 @@
 //! stage 9's device handles 0.4 s. A desktop somebody switches on
 //! waits for all of it, to learn what the last boot test already said.
 //!
-//! So `ferrix.checks=skip` on the command line keeps every step that brings
+//! So `xaqu.checks=skip` on the command line keeps every step that brings
 //! something up -- the allocators, interrupts, the processors, the scheduler,
 //! the root from the initramfs, the device nodes, `devmgr`, the disks, the net
 //! core, the reclaim of boot memory -- and leaves out the steps that only
@@ -21,26 +21,26 @@
 //! input ring, the random generator's).
 //!
 //! A boot that skipped them must never pass for one that ran them. It says so
-//! as soon as the option is read, and it ends with `FERRIX-BOOT-UNCHECKED`
-//! instead of `FERRIX-BOOT-OK`: a different word rather than the same marker
+//! as soon as the option is read, and it ends with `XAQU-BOOT-UNCHECKED`
+//! instead of `XAQU-BOOT-OK`: a different word rather than the same marker
 //! with a note after it, because every reader of the marker -- `test-boot`,
 //! `watch-serial`, the rows that find init's output after it -- matches the
 //! word, and a note is exactly the part such a reader does not look at. The
 //! option is read from the loader's command line first and from the device
-//! tree's `/chosen/bootargs` after, as `ferrix.onexit` is; `ferrix.checks=run`
+//! tree's `/chosen/bootargs` after, as `xaqu.onexit` is; `xaqu.checks=run`
 //! asks for the default explicitly, which is how a card's `CMDLINE.TXT` turns
 //! the checks back on over an image that carries `skip` among its defaults.
 
-use ferrix_bootinfo::{BootView, option_in};
+use xaqu_bootinfo::{BootView, option_in};
 
 use crate::console::println;
 
 /// The command-line option, and its two values.
-const OPTION: &str = "ferrix.checks";
+const OPTION: &str = "xaqu.checks";
 const SKIP: &str = "skip";
 const RUN: &str = "run";
 
-/// Read `ferrix.checks`, and say what it asked for.
+/// Read `xaqu.checks`, and say what it asked for.
 ///
 /// Any value but the two is reported and ignored: running every check is the
 /// safe default, and a misspelt option should cost a slow boot rather than
@@ -82,11 +82,11 @@ pub fn init(view: &BootView<'_>) {
 }
 
 /// Whether the self-checks run on this boot: true unless [`init`] read
-/// `ferrix.checks=skip`, and never in a kernel built with the build flag
+/// `xaqu.checks=skip`, and never in a kernel built with the build flag
 /// `checks=off`, where it is the constant `false` and every check it gates is
 /// compiled out of the image (`docs/BUILD-FLAGS.md` §3, BF7). Such a kernel
 /// is an ad-hoc build: no profile carries `checks=off`, and it ends with
-/// `FERRIX-BOOT-UNCHECKED`, as a skipped boot does. The flag is the core's
+/// `XAQU-BOOT-UNCHECKED`, as a skipped boot does. The flag is the core's
 /// (`crate::boot_checks`).
 pub fn run() -> bool {
     crate::boot_checks::run()

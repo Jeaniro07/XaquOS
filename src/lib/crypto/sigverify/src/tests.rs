@@ -16,8 +16,8 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 use std::vec::Vec;
 
-use ferrix_softsign::manifest::{Body, assemble};
-use ferrix_softsign::token::{CKA_VALUE, CKM_HSS, ObjectHandle, SoftToken, Token};
+use xaqu_softsign::manifest::{Body, assemble};
+use xaqu_softsign::token::{CKA_VALUE, CKM_HSS, ObjectHandle, SoftToken, Token};
 
 use crate::lms::{self, EVERY_SHA256_192, Error, HSS_PUBLIC_KEY_LEN, LmsKey, PRODUCT};
 use crate::manifest::{Anchor, BLOCK_LEN, BODY_LEN, Expect, Field, Kind, Refusal, verify};
@@ -252,7 +252,7 @@ fn keys() -> &'static Keys {
     static KEYS: OnceLock<Keys> = OnceLock::new();
     KEYS.get_or_init(|| {
         let dir =
-            std::env::temp_dir().join(std::format!("ferrix-sigverify-test-{}", std::process::id()));
+            std::env::temp_dir().join(std::format!("xaqu-sigverify-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let mut token = SoftToken::open(&dir, Vec::new()).unwrap();
         let slot = token
@@ -302,7 +302,7 @@ fn slot_body() -> Body {
         arch: 1,
         family: 0x0101,
         release: 42,
-        label: *b"ferrix test 0000000000000000000\0",
+        label: *b"xaqu test 0000000000000000000\0",
         payload_len: 4096,
         payload_sha256: [0xAB; 32],
         floors: [5, 2, 1, 0],
@@ -769,7 +769,7 @@ fn a_revocation_by_an_already_revoked_key_is_refused() {
 /// SIGNING.md §4.3 describes: the top tree signs the lower tree's LMS
 /// public key once, the lower tree signs the message.
 fn two_levels(message: &[u8]) -> ([u8; HSS_PUBLIC_KEY_LEN], Vec<u8>, [u8; 16]) {
-    use ferrix_softsign::lms::Key;
+    use xaqu_softsign::lms::Key;
     type Tree = Vec<[u8; 24]>;
     static TREES: OnceLock<(Key, Tree, Key, Tree)> = OnceLock::new();
     let (top, top_tree, lower, lower_tree) = TREES.get_or_init(|| {

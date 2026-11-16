@@ -6,8 +6,8 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_inputctl::message::RawEvent;
-use ferrix_linux_abi::input::{EV_KEY, EV_SYN, SYN_REPORT};
+use xaqu_inputctl::message::RawEvent;
+use xaqu_linux_abi::input::{EV_KEY, EV_SYN, SYN_REPORT};
 
 use super::model::xhci::{Memory, Regs, Shared, Time, Xhci, stick, super_mouse};
 use super::model::{g502, sem_keyboard, usb2514b};
@@ -298,7 +298,7 @@ fn unplugging_and_plugging_again_gives_every_slot_and_page_back() {
 
 #[test]
 fn key_cycles_with_an_led_report_each_cross_both_rings_many_times() {
-    use ferrix_linux_abi::input::{EV_LED, LED_CAPSL};
+    use xaqu_linux_abi::input::{EV_LED, LED_CAPSL};
     let model = Xhci::new();
     let keyboard = {
         let mut m = model.borrow_mut();
@@ -698,7 +698,7 @@ fn a_stick_is_a_disk_that_reads_writes_and_flushes() {
         assert_eq!(outputs(&mut bus), vec![Got::Disk(0)]);
         let disk = *bus.disk(0).expect("the disk");
         assert_eq!((disk.blocks, disk.block_bytes), (300, 512));
-        assert_eq!(&disk.vendor, b"FERRIX  ");
+        assert_eq!(&disk.vendor, b"XAQU  ");
 
         // 200 blocks: two commands, and a page at a time within each.
         let mut read = vec![0_u8; 200 * 512];

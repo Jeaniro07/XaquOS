@@ -21,7 +21,7 @@
 //! [`SplitQueue`] is the driver: it allocates descriptors, chains them, and
 //! publishes chain heads into the available ring. [`SplitQueueDevice`] is the
 //! device: it consumes the available ring and writes the used ring. The device
-//! side is not only for tests — Ferrix runs its drivers in userspace, so the
+//! side is not only for tests — Xaqu runs its drivers in userspace, so the
 //! kernel is the *device* end of a virtqueue whenever it serves a userspace
 //! driver, and that end needs the same range checking as anything else that
 //! reads memory another protection domain wrote.
@@ -39,7 +39,7 @@
 //! ```
 //! # extern crate std;
 //! # use core::cell::RefCell;
-//! # use ferrix_virtio::{Buffer, Layout, QueueMemory, SplitQueue, SplitQueueDevice};
+//! # use xaqu_virtio::{Buffer, Layout, QueueMemory, SplitQueue, SplitQueueDevice};
 //! # struct Mem(RefCell<std::vec::Vec<u8>>);
 //! # // SAFETY: a `Vec` sized for the layout below, and the driver and device
 //! # // are stepped one after the other rather than concurrently.
@@ -77,7 +77,7 @@
 //! let completion = driver.take_used()?;
 //! assert_eq!(completion.map(|done| done.written), Some(512));
 //! assert_eq!(driver.free_descriptors(), 8);
-//! # Ok::<(), ferrix_virtio::QueueError>(())
+//! # Ok::<(), xaqu_virtio::QueueError>(())
 //! ```
 
 #![no_std]
@@ -485,7 +485,7 @@ pub struct Completion {
 /// ```compile_fail,E0046
 /// struct Bytes;
 /// // SAFETY: never used; this only has to fail to compile.
-/// unsafe impl ferrix_virtio::QueueMemory for Bytes {
+/// unsafe impl xaqu_virtio::QueueMemory for Bytes {
 ///     fn read_u8(&self, _offset: usize) -> u8 {
 ///         0
 ///     }
@@ -1053,7 +1053,7 @@ impl<M: QueueMemory> SplitQueue<M> {
 
 /// The device side of a split virtqueue.
 ///
-/// Consumes the available ring and writes the used ring. In Ferrix this is the
+/// Consumes the available ring and writes the used ring. In Xaqu this is the
 /// kernel end of a ring shared with a userspace driver, so it treats the
 /// available ring exactly as sceptically as [`SplitQueue`] treats the used
 /// ring: every index range-checked, every chain walk bounded.

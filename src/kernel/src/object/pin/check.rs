@@ -15,14 +15,14 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     DEVICE_LIMIT_PIN_CEILING, DEVICE_LIMIT_PIN_PAGES, DEVICE_LIMIT_PIN_ROOM,
 };
-use ferrix_paging::MapFlags;
+use xaqu_paging::MapFlags;
 
 use super::{
     Counts, DEFAULT_PIN_BUDGET_PAGES, Pin, PinError, ceiling, counts, release, retire_for_check,
@@ -702,7 +702,7 @@ fn untranslated_domain(nodes: &[Arc<DeviceNode>]) -> Result<Option<Checked>, &'s
                 None => continue,
             },
             // The firmware framebuffer's node reaches no memory and has no
-            // domain to give (`ferrix.efifb`).
+            // domain to give (`xaqu.efifb`).
             _ if !node.reaches_memory() => continue,
             _ => node
                 .domain()
@@ -802,7 +802,7 @@ pub(crate) fn check_intel_gpu_budget() -> Result<IntelGpu, &'static str> {
 /// function at `00:02.0` and nothing beside it.
 fn intel_gpu_identities() -> Result<u32, &'static str> {
     use crate::device::is_intel_gpu;
-    use ferrix_pci::Address;
+    use xaqu_pci::Address;
 
     let at = |bus, device, function| Address::new(0, bus, device, function);
     let cases = [
@@ -873,8 +873,8 @@ fn intel_gpu_at_cap(
         return Err("a pin refused at twice the Intel GPU's budget changed its counts");
     }
     drop(last);
-    if status::QUARANTINE_FULL != ferrix_linux_abi::errno::Errno::EDQUOT
-        || status::LIMIT_REACHED != ferrix_linux_abi::errno::Errno::ENOSPC
+    if status::QUARANTINE_FULL != xaqu_linux_abi::errno::Errno::EDQUOT
+        || status::LIMIT_REACHED != xaqu_linux_abi::errno::Errno::ENOSPC
     {
         return Err("the budget's refusals do not travel as EDQUOT and ENOSPC");
     }

@@ -168,8 +168,8 @@ mod tests {
         assert_eq!(target_dir(None), None);
         assert_eq!(target_dir(Some("".into())), None);
         assert_eq!(
-            target_dir(Some("/home/u/.local/share/ferrix/target-os-05".into())).as_deref(),
-            Some("/home/u/.local/share/ferrix/target-os-05/ferrousli")
+            target_dir(Some("/home/u/.local/share/xaqu/target-os-05".into())).as_deref(),
+            Some("/home/u/.local/share/xaqu/target-os-05/ferrousli")
         );
     }
 

@@ -99,9 +99,9 @@ mod tests {
     #[test]
     fn lines_read_as_musl_reads_them() {
         assert_eq!(
-            parse("ferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh"),
+            parse("xaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh"),
             Some(Account {
-                name: "ferrix".to_owned(),
+                name: "xaqu".to_owned(),
                 uid: 1000,
                 gid: 1000,
                 shell: "/bin/zsh".to_owned(),
@@ -120,27 +120,27 @@ mod tests {
 
     #[test]
     fn a_group_counts_its_listed_members_and_its_primary_ones() {
-        let ferrix = parse("ferrix:x:1000:1000::/home/ferrix:/bin/zsh").unwrap();
+        let xaqu = parse("xaqu:x:1000:1000::/home/xaqu:/bin/zsh").unwrap();
         let wheel_by_gid = parse("admin:x:1002:10::/:/bin/sh").unwrap();
         let plain = parse("plain:x:1001:1001::/:/bin/sh").unwrap();
-        let group = "root:x:0:\nwheel:x:10:root,ferrix\nferrix:x:1000:\n";
-        assert!(member(group, &ferrix, "wheel"));
+        let group = "root:x:0:\nwheel:x:10:root,xaqu\nxaqu:x:1000:\n";
+        assert!(member(group, &xaqu, "wheel"));
         assert!(member(group, &wheel_by_gid, "wheel"));
         assert!(!member(group, &plain, "wheel"));
-        assert!(!member(group, &ferrix, "audio"));
-        assert!(!member("", &ferrix, "wheel"));
+        assert!(!member(group, &xaqu, "audio"));
+        assert!(!member("", &xaqu, "wheel"));
         // A name that only contains the account's is not it.
-        assert!(!member("wheel:x:10:ferrix2,xferrix\n", &ferrix, "wheel"));
+        assert!(!member("wheel:x:10:xaqu2,xxaqu\n", &xaqu, "wheel"));
     }
 
     #[test]
     fn a_persons_account_is_in_the_range_and_has_a_shell() {
         let persons = |line: &str| parse(line).is_some_and(|a| a.is_a_persons());
-        assert!(persons("ferrix:x:1000:1000::/home/ferrix:/bin/zsh"));
+        assert!(persons("xaqu:x:1000:1000::/home/xaqu:/bin/zsh"));
         assert!(persons("last:x:60000:60000::/:/bin/sh"));
         assert!(!persons("root:x:0:0:root:/:/bin/sh"));
         assert!(!persons(
-            "auth:x:90:90:authd:/var/lib/ferrix/auth:/sbin/nologin"
+            "auth:x:90:90:authd:/var/lib/xaqu/auth:/sbin/nologin"
         ));
         assert!(!persons("svc:x:999:999::/:/bin/sh"));
         assert!(!persons("nobody:x:65534:65534::/:/bin/sh"));

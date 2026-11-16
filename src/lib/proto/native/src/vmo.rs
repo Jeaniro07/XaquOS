@@ -2,7 +2,7 @@
 //!
 //! Mapping a VMO is [`crate::pending`]'s, until its handler lands.
 
-use ferrix_native_abi::nr;
+use xaqu_native_abi::nr;
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode_handle, decode_unit};

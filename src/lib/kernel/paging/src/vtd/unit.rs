@@ -64,9 +64,9 @@ pub const VERSIONS: [u32; 3] = [1, 4, 5];
 /// The walk a unit's domains get.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Walk {
-    /// Three levels over 39 bits (`ferrix_paging::vtd::VtdSecondLevel`).
+    /// Three levels over 39 bits (`xaqu_paging::vtd::VtdSecondLevel`).
     Three,
-    /// Four levels over 48 bits (`ferrix_paging::vtd::VtdFourLevel`).
+    /// Four levels over 48 bits (`xaqu_paging::vtd::VtdFourLevel`).
     Four,
 }
 
@@ -234,9 +234,9 @@ pub const fn audited(translates: bool, remaps: bool) -> bool {
 }
 
 /// The command-line option that leaves every VT-d unit alone.
-pub const OFF_OPTION: &str = "ferrix.vtd";
+pub const OFF_OPTION: &str = "xaqu.vtd";
 
-/// Whether the command line's `ferrix.vtd` value, if it has one, leaves
+/// Whether the command line's `xaqu.vtd` value, if it has one, leaves
 /// every VT-d unit alone: `off` exactly, and nothing else. A recovery
 /// configuration for a machine whose units break its boot, never an
 /// evaluated one: no DMA is translated and no interrupt remapped.

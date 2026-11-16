@@ -5,8 +5,8 @@ use std::io;
 use std::os::fd::RawFd;
 use std::time::Instant;
 
-use ferrix_auth_client::send_packet;
-use ferrix_settings_proto::{MAX_RECORD, ToClient};
+use xaqu_auth_client::send_packet;
+use xaqu_settings_proto::{MAX_RECORD, ToClient};
 
 /// Send `record` to `fd`.
 ///

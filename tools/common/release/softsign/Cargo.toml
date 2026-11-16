@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-softsign"
+name = "xaqu-softsign"
 description = "The development soft signer: LMS keys in files behind the PKCS #11 3.1 HSS surface, for gates and development images only, never a release (docs/SIGNING.md §6.4)"
 version = "0.1.0"
 edition = "2024"
@@ -8,10 +8,10 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-sha256.workspace = true
+xaqu-sha256.workspace = true
 
 [dev-dependencies]
-ferrix-sigverify.workspace = true
+xaqu-sigverify.workspace = true
 
 [lints]
 workspace = true

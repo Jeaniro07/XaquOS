@@ -3,7 +3,7 @@
  *
  * NVIDIA's uvm_common.c is the one GPL-2.0-or-later file in nvidia-uvm
  * (docs/NVIDIA.md §11.2), so nvrm never links it. This file is written
- * for Ferrix from the contract in uvm_common.h, which is MIT: the debug and
+ * for Xaqu from the contract in uvm_common.h, which is MIT: the debug and
  * assertion switches, the spin loop, and the mapping between NV_STATUS and
  * errno. It is compiled as a UVM unit, against uvm-kpi.
  *

@@ -39,8 +39,8 @@ On ARMv7-A that sequence is also *copyable*. Firmware may load the loader where
 neither translation tree can map it at its own address while the MMU comes back
 on — QEMU's `virt` with 2 GiB puts it inside the direct map's virtual range —
 and then the loader copies the switch to a page below the split and runs it
-there. So the sequence is a block between `ferrix_switch_start` and
-`ferrix_switch_end`, register-only and position-independent, and
+there. So the sequence is a block between `xaqu_switch_start` and
+`xaqu_switch_end`, register-only and position-independent, and
 `tools/common/xtask/src/pe.rs` refuses a loader whose block is over a page or holds a
 relocation. It is the same instructions, not more of them; the product owner
 admitted the block on 2026-09-13 on exactly those conditions.
@@ -79,7 +79,7 @@ Each entry names why Rust cannot express it. Entries are added to
 
 | Site | Why |
 |---|---|
-| Context switch | Saves and restores the callee-saved set and the stack pointer *between two different stacks*. The function returns onto a stack that belongs to another task; Rust has no way to say that. On x86-64 it is a naked function (`#[unsafe(naked)]`, `naked_asm!`) rather than a `global_asm!` symbol, so that the kernel, built position-independent for KASLR, calls it directly rather than through the GOT (`docs/OPAQUE-KERNEL.md` §9.11, Q8); the trampoline a new task starts on, `ferrix_task_entry`, stays in `global_asm!`, since nothing calls it: only its address is pushed. |
+| Context switch | Saves and restores the callee-saved set and the stack pointer *between two different stacks*. The function returns onto a stack that belongs to another task; Rust has no way to say that. On x86-64 it is a naked function (`#[unsafe(naked)]`, `naked_asm!`) rather than a `global_asm!` symbol, so that the kernel, built position-independent for KASLR, calls it directly rather than through the GOT (`docs/OPAQUE-KERNEL.md` §9.11, Q8); the trampoline a new task starts on, `xaqu_task_entry`, stays in `global_asm!`, since nothing calls it: only its address is pushed. |
 | CPU primitives | Single instructions with no Rust spelling: reading a control or system register (`mrs`, or `mrc`/`mrrc` on `cp15`), invalidating a TLB entry, memory barriers, `wfi`/`hlt`, `sti`/`msr daifclr`/`cpsie`, `rdtsc` and the generic timer's comparator, `cpuid`, and the `hvc`/`smc` a PSCI call is made with. Each is one instruction, or one short fixed sequence, wrapped in one `#[inline]` function. |
 | Side-channel primitives (`speculation.rs`) | The Spectre v1 clamp: a compare and a conditional select (`sbb` on x86-64, `csel` or `movhs` then `csdb` on the Arm pair) that bounds a program's index by a data dependency rather than a branch. Written in Rust the compiler folds it into the bounds check it follows and nothing is left; `csdb` has no Rust spelling at all. Beside it, the predictor barriers a switch of address space issues (x86-64's return stack refill, ARMv7-A's `BPIALL`/`ICIALLU`), x86-64's `VERW`, and the Arm ID and control register accesses the plan is made from. `docs/certification/SPECULATION.md`. |
 | Device register access (`arch/aarch64/mmio.rs`, `arch/armv7a/mmio.rs`) | One `ldrb`/`ldrh`/`ldr` or `strb`/`strh`/`str` with a bare base register for each access. Under KVM a register access traps, and the hypervisor emulates it from the fault's syndrome, which a load or store with writeback, or a pair, does not carry: `KVM_RUN` fails and the guest stops. Volatile says the access happens, not which instruction does it, and LLVM folds repeated reads at one offset into a pre-indexed `ldrh`, which stopped the Pixel 7's VM in stage 10. Linux's `readl` and `writel` are assembly for the same reason. x86-64 keeps volatile, since KVM there decodes the instruction. |
@@ -99,7 +99,7 @@ Each entry names why Rust cannot express it. Entries are added to
 | Site | Why |
 |---|---|
 | `VBAR_EL1` vector table | The architecture defines a table of sixteen entries at fixed 128-byte offsets. The layout is the interface; a Rust `static` of function pointers is not what the CPU reads. |
-| EL0 entry and return | Dropping to EL0 is an `eret` into a program that has never run, so its state — `SP_EL0`, `ELR_EL1`, `SPSR_EL1`, and every general register zeroed so nothing of the kernel's leaks — has to be built first. And the stack pointer has to move to a dedicated entry stack *between* the last Rust frame and the `eret`: at EL1, `sp` is `SP_EL1`, the stack every exception from EL0 lands on, so leaving it where the kernel parked its own registers means the program's first fault pushes a frame over them. The return, `ferrix_leave_user`, restores that parked stack from inside a system call and abandons the call's frame. |
+| EL0 entry and return | Dropping to EL0 is an `eret` into a program that has never run, so its state — `SP_EL0`, `ELR_EL1`, `SPSR_EL1`, and every general register zeroed so nothing of the kernel's leaks — has to be built first. And the stack pointer has to move to a dedicated entry stack *between* the last Rust frame and the `eret`: at EL1, `sp` is `SP_EL1`, the stack every exception from EL0 lands on, so leaving it where the kernel parked its own registers means the program's first fault pushes a frame over them. The return, `xaqu_leave_user`, restores that parked stack from inside a system call and abandons the call's frame. |
 | EL2 → EL1 drop | Firmware may hand off at EL2. Lowering to EL1 is an `eret` into a context that has to be constructed first, so the "return" goes somewhere the compiler cannot know about. |
 | Secondary core entry | PSCI `CPU_ON` starts a core at a physical address with its MMU and caches off and no stack. Installing the translation regime and turning the MMU on while executing at an address only an identity map makes meaningful is the loader's switch again, once per core. |
 
@@ -123,7 +123,7 @@ under `src/user/system/native/rt/src/arch/`, and each holds the same three thing
 
 | Site | Why |
 |---|---|
-| `_start` | A process is *entered*, not called. The kernel drops to user mode with `SYSRET`, `eret` or `rfeia`, so there is no return address and no caller's frame. The stack is aligned for a program entry, not for a callee: on x86-64 that is eight bytes off what a function prologue assumes. Two to five instructions zero the frame pointer (and link register), align the stack, and call `ferrix_rt_start`, leaving the bootstrap handle in the first argument register. |
+| `_start` | A process is *entered*, not called. The kernel drops to user mode with `SYSRET`, `eret` or `rfeia`, so there is no return address and no caller's frame. The stack is aligned for a program entry, not for a callee: on x86-64 that is eight bytes off what a function prologue assumes. Two to five instructions zero the frame pointer (and link register), align the stack, and call `xaqu_rt_start`, leaving the bootstrap handle in the first argument register. |
 | The trap | `syscall` or `svc #0`, and the register each argument goes in. This is the kernel's system call entry, read from the other side, and it has no Rust spelling. It is one instruction in an `asm!` block. Each register is named as an operand, and the budget counts those lines too, because the register assignment *is* the contract. |
 | `exit_group` | The same trap, with nothing to return to. |
 

@@ -6,7 +6,7 @@ rings and the six load files the item's own calls reach -- to allocation
 that reports failure (finding F-23). Everything else the kernel runs was
 outside it: the load ring's Linux layer, filesystems, sockets and
 interfaces, and the libraries the kernel links that are not item crates
-(`ferrix-vfs`, `ferrix-btrfs-vfs`, `ferrix-net`, `ferrix-procfs`, ...).
+(`xaqu-vfs`, `xaqu-btrfs-vfs`, `xaqu-net`, `xaqu-procfs`, ...).
 That is where the box's FX-0008 stops of 2026-11-08 came from: a `Box`,
 `Vec` or `String` on a path a program drives, which the standard library
 turns into a panic when the heap is empty. Every program can drive those
@@ -20,9 +20,9 @@ script's docstring), over
   * every product file of the kernel's own source in the `load` ring that the
     item's gate does not scan (its `REACHED` files are held there), and
   * every product file of every workspace crate the kernel links -- the
-    shipping dependencies of `ferrix-kernel`, `-core`, `-item` and `-load`,
+    shipping dependencies of `xaqu-kernel`, `-core`, `-item` and `-load`,
     followed through the workspace -- other than the item's own crates
-    (held there) and `ferrix-fallible` (the toolkit),
+    (held there) and `xaqu-fallible` (the toolkit),
 
 and holds a per-file count of unmarked calls in
 `tools/common/data/ring0-alloc-baseline.json`.
@@ -31,7 +31,7 @@ What fails and what does not
 ----------------------------
 
   * A file whose unmarked count rises, or a new file with any, fails. Use
-    `crate::fallible` in the kernel, `ferrix-fallible` or `try_reserve` in a
+    `crate::fallible` in the kernel, `xaqu-fallible` or `try_reserve` in a
     crate, or argue the site with a marker.
   * A file whose count fell is reported and does not fail. This differs from
     the item's ratchet on purpose: the load changes in most landings, and a
@@ -85,9 +85,9 @@ ROOT = Path(__file__).resolve().parent.parent.parent.parent
 BASELINE = ROOT / "tools" / "common" / "data" / "ring0-alloc-baseline.json"
 
 # The kernel's packages: what they link is what ring 0 runs.
-KERNEL_PACKAGES = ("ferrix-kernel", "ferrix-kernel-core", "ferrix-kernel-item", "ferrix-kernel-load")
+KERNEL_PACKAGES = ("xaqu-kernel", "xaqu-kernel-core", "xaqu-kernel-item", "xaqu-kernel-load")
 # The toolkit the conversions are made with; its infallible calls are its job.
-TOOLKIT_CRATES = {"ferrix-fallible"}
+TOOLKIT_CRATES = {"xaqu-fallible"}
 # Only what ships into the image: build scripts run on the host.
 SHIPPING_TABLES = ("dependencies",)
 
@@ -261,17 +261,17 @@ def record(counts: dict[str, int]) -> None:
 
 
 _SELF_CARGO = {
-    "dependencies": {"ferrix-a": {"workspace": True}, "renamed": {"workspace": True}, "plain": "1"},
-    "build-dependencies": {"ferrix-host": {"workspace": True}},
-    "target": {"cfg(x)": {"dependencies": {"ferrix-t": {"path": "x"}}}},
+    "dependencies": {"xaqu-a": {"workspace": True}, "renamed": {"workspace": True}, "plain": "1"},
+    "build-dependencies": {"xaqu-host": {"workspace": True}},
+    "target": {"cfg(x)": {"dependencies": {"xaqu-t": {"path": "x"}}}},
 }
-_SELF_WORKSPACE = {"ferrix-a": {"path": "a"}, "renamed": {"package": "ferrix-r", "path": "r"}}
+_SELF_WORKSPACE = {"xaqu-a": {"path": "a"}, "renamed": {"package": "xaqu-r", "path": "r"}}
 
 
 def self_test() -> list[str]:
     failures = []
     got = shipping_deps(_SELF_CARGO, _SELF_WORKSPACE)
-    want = {"ferrix-a", "ferrix-r", "plain", "ferrix-t"}
+    want = {"xaqu-a", "xaqu-r", "plain", "xaqu-t"}
     if got != want:
         failures.append(f"shipping deps: got {sorted(got)}, expected {sorted(want)}")
     sites = {"a.rs": [{"marker": None}, {"marker": "noalloc"}, {"marker": None}], "b.rs": [{"marker": "fatal"}]}
@@ -334,7 +334,7 @@ def main() -> int:
         print(
             "ring0-alloc: infallible allocation added in ring 0, where a program can\n"
             "  drive it and an empty heap then stops the machine (FX-0008). Use\n"
-            "  crate::fallible in the kernel, ferrix-fallible or try_reserve in a crate,\n"
+            "  crate::fallible in the kernel, xaqu-fallible or try_reserve in a crate,\n"
             "  or argue the site with NOALLOC:/FALLIBLE:/FATAL-ALLOC: (check-fallible-alloc.py's\n"
             "  docstring; docs/ROBUSTNESS.md, class A):",
             file=sys.stderr,

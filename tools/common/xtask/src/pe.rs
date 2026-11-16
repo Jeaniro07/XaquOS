@@ -31,7 +31,7 @@
 //! file-backed bytes. Each is a build failure with a message, because each
 //! would otherwise be a boot that stops with nothing on the serial port.
 
-use ferrix_elf::{Addend, Class, EM_ARM, Elf};
+use xaqu_elf::{Addend, Class, EM_ARM, Elf};
 
 use crate::{Error, Result};
 
@@ -236,10 +236,10 @@ pub(crate) fn check_switch(elf_image: &[u8]) -> Result<()> {
             .find(|symbol| symbol.name == name)
             .map(|symbol| symbol.value)
     };
-    let (Some(start), Some(end)) = (find(b"ferrix_switch_start"), find(b"ferrix_switch_end"))
+    let (Some(start), Some(end)) = (find(b"xaqu_switch_start"), find(b"xaqu_switch_end"))
     else {
         return Err(fail(
-            "the loader has no ferrix_switch_start/ferrix_switch_end block",
+            "the loader has no xaqu_switch_start/xaqu_switch_end block",
         ));
     };
     let mut sites = Vec::new();

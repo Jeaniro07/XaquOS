@@ -1,6 +1,6 @@
 //! x86-64.
 //!
-//! The kernel's entry is `ferrix_syscall_stub` in
+//! The kernel's entry is `xaqu_syscall_stub` in
 //! `src/kernel/src/arch/x86_64/syscall.rs`: `SYSCALL`, the number in RAX, the
 //! arguments in RDI, RSI, RDX, R10, R8 and R9 — R10, not RCX, because the
 //! instruction overwrites RCX with the return address and R11 with the flags —
@@ -8,8 +8,8 @@
 
 use core::arch::{asm, naked_asm};
 
-use ferrix_linux_abi::nr::x86_64::{CLOCK_GETTIME, EXIT_GROUP, UNLINK};
-use ferrix_native::Raw;
+use xaqu_linux_abi::nr::x86_64::{CLOCK_GETTIME, EXIT_GROUP, UNLINK};
+use xaqu_native::Raw;
 
 use crate::linux::CLOCK_MONOTONIC;
 
@@ -18,7 +18,7 @@ use crate::linux::CLOCK_MONOTONIC;
 /// A number is this architecture's, so the table it comes from is named here
 /// and nowhere else; `crate::linux` spells every call the same on all three.
 pub(crate) mod nr {
-    pub(crate) use ferrix_linux_abi::nr::x86_64::{
+    pub(crate) use xaqu_linux_abi::nr::x86_64::{
         ACCEPT4, BIND, CLOSE, FCNTL, GETSOCKOPT, LISTEN, MUNMAP, READ, REBOOT, SETSOCKOPT, SOCKET,
         WRITE,
     };
@@ -26,13 +26,13 @@ pub(crate) mod nr {
 
 /// This architecture's whole table, for a program that makes a call
 /// `crate::linux` has no function for (`crate::linux::call`).
-pub use ferrix_linux_abi::nr::x86_64 as numbers;
+pub use xaqu_linux_abi::nr::x86_64 as numbers;
 
 /// The process's first instruction.
 ///
-/// `ferrix_enter_user` starts a program with `SYSRET` and the stack pointer a
+/// `xaqu_enter_user` starts a program with `SYSRET` and the stack pointer a
 /// multiple of 16. A function expects to be entered by a `call`, eight bytes
-/// below that; so the stack is aligned and `ferrix_rt_start` is called, which
+/// below that; so the stack is aligned and `xaqu_rt_start` is called, which
 /// pushes the return address the ABI wants. RBP is zeroed so a frame-pointer
 /// walk ends here. The bootstrap handle's register, RDI, is already the first
 /// argument.
@@ -44,7 +44,7 @@ pub(crate) extern "C" fn _start() -> ! {
     naked_asm!(
         "xor ebp, ebp",
         "and rsp, -16",
-        "call ferrix_rt_start",
+        "call xaqu_rt_start",
         "ud2",
     )
 }
@@ -128,7 +128,7 @@ pub(crate) fn trap_words(number: usize, args: [usize; 6]) -> (usize, [usize; 3])
     let (w0, w1, w2);
     // The vector registers: `channel_write_read`, `object_wait_one` and
     // `port_wait` destroy every register the System V ABI makes caller-saved,
-    // as a function call does (`ferrix_native_abi::nr`, the vector-state
+    // as a function call does (`xaqu_native_abi::nr`, the vector-state
     // contract; `docs/OPAQUE-KERNEL.md` §9.8, 3a). `clobber_abi("sysv64")`
     // declares exactly that, so the compiler keeps no live value in an `XMM`
     // or `YMM` register, an x87 register or a mask register across the trap;
@@ -204,7 +204,7 @@ pub(crate) fn exit(status: i32) -> ! {
     }
 }
 
-/// The ELF machine of a native program here (`ferrix-process-builder`).
+/// The ELF machine of a native program here (`xaqu-process-builder`).
 pub const ELF_MACHINE: u16 = 62;
 /// Make `RESTRICTED_ENTER`, `RESTRICTED_RESUME` or `RESTRICTED_CONTINUE`, with
 /// one argument, and answer what an exit leaves (`docs/microkernel/K1.md`
@@ -256,17 +256,17 @@ pub(crate) unsafe fn restricted(
 // `linuxd`'s copies of a program's memory, in the copy window
 // (`docs/microkernel/K1.md` §2.5): zero, or what the kernel landed with.
 core::arch::global_asm!(
-    ".section .text.ferrix_program_copy, \"ax\"",
-    ".globl ferrix_program_copy",
-    "ferrix_program_copy:",
+    ".section .text.xaqu_program_copy, \"ax\"",
+    ".globl xaqu_program_copy",
+    "xaqu_program_copy:",
     "mov rcx, rdx",
     "rep movsb",
     "xor eax, eax",
-    ".globl ferrix_program_copy_end",
-    "ferrix_program_copy_end:",
+    ".globl xaqu_program_copy_end",
+    "xaqu_program_copy_end:",
     "nop",
-    ".globl ferrix_program_copy_landing",
-    "ferrix_program_copy_landing:",
+    ".globl xaqu_program_copy_landing",
+    "xaqu_program_copy_landing:",
     "ret",
     ".text",
 );

@@ -20,9 +20,9 @@
 
 mod arch;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Run every case.
-fn main(bootstrap: ferrix_rt::Bootstrap) -> i32 {
+fn main(bootstrap: xaqu_rt::Bootstrap) -> i32 {
     arch::run(bootstrap)
 }

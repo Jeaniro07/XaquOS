@@ -1,7 +1,7 @@
 /*
  * rig: the game path's rig programs that are not the frame recorder
  * (docs/GAME-PATH.md §2.4, stage 24's R3). One static binary, the same
- * on the Linux guest and on Ferrix, so that nothing is measured with one
+ * on the Linux guest and on Xaqu, so that nothing is measured with one
  * tool on one system and another on the other.
  *
  *   rig cpus                       how many processors /proc/stat lists

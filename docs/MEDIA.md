@@ -1,8 +1,8 @@
 # Media: Bad Apple!! and Doom
 
-The customer's order of 2026-09-26: Ferrix plays **Bad Apple!! with its
+The customer's order of 2026-09-26: Xaqu plays **Bad Apple!! with its
 sound**, and runs **Doom, written in Rust**. Both are Linux programs on
-Ferrix's Linux ABI -- Bad Apple!! the `badapple` app (`docs/APPS.md`),
+Xaqu's Linux ABI -- Bad Apple!! the `badapple` app (`docs/APPS.md`),
 Doom in `userland/doom/` -- and both stand on what stages 17 and 22 built: `/dev/dri/card0`'s dumb
 buffers (`docs/DISPLAY.md`), `/dev/snd` (`docs/AUDIO.md`) and
 `/dev/input/eventN` (`docs/INPUT.md`). Neither needs anything new from the
@@ -18,11 +18,11 @@ kernel.
   shareware or retail WADs are never used by a gate or committed.
 * **The Doom engine** is room4doom (github.com/flukejones/room4doom). It is
   labelled MIT, but its own README calls it a transliteration of id's Doom
-  C source, which is GPL-2.0, so Ferrix treats it as GPL. The customer's
+  C source, which is GPL-2.0, so Xaqu treats it as GPL. The customer's
   decision (2026-09-26): cargo fetches it at build time as a git
   dependency pinned to one revision, the way Chrome is fetched. What the
-  repository holds is Ferrix's backend for it (the screen, the sound and
-  the input), which is written for Ferrix and is MIT like the rest.
+  repository holds is Xaqu's backend for it (the screen, the sound and
+  the input), which is written for Xaqu and is MIT like the rest.
 
 ## 2. Bad Apple!!
 
@@ -40,7 +40,7 @@ workspace of its own that plays through two crates of the system's
 Until 2026-10-01 the player and `bav` were in the media workspace too.
 
 **The video is converted on the host.** No H.264 decoder written in Rust
-could run on Ferrix, and a shadow play needs few of H.264's tools. `bav-pack`
+could run on Xaqu, and a shadow play needs few of H.264's tools. `bav-pack`
 takes ffmpeg's grey frames and writes 16 shades of grey in runs. Each run
 either paints a shade or keeps the previous frame's pixels (the format is
 documented in `bav/src/lib.rs`). Before packing, ffmpeg snaps near-black
@@ -49,7 +49,7 @@ is shown is kept rather than repainted. The source's compression noise
 would otherwise be most of the file. All 6572 frames come to 32 MB, in the
 initramfs.
 
-**The song is decoded on Ferrix.** The player reads the original's own AAC
+**The song is decoded on Xaqu.** The player reads the original's own AAC
 track (copied out by ffmpeg, not re-encoded) with symphonia, which is Rust
 and MPL-2.0, used unmodified. It converts the song to the card's 48 kHz
 with `resample` and writes it to the card.
@@ -110,7 +110,7 @@ wgpu and cpal. Three things follow:
 
 * `render/backend`'s `ActiveBackend` is defined only when one of its
   display features is on, so the crate does not build without SDL2, winit
-  or wgpu. Ferrix's frontend should skip it and drive `software25d`
+  or wgpu. Xaqu's frontend should skip it and drive `software25d`
   directly: `Software25D::new(hfov, w, h, hi_res)`, then `draw_view(view,
   level_data, pic_data, &mut PixelTarget)`. It then draws the status bar,
   messages, menu, intermission and finale (`doom-ui`, through
@@ -124,18 +124,18 @@ wgpu and cpal. Three things follow:
   palette set by damage and bonus counts, the view, then the UI). Write it
   against the libraries' API, not by copying the file.
 * Sound is a `std::sync::mpsc` channel of `sound_common::SoundAction`.
-  Ferrix's mixer consumes it: effects from the WAD's `DS*` lumps at
+  Xaqu's mixer consumes it: effects from the WAD's `DS*` lumps at
   11025 Hz, and music as MUS to MIDI (`sound_common::read_mus_to_midi`)
   into `opl2_emulator`.
 
 Planned, in the order it would be built:
 
-* **D1: the engine for Ferrix.** Pull in room4doom's crates that don't
+* **D1: the engine for Xaqu.** Pull in room4doom's crates that don't
   depend on a platform (`wad`, `level`, `gameplay`, `gamestate`,
   `render/software25d`, `ui`, `sound/common`, `sound/opl2_emulator`). Add a
-  main loop of Ferrix's own that draws the software renderer's frame into a
+  main loop of Xaqu's own that draws the software renderer's frame into a
   dumb buffer as `badapple` does. 8 points.
-* **D2: sound.** A mixer of Ferrix's own behind room4doom's `SoundAction`
+* **D2: sound.** A mixer of Xaqu's own behind room4doom's `SoundAction`
   channel: the 11025 Hz effects at 640/147 through `resample`, and the OPL2
   music, through `pcm`. 5 points.
 * **D3: input, and the gate.** Keys from `/dev/input/eventN` as room4doom's

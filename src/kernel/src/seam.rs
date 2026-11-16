@@ -24,8 +24,8 @@
 //! invokes it twice defines them twice and does not link either: the
 //! registration is the linker's (ledger 3762 (2)).
 //!
-//! The list's types are written as `::ferrix_kernel_load::...` paths, which
-//! resolve both here (`extern crate self as ferrix_kernel_load`) and in the
+//! The list's types are written as `::xaqu_kernel_load::...` paths, which
+//! resolve both here (`extern crate self as xaqu_kernel_load`) and in the
 //! binary's root, where the binding macro expands.
 
 /// One seam: its trait, symbols, wrappers, count and binding macro, from one
@@ -88,7 +88,7 @@ macro_rules! seam {
                     #[inline(never)]
                     #[unsafe(no_mangle)]
                     fn $symbol($($arg: $ty),*) -> $ret {
-                        <$d chosen as ::ferrix_kernel_load::$module::$trait_name>::$name($($arg),*)
+                        <$d chosen as ::xaqu_kernel_load::$module::$trait_name>::$name($($arg),*)
                     }
                 )*
             };

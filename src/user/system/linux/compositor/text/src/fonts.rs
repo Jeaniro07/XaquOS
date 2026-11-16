@@ -328,10 +328,10 @@ impl Fonts {
     }
 
     /// The faces under the directories fontconfig would look in on this
-    /// machine, in this order: `$FERRIX_FONT_DIRS` (colon-separated, the
+    /// machine, in this order: `$XAQU_FONT_DIRS` (colon-separated, the
     /// image's own list), `$XDG_DATA_HOME/fonts` (`~/.local/share/fonts`),
     /// `~/.fonts`, `/usr/share/fonts`, `/usr/local/share/fonts`,
-    /// `/usr/share/ferrix/fonts` (the tree's `assets/fonts/`, where an image
+    /// `/usr/share/xaqu/fonts` (the tree's `assets/fonts/`, where an image
     /// carries it). Missing directories are skipped; subdirectories are
     /// read.
     #[must_use]
@@ -347,7 +347,7 @@ impl Fonts {
     #[must_use]
     pub fn system_dirs() -> Vec<PathBuf> {
         let mut dirs: Vec<PathBuf> = Vec::new();
-        if let Some(list) = std::env::var_os("FERRIX_FONT_DIRS") {
+        if let Some(list) = std::env::var_os("XAQU_FONT_DIRS") {
             dirs.extend(std::env::split_paths(&list).filter(|dir| !dir.as_os_str().is_empty()));
         }
         let home = std::env::var_os("HOME")
@@ -361,7 +361,7 @@ impl Fonts {
         for fixed in [
             "/usr/share/fonts",
             "/usr/local/share/fonts",
-            "/usr/share/ferrix/fonts",
+            "/usr/share/xaqu/fonts",
         ] {
             dirs.push(PathBuf::from(fixed));
         }

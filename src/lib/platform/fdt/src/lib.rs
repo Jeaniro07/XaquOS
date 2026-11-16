@@ -23,7 +23,7 @@
 //! that nests forever is refused rather than recursed into.
 //!
 //! ```
-//! # use ferrix_fdt::{Fdt, FdtError};
+//! # use xaqu_fdt::{Fdt, FdtError};
 //! # fn example(blob: &[u8]) -> Result<(), FdtError> {
 //! let fdt = Fdt::parse(blob)?;
 //! for region in fdt.memory() {

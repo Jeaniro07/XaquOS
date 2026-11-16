@@ -5,12 +5,12 @@ use core::cell::RefCell;
 use std::rc::Rc;
 use std::vec::Vec;
 
-use ferrix_sndctl::message::{
+use xaqu_sndctl::message::{
     DIRECTION_CAPTURE, DIRECTION_PLAYBACK, Elapsed, MAX_PUBLISHED, Message, Published, Ready,
     Refusal, Submit,
 };
-use ferrix_sndctl::pcm::MAX_IN_FLIGHT;
-use ferrix_virtio::pci::{STATUS_DRIVER_OK, STATUS_FAILED};
+use xaqu_sndctl::pcm::MAX_IN_FLIGHT;
+use xaqu_virtio::pci::{STATUS_DRIVER_OK, STATUS_FAILED};
 
 use super::fake::{Bus, Device, Handle, PAGE, Region};
 use crate::{

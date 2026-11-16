@@ -36,14 +36,14 @@
     reason = "a raised check: it calls methods made pub for it alone"
 )]
 
-use ferrix_kernel_core::arch::armv7a as core_armv7a;
-use ferrix_kernel_core::arch::armv7a::switch as core_switch;
+use xaqu_kernel_core::arch::armv7a as core_armv7a;
+use xaqu_kernel_core::arch::armv7a::switch as core_switch;
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::types::SIGUSR1;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::types::SIGUSR1;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Rights;
 
 use crate::console::println;
 use crate::object::Object;
@@ -526,12 +526,12 @@ fn load(name: &[u8], code: &[u8]) -> Result<Arc<Process>, &'static str> {
         return Err("a switch-state fixture is longer than the loader's text segment holds");
     }
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         core_armv7a::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         code,
     );
-    crate::syscall::exec::load(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+    crate::syscall::exec::load(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a switch-state program could not be loaded")
 }
 
@@ -883,7 +883,7 @@ pub(crate) fn run_vectors() -> Result<VectorReport, &'static str> {
 ///
 /// Verifies: `L.armv7a.5`
 fn check_the_three_numbers() -> Result<(), &'static str> {
-    use ferrix_native_abi::nr::{CHANNEL_WRITE_READ, FIRST, LAST, OBJECT_WAIT_ONE, PORT_WAIT};
+    use xaqu_native_abi::nr::{CHANNEL_WRITE_READ, FIRST, LAST, OBJECT_WAIT_ONE, PORT_WAIT};
 
     use core_armv7a::trap::vectors_die_in;
 
@@ -2049,7 +2049,7 @@ fn check_bring_up_scrubs() -> Result<(), &'static str> {
         // is saved at its switch out), so filling them takes nobody's.
         unsafe { core_switch::turn_on() };
         // SAFETY: (SYSREG) as above; `EN` was just set.
-        unsafe { core_switch::ferrix_user_fpu_restore(&raw const dirty, 1) };
+        unsafe { core_switch::xaqu_user_fpu_restore(&raw const dirty, 1) };
         // SAFETY: (SYSREG) as above; `CPACR` was granted at bring-up.
         let _ = unsafe { core_switch::bring_up_vfp() };
         // Bring-up writes no record (a secondary cannot name its own yet);
@@ -2088,7 +2088,7 @@ fn behind_en_masked() -> Behind {
     // state is in the registers while `EN` is clear.
     unsafe { core_switch::turn_on() };
     // SAFETY: (SYSREG) as above; `EN` was just set.
-    unsafe { core_switch::ferrix_user_fpu_save(&raw mut seen, 1) };
+    unsafe { core_switch::xaqu_user_fpu_save(&raw mut seen, 1) };
     // SAFETY: (SYSREG) as above; scrubbed again and `EN` cleared, so I2 holds
     // after the read.
     unsafe { core_switch::scrub_off(32) };

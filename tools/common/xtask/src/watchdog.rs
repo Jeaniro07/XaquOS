@@ -4,7 +4,7 @@
 //! `L.lockup.6`-`9`). x86-64: the watchdog has no architecture's code, and
 //! its windows are measured where the gate host boots fastest.
 //!
-//! Every case boots busybox as init with `ferrix.watchdog=on`, except the
+//! Every case boots busybox as init with `xaqu.watchdog=on`, except the
 //! last two. busybox's `watchdog -F -T 5 -t 1` arms a 5 s timeout and feeds
 //! every second.
 //!
@@ -12,7 +12,7 @@
 //!    under FX-9008 within the window (`REPORT_AT_LEAST` to
 //!    `REPORT_AT_MOST` after the stop line), name the opener, its 5 s
 //!    timeout and the time since the last feed, and halt;
-//! 2. *stopped, reset*: the same under `ferrix.panic=reset`: the report's
+//! 2. *stopped, reset*: the same under `xaqu.panic=reset`: the report's
 //!    reset line, the machine starting again by itself, and boot 2's loader
 //!    quoting the report;
 //! 3. *killed*: the feeder is ended with `SIGKILL`, so its file's last
@@ -29,12 +29,12 @@
 //!    kernel says the watchdog is disarmed for the halt, and no FX-9008. The
 //!    halt stops the machine at once, so the task never outlives it: the
 //!    line is the check;
-//! 7. *init feeds*: init as pid 1 with `ferrix.init.watchdog=5` for 20 s:
+//! 7. *init feeds*: init as pid 1 with `xaqu.init.watchdog=5` for 20 s:
 //!    init says it feeds, and no report;
-//! 8. *off*: `ferrix.watchdog=On`, any value but `on`, is said and taken as
+//! 8. *off*: `xaqu.watchdog=On`, any value but `on`, is said and taken as
 //!    off: `/dev/watchdog` is absent and nothing is served.
 //!
-//! `FERRIX_TEST_WATCHDOG_ONLY=<case>,...` (`stopped`, `reset`, `killed`,
+//! `XAQU_TEST_WATCHDOG_ONLY=<case>,...` (`stopped`, `reset`, `killed`,
 //! `goes-on`, `disabled`, `halted`, `init`, `off`) runs those cases alone,
 //! for a negative control's run; a gate row sets nothing and runs every case.
 
@@ -52,7 +52,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     name: "test-watchdog",
     help_at: 502,
     help: &[
-        "test-watchdog  /dev/watchdog (ferrix.watchdog=on): a feeder stopped or killed is reported under FX-9008, and reset by ferrix.panic=reset; a feed that goes on, a magic close, DISABLECARD, a halt, init's feed and the option off are not (x86_64)",
+        "test-watchdog  /dev/watchdog (xaqu.watchdog=on): a feeder stopped or killed is reported under FX-9008, and reset by xaqu.panic=reset; a feed that goes on, a magic close, DISABLECARD, a halt, init's feed and the option off are not (x86_64)",
     ],
     run: |_, args| test_watchdog(args),
 }];
@@ -71,7 +71,7 @@ pub(crate) fn test_watchdog(args: &Args) -> Result<()> {
                  windows are measured under KVM",
             ));
         }
-        let only = std::env::var("FERRIX_TEST_WATCHDOG_ONLY").unwrap_or_default();
+        let only = std::env::var("XAQU_TEST_WATCHDOG_ONLY").unwrap_or_default();
         let wants = |case: &str| only.is_empty() || only.split(',').any(|each| each == case);
         let busybox = crate::busybox::program(arch)?;
         let shell = read(&busybox)?;
@@ -131,9 +131,9 @@ const STARVED: &str = "user space stopped feeding /dev/watchdog: armed by proces
 /// What the headline says of the feeder's timeout, and of the last feed.
 const FIVE_SECONDS: &str = "with a 5 s timeout, last fed ";
 /// The kernel's line for a value of the option other than `on`.
-const NOT_UNDERSTOOD: &str = "watchdog ferrix.watchdog=On is not understood; it is off";
+const NOT_UNDERSTOOD: &str = "watchdog xaqu.watchdog=On is not understood; it is off";
 /// The kernel's line once the watchdog is served.
-const SERVED: &str = "  watchdog ferrix.watchdog=on: /dev/watchdog is served";
+const SERVED: &str = "  watchdog xaqu.watchdog=on: /dev/watchdog is served";
 /// Boot 2's loader's quotation of boot 1's report.
 const QUOTED: &str = "'s last report: panicked: user space stopped feeding /dev/watchdog";
 /// The kernel's line for a last release without the magic `V`.
@@ -159,7 +159,7 @@ const INVALID: &str = "Invalid argument";
 /// task's second and a slack of 9 s for a loaded host.
 const REPORT_AT_LEAST: Duration = Duration::from_millis(3_500);
 const REPORT_AT_MOST: Duration = Duration::from_secs(15);
-/// The longest from the report to `ferrix.panic=reset`'s reset.
+/// The longest from the report to `xaqu.panic=reset`'s reset.
 const RESET_AT_MOST: Duration = Duration::from_secs(60);
 /// How long the cases that must not report watch past the feed: the
 /// timeout and 5 s.
@@ -170,14 +170,14 @@ const QUIET: Duration = Duration::from_secs(10);
 enum Ending {
     /// `SIGSTOP`, the default halt.
     Stopped,
-    /// `SIGSTOP` under `ferrix.panic=reset`.
+    /// `SIGSTOP` under `xaqu.panic=reset`.
     StoppedReset,
     /// `SIGKILL`: the file's last release, without the magic `V`.
     Killed,
 }
 
 /// Cases 1 to 3: the feeder stops feeding; the report must come in the
-/// window, and under `ferrix.panic=reset` the machine reset by itself.
+/// window, and under `xaqu.panic=reset` the machine reset by itself.
 ///
 /// Verifies: H.FAIL.14, `L.lockup.6`, `L.lockup.7`
 fn feeder_stops(
@@ -187,9 +187,9 @@ fn feeder_stops(
     shell: &[u8],
     ending: Ending,
 ) -> Result<()> {
-    let mut options = format!("{} ferrix.watchdog=on", qemu::init_option(STOP_SCRIPT));
+    let mut options = format!("{} xaqu.watchdog=on", qemu::init_option(STOP_SCRIPT));
     if ending == Ending::StoppedReset {
-        options.push_str(" ferrix.panic=reset");
+        options.push_str(" xaqu.panic=reset");
     }
     let signal = if ending == Ending::Killed {
         "KILL"
@@ -364,7 +364,7 @@ fn stopped_problem(
             return Some(format!("boot 2's loader never said `boot 1{QUOTED}...`"));
         }
     } else if report.iter().any(|line| line.contains(RESET_LINE)) {
-        return Some("a report without ferrix.panic=reset announced a reset".to_owned());
+        return Some("a report without xaqu.panic=reset announced a reset".to_owned());
     }
     None
 }
@@ -418,7 +418,7 @@ fn feed_goes_on(
     parts: &crate::init_file::Parts<'_>,
     shell: &[u8],
 ) -> Result<()> {
-    let options = format!("{} ferrix.watchdog=on", qemu::init_option(STOP_SCRIPT));
+    let options = format!("{} xaqu.watchdog=on", qemu::init_option(STOP_SCRIPT));
     let quiet = QUIET.as_secs();
     let script = format!(
         "#!/bin/sh\n\
@@ -514,7 +514,7 @@ fn disabled(
     parts: &crate::init_file::Parts<'_>,
     shell: &[u8],
 ) -> Result<()> {
-    let options = format!("{} ferrix.watchdog=on", qemu::init_option(STOP_SCRIPT));
+    let options = format!("{} xaqu.watchdog=on", qemu::init_option(STOP_SCRIPT));
     let quiet = QUIET.as_secs();
     let script = format!(
         "#!/bin/sh\n\
@@ -564,7 +564,7 @@ fn halted(
     parts: &crate::init_file::Parts<'_>,
     shell: &[u8],
 ) -> Result<()> {
-    let options = format!("{} ferrix.watchdog=on", qemu::init_option(STOP_SCRIPT));
+    let options = format!("{} xaqu.watchdog=on", qemu::init_option(STOP_SCRIPT));
     let script = format!(
         "#!/bin/sh\nwatchdog -F -T 5 -t 1 /dev/watchdog &\nsleep 3\necho \"{HALTING}\"\nhalt -f\nsleep 600\n"
     );
@@ -608,7 +608,7 @@ fn init_feeds(arch: Arch, args: &Args) -> Result<()> {
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &files)?;
     let options = format!(
-        "{} ferrix.watchdog=on ferrix.init.watchdog=5",
+        "{} xaqu.watchdog=on xaqu.init.watchdog=5",
         crate::init::command_line().trim_end()
     );
     let image = crate::fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
@@ -655,7 +655,7 @@ fn init_feeds(arch: Arch, args: &Args) -> Result<()> {
     Ok(())
 }
 
-/// Case 8: with a value of `ferrix.watchdog` other than `on`, said and
+/// Case 8: with a value of `xaqu.watchdog` other than `on`, said and
 /// taken as off: no node and no task.
 ///
 /// Verifies: `L.lockup.9`
@@ -670,7 +670,7 @@ fn switched_off(
         shell,
         STOP_SCRIPT,
         script,
-        &format!("{} ferrix.watchdog=On", qemu::init_option(STOP_SCRIPT)),
+        &format!("{} xaqu.watchdog=On", qemu::init_option(STOP_SCRIPT)),
         &["bin/poweroff"],
     )?;
     let lines = watch_until(arch, args, parts, &image, &["wd-off: "])?;
@@ -681,15 +681,15 @@ fn switched_off(
     }
     if !lines.iter().any(|line| line.contains("wd-off: absent")) {
         return Err(Error::new(format!(
-            "{arch}: with ferrix.watchdog=On, /dev/watchdog was not absent"
+            "{arch}: with xaqu.watchdog=On, /dev/watchdog was not absent"
         )));
     }
     if lines.iter().any(|line| line.contains(SERVED)) {
         return Err(Error::new(format!(
-            "{arch}: with ferrix.watchdog=On, the kernel served the watchdog"
+            "{arch}: with xaqu.watchdog=On, the kernel served the watchdog"
         )));
     }
-    println!("  {arch}: ferrix.watchdog=On is not understood: no /dev/watchdog and no task");
+    println!("  {arch}: xaqu.watchdog=On is not understood: no /dev/watchdog and no task");
     Ok(())
 }
 
@@ -701,12 +701,12 @@ mod tests {
         text.iter().map(|line| (*line).to_owned()).collect()
     }
 
-    const HEADLINE: &str = "FERRIX-PANIC user space stopped feeding /dev/watchdog: armed by process 7 (watchdog) with a 5 s timeout, last fed 5012 ms ago";
+    const HEADLINE: &str = "XAQU-PANIC user space stopped feeding /dev/watchdog: armed by process 7 (watchdog) with a 5 s timeout, last fed 5012 ms ago";
 
     #[test]
     fn a_report_must_be_the_watchdogs_in_its_window_and_reset_only_when_asked() {
         let boot_1 = lines(&[
-            "  watchdog ferrix.watchdog=on: /dev/watchdog is served; once opened",
+            "  watchdog xaqu.watchdog=on: /dev/watchdog is served; once opened",
             HEADLINE,
             "  code      FX-9008  user space stopped feeding its watchdog",
         ]);
@@ -739,8 +739,8 @@ mod tests {
                 .is_some_and(|why| why.contains("announced a reset"))
         );
         let other = lines(&[
-            "  watchdog ferrix.watchdog=on: /dev/watchdog is served; once opened",
-            "FERRIX-PANIC something else",
+            "  watchdog xaqu.watchdog=on: /dev/watchdog is served; once opened",
+            "XAQU-PANIC something else",
             "  code      FX-0001  something else",
         ]);
         assert!(
@@ -752,7 +752,7 @@ mod tests {
     #[test]
     fn a_report_while_fed_or_a_second_banner_fails_the_case_that_goes_on() {
         let good = lines(&[
-            "Ferrix loader 0.3.0",
+            "Xaqu loader 0.3.0",
             "wd-feed: feeding as 9",
             "watchdog: /dev/watchdog: Resource busy",
             "wd-feed: second open done",
@@ -763,10 +763,10 @@ mod tests {
         ]);
         assert_eq!(goes_on_problem(&good), None);
         let mut reset = good.clone();
-        reset.insert(6, "Ferrix loader 0.3.0".to_owned());
+        reset.insert(6, "Xaqu loader 0.3.0".to_owned());
         assert!(goes_on_problem(&reset).is_some_and(|why| why.contains("reset")));
         let mut reported = good;
-        reported.push("FERRIX-PANIC user space stopped feeding".to_owned());
+        reported.push("XAQU-PANIC user space stopped feeding".to_owned());
         assert!(goes_on_problem(&reported).is_some_and(|why| why.contains("report")));
     }
 }

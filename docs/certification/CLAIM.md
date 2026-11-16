@@ -32,7 +32,7 @@
 >   bus master's DMA is translated. ARMv7-A leaves the claimed
 >   architectures (`present.toml`'s `claim_architectures`,
 >   `certification-item.json`'s `reference_configuration.architectures`).
->   Every ARMv7-A image boots with `ferrix.unisolated`, and its rows are
+>   Every ARMv7-A image boots with `xaqu.unisolated`, and its rows are
 >   development rows, not claim evidence; the DK1 stays a development
 >   board. Under `personality=user` alone, since no hybrid publishes (ledger 5896 C.1), generic device-tree publication (`docs/DRIVER-MODEL.md`
 >   step 1, ledger 4475 D22) means the drivers of the DMA-capable peripherals
@@ -43,7 +43,7 @@
 >   on ARMv7-A and its rows boot without the word: ARMv7-A then returns to
 >   both lists, by a decision of the customer's, reviewed by the consultant.
 
-The customer has named Ferrix's differentiator: run Linux software on a
+The customer has named Xaqu's differentiator: run Linux software on a
 kernel that can be assured. That means unmodified Linux binaries (Chrome,
 rustc, git, Steam) on a memory-safe Rust kernel whose drivers are
 restartable, IOMMU-confined ring-3 processes, backed by the SysML model and
@@ -63,8 +63,8 @@ AoU-3 already excludes the Linux personality, the VFS, the network stack and
 every ring-3 driver from any claim, and forbids a safety function there.
 
 btrfs is the one part of the Linux layer that moved: on 2026-10-02 the
-customer decided that the btrfs reader and write path (`ferrix-btrfs`,
-`ferrix-btrfs-write`) are certified for as long as they run inside the
+customer decided that the btrfs reader and write path (`xaqu-btrfs`,
+`xaqu-btrfs-write`) are certified for as long as they run inside the
 kernel, and they joined the item. What that adds to the claim is narrow
 and is ASR-9's: data on a volume is returned as stored or refused, and what
 a commit reported durable survives a power cut, on a single-device volume
@@ -96,7 +96,7 @@ context** (the SEooC route of [SAFETY-MANUAL.md](SAFETY-MANUAL.md)).
   [README](README.md)'s verdicts rate EN 50716 SIL 2 "reachable" and IEC
   62304 Class C "closest", and 62304 needs an ISO 13485 QMS first (F-28),
   which is an organisation, not code.
-* **SIL 2 tolerates what Ferrix cannot soon remove:** dynamic memory
+* **SIL 2 tolerates what Xaqu cannot soon remove:** dynamic memory
   justified rather than forbidden (AoU-5), and roles combined with
   justification (F-27). Neither survives at SIL 3 and above.
 * **A qualified Rust toolchain exists** for IEC 61508 and ISO 26262
@@ -128,10 +128,10 @@ device discovery, and the native ABI a safety process uses, and since
 8,278 lines of host tests). Their
 interface below is the `Device` and `WriteDevice` traits the kernel's block
 layer answers, and above it `Volume` and `WriteVolume`. The Linux layer (the
-personality, VFS, the btrfs glue on the VFS -- `ferrix-btrfs-vfs` and the
+personality, VFS, the btrfs glue on the VFS -- `xaqu-btrfs-vfs` and the
 kernel's `fs/btrfs*.rs` --, net, namespaces, procfs) is outside, as the
 `load` ring: 64,036 kernel lines, plus the libraries it calls, which the
-gate does not count but for `ferrix-btrfs-vfs`'s 2,185 (network about 16k,
+gate does not count but for `xaqu-btrfs-vfs`'s 2,185 (network about 16k,
 vfs about 13k, by `wc` with tests).
 It stays outside.
 
@@ -185,7 +185,7 @@ pre-assessment (§5, M2).
 |---|---|---|---|---|---|
 | 1a. PKS / FEAT_S1POE domains in ring 0 | stray writes (and reads) | strengthens | doubtful: the load can rewrite the key register itself | 60–120, mostly partitioning data by owner | x86-64 with PKS only; AArch64 with S1POE, which no target has; not ARMv7-A (LPAE has no domains) |
 | 1b. Page-table switch on entry to the load | the same | strengthens | the same caveat | as 1a, and costly until PCIDs and ASIDs exist (none are used today) | all three |
-| 2a. Item at EL2 / VMX root, Ferrix's load as a guest kernel | memory, time, faults, resources | yes | yes | 150+: the load becomes a second kernel | x86-64, AArch64 (nested virtualisation to develop on) |
+| 2a. Item at EL2 / VMX root, Xaqu's load as a guest kernel | memory, time, faults, resources | yes | yes | 150+: the load becomes a second kernel | x86-64, AArch64 (nested virtualisation to develop on) |
 | 2b. Item as a separation kernel, **real Linux** as the guest | all four | yes | yes, with industry precedent | 80–150 | as 2a |
 | 3. Partial opaque: btrfs, then net, in ring 3 | all four, for the parts moved | yes, for those parts | yes, for those parts | btrfs 20–35 after 4; net 25–40 after 4 | all three |
 | 4. IPC fast path first | nothing by itself; the enabler for 3 and the full opaque kernel | — | — | 25–45 | all three |
@@ -205,7 +205,7 @@ Notes:
   3.2 IPIs per read. `ipc-lazytlb` (reviewed with conditions), `ipc-ring`
   and `ipc-wake` follow.
 * **2b is a strategic choice, not a technical one.** It is the proven route,
-  but it moves Linux compatibility out of Ferrix's own code, and "Linux
+  but it moves Linux compatibility out of Xaqu's own code, and "Linux
   software" then means a Linux VM.
 
 ### 3.3 Proposed combination
@@ -296,7 +296,7 @@ the assumption it replaces with an argument, and the work becomes orders in
 | M4 | SIL 2 compliant-item certificate; then ASIL B SEooC, 62304 Class C, CC EAL4+ | all of the above | assessor; toolchain vendor; CC lab; the customer's QMS | 20–30 for 26262's own work |
 
 **M0, statable today** (every number measured and in this directory):
-"Ferrix runs unmodified Linux programs above a 63,000-line kernel item that
+"Xaqu runs unmodified Linux programs above a 63,000-line kernel item that
 its build defines and enforces. It contains no third-party code and has no
 upward dependency, statement coverage is measured at about 90% on three
 architectures, and an element-level safety argument is written against IEC

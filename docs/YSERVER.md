@@ -3,7 +3,7 @@
 Version 1, a draft written on 2026-09-28 for the customer, who decides §8.
 The customer chose the server on 2026-09-27 (`docs/BACKLOG.md` Decisions):
 [yserver](https://github.com/joske/yserver), Rust and MIT, with a rootless
-Wayland backend that Ferrix adds. This document is the design that decision
+Wayland backend that Xaqu adds. This document is the design that decision
 asked for, written after the feasibility pass (§2), and before anything is
 built.
 
@@ -12,7 +12,7 @@ built.
 The Steam client is an X11 program, and hyprix speaks only Wayland. This
 document says how yserver becomes the X server between them:
 
-* **how it is built and carried**: a pinned release, Ferrix's patches, and
+* **how it is built and carried**: a pinned release, Xaqu's patches, and
   a data volume (§3);
 * **the backend**: every top-level X window becomes a window on hyprix, and
   hyprix's input goes back into X (§4);
@@ -40,15 +40,15 @@ bootstrapper (I5b of `docs/I386.md`).
 
 ## 2. What the feasibility pass found (2026-09-28)
 
-`cargo xtask test-yserver` boots Ferrix with a volume holding Debian 13's
+`cargo xtask test-yserver` boots Xaqu with a volume holding Debian 13's
 x86-64 libraries, Mesa's lavapipe, `x11-utils`, and yserver 1.6.0 (`0d00e81`)
 built against them. yserver starts on `:1` with no DRM card and no input
 device, renders through Vulkan on the CPU, and answers `xdpyinfo` about one
 second after the boot's shell starts. It lists 21 extensions, among them
 GLX, Present, RENDER, RANDR, MIT-SHM, Composite, XInputExtension, XKEYBOARD
-and XTEST. Ferrix changed nothing for it.
+and XTEST. Xaqu changed nothing for it.
 
-Ferrix gets three things wrong, and none of them matters to this design:
+Xaqu gets three things wrong, and none of them matters to this design:
 
 * a `NETLINK_KOBJECT_UEVENT` socket opens but never hears an event (it was
   `EPROTONOSUPPORT` until 2026-09-30), so yserver's udev monitor and
@@ -73,13 +73,13 @@ for after Steam runs.
 * **The source** is a fork of yserver under the customer's GitHub account
   (decision 1, §8), branched from the 1.6.0 tag (`0d00e81`) and pinned by
   commit; upstream's `master` was merged into it on 2026-10-03 (`3875be0`,
-  86 commits past 1.6.0). Ferrix's changes are commits on the fork, starting with
+  86 commits past 1.6.0). Xaqu's changes are commits on the fork, starting with
   `YSERVER_ALLOW_NO_INPUT`, and the Wayland backend is added there.
   `tools/common/fetch/fetch-yserver.sh` fetches the pinned commit and builds it,
   and writes the commit beside the volume's image. `cargo xtask` refuses an
   image made from any other commit: one made before the pin moved still
   starts and answers `xdpyinfo`, but takes no input from hyprix.
-* **The Wayland client** is Ferrix's own client runtime,
+* **The Wayland client** is Xaqu's own client runtime,
   `compositor-toolkit`, over `compositor-wire`, `compositor-protocol` and
   `compositor-shm` (decision 2, §8). The fork takes it as a git dependency
   on this repository at a pinned commit. It is MIT, uses only std and
@@ -92,7 +92,7 @@ for after Steam runs.
   already merges steamcmd's. A pinned package the mirror has since dropped
   (trixie-security keeps only a package's latest update) is fetched from
   snapshot.debian.org as the archive was on the day the pins were taken,
-  and checked against the same SHA-256; `FERRIX_YSERVER_POOL` names the
+  and checked against the same SHA-256; `XAQU_YSERVER_POOL` names the
   directory the downloads are kept in, an empty one to fetch as a new
   machine does.
 
@@ -240,7 +240,7 @@ the plan above in three places:
 
 The wheel takes hyprix's clicks where it counts them, else ten units of
 `wl_pointer.axis` a click. The cursor goes through the toolkit's new
-`Client::set_cursor_image` (Ferrix `e348bd13`). Two yserver bugs, found by
+`Client::set_cursor_image` (Xaqu `e348bd13`). Two yserver bugs, found by
 the test and fixed in the core for every backend, are the fork's `ed44c36`
 and `e81b3a5` (§9).
 
@@ -301,7 +301,7 @@ for `CLIPBOARD` and `PRIMARY` both:
   loop woken every 5 ms while one is under way, and give up after five
   seconds. `INCR` is not done: a selection larger than one property is
   refused both ways.
-* **The toolkit** needed `Client::adopt_new_ids` (Ferrix `f1ced561`): an
+* **The toolkit** needed `Client::adopt_new_ids` (Xaqu `f1ced561`): an
   offer's types follow the `data_offer` that makes it in the same read,
   and an offer adopted after the event had lost them.
 
@@ -392,7 +392,7 @@ Taken on 2026-09-28:
    GitHub account.** It was chosen over a patch series in this repository and
    over offering it upstream from the start. The fork is easier to offer
    upstream later.
-2. **The Wayland client library: Ferrix's own** `compositor-wire`,
+2. **The Wayland client library: Xaqu's own** `compositor-wire`,
    `compositor-protocol` and `compositor-shm`. It was chosen over the
    `wayland-client` crate.
 3. **The design is approved** for building, starting with Y1.
@@ -479,7 +479,7 @@ extension: a client's `NotifyMSC` stayed at 0, and its first
 `PresentPixmap` ended the server on lavapipe. The root's RandR output now
 has a clock, as Xwayland's does (`fcc145c4`): its MSC and UST advance at
 each frame hyprix sends and, between frames, once a refresh period of the
-rate hyprix reports, about 75 Hz on Ferrix (74.992 Hz). yserver logs the
+rate hyprix reports, about 75 Hz on Xaqu (74.992 Hz). yserver logs the
 rate at startup ("the Present clock runs at"). On the way: on a Vulkan
 device without `VK_KHR_external_semaphore_fd`, lavapipe's, a completion
 polls its fence instead (`c56a5e57`), which is the crash; and a parked
@@ -504,7 +504,7 @@ made from the pin.
 2026-09-29, later: **a window of a fixed size floats at that size**, as in
 Hyprland. yserver passes `WM_NORMAL_HINTS` on as `xdg_toplevel`'s least and
 greatest size (fork `c5b5935`, which `fetch-yserver.sh` pins), and hyprix
-floats a window whose least size is its greatest (Ferrix `ec4ce6b2`); Steam's
+floats a window whose least size is its greatest (Xaqu `ec4ce6b2`); Steam's
 sign-in window is one, and was tiled to fill the screen. `against_hyprix`
 requires a 150x90 fixed window to float at 150x90 (tiled at 598x438 with the
 rule taken out), yserver's unit test reads the hints' flags, and
@@ -522,7 +522,7 @@ finding nothing and `xclip` pasting its own copy. What Y6 found:
 * **The toolkit lost a data offer's types.** A program's own objects are
   adopted after the event that makes them, which is too late when the
   object's events follow in the same read: every `data_offer` came with
-  no types. `Client::adopt_new_ids` (Ferrix `f1ced561`) says ahead of time
+  no types. `Client::adopt_new_ids` (Xaqu `f1ced561`) says ahead of time
   what an event's new objects are.
 * **The core had no way to own or ask for a selection itself**, and a
   `ConvertSelection` of a selection owned by a window of the server's own
@@ -593,7 +593,7 @@ What Y5a found:
   and mio's edge-triggered poll never woke again. Under sway, which sends
   a window's configure and a ping once, no X window was ever shown; hyprix's
   frame events hid it. The Steam spike found it. Fixed in the toolkit
-  (Ferrix `9c84938e`), and checked on the host: the spike's own commit
+  (Xaqu `9c84938e`), and checked on the host: the spike's own commit
   never maps xev's window under a headless sway, and with only that fix,
   it does.
 * **Three yserver bugs, fixed for every backend.** A grow exposed black,
@@ -602,12 +602,12 @@ What Y5a found:
   borders, because the background repaint of the map painted over them
   (same commit). And the setup thread dropped a client whose setup had not
   arrived yet when its socket came non-blocking from `accept` (`14197fb`),
-  which is how Ferrix hands it on (below).
+  which is how Xaqu hands it on (below).
 * **The kernel's `accept` handed on `O_NONBLOCK`**, where Linux does not;
   steam-y4 fixed it the same day (`18388c70`). hyprix and yserver no longer
   depend on it either: hyprix reads a `hyprctl` request as it arrives
   (`2f651899`) and yserver makes its setup socket blocking.
-* **The spike's RandR fix is on `ferrix`** (`72fde5f`): the synthetic
+* **The spike's RandR fix is on `xaqu`** (`72fde5f`): the synthetic
   output kept its CRTC across rebuilds, which Chromium needs to find a
   display.
 * **Estimate against spend.** Y5a was 5 of Y5's 8 points and took about
@@ -624,8 +624,8 @@ What Y4 found:
   always picked the root (`ed44c36`). Key events carried the root position
   as their window position (`e81b3a5`). Xorg sets both in
   `FixUpEventFromWindow`.
-* **A Ferrix bug that drops X clients.** An accepted socket inherits the
-  listener's `O_NONBLOCK` on Ferrix. yserver's listener is non-blocking, so
+* **A Xaqu bug that drops X clients.** An accepted socket inherits the
+  listener's `O_NONBLOCK` on Xaqu. yserver's listener is non-blocking, so
   a client whose setup had not arrived when yserver first read it was
   dropped, and said `unable to open display`: 3 of 13 `test-xwindow` runs.
   It was also hyprix's empty `hyprctl` request. Fixed in the kernel the

@@ -29,7 +29,7 @@
 //! What changes against `cargo test` alone: binaries run at the same time,
 //! as one binary's tests already do; every binary runs to its end, where
 //! cargo stopped at the first that failed; and the output comes after the
-//! steps that ran meanwhile. `FERRIX_TESTS_IN_TURN=1` runs them as cargo
+//! steps that ran meanwhile. `XAQU_TESTS_IN_TURN=1` runs them as cargo
 //! does, for diagnosing a test (ledger line 1619).
 //!
 //! With the step cache on, a binary outside the item may be a cached pass
@@ -44,13 +44,13 @@ use std::time::{Duration, Instant};
 use crate::{Error, Result, sha256};
 
 /// The variable that names the directory a run's records go to.
-const VARIABLE: &str = "FERRIX_TEST_RUNS";
+const VARIABLE: &str = "XAQU_TEST_RUNS";
 
 /// The variable that names the `check` process the binaries belong to.
-const OWNER: &str = "FERRIX_TEST_RUNS_OWNER";
+const OWNER: &str = "XAQU_TEST_RUNS_OWNER";
 
 /// The variable that keeps cargo's own way: one binary after another.
-pub(crate) const IN_TURN: &str = "FERRIX_TESTS_IN_TURN";
+pub(crate) const IN_TURN: &str = "XAQU_TESTS_IN_TURN";
 
 /// Binaries running at once.
 pub(crate) const AT_ONCE: usize = 6;
@@ -86,7 +86,7 @@ pub(crate) fn launch(
     if let Some(plan) = cache {
         std::fs::write(directory.join(crate::test_cache::FILE), plan)?;
         println!(
-            "   the test binaries outside the item may be cached passes (FERRIX_STEP_CACHE=on)"
+            "   the test binaries outside the item may be cached passes (XAQU_STEP_CACHE=on)"
         );
     }
     let exe = std::env::current_exe()?;
@@ -421,11 +421,11 @@ pub(crate) fn command() -> Option<Result<()>> {
     }
 }
 
-/// The directory `FERRIX_TEST_RUNS` names.
+/// The directory `XAQU_TEST_RUNS` names.
 fn runs_directory(who: &str) -> Result<PathBuf> {
     std::env::var_os(VARIABLE)
         .map(PathBuf::from)
-        .ok_or_else(|| Error::new(format!("{who}: FERRIX_TEST_RUNS names no directory")))
+        .ok_or_else(|| Error::new(format!("{who}: XAQU_TEST_RUNS names no directory")))
 }
 
 /// `xtask test-runner <binary> <arguments>`, as cargo calls it: record the

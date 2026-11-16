@@ -1,11 +1,11 @@
 //! `bitfields!`'s setters, on the host: the fallible one refuses what the
 //! field cannot hold, and both store what it can, encoded.
 
-extern crate ferrix_registers as ferrix_driver;
+extern crate xaqu_registers as xaqu_driver;
 
-use ferrix_registers::OutOfRange;
+use xaqu_registers::OutOfRange;
 
-ferrix_driver_derive::bitfields! {
+xaqu_driver_derive::bitfields! {
     Configuration1 {
         // The hardware stores "bits - 1"; the field takes the real size, 4 to 32 bits.
         frame_size: bits 0..=4 as OffsetByOne<4, 32>,

@@ -29,7 +29,7 @@
 
 #![no_main]
 
-use ferrix_cpio::{
+use xaqu_cpio::{
     Archive, CpioError, Entry, FileType, HEADER_SIZE, MAGIC_CRC, MAX_NAME_SIZE, Summary,
     TRAILER_NAME,
 };
@@ -219,9 +219,9 @@ fuzz_target!(|bytes: &[u8]| {
             .iter()
             .find(|other| other.is_safe_path() && other.is_file() && normalised(other.name) == name)
             .map(|found| found.data);
-        assert_eq!(ferrix_cpio::file_named(bytes, name.as_bytes()), wanted);
+        assert_eq!(xaqu_cpio::file_named(bytes, name.as_bytes()), wanted);
     }
-    assert_eq!(ferrix_cpio::file_named(bytes, b"\0not a name"), None);
+    assert_eq!(xaqu_cpio::file_named(bytes, b"\0not a name"), None);
 
     // 1. Layout, entry by entry, and each next header where the last one said.
     let mut expected_header = 0;

@@ -1,11 +1,11 @@
 # The compositor
 
-A Hyprland-shaped Wayland compositor, written in Rust, running on Ferrix: the
+A Hyprland-shaped Wayland compositor, written in Rust, running on Xaqu: the
 goal after `rustc`, carried by the roadmap's stages 17 (display and
 input), 18 (the compositor) and 19 (fidelity and the GPU), in
 `docs/roadmap/`.
 
-It lives in the Ferrix tree but stands alone, as zinc and ferrousli do: its
+It lives in the Xaqu tree but stands alone, as zinc and ferrousli do: its
 own cargo workspace, a std Linux program reaching the kernel only through
 Linux system calls. Hyprland is the reference for behaviour, and each module
 names the part of Hyprland or hyprlang it follows.
@@ -15,11 +15,11 @@ names the part of Hyprland or hyprlang it follows.
 * **Pure cores first.** The configuration, the layouts, the dispatchers, the
   renderer and the IPC's request format hold no socket and no descriptor, so
   every one of them is host-tested and fuzzed before anything of it runs on
-  Ferrix. The server is written from scratch rather than on Smithay, decided
+  Xaqu. The server is written from scratch rather than on Smithay, decided
   on 2026-09-17 with the reasoning in `docs/BACKLOG.md`.
 * **No C device stack, ever.** No udev, libinput, libseat, GBM, EGL or
   libwayland, not even on a Linux host: the backend is DRM dumb buffers and
-  raw evdev through the ioctl subset Ferrix implements, and the protocol
+  raw evdev through the ioctl subset Xaqu implements, and the protocol
   server is pure Rust. A frame is drawn on the CPU, or, where the card has
   a GPU behind it, on the GPU as virgl command words written in Rust and
   sent through the render node, with no Mesa, GBM or EGL between
@@ -92,7 +92,7 @@ names the part of Hyprland or hyprlang it follows.
   buffer and commit. That is the handshake every application performs when it
   starts, and a compositor that gets any step of it wrong is one no
   application will run on.
-* **`socket`** is the one crate that has to be on Ferrix to be tried: an
+* **`socket`** is the one crate that has to be on Xaqu to be tried: an
   `AF_UNIX` listener, and `sendmsg`/`recvmsg` with the `SCM_RIGHTS` control
   messages that carry a client's descriptors beside its bytes, which the
   standard library has no stable way to do. A read gives a whole number of
@@ -115,7 +115,7 @@ names the part of Hyprland or hyprlang it follows.
   `render` module is the render node, `/dev/dri/renderD128`, where the GPU
   is: the compositor opens the card to show a frame and the node to make
   one. It is the only crate here that builds on Linux alone, because
-  `/dev/dri` is Linux's and Ferrix's through its Linux ABI; the parts that
+  `/dev/dri` is Linux's and Xaqu's through its Linux ABI; the parts that
   are arithmetic rather than ioctls are tested on any host. `blank` and
   `hyprix` both drive the screen through it.
 * **`render`** draws the frame: a `Canvas` over a `tiny-skia` pixmap with
@@ -139,7 +139,7 @@ names the part of Hyprland or hyprlang it follows.
   by the render node in a guest and by virglrenderer's test server on a
   host, where every line of it is tested against the software frame.
   `cursor` is the arrow the compositor draws when no client has said
-  otherwise: a shape in code rather than a theme file, since Ferrix has
+  otherwise: a shape in code rather than a theme file, since Xaqu has
   neither the files nor a library to read them with.
 * **`blank`** is iteration 1 on screen (`docs/DISPLAY.md`): it opens
   `/dev/dri/card0`, sets the connected connector's preferred mode with the
@@ -164,7 +164,7 @@ names the part of Hyprland or hyprlang it follows.
   keyword`, draws Hyprland's frames-per-second counter over the first
   screen's top left corner, a port of its `src/debug/Overlay.cpp` written in
   Spleen, `src/lib/kernel/fbtext`'s face (`hyprix/src/overlay.rs`).
-  On Ferrix it is `hyprix.service` under `/sbin/init` (`docs/INIT.md`,
+  On Xaqu it is `hyprix.service` under `/sbin/init` (`docs/INIT.md`,
   L10), no longer pid 1, and each program it starts is asked into a scope of
   its own, `app.slice/app-<name>-<pid>.scope` (`hyprix/src/scope.rs`).
   `cargo xtask test-compositor` boots it so, with two `pattern` clients in
@@ -182,7 +182,7 @@ names the part of Hyprland or hyprlang it follows.
   `wl_shm` buffer. It starts a program on a pseudoterminal with
   the slave for its session and its three descriptors, and `--headless` runs
   one with no window at all, which is what `cargo xtask test-pty` boots.
-* **`clip`** is `wl-copy` and `wl-paste`, neither of which is on Ferrix:
+* **`clip`** is `wl-copy` and `wl-paste`, neither of which is on Xaqu:
   `clip copy <text>` offers text as `text/plain;charset=utf-8` and stays
   alive to answer -- Wayland's clipboard is a promise, and the data lives in
   the program that made it -- and `clip paste` asks for the selection on a
@@ -205,7 +205,7 @@ names the part of Hyprland or hyprlang it follows.
 * **`notifyd`** is the desktop's notification server
   (`docs/DESKTOP.md` §4): `org.freedesktop.Notifications` on the session
   bus through **`dbus`**, the crate's own D-Bus subset, and `devmgr`'s
-  driver deaths and restarts read from `\0ferrix.devmgr.events`, one banner
+  driver deaths and restarts read from `\0xaqu.devmgr.events`, one banner
   per device with a count. Banners are a fixed-size overlay layer surface
   at the top centre whose input region is only the cards; `notifyd
   --toggle-list` (the bar's clock) opens the list of recent ones.
@@ -245,7 +245,7 @@ names the part of Hyprland or hyprlang it follows.
   `cargo xtask test-compositor --gl --boot dmabuf` judges.
 * **`vdagent`** is the clipboard agent (`docs/CLIPBOARD.md` §6): it joins the
   host's selection, arriving over the virtio-serial port `vport` binds at
-  the abstract name `\0ferrix.vport`, to the compositor's, as an
+  the abstract name `\0xaqu.vport`, to the compositor's, as an
   `ext-data-control` client with no window.
 * **`vkbd`** is `wtype` without the layouts: a
   `zwp_virtual_keyboard_manager_v1` keyboard that types the keys it is
@@ -270,9 +270,9 @@ names the part of Hyprland or hyprlang it follows.
 ## The desktop's own clients
 
 waybar, fuzzel, hyprlock and hypridle, ported to Rust and reading their
-users' files unchanged -- apps in `ferrix-os/apps` (`src/user/apps`) since
+users' files unchanged -- apps in `xaqu-os/apps` (`src/user/apps`) since
 2026-10-04, built by xtask from their folders, standing on the crates below
-(`docs/DESKTOP-CLIENTS.md`, which says what of each file works on Ferrix and
+(`docs/DESKTOP-CLIENTS.md`, which says what of each file works on Xaqu and
 what cannot):
 
 * **`toolkit`** is the Wayland client runtime they share: the connection
@@ -287,7 +287,7 @@ what cannot):
   **`hyprlang`** reads the language `hyprlock.conf` and `hypridle.conf` are
   written in, as the hyprlang library does, against a schema each program
   gives it.
-* **tole**, Ferrix's UI framework (`docs/UI-FRAMEWORK.md`), is not in this
+* **tole**, Xaqu's UI framework (`docs/UI-FRAMEWORK.md`), is not in this
   workspace but beside it, a component of its own at
   `src/user/system/linux/tole`; it draws text with `text` and will reach
   windows through `toolkit`, both by path, so a change to either is a

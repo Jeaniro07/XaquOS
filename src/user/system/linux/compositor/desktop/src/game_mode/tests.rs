@@ -17,16 +17,16 @@ fn env<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> +
 fn the_file_is_under_the_configuration_directory() {
     assert_eq!(
         path(&env(&[("HOME", "/home/u")])),
-        Some("/home/u/.config/ferrix/game-mode.conf".into())
+        Some("/home/u/.config/xaqu/game-mode.conf".into())
     );
     assert_eq!(
         path(&env(&[("HOME", "/home/u"), ("XDG_CONFIG_HOME", "/cfg")])),
-        Some("/cfg/ferrix/game-mode.conf".into())
+        Some("/cfg/xaqu/game-mode.conf".into())
     );
     // An empty XDG_CONFIG_HOME is one that is not set.
     assert_eq!(
         path(&env(&[("HOME", "/"), ("XDG_CONFIG_HOME", "")])),
-        Some("/.config/ferrix/game-mode.conf".into())
+        Some("/.config/xaqu/game-mode.conf".into())
     );
     assert_eq!(path(&env(&[])), None);
 }
@@ -73,7 +73,7 @@ fn what_is_written_reads_back_and_is_the_same_bytes_for_the_same_set() {
     assert!(!set.set("steam.desktop", true));
     assert!(!set.set("not an id", true));
     let text = set.render();
-    assert!(text.starts_with("# Ferrix game mode"), "{text}");
+    assert!(text.starts_with("# Xaqu game mode"), "{text}");
     assert!(text.ends_with("a.desktop\nsteam.desktop\n"), "{text}");
     let (back, complaints) = GameMode::parse(&text);
     assert_eq!(back, set);
@@ -88,7 +88,7 @@ fn what_is_written_reads_back_and_is_the_same_bytes_for_the_same_set() {
 fn no_file_is_nothing_in_game_mode() {
     let dir = TestDir::new("game-mode-missing");
     let (set, complaints) =
-        GameMode::load(&dir.path().join("ferrix/game-mode.conf")).unwrap_or_default();
+        GameMode::load(&dir.path().join("xaqu/game-mode.conf")).unwrap_or_default();
     assert!(set.is_empty());
     assert!(complaints.is_empty());
 }
@@ -98,7 +98,7 @@ fn a_save_replaces_the_file_whole_and_leaves_nothing_beside_it() {
     use std::os::unix::fs::PermissionsExt as _;
     let dir = TestDir::new("game-mode-save");
     // The directory is not there yet: the first save makes it.
-    let file = dir.path().join("cfg/ferrix/game-mode.conf");
+    let file = dir.path().join("cfg/xaqu/game-mode.conf");
     let mut set = GameMode::default();
     let _ = set.set("steam.desktop", true);
     assert!(set.save(&file).is_ok());
@@ -110,12 +110,12 @@ fn a_save_replaces_the_file_whole_and_leaves_nothing_beside_it() {
     assert_eq!(mode.ok(), Some(0o644));
 
     // A second save over a file somebody else wrote by hand.
-    let _ = dir.write("cfg/ferrix/game-mode.conf", "hand.desktop\n");
+    let _ = dir.write("cfg/xaqu/game-mode.conf", "hand.desktop\n");
     let _ = set.set("pattern.desktop", true);
     assert!(set.save(&file).is_ok());
     let (back, _) = GameMode::load(&file).unwrap_or_default();
     assert_eq!(back, set);
-    let beside: Vec<String> = std::fs::read_dir(dir.path().join("cfg/ferrix"))
+    let beside: Vec<String> = std::fs::read_dir(dir.path().join("cfg/xaqu"))
         .map(|entries| {
             entries
                 .filter_map(|entry| entry.ok()?.file_name().into_string().ok())
@@ -129,11 +129,11 @@ fn a_save_replaces_the_file_whole_and_leaves_nothing_beside_it() {
 fn a_save_that_cannot_be_made_leaves_the_file_as_it_was() {
     let dir = TestDir::new("game-mode-refused");
     // The directory's place is taken by a file, so nothing can be made in it.
-    let _ = dir.write("cfg/ferrix", "in the way");
-    let file = dir.path().join("cfg/ferrix/game-mode.conf");
+    let _ = dir.write("cfg/xaqu", "in the way");
+    let file = dir.path().join("cfg/xaqu/game-mode.conf");
     assert!(GameMode::default().save(&file).is_err());
     assert_eq!(
-        std::fs::read_to_string(dir.path().join("cfg/ferrix")).unwrap_or_default(),
+        std::fs::read_to_string(dir.path().join("cfg/xaqu")).unwrap_or_default(),
         "in the way"
     );
 }
@@ -178,17 +178,17 @@ fn the_mark_reaches_a_started_program_and_an_inherited_one_does_not() {
     };
     let game = run("game.desktop");
     assert!(
-        game.lines().any(|line| line == "FERRIX_GAME_MODE=1"),
+        game.lines().any(|line| line == "XAQU_GAME_MODE=1"),
         "{game}"
     );
     assert!(
         game.lines()
-            .any(|line| line == "FERRIX_GAME_MODE_APP=game.desktop"),
+            .any(|line| line == "XAQU_GAME_MODE_APP=game.desktop"),
         "{game}"
     );
     let other = run("other.desktop");
     assert!(
-        !other.contains("FERRIX_GAME_MODE"),
+        !other.contains("XAQU_GAME_MODE"),
         "a program that is no game inherited a mark: {other}"
     );
 }
@@ -205,7 +205,7 @@ fn a_launch_reads_the_users_file_afresh() {
     assert!(complaints.is_empty());
 
     let _ = dir.write(
-        ".config/ferrix/game-mode.conf",
+        ".config/xaqu/game-mode.conf",
         "steam.desktop\nnot an id\n",
     );
     let (mark, complaints) = mark_for_launch(Some("steam.desktop"), &var);
@@ -222,7 +222,7 @@ fn a_launch_reads_the_users_file_afresh() {
 
     // A file that cannot be read starts the program all the same, unmarked.
     let unreadable = TestDir::new("game-mode-unreadable");
-    let _ = std::fs::create_dir_all(unreadable.path().join(".config/ferrix/game-mode.conf"));
+    let _ = std::fs::create_dir_all(unreadable.path().join(".config/xaqu/game-mode.conf"));
     let home = unreadable.path().to_string_lossy().into_owned();
     let pairs = [("HOME", home.as_str())];
     let (mark, complaints) = mark_for_launch(Some("steam.desktop"), &env(&pairs));

@@ -24,10 +24,10 @@
 
 use alloc::vec::Vec;
 
-use ferrix_acpi::MadtEntry;
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_fdt::PsciConduit;
-use ferrix_paging::MapFlags;
+use xaqu_acpi::MadtEntry;
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_fdt::PsciConduit;
+use xaqu_paging::MapFlags;
 
 use super::cpu;
 use crate::smp::Described;
@@ -109,7 +109,7 @@ fn cpus_from_madt(view: &BootView<'_>) -> Result<Vec<u64>, &'static str> {
     // Which of them are threads of one core: the PPTT, of the processors
     // enabled here, which are the ones started (`smt`, `L.aarch64.65`).
     let found = match acpi.pptt() {
-        Err(ferrix_acpi::AcpiError::NotFound(_)) => super::super::arm_common::smt::Found::NoTable,
+        Err(xaqu_acpi::AcpiError::NotFound(_)) => super::super::arm_common::smt::Found::NoTable,
         Err(_) => super::super::arm_common::smt::Found::Malformed("smt: the PPTT cannot be read"),
         Ok(pptt) => match pptt.threads(|uid| uids.contains(&uid)) {
             Ok(threads) => super::super::arm_common::smt::Found::Map {
@@ -177,8 +177,8 @@ core::arch::global_asm!(
     r#"
 .section .text
 .balign 64
-.globl ferrix_secondary_entry
-ferrix_secondary_entry:
+.globl xaqu_secondary_entry
+xaqu_secondary_entry:
     mrs  x9, CurrentEL
     cmp  x9, #8
     b.ne 2f
@@ -231,16 +231,16 @@ ferrix_secondary_entry:
     mov  x29, xzr
     mov  x30, xzr
     br   x7
-.globl ferrix_secondary_entry_end
-ferrix_secondary_entry_end:
+.globl xaqu_secondary_entry_end
+xaqu_secondary_entry_end:
 "#
 );
 
 unsafe extern "C" {
     /// Where PSCI starts a secondary core, by its physical address.
-    static ferrix_secondary_entry: [u8; 0];
+    static xaqu_secondary_entry: [u8; 0];
     /// One past the entry sequence's last instruction.
-    static ferrix_secondary_entry_end: [u8; 0];
+    static xaqu_secondary_entry_end: [u8; 0];
 }
 
 /// What a starting core reads, with its MMU off, to get its MMU on.
@@ -314,8 +314,8 @@ impl CpuStarter {
 
         let info = view.raw();
         let physical = |virt: u64| virt - info.kernel_virt + info.kernel_phys;
-        let entry_phys = physical((&raw const ferrix_secondary_entry) as u64);
-        let end_phys = physical((&raw const ferrix_secondary_entry_end) as u64);
+        let entry_phys = physical((&raw const xaqu_secondary_entry) as u64);
+        let end_phys = physical((&raw const xaqu_secondary_entry_end) as u64);
         let identity_base = entry_phys - entry_phys % PAGE_SIZE;
         let identity_len = (end_phys - identity_base).next_multiple_of(PAGE_SIZE);
 
@@ -485,7 +485,7 @@ extern "C" fn secondary_start(record: u64) -> ! {
 
 /// Which processors are threads of one core, as the tree's `cpu-map` says
 /// (`smt`, `L.aarch64.65`).
-fn threads_in_tree(tree: &ferrix_fdt::Fdt<'_>) -> super::super::arm_common::smt::Found {
+fn threads_in_tree(tree: &xaqu_fdt::Fdt<'_>) -> super::super::arm_common::smt::Found {
     use super::super::arm_common::smt::Found;
     match tree.cpu_map() {
         Ok(None) => Found::NoTable,
@@ -494,10 +494,10 @@ fn threads_in_tree(tree: &ferrix_fdt::Fdt<'_>) -> super::super::arm_common::smt:
             cores: map.cores,
             most_a_core: map.most_a_core,
         },
-        Err(ferrix_fdt::CpuMapError::ThreadOutsideCore) => {
+        Err(xaqu_fdt::CpuMapError::ThreadOutsideCore) => {
             Found::Malformed("smt: cpu-map has a thread outside a core")
         }
-        Err(ferrix_fdt::CpuMapError::ThreadWithoutCpu) => {
+        Err(xaqu_fdt::CpuMapError::ThreadWithoutCpu) => {
             Found::Malformed("smt: cpu-map has a thread that names no processor")
         }
     }

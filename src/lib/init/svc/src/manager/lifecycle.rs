@@ -21,7 +21,7 @@ const KILL_WAIT: Duration = Duration::from_secs(90);
 impl Manager {
     /// Start the system: load every unit the directories have, mark the
     /// cgroups init did not make as up, and start `default.target` or the
-    /// one `ferrix.target=` names.
+    /// one `xaqu.target=` names.
     pub(super) fn boot(&mut self) {
         if self.booted {
             return;

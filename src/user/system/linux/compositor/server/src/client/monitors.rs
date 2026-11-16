@@ -147,7 +147,7 @@ impl Client {
                 Arg::Int(0),
                 Arg::Int(0),
                 Arg::Int(wl_output::subpixel::UNKNOWN.cast_signed()),
-                Arg::Str(Some("Ferrix")),
+                Arg::Str(Some("Xaqu")),
                 Arg::Str(Some("hyprix")),
                 // How the monitor is turned, which Hyprland sends as its
                 // `m_transform`: the transform that makes the buffer the

@@ -1,5 +1,5 @@
-# The fixture component `cargo xtask test-devloop` has Ferrix clone, build,
-# test, run as a service, change and replace (docs/DEV-ON-FERRIX.md). It
+# The fixture component `cargo xtask test-devloop` has Xaqu clone, build,
+# test, run as a service, change and replace (docs/DEV-ON-XAQU.md). It
 # takes nothing from crates.io: the gate's guest has no way there.
 [package]
 name = "greeter"

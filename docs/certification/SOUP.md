@@ -14,12 +14,12 @@ that is wrong.
 
 | Binary | Target | External crates |
 |---|---|---:|
-| `ferrix-kernel` | `x86_64-unknown-none` | **none** |
-| `ferrix-kernel` | `aarch64-unknown-none-softfloat` | **none** |
-| `ferrix-kernel` | `armv7a-none-eabi` | **none** |
-| `ferrix-boot` | `x86_64-unknown-uefi` | **none** |
-| `ferrix-boot` | `aarch64-unknown-uefi` | **none** |
-| `ferrix-boot` | `armv7-unknown-linux-musleabi` | **none** |
+| `xaqu-kernel` | `x86_64-unknown-none` | **none** |
+| `xaqu-kernel` | `aarch64-unknown-none-softfloat` | **none** |
+| `xaqu-kernel` | `armv7a-none-eabi` | **none** |
+| `xaqu-boot` | `x86_64-unknown-uefi` | **none** |
+| `xaqu-boot` | `aarch64-unknown-uefi` | **none** |
+| `xaqu-boot` | `armv7-unknown-linux-musleabi` | **none** |
 
 **Total SOUP in the item: 0.**
 

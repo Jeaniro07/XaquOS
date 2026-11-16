@@ -383,7 +383,7 @@ fn exits() -> Result<(), &'static str> {
 ///
 /// Verifies: `L.x86_64.197`
 fn measured() -> Result<(), &'static str> {
-    use ferrix_native_abi::types as abi;
+    use xaqu_native_abi::types as abi;
     let fake = Fake::new();
     let state = State::new();
     let machine = super::Machine {

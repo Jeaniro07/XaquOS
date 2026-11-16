@@ -14,7 +14,7 @@
 
 use std::collections::VecDeque;
 
-use ferrix_argon2::blake2b::Blake2b;
+use xaqu_argon2::blake2b::Blake2b;
 
 use crate::store::Tally;
 

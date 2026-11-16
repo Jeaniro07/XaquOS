@@ -15,7 +15,7 @@
 //! `TRNG_FEATURES` for `TRNG_RND64`. Any answer short of that is no entropy,
 //! not a failure.
 
-use ferrix_bootinfo::BootView;
+use xaqu_bootinfo::BootView;
 
 use super::cpu;
 use super::smp::{self, Conduit};

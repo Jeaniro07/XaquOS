@@ -1,9 +1,9 @@
-use ferrix_acpi::Acpi;
-use ferrix_acpi::AcpiError;
-use ferrix_acpi::RootKind;
-use ferrix_acpi::Rsdp;
-use ferrix_acpi::Tables;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_acpi::Acpi;
+use xaqu_acpi::AcpiError;
+use xaqu_acpi::RootKind;
+use xaqu_acpi::Rsdp;
+use xaqu_acpi::Tables;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::PAGE_SIZE;
 #[derive(Debug)]
 pub struct Firmware {}

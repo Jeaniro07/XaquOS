@@ -2,7 +2,7 @@
 # and the client library they and hyprlock share.
 #
 # A workspace of its own, as src/user/system/linux/init/ is: Linux user programs built with
-# std on musl, speaking only the Linux ABI. The pure parts are Ferrix
+# std on musl, speaking only the Linux ABI. The pure parts are Xaqu
 # workspace crates: the records in src/lib/proto/auth-proto, the hash in
 # src/lib/crypto/argon2, and the policy files' syntax in src/lib/init/svc.
 [workspace]
@@ -12,7 +12,7 @@ members = ["account", "authctl", "authd", "client", "login", "passwd", "su"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -20,7 +20,7 @@ publish = false
 # ---------------------------------------------------------------------------
 # Lints
 #
-# The Ferrix discipline, as init has it. A panic in authd ends every
+# The Xaqu discipline, as init has it. A panic in authd ends every
 # conversation in flight and leaves the lock screen with no answer, so the
 # ways of reaching one are denied and a failing call is a verdict of
 # UNAVAILABLE, never an abort.
@@ -73,5 +73,5 @@ panic = "abort"
 
 # Argon2id at the floor fills 19 MiB twice. Unoptimised, every check in a
 # test would take seconds.
-[profile.dev.package.ferrix-argon2]
+[profile.dev.package.xaqu-argon2]
 opt-level = 3

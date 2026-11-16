@@ -19,9 +19,9 @@
 
 use core::ops::ControlFlow;
 
-use ferrix_fdt::Fdt;
-use ferrix_fdt::generic::{LINEAGE_DEPTH, MAX_REFERENCES, MAX_SPECIFIER_CELLS};
-use ferrix_fdt::identity::{self, FLAG_CUT, RECORD_BYTES, Record};
+use xaqu_fdt::Fdt;
+use xaqu_fdt::generic::{LINEAGE_DEPTH, MAX_REFERENCES, MAX_SPECIFIER_CELLS};
+use xaqu_fdt::identity::{self, FLAG_CUT, RECORD_BYTES, Record};
 use libfuzzer_sys::fuzz_target;
 
 /// The most nodes the per-node checks look at: references resolve phandles

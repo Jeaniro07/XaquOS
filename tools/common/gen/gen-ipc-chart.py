@@ -151,7 +151,7 @@ def num(v):
 
 def chart():
     w, h = 1060, 420
-    svg = Svg(w, h, "Ferrix native channel round trip, domain-call p50")
+    svg = Svg(w, h, "Xaqu native channel round trip, domain-call p50")
     left, right = 70, w - 200
     top, bottom = 90, 370
     svg.text(24, 28, "The native channel round trip: bench-ipc domain-call p50, ns, log scale",

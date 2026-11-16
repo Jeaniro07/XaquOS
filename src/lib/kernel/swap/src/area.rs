@@ -1,8 +1,8 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
-use ferrix_crng::block;
-use ferrix_sha256::digest;
+use xaqu_crng::block;
+use xaqu_sha256::digest;
 
 use crate::{Entry, PAGE};
 

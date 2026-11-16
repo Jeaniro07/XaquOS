@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lift-item"
+name = "xaqu-lift-item"
 description = "linuxd's shim of the kernel's item"
 version.workspace = true
 edition.workspace = true
@@ -9,31 +9,31 @@ publish.workspace = true
 build = "../../build.rs"
 
 [lib]
-name = "ferrix_kernel_item"
+name = "xaqu_kernel_item"
 path = "../../src/lift_item.rs"
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native.workspace = true
-ferrix-kernel-core = { package = "ferrix-lift-core", path = "../core" }
-ferrix-audit.workspace = true
-ferrix-blkring.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-crng.workspace = true
-ferrix-devmgr-proto.workspace = true
-ferrix-elf.workspace = true
-ferrix-fdt.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-objects.workspace = true
-ferrix-paging.workspace = true
-ferrix-pci.workspace = true
-ferrix-sched.workspace = true
-ferrix-smbios.workspace = true
-ferrix-sync.workspace = true
-ferrix-vfs.workspace = true
-ferrix-virtio.workspace = true
-ferrix-vma.workspace = true
+xaqu-rt.workspace = true
+xaqu-native.workspace = true
+xaqu-kernel-core = { package = "xaqu-lift-core", path = "../core" }
+xaqu-audit.workspace = true
+xaqu-blkring.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-crng.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-elf.workspace = true
+xaqu-fdt.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-objects.workspace = true
+xaqu-paging.workspace = true
+xaqu-pci.workspace = true
+xaqu-sched.workspace = true
+xaqu-smbios.workspace = true
+xaqu-sync.workspace = true
+xaqu-vfs.workspace = true
+xaqu-virtio.workspace = true
+xaqu-vma.workspace = true
 
 
 [lints]

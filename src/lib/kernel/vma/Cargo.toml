@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-vma"
+name = "xaqu-vma"
 description = "Virtual memory area map: the structure behind mmap, munmap and mprotect"
 version = "0.1.0"
 edition = "2024"
@@ -8,11 +8,11 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-fallible = { workspace = true }
-ferrix-kmem = { workspace = true }
+xaqu-fallible = { workspace = true }
+xaqu-kmem = { workspace = true }
 
 [dev-dependencies]
-ferrix-kmem = { workspace = true, features = ["testing"] }
+xaqu-kmem = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

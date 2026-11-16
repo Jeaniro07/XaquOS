@@ -1,5 +1,5 @@
 //! A client's GPU buffer, sampled where it lies: the GPU painter on
-//! Ferrix's patched `virgl_test_server` (tools/common/fetch/fetch-virgl-server.sh),
+//! Xaqu's patched `virgl_test_server` (tools/common/fetch/fetch-virgl-server.sh),
 //! given a dmabuf and no pixels, as it is given a buffer in video memory.
 //!
 //! The dmabuf is the host's own (`/dev/udmabuf` over a memfd), so what is
@@ -17,15 +17,15 @@ use compositor_virgl::vtest::Vtest;
 const SIDE: u32 = 64;
 const STRIDE: u32 = 256;
 
-/// Ferrix's patched server: `FERRIX_VIRGL_SERVER_BIN`, or where the fetch
+/// Xaqu's patched server: `XAQU_VIRGL_SERVER_BIN`, or where the fetch
 /// script puts it.
 fn patched_server() -> Option<std::path::PathBuf> {
-    let path = std::env::var_os("FERRIX_VIRGL_SERVER_BIN")
+    let path = std::env::var_os("XAQU_VIRGL_SERVER_BIN")
         .map(std::path::PathBuf::from)
         .or_else(|| {
             std::env::var_os("HOME").map(|home| {
                 std::path::PathBuf::from(home)
-                    .join(".local/share/ferrix/virgl-server/out/usr/bin/virgl_test_server")
+                    .join(".local/share/xaqu/virgl-server/out/usr/bin/virgl_test_server")
             })
         })?;
     path.is_file().then_some(path)

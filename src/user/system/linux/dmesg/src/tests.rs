@@ -1,7 +1,7 @@
 //! Host tests: the records the kernel writes, read back and shown as
 //! util-linux shows them.
 
-use ferrix_linux_abi::kmsg;
+use xaqu_linux_abi::kmsg;
 
 use crate::args::{self, Action, Follow, Options, Time};
 use crate::record::{self, Record};
@@ -92,42 +92,42 @@ fn syslog_lines_read_back_with_and_without_their_parts() {
 #[test]
 fn the_output_is_util_linuxs() {
     let records = [
-        record::parse_kmsg(&kmsg_record(6, 0, 0, b"Booting Ferrix")).unwrap(),
+        record::parse_kmsg(&kmsg_record(6, 0, 0, b"Booting Xaqu")).unwrap(),
         record::parse_kmsg(&kmsg_record(14, 1, 12_345_678, b"hyprix: started")).unwrap(),
         record::parse_kmsg(&kmsg_record(3, 2, 12_400_000, b"disk: error")).unwrap(),
     ];
     let default = Options::default();
     assert_eq!(
         shown(&records, &default),
-        "[    0.000000] Booting Ferrix\n\
+        "[    0.000000] Booting Xaqu\n\
          [   12.345678] hyprix: started\n\
          [   12.400000] disk: error\n"
     );
     let decode = parse(&["-x"]).unwrap();
     assert_eq!(
         shown(&records, &decode),
-        "kern  :info  : [    0.000000] Booting Ferrix\n\
+        "kern  :info  : [    0.000000] Booting Xaqu\n\
          user  :info  : [   12.345678] hyprix: started\n\
          kern  :err   : [   12.400000] disk: error\n"
     );
     let raw = parse(&["-r"]).unwrap();
     assert_eq!(
         shown(&records[..2], &raw),
-        "<6>[    0.000000] Booting Ferrix\n<14>[   12.345678] hyprix: started\n"
+        "<6>[    0.000000] Booting Xaqu\n<14>[   12.345678] hyprix: started\n"
     );
     let notime = parse(&["--notime"]).unwrap();
-    assert_eq!(shown(&records[..1], &notime), "Booting Ferrix\n");
+    assert_eq!(shown(&records[..1], &notime), "Booting Xaqu\n");
     let ctime = parse(&["-T"]).unwrap();
     assert_eq!(
         shown(&records, &ctime),
-        "[Fri Oct 23 12:00:00 2026] Booting Ferrix\n\
+        "[Fri Oct 23 12:00:00 2026] Booting Xaqu\n\
          [Fri Oct 23 12:00:12 2026] hyprix: started\n\
          [Fri Oct 23 12:00:12 2026] disk: error\n"
     );
     let human = parse(&["-H"]).unwrap();
     assert_eq!(
         shown(&records, &human),
-        "[Oct23 12:00] Booting Ferrix\n\
+        "[Oct23 12:00] Booting Xaqu\n\
          [  +12.345678] hyprix: started\n\
          [   +0.054322] disk: error\n"
     );

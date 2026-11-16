@@ -1,6 +1,6 @@
 //! `/bin/svc`: the init's control client (`docs/INIT.md` §10).
 //!
-//! systemctl's verbs, spoken to `/run/ferrix/control` as the records of
+//! systemctl's verbs, spoken to `/run/xaqu/control` as the records of
 //! `src/lib/init/svc-proto`. One call per connection; init answers, the last
 //! answer final. What `svc` prints is its own business: the records carry
 //! the facts, so this output can change without breaking another client.
@@ -29,8 +29,8 @@ use std::io::{self, Read as _, Write as _};
 use std::os::unix::net::UnixStream;
 use std::process::ExitCode;
 
-use ferrix_audit::{NO_UID, RECORD_BYTES, Record};
-use ferrix_svc_proto::control::{Answer, Call, Framer, SOCKET, UnitStatus};
+use xaqu_audit::{NO_UID, RECORD_BYTES, Record};
+use xaqu_svc_proto::control::{Answer, Call, Framer, SOCKET, UnitStatus};
 
 /// What went wrong, and the exit status for it.
 #[derive(Debug)]

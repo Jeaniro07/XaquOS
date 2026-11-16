@@ -188,7 +188,7 @@ as it starts each disk's driver, and a bus host's disks appear later.
 
 ## 7. Tests
 
-**Host tests** (`cargo test -p ferrix-usb-host`, 59: EHCI's 37 and 22 new).
+**Host tests** (`cargo test -p xaqu-usb-host`, 59: EHCI's 37 and 22 new).
 `tests/model/xhci.rs` is a model of the controller over the EHCI model's
 devices: it walks the rings as written, cycle bits and link TRBs included,
 and writes its events to the ring the driver's table names. It records as
@@ -299,7 +299,7 @@ capabilities. The kernel writes the function's command register (bus
 mastering) and its MSI-X capability and table. Nothing outside the
 function.
 
-**Before it.** INSTALLER.md's H0 (the PC boots Ferrix at all: ACPI,
+**Before it.** INSTALLER.md's H0 (the PC boots Xaqu at all: ACPI,
 interrupts, timer, a console) is a prerequisite and is not part of this
 work. Without a serial port or a screen there is nothing to read.
 
@@ -393,8 +393,8 @@ whichever pointer the guest started reading last) and requires two places
 as `ABS_X` and `ABS_Y` on the tablet's node; the second is sent only after
 the first arrived, since QEMU's tablet keeps one position.
 
-**Watching a device's reports** (`ferrix_usb_host::watch`). The boot word
-`ferrix.usbhid.reports` (alone or `=all`; `=off`; `=vvvv:pppp`, one device;
+**Watching a device's reports** (`xaqu_usb_host::watch`). The boot word
+`xaqu.usbhid.reports` (alone or `=all`; `=off`; `=vvvv:pppp`, one device;
 `=keyboard`, `mouse`, `media`, `system` or `input`, one kind; or
 `=vvvv:pppp/keyboard`), or the file `/run/usbhid-reports` holding such a
 value (empty: all), which the driver reads at every port poll and which

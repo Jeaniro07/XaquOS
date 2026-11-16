@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-nvme"
+name = "xaqu-nvme"
 description = "An NVMe controller over PCIe as logic over registers and memory: reset and enable, Identify, the queues, PRP lists, reads, writes and flushes, the Host Memory Buffer, timeouts and the clean shutdown"
 version = "0.1.0"
 edition = "2024"

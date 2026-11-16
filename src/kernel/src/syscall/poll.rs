@@ -27,13 +27,13 @@
 //! yet, so no program can see the difference until something does; applying
 //! it now means delivery finds the mask where it looks.
 //!
-//! [`OpenFile::poll`]: ferrix_vfs::OpenFile::poll
+//! [`OpenFile::poll`]: xaqu_vfs::OpenFile::poll
 
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::Readiness;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::Readiness;
 
 use crate::fs::wake::Sources;
 use crate::syscall::fd;

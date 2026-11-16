@@ -147,7 +147,7 @@
       "owner": "i3",
       "branch": "fs-traits",
       "date": "2026-10-19",
-      "purpose": "Common fs traits (docs/FS-COMMON.md, the consultant's OK IF of 2026-10-19, ledger line 2587, condition 4): the reader's and the write path's per-operation mapping of a ferrix-fs-device DeviceError into BtrfsError and btrfs-write's Error, keeping the address asked (parents H.STORE.2 and H.STORE.8)"
+      "purpose": "Common fs traits (docs/FS-COMMON.md, the consultant's OK IF of 2026-10-19, ledger line 2587, condition 4): the reader's and the write path's per-operation mapping of a xaqu-fs-device DeviceError into BtrfsError and btrfs-write's Error, keeping the address asked (parents H.STORE.2 and H.STORE.8)"
     },
     {
       "ids": ["L.user.111-124", "L.object.121-125", "H.MEM.20-21"],
@@ -189,7 +189,7 @@
       "owner": "syncwake",
       "branch": "syncwake",
       "date": "2026-10-17",
-      "purpose": "Idle poll before a halt (os-35 part C, piece 1 of STALLS.md recommendation 2): a kick to a polling processor sends no interrupt and is never lost, a kick absorbed before a halt still lets a later kick run the task, and ferrix.haltpoll selects where the poll runs (consultant design verdict, ledger 2026-10-17 line 2301, piece 1 (1))"
+      "purpose": "Idle poll before a halt (os-35 part C, piece 1 of STALLS.md recommendation 2): a kick to a polling processor sends no interrupt and is never lost, a kick absorbed before a halt still lets a later kick run the task, and xaqu.haltpoll selects where the poll runs (consultant design verdict, ledger 2026-10-17 line 2301, piece 1 (1))"
     },
     {
       "ids": ["L.console.45"],
@@ -203,14 +203,14 @@
       "owner": "retired",
       "branch": "feature/mk-land",
       "date": "2026-11-04",
-      "purpose": "Retired, never to be reused: fastpath::init's read of the boot option ferrix.fastpath, gone with BF6 (ledger 1001, M0-B-PROPOSALS 1.3); the stage-9 line it named is informational, L.x86_64.159's criterion."
+      "purpose": "Retired, never to be reused: fastpath::init's read of the boot option xaqu.fastpath, gone with BF6 (ledger 1001, M0-B-PROPOSALS 1.3); the stage-9 line it named is informational, L.x86_64.159's criterion."
     },
     {
       "ids": ["L.x86_64.190-191", "L.x86_64.193"],
       "owner": "retired",
       "branch": "powerctl",
       "date": "2026-10-22",
-      "purpose": "Retired, never to be reused: ferrix.vrcurrent's word and clamp, its thermal guard, and its step's write (ledger lines 3086 and 3090), replaced by the power core of docs/POWERCTL.md, whose design review is ledger line 3130 (condition 12). L.x86_64.192, the checked write, stays."
+      "purpose": "Retired, never to be reused: xaqu.vrcurrent's word and clamp, its thermal guard, and its step's write (ledger lines 3086 and 3090), replaced by the power core of docs/POWERCTL.md, whose design review is ledger line 3130 (condition 12). L.x86_64.192, the checked write, stays."
     },
     {
       "ids": ["H.SCHED.17", "L.sched.93-94", "L.user.163-168"],
@@ -236,7 +236,7 @@
     {
       "ids": ["H.SCHED.20-25", "L.sched.124-152"],
       "owner": "sched-classes",
-      "branch": "feature/ferrix-roadmap-completion-hkxlpp",
+      "branch": "feature/xaqu-roadmap-completion-hkxlpp",
       "date": "2026-11-02",
       "purpose": "docs/SCHED-CLASSES.md steps 3b to 5 (stage 14, the consultant's OK IF D1-D13, G1-G10, F1-F16, R1-R15 and V1-V16): H.SCHED.20-22 and L.sched.124-139 for the class-crate record, the stack of two tiers and SCHED_FIFO/SCHED_RR above fair, written on the branch (133 and 139 withdrawn there); H.SCHED.23-25 and L.sched.140-152 for step 5's SoftRt domain made at run time. Renumbered on 2026-11-02 from H.SCHED.18-23 and L.sched.102-130, which core quarantine and game-mode-sched took on develop first. Released in the commits that write them"
     },

@@ -1,14 +1,14 @@
 //! Feeding the kernel's watchdog (`docs/POSTMORTEM.md` §6.11): the
 //! policy half of it, ring 3's.
 //!
-//! With `ferrix.init.watchdog=<seconds>` on the command line, init opens
+//! With `xaqu.init.watchdog=<seconds>` on the command line, init opens
 //! `/dev/watchdog`, sets that timeout and feeds it every third of it from
 //! its event loop, whose wait the next feed bounds. A user space in which
 //! pid 1 cannot turn its loop for the timeout is a stopped one, and the
 //! kernel reports it (FX-9008). Init never writes the magic `V`: a stop on
 //! purpose disarms the watchdog in the kernel (`reboot(2)`, init's exit).
 //!
-//! Without the option, or without the device (`ferrix.watchdog=on` not
+//! Without the option, or without the device (`xaqu.watchdog=on` not
 //! given), nothing is opened and nothing is fed.
 
 use std::fs::{File, OpenOptions};
@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use crate::sys;
 
 /// Init's option, read from the kernel's command line.
-const OPTION: &str = "ferrix.init.watchdog=";
+const OPTION: &str = "xaqu.init.watchdog=";
 
 /// The device.
 const DEVICE: &str = "/dev/watchdog";

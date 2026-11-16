@@ -557,7 +557,7 @@ impl<T: AsRef<[ChunkMapEntry]> + AsMut<[ChunkMapEntry]> + ?Sized> ChunkStorage f
 /// set up from a filesystem this crate is reading. A caller supplies storage:
 ///
 /// ```
-/// # use ferrix_btrfs::chunk::{ChunkMap, ChunkMapEntry};
+/// # use xaqu_btrfs::chunk::{ChunkMap, ChunkMapEntry};
 /// let mut storage = [ChunkMapEntry::EMPTY; 64];
 /// let map = ChunkMap::new(&mut storage);
 /// assert!(map.is_empty(), "a fresh map holds no chunks");

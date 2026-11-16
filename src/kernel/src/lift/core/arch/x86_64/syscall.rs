@@ -2,7 +2,7 @@
 
 /// A user program's registers, as the trampoline saves them.
 ///
-/// Laid out to match the pushes in `ferrix_syscall_stub` exactly, in reverse:
+/// Laid out to match the pushes in `xaqu_syscall_stub` exactly, in reverse:
 /// the last thing pushed is the first field. `repr(C)` because assembly is the
 /// other half of this type's definition.
 #[derive(Debug, Clone, Copy)]

@@ -10,7 +10,7 @@
 //!   root of its second-level tables — `src/lib/kernel/paging`'s
 //!   [`VtdSecondLevel`], three levels over 39 bits, or [`VtdFourLevel`],
 //!   four over 48, whichever is the widest the unit walks
-//!   (`ferrix_paging::vtd::unit::accept`);
+//!   (`xaqu_paging::vtd::unit::accept`);
 //! * **queued invalidation** of the context cache and the IOTLB, after
 //!   anything the unit may have cached changes (below);
 //! * **translation on**, after which a function with no context entry reaches
@@ -36,7 +36,7 @@
 //! What the check proves is that each change's noted writes were cleaned
 //! before its own publish point. That every write to memory the unit walks
 //! is noted rests on construction: [`write_entry`], [`table`] and the
-//! mapper's writes through `ferrix_paging::coherence::Walked` (in
+//! mapper's writes through `xaqu_paging::coherence::Walked` (in
 //! `mm::map_io` and `mm::unmap_io`) are this file's only writers of that
 //! memory, and no other direct-map write is in it. `enable` and `flush`
 //! write nothing, so their invalidations check no record: `enable` relies
@@ -72,7 +72,7 @@
 //!
 //! # Which units
 //!
-//! `ferrix_paging::vtd::unit::accept` decides from `VER`, `CAP` and
+//! `xaqu_paging::vtd::unit::accept` decides from `VER`, `CAP` and
 //! `ECAP` alone: a major version of 1, 4 or 5 -- QEMU's unit and the
 //! N150's two, whose legacy-mode register interface (revisions 1 to 5 of
 //! the specification) is all this driver uses -- a three- or four-level
@@ -90,18 +90,18 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::coherence::Unpublished;
-use ferrix_paging::vtd::queue::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::coherence::Unpublished;
+use xaqu_paging::vtd::queue::{
     self, Completion, ContextScope, Descriptor, FSTS_ICE, FSTS_IQE, FSTS_QUEUE_ERRORS,
     InterruptEntryScope, IotlbScope, Outcome,
 };
-use ferrix_paging::vtd::remap::{self, Remap};
-use ferrix_paging::vtd::unit::{self as policy, Drain, Walk};
-use ferrix_paging::vtd::{VtdFourLevel, VtdSecondLevel};
-use ferrix_paging::{MapError, MapFlags, PhysAddr};
-use ferrix_pci::Address;
-use ferrix_sync::IrqSpinLock;
+use xaqu_paging::vtd::remap::{self, Remap};
+use xaqu_paging::vtd::unit::{self as policy, Drain, Walk};
+use xaqu_paging::vtd::{VtdFourLevel, VtdSecondLevel};
+use xaqu_paging::{MapError, MapFlags, PhysAddr};
+use xaqu_pci::Address;
+use xaqu_sync::IrqSpinLock;
 
 use super::gate::{self, Gate};
 use super::{Cause, Fault, Wait};
@@ -425,7 +425,7 @@ impl Attached {
 
 impl Unit {
     /// Map the unit whose registers are at `phys`, and require it to be able to
-    /// do what this driver asks (`ferrix_paging::vtd::unit::accept`): a
+    /// do what this driver asks (`xaqu_paging::vtd::unit::accept`): a
     /// version read against, a three- or four-level walk, no write buffer
     /// to flush, an invalidation queue, its records in its first page; and
     /// not left translating. A unit firmware left remapping interrupts, or
@@ -652,7 +652,7 @@ impl Unit {
     /// message or I/O APIC entry that names it is programmed.
     ///
     /// The entry must not be present: it is never rewritten while it is
-    /// (`ferrix_paging::vtd::remap`'s rule). Its high quadword -- the source
+    /// (`xaqu_paging::vtd::remap`'s rule). Its high quadword -- the source
     /// ID it checks -- is written first, its low quadword with `P` last, so
     /// the unit never reads a present entry with a stale check. Both are
     /// cleaned to memory on a unit that does not snoop, then the entry is
@@ -743,7 +743,7 @@ impl Unit {
     /// The fault the first full recording register holds, cleared so the
     /// unit can record the next, or `None`: the records are read from the
     /// one `FSTS.FRI` names round all `CAP.NFR` + 1 of them
-    /// (`ferrix_paging::vtd::unit::fault_records`), as the unit fills them.
+    /// (`xaqu_paging::vtd::unit::fault_records`), as the unit fills them.
     ///
     /// QEMU's unit has one record, as both of the N150's have, and drops a second fault from the same
     /// device while it is full, so a caller that wants a particular fault clears
@@ -1655,7 +1655,7 @@ impl Unit {
     /// else: an RMRR's identity domain (`vtd-design.md` §3.9(b)), made
     /// after [`Unit::enable`] and before [`Unit::translate`], and never
     /// detached (`L.iommu.73`, `L.iommu.78`). The regions were honoured by
-    /// `ferrix_paging::vtd::rmrr::identity` and share no page.
+    /// `xaqu_paging::vtd::rmrr::identity` and share no page.
     ///
     /// # Errors
     ///
@@ -1667,7 +1667,7 @@ impl Unit {
     pub fn attach_identity(
         &self,
         function: Address,
-        regions: &[ferrix_paging::vtd::rmrr::Identity],
+        regions: &[xaqu_paging::vtd::rmrr::Identity],
     ) -> Result<Attached, &'static str> {
         // Before translation goes on, but for stage 10's check, which makes
         // one on QEMU's translating unit (`domain_check::check_rmrr_identity`).

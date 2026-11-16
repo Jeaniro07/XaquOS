@@ -42,7 +42,7 @@ const S2AP_WRITE: u64 = 1 << 7;
 const SH_INNER: u64 = 0b11 << 8;
 
 /// Access flag. An entry without it faults on first use unless the stream
-/// table entry sets `S2AFFD`, which Ferrix does not.
+/// table entry sets `S2AFFD`, which Xaqu does not.
 const ACCESS_FLAG: u64 = 1 << 10;
 
 /// Execute never. A device does not execute, so every leaf sets it.

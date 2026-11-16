@@ -5,16 +5,16 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::ingest::{self, Now};
-use ferrix_lode_core::mce;
-use ferrix_lode_core::quarantine::{
+use xaqu_lode_core::ingest::{self, Now};
+use xaqu_lode_core::mce;
+use xaqu_lode_core::quarantine::{
     Config, Judge, MESSAGE_ID_QUARANTINE, Verdict, brought_back_by_root, core_scoped, cpu_list,
 };
-use ferrix_lode_core::record::Record;
-use ferrix_native_abi::directory::{self, Kind, MAX_MESSAGE, Message};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::{Handle, OwnedHandle, Requested, Rights, pending};
+use xaqu_lode_core::record::Record;
+use xaqu_native_abi::directory::{self, Kind, MAX_MESSAGE, Message};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::{Handle, OwnedHandle, Requested, Rights, pending};
 
 use crate::sys;
 
@@ -51,7 +51,7 @@ impl Token {
     }
 
     /// Take processor `cpu` out of service.
-    pub(crate) fn take_out(&self, cpu: usize) -> Result<(), ferrix_rt::native::Error> {
+    pub(crate) fn take_out(&self, cpu: usize) -> Result<(), xaqu_rt::native::Error> {
         pending::cpu_service(Kernel, &self.0, cpu, false)
     }
 }

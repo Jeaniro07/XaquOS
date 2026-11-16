@@ -43,7 +43,7 @@ const MONTHS: [&str; 12] = [
 ];
 
 /// `seconds` since the epoch as a date and time in UTC, the only time zone
-/// Ferrix has: (year, month 0-11, day 1-31, weekday 0-6 from Thursday, hour,
+/// Xaqu has: (year, month 0-11, day 1-31, weekday 0-6 from Thursday, hour,
 /// minute, second). Howard Hinnant's `civil_from_days`.
 fn civil(seconds: i64) -> (i64, usize, i64, usize, i64, i64, i64) {
     let days = seconds.div_euclid(86_400);

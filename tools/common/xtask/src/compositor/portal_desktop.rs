@@ -1,4 +1,4 @@
-//! What the boots of Ferrix's file chooser through the desktop portal
+//! What the boots of Xaqu's file chooser through the desktop portal
 //! share: Xaqu's desktop on the Chrome volume, with a session bus -- the
 //! volume's `dbus-daemon` -- that portald answers on, and a script saying
 //! the windows' classes and titles every two seconds.
@@ -22,7 +22,7 @@ while :; do
 done
 "#;
 
-/// The class Ferrix's chooser's window has.
+/// The class Xaqu's chooser's window has.
 pub(super) const CHOOSER_CLASS: &str = "class: rocks.magical.chooser";
 
 /// The image for such a boot, its kernel, and the arguments it boots with;

@@ -8,7 +8,7 @@
 //! block that answers a query the way virtio 1.2 §5.8.4 says, from a table,
 //! and records every access; some of its answers are wrong on purpose.
 //!
-//! The evdev names from `ferrix_linux_abi::input` appear only on the other
+//! The evdev names from `xaqu_linux_abi::input` appear only on the other
 //! side of an assertion from those hand-written numbers: where QEMU's devices
 //! set bit 30 for `KEY_A`, the test requires that bit to be the probe's
 //! `KEY_A`, so a code QEMU sends and the probe's number for it cannot part.
@@ -18,7 +18,7 @@ extern crate std;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_MT_POSITION_X, ABS_MT_POSITION_Y, ABS_MT_SLOT, ABS_MT_TRACKING_ID, BTN_EXTRA,
     BTN_GEAR_DOWN, BTN_GEAR_UP, BTN_LEFT, BTN_MIDDLE, BTN_RIGHT, BTN_SIDE, BTN_TOUCH,
     INPUT_PROP_DIRECT, KEY_A, KEY_ESC, LED_CAPSL, LED_NUML, LED_SCROLLL, REL_WHEEL, REL_X, REL_Y,

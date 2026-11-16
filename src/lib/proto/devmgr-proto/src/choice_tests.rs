@@ -8,8 +8,8 @@ use crate::choice::{self, Chooser, Pick, Wanted};
 
 /// The word as `devmgr` spells it, here only so the lines read as they do
 /// on a console.
-const WORD: &[u8] = b"ferrix.nvidia=";
-const NAME: &str = "ferrix.nvidia";
+const WORD: &[u8] = b"xaqu.nvidia=";
+const NAME: &str = "xaqu.nvidia";
 
 /// nazuna's two cards, as `DeviceInfo::location` has them.
 const RTX_3060: u32 = 0x01 << 8;
@@ -51,34 +51,34 @@ fn what_is_not_an_address_is_none() {
 #[test]
 fn the_word_is_found_among_the_others() {
     assert_eq!(
-        choice::wanted(b"ferrix.root=btrfs ferrix.fbcon", WORD),
+        choice::wanted(b"xaqu.root=btrfs xaqu.fbcon", WORD),
         Wanted::First
     );
     assert_eq!(choice::wanted(b"", WORD), Wanted::First);
     assert_eq!(
         choice::wanted(
-            b"ferrix.root=btrfs ferrix.nvidia=0000:01:00.0 ferrix.fbcon\n",
+            b"xaqu.root=btrfs xaqu.nvidia=0000:01:00.0 xaqu.fbcon\n",
             WORD
         ),
         Wanted::At(RTX_3060)
     );
     assert_eq!(
-        choice::wanted(b"ferrix.nvidia=03:00.0", WORD),
+        choice::wanted(b"xaqu.nvidia=03:00.0", WORD),
         Wanted::At(RTX_3090)
     );
     assert_eq!(
-        choice::wanted(b"ferrix.nvidia=3090", WORD),
+        choice::wanted(b"xaqu.nvidia=3090", WORD),
         Wanted::Unparsed
     );
-    assert_eq!(choice::wanted(b"ferrix.nvidia=", WORD), Wanted::Unparsed);
+    assert_eq!(choice::wanted(b"xaqu.nvidia=", WORD), Wanted::Unparsed);
     // A longer word that only starts the same is not it.
     assert_eq!(
-        choice::wanted(b"ferrix.nvidiax=01:00.0", WORD),
+        choice::wanted(b"xaqu.nvidiax=01:00.0", WORD),
         Wanted::First
     );
     // The first word counts.
     assert_eq!(
-        choice::wanted(b"ferrix.nvidia=01:00.0 ferrix.nvidia=03:00.0", WORD),
+        choice::wanted(b"xaqu.nvidia=01:00.0 xaqu.nvidia=03:00.0", WORD),
         Wanted::At(RTX_3060)
     );
 }
@@ -128,25 +128,25 @@ fn every_pick_has_its_line() {
     let line = |pick, location| format!("{}", chooser.line(pick, location));
     assert_eq!(
         line(Pick::Take { by_word: false }, RTX_3060),
-        "devmgr   gpu 01:00.0: the one nvrm drives, the first GPU met (ferrix.nvidia=<address> \
+        "devmgr   gpu 01:00.0: the one nvrm drives, the first GPU met (xaqu.nvidia=<address> \
          chooses another)"
     );
     assert_eq!(
         line(Pick::Take { by_word: true }, RTX_3090),
-        "devmgr   gpu 03:00.0: the one nvrm drives, as ferrix.nvidia names it"
+        "devmgr   gpu 03:00.0: the one nvrm drives, as xaqu.nvidia names it"
     );
     assert_eq!(
         line(Pick::NotNamed { named: RTX_3090 }, RTX_3060),
-        "devmgr   gpu 01:00.0 not started: ferrix.nvidia names 03:00.0"
+        "devmgr   gpu 01:00.0 not started: xaqu.nvidia names 03:00.0"
     );
     assert_eq!(
         line(Pick::Second { chosen: RTX_3060 }, RTX_3090),
         "devmgr   gpu 03:00.0 not started: nvrm drives one GPU, 01:00.0 \
-         (ferrix.nvidia=<address> chooses another)"
+         (xaqu.nvidia=<address> chooses another)"
     );
     assert_eq!(
         line(Pick::Unparsed, RTX_3060),
-        "devmgr   gpu 01:00.0 not started: ferrix.nvidia's value is not a PCI address \
+        "devmgr   gpu 01:00.0 not started: xaqu.nvidia's value is not a PCI address \
          (ssss:bb:dd.f or bb:dd.f), so no GPU is chosen"
     );
 }

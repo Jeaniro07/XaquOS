@@ -1,6 +1,6 @@
 //! The records on the wire (`docs/SETTINGS-WRITER.md` §3).
 
-use ferrix_auth_proto::Secret;
+use xaqu_auth_proto::Secret;
 
 use crate::request::Request;
 use crate::{MAX_RECORD, MAX_TEXT, VERSION};
@@ -364,7 +364,7 @@ impl ToServer {
             }
             ToServer::Respond(secret) => {
                 let mut w = Writer::new(kind::RESPOND);
-                w.bytes(secret.expose(), ferrix_auth_proto::MAX_SECRET)?;
+                w.bytes(secret.expose(), xaqu_auth_proto::MAX_SECRET)?;
                 w.done()
             }
             ToServer::Cancel => Writer::new(kind::CANCEL).done(),
@@ -399,7 +399,7 @@ impl ToServer {
                 ToServer::Request { dry_run, request }
             }
             kind::RESPOND => {
-                let bytes = r.bytes(ferrix_auth_proto::MAX_SECRET)?;
+                let bytes = r.bytes(xaqu_auth_proto::MAX_SECRET)?;
                 ToServer::Respond(Secret::from_bytes(bytes).ok_or(DecodeError::Field)?)
             }
             kind::CANCEL => ToServer::Cancel,

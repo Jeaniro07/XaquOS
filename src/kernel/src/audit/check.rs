@@ -83,9 +83,9 @@ const REFUSAL: Event = Event::new(Class::Refused, 2);
 /// What bring-up says it recorded, for the check of the kernel's store.
 #[derive(Debug)]
 pub struct Expected {
-    /// `ferrix.checks`: 1 when the checks run.
+    /// `xaqu.checks`: 1 when the checks run.
     pub checks: u32,
-    /// `ferrix.devmgr`: 1 when pid 1 starts `devmgr`.
+    /// `xaqu.devmgr`: 1 when pid 1 starts `devmgr`.
     pub devmgr: u32,
     /// The build's mitigations: 1 when hardened.
     pub mitigations: u32,
@@ -93,17 +93,17 @@ pub struct Expected {
     pub kaslr: u32,
     /// 1 when the log is mirrored to the region kept across a reset.
     pub pstore: u32,
-    /// `ferrix.efifb`: 1 when the firmware framebuffer was asked to be lent.
+    /// `xaqu.efifb`: 1 when the firmware framebuffer was asked to be lent.
     pub efifb: u32,
     /// The build flags, packed (`crate::build_flags::audit_words`).
     pub build: u32,
-    /// `ferrix.vtd`: 1 when the VT-d units are driven, 0 for
-    /// `ferrix.vtd=off`.
+    /// `xaqu.vtd`: 1 when the VT-d units are driven, 0 for
+    /// `xaqu.vtd=off`.
     pub vtd: u32,
-    /// `ferrix.amdvi`: 1 when the AMD-Vi units are driven, 0 for
-    /// `ferrix.amdvi=off`.
+    /// `xaqu.amdvi`: 1 when the AMD-Vi units are driven, 0 for
+    /// `xaqu.amdvi=off`.
     pub amdvi: u32,
-    /// `ferrix.unisolated`: 1 when the boot carries the word, 0 when not.
+    /// `xaqu.unisolated`: 1 when the boot carries the word, 0 when not.
     pub unisolated: u32,
 }
 

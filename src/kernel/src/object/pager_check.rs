@@ -41,13 +41,13 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     MAP_NO_PAGER, MAP_READ, MAP_WRITE, PACKET_PAGE_REQUEST, PAGE_REQUEST_DIRTY, PAGE_REQUEST_READ,
     PAGER_OP_DECOMMIT, PAGER_OP_DIRTY, PAGER_OP_FAIL, PAGER_OP_WRITEBACK_BEGIN,
     PAGER_OP_WRITEBACK_END, PAGER_VMO_NO_COPY_WAIT, PAGER_VMO_TRAP_DIRTY, PAGER_WAIT_MAX_NS,
@@ -929,7 +929,7 @@ fn case_h_trap_dirty(world: &World) -> Result<(), &'static str> {
     if outcome(&client, &task)?.0 != Outcome::Wrote {
         return Err("h: a write the pager let be Dirty did not land");
     }
-    if served.dirty()? != [(0, 1, ferrix_native_abi::types::DIRTY_STATE_DIRTY)] {
+    if served.dirty()? != [(0, 1, xaqu_native_abi::types::DIRTY_STATE_DIRTY)] {
         return Err("h: the query did not show the written page alone as Dirty");
     }
     let refused = served.client(&world.c)?;

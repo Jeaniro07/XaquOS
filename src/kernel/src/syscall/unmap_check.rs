@@ -21,9 +21,9 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_vma::VmaFlags;
 
 use crate::sync::SpinLock;
 use crate::syscall::process;

@@ -1,8 +1,8 @@
 //! What the system calls itself, what it has, and how it stops.
 //!
-//! # Why `sysname` says `Ferrix`
+//! # Why `sysname` says `Xaqu`
 //!
-//! The system names itself. `uname -s` reads `Ferrix`, chosen by the owner of
+//! The system names itself. `uname -s` reads `Xaqu`, chosen by the owner of
 //! the project on 2026-09-13 over the earlier answer, `Linux`.
 //!
 //! That earlier answer had a reason, and it is the cost of this one: a program
@@ -13,14 +13,14 @@
 //! interface is still Linux's, and the rest of the identity still says so:
 //! `release` is a Linux version and `machine` the Linux architecture name, so
 //! a program that reads those, or `/proc/version`, sees a Linux kernel. When a
-//! build that Ferrix has to run branches on the name, it is told which target
+//! build that Xaqu has to run branches on the name, it is told which target
 //! to use rather than left to guess -- the fix goes there, not back here.
 //! `src/lib/proto/linux-abi` says the same thing at [`Utsname::sysname`].
 //!
 //! `uname -a` reads
 //!
 //! ```text
-//! Ferrix ferrix 6.1.0-ferrix #1 Ferrix 0.3.0 x86_64 GNU/Linux
+//! Xaqu xaqu 6.1.0-xaqu #1 Xaqu 0.3.0 x86_64 GNU/Linux
 //! ```
 //!
 //! `nodename` and `domainname` are the two a program may change, with
@@ -28,18 +28,18 @@
 //! last set to. They are system-wide, as they are on Linux outside a UTS
 //! namespace.
 //!
-//! [`Utsname::sysname`]: ferrix_linux_abi::types::Utsname::sysname
+//! [`Utsname::sysname`]: xaqu_linux_abi::types::Utsname::sysname
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::pstore::Stop;
-use ferrix_bootinfo::{Arch, PAGE_SIZE, is_user_address};
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_sync::{IrqControl, Once};
+use xaqu_bootinfo::pstore::Stop;
+use xaqu_bootinfo::{Arch, PAGE_SIZE, is_user_address};
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_sync::{IrqControl, Once};
 
 use crate::sync::SpinLock;
 
@@ -55,7 +55,7 @@ use crate::syscall::process::Process;
 use crate::syscall::time;
 use crate::syscall::uaccess::{self, WORD};
 use crate::syscall::userns::{self, UserNamespace};
-use ferrix_linux_abi::kmsg;
+use xaqu_linux_abi::kmsg;
 
 /// Bytes in each of `utsname`'s six fields.
 const FIELD: usize = 65;
@@ -65,26 +65,26 @@ const FIELD: usize = 65;
 pub const NAME_MAX: usize = FIELD - 1;
 
 /// The system's name, `uname -s`; see the module documentation for why.
-pub(crate) const SYSNAME: &str = "Ferrix";
+pub(crate) const SYSNAME: &str = "Xaqu";
 
 /// The kernel release.
 ///
 /// Not arbitrary: a configure script compares this against a minimum, and
 /// glibc refuses to start under a kernel it reads as older than the one it was
-/// built for. So it is a plausible modern Linux version with Ferrix named in
+/// built for. So it is a plausible modern Linux version with Xaqu named in
 /// the suffix, which is exactly what a distribution kernel does.
-pub(crate) const RELEASE: &str = "6.1.0-ferrix";
+pub(crate) const RELEASE: &str = "6.1.0-xaqu";
 
 /// The version string, which by convention starts with a build number, then
 /// the release this kernel is: the workspace's version, so the two never part.
-pub(crate) const VERSION: &str = concat!("#1 Ferrix ", env!("CARGO_PKG_VERSION"));
+pub(crate) const VERSION: &str = concat!("#1 Xaqu ", env!("CARGO_PKG_VERSION"));
 
 /// A name set by `sethostname` or `setdomainname`: its bytes, NUL-padded, and
 /// how many of them were given.
 pub type SetName = ([u8; NAME_MAX], usize);
 
 /// The host name before anything sets one.
-const HOSTNAME_DEFAULT: &str = "ferrix";
+const HOSTNAME_DEFAULT: &str = "xaqu";
 
 /// The domain name before anything sets one. `(none)` is what Linux reports
 /// before anything sets it.
@@ -403,7 +403,7 @@ pub(crate) fn sys_sysinfo_at_width(
     );
     let (_, loads) = crate::fs::procfs::loadavg::now();
     for (index, load) in loads.into_iter().enumerate() {
-        let shifted = load << (SI_LOAD_SHIFT - ferrix_procfs::loadavg::FSHIFT);
+        let shifted = load << (SI_LOAD_SHIFT - xaqu_procfs::loadavg::FSHIFT);
         put(
             field(sysinfo_at::LOADS) + index * word,
             long(shifted).get(..word).unwrap_or_default(),
@@ -477,7 +477,7 @@ pub(crate) fn cleared() -> u64 {
 /// The actions are Linux's (`kernel/printk/printk.c`, v7.0), over those
 /// lines as Linux's records, each read out as Linux formats it:
 /// `<6>[   12.345678] text`, the kernel's lines at `KERN_INFO`, programs'
-/// output at `LOG_USER`'s (`ferrix_linux_abi::kmsg`).
+/// output at `LOG_USER`'s (`xaqu_linux_abi::kmsg`).
 ///
 /// * `READ` (2) takes the lines the one system-wide reader has not read yet,
 ///   as many whole ones as fit, or as much of the first as fits; it waits for
@@ -804,9 +804,9 @@ pub(crate) fn sys_reboot(
     if matches!(cmd, command::POWER_OFF | command::HALT | command::RESTART) {
         crate::power::sync_disks();
         let action = match cmd {
-            command::POWER_OFF => ferrix_audit::power::OFF,
-            command::HALT => ferrix_audit::power::HALT,
-            _ => ferrix_audit::power::RESTART,
+            command::POWER_OFF => xaqu_audit::power::OFF,
+            command::HALT => xaqu_audit::power::HALT,
+            _ => xaqu_audit::power::RESTART,
         };
         let caller = crate::object::process::Host::core(process);
         crate::audit::power(crate::audit::Subject::of(caller), action);

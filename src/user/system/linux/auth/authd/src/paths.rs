@@ -31,7 +31,7 @@ impl Paths {
 
     /// The store (`docs/AUTH.md` §5.2).
     pub(crate) fn store(&self) -> PathBuf {
-        self.at("var/lib/ferrix/auth")
+        self.at("var/lib/xaqu/auth")
     }
 
     /// One account's credential record.
@@ -46,20 +46,20 @@ impl Paths {
 
     /// The seeds an image carries (§5.3).
     pub(crate) fn seeds(&self) -> PathBuf {
-        self.at("lib/ferrix/auth/seed")
+        self.at("lib/xaqu/auth/seed")
     }
 
     /// The audit log (§3.6).
     pub(crate) fn audit(&self) -> PathBuf {
-        self.at("var/log/ferrix/auth.log")
+        self.at("var/log/xaqu/auth.log")
     }
 
     /// The three layers of service policy, lowest first (§4.2).
     pub(crate) fn service_layers(&self) -> [PathBuf; 3] {
         [
-            self.at("lib/ferrix/auth/services"),
-            self.at("etc/ferrix/auth/services"),
-            self.at("run/ferrix/auth/services"),
+            self.at("lib/xaqu/auth/services"),
+            self.at("etc/xaqu/auth/services"),
+            self.at("run/xaqu/auth/services"),
         ]
     }
 

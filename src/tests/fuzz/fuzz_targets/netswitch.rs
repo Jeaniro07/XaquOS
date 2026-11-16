@@ -4,7 +4,7 @@
 
 #![no_main]
 
-use ferrix_netswitch::Switch;
+use xaqu_netswitch::Switch;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {

@@ -13,7 +13,7 @@
 //! it could not enable dispatch.
 //!
 //! Run on nazuna's Linux under the same Proton first, it passes there too:
-//! the probe is right before Ferrix is judged by it.
+//! the probe is right before Xaqu is judged by it.
 
 use crate::args::Args;
 use crate::paths::Arch;
@@ -157,7 +157,7 @@ pub(crate) fn test_wine_dispatch(args: &Args) -> Result<()> {
     let archive = initramfs::build(Some(&busybox), &natives, Some(&bytes), &files)?;
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
     println!(
-        "  {arch}: running the probe in Proton's Wine on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running the probe in Proton's Wine on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;

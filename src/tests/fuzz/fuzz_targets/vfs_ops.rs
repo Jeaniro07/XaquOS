@@ -46,9 +46,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use ferrix_vfs::dirent::{DirentWriter, records};
-use ferrix_vfs::tmpfs::{HeapStorage, Tmpfs};
-use ferrix_vfs::{
+use xaqu_vfs::dirent::{DirentWriter, records};
+use xaqu_vfs::tmpfs::{HeapStorage, Tmpfs};
+use xaqu_vfs::{
     Clock, Context, FileSystem, FileType, MountFlags, Namespace, OpenFlags, RenameMode, Timespec,
     Whence,
 };
@@ -261,7 +261,7 @@ fuzz_target!(|data: &[u8]| {
     let mut ns = Arc::new(Namespace::with_cache(
         tmpfs(1),
         16,
-        Arc::new(ferrix_sync::SpinParker),
+        Arc::new(xaqu_sync::SpinParker),
     ));
     let mut ctx = ns.context();
     let _ = ns.mkdir(&ctx, None, b"/mnt", 0o755);

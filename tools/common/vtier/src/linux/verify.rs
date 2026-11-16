@@ -6,7 +6,7 @@
 //! ```text
 //! vtier verify --status FILE [--since SEQ --instance ID] [--allow-inject] MOUNTPOINT
 //! ```
-use ferrix_vtier::store::BLOCK;
+use xaqu_vtier::store::BLOCK;
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::fd::AsRawFd;

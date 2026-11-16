@@ -57,8 +57,8 @@
 //! writes are cleaned and invalidated once, after they are zeroed, so no
 //! dirty line of the kernel's is left to be evicted over what the ITS wrote.
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_sync::IrqSpinLock;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_sync::IrqSpinLock;
 
 use super::{super::cpu, gicv3};
 use crate::irq::Msi;

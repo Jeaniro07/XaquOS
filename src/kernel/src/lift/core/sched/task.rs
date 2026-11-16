@@ -5,7 +5,7 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
-use ferrix_sched::CpuSet;
+use xaqu_sched::CpuSet;
 
 use crate::object::process::Host;
 use crate::sync::SpinLock;
@@ -59,7 +59,7 @@ pub struct Task {
     /// (`sched::lock_taken`). Only the thread itself reaches these.
     pub(crate) pending_up: AtomicBool,
     /// Whether it holds a reservation.
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     pub(crate) reserved: AtomicBool,
     /// In a sigreturn, whose capture wants only the processor's mask.
     pub(crate) sigreturning: AtomicBool,
@@ -87,7 +87,7 @@ pub struct Task {
     pub(crate) argument: AtomicUsize,
     pub(crate) gone: crate::sched::wait::WaitQueue,
     pub(crate) user_state: SpinLock<Option<crate::arch::UserState>>,
-    pub(crate) pending: SpinLock<Option<ferrix_native::region::Context>>,
+    pub(crate) pending: SpinLock<Option<xaqu_native::region::Context>>,
     pub(crate) time: crate::sched::account::Time,
     /// The call it is in, for `/proc`: its number plus one (0 for none), its arguments,
     /// and the program's stack and instruction pointers once it has parked in it.
@@ -225,7 +225,7 @@ impl Task {
     pub(crate) fn note_parking(&self) {
         if self.call[0].load(Ordering::Relaxed) != 0
             && self.call[8].load(Ordering::Relaxed) == 0
-            && let Ok(context) = ferrix_native::region::context_read(ferrix_rt::Kernel)
+            && let Ok(context) = xaqu_native::region::context_read(xaqu_rt::Kernel)
         {
             #[cfg(target_arch = "x86_64")]
             let (stack, pc) = (context.rsp, context.rip);

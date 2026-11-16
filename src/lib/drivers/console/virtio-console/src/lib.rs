@@ -43,10 +43,10 @@
 
 #![no_std]
 
-use ferrix_virtio::DeviceConfig;
-use ferrix_virtio::console::{self, ConsoleError as ProtocolError, Control};
-use ferrix_virtio::pci::{self, ActiveQueue, CommonConfig, QueueAddresses, TransportError};
-use ferrix_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
+use xaqu_virtio::DeviceConfig;
+use xaqu_virtio::console::{self, ConsoleError as ProtocolError, Control};
+use xaqu_virtio::pci::{self, ActiveQueue, CommonConfig, QueueAddresses, TransportError};
+use xaqu_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
 
 #[cfg(test)]
 mod tests;

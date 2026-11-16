@@ -7,7 +7,7 @@
 //! decides which leaf to use and must never use one twice ([`crate::token`]
 //! is what enforces that).
 
-use ferrix_sha256::{Sha256, finish_192};
+use xaqu_sha256::{Sha256, finish_192};
 
 /// `n`: SHA-256/192.
 pub const N: usize = 24;

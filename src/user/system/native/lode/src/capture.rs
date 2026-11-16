@@ -1,7 +1,7 @@
 //! Crash screenshots (`docs/LOGGING.md` §19, step 2b): lode's side of the
-//! provider protocol ([`ferrix_lode_capture`]).
+//! provider protocol ([`xaqu_lode_capture`]).
 //!
-//! Off unless `/etc/ferrix/lode.d/capture.conf` says `Capture=yes`. When on,
+//! Off unless `/etc/xaqu/lode.d/capture.conf` says `Capture=yes`. When on,
 //! lode listens on `/run/lode/capture` (anyone may connect; only a provider
 //! that is the session's announced pid and holds its token is accepted),
 //! and for each crash record -- a kernel `signal` line that ended a
@@ -9,7 +9,7 @@
 //! where EXPR` line of the file matches -- asks the seat's provider for a
 //! picture, at most one each [`SPACING_US`], and for one program at most one
 //! each `SameProgramEvery=` (10 min unless the file says otherwise;
-//! [`ferrix_lode_core::capture`]). The record is stored first and
+//! [`xaqu_lode_core::capture`]). The record is stored first and
 //! never waits: the answer, or its absence, is a record of its own, linked
 //! by `CAPTURE_OF`, and an image is a blob in the store's blob container
 //! (`BLOB_SCREENSHOT`, §21.4), readable by exactly those who read the
@@ -18,20 +18,20 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_capture::{FORMAT_QOI, Message};
-use ferrix_lode_core::blob;
-use ferrix_lode_core::capture::{Bins, SAME_PROGRAM_DEFAULT_US, same_program_every};
-use ferrix_lode_core::filter::{self, Expr};
-use ferrix_lode_core::ingest::{self, Now};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::session::Sessions;
+use xaqu_lode_capture::{FORMAT_QOI, Message};
+use xaqu_lode_core::blob;
+use xaqu_lode_core::capture::{Bins, SAME_PROGRAM_DEFAULT_US, same_program_every};
+use xaqu_lode_core::filter::{self, Expr};
+use xaqu_lode_core::ingest::{self, Now};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::session::Sessions;
 
 use crate::sys;
 
 /// The provider socket.
 const SOCKET: &[u8] = b"/run/lode/capture";
 /// The switch and the rules.
-const CONFIG: &[u8] = b"/etc/ferrix/lode.d/capture.conf";
+const CONFIG: &[u8] = b"/etc/xaqu/lode.d/capture.conf";
 /// At most one capture each 10 s.
 const SPACING_US: u64 = 10_000_000;
 /// How long a provider has to answer.
@@ -150,15 +150,15 @@ impl Capture {
             && (record.get_str("MESSAGE_ID") == Some(ingest::MESSAGE_ID_CRASH)
                 // An error dialog nothing crashed behind (hyprix's
                 // app-error event): the picture is the only copy of its text.
-                || record.get("FERRIX_EVENT") == Some(b"app-error")
-                || (record.get("FERRIX_SUBSYSTEM") == Some(b"devmgr")
+                || record.get("XAQU_EVENT") == Some(b"app-error")
+                || (record.get("XAQU_SUBSYSTEM") == Some(b"devmgr")
                     && filter::contains(b"died", record.message()))
                 || self.rules.iter().any(|rule| rule.matches(record)))
     }
 
     /// Ask for a picture of the screen at record `seqnum`, `what` being
     /// one line of it and `bin` the program it is about
-    /// ([`ferrix_lode_core::capture::bin_of`]); what is to be said goes into
+    /// ([`xaqu_lode_core::capture::bin_of`]); what is to be said goes into
     /// `out`.
     pub(crate) fn ask(
         &mut self,

@@ -1,6 +1,6 @@
 //! The driver model design page's child-device example, as the page writes
 //! it: an LM75 temperature sensor wired to an I2C controller a ring-3 driver
-//! runs. Kept compiling as ferrix-driver's test of its API shape; never put
+//! runs. Kept compiling as xaqu-driver's test of its API shape; never put
 //! in an image. Child devices are step 4's, so its parent bus never resolves
 //! and it is never started.
 //!
@@ -16,12 +16,12 @@ mod no_memory;
 
 use alloc::format;
 
-use ferrix_driver::bus::I2cDevice;
-use ferrix_driver::class::{CharacterDevice, File, UserMemoryWriter};
-use ferrix_driver::{BindContext, Driver, Event, Flow, Resources, Result, run};
-use ferrix_platform::RegulatorClient;
+use xaqu_driver::bus::I2cDevice;
+use xaqu_driver::class::{CharacterDevice, File, UserMemoryWriter};
+use xaqu_driver::{BindContext, Driver, Event, Flow, Resources, Result, run};
+use xaqu_platform::RegulatorClient;
 
-ferrix_driver::entry!();
+xaqu_driver::entry!();
 
 #[derive(Resources)]
 struct Lm75Resources {

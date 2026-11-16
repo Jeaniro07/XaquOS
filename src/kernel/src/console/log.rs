@@ -66,7 +66,7 @@
 
 use core::sync::atomic::{AtomicU8, AtomicU32, AtomicU64, Ordering, fence};
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 /// The log's length: Linux's default, `CONFIG_LOG_BUF_SHIFT` of 17, which is
 /// also what `syslog(2)` reports as the buffer's size.
@@ -634,7 +634,7 @@ pub(crate) fn break_line() -> bool {
 ///
 /// A size that does not read as one, or no memory for it; the log stays as
 /// it was.
-pub fn size_from(view: &ferrix_bootinfo::BootView<'_>) -> Result<Option<usize>, &'static str> {
+pub fn size_from(view: &xaqu_bootinfo::BootView<'_>) -> Result<Option<usize>, &'static str> {
     let Some(asked) = view.option(LOG_BUF_LEN) else {
         return Ok(None);
     };
@@ -661,7 +661,7 @@ pub fn size_from(view: &ferrix_bootinfo::BootView<'_>) -> Result<Option<usize>, 
 ///
 /// A value that is not a size.
 pub(crate) fn size_asked(asked: &str, current: usize) -> Result<Option<usize>, &'static str> {
-    let bytes = ferrix_bootinfo::size_in(asked)
+    let bytes = xaqu_bootinfo::size_in(asked)
         .and_then(|bytes| usize::try_from(bytes).ok())
         .and_then(usize::checked_next_power_of_two)
         .ok_or("log_buf_len is not a size")?

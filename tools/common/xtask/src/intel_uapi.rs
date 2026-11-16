@@ -5,11 +5,11 @@
 //! `pci-testdev` at 00:02.0 that answers as Alder Lake-N, 8086:46d4 with
 //! class 030000 (`tools/common/data/qemu/0006-*.patch`). The kernel takes it
 //! for the Intel integrated GPU by that identity (`device.rs`,
-//! `is_intel_gpu`), devmgr matches it under `ferrix.intelgpu`, and QEMU's
+//! `is_intel_gpu`), devmgr matches it under `xaqu.intelgpu`, and QEMU's
 //! VT-d unit translates its DMA, so K3's rule lets its driver publish a render
 //! node. The driver is `intel-fake` (`src/user/system/native/drivers/gpu/intel-fake`)
 //! under the name `intel`, in this image alone: the front end of
-//! `ferrix-intel-xelp` over a back end that completes every batch at once and
+//! `xaqu-intel-xelp` over a back end that completes every batch at once and
 //! runs nothing. It exercises the chardev core's K3, K5 and K6 paths and every
 //! ioctl Mesa makes at start-up, never the GPU's DMA, so no K2 claim may cite
 //! it (the consultant's C2, ledger 2352).
@@ -92,7 +92,7 @@ pub(crate) const STANDIN: &str =
 pub(crate) const VOLUME: &str = "1";
 
 /// The kernel option under which devmgr drives the Intel GPU.
-pub(crate) const OPTION: &str = "ferrix.intelgpu";
+pub(crate) const OPTION: &str = "xaqu.intelgpu";
 
 /// Guest RAM, in MiB: Mesa's heaps and the fake's objects.
 pub(crate) const MEMORY: u32 = 4096;
@@ -197,10 +197,10 @@ const RENDERER: &str = "OpenGL core profile renderer: ";
 
 /// Where `fetch-intel-uapi.sh` writes the volume.
 pub(crate) fn volume() -> Result<PathBuf> {
-    let root = match std::env::var_os("FERRIX_INTEL_UAPI") {
+    let root = match std::env::var_os("XAQU_INTEL_UAPI") {
         Some(root) => PathBuf::from(root),
         None => PathBuf::from(std::env::var_os("HOME").unwrap_or_default())
-            .join(".local/share/ferrix/intel-uapi"),
+            .join(".local/share/xaqu/intel-uapi"),
     };
     let image = root.join("intel-uapi.img");
     let stamp = std::fs::read_to_string(root.join("intel-uapi.stamp")).unwrap_or_default();
@@ -233,7 +233,7 @@ pub(crate) fn refuse_unpatched_qemu() -> Result<()> {
 
 /// `intel-fake`, the fake back end's driver.
 const FAKE: Program = Program {
-    package: "ferrix-intel-fake",
+    package: "xaqu-intel-fake",
     binary: "intel-fake",
     directory: native::DRIVERS,
 };
@@ -259,14 +259,14 @@ pub(crate) fn use_fake(natives: &mut [Built], arch: Arch, release: bool) -> Resu
 /// The keeper (`docs/INTEL-GPU.md` §12.3), a product program, built
 /// beside `intel` in the same package.
 const KEEPER: Program = Program {
-    package: "ferrix-intel-driver",
+    package: "xaqu-intel-driver",
     binary: "intel-keeper",
     directory: native::DRIVERS,
 };
 
 /// The fake as the keeper's worker.
 const FAKE_WORKER: Program = Program {
-    package: "ferrix-intel-fake",
+    package: "xaqu-intel-fake",
     binary: "intel-fake-gt",
     directory: native::DRIVERS,
 };
@@ -406,7 +406,7 @@ pub(crate) fn test_intel_uapi(args: &Args) -> Result<()> {
     });
     let archive = initramfs::build(Some(&busybox), &natives, Some(&bytes), &files)?;
     // `--kernel-option` words after the driver's: a control boots this
-    // image with `ferrix.checks=skip` to reach the judge past a check.
+    // image with `xaqu.checks=skip` to reach the judge past a check.
     let mut words = vec![OPTION.to_owned()];
     words.extend(args.kernel_options.iter().cloned());
     let options = format!("{}\n", words.join(" "));

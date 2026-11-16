@@ -1,8 +1,8 @@
 //! Descriptors: `openat`, `close`, `dup` and its kin, `fcntl`, `lseek`,
 //! `ftruncate` and `ioctl`.
 //!
-//! The rules about numbers live in `ferrix_vfs::fd::FdTable` and the rules
-//! about offsets in `ferrix_vfs::OpenFile`, both host-tested. What is here is
+//! The rules about numbers live in `xaqu_vfs::fd::FdTable` and the rules
+//! about offsets in `xaqu_vfs::OpenFile`, both host-tested. What is here is
 //! the part neither can do: reading a program's arguments, choosing this
 //! architecture's flag bits, and holding the process's table lock for exactly
 //! as long as a table operation takes.
@@ -26,15 +26,15 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     AT_FDCWD, F_ADD_SEALS, F_DUPFD, F_DUPFD_CLOEXEC, F_GET_SEALS, F_GETFD, F_GETFL, F_SETFD,
     F_SETFL, FD_CLOEXEC, FIOCLEX, FIONBIO, FIONCLEX, O_ACCMODE, O_APPEND, O_CLOEXEC, O_CREAT,
     O_EXCL, O_NONBLOCK, O_PATH, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY, SEEK_CUR, SEEK_DATA, SEEK_END,
     SEEK_HOLE, SEEK_SET,
 };
-use ferrix_vfs::fd::FdTable;
-use ferrix_vfs::{Context, FileType, Location, OpenFile, OpenFlags, Resolve, Whence};
+use xaqu_vfs::fd::FdTable;
+use xaqu_vfs::{Context, FileType, Location, OpenFile, OpenFlags, Resolve, Whence};
 
 use crate::arch;
 use crate::fallible::AllocError;
@@ -142,7 +142,7 @@ pub(crate) fn user_path(process: &Process, at: u64) -> Result<Vec<u8>, Errno> {
 pub(crate) fn standard_streams(
     reading: console::Reading,
 ) -> Result<FdTable<Arc<OpenFile>>, AllocError> {
-    ferrix_fallible::check()?;
+    xaqu_fallible::check()?;
     match crate::object::quota::charging_nobody(|| console_table(reading)) {
         Ok(table) => Ok(table),
         Err(Errno::ENOMEM) => Err(AllocError),
@@ -282,7 +282,7 @@ pub(crate) fn sys_openat2(
     if size < OPEN_HOW_SIZE as u64 {
         return Err(Errno::EINVAL);
     }
-    if size > ferrix_bootinfo::PAGE_SIZE {
+    if size > xaqu_bootinfo::PAGE_SIZE {
         return Err(Errno::E2BIG);
     }
     let size = usize::try_from(size).map_err(|_| Errno::E2BIG)?;
@@ -718,7 +718,7 @@ pub(crate) fn sys_ioctl(
     // An inotify instance answers what is queued to read.
     if let Some(instance) = fs::inotify::of(&file) {
         return match request {
-            ferrix_linux_abi::types::FIONREAD => {
+            xaqu_linux_abi::types::FIONREAD => {
                 let queued = u32::try_from(instance.queued_bytes()).unwrap_or(u32::MAX);
                 uaccess::copy_to_user(process.space(), arg, &queued.to_ne_bytes())
                     .map_err(|_| Errno::EFAULT)?;

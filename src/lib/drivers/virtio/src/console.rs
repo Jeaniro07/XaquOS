@@ -5,7 +5,7 @@
 //! [`FEATURE_MULTIPORT`] it is one nameless byte stream and there is nothing
 //! to say; with it, the device has a control queue over which ports are
 //! added, named and opened, and that is what a `virtserialport` is and what
-//! this module is for. Ferrix wants exactly one such port -- the one named
+//! this module is for. Xaqu wants exactly one such port -- the one named
 //! `com.redhat.spice.0`, which carries the clipboard (`docs/CLIPBOARD.md`
 //! §3) -- but the numbering and the control conversation are the device's
 //! whatever the port is for, so they are here and the clipboard is not.

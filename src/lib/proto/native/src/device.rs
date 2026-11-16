@@ -1,7 +1,7 @@
 //! A device, and the interrupts and register windows it hands a driver.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::nr;
+use xaqu_native_abi::types::{
     APERTURE_INFO_BYTES, ApertureInfo, DEVICE_INFO_BYTES, DEVICE_LIMIT_ISOLATED_INTERRUPTS,
     DEVICE_LIMIT_PIN_CEILING, DEVICE_LIMIT_PIN_PAGES, DEVICE_LIMIT_PIN_ROOM, DeviceBlock,
     DeviceInfo, IoMappingSpec,
@@ -216,7 +216,7 @@ impl<S: Syscall> Device<S> {
     /// [`Error::AccessDenied`] without `MANAGE`.
     pub fn clock(&self, hz: u32, set: bool) -> Result<u32, Error> {
         let options = if set {
-            ferrix_native_abi::types::CLOCK_SET
+            xaqu_native_abi::types::CLOCK_SET
         } else {
             0
         };
@@ -397,7 +397,7 @@ impl<S: Syscall> Device<S> {
     }
 
     /// Make a log control channel for this device and answer the driver's
-    /// end of it: the kernel log, read with `ferrix_logctl`'s READ and
+    /// end of it: the kernel log, read with `xaqu_logctl`'s READ and
     /// answered with DATA from the oldest byte the log still keeps. The claim
     /// ends when the channel is closed.
     ///

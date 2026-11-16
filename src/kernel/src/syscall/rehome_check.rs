@@ -11,14 +11,14 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::JOB_SEALED;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::JOB_SEALED;
+use xaqu_vma::VmaFlags;
 
 use crate::claim::StillServed;
 use crate::console::println;
@@ -402,7 +402,7 @@ fn check_quiesce() -> Result<bool, &'static str> {
 /// no core's view and write-combining ever meet.
 ///
 /// Verifies: L.user.133
-#[cfg(not(all(ferrix_personality = "user", ferrix_load_built = "none")))]
+#[cfg(not(all(xaqu_personality = "user", xaqu_load_built = "none")))]
 fn check_a_combining_object() -> Result<bool, &'static str> {
     let object = Vmo::new_anonymous(1).map_err(|_| "no object to make write-combining")?;
     if !object.make_combining() {
@@ -475,7 +475,7 @@ fn check_a_combining_object() -> Result<bool, &'static str> {
 
 /// `drivers_job` makes `drivers.slice` sealed, and every job beneath it is. On a
 /// boot whose devmgr bound a driver the slice is there already and its absence is
-/// the failure; on one with no devmgr this makes it, as `ferrix.devmgr=init` does.
+/// the failure; on one with no devmgr this makes it, as `xaqu.devmgr=init` does.
 ///
 /// Verifies: L.device.54
 fn check_drivers_sealed() -> Result<u64, &'static str> {
@@ -534,9 +534,9 @@ fn run_early() -> Result<u64, &'static str> {
     check_an_unknown_number_is_enosys()?;
     check_job_create()?;
     // Nothing under `personality=user` makes an object write-combining (M.4).
-    #[cfg(all(ferrix_personality = "user", ferrix_load_built = "none"))]
+    #[cfg(all(xaqu_personality = "user", xaqu_load_built = "none"))]
     let combined = false;
-    #[cfg(not(all(ferrix_personality = "user", ferrix_load_built = "none")))]
+    #[cfg(not(all(xaqu_personality = "user", xaqu_load_built = "none")))]
     let combined = check_a_combining_object()?;
     Ok(2 + u64::from(combined))
 }

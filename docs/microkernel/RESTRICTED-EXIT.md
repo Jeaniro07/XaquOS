@@ -18,7 +18,7 @@ null call through linuxd's general path (`getuid`) reads 1,180 ns**, and must be
 | Before: `exit`, K1's fast path (feature/mk-perf 64e7d900c) | 1,560 to 2,030 | not in that tree |
 | Now: `exit` | 650 to 800 | 1,180 to 1,560 |
 | Now: `partition`, no exit barrier | 470 to 520 | 550 to 590 |
-| Hybrid, `ferrix.checks=skip` | 120 to 140 | 140 to 170 |
+| Hybrid, `xaqu.checks=skip` | 120 to 140 | 140 to 170 |
 
 Built as `--personality user --set restricted_fastpath=on --set partition_speculation=exit`, with
 `values.exit` in `build-flags.toml` changed to `built = "adhoc"` for the run and left uncommitted.
@@ -35,7 +35,7 @@ Counts per crossing from KVM's guest PMU, in the same boot as the row's own figu
 | Now | 3,505 | 722 | 20 | 12.5 | 9 | 7 |
 | Bare assembly, IBPB, frame, `TS` | 2,895 | 145 | 6 | 7 | 1 | 2 |
 
-The bare harness (`~/.local/share/ferrix/mk-ibpb/kvmb`) has no kernel in it: ring 0 and ring 3, two
+The bare harness (`~/.local/share/xaqu/mk-ibpb/kvmb`) has no kernel in it: ring 0 and ring 3, two
 roots, the row's stamps. Its figures, stamp included:
 
 | What | ns |
@@ -137,7 +137,7 @@ every image: VERW out of line; K1's record change in the general path; the `#NM`
 build, flag or not. Ledger 6966. By `gate.sh` at the landing's code: `check`, four test-boots, test-linuxd,
 test-threads at two processors, test-shell and test-rustc with the fast path on, all passed. K1's `FS` cut and the stamp followed (ledger 6464, 6981), with Z2 to Z4 owed before the flag. Not landed: the window's prototype, whose
 slot is safe on one processor only; `feature/mk-ibpb` and
-`~/.local/share/ferrix/mk-ibpb/mk-ibpb-code.patch` on nazuna hold it.
+`~/.local/share/xaqu/mk-ibpb/mk-ibpb-code.patch` on nazuna hold it.
 
 **The row through `gate.sh`, 2026-11-05, nazuna idle, load under 2, sibling 0%, five boots**: `bench-rows --release --accel kvm --personality user --set restricted_fastpath=on --set partition_speculation=exit --no-claim`: 720 ns (710 to 890) before the cut (`mkm-row-2`, 70bad907e), 690 ns (690 to 700) after it (`mkm-row-3`): 30, not ea9d3e8a2's 60. **660 is not reached**, and of the 40 against the 650 above, 30 is develop's tree against the by-hand one (`OPEN-QUESTIONS.md` §1, by hand), not yet named. No delay control and no general-path row, flag on and `personality=user`, not `max`.
 
@@ -167,7 +167,7 @@ What is left is the crossing's 500, and of the 340 above it most reads as TLB wa
 next lever is 2 MiB pages for `linuxd`'s text and arena**, a change to the paging crate, K2 and every walker, which
 wants its own design review.
 
-This also found a wrong answer: `ferrix_lift_hot_answer` took 110 for `getppid` on every architecture, and on AArch64
+This also found a wrong answer: `xaqu_lift_hot_answer` took 110 for `getppid` on every architecture, and on AArch64
 that is `timer_settime`, so a program there got its parent's pid back from one. It takes the table's number now, and
 `test-threads` holds a bad timer's call to its own answer.
 
@@ -185,7 +185,7 @@ its limit. Overlapping threads stay correct and pay today's price.
 | `develop` today, the flag off | 680 (670-710), five boots | 1,020 |
 | The window, `qemu64`: the boot fails closed to two roots | 690 (690-700), three | 1,030 |
 | The window, the family hidden no more, `IBPB_RET` hidden still | 480, five | 1,040 |
-| The window, `FERRIX_X86_CPU=host,migratable=off,-pcid,-invpcid,+invtsc` | **370** (370-520), three | 1,030 |
+| The window, `XAQU_X86_CPU=host,migratable=off,-pcid,-invpcid,+invtsc` | **370** (370-520), three | 1,030 |
 
 The IBPB is issued on every trip in every row. `TS` is not set on the stub's path, the customer's trade
 (ledger 6826). None of it is gated evidence, no row of `max`, and it may not be called better than seL4:
@@ -241,6 +241,6 @@ child's `getppid` across its parent's end in a pid namespace, `test-container`. 
 the child's parent lock, a parent's last thread alone clears its orphans, and a fork cannot run beside it, so no `Weak`
 expires with the word kept. 6747 (4a), (4b): met as landed, 6966: the signal look holds its locks, the group and bandwidth
 compare in the branch. The rows these readings came from ran with their threads' masks wide: a pinned thread takes the
-general path (`PERFORMANCE.md`). 6747 (1c), by hand, not gated: `~/.local/share/ferrix/po-2026-11-03/mk-flip3-kvmb/ret-case.out`, returns mispredicted 2 of 2 after a root write, 0 of 2 with none, KVM. Still owed: SAFETY categories and coverage; the row's text
+general path (`PERFORMANCE.md`). 6747 (1c), by hand, not gated: `~/.local/share/xaqu/po-2026-11-03/mk-flip3-kvmb/ret-case.out`, returns mispredicted 2 of 2 after a root write, 0 of 2 with none, KVM. Still owed: SAFETY categories and coverage; the row's text
 (ledger 6755) and a general-path null call beside it; five quiet boots through `gate.sh` and the
 delay control. Base: K1 here is feature/mk-perf's; it must be carried onto mk-restricted's stack.

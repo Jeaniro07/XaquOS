@@ -82,7 +82,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_sync::IrqSpinLock;
+use xaqu_sync::IrqSpinLock;
 
 use super::port::{Port, Promise};
 use crate::arch;

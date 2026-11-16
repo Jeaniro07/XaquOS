@@ -42,9 +42,9 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::types::SIGNALFD_SIGINFO_BYTES;
-use ferrix_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::types::SIGNALFD_SIGINFO_BYTES;
+use xaqu_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
 
 use crate::fs;
 use crate::sched::WaitQueue;
@@ -151,7 +151,7 @@ impl SignalFd {
 
     /// One signal for a read: taken at once, or waited for unless
     /// `nonblock`. Linux's `signalfd_dequeue`.
-    fn dequeue(&self, reader: &Process, nonblock: bool) -> ferrix_vfs::Result<Taken> {
+    fn dequeue(&self, reader: &Process, nonblock: bool) -> xaqu_vfs::Result<Taken> {
         loop {
             if let Some(taken) = self.take(reader) {
                 return Ok(taken);
@@ -221,7 +221,7 @@ impl Inode for SignalFd {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         match self.reader() {
             Some(reader) => {
                 visit(fs::wake::shared(reader.signal_arrived()));
@@ -239,7 +239,7 @@ impl Inode for SignalFd {
     }
 
     /// A `signalfd_siginfo` for each signal taken, as many as `buf` holds.
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         if buf.len() < SIGNALFD_SIGINFO_BYTES {
             return Err(Errno::EINVAL);
         }
@@ -263,7 +263,7 @@ impl Inode for SignalFd {
     }
 
     /// No write: `EINVAL`, as for a file with no write operation.
-    fn write_stream(&self, data: &[u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         let _ = (data, nonblock);
         Err(Errno::EINVAL)
     }

@@ -28,7 +28,7 @@ It is not the virtio-input protocol, which the driver speaks to the device
 (`src/lib/drivers/virtio::input`, on `main` since 493fd843). It is not the
 keymap: evdev delivers key codes, and turning them into keysyms is
 xkbcommon's job in the compositor. It is not udev, libinput or a seat
-manager, none of which Ferrix will have (§2.3). It is not hotplug, force
+manager, none of which Xaqu will have (§2.3). It is not hotplug, force
 feedback, multi-touch or writing to the device (LEDs); §6 says when each
 comes.
 
@@ -195,10 +195,10 @@ monotonic timestamps.
 
 ### 2.5 The table
 
-"Ferrix today" is `main` at `aa47c0c6`, read from `src/kernel/src/syscall` and
+"Xaqu today" is `main` at `aa47c0c6`, read from `src/kernel/src/syscall` and
 `src/lib/proto/linux-abi`; `card0` is branch `display-core`.
 
-| Call | Needed by | Ferrix today | Iteration |
+| Call | Needed by | Xaqu today | Iteration |
 |---|---|---|---|
 | `epoll_create1`, `epoll_ctl` (`ONESHOT`, `ET`) | polling, wayland-backend | **no**: numbers and `epoll_event` in `linux-abi` (`nr.rs`, `types.rs`), no handler | 2 |
 | `epoll_pwait` (and `epoll_wait` on x86-64 and ARMv7-A) | rustix, musl | **no** | 2 |
@@ -357,7 +357,7 @@ never opens a different device under a name it remembered.
 
 `/dev/input/eventN` is a character device, major `INPUT_MAJOR` (13,
 `linux/major.h`) and minor 64 + N, the range Linux's evdev takes for its first
-32 devices. The node is `0660` and root's, as `card0` is, since Ferrix has no
+32 devices. The node is `0660` and root's, as `card0` is, since Xaqu has no
 `input` group. `/dev/input/` becomes devfs's second subdirectory after
 `/dev/dri/`. Any number of opens is allowed, as on Linux, each with its own
 queue, clock and grab state. Nothing here stands in for DRM master's exclusive
@@ -466,7 +466,7 @@ would learn of it without udev (an `inotify` watch on `/dev/input`), is §6.
   `EVIOCSCLOCKID(CLOCK_MONOTONIC)` and `EVIOCGRAB(1)`, and prints one
   `evecho: device` line for each. It then prints `evecho: ready`, waits in
   `poll(2)`, and prints `evecho: event N type code value` for each event, in
-  decimal. It uses `ferrix-linux-abi::input` as `blank` uses `::drm`.
+  decimal. It uses `xaqu-linux-abi::input` as `blank` uses `::drm`.
 * **`test-input`.** It boots the program with the two devices and waits for
   the two device lines. It requires the names QEMU gives, `QEMU Virtio
   Keyboard` and `QEMU Virtio Tablet` (`virtio-input-hid.c:19`–`21`), and the
@@ -618,8 +618,8 @@ matched this document's text, and it found `EVIOCSFF` to be a second request
 whose number depends on the width, since `struct ff_effect` holds a pointer.
 L2 is done: `src/lib/drivers/virtio::input` landed in 493fd843 and 0bfb1de4, and now
 re-exports L1's `EV_*` and `SYN_REPORT` instead of keeping its own copy, which
-agreed with them. `ferrix-virtio` depends on `ferrix-linux-abi` for that: a
-`no_std` crate with no dependencies that the kernel, `ferrix-rt` and the fuzz
+agreed with them. `xaqu-virtio` depends on `xaqu-linux-abi` for that: a
+`no_std` crate with no dependencies that the kernel, `xaqu-rt` and the fuzz
 crate already link. Its tests now also require the bits QEMU's devices set to
 be L1's codes, and its fuzz target ran 50,283,653 inputs in ten minutes on
 example without a failure. L3 is done, landed on 2026-09-16 as 3aa79e19 to
@@ -661,7 +661,7 @@ wrong answer rather than a failing test:
   `EV_FF_STATUS` are not in the switch. A consumer that asked for every type
   a device reports lost every keyboard that reports `EV_REP`, which QEMU's
   does -- found by running `src/user/system/linux/compositor/evecho` against the host's own kernel
-  before Ferrix ever ran it.
+  before Xaqu ever ran it.
 * **A directory cursor counts from `FIRST_CURSOR`, not from zero.** The two
   entries before it are `.` and `..`. Counting from zero listed nothing at
   all, because the first `getdents` arrives with the cursor already at two.
@@ -674,7 +674,7 @@ The compositor reads those nodes as of the same day: `src/user/system/linux/comp
 libxkbcommon's own keymap for the `us` layout from a committed probe,
 `hyprix` opens every node through `src/user/system/linux/compositor/evecho` and turns its events
 into `wl_keyboard` and `wl_pointer` ones, and `cargo xtask test-seat` types
-into a window on Ferrix from QEMU's far end and fires a Hyprland keybind.
+into a window on Xaqu from QEMU's far end and fires a Hyprland keybind.
 `docs/ROADMAP.md` stage 18 records it.
 
 Of iteration 2's prerequisites,
@@ -699,10 +699,10 @@ Linux does.
    publishes, even when a device declares them, each with a backlog row.
    QEMU's keyboard and tablet declare none of them.
 5. **Hotplug is out of scope**, with a backlog row. Devices exist from boot.
-   Whether a later iteration adds `inotify` on `/dev/input` (not in Ferrix
+   Whether a later iteration adds `inotify` on `/dev/input` (not in Xaqu
    today) or accepts a compositor that rescans is that row's question.
 6. **The compositor's input backend is hand-written over
-   `ferrix-linux-abi::input`**, not the `evdev` crate or `nix`: the no-C-stack
+   `xaqu-linux-abi::input`**, not the `evdev` crate or `nix`: the no-C-stack
    rule, and a small surface. §2.4 stays as the check that the subset would
    serve an `evdev`-crate consumer too.
 7. **os-26 holds E1** (`epoll`, with nesting), **E2** (`eventfd2`) **and E3**

@@ -8,12 +8,12 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_blkring::bell::{BELL_COMPLETE, Wait};
-use ferrix_blkring::geometry::{Device, DeviceFlags};
-use ferrix_blkring::kernel::{KernelSide, Slot};
-use ferrix_blkring::layout::{RingLayout, Status as RingStatus, Submission, header};
-use ferrix_blkring::{DriverSide, RingMemory};
-use ferrix_virtio_blk::{
+use xaqu_blkring::bell::{BELL_COMPLETE, Wait};
+use xaqu_blkring::geometry::{Device, DeviceFlags};
+use xaqu_blkring::kernel::{KernelSide, Slot};
+use xaqu_blkring::layout::{RingLayout, Status as RingStatus, Submission, header};
+use xaqu_blkring::{DriverSide, RingMemory};
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, Drained, Op, Request, Status, SubmitError,
 };
 

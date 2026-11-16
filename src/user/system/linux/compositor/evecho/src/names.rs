@@ -2,13 +2,13 @@
 //!
 //! An evdev event is three numbers, and a line saying `1 30 1` proves
 //! nothing to a reader. These are the kernel's own names, from
-//! `ferrix_linux_abi::input`, for the subset a compositor sees: enough that
+//! `xaqu_linux_abi::input`, for the subset a compositor sees: enough that
 //! a test can look for `KEY_A` and a person can read the log.
 //!
 //! A code with no name is printed as its number, which is what `evtest`
 //! does; the table is not meant to be complete.
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_MT_POSITION_X, ABS_MT_POSITION_Y, ABS_MT_SLOT, ABS_MT_TRACKING_ID, ABS_X, ABS_Y, BTN_EXTRA,
     BTN_LEFT, BTN_MIDDLE, BTN_RIGHT, BTN_SIDE, BTN_TOUCH, EV_ABS, EV_FF, EV_KEY, EV_LED, EV_MSC,
     EV_PWR, EV_REL, EV_REP, EV_SND, EV_SW, EV_SYN, KEY_A, KEY_ESC, KEY_RESERVED, MSC_SCAN,

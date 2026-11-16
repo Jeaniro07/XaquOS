@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 19: the low-level requirements of
+ * Xaqu — SysML v2 model, part 19: the low-level requirements of
  * arch/aarch64.
  *
  * What each unit of src/kernel/src/arch/aarch64/ does, as `ItemLowLevel`
@@ -34,8 +34,8 @@
  * accessor needs no requirement of its own; and check code living in a
  * product file is listed in tools/common/data/traceability-units.json.
  */
-package FerrixAarch64Requirements {
-    private import FerrixItemRequirements::*;
+package XaquAarch64Requirements {
+    private import XaquItemRequirements::*;
 
     package Traps {
         doc /* src/kernel/src/arch/aarch64/trap.rs: the vector table, the save and
@@ -79,12 +79,12 @@ package FerrixAarch64Requirements {
                 or a read past the end of a file it mapped shall be ended by
                 SIGBUS, SIGILL, SIGTRAP and SIGBUS respectively, the kernel going
                 on: the vector table's entry from EL0 saves the frame, hands it to
-                ferrix_trap_entry and returns through resume_user.";
+                xaqu_trap_entry and returns through resume_user.";
             attribute :>> criterion = "Four programs, each one of those
                 instructions and then exit_group(97), are run from the trap check,
                 and each ends with the status 128 plus its signal.";
             attribute :>> parent = "H.TRAP.4";
-            attribute :>> unit = ("arch::aarch64::trap::ferrix_trap_entry",
+            attribute :>> unit = ("arch::aarch64::trap::xaqu_trap_entry",
                 "arch::aarch64::trap::resume_user", "arch::aarch64::trap::enter_user",
                 "arch::aarch64::trap::init", "arch::aarch64::init_traps",
                 "arch::aarch64::cpu::write_vbar");
@@ -495,7 +495,7 @@ package FerrixAarch64Requirements {
                 16550's page at its address, a ramoops zone whole, continuing the
                 loader's record where its signature is, or else the PL011.";
             attribute :>> criterion = "QEMU's boots print through the PL011; the
-                crosvm guest's log (~/.local/share/ferrix/pixel7/vm-20260926-140648)
+                crosvm guest's log (~/.local/share/xaqu/pixel7/vm-20260926-140648)
                 through its 16550; the Pixel 7's boot log through its ramoops zone
                 after the watchdog reset. None of the three is a check.";
             attribute :>> parent = ("H.BOOT.8", "H.FAIL.1");
@@ -509,7 +509,7 @@ package FerrixAarch64Requirements {
                 record, dropping it once the zone is full -- and drain shall wait,
                 bounded, until the port has sent everything.";
             attribute :>> criterion = "Every gate reads the boot's log from the
-                serial port, FERRIX-BOOT-OK among it; the 16550 and ramoops arms
+                serial port, XAQU-BOOT-OK among it; the 16550 and ramoops arms
                 run only on the crosvm guest and the Pixel 7.";
             attribute :>> parent = ("H.BOOT.8", "H.FAIL.1");
             attribute :>> unit = ("arch::aarch64::console::write_byte", "arch::aarch64::console::put",
@@ -672,7 +672,7 @@ package FerrixAarch64Requirements {
                 AT_HWCAP and AT_HWCAP2 bits arch/arm64 gives for what
                 ID_AA64PFR0_EL1, ID_AA64ISAR0_EL1 and ID_AA64ISAR1_EL1 say the core
                 has, and user_platform none.";
-            attribute :>> criterion = "The mapping is ferrix-linux-abi's hwcap,
+            attribute :>> criterion = "The mapping is xaqu-linux-abi's hwcap,
                 host-tested against Linux's bits; that the registers read here
                 reach it is not checked on the machine.";
             attribute :>> parent = "H.TRAP.4";
@@ -869,7 +869,7 @@ package FerrixAarch64Requirements {
                 core ID_AA64ISAR0_EL1 says has RNDR, and only one RNDR reports
                 valid within ten tries.";
             attribute :>> criterion = "The crosvm guest's boot seeds 48 bytes from
-                its TRNG (~/.local/share/ferrix/pixel7/vm-20260926-140648) and
+                its TRNG (~/.local/share/xaqu/pixel7/vm-20260926-140648) and
                 QEMU's 0; neither is a check, and RNDR is not asserted.";
             attribute :>> parent = "H.BOOT.3";
             attribute :>> unit = ("arch::aarch64::firmware_entropy", "arch::aarch64::trng::fill",
@@ -882,7 +882,7 @@ package FerrixAarch64Requirements {
                 announcing the power-off first, powering off where reset
                 returns, and saying so and halting where power-off returns.";
             attribute :>> criterion = "Every gate's QEMU exits when the boot
-                powers off, and boot-reset's ferrix.onexit=reset is x86-64's; a
+                powers off, and boot-reset's xaqu.onexit=reset is x86-64's; a
                 reset on this architecture is not asserted.";
             attribute :>> parent = ("H.BOOT.6", "H.BOOT.7");
             attribute :>> unit = ("arch::aarch64::shutdown", "arch::aarch64::reset",

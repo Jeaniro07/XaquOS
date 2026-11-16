@@ -6,9 +6,9 @@ extern crate std;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_bootinfo::pstore::{self, CAPACITY, HEADER_BYTES, WRITTEN_OFFSET};
-use ferrix_slots::gpt::Part;
-use ferrix_slots::record::{ControlDisk, DeviceError};
+use xaqu_bootinfo::pstore::{self, CAPACITY, HEADER_BYTES, WRITTEN_OFFSET};
+use xaqu_slots::gpt::Part;
+use xaqu_slots::record::{ControlDisk, DeviceError};
 
 use super::*;
 
@@ -90,9 +90,9 @@ fn region(sequence: u64, text: &[u8]) -> ([u8; HEADER_BYTES], Vec<u8>) {
 /// A kernel log that ends in a panic report saying `why`.
 fn panicked(why: &str) -> Vec<u8> {
     let mut text = Vec::new();
-    text.extend_from_slice(b"\nFerrix 0.1.0 on x86_64\n  memory   16127 MiB\n");
+    text.extend_from_slice(b"\nXaqu 0.1.0 on x86_64\n  memory   16127 MiB\n");
     text.extend_from_slice(b"  init     started\n\n");
-    text.extend_from_slice(b"FERRIX-PANIC ");
+    text.extend_from_slice(b"XAQU-PANIC ");
     text.extend_from_slice(why.as_bytes());
     text.extend_from_slice(b"\n  at        src/kernel/src/power.rs:180:24\n  code      FX-1501\n");
     text
@@ -315,7 +315,7 @@ fn the_text_is_the_report_then_the_log_before_it() {
     let (event, record) = incoming(3, &panicked("init exited"));
     let text = &record[HEAD_LEN..HEAD_LEN + event.text_len];
     assert!(
-        text.starts_with(b"FERRIX_PANIC init exited\n"),
+        text.starts_with(b"XAQU_PANIC init exited\n"),
         "defused, first"
     );
     let separator = text
@@ -326,11 +326,11 @@ fn the_text_is_the_report_then_the_log_before_it() {
         text[separator..].ends_with(b"  init     started\n\n"),
         "the log before"
     );
-    assert!(text[separator..].windows(6).any(|w| w == b"Ferrix"));
+    assert!(text[separator..].windows(6).any(|w| w == b"Xaqu"));
     assert_eq!(event.flags, flags::UNCHECKED, "whole, unchecked");
     assert_eq!(event.boot, 3);
     assert_eq!(event.identity >> 32, 3);
-    assert_eq!(first_line(text, 13), b"FERRIX_PANIC ");
+    assert_eq!(first_line(text, 13), b"XAQU_PANIC ");
 }
 
 #[test]
@@ -343,7 +343,7 @@ fn a_long_log_keeps_the_report_and_the_lines_before_it() {
     let (event, record) = incoming(1, &text);
     let kept = &record[HEAD_LEN..HEAD_LEN + event.text_len];
     assert_eq!(event.flags, flags::UNCHECKED | flags::TRUNCATED);
-    assert!(kept.starts_with(b"FERRIX_PANIC late\n"));
+    assert!(kept.starts_with(b"XAQU_PANIC late\n"));
     let separator = kept
         .windows(SEPARATOR.len())
         .position(|window| window == SEPARATOR)
@@ -357,7 +357,7 @@ fn a_long_log_keeps_the_report_and_the_lines_before_it() {
 
 #[test]
 fn no_panic_report_is_no_event() {
-    let (header, ring) = region(2, b"\nFerrix 0.1.0\n  power    resetting\n");
+    let (header, ring) = region(2, b"\nXaqu 0.1.0\n  power    resetting\n");
     let mut text = vec![0u8; TEXT_MAX];
     assert_eq!(compose(&header, &ring, [0; 8], &mut text), None);
     let mut short = vec![0u8; 10];
@@ -418,7 +418,7 @@ fn an_empty_partition_gets_a_header_and_the_first_record() {
     assert_eq!(header.map(|h| (h.next, h.appended)), Some((1, 1)));
     assert_eq!(
         listing(&mut disk),
-        vec![(0, 1, b"FERRIX_PANIC first".to_vec())]
+        vec![(0, 1, b"XAQU_PANIC first".to_vec())]
     );
 }
 
@@ -469,8 +469,8 @@ fn a_reset_loop_is_one_record_with_a_count() {
     assert_eq!(
         listing(&mut disk),
         vec![
-            (0, 1, b"FERRIX_PANIC other".to_vec()),
-            (1, 50, b"FERRIX_PANIC the same fault".to_vec())
+            (0, 1, b"XAQU_PANIC other".to_vec()),
+            (1, 50, b"XAQU_PANIC the same fault".to_vec())
         ],
         "the first record of the run stays, its copies counted"
     );
@@ -510,15 +510,15 @@ fn a_torn_append_leaves_the_newest_or_the_previous_record() {
         let listed = listing(&mut disk);
         let lines: Vec<&[u8]> = listed.iter().map(|entry| &entry.2[..]).collect();
         assert!(
-            lines == [&b"FERRIX_PANIC before"[..]]
-                || lines == [&b"FERRIX_PANIC before"[..], &b"FERRIX_PANIC new"[..]],
+            lines == [&b"XAQU_PANIC before"[..]]
+                || lines == [&b"XAQU_PANIC before"[..], &b"XAQU_PANIC new"[..]],
             "after {budget} writes: {lines:?}"
         );
         // And the log goes on: the next append lands whole.
         assert!(append_text(&mut disk, 3, &panicked("after")).is_ok());
         assert_eq!(
             listing(&mut disk).last().map(|e| e.2.clone()),
-            Some(b"FERRIX_PANIC after".to_vec())
+            Some(b"XAQU_PANIC after".to_vec())
         );
     }
     for budget in 0..=64 {
@@ -531,7 +531,7 @@ fn a_torn_append_leaves_the_newest_or_the_previous_record() {
         disk.budget = None;
         let listed = listing(&mut disk);
         assert!(
-            !listed.is_empty() && listed[0].2 == b"FERRIX_PANIC before",
+            !listed.is_empty() && listed[0].2 == b"XAQU_PANIC before",
             "after {budget}"
         );
         assert!(listed.iter().all(|entry| entry.1 == 1 || entry.1 == 2));
@@ -553,7 +553,7 @@ fn a_header_copy_torn_falls_back_to_the_other() {
 /// Verifies the absent/unusable decision (the consultant's (2)).
 #[test]
 fn a_present_but_unusable_log_is_never_taken_for_absent() {
-    use ferrix_slots::gpt::{GptError, Lookup};
+    use xaqu_slots::gpt::{GptError, Lookup};
     let unusable = |store: Store| matches!(store, Store::Unusable(_));
     // Absent: no GPT at all, or no partition of the type.
     assert_eq!(
@@ -629,7 +629,7 @@ fn a_version_1_region_with_a_panic_is_kept() {
     );
     assert_eq!(
         listing(&mut disk),
-        vec![(0, 1, b"FERRIX_PANIC before the stop word".to_vec())]
+        vec![(0, 1, b"XAQU_PANIC before the stop word".to_vec())]
     );
 }
 

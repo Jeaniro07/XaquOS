@@ -12,9 +12,9 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_sync::Once;
-use ferrix_vfs::path::NAME_MAX;
-use ferrix_vfs::{
+use xaqu_sync::Once;
+use xaqu_vfs::path::NAME_MAX;
+use xaqu_vfs::{
     Errno, FileSystem, FileType, Inode, Location, Metadata, OpenFile, OpenFlags, StatFs, Timespec,
 };
 

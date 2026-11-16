@@ -2,9 +2,9 @@
 //! frames between the kernel and a Motorcomm YT6801 PCIe gigabit adapter.
 //!
 //! It is `drivers/net/virtio-net`'s program with another device under it.
-//! `ferrix-yt6801` prepares the chip (reset, the PHY released, the address
-//! from eFuse, interrupts let out), `ferrix-dwmac` drives the `DesignWare`
-//! core inside it, `ferrix-netring` speaks the ring and `ferrix-netserve`
+//! `xaqu-yt6801` prepares the chip (reset, the PHY released, the address
+//! from eFuse, interrupts let out), `xaqu-dwmac` drives the `DesignWare`
+//! core inside it, `xaqu-netring` speaks the ring and `xaqu-netserve`
 //! joins them; all four are tested on the host. This program is the handles
 //! they were written to be wrapped in:
 //!
@@ -20,7 +20,7 @@
 //! 3. Every vector the function offers is bound to one port: one MSI vector
 //!    with the page granted, the MSI-X entries otherwise.
 //! 4. On one MSI the chip's message comes from the glue's aggregator, whose
-//!    latch every drain clears after it ([`ferrix_yt6801::rearm`]): without
+//!    latch every drain clears after it ([`xaqu_yt6801::rearm`]): without
 //!    that the N150 box heard its first interrupt and about 209 more in five
 //!    minutes of downloading tens of thousands of frames.
 //! 5. The loop polls as well as waits: every millisecond until a first
@@ -46,31 +46,31 @@
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_dwmac::{
+use xaqu_dwmac::{
     Clock, Driver, Event as CoreEvent, Frame as CoreFrame, Link, Memory, Pages, Parts, Registers,
     SubmitError as CoreSubmitError, Teardown,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{ApertureInfo, IoMappingSpec};
-use ferrix_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::layout::VERSION;
-use ferrix_netring::{Message, RingMemory, Wait};
-use ferrix_netserve::{Nic, Serve};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio_net::{DeviceError, Event, Frame, SubmitError};
-use ferrix_yt6801::{BAR_BYTES, DEVICE, GMAC_OFFSET, Gmac, VENDOR};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{ApertureInfo, IoMappingSpec};
+use xaqu_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::layout::VERSION;
+use xaqu_netring::{Message, RingMemory, Wait};
+use xaqu_netserve::{Nic, Serve};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio_net::{DeviceError, Event, Frame, SubmitError};
+use xaqu_yt6801::{BAR_BYTES, DEVICE, GMAC_OFFSET, Gmac, VENDOR};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -103,7 +103,7 @@ const KEY_INTERRUPT: u64 = 3;
 const KEY_CONTROL: u64 = 4;
 
 // How long to wait for an interrupt before looking anyway, until one has
-// been seen: `ferrix_yt6801::next_poll_nanos`, 1 ms while looks move frames,
+// been seen: `xaqu_yt6801::next_poll_nanos`, 1 ms while looks move frames,
 // backing off to 8 ms while they move none.
 
 /// How often the PHY is asked about the link.
@@ -352,7 +352,7 @@ impl RingMemory for Ring {
         fence(Ordering::SeqCst);
     }
     // The indices the kernel moves while this side reads them are one
-    // access each where aligned (`ferrix-netring`'s `RingMemory`): composed
+    // access each where aligned (`xaqu-netring`'s `RingMemory`): composed
     // from bytes, a tail stepping from 0x00ff to 0x0100 could read 0x01ff.
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -391,7 +391,7 @@ impl RingMemory for Data {
         fence(Ordering::SeqCst);
     }
     // The indices the kernel moves while this side reads them are one
-    // access each where aligned (`ferrix-netring`'s `RingMemory`): composed
+    // access each where aligned (`xaqu-netring`'s `RingMemory`): composed
     // from bytes, a tail stepping from 0x00ff to 0x0100 could read 0x01ff.
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -513,7 +513,7 @@ impl Registers for Bar {
 
 /// Read a register as one plain load, never inlined: inlined into a loop
 /// the address step can fold into the load as a writeback, which KVM's
-/// MMIO emulation refuses (`ferrix-driver`'s `mmio.rs` says more).
+/// MMIO emulation refuses (`xaqu-driver`'s `mmio.rs` says more).
 ///
 /// # Safety
 ///
@@ -542,7 +542,7 @@ struct Monotonic {
 
 impl Clock for Monotonic {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn pause(&mut self, nanos: u64) {
@@ -637,8 +637,8 @@ impl Nic for Adapter {
             .drain_receiving(core.get_mut(..room).unwrap_or_default(), receive_room)
             .map_err(|_| DeviceError::NeedsReset)?;
         // After the drain, so that what the drain missed is announced:
-        // `ferrix_yt6801::rearm`.
-        if self.glue && ferrix_yt6801::rearm(&mut self.card.registers().0) != 0 {
+        // `xaqu_yt6801::rearm`.
+        if self.glue && xaqu_yt6801::rearm(&mut self.card.registers().0) != 0 {
             self.latched += 1;
         }
         for (slot, event) in out.iter_mut().zip(core.iter().take(drained.events)) {
@@ -735,8 +735,8 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
     let seed = [seed[0], seed[1], seed[2]];
     let glue = bar.covers(0x1000, 0x1600);
     let mac = if glue {
-        let prepared = ferrix_yt6801::prepare(&mut bar, &mut clock, seed);
-        ferrix_rt::info!(
+        let prepared = xaqu_yt6801::prepare(&mut bar, &mut clock, seed);
+        xaqu_rt::info!(
             "yt6801   address {:02x?} from {:?} (eFuse {:?}, firmware {:02x?})",
             prepared.mac,
             prepared.source,
@@ -747,13 +747,13 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
     } else {
         // The glue's page is withheld: no chip reset, no PHY release, no
         // eFuse. What firmware left in the core, else a made-up address.
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "yt6801   the glue's page is not mapped (BAR 0 0x1000-0x1fff withheld): the core \
              alone, its reset may not finish"
         );
-        let high = bar.read(GMAC_OFFSET + ferrix_dwmac::regs::MAC_ADDRESS0_HIGH);
+        let high = bar.read(GMAC_OFFSET + xaqu_dwmac::regs::MAC_ADDRESS0_HIGH);
         let low = bar
-            .read(GMAC_OFFSET + ferrix_dwmac::regs::MAC_ADDRESS0_LOW)
+            .read(GMAC_OFFSET + xaqu_dwmac::regs::MAC_ADDRESS0_LOW)
             .to_le_bytes();
         let firmware = [
             low[0],
@@ -763,13 +763,13 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
             high as u8,
             (high >> 8) as u8,
         ];
-        if ferrix_yt6801::valid_unicast(firmware) {
+        if xaqu_yt6801::valid_unicast(firmware) {
             firmware
         } else {
-            ferrix_yt6801::generated(seed)
+            xaqu_yt6801::generated(seed)
         }
     };
-    let options = ferrix_yt6801::options(mac);
+    let options = xaqu_yt6801::options(mac);
     let rings = Pinned::new(device, 1)?;
     let receive_pages = usize::from(options.receive_entries) * options.buffer_bytes as usize / PAGE;
     let receive = Pinned::new(device, receive_pages)?;
@@ -786,7 +786,7 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
     let card = match Driver::init(parts, options) {
         Ok(card) => card,
         Err(failed) => {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "yt6801   the core did not come up: {} (reset after: {})",
                 failed.error,
                 failed.reset
@@ -798,7 +798,7 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
         }
     };
     let info = *card.info();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "yt6801   core {:#x} feature1 {:#x} dma {} bits phy {:#010x}",
         info.version,
         info.feature1,
@@ -807,7 +807,7 @@ fn bring_up(device: &Device<Kernel>, mut bar: Bar, location: u32) -> Result<Adap
     );
     let mut card = card;
     if glue {
-        ferrix_yt6801::enable_interrupts(&mut card.registers().0);
+        xaqu_yt6801::enable_interrupts(&mut card.registers().0);
     }
     Ok(Adapter {
         card,
@@ -955,20 +955,20 @@ fn poll_link(
     match adapter.card.poll_link() {
         Ok(Some(link)) => {
             let up = matches!(link, Link::Up { .. });
-            ferrix_rt::info!("yt6801   link {link:?}");
+            xaqu_rt::info!("yt6801   link {link:?}");
             say_link(control, up);
             Ok(())
         }
         Ok(None) => Ok(()),
-        Err(ferrix_dwmac::Error::MdioTimeout) => {
+        Err(xaqu_dwmac::Error::MdioTimeout) => {
             *misses += 1;
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "yt6801   the PHY did not answer a link poll ({misses} so far); asking again"
             );
             Ok(())
         }
         Err(error) => {
-            ferrix_rt::err!("yt6801   the link poll failed: {error}");
+            xaqu_rt::err!("yt6801   the link poll failed: {error}");
             Err(Step::Serve)
         }
     }
@@ -982,7 +982,7 @@ fn serve(
     control: &Channel<Kernel>,
 ) -> Result<(), Step> {
     let mut serve = Serve::new();
-    let now = || ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+    let now = || xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
     let mut interrupted = false;
     // Whether this turn follows a wait that ended at its deadline.
     let mut polled = false;
@@ -996,7 +996,7 @@ fn serve(
     let mut next_link = 0;
     // Link polls the PHY did not answer in time.
     let mut link_misses: u64 = 0;
-    let mut poll_every = ferrix_yt6801::POLL_NANOS;
+    let mut poll_every = xaqu_yt6801::POLL_NANOS;
     control
         .wait_async(
             &ring.port,
@@ -1012,7 +1012,7 @@ fn serve(
         let turn = serve
             .turn(&mut ring.ring, &mut ring.data, &mut ring.side, adapter)
             .map_err(|fault| {
-                ferrix_rt::err!("yt6801   the serve loop stopped: {fault} ({fault:?})");
+                xaqu_rt::err!("yt6801   the serve loop stopped: {fault} ({fault:?})");
                 Step::Serve
             })?;
         stats.turn(&turn, polled);
@@ -1032,7 +1032,7 @@ fn serve(
             if misses >= MISSES_TO_POLL {
                 interrupted = false;
                 unreliable = true;
-                ferrix_rt::notice!(
+                xaqu_rt::notice!(
                     "yt6801   frames no interrupt announced: polling every 1 to 8 ms from now on"
                 );
             }
@@ -1056,7 +1056,7 @@ fn serve(
         let wait = serve
             .before_sleep(&mut ring.ring, &mut ring.side)
             .map_err(|fault| {
-                ferrix_rt::err!("yt6801   the ring refused a sleep: {fault}");
+                xaqu_rt::err!("yt6801   the ring refused a sleep: {fault}");
                 Step::Serve
             })?;
         if wait != Wait::Sleep {
@@ -1082,7 +1082,7 @@ fn serve(
                 stats.interrupts += 1;
                 if !interrupted && !unreliable {
                     interrupted = true;
-                    ferrix_rt::info!("yt6801   first interrupt: polling every 250 ms now");
+                    xaqu_rt::info!("yt6801   first interrupt: polling every 250 ms now");
                 }
                 // The drain in the next turn takes what it raised; every
                 // vector is re-armed, whichever rang.
@@ -1102,10 +1102,10 @@ fn serve(
 /// The look's next wait while interrupts are not trusted (p2-138): backed
 /// off only after a look that found nothing to do, and back to the fast look
 /// on anything moved, whatever woke the turn.
-fn next_look(every: u64, turn: &ferrix_netserve::Turn, polled: bool) -> u64 {
+fn next_look(every: u64, turn: &xaqu_netserve::Turn, polled: bool) -> u64 {
     let moved = turn.sent > 0 || turn.received > 0 || turn.dropped > 0;
     if moved || polled {
-        ferrix_yt6801::next_poll_nanos(every, moved)
+        xaqu_yt6801::next_poll_nanos(every, moved)
     } else {
         every
     }
@@ -1171,7 +1171,7 @@ impl Stats {
     }
 
     /// Count `turn`, which followed a deadline if `polled`.
-    fn turn(&mut self, turn: &ferrix_netserve::Turn, polled: bool) {
+    fn turn(&mut self, turn: &xaqu_netserve::Turn, polled: bool) {
         self.received += u64::from(turn.received);
         self.sent += u64::from(turn.sent);
         if polled {
@@ -1193,7 +1193,7 @@ impl Stats {
         if self.interrupts + self.received + self.sent > 0 {
             let per_second = |count: u64| count.saturating_mul(1_000_000_000) / elapsed;
             let per_interrupt_tenths = self.received.saturating_mul(10) / self.interrupts.max(1);
-            ferrix_rt::debug!(
+            xaqu_rt::debug!(
                 "yt6801   {} ms: {} interrupts ({}/s), {} frames in ({}/s), {} out, {}.{} in per \
                  interrupt; {} of {} looks found frames; latch cleared {} times; out of \
                  receive descriptors {} times, {} dropped with no slot, {} bad; {}",
@@ -1243,7 +1243,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     if info.vendor_id != VENDOR || info.device_id != DEVICE {
         return Err(Step::Identity);
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "yt6801   {:#010x} {:04x}:{:04x} apertures {} vectors {} msix_table_size {}",
         info.location,
         info.vendor_id,
@@ -1254,7 +1254,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     );
     for index in 0..info.apertures as usize {
         if let Ok(aperture) = device.aperture(index) {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "yt6801   aperture {index}: bar {} offset {:#x} len {:#x}",
                 aperture.bar,
                 aperture.offset,
@@ -1265,7 +1265,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     say_link_power(&device);
     let bar = Bar::map(&device, info.apertures)?;
     if !bar.covers(GMAC_OFFSET, GMAC_OFFSET + 0x1200) {
-        ferrix_rt::err!("yt6801   the core's registers are not mapped");
+        xaqu_rt::err!("yt6801   the core's registers are not mapped");
         return Err(Step::Registers);
     }
     let port = port::create(Kernel).map_err(|_| Step::Ring)?;
@@ -1281,7 +1281,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
 /// states and its MSI: read only, nothing written.
 ///
 /// Linux's `dwmac-motorcomm` turns ASPM L1 off on every YT6801 because
-/// some boards "don't deliver MSI(X) with ASPM enabled"; Ferrix leaves the
+/// some boards "don't deliver MSI(X) with ASPM enabled"; Xaqu leaves the
 /// link as firmware set it, and a driver may not write Link Control. The
 /// line shows which the box has, so a run whose interrupts stay rare can
 /// be told apart from one the latch explains.
@@ -1313,7 +1313,7 @@ fn say_link_power(device: &Device<Kernel>) {
     let control = msi.and_then(|cap| read(cap + 0x02, 2));
     match link {
         Some(link) => {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "yt6801   link control {link:#06x}: ASPM L0s {} L1 {}; MSI control {}",
                 if link & 0b01 != 0 { "on" } else { "off" },
                 if link & 0b10 != 0 { "on" } else { "off" },
@@ -1321,7 +1321,7 @@ fn say_link_power(device: &Device<Kernel>) {
             );
         }
         None => {
-            ferrix_rt::warn!("yt6801   link control unreadable");
+            xaqu_rt::warn!("yt6801   link control unreadable");
         }
     }
 }

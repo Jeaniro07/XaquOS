@@ -619,7 +619,7 @@ pub(crate) unsafe fn write_msr(msr: u32, value: u64) {
 pub(super) const IA32_PAT: u32 = 0x277;
 
 /// Program this processor's page attribute table with
-/// [`ferrix_paging::X86_PAT`], whose entry 1 is write-combining, and say
+/// [`xaqu_paging::X86_PAT`], whose entry 1 is write-combining, and say
 /// whether it reads back so.
 ///
 /// Before anything maps write-combining: entry 1 is what a descriptor with
@@ -635,7 +635,7 @@ pub(super) const IA32_PAT: u32 = 0x277;
 /// `smp::secondary_start`, after its trampoline already wrote the same
 /// table before paging was on. Before the boot processor's IDT, too: the
 /// write is to a register CPUID reported, of types the SDM defines, so it
-/// cannot fault. Ferrix has no processor hotplug, no S3 resume and no UEFI
+/// cannot fault. Xaqu has no processor hotplug, no S3 resume and no UEFI
 /// runtime calls, any of which can leave a processor with another table.
 /// Whichever is added must call this again before that processor runs anything that reaches a write-combining
 /// mapping, and `object::io_mapping::combining_ready` refuses
@@ -649,10 +649,10 @@ pub(crate) fn program_pat() -> bool {
     }
     // SAFETY: (SYSREG) CPUID reported the PAT, and every entry of the value is
     // a memory type the SDM defines (0x00, 0x01, 0x04, 0x06, 0x07).
-    unsafe { write_msr(IA32_PAT, ferrix_paging::X86_PAT) };
+    unsafe { write_msr(IA32_PAT, xaqu_paging::X86_PAT) };
     flush_tlb_including_global();
     // SAFETY: (SYSREG) the register exists, as CPUID said.
-    unsafe { read_msr(IA32_PAT) == ferrix_paging::X86_PAT }
+    unsafe { read_msr(IA32_PAT) == xaqu_paging::X86_PAT }
 }
 
 /// `IA32_PM_ENABLE`: bit 0 turns hardware P-states on, and only a reset
@@ -672,8 +672,8 @@ const CPUID6_HWP: u32 = 1 << 7;
 const CPUID6_HWP_EPP: u32 = 1 << 10;
 /// The boot option that chooses the energy and performance preference every
 /// processor's request asks for (`L.x86_64.182`).
-pub(crate) const EPP_OPTION: &str = "ferrix.epp";
-/// The preference asked for where `ferrix.epp` names none, or names one
+pub(crate) const EPP_OPTION: &str = "xaqu.epp";
+/// The preference asked for where `xaqu.epp` names none, or names one
 /// that is not understood: 0, all performance, which is what Linux's
 /// `performance` governor writes. With `Desired_Performance` 0 the
 /// processor still chooses its own level within the range, and an idle
@@ -682,10 +682,10 @@ pub(crate) const EPP_OPTION: &str = "ferrix.epp";
 /// limits stay the firmware's: nothing in the kernel writes them.
 pub(crate) const EPP_DEFAULT: u8 = 0x00;
 
-/// What [`choose_preference`] made of `ferrix.epp`.
+/// What [`choose_preference`] made of `xaqu.epp`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum Preference {
-    /// No `ferrix.epp=` word: [`EPP_DEFAULT`].
+    /// No `xaqu.epp=` word: [`EPP_DEFAULT`].
     Default,
     /// A name or a number understood, and the preference it stands for.
     Asked(u8),
@@ -703,9 +703,9 @@ impl Preference {
     }
 }
 
-/// Choose the preference from `ferrix.epp`'s value, as the loader's command
-/// line gave it (`ferrix_bootinfo::option_in`: the first `ferrix.epp=` word,
-/// and a bare `ferrix.epp` is no option).
+/// Choose the preference from `xaqu.epp`'s value, as the loader's command
+/// line gave it (`xaqu_bootinfo::option_in`: the first `xaqu.epp=` word,
+/// and a bare `xaqu.epp` is no option).
 ///
 /// Linux's `intel_pstate` names and values: `performance` 0x00,
 /// `balance_performance` 0x80, `balance_power` 0xc0, `power` 0xff; or a
@@ -742,11 +742,11 @@ fn decimal_preference(value: &str) -> Option<u8> {
 /// boot processor by [`read_preference`] before any processor asks.
 static PREFERENCE: AtomicU8 = AtomicU8::new(EPP_DEFAULT);
 
-/// Read `ferrix.epp` and choose the preference every processor asks for;
+/// Read `xaqu.epp` and choose the preference every processor asks for;
 /// say it when the option was given. Called once, on the boot processor,
 /// by `arch::read_boot_options` before its IDT is loaded and so before any
 /// processor's [`enable_hwp`] (the secondaries start long after). It reads
-/// `ferrix.epp` and nothing else, writes no register and allocates nothing;
+/// `xaqu.epp` and nothing else, writes no register and allocates nothing;
 /// without it [`PREFERENCE`] keeps [`EPP_DEFAULT`].
 pub(crate) fn read_preference(value: Option<&str>) {
     let choice = choose_preference(value);
@@ -834,11 +834,11 @@ pub(crate) fn has_hwp() -> bool {
 /// Turn on this processor's hardware P-states and ask for every
 /// performance level it has, turbo included, the level within them left to
 /// the processor (`Desired` 0), and the energy and performance preference
-/// `ferrix.epp` chose ([`preference`], performance by default) where it
+/// `xaqu.epp` chose ([`preference`], performance by default) where it
 /// takes one. `IA32_HWP_REQUEST_PKG` is never written: `Package_Control`
 /// stays clear, so each processor's own request is the one it follows.
 ///
-/// Ferrix manages no frequency itself: without this an Intel processor runs
+/// Xaqu manages no frequency itself: without this an Intel processor runs
 /// at whatever the firmware left, which on the N150 box was its base
 /// clock, 1.6 times slower than Linux on a one-thread hash. [`Hwp::Absent`]
 /// where `CPUID.06H:EAX[7]` is clear, and then none of the three registers
@@ -940,9 +940,9 @@ pub(crate) unsafe fn read_msr(msr: u32) -> u64 {
 /// refuses the register with `#GP`, 0 with `*out` unwritten
 /// (`L.x86_64.188`).
 ///
-/// The one `rdmsr` sits at `ferrix_rdmsr_checked_insn`. A `#GP` taken from
-/// ring 0 at exactly that address is resumed by `trap::ferrix_trap_entry` at
-/// `ferrix_rdmsr_checked_fault` ([`checked_read_resume`]), which sets its own
+/// The one `rdmsr` sits at `xaqu_rdmsr_checked_insn`. A `#GP` taken from
+/// ring 0 at exactly that address is resumed by `trap::xaqu_trap_entry` at
+/// `xaqu_rdmsr_checked_fault` ([`checked_read_resume`]), which sets its own
 /// return value and reads neither EDX nor EAX: a one-entry exception table.
 /// A naked function rather than a `global_asm!` symbol, so the
 /// position-independent kernel calls it directly (as `switch.rs`); the labels
@@ -957,29 +957,29 @@ pub(crate) unsafe fn read_msr(msr: u32) -> u64 {
 // toward its caller -- `msr` in edi, `out` in rsi, the result in eax, only
 // the caller-saved rcx, rdx and rax touched -- and either path returns.
 #[unsafe(naked)]
-unsafe extern "C" fn ferrix_rdmsr_checked(msr: u32, out: *mut u64) -> u32 {
+unsafe extern "C" fn xaqu_rdmsr_checked(msr: u32, out: *mut u64) -> u32 {
     core::arch::naked_asm!(
-        ".globl ferrix_rdmsr_checked_insn, ferrix_rdmsr_checked_fault",
-        ".hidden ferrix_rdmsr_checked_insn, ferrix_rdmsr_checked_fault",
+        ".globl xaqu_rdmsr_checked_insn, xaqu_rdmsr_checked_fault",
+        ".hidden xaqu_rdmsr_checked_insn, xaqu_rdmsr_checked_fault",
         "mov ecx, edi",
-        "ferrix_rdmsr_checked_insn:",
+        "xaqu_rdmsr_checked_insn:",
         "rdmsr",
         "mov dword ptr [rsi], eax",
         "mov dword ptr [rsi + 4], edx",
         "mov eax, 1",
         "ret",
-        "ferrix_rdmsr_checked_fault:",
+        "xaqu_rdmsr_checked_fault:",
         "xor eax, eax",
         "ret",
     );
 }
 
 unsafe extern "C" {
-    /// The address of [`ferrix_rdmsr_checked`]'s `rdmsr`. Only its address is
+    /// The address of [`xaqu_rdmsr_checked`]'s `rdmsr`. Only its address is
     /// taken; it is code, never read as data.
-    static ferrix_rdmsr_checked_insn: u8;
+    static xaqu_rdmsr_checked_insn: u8;
     /// Where a `#GP` at that `rdmsr` resumes. Address only, as above.
-    static ferrix_rdmsr_checked_fault: u8;
+    static xaqu_rdmsr_checked_fault: u8;
 }
 
 /// `#GP`s that [`checked_read_resume`] resumed: one per checked read the
@@ -993,15 +993,15 @@ pub(crate) fn checked_reads_refused() -> u64 {
 }
 
 /// Where a ring-0 `#GP` at `rip` resumes, if `rip` is exactly
-/// [`ferrix_rdmsr_checked`]'s `rdmsr`; `None` for every other address, whose
+/// [`xaqu_rdmsr_checked`]'s `rdmsr`; `None` for every other address, whose
 /// `#GP` stays as fatal as it was (`L.x86_64.188`). No range: one address.
 pub(super) fn checked_read_resume(rip: u64) -> Option<u64> {
-    let insn = (&raw const ferrix_rdmsr_checked_insn) as u64;
+    let insn = (&raw const xaqu_rdmsr_checked_insn) as u64;
     if rip != insn {
         return None;
     }
     let _ = CHECKED_READS_REFUSED.fetch_add(1, Ordering::Relaxed);
-    Some((&raw const ferrix_rdmsr_checked_fault) as u64)
+    Some((&raw const xaqu_rdmsr_checked_fault) as u64)
 }
 
 /// Read a model-specific register that may not exist: `None` where the
@@ -1015,17 +1015,17 @@ pub(crate) fn read_msr_checked(msr: u32) -> Option<u64> {
     // or a `#GP`, which `checked_read_resume` turns into a return of 0 at the
     // fault label, `value` untouched. The callers pass only registers whose
     // read changes no state.
-    let read = unsafe { ferrix_rdmsr_checked(msr, &raw mut value) };
+    let read = unsafe { xaqu_rdmsr_checked(msr, &raw mut value) };
     (read == 1).then_some(value)
 }
 
 /// `wrmsr` of `ecx = msr` with `value`, returning 1; or, where the processor
 /// refuses the write with `#GP`, 0 (`L.x86_64.192`).
 ///
-/// [`ferrix_rdmsr_checked`]'s pair for writing: the one `wrmsr` sits at
-/// `ferrix_wrmsr_checked_insn`, and a `#GP` taken from ring 0 at exactly that
-/// address is resumed by `trap::ferrix_trap_entry` at
-/// `ferrix_wrmsr_checked_fault` ([`checked_write_resume`]). A refused
+/// [`xaqu_rdmsr_checked`]'s pair for writing: the one `wrmsr` sits at
+/// `xaqu_wrmsr_checked_insn`, and a `#GP` taken from ring 0 at exactly that
+/// address is resumed by `trap::xaqu_trap_entry` at
+/// `xaqu_wrmsr_checked_fault` ([`checked_write_resume`]). A refused
 /// `wrmsr` changes nothing, so the fault label only sets the return value.
 /// Its one caller is [`write_msr_checked`], whose one caller is the power
 /// core, `powerctl.rs` (check-device-access.py holds both).
@@ -1038,30 +1038,30 @@ pub(crate) fn read_msr_checked(msr: u32) -> Option<u64> {
 // toward its caller -- `msr` in edi, `value` in rsi, the result in eax, only
 // the caller-saved rcx, rdx and rax touched -- and either path returns.
 #[unsafe(naked)]
-unsafe extern "C" fn ferrix_wrmsr_checked(msr: u32, value: u64) -> u32 {
+unsafe extern "C" fn xaqu_wrmsr_checked(msr: u32, value: u64) -> u32 {
     core::arch::naked_asm!(
-        ".globl ferrix_wrmsr_checked_insn, ferrix_wrmsr_checked_fault",
-        ".hidden ferrix_wrmsr_checked_insn, ferrix_wrmsr_checked_fault",
+        ".globl xaqu_wrmsr_checked_insn, xaqu_wrmsr_checked_fault",
+        ".hidden xaqu_wrmsr_checked_insn, xaqu_wrmsr_checked_fault",
         "mov ecx, edi",
         "mov eax, esi",
         "mov rdx, rsi",
         "shr rdx, 32",
-        "ferrix_wrmsr_checked_insn:",
+        "xaqu_wrmsr_checked_insn:",
         "wrmsr",
         "mov eax, 1",
         "ret",
-        "ferrix_wrmsr_checked_fault:",
+        "xaqu_wrmsr_checked_fault:",
         "xor eax, eax",
         "ret",
     );
 }
 
 unsafe extern "C" {
-    /// The address of [`ferrix_wrmsr_checked`]'s `wrmsr`. Only its address is
+    /// The address of [`xaqu_wrmsr_checked`]'s `wrmsr`. Only its address is
     /// taken; it is code, never read as data.
-    static ferrix_wrmsr_checked_insn: u8;
+    static xaqu_wrmsr_checked_insn: u8;
     /// Where a `#GP` at that `wrmsr` resumes. Address only, as above.
-    static ferrix_wrmsr_checked_fault: u8;
+    static xaqu_wrmsr_checked_fault: u8;
 }
 
 /// `#GP`s that [`checked_write_resume`] resumed: one per checked write the
@@ -1074,15 +1074,15 @@ pub(crate) fn checked_writes_refused() -> u64 {
 }
 
 /// Where a ring-0 `#GP` at `rip` resumes, if `rip` is exactly
-/// [`ferrix_wrmsr_checked`]'s `wrmsr`; `None` for every other address
+/// [`xaqu_wrmsr_checked`]'s `wrmsr`; `None` for every other address
 /// (`L.x86_64.192`). No range: one address.
 pub(super) fn checked_write_resume(rip: u64) -> Option<u64> {
-    let insn = (&raw const ferrix_wrmsr_checked_insn) as u64;
+    let insn = (&raw const xaqu_wrmsr_checked_insn) as u64;
     if rip != insn {
         return None;
     }
     let _ = CHECKED_WRITES_REFUSED.fetch_add(1, Ordering::Relaxed);
-    Some((&raw const ferrix_wrmsr_checked_fault) as u64)
+    Some((&raw const xaqu_wrmsr_checked_fault) as u64)
 }
 
 /// Write a model-specific register that may refuse the write: `false` where
@@ -1097,7 +1097,7 @@ pub(super) unsafe fn write_msr_checked(msr: u32, value: u64) -> bool {
     // SAFETY: (SYSREG) `wrmsr` of any index and value is either a write the
     // caller argued safe or a `#GP`, which `checked_write_resume` turns into
     // a return of 0 at the fault label with nothing written.
-    let written = unsafe { ferrix_wrmsr_checked(msr, value) };
+    let written = unsafe { xaqu_wrmsr_checked(msr, value) };
     written == 1
 }
 
@@ -1112,7 +1112,7 @@ pub fn read_cr0() -> u64 {
 }
 
 /// `CR0.MP` — `WAIT` and `FWAIT` honour `CR0.TS` as the x87 instructions
-/// do. Ferrix never sets `TS`, so it changes nothing here; set because the
+/// do. Xaqu never sets `TS`, so it changes nothing here; set because the
 /// SDM asks it of every processor with an x87 (Vol. 3A §9.2.1), as Linux does.
 const CR0_MP: u64 = 1 << 1;
 
@@ -1122,7 +1122,7 @@ const CR0_MP: u64 = 1 << 1;
 const CR0_EM: u64 = 1 << 2;
 
 /// `CR0.TS` — the next x87 or vector instruction is `#NM`, for a lazy
-/// switch Ferrix does not do: it saves and restores eagerly, and assumes it
+/// switch Xaqu does not do: it saves and restores eagerly, and assumes it
 /// clear.
 const CR0_TS: u64 = 1 << 3;
 
@@ -1181,7 +1181,7 @@ unsafe fn write_cr0(value: u64) {
 
 /// Set `CR0.TS`: the next vector instruction is `#NM` (K1 §7.1).
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 pub(crate) fn set_task_switched() {
@@ -1198,7 +1198,7 @@ pub(crate) fn clear_task_switched() {
 
 /// Whether `CPUID` says an `IBPB` clears the return predictor: IBPB_RET,
 /// 0x8000_0008 EBX bit 30. Anything else, a hypervisor hiding it included, is no.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) fn ibpb_clears_returns() -> bool {
     let highest = core::arch::x86_64::__cpuid(0x8000_0000).eax;
     highest >= 0x8000_0008 && core::arch::x86_64::__cpuid(0x8000_0008).ebx & (1 << 30) != 0
@@ -1963,7 +1963,7 @@ pub(crate) fn machine_check_enabled() -> bool {
 /// its own TSS are loaded, so that the machine check's gate and its
 /// interrupt stack (`gdt::MACHINE_CHECK_IST`) are both there to take it,
 /// and before any program runs there. The paranoid entry then stops the
-/// machine as FX-9005 (`paranoid::ferrix_paranoid_entry`).
+/// machine as FX-9005 (`paranoid::xaqu_paranoid_entry`).
 ///
 /// False on a processor without the exception, where the bit stays clear.
 pub(crate) fn enable_machine_check() -> bool {

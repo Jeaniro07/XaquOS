@@ -23,11 +23,11 @@
 
 use std::collections::VecDeque;
 
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::{HwParams, Interval, Mask, PCM_VERSION, SwParams};
-use ferrix_sndctl::message::Message;
-use ferrix_sndctl::pcm::{Effects, MAX_IN_FLIGHT, Stream, Submit, VERSION_1};
-use ferrix_sndctl::refine::ANY;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::{HwParams, Interval, Mask, PCM_VERSION, SwParams};
+use xaqu_sndctl::message::Message;
+use xaqu_sndctl::pcm::{Effects, MAX_IN_FLIGHT, Stream, Submit, VERSION_1};
+use xaqu_sndctl::refine::ANY;
 use libfuzzer_sys::fuzz_target;
 
 const PERIOD: u32 = 960;

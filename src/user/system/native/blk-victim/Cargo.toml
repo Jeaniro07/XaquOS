@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-blk-victim"
+name = "xaqu-blk-victim"
 description = "A test block driver over memory that dies or hangs on purpose: test-btrfsd-restart's. It never ships in a product image."
 version.workspace = true
 edition.workspace = true
@@ -14,10 +14,10 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkclient.workspace = true
-ferrix-blkring.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkclient.workspace = true
+xaqu-blkring.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

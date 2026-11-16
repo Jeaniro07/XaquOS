@@ -3,7 +3,7 @@
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_usb_device::acm::{DATA_IN, DATA_OUT, NOTIFY_IN, serial_state};
+use xaqu_usb_device::acm::{DATA_IN, DATA_OUT, NOTIFY_IN, serial_state};
 
 use super::rig::Rig;
 use crate::layout::ENDPOINT_BYTES;

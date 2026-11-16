@@ -19,11 +19,11 @@
 //! The kernel's image, direct map and arena each get their own random word,
 //! so that one leaked address gives away one region, not three.
 
-use ferrix_bootinfo::{
+use xaqu_bootinfo::{
     KASLR_DECLINED, KASLR_FIXED_IMAGE, KASLR_MOVED, KASLR_NO_ENTROPY, Kaslr, LAYOUT, PAGE_SIZE,
     SOURCE_COUNTER, SOURCE_CPU_RNG, SOURCE_FIRMWARE_RNG,
 };
-use ferrix_elf::Elf;
+use xaqu_elf::Elf;
 
 use crate::arch;
 use crate::console::println;
@@ -50,7 +50,7 @@ pub(crate) struct Choice {
 
 /// Whether the command line the loader read asks for no randomisation.
 pub(crate) fn declined(cmdline: &str) -> bool {
-    ferrix_bootinfo::flag_in(cmdline, "nokaslr")
+    xaqu_bootinfo::flag_in(cmdline, "nokaslr")
 }
 
 /// The best randomness there is, or `None` for none at all.

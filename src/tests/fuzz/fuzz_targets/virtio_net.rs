@@ -44,17 +44,17 @@ use std::collections::BTreeSet;
 use std::mem::ManuallyDrop;
 use std::rc::Rc;
 
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     CONFIG_GENERATION, CommonConfig, DEVICE_FEATURE, DEVICE_FEATURE_SELECT, DEVICE_STATUS,
     DRIVER_FEATURE, DRIVER_FEATURE_SELECT, FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, NO_VECTOR,
     QUEUE_ENABLE, QUEUE_MSIX_VECTOR, QUEUE_NOTIFY_OFF, QUEUE_SELECT, QUEUE_SIZE,
     STATUS_DEVICE_NEEDS_RESET, STATUS_FEATURES_OK,
 };
-use ferrix_virtio::net::{
+use xaqu_virtio::net::{
     FEATURE_MAC, FEATURE_MRG_RXBUF, FEATURE_MTU, FEATURE_SPEED_DUPLEX, FEATURE_STATUS, HEADER_LEN,
 };
-use ferrix_virtio::{Descriptor, DeviceConfig, Layout, QueueMemory, SplitQueueDevice};
-use ferrix_virtio_net::{
+use xaqu_virtio::{Descriptor, DeviceConfig, Layout, QueueMemory, SplitQueueDevice};
+use xaqu_virtio_net::{
     DevicePages, Driver, Event, Frame, ISR_QUEUE, Options, Parts, RECEIVE_QUEUE, RequestArea, Slot,
     SubmitError, TRANSMIT_QUEUE, Teardown, Transport,
 };
@@ -387,7 +387,7 @@ impl Transport for Handle {
 
 type FuzzDriver = Driver<Handle, Region, Region, Region, Vec<Slot>>;
 
-type FuzzReleased = ferrix_virtio_net::Released<Handle, Region, Region, Region, Vec<Slot>>;
+type FuzzReleased = xaqu_virtio_net::Released<Handle, Region, Region, Region, Vec<Slot>>;
 
 /// The parts a teardown hands back, whether the device reset or not.
 ///

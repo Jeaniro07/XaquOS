@@ -1,7 +1,7 @@
 //! `card0` over the lit plane: the Intel driver as a copying display card
 //! (`docs/INTEL-GPU.md` §4.3, M6's first step; `docs/DISPLAY.md` §8.1).
 //!
-//! Under `ferrix.efifb` and `ferrix.intelgpu`, K4 lends the firmware's
+//! Under `xaqu.efifb` and `xaqu.intelgpu`, K4 lends the firmware's
 //! framebuffer to 00:02.0's own node as one more aperture, the only one that
 //! is no BAR (`APERTURE_NOT_BAR`), and the display core hands this node a
 //! copying card by its identity alone (`L.device.48`). So, as `efifb` does
@@ -38,10 +38,10 @@
 //! the firmware's and nothing here retimes it, so a smaller mode is the
 //! buffer scaled into the plane by the copy, aspect kept, centred, black
 //! bars, as Linux's panel fitter shows one. The connector is named by what
-//! drives pipe A (`ferrix_intel_xelp::plane::Output`), so the box's
+//! drives pipe A (`xaqu_intel_xelp::plane::Output`), so the box's
 //! monitor is `HDMI-A-1` and not `Virtual-1`.
 //!
-//! Under `ferrix.intelgpu.modeset=on` the card has a second scanout
+//! Under `xaqu.intelgpu.modeset=on` the card has a second scanout
 //! (`docs/DESKTOP.md` §3.5): pipe B on the other combo port, showing a
 //! surface of its own ([`surface`]) -- lit by the driver
 //! ([`modeset::light_port`]) on whichever combo port the firmware left
@@ -54,29 +54,29 @@
 use core::ptr;
 use core::sync::atomic::Ordering;
 
-use ferrix_display_modes::scale::Scaler;
-use ferrix_display_modes::{ModeList, add_scaled};
-use ferrix_displayctl::message::{
+use xaqu_display_modes::scale::Scaler;
+use xaqu_display_modes::{ModeList, add_scaled};
+use xaqu_displayctl::message::{
     Attach, EDID_BYTES, Edid, Hello, MAX_BYTES, MAX_DIMENSION, MAX_SCANOUTS, Message, PORT_RIGHTS,
     Rect, ScanoutMode, Status, Timing, Timings, VERSION,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{APERTURE_NOT_BAR, IoMappingSpec};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::port::Port;
-use ferrix_rt::native::vmo::Vmo;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{APERTURE_NOT_BAR, IoMappingSpec};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::port::Port;
+use xaqu_rt::native::vmo::Vmo;
 
-use ferrix_intel_xelp::display::hotplug::Port as PortOf;
-use ferrix_intel_xelp::display::light;
-use ferrix_intel_xelp::frontend::Completion;
-use ferrix_intel_xelp::io::Mmio;
+use xaqu_intel_xelp::display::hotplug::Port as PortOf;
+use xaqu_intel_xelp::display::light;
+use xaqu_intel_xelp::frontend::Completion;
+use xaqu_intel_xelp::io::Mmio;
 
 use crate::m2::ScreenPlane;
 
@@ -140,7 +140,7 @@ struct Output {
 
 /// A scanout's cursor: a copying card has no plane for it, so the pointer
 /// is put into the plane after each copy ([`Display::repaint`],
-/// `ferrix_display_modes::pointer`).
+/// `xaqu_display_modes::pointer`).
 #[derive(Clone, Copy)]
 struct Pointer {
     /// The image's buffer, 0 for none.
@@ -241,7 +241,7 @@ pub(crate) struct Display<'d> {
     /// plug.
     device: Option<Device<Kernel>>,
     apertures: u32,
-    /// `ferrix.intelgpu.modeset=on`, where the command line says it.
+    /// `xaqu.intelgpu.modeset=on`, where the command line says it.
     written: Option<modeset::Written>,
     /// Pipe A's beam, where `FLUSH`es of the first scanout wait for its
     /// blank ([`vblank`]); `None` copies at once.
@@ -253,7 +253,7 @@ pub(crate) struct Display<'d> {
     hotplug_at: u64,
     tally: vblank::Tally,
     /// The count of GPU writes to shared objects the last copy saw
-    /// (`ferrix_intel_xelp::frontend::shared_writes`).
+    /// (`xaqu_intel_xelp::frontend::shared_writes`).
     shared_writes: u64,
     /// Copies evict their source until then: a GPU write submitted before
     /// one copy may land after it, and the lines that copy read would
@@ -290,20 +290,20 @@ impl<'d> Display<'d> {
         port: &Port<Kernel>,
     ) -> Option<Display<'d>> {
         let Some(plane) = plane else {
-            ferrix_rt::info!("intel: no card0: pipe A's plane is not lit");
+            xaqu_rt::info!("intel: no card0: pipe A's plane is not lit");
             return None;
         };
         let (window, first, phys) = map_screen(device, apertures, plane)?;
         let control = device
             .display_control()
             .inspect_err(|error| {
-                ferrix_rt::err!("intel: no card0: no display control ({error:?})");
+                xaqu_rt::err!("intel: no card0: no display control ({error:?})");
             })
             .ok()?;
         let mut regs = regs::Regs::map(device, apertures)
-            .inspect_err(|why| ferrix_rt::warn!("intel: card0: no hotplug: {why}"))
+            .inspect_err(|why| xaqu_rt::warn!("intel: card0: no hotplug: {why}"))
             .ok();
-        // `ferrix.intelgpu.modeset=dry` prints the steps for the second port;
+        // `xaqu.intelgpu.modeset=dry` prints the steps for the second port;
         // `=on` gives the card a second scanout (`docs/DESKTOP.md` §3.5).
         let mut second = None;
         if let Some(regs) = regs.as_mut() {
@@ -326,17 +326,17 @@ impl<'d> Display<'d> {
         if let Err(why) = introduce(
             &control, port, location, scanouts, modes, connectors, running,
         ) {
-            ferrix_rt::warn!("intel: no card0: {why}");
+            xaqu_rt::warn!("intel: no card0: {why}");
             return None;
         }
         if control
             .wait_async(port, Signals::READABLE | Signals::PEER_CLOSED, KEY_DISPLAY)
             .is_err()
         {
-            ferrix_rt::err!("intel: no card0: the display control could not be waited on");
+            xaqu_rt::err!("intel: no card0: the display control could not be waited on");
             return None;
         }
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: card0 published: copies frames into the lit {}x{} plane at {phys:#x} ({} bytes a line, write-combining){}",
             first.width,
             first.height,
@@ -384,7 +384,7 @@ impl<'d> Display<'d> {
             card.written = second.written;
         }
         if let Err(why) = card.announce() {
-            ferrix_rt::warn!("intel: no card0: {why}");
+            xaqu_rt::warn!("intel: no card0: {why}");
             return None;
         }
         if card.watches.iter().any(Option::is_some) {
@@ -461,18 +461,18 @@ fn hello_parts(
 /// The combo port the firmware left dark: B where pipe A drives A, A where
 /// it drives B. `None`, said, where pipe A drives neither.
 fn dark_port(regs: &mut regs::Regs) -> Option<PortOf> {
-    let lit = PortOf::of_ddi_func_ctl(regs.read32(ferrix_intel_xelp::plane::TRANS_DDI_FUNC_CTL_A));
+    let lit = PortOf::of_ddi_func_ctl(regs.read32(xaqu_intel_xelp::plane::TRANS_DDI_FUNC_CTL_A));
     match lit {
         Some(PortOf::Combo(0)) => Some(PortOf::Combo(1)),
         Some(PortOf::Combo(1)) => Some(PortOf::Combo(0)),
         _ => {
-            ferrix_rt::info!("intel: card0: no second port: pipe A drives no combo port");
+            xaqu_rt::info!("intel: card0: no second port: pipe A drives no combo port");
             None
         }
     }
 }
 
-/// The second scanout under `ferrix.intelgpu.modeset=on`: the combo port
+/// The second scanout under `xaqu.intelgpu.modeset=on`: the combo port
 /// pipe A does not drive -- or, where the firmware runs pipe B already
 /// (both ports cloned onto one surface), pipe B's -- its own surface, and
 /// pipe B lit on it now where a monitor is there, or pointed at it where
@@ -493,7 +493,7 @@ fn prepare_second(
     let surface = surface::Surface::make(written, device, apertures, regs);
     let mut size = None;
     if let (Some(running), Some(surface)) = (cloned, surface.as_ref()) {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: card0: the firmware runs pipe B on port {} at {}x{}: it gets a surface of its own",
             running.port.name(),
             running.size.0,
@@ -505,18 +505,18 @@ fn prepare_second(
     } else if let Some(surface) = surface.as_ref()
         && port
             .live_bit()
-            .is_some_and(|bit| regs.read32(ferrix_intel_xelp::display::hotplug::SDEISR) & bit != 0)
+            .is_some_and(|bit| regs.read32(xaqu_intel_xelp::display::hotplug::SDEISR) & bit != 0)
     {
         size = modeset::light_port(regs, port, surface.ggtt).map(|mode| (mode.h[0], mode.v[0]));
     }
-    let function = regs.read32(ferrix_intel_xelp::plane::TRANS_DDI_FUNC_CTL_A + 0x1000);
-    let connector = match (ferrix_intel_xelp::plane::Output {
+    let function = regs.read32(xaqu_intel_xelp::plane::TRANS_DDI_FUNC_CTL_A + 0x1000);
+    let connector = match (xaqu_intel_xelp::plane::Output {
         ddi_func_ctl: function,
         pp_status: 0,
     })
     .drm_connector()
     {
-        0 => ferrix_intel_xelp::plane::DRM_CONNECTOR_HDMIA,
+        0 => xaqu_intel_xelp::plane::DRM_CONNECTOR_HDMIA,
         named => named,
     };
     let watch = hotplug::Watch::on(regs, port, 1);
@@ -537,7 +537,7 @@ fn map_screen(
     plane: ScreenPlane,
 ) -> Option<(IoMapping<Kernel>, Output, u64)> {
     if !plane.linear_xrgb8888() {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: no card0: the lit plane is not linear XRGB8888 (PLANE_CTL {:#010x})",
             plane.ctl
         );
@@ -549,8 +549,8 @@ fn map_screen(
             .find(|aperture| aperture.bar == bar)
     };
     let Some(window) = find(APERTURE_NOT_BAR) else {
-        ferrix_rt::warn!(
-            "intel: no card0: no lent framebuffer (K4 lends it under ferrix.efifb with ferrix.intelgpu)"
+        xaqu_rt::warn!(
+            "intel: no card0: no lent framebuffer (K4 lends it under xaqu.efifb with xaqu.intelgpu)"
         );
         return None;
     };
@@ -558,7 +558,7 @@ fn map_screen(
     // aperture) at the plane's GGTT offset.
     let gmadr = find(2);
     if gmadr.is_some_and(|bar2| bar2.phys + u64::from(plane.ggtt) != window.phys) {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: no card0: the lent window at {:#x} is not the plane's surface (BAR 2 {:#x} + GGTT {:#x})",
             window.phys,
             gmadr.map_or(0, |b| b.phys),
@@ -578,7 +578,7 @@ fn map_screen(
         || pitch * height > len
         || !len.is_multiple_of(PAGE)
     {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: no card0: the plane {width}x{height} (pitch {pitch}) does not fit the lent window ({len:#x} bytes)"
         );
         return None;
@@ -589,13 +589,13 @@ fn map_screen(
             len: window.len,
         })
         .inspect_err(|error| {
-            ferrix_rt::err!("intel: no card0: the lent window refused ({error:?})");
+            xaqu_rt::err!("intel: no card0: the lent window refused ({error:?})");
         })
         .ok()?;
     let base = mapping
         .map_combining(None)
         .inspect_err(|error| {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "intel: no card0: the window's write-combining mapping refused ({error:?})"
             );
         })
@@ -609,12 +609,12 @@ fn map_screen(
 
 /// Milliseconds of `CLOCK_MONOTONIC`.
 fn now_ms() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000_000
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000_000
 }
 
 /// Nanoseconds of `CLOCK_MONOTONIC`.
 fn now_ns() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 /// The loop's wake-up at `at_ns`.
@@ -622,24 +622,24 @@ fn schedule(at_ns: u64) {
     crate::serve::WAKE_AT.store(at_ns.max(1), Ordering::Relaxed);
 }
 
-/// Pipe A's beam, said, unless `ferrix.intelgpu.vblank=off` asks to copy
+/// Pipe A's beam, said, unless `xaqu.intelgpu.vblank=off` asks to copy
 /// each frame at once or the transcoder's numbers make no sense.
 fn beam(regs: Option<&mut regs::Regs>, height: u32) -> Option<vblank::Beam> {
     if vblank_off() {
-        ferrix_rt::info!("intel: card0: copies at once (ferrix.intelgpu.vblank=off)");
+        xaqu_rt::info!("intel: card0: copies at once (xaqu.intelgpu.vblank=off)");
         return None;
     }
     let beam = regs.and_then(|regs| vblank::Beam::read(regs, height, REFRESH_HZ, now_ns()));
     match beam.map(|beam| beam.timing()) {
-        Some((vactive, vtotal, frame_ns)) => ferrix_rt::info!(
+        Some((vactive, vtotal, frame_ns)) => xaqu_rt::info!(
             "intel: card0: flips wait for pipe A's blank (lines {vactive} of {vtotal}, {frame_ns} ns a refresh)"
         ),
-        None => ferrix_rt::info!("intel: card0: no beam to wait for; frames are copied at once"),
+        None => xaqu_rt::info!("intel: card0: no beam to wait for; frames are copied at once"),
     }
     beam
 }
 
-/// `ferrix.intelgpu.vblank=off`: copy each frame the moment it comes, as
+/// `xaqu.intelgpu.vblank=off`: copy each frame the moment it comes, as
 /// before frames waited for the blank.
 fn vblank_off() -> bool {
     let mut line = [0_u8; 4096];
@@ -647,7 +647,7 @@ fn vblank_off() -> bool {
         line.get(..length)
             .unwrap_or_default()
             .split(u8::is_ascii_whitespace)
-            .any(|word| word == b"ferrix.intelgpu.vblank=off")
+            .any(|word| word == b"xaqu.intelgpu.vblank=off")
     })
 }
 
@@ -672,7 +672,7 @@ impl Display<'_> {
         match self.settle_blit(gpu, false) {
             Ok(()) => true,
             Err(why) => {
-                ferrix_rt::err!("intel: card0 stopped: {why}");
+                xaqu_rt::err!("intel: card0 stopped: {why}");
                 false
             }
         }
@@ -713,7 +713,7 @@ impl Display<'_> {
             // The blit wrote over the pointer, or moved under it.
             self.repaint(0);
         } else {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: card0: a blit ended {how:?}; frames are copied by the processor from now on"
             );
             self.blit = blit::State::Off;
@@ -805,7 +805,7 @@ impl Display<'_> {
         first.owed_whole = false;
         self.flushes += 1;
         if self.flushes == 1 {
-            ferrix_rt::info!("intel: card0: the first frame is on the screen");
+            xaqu_rt::info!("intel: card0: the first frame is on the screen");
         }
         true
     }
@@ -893,7 +893,7 @@ impl Display<'_> {
             if let Some(connected) = change
                 && let Err(why) = self.changed(scanout, connected)
             {
-                ferrix_rt::err!("intel: card0 stopped: {why}");
+                xaqu_rt::err!("intel: card0 stopped: {why}");
                 return false;
             }
         }
@@ -963,11 +963,11 @@ impl Display<'_> {
                 .wait_async(port, Signals::READABLE | Signals::PEER_CLOSED, KEY_DISPLAY)
                 .is_ok(),
             Ok(false) => {
-                ferrix_rt::warn!("intel: card0: the display core closed its end");
+                xaqu_rt::warn!("intel: card0: the display core closed its end");
                 false
             }
             Err(why) => {
-                ferrix_rt::err!("intel: card0 stopped: {why}");
+                xaqu_rt::err!("intel: card0 stopped: {why}");
                 false
             }
         }
@@ -1102,7 +1102,7 @@ impl Display<'_> {
                 clear(output);
                 // Cleared with the rest, and drawn again at the next copy.
                 output.pointer.drawn = None;
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "intel: card0: scanout {scanout} mode {}x{}{}",
                     size.0,
                     size.1,
@@ -1211,7 +1211,7 @@ impl Display<'_> {
             .then(|| self.buffer(pointer.image))
             .flatten();
         let now =
-            image.and_then(|_| ferrix_display_modes::pointer::bounds(pointer.at, output.mode()));
+            image.and_then(|_| xaqu_display_modes::pointer::bounds(pointer.at, output.mode()));
         if let Some(old) = pointer.drawn
             && now != Some(old)
         {
@@ -1221,7 +1221,7 @@ impl Display<'_> {
             paint(output, &buffer, shown, Some((image, pointer.at)), rect);
         }
         if pointer.drawn.is_some() || now.is_some() {
-            ferrix_rt::device_barrier();
+            xaqu_rt::device_barrier();
         }
         if let Some(Some(output)) = self.outputs.get_mut(scanout) {
             output.pointer.drawn = now;
@@ -1257,7 +1257,7 @@ impl Display<'_> {
             self.tally.copied(now_ns().saturating_sub(started), evicted);
             self.flushes += 1;
             if self.flushes == 1 {
-                ferrix_rt::info!("intel: card0: the first frame is on the screen");
+                xaqu_rt::info!("intel: card0: the first frame is on the screen");
             }
         }
         for (scanout, copied) in copied.into_iter().enumerate() {
@@ -1271,7 +1271,7 @@ impl Display<'_> {
     /// shared with other programs within [`EVICT_WINDOW_NS`]. A desktop
     /// drawn in software with no GPU client copies as before, at no cost.
     fn evicting(&mut self) -> bool {
-        let writes = ferrix_intel_xelp::frontend::shared_writes();
+        let writes = xaqu_intel_xelp::frontend::shared_writes();
         let now = now_ns();
         if writes != self.shared_writes {
             self.shared_writes = writes;
@@ -1353,7 +1353,7 @@ impl Display<'_> {
                 output.pointer.drawn = None;
             }
         }
-        if ferrix_rt::linux::munmap(buffer.base, buffer.length).is_err() {
+        if xaqu_rt::linux::munmap(buffer.base, buffer.length).is_err() {
             return Status::DeviceRefused;
         }
         Status::Ok
@@ -1374,7 +1374,7 @@ fn clear(screen: &Output) {
         }
         screen.written(row * screen.pitch, screen.width * PIXEL);
     }
-    ferrix_rt::device_barrier();
+    xaqu_rt::device_barrier();
 }
 
 /// The scaled copy: each plane pixel whose nearest buffer pixel lies in
@@ -1513,7 +1513,7 @@ fn copy(screen: &Output, buffer: &Buffer, changed: Rect, evicting: bool) -> u64 
             screen.written(to, bytes);
         }
     }
-    ferrix_rt::device_barrier();
+    xaqu_rt::device_barrier();
     evicted
 }
 
@@ -1534,7 +1534,7 @@ fn paint(
     image: Option<(&Buffer, (i32, i32))>,
     rect: Rect,
 ) {
-    use ferrix_display_modes::pointer::{image_at, on_plane, over, shown_at};
+    use xaqu_display_modes::pointer::{image_at, on_plane, over, shown_at};
     let scaler = screen.scaler.as_ref();
     let Some(area) = on_plane(scaler, rect, screen.size()) else {
         return;
@@ -1633,7 +1633,7 @@ fn send_edid(
         .write(Message::Edid(edid).encode().as_bytes())
         .is_err()
     {
-        ferrix_rt::err!("intel: card0: the EDID could not be written");
+        xaqu_rt::err!("intel: card0: the EDID could not be written");
     }
 }
 
@@ -1652,7 +1652,7 @@ fn send_list(
             .write(page.encode().as_bytes())
             .map_err(|_| "the mode list could not be written")?;
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: card0: scanout {scanout}: {} modes listed, the smaller ones shown scaled",
         list.len()
     );

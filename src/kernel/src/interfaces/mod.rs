@@ -9,13 +9,13 @@
 //!
 //! | Core | Protocol | Design |
 //! |---|---|---|
-//! | [`block_ring`] | `ferrix-blkring` | `docs/BLOCK-RING.md` |
-//! | `net_ring`, the part `ferrix-kernel-net-ring` (CRATE-SPLIT.md S4) | `ferrix-netring` | `docs/NET-RING.md` |
-//! | [`display`] | `ferrix-displayctl` | `docs/DISPLAY.md` |
-//! | [`render`] | `ferrix-renderctl` | `docs/GPU.md` |
-//! | [`input`] | `ferrix-inputctl` | `docs/INPUT.md` |
-//! | [`audio`] | `ferrix-sndctl` | `docs/AUDIO.md` |
-//! | `logctl`, the part `ferrix-kernel-logctl` (CRATE-SPLIT.md S3) | `ferrix-logctl` | the kernel log |
+//! | [`block_ring`] | `xaqu-blkring` | `docs/BLOCK-RING.md` |
+//! | `net_ring`, the part `xaqu-kernel-net-ring` (CRATE-SPLIT.md S4) | `xaqu-netring` | `docs/NET-RING.md` |
+//! | [`display`] | `xaqu-displayctl` | `docs/DISPLAY.md` |
+//! | [`render`] | `xaqu-renderctl` | `docs/GPU.md` |
+//! | [`input`] | `xaqu-inputctl` | `docs/INPUT.md` |
+//! | [`audio`] | `xaqu-sndctl` | `docs/AUDIO.md` |
+//! | `logctl`, the part `xaqu-kernel-logctl` (CRATE-SPLIT.md S3) | `xaqu-logctl` | the kernel log |
 //!
 //! The certification item puts every core in the load ring
 //! (`tools/common/data/certification-item.json`): a defect in one is bounded

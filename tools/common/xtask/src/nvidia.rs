@@ -1,11 +1,11 @@
-//! `run-nvidia`: Ferrix on the RTX 3060, in libvirt's `ferrix-3060` domain
+//! `run-nvidia`: Xaqu on the RTX 3060, in libvirt's `xaqu-3060` domain
 //! (`docs/NVIDIA.md` §2.3, §7's N0e, §12.3's emulator).
 //!
 //! The card is shared with the customer's own domains, so before anything
 //! starts:
 //!
 //! * every domain that shares it (`SHARED`) must be shut off, and
-//!   `ferrix-3060` itself must not be running already;
+//!   `xaqu-3060` itself must not be running already;
 //! * the 3060's function 0, `0000:01:00.0`, must be bound to `vfio-pci` on
 //!   the host. Nothing here names the RTX 3090 (`03:00.0`), and the domain
 //!   is defined with the 3060's function 0 alone;
@@ -13,7 +13,7 @@
 //!   attached, OVMF's GOP would put a boot framebuffer in BAR1, which the
 //!   kernel keeps for its console and so withholds from `nvrm`;
 //! * the emulator must be the patched QEMU installed as root at
-//!   [`EMULATOR`], whose `--version` says `ferrix-cfi`, so that interrupt
+//!   [`EMULATOR`], whose `--version` says `xaqu-cfi`, so that interrupt
 //!   remapping blocks compatibility-format messages (F-57).
 //!
 //! Then it builds the x86-64 image with `nvrm` as the NVIDIA display
@@ -52,7 +52,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     name: "run-nvidia",
     help_at: 630,
     help: &[
-        "run-nvidia    Boot Ferrix on the RTX 3060 in libvirt's ferrix-3060 domain (the patched QEMU as root, the sharing",
+        "run-nvidia    Boot Xaqu on the RTX 3060 in libvirt's xaqu-3060 domain (the patched QEMU as root, the sharing",
         "              domains shut off), nvrm as its driver with its core and the GSP firmware on the NVIDIA volume;",
         "              print the serial port until nvrm is up or stops, then destroy the domain (x86_64)",
     ],
@@ -62,9 +62,9 @@ pub(crate) const TASKS: &[Task] = &[Task {
 /// The libvirt connection.
 const CONNECTION: &str = "qemu:///system";
 /// The domain this command defines and starts.
-const DOMAIN: &str = "ferrix-3060";
+const DOMAIN: &str = "xaqu-3060";
 /// The customer's domains that pass the same card through: each must be
-/// shut off before `ferrix-3060` starts.
+/// shut off before `xaqu-3060` starts.
 const SHARED: &[&str] = &[
     "GameLab",
     "win11",
@@ -76,9 +76,9 @@ const SHARED: &[&str] = &[
 /// The 3060's function 0, the one function passed through.
 const GPU: &str = "0000:01:00.0";
 /// The patched QEMU, installed as root where libvirt's QEMU user may run it.
-const EMULATOR: &str = "/usr/local/lib/ferrix/qemu/bin/qemu-system-x86_64";
+const EMULATOR: &str = "/usr/local/lib/xaqu/qemu/bin/qemu-system-x86_64";
 /// The domain's UUID, which libvirt keeps it by: the one it was first
-/// defined with (`~/ferrix-nvidia-vm/ferrix-3060.xml`).
+/// defined with (`~/xaqu-nvidia-vm/xaqu-3060.xml`).
 const UUID: &str = "daa6c031-6207-4aa4-8fbc-1bfd92bec29f";
 /// The serial port's TCP socket.
 const SERIAL: &str = "127.0.0.1:47060";
@@ -94,13 +94,13 @@ const DONE: &[&str] = &[
     "init     the shell exited with",
     "nvrm: stopped",
     "nvos: core refused: ",
-    "FERRIX-PANIC",
+    "XAQU-PANIC",
     " not started: ",
 ];
 
-/// `~/ferrix-nvidia-vm`, which libvirt's QEMU can traverse.
+/// `~/xaqu-nvidia-vm`, which libvirt's QEMU can traverse.
 fn vm_dir() -> PathBuf {
-    PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join("ferrix-nvidia-vm")
+    PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join("xaqu-nvidia-vm")
 }
 
 /// `virsh -c qemu:///system` with `arguments`: its standard output, or why
@@ -123,7 +123,7 @@ fn virsh(arguments: &[&str]) -> Result<String> {
 }
 
 /// Refuse unless the card is free for this domain: every sharing domain
-/// shut off, `ferrix-3060` not running, the 3060 on `vfio-pci`, and the
+/// shut off, `xaqu-3060` not running, the 3060 on `vfio-pci`, and the
 /// patched emulator installed.
 fn guard() -> Result<()> {
     let running = virsh(&["list", "--name", "--state-running"])?;
@@ -160,11 +160,11 @@ fn guard() -> Result<()> {
         .map_err(|error| {
             Error::new(format!(
                 "{EMULATOR} cannot run ({error}): install the patched QEMU as root \
-                 (docs/NVIDIA.md §12.3, \"The ferrix-3060 domain's <emulator>\")"
+                 (docs/NVIDIA.md §12.3, \"The xaqu-3060 domain's <emulator>\")"
             ))
         })?;
     let version = String::from_utf8_lossy(&version.stdout);
-    if !version.contains("ferrix-cfi") {
+    if !version.contains("xaqu-cfi") {
         return Err(Error::new(format!(
             "{EMULATOR} is not the patched QEMU: `{}`",
             version.lines().next().unwrap_or_default()
@@ -207,7 +207,7 @@ enum Layout {
     /// `efifb` are on it -- seen over VNC on the host's loopback, or with
     /// `virsh screenshot` -- as nazuna's are on its iGPU (`0e:00.0`,
     /// `boot_vga` 1). `rom`: the 3060's option ROM runs too
-    /// (`FERRIX_NAZUNA_ROM=1`), as AMI may run every card's GOP, which
+    /// (`XAQU_NAZUNA_ROM=1`), as AMI may run every card's GOP, which
     /// shows whether the boot framebuffer stays the emulated card's and
     /// none of the 3060's BAR1 is withheld.
     Nazuna {
@@ -273,7 +273,7 @@ fn cputune(vcpus: u32) -> String {
 /// vDSO. Measured 2026-10-10 on the same machine under plain KVM, Teeworlds
 /// on llvmpipe at 1920x1080: 62 swaps a second on the HPET against 103 to 129
 /// on the TSC, and an idle `teeworlds_srv` at 18 % of a processor against 2 %
-/// (`~/.local/share/ferrix/steam-race/softgl-gap.md`). Every other boot has
+/// (`~/.local/share/xaqu/steam-race/softgl-gap.md`). Every other boot has
 /// had the bit since `qemu::x86_cpu` gave it `+invtsc`.
 fn domain_xml(dir: &Path, machine: &Machine) -> String {
     let file = |name: &str| dir.join(name).display().to_string();
@@ -294,7 +294,7 @@ fn domain_xml(dir: &Path, machine: &Machine) -> String {
         "<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <name>{DOMAIN}</name>
   <uuid>{UUID}</uuid>
-  <description>Ferrix on the RTX 3060 (cargo xtask run-nvidia). Shares the card with {shared}: start only when those are shut off.</description>
+  <description>Xaqu on the RTX 3060 (cargo xtask run-nvidia). Shares the card with {shared}: start only when those are shut off.</description>
   <memory unit='MiB'>{memory}</memory>
   <vcpu placement='static'>{vcpus}</vcpu>
 {cputune}  <os>
@@ -361,7 +361,7 @@ fn domain_xml(dir: &Path, machine: &Machine) -> String {
         cores = machine.vcpus.div_ceil(THREADS),
         threads = THREADS,
         devices = machine.devices,
-        image = file("ferrix.img"),
+        image = file("xaqu.img"),
         vda = virtio("pattern.img", 8, true),
         vdb = virtio("btrfs.img", 9, true),
         vdc = virtio("btrfs-write.img", 10, false),
@@ -570,7 +570,7 @@ fn quiesce(port: Option<u16>, serial: Option<Serial>) {
         println!("  {DOMAIN}: the guest stopped by itself; nothing to quiesce");
         return;
     };
-    let key = PathBuf::from(home()).join(".local/share/ferrix/ssh/id_ed25519");
+    let key = PathBuf::from(home()).join(".local/share/xaqu/ssh/id_ed25519");
     let touch = format!(
         "/bin/busybox mkdir -p /run; \
          /bin/busybox touch {QUIESCE_ASK} || touch {QUIESCE_ASK} || : > {QUIESCE_ASK}"
@@ -646,7 +646,7 @@ fn quiesce(port: Option<u16>, serial: Option<Serial>) {
 
 /// Where the static musl busybox is (`tools/common/xtask` uses Alpine's for
 /// `test-shell --init`); the script runs its `sleep`, which zinc lacks.
-const BUSYBOX: &str = "~/.local/share/ferrix/busybox/x86_64/bin/busybox.static";
+const BUSYBOX: &str = "~/.local/share/xaqu/busybox/x86_64/bin/busybox.static";
 
 /// What init runs: wait for `nvrm` to register `/dev/nvidiactl`, then run
 /// NVIDIA's own `nvidia-smi` from the volume, through glibc. At its end it
@@ -704,7 +704,7 @@ const SCRIPT_EXIT: &str = "exit 16\n";
 /// Set to anything to leave the card as every boot before §13 left it: no
 /// request to quiesce from `run-nvidia`'s script or before a destroy. For
 /// telling a fault of the quiesce from a fault it was meant to prevent.
-const NO_QUIESCE: &str = "FERRIX_NVIDIA_NO_QUIESCE";
+const NO_QUIESCE: &str = "XAQU_NVIDIA_NO_QUIESCE";
 
 /// Whether [`NO_QUIESCE`] is set.
 fn no_quiesce() -> bool {
@@ -713,7 +713,7 @@ fn no_quiesce() -> bool {
 
 /// `vk-offscreen` (`nvrm/test/vk-offscreen.c`): a clear on the GPU read
 /// back, N2's smallest proof of work. Built with the host's compiler against
-/// its Vulkan headers and loader, and run on Ferrix with Debian's loader and
+/// its Vulkan headers and loader, and run on Xaqu with Debian's loader and
 /// NVIDIA's ICD from the volume; it asks for nothing newer than glibc 2.34.
 fn vk_offscreen(dir: &Path) -> Result<Vec<u8>> {
     vk_test(dir, "vk-offscreen")
@@ -805,9 +805,9 @@ fn merge_beside(tree: &Path, beside: Option<&Path>) -> Result<()> {
     Ok(())
 }
 
-/// `--everything`'s extras on the 3060: `FERRIX_NVIDIA_YSERVER`, a yserver
+/// `--everything`'s extras on the 3060: `XAQU_NVIDIA_YSERVER`, a yserver
 /// binary in the volume's one's place (a dev build, as ydev.sh swaps one),
-/// and `FERRIX_NVIDIA_TEEWORLDS`, a directory (Teeworlds' bundle: `lib/`,
+/// and `XAQU_NVIDIA_TEEWORLDS`, a directory (Teeworlds' bundle: `lib/`,
 /// `tw/`, `tw.sh`) at `/data/tw`, which the desktop copies to `/tmp/tw` and
 /// starts a match from.
 fn extras(tree: &Path) -> Result<()> {
@@ -837,10 +837,10 @@ fn extras(tree: &Path) -> Result<()> {
             )))
         }
     };
-    if let Some(yserver) = std::env::var_os("FERRIX_NVIDIA_YSERVER") {
+    if let Some(yserver) = std::env::var_os("XAQU_NVIDIA_YSERVER") {
         copy(&yserver, &tree.join("yserver/yserver"), false)?;
     }
-    if let Some(teeworlds) = std::env::var_os("FERRIX_NVIDIA_TEEWORLDS") {
+    if let Some(teeworlds) = std::env::var_os("XAQU_NVIDIA_TEEWORLDS") {
         let to = tree.join("tw");
         let _ = std::fs::remove_dir_all(&to);
         copy(&teeworlds, &to, true)?;
@@ -894,8 +894,8 @@ fn volume_stamp(core: &Path, everything: &Path) -> String {
         "{}\n{}\n{}\n{}\n",
         seen(core),
         seen(&everything.join("everything.img")),
-        named("FERRIX_NVIDIA_YSERVER"),
-        named("FERRIX_NVIDIA_TEEWORLDS")
+        named("XAQU_NVIDIA_YSERVER"),
+        named("XAQU_NVIDIA_TEEWORLDS")
     )
 }
 
@@ -905,7 +905,7 @@ fn volume_stamp(core: &Path, everything: &Path) -> String {
 fn whole_volume(dir: &Path, core: &Path, beside: Option<&Path>) -> Result<()> {
     // `--everything`'s volume is kept from run to run while the core and the
     // everything volume are the ones it was made from: what Steam installed
-    // and signed in to is on it. FERRIX_NVIDIA_FRESH_VOLUME makes it anew.
+    // and signed in to is on it. XAQU_NVIDIA_FRESH_VOLUME makes it anew.
     let image = dir.join(if beside.is_some() {
         EVERYTHING_VOLUME
     } else {
@@ -914,7 +914,7 @@ fn whole_volume(dir: &Path, core: &Path, beside: Option<&Path>) -> Result<()> {
     let kept = image.with_extension("kept");
     let stamp = beside.map(|everything| volume_stamp(core, everything));
     if let Some(stamp) = &stamp
-        && std::env::var_os("FERRIX_NVIDIA_FRESH_VOLUME").is_none()
+        && std::env::var_os("XAQU_NVIDIA_FRESH_VOLUME").is_none()
         && image.is_file()
         && std::fs::read_to_string(&kept).ok().as_deref() == Some(stamp.as_str())
     {
@@ -1046,9 +1046,9 @@ fn initramfs_files(dir: &Path) -> Result<Vec<ports::File>> {
         mode: 0o755,
         content: ports::Content::Bytes(busybox),
     });
-    // A bring-up aid: `FERRIX_RUN_NVIDIA_PRELOAD` names a shared library
+    // A bring-up aid: `XAQU_RUN_NVIDIA_PRELOAD` names a shared library
     // the script preloads into vulkaninfo, such as a tracer of its calls.
-    if let Some(preload) = std::env::var_os("FERRIX_RUN_NVIDIA_PRELOAD") {
+    if let Some(preload) = std::env::var_os("XAQU_RUN_NVIDIA_PRELOAD") {
         let bytes = std::fs::read(&preload).map_err(|error| {
             Error::new(format!(
                 "reading {}: {error}",
@@ -1061,9 +1061,9 @@ fn initramfs_files(dir: &Path) -> Result<Vec<ports::File>> {
             content: ports::Content::Bytes(bytes),
         });
     }
-    // Another: `FERRIX_RUN_NVIDIA_EXTRA` names a directory whose files go to
+    // Another: `XAQU_RUN_NVIDIA_EXTRA` names a directory whose files go to
     // `/bin/extra`; the script runs its `extra.sh` after vk-offscreen.
-    if let Some(extra) = std::env::var_os("FERRIX_RUN_NVIDIA_EXTRA") {
+    if let Some(extra) = std::env::var_os("XAQU_RUN_NVIDIA_EXTRA") {
         let entries = std::fs::read_dir(&extra).map_err(|error| {
             Error::new(format!("reading {}: {error}", Path::new(&extra).display()))
         })?;
@@ -1126,9 +1126,9 @@ pub(crate) fn run_nvidia(args: &Args) -> Result<()> {
         &loader,
         &kernel,
         &archive,
-        Some("ferrix.checks=skip\n"),
+        Some("xaqu.checks=skip\n"),
     )?;
-    place(&image, &dir, "ferrix.img")?;
+    place(&image, &dir, "xaqu.img")?;
     place(&test_disk::ensure()?, &dir, "pattern.img")?;
     place(&btrfs_disk::ensure()?, &dir, "btrfs.img")?;
     place(&btrfs_disk::ensure_blank(arch)?, &dir, "btrfs-write.img")?;
@@ -1165,7 +1165,7 @@ pub(crate) fn run_nvidia(args: &Args) -> Result<()> {
         println!("  recorded: {line}");
     }
     match lines.iter().find(|line| {
-        line.contains("FERRIX-PANIC")
+        line.contains("XAQU-PANIC")
             || line.contains("nvrm: stopped")
             || line.contains("core refused")
     }) {
@@ -1219,17 +1219,17 @@ pub(crate) fn data_links() -> Vec<ports::File> {
 
 /// The page `run-compositor --nvidia`'s Chrome opens: which GPU renders
 /// WebGL, said large, over a cube spun on it, with its frame rate.
-pub(crate) const WEBGL_PAGE: &str = "file:///etc/ferrix/nvidia-webgl.html";
+pub(crate) const WEBGL_PAGE: &str = "file:///etc/xaqu/nvidia-webgl.html";
 
 /// The host's keyboards and mice the desktop on the 3060's monitor is
-/// driven with: `FERRIX_NVIDIA_INPUT`, a colon-separated list of evdev
+/// driven with: `XAQU_NVIDIA_INPUT`, a colon-separated list of evdev
 /// devices (`/dev/input/by-id/...-event-kbd`, `...-event-mouse`), each
 /// grabbed for the guest alone while it runs. Devices kept for the 3060's
 /// monitor, not the host's own: a grabbed device types into the guest only.
 /// The guest gets a virtio keyboard and mouse, which the host's events
 /// reach; none without the variable.
 fn input_devices() -> String {
-    let Some(list) = std::env::var_os("FERRIX_NVIDIA_INPUT") else {
+    let Some(list) = std::env::var_os("XAQU_NVIDIA_INPUT") else {
         return String::new();
     };
     let mut xml = String::from(
@@ -1278,7 +1278,7 @@ fn desktop_machine(args: &Args, everything: bool) -> Machine {
         vcpus: 8,
         layout: if args.nazuna_layout {
             Layout::Nazuna {
-                rom: std::env::var_os("FERRIX_NAZUNA_ROM").is_some(),
+                rom: std::env::var_os("XAQU_NAZUNA_ROM").is_some(),
             }
         } else {
             Layout::Card
@@ -1308,8 +1308,8 @@ fn desktop_machine(args: &Args, everything: bool) -> Machine {
 ///
 /// The guard's, a volume or disk that cannot be made, or libvirt refusing.
 pub(crate) fn run_desktop(image: &Path, args: &Args) -> Result<()> {
-    // `FERRIX_N3C_BUILD_ONLY`: the image is built, and the card is not booted.
-    if std::env::var_os("FERRIX_N3C_BUILD_ONLY").is_some() {
+    // `XAQU_N3C_BUILD_ONLY`: the image is built, and the card is not booted.
+    if std::env::var_os("XAQU_N3C_BUILD_ONLY").is_some() {
         println!("  n3c: built {}; not booting", image.display());
         return Ok(());
     }
@@ -1318,7 +1318,7 @@ pub(crate) fn run_desktop(image: &Path, args: &Args) -> Result<()> {
     std::fs::create_dir_all(&dir)
         .map_err(|error| Error::new(format!("making {}: {error}", dir.display())))?;
     let programs = nvrm::build()?;
-    place(image, &dir, "ferrix.img")?;
+    place(image, &dir, "xaqu.img")?;
     place(&test_disk::ensure()?, &dir, "pattern.img")?;
     place(&btrfs_disk::ensure()?, &dir, "btrfs.img")?;
     place(
@@ -1401,10 +1401,10 @@ const CARDVM_STOP: &str = "cardvm-stop";
 /// `ADDRESS=`, `LOG=`, `PID=` (`card.sh` sources it).
 const CARDVM_STATE: &str = "cardvm.env";
 
-/// `name` in `~/.local/share/ferrix/nvidia`, beside the card lock.
+/// `name` in `~/.local/share/xaqu/nvidia`, beside the card lock.
 fn cardvm_file(name: &str) -> PathBuf {
     PathBuf::from(home())
-        .join(".local/share/ferrix/nvidia")
+        .join(".local/share/xaqu/nvidia")
         .join(name)
 }
 
@@ -1559,7 +1559,7 @@ mod tests {
     #[test]
     fn the_desktop_is_pinned_as_the_linux_guest_is() {
         let linux = include_str!("../../game/linux-3060.xml");
-        let ferrix = domain_xml(
+        let xaqu = domain_xml(
             Path::new("/vm"),
             &Machine {
                 memory: MEMORY,
@@ -1570,10 +1570,10 @@ mod tests {
             },
         );
         for (open, close) in [("<cputune>", "</cputune>"), ("<cpu ", "</cpu>")] {
-            assert_eq!(between(&ferrix, open, close), between(linux, open, close));
+            assert_eq!(between(&xaqu, open, close), between(linux, open, close));
         }
         assert!(linux.contains("<vcpu placement='static'>8</vcpu>"));
-        assert!(ferrix.contains("<vcpu placement='static'>8</vcpu>"));
+        assert!(xaqu.contains("<vcpu placement='static'>8</vcpu>"));
     }
 
     /// The gate's two processors are one core's two threads.
@@ -1669,7 +1669,7 @@ nvrm: quiesce: done in 1840 ms
     #[test]
     fn a_merge_keeps_the_nvidia_volumes_own_files() {
         let base =
-            std::env::temp_dir().join(format!("ferrix-merge-keeping-{}", std::process::id()));
+            std::env::temp_dir().join(format!("xaqu-merge-keeping-{}", std::process::id()));
         let (tree, from) = (base.join("tree"), base.join("from"));
         let lib = |root: &Path| root.join("usr/lib/x86_64-linux-gnu");
         for root in [&tree, &from] {

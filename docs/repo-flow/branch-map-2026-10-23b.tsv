@@ -33,8 +33,8 @@ origin	feature/ab-boot	archive (idea line in backlog br-006)		refs/archive/2026-
 origin	feature/ab-sys-wip-backup	archive (idea line in backlog br-006)		refs/archive/2026-10-23b/feature/ab-sys-wip-backup	bce5593444014b21b5f98bf6d907739ba0e7449a	2026-10-11	3
 origin	feature/ahci	archive (idea line in backlog br-006)		refs/archive/2026-10-23b/feature/ahci	a013115f63716904c162139962d4483b6705b4e0	2026-10-16	2
 origin	feature/ahci-n150-kernel	archive (idea line in backlog br-006)		refs/archive/2026-10-23b/feature/ahci-n150-kernel	a013115f63716904c162139962d4483b6705b4e0	2026-10-16	2
-origin	feature/backup/2026-09-11/lilith-ferrix	keep			b369e808087efdfcb80d62822e0eb4e0a1d6d4c2	2026-10-18	1
-origin	feature/backup/2026-09-11/lilith-ferrix-work	keep			d627e3de37c6742f52232712e20e96641e82721d	2026-10-18	1
+origin	feature/backup/2026-09-11/lilith-xaqu	keep			b369e808087efdfcb80d62822e0eb4e0a1d6d4c2	2026-10-18	1
+origin	feature/backup/2026-09-11/lilith-xaqu-work	keep			d627e3de37c6742f52232712e20e96641e82721d	2026-10-18	1
 origin	feature/baremetal-hang	archive (never to land / snapshot)		refs/archive/2026-10-23b/feature/baremetal-hang	db6f3070680e674ad18c9242d5fa17d4ad74495b	2026-10-11	2
 origin	feature/blockring-n150-ctl	archive (never to land / snapshot)		refs/archive/2026-10-23b/feature/blockring-n150-ctl	4cbeed0ebbd31de051e9a862b3730907c7430de3	2026-10-17	1
 origin	feature/bm-h4-reserve	archive (idea line in backlog br-006)		refs/archive/2026-10-23b/feature/bm-h4-reserve	0b7693a4850230a8ccdc3b9acd40a3566bb0ae98	2026-10-13	1
@@ -301,7 +301,7 @@ local	chore/xelp-m2-gate/trace	keep			2b681bd58216925ca1aa9ddd25bfc39da2ef8a8f	2
 local	chore/yserver-rebase-pin	archive (idea line in backlog br-006)		refs/archive/2026-10-23b/chore/yserver-rebase-pin	ab9f7278ad9aa6cf576b40b63b09bb7de56adf5d	2026-10-13	1
 local	claude-desktop-assess	in-use			e27e974940c5c5c1d89284bcea7829bfab15581a	2026-10-14	0
 local	cmount-flake	in-use			cc1c1288ac7cb5724ef48203d4568418c07bf76e	2026-10-15	1
-local	codex/ferrix-marketing-seo	in-use			d60c54b5e7cc1bee3c740934092a0e0647324d17	2026-09-27	0
+local	codex/xaqu-marketing-seo	in-use			d60c54b5e7cc1bee3c740934092a0e0647324d17	2026-09-27	0
 local	codex/marketing-brand-kit	delete (landed on develop)		refs/archive/2026-10-23b/local/codex/marketing-brand-kit	c61c2e8f1b9a28a9c02a49f90eb9574f0ab6451c	2026-09-27	0
 local	cpuinfo-model	in-use			6f1cecf56fa1135b6fc5fc21830182d8e96f4d97	2026-10-23	0
 local	cpuinfo-pin	in-use			94a53b55346cef1d22be52d60562e9705a64b75b	2026-10-23	0

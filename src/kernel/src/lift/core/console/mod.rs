@@ -9,7 +9,7 @@ use core::sync::atomic::AtomicBool;
 use core::sync::atomic::AtomicU8;
 use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering;
-use ferrix_sync::IrqSpinLock;
+use xaqu_sync::IrqSpinLock;
 pub fn write(args: core::fmt::Arguments<'_>) {
     use core::fmt::Write as _;
     // One line, one write, so that threads' lines do not cross.

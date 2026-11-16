@@ -1,4 +1,4 @@
-//! Stage 3's checks of `ferrix.msrlog`'s parts that run on every boot: the
+//! Stage 3's checks of `xaqu.msrlog`'s parts that run on every boot: the
 //! checked MSR read and its `#GP` fixup (`L.x86_64.188`), the decoder on
 //! fixed values (`L.x86_64.189`) and the period chooser (`L.x86_64.187`).
 
@@ -159,7 +159,7 @@ fn decoded() -> Result<(), &'static str> {
     Ok(())
 }
 
-/// `ferrix.msrlog.period`: none is 5; 0 to 3600 of one to four digits are
+/// `xaqu.msrlog.period`: none is 5; 0 to 3600 of one to four digits are
 /// their number; anything else is not understood.
 ///
 /// Verifies: `L.x86_64.187`
@@ -173,12 +173,12 @@ fn periods_chosen() -> Result<(), &'static str> {
     ];
     for (value, seconds) in understood {
         if choose_period(value) != Some(seconds) {
-            return Err("a ferrix.msrlog.period did not choose its seconds");
+            return Err("a xaqu.msrlog.period did not choose its seconds");
         }
     }
     for value in ["", "3601", "10000", "-1", "+1", "0x5", " 5", "5s"] {
         if choose_period(Some(value)).is_some() {
-            return Err("a ferrix.msrlog.period outside 0 to 3600 was not refused");
+            return Err("a xaqu.msrlog.period outside 0 to 3600 was not refused");
         }
     }
     Ok(())

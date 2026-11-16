@@ -1,7 +1,7 @@
 //! `/dev/snd/controlC<N>` and `/dev/snd/pcmC<N>D0p`: the ALSA subset
 //! `docs/AUDIO.md` §3.4 answers.
 //!
-//! The stream's rules are `ferrix_sndctl::pcm`'s. What is here is reading a
+//! The stream's rules are `xaqu_sndctl::pcm`'s. What is here is reading a
 //! request's argument from the program, calling the stream with its lock
 //! held, and writing the answer back; copying a program's samples into the
 //! buffer with no lock held; and waiting, for room to write and for a drain,
@@ -13,15 +13,15 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::Ordering;
 
-use ferrix_linux_abi::layout::{Field, Layout};
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::layout::{Field, Layout};
+use xaqu_linux_abi::sound::{
     CLASS_GENERIC, CTL_VERSION, Ctl, CtlCardInfo, CtlElemList, HwParams, PCM_VERSION, Pcm, PcmInfo,
     STATE_DRAINING, STREAM_CAPTURE, STREAM_PLAYBACK, SUBCLASS_GENERIC_MIX, Status, SwParams,
     SyncPtr, Xferi,
 };
-use ferrix_sndctl::pcm::{Drain, Stream};
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
+use xaqu_sndctl::pcm::{Drain, Stream};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
 
 use crate::syscall::process::{self, Process};
 use crate::syscall::uaccess;
@@ -32,9 +32,9 @@ use super::{Card, SOUND_MAJOR, control_minor, playback_minor, width};
 /// The name the card's driver goes by in `CARD_INFO`: one alsa-lib has no
 /// `cards/<driver>.conf` for, so `default` is `plug` over `hw`
 /// (`docs/AUDIO.md` §2.2).
-const DRIVER: &[u8] = b"Ferrix";
+const DRIVER: &[u8] = b"Xaqu";
 /// The card's id, which alsa-lib's name hints name it by: a word.
-const ID: &[u8] = b"Ferrix";
+const ID: &[u8] = b"Xaqu";
 /// Its short name.
 const NAME: &[u8] = b"VirtIO SoundCard";
 
@@ -117,10 +117,10 @@ fn write_long(process: &Process, arg: u64, value: i64) -> Result<(), Errno> {
     let mut bytes = [0_u8; 8];
     let len = width().bytes();
     let fits = match width() {
-        ferrix_linux_abi::socket::Width::Bits32 => {
+        xaqu_linux_abi::socket::Width::Bits32 => {
             i32::try_from(value).ok().map(|v| v.put(&mut bytes, 0))
         }
-        ferrix_linux_abi::socket::Width::Bits64 => Some(value.put(&mut bytes, 0)),
+        xaqu_linux_abi::socket::Width::Bits64 => Some(value.put(&mut bytes, 0)),
     };
     if fits.flatten().is_none() {
         return Err(Errno::EOVERFLOW);
@@ -225,7 +225,7 @@ impl Inode for PcmFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.card.changed));
         true
     }
@@ -601,7 +601,7 @@ impl Inode for ControlFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.card.changed));
         true
     }

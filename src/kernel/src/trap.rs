@@ -10,8 +10,8 @@
 use core::ptr;
 use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::Once;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::Once;
 
 use crate::arch;
 use crate::console::println;
@@ -352,7 +352,7 @@ pub type SyscallFilter = fn(&SyscallArgs) -> Verdict;
 static SYSCALL_FILTER: Once<SyscallFilter> = Once::new();
 
 /// Judge every system call with `filter` from now on, a filter whose quiet
-/// predicate is `main.rs`'s `ferrix_filter_quiet`, registered in one call so
+/// predicate is `main.rs`'s `xaqu_filter_quiet`, registered in one call so
 /// that the two cannot be registered apart: [`QUIET_REGISTERED`] is raised only by the call that installed
 /// `filter`, after it did. A filter already registered by anyone else stands,
 /// and leaves the flag down, so its calls are never quiet. `main.rs` makes it
@@ -412,7 +412,7 @@ pub fn ask(slot: &Once<SyscallFilter>, args: &SyscallArgs) -> Option<Outcome> {
 // symbols, and the composition root, `main.rs`, which names every ring
 // already, defines each as a forward to the function above it
 // (`crate::hooks`, *Link-time hooks*; check-item-boundary holds both ends).
-// The fast path's is there only in a build with it (`ferrix_fast_ipc`, BF6), and
+// The fast path's is there only in a build with it (`xaqu_fast_ipc`, BF6), and
 // the entry calls it for every `channel_write_read`. Whether the filter's is
 // called is decided at run time by [`QUIET_REGISTERED`], for a filter registered
 // with its predicate.
@@ -422,10 +422,10 @@ pub fn ask(slot: &Once<SyscallFilter>, args: &SyscallArgs) -> Option<Outcome> {
 // alias; Rust checks neither side against the other otherwise.
 unsafe extern "Rust" {
     /// `syscall::native::fast_write_read`, defined in `main.rs`.
-    #[cfg(ferrix_fast_ipc)]
-    safe fn ferrix_fast_write_read(a: &[u64; 6]) -> Fast;
+    #[cfg(xaqu_fast_ipc)]
+    safe fn xaqu_fast_write_read(a: &[u64; 6]) -> Fast;
     /// `syscall::seccomp::quiet`, defined in `main.rs`.
-    safe fn ferrix_filter_quiet() -> bool;
+    safe fn xaqu_filter_quiet() -> bool;
 }
 
 /// The personality's quiet predicate, as `main.rs` defines it: whether the
@@ -434,9 +434,9 @@ unsafe extern "Rust" {
 pub type FilterQuiet = fn() -> bool;
 
 // The declarations are the aliases' type, as `main.rs`'s definitions are.
-#[cfg(ferrix_fast_ipc)]
-const _: FastWriteRead = ferrix_fast_write_read;
-const _: FilterQuiet = ferrix_filter_quiet;
+#[cfg(xaqu_fast_ipc)]
+const _: FastWriteRead = xaqu_fast_write_read;
+const _: FilterQuiet = xaqu_filter_quiet;
 
 /// Whether the personality said, beside its filter, when that filter lets
 /// calls through unlooked at: what the fast path tests first (T2,
@@ -459,14 +459,14 @@ pub fn filter_quiet() -> bool {
         QUIET_REGISTERED.load(Ordering::Acquire),
     ) {
         (None, _) => true,
-        (Some(_), true) => ferrix_filter_quiet(),
+        (Some(_), true) => xaqu_filter_quiet(),
         (Some(_), false) => false,
     }
 }
 
 /// What step 4's fast path made of a `channel_write_read`
 /// (`docs/OPAQUE-KERNEL.md` §9.7, part 2).
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 #[derive(Clone, Copy, Debug)]
 pub enum Fast {
     /// A test failed, and nothing changed: the entry goes on as for any
@@ -485,16 +485,16 @@ pub enum Fast {
 /// The fast path, given the call's six argument registers. Entered from
 /// x86-64's `SYSCALL` entry alone, with interrupts masked, before the
 /// filter; returns with them masked.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub type FastWriteRead = fn(&[u64; 6]) -> Fast;
 
-/// The fast path itself, by a direct call: `main.rs`'s `ferrix_fast_write_read`.
+/// The fast path itself, by a direct call: `main.rs`'s `xaqu_fast_write_read`.
 /// Nothing the fast path reads is set up after the first ring-3 call, so nothing
 /// waits on a flag as `FAST_PATH_ON` once did: stage 3's first program already
 /// finds its channels, its tasks and the park record whole (ledger 1001 (2)).
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub(crate) fn fast_write_read_now(a: &[u64; 6]) -> Fast {
-    ferrix_fast_write_read(a)
+    xaqu_fast_write_read(a)
 }
 
 /// Answer one system call: what every architecture's system call path calls,
@@ -543,7 +543,7 @@ fn copy_poisoned() {
     if let (Some(at), Some(path)) = (at, return_path()) {
         // No instruction consumed it, the call did: `pc` 0, which only a
         // fatal signal's crash line reads.
-        let _ = (path.fault_signal)(ferrix_linux_abi::types::SIGBUS, BUS_MCEERR_AR, at, 0);
+        let _ = (path.fault_signal)(xaqu_linux_abi::types::SIGBUS, BUS_MCEERR_AR, at, 0);
     }
 }
 
@@ -689,10 +689,10 @@ fn user_fault(frame: &mut arch::TrapFrame, trap: &Trap) {
         }
         return;
     }
-    #[cfg(ferrix_checks = "on")]
+    #[cfg(xaqu_checks = "on")]
     if let Some(poison) = crate::object::exception::take_poison() {
         let raised = (
-            ferrix_linux_abi::types::SIGBUS,
+            xaqu_linux_abi::types::SIGBUS,
             0,
             crate::object::exception::POISON_ADDRESS,
         );
@@ -744,15 +744,15 @@ fn restricted_fault_kind(
     trap: &Trap,
     signal: u32,
     code: i32,
-) -> ferrix_native_abi::restricted::FaultKind {
-    use ferrix_native_abi::restricted::FaultKind;
+) -> xaqu_native_abi::restricted::FaultKind {
+    use xaqu_native_abi::restricted::FaultKind;
     /// `BUS_MCEERR_AR`.
     const BUS_MCEERR_AR: i32 = 4;
     match trap {
-        _ if signal == ferrix_linux_abi::types::SIGBUS && code == BUS_MCEERR_AR => {
+        _ if signal == xaqu_linux_abi::types::SIGBUS && code == BUS_MCEERR_AR => {
             FaultKind::Poison
         }
-        _ if signal == ferrix_linux_abi::types::SIGBUS => FaultKind::PastEnd,
+        _ if signal == xaqu_linux_abi::types::SIGBUS => FaultKind::PastEnd,
         Trap::PageFault(fault) if fault.present => FaultKind::Protection,
         Trap::PageFault(_) => FaultKind::NoMapping,
         _ => FaultKind::NotMemory,
@@ -763,7 +763,7 @@ fn restricted_fault_kind(
 fn exit_on_fault(frame: &mut arch::TrapFrame, trap: &Trap, signal: u32, code: i32, address: u64) {
     let kind = restricted_fault_kind(trap, signal, code);
     let address = match kind {
-        ferrix_native_abi::restricted::FaultKind::NotMemory => 0,
+        xaqu_native_abi::restricted::FaultKind::NotMemory => 0,
         _ => address,
     };
     arch::restricted_fault_exit(frame, kind, address);
@@ -825,7 +825,7 @@ fn user_fault_ending(
     if !end {
         let fault = crate::object::exception::Fault {
             trap: *trap,
-            bus: signal == ferrix_linux_abi::types::SIGBUS,
+            bus: signal == xaqu_linux_abi::types::SIGBUS,
             address,
             code: arch::exception_code(frame),
         };
@@ -912,7 +912,7 @@ fn resolve_user_fault(fault: &PageFault) -> Result<(), Option<crate::user::space
 /// Where a fault in normal mode, on the restricted half and in the region's
 /// copy window, lands.
 fn copy_landing(frame: &arch::TrapFrame, fault: &PageFault) -> Option<u64> {
-    if fault.address >= ferrix_native_abi::restricted::SHARED_BASE {
+    if fault.address >= xaqu_native_abi::restricted::SHARED_BASE {
         return None;
     }
     crate::sched::with_current(|task| {
@@ -933,7 +933,7 @@ fn restricted_fault(
     resolved: Result<(), Option<crate::user::space::SpaceError>>,
 ) -> bool {
     use crate::user::space::SpaceError;
-    use ferrix_native_abi::restricted::FaultKind;
+    use xaqu_native_abi::restricted::FaultKind;
     if !fault.user || !frame.came_from_user() {
         return false;
     }
@@ -1020,7 +1020,7 @@ fn handle_page_fault(frame: &mut arch::TrapFrame, fault: PageFault) {
             )) => user_fault_as(
                 frame,
                 &trap,
-                (ferrix_linux_abi::types::SIGBUS, BUS_ADRERR, address),
+                (xaqu_linux_abi::types::SIGBUS, BUS_ADRERR, address),
             ),
             _ => user_fault(frame, &trap),
         }
@@ -1080,7 +1080,7 @@ pub(crate) fn stack_overflow(frame: &arch::TrapFrame) -> ! {
 )]
 pub(crate) const STACK_STOP_SIZE: usize = 4096;
 
-/// One processor's claim on [`STACK_STOP_STACK`]; see `ferrix_stack_stop`.
+/// One processor's claim on [`STACK_STOP_STACK`]; see `xaqu_stack_stop`.
 #[allow(
     dead_code,
     reason = "both Arm architectures' entries reach it, x86-64's `IST` does not"
@@ -1117,9 +1117,9 @@ pub(crate) static STACK_STOP_STACK: StackStopStack =
     reason = "both Arm architectures' entries reach it, x86-64's `IST` does not"
 )]
 pub(crate) extern "C" fn stack_stop_report() -> ! {
-    let _ = crate::panic::begin_report(ferrix_bootinfo::pstore::Stop::Panic);
+    let _ = crate::panic::begin_report(xaqu_bootinfo::pstore::Stop::Panic);
     crate::console::println_unlogged!(
-        "FERRIX-PANIC kernel stack overflow with no emergency stack to report it on"
+        "XAQU-PANIC kernel stack overflow with no emergency stack to report it on"
     );
     loop {
         core::hint::spin_loop();
@@ -1141,13 +1141,13 @@ fn report(
     // A machine check's stop is a stop word of its own for the next boot's
     // loader (`L.console.58`); every other fatal trap is a panic's.
     let stop = if ptr::eq(entry, &raw const crate::panic::catalog::MACHINE_CHECK) {
-        ferrix_bootinfo::pstore::Stop::MachineCheck
+        xaqu_bootinfo::pstore::Stop::MachineCheck
     } else {
-        ferrix_bootinfo::pstore::Stop::Panic
+        xaqu_bootinfo::pstore::Stop::Panic
     };
     let first = crate::panic::begin_report(stop);
     println!();
-    crate::console::println_unlogged!("FERRIX-PANIC {headline}");
+    crate::console::println_unlogged!("XAQU-PANIC {headline}");
     arch::report_trap(frame);
     if !first {
         crate::panic::abridged()

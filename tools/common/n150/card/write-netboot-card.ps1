@@ -1,14 +1,14 @@
 # MACHINE-SPECIFIC: written for the N150 bring-up from the customer's Windows
 # PC (2026-10-15, docs/N150.md §13.1). It hardcodes the Windows PC's image path
-# (G:\GameLab\iso\ferrix), the card reader's USB serial (000000002964) and the
+# (G:\GameLab\iso\xaqu), the card reader's USB serial (000000002964) and the
 # card's size (31914983424 bytes). Adjust those before running it anywhere
 # else.
-# Writes the Ferrix netboot stick image onto the 32 GB microSD card in the
+# Writes the Xaqu netboot stick image onto the 32 GB microSD card in the
 # USB reader, then reads it back. Run from an elevated PowerShell with
 # -Erase ERASE as the confirmation.
 param([string]$Erase = '')
 $ErrorActionPreference = 'Stop'
-$img = 'G:\GameLab\iso\ferrix\ferrix-netboot-stick.img'
+$img = 'G:\GameLab\iso\xaqu\xaqu-netboot-stick.img'
 $want = '1926c3e23561756c8a85ca18e91f9984103cc2d0f8ddc4855cc86f859f9e7355'
 
 $d = Get-Disk | Where-Object { $_.BusType -eq 'USB' -and $_.SerialNumber -eq '000000002964' -and $_.Size -eq 31914983424 }

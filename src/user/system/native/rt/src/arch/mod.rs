@@ -72,7 +72,7 @@ pub use x86_64::numbers;
 #[path = "../restricted.rs"]
 pub mod restricted;
 #[cfg(target_arch = "arm")]
-use ferrix_native_abi as _;
+use xaqu_native_abi as _;
 
 /// What this crate has by architecture beyond the trap.
 pub(crate) mod modes {

@@ -2,14 +2,14 @@
 //! half the Settings app and `settingsctl` share.
 //!
 //! ```no_run
-//! use ferrix_settings_client::{Client, Request, Step};
+//! use xaqu_settings_client::{Client, Request, Step};
 //!
 //! let request = Request::SetHostname { name: "box".into() };
 //! let mut talk = Client::new().begin(&request, false).unwrap();
 //! loop {
 //!     match talk.step() {
 //!         Step::Prompt { visible, text } => {
-//!             # let secret = ferrix_settings_client::Secret::new();
+//!             # let secret = xaqu_settings_client::Secret::new();
 //!             // ask the person, then:
 //!             talk.answer(secret).unwrap();
 //!         }
@@ -35,13 +35,13 @@ use std::io;
 use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 use std::path::{Path, PathBuf};
 
-pub use ferrix_auth_client::Person;
-pub use ferrix_settings_proto::{
+pub use xaqu_auth_client::Person;
+pub use xaqu_settings_proto::{
     Area, Invalid, MAX_RECORD, Refusal, RefusalKind, Request, SOCKET, SWITCHABLE_UNITS, Secret,
     ToClient, ToServer, valid_hostname,
 };
 
-use ferrix_auth_client::{send_packet, seqpacket_socket, socklen, unix_address};
+use xaqu_auth_client::{send_packet, seqpacket_socket, socklen, unix_address};
 
 /// What a finished request came to.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -389,7 +389,7 @@ mod missing_tests {
         let present = Manifest::parse(
             "format=1\nprofile=present\nruntime_settings=live\nsettings_writer=present\n",
         );
-        let socket = Path::new("/run/ferrix/settings");
+        let socket = Path::new("/run/xaqu/settings");
         let said = missing_writer(&gone, &absent, socket);
         assert_eq!(said.kind, RefusalKind::Unavailable);
         assert_eq!(said.text, "Fixed by this build (profile max)");

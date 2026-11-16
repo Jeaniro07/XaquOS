@@ -1,9 +1,9 @@
 [package]
-name = "ferrix-nvos"
+name = "xaqu-nvos"
 description = "The OS layer NVIDIA's resource manager runs on inside nvrm: memory, locks, waits, threads, timers, time and the device (docs/NVIDIA.md §4.2)"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -11,7 +11,7 @@ publish = false
 # A workspace of its own, as every program under src/user/system/linux/ is
 # (docs/LAYOUT.md): it builds for the Linux ABI, not for the kernel's
 # targets. `os/Makefile` builds it and links it, with NVIDIA's kept C and
-# Ferrix's C glue, into nvrm and nvrm-link-test.
+# Xaqu's C glue, into nvrm and nvrm-link-test.
 [workspace]
 
 [lib]
@@ -28,14 +28,14 @@ doctest = false
 # The native calls for the device: the configuration window, apertures, pins
 # and interrupts. Written against a trait, which `sys::Kernel` implements
 # with the instruction.
-ferrix-native = { path = "../../../../../../../lib/proto/native" }
-ferrix-native-abi = { path = "../../../../../../../lib/proto/native-abi" }
+xaqu-native = { path = "../../../../../../../lib/proto/native" }
+xaqu-native-abi = { path = "../../../../../../../lib/proto/native-abi" }
 # The chardev core's control protocol: HELLO and REQUEST (N1e).
-ferrix-chardevctl = { path = "../../../../../../../lib/proto/chardevctl" }
+xaqu-chardevctl = { path = "../../../../../../../lib/proto/chardevctl" }
 # The display core's control protocol: HELLO, ATTACH, FLUSH (N6).
-ferrix-displayctl = { path = "../../../../../../../lib/proto/displayctl" }
+xaqu-displayctl = { path = "../../../../../../../lib/proto/displayctl" }
 # DRM's connector types, which HELLO names (displayctl v10).
-ferrix-linux-abi = { path = "../../../../../../../lib/proto/linux-abi" }
+xaqu-linux-abi = { path = "../../../../../../../lib/proto/linux-abi" }
 
 # ---------------------------------------------------------------------------
 # Lints

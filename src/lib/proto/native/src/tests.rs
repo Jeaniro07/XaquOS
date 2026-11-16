@@ -15,14 +15,14 @@ use std::collections::{BTreeSet, VecDeque};
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Requested, Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types;
-use ferrix_native_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Requested, Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types;
+use xaqu_native_abi::types::{
     DEVICE_INFO_BYTES, DEVICE_VIRTIO_PCI, DeviceBlock, IoMappingSpec, PACKET_SIGNAL, PACKET_USER,
     PIN_READ_ONLY, PortPacket,
 };
@@ -1259,7 +1259,7 @@ fn every_call_in_the_native_table_has_a_wrapper() {
     let wrapped: BTreeSet<usize> = sys.numbers().into_iter().collect();
     let table: BTreeSet<usize> = nr::ALL.iter().map(|&call| nr::number(call)).collect();
     // These three answer in more registers than a `Syscall` sees, so they are
-    // `ferrix_rt::restricted`'s, on the architecture's trap.
+    // `xaqu_rt::restricted`'s, on the architecture's trap.
     let elsewhere = [
         nr::RESTRICTED_ENTER,
         nr::RESTRICTED_RESUME,

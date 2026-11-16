@@ -29,23 +29,23 @@
 
 use core::fmt::Write as _;
 
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::types::{PROCESS_KILLED, PROCESS_RUNNING};
-use ferrix_process_builder::build;
-use ferrix_rt::linux::{self, numbers};
-use ferrix_rt::native::channel::{self, Channel};
-use ferrix_rt::native::job::{Job, for_cgroup};
-use ferrix_rt::native::pending::Process;
-use ferrix_rt::native::port;
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::native::{Deadline, Error, Object, OwnedHandle, Signals};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::types::{PROCESS_KILLED, PROCESS_RUNNING};
+use xaqu_process_builder::build;
+use xaqu_rt::linux::{self, numbers};
+use xaqu_rt::native::channel::{self, Channel};
+use xaqu_rt::native::job::{Job, for_cgroup};
+use xaqu_rt::native::pending::Process;
+use xaqu_rt::native::port;
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::native::{Deadline, Error, Object, OwnedHandle, Signals};
+use xaqu_rt::{Bootstrap, Kernel};
 
 /// The most bytes `channel_write_read` carries: three of this processor's
 /// words.
-const MOST: usize = ferrix_native_abi::nr::CHANNEL_WRITE_READ_BYTES;
+const MOST: usize = xaqu_native_abi::nr::CHANNEL_WRITE_READ_BYTES;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Where this program is, to start a copy of it.
 const SELF: &[u8] = b"/sbin/ipc-equiv\0";
@@ -191,7 +191,7 @@ fn serve(channel: &Channel<Kernel>) -> i32 {
 
 /// End this process with `status`, now.
 fn linux_exit(status: i32) -> ! {
-    ferrix_rt::exit(status)
+    xaqu_rt::exit(status)
 }
 
 /// Sleep about `nanos`, on a port nothing posts to.
@@ -226,7 +226,7 @@ impl Place {
             job.unwrap_or(&self.job),
             &self.image,
             "ipc-equiv-server",
-            ferrix_rt::ELF_MACHINE,
+            xaqu_rt::ELF_MACHINE,
         )
         .map_err(|_| 9)?;
         let process = built.run(theirs.into_owned()).map_err(|_| 9)?;
@@ -547,7 +547,7 @@ fn prepare() -> Result<Place, i32> {
     )
     .map_err(|_| 7)?;
     let _ = linux::close(dir);
-    let image = ferrix_process_builder::image(image).map_err(|_| 5)?;
+    let image = xaqu_process_builder::image(image).map_err(|_| 5)?;
     Ok(Place { image, job })
 }
 

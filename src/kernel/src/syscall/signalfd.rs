@@ -8,8 +8,8 @@
 //! nothing, `EINVAL` for one that is not a signalfd -- and the flags, which
 //! only a new descriptor could take, are then ignored, as on Linux.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{SFD_CLOEXEC, SFD_NONBLOCK};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{SFD_CLOEXEC, SFD_NONBLOCK};
 
 use crate::fs::signalfd;
 use crate::syscall::fd;

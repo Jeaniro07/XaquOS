@@ -38,11 +38,11 @@
 
 use alloc::collections::BTreeSet;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::coherence::Unpublished;
-use ferrix_paging::stage2::ArmStage2;
-use ferrix_paging::{MapError, MapFlags};
-use ferrix_sync::IrqSpinLock;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::coherence::Unpublished;
+use xaqu_paging::stage2::ArmStage2;
+use xaqu_paging::{MapError, MapFlags};
+use xaqu_sync::IrqSpinLock;
 
 use super::gate::{self, Gate};
 use super::{Cause, Fault};

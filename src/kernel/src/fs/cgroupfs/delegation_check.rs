@@ -16,10 +16,10 @@
 
 use alloc::sync::Arc;
 
-use ferrix_cgroupfs::files::Kind;
-use ferrix_elf::Class;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::{Access, NewNode, OpenFlags, SetAttributes};
+use xaqu_cgroupfs::files::Kind;
+use xaqu_elf::Class;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::{Access, NewNode, OpenFlags, SetAttributes};
 
 use super::{Checked, Directory, Harness, Writer, write_to};
 use crate::arch;
@@ -139,7 +139,7 @@ fn check_clone_into_cgroup(harness: &mut Harness) -> Checked<bool> {
         &file,
         &[b"/into-cgroup"],
         &[],
-        [0x5c; ferrix_ustack::RANDOM_BYTES],
+        [0x5c; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the CLONE_INTO_CGROUP program could not be started")?;
     match status {
@@ -276,7 +276,7 @@ fn check_a_removed_cgroup(harness: &mut Harness) -> Checked<()> {
     let process = process::new_for_check()
         .map_err(|_| "could not make a process for the removed-cgroup check")?;
     let moved = move_as(&Access::root(), &process, &directory);
-    let made = ferrix_vfs::Inode::create(&*directory, b"x", NewNode::Directory, 0o755).err();
+    let made = xaqu_vfs::Inode::create(&*directory, b"x", NewNode::Directory, 0o755).err();
     let stayed = Arc::ptr_eq(&process.job(), crate::object::job::root());
     process::kill(&process, KILLED_STATUS);
     harness.refused(

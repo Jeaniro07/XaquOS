@@ -7,7 +7,7 @@
 //! takes through `zwp_linux_dmabuf_v1`, `gbm_bo_get_stride` and
 //! `gbm_bo_get_modifier` for what to tell it, and `gbm_bo_write` for bytes
 //! drawn on the CPU. This is that shape in Rust, over `compositor-drm`'s
-//! render node, for the clients on Ferrix that exist today; Mesa's own GBM
+//! render node, for the clients on Xaqu that exist today; Mesa's own GBM
 //! comes with Mesa (§3a).
 //!
 //! # What a buffer is here

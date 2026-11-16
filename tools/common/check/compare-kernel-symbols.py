@@ -11,7 +11,7 @@ are BACKLOG's row, with M7.
 
 Usage:  compare-kernel-symbols.py BASE_ELF HEAD_ELF [--self-test]
 
-FERRIX_SYMBOLS_RENAME=OLD=NEW[,OLD=NEW...]: a move of a module into a crate of its own
+XAQU_SYMBOLS_RENAME=OLD=NEW[,OLD=NEW...]: a move of a module into a crate of its own
 (docs/microkernel/CRATE-SPLIT.md §3.3, the recorded crate-name rewrite) renames every path
 under it; each OLD path prefix in the base's names (wherever it stands in a name, a
 generic's argument included) is read as NEW before the comparison. Only whole `::`-ended
@@ -50,7 +50,7 @@ def renames(text: str) -> list[tuple[str, str]]:
     for pair in filter(None, text.split(",")):
         old, sep, new = pair.partition("=")
         if not sep or not old.endswith("::") or not new.endswith("::"):
-            raise SystemExit(f"compare-kernel-symbols: FERRIX_SYMBOLS_RENAME {pair}: OLD::=NEW::")
+            raise SystemExit(f"compare-kernel-symbols: XAQU_SYMBOLS_RENAME {pair}: OLD::=NEW::")
         pairs.append((old, new))
     return pairs
 
@@ -139,7 +139,7 @@ def main() -> int:
     if len(sys.argv) != 3:
         print(__doc__)
         return 2
-    pairs = renames(os.environ.get("FERRIX_SYMBOLS_RENAME", ""))
+    pairs = renames(os.environ.get("XAQU_SYMBOLS_RENAME", ""))
     for old, new in pairs:
         print(f"compare-kernel-symbols: the base's {old} read as {new} (a recorded move)")
     base, head = renamed(symbols(sys.argv[1]), pairs), symbols(sys.argv[2])

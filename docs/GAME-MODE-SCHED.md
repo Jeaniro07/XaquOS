@@ -31,7 +31,7 @@ review, and §9 where each stands.
   figures in §7 are product evidence for the customer, not item evidence.
 * **Inside eligibility.** Nothing here takes a task out of the fair class
   or makes it ineligible. The virtual time, the weights and the lags are
-  EEVDF's as now (`ferrix-sched`). A mark changes *which eligible entity*
+  EEVDF's as now (`xaqu-sched`). A mark changes *which eligible entity*
   is picked, and an unmarked task's wait is bounded by the kernel, in
   decisions, not by the holder (ledger 5115 (6)).
 * **Generic.** The kernel learns no game, no window and no program name.
@@ -41,8 +41,8 @@ review, and §9 where each stands.
 * **Checked.** Each rule has a boot check in `src/kernel/src/sched/` or a
   test-threads step, and a negative control through
   `gate.sh control --expect` that shows the check fires with the rule
-  removed. Arithmetic in `ferrix-sched` has host tests.
-* **The core ring.** `sched/**` and `ferrix-sched` are the item's core
+  removed. Arithmetic in `xaqu-sched` has host tests.
+* **The core ring.** `sched/**` and `xaqu-sched` are the item's core
   ring (`tools/common/data/certification-item.json`); the system-call
   handlers in `syscall/limits.rs` and the chardev core are the load ring.
   Each piece comes back for its own code review with its ids, rows and
@@ -181,7 +181,7 @@ same share as before, because its weight is unchanged.
   effective request is the queue's slice when `r` is zero and
   `min(r, the queue's slice)` otherwise. `r` is never below
   `MIN_REQUEST_NS`, Linux's 0.1 ms floor, which the setter enforces.
-  It is one function, `effective_request(r, slice)` in `ferrix-sched`,
+  It is one function, `effective_request(r, slice)` in `xaqu-sched`,
   used at those six sites; `vslice`, `lag_limit`, `placement_lag` and
   `decision_in_ns`'s cap keep the queue's slice, and a host test holds
   `lag_limit` and `placement_lag` bit-identical for every `r` (A6). `r`
@@ -205,7 +205,7 @@ same share as before, because its weight is unchanged.
   That is Linux 7.0's rule, read in the source on 2026-10-30 (A8):
   `dup_task_struct` copies `se.slice` and `se.custom_slice`, and
   `sched_fork` resets them only under `SCHED_RESET_ON_FORK`
-  (`kernel/sched/core.c` 4647-4658), which Ferrix refuses. A request
+  (`kernel/sched/core.c` 4647-4658), which Xaqu refuses. A request
   that a mark set (M6) is not the task's own and is not inherited, as the
   mark is not (M4).
 
@@ -240,7 +240,7 @@ and without F6 if F6 lands first.
 
 ### 2.3 Checks and controls
 
-* **Host tests (`ferrix-sched`):** for each of the six new-request sites,
+* **Host tests (`xaqu-sched`):** for each of the six new-request sites,
   the deadline's offset from the virtual runtime is the effective request
   scaled by the weight, `r` zero or not, `r` longer or shorter than the
   queue's slice; `hand_over`'s bit-for-bit test extended with a request;
@@ -333,7 +333,7 @@ What `sessiond` gains is ring 3 and outside the item; it is code-reviewed
 as any change to it, against these rules:
 
 1. It opens the right at its start (§3.2) and holds it for its lifetime.
-2. It reads the **administrator's list**, `/etc/ferrix/game-mode.conf`
+2. It reads the **administrator's list**, `/etc/xaqu/game-mode.conf`
    (root's, `0644`, GAME-MODE.md §8.1). Layer B acts only for an
    application named there; the user's list alone grants nothing of it.
 3. hyprix asks, on the seat channel, when a window becomes fullscreen and
@@ -356,10 +356,10 @@ as any change to it, against these rules:
    task to run (the 3-of-4 floor of GAME-MODE.md §5.5): a policy on top of
    the kernel's own bound (§3.3, M3), not in place of it (ledger 5115 (6)).
 
-### 3.2 The right: `/dev/ferrix-frame`
+### 3.2 The right: `/dev/xaqu-frame`
 
 A character device of the chardev core (load ring), `0600 root`, made by
-the kernel, as `/dev/ferrix-crashes` is. **The open description is the
+the kernel, as `/dev/xaqu-crashes` is. **The open description is the
 right**: every mark is given through one and belongs to it.
 
 * `open` needs euid 0 in the initial user namespace (a namespaced root is
@@ -395,7 +395,7 @@ right**: every mark is given through one and belongs to it.
 ### 3.3 The rules
 
 * **M1 (L.sched.110), only the right marks.** A task is marked only by a
-  `FRAME_MARK` on an open description of `/dev/ferrix-frame`, made by a
+  `FRAME_MARK` on an open description of `/dev/xaqu-frame`, made by a
   caller with euid 0 in the initial user namespace, which only such a
   caller can open. No task can mark itself, and no other call sets the
   mark.
@@ -595,8 +595,8 @@ instead of inferred).
 
 ### 4.3 NT sync objects: not yet
 
-Ferrix does not serve `/dev/ntsync` (`docs/WINE.md`: not done); Proton
-uses fsync, which §4.2 covers. If Ferrix serves ntsync, a mutex's owner is
+Xaqu does not serve `/dev/ntsync` (`docs/WINE.md`: not done); Proton
+uses fsync, which §4.2 covers. If Xaqu serves ntsync, a mutex's owner is
 known exactly and a marked waiter lends to it as L1 does; that is a
 change to this section with its own id, not reserved now.
 
@@ -622,7 +622,7 @@ change to this section with its own id, not reserved now.
 ## 5. The idle-gap class
 
 GAME-MODE.md §5.5: work that must run but not now, given a class that
-runs where no marked task is runnable. Ferrix already has the weight half
+runs where no marked task is runnable. Xaqu already has the weight half
 of it: a cgroup with `cpu.idle` 1 runs at the entity weight 3
 (`docs/CGROUPS.md`, L.object.185). What it lacks is the order.
 
@@ -693,7 +693,7 @@ control: the cap removed).
 ## 7. Measuring on the box
 
 On the N150 (`docs/N150.md`), turns taken through
-`~/.local/share/ferrix/n150-linux/BOX-HOLDER`. Endfield in the world at
+`~/.local/share/xaqu/n150-linux/BOX-HOLDER`. Endfield in the world at
 The Hub, as GAME-MODE.md §2.3; Wine's per-second fps channel (never
 hyprix's counter); the **lowest second and the spread**, not only the
 mean; alternating A/B windows, three rounds; at the played settings
@@ -711,7 +711,7 @@ co-limit** (39.6 fps, ~93% busy: GAME-MODE.md §3.4).
 What the box can show at 720p is limited: the GPU is 99.9% busy, and the
 lows, not the mean, are where a CPU lever can show. Each result goes into
 GAME-MODE.md §11 and §9 below, with the raw files under
-`~/.local/share/ferrix/logs/game-mode/`.
+`~/.local/share/xaqu/logs/game-mode/`.
 
 ### 7.1 F7 on the box, 2026-10-31
 
@@ -747,7 +747,7 @@ L.sched.109's and L.sched.101's exec halves ran on hardware (ledger 5232
 (4), 5269 (7)).
 
 Raw: `gms-ab-720p.log`, `gms-ab-480p.log`, `gms-ab-480r.log` and the
-scripts `gms-*.sh` under `~/.local/share/ferrix/logs/game-mode/`. The
+scripts `gms-*.sh` under `~/.local/share/xaqu/logs/game-mode/`. The
 resolution was set in the prefix's `user.reg` (`video_resolution_*`) with
 the game stopped and set back to 1280x720 afterwards.
 

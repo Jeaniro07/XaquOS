@@ -1,7 +1,7 @@
 //! Tree nodes as the writer holds them: parsed, edited as lists, written whole.
 //!
 //! On disk a leaf is a descriptor array growing forward and payloads packed
-//! backward from the end (see `ferrix_btrfs::tree`). Editing that in place
+//! backward from the end (see `xaqu_btrfs::tree`). Editing that in place
 //! means shifting both regions and rewriting offsets on every insert, which is
 //! exactly where an off-by-one produces a leaf that still checksums but whose
 //! items overlap. So a node being changed is held here as what it means — a
@@ -14,8 +14,8 @@
 use alloc::vec::Vec;
 use core::ops::Range;
 
-use ferrix_btrfs::crc32c;
-use ferrix_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE, KEY_PTR_SIZE, KeyPtr, Node};
+use xaqu_btrfs::crc32c;
+use xaqu_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE, KEY_PTR_SIZE, KeyPtr, Node};
 
 use crate::bytes::{put, put_key, put_u8, put_u32, put_u64};
 use crate::{Error, Result, Unsupported, fallible};
@@ -82,7 +82,7 @@ impl TreeNode {
         }
     }
 
-    /// Copy a node `ferrix-btrfs` has parsed and checked into the editable
+    /// Copy a node `xaqu-btrfs` has parsed and checked into the editable
     /// form.
     ///
     /// A node carrying the relocation flag is refused: it belongs to a
@@ -278,7 +278,7 @@ impl TreeNode {
                 }
             }
         }
-        let sum = crc32c(out.get(ferrix_btrfs::CSUM_SIZE..)?);
+        let sum = crc32c(out.get(xaqu_btrfs::CSUM_SIZE..)?);
         put_u32(out, 0, sum)
     }
 }

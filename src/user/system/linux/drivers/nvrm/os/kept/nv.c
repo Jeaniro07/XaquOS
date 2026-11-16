@@ -22,7 +22,7 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/nv.c at 580.173.02, under the MIT licence above.
  *
  * What is kept: the module's start and stop as far as they need no GPU
@@ -31,7 +31,7 @@
  * dispatcher (nvidia_ioctl) and its card list, per-file state and events,
  * the RC timer, firmware by name, and the nv_* calls RM makes of nv.c.
  * Each function says what changed. Their logic is NVIDIA's; their Linux
- * calls are replaced by ferrix-nvos's (include/nvos.h): semaphores and
+ * calls are replaced by xaqu-nvos's (include/nvos.h): semaphores and
  * spinlocks by its futex locks, kmalloc by the heap, struct file by
  * nvrm's own file identity, request_firmware by a read from the volume,
  * and pages by VMOs pinned into the card's domain.
@@ -44,7 +44,7 @@
 #define NV_FIRMWARE_FOR_NAME(name)  "nvidia/" NV_VERSION_STRING "/" name ".bin"
 #include "nv-firmware.h"
 
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "nv-reg.h"
 #include "nv-chardev-numbers.h"
 
@@ -119,7 +119,7 @@ static int nvos_free_alloc(nv_alloc_t *at)
 
 /* ------------------------------------------------------------------------
  * Per-file state: NVIDIA's nv_alloc_file_private and nv_free_file_private;
- * the wait queue and spinlock are ferrix-nvos's, zero-initialized.
+ * the wait queue and spinlock are xaqu-nvos's, zero-initialized.
  * ---------------------------------------------------------------------- */
 
 static void *nv_alloc_file_private(void)
@@ -186,7 +186,7 @@ nv_linux_state_t *find_pci(NvU32 domain, NvU8 bus, NvU8 slot, NvU8 function)
 }
 
 /*
- * Ferrix: NVIDIA's nv_linux_add_device_locked, for nv-pci.c's probe. The
+ * Xaqu: NVIDIA's nv_linux_add_device_locked, for nv-pci.c's probe. The
  * GPU gets the next minor number and joins the list find_pci walks.
  */
 void nv_linux_add_device(nv_linux_state_t *nvl)
@@ -576,7 +576,7 @@ out:
     return rc;
 }
 
-/* Ferrix: set to say each refused ioctl and each RM call that failed (N1e
+/* Xaqu: set to say each refused ioctl and each RM call that failed (N1e
  * bring-up); off by default. */
 int nvrm_trace_ioctls = 0;
 
@@ -718,7 +718,7 @@ int nvrm_ioctl(nv_linux_file_private_t *nvlfp, unsigned int cmd, void *i_arg)
             }
 
             /*
-             * Ferrix: NVIDIA's nvidia_dev_get() looks each id up and opens
+             * Xaqu: NVIDIA's nvidia_dev_get() looks each id up and opens
              * its GPU. nvrm's GPUs are started at probe (os/kept/nv-pci.c),
              * as a persistence-mode GPU is on Linux, so the lookup is all
              * that is left: an id no probed GPU has is refused.
@@ -788,7 +788,7 @@ int nvrm_ioctl(nv_linux_file_private_t *nvlfp, unsigned int cmd, void *i_arg)
         case NV_ESC_NUMA_INFO:
         {
             /* NVIDIA's, with NUMA never on: no GPU memory is onlined as a
-             * NUMA node on Ferrix. */
+             * NUMA node on Xaqu. */
             nv_ioctl_numa_info_t *api = arg_copy;
 
             if ((nv->flags & NV_FLAG_CONTROL) != 0)
@@ -829,7 +829,7 @@ int nvrm_ioctl(nv_linux_file_private_t *nvlfp, unsigned int cmd, void *i_arg)
     }
 
     /*
-     * Ferrix (N1e bring-up): say each refused escape, and each RM call
+     * Xaqu (N1e bring-up): say each refused escape, and each RM call
      * whose own status (NVOS21/NVOS54's last word) is not NV_OK, with its
      * command or class.
      */
@@ -872,7 +872,7 @@ done_early:
 
 /* ------------------------------------------------------------------------
  * System memory. NVIDIA's nv_alloc_pages and nv_free_pages, over
- * ferrix-nvos's pages (os/nvos/src/pages.rs) in place of alloc_pages and
+ * xaqu-nvos's pages (os/nvos/src/pages.rs) in place of alloc_pages and
  * dma_map_page: each page is pinned into the card's domain at allocation,
  * its device address doubling as its physical address (§4.3). Every page
  * is mapped in nvrm, contiguously, so nv_alloc_kernel_mapping is a lookup.
@@ -881,7 +881,7 @@ done_early:
  * ---------------------------------------------------------------------- */
 
 /*
- * Ferrix: every live allocation nv_alloc_pages made, for nvrm_alloc_at. A
+ * Xaqu: every live allocation nv_alloc_pages made, for nvrm_alloc_at. A
  * GEM object of nvidia-drm's (os/glue/drm.c) knows its pages only by the
  * addresses NVKMS reports, and its CPU mapping needs the VMO they are.
  */
@@ -918,7 +918,7 @@ static void nv_live_forget(nv_alloc_t *gone)
 
 /*
  * NVIDIA's nv_get_phys_pages, which NVKMS's getMemoryPages reaches through
- * RM: Linux writes each page's struct page; Ferrix has none, and writes
+ * RM: Linux writes each page's struct page; Xaqu has none, and writes
  * each page's address, which is what nvrm_alloc_at finds an allocation by
  * (os/glue/drm.c).
  */
@@ -973,7 +973,7 @@ NV_STATUS NV_API_CALL nv_alloc_pages(
 
     if (node_id != -1)
     {
-        /* Ferrix: no NUMA node allocation (os_alloc_pages_node). */
+        /* Xaqu: no NUMA node allocation (os_alloc_pages_node). */
         return NV_ERR_NOT_SUPPORTED;
     }
 
@@ -998,7 +998,7 @@ NV_STATUS NV_API_CALL nv_alloc_pages(
     }
 
     /*
-     * Ferrix: a contiguous request asks ferrix-nvos for one run, which
+     * Xaqu: a contiguous request asks xaqu-nvos for one run, which
      * writes its first address only; each page's follows from it. The check
      * below still holds the run to it.
      */
@@ -1101,7 +1101,7 @@ void* NV_API_CALL nv_alloc_kernel_mapping(
     nv_alloc_t *at = pAllocPrivate;
 
     /*
-     * Ferrix: pages nvos allocated are mapped in nvrm already, one run for
+     * Xaqu: pages nvos allocated are mapped in nvrm already, one run for
      * the whole allocation, so any range of them is mapped. Pages RM was
      * only told the address of -- a client's, a guest's, physical ones --
      * have no mapping here: nvrm cannot map a physical address outside
@@ -1257,7 +1257,7 @@ NV_STATUS NV_API_CALL nv_register_user_pages(
     nv_printf(NV_DBG_MEMINFO, "NVRM: VM: nv_register_user_pages: 0x%llx\n", page_count);
 
     /*
-     * Ferrix: os_lock_user_pages (request_pin at N1e) hands over the
+     * Xaqu: os_lock_user_pages (request_pin at N1e) hands over the
      * pinned pages' addresses, not struct pages.
      */
     user_pages = *priv_data;
@@ -1391,7 +1391,7 @@ NV_STATUS NV_API_CALL nv_get_num_phys_pages(
 
 /* ------------------------------------------------------------------------
  * Events. NVIDIA's nv_post_event and nv_get_event; the file's spinlock and
- * wait queue are ferrix-nvos's.
+ * wait queue are xaqu-nvos's.
  * ---------------------------------------------------------------------- */
 
 void NV_API_CALL nv_post_event(
@@ -1495,7 +1495,7 @@ nv_file_private_t* NV_API_CALL nv_get_file_private(
 )
 {
     nv_linux_file_private_t *nvlfp;
-    /* Ferrix: the client's descriptor, resolved to the identity the kernel's
+    /* Xaqu: the client's descriptor, resolved to the identity the kernel's
      * chardev core gave the file (N1e), which nvrm's dispatcher made the
      * file's fd; nvrm-link-test's descriptors are identities already. */
     NvS64 identity = nvos_client_resolve_fd(fd);
@@ -1570,7 +1570,7 @@ NvBool NV_API_CALL nv_match_gpu_os_info(nv_state_t *nv, void *os_info)
 
 /* ------------------------------------------------------------------------
  * The RC timer. NVIDIA's nv_start_rc_timer, nv_stop_rc_timer and
- * nvidia_rc_timer_callback, on a ferrix-nvos timer: once a second, RM's
+ * nvidia_rc_timer_callback, on a xaqu-nvos timer: once a second, RM's
  * RC callback, then the timer again unless it failed.
  * ---------------------------------------------------------------------- */
 

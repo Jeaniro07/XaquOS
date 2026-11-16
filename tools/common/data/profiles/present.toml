@@ -8,7 +8,7 @@ profile = "present"
 level = "present"
 claim = "EAL5+, DO-178C DAL C, IEC 62304 Class C, EN 50716 SIL 2 (ledger 869), until M5's flip"
 # ARMv7-A left the claim on 2026-10-24 (the customer's G4, ledger 3906): no
-# IOMMU is driven there, so its images boot with ferrix.unisolated and its
+# IOMMU is driven there, so its images boot with xaqu.unisolated and its
 # rows are development rows, until an SMMU is driven on ARMv7-A.
 claim_architectures = ["x86_64", "aarch64"]
 buildable_from = "today"
@@ -48,21 +48,21 @@ runtime_settings = "live"
 # word; a flag option is permitted as `true`. Anything not named is outside
 # the certified configuration.
 [boot_options]
-"ferrix.checks" = ["run"]
-"ferrix.root" = ["*"]
-"ferrix.init" = ["*"]
-"ferrix.onexit" = ["*"]
-"ferrix.panic" = ["halt"]
-"ferrix.vtd" = ["on"]
-"ferrix.amdvi" = ["on"]
-"ferrix.fbcon" = true
-"ferrix.fbcon.small" = true
-"ferrix.pstore" = ["on"]
-"ferrix.apic" = ["x2apic", "xapic"]
-"ferrix.epp" = ["performance", "balance_performance", "balance_power", "power"]
+"xaqu.checks" = ["run"]
+"xaqu.root" = ["*"]
+"xaqu.init" = ["*"]
+"xaqu.onexit" = ["*"]
+"xaqu.panic" = ["halt"]
+"xaqu.vtd" = ["on"]
+"xaqu.amdvi" = ["on"]
+"xaqu.fbcon" = true
+"xaqu.fbcon.small" = true
+"xaqu.pstore" = ["on"]
+"xaqu.apic" = ["x2apic", "xapic"]
+"xaqu.epp" = ["performance", "balance_performance", "balance_power", "power"]
 console = ["*"]
 "drm.edid_firmware" = ["*"]
-"ferrix.devmgr" = ["kernel"]
+"xaqu.devmgr" = ["kernel"]
 
 # The build settings that change code without a cfg (BF4), compared with the
 # tree by check-item-boundary.py: the toolchain with rust-toolchain.toml, the

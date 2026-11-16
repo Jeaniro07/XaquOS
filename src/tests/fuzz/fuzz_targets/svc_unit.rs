@@ -32,10 +32,10 @@
 
 use std::sync::Arc;
 
-use ferrix_svc::ini;
-use ferrix_svc::name::{UnitType, escape_path, path_components, unescape};
-use ferrix_svc::source::{Entry, Layer, Source};
-use ferrix_svc::{UnitName, Warnings, value};
+use xaqu_svc::ini;
+use xaqu_svc::name::{UnitType, escape_path, path_components, unescape};
+use xaqu_svc::source::{Entry, Layer, Source};
+use xaqu_svc::{UnitName, Warnings, value};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

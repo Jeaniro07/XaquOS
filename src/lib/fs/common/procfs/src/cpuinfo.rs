@@ -409,7 +409,7 @@ pub mod x86 {
         /// `x86_power`, the 8-bit APIC ID after family 0x16, `vmmcall`
         /// always, `rep_good` from family 0x10, and Automatic IBRS as Intel's
         /// `ibrs_enhanced`. Memory encryption, which Linux keeps only where
-        /// firmware and the kernel turned it on, is cleared: Ferrix uses none.
+        /// firmware and the kernel turned it on, is cleared: Xaqu uses none.
         fn amd(&mut self) {
             if self.power & (1 << 12) != 0 {
                 self.set(feature::ACC_POWER);
@@ -571,7 +571,7 @@ pub mod x86 {
     /// `cpu_detect_cache_sizes` finds instead. Everywhere else
     /// `cpu_detect_cache_sizes` alone. (Intel's leaf 2 descriptors, which
     /// Linux decodes on a processor without leaf 4, are not: every
-    /// processor Ferrix starts has leaf 4.)
+    /// processor Xaqu starts has leaf 4.)
     fn cache_kb(cpuid: Cpuid<'_>, vendor: Vendor, level: u32, extended: u32) -> (u32, u32) {
         if vendor != Vendor::Intel || level < 4 {
             return legacy_cache_kb(cpuid, extended, 0);

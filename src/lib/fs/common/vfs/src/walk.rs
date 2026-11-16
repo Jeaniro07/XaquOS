@@ -27,7 +27,7 @@ use alloc::boxed::Box;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::Result;
 use crate::access::MAY_EXEC;
@@ -146,7 +146,7 @@ impl Steps {
             fragments: Vec::new(),
         };
         steps.push(
-            ferrix_fallible::try_to_vec(path).map_err(|_| Errno::ENOMEM)?,
+            xaqu_fallible::try_to_vec(path).map_err(|_| Errno::ENOMEM)?,
             false,
         )?;
         Ok(steps)

@@ -2,7 +2,7 @@
 """The gate's half of docs/BUILD-FLAGS.md rule 6: compare a kernel's `build`
 boot line with the profile file it was built from.
 
-Every Ferrix kernel prints, early in its boot, one line computed from the
+Every Xaqu kernel prints, early in its boot, one line computed from the
 `cfg`s it was compiled with (`src/kernel/src/build_flags.rs`):
 
     build    profile=present level=present personality=kernel fs=kernel ...
@@ -145,7 +145,7 @@ def expected_manifest(words: dict[str, str], profile_file: dict) -> str:
 def manifest_problems(want: str, got: str | None) -> list[str]:
     """What differs between the manifest the image carries and the profile's."""
     if got is None:
-        return ["the image carries no manifest (etc/ferrix/image-manifest)"]
+        return ["the image carries no manifest (etc/xaqu/image-manifest)"]
     if got == want:
         return []
     wanted, carried = want.splitlines(), got.splitlines()
@@ -177,7 +177,7 @@ def self_test() -> list[str]:
     flag_file = {"flags": {"a": {}, "b": {}}}
     prof = {"profile": "p", "level": "l", "flags": {"a": "x", "b": "y"}}
     want = expected("p", [], flag_file, prof)
-    line = ["  1.0 | Ferrix", "  1.1 |   build    profile=p level=l a=x b=y"]
+    line = ["  1.0 | Xaqu", "  1.1 |   build    profile=p level=l a=x b=y"]
     got, none = found(line) or ({}, False)
     if compare(want, got, none, False):
         failures.append("a matching line was refused")

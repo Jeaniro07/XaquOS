@@ -29,8 +29,8 @@ use std::os::unix::net::{UnixListener, UnixStream};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use ferrix_vdagent::chunk::{self, Reassembler};
-use ferrix_vdagent::message::{ClipboardType, Message, Selection, Shape, Types, cap};
+use xaqu_vdagent::chunk::{self, Reassembler};
+use xaqu_vdagent::message::{ClipboardType, Message, Selection, Shape, Types, cap};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -117,7 +117,7 @@ fn one(arch: Arch, args: &Args) -> Result<()> {
     // bytes, which a worktree's build directory does not. Named by process
     // and architecture, so two gates at once do not meet.
     let socket = std::env::temp_dir().join(format!(
-        "ferrix-clipboard-{}-{arch}.sock",
+        "xaqu-clipboard-{}-{arch}.sock",
         std::process::id()
     ));
     let _ = std::fs::remove_file(&socket);

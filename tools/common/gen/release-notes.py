@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 RELEASES = Path(__file__).resolve().parents[3] / "docs" / "RELEASES.md"
-REPO = "https://github.com/ferrix-os/ferrix"
+REPO = "https://github.com/xaqu-os/xaqu"
 
 
 CANDIDATE = re.compile(r"^(v\d+(?:\.\d+)*)-rc(\d+)$")
@@ -75,10 +75,10 @@ def main():
     print("---")
     print(f"Boot it: `git checkout {tag} && cargo xtask run --arch x86_64`. "
           f"Everything else is in the [README]({REPO}/blob/{tag}/README.md) "
-          f"and on the [website](https://ferrix-os.org/).")
+          f"and on the [website](https://xaqu-os.org/).")
     print()
     print("The desktop's wallpaper is attached at 1920x1080, 2560x1440 and 3840x2160 "
-          "(`ferrix-wallpaper-<size>.png`), for your own desktop too.")
+          "(`xaqu-wallpaper-<size>.png`), for your own desktop too.")
 
 
 if __name__ == "__main__":

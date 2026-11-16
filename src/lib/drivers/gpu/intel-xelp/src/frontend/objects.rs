@@ -11,7 +11,7 @@
 use super::backend::{Completion, Engine, HwContext, VmId};
 use super::limits;
 use super::{RequestId, fence::Waits};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 /// The most slots a [`Slab`] has: [`limits::HANDLES`], the largest table.
 const MAX_SLOTS: usize = 16_384;
@@ -852,7 +852,7 @@ pub struct Tables<M> {
     /// Lines said once.
     pub said: Said,
     /// Say each failed ioctl, the held waits, their answers, and a wait
-    /// held unanswered too long (`ferrix.intelgpu.uapitrace`).
+    /// held unanswered too long (`xaqu.intelgpu.uapitrace`).
     pub trace: bool,
     /// Why the ioctl being handled was refused, when the refusing site
     /// said; for the `intel: uapi refused` line.

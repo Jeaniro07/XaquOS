@@ -20,9 +20,9 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
 
 use super::user_dispatch::{
     self, PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_EXCLUSIVE_ON, PR_SYS_DISPATCH_INCLUSIVE_ON,
@@ -520,7 +520,7 @@ fn median(costs: &mut [u64; TIMED]) -> u64 {
     reason = "one case after another, as the design lists them"
 )]
 fn in_the_process(case: Option<Case>) -> Result<Then, &'static str> {
-    use ferrix_seccomp::{ALLOW, ERRNO, Insn, KILL_PROCESS};
+    use xaqu_seccomp::{ALLOW, ERRNO, Insn, KILL_PROCESS};
 
     let thread = crate::syscall::thread::current().ok_or("the dispatch task has no thread")?;
     let process = Arc::clone(thread.process());
@@ -675,7 +675,7 @@ fn in_the_process(case: Option<Case>) -> Result<Then, &'static str> {
         return Err("a dispatch SIGSYS did not carry the call, its ip and its arch");
     }
     let info = taken.origin.encode(SIGSYS);
-    let small = ferrix_linux_abi::sigframe32::siginfo_from_64(&info);
+    let small = xaqu_linux_abi::sigframe32::siginfo_from_64(&info);
     let word32 = |at: usize| {
         small
             .get(at..at + 4)
@@ -827,7 +827,7 @@ fn in_the_process(case: Option<Case>) -> Result<Then, &'static str> {
 fn install_filter(
     process: &Process,
     page: u64,
-    program: &[ferrix_seccomp::Insn],
+    program: &[xaqu_seccomp::Insn],
 ) -> Result<(), &'static str> {
     use alloc::vec::Vec;
     let code_at = page + 64;

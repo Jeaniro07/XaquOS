@@ -3,11 +3,11 @@
 //!
 //! On x86-64 and AArch64 the image's init starts `memscrub` with a period of
 //! 20 s and batches of 64, and the kernel command line carries the gate's
-//! override, `ferrix.scrub=test`, which a build with the checks honours as a
+//! override, `xaqu.scrub=test`, which a build with the checks honours as a
 //! guest: QEMU's own SMBIOS type 16 says multi-bit ECC, so without it the
 //! scrubber stands down. The guest's script waits for a full sweep, keeps
 //! four CPU-bound loops running and requires that nothing is tested while
-//! they run, and prints `/proc/ferrix-scrub`. A second boot without the
+//! they run, and prints `/proc/xaqu-scrub`. A second boot without the
 //! override requires the stand-down and its reason. On ARMv7-A, which has
 //! no write of a whole line that reads nothing, one boot requires the
 //! stand-down alone.
@@ -52,10 +52,10 @@ ExecStart=/bin/busybox sh /lib/scrub-test.sh
 /// The guest half; every line it prints starts with `scrub-test:`.
 const SCRIPT: &str = r#"
 say() { echo "scrub-test: $*"; }
-field() { busybox grep "^$1 " /proc/ferrix-scrub | busybox cut -d' ' -f2; }
-say "standing $(busybox grep '^standing ' /proc/ferrix-scrub | busybox cut -d' ' -f2-)"
-if [ "$(field sweeps)" = "" ]; then say "no /proc/ferrix-scrub"; say done; exit 0; fi
-case "$(busybox grep '^standing ' /proc/ferrix-scrub)" in
+field() { busybox grep "^$1 " /proc/xaqu-scrub | busybox cut -d' ' -f2; }
+say "standing $(busybox grep '^standing ' /proc/xaqu-scrub | busybox cut -d' ' -f2-)"
+if [ "$(field sweeps)" = "" ]; then say "no /proc/xaqu-scrub"; say done; exit 0; fi
+case "$(busybox grep '^standing ' /proc/xaqu-scrub)" in
     "standing stands down"*) say done; exit 0 ;;
 esac
 i=0
@@ -87,17 +87,17 @@ fn image_files(arch: Arch) -> Result<Vec<File>> {
         content: Content::Bytes(busybox),
     });
     files.push(File {
-        path: format!("etc/ferrix/units/basic.target.wants/{UNIT}"),
+        path: format!("etc/xaqu/units/basic.target.wants/{UNIT}"),
         mode: 0o777,
-        content: Content::Link(format!("/lib/ferrix/units/{UNIT}")),
+        content: Content::Link(format!("/lib/xaqu/units/{UNIT}")),
     });
     files.push(File {
-        path: "etc/ferrix/memscrub.conf".to_owned(),
+        path: "etc/xaqu/memscrub.conf".to_owned(),
         mode: 0o644,
         content: Content::Bytes(CONFIG.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/units/getty@.service".to_owned(),
+        path: "etc/xaqu/units/getty@.service".to_owned(),
         mode: 0o777,
         content: Content::Link("/dev/null".to_owned()),
     });
@@ -107,14 +107,14 @@ fn image_files(arch: Arch) -> Result<Vec<File>> {
         content: Content::Bytes(SCRIPT.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/units/scrub-test.service".to_owned(),
+        path: "etc/xaqu/units/scrub-test.service".to_owned(),
         mode: 0o644,
         content: Content::Bytes(GUEST_UNIT.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/units/multi-user.target.wants/scrub-test.service".to_owned(),
+        path: "etc/xaqu/units/multi-user.target.wants/scrub-test.service".to_owned(),
         mode: 0o777,
-        content: Content::Link("/etc/ferrix/units/scrub-test.service".to_owned()),
+        content: Content::Link("/etc/xaqu/units/scrub-test.service".to_owned()),
     });
     Ok(files)
 }
@@ -123,9 +123,9 @@ fn image_files(arch: Arch) -> Result<Vec<File>> {
 /// nothing where the kernel's scrubber stands down.
 pub(crate) fn enabled() -> File {
     File {
-        path: "etc/ferrix/units/basic.target.wants/memscrub.service".to_owned(),
+        path: "etc/xaqu/units/basic.target.wants/memscrub.service".to_owned(),
         mode: 0o777,
-        content: Content::Link("/lib/ferrix/units/memscrub.service".to_owned()),
+        content: Content::Link("/lib/xaqu/units/memscrub.service".to_owned()),
     }
 }
 
@@ -248,7 +248,7 @@ fn boot(arch: Arch, args: &Args, overridden: bool) -> Result<Vec<String>> {
     let kernel = cargo::build_kernel(arch, args.release)?;
     let natives = native::build(arch, args.release)?;
     let archive = initramfs::build(None, &natives, None, &files)?;
-    let option = if overridden { " ferrix.scrub=test" } else { "" };
+    let option = if overridden { " xaqu.scrub=test" } else { "" };
     let options = format!("{}{option}\n", init::command_line().trim_end());
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
     let mut qemu_args = args.clone();
@@ -341,7 +341,7 @@ fn stands_down(lines: &[String], reason: &str) -> std::result::Result<(), String
         ));
     }
     if !has("scrub-test: standing stands down") {
-        return Err("/proc/ferrix-scrub did not say the stand-down".to_owned());
+        return Err("/proc/xaqu-scrub did not say the stand-down".to_owned());
     }
     Ok(())
 }

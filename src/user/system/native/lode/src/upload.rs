@@ -7,8 +7,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::blob::BlobId;
-use ferrix_lode_core::upload;
+use xaqu_lode_core::blob::BlobId;
+use xaqu_lode_core::upload;
 
 use crate::{cli, sys};
 
@@ -64,7 +64,7 @@ pub(crate) fn stub(words: &[String]) -> i32 {
                         alloc::format!("{file}.blobs"),
                         alloc::format!(
                             "BLOB {} {kind} {}\n",
-                            ferrix_lode_core::blob::hex(&id),
+                            xaqu_lode_core::blob::hex(&id),
                             body.len()
                         )
                         .into_bytes(),

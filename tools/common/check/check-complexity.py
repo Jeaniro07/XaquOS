@@ -13,8 +13,8 @@ the `core` and `item` rings, product code only. The uncertified load above them
 carries no assurance claim and is measured but not enforced, so the numbers can
 be compared.
 
-Since 2026-10-02 that includes the item's library crates, `ferrix-btrfs` and
-`ferrix-btrfs-write` (`crates` in the manifest): every product file their module
+Since 2026-10-02 that includes the item's library crates, `xaqu-btrfs` and
+`xaqu-btrfs-write` (`crates` in the manifest): every product file their module
 trees reach, with any inline `#[cfg(test)] mod` blanked, since tests are
 verification. Their functions are keyed by the path from the repository root
 (`src/lib/fs/btrfs/format/src/tree.rs::search`), the kernel's by the path under
@@ -113,7 +113,7 @@ def body_of(text: str, start: int) -> tuple[str, int] | None:
     an `unsafe extern "C"` block, which ends in `;`. Distinguishing the two
     matters more than it sounds. Taking the next `{` unconditionally gave every
     `extern` declaration the *following* item's body -- which is how the
-    assembly symbol `ferrix_switch`, declared beside the `naked_asm!` that
+    assembly symbol `xaqu_switch`, declared beside the `naked_asm!` that
     defines it, came out looking like a recursive function with borrowed
     complexity and length scores.
 
@@ -293,7 +293,7 @@ fn say_booted() {
     } else {
         println!(
             "{UNCHECKED_MARKER} stages 1-12 brought up, the self-checks of 2 to 12 skipped as \
-             ferrix.checks=skip asks for while loop if"
+             xaqu.checks=skip asks for while loop if"
         );
     }
 }
@@ -306,12 +306,12 @@ fn register_load(view: &BootView<'_>) {
 }
 
 extern "C" {
-    fn ferrix_switch();
+    fn xaqu_switch();
 }
 
-fn ferrix_switch_body() {
+fn xaqu_switch_body() {
     naked_asm!(r#"
-    ferrix_switch_body:
+    xaqu_switch_body:
         ret "for" if
     "#);
 }
@@ -326,7 +326,7 @@ _SELF_EXPECT = {
     # name: (complexity, lines, recursive)
     "say_booted": (2, 7, False),
     "register_load": (3, 3, False),
-    "ferrix_switch_body": (1, 2, False),
+    "xaqu_switch_body": (1, 2, False),
 }
 
 
@@ -341,7 +341,7 @@ def self_test() -> list[str]:
             failures.append(f"measure: {name} is {got.get(name)}, expected {want}")
     if "only_a_test" in got:
         failures.append("measure: a function in a #[cfg(test)] module was measured")
-    if "ferrix_switch" in got:
+    if "xaqu_switch" in got:
         failures.append("measure: an extern declaration was measured as a function")
     return failures
 

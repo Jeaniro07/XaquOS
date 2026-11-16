@@ -1,14 +1,14 @@
-# adb for Ferrix: handover
+# adb for Xaqu: handover
 
-**Status, 2026-09-27 (ferrix-9c): done.** adb works over TCP (QEMU,
+**Status, 2026-09-27 (xaqu-9c): done.** adb works over TCP (QEMU,
 gated) and over the Pixel 7's USB port (run `adbusb4`): `adb devices`,
 `adb shell`, `push`, `pull`, `ls`, `forward` and `reboot`. §6 is where it
 stands. The rest is the brief as it was written: why adb, what it has to
-do, what Ferrix already has for it, and the order to build it in.
+do, what Xaqu already has for it, and the order to build it in.
 
 ## 1. Why adb, and what done looks like
 
-The Pixel 7 running Ferrix natively has a live log over USB and nothing else.
+The Pixel 7 running Xaqu natively has a live log over USB and nothing else.
 The owner wants a debug interface: a shell, files in and out, a reboot, and
 later port forwarding for a debugger. Four were weighed with the owner on
 2026-09-26:
@@ -27,13 +27,13 @@ later port forwarding for a debugger. Four were weighed with the owner on
   files, reboot and forwarding in one tool, and it runs over TCP as well as
   USB. **Chosen.**
 
-Done means: with Ferrix running natively on the phone, `adb devices` on example
+Done means: with Xaqu running natively on the phone, `adb devices` on example
 lists it, and `adb shell`, `adb push`, `adb pull`, `adb reboot` and
-`adb forward` work. The same works over TCP (`adb connect`) against Ferrix in
+`adb forward` work. The same works over TCP (`adb connect`) against Xaqu in
 QEMU and in the phone's crosvm guest, and a gate proves it on every change.
 
 Until then, the monitor's "Boot Android" button sends `usbdev` one line over
-the serial port (`ferrix-usbdev: reboot`). `adb reboot` replaces it.
+the serial port (`xaqu-usbdev: reboot`). `adb reboot` replaces it.
 
 ## 2. The protocol, as much as is needed
 
@@ -45,13 +45,13 @@ check each value against those files before relying on it. The host's
 * **Messages.** A 24-byte header, little-endian: `command`, `arg0`, `arg1`,
   `data_length`, `data_crc32`, and `magic` (`command ^ 0xFFFFFFFF`), then
   `data_length` bytes of payload. Commands are four ASCII bytes: `CNXN`,
-  `AUTH`, `OPEN`, `OKAY`, `WRTE`, `CLSE` (and `STLS`, which Ferrix need not
+  `AUTH`, `OPEN`, `OKAY`, `WRTE`, `CLSE` (and `STLS`, which Xaqu need not
   offer). With version `0x01000001` and up, the CRC is not checked and may be
   zero. The payload limit is agreed in `CNXN` (1 MiB on current hosts).
 * **Connecting.** The host sends `CNXN(version, max_payload, "host::")`. A
   device that does not require authentication (a debug build's
   `ro.adb.secure=0`) answers with its own `CNXN` and a banner such as
-  `device::ro.product.name=ferrix;ro.product.model=Pixel 7;features=shell_v2,cmd`.
+  `device::ro.product.name=xaqu;ro.product.model=Pixel 7;features=shell_v2,cmd`.
   Authentication (`AUTH` with an RSA token, signature and public key) comes
   later, once keys have somewhere to live.
 * **Streams.** `OPEN(local_id, 0, "service:args")` opens one; the device
@@ -67,7 +67,7 @@ check each value against those files before relying on it. The host's
   * `sync:` — `push` and `pull`: requests of a 4-byte id and a 4-byte length
     (`STAT`, `LIST`, `SEND`, `RECV`, `DATA`, `DONE`, `OKAY`, `FAIL`,
     `QUIT`).
-  * `reboot:` — restart. On the phone, Ferrix's restart is the watchdog reset
+  * `reboot:` — restart. On the phone, Xaqu's restart is the watchdog reset
     that brings Android back.
   * `tcp:PORT` — a stream to a local TCP port, which is `adb forward`, and
     what gdbserver needs later.
@@ -76,7 +76,7 @@ check each value against those files before relying on it. The host's
   protocol `0x01`, with a bulk IN and a bulk OUT endpoint. The host finds it
   by that class, whatever the vendor ID.
 
-## 3. What Ferrix already has
+## 3. What Xaqu already has
 
 * **Sockets, ptys, processes:** `AF_INET` TCP (`test-net`), `AF_UNIX`,
   pseudo-terminals and job control (`test-pty`, `test-jobs`),
@@ -101,7 +101,7 @@ Each step lands on its own, gated, and says where it stands here.
    and the stream table go in a host-tested library, as the USB pieces are,
    tested against captured `adb` exchanges. Then `CNXN` without auth,
    `shell:` on a pty, `reboot:`, `sync:` push and pull, and `tcp:`. Started
-   by init where there is a network, or as `ferrix.init=` for a test. About
+   by init where there is a network, or as `xaqu.init=` for a test. About
    13 points.
 2. **A gate**, `xtask test-adb`: boot with `--net --forward 5555:5555`, run
    the host's `adb connect 127.0.0.1:5555`, then `adb shell echo`, a
@@ -118,9 +118,9 @@ Each step lands on its own, gated, and says where it stands here.
 4. **The host.** A udev rule so `adb` may open `1209:0001`:
    `SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="0001",
    TAG+="uaccess"`, installed by the owner as the ModemManager rule was
-   (`/etc/udev/rules.d/70-ferrix-console.rules` is where that one lives).
+   (`/etc/udev/rules.d/70-xaqu-console.rules` is where that one lives).
    Then the monitor's "Boot Android" button becomes `adb reboot`, and its
-   phone script can run against Ferrix, where `/proc` answers it.
+   phone script can run against Xaqu, where `/proc` answers it.
 
 ## 5. Threats to keep in view
 
@@ -131,7 +131,7 @@ Each step lands on its own, gated, and says where it stands here.
   it, and it should come before adbd is started by default rather than on
   request.
 * **The stopgap is the same, smaller.** Today `usbdev` restarts the machine
-  when the serial port's host sends `ferrix-usbdev: reboot`. It is
+  when the serial port's host sends `xaqu-usbdev: reboot`. It is
   unauthenticated too, for anyone with a USB cable to the phone. It reboots
   and does nothing else. It goes when adb's `reboot:` replaces it.
 * **Opt-in, because of the first point.** adbd is in an image only when it
@@ -141,23 +141,23 @@ Each step lands on its own, gated, and says where it stands here.
   on the host's loopback.
 * **Keys, when they come.** adbd keeps its own list of allowed public keys,
   as `sshdt` keeps `authorized_keys`, and checks the RSA token itself. The
-  auth design's owner (ferrix-d5, `docs/AUTH.md` §4) settled that authd
+  auth design's owner (xaqu-d5, `docs/AUTH.md` §4) settled that authd
   stores no adb keys and verifies no signatures; from authd's phase 3,
   adbd reports each verdict to it (service `adbd`, the target uid) for
   throttling and the audit log.
-* **Forwarding reaches inside.** `tcp:` opens connections from inside Ferrix
+* **Forwarding reaches inside.** `tcp:` opens connections from inside Xaqu
   to whatever listens there, so it answers to the same authentication.
 
 Not in the first cut: authentication, `adb install`, `logcat`, `adb root`
 and `remount`, and `reboot bootloader`. On this phone that last one is a
-secure-firmware call plus a persistent write Ferrix must never make:
+secure-firmware call plus a persistent write Xaqu must never make:
 `docs/BACKLOG.md` has the row.
 
 ## 6. Where it stands
 
 ### Step 1, adbd over TCP (2026-09-26)
 
-* `src/lib/proto/adb` (`ferrix-adb`): the 24-byte messages, the banner, and the
+* `src/lib/proto/adb` (`xaqu-adb`): the 24-byte messages, the banner, and the
   first sync protocol's requests and replies, with tests on the host. The
   constants match `protocol.txt`, and the host's `adb` 37 is the proof.
 * `src/user/system/linux/adbd`: a static musl program, built as `statd` is. `shell:` runs
@@ -175,7 +175,7 @@ secure-firmware call plus a persistent write Ferrix must never make:
   `ls /bin`, a `forward` that speaks `CNXN` to adbd through itself, and
   `reboot`. It passed on x86_64, aarch64 and armv7a on 2026-09-26. Without
   `adb` on the machine it is skipped, and says so. `cargo xtask check`
-  holds adbd's formatting and clippy, and `ferrix-adb`'s tests.
+  holds adbd's formatting and clippy, and `xaqu-adb`'s tests.
 * By hand: `cargo xtask run --arch x86_64 --init <busybox> --adbd --forward
   5555:5555`, then `udhcpc -i eth0` and `adbd &` in the guest, then
   `adb connect 127.0.0.1:5555` on the host.
@@ -191,13 +191,13 @@ secure-firmware call plus a persistent write Ferrix must never make:
   message's header and payload as transfers of their own, and adbd over
   USB offers payloads of at most 4096 bytes, one endpoint ring.
 * `adbd --usb` serves that socket; run as pid 1
-  (`ferrix.init=/bin/adbd`), it serves USB and TCP and reaps orphans.
+  (`xaqu.init=/bin/adbd`), it serves USB and TCP and reaps orphans.
 * The host: `SUBSYSTEM=="usb", ATTR{idVendor}=="1209",
   ATTR{idProduct}=="0001", TAG+="uaccess"` in
-  `/etc/udev/rules.d/70-ferrix-console.rules`, installed by the owner.
+  `/etc/udev/rules.d/70-xaqu-console.rules`, installed by the owner.
 * On the phone: build with `--adbd --init <aarch64 busybox>` (a shell for
-  `adb shell`) and `FERRIX_PIXEL7_CMDLINE_EXTRA="ferrix.init=/bin/adbd"`,
-  RAM-boot it, and `adb -s ferrix-pixel7 …`. `adb reboot`, or the serial
+  `adb shell`) and `XAQU_PIXEL7_CMDLINE_EXTRA="xaqu.init=/bin/adbd"`,
+  RAM-boot it, and `adb -s xaqu-pixel7 …`. `adb reboot`, or the serial
   port's reboot line, brings Android back.
 
 Four phone runs found three things only the phone could:
@@ -216,13 +216,13 @@ Four phone runs found three things only the phone could:
    (`set_zero_length_packets`); the serial port keeps them.
 
 Run `adbusb4` (image `a766ccc5`): `adb devices` listed it a second after
-enumeration, `adb shell` answered `Ferrix aarch64`, a 1 MB push and pull
+enumeration, `adb shell` answered `Xaqu aarch64`, a 1 MB push and pull
 came back byte for byte, the interactive shell and `ls` worked, and
 `adb reboot` had Android back 40 s later. Every register write in the
 record was on the product owner's list.
 
 **Nothing typed in that shell outlives a reset** (the product owner's
-condition for an unauthenticated root shell on the phone): Ferrix on the
+condition for an unauthenticated root shell on the phone): Xaqu on the
 Pixel has no driver for UFS or any persistent storage. The tree has no
 UFS, MMC or SDHCI driver, the only binding the phone's tree matches is the
 DWC3's (every run's record: one device node, one driver, and "no

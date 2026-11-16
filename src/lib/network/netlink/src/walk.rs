@@ -5,7 +5,7 @@
 //! then an error, which is what the sender should be told about rather than
 //! having the rest of its buffer guessed at.
 
-use ferrix_linux_abi::netlink::{NLA_TYPE_MASK, NlAttr, NlMsgHdr, nla_align, nlmsg_align};
+use xaqu_linux_abi::netlink::{NLA_TYPE_MASK, NlAttr, NlMsgHdr, nla_align, nlmsg_align};
 
 use crate::{Address, Error};
 

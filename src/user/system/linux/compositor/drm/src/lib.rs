@@ -6,7 +6,7 @@
 //! `docs/DISPLAY.md` says why, and what stage 19 adds.
 //!
 //! It is the one crate in the compositor that only builds on Linux, because
-//! `/dev/dri` is Linux's and Ferrix's through its Linux ABI. The parts that
+//! `/dev/dri` is Linux's and Xaqu's through its Linux ABI. The parts that
 //! are arithmetic rather than ioctls -- choosing a mode, choosing a CRTC,
 //! filling a buffer, naming a plane -- are in [`modeset`] and are tested on
 //! any host.

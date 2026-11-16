@@ -4,7 +4,7 @@
 //! region: a `Frame`'s number is its page's offset in it, and `direct_map` is that
 //! mapping, so the load's and `user::vmo`'s frame arithmetic runs unchanged. A
 //! program's address space keeps its real page tables here as a **shadow**, in
-//! arena frames, walked by the same `ferrix-paging`; the kernel's restricted space
+//! arena frames, walked by the same `xaqu-paging`; the kernel's restricted space
 //! is a cache of it, filled by `SPACE_MAP` of arena pages at a fault
 //! (`crate::fill`) and emptied by `SPACE_UNMAP` at every unmap below.
 
@@ -13,9 +13,9 @@ pub mod scrub;
 use core::sync::atomic::{AtomicU64, Ordering};
 
 use crate::sync::SpinLock as PlainLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_frame::{Frame, Frames, PageEntry};
-use ferrix_paging::{MapFlags, Mapper, PhysAddr, PhysMem, Released, VirtAddr};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_frame::{Frame, Frames, PageEntry};
+use xaqu_paging::{MapFlags, Mapper, PhysAddr, PhysMem, Released, VirtAddr};
 
 use crate::fallible;
 
@@ -49,7 +49,7 @@ pub fn init(at: u64, frames: u64) {
     *FRAMES.lock() = Some(frames);
 }
 
-/// Arena pages by their "physical" address, as `ferrix-paging` reads them.
+/// Arena pages by their "physical" address, as `xaqu-paging` reads them.
 #[derive(Debug, Clone, Copy)]
 pub struct KernelPhysMem;
 
@@ -225,7 +225,7 @@ pub fn release_frame(frame: Frame) -> bool {
     }
     let freed = with_frames(|frames| {
         let owner = frames.owner(frame);
-        matches!(frames.release(frame), Ok(ferrix_frame::Released::Freed)).then_some(owner)
+        matches!(frames.release(frame), Ok(xaqu_frame::Released::Freed)).then_some(owner)
     })
     .flatten();
     if let Some(owner) = freed {
@@ -252,7 +252,7 @@ pub fn frame_references(frame: Frame) -> u32 {
 pub fn frame_owner(frame: Frame) -> u32 {
     with_frames(|frames| frames.owner(frame)).unwrap_or(crate::object::quota::NONE)
 }
-pub fn frame_state(frame: Frame) -> Option<ferrix_frame::State> {
+pub fn frame_state(frame: Frame) -> Option<xaqu_frame::State> {
     with_frames(|frames| frames.state(frame)).flatten()
 }
 pub fn frame_retired(frame: Frame) -> bool {
@@ -326,7 +326,7 @@ pub fn translate_in(root: u64, virt: u64) -> Option<u64> {
         .translate(&KernelPhysMem, VirtAddr(virt))
         .map(|at| at.0)
 }
-pub fn for_each_leaf_in(root: u64, visit: impl FnMut(ferrix_paging::Leaf) -> bool) {
+pub fn for_each_leaf_in(root: u64, visit: impl FnMut(xaqu_paging::Leaf) -> bool) {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let _ = mapper.for_each_leaf(&KernelPhysMem, visit);
 }
@@ -341,7 +341,7 @@ pub fn map_in(
     phys: u64,
     len: u64,
     flags: MapFlags,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     crate::fill::with_shadow(root, || {
         mapper.map_range(
@@ -359,7 +359,7 @@ pub fn unmap_in(
     virt: u64,
     len: u64,
     flush: &mut crate::smp::TlbPages,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let len = len.next_multiple_of(PAGE_SIZE);
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let tables = flush.tables();
@@ -382,7 +382,7 @@ pub fn unmap_in(
     let _ = unmapped?;
     Ok(())
 }
-pub fn unmap_unwalked(root: u64, virt: u64, len: u64) -> Result<(), ferrix_paging::MapError> {
+pub fn unmap_unwalked(root: u64, virt: u64, len: u64) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let len = len.next_multiple_of(PAGE_SIZE);
     let _ = crate::fill::with_shadow(root, || {
@@ -471,11 +471,11 @@ pub fn ram_behind(_virt: u64) -> Option<u64> {
 }
 
 /// Where the initramfs is: linuxd has it mapped already (M5-LIFT.md §6).
-pub fn keep_initrd(view: &ferrix_bootinfo::BootView<'_>) -> Result<Option<u64>, ()> {
+pub fn keep_initrd(view: &xaqu_bootinfo::BootView<'_>) -> Result<Option<u64>, ()> {
     Ok(Some(INITRD_LEN.load(Ordering::Acquire)).filter(|len| *len != 0))
 }
 
-pub fn ensure_top_in(root: u64, virt: u64) -> Result<(), ferrix_paging::MapError> {
+pub fn ensure_top_in(root: u64, virt: u64) -> Result<(), xaqu_paging::MapError> {
     Ok(())
 }
 /// A normal root over a region: a page nobody walks, the shadow space has one
@@ -501,7 +501,7 @@ pub fn unmap_in_keeping(
     len: u64,
     flush: &mut crate::smp::TlbPages,
     keep_top: bool,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     unmap_in(root, virt, len, flush)
 }
 

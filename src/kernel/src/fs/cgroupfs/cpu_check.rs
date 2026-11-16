@@ -30,8 +30,8 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::SIGKILL;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::SIGKILL;
 
 use super::freeze_check::{self, Running};
 use super::{Checked, Harness};
@@ -243,7 +243,7 @@ fn idle(harness: &mut Harness) -> Checked<()> {
 /// `sched_group_set_shares` and `cpu_weight_read_u64` do. Load-ring
 /// behaviour the item does not claim, so it verifies no requirement (the
 /// consultant's ruling, 2026-10-26, ledger line 10); the parse is host-tested
-/// in `ferrix-cgroupfs`, and the native refusal is L.object.187's.
+/// in `xaqu-cgroupfs`, and the native refusal is L.object.187's.
 fn idle_files(harness: &mut Harness) -> Checked<()> {
     if !harness.reads(b"/check-c/cpu.idle", b"0\n") {
         return Err("a new cgroup's cpu.idle does not read 0");
@@ -290,7 +290,7 @@ fn idle_weight() -> Checked<()> {
 /// `tg_set_cfs_bandwidth` have it. Load-ring behaviour the item does not
 /// claim, so it verifies no requirement (the consultant's ruling,
 /// 2026-10-26, ledger line 10); the parse and the fit are host-tested in
-/// `ferrix-cgroupfs`.
+/// `xaqu-cgroupfs`.
 fn burst_files(harness: &mut Harness) -> Checked<()> {
     if !harness.reads(b"/check-c/cpu.max.burst", b"0\n") {
         return Err("a new cgroup's cpu.max.burst does not read 0");

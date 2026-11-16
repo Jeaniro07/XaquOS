@@ -74,7 +74,7 @@ that said they were never to land were archived the same way without a
 line here; `docs/repo-flow/`'s map lists them.
 
 - **ab**
-  - idea: ferrix-slots: the loader's words parse back, and AB-BOOT says what rollback does; last commit 2026-10-11; archived as `refs/archive/2026-10-23b/feature/ab-boot`
+  - idea: xaqu-slots: the loader's words parse back, and AB-BOOT says what rollback does; last commit 2026-10-11; archived as `refs/archive/2026-10-23b/feature/ab-boot`
   - idea: 3 (+2 more commits); last commit 2026-10-11; archived as `refs/archive/2026-10-23b/feature/ab-sys-wip-backup`
 - **ahci**
   - idea: sysml, certification: the requirements say what fbcon, the output fallback and BAR widening do (+1 more commits); last commit 2026-10-16; archived as `refs/archive/2026-10-23b/feature/ahci`
@@ -82,10 +82,10 @@ line here; `docs/repo-flow/`'s map lists them.
 - **bm**
   - idea: Reserve L.quiesce.6 for H4, a USB stick behind the block ring; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-h4-reserve`
   - idea: usb-host: 16-byte SCSI commands, a refused status tag, a caught short read; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-h4-usb-storage`
-  - idea: H6: Cargo.lock for ferrix-efifb (+1 more commits); last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-h6-gop`
-  - idea: AB-BOOT.md §6.4: the design for ferrix.panic=reset, for review; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-panic`
+  - idea: H6: Cargo.lock for xaqu-efifb (+1 more commits); last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-h6-gop`
+  - idea: AB-BOOT.md §6.4: the design for xaqu.panic=reset, for review; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-panic`
   - idea: NVMe namespaces are nvme<C>n1, and their partitions nvme<C>n1pN; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-parts`
-  - idea: Reserve requirement ids for STOP at power-off and ferrix.panic=reset; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-reserve`
+  - idea: Reserve requirement ids for STOP at power-off and xaqu.panic=reset; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-reserve`
   - idea: NVME.md §2.1: the design for STOP at power-off and reset, for review; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/bm-nvme-stop`
 - **bs**
   - idea: Kernel split S3: the code review's conditions (ledger 1777, 1795) (+2 more commits); last commit 2026-10-15; archived as `refs/archive/2026-10-23b/feature/bs-a-s3b-pre-rebase4`
@@ -132,17 +132,17 @@ line here; `docs/repo-flow/`'s map lists them.
 - **n3b**
   - idea: chardev self-check: a fence's signal wakes its queue; SYNC_IOC_FILE_INFO through the program's memory with no array and with one entry, flags (EINVAL), a bad pointer (EFAULT); MERGE ENOTTY; no read, no mapping (S6, S9). test-boot x86_64 kvm: 14 sync_file refusals (+11 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/n3b-gbm`
 - **n3c-vtest**
-  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; FERRIX_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/n3c-vtest`
+  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; XAQU_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/n3c-vtest`
 - **nv**
-  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; FERRIX_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-cardvm`
-  - idea: FERRIX_DRI3_PROBE: yserver's warnings and errors, and every pixmap line, in the serial log (+9 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-dri3`
-  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; FERRIX_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-mapslots`
+  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; XAQU_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-cardvm`
+  - idea: XAQU_DRI3_PROBE: yserver's warnings and errors, and every pixmap line, in the serial log (+9 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-dri3`
+  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; XAQU_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-mapslots`
   - idea: hyprix: the import line says the modifier and whether the buffer is sampled or mapped (+40 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-modifiers`
   - idea: Handover 2026-10-10: Teeworlds reads 75 to 80 in full screen, 160 at most (+43 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-next`
   - idea: nvrm quiesce: three defects a second reading found, and a switch that leaves it out (+8 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-quiesce`
   - idea: Name-only dmabufs: clippy-clean self-check and size test (+7 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-vram-dmabuf`
   - idea: (wallpaper): FFmpeg leaves out two device extensions nvrm cannot serve (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-wallpaper`
-  - idea: hyprix says whether NVIDIA draws into nvrm's buffer in place; xtask carries FERRIX_VTEST_SCANOUT (+12 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-zerocopy`
+  - idea: hyprix says whether NVIDIA draws into nvrm's buffer in place; xtask carries XAQU_VTEST_SCANOUT (+12 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nv-zerocopy`
 - **nvidia**
   - idea: (N3b): the dmabuf self-check gives vmo_write its offset in memory (+2 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/nvidia-n3b`
 - **r1**
@@ -150,7 +150,7 @@ line here; `docs/repo-flow/`'s map lists them.
   - idea: Pin yserver at the Present clock (2966c377), for test-frames: drop before landing; the product owner lands the pin (+3 more commits); last commit 2026-10-14; archived as `refs/archive/2026-10-23b/feature/r1/frames-pinned`
   - idea: test only: pin yserver at the Present clock (2966c377), for test-frames (+2 more commits); last commit 2026-10-14; archived as `refs/archive/2026-10-23b/feature/r1/frames-yclock`
 - **rn**
-  - idea: run-nazuna: Ferrix installed on a copy of nazuna's SN720, on a machine shaped like nazuna and described by its ACPI tables; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/rn/run-nazuna`
+  - idea: run-nazuna: Xaqu installed on a copy of nazuna's SN720, on a machine shaped like nazuna and described by its ACPI tables; last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/rn/run-nazuna`
 - **run**
   - idea: NAZUNA-VM.md: the board's ACPI tables, how they were checked, and the boot on them (+9 more commits); last commit 2026-10-13; archived as `refs/archive/2026-10-23b/feature/run-nazuna`
 - **s13f-seccomp**
@@ -164,7 +164,7 @@ line here; `docs/repo-flow/`'s map lists them.
   - idea: fixup! S5: record TSYNC, its evidence and controls (+5 more commits); last commit 2026-10-11; archived as `refs/archive/2026-10-23b/feature/s4port-pre-squash`
   - idea: S4: carry the coverage anchors, regenerate the pages; last commit 2026-10-11; archived as `refs/archive/2026-10-23b/feature/s4port-pre-squash2`
 - **softgl**
-  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; FERRIX_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/softgl-gap`
+  - idea: N3c: vtest moves socket bytes in 256 KiB pieces and names failed transfers; XAQU_VTEST_PROTOCOL reaches hyprix under --nvidia (+6 more commits); last commit 2026-10-10; archived as `refs/archive/2026-10-23b/feature/softgl-gap`
 - **stage13**
   - idea: 8: CGROUPS.md §15, the exit test and its controls (INDEX lines owed) (+8 more commits); last commit 2026-10-12; archived as `refs/archive/2026-10-23b/feature/stage13-exit`
 - **steam**

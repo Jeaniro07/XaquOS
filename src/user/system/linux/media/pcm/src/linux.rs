@@ -4,8 +4,8 @@ use std::ffi::CString;
 use std::io;
 use std::os::fd::{AsRawFd as _, FromRawFd as _, OwnedFd};
 
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::{
     ACCESS_RW_INTERLEAVED, FORMAT_S16_LE, HW_PARAM_BUFFER_SIZE, HW_PARAM_CHANNELS,
     HW_PARAM_FIRST_INTERVAL, HW_PARAM_PERIOD_SIZE, HW_PARAM_RATE, HwParams, Interval, Mask,
     PCM_VERSION, Pcm, SUBFORMAT_STD, SwParams, TSTAMP_TYPE_MONOTONIC, Xferi, protocol_version,

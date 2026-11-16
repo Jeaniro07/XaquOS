@@ -16,7 +16,7 @@
 //!   copy is in its own `mountinfo` and not in the other's, and
 //!   `/proc/<pid>/ns/mnt` names the same namespace before the `unshare` and
 //!   different ones after; `unshare(CLONE_NEWNS)` by uid 1000 is `EPERM`, and
-//!   a namespace Ferrix does not have is still `EINVAL`;
+//!   a namespace Xaqu does not have is still `EINVAL`;
 //! * bubblewrap's calls as root, in its order, from the namespace's own `/`
 //!   -- the kernel's tmpfs, in memory, on the bottom mount -- as on a machine
 //!   with no disk: a tmpfs for the new root,
@@ -41,14 +41,14 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_elf::Class;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_elf::Class;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, AT_REMOVEDIR, MNT_DETACH, MS_BIND, MS_NODEV, MS_NOSUID, MS_REC, O_CREAT, O_PATH,
     O_RDONLY, O_TRUNC, O_WRONLY,
 };
-use ferrix_vfs::Errno;
-use ferrix_vfs::initramfs::makedev;
+use xaqu_vfs::Errno;
+use xaqu_vfs::initramfs::makedev;
 
 use crate::arch;
 use crate::fs;
@@ -536,9 +536,9 @@ fn private_both_ways(
     )?;
     drop(unprivileged);
     tally.refused(
-        unshare(inside.process, ferrix_linux_abi::types::CLONE_VM),
+        unshare(inside.process, xaqu_linux_abi::types::CLONE_VM),
         Errno::EINVAL,
-        "unshare of a flag Ferrix does not support (CLONE_VM) was not refused EINVAL",
+        "unshare of a flag Xaqu does not support (CLONE_VM) was not refused EINVAL",
     )?;
 
     tally.ok(

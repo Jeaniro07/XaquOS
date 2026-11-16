@@ -1,4 +1,4 @@
-//! Ferrix's `dmesg`, `/bin/dmesg` (`src/user/system/linux/dmesg`): built for
+//! Xaqu's `dmesg`, `/bin/dmesg` (`src/user/system/linux/dmesg`): built for
 //! an architecture and carried by every image with a shell -- `test-shell`'s
 //! and `run --init`'s, the init image `run` boots, `test-vfs`'s and the
 //! desktop's. A file at `bin/dmesg` takes the name from busybox's applet

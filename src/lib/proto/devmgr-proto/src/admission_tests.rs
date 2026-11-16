@@ -68,7 +68,7 @@ fn every_line() {
     );
     assert_eq!(
         line(admission::admit(Some(0x0), false, true, 0x0800)).unwrap(),
-        "devmgr   UNISOLATED: net 08:00.0 started under ferrix.unisolated: its DMA is not \
+        "devmgr   UNISOLATED: net 08:00.0 started under xaqu.unisolated: its DMA is not \
          translated or its interrupts are not isolated, and its driver is trusted with all of \
          memory"
     );
@@ -81,7 +81,7 @@ fn every_line() {
 /// The bits are the ABI's.
 #[test]
 fn the_bits_are_the_abis() {
-    use ferrix_native_abi::types;
+    use xaqu_native_abi::types;
     assert_eq!(DMA_TRANSLATED, types::DEVICE_ISOLATION_DMA_TRANSLATED);
     assert_eq!(INTERRUPTS_ISOLATED, types::DEVICE_ISOLATION_INTERRUPTS);
     assert_eq!(NO_DMA, types::DEVICE_ISOLATION_NO_DMA);

@@ -30,10 +30,10 @@
 //! `unsafe` block for no gain.
 //!
 //! ```
-//! # use ferrix_elf::{Elf, ElfError};
+//! # use xaqu_elf::{Elf, ElfError};
 //! # fn example(image: &[u8]) -> Result<(), ElfError> {
 //! let elf = Elf::parse(image)?;
-//! elf.check_machine(ferrix_elf::EM_X86_64)?;
+//! elf.check_machine(xaqu_elf::EM_X86_64)?;
 //! for segment in elf.loadable() {
 //!     let _ = (segment.vaddr, segment.memsz, segment.flags);
 //! }

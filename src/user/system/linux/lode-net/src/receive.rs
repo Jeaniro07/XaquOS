@@ -1,4 +1,4 @@
-//! `lode-receive`: the uploads of Ferrix machines taken in over TLS and
+//! `lode-receive`: the uploads of Xaqu machines taken in over TLS and
 //! kept, a lode store for each machine (`docs/LOGGING.md` §10.3).
 //!
 //! ```text
@@ -29,8 +29,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::upload;
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::upload;
 
 use crate::pki::Pki;
 use crate::store::{BlobWriter, Writer};
@@ -188,7 +188,7 @@ impl Receiver {
     ) -> Result<(String, [u8; 16], String, PathBuf), (u16, String)> {
         let host = clean(upload::header(head, upload::HOST_HEADER).unwrap_or_default());
         let id = upload::header(head, upload::MACHINE_HEADER).unwrap_or_default();
-        let (dir, machine_id) = match ferrix_lode_core::segment::parse_id(id) {
+        let (dir, machine_id) = match xaqu_lode_core::segment::parse_id(id) {
             Some(machine_id) if id.len() == 32 => (id.to_ascii_lowercase(), machine_id),
             _ if !host.is_empty() => (format!("host-{host}"), [0; 16]),
             _ => match paired {
@@ -234,7 +234,7 @@ impl Receiver {
         if let Err(error) = writer.keep(&id, &kind, body) {
             return (503, format!("{dir}: {error}"));
         }
-        let id = ferrix_lode_core::blob::hex(&id);
+        let id = xaqu_lode_core::blob::hex(&id);
         if had {
             (200, format!("{dir}: blob {id} held already"))
         } else {
@@ -257,7 +257,7 @@ fn clean(text: &str) -> String {
 /// Microseconds since 1970 as RFC 3339, UTC.
 #[must_use]
 pub fn rfc3339(us: u64) -> String {
-    let at = ferrix_lode_core::time::Civil::at(us, 0);
+    let at = xaqu_lode_core::time::Civil::at(us, 0);
     format!(
         "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
         at.year, at.month, at.day, at.hour, at.minute, at.second

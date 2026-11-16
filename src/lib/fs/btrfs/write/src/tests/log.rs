@@ -8,7 +8,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::items::{FS_TREE_OBJECTID, S_IFREG, Timespec};
+use xaqu_btrfs::items::{FS_TREE_OBJECTID, S_IFREG, Timespec};
 
 use super::{BLANK, MemDevice, Op, check, items};
 use crate::log::TREE_LOG_OBJECTID;
@@ -132,7 +132,7 @@ fn a_log_commit_flushes_before_its_superblock() {
     let superblock = log
         .iter()
         .position(
-            |op| matches!(op, Op::Write(at, _) if *at == ferrix_btrfs::superblock::PRIMARY_OFFSET),
+            |op| matches!(op, Op::Write(at, _) if *at == xaqu_btrfs::superblock::PRIMARY_OFFSET),
         )
         .expect("a log commit writes the primary superblock");
     assert!(
@@ -158,7 +158,7 @@ fn a_crash_between_the_log_and_its_superblock_leaves_the_last_commit() {
     let mut crashed = base;
     for op in &volume.device.log {
         if let Op::Write(at, data) = op
-            && *at != ferrix_btrfs::superblock::PRIMARY_OFFSET
+            && *at != xaqu_btrfs::superblock::PRIMARY_OFFSET
         {
             crashed.store(*at, data);
         }
@@ -220,7 +220,7 @@ fn the_log_tree_is_a_tree_of_its_own() {
     assert!(!logged.is_empty(), "the log holds the inode's items");
     assert!(
         logged.iter().all(|(key, _)| key.objectid == ino
-            || key.objectid == ferrix_btrfs::items::EXTENT_CSUM_OBJECTID),
+            || key.objectid == xaqu_btrfs::items::EXTENT_CSUM_OBJECTID),
         "the log holds nothing but that inode and its checksums"
     );
     assert!(

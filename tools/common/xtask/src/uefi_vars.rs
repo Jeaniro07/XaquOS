@@ -4,7 +4,7 @@
 //! five seconds, before it starts a boot option, and it takes the wait from
 //! the `Timeout` variable once one exists -- which on a store xtask made
 //! fresh for the boot it never does until that boot has waited and written
-//! it. 5.3 s of every AArch64 boot was that wait (ferrix-9a's survey of the
+//! it. 5.3 s of every AArch64 boot was that wait (xaqu-9a's survey of the
 //! gates' time, 2026-09-27). QEMU's `-boot splash-time=` does not reach it:
 //! the x86-64 build reads `etc/boot-menu-wait` from `fw_cfg`, the AArch64 build
 //! does not, and a boot with it set to fifteen seconds still waited five.

@@ -1,7 +1,7 @@
 //! Sample-rate conversion by a rational factor, with a polyphase windowed-sinc
 //! filter.
 //!
-//! Ferrix's sound card takes 48 kHz and nothing else (`docs/AUDIO.md` §3),
+//! Xaqu's sound card takes 48 kHz and nothing else (`docs/AUDIO.md` §3),
 //! so every source at another rate is converted before it is written: Bad
 //! Apple!!'s 44.1 kHz AAC (a factor of 160/147) and Doom's 11025 Hz sound
 //! effects (640/147). Output sample `j` sits at input position `j × M / L`;

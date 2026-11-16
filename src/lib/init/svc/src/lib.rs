@@ -72,7 +72,7 @@ pub use name::UnitName;
 pub use time::Instant;
 
 /// Something wrong with a unit file that does not stop it loading: an
-/// unknown key, a value that does not parse, a setting Ferrix does not have
+/// unknown key, a value that does not parse, a setting Xaqu does not have
 /// yet. systemd logs these and carries on, and so does init, so that a unit
 /// written for systemd still loads here.
 #[derive(Debug, Clone, PartialEq, Eq)]

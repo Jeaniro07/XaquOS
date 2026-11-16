@@ -16,9 +16,9 @@ files and still pass. This holds that in two halves.
    (kernel_source_roots.parts_place) literally: the record is the one place it is
    written (ledger 7445 B.2).
 
-2. The parity guard. Each walker below runs twice with FERRIX_WALK_LOG set: as the
+2. The parity guard. Each walker below runs twice with XAQU_WALK_LOG set: as the
    tree is, and with the fixture part tools/common/data/kernel-roots-fixture/src
-   added as a root (FERRIX_KERNEL_ROOTS_EXTRA). Each run, every file the guard
+   added as a root (XAQU_KERNEL_ROOTS_EXTRA). Each run, every file the guard
    counts itself (`git ls-files` under the roots, never the walker's own walk)
    must be in what the walker says it walked. In the fixture run,
    check-kernel-alloc-audit.py must report the fixture's planted allocation and
@@ -143,7 +143,7 @@ def run_walkers(extra: str | None) -> tuple[dict[str, set[str]], dict[str, str]]
     outputs: dict[str, str] = {}
     with tempfile.TemporaryDirectory() as scratch:
         log = Path(scratch) / "walk.log"
-        env = dict(os.environ, FERRIX_WALK_LOG=str(log))
+        env = dict(os.environ, XAQU_WALK_LOG=str(log))
         env.pop(kernel_roots.EXTRA_ENV, None)
         if extra:
             env[kernel_roots.EXTRA_ENV] = extra

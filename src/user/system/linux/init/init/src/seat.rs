@@ -17,7 +17,7 @@
 //!
 //! What this does not claim: a remote session of the same uid that has a
 //! program of the seat's session act for it (`hyprctl dispatch exec`) acts
-//! as the seat. That is a same-uid boundary, which Ferrix does not draw,
+//! as the seat. That is a same-uid boundary, which Xaqu does not draw,
 //! as logind and polkit do not.
 
 use std::collections::BTreeMap;

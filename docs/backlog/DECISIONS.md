@@ -70,13 +70,13 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   * **Tooling**: the component mirrors are repointed (yes), and the agents'
     incremental caches are trimmed (yes; mk-ci does it).
   * Not answered, so the consultant's defaults stand: console input staying
-    in ring 0, `ferrix-elf`'s ring, and deleting `PROCESS_CREATE` and
+    in ring 0, `xaqu-elf`'s ring, and deleting `PROCESS_CREATE` and
     `PROCESS_START`.
 * **2026-11-03 (customer)** **A tiny kernel in `fast` and `max`, compared,
   by compile flags only**: all of it from one source tree, `desktop` a hybrid
   and `present` as it is, no forks and no boot option choosing the shape. So
   "removed", "retired", "deleted" and "the flip" in `MICROKERNEL.md` M5 and M6
-  mean compiled out of `personality=user` builds; the same `ferrix-kernel-load`
+  mean compiled out of `personality=user` builds; the same `xaqu-kernel-load`
   source builds into ring 0 for `desktop` and into `linuxd` for `fast` and `max`.
   Softened the same evening: "don't delete" is a guideline; kernel code that no
   profile that still builds needs may be deleted, through the consultant.
@@ -84,7 +84,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   hit from moving it out is minimal.
 * **2026-11-03 (customer)** **The microkernel run**: five agents, each with its
   own consultant, this session as product owner, until 13:00 on 2026-11-04,
-  for "everything that makes ferrix a microkernel". The certification streams
+  for "everything that makes xaqu a microkernel". The certification streams
   (V1, V2, T1, F1, F2) are outside the run. Requirement ids are allotted up
   front in `requirement-reservations.json`, so the streams do not conflict.
 * **2026-10-30 (customer)** **Game mode: build the GPU path, the cheap
@@ -107,13 +107,13 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   refused; the desktop's own account is answered only in the trusted
   prompt.
 * **2026-10-23 (customer, through the coordinator)** **tole is a
-  repository of its own**, https://github.com/ferrix-os/tole, a component
+  repository of its own**, https://github.com/xaqu-os/tole, a component
   checked out at `src/user/system/linux/tole` (`components.toml`), built
   alone with its own CI; its Wayland backend is behind a feature. The
   compositor's `text` and `toolkit` crates stay in this tree and tole
   reaches them by path (`docs/UI-FRAMEWORK.md` §4.13).
 
-* **2026-10-23 (customer, through the coordinator)** **Ferrix's UI
+* **2026-10-23 (customer, through the coordinator)** **Xaqu's UI
   framework is called tole** (painted sheet metal, French *tôle*), built
   as designed in `docs/UI-FRAMEWORK.md` without waiting for a review: a
   QML-like markup in `.tole` files compiled into Rust at build time, the
@@ -128,11 +128,11 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   manager is called lode** ("lode sounds good"; a vein of ore, where you
   dig for what happened). The program and service binary is `lode` (`lode
   -b -1 -u hyprix`, `lode -f -p err`, `lode -k`), the crate and package
-  `ferrix-lode`; `journalctl` is a link to it only when `linux_abi=on`
+  `xaqu-lode`; `journalctl` is a link to it only when `linux_abi=on`
   (`docs/LOGGING.md`). Chosen after a conflict check: no log tool, command
   or distribution package named lode (Ubuntu, Arch, AUR, Homebrew);
   crates.io's `lode` is an unrelated Ruby package manager of 46 downloads,
-  hence `ferrix-lode`; npm's and PyPI's `lode` are small and unrelated;
+  hence `xaqu-lode`; npm's and PyPI's `lode` are small and unrelated;
   GitHub's look-alikes are other domains (lodepng, lodestar, lodestone,
   Lode Runner, pyLODE). The first choice, strata, was dropped for Palo
   Alto Networks' Strata Logging Service, a `strata` crate and the AUR's
@@ -159,10 +159,10 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   Asked "Power limits (consultant OK IF): accept about +500 kernel lines?
   also retire msrlog (−321 lines)? your dated words for a standing
   interface and for 48 A.", the customer answered "power limits are ok":
-  `ferrix.powerctl` and its driver stay in the tree, and the N150's model
+  `xaqu.powerctl` and its driver stay in the tree, and the N150's model
   row allows 48 A and at most 23 A above firmware's (the consultant's
   ledger 3130 condition 1 (a) and (c), ledger 3180 condition 1). No answer
-  on `ferrix.msrlog`, which stays.
+  on `xaqu.msrlog`, which stays.
 
 * **2026-10-21 (customer, through the coordinator os-22)** **ptrace is out
   of the certified `present` profile** (docs/DEBUG.md S2; the consultant's
@@ -171,9 +171,9 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   requirements cover the debug builds alone, and the N150 box is given an
   image built with the flag on when gdbserver or strace are needed there.
 
-* **2026-10-13 (customer)** **Ferrix becomes a microkernel whose ring 0
+* **2026-10-13 (customer)** **Xaqu becomes a microkernel whose ring 0
   is the certified item whole** (`docs/MICROKERNEL.md`, route C with
-  restricted mode). The customer asked to "plan out the switch of ferrix to
+  restricted mode). The customer asked to "plan out the switch of xaqu to
   become fully certifiable microkernels", and answered the plan's questions
   in these words: "Linux =use space => ok"; "performance: maximum
   performance"; "btrfs server: ok"; "cert level asil d etc so max
@@ -304,28 +304,28 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   it join, wait for the verdict and leave `main` alone.
 * **2026-10-04 (customer)** **Full runs are batched.** Branches ready to
   land share one run of the image row instead of paying it each:
-  `~/.local/share/ferrix/fleet/batch.sh` stacks them on `main`, runs the
+  `~/.local/share/xaqu/fleet/batch.sh` stacks them on `main`, runs the
   union of their gates once across the gate pool's slots, finds a failing
   entry by running its failed gates on the stack's prefixes at once, and the
   stack lands whole. How the product owner runs it is in `AGENTS.md`, *The
   product owner*, *Batching full runs*.
 * **2026-10-03 (customer)** **The `--everything` desktop runs as the user
-  `ferrix`, and the machine keeps the users' files apart from the system.**
+  `xaqu`, and the machine keeps the users' files apart from the system.**
   The session is started the way `docs/AUTH.md` §6 plans it, not as an
   interim: `sessiond` owns seat0 and hands hyprix its devices, and hyprix
-  and every client it starts run as `ferrix` (P2.4, P2.5), the device nodes
+  and every client it starts run as `xaqu` (P2.4, P2.5), the device nodes
   staying `0660 root`. The users' files are on a disk of their own,
-  `build/home.img` labelled `ferrix-home` and mounted at `/home`.
+  `build/home.img` labelled `xaqu-home` and mounted at `/home`.
   `--reset-root` starts only the system's root over, keeping `/home` and
   `--persistent`'s `/data`; the new `--reset-flash` starts all three over.
   The host's `hyprland.conf`, waybar and fuzzel settings are copied into
-  `/home/ferrix` once, when absent, so edits made in Ferrix are kept;
+  `/home/xaqu` once, when absent, so edits made in Xaqu are kept;
   `--reset-flash` copies them again. With the consultant's seat empty, an
   interim reviewer subagent of the session doing the work reviews its
   kernel changes, and its verdicts go in the consultant's ledger.
 * **2026-10-02 (customer)** **GPU support is NVIDIA's own driver.**
   NVIDIA's open-gpu-kernel-modules are ported so that their OS-agnostic core
-  (RM, NVKMS, GSP boot for Ampere) runs as a Ferrix driver. NVIDIA's
+  (RM, NVKMS, GSP boot for Ampere) runs as a Xaqu driver. NVIDIA's
   unmodified userspace (`libnvidia-*`, the Vulkan and GL ICD, later CUDA)
   talks to `/dev/nvidia*` as on Linux. Not nouveau and not NVK. The
   hardware is nazuna's RTX 3060, through libvirt, and only while the
@@ -339,7 +339,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   later, and N6 waits for it. The sources are fetched at 580.173.02 and
   never committed. The copy layer comes before dmabuf. Each platform change
   inside the item goes through the consultant on its own. Agents may start
-  `ferrix-3060` whenever the customer's domains sharing the card are shut
+  `xaqu-3060` whenever the customer's domains sharing the card are shut
   off; the 3090 is never touched.
 * **2026-10-02 (customer)** **Build System V shared memory for Steam's web
   helper's MIT-SHM.** Asked by the session making Steam smooth: the web
@@ -399,8 +399,8 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   only on a wiped disk; and a raw `.img` and a hybrid `.iso`, both attached
   to GitHub releases. The design (21 slices, 162 points) was **approved the
   same day**, with §10's recommendations taken for decisions 2 and 5: an
-  auto-login `ferrix` live user and a text-mode fallback. **Secure Boot is
-  supported** through Ubuntu's Microsoft-signed shim and a Ferrix key the
+  auto-login `xaqu` live user and a text-mode fallback. **Secure Boot is
+  supported** through Ubuntu's Microsoft-signed shim and a Xaqu key the
   owner enrolls once in MokManager (§5.7, I13, 13 points). For decision 1 the customer wants **the full setup for
   shrinking the other system's partition**: the installer shrinks NTFS,
   ext4 and btrfs itself (§4.6, S1–S6, 76 points; 251 in all). Order: the
@@ -409,20 +409,20 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   (`docs/YSERVER.md`, 7 slices, 36 points) is approved. Its code lives on a
   **fork of yserver on the customer's GitHub account**, pinned by commit in
   `tools/common/fetch/fetch-yserver.sh`, not as a patch series here and not
-  upstream first. The backend speaks Wayland through **Ferrix's own**
+  upstream first. The backend speaks Wayland through **Xaqu's own**
   `compositor-wire`, `compositor-protocol` and `compositor-shm`, not the
   `wayland-client` crate.
-* **2026-09-27 (customer, relayed by ferrix-f6)** **Steam's X server is
+* **2026-09-27 (customer, relayed by xaqu-f6)** **Steam's X server is
   yserver** (github.com/joske/yserver, Rust, MIT), not C Xwayland with
-  xwayland-satellite. Ferrix adds the rootless Wayland backend yserver
+  xwayland-satellite. Xaqu adds the rootless Wayland backend yserver
   lacks, behind its backend trait: each top-level X window an
   `xdg_toplevel` on hyprix, input and the clipboard bridged.
   xwayland-satellite (MPL-2.0) is read as a reference, not copied. Order:
-  a feasibility pass on a pinned release (headless backend on Ferrix, an X
+  a feasibility pass on a pinned release (headless backend on Xaqu, an X
   client against it), then a written design sent to the coordinator, then
   the build in small landings (`docs/roadmap/stage-22-steam.md`). Owner:
-  ferrix-c3 (was ferrix-41).
-* **2026-09-27 (customer, ferrix-55)** `src/kernel/src` is grouped by what each
+  xaqu-c3 (was xaqu-41).
+* **2026-09-27 (customer, xaqu-55)** `src/kernel/src` is grouped by what each
   file is (`docs/LAYOUT.md`): `arch/<isa>/`, `arch/arm_common/`,
   `platform/<vendor>/<soc>/`. Every file kept its ring in the move.
   `#[cfg(target_arch)]` stays under `arch/` alone -- the certification
@@ -439,10 +439,10 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
 
 * **2026-09-26 (customer)** **Doom is room4doom, fetched at build time,**
   never committed. It is labelled MIT but calls itself a transliteration of
-  id's GPL-2.0 C source, so Ferrix treats it as GPL: cargo fetches it as a
+  id's GPL-2.0 C source, so Xaqu treats it as GPL: cargo fetches it as a
   git dependency pinned to one revision, the way Chrome is fetched, and the
-  repository holds only Ferrix's MIT backend for it (`docs/MEDIA.md` §1).
-* **2026-09-26 (customer)** The fleet has a coordinator, ferrix-2c, which
+  repository holds only Xaqu's MIT backend for it (`docs/MEDIA.md` §1).
+* **2026-09-26 (customer)** The fleet has a coordinator, xaqu-2c, which
   keeps the landing order under the landing lock (standing rules above); the
   customer stays product owner for scope. No new scope starts without the
   customer.
@@ -471,7 +471,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   driver is built as a static archive against ferrousli and presents over
   `wl_shm` until dmabuf lands. The DK1's Vivante GC400T is an OpenGL ES 2.0
   core with no Vulkan in any driver, so the board gets gears drawn by that
-  core through a ring-3 driver of Ferrix's own, rather than vkgears on a CPU
+  core through a ring-3 driver of Xaqu's own, rather than vkgears on a CPU
   Vulkan that would test no GPU. `docs/GPU.md` §6 has the reasons and the
   steps: 39 points for Venus, 32 for the GC400.
 
@@ -494,13 +494,13 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   first guesses that sum past 300 points; the rest is stages 12, 13 and
   dynamic linking, which were already there.
 * **2026-09-18 (customer)** The GPU: **Path A first, Path B in a later
-  stage.** Path A is GPU acceleration for Ferrix as a guest through
+  stage.** Path A is GPU acceleration for Xaqu as a guest through
   virtio-gpu's 3D commands, which uses the host's NVIDIA driver without
   porting it: the ring-3 driver's 3D commands, a render node with the
   `virtgpu` ioctls and 3D scanout, the host half in xtask, and a Rust virgl
   encoder as the compositor's renderer behind a renderer trait -- 52 points,
   in that order, `docs/GPU.md` §3. Path B is a driver for an NVIDIA card
-  under Ferrix itself, for the day Ferrix runs on bare metal: stage 21,
+  under Xaqu itself, for the day Xaqu runs on bare metal: stage 21,
   unsized, `docs/GPU.md` §4. This settles the third of the three choices
   left open on 2026-09-13 below: neither Mesa on ferrousli nor Vulkan for
   the compositor, but a Rust encoder of virgl's command stream, with Mesa
@@ -516,7 +516,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   `/dev/dri/card0` itself, `src/lib/drivers/input/virtio-input` is the input driver, and
   `src/user/system/linux/compositor/render` is the renderer Smithay's own pixman would have been.
   What would be left of Smithay is `wayland-server`'s marshalling and its
-  protocol handlers, and taking those means every Ferrix system call they
+  protocol handlers, and taking those means every Xaqu system call they
   make is a dependency's choice rather than this tree's -- on a kernel whose
   Linux surface is still being filled in, that turns a compositor bug into a
   hunt through someone else's crate. Writing the wire protocol is about 20
@@ -536,14 +536,14 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   landing carries its own documentation.
 
 * **2026-09-14** The busybox built against ferrousli is the primary busybox:
-  the userland Ferrix is measured with, first in every `test-shell` and
+  the userland Xaqu is measured with, first in every `test-shell` and
   `test-vfs` the gates run. The musl and glibc busyboxes stay required as
   compatibility checks. A `src/user/system/linux/ferrousli/` landing rebuilds it and runs both with
   it. This carries out the customer's 2026-09-13 order below once the binary
   passed both, at 5e9b0b6 with no stub reached.
 
 * **2026-09-13 (customer)** The goal after `rustc` is a Hyprland-shaped
-  Wayland compositor, written in Rust, running on Ferrix. Roadmap stages 17
+  Wayland compositor, written in Rust, running on Xaqu. Roadmap stages 17
   (display and input), 18 (the compositor) and 19 (Hyprland fidelity and the
   GPU) carry it; self-hosting moves to stage 20. Pulled onto the path by it:
   `AF_UNIX` with `SCM_RIGHTS` (from networking), `memfd_create` with sealing
@@ -552,7 +552,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   allowed at stage 18; the other two choices named that day were settled on
   2026-09-17 (from scratch, not Smithay) and 2026-09-18 (the GPU's Path A).
 * **2026-09-13 (customer)** POSIX.1-2024 compatibility is a goal, on the
-  condition that it never breaks Linux compatibility. Ferrix takes POSIX
+  condition that it never breaks Linux compatibility. Xaqu takes POSIX
   through its libc over the Linux ABI (ARCHITECTURE §2), so the goal costs
   the kernel nothing new in kind: every mandatory POSIX.1-2024 interface is a
   Linux system call the kernel must answer as Linux does, and the libc side is
@@ -560,7 +560,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   the POSIX interface sweep and `AF_UNIX` sockets (P1), libc-test as the
   measure (P2). `AF_INET` stays with the networking stage.
 * **2026-09-13 (customer)** Ferrousli is to replace the musl and glibc
-  busyboxes as the userland Ferrix is measured with, as fast as it can be
+  busyboxes as the userland Xaqu is measured with, as fast as it can be
   done: once its busybox passes `test-shell` it becomes the primary binary of
   that gate, with musl and glibc kept as the compatibility checks. Static musl
   stays the goal path to `rustc`, whose `std` targets it.
@@ -569,7 +569,7 @@ otherwise; one a later decision replaced is deleted, and the history keeps it.
   stages", not as done: an EXECUTE right on the VMO handle comes with
   `process_create`'s native loader, its first consumer.
 * **2026-09-13 (PO)** The DK1 reset follow-ups, as specified: the loader reads
-  `bootargs` from a `CMDLINE.TXT` on the ESP so `ferrix.onexit=reset` survives
+  `bootargs` from a `CMDLINE.TXT` on the ESP so `xaqu.onexit=reset` survives
   a reset without U-Boot's `saveenv`; `test-boot --reset` boots with that option
   and requires QEMU to show a reset, not a power-off. Both go into
   `docs/vendor/st/stm32mp157-dk.md` with the landing.

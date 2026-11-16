@@ -167,7 +167,7 @@ fn pinned() -> &'static str {
 /// The volume has not been made, or was made with another yserver, DXVK
 /// or game.
 fn volume() -> Result<PathBuf> {
-    let directory = match std::env::var_os("FERRIX_UNITY_VOLUME") {
+    let directory = match std::env::var_os("XAQU_UNITY_VOLUME") {
         Some(directory) => PathBuf::from(directory),
         None => paths::volume_directory("unity")?,
     };
@@ -309,7 +309,7 @@ fn screen(qmp: &mut Qmp, dump: &Path) -> Result<Image> {
 /// No static busybox, or a build that fails.
 fn desktop(arch: Arch, args: &Args) -> Result<(PathBuf, PathBuf)> {
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-unity needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-unity needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let mut ports = crate::yserver::desktop_files(&[]);
@@ -421,7 +421,7 @@ pub(crate) fn test_unity(args: &Args) -> Result<()> {
     })?;
     println!(
         "  {arch}: Spaceship Demo drew its walkthrough through DXVK on lavapipe in Wine on \
-         Ferrix: {summary}; {} and {}",
+         Xaqu: {summary}; {} and {}",
         first_dump.display(),
         second_dump.display()
     );

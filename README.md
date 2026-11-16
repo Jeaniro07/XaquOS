@@ -1,39 +1,39 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/banner-dark.png">
-    <img src="docs/brand/banner-light.png" alt="Ferrix: Linux apps without Linux" width="100%">
+    <img src="docs/brand/banner-light.png" alt="Xaqu: Linux apps without Linux" width="100%">
   </picture>
 </p>
 
-# Ferrix
+# Xaqu
 
 **An operating system written by a fleet of Claude Code sessions.**
 
-Claude Code sessions write Ferrix: its Rust kernel,
+Claude Code sessions write Xaqu: its Rust kernel,
 its drivers, its compositor, its shell and its tests. A person, the
 customer, decides what is built, in what order, and what is good enough.
 The sessions plan the work, write the code, review each other's changes and
 land them once their tests pass. [How the fleet works](#how-the-fleet-works)
 says who does what.
 
-**Linux apps without Linux.** Ferrix runs tested, unchanged Linux programs
+**Linux apps without Linux.** Xaqu runs tested, unchanged Linux programs
 on its own kernel: Chrome, `git`, `curl`, `rustc`, Valve's Steam client and,
 through Proton, a Windows game. Disk, network, graphics, input and power
-drivers run as separate processes that Ferrix can restart when they crash.
+drivers run as separate processes that Xaqu can restart when they crash.
 
-Ferrix is experimental. Logins, `su` and the lock screen check passwords,
+Xaqu is experimental. Logins, `su` and the lock screen check passwords,
 but it is not ready to be your everyday operating system, and most of its
 tests run in QEMU.
 
-[See what works](#what-works) · [Download the live ISO](https://github.com/ferrix-os/ferrix/releases/latest) ·
+[See what works](#what-works) · [Download the live ISO](https://github.com/xaqu-os/xaqu/releases/latest) ·
 [Try it without building](#try-it-without-building) ·
-[Boot Ferrix](#boot-ferrix) · [Read the technical guide](docs/GUIDE.md) ·
-[Visit the website](https://ferrix-os.org/)
+[Boot Xaqu](#boot-xaqu) · [Read the technical guide](docs/GUIDE.md) ·
+[Visit the website](https://xaqu-os.org/)
 
-![Ferrix's Xaqu desktop on an Intel N150 mini PC: Arknights: Endfield in a window, btop and ferrofetch beside it](docs/brand/screenshots/hero-n150.png)
+![Xaqu's Xaqu desktop on an Intel N150 mini PC: Arknights: Endfield in a window, btop and ferrofetch beside it](docs/brand/screenshots/hero-n150.png)
 
-*Ferrix's desktop, Xaqu, on an Intel N150 mini PC: Arknights: Endfield from
-Steam, in a window, through Ferrix's own Intel GPU driver, with btop and
+*Xaqu's desktop, Xaqu, on an Intel N150 mini PC: Arknights: Endfield from
+Steam, in a window, through Xaqu's own Intel GPU driver, with btop and
 ferrofetch beside it.*
 
 ## What works
@@ -41,13 +41,13 @@ ferrofetch beside it.*
 - **Linux programs, unchanged:** Chrome, `rustc`, `git`, `curl`, Valve's
   `steamcmd` and Steam client, and other tested binaries, 32-bit x86 programs
   included. Wine and Proton run Windows programs, among them Endfield's
-  launcher and the game. Claude Code runs a full session on Ferrix's desktop
-  ([docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md)). Ferrix implements the Linux
+  launcher and the game. Claude Code runs a full session on Xaqu's desktop
+  ([docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md)). Xaqu implements the Linux
   system calls these programs need, and has its own C library, ferrousli.
-- **A desktop:** hyprix, Ferrix's Wayland compositor, reads `hyprland.conf`
+- **A desktop:** hyprix, Xaqu's Wayland compositor, reads `hyprland.conf`
   and tiles windows. It also has a floating layout with snapping, an
   activities overview, title bars it draws itself, and screens added and
-  removed while it runs. Xaqu, Ferrix's default desktop, adds a dock and
+  removed while it runs. Xaqu, Xaqu's default desktop, adds a dock and
   sidebars on top of it
   ([docs/DESKTOP.md](docs/DESKTOP.md)). A fullscreen program's own buffer can
   go straight to the screen. Each display driver lists the modes its screen
@@ -64,31 +64,31 @@ ferrofetch beside it.*
   all. On the N150, a ring-3 power driver sets the processor's
   voltage-regulator current limit through typed kernel calls
   ([docs/POWERCTL.md](docs/POWERCTL.md)).
-- **Real hardware:** on the N150, Ferrix boots to its desktop with `/` on the
+- **Real hardware:** on the N150, Xaqu boots to its desktop with `/` on the
   SATA drive, its own network driver for the Motorcomm YT6801, USB input and
   the Intel GPU ([docs/N150.md](docs/N150.md)). It has also booted on a
   Pixel 7, on all eight cores, and on an STM32MP157D-DK1 board. NVIDIA's own
   driver runs as a process on an RTX 3060 passed to a virtual machine. Every
   landing that changes the image boots it on x86-64, AArch64 and ARMv7-A.
-- **When hardware fails:** on x86-64, Intel and AMD, Ferrix reads the
+- **When hardware fails:** on x86-64, Intel and AMD, Xaqu reads the
   processor's error banks and logs every machine check, corrected ones
-  included (`/proc/ferrix-mce`). A bad page a program reads ends that
+  included (`/proc/xaqu-mce`). A bad page a program reads ends that
   program, not the kernel, and its frame stays retired across a reboot. An
   unstable core is taken out of service, and free memory is tested while
   the machine idles ([docs/MACHINE-CHECK.md](docs/MACHINE-CHECK.md)).
   Running out of memory ends a program, not the system.
 - **Users, namespaces and containers:** the full desktop runs as the user
-  `ferrix`, not root, and passwords are checked by `authd`. Ferrix has pid,
+  `xaqu`, not root, and passwords are checked by `authd`. Xaqu has pid,
   user, mount, network, UTS, IPC and cgroup namespaces, cgroup v2 limits and
   seccomp filters; `cargo xtask test-container` runs an unprivileged
   container under a memory limit on all three architectures.
 - **Storage, networking, updates:** the root filesystem is btrfs, read and
-  write. Inside Ferrix, `git` clones a repository and `curl` fetches over
+  write. Inside Xaqu, `git` clones a repository and `curl` fetches over
   HTTPS. A disk can carry two system slots, and a new system that does not
   come up falls back to the good one ([docs/AB-BOOT.md](docs/AB-BOOT.md)).
-- **Developing Ferrix on Ferrix:** the toolchain volume carries `cargo`,
-  `clippy`, `rust-analyzer` and the helix editor, and Ferrix builds its own
-  image ([docs/DEV-ON-FERRIX.md](docs/DEV-ON-FERRIX.md)). The zinc shell is
+- **Developing Xaqu on Xaqu:** the toolchain volume carries `cargo`,
+  `clippy`, `rust-analyzer` and the helix editor, and Xaqu builds its own
+  image ([docs/DEV-ON-XAQU.md](docs/DEV-ON-XAQU.md)). The zinc shell is
   zsh-compatible, runs oh-my-zsh, and behaves as zsh's `sh` emulation when it
   is started as `sh`.
 - **On the way to a microkernel:** in the `fast` build profile, Linux's
@@ -104,7 +104,7 @@ still being built, and [the backlog](docs/BACKLOG.md) what is broken.
 
 ## How the fleet works
 
-Ferrix is not one long chat. It is a team of Claude Code sessions with
+Xaqu is not one long chat. It is a team of Claude Code sessions with
 roles, and one person, the customer, above them ([AGENTS.md](AGENTS.md)).
 
 - **The customer** decides scope, priorities and every question of
@@ -137,7 +137,7 @@ open and closed findings alike, is in
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/brand/screenshots/live-installer.png" alt="The live ISO's Xaqu desktop with the Ferrix installer's welcome page"></td>
+    <td width="50%"><img src="docs/brand/screenshots/live-installer.png" alt="The live ISO's Xaqu desktop with the Xaqu installer's welcome page"></td>
     <td width="50%"><img src="docs/brand/screenshots/installer-summary.png" alt="The installer's summary page before it erases the chosen disk"></td>
   </tr>
   <tr>
@@ -146,7 +146,7 @@ open and closed findings alike, is in
   </tr>
   <tr>
     <td width="50%"><img src="docs/brand/screenshots/suspend.png" alt="A program suspended with SUPER+Z: its window, a clock stopped at 23:52:12, at half opacity over ferrofetch, while a terminal reads its cgroup as frozen"></td>
-    <td width="50%"><img src="docs/brand/screenshots/machine-check.png" alt="A terminal showing uname as Ferrix 0.3.0 and /proc/ferrix-mce counting one corrected error on cpu2"></td>
+    <td width="50%"><img src="docs/brand/screenshots/machine-check.png" alt="A terminal showing uname as Xaqu 0.3.0 and /proc/xaqu-mce counting one corrected error on cpu2"></td>
   </tr>
   <tr>
     <td>v0.3.0: SUPER+Z freezes a program in RAM; its clock stopped.</td>
@@ -154,7 +154,7 @@ open and closed findings alike, is in
   </tr>
 </table>
 
-[![On Ferrix's desktop, rustc compiles and runs a hello-world program in a terminal, then Chrome loads Wikipedia's article on Rust](docs/brand/screenshots/demo-loop.gif)](docs/brand/screenshots/demo.mp4)
+[![On Xaqu's desktop, rustc compiles and runs a hello-world program in a terminal, then Chrome loads Wikipedia's article on Rust](docs/brand/screenshots/demo-loop.gif)](docs/brand/screenshots/demo.mp4)
 
 *15 seconds, in real time, of [a 70-second recording](docs/brand/screenshots/demo.mp4)
 that starts at the firmware: `rustc` compiling and running a program, then Chrome
@@ -163,12 +163,12 @@ loading Wikipedia.*
 <table>
   <tr>
     <td width="33%"><img src="docs/brand/screenshots/terminal-omz.png" alt="zinc shell showing driver processes, service status and a curl request"></td>
-    <td width="33%"><img src="docs/brand/screenshots/desktop-chrome.png" alt="Chrome browsing Wikipedia on the Ferrix desktop"></td>
+    <td width="33%"><img src="docs/brand/screenshots/desktop-chrome.png" alt="Chrome browsing Wikipedia on the Xaqu desktop"></td>
     <td width="33%"><img src="docs/brand/screenshots/btop.png" alt="btop showing Chrome, the compositor and driver processes"></td>
   </tr>
   <tr>
     <td>The zinc shell, driver processes and a <code>curl</code> request.</td>
-    <td>Chrome browsing Wikipedia on Ferrix.</td>
+    <td>Chrome browsing Wikipedia on Xaqu.</td>
     <td><code>btop</code> showing what's running.</td>
   </tr>
 </table>
@@ -177,7 +177,7 @@ loading Wikipedia.*
 
 ## The repositories
 
-Ferrix lives in the [ferrix-os](https://github.com/ferrix-os) organization. This
+Xaqu lives in the [xaqu-os](https://github.com/xaqu-os) organization. This
 repository holds the kernel, its libraries, the system's programs and the build;
 the parts below have repositories of their own, which `cargo xtask` checks out into
 this tree at the commits [`components.toml`](components.toml) names.
@@ -185,40 +185,40 @@ this tree at the commits [`components.toml`](components.toml) names.
 <table>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://github.com/ferrix-os/ferrousli"><img src="docs/brand/screenshots/btop.png" alt="btop, built against ferrousli, on Ferrix"></a>
-      <br><b><a href="https://github.com/ferrix-os/ferrousli">ferrix-os/ferrousli</a></b><br>
-      The C library, written in Rust, that Linux programs on Ferrix are built against,
+      <a href="https://github.com/xaqu-os/ferrousli"><img src="docs/brand/screenshots/btop.png" alt="btop, built against ferrousli, on Xaqu"></a>
+      <br><b><a href="https://github.com/xaqu-os/ferrousli">xaqu-os/ferrousli</a></b><br>
+      The C library, written in Rust, that Linux programs on Xaqu are built against,
       and the toolkit they are ported onto it with.
     </td>
     <td width="50%" valign="top">
-      <a href="https://github.com/ferrix-os/zinc"><img src="docs/brand/screenshots/terminal-omz.png" alt="zinc running oh-my-zsh on Ferrix"></a>
-      <br><b><a href="https://github.com/ferrix-os/zinc">ferrix-os/zinc</a></b><br>
+      <a href="https://github.com/xaqu-os/zinc"><img src="docs/brand/screenshots/terminal-omz.png" alt="zinc running oh-my-zsh on Xaqu"></a>
+      <br><b><a href="https://github.com/xaqu-os/zinc">xaqu-os/zinc</a></b><br>
       The zsh-compatible shell, written in Rust, with oh-my-zsh running in it.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="https://github.com/ferrix-os/apps"><img src="docs/brand/screenshots/vkgears.png" alt="vkgears drawing Vulkan gears on Ferrix"></a>
-      <br><b><a href="https://github.com/ferrix-os/apps">ferrix-os/apps</a></b><br>
-      Every program a person starts: Ferrix's own, like badapple and ferrofetch,
+      <a href="https://github.com/xaqu-os/apps"><img src="docs/brand/screenshots/vkgears.png" alt="vkgears drawing Vulkan gears on Xaqu"></a>
+      <br><b><a href="https://github.com/xaqu-os/apps">xaqu-os/apps</a></b><br>
+      Every program a person starts: Xaqu's own, like badapple and ferrofetch,
       and those ported onto ferrousli, like foot, btop, curl, git and vkgears.
     </td>
     <td width="50%" valign="top">
-      <a href="https://github.com/ferrix-os/ferrix-os.github.io"><img src="docs/brand/screenshots/website.png" alt="Ferrix's website"></a>
-      <br><b><a href="https://github.com/ferrix-os/ferrix-os.github.io">ferrix-os/ferrix-os.github.io</a></b><br>
-      The website, at <a href="https://ferrix-os.org/">ferrix-os.org</a>.
+      <a href="https://github.com/xaqu-os/xaqu-os.github.io"><img src="docs/brand/screenshots/website.png" alt="Xaqu's website"></a>
+      <br><b><a href="https://github.com/xaqu-os/xaqu-os.github.io">xaqu-os/xaqu-os.github.io</a></b><br>
+      The website, at <a href="https://xaqu-os.org/">xaqu-os.org</a>.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <b><a href="https://github.com/ferrix-os/yserver">ferrix-os/yserver</a></b><br>
+      <b><a href="https://github.com/xaqu-os/yserver">xaqu-os/yserver</a></b><br>
       The X server, in Rust, that Steam, Proton's games and other X11 programs
-      draw through, on Ferrix's rootless Wayland backend.
+      draw through, on Xaqu's rootless Wayland backend.
     </td>
     <td width="50%" valign="top">
-      <a href="https://github.com/ferrix-os/pixel7"><img src="https://raw.githubusercontent.com/ferrix-os/pixel7/main/monitor/icons/icon.png" alt="The Pixel 7 tools' icon" width="128"></a>
-      <br><b><a href="https://github.com/ferrix-os/pixel7">ferrix-os/pixel7</a></b><br>
-      Ferrix on the Pixel 7: the Android launcher app, the desktop build, release
+      <a href="https://github.com/xaqu-os/pixel7"><img src="https://raw.githubusercontent.com/xaqu-os/pixel7/main/monitor/icons/icon.png" alt="The Pixel 7 tools' icon" width="128"></a>
+      <br><b><a href="https://github.com/xaqu-os/pixel7">xaqu-os/pixel7</a></b><br>
+      Xaqu on the Pixel 7: the Android launcher app, the desktop build, release
       packaging and the monitor.
     </td>
   </tr>
@@ -228,24 +228,24 @@ this tree at the commits [`components.toml`](components.toml) names.
 
 From v0.2.0 on, each release also carries a live ISO: Xaqu's desktop
 from a CD, a virtual disk or a USB stick, with an installer that puts
-Ferrix on a disk of its own. Download it from
-[the latest release](https://github.com/ferrix-os/ferrix/releases/latest)
-and check it against `SHA256SUMS`. [Try Ferrix](docs/TRY-FERRIX.md) covers
+Xaqu on a disk of its own. Download it from
+[the latest release](https://github.com/xaqu-os/xaqu/releases/latest)
+and check it against `SHA256SUMS`. [Try Xaqu](docs/TRY-XAQU.md) covers
 QEMU, VirtualBox, VMware and writing the stick.
 
 Each release carries the x86-64 desktop as one zip. You need QEMU and
 nothing else: no Rust, no build. On Linux or macOS:
 
 ```sh
-curl -LO https://github.com/ferrix-os/ferrix/releases/latest/download/ferrix-x86_64-desktop.zip
-unzip ferrix-x86_64-desktop.zip && sh ferrix-x86_64-desktop/run.sh
+curl -LO https://github.com/xaqu-os/xaqu/releases/latest/download/xaqu-x86_64-desktop.zip
+unzip xaqu-x86_64-desktop.zip && sh xaqu-x86_64-desktop/run.sh
 ```
 
 On Windows, in PowerShell:
 
 ```powershell
-Invoke-WebRequest https://github.com/ferrix-os/ferrix/releases/latest/download/ferrix-x86_64-desktop.zip -OutFile ferrix.zip
-Expand-Archive ferrix.zip .; powershell -ExecutionPolicy Bypass -File ferrix-x86_64-desktop\run.ps1
+Invoke-WebRequest https://github.com/xaqu-os/xaqu/releases/latest/download/xaqu-x86_64-desktop.zip -OutFile xaqu.zip
+Expand-Archive xaqu.zip .; powershell -ExecutionPolicy Bypass -File xaqu-x86_64-desktop\run.ps1
 ```
 
 A QEMU window opens on the desktop with a terminal in it; try `btop`,
@@ -257,15 +257,15 @@ memory, so nothing is kept after QEMU exits. With released QEMU on Windows
 the guest gets one processor. The zip's `README.txt` covers firmware,
 options and the rest. The [install guide](docs/INSTALL.md) walks through
 it with pictures of each step on Windows and Linux, says what to do when
-a step fails, and where installing Ferrix on a disk stands.
+a step fails, and where installing Xaqu on a disk stands.
 
-## Boot Ferrix
+## Boot Xaqu
 
 Install Rust and QEMU, then:
 
 ```sh
-git clone https://github.com/ferrix-os/ferrix.git
-cd ferrix
+git clone https://github.com/xaqu-os/xaqu.git
+cd xaqu
 cargo xtask run --arch x86_64
 ```
 
@@ -276,20 +276,20 @@ for Chrome and the Rust toolchain. Quit QEMU with `Ctrl-A`, then `x`.
 
 ## Check the claims
 
-The boot test starts Ferrix on all three architectures:
+The boot test starts Xaqu on all three architectures:
 
 ```sh
 cargo xtask test-boot --arch all
 ```
 
-Other tests compile a program with an unmodified `rustc` inside Ferrix and boot
-an x86-64 image built inside Ferrix. Ferrix has also built its own AArch64
-image inside Ferrix on a Pixel 7, in the phone's own virtual machine, and
+Other tests compile a program with an unmodified `rustc` inside Xaqu and boot
+an x86-64 image built inside Xaqu. Xaqu has also built its own AArch64
+image inside Xaqu on a Pixel 7, in the phone's own virtual machine, and
 that image passed the boot test. The [guide](docs/GUIDE.md#proof-you-can-run)
 has the commands and serial output. These tests demonstrate specific working
 paths; they are not a claim that every Linux app works. What this page says
 about the N150 comes from runs on that one machine, not from a gate.
 
-Ferrix is MIT licensed. [Explore the code and component docs](docs/GUIDE.md#layout),
+Xaqu is MIT licensed. [Explore the code and component docs](docs/GUIDE.md#layout),
 [get the logo and press kit](docs/marketing/README.md), or
-[open an issue](https://github.com/ferrix-os/ferrix/issues).
+[open an issue](https://github.com/xaqu-os/xaqu/issues).

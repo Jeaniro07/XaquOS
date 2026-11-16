@@ -27,9 +27,9 @@ composition root.
 
 Measured on develop b6a737ea4 (lines with `wc -l`, rings with the item's
 globs; "check" is a `*_check.rs` file or a `check/` module). Crates:
-**C** `ferrix-kernel-core`, **I** `ferrix-kernel-item`, **L**
-`ferrix-kernel-load`, **S** `ferrix-kernel-settings`, **B** the binary
-`ferrix-kernel`, **lift** the `ferrix-lift-*` twins that build linuxd.
+**C** `xaqu-kernel-core`, **I** `xaqu-kernel-item`, **L**
+`xaqu-kernel-load`, **S** `xaqu-kernel-settings`, **B** the binary
+`xaqu-kernel`, **lift** the `xaqu-lift-*` twins that build linuxd.
 Profiles: **pr** `present`, **de** `desktop` (both `personality=kernel`, load
 in ring 0), **fa** `fast`, **mx** `max` (both `personality=user`: core and
 item in ring 0, the load in `linuxd` once M5 flips them).
@@ -75,7 +75,7 @@ item in ring 0, the load in `linuxd` once M5 flips them).
 | `interfaces/input/` | load | L | 1,310 | 0 | pr, de |
 | `interfaces/net_ring/` | load | L | 927 | 693 | pr, de |
 | `interfaces/logctl/` | load | L | 281 | 190 | pr, de |
-| `platform/st/stm32mp1*` | load | L (not in the lift: `cfg(not(ferrix_load_built = "lift"))`) | 1,620 | 0 | pr, de (DK1) |
+| `platform/st/stm32mp1*` | load | L (not in the lift: `cfg(not(xaqu_load_built = "lift"))`) | 1,620 | 0 | pr, de (DK1) |
 | `platform/google/gs201/usb.rs` | load | L (same) | 142 | 0 | pr, de (Pixel 7) |
 | `seam.rs`, `setters.rs`, `kernel_load.rs` | load | L | 589 | | pr, de |
 | `settings/`, `kernel_settings.rs` | load | S (removable, `runtime_settings=live`) | 532 | 0 | pr, de |
@@ -88,7 +88,7 @@ S5, 7346 (1)): 40 built by the load (object 21, arch 7, user 4, syscall 4,
 iommu 2, device 1, `service_check.rs`), `arch/x86_64/framebuffer/check.rs` by
 the item, `stages_check.rs` by the binary. Under `fast` and `max`, ring 0 is the core and
 item rows only; everything from `syscall/` (load) down is either in `linuxd`
-(through `ferrix-lift-load`, which compiles `kernel_load.rs` a second time)
+(through `xaqu-lift-load`, which compiles `kernel_load.rs` a second time)
 or, for the board glue, built nowhere yet.
 
 **The load's internal edges** (non-comment `crate::` paths between groups,
@@ -116,30 +116,30 @@ the item, their crates, the binary and its composition root, the build
 script and the linker scripts, the lift's shim of the core and the item
 (the core's and item's interface seen from user space, which belongs with
 what it mirrors), and one crate of raised checks (§2.6 item 5). The load
-leaves whole in S5, keeping its package name `ferrix-kernel-load`, and is
+leaves whole in S5, keeping its package name `xaqu-kernel-load`, and is
 then cut into parts inside `src/kernel/extensions/` (P1 to P3), the
 customer's name for the parts' place (2026-11-05, §2.2).
 
 ```text
 src/kernel/                           ring 0 under fast/max, and the composition root
-  Cargo.toml build.rs linker/         the binary ferrix-kernel (main.rs, stages_check.rs)
-  core/ item/                         ferrix-kernel-core, ferrix-kernel-item
-  checks/                             ferrix-kernel-raised-checks (S5): root in src/, files stay put
-  lift/{core,item}/                   the shim's manifests (ferrix-lift-core, -item)
+  Cargo.toml build.rs linker/         the binary xaqu-kernel (main.rs, stages_check.rs)
+  core/ item/                         xaqu-kernel-core, xaqu-kernel-item
+  checks/                             xaqu-kernel-raised-checks (S5): root in src/, files stay put
+  lift/{core,item}/                   the shim's manifests (xaqu-lift-core, -item)
   src/                                core and item files, the shim, the crate roots
   extensions/                         optional parts; each a crate, built into ring 0 or linuxd
-    settings/                 ferrix-kernel-settings         S1  + lift/ twin (ferrix-lift-settings, linuxd's `live`)
-    board/stm32mp1/           ferrix-kernel-board-stm32mp1   S2
-    board/gs201-usb/          ferrix-kernel-board-gs201-usb  S2
-    device/logctl/            ferrix-kernel-logctl           S3  + lift/ twin
-    device/net-ring/          ferrix-kernel-net-ring         S4  + lift/ twin
-    personality/linux/        ferrix-kernel-load             S5  + lift/ twin (ferrix-lift-load)
-    fs/btrfs/                 ferrix-kernel-btrfs            P1
-    device/{input,audio}/     ferrix-kernel-input, -audio    P2
-    device/block-ring/        ferrix-kernel-block-ring       P2
-    device/gpu/               ferrix-kernel-gpu (display, render, chardev)  P3
+    settings/                 xaqu-kernel-settings         S1  + lift/ twin (xaqu-lift-settings, linuxd's `live`)
+    board/stm32mp1/           xaqu-kernel-board-stm32mp1   S2
+    board/gs201-usb/          xaqu-kernel-board-gs201-usb  S2
+    device/logctl/            xaqu-kernel-logctl           S3  + lift/ twin
+    device/net-ring/          xaqu-kernel-net-ring         S4  + lift/ twin
+    personality/linux/        xaqu-kernel-load             S5  + lift/ twin (xaqu-lift-load)
+    fs/btrfs/                 xaqu-kernel-btrfs            P1
+    device/{input,audio}/     xaqu-kernel-input, -audio    P2
+    device/block-ring/        xaqu-kernel-block-ring       P2
+    device/gpu/               xaqu-kernel-gpu (display, render, chardev)  P3
     fs/{procfs,sysfs,devfs,cgroupfs}/                        P3
-    net/stack/                ferrix-kernel-net              P3
+    net/stack/                xaqu-kernel-net              P3
     fixture/kernel-roots/     check-kernel-roots.py's planted part (S0): no package, never built
 ```
 
@@ -154,9 +154,9 @@ declares hides the glob's module of that name, so each such parent
 re-exports the lower crate's module first:
 
 ```rust
-pub use ferrix_kernel_load::*;
+pub use xaqu_kernel_load::*;
 pub mod interfaces {
-    pub use ferrix_kernel_load::interfaces::*; // keeps crate::interfaces::block_ring
+    pub use xaqu_kernel_load::interfaces::*; // keeps crate::interfaces::block_ring
     pub mod net_ring;
 }
 ```
@@ -168,7 +168,7 @@ listed in the landing message (`net_ring` needs 5, `logctl` 4, plus the
 load items they name); every core or item file edited this way is named
 and `kernel-interface --check` runs. A part that linuxd builds has its lift
 twin **in its own directory**, `lift/Cargo.toml`, naming the same
-`src/lib.rs` (M5-LIFT §1's precedent: `ferrix-lift-load` names
+`src/lib.rs` (M5-LIFT §1's precedent: `xaqu-lift-load` names
 `kernel_load.rs`), so one directory holds everything of a part. Every part's
 manifest names the one build script, `src/kernel/build.rs` (ledger 3282
 (K1)), and is a workspace member.
@@ -187,7 +187,7 @@ place under `src/kernel/` (ledger 7429 Q.1-Q.4, 7445). The reasons:
    nor the loader. The crates in `src/lib/kernel/` today (`frame`, `heap`,
    `sched`, `objects`, ...) keep that: they are the kernel's pure cores and
    the kernel depends on them. A part depends on the kernel's crates
-   (`ferrix-kernel-core`, `-item`, often `-load`) and runs in ring 0. Putting
+   (`xaqu-kernel-core`, `-item`, often `-load`) and runs in ring 0. Putting
    it under `src/lib/` either breaks rule 2 or adds an exception to it, and
    the one tree where "no kernel" is checked stops meaning that. Under
    `src/kernel/`, rule 2 keeps no exception.
@@ -215,7 +215,7 @@ not nest in another nor sit under `src/kernel/src` (Q.2); a `.rs` under
 
 ### 2.3 The rules a part keeps
 
-* **One direction.** A part depends on `ferrix-kernel-core`, `-item` and, if
+* **One direction.** A part depends on `xaqu-kernel-core`, `-item` and, if
   it needs the VFS or the personality, `-load`; never the reverse, and no
   part on another part unless the record (§2.5) lists that edge.
   `check-crate-layering.sh` gets `kernel_rule` lines for each, and
@@ -236,11 +236,11 @@ not nest in another nor sit under `src/kernel/src` (Q.2); a `.rs` under
   `symbol` and `absent_symbols`, checked by `removable_problems`,
   `seam_scan_problems` and `check-removable-symbols.py` on the linked ELF.
   For a part whose flag is the profile's personality (the device cores, the
-  filesystems), the flag is the derived `ferrix_load_built`: `ring0` links it
+  filesystems), the flag is the derived `xaqu_load_built`: `ring0` links it
   into the kernel, `lift` into linuxd, `none` nowhere.
 * **Same source in ring 0 and in linuxd.** A part that linuxd needs has a
   twin manifest, `<part>/lift/Cargo.toml` (lib name the same, its
-  `ferrix-kernel-*` dependencies renamed onto `ferrix-lift-*` with Cargo's
+  `xaqu-kernel-*` dependencies renamed onto `xaqu-lift-*` with Cargo's
   `package =`), naming the same root; `lift_packages` and the second key of
   `lift_reuse` (the root) list it. No `#[path]`, no `include!` (KERNEL-CRATES
   §3 (1)), no file of a part reached by any crate but the part and its twin.
@@ -253,18 +253,18 @@ not nest in another nor sit under `src/kernel/src` (Q.2); a `.rs` under
 
 | Crate | Files today | Product / check lines | Depends on | Who names it today | Seam needed | Ring 0 in | linuxd in | Split |
 |---|---|---:|---|---|---|---|---|---|
-| `ferrix-kernel-settings` | `settings/`, `kernel_settings.rs` | 532 / 0 | core, load | `main.rs` (binding) | `setters::Setters`, built | pr, de (`live`) | yes (twin `ferrix-lift-settings`, linuxd binds `Live`) | **S1: path move only** |
-| `ferrix-kernel-board-stm32mp1` | `platform/st/stm32mp1.rs`, `stm32mp1/` | 1,620 / 0 | core, item | `kernel_load.rs` (mod), `main.rs` (`install`) | none (main's call) | pr, de | not built (Q3) | **S2** |
-| `ferrix-kernel-board-gs201-usb` | `platform/google/gs201/usb.rs` | 142 / 0 | core, item | `kernel_load.rs` (mod), `main.rs` | none | pr, de | not built (Q3) | **S2** |
-| `ferrix-kernel-logctl` | `interfaces/logctl/` | 281 / 190 | core, item | `interfaces/mod.rs` (mod), `main.rs` | none | pr, de | yes (twin) | **S3** |
-| `ferrix-kernel-net-ring` | `interfaces/net_ring/` | 927 / 693 | core, item, load (`net`, `block_ring::location_of`) | `interfaces/mod.rs` (mod), `main.rs`, `stages_check.rs`, `fs/sysfs.rs` (`node_of`, five calls) | none, once S4a moves `PLACED` and `node_of` into the load's `net::device` | pr, de | yes (twin) | **S4a, S4** |
-| `ferrix-kernel-btrfs` | `fs/btrfs*` | 835 / 2,362 | core, item, load | `fs/mod.rs` (`start`, `settle`, `drop_clean`), `fs/{root,data,home}_disk.rs` and `syscall/fsctl.rs` (`label`, `mount`, `mount_rw`), `procfs/render.rs` (`clean_bytes`), `main.rs` (powerfail, write check) | `fs::DiskFilesystem`: those seven entries, `Absent` answering `ENODEV`/0 | pr, de | yes, until btrfsd (`fs=lift`) | P1 |
-| `ferrix-kernel-input`, `-audio` | `interfaces/{input,audio}/` | 2,598 / 0 | load | `devfs` (20 sites: `device`, `device_indices`, `evdev`, `card`, `card_indices`, `pcm`), `syscall/fd.rs` (the `ioctl` chain), `syscall/memory.rs` | `fd::DeviceFiles` (`of` + `ioctl` + `mmap`) and `devfs::DeviceNodes` (`indices`, `open`), bound as a tuple in the chain's order (§2.6 item 1) | pr, de | yes | P2 |
-| `ferrix-kernel-block-ring` | `interfaces/block_ring/` | 2,351 / 2,539 | load | `fs` (VFS block devices), `claim.rs`, device cores' shared helpers | `fs::BlockDevice`; its shared helpers move to the core or item first | pr, de | yes | P2 |
-| `ferrix-kernel-gpu` (display, render, chardev) | `interfaces/{display,render,chardev}/` | 10,187 / 3,619 | load | `devfs`, `syscall` (18), `procfs`, `sysfs` | P2's two seams, with their entries; one crate, since the three name one another (Q2) | pr, de | yes | P3 |
-| `ferrix-kernel-procfs`, `-sysfs`, `-devfs`, `-cgroupfs` | `fs/{procfs,sysfs,devfs,cgroupfs}*` | 10,441 / 8,305 | load | `syscall`, `fs` core, `setters.rs` | `fs::Mountable`; `setters.rs`'s `pub use procfs::Kernel` moves to the load | pr, de | yes | P3 |
-| `ferrix-kernel-net` | `net/` | 5,122 / 1,232 | load | `fs` (9), `syscall` (15), `procfs` (7) | `fs::SocketFamily`; `net`'s 6 sites into `fs` stay (one way) | pr, de | yes, until netd (M8) | P3 |
-| `ferrix-kernel-load`, the Linux personality | `syscall/` (load files), `fs/` core, `seam.rs`, `setters.rs`, `kernel_load.rs`, and until P1 to P3 everything above | 49,516 / 40,814 (122k with the not yet split parts) | core, item | `main.rs`, the raised checks | `Personality` (W-5), built | pr, de | yes (`ferrix-lift-load`) | **S5: whole, to `personality/linux/`, name kept** |
+| `xaqu-kernel-settings` | `settings/`, `kernel_settings.rs` | 532 / 0 | core, load | `main.rs` (binding) | `setters::Setters`, built | pr, de (`live`) | yes (twin `xaqu-lift-settings`, linuxd binds `Live`) | **S1: path move only** |
+| `xaqu-kernel-board-stm32mp1` | `platform/st/stm32mp1.rs`, `stm32mp1/` | 1,620 / 0 | core, item | `kernel_load.rs` (mod), `main.rs` (`install`) | none (main's call) | pr, de | not built (Q3) | **S2** |
+| `xaqu-kernel-board-gs201-usb` | `platform/google/gs201/usb.rs` | 142 / 0 | core, item | `kernel_load.rs` (mod), `main.rs` | none | pr, de | not built (Q3) | **S2** |
+| `xaqu-kernel-logctl` | `interfaces/logctl/` | 281 / 190 | core, item | `interfaces/mod.rs` (mod), `main.rs` | none | pr, de | yes (twin) | **S3** |
+| `xaqu-kernel-net-ring` | `interfaces/net_ring/` | 927 / 693 | core, item, load (`net`, `block_ring::location_of`) | `interfaces/mod.rs` (mod), `main.rs`, `stages_check.rs`, `fs/sysfs.rs` (`node_of`, five calls) | none, once S4a moves `PLACED` and `node_of` into the load's `net::device` | pr, de | yes (twin) | **S4a, S4** |
+| `xaqu-kernel-btrfs` | `fs/btrfs*` | 835 / 2,362 | core, item, load | `fs/mod.rs` (`start`, `settle`, `drop_clean`), `fs/{root,data,home}_disk.rs` and `syscall/fsctl.rs` (`label`, `mount`, `mount_rw`), `procfs/render.rs` (`clean_bytes`), `main.rs` (powerfail, write check) | `fs::DiskFilesystem`: those seven entries, `Absent` answering `ENODEV`/0 | pr, de | yes, until btrfsd (`fs=lift`) | P1 |
+| `xaqu-kernel-input`, `-audio` | `interfaces/{input,audio}/` | 2,598 / 0 | load | `devfs` (20 sites: `device`, `device_indices`, `evdev`, `card`, `card_indices`, `pcm`), `syscall/fd.rs` (the `ioctl` chain), `syscall/memory.rs` | `fd::DeviceFiles` (`of` + `ioctl` + `mmap`) and `devfs::DeviceNodes` (`indices`, `open`), bound as a tuple in the chain's order (§2.6 item 1) | pr, de | yes | P2 |
+| `xaqu-kernel-block-ring` | `interfaces/block_ring/` | 2,351 / 2,539 | load | `fs` (VFS block devices), `claim.rs`, device cores' shared helpers | `fs::BlockDevice`; its shared helpers move to the core or item first | pr, de | yes | P2 |
+| `xaqu-kernel-gpu` (display, render, chardev) | `interfaces/{display,render,chardev}/` | 10,187 / 3,619 | load | `devfs`, `syscall` (18), `procfs`, `sysfs` | P2's two seams, with their entries; one crate, since the three name one another (Q2) | pr, de | yes | P3 |
+| `xaqu-kernel-procfs`, `-sysfs`, `-devfs`, `-cgroupfs` | `fs/{procfs,sysfs,devfs,cgroupfs}*` | 10,441 / 8,305 | load | `syscall`, `fs` core, `setters.rs` | `fs::Mountable`; `setters.rs`'s `pub use procfs::Kernel` moves to the load | pr, de | yes | P3 |
+| `xaqu-kernel-net` | `net/` | 5,122 / 1,232 | load | `fs` (9), `syscall` (15), `procfs` (7) | `fs::SocketFamily`; `net`'s 6 sites into `fs` stay (one way) | pr, de | yes, until netd (M8) | P3 |
+| `xaqu-kernel-load`, the Linux personality | `syscall/` (load files), `fs/` core, `seam.rs`, `setters.rs`, `kernel_load.rs`, and until P1 to P3 everything above | 49,516 / 40,814 (122k with the not yet split parts) | core, item | `main.rs`, the raised checks | `Personality` (W-5), built | pr, de | yes (`xaqu-lift-load`) | **S5: whole, to `personality/linux/`, name kept** |
 | console screen and input | `console/{screen,input}.rs` | 689 / 0 | core | `console.rs`, `device/check.rs`, `discovery/firmware.rs`, the three `arch/*/mod.rs`, `iommu` checks | a core seam `console::Screen` bound by `main.rs` | all | no | P5 (core ring: §2.6) |
 
 ### 2.5 The record
@@ -284,7 +284,7 @@ from one line per part. Every tool that walks kernel files reads
    group; `fs`, `devfs`, the device cores and `net` name one another. A part
    may name the load, never the reverse, so each edge from the load into a
    part is inverted by a seam the load defines (`seam!`, KERNEL-CRATES §6.1
-   point 2), bound by `main.rs` under `ferrix_load_built = "ring0"` and by
+   point 2), bound by `main.rs` under `xaqu_load_built = "ring0"` and by
    linuxd's root under `"lift"`, each seam its own landing with its own
    design review, before its part moves:
    * **btrfs** (P1): `fs::DiskFilesystem`, seven entries (`start`, `settle`,
@@ -330,7 +330,7 @@ from one line per part. Every tool that walks kernel files reads
    item files by path (`arch/**`, `object/**`, ...) and must not move with
    the load, or they would change ring by path; but the load's root, once in
    `src/kernel/extensions/`, cannot reach them without `#[path]`. *Unblock (S5):*
-   a crate of their own, `ferrix-kernel-raised-checks`, root
+   a crate of their own, `xaqu-kernel-raised-checks`, root
    `src/kernel/src/kernel_raised.rs` (classed `load` as a crate root, as
    `kernel_load.rs` is), its package in `src/kernel/checks/`, depending on
    core, item and load; the load's root stops declaring them and the
@@ -351,7 +351,7 @@ from one line per part. Every tool that walks kernel files reads
    `desktop`/`present`. Taking a file out of the core changes what the core
    is and needs its own design review (P5); not in this split's first round.
 7. **Board glue under `personality=user`.** Not built into linuxd today
-   (`cfg(not(ferrix_load_built = "lift"))`) and MICROKERNEL §2.1 says it
+   (`cfg(not(xaqu_load_built = "lift"))`) and MICROKERNEL §2.1 says it
    leaves ring 0; nothing serves it in `fast`/`max` yet. S2 changes nothing
    there; its `fast`/`max` home is M8's board server (Q3).
 8. **`gs201/usb.rs` names `stm32mp1`** once, in a doc comment (line 12),
@@ -373,7 +373,7 @@ each item below with its output.
   file under 100% similarity fails the landing. The script that moves
   (§4.1) asserts it before it commits.
 * The new `lib.rs` of a part carries the module declarations cut from the
-  old root, unchanged, plus `pub use ferrix_kernel_load::*` (or `_item`)
+  old root, unchanged, plus `pub use xaqu_kernel_load::*` (or `_item`)
   so `crate::` paths resolve as before (KERNEL-CRATES §1's rule).
 * `cargo xtask kernel-interface --check` (docs/generated/KERNEL-INTERFACE.md)
   shows the core's and item's `pub` interface unchanged.
@@ -426,8 +426,8 @@ each item below with its output.
   not section sizes. The release kernels of base and tip, `present` and
   `desktop`, x86-64 and AArch64, compared with the compare tool landed under
   ledger 7319 L.1 (`<.*>` masked to line end), after the recorded crate-name
-  rewrite (`ferrix_kernel_load::interfaces::logctl::` to
-  `ferrix_kernel_logctl::interfaces::logctl::`) and with mangling hashes
+  rewrite (`xaqu_kernel_load::interfaces::logctl::` to
+  `xaqu_kernel_logctl::interfaces::logctl::`) and with mangling hashes
   stripped. No body may differ unless it is named and explained (inlining
   across a new crate boundary is the expected cause); otherwise the landing
   stops. S1 and S5 keep their package names, so their bodies compare with
@@ -525,7 +525,7 @@ their owners.
 | # | Landing | Points | Freeze (files the PO holds) | Depends on |
 |---|---|---:|---|---|
 | S0 | **Landed** (see *Where it stands*). Tools: `kernel_source_roots` with `parts_place`, every scanner reads it, file-set parity guard, `carry-coverage.py --rename`, `move-kernel-part.py`, `check-crate-layering.sh`, `check-item-boundary.py` and `check-kernel-shape.py` read every root, the planted part file and its controls. Owed to later landings: the mover's `lib.rs` and manifest writing, the rodata/symbol comparison run, the `lib.rs`-shape dry build (S2 or S3, 7429 S.7) | 5 | none: no kernel file | this design |
-| S1 | **Landed** (see *Where it stands*). `ferrix-kernel-settings` to `src/kernel/extensions/settings/`, its lift twin to its `lift/`: a path move, it is already a removable crate | 1 | `settings/`, `kernel_settings.rs`, `src/kernel/settings/`; about 20 min | S0 |
+| S1 | **Landed** (see *Where it stands*). `xaqu-kernel-settings` to `src/kernel/extensions/settings/`, its lift twin to its `lift/`: a path move, it is already a removable crate | 1 | `settings/`, `kernel_settings.rs`, `src/kernel/settings/`; about 20 min | S0 |
 | S2 | **Landed** (see *Where it stands*). Board glue to `board/{stm32mp1,gs201-usb}/`, two crates | 2 | `platform/st/`, `gs201/usb.rs`, `kernel_load.rs`'s `platform` block, `main.rs`'s `install` lines; about 30 min, DK1 boot under ARMv7-A `--smp 2` included | S0 |
 | S3 | **Landed** (see *Where it stands*). `logctl` to `device/logctl/`, with its lift twin | 2 | `interfaces/logctl/`, `interfaces/mod.rs`, `main.rs`; about 30 min | S0 |
 | S4a | **Landed** (see *Where it stands*). `PLACED` and `node_of` from `net_ring` into the load's `net::device` (§2.6 item 4a); a code change, reviewed, no move | 2 | none | S0 |
@@ -565,7 +565,7 @@ share one freeze if they land as one stack.
 ## 5. Questions for the customer
 
 Each has a default the work proceeds on, and a line in
-`~/.local/share/ferrix/fleet/morning-questions.md` (7346 (11)).
+`~/.local/share/xaqu/fleet/morning-questions.md` (7346 (11)).
 
 1. **Where the parts live. DECIDED, 2026-11-05, by the customer:**
    `src/kernel/extensions/<group>/<name>/` ("ok i like src/kernel/extensions"),
@@ -574,9 +574,9 @@ Each has a default the work proceeds on, and a line in
    conditions for a place under `src/kernel/` are ledger 7429 Q.1-Q.4 and
    7445, met in S0. Recorded in `docs/backlog/DECISIONS.md`.
 2. **How fine the crates are.** One crate per device core and per
-   filesystem (as §2.4), or one per group (`ferrix-kernel-devices`,
-   `ferrix-kernel-fs`). No certification angle. *Default:* one per part,
-   with display, render and chardev as one crate (`ferrix-kernel-gpu`).
+   filesystem (as §2.4), or one per group (`xaqu-kernel-devices`,
+   `xaqu-kernel-fs`). No certification angle. *Default:* one per part,
+   with display, render and chardev as one crate (`xaqu-kernel-gpu`).
 3. **The board glue under `fast` and `max`.** It is built into neither ring 0
    nor linuxd under `personality=user` today, and changes no claim.
    *Default:* S2 moves it as it is; its `fast`/`max` home is M8's board
@@ -618,10 +618,10 @@ its freeze (7429 S.7); rule A (dangling file literals) is not built. Each of
 S1 to S5 comes back for a diff check with §3's evidence on its landing hash;
 P1 to P3 and P5 each need a design review before code.
 
-**S1 landed** (2026-11-06, mk-crates3). `ferrix-kernel-settings` is the first
+**S1 landed** (2026-11-06, mk-crates3). `xaqu-kernel-settings` is the first
 part: `src/kernel/extensions/settings/` holds its manifest, `src/lib.rs` (was
 `src/kernel/src/kernel_settings.rs`) and `src/settings/*.rs`, all ten files
-`R100`, and its lift twin `ferrix-lift-settings` in `lift/`, naming the same
+`R100`, and its lift twin `xaqu-lift-settings` in `lift/`, naming the same
 `src/lib.rs`. A part that is a group of its own sits at `<parts_place>/<name>/`
 (the mover takes `--part settings`). The record has the root
 `src/kernel/extensions/settings/src`, the `load` line
@@ -640,14 +640,14 @@ part's lift twin for a kernel crate (linuxd links it); `gate_rows.rs`'s
 quarantine list named the moved file, now through `KERNEL_PARTS_PLACE`, with
 a unit test. Then (consultant ledger 7608 S1.5, S1.6) kernel_roots refuses a part root not
 `<place>/<name>/src` or `<place>/<group>/<name>/src` or without a `Cargo.toml` above it, and
-check-lift refuses any `ferrix-kernel-*` dependency of a lift package, a part's twin's included.
+check-lift refuses any `xaqu-kernel-*` dependency of a lift package, a part's twin's included.
 
 **S2 landed** (2026-11-06, mk-crates3). The board glue is two parts:
-`board/stm32mp1/` (`ferrix-kernel-board-stm32mp1`: `platform/st/stm32mp1.rs` and
-`stm32mp1/{gpu,sdmmc,usb}.rs`) and `board/gs201-usb/` (`ferrix-kernel-board-gs201-usb`:
+`board/stm32mp1/` (`xaqu-kernel-board-stm32mp1`: `platform/st/stm32mp1.rs` and
+`stm32mp1/{gpu,sdmmc,usb}.rs`) and `board/gs201-usb/` (`xaqu-kernel-board-gs201-usb`:
 `platform/google/gs201/usb.rs`), five files `R100`, each crate depending on the core and the
 item only, no lift twin (§2.6 item 7). The load's root lost its `platform` block (and its
-`ferrix-fdt` dependency, which only the glue used); `main.rs` calls each part's `install` by
+`xaqu-fdt` dependency, which only the glue used); `main.rs` calls each part's `install` by
 its crate's path, under the same `cfg`s, and holds each part's flag word to its own. The
 `lib.rs` shape (7346 (3), 7429 S.7) was built here: no glob of the item's `platform` or
 `google`, since below them is only the core's `pub(crate)` watchdog, and a glob re-exports
@@ -662,13 +662,13 @@ evidence was carried (`carry-coverage.py`, git's renames, nothing dropped), and 
 and decision-coverage files' five keys renamed with it.
 
 **S3 landed** (2026-11-06, mk-crates3). `interfaces/logctl/` (`mod.rs`, `check.rs`) is the part
-`device/logctl/` (`ferrix-kernel-logctl`, both files `R100`), depending on the core and the
-item (it never named the load), with its twin `ferrix-lift-logctl` in `lift/` (its
-`ferrix-kernel-*` dependencies as `package = "ferrix-lift-*"`), which linuxd now names in
+`device/logctl/` (`xaqu-kernel-logctl`, both files `R100`), depending on the core and the
+item (it never named the load), with its twin `xaqu-lift-logctl` in `lift/` (its
+`xaqu-kernel-*` dependencies as `package = "xaqu-lift-*"`), which linuxd now names in
 place of the load's module. The part's `interfaces` is built where the load's is
 (`ring0`, `lift`), so a `personality=user` kernel compiles none of it; under `lift` the
-ring-0 check is out and its one helper, `claimed`, is allowed dead as `ferrix-lift-load`'s
-root allowed it. The load, ring-0 and lift, drops its `ferrix-logctl` dependency;
+ring-0 check is out and its one helper, `claimed`, is allowed dead as `xaqu-lift-load`'s
+root allowed it. The load, ring-0 and lift, drops its `xaqu-logctl` dependency;
 `interfaces/mod.rs` loses its `mod logctl` line (its table names the part). `main.rs` (its
 `install`, and stage 9's check through `stages_check.rs`'s glob) names the part by crate path.
 The panic catalog's `see:` strings (`panic/catalog.rs`, a core file, strings only) and
@@ -680,21 +680,21 @@ device-node map (`PLACED`, `node_of`, `placed_on`) is the load's `net::device` (
 load's last edge into the ring's core went with it.
 
 **S4 landed** (2026-11-06, mk-crates5). `interfaces/net_ring/` (`mod.rs`, `check.rs`) is the
-part `device/net-ring/` (`ferrix-kernel-net-ring`, both files `R100`), the first part that
+part `device/net-ring/` (`xaqu-kernel-net-ring`, both files `R100`), the first part that
 depends on the load (§2.3's one allowed edge: `crate::net`, `block_ring::location_of`,
 `net::packet` in its check). Its `lib.rs` re-exports the load's tree (`pub use
-ferrix_kernel_load::*`, which carries the item's and the core's), and its own `interfaces`
+xaqu_kernel_load::*`, which carries the item's and the core's), and its own `interfaces`
 re-exports the load's beside `pub mod net_ring`, since a local module shadows the glob's;
 so every `crate::` path in the moved files names what it named before. The load's items the
 ring calls from outside its crate now are `pub` where they were `pub(crate)` (in `net/mod.rs`
 `core`, `first`, `NetCore` and four of its methods, the `device` and `packet` modules; twelve
 functions of `net::device`; `PacketSocket` and four of its methods, `packet::of`;
 `NetNamespace`; `socket::Received` and its `bytes`; `block_ring`'s `location_of` re-export):
-visibility only, no body changed, all in the load ring. The twin `ferrix-lift-net-ring`
-depends on `ferrix-lift-load`; under `lift` the module's two check-only helpers are allowed
+visibility only, no body changed, all in the load ring. The twin `xaqu-lift-net-ring`
+depends on `xaqu-lift-load`; under `lift` the module's two check-only helpers are allowed
 dead on the module declaration (logctl's crate-wide allow narrowed the same way, the
 consultant's C1), so neither moved file changes a line. The load and its lift twin drop
-`ferrix-netring`. The load→`net_ring` edge is gone: the load declares no `net_ring` and its
+`xaqu-netring`. The load→`net_ring` edge is gone: the load declares no `net_ring` and its
 manifest names no part; `check-item-boundary.py --report` lists only `main.rs`'s composition
 edge to it (line 1662, the `install`). Under `fast` and `max` `LEFT` and `LEFT_CRATES` hold
 it out of ring 0. Next: S5.

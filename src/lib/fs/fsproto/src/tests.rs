@@ -6,8 +6,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::{FileSystem, FileType};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::{FileSystem, FileType};
 
 use crate::server::{Slot, Volume};
 use crate::wire::{
@@ -48,17 +48,17 @@ impl Slot for Memory {
 #[derive(Debug)]
 struct Still;
 
-impl ferrix_vfs::Clock for Still {
-    fn now(&self) -> ferrix_vfs::Timespec {
-        ferrix_vfs::Timespec::default()
+impl xaqu_vfs::Clock for Still {
+    fn now(&self) -> xaqu_vfs::Timespec {
+        xaqu_vfs::Timespec::default()
     }
 }
 
 fn tmpfs() -> Arc<dyn FileSystem> {
-    ferrix_vfs::tmpfs::Tmpfs::new(
+    xaqu_vfs::tmpfs::Tmpfs::new(
         1,
         Arc::new(Still),
-        Arc::new(ferrix_vfs::tmpfs::HeapStorage::new(1 << 30)),
+        Arc::new(xaqu_vfs::tmpfs::HeapStorage::new(1 << 30)),
         0o755,
     )
     .expect("a tmpfs")
@@ -122,7 +122,7 @@ fn a_file_is_made_written_read_and_listed() {
     let list = ask(
         &mut volume,
         Request {
-            a: ferrix_vfs::FIRST_CURSOR,
+            a: xaqu_vfs::FIRST_CURSOR,
             ..Request::new(Op::ReadDir, FIRST_NODE)
         },
         &mut slot,
@@ -295,7 +295,7 @@ fn the_slot_is_read_once_into_this_sides_memory() {
         &mut memory,
     );
     assert_eq!(answer.status, u32::from(Errno::EINVAL.0));
-    let good = encode_set_attr(&ferrix_vfs::SetAttributes {
+    let good = encode_set_attr(&xaqu_vfs::SetAttributes {
         permissions: Some(0o700),
         ..Default::default()
     });

@@ -1,8 +1,8 @@
 //! The NVMe driver process: a ring-3 program that serves an NVMe
 //! controller's first namespace to the kernel over the block ring.
 //!
-//! `ferrix-nvme` knows the controller and is tested on the host.
-//! `ferrix-driver` is the rest: START, the PCI bus, pinned memory, and the
+//! `xaqu-nvme` knows the controller and is tested on the host.
+//! `xaqu-driver` is the rest: START, the PCI bus, pinned memory, and the
 //! block ring's conversation with the kernel (`docs/BLOCK-RING.md`). What
 //! is here is the glue (`docs/NVME.md`): the controller's registers through
 //! its first BAR, the memory it reaches, a clock, the host memory a drive
@@ -25,7 +25,7 @@
 //! drive nobody has seen leaves its facts in the log; one line for each
 //! abort, reset and failed request; one line when it is shut down.
 //!
-//! The exit status is a `ferrix_driver::Step`, 0 a clean STOP.
+//! The exit status is a `xaqu_driver::Step`, 0 a clean STOP.
 
 #![no_std]
 #![no_main]
@@ -33,29 +33,29 @@
 use core::fmt::{self, Write as _};
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_blkring::control::VMO_RIGHTS;
-use ferrix_blkring::geometry::{Device as Geometry, DeviceFlags};
-use ferrix_blkserve::Disk;
-use ferrix_driver::dma::{Dma, MAX_RUN_PAGES, PAGE, Run};
-use ferrix_driver::pci::{self, Function};
-use ferrix_driver::{Probe, Step, Stopped, Stuck, block, mmio};
-use ferrix_native_abi::types::DeviceInfo;
-use ferrix_nvme::driver::{Cause, Released, list_pages_needed, queue_pages_needed};
-use ferrix_nvme::hmb::{Chunk, Wish};
-use ferrix_nvme::identify::Controller;
-use ferrix_nvme::quirks::{self, Quirks};
-use ferrix_nvme::{
+use xaqu_blkring::control::VMO_RIGHTS;
+use xaqu_blkring::geometry::{Device as Geometry, DeviceFlags};
+use xaqu_blkserve::Disk;
+use xaqu_driver::dma::{Dma, MAX_RUN_PAGES, PAGE, Run};
+use xaqu_driver::pci::{self, Function};
+use xaqu_driver::{Probe, Step, Stopped, Stuck, block, mmio};
+use xaqu_native_abi::types::DeviceInfo;
+use xaqu_nvme::driver::{Cause, Released, list_pages_needed, queue_pages_needed};
+use xaqu_nvme::hmb::{Chunk, Wish};
+use xaqu_nvme::identify::Controller;
+use xaqu_nvme::quirks::{self, Quirks};
+use xaqu_nvme::{
     Clock, Event, Failed, Fatal, Memory, Op as NvmeOp, Options, Outcome, Parts, Registers,
     Request as NvmeRequest, Shutdown, SubmitError as NvmeSubmitError, Submitted, regs,
 };
-use ferrix_rt::native::handle::{Deadline, OwnedHandle};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio_blk::{
+use xaqu_rt::native::handle::{Deadline, OwnedHandle};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, Drained, Op, Request, Status, SubmitError,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// I/O queue pairs: one. One process serves one ring from one thread, so a
 /// second pair would be a second place for the same thread to look.
@@ -123,7 +123,7 @@ impl fmt::Debug for Monotonic {
 
 impl Clock for Monotonic {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn pause(&mut self, nanos: u64) {
@@ -161,7 +161,7 @@ impl Memory for Pages {
 }
 
 type Made = Parts<Regs, Monotonic, Pages, Pages, Pages>;
-type Logic = ferrix_nvme::Driver<Regs, Monotonic, Pages, Pages, Pages>;
+type Logic = xaqu_nvme::Driver<Regs, Monotonic, Pages, Pages, Pages>;
 
 /// The host memory lent to the controller.
 type Lent = [Option<Run>; HOST_MEMORY_RUNS];
@@ -195,7 +195,7 @@ impl Probe for Nvme {
         let info = *device.info();
         let quirks = quirks::for_device(info.vendor_id, info.device_id);
         if quirks.contains(Quirks::BROKEN_MSI) && !device.msix() {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "nvme     {} has no MSI-X and its MSI is known broken: not driven",
                 Place(info.location)
             );
@@ -204,7 +204,7 @@ impl Probe for Nvme {
         let registers = device.map_bar(0)?;
         // The admin queue's doorbells are the least the BAR must hold.
         if registers.len() < (regs::cq_doorbell(0, 4) + 4) as usize {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "nvme     {} BAR 0 is {} bytes where it starts: too small for a controller",
                 Place(info.location),
                 registers.len()
@@ -213,7 +213,7 @@ impl Probe for Nvme {
         }
         // Said before the controller is touched, so a boot that stops in
         // the reset or the enable still says how far it came.
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "nvme     {} {:04x}:{:04x} found: BAR 0 maps {} bytes, interrupt by {}, quirks {:#x}",
             Place(info.location),
             info.vendor_id,
@@ -224,7 +224,7 @@ impl Probe for Nvme {
         );
         let pinned = |pages: usize| {
             device.dma(pages).inspect_err(|_| {
-                ferrix_rt::err!(
+                xaqu_rt::err!(
                     "nvme     {} {pages} pages could not be pinned for the controller",
                     Place(info.location)
                 );
@@ -266,7 +266,7 @@ impl Probe for Nvme {
             Err(Step::Registers)
         } else {
             logic.bring_up().map_err(|error| {
-                ferrix_rt::err!(
+                xaqu_rt::err!(
                     "nvme     {} did not come up: {error:?}",
                     Place(info.location)
                 );
@@ -300,7 +300,7 @@ impl Probe for Nvme {
 /// A controller that did not come up: say why, free its memory if it was
 /// seen disabled, and name the step.
 fn refused(device: &Device, failed: Failed<Made>) -> Step {
-    ferrix_rt::err!(
+    xaqu_rt::err!(
         "nvme     {} did not come up: {:?}",
         Place(device.info().location),
         failed.error
@@ -419,7 +419,7 @@ impl Nvme {
 }
 
 /// A finished request, as the serve loop takes it.
-fn completion(done: &ferrix_nvme::Completion) -> Completion {
+fn completion(done: &xaqu_nvme::Completion) -> Completion {
     Completion {
         id: done.id,
         status: match done.outcome {
@@ -444,7 +444,7 @@ impl Disk for Nvme {
         // Re-armed first, so a completion that arrives while these are
         // taken interrupts again.
         self.device.acknowledge_interrupt();
-        let mut done = [ferrix_nvme::Completion {
+        let mut done = [xaqu_nvme::Completion {
             id: 0,
             outcome: Outcome::Ok,
             bytes: 0,
@@ -458,7 +458,7 @@ impl Disk for Nvme {
             if done.outcome != Outcome::Ok {
                 self.errors = self.errors.saturating_add(1);
                 if self.errors <= SAID_ERRORS {
-                    ferrix_rt::err!(
+                    xaqu_rt::err!(
                         "nvme     request {} failed: {:?}, last status {:#05x}, {before} failed so far",
                         done.id,
                         done.outcome,
@@ -490,7 +490,7 @@ impl Disk for Nvme {
                 Ok(())
             }
             Err(fatal) => {
-                ferrix_rt::err!("nvme     the controller is given up: {fatal:?}");
+                xaqu_rt::err!("nvme     the controller is given up: {fatal:?}");
                 Err(match fatal {
                     Fatal::Gone | Fatal::Dead => DeviceError::Broken,
                     Fatal::ResetLimit | Fatal::Reset(_) => DeviceError::NeedsReset,
@@ -529,7 +529,7 @@ fn release(
     abandoned: &mut dyn FnMut(u64),
 ) -> Result<Stopped, Stuck> {
     let Shutdown::Released(released) = shutdown else {
-        ferrix_rt::err!("nvme     the controller would not disable: its memory stays pinned");
+        xaqu_rt::err!("nvme     the controller would not disable: its memory stays pinned");
         return Err(Stuck);
     };
     let mut held = 0_u32;
@@ -548,7 +548,7 @@ fn release(
 
 /// What a shutdown did, on the console.
 fn said_down(released: &Released<Made>, held: u32) {
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "nvme     shut down: {}, {held} requests abandoned",
         if released.clean {
             "the controller said its shutdown is complete"
@@ -561,17 +561,17 @@ fn said_down(released: &Released<Made>, held: u32) {
 /// What the watch did, on the console.
 fn said_event(event: Event) {
     match event {
-        Event::MissedInterrupt => ferrix_rt::warn!(
+        Event::MissedInterrupt => xaqu_rt::warn!(
             "nvme     completions waited 100 ms with no interrupt: taken by the watch"
         ),
         Event::Aborted(count) => {
-            ferrix_rt::warn!("nvme     {count} commands timed out: abort sent");
+            xaqu_rt::warn!("nvme     {count} commands timed out: abort sent");
         }
         Event::Reset {
             cause,
             requeued,
             failed,
-        } => ferrix_rt::warn!(
+        } => xaqu_rt::warn!(
             "nvme     controller reset ({}): {requeued} requests sent again, {failed} failed",
             match cause {
                 Cause::ControllerFatal => "it reported a fatal status",
@@ -612,7 +612,7 @@ fn said_up(info: &DeviceInfo, logic: &Logic, wish: Option<&Wish>) {
             wish.preferred_pages / 256
         ),
     };
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "nvme     {} {:04x}:{:04x} {} fw {} NVMe {major}.{minor}: namespace {} of {} blocks of {} \
          ({mebibytes} MiB){}, {} queue of {}, {} blocks a request, write cache {}, {}, quirks {:#x}",
         Place(info.location),
@@ -638,7 +638,7 @@ fn said_up(info: &DeviceInfo, logic: &Logic, wish: Option<&Wish>) {
     // The fields that decided it, as the controller reported them: what a
     // person compares with `nvme id-ctrl` and `nvme show-regs`.
     let capabilities = logic.capabilities();
-    ferrix_rt::debug!(
+    xaqu_rt::debug!(
         "nvme     {} said: CAP {:#018x} (ready within {} ms, {} entries a queue, doorbells {} \
          bytes apart), MDTS {}, VWC {}, APSTA {}, ACL {}, NPSS {}, RTD3E {} us, HMPRE {} HMMIN {} \
          HMMINDS {} HMMAXD {}, SQES {:#04x} CQES {:#04x}, NN {}",

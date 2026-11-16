@@ -4,10 +4,10 @@
 //! descriptors of the program waiting in one.
 //!
 //! Each names the control channel and a request id from a REQUEST
-//! (`ferrix_chardevctl::message`), and works only while that request is
+//! (`xaqu_chardevctl::message`), and works only while that request is
 //! outstanding: once answered or abandoned, the id names nothing.
 
-use ferrix_native_abi::nr;
+use xaqu_native_abi::nr;
 
 use crate::call::{Call, Syscall};
 use crate::channel::Channel;
@@ -38,7 +38,7 @@ pub fn reply<S: Syscall>(
 }
 
 /// `chardev_reply` for an mmap request: map `offset` bytes into `vmo`, which
-/// the driver holds, as `kind` says (`ferrix_chardevctl::message`'s
+/// the driver holds, as `kind` says (`xaqu_chardevctl::message`'s
 /// `MAP_VMO`, with `MAP_WRITE_COMBINING` for K6's write-combining). The
 /// kernel maps the program's range once this answer is in.
 ///
@@ -140,7 +140,7 @@ pub struct Installed {
 /// `chardev_dmabuf_install`: a dmabuf over the whole of `vmo`, named by
 /// `cookie`, as a new descriptor in the program waiting in `request`
 /// (`docs/NVIDIA.md` §4.4, N3b). `flags` are
-/// `ferrix_native_abi::types::DMABUF_WRITABLE` and `DMABUF_CLOEXEC`;
+/// `xaqu_native_abi::types::DMABUF_WRITABLE` and `DMABUF_CLOEXEC`;
 /// whether it was made is always asked.
 ///
 /// # Errors
@@ -158,7 +158,7 @@ pub fn dmabuf_install<S: Syscall>(
     cookie: u64,
     flags: u64,
 ) -> Result<Installed, Error> {
-    use ferrix_native_abi::types::{DMABUF_MADE, DMABUF_TELL_MADE};
+    use xaqu_native_abi::types::{DMABUF_MADE, DMABUF_TELL_MADE};
     let value = Call::new(nr::CHARDEV_DMABUF_INSTALL)
         .value(register(control.handle()))
         .value(request as usize)
@@ -196,7 +196,7 @@ pub fn dmabuf_resolve<S: Syscall>(
 /// `chardev_sync_install`: a fence named `cookie` as a new descriptor in
 /// the program `request` is for (N3b sync, `docs/NVIDIA.md` §4.6), read as
 /// signalled with `ETIMEDOUT` once `deadline_ms` pass (0 for the default,
-/// capped by the kernel). `flags` are `ferrix_native_abi::types::SYNC_CLOEXEC`.
+/// capped by the kernel). `flags` are `xaqu_native_abi::types::SYNC_CLOEXEC`.
 ///
 /// # Errors
 ///

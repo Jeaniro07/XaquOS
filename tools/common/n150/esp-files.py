@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Copy FERRIX/{KERNEL.ELF,INITRD.IMG,CMDLINE.TXT} and EFI/BOOT/BOOTX64.EFI out of a FAT ESP image
+"""Copy XAQU/{KERNEL.ELF,INITRD.IMG,CMDLINE.TXT} and EFI/BOOT/BOOTX64.EFI out of a FAT ESP image
 (the one `cargo xtask n150-install` puts on the N150's disk) into
-OUT/FERRIX/, and write OUT/SHA256SUMS, for the box's `esp` script
-(G:/GameLab/iso/ferrix/n150/esp) to fetch over HTTP.
+OUT/XAQU/, and write OUT/SHA256SUMS, for the box's `esp` script
+(G:/GameLab/iso/xaqu/n150/esp) to fetch over HTTP.
 
     esp-files.py ESP.IMG OUT [--cmdline-from OTHER_ESP.IMG]
 
@@ -15,7 +15,7 @@ import os
 import struct
 import sys
 
-NAMES = ["FERRIX/KERNEL.ELF", "FERRIX/INITRD.IMG", "FERRIX/CMDLINE.TXT", "EFI/BOOT/BOOTX64.EFI"]
+NAMES = ["XAQU/KERNEL.ELF", "XAQU/INITRD.IMG", "XAQU/CMDLINE.TXT", "EFI/BOOT/BOOTX64.EFI"]
 
 
 class Fat:
@@ -105,7 +105,7 @@ def main():
     fat = Fat(image)
     sums = []
     for name in NAMES:
-        src = Fat(other) if (other and name == "FERRIX/CMDLINE.TXT") else fat
+        src = Fat(other) if (other and name == "XAQU/CMDLINE.TXT") else fat
         data = src.lookup(name)
         target = os.path.join(out, *name.split("/"))
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -119,7 +119,7 @@ def main():
         digest = hashlib.sha256(data).hexdigest()
         sums.append(f"{digest}  {name}\n")
         print(f"esp-files: {name} {len(data)} bytes {digest}")
-        if name == "FERRIX/CMDLINE.TXT":
+        if name == "XAQU/CMDLINE.TXT":
             print(f"esp-files: CMDLINE.TXT = {data.decode('utf-8', 'replace').strip()!r}")
     with open(os.path.join(out, "SHA256SUMS"), "w", newline="\n") as f:
         f.writelines(sums)

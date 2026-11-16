@@ -5,13 +5,13 @@
 #![no_std]
 #![no_main]
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::handle::{Deadline, Object as _};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::handle::{Deadline, Object as _};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 fn main(bootstrap: Bootstrap) -> i32 {
     let Some(channel): Option<Channel<Kernel>> = bootstrap else {
@@ -28,7 +28,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     if channel.read(&mut bytes, &mut handles).is_err() {
         return 3;
     }
-    ferrix_rt::log::use_debug_log(handles[0]);
-    ferrix_rt::notice!("partition-hello  up in a safety partition");
+    xaqu_rt::log::use_debug_log(handles[0]);
+    xaqu_rt::notice!("partition-hello  up in a safety partition");
     0
 }

@@ -6,7 +6,7 @@
 //! power cycle (§9), read right after the banks.
 //!
 //! A page is kept out by allocating exactly it from firmware with the
-//! loader's own type for it (`MemoryType::FERRIX_BAD_FRAME`), which the map
+//! loader's own type for it (`MemoryType::XAQU_BAD_FRAME`), which the map
 //! hands the kernel as `MemKind::BadFrame`: never free, not RAM, not in the
 //! direct map. A refusal -- firmware has the page, or another of the
 //! loader's allocations does -- is one line, and the page goes as it would
@@ -14,10 +14,10 @@
 //! assumption of use, §3); it reads no bank but to decode it, and clears
 //! none: the kernel's bring-up does.
 
-pub(crate) use ferrix_eventlog::badframes::Mode;
+pub(crate) use xaqu_eventlog::badframes::Mode;
 
 use crate::console::println;
-#[cfg(ferrix_bad_frames = "choice")]
+#[cfg(xaqu_bad_frames = "choice")]
 use crate::services::Allocation;
 use crate::services::Services;
 use crate::uefi::tables::MemoryType;
@@ -77,7 +77,7 @@ impl Kept {
 /// This boot's bad-frame mode (`docs/MACHINE-CHECK-RESTART.md` §10): fixed
 /// by a `bad_frames = persist` build, which compiles no read of the boot
 /// word.
-#[cfg(ferrix_bad_frames = "persist")]
+#[cfg(xaqu_bad_frames = "persist")]
 pub(crate) fn mode(_cmdline: &str) -> Mode {
     println!("  badframe mode persist (fixed by this build)");
     Mode::Persist
@@ -85,9 +85,9 @@ pub(crate) fn mode(_cmdline: &str) -> Mode {
 
 /// This boot's bad-frame mode: a `bad_frames = choice` build reads it from
 /// the command line, absent or not understood `persist`, said once.
-#[cfg(ferrix_bad_frames = "choice")]
+#[cfg(xaqu_bad_frames = "choice")]
 pub(crate) fn mode(cmdline: &str) -> Mode {
-    use ferrix_eventlog::badframes::{Choice, OPTION, choice};
+    use xaqu_eventlog::badframes::{Choice, OPTION, choice};
     let read = choice(cmdline);
     let mode = read.mode();
     match read {
@@ -103,9 +103,9 @@ pub(crate) fn mode(cmdline: &str) -> Mode {
 /// Release what `mode` keeps out no longer (§10.3): after `pstore::take`,
 /// so that the banks' pages stay held while it reads the region, and before
 /// the kernel is staged. A frame firmware will not take back stays out.
-#[cfg(ferrix_bad_frames = "choice")]
+#[cfg(xaqu_bad_frames = "choice")]
 pub(crate) fn release(services: &Services, kept: &mut Kept, mode: Mode) {
-    use ferrix_eventlog::badframes::{OPTION, released};
+    use xaqu_eventlog::badframes::{OPTION, released};
     let named = kept.named;
     let named = named.get(..kept.named_count).unwrap_or_default();
     let mut index = 0;
@@ -178,7 +178,7 @@ pub(crate) fn keep(services: &Services, kept: &mut Kept, frame: u32, source: &st
         return;
     };
     if services
-        .allocate_at(address, PAGE, MemoryType::FERRIX_BAD_FRAME)
+        .allocate_at(address, PAGE, MemoryType::XAQU_BAD_FRAME)
         .is_some()
     {
         *slot = frame;

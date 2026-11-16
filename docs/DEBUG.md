@@ -1,8 +1,8 @@
-# Debugging a running Ferrix
+# Debugging a running Xaqu
 
 On 2026-10-21 a DXVK thread of Endfield froze on the N150 box's Intel iGPU
 (`docs/N150.md`), and nothing on the box could say what it was waiting for.
-Ferrix had no `ptrace`, so no gdb, gdbserver or strace for a process. It had
+Xaqu had no `ptrace`, so no gdb, gdbserver or strace for a process. It had
 no `/proc/<pid>/{syscall,wchan,stack,environ}`, no perf, and no kernel
 debugger on bare metal. The only debugger was QEMU's gdb stub
 (`cargo xtask run --gdb`), which no real machine has.
@@ -47,7 +47,7 @@ on the native channel round trip (§1.4). Everything the view needs is
 already in memory.
 
 * **The call (x86-64).** A 64-bit program's `SYSCALL` saves its registers
-  as `ferrix_syscall_stub`'s `SyscallFrame` at `gs:8`, which
+  as `xaqu_syscall_stub`'s `SyscallFrame` at `gs:8`, which
   `set_entry_stack` points at the task's kernel stack top. A trap from ring
   3, a page fault among them, and a 32-bit program's `int $0x80` push a
   `TrapFrame` from `RSP0`, the same top. A blocked task's frame stays there
@@ -60,14 +60,14 @@ already in memory.
   asserted against (`arch/x86_64/inspect.rs`).
 * **Not yet on AArch64 and ARMv7-A.** Their vectors push the frame on
   `SP_EL1`, or the SVC stack pointer, as the task's last return to user mode
-  left it. `ferrix_enter_user` and `ferrix_resume_user` leave that wherever
+  left it. `xaqu_enter_user` and `xaqu_resume_user` leave that wherever
   their caller's stack stood, so it is no fixed place. On 2026-10-21 the
   debug step read `syscall_2735960` and `restart_syscall` from a frame
   assumed to be at the top. So `syscall` answers `EOPNOTSUPP` there and
   `wchan` reads `0`, rather than print a wrong call. The fix is in the cold
   user-entry paths (BACKLOG p2-140).
 * **The chain (all three).** A task that is not running was switched away
-  from by `ferrix_switch`, which leaves its stack pointer in
+  from by `xaqu_switch`, which leaves its stack pointer in
   `Task::stack_pointer`. The frame pointer and the return address sit at a
   fixed slot of that switch frame on each architecture (`rbp`, `x29`,
   `r11`). The kernel is built with frame pointers (`backtrace.rs`), so the
@@ -132,10 +132,10 @@ directory in `/proc`.
 * `src/kernel/src/fs/procfs.rs` and `fs/procfs/debug.rs` (load): the four
   files, who may open them (`guard_of`, `may_open`), and `wchan`'s naming.
   The naming needs the descriptor table and the call names
-  (`ferrix_linux_abi::nr::Syscall`, `ferrix_native_abi::nr::NativeCall`),
+  (`xaqu_linux_abi::nr::Syscall`, `xaqu_native_abi::nr::NativeCall`),
   which the item does not.
 * `src/kernel/src/syscall/exec.rs` and `syscall/process.rs` (load):
-  `execve` keeps `env_start` and `env_end`, which `ferrix_ustack::build`
+  `execve` keeps `env_start` and `env_end`, which `xaqu_ustack::build`
   already computes, and the program's ABI, beside the argument vector.
   `fork` copies them with the rest of the identity. A process that no
   `execve` started (a native one, from `launch`) keeps an empty range, so
@@ -348,7 +348,7 @@ A user test program, `src/tests/ptrace`, drives them under
   interrupts masked on every processor once a stop is taken. It runs over
   the network only through a dedicated ring-3 relay, never through the
   kernel's own network stack, which a stopped kernel cannot run.
-* **When**: only with `ferrix.kgdb=serial` on the command line, and only in
+* **When**: only with `xaqu.kgdb=serial` on the command line, and only in
   a kernel built with `debug=kgdb` (`build-flags.toml`). The certified
   profiles (`present`) never build it. The flag shows on the `build` boot
   line, and `check-item-boundary.py` refuses the flag in the reference

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-inputctl"
+name = "xaqu-inputctl"
 description = "The input control protocol between the kernel's input core and a ring-3 input driver, and evdev's per-open queues"
 version = "0.1.0"
 edition = "2024"
@@ -8,8 +8,8 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
-ferrix-native-abi = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-native-abi = { workspace = true }
 
 [lints]
 workspace = true

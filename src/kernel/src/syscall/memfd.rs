@@ -43,11 +43,11 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{MFD_ALLOW_SEALING, MFD_CLOEXEC, MFD_EXEC, MFD_NOEXEC_SEAL};
-use ferrix_sync::Once;
-use ferrix_vfs::tmpfs::{SEAL_EXEC, SEAL_SEAL, Tmpfs};
-use ferrix_vfs::{FileSystem, Location, OpenFile, OpenFlags, SetAttributes};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{MFD_ALLOW_SEALING, MFD_CLOEXEC, MFD_EXEC, MFD_NOEXEC_SEAL};
+use xaqu_sync::Once;
+use xaqu_vfs::tmpfs::{SEAL_EXEC, SEAL_SEAL, Tmpfs};
+use xaqu_vfs::{FileSystem, Location, OpenFile, OpenFlags, SetAttributes};
 
 use crate::fs;
 use crate::syscall::pidns;

@@ -608,15 +608,15 @@ fn shared_memory_moves_the_pixels_the_socket_does() {
     assert_eq!(socket, shared, "version 0 and version 2 agree");
 }
 
-/// Ferrix's patched server, built by tools/common/fetch/fetch-virgl-server.sh:
-/// `FERRIX_VIRGL_SERVER_BIN`, or where that script puts it.
+/// Xaqu's patched server, built by tools/common/fetch/fetch-virgl-server.sh:
+/// `XAQU_VIRGL_SERVER_BIN`, or where that script puts it.
 fn patched_server() -> Option<std::path::PathBuf> {
-    let path = std::env::var_os("FERRIX_VIRGL_SERVER_BIN")
+    let path = std::env::var_os("XAQU_VIRGL_SERVER_BIN")
         .map(std::path::PathBuf::from)
         .or_else(|| {
             std::env::var_os("HOME").map(|home| {
                 std::path::PathBuf::from(home)
-                    .join(".local/share/ferrix/virgl-server/out/usr/bin/virgl_test_server")
+                    .join(".local/share/xaqu/virgl-server/out/usr/bin/virgl_test_server")
             })
         })?;
     path.is_file().then_some(path)
@@ -1240,7 +1240,7 @@ impl Gbm {
         const USE_RENDERING: u32 = 1 << 2;
         let count = libc::c_uint::try_from(modifiers.len()).ok()?;
         // The node the servers here are pinned to, or every node there may be.
-        let nodes: Vec<String> = std::env::var("FERRIX_VTEST_RENDERNODE").map_or_else(
+        let nodes: Vec<String> = std::env::var("XAQU_VTEST_RENDERNODE").map_or_else(
             |_| (128..136).map(|n| format!("/dev/dri/renderD{n}")).collect(),
             |node| vec![node],
         );

@@ -19,7 +19,7 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sched::NICE_0_WEIGHT;
+use xaqu_sched::NICE_0_WEIGHT;
 
 use super::WaitQueue;
 use super::inspect::{self, MAX_FRAMES};
@@ -116,7 +116,7 @@ fn chain_is_the_tasks_own() -> Result<Report, &'static str> {
     let found = found.ok_or("inspect: the held task was never seen blocked")?;
     let walked = chain.get(..found).unwrap_or_default();
     let slide = backtrace::slide();
-    let linked = ferrix_bootinfo::KERNEL_VIRT_BASE;
+    let linked = xaqu_bootinfo::KERNEL_VIRT_BASE;
     let end = linked.saturating_add(backtrace::image_len());
     if walked
         .iter()

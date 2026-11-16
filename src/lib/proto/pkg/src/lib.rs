@@ -7,7 +7,7 @@
 //! text: the manifest, the record, and the plan that says whether a set of
 //! packages may go into one root, and in which order. xtask builds images
 //! with it on the host, and the package manager will be the same code on
-//! Ferrix, so the two cannot disagree about what a package is.
+//! Xaqu, so the two cannot disagree about what a package is.
 //!
 //! # What is here
 //!
@@ -15,7 +15,7 @@
 //! * [`manifest`] -- an `app.toml`: the package, how it is built, how it is
 //!   judged.
 //! * [`record`] -- what an installed package leaves in
-//!   `lib/ferrix/packages/`.
+//!   `lib/xaqu/packages/`.
 //! * [`plan`] -- whether a set of packages installs, and in what order.
 
 #![no_std]

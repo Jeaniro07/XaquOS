@@ -4,13 +4,13 @@
 #
 # Needs gcc, the system's linux/types.h (linux-libc-dev), and the v7.0 tag's
 # include/uapi: by default the sparse checkout docs/INTEL-GPU.md §10 names,
-# ~/.local/share/ferrix/intel-gpu-ref/linux, or the tree given as $1. Writes
+# ~/.local/share/xaqu/intel-gpu-ref/linux, or the tree given as $1. Writes
 # i915-64.txt beside this script, which the crate's tests read. Record the
 # tree's commit in the commit that changes the file.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-linux="${1:-$HOME/.local/share/ferrix/intel-gpu-ref/linux}"
+linux="${1:-$HOME/.local/share/xaqu/intel-gpu-ref/linux}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 

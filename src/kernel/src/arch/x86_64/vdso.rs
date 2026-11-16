@@ -36,7 +36,7 @@
 
 use core::arch::global_asm;
 
-use ferrix_vdso::{
+use xaqu_vdso::{
     CODE_AT, Function, IMAGE_BYTES, VVAR_COUNTER_HZ, VVAR_MODE, VVAR_REALTIME_OFFSET,
 };
 
@@ -54,11 +54,11 @@ const GETTIMEOFDAY_AT: usize = 128;
 const TIME_AT: usize = 256;
 
 global_asm!(
-    ".pushsection .rodata.ferrix_vdso,\"a\"",
+    ".pushsection .rodata.xaqu_vdso,\"a\"",
     ".balign 16",
     ".balign 16",
-    ".globl ferrix_vdso_code",
-    "ferrix_vdso_code:",
+    ".globl xaqu_vdso_code",
+    "xaqu_vdso_code:",
     ".Lvdso_start:",
     // int clock_gettime(clockid_t clock (edi), struct timespec *ts (rsi))
     ".Lvdso_clock_gettime:",
@@ -166,8 +166,8 @@ global_asm!(
     "ret",
     ".Lvdso_end:",
     ".balign 8",
-    ".globl ferrix_vdso_len",
-    "ferrix_vdso_len:",
+    ".globl xaqu_vdso_len",
+    "xaqu_vdso_len:",
     ".quad .Lvdso_end - .Lvdso_start",
     ".popsection",
     vvar_back = const CODE_AT + IMAGE_BYTES,
@@ -182,9 +182,9 @@ global_asm!(
 
 unsafe extern "C" {
     /// The code's first byte.
-    static ferrix_vdso_code: u8;
+    static xaqu_vdso_code: u8;
     /// Its length in bytes.
-    static ferrix_vdso_len: u64;
+    static xaqu_vdso_len: u64;
 }
 
 /// The functions the code exports, where [`vdso_spec`]'s bytes start each.
@@ -207,17 +207,17 @@ const FUNCTIONS: [Function<'static>; 3] = [
 ];
 
 /// The vDSO's machine code and what it exports: always, on x86-64.
-pub fn vdso_spec() -> Option<ferrix_vdso::Spec<'static>> {
+pub fn vdso_spec() -> Option<xaqu_vdso::Spec<'static>> {
     // SAFETY: (BOOT-DATA) a quadword the assembly above defines in read-only data, never
     // written, and valid for the kernel's life.
-    let len = usize::try_from(unsafe { ferrix_vdso_len }).ok()?;
-    let start = &raw const ferrix_vdso_code;
+    let len = usize::try_from(unsafe { xaqu_vdso_len }).ok()?;
+    let start = &raw const xaqu_vdso_code;
     // SAFETY: (BOOT-DATA) `start` is the code's first byte and `len` its length, both from
     // the same assembly: the bytes lie in read-only data, one section, for the
     // kernel's life, and nothing writes them.
     let code = unsafe { core::slice::from_raw_parts(start, len) };
-    Some(ferrix_vdso::Spec {
-        machine: ferrix_vdso::EM_X86_64,
+    Some(xaqu_vdso::Spec {
+        machine: xaqu_vdso::EM_X86_64,
         code,
         functions: &FUNCTIONS,
     })

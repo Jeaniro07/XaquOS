@@ -36,11 +36,11 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::items::{
+use xaqu_btrfs::items::{
     CSUM_TREE_OBJECTID, EXTENT_CSUM_KEY, EXTENT_CSUM_OBJECTID, EXTENT_DATA_KEY, ExtentData,
     ExtentDataBody, INODE_ITEM_KEY,
 };
-use ferrix_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::tree::BtrfsKey;
 
 use crate::bytes::{put_u8, put_u64};
 use crate::extent::Backref;
@@ -171,7 +171,7 @@ impl<D: WriteDevice> WriteVolume<D> {
             let block = crate::commit::sealed(block)?;
             volume
                 .device
-                .write_durable(ferrix_btrfs::superblock::PRIMARY_OFFSET, &block)
+                .write_durable(xaqu_btrfs::superblock::PRIMARY_OFFSET, &block)
         })
     }
 

@@ -258,14 +258,14 @@ fn text_after_the_ring_went_round_is_the_newest_capacity_less_one() {
 #[test]
 fn the_last_panic_line_is_found_across_the_wrap() {
     let mut all = Vec::new();
-    all.extend_from_slice(b"FERRIX-PANIC an old one\n");
+    all.extend_from_slice(b"XAQU-PANIC an old one\n");
     for line in 0..300 {
         all.extend_from_slice(format!("filler {line}\n").as_bytes());
     }
-    all.extend_from_slice(b"\nFERRIX-PANIC init exited\n  at        src/x.rs:1:1\n");
+    all.extend_from_slice(b"\nXAQU-PANIC init exited\n  at        src/x.rs:1:1\n");
     let (ring, found) = recorded(4096, &all);
     let text = Text::of(&ring, &found);
-    let (start, end) = text.last_line_after(b"FERRIX-PANIC ").unwrap();
+    let (start, end) = text.last_line_after(b"XAQU-PANIC ").unwrap();
     let mut out = [0u8; 160];
     let count = text.shown_into((start, end), 160, &mut out);
     assert_eq!(
@@ -273,9 +273,9 @@ fn the_last_panic_line_is_found_across_the_wrap() {
         b"init exited",
         "the message, marker left off"
     );
-    let none = recorded(4096, b"FERRIX-BOOT-OK\n");
+    let none = recorded(4096, b"XAQU-BOOT-OK\n");
     assert_eq!(
-        Text::of(&none.0, &none.1).last_line_after(b"FERRIX-PANIC "),
+        Text::of(&none.0, &none.1).last_line_after(b"XAQU-PANIC "),
         None,
         "no panic"
     );
@@ -303,34 +303,34 @@ fn unprintable_bytes_are_shown_as_question_marks() {
 
 #[test]
 fn quoted_markers_are_defused() {
-    let (ring, found) = recorded(4096, b"FERRIX-PANIC x said FERRIX-BOOT-OK and FERRIX-\n");
+    let (ring, found) = recorded(4096, b"XAQU-PANIC x said XAQU-BOOT-OK and XAQU-\n");
     let text = Text::of(&ring, &found);
-    let line = text.last_line_after(b"FERRIX-PANIC ").unwrap();
+    let line = text.last_line_after(b"XAQU-PANIC ").unwrap();
     let mut out = [0u8; 64];
     let count = text.shown_into(line, 64, &mut out);
     assert_eq!(
         &out[..count],
-        b"x said FERRIX_BOOT-OK and FERRIX_",
+        b"x said XAQU_BOOT-OK and XAQU_",
         "no marker survives"
     );
-    let mut short = *b"FERRIX";
+    let mut short = *b"XAQU";
     defuse(&mut short);
-    assert_eq!(&short, b"FERRIX", "a part of the marker is left alone");
+    assert_eq!(&short, b"XAQU", "a part of the marker is left alone");
 }
 
 #[test]
 fn the_switch_fails_closed() {
     assert_eq!(switch(""), Switch::On, "no option is on");
-    assert_eq!(switch("quiet ferrix.pstore=on"), Switch::On, "on");
-    assert_eq!(switch("ferrix.pstore=off"), Switch::Off, "off");
+    assert_eq!(switch("quiet xaqu.pstore=on"), Switch::On, "on");
+    assert_eq!(switch("xaqu.pstore=off"), Switch::Off, "off");
     assert_eq!(
-        switch("ferrix.pstore=of"),
+        switch("xaqu.pstore=of"),
         Switch::NotUnderstood("of"),
         "a misspelling"
     );
-    assert_eq!(switch("ferrix.pstore="), Switch::NotUnderstood(""), "empty");
+    assert_eq!(switch("xaqu.pstore="), Switch::NotUnderstood(""), "empty");
     assert_eq!(
-        switch("ferrix.pstore"),
+        switch("xaqu.pstore"),
         Switch::On,
         "a bare word is not the option"
     );

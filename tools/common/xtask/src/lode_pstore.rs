@@ -6,7 +6,7 @@
 //! `test-log-budget`'s does. Boot 1 stores a line, seals the store, stops
 //! lode and writes one more line to the kernel log, which lode never sees:
 //! the machine has hung. The gate resets it. Boot 2's loader keeps boot 1's
-//! log as the ESP's `FERRIX/LASTKERNEL.TXT` (stage 12's write disk is
+//! log as the ESP's `XAQU/LASTKERNEL.TXT` (stage 12's write disk is
 //! rewritten from its fixture first, as for every boot); boot 2's lode reads it off the
 //! ESP and imports the lines it had not stored as the end of boot 1. The
 //! gate requires
@@ -162,13 +162,13 @@ fn files(arch: Arch) -> Result<Vec<File>> {
         },
         crate::lode::enabled(),
         crate::lode::pstore_enabled(),
-        link("etc/ferrix/units/getty@.service", "/dev/null"),
+        link("etc/xaqu/units/getty@.service", "/dev/null"),
         link("var/log/journal", "/data/journal"),
         bytes("lib/lode-pstore.sh", 0o755, SCRIPT),
-        bytes("etc/ferrix/units/pstore-test.service", 0o644, UNIT),
+        bytes("etc/xaqu/units/pstore-test.service", 0o644, UNIT),
         link(
-            "etc/ferrix/units/multi-user.target.wants/pstore-test.service",
-            "/etc/ferrix/units/pstore-test.service",
+            "etc/xaqu/units/multi-user.target.wants/pstore-test.service",
+            "/etc/xaqu/units/pstore-test.service",
         ),
     ]);
     Ok(files)
@@ -263,9 +263,9 @@ fn judge(boot_2: &[String]) -> std::result::Result<(), String> {
     };
     if !boot_2
         .iter()
-        .any(|line| line.contains("kept in FERRIX/LASTKERNEL.TXT"))
+        .any(|line| line.contains("kept in XAQU/LASTKERNEL.TXT"))
     {
-        return Err("boot 2's loader did not keep boot 1's log in FERRIX/LASTKERNEL.TXT".into());
+        return Err("boot 2's loader did not keep boot 1's log in XAQU/LASTKERNEL.TXT".into());
     }
     let imported: u32 = said("pstore-test: imported:").parse().unwrap_or(0);
     if imported == 0 {

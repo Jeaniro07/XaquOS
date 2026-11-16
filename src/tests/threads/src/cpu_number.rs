@@ -2,7 +2,7 @@
 //! `getcpu` names, as on Linux (`(node << 12) | cpu`) and Windows, whose
 //! programs compare the two. Four threads each take 200,000 pairs of a
 //! `getcpu` and an `RDTSCP`; a pair may straddle a migration, so up to 1 %
-//! may differ (Linux 7.0 on 24 processors: 2 of 800,000). On Ferrix before
+//! may differ (Linux 7.0 on 24 processors: 2 of 800,000). On Xaqu before
 //! the kernel set `IA32_TSC_AUX`, `RDTSCP` said 0 on every processor and
 //! three of the N150's four threads differed in nearly every pair. Elsewhere
 //! the step has nothing to compare and says so.

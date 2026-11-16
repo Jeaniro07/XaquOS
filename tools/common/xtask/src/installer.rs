@@ -1,38 +1,38 @@
-//! The live installer (`docs/INSTALLER.md`): `ferrix-install` in the image,
+//! The live installer (`docs/INSTALLER.md`): `xaqu-install` in the image,
 //! the live medium, and `test-install`, which boots the medium, installs
 //! from it and boots what it wrote.
 //!
 //! `build --installer` makes the MVP's live image: the usual image, a bare
-//! FAT volume, whose initramfs also carries `/sbin/ferrix-install`, which
-//! makes the root volume itself (`ferrix-btrfs-mkfs`). `live` makes the live
+//! FAT volume, whose initramfs also carries `/sbin/xaqu-install`, which
+//! makes the root volume itself (`xaqu-btrfs-mkfs`). `live` makes the live
 //! medium of §3.1: the
 //! same files on a GUID partition table, in an EFI system partition named
-//! `FERRIX-LIVE`, with `ferrix.root=tmpfs` on its command line so that the
+//! `XAQU-LIVE`, with `xaqu.root=tmpfs` on its command line so that the
 //! live session keeps `/` in memory whatever disks the machine has. Either,
 //! attached to a virtual machine as a virtio disk, boots as any image does;
-//! `ferrix-install /dev/vdX` then puts it on another disk.
+//! `xaqu-install /dev/vdX` then puts it on another disk.
 //!
 //! `test-install`, x86-64:
 //!
 //! 1. The live medium is built at `build/x86_64/install-live.img`.
 //! 2. It boots alone, as a virtio disk, through OVMF: the kernel must publish
-//!    its partition, `vdd1`, say it was given `ferrix.root=tmpfs` from the
+//!    its partition, `vdd1`, say it was given `xaqu.root=tmpfs` from the
 //!    partition's `CMDLINE.TXT`, and reach the boot marker.
-//! 3. A boot whose shell runs `ferrix-install` has the medium as `vdd` and a
+//! 3. A boot whose shell runs `xaqu-install` has the medium as `vdd` and a
 //!    blank 2 GiB disk as `vde`. The installer must refuse `/dev/vdd`, the
 //!    disk the live system is on, then find the live system on `vdd1` by
 //!    itself and install on `/dev/vde`.
 //! 4. A second boot starts from that disk alone, as a virtio disk, through
-//!    OVMF: the kernel must publish its partitions, find `ferrix-root` on
+//!    OVMF: the kernel must publish its partitions, find `xaqu-root` on
 //!    `vdd2`, install the system on it and reach the boot marker. That needs
-//!    the installer to have turned the medium's `ferrix.root=tmpfs` into
-//!    `ferrix.root=btrfs` on the installed disk's EFI system partition.
+//!    the installer to have turned the medium's `xaqu.root=tmpfs` into
+//!    `xaqu.root=btrfs` on the installed disk's EFI system partition.
 
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use ferrix_partition::{ESP, Guid, Partition, write_table};
+use xaqu_partition::{ESP, Guid, Partition, write_table};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -45,8 +45,8 @@ pub(crate) const TASKS: &[Task] = &[
         name: "live",
         help_at: 30,
         help: &[
-            "live          Write build/<arch>/ferrix-live.img, the installer's live medium: a GUID partition table and",
-            "              an EFI system partition holding the image with ferrix-install, / in memory (x86_64, aarch64)",
+            "live          Write build/<arch>/xaqu-live.img, the installer's live medium: a GUID partition table and",
+            "              an EFI system partition holding the image with xaqu-install, / in memory (x86_64, aarch64)",
         ],
         run,
     },
@@ -54,7 +54,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-install",
         help_at: 520,
         help: &[
-            "test-install  Boot the live medium, install it on a blank disk with ferrix-install, then boot that disk alone (x86_64);",
+            "test-install  Boot the live medium, install it on a blank disk with xaqu-install, then boot that disk alone (x86_64);",
             "              --slots: the A/B layout, bootctl's status, try, good and rollback, and their refusals",
         ],
         run,
@@ -78,19 +78,19 @@ pub(crate) const TASKS: &[Task] = &[
 ];
 
 /// Where the installer goes in the initramfs.
-const PROGRAM_PATH: &str = "sbin/ferrix-install";
+const PROGRAM_PATH: &str = "sbin/xaqu-install";
 /// Where `bootctl`, built in the installer's workspace, goes.
 const BOOTCTL_PATH: &str = "sbin/bootctl";
 /// The target disk's size.
 const TARGET_BYTES: u64 = 2 << 30;
 
-/// The live medium's EFI system partition's name, by which `ferrix-install`
+/// The live medium's EFI system partition's name, by which `xaqu-install`
 /// knows the live system's disk (`docs/INSTALLER.md` §3.1).
-pub(crate) const LIVE_NAME: &str = "FERRIX-LIVE";
+pub(crate) const LIVE_NAME: &str = "XAQU-LIVE";
 /// The live session's command line: `/` in memory, so that booting the
 /// medium never installs onto, or mounts, a disk the machine already has.
-/// `ferrix-install` rewrites it on the disk it installs (§4.2 step 5).
-const LIVE_CMDLINE: &str = "ferrix.root=tmpfs";
+/// `xaqu-install` rewrites it on the disk it installs (§4.2 step 5).
+const LIVE_CMDLINE: &str = "xaqu.root=tmpfs";
 /// Where the live medium's partition starts: 1 MiB, as every partitioning
 /// tool aligns the first one.
 const LIVE_FIRST: u64 = 2048;
@@ -107,9 +107,9 @@ pub(crate) const LIVE_PART_GUID: Guid =
 /// What the install boot's shell runs: first an install onto the disk the
 /// live system is on, which must be refused, then the real one, with the
 /// live system found by the installer itself.
-const SCRIPT: &str = "/sbin/ferrix-install --yes /dev/vdd\n\
+const SCRIPT: &str = "/sbin/xaqu-install --yes /dev/vdd\n\
 echo \"install: on the live disk, exited $?\"\n\
-/sbin/ferrix-install --yes /dev/vde\n\
+/sbin/xaqu-install --yes /dev/vde\n\
 echo \"install: exited $?\"\n\
 exit 0\n";
 
@@ -118,13 +118,13 @@ const PUBLISHED: &str = "disks    vdd1 is a partition";
 /// What it must print of its command line: the loader read the medium's
 /// `CMDLINE.TXT` from the partition. Spelled out, not built from
 /// [`LIVE_CMDLINE`], so that a medium written with another line fails.
-const KEPT_IN_MEMORY: &str = "cmdline  ferrix.root=tmpfs  (from /FERRIX/CMDLINE.TXT)";
+const KEPT_IN_MEMORY: &str = "cmdline  xaqu.root=tmpfs  (from /XAQU/CMDLINE.TXT)";
 /// What the installer must say when asked to install on the live disk.
-const REFUSED: &str = "ferrix-install: /dev/vdd holds /dev/vdd1, the live system";
+const REFUSED: &str = "xaqu-install: /dev/vdd holds /dev/vdd1, the live system";
 /// What the installer must say it found by itself.
-const FOUND: &str = "ferrix-install: the live system is on /dev/vdd1";
+const FOUND: &str = "xaqu-install: the live system is on /dev/vdd1";
 /// What the install boot must print.
-const DONE: &str = "ferrix-install: done.";
+const DONE: &str = "xaqu-install: done.";
 /// What the installed disk's boot must print.
 const ROOTED: &str = "/ is btrfs on vdd2; the system was installed on it";
 
@@ -132,17 +132,17 @@ const ROOTED: &str = "/ is btrfs on vdd2; the system was installed on it";
 /// on an architecture the installer is not built for.
 pub(crate) fn files(arch: Arch) -> Result<Option<Vec<ports::File>>> {
     let Some(target) = zinc::target(arch) else {
-        println!("  ferrix-install is not built for {} yet", arch.name());
+        println!("  xaqu-install is not built for {} yet", arch.name());
         return Ok(None);
     };
-    println!("  building ferrix-install for {target}");
+    println!("  building xaqu-install for {target}");
     let target_dir = paths::target_dir().join("installer");
     let program = target_dir
         .join(target)
         .join("release")
-        .join("ferrix-install");
+        .join("xaqu-install");
     crate::builds::Build::cargo(
-        format!("cargo build (ferrix-install) --target {target}"),
+        format!("cargo build (xaqu-install) --target {target}"),
         paths::workspace_root().join("src/user/system/linux/installer"),
     )
     .args(["build", "--release", "--target", target])
@@ -170,7 +170,7 @@ pub(crate) fn files(arch: Arch) -> Result<Option<Vec<ports::File>>> {
     ]))
 }
 
-/// `live`: write `build/<arch>/ferrix-live.img`, the live medium, for each
+/// `live`: write `build/<arch>/xaqu-live.img`, the live medium, for each
 /// architecture asked (x86-64 and AArch64, §3.2).
 /// `live`, `test-install` and `test-ab-boot` (`crate::ab_boot`), the
 /// commands that make or boot installed-disk layouts.
@@ -193,12 +193,12 @@ pub(crate) fn live(args: &Args) -> Result<()> {
             ));
         }
         let carried = files(arch)?
-            .ok_or_else(|| Error::new(format!("ferrix-install is not built for {arch}")))?;
+            .ok_or_else(|| Error::new(format!("xaqu-install is not built for {arch}")))?;
         let natives = native::build(arch, args.release)?;
         let loader = cargo::build_loader(arch, args.release)?;
         let initramfs = initramfs::build(None, &natives, None, &carried)?;
         let kernel = cargo::build_kernel(arch, args.release)?;
-        let medium = paths::build_dir(arch).join("ferrix-live.img");
+        let medium = paths::build_dir(arch).join("xaqu-live.img");
         write_medium(arch, &loader, &kernel, &initramfs, &medium)?;
     }
     Ok(())
@@ -318,7 +318,7 @@ pub(crate) fn test_install(args: &Args) -> Result<()> {
              virtio-blk-pci disk through OVMF",
         ));
     }
-    let carried = files(arch)?.ok_or_else(|| Error::new("ferrix-install is not built"))?;
+    let carried = files(arch)?.ok_or_else(|| Error::new("xaqu-install is not built"))?;
     let natives = native::build(arch, args.release)?;
     let loader = cargo::build_loader(arch, args.release)?;
     let initramfs = initramfs::build(None, &natives, None, &carried)?;

@@ -20,11 +20,11 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, AT_REMOVEDIR, CLONE_SYSVSEM, CLONE_THREAD, O_RDONLY, O_WRONLY,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs::cgroupfs;
 use crate::fs::mount_check::{Page, Report as Counts, Tally, by_number, close, open, page_for};

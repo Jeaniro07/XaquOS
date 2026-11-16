@@ -196,13 +196,13 @@ impl std::fmt::Debug for Account {
     }
 }
 
-/// Where the account is kept: `FERRIX_STEAM_ACCOUNT_FILE`, or
-/// `~/.config/ferrix/steam-test-account`. Two lines, the account's name and
+/// Where the account is kept: `XAQU_STEAM_ACCOUNT_FILE`, or
+/// `~/.config/xaqu/steam-test-account`. Two lines, the account's name and
 /// its password, readable by its owner alone; never in a checkout.
 fn account_file() -> Option<PathBuf> {
-    std::env::var_os("FERRIX_STEAM_ACCOUNT_FILE")
+    std::env::var_os("XAQU_STEAM_ACCOUNT_FILE")
         .map(PathBuf::from)
-        .or_else(|| std::env::home_dir().map(|home| home.join(".config/ferrix/steam-test-account")))
+        .or_else(|| std::env::home_dir().map(|home| home.join(".config/xaqu/steam-test-account")))
 }
 
 /// The account in `path`, or `None` when there is no such file.
@@ -644,7 +644,7 @@ fn boot(args: &Args, game: bool) -> Result<()> {
              file at {}: put the account's name and password there, one a line, mode 0600, \
              with Steam Guard off (docs/STEAM.md §1)",
             file.map_or_else(
-                || "~/.config/ferrix/steam-test-account".to_owned(),
+                || "~/.config/xaqu/steam-test-account".to_owned(),
                 |file| file.display().to_string()
             )
         )));
@@ -861,10 +861,10 @@ impl Gate<'_, '_> {
             println!(
                 "  steam-store: the store step was skipped: no account file at {}. To run it, \
                  put a Steam test account's name and password there, one a line, mode 0600, \
-                 with Steam Guard off (docs/STEAM.md §1); FERRIX_STEAM_ACCOUNT_FILE names \
+                 with Steam Guard off (docs/STEAM.md §1); XAQU_STEAM_ACCOUNT_FILE names \
                  another file",
                 file.map_or_else(
-                    || "~/.config/ferrix/steam-test-account".to_owned(),
+                    || "~/.config/xaqu/steam-test-account".to_owned(),
                     |file| file.display().to_string()
                 )
             );

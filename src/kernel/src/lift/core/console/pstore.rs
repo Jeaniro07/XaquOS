@@ -5,18 +5,18 @@ use crate::mm;
 use core::sync::atomic::AtomicU8;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::MemKind;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_bootinfo::pstore;
-use ferrix_bootinfo::pstore::HEADER_BYTES;
-use ferrix_bootinfo::pstore::STOP_OFFSET;
-use ferrix_bootinfo::pstore::Stop;
-use ferrix_bootinfo::pstore::TABLE_COUNT_OFFSET;
-use ferrix_bootinfo::pstore::TABLE_ENTRIES;
-use ferrix_bootinfo::pstore::TABLE_OFFSET;
-use ferrix_bootinfo::pstore::WRITTEN_OFFSET;
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::MemKind;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::pstore;
+use xaqu_bootinfo::pstore::HEADER_BYTES;
+use xaqu_bootinfo::pstore::STOP_OFFSET;
+use xaqu_bootinfo::pstore::Stop;
+use xaqu_bootinfo::pstore::TABLE_COUNT_OFFSET;
+use xaqu_bootinfo::pstore::TABLE_ENTRIES;
+use xaqu_bootinfo::pstore::TABLE_OFFSET;
+use xaqu_bootinfo::pstore::WRITTEN_OFFSET;
+use xaqu_sync::Once;
 pub fn stop(stop: Stop) -> bool {
     false
 }

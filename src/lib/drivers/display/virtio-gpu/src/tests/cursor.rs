@@ -6,10 +6,10 @@ use core::cell::RefCell;
 use std::rc::Rc;
 use std::vec::Vec;
 
-use ferrix_virtio::gpu::{
+use xaqu_virtio::gpu::{
     CMD_MOVE_CURSOR, CMD_UPDATE_CURSOR, Command, Format, MemEntry, Rect, backing_entries,
 };
-use ferrix_virtio::pci::NO_VECTOR;
+use xaqu_virtio::pci::NO_VECTOR;
 
 use super::driver::{TestDriver, build, run};
 use super::fake::{Bus, CursorSeen, Device};

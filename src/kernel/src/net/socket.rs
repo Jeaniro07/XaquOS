@@ -20,23 +20,23 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::inet::{
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::inet::{
     ICMP_FILTER, ICMPV6_FILTER, IP_HDRINCL, IP_TOS, IP_TTL, IPPROTO_ICMP, IPPROTO_ICMPV6,
     IPPROTO_TCP, IPPROTO_UDP, IPV6_2292HOPLIMIT, IPV6_CHECKSUM, IPV6_HOPLIMIT, IPV6_RECVHOPLIMIT,
     IPV6_UNICAST_HOPS, IPV6_V6ONLY, InetAddress, InetTunables, SOCKADDR_STORAGE_SIZE, SOL_ICMPV6,
     SOL_IP, SOL_IPV6, SOL_RAW, SOL_TCP, TCP_MAXSEG, TCP_NODELAY, TunableError, TunableValue,
 };
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::socket::{
     AF_INET, AF_INET6, MSG_DONTWAIT, MSG_PEEK, SHUT_RD, SHUT_RDWR, SHUT_WR, SO_ACCEPTCONN,
     SO_BROADCAST, SO_DOMAIN, SO_ERROR, SO_KEEPALIVE, SO_PROTOCOL, SO_RCVBUF, SO_RCVTIMEO_NEW,
     SO_RCVTIMEO_OLD, SO_REUSEADDR, SO_SNDBUF, SO_SNDTIMEO_NEW, SO_SNDTIMEO_OLD, SO_TYPE,
     SOCK_DGRAM, SOCK_RAW, SOCK_STREAM, SOCKET_BUFFER_DEFAULT, SOL_SOCKET, Width,
 };
-use ferrix_net::socket::{Error, Family, Shutdown, Socket as NetSocket};
-use ferrix_net::{Endpoint, IpAddress, Ipv4, Ipv6, SocketId, to_v6};
-use ferrix_vfs::{Inode, Metadata, OpenFile, Readiness};
+use xaqu_net::socket::{Error, Family, Shutdown, Socket as NetSocket};
+use xaqu_net::{Endpoint, IpAddress, Ipv4, Ipv6, SocketId, to_v6};
+use xaqu_vfs::{Inode, Metadata, OpenFile, Readiness};
 
 use crate::fs;
 use crate::net::NetNamespace;
@@ -318,7 +318,7 @@ impl InetSocket {
         // billion is still a program's mistake.
         let backlog = usize::try_from(backlog.max(0))
             .unwrap_or(0)
-            .min(ferrix_linux_abi::socket::SOMAXCONN);
+            .min(xaqu_linux_abi::socket::SOMAXCONN);
         self.ns
             .core()
             .with(|stack, _| stack.listen(self.id, backlog))
@@ -834,16 +834,16 @@ impl InetSocket {
     }
 
     /// The options the stack keeps for this socket.
-    fn stack_options(&self) -> ferrix_net::socket::Options {
+    fn stack_options(&self) -> xaqu_net::socket::Options {
         self.ns.core().with(|stack, _| {
             stack
                 .socket(self.id)
-                .map_or(ferrix_net::socket::Options::default(), NetSocket::options)
+                .map_or(xaqu_net::socket::Options::default(), NetSocket::options)
         })
     }
 
     /// Change the options the stack keeps.
-    fn with_options(&self, body: impl FnOnce(&mut ferrix_net::socket::Options)) {
+    fn with_options(&self, body: impl FnOnce(&mut xaqu_net::socket::Options)) {
         self.ns.core().with(|stack, _| {
             if let Some(socket) = stack.socket_mut(self.id) {
                 body(socket.options_mut());
@@ -859,7 +859,7 @@ impl InetSocket {
     /// and refused there unless the socket is `SOCK_RAW`.
     fn with_raw<T>(
         &self,
-        body: impl FnOnce(&mut ferrix_net::socket::RawSocket) -> T,
+        body: impl FnOnce(&mut xaqu_net::socket::RawSocket) -> T,
     ) -> Result<T, Errno> {
         self.ns
             .core()
@@ -1011,7 +1011,7 @@ impl InetSocket {
     fn segment_size(&self) -> i32 {
         self.ns.core().with(|stack, _| match stack.socket(self.id) {
             Some(NetSocket::Stream(stream)) => i32::from(stream.connection.segment_size()),
-            _ => i32::from(ferrix_nettcp::conn::DEFAULT_MSS),
+            _ => i32::from(xaqu_nettcp::conn::DEFAULT_MSS),
         })
     }
 
@@ -1027,8 +1027,8 @@ impl InetSocket {
         arg: u64,
     ) -> Result<usize, Errno> {
         let count = match request {
-            ferrix_linux_abi::socket::SIOCINQ => self.queued(),
-            ferrix_linux_abi::socket::SIOCOUTQ => self.unsent(),
+            xaqu_linux_abi::socket::SIOCINQ => self.queued(),
+            xaqu_linux_abi::socket::SIOCOUTQ => self.unsent(),
             // Everything else is about an interface rather than about this
             // socket, and `sys_ioctl` sends it on to `net::ifreq` for every
             // socket family alike.
@@ -1089,7 +1089,7 @@ impl Inode for InetSocket {
         Some(self.ns.core().progress().wakes())
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(self.ns.core().progress_source());
         true
     }
@@ -1099,12 +1099,12 @@ impl Inode for InetSocket {
         true
     }
 
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.recv(buf, 0, nonblock)
             .map(|(received, _from)| received.bytes)
     }
 
-    fn write_stream(&self, data: &[u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.send(data, 0, nonblock, None)
     }
 }
@@ -1159,7 +1159,7 @@ fn clamp_buffer(requested: i32) -> usize {
         .unwrap_or(0)
         .saturating_mul(2);
     wanted.clamp(
-        ferrix_linux_abi::socket::SOCKET_BUFFER_MIN,
-        ferrix_linux_abi::socket::SOCKET_BUFFER_MAX,
+        xaqu_linux_abi::socket::SOCKET_BUFFER_MIN,
+        xaqu_linux_abi::socket::SOCKET_BUFFER_MAX,
     )
 }

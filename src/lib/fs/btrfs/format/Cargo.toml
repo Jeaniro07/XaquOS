@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-btrfs"
+name = "xaqu-btrfs"
 description = "btrfs on-disk format: superblock, chunk mapping, B-tree and item parsing"
 version = "0.1.0"
 edition = "2024"

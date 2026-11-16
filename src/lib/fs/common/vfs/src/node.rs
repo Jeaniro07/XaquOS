@@ -5,9 +5,9 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_linux_abi::errno::Errno;
-pub use ferrix_linux_abi::types::Timespec;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+pub use xaqu_linux_abi::types::Timespec;
+use xaqu_linux_abi::types::{
     DT_BLK, DT_CHR, DT_DIR, DT_FIFO, DT_LNK, DT_REG, DT_SOCK, S_IFBLK, S_IFCHR, S_IFDIR, S_IFIFO,
     S_IFLNK, S_IFMT, S_IFREG, S_IFSOCK,
 };

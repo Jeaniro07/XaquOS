@@ -11,9 +11,9 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::QueueError;
-use ferrix_virtio::blk::{BlkError, FEATURE_BLK_SIZE};
-use ferrix_virtio::pci::{FEATURE_VERSION_1, NO_VECTOR, STATUS_FAILED, TransportError};
+use xaqu_virtio::QueueError;
+use xaqu_virtio::blk::{BlkError, FEATURE_BLK_SIZE};
+use xaqu_virtio::pci::{FEATURE_VERSION_1, NO_VECTOR, STATUS_FAILED, TransportError};
 
 use super::fake::{Device, PAGE, Rig, Setup};
 use crate::{Completion, DeviceError, InitError, Op, Rings, Status, SubmitError, Teardown};

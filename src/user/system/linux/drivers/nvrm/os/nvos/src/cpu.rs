@@ -22,7 +22,7 @@ const CPUID_OSXSAVE: u32 = 1 << 27;
 /// What `osNv_rdcr4` answers: the two bits RM reads
 /// (`src/nvidia/src/kernel/platform/cpu.c`, `RmInitCpuInfo`), and no
 /// others. `OSFXSR` is set by every x86-64 kernel that runs SSE code in
-/// user space, as Ferrix does; `OSXSAVE` is exactly what `CPUID.1:ECX`
+/// user space, as Xaqu does; `OSXSAVE` is exactly what `CPUID.1:ECX`
 /// bit 27 reports, by the architecture's definition.
 #[unsafe(no_mangle)]
 pub extern "C" fn nvos_rdcr4() -> u32 {

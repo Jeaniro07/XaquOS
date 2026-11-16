@@ -22,7 +22,7 @@
 //!    **STOPPED**. A driver that dies is an implicit STOPPED without the
 //!    promise that its device was reset.
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::layout::{
     MAX_ENTRIES, MAX_SLOT_BYTES, MIN_ENTRIES, MIN_SLOT_BYTES, SLOT_ALIGN, VERSION,

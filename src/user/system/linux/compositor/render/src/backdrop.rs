@@ -66,7 +66,7 @@ fn index(value: i64) -> usize {
 /// Whether two runs of pixels hold the same bytes.
 ///
 /// A word at a time rather than through `memcmp`, which musl -- the C
-/// library every Ferrix program links -- implements a byte at a time: on a
+/// library every Xaqu program links -- implements a byte at a time: on a
 /// Cortex-A7 that comparison was most of what keeping the backdrop cost.
 fn same(one: &[u8], other: &[u8]) -> bool {
     const WORD: usize = 8;

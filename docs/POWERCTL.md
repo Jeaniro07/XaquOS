@@ -1,7 +1,7 @@
 # Power control: the VR current limit from a ring-3 driver
 
 Design version 2, 2026-10-22, session `powerctl`. Replaces
-`ferrix.vrcurrent` (`L.x86_64.190`, `191`, `193`, now retired), which put
+`xaqu.vrcurrent` (`L.x86_64.190`, `191`, `193`, now retired), which put
 the N150's VR-current policy in the kernel. The customer's brief: move the
 policy out "the Fuchsia route" -- typed, narrow kernel calls behind a
 capability, the policy in a ring-3 driver -- "with some further
@@ -17,9 +17,9 @@ changed from version 1 and why, for the consultant's review of the code.
 
 ## 1. Why
 
-`ferrix.vrcurrent` works: on the N150 box, 40 A in `MSR_VR_CURRENT_CONFIG`
+`xaqu.vrcurrent` works: on the N150 box, 40 A in `MSR_VR_CURRENT_CONFIG`
 (0x601) -- written by the box-test branch `vr36` (never landed), whose ceiling
-the customer raised for that run, since `main`'s `ferrix.vrcurrent` stops
+the customer raised for that run, since `main`'s `xaqu.vrcurrent` stops
 at 32 A -- lifted the CPU ratio from 22 to 26 under full GPU load at 80-82 C,
 where 36 A and below left it held by "amps/pl4". But every decision -- the
 steps, their timing, the clamp, the ceiling -- was kernel code in the core
@@ -36,25 +36,25 @@ when and why is the driver's.
 | Redox | raw read/write of any MSR through `kernel.acpi`'s `msr` handle | root | none |
 | Fiasco, QNX | none from userspace | -- | -- |
 
-Ferrix takes Fuchsia's shape -- one typed system call per operation, the
+Xaqu takes Fuchsia's shape -- one typed system call per operation, the
 bounds in the kernel, a capability only the power driver holds -- and adds
 what none of them has: firmware's value comes back when the holder dies,
 hangs, or the kernel's own backstop trips.
 
 ## 3. Authority
 
-This design gives the driver no register `ferrix.vrcurrent` did not
+This design gives the driver no register `xaqu.vrcurrent` did not
 already write, on no processor it did not write it on, and no higher
 value -- before this branch's last commit: 0x601 bits 12:0 on Intel family
 6 model 0xBE, at most 32 A and 7 A above firmware's, the customer's
-authorisation for `ferrix.vrcurrent`. The last commit raises the ceiling
+authorisation for `xaqu.vrcurrent`. The last commit raises the ceiling
 to 48 A and 23 A above firmware's, which (a) below needs.
 Two things the consultant found it does add (ledger 3130, condition 1),
 which need the customer's own words, with their date, here and in the take
 message before it lands:
 
 * **(c) a standing interface** rather than "one N150 run": the word
-  `ferrix.powerctl` and its driver stay in the tree;
+  `xaqu.powerctl` and its driver stay in the tree;
 * **(a) a higher ceiling**, for the 44 A step of §12: 48 A absolute and
   23 A above firmware's is one constant in the model table
   (`logic::TABLE`), the branch's last commit alone.
@@ -64,7 +64,7 @@ IF): accept about +500 kernel lines? also retire msrlog (−321 lines)? your
 dated words for a standing interface and for 48 A.", answered verbatim:
 "power limits are ok". They are the authority for both (c) the standing
 interface and (a) the 48 A / 23 A row, so the last commit lands
-(re-review, ledger 3180, condition 1). They say nothing about `ferrix.msrlog`,
+(re-review, ledger 3180, condition 1). They say nothing about `xaqu.msrlog`,
 which stays (§11).
 
 Version 1's package power limits (0x610, condition 1 (b)) are not in
@@ -76,12 +76,12 @@ writes one register.
 ```
 kernel                                            ring 3
   discovery/powerctl.rs (item): stage 10's        devmgr: TREE_X86_POWER -> `power`
-    finder; one node under ferrix.powerctl          (Kind::Power, never restarted)
+    finder; one node under xaqu.powerctl          (Kind::Power, never restarted)
     on a processor the model table names              |
   syscall/native.rs (item): power_control_create,     v
     power_set, power_read                          power driver (drivers/power/x86,
-  arch/x86_64/powerctl.rs (core): the bounds,        policy in lib ferrix-x86-power):
-    the write, the restores, one task a second       plan from ferrix.power.* words,
+  arch/x86_64/powerctl.rs (core): the bounds,        policy in lib xaqu-x86-power):
+    the write, the restores, one task a second       plan from xaqu.power.* words,
     for the death watch, the lease and the           a power_read a second (its lease),
     backstop                                         back-off, every log line
 ```
@@ -90,7 +90,7 @@ kernel                                            ring 3
 
 **The node** (`L.device.51`). Stage 10's fifth finder,
 `discovery/powerctl.rs` (item ring), asks `arch::power_probe`. Without
-`ferrix.powerctl` or `ferrix.powerctl.fake` nothing is read, published or
+`xaqu.powerctl` or `xaqu.powerctl.fake` nothing is read, published or
 printed. **That is the deactivation mechanism** (the certification
 consultant's ledger 3558 C2, 3623 (R13)): no profile permits either option,
 so in every certified configuration the probe returns before it reads a
@@ -98,7 +98,7 @@ register, no node is published, and `power_control_create` finds none to
 claim; the code is deactivated, not absent, in every build, a
 `runtime_settings=fixed` one included, until step 2 of
 `docs/KERNEL-CRATES.md` §6.2 moves its entries into the removable settings
-crate under its own boundary-move review. With `ferrix.powerctl` the probe publishes one node,
+crate under its own boundary-move review. With `xaqu.powerctl` the probe publishes one node,
 `TREE_X86_POWER` (binding 7), only when all hold, and otherwise prints
 `power: refused: <why> (Intel .., signature .., 0x601 ..); no node` and
 publishes nothing -- never a failed finder, so the boot goes on:
@@ -114,7 +114,7 @@ publishes nothing -- never a failed finder, so the boot goes on:
 
 Then the probe stores firmware's 0x601 for the boot -- once, never again
 (condition 6) -- and prints `power: node: signature .., 0x601 .., ceiling
-..`. `ferrix.powerctl.fake` publishes the same node on any x86-64 processor
+..`. `xaqu.powerctl.fake` publishes the same node on any x86-64 processor
 over `powerctl/fake_check.rs`'s register file (§10).
 
 The node is `Location::Tree(0)` (no other x86-64 node is at a tree address
@@ -155,7 +155,7 @@ to see `PEER_CLOSED` when the kernel ends the claim.
 | Call | Arguments | The kernel |
 |---|---|---|
 | `power_set` (0x1067) | claim, eighths of an ampere | refuses `INVALID_ARGS` outside firmware's own value up to the row's ceiling (`L.x86_64.195`); `SHOULD_WAIT` for a raise within a second of the last, whichever claim made it (`203`); `LIMIT_REACHED` for a raise while the backstop's verdict is bad (`200`); `BAD_STATE` latched, the register left to firmware, or not the claim. A value already in force writes and prints nothing. Otherwise writes 0x601 bits 12:0 over the register as it reads now (`196`, `202`), reads it back (`205`), prints `power: set 0x601 <new> (was <old>)`, answers the read-back. A lowering, firmware's value included, is how the driver takes its raise back. |
-| `power_read` (0x1068) | claim, `*[u64; 16]` | writes `POWER_READ_*` (`ferrix_native_abi::types`): firmware's 0x601, the ceiling, the signature, the latch flags, 0x601 now, and the fixed read-only list 0x1A2, 0x19C, 0x1B1, 0x198, 0x64F, 0x6B0, 0x611, 0x606, 0x610, each marked present only if its read did not fault (`197`); renews the lease. Decoding is the driver's. |
+| `power_read` (0x1068) | claim, `*[u64; 16]` | writes `POWER_READ_*` (`xaqu_native_abi::types`): firmware's 0x601, the ceiling, the signature, the latch flags, 0x601 now, and the fixed read-only list 0x1A2, 0x19C, 0x1B1, 0x198, 0x64F, 0x6B0, 0x611, 0x606, 0x610, each marked present only if its read did not fault (`197`); renews the lease. Decoding is the driver's. |
 
 Both renew the lease. There is no other call: no register number crosses
 the interface, and nothing else in it writes.
@@ -174,7 +174,7 @@ the interface, and nothing else in it writes.
 | an orderly power-off or reset, and both ends of a panic (`206`) | `restore(what)`, any processor, no lock, no allocation | `power: restored ..: power-off` | -- |
 
 A latched core refuses every later claim until reboot (`201`). The
-backstop is `ferrix.vrcurrent`'s guard, unchanged, and minimal: one limit,
+backstop is `xaqu.vrcurrent`'s guard, unchanged, and minimal: one limit,
 no hysteresis; backing off before it is the driver's.
 
 **Firmware's value against the register** (`202`, condition 6). Firmware's
@@ -248,8 +248,8 @@ power: latched off until reboot: Backstop(Hot(90))
 power: restored Done { value: c8, taken: true, back: Some(c8) }: power-off
 ```
 
-Under `ferrix.powerctl.fake` every kernel line says `power (fake):`. The
-driver prints `ferrix.vrcurrent`'s shapes, so the box's scripts keep
+Under `xaqu.powerctl.fake` every kernel line says `power (fake):`. The
+driver prints `xaqu.vrcurrent`'s shapes, so the box's scripts keep
 working. It writes them to `/dev/kmsg`, a record a line at info, which the
 kernel writes without ever waiting for the console's room
 (`console::write_record`); standard error only if `/dev/kmsg` will not
@@ -264,14 +264,14 @@ power: backing off to 37 A: 86 C
 
 ## 9. The driver
 
-`src/lib/drivers/power/x86-power` (crate `ferrix-x86-power`, host-tested:
+`src/lib/drivers/power/x86-power` (crate `xaqu-x86-power`, host-tested:
 15 tests) and `src/user/system/native/drivers/power/x86` (image `power`),
 outside the item. It reads its words from `/proc/cmdline`:
 
-* `ferrix.power.vr=A1,...,An@S`: the plan, one to eight ascending steps of
+* `xaqu.power.vr=A1,...,An@S`: the plan, one to eight ascending steps of
   whole amperes; steps above the kernel's ceiling are dropped and said.
   Without it the driver writes nothing and only reports.
-* `ferrix.power.vr=auto:LO-HI` (`auto` alone is 30-44): the adaptive
+* `xaqu.power.vr=auto:LO-HI` (`auto` alone is 30-44): the adaptive
   plan. Eight steps spread evenly from LO to HI A and no clock: the driver
   starts at LO and moves by temperature, reading the hottest sensor's trend
   ten seconds ahead. It climbs one step at most every 15 s while both the
@@ -281,13 +281,13 @@ outside the item. It reads its words from `/proc/cmdline`:
   reading got that near as its ceiling for three minutes before it tries
   higher. It finds the highest current the cooling holds, and never
   gives up: LO is its floor, the kernel's backstop still above it.
-* `ferrix.power.hot=C`: the soft limit, 50 to 99, 85 without it. At or
+* `xaqu.power.hot=C`: the soft limit, 50 to 99, 85 without it. At or
   above it on either sensor the driver steps down one step, at most once in
   5 s, and holds until the hottest reads 5 C below it for 30 s, each such
   spell lifting it one step (not back to the top at once); a third
   back-off without such a spell, or one asked of the first step, puts
   firmware's value back for good.
-* `ferrix.power.test=hang@S` / `exit@S`: test only (§10).
+* `xaqu.power.test=hang@S` / `exit@S`: test only (§10).
 
 Its loop: a `power_read` once a second -- the only thing that renews its
 lease, so a policy loop that stops is a lapsed lease (C2) -- the policy's
@@ -324,7 +324,7 @@ again -- keeps firmware's value.
 `powerctl/fake_check.rs`, nothing reaching an MSR): the gate, the package
 count, the bounds and the composition (`194`-`196`); `power_read`'s words
 (`197`); a claim's life and the holder gone (`198`); the lease (`199`); the
-backstop's verdict on `ferrix.vrcurrent`'s vectors and its restores
+backstop's verdict on `xaqu.vrcurrent`'s vectors and its restores
 (`200`); the latches (`201`); the firmware compares (`202`); the raise
 floor across claims (`203`); every interleaving of a write with an exit
 restore (`204`); a write that does not read back, restored (`205`); the
@@ -332,14 +332,14 @@ exit restore (`206`); every interleaving of a task restore with an exit
 restore (`208`); a stale watch and the next claim (`198`).
 
 **`cargo xtask test-power`** (x86_64; `--init` with the static busybox,
-whose shell keeps the machine up past `FERRIX-BOOT-OK`): (1) no word: no
-power line, no driver; (2) `ferrix.powerctl` on the gate host's AMD: one
-refusal, no node; (3) the fake with `ferrix.power.vr=27,29@1` and
+whose shell keeps the machine up past `XAQU-BOOT-OK`): (1) no word: no
+power line, no driver; (2) `xaqu.powerctl` on the gate host's AMD: one
+refusal, no node; (3) the fake with `xaqu.power.vr=27,29@1` and
 `hang@3`: the driver's refusal checks, 27 then 29 A on the fake, the lease
 restore, every kernel line `(fake)`; (4) the same with `exit@3`: the
 holder-gone restore, devmgr's `ended with status 4`, one start only; (5)
 TCG answering as Intel 6/0xBE: the probe refuses 0x601's 0; (6) the fake
-with `ferrix.power.vr=27,29@1`, the driver stopped from the shell with
+with `xaqu.power.vr=27,29@1`, the driver stopped from the shell with
 `kill -STOP` for 8 s after its second write -- starved of every processor
 -- and let go: the lease restore, the driver's late loop, lost and regained
 claim, 27 then 29 A again, no latch, one start.
@@ -367,29 +367,29 @@ Lines of code, comments and blank lines left out, against `main` at
 | the checked write's boot check, moved to `cpu/check.rs` | -- | moved, not added |
 
 So the kernel's product code grows by about 500 lines (after the code review's B1-B3, which added the claim's own end and generation and the masked task restore). What moved out to
-ring 3 is all of `ferrix.vrcurrent`'s policy -- the plan's grammar, the
+ring 3 is all of `xaqu.vrcurrent`'s policy -- the plan's grammar, the
 schedule, its packing into a task argument, the guard's logging -- about
 150 lines; what the kernel gains is the capability's obligations, which
-`ferrix.vrcurrent` never had: a claim, a lease, a death watch, two system
+`xaqu.vrcurrent` never had: a claim, a lease, a death watch, two system
 calls, a node, a write and a restore safe against each other on any
 processor, and the fake that lets QEMU prove the death and the lease end
-to end. Retiring `ferrix.msrlog` too -- its decoded log is the driver's
+to end. Retiring `xaqu.msrlog` too -- its decoded log is the driver's
 job now, from `power_read` -- would take 321 product and 144 check lines
 out, and is offered, not done: the customer asked to keep it.
 
 ## 12. The box procedure (the customer's)
 
-1. Build from this branch. Boot with `ferrix.powerctl ferrix.msrlog
-   ferrix.power.vr=30,34,37,40,44@60` (the 48 A row, the customer's words
+1. Build from this branch. Boot with `xaqu.powerctl xaqu.msrlog
+   xaqu.power.vr=30,34,37,40,44@60` (the 48 A row, the customer's words
    of 2026-10-23 in §3). Expect `power: node:`, the
    driver's `power: claimed`, then `msr: vrcurrent set 30.000 A (was
    25.000 A)` with the kernel's `power: set 0x601 0xf0 (was 0xc8)`, and one
    step a minute.
-2. Load the GPU. The driver backs off at 85 C (`ferrix.power.hot` to move
+2. Load the GPU. The driver backs off at 85 C (`xaqu.power.hot` to move
    it); the kernel restores at 90 C and latches. Read the driver's 5 s lines
    and msrlog's.
 3. The warm-reset check (condition 14): with a raise in force, reset the
-   box with its button (or `ferrix.panic=reset` and a forced panic), and
+   box with its button (or `xaqu.panic=reset` and a forced panic), and
    record the next boot's `power: node: ... 0x601 0x..`: 0xc8 is firmware's
    value back; anything else is a finding for review.
 4. Before using the box for anything else: power-cycle, or see a `power:
@@ -406,7 +406,7 @@ out, and is offered, not done: the customer asked to keep it.
 | a periodic firmware-change watch | the compare before every write and restore | the compares are what keep firmware's change; an earlier sighting changed nothing |
 | a quiesce that waits for an ending claim | `BAD_STATE` under a live holder, else at once | the restore never depends on the quiesce |
 | a power task serving the channel | a task that looks once a second | the death watch, the lease and the backstop in one look |
-| decoded kernel lines in `ferrix.vrcurrent`'s shapes | raw hex from the kernel, the shapes from the driver | logging formats are ring 3's |
+| decoded kernel lines in `xaqu.vrcurrent`'s shapes | raw hex from the kernel, the shapes from the driver | logging formats are ring 3's |
 | every restore sets the stop flag | exit restores only; task restores serialized by the lock | §7 |
 
 Conditions (2), (3), (4), (5), (6), (7), (9), (10), (11), (12), (13) and
@@ -432,7 +432,7 @@ branch `powerctl-reserve`, landed on `main` as bb243e114 first.
 2026-10-23, meeting ledger 3180's conditions: (1) the customer's words
 "power limits are ok" (2026-10-23) are in §3 and
 `docs/backlog/DECISIONS.md`, for the standing interface and the 48 A /
-23 A row, which stays; `ferrix.msrlog` is not retired. (2) The branch is
+23 A row, which stays; `xaqu.msrlog` is not retired. (2) The branch is
 rebased onto bb243e114; devmgr's `launch_again` list holds `Kind::Engine`
 and `Kind::Power`, and `restarted()` has no `Power`. (3)/(4) the 19
 controls and the rows ran through `fleet/gate.sh` on the landing hash

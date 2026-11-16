@@ -38,7 +38,7 @@ Supported log levels (priorities):
 ";
 
 /// What `--version` prints.
-pub const VERSION: &str = concat!("dmesg from Ferrix ", env!("CARGO_PKG_VERSION"));
+pub const VERSION: &str = concat!("dmesg from Xaqu ", env!("CARGO_PKG_VERSION"));
 
 /// What the program is to do.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

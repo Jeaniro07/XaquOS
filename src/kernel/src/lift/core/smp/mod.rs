@@ -7,12 +7,12 @@ use core::hint::spin_loop;
 use core::sync::atomic::AtomicBool;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_sched::CpuSet;
-use ferrix_sched::MAX_CPUS;
-use ferrix_sync::IrqControl;
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_sched::CpuSet;
+use xaqu_sched::MAX_CPUS;
+use xaqu_sync::IrqControl;
+use xaqu_sync::Once;
 #[repr(C)]
 #[derive(Debug)]
 pub struct PerCpu {
@@ -82,7 +82,7 @@ pub fn this_cpu() -> Option<&'static PerCpu> {
 /// register that says.
 #[cfg(not(target_arch = "x86_64"))]
 pub fn this_cpu() -> Option<&'static PerCpu> {
-    records().get(crate::sys::clock(ferrix_native_abi::lift::CLOCK_CPU) as usize)
+    records().get(crate::sys::clock(xaqu_native_abi::lift::CLOCK_CPU) as usize)
 }
 
 /// A set of processors joined and left: nothing asks it in ring 3.
@@ -94,11 +94,11 @@ impl CpuMask {
     }
     pub fn join(&self, cpu: usize) {}
     pub fn leave(&self, cpu: usize) {}
-    pub fn snapshot(&self) -> ferrix_sched::CpuSet {
-        ferrix_sched::CpuSet::empty()
+    pub fn snapshot(&self) -> xaqu_sched::CpuSet {
+        xaqu_sched::CpuSet::empty()
     }
 }
-pub fn add_cpus(into: &mut ferrix_sched::CpuSet, from: &ferrix_sched::CpuSet) {}
+pub fn add_cpus(into: &mut xaqu_sched::CpuSet, from: &xaqu_sched::CpuSet) {}
 /// A shootdown: `mm::unmap_in` asked the kernel, which ran it.
 #[derive(Debug)]
 pub struct TlbPages {
@@ -127,4 +127,4 @@ impl TlbPages {
     pub fn add_range(&mut self, start: u64, len: u64) {}
     pub fn add_all(&mut self, other: &mut TlbPages) {}
 }
-pub fn flush_tlb_pages(cpus: &ferrix_sched::CpuSet, pages: &mut TlbPages) {}
+pub fn flush_tlb_pages(cpus: &xaqu_sched::CpuSet, pages: &mut TlbPages) {}

@@ -41,23 +41,23 @@
 //! # No allocator, no unsafe
 //!
 //! Rust's `core` only, so every native program can link it, and a recorder plays
-//! the kernel in the tests, as for `ferrix-native`.
+//! the kernel in the tests, as for `xaqu-native`.
 
 #![no_std]
 #![forbid(unsafe_code)]
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_elf::{Class, Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP};
-use ferrix_native::Error;
-use ferrix_native::handle::OwnedHandle;
-use ferrix_native::job::Job;
-use ferrix_native::pending::{Process, make_process};
-use ferrix_native::space::{Access, Space};
-use ferrix_native::vmo::Vmo;
-use ferrix_native::{Requested, Rights, Syscall};
-use ferrix_native_abi::nr::PROCESS_NAME_MAX;
-use ferrix_native_abi::rights::IMAGE_RIGHTS;
-use ferrix_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_elf::{Class, Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP};
+use xaqu_native::Error;
+use xaqu_native::handle::OwnedHandle;
+use xaqu_native::job::Job;
+use xaqu_native::pending::{Process, make_process};
+use xaqu_native::space::{Access, Space};
+use xaqu_native::vmo::Vmo;
+use xaqu_native::{Requested, Rights, Syscall};
+use xaqu_native_abi::nr::PROCESS_NAME_MAX;
+use xaqu_native_abi::rights::IMAGE_RIGHTS;
+use xaqu_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
 
 #[cfg(test)]
 mod tests;
@@ -513,14 +513,14 @@ fn place_stack<S: Syscall>(space: &Space<S>) -> Result<u64, Refused> {
 }
 
 /// The ELF machine of the architecture `std::env::consts::ARCH` names, for a Linux
-/// program that starts native ones; a native one has `ferrix_rt::ELF_MACHINE`. Asked
+/// program that starts native ones; a native one has `xaqu_rt::ELF_MACHINE`. Asked
 /// of the caller since no library holds a `target_arch` conditional.
 #[must_use]
 pub fn machine_named(arch: &str) -> u16 {
     match arch {
-        "x86_64" => ferrix_elf::EM_X86_64,
-        "aarch64" => ferrix_elf::EM_AARCH64,
-        "arm" => ferrix_elf::EM_ARM,
+        "x86_64" => xaqu_elf::EM_X86_64,
+        "aarch64" => xaqu_elf::EM_AARCH64,
+        "arm" => xaqu_elf::EM_ARM,
         _ => 0,
     }
 }

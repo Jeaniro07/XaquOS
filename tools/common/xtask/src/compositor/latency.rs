@@ -1,4 +1,4 @@
-//! `test-xlatency`: stage 24's input-to-scan-out probe on Ferrix with no
+//! `test-xlatency`: stage 24's input-to-scan-out probe on Xaqu with no
 //! card (docs/GAME-PATH.md §2.4 and §8.1, R2).
 //!
 //! `test-xwindow`'s boot -- hyprix, and yserver on `:0` as the
@@ -135,7 +135,7 @@ const AGES_DROP_IN: &str = "# Carried by `cargo xtask test-xlatency`.\n\
 fn ports(arch: Arch) -> Result<Vec<crate::ports::File>> {
     let mut ports = crate::yserver::desktop_files(&[]);
     ports.push(crate::ports::File {
-        path: "etc/ferrix/units/hyprix.service.d/ages.conf".to_owned(),
+        path: "etc/xaqu/units/hyprix.service.d/ages.conf".to_owned(),
         mode: 0o644,
         content: crate::ports::Content::Bytes(AGES_DROP_IN.as_bytes().to_vec()),
     });

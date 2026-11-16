@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 use compositor_seat::prompt::ToSeat;
 
-use ferrix_settings_proto::{
+use xaqu_settings_proto::{
     DecodeError, MAX_RECORD, Refusal, RefusalKind, Request, ToClient, ToServer,
 };
 

@@ -3,7 +3,7 @@
 //! The installer formats the root partition with this (`docs/INSTALLER.md`
 //! §5.3, slice I3), where it used to copy a 1 GiB volume `mkfs.btrfs` had
 //! made on the build host. What it makes is what `mkfs.btrfs` makes by
-//! default for one device, and what `ferrix-btrfs-write` takes:
+//! default for one device, and what `xaqu-btrfs-write` takes:
 //!
 //! * `SINGLE` data, `DUP` metadata and system chunks;
 //! * skinny metadata, `NO_HOLES`, extended inode references, the free-space
@@ -17,7 +17,7 @@
 //! of each kind where the device's start is, sized as Linux sizes a first
 //! chunk (a tenth of the device, at most 1 GiB of data and 256 MiB of
 //! metadata), and leaves the rest of the device unallocated.
-//! `ferrix-btrfs-write` makes further chunks as the volume fills, as Linux
+//! `xaqu-btrfs-write` makes further chunks as the volume fills, as Linux
 //! does, so there is no second pass that grows the volume to its device.
 //!
 //! [`make`] is pure: it returns the bytes to write and where, and
@@ -35,24 +35,24 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::ops::Range;
 
-use ferrix_btrfs::chunk::{
+use xaqu_btrfs::chunk::{
     BLOCK_GROUP_DATA, BLOCK_GROUP_DUP, BLOCK_GROUP_METADATA, BLOCK_GROUP_SYSTEM,
     FIRST_CHUNK_TREE_OBJECTID,
 };
-use ferrix_btrfs::crc32c;
-use ferrix_btrfs::items::{
+use xaqu_btrfs::crc32c;
+use xaqu_btrfs::items::{
     CHUNK_ITEM_KEY, CHUNK_TREE_OBJECTID, CSUM_TREE_OBJECTID, DEV_ITEM_KEY, DEV_ITEMS_OBJECTID,
     DEV_TREE_OBJECTID, DIR_ITEM_KEY, EXTENT_TREE_OBJECTID, FIRST_FREE_OBJECTID, FS_TREE_OBJECTID,
     INODE_ITEM_KEY, INODE_REF_KEY, ROOT_ITEM_KEY, ROOT_TREE_DIR_OBJECTID, ROOT_TREE_OBJECTID,
     name_hash,
 };
-use ferrix_btrfs::superblock::{IncompatFlags, MAGIC, SUPERBLOCK_OFFSETS, SUPERBLOCK_SIZE};
-use ferrix_btrfs::tree::{BtrfsKey, MAX_NODE_SIZE, MIN_NODE_SIZE};
-use ferrix_btrfs_write::extent::{
+use xaqu_btrfs::superblock::{IncompatFlags, MAGIC, SUPERBLOCK_OFFSETS, SUPERBLOCK_SIZE};
+use xaqu_btrfs::tree::{BtrfsKey, MAX_NODE_SIZE, MIN_NODE_SIZE};
+use xaqu_btrfs_write::extent::{
     BLOCK_GROUP_ITEM_KEY, DEV_EXTENT_KEY, FREE_SPACE_EXTENT_KEY, FREE_SPACE_INFO_KEY,
     METADATA_ITEM_KEY,
 };
-use ferrix_btrfs_write::node::{Body, LeafItem, TreeNode};
+use xaqu_btrfs_write::node::{Body, LeafItem, TreeNode};
 
 use items::{BackupRoots, Bytes, DevFields, RootFields};
 
@@ -63,7 +63,7 @@ mod items;
 pub const MIN_SIZE: u64 = 128 * MIB;
 /// `mkfs.btrfs`'s node size.
 pub const DEFAULT_NODESIZE: u32 = 16 * 1024;
-/// The sector size: the page size of every machine Ferrix runs on.
+/// The sector size: the page size of every machine Xaqu runs on.
 pub const SECTORSIZE: u32 = 4096;
 /// The longest label, as `mkfs.btrfs -L` takes it.
 pub const MAX_LABEL: usize = 255;
@@ -74,7 +74,7 @@ const MIB: u64 = 1 << 20;
 const RESERVED: u64 = MIB;
 /// The system chunk, as `mkfs.btrfs` makes it.
 const SYSTEM_BYTES: u64 = 8 * MIB;
-/// The largest first chunks, as `ferrix-btrfs-write` sizes later ones.
+/// The largest first chunks, as `xaqu-btrfs-write` sizes later ones.
 const METADATA_MOST: u64 = 256 * MIB;
 const DATA_MOST: u64 = 1 << 30;
 /// The one device's id.
@@ -108,7 +108,7 @@ pub struct Options<'a> {
     pub size: u64,
     /// Bytes in a tree node: a power of two from 4 KiB to 64 KiB.
     pub nodesize: u32,
-    /// The label, `ferrix-root` for a root volume.
+    /// The label, `xaqu-root` for a root volume.
     pub label: &'a [u8],
     /// The filesystem's UUID, which every tree block carries.
     pub fsid: [u8; 16],
@@ -681,7 +681,7 @@ fn superblock(options: &Options<'_>, layout: &Layout, offset: u64) -> Result<Vec
         generation: GENERATION,
     };
     let out = Bytes::new()
-        .raw(&[0; ferrix_btrfs::CSUM_SIZE])
+        .raw(&[0; xaqu_btrfs::CSUM_SIZE])
         .raw(&options.fsid)
         .u64(offset)
         .u64(SUPER_FLAG_WRITTEN)
@@ -730,7 +730,7 @@ fn superblock(options: &Options<'_>, layout: &Layout, offset: u64) -> Result<Vec
     if out.len() != SUPERBLOCK_SIZE {
         return Err(bad);
     }
-    let sum = crc32c(out.get(ferrix_btrfs::CSUM_SIZE..).ok_or(bad)?);
+    let sum = crc32c(out.get(xaqu_btrfs::CSUM_SIZE..).ok_or(bad)?);
     out.get_mut(..4)
         .ok_or(bad)?
         .copy_from_slice(&sum.to_le_bytes());

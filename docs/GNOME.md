@@ -1,12 +1,12 @@
-# GNOME on Ferrix: what a probe found
+# GNOME on Xaqu: what a probe found
 
-Asked by the customer on 2026-10-17: can GNOME run on Ferrix, and what
+Asked by the customer on 2026-10-17: can GNOME run on Xaqu, and what
 would it take? The certification consultant answered a GNOME port **not
 yet** on 2026-10-17 (ledger line 2289, blockers B1 to B5 below) and
 recommended option A; session 025c420a carried the assessment on from the
 tree on 2026-10-18. The feasibility probe done here on 2026-10-22 was
 chosen afterwards: run Debian 13's own mutter and
-gnome-shell on a Ferrix guest and write down exactly how far they get and
+gnome-shell on a Xaqu guest and write down exactly how far they get and
 what stops them, before any design. This is an assessment, not a decision
 and not a stage.
 
@@ -45,7 +45,7 @@ small as possible.
   taken (the consultant's B1: no 512 KiB contiguous heap block). Debian's
   gnome-shell headless now shows GTK 4's GL gears on virgl at 59 fps with
   no shim (screenshot off-tree,
-  `~/.local/share/ferrix/gnome-probe/shots/shell-gears-virgl-fixed.png`);
+  `~/.local/share/xaqu/gnome-probe/shots/shell-gears-virgl-fixed.png`);
   `test-display --gl` requires `long 266240`. Both are shown on x86_64 only: the pool's AArch64 QEMU has no
   `virtio-gpu-gl-pci`, so `test-display --arch aarch64 --gl` cannot pass
   (it fails the same way on main); AArch64 is owed by backlog p2-154
@@ -55,8 +55,8 @@ small as possible.
   starts the session's D-Bus bus as the user in the session's scope;
   `data-nosuid.service` remounts `/data` `nosuid,nodev` before any session;
   `cargo xtask test-gnome-apps` boots it and requires libadwaita's demo on
-  hyprix as `ferrix`, on the bus, and gone with the session
-  (`~/.local/share/ferrix/gnome-probe/shots/g1-test-gnome-apps.png`).
+  hyprix as `xaqu`, on the bus, and gone with the session
+  (`~/.local/share/xaqu/gnome-probe/shots/g1-test-gnome-apps.png`).
 * **Kernel lines**: 95 added and 28 removed, all in the load ring's
   `interfaces/render` -- 40 added and 16 removed are code, the rest the
   comments that say why. Gap 1 is one match arm; gap 2 is the slot size,
@@ -68,8 +68,8 @@ small as possible.
 
 ## The probe, 2026-10-22
 
-* **gnome-shell 48.7 runs on Ferrix**, unmodified Debian 13 binaries on
-  Ferrix's kernel, in two ways:
+* **gnome-shell 48.7 runs on Xaqu**, unmodified Debian 13 binaries on
+  Xaqu's kernel, in two ways:
   * **headless** (`--headless --virtual-monitor 1280x720`), drawing with
     Mesa's virgl on `/dev/dri/renderD128`. It starts in 0.7 s, answers
     `org.gnome.Shell` on the session bus, and its own screenshot shows the
@@ -78,7 +78,7 @@ small as possible.
     gnome-shell's own Xwayland, with mutter's frames.
   * **nested in hyprix**, as an X11 client of Debian's Xwayland running
     rootless on hyprix (`gnome-shell --nested`): GNOME Shell in a window on
-    the Ferrix desktop, a libadwaita app inside it. Its own first
+    the Xaqu desktop, a libadwaita app inside it. Its own first
     notification is *"Screen Lock disabled: Screen Locking requires the
     GNOME display manager"* -- blocker B1, said by GNOME itself.
 * **GTK 4 and libadwaita apps run on hyprix today**, from the same Debian
@@ -111,7 +111,7 @@ small as possible.
 
 ## 1. Why a probe and not a design
 
-The 2026-10-18 assessment listed what GNOME needs and Ferrix lacks: D-Bus,
+The 2026-10-18 assessment listed what GNOME needs and Xaqu lacks: D-Bus,
 logind, a `systemd --user` stand-in, udev, EGL, atomic KMS, PipeWire,
 polkit, accountsservice and GDM. It could not say which of those are walls
 and which are warnings, because GNOME degrades gracefully around most
@@ -127,23 +127,23 @@ fonts-cantarell adwaita-icon-theme gsettings-desktop-schemas procps less`:
 550 packages, 1.2 GB, mutter and gnome-shell 48.7, Mesa 25.0.7, GLib 2.84,
 GTK 4.18. `docker export` into a tree, `mkfs.btrfs --rootdir` into a
 volume. The package list is kept beside it
-(`~/.local/share/ferrix/gnome-probe/pkglist.txt`). Unpinned: this is a
+(`~/.local/share/xaqu/gnome-probe/pkglist.txt`). Unpinned: this is a
 probe, not a fetch script.
 
 **The boot.** `cargo xtask run-compositor --chrome --interpreter glibc
 --release --ssh 2251 --vnc :51 --memory 4096 --tmpfs-root --no-dotfiles`,
-x86-64 under KVM on nazuna, with `FERRIX_CHROME_VOLUME` pointing at the
+x86-64 under KVM on nazuna, with `XAQU_CHROME_VOLUME` pointing at the
 probe's directory, so the volume is mounted at `/data` as Chrome's would
 be (`tools/common/xtask/src/compositor/run.rs`, `data_disk`). The desktop
 is hyprix as root, as on every non-session image.
 
-**A Debian root inside Ferrix.** Over `sshdt`: `mount --bind` of `/dev`,
+**A Debian root inside Xaqu.** Over `sshdt`: `mount --bind` of `/dev`,
 `/proc`, `/sys`, `/tmp`, `/run` and `/dev/shm` into `/data`, then `chroot
-/data`. Both are Ferrix's own (`syscall/fsctl.rs`), and Debian's
+/data`. Both are Xaqu's own (`syscall/fsctl.rs`), and Debian's
 programs then see a Debian filesystem exactly as on Linux. **`apt-get`
 works inside it**, over the desktop's NAT: `gdb`, `mesa-utils`,
 `gstreamer1.0-plugins-base`, `x11-apps` and `x11-utils` were installed on
-Ferrix during the probe.
+Xaqu during the probe.
 
 **The buses.** `dbus-daemon --session` started first try. The system bus
 needed a configuration without `<user>messagebus</user>` (gap 3, §3).
@@ -157,13 +157,13 @@ own `org.gnome.Shell.Screenshot` (under `--unsafe-mode`), and for hyprix a
 raw-encoding RFB client reading QEMU's VNC server.
 
 Every guest script, every log and every screenshot is in
-`~/.local/share/ferrix/gnome-probe/` on nazuna (`guest/`, `shots/`,
+`~/.local/share/xaqu/gnome-probe/` on nazuna (`guest/`, `shots/`,
 `shims/`); the screenshots are not committed, since they carry Debian's
 and the user's artwork.
 
 ## 3. What failed, in the order it was met
 
-Each gap: what was seen, why, where in Ferrix it would change, which ring
+Each gap: what was seen, why, where in Xaqu it would change, which ring
 of `tools/common/data/certification-item.json` that is, and a size in
 points. None was changed here. Gaps 1 and 3 are in the kernel's load
 ring, and gap 7 is in the kernel only in its way (b); gaps 4, 5, 6, 7 (a)
@@ -182,7 +182,7 @@ wayland-egl: display does not support prime` first.
 **Why.** Mesa's Wayland platform asks the compositor's main device for
 `DRM_CAP_PRIME` and, without import and export, takes a software path --
 which with the virgl driver loaded calls a screen hook only Zink has, a
-null pointer. Ferrix's render node answers `DRM_IOCTL_GET_CAP` for the
+null pointer. Xaqu's render node answers `DRM_IOCTL_GET_CAP` for the
 sync-object capabilities alone, `EINVAL` for everything else
 (`src/kernel/src/interfaces/render/node.rs`, `get_cap`), although it
 implements both PRIME calls (`export`, `import`, the same file).
@@ -224,7 +224,7 @@ every handle it opens), so this is not the missing attach.
 **Where to look next.** The difference between hyprix's import (its own
 virgl stream, `src/user/system/linux/compositor/virgl`) and Mesa's
 (`EGL_EXT_image_dma_buf_import` in mutter's process): implicit
-synchronisation, which Ferrix's dmabufs do not carry (`docs/GPU.md`
+synchronisation, which Xaqu's dmabufs do not carry (`docs/GPU.md`
 §3.13), the format and modifier mutter asks for, and the resource's bind
 flags. A day's investigation (3 points) before it can be sized. Until then
 GNOME's own GL path is software, and its clients' GL must be too
@@ -259,7 +259,7 @@ none EINVAL`, the negative control the consultant asked for (A2).
 ### Gap 3: `prctl`'s capability options are `EINVAL` -- 2 to 3 points, kernel, load ring
 
 **Seen.** `dbus-daemon --system`: *"Failed to start message bus: Failed to
-drop capabilities: Invalid argument"*. A probe program on Ferrix:
+drop capabilities: Invalid argument"*. A probe program on Xaqu:
 `PR_SET_KEEPCAPS`, `PR_GET_KEEPCAPS`, `PR_CAP_AMBIENT` and
 `PR_GET_SECUREBITS` all `EINVAL`.
 
@@ -355,7 +355,7 @@ B2.
 enumeration works (headless mutter found `renderD128` through it). But
 `/run/udev/data` does not exist, so no device has `ID_SEAT`, the `seat`
 tag, or `ID_INPUT_KEYBOARD` and the rest that libinput needs before it
-will open a node. Debian's `systemd-udevd` starts on Ferrix; `udevadm
+will open a node. Debian's `systemd-udevd` starts on Xaqu; `udevadm
 trigger` then fails on every device with *"Failed to write 'add' to
 '.../uevent': Permission denied"*: the `uevent` files are read-only, and
 the kernel sends no uevents (`src/kernel/src/net/netlink/mod.rs` has none).
@@ -385,7 +385,7 @@ exists.
 *"Error connecting to the screencast service"*. Screencasts, screenshots
 through the portal, remote desktop and the `--devkit` viewer all need
 PipeWire; sound in GNOME goes through PulseAudio's protocol, which
-Ferrix's own pulse server speaks (`docs/AUDIO.md`). Not tried.
+Xaqu's own pulse server speaks (`docs/AUDIO.md`). Not tried.
 
 ### Gap 10: no `ptrace` -- tooling only, decided
 
@@ -443,7 +443,7 @@ conditions of ledger lines 3100 and 3123:
   schemas, gdk-pixbuf's loader list and the MIME database as the triggers
   would. Every file on the volume is root's: `mkfs.btrfs --rootdir` copies
   the owner it reads -- this machine's user, uid 1000, the guest's
-  `ferrix` (Chrome's volume has the same, the consultant's L3) -- so it
+  `xaqu` (Chrome's volume has the same, the consultant's L3) -- so it
   is given each file's stat as root's through a preloaded `nftw`, and the
   image is read back with `btrfs inspect-internal dump-tree` to prove
   4865 of 4865 inodes `0:0` (the consultant's A1, ledger 3137). A volume
@@ -458,20 +458,20 @@ conditions of ledger lines 3100 and 3123:
   same `session-N.scope` by the same init call before either execs, its
   descriptors 0 to 2 and its address pipe, its socket
   `/run/user/<uid>/bus`. It ends with the scope; nothing restarts it. Its
-  configuration is Ferrix's own (`/etc/ferrix/session-bus.conf`):
+  configuration is Xaqu's own (`/etc/xaqu/session-bus.conf`):
   `EXTERNAL` only, one `unix:runtime=yes` listen, the volume's service
   directory, no eavesdropping, no include. No system bus, no login1, no
   gnome-keyring, no portal.
 * **Gates.** `cargo xtask test-gnome-apps` (x86_64): the session as
-  `ferrix`, the volume at `/data`; required: `/data` `nosuid,nodev`, the bus
-  `ferrix`'s at its socket and no system bus, `adwaita-1-demo` `ferrix`'s
+  `xaqu`, the volume at `/data`; required: `/data` `nosuid,nodev`, the bus
+  `xaqu`'s at its socket and no system bus, `adwaita-1-demo` `xaqu`'s
   and on the bus, its window drawn, and after the compositor is killed
   neither the bus nor the app left; the volume's files root's
-  (`dbus-daemon` `0 0 755`, a write by `ferrix` refused). It boots without
+  (`dbus-daemon` `0 0 755`, a write by `xaqu` refused). It boots without
   the 3D card, so GTK draws with Mesa's software rasterizer: QEMU cannot
   screendump a virgl scanout. GTK on virgl with the session bus is shown
   only by the manual run of §2; `test-display --gl` carries gaps 1 and 2. `test-compositor --boot session-end` starts a
-  stand-in bus on every architecture and requires it `ferrix`'s, with only
+  stand-in bus on every architecture and requires it `xaqu`'s, with only
   its address pipe, beating until the session's end and not after.
 * **Not yet**: the apps a person wants (GNOME Text Editor, Files,
   Calculator) beside the demos, the launcher's entries, the `--everything`
@@ -501,7 +501,7 @@ init already holds would close it; a row for the next `sessiond` change.
 the probe now, nested on Xwayland. It needs a system bus -- §3 shows the
 shell ends without one -- which puts it in gap 3 and 4's and B3's
 territory, and outside the consultant's G1 verdict. Useful as a demonstration and for
-working on GNOME without leaving the Ferrix desktop; its lock is disabled
+working on GNOME without leaving the Xaqu desktop; its lock is disabled
 and must stay so, which is what B1 wants anyway.
 
 **G3: a GNOME session on the screen, as the user, without GDM -- about 40
@@ -518,19 +518,19 @@ and B1 is open.
 **G4: the full session -- unsized.** GDM through a PAM shim onto `authd`
 (`docs/AUTH.md` §4.3 already plans the shim for sudo and OpenSSH),
 polkit's agent onto `authd`, gnome-session or not, gnome-settings-daemon,
-PipeWire (gap 9), NetworkManager or Ferrix's own network through a
+PipeWire (gap 9), NetworkManager or Xaqu's own network through a
 stand-in. Each of these is one of the consultant's blockers, and the
 customer's choice first.
 
 The consultant's recommendation of 2026-10-17 was option A, a floating
-window manager of Ferrix's own, over GNOME. G1 is compatible with either:
+window manager of Xaqu's own, over GNOME. G1 is compatible with either:
 it brings GNOME's apps, not GNOME's session.
 
 ## 6. The certification consultant's review
 
 Design review on 2026-10-22 by this session's consultant subagent,
 recorded in the consultant's ledger
-(`~/.local/share/ferrix/cert-consultant/reviews.md`) at **line 3100**,
+(`~/.local/share/xaqu/cert-consultant/reviews.md`) at **line 3100**,
 conditions on lines 3101 to 3104. Internal review, not independent
 verification (F-27).
 
@@ -609,7 +609,7 @@ nothing on it.
 **The ring-3 way (proposed): init drops privilege, the daemon never does.**
 The system bus is a unit, `dbus-system.service`, with `User=messagebus`
 and `Group=messagebus` -- init's own drop, which exists (`svc`'s
-`User=`) -- and a configuration of Ferrix's own with **no `<user>`
+`User=`) -- and a configuration of Xaqu's own with **no `<user>`
 element**: `dbus-daemon` calls libcap-ng's `capng_change_id` only to obey
 that element, so it never asks `PR_SET_KEEPCAPS` and the kernel needs
 nothing new. `/run/dbus` is made `0755 messagebus` by a root
@@ -662,7 +662,7 @@ channel it has. No kernel change. Its rules, G3-3's:
 * **Who controls the session.** `TakeControl` succeeds only for the
   session leader `sessiond` started, identified by a pidfd `sessiond`
   holds from the fork, compared with the caller's pid as the bus reports
-  it (`GetConnectionUnixProcessID`, which works on Ferrix: the G1 gate
+  it (`GetConnectionUnixProcessID`, which works on Xaqu: the G1 gate
   reads the app's pid through it) and then re-checked through the pidfd,
   so a reused pid is not the leader. Never by the caller's cgroup path: a
   user may make scopes under its own slice (AUTH §1).
@@ -688,7 +688,7 @@ waits for B1 as well.
 **Way (a), proposed (the consultant's recommendation, G3-4).** `udevdb`,
 a root oneshot unit ordered after the device manager has published the
 boot's devices, writes what libudev reads, from `/sys/class/drm`,
-`/sys/class/input` and `/sys/class/sound`, which Ferrix already
+`/sys/class/input` and `/sys/class/sound`, which Xaqu already
 enumerates:
 
 * `/run/udev/data/c<major>:<minor>` per device: `E:ID_SEAT=seat0` (and the

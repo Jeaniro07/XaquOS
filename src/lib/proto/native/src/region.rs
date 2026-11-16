@@ -2,13 +2,13 @@
 //! parts of restricted mode (`docs/microkernel/K1.md`) that are ordinary calls.
 //!
 //! `RESTRICTED_ENTER`, `RESTRICTED_RESUME` and `RESTRICTED_CONTINUE` answer in
-//! more registers than a [`Syscall`] can see: `ferrix_rt::restricted` makes
+//! more registers than a [`Syscall`] can see: `xaqu_rt::restricted` makes
 //! those.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Requested;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Requested;
 
-pub use ferrix_native_abi::restricted::{
+pub use xaqu_native_abi::restricted::{
     CONTEXT_BYTES, Context, ENTER_ALL_CALLS_EXIT, ENTER_COPY_MISS_EXITS, FaultKind, HANDLE_KEEP,
     Reason, SHARED_BASE, VECTORS_BYTES,
 };

@@ -136,12 +136,12 @@ impl UserState {
     }
 
     /// Take the record's thread pointer from K1's context.
-    pub fn read_context(&mut self, context: &ferrix_native::region::Context) {
+    pub fn read_context(&mut self, context: &xaqu_native::region::Context) {
         self.thread_pointer = context.tpidr;
     }
 
     /// Put the record's thread pointer into K1's context.
-    pub fn write_context(&self, context: &mut ferrix_native::region::Context) {
+    pub fn write_context(&self, context: &mut xaqu_native::region::Context) {
         context.tpidr = self.thread_pointer;
     }
 }

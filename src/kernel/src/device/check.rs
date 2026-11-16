@@ -13,8 +13,8 @@ use alloc::vec::Vec;
 use core::fmt::{self, Write};
 use core::sync::atomic::Ordering;
 
-use ferrix_pci::ConfigSpace as _;
-use ferrix_pci::header::{COMMAND, COMMAND_BUS_MASTER, COMMAND_MEMORY_SPACE};
+use xaqu_pci::ConfigSpace as _;
+use xaqu_pci::header::{COMMAND, COMMAND_BUS_MASTER, COMMAND_MEMORY_SPACE};
 
 use super::{
     Address, ConfigWrites, DeviceNode, DmaShape, FIRST_SHARED_INTERRUPT, Failure, Location,
@@ -24,7 +24,7 @@ use super::{
 use crate::mmio::Mmio;
 use crate::object::interrupt::Interrupt;
 use crate::{irq, timer, vmap};
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 /// Mint one PCI node's first MSI-X vector and require it to behave as one:
 /// the same vector when asked again, no handler already on its number, an
@@ -255,7 +255,7 @@ fn check_forged(
     let domain = node.domain().map_err(|_| "no memory for edu's domain")?;
     node.enable_dma()?;
     let result = (|| {
-        let compatibility = ferrix_pci::msix::local_apic_message(
+        let compatibility = xaqu_pci::msix::local_apic_message(
             u8::try_from(crate::arch::hardware_id()).unwrap_or(0),
             crate::iommu::CHECK_VECTOR,
         );
@@ -740,7 +740,7 @@ pub(super) fn check_node(
     // listed one whose hold did not read back.
     let granted = node.msix_off.is_some()
         && node.pci_function().is_some_and(|function| {
-            ferrix_pci::msix::msi_preferred(function.vendor, function.device)
+            xaqu_pci::msix::msi_preferred(function.vendor, function.device)
         });
     for &(start, len) in node.interrupt_tables.iter().filter(|_| !granted) {
         report.msix_withheld += 1;
@@ -939,7 +939,7 @@ pub(super) fn check_together<P: Policy>(
     check_lent_framebuffer::<P>(nodes, reserved)
 }
 
-/// The Intel integrated GPU is not driven without `ferrix.intelgpu`
+/// The Intel integrated GPU is not driven without `xaqu.intelgpu`
 /// (`docs/INTEL-GPU.md` §4.4 (b)): on made-up nodes at `00:02.0`, Intel's
 /// display function is yielded when the option was not said and not when it
 /// was, while another vendor's display function and Intel's display
@@ -971,7 +971,7 @@ fn check_intel_gpu_yield(nodes: &[DeviceNode]) -> Result<(), &'static str> {
         super::yield_intel_gpu(&mut made, allowed);
         let yielded = made.each_ref().map(DeviceNode::yielded);
         if yielded != [!allowed, false, false] {
-            return Err("the Intel GPU was yielded other than exactly without ferrix.intelgpu");
+            return Err("the Intel GPU was yielded other than exactly without xaqu.intelgpu");
         }
     }
     let allowed = super::intel_gpu_allowed();
@@ -981,7 +981,7 @@ fn check_intel_gpu_yield(nodes: &[DeviceNode]) -> Result<(), &'static str> {
             && node.framebuffer_mode().is_none()
             && !node.holds_framebuffer
     }) {
-        return Err("a published Intel GPU's yield does not follow ferrix.intelgpu");
+        return Err("a published Intel GPU's yield does not follow xaqu.intelgpu");
     }
     Ok(())
 }
@@ -1098,7 +1098,7 @@ fn check_lent_framebuffer<P: Policy>(
     })
 }
 
-/// The firmware framebuffer's node, when `ferrix.efifb` made one
+/// The firmware framebuffer's node, when `xaqu.efifb` made one
 /// (`docs/DISPLAY.md` §8): it holds exactly one aperture, wholly inside the
 /// boot framebuffer [`Reserved`] holds and starting at its first byte; no
 /// vector; nothing that reaches memory, so `vmo_pin` refuses it; and it is the
@@ -1109,7 +1109,7 @@ fn check_lent_framebuffer<P: Policy>(
 fn check_framebuffer<P: Policy>(nodes: &[DeviceNode], reserved: &Reserved) -> Result<(), Failure> {
     let mut seen = 0;
     // Only the framebuffer's own node holds a lent aperture, or, under
-    // `ferrix.intelgpu`, the Intel GPU holding it, in place of that node
+    // `xaqu.intelgpu`, the Intel GPU holding it, in place of that node
     // (K4, `L.device.46`).
     for node in nodes
         .iter()
@@ -1144,7 +1144,7 @@ fn check_framebuffer<P: Policy>(nodes: &[DeviceNode], reserved: &Reserved) -> Re
         }
         if !P::may_lend() {
             return Err(fail(
-                "a firmware framebuffer node without ferrix.efifb on x86-64",
+                "a firmware framebuffer node without xaqu.efifb on x86-64",
             ));
         }
         let Some((start, end)) = reserved.framebuffer() else {
@@ -1226,7 +1226,7 @@ fn check_framebuffer<P: Policy>(nodes: &[DeviceNode], reserved: &Reserved) -> Re
 ///
 /// Verifies: L.device.38
 fn check_lending() -> Result<(), &'static str> {
-    use ferrix_bootinfo::{Framebuffer, PixelFormat};
+    use xaqu_bootinfo::{Framebuffer, PixelFormat};
 
     const AT: u64 = 0x8000_0000;
     const SIZE: u64 = 16 * 1024 * 1024;
@@ -1294,7 +1294,7 @@ fn check_lending() -> Result<(), &'static str> {
 ///
 /// Verifies: L.device.46, L.device.47, L.device.48
 fn check_lending_intel(
-    screen: &ferrix_bootinfo::Framebuffer,
+    screen: &xaqu_bootinfo::Framebuffer,
     reserved: &Reserved,
     at: u64,
 ) -> Result<(), &'static str> {
@@ -1320,7 +1320,7 @@ fn check_lending_intel(
     let nodes = [made(0x8086, true)?];
     if super::lend_target(&nodes, false).is_some() || super::lend_target(&nodes, true) != Some(0) {
         return Err(
-            "the framebuffer was lent to the Intel GPU other than exactly under ferrix.intelgpu",
+            "the framebuffer was lent to the Intel GPU other than exactly under xaqu.intelgpu",
         );
     }
     let others = [made(0x1234, true)?, made(0x8086, false)?];
@@ -1335,7 +1335,7 @@ fn check_lending_intel(
     }
     let [mut intel] = nodes;
     if intel.lend_framebuffer_here(screen, reserved, false).is_ok() {
-        return Err("the Intel GPU was lent the framebuffer without ferrix.intelgpu");
+        return Err("the Intel GPU was lent the framebuffer without xaqu.intelgpu");
     }
     intel
         .lend_framebuffer_here(screen, reserved, true)
@@ -1377,7 +1377,7 @@ fn check_lending_intel(
 ///
 /// Verifies: L.device.38
 fn check_lending_exact(at: u64) -> Result<(), &'static str> {
-    use ferrix_bootinfo::{Framebuffer, PixelFormat};
+    use xaqu_bootinfo::{Framebuffer, PixelFormat};
 
     const VISIBLE: u64 = 800 * 600 * 4;
     const PAGES: u64 = VISIBLE.div_ceil(PAGE_SIZE) * PAGE_SIZE;
@@ -1424,12 +1424,12 @@ fn check_lending_exact(at: u64) -> Result<(), &'static str> {
 ///
 /// Verifies: L.device.38
 fn check_lending_refusals(
-    screen: &ferrix_bootinfo::Framebuffer,
+    screen: &xaqu_bootinfo::Framebuffer,
     lone: &Reserved,
     at: u64,
     size: u64,
 ) -> Result<(), &'static str> {
-    use ferrix_bootinfo::{Framebuffer, PixelFormat};
+    use xaqu_bootinfo::{Framebuffer, PixelFormat};
 
     let unknown = Framebuffer {
         format: PixelFormat::Unknown,
@@ -1482,15 +1482,15 @@ fn mode_bytes(node: &DeviceNode) -> u64 {
 
 /// What [`check_held_off`] found, kept from stage 10's enumeration, which
 /// runs it, until [`super::publish`] reports it: `None` where no function
-/// was its case (no QEMU `e1000e`, or `ferrix.checks=skip`).
-pub static HELD_OFF: ferrix_sync::Once<Result<(), Failure>> = ferrix_sync::Once::new();
+/// was its case (no QEMU `e1000e`, or `xaqu.checks=skip`).
+pub static HELD_OFF: xaqu_sync::Once<Result<(), Failure>> = xaqu_sync::Once::new();
 
 /// The held-off path, on a scratch node: QEMU's `e1000e` with QEMU's
-/// subsystem (`ferrix_pci::msix::held_off_check_case`), built by
+/// subsystem (`xaqu_pci::msix::held_off_check_case`), built by
 /// enumeration a second time as if it were in `MSI_PREFERRED` and never
 /// published. Its MSI-X was held off through enumeration's own
 /// configuration space before the node was built
-/// (`ferrix_pci::msix::hold_off`), and `table` is where its MSI-X table and
+/// (`xaqu_pci::msix::hold_off`), and `table` is where its MSI-X table and
 /// pending-bit array lie, `(phys, len)` each. Required:
 ///
 /// * MSI-X Enable reads 0 and Function Mask 1;
@@ -1644,7 +1644,7 @@ fn check_combining<P: Policy>(aperture: &super::Aperture) -> Result<(), &'static
         return Err("the firmware framebuffer's aperture is not prefetchable");
     }
     if crate::arch::write_combining_processors() != Some(crate::smp::count())
-        || crate::arch::pat() != Some(ferrix_paging::X86_PAT)
+        || crate::arch::pat() != Some(xaqu_paging::X86_PAT)
     {
         return Err("a processor's PAT is not the table with entry 1 write-combining");
     }
@@ -1688,7 +1688,7 @@ pub fn check_binding_follows_profile() -> Result<(), &'static str> {
 /// Verifies: L.device.70, L.device.73
 /// Verifies: H.DEV.11
 pub fn check_iommu_held(
-    view: &ferrix_bootinfo::BootView<'_>,
+    view: &xaqu_bootinfo::BootView<'_>,
     reserved: &Reserved,
 ) -> Result<(usize, usize), &'static str> {
     let mut units = 0;
@@ -1707,7 +1707,7 @@ pub fn check_iommu_held(
     // The memory map, where the units' tables are: a mint over it is withheld.
     if let Some(region) = view.regions().iter().find(|region| {
         // Not at address zero: a mint of nothing proves nothing.
-        region.kind != ferrix_bootinfo::MemKind::Mmio
+        region.kind != xaqu_bootinfo::MemKind::Mmio
             && region.base >= PAGE_SIZE
             && region.len >= 2 * PAGE_SIZE
     }) {
@@ -1734,7 +1734,7 @@ pub fn check_iommu_held(
                 && view
                     .regions()
                     .iter()
-                    .filter(|region| region.kind != ferrix_bootinfo::MemKind::Mmio)
+                    .filter(|region| region.kind != xaqu_bootinfo::MemKind::Mmio)
                     .any(|region| {
                         aperture.overlaps(region.base, region.base.saturating_add(region.len))
                     })

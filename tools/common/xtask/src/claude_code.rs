@@ -1,4 +1,4 @@
-//! `test-claude-code`: Anthropic's Claude Code on Ferrix, running a command
+//! `test-claude-code`: Anthropic's Claude Code on Xaqu, running a command
 //! of its own in bash.
 //!
 //! The program is Claude Code's native linux-x64 release, not one built
@@ -12,7 +12,7 @@
 //! which says the program loaded, its libraries resolved and its runtime
 //! started; and one turn of `claude -p`, against a Messages API this process
 //! serves ([`Api`]), in which the model asks for a Bash command, Claude Code
-//! runs it in bash on Ferrix, and sends back what it printed. The reply the
+//! runs it in bash on Xaqu, and sends back what it printed. The reply the
 //! guest prints is only written once that output has arrived, so the line
 //! says the whole loop ran: HTTP over the network, the streaming reply
 //! parsed, a tool call dispatched, a child process in a shell, and its
@@ -30,7 +30,7 @@
 //!
 //! # Where Claude Code lives
 //!
-//! As Chrome's does: the volume carries no `ferrix-root` label, so the kernel
+//! As Chrome's does: the volume carries no `xaqu-root` label, so the kernel
 //! mounts it at `/data`, under QEMU's `snapshot=on`, and the initramfs links
 //! the paths glibc names into it ([`LINKS`]). busybox is on the image for
 //! `dhcpc`; zinc runs the script; bash is the volume's, and `SHELL` names it,
@@ -61,7 +61,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     help_at: 670,
     help: &[
         "test-claude-code  Attach the volume tools/common/fetch/fetch-claude-code.sh makes, and require Claude Code to start and,",
-        "              against a stub Messages API xtask serves, run a Bash command on Ferrix for its model",
+        "              against a stub Messages API xtask serves, run a Bash command on Xaqu for its model",
         "              (--everything: as `claude` on run-compositor --everything's merged volume, on ferrousli's",
         "              loader and libc.so.6 as that desktop runs it, unless --interpreter glibc; --arch aarch64:",
         "              the linux-arm64 build on fetch-claude-code.sh arm64's volume)",
@@ -121,7 +121,7 @@ const INTERACTIVE_ENDED: &str = "claude-code-gate: interactive ended";
 
 /// What is typed at the TUI: [`PROMPT`], so [`Api`] answers it with the same
 /// tool call, and something of its own, so the typing shows in the log.
-const TUI_PROMPT: &str = "ferrix-gate: run the check, typed at the TUI";
+const TUI_PROMPT: &str = "xaqu-gate: run the check, typed at the TUI";
 
 /// `~/.claude.json` before the TUI starts: onboarding done, the gate's key
 /// approved -- Claude Code asks about a key from the environment once, by
@@ -181,7 +181,7 @@ pub(crate) fn desktop_files(carried: &[crate::ports::File]) -> Vec<crate::ports:
 /// terminal's icon.
 const DESKTOP_ENTRY: &str = "[Desktop Entry]\nType=Application\nName=Claude Code\n\
      GenericName=Coding Agent\nComment=Anthropic's Claude Code, from the data disk\n\
-     Exec=claude\nIcon=ferrix-terminal\nTerminal=true\nKeywords=claude;ai;code;agent;\n\
+     Exec=claude\nIcon=xaqu-terminal\nTerminal=true\nKeywords=claude;ai;code;agent;\n\
      Categories=Development;\n";
 
 /// What `--version` prints, which says Claude Code and its runtime started.
@@ -192,21 +192,21 @@ const STATUS: i32 = 18;
 
 /// The key the script gives Claude Code, and [`Api`] requires in every
 /// request's `x-api-key`: made up, and only ever sent to this process.
-const KEY: &str = "sk-ant-ferrix-gate-not-a-key";
+const KEY: &str = "sk-ant-xaqu-gate-not-a-key";
 
 /// The prompt: [`Api`] knows the request it answers with a tool call by it.
-const PROMPT: &str = "ferrix-gate: run the check";
+const PROMPT: &str = "xaqu-gate: run the check";
 
 /// The command [`Api`] asks for. `$((6*7))` is bash's to work out, so its
 /// output carries a number the command's text does not.
-const COMMAND: &str = "echo ferrix-bash-$((6*7)); uname -s";
+const COMMAND: &str = "echo xaqu-bash-$((6*7)); uname -s";
 
-/// What that command prints on Ferrix, as the tool result's JSON carries it.
-const COMMAND_OUTPUT: &str = r"ferrix-bash-42\nFerrix";
+/// What that command prints on Xaqu, as the tool result's JSON carries it.
+const COMMAND_OUTPUT: &str = r"xaqu-bash-42\nXaqu";
 
 /// [`Api`]'s last reply, which the guest prints: sent only once
 /// [`COMMAND_OUTPUT`] came back in a tool result.
-const REPLY: &str = "claude-code-gate: bash on Ferrix said ferrix-bash-42";
+const REPLY: &str = "claude-code-gate: bash on Xaqu said xaqu-bash-42";
 
 /// Memory for the guest: the runtime's heap, and the program's pages.
 const MEMORY: u32 = 2048;
@@ -215,13 +215,13 @@ const MEMORY: u32 = 2048;
 const TIMEOUT: u64 = 900;
 
 /// Where `tools/common/fetch/fetch-claude-code.sh` writes, unless
-/// `FERRIX_CLAUDE_CODE_VOLUME` names another directory.
+/// `XAQU_CLAUDE_CODE_VOLUME` names another directory.
 ///
 /// # Errors
 ///
 /// The volume has not been fetched.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_CLAUDE_CODE_VOLUME") {
+    let directory = match std::env::var_os("XAQU_CLAUDE_CODE_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("claude-code")?,
     };
@@ -236,14 +236,14 @@ pub(crate) fn volume() -> Result<std::path::PathBuf> {
 }
 
 /// Where `tools/common/fetch/fetch-claude-code.sh arm64` writes, unless
-/// `FERRIX_CLAUDE_CODE_ARM64_VOLUME` names another directory: Claude Code's
+/// `XAQU_CLAUDE_CODE_ARM64_VOLUME` names another directory: Claude Code's
 /// linux-arm64 build on Debian's arm64 glibc and bash.
 ///
 /// # Errors
 ///
 /// The volume has not been fetched.
 pub(crate) fn arm64_volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_CLAUDE_CODE_ARM64_VOLUME") {
+    let directory = match std::env::var_os("XAQU_CLAUDE_CODE_ARM64_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("claude-code-arm64")?,
     };
@@ -509,7 +509,7 @@ pub(crate) fn test_claude_code(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running Claude Code on Ferrix with {} MiB (timeout {}s), its API on port {}",
+        "  {arch}: running Claude Code on Xaqu with {} MiB (timeout {}s), its API on port {}",
         args.memory, args.timeout, api.port
     );
     let mut tui = Tui::default();
@@ -548,7 +548,7 @@ fn judge_tui(arch: Arch, tui: Tui, seen: &Seen) -> Result<()> {
 }
 
 /// Whether the transcript is a Claude Code that started, and a turn whose
-/// tool call ran on Ferrix and came back.
+/// tool call ran on Xaqu and came back.
 fn judge(arch: Arch, lines: &[String], seen: &Seen) -> Result<()> {
     let after_boot = lines
         .iter()
@@ -567,7 +567,7 @@ fn judge(arch: Arch, lines: &[String], seen: &Seen) -> Result<()> {
     match exited {
         Some(status) if status == STATUS.to_string() && loaded && replied && seen.tool_ran => {
             println!(
-                "  {arch}: Claude Code started ({VERSION}), and ran a command in bash on Ferrix \
+                "  {arch}: Claude Code started ({VERSION}), and ran a command in bash on Xaqu \
                  for its model ({} requests)",
                 seen.requests.len()
             );
@@ -627,7 +627,7 @@ impl Api {
             let seen = Arc::clone(&seen);
             let stop = Arc::clone(&stop);
             std::thread::Builder::new()
-                .name("ferrix-claude-api".to_owned())
+                .name("xaqu-claude-api".to_owned())
                 .spawn(move || listen(&listener, &stop, &seen))?
         };
         Ok(Api {
@@ -667,7 +667,7 @@ fn listen(listener: &TcpListener, stop: &AtomicBool, seen: &Arc<Mutex<Seen>>) {
             Ok((stream, _)) => {
                 let seen = Arc::clone(seen);
                 let _ = std::thread::Builder::new()
-                    .name("ferrix-claude-conn".to_owned())
+                    .name("xaqu-claude-conn".to_owned())
                     .spawn(move || {
                         let _ = answer(stream, &seen);
                     });
@@ -718,7 +718,7 @@ fn answer(mut stream: TcpStream, seen: &Mutex<Seen>) -> Result<()> {
     }
     let head = format!(
         "HTTP/1.1 {status}\r\ncontent-type: {content_type}\r\ncontent-length: {}\r\n\
-         request-id: req_ferrix\r\nconnection: close\r\n\r\n",
+         request-id: req_xaqu\r\nconnection: close\r\n\r\n",
         body.len()
     );
     stream.write_all(head.as_bytes())?;
@@ -875,16 +875,16 @@ enum Block {
 }
 
 /// The id of the one tool call.
-const TOOL_ID: &str = "toolu_ferrix_gate";
+const TOOL_ID: &str = "toolu_xaqu_gate";
 
 /// The model the replies say they are from.
-const MODEL: &str = "claude-ferrix-gate";
+const MODEL: &str = "claude-xaqu-gate";
 
 impl Block {
     /// The tool call's input, as JSON.
     fn input(command: &str) -> String {
         format!(
-            "{{\"command\":{},\"description\":\"Say hello from Ferrix\"}}",
+            "{{\"command\":{},\"description\":\"Say hello from Xaqu\"}}",
             json_string(command)
         )
     }
@@ -930,7 +930,7 @@ impl Block {
 fn message_body(blocks: &[Block], stop_reason: &str) -> String {
     let content: Vec<String> = blocks.iter().map(|block| block.whole()).collect();
     format!(
-        "{{\"id\":\"msg_ferrix_gate\",\"type\":\"message\",\"role\":\"assistant\",\
+        "{{\"id\":\"msg_xaqu_gate\",\"type\":\"message\",\"role\":\"assistant\",\
          \"model\":\"{MODEL}\",\"content\":[{}],\"stop_reason\":\"{stop_reason}\",\
          \"stop_sequence\":null,\"usage\":{{\"input_tokens\":1,\"output_tokens\":1}}}}",
         content.join(",")
@@ -946,7 +946,7 @@ fn stream_body(blocks: &[Block], stop_reason: &str) -> String {
     event(
         "message_start",
         format!(
-            "{{\"type\":\"message_start\",\"message\":{{\"id\":\"msg_ferrix_gate\",\
+            "{{\"type\":\"message_start\",\"message\":{{\"id\":\"msg_xaqu_gate\",\
              \"type\":\"message\",\"role\":\"assistant\",\"model\":\"{MODEL}\",\"content\":[],\
              \"stop_reason\":null,\"stop_sequence\":null,\
              \"usage\":{{\"input_tokens\":1,\"output_tokens\":1}}}}}}"
@@ -1043,7 +1043,7 @@ mod tests {
         assert!(script.contains(&format!("-p '{PROMPT}'")));
         assert!(!script.contains('@'));
         // The script must not already hold what the reply is required to.
-        assert!(!script.contains("ferrix-bash-42"));
+        assert!(!script.contains("xaqu-bash-42"));
         assert!(!script.contains("LD_LIBRARY_PATH"));
         // On ferrousli the search path comes first, as the desktop's
         // compositor gives it to what it starts.
@@ -1064,7 +1064,7 @@ mod tests {
             ("200 OK", "text/event-stream", "tool call")
         );
         assert!(body.contains("\"name\":\"Bash\""));
-        assert!(body.contains(r#"\"command\":\"echo ferrix-bash-$((6*7)); uname -s\""#));
+        assert!(body.contains(r#"\"command\":\"echo xaqu-bash-$((6*7)); uname -s\""#));
         assert!(body.contains("\"stop_reason\":\"tool_use\""));
         assert!(body.ends_with("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"));
     }
@@ -1132,8 +1132,8 @@ mod tests {
         // As the TUI drew it on 2026-09-30: each word placed by column.
         let drawn = transcript(&[
             "\u{1b}]0;\u{2733} Claude Code\u{7}\u{1b}[H\r\u{1b}[11C\u{1b}[1BClaude\u{1b}[19GCode",
-            "\u{1b}[1B\u{25cf}\u{1b}[3Gclaude-code-gate:\u{1b}[21Gbash\u{1b}[26Gon\u{1b}[29GFerrix\
-             \u{1b}[36Gsaid\u{1b}[41Gferrix-bash-42\r\u{1b}[5B? for shortcuts\u{1b}[K",
+            "\u{1b}[1B\u{25cf}\u{1b}[3Gclaude-code-gate:\u{1b}[21Gbash\u{1b}[26Gon\u{1b}[29GXaqu\
+             \u{1b}[36Gsaid\u{1b}[41Gxaqu-bash-42\r\u{1b}[5B? for shortcuts\u{1b}[K",
         ]);
         let screen = screen_text(&drawn);
         assert!(screen.contains(&squeeze(REPLY)), "{screen}");

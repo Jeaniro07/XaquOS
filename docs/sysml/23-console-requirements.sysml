@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 23: the low-level requirements of console.
+ * Xaqu — SysML v2 model, part 23: the low-level requirements of console.
  *
  * What each unit of src/kernel/src/console.rs and src/kernel/src/console/ does, as
  * `ItemLowLevel` requirements (part 13 defines the format, part 14 is the
@@ -40,8 +40,8 @@
  * Ids are `L.console.<n>`, numbered through the subsystem; the package gives
  * the part of it. They are never renumbered once a check names them.
  */
-package FerrixConsoleRequirements {
-    private import FerrixItemRequirements::*;
+package XaquConsoleRequirements {
+    private import XaquItemRequirements::*;
 
     package Lines {
         doc /* The kernel's own lines, from println! to the port. */
@@ -221,7 +221,7 @@ package FerrixConsoleRequirements {
                 shall write through write_panicking, which, when it gets the port's
                 lock, sends the line straight to the port.";
             attribute :>> criterion = "A boot told to panic at its end
-                (`ferrix.onexit=panic`) shows the FX-1501 line on the port after
+                (`xaqu.onexit=panic`) shows the FX-1501 line on the port after
                 init's exit (`cargo xtask test-init-file`).";
             attribute :>> parent = "H.FAIL.1";
             attribute :>> unit = ("console::begin_panic", "console::write_as",
@@ -234,7 +234,7 @@ package FerrixConsoleRequirements {
                 queued in the ring; once one such wait has failed during a report it
                 shall not try the lock again for the rest of that report. (A holder
                 still alive then has its lines interleaved with the report's.)";
-            attribute :>> criterion = "Under the check-only ferrix.check.panic=held,
+            attribute :>> criterion = "Under the check-only xaqu.check.panic=held,
                 the first report's processor takes the port's lock for good and the
                 report still reaches its reset line within 5 s of its first line in
                 test-postmortem's held-lock case (491 ms under KVM), and exceeds it
@@ -598,7 +598,7 @@ package FerrixConsoleRequirements {
                 versions 1, 2 and 3, and fresh shall refuse version 2 and any
                 non-zero table byte; an entry whose halves do not match shall name
                 no frame.";
-            attribute :>> criterion = "ferrix-bootinfo's host tests: the table read whole
+            attribute :>> criterion = "xaqu-bootinfo's host tests: the table read whole
                 entries only, the 64 bound, version 2 read with no table, fresh's
                 refusals, the left record's decoding. Negative control: fresh
                 accepting a non-empty table, the host test fails.";
@@ -625,12 +625,12 @@ package FerrixConsoleRequirements {
 
         requirement <'L.console.36'> theScreenStartsWhenAsked : ItemLowLevel {
             attribute :>> statement = "screen::start shall draw the console only when
-                the command line holds ferrix.fbcon and there is a framebuffer, and
+                the command line holds xaqu.fbcon and there is a framebuffer, and
                 only the first time it is called: clear it, and draw what recent
                 keeps of the lines printed before, from the first whole one; and
                 milestone shall paint stripe n, for n below 12, only while the
                 console is drawn, and not when it finds the board taken.";
-            attribute :>> criterion = "A boot without ferrix.fbcon leaves the
+            attribute :>> criterion = "A boot without xaqu.fbcon leaves the
                 framebuffer as firmware left it; one with it shows the boot's earlier
                 lines from a line's start, and every later kernel line.";
             attribute :>> parent = "H.FAIL.1";
@@ -639,7 +639,7 @@ package FerrixConsoleRequirements {
         }
         requirement <'L.console.37'> theBoardFitsTheScreen : ItemLowLevel {
             attribute :>> statement = "Board::new shall pick the largest glyph scale up
-                to 4, or up to 1 under ferrix.fbcon.small, that leaves at least 60
+                to 4, or up to 1 under xaqu.fbcon.small, that leaves at least 60
                 columns, inside the margins, the top inset and the 12 milestone
                 stripes, and refuse a surface with room for no column or fewer than
                 2 rows.";
@@ -721,7 +721,7 @@ package FerrixConsoleRequirements {
         doc /* src/kernel/src/console/pstore.rs: the kernel log kept across a reset
              * in a region of RAM the loader gives, which the next boot's loader
              * reports (docs/POSTMORTEM.md section 3; the consultant's OK IF Q1-Q16,
-             * ledger line 1238). The region's format is ferrix-bootinfo's
+             * ledger line 1238). The region's format is xaqu-bootinfo's
              * pstore module, unclassified, host-tested; the decisions below are
              * the kernel's. */
 
@@ -751,11 +751,11 @@ package FerrixConsoleRequirements {
                 not on a page, one no longer than its header, one whose ring is not a
                 power of two and one running past its entry, and takes the loader's
                 region: 5 of 5 refused when a region was attached, 1 of 1 when none.
-                The header clause is ferrix-bootinfo's validate, whose host tests
+                The header clause is xaqu-bootinfo's validate, whose host tests
                 refuse a wrong magic, version, header length, capacity, region
                 length, CRC and count: every_field_is_checked and
                 capacities_outside_the_bounds_are_refused. The kernel takes the
-                header through ferrix-bootinfo's fresh, whose host test
+                header through xaqu-bootinfo's fresh, whose host test
                 the_kernel_takes_only_a_fresh_version_2_header refuses a version-1
                 header, a count other than 0 and every stop word other than 0. By
                 inspection of check: nothing is written to the region before every
@@ -769,7 +769,7 @@ package FerrixConsoleRequirements {
                 the caches after the report's last line is drained and before the
                 screen is drawn, taking no lock and allocating nothing; an abridged
                 report shall write nothing back. finish shall write it back, through
-                stop, after its last line and before the reset ferrix.onexit=reset
+                stop, after its last line and before the reset xaqu.onexit=reset
                 asks for or the power-off of its default.";
             attribute :>> criterion = "In test-postmortem's boot 1, the unlogged
                 `written back for the next boot` line comes straight after the
@@ -790,14 +790,14 @@ package FerrixConsoleRequirements {
                 one atomic update after its caller's last line and before the
                 architecture's stop: reboot(2)'s RESTART and RESTART2 a restart,
                 POWER_OFF a power-off, HALT a halt, finish a reset under
-                ferrix.onexit=reset and a power-off by default; begin_report shall
+                xaqu.onexit=reset and a power-off by default; begin_report shall
                 record a panic when it admits the first report, and an abridged
                 report nothing. No stop shall replace a panic's word.";
             attribute :>> criterion = "In test-postmortem's stop cases (x86-64 and
                 AArch64), boot 2's loader says boot 1 ended in a restart after
                 reboot -f and after a RESTART2 word, a power-off after poweroff -f, a
                 halt after halt -f, a reset after init exited under
-                ferrix.onexit=reset, and a power-off after init exited by default;
+                xaqu.onexit=reset, and a power-off after init exited by default;
                 no stop recorded after a reset from outside while a program sleeps;
                 and in its record case, the saved region's word and boot 2's loader
                 both say a panic. By inspection: an abridged report stores nothing,
@@ -826,18 +826,18 @@ package FerrixConsoleRequirements {
             attribute :>> unit = "console::pstore::stop";
         }
         requirement <'L.console.48'> theStopWordChecksItself : ItemLowLevel {
-            doc /* The word's format is ferrix-bootinfo's pstore module, which the
+            doc /* The word's format is xaqu-bootinfo's pstore module, which the
                  * loader and the kernel compile and which is unclassified (the
                  * consultant's L3, ledger line 2749): its units are named here by
                  * the kernel functions that store it. */
             attribute :>> statement = "The stop word the kernel stores shall be
-                ferrix-bootinfo's Stop::word: a stop's code in its low half and the
+                xaqu-bootinfo's Stop::word: a stop's code in its low half and the
                 code's complement in its high half, so that a word of 0 reads as no
                 stop recorded, a word whose halves do not match or whose code is 0
                 as damaged, and a whole word with a code the list does not name as
                 unknown; validate shall read version 1, with no stop word whatever
                 its bytes hold, and version 2, and refuse any other.";
-            attribute :>> criterion = "Host tests of ferrix-bootinfo's pstore:
+            attribute :>> criterion = "Host tests of xaqu-bootinfo's pstore:
                 every_stop_round_trips_and_none_is_zero,
                 a_changed_bit_is_damaged (every single-bit change of every stop's
                 word), an_unassigned_code_is_a_newer_kernels, and
@@ -849,7 +849,7 @@ package FerrixConsoleRequirements {
     }
 
     package PanicReset {
-        doc /* `ferrix.panic=reset` (src/kernel/src/panic/reset.rs), the N150
+        doc /* `xaqu.panic=reset` (src/kernel/src/panic/reset.rs), the N150
              * stop-gap of 2026-10-17 (consultant ledger line 2143): the reset a
              * failure report ends in when asked. Its own family, L.panic, since
              * panic.rs had no low-level ids; here beside the pstore it exists
@@ -858,12 +858,12 @@ package FerrixConsoleRequirements {
 
         requirement <'L.panic.1'> theOptionArmsOnlyOnReset : ItemLowLevel {
             attribute :>> statement = "read_option shall arm the reset once, for
-                exactly the value reset of ferrix.panic; no option or halt shall
+                exactly the value reset of xaqu.panic; no option or halt shall
                 leave it unarmed, and any other value shall be said as not
                 understood and leave it unarmed.";
             attribute :>> criterion = "In test-postmortem, a boot with
-                ferrix.panic=reset says it resets after the report; one with
-                ferrix.panic=Reset says the value is not understood, its report
+                xaqu.panic=reset says it resets after the report; one with
+                xaqu.panic=Reset says the value is not understood, its report
                 says it halts and holds no reset line; one with no option holds no
                 reset line.";
             attribute :>> parent = "H.FAIL.5";
@@ -901,8 +901,8 @@ package FerrixConsoleRequirements {
                 to wait_then_reset; on any other processor it shall halt. (On x86-64
                 a fault taken before the kernel's GS base is installed reads another
                 register value and may halt: the fail-safe direction.)";
-            attribute :>> criterion = "Under ferrix.panic=reset with the check-only
-                ferrix.check.panic=early, a fault forced inside the first report
+            attribute :>> criterion = "Under xaqu.panic=reset with the check-only
+                xaqu.check.panic=early, a fault forced inside the first report
                 before its reset line ends in the reset line, the reset and the
                 loader again in test-postmortem's early case, and halts with
                 resetting_here back on the announce (gate.sh control). By
@@ -914,14 +914,14 @@ package FerrixConsoleRequirements {
     }
 
     package Watchdog {
-        doc /* `ferrix.watchdog=on` (src/kernel/src/watchdog.rs, the core;
+        doc /* `xaqu.watchdog=on` (src/kernel/src/watchdog.rs, the core;
              * /dev/watchdog in src/kernel/src/fs/watchdog.rs, the load):
              * a deadline a privileged program arms and feeds, and a report
              * when no feed comes (docs/POSTMORTEM.md §6.11; consultant
              * ledger lines 7925 and 8078). Software only: the chipset's TCO
              * timer and the lockup detector are parked, so a kernel that
              * stops is not detected, and a report resets only under
-             * ferrix.panic=reset. */
+             * xaqu.panic=reset. */
 
         requirement <'L.lockup.6'> aMissedFeedIsReportedInItsWindow : ItemLowLevel {
             attribute :>> statement = "Once an open has armed it, look_forever shall
@@ -933,7 +933,7 @@ package FerrixConsoleRequirements {
                 SIGSTOP is reported under FX-9008 3.5 to 15 s after the stop (the
                 timeout, the task's 1 s look and a slack of 9 s for a loaded host),
                 the headline naming the opener, its 5 s timeout and the last feed;
-                the report halts without ferrix.panic=reset and, with it, says the
+                the report halts without xaqu.panic=reset and, with it, says the
                 reset line and the machine starts again by itself, boot 2's loader
                 quoting the report.";
             attribute :>> parent = "H.FAIL.14";
@@ -957,7 +957,7 @@ package FerrixConsoleRequirements {
         requirement <'L.lockup.8'> aStopOnPurposeDisarmsFirst : ItemLowLevel {
             attribute :>> statement = "Each stop on purpose -- reboot(2)'s restart,
                 power-off and halt, the settings' restart, init's exit under
-                ferrix.onexit and linuxd's exit -- shall call stop_for_shutdown
+                xaqu.onexit and linuxd's exit -- shall call stop_for_shutdown
                 before the stop, which disarms an armed deadline and says so.";
             attribute :>> criterion = "In test-watchdog, halt -f (reboot(2)'s halt)
                 with the feeder running says the watchdog is disarmed for a halt,
@@ -970,10 +970,10 @@ package FerrixConsoleRequirements {
         }
         requirement <'L.lockup.9'> offUnlessAsked : ItemLowLevel {
             attribute :>> statement = "read_option shall ask for the watchdog for
-                exactly the value on of ferrix.watchdog, saying any other value is
+                exactly the value on of xaqu.watchdog, saying any other value is
                 not understood and taking it as off; unasked, start shall spawn no
                 task and serve nothing, and /dev/watchdog shall not be present.";
-            attribute :>> criterion = "In test-watchdog, a boot with ferrix.watchdog=On
+            attribute :>> criterion = "In test-watchdog, a boot with xaqu.watchdog=On
                 says the value is not understood, has no /dev/watchdog and never
                 says the watchdog is served.";
             attribute :>> parent = "H.FAIL.14";

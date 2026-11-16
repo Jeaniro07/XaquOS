@@ -6,11 +6,11 @@ pub use crate::arch::aarch64::signal;
 pub mod switch;
 pub mod syscall;
 pub mod trap;
-use ferrix_bootinfo::Arch;
-use ferrix_linux_abi::nr;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types;
-use ferrix_linux_abi::types::OpenFlagBits;
+use xaqu_bootinfo::Arch;
+use xaqu_linux_abi::nr;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types;
+use xaqu_linux_abi::types::OpenFlagBits;
 pub use signal::SIGNAL_RED_ZONE;
 pub use signal::UserContext;
 pub use signal::restore_signal_frame;
@@ -124,10 +124,10 @@ pub const fn audit_arch(abi: crate::trap::Abi) -> u32 {
     let _ = abi;
     0xC000_00B7
 }
-pub fn image_abi(_class: ferrix_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
+pub fn image_abi(_class: xaqu_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
     (machine == ARCH.elf_machine()).then_some(crate::trap::Abi::Native)
 }
-pub const COMPAT_USER_END: u64 = ferrix_bootinfo::USER_VIRT_END;
+pub const COMPAT_USER_END: u64 = xaqu_bootinfo::USER_VIRT_END;
 pub const fn decode_compat_syscall(_number: usize) -> Option<Syscall> {
     None
 }
@@ -146,8 +146,8 @@ pub fn user_hwcaps() -> (u64, u64) {
     if kept & KNOWN != 0 {
         return (kept & !KNOWN, TWO.load(Ordering::Relaxed));
     }
-    let hwcap = crate::sys::clock(ferrix_native_abi::lift::CLOCK_HWCAP);
-    let hwcap2 = crate::sys::clock(ferrix_native_abi::lift::CLOCK_HWCAP2);
+    let hwcap = crate::sys::clock(xaqu_native_abi::lift::CLOCK_HWCAP);
+    let hwcap2 = crate::sys::clock(xaqu_native_abi::lift::CLOCK_HWCAP2);
     TWO.store(hwcap2, Ordering::Relaxed);
     ONE.store(hwcap | KNOWN, Ordering::Relaxed);
     (hwcap, hwcap2)
@@ -157,16 +157,16 @@ pub const fn user_platform(abi: crate::trap::Abi) -> Option<&'static [u8]> {
     None
 }
 pub fn shutdown() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_HALT)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_HALT)
 }
 pub fn power_off() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_POWER_OFF)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_POWER_OFF)
 }
 pub fn reset() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_RESTART)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_RESTART)
 }
 pub fn halt() -> ! {
-    crate::sys::end_partition_with(ferrix_native_abi::lift::EXIT_HALT)
+    crate::sys::end_partition_with(xaqu_native_abi::lift::EXIT_HALT)
 }
 pub fn enable_interrupts() {}
 pub fn disable_interrupts() {}
@@ -177,7 +177,7 @@ pub fn interrupts_enabled() -> bool {
 pub struct Irq;
 // SAFETY: a program has no interrupts to mask: a spin lock's holder may be
 // preempted by the kernel, which the shim's locks allow for (M5-LIFT.md §4.5).
-unsafe impl ferrix_sync::IrqControl for Irq {
+unsafe impl xaqu_sync::IrqControl for Irq {
     fn disable() -> usize {
         0
     }
@@ -204,7 +204,7 @@ pub fn counter_now() -> u64 {
     read_cntvct()
 }
 /// `getppid` on the table this architecture's programs call: what a straight answer is for.
-pub const GETPPID_NUMBER: usize = ferrix_linux_abi::nr::aarch64::GETPPID;
+pub const GETPPID_NUMBER: usize = xaqu_linux_abi::nr::aarch64::GETPPID;
 pub fn counter_hz() -> u64 {
     read_cntfrq()
 }
@@ -241,7 +241,7 @@ pub fn sync_instructions(start: u64, len: u64) {
     }
 }
 
-pub type PageEncoding = ferrix_paging::aarch64::AArch64;
+pub type PageEncoding = xaqu_paging::aarch64::AArch64;
 
 pub const fn flush_cache_lines(_virt: u64, _len: u64) {}
 pub const fn write_combining_processors() -> Option<usize> {
@@ -310,16 +310,16 @@ const VDSO_CODE: [u8; 12] = {
 };
 
 /// What the vDSO exports: the trampoline, after its `nop`.
-const VDSO_FUNCTIONS: &[ferrix_vdso::Function<'static>] = &[ferrix_vdso::Function {
-    name: ferrix_vdso::SIGRETURN,
+const VDSO_FUNCTIONS: &[xaqu_vdso::Function<'static>] = &[xaqu_vdso::Function {
+    name: xaqu_vdso::SIGRETURN,
     alias: None,
     offset: 4,
 }];
 
 /// The vDSO, which here is the signal return trampoline and nothing else.
-pub fn vdso_spec() -> Option<ferrix_vdso::Spec<'static>> {
-    Some(ferrix_vdso::Spec {
-        machine: ferrix_elf::EM_AARCH64,
+pub fn vdso_spec() -> Option<xaqu_vdso::Spec<'static>> {
+    Some(xaqu_vdso::Spec {
+        machine: xaqu_elf::EM_AARCH64,
         code: &VDSO_CODE,
         functions: VDSO_FUNCTIONS,
     })

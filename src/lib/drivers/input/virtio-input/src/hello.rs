@@ -1,10 +1,10 @@
 //! From the device's configuration queries to HELLO.
 
-use ferrix_inputctl::message::{
+use xaqu_inputctl::message::{
     AXES, AxisRange, Bitmaps, DeviceId, Hello, Text, VERSION, bit, bits_past,
 };
-use ferrix_linux_abi::input::{ABS_CNT, EV_CNT, INPUT_PROP_CNT};
-use ferrix_virtio::input::{self, Answer, ConfigSelect, InputError};
+use xaqu_linux_abi::input::{ABS_CNT, EV_CNT, INPUT_PROP_CNT};
+use xaqu_virtio::input::{self, Answer, ConfigSelect, InputError};
 
 /// Set bit `index` of a little-endian bitmap, if it has one.
 fn set(bits: &mut [u8], index: u16) {

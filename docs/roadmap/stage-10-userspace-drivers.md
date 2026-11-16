@@ -453,7 +453,7 @@ end of the domain check on x86-64, under KVM, and on AArch64; none on ARMv7-A,
 whose domain is untranslated.
 
 **Done — the block ring's protocol, as a library, host-side.** `src/lib/proto/blkring`
-(`ferrix-blkring`) is the ring the kernel and a ring-3 block driver will share,
+(`xaqu-blkring`) is the ring the kernel and a ring-3 block driver will share,
 as `docs/BLOCK-RING.md` specifies it: the ring and data VMO layout, every index
 and entry the other side writes checked before it is used, doorbells over stage
 9 ports, and a HELLO carrying the disk's PCI location, its virtio serial and the
@@ -542,7 +542,7 @@ memory back only after the device's reset has finished. Device addresses reach
 it only through `DevicePages`: the addresses the pin query (0x1026) returned,
 page by page of the pinned range, with no relation to physical addresses
 assumed. It is tested on the host, under Miri, and by the `virtio_blk` fuzz
-target. The driver process on `ferrix-rt` that uses it came next, below.
+target. The driver process on `xaqu-rt` that uses it came next, below.
 
 **Done — the kernel's half of `devmgr`: what a driver is started with, and
 what ends it.** `docs/ARCHITECTURE.md` §7 has `devmgr` hand a driver its device
@@ -557,7 +557,7 @@ and the function's configuration space address. From that, `device_info`
 builds the START message `docs/BLOCK-RING.md` §6.4 now specifies — type 6, the
 first message on a driver's bootstrap channel, carrying the blocks, the
 location, the name, the device with `MANAGE` and the driver's end of the ring's
-control channel — and `ferrix-blkring` encodes, decodes and checks it. Two more
+control channel — and `xaqu-blkring` encodes, decodes and checks it. Two more
 things nothing did before:
 
 * **Bus mastering goes on at a device's first `VMO_PIN`**, the moment a driver
@@ -597,7 +597,7 @@ VT-d translating and on AArch64 through the `SMMUv3`, and the deliberate
 out-of-domain write faulted on both earlier in the same boot; on ARMv7-A the
 driver runs in degraded trusted mode, as the exit criterion decided. The
 disk is `virtio-blk-pci` on every machine, because under ACPI QEMU describes
-its virtio-mmio devices only in AML. The marker moves to `FERRIX-BOOT-OK
+its virtio-mmio devices only in AML. The marker moves to `XAQU-BOOT-OK
 stages 1-10` when it landed; what the stage still owes is below, after the exit, each with a
 row in `docs/BACKLOG.md`.
 
@@ -740,7 +740,7 @@ repeat.
   The steps landed without a recorded review; the certification consultant
   (os-ad) reviewed them after the fact on 2026-10-01 (da45a113), and its
   conditions are a row of `docs/BACKLOG.md`.
-* *`ferrix-driver`* (`src/user/system/native/driver`, d5b03142): START, register
+* *`xaqu-driver`* (`src/user/system/native/driver`, d5b03142): START, register
   blocks, DMA memory, the virtio transport, and a subsystem module per class
   (`input`, `block`), which a driver implements a trait of. Matching is the
   device type, not an ID table. DMA memory has no `Drop` and frees only with a
@@ -752,13 +752,13 @@ repeat.
 driver for a disk a PC has (`docs/INSTALLER.md` H1; `docs/NVME.md`):
 `src/lib/drivers/block/nvme` is the controller as logic, with 40 host tests
 against a model, and `src/user/system/native/drivers/block/nvme` its process
-on `ferrix-driver`, whose new `pci` module is the bus of a PCI function that
+on `xaqu-driver`, whose new `pci` module is the bus of a PCI function that
 is not virtio. `devmgr` matches class code `01:08:02`. The kernel is not
 changed: the disk arrives over the block ring as a virtio disk does.
 `cargo xtask test-nvme` boots `/` from an NVMe drive below a root port and a
 PCIe switch, reads, writes and flushes a second drive of 4096-byte blocks,
 and kills both drivers under load; `test-restart --boot nvme` is the restart
-gate's rounds on that root. It has since driven a real WD SN720 through VFIO and installed Ferrix onto it (the customer; the run's log is not on `main`), and
+gate's rounds on that root. It has since driven a real WD SN720 through VFIO and installed Xaqu onto it (the customer; the run's log is not on `main`), and
 `docs/NVME.md` §8 says what that leaves unshown: the Host Memory Buffer, a
 command timeout and the shutdown notification among it.
 
@@ -776,7 +776,7 @@ switch check runs on the first function that is not a bridge (b342f0922).
 Besides the xHCI controller, AHCI and the YT6801 on the customer's N150 box on
 2026-10-15 and the NVMe driver on a real SN720, all of it is shown under QEMU.
 
-**Still to do:** the other seven drivers onto `ferrix-driver` (net, snd,
+**Still to do:** the other seven drivers onto `xaqu-driver` (net, snd,
 vport, gpu, then stm32-ltdc, gc400, usbhid, usbdev; `docs/BACKLOG.md` P2);
 a graceful STOP, since no kernel code sends one to a real driver and every
 driver's stop path is unreachable (`docs/BACKLOG.md`, the desktop's table,

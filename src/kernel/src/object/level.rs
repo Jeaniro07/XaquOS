@@ -5,7 +5,7 @@
 //! nothing here refuses anything, and everything on a kernel whose jobs never
 //! asked for a level is at one level.
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::object::Object;
 
@@ -67,6 +67,6 @@ pub fn level_of(object: &Object) -> u8 {
         Object::Pager(pager) => pager.level(),
         Object::PagerKeeper(keeper) => keeper.level(),
         Object::Vmo(vmo) => vmo.highest_mapper(),
-        _ => ferrix_native_abi::types::JOB_LEVEL_TOP,
+        _ => xaqu_native_abi::types::JOB_LEVEL_TOP,
     }
 }

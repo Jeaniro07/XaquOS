@@ -1,8 +1,8 @@
 //! What [`make`] writes, judged by the reader, the writer and real
 //! `mkfs.btrfs`'s volume.
 //!
-//! The oracles: `ferrix-btrfs` must open the volume and find its label and
-//! root directory; `ferrix-btrfs-write` must open it, which checks every
+//! The oracles: `xaqu-btrfs` must open the volume and find its label and
+//! root directory; `xaqu-btrfs-write` must open it, which checks every
 //! block group against its chunk and its free-space items, then fill it to
 //! the end of its device, making chunks as it goes, and read back what it
 //! wrote after a reopen; and its trees must hold the items, item type for
@@ -17,12 +17,12 @@ use std::collections::BTreeMap;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::chunk::ChunkMapEntry;
-use ferrix_btrfs::items::{S_IFREG, Timespec};
-use ferrix_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_SIZE, Superblock};
-use ferrix_btrfs::volume::{Device, ReadKind, Volume};
-use ferrix_btrfs_write::{NewInode, WriteDevice, WriteVolume};
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::chunk::ChunkMapEntry;
+use xaqu_btrfs::items::{S_IFREG, Timespec};
+use xaqu_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_SIZE, Superblock};
+use xaqu_btrfs::volume::{Device, ReadKind, Volume};
+use xaqu_btrfs_write::{NewInode, WriteDevice, WriteVolume};
 
 use super::*;
 
@@ -35,7 +35,7 @@ const NEW: NewInode = NewInode {
     rdev: 0,
     now: Timespec { sec: 1, nsec: 0 },
 };
-/// `mkfs.btrfs -L ferrix-root` of 1 GiB with 4 KiB nodes: the volume the
+/// `mkfs.btrfs -L xaqu-root` of 1 GiB with 4 KiB nodes: the volume the
 /// installer used to copy.
 const ROOT_FIXTURE: &[u8] = include_bytes!("../../format/testdata/root.img.packed");
 
@@ -123,16 +123,16 @@ impl Device for MemDevice {
 }
 
 impl WriteDevice for MemDevice {
-    fn write_at(&mut self, at: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+    fn write_at(&mut self, at: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         if at + data.len() as u64 > self.size {
-            return Err(ferrix_btrfs_write::Error::DeviceWrite { physical: at });
+            return Err(xaqu_btrfs_write::Error::DeviceWrite { physical: at });
         }
         self.store(at, data);
         self.log.push(Op::Write(at, data.len()));
         Ok(())
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         self.log.push(Op::Flush);
         Ok(())
     }
@@ -142,7 +142,7 @@ fn options(size: u64, nodesize: u32) -> Options<'static> {
     let random = [[0x11; 16], [0x22; 16], [0x33; 16], [0x44; 16]];
     Options {
         nodesize,
-        ..Options::new(size, b"ferrix-root", random, 1_790_000_000)
+        ..Options::new(size, b"xaqu-root", random, 1_790_000_000)
     }
 }
 
@@ -155,13 +155,13 @@ fn formatted(size: u64, nodesize: u32) -> MemDevice {
 }
 
 impl Target for MemDevice {
-    type Error = ferrix_btrfs_write::Error;
+    type Error = xaqu_btrfs_write::Error;
 
-    fn write_at(&mut self, at: u64, data: &[u8]) -> ferrix_btrfs_write::Result<()> {
+    fn write_at(&mut self, at: u64, data: &[u8]) -> xaqu_btrfs_write::Result<()> {
         WriteDevice::write_at(self, at, data)
     }
 
-    fn flush(&mut self) -> ferrix_btrfs_write::Result<()> {
+    fn flush(&mut self) -> xaqu_btrfs_write::Result<()> {
         WriteDevice::flush(self)
     }
 }
@@ -183,7 +183,7 @@ fn the_reader_opens_the_volume_and_finds_its_label() {
                 .read_at(PRIMARY_OFFSET, &mut block, ReadKind::Metadata)
                 .unwrap();
             let sb = Superblock::parse_at(&block, PRIMARY_OFFSET).unwrap();
-            assert_eq!(sb.label(), Some("ferrix-root"));
+            assert_eq!(sb.label(), Some("xaqu-root"));
             assert_eq!(sb.total_bytes(), size - size % 4096);
             assert_eq!(sb.nodesize(), nodesize);
             let mut node = vec![0_u8; 65536];
@@ -410,12 +410,12 @@ fn the_uuids_are_version_4() {
     }
 }
 
-/// Write fresh volumes, and the same filled, to `FERRIX_BTRFS_OUT` for host
+/// Write fresh volumes, and the same filled, to `XAQU_BTRFS_OUT` for host
 /// `btrfs check`; see `tools/common/test/btrfs-check-writer.sh`.
 #[test]
 #[ignore = "writes images for host btrfs check; run by tools/common/test/btrfs-check-writer.sh"]
 fn btrfs_check_images() {
-    let out = std::env::var("FERRIX_BTRFS_OUT").expect("FERRIX_BTRFS_OUT names a directory");
+    let out = std::env::var("XAQU_BTRFS_OUT").expect("XAQU_BTRFS_OUT names a directory");
     for nodesize in [4096, DEFAULT_NODESIZE] {
         let device = formatted(MIN_SIZE, nodesize);
         std::fs::write(std::format!("{out}/mkfs-{nodesize}.img"), device.image()).unwrap();

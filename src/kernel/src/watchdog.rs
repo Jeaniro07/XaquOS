@@ -1,10 +1,10 @@
 //! The watchdog: ring 3 feeds it, and a feed that does not come ends in a
-//! report, and in a reset only under `ferrix.panic=reset`
-//! (`docs/POSTMORTEM.md` §6.11, `ferrix.watchdog=on`).
+//! report, and in a reset only under `xaqu.panic=reset`
+//! (`docs/POSTMORTEM.md` §6.11, `xaqu.watchdog=on`).
 //!
 //! **What "stuck" means here.** A machine nobody can reach any more: its
 //! supervisor, init, cannot turn its own loop within the timeout. That is
-//! decided in ring 3, by what feeds -- init's `ferrix.init.watchdog=`, or any
+//! decided in ring 3, by what feeds -- init's `xaqu.init.watchdog=`, or any
 //! privileged program that opens `/dev/watchdog` -- and never by a kernel
 //! timer, which goes on ticking while all of user space waits on something
 //! that will not come (the N150 box on 2026-10-31: ping answered, every
@@ -15,7 +15,7 @@
 //! **The kernel's part**, all of it, and the policy none of it: a deadline
 //! on the kernel's clock, moved by each feed, that a task of its own checks
 //! once a second; past it, the report (FX-9008) naming who armed it, its
-//! timeout and how long since the last feed, and then `ferrix.panic`'s halt
+//! timeout and how long since the last feed, and then `xaqu.panic`'s halt
 //! or reset.
 //!
 //! **What it does not catch.** The task runs on the kernel's own scheduler
@@ -24,26 +24,26 @@
 //! -- stops the task too, and nothing reports it: that is the lockup
 //! detector's and a hardware timer's (S4a, the chipset's TCO), both parked
 //! (`docs/POSTMORTEM.md` §6.11). A report resets the machine only under
-//! `ferrix.panic=reset`; otherwise it halts.
+//! `xaqu.panic=reset`; otherwise it halts.
 //!
 //! The timeout, whether to arm at all and what must be alive for the feed to
 //! come are the opener's. The interface is typed and knows no Linux number:
 //! `/dev/watchdog` (`fs::watchdog`, the load) turns `open`, `write`, `ioctl`
 //! and the last release into the calls below.
 //!
-//! Off unless asked for: without `ferrix.watchdog=on` no node exists and no
+//! Off unless asked for: without `xaqu.watchdog=on` no node exists and no
 //! task runs.
 
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
+use xaqu_bootinfo::BootView;
 
 use crate::console::println;
 use crate::panic::{catalog, fatal};
 use crate::{sched, timer};
 
 /// The command-line option, and the one value that asks for it.
-pub(crate) const OPTION: &str = "ferrix.watchdog";
+pub(crate) const OPTION: &str = "xaqu.watchdog";
 const ON: &str = "on";
 
 /// The timeout an open arms with until one is set, as Linux's softdog's.
@@ -55,7 +55,7 @@ pub(crate) const MAX_SECONDS: u32 = 600;
 /// How often the task looks at the deadline, in nanoseconds.
 const LOOK_EVERY: u64 = 1_000_000_000;
 
-/// Whether `ferrix.watchdog=on` was asked for.
+/// Whether `xaqu.watchdog=on` was asked for.
 static ASKED: AtomicBool = AtomicBool::new(false);
 
 /// Whether the device is served: asked, and the task running.
@@ -78,7 +78,7 @@ static OPEN: AtomicBool = AtomicBool::new(false);
 static OPENER: AtomicU32 = AtomicU32::new(0);
 static OPENER_NAME: [AtomicU64; 2] = [const { AtomicU64::new(0) }; 2];
 
-/// Read `ferrix.watchdog` from the loader's command line: once, at boot.
+/// Read `xaqu.watchdog` from the loader's command line: once, at boot.
 /// Exactly `on` asks for it; anything else is said and taken as off.
 fn read_option(view: &BootView<'_>) {
     match view.option(OPTION) {
@@ -96,7 +96,7 @@ pub fn start(view: &BootView<'_>) {
     if !ASKED.load(Ordering::Acquire) {
         return;
     }
-    if sched::spawn("watchdog", look_forever, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("watchdog", look_forever, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         println!("  watchdog no task to look at the deadline: /dev/watchdog is not served");
         return;
     }

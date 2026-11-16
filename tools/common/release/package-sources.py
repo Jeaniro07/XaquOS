@@ -3,7 +3,7 @@
 
     tools/common/release/package-sources.py <out-dir> --tag TAG [--fetch]
 
-Writes `ferrix-<TAG>-sources.tar.gz` into <out-dir>: for each component
+Writes `xaqu-<TAG>-sources.tar.gz` into <out-dir>: for each component
 tools/common/data/release-licences.toml's `[sources]` names -- the
 copyleft programs in the release's images, and what is linked statically
 into one -- the exact upstream tarballs its build fetched, read from the
@@ -111,7 +111,7 @@ def busybox(archive: Archive, fetch_into: pathlib.Path | None) -> list[str]:
     archive.add_bytes("busybox/busybox.config", changed)
     notes = ["`busybox.config` is Alpine's `busyboxconfig` with `recipe/config.sh`'s changes."]
     # And the .config `make oldconfig` turned that into, where this machine built it.
-    built = pathlib.Path(os.environ.get("FERRIX_BUSYBOX", pathlib.Path.home() / ".local/share/ferrix/busybox/ferrousli"))
+    built = pathlib.Path(os.environ.get("XAQU_BUSYBOX", pathlib.Path.home() / ".local/share/xaqu/busybox/ferrousli"))
     for directory, arch in (("build", "x86_64"), ("build-aarch64", "aarch64"), ("build-armv7a", "armv7a")):
         config = built / directory / ".config"
         if config.is_file():
@@ -175,7 +175,7 @@ def debian(archive: Archive) -> int:
         "pixel7-debian/README.md",
         (
             "# The Pixel 7 `full` edition's Chromium volume\n\n"
-            "`ferrix-pixel7-chromium.img.gz` is Debian 13's Chromium for arm64 and every library it\n"
+            "`xaqu-pixel7-chromium.img.gz` is Debian 13's Chromium for arm64 and every library it\n"
             "loads, unpacked unchanged from Debian's own .deb files onto a btrfs volume by\n"
             "`fetch-chromium-arm64.sh` (here, as it was at the tag). `packages.tsv` lists each package,\n"
             "its version and SHA-256 as the script pins it, and its source package. The archive was\n"
@@ -199,7 +199,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     fetch_into = args.out / "downloads" if args.fetch else None
-    top = f"ferrix-{args.tag}-sources"
+    top = f"xaqu-{args.tag}-sources"
     archive = Archive(top)
     sections = []
 
@@ -231,7 +231,7 @@ def main() -> None:
     packages = debian(archive)
 
     lines = [
-        f"# Ferrix {args.tag}: corresponding sources",
+        f"# Xaqu {args.tag}: corresponding sources",
         "",
         "The source of every program under the GPL or the LGPL in this release's assets, and of",
         "what is linked statically into one, as each was built. Every tarball is the upstream",
@@ -239,20 +239,20 @@ def main() -> None:
         "script, which is in `recipe/` beside it with every patch it applies. The licence of every",
         "part of the release is in its THIRD-PARTY-LICENSES.md.",
         "",
-        "Each program is built against ferrousli, Ferrix's C library, linked statically: its source",
-        f"is `ferrousli/ferrousli-{commit[:12]}.tar.gz` (ferrix-os/ferrousli at {commit}), and the scripts",
+        "Each program is built against ferrousli, Xaqu's C library, linked statically: its source",
+        f"is `ferrousli/ferrousli-{commit[:12]}.tar.gz` (xaqu-os/ferrousli at {commit}), and the scripts",
         "source its port toolkit, `common/ports-common.sh` (its `tools/ports/common.sh`). They run on a",
-        "Linux host with a C compiler; the Ferrix repository at the tag runs them for you:",
+        "Linux host with a C compiler; the Xaqu repository at the tag runs them for you:",
         "",
         "```",
-        f"git clone https://github.com/ferrix-os/ferrix && cd ferrix && git checkout {args.tag}",
+        f"git clone https://github.com/xaqu-os/xaqu && cd xaqu && git checkout {args.tag}",
         "cargo xtask busybox --arch x86_64        # and --arch aarch64 for the Pixel 7's",
         "cargo xtask ports --arch x86_64",
         "cargo xtask build-apps --arch x86_64",
         "```",
         "",
-        "and put a tarball from here in `~/.local/share/ferrix/ports/ferrousli/src/` (busybox's in",
-        "`~/.local/share/ferrix/busybox/ferrousli/src/`) to build from it rather than a download.",
+        "and put a tarball from here in `~/.local/share/xaqu/ports/ferrousli/src/` (busybox's in",
+        "`~/.local/share/xaqu/busybox/ferrousli/src/`) to build from it rather than a download.",
         "",
         "| Part | Licence | Shipped in | How it is built |",
         "|---|---|---|---|",

@@ -20,7 +20,7 @@
 //!   `RCX` and `R11` as `SYSCALL` left them) and that what it writes there,
 //!   `RCX` and `R11` included, is what the program resumes with;
 //! * **special**: a number that reads as `-ERESTARTSYS` and, on x86-64, one in
-//!   Ferrix's native range are dispatched like any other;
+//!   Xaqu's native range are dispatched like any other;
 //! * **compat**: on x86-64 an `int $0x80` from the page is dispatched with
 //!   i386's `AUDIT_ARCH`; in the i386 build the `siginfo` is at i386's
 //!   offsets;
@@ -101,7 +101,7 @@ const GETPID: c_long = libc::SYS_getpid;
 const GETPID_I386: u64 = 20;
 /// A number no Linux ABI has, as DW-Proton's self-test uses it.
 const UNKNOWN: u64 = 0xFFFF;
-/// Ferrix's `channel_write_read`, in its native range.
+/// Xaqu's `channel_write_read`, in its native range.
 #[cfg(target_arch = "x86_64")]
 const NATIVE: u64 = 0x1013;
 /// What the handler writes as a dispatched call's result.

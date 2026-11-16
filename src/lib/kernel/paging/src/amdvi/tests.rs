@@ -344,7 +344,7 @@ fn units_are_accepted_by_hat_disabled_first_then_hats() {
 
 /// Verifies: L.iommu.98
 #[test]
-fn ferrix_amdvi_off_is_the_bare_word() {
+fn xaqu_amdvi_off_is_the_bare_word() {
     assert!(unit::switched_off(Some("off")));
     for not in [None, Some("on"), Some("OFF"), Some("off "), Some("")] {
         assert!(!unit::switched_off(not), "{not:?}");

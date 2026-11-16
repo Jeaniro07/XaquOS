@@ -17,7 +17,7 @@ fn every_kind() -> Vec<Record<'static>> {
         },
         Record::Begin {
             service: "login",
-            account: "ferrix",
+            account: "xaqu",
             method: "fingerprint",
         },
         Record::Respond(Response(b"correct horse")),
@@ -48,13 +48,13 @@ fn every_kind() -> Vec<Record<'static>> {
         Record::Error("the caps lock is on"),
         Record::Accepted {
             uid: 1000,
-            account: "ferrix",
+            account: "xaqu",
         },
         Record::Failed {
             retry_after_ms: 2000,
             text: "Authentication failed",
         },
-        Record::Unavailable("no password is set for ferrix"),
+        Record::Unavailable("no password is set for xaqu"),
         Record::State {
             credential: true,
             methods: method::PASSWORD,

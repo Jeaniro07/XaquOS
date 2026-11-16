@@ -343,7 +343,7 @@ fn on_the_plane(
     before: u32,
     shape: Option<crate::vnc::Shape>,
 ) -> Result<()> {
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while the compositor ran: {}",
             line.trim()

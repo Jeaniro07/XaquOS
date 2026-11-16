@@ -4,9 +4,9 @@
 #![no_std]
 #![no_main]
 
-use ferrix_rt::Bootstrap;
+use xaqu_rt::Bootstrap;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 fn main(_bootstrap: Bootstrap) -> i32 {
     86

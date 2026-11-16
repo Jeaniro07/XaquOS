@@ -4617,7 +4617,7 @@ fn gpu_for(
 }
 
 /// The modifiers the test server's EGL imports both of a client's formats
-/// with, for a server that takes dmabufs at all (Ferrix's patched one):
+/// with, for a server that takes dmabufs at all (Xaqu's patched one):
 /// what clients are then offered. `None` for a stock server, or one that
 /// could not be asked, whose clients' buffers are mapped as for a screen
 /// drawn in software.
@@ -4736,7 +4736,7 @@ fn render_node() -> Result<Box<dyn compositor_virgl::Device>, String> {
 /// One screen a connected connector, across every card: two monitors are two
 /// screens whether they are two connectors of one card or a card each.
 ///
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/dri`; elsewhere
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/dri`; elsewhere
 /// the compositor is headless or it is nothing.
 #[cfg(target_os = "linux")]
 fn open_screens(rules: &[MonitorRule]) -> Result<Vec<Box<dyn Backend>>, String> {
@@ -7980,7 +7980,7 @@ fn globals(outputs: usize, dmabuf: Option<Vec<u64>>) -> Globals {
         ),
         // An application's own menus, for the menu bar.
         (
-            &compositor_protocol::appmenu::FERRIX_APPMENU_MANAGER_V1,
+            &compositor_protocol::appmenu::XAQU_APPMENU_MANAGER_V1,
             1,
             Role::AppMenuManager,
         ),
@@ -8333,7 +8333,7 @@ pub(crate) fn start(
     if std::env::var_os("XDG_SESSION_TYPE").is_none() {
         let _ = child.env("XDG_SESSION_TYPE", "wayland");
     }
-    // A locale, which a distribution's login sets and nothing on Ferrix did.
+    // A locale, which a distribution's login sets and nothing on Xaqu did.
     // Without one, `setlocale(LC_ALL, "")` names `C.UTF-8;C;C;C;C;C` -- UTF-8
     // for characters, C for the rest, as musl's does -- and btop refuses to
     // start on a name that is not plainly UTF-8. UTF-8 is what the terminal

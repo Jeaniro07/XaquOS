@@ -4,24 +4,24 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::KERNEL_VMAP_BASE;
-use ferrix_bootinfo::KERNEL_VMAP_RESERVED;
-use ferrix_bootinfo::KERNEL_VMAP_SIZE;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
-use ferrix_sync::IrqSpinLock;
-use ferrix_vma::AddressSpace;
-use ferrix_vma::Backing;
-use ferrix_vma::PageRange;
-use ferrix_vma::VmaError;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::KERNEL_VMAP_BASE;
+use xaqu_bootinfo::KERNEL_VMAP_RESERVED;
+use xaqu_bootinfo::KERNEL_VMAP_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
+use xaqu_sync::IrqSpinLock;
+use xaqu_vma::AddressSpace;
+use xaqu_vma::Backing;
+use xaqu_vma::PageRange;
+use xaqu_vma::VmaError;
+use xaqu_vma::VmaFlags;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VmapError {
     NotReady,
     BadLength(u64),
     NoAddressSpace(u64),
     OutOfMemory,
-    MapFailed(ferrix_paging::MapError),
+    MapFailed(xaqu_paging::MapError),
     NotAllocated(u64),
     KernelImage(u64),
 }

@@ -4,7 +4,7 @@
 ran as a boot or a row. The customer asked whether the microkernel is around 20k lines and asked for
 one design agent. Every figure says **measured** or **estimate**. Builds were by hand at `nice -n 19`,
 debug-optimised unless a row says release; no gate, no evidence. Scripts, per-file data and the budget's
-generator: `~/.local/share/ferrix/mk-tiny/` (`budget.py`, `lines.py`, `scen.py`, `cc.py`).
+generator: `~/.local/share/xaqu/mk-tiny/` (`budget.py`, `lines.py`, `scen.py`, `cc.py`).
 **Reviewed: OK IF TK.1-TK.14, ledger 7256, and after the customer's D2-D11, OK IF TR.1-TR.22, ledger 7383**, both folded in here; §10 says what is still owed.*
 
 **Two names.** A **placed space** is a space with no regions: `SPACE_WINDOW`, `feature/mk-ibpb`'s window and
@@ -70,12 +70,12 @@ the flags choose little at file level.
 **The proposed definition, count A, "ring 0's product lines".** For one architecture and one profile: non-blank,
 non-comment lines of
 
-1. every file rustc's dep-info lists for `ferrix_kernel_core`, `ferrix_kernel_item` and `ferrix_kernel`,
+1. every file rustc's dep-info lists for `xaqu_kernel_core`, `xaqu_kernel_item` and `xaqu_kernel`,
    as `check-kernel-shape.py` does today, less the files it calls checks, **and any generated file rustc reads
    outside `src/kernel/src`, which the tool skips today and Cut 0 counts**; and
 2. **every library file with at least one line of machine code in the image**, by the image's own `.debug_line`,
    whole file. A library in ring 0 is ring 0. Whole files, so that an `errno` does not bring 5,387 lines of
-   `ferrix-linux-abi` in free: the cheap way down is to split the crate. Which files have code moves with opt-level:
+   `xaqu-linux-abi` in free: the cheap way down is to split the crate. Which files have code moves with opt-level:
    the ratchet reads **release** (M.7), and prints opt-level 1 beside it.
 
 **One column.** A counts whole files. A line under a `cfg` inside a read file stays counted: the tool's brace walk is
@@ -83,7 +83,7 @@ non-comment lines of
 requires, and the second column of the table above is printed and is not the count.
 
 **Checks are not in the headline figure, on one condition: the same row prints them.** `max.toml` has `checks = "on"` and
-`"ferrix.checks" = ["run"]`, and §2.1 argues them as executed code, so "all of ring 0" would be false: the image holds A +
+`"xaqu.checks" = ["run"]`, and §2.1 argues them as executed code, so "all of ring 0" would be false: the image holds A +
 checks. Also printed: count C; text bytes; `core` and `alloc` by bytes, which count A leaves to the toolchain's
 qualification (F-17). The headline is **AArch64 `max`**: both `max.toml` and `fast.toml` have
 `claim_architectures = ["aarch64"]`, so x86-64 is shape evidence and the speed rows' host, and no line of its `mce*`,
@@ -92,7 +92,7 @@ VT-d or AMD-Vi is in any claim.
 **Why not count C, though it reads 22k today.** It is the tempting one and I reject it as the headline. Lines
 with code are what coverage and MC/DC pay for, and the coverage reports do read these line tables
 (`Cargo.toml`'s `[profile.dev]` comment). But "22k, so we are there" would be flattery: seL4 by the same
-measure is 8,326 at `-O1`, 1,529 of them generated, so Ferrix today is 2.6 times seL4 on it, and 22k is
+measure is 8,326 at `-O1`, 1,529 of them generated, so Xaqu today is 2.6 times seL4 on it, and 22k is
 not the same quantity as anyone's "20k lines". It is printed beside A. On AArch64 it stays "not computed" until the method
 sees `adrp`; "check functions out" is an edit of the call graph, since a kernel without them cannot be built (§2's fourth).
 
@@ -111,9 +111,9 @@ near, not like for like. By origin: `src/object` 3,412, `include/arch` 2,531, `s
 `src/arch/x86/64` 1,740, `src/plat` 1,233, `src/arch/x86/object` 1,156, `boot.c` 845. I built no AArch64 seL4 here;
 its `src/arch/arm` is 11,491 against `src/arch/x86`'s 13,135, all modes, so it would be near.
 
-**Bytes do not flatter either.** Release `.text`: Ferrix x86-64 1,866,452, AArch64 1,597,496, seL4 92,964 with
+**Bytes do not flatter either.** Release `.text`: Xaqu x86-64 1,866,452, AArch64 1,597,496, seL4 92,964 with
 `.boot`: **20 times**. At opt-level 1 with check functions out, x86-64: kernel 540,659, libraries 202,814, `core` 535,359,
-`alloc` 222,356, by line-table attribution, so half of Ferrix's text is inlined standard library. Count A does
+`alloc` 222,356, by line-table attribution, so half of Xaqu's text is inlined standard library. Count A does
 not see that half. V2's object-code verification does. The budget's bytes are perhaps 600 to 800 KB (estimate),
 still about 8 times seL4.
 
@@ -129,7 +129,7 @@ Six things the earlier list did not have.
    6411). So in a user kernel, **ring 0's 3,529 lines of `space.rs` serve native processes and linuxd's own
    space, and nothing else**. The hard part of "user-level VM" is built and running; the old copy in ring 0 was
    never compiled out.
-2. **Mechanisms with no ring-3 caller.** By name, every `pub fn` of `ferrix_native` against `src/user`, `src/lib`,
+2. **Mechanisms with no ring-3 caller.** By name, every `pub fn` of `xaqu_native` against `src/user`, `src/lib`,
    `src/tests` and `lift/`, by grep, so it can miss a caller and any test-only one is out of it: none for
    `pager_create`, `pager_supply`, `pager_op`, `pager_keep`, `pager_take_up` (K3, K13), `issue_ticket`, `adopt_ticket`
    (K7), `timer_create`, `timer_set`, `timer_cancel` (K10), `read_attested` (K6), `read_state` (K4), `clone_space` (K2),
@@ -137,9 +137,9 @@ Six things the earlier list did not have.
    arena took K3's. Having no caller does not by itself let one go: §3.2's rule. `partmgr`'s header says it supervises; its source uses `notify_on_exit`.
 3. **Half the library lines are not product.** Linked: x86-64 40,931, AArch64 39,039, whole files. Reachable with
    the checks removed, x86-64, by the image's own call and address references: **27,140 lines of files, 4,389 lines
-   with code**. `ferrix-vfs` (6,044 lines, 47 KB) is not on that list at all: the product names it for an `Errno`
-   type in `space.rs` and `vmo.rs`, and the rest is reached from checks. `ferrix-virtio`, `ferrix-blkring`,
-   `ferrix-cgroupfs` and `ferrix-vdso` contribute under 400 bytes of product between them.
+   with code**. `xaqu-vfs` (6,044 lines, 47 KB) is not on that list at all: the product names it for an `Errno`
+   type in `space.rs` and `vmo.rs`, and the rest is reached from checks. `xaqu-virtio`, `xaqu-blkring`,
+   `xaqu-cgroupfs` and `xaqu-vdso` contribute under 400 bytes of product between them.
 4. **`checks=off` removes almost nothing here**: 6,664 bytes of x86-64's text, 1,932 of AArch64's. About 209 KB of
    check code stays linked and rustc reads the same files. That is not a defect of the flag's stated purpose, BF7's "so it
    cannot rot", but no count may rely on it, and a kernel with its checks out cannot be measured today.
@@ -176,7 +176,7 @@ Two facts constrain how. Count A counts whole files (§1), so code a shape does 
 | **Split by file, not by copy.** A type's methods only one shape runs move, unchanged, into an `impl` block in a child file behind a `#[cfg]`'d `mod`: `user/space/regions.rs` beside `user/space/placed.rs`, `object/job/tree.rs`, `object/quota/slots.rs`. The shared methods stay where they are | VM, jobs, quotas, the native handlers by family | Every shared method. A move is `CONVENTIONS.md`'s SP-2 pattern: bodies byte-identical by script, the same boot lines on four boots |
 | **Fields by shape.** A struct's shape-only fields under `#[cfg]`, so the type keeps one name | `AddressSpace`'s `map`, `objects`; `Job`'s cgroup link | The type, its name and every method that does not touch them |
 | **Static-dispatch traits at the composition root** (the customer's rule of 2026-10-24: proper traits, chosen per profile, not structs of function pointers) | The scheduler's class (§3.7), memory charging (`Charge`: slots or reservation), first-process start (`Starter`), panic text (`Explainer`: prose or code alone) | The caller. Each trait has one composition per image and no `dyn`, so no run-time cost; it does rename a symbol in `present` (below) |
-| **Shared crates for code that moves to ring 3 in one shape only** | PCI's walk stays in ring 0 (§3.6), but DEVICES' composition and matching go into `ferrix-devmgr-proto`, linked by the hybrid's kernel and by the micro shape's devmgr; the panic catalog's text, generated from one data file into a ring-0 table of codes and a host table of prose; `mce/decode.rs` and `console/pstore.rs` as crates the hybrid's kernel and `lode` both link | One body, two linkers. In ring 0 of the micro shape it is simply not linked |
+| **Shared crates for code that moves to ring 3 in one shape only** | PCI's walk stays in ring 0 (§3.6), but DEVICES' composition and matching go into `xaqu-devmgr-proto`, linked by the hybrid's kernel and by the micro shape's devmgr; the panic catalog's text, generated from one data file into a ring-0 table of codes and a host table of prose; `mce/decode.rs` and `console/pstore.rs` as crates the hybrid's kernel and `lode` both link | One body, two linkers. In ring 0 of the micro shape it is simply not linked |
 
 **What still has two bodies, by estimate, with why no seam serves:**
 
@@ -217,7 +217,7 @@ Each has `built`, levels and rows as `BUILD-FLAGS.md` asks, and each joins FLIP'
 
 | Object | Made from | Calls | Today's | Gone from ring 0 |
 |---|---|---|---|---|
-| Handle table, one or two a process | `ferrix-objects` | close, duplicate, replace; wait one, wait async; id | `object/mod.rs`, K11 | |
+| Handle table, one or two a process | `xaqu-objects` | close, duplicate, replace; wait one, wait async; id | `object/mod.rs`, K11 | |
 | **Memory** | a job's reservation, K12 | create, read, write, size; seal, digest (K14); hold, pin, pin addresses | `user/vmo.rs`, 2,178 | copy-on-write children, pager backing, `decommit`, rmap, retire lists, `ShadowCopies`, `Sharing` |
 | **Space** (placed) | root and tables from the reservation | create, place, unmap, protect, read, write; a process's own by `VMO_MAP`, in `rt` over place | `user/space.rs`, 3,529 | regions, `Vma` tree, lazy resolve, fork, remap, file mapping, advise, fault-around |
 | Process | bare | make, run, status, space, images, give and take bootstrap | `process.rs` + `bare.rs`, 1,135 | `Host`, the personality seam |
@@ -276,7 +276,7 @@ Cut 3 owes, before code, by space class (program, native QM, measured or safety,
 
 **True retype, for the record.** seL4's whole form, objects placed by the user in Untyped with a derivation tree:
 `src/object/untyped.c` 224, `cnode.c` 746, `objecttype.c` 824, `kernel/cspace.c` 149, **1,943 lines measured**, against
-what it removes here, `ferrix-heap`, `ferrix-kmem`, `fallible`, some of `mm.rs`: about 1,200 (estimate). **No line
+what it removes here, `xaqu-heap`, `xaqu-kmem`, `fallible`, some of `mm.rs`: about 1,200 (estimate). **No line
 gain**, a rewrite of every `Arc` in the object layer, and `max` keeps per-job heaps by the customer's order. It remains
 `max_plus`'s, `kernel_memory=none`, unchanged by this design. Its real gain is the proof, not the count.
 
@@ -317,7 +317,7 @@ by the reservation; processor by the window or budget. `quota.rs` is 1,304 lines
 | MSI and MSI-X mint, the configuration write filter, bus mastering only with a domain, ATS off | K8, B6, AoU-21 to 23 |
 | The refusal of the description's safety functions **and their closure**: a parent-is-a-root-port read, ACS, alias, peer to peer | (f): BA.3, ledger 6343, AoU-45. K14's `flag_nodes` at mint (7166) |
 | An untranslated node under `device_bus=devmgr` refused, or the boot, by the kernel, per node | (e): K8.2's Tree and VirtioMmio nodes, a refused unit; G4 |
-| `ferrix-pci`'s `bar`, `capability`, `header`, `msi`, `msix`, `topology` and the walk | (a): the parser stays |
+| `xaqu-pci`'s `bar`, `capability`, `header`, `msi`, `msix`, `topology` and the walk | (a): the parser stays |
 
 **After the walk (TR.15).** No hot-plug. SR-IOV is not in `discovery/pci.rs`, by grep: the write filter refuses a VF enable, so no function appears that the walk did not see. A bridge firmware left unnumbered: the walk reads firmware's numbers alone, so a function behind it is not found, and the host is reported, not guessed at.
 
@@ -326,12 +326,12 @@ by the reservation; processor by the window or budget. `quota.rs` is 1,304 lines
 | Leaves for devmgr, QM | How it reaches it |
 |---|---|
 | Which driver for which function: matching by vendor, device, class | A read-only table the kernel published at the walk's end: one row per node, its identity words and apertures as the kernel measured them, by `DEVICE_INFO` on a bus handle. devmgr reads that, never ECAM |
-| DEVICES' composition, driver images by name, REPORT and its handling | `discovery/devmgr.rs`'s policy half, into `ferrix-devmgr-proto` (§3.1: one crate the hybrid's kernel and devmgr both link; an extraction, so TR.2-TR.5 apply) |
+| DEVICES' composition, driver images by name, REPORT and its handling | `discovery/devmgr.rs`'s policy half, into `xaqu-devmgr-proto` (§3.1: one crate the hybrid's kernel and devmgr both link; an extraction, so TR.2-TR.5 apply) |
 | The names a node is published under; the order drivers start; restarts | devmgr's, as today for drivers |
 
 **What a lying or dead devmgr can do, then.** Start the wrong driver on a node it was given, or none: a driver is confined by its node's apertures, vectors and domain, which the kernel made. It cannot name a function the kernel did not publish, read configuration space beyond `DEVICE_CONFIG_READ` on a node it holds, change a BAR, aim a function's DMA or MSI, or reach a safety function. It no longer decides when ring 0 touches hardware (TK.11 (g)): the walk runs once, at boot, on the kernel's own schedule. **What leaves the TCB is the policy, not a parser.** That is smaller than the first form claimed, and true.
 
-**Re-priced, estimate.** Ring 0 keeps about 700 of `discovery/pci.rs`, about 2,200 of `ferrix-pci` and about 1,900 of `device.rs`, since only about 400 of it can be named as moving (§4.2). Against the budget before this revision, AArch64 `max` count A rises by about 2,050, and Cut 7's fall is about 8,100 rather than 9,800. The write filter's allowlist (`src/lib/platform/pci/src/window.rs`) keeps SR-IOV's capability the kernel's, so the VF enable of TR.15 is refused there today.
+**Re-priced, estimate.** Ring 0 keeps about 700 of `discovery/pci.rs`, about 2,200 of `xaqu-pci` and about 1,900 of `device.rs`, since only about 400 of it can be named as moving (§4.2). Against the budget before this revision, AArch64 `max` count A rises by about 2,050, and Cut 7's fall is about 8,100 rather than 9,800. The write filter's allowlist (`src/lib/platform/pci/src/window.rs`) keeps SR-IOV's capability the kernel's, so the VF enable of TR.15 is refused there today.
 
 **Controls owed before code (TR.17), each `gate.sh control --expect`, FIRED:** an untranslated node under `device_bus=devmgr` refused by the kernel; `DEVICE_INFO` on a node the walk did not find refused; a safety function's row absent, or its mint refused; a configuration read beyond a held node refused; a function devmgr never asks about found with mastering and ATS off.
 
@@ -341,16 +341,16 @@ by the reservation; processor by the window or budget. `quota.rs` is 1,304 lines
 
 ### 3.7 The scheduler: crates behind one class, chosen at build time (D5)
 
-**The customer, 2026-11-05: "make it a fixed build time configurable and the scheduler become crates".** Today `schedule=fair|edf|windows` exists, EEVDF lives in `ferrix-sched` (1,603 lines linked today, host-tested), `ferrix-sched-edf` wraps it (`OverFair<T>`, 866), and ring 0's `sched::Tier<Arc<Task>>` alias picks one; `sched/mod.rs` still holds fair-class helpers (`vtime.rs`, `borrow.rs`, `leftovers.rs`, the steal and balance walk).
+**The customer, 2026-11-05: "make it a fixed build time configurable and the scheduler become crates".** Today `schedule=fair|edf|windows` exists, EEVDF lives in `xaqu-sched` (1,603 lines linked today, host-tested), `xaqu-sched-edf` wraps it (`OverFair<T>`, 866), and ring 0's `sched::Tier<Arc<Task>>` alias picks one; `sched/mod.rs` still holds fair-class helpers (`vtime.rs`, `borrow.rs`, `leftovers.rs`, the steal and balance walk).
 
-**The interface.** A crate `ferrix-sched-class`, about 200 lines: the `Class<T>` trait K9 §2a's table already names (`enqueue`, `pick_next`, `hand_over`, `update_curr`, `yield_curr`, `decision_in_ns`, `should_preempt`, `remaining_ns`, `remove_curr`, `current`, `remove`, `len`, plus `steal_candidate` for balancing), and the types they share. Pure: no `unsafe`, no `ferrix_` `cfg`, no allocation after construction, as `sched-edf` is held today.
+**The interface.** A crate `xaqu-sched-class`, about 200 lines: the `Class<T>` trait K9 §2a's table already names (`enqueue`, `pick_next`, `hand_over`, `update_curr`, `yield_curr`, `decision_in_ns`, `should_preempt`, `remaining_ns`, `remove_curr`, `current`, `remove`, `len`, plus `steal_candidate` for balancing), and the types they share. Pure: no `unsafe`, no `xaqu_` `cfg`, no allocation after construction, as `sched-edf` is held today.
 
 | Crate | What | Today |
 |---|---|---|
-| `ferrix-sched-fair` | EEVDF, and what ring 0 holds of it now: `vtime`, `borrow`, `leftovers`, the steal and balance choice | `ferrix-sched` renamed, plus about 700 lines from `sched/` |
-| `ferrix-sched-rr` | Fixed priorities, round-robin within one: a bitmap and lists | New, about 300 (estimate) |
-| `ferrix-sched-edf` | Partitioned EDF with a hard CBS **over any `Class`**: `Edf<Inner: Class>` | `OverFair<T>`, made generic over its inner class |
-| `ferrix-sched-windows` | K9's static major frame, **composed over `sched-rr`** (`Windows<Inner: Class>`), so C6's fixed priorities inside a window are `rr`'s one body, not a second (TR.10); no fair class (C3); S.2's quantum among equals and idle-never-another's stand | New, K9, no code yet (FLIP, ledger 7011 S.1-S.6) |
+| `xaqu-sched-fair` | EEVDF, and what ring 0 holds of it now: `vtime`, `borrow`, `leftovers`, the steal and balance choice | `xaqu-sched` renamed, plus about 700 lines from `sched/` |
+| `xaqu-sched-rr` | Fixed priorities, round-robin within one: a bitmap and lists | New, about 300 (estimate) |
+| `xaqu-sched-edf` | Partitioned EDF with a hard CBS **over any `Class`**: `Edf<Inner: Class>` | `OverFair<T>`, made generic over its inner class |
+| `xaqu-sched-windows` | K9's static major frame, **composed over `sched-rr`** (`Windows<Inner: Class>`), so C6's fixed priorities inside a window are `rr`'s one body, not a second (TR.10); no fair class (C3); S.2's quantum among equals and idle-never-another's stand | New, K9, no code yet (FLIP, ledger 7011 S.1-S.6) |
 
 **What stays in ring 0's core** (`sched/`, about 2,500 to 2,800): `Task` and its states; the per-processor run queue's lock and the switch it is held across; wait queues and the sleeper sets; preemption on interrupt exit; the IPI kick; the reaper; `direct`, when `ipc_fastpath` is on; the call into the class and the move a class asks for. **Policy is the class's; the mechanism that runs a choice is the core's**, so no class can touch a register or a lock.
 
@@ -363,9 +363,9 @@ by the reservation; processor by the window or budget. `quota.rs` is 1,304 lines
 
 * **The method table (7088 G.1).** About 25 methods reach `RunQueue` from `sched/`, not the trait's 13. One row a method, one column a class (fair, rr, edf over each inner, windows over rr): which the trait takes, which the core drops, and that none is a stub read by balancing or `direct`'s fold unsaid. One generic host-test set runs over every class.
 * **A lock bound, not only a type bound.** The core calls a class under the run queue's lock with interrupts masked, so 6208 (3), (7) and 5695 B1 bind every crate: no allocation after construction, no parent walk, no membership lock, no queue scan in `pick`. Each class's bound goes in MEMORY-AND-TIMING. "No class can touch a register or a lock" is true of what it can name, not of how long it holds one.
-* **The sleepers' timeline.** `certification-item.json` names `ferrix-sched` "the fair class and the sleepers' timeline": `Timeline` and `Entity` go to a crate of their own, linked by every image, or are named as C3's residue linked into `max`, and `max`'s 500 library lines are re-priced with them. 7088's C3 plant (`RunQueue`'s pick, weights, `carried_weight`, `plan_job_fold`, `avg_vruntime` absent from `max`) is unchanged.
+* **The sleepers' timeline.** `certification-item.json` names `xaqu-sched` "the fair class and the sleepers' timeline": `Timeline` and `Entity` go to a crate of their own, linked by every image, or are named as C3's residue linked into `max`, and `max`'s 500 library lines are re-priced with them. 7088's C3 plant (`RunQueue`'s pick, weights, `carried_weight`, `plan_job_fold`, `avg_vruntime` absent from `max`) is unchanged.
 * **`Edf<Inner>`'s doors** (E.1-E.5, S.4's balance, steal, push, wake placement, `move_onto`, yield, `direct::hand_over`, `ipc_fastpath`) answered for each inner class. `edf_over=rr` and `rr` are `built = "no"` until their rows; every value is type-checked by `check` on each architecture it builds on (G.2). **`schedule=rr` as a top-level value is dropped**: no profile or row uses it, and `windows` reaches `rr` as its inner.
-* **G.3 for each new crate**: core in `certification-item.json` with `in_ring0_when`; pure as `sched-edf`, host tests and Miri; a requirement table before code, ids from the PO. `ferrix-sched`'s rename and the 700 lines from `sched/` are an extraction in `present` and `desktop`, so §3.1's rename list, bodies and coverage apply, and §3.0's A/B on `futex-thread-pingpong` and `test-game-rig`.
+* **G.3 for each new crate**: core in `certification-item.json` with `in_ring0_when`; pure as `sched-edf`, host tests and Miri; a requirement table before code, ids from the PO. `xaqu-sched`'s rename and the 700 lines from `sched/` are an extraction in `present` and `desktop`, so §3.1's rename list, bodies and coverage apply, and §3.0's A/B on `futex-thread-pingpong` and `test-game-rig`.
 * **K9 §1's charging is K7's.** A server's time for a client is charged by tickets; with K7 out of `fast` and `max` (D8), it is charged to the server's job there. Said here and owed in K9: TK.6's "temporal twin".
 
 One composition per image: `windows` links two classes (itself and `rr`), `edf` two (itself and its inner), so "one class" means one composition. **Count:** `max` links `class`, `windows` and `rr`, about 500 library lines before TR.9's timeline is placed, against ring 0's 6,276 of `sched/` today going to about 2,500: the budget's AArch64 `max` falls by about 220 against the first form. `fast` links `class`, `edf` and `fair`, about 3,400: its kernel falls by about 1,500 and its libraries rise by about 1,400, a wash in count A, but the policy is now a host-tested crate's and the core is what remains to argue. Rows: each class is held by today's scheduler checks run under each `schedule` value, and `desktop`'s `fair` by §3.0's A/B.
@@ -397,7 +397,7 @@ fixed table, as seL4 starts its root task; `partmgr` starts devmgr and linuxd wi
 
 Same counter throughout: `cc.py`, no blanks, no comments, tests dropped by directory and name. **Read means read:** seL4's `untyped.c` to its first
 200 lines, `faulthandler.c`, and the build; for the others, directory listings and heads. I did not read Zircon's VM, nor Redox's scheme code. Fetched
-shallow on 2026-11-05 to `~/.local/share/ferrix/mk-tiny/ref/`.
+shallow on 2026-11-05 to `~/.local/share/xaqu/mk-tiny/ref/`.
 
 | Kernel | Revision | Lines | What it keeps in ring 0 |
 |---|---|---:|---|
@@ -405,9 +405,9 @@ shallow on 2026-11-05 to `~/.local/share/ferrix/mk-tiny/ref/`.
 | Zircon | fuchsia 62795b11 | 295,226 `zircon/kernel` all architectures: `object` 34,317, `vm` 49,593, `arch` 44,178 (x86 21,655), `kernel` 31,157, `lib` 74,652, `dev` 26,187. **Now mostly Rust** | VMOs, VMARs, page faults, pager, evictor and compression in ring 0: `vm/`'s listing. K1's restricted mode is `kernel/restricted.rs` |
 | Hubris | 59c9a07 | 3,248 Rust, `sys/kern/src`, Arm M only | Static task table, no dynamic memory, 14 calls, read from `syscalls.rs`: no MMU, no SMP. Shows Rust does not force bulk; not the same job |
 | Redox | b030c6f | 34,827 Rust, all architectures | Schemes, including memory and processes, and `context` in ring 0, listing only |
-| Ferrix target | | 37,952 count A, 25,765 B | Zircon's object names, seL4's lack of VM policy, K1's restricted mode |
+| Xaqu target | | 37,952 count A, 25,765 B | Zircon's object names, seL4's lack of VM policy, K1's restricted mode |
 
-Nearest in spirit is seL4. Ferrix differs by: restricted mode (K1, K11) so a Linux call involves no IPC, SMP as the default, the barrier rules, audit,
+Nearest in spirit is seL4. Xaqu differs by: restricted mode (K1, K11) so a Linux call involves no IPC, SMP as the default, the barrier rules, audit,
 jobs and windows. Those are why 18,627 is a floor.
 
 ## 4. The budget
@@ -480,7 +480,7 @@ AArch64 `fast` is the first table plus `edf`'s core and the two fast paths: abou
 | From | Lines | To | Under what authority | Is it in the certified item? |
 |---|---:|---|---|---|
 | `user/space.rs`'s regions, fork, remap, file, advise | 2,679 | **linuxd's existing by-position copy.** Native layout: `rt`, process builder | Its own Memory and space handles | **linuxd: no, and the claim went with it at R3**: a smaller claim, not a free gain, §6, D11. **`rt` and the builder: yes**, ledger 886's set |
-| `device.rs`'s policy, by function: `describe` 62, `publish`'s matching half (about 40), the Intel GPU's `intel_gpu`, `allow_intel_gpu`, `is_intel_gpu`, `yield_intel_gpu` (38), G8's predicates `input_functions`, `reads_log`, `may_have_client_nodes` (27), `set_identity`, `identity_flags`, `flag_identity` (18), the framebuffer's lending group (`lendable`, `lend_framebuffer_here`, `_held`, `holds_lent_framebuffer`, `firmware_framebuffer`, `yield_framebuffer_holder`, `lend_target`: 122, if the display server takes it), the report impls and `occupants` (about 76); **none of `widen_lone_partial_bars`, `withhold_shared_pages`, `silence_found_masters`, the breach checks or their callers**; and `discovery/pci.rs`'s matching, native handlers | about 400 of `device.rs`, about 150 of `pci.rs`; **about 500 of `ferrix-pci`** | devmgr | A bus handle: the kernel's published table and `DEVICE_INFO`; **devmgr never reads ECAM** | No. §3.6, OK IF TR.14-TR.18 |
+| `device.rs`'s policy, by function: `describe` 62, `publish`'s matching half (about 40), the Intel GPU's `intel_gpu`, `allow_intel_gpu`, `is_intel_gpu`, `yield_intel_gpu` (38), G8's predicates `input_functions`, `reads_log`, `may_have_client_nodes` (27), `set_identity`, `identity_flags`, `flag_identity` (18), the framebuffer's lending group (`lendable`, `lend_framebuffer_here`, `_held`, `holds_lent_framebuffer`, `firmware_framebuffer`, `yield_framebuffer_holder`, `lend_target`: 122, if the display server takes it), the report impls and `occupants` (about 76); **none of `widen_lone_partial_bars`, `withhold_shared_pages`, `silence_found_masters`, the breach checks or their callers**; and `discovery/pci.rs`'s matching, native handlers | about 400 of `device.rs`, about 150 of `pci.rs`; **about 500 of `xaqu-pci`** | devmgr | A bus handle: the kernel's published table and `DEVICE_INFO`; **devmgr never reads ECAM** | No. §3.6, OK IF TR.14-TR.18 |
 | `discovery/devmgr.rs`, `linuxd_start.rs` | 1,493 | `partmgr` | Its boot table | **Yes**: about 800 lines into a certified item |
 | `panic/catalog.rs`'s prose | 1,959, with 1,668 already under a `cfg` | A host tool, by code | None | **Data, no logic. It flatters this table more than anything in it and takes no risk out** |
 | `mce/decode.rs`, CMCI's policy, x86-64 | 1,020 | `lode` | `CPU_SERVICE`'s ring, read-only | No claim on x86-64 at all |
@@ -527,7 +527,7 @@ Linked whole files, today, measured; "without checks" is x86-64's image with the
 | With `firmware=static` (D2): -3,384, FDT, ACPI, `tree.rs`, ITS, `discovery`'s rest | not applicable | not applicable | **34,568** |
 | Count C, a conservative formula, 0.30 × crates + 0.20 × libraries | | | 9,500 to 11,500. It gives 27,434 for today against 21,991 measured, so it is not a measured ratio |
 
-**Revised 2026-11-05, after D5, D7, D8 and D9**, the components adding to the tables' movement (TR.21 (b)): seams +300 (D9); the second form of Cut 7 about +2,050 (D7: `device.rs` keeps about 1,900, since only about 400 of it can be named as moving, `pci.rs` +250, `ferrix-pci` +700); K4 out about -230 (D8); `max`'s scheduler as crates about -430 (D5: `sched/` -630, libraries +200; the first form's 350 new lines are gone). **+1,690 in all: 37,952 against the 36,262 the customer accepted at "36kLoc".**
+**Revised 2026-11-05, after D5, D7, D8 and D9**, the components adding to the tables' movement (TR.21 (b)): seams +300 (D9); the second form of Cut 7 about +2,050 (D7: `device.rs` keeps about 1,900, since only about 400 of it can be named as moving, `pci.rs` +250, `xaqu-pci` +700); K4 out about -230 (D8); `max`'s scheduler as crates about -430 (D5: `sched/` -630, libraries +200; the first form's 350 new lines are gone). **+1,690 in all: 37,952 against the 36,262 the customer accepted at "36kLoc".**
 
 **36k is assured by none of these readings.** The ±15% is the estimate's, not the target's, and §1's "expect the high side" puts AArch64 `max` at about 38k to 44k and the static board at about 35k to 40k. The central figure is over 36k by about 1,700; with D2's static board it is under, at 34,568, and still at risk on the high side.
 
@@ -694,10 +694,10 @@ down in the same commit. Sizes are estimates, AArch64 `max` / x86-64 `fast`. Poi
 | Tag | Plant | gate.sh's verdict |
 |---|---|---|
 | `mkt0-c-module` | a 31-line module planted in `kernel_core.rs` | control: FIRED (host): ring0-budget: user x86_64 release: count A rose to 91,325 against 91,294 (+31) |
-| `mkt0-c-library` | `main.rs` takes the address of `ferrix_paging::mtrr::range_type`, a library file not linked before | control: FIRED (host): ring0-budget: user x86_64 release: library files rose to 27,224 against 27,129 (+95) |
-| `mkt0-c-max-alone` | `include_str!("sched/reserve.rs")` under `cfg(ferrix_kernel_memory = "retyped")`, so under `max`'s values alone | control: FIRED (host): ring0-budget: max aarch64 release: count B rose to 58,773 against 58,668 (+105) |
+| `mkt0-c-library` | `main.rs` takes the address of `xaqu_paging::mtrr::range_type`, a library file not linked before | control: FIRED (host): ring0-budget: user x86_64 release: library files rose to 27,224 against 27,129 (+95) |
+| `mkt0-c-max-alone` | `include_str!("sched/reserve.rs")` under `cfg(xaqu_kernel_memory = "retyped")`, so under `max`'s values alone | control: FIRED (host): ring0-budget: max aarch64 release: count B rose to 58,773 against 58,668 (+105) |
 | `mkt0-c-aarch64-alone` | `include_str!("arch/x86_64/framebuffer.rs")` under `cfg(target_arch = "aarch64")` | control: FIRED (host): ring0-budget: user aarch64 release: count B rose to 58,697 against 58,599 (+98) |
-| `mkt0-c-no-line-table` | `debug = false` in `[profile.release]` | control: FIRED (host): ring0-budget: user x86_64 release: no .debug_line in /home/sebastian/.local/share/ferrix/target-gate-slot-2/x86_64-unknown-none/release/ferrix-kernel: the budget fails closed |
+| `mkt0-c-no-line-table` | `debug = false` in `[profile.release]` | control: FIRED (host): ring0-budget: user x86_64 release: no .debug_line in /home/sebastian/.local/share/xaqu/target-gate-slot-2/x86_64-unknown-none/release/xaqu-kernel: the budget fails closed |
 | `mkt0-c-short-dep-info` | the tool's dep-info list drops `/object/` | control: FIRED (host): ring0-budget: user x86_64 release: the dep-info is short: the image's line table names src/kernel/src/object/bare.rs, rustc's list does not |
 | `mkt0-c-relabel` | `include_str!("arch/stage_check.rs")`: a file whose path holds `_check` read anew. gate.sh cannot rename a file, so this stands for a product file renamed: the same reviewed list catches both (TK.4 (b), not met to the letter) | control: FIRED (host): ring0-budget: user x86_64 release: arch/stage_check.rs: read as a check, and tools/common/data/ring0-budget.json's list of check files does not name it |
 | `mkt0c-c-fall` | the user x86-64 baseline's A raised past 1% | control: FIRED (host): ring0-budget: user x86_64 release: count A fell to 92,047 against 93,800 (-1.9%), past 1% with no edit of tools/common/data/ring0-budget.json: lower the baseline |
@@ -721,7 +721,7 @@ About 300 lines of Python, one JSON, one gate row, 80 lines of xtask. No kernel 
 | D4 | **Answered, 2026-11-05: "yes".** The question as put: The panic catalog's prose leaves ring 0 for a host tool (`OPEN-QUESTIONS.md` asks this too). A serial panic prints the code and the numbers. Data, not risk | **Yes** for `fast` and `max`. `desktop` keeps it |
 | D5 | **Answered, 2026-11-05: "make it a fixed build time configurable and the scheduler become crates".** §3.7. The question as put: Does `fast` keep EEVDF, or a plain round-robin under its CBS? About -1,500 lines. A real change for Linux workloads on `fast` | **Keep for now**; a row after Cut 5 decides |
 | D6 | **Answered, 2026-11-05: "yes".** The question as put: The kernel starts `partmgr` alone, against `MICROKERNEL.md` §5's three. About -840 in ring 0, +800 in a certified item, so the gain is structure, not lines. `partmgr`'s death stops even a Linux-only `fast` machine | **Yes, last.** The first to drop if time is short |
-| D7 | **Answered, 2026-11-05: "yes".** The first form was refused (TK.11); the yes covers §3.6's second form, reviewed OK IF TR.14-TR.18 (7383): **traversal stays in ring 0**, matching, naming and DEVICES leave, about 8,100 by A. The hybrid's `devmgr.rs` into `ferrix-devmgr-proto` is an extraction under §3.1's rules | Done |
+| D7 | **Answered, 2026-11-05: "yes".** The first form was refused (TK.11); the yes covers §3.6's second form, reviewed OK IF TR.14-TR.18 (7383): **traversal stays in ring 0**, matching, naming and DEVICES leave, about 8,100 by A. The hybrid's `devmgr.rs` into `xaqu-devmgr-proto` is an extraction under §3.1's rules | Done |
 | D8 | **Answered, 2026-11-05: "go with the recommendation"**: K3, K10, K13 out; K4 out, §5 and ledger 886 rewritten to supervision by end notice and a fault meaning death; K7 out only with a per-client bound in the server. §3.2. The question as put: K3, K10, K13 are compiled out of `fast` and `max`, though §3 lists them. **And K4, one of: whole; report and kill; or out, with §5 and ledger 886's wording rewritten to supervision by end notice and a fault meaning death.** **And K7: out only with a named replacement** (a per-client bound in `btrfsd`, or a checked rule that no shared server spans levels). No caller today means `btrfsd` and `netd` have that hole now | K3, K10, K13 **yes**. K4: **out, for a safety partition**, the consultant's view too. K7: **the bound in the server**, since the hole exists anyway. They stay in the hybrid |
 | D9 | **Answered, 2026-11-05: "not great  find alternatives like compile time traits or something which keeps duplicated code to the absolute minimum".** §3.1 is redone: one implementation split by file, traits at the seams, about 140 lines known duplicated, under 700. The question as put: §3.1's two implementations in one tree, for good, with fixes sometimes owed twice | **Accept**: it follows from `desktop` staying hybrid and one source |
 | D10 | **Answered, 2026-11-05: "D10: yes".** The cuts follow, in this document's order, once its revised design is reviewed and Cut 0 has landed. The question as put: This becomes M6: its points are probably several hundred against the old 70, §7. It delays M7. F1 and F2 start on what is left | **Yes**, if the customer wants the count: doing it after M7 would discard the evidence |

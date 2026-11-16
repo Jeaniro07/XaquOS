@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 7: isolation.
+ * Xaqu — SysML v2 model, part 7: isolation.
  *
  * docs/ARCHITECTURE.md §6: namespaces, cgroups v2, seccomp, credentials.
  * Stage 13, designed in from the start so that no global table has to be
@@ -14,9 +14,9 @@
  * Syscall User Dispatch (prctl 59, docs/SECCOMP.md section 13) is a second
  * rule in the same look, judged before the chain, x86-64 only.
  */
-package FerrixIsolation {
+package XaquIsolation {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
+    private import XaquLifecycle::*;
 
     enum def NamespaceKind {
         Pid; Mount; Uts; Ipc; Net; User; Cgroup; Time;

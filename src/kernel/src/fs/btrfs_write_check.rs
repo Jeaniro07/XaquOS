@@ -25,27 +25,27 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::crc32c::{crc32c, crc32c_update};
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, NewNode, RenameMode};
+use xaqu_btrfs::crc32c::{crc32c, crc32c_update};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, NewNode, RenameMode};
 
 use crate::fs;
 use crate::interfaces::block_ring::VIRTIO_BLK_MAJOR;
 
-#[cfg(not(ferrix_load_built = "lift"))]
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_load_built = "lift"))]
+#[cfg(not(xaqu_fs = "server"))]
 mod clean_check;
-#[cfg(not(ferrix_load_built = "lift"))]
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_load_built = "lift"))]
+#[cfg(not(xaqu_fs = "server"))]
 mod mapped_check;
-#[cfg(not(ferrix_load_built = "lift"))]
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_load_built = "lift"))]
+#[cfg(not(xaqu_fs = "server"))]
 mod poison_check;
-#[cfg(not(ferrix_load_built = "lift"))]
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_load_built = "lift"))]
+#[cfg(not(xaqu_fs = "server"))]
 mod reclaim_check;
-#[cfg(not(ferrix_load_built = "lift"))]
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_load_built = "lift"))]
+#[cfg(not(xaqu_fs = "server"))]
 mod stuck_check;
 
 /// Where the writable disk is mounted.
@@ -372,7 +372,7 @@ pub fn run() -> Result<Report, &'static str> {
     crate::console::println!(
         "  btrfs-rw vdc filled with {filled} bytes until ENOSPC, synced, emptied and written again"
     );
-    #[cfg(not(ferrix_load_built = "lift"))]
+    #[cfg(not(xaqu_load_built = "lift"))]
     {
         let reclaim = reclaim_check::run()?;
         crate::console::println!(
@@ -497,7 +497,7 @@ fn fill(expected: &[Expected]) -> Result<u64, &'static str> {
 /// # Errors
 ///
 /// What failed, as a sentence.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub fn mount_fixture() -> Result<bool, &'static str> {
     const FIXTURE_DISK: u32 = 1;
     let rdev = makedev(VIRTIO_BLK_MAJOR, FIXTURE_DISK * 16);

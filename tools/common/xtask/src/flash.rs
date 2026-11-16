@@ -59,10 +59,10 @@ fn deploy(args: &Args) -> Result<()> {
 const BOOT_DIRECTORY: &str = "EFI/BOOT";
 
 /// Where the kernel goes, as the loader looks for it.
-const KERNEL_PATH: &str = "FERRIX/KERNEL.ELF";
+const KERNEL_PATH: &str = "XAQU/KERNEL.ELF";
 
 /// Where the initramfs goes, beside the kernel.
-const INITRD_PATH: &str = "FERRIX/INITRD.IMG";
+const INITRD_PATH: &str = "XAQU/INITRD.IMG";
 
 /// The kernel as the card gets it, and as an image does under
 /// `--strip-kernel` (`fat::set_strip_kernel`): without its debug information
@@ -118,8 +118,8 @@ pub(crate) fn stripped_kernel(kernel: &Path) -> PathBuf {
 /// loader moves it with, which a full strip would remove.
 fn keeps_relocations(kernel: &Path) -> bool {
     std::fs::read(kernel).is_ok_and(|bytes| {
-        ferrix_elf::Elf::parse(&bytes)
-            .is_ok_and(|elf| elf.header().elf_type == ferrix_elf::ET_EXEC && elf.is_relocatable())
+        xaqu_elf::Elf::parse(&bytes)
+            .is_ok_and(|elf| elf.header().elf_type == xaqu_elf::ET_EXEC && elf.is_relocatable())
     })
 }
 
@@ -221,8 +221,8 @@ pub(crate) struct BoardFiles {
     /// The archive the loader hands over, byte for byte what an image
     /// carries: [`card_initramfs`] strips the programs in the card's copy.
     pub(crate) initramfs: Vec<u8>,
-    /// The image's own command-line options, for `FERRIX/DEFAULTS.TXT`, or
-    /// none: `flash --compositor`'s `ferrix.checks=skip`.
+    /// The image's own command-line options, for `XAQU/DEFAULTS.TXT`, or
+    /// none: `flash --compositor`'s `xaqu.checks=skip`.
     pub(crate) defaults: Option<&'static str>,
 }
 
@@ -312,12 +312,12 @@ pub(crate) fn run(arch: Arch, files: &BoardFiles, args: &Args) -> Result<()> {
     Ok(())
 }
 
-/// Write the image's own options to `FERRIX/DEFAULTS.TXT`, or take away a
+/// Write the image's own options to `XAQU/DEFAULTS.TXT`, or take away a
 /// previous image's.
 ///
 /// Rewritten by every `flash`, because the file belongs to the image and not
 /// to the card: a self-check image flashed over a desktop's must not boot
-/// with the desktop's `ferrix.checks=skip`. `CMDLINE.TXT`, which is the card
+/// with the desktop's `xaqu.checks=skip`. `CMDLINE.TXT`, which is the card
 /// owner's, is never touched, and wins over this file where both give a key.
 fn write_defaults(target: &Path, defaults: Option<&str>) -> Result<()> {
     let path = target.join(crate::fat::DEFAULTS_PATH);

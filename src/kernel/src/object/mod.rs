@@ -34,9 +34,9 @@ pub mod port;
 pub mod process;
 pub mod quota;
 pub mod region;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod rehome_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod reserve_check;
 pub mod space;
 pub mod ticket;
@@ -47,8 +47,8 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
 
 use crate::device::DeviceNode;
 use crate::fallible;
@@ -58,7 +58,7 @@ use crate::user::vmo::Vmo;
 /// The most handles one process may hold at once.
 ///
 /// A resource limit, not a structural one: the table itself can grow to
-/// `ferrix_objects::table::MAX_SLOTS`. Four thousand is far more than a driver
+/// `xaqu_objects::table::MAX_SLOTS`. Four thousand is far more than a driver
 /// needs, and small enough that a program leaking handles in a loop hits it
 /// long before the heap notices.
 pub const HANDLE_LIMIT: usize = 4096;
@@ -84,7 +84,7 @@ pub enum Object {
     Process(process::ProcessRef),
     /// A VMO's pages held in place for a server (`vmo_hold`,
     /// `docs/microkernel/BTRFSD.md`, BD.2).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     Held(Arc<crate::user::vmo::Held>),
     /// An event queue.
     Port(Arc<port::Port>),
@@ -176,7 +176,7 @@ impl Object {
             | Object::CpuService
             | Object::MemoryScrub
             | Object::Exception(_) => Signals::NONE,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             Object::Held(_) => Signals::NONE,
         }
     }
@@ -211,14 +211,14 @@ impl Object {
             | Object::CpuService
             | Object::MemoryScrub
             | Object::Exception(_) => &QUIET,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             Object::Held(_) => &QUIET,
         }
     }
 }
 
 /// A process's handle table.
-pub type HandleTable = ferrix_objects::table::HandleTable<Object>;
+pub type HandleTable = xaqu_objects::table::HandleTable<Object>;
 
 /// An object travelling in a message, with the rights its handle carried.
 ///
@@ -399,7 +399,7 @@ impl Object {
             | Object::Process(_)
             | Object::Space(_)
             | Object::Region(_) => false,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             Object::Held(_) => false,
         }
     }

@@ -138,8 +138,8 @@
 
 use ::core::fmt;
 
-use ferrix_linux_abi::drm::{self, FORMAT_XRGB8888};
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::drm::{self, FORMAT_XRGB8888};
+use xaqu_native_abi::rights::Rights;
 
 /// The protocol version this crate speaks. 5 added HELLO's timings, 6 MODES,
 /// 7 each scanout's refresh, 8 HELLO's flags, 9 a VMO a buffer, carried by

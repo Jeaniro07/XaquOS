@@ -1,5 +1,5 @@
 //! An application's own menus: the tree the menu bar shows, the limits a
-//! client must keep, the steps that carry the tree over `ferrix_appmenu_v1`,
+//! client must keep, the steps that carry the tree over `xaqu_appmenu_v1`,
 //! and the text hyprix answers the `appmenu` request with.
 
 use std::fmt::{self, Write as _};
@@ -96,7 +96,7 @@ impl Item {
     }
 }
 
-/// One `ferrix_appmenu_v1` request.
+/// One `xaqu_appmenu_v1` request.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Step {
     /// `add_menu`.
@@ -118,7 +118,7 @@ pub enum Step {
     Commit,
 }
 
-/// Why a tree was refused. Each is a `ferrix_appmenu_v1.error`.
+/// Why a tree was refused. Each is a `xaqu_appmenu_v1.error`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Wrong {
     /// An entry came before any menu.

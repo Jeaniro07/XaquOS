@@ -92,7 +92,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-recover-off",
         help_at: 213,
         help: &[
-            "test-mce-recover-off  test-mce-srar with ferrix.mce.recover=off: the kernel must stop as FX-9005",
+            "test-mce-recover-off  test-mce-srar with xaqu.mce.recover=off: the kernel must stop as FX-9005",
         ],
         run: |_, args| test_mode(args, Mode::RecoverOff),
     },
@@ -182,7 +182,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-amd-recover-off",
         help_at: 226,
         help: &[
-            "test-mce-amd-recover-off  test-mce-amd-srar with ferrix.mce.recover=off: the kernel stops",
+            "test-mce-amd-recover-off  test-mce-amd-srar with xaqu.mce.recover=off: the kernel stops",
         ],
         run: |_, args| test_amd(args, "recover-off"),
     },
@@ -312,7 +312,7 @@ enum Mode {
     /// left from before this boot (`L.x86_64.222`). What a warm reset keeps
     /// on hardware, injected where the gates' `-no-reboot` QEMU can show it.
     Left,
-    /// [`Mode::Srar`] with `ferrix.mce.recover=off`: the kernel stops as
+    /// [`Mode::Srar`] with `xaqu.mce.recover=off`: the kernel stops as
     /// FX-9005 (`L.x86_64.231`).
     RecoverOff,
     /// [`Mode::Srar`] with `RIPV` clear: the instruction cannot be
@@ -324,13 +324,13 @@ enum Mode {
 /// The guest program the modes boot as init (`src/tests/mce`).
 const TEST_PROGRAM: &str = "mce";
 /// The kernel options every mode boots with: a poll every second.
-const POLL_EVERY_SECOND: &str = "ferrix.mce.poll=1\n";
+const POLL_EVERY_SECOND: &str = "xaqu.mce.poll=1\n";
 /// The victim's line: `mce-test: victim pid=<pid> va=<address>`.
 const VICTIM: &str = "mce-test: victim pid=";
 /// The guest's last line.
 const DONE: &str = "mce-test: done";
 /// The loader's banner, printed before the kernel brings any bank up.
-const LOADER: &str = "Ferrix loader ";
+const LOADER: &str = "Xaqu loader ";
 /// The machine check's catalogue code.
 const FX_9005: &str = "FX-9005";
 
@@ -388,7 +388,7 @@ fn test_mode(args: &Args, mode: Mode) -> Result<()> {
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &[])?;
     let options = if mode == Mode::RecoverOff {
-        "ferrix.mce.poll=1 ferrix.mce.recover=off\n"
+        "xaqu.mce.poll=1 xaqu.mce.recover=off\n"
     } else {
         POLL_EVERY_SECOND
     };
@@ -641,14 +641,14 @@ fn judge(mode: Mode, lines: &[String], injected: &Injected) -> std::result::Resu
     }
     if mode == Mode::RecoverOff {
         return stopped.then_some(()).ok_or_else(|| {
-            "with ferrix.mce.recover=off the machine check did not stop as FX-9005".to_owned()
+            "with xaqu.mce.recover=off the machine check did not stop as FX-9005".to_owned()
         });
     }
     if has(qemu::PANIC_MARKER) {
         return Err("the kernel stopped".to_owned());
     }
     let page = format!("{:#x}", injected.page);
-    let retired = format!("mce-test: /proc/ferrix-mce-retired: {page}");
+    let retired = format!("mce-test: /proc/xaqu-mce-retired: {page}");
     match mode {
         Mode::Corrected | Mode::Left => {
             let what = if mode == Mode::Left {
@@ -677,7 +677,7 @@ fn judge(mode: Mode, lines: &[String], injected: &Injected) -> std::result::Resu
             )?;
             if mode == Mode::Broadcast {
                 let other = 1 - injected.consumer.min(1);
-                let bystander = format!("mce-test: /proc/ferrix-mce: cpu{other} ");
+                let bystander = format!("mce-test: /proc/xaqu-mce: cpu{other} ");
                 let spurious = lines
                     .iter()
                     .rfind(|line| line.contains(&bystander))
@@ -1036,7 +1036,7 @@ const AMD_MODES: &[AmdMode] = &[
     AmdMode {
         name: "recover-off",
         cpu: AMD,
-        options: "ferrix.mce.poll=1 ferrix.mce.recover=off\n",
+        options: "xaqu.mce.poll=1 xaqu.mce.recover=off\n",
         status: AMD_AR,
         mcg: CONSUMER,
         target: Target::Consumer,
@@ -1179,7 +1179,7 @@ fn judge_amd(
 ) -> std::result::Result<(), String> {
     let has = |want: &str| lines.iter().any(|line| line.contains(want));
     let stopped = has(qemu::PANIC_MARKER) && has(FX_9005) && !has("mce-test: SIGBUS");
-    let retired = format!("mce-test: /proc/ferrix-mce-retired: {:#x}", injected.page);
+    let retired = format!("mce-test: /proc/xaqu-mce-retired: {:#x}", injected.page);
     let expect = match mode.expect {
         Expect::Signal | Expect::Kill if !recovery => Expect::Stop,
         other => other,

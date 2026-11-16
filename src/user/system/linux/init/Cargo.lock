@@ -6,8 +6,8 @@ version = 4
 name = "dirclient"
 version = "0.1.0"
 dependencies = [
- "ferrix-native",
- "ferrix-native-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
  "libc",
 ]
 
@@ -15,83 +15,83 @@ dependencies = [
 name = "drvupdate"
 version = "0.1.0"
 dependencies = [
- "ferrix-drvupdate-proto",
+ "xaqu-drvupdate-proto",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-audit"
+name = "xaqu-audit"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-bootinfo"
+name = "xaqu-bootinfo"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-drvupdate-proto"
+name = "xaqu-drvupdate-proto"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-elf"
+name = "xaqu-elf"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-log-shed"
+name = "xaqu-log-shed"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-native"
+name = "xaqu-native"
 version = "0.3.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-process-builder"
+name = "xaqu-process-builder"
 version = "0.3.0"
 dependencies = [
- "ferrix-bootinfo",
- "ferrix-elf",
- "ferrix-native",
- "ferrix-native-abi",
+ "xaqu-bootinfo",
+ "xaqu-elf",
+ "xaqu-native",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-restart"
+name = "xaqu-restart"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-settings-proto"
+name = "xaqu-settings-proto"
 version = "0.3.0"
 dependencies = [
- "ferrix-auth-proto",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
-name = "ferrix-svc"
+name = "xaqu-svc"
 version = "0.1.0"
 dependencies = [
- "ferrix-restart",
+ "xaqu-restart",
 ]
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
@@ -105,14 +105,14 @@ dependencies = [
 name = "init"
 version = "0.1.0"
 dependencies = [
- "ferrix-audit",
- "ferrix-log-shed",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-process-builder",
- "ferrix-settings-proto",
- "ferrix-svc",
- "ferrix-svc-proto",
+ "xaqu-audit",
+ "xaqu-log-shed",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-process-builder",
+ "xaqu-settings-proto",
+ "xaqu-svc",
+ "xaqu-svc-proto",
  "libc",
 ]
 
@@ -126,6 +126,6 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 name = "svc"
 version = "0.1.0"
 dependencies = [
- "ferrix-audit",
- "ferrix-svc-proto",
+ "xaqu-audit",
+ "xaqu-svc-proto",
 ]

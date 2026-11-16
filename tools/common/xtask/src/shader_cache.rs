@@ -15,7 +15,7 @@
 //!
 //! Before the program, `tools/common/test/thread-nice.c` lowers one thread
 //! with `setpriority(PRIO_PROCESS, tid, 19)`, as Mesa's disk-cache threads
-//! do, and must leave its main thread and a later thread at 0. Ferrix kept
+//! do, and must leave its main thread and a later thread at 0. Xaqu kept
 //! the value per process until 2026-10-19, so every thread of a program
 //! using Mesa ran at nice 19.
 
@@ -317,7 +317,7 @@ pub(crate) fn test_shader_cache(args: &Args) -> Result<()> {
     let archive = initramfs::build(Some(&busybox), &natives, Some(&bytes), &files)?;
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
     println!(
-        "  {arch}: running the program twice in Proton's Wine on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running the program twice in Proton's Wine on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;

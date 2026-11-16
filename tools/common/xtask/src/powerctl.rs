@@ -3,9 +3,9 @@
 //! a register a processor implements.
 //!
 //! 1. Without either word: no power line, no node, no `power` driver.
-//! 2. `ferrix.powerctl` on the gate host's processor, which the kernel's
+//! 2. `xaqu.powerctl` on the gate host's processor, which the kernel's
 //!    model table does not name: one refusal line, no node.
-//! 3. `ferrix.powerctl.fake` (test only) with a plan and `hang@3`: the
+//! 3. `xaqu.powerctl.fake` (test only) with a plan and `hang@3`: the
 //!    driver checks the claim's refusals, writes 27 then 29 A to the fake,
 //!    stops renewing, and the kernel restores on the lease.
 //! 4. The same with `exit@3`: the kernel restores when the holder goes,
@@ -23,13 +23,13 @@
 //!
 //! Each row is judged by [`judge`], a pure function host tests hold.
 //!
-//! The kernel's own init powers the machine off at `FERRIX-BOOT-OK`,
+//! The kernel's own init powers the machine off at `XAQU-BOOT-OK`,
 //! before a lease could lapse, so the rows boot with `--init` (or
-//! `FERRIX_INIT`), the static busybox `test-shell` uses: its `sh -i`
+//! `XAQU_INIT`), the static busybox `test-shell` uses: its `sh -i`
 //! waits at the console and the machine stays up:
 //!
 //! ```text
-//! cargo xtask test-power --init '~/.local/share/ferrix/busybox/{arch}/bin/busybox.static'
+//! cargo xtask test-power --init '~/.local/share/xaqu/busybox/{arch}/bin/busybox.static'
 //! ```
 
 use std::time::{Duration, Instant};
@@ -53,7 +53,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
 }];
 
 /// The boot's last line, after which a row reads on for its own lines.
-const BOOTED: &str = "FERRIX-BOOT-OK";
+const BOOTED: &str = "XAQU-BOOT-OK";
 /// How long a row reads on after [`BOOTED`] for the lines it needs.
 const PATIENCE: Duration = Duration::from_secs(30);
 
@@ -62,13 +62,13 @@ const PATIENCE: Duration = Duration::from_secs(30);
 pub(crate) enum Row {
     /// No word.
     Off,
-    /// `ferrix.powerctl` on a processor the table does not name.
+    /// `xaqu.powerctl` on a processor the table does not name.
     Refused,
     /// The fake, a plan, `hang@3`.
     Lease,
     /// The fake, a plan, `exit@3`.
     Gone,
-    /// TCG answering as Intel 6/0xBE, `ferrix.powerctl`.
+    /// TCG answering as Intel 6/0xBE, `xaqu.powerctl`.
     Absent,
     /// The fake, a plan, and the driver stopped from outside for longer than
     /// its lease: the kernel restores, the driver claims again and climbs.
@@ -90,18 +90,18 @@ impl Row {
     fn options(self) -> &'static [&'static str] {
         match self {
             Row::Off => &[],
-            Row::Refused | Row::Absent => &["ferrix.powerctl"],
+            Row::Refused | Row::Absent => &["xaqu.powerctl"],
             Row::Lease => &[
-                "ferrix.powerctl.fake",
-                "ferrix.power.vr=27,29@1",
-                "ferrix.power.test=hang@3",
+                "xaqu.powerctl.fake",
+                "xaqu.power.vr=27,29@1",
+                "xaqu.power.test=hang@3",
             ],
             Row::Gone => &[
-                "ferrix.powerctl.fake",
-                "ferrix.power.vr=27,29@1",
-                "ferrix.power.test=exit@3",
+                "xaqu.powerctl.fake",
+                "xaqu.power.vr=27,29@1",
+                "xaqu.power.test=exit@3",
             ],
-            Row::Recover => &["ferrix.powerctl.fake", "ferrix.power.vr=27,29@1"],
+            Row::Recover => &["xaqu.powerctl.fake", "xaqu.power.vr=27,29@1"],
         }
     }
 }
@@ -308,8 +308,8 @@ fn test_power(args: &Args) -> Result<()> {
         }
         if crate::optional_program(arch, args)?.is_none() {
             return Err(Error::new(
-                "test-power needs --init (or FERRIX_INIT): a program whose shell keeps the \
-                 machine up past FERRIX-BOOT-OK, such as the static busybox test-shell uses",
+                "test-power needs --init (or XAQU_INIT): a program whose shell keeps the \
+                 machine up past XAQU-BOOT-OK, such as the static busybox test-shell uses",
             ));
         }
         for row in Row::ALL {

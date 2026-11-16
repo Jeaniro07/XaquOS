@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 21: the low-level requirements of
+ * Xaqu — SysML v2 model, part 21: the low-level requirements of
  * arch/armv7a, as far as they are written.
  *
  * ARMv7-A, the Cortex-A7 of the STM32MP157, has no requirements of its own
@@ -14,8 +14,8 @@
  * rows. Ids are `L.armv7a.<n>`, flat through the architecture; the rules of
  * part 19 hold.
  */
-package FerrixArmv7aRequirements {
-    private import FerrixItemRequirements::*;
+package XaquArmv7aRequirements {
+    private import XaquItemRequirements::*;
 
     package Traps {
         requirement <'L.armv7a.1'> theFilterIsAskedFirstAtTheSvc : ItemLowLevel {
@@ -237,7 +237,7 @@ package FerrixArmv7aRequirements {
                 signal check, whose program uses VFP, fails first).";
             attribute :>> parent = ("H.SCHED.8", "H.TRAP.4");
             attribute :>> unit = ("arch::armv7a::switch::take_first_use",
-                "arch::armv7a::trap::ferrix_trap_entry");
+                "arch::armv7a::trap::xaqu_trap_entry");
         }
         requirement <'L.armv7a.23'> sigillNamesItsInstruction : ItemLowLevel {
             attribute :>> statement = "The undefined-instruction path shall set the
@@ -252,7 +252,7 @@ package FerrixArmv7aRequirements {
                 removed, F-68's stub, the check fails by name.";
             attribute :>> parent = "H.TRAP.4";
             attribute :>> unit = ("arch::armv7a::trap::point_at_undefined",
-                "arch::armv7a::trap::ferrix_trap_entry");
+                "arch::armv7a::trap::xaqu_trap_entry");
         }
         requirement <'L.armv7a.24'> nothingStaysBehindAClearEnable : ItemLowLevel {
             attribute :>> statement = "While a core's FPEXC.EN is clear, every VFP
@@ -311,7 +311,7 @@ package FerrixArmv7aRequirements {
             attribute :>> statement = "On ARMv7-A, which has no write of a whole line that reads
                 nothing, the scrubber shall stand down.";
             attribute :>> criterion = "test-scrub on ARMv7-A: the kernel says the stand-down with its
-                reason and /proc/ferrix-scrub says it.";
+                reason and /proc/xaqu-scrub says it.";
             attribute :>> parent = "H.FAIL.9";
             attribute :>> unit = ("arch::scrub_ready");
         }

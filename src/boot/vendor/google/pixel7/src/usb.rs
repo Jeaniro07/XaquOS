@@ -1,7 +1,7 @@
 //! What ABL leaves the USB controller in, read and logged -- nothing written.
 //!
 //! ABL runs fastboot over the DWC3 on the USB-C port, in device mode, until it
-//! jumps here, and the phone drops off USB the moment it does. Whether Ferrix
+//! jumps here, and the phone drops off USB the moment it does. Whether Xaqu
 //! can present a USB serial port without touching a power domain depends on
 //! what is still on at that moment: the HSI0 power domain the controller, its
 //! PHY and HSI0's clock unit sit in; the PMU's PHY isolation control; the

@@ -4,7 +4,7 @@
 //! the first match: longest prefix first, and among equal prefixes the lowest
 //! metric. That is the whole of the routing policy, and it is deliberately the
 //! whole: multiple tables, rules and source routing are Linux features nothing
-//! Ferrix runs has asked for, and each of them is a place for a packet to go
+//! Xaqu runs has asked for, and each of them is a place for a packet to go
 //! somewhere nobody predicted.
 
 use alloc::vec::Vec;

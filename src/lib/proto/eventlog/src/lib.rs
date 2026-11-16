@@ -1,8 +1,8 @@
-//! The Ferrix event log: where a panic's record is kept across power cycles
+//! The Xaqu event log: where a panic's record is kept across power cycles
 //! (`docs/POSTMORTEM.md` §4).
 //!
 //! The panicked kernel writes nothing here. Its log is in RAM (the pstore,
-//! `ferrix_bootinfo::pstore`); the machine resets itself (`ferrix.panic=reset`)
+//! `xaqu_bootinfo::pstore`); the machine resets itself (`xaqu.panic=reset`)
 //! and the next boot's loader -- or the inspection Linux, when the boot
 //! manager starts that instead -- appends the record to a partition of its
 //! own, through firmware's (or Linux's) block layer, on a machine that is not
@@ -44,11 +44,11 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-use ferrix_bootinfo::pstore::{self, HEADER_BYTES, Text};
-use ferrix_slots::gpt::{GptError, Lookup, Part};
-use ferrix_slots::record::{ControlDisk, DeviceError};
+use xaqu_bootinfo::pstore::{self, HEADER_BYTES, Text};
+use xaqu_slots::gpt::{GptError, Lookup, Part};
+use xaqu_slots::record::{ControlDisk, DeviceError};
 
-pub use ferrix_slots::gpt::EVENTS_TYPE;
+pub use xaqu_slots::gpt::EVENTS_TYPE;
 
 pub mod badframes;
 
@@ -111,7 +111,7 @@ const HEAD_CHECKED: usize = 92;
 const APPENDED_LIMIT: u64 = 1 << 48;
 
 /// The line a failure report starts with.
-pub const PANIC_MARKER: &[u8] = b"FERRIX-PANIC ";
+pub const PANIC_MARKER: &[u8] = b"XAQU-PANIC ";
 /// Between a record's report and the log before it.
 pub const SEPARATOR: &[u8] = b"\n-- the log before the report --\n";
 /// The longest piece of the panic line that keys a run of the same panic.
@@ -708,11 +708,11 @@ pub struct Incoming {
 }
 
 /// Compose the event a previous boot's pstore region holds, if it holds a
-/// panic report: the report first (from its `FERRIX-PANIC` line to the end
+/// panic report: the report first (from its `XAQU-PANIC` line to the end
 /// of the text), then [`SEPARATOR`] and as much of the log before the report
 /// as fits, from a line's start. The text goes into `text`, at most
 /// [`TEXT_MAX`] bytes, every byte as `pstore::shown` prints it and every
-/// `FERRIX-` made `FERRIX_` (`pstore::defuse`), so a record printed on a
+/// `XAQU-` made `XAQU_` (`pstore::defuse`), so a record printed on a
 /// console is never read as a marker of the boot printing it.
 ///
 /// `header` and `ring` are what the panicked kernel left in RAM, trusted in
@@ -1058,7 +1058,7 @@ pub fn add_bad_frames(
 }
 
 /// Empty the log's bad-frame set: what root does on a host after the memory
-/// was replaced (`docs/MACHINE-CHECK-RESTART.md` §9.4); nothing in Ferrix
+/// was replaced (`docs/MACHINE-CHECK-RESTART.md` §9.4); nothing in Xaqu
 /// calls it. Copy A with the generation one more, flushed, then copy B,
 /// flushed; nothing written when the set is empty already. The frames
 /// dropped.
@@ -1175,7 +1175,7 @@ fn read_bytes(
 }
 
 /// The first line of a record's text, at most `most` bytes: the report's
-/// panic line, `FERRIX_PANIC ...`.
+/// panic line, `XAQU_PANIC ...`.
 #[must_use]
 pub fn first_line(text: &[u8], most: usize) -> &[u8] {
     let end = text

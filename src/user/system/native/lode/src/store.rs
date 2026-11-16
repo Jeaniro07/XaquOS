@@ -9,8 +9,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::segment::{self, Header};
-use ferrix_lode_core::{access, compress};
+use xaqu_lode_core::segment::{self, Header};
+use xaqu_lode_core::{access, compress};
 
 use crate::sys;
 
@@ -25,12 +25,12 @@ pub(crate) struct Segment {
     /// Its store directory, open.
     pub(crate) dir: usize,
     /// Its path in the store: its file name, after `user-<uid>/` for a
-    /// user's segment (`ferrix_lode_core::access`).
+    /// user's segment (`xaqu_lode_core::access`).
     pub(crate) name: String,
     /// The first sequence number its name says.
     pub(crate) first: u64,
     /// The file and its summary, open, when lode handed them to a user who
-    /// cannot open them by name (`ferrix_lode_core::access`).
+    /// cannot open them by name (`xaqu_lode_core::access`).
     pub(crate) passed: Option<(usize, Option<usize>)>,
 }
 
@@ -115,9 +115,9 @@ pub(crate) fn all_segments(dirs: &[Dir]) -> Vec<Segment> {
 }
 
 /// The segments lode hands the caller, a user who reads their own
-/// (`ferrix_lode_core::access`): each open, its summary beside it.
+/// (`xaqu_lode_core::access`): each open, its summary beside it.
 pub(crate) fn passed_segments() -> Result<Vec<Segment>, String> {
-    use ferrix_lode_core::access::{self, Packet};
+    use xaqu_lode_core::access::{self, Packet};
     let fd = crate::cli::connect_kind(access::SOCKET.as_bytes(), sys::SOCK_SEQPACKET).map_err(
         |error| {
             alloc::format!(
@@ -278,10 +278,10 @@ pub(crate) fn size(segment: &Segment) -> u64 {
 }
 
 /// Write `<name>.sum` beside the sealed segment `name` in `dir`, from its
-/// records (`ferrix_lode_core::summary`): a new file, then renamed over any
+/// records (`xaqu_lode_core::summary`): a new file, then renamed over any
 /// old one, so a reader sees one summary or the other, whole.
 pub(crate) fn write_summary(dir: usize, name: &str) {
-    use ferrix_lode_core::summary::Summary;
+    use xaqu_lode_core::summary::Summary;
     let Some(bytes) = bytes_in(dir, name, 0) else {
         return;
     };
@@ -315,7 +315,7 @@ pub(crate) fn write_summary(dir: usize, name: &str) {
 }
 
 /// A segment's summary, if it has one that reads.
-pub(crate) fn summary(segment: &Segment) -> Option<ferrix_lode_core::summary::Summary> {
+pub(crate) fn summary(segment: &Segment) -> Option<xaqu_lode_core::summary::Summary> {
     let bytes = match segment.passed {
         Some((_, summary)) => sys::read_fd_from(summary?, 0).ok()?,
         None => {
@@ -323,5 +323,5 @@ pub(crate) fn summary(segment: &Segment) -> Option<ferrix_lode_core::summary::Su
             sys::read_file_from(segment.dir, name.as_bytes(), 0).ok()?
         }
     };
-    ferrix_lode_core::summary::Summary::decode(&bytes)
+    xaqu_lode_core::summary::Summary::decode(&bytes)
 }

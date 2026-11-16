@@ -17,8 +17,8 @@ use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::os::unix::fs::PermissionsExt as _;
 use std::os::unix::net::{UnixDatagram, UnixListener};
 
-use ferrix_svc::event::{ListenSpec, Token, UnitId};
-use ferrix_svc::kind::Listen;
+use xaqu_svc::event::{ListenSpec, Token, UnitId};
+use xaqu_svc::kind::Listen;
 
 /// One socket of a unit's.
 #[derive(Debug)]

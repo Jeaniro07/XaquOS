@@ -26,7 +26,7 @@ compiler through criticalup in place of `rustup run`.
 What it checks
 --------------
 
-  * `cargo check` with Rust 1.95.0 of `ferrix-kernel` and of every library
+  * `cargo check` with Rust 1.95.0 of `xaqu-kernel` and of every library
     crate `tools/common/data/certification-item.json` puts in the `core` or
     `item` ring or on its infrastructure allow-list, for
     x86_64-unknown-none, aarch64-unknown-none-softfloat and
@@ -130,8 +130,8 @@ def packages(manifest: dict) -> list[tuple[str, str]]:
         name: entry for name, entry in manifest.get("kernel_crates", {}).items()
         if not name.startswith("//")
     }
-    if "ferrix-kernel" not in kernel:
-        say("certification-item.json's kernel_crates names no ferrix-kernel; nothing to check")
+    if "xaqu-kernel" not in kernel:
+        say("certification-item.json's kernel_crates names no xaqu-kernel; nothing to check")
         sys.exit(1)
     found = [(name, entry["path"]) for name, entry in sorted(kernel.items())]
     crates = manifest["crates"]

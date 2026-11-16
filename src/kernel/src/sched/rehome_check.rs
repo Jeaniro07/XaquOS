@@ -6,7 +6,7 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use crate::sched::{self, Task};
 

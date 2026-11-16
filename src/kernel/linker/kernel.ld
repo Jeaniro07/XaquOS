@@ -1,4 +1,4 @@
-/* Link script for the Ferrix kernel.
+/* Link script for the Xaqu kernel.
  *
  * One script for all three architectures. The layout within the image is the
  * same on each; where the image goes is not -- the 64-bit pair link it in the

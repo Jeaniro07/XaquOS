@@ -10,7 +10,7 @@
 //! format would be a service manager misreading its own tree.
 //!
 //! Nothing here knows about jobs. The kernel gathers the numbers and names,
-//! and these functions only arrange or interpret them, as `ferrix-procfs`
+//! and these functions only arrange or interpret them, as `xaqu-procfs`
 //! does for `/proc`.
 //!
 //! # What is here
@@ -52,7 +52,7 @@ pub enum Refusal {
     Invalid,
     /// A number the file takes the form of but not the value of: `ERANGE`.
     Range,
-    /// Something Linux takes and Ferrix does not do: `EOPNOTSUPP`.
+    /// Something Linux takes and Xaqu does not do: `EOPNOTSUPP`.
     NotSupported,
     /// A name longer than a directory entry may be: `ENAMETOOLONG`.
     TooLong,

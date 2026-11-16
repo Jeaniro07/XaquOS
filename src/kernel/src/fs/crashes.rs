@@ -1,4 +1,4 @@
-//! `/dev/ferrix-crashes`: a process a fault ends, held for a moment so that
+//! `/dev/xaqu-crashes`: a process a fault ends, held for a moment so that
 //! a root collector (`lode-crashd`, `docs/LOGGING.md` §21) can read its
 //! threads, status, maps and descriptors before it goes.
 //!
@@ -44,15 +44,15 @@ use core::any::Any;
 use core::fmt::Write as _;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result, Timespec, WakeSource};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result, Timespec, WakeSource};
 
 use crate::sched::WaitQueue;
 use crate::sync::SpinLock;
 use crate::syscall::thread::Thread;
 use crate::syscall::{credentials, process, registry};
 
-/// The node's device number: major 1, minor 13, Ferrix's own (Linux leaves
+/// The node's device number: major 1, minor 13, Xaqu's own (Linux leaves
 /// 1:13 unassigned; it moves if Linux assigns it).
 pub(crate) const MINOR: u32 = 13;
 
@@ -316,7 +316,7 @@ fn release_all() {
     }
 }
 
-/// One open of `/dev/ferrix-crashes`: the armed reader.
+/// One open of `/dev/xaqu-crashes`: the armed reader.
 #[derive(Debug)]
 pub(crate) struct CrashFile {
     /// Whether this open armed the device: false for one refused `EBUSY`,

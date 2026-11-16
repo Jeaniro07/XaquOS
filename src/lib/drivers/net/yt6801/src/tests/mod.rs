@@ -6,7 +6,7 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_dwmac::{Clock, Registers, regs};
+use xaqu_dwmac::{Clock, Registers, regs};
 
 use crate::{
     Efuse, GMAC_OFFSET, Gmac, MacSource, enable_interrupts, generated, glue, options, prepare,

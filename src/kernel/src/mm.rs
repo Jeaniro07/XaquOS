@@ -6,8 +6,8 @@
 //! 1. the buddy allocator is given every usable frame firmware reported, and
 //! 2. `alloc` starts working, so `Box`, `Vec` and `BTreeMap` exist.
 //!
-//! Both allocators themselves live in `src/lib/` — see `ferrix_frame` and
-//! `ferrix_heap` — where they are ordinary Rust that `cargo test`, Miri and a
+//! Both allocators themselves live in `src/lib/` — see `xaqu_frame` and
+//! `xaqu_heap` — where they are ordinary Rust that `cargo test`, Miri and a
 //! fuzzer can drive. What is here is the part that genuinely needs a machine:
 //! deciding where the per-frame array goes, and reaching physical memory
 //! through the direct map.
@@ -52,14 +52,14 @@ use alloc::vec::Vec;
 use core::alloc::{GlobalAlloc, Layout};
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::{BootView, MemKind, MemRegion, PAGE_SIZE, direct_map_runs};
-use ferrix_frame::{Frame, Frames, PageEntry};
-use ferrix_heap::{Backing, CpuCache, Heap, Request};
-use ferrix_paging::coherence::{Clean, Unpublished, Walked};
-use ferrix_paging::{Encoding, MapFlags, Mapper, PhysAddr, PhysMem, Released, VirtAddr};
-use ferrix_sched::MAX_CPUS;
-use ferrix_sync::IrqControl;
-use ferrix_sync::IrqSpinLock;
+use xaqu_bootinfo::{BootView, MemKind, MemRegion, PAGE_SIZE, direct_map_runs};
+use xaqu_frame::{Frame, Frames, PageEntry};
+use xaqu_heap::{Backing, CpuCache, Heap, Request};
+use xaqu_paging::coherence::{Clean, Unpublished, Walked};
+use xaqu_paging::{Encoding, MapFlags, Mapper, PhysAddr, PhysMem, Released, VirtAddr};
+use xaqu_sched::MAX_CPUS;
+use xaqu_sync::IrqControl;
+use xaqu_sync::IrqSpinLock;
 
 use crate::fallible;
 
@@ -76,13 +76,13 @@ pub const NO_RESERVATION: Reservation = reservation::NONE;
 
 /// The largest buddy block's order, for the calls that name one
 /// (`vmo_pin`'s `PIN_BLOCKS`).
-pub const MAX_ORDER: u8 = ferrix_frame::MAX_ORDER;
+pub const MAX_ORDER: u8 = xaqu_frame::MAX_ORDER;
 
 // CHECKS-ONLY: syscall/native_check.rs
 /// The kernel heap's size classes: for the check that a reserved heap keeps at
 /// most a page a class of what its job freed.
 #[doc(hidden)]
-pub const HEAP_CLASSES: usize = ferrix_heap::CLASSES;
+pub const HEAP_CLASSES: usize = xaqu_heap::CLASSES;
 pub use reserve::fill_reserve;
 pub(crate) use reserve::{Reserved, reserve};
 pub use reserve::{bypass_heap_in_sections, refuse_reserve_fills, reserve_counts};
@@ -367,7 +367,7 @@ fn place_page_array(base: u64, entries: usize) -> &'static mut [PageEntry] {
     // Zero first, then take the slice. Forming a `&mut [PageEntry]` over memory
     // holding whatever the last owner left would be undefined behaviour: `State`
     // is an enum, and an undefined discriminant is not merely a strange value.
-    // `ferrix_frame` guarantees zero is a state it defines.
+    // `xaqu_frame` guarantees zero is a state it defines.
     //
     // SAFETY: (KMEM) `base` is the start of a run of RAM firmware called usable, and
     // which is about to be excluded from the allocator, so nothing else refers
@@ -694,7 +694,7 @@ pub(crate) fn allocate_user_run(order: u8) -> Option<Frame> {
 /// Take `blocks` blocks of `2^MAX_ORDER` frames lying back to back, for
 /// memory that has to be one run longer than a block: the first frame, each
 /// block given back or split on its own as one from [`allocate_frames`]
-/// would be (`ferrix_frame::Frames::allocate_run`).
+/// would be (`xaqu_frame::Frames::allocate_run`).
 ///
 /// The kernel's own, held above the outstanding promise as
 /// [`allocate_frames`] is (`L.mm.78`).
@@ -702,7 +702,7 @@ pub fn allocate_frame_run(blocks: u64) -> Option<Frame> {
     if fallible::frame_refused() {
         return None;
     }
-    let n = blocks.checked_shl(u32::from(ferrix_frame::MAX_ORDER))?;
+    let n = blocks.checked_shl(u32::from(xaqu_frame::MAX_ORDER))?;
     let frame = with_frames(|frames| {
         let _: reservation::Taking =
             reservation::take(reservation::Floor::Kernel, frames.free_frames(), n, 0)?;
@@ -726,7 +726,7 @@ pub(crate) fn allocate_frames_below(order: u8, limit: Frame) -> Option<Frame> {
 
 /// What the allocator records for `frame`, or `None` if its array does not
 /// cover the frame or the allocator is not up.
-pub(crate) fn frame_state(frame: Frame) -> Option<ferrix_frame::State> {
+pub(crate) fn frame_state(frame: Frame) -> Option<xaqu_frame::State> {
     with_frames(|frames| frames.state(frame))?
 }
 
@@ -788,7 +788,7 @@ pub fn share_frame(frame: Frame) -> Option<u32> {
 /// copy-on-write page may still be mapped by somebody else and the allocator
 /// refuses to free it while it is.
 pub fn release_frame(frame: Frame) -> bool {
-    // Qualified: `Released` is already `ferrix_paging`'s in this module, and
+    // Qualified: `Released` is already `xaqu_paging`'s in this module, and
     // the two mean different things -- a page table given back versus a frame.
     let freed = with_frames(|frames| {
         let owner = frames.owner(frame);
@@ -802,7 +802,7 @@ pub fn release_frame(frame: Frame) -> bool {
             }
             return kept.then_some(owner);
         }
-        let freed = matches!(frames.release(frame), Ok(ferrix_frame::Released::Freed));
+        let freed = matches!(frames.release(frame), Ok(xaqu_frame::Released::Freed));
         if freed {
             // As `deallocate_frames` (`L.mm.80`).
             reservation::freed(frame, 1);
@@ -933,7 +933,7 @@ pub(crate) fn retire_frame(frame: Frame) -> Retired {
         }
         if frames
             .state(frame)
-            .is_none_or(|state| state == ferrix_frame::State::Reserved)
+            .is_none_or(|state| state == xaqu_frame::State::Reserved)
         {
             return Retired::NotCovered;
         }
@@ -961,7 +961,7 @@ pub(crate) fn retire_frame(frame: Frame) -> Retired {
     {
         crate::console::println!(
             "mce: the bad-frame table is full ({}); frame {:#x} is not kept out after a reset",
-            ferrix_bootinfo::pstore::TABLE_ENTRIES,
+            xaqu_bootinfo::pstore::TABLE_ENTRIES,
             frame * PAGE_SIZE
         );
     }
@@ -997,29 +997,29 @@ fn keep_out(frame: Frame) -> bool {
 /// retirements never reach the live table (`L.mm.109`): set by each check
 /// before it retires, cleared by [`forget_checked_retirements`]. Check
 /// builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 static TABLE_HELD: AtomicBool = AtomicBool::new(false);
 
 /// Whether a check holds the table. Check builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn table_held() -> bool {
     TABLE_HELD.load(Ordering::Relaxed)
 }
 
 /// A product build has no check to hold it.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 const fn table_held() -> bool {
     false
 }
 
 /// Hold the table for a check's retirements, or let it go.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn hold_table(hold: bool) {
     TABLE_HELD.store(hold, Ordering::Relaxed);
 }
 
 /// A product build holds nothing.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 const fn hold_table(_hold: bool) {}
 
 // CHECKS-ONLY: fs/btrfs_write_check/poison_check.rs; home: mm
@@ -1215,7 +1215,7 @@ unsafe impl Backing for ReservedPages {
 
     fn deallocate_pages(&mut self, address: u64, order: u8) {
         // Nothing of this job's stays on a frame that goes back to untyped (K16.8).
-        #[cfg(ferrix_kernel_memory = "retyped")]
+        #[cfg(xaqu_kernel_memory = "retyped")]
         // SAFETY: (KMEM) the heap gives these pages back whole: nothing else names them.
         unsafe {
             (address as *mut u8).write_bytes(0, (PAGE_SIZE as usize) << order);
@@ -1259,14 +1259,14 @@ pub(crate) fn heap_drawn_from(address: u64) -> Reservation {
 /// The kernel's `alloc` implementation.
 struct KernelAllocator;
 
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub mod seal;
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub mod seal_check;
 
 // SAFETY: (KMEM) `alloc` returns either null or the address of a block of at least
 // `layout.size()` bytes, aligned to `layout.align()`, which no other live
-// allocation overlaps — that is `ferrix_heap`'s contract, and its tests are
+// allocation overlaps — that is `xaqu_heap`'s contract, and its tests are
 // where it is checked. `dealloc` is only called with a pointer and layout from
 // a matching `alloc`, which is what `GlobalAlloc` requires of its caller.
 unsafe impl GlobalAlloc for KernelAllocator {
@@ -1280,14 +1280,14 @@ unsafe impl GlobalAlloc for KernelAllocator {
         // A job with a reservation, in task context, is served by its own
         // heap while the reservation has room, and by the shared heap after
         // (`L.mm.81`); interrupt context never draws (`reservation_for`).
-        #[cfg(not(ferrix_kernel_memory = "retyped"))]
+        #[cfg(not(xaqu_kernel_memory = "retyped"))]
         let entry = if reservation::any_bound() {
             reservation_for(crate::sched::running_group())
         } else {
             NO_RESERVATION
         };
         // K16: whoever the request is charged to, a call's ticket included.
-        #[cfg(ferrix_kernel_memory = "retyped")]
+        #[cfg(xaqu_kernel_memory = "retyped")]
         let entry = seal::route(seal::charged());
         // The reserve's check makes the heap refuse its own task's
         // allocations, so that the fallback below is what answers them
@@ -1305,7 +1305,7 @@ unsafe impl GlobalAlloc for KernelAllocator {
                     return None;
                 }
                 // After the seal the shared heap serves nobody (K16 §2, H.MEM.32).
-                #[cfg(ferrix_kernel_memory = "retyped")]
+                #[cfg(xaqu_kernel_memory = "retyped")]
                 if seal::note_shared(request.size) {
                     return None;
                 }
@@ -1319,7 +1319,7 @@ unsafe impl GlobalAlloc for KernelAllocator {
             // so it does for the task killing for the heap (L.mm.139).
             .or_else(|| reserve::draw(request, crate::object::oom::killing_for_the_heap));
         // A null return is how `GlobalAlloc` reports failure. A fallible
-        // caller -- `try_reserve`, `ferrix_fallible` -- turns it into an
+        // caller -- `try_reserve`, `xaqu_fallible` -- turns it into an
         // error; an infallible one calls the allocation error handler, and
         // the count is how the panic that follows is recognised as that.
         // The kernel's frames below half the watermark: an allocation that
@@ -1432,7 +1432,7 @@ fn allocate_through_caches(request: Request) -> Option<u64> {
 
 /// The size of a class's objects; zero for no class, which no caller asks.
 fn class_bytes(class: usize) -> usize {
-    ferrix_heap::CLASS_SIZES.get(class).copied().unwrap_or(0)
+    xaqu_heap::CLASS_SIZES.get(class).copied().unwrap_or(0)
 }
 
 /// `attempt`, and if the heap refused it, every cache drained and `attempt`
@@ -1832,7 +1832,7 @@ pub(crate) fn map_kernel(
     phys: u64,
     len: u64,
     flags: MapFlags,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     with_tables(|mapper| {
         mapper.map_range(
             &mut KernelPhysMem,
@@ -1897,7 +1897,7 @@ pub fn translate_in(root: u64, virt: u64) -> Option<u64> {
         reason = "only x86-64's machine check finds a poisoned frame's address"
     )
 )]
-pub(crate) fn for_each_leaf_in(root: u64, visit: impl FnMut(ferrix_paging::Leaf) -> bool) {
+pub(crate) fn for_each_leaf_in(root: u64, visit: impl FnMut(xaqu_paging::Leaf) -> bool) {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let _ = mapper.for_each_leaf(&KernelPhysMem, visit);
 }
@@ -2021,7 +2021,7 @@ pub(crate) fn map_in(
     phys: u64,
     len: u64,
     flags: MapFlags,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     // Code a program will run: what the kernel wrote there, a file's pages or
     // a copy, has to be what every processor fetches before any can reach it.
     if flags.user && flags.execute {
@@ -2079,8 +2079,8 @@ pub(crate) fn share_kernel_slots(root: u64, slots: core::ops::Range<usize>) {
 ///
 /// # Errors
 ///
-/// [`ferrix_paging::MapError::OutOfMemory`].
-pub(crate) fn ensure_top_in(root: u64, virt: u64) -> Result<(), ferrix_paging::MapError> {
+/// [`xaqu_paging::MapError::OutOfMemory`].
+pub(crate) fn ensure_top_in(root: u64, virt: u64) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let flags = MapFlags {
         read: true,
@@ -2132,17 +2132,17 @@ pub(crate) fn copy_root_slot(from: u64, to: u64, slot: usize) -> bool {
 
 /// The root slot of the window (`restricted_window`): the user half's last, which is
 /// no region's and no program's. Present only while one processor runs a stub in it.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) const WINDOW_ROOT_SLOT: usize = 255;
 
 /// Where a root table's entry `slot` is, through the direct map.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) fn root_slot_pointer(root: u64, slot: usize) -> *mut u64 {
     (physmap(root) as *mut u64).wrapping_add(slot)
 }
 
 /// A frame's address through the direct map, zeroed, for the window's own tables.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) fn window_frame() -> Option<(u64, *mut u64)> {
     let frame = allocate_frames(0)?;
     zero_frame(frame);
@@ -2151,7 +2151,7 @@ pub(crate) fn window_frame() -> Option<(u64, *mut u64)> {
 }
 
 /// Give back a frame [`window_frame`] gave.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) fn window_frame_free(at: u64) {
     deallocate_frames(at / PAGE_SIZE, 0);
 }
@@ -2160,7 +2160,7 @@ pub(crate) fn window_frame_free(at: u64) {
 /// for absent. The address alone, since a walker sets its accessed bit in
 /// whichever root it walked.
 pub(crate) fn root_slot_entry(root: u64, slot: usize) -> u64 {
-    use ferrix_paging::Encoding as _;
+    use xaqu_paging::Encoding as _;
     let entry = KernelPhysMem.read(PhysAddr(root + (slot as u64) * 8));
     if crate::arch::PageEncoding::is_present(entry) {
         crate::arch::PageEncoding::address(entry).0
@@ -2188,7 +2188,7 @@ pub(crate) fn unmap_in(
     virt: u64,
     len: u64,
     flush: &mut crate::smp::TlbPages,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     unmap_in_keeping(root, virt, len, flush, false)
 }
 
@@ -2200,7 +2200,7 @@ pub(crate) fn unmap_in_keeping(
     len: u64,
     flush: &mut crate::smp::TlbPages,
     keep_top: bool,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let len = len.next_multiple_of(PAGE_SIZE);
     let mut mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     if keep_top {
@@ -2225,7 +2225,7 @@ pub(crate) fn unmap_in_keeping(
 /// past its ceiling is the whole TLB. A table is unlinked only with a leaf, so `flush`'s
 /// tables are released by a shootdown that names that leaf. An error may leave the
 /// rest of the range unlooked at; it names the range, as `unmap_in_keeping` does.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn unmap_placed(root: u64, virt: u64, len: u64) -> crate::smp::TlbPages {
     let len = len.next_multiple_of(PAGE_SIZE);
     let mut mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
@@ -2258,7 +2258,7 @@ pub(crate) fn unmap_unwalked(
     root: u64,
     virt: u64,
     len: u64,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let _ = mapper.unmap_range(
         &mut KernelPhysMem,
@@ -2277,7 +2277,7 @@ pub(crate) fn unmap_unwalked(
 /// Give back every table under `root` in the `len` bytes at `virt` that maps
 /// nothing: what a [`map_in`] that ran out of memory part-way made above the
 /// page it could not map, which no [`unmap_in`] prunes, since only a page's
-/// removal does (`ferrix_paging::Mapper::prune_range`).
+/// removal does (`xaqu_paging::Mapper::prune_range`).
 ///
 /// For a tree no processor can walk any more -- one being torn down -- which
 /// is when such a table may go: a processor that walked through one while it
@@ -2310,7 +2310,7 @@ pub(crate) fn map_io<E: Encoding>(
     phys: u64,
     flags: MapFlags,
     writes: &mut Unpublished,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mut mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     mapper.pages_only();
     mapper.map_range(
@@ -2337,7 +2337,7 @@ pub(crate) fn map_io_run<E: Encoding>(
     phys: u64,
     flags: MapFlags,
     writes: &mut Unpublished,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     mapper.map_range(
         &mut Walked::new(&mut KernelPhysMem, writes, WalkerClean),
@@ -2354,7 +2354,7 @@ pub(crate) fn io_entry_span<E: Encoding>(root: u64, iova: u64) -> Option<u64> {
     let mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     mapper
         .mapping_level(&KernelPhysMem, VirtAddr(iova))
-        .map(ferrix_paging::Level::span)
+        .map(xaqu_paging::Level::span)
 }
 
 // CHECKS-ONLY: iommu/blocks_check.rs; home: in crate
@@ -2367,7 +2367,7 @@ pub(crate) fn link_empty_io_table<E: Encoding>(
     root: u64,
     iova: u64,
     writes: &mut Unpublished,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     map_io::<E>(root, iova, iova, MapFlags::DMA, writes)?;
     let mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     let mut kernel = KernelPhysMem;
@@ -2417,7 +2417,7 @@ pub(crate) fn unmap_io_run<E: Encoding>(
     iova: u64,
     tables: &mut UnlinkedTables,
     writes: &mut Unpublished,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     let mut kernel = KernelPhysMem;
     let mut memory = Walked::new(&mut kernel, writes, WalkerClean);
@@ -2445,7 +2445,7 @@ pub(crate) fn unmap_io<E: Encoding>(
     iova: u64,
     tables: &mut UnlinkedTables,
     writes: &mut Unpublished,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<E> = Mapper::new(PhysAddr(root));
     let mut kernel = KernelPhysMem;
     let mut memory = Walked::new(&mut kernel, writes, WalkerClean);
@@ -2511,7 +2511,7 @@ pub(crate) fn unmap_kernel(
     virt: u64,
     len: u64,
     released: impl FnMut(Frame, u8),
-) -> Result<u64, ferrix_paging::MapError> {
+) -> Result<u64, xaqu_paging::MapError> {
     unmap_kernel_all(&[(virt, len)], released)
 }
 
@@ -2529,7 +2529,7 @@ pub(crate) fn unmap_kernel(
 pub(crate) fn unmap_kernel_all(
     ranges: &[(u64, u64)],
     released: impl FnMut(Frame, u8),
-) -> Result<u64, ferrix_paging::MapError> {
+) -> Result<u64, xaqu_paging::MapError> {
     let mut pages: Deferred<(Frame, u8), DEFERRED_PAGES> = Deferred::new((0, 0));
     let mut tables: Deferred<Frame, 8> = Deferred::new(0);
 
@@ -2555,7 +2555,7 @@ fn unmap_and_release<const N: usize>(
     pages: &mut Deferred<(Frame, u8), N>,
     tables: &mut Deferred<Frame, 8>,
     mut released: impl FnMut(Frame, u8),
-) -> Result<u64, ferrix_paging::MapError> {
+) -> Result<u64, xaqu_paging::MapError> {
     let mut removed = Ok(0u64);
     for &(virt, len) in ranges {
         let this = with_tables(|mapper| {
@@ -2569,7 +2569,7 @@ fn unmap_and_release<const N: usize>(
                         // small-to-large, so the conversion is a subtraction
                         // rather than a table: a level-3 leaf is order 0 and
                         // a 2 MiB block is order 9.
-                        let order = (ferrix_paging::Level::PAGE.depth() - level.depth()) * 9;
+                        let order = (xaqu_paging::Level::PAGE.depth() - level.depth()) * 9;
                         // NOALLOC: `Deferred::push`, into room made before the unmap began.
                         pages.push((phys.0 / PAGE_SIZE, order));
                     }
@@ -2619,7 +2619,7 @@ const DEFERRED_PAGES: usize = 32;
 fn unmap_kernel_in_pieces(
     ranges: &[(u64, u64)],
     mut released: impl FnMut(Frame, u8),
-) -> Result<u64, ferrix_paging::MapError> {
+) -> Result<u64, xaqu_paging::MapError> {
     let piece = DEFERRED_PAGES as u64 * PAGE_SIZE;
     let mut total = 0_u64;
     for &(virt, len) in ranges {
@@ -2706,7 +2706,7 @@ pub(crate) fn protect_kernel(
     virt: u64,
     len: u64,
     flags: MapFlags,
-) -> Result<(), ferrix_paging::MapError> {
+) -> Result<(), xaqu_paging::MapError> {
     with_tables(|mapper| {
         mapper.protect_range(
             &mut KernelPhysMem,
@@ -2898,7 +2898,7 @@ struct Initrd {
 /// bytes are lent to a closure under it ([`with_initrd`]), and the give-back
 /// takes the archive out under it before a page goes. A sleeping lock, since
 /// the install holds it across an unpack of the whole system onto a disk.
-static INITRD: ferrix_sync::Once<ferrix_sync::SleepLock<Option<Initrd>>> = ferrix_sync::Once::new();
+static INITRD: xaqu_sync::Once<xaqu_sync::SleepLock<Option<Initrd>>> = xaqu_sync::Once::new();
 
 /// Why the initramfs cannot be kept.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2930,7 +2930,7 @@ pub fn keep_initrd(view: &BootView<'_>) -> Result<Option<u64>, OutsideDirectMap>
     }
     let len_bytes = usize::try_from(len).map_err(|_| OutsideDirectMap)?;
     let _ = INITRD.call_once(|| {
-        ferrix_sync::SleepLock::new(
+        xaqu_sync::SleepLock::new(
             Some(Initrd {
                 base,
                 len: len_bytes,
@@ -3085,7 +3085,7 @@ pub fn give_back_initrd() -> Option<GivenBack> {
 pub fn reserved_in(range: core::ops::Range<Frame>) -> u64 {
     with_frames(|frames| {
         range
-            .filter(|&frame| frames.state(frame) == Some(ferrix_frame::State::Reserved))
+            .filter(|&frame| frames.state(frame) == Some(xaqu_frame::State::Reserved))
             .count() as u64
     })
     .unwrap_or(0)

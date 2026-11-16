@@ -1,10 +1,10 @@
-//! `test-uvm`: NVIDIA's UVM running its own tests on Ferrix, with no GPU
+//! `test-uvm`: NVIDIA's UVM running its own tests on Xaqu, with no GPU
 //! (`docs/NVIDIA.md` §11.5, C0a).
 //!
 //! The program is `uvm-selftest`, from
 //! `src/user/system/linux/drivers/nvrm/uvm-kpi/`: NVIDIA's unmodified UVM
-//! sources, from the tree `FERRIX_NVIDIA_SRC` names (by default
-//! `~/.local/share/ferrix/nvidia/580.173.02/src`, where
+//! sources, from the tree `XAQU_NVIDIA_SRC` names (by default
+//! `~/.local/share/xaqu/nvidia/580.173.02/src`, where
 //! `tools/common/fetch/fetch-nvidia.sh` unpacks it), built against
 //! `uvm-kpi` and linked statically against ferrousli. It is booted as init on
 //! x86-64. It loads UVM as Linux's module loader would, opens UVM's device,
@@ -26,11 +26,11 @@ use crate::sem::{boot, says, status};
 use crate::{Error, Result};
 
 /// The variable that names NVIDIA's source tree.
-const SOURCES_VAR: &str = "FERRIX_NVIDIA_SRC";
+const SOURCES_VAR: &str = "XAQU_NVIDIA_SRC";
 
 /// Where the tree is when the variable is not set, under the home directory.
 /// `tools/common/fetch/fetch-nvidia.sh` unpacks it there.
-const SOURCES_DEFAULT: &[&str] = &[".local", "share", "ferrix", "nvidia", "580.173.02", "src"];
+const SOURCES_DEFAULT: &[&str] = &[".local", "share", "xaqu", "nvidia", "580.173.02", "src"];
 
 /// The seconds a boot may take when `--timeout` does not say. Under KVM a
 /// run takes about 15 s; under TCG `UVM_TEST_RB_TREE_RANDOM`'s 100,000
@@ -178,12 +178,12 @@ fn build(tree: &Path) -> Result<(PathBuf, PathBuf)> {
         .arg(format!("NVSRC={}", tree.display()))
         .arg(format!("OUT={}", out.display()))
         .arg(format!("FERROUSLI_TARGET={}", ferrousli.display()))
-        .arg("ferrix")
+        .arg("xaqu")
         .status()
         .map_err(|error| Error::new(format!("running make in {}: {error}", kpi.display())))?;
     if !ran.success() {
         return Err(Error::new(format!(
-            "building uvm-selftest failed ({ran}); make -C {} ferrix",
+            "building uvm-selftest failed ({ran}); make -C {} xaqu",
             kpi.display()
         )));
     }

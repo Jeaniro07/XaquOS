@@ -549,7 +549,7 @@ def clippy_paths(entries, crate):
     for e in entries:
         if not e.checks_only or e.kind not in ("method", "foreign fn"):
             continue
-        root = "ferrix_kernel_core" if crate[e.file] == "core" else "ferrix_kernel_item"
+        root = "xaqu_kernel_core" if crate[e.file] == "core" else "xaqu_kernel_item"
         parts = [root, *e.module]
         if e.kind == "method":
             parts.append(e.container.split(" ")[0])
@@ -596,7 +596,7 @@ def render(entries, crate, types_marked) -> str:
     for e in entries:
         groups[(crate[e.file], e.module)].append(e)
     for which in ("core", "item"):
-        out += [f"## ferrix-kernel-{which}", ""]
+        out += [f"## xaqu-kernel-{which}", ""]
         for module in sorted(m for c, m in groups if c == which):
             rows = sorted(groups[(which, module)], key=lambda e: (e.container or "", e.kind, e.name, e.line))
             out += [f"### `{'::'.join(module) or 'crate root'}`", "",
@@ -639,8 +639,8 @@ def write_clippy(block: str, check: bool) -> bool:
 _FIX = {
     "main.rs": "mod stages_check;\nfn main() {}\n",
     "kernel_core.rs": "pub mod mm;\n",
-    "kernel_item.rs": "pub use ferrix_kernel_core::*;\npub mod syscall;\n",
-    "kernel_load.rs": "pub use ferrix_kernel_item::*;\npub mod fs;\n",
+    "kernel_item.rs": "pub use xaqu_kernel_core::*;\npub mod syscall;\n",
+    "kernel_load.rs": "pub use xaqu_kernel_item::*;\npub mod fs;\n",
     "mm.rs": "pub fn frame() -> Frame { Frame }\npub struct Frame;\n"
              "// CHECKS-ONLY: fs.rs\n#[doc(hidden)]\npub struct Secret {\n    pub inner: u8,\n}\n"
              "// CHECKS-ONLY: fs.rs\n#[doc(hidden)]\npub fn secret() -> Secret { Secret { inner: 0 } }\n"
@@ -660,10 +660,10 @@ _MANIFEST = {
               "load": {"members": ["kernel_load.rs", "fs.rs", "fs/check.rs"]}},
     "test_file_patterns": ["check.rs", "*_check.rs"],
     "kernel_crates": {
-        "ferrix-kernel": {"path": "k", "root": "main.rs", "rings": []},
-        "ferrix-kernel-core": {"path": "k/core", "root": "kernel_core.rs", "rings": ["core"]},
-        "ferrix-kernel-item": {"path": "k/item", "root": "kernel_item.rs", "rings": ["item"]},
-        "ferrix-kernel-load": {"path": "k/load", "root": "kernel_load.rs", "rings": ["load"]},
+        "xaqu-kernel": {"path": "k", "root": "main.rs", "rings": []},
+        "xaqu-kernel-core": {"path": "k/core", "root": "kernel_core.rs", "rings": ["core"]},
+        "xaqu-kernel-item": {"path": "k/item", "root": "kernel_item.rs", "rings": ["item"]},
+        "xaqu-kernel-load": {"path": "k/load", "root": "kernel_load.rs", "rings": ["load"]},
     },
 }
 _CASES = [
@@ -719,7 +719,7 @@ def self_test() -> list[str]:
                  ("inner", "field", False), ("frame", "fn", False), ("LIMIT", "const", False)]:
         if want not in names:
             failures.append(f"the fixture's {want} was not listed: {sorted(names)}")
-    if ("ferrix_kernel_core::mm::Node::probe", "mm.rs") not in clippy_paths(entries, crate):
+    if ("xaqu_kernel_core::mm::Node::probe", "mm.rs") not in clippy_paths(entries, crate):
         failures.append(f"the checks-only method is not in the clippy list: {clippy_paths(entries, crate)}")
     for what, change, expect in _CASES:
         _, _, found, _ = _run_fixture(dict(_FIX, **change))

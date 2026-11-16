@@ -2,8 +2,8 @@
 # Assert the layering this OS rests on. See docs/ARCHITECTURE.md.
 #
 #   1. The loader and the kernel are two programs that meet at one struct.
-#      `boot` must never link `ferrix-kernel` and the kernel must never link
-#      the loader; everything they agree on lives in `ferrix-bootinfo`.
+#      `boot` must never link `xaqu-kernel` and the kernel must never link
+#      the loader; everything they agree on lives in `xaqu-bootinfo`.
 #   2. `src/lib/*` is host-testable, architecture-neutral logic. That is the whole
 #      reason it exists -- it is the code `cargo test`, Miri and the fuzzers can
 #      reach -- so it must depend on neither the kernel nor the loader, and must
@@ -71,8 +71,8 @@ forbid() {
         return 0
     fi
 
-    # Anchored on the whole name, and it matters: `ferrix-boot` is a prefix of
-    # `ferrix-bootinfo` and `ferrix-devmgr` of `ferrix-devmgr-proto`, so a
+    # Anchored on the whole name, and it matters: `xaqu-boot` is a prefix of
+    # `xaqu-bootinfo` and `xaqu-devmgr` of `xaqu-devmgr-proto`, so a
     # looser match reports a crate that depends on the ABI as depending on the
     # program. `cargo tree --prefix none` starts every line with the package
     # name and follows it with a space, so that is the anchor; a word boundary
@@ -94,8 +94,8 @@ forbid() {
 # ---------------------------------------------------------------------------
 # The kernel's packages: the binary at src/kernel and the library crates
 # beneath it (docs/KERNEL-CRATES.md). Every rule that keeps something away
-# from "the kernel" names all of them: an anchored `ferrix-kernel` does not
-# match `ferrix-kernel-core`.
+# from "the kernel" names all of them: an anchored `xaqu-kernel` does not
+# match `xaqu-kernel-core`.
 # The kernel's source roots but src/kernel/src (kernel_source_roots, read by
 # tools/common/check/kernel_roots.py; docs/microkernel/CRATE-SPLIT.md S0): each is
 # an optional part's src/, its package the directory above it. Its lift twin in
@@ -119,14 +119,14 @@ done
 kernel_crates=$( { find src/kernel -maxdepth 2 -name Cargo.toml -not -path '*/target/*' 2>/dev/null; printf '%s\n' "${kernel_part_manifests[@]}"; } | sed '/^$/d' | sort \
     | xargs -r sed -n '/^\[package\]/,/^\[/s/^name = "\(.*\)"$/\1/p' \
     | paste -sd '|' - || true)
-if [[ "|$kernel_crates|" != *"|ferrix-kernel|"* ]]; then
-    echo "ERROR: no ferrix-kernel package found under src/kernel; the kernel's rules were NOT checked." >&2
+if [[ "|$kernel_crates|" != *"|xaqu-kernel|"* ]]; then
+    echo "ERROR: no xaqu-kernel package found under src/kernel; the kernel's rules were NOT checked." >&2
     exit 1
 fi
 K="$kernel_crates"
 
-forbid ferrix-boot   "UEFI loader" "$K"
-forbid ferrix-kernel "kernel"      "ferrix-boot"
+forbid xaqu-boot   "UEFI loader" "$K"
+forbid xaqu-kernel "kernel"      "xaqu-boot"
 
 # The kernel's own crates, in ring order (docs/KERNEL-CRATES.md, the
 # certification consultant's ledger line 1477 (5)): the core links none of
@@ -146,28 +146,28 @@ kernel_rule() {
     [[ " $listed " == *" $1 "* ]] && forbid "$@"
     return 0
 }
-kernel_rule ferrix-kernel-core "the kernel's core ring" "ferrix-kernel|ferrix-kernel-item|ferrix-kernel-load|ferrix-boot"
-kernel_rule ferrix-kernel-item "the kernel's item ring" "ferrix-kernel|ferrix-kernel-load|ferrix-boot"
-kernel_rule ferrix-kernel-load "the kernel's load ring" "ferrix-kernel|ferrix-boot"
+kernel_rule xaqu-kernel-core "the kernel's core ring" "xaqu-kernel|xaqu-kernel-item|xaqu-kernel-load|xaqu-boot"
+kernel_rule xaqu-kernel-item "the kernel's item ring" "xaqu-kernel|xaqu-kernel-load|xaqu-boot"
+kernel_rule xaqu-kernel-load "the kernel's load ring" "xaqu-kernel|xaqu-boot"
 
 # ---------------------------------------------------------------------------
 # 2. The host-testable libraries sit below both.
 # ---------------------------------------------------------------------------
-forbid ferrix-bootinfo "handoff ABI"  "$K|ferrix-boot|ferrix-elf|ferrix-frame"
-forbid ferrix-elf      "ELF64 reader" "$K|ferrix-boot"
-forbid ferrix-frame    "frame allocator" "$K|ferrix-boot"
-forbid ferrix-paging   "page tables"  "$K|ferrix-boot"
-forbid ferrix-sched    "scheduler logic" "$K|ferrix-boot"
-forbid ferrix-pci      "PCI configuration space" "$K|ferrix-boot"
-forbid ferrix-block    "block core" "$K|ferrix-boot"
-forbid ferrix-btrfs    "btrfs read path" "$K|ferrix-boot"
-forbid ferrix-btrfs-write "btrfs write path" "$K|ferrix-boot"
-forbid ferrix-netwire  "network wire formats" "$K|ferrix-boot"
-forbid ferrix-nettcp   "TCP state machine" "$K|ferrix-boot"
-forbid ferrix-net      "net core" "$K|ferrix-boot"
-forbid ferrix-netring  "net ring protocol" "$K|ferrix-boot"
-forbid ferrix-netserve "net driver serve loop" "$K|ferrix-boot"
-forbid ferrix-netlink  "netlink messages" "$K|ferrix-boot"
+forbid xaqu-bootinfo "handoff ABI"  "$K|xaqu-boot|xaqu-elf|xaqu-frame"
+forbid xaqu-elf      "ELF64 reader" "$K|xaqu-boot"
+forbid xaqu-frame    "frame allocator" "$K|xaqu-boot"
+forbid xaqu-paging   "page tables"  "$K|xaqu-boot"
+forbid xaqu-sched    "scheduler logic" "$K|xaqu-boot"
+forbid xaqu-pci      "PCI configuration space" "$K|xaqu-boot"
+forbid xaqu-block    "block core" "$K|xaqu-boot"
+forbid xaqu-btrfs    "btrfs read path" "$K|xaqu-boot"
+forbid xaqu-btrfs-write "btrfs write path" "$K|xaqu-boot"
+forbid xaqu-netwire  "network wire formats" "$K|xaqu-boot"
+forbid xaqu-nettcp   "TCP state machine" "$K|xaqu-boot"
+forbid xaqu-net      "net core" "$K|xaqu-boot"
+forbid xaqu-netring  "net ring protocol" "$K|xaqu-boot"
+forbid xaqu-netserve "net driver serve loop" "$K|xaqu-boot"
+forbid xaqu-netlink  "netlink messages" "$K|xaqu-boot"
 
 # ---------------------------------------------------------------------------
 # 2a. Ring-3 programs sit beside the kernel, never in it.
@@ -184,21 +184,21 @@ user_crates=$(find src/user/system/native -name Cargo.toml -not -path '*/target/
     | paste -sd '|' - || true)
 if [[ -n "$user_crates" ]]; then
     for crate in ${user_crates//|/ }; do
-        forbid "$crate" "ring-3 program" "$K|ferrix-boot"
+        forbid "$crate" "ring-3 program" "$K|xaqu-boot"
     done
     for kernel_crate in ${K//|/ }; do
         forbid "$kernel_crate" "kernel" "$user_crates"
     done
-    forbid ferrix-boot   "UEFI loader" "$user_crates"
+    forbid xaqu-boot   "UEFI loader" "$user_crates"
 fi
-forbid ferrix-btrfs-vfs "btrfs mount" "$K|ferrix-boot"
-forbid ferrix-blkring  "block ring protocol" "$K|ferrix-boot"
-forbid ferrix-virtio-blk "virtio-blk driver logic" "$K|ferrix-boot"
-forbid ferrix-virtio-net "virtio-net driver logic" "$K|ferrix-boot"
-forbid ferrix-dwmac "DesignWare QoS core logic" "$K|ferrix-boot"
-forbid ferrix-yt6801 "YT6801 glue logic" "$K|ferrix-boot"
-forbid ferrix-rtl8169 "RTL8168 chip logic" "$K|ferrix-boot"
-forbid ferrix-blkserve "block driver serve loop" "$K|ferrix-boot"
+forbid xaqu-btrfs-vfs "btrfs mount" "$K|xaqu-boot"
+forbid xaqu-blkring  "block ring protocol" "$K|xaqu-boot"
+forbid xaqu-virtio-blk "virtio-blk driver logic" "$K|xaqu-boot"
+forbid xaqu-virtio-net "virtio-net driver logic" "$K|xaqu-boot"
+forbid xaqu-dwmac "DesignWare QoS core logic" "$K|xaqu-boot"
+forbid xaqu-yt6801 "YT6801 glue logic" "$K|xaqu-boot"
+forbid xaqu-rtl8169 "RTL8168 chip logic" "$K|xaqu-boot"
+forbid xaqu-blkserve "block driver serve loop" "$K|xaqu-boot"
 
 # ---------------------------------------------------------------------------
 # 3. Generic kernel code reaches architecture code through the facade.

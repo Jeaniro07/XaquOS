@@ -4,7 +4,7 @@
 //! The machine has no virtio-gpu. Its one screen is a VGA whose EDID
 //! prefers 1024x768, which OVMF takes for its graphics output, so the loader
 //! hands the kernel a 1024x768 framebuffer that firmware chose. The command
-//! line says `ferrix.efifb`: the kernel lends the framebuffer to a node of
+//! line says `xaqu.efifb`: the kernel lends the framebuffer to a node of
 //! its own, `devmgr` starts `efifb` on it, and the card it serves is the only
 //! one. The compositor tiles its two clients there, and the VGA's screendump
 //! must be the renderer's blessed picture of them, every pixel.
@@ -34,7 +34,7 @@ exec-once = /bin/pattern gradient two --after one
 /// What the kernel's command line says after init's: the framebuffer lent,
 /// and the boot console drawn on it first, so that the console's stop is
 /// tested too -- a line it drew after `efifb` started would be in the picture.
-const OPTION: &str = "ferrix.efifb ferrix.fbcon";
+const OPTION: &str = "xaqu.efifb xaqu.fbcon";
 
 /// The lines the guest must have said, each with what it shows.
 const SAID: [(&str, &str); 6] = [
@@ -43,7 +43,7 @@ const SAID: [(&str, &str); 6] = [
         "the VGA function that holds the framebuffer is driven by nobody",
     ),
     (
-        "display  firmware framebuffer 1024x768 lent to a driver (ferrix.efifb), write-combining",
+        "display  firmware framebuffer 1024x768 lent to a driver (xaqu.efifb), write-combining",
         "the kernel lent the framebuffer with its own window write-combining",
     ),
     (

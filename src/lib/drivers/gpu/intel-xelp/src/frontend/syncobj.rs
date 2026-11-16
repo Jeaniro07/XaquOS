@@ -9,7 +9,7 @@
 //! core has no object for that, and adding one is a kernel interface
 //! (refused by name, `EOPNOTSUPP`).
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::drm::{Call, put, unserved_as};
 use super::fence::{self, Hold, WaitKind};

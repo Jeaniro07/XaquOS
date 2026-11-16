@@ -34,7 +34,7 @@
 //! and the base block's count and checksum made to agree; a CTA-861 block
 //! with a wrong checksum is kept, as Linux keeps one.
 
-use ferrix_linux_abi::drm::{self, GetBlob, GetProperty};
+use xaqu_linux_abi::drm::{self, GetBlob, GetProperty};
 
 /// The command-line option, without its `=`.
 pub const PARAMETER: &str = "drm.edid_firmware";

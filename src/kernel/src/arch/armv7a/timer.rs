@@ -9,7 +9,7 @@
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_fdt::{Fdt, TimerInterrupt};
+use xaqu_fdt::{Fdt, TimerInterrupt};
 
 use super::cpu;
 

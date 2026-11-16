@@ -6,7 +6,7 @@ the STM32MP157 — joins the two that boot today, without any of stages 1–3
 being rewritten to admit it.
 
 The target is QEMU's `virt` machine with a Cortex-A7, booted by U-Boot, to
-`FERRIX-BOOT-OK stages 1-3`, in CI, beside the other two. The board itself is
+`XAQU-BOOT-OK stages 1-3`, in CI, beside the other two. The board itself is
 not in this plan; what is in it is everything the board will need that QEMU
 can prove, and a stated list of what QEMU cannot.
 
@@ -348,14 +348,14 @@ from `0x1000`, `.dynamic` and `.rel.dyn` kept, `.ARM.exidx*` discarded.
 two-element literals in `args.rs` and `check.rs`; the usage string and the
 parse error name three architectures. `cargo.rs` learns that a loader is
 either a PE the target emits or an ELF to convert, and for `Armv7a` runs
-`pe::convert` on `target/armv7-unknown-linux-musleabi/<profile>/ferrix-boot`
+`pe::convert` on `target/armv7-unknown-linux-musleabi/<profile>/xaqu-boot`
 and returns the `.efi` beside it. `pe.rs` and `pe/tests.rs` are the converter
-from decision 2; `tools/common/xtask/Cargo.toml` gains `ferrix-elf` as its first dependency,
+from decision 2; `tools/common/xtask/Cargo.toml` gains `xaqu-elf` as its first dependency,
 and the comment that says there are none is rewritten to say why this one is
 different (it is ours, and the alternative is a second ELF reader). `paths.rs`
 grows a firmware kind — pflash pair, or a `-bios` image — with `u-boot.bin`
 searched under `/usr/lib/u-boot/qemu_arm`, `/usr/share/u-boot/qemu_arm` and
-next to QEMU, overridable by `FERRIX_UBOOT`. `qemu.rs` adds the
+next to QEMU, overridable by `XAQU_UBOOT`. `qemu.rs` adds the
 `-machine virt -cpu cortex-a7 -bios …` arm and skips the variable store for a
 `-bios` firmware. `fat.rs` needs nothing: `BOOTARM.EFI` is 8.3.
 
@@ -410,7 +410,7 @@ latter reaches the console:
    return state on the *SVC* stack from whichever mode the CPU entered,
    `cps #19` switches to it with interrupts still masked, and a single common
    path pushes `r0`–`r12` and `lr`, reads `DFSR`/`DFAR`/`IFSR`/`IFAR`, calls
-   `ferrix_trap_entry`, and returns with `rfeia sp!`. No per-mode stacks: that
+   `xaqu_trap_entry`, and returns with `rfeia sp!`. No per-mode stacks: that
    is what `srs` is for. The frame is 80 bytes and asserted 8-aligned, as
    AAPCS requires at a call boundary. `classify` reads the long-descriptor
    fault status — the same six-bit codes as AArch64, so the same
@@ -433,7 +433,7 @@ builtins), and the kernel's `u64`-everywhere address plumbing carries over
 without a width conditional.
 
 **Exit:** `cargo xtask test-boot --arch armv7a` reaches
-`FERRIX-BOOT-OK stages 1-3` with the same self-checks the other two run —
+`XAQU-BOOT-OK stages 1-3` with the same self-checks the other two run —
 two breakpoints, four page faults with the exact frame bound, a thousand ticks
 measured against the counter, the identity map dropped and its absence checked,
 a W^X sweep that finds mappings and no writable-executable one, and a non-zero

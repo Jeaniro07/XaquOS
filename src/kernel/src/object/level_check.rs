@@ -4,11 +4,11 @@
 
 use alloc::sync::Arc;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{JOB_LEVEL_SET, JOB_LEVEL_SHIFT, MAP_READ, MAP_WRITE};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{JOB_LEVEL_SET, JOB_LEVEL_SHIFT, MAP_READ, MAP_WRITE};
 
 use crate::audit;
 use crate::object::Object;
@@ -285,7 +285,7 @@ fn vmo(side: &Side) -> Result<Handle, &'static str> {
 }
 
 /// Map `vmo` as `protection` from `side`.
-fn map(side: &Side, vmo: Handle, protection: u32) -> Result<usize, ferrix_linux_abi::errno::Errno> {
+fn map(side: &Side, vmo: Handle, protection: u32) -> Result<usize, xaqu_linux_abi::errno::Errno> {
     side.put(OFFSET_AT, &0_u64.to_ne_bytes())
         .map_err(|_| status::FAULT)?;
     side.call(

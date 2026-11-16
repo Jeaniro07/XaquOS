@@ -21,12 +21,12 @@
 
 use alloc::vec::Vec;
 
-use ferrix_btrfs::chunk::{BLOCK_GROUP_PROFILE_MASK, Stripe};
-use ferrix_btrfs::items::{
+use xaqu_btrfs::chunk::{BLOCK_GROUP_PROFILE_MASK, Stripe};
+use xaqu_btrfs::items::{
     CHUNK_ITEM_KEY, CHUNK_TREE_OBJECTID, DEV_ITEM_KEY, DEV_ITEMS_OBJECTID, DEV_TREE_OBJECTID,
     EXTENT_TREE_OBJECTID,
 };
-use ferrix_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::tree::BtrfsKey;
 
 use crate::bytes::{key_bytes, put, put_u32, put_u64};
 use crate::chunks::Chunk;
@@ -287,7 +287,7 @@ impl<D: WriteDevice> WriteVolume<D> {
             fallible::extend_from_slice(&mut out, &key_bytes(&key))?;
             fallible::extend_from_slice(&mut out, &chunk.item_bytes(self.sectorsize())?)?;
         }
-        if out.len() > ferrix_btrfs::superblock::SYS_CHUNK_ARRAY_SIZE {
+        if out.len() > xaqu_btrfs::superblock::SYS_CHUNK_ARRAY_SIZE {
             return Err(Error::NoSpace);
         }
         Ok(out)

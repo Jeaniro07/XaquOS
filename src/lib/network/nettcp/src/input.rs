@@ -7,7 +7,7 @@
 //! ignored, which is the classic way to let a stranger close somebody's
 //! connection.
 
-use ferrix_netwire::tcp::{Flags, Header, Segment};
+use xaqu_netwire::tcp::{Flags, Header, Segment};
 
 use crate::conn::{Connection, Progress};
 use crate::rtt::Millis;

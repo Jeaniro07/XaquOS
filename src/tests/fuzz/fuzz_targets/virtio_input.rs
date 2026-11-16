@@ -25,7 +25,7 @@
 
 use std::cell::RefCell;
 
-use ferrix_virtio::input::{
+use xaqu_virtio::input::{
     ConfigSelect, DeviceConfig, EVENT_LEN, Event, InputError, abs_info, devids, ev_bits, name,
     query, serial,
 };

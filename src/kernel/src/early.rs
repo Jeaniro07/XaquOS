@@ -11,11 +11,11 @@
 //! which is all early boot needs.
 
 use core::cell::UnsafeCell;
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
 
 use crate::arch::{self, PageEncoding};
 
@@ -46,7 +46,7 @@ static POOL: TablePool = TablePool(UnsafeCell::new(
 ));
 
 /// The most early device windows recorded: two or three are made.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 const EARLY_WINDOWS: usize = 8;
 
 /// Every device window [`EarlyMemory::map_device`] made, as physical
@@ -54,17 +54,17 @@ const EARLY_WINDOWS: usize = 8;
 /// named, on every architecture. What generic device-tree publication
 /// claims as the kernel's own use at its seal (`docs/DRIVER-MODEL.md` §3,
 /// D3; `L.discovery.10`), since these windows are not `vmap`'s.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 static WINDOWS: [(AtomicU64, AtomicU64); EARLY_WINDOWS] =
     [const { (AtomicU64::new(0), AtomicU64::new(0)) }; EARLY_WINDOWS];
 
 /// How many of [`WINDOWS`] are filled.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 static WINDOWS_MADE: AtomicUsize = AtomicUsize::new(0);
 
 /// Record a device window; one past [`EARLY_WINDOWS`] is reported as a map
 /// failure by its caller, so no window the kernel uses goes unrecorded.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn record_window(start: u64, end: u64) -> bool {
     let index = WINDOWS_MADE.load(Ordering::Acquire);
     let Some((first, last)) = WINDOWS.get(index) else {
@@ -77,7 +77,7 @@ fn record_window(start: u64, end: u64) -> bool {
 }
 
 /// Every device window early boot mapped, as physical `start..end`.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn device_windows() -> impl Iterator<Item = (u64, u64)> {
     WINDOWS
         .iter()
@@ -90,7 +90,7 @@ pub(crate) fn device_windows() -> impl Iterator<Item = (u64, u64)> {
 pub enum EarlyError {
     /// The mapper refused the request. A pool in `.bss` that has run dry
     /// arrives here too, as `MapError::OutOfMemory`.
-    MapFailed(ferrix_paging::MapError),
+    MapFailed(xaqu_paging::MapError),
     /// The machine's description names no console this kernel can drive.
     #[allow(
         dead_code,
@@ -176,7 +176,7 @@ impl EarlyMemory {
     /// # Errors
     ///
     /// [`EarlyError::MapFailed`] with
-    /// [`ferrix_paging::MapError::RangeOverflow`] for a range whose end,
+    /// [`xaqu_paging::MapError::RangeOverflow`] for a range whose end,
     /// rounded out to a page, is past the top of the address space, before
     /// anything else is asked of it: a wrapped `phys + len` would otherwise be
     /// judged against the image by its clamped end, and the rounding would
@@ -188,7 +188,7 @@ impl EarlyMemory {
         self.map_window(virt, phys, len, MapFlags::KERNEL_DEVICE)?;
         // Only a kernel that publishes generic nodes needs the record, and no
         // other may gain a failure a board could meet (ledger 5896, C.1).
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         {
             let start = phys - phys % PAGE_SIZE;
             let end = phys
@@ -196,7 +196,7 @@ impl EarlyMemory {
                 .checked_next_multiple_of(PAGE_SIZE)
                 .unwrap_or(u64::MAX);
             if !record_window(start, end) {
-                return Err(EarlyError::MapFailed(ferrix_paging::MapError::OutOfMemory));
+                return Err(EarlyError::MapFailed(xaqu_paging::MapError::OutOfMemory));
             }
         }
         Ok(())
@@ -228,7 +228,7 @@ impl EarlyMemory {
             .checked_next_multiple_of(PAGE_SIZE)
             .filter(|&span| phys.checked_add(span).is_some())
             .ok_or(EarlyError::MapFailed(
-                ferrix_paging::MapError::RangeOverflow,
+                xaqu_paging::MapError::RangeOverflow,
             ))?;
         if crate::mm::image_span_overlaps(self.kernel_phys, self.kernel_len, phys, len) {
             return Err(EarlyError::KernelImage(phys));

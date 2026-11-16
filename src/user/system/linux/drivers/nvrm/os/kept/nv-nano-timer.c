@@ -22,9 +22,9 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/nv-nano-timer.c at 580.173.02, under the MIT licence
- * above: RM's nanosecond timers. Changes: the hrtimer is a ferrix-nvos
+ * above: RM's nanosecond timers. Changes: the hrtimer is a xaqu-nvos
  * timer (os/nvos/src/timer.rs), whose callback runs on the timer thread
  * rather than in soft-IRQ; the callback into RM is NVIDIA's, unchanged.
  */
@@ -32,7 +32,7 @@
 #define  __NO_VERSION__
 
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 struct nv_nano_timer
 {

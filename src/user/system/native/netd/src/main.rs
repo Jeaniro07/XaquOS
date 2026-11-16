@@ -1,7 +1,7 @@
 //! netd, the network switch (`docs/MICROKERNEL.md` §2.3, `docs/microkernel/M8.md` §2):
 //! the ring's kernel side toward the wire's driver, and the ring's driver side toward
 //! each Linux partition's core, which sees a NIC and changes nothing. Frames go by
-//! `ferrix_netswitch`.
+//! `xaqu_netswitch`.
 //!
 //! One thread. All of it is bounded per turn: [`BUDGET`] frames from each side, so a
 //! partition flooding the switch costs another its share and no more. It holds no
@@ -18,30 +18,30 @@ use alloc::vec::Vec;
 use core::alloc::{GlobalAlloc, Layout};
 use core::cell::UnsafeCell;
 
-use ferrix_blkclient::{Mapped, Shared, held_mapping};
-use ferrix_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, CorePublished};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_netring::control::{
+use xaqu_blkclient::{Mapped, Shared, held_mapping};
+use xaqu_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, CorePublished};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_netring::control::{
     CONTROL_RIGHTS, HELLO_RIGHTS, Hello, Interface, MAX_MESSAGE, Message, PORT_RIGHTS, Refusal,
     VMO_RIGHTS,
 };
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::kernel::{Completed, KernelSide};
-use ferrix_netring::layout::{Op, Status, Submission};
-use ferrix_netring::{RingMemory, Wait};
-use ferrix_netswitch::{Route, Switch};
-use ferrix_rt::native::channel::{self, Channel};
-use ferrix_rt::native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::space::Space;
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::kernel::{Completed, KernelSide};
+use xaqu_netring::layout::{Op, Status, Submission};
+use xaqu_netring::{RingMemory, Wait};
+use xaqu_netswitch::{Route, Switch};
+use xaqu_rt::native::channel::{self, Channel};
+use xaqu_rt::native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::space::Space;
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Frames from each side in one turn.
 const BUDGET: usize = 32;
@@ -98,36 +98,36 @@ struct Memory(Shared);
 
 impl RingMemory for Memory {
     fn read_u8(&self, offset: usize) -> u8 {
-        ferrix_blkclient::RingMemory::read_u8(&self.0, offset)
+        xaqu_blkclient::RingMemory::read_u8(&self.0, offset)
     }
 
     fn write_u8(&mut self, offset: usize, value: u8) {
-        ferrix_blkclient::RingMemory::write_u8(&mut self.0, offset, value);
+        xaqu_blkclient::RingMemory::write_u8(&mut self.0, offset, value);
     }
 
     fn barrier(&self) {
-        ferrix_blkclient::RingMemory::barrier(&self.0);
+        xaqu_blkclient::RingMemory::barrier(&self.0);
     }
 
     fn read_u16(&self, offset: usize) -> u16 {
-        ferrix_blkclient::RingMemory::read_u16(&self.0, offset)
+        xaqu_blkclient::RingMemory::read_u16(&self.0, offset)
     }
 
     fn read_u32(&self, offset: usize) -> u32 {
-        ferrix_blkclient::RingMemory::read_u32(&self.0, offset)
+        xaqu_blkclient::RingMemory::read_u32(&self.0, offset)
     }
 
     fn write_u16(&mut self, offset: usize, value: u16) {
-        ferrix_blkclient::RingMemory::write_u16(&mut self.0, offset, value);
+        xaqu_blkclient::RingMemory::write_u16(&mut self.0, offset, value);
     }
 
     fn write_u32(&mut self, offset: usize, value: u32) {
-        ferrix_blkclient::RingMemory::write_u32(&mut self.0, offset, value);
+        xaqu_blkclient::RingMemory::write_u32(&mut self.0, offset, value);
     }
 }
 
 fn now() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 /// The wire's driver, this side of its ring.
@@ -207,7 +207,7 @@ impl Netd {
                 .is_ok(),
         };
         if !sent {
-            ferrix_rt::notice!("netd     devmgr's channel would not take an answer");
+            xaqu_rt::notice!("netd     devmgr's channel would not take an answer");
         }
     }
 
@@ -218,7 +218,7 @@ impl Netd {
         };
         match self.wire_from(control, location) {
             Ok(mac_of_wire) => {
-                ferrix_rt::notice!("netd     the wire is up at {location:#x}");
+                xaqu_rt::notice!("netd     the wire is up at {location:#x}");
                 let _ = self.cores.write(&CorePublished { location }.encode());
                 if self.switch.is_none() {
                     self.switch = Some(Switch::new(
@@ -229,7 +229,7 @@ impl Netd {
                 }
                 self.tell_link(true);
             }
-            Err(why) => ferrix_rt::notice!("netd     {location:#x}: refused: {why:?}"),
+            Err(why) => xaqu_rt::notice!("netd     {location:#x}: refused: {why:?}"),
         }
     }
 
@@ -316,9 +316,9 @@ impl Netd {
             match self.open_partition(port, &hello, &switch) {
                 Some(partition) => {
                     self.partitions.push(partition);
-                    ferrix_rt::notice!("netd     port {port} is up");
+                    xaqu_rt::notice!("netd     port {port} is up");
                 }
-                None => ferrix_rt::notice!("netd     port {port} took no interface"),
+                None => xaqu_rt::notice!("netd     port {port} took no interface"),
             }
         }
     }
@@ -329,7 +329,7 @@ impl Netd {
     )]
     fn open_partition(&self, index: usize, hello: &Hello, switch: &Switch) -> Option<Partition> {
         // Port 0 is the first partition's uplink, ports 1 up the internal link's, its
-        // own first (`ferrix_netswitch`): a partition's cores by its index on that link.
+        // own first (`xaqu_netswitch`): a partition's cores by its index on that link.
         let cores = self.partition_cores.get(index.saturating_sub(1))?;
         let location = self.wire.as_ref()?.location | (index as u32) << 24;
         let open = CoreOpen {
@@ -457,7 +457,7 @@ impl Netd {
                 let _ = self.space.unmap(one.address(), one.bytes());
             }
             self.tell_link(false);
-            ferrix_rt::notice!("netd     the wire's driver ended");
+            xaqu_rt::notice!("netd     the wire's driver ended");
         }
     }
 
@@ -663,7 +663,7 @@ impl Netd {
         // Only `test-netd`'s build: the row's way of killing it, since nothing can
         // from outside.
         let dies_after: Option<u32> =
-            option_env!("FERRIX_TEST_NETD_DIES_AFTER").and_then(|text| text.parse().ok());
+            option_env!("XAQU_TEST_NETD_DIES_AFTER").and_then(|text| text.parse().ok());
         let mut turns = 0_u32;
         let wake = Signals::READABLE | Signals::PEER_CLOSED;
         if self.cores.wait_async(&self.port, wake, KEY_CORES).is_err() {
@@ -681,7 +681,7 @@ impl Netd {
             }
             for index in 0..self.partitions.len() {
                 if !self.turn_partition(index) {
-                    ferrix_rt::notice!("netd     partition {index}'s ring broke");
+                    xaqu_rt::notice!("netd     partition {index}'s ring broke");
                 }
             }
             self.publish_all();
@@ -709,7 +709,7 @@ impl Netd {
                         .is_some_and(|(_, _, until)| now() > *until)
                     {
                         self.pending = None;
-                        ferrix_rt::notice!("netd     a driver said no HELLO in time");
+                        xaqu_rt::notice!("netd     a driver said no HELLO in time");
                     }
                 }
             }
@@ -743,17 +743,17 @@ fn main(bootstrap: Bootstrap) -> i32 {
     if got.handles != 4 {
         return 4;
     }
-    ferrix_rt::log::use_debug_log(handles[2]);
+    xaqu_rt::log::use_debug_log(handles[2]);
     let Ok(port) = port::create(Kernel) else {
         return 5;
     };
     // The first partition's cores, and from devmgr, who keeps them for every next `netd`,
     // the further ones' (ledger 6226 N.5).
     let first: Channel<Kernel> = Channel::from_owned(OwnedHandle::from_raw(Kernel, handles[3]));
-    let mut partition_cores = Vec::with_capacity(ferrix_netswitch::MAX_PORTS);
+    let mut partition_cores = Vec::with_capacity(xaqu_netswitch::MAX_PORTS);
     partition_cores.push(first);
     // All written before this process ran, so that an empty channel is the end of them.
-    while partition_cores.len() < ferrix_netswitch::MAX_PORTS - 1 {
+    while partition_cores.len() < xaqu_netswitch::MAX_PORTS - 1 {
         let mut said = [0_u8; 8];
         let mut end = [Handle::INVALID; 1];
         match start.read(&mut said, &mut end) {
@@ -775,6 +775,6 @@ fn main(bootstrap: Bootstrap) -> i32 {
         frame: Vec::new(),
         interface: None,
     };
-    ferrix_rt::notice!("netd     up: {} partitions", netd.partition_cores.len());
+    xaqu_rt::notice!("netd     up: {} partitions", netd.partition_cores.len());
     netd.run()
 }

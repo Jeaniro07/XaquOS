@@ -321,7 +321,7 @@ pub fn identity(line: &[u8]) -> Option<Identity> {
 }
 
 /// A signal number's name, Linux's numbering, the same on every
-/// architecture Ferrix builds for for these.
+/// architecture Xaqu builds for for these.
 fn signal_name(number: &str) -> String {
     let name = match number.trim() {
         "4" => "SIGILL",

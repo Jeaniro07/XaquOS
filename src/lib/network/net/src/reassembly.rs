@@ -1,6 +1,6 @@
 //! Putting a fragmented IPv4 datagram back together.
 //!
-//! Fragmentation is rare on the paths Ferrix runs over and is not optional:
+//! Fragmentation is rare on the paths Xaqu runs over and is not optional:
 //! a DNS answer over a tunnel, or a UDP write larger than the link will
 //! carry, arrives in pieces or not at all.
 //!

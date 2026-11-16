@@ -4,8 +4,8 @@
 //! which nothing else records since nothing crashed -- and each program
 //! hyprix starts writing under its own name.
 //!
-//! Each kind is switched in `/etc/ferrix/lode.d/events.conf`, a person's
-//! `~/.config/ferrix/lode/events.conf` over it (`ferrix_lode_core::events`,
+//! Each kind is switched in `/etc/xaqu/lode.d/events.conf`, a person's
+//! `~/.config/xaqu/lode/events.conf` over it (`xaqu_lode_core::events`,
 //! whose defaults this repeats: app errors on, streams and windows off).
 //! The files are read each time an event would be made, so a change takes
 //! effect at once, with no reload. Nothing here waits for lode: a lode that
@@ -47,9 +47,9 @@ pub fn switch(kind: &str) -> Switch {
         },
         _ => Switch { on: true, level: 6 },
     };
-    let mut files = vec![std::path::PathBuf::from("/etc/ferrix/lode.d/events.conf")];
+    let mut files = vec![std::path::PathBuf::from("/etc/xaqu/lode.d/events.conf")];
     if let Some(home) = std::env::var_os("HOME") {
-        files.push(std::path::PathBuf::from(home).join(".config/ferrix/lode/events.conf"));
+        files.push(std::path::PathBuf::from(home).join(".config/xaqu/lode/events.conf"));
     }
     for file in files {
         if let Ok(text) = std::fs::read_to_string(&file) {
@@ -127,7 +127,7 @@ pub fn window_fields(
         ("MESSAGE".to_owned(), message.into_bytes()),
         ("PRIORITY".to_owned(), level.to_string().into_bytes()),
         ("SYSLOG_IDENTIFIER".to_owned(), b"hyprix".to_vec()),
-        ("FERRIX_EVENT".to_owned(), kind.as_bytes().to_vec()),
+        ("XAQU_EVENT".to_owned(), kind.as_bytes().to_vec()),
         ("WINDOW_TITLE".to_owned(), title.as_bytes().to_vec()),
         ("WINDOW_CLASS".to_owned(), class.as_bytes().to_vec()),
         ("WINDOW_PID".to_owned(), pid.to_string().into_bytes()),
@@ -294,7 +294,7 @@ pub fn identifier(program: &str, arguments: &[String]) -> String {
 /// and error to: a pipe into `lode cat -t IDENTIFIER --echo`, which hands
 /// each line to lode under that name and writes it on to hyprix's own
 /// standard output as before, so the console and every gate that reads it
-/// see what they saw; lode keeps the two copies as one (`ferrix_lode_core::
+/// see what they saw; lode keeps the two copies as one (`xaqu_lode_core::
 /// units::Echoes`). The `lode cat` process is reaped as hyprix's other
 /// children are. `None` when session streams are off or there is no lode,
 /// and the program inherits hyprix's output as it always did.
@@ -370,7 +370,7 @@ mod tests {
         let bytes = datagram(&fields);
         let text = String::from_utf8(bytes).unwrap();
         assert!(text.contains("MESSAGE=app error: SuspendThread loop failed (#32770)\n"));
-        assert!(text.contains("FERRIX_EVENT=app-error\n"));
+        assert!(text.contains("XAQU_EVENT=app-error\n"));
         assert!(text.contains("PRIORITY=4\n"));
         assert!(text.contains("WINDOW_DIALOG=1\n"));
     }

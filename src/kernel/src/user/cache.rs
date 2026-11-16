@@ -85,8 +85,8 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 
 use super::vmo::{PoisonTake, Vmo};
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_frame::Frame;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_frame::Frame;
 
 use crate::fallible;
 use crate::mm;

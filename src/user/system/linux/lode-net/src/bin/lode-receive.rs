@@ -1,4 +1,4 @@
-//! `lode-receive`: Ferrix machines' logs, kept on a Linux host
+//! `lode-receive`: Xaqu machines' logs, kept on a Linux host
 //! (`docs/LOGGING.md` §10.3). An ordinary user's program.
 //!
 //! ```text
@@ -107,7 +107,7 @@ fn parse(args: &[String]) -> Result<Options, Failure> {
     Ok(options)
 }
 
-/// `--root`, or `~/.local/share/ferrix/lode-receive`.
+/// `--root`, or `~/.local/share/xaqu/lode-receive`.
 fn root(options: &Options) -> Result<PathBuf, Failure> {
     if let Some(root) = &options.root {
         return Ok(root.clone());
@@ -121,7 +121,7 @@ fn root(options: &Options) -> Result<PathBuf, Failure> {
                 String::from("no HOME to keep the stores under; give --root"),
             )
         })?;
-    Ok(home.join("ferrix/lode-receive"))
+    Ok(home.join("xaqu/lode-receive"))
 }
 
 /// `--listen`, or every address on `--port` (19532).
@@ -143,7 +143,7 @@ fn pair(options: &Options) -> Result<u8, Failure> {
     let paired = Pki::at(&root)
         .pair(name, &options.servers)
         .map_err(|why| Failure(4, why))?;
-    let remote_dir = format!("/etc/ferrix/lode-upload.d/{name}");
+    let remote_dir = format!("/etc/xaqu/lode-upload.d/{name}");
     let server = options.servers.first().cloned().unwrap_or_default();
     let line = format!(
         "{name} https://{server}:{port}/upload export ca={remote_dir}/ca.pem \
@@ -176,7 +176,7 @@ fn pair(options: &Options) -> Result<u8, Failure> {
             .collect();
         println!(
             "{{\"machine\":{},\"listen\":{},\"ca_fingerprint\":{},\"server_fingerprint\":{},\
-             \"remote_files\":[{}],\"remote_config_file\":\"/etc/ferrix/lode-upload.conf\",\
+             \"remote_files\":[{}],\"remote_config_file\":\"/etc/xaqu/lode-upload.conf\",\
              \"remote_config_line\":{},\"remote_restart\":\"svc enable lode-upload.service && svc restart lode-upload.service\"}}",
             quoted(name),
             quoted(&format!("0.0.0.0:{port}")),
@@ -194,7 +194,7 @@ fn pair(options: &Options) -> Result<u8, Failure> {
         for (local, remote, mode) in &files {
             println!("  {} -> {remote} (mode {mode})", local.display());
         }
-        println!("and put this line in its /etc/ferrix/lode-upload.conf:");
+        println!("and put this line in its /etc/xaqu/lode-upload.conf:");
         println!("  {line}");
         println!("then: svc enable lode-upload.service && svc restart lode-upload.service");
     }
@@ -324,7 +324,7 @@ fn install(options: &Options) -> Result<u8, Failure> {
     let unit = config.join("systemd/user/lode-receive.service");
     let text = format!(
         "# Written by `lode-receive install-service` (docs/LOGGING.md §10.3).\n\
-         [Unit]\nDescription=lode-receive: logs from Ferrix machines\n\n\
+         [Unit]\nDescription=lode-receive: logs from Xaqu machines\n\n\
          [Service]\nExecStart={} run --root {} --listen {listen}\nRestart=on-failure\n\
          RestartSec=5s\n\n[Install]\nWantedBy=default.target\n",
         program.display(),
@@ -368,14 +368,14 @@ fn show(options: &Options) -> Result<u8, Failure> {
                 String::from("show needs --machine DIR (a name `check` lists)"),
             )
         })?;
-    let zone = ferrix_lode_core::time::Zone::utc();
+    let zone = xaqu_lode_core::time::Zone::utc();
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
     for segment in lode_net::store::segments(&[root.join(dir)]) {
         let mut bytes = Vec::new();
         for record in segment.records() {
-            ferrix_lode_core::format::write(
+            xaqu_lode_core::format::write(
                 &record,
-                ferrix_lode_core::format::Output::Json,
+                xaqu_lode_core::format::Output::Json,
                 &zone,
                 &mut bytes,
             );

@@ -8,7 +8,7 @@
 //! all this driver has: no mode setting, no vertical blanking, no GPU.
 //!
 //! 1. START, as the HDMI driver's: the device -- the node the kernel
-//!    publishes for the framebuffer under `ferrix.efifb` -- the driver's end
+//!    publishes for the framebuffer under `xaqu.efifb` -- the driver's end
 //!    of the display control channel, and the framebuffer's one window. The
 //!    mode is in START's fields a tree node leaves zero (`TREE_FIRMWARE_FB`).
 //! 2. The window is mapped write-combining, the one type the kernel lets a
@@ -46,29 +46,29 @@
 
 use core::ptr;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES, Start};
-use ferrix_display_modes::scale::Scaler;
-use ferrix_display_modes::{ModeList, add_scaled};
-use ferrix_displayctl::message::{
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES, Start};
+use xaqu_display_modes::scale::Scaler;
+use xaqu_display_modes::{ModeList, add_scaled};
+use xaqu_displayctl::message::{
     Attach, Hello, MAX_BYTES, MAX_DIMENSION, MAX_SCANOUTS, Message, PORT_RIGHTS, Rect, ScanoutMode,
     Status, Timing, Timings, VERSION,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     FRAMEBUFFER_BGRX, FRAMEBUFFER_RGBX, IoMappingSpec, PACKET_SIGNAL, PACKET_USER, TREE_FIRMWARE_FB,
 };
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page.
 const PAGE: usize = 4096;
@@ -204,7 +204,7 @@ impl Screen {
         // (L.device.39): a refusal here says so on the console, the line
         // wc-ctl-plain expects (docs/DISPLAY.md section 8).
         let base = mapping.map_combining(None).map_err(|_| {
-            ferrix_rt::err!("efifb: the kernel refused the window's mapping");
+            xaqu_rt::err!("efifb: the kernel refused the window's mapping");
             Step::Window
         })?;
         Ok(Screen {
@@ -313,7 +313,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
         control,
     } = started(boot)?;
     let screen = Screen::map(&device, &start)?;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "efifb: {}x{} firmware framebuffer, {} bytes a line, {}",
         screen.width,
         screen.height,
@@ -321,7 +321,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
         if screen.rgbx { "RGBX" } else { "BGRX" }
     );
     let port = port::create(Kernel).map_err(|_| Step::Events)?;
-    ferrix_rt::info!("efifb: window mapped write-combining");
+    xaqu_rt::info!("efifb: window mapped write-combining");
     introduce(&control, &port, start.location, &screen)?;
     let mut list = ModeList::new();
     add_scaled(&mut list, screen.timing());
@@ -331,7 +331,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
             .write(page.encode().as_bytes())
             .map_err(|_| Step::Control)?;
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "efifb: {} modes listed, smaller ones shown scaled",
         list.len()
     );
@@ -499,7 +499,7 @@ impl Serving {
                 }
                 self.scaler = Scaler::new(size, screen).filter(|scaler| !scaler.is_identity());
                 self.clear();
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "efifb: mode {}x{}{}",
                     size.0,
                     size.1,
@@ -589,7 +589,7 @@ impl Serving {
         }
         // Nothing reads the mapping after this: the buffer is gone from the
         // table every copy looks it up in.
-        if ferrix_rt::linux::munmap(buffer.base, buffer.length).is_err() {
+        if xaqu_rt::linux::munmap(buffer.base, buffer.length).is_err() {
             return Status::DeviceRefused;
         }
         Status::Ok
@@ -708,7 +708,7 @@ impl Serving {
 /// x86-64 (a full fence, which drains the write-combining buffers as
 /// `sfence` does, with no assembly of this program's own).
 fn shown() {
-    ferrix_rt::device_barrier();
+    xaqu_rt::device_barrier();
 }
 
 /// Copy a black frame of this process's own to the screen [`TIMED_FRAMES`]
@@ -720,14 +720,14 @@ fn shown() {
 fn time_frames(screen: &Screen) {
     let row = screen.width * PIXEL;
     let frame_len = (row * screen.height).next_multiple_of(4096);
-    let mapped = ferrix_rt::native::vmo::create(Kernel, frame_len)
+    let mapped = xaqu_rt::native::vmo::create(Kernel, frame_len)
         .and_then(|frame| frame.map(None, frame_len, Protection::Read, 0));
     let Ok(card_base) = mapped else {
-        ferrix_rt::warn!("efifb: full-frame copy not timed: no memory for a frame");
+        xaqu_rt::warn!("efifb: full-frame copy not timed: no memory for a frame");
         return;
     };
     time_copies(screen, card_base);
-    let _ = ferrix_rt::linux::munmap(card_base, frame_len);
+    let _ = xaqu_rt::linux::munmap(card_base, frame_len);
 }
 
 /// [`time_frames`]' copies from the frame mapped at `card_base`.
@@ -735,7 +735,7 @@ fn time_copies(screen: &Screen, card_base: usize) {
     let row = screen.width * PIXEL;
     let mut times = [0_u64; TIMED_FRAMES];
     for time in &mut times {
-        let Ok(before) = ferrix_rt::linux::monotonic_nanos() else {
+        let Ok(before) = xaqu_rt::linux::monotonic_nanos() else {
             return;
         };
         for line in 0..screen.height {
@@ -754,14 +754,14 @@ fn time_copies(screen: &Screen, card_base: usize) {
             }
         }
         shown();
-        let Ok(after) = ferrix_rt::linux::monotonic_nanos() else {
+        let Ok(after) = xaqu_rt::linux::monotonic_nanos() else {
             return;
         };
         *time = after.saturating_sub(before);
     }
     times.sort_unstable();
     let median = times.get(TIMED_FRAMES / 2).copied().unwrap_or(0);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "efifb: full-frame copy {}x{}: median {} us over {} (write-combining)",
         screen.width,
         screen.height,

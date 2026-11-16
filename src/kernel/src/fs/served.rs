@@ -20,19 +20,19 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_fsproto::wire::{
+use xaqu_fsproto::wire::{
     ANSWER_BYTES, Answer, DiskUp, EVENT_BYTES, FIRST_NODE, Op, REQUEST_MAX, Request, SLOT_BYTES,
     STATFS_BYTES, decode_dirent, decode_statfs, encode_set_attr,
 };
-use ferrix_native::channel::{self, Channel};
-use ferrix_native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_native::pending::Protection;
-use ferrix_native::vmo::{self, Vmo};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
-use ferrix_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage as _};
-use ferrix_vfs::{
+use xaqu_native::channel::{self, Channel};
+use xaqu_native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_native::pending::Protection;
+use xaqu_native::vmo::{self, Vmo};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
+use xaqu_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage as _};
+use xaqu_vfs::{
     DirEntry, Errno, FileSystem, FileType, Inode, Metadata, NewNode, SetAttributes, StatFs,
 };
 
@@ -73,7 +73,7 @@ impl fmt::Debug for Client {
 /// A new slot VMO, mapped here, and a handle to give the server.
 fn new_slot() -> Result<(usize, OwnedHandle<Kernel>), Errno> {
     let made: Vmo<Kernel> = vmo::create(Kernel, SLOT).map_err(|_| Errno::ENOMEM)?;
-    let (_, at) = ferrix_kernel_core::mm::foreign_window((SLOT as u64).div_ceil(PAGE_SIZE))
+    let (_, at) = xaqu_kernel_core::mm::foreign_window((SLOT as u64).div_ceil(PAGE_SIZE))
         .ok_or(Errno::ENOMEM)?;
     let _ = made
         .map(Some(at as usize), SLOT, Protection::ReadWrite, 0)
@@ -134,7 +134,7 @@ impl Client {
         {
             let _ = self.turn.wait_until_deadline(
                 || !self.busy.load(Ordering::Acquire),
-                ferrix_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS),
+                xaqu_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS),
             );
         }
         before(self);
@@ -163,7 +163,7 @@ impl Client {
                 .map_err(|_| Errno::EIO)?,
             None => self.channel.write(request).map_err(|_| Errno::EIO)?,
         }
-        let until = ferrix_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
+        let until = xaqu_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
         let signals = self
             .channel
             .wait_one(
@@ -219,7 +219,7 @@ pub(crate) fn start(files: u32) {
         crate::println!("  btrfsd   its channel would not take HELLO");
         return;
     }
-    let until = ferrix_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
+    let until = xaqu_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
     let mut bytes = [0_u8; ANSWER_BYTES];
     // The answer carries the events channel, a channel's handle: so this read goes by
     // the kernel's topology path, the one a region's thread once could not.
@@ -289,7 +289,7 @@ fn register(client: &Arc<Client>, up: &DiskUp) {
         .position(|&byte| byte == 0)
         .unwrap_or(up.name.len());
     let name = up.name.get(..end).unwrap_or(&[]);
-    let Some(disk_name) = ferrix_blkring::DiskName::new(up.name) else {
+    let Some(disk_name) = xaqu_blkring::DiskName::new(up.name) else {
         return;
     };
     let device: Arc<dyn BlockDevice> = Arc::new(ServedDisk {
@@ -297,7 +297,7 @@ fn register(client: &Arc<Client>, up: &DiskUp) {
         name: up.name,
         sectors: up.sectors,
         sector_size: up.sector_size,
-        read_only: up.flags & ferrix_blkring::geometry::DeviceFlags::READ_ONLY.0 != 0,
+        read_only: up.flags & xaqu_blkring::geometry::DeviceFlags::READ_ONLY.0 != 0,
     });
     let minor = disk_name.minor();
     let accounted = super::blkio::account_disk(device, DISK_MAJOR, minor);
@@ -414,7 +414,7 @@ impl BlockDevice for ServedDisk {
 fn disk_name(rdev: u64) -> Option<[u8; 8]> {
     let mut found = None;
     devfs::for_each_block(|name, major, minor, _| {
-        if ferrix_vfs::initramfs::makedev(major, minor) == rdev {
+        if xaqu_vfs::initramfs::makedev(major, minor) == rdev {
             let mut stored = [0_u8; 8];
             for (slot, byte) in stored.iter_mut().zip(name) {
                 *slot = *byte;
@@ -455,7 +455,7 @@ pub(crate) fn mount_rw(rdev: u64) -> Result<Arc<dyn FileSystem>, Errno> {
 }
 
 fn open(rdev: u64, writable: bool) -> Result<Arc<dyn FileSystem>, Errno> {
-    let until = ferrix_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
+    let until = xaqu_kernel_core::timer::now_nanos().saturating_add(CALL_PATIENCE_NANOS);
     if !CLOSED.wait_until_deadline(|| CLOSING.load(Ordering::Acquire) == 0, until) {
         return Err(Errno::EBUSY);
     }

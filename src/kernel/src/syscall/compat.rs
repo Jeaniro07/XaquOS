@@ -21,9 +21,9 @@
 //! [`ioctl_passes`] keeps back the `ioctl` requests no handler reads that way
 //! yet. [`socketcall`] turns i386's one socket entry into the call it names.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     FIOCLEX, FIONBIO, FIONCLEX, FIONREAD, TCFLSH, TCGETS, TCGETS2, TCSETS, TCSETS2, TCSETSF,
     TCSETSF2, TCSETSW, TCSETSW2, TCXONC, TIOCGPGRP, TIOCGPTN, TIOCGSID, TIOCGWINSZ, TIOCNOTTY,
     TIOCOUTQ, TIOCSCTTY, TIOCSPGRP, TIOCSPTLCK, TIOCSWINSZ,

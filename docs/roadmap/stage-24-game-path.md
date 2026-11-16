@@ -1,6 +1,6 @@
 # Stage 24 — The game path  ·  *≈ 68 points before the game domain, about 190 with it and the later rows*
 
-A fullscreen game is faster on Ferrix than on a stock Linux desktop on the
+A fullscreen game is faster on Xaqu than on a stock Linux desktop on the
 same hardware, where a system can be: in the time from an input to the
 picture that shows it, and in how even the frames are while the machine does
 something else. [`docs/GAME-PATH.md`](../GAME-PATH.md) is the design and the
@@ -71,7 +71,7 @@ open.
 
 ## Where it stands in the order
 
-After [stage 21](stage-21-bare-metal-gpu-ferrix.md)'s zero-copy landings,
+After [stage 21](stage-21-bare-metal-gpu-xaqu.md)'s zero-copy landings,
 which are not landed. The design names what it stands on:
 
 * **displayctl v9**, flips of a driver's own dmabuf, which stands on
@@ -102,8 +102,8 @@ design says only that G0 goes "as far as a heuristic goes").
 **The switch a person turns exists, with nothing behind it yet.** Since
 2026-10-11 Settings has a game-mode page (`docs/SETTINGS.md`): a list of
 the installed applications with a switch each, kept in the user's
-`~/.config/ferrix/game-mode.conf`, and the launcher starts a switched-on
-application with `FERRIX_GAME_MODE=1`. That is the design's "the user
+`~/.config/xaqu/game-mode.conf`, and the launcher starts a switched-on
+application with `XAQU_GAME_MODE=1`. That is the design's "the user
 turned the session on for it" (§5.4) written down, and what G0 and G5 will
 read. It changes no weight, processor or defence, carries no points of this
 stage, and `test-compositor --boot settings` holds it.
@@ -123,8 +123,8 @@ design's §5, G0 to G5) and of P1 is owed before any code.
 | # | Landing | Points | Proved by |
 |---|---|---|---|
 | R1 | The frame recorder: per-swap times and Present completions in the preload library, and the summariser, brought into the tree under `tools/common/` with the baseline's scripts | 5 | the same binary's record on both guests; a 50 ms sleep injected every ten seconds is counted exactly. No card. **Built 2026-10-14** (below) |
-| R2 | The latency probe and the injector's log: input to scan-out on both systems | 5 | the probe on both; a 16.7 ms delay added in the probe moves the median by one refresh; a gate without the card. No card. **Built 2026-10-14**: `xlatency` and `vptr` in the compositor's workspace, `tools/common/test/latency-sway.sh`, `cargo xtask test-xlatency`. Headless sway with Xwayland: 24.3 ms from send to scan-out (median, 2 refreshes), 40.9 ms with the delay. Ferrix without a card, on R1's yserver clock: 23.9 ms timed on the host from QMP, 2 refreshes; 3 with the delay. The pinned yserver panics on the probe's first `PresentPixmap`, so the gate passes from the pin on R1's yserver (eb7ad7411) on |
-| R3 | The load script, the launch timer, the sleep and wake-up program, and both guests defined with pinned processors and an invariant TSC | 3 | the load holds every processor at 100% on both; the clock line says TSC. **Built 2026-10-14** (`tools/common/game/`): under the load every processor 97.5 to 100% busy on Ferrix (`cargo xtask test-game-rig`, 4 processors) and 99.5 to 100% on the Linux guest without the card (`linux-guest.sh`, 8 processors); the clock is `TSC, calibrated against the HPET` on Ferrix and `tsc` on Linux; without invtsc, the TSC as KVM's paravirtual clock vouches for it, and `kvm-clock`. The figures and controls are in `docs/GAME-PATH.md` §12 |
+| R2 | The latency probe and the injector's log: input to scan-out on both systems | 5 | the probe on both; a 16.7 ms delay added in the probe moves the median by one refresh; a gate without the card. No card. **Built 2026-10-14**: `xlatency` and `vptr` in the compositor's workspace, `tools/common/test/latency-sway.sh`, `cargo xtask test-xlatency`. Headless sway with Xwayland: 24.3 ms from send to scan-out (median, 2 refreshes), 40.9 ms with the delay. Xaqu without a card, on R1's yserver clock: 23.9 ms timed on the host from QMP, 2 refreshes; 3 with the delay. The pinned yserver panics on the probe's first `PresentPixmap`, so the gate passes from the pin on R1's yserver (eb7ad7411) on |
+| R3 | The load script, the launch timer, the sleep and wake-up program, and both guests defined with pinned processors and an invariant TSC | 3 | the load holds every processor at 100% on both; the clock line says TSC. **Built 2026-10-14** (`tools/common/game/`): under the load every processor 97.5 to 100% busy on Xaqu (`cargo xtask test-game-rig`, 4 processors) and 99.5 to 100% on the Linux guest without the card (`linux-guest.sh`, 8 processors); the clock is `TSC, calibrated against the HPET` on Xaqu and `tsc` on Linux; without invtsc, the TSC as KVM's paravirtual clock vouches for it, and `kvm-clock`. The figures and controls are in `docs/GAME-PATH.md` §12 |
 | R4 | The baseline: M1 to M9 on both guests as they are, the system-call breakdown, and the record written into the design's §12 | 3 | the table, with its logs. Needs the card, the Linux guest, and `nv-present` or its successor on the card |
 | R5 | The software measure checked against light, once | 3, or 5 with a built device | the two agree within the device's error on both systems. Needs question 6 |
 
@@ -139,9 +139,9 @@ R1 to R3 needed nobody's decision and no card, and are built.
 with `linux-side/measure-frames.sh`. `cargo xtask frames` builds both
 binaries and summarises a record: median, 99th, 99.9th percentile and worst
 frame, missed refreshes by msc and by time, and each stall's count.
-`cargo xtask test-frames` is the gate on Ferrix (hyprix, yserver, llvmpipe;
+`cargo xtask test-frames` is the gate on Xaqu (hyprix, yserver, llvmpipe;
 it needs yserver's Present clock kept to one refresh, pin d2bf56e2). The same binaries
-(libframerec.so `c28129b3`) recorded on both guests: on Ferrix the three
+(libframerec.so `c28129b3`) recorded on both guests: on Xaqu the three
 stalls were 3, 3 and 3 missed refreshes at hyprix's 75 Hz (50 ms is 3.75
 refreshes there, so three or four; by msc and by time alike; gate
 `r1-frames-clock3`), on the Linux guest 3, 3 and 3 by time at
@@ -155,7 +155,7 @@ what is open are in the design's §12.
 **R1 and R3, 2026-10-14: the launch timer on the real recorder.**
 `framerec.c` answers R3's `rig launch` (`ctor <ns> swap <ns>` on
 `RIG_LAUNCH_FD`), and `test-frames` starts both framegl runs with it: M6 on
-Ferrix, framegl through yserver on hyprix with llvmpipe, is +395.6 ms to
+Xaqu, framegl through yserver on hyprix with llvmpipe, is +395.6 ms to
 the first swap cold and +67.6 ms warm (constructor +2.6 and +2.3 ms; gate
 `rf-frames`). `test-game-rig`'s console boot has no X server and keeps the
 stand-in. The Linux guest's M6 is still to be taken.

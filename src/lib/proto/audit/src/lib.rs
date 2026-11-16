@@ -280,7 +280,7 @@ pub mod power {
     pub const HALT: u32 = 2;
     /// Restart.
     pub const RESTART: u32 = 3;
-    /// A panic asked for when init exits (`ferrix.onexit=panic`).
+    /// A panic asked for when init exits (`xaqu.onexit=panic`).
     pub const PANIC: u32 = 4;
 }
 
@@ -353,9 +353,9 @@ pub mod target {
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Config {
-    /// `ferrix.checks`: 1 when the self-checks run, 0 when `skip` was asked.
+    /// `xaqu.checks`: 1 when the self-checks run, 0 when `skip` was asked.
     Checks = 1,
-    /// `ferrix.devmgr`: 0 when the kernel starts `devmgr`, 1 when pid 1 does.
+    /// `xaqu.devmgr`: 0 when the kernel starts `devmgr`, 1 when pid 1 does.
     Devmgr = 2,
     /// The build's `--mitigations`: 1 when hardened.
     Mitigations = 3,
@@ -364,9 +364,9 @@ pub enum Config {
     Kaslr = 4,
     /// The log kept across a reset (`docs/POSTMORTEM.md` §3): 1 when the
     /// kernel attached the loader's region and mirrors its log there, 0 when
-    /// it did not (`ferrix.pstore=off`, no region, or a region it refused).
+    /// it did not (`xaqu.pstore=off`, no region, or a region it refused).
     Pstore = 5,
-    /// `ferrix.efifb`: 1 when the command line asked for the firmware's
+    /// `xaqu.efifb`: 1 when the command line asked for the firmware's
     /// framebuffer to be lent to a driver (`docs/DISPLAY.md` §8), 0 when it
     /// did not.
     Efifb = 6,
@@ -376,15 +376,15 @@ pub enum Config {
     /// to 3 and the level's in bits 4 to 7. The same set as the `build`
     /// boot line, from the same `cfg`s.
     Build = 7,
-    /// `ferrix.vtd`: 1 when the kernel drives the VT-d units it accepts, 0
-    /// when `ferrix.vtd=off` left every one alone (a recovery
+    /// `xaqu.vtd`: 1 when the kernel drives the VT-d units it accepts, 0
+    /// when `xaqu.vtd=off` left every one alone (a recovery
     /// configuration, not an evaluated one).
     Vtd = 8,
-    /// `ferrix.amdvi`: 1 when the kernel drives the AMD-Vi units the IVRS
-    /// describes, 0 when `ferrix.amdvi=off` left every one alone (a
+    /// `xaqu.amdvi`: 1 when the kernel drives the AMD-Vi units the IVRS
+    /// describes, 0 when `xaqu.amdvi=off` left every one alone (a
     /// recovery configuration, not an evaluated one, `L.iommu.98`).
     AmdVi = 9,
-    /// `ferrix.unisolated`: 1 when the boot lets devmgr start drivers of
+    /// `xaqu.unisolated`: 1 when the boot lets devmgr start drivers of
     /// devices whose DMA is not translated or whose interrupts are not
     /// isolated, 0 when every bus master needs both (a development
     /// configuration, carrying no claim, `L.device.58`).

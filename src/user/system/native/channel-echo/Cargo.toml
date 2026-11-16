@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-channel-echo"
-description = "The smallest native program: a message through a channel and back, built on ferrix-rt"
+name = "xaqu-channel-echo"
+description = "The smallest native program: a message through a channel and back, built on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,7 +14,7 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

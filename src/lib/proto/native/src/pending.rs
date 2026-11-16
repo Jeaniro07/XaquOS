@@ -5,7 +5,7 @@
 //! today fails cleanly on today's kernel and works unchanged on the one that
 //! implements the call.
 //!
-//! All of them are stage 9's, owned by ferrix-4b.
+//! All of them are stage 9's, owned by xaqu-4b.
 //!
 //! * **Process creation**, `0x1030` and `0x1031`. The numbers were copied here
 //!   while `src/lib/proto/native-abi`'s table left `0x1030..=0x1037` free for them;
@@ -19,10 +19,10 @@
 //!   and `MAP_READ`/`MAP_WRITE` constants are not. The constants are copied here
 //!   until they land in `src/lib/proto/native-abi`'s `types`.
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{self, ProcessStatus};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{self, ProcessStatus};
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode, decode_handle, decode_unit};
@@ -32,12 +32,12 @@ use crate::port::Port;
 use crate::vmo::Vmo;
 
 /// `process_create`: `(job, image_vmo, name_ptr, name_len)` → process handle.
-pub use ferrix_native_abi::nr::PROCESS_CREATE;
+pub use xaqu_native_abi::nr::PROCESS_CREATE;
 
 /// `process_start`: `(process, bootstrap)`, the bootstrap a channel handle.
 /// It leaves the caller, becomes the new process's first handle, and its value
 /// arrives in the first argument register at `_start`, zero meaning none.
-pub use ferrix_native_abi::nr::PROCESS_START;
+pub use xaqu_native_abi::nr::PROCESS_START;
 
 object_handle!(
     /// A process, made by [`create_process`] and not necessarily started.
@@ -83,7 +83,7 @@ pub struct Images {
 /// `process_make`: a process in `job` with an empty address space, named
 /// `name`. Not started. What it runs is the creator's to map, by
 /// [`Process::space`](crate::space); the loader library
-/// `ferrix-process-builder` does all of it.
+/// `xaqu-process-builder` does all of it.
 ///
 /// # Errors
 ///
@@ -584,14 +584,14 @@ pub fn take_bootstrap<S: Syscall>(sys: S) -> Result<Option<OwnedHandle<S>>, Erro
 
 /// `vmo_map`'s protection bit for a readable mapping.
 ///
-/// Owned by stage 9 (ferrix-4b), who adds it to `src/lib/proto/native-abi`'s `types`
+/// Owned by stage 9 (xaqu-4b), who adds it to `src/lib/proto/native-abi`'s `types`
 /// with the handler; copied here until then.
 pub const MAP_READ: u32 = 1;
 
 /// `vmo_map`'s protection bit for a writable mapping, only ever with
 /// [`MAP_READ`].
 ///
-/// Owned by stage 9 (ferrix-4b), as [`MAP_READ`].
+/// Owned by stage 9 (xaqu-4b), as [`MAP_READ`].
 pub const MAP_WRITE: u32 = 2;
 
 /// What a mapping of a VMO may do.

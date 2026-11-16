@@ -16,7 +16,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_netwire::ethernet::Mac;
+use xaqu_netwire::ethernet::Mac;
 
 use crate::addr::IpAddress;
 

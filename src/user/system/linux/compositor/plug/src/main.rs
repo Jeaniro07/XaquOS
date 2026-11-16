@@ -22,7 +22,7 @@ use std::os::unix::net::UnixStream;
 
 /// What this plugin says it is: the four fields `PLUGIN_INIT` returns in
 /// Hyprland, in the order the protocol's line carries them.
-const WHAT: &str = "swap,ferrix,1.0,swaps the focused window with its neighbour";
+const WHAT: &str = "swap,xaqu,1.0,swaps the focused window with its neighbour";
 
 /// The dispatcher it adds.
 const DISPATCHER: &str = "swapthem";

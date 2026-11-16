@@ -7,13 +7,13 @@
 use alloc::boxed::Box;
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{self, MAP_READ, MAP_WRITE};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{self, MAP_READ, MAP_WRITE};
 
 use crate::device::{DeviceNode, Location};
 use crate::object::Object;

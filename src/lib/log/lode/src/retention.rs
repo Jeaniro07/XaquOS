@@ -3,7 +3,7 @@
 //! A retention class is a filter with an age and a size. A record goes to
 //! the first class whose filter it matches, and each class is its own
 //! series of segments (`<class>@<boot>-<seq>.fxj`), so expiry is removing
-//! whole files, never rewriting one. `/etc/ferrix/lode.d/retention.conf`:
+//! whole files, never rewriting one. `/etc/xaqu/lode.d/retention.conf`:
 //!
 //! ```text
 //! class errors  where priority <= err          keep 1y   max 256M

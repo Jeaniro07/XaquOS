@@ -368,7 +368,7 @@ fn a_record_that_does_not_parse_or_names_another_store_is_a_miss() {
     let text = record_of(&root, &sample_trace(&root));
     let here = context(&root);
     assert_eq!(
-        holds("unit", &text.replace(MAGIC, "ferrix-step-cache 0"), &here),
+        holds("unit", &text.replace(MAGIC, "xaqu-step-cache 0"), &here),
         None
     );
     assert_eq!(holds("unit", &format!("{text}Q what\n"), &here), None);
@@ -606,7 +606,7 @@ fn the_item_list_fails_closed_when_a_crate_has_no_path() {
 fn gate_sh_s_settings_are_not_part_of_the_environment() {
     // Each gate run has a tag of its own; a record must hold across runs.
     for ignored in [
-        "FERRIX_GATE_TAG",
+        "XAQU_GATE_TAG",
         "GATE_SLOT",
         "GATE_STEP_CACHE",
         "GATE_PRIORITY",
@@ -617,7 +617,7 @@ fn gate_sh_s_settings_are_not_part_of_the_environment() {
         "RUSTFLAGS",
         "XDG_CONFIG_HOME",
         "XDG_RUNTIME_DIR",
-        "FERRIX_INIT",
+        "XAQU_INIT",
         "PATH",
         "GATE_SOMETHING_NEW",
     ] {

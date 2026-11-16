@@ -23,9 +23,9 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{CLONE_FILES, CLONE_FS};
-use ferrix_vfs::{Context, Namespace};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{CLONE_FILES, CLONE_FS};
+use xaqu_vfs::{Context, Namespace};
 
 use crate::fallible;
 use crate::fs;
@@ -276,7 +276,7 @@ pub(crate) fn owner_of(namespace: &Namespace) -> Arc<userns::UserNamespace> {
 /// The user namespace that owns the filesystem `mount` is of, Linux's
 /// `s_user_ns`: the confined caller's that mounted it, the first for every
 /// other.
-pub(crate) fn filesystem_owner_of(mount: &ferrix_vfs::Mount) -> Arc<userns::UserNamespace> {
+pub(crate) fn filesystem_owner_of(mount: &xaqu_vfs::Mount) -> Arc<userns::UserNamespace> {
     mount
         .filesystem_owner()
         .and_then(|held| held.downcast::<userns::UserNamespace>().ok())
@@ -294,7 +294,7 @@ pub(crate) fn filesystem_owner_of(mount: &ferrix_vfs::Mount) -> Arc<userns::User
 /// `EPERM`.
 pub(crate) fn may_remount_filesystem(
     process: &Process,
-    mount: &ferrix_vfs::Mount,
+    mount: &xaqu_vfs::Mount,
 ) -> Result<(), Errno> {
     let owner = filesystem_owner_of(mount);
     if process.with_credentials(|held| userns::capable_over(held, &owner, CAP_SYS_ADMIN)) {

@@ -202,7 +202,7 @@ impl Rights {
     /// only the creator, only through a space handle it took before the
     /// start, and no wider than that handle's rights. A handle to a process
     /// the kernel started with authority of its own -- `devmgr` under
-    /// `ferrix.devmgr=init` -- hands its holder none of that authority.
+    /// `xaqu.devmgr=init` -- hands its holder none of that authority.
     pub const PROCESS: Rights =
         Rights(Rights::DUPLICATE.0 | Rights::TRANSFER.0 | Rights::WAIT.0 | Rights::MANAGE.0);
     /// What a new timer carries (`docs/microkernel/K10.md`).
@@ -319,7 +319,7 @@ impl Requested {
 
 /// What a handle to a native image carries (K15): it can be read and mapped
 /// executable and moved, and neither written through nor duplicated. What the
-/// kernel hands `devmgr` for each driver, and what `ferrix-process-builder`'s
+/// kernel hands `devmgr` for each driver, and what `xaqu-process-builder`'s
 /// `Image::new` narrows a VMO handle to.
 pub const IMAGE_RIGHTS: Rights =
     Rights(Rights::READ.0 | Rights::MAP.0 | Rights::EXECUTE.0 | Rights::TRANSFER.0);

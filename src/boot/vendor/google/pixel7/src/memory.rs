@@ -13,8 +13,8 @@
 //! than kept as a list and split in place: the layers are few, the arithmetic
 //! is a sweep over their edges, and no layer can be half-applied.
 
-use ferrix_bootinfo::{MemKind, MemRegion, PAGE_SIZE};
-use ferrix_fdt::Fdt;
+use xaqu_bootinfo::{MemKind, MemRegion, PAGE_SIZE};
+use xaqu_fdt::Fdt;
 
 /// Layers the map can hold. The Pixel 7's tree reserves about seventy ranges.
 const MAX_LAYERS: usize = 192;

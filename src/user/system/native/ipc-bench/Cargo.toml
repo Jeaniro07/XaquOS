@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-ipc-bench"
+name = "xaqu-ipc-bench"
 description = "Times a channel round trip between two native processes: the figure Zircon's IPC is quoted by"
 version.workspace = true
 edition.workspace = true
@@ -14,9 +14,9 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-process-builder.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-process-builder.workspace = true
 
 [lints]
 workspace = true

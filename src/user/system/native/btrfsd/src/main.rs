@@ -1,5 +1,5 @@
 //! btrfsd, the filesystem server (`docs/MICROKERNEL.md` §6.3,
-//! `docs/microkernel/BTRFSD.md`): `ferrix-btrfs` and `ferrix-btrfs-vfs`, byte for
+//! `docs/microkernel/BTRFSD.md`): `xaqu-btrfs` and `xaqu-btrfs-vfs`, byte for
 //! byte, in a process of their own, over the block ring in user space. The partition
 //! manager starts it with a job of its own, measured.
 //!
@@ -21,29 +21,29 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_blkclient::{Mapped, Shared, held_mapping};
-use ferrix_btrfs_vfs::Btrfs;
-use ferrix_btrfs_vfs::rw::RwBtrfs;
-use ferrix_fsproto::server::{Slot, Volume};
-use ferrix_fsproto::wire::{ANSWER_BYTES, Answer, Op, REQUEST_MAX, Request, SLOT_BYTES};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::space::Space;
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_sync::SpinParker;
-use ferrix_vfs::tmpfs::HeapStorage;
-use ferrix_vfs::{Clock, Timespec};
+use xaqu_blkclient::{Mapped, Shared, held_mapping};
+use xaqu_btrfs_vfs::Btrfs;
+use xaqu_btrfs_vfs::rw::RwBtrfs;
+use xaqu_fsproto::server::{Slot, Volume};
+use xaqu_fsproto::wire::{ANSWER_BYTES, Answer, Op, REQUEST_MAX, Request, SLOT_BYTES};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::space::Space;
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_sync::SpinParker;
+use xaqu_vfs::tmpfs::HeapStorage;
+use xaqu_vfs::{Clock, Timespec};
 
 use crate::disks::{disks, install, now};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The start's message: the handles after the debug log.
 const START_HANDLES: usize = 5;
@@ -130,7 +130,7 @@ impl Clock for WallClock {
 const MAX_FILE_SIZE: u64 = 1 << 46;
 
 fn say_btrfs(why: core::fmt::Arguments<'_>) {
-    ferrix_rt::notice!("btrfs    {why}");
+    xaqu_rt::notice!("btrfs    {why}");
 }
 
 /// The volume on the disk at `index`, mounted once whoever asks again, and as
@@ -140,7 +140,7 @@ fn volume_on(
     dev_no: u64,
     writable: bool,
     clock: &Arc<WallClock>,
-) -> Result<Arc<dyn ferrix_vfs::FileSystem>, Errno> {
+) -> Result<Arc<dyn xaqu_vfs::FileSystem>, Errno> {
     let entry = disks().entries.get(index).ok_or(Errno::ENXIO)?;
     if let Some(mounted) = entry.filesystem.as_ref() {
         if entry.writable != writable {
@@ -152,7 +152,7 @@ fn volume_on(
         index,
         sector: u64::from(entry.sector_size),
     };
-    let mounted: Arc<dyn ferrix_vfs::FileSystem> = if writable {
+    let mounted: Arc<dyn xaqu_vfs::FileSystem> = if writable {
         RwBtrfs::mount(
             device,
             dev_no,
@@ -194,7 +194,7 @@ impl Client {
         match self.answer_control(&request, owned) {
             Ok(done) => (done, None),
             Err(errno) => {
-                ferrix_rt::notice!("btrfsd   {:?} refused: errno {}", request.op, errno.0);
+                xaqu_rt::notice!("btrfsd   {:?} refused: errno {}", request.op, errno.0);
                 (Answer::refused(errno), None)
             }
         }
@@ -422,7 +422,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     if got.handles != START_HANDLES {
         return 4;
     }
-    ferrix_rt::log::use_debug_log(handles[0]);
+    xaqu_rt::log::use_debug_log(handles[0]);
     let cores: Channel<Kernel> = Channel::from_owned(OwnedHandle::from_raw(Kernel, handles[1]));
     let control: Channel<Kernel> = Channel::from_owned(OwnedHandle::from_raw(Kernel, handles[2]));
     let space = Space::from_owned(OwnedHandle::from_raw(Kernel, handles[3]));
@@ -446,7 +446,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
             mono_at_hello: now(),
         }),
     };
-    ferrix_rt::notice!("btrfsd   up: serving one partition's disks");
+    xaqu_rt::notice!("btrfsd   up: serving one partition's disks");
     let wake = Signals::READABLE | Signals::PEER_CLOSED;
     if disks()
         .cores
@@ -478,7 +478,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
             Ok(packet) if packet.key == KEY_CONTROL => {
                 if !client.serve_control() {
                     // Its client is gone: nothing here is anyone's now.
-                    ferrix_rt::notice!("btrfsd   its client ended");
+                    xaqu_rt::notice!("btrfsd   its client ended");
                     return 0;
                 }
                 if client

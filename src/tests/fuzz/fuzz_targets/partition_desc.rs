@@ -7,7 +7,7 @@
 
 #![no_main]
 
-use ferrix_partition_desc::{Description, MAX_BYTES, MAX_DEVICES, MAX_PARTITIONS};
+use xaqu_partition_desc::{Description, MAX_BYTES, MAX_DEVICES, MAX_PARTITIONS};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
@@ -23,7 +23,7 @@ fuzz_target!(|bytes: &[u8]| {
         assert!(!partition.name().is_empty());
         assert!(partition.devices().count() <= MAX_DEVICES);
         devices += partition.devices().count();
-        servers += usize::from(partition.role() == ferrix_partition_desc::ROLE_FILES);
+        servers += usize::from(partition.role() == xaqu_partition_desc::ROLE_FILES);
     }
     assert!(description.partition(description.count()).is_none());
     assert!(servers <= 1);

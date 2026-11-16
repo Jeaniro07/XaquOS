@@ -594,7 +594,7 @@ impl IntoRawOwned for OwnedFd {
 const fn cmsg_space(count: usize) -> usize {
     // CMSG_SPACE is not a const function in libc, and its value is the
     // header rounded up to an alignment plus the payload rounded up to one.
-    // Both roundings are to `size_of::<usize>()` on every platform Ferrix
+    // Both roundings are to `size_of::<usize>()` on every platform Xaqu
     // builds for.
     let align = size_of::<usize>();
     let header = size_of::<libc::cmsghdr>().div_ceil(align) * align;

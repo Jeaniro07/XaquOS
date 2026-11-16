@@ -9,15 +9,15 @@
 //! (`__i915_request_skip`), and a hang marks the guilty request and bans its
 //! context as `context_mark_guilty` does.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::kmsg::Level;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::kmsg::Level;
 
 use super::backend::{Completion, ContextParams, SubmitError};
 use super::drm::{Call, KDATA};
 use super::objects::{FenceRef, KernelFence, RequestState, Slab, SyncFence, Tables};
 
 /// How long a held wait goes unanswered before the trace names it
-/// (`ferrix.intelgpu.uapitrace`): once, with its fences and the requests not
+/// (`xaqu.intelgpu.uapitrace`): once, with its fences and the requests not
 /// done, the call a hung program is in.
 pub const STUCK_NS: u64 = 2_000_000_000;
 use super::{Backend, Frontend, Host, RequestId, gem, limits, objects, syncobj, vm};

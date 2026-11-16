@@ -17,11 +17,11 @@ about 450 to 480 ns.
 ## How to read the figures
 
 * Both shapes come from one tree, `feature/mk-perf`. Kernel side: `--kernel-option
-  ferrix.checks=skip`, because on this tree restricted-check's case 125 stops the boot.
+  xaqu.checks=skip`, because on this tree restricted-check's case 125 stops the boot.
   User side: `--personality user --set restricted_fastpath=on`. Same processor model,
   same mitigations, same release profile (LTO, one codegen unit), `linuxd` included.
 * Boots alternate, with QEMU pinned to whichever of cores 6 to 11 and its sibling looks
-  quietest, at `nice`. Tools are in `~/.local/share/ferrix/mk-perf/tools` (`abrun.py`).
+  quietest, at `nice`. Tools are in `~/.local/share/xaqu/mk-perf/tools` (`abrun.py`).
 * **Noise.** Whole boots read about 1.3x slower in every row, on both shapes (the "two
   clock modes" of `roadmap/microkernel-m0-baselines.md`). So the ratio quoted here is of
   each side's fastest boot, with the medians beside it. `pagecache-miss-4K` is one pass per

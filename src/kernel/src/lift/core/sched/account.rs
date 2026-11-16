@@ -59,7 +59,7 @@ fn cycles() -> u64 {
 }
 
 fn nanos_of(amount: u64) -> u64 {
-    ferrix_vdso::counter_nanos(amount, crate::arch::counter_hz())
+    xaqu_vdso::counter_nanos(amount, crate::arch::counter_hz())
 }
 
 #[cold]

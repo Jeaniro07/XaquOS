@@ -21,7 +21,7 @@
 
 #![no_main]
 
-use ferrix_virtio::gpu::{
+use xaqu_virtio::gpu::{
     BLOB_MEM_HOST3D, Box3d, CAPSET_VIRGL2, CMD_RESOURCE_MAP_BLOB, CONTEXT_NAME_LEN, Command,
     Context, DISPLAY_INFO_LEN, Format, GpuError, HEADER_LEN, MAP_INFO_LEN, MAX_CAPSET_SIZE,
     MAX_DIMENSION, MemEntry, PAGE_SIZE, Rect, Response, backing_entries,

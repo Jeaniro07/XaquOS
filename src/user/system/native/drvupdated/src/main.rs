@@ -5,7 +5,7 @@
 //! watch a descriptor. This helper does the I/O for it. `devmgr` starts it
 //! from the image the initramfs carries in `/lib/drivers`, with a channel
 //! whose other end `devmgr` keeps. The helper listens on the abstract
-//! `AF_UNIX` name `ferrix.devmgr.update`. It takes one connection at a time,
+//! `AF_UNIX` name `xaqu.devmgr.update`. It takes one connection at a time,
 //! closes any peer whose `SO_PEERCRED` uid is not root's, and reads a
 //! request and the image's bytes into a VMO of its own making. It hands the
 //! request and the VMO to `devmgr` and writes `devmgr`'s answer back to the
@@ -20,12 +20,12 @@
 #![no_std]
 #![no_main]
 
-use ferrix_drvupdate_proto::{ANSWER_BYTES, Answer, Outcome, REQUEST_BYTES, Request, SOCKET_NAME};
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::{Deadline, Handle, Object, Signals, vmo};
-use ferrix_rt::{Bootstrap, Kernel, linux};
+use xaqu_drvupdate_proto::{ANSWER_BYTES, Answer, Outcome, REQUEST_BYTES, Request, SOCKET_NAME};
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::{Deadline, Handle, Object, Signals, vmo};
+use xaqu_rt::{Bootstrap, Kernel, linux};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Where the helper gave up, as its exit status.
 #[repr(i32)]
@@ -142,8 +142,8 @@ fn ask(devmgr: &Channel<Kernel>, header: &[u8; REQUEST_BYTES], image: vmo::Vmo<K
                 return Answer::decode(bytes.get(..got.bytes).unwrap_or_default())
                     .unwrap_or(Answer::of(Outcome::Unanswered));
             }
-            Err(ferrix_rt::native::channel::ReadError::Failed(
-                ferrix_rt::native::Error::ShouldWait,
+            Err(xaqu_rt::native::channel::ReadError::Failed(
+                xaqu_rt::native::Error::ShouldWait,
             )) => {}
             Err(_) => return Answer::of(Outcome::Unanswered),
         }

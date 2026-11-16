@@ -1,5 +1,5 @@
 //! The `$5$` and `$6$` password hashes: Ulrich Drepper's "Unix crypt using
-//! SHA-256 and SHA-512" (2007), which glibc, musl and Ferrix's own C library
+//! SHA-256 and SHA-512" (2007), which glibc, musl and Xaqu's own C library
 //! (`src/user/system/linux/ferrousli/src/crypt/sha2.rs`) all implement.
 //!
 //! `authd` reads them only to take a credential over: a seed written with

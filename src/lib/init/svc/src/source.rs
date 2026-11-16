@@ -5,9 +5,9 @@
 //!
 //! | [`Layer`] | Directory | Written by |
 //! |---|---|---|
-//! | [`Runtime`](Layer::Runtime) | `/run/ferrix/units` | generators, at every boot |
-//! | [`Admin`](Layer::Admin) | `/etc/ferrix/units` | the administrator; `svc enable` |
-//! | [`Image`](Layer::Image) | `/lib/ferrix/units` | the image |
+//! | [`Runtime`](Layer::Runtime) | `/run/xaqu/units` | generators, at every boot |
+//! | [`Admin`](Layer::Admin) | `/etc/xaqu/units` | the administrator; `svc enable` |
+//! | [`Image`](Layer::Image) | `/lib/xaqu/units` | the image |
 //!
 //! The crate reads no directory. The backend walks the three and hands each
 //! entry to [`Source::add`] under its path relative to its directory, as an
@@ -51,11 +51,11 @@ const MAX_LINKS: usize = 32;
 /// One of the three unit directories, highest first in [`Layer::ALL`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Layer {
-    /// `/run/ferrix/units`.
+    /// `/run/xaqu/units`.
     Runtime,
-    /// `/etc/ferrix/units`.
+    /// `/etc/xaqu/units`.
     Admin,
-    /// `/lib/ferrix/units`.
+    /// `/lib/xaqu/units`.
     Image,
 }
 
@@ -66,9 +66,9 @@ impl Layer {
     /// Its path.
     pub fn directory(self) -> &'static str {
         match self {
-            Layer::Runtime => "/run/ferrix/units",
-            Layer::Admin => "/etc/ferrix/units",
-            Layer::Image => "/lib/ferrix/units",
+            Layer::Runtime => "/run/xaqu/units",
+            Layer::Admin => "/etc/xaqu/units",
+            Layer::Image => "/lib/xaqu/units",
         }
     }
 }

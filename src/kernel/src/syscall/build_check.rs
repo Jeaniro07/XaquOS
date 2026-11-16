@@ -1,18 +1,18 @@
 //! Stage 9's `build`: a process made empty and run where its creator says
 //! (`docs/microkernel/K15.md` §6), through the native dispatcher, as the object
 //! checks drive it. What a real starter does end to end is the boot's driver
-//! starts, by `ferrix-process-builder` under `devmgr`.
+//! starts, by `xaqu-process-builder` under `devmgr`.
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{IMAGE_RIGHTS, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{IMAGE_RIGHTS, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     JOB_MEASURED, JOB_MEMORY, JOB_SEALED, MAP_EXECUTE, MAP_NO_PAGER, MAP_NONE, MAP_READ, MAP_WRITE,
     VMO_SEAL,
 };

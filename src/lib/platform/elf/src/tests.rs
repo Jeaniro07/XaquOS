@@ -831,12 +831,12 @@ fn reads_the_interpreter_path_without_its_nul() {
             PT_INTERP,
             PF_R,
             0x2000,
-            b"/lib/ld-ferrix.so.1\0".to_vec(),
+            b"/lib/ld-xaqu.so.1\0".to_vec(),
             0,
         )
         .build();
     let elf = Elf::parse(&image).unwrap();
-    assert_eq!(elf.interpreter(), Some(Ok(&b"/lib/ld-ferrix.so.1"[..])));
+    assert_eq!(elf.interpreter(), Some(Ok(&b"/lib/ld-xaqu.so.1"[..])));
 }
 
 #[test]

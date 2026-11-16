@@ -15,7 +15,7 @@
 //!
 //! Before the round trips it times [`ROUNDS`] `object_wait_one`s on a signal
 //! already asserted, so the floor -- a native call that does not sleep -- is
-//! printed beside the trip. Times are the processor's counter (`ferrix_rt::counter`),
+//! printed beside the trip. Times are the processor's counter (`xaqu_rt::counter`),
 //! converted to nanoseconds by the monotonic clock read around the run.
 //! Each line is `ipc-bench <what> n=<count> min=<ns> p50=<ns> p90=<ns>
 //! p99=<ns> mean=<ns>`, the percentiles to an eighth of a power of two.
@@ -27,17 +27,17 @@
 
 use core::fmt::Write as _;
 
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_process_builder::build;
-use ferrix_rt::linux::{self, numbers};
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::job::{Job, for_cgroup};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::native::{Deadline, Error, Handle, Object, OwnedHandle, Signals};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_process_builder::build;
+use xaqu_rt::linux::{self, numbers};
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::job::{Job, for_cgroup};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::native::{Deadline, Error, Handle, Object, OwnedHandle, Signals};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Round trips timed, after [`WARMUP`] untimed ones.
 const ROUNDS: u32 = 20_000;
@@ -124,9 +124,9 @@ fn domain_client(launcher: &Channel<Kernel>, server: &Channel<Kernel>) -> Result
     }
     let clock = Clock::start();
     for _ in 0..ROUNDS {
-        let before = ferrix_rt::counter().unwrap_or(0);
+        let before = xaqu_rt::counter().unwrap_or(0);
         call_trip(server, &message)?;
-        call.add(ferrix_rt::counter().unwrap_or(0).wrapping_sub(before));
+        call.add(xaqu_rt::counter().unwrap_or(0).wrapping_sub(before));
     }
     let scale = clock.stop();
     let line = call.line("domain-call", scale);
@@ -197,11 +197,11 @@ fn client() -> Result<(), i32> {
     let mut floor = Histogram::new();
     let clock = Clock::start();
     for _ in 0..ROUNDS {
-        let before = ferrix_rt::counter().unwrap_or(0);
+        let before = xaqu_rt::counter().unwrap_or(0);
         let _ = mine
             .wait_one(Signals::WRITABLE, Deadline::Never)
             .map_err(|_| 10)?;
-        floor.add(ferrix_rt::counter().unwrap_or(0).wrapping_sub(before));
+        floor.add(xaqu_rt::counter().unwrap_or(0).wrapping_sub(before));
     }
     let scale = clock.stop();
     floor.print("floor", scale);
@@ -215,9 +215,9 @@ fn client() -> Result<(), i32> {
     }
     let clock = Clock::start();
     for _ in 0..ROUNDS {
-        let before = ferrix_rt::counter().unwrap_or(0);
+        let before = xaqu_rt::counter().unwrap_or(0);
         round_trip(&mine, &message, &mut back, &mut handles)?;
-        trip.add(ferrix_rt::counter().unwrap_or(0).wrapping_sub(before));
+        trip.add(xaqu_rt::counter().unwrap_or(0).wrapping_sub(before));
     }
     let scale = clock.stop();
     trip.print("trip", scale);
@@ -230,9 +230,9 @@ fn client() -> Result<(), i32> {
     }
     let clock = Clock::start();
     for _ in 0..ROUNDS {
-        let before = ferrix_rt::counter().unwrap_or(0);
+        let before = xaqu_rt::counter().unwrap_or(0);
         call_trip(&mine, &message)?;
-        call.add(ferrix_rt::counter().unwrap_or(0).wrapping_sub(before));
+        call.add(xaqu_rt::counter().unwrap_or(0).wrapping_sub(before));
     }
     let scale = clock.stop();
     call.print("call", scale);
@@ -307,7 +307,7 @@ fn round_trip(
 /// new channel as its bootstrap, and keep the other.
 fn spawn(job: &Job<Kernel>, image: &Vmo<Kernel>, name: &str) -> Result<Channel<Kernel>, i32> {
     let (mine, theirs) = channel::create(Kernel).map_err(|_| 8)?;
-    let built = build(job, image, name, ferrix_rt::ELF_MACHINE).map_err(|_| 9)?;
+    let built = build(job, image, name, xaqu_rt::ELF_MACHINE).map_err(|_| 9)?;
     let process = built.run(theirs.into_owned()).map_err(|_| 9)?;
     // The process handle goes; the process lives until its channel does.
     drop(process);
@@ -343,7 +343,7 @@ fn prepare() -> Result<(Vmo<Kernel>, Job<Kernel>), i32> {
         at = at.saturating_add(got);
     }
     let _ = linux::close(fd);
-    let image = ferrix_process_builder::image(image).map_err(|_| 5)?;
+    let image = xaqu_process_builder::image(image).map_err(|_| 5)?;
 
     // Mounted and made here, what is there already being as good: the shell
     // running this may have no `mount` or `mkdir`.
@@ -414,7 +414,7 @@ impl Clock {
     fn start() -> Clock {
         Clock {
             nanos: linux::monotonic_nanos().unwrap_or(0),
-            ticks: ferrix_rt::counter().unwrap_or(0),
+            ticks: xaqu_rt::counter().unwrap_or(0),
         }
     }
 
@@ -423,7 +423,7 @@ impl Clock {
         let nanos = linux::monotonic_nanos()
             .unwrap_or(0)
             .saturating_sub(self.nanos);
-        let ticks = ferrix_rt::counter()
+        let ticks = xaqu_rt::counter()
             .unwrap_or(0)
             .saturating_sub(self.ticks)
             .max(1);

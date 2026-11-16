@@ -20,7 +20,7 @@
 //!
 //! A device that merely refuses, stalls or will not reset is reported and
 //! skipped. On the machines `xtask` boots that would still be a regression,
-//! and `xtask test-boot` fails the boot that reads no entropy. But Ferrix does
+//! and `xtask test-boot` fails the boot that reads no entropy. But Xaqu does
 //! not only boot where its own tools configured the hypervisor: libvirt adds a
 //! virtio-rng to every guest it defines, and one backed by a rate-limited or
 //! drained entropy source can miss any deadline chosen here without anything
@@ -41,21 +41,21 @@
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
-use ferrix_pci::bar::{Bar, Region};
-use ferrix_pci::capability::{Capability, MSIX_ENTRY_SIZE, MsiX};
-use ferrix_pci::header::{COMMAND, COMMAND_BUS_MASTER, COMMAND_MEMORY_SPACE};
-use ferrix_pci::msix::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
+use xaqu_pci::bar::{Bar, Region};
+use xaqu_pci::capability::{Capability, MSIX_ENTRY_SIZE, MsiX};
+use xaqu_pci::header::{COMMAND, COMMAND_BUS_MASTER, COMMAND_MEMORY_SPACE};
+use xaqu_pci::msix::{
     self, CAPABILITY_CONTROL, CONTROL_ENABLE, CONTROL_FUNCTION_MASK, ENTRY_ADDRESS_HIGH,
     ENTRY_ADDRESS_LOW, ENTRY_DATA, ENTRY_VECTOR_CONTROL, VECTOR_CONTROL_MASKED,
 };
-use ferrix_pci::virtio::{Location, Transport};
-use ferrix_pci::{Address, ConfigSpace};
-use ferrix_virtio::pci::{
+use xaqu_pci::virtio::{Location, Transport};
+use xaqu_pci::{Address, ConfigSpace};
+use xaqu_virtio::pci::{
     self as transport, COMMON_CONFIG_LEN, CommonConfig, NO_VECTOR, QueueAddresses, TransportError,
 };
-use ferrix_virtio::{Buffer, Layout, QueueMemory, SplitQueue};
+use xaqu_virtio::{Buffer, Layout, QueueMemory, SplitQueue};
 
 use super::{Failure, Space};
 use crate::arch;

@@ -22,7 +22,7 @@ recognised_by = "arch; UEFI"
 id = 258            # 0x0102
 arch = "x86_64"
 generic = false
-recognised_by = "SMBIOS processor and board strings of the SOYO M4 Pro (ferrix-smbios)"
+recognised_by = "SMBIOS processor and board strings of the SOYO M4 Pro (xaqu-smbios)"
 
 [family.aarch64-uefi-virt]
 id = 513            # 0x0201

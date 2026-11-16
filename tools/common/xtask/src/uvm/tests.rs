@@ -1,9 +1,9 @@
 use super::{STEPS, judge, negative_failed_there, verdict};
 
-// Recorded from the first run under Ferrix (2026-10-02, x86-64 under KVM),
+// Recorded from the first run under Xaqu (2026-10-02, x86-64 under KVM),
 // the lines `boot` returns.
 const PASSED_ON_X86_64: &str = "\
-  7.28 | FERRIX-BOOT-OK stages 1-12\n\
+  7.28 | XAQU-BOOT-OK stages 1-12\n\
   7.28 |   init     19351 KiB program built in, starting `sh -c` with a built-in script\n\
   7.28 | nvidia-uvm:  Built-in UVM tests are enabled. This is a security risk.\n\
   7.28 | uvm-selftest: module init 0\n\
@@ -106,7 +106,7 @@ fn a_run_that_stopped_early_is_refused() {
 
 // The negative control, recorded from the same day's gate.
 const NEGATIVE_ON_X86_64: &str = "\
-  7.18 | FERRIX-BOOT-OK stages 1-12\n\
+  7.18 | XAQU-BOOT-OK stages 1-12\n\
   7.18 |   init     19350 KiB program built in, starting `sh -c` with a built-in script\n\
   7.19 | nvidia-uvm:  Built-in UVM tests are enabled. This is a security risk.\n\
   7.19 | uvm-selftest: module init 0\n\

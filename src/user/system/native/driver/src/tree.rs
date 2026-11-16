@@ -10,10 +10,10 @@
 
 use core::marker::PhantomData;
 
-use ferrix_blkring::control::Start;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::Device as DeviceHandle;
-use ferrix_rt::native::port::Port;
+use xaqu_blkring::control::Start;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::Device as DeviceHandle;
+use xaqu_rt::native::port::Port;
 
 use crate::mmio;
 use crate::start::Bind;

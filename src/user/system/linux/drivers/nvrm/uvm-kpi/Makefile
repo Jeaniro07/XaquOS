@@ -1,24 +1,24 @@
 # Builds NVIDIA's nvidia-uvm from a fetched open-gpu-kernel-modules tree
-# against uvm-kpi, Ferrix's Linux-compatible header set, as user-space
+# against uvm-kpi, Xaqu's Linux-compatible header set, as user-space
 # objects for nvrm (docs/NVIDIA.md §11.3).
 #
 #   make NVSRC=<tree> OUT=<dir> [CC=gcc]
-#   make NVSRC=<tree> OUT=<dir> ferrix
+#   make NVSRC=<tree> OUT=<dir> xaqu
 #
 # NVSRC is the open-gpu-kernel-modules tree at 580.173.02, by default where
 # tools/common/fetch/fetch-nvidia.sh unpacks it; OUT is a
 # build directory outside the checkout. `all` links uvm-selftest against
-# the host's C library, to run on the host; `ferrix` links it statically
-# against ferrousli, Ferrix's own C library, to boot as init on Ferrix
+# the host's C library, to run on the host; `xaqu` links it statically
+# against ferrousli, Xaqu's own C library, to boot as init on Xaqu
 # (`cargo xtask test-uvm`), together with its negative control.
 
-NVSRC ?= $(HOME)/.local/share/ferrix/nvidia/580.173.02/src
-OUT   ?= $(HOME)/.local/share/ferrix/target-nvidia-cuda/uvm-kpi
+NVSRC ?= $(HOME)/.local/share/xaqu/nvidia/580.173.02/src
+OUT   ?= $(HOME)/.local/share/xaqu/target-nvidia-cuda/uvm-kpi
 CC    ?= gcc
 KPI   := $(CURDIR)
 UVM   := $(NVSRC)/kernel-open/nvidia-uvm
 
-# The UVM sources of the Ferrix profile: NVIDIA's list less uvm_common.c
+# The UVM sources of the Xaqu profile: NVIDIA's list less uvm_common.c
 # (GPL-2.0-or-later, replaced by kpi/uvm_common.c). The tests stay in: the
 # self-test runner calls them.
 UVM_SOURCES := $(filter-out uvm_common.c,$(notdir $(shell sed -n 's|^NVIDIA_UVM_SOURCES += nvidia-uvm/||p' $(UVM)/nvidia-uvm-sources.Kbuild)))
@@ -33,7 +33,7 @@ KPI_OBJECTS := $(patsubst $(KPI)/kpi/%.c,$(OUT)/kpi/%.o,$(KPI_SOURCES))
 UVM_CFLAGS := -std=gnu11 -O2 -g -ffreestanding -nostdinc \
 	-isystem $(shell $(CC) -print-file-name=include) \
 	-I$(KPI)/include -I$(UVM) -I$(NVSRC)/kernel-open/common/inc -I$(NVSRC)/kernel-open \
-	-include $(KPI)/include/ferrix_kpi.h \
+	-include $(KPI)/include/xaqu_kpi.h \
 	-D__KERNEL__ -DMODULE -DNVRM -DNV_VERSION_STRING=\"580.173.02\" \
 	-DNVIDIA_UVM_ENABLED -DNVIDIA_UNDEF_LEGACY_BIT_MACROS -DLinux -D__linux__ \
 	-DNV_UVM_ENABLE -DNV_KERNEL_INTERFACE_LAYER -DNV_SPECTRE_V2=0 \
@@ -74,7 +74,7 @@ $(OUT)/selftest/%.o: $(KPI)/selftest/%.c $(wildcard $(KPI)/include/*.h $(KPI)/in
 $(OUT)/uvm-selftest: $(SELFTEST_OBJECTS) $(OUT)/libuvm.a $(OUT)/libuvmkpi.a
 	$(CC) -pthread -o $@ $(SELFTEST_OBJECTS) $(OUT)/libuvm.a $(OUT)/libuvmkpi.a $(OUT)/libuvm.a
 
-# The same program for Ferrix: static, and against ferrousli alone, whose
+# The same program for Xaqu: static, and against ferrousli alone, whose
 # release library cargo builds in $(FERROUSLI_TARGET). The objects are the
 # ones above: nothing in them includes a C library header (kpi/libc.h).
 FERROUSLI        := $(abspath $(KPI)/../../../ferrousli)
@@ -108,7 +108,7 @@ $(OUT)/libuvmkpi-negative.a: $(filter-out $(OUT)/kpi/mm.o,$(KPI_OBJECTS)) $(OUT)
 $(OUT)/uvm-selftest-ferrousli-negative: $(SELFTEST_OBJECTS) $(OUT)/libuvm.a $(OUT)/libuvmkpi-negative.a $(FERROUSLI_LIB)
 	$(call link-ferrousli,$(OUT)/libuvmkpi-negative.a)
 
-ferrix: $(OUT)/uvm-selftest-ferrousli $(OUT)/uvm-selftest-ferrousli-negative
+xaqu: $(OUT)/uvm-selftest-ferrousli $(OUT)/uvm-selftest-ferrousli-negative
 
 test: $(OUT)/uvm-selftest
 	$(OUT)/uvm-selftest
@@ -116,5 +116,5 @@ test: $(OUT)/uvm-selftest
 clean:
 	rm -rf $(OUT)
 
-.PHONY: all clean test ferrix FORCE
+.PHONY: all clean test xaqu FORCE
 FORCE:

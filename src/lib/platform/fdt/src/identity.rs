@@ -4,7 +4,7 @@
 //! (`docs/DRIVER-MODEL.md` §3).
 //!
 //! One definition for both ends: the kernel writes a record with [`encode`],
-//! `devmgr` and `ferrix-driver` read it with [`Record::parse`]. The kernel
+//! `devmgr` and `xaqu-driver` read it with [`Record::parse`]. The kernel
 //! interprets nothing it copies: the `compatible` strings, the path, each
 //! reference's specifier cells and the subtree are the tree's bytes.
 //!

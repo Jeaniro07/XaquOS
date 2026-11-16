@@ -55,10 +55,10 @@ impl ServiceType {
     }
 }
 
-pub use ferrix_restart::Restart;
+pub use xaqu_restart::Restart;
 
 /// `Restart=`'s value. A free function, since [`Restart`] is
-/// `ferrix-restart`'s, which parses nothing.
+/// `xaqu-restart`'s, which parses nothing.
 fn parse_restart(text: &str) -> Result<Restart, ValueError> {
     Ok(match text {
         "no" => Restart::No,
@@ -602,7 +602,7 @@ fn output(text: &str) -> Result<Output, ValueError> {
     })
 }
 
-/// `Offers=` and `Uses=`: dotted names, `ferrix.clipboard`.
+/// `Offers=` and `Uses=`: dotted names, `xaqu.clipboard`.
 fn directory_names(list: &mut Vec<String>, assignment: &Assignment, warnings: &mut Warnings) {
     if assignment.value.is_empty() {
         list.clear();

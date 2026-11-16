@@ -19,9 +19,9 @@ restart, the crash loop) and `object/pin.rs`'s quarantine (F-38).
   5435 question 3): `launch::load_native` makes the personality's own
   Process, the one global `ReturnPath` is the personality's,
   `signal::force` resets a blocked or ignored `SIGBUS` to its default, and
-  nothing in `ferrix_rt` installs a handler; so the signal ends it with
+  nothing in `xaqu_rt` installs a handler; so the signal ends it with
   status 135 (128 + 7), through `fault_signal`, or `fault_end` where `RIPV`
-  is clear. While lode crashd holds `/dev/ferrix-crashes` the end is held up
+  is clear. While lode crashd holds `/dev/xaqu-crashes` the end is held up
   to 2 s (LOGGING §21.7).
 * **A system call's copy** from the driver's memory -- a `channel_write` of
   a buffer, a `vmo_write` -- recovers (H.FAIL.10): the call fails, the frame
@@ -53,7 +53,7 @@ From the consumption to the frames' release, each with how it is handled:
 | `arch/x86_64/mce.rs` `from_user`, `signal_page` | the record's address, the space's walk for the program's page | no read of the frame's data |
 | `mm::retire_frame` | the retired set, the allocator's lists | no read of the frame's data |
 | `syscall/deliver.rs` `force_held`, `fault_end` | the kill; no handler, so no signal frame is written | no touch of the frame |
-| `syscall/process.rs` exit's `clear_child_tid` (`uaccess::copy_to_user`) and `futex::wake_address` | a 4-byte store, and the futex word's read, at the thread's `clear_child_tid` | a store is not a consumption; the futex read is `uaccess`, so `copy_mc` (L.syscall.26); a native driver sets none: only `set_tid_address` (`syscall/linux.rs`) and `clone` with `CLONE_CHILD_CLEARTID` (`syscall/family.rs`) set it, neither of which `ferrix_rt` or `ferrix_native` makes (grep), and `exec` clears it (5444 (5)) |
+| `syscall/process.rs` exit's `clear_child_tid` (`uaccess::copy_to_user`) and `futex::wake_address` | a 4-byte store, and the futex word's read, at the thread's `clear_child_tid` | a store is not a consumption; the futex read is `uaccess`, so `copy_mc` (L.syscall.26); a native driver sets none: only `set_tid_address` (`syscall/linux.rs`) and `clone` with `CLONE_CHILD_CLEARTID` (`syscall/family.rs`) set it, neither of which `xaqu_rt` or `xaqu_native` makes (grep), and `exec` clears it (5444 (5)) |
 | `fs/crashes.rs`, lode crashd | the hold; crashd reads threads, status, maps and descriptors, never the program's memory (no `/proc/<pid>/mem`, no `process_vm_readv`: grep of `src/user/system/native/lode`) | no touch |
 | address-space teardown (`user/space`) | unmap, page tables freed, the shootdown | page tables only, no data |
 | VMO teardown, `mm::release_frame` | the reference dropped; a retired frame kept, never zeroed or handed out (`holds_retired`) | no read of the frame's data |
@@ -122,7 +122,7 @@ drains the other end.
   stand-in's location with status 135; a second start (another pid) whose
   page's frame is not `<f>`; its `restarted 1`; no other `ended by signal`
   line; the shell answering; after the second start's HELLO, the release
-  line with `1 retired, not read`; `/proc/ferrix-mce-retired` still holding
+  line with `1 retired, not read`; `/proc/xaqu-mce-retired` still holding
   `<f>`. One injection a boot (C6).
 * **Kill**: Own with `RIPV` clear: ended without a handler (`fault_end`),
   status 135, the rest as Own.
@@ -222,7 +222,7 @@ row's driver run).
   when that start allocates: the gate shows `<f>` still listed after
   `quarantine_release`, and its keep is stage 2's L.mm.91 check (control c3:
   the keep removed, stage 2 stops); the `signal_page` control expects `machine
-  check`, the text of the stop's `FERRIX-PANIC` line, whose catalogue code
+  check`, the text of the stop's `XAQU-PANIC` line, whose catalogue code
   FX-9005 follows on another line.
 * Code reviewed 2026-10-31 at 64fdf1fc2, ledger 5455: **OK IF (1)-(4)**:
   the criteria amendments' wording, L.mm.91's amendment narrowed to the

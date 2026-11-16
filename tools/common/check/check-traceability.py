@@ -28,7 +28,7 @@ attributes, each a string or a parenthesised list of strings:
 `object::quota::Quota::charge` -- and must be the item's product code. A
 library crate the manifest's `crates` puts in the `core` or `item` ring is
 named the same way from its src/, led by the crate's name:
-`ferrix_btrfs::volume::Volume::read_node`. Its product files are the ones
+`xaqu_btrfs::volume::Volume::read_node`. Its product files are the ones
 check-item-boundary.py's `item_crate_product_files` lists, and they are
 sorted for the "no unintended function" report with the kernel's.
 
@@ -436,8 +436,8 @@ def _impl_type(header: str) -> str:
 
 def item_crate_modules() -> dict[tuple[str, ...], str]:
     """`{(crate, *module): repository-relative file}` for the product files of
-    every `core` and `item` library crate in the manifest: `ferrix-btrfs`'s
-    src/volume.rs is `("ferrix_btrfs", "volume")`. Empty for a manifest, or a
+    every `core` and `item` library crate in the manifest: `xaqu-btrfs`'s
+    src/volume.rs is `("xaqu_btrfs", "volume")`. Empty for a manifest, or a
     boundary gate, that classifies no crates."""
     listing = getattr(boundary, "item_crate_product_files", None)
     if listing is None:
@@ -970,7 +970,7 @@ def landing_refs() -> tuple[str, list[str]]:
     Since 2026-10-23 landings go to `develop` and `main` moves only when a
     promotion merges (docs/REPO-FLOW.md), so a branch is compared with the
     landing branch, not with a `main` that lags it: a reservation landed on
-    develop counts at once. In order: `FERRIX_MAIN_REF` when set; a pull
+    develop counts at once. In order: `XAQU_MAIN_REF` when set; a pull
     request's base in CI; on the gate host, the branch `fleet/land-branch`
     names; in any clone that has it, `origin/develop`; else `main`. Not
     `main` for a promotion: its ids were written and their reservations
@@ -978,12 +978,12 @@ def landing_refs() -> tuple[str, list[str]]:
     against develop, which the promotion is, nothing is new. (CI's shallow
     checkout has neither, and says so.)
     """
-    if os.environ.get("FERRIX_MAIN_REF"):
-        return os.environ["FERRIX_MAIN_REF"], [os.environ["FERRIX_MAIN_REF"]]
+    if os.environ.get("XAQU_MAIN_REF"):
+        return os.environ["XAQU_MAIN_REF"], [os.environ["XAQU_MAIN_REF"]]
     if os.environ.get("GITHUB_BASE_REF"):
         name = os.environ["GITHUB_BASE_REF"]
         return name, [name, f"origin/{name}"]
-    fleet = Path(os.environ.get("FERRIX_FLEET_DIR", Path.home() / ".local/share/ferrix/fleet"))
+    fleet = Path(os.environ.get("XAQU_FLEET_DIR", Path.home() / ".local/share/xaqu/fleet"))
     try:
         name = (fleet / "land-branch").read_text(encoding="utf-8").strip()
     except OSError:
@@ -1121,7 +1121,7 @@ def render(
         "say: *reached*, *not reached*, *not built* (the check is another "
         "architecture's), *not measured* (the coverage evidence was written before "
         "it recorded the checks' own statements), or that the verifier is a host "
-        "test or an xtask gate rather than a boot. The boot's `FERRIX-BOOT-OK`, "
+        "test or an xtask gate rather than a boot. The boot's `XAQU-BOOT-OK`, "
         "the third link, is what `cargo xtask test-boot` gates on each architecture."
     )
     w("")
@@ -1494,17 +1494,17 @@ def self_test() -> list[str]:
     crated = Units(
         {**_KERNEL, crate_file: "pub struct V;\nimpl V {\n    pub fn read(&self) -> u8 { 0 }\n}\n"},
         product={"mm.rs", crate_file},
-        crates={("ferrix_x", "volume"): crate_file},
+        crates={("xaqu_x", "volume"): crate_file},
     )
     got = {
         unit: crated(unit)
-        for unit in ("ferrix_x::volume::V::read", "ferrix_x::volume::read", "ferrix_y::volume::V::read")
+        for unit in ("xaqu_x::volume::V::read", "xaqu_x::volume::read", "xaqu_y::volume::V::read")
     }
     if (
-        got["ferrix_x::volume::V::read"] is not None
-        or "is a method of V" not in str(got["ferrix_x::volume::read"])
-        or "names no module" not in str(got["ferrix_y::volume::V::read"])
-        or "ferrix_x::volume::V::read" not in crated.names()
+        got["xaqu_x::volume::V::read"] is not None
+        or "is a method of V" not in str(got["xaqu_x::volume::read"])
+        or "names no module" not in str(got["xaqu_y::volume::V::read"])
+        or "xaqu_x::volume::V::read" not in crated.names()
         or "mm::zero_frame" not in crated.names()
     ):
         failures.append(f"crate units: {got}, names {crated.names()}")

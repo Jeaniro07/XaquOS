@@ -24,35 +24,35 @@ name = "compositor-wire"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-auth-client"
+name = "xaqu-auth-client"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-proto",
+ "xaqu-auth-proto",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-settings-client"
+name = "xaqu-settings-client"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-client",
- "ferrix-settings-proto",
+ "xaqu-auth-client",
+ "xaqu-settings-proto",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-settings-proto"
+name = "xaqu-settings-proto"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-proto",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
@@ -65,8 +65,8 @@ checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 name = "settingsctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-client",
- "ferrix-settings-client",
+ "xaqu-auth-client",
+ "xaqu-settings-client",
 ]
 
 [[package]]
@@ -74,9 +74,9 @@ name = "settingsd"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "ferrix-auth-client",
- "ferrix-auth-proto",
- "ferrix-settings-proto",
- "ferrix-svc-proto",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
+ "xaqu-settings-proto",
+ "xaqu-svc-proto",
  "libc",
 ]

@@ -26,9 +26,9 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_elf::Class;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{SIGCONT, SIGKILL};
+use xaqu_elf::Class;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{SIGCONT, SIGKILL};
 
 use super::{Checked, Harness};
 use crate::arch;
@@ -81,7 +81,7 @@ pub(super) fn start(harness: &Harness, tail: &[u8]) -> Checked<Running> {
         &file,
         &[b"/freeze"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "freeze check: the program could not be loaded")?;
     let mut procs = Vec::from(tail);

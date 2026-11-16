@@ -16,7 +16,7 @@ use super::trap::TrapFrame;
 use crate::arch::inspect::{EntryFrame, SwitchFrame};
 use crate::trap::Abi;
 
-/// A 64-bit program's system call, as `ferrix_syscall_stub` saved it.
+/// A 64-bit program's system call, as `xaqu_syscall_stub` saved it.
 const SYSCALL: EntryFrame = EntryFrame {
     bytes: size_of::<SyscallFrame>(),
     number: offset_of!(SyscallFrame, rax),
@@ -58,7 +58,7 @@ pub(crate) const fn entry_frame(abi: Abi, in_call: bool) -> Option<EntryFrame> {
     }
 }
 
-/// `ferrix_switch` pushes RBP, RBX, R12, R13, R14, R15, so its saved stack
+/// `xaqu_switch` pushes RBP, RBX, R12, R13, R14, R15, so its saved stack
 /// pointer names R15 and RBP is five words above it, with the return
 /// address the `call` pushed above that.
 pub(crate) const SWITCH_FRAME: SwitchFrame = SwitchFrame {

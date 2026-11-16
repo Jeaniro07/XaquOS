@@ -806,8 +806,8 @@ impl Prompts {
             None => (
                 "No system prompt is waiting".to_owned(),
                 vec![
-                    "A window asking for your password now is not Ferrix.".to_owned(),
-                    "Ferrix asks only on this screen, which no program can draw.".to_owned(),
+                    "A window asking for your password now is not Xaqu.".to_owned(),
+                    "Xaqu asks only on this screen, which no program can draw.".to_owned(),
                 ],
                 String::new(),
                 None,
@@ -944,7 +944,7 @@ type Card = (Vec<u8>, i64, i64, Vec<(Rect, Button)>);
 /// The screen behind a prompt: nothing a client drew.
 const BACKGROUND: Color = Color(0xff10_1418);
 
-/// The card's colours: the Ferrix light theme's.
+/// The card's colours: the Xaqu light theme's.
 const CARD: Rgba = Rgba::rgb(0xf7, 0xf7, 0xf8);
 const INK: Rgba = Rgba::rgb(0x1d, 0x1d, 0x1f);
 const DIM_INK: Rgba = Rgba::rgb(0x6e, 0x6e, 0x73);

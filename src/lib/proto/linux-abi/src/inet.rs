@@ -20,7 +20,7 @@
 //!
 //! # Two byte orders in one structure
 //!
-//! `sin_family` is host order, which under Ferrix is little-endian. The port,
+//! `sin_family` is host order, which under Xaqu is little-endian. The port,
 //! the address and IPv6's flow information are network order, big-endian,
 //! because a program fills them with `htons` and `inet_pton`. IPv6's scope
 //! identifier is an interface index, host order again. [`InetAddress`] holds

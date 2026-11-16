@@ -1,6 +1,6 @@
 //! The driver model design page's SPI example, as the page writes it: an
 //! STM32 SPI controller serving Linux's spidev interface, every resource
-//! through its typed `SpiResources`. Kept compiling as ferrix-driver's test
+//! through its typed `SpiResources`. Kept compiling as xaqu-driver's test
 //! of its API shape (`cargo xtask check` lints it on every architecture); it
 //! is never put in an image, and its providers and class are step 2's and
 //! `CHARDEV.md`'s, so at run time those calls answer `ENOSYS`.
@@ -24,24 +24,24 @@ mod no_memory;
 
 use alloc::vec;
 
-use ferrix_driver::class::{
+use xaqu_driver::class::{
     CharacterDevice, CommandTable, Direction, File, Readiness, UserMemory, UserMemoryReader,
     UserMemoryWriter,
 };
-use ferrix_driver::{
+use xaqu_driver::{
     BindContext, Driver, Errno, Event, Flow, Interrupt, PinControl, PinStates, ReadOnly, ReadWrite,
     Registers, Resources, Result, WriteOnly, bitfields, register_map, run,
 };
-use ferrix_platform::{ClockClient, ResetClient};
+use xaqu_platform::{ClockClient, ResetClient};
 use linux_uapi::spi::{SPI_IOC_MESSAGE_BASE, SPI_IOC_WR_MAX_SPEED_HZ, SpiTransfer};
 
-ferrix_driver::entry!();
+xaqu_driver::entry!();
 
 /// A stand-in for the Linux UAPI crate the page names: `spi_ioc_transfer`
 /// and the two commands the example answers.
 mod linux_uapi {
     pub(crate) mod spi {
-        use ferrix_driver::class::{Plain, PointerField};
+        use xaqu_driver::class::{Plain, PointerField};
 
         /// `SPI_IOC_WR_MAX_SPEED_HZ`.
         pub(crate) const SPI_IOC_WR_MAX_SPEED_HZ: u32 = 0x4004_6B04;

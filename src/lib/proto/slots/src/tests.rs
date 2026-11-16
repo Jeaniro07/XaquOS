@@ -274,12 +274,12 @@ fn loader_words_are_written_or_refused() {
     };
     assert_eq!(
         &out[..len],
-        b"ferrix.slot=b ferrix.slot.boot=trial ferrix.slot.seq=12 \
-          ferrix.slot.disk=12345678-9abc-def0-1122-334455667788 ferrix.slot.sig=32768"
+        b"xaqu.slot=b xaqu.slot.boot=trial xaqu.slot.seq=12 \
+          xaqu.slot.disk=12345678-9abc-def0-1122-334455667788 xaqu.slot.sig=32768"
     );
     let unsigned = LoaderWords { sig: None, ..words };
     let len = write_words(&unsigned, &mut out).unwrap();
-    assert!(out[..len].ends_with(b" ferrix.slot.sig=none"));
+    assert!(out[..len].ends_with(b" xaqu.slot.sig=none"));
     assert_eq!(write_words(&words, &mut [0u8; 20]), None);
 }
 
@@ -302,9 +302,9 @@ fn loader_words_read_back_first_match_and_whole() {
         assert_eq!(parse_words(&line), Some(words));
         // A slot's own line after the loader's cannot override them.
         let forged = std::format!(
-            "{line} ferrix.slot=b ferrix.slot.boot=trial ferrix.slot.seq=99 \
-             ferrix.slot.disk=00000000-0000-0000-0000-000000000000 ferrix.slot.sig=0 \
-             ferrix.root=btrfs"
+            "{line} xaqu.slot=b xaqu.slot.boot=trial xaqu.slot.seq=99 \
+             xaqu.slot.disk=00000000-0000-0000-0000-000000000000 xaqu.slot.sig=0 \
+             xaqu.root=btrfs"
         );
         assert_eq!(parse_words(&forged), Some(words));
         assert_eq!(
@@ -313,31 +313,31 @@ fn loader_words_read_back_first_match_and_whole() {
         );
     }
     // Any of the four missing or malformed: not a slot boot.
-    let whole = "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1 \
-                 ferrix.slot.disk=12345678-9abc-def0-1122-334455667788";
-    // A loader from before `ferrix.slot.sig` wrote none: unsigned.
+    let whole = "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1 \
+                 xaqu.slot.disk=12345678-9abc-def0-1122-334455667788";
+    // A loader from before `xaqu.slot.sig` wrote none: unsigned.
     assert_eq!(parse_words(whole).map(|w| w.sig), Some(None));
     assert_eq!(
-        parse_words(&std::format!("{whole} ferrix.slot.sig=32768")).map(|w| w.sig),
+        parse_words(&std::format!("{whole} xaqu.slot.sig=32768")).map(|w| w.sig),
         Some(Some(0x8000))
     );
     for broken in [
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1 ferrix.slot.disk=12345678-9abc-def0-1122-334455667788 ferrix.slot.sig=x",
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1 ferrix.slot.disk=12345678-9abc-def0-1122-334455667788 ferrix.slot.sig=65536",
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1",
-        "ferrix.slot=c ferrix.slot.boot=good ferrix.slot.seq=1 ferrix.slot.disk=12345678-9abc-def0-1122-334455667788",
-        "ferrix.slot=a ferrix.slot.boot=best ferrix.slot.seq=1 ferrix.slot.disk=12345678-9abc-def0-1122-334455667788",
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=x ferrix.slot.disk=12345678-9abc-def0-1122-334455667788",
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1 ferrix.slot.disk=123456789abcdef011223344556677",
-        "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1 ferrix.slot.disk=12345678+9abc-def0-1122-334455667788",
-        "ferrix.root=btrfs",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1 xaqu.slot.disk=12345678-9abc-def0-1122-334455667788 xaqu.slot.sig=x",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1 xaqu.slot.disk=12345678-9abc-def0-1122-334455667788 xaqu.slot.sig=65536",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1",
+        "xaqu.slot=c xaqu.slot.boot=good xaqu.slot.seq=1 xaqu.slot.disk=12345678-9abc-def0-1122-334455667788",
+        "xaqu.slot=a xaqu.slot.boot=best xaqu.slot.seq=1 xaqu.slot.disk=12345678-9abc-def0-1122-334455667788",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=x xaqu.slot.disk=12345678-9abc-def0-1122-334455667788",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1 xaqu.slot.disk=123456789abcdef011223344556677",
+        "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1 xaqu.slot.disk=12345678+9abc-def0-1122-334455667788",
+        "xaqu.root=btrfs",
     ] {
         assert_eq!(parse_words(broken), None, "{broken}");
     }
 }
 
 fn slot_image(kernel: &[u8], initrd: &[u8], cmdline: &[u8]) -> (SlotHeader, Vec<u8>) {
-    let header = SlotHeader::lay_out(VERSION_1, 3, "ferrix test", kernel, initrd, cmdline);
+    let header = SlotHeader::lay_out(VERSION_1, 3, "xaqu test", kernel, initrd, cmdline);
     let mut image = vec![0u8; header.needed() as usize];
     image[..HEADER_LEN].copy_from_slice(&header.encode());
     for (blob, bytes) in header.blobs().iter().zip([kernel, initrd, cmdline]) {
@@ -352,17 +352,17 @@ fn slot_image(kernel: &[u8], initrd: &[u8], cmdline: &[u8]) -> (SlotHeader, Vec<
 fn a_slot_round_trips_and_verifies() {
     let kernel = vec![0x7F; 10_000];
     let initrd = vec![0x30; 70_000];
-    let (header, image) = slot_image(&kernel, &initrd, b"ferrix.root=tmpfs");
+    let (header, image) = slot_image(&kernel, &initrd, b"xaqu.root=tmpfs");
     assert_eq!(header.kernel.offset, 4096);
     assert_eq!(header.initrd.offset, 4096 * 4);
     assert_eq!(header.cmdline.offset, 4096 * 22);
     let read = SlotHeader::decode(&image, 1 << 20);
     assert_eq!(read, Ok(header));
-    assert_eq!(header.label_text(), "ferrix test");
+    assert_eq!(header.label_text(), "xaqu test");
     for (blob, bytes) in header
         .blobs()
         .iter()
-        .zip([&kernel[..], &initrd, b"ferrix.root=tmpfs"])
+        .zip([&kernel[..], &initrd, b"xaqu.root=tmpfs"])
     {
         let at = blob.offset as usize;
         assert!(blob.matches(&image[at..at + bytes.len()]));
@@ -423,7 +423,7 @@ fn a_slot_header_refuses_what_it_must() {
 
 /// A version-2 header and its slot image, the manifest block left zero.
 fn signed_slot_image(kernel: &[u8], initrd: &[u8], cmdline: &[u8]) -> (SlotHeader, Vec<u8>) {
-    let header = SlotHeader::lay_out(VERSION_2, 7, "ferrix signed", kernel, initrd, cmdline);
+    let header = SlotHeader::lay_out(VERSION_2, 7, "xaqu signed", kernel, initrd, cmdline);
     let mut image = vec![0u8; header.needed() as usize];
     image[..HEADER_LEN].copy_from_slice(&header.encode());
     for (blob, bytes) in header.blobs().iter().zip([kernel, initrd, cmdline]) {
@@ -477,24 +477,24 @@ const DISK_BLOCKS: u64 = 1 << 16;
 /// A disk GUID whose text is easy to read.
 const DISK: gpt::Guid = gpt::guid(0x1234_5678, 0x9abc, 0xdef0, 0x1122, 0x3344_5566_7788);
 
-fn table(parts: &[(ferrix_partition::Guid, u64, u64)]) -> (Vec<u8>, Vec<u8>) {
+fn table(parts: &[(xaqu_partition::Guid, u64, u64)]) -> (Vec<u8>, Vec<u8>) {
     let partitions: Vec<_> = parts
         .iter()
         .enumerate()
         .map(|(index, &(kind, first, last))| {
-            ferrix_partition::Partition::new(
+            xaqu_partition::Partition::new(
                 kind,
-                ferrix_partition::Guid::random([index as u8 + 1; 16]),
+                xaqu_partition::Guid::random([index as u8 + 1; 16]),
                 first,
                 last,
                 "p",
             )
         })
         .collect();
-    let writes = ferrix_partition::write_table(
+    let writes = xaqu_partition::write_table(
         DISK_BLOCKS,
         512,
-        ferrix_partition::Guid::random([9; 16]),
+        xaqu_partition::Guid::random([9; 16]),
         &partitions,
     )
     .unwrap_or_else(|error| panic!("{error:?}"));
@@ -508,7 +508,7 @@ fn table(parts: &[(ferrix_partition::Guid, u64, u64)]) -> (Vec<u8>, Vec<u8>) {
     (disk[512..1024].to_vec(), disk[1024..34 * 512].to_vec())
 }
 
-fn find(parts: &[(ferrix_partition::Guid, u64, u64)]) -> Result<gpt::Layout, GptError> {
+fn find(parts: &[(xaqu_partition::Guid, u64, u64)]) -> Result<gpt::Layout, GptError> {
     let (header, array) = table(parts);
     let header = gpt::parse_header(&header, DISK_BLOCKS, 512)?;
     gpt::find(&header, &array, DISK_BLOCKS, 512)
@@ -518,16 +518,16 @@ fn find(parts: &[(ferrix_partition::Guid, u64, u64)]) -> Result<gpt::Layout, Gpt
 #[test]
 fn the_gpt_scan_finds_the_layout_by_type() {
     let swap =
-        ferrix_partition::Guid::from_fields(0x0657_FD6D, 0xA4AB, 0x43C4, 0x84E5, 0x0933_C84B_4F4F);
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+        xaqu_partition::Guid::from_fields(0x0657_FD6D, 0xA4AB, 0x43C4, 0x84E5, 0x0933_C84B_4F4F);
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let layout = find(&[
         (swap, 2048, 4095),
-        (ferrix_partition::ESP, 4096, 8191),
+        (xaqu_partition::ESP, 4096, 8191),
         (control, 8192, 8192 + 2047),
         (slot, 12288, 20479),
         (slot, 20480, 28671),
-        (ferrix_partition::LINUX_FILESYSTEM, 28672, 60000),
+        (xaqu_partition::LINUX_FILESYSTEM, 28672, 60000),
     ]);
     let Ok(layout) = layout else {
         panic!("{layout:?}");
@@ -575,8 +575,8 @@ fn the_gpt_scan_finds_the_layout_by_type() {
 /// Verifies: L.slots.14
 #[test]
 fn the_gpt_scan_trusts_nothing() {
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let (header, array) = table(&[
         (control, 2048, 4095),
         (slot, 4096, 9000),
@@ -609,11 +609,11 @@ fn the_gpt_scan_trusts_nothing() {
     assert_eq!(gpt::find(&parsed, &array, 15000, 512), Err(GptError::Range));
 }
 
-/// A table edited after `ferrix-partition` wrote it (which refuses such
+/// A table edited after `xaqu-partition` wrote it (which refuses such
 /// tables itself), with both CRCs made right again, so only the edit is
 /// wrong.
 fn edited(
-    parts: &[(ferrix_partition::Guid, u64, u64)],
+    parts: &[(xaqu_partition::Guid, u64, u64)],
     edit: &dyn Fn(&mut Vec<u8>, &mut Vec<u8>),
 ) -> Result<gpt::Layout, GptError> {
     let (mut header, mut array) = table(parts);
@@ -637,9 +637,9 @@ fn set_lba(array: &mut [u8], entry: usize, field: usize, value: u64) {
 /// Verifies: L.slots.14
 #[test]
 fn the_gpt_scan_refuses_hostile_tables() {
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
-    let swap = ferrix_partition::LINUX_FILESYSTEM;
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
+    let swap = xaqu_partition::LINUX_FILESYSTEM;
     let parts = [
         (swap, 2048, 4095),
         (control, 4096, 8191),
@@ -662,7 +662,7 @@ fn the_gpt_scan_refuses_hostile_tables() {
         edited(&parts, &|_, array| set_lba(array, 3, 32, 12000)),
         Err(GptError::Overlap)
     );
-    // Backwards, on a Ferrix entry and on another one.
+    // Backwards, on a Xaqu entry and on another one.
     assert_eq!(
         edited(&parts, &|_, array| set_lba(array, 2, 40, 8000)),
         Err(GptError::Range)
@@ -842,20 +842,20 @@ fn a_slot_command_line_is_composed_whole_or_not_at_all() {
         disk: DISK,
         sig: None,
     };
-    let full: &[u8] = b"ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=3 \
-        ferrix.slot.disk=12345678-9abc-def0-1122-334455667788 ferrix.slot.sig=none ferrix.root=tmpfs";
+    let full: &[u8] = b"xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=3 \
+        xaqu.slot.disk=12345678-9abc-def0-1122-334455667788 xaqu.slot.sig=none xaqu.root=tmpfs";
     let mut out = [0u8; 200];
-    let len = compose(&words, b"  ferrix.root=tmpfs\n", &mut out);
+    let len = compose(&words, b"  xaqu.root=tmpfs\n", &mut out);
     assert_eq!(len.map(|len| &out[..len]), Some(full));
     assert_eq!(compose(&words, b"", &mut out), Some(full.len() - 18));
     // Exactly enough room, and one byte short: refused, never cut.
     let mut exact = vec![0u8; full.len()];
     assert_eq!(
-        compose(&words, b"ferrix.root=tmpfs", &mut exact),
+        compose(&words, b"xaqu.root=tmpfs", &mut exact),
         Some(full.len())
     );
     let mut short = vec![0u8; full.len() - 1];
-    assert_eq!(compose(&words, b"ferrix.root=tmpfs", &mut short), None);
+    assert_eq!(compose(&words, b"xaqu.root=tmpfs", &mut short), None);
     assert_eq!(compose(&words, &[0xFF, 0xFE], &mut out), None);
 }
 
@@ -867,7 +867,7 @@ fn the_longest_slot_command_line_fits_the_boot_info() {
     // The loader's command-line area: the page of the boot info after the
     // `BootInfo` (src/boot/common/uefi/src/main.rs, CMDLINE_OFFSET to
     // REGIONS_OFFSET).
-    let capacity = ferrix_bootinfo::PAGE_SIZE as usize - size_of::<ferrix_bootinfo::BootInfo>();
+    let capacity = xaqu_bootinfo::PAGE_SIZE as usize - size_of::<xaqu_bootinfo::BootInfo>();
     let words = LoaderWords {
         slot: Slot::B,
         kind: Kind::Fallback,
@@ -885,9 +885,9 @@ fn the_longest_slot_command_line_fits_the_boot_info() {
 
 /// Verifies: L.slots.14
 #[test]
-fn a_ferrix_partition_outside_the_usable_blocks_is_refused() {
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+fn a_xaqu_partition_outside_the_usable_blocks_is_refused() {
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let parts = [
         (control, 4096, 8191),
         (slot, 8192, 12287),
@@ -914,7 +914,7 @@ fn a_ferrix_partition_outside_the_usable_blocks_is_refused() {
     );
 }
 
-fn find_events(parts: &[(ferrix_partition::Guid, u64, u64)]) -> Result<gpt::Part, gpt::Lookup> {
+fn find_events(parts: &[(xaqu_partition::Guid, u64, u64)]) -> Result<gpt::Part, gpt::Lookup> {
     let (header, array) = table(parts);
     let header = gpt::parse_header(&header, DISK_BLOCKS, 512).map_err(gpt::Lookup::Table)?;
     gpt::find_one(&header, &array, DISK_BLOCKS, gpt::EVENTS_TYPE)
@@ -923,8 +923,8 @@ fn find_events(parts: &[(ferrix_partition::Guid, u64, u64)]) -> Result<gpt::Part
 /// Verifies: L.slots.13
 #[test]
 fn the_event_log_is_found_alone_and_checked() {
-    let events = ferrix_partition::Guid(gpt::EVENTS_TYPE);
-    let esp = ferrix_partition::ESP;
+    let events = xaqu_partition::Guid(gpt::EVENTS_TYPE);
+    let esp = xaqu_partition::ESP;
     // The N150's shape: the log in the gap before the ESP.
     let found = find_events(&[(esp, 2048, 4095), (events, 40, 2047)]);
     assert_eq!(
@@ -956,7 +956,7 @@ fn the_event_log_is_found_alone_and_checked() {
 /// Verifies: L.slots.14
 #[test]
 fn the_event_log_lookup_refuses_a_damaged_array() {
-    let events = ferrix_partition::Guid(gpt::EVENTS_TYPE);
+    let events = xaqu_partition::Guid(gpt::EVENTS_TYPE);
     let (header, mut array) = table(&[(events, 40, 2047)]);
     let header = gpt::parse_header(&header, DISK_BLOCKS, 512).unwrap_or_else(|e| panic!("{e:?}"));
     array[40] ^= 1;
@@ -969,8 +969,8 @@ fn the_event_log_lookup_refuses_a_damaged_array() {
 /// A valid primary header, edited at `at` to `value`, its CRC made right
 /// again, so that only the edit is wrong.
 fn header_with(at: usize, value: &[u8]) -> Vec<u8> {
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let (mut header, _) = table(&[
         (control, 4096, 8191),
         (slot, 8192, 12287),
@@ -1036,8 +1036,8 @@ fn each_header_field_is_refused_alone() {
 /// the event log's lookup; and each of the three partitions too small.
 #[test]
 fn each_entry_range_condition_is_refused_alone() {
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let parts = [
         (control, 4096, 8191),
         (slot, 8192, 12287),
@@ -1062,8 +1062,8 @@ fn each_entry_range_condition_is_refused_alone() {
     ];
     assert_eq!(edited(&small_b, &|_, _| {}), Err(GptError::TooSmall));
 
-    let events = ferrix_partition::Guid(gpt::EVENTS_TYPE);
-    let esp = ferrix_partition::ESP;
+    let events = xaqu_partition::Guid(gpt::EVENTS_TYPE);
+    let esp = xaqu_partition::ESP;
     let lookup = |entry_first: u64, entry_last: u64, blocks: u64| {
         let (mut header, mut array) = table(&[(esp, 2048, 4095), (events, 40, 2047)]);
         set_lba(&mut array, 1, 32, entry_first);
@@ -1166,8 +1166,8 @@ fn blobs_apart_in_any_order_decode() {
     let mut moved = header;
     moved.kernel.offset = 4096 * 64;
     assert_eq!(SlotHeader::decode(&moved.encode(), 1 << 20), Ok(moved));
-    let slot = ferrix_partition::Guid(SLOT_TYPE);
-    let control = ferrix_partition::Guid(CONTROL_TYPE);
+    let slot = xaqu_partition::Guid(SLOT_TYPE);
+    let control = xaqu_partition::Guid(CONTROL_TYPE);
     let Ok(layout) = edited(
         &[
             (control, 4096, 8191),

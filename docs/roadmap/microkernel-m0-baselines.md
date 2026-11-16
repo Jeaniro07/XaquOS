@@ -60,9 +60,9 @@ gate.sh run <ref> <tag> test-rustc --release --accel kvm [--fail-above <row>=<ms
 gate.sh run <ref> <tag> test-selfhost --accel kvm [--fail-above selfhost-build=<ms>]
 ```
 
-`gate.sh` is `~/.local/share/ferrix/fleet/gate.sh` on nazuna. Every
+`gate.sh` is `~/.local/share/xaqu/fleet/gate.sh` on nazuna. Every
 measuring run here went through
-`~/.local/share/ferrix/logs/m0-baselines/m0b-run.sh <max-load> <mode> <ref> <tag> <args...>`,
+`~/.local/share/xaqu/logs/m0-baselines/m0b-run.sh <max-load> <mode> <ref> <tag> <args...>`,
 which puts `~/.local/bin` first on `PATH` (a bare ssh shell finds QEMU 9.2.4
 in `/usr/local/bin` first, which does not name `eraps`), waits until the
 1-minute load is at or under `<max-load>`, takes `bench.lock`, and runs
@@ -91,7 +91,7 @@ a row's median over the boots is above it.
 | 4 KiB block read, ring and ring-3 driver | `block-read-4K` | the kernel's own `seam` boot line in the same boot: 1,024 reads of 4 KiB of the pattern disk through the block ring and the ring-3 virtio-blk driver, one at a time, its depth-1 p50 (`block_ring::hop_check`) |
 | Warm `rustc hello.rs` | `test-rustc`'s `warm-rustc-hello` | five `rustc hello.rs` after a first warm one, timed together from `/proc/uptime` read by the shell (10 ms steps, 2 ms a compile) |
 | Cold `test-rustc`, and its call count | `test-rustc`'s `cold-test-rustc`, `cold-rustc-hello`; the `cold seam syscalls` line | the script from its start to its cold counters (`rustc -vV`, `cargo -V`, `rustc hello.rs`, `cc hello.c`, both programs run); the first `rustc hello.rs` alone; the system calls the seam counted since boot |
-| The self-host build | `test-selfhost`'s `selfhost-build` | `cargo xtask build --arch x86_64` on Ferrix, from the stamp before it to the one after |
+| The self-host build | `test-selfhost`'s `selfhost-build` | `cargo xtask build --arch x86_64` on Xaqu, from the stamp before it to the one after |
 | Chrome's network bench | none yet | owed, below |
 | The compositor's frame time | `bench-chrome`'s ms/frame | owed, below |
 | `test-unity` | `test-unity` | owed, below |
@@ -106,7 +106,7 @@ below is a baseline. The commit to measure is the branch's tip on `main`,
 and the commands, run as they are queued:
 
 ```
-cd ~/.local/share/ferrix/logs/m0-baselines
+cd ~/.local/share/xaqu/logs/m0-baselines
 ./m0b-run.sh 3 run <tip> m0b3-base-rows bench-rows --release --accel kvm --arch x86_64 --rounds 5
 for n in 1 2 3 4 5; do ./m0b-run.sh 3 run <tip> m0b3-base-rustc-$n test-rustc --release --accel kvm; done
 ./m0b-wall.sh <tip> <cold-rustc-hello> <cold-test-rustc> <warm-rustc-hello> 5   # C4, C5, then selfhost x5
@@ -186,7 +186,7 @@ CPUID on the host (`m0b-cpuid`, `host-cpuid.txt`) and in the guest
 So the gate's model today passes ERAPS and none of IBPB_BRTYPE,
 SRSO_USER_KERNEL_NO and BTC_NO; SRSO_NO is clear on the host itself. With
 `+ibpb,+ibpb-brtype,+sbpb,+srso-user-kernel-no` added (through
-`FERRIX_X86_CPU`, one boot, `m0b2-hr6-model`) KVM passes all four, and the
+`XAQU_X86_CPU`, one boot, `m0b2-hr6-model`) KVM passes all four, and the
 kernel booted and ran every row with the same speculation boot line. BTC_NO
 has no feature name in QEMU 10.2.1, so no `-cpu` list can pass it; it needs
 `-cpu host` or a QEMU patch. **Owed, not done here** (the brief: xtask's
@@ -280,5 +280,5 @@ The tooling adds no kernel code and touches no file of the certified item:
   task table in `rows_bench.rs`), `summary` made `pub(crate)`.
 
 The logs, scripts and wrap files are in
-`~/.local/share/ferrix/logs/m0-baselines/` on nazuna; the gate logs are
-`~/.local/share/ferrix/logs/queue/<tag>.log`.
+`~/.local/share/xaqu/logs/m0-baselines/` on nazuna; the gate logs are
+`~/.local/share/xaqu/logs/queue/<tag>.log`.

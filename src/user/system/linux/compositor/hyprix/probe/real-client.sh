@@ -10,7 +10,7 @@
 # does not offer.
 #
 # Needs a Linux host with `foot` (a Wayland terminal) on the PATH; it is not
-# on Ferrix's image and this is a development-host check, so the script says
+# on Xaqu's image and this is a development-host check, so the script says
 # so and stops if it is missing rather than failing.
 #
 # The client is given a command shorter than the compositor's deadline, so

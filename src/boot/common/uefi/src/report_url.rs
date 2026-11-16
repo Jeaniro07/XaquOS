@@ -1,4 +1,4 @@
-//! Which `FERRIX/REPORT.TXT` the netbooted loader takes (`netreport.rs`).
+//! Which `XAQU/REPORT.TXT` the netbooted loader takes (`netreport.rs`).
 //!
 //! Pure and dependency-free, so that xtask's host tests compile this very
 //! file (`tools/common/xtask/src/netboot/tests.rs`) and check every refusal.

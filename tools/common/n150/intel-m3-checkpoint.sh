@@ -7,9 +7,9 @@
 #
 #   tools/common/n150/intel-m3-checkpoint.sh [BOX] [BOX_SSH_OPTIONS...]
 #
-# The box must already run a Ferrix under `ferrix.intelgpu` with this
-# driver and be reachable over ssh: K4 (`ferrix.efifb` beside
-# `ferrix.intelgpu`, so the desktop and its sshd have a card), and K2 for the
+# The box must already run a Xaqu under `xaqu.intelgpu` with this
+# driver and be reachable over ssh: K4 (`xaqu.efifb` beside
+# `xaqu.intelgpu`, so the desktop and its sshd have a card), and K2 for the
 # node itself, since the kernel refuses a render-node client while 00:02.0's
 # DMA is untranslated (K3, `chardev ... refused while its DMA is
 # untranslated`). Before K2 the verdict says so, which is itself the answer.
@@ -23,7 +23,7 @@
 #   no "intel: unserved" line (each one names a call to add).
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-evidence=$HOME/.local/share/ferrix/n150-linux/evidence
+evidence=$HOME/.local/share/xaqu/n150-linux/evidence
 before=$(ls -1t "$evidence"/intel-checkpoint-*.txt 2>/dev/null | head -n 1 || true)
 "$here/intel-checkpoint.sh" "$@"
 out=$(ls -1t "$evidence"/intel-checkpoint-*.txt 2>/dev/null | head -n 1 || true)

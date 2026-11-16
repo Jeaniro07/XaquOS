@@ -46,7 +46,7 @@ pub const CGROUP_ROOT: &str = "/sys/fs/cgroup";
 /// The tree the hemat's groups live in, of its own.
 pub const TREE: &str = "hemat";
 
-/// The controllers the root of the tree has: the three Ferrix has.
+/// The controllers the root of the tree has: the three Xaqu has.
 pub const CONTROLLERS: [&str; 3] = ["+cpu", "+memory", "+pids"];
 
 /// The controllers the hemat's tree has for its own children.
@@ -850,7 +850,7 @@ mod tests {
     }
 
     #[test]
-    fn the_controllers_are_the_three_ferrix_has() {
+    fn the_controllers_are_the_three_xaqu_has() {
         assert_eq!(CONTROLLERS, ["+cpu", "+memory", "+pids"]);
     }
 
@@ -1043,7 +1043,7 @@ MemAvailable:    8158248 kB\nBuffers:          1234 kB\n";
         let memory = meminfo_of(MEMINFO).expect("the memory is read");
         assert_eq!(memory.total, 16316496 * 1024);
         assert_eq!(memory.available, 8158248 * 1024);
-        // There is no swap in Ferrix, and none is said.
+        // There is no swap in Xaqu, and none is said.
         assert_eq!(memory.swap_total, 0);
         assert_eq!(memory.swap_free, 0);
         // A text without the memory in it says nothing.

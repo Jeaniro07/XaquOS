@@ -1,5 +1,5 @@
 <#
-Boot Ferrix's x86-64 desktop in QEMU on Windows, from the release archive
+Boot Xaqu's x86-64 desktop in QEMU on Windows, from the release archive
 this script came in. Nothing but QEMU is needed: no Rust, no build.
 
     powershell -ExecutionPolicy Bypass -File run.ps1
@@ -15,7 +15,7 @@ folder.
 
 Under the Windows Hypervisor Platform (Windows features: "Windows Hypervisor
 Platform") the guest runs on the processor; without it QEMU emulates, which
-is slow. Released QEMU's WHPX support faults Ferrix's ring-3 drivers with
+is slow. Released QEMU's WHPX support faults Xaqu's ring-3 drivers with
 more than one processor, so the guest gets one there unless -Smp says
 otherwise. Kept in step with run.sh.
 #>
@@ -34,7 +34,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$image = Join-Path $here "ferrix-x86_64.img"
+$image = Join-Path $here "xaqu-x86_64.img"
 if (-not (Test-Path $image)) {
     throw "no $image : run this script from the unpacked archive"
 }
@@ -89,7 +89,7 @@ if (-not $Tcg) {
 if ($Smp -eq 0) {
     if ($accel -eq "whpx" -and $version -notmatch "whpx-gva") {
         $Smp = 1
-        Write-Host "run.ps1: one processor under WHPX: released QEMU's WHPX faults Ferrix's drivers with more (-Smp N overrides)"
+        Write-Host "run.ps1: one processor under WHPX: released QEMU's WHPX faults Xaqu's drivers with more (-Smp N overrides)"
     } else {
         $Smp = 4
     }
@@ -105,7 +105,7 @@ if ($accel -eq "whpx") {
 }
 
 # A fresh variable store every boot, as xtask makes one.
-$vars = Join-Path $env:TEMP ("ferrix-vars-" + [guid]::NewGuid().ToString("N") + ".fd")
+$vars = Join-Path $env:TEMP ("xaqu-vars-" + [guid]::NewGuid().ToString("N") + ".fd")
 if (Test-Path $OvmfVars) {
     Copy-Item $OvmfVars $vars
 } else {
@@ -122,8 +122,8 @@ $arguments = @(
     "-vga", "none",
     "-drive", "format=raw,file=$image,if=none,id=disk",
     "-device", "ide-hd,drive=disk,bus=ide.0,bootindex=0",
-    "-device", "pcie-root-port,id=ferrix.port0,chassis=1,slot=1",
-    "-device", "virtio-rng-pci,$flags,bus=ferrix.port0",
+    "-device", "pcie-root-port,id=xaqu.port0,chassis=1,slot=1",
+    "-device", "virtio-rng-pci,$flags,bus=xaqu.port0",
     "-device", "virtio-gpu-pci,id=gpu0,addr=0x10,$flags,ioeventfd=on,edid=on,xres=$width,yres=$height",
     "-device", "virtio-keyboard-pci,$flags",
     "-device", "virtio-tablet-pci,$flags",

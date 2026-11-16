@@ -1,5 +1,5 @@
 //! FAT32, read only: one file read off a volume by its path, as `lode`
-//! reads the loader's `FERRIX/LASTKERNEL.TXT` off the ESP (`docs/LOGGING.md`
+//! reads the loader's `XAQU/LASTKERNEL.TXT` off the ESP (`docs/LOGGING.md`
 //! §5, `docs/POSTMORTEM.md` §3.5).
 //!
 //! The volume is untrusted bytes: another operating system, firmware or a

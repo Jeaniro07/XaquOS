@@ -3,8 +3,8 @@
 //!
 //! # The file
 //!
-//! `$XDG_CONFIG_HOME/ferrix/game-mode.conf`, which is
-//! `~/.config/ferrix/game-mode.conf` where that is not set ([`path`]). Plain
+//! `$XDG_CONFIG_HOME/xaqu/game-mode.conf`, which is
+//! `~/.config/xaqu/game-mode.conf` where that is not set ([`path`]). Plain
 //! text, one desktop-file ID a line -- the name a launcher knows an
 //! application by, `steam.desktop` -- in any order:
 //!
@@ -28,8 +28,8 @@
 //!
 //! A launcher asks [`mark_for_launch`] what to do to the environment of the
 //! program it is about to start, and does it ([`Mark::apply`]). For an
-//! application in the set that is `FERRIX_GAME_MODE=1` and
-//! `FERRIX_GAME_MODE_APP=<its ID>`; for any other, both are taken *out*, so
+//! application in the set that is `XAQU_GAME_MODE=1` and
+//! `XAQU_GAME_MODE_APP=<its ID>`; for any other, both are taken *out*, so
 //! that a launcher which was itself started from a game does not hand the
 //! mark on to something the user never switched on. What a marked program
 //! starts inherits the mark, which is how a game Steam starts has Steam's.
@@ -43,21 +43,21 @@ use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
 /// The variable a program started in game mode has, set to [`ON`].
-pub const MARK: &str = "FERRIX_GAME_MODE";
+pub const MARK: &str = "XAQU_GAME_MODE";
 
 /// The variable that names the application the mark was given for: its
 /// desktop-file ID.
-pub const MARK_APP: &str = "FERRIX_GAME_MODE_APP";
+pub const MARK_APP: &str = "XAQU_GAME_MODE_APP";
 
 /// What [`MARK`] is set to.
 pub const ON: &str = "1";
 
 /// The file's place under the configuration directory.
-const RELATIVE: &str = "ferrix/game-mode.conf";
+const RELATIVE: &str = "xaqu/game-mode.conf";
 
 /// What the file starts with when Settings writes it.
 const HEADER: &str = "\
-# Ferrix game mode: the applications started in game mode, one desktop-file
+# Xaqu game mode: the applications started in game mode, one desktop-file
 # ID a line. Written by Settings (/bin/settings); edit it freely. A launcher
 # reads it each time it starts an application (docs/SETTINGS.md).
 ";

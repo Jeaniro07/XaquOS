@@ -218,7 +218,7 @@ above was one lock; the kernel had forty more plain ticket locks taken from
 tasks with interrupts on, each exposed to the same thing once contended.
 Masking interrupts for all of them is the wrong tool, so the scheduler keeps
 a per-processor preemption count, raised and lowered by the kernel's
-`sync::SpinLock` (a `ferrix_sync::PreemptSpinLock`) for as long as it is
+`sync::SpinLock` (a `xaqu_sync::PreemptSpinLock`) for as long as it is
 held and while it spins for its ticket, and read on the way out of every
 interrupt: a pending reschedule waits until the count is zero, then is made.
 A holder must not block, and the scheduler enforces it -- a switch with the

@@ -569,7 +569,7 @@ pub enum NativeCall {
     /// empty address space, not started: K15's [`NativeCall::ProcessCreate`]
     /// with the image taken out. The kernel parses nothing; the creator maps
     /// what the process runs through [`NativeCall::ProcessSpace`], with the
-    /// loader library `ferrix-process-builder`. The same job rules as
+    /// loader library `xaqu-process-builder`. The same job rules as
     /// `ProcessCreate`: `MANAGE` on `job`, and a sealed creator stays in its
     /// tree. `name_len` is at most [`PROCESS_NAME_MAX`].
     ProcessMake,
@@ -666,7 +666,7 @@ pub enum NativeCall {
     /// reaches nothing inside it; the channel never passes through the
     /// caller. `starter` is the one-shot capability the kernel gives pid 1
     /// on its bootstrap channel when the command line says
-    /// `ferrix.devmgr=init` (needs `MANAGE`); `job` needs `MANAGE`.
+    /// `xaqu.devmgr=init` (needs `MANAGE`); `job` needs `MANAGE`.
     /// `ALREADY_BOUND` while a `devmgr` it started lives; `BAD_STATE` after
     /// one ended, until every driver it started has ended too.
     DevmgrStart,
@@ -750,7 +750,7 @@ pub enum NativeCall {
     /// unit or table. `ALREADY_BOUND` when it is bound, `WRONG_TYPE` for a
     /// node that reaches no memory or a function that is never a bus master,
     /// `ACCESS_DENIED` for a domain that would not translate unless the boot
-    /// carries `ferrix.unisolated`, `LIMIT_REACHED` when the function's only
+    /// carries `xaqu.unisolated`, `LIMIT_REACHED` when the function's only
     /// possible domain is held already.
     DeviceBindDomain,
     /// `(device)`. A server has accepted the next driver's HELLO: what a dead

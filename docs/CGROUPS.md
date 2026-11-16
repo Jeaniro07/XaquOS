@@ -193,7 +193,7 @@ root. Such a write fails `EBUSY` while it has members, and a move into such
 a cgroup fails `EBUSY`. Threaded controllers (`cpu`, `pids`) are exempt
 while the cgroup could still be a threaded root: no domain controller on and
 no populated child. That is Linux's `cgroup_vet_subtree_control_enable` and
-`cgroup_migrate_vet_dst`, in `ferrix_cgroupfs::controllers` with host tests;
+`cgroup_migrate_vet_dst`, in `xaqu_cgroupfs::controllers` with host tests;
 the kernel decides it under the lock a move counts a process in under, so a
 move and a `subtree_control` write cannot pass each other. Until a
 controller is built `subtree_control` takes no name, so no boot check can
@@ -417,7 +417,7 @@ locks and network queues, each at the size class the heap serves it from.
 `memory.max` limits frames and heap together, a charge past it is refused
 `ENOMEM` from the call that would have made the object, and
 `memory.events`' `max` counts it. `memory.stat` exists, and prints the one
-key Ferrix counts apart, `kernel`: the heap part of `memory.current`. An
+key Xaqu counts apart, `kernel`: the heap part of `memory.current`. An
 object made in one cgroup stays charged there until it goes, wherever it is
 passed, as Linux's `obj_cgroup` keeps it. Without reclaim, the dentries a
 cgroup's lookups left in the cache stay charged to it until evicted, where
@@ -488,7 +488,7 @@ a process within the subtree and back and is refused `EACCES` moving it out,
 even to a `cgroup.procs` it owns; and a removed cgroup refuses a move and a
 `mkdir` with `ENODEV`. The user-level run G2 moved here is a `test-vfs`
 command, not `test-shell`, because `test-vfs` is where the image has `su`
-and the user `ferrix`: root hands `deleg` to uid 1000, `su ferrix` makes
+and the user `xaqu`: root hands `deleg` to uid 1000, `su xaqu` makes
 `work`, moves its own shell in, reads it from `/proc/self/cgroup`, and is
 refused moving it to `other` and to the root. Each check has a negative
 control that fails by its own message: the child forked into its parent's
@@ -548,7 +548,7 @@ there.
 since 2026-09-23: `cargo xtask check` plus only the rows the change
 touches, about five minutes, then land. The userland rows use ferrousli's
 busybox on all three architectures (`--init
-~/.local/share/ferrix/busybox/ferrousli/{arch}/bin/busybox.static`), and no
+~/.local/share/xaqu/busybox/ferrousli/{arch}/bin/busybox.static`), and no
 musl. Every boot check gets a negative control that prints a marker line
 and fails by the check's own message. Five things cost a gate each today:
 * `fs::read_file` sizes its read from `stat`, and a generated file says 0,
@@ -783,12 +783,12 @@ while it is set `cpu.weight` reads 1 (the idle weight as a cgroup weight) and
 a write of `cpu.weight` or `cpu.weight.nice` is `EINVAL`; a cgroup let off it
 is at `cpu.weight` 100 again, whatever it had before, and the same value
 written again changes nothing. Linux also keeps an idle cgroup's tasks from
-preempting a busy sibling's on wakeup (`sched_idle` entities); Ferrix's fair
+preempting a busy sibling's on wakeup (`sched_idle` entities); Xaqu's fair
 class has no such rule, so the weight is the whole of it. The `cpu` line of
 stage 13 checks the files and, on slots of its own, the weights at
 `cpu.weight` 10000 (`quota::check_idle_weight`); the files' semantics and
 `cpu.weight` read as 1 are the load ring's (`fs::cgroupfs`) and the
-`ferrix-cgroupfs` library's, which the item does not vouch for, so they claim
+`xaqu-cgroupfs` library's, which the item does not vouch for, so they claim
 no requirement (the consultant's ruling of 2026-10-26, ledger line 10 of this session's ledger, still to be copied to the gate host's); the item's one refusal, the native
 call's below, is L.object.187. The check that a write of `cpu.weight` is
 refused while idle and the store of the weight are not one step, in either
@@ -836,7 +836,7 @@ The file takes microseconds as `kstrtoull` reads them; a burst over the quota
 is `EINVAL`, and so is a `cpu.max` quota under the burst
 (`tg_set_cfs_bandwidth`); under `max` any burst whose nanoseconds fit stands,
 and does nothing until a quota is set. Linux serialises the two files' writes
-with `cfs_constraints_mutex`; Ferrix does not, and fails closed instead: a
+with `cfs_constraints_mutex`; Xaqu does not, and fails closed instead: a
 carry never grants more than the quota (`carry_cap`), so two writers racing
 past each other's check leave a job with no more than a burst that fits.
 Writing either file drops what was carried. The `cpu` line of stage 13 checks
@@ -880,11 +880,11 @@ cgroup never used; `io.max` takes `rbps`, `wbps`, `riops` and `wiops` as
 `tg_set_limit` does (`ENODEV`, `EINVAL`, `ERANGE`), and the root has none.
 
 A request waits in its submitter for the latest instant the limits on the way
-up give it (`ferrix_block::Throttle`: one virtual clock per limit, no burst
+up give it (`xaqu_block::Throttle`: one virtual clock per limit, no burst
 beyond a request, host-tested) and pays them all that start. A job's entries
 are one table keyed by its quota slot and dropped as the job goes
 (`quota::on_job_release`), each charged to the job as kernel heap (F-37). The
-block core's queue (`ferrix_block::Queue`) is not where this sits: a throttled
+block core's queue (`xaqu_block::Queue`) is not where this sits: a throttled
 request has not been queued, so no barrier can wait for it.
 
 With `io` built, `cgroup.controllers` at the root lists `cpu io memory pids`,
@@ -892,10 +892,10 @@ and the no-internal-process rule reaches `io`.
 
 **`io.weight` and `io.latency` (2026-10-26).** While any cgroup has a weight
 other than the default or a latency target, each disk serves one request at a
-time from a fair queue (`ferrix_block::Fair`, host-tested): start-time fair
+time from a fair queue (`xaqu_block::Fair`, host-tested): start-time fair
 queueing in 128-bit virtual time, a request's cost its bytes times, at each
 level from its job up, 100 over that job's weight, rounded up at each level and
-at most 2^40 (`ferrix_block::weighted_cost`; a deep or light job never gains by
+at most 2^40 (`xaqu_block::weighted_cost`; a deep or light job never gains by
 its depth). The flag is the machine's, so one cgroup's write queues every disk
 (`docs/backlog/stage13.md`; VULNERABILITY-ANALYSIS.md, T.EXHAUST 6). The
 product is not Linux's per-level `blk-iocost` tree: siblings share by their weights and a
@@ -1046,7 +1046,7 @@ the test passed (it landed on 2026-10-26, 2daef95d2, `docs/NAMESPACES.md`
 
 Passed in direct runs on 2026-10-12, and through the gate pool on
 2026-10-14 on f231cdf09 with no kernel change (INDEX tags `s13fx-*`, logs
-`~/.local/share/ferrix/logs/queue/<tag>.log` on nazuna), every row
+`~/.local/share/xaqu/logs/queue/<tag>.log` on nazuna), every row
 `run: PASSED`:
 
 | Row | Tag | Accelerator |

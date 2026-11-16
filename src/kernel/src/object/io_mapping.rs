@@ -21,7 +21,7 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_vma::VmaFlags;
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::device::Aperture;

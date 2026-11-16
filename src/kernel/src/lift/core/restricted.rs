@@ -8,9 +8,9 @@
 
 use core::sync::atomic::{AtomicPtr, Ordering};
 
-use ferrix_native::region::{Context, FaultKind, Reason};
-use ferrix_rt::Kernel;
-use ferrix_rt::restricted as k1;
+use xaqu_native::region::{Context, FaultKind, Reason};
+use xaqu_rt::Kernel;
+use xaqu_rt::restricted as k1;
 
 #[cfg(target_arch = "x86_64")]
 use crate::arch::x86_64::gdt::{USER_CODE, USER_CODE32, USER_DATA};
@@ -53,7 +53,7 @@ const SYSCALL_BYTES: u64 = 4;
 /// The program's registers as K1 holds them: read once per change, written back
 /// by the next `enter`.
 fn read_context() -> Context {
-    ferrix_native::region::context_read(Kernel).unwrap_or_else(|why| {
+    xaqu_native::region::context_read(Kernel).unwrap_or_else(|why| {
         crate::println!("linuxd: the program's context could not be read: {why:?}");
         Context::default()
     })
@@ -159,7 +159,7 @@ fn with_pending<R>(change: impl FnOnce(&mut Context) -> R) -> R {
 fn back(value: u64, not_a_call: bool) -> k1::Exit {
     // The usual way, every call's: nothing held and nothing due, with the task lent. A
     // clone of it is two locked operations a call; only this thread raises the flag.
-    let due = ferrix_lift_attention();
+    let due = xaqu_lift_attention();
     let plain = (!due)
         & (sched::with_current(|task| !task.pending_up.load(Ordering::Relaxed)) == Some(true));
     if plain {
@@ -269,7 +269,7 @@ fn needs_context(abi: Abi, number: usize) -> bool {
     // A 32-bit program's table has sigreturns and segments of its own: on no row, so every
     // call of one reads them first rather than a list being kept here. A filter is shown the
     // instruction pointer. A number past the table is nobody's.
-    if (!matches!(abi, Abi::Native)) | (number >= 512) | (!ferrix_lift_quiet()) {
+    if (!matches!(abi, Abi::Native)) | (number >= 512) | (!xaqu_lift_quiet()) {
         unusual();
         return true;
     }
@@ -294,7 +294,7 @@ fn again_resume(value: u64) -> k1::Exit {
 }
 fn again_enter(context: &Context) -> k1::Exit {
     sched::account::entering();
-    k1::enter_with(context, ferrix_native::region::ENTER_COPY_MISS_EXITS)
+    k1::enter_with(context, xaqu_native::region::ENTER_COPY_MISS_EXITS)
 }
 
 #[cold]
@@ -305,24 +305,24 @@ const fn unusual() {}
 // take nothing the caller has not checked.
 unsafe extern "Rust" {
     /// linuxd's dispatch, by name, for LTO: no indirect call on a program's every call.
-    safe fn ferrix_lift_dispatch(args: &SyscallArgs, regs: Option<&UserRegs>) -> Outcome;
+    safe fn xaqu_lift_dispatch(args: &SyscallArgs, regs: Option<&UserRegs>) -> Outcome;
     /// Whether the way back has anything to do for the running thread.
-    safe fn ferrix_lift_attention() -> bool;
+    safe fn xaqu_lift_attention() -> bool;
     /// Whether no filter or probe asks about the running thread.
-    safe fn ferrix_lift_quiet() -> bool;
+    safe fn xaqu_lift_quiet() -> bool;
     /// A call `linuxd` answers straight through (`docs/microkernel/PERFORMANCE.md`), by
     /// name so that LTO can take it in line: `u64::MAX` for the general path.
-    safe fn ferrix_lift_hot_answer(number: usize) -> u64;
+    safe fn xaqu_lift_hot_answer(number: usize) -> u64;
 }
 
 /// Every taken branch here runs cold after the exit's barrier: one straight run, back into
 /// the program for as long as the answer is this simple, and on anything unusual out to
 /// the general path. Its time counts as the program's, as the kernel's fast crossing's does.
-#[unsafe(link_section = ".text.ferrix_straight")]
+#[unsafe(link_section = ".text.xaqu_straight")]
 #[inline(never)]
 fn straight_run(mut exit: k1::Exit) -> k1::Exit {
     loop {
-        let value = ferrix_lift_hot_answer(exit.number as usize);
+        let value = xaqu_lift_hot_answer(exit.number as usize);
         let plain = sched::with_current(|task| !task.pending_up.load(Ordering::Relaxed));
         if (exit.reason != Reason::Syscall as u64) | (value == u64::MAX) | (plain != Some(true)) {
             return exit;
@@ -336,7 +336,7 @@ fn straight_run(mut exit: k1::Exit) -> k1::Exit {
 /// return run cold on every crossing cost more than a compare.
 const STRAIGHT: u64 = crate::arch::GETPPID_NUMBER as u64;
 
-#[unsafe(link_section = ".text.ferrix_straight")]
+#[unsafe(link_section = ".text.xaqu_straight")]
 fn run(mut exit: k1::Exit) -> ! {
     loop {
         if exit.number == STRAIGHT {
@@ -358,7 +358,7 @@ fn run(mut exit: k1::Exit) -> ! {
 fn call(exit: &k1::Exit) -> k1::Exit {
     let number = exit.number as usize;
     let _ = sched::with_current(|task| task.note_call(exit.number, &exit.words));
-    // Its answer holds `ferrix_lift_quiet`'s: no filter for this one to ask, and none shown.
+    // Its answer holds `xaqu_lift_quiet`'s: no filter for this one to ask, and none shown.
     if needs_context(Abi::Native, number) {
         unusual();
         return call_with_context(exit, Abi::Native);
@@ -369,7 +369,7 @@ fn call(exit: &k1::Exit) -> k1::Exit {
         args: exit.words,
         ip: 0,
     };
-    match ferrix_lift_dispatch(&args, None) {
+    match xaqu_lift_dispatch(&args, None) {
         Outcome::Return(value) => back(value as u64, false),
         outcome => {
             unusual();
@@ -415,12 +415,12 @@ fn call_with_context(exit: &k1::Exit, abi: Abi) -> k1::Exit {
         .and_then(|context| answer_early(&args, context))
     {
         Some(next) => next,
-        None => match (if ferrix_lift_quiet() {
+        None => match (if xaqu_lift_quiet() {
             None
         } else {
             trap::filter_system_call(&args)
         })
-        .unwrap_or_else(|| ferrix_lift_dispatch(&args, regs.as_ref()))
+        .unwrap_or_else(|| xaqu_lift_dispatch(&args, regs.as_ref()))
         {
             Outcome::Return(value) => back(value as u64, false),
             outcome => not_returned(outcome, context),
@@ -477,7 +477,7 @@ fn set_answer_words(context: &mut Context, value: u64, words: [u64; 3]) {
 /// `arch_prctl` and `rt_sigreturn`, which the kernel's entry answers before
 /// dispatch for the same reasons: each changes registers the dispatch does not hold.
 fn answer_early(args: &SyscallArgs, context: &Context) -> Option<k1::Exit> {
-    use ferrix_linux_abi::nr::Syscall;
+    use xaqu_linux_abi::nr::Syscall;
     if args.abi != Abi::Native {
         return None;
     }
@@ -490,9 +490,9 @@ fn answer_early(args: &SyscallArgs, context: &Context) -> Option<k1::Exit> {
             if code != ARCH_SET_FS && code != ARCH_SET_GS {
                 return None;
             }
-            if !ferrix_bootinfo::is_user_address(base) {
+            if !xaqu_bootinfo::is_user_address(base) {
                 return Some(again_resume(
-                    ferrix_linux_abi::errno::Errno::EPERM.as_return_value() as u64,
+                    xaqu_linux_abi::errno::Errno::EPERM.as_return_value() as u64,
                 ));
             }
             let mut context = *context;
@@ -529,11 +529,11 @@ fn answer_early(args: &SyscallArgs, context: &Context) -> Option<k1::Exit> {
 /// `AddressSpace::fault` may make it so; otherwise it is the program's.
 fn fault(exit: &k1::Exit) -> k1::Exit {
     let vector = exit.number;
-    let code = exit.words[ferrix_native_abi::restricted::FAULT_CODE];
+    let code = exit.words[xaqu_native_abi::restricted::FAULT_CODE];
     let (is_page_fault, write, execute) = page_fault_of(vector, code);
-    let address = exit.words[ferrix_native_abi::restricted::FAULT_ADDRESS];
-    let mut kind = exit.words[ferrix_native_abi::restricted::FAULT_KIND];
-    let pc = exit.words[ferrix_native_abi::restricted::EXIT_PC];
+    let address = exit.words[xaqu_native_abi::restricted::FAULT_ADDRESS];
+    let mut kind = exit.words[xaqu_native_abi::restricted::FAULT_KIND];
+    let pc = exit.words[xaqu_native_abi::restricted::EXIT_PC];
     if is_page_fault {
         let access = crate::user::space::Access { write, execute };
         // The kernel's window has no regions, so only the shadow's answer says why: a page
@@ -543,18 +543,18 @@ fn fault(exit: &k1::Exit) -> k1::Exit {
             // Nothing of the program changed: back at the instruction, no read.
             Ok(()) => return back(0, true),
             Err(Some(SpaceError::PastEnd(_) | SpaceError::Unreadable(_))) => {
-                kind = ferrix_native_abi::restricted::FaultKind::PastEnd as u64;
+                kind = xaqu_native_abi::restricted::FaultKind::PastEnd as u64;
             }
             Err(Some(SpaceError::Refused(_))) => {
-                kind = ferrix_native_abi::restricted::FaultKind::Protection as u64;
+                kind = xaqu_native_abi::restricted::FaultKind::Protection as u64;
             }
             Err(_) => {}
         }
-        if kind == ferrix_native_abi::restricted::FaultKind::CallCopy as u64 {
+        if kind == xaqu_native_abi::restricted::FaultKind::CallCopy as u64 {
             // A bad pointer in a native call: its status, never a signal (P4).
             with_pending(|context| step_past_call(context));
             return back(
-                ferrix_native_abi::status::FAULT.as_return_value() as u64,
+                xaqu_native_abi::status::FAULT.as_return_value() as u64,
                 false,
             );
         }
@@ -606,7 +606,7 @@ const fn page_fault_of(vector: u64, code: u64) -> (bool, bool, bool) {
 
 #[cfg(target_arch = "aarch64")]
 fn signal_for(vector: u64, kind: u64) -> (u32, i32) {
-    use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
+    use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
     match vector {
         0b100100 | 0b100000 => match kind {
             2 => (SIGSEGV, 2),
@@ -623,7 +623,7 @@ fn signal_for(vector: u64, kind: u64) -> (u32, i32) {
 
 #[cfg(target_arch = "x86_64")]
 fn signal_for(vector: u64, kind: u64) -> (u32, i32) {
-    use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
+    use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
     match vector {
         0 => (SIGFPE, 1),
         1 | 3 => (SIGTRAP, 1),
@@ -698,7 +698,7 @@ pub fn capture_state() -> UserState {
     let mut state = UserState::new();
     state.read_context(&context);
     let mut image = [0_u8; 528];
-    if ferrix_native::region::vectors_read(Kernel, &mut image).is_ok() {
+    if xaqu_native::region::vectors_read(Kernel, &mut image).is_ok() {
         let _ = state.set_vector_image(&image);
     }
     state
@@ -726,7 +726,7 @@ pub fn capture_state() -> UserState {
         }
         return state;
     }
-    let _ = ferrix_native::region::vectors_read(Kernel, state.image_mut());
+    let _ = xaqu_native::region::vectors_read(Kernel, state.image_mut());
     if let Some(&[a, b, c, d]) = state
         .image()
         .get(at)
@@ -740,7 +740,7 @@ pub fn capture_state() -> UserState {
     state
 }
 pub fn load_vectors(state: &UserState) {
-    let _ = ferrix_native::region::vectors_write(Kernel, as_bytes(&state.image()));
+    let _ = xaqu_native::region::vectors_write(Kernel, as_bytes(&state.image()));
 }
 #[cfg(target_arch = "aarch64")]
 const fn as_bytes(image: &[u8; 528]) -> &[u8] {
@@ -753,7 +753,7 @@ const fn as_bytes(image: &[u8]) -> &[u8] {
 #[cfg(target_arch = "aarch64")]
 pub fn reset_state() {
     with_pending(|context| context.tpidr = 0);
-    let _ = ferrix_native::region::vectors_write(Kernel, &UserState::new().image());
+    let _ = xaqu_native::region::vectors_write(Kernel, &UserState::new().image());
 }
 #[cfg(target_arch = "x86_64")]
 pub fn reset_state() {
@@ -766,7 +766,7 @@ pub fn reset_state() {
         context.fs = 0;
         context.gs = 0;
     });
-    let _ = ferrix_native::region::vectors_write(Kernel, UserState::new().image());
+    let _ = xaqu_native::region::vectors_write(Kernel, UserState::new().image());
 }
 #[cfg(target_arch = "x86_64")]
 pub fn set_thread_area(index: Option<usize>, descriptor: u64) -> Option<usize> {

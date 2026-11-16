@@ -7,7 +7,7 @@
 //! one, the address VMO of the memory it binds (read-only), and nothing
 //! else does.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::frontend::{Completion, Engine, Facts};
 use crate::sseu::SseuInfo;

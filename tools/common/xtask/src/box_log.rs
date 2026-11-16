@@ -4,7 +4,7 @@
 //!
 //! It runs `lode -f -o json` on the machine, with whatever lode options
 //! follow `--` (`--where 'id = "intel*"' -p info`), writes every record to
-//! `~/.local/share/ferrix/logs/box/<UTC>-<host>.jsonl` and a line of it to
+//! `~/.local/share/xaqu/logs/box/<UTC>-<host>.jsonl` and a line of it to
 //! the terminal, and keeps the last record's cursor. A connection that
 //! drops -- a reboot of the machine, a network that blinked -- is made again
 //! every two seconds and goes on `--after-cursor` the last record kept, so a
@@ -33,7 +33,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     help_at: 1136,
     help: &[
         "box-log --host <DEST> [-- <lode options>] [--until-match TEXT] [--out FILE]",
-        "              Follow a machine's lode over ssh into ~/.local/share/ferrix/logs/box, resuming",
+        "              Follow a machine's lode over ssh into ~/.local/share/xaqu/logs/box, resuming",
         "              from the last record after a dropped connection or a reboot",
     ],
     run: |_, args| run(args),
@@ -193,7 +193,7 @@ fn evidence(host: &str, out: Option<&PathBuf>) -> Result<(PathBuf, std::fs::File
             let home = std::env::var_os("HOME")
                 .map(PathBuf::from)
                 .unwrap_or_default();
-            let dir = home.join(".local/share/ferrix/logs/box");
+            let dir = home.join(".local/share/xaqu/logs/box");
             std::fs::create_dir_all(&dir)
                 .map_err(|error| Error::new(format!("{}: {error}", dir.display())))?;
             let safe: String = host

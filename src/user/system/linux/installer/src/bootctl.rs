@@ -1,5 +1,5 @@
 //! `bootctl`: the running system's half of the second slot
-//! (`docs/DEV-ON-FERRIX.md` §4.4, D8; the rules are `docs/AB-BOOT.md` §5).
+//! (`docs/DEV-ON-XAQU.md` §4.4, D8; the rules are `docs/AB-BOOT.md` §5).
 //!
 //! ```text
 //! bootctl [--disk /dev/vdX] status
@@ -10,14 +10,14 @@
 //! bootctl [--disk /dev/vdX] init
 //! ```
 //!
-//! The disk is the one with partitions of Ferrix's boot-control and
+//! The disk is the one with partitions of Xaqu's boot-control and
 //! system-slot types (`layout`); `bootctl` writes no other partition. The
 //! slot this system booted from is what the loader put first on the
-//! command line: `ferrix.slot=a|b ferrix.slot.boot=trial|good|fallback
-//! ferrix.slot.seq=<n>`.
+//! command line: `xaqu.slot=a|b xaqu.slot.boot=trial|good|fallback
+//! xaqu.slot.seq=<n>`.
 //!
 //! `try` writes an image -- a slot image (`cargo xtask slot-image`), an
-//! `xtask` FAT image such as `build/x86_64/ferrix.img`, or a directory
+//! `xtask` FAT image such as `build/x86_64/xaqu.img`, or a directory
 //! with `KERNEL.ELF`, `INITRD.IMG` and `CMDLINE.TXT` -- into the *idle*
 //! slot, the one that is not good. It refuses while this system runs a trial
 //! (the idle slot is then the one running) or when the command line and the
@@ -31,13 +31,13 @@ use std::process::ExitCode;
 
 use std::fs::File;
 
-use ferrix_install::disk::{self, SECTOR};
-use ferrix_install::layout::{self, AbDisk, Slot};
-use ferrix_install::record::{self, Blocks};
-use ferrix_install::slotio;
-use ferrix_partition::Guid;
-use ferrix_slots::plan::parse_words;
-use ferrix_slots::record::{Current, MAX_TRIES, Record};
+use xaqu_install::disk::{self, SECTOR};
+use xaqu_install::layout::{self, AbDisk, Slot};
+use xaqu_install::record::{self, Blocks};
+use xaqu_install::slotio;
+use xaqu_partition::Guid;
+use xaqu_slots::plan::parse_words;
+use xaqu_slots::record::{Current, MAX_TRIES, Record};
 
 fn main() -> ExitCode {
     match run() {
@@ -127,7 +127,7 @@ fn run() -> Result<(), String> {
     // and repair, never change what boots (the consultant's S2).
     if booted.slot.is_none() && command.changes_what_boots() {
         return Err(
-            "this system did not boot from a slot (the loader's four ferrix.slot words are not \
+            "this system did not boot from a slot (the loader's four xaqu.slot words are not \
              all on the command line): try, good and rollback refuse; status, verify and init \
              work"
                 .into(),
@@ -187,7 +187,7 @@ struct Booted {
 }
 
 impl Booted {
-    /// From `/proc/cmdline`, read by `ferrix-slots`' own `parse_words`,
+    /// From `/proc/cmdline`, read by `xaqu-slots`' own `parse_words`,
     /// the inverse of the loader's writing of them: the first word with each
     /// key, all four or none (the consultant's S1 and S5).
     fn read() -> Result<Booted, String> {
@@ -221,7 +221,7 @@ impl Booted {
 /// The control record, on the whole disk, in its logical blocks.
 struct Control {
     file: File,
-    part: ferrix_slots::gpt::Part,
+    part: xaqu_slots::gpt::Part,
     current: Current,
 }
 
@@ -262,7 +262,7 @@ fn blocks(file: &mut File) -> Blocks<'_> {
     }
 }
 
-fn verify(ab: &AbDisk, slot: Slot) -> Result<ferrix_slots::slot::SlotHeader, String> {
+fn verify(ab: &AbDisk, slot: Slot) -> Result<xaqu_slots::slot::SlotHeader, String> {
     let part = ab.slot(slot);
     let mut file = disk::open(&part.node).map_err(|e| format!("{}: {e}", part.node))?;
     slotio::verify(&mut file, 0, part.bytes()).map_err(|why| {
@@ -281,7 +281,7 @@ fn status(ab: &AbDisk, booted: &Booted) -> Result<(), String> {
         ab.disk, ab.guid, ab.control.node, ab.slots[0].node, ab.slots[1].node
     );
     match booted.slot {
-        None => println!("booted:  not from a slot (no ferrix.slot= on the command line)"),
+        None => println!("booted:  not from a slot (no xaqu.slot= on the command line)"),
         Some(slot) => println!(
             "booted:  {} as {}, under record {}",
             slot.letter(),
@@ -380,8 +380,8 @@ fn try_image(
         loaded.cmdline = words.as_bytes().to_vec();
     }
     let words = String::from_utf8_lossy(&loaded.cmdline).into_owned();
-    if words.split_whitespace().any(|w| w == "ferrix.root=tmpfs") {
-        println!("bootctl: note: the image's command line keeps / in memory (ferrix.root=tmpfs)");
+    if words.split_whitespace().any(|w| w == "xaqu.root=tmpfs") {
+        println!("bootctl: note: the image's command line keeps / in memory (xaqu.root=tmpfs)");
     }
     let mut slot = disk::open_rw(&part.node).map_err(|e| format!("{}: {e}", part.node))?;
     layout::check_writable(part, &mut slot)?;
@@ -444,7 +444,7 @@ fn label_of(image: &slotio::Image) -> String {
         .next()
         .unwrap_or("image")
         .trim_end_matches(')');
-    let mut label: String = format!("ferrix {base}").chars().take(31).collect();
+    let mut label: String = format!("xaqu {base}").chars().take(31).collect();
     label.retain(|c| c.is_ascii_graphic() || c == ' ');
     label
 }
@@ -456,7 +456,7 @@ fn good(ab: &AbDisk, booted: &Booted) -> Result<(), String> {
         .ok_or("the control record is uninitialised")?;
     let Some(slot) = booted.slot else {
         return Err(
-            "no ferrix.slot= on the command line: this boot did not come from a slot".into(),
+            "no xaqu.slot= on the command line: this boot did not come from a slot".into(),
         );
     };
     if !booted.is_trial() {
@@ -465,7 +465,7 @@ fn good(ab: &AbDisk, booted: &Booted) -> Result<(), String> {
             return Ok(());
         }
         return Err(format!(
-            "slot {} was not booted as a trial (ferrix.slot.boot={}); nothing changed",
+            "slot {} was not booted as a trial (xaqu.slot.boot={}); nothing changed",
             slot.letter(),
             booted.how.as_deref().unwrap_or("?")
         ));
@@ -563,7 +563,7 @@ mod tests {
         }
     }
 
-    const DISK: &str = "ferrix.slot.disk=12345678-9abc-def0-1122-334455667788";
+    const DISK: &str = "xaqu.slot.disk=12345678-9abc-def0-1122-334455667788";
 
     fn words(text: &str) -> Booted {
         Booted::parse(&format!("{text} {DISK}"))
@@ -571,27 +571,27 @@ mod tests {
 
     #[test]
     fn the_idle_slot_is_never_the_running_one() {
-        let good_a = words("ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=5");
+        let good_a = words("xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=5");
         assert_eq!(idle(&record(Slot::A, None), &good_a), Ok(Slot::B));
         // Armed but not booted yet: B is rewritten (after being disarmed).
         assert_eq!(idle(&record(Slot::A, Some(Slot::B)), &good_a), Ok(Slot::B));
         // Running B on trial: the idle slot would be the good one, A.
-        let trial_b = words("ferrix.slot=b ferrix.slot.boot=trial ferrix.slot.seq=5");
+        let trial_b = words("xaqu.slot=b xaqu.slot.boot=trial xaqu.slot.seq=5");
         assert!(idle(&record(Slot::A, Some(Slot::B)), &trial_b).is_err());
         // Booted A as a fallback: the good slot B is the idle one.
-        let fallback = words("ferrix.slot=a ferrix.slot.boot=fallback ferrix.slot.seq=5");
+        let fallback = words("xaqu.slot=a xaqu.slot.boot=fallback xaqu.slot.seq=5");
         assert!(idle(&record(Slot::B, None), &fallback).is_err());
         // Not booted from a slot: the one not good.
-        let none = Booted::parse("ferrix.root=btrfs");
+        let none = Booted::parse("xaqu.root=btrfs");
         assert_eq!(idle(&record(Slot::B, None), &none), Ok(Slot::A));
     }
 
     #[test]
     fn a_rescue_boot_changes_nothing() {
-        let rescue = Booted::parse("ferrix.root=btrfs");
+        let rescue = Booted::parse("xaqu.root=btrfs");
         assert!(rescue.slot.is_none());
         // Without the disk word a slot boot is no slot boot: S1.
-        let no_disk = Booted::parse("ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1");
+        let no_disk = Booted::parse("xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1");
         assert!(no_disk.slot.is_none() && no_disk.disk.is_none());
         for command in [Command::Good, Command::Rollback] {
             assert!(command.changes_what_boots());
@@ -603,14 +603,14 @@ mod tests {
 
     #[test]
     fn the_boot_disk_is_named_by_its_guid() {
-        let booted = words("ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1");
+        let booted = words("xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1");
         let guid = booted.disk.unwrap();
         assert_eq!(guid.to_string(), "12345678-9ABC-DEF0-1122-334455667788");
     }
 
     #[test]
     fn the_loaders_words_come_first() {
-        let booted = words("ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=3 ferrix.slot=b");
+        let booted = words("xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=3 xaqu.slot=b");
         assert_eq!(booted.slot, Some(Slot::A));
         assert_eq!(booted.sequence, Some(3));
     }

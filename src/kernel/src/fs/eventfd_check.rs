@@ -24,13 +24,13 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     EFD_CLOEXEC, EFD_NONBLOCK, EFD_SEMAPHORE, EPOLL_CTL_ADD, EPOLLET, EPOLLIN, F_GETFD, F_GETFL,
     FD_CLOEXEC, MAP_ANONYMOUS, MAP_PRIVATE, O_NONBLOCK, PROT_READ, PROT_WRITE, SEEK_CUR, SEEK_SET,
 };
-use ferrix_vfs::{Errno, OpenFile};
+use xaqu_vfs::{Errno, OpenFile};
 
 use crate::fs;
 use crate::fs::eventfd::{self, VALUE_BYTES};
@@ -341,7 +341,7 @@ fn a_blocked_read_is_woken() -> Result<bool, &'static str> {
         "eventfd-reader",
         blocked_reader,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     )?;
     until_listed(|| inner.readers_listed(), || READER_ANSWER.lock().is_some());
     crate::sched::sleep_for(STILL_WAITING_NANOS);
@@ -593,7 +593,7 @@ fn a_wait_is_woken(process: &Arc<Process>, page: u64, how: HowWaits) -> Result<b
     *WAITER_ANSWER.lock() = None;
     *WAITER_SUBJECT.lock() = Some((Arc::clone(process), page, target, how));
     let ended_before = ended();
-    let waiter = crate::sched::spawn("poll-waiter", poll_waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let waiter = crate::sched::spawn("poll-waiter", poll_waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
     until_listed(listed, || WAITER_ANSWER.lock().is_some());
     crate::sched::sleep_for(STILL_WAITING_NANOS);
     if WAITER_ANSWER.lock().is_some() {

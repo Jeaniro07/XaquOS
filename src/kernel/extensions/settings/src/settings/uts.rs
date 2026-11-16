@@ -4,11 +4,11 @@
 
 use alloc::sync::Arc;
 
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::system::{NAME_MAX, SetName, UtsNamespace};
-use ferrix_kernel_load::syscall::uaccess;
-use ferrix_kernel_load::syscall::userns;
-use ferrix_linux_abi::errno::Errno;
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::system::{NAME_MAX, SetName, UtsNamespace};
+use xaqu_kernel_load::syscall::uaccess;
+use xaqu_kernel_load::syscall::userns;
+use xaqu_linux_abi::errno::Errno;
 
 /// Read a name for `sethostname` or `setdomainname`.
 ///

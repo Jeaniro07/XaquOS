@@ -7,7 +7,7 @@
 //! HELLO waits in that channel with the shared VMO. Then:
 //!
 //! 1. both bulk endpoints opened as streams, and the chip set up as Linux's
-//!    `ftdi_sio` sets it up at open (`ferrix_usb_serial::port`);
+//!    `ftdi_sio` sets it up at open (`xaqu_usb_serial::port`);
 //! 2. a pseudoterminal ([`tty`]), its slave linked as `/tmp/ttyUSB<N>`, or
 //!    for a Blaster `/tmp/jtag<N>`, which takes JTAG command lines;
 //! 3. one wait, a `ppoll` on the port the interface channel is watched on
@@ -30,23 +30,23 @@ mod tty;
 
 use core::fmt::Write as _;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_rt::{Bootstrap, Kernel, linux};
-use ferrix_usb_serial::blaster::{self, Command, Jtag, MAX_TAPS, SCAN_BYTES, Tap};
-use ferrix_usb_serial::ftdi::Role;
-use ferrix_usb_serial::mpsse::{self, Outcome};
-use ferrix_usb_serial::port::{Cable, Identity, Serial};
-use ferrix_usbif::{MAX_BYTES, Message};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_rt::{Bootstrap, Kernel, linux};
+use xaqu_usb_serial::blaster::{self, Command, Jtag, MAX_TAPS, SCAN_BYTES, Tap};
+use xaqu_usb_serial::ftdi::Role;
+use xaqu_usb_serial::mpsse::{self, Outcome};
+use xaqu_usb_serial::port::{Cable, Identity, Serial};
+use xaqu_usbif::{MAX_BYTES, Message};
 
 use crate::link::Link;
 use crate::tty::{Kind, Tty};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The interface channel's port key.
 const KEY_LINK: u64 = 1;
@@ -85,7 +85,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(()) => 0,
         Err(step) => {
-            ferrix_rt::err!("usbserial: stopped at {step:?}");
+            xaqu_rt::err!("usbserial: stopped at {step:?}");
             step as i32
         }
     }
@@ -201,7 +201,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
         outward.address,
     );
     link.open_streams().map_err(|error| {
-        ferrix_rt::err!("usbserial: {number}: the streams would not open: {error:?}");
+        xaqu_rt::err!("usbserial: {number}: the streams would not open: {error:?}");
         Step::Streams
     })?;
     let chip = Identity {
@@ -212,7 +212,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
         max_packet: inward.max_packet,
     };
     let serial = Serial::open(&mut link, &chip).map_err(|error| {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "usbserial: {number}: {:04x}:{:04x} would not be set up: {error:?}",
             identity.vendor,
             identity.product
@@ -224,10 +224,10 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
         Role::Blaster => Kind::Jtag,
     };
     let tty = Tty::open(usize::from(number), kind).ok_or_else(|| {
-        ferrix_rt::err!("usbserial: {number}: no terminal: /dev/ptmx would not open");
+        xaqu_rt::err!("usbserial: {number}: no terminal: /dev/ptmx would not open");
         Step::Terminal
     })?;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "usbserial: serial {number} {:04x}:{:04x} ({} {}, {}-byte packets, serial {}) is {} (/dev/pts/{})",
         identity.vendor,
         identity.product,
@@ -279,7 +279,7 @@ impl Driver {
             }
             self.link.take_messages();
             if self.link.is_gone() {
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "usbserial: serial {} unplugged: {} hung up",
                     self.number,
                     self.tty.link()
@@ -341,12 +341,12 @@ impl Driver {
             let current = self.serial.line.baud;
             let line = termios.line(current);
             if let Err(error) = self.serial.modem(&mut self.link, !hang_up, !hang_up) {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "usbserial: serial {number}'s DTR and RTS were not set: {error:?}"
                 );
             }
             match self.serial.configure(&mut self.link, &line) {
-                Ok(()) => ferrix_rt::info!(
+                Ok(()) => xaqu_rt::info!(
                     "usbserial: serial {number} set to {} baud ({} on the chip), {} data bits, parity {:?}, {} stop bits, flow {:?}",
                     line.baud,
                     self.serial.actual_baud(),
@@ -355,7 +355,7 @@ impl Driver {
                     if line.two_stop_bits { 2 } else { 1 },
                     line.flow
                 ),
-                Err(error) => ferrix_rt::warn!(
+                Err(error) => xaqu_rt::warn!(
                     "usbserial: serial {number} cannot be set to {} baud: {error:?}; it stays at {current}",
                     line.baud
                 ),
@@ -372,7 +372,7 @@ impl Driver {
                     .serial
                     .write(&mut self.link, buffer.get(..out).unwrap_or_default())
             {
-                ferrix_rt::warn!("usbserial: serial {number} dropped {out} bytes: {error:?}");
+                xaqu_rt::warn!("usbserial: serial {number} dropped {out} bytes: {error:?}");
             }
         }
         let mut flags = [0_u8; PUMP_BYTES];
@@ -385,7 +385,7 @@ impl Driver {
         }
         let lost = self.link.take_lost();
         if lost > 0 {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "usbserial: serial {number} lost {lost} bytes to a stalled OUT endpoint"
             );
         }
@@ -400,13 +400,13 @@ impl Driver {
         }
         self.modem_said = Some(modem);
         let bit = |mask: u8| u8::from(modem & mask != 0);
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "usbserial: serial {} modem lines: CTS {} DSR {} RI {} DCD {}",
             self.number,
-            bit(ferrix_usb_serial::ftdi::MODEM_CTS),
-            bit(ferrix_usb_serial::ftdi::MODEM_DSR),
-            bit(ferrix_usb_serial::ftdi::MODEM_RI),
-            bit(ferrix_usb_serial::ftdi::MODEM_DCD)
+            bit(xaqu_usb_serial::ftdi::MODEM_CTS),
+            bit(xaqu_usb_serial::ftdi::MODEM_DSR),
+            bit(xaqu_usb_serial::ftdi::MODEM_RI),
+            bit(xaqu_usb_serial::ftdi::MODEM_DCD)
         );
     }
 
@@ -451,17 +451,17 @@ impl Driver {
             core::array::from_fn(|at| (at as u32).wrapping_mul(2_654_435_761).to_le_bytes()[3]);
         let number = self.number;
         match mpsse::loopback(&mut self.link, &mut self.serial, &pattern) {
-            Ok(Outcome::Equal) => ferrix_rt::info!(
+            Ok(Outcome::Equal) => xaqu_rt::info!(
                 "usbserial: serial {number} loopback through the chip's MPSSE: {} bytes back as sent",
                 pattern.len()
             ),
-            Ok(Outcome::Differs(at)) => ferrix_rt::warn!(
+            Ok(Outcome::Differs(at)) => xaqu_rt::warn!(
                 "usbserial: serial {number} loopback through the chip's MPSSE: byte {at} came back otherwise"
             ),
-            Ok(Outcome::NoEngine) => ferrix_rt::warn!(
+            Ok(Outcome::NoEngine) => xaqu_rt::warn!(
                 "usbserial: serial {number} loopback: the chip's MPSSE did not answer"
             ),
-            Err(error) => ferrix_rt::warn!("usbserial: serial {number} loopback failed: {error:?}"),
+            Err(error) => xaqu_rt::warn!("usbserial: serial {number} loopback failed: {error:?}"),
         }
     }
 
@@ -475,17 +475,17 @@ impl Driver {
         };
         match read {
             Ok(count) => {
-                ferrix_rt::info!("usbserial: jtag {number}: {count} taps");
+                xaqu_rt::info!("usbserial: jtag {number}: {count} taps");
                 for (tap, found) in taps.iter().take(count).enumerate() {
                     match found {
                         Tap::Idcode(idcode) => {
                             let (version, part, maker) = blaster::fields(*idcode);
-                            ferrix_rt::info!(
+                            xaqu_rt::info!(
                                 "usbserial: jtag {number} tap {tap}: idcode {idcode:#010x} (version {version}, part {part:#06x}, maker {maker:#05x})"
                             );
                         }
                         Tap::Bypass => {
-                            ferrix_rt::info!(
+                            xaqu_rt::info!(
                                 "usbserial: jtag {number} tap {tap}: bypass, no idcode"
                             );
                         }
@@ -493,7 +493,7 @@ impl Driver {
                 }
             }
             Err(error) => {
-                ferrix_rt::warn!("usbserial: jtag {number}: the chain did not read: {error:?}");
+                xaqu_rt::warn!("usbserial: jtag {number}: the chain did not read: {error:?}");
             }
         }
     }

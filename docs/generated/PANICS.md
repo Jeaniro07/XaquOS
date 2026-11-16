@@ -1,9 +1,9 @@
-# Ferrix — panic codes
+# Xaqu — panic codes
 
 > Generated from src/kernel/src/panic/catalog.rs by tools/common/gen/gen-panic-catalog.py. Do not edit: change the catalog and regenerate with `python3 tools/common/gen/gen-panic-catalog.py`.
 
 When the kernel stops on a fatal condition it prints a report beginning with a
-`FERRIX-PANIC` line that carries the failing site's own message. A site that
+`XAQU-PANIC` line that carries the failing site's own message. A site that
 names a catalog entry adds, below the trace, the entry's code and title on a
 `code` line, then `means`, `causes` and `see` lines with the text below. The
 message says what happened this time; the entry says what the check was for and
@@ -158,14 +158,14 @@ Causes are listed most likely first.
 | [FX-1150](#fx-1150) | the net core did not carry a packet round its own loopback |
 | [FX-1151](#fx-1151) | the net ring did not carry a frame between the kernel and a driver |
 | [FX-1152](#fx-1152) | AF_NETLINK did not answer the requests `ip` makes |
-| [FX-1201](#fx-1201) | a btrfs volume Ferrix wrote did not read back as it was written |
+| [FX-1201](#fx-1201) | a btrfs volume Xaqu wrote did not read back as it was written |
 | [FX-1202](#fx-1202) | pid 1 did not move onto the root volume with the switch |
 | [FX-1203](#fx-1203) | the boot's copies of the system were not given back as specified |
 | [FX-1301](#fx-1301) | cgroupfs did not show the job tree as cgroup v2 |
 | [FX-1302](#fx-1302) | seccomp's filter was not asked first at every entry, or not as the entry's own |
 | [FX-1303](#fx-1303) | a seccomp filter was not installed, judged, inherited, ordered or released as specified |
 | [FX-1304](#fx-1304) | Syscall User Dispatch did not judge, dispatch or refuse a call as Linux does |
-| [FX-1501](#fx-1501) | init exited, and ferrix.onexit=panic asked for a panic |
+| [FX-1501](#fx-1501) | init exited, and xaqu.onexit=panic asked for a panic |
 | [FX-1502](#fx-1502) | a kernel call init needs did not do what docs/INIT.md §11 says |
 | [FX-1503](#fx-1503) | init took or refused an input other than set_inputs says |
 | [FX-9001](#fx-9001) | a page fault the kernel cannot resolve |
@@ -449,7 +449,7 @@ See: src/kernel/src/mm.rs init; src/lib/kernel/frame; docs/ROADMAP.md stage 2.
 
 `vmap::init` creates the arena that hands out kernel virtual ranges, from which
 every device window and every guard-paged kernel stack is later taken. It fails
-only if `ferrix_vma` rejects the arena's bounds as misaligned or empty. Nothing
+only if `xaqu_vma` rejects the arena's bounds as misaligned or empty. Nothing
 that needs a device register or a new stack can run without it.
 
 1. `ARENA_BASE` and `ARENA_END`, or the `KERNEL_VMAP_BASE`,
@@ -510,7 +510,7 @@ the identity map, is not the kernel the boot marker describes.
 2. A loader mapped the direct map writable over the kernel's text or read-only
    data, or something mapped those frames writable later; the `sealed` line
    gives the mapping's address. Both loaders cut the direct map around the span
-   `ferrix_bootinfo::read_only_span` computes.
+   `xaqu_bootinfo::read_only_span` computes.
 3. The direct map does not alias all of the image's text, so the sealed sweep
    checked nothing; the `sealed` line gives where the alias should have been.
 4. The architecture's `drop_identity_map` did not remove the lower half, so
@@ -775,7 +775,7 @@ its own logical number -- the one `getcpu` answers -- back through it when it
 was brought up (`L.x86_64.211`; `RDPID` reads the same register). Linux and
 Windows put the processor's number in `IA32_TSC_AUX`; a program comparing it
 with `getcpu` or `GetCurrentProcessorNumber` saw 0 on every processor before
-Ferrix wrote it.
+Xaqu wrote it.
 
 1. A bring-up path that stopped calling `syscall::init` with the processor's
    logical number, or the write of `IA32_TSC_AUX` taken out of it.
@@ -831,7 +831,7 @@ stops rather than go on without it or free the block under it.
    rejected; the message says which.
 3. On x86-64 there is no free frame below 1 MiB for the trampoline or its root
    table, or a processor's APIC ID is above 255 while the boot runs in xAPIC
-   mode (`ferrix.apic=x2apic` runs it in x2APIC mode).
+   mode (`xaqu.apic=x2apic` runs it in x2APIC mode).
 4. On x86-64 the local APIC never accepted the INIT or start-up IPI.
 5. On ARMv7-A the entry sequence, a stack, a per-CPU record or the start block
    lies above 4 GiB and cannot be passed in a 32-bit register.
@@ -954,7 +954,7 @@ migrating_shootdown; src/kernel/src/smp.rs run_everywhere; docs/ROADMAP.md stage
 
 The boot processor chooses the local APIC's mode once: x2APIC, through its MSRs,
 where firmware locked it (`IA32_XAPIC_DISABLE_STATUS`), left it on, or
-`ferrix.apic=x2apic` asked; xAPIC, through its MMIO window, otherwise. Every
+`xaqu.apic=x2apic` asked; xAPIC, through its MMIO window, otherwise. Every
 application processor follows it, and in xAPIC mode one firmware left in x2APIC
 mode is switched back (`docs/NVIDIA.md` section 12.3, condition G6). A processor
 locked in x2APIC mode while the boot processor runs in xAPIC mode cannot be
@@ -963,7 +963,7 @@ there.
 
 1. The platform locks some processors' local APICs in x2APIC mode and not the
    boot processor's, or reports the lock only on some processors.
-2. `ferrix.apic=xapic` on a platform whose application processors are locked in
+2. `xaqu.apic=xapic` on a platform whose application processors are locked in
    x2APIC mode.
 
 See: src/kernel/src/arch/x86_64/apic.rs enter_mode;
@@ -1023,7 +1023,7 @@ slept or preempted until every processor is running tasks.
    between waking and joining.
 2. The machine has more processors than a scheduling domain's `CpuSet` can hold.
 3. The vmap arena had no stack left for the boot processor's idle task.
-4. `ferrix_sched` rejected the scheduler's slice constant when a run queue was
+4. `xaqu_sched` rejected the scheduler's slice constant when a run queue was
    built.
 
 See: src/kernel/src/sched/mod.rs init; src/kernel/src/sched/mod.rs
@@ -1328,7 +1328,7 @@ person debugging a frozen program to the wrong place; a read that faults stops
 the kernel from a /proc read.
 
 1. `arch::SWITCH_FRAME` no longer names the frame pointer or return address
-   `ferrix_switch` saves, after a change to the switch's pushes.
+   `xaqu_switch` saves, after a change to the switch's pushes.
 2. `chain_of` does not take `backtrace::slide` off, or reports a word that
    failed `backtrace::in_image`.
 3. `mm::read_kernel_word` reads an address that is unmapped or not RAM instead
@@ -1526,7 +1526,7 @@ The archive is read through the direct map from memory the loader reserved as
 
 1. The archive is malformed or truncated: `tools/common/xtask/src/initramfs.rs`
    wrote something the newc reader in `src/lib/fs/common/cpio` refuses, or the
-   loader read less of FERRIX/INITRD.IMG than it reported.
+   loader read less of XAQU/INITRD.IMG than it reported.
 2. The loader placed the archive outside the direct map, which it is meant to
    refuse before the hand-off.
 3. An entry could not be created: tmpfs refused it, or memory for file contents
@@ -2360,7 +2360,7 @@ src/kernel/src/syscall/credentials.rs.
 
 ## FX-0895 — the crash hold failed its self-check
 
-`syscall::deliver::check_the_crash_hold` arms /dev/ferrix-crashes from a check
+`syscall::deliver::check_the_crash_hold` arms /dev/xaqu-crashes from a check
 process and makes faults through the fault path's own entry. Unarmed, a fault
 must end its process at once. Armed, a fatal fault must be held: its line read,
 its process shown as t (tracing stop), its other thread parked, not stopped, and
@@ -2580,7 +2580,7 @@ make one; and once the objects are gone every byte charged must have come back.
 A kernel failing this lets one job take the kernel heap from the rest through a
 path its memory limit does not see (certification finding F-37, T.EXHAUST).
 
-1. An allocation site stopped carrying a `ferrix_kmem::Charge`, or made the
+1. An allocation site stopped carrying a `xaqu_kmem::Charge`, or made the
    object before charging it, so a refusal left something behind.
 2. A charge was made to the wrong job: a buffer's growth to the running task
    where it belongs to the object's maker, or the other way round.
@@ -2659,7 +2659,7 @@ none it should.
 
 1. A bound in `range` in src/kernel/src/discovery/smbios.rs was loosened or
    dropped.
-2. `ferrix_smbios::Smbios::new` stopped checking the table's length or the
+2. `xaqu_smbios::Smbios::new` stopped checking the table's length or the
    checksum; its host tests pin both.
 
 See: src/kernel/src/discovery/smbios.rs;
@@ -2877,7 +2877,7 @@ message names the case.
 4. `quota::charging_to` no longer moves the target-side half of a by-handle copy
    to the space's owner.
 5. `AddressSpace::fork` no longer takes the source's writable translations down
-   before it answers, or `ferrix_vma`'s `protect` no longer marks a private
+   before it answers, or `xaqu_vma`'s `protect` no longer marks a private
    region made writable copy-on-write (F-41).
 
 See: src/kernel/src/object/space_check.rs; src/kernel/src/object/space.rs;
@@ -3197,7 +3197,7 @@ See: src/kernel/src/boot_authority.rs; docs/microkernel/BOOT-AUTHORITY.md.
 
 ## FX-0953 — the partitions' description cannot be honoured
 
-`.ferrix/partitions` is malformed, or names a device no node matches, or one
+`.xaqu/partitions` is malformed, or names a device no node matches, or one
 that shares its requester id or its pages with something it does not also name.
 Reading it as empty would hand a safety partition's device to `devmgr`, so the
 boot stops.
@@ -3425,7 +3425,7 @@ nothing here; a request on the ring is the ring-3 driver's check.
    other than a device, or a device that already has a ring.
 2. The ring's task answered a HELLO with the wrong refusal, or none: the order
    of checks in `block_ring::check_hello` and `take_up` no longer matches
-   BLOCK-RING.md section 6.2, or `ferrix-blkring`'s validation changed.
+   BLOCK-RING.md section 6.2, or `xaqu-blkring`'s validation changed.
 3. An accepted HELLO published no disk, or one with another geometry or name:
    the registration in `take_up`, or `DiskName::minor`, disagrees with section
    6.1.
@@ -3547,7 +3547,7 @@ DMA it was not given, and a unit whose faults nobody reads would hide it.
    was marked failed: it takes no invalidation again, and nothing its domains
    may reach is released until reboot. The line before names the unit and which
    error stopped it; a descriptor the unit would not take is a kernel encoding
-   fault (`ferrix_paging::vtd::queue`).
+   fault (`xaqu_paging::vtd::queue`).
 
 See: src/kernel/src/iommu.rs audit_faults; src/kernel/src/iommu/check.rs
 check_dma_faults; src/kernel/src/discovery/pci/virtio.rs probe_out_of_domain;
@@ -3585,7 +3585,7 @@ src/lib/proto/logctl.
 
 ## FX-1009 — a devmgr pid 1 started did not keep device authority to itself
 
-Under ferrix.devmgr=init (docs/INIT.md §7.3, L12) pid 1 asks the kernel to start
+Under xaqu.devmgr=init (docs/INIT.md §7.3, L12) pid 1 asks the kernel to start
 devmgr with the starter it was given, and gets back a handle to the process. The
 kernel makes the DEVICES channel -- MANAGE on every device node, and through
 them DMA -- and puts one end in devmgr's table and keeps the other. Every start
@@ -3649,7 +3649,7 @@ rewritten. `device::config_check` holds all of it on the published nodes
 
 1. `device_aperture` cut an address or a length, or reported a BAR, offset or
    flag other than the minted aperture's.
-2. `ferrix_pci::window::writable` let a kernel-owned byte through -- the header,
+2. `xaqu_pci::window::writable` let a kernel-owned byte through -- the header,
    MSI, MSI-X, PCI Express, ATS, device-dependent space or virtio's
    `pci_cfg_data` -- or refused a vendor capability's body.
 3. `Writable::allows` tested fewer than all of a write's bytes.
@@ -3704,7 +3704,7 @@ another driver's control, every call waiting out a copy in flight, the 257th
 request refused, the queue to a driver that reads nothing bounded (F-63), and a
 program woken with ENODEV when its driver goes.
 
-1. A refusal, or its absence: `ferrix_chardevctl::session::judge` or `publish`
+1. A refusal, or its absence: `xaqu_chardevctl::session::judge` or `publish`
    no longer refuses what the message names.
 2. The driver's end was made with `DUPLICATE` or `TRANSFER`: `DRIVER_RIGHTS`
    changed.
@@ -3728,7 +3728,7 @@ docs/certification/FINDINGS.md F-63.
 A display driver whose HELLO says it copies is handed each buffer's VMO with
 `MAP`, so it can read every frame. The core allows that only for a device the
 chardev core serves (NVIDIA's) and for the firmware framebuffer's node under
-`ferrix.efifb` (`docs/DISPLAY.md` section 8). `display::check::run` requires a
+`xaqu.efifb` (`docs/DISPLAY.md` section 8). `display::check::run` requires a
 made-up device tree node and every other published node refused, the firmware
 framebuffer's node allowed, and the copying card handed with `READ` and `MAP`
 and never `WRITE`.
@@ -3753,7 +3753,7 @@ refresh, to refuse a listed size at a refresh nobody listed and a size nobody
 listed, a list sent in two pages to be taken, and a list with two preferred
 modes to be refused.
 
-1. `ferrix_displayctl::listed::listed_match` was widened to take a size or
+1. `xaqu_displayctl::listed::listed_match` was widened to take a size or
    refresh no entry has.
 2. The session's page checks (`Session::receive` of MODE_LIST) stopped counting
    preferred entries or tracking the page order.
@@ -3893,7 +3893,7 @@ src/lib/network/netlink; docs/ROADMAP.md.
 
 <a id="fx-1201"></a>
 
-## FX-1201 — a btrfs volume Ferrix wrote did not read back as it was written
+## FX-1201 — a btrfs volume Xaqu wrote did not read back as it was written
 
 Stage 12's exit, the guest's half: xtask attaches a fresh copy of the `blank`
 fixture, an empty volume made by real mkfs.btrfs, as the third virtio-blk disk;
@@ -3903,7 +3903,7 @@ rename and an unlink — syncs, unmounts, mounts again and reads everything back
 After the unmount nothing is cached, so every byte compared came off the disk.
 Then one file fills the volume until a write answers ENOSPC, and the volume must
 still sync, read back and take a new file once that one is deleted. Under
-`ferrix.btrfs=churn` or `=replay`, which only `cargo xtask test-powerfail` sets,
+`xaqu.btrfs=churn` or `=replay`, which only `cargo xtask test-powerfail` sets,
 the same disk is instead rewritten until QEMU is killed, and then mounted again
 — replaying any log the kill left — and every file whose trailer says its body
 was made durable is checked against that trailer.
@@ -3939,7 +3939,7 @@ docs/ROADMAP.md stage 12.
 
 ## FX-1202 — pid 1 did not move onto the root volume with the switch
 
-Under ferrix.devmgr=init pid 1 starts on the tmpfs, since the root disk's driver
+Under xaqu.devmgr=init pid 1 starts on the tmpfs, since the root disk's driver
 comes from the devmgr it starts. When devmgr has reported, the kernel switches /
 to the btrfs root volume and, in the same step, moves pid 1's root and working
 directory onto it, under pid 1's filesystem lock. After the switch pid 1's root
@@ -3972,7 +3972,7 @@ file held open and mapped across the release reading as before.
    src/kernel/src/mm.rs gave back other frames than the archive's whole pages,
    or left the watermark as it was.
 2. `init::set_inputs` kept a slice of the archive instead of a copy.
-3. `ferrix_vfs::initramfs::remove` left a name of the archive, or removed a
+3. `xaqu_vfs::initramfs::remove` left a name of the archive, or removed a
    spared one.
 
 See: src/kernel/src/fs/release_check.rs; docs/RAM-RELEASE.md §2.
@@ -4182,19 +4182,19 @@ src/kernel/src/syscall/seccomp.rs check; docs/SECCOMP.md §13.
 
 <a id="fx-1501"></a>
 
-## FX-1501 — init exited, and ferrix.onexit=panic asked for a panic
+## FX-1501 — init exited, and xaqu.onexit=panic asked for a panic
 
-The program the kernel started as pid 1 -- the one `ferrix.init=` named, or the
-one built in -- has exited, and the command line carries `ferrix.onexit=panic`,
+The program the kernel started as pid 1 -- the one `xaqu.init=` named, or the
+one built in -- has exited, and the command line carries `xaqu.onexit=panic`,
 which asks for what Linux does when init dies. Without the option the machine
-commits its disks and powers off, and with `ferrix.onexit=reset` it resets. The
+commits its disks and powers off, and with `xaqu.onexit=reset` it resets. The
 disks were committed before this panic, as they are before a power-off.
 
 1. Init ran to its end: a shell whose session was ended with `exit`, or a script
    that finished.
 2. Init failed and exited: the `init ... exited with` line above this report
    gives its status, and its own output above that says why.
-3. Nothing could be started at all: no program is built in, `ferrix.init=` named
+3. Nothing could be started at all: no program is built in, `xaqu.init=` named
    a file that would not start, and the image carries no /sbin/init.
 
 See: src/kernel/src/power.rs finish; src/kernel/src/init.rs run; docs/INIT.md
@@ -4267,7 +4267,7 @@ docs/INIT.md §6, §9, §11, §16.
 
 ## FX-1503 — init took or refused an input other than set_inputs says
 
-`init::check` judges sets of entries under `.ferrix/init/` made up as an
+`init::check` judges sets of entries under `.xaqu/init/` made up as an
 initramfs could carry them, as `fs::init` hands the boot archive's to
 `init::set_inputs`: the program, the script and the commands are each taken when
 one regular file with one link carries them, and refused -- the input taken as
@@ -4392,7 +4392,7 @@ a program or the kernel was interrupted; that says nothing about the cause.
    instruction pointer then lies in the kernel image, just after it.
 
 See: src/kernel/src/arch/x86_64/paranoid.rs; src/kernel/src/arch/x86_64/trap.rs
-ferrix_paranoid_common.
+xaqu_paranoid_common.
 
 <a id="fx-9006"></a>
 
@@ -4415,7 +4415,7 @@ registers in the report are the second exception's.
    overflowed or faulted.
 
 See: src/kernel/src/arch/x86_64/paranoid.rs; src/kernel/src/arch/x86_64/trap.rs
-ferrix_paranoid_common; src/kernel/src/arch/x86_64/gdt.rs.
+xaqu_paranoid_common; src/kernel/src/arch/x86_64/gdt.rs.
 
 <a id="fx-9007"></a>
 
@@ -4431,20 +4431,20 @@ entry's save if an interrupt was what reached the guard.
    `cargo xtask check-stack-depth` walks the known ones.
 2. A very large local in a function, or a recursion.
 
-See: src/kernel/src/arch/aarch64/trap.rs ferrix_stack_hit;
-src/kernel/src/arch/armv7a/trap.rs ferrix_stack_hit; src/kernel/src/trap.rs
+See: src/kernel/src/arch/aarch64/trap.rs xaqu_stack_hit;
+src/kernel/src/arch/armv7a/trap.rs xaqu_stack_hit; src/kernel/src/trap.rs
 stack_overflow.
 
 <a id="fx-9008"></a>
 
 ## FX-9008 — user space stopped feeding its watchdog
 
-With `ferrix.watchdog=on` a privileged program -- init, under
-`ferrix.init.watchdog=` -- opened `/dev/watchdog` and so promised to feed it
+With `xaqu.watchdog=on` a privileged program -- init, under
+`xaqu.init.watchdog=` -- opened `/dev/watchdog` and so promised to feed it
 within its timeout. No feed came for that long: the program's own loop did not
 turn. The kernel still ran -- its watchdog task woke to see the deadline pass --
 so what stopped is user space, or the part of the kernel it waits on. The
-machine resets after this report only under `ferrix.panic=reset`.
+machine resets after this report only under `xaqu.panic=reset`.
 
 1. Every program blocked on a kernel lock, a wait or a page that never comes:
    the system froze under them. The log's last lines before this report say what

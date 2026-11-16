@@ -14,7 +14,7 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_vfs::{Errno, Inode, Metadata, OpenFile, Readiness, Result as VfsResult};
+use xaqu_vfs::{Errno, Inode, Metadata, OpenFile, Readiness, Result as VfsResult};
 
 use super::Renderer;
 use crate::fs;
@@ -72,7 +72,7 @@ impl Inode for Fence {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(self.renderer.changed()));
         true
     }

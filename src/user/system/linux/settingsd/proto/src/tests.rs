@@ -36,7 +36,7 @@ fn replies() -> Vec<ToClient> {
         ToClient::Info("wait 16 s".to_owned()),
         ToClient::Done {
             changed: true,
-            text: "the computer is called box (was ferrix)".to_owned(),
+            text: "the computer is called box (was xaqu)".to_owned(),
         },
     ];
     for kind in [
@@ -206,7 +206,7 @@ fn unencodable_fields_are_refused_on_the_way_out() {
 
 #[test]
 fn host_names_keep_rfc_1123() {
-    for good in ["box", "ferrix", "a", "my-pc", "lab.example.org", "x1", "1x"] {
+    for good in ["box", "xaqu", "a", "my-pc", "lab.example.org", "x1", "1x"] {
         assert!(valid_hostname(good).is_ok(), "{good}");
     }
     let long_label = "a".repeat(64);

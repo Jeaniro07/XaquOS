@@ -49,9 +49,9 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{O_CLOEXEC, O_NONBLOCK, SPLICE_F_ALL, SPLICE_F_NONBLOCK};
-use ferrix_vfs::{FileType, OpenFile, Whence};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{O_CLOEXEC, O_NONBLOCK, SPLICE_F_ALL, SPLICE_F_NONBLOCK};
+use xaqu_vfs::{FileType, OpenFile, Whence};
 
 use crate::fs;
 use crate::syscall::fd;
@@ -72,7 +72,7 @@ const MAX_RW_COUNT: u64 = 0x7FFF_F000;
 /// neither `arch/arm/include/uapi/asm/fcntl.h` nor its arm64 counterpart
 /// overrides the generic header's values, and x86-64 has no header of its own.
 /// So is `O_DIRECT`, whose bit Arm does move, for a packet pipe that keeps
-/// each write apart (`ferrix_vfs::pipe`): the Steam client's controller code
+/// each write apart (`xaqu_vfs::pipe`): the Steam client's controller code
 /// asserts without one. Linux's `O_NOTIFICATION_PIPE` is `EINVAL` here, with
 /// every other bit.
 pub(crate) fn sys_pipe2(process: &Process, fds: u64, raw: u32) -> Result<usize, Errno> {
@@ -218,7 +218,7 @@ fn transfer(
 /// socket and send into a pipe; an eventfd, a timerfd, a signalfd, an epoll
 /// and an inotify are `EINVAL` into all three, and 0 into a pipe for a count
 /// of zero; `/dev/zero`, `/dev/urandom` and `/dev/full` send into all three.
-/// Ferrix used to copy from all of them, and to lose what a short write left
+/// Xaqu used to copy from all of them, and to lose what a short write left
 /// of a pipe's bytes.
 ///
 /// A file with no `splice_read` of its own ([`splices_out`]) is refused the
@@ -235,7 +235,7 @@ fn refuses_input(input: &OpenFile, output: &OpenFile, count: u64) -> bool {
 /// Whether Linux's file for `input` has a `splice_read`, which `sendfile`
 /// and `splice` read through: a pipe and a stream on the anonymous
 /// filesystem have none, and an object says for itself
-/// ([`ferrix_vfs::Inode::splices_out`]). Measured on a 7.0 host, `sendfile`
+/// ([`xaqu_vfs::Inode::splices_out`]). Measured on a 7.0 host, `sendfile`
 /// of five bytes from each of these is `EINVAL` into a file, a pipe and a
 /// Unix socket, and a count of zero is 0: `/dev/null`, a DRM render node and
 /// card, an event device, `/proc/net/{arp,dev,route,tcp,udp,tcp6,udp6}`,

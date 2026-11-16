@@ -10,8 +10,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vma::VmaFlags;
 
 use crate::console::println;
 use crate::object::bare::Bare;
@@ -573,11 +573,11 @@ fn a_program_has_its_argument_and_its_calls_theirs(program: &[u8]) -> Result<(),
 struct ReadAgain;
 
 impl Filler for ReadAgain {
-    fn fill(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 
-    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 

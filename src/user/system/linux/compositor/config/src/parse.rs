@@ -283,7 +283,7 @@ pub(crate) fn apply(
         "workspace" => config.workspaces.push(raw(key)),
         "animation" | "bezier" => config.animations.push(raw(key)),
         // Hyprland's `plugin` names a shared object it loads into itself.
-        // Ferrix has no dynamic loader and this compositor loads no code
+        // Xaqu has no dynamic loader and this compositor loads no code
         // into its own address space, so a plugin here is a program it
         // starts and talks to over the control socket; `docs/COMPOSITOR.md`
         // says why. The keyword is the same one, so a person's `plugin =`

@@ -1,4 +1,4 @@
-//! Being Ferrix's first program.
+//! Being Xaqu's first program.
 //!
 //! The kernel starts init the way it starts a shell (`src/kernel/src/init.rs`):
 //! `sh -i` when nothing was built in, and `sh -c <script>` when something

@@ -1,6 +1,6 @@
 //! Iteration 1 of the compositor: fill the screen with one colour.
 //!
-//! `docs/DISPLAY.md` puts a blank screen on Ferrix first, so the path from a
+//! `docs/DISPLAY.md` puts a blank screen on Xaqu first, so the path from a
 //! Linux program through `/dev/dri/card0`, the kernel's display core and the
 //! ring-3 virtio-gpu driver to QEMU's window is proven before a compositor
 //! draws anything on it. This program is that proof, and it uses nothing a
@@ -48,7 +48,7 @@ fn main() {
     }
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/dri`; elsewhere the
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/dri`; elsewhere the
 /// crate builds so its modeset logic is tested on any host.
 #[cfg(not(target_os = "linux"))]
 fn main() {}

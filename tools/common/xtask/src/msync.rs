@@ -68,7 +68,7 @@ fn test_msync(args: &Args) -> Result<()> {
                 &loader,
                 &kernel,
                 &archive,
-                Some("ferrix.btrfs=keep\n"),
+                Some("xaqu.btrfs=keep\n"),
             )?;
             qemu::watch_then(arch, &reader, &kernel, args, "msync: started", |watching| {
                 let _ = watching.read_more(

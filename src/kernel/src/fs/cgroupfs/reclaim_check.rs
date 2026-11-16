@@ -57,10 +57,10 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::tmpfs::{PageSource, Pages, Storage};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::tmpfs::{PageSource, Pages, Storage};
+use xaqu_vma::VmaFlags;
 
 use super::{Checked, Harness};
 use crate::fallible;
@@ -99,7 +99,7 @@ struct Pattern {
 }
 
 impl PageSource for Pattern {
-    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> ferrix_vfs::Result<usize> {
+    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> xaqu_vfs::Result<usize> {
         for (index, page) in (first..).zip(pages.iter_mut()) {
             for (at, slot) in page.iter_mut().enumerate() {
                 *slot = byte(index, at);
@@ -327,7 +327,7 @@ fn the_files(harness: &mut Harness, group: &Group, other: &Group) -> Checked<()>
     if harness.exists(&group.file("memory.swap.max"))
         || harness.exists(&other.file("memory.swap.current"))
     {
-        return Err("a cgroup has a memory.swap file, and Ferrix has no swap");
+        return Err("a cgroup has a memory.swap file, and Xaqu has no swap");
     }
     Ok(())
 }
@@ -420,7 +420,7 @@ const TMPFS_PAGES: u64 = 32;
 /// operations hold its sleeping I/O lock and not its inode spin lock (F-70;
 /// with the spin lock held, FX-0503 stops the machine here).
 fn tmpfs_read_throttled(harness: &mut Harness) -> Checked<()> {
-    use ferrix_vfs::{FileSystem, NewNode};
+    use xaqu_vfs::{FileSystem, NewNode};
     let group = Group::make(harness, b"/check-rt")?;
     group.set(harness, "memory.high", MARK)?;
     let page = PAGE_SIZE as usize;

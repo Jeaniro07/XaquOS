@@ -9,15 +9,15 @@
 # nothing here until this script is changed.
 #
 # Each architecture's four files land flat under
-# `$FERRIX_DEBIAN_BUSYBOX/<arch>/` (default ~/.local/share/ferrix/busybox/debian),
-# in Ferrix's architecture names, so one `{arch}` template serves every run:
+# `$XAQU_DEBIAN_BUSYBOX/<arch>/` (default ~/.local/share/xaqu/busybox/debian),
+# in Xaqu's architecture names, so one `{arch}` template serves every run:
 #
-#   D=~/.local/share/ferrix/busybox/debian
+#   D=~/.local/share/xaqu/busybox/debian
 #   cargo xtask test-shell --arch all --init "$D/{arch}/busybox" \
 #       --interpreter "$D/{arch}/ld.so" \
 #       --library "$D/{arch}/libc.so.6" --library "$D/{arch}/libresolv.so.2"
 #
-# `i386` is not one of Ferrix's architectures but a program it runs on
+# `i386` is not one of Xaqu's architectures but a program it runs on
 # x86-64 (docs/I386.md, I4), so its four files land in `$D/i386/` and are
 # named in an `--arch x86_64` run:
 #
@@ -33,9 +33,9 @@
 set -euo pipefail
 
 mirror=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
-out=${FERRIX_DEBIAN_BUSYBOX:-$HOME/.local/share/ferrix/busybox/debian}
+out=${XAQU_DEBIAN_BUSYBOX:-$HOME/.local/share/xaqu/busybox/debian}
 
-# Ferrix's arch, Debian's arch (for the reader), multiarch directory, linker, then each package as
+# Xaqu's arch, Debian's arch (for the reader), multiarch directory, linker, then each package as
 # pool path and SHA-256.
 packages=(
     "x86_64 amd64 x86_64-linux-gnu ld-linux-x86-64.so.2

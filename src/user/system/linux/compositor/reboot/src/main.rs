@@ -133,7 +133,7 @@ fn main() -> std::process::ExitCode {
     ExitCode::FAILURE
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `reboot(2)`; elsewhere
+/// Only Linux, and Xaqu through its Linux ABI, have `reboot(2)`; elsewhere
 /// the crate builds so its argument parsing is tested on any host.
 #[cfg(not(target_os = "linux"))]
 fn main() {

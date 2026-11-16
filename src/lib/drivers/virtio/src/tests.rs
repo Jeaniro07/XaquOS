@@ -997,7 +997,7 @@ fn the_device_rejects_an_available_entry_out_of_range() {
     let _ = driver.add_chain(&[Buffer::readable(0x1, 1)]).unwrap();
 
     // The driver side of the ring is the untrusted one when the device is the
-    // Ferrix kernel and the driver is a userspace process.
+    // Xaqu kernel and the driver is a userspace process.
     memory.poke_u16(layout.available_entry(0), 9);
 
     assert_eq!(

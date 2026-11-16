@@ -11,8 +11,8 @@
 
 use core::sync::atomic::{AtomicU8, Ordering};
 
-use ferrix_bootinfo::option_in;
-use ferrix_fdt::{Fdt, Node};
+use xaqu_bootinfo::option_in;
+use xaqu_fdt::{Fdt, Node};
 
 use crate::arch::arm_common::{pl011, stm32_usart};
 use crate::early::{EarlyError, EarlyMemory};
@@ -97,7 +97,7 @@ pub(super) fn chosen<'a>(tree: &Fdt<'a>) -> Option<(Node<'a>, Port)> {
 }
 
 /// The GIC interrupt the console port receives on, if the tree says so in a
-/// shape `ferrix_fdt` follows.
+/// shape `xaqu_fdt` follows.
 ///
 /// Chosen the way [`init`] chose the port, and only for the port it brought
 /// up: an interrupt belonging to a different node would be enabled for a port

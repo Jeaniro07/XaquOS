@@ -10,7 +10,7 @@
 //! process implements over its handles, and holds everything else:
 //!
 //! * [`Driver::init`] negotiates features, reads the device's description
-//!   through `ferrix_virtio::input`'s configuration queries and builds the
+//!   through `xaqu_virtio::input`'s configuration queries and builds the
 //!   event queue, and [`Driver::hello`] turns that description into the HELLO
 //!   the core judges;
 //! * [`Driver::on_control`] follows the core's side: READY sets `DRIVER_OK`
@@ -64,7 +64,7 @@
 //!
 //! # DMA memory is freed only after a reset
 //!
-//! As in `ferrix-virtio-gpu`: the rings and the event area are held in
+//! As in `xaqu-virtio-gpu`: the rings and the event area are held in
 //! [`ManuallyDrop`], and [`Driver::shutdown`] resets the device and hands them
 //! back as [`Teardown::Released`] only if the reset finished. A device that
 //! does not reset may still write into the event buffers, so they come back
@@ -72,7 +72,7 @@
 //!
 //! # Trust
 //!
-//! The configuration is checked by `ferrix_virtio::input`: a declared axis
+//! The configuration is checked by `xaqu_virtio::input`: a declared axis
 //! with no range, a range whose minimum lies above its maximum, or an answer
 //! that breaks the query protocol fails bring-up. The used ring is checked by
 //! [`SplitQueue`]. A completion that wrote anything but one event, a
@@ -97,15 +97,15 @@
 use core::fmt;
 use core::mem::ManuallyDrop;
 
-use ferrix_inputctl::message::{Events, Hello, Message, RawEvent, Refusal};
-use ferrix_inputctl::session::Capabilities;
-use ferrix_linux_abi::input::{EV_REP, EV_SYN, REP_MAX, SYN_REPORT};
-use ferrix_virtio::input::{self, ConfigSelect, EVENT_LEN, Event, InputError};
-use ferrix_virtio::pci::{
+use xaqu_inputctl::message::{Events, Hello, Message, RawEvent, Refusal};
+use xaqu_inputctl::session::Capabilities;
+use xaqu_linux_abi::input::{EV_REP, EV_SYN, REP_MAX, SYN_REPORT};
+use xaqu_virtio::input::{self, ConfigSelect, EVENT_LEN, Event, InputError};
+use xaqu_virtio::pci::{
     self, CommonConfig, DEVICE_STATUS, QueueAddresses, STATUS_DEVICE_NEEDS_RESET, STATUS_FAILED,
     TransportError,
 };
-use ferrix_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
+use xaqu_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
 
 pub mod batch;
 mod hello;
@@ -142,7 +142,7 @@ pub const QUEUE_SIZE: u16 = 64;
 pub const AREA_BYTES: usize = QUEUE_SIZE as usize * EVENT_LEN;
 
 /// The device's registers, as the process that drives it reaches them. The
-/// same shape as `ferrix-virtio-gpu`'s, with the configuration writable,
+/// same shape as `xaqu-virtio-gpu`'s, with the configuration writable,
 /// since a virtio-input query is a write.
 pub trait Transport: CommonConfig + ConfigSelect {
     /// Ring the doorbell for `queue`, whose `queue_notify_off` is

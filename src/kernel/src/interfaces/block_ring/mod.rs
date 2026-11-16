@@ -1,6 +1,6 @@
 //! Stage 10: the kernel's end of a block ring.
 //!
-//! `docs/BLOCK-RING.md` is the protocol, and `ferrix-blkring` checks every
+//! `docs/BLOCK-RING.md` is the protocol, and `xaqu-blkring` checks every
 //! word of it. This is the glue that crate leaves to the kernel (its §8). A
 //! process holding a device with `MANAGE` asks for a ring with
 //! `BLOCK_RING_CREATE` and hands the channel end it gets to a block driver.
@@ -74,21 +74,21 @@ use core::convert::Infallible;
 use core::fmt;
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_blkring::kernel::Ending;
-use ferrix_blkring::{
+use xaqu_blkring::kernel::Ending;
+use xaqu_blkring::{
     Block, Completed, Device, DeviceFlags, DiskName, KernelSide, Location, Message, Refusal,
     RingMemory, Slot, Start as StartMessage, Status, Submission, SubmitError, Wait,
 };
-use ferrix_block::{Config, Limits, Op, Queue, Request, Token};
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_block::{Config, Limits, Op, Queue, Request, Token};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, PACKET_SIGNAL, PACKET_USER,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::device::{self, DeviceNode};
 use crate::object::channel::{Endpoint, ReadError, Sender};
@@ -106,19 +106,19 @@ use crate::hooks::Full;
 use crate::object::process::Host;
 use crate::syscall::native;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod driver_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod hop_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod offline_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod reread_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod tree_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod trip_check;
 
 /// The block major every ring's disk is published under. Linux allocates
@@ -128,7 +128,7 @@ pub(crate) const VIRTIO_BLK_MAJOR: u32 = 254;
 /// The rights the driver's end of the control channel carries: it sends and
 /// receives on it, waits on it and is handed it, and nobody copies it. The
 /// crate's definition, so START's check and this agree by construction.
-pub(crate) const CONTROL_RIGHTS: Rights = ferrix_blkring::control::CONTROL_RIGHTS;
+pub(crate) const CONTROL_RIGHTS: Rights = xaqu_blkring::control::CONTROL_RIGHTS;
 
 /// How long a ring waits for its driver's HELLO.
 const HELLO_PATIENCE_NANOS: u64 = 10_000_000_000;
@@ -141,7 +141,7 @@ const READ_PATIENCE_NANOS: u64 = 30_000_000_000;
 const PARK_PATIENCE_NANOS: u64 = READ_PATIENCE_NANOS;
 
 /// How long a disk's driver may answer nothing at all while a request waits
-/// before the disk is taken offline (`ferrix_blkring::kernel::gone_silent`,
+/// before the disk is taken offline (`xaqu_blkring::kernel::gone_silent`,
 /// "A disk that stops answering" above): one read's patience, so a request
 /// that waited it out with nothing else answered meanwhile takes the disk
 /// with it.
@@ -304,7 +304,7 @@ pub(crate) fn forget_parked(location: Location) {
 /// `interfaces/display` names its card's: a block ring has no PCI address
 /// to name a tree node by. The word names one disk, so a machine serves at
 /// most one tree disk at a time ([`TREE_OWNER`]).
-pub(crate) const TREE_LOCATION: Location = Location(ferrix_native_abi::types::DEVICE_NOT_PCI);
+pub(crate) const TREE_LOCATION: Location = Location(xaqu_native_abi::types::DEVICE_NOT_PCI);
 
 /// The device tree node that last took a ring under [`TREE_LOCATION`].
 ///
@@ -370,7 +370,7 @@ pub(crate) fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, CreateErro
         control: kernel_end,
         location,
     });
-    match sched::spawn("block ring", run, id, ferrix_sched::NICE_0_WEIGHT) {
+    match sched::spawn("block ring", run, id, xaqu_sched::NICE_0_WEIGHT) {
         Ok(task) => {
             let mut tasks = TASKS.lock();
             tasks.retain(|task| !task.is_dead());
@@ -1791,7 +1791,7 @@ impl RingDisk {
         }
         let id = state.next_id;
         let request = Request {
-            id: ferrix_block::RequestId(id),
+            id: xaqu_block::RequestId(id),
             ..request
         };
         let _ = crate::fallible::insert(
@@ -1865,7 +1865,7 @@ impl RingDisk {
             let now = timer::now_nanos();
             if state.ended
                 || state.offline
-                || !ferrix_blkring::kernel::gone_silent(
+                || !xaqu_blkring::kernel::gone_silent(
                     now,
                     state.last_answer,
                     outstanding,
@@ -2446,7 +2446,7 @@ impl Serving<'_> {
     }
 
     /// Take every completion off the ring and answer its requests.
-    fn complete(&mut self) -> Result<(), ferrix_blkring::Corruption> {
+    fn complete(&mut self) -> Result<(), xaqu_blkring::Corruption> {
         let mut wake = 0;
         while let Some(completed) = self.side.poll()? {
             let token = completed.submission.id;
@@ -2456,7 +2456,7 @@ impl Serving<'_> {
                 continue;
             };
             crate::fs::seam::completed();
-            #[cfg(not(ferrix_load_built = "lift"))]
+            #[cfg(not(xaqu_load_built = "lift"))]
             if completed.device_ticks != 0 {
                 let _ = hop_check::DEVICE_TICKS
                     .fetch_add(u64::from(completed.device_ticks), Ordering::Relaxed);
@@ -2649,7 +2649,7 @@ fn answer(
 /// Each of `parts`' request id and first sector, in room on the stack: as
 /// many as [`MAX_PARTS`] and how many there were room for, which is fewer
 /// than `parts` only if the queue merged past the limit it was given.
-fn parts_of(parts: &[ferrix_block::Part]) -> ([(u64, u64); MAX_PARTS as usize], usize) {
+fn parts_of(parts: &[xaqu_block::Part]) -> ([(u64, u64); MAX_PARTS as usize], usize) {
     let mut room = [(0_u64, 0_u64); MAX_PARTS as usize];
     for (slot, part) in room.iter_mut().zip(parts) {
         *slot = (part.id.0, part.sector);

@@ -4,7 +4,7 @@
 # customer's LAN (192.168.178.39:8150), the image's sha256 and the box's drive
 # size (512110190592 bytes). Adjust those before running it anywhere else.
 #
-# Ferrix onto the N150's internal drive (SATA on the box; NVMe is accepted too),
+# Xaqu onto the N150's internal drive (SATA on the box; NVMe is accepted too),
 # from an Ubuntu live session:
 #   wget -qO- 192.168.178.39:8150/go | sudo bash
 # Finds the one internal NVMe or SATA drive, checks its size, asks for ERASE,
@@ -105,8 +105,8 @@ say "Check"
 partprobe "/dev/$NAME" 2>/dev/null; udevadm settle 2>/dev/null; sleep 1
 lsblk -o NAME,SIZE,FSTYPE,LABEL,PARTLABEL "/dev/$NAME" | tee -a "$INFO"
 labels=$(lsblk -ln -o LABEL,PARTLABEL "/dev/$NAME" | tr '\n' ' ')
-case "$labels" in *ferrix-root*) ;; *) die "no ferrix-root on the drive after writing" ;; esac
+case "$labels" in *xaqu-root*) ;; *) die "no xaqu-root on the drive after writing" ;; esac
 command -v sgdisk >/dev/null && sgdisk -v "/dev/$NAME"
 
-printf '\n\033[1;32mDONE. Shut down, take the card out, and power on: the box boots Ferrix from the NVMe.\033[0m\n'
+printf '\n\033[1;32mDONE. Shut down, take the card out, and power on: the box boots Xaqu from the NVMe.\033[0m\n'
 printf 'First boot installs and is slower. Photograph the screens, and any panic whole.\n'

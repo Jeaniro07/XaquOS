@@ -6,7 +6,7 @@ stage 11. `docs/ARCHITECTURE.md` §7 is the architecture; this is the protocol
 between the kernel and `devmgr`, and between `devmgr` and the drivers it
 starts. The kernel's half of it — `device_info`, `device_quiesce`, bus
 mastering at the first pin, START — is on develop; `devmgr` the program, on
-`ferrix-rt`, is `src/user/system/native/devmgr`, started by `src/kernel/src/discovery/devmgr.rs`; the
+`xaqu-rt`, is `src/user/system/native/devmgr`, started by `src/kernel/src/discovery/devmgr.rs`; the
 messages are `src/lib/proto/devmgr-proto`.
 
 ## 1. What devmgr is, and what it is not
@@ -32,10 +32,10 @@ by construction.
 
 The kernel creates a channel, keeps one end, and starts `/sbin/devmgr` with
 the other as its bootstrap handle -- at bring-up, or, under
-`ferrix.devmgr=init`, when pid 1 asks with its starter (`devmgr_start`,
+`xaqu.devmgr=init`, when pid 1 asks with its starter (`devmgr_start`,
 `docs/INIT.md` §7.3), in the job pid 1 names, which then holds the drivers'
 jobs too; either way the channel goes between the kernel and `devmgr` alone,
-and this section is the same -- (`Handle(1)`, which `ferrix-rt`'s
+and this section is the same -- (`Handle(1)`, which `xaqu-rt`'s
 `Bootstrap` adopts; `docs/BLOCK-RING.md` §6.4 says the same of a driver's).
 Before starting it the kernel has written one message on its end:
 
@@ -77,11 +77,11 @@ handles: [job (first only), device 0, device 0 again, ..., image 0 ...
   by the kernel from the initramfs — and hands the VMO with
   `IMAGE_RIGHTS`, `READ | MAP | EXECUTE | TRANSFER` (K15). The name is the file's name. `process_create` (0x1030)
   takes exactly this: a job, an image VMO with `READ`, a name. There are at
-  most 32 (`MAX_DRIVERS` in `ferrix-devmgr-proto`), all in the first
+  most 32 (`MAX_DRIVERS` in `xaqu-devmgr-proto`), all in the first
   message: with the job they leave room for 15 devices beside them in its 64
   handles. The kernel's refusal is the enforcement: a directory with more
   stops the boot at stage 10 with FX-1006 (`write_devices` cannot encode
-  the first message), or fails `devmgr_start` under `ferrix.devmgr=init`.
+  the first message), or fails `devmgr_start` under `xaqu.devmgr=init`.
   `xtask` refuses to build such an image too, but that is only an early,
   build-time copy of the kernel's check, not the item's enforcement.
 * A channel message carries at most `CHANNEL_MAX_HANDLES` (64) handles, and
@@ -149,7 +149,7 @@ a driver's death or of its restart (§4), printed the same way.
    offers its MSI capability's one vector; `verify_config` refuses the node
    if Enable reads 1 at a read-back, and an MSI mint made while it reads 1
    is refused. The list is a
-   const in `ferrix_pci::msix` (`MSI_PREFERRED`), fixed at build: nothing a
+   const in `xaqu_pci::msix` (`MSI_PREFERRED`), fixed at build: nothing a
    driver, `devmgr` or a boot option supplies adds to it. Requirements
    `L.device.35` to `L.device.37`; the design is the consultant's OK IF of
    2026-10-15 (option D, ledger line 1097, D1-D9, with V1-V6 at lines
@@ -198,7 +198,7 @@ PUBLISHED  kernel -> devmgr, 16 bytes
    the kernel's patience for REPORT: a driver that never publishes holds
    `devmgr` there, and the boot fails saying so. A driver whose start fails
    outright counts as failed, and so does one that ends before it
-   publishes -- unless it ends with status 0, `ferrix_driver::Step::Idle`:
+   publishes -- unless it ends with status 0, `xaqu_driver::Step::Idle`:
    its device has nothing for it to serve (an AHCI controller with no ATA
    disk, as q35's built-in one is when only QEMU's CD-ROM is on it). That
    one is said as `nothing to serve; stopped` and counts neither started
@@ -219,7 +219,7 @@ before the driver starts: the kernel refuses a change under live pins.
 | disk, network, display, input, sound, port, host, engine, gadget | the kernel's default, 66560 pages (one driver's worst case); not set |
 | GPU under `nvrm` (NVIDIA's N1b, §3.2) | `max(ceiling / 2, 1 GiB)`, cut to the room |
 
-The GPU's rule (`ferrix_devmgr_proto::budget`, the customer's decision of
+The GPU's rule (`xaqu_devmgr_proto::budget`, the customer's decision of
 2026-10-02) reads the ceiling and the room with `device_get_limit` (0x1058):
 the ceiling is a quarter of RAM, on twice every raised budget, and the room
 what other devices' raised budgets leave. It wants an eighth of RAM and at
@@ -246,7 +246,7 @@ MiB`. The `Gpu` kind applies the rule as the last step of its hand-over
 A GPU runs firmware of its own, NVIDIA's GSP, which is not its driver's to
 vouch for, and its driver pins more than any other. So `devmgr` hands one to
 `nvrm` only once three things hold, in this order, each through the device
-handle it keeps, which alone has `SET_LIMIT` (`ferrix_devmgr_proto::gpu`,
+handle it keeps, which alone has `SET_LIMIT` (`xaqu_devmgr_proto::gpu`,
 host-tested):
 
 1. **The mark.** `device_set_limit(DEVICE_LIMIT_ISOLATED_INTERRUPTS, 1)`,
@@ -259,7 +259,7 @@ host-tested):
    Without it the GPU is not handed over at all, and the budget is not
    raised: `devmgr   gpu 01:00.0 not started: its interrupts are not
    isolated (device_isolation 0x0)`. This is where F-57's closure is
-   verified for the `ferrix-3060` domain at N1's first boot.
+   verified for the `xaqu-3060` domain at N1's first boot.
 3. **The budget**, as §3.1 says, set before the driver starts.
 
 A GPU handed over is said in two lines, then started as a port's driver is,
@@ -298,7 +298,7 @@ ferrousli program that also makes native calls.
 
 **RM's core is not in `nvrm`'s image.** The core is 13 MB, too large for
 the kernel's read of a driver's image (§5). So `nvrm` reads it at run time
-from the NVIDIA volume, at `/data/usr/lib/ferrix/nvrm-core`, and never
+from the NVIDIA volume, at `/data/usr/lib/xaqu/nvrm-core`, and never
 from the initramfs (`docs/NVIDIA.md` §4.1, "The core"). It reads the file
 with `read(2)` into anonymous memory of its own, so nothing maps the file.
 The volume is mounted after REPORT, so `nvrm` waits for the file, at most
@@ -314,7 +314,7 @@ QEMU can show: handed over at 4 GiB, refused for a budget too small at
 ## 4. When a driver dies
 
 A driver that dies by a fault of its own, while `lode crashd` holds
-`/dev/ferrix-crashes` open, is held up to 2 s before it ends
+`/dev/xaqu-crashes` open, is held up to 2 s before it ends
 (`docs/LOGGING.md` §21.7), so `TERMINATED` and the restart below can come
 up to 2 s later than its fault.
 
@@ -385,7 +385,7 @@ RESTARTED devmgr -> kernel, 16 bytes
    **A crash loop escalates** (the customer, 2026-10-30, after the N150 box's
    Intel driver died at every start). No restart is made at once: the first
    comes 1 s after the death, and each one of a crash loop waits twice the
-   one before (`ferrix_restart::Escalation`, over the policy's backoff). A
+   one before (`xaqu_restart::Escalation`, over the policy's backoff). A
    start has failed when its driver dies before it is up -- published, or
    started for a kind that publishes nothing -- or within 10 s of it; a
    driver that stayed up 10 s ends the streak, and its death is restarted as
@@ -531,7 +531,7 @@ kernel:
   only the images `cargo xtask test-restart --update` boots carry it. If
   the helper dies, `devmgr` says so on its line
   and does not start it again.
-* The helper binds the abstract `AF_UNIX` name `\0ferrix.devmgr.update`.
+* The helper binds the abstract `AF_UNIX` name `\0xaqu.devmgr.update`.
   The name is abstract because `devmgr` and what it starts keep the
   initramfs root (`docs/INIT.md` §7.3). The helper takes one connection at
   a time and closes any peer whose `SO_PEERCRED` uid is not 0, as `vport`
@@ -636,7 +636,7 @@ times:
 Then the two kill rounds run as for every kind, and each restart must print
 `gpu: version next` again: a restart starts the image the update put on the
 device. The shell must answer after each step. The versions are the `gpu`
-driver built with `FERRIX_DRIVER_VERSION` set, which every other build
+driver built with `XAQU_DRIVER_VERSION` set, which every other build
 leaves unset.
 
 **Where it stands (2026-10-07).** The certification consultant's design

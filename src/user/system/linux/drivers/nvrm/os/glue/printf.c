@@ -2,13 +2,13 @@
  * RM's printing calls, which take a format and arguments, so they are C:
  * nv_printf, out_string, os_snprintf, and the debug level that filters
  * them (docs/NVIDIA.md §4.2, "logging"). Each line goes to the console
- * through ferrix-nvos (nvos_write_line). The level rule is NVIDIA's
+ * through xaqu-nvos (nvos_write_line). The level rule is NVIDIA's
  * os-interface.c's: print a message whose level is at least bits 5:4 of
  * cur_debuglevel, by default warnings and errors.
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 /* NVIDIA's default: everything, which bits 5:4 read as warnings and up. */
 NvU32 cur_debuglevel = 0xffffffff;

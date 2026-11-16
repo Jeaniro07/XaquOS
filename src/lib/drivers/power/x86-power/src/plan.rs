@@ -1,5 +1,5 @@
 //! The VR current step plan: `A1,...,An@SECONDS`, the grammar
-//! `ferrix.vrcurrent` had, now the driver's. The kernel's ceilings, not this
+//! `xaqu.vrcurrent` had, now the driver's. The kernel's ceilings, not this
 //! grammar, bound what is written: a step is a whole number of amperes of
 //! one or two digits, and the driver drops a step above the ceiling
 //! `HELLO` reports before it asks.

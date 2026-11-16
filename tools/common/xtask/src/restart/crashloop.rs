@@ -21,7 +21,7 @@
 //! and no fifth start, no pin refused past twice the device's budget.
 //!
 //! Its negative control maps `Next::Quarantine` to a restart in
-//! `ferrix-restart`: the device is never quarantined, and the judge says so.
+//! `xaqu-restart`: the device is never quarantined, and the judge says so.
 
 use crate::args::Args;
 use crate::native::{self, Program};
@@ -31,7 +31,7 @@ use crate::{Error, Result, busybox, cargo, fat, initramfs, intel_uapi, qemu, she
 
 /// The driver that dies at every start.
 const CRASHER: Program = Program {
-    package: "ferrix-crash-at-start",
+    package: "xaqu-crash-at-start",
     binary: "crash-at-start",
     directory: native::DRIVERS,
 };

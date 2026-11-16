@@ -150,7 +150,7 @@ def aarch64_names(linux):
     for name, printed in re.findall(r"\[KERNEL_HWCAP_(\w+)\]\s*=\s*\"(\w+)\"", table):
         word, cap = which[name]
         if word not in ("1", "2"):
-            continue  # AT_HWCAP3 and on: Ferrix passes no such word.
+            continue  # AT_HWCAP3 and on: Xaqu passes no such word.
         names.append((int(word) - 1, bits[(word, cap)], printed))
     names.sort()
     return names

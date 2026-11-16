@@ -15,7 +15,7 @@
 //! where a check that the unpack happened can find it.
 //!
 //! Given a program — `test-vfs`, or `build` and `run` with `--init` or
-//! `FERRIX_INIT` — the archive also carries it at `/bin/busybox`, zinc at
+//! `XAQU_INIT` — the archive also carries it at `/bin/busybox`, zinc at
 //! `/bin/zinc` and uutils/coreutils at `/bin/coreutils`, and a link in `/bin`
 //! for every name each of them owns: `sh` is zinc's, the hundred names in
 //! [`UTILITIES`] are uutils', and busybox gets the rest of [`APPLETS`].
@@ -45,7 +45,7 @@ const DIRECTORY_TIME_SPAN: u32 = 1 << 24;
 const MTIME_AT: usize = 6 + 5 * 8;
 
 /// Where the marker is unpacked, relative to the root.
-pub(crate) const MARKER_PATH: &str = "etc/ferrix/initramfs";
+pub(crate) const MARKER_PATH: &str = "etc/xaqu/initramfs";
 
 /// The marker's contents. The kernel's self-check compares them byte for byte,
 /// and `src/kernel/src/fs/check.rs` carries the same string.
@@ -272,7 +272,7 @@ fn directory_time(names: &[&str]) -> u32 {
 }
 
 /// An archive of `directories` and then `files`, each a path, its
-/// permission bits and its bytes: for a guest that is not Ferrix, such as the
+/// permission bits and its bytes: for a guest that is not Xaqu, such as the
 /// stock Linux kernel the seam's measurement compares against
 /// (`crate::seam`).
 ///
@@ -328,7 +328,7 @@ pub(crate) fn package(entries: &[ports::File]) -> Result<Vec<u8>> {
 /// Where an image carries pid 1's inputs: the kernel reads them from the
 /// archive and nothing unpacks them (`src/kernel/src/init.rs`,
 /// `src/lib/fs/common/vfs/src/initramfs.rs`).
-pub(crate) const INIT_DIRECTORY: &str = ".ferrix/init";
+pub(crate) const INIT_DIRECTORY: &str = ".xaqu/init";
 
 /// `archive` with pid 1's inputs added under [`INIT_DIRECTORY`]: each of
 /// `inputs` is a name there (`program`, `script` or `commands`) and its
@@ -341,9 +341,9 @@ pub(crate) const INIT_DIRECTORY: &str = ".ferrix/init";
 pub(crate) fn with_init_inputs(archive: &[u8], inputs: &[(&str, &[u8])]) -> Result<Vec<u8>> {
     let mut out = Newc::new();
     let mut last_ino = 0;
-    for entry in ferrix_cpio::Archive::new(archive).entries() {
+    for entry in xaqu_cpio::Archive::new(archive).entries() {
         let entry = entry.map_err(|error| Error::new(format!("reading the archive: {error:?}")))?;
-        if entry.name.trim_start_matches("./").starts_with(".ferrix") {
+        if entry.name.trim_start_matches("./").starts_with(".xaqu") {
             return Err(Error::new(format!(
                 "the initramfs carries {} already, where pid 1's inputs go",
                 entry.name
@@ -362,7 +362,7 @@ pub(crate) fn with_init_inputs(archive: &[u8], inputs: &[(&str, &[u8])]) -> Resu
     if inputs.is_empty() {
         return out.finish();
     }
-    out.entry(".ferrix", 0o040_755, last_ino + 1, 2, (0, 0), b"")?;
+    out.entry(".xaqu", 0o040_755, last_ino + 1, 2, (0, 0), b"")?;
     out.entry(INIT_DIRECTORY, 0o040_755, last_ino + 2, 2, (0, 0), b"")?;
     for (offset, (name, data)) in (3..).zip(inputs) {
         out.entry(
@@ -386,7 +386,7 @@ pub(crate) fn with_init_inputs(archive: &[u8], inputs: &[(&str, &[u8])]) -> Resu
 pub(crate) fn init_inputs(archive: &[u8]) -> Result<Vec<(String, Vec<u8>)>> {
     let prefix = format!("{INIT_DIRECTORY}/");
     let mut found = Vec::new();
-    for entry in ferrix_cpio::Archive::new(archive).entries() {
+    for entry in xaqu_cpio::Archive::new(archive).entries() {
         let entry = entry.map_err(|error| Error::new(format!("reading the archive: {error:?}")))?;
         if let Some(name) = entry.name.trim_start_matches("./").strip_prefix(&prefix) {
             found.push((name.to_owned(), entry.data.to_vec()));
@@ -411,7 +411,7 @@ pub(crate) fn with_files_changed(
     mut change: impl FnMut(&str, &[u8]) -> Result<Option<Vec<u8>>>,
 ) -> Result<Vec<u8>> {
     let mut out = Newc::new();
-    for entry in ferrix_cpio::Archive::new(archive).entries() {
+    for entry in xaqu_cpio::Archive::new(archive).entries() {
         let entry = entry.map_err(|error| Error::new(format!("reading the archive: {error:?}")))?;
         let changed = if entry.mode & 0o170_000 == S_IFREG && !entry.data.is_empty() {
             change(entry.name, entry.data)?
@@ -625,7 +625,7 @@ esac
 /// disks are there. The device is written as `/proc/mounts` writes it; a
 /// reader that finds a mount point here that is not mounted skips it.
 const FSTAB: &[u8] = b"\
-# Written by cargo xtask. Ferrix mounts these itself, from the kernel's
+# Written by cargo xtask. Xaqu mounts these itself, from the kernel's
 # command line, and nothing mounts from this file: it says what they are.
 # <device> <mount point> <type> <options> <dump> <pass>
 btrfs / btrfs rw 0 0
@@ -635,7 +635,7 @@ btrfs /data btrfs rw 0 0
 /// `/etc/profile`, which the kernel's interactive shell reads through `ENV`.
 ///
 /// Configures `eth0` by DHCP, as a distribution's network setup would:
-/// Ferrix's own `dhcpc` (`crate::dhcp`) where the image carries it, which
+/// Xaqu's own `dhcpc` (`crate::dhcp`) where the image carries it, which
 /// applies the address, the route and the resolvers itself; busybox's
 /// `udhcpc` and [`UDHCPC_SCRIPT`] where it does not. Only when there is an
 /// `eth0` and it has no IPv4 address, so a boot without `--net` is quiet, a
@@ -725,7 +725,7 @@ fn certified_digest(image: &[u8]) -> [u8; 32] {
     crate::sha256::digest(&framed)
 }
 
-/// `etc/ferrix/certified` (`docs/microkernel/K14.md` §5) from `natives`: magic, version, count,
+/// `etc/xaqu/certified` (`docs/microkernel/K14.md` §5) from `natives`: magic, version, count,
 /// then digest and name. Each name is cut to 32 bytes, zero-padded.
 fn certified_bytes(natives: &[native::Built]) -> Result<Vec<u8>> {
     const MOST: usize = 256;
@@ -756,7 +756,7 @@ fn may_remake_digests(level: &str) -> bool {
 }
 
 /// The files that name a program by its bytes: K14's list and a partition's description.
-const DIGEST_FILES: [&str; 2] = ["etc/ferrix/certified", "etc/ferrix/partitions"];
+const DIGEST_FILES: [&str; 2] = ["etc/xaqu/certified", "etc/xaqu/partitions"];
 
 /// Whether `archive` carries any of [`DIGEST_FILES`].
 fn carries_digests(archive: &[u8]) -> bool {
@@ -796,7 +796,7 @@ pub(crate) fn digests_of_what_it_holds(archive: &[u8]) -> Result<Vec<u8>> {
             .map(|(_, bytes)| bytes.as_slice())
     };
     with_files_changed(archive, |name, data| match name {
-        "etc/ferrix/certified" => {
+        "etc/xaqu/certified" => {
             let mut list = data.to_vec();
             for entry in list
                 .get_mut(12..)
@@ -812,7 +812,7 @@ pub(crate) fn digests_of_what_it_holds(archive: &[u8]) -> Result<Vec<u8>> {
             }
             Ok(Some(list))
         }
-        "etc/ferrix/partitions" => match holds(b"btrfsd") {
+        "etc/xaqu/partitions" => match holds(b"btrfsd") {
             Some(server) => crate::kernel_shape::server_description_of(server)?
                 .map(|file| match file.content {
                     ports::Content::Bytes(bytes) => Ok(Some(bytes)),
@@ -847,7 +847,7 @@ fn certified_list(natives: &[native::Built]) -> Result<Option<ports::File>> {
         natives.len()
     );
     Ok(Some(ports::File {
-        path: "etc/ferrix/certified".to_owned(),
+        path: "etc/xaqu/certified".to_owned(),
         mode: 0o644,
         content: ports::Content::Bytes(certified_bytes(natives)?),
     }))
@@ -968,7 +968,7 @@ fn add_identity(
     natives: &[native::Built],
     ports: &[ports::File],
 ) -> Result<()> {
-    archive.file("etc/hostname", 0o644, b"ferrix\n")?;
+    archive.file("etc/hostname", 0o644, b"xaqu\n")?;
     let (manifest, writer) = crate::flags::this_image()?;
     refuse_settings_writer(natives, ports, &writer)?;
     archive.file(crate::flags::IMAGE_MANIFEST, 0o644, manifest.as_bytes())
@@ -987,7 +987,7 @@ fn holds(haystack: &[u8], needle: &[u8]) -> bool {
         .any(|window| window == needle)
 }
 /// Where authd's policies are, of which the writer's are `settings.*`.
-const SETTINGS_POLICIES: &str = "etc/ferrix/auth/services/settings.";
+const SETTINGS_POLICIES: &str = "etc/xaqu/auth/services/settings.";
 
 /// Refuse an image whose profile has `settings_writer = "absent"` and that
 /// carries any part of the writer (ledger 3558 (13), 3623 (R18)), as
@@ -1051,7 +1051,7 @@ fn build_with_shell(
     let served = crate::kernel_shape::server_description(natives)?.filter(|_| {
         !ports
             .iter()
-            .any(|file| file.path == "etc/ferrix/partitions")
+            .any(|file| file.path == "etc/xaqu/partitions")
     });
     let listed = certified_list(natives)?;
     let with_server: Vec<ports::File>;
@@ -1073,7 +1073,7 @@ fn build_with_shell(
         ("bin", 0o755),
         ("dev", 0o755),
         ("etc", 0o755),
-        ("etc/ferrix", 0o755),
+        ("etc/xaqu", 0o755),
         ("proc", 0o555),
         ("tmp", 0o1777),
     ] {
@@ -1111,14 +1111,14 @@ fn build_with_shell(
         archive.file(
             "etc/passwd",
             0o644,
-            b"root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\n",
+            b"root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n",
         )?;
-        archive.file("etc/group", 0o644, b"root:x:0:\nferrix:x:1000:\n")?;
+        archive.file("etc/group", 0o644, b"root:x:0:\nxaqu:x:1000:\n")?;
         // Where the C library's resolver asks. `10.0.2.3` is the gateway's
         // forwarder, which is where slirp puts one too, so a guest configured
         // by DHCP and a guest configured by hand agree.
         archive.file("etc/resolv.conf", 0o644, b"nameserver 10.0.2.3\n")?;
-        // What is mounted, for the programs that read it. Ferrix mounts `/`
+        // What is mounted, for the programs that read it. Xaqu mounts `/`
         // and `/data` itself, from the command line (`src/kernel/src/fs/root_disk.rs`,
         // `data_disk.rs`), and nothing here mounts from this file. But every
         // Linux has one, and btop reads its list of disks from it by default:
@@ -1134,10 +1134,10 @@ fn build_with_shell(
             archive.directory(directory, 0o755)?;
         }
         archive.file(UDHCPC_SCRIPT_PATH, 0o755, UDHCPC_SCRIPT)?;
-        // A home the user owns: `su - ferrix` starts there, and a home root
+        // A home the user owns: `su - xaqu` starts there, and a home root
         // owned would be a home its user cannot write in.
         archive.directory("home", 0o755)?;
-        archive.directory_owned("home/ferrix", 0o755, USER)?;
+        archive.directory_owned("home/xaqu", 0o755, USER)?;
         archive.file(PROGRAM_PATH, 0o755, program)?;
         for applet in APPLETS {
             if busybox_owns(applet, zinc.is_some(), uutils, ports) {
@@ -1219,7 +1219,7 @@ fn build_with_shell(
 }
 
 /// Refuse `natives` when they hold more drivers than one DEVICES message
-/// names (`ferrix_devmgr_proto::MAX_DRIVERS`): the kernel could not hand
+/// names (`xaqu_devmgr_proto::MAX_DRIVERS`): the kernel could not hand
 /// them to devmgr, and the boot would stop at stage 10 with FX-1006, "more
 /// drivers than one DEVICES message names". It counts the built programs in
 /// `lib/drivers`, where the kernel counts `MANIFEST`'s lines: the two agree
@@ -1229,13 +1229,13 @@ fn refuse_too_many_drivers(natives: &[native::Built]) -> Result<()> {
         .iter()
         .filter(|built| built.directory == native::DRIVERS)
         .count();
-    if drivers > ferrix_devmgr_proto::MAX_DRIVERS {
+    if drivers > xaqu_devmgr_proto::MAX_DRIVERS {
         return Err(Error::new(format!(
             "this image carries {drivers} drivers in {}, more than the {} one DEVICES message \
-             names (ferrix_devmgr_proto::MAX_DRIVERS): the kernel would stop at stage 10 with \
+             names (xaqu_devmgr_proto::MAX_DRIVERS): the kernel would stop at stage 10 with \
              FX-1006",
             native::DRIVERS,
-            ferrix_devmgr_proto::MAX_DRIVERS
+            xaqu_devmgr_proto::MAX_DRIVERS
         )));
     }
     Ok(())
@@ -1265,8 +1265,8 @@ mod tests {
         let plain = archive("bin/devmgr");
         assert!(!carries_digests(&plain));
         assert_eq!(digests_of_what_it_holds(&plain).unwrap(), plain);
-        assert!(carries_digests(&archive("etc/ferrix/certified")));
-        assert!(carries_digests(&archive("etc/ferrix/partitions")));
+        assert!(carries_digests(&archive("etc/xaqu/certified")));
+        assert!(carries_digests(&archive("etc/xaqu/partitions")));
     }
 
     /// K14.12: this framing is the kernel's. The kernel's own boot check names this digest of
@@ -1282,7 +1282,7 @@ mod tests {
         assert_ne!(hex(certified_digest(&[1])), zero);
     }
 
-    /// The form `ferrix_partition_desc::certified::parse` reads: header and entries, exactly.
+    /// The form `xaqu_partition_desc::certified::parse` reads: header and entries, exactly.
     #[test]
     fn the_list_has_its_header_and_one_entry_per_image() {
         let natives = [native::Built {
@@ -1337,7 +1337,7 @@ mod tests {
             written.finish().unwrap()
         };
         let time = |bytes: &[u8], name: &str| {
-            ferrix_cpio::Archive::new(bytes)
+            xaqu_cpio::Archive::new(bytes)
                 .find(name)
                 .unwrap()
                 .unwrap()
@@ -1366,7 +1366,7 @@ mod tests {
             directory: native::DRIVERS,
             bytes: b"\x7fELF".to_vec(),
         };
-        let full = vec![driver("x"); ferrix_devmgr_proto::MAX_DRIVERS];
+        let full = vec![driver("x"); xaqu_devmgr_proto::MAX_DRIVERS];
         assert!(build_with(None, &full).is_ok(), "MAX_DRIVERS drivers fit");
         let mut over = full;
         over.push(driver("y"));
@@ -1386,7 +1386,7 @@ mod tests {
             bytes: b"\x7fELF".to_vec(),
         };
         let policy = ports::File {
-            path: "etc/ferrix/auth/services/settings.hostname".to_owned(),
+            path: "etc/xaqu/auth/services/settings.hostname".to_owned(),
             mode: 0o644,
             content: ports::Content::Bytes(b"Callers=root\n".to_vec()),
         };
@@ -1416,7 +1416,7 @@ mod tests {
         let archive = build_with(None, &[]).expect("an archive");
         let manifest = entry_of(&archive, crate::flags::IMAGE_MANIFEST).expect("a manifest");
         assert!(manifest.starts_with(b"format=1\nprofile="));
-        assert_eq!(entry_of(&archive, "etc/ferrix/no-such-file"), None);
+        assert_eq!(entry_of(&archive, "etc/xaqu/no-such-file"), None);
     }
 
     /// `drvupdated` goes into `test-restart --update`'s images alone (the
@@ -1469,7 +1469,7 @@ mod tests {
             content: ports::Content::Bytes(program.to_vec()),
         }];
         let bytes = build(None, &[], None, &carried).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         let found = archive.find("bin/pattern").unwrap().unwrap();
         assert_eq!(found.data, program);
         assert_eq!(found.mode & 0o777, 0o755, "it has to be runnable");
@@ -1480,7 +1480,7 @@ mod tests {
             build(None, &[], None, &[]).unwrap()
         );
         assert!(
-            ferrix_cpio::Archive::new(&build(None, &[], None, &[]).unwrap())
+            xaqu_cpio::Archive::new(&build(None, &[], None, &[]).unwrap())
                 .find("bin/pattern")
                 .unwrap()
                 .is_none()
@@ -1498,7 +1498,7 @@ mod tests {
             Ok((name == PROGRAM_PATH).then(|| data[..4].to_vec()))
         })
         .unwrap();
-        let archive = ferrix_cpio::Archive::new(&changed);
+        let archive = xaqu_cpio::Archive::new(&changed);
         assert_eq!(
             archive.find(PROGRAM_PATH).unwrap().unwrap().data,
             b"\x7fELF"
@@ -1508,7 +1508,7 @@ mod tests {
         assert_eq!(archive.find(&link).unwrap().unwrap().data, MARKER);
         assert_eq!(
             archive.summary().unwrap().entries,
-            ferrix_cpio::Archive::new(&bytes).summary().unwrap().entries
+            xaqu_cpio::Archive::new(&bytes).summary().unwrap().entries
         );
     }
 
@@ -1529,7 +1529,7 @@ mod tests {
     fn a_program_goes_in_bin_with_its_applets_beside_it() {
         let program: &[u8] = b"\x7fELF not really";
         let bytes = build_with(Some(program), &[]).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         assert_eq!(archive.find(PROGRAM_PATH).unwrap().unwrap().data, program);
         for applet in APPLETS {
             let link = archive.find(&format!("bin/{applet}")).unwrap().unwrap();
@@ -1548,7 +1548,7 @@ mod tests {
         assert!(
             archive
                 .entries()
-                .all(|entry| ferrix_cpio::is_safe_path(entry.unwrap().name)),
+                .all(|entry| xaqu_cpio::is_safe_path(entry.unwrap().name)),
             "every applet name joins to /bin without escaping it"
         );
     }
@@ -1581,7 +1581,7 @@ mod tests {
     #[test]
     fn sh_is_zinc_when_zinc_is_there_and_busybox_when_it_is_not() {
         let with = build_with_shell(Some(b"program"), &[], Some(b"shell"), &[], &[]).unwrap();
-        let archive = ferrix_cpio::Archive::new(&with);
+        let archive = xaqu_cpio::Archive::new(&with);
         for name in ZINC_NAMES {
             assert_eq!(
                 archive
@@ -1602,7 +1602,7 @@ mod tests {
         // built for an architecture zinc is not compiled for still has one.
         let without = build_with_shell(Some(b"program"), &[], None, &[], &[]).unwrap();
         assert_eq!(
-            ferrix_cpio::Archive::new(&without)
+            xaqu_cpio::Archive::new(&without)
                 .find("bin/sh")
                 .unwrap()
                 .unwrap()
@@ -1618,7 +1618,7 @@ mod tests {
             .map(|binary| (binary.name, binary.name.as_bytes().to_vec()))
             .collect();
         let with = build_with_shell(Some(b"program"), &[], None, &carried, &[]).unwrap();
-        let archive = ferrix_cpio::Archive::new(&with);
+        let archive = xaqu_cpio::Archive::new(&with);
 
         // Every program in the family is carried under its own name, and each
         // of its own links points at it.
@@ -1673,7 +1673,7 @@ mod tests {
         // architecture without it still has an `ls`.
         let no_uutils = build_with_shell(Some(b"program"), &[], None, &[], &[]).unwrap();
         assert_eq!(
-            ferrix_cpio::Archive::new(&no_uutils)
+            xaqu_cpio::Archive::new(&no_uutils)
                 .find("bin/ls")
                 .unwrap()
                 .unwrap()
@@ -1685,7 +1685,7 @@ mod tests {
         // the boot check's bytes the same.
         let without = build_with_shell(Some(b"program"), &[], None, &[], &[]).unwrap();
         assert!(
-            ferrix_cpio::Archive::new(&without)
+            xaqu_cpio::Archive::new(&without)
                 .find("bin/coreutils")
                 .unwrap()
                 .is_none()
@@ -1722,7 +1722,7 @@ mod tests {
             },
         ];
         let bytes = build_with_shell(Some(b"program"), &[], None, &[], &files).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         assert_eq!(archive.find("bin/curl").unwrap().unwrap().data, b"curl");
         let bundle = archive
             .find("etc/ssl/certs/ca-certificates.crt")
@@ -1747,7 +1747,7 @@ mod tests {
         // init with no busybox, and its clients have to be somewhere.
         let without = build_with_shell(None, &[], None, &[], &files).unwrap();
         assert_eq!(
-            ferrix_cpio::Archive::new(&without)
+            xaqu_cpio::Archive::new(&without)
                 .find("bin/curl")
                 .unwrap()
                 .unwrap()
@@ -1759,7 +1759,7 @@ mod tests {
     #[test]
     fn without_a_program_bin_is_empty() {
         let bytes = build(None, &[], None, &[]).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         assert!(archive.find(PROGRAM_PATH).unwrap().is_none());
         assert!(
             archive
@@ -1777,7 +1777,7 @@ mod tests {
             bytes: b"\x7fELF native".to_vec(),
         }];
         let bytes = build_with(None, &natives).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         let entry = archive.find("sbin/channel-echo").unwrap().unwrap();
         assert_eq!(entry.data, b"\x7fELF native");
         assert!(
@@ -1820,7 +1820,7 @@ mod tests {
     #[test]
     fn the_archive_reads_back_with_the_kernels_own_reader() {
         let bytes = build(None, &[], None, &[]).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         let names: Vec<&str> = archive.entries().map(|entry| entry.unwrap().name).collect();
         assert_eq!(names.first(), Some(&"."));
         assert!(names.contains(&"tmp"));
@@ -1840,7 +1840,7 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(symlink.symlink_target(), Some("initramfs"));
-        assert!(names.iter().all(|name| ferrix_cpio::is_safe_path(name)));
+        assert!(names.iter().all(|name| xaqu_cpio::is_safe_path(name)));
     }
 
     #[test]

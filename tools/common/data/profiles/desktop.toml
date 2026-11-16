@@ -34,30 +34,30 @@ runtime_settings = "live"
 
 # No claim, so every option the registry declares, with any of its values.
 [boot_options]
-"ferrix.checks" = ["run", "skip"]
-"ferrix.badframes" = ["persist", "reset", "off"]
-"ferrix.root" = ["*"]
-"ferrix.init" = ["*"]
-"ferrix.onexit" = ["*"]
-"ferrix.panic" = ["halt", "reset"]
-"ferrix.vtd" = ["on", "off"]
-"ferrix.amdvi" = ["on", "off"]
-"ferrix.fbcon" = true
-"ferrix.fbcon.small" = true
-"ferrix.pstore" = ["on", "off"]
-"ferrix.efifb" = true
-"ferrix.intelgpu" = true
-"ferrix.unisolated" = true
-"ferrix.apic" = ["x2apic", "xapic"]
-"ferrix.epp" = ["*"]
-"ferrix.btrfs" = ["*"]
-"ferrix.btrfs.seed" = ["*"]
+"xaqu.checks" = ["run", "skip"]
+"xaqu.badframes" = ["persist", "reset", "off"]
+"xaqu.root" = ["*"]
+"xaqu.init" = ["*"]
+"xaqu.onexit" = ["*"]
+"xaqu.panic" = ["halt", "reset"]
+"xaqu.vtd" = ["on", "off"]
+"xaqu.amdvi" = ["on", "off"]
+"xaqu.fbcon" = true
+"xaqu.fbcon.small" = true
+"xaqu.pstore" = ["on", "off"]
+"xaqu.efifb" = true
+"xaqu.intelgpu" = true
+"xaqu.unisolated" = true
+"xaqu.apic" = ["x2apic", "xapic"]
+"xaqu.epp" = ["*"]
+"xaqu.btrfs" = ["*"]
+"xaqu.btrfs.seed" = ["*"]
 console = ["*"]
 "drm.edid_firmware" = ["*"]
 nokaslr = true
 nosmp = true
 noactlr = true
-"ferrix.devmgr" = ["kernel", "init"]
+"xaqu.devmgr" = ["kernel", "init"]
 
 # The build settings that change code without a cfg (BF4), compared with the
 # tree by check-item-boundary.py: the toolchain with rust-toolchain.toml, the

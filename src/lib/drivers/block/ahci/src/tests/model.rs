@@ -107,7 +107,7 @@ impl Model {
             identify[117] = words as u16;
             identify[118] = (words >> 16) as u16;
         }
-        ata_string(&mut identify[27..47], "FERRIX MODEL DISK");
+        ata_string(&mut identify[27..47], "XAQU MODEL DISK");
         ata_string(&mut identify[10..20], "SN-0042");
         let mut ports = vec![Port::default(); 32];
         ports[0] = Port {

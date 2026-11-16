@@ -1,6 +1,6 @@
-# Wine on Ferrix
+# Wine on Xaqu
 
-Debian 13's 64-bit Wine (10.0), unchanged, on Ferrix under KVM. This is
+Debian 13's 64-bit Wine (10.0), unchanged, on Xaqu under KVM. This is
 stage 23's first step: a prefix made by `wineboot`, `cmd /c ver` answering
 from the 64-bit `cmd` and from the 32-bit one, and `notepad` drawing a
 window through yserver in software. No GPU is involved.
@@ -22,10 +22,10 @@ same two steps, then `notepad`, which must become a window of hyprix's
 titled "Untitled - Notepad" whose white page fills the tile hyprix gave it
 (70% of the screen white; `build/x86_64/wine-notepad.ppm`). Then the gate
 types into it through QEMU's tablet and keyboard, as `test-xwindow` does
-into xev: a click into the page, the keys of `hello ferrix`, `Ctrl+A`,
+into xev: a click into the page, the keys of `hello xaqu`, `Ctrl+A`,
 `Ctrl+C`, a double click on `hello` and `Ctrl+C`. The line must be on the
 screen (`build/x86_64/wine-notepad-typed.ppm`), and X's clipboard must hold
-`hello ferrix` and then `hello`: the keys arrived as the characters they
+`hello xaqu` and then `hello`: the keys arrived as the characters they
 are, and the double click reached the word where it is drawn. It needs no
 network.
 
@@ -49,11 +49,11 @@ profile (`batch.sh profile`), so no landing runs it unasked. A landing that
 changes what Wine uses of the kernel, yserver or hyprix adds it with
 `batch.sh join … --gate FILE`, the file holding `test-wine --arch x86_64
 --accel kvm`. The gate never downloads: with no `wine.img` under
-`~/.local/share/ferrix/wine` (or `FERRIX_WINE_VOLUME`) it stops at once and
+`~/.local/share/xaqu/wine` (or `XAQU_WINE_VOLUME`) it stops at once and
 names the fetch script. On nazuna the volume is there since 2026-10-10,
 with the packages it was made from in `pool/` beside it, so making it
 again downloads nothing. It needs yserver's tree
-(`~/.local/share/ferrix/yserver/tree`), which `fetch-yserver.sh` makes;
+(`~/.local/share/xaqu/yserver/tree`), which `fetch-yserver.sh` makes;
 `fetch-wine.sh` makes it again when it holds another commit than the one
 `fetch-yserver.sh` pins. The volume records the yserver it carries
 (`yserver.commit` beside `wine.img`), and `test-wine`, `test-dxvk` and
@@ -75,7 +75,7 @@ gives it.
 | The volume | `tools/common/fetch/fetch-wine.sh` | Debian's `wine64`, `libwine` and `wine`, pinned by SHA-256, unpacked over yserver's tree, the 32-bit Windows DLLs from the i386 `libwine` (§7), with glibc, libunwind, FreeType, fontconfig, Xlib and the X extension libraries, `libz-mingw-w64`'s zlib marked as a Wine builtin (what `libwine`'s postinst does), Wine's and Liberation's fonts, and `strace` |
 | The shell boot | `tools/common/xtask/src/wine.rs` | zinc as init, busybox, the links Debian's paths need, and the script |
 | The desktop boot | `tools/common/xtask/src/compositor/wine.rs` | hyprix, yserver started as the `--everything` desktop starts it, the script, and the input the gate types; also `run-compositor --wine`'s scripts |
-| yserver | the fork `ferrix-os/yserver`, pinned in `tools/common/fetch/fetch-yserver.sh` | the X server; §5 says what Wine needed of it |
+| yserver | the fork `xaqu-os/yserver`, pinned in `tools/common/fetch/fetch-yserver.sh` | the X server; §5 says what Wine needed of it |
 | DXVK | `tools/common/fetch/fetch-dxvk.sh`, `tools/common/xtask/src/dxvk.rs` | DXVK's release and `test-dxvk` (§6) |
 | The shader caches | `tools/common/xtask/src/shader_cache.rs`, `tools/common/test/d3d11-shaders.c`, `tools/common/test/thread-nice.c` | `test-shader-cache` (§6a) |
 | The Unity game | `tools/common/fetch/fetch-unity.sh`, `tools/common/xtask/src/compositor/unity.rs` | Spaceship Demo on its own volume and `test-unity` (§9) |
@@ -131,13 +131,13 @@ gone. Linux has it on, and its paranoid entries then no longer trust `GS`
 at all (`arch/x86/entry/entry_64.S` in 6.12): they read the processor's
 number from a segment's limit, look the per-CPU base up, write it with
 `WRGSBASE` and put the old base back on the way out. Without `FSGSBASE`
-Linux keeps the rule Ferrix has, in its own words: "the kernel enforces
-that negative GSBASE values indicate kernel GSBASE". Ferrix would need the same in all four entries
+Linux keeps the rule Xaqu has, in its own words: "the kernel enforces
+that negative GSBASE values indicate kernel GSBASE". Xaqu would need the same in all four entries
 and in `load_user_gs`, and the switch would have to read both bases back at
 every switch, which 3b removed for its cost. What it would buy Wine is
 small. Wine uses the instructions only where `AT_HWCAP2` offers them
-(Ferrix's is 0), and otherwise makes the calls above: one `ARCH_SET_GS`
-per thread. Debian's Wine made a prefix and ran `cmd` on Ferrix this way.
+(Xaqu's is 0), and otherwise makes the calls above: one `ARCH_SET_GS`
+per thread. Debian's Wine made a prefix and ran `cmd` on Xaqu this way.
 A program that switches bases often (a Windows program in a tight loop of
 system calls from 32-bit code) would pay a system call each time; none has
 been measured yet.
@@ -161,15 +161,15 @@ through `fleet/gate.sh control`:
 | `prctl`, first | L.x86_64.60 | a kernel thread pointer, and a kernel and a non-canonical `GS` base, refused with `EPERM`; an unknown request `EINVAL` | the `GS` refusal dropped: "arch_prctl accepted a kernel or non-canonical address as the GS base" |
 | `prctl`, second | L.x86_64.173 | `ARCH_GET_FS` and `ARCH_GET_GS` into address 0 `EFAULT`; a `GS` base set and read back through `%gs:0` and `ARCH_GET_GS`, an `FS` base through `ARCH_GET_FS` | |
 | `fsbase` | L.x86_64.9 | two programs with different `GS` bases trade one processor 10,000 times each, each reading its own word | the call writes the MSR and not the record, and, apart, the switch's write of the base removed: "did not each read their own GS base" |
-| `gsbase` | L.x86_64.172 | `CR4.FSGSBASE` read clear at every processor's bring-up; where the processor has the feature, the bit set for the check is cleared again; a program's `WRGSBASE` is `SIGILL` on two processors | on `FERRIX_X86_CPU=…,+fsgsbase` with the clear removed: "CR4.FSGSBASE, set for the check, was not cleared again". The gates' `qemu64` has no FSGSBASE, and the line says the clear was not seen there |
+| `gsbase` | L.x86_64.172 | `CR4.FSGSBASE` read clear at every processor's bring-up; where the processor has the feature, the bit set for the check is cleared again; a program's `WRGSBASE` is `SIGILL` on two processors | on `XAQU_X86_CPU=…,+fsgsbase` with the clear removed: "CR4.FSGSBASE, set for the check, was not cleared again". The gates' `qemu64` has no FSGSBASE, and the line says the clear was not seen there |
 | `debug`, second | L.x86_64.24, L.x86_64.25 | beside a program whose `GS` base is `0x7ffffffff000`: breakpoints on the `SYSCALL` stub's `swapgs` and `sysretq`, and NMIs taken in ring 3 on another processor, all find the kernel's `GS` | the paranoid entry deciding from the saved `CS` |
 | `sigsegv` | L.x86_64.174 | a `SIGSEGV` handler reads trap 14, error code 6 and the address from its `sigcontext` (§5) | the three left zero: "did not say trap 14 for a page fault" |
 
 **Reviewed** by wine-m1's certification consultant on 2026-10-10: OK IF
-W1 to W10 (`~/.local/share/ferrix/cert-consultant/reviews.md`, line 668).
+W1 to W10 (`~/.local/share/xaqu/cert-consultant/reviews.md`, line 668).
 An internal review, not independent verification.
 
-## 4. What Wine uses, against Ferrix
+## 4. What Wine uses, against Xaqu
 
 From `strace -f` of `wineboot -i`, `cmd /c ver` and `notepad` in the same
 Debian tree on Linux 7.0 (2026-10-10; the traces are not kept in the
@@ -226,7 +226,7 @@ more, and on such a volume `wineboot` made the prefix on `/data`, `cmd`
 answered and 627 MB were left. Read with `btrfs inspect-internal` on the
 host, the full volume had every data block group full, its metadata chunk
 9 MB used of 107 MB (two copies), and 135 MB of the device never allocated
-to a chunk: whether Ferrix's write path holds back more than Linux's would
+to a chunk: whether Xaqu's write path holds back more than Linux's would
 is a separate question, in `docs/BACKLOG.md`.
 
 **esync is not in this Wine.** Debian's Wine 10.0 is upstream Wine, and
@@ -242,7 +242,7 @@ over many descriptors, a high `RLIMIT_NOFILE`, shared memory for its
 objects) stays untried by Wine until a Wine that has it is on a volume.
 GE-Proton11-7, the Proton of §10, has none either (2026-10-15): its
 `wineserver` and `ntdll.so` carry fsync and ntsync and no line of esync,
-which Proton has dropped. Its fast path is fsync, on Ferrix since
+which Proton has dropped. Its fast path is fsync, on Xaqu since
 2026-10-15 (§11).
 
 **Leads, none of them in the kernel as far as is known.**
@@ -363,7 +363,7 @@ each, and `tools/common/n150/endfield/zero-copy-soak.sh` runs this program
 on the box on anv, through the zero-copy path, maximizing and restoring
 it, and fails when its presents stall or it cannot follow the maximize.
 
-**What Ferrix answered wrongly on the way:** nothing. Both boots passed on
+**What Xaqu answered wrongly on the way:** nothing. Both boots passed on
 their first run under KVM (2026-10-12): `wineboot` about 38 s of guest time,
 the offscreen program 1.3 s, DXVK with 4 compiler threads.
 
@@ -410,13 +410,13 @@ lavapipe), puts the home and the prefix on it -- btrfs, as the box's home
 is -- and runs the program twice. The first run must miss in Mesa's cache
 and create DXVK's file; the second must find DXVK's file, miss nothing and
 draw the same pixel. On 2026-10-19 under KVM: 6,057 ms cold, 645 ms warm,
-106 misses and then 216 hits and none missed. Ferrix's btrfs, `flock`,
+106 misses and then 216 hits and none missed. Xaqu's btrfs, `flock`,
 `ftruncate` and Wine's file sharing answered as Linux does; so did two
 programs filling one cache at once, in a trial boot.
 
-**What Ferrix answered wrongly: a thread's nice value.** Mesa lowers its
+**What Xaqu answered wrongly: a thread's nice value.** Mesa lowers its
 disk-cache threads with `setpriority(PRIO_PROCESS, tid, 19)`, which on Linux
-changes that thread alone. Ferrix kept the value per process, so the call
+changes that thread alone. Xaqu kept the value per process, so the call
 put every thread of the program at 19, and every thread it started later:
 a game's renderer and DXVK's compilers ran at Linux's lowest weight (15
 against 1,024) beside yserver, the compositor and wineserver. The value is
@@ -424,7 +424,7 @@ now the thread's (`syscall::thread::Thread`, `syscall::attributes`): `who`
 names a thread, `PRIO_PGRP` and `PRIO_USER` every thread of their
 processes, and a `clone` thread starts with its creator's. Before the
 program, the gate runs `tools/common/test/thread-nice.c`, which must print
-Linux's `worker=19 main=0 later=0`; Ferrix before the fix printed
+Linux's `worker=19 main=0 later=0`; Xaqu before the fix printed
 `worker=19 main=19 later=19`.
 
 **Negative controls**, through `gate.sh control`, each FIRED under KVM on
@@ -443,14 +443,14 @@ Wine 10.0 runs a 32-bit Windows program inside its 64-bit process: its
 `ntdll.so` starts it "in experimental wow64 mode" when no 32-bit Wine is
 installed, and Wine's `wow64cpu.dll` switches between the 64-bit code and
 the program's 32-bit code with far transfers to the 32-bit code selector,
-`0x23` on Linux and on Ferrix (`docs/I386.md` §3.1). No Linux system call is
+`0x23` on Linux and on Xaqu (`docs/I386.md` §3.1). No Linux system call is
 made from 32-bit code: a Windows system call goes back to 64-bit code first.
 
 **The DLLs.** Debian builds the 32-bit Windows DLLs only into its i386
 `libwine`. Without them `wineboot` says `failed to open
 C:\windows\syswow64\rundll32.exe: c0000135` (a DLL not found), on Linux
-as on Ferrix: this page said before that Linux did not, which the trace in
-`~/.local/share/ferrix/wine/trace` on nazuna does not bear out.
+as on Xaqu: this page said before that Linux did not, which the trace in
+`~/.local/share/xaqu/wine/trace` on nazuna does not bear out.
 `fetch-wine.sh` copies that package's `i386-windows` beside the 64-bit
 `x86_64-windows`, about 600 MB, and nothing else of it. With them, on Linux
 7.0 in the same tree (2026-10-12), `wineboot` fills `syswow64` and the
@@ -468,7 +468,7 @@ as on Ferrix: this page said before that Linux did not, which the trace in
 2. *`ARCH_SET_FS` loads a null `FS` selector first.* Each time Wine comes
    back to its Unix side it sets its own thread pointer with `ARCH_SET_FS`
    while `FS` still holds the 32-bit selector. Linux loads a null selector
-   before it writes the base; Ferrix did not, so the next switch reloaded the
+   before it writes the base; Xaqu did not, so the next switch reloaded the
    selector, whose base is the 32-bit TEB, and glibc's thread pointer was
    gone. It now does as Linux does, and as its `ARCH_SET_GS` already did.
 3. *A handler is entered on the frame its installer's mode chose.* A fault
@@ -476,20 +476,20 @@ as on Ferrix: this page said before that Linux did not, which the trace in
    handled by Wine's 64-bit `SIGSEGV` handler. Linux enters it on a 64-bit
    frame in 64-bit mode whatever mode the interrupted code was in, because it
    decides by the handler (`SA_IA32_ABI`, set when an i386 call installed
-   it), and records the interrupted `cs`, `0x23`, in the `sigcontext`. Ferrix
+   it), and records the interrupted `cs`, `0x23`, in the `sigcontext`. Xaqu
    decided by the interrupted code's selector, and would have entered Wine's
    64-bit handler on an i386 frame in 32-bit mode. A disposition now records
    the ABI of the `rt_sigaction` that installed it, and the 64-bit frame
    records the interrupted code selector, which Wine reads to tell 32-bit
    code from 64-bit.
 4. *A 64-bit `rt_sigreturn` gives back `0x23`.* Wine resumes the 32-bit
-   code from its handler through the frame, which says `0x23`. Ferrix
+   code from its handler through the frame, which says `0x23`. Xaqu
    resumed every 64-bit frame in 64-bit code. It now gives back 32-bit user
    code where the frame holds it, and 64-bit user code for anything else, as
    before; Linux loads whatever the frame holds and lets `IRET` refuse a bad
    one. A frame that gives back `0x23` with a `RIP` at or above 4 GiB is
    refused with `SIGSEGV`: `IRETQ` checks the 32-bit segment's limit and
-   would fault in ring 0, where Linux has a fixup and Ferrix has none.
+   would fault in ring 0, where Linux has a fixup and Xaqu has none.
 5. *`SS` after `SYSRET`, on AMD.* Wine leaves its 64-bit side for the 32-bit
    code with a far jump, which loads `CS` and nothing else, so the 32-bit
    code runs on whatever `SS` the last return from the kernel left. AMD's
@@ -525,14 +525,14 @@ completion: `Microsoft Windows 10.0.19043`. `wineboot` runs the 32-bit
 program draws a window: `tools/common/test/window32.c`, built by xtask with
 mingw-w64's i686 compiler and run in `test-wine`'s desktop boot, prints
 `window32: pointer=4 wow64=1 process=014c native=8664` and paints its
-window, titled `Ferrix WoW64`, in the colour the script names; the gate
+window, titled `Xaqu WoW64`, in the colour the script names; the gate
 requires the line, the window in hyprix's list and the colour over half
 the screen (90% on the 1024 by 768 screen under KVM, 2026-10-15). Not tried yet: a 32-bit installer. An i386 handler in a
 64-bit program, delivered on a `SYSCALL`'s way back, runs in 64-bit mode,
 unlike Linux; Wine installs none, and the row is in `docs/BACKLOG.md`.
 
 **Review.** The landing's certification review is in the consultant's
-ledger on nazuna (`~/.local/share/ferrix/cert-consultant/reviews.md`):
+ledger on nazuna (`~/.local/share/xaqu/cert-consultant/reviews.md`):
 the first verdict, OK IF W1 to W7, at line 762; W1 is the 4 GiB refusal
 above, W2 the `SYSCALL` row, W3 the `inherit` check. The verdict on the
 landed commit fb3f9f093, W1 to W7 met, is at line 768.
@@ -584,7 +584,7 @@ Wine 10.0 under bubblewrap and Xvfb: the launcher shows its first screen
 `games.log` says Gryphline's server answered its version query with 200.
 No Wine setting was needed.
 
-**On Ferrix, under KVM.** hyprix with yserver, the network through xtask's
+**On Xaqu, under KVM.** hyprix with yserver, the network through xtask's
 gateway (a lease from `udhcpc` first), the payload on a btrfs volume, the
 prefix on tmpfs, 8 GiB. The launcher draws its first screen there too,
 with the news and pictures fetched over TLS by its web view; its window is
@@ -616,23 +616,23 @@ kernel's; both are fixed:
   `getaddrinfo` with `AF_UNSPEC` and no `AI_ADDRCONFIG`; glibc's resolver
   then sends the A and AAAA queries together with `sendmmsg` (`send_dg` in
   `resolv/res_send.c`), which x86-64 glibc assumes the kernel has, and
-  takes `ENOSYS` from it as a failed query. Ferrix had neither `sendmmsg`
+  takes `ENOSYS` from it as a failed query. Xaqu had neither `sendmmsg`
   nor `recvmmsg`, so every such lookup ended in `EAI_AGAIN`, while one with
   `AI_ADDRCONFIG` (only IPv4 configured, so one A query, sent by `sendto`)
   succeeded. A static glibc program run as init with the network showed it
-  on 2026-10-13 (`~/.local/share/ferrix/endfield/probe/addrconfig.c`): both
+  on 2026-10-13 (`~/.local/share/xaqu/endfield/probe/addrconfig.c`): both
   names failed with flags 0 and resolved with `AI_ADDRCONFIG`. Both calls
   are now in the kernel (`src/kernel/src/syscall/sockets.rs`, on
   `sendmsg` and `recvmsg` as Linux's `net/socket.c` builds them, with a
   boot check beside the other socket checks), and the same probe resolves
-  both names with flags 0 (`~/.local/share/ferrix/logs/endfield-mmsg/probe-addrconfig.log`).
+  both names with flags 0 (`~/.local/share/xaqu/logs/endfield-mmsg/probe-addrconfig.log`).
   i386's `socketcall` still answers its sub-calls 19 and 20 with `ENOSYS`:
   the boot check that requires it is in the core ring. With the fix, the
-  launcher reached its server on Ferrix on 2026-10-13: `games.log` says
+  launcher reached its server on Xaqu on 2026-10-13: `games.log` says
   `OnQuery_ProtocolVer_LauncherVer_GameVer_Result ... bRet=true,
   nCode=200`, and Gryphline's GPU configuration query answered 200 too
   (`test-endfield-launcher` on the branch `endfield-s4` over this kernel,
-  `~/.local/share/ferrix/logs/queue/endfield-mmsg-launcher-try.log`).
+  `~/.local/share/xaqu/logs/queue/endfield-mmsg-launcher-try.log`).
 
 **The gate.** `tools/common/fetch/fetch-endfield-launcher.sh`
 pins the installer and 7-Zip 25.01's Linux build by SHA-256, checks the
@@ -642,7 +642,7 @@ sessions bind for bubblewrap, and held an older yserver than its stamp on
 2026-10-12) with `/GRYPHLINK` added. `cargo xtask test-endfield-launcher`
 requires hyprix to list the window by its title, the yellow button on the
 screen, and `games.log` saying the server answered with 200. The first two
-held on Ferrix on 2026-10-13, and the third once the second defect above
+held on Xaqu on 2026-10-13, and the third once the second defect above
 was fixed the same day. It has no negative control yet.
 `cargo xtask test-endfield-proton` is the same boot in GE-Proton's Wine
 (§10).
@@ -673,7 +673,7 @@ Endfield, and where it does not:
 | Code | Mono (`MonoBleedingEdge`, `mono-2.0-bdwgc.dll`, `Assembly-CSharp.dll`) | not known; Unity games of its kind are usually IL2CPP (`GameAssembly.dll`) |
 | Bits, anti-cheat | 64-bit, none | 64-bit, ACE |
 
-So it holds what any Unity game asks of Wine and of Ferrix beneath it --
+So it holds what any Unity game asks of Wine and of Xaqu beneath it --
 `UnityPlayer.dll`'s threads (its job workers and Enlighten's, a render
 thread), its memory and file mapping, its window, Direct3D 11 through
 DXVK -- and a renderer far heavier than a small game's. It does not hold
@@ -715,13 +715,13 @@ drawn in it" before it reaches "not drawing frames"), and Wine's own
 stopped on FX-0008 (`docs/BACKLOG.md`).
 
 **On Linux, for comparison** (linux-host: the same tree under bubblewrap on
-nazuna with Xvfb at 640 by 360, 24 processors, no Ferrix): the game's
+nazuna with Xvfb at 640 by 360, 24 processors, no Xaqu): the game's
 intro, its menu with the animated fog behind it, and the benchmark's
 walkthrough all drew; the walkthrough had not ended after 18 minutes.
-Screenshots, each with its banner: `~/.local/share/ferrix/unity/shots/` on
-nazuna (`linux-host-*` and `ferrix-*`).
+Screenshots, each with its banner: `~/.local/share/xaqu/unity/shots/` on
+nazuna (`linux-host-*` and `xaqu-*`).
 
-**What Ferrix answered wrongly on the way:** nothing yet. The game started,
+**What Xaqu answered wrongly on the way:** nothing yet. The game started,
 loaded its scene and drew it through DXVK on its first boot that got that
 far. Two things on the way were not the kernel's:
 
@@ -746,14 +746,14 @@ attaches a volume and never downloads.
 
 Debian's Wine 10.0 draws the launcher's Qt dialogs that are translucent
 windows -- its install dialog, its update prompt -- blank, on Linux as
-on Ferrix (§8): only a line of their text shows. The customer asked for
+on Xaqu (§8): only a line of their text shows. The customer asked for
 the latest Proton's Wine instead (2026-10-13). Valve's Proton 11 ships as
 source only; GE-Proton is built from it and released as a tarball, and
-its 11-7 draws those dialogs whole, on Linux and on Ferrix.
+its 11-7 draws those dialogs whole, on Linux and on Xaqu.
 
 ```
 tools/common/fetch/fetch-proton.sh                                  # once
-FERRIX_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh
+XAQU_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh
 cargo xtask test-endfield-proton --accel kvm
 ```
 
@@ -763,7 +763,7 @@ libraries its 32-bit half needs. This build is Wine's old 32/64 layout,
 not its new WoW64 mode (§7): a 32-bit Unix side
 (`files/lib/wine/i386-unix`) runs 32-bit Windows programs, and without it
 the 64-bit side does not make a prefix either. That half is a 32-bit
-glibc program, which Ferrix runs (stage 22's I1 to I4), so glibc, Xlib and
+glibc program, which Xaqu runs (stage 22's I1 to I4), so glibc, Xlib and
 the X extensions, FreeType and fontconfig are there in i386 too, in
 Debian's multiarch places. The list is what `wineboot`, the 32-bit `cmd`
 and a 32-bit window asked for on Linux. Proton's own `proton` script,
@@ -771,17 +771,17 @@ which Steam runs inside its runtime, is not used; the boot sets what it
 sets for Wine (`WINEDLLPATH`, `LD_LIBRARY_PATH` into `files/lib`) and
 links Proton's fonts into the prefix before `wineboot`, as it does.
 
-**What Ferrix answered wrongly (fixed 2026-10-13, f0c812f01).** Proton's
+**What Xaqu answered wrongly (fixed 2026-10-13, f0c812f01).** Proton's
 `wineboot` faulted writing its user shared data, a memfd wineserver maps
 `PROT_WRITE` alone and the client maps `MAP_SHARED|MAP_FIXED` over a
 placeholder and `mprotect`s read-write. `mprotect` replaced a region's
 every flag, so the shared mapping became private and the write after it
 faulted; and a write-only region refused a read, where Linux's
 `protection_map` makes it readable. A static probe of each step
-(`~/.local/share/ferrix/endfield/probe/usd2.c`) failed three of twelve
-variants on Ferrix and none on Linux before the fix, and none after
+(`~/.local/share/xaqu/endfield/probe/usd2.c`) failed three of twelve
+variants on Xaqu and none on Linux before the fix, and none after
 (L.user.128, L.user.129). Proton's Wine also warned that it could not
-enable Syscall User Dispatch, which Ferrix did not have then (stage 23's
+enable Syscall User Dispatch, which Xaqu did not have then (stage 23's
 E5.3, since built: `docs/SECCOMP.md` §13); nothing the launcher does
 needed it.
 
@@ -799,11 +799,11 @@ hinted, spaces as Windows does. Open Sans is a little wider than Segoe UI,
 so a line may wrap a word earlier.
 
 **The gate** requires, besides §8's window, button and server answer, the
-32-bit `cmd` to answer with a Windows version. On Ferrix under KVM on
+32-bit `cmd` to answer with a Windows version. On Xaqu under KVM on
 2026-10-13: `wineboot` exits 0, the 32-bit `cmd` answers `Microsoft Windows
 10.0.19045`, the launcher's window and button are drawn and Gryphline's
 server answers; a click on Download draws the install dialog whole, in Open
-Sans (the screens are in `~/.local/share/ferrix/endfield-proton/` on
+Sans (the screens are in `~/.local/share/xaqu/endfield-proton/` on
 nazuna).
 
 **The click.** Since 2026-10-17 the gate also clicks the main button, once
@@ -837,16 +837,16 @@ add X's origin (`xwininfo`).
 **Still not as on Windows:** the launcher asks every five seconds for the
 image path of its `QtWebEngineProcess.exe` and gets none, because Wine
 reads another process's memory through `ptrace` and `/proc/<pid>/mem`,
-which Ferrix does not have (stage 23's E5.2; the certification
+which Xaqu does not have (stage 23's E5.2; the certification
 consultant's answer, ledger line 877, is OK IF P1 to P8, with a design and
 the customer's word on the Security Target first). The version 1.6.0.1607
 pinned here asks for no update; the current launcher on Windows does.
 
 **The game's download (2026-10-14).** For the comparison with the
 customer's Windows install, the game goes to a 160 GB sparse btrfs image
-on the SN720's `ferrix-root` partition (mounted on nazuna at
-`/mnt/ferrix-root`, the filesystem grown to the partition's 190 GB),
-attached to Ferrix writable; the launcher sees 154.52 GB free for its
+on the SN720's `xaqu-root` partition (mounted on nazuna at
+`/mnt/xaqu-root`, the filesystem grown to the partition's 190 GB),
+attached to Xaqu writable; the launcher sees 154.52 GB free for its
 111.18 GB. The download failed twice within seconds, with "Download
 Error" on the button and `OnGameDownloadSdkError nCode=206` in the
 launcher's log:
@@ -869,7 +869,7 @@ launcher's log:
   do, and the download runs. Verification stays on.
 
 With the link, the launcher downloads its 54 files (the game 1.5.3 in
-`.zip.NNN` parts). Through xtask's gateway Ferrix took about 3.4 MB/s,
+`.zip.NNN` parts). Through xtask's gateway Xaqu took about 3.4 MB/s,
 steadily; nazuna itself fetches a part from the same CDN at 31 MB/s, so the
 gateway, not the guest, is the limit (`docs/STEAM.md` §7, stage 23's E4.4).
 
@@ -879,7 +879,7 @@ write of the downloader failed with Windows' error 112, the disk is full
 the launcher showed "Download Error". Wine maps `ENOSPC` to 112, but the
 volume was not full: about 150 GB of it was still unallocated (read from
 the host, its chunk tree has the 612 8 MiB data chunks `mkfs.btrfs
---rootdir` made, four 1 GiB data chunks Ferrix made, and a 1 GiB metadata
+--rootdir` made, four 1 GiB data chunks Xaqu made, and a 1 GiB metadata
 chunk 3 % used). Neither btrfs measure refused: the same volume, written
 through the same writable mount on the host (`btrfs-vfs`, four files
 round-robin, 10 GiB), takes every byte, and `statfs` falls by what was
@@ -929,7 +929,7 @@ picture comes from the launcher itself: with the video's host resolving
 to nowhere, in the guest's `/etc/hosts` and in the prefix's, the same two
 minutes took 6.5 processor-seconds (wineserver 9.8), the window, the
 yellow button and the server's answer as before.
-`FERRIX_ENDFIELD_NO_VIDEO=1 cargo xtask test-endfield-proton` does that,
+`XAQU_ENDFIELD_NO_VIDEO=1 cargo xtask test-endfield-proton` does that,
 for a boot that downloads or unpacks the game; the gate leaves the video
 on.
 
@@ -988,7 +988,7 @@ Valve's `proton_11.0` source (`server/fsync.c`,
   ("can't use __NR_futex_waitv"). Both Unix sides call it: Proton's 64-bit
   `ntdll.so` through `syscall`, its 32-bit one through `int $0x80`.
 
-**What Ferrix lacked.** `futex_waitv` itself; shared futex keys on a
+**What Xaqu lacked.** `futex_waitv` itself; shared futex keys on a
 `MAP_SHARED` file mapping, `/dev/shm` and `FUTEX_WAKE` were there. It is
 in the kernel since 2026-10-15 (`syscall/futex.rs`, 449 on x86-64, i386
 and AArch64; ARMv7-A's local header ends before it), with Linux's answers
@@ -1021,7 +1021,7 @@ gate pool's `es-sync`; wineserver's time is its user and system time from
 | fsync | 4.9, 3.3 µs | 8.0, 5.5 µs | 5.4, 3.8 µs | 8.7, 6.0 µs | 880 / 320, 1240 / 200 ms |
 
 **The launcher.** `test-endfield-proton` sets `WINEFSYNC=1`, as Proton's
-own script does (`FERRIX_WINEFSYNC=0` leaves it to wineserver, to compare),
+own script does (`XAQU_WINEFSYNC=0` leaves it to wineserver, to compare),
 and prints the processor time wineserver and the Windows programs took
 over the last two minutes of its wait, the launcher idle on its first
 screen.
@@ -1053,13 +1053,13 @@ under QEMU's `snapshot=on` with its overlay on the host's `/dev/shm`, so the
 host's disk (saturated by other work that day: a 4 GiB `sync` took 5 min) is
 out of the figures; 4 processors, 4 GiB, KVM, so the extraction runs into the
 memory floor as Endfield's did. Linux is the Debian 13 guest of
-`~/.local/share/ferrix/linux-baseline` (no card) with the same volume, the same
-command and the same QEMU. Ferrix's own split comes from counters around the
+`~/.local/share/xaqu/linux-baseline` (no card) with the same volume, the same
+command and the same QEMU. Xaqu's own split comes from counters around the
 `read`/`write` calls, the btrfs mount's writeback and commit, its page-cache
 fills, and the disk's reads, writes and flushes (scratch branch `ep-rig`,
-never landed). Scripts and logs: `~/.local/share/ferrix/ep-bench/`.
+never landed). Scripts and logs: `~/.local/share/xaqu/ep-bench/`.
 
-| 4 GiB out of a 3.2 GiB zip set | Linux 6.12 | Ferrix, debug kernel | + read-ahead | + read-ahead, release kernel |
+| 4 GiB out of a 3.2 GiB zip set | Linux 6.12 | Xaqu, debug kernel | + read-ahead | + read-ahead, release kernel |
 |---|---|---|---|---|
 | `7zz x` (s) | 20 | 200 | 88 | 42 |
 | MB/s | 205 | 21 | 47 | 99 |
@@ -1096,7 +1096,7 @@ take 328 us rather than 925 us and the extraction 42 s rather than 88.
 
 ## 13. League of Legends' game, on its own and offline (parked 2026-10-19)
 
-The question: how far League of Legends gets on Ferrix with no Riot server
+The question: how far League of Legends gets on Xaqu with no Riot server
 and no anti-cheat -- its game executable drawing locally, not a match. The
 research (session oc, 2026-10-19) found the rails in place: Wine 10.0 (§1),
 DXVK on lavapipe (§6) and a real Direct3D 11 game (§9) already pass. The
@@ -1111,8 +1111,8 @@ executable starts at all without Riot's client is the open question.
 
 | | What | Exit |
 |---|---|---|
-| L0 | On a Linux host (WSL, bubblewrap with no network, the install bound read-only): start the executable on its own, offline; `strace -f -c` against `nr.rs`; list the files it opens | what it draws or says, the syscalls Ferrix lacks, the files a volume needs |
-| L1 | `test-lol`: the same on Ferrix | DXVK made its device, its window drawn |
+| L0 | On a Linux host (WSL, bubblewrap with no network, the install bound read-only): start the executable on its own, offline; `strace -f -c` against `nr.rs`; list the files it opens | what it draws or says, the syscalls Xaqu lacks, the files a volume needs |
+| L1 | `test-lol`: the same on Xaqu | DXVK made its device, its window drawn |
 | L2 | Only if L0 shows it needs Riot's client: a 2014 client with LeagueSandbox 4.20 (sourcing it is the customer's call), or park it | |
 
 Sound (E3.2) and the mouse (E3.3) ride stage 23; they gate "playable",
@@ -1137,7 +1137,7 @@ reaches window creation; then, in every run, with no arguments or with
 the old client's: `Call from ... to unimplemented function
 KERNEL32.dll.SetTimerQueueTimer, aborting`, so no window maps. Nothing of
 Vanguard's is loaded on the way. Its system calls (90, `strace -f -c`)
-are all in `nr.rs` but `fadvise64`, which Ferrix may ignore: no kernel
+are all in `nr.rs` but `fadvise64`, which Xaqu may ignore: no kernel
 gap. It opens only the executable and `rpatch.dll` of `Game/` before it
 dies, so the volume's size is still unknown.
 

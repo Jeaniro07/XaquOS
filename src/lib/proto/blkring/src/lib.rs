@@ -215,7 +215,7 @@ pub use layout::{HeaderError, Op, RingLayout, Status, Submission};
 /// side reports [`Corruption::TailOverrun`] or [`Corruption::TailBackwards`]
 /// and ends the ring. A torn read is not a safety problem -- every value read
 /// is checked as if the peer chose it -- but it ends a healthy ring: these
-/// used to be provided from the byte accessors, `ferrix-driver`'s block ring
+/// used to be provided from the byte accessors, `xaqu-driver`'s block ring
 /// inherited them, and a disk's requests failed after 30 s about once in
 /// 2,300 boots under load (`docs/BACKLOG.md`, the seam's deeper run). Only
 /// [`RingMemory::read_u64`] and [`RingMemory::write_u64`] are provided, since
@@ -227,7 +227,7 @@ pub use layout::{HeaderError, Op, RingLayout, Status, Submission};
 ///
 /// ```compile_fail,E0046
 /// struct Bytes;
-/// impl ferrix_blkring::RingMemory for Bytes {
+/// impl xaqu_blkring::RingMemory for Bytes {
 ///     fn read_u8(&self, _offset: usize) -> u8 {
 ///         0
 ///     }

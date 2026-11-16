@@ -8,7 +8,7 @@
 //! fetched on this machine by `tools/common/fetch/fetch-claude-desktop.sh`
 //! from Anthropic's apt repository, checked from a pinned key down to the
 //! package, and unpacked without its maintainer scripts. It is proprietary,
-//! so Ferrix carries none of it: the script keeps a tree beside a stamp, and
+//! so Xaqu carries none of it: the script keeps a tree beside a stamp, and
 //! `crate::everything` merges that tree, with GTK 3 and the client library
 //! of the sound server `pipewire` from Debian, into the `--everything`
 //! volume. No image of it is made on its own.
@@ -67,7 +67,7 @@ pub(crate) const APP_ID: &str = "com.anthropic.Claude";
 /// * `--ozone-platform=wayland`: a client of hyprix, through `wl_shm`.
 /// * `--disable-gpu`: its GPU process in software, as Chrome's on the
 ///   desktop, since the render node is the compositor's.
-/// * `--no-sandbox`: Chromium's sandbox does not run on Ferrix yet
+/// * `--no-sandbox`: Chromium's sandbox does not run on Xaqu yet
 ///   (`docs/SECCOMP.md`, S7 and S8), as for Chrome.
 /// * `XDG_DATA_DIRS`: GTK's schemas, its icons and the volume's MIME data
 ///   are under `/data/usr/share`, which no program looks in by itself.
@@ -81,7 +81,7 @@ export XDG_DATA_DIRS=/data/usr/share:/usr/share
 exec $app/claude-desktop --no-sandbox --ozone-platform=wayland --disable-gpu "$@"
 "#;
 
-/// The launcher's entry: the package's own, less what Ferrix has no use
+/// The launcher's entry: the package's own, less what Xaqu has no use
 /// for, with the app's icon on the volume. `%U` is a `claude:` link or a
 /// file, which a second start hands to the first.
 const DESKTOP_ENTRY: &str = "[Desktop Entry]\nType=Application\nName=Claude\n\
@@ -107,7 +107,7 @@ const MIMEAPPS_PATH: &str = "usr/share/applications/mimeapps.list";
 
 /// The app's own file types, which its package's `postinst` registers:
 /// MCP bundles (`.mcpb`, and `.dxt` from before they were renamed) and
-/// skills. Ferrix has no MIME database to add them to, so they are written
+/// skills. Xaqu has no MIME database to add them to, so they are written
 /// here as shared-mime-info's source format, and `/bin/xdg-open` knows them
 /// by their extensions ([`crate::chrome::opener`]).
 const MIME_TYPES: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -130,9 +130,9 @@ const MIME_TYPES: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 const MIME_TYPES_PATH: &str = "usr/share/mime/packages/claude-desktop.xml";
 
 /// Where `tools/common/fetch/fetch-claude-desktop.sh` writes, unless
-/// `FERRIX_CLAUDE_DESKTOP_VOLUME` names another directory.
+/// `XAQU_CLAUDE_DESKTOP_VOLUME` names another directory.
 fn directory() -> Result<PathBuf> {
-    match std::env::var_os("FERRIX_CLAUDE_DESKTOP_VOLUME") {
+    match std::env::var_os("XAQU_CLAUDE_DESKTOP_VOLUME") {
         Some(directory) => Ok(PathBuf::from(directory)),
         None => paths::volume_directory("claude-desktop"),
     }
@@ -365,7 +365,7 @@ fn colours(screen: &Image, window: &Listed) -> std::collections::HashMap<[u8; 3]
 }
 
 /// What the sign-in screen is made of, as the app (package 2.37337.1)
-/// drew it on Ferrix on 2026-10-15, its window 1878x1038: 94% of the window
+/// drew it on Xaqu on 2026-10-15, its window 1878x1038: 94% of the window
 /// its background, `#fcfcfb`; Claude's mark in the middle, 3783 pixels of
 /// its orange; the black "Get started" button below it, 14017 pixels of
 /// `#0b0b0b`; 1505 colours in all. Each least amount below is well under
@@ -538,7 +538,7 @@ fn watch(arch: Arch, watching: &mut Watching<'_>, qmp: &mut Qmp, shots: &Path) -
             .chain(watching.after())
             .cloned()
             .collect();
-        if let Some(line) = lines.iter().find(|line| line.contains("FERRIX-PANIC")) {
+        if let Some(line) = lines.iter().find(|line| line.contains("XAQU-PANIC")) {
             return Err(with_the_transcript(
                 &Error::new(format!(
                     "{arch}: the kernel stopped while the app ran: {}",

@@ -3,7 +3,7 @@
 # in SUMMARY.md's order; print.html is all of them on one page.
 
 [book]
-title = "Ferrix roadmap"
+title = "Xaqu roadmap"
 src = "."
 language = "en"
 
@@ -17,7 +17,7 @@ create-missing = false
 command = "python3 ../../tools/common/gen/split-roadmap.py mdbook"
 
 [output.html]
-git-repository-url = "https://github.com/ferrix-os/ferrix"
+git-repository-url = "https://github.com/xaqu-os/xaqu"
 no-section-label = true
 additional-css = ["theme/roadmap.css"]
 

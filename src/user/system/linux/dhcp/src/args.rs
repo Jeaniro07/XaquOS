@@ -1,4 +1,4 @@
-//! The command line: `udhcpc`'s options, as far as Ferrix's callers use
+//! The command line: `udhcpc`'s options, as far as Xaqu's callers use
 //! them.
 
 use std::time::Duration;

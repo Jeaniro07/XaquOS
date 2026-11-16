@@ -12,12 +12,12 @@
 use core::ffi::c_void;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_chardevctl::message::{self, Hello, MAX_NODES, Message, Op, VERSION};
-use ferrix_native::channel::Channel;
-use ferrix_native::handle::{Object, OwnedHandle};
-use ferrix_native::{Deadline, Handle};
-use ferrix_native_abi::nr;
-use ferrix_native_abi::signals::Signals;
+use xaqu_chardevctl::message::{self, Hello, MAX_NODES, Message, Op, VERSION};
+use xaqu_native::channel::Channel;
+use xaqu_native::handle::{Object, OwnedHandle};
+use xaqu_native::{Deadline, Handle};
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
 
 use crate::device;
 use crate::futex::{self, Kernel};
@@ -207,7 +207,7 @@ pub unsafe extern "C" fn nvos_chardev_next(out: *mut Request) -> NvStatus {
                 }
                 return status::OK;
             }
-            Err(ferrix_native::channel::ReadError::Failed(ferrix_native::Error::ShouldWait)) => {
+            Err(xaqu_native::channel::ReadError::Failed(xaqu_native::Error::ShouldWait)) => {
                 if channel
                     .wait_one(Signals::READABLE | Signals::PEER_CLOSED, Deadline::Never)
                     .is_err()
@@ -303,7 +303,7 @@ pub extern "C" fn nvos_chardev_dmabuf_install_name(
             id as usize,
             0,
             cookie as usize,
-            (u64::from(flags) | ferrix_native_abi::types::DMABUF_NAME_ONLY) as usize,
+            (u64::from(flags) | xaqu_native_abi::types::DMABUF_NAME_ONLY) as usize,
             size as usize,
         ],
     ) {
@@ -456,7 +456,7 @@ pub unsafe extern "C" fn nvos_chardev_sync_resolve(id: u64, fd: i32, cookie: *mu
 }
 
 /// Answer mmap request `id`: `value` a VMO handle with `offset` its byte
-/// offset, or a physical address, by `kind` (`ferrix_chardevctl::message`'s
+/// offset, or a physical address, by `kind` (`xaqu_chardevctl::message`'s
 /// `MAP_*`). 0, or a negative errno.
 #[unsafe(no_mangle)]
 pub extern "C" fn nvos_chardev_reply_map(id: u64, value: u64, offset: u64, kind: u64) -> i32 {

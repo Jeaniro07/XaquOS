@@ -1,5 +1,5 @@
 //! The boot words the power driver reads from `/proc/cmdline`
-//! (`docs/POWERCTL.md` §8). The kernel's own word, `ferrix.powerctl`, is
+//! (`docs/POWERCTL.md` §8). The kernel's own word, `xaqu.powerctl`, is
 //! not one of them: it decides whether the driver runs at all.
 
 use crate::plan::{self, Plan, PlanError};

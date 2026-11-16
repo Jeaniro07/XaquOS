@@ -11,7 +11,7 @@
 //! millisecond there was one for every event the pointer sent.
 //!
 //! And a frame is not only drawing. On a card it ends in a page flip, and
-//! Ferrix's virtio-gpu answers a flip by setting the scanout and sending the
+//! Xaqu's virtio-gpu answers a flip by setting the scanout and sending the
 //! whole framebuffer to the host, waited for (`show` in
 //! `src/kernel/src/interfaces/display/drm.rs`). A guest with one processor spent it doing
 //! that, and the pointer stuttered over everything -- worse than when every

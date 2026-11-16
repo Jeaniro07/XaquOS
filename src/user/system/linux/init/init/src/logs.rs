@@ -14,8 +14,8 @@ use std::fs::File;
 use std::io::{self, Read as _};
 use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 
-use ferrix_svc::event::UnitId;
-use ferrix_svc_proto::notify::Lines;
+use xaqu_svc::event::UnitId;
+use xaqu_svc_proto::notify::Lines;
 
 /// How many lines a unit's ring keeps.
 pub(crate) const RING: usize = 256;

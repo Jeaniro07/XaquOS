@@ -240,7 +240,7 @@ pub const DEVICES_MAX_BYTES: usize = DEVICES_HEADER_BYTES + MAX_DRIVERS * NAME_B
 /// `flags` bit: this is the first DEVICES message, carrying the job and the
 /// images.
 pub const FLAG_FIRST: u32 = 1;
-/// `flags` bit: the boot carries `ferrix.unisolated`, so `devmgr` may start
+/// `flags` bit: the boot carries `xaqu.unisolated`, so `devmgr` may start
 /// a bus master whose DMA is not translated or whose interrupts are not
 /// isolated, saying so each time (`admission`, `docs/DMA-GATE.md`). Any
 /// other bit unknown to this crate gives no opt-out (ledger 3906 (2)).
@@ -283,7 +283,7 @@ pub struct Devices<'a> {
     pub first: bool,
     /// The drivers' names, one per image handle; empty unless `first`.
     pub names: &'a [[u8; NAME_BYTES]],
-    /// Whether the boot carries `ferrix.unisolated` ([`FLAG_UNISOLATED_ALLOWED`]).
+    /// Whether the boot carries `xaqu.unisolated` ([`FLAG_UNISOLATED_ALLOWED`]).
     pub unisolated_allowed: bool,
     /// Whether devmgr must bind what it admits ([`FLAG_EXPLICIT_BIND`]).
     pub explicit_bind: bool,
@@ -376,7 +376,7 @@ pub struct DevicesView<'a> {
     pub more: u32,
     /// Whether this is the first message, with the job and the images.
     pub first: bool,
-    /// Whether the boot carries `ferrix.unisolated`: only with that bit set
+    /// Whether the boot carries `xaqu.unisolated`: only with that bit set
     /// and no bit this crate does not define.
     pub unisolated_allowed: bool,
     /// Whether devmgr binds what it admits, under the same rule.

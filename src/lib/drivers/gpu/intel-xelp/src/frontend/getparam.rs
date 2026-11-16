@@ -10,7 +10,7 @@
 //! why: `HAS_USERPTR_PROBE` is 0 because userptr is not served (K7), and
 //! the scheduler has no preemption, so `HAS_SCHEDULER` says so.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::drm::{Call, put};
 use super::{Backend, Frontend, Host};

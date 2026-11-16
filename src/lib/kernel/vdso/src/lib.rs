@@ -2,7 +2,7 @@
 //! whose functions read the clock without entering the kernel.
 //!
 //! A C library asks the clock through `clock_gettime`, and a browser asks it
-//! tens of thousands of times a second: Chrome on Ferrix made about forty
+//! tens of thousands of times a second: Chrome on Xaqu made about forty
 //! thousand of the calls a second, each a trip into the kernel and back to
 //! compute a number the program could have computed itself. The kernel's
 //! clock is the TSC scaled by a frequency that never changes after boot, and

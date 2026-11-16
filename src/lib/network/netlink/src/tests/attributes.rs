@@ -3,7 +3,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     IFA_ADDRESS, IFLA_ADDRESS, IFLA_IFNAME, IFLA_MTU, IFLA_OPERSTATE, NLA_F_NESTED, NlAttr,
 };
 
@@ -190,7 +190,7 @@ fn a_repeated_attribute_is_read_as_its_first() {
 
 #[test]
 fn the_attributes_of_a_message_start_after_its_aligned_body() {
-    use ferrix_linux_abi::netlink::{NlMsgHdr, RTM_NEWLINK};
+    use xaqu_linux_abi::netlink::{NlMsgHdr, RTM_NEWLINK};
 
     use crate::Messages;
 

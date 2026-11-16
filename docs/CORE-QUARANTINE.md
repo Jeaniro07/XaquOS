@@ -6,7 +6,7 @@ version carries Q2-Q13 (Q1). Item 6 of
 the customer's eight hardware-error follow-ups (2026-10-30: "go for all
 items on the list then start with 1, 6, 7"). It builds on the machine-check
 log (`docs/MACHINE-CHECK.md`, landed d787815b1), whose poll counts each
-processor's corrected errors in `/proc/ferrix-mce`.
+processor's corrected errors in `/proc/xaqu-mce`.
 
 **Landed:** on `develop` as 805b289b1 (2026-10-30); the branch `feature/core-quarantine` is gone. Reconciled 2026-11-02.
 
@@ -16,10 +16,10 @@ An overclock that is too far usually fails on one core first: that core's
 L1/L2 starts correcting errors, then one day fails to correct one and the
 machine stops. The corrected errors are the warning, and `MACHINE-CHECK.md`
 now counts them per processor. What nobody can do yet is act on them: a
-Ferrix processor, once started, runs tasks until the machine stops
+Xaqu processor, once started, runs tasks until the machine stops
 (`smp.rs`: "Never cleared: nothing takes a CPU offline"). Linux can take a
 processor offline by hand (`echo 0 > /sys/devices/system/cpu/cpu3/online`),
-and rasdaemon can do it on a threshold on some AMD parts. This gives Ferrix
+and rasdaemon can do it on a threshold on some AMD parts. This gives Xaqu
 both, with the decision in ring 3 and only the mechanism in the kernel.
 
 ## 2. What is there (survey of `develop`, 2026-10-30)
@@ -129,7 +129,7 @@ channel, futex or port is on no list; this is what finds it when it wakes.
    the entry (test-mce-cmci-parked). A poll round that ends while the
    processor parks holds its unmask the same way, for the same return. The idle task, if
    it ever finds a task on its queue, drains it to an in-service processor
-   and counts it (`/proc/ferrix-service` says `drained`; `test-quarantine`
+   and counts it (`/proc/xaqu-service` says `drained`; `test-quarantine`
    expects 0).
 
 ### 3.3 Interrupts (Q4)
@@ -208,7 +208,7 @@ Both end in `smp::set_in_service`, with the same checks.
 lode turns every `mce:` line into a record with `MCE_CPU`, `MCE_CLASS` and,
 on AMD SMCA, `MCE_BANK_TYPE` (`src/lib/log/lode/src/mce.rs`, landed with
 `docs/MACHINE-CHECK-AMD.md`; this branch rebases on that landing, Q1). The
-rule, in `/etc/ferrix/lode.d/quarantine.conf`:
+rule, in `/etc/xaqu/lode.d/quarantine.conf`:
 
 ```
 action = quarantine      # quarantine, warn, or off
@@ -376,7 +376,7 @@ code review. The kernel half lands first or with mce-amd's lode module on
   `TRANSFER` on receipt.
 * The Linux surface on `in_service`, and `cpuN/topology/core_id` and
   `thread_siblings_list` from CPUID 0Bh.
-* lode's policy (§5) in `ferrix_lode_core::quarantine`, host-tested, read
+* lode's policy (§5) in `xaqu_lode_core::quarantine`, host-tested, read
   from `quarantine.conf`, acting through the token.
 * `test-quarantine`: eleven core-scoped corrected records into processor 2
   under init and lode; lode takes it out, the surface says so, nothing ran
@@ -412,7 +412,7 @@ changes above accepted. Answered on the branch:
     the park loop with interrupts masked (a shootdown never answered), the
     capability asked in the writer's own namespace (the namespace's root
     takes a processor out) -- each fires; logs under
-    `~/.local/share/ferrix/logs/queue/cq*-ctl-*.log`. Removing only
+    `~/.local/share/xaqu/logs/queue/cq*-ctl-*.log`. Removing only
     `may_place`'s test does not fire: `choose_cpu`, `place_on_idle`,
     `steal_from` and `balance` each refuse a processor out of service too.
   - The last-processor refusal is not reachable while the boot processor
@@ -435,7 +435,7 @@ the landing commit:
   answering true). L.sched.102's criterion names both placer controls.
 * **(2)** The compatibility-format half of L.iommu.104 is shown, not
   argued: `test-quarantine-unremapped` boots VT-d with interrupt remapping
-  off and devmgr starting drivers (`ferrix.unisolated`), and root's
+  off and devmgr starting drivers (`xaqu.unisolated`), and root's
   take-out of each secondary holding a message is refused, each left in
   service; the native boot check's arm on that machine (and on test-nvrm's
   unremapped boot) requires lode's take-out of processor 1 refused with

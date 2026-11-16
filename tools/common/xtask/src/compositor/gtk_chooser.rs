@@ -1,5 +1,5 @@
 //! `test-compositor --boot gtk-chooser`: a plain GTK 3 program's and a GTK
-//! 4 program's file dialogs on Xaqu's desktop are Ferrix's own chooser.
+//! 4 program's file dialogs on Xaqu's desktop are Xaqu's own chooser.
 //! The session's environment has `GTK_USE_PORTAL=1` and
 //! `GDK_DEBUG=portals` (Xaqu's theme), so GTK 3's `GtkFileChooserNative`
 //! and GTK 4's `GtkFileDialog` ask the desktop portal, and portald opens
@@ -106,7 +106,7 @@ pub(super) fn test_gtk_chooser(arch: Arch, programs: &Programs, args: &Args) -> 
                     .cloned()
                     .unwrap_or_default();
                 failures.push(format!(
-                    "GTK {gtk}'s dialog was not Ferrix's chooser: {}",
+                    "GTK {gtk}'s dialog was not Xaqu's chooser: {}",
                     said.trim()
                 ));
                 break;
@@ -115,7 +115,7 @@ pub(super) fn test_gtk_chooser(arch: Arch, programs: &Programs, args: &Args) -> 
             let dump = paths::build_dir(arch).join(format!("gtk-chooser-{gtk}.ppm"));
             qmp.screendump(Some(DEVICE_ID), &dump)?;
             println!(
-                "  {arch}: gtk-chooser: GTK {gtk}'s dialog is Ferrix's chooser (the screen is {})",
+                "  {arch}: gtk-chooser: GTK {gtk}'s dialog is Xaqu's chooser (the screen is {})",
                 dump.display()
             );
             let from = watching.after().len();
@@ -145,7 +145,7 @@ pub(super) fn test_gtk_chooser(arch: Arch, programs: &Programs, args: &Args) -> 
         }
         if failures.is_empty() {
             println!(
-                "  {arch}: gtk-chooser: GTK 3's and GTK 4's file dialogs were Ferrix's chooser, through the portal"
+                "  {arch}: gtk-chooser: GTK 3's and GTK 4's file dialogs were Xaqu's chooser, through the portal"
             );
             Ok(())
         } else {

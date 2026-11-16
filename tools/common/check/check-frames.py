@@ -31,7 +31,7 @@ PAGE = 4096
 BASELINE = Path("tools/common/data/frame-baseline-armv7a.json")
 # Not a function: the vector table's sixteen entries, each its own `sub sp, sp, #304`, and each one
 # followed at once by a store at the new stack pointer.
-NOT_FUNCTIONS = {"ferrix_vectors"}
+NOT_FUNCTIONS = {"xaqu_vectors"}
 CHECK_NAME = re.compile(r"_check::|::check::|::check_|_check\b|check::")
 
 

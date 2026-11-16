@@ -1,12 +1,12 @@
 //! A virtio-net driver, as logic over a transport and DMA memory it is handed.
 //!
-//! This is `ferrix-virtio-blk` for the network device, over the same four
+//! This is `xaqu-virtio-blk` for the network device, over the same four
 //! traits and with the same two invariants, so what follows says only what is
 //! different. A driver process holds an `IoMapping` of the device's register
 //! blocks, an `Interrupt` and pinned DMA memory whose device addresses came
 //! from an IOMMU domain, none of which can be had in a unit test; so the
 //! driver is written against [`Transport`], [`DevicePages`], [`RequestArea`]
-//! and [`ferrix_virtio::QueueMemory`], and this crate is the order of the
+//! and [`xaqu_virtio::QueueMemory`], and this crate is the order of the
 //! status protocol, which features to take, how a frame becomes a chain and a
 //! completion becomes an event, and what to do when the device lies.
 //!
@@ -30,13 +30,13 @@
 //!
 //! Each frame is one chain: a header descriptor pointing into the request
 //! area, then one descriptor per run of device-contiguous pages the frame
-//! covers. Because [`ferrix_virtio::net::FEATURE_MRG_RXBUF`] is declined, a
+//! covers. Because [`xaqu_virtio::net::FEATURE_MRG_RXBUF`] is declined, a
 //! received frame is one buffer and never a reassembly; see that module for
 //! the argument.
 //!
 //! # DMA memory is freed only after a reset
 //!
-//! As in `ferrix-virtio-blk`: a device holds addresses into the rings, the
+//! As in `xaqu-virtio-blk`: a device holds addresses into the rings, the
 //! headers and the frame regions for as long as it is not reset, so the driver
 //! keeps them in [`ManuallyDrop`], dropping a [`Driver`] leaks rather than
 //! frees, and only [`Driver::shutdown`] gives them back — as
@@ -65,7 +65,7 @@
 
 #![no_std]
 // Forbidden in the shipped library. The tests implement
-// `ferrix_virtio::QueueMemory`, an unsafe trait, for their fake memory, and a
+// `xaqu_virtio::QueueMemory`, an unsafe trait, for their fake memory, and a
 // forbid cannot be relaxed for one item; there it is denied, and the one
 // implementation is exempted and argued at its site.
 #![cfg_attr(not(test), forbid(unsafe_code))]
@@ -74,12 +74,12 @@
 use core::fmt;
 use core::mem::ManuallyDrop;
 
-use ferrix_virtio::net::{self, Chain, Config, Data, Header, Limits, NetError, Segments};
-use ferrix_virtio::pci::{
+use xaqu_virtio::net::{self, Chain, Config, Data, Header, Limits, NetError, Segments};
+use xaqu_virtio::pci::{
     self, CONFIG_GENERATION, CommonConfig, DEVICE_STATUS, QueueAddresses,
     STATUS_DEVICE_NEEDS_RESET, STATUS_FAILED, TransportError,
 };
-use ferrix_virtio::{
+use xaqu_virtio::{
     DeviceConfig, Layout, MAX_QUEUE_SIZE, PAGE_SIZE, QueueError, QueueMemory, SplitQueue,
 };
 
@@ -1389,7 +1389,7 @@ where
     }
 
     /// The next completion on `queue`.
-    fn take_used(&mut self, queue: u16) -> Result<Option<ferrix_virtio::Completion>, QueueError> {
+    fn take_used(&mut self, queue: u16) -> Result<Option<xaqu_virtio::Completion>, QueueError> {
         if queue == RECEIVE_QUEUE {
             self.receive.take_used()
         } else {
@@ -1401,7 +1401,7 @@ where
     fn finish(
         &mut self,
         queue: u16,
-        used: ferrix_virtio::Completion,
+        used: xaqu_virtio::Completion,
     ) -> Result<Event, DeviceError> {
         let record = self
             .slot(queue, used.head)

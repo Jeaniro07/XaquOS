@@ -1,15 +1,15 @@
 //! Going into restricted mode and coming back (`docs/microkernel/K1.md`).
 //!
-//! Three calls answer in more registers than `ferrix_native::call::Syscall`
+//! Three calls answer in more registers than `xaqu_native::call::Syscall`
 //! sees, so they are here, on the architecture's trap. Everything else about
-//! restricted mode is an ordinary call in [`ferrix_native::region`].
+//! restricted mode is an ordinary call in [`xaqu_native::region`].
 //!
 //! Each of them looks like one long system call: it comes back when the
 //! thread leaves restricted mode, with [`Exit`] saying why.
 
-use ferrix_native::error::Error;
-use ferrix_native::region::{Context, Reason};
-use ferrix_native_abi::nr;
+use xaqu_native::error::Error;
+use xaqu_native::region::{Context, Reason};
+use xaqu_native_abi::nr;
 
 use crate::arch;
 
@@ -22,7 +22,7 @@ pub struct Exit {
     /// refused call's status.
     pub number: u64,
     /// The six argument registers: a system call's arguments, or what
-    /// `ferrix_native_abi::restricted` names for a fault or a kick.
+    /// `xaqu_native_abi::restricted` names for a fault or a kick.
     pub words: [u64; 6],
 }
 
@@ -37,7 +37,7 @@ impl Exit {
     pub fn reason(&self) -> Result<Reason, Error> {
         match Reason::from_register(self.reason) {
             Some(reason) => Ok(reason),
-            None => match ferrix_native::error::decode(self.number as usize) {
+            None => match xaqu_native::error::decode(self.number as usize) {
                 Err(refused) => Err(refused),
                 Ok(_) => Err(Error::BadState),
             },
@@ -75,7 +75,7 @@ pub fn enter_all_calls_exit(context: &Context) -> Exit {
         arch::restricted(
             nr::RESTRICTED_ENTER,
             at,
-            ferrix_native::region::ENTER_ALL_CALLS_EXIT,
+            xaqu_native::region::ENTER_ALL_CALLS_EXIT,
         )
     }
 }
@@ -109,9 +109,9 @@ pub fn continue_() -> Exit {
 unsafe extern "C" {
     /// `n` bytes from `from` to `to`, in the copy window: zero, or the fault's
     /// [`FaultKind`].
-    fn ferrix_program_copy(to: *mut u8, from: *const u8, n: usize) -> u64;
-    static ferrix_program_copy_end: u8;
-    static ferrix_program_copy_landing: u8;
+    fn xaqu_program_copy(to: *mut u8, from: *const u8, n: usize) -> u64;
+    static xaqu_program_copy_end: u8;
+    static xaqu_program_copy_landing: u8;
 }
 
 /// Declare this runtime's copy routine as the region's copy window
@@ -120,13 +120,13 @@ unsafe extern "C" {
 ///
 /// # Errors
 ///
-/// As [`ferrix_native::region::copy_window`].
+/// As [`xaqu_native::region::copy_window`].
 pub fn declare_copy_window() -> Result<(), Error> {
-    ferrix_native::region::copy_window(
+    xaqu_native::region::copy_window(
         crate::Kernel,
-        (ferrix_program_copy as *const ()).addr(),
-        (&raw const ferrix_program_copy_end).addr(),
-        (&raw const ferrix_program_copy_landing).addr(),
+        (xaqu_program_copy as *const ()).addr(),
+        (&raw const xaqu_program_copy_end).addr(),
+        (&raw const xaqu_program_copy_landing).addr(),
     )
 }
 
@@ -138,7 +138,7 @@ pub fn declare_copy_window() -> Result<(), Error> {
 pub fn copy_from_program(to: &mut [u8], from: u64) -> Result<(), u64> {
     // SAFETY: `to` is this program's own for the call; `from` is only ever read,
     // and a fault there lands, by the window [`declare_copy_window`] declared.
-    match unsafe { ferrix_program_copy(to.as_mut_ptr(), from as *const u8, to.len()) } {
+    match unsafe { xaqu_program_copy(to.as_mut_ptr(), from as *const u8, to.len()) } {
         0 => Ok(()),
         kind => Err(kind),
     }
@@ -152,7 +152,7 @@ pub fn copy_from_program(to: &mut [u8], from: u64) -> Result<(), u64> {
 pub fn copy_to_program(to: u64, from: &[u8]) -> Result<(), u64> {
     // SAFETY: `from` is this program's own for the call; `to` is the program's,
     // and a fault there lands, by the window [`declare_copy_window`] declared.
-    match unsafe { ferrix_program_copy(to as *mut u8, from.as_ptr(), from.len()) } {
+    match unsafe { xaqu_program_copy(to as *mut u8, from.as_ptr(), from.len()) } {
         0 => Ok(()),
         kind => Err(kind),
     }

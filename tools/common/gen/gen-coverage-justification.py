@@ -224,7 +224,7 @@ HEADINGS = {
         "Reached only when the kernel is stopping",
         "Justified. The panic report, its catalogue and the backtrace walker "
         "run when the kernel has already decided to stop. Exercising them means "
-        "crashing deliberately, which only `test-shell`'s `ferrix.onexit=panic` "
+        "crashing deliberately, which only `test-shell`'s `xaqu.onexit=panic` "
         "boot does -- and a passing run that reached the rest would be a "
         "failing run.",
     ),

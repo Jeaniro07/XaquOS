@@ -7,7 +7,7 @@
 //!
 //! It starts as root, however it is started: from `auth.socket` under init,
 //! which hands it the listening socket (`LISTEN_FDS`), or from the desktop's
-//! `exec-once` while hyprix is pid 1, when it binds `/run/ferrix/auth`
+//! `exec-once` while hyprix is pid 1, when it binds `/run/xaqu/auth`
 //! itself. As root it makes the store's directories, imports the image's
 //! seeds, and gives the store and the log to the `auth` user. Then it
 //! becomes `auth` with `setgroups`, `setresgid` and `setresuid`, before it
@@ -41,7 +41,7 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_auth_client::{seqpacket_socket, socklen, unix_address};
+use xaqu_auth_client::{seqpacket_socket, socklen, unix_address};
 
 use crate::audit::say;
 use crate::engine::Engine;
@@ -92,7 +92,7 @@ fn options() -> Result<Options, String> {
         }
     }
     let socket =
-        socket.unwrap_or_else(|| root.join(ferrix_auth_proto::SOCKET.trim_start_matches('/')));
+        socket.unwrap_or_else(|| root.join(xaqu_auth_proto::SOCKET.trim_start_matches('/')));
     Ok(Options { root, socket })
 }
 

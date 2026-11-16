@@ -3,7 +3,7 @@
 //! every program of the session is in one cgroup and ends with it.
 //!
 //! `n` comes from the count `login` keeps for the console's sessions,
-//! `/run/ferrix/login/next`, under the same `flock`, so a boot's sessions
+//! `/run/xaqu/login/next`, under the same `flock`, so a boot's sessions
 //! are numbered once whichever way they started. A scope the init refuses
 //! is not a session: `sessiond` then stops the compositor and starts none,
 //! so the session's end may rely on the scope.
@@ -14,10 +14,10 @@ use std::os::unix::fs::{DirBuilderExt as _, OpenOptionsExt as _};
 use std::os::unix::net::UnixStream;
 use std::time::Duration;
 
-use ferrix_svc_proto::control::{Answer, Call, Framer, SOCKET};
+use xaqu_svc_proto::control::{Answer, Call, Framer, SOCKET};
 
 /// Where the count is kept, `login`'s directory.
-const DIRECTORY: &str = "/run/ferrix/login";
+const DIRECTORY: &str = "/run/xaqu/login";
 
 /// Put `pids` -- the compositor, and the session's bus when it has one --
 /// in a new session scope of `uid`'s, in one call: the scope's unit name,

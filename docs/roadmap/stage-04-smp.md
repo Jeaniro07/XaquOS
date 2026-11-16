@@ -35,7 +35,7 @@ how that class of bug is reachable at all.
   kernel page tables, where two processors mapping at once would each install
   the same intermediate table. The lock order is written down in `mm.rs`. Once
   something is panicking the console waits a bounded time for its lock, so a
-  fault while printing still produces its `FERRIX-PANIC` line.
+  fault while printing still produces its `XAQU-PANIC` line.
 * **A record per processor**, reached through `GS` on x86-64 and `TPIDR_EL1`
   on AArch64, holding its own address first so `gs:0` is a pointer. Every
   processor checks its record against what its own hardware says it is.
@@ -91,7 +91,7 @@ waits for its turn must answer for the processor it is on. The wait first read
 its per-CPU record once, on entry, and so flushed one processor and recorded
 the flush for the one it had left; put back, x86-64 fails on exactly that.
 
-The boot marker read `FERRIX-BOOT-OK stages 1-5` when this landed.
+The boot marker read `XAQU-BOOT-OK stages 1-5` when this landed.
 
 **Deferred, none of it on stage 5's path:**
 

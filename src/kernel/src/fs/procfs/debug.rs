@@ -12,8 +12,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::fmt::Write as _;
 
-use ferrix_native_abi::nr as native;
-use ferrix_vfs::{Errno, Result};
+use xaqu_native_abi::nr as native;
+use xaqu_vfs::{Errno, Result};
 
 use super::ThreadOf;
 use crate::arch;
@@ -131,7 +131,7 @@ fn snake(camel: &str) -> alloc::string::String {
     out
 }
 
-/// The name of call `number` in the table of the entry `abi` names: Ferrix's
+/// The name of call `number` in the table of the entry `abi` names: Xaqu's
 /// own calls by their native names, Linux's by Linux's.
 fn call_name(abi: Abi, number: u64) -> Option<alloc::string::String> {
     let number = usize::try_from(number).ok()?;

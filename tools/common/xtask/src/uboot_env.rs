@@ -4,7 +4,7 @@
 //! autoboot" -- on every ARMv7-A boot, because the environment it loads from
 //! flash is not there ("bad CRC, using default environment") and the
 //! compiled-in default says `bootdelay=2`. 2.0 s of every ARMv7-A boot was
-//! that count (ferrix-9a's survey of the gates' time, 2026-09-27).
+//! that count (xaqu-9a's survey of the gates' time, 2026-09-27).
 //!
 //! So xtask gives U-Boot an environment in the flash bank it reads one from:
 //! its own default environment, read out of the `u-boot.bin` the boot runs so

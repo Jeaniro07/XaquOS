@@ -63,7 +63,7 @@
 //! `Channel` adds no edge: what a side's queue holds is freed when that
 //! side's `Endpoint` goes, whichever end still holds the channel.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 use alloc::collections::VecDeque;
@@ -72,10 +72,10 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU8, Ordering, fence};
 
 use crate::sync::SpinLock;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
-use ferrix_objects::message::{Limits, Message, MessageQueue, ReceiveError, SendError};
-use ferrix_objects::reach::{Reach, reaches};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
+use xaqu_objects::message::{Limits, Message, MessageQueue, ReceiveError, SendError};
+use xaqu_objects::reach::{Reach, reaches};
 
 use super::port::{Observer, Observers, PortError, deliver, register, trigger};
 use super::ticket::{IssueError, Ticket, Tickets};
@@ -100,7 +100,7 @@ const LIMITS: Limits = Limits {
 
 /// The most bytes a message kept in an inbox's slot carries: what
 /// `channel_write_read` carries in registers.
-pub(crate) const SMALL_BYTES: usize = ferrix_native_abi::nr::CHANNEL_WRITE_READ_BYTES;
+pub(crate) const SMALL_BYTES: usize = xaqu_native_abi::nr::CHANNEL_WRITE_READ_BYTES;
 
 /// Who wrote a message, as the kernel stamped it at the write
 /// (`docs/microkernel/K6.md` §2): the writing process's id, never given to
@@ -1022,7 +1022,7 @@ impl Endpoint {
     /// until the switch: the halves' locks are held under that mask, counted
     /// for A3 but without the site record or the deferred decision
     /// (`sync::try_lock_masked`).
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub unsafe fn send_direct(
         &self,
         caller: &Task,
@@ -1069,7 +1069,7 @@ impl Endpoint {
     /// (T6 to T8, under this side's lock, the order a writer and a close
     /// read it in). Answers whether it parked; the caller then makes the
     /// last look and blocks (`sched::direct::block_parked`).
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub fn park(&self, task: &Arc<Task>) -> bool {
         let own = self.own();
         let mut inbox = own.inbox.lock();
@@ -1084,7 +1084,7 @@ impl Endpoint {
 
     /// Clear this side's record if it still names `task`: a parked task
     /// leaving its park by any way but a commit, which cleared it already.
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub fn unpark(&self, task: &Task) {
         let taken = {
             let mut inbox = self.own().inbox.lock();
@@ -1108,7 +1108,7 @@ impl Endpoint {
 /// (T8) -- and a reader is parked on the peer's side (T9) with nobody else
 /// to be told of the message (T10). Answers the reader. A record beside a
 /// message or on a closed end stops the machine (A2, FX-0531).
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn sendable<'a>(
     own: &Half,
     own_inbox: &Inbox,
@@ -1232,7 +1232,7 @@ fn queued_endpoints(endpoint: &Arc<Endpoint>) -> Option<Vec<Arc<Endpoint>>> {
             | Object::CpuService
             | Object::MemoryScrub
             | Object::Exception(_) => None,
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             Object::Held(_) => None,
         });
     for queued in carried {
@@ -1312,8 +1312,8 @@ impl Drop for Endpoint {
 /// §2.3).
 #[doc(hidden)]
 pub fn heap_footprint() -> usize {
-    ferrix_kmem::arc_footprint::<Channel>()
-        .saturating_add(2 * ferrix_kmem::arc_footprint::<Endpoint>())
+    xaqu_kmem::arc_footprint::<Channel>()
+        .saturating_add(2 * xaqu_kmem::arc_footprint::<Endpoint>())
 }
 
 impl Endpoint {
@@ -1322,7 +1322,7 @@ impl Endpoint {
     ///
     /// # Errors
     ///
-    /// [`IssueError`]: this end has [`ferrix_native_abi::types::MAX_TICKETS`]
+    /// [`IssueError`]: this end has [`xaqu_native_abi::types::MAX_TICKETS`]
     /// live, the other end has gone, or the issuer cannot pay.
     pub fn issue_ticket(&self, issuer: Sender, slot: u32) -> Result<u64, IssueError> {
         let mut tickets = self.channel.tickets.lock();

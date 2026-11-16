@@ -30,12 +30,12 @@ the missing line reports itself rather than waiting to be noticed.
 
 ## `commit-msg` — no `Co-authored-by`, no tool as author or committer
 
-Ferrix commits name one author. A `Co-authored-by:` trailer is refused at the
+Xaqu commits name one author. A `Co-authored-by:` trailer is refused at the
 moment it is written, which is where the error is cheap and the fix is to edit
 the message.
 
 The author and the committer are refused too when their name or address
-matches `claude` or `anthropic`: a Ferrix commit is its owner's, and agents go on
+matches `claude` or `anthropic`: a Xaqu commit is its owner's, and agents go on
 committing under the owner's identity. To repair the tip, `git commit --amend
 --reset-author` (a plain amend keeps the author, so the hook refuses it again);
 for older commits, `git rebase --exec 'git commit --amend --no-edit

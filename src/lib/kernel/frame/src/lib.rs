@@ -23,7 +23,7 @@
 //! so the free lists stay as coarse as the allocation pattern allows.
 //!
 //! ```
-//! # use ferrix_frame::{Frames, PageEntry, MAX_ORDER};
+//! # use xaqu_frame::{Frames, PageEntry, MAX_ORDER};
 //! // One entry per frame, for frames 0x100..0x200.
 //! let mut entries = [PageEntry::RESERVED; 0x100];
 //! let mut frames = Frames::new(&mut entries, 0x100);

@@ -4,7 +4,7 @@ extern crate std;
 
 use std::format;
 
-use ferrix_native_abi::types::{
+use xaqu_native_abi::types::{
     POWER_READ_CEILING, POWER_READ_FLAGS, POWER_READ_PRESENT, POWER_READ_VR, POWER_READ_WORDS,
 };
 
@@ -13,9 +13,9 @@ use crate::options::{self, DEFAULT_HOT_CELSIUS, TestMode, Words};
 
 /// The driver's words.
 const WORDS: Words<'static> = Words {
-    vr: b"ferrix.power.vr",
-    hot: b"ferrix.power.hot",
-    test: b"ferrix.power.test",
+    vr: b"xaqu.power.vr",
+    hot: b"xaqu.power.hot",
+    test: b"xaqu.power.test",
 };
 
 /// [`options::parse`] with the driver's words.
@@ -99,15 +99,15 @@ fn steps_above_the_ceiling_are_dropped() {
 
 #[test]
 fn the_command_line_gives_its_options() {
-    let line = b"console=ttyS0 ferrix.powerctl ferrix.power.vr=30,34@60 ferrix.power.hot=80 \
-                 ferrix.power.test=hang@3\n";
+    let line = b"console=ttyS0 xaqu.powerctl xaqu.power.vr=30,34@60 xaqu.power.hot=80 \
+                 xaqu.power.test=hang@3\n";
     let options = parse(line);
     assert_eq!(options.plan, Some(plan_of(&[30, 34], 60)));
     assert_eq!(options.hot, 80);
     assert_eq!(options.test, Some((TestMode::Hang, 3)));
     assert!(!options.hot_refused && !options.test_refused);
 
-    let none = parse(b"ferrix.powerctl ferrix.power.vrx=30@1");
+    let none = parse(b"xaqu.powerctl xaqu.power.vrx=30@1");
     assert_eq!(none.plan, None);
     assert_eq!(none.hot, DEFAULT_HOT_CELSIUS);
     assert_eq!(none.test, None);
@@ -115,21 +115,21 @@ fn the_command_line_gives_its_options() {
 
 #[test]
 fn the_last_word_wins_and_bad_words_are_said() {
-    let options = parse(b"ferrix.power.vr=30@1 ferrix.power.vr=31@2");
+    let options = parse(b"xaqu.power.vr=30@1 xaqu.power.vr=31@2");
     assert_eq!(options.plan, Some(plan_of(&[31], 2)));
-    let bad = parse(b"ferrix.power.vr=x ferrix.power.hot=49 ferrix.power.test=nap@3");
+    let bad = parse(b"xaqu.power.vr=x xaqu.power.hot=49 xaqu.power.test=nap@3");
     assert_eq!(bad.plan, None);
     assert_eq!(bad.plan_refused, Some(PlanError::Malformed));
     assert!(bad.hot_refused && bad.test_refused);
     assert_eq!(bad.hot, DEFAULT_HOT_CELSIUS);
-    assert!(parse(b"ferrix.power.test=spin@3").test_refused);
+    assert!(parse(b"xaqu.power.test=spin@3").test_refused);
     for mode in [&b"exit@1"[..], b"hang@3600"] {
-        let mut line = b"ferrix.power.test=".to_vec();
+        let mut line = b"xaqu.power.test=".to_vec();
         line.extend_from_slice(mode);
         assert!(parse(&line).test.is_some());
     }
-    assert!(parse(b"ferrix.power.test=hang@3601").test_refused);
-    assert!(parse(b"ferrix.power.hot=100").hot_refused);
+    assert!(parse(b"xaqu.power.test=hang@3601").test_refused);
+    assert!(parse(b"xaqu.power.hot=100").hot_refused);
 }
 
 /// A reading of `core` and `package` degrees under `TjMax` 105.

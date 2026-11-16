@@ -4,13 +4,13 @@
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_inputctl::message::{Events, Hello, Message, PORT_RIGHTS, RawEvent, bit};
-use ferrix_inputctl::session::Session;
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::{Events, Hello, Message, PORT_RIGHTS, RawEvent, bit};
+use xaqu_inputctl::session::Session;
+use xaqu_linux_abi::input::{
     ABS_X, ABS_Y, BTN_LEFT, BTN_RIGHT, BUS_USB, EV_ABS, EV_KEY, EV_LED, EV_REL, EV_SYN, LED_CAPSL,
     LED_NUML, REL_HWHEEL, REL_WHEEL, REL_X, REL_Y, SYN_REPORT,
 };
-use ferrix_native_abi::types::DEVICE_NOT_PCI;
+use xaqu_native_abi::types::DEVICE_NOT_PCI;
 
 use super::model::{Memory, Regs, Shared, Time, dk_board, jetkvm};
 use crate::bus::{Bus, Note, Output, Parent};

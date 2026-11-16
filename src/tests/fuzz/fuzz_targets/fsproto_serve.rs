@@ -6,18 +6,18 @@
 
 use std::sync::Arc;
 
-use ferrix_fsproto::server::{Slot, Volume};
-use ferrix_fsproto::wire::{Answer, SLOT_BYTES};
-use ferrix_vfs::Clock;
-use ferrix_vfs::tmpfs::{HeapStorage, Tmpfs};
+use xaqu_fsproto::server::{Slot, Volume};
+use xaqu_fsproto::wire::{Answer, SLOT_BYTES};
+use xaqu_vfs::Clock;
+use xaqu_vfs::tmpfs::{HeapStorage, Tmpfs};
 use libfuzzer_sys::fuzz_target;
 
 #[derive(Debug)]
 struct Still;
 
 impl Clock for Still {
-    fn now(&self) -> ferrix_vfs::Timespec {
-        ferrix_vfs::Timespec::default()
+    fn now(&self) -> xaqu_vfs::Timespec {
+        xaqu_vfs::Timespec::default()
     }
 }
 

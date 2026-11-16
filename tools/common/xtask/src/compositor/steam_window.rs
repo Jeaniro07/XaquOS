@@ -1,5 +1,5 @@
 //! `run-steam` and `test-steam-window`: Valve's Steam client in a window of
-//! hyprix, drawn through yserver, on Ferrix (`docs/STEAM.md`).
+//! hyprix, drawn through yserver, on Xaqu (`docs/STEAM.md`).
 //!
 //! The image boots hyprix, whose `exec-once` runs `tools/common/steam/run.sh`:
 //! yserver on `:0` as a Wayland client of hyprix, a lease for `eth0`, then
@@ -59,13 +59,13 @@ const ENTRY_POINT: &[u8] = include_bytes!("../../../steam/_v2-entry-point");
 
 /// The compatibility tool `client.sh` maps native games to, so Steam runs
 /// them directly rather than in the Steam Linux Runtime's container.
-const DIRECT_TOOL: &[u8] = include_bytes!("../../../steam/ferrix_direct/compatibilitytool.vdf");
+const DIRECT_TOOL: &[u8] = include_bytes!("../../../steam/xaqu_direct/compatibilitytool.vdf");
 
 /// [`DIRECT_TOOL`]'s manifest: the command line Steam puts before a game's.
-const DIRECT_MANIFEST: &[u8] = include_bytes!("../../../steam/ferrix_direct/toolmanifest.vdf");
+const DIRECT_MANIFEST: &[u8] = include_bytes!("../../../steam/xaqu_direct/toolmanifest.vdf");
 
 /// [`DIRECT_TOOL`]'s script, which runs the game.
-const DIRECT_RUN: &[u8] = include_bytes!("../../../steam/ferrix_direct/run");
+const DIRECT_RUN: &[u8] = include_bytes!("../../../steam/xaqu_direct/run");
 
 /// The Steam Runtime logger's stand-in.
 const LOGGER: &[u8] = include_bytes!("../../../steam/logger-0.bash");
@@ -85,15 +85,15 @@ const DESKTOP_PATH: &str = "steam/desktop.sh";
 /// running one, as it does on Linux.
 const LAUNCHER_ENTRY: &str = "[Desktop Entry]\nType=Application\nName=Steam\n\
      GenericName=Game Library\nComment=Valve's Steam client, from the data disk\n\
-     Exec=/bin/busybox sh /steam/desktop.sh\nIcon=ferrix-games\nTerminal=false\n\
+     Exec=/bin/busybox sh /steam/desktop.sh\nIcon=xaqu-games\nTerminal=false\n\
      Keywords=steam;games;valve;\nCategories=Game;\n";
 
 /// [`LAUNCHER_ENTRY`]'s icon, in the `hicolor` theme fuzzel's own icons are
 /// in: the volume carries none of Steam's until the client has installed.
-const LAUNCHER_ICON: &[u8] = include_bytes!("../../../steam/ferrix-games.svg");
+const LAUNCHER_ICON: &[u8] = include_bytes!("../../../steam/xaqu-games.svg");
 
 /// Where `crate::steam::UNAME` is: a directory `client.sh` alone puts first
-/// in `PATH`, so the desktop's own `uname` still says Ferrix.
+/// in `PATH`, so the desktop's own `uname` still says Xaqu.
 const UNAME_PATH: &str = "steam/bin/uname";
 
 /// Where each is carried, with its mode. `client.sh` names the stand-ins'
@@ -110,16 +110,16 @@ const SCRIPTS: &[(&str, &[u8], u32)] = &[
     ),
     ("usr/bin/lsof", LSOF, 0o755),
     (
-        "steam/compat/ferrix_direct/compatibilitytool.vdf",
+        "steam/compat/xaqu_direct/compatibilitytool.vdf",
         DIRECT_TOOL,
         0o644,
     ),
     (
-        "steam/compat/ferrix_direct/toolmanifest.vdf",
+        "steam/compat/xaqu_direct/toolmanifest.vdf",
         DIRECT_MANIFEST,
         0o644,
     ),
-    ("steam/compat/ferrix_direct/run", DIRECT_RUN, 0o755),
+    ("steam/compat/xaqu_direct/run", DIRECT_RUN, 0o755),
 ];
 
 /// The title of Steam's sign-in window, which `run.sh`'s watcher looks for
@@ -150,7 +150,7 @@ pub(crate) const MEMORY: u32 = 16384;
 pub(super) const TIMEOUT: u64 = 2400;
 
 /// Where `tools/common/fetch/fetch-steam-window.sh` writes, unless
-/// `FERRIX_STEAM_WINDOW_VOLUME` names another directory.
+/// `XAQU_STEAM_WINDOW_VOLUME` names another directory.
 ///
 /// It carries yserver, built by the script's own run of `fetch-yserver.sh`
 /// into `yserver/` beside the image, and must carry the one that script
@@ -162,7 +162,7 @@ pub(super) const TIMEOUT: u64 = 2400;
 ///
 /// The volume has not been made, or was made with another yserver.
 pub(crate) fn volume() -> Result<PathBuf> {
-    let directory = match std::env::var_os("FERRIX_STEAM_WINDOW_VOLUME") {
+    let directory = match std::env::var_os("XAQU_STEAM_WINDOW_VOLUME") {
         Some(directory) => PathBuf::from(directory),
         None => paths::volume_directory("steam-window")?,
     };
@@ -265,7 +265,7 @@ pub(crate) fn desktop_files(carried: &[File]) -> Vec<File> {
         content: Content::Bytes(LAUNCHER_ENTRY.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "usr/share/icons/hicolor/scalable/apps/ferrix-games.svg".to_owned(),
+        path: "usr/share/icons/hicolor/scalable/apps/xaqu-games.svg".to_owned(),
         mode: 0o644,
         content: Content::Bytes(LAUNCHER_ICON.to_vec()),
     });
@@ -303,7 +303,7 @@ pub(crate) fn run(args: &Args, gate: bool) -> Result<()> {
         args.timeout = TIMEOUT;
     }
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("run-steam needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("run-steam needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let carried = Carried {
@@ -324,7 +324,7 @@ pub(crate) fn run(args: &Args, gate: bool) -> Result<()> {
     let _ = std::fs::remove_dir_all(&shots);
     std::fs::create_dir_all(&shots)
         .map_err(|error| Error::new(format!("making {}: {error}", shots.display())))?;
-    let every = std::env::var("FERRIX_STEAM_SHOT_EVERY")
+    let every = std::env::var("XAQU_STEAM_SHOT_EVERY")
         .ok()
         .and_then(|seconds| seconds.parse().ok())
         .unwrap_or(3u64);
@@ -482,7 +482,7 @@ mod tests {
         let script = include_str!("../../../fetch/fetch-steam-window.sh");
         assert!(script.contains("yserver=$out/yserver\n"));
         assert!(script.contains(
-            r#"FERRIX_YSERVER_VOLUME=$yserver "$repo/tools/common/fetch/fetch-yserver.sh""#
+            r#"XAQU_YSERVER_VOLUME=$yserver "$repo/tools/common/fetch/fetch-yserver.sh""#
         ));
     }
 
@@ -536,8 +536,8 @@ mod tests {
         assert!(desktop.contains("/steam/client.sh"));
         assert!(desktop.contains("/tmp/.X11-unix/X0"));
         assert!(paths.contains(&"usr/share/applications/steam.desktop"));
-        assert!(paths.contains(&"usr/share/icons/hicolor/scalable/apps/ferrix-games.svg"));
+        assert!(paths.contains(&"usr/share/icons/hicolor/scalable/apps/xaqu-games.svg"));
         assert!(LAUNCHER_ENTRY.contains(&format!("\nExec=/bin/busybox sh /{DESKTOP_PATH}\n")));
-        assert!(LAUNCHER_ENTRY.contains("\nIcon=ferrix-games\n"));
+        assert!(LAUNCHER_ENTRY.contains("\nIcon=xaqu-games\n"));
     }
 }

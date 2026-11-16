@@ -17,7 +17,7 @@ use alloc::vec::Vec;
 pub const MAX_RECORD: usize = 1 << 20;
 
 /// Where init listens.
-pub const SOCKET: &str = "/run/ferrix/control";
+pub const SOCKET: &str = "/run/xaqu/control";
 
 /// What a client asks.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,7 +68,7 @@ pub enum Call {
         unit: String,
         /// `Key=value`, in order.
         assignments: Vec<String>,
-        /// Kept in `/etc/ferrix/units` across boots, not in `/run`.
+        /// Kept in `/etc/xaqu/units` across boots, not in `/run`.
         persistent: bool,
     },
     /// `svc scope`: group processes init did not start (§5.6).

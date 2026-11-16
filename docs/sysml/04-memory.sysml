@@ -1,14 +1,14 @@
 /*
- * Ferrix — SysML v2 model, part 4: memory.
+ * Xaqu — SysML v2 model, part 4: memory.
  *
  * docs/ARCHITECTURE.md §4. The physical allocator, the heap, the page-table
  * arithmetic and the kernel arena since stage 2; VMOs, process address
  * spaces, demand paging and copy-on-write since stage 6, file mappings since
  * stage 8. Reclaim is stage 13's and not built.
  */
-package FerrixMemory {
+package XaquMemory {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
+    private import XaquLifecycle::*;
 
     // -----------------------------------------------------------------------
     // Physical frames (src/lib/kernel/frame, src/kernel/src/mm.rs)
@@ -300,7 +300,7 @@ package FerrixMemory {
              * driver filling a page-cache page fills the VMO the cache already
              * holds, with no copy, which is what makes userspace drivers
              * affordable for a compiler workload. All three kinds exist: a
-             * file's VMO is its page cache since stage 8 (FerrixStorage's
+             * file's VMO is its page cache since stage 8 (XaquStorage's
              * PageCache), filled from a disk by a Filler before a fault
              * commits the page, and a VMO's pages are pinned into a device's
              * IOMMU domain for DMA since stage 10, held where they are by
@@ -448,7 +448,7 @@ package FerrixMemory {
              * process's address space. Since stage 8 a file mapping faults
              * in the file's own pages, and since stage 7 a fault that cannot
              * be resolved is a signal to the program. */
-        in fault : FerrixBoot::PageFault;
+        in fault : XaquBoot::PageFault;
         doc /* The guard below is the region's cow mark and *not* whether the
              * page is present, which is the obvious guess and is wrong in both
              * directions. A copy-on-write page that has not been faulted in

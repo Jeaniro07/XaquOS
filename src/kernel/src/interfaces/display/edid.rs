@@ -4,7 +4,7 @@
 //!
 //! `docs/DISPLAY.md` §7 says why here and not in the driver. Linux's DRM
 //! core does the same in `drm_edid_load.c`; the grammar and the checks are
-//! `ferrix_displayctl::edid`'s, host-tested, and this is the reading and the
+//! `xaqu_displayctl::edid`'s, host-tested, and this is the reading and the
 //! boot lines. A connector the command line names no file for, or whose file
 //! cannot be read or is not an EDID, has none, which is what every connector
 //! had before: the card never refuses a driver over it.
@@ -13,9 +13,9 @@ use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::option_in;
-use ferrix_displayctl::edid::{self, FIRMWARE_DIR, PARAMETER};
-use ferrix_sysfs::drm::connector_type_name;
+use xaqu_bootinfo::option_in;
+use xaqu_displayctl::edid::{self, FIRMWARE_DIR, PARAMETER};
+use xaqu_sysfs::drm::connector_type_name;
 
 use crate::console::println;
 use crate::fs;
@@ -150,7 +150,7 @@ fn read(file: &str) -> Result<(Vec<u8>, edid::Checked), String> {
         name.as_bytes(),
     )
     .map_err(|error| {
-        if error == ferrix_linux_abi::errno::Errno::ELOOP {
+        if error == xaqu_linux_abi::errno::Errno::ELOOP {
             String::from("which is a symbolic link or under one, and is not followed (err=-40)")
         } else {
             format!("which cannot be read (err=-{})", error.0)

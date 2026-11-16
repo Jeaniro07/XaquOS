@@ -64,7 +64,7 @@
 //! # The check that the bits are complete
 //!
 //! A bit a poster forgot makes the way out skip work it owed. So with the
-//! self-checks on (`ferrix.checks`, the default), a look that finds the word
+//! self-checks on (`xaqu.checks`, the default), a look that finds the word
 //! clear asks the personality anyway ([`audit`]), and stops the machine
 //! (FX-0520) if the answer is yes and no post is on its way. Every poster
 //! brackets its write and its post in a [`Posting`], so that a look between
@@ -83,7 +83,7 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 use super::Task;
 use crate::arch;
@@ -320,7 +320,7 @@ pub struct Posting(bool);
 static AUDITING: AtomicBool = AtomicBool::new(false);
 
 /// Turn the check that the bits are complete on or off: `checks::init`,
-/// once, as it reads `ferrix.checks` and before the first program.
+/// once, as it reads `xaqu.checks` and before the first program.
 pub fn set_auditing(on: bool) {
     AUDITING.store(on, Ordering::Release);
 }
@@ -408,7 +408,7 @@ pub const HOOK_LAST_LOOK: usize = 1;
 /// The fast path's hook, called just before T13's last look: with case 14's
 /// check armed and `caller` its target, post `END` to it, as a kill landing
 /// in that window would. Unarmed, one load.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub(crate) fn fast_path_hook(caller: &Task) {
     if HOOK.load(Ordering::Acquire) != HOOK_LAST_LOOK + 1 {
         return;

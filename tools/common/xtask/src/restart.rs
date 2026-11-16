@@ -102,7 +102,7 @@ pub(crate) fn lifted_row() {
     if lifted() {
         LIFTED.store(true, std::sync::atomic::Ordering::Relaxed);
         // SAFETY: set before this row starts any thread or build.
-        unsafe { std::env::set_var("FERRIX_ROW_DRIVER_KILL", "1") };
+        unsafe { std::env::set_var("XAQU_ROW_DRIVER_KILL", "1") };
     }
 }
 

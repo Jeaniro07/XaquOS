@@ -1,1 +1,1 @@
-/* uvm-kpi: everything is in ferrix_kpi.h, which every unit includes first. */
+/* uvm-kpi: everything is in xaqu_kpi.h, which every unit includes first. */

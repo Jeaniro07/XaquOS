@@ -12,8 +12,8 @@
 //!
 //! Nothing here knows where a fact comes from. The kernel gathers them from
 //! whoever owns each one -- enumeration, the cores the drivers publish into,
-//! and `devmgr` -- and these functions only arrange them, as `ferrix-procfs`
-//! does for `/proc` and `ferrix-cgroupfs` for the job tree.
+//! and `devmgr` -- and these functions only arrange them, as `xaqu-procfs`
+//! does for `/proc` and `xaqu-cgroupfs` for the job tree.
 //!
 //! # What is here
 //!

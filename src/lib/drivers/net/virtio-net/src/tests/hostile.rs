@@ -8,8 +8,8 @@
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::net::{FEATURE_MAC, HDR_F_NEEDS_CSUM, HDR_GSO_TCPV4, HEADER_LEN, NetError};
-use ferrix_virtio::pci::{NO_VECTOR, STATUS_FAILED, TransportError};
+use xaqu_virtio::net::{FEATURE_MAC, HDR_F_NEEDS_CSUM, HDR_GSO_TCPV4, HEADER_LEN, NetError};
+use xaqu_virtio::pci::{NO_VECTOR, STATUS_FAILED, TransportError};
 
 use super::fake::{Misbehave, Rig, Setup, TestTeardown, free};
 use crate::{

@@ -1,5 +1,5 @@
 //! Writing the 4 KiB signed manifest of `docs/SIGNING.md` §1.2: the same
-//! bytes the product path writes (D3). `ferrix-sigverify` reads them.
+//! bytes the product path writes (D3). `xaqu-sigverify` reads them.
 
 use crate::token::{CKM_HSS, Error, ObjectHandle, Token};
 

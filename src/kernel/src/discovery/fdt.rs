@@ -2,7 +2,7 @@
 //!
 //! The counterpart of `crate::discovery::acpi` for machines that describe themselves with
 //! a flattened device tree: every ARMv7-A board, and AArch64 ones whose
-//! firmware chooses to. `ferrix_fdt` parses a byte slice and never follows a
+//! firmware chooses to. `xaqu_fdt` parses a byte slice and never follows a
 //! pointer; this is where that slice comes from — the loader's copy of
 //! firmware's tree, read through the direct map.
 //!
@@ -11,8 +11,8 @@
 //! `'static`, honestly: stage 10 enumerates devices from the same bytes long
 //! after boot.
 
-use ferrix_bootinfo::BootView;
-use ferrix_fdt::Fdt;
+use xaqu_bootinfo::BootView;
+use xaqu_fdt::Fdt;
 
 /// The device tree the loader handed over.
 ///

@@ -147,7 +147,7 @@ REMAINING = [
     ("Stage 23, Endfield's rest", 101, "est"),
     ("Stage 24, the game path's rest", 175, "est"),
     ("Stage 25, Xaqu's rest", 46, "est"),
-    ("Developing Ferrix on Ferrix, the rest", 39, "est"),
+    ("Developing Xaqu on Xaqu, the rest", 39, "est"),
     ("Microkernel, M1's rest to M8", 477, "est"),
     ("Microkernel, maximum-certification streams", 950, "est"),
     ("Certification, ring-0 interference", 125, "est"),
@@ -208,7 +208,7 @@ DONE = [
     ("yserver, the X server (36)", D(2026, 9, 28), D(2026, 9, 29)),
     ("Mount namespaces N1 to N3 (19)", D(2026, 9, 28), D(2026, 9, 30)),
     ("Stage 13: cgroup controllers (30)", D(2026, 10, 7), D(2026, 10, 7)),
-    ("Claude Code on Ferrix", D(2026, 9, 29), D(2026, 10, 1)),
+    ("Claude Code on Xaqu", D(2026, 9, 29), D(2026, 10, 1)),
     ("Speculation domain, round trip", D(2026, 10, 1), D(2026, 10, 3)),
     ("btrfs in the certified item", D(2026, 10, 2), D(2026, 10, 2)),
     ("NVIDIA N0 and N1 (60)", D(2026, 10, 2), D(2026, 10, 3)),
@@ -254,8 +254,8 @@ ACTIVE = [
      ["NVIDIA N5, CUDA", "Stage 21, NVIDIA's rest", "Chrome: GPU compositing"]),
     ("Stage 23, Endfield", D(2026, 10, 10), ["Stage 23, Endfield's rest"]),
     ("Stage 24, the game path", D(2026, 10, 10), ["Stage 24, the game path's rest"]),
-    ("Developing Ferrix on Ferrix", D(2026, 10, 10),
-     ["Developing Ferrix on Ferrix, the rest"]),
+    ("Developing Xaqu on Xaqu", D(2026, 10, 10),
+     ["Developing Xaqu on Xaqu, the rest"]),
     ("Game mode", D(2026, 10, 11), ["Game mode, the rest", "Program suspend, S2 to S4"]),
     ("Stage 21: the N150 box, its Intel GPU", D(2026, 10, 13),
      ["Stage 21, the N150 and its Intel GPU, the rest"]),
@@ -340,7 +340,7 @@ def label(d):
 
 def burndown():
     w, h = 1040, 800
-    svg = Svg(w, h, "Ferrix burndown")
+    svg = Svg(w, h, "Xaqu burndown")
     left, right = 56, w - 24
 
     # Panel 1: sized points remaining, forecast from today.
@@ -462,8 +462,8 @@ def gantt():
     left, right = 310, w - 140
     top = 94
     h = top + rows * row_h + 3 * sec_h + 50
-    svg = Svg(w, h, "Ferrix Gantt")
-    svg.text(24, 28, "Ferrix: done, in progress, and a forecast", size=16,
+    svg = Svg(w, h, "Xaqu Gantt")
+    svg.text(24, 28, "Xaqu: done, in progress, and a forecast", size=16,
              weight="bold")
     svg.text(24, 46, f"The forecast is one queue at {FORECAST_RATE} points a day, "
              "built rows first, then shortest first: the size of the work, not a plan; "

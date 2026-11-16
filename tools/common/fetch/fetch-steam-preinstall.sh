@@ -14,27 +14,27 @@
 # `steamcmd +login <account> <password> +app_license_request 380840 +quit`
 # claims it.
 #
-# The account is the gate's, from ~/.config/ferrix/steam-test-account
-# (name and password, one a line; or FERRIX_STEAM_ACCOUNT_FILE), with
+# The account is the gate's, from ~/.config/xaqu/steam-test-account
+# (name and password, one a line; or XAQU_STEAM_ACCOUNT_FILE), with
 # Steam Guard off. Both go to steamcmd in a runscript readable by its owner
 # alone, removed on exit, and every log line is redacted of the name.
 #
 # steamcmd runs on the host, natively: it needs the host's i386 loader at
-# /lib/ld-linux.so.2. It is FERRIX_STEAMCMD_HOST (default
-# ~/.local/share/ferrix/steamcmd-host), copied from the steamcmd volume's
+# /lib/ld-linux.so.2. It is XAQU_STEAMCMD_HOST (default
+# ~/.local/share/xaqu/steamcmd-host), copied from the steamcmd volume's
 # tree (fetch-steamcmd.sh) when missing; it updates itself there.
 #
-# Writes $FERRIX_STEAM_PREINSTALL (default
-# ~/.local/share/ferrix/steam-preinstall): `tree/steam/steamapps` and the
+# Writes $XAQU_STEAM_PREINSTALL (default
+# ~/.local/share/xaqu/steam-preinstall): `tree/steam/steamapps` and the
 # stamp `steam-preinstall.stamp` xtask compares with the volume's age.
 #
 # Usage: tools/common/fetch/fetch-steam-preinstall.sh [appid...]
 
 set -euo pipefail
 
-out=${FERRIX_STEAM_PREINSTALL:-$HOME/.local/share/ferrix/steam-preinstall}
-host=${FERRIX_STEAMCMD_HOST:-$HOME/.local/share/ferrix/steamcmd-host}
-account=${FERRIX_STEAM_ACCOUNT_FILE:-$HOME/.config/ferrix/steam-test-account}
+out=${XAQU_STEAM_PREINSTALL:-$HOME/.local/share/xaqu/steam-preinstall}
+host=${XAQU_STEAMCMD_HOST:-$HOME/.local/share/xaqu/steamcmd-host}
+account=${XAQU_STEAM_ACCOUNT_FILE:-$HOME/.config/xaqu/steam-test-account}
 apps=("$@")
 [ ${#apps[@]} -gt 0 ] || apps=(380840 1070560 1391110)
 
@@ -43,7 +43,7 @@ apps=("$@")
 [ -r "$account" ] \
     || { echo "fetch-steam-preinstall: no account file at $account (docs/STEAM.md §1)" >&2; exit 1; }
 if [ ! -x "$host/steamcmd.sh" ]; then
-    from=${FERRIX_STEAMCMD_VOLUME:-$HOME/.local/share/ferrix/steamcmd}/tree/steamcmd
+    from=${XAQU_STEAMCMD_VOLUME:-$HOME/.local/share/xaqu/steamcmd}/tree/steamcmd
     [ -x "$from/steamcmd.sh" ] \
         || { echo "fetch-steam-preinstall: no steamcmd at $host or $from: run fetch-steamcmd.sh" >&2; exit 1; }
     mkdir -p "$host"

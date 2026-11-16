@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // ARMv7-A has no region to be linked in (`docs/microkernel/K1.md` §8): the
     // runtime's own layout, for the empty program it is there.
     let script = if std::env::var("CARGO_CFG_TARGET_ARCH")? == "arm" {
-        std::path::PathBuf::from(std::env::var("DEP_FERRIX_RT_LINKER_SCRIPT")?)
+        std::path::PathBuf::from(std::env::var("DEP_XAQU_RT_LINKER_SCRIPT")?)
     } else {
         Path::new(&manifest).join("linker").join("region.ld")
     };

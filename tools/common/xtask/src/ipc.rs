@@ -89,7 +89,7 @@ pub(crate) fn bench_ipc(args: &Args) -> Result<()> {
 const HOT_PATH: (&str, &str, &str) = ("ipc-round-trip", "ipc-bench", "domain-call");
 
 /// `--record`: the fingerprint of this host and of the x86-64 guest, and
-/// the record, written and named. The log is `FERRIX_HOTPATH_LOG` if set:
+/// the record, written and named. The log is `XAQU_HOTPATH_LOG` if set:
 /// `bench-ipc` does not know where its own output is kept.
 fn write_record(args: &Args, rounds: u32, boots: Vec<Boot>, reference: Reference) -> Result<()> {
     let arch = args
@@ -112,7 +112,7 @@ fn write_record(args: &Args, rounds: u32, boots: Vec<Boot>, reference: Reference
         record::set_board(&mut configuration, board, processors);
     }
     let home = std::env::var("HOME").unwrap_or_default();
-    let log = std::env::var("FERRIX_HOTPATH_LOG")
+    let log = std::env::var("XAQU_HOTPATH_LOG")
         .ok()
         .map(|log| record::without_home(&log, &home));
     let measurement = Measurement {
@@ -126,7 +126,7 @@ fn write_record(args: &Args, rounds: u32, boots: Vec<Boot>, reference: Reference
         &measurement,
         &fingerprint,
         configuration,
-        record::ferrix_commit(&root)?,
+        record::xaqu_commit(&root)?,
         &record::utc_now(),
         log.as_deref(),
     );
@@ -403,13 +403,13 @@ fn other_tree_args(args: &Args) -> Vec<String> {
 /// `--against-sel4` and `--against-redox`: this tree's domain-call against
 /// the other kernel's own round trip, turn about. Each runner is the one its
 /// figure was measured with, under the gate's CPU model on host processor
-/// [`PIN`]: `run.sh` in `~/.local/share/ferrix/sel4`, `run.py` in
-/// `~/.local/share/ferrix/redox-bench`. What is missing says so.
+/// [`PIN`]: `run.sh` in `~/.local/share/xaqu/sel4`, `run.py` in
+/// `~/.local/share/xaqu/redox-bench`. What is missing says so.
 fn against(args: &Args, rounds: u32) -> Result<(Vec<Boot>, Reference)> {
     let home = std::env::var_os("HOME")
         .map(std::path::PathBuf::from)
         .unwrap_or_default();
-    let share = home.join(".local/share/ferrix");
+    let share = home.join(".local/share/xaqu");
     let other = if args.against_sel4 { "seL4" } else { "Redox" };
     if !args.against_sel4 {
         let _ = redox_round_trip(&share.join("redox-bench"))?;
@@ -430,7 +430,7 @@ fn against(args: &Args, rounds: u32) -> Result<(Vec<Boot>, Reference)> {
         boots.push(Boot { lines: mine });
         figures.push(theirs);
     }
-    ratio("Ferrix", other, &pairs);
+    ratio("Xaqu", other, &pairs);
     let reference = Reference::Kernel {
         name: "seL4 matched-nopcid (run.sh)".to_owned(),
         p50_ns: figures,
@@ -440,7 +440,7 @@ fn against(args: &Args, rounds: u32) -> Result<(Vec<Boot>, Reference)> {
 
 /// seL4's `Call`/`ReplyRecv` round trip, p50 in nanoseconds, the median of
 /// one image boot's runs: `run.sh matched-nopcid nopcid`, whose root task
-/// times as `ipc-bench` does (`sel4bench-ferrix-rt.patch`).
+/// times as `ipc-bench` does (`sel4bench-xaqu-rt.patch`).
 fn sel4_round_trip(dir: &std::path::Path, round: u32) -> Result<u64> {
     let runner = dir.join("run.sh");
     if !runner.is_file() || !dir.join("build/matched-nopcid").is_dir() {
@@ -627,7 +627,7 @@ const EQUIV_SCRIPT: &str = r#"/sbin/ipc-equiv
 const FASTPATH_LINE: &str = "ipc fast path for channel_write_read:";
 
 /// Set in the child that builds and boots one image of [`test_ipc_equiv`].
-const EQUIV_CHILD: &str = "FERRIX_IPC_EQUIV_CHILD";
+const EQUIV_CHILD: &str = "XAQU_IPC_EQUIV_CHILD";
 
 /// How a child marks the lines its parent reads.
 const EQUIV_MARK: &str = "equiv| ";
@@ -635,7 +635,7 @@ const EQUIV_MARK: &str = "equiv| ";
 /// The symbols an image built with the fast path holds and any other does not:
 /// the hook, whose `no_mangle` keeps it apart, and the `used` marker. Mangled
 /// names say nothing, as an inlined function leaves none (ledger 1001 (3)).
-const FAST_PATH_SYMBOLS: [&str; 2] = ["ferrix_fast_write_read", "FERRIX_FAST_IPC_BUILT"];
+const FAST_PATH_SYMBOLS: [&str; 2] = ["xaqu_fast_write_read", "XAQU_FAST_IPC_BUILT"];
 
 /// Whether `elf` holds `name` anywhere, its symbol table included.
 fn holds_symbol(elf: &[u8], name: &str) -> bool {
@@ -910,8 +910,8 @@ mod equiv_tests {
 
     #[test]
     fn a_symbol_is_found_anywhere_in_the_image() {
-        assert!(holds_symbol(b"\0a\0ferrix_x\0", "ferrix_x"));
-        assert!(!holds_symbol(b"\0a\0ferrix_\0", "ferrix_x"));
+        assert!(holds_symbol(b"\0a\0xaqu_x\0", "xaqu_x"));
+        assert!(!holds_symbol(b"\0a\0xaqu_\0", "xaqu_x"));
     }
 }
 
@@ -934,7 +934,7 @@ mod other_tree_tests {
             "--init",
             "/bb/{arch}/busybox",
             "--kernel-option",
-            "ferrix.devmgr=init",
+            "xaqu.devmgr=init",
             "--alternate",
             "main",
         ]);
@@ -943,7 +943,7 @@ mod other_tree_tests {
             .iter()
             .position(|word| word == "--kernel-option")
             .unwrap();
-        assert_eq!(out[at + 1], "ferrix.devmgr=init");
+        assert_eq!(out[at + 1], "xaqu.devmgr=init");
         assert!(out.contains(&"--release".to_owned()));
         assert!(!out.contains(&"--alternate".to_owned()));
     }

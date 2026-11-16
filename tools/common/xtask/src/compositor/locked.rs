@@ -96,7 +96,7 @@ fn run(arch: Arch, programs: &Programs, args: &Args, hold: Option<u64>) -> Resul
                 })?),
             },
             crate::ports::File {
-                path: "etc/ferrix/units/hyprix.service.d/locked.conf".to_owned(),
+                path: "etc/xaqu/units/hyprix.service.d/locked.conf".to_owned(),
                 mode: 0o644,
                 content: crate::ports::Content::Bytes(drop_in(hold).into_bytes()),
             },
@@ -207,7 +207,7 @@ fn arrived(lines: &[String], marker: &str) -> (usize, f64) {
 /// a motion in an ordinary boot and in no fewer than [`FEWEST_HELD`] with
 /// frames held.
 fn judge(arch: Arch, lines: &[String], hold: Option<u64>) -> Result<()> {
-    if let Some(line) = lines.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = lines.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while the compositor ran: {}",
             line.trim()
@@ -306,7 +306,7 @@ mod tests {
 
     #[test]
     fn a_panic_fails() {
-        let said = vec!["FERRIX-PANIC: something".to_owned()];
+        let said = vec!["XAQU-PANIC: something".to_owned()];
         assert!(judge(Arch::X86_64, &said, None).is_err());
     }
 }

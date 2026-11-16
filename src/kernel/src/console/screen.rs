@@ -11,7 +11,7 @@
 //! ones that say why a boot went wrong. It is still the boot console, not a
 //! terminal: nothing is read from it.
 //!
-//! It is asked for with `ferrix.fbcon` on the command line and is off
+//! It is asked for with `xaqu.fbcon` on the command line and is off
 //! otherwise. On a machine with a cable a second copy of the log only costs
 //! time, and the QEMU heads are compared against screenshots that expect them
 //! as firmware left them.
@@ -36,16 +36,16 @@
 use core::hint::spin_loop;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_fbtext::{GLYPH_HEIGHT, GLYPH_WIDTH, Rgb, Surface};
-use ferrix_sync::SpinLock;
+use xaqu_bootinfo::BootView;
+use xaqu_fbtext::{GLYPH_HEIGHT, GLYPH_WIDTH, Rgb, Surface};
+use xaqu_sync::SpinLock;
 
 /// The command-line flag that asks for it.
-const FLAG: &str = "ferrix.fbcon";
+const FLAG: &str = "xaqu.fbcon";
 /// Asks for single-size glyphs whatever the screen's width: as many lines
 /// as fit, for reading a whole boot off one photo of a machine with no other
 /// output (the N150 box).
-const SMALL_FLAG: &str = "ferrix.fbcon.small";
+const SMALL_FLAG: &str = "xaqu.fbcon.small";
 
 /// The screen behind the text: the panic screen's, so a panic drawn over the
 /// console changes the banner and the text, not the whole screen.
@@ -241,7 +241,7 @@ pub fn start(view: &BootView<'_>) {
     }
     // SAFETY: (SHARED) nothing else writes the framebuffer while the board holds it:
     // the panic screen stops the board before it draws, and the one ring-3
-    // writer there can be -- `efifb`, under `ferrix.efifb` -- can map the
+    // writer there can be -- `efifb`, under `xaqu.efifb` -- can map the
     // framebuffer only through the node `discovery::firmware` lends it to,
     // which stops the board before the node exists (`device::check`'s
     // `check_framebuffer` requires it stopped).

@@ -45,22 +45,22 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::is_user_address;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::inet::{
+use xaqu_bootinfo::is_user_address;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::inet::{
     IPPROTO_ICMP, IPPROTO_ICMPV6, IPPROTO_MAX, IPPROTO_TCP, IPPROTO_UDP, SOCKADDR_STORAGE_SIZE,
 };
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::socket::{
     AF_INET, AF_INET6, AF_MAX, AF_NETLINK, AF_PACKET, AF_UNIX, CmsgHdr, ControlMessages,
     MSG_CMSG_CLOEXEC, MSG_CMSG_COMPAT, MSG_CTRUNC, MSG_DONTWAIT, MSG_OOB, MSG_TRUNC,
     MSG_WAITFORONE, MmsgHdr, MsgHdr, SCM_CREDENTIALS, SCM_MAX_FD, SCM_RIGHTS, SOCK_CLOEXEC,
     SOCK_DGRAM, SOCK_NONBLOCK, SOCK_RAW, SOCK_STREAM, SOCK_TYPE_MASK, SOL_SOCKET, Ucred,
     UnixAddress, Width, cmsg_align, cmsg_len, cmsg_space,
 };
-use ferrix_net::packet::PacketKind;
-use ferrix_net::socket::Family;
-use ferrix_vfs::OpenFile;
+use xaqu_net::packet::PacketKind;
+use xaqu_net::socket::Family;
+use xaqu_vfs::OpenFile;
 
 use crate::fs;
 use crate::fs::socket::{Passed, Received, Socket, SocketType};
@@ -1299,7 +1299,7 @@ fn put_mmsg_len(process: &Process, entry: u64, count: usize, width: Width) -> Re
 ///
 /// Linux's `recvmmsg` also keeps an error met after the first message for
 /// the socket's next call to report (`sk_err`), unless it is `EAGAIN`;
-/// Ferrix drops it, and the next call meets the condition again or not, as
+/// Xaqu drops it, and the next call meets the condition again or not, as
 /// it stands then.
 fn batch_answer(done: u32, error: Option<Errno>) -> Result<usize, Errno> {
     if done > 0 {

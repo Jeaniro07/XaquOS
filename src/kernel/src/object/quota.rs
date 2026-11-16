@@ -14,7 +14,7 @@
 //! memory and may be a job's last, and a raw pointer would need `unsafe`. An
 //! index into a table that never shrinks needs neither, and fits in the
 //! frame record's link field, which an allocated frame leaves unused
-//! (`ferrix_frame::Frames::set_owner`). The table grows by [`CHUNK`] slots at
+//! (`xaqu_frame::Frames::set_owner`). The table grows by [`CHUNK`] slots at
 //! a time, from process context, and a chunk once made is never taken away,
 //! so an index read anywhere stays a slot.
 //!
@@ -52,8 +52,8 @@
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicI64, AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_sched::NICE_0_WEIGHT;
-use ferrix_sync::Once;
+use xaqu_sched::NICE_0_WEIGHT;
+use xaqu_sync::Once;
 
 use crate::fallible::{self, AllocError};
 use crate::sync::SpinLock;
@@ -241,7 +241,7 @@ impl Mark {
 }
 
 /// What a frame is charged as: a page of memory.
-const FRAME_BYTES: u64 = ferrix_bootinfo::PAGE_SIZE;
+const FRAME_BYTES: u64 = xaqu_bootinfo::PAGE_SIZE;
 
 /// A charge a limit refused.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -1087,13 +1087,13 @@ pub(crate) fn uncharge_kernel(index: u32, bytes: u64) {
     uncharge(index, Resource::Memory, bytes);
 }
 
-/// The account `ferrix_kmem` charges through: kernel heap a program's calls
+/// The account `xaqu_kmem` charges through: kernel heap a program's calls
 /// hold, charged to the running task's job ([`charge_kernel`]), and holding
 /// that job's slot for as long as the charge lives.
 #[derive(Debug)]
 struct KernelHeap;
 
-impl ferrix_kmem::Account for KernelHeap {
+impl xaqu_kmem::Account for KernelHeap {
     fn current(&self) -> u32 {
         crate::sched::running_group()
     }
@@ -1105,26 +1105,26 @@ impl ferrix_kmem::Account for KernelHeap {
     /// it may block, and not inside a reclaim, which is never begun twice
     /// ([`crate::user::cache::reclaim`]). With no limit full by then, the try
     /// again alone. The refusal is counted as a fault's is: once a try.
-    fn charge(&self, owner: u32, bytes: u64) -> Result<(), ferrix_kmem::Refused> {
+    fn charge(&self, owner: u32, bytes: u64) -> Result<(), xaqu_kmem::Refused> {
         if charge_kernel(owner, bytes).is_ok() {
             return Ok(());
         }
         // No in the lift, whose `may_block` cannot tell a spin lock from none:
         // linuxd's charges refuse as before (`sched::heap_charge_may_reclaim`).
         if !crate::sched::heap_charge_may_reclaim() {
-            return Err(ferrix_kmem::Refused);
+            return Err(xaqu_kmem::Refused);
         }
         let own = owner != NONE && owner == crate::sched::running_group();
         if !own
             || !crate::sched::may_block()
             || crate::sched::with_current(crate::sched::Task::reclaiming) != Some(false)
         {
-            return Err(ferrix_kmem::Refused);
+            return Err(xaqu_kmem::Refused);
         }
         if let Some(full) = at_limit(owner, Resource::Memory, bytes) {
             let _ = super::oom::reclaim_within(full, bytes.div_ceil(FRAME_BYTES));
         }
-        charge_kernel(owner, bytes).map_err(|Exceeded| ferrix_kmem::Refused)
+        charge_kernel(owner, bytes).map_err(|Exceeded| xaqu_kmem::Refused)
     }
 
     fn uncharge(&self, owner: u32, bytes: u64) {
@@ -1185,7 +1185,7 @@ static KERNEL_HEAP: KernelHeap = KernelHeap;
 /// no slot a charge could go to, and the root's programs are charged to
 /// nobody anyway.
 fn install_kernel_heap() {
-    ferrix_kmem::install(&KERNEL_HEAP);
+    xaqu_kmem::install(&KERNEL_HEAP);
 }
 
 /// A charge held by whatever it was made for, and taken back as it is dropped:
@@ -1202,7 +1202,7 @@ pub(crate) struct Charge {
 
 impl Charge {
     /// The slot charged.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub(crate) const fn owner(&self) -> u32 {
         self.index
     }
@@ -1622,7 +1622,7 @@ pub(crate) fn adjust(index: u32, delta: i64) {
 /// The weight a task of weight `base` in `index` runs at: `base` times, at
 /// each level from `index` up, that job's weight over its load.
 ///
-/// The arithmetic is `ferrix_sched::carried_weight`'s, in 64 bits, which is
+/// The arithmetic is `xaqu_sched::carried_weight`'s, in 64 bits, which is
 /// the 128-bit formula's exactly while every entity weight is below 2^32
 /// (the assertion below): a task's base is a `u32`, and a job's is
 /// `cpu.weight` clamped to [`MAX_WEIGHT`] and scaled to task units.
@@ -1633,7 +1633,7 @@ pub fn effective(index: u32, base: u32) -> u32 {
 /// [`effective`], with `extra` added to `index`'s own load and to no other
 /// level's: the direct switch's weights, made while the peer's weight is
 /// counted in its word and not yet in the load it shares with the caller
-/// (`docs/OPAQUE-KERNEL.md` §9.11, J2; `ferrix_sched::carried_weight_with`).
+/// (`docs/OPAQUE-KERNEL.md` §9.11, J2; `xaqu_sched::carried_weight_with`).
 /// One walk, each level read once, as `effective`'s.
 pub fn effective_with(index: u32, base: u32, extra: i64) -> u32 {
     let mut at = index;
@@ -1649,7 +1649,7 @@ pub fn effective_with(index: u32, base: u32, extra: i64) -> u32 {
         Some((own, load))
     });
     let clamped =
-        ferrix_sched::carried_weight_with(base, levels, extra).clamp(MIN_EFFECTIVE, MAX_EFFECTIVE);
+        xaqu_sched::carried_weight_with(base, levels, extra).clamp(MIN_EFFECTIVE, MAX_EFFECTIVE);
     u32::try_from(clamped).unwrap_or(NICE_0_WEIGHT)
 }
 

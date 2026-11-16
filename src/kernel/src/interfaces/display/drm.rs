@@ -2,7 +2,7 @@
 //! `docs/DISPLAY.md` §2.3 answers.
 //!
 //! Up to [`super::MAX_OPENS`] opens at once, and at most one of them the
-//! DRM master, the open that shows things (`ferrix_displayctl::card`'s rules,
+//! DRM master, the open that shows things (`xaqu_displayctl::card`'s rules,
 //! `docs/DISPLAY.md` §2.3): each open holds the dumb buffers it created, the
 //! framebuffers it added and the page-flip events it has not read, and only
 //! the master sets a mode, flips a page, reports damage or places a cursor. The card has one
@@ -57,20 +57,20 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_displayctl::message::{CURSOR_SIZE, MAX_DIMENSION, MAX_SCANOUTS, Rect, Status, Timing};
-use ferrix_linux_abi::drm::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_displayctl::message::{CURSOR_SIZE, MAX_DIMENSION, MAX_SCANOUTS, Rect, Status, Timing};
+use xaqu_linux_abi::drm::{
     self, CardRes, ClipRect, CreateDumb, Crtc, CrtcPageFlip, DestroyDumb, Event, EventVblank,
     FbCmd, FbCmd2, FbDirtyCmd, Field, GetBlob, GetCap, GetConnector, GetEncoder, GetPlane,
     GetPlaneRes, GetProperty, Layout, MapDumb, ModeCursor, ModeCursor2, ModeInfo, ObjGetProperties,
     PrimeHandle, PropertyEnum, SetClientCap, Version,
 };
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::Width;
-use ferrix_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::Width;
+use xaqu_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
 
 use super::{Card, CardError};
-use ferrix_displayctl::card::{self as rules, Became, Class, OpenId};
+use xaqu_displayctl::card::{self as rules, Became, Class, OpenId};
 
 use crate::user::vmo::Vmo;
 
@@ -95,7 +95,7 @@ use crate::timer;
 const MAP_SHIFT: u32 = 25;
 
 const _: () = assert!(
-    1u64 << MAP_SHIFT >= ferrix_displayctl::message::MAX_BUFFER_PAGES * PAGE_SIZE,
+    1u64 << MAP_SHIFT >= xaqu_displayctl::message::MAX_BUFFER_PAGES * PAGE_SIZE,
     "a buffer is larger than a map offset's place bits reach"
 );
 
@@ -270,7 +270,7 @@ pub(crate) struct CardFile {
     /// `GETPLANERESOURCES` lists only overlay planes, and so none here.
     universal_planes: AtomicBool,
     /// The card's `modes_changed` this open last told its program of with
-    /// [`drm::EVENT_FERRIX_CONNECTORS`].
+    /// [`drm::EVENT_XAQU_CONNECTORS`].
     modes_told: AtomicU64,
 }
 
@@ -396,7 +396,7 @@ impl Inode for CardFile {
 
     /// The events queue's wakes, and the card's, which a driver that goes
     /// wakes.
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.readable));
         visit(crate::fs::wake::shared(&self.card.changed));
         true
@@ -455,8 +455,8 @@ impl Inode for CardFile {
     /// `ret`. This used to answer `EINVAL` for any read smaller than an
     /// event.
     ///
-    /// A connector change comes first, as Ferrix's own eight-byte
-    /// [`drm::EVENT_FERRIX_CONNECTORS`], once however many changes there were
+    /// A connector change comes first, as Xaqu's own eight-byte
+    /// [`drm::EVENT_XAQU_CONNECTORS`], once however many changes there were
     /// since the last: what it asks of the program is to read the
     /// connectors again, which reads them as they are now.
     fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> VfsResult<usize> {
@@ -466,7 +466,7 @@ impl Inode for CardFile {
             let untold = self.modes_told.load(Ordering::Acquire) != changed;
             if untold && let Some(slot) = buf.get_mut(..Event::SIZE) {
                 let event = Event {
-                    r#type: drm::EVENT_FERRIX_CONNECTORS,
+                    r#type: drm::EVENT_XAQU_CONNECTORS,
                     length: Event::SIZE as u32,
                 };
                 if event.write(slot).is_some() {
@@ -945,11 +945,11 @@ fn edid_property(card: &Card, head: usize) -> Option<(u32, u64)> {
 /// `type` property is an immutable enum whose values are the three plane
 /// types, each named, copied as far as the caller's arrays have room; the
 /// connector `EDID` property is an immutable blob, which has neither values
-/// nor enum records (`ferrix_displayctl::edid::describe_property`).
+/// nor enum records (`xaqu_displayctl::edid::describe_property`).
 fn get_property(process: &Process, arg: u64) -> Result<usize, Errno> {
     let mut property: GetProperty = read_arg(process, arg)?;
     if property.prop_id == EDID_PROPERTY_ID {
-        ferrix_displayctl::edid::describe_property(&mut property);
+        xaqu_displayctl::edid::describe_property(&mut property);
         return write_arg(process, arg, &property);
     }
     if property.prop_id != TYPE_PROPERTY_ID {
@@ -994,12 +994,12 @@ fn get_property(process: &Process, arg: u64) -> Result<usize, Errno> {
 /// `GETPROPBLOB`, as `drm_mode_getblob_ioctl` answers it: an id that names
 /// no blob is `ENOENT`; the bytes are copied only into room of exactly the
 /// blob's length, and the length is written back either way, so a caller
-/// asks once with none to learn it (`ferrix_displayctl::edid::answer_blob`).
+/// asks once with none to learn it (`xaqu_displayctl::edid::answer_blob`).
 fn get_blob(process: &Process, card: &Card, arg: u64) -> Result<usize, Errno> {
     let mut request: GetBlob = read_arg(process, arg)?;
     let head = head_of_blob(card, request.blob_id).ok_or(Errno::ENOENT)?;
     let bytes = card.edid(head).ok_or(Errno::ENOENT)?;
-    if ferrix_displayctl::edid::answer_blob(&mut request, bytes.len()) {
+    if xaqu_displayctl::edid::answer_blob(&mut request, bytes.len()) {
         uaccess::copy_to_user(process.space(), request.data, &bytes).map_err(|_| Errno::EFAULT)?;
     }
     write_arg(process, arg, &request)
@@ -1904,7 +1904,7 @@ fn set_crtc(process: &Process, file: &CardFile, arg: u64) -> Result<usize, Errno
         }
         file.card.list_into(head, &mut list);
         let timing =
-            ferrix_displayctl::listed::listed_match(&list, &crtc.mode).ok_or(Errno::EINVAL)?;
+            xaqu_displayctl::listed::listed_match(&list, &crtc.mode).ok_or(Errno::EINVAL)?;
         let preferred = list
             .iter()
             .any(|listed| listed.timing == timing && listed.preferred);

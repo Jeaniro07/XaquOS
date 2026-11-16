@@ -11,7 +11,7 @@
 //! handing over, and the walk follows the numbers as found rather than
 //! renumbering, because a bus number is also where a function sits in the
 //! ECAM window firmware described and in the IOMMU's tables. Renumbering is a
-//! change for the day Ferrix boots on firmware that does not do it.
+//! change for the day Xaqu boots on firmware that does not do it.
 //!
 //! What is *not* trusted is that the numbers make sense. A bridge whose
 //! secondary bus is not above its own, lies outside the window, or has

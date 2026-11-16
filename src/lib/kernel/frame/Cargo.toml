@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-frame"
+name = "xaqu-frame"
 description = "Buddy allocator for physical frames, as pure array manipulation"
 version.workspace = true
 edition.workspace = true

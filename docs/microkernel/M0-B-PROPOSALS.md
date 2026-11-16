@@ -2,7 +2,7 @@
 
 **For the certification consultant, 2026-10-14.** `docs/roadmap/microkernel-m0.md`
 §B and its *Reviews* paragraph ask for two item reviews before any code:
-the fast path's move from the boot option `ferrix.fastpath` to the build
+the fast path's move from the boot option `xaqu.fastpath` to the build
 flag `ipc_fastpath` (`docs/BUILD-FLAGS.md` §3, **BF6**), and Zenbleed's and
 GDS's fixes leaving the `mitigations` flag (§3.1, **DF6**). §1 and §2 are
 those two design notes, each ending with the questions the consultant is
@@ -16,7 +16,7 @@ decide.
 **Where it stands (2026-11-04):** §1 BF6 and §2 DF6 are code on `feature/mk-land`
 under review; `smt=off` (§3) landed `b8a57534b`; §4 and §5 still plans.
 
-**Reviewed 2026-10-14** (`~/.local/share/ferrix/cert-consultant/reviews.md`,
+**Reviewed 2026-10-14** (`~/.local/share/xaqu/cert-consultant/reviews.md`,
 reviewer m0-b-cert, at `ef59e4115` on `main` `65608f7a0`):
 
 * **BF6: OK IF (1) to (9)**, ledger line 1001. The conditions are §1.8 and
@@ -35,7 +35,7 @@ to f4) are made in the text below. These conditions are the binding plan.
 
 Written against nazuna's local `main` at `c0bded3c7`, and against branch
 `m0-flags` at `91a2b456f` (part A, not landed), whose names are used where
-part A defines them: `cfg(ferrix_<flag> = "<value>")` set by the kernel's
+part A defines them: `cfg(xaqu_<flag> = "<value>")` set by the kernel's
 build script alone; `build-flags.toml`'s `built = "stand-in"` for a value
 whose code is not built yet; the `build` boot line from
 `src/kernel/src/build_flags.rs`; `check-boot-line.py`, which refuses a
@@ -62,7 +62,7 @@ earlier figure itemised.
 
 ---
 
-## 1. `ipc_fastpath` replaces `ferrix.fastpath` (BF6)
+## 1. `ipc_fastpath` replaces `xaqu.fastpath` (BF6)
 
 ### 1.1 What there is today
 
@@ -70,24 +70,24 @@ The switch is a boot option read at run time, and the fast path's code is in
 every x86-64 image:
 
 * `src/kernel/src/fastpath.rs` (item ring): `fastpath::init` reads
-  `ferrix.fastpath` once, from the loader's command line and then the device
+  `xaqu.fastpath` once, from the loader's command line and then the device
   tree's `bootargs` (four readings: none, `on`, `off`, other), and for `on`
   alone, where `arch::FAST_WRITE_READ` (true only in
   `arch/x86_64/mod.rs:50`), calls `trap::set_fast_write_read`.
   `fastpath::report` prints stage 9's line, `fastpath ipc fast path for
-  channel_write_read: on (as ferrix.fastpath asked); taken from x86-64's
+  channel_write_read: on (as xaqu.fastpath asked); taken from x86-64's
   SYSCALL entry`. Called from `checks::init` (`checks.rs:80`) and
   `stages_check.rs:1081`. `fastpath::report_counts` prints the counts line
   (`init.rs:667`).
 * `src/kernel/src/trap.rs` (core): `FAST_PATH_ON`, the core's flag (T1),
   raised by `set_fast_write_read` and read (Acquire) by `fast_path_on` at
   every entry; `fast_write_read`, `fast_write_read_now`; the `unsafe extern
-  "Rust"` declaration of `ferrix_fast_write_read` beside `ferrix_filter_quiet`,
+  "Rust"` declaration of `xaqu_fast_write_read` beside `xaqu_filter_quiet`,
   each tied to its alias by a `const _`.
 * `src/kernel/src/main.rs:146-154` (composition root): the hook's
-  definition, `#[unsafe(no_mangle)] fn ferrix_fast_write_read`, one call of
+  definition, `#[unsafe(no_mangle)] fn xaqu_fast_write_read`, one call of
   `syscall::native::fast_write_read`.
-* `src/kernel/src/arch/x86_64/syscall.rs:485-505`: `ferrix_syscall_entry`
+* `src/kernel/src/arch/x86_64/syscall.rs:485-505`: `xaqu_syscall_entry`
   tests `rax == CHANNEL_WRITE_READ && trap::fast_path_on()` first, before the
   filter; `frame_tail`, `write_outcome` and `leave` serve both paths.
 * `src/kernel/src/syscall/native.rs`: `fast_write_read` and
@@ -100,13 +100,13 @@ every x86-64 image:
   asks `trap::fast_write_read().is_some()`, and case 15 in
   `arch/x86_64/switch/check.rs:1397`, which asks the same.
 * `tools/common/data/certification-item.json`: `composition_root.hooks`
-  lists `ferrix_fast_write_read` (`declared_in` `trap.rs`, `forwards_to`
+  lists `xaqu_fast_write_read` (`declared_in` `trap.rs`, `forwards_to`
   `syscall::native::fast_write_read`); `fastpath.rs` is in the item ring.
 * The requirements: **L.x86_64.150** (`fastpath::init` reads the option,
   raises the flag for `on` alone, stage 9 says which; criterion: two boots of
   `test-ipc-equiv`), **L.x86_64.159** (the entry calls the fast path only
   for 0x1013 and only while the core's flag, read at every call, is raised,
-  "which fastpath::init does for ferrix.fastpath=on alone"), **L.x86_64.161**
+  "which fastpath::init does for xaqu.fastpath=on alone"), **L.x86_64.161**
   (the core reaches the fast path and T2's predicate only through the two
   listed link-time hooks, each call only while a core flag says so;
   criterion: `check-item-boundary.py`'s self-tests and two boots), and
@@ -117,15 +117,15 @@ every x86-64 image:
 * On `m0-flags`: `ipc_fastpath` has `off` (`built = "yes"`) and `on`
   (`built = "stand-in"`, `stands_in = "off"`, allows `sc2` and `none`);
   `present` and `max` say `off`, `fast` and `desktop` say `on`; the
-  boot-option registry still declares `ferrix.fastpath` with `until = "M0"`,
-  and `present.toml` permits `"ferrix.fastpath" = ["off"]`.
+  boot-option registry still declares `xaqu.fastpath` with `until = "M0"`,
+  and `present.toml` permits `"xaqu.fastpath" = ["off"]`.
 
 ### 1.2 The change
 
 1. **The code is selected at compile time, and is absent where the flag is
    off** (rule 1: code a profile does not select is not in its image).
-   `#[cfg(ferrix_ipc_fastpath = "on")]` on the entry's test in
-   `ferrix_syscall_entry`, on the hook's declaration in `trap.rs` and its
+   `#[cfg(xaqu_ipc_fastpath = "on")]` on the entry's test in
+   `xaqu_syscall_entry`, on the hook's declaration in `trap.rs` and its
    definition in `main.rs` (with their `const _` assertions), and on
    everything only the fast path reaches: `syscall::native::fast_write_read`,
    `fast_write_read_raised`, `continue_general`, `park_for_reply` and the
@@ -137,7 +137,7 @@ every x86-64 image:
    `switch/check.rs:1397` and `object/fast_path_check.rs:171`), read a
    constant, `fastpath::BUILT`, from the same predicate.
    **One predicate (1001, condition 1):** the code is selected by
-   `all(ferrix_ipc_fastpath = "on", target_arch = "x86_64")`, defined once
+   `all(xaqu_ipc_fastpath = "on", target_arch = "x86_64")`, defined once
    (a cfg the kernel's build script derives, or one `cfg_attr` alias) and
    never retyped per site; `arch::FAST_WRITE_READ` goes with it. The flag
    file records that `on` selects code on x86-64 only; an AArch64 or
@@ -169,22 +169,22 @@ every x86-64 image:
    no longer calls `fastpath::init`; a boot that skips stage 9 still prints
    the line there.
 4. **The boot option is retired.** `build-flags.toml`: `on` becomes
-   `built = "yes"`, `stands_in` goes, `[boot_options."ferrix.fastpath"]`
+   `built = "yes"`, `stands_in` goes, `[boot_options."xaqu.fastpath"]`
    goes; `present.toml` loses its permit; `check-build-flags.py`'s registry
-   check then fails any read of `ferrix.fastpath` that comes back. xtask
-   refuses `--kernel-option ferrix.fastpath=<anything>` with a message naming
+   check then fails any read of `xaqu.fastpath` that comes back. xtask
+   refuses `--kernel-option xaqu.fastpath=<anything>` with a message naming
    `--set ipc_fastpath=on --no-claim` or `--kernel-profile desktop`, so an old
    gate row fails loudly instead of running the general path and passing.
 5. **The hook stays a listed hook, now conditional.**
-   `composition_root.hooks`' entry for `ferrix_fast_write_read` gains
-   `"cfg": "ferrix_ipc_fastpath=on"`; `check-item-boundary.py` requires the
+   `composition_root.hooks`' entry for `xaqu_fast_write_read` gains
+   `"cfg": "xaqu_ipc_fastpath=on"`; `check-item-boundary.py` requires the
    same `cfg` on the declaration and the definition, and its self-test gains
-   a case for each half missing it. `ferrix_filter_quiet` is unchanged.
+   a case for each half missing it. `xaqu_filter_quiet` is unchanged.
 6. **The audit record.** The fast path's value is already in
    `Config::Build` (part A: two bits per flag, FAU_GEN.1 b), so the boot's
    audit record names it; no record of its own is added. SECURITY-TARGET's
    and AUDIT.md's lists of the start-up record name `ipc_fastpath` from
-   `Config::Build` and no longer `ferrix.fastpath` (condition 8).
+   `Config::Build` and no longer `xaqu.fastpath` (condition 8).
 
 ### 1.3 The requirements restated
 
@@ -197,7 +197,7 @@ Requirement text for the implementer to write after this review
   reused. Stage 9's line becomes informational; the check that an `off`
   image says `off` moves into L.x86_64.159's criterion.
 * **L.x86_64.159**: "In a kernel built with ipc_fastpath=on for x86-64,
-  ferrix_syscall_entry shall call the fast path for 0x1013 and for no other
+  xaqu_syscall_entry shall call the fast path for 0x1013 and for no other
   number, before the filter and with interrupts masked, after every entry
   measure the stub makes, raising the vector mark first and lowering it on a
   decline; in a kernel built with ipc_fastpath=off the entry shall contain
@@ -208,37 +208,37 @@ Requirement text for the implementer to write after this review
   built with ipc_fastpath=on for x86-64, through a hook declared and defined
   under that predicate"; the predicate's clause is unchanged. Its criterion
   adds the cfg-mismatch self-test case, and its boots ("booted with
-  ferrix.fastpath=off no fast path counter moves and with on trips are
+  xaqu.fastpath=off no fast path counter moves and with on trips are
   taken", `18-x86-64-requirements.sysml:441`) are restated as the `off` and
   `on` images of `test-ipc-equiv` (1001, f3).
 * **L.x86_64.160**: the criterion's "with the fast path on" becomes "in the
   `on` build".
 * **L.sched.61** (`15-sched-requirements.sysml:530-538`) and
-  `13-item-requirements.sysml:446` ("behind ferrix.fastpath") are reworded
+  `13-item-requirements.sysml:446` ("behind xaqu.fastpath") are reworded
   to the flag.
 * No requirement's units name `fastpath::init`, `trap::fast_path_on` or
   `trap::set_fast_write_read` any more.
 
-### 1.4 Every gate row that passes `ferrix.fastpath` today
+### 1.4 Every gate row that passes `xaqu.fastpath` today
 
 Found in the tree, in the batch runner's history
-(`~/.local/share/ferrix/fleet/batch/runs/*/gates`, `full/*.cmd`) and in the
+(`~/.local/share/xaqu/fleet/batch/runs/*/gates`, `full/*.cmd`) and in the
 fleet's gate files. Counts are the number of batch runs, of the 63 there,
 that carried the row (corrected by 1001 f1: each run's `gates` and
 `summary` files both name a row, and were counted twice).
 
 | Row | Where | Becomes |
 |---|---|---|
-| R1 `test-boot --arch x86_64 --accel kvm --kernel-option ferrix.fastpath=on` | 11 batch runs (IPC, scheduler and object landings) | `test-boot --arch x86_64 --accel kvm --set ipc_fastpath=on --no-claim` |
-| R2 `test-boot --arch x86_64 --accel tcg --kernel-option ferrix.fastpath=on` | 11 batch runs; BACKLOG row 436 (po10-f65, stage 13's cgroupfs check under TCG at load 34, open) | the same with `--accel tcg`; row 436's reproduction recipe rewritten |
-| R3 `test-boot --arch x86_64 --release --accel kvm --kernel-option ferrix.fastpath=on` | 9 batch runs; `fleet/po9-fx0902-gate.txt` | `--release ... --set ipc_fastpath=on --no-claim` |
+| R1 `test-boot --arch x86_64 --accel kvm --kernel-option xaqu.fastpath=on` | 11 batch runs (IPC, scheduler and object landings) | `test-boot --arch x86_64 --accel kvm --set ipc_fastpath=on --no-claim` |
+| R2 `test-boot --arch x86_64 --accel tcg --kernel-option xaqu.fastpath=on` | 11 batch runs; BACKLOG row 436 (po10-f65, stage 13's cgroupfs check under TCG at load 34, open) | the same with `--accel tcg`; row 436's reproduction recipe rewritten |
+| R3 `test-boot --arch x86_64 --release --accel kvm --kernel-option xaqu.fastpath=on` | 9 batch runs; `fleet/po9-fx0902-gate.txt` | `--release ... --set ipc_fastpath=on --no-claim` |
 | R4 the same with `--smp 2` | 9 batch runs; `fleet/po9-fx0902-gate.txt` | the same with `--smp 2` |
-| R5 `test-ipc-equiv --arch all` and `--arch x86_64 --accel tcg` | `ipc.rs:621` writes `ferrix.fastpath={off,on}` itself; `fleet/po9-sched-{a,b}-gate.txt`, batch runs | two images, 1.5 |
-| R6 `bench-ipc --kernel-option ferrix.fastpath=on`, and `bench-ipc --alternate`, which forwards the options to the other tree | measurements, not gate rows: `docs/hotpaths/results/ipc-round-trip/6bc2646211ca/` (7 records of 2026-10-07 name the option in `kernel_options`); `ipc.rs:202`, `other_tree_args` at 337 to 353 and its unit test at 706 to 724 | `--set ipc_fastpath=on --no-claim`; the record names the flag set (part A's `hotpath/record.rs` change); `--alternate` against a tree from before the move passes the option, against one after passes `--set` (the other tree's xtask decides which) |
+| R5 `test-ipc-equiv --arch all` and `--arch x86_64 --accel tcg` | `ipc.rs:621` writes `xaqu.fastpath={off,on}` itself; `fleet/po9-sched-{a,b}-gate.txt`, batch runs | two images, 1.5 |
+| R6 `bench-ipc --kernel-option xaqu.fastpath=on`, and `bench-ipc --alternate`, which forwards the options to the other tree | measurements, not gate rows: `docs/hotpaths/results/ipc-round-trip/6bc2646211ca/` (7 records of 2026-10-07 name the option in `kernel_options`); `ipc.rs:202`, `other_tree_args` at 337 to 353 and its unit test at 706 to 724 | `--set ipc_fastpath=on --no-claim`; the record names the flag set (part A's `hotpath/record.rs` change); `--alternate` against a tree from before the move passes the option, against one after passes `--set` (the other tree's xtask decides which) |
 | R7 owed: a stage-13 boot with the fast path on (`docs/CGROUPS.md:782`, BACKLOG row 591's F9) | not yet a row | written as R2's form when it is made |
 
 Also reworded, not rows: `.claude/skills/optimize-ipc-round-trip/SKILL.md`
-(the measuring protocol's step 2 records `ferrix.fastpath`, and the "tested
+(the measuring protocol's step 2 records `xaqu.fastpath`, and the "tested
 equivalence" paragraph), `docs/roadmap/ipc-round-trip.md:16`,
 `where-it-stands.md:52`, `README.md:51`, `status.md:85`,
 `docs/certification/ITEM.md:203` (§2's link-time hooks),
@@ -252,7 +252,7 @@ became the flag; the history stays as written). No row in CI (`.github/`)
 and none in `xtask check` or the coverage run's gate list (`coverage.rs`)
 passes it.
 
-**Condition 7:** after the landing, `git grep ferrix.fastpath` is empty
+**Condition 7:** after the landing, `git grep xaqu.fastpath` is empty
 outside dated history (OPAQUE-KERNEL.md's history, `docs/handover`,
 FINDINGS.md, `docs/hotpaths/results`, `open-branches.md`), and the product
 owner is told the same day to change the fleet's gate lists outside the
@@ -292,13 +292,13 @@ and a log showing it fired, on the `on` build unless said:
 * C6 new: the `off` image holds no fast path. A symbol check on the linked
   `present` kernel, in `xtask check` or `test-flags`, **keyed on what cannot
   be inlined away** (condition 3): the `#[no_mangle]` hook
-  `ferrix_fast_write_read`, and a `#[used]` marker static under the same
+  `xaqu_fast_write_read`, and a `#[used]` marker static under the same
   predicate. Mangled Rust names are not used: an inlined function's
   absence proves nothing. Control: the `present` build with the hook's cfg
   removed (always compiled) fails it, FIRED.
-* C7 new: xtask refuses `--kernel-option ferrix.fastpath=on` (an
+* C7 new: xtask refuses `--kernel-option xaqu.fastpath=on` (an
   `args.rs` unit test and one run showing the refusal); and a planted read
-  of `ferrix.fastpath` in the kernel is refused by `check-build-flags.py`'s
+  of `xaqu.fastpath` in the kernel is refused by `check-build-flags.py`'s
   registry check, FIRED (condition 7).
 * C8 part A's `--set` without `--no-claim`, refused, fired once with
   `ipc_fastpath=on` now that it builds code.
@@ -317,10 +317,10 @@ each re-fired one against its original. *Condition 6:* C1 to C8 FIRED by
   lines are not in its image. The coverage run measures `present`, so those
   lines leave its denominator: the carried and argued anchors for them
   (COVERAGE-WORKLIST.md's rows "step 4" and "step 4's groundwork:
-  ferrix.fastpath"; `coverage-owed.json`'s entry at line 62 and the step-4
+  xaqu.fastpath"; `coverage-owed.json`'s entry at line 62 and the step-4
   entries; the `coverage-argued-*.json` and `coverage-residual-*.json` rows
   on those lines) are removed with a stated reason, "not in present's
-  image: cfg(ferrix_ipc_fastpath = "on")", and a check that every removed
+  image: cfg(xaqu_ipc_fastpath = "on")", and a check that every removed
   anchor lies inside such an item. `fastpath.rs`'s `init` lines go with the
   code. The cfg attributes shift lines, so the evidence is re-carried
   (`carry-coverage.py`) and the traceability rows checked, which are
@@ -350,7 +350,7 @@ the re-carry: 2. Gating and the controls C1 to C8 under KVM and TCG: 3 to
 ### 1.7 Questions for the consultant (BF6), and the answers (ledger 1001)
 
 1. **Compile-out depth.** Is §1.2's cut right: every item only the fast
-   path reaches under `cfg(ferrix_ipc_fastpath = "on")`, `FAST_PATH_ON`
+   path reaches under `cfg(xaqu_ipc_fastpath = "on")`, `FAST_PATH_ON`
    removed, so the `off` image has neither the code nor the entry's test?
    The alternative, keeping the run-time flag and raising it from a `cfg!`
    constant, leaves the fast path as deactivated code in `present`'s and
@@ -388,19 +388,19 @@ the re-carry: 2. Gating and the controls C1 to C8 under KVM and TCG: 3 to
 7. **The audit record.** Is the fast path's value inside `Config::Build`
    enough for FAU_GEN.1 b, with stage 9's line informational?
    *Answer: yes, with condition 8.*
-8. **The boot option's retirement.** Removing `ferrix.fastpath` from the
+8. **The boot option's retirement.** Removing `xaqu.fastpath` from the
    registry and from `present`'s permits, with xtask refusing the old
    option (C7), in one landing.
    *Answer: yes, one landing, with condition 7.* *Correction (1001 f4):*
    the question also spoke of "ITEM.md §5's count". That was wrong:
-   ITEM.md §5 counts one boot option, `ferrix.devmgr`, and `ferrix.fastpath`
+   ITEM.md §5 counts one boot option, `xaqu.devmgr`, and `xaqu.fastpath`
    was never in it. The fast path is described in §2, line 203. So §5 was
    understated while the option existed, and the move makes it true; only
    §2's line 203 is reworded.
 
 ### 1.8 The conditions (ledger 1001, OK IF (1) to (9))
 
-1. **One predicate.** `all(ferrix_ipc_fastpath = "on", target_arch =
+1. **One predicate.** `all(xaqu_ipc_fastpath = "on", target_arch =
    "x86_64")`, defined once and never retyped per site; the flag file
    records that `on` selects code on x86-64 only; an AArch64 or ARMv7-A `on`
    image holds none of it, and stage 9 and the `build` line say so (§1.2).
@@ -423,8 +423,8 @@ the re-carry: 2. Gating and the controls C1 to C8 under KVM and TCG: 3 to
    509 to 520); R1 to R4 in Q4's form `run: PASSED` on the landing hash,
    KVM and TCG named; BACKLOG row 436's recipe rewritten.
 7. **Retirement in one landing**: the registry entry and `present`'s
-   permit gone; C7 FIRED; a planted read of `ferrix.fastpath` refused by
-   `check-build-flags.py`, FIRED; `git grep ferrix.fastpath` empty outside
+   permit gone; C7 FIRED; a planted read of `xaqu.fastpath` refused by
+   `check-build-flags.py`, FIRED; `git grep xaqu.fastpath` empty outside
    dated history, §1.4's reword list included; the PO told the same day to
    change the fleet gate lists outside the repository.
 8. **Coverage and audit**: §1.5's per-profile coverage with every removed
@@ -667,7 +667,7 @@ parking then finds `CR4.MCE` already set and only checks it.
 **Checks and controls.** A `--set smt=off --no-claim --smp 4 --smp-threads
 2` boot under KVM and TCG: two cores, two parked. Control S1: the thread
 test made always true for the first sibling, so one sibling starts for work;
-the stage-4 check fires (FERRIX-PANIC, its catalogue name). Control S2: a
+the stage-4 check fires (XAQU-PANIC, its catalogue name). Control S2: a
 parked thread with `CR4.MCE` cleared; the check reads each parked thread's
 `CR4` as it reports and fires. Control S3: the AArch64 `cpu-map` with two
 threads of one core (comment b). A `stibp` boot with `--smp-threads 2`
@@ -740,7 +740,7 @@ above left a choice:
   core); a device-tree boot uses `/cpus/cpu-map`'s `thread` nodes. ARMv7-A
   reads `cpu-map` (its boots are device-tree only). A PPTT reader is new
   (`discovery::acpi`, bounded walk, no allocation beyond one entry per
-  processor) and `ferrix-fdt` gains a `cpu-map` walk with host tests.
+  processor) and `xaqu-fdt` gains a `cpu-map` walk with host tests.
   Under `smt=off`, two threads of one core stop the boot at stage 4 by
   name; with no topology table the check passes as one thread a core and
   says "no topology table". `MPIDR.MT` is never read.
@@ -808,7 +808,7 @@ and interrupt stacks, allocated once at boot), `cpu::enable_machine_check`,
 work is counted by: the PAT, `FSGSBASE`, the x87 controls, `XCR0`, HWP, the
 speculation defences' application, `apic::init_this_cpu` and
 `smp::secondary_main`. After it parks it can run two things:
-* **An NMI**: `ferrix_paranoid_entry`'s NMI arm, `note_gs` (which walks
+* **An NMI**: `xaqu_paranoid_entry`'s NMI arm, `note_gs` (which walks
   the records, `cpus` and `parked`, comparing addresses, with no lock, no
   allocation, no index) and two counter increments, then the return to the
   halt.
@@ -841,10 +841,10 @@ sends the fixed IPI (`ICR_ALL_BUT_SELF`), which a parked thread, with
 `smt=off` on a malformed PPTT or `cpu-map` (`describe_cpus`' error);
 `arm_common::smt::check::check_arm_smt` passes "no topology table" only where every
 online processor reads `MPIDR.MT` clear. The PPTT walk
-(`ferrix_acpi::pptt`) is bounded by the table's length over the 20-byte
+(`xaqu_acpi::pptt`) is bounded by the table's length over the 20-byte
 node size, refuses a parent outside the table, inside a node, a loop or a
 thread with no parent, and allocates nothing (nine host tests, the
-malformed shapes among them); `ferrix_fdt::cpu_map` walks the tree's own
+malformed shapes among them); `xaqu_fdt::cpu_map` walks the tree's own
 bounded walk, refuses a thread outside a core or naming no processor, and
 allocates nothing (seven host tests). AArch64's reference boot reads the
 PPTT (QEMU `virt` publishes one); the line reads "the PPTT lists no
@@ -904,7 +904,7 @@ regardless under `always`, so nothing is exposed. Values, from nazuna's
    disabled until `execve`), copied by `fork` and `clone`, the until-exec
    bit cleared by `execve`, as Linux does.
 2. **The write at a switch, only on change**, under
-   `cfg(ferrix_ssbd = "on_request")`: a per-processor shadow of the
+   `cfg(xaqu_ssbd = "on_request")`: a per-processor shadow of the
    SSBD bit last written; at the switch, if the incoming thread's bit
    differs, write `IA32_SPEC_CTRL` as `PLAN_SPEC_CTRL` (its IBRS and STIBP
    bits kept) with SSBD set or clear, or `VIRT_SPEC_CTRL` under AMD's KVM.
@@ -996,7 +996,7 @@ process that moves to another job leaves its domain for good
 leaves it (`attributes.rs:169`). Marking needs MANAGE on the parent
 (`syscall/native.rs:1683`, `JOB_SPECULATION_DOMAIN`).
 
-**The work**, each under `cfg(ferrix_program_barrier = "session")`:
+**The work**, each under `cfg(xaqu_program_barrier = "session")`:
 
 1. (a) **The subtree.** `bare_child` alone, under the session cfg, gives a
    child job its parent's domain (`new_child` and `new_named_child`), so a

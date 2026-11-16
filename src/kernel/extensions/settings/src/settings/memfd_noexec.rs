@@ -2,11 +2,11 @@
 //! program (moved whole from `syscall/memfd.rs`; `docs/KERNEL-CRATES.md`
 //! §6.2). The scope stays its namespace's, in the load.
 
-use ferrix_kernel_load::syscall::memfd::SCOPE_NOEXEC_ENFORCED;
-use ferrix_kernel_load::syscall::pidns;
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::userns::CAP_SYS_ADMIN;
-use ferrix_linux_abi::errno::Errno;
+use xaqu_kernel_load::syscall::memfd::SCOPE_NOEXEC_ENFORCED;
+use xaqu_kernel_load::syscall::pidns;
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::userns::CAP_SYS_ADMIN;
+use xaqu_linux_abi::errno::Errno;
 
 /// A write of `data` to `/proc/sys/vm/memfd_noexec` by `process`: Linux's
 /// `pid_mfd_noexec_dointvec_minmax`. One decimal integer, white space around

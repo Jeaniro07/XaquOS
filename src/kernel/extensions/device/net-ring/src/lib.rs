@@ -1,4 +1,4 @@
-//! The Ferrix kernel's end of a network driver's ring (`ferrix-netring`):
+//! The Xaqu kernel's end of a network driver's ring (`xaqu-netring`):
 //! the core that turns a driver's frames into an interface of the load's
 //! network stack.
 //!
@@ -15,7 +15,7 @@
 // and a personality=user kernel builds none of this part's modules. Never in
 // a build with `linux_abi=on`.
 #![cfg_attr(
-    ferrix_load_built = "none",
+    xaqu_load_built = "none",
     allow(
         unused_crate_dependencies,
         reason = "linux_abi=off is build-only until the checks that run a Linux program are re-homed"
@@ -31,28 +31,28 @@ extern crate alloc;
     reason = "named by its crate's path, so the interface's list sees the core's fn used here"
 )]
 pub const NET_RING_FLAG_WORD: u64 =
-    ferrix_kernel_core::flag_word(&ferrix_kernel_core::build_flag_word!());
+    xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
 
 // Held to the load's word, which main.rs holds to the binary's: the assert
 // lives here, not in main.rs, so that a part adds no line to a
 // `personality=user` ring 0 (test-ring0-budget, TINY-KERNEL.md). Not in
 // linuxd's build, as logctl's.
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 const _: () = assert!(
     NET_RING_FLAG_WORD == LOAD_FLAG_WORD,
-    "ferrix-kernel-net-ring was compiled with other build flags than the load"
+    "xaqu-kernel-net-ring was compiled with other build flags than the load"
 );
 
-pub use ferrix_kernel_load::*;
+pub use xaqu_kernel_load::*;
 
 /// The kernel's interfaces to ring-3 drivers; this part holds the network
 /// ring's, beside the load's own (re-exported, so `crate::interfaces::
 /// block_ring` resolves). Built where the load's `interfaces` is: in ring 0
 /// and in linuxd, not in a `personality=user` kernel
-/// (`ferrix_load_built = "none"`).
-#[cfg(any(ferrix_load_built = "ring0", ferrix_load_built = "lift"))]
+/// (`xaqu_load_built = "none"`).
+#[cfg(any(xaqu_load_built = "ring0", xaqu_load_built = "lift"))]
 pub mod interfaces {
-    pub use ferrix_kernel_load::interfaces::*;
+    pub use xaqu_kernel_load::interfaces::*;
 
     // Built for linuxd by the twin, where the ring-0 check is cfg'd out: the
     // two helpers only that check calls (`forget_device`,
@@ -60,7 +60,7 @@ pub mod interfaces {
     // not on the two items, so that the moved files stay R100, their lines
     // where they were (CRATE-SPLIT.md §3.1). In no kernel image.
     #[cfg_attr(
-        ferrix_load_built = "lift",
+        xaqu_load_built = "lift",
         allow(
             dead_code,
             reason = "forget_device and wait_until_task_stopped serve only the ring-0 check, which linuxd's build leaves out"

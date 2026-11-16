@@ -115,7 +115,7 @@ impl<'a> Walk<'a> {
     pub fn next_aux(&mut self) -> Result<Option<(u64, u64)>, ReadError> {
         let key = self.word()?;
         let value = self.word()?;
-        if key == ferrix_linux_abi::types::AT_NULL {
+        if key == xaqu_linux_abi::types::AT_NULL {
             return Ok(None);
         }
         Ok(Some((key, value)))

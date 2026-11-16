@@ -26,7 +26,7 @@
 //! `lode-viewer.ppm`.
 //!
 //! `lode-viewer-ssh` is the other side: the viewer on this machine following
-//! a Ferrix guest's lode over ssh, as its Machines page does for a box. The
+//! a Xaqu guest's lode over ssh, as its Machines page does for a box. The
 //! guest runs `sshdt`, its port 22 forwarded to a free port here, and the
 //! viewer's `--pull` (the link the Machines page starts, with no window)
 //! logs in with the test boots' client key and keeps what comes in a
@@ -46,7 +46,7 @@ use crate::qemu::Watching;
 use crate::{Error, Result};
 
 /// Where the image carries the records.
-const RECORDS: &str = "/usr/share/ferrix/lode-viewer-test.jsonl";
+const RECORDS: &str = "/usr/share/xaqu/lode-viewer-test.jsonl";
 
 /// The app's own test records, in its folder.
 const FIXTURE: &str = "testdata/n150-boot-excerpt.jsonl";
@@ -55,7 +55,7 @@ const FIXTURE: &str = "testdata/n150-boot-excerpt.jsonl";
 /// key that types a query into it.
 const CONFIG: &str = "\
 # Carried into the initramfs by `cargo xtask test-compositor --boot lode-viewer`.
-exec-once = /bin/lode-viewer /usr/share/ferrix/lode-viewer-test.jsonl --page logs --zoom 0
+exec-once = /bin/lode-viewer /usr/share/xaqu/lode-viewer-test.jsonl --page logs --zoom 0
 bind = , F1, exec, /bin/vkbd slash i d equal m s r Return
 bind = , F2, exec, /bin/clip copy id=usbhid
 bind = , F3, exec, /bin/vkbd slash
@@ -453,7 +453,7 @@ mod tests {
 
     fn passed() -> Vec<String> {
         [
-            "lode-viewer: read 801 records from /usr/share/ferrix/lode-viewer-test.jsonl (0 other lines)",
+            "lode-viewer: read 801 records from /usr/share/xaqu/lode-viewer-test.jsonl (0 other lines)",
             "lode-viewer: 801 records in 1 boots, 19 sources",
             "lode-viewer: the window is up, 1264x704 at scale 1, 754 lines in the table, first frame in 80 ms",
             "vkbd: typed slash i d equal m s r Return",
@@ -528,9 +528,9 @@ mod tests {
     fn a_second_pull_must_go_on_where_the_first_stopped() {
         use super::judge_ssh;
         let pulls = vec![
-            "lode-viewer: pull root@127.0.0.1:5555: 175 records kept in /x/host-ferrix\n"
+            "lode-viewer: pull root@127.0.0.1:5555: 175 records kept in /x/host-xaqu\n"
                 .to_owned(),
-            "lode-viewer: pull root@127.0.0.1:5555: 2 records kept in /x/host-ferrix\n".to_owned(),
+            "lode-viewer: pull root@127.0.0.1:5555: 2 records kept in /x/host-xaqu\n".to_owned(),
         ];
         assert!(judge_ssh(Arch::X86_64, &pulls, (177, true)).is_ok());
         let again = judge_ssh(Arch::X86_64, &pulls, (352, true)).expect_err("repeated");

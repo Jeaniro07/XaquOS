@@ -35,19 +35,19 @@
 
 use core::fmt::Debug;
 
-use ferrix_linux_abi::drm;
-use ferrix_linux_abi::hwcap;
-use ferrix_linux_abi::inet::InetAddress;
-use ferrix_linux_abi::input;
-use ferrix_linux_abi::layout::Layout;
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::drm;
+use xaqu_linux_abi::hwcap;
+use xaqu_linux_abi::inet::InetAddress;
+use xaqu_linux_abi::input;
+use xaqu_linux_abi::layout::Layout;
+use xaqu_linux_abi::netlink::{
     IfAddrMsg, IfInfoMsg, NdMsg, NetlinkAddress, NlAttr, NlMsgErr, NlMsgHdr, RtMsg,
 };
-use ferrix_linux_abi::nr;
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::nr;
+use xaqu_linux_abi::socket::{
     CmsgHdr, ControlMessages, Linger, MsgHdr, Ucred, UnixAddress, Width,
 };
-use ferrix_linux_abi::virtgpu;
+use xaqu_linux_abi::virtgpu;
 use libfuzzer_sys::fuzz_target;
 
 /// Property 4: `inner` lies wholly inside `outer`.

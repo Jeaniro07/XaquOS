@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_nettcp::State;
+use xaqu_nettcp::State;
 
 use crate::addr::{Endpoint, IpAddress, Ipv4};
 use crate::socket::{Error, Family, Socket};
@@ -315,7 +315,7 @@ fn a_connection_that_both_ends_closed_is_forgotten_after_time_wait() {
     // One end waits out the segments that may still be in the network; the
     // other is done at once.
     assert_eq!(state(&wire.one, client), Some(State::TimeWait));
-    wire.advance(ferrix_nettcp::conn::TIME_WAIT + 1);
+    wire.advance(xaqu_nettcp::conn::TIME_WAIT + 1);
     wire.exchange();
     assert!(
         wire.one.socket(client).is_none(),

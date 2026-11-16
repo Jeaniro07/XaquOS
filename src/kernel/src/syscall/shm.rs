@@ -61,11 +61,11 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_vma::VmaFlags;
 
 use crate::sync::SpinLock;
 use crate::syscall::credentials;
@@ -471,7 +471,7 @@ fn create(
         return Err(Errno::EINVAL);
     }
     let pages = size.div_ceil(PAGE_SIZE);
-    let bytes = ferrix_kmem::arc_footprint::<Segment>().saturating_add(size_of::<Slot>());
+    let bytes = xaqu_kmem::arc_footprint::<Segment>().saturating_add(size_of::<Slot>());
     let charge = Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)?;
     let vmo = Vmo::new_anonymous(pages).map_err(|_| Errno::ENOMEM)?;
     let now = sem::now_seconds();
@@ -562,7 +562,7 @@ fn create(
 /// elsewhere -- i386's on x86-64 included.
 pub(crate) fn shmlba(abi: Abi) -> u64 {
     let _ = abi;
-    if crate::arch::ARCH == ferrix_bootinfo::Arch::Armv7a {
+    if crate::arch::ARCH == xaqu_bootinfo::Arch::Armv7a {
         4 * PAGE_SIZE
     } else {
         PAGE_SIZE

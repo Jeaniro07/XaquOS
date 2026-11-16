@@ -29,14 +29,14 @@
 
 #![no_main]
 
-use ferrix_inputctl::message::{
+use xaqu_inputctl::message::{
     AXES, AxisRange, Bitmaps, DeviceId, Hello, MAX_EVENTS, Message, RawEvent, Text, VERSION,
 };
-use ferrix_inputctl::session::{Received, Session};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::session::{Received, Session};
+use xaqu_linux_abi::input::{
     ABS_X, BTN_LEFT, EV_ABS, EV_KEY, EV_REL, EV_SYN, KEY_A, REL_X, SYN_REPORT,
 };
-use ferrix_virtio_input::batch::{Batch, CAPACITY, PUSH_ROOM, REPORT_EVENTS};
+use xaqu_virtio_input::batch::{Batch, CAPACITY, PUSH_ROOM, REPORT_EVENTS};
 use libfuzzer_sys::fuzz_target;
 
 const SYN: RawEvent = RawEvent::new(EV_SYN, SYN_REPORT, 0);

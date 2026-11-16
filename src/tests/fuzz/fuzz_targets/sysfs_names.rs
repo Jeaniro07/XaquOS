@@ -22,8 +22,8 @@
 
 #![no_main]
 
-use ferrix_sysfs::name::{self, Slot};
-use ferrix_sysfs::path;
+use xaqu_sysfs::name::{self, Slot};
+use xaqu_sysfs::path;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

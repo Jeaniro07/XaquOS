@@ -1,4 +1,4 @@
-# A static program for Ferrix's initramfs, linkable from any host: the musl
+# A static program for Xaqu's initramfs, linkable from any host: the musl
 # targets carry their own C runtime and `libc.a`, so rust-lld is the whole
 # toolchain and Windows needs no Linux C compiler.
 # `relocation-model=static` links a fixed-address executable rather than a
@@ -16,7 +16,7 @@ rustflags = ["-C", "link-self-contained=yes", "-C", "target-feature=+crt-static"
 # loader's linker script, which cargo would merge into these flags, and a
 # compositor does its blending in floating point.
 #
-# And for the Cortex-A7, which is the one ARMv7-A core Ferrix runs on: the
+# And for the Cortex-A7, which is the one ARMv7-A core Xaqu runs on: the
 # DK1's, and the one QEMU is given (`tools/common/xtask/src/qemu.rs`). The target's own
 # baseline has no NEON and sixteen double registers, so every loop over
 # pixels was scalar; this core has NEON, thirty-two registers (which the

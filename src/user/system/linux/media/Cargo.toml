@@ -1,4 +1,4 @@
-# Media on Ferrix: the pieces a program's sound needs, and the
+# Media on Xaqu: the pieces a program's sound needs, and the
 # PulseAudio-protocol server (docs/AUDIO.md, U2). Bad Apple!!'s player, which
 # was the first to use them, is the `badapple` app (docs/APPS.md).
 #
@@ -14,7 +14,7 @@ members = ["pa-tone", "pcm", "pulse-server", "pulsed", "resample"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false

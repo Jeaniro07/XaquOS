@@ -1,13 +1,13 @@
 /*
- * Ferrix — SysML v2 model, part 9: storage.
+ * Xaqu — SysML v2 model, part 9: storage.
  *
  * docs/ARCHITECTURE.md §8. Block core, VFS, the small in-kernel filesystems
  * and btrfs in three stages. What exists today is marked on each part.
  */
-package FerrixStorage {
+package XaquStorage {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
-    private import FerrixMemory::Vmo;
+    private import XaquLifecycle::*;
+    private import XaquMemory::Vmo;
 
     // -----------------------------------------------------------------------
     // Block core, stage 11

@@ -1,4 +1,4 @@
-//! The blob container on disk (`ferrix_lode_core::blob`, `docs/LOGGING.md`
+//! The blob container on disk (`xaqu_lode_core::blob`, `docs/LOGGING.md`
 //! §21.4): `<store>/blobs/pack-<16 hex>.fxb`, written by the service only.
 //!
 //! The service queues a blob ([`Blobs::submit`]) while it makes the record
@@ -16,7 +16,7 @@ use alloc::collections::{BTreeSet, VecDeque};
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::blob::{self, BlobId, Entry, Sweep};
+use xaqu_lode_core::blob::{self, BlobId, Entry, Sweep};
 
 use crate::sys;
 
@@ -68,7 +68,7 @@ impl Blobs {
             queued: 0,
             known: BTreeSet::new(),
             written: 0,
-            quota: ferrix_lode_core::retention::BLOB_QUOTA,
+            quota: xaqu_lode_core::retention::BLOB_QUOTA,
         }
     }
 
@@ -153,7 +153,7 @@ impl Blobs {
         }
         if self.open.is_none() {
             let mut name = String::from("pack-");
-            ferrix_lode_core::segment::push_hex(&mut name, id.get(..8).unwrap_or_default());
+            xaqu_lode_core::segment::push_hex(&mut name, id.get(..8).unwrap_or_default());
             name.push_str(".fxb");
             let fd = sys::openat(
                 dir,

@@ -1,6 +1,6 @@
-//! `sessiond`'s end of `ferrix.auth.seat` (`docs/AUTH.md` §3.7, P2.5).
+//! `sessiond`'s end of `xaqu.auth.seat` (`docs/AUTH.md` §3.7, P2.5).
 //!
-//! `hyprix.service` says `Uses=ferrix.auth.seat`, and init gives the
+//! `hyprix.service` says `Uses=xaqu.auth.seat`, and init gives the
 //! bootstrap channel to the unit's own process, which is this one: the
 //! compositor is a child and cannot take it. This sends OPEN for the name
 //! with one end of a channel of its own; init starts `authd` if it must and
@@ -13,16 +13,16 @@
 
 use std::os::fd::{FromRawFd as _, OwnedFd};
 
-use ferrix_auth_proto::{MAX_RECORD, Record};
-use ferrix_native::channel::{self, Channel, ReadError};
-use ferrix_native::port::{self, Port};
-use ferrix_native::{Deadline, Error, Object, Raw, Signals, Syscall, pending};
-use ferrix_native_abi::directory::{Kind, MAX_MESSAGE, Message};
+use xaqu_auth_proto::{MAX_RECORD, Record};
+use xaqu_native::channel::{self, Channel, ReadError};
+use xaqu_native::port::{self, Port};
+use xaqu_native::{Deadline, Error, Object, Raw, Signals, Syscall, pending};
+use xaqu_native_abi::directory::{Kind, MAX_MESSAGE, Message};
 
 use crate::say;
 
 /// The name.
-const NAME: &str = "ferrix.auth.seat";
+const NAME: &str = "xaqu.auth.seat";
 
 /// The port key of the bootstrap channel, where a REFUSED comes.
 const BOOTSTRAP: u64 = 1;

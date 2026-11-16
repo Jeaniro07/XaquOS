@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-virtio-snd"
+name = "xaqu-virtio-snd"
 description = "A virtio-snd driver, as logic over a transport and DMA memory it is handed"
 version = "0.1.0"
 edition = "2024"
@@ -8,9 +8,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
-ferrix-sndctl = { workspace = true }
-ferrix-virtio = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-sndctl = { workspace = true }
+xaqu-virtio = { workspace = true }
 
 [lints]
 workspace = true

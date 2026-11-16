@@ -35,11 +35,11 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     BLKALIGNOFF, BLKBSZGET, BLKFLSBUF, BLKGETSIZE, BLKGETSIZE64, BLKIOMIN, BLKIOOPT, BLKPBSZGET,
     BLKROGET, BLKROTATIONAL, BLKRRPART, BLKSSZGET,
 };
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Result, Timespec};
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Result, Timespec};
 
 use crate::fs::block::{self, BlockDevice};
 use crate::fs::devfs;

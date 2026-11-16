@@ -10,8 +10,8 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::{MemKind, MemRegion, PAGE_SIZE, SMBIOS_ENTRY_BYTES};
-use ferrix_smbios::Error;
+use xaqu_bootinfo::{MemKind, MemRegion, PAGE_SIZE, SMBIOS_ENTRY_BYTES};
+use xaqu_smbios::Error;
 
 use super::smbios::{Direct, Refusal, decode, range};
 

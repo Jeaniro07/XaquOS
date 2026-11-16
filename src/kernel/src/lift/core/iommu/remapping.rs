@@ -9,13 +9,13 @@ use core::sync::atomic::AtomicBool;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering;
-use ferrix_acpi::dmar;
-use ferrix_acpi::dmar::Structure;
-use ferrix_paging::vtd::remap;
-use ferrix_paging::vtd::remap::Remap;
-use ferrix_paging::vtd::remap::UnitState;
-use ferrix_pci::Address;
-use ferrix_sync::Once;
+use xaqu_acpi::dmar;
+use xaqu_acpi::dmar::Structure;
+use xaqu_paging::vtd::remap;
+use xaqu_paging::vtd::remap::Remap;
+use xaqu_paging::vtd::remap::UnitState;
+use xaqu_pci::Address;
+use xaqu_sync::Once;
 #[derive(Clone, Copy, Debug)]
 pub enum Route {
     Compatibility,

@@ -3,7 +3,7 @@ name = "linux-rows-test"
 description = "Microkernel M0's Linux rows timed: getppid, fork+exec+wait, mmap churn, a page-cache miss, a signal, a futex wake"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false

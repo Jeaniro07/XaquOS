@@ -5,8 +5,8 @@ use core::sync::atomic::AtomicU16;
 use core::sync::atomic::AtomicU64;
 use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering;
-use ferrix_bootinfo::BootView;
-use ferrix_sync::IrqSpinLock;
+use xaqu_bootinfo::BootView;
+use xaqu_sync::IrqSpinLock;
 #[derive(Debug)]
 pub struct Checked {
     pub held: usize,

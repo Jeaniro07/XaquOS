@@ -8,7 +8,7 @@
 //! marker and halts by hand and every failure arrives in the same shape:
 //!
 //! ```text
-//! FERRIX-PANIC stage 3 self-check failed: the timer never fired
+//! XAQU-PANIC stage 3 self-check failed: the timer never fired
 //!   at        src/kernel/src/main.rs:152:23
 //!   on        processor 0 (hardware id 0x0)
 //!   stopped   this processor halts here, and 3 more were asked to
@@ -43,13 +43,13 @@
 pub mod catalog;
 pub mod reset;
 pub mod reset_check;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub mod screen;
 /// The panic screen in a `personality=user` kernel: none
 /// (`docs/microkernel/M6.md` §2). The panic path is serial (`MICROKERNEL.md`
 /// §2.1); a machine with no serial port says nothing of its panic but what
 /// pstore keeps, an assumption of use.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub mod screen {
     /// No window.
     pub(crate) fn draw() {}
@@ -115,11 +115,11 @@ pub fn explain(entry: &'static Explanation) {
 /// and stops the processor it is running on.
 #[panic_handler]
 fn panic(info: &PanicInfo<'_>) -> ! {
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     arch::window_release_for_stop();
-    let first = begin_report(ferrix_bootinfo::pstore::Stop::Panic);
+    let first = begin_report(xaqu_bootinfo::pstore::Stop::Panic);
     println!();
-    println!("FERRIX-PANIC {}", info.message());
+    println!("XAQU-PANIC {}", info.message());
     if let Some(location) = info.location() {
         println!("  at        {location}");
     }
@@ -202,7 +202,7 @@ impl core::fmt::Write for Prefix {
 /// Interrupts go first, before the other processors are asked to stop: an
 /// inter-processor interrupt taken part way through the report would halt the
 /// one processor writing it.
-pub(crate) fn begin_report(stop: ferrix_bootinfo::pstore::Stop) -> bool {
+pub(crate) fn begin_report(stop: xaqu_bootinfo::pstore::Stop) -> bool {
     arch::disable_interrupts();
     console::begin_panic();
     let first = !REPORTING.swap(true, Ordering::AcqRel);
@@ -218,7 +218,7 @@ pub(crate) fn begin_report(stop: ferrix_bootinfo::pstore::Stop) -> bool {
 /// End a report that is not the first. Its opening lines are printed; the
 /// report already under way has everything else.
 ///
-/// Under `ferrix.panic=reset`, a report inside the first one on the
+/// Under `xaqu.panic=reset`, a report inside the first one on the
 /// processor making it -- a fault anywhere in it, the screen being the step
 /// likeliest to -- still resets the machine ([`reset`]), on exactly the
 /// machine that has nobody at it. Before the reset it writes the record
@@ -313,7 +313,7 @@ pub(crate) fn conclude(entry: Option<&Explanation>) -> ! {
 /// programs read back (`console::write_unlogged`); `SPECULATION.md` §6 argues
 /// why that is not a leak.
 fn report_backtrace() {
-    let slide = backtrace::image_start().wrapping_sub(ferrix_bootinfo::KERNEL_VIRT_BASE);
+    let slide = backtrace::image_start().wrapping_sub(xaqu_bootinfo::KERNEL_VIRT_BASE);
     if slide != 0 {
         println_unlogged!("  kaslr     slide {slide:#x}");
     }

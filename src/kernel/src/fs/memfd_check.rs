@@ -26,15 +26,15 @@
 
 use alloc::vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_EMPTY_PATH, AT_FDCWD, F_ADD_SEALS, F_GET_SEALS, F_SEAL_EXEC, F_SEAL_FUTURE_WRITE,
     F_SEAL_GROW, F_SEAL_SEAL, F_SEAL_SHRINK, F_SEAL_WRITE, MAP_ANONYMOUS, MAP_PRIVATE, MAP_SHARED,
     MFD_ALLOW_SEALING, MFD_CLOEXEC, MFD_EXEC, MFD_NOEXEC_SEAL, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC,
     O_WRONLY, PROT_READ, PROT_WRITE,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs;
 use crate::mm;
@@ -44,7 +44,7 @@ use crate::syscall::process::{self, Process};
 use crate::syscall::{fd, uaccess};
 
 /// A memfd's name, staged in the check's page.
-const NAME: &[u8] = b"ferrix-seals\0";
+const NAME: &[u8] = b"xaqu-seals\0";
 /// Where [`NAME`] is staged.
 const AT_NAME: u64 = 0;
 /// A name one byte past the longest `memfd_create` takes, staged after it.
@@ -52,7 +52,7 @@ const AT_LONG: u64 = 64;
 /// The longest name `memfd_create` takes.
 const NAME_MAX_LEN: usize = 249;
 /// A regular file for the read-only mapping check, staged in the page.
-const PATH: &[u8] = b"/tmp/ferrix-memfd-check\0";
+const PATH: &[u8] = b"/tmp/xaqu-memfd-check\0";
 /// Where [`PATH`] is staged.
 const AT_PATH: u64 = 512;
 /// An empty path, for `execveat`'s `AT_EMPTY_PATH`: the page is zeroed.
@@ -507,11 +507,11 @@ fn check_a_read_only_mapping_stays_read_only(
 /// `protect` took the new flags whole, so the region came out private, and
 /// the write after it went to a private copy (Proton's `wineboot` faulted
 /// on it); and a write-only region refused a read. With `region.flags =
-/// flags` put back in `ferrix_vma`'s `protect` (scratch), the first test
+/// flags` put back in `xaqu_vma`'s `protect` (scratch), the first test
 /// here fails; with the write-implies-read taken out of `permits`, the
 /// second.
 ///
-/// Whether `protect` keeps a region's growth and `mlock` is ferrix-vma's
+/// Whether `protect` keeps a region's growth and `mlock` is xaqu-vma's
 /// host test alone: no kernel path sets either today.
 ///
 /// Verifies: L.user.128

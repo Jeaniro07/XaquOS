@@ -1,6 +1,6 @@
 //! The gateway tested from the guest's side of the wire.
 //!
-//! The Ferrix guest has no network driver yet, so there is no end-to-end test
+//! The Xaqu guest has no network driver yet, so there is no end-to-end test
 //! to write. What there is instead is the wire: these tests bind the socket
 //! QEMU would bind, send the frames QEMU would send, and read what comes back,
 //! so the half of the path that is ours is exercised by `cargo test` on every
@@ -14,10 +14,10 @@ use std::io::{Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, UdpSocket};
 use std::time::Duration;
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::ethernet::{self, Mac, ethertype};
-use ferrix_netwire::tcp::Flags;
-use ferrix_netwire::{arp, icmpv4, ipv4, tcp, udp};
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::ethernet::{self, Mac, ethertype};
+use xaqu_netwire::tcp::Flags;
+use xaqu_netwire::{arp, icmpv4, ipv4, tcp, udp};
 
 use super::{DNS_IP, Forward, GATEWAY_IP, GATEWAY_MAC, GUEST_IP, Gateway};
 
@@ -255,7 +255,7 @@ fn ignores_arp_for_an_address_it_does_not_own() {
 #[test]
 fn answers_a_ping_to_the_gateway() {
     let guest = Guest::start();
-    let body = b"ferrix echoes";
+    let body = b"xaqu echoes";
     let request = icmpv4::Header::echo(icmpv4::kind::ECHO_REQUEST, 0x4321, 7);
     let mut message = vec![0_u8; icmpv4::HEADER_LEN + body.len()];
     let _ = request.emit(body, &mut message).unwrap();
@@ -931,11 +931,11 @@ fn forwards_a_host_connection_to_the_guest_and_closes_it() {
     assert_eq!(ack.acknowledgment, stream.sequence);
 
     // A server speaks first in SSH, so the guest does here.
-    stream.write(b"SSH-2.0-ferrix\r\n");
+    stream.write(b"SSH-2.0-xaqu\r\n");
     let mut banner = [0_u8; 16];
     host.read_exact(&mut banner).unwrap();
     assert_eq!(
-        &banner, b"SSH-2.0-ferrix\r\n",
+        &banner, b"SSH-2.0-xaqu\r\n",
         "the guest's bytes reach the host"
     );
 

@@ -3,15 +3,15 @@
 //! Two groups of call that look unrelated and are here for the same reason:
 //! a static binary reaches for both during startup, before it has printed
 //! anything, and a missing answer to either does not fail loudly. The first
-//! real program to run on Ferrix -- busybox's `sh` -- span forever on
+//! real program to run on Xaqu -- busybox's `sh` -- span forever on
 //! `clock_gettime(CLOCK_MONOTONIC)` returning `ENOSYS`, waiting for time to
 //! pass on a clock that could not say it had.
 
 use core::sync::atomic::{AtomicI64, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     CLOCK_BOOTTIME, CLOCK_MONOTONIC, CLOCK_MONOTONIC_COARSE, CLOCK_MONOTONIC_RAW,
     CLOCK_PROCESS_CPUTIME_ID, CLOCK_REALTIME, CLOCK_REALTIME_COARSE, CLOCK_THREAD_CPUTIME_ID,
 };
@@ -136,8 +136,8 @@ pub(crate) fn restore_realtime_offset(offset: i64) {
 /// Start `CLOCK_REALTIME` at the time firmware's clock gave the loader, and
 /// return it in whole seconds; `None`, leaving the clock at the epoch, when
 /// firmware had no clock.
-pub fn set_boot_time(info: &ferrix_bootinfo::BootInfo) -> Option<u64> {
-    if info.firmware_flags & ferrix_bootinfo::FIRMWARE_TIME == 0 {
+pub fn set_boot_time(info: &xaqu_bootinfo::BootInfo) -> Option<u64> {
+    if info.firmware_flags & xaqu_bootinfo::FIRMWARE_TIME == 0 {
         return None;
     }
     let nanos = u64::try_from(info.firmware_time).ok()?;

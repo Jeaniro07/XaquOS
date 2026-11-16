@@ -100,7 +100,7 @@ const KIND_FIQ: u32 = 7;
 /// What the entry stores on the SVC stack before any function runs: `srsdb`'s two
 /// words, `push`'s fourteen, and the common path's four.
 const ENTRY_FRAME: usize = (2 + 14 + 4) * 4;
-/// Recorded when [`ferrix_stack_hit`] ran: past the eight real ones.
+/// Recorded when [`xaqu_stack_hit`] ran: past the eight real ones.
 const KIND_STACK_OVERFLOW: u32 = 8;
 
 core::arch::global_asm!(
@@ -110,32 +110,32 @@ core::arch::global_asm!(
 
 // The table itself: one branch per exception, 32-byte aligned as VBAR requires.
 .balign 32
-.globl ferrix_vectors
-ferrix_vectors:
-    b ferrix_stub_reset
-    b ferrix_stub_undefined
-    b ferrix_stub_svc
-    b ferrix_stub_prefetch_abort
-    b ferrix_stub_data_abort
-    b ferrix_stub_hyp_trap
-    b ferrix_stub_irq
-    b ferrix_stub_fiq
+.globl xaqu_vectors
+xaqu_vectors:
+    b xaqu_stub_reset
+    b xaqu_stub_undefined
+    b xaqu_stub_svc
+    b xaqu_stub_prefetch_abort
+    b xaqu_stub_data_abort
+    b xaqu_stub_hyp_trap
+    b xaqu_stub_irq
+    b xaqu_stub_fiq
 
 // Each stub: correct the banked link register to the return address, store it
 // and the banked saved status on the SVC stack, move to SVC mode, save the
 // general registers, and pass the common path the kind of exception in r0 and
 // the fault status and address in r1 and r2. r0 to r3 are free to use once the
 // push has saved them.
-ferrix_stub_reset:
+xaqu_stub_reset:
     srsdb sp!, #0x13
     cps   #0x13
     push  {{r0-r12, lr}}
     mov   r0, #0
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_undefined:
+xaqu_stub_undefined:
     sub   lr, lr, #4
     srsdb sp!, #0x13
     cps   #0x13
@@ -143,18 +143,18 @@ ferrix_stub_undefined:
     mov   r0, #1
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_svc:
+xaqu_stub_svc:
     srsdb sp!, #0x13
     cps   #0x13
     push  {{r0-r12, lr}}
     mov   r0, #2
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_prefetch_abort:
+xaqu_stub_prefetch_abort:
     sub   lr, lr, #4
     srsdb sp!, #0x13
     cps   #0x13
@@ -162,7 +162,7 @@ ferrix_stub_prefetch_abort:
     mov   r0, #3
     mrc   p15, 0, r1, c5, c0, 1
     mrc   p15, 0, r2, c6, c0, 2
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
 // Every other stub's `srsdb` faults here if the SVC stack pointer is unmapped,
 // and this one would then fault here for ever, silently (F-103). So it asks the
@@ -172,8 +172,8 @@ ferrix_stub_prefetch_abort:
 // byte the entry below stores, not the stack pointer itself: an aborted `srsdb`
 // or `push` leaves the pointer where it was, so a pointer a few bytes above the
 // guard would pass the question and abort here again, for ever.
-.globl ferrix_stub_data_abort
-ferrix_stub_data_abort:
+.globl xaqu_stub_data_abort
+xaqu_stub_data_abort:
     mov   sp, r0
     mrs   r0, spsr
     tst   r0, #0xf
@@ -186,7 +186,7 @@ ferrix_stub_data_abort:
     isb
     mrc   p15, 0, r0, c7, c4, 0
     tst   r0, #1
-    bne   ferrix_stack_hit
+    bne   xaqu_stack_hit
 1:  mov   r0, sp
     sub   lr, lr, #8
     srsdb sp!, #0x13
@@ -195,18 +195,18 @@ ferrix_stub_data_abort:
     mov   r0, #4
     mrc   p15, 0, r1, c5, c0, 0
     mrc   p15, 0, r2, c6, c0, 0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_hyp_trap:
+xaqu_stub_hyp_trap:
     srsdb sp!, #0x13
     cps   #0x13
     push  {{r0-r12, lr}}
     mov   r0, #5
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_irq:
+xaqu_stub_irq:
     sub   lr, lr, #4
     srsdb sp!, #0x13
     cps   #0x13
@@ -214,9 +214,9 @@ ferrix_stub_irq:
     mov   r0, #6
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
-ferrix_stub_fiq:
+xaqu_stub_fiq:
     sub   lr, lr, #4
     srsdb sp!, #0x13
     cps   #0x13
@@ -224,22 +224,22 @@ ferrix_stub_fiq:
     mov   r0, #7
     mov   r1, #0
     mov   r2, #0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
 // The SVC stack pointer is in unmapped memory: a kernel stack has overflowed.
 // This never returns. r0 is in this mode's stack pointer; r1 and r2 go to the
 // two thread registers a program would read, and nobody will run to miss them.
 // This processor's emergency stack is taken once, so that an overflow of that
 // one stops below.
-ferrix_stack_hit:
+xaqu_stack_hit:
     mcr   p15, 0, r1, c13, c0, 3
     mcr   p15, 0, r2, c13, c0, 2
     mrc   p15, 0, r1, c13, c0, 4
     cmp   r1, #0
-    beq   ferrix_stack_stop
+    beq   xaqu_stack_stop
     ldr   r0, [r1, #{emergency_stack}]
     cmp   r0, #0
-    beq   ferrix_stack_stop
+    beq   xaqu_stack_stop
     mov   r2, #0
     str   r2, [r1, #{emergency_stack}]
     cps   #0x13
@@ -257,12 +257,12 @@ ferrix_stack_hit:
     mov   r0, #{kind_overflow}
     mrc   p15, 0, r1, c5, c0, 0
     mrc   p15, 0, r2, c6, c0, 0
-    b     ferrix_trap_common
+    b     xaqu_trap_common
 
 // No emergency stack to run on: not given yet, or this is the second hit. One
 // stack for the whole machine, for whichever processor gets here first, to say
 // so; any other waits. Registers are given up: this stops the processor.
-ferrix_stack_stop:
+xaqu_stack_stop:
     ldr   r0, 3f
 4:  add   r0, pc, r0
 5:  ldrex r1, [r0]
@@ -289,14 +289,14 @@ ferrix_stack_stop:
 // interrupted is only four-byte aligned in general, so it is aligned to eight
 // for the call, and r4 and r5 -- saved above, and preserved by the callee --
 // remember the frame and the adjustment.
-ferrix_trap_common:
+xaqu_trap_common:
     mov   r3, #0
     push  {{r0-r3}}
     mov   r4, sp
     and   r5, sp, #4
     sub   sp, sp, r5
     mov   r0, r4
-    bl    ferrix_trap_entry
+    bl    xaqu_trap_entry
     add   sp, sp, r5
     add   sp, sp, #16
     pop   {{r0-r12, lr}}
@@ -331,9 +331,9 @@ core::arch::global_asm!(
 // r0 = a `TrapFrame`. Never returns: the frame is restored by the same
 // instructions the vector path above returns through. The user stack pointer is
 // banked, not in the frame, and is the task's user state's to load.
-.globl ferrix_resume_user
+.globl xaqu_resume_user
 .balign 4
-ferrix_resume_user:
+xaqu_resume_user:
     cpsid if
     mov   sp, r0
     add   sp, sp, #16
@@ -341,9 +341,9 @@ ferrix_resume_user:
     rfeia sp!
 
 // r0 = entry, r1 = user stack, r2 = the program's CPSR. Never returns.
-.globl ferrix_enter_user
+.globl xaqu_enter_user
 .balign 4
-ferrix_enter_user:
+xaqu_enter_user:
     // Masked until the `rfeia`, which opens them from the CPSR it loads.
     cpsid if
 
@@ -402,9 +402,9 @@ const CPSR_THUMB: u32 = 1 << 5;
 
 unsafe extern "C" {
     /// Enter USR mode at `entry` on `stack` with `cpsr`.
-    fn ferrix_enter_user(entry: u32, stack: u32, cpsr: u32, argument: u32) -> !;
+    fn xaqu_enter_user(entry: u32, stack: u32, cpsr: u32, argument: u32) -> !;
     /// Resume USR mode from a saved frame.
-    fn ferrix_resume_user(frame: *const TrapFrame) -> !;
+    fn xaqu_resume_user(frame: *const TrapFrame) -> !;
 }
 
 /// A program's registers as its system call saved them.
@@ -452,7 +452,7 @@ pub(crate) const fn exception_code(frame: &TrapFrame) -> u64 {
 /// else `SIGILL` at the instruction.
 pub(crate) fn fault_signal(frame: &TrapFrame, trap: &crate::trap::Trap) -> (u32, i32, u64) {
     use crate::trap::Trap;
-    use ferrix_linux_abi::types::{SIGBUS, SIGILL, SIGSEGV, SIGTRAP};
+    use xaqu_linux_abi::types::{SIGBUS, SIGILL, SIGSEGV, SIGTRAP};
 
     /// `SIGSEGV`: nothing mapped at the address.
     const SEGV_MAPERR: i32 = 1;
@@ -490,7 +490,7 @@ pub(crate) fn fault_signal(frame: &TrapFrame, trap: &crate::trap::Trap) -> (u32,
 /// stack.
 pub unsafe fn resume_user(regs: &UserRegs) -> ! {
     // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract.
-    unsafe { ferrix_resume_user(core::ptr::from_ref(&regs.0)) }
+    unsafe { xaqu_resume_user(core::ptr::from_ref(&regs.0)) }
 }
 
 /// Enter USR mode for the first time, at `entry` on `stack`, with `argument`'s
@@ -513,7 +513,7 @@ pub unsafe fn enter_user(entry: u64, stack: u64, argument: u64, abi: crate::trap
         (entry & !1, USER_CPSR | CPSR_THUMB)
     };
     // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract.
-    unsafe { ferrix_enter_user(entry, stack as u32, cpsr, argument as u32) }
+    unsafe { xaqu_enter_user(entry, stack as u32, cpsr, argument as u32) }
 }
 
 /// Service a system call made from USR mode with `svc #0`.
@@ -529,7 +529,7 @@ pub unsafe fn enter_user(entry: u64, stack: u64, argument: u64, abi: crate::trap
 /// does not yet honour.
 pub fn system_call(frame: &mut TrapFrame) -> Result<(), &'static str> {
     use crate::trap::{Outcome, SyscallArgs};
-    use ferrix_linux_abi::nr::Syscall;
+    use xaqu_linux_abi::nr::Syscall;
 
     if !frame.came_from_user() {
         return Err("a system call from SVC mode");
@@ -654,7 +654,7 @@ fn dispatch_marked(args: &crate::trap::SyscallArgs, regs: &UserRegs) -> crate::t
 /// number, at the one `svc` entry every program uses.
 #[doc(hidden)]
 pub const fn vectors_die_in(number: usize) -> bool {
-    use ferrix_native_abi::nr::{CHANNEL_WRITE_READ, OBJECT_WAIT_ONE, PORT_WAIT};
+    use xaqu_native_abi::nr::{CHANNEL_WRITE_READ, OBJECT_WAIT_ONE, PORT_WAIT};
     matches!(number, CHANNEL_WRITE_READ | OBJECT_WAIT_ONE | PORT_WAIT)
 }
 
@@ -679,14 +679,14 @@ fn store_words(frame: &mut TrapFrame, answer: &[u64]) -> Result<(), &'static str
 
 unsafe extern "C" {
     /// The vector table, aligned as `VBAR` requires.
-    static ferrix_vectors: [u8; 8 * 4];
+    static xaqu_vectors: [u8; 8 * 4];
 }
 
 /// Where the save sequence hands over.
 ///
 /// Not called from Rust — the `bl` in the assembly above is its only caller.
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_trap_entry(frame: &mut TrapFrame) {
+extern "C" fn xaqu_trap_entry(frame: &mut TrapFrame) {
     if frame.kind == KIND_STACK_OVERFLOW {
         crate::trap::stack_overflow(frame);
     }
@@ -858,8 +858,8 @@ pub(crate) fn report_trap(frame: &TrapFrame) {
 /// table serves every core: it holds code, and no per-core state.
 pub(crate) unsafe fn init() {
     // The kernel is linked below 4 GiB, so the address fits the register.
-    let table = (&raw const ferrix_vectors).addr() as u32;
-    // Before the table can be used: `ferrix_stack_hit` reads this to find the
+    let table = (&raw const xaqu_vectors).addr() as u32;
+    // Before the table can be used: `xaqu_stack_hit` reads this to find the
     // processor's record, and reset leaves it unknown. Zero says none yet;
     // `set_cpu_local`, which runs later on every core, gives it its value.
     cpu::write_tpidrprw(0);
@@ -873,9 +873,9 @@ pub(crate) unsafe fn init() {
 /// The first words of the data abort stub, for `L.armv7a.30`'s check.
 pub(super) fn stack_checked_entry() -> [u32; 9] {
     unsafe extern "C" {
-        static ferrix_stub_data_abort: [u32; 9];
+        static xaqu_stub_data_abort: [u32; 9];
     }
-    let entry = (&raw const ferrix_stub_data_abort).cast::<u32>();
+    let entry = (&raw const xaqu_stub_data_abort).cast::<u32>();
     // SAFETY: (PROBE) the stub is in this image, mapped readable, and longer than this.
     core::array::from_fn(|at| unsafe { entry.wrapping_add(at).read() })
 }

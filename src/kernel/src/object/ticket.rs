@@ -41,7 +41,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_native_abi::types::MAX_TICKETS;
+use xaqu_native_abi::types::MAX_TICKETS;
 
 use crate::object::channel::Sender;
 use crate::object::quota::{self, Charge, Resource};

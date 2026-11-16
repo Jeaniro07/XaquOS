@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-kmem"
+name = "xaqu-kmem"
 description = "Kernel memory held for a program, charged to its job: the token and the hook the kernel installs"
 version = "0.1.0"
 edition = "2024"
@@ -14,8 +14,8 @@ publish = false
 testing = []
 
 [dependencies]
-ferrix-heap = { workspace = true }
-ferrix-sync = { workspace = true }
+xaqu-heap = { workspace = true }
+xaqu-sync = { workspace = true }
 
 [lints]
 workspace = true

@@ -32,19 +32,19 @@
 //!   stays the program's even if its call then answers `ENODEV`, as when a
 //!   driver installs and dies; the fence it names reads `ENODEV`.
 //!
-//! [`SYNC_DEADLINE_MAX_MS`]: ferrix_native_abi::types::SYNC_DEADLINE_MAX_MS
+//! [`SYNC_DEADLINE_MAX_MS`]: xaqu_native_abi::types::SYNC_DEADLINE_MAX_MS
 
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     SYNC_CLOEXEC, SYNC_DEADLINE_DEFAULT_MS, SYNC_DEADLINE_MAX_MS, SYNC_FLAGS,
 };
-use ferrix_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
+use xaqu_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
 
 use crate::fs;
 use crate::object::process::Host;
@@ -228,7 +228,7 @@ impl Inode for SyncFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(&self.readable));
         true
     }
@@ -609,7 +609,7 @@ fn watch(fence: &Arc<SyncFile>) -> Result<(), Errno> {
         start
     };
     if start {
-        match sched::spawn("syncfiles", run, 0, ferrix_sched::NICE_0_WEIGHT) {
+        match sched::spawn("syncfiles", run, 0, xaqu_sched::NICE_0_WEIGHT) {
             Ok(task) => {
                 let previous = TASK.lock().replace(task);
                 drop(previous);

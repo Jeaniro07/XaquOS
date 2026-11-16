@@ -19,7 +19,7 @@
 //! # The switch
 //!
 //! [`HARDENED`] is false only in a kernel built with the flag `mitigations=off`
-//! (`cfg(ferrix_mitigations = "off")`, `cargo xtask --mitigations off`), and
+//! (`cfg(xaqu_mitigations = "off")`, `cargo xtask --mitigations off`), and
 //! then every defence here and in the architectures is compiled out: clamps are
 //! the identity, nothing is written to the processor, no barrier is issued,
 //! and the entry paths' extra instructions are assembled away. The reference
@@ -27,13 +27,13 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_sched::MAX_CPUS;
+use xaqu_sched::MAX_CPUS;
 
 use super::machine_speculation as machine;
 
 /// Whether this kernel carries its side-channel defences: every build but one
 /// made with `--mitigations off`.
-pub const HARDENED: bool = !cfg!(ferrix_mitigations = "off");
+pub const HARDENED: bool = !cfg!(xaqu_mitigations = "off");
 
 /// `Some(index)` when `index < len`, clamped so that no mispredicted path can
 /// use it to reach past `len`; `None` otherwise.
@@ -317,7 +317,7 @@ fn issue_barrier(cpu: usize) {
 /// every restricted exit. Every build but one made with `partition`
 /// (`docs/microkernel/K1.md` §6), so `present` and `desktop` boot the check
 /// under the strong rule.
-const EXIT_BARRIER: bool = !cfg!(ferrix_partition_speculation = "partition");
+const EXIT_BARRIER: bool = !cfg!(xaqu_partition_speculation = "partition");
 
 /// Whether each processor last ran restricted code in ring 3, and has had no
 /// barrier since: what a switch from a restricted thread to a normal-mode
@@ -376,7 +376,7 @@ pub(crate) const fn exit_barrier_built() -> bool {
 }
 
 /// Whether this processor's mark says restricted code ran here last, with no barrier since.
-#[cfg(all(target_arch = "x86_64", ferrix_restricted_fastpath = "on"))]
+#[cfg(all(target_arch = "x86_64", xaqu_restricted_fastpath = "on"))]
 pub(crate) fn restricted_ran_here() -> bool {
     RESTRICTED_RAN
         .get(this_cpu())
@@ -387,7 +387,7 @@ pub(crate) fn restricted_ran_here() -> bool {
 #[cfg(target_arch = "x86_64")]
 #[inline(always)]
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 pub(crate) fn restricted_ran_on(cpu: usize) {
@@ -397,7 +397,7 @@ pub(crate) fn restricted_ran_on(cpu: usize) {
 
 /// [`restricted_left_here`] for a window's trip: no root write follows, so what empties the
 /// return predictor is the `IBPB` where the processor says so, or the refill (6787 W8).
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[inline(always)]
 pub(crate) fn restricted_left_window(cpu: usize) {
     // SAFETY: (CONTEXT) `cpu` is this processor's logical number, below `MAX_CPUS`.
@@ -420,7 +420,7 @@ pub(crate) fn restricted_left_window(cpu: usize) {
 #[cfg(target_arch = "x86_64")]
 #[inline(always)]
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 pub(crate) fn restricted_left_here(cpu: usize) {
@@ -551,9 +551,9 @@ pub(crate) fn leaving_domain(domain: u64) {
     if let Some(hook) = hook {
         (hook.run)();
     }
-    let saved = <super::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <super::Irq as xaqu_sync::IrqControl>::disable();
     serve_wanted_barrier();
-    <super::Irq as ferrix_sync::IrqControl>::restore(saved);
+    <super::Irq as xaqu_sync::IrqControl>::restore(saved);
     crate::smp::synchronize();
     if let Some(published) = LEAVING.get(slot) {
         published.store(0, Ordering::SeqCst);

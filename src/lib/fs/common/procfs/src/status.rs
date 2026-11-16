@@ -209,7 +209,7 @@ pub fn render(out: &mut Vec<u8>, status: &Status<'_>) {
     // The signal lines follow `Threads`, as Linux's do. `NoNewPrivs`,
     // `Seccomp` and `Seccomp_filters` come after the capability
     // sets and before the speculation lines and `Cpus_allowed`
-    // (`fs/proc/array.c`), which is where the lines Ferrix has fall.
+    // (`fs/proc/array.c`), which is where the lines Xaqu has fall.
     let SignalMasks {
         queued,
         queue_limit,

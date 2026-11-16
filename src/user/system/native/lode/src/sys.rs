@@ -1,4 +1,4 @@
-//! The Linux calls lode makes, by number through `ferrix_rt::linux::call`
+//! The Linux calls lode makes, by number through `xaqu_rt::linux::call`
 //! (an app's way: nothing is added to the runtime).
 //!
 //! Where the three architectures differ beyond the number -- ARMv7-A's
@@ -8,12 +8,12 @@
 
 use alloc::vec::Vec;
 
-use ferrix_rt::linux::{call, numbers};
+use xaqu_rt::linux::{call, numbers};
 
 use crate::arch;
 
 /// An error number.
-pub(crate) use ferrix_linux_abi::errno::Errno;
+pub(crate) use xaqu_linux_abi::errno::Errno;
 
 /// `-100`, the working directory, as `openat` takes it.
 pub(crate) const AT_FDCWD: usize = -100_isize as usize;
@@ -362,7 +362,7 @@ pub(crate) fn map(length: usize) -> Option<*mut u8> {
 
 /// Unmap what [`map`] gave.
 pub(crate) fn unmap(address: *mut u8, length: usize) {
-    let _ = ferrix_rt::linux::munmap(address as usize, length);
+    let _ = xaqu_rt::linux::munmap(address as usize, length);
 }
 
 /// `getuid()`.
@@ -400,13 +400,13 @@ pub(crate) fn set_nonblocking(fd: usize) -> Result<(), Errno> {
 
 /// A listening stream socket at `path`, made afresh, non-blocking.
 pub(crate) fn listen_at(path: &[u8]) -> Result<usize, Errno> {
-    listen_kind(path, ferrix_rt::linux::SOCK_STREAM)
+    listen_kind(path, xaqu_rt::linux::SOCK_STREAM)
 }
 
 /// A listening socket of `kind` (`SOCK_STREAM`, [`SOCK_SEQPACKET`]) at
 /// `path`, made afresh, non-blocking.
 pub(crate) fn listen_kind(path: &[u8], kind: usize) -> Result<usize, Errno> {
-    use ferrix_rt::linux as rt;
+    use xaqu_rt::linux as rt;
     let _ = unlinkat(AT_FDCWD, path);
     let fd = rt::socket(rt::AF_UNIX, kind | rt::SOCK_NONBLOCK | O_CLOEXEC, 0)?;
     let Some((address, length)) = rt::sockaddr_un(path) else {
@@ -423,12 +423,12 @@ pub(crate) fn listen_kind(path: &[u8], kind: usize) -> Result<usize, Errno> {
 
 /// A connection waiting on `listener`, non-blocking, if there is one.
 pub(crate) fn accept(listener: usize) -> Option<usize> {
-    ferrix_rt::linux::accept4(listener, ferrix_rt::linux::SOCK_NONBLOCK | O_CLOEXEC).ok()
+    xaqu_rt::linux::accept4(listener, xaqu_rt::linux::SOCK_NONBLOCK | O_CLOEXEC).ok()
 }
 
 /// The uid at the other end of a connected socket.
 pub(crate) fn peer_uid(fd: usize) -> Option<u32> {
-    ferrix_rt::linux::peer_uid(fd).ok()
+    xaqu_rt::linux::peer_uid(fd).ok()
 }
 
 /// Wait up to `millis` for any of `fds` to be readable.
@@ -531,7 +531,7 @@ const SOCK_DGRAM: usize = 2;
 /// A datagram socket bound at `path`, made afresh, non-blocking, its
 /// receives stamped with their senders' credentials (`SO_PASSCRED`).
 pub(crate) fn datagram_at(path: &[u8]) -> Result<usize, Errno> {
-    use ferrix_rt::linux as rt;
+    use xaqu_rt::linux as rt;
     let _ = unlinkat(AT_FDCWD, path);
     let fd = rt::socket(rt::AF_UNIX, SOCK_DGRAM | rt::SOCK_NONBLOCK | O_CLOEXEC, 0)?;
     let one: i32 = 1;
@@ -833,7 +833,7 @@ fn sockaddr_in(address: [u8; 4], port: u16) -> [u8; 16] {
 
 /// A listening TCP socket on `127.0.0.1`:`port`, blocking.
 pub(crate) fn tcp_listen(port: u16) -> Result<usize, Errno> {
-    use ferrix_rt::linux as rt;
+    use xaqu_rt::linux as rt;
     let fd = rt::socket(AF_INET, rt::SOCK_STREAM | O_CLOEXEC, 0)?;
     let sockaddr = sockaddr_in([127, 0, 0, 1], port);
     let bound = rt::bind(fd, &sockaddr, sockaddr.len()).and_then(|_| rt::listen(fd, 16));
@@ -846,7 +846,7 @@ pub(crate) fn tcp_listen(port: u16) -> Result<usize, Errno> {
 
 /// The next connection on a blocking `listener`.
 pub(crate) fn accept_blocking(listener: usize) -> Result<usize, Errno> {
-    ferrix_rt::linux::accept4(listener, O_CLOEXEC)
+    xaqu_rt::linux::accept4(listener, O_CLOEXEC)
 }
 
 /// Take a fault on purpose: a read of address 0, which no program maps.
@@ -855,7 +855,7 @@ pub(crate) fn fault_now() -> ! {
     // SAFETY: deliberately unsound: the read faults, and the kernel ends
     // the process with SIGSEGV before anything reads the value.
     let _ = unsafe { core::ptr::read_volatile(core::ptr::null::<u8>()) };
-    ferrix_rt::exit(1)
+    xaqu_rt::exit(1)
 }
 
 /// Where the link `path` points, or none.

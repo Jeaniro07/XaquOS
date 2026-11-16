@@ -23,8 +23,8 @@ use std::io::Write as _;
 use std::os::unix::process::CommandExt as _;
 use std::process::{Command, ExitCode};
 
-use ferrix_auth_account as account;
-use ferrix_auth_client::{Connection, Terminal, Verdict, converse, talks_to_authd};
+use xaqu_auth_account as account;
+use xaqu_auth_client::{Connection, Terminal, Verdict, converse, talks_to_authd};
 
 /// The `PATH` the new shell starts with.
 const PATH: &str = "/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin";
@@ -108,7 +108,7 @@ fn run(asked: &args::Asked, term: Option<String>) -> Result<Never, String> {
 fn prove(real: u32, caller: &str) -> Result<(), String> {
     // U5: no terminal, no password: refused before connecting. The secret
     // is read from standard input, and only when that is a terminal;
-    // `/dev/tty` is the console on Ferrix whatever the caller's terminal is.
+    // `/dev/tty` is the console on Xaqu whatever the caller's terminal is.
     // SAFETY: isatty reads nothing through its argument.
     if unsafe { libc::isatty(libc::STDIN_FILENO) } != 1 {
         return Err("no terminal to ask the password on".to_owned());
@@ -172,29 +172,29 @@ fn say(line: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ferrix_auth_client::AUTHD_UIDS;
+    use xaqu_auth_client::AUTHD_UIDS;
 
     /// U3: root only for an ACCEPTED naming the caller itself.
     #[test]
     fn root_comes_back_only_for_the_callers_own_acceptance() {
         let ok = Verdict::Accepted {
             uid: 1000,
-            account: "ferrix".to_owned(),
+            account: "xaqu".to_owned(),
         };
-        assert!(accepted(&ok, 1000, "ferrix").is_ok());
-        assert!(accepted(&ok, 1001, "ferrix").is_err());
+        assert!(accepted(&ok, 1000, "xaqu").is_ok());
+        assert!(accepted(&ok, 1001, "xaqu").is_err());
         assert!(accepted(&ok, 1000, "other").is_err());
         let root = Verdict::Accepted {
             uid: 0,
             account: "root".to_owned(),
         };
-        assert!(accepted(&root, 1000, "ferrix").is_err());
+        assert!(accepted(&root, 1000, "xaqu").is_err());
         let failed = Verdict::Failed {
             retry_after_ms: 0,
             text: "Authentication failed".to_owned(),
         };
-        assert!(accepted(&failed, 1000, "ferrix").is_err());
-        assert!(accepted(&Verdict::Unavailable("no".to_owned()), 1000, "ferrix").is_err());
+        assert!(accepted(&failed, 1000, "xaqu").is_err());
+        assert!(accepted(&Verdict::Unavailable("no".to_owned()), 1000, "xaqu").is_err());
     }
 
     /// The certification consultant's V1: a server of a user's own -- here

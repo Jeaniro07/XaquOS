@@ -1,4 +1,4 @@
-//! Verify-only LMS/HSS and the signed manifest of Ferrix's product signing
+//! Verify-only LMS/HSS and the signed manifest of Xaqu's product signing
 //! (`docs/SIGNING.md`).
 //!
 //! [`lms`] verifies LM-OTS, LMS and HSS signatures (RFC 8554) over

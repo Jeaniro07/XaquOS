@@ -27,7 +27,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "nvidia-modeset-os-interface.h"
 #include "nvkms.h"
 

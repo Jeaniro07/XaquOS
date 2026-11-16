@@ -1,7 +1,7 @@
 //! The kernel log, kept across a reset too: a mirror of every byte the log
 //! records into a region of RAM the loader gave, which the next boot's loader
 //! finds and reports (`docs/POSTMORTEM.md` §3, the format in
-//! `ferrix_bootinfo::pstore`).
+//! `xaqu_bootinfo::pstore`).
 //!
 //! # What the kernel does with the region, and what it does not
 //!
@@ -34,12 +34,12 @@
 
 use core::sync::atomic::{AtomicU8, AtomicU64, Ordering};
 
-use ferrix_bootinfo::pstore::{
+use xaqu_bootinfo::pstore::{
     self, HEADER_BYTES, STOP_OFFSET, Stop, TABLE_COUNT_OFFSET, TABLE_ENTRIES, TABLE_OFFSET,
     WRITTEN_OFFSET,
 };
-use ferrix_bootinfo::{BootView, MemKind, PAGE_SIZE};
-use ferrix_sync::Once;
+use xaqu_bootinfo::{BootView, MemKind, PAGE_SIZE};
+use xaqu_sync::Once;
 
 use super::log;
 use crate::console::println;

@@ -7,7 +7,7 @@
 //! (`check::check_arm_smt`). Under `smt=off` a malformed table stops
 //! the boot there; under `stibp` it is kept as malformed and said.
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 pub(crate) mod check;
 
@@ -40,7 +40,7 @@ static FOUND: Once<Found> = Once::new();
 /// known, and the boot stops rather than read it as none.
 pub(crate) fn record(found: Found) -> Result<(), &'static str> {
     let _ = FOUND.call_once(|| found);
-    if cfg!(ferrix_smt = "off")
+    if cfg!(xaqu_smt = "off")
         && let Found::Malformed(why) = found
     {
         return Err(why);

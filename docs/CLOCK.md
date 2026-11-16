@@ -2,7 +2,7 @@
 
 Version 1. Written on 2026-10-10, the day a study of a software-GL game
 found the kernel running on the HPET under a hypervisor without saying so
-(`~/.local/share/ferrix/steam-race/softgl-gap.md` on the gate host). The
+(`~/.local/share/xaqu/steam-race/softgl-gap.md` on the gate host). The
 code is `src/kernel/src/arch/x86_64/clock.rs`; its requirements are
 `L.x86_64.38` to `L.x86_64.41` and `L.x86_64.166` to `L.x86_64.171`
 (`docs/sysml/18-x86-64-requirements.sysml`). AArch64 and ARMv7-A read the
@@ -84,7 +84,7 @@ bit rules out by forbidding migration:
   while the time page goes on stating the host's rate with the stable flag
   set, so a clock built on that rate runs fast from the first second.
 
-Ferrix reads the rate once, with the invariant bit and without it: nothing
+Xaqu reads the rate once, with the invariant bit and without it: nothing
 in the kernel or the vDSO data page can change a rate after boot. So row 2
 of §3 states that limit rather than hides it: the boot line names KVM as
 the source of the trust, `docs/certification/SAFETY-MANUAL.md`'s AoU-28
@@ -255,7 +255,7 @@ beside `MODE_TSC` in `src/lib/kernel/vdso`, a system-call fallback when the
 stable flag drops, and a kernel clock that is no longer `counter * 10^9 /
 hz`: a change to `timer.rs`'s contract with all three architectures.
 `docs/BACKLOG.md` has the row, with the migration case as its reason. Until
-it is built, a Ferrix guest on row 2 must not be live-migrated to a host
+it is built, a Xaqu guest on row 2 must not be live-migrated to a host
 without TSC scaling; on rows 1, 3 and 5 it could never be.
 
 ## 8. Requirements and checks
@@ -287,10 +287,10 @@ direction reversed in `pvclock_hz` (167, any boot); the give-back write
 registering again (168, the standing KVM boot); the changed-version test taken out
 of `read_time_page` (169, any boot); `hpet_reason` answering nothing (170,
 under TCG); and `init` not asking KVM (171, under KVM with
-`FERRIX_X86_CPU=host`).
+`XAQU_X86_CPU=host`).
 
 Gates: the image row, x86_64 under KVM and TCG, plus one boot the row does
-not have: `FERRIX_X86_CPU=host cargo xtask test-boot --arch x86_64 --accel
+not have: `XAQU_X86_CPU=host cargo xtask test-boot --arch x86_64 --accel
 kvm`, the card domain's processor line, which must print row 2's line and
 pass stage 3's timer check and the vDSO's on it. Only that boot reaches
 row 2's arm of `init`; `docs/certification/COVERAGE-RESIDUAL.md` says so,

@@ -247,7 +247,7 @@ pub struct Stat {
     pub burst_us: u64,
 }
 
-/// Append `cpu.stat`, the keys Ferrix has a source for in Linux's order.
+/// Append `cpu.stat`, the keys Xaqu has a source for in Linux's order.
 /// Every cgroup has the first three; the period and throttle counts are
 /// printed only where the `cpu` controller is enabled, as Linux prints them.
 pub fn render_stat(out: &mut Vec<u8>, stat: Stat, controlled: bool) {

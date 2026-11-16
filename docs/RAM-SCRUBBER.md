@@ -15,7 +15,7 @@ nothing when a cell flips or sticks. The first sign is a program's wrong
 answer, a corrupted file, or a crash far from the cause. Linux offers
 `memtest=` at boot (a pattern test of free memory before anything runs) and
 nothing at run time; hardware ECC patrol scrubbing exists only where ECC
-does. The customer wants Ferrix to hold up better than Linux and Windows on
+does. The customer wants Xaqu to hold up better than Linux and Windows on
 an overclocked machine: a frame that fails a pattern test should be found
 while the machine idles, before anything is stored in it, and taken out of
 use for the rest of the boot.
@@ -26,7 +26,7 @@ use for the rest of the boot.
   `RETIRED_CAPACITY` (256) frames, never handed out again until restart. A
   free frame is claimed off the free lists (`Claimed`); an allocated one --
   the scrubber's own claimed frame among them -- is `Marked` and kept by
-  `keep_retired` when it is freed. `/proc/ferrix-mce-retired`, root's,
+  `keep_retired` when it is freed. `/proc/xaqu-mce-retired`, root's,
   lists them.
 * **Claiming one free frame** (`mm::claim_frame`, `Frames::claim`): finds
   the free block of order `m` holding the frame, unlinks it and splits it
@@ -36,7 +36,7 @@ use for the rest of the boot.
   flushes; AArch64 `dc civac` over `CTR_EL0.DminLine` (`cpu.rs`); ARMv7-A
   `clean_to_poc` over `CTR.DminLine`, clean only. No facade evicts a range
   for a read-back test.
-* **SMBIOS** (`ferrix_smbios`): identity fields only; type 16 (Physical
+* **SMBIOS** (`xaqu_smbios`): identity fields only; type 16 (Physical
   Memory Array) is not decoded. QEMU's own type 16 reports multi-bit ECC
   (06h).
 * **Policy in ring 3**: the processor service token pattern
@@ -82,7 +82,7 @@ time:
    ever held out. Each is
    said on the console: `scrub: a frame failed its pattern test twice and
    was retired` (or `... and is held: the retired set is full`); no address
-   (`/proc/ferrix-mce-retired` lists retired ones, root's).
+   (`/proc/xaqu-mce-retired` lists retired ones, root's).
 
 The call runs in the asking task, preemptible, with interrupts on; it holds
 `FRAMES` only to claim and to release, and no spin lock across a frame's
@@ -181,10 +181,10 @@ these: a hypervisor that answers it is reached by `hvc`.) A guest none of these 
 residual.
 
 The gate needs the scrubber on under QEMU, whose own type 16 says
-multi-bit ECC. One boot option, `ferrix.scrub=test`, overrides both
+multi-bit ECC. One boot option, `xaqu.scrub=test`, overrides both
 stand-downs, and only where it cannot defeat the ECC stand-down on bare
 metal (condition 2, ledger 5140 (1)): it is compiled into a build with the
-checks (`ferrix_checks = "on"`), which every certified profile is, so what
+checks (`xaqu_checks = "on"`), which every certified profile is, so what
 keeps it off bare metal is that it is honoured only where a hypervisor is
 positively seen -- x86-64's hypervisor bit, AArch64's `hvc` conduit or
 `/hypervisor` node, never the fail-closed answer for firmware that names no
@@ -196,7 +196,7 @@ reason are a boot line: `scrub: runs` / `scrub: stands down: <why>`.
 
 ### 3.4 Counts
 
-`/proc/ferrix-scrub` (0444): frames managed, frames tested this sweep and
+`/proc/xaqu-scrub` (0444): frames managed, frames tested this sweep and
 in all, suspects, bad, retired by the scrubber, held because the set was
 full, full sweeps completed, and whether and why it stands down (§8 answer
 4: coverage visible as tested against managed). No addresses; the bad count
@@ -240,7 +240,7 @@ pace is the service's (§8 answer 2).
 * It does not run on ECC or parity memory, under a hypervisor, or on
   ARMv7-A without a table saying no ECC and no outer cache.
 * It does not test past the point of coherency (§3.2).
-* It is not a boot-time memtest; `ferrix.scrub=boot` is a later option.
+* It is not a boot-time memtest; `xaqu.scrub=boot` is a later option.
 * Under QEMU it finds nothing, and QEMU models no caches: its gate injects
   the failure, and the eviction is shown by build evidence (§7).
 
@@ -292,10 +292,10 @@ L.object.252-253; L.syscall.24.
 * **`test-scrub`** (x86-64 KVM and TCG, AArch64; ARMv7-A's row requires
   the stand-down line, its reason no write of a whole line that reads
   nothing: the architecture is judged before the table): init and `memscrub` with `period = 20`, 512 MiB of memory,
-  `ferrix.scrub=test`: a full sweep completes and is said,
-  `/proc/ferrix-scrub` counts the frames tested against managed, no
+  `xaqu.scrub=test`: a full sweep completes and is said,
+  `/proc/xaqu-scrub` counts the frames tested against managed, no
   allocation failed, and with four CPU-bound loops it scrubs nothing while
-  busy. A boot without `ferrix.scrub=test` stands down, said with the
+  busy. A boot without `xaqu.scrub=test` stands down, said with the
   reason (QEMU's type 16).
 * **Negative controls that fire under QEMU**: the claim's "free" test
   removed (the check's held frame changes); the "another block of the

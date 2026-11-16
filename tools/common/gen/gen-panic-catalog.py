@@ -189,14 +189,14 @@ def render(entries: list[dict], names: list[str]) -> str:
     ordered = [by_name[name] for name in names]
 
     lines = [
-        "# Ferrix — panic codes",
+        "# Xaqu — panic codes",
         "",
         f"> Generated from {SOURCE.as_posix()} by tools/common/gen/gen-panic-catalog.py. Do not edit: "
         f"change the catalog and regenerate with `{COMMAND}`.",
         "",
         wrap(
             "When the kernel stops on a fatal condition it prints a report beginning "
-            "with a `FERRIX-PANIC` line that carries the failing site's own message. A "
+            "with a `XAQU-PANIC` line that carries the failing site's own message. A "
             "site that names a catalog entry adds, below the trace, the entry's code and "
             "title on a `code` line, then `means`, `causes` and `see` lines with the text "
             "below. The message says what happened this time; the entry says what the "

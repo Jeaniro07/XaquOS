@@ -1,7 +1,7 @@
 //! The record of one measurement of a hot path (`docs/HOTPATHS.md` §6).
 //!
 //! A record is keyed by four things, and its file name and directory carry
-//! all four: the hot path, the hardware's fingerprint hash, the Ferrix
+//! all four: the hot path, the hardware's fingerprint hash, the Xaqu
 //! commit, and the configuration's hash:
 //!
 //! ```text
@@ -22,7 +22,7 @@ use crate::args::Args;
 use crate::{Error, Result};
 
 /// What a record's text says it is.
-pub(crate) const RESULT_SCHEMA: &str = "ferrix-hotpath-result/1";
+pub(crate) const RESULT_SCHEMA: &str = "xaqu-hotpath-result/1";
 
 /// Where records live, under the workspace.
 pub(crate) const RESULTS: &str = "docs/hotpaths/results";
@@ -93,7 +93,7 @@ impl Boot {
 pub(crate) enum Reference {
     /// Nothing: one tree, measured alone.
     None,
-    /// Another Ferrix tree, turn about (`--alternate`).
+    /// Another Xaqu tree, turn about (`--alternate`).
     Tree {
         /// The ref as given.
         name: String,
@@ -132,7 +132,7 @@ pub(crate) fn value(
     measurement: &Measurement<'_>,
     fingerprint: &Fingerprint,
     configuration: Value,
-    ferrix: Value,
+    xaqu: Value,
     taken: &str,
     log: Option<&str>,
 ) -> Value {
@@ -150,7 +150,7 @@ pub(crate) fn value(
             boots,
         } => (
             Value::object([
-                ("kind", Value::str("ferrix tree")),
+                ("kind", Value::str("xaqu tree")),
                 ("ref", Value::str(name)),
                 ("commit", Value::str(commit)),
                 (
@@ -192,7 +192,7 @@ pub(crate) fn value(
         ("host_hash", Value::str(&fingerprint.host_hash)),
         ("cpu_hash", Value::str(&fingerprint.cpu_hash)),
         ("hardware", fingerprint.value.clone()),
-        ("ferrix", ferrix),
+        ("xaqu", xaqu),
         (
             "configuration_hash",
             Value::str(super::hash(&configuration)),
@@ -326,7 +326,7 @@ pub(crate) fn set_board(configuration: &mut Value, board: &str, processors: u64)
 
 /// This tree's commit, and whether anything outside the results directory
 /// differs from it.
-pub(crate) fn ferrix_commit(root: &Path) -> Result<Value> {
+pub(crate) fn xaqu_commit(root: &Path) -> Result<Value> {
     let git = |arguments: &[&str]| -> Result<String> {
         let output = std::process::Command::new("git")
             .arg("-C")
@@ -351,8 +351,8 @@ pub(crate) fn ferrix_commit(root: &Path) -> Result<Value> {
 pub(crate) fn write(root: &Path, record: &Value) -> Result<PathBuf> {
     let field = |key: &str| record.get(key).and_then(Value::as_str).unwrap_or_default();
     let commit = record
-        .get("ferrix")
-        .and_then(|ferrix| ferrix.get("commit"))
+        .get("xaqu")
+        .and_then(|xaqu| xaqu.get("commit"))
         .and_then(Value::as_str)
         .unwrap_or_default();
     let directory = root
@@ -484,7 +484,7 @@ fn check_record(record: &Value, file: &Path) -> Vec<String> {
     if path != Some(text("path")) {
         problems.push("filed under another hot path than its own".to_owned());
     }
-    for key in ["ferrix", "runs", "summary", "taken", "figure"] {
+    for key in ["xaqu", "runs", "summary", "taken", "figure"] {
         if record.get(key).is_none() {
             problems.push(format!("no `{key}`"));
         }
@@ -604,7 +604,7 @@ mod tests {
 
     #[test]
     fn a_written_record_checks_clean_and_a_moved_one_does_not() {
-        let root = std::env::temp_dir().join(format!("ferrix-hotpath-test-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("xaqu-hotpath-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let fingerprint = Fingerprint::new(host::tests::nazuna().describe(), Value::Null);
         let measurement = Measurement {
@@ -618,7 +618,7 @@ mod tests {
                 boots: vec![boot(2427), boot(2400)],
             },
         };
-        let ferrix = Value::object([
+        let xaqu = Value::object([
             ("commit", Value::str("a1d456820abc")),
             ("dirty", Value::Bool(false)),
         ]);
@@ -627,7 +627,7 @@ mod tests {
             &measurement,
             &fingerprint,
             configuration,
-            ferrix,
+            xaqu,
             "2026-10-06T10:44:14Z",
             None,
         );

@@ -9,7 +9,7 @@
 use std::io::Write as _;
 use std::time::Instant;
 
-use ferrix_argon2::{Block, Inputs, Params, hash};
+use xaqu_argon2::{Block, Inputs, Params, hash};
 
 fn main() {
     let words: Vec<u32> = std::env::args()

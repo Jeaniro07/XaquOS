@@ -25,14 +25,14 @@ use alloc::vec::Vec;
 use core::mem::{offset_of, size_of};
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, AT_REMOVEDIR, ArmStatfs, MAP_ANONYMOUS, MAP_PRIVATE, MS_BIND, MS_NOATIME, MS_NODEV,
     MS_NOEXEC, MS_NOSUID, MS_RDONLY, MS_REMOUNT, O_CREAT, O_EXCL, O_PATH, O_RDONLY, O_WRONLY,
     PROT_EXEC, PROT_READ, PROT_WRITE, S_IFCHR, ST_NODEV, ST_NOEXEC, ST_NOSUID, ST_RDONLY, ST_VALID,
     Statfs,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs;
 use crate::syscall::check as syscall_check;

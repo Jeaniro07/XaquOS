@@ -16,7 +16,7 @@
 
 use alloc::sync::Arc;
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 use crate::user::space::AddressSpace;
 use crate::user::vmo::{Held, Vmo};

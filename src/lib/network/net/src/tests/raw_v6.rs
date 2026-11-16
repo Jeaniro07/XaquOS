@@ -4,7 +4,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::icmpv6;
+use xaqu_netwire::icmpv6;
 
 use crate::addr::{IpAddress, Ipv6};
 use crate::socket::{Error, Family, Socket, SocketId};
@@ -67,7 +67,7 @@ fn verifies(message: &[u8], source: Ipv6, destination: Ipv6, protocol: u8) -> bo
 fn ping6_over_loopback_reads_the_reply_without_a_header_and_with_its_hop_limit() {
     let mut host = Alone::new();
     let ping = host.stack.open_raw(Family::V6, ICMPV6);
-    let request = echo_request(0x6666, 1, b"ferrix");
+    let request = echo_request(0x6666, 1, b"xaqu");
     let sent = host
         .stack
         .send(ping, &request, Some(at_v6(Ipv6::LOOPBACK, 0)), host.now)

@@ -9,7 +9,7 @@ use std::format;
 use std::string::String;
 use std::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::keeper::{GiveUp, Journal, KeeperLink, MAX_RESTARTS, PING_NS, RemoteBackend, TDR_NS};
 use super::wire::{self, Call, Event, Malformed, UAPI_ENGINES, kind};
@@ -200,7 +200,7 @@ impl KeeperLink for Link {
         self.now
     }
 
-    fn say(&mut self, _level: ferrix_linux_abi::kmsg::Level, line: core::fmt::Arguments<'_>) {
+    fn say(&mut self, _level: xaqu_linux_abi::kmsg::Level, line: core::fmt::Arguments<'_>) {
         self.lines.push(format!("{line}"));
     }
 

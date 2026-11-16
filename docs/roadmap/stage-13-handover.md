@@ -62,9 +62,9 @@ rows below. It is S3 on main 22384874f with two fixes: the table sizes (255,
 223, 273) and the filters check listing its tasks. Its rows passed on
 6c539b276 (`l13s3f-*`), all 19 controls FIRED, consultant OK at ledger line
 336; k7, k13 and k17 FIRED on 0527dd365 (`l13s3n2-*`) and the rest carry
-(`~/.local/share/ferrix/logs/s3-range-diff.txt`). Owed: one batch re-run
-(`fleet/batch.sh join`, gate file `~/.local/share/ferrix/logs/l13-s3-gate.txt`)
-and the consultant's final OK. Handover: `~/.local/share/ferrix/l13-coord/HANDOVER.md`.
+(`~/.local/share/xaqu/logs/s3-range-diff.txt`). Owed: one batch re-run
+(`fleet/batch.sh join`, gate file `~/.local/share/xaqu/logs/l13-s3-gate.txt`)
+and the consultant's final OK. Handover: `~/.local/share/xaqu/l13-coord/HANDOVER.md`.
 The two rows below are history.
 
 | Branch | Tip | Worktree | State | To land it |
@@ -116,7 +116,7 @@ content is on `main` or replaced by the branches above.
    lines in `launch::load_native`: every namespace and seccomp review found that
    a native child must get its creator's whole namespace set, pid namespace,
    seccomp chain and `no_new_privs`.
-2. Gate through `~/.local/share/ferrix/fleet/gate.sh` on nazuna (`run`,
+2. Gate through `~/.local/share/xaqu/fleet/gate.sh` on nazuna (`run`,
    `control --expect "<panic text>"`, `status`) after pushing a side ref. A row
    counts when its INDEX line says `run: PASSED` on the commit that lands, with
    the accelerator named; a control counts when it says
@@ -130,10 +130,10 @@ content is on `main` or replaced by the branches above.
    every verdict and condition (the wind-down consultant's final word on each
    branch is in `HANDOVER.md` there; the previous one is
    `HANDOVER-2026-10-01-osbd.md`) is
-   `~/.local/share/ferrix/cert-consultant/reviews.md` on nazuna, with
+   `~/.local/share/xaqu/cert-consultant/reviews.md` on nazuna, with
    `HANDOVER.md` beside it. Requirement ids are reserved in
    `tools/common/data/requirement-reservations.json` before they are written.
-4. Take the lock (`~/.local/share/ferrix/fleet/land.sh`, never piped), assert
+4. Take the lock (`~/.local/share/xaqu/fleet/land.sh`, never piped), assert
    `git merge-base --is-ancestor origin/main HEAD`, push `HEAD:refs/heads/main`,
    release, and update the roadmap entry.
 

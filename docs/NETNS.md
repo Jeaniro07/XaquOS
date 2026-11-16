@@ -106,7 +106,7 @@ A process holds its namespace: `Process::net_ns: SpinLock<Option<Arc<NetNamespac
 making a process does not start the net core); a fork child copies it, a
 native child made by `process_create` takes its creator's, and every process
 that nothing forked starts in the first. (Linux keeps it per task in `nsproxy`; `stage13-smallns` keeps the UTS,
-IPC and cgroup namespaces in a per-process `NsProxy`, as Ferrix has no
+IPC and cgroup namespaces in a per-process `NsProxy`, as Xaqu has no
 per-thread credentials either. When the integrator merges, this field moves
 into the `NsProxy`; the accessor `Process::net_ns()` is the seam.)
 
@@ -161,7 +161,7 @@ no route, no default gateway, no NIC.
 two are: a network namespace's owner must be able to configure its own
 devices, and only them; neither reaches a file, a process or the first
 namespace). Each gets a boot check and a negative control (NN6, NN7).
-`CAP_NET_BIND_SERVICE` (10) is **not** honoured: Ferrix has no privileged-port
+`CAP_NET_BIND_SERVICE` (10) is **not** honoured: Xaqu has no privileged-port
 rule at all today (a port below 1024 binds for anyone), so there is nothing
 to relax; it is recorded, not granted.
 
@@ -570,8 +570,8 @@ namespace was refused" (`ae-nn-31b`), not at its `ESRCH` case. The native
 child's network-namespace control is `ae-nn-b1`.
 
 **Gated first**, on the code of e8de326e (the commits after it are documents): `cargo
-fmt` and `cargo clippy -p ferrix-kernel` on x86_64, aarch64 and armv7a; `cargo
-test` of `ferrix-net` (82), `ferrix-linux-abi` (146) and `ferrix-netlink` (48);
+fmt` and `cargo clippy -p xaqu-kernel` on x86_64, aarch64 and armv7a; `cargo
+test` of `xaqu-net` (82), `xaqu-linux-abi` (146) and `xaqu-netlink` (48);
 `check-item-boundary.py`; on nazuna through the queue, `test-boot` on x86_64,
 aarch64 and armv7a at `--smp 2` (the `netns` line on each, with `kmem`, `net`,
 `netlink` and the ring check passing), `test-shell` and `test-vfs` on x86_64

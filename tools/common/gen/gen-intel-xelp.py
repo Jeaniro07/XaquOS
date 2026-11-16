@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn i915's tables into the Rust tables `ferrix-intel-xelp` reads.
+"""Turn i915's tables into the Rust tables `xaqu-intel-xelp` reads.
 
 `docs/INTEL-GPU.md` §3.6: the Intel driver follows Linux's i915 file by file,
 and its tables are i915's, not retyped. Retyping the forcewake ranges, the

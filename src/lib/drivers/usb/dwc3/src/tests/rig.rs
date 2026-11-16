@@ -4,8 +4,8 @@
 use std::string::String;
 use std::vec::Vec;
 
-use ferrix_usb_device::acm::SerialPort;
-use ferrix_usb_device::{Function, Setup};
+use xaqu_usb_device::acm::SerialPort;
+use xaqu_usb_device::{Function, Setup};
 
 use super::model::{HostError, Memory, Model, Regs, Shared, Time};
 use crate::layout::AREA_BYTES;

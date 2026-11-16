@@ -43,7 +43,7 @@
 //! first store, so no line firmware's own mapping left lies beside it. Its
 //! type never changes after.
 //!
-//! The exception: under `ferrix.efifb`, on x86-64, the boot framebuffer's
+//! The exception: under `xaqu.efifb`, on x86-64, the boot framebuffer's
 //! visible lines are lent to a node of their own (`discovery::firmware`,
 //! `docs/DISPLAY.md` §8), so a user mapping can reach pages the kernel maps
 //! for its panic screen. Before the node is published the kernel reads its

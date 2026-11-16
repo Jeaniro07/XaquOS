@@ -3,12 +3,12 @@
 //! `docs/CLIPBOARD.md` §6 is the specification. This program sits between two
 //! sockets and belongs to neither protocol:
 //!
-//! * **`\0ferrix.vport`**, the abstract name `src/user/system/native/drivers/console/vport` binds --
+//! * **`\0xaqu.vport`**, the abstract name `src/user/system/native/drivers/console/vport` binds --
 //!   not a path, because `devmgr` starts the driver before `/` moves onto the
 //!   root volume and a path it bound would stay behind in the initramfs's
 //!   `/tmp` (`docs/INIT.md` §7.3). Everything written there goes
 //!   out on the virtio-serial port to QEMU's own half of vdagent, and
-//!   everything the host sends arrives here. `ferrix-vdagent` is the codec;
+//!   everything the host sends arrives here. `xaqu-vdagent` is the codec;
 //!   the driver carries bytes and understands none of them.
 //! * **the Wayland socket**, where this is an `ext-data-control` client. That
 //!   protocol and not `wl_data_device` because this program has no window: an
@@ -51,8 +51,8 @@ use compositor_protocol::ext_data_control::{
 };
 use compositor_socket::{Connection, RecvError};
 use compositor_wire::{Arg, ArgType, Fd, Interface, ObjectId, Reader, Writer};
-use ferrix_vdagent::chunk::{self, Reassembler};
-use ferrix_vdagent::message::{AGENT_CAPS, ClipboardType, Message, Selection, Shape, Types};
+use xaqu_vdagent::chunk::{self, Reassembler};
+use xaqu_vdagent::message::{AGENT_CAPS, ClipboardType, Message, Selection, Shape, Types};
 
 /// The MIME type version 1 carries, which is what `src/user/system/linux/compositor/clip` offers
 /// and what `ClipboardType::Utf8Text` maps to.
@@ -62,7 +62,7 @@ const TEXT: &str = "text/plain;charset=utf-8";
 const MANAGER_NAME: &str = ext_data_control::EXT_DATA_CONTROL_MANAGER_V1.name;
 
 /// Where `src/user/system/native/drivers/console/vport` listens (`docs/CLIPBOARD.md` §6).
-const PORT_NAME: &[u8] = b"ferrix.vport";
+const PORT_NAME: &[u8] = b"xaqu.vport";
 
 /// How long a turn of the loop rests before looking at both sockets again.
 const TICK: Duration = Duration::from_millis(10);

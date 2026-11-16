@@ -3,11 +3,11 @@
 //! Every structure here is written front to back by [`Bytes`], so a field's
 //! offset is the sum of the fields before it, as in the kernel's `ctree.h`;
 //! the sizes each encoder must come to are checked by the tests against what
-//! `ferrix-btrfs` parses.
+//! `xaqu-btrfs` parses.
 
 use alloc::vec::Vec;
 
-use ferrix_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::tree::BtrfsKey;
 
 /// Size of a superblock backup root.
 const BACKUP_ROOT_SIZE: usize = 168;
@@ -17,17 +17,17 @@ const DIR_MODE: u32 = 0o040_755;
 /// A directory entry's type byte for a directory: `BTRFS_FT_DIR`.
 const FT_DIR: u8 = 2;
 /// Every chunk's stripe length and I/O alignment, as `mkfs.btrfs` writes them.
-const STRIPE_LEN: u64 = ferrix_btrfs::chunk::STRIPE_LEN;
+const STRIPE_LEN: u64 = xaqu_btrfs::chunk::STRIPE_LEN;
 /// A chunk item's owner: the extent tree.
-const CHUNK_OWNER: u64 = ferrix_btrfs::items::EXTENT_TREE_OBJECTID;
+const CHUNK_OWNER: u64 = xaqu_btrfs::items::EXTENT_TREE_OBJECTID;
 /// The tree the device extents name as their chunk's.
-const CHUNK_TREE: u64 = ferrix_btrfs::items::CHUNK_TREE_OBJECTID;
+const CHUNK_TREE: u64 = xaqu_btrfs::items::CHUNK_TREE_OBJECTID;
 /// The object id of every chunk item.
-const FIRST_CHUNK_TREE: u64 = ferrix_btrfs::chunk::FIRST_CHUNK_TREE_OBJECTID;
+const FIRST_CHUNK_TREE: u64 = xaqu_btrfs::chunk::FIRST_CHUNK_TREE_OBJECTID;
 /// Extent item flag: the extent is a tree block.
-const TREE_BLOCK: u64 = ferrix_btrfs_write::extent::EXTENT_FLAG_TREE_BLOCK;
+const TREE_BLOCK: u64 = xaqu_btrfs_write::extent::EXTENT_FLAG_TREE_BLOCK;
 /// Inline reference type: a tree block owned by a tree.
-const TREE_BLOCK_REF: u8 = ferrix_btrfs_write::extent::TREE_BLOCK_REF_KEY;
+const TREE_BLOCK_REF: u8 = xaqu_btrfs_write::extent::TREE_BLOCK_REF_KEY;
 
 /// A structure being written front to back.
 pub(crate) struct Bytes(Vec<u8>);
@@ -115,7 +115,7 @@ pub(crate) fn inode_ref(index: u64, name: &[u8]) -> Vec<u8> {
 
 /// A directory item naming the subvolume tree `tree` as `name`.
 pub(crate) fn dir_item_for_tree(tree: u64, transid: u64, name: &[u8]) -> Vec<u8> {
-    let location = BtrfsKey::new(tree, ferrix_btrfs::items::ROOT_ITEM_KEY, u64::MAX);
+    let location = BtrfsKey::new(tree, xaqu_btrfs::items::ROOT_ITEM_KEY, u64::MAX);
     let len = u16::try_from(name.len()).unwrap_or(u16::MAX);
     Bytes::new()
         .key(&location)

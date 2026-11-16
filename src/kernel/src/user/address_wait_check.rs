@@ -18,13 +18,13 @@
 use alloc::sync::Arc;
 
 use crate::sync::SpinLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     ADDRESS_BY_VMO, ADDRESS_COMPARE, ADDRESS_SHARED, MAP_READ, MAP_WRITE,
 };
 
@@ -152,7 +152,7 @@ fn start_task(
             args,
         });
     }
-    sched::spawn("addrwait waiter", waiter, slot, ferrix_sched::NICE_0_WEIGHT)
+    sched::spawn("addrwait waiter", waiter, slot, xaqu_sched::NICE_0_WEIGHT)
         .map_err(|_| "addrwait: could not start a waiter")
 }
 
@@ -627,7 +627,7 @@ fn a_requeue_moves_waiters_across_buckets(
 
 /// A stale entry listed on `key`: the sabotage hook's, in a kernel with its
 /// checks.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn stale_entry(key: &Key) -> Result<Option<address_wait::sabotage::StaleEntry>, &'static str> {
     address_wait::sabotage::list_stale_entry(key.clone())
         .map(Some)
@@ -635,19 +635,19 @@ fn stale_entry(key: &Key) -> Result<Option<address_wait::sabotage::StaleEntry>, 
 }
 
 /// None in a kernel built `checks=off`, which runs no check.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn stale_entry(_: &Key) -> Result<Option<()>, &'static str> {
     Ok(None)
 }
 
 /// Whether a stale entry is still listed, taking it off if it is.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn still_listed(stale: Option<address_wait::sabotage::StaleEntry>) -> bool {
     stale.is_some_and(address_wait::sabotage::StaleEntry::remove)
 }
 
 /// Never, in a kernel built `checks=off`.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn still_listed(_: Option<()>) -> bool {
     false
 }
@@ -986,7 +986,7 @@ fn the_calls_refuse_what_the_abi_refuses(
 /// own, is timed; once they leave, the bucket gives its room back.
 ///
 /// Verifies: L.user.138, L.user.144
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn a_walk_is_measured_and_its_room_given_back(a: &Side) -> Result<u64, &'static str> {
     const ENTRIES: usize = 1024;
     let bucket = address_wait::bucket_of(&private(a, WORD));
@@ -1027,7 +1027,7 @@ fn a_walk_is_measured_and_its_room_given_back(a: &Side) -> Result<u64, &'static 
 
 /// Case 13 needs the sabotage hooks, which a kernel built `checks=off` has
 /// not; such a kernel runs no check at all.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn a_walk_is_measured_and_its_room_given_back(_: &Side) -> Result<u64, &'static str> {
     Ok(0)
 }

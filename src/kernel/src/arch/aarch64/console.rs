@@ -28,7 +28,7 @@
 use core::cell::UnsafeCell;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{BootView, KERNEL_VMAP_BASE, PAGE_SIZE};
+use xaqu_bootinfo::{BootView, KERNEL_VMAP_BASE, PAGE_SIZE};
 
 use crate::arch::arm_common::pl011;
 use crate::early::{EarlyError, EarlyMemory};

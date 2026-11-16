@@ -42,7 +42,7 @@ changes nothing about the decision.
 | `CHANGED` | TSF data changed by a call that succeeded: a job's limit set (`job_set_limit`), a cgroup's limit file written, a device's pin budget set (`DEVICE_LIMIT_SET`, with the old and new values); a processor taken out of service or brought back (`CPU_SERVICE`, with the direction and the door, root's `cpuN/online` or lode's token; a refusal recorded with its number, `docs/CORE-QUARANTINE.md` §4) | `syscall/native.rs` `job_set_limit`, `device_set_limit` and `cpu_service`; cgroupfs limit writes; `smp/service.rs` `set_in_service` |
 | `CHANGED` | A faulting thread resumed with registers its supervisor wrote (`EXCEPTION_CONTEXT`): the process, the pc before and after, the level. Every such resume is recorded (the consultant's answer to K4's Q4, ledger 2871); a debugger stepping a program records one each step, which the job's audit budget and the ring's overflow rule bound as they bound every other record of the job | `object/exception.rs` `raise` |
 | `SYSTEM` | The audit function's own start-up, with the ring sizes; and its shutdown, the last record before a power action | `audit::start` at bring-up; `power` |
-| `SYSTEM` | The boot's configuration: `--mitigations`, the KASLR state (randomised or not, and why), `ferrix.devmgr=kernel\|init`, whether `ferrix.efifb` asked for the firmware framebuffer to be lent, **`ferrix.checks=skip`** -- a boot that skipped its self-tests leaves a record of it -- the **build flags** the kernel was compiled with (`Config::Build`, the same set as its `build` boot line, from the same `cfg`s: in the second detail word each flag's place in its list of values, two bits a flag in `build-flags.toml`'s order, its fifteen flags in bits 0 to 29, `runtime_settings` (0 `fixed`, 1 `live`) last; in the third the profile's place among present, desktop, fast, max, none in bits 0 to 3 and the level's among none, present, sc2, sc4 in bits 4 to 7; `docs/BUILD-FLAGS.md` rule 6 d). In `desktop` the record names `ipc_fastpath=on`, `program_barrier=session`, `ssbd=on_request` and `runtime_trades=game_mode` while the image runs their stand-ins, today's stricter `off`, `switch`, `always` and `none` (`build-flags.toml`'s `stands_in`), until each value's own landing; a stand-in is allowed only at level `none` (`BUILD-FLAGS.md` §3.1), and each self-check stage's verdict | bring-up in `main.rs`, `build_flags.rs` |
+| `SYSTEM` | The boot's configuration: `--mitigations`, the KASLR state (randomised or not, and why), `xaqu.devmgr=kernel\|init`, whether `xaqu.efifb` asked for the firmware framebuffer to be lent, **`xaqu.checks=skip`** -- a boot that skipped its self-tests leaves a record of it -- the **build flags** the kernel was compiled with (`Config::Build`, the same set as its `build` boot line, from the same `cfg`s: in the second detail word each flag's place in its list of values, two bits a flag in `build-flags.toml`'s order, its fifteen flags in bits 0 to 29, `runtime_settings` (0 `fixed`, 1 `live`) last; in the third the profile's place among present, desktop, fast, max, none in bits 0 to 3 and the level's among none, present, sc2, sc4 in bits 4 to 7; `docs/BUILD-FLAGS.md` rule 6 d). In `desktop` the record names `ipc_fastpath=on`, `program_barrier=session`, `ssbd=on_request` and `runtime_trades=game_mode` while the image runs their stand-ins, today's stricter `off`, `switch`, `always` and `none` (`build-flags.toml`'s `stands_in`), until each value's own landing; a stand-in is allowed only at level `none` (`BUILD-FLAGS.md` §3.1), and each self-check stage's verdict | bring-up in `main.rs`, `build_flags.rs` |
 | `SYSTEM` | The root switch and pid 1's re-root; a power action | `fs::root_disk`; `power` |
 | `ENDED` | A first process ended, the partition manager, `devmgr` or `linuxd`, whatever it answered (`FIRST_PROCESS_ENDED`, `docs/microkernel/BOOT-AUTHORITY.md` §4): its pid and exit status. |
 
@@ -145,9 +145,9 @@ record, the boot's configuration and the boot brought up -- are also pinned
 where nothing else reaches them (`Which::Boot`), numbered as the high-value
 ring numbered them. That array never wraps and holds at most twelve (eight
 until the build flags' record, `Config::Build`, made the configuration
-seven items, nine until `ferrix.vtd`'s, `Config::Vtd`, `L.iommu.71`, made
-it eight, ten until `ferrix.amdvi`'s, `Config::AmdVi`, `L.iommu.98`, made
-it nine, eleven until `ferrix.unisolated`'s, `Config::Unisolated`,
+seven items, nine until `xaqu.vtd`'s, `Config::Vtd`, `L.iommu.71`, made
+it eight, ten until `xaqu.amdvi`'s, `Config::AmdVi`, `L.iommu.98`, made
+it nine, eleven until `xaqu.unisolated`'s, `Config::Unisolated`,
 `L.device.58`, made it ten; `audit::BOOT_RECORDS` is held at two more than
 `audit::CONFIG_ITEMS` by a compile-time assertion); a system
 record after them is kept in the high-value ring alone. The boot's own
@@ -259,9 +259,9 @@ readable, and the flooding job's *suppressed n* record. It requires the
 start-up record, the configuration records, and the same audit id in every
 answer.
 
-The record a `ferrix.checks=skip` boot writes cannot be checked from inside
+The record a `xaqu.checks=skip` boot writes cannot be checked from inside
 that boot, which runs no in-kernel check. It is verified from outside: an
-xtask gate boots with `ferrix.checks=skip` and reads the record through
+xtask gate boots with `xaqu.checks=skip` and reads the record through
 `audit_read` -- from init's `audit.service` on the console, or a small native
 program the image carries -- and asserts it is there, naming the option. Negative controls: drop the `record` call at one site, and the
 check names the missing event; widen `Object::Audit` to `TRANSFER`, and the
@@ -297,9 +297,9 @@ Three slices, each reviewed before it lands:
    the audit id, which bring-up draws from the random generator and hands
    in, since the generator is the item's and the core may not name it --
    and bring-up's records: the start-up record and the boot's configuration
-   (`ferrix.checks`, `ferrix.devmgr`, the mitigations, `ipc_fastpath` from
+   (`xaqu.checks`, `xaqu.devmgr`, the mitigations, `ipc_fastpath` from
    `Config::Build`, KASLR, whether the
-   log is kept across a reset, `ferrix.pstore`, `ferrix.efifb`, and the
+   log is kept across a reset, `xaqu.pstore`, `xaqu.efifb`, and the
    build flags, `Config::Build`) right after
    the generator's check, and one when the boot is brought up. Its boot
    check, `audit::check`, is §6's first half on stores of its own and on a
@@ -331,7 +331,7 @@ Three slices, each reviewed before it lands:
    slice 3.
 3. **The reader** (built): `Object::Audit` and `audit_read`, init keeping
    `/var/log/audit/<id>.bin` (§4), `svc audit`, `test-init` reading the
-   record back and a `ferrix.checks=skip` boot's from outside, and nothing
+   record back and a `xaqu.checks=skip` boot's from outside, and nothing
    before a power action lost without a console line. Then the measured
    cost (MEMORY-AND-TIMING.md §1.7) and the Security Target's claims (§7)
    under O.AUDIT and P.ACCOUNTABILITY, with thirteen `H.AUD` requirements

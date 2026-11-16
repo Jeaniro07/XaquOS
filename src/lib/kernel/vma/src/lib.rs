@@ -41,7 +41,7 @@
 //! the next `mmap`.
 //!
 //! ```
-//! use ferrix_vma::{AddressSpace, Backing, PageRange, VmaFlags};
+//! use xaqu_vma::{AddressSpace, Backing, PageRange, VmaFlags};
 //!
 //! let mut space = AddressSpace::new(0x1000, 0x0000_8000_0000_0000).unwrap();
 //! let text = PageRange::new(0x40_0000, 0x40_4000).unwrap();
@@ -65,7 +65,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_kmem::{Charge, buffer_footprint};
+use xaqu_kmem::{Charge, buffer_footprint};
 
 /// The page size every address and length in this crate is quantised to.
 pub const PAGE_SIZE: u64 = 4096;
@@ -109,8 +109,8 @@ pub enum VmaError {
     NoMemory,
 }
 
-impl From<ferrix_fallible::AllocError> for VmaError {
-    fn from(_: ferrix_fallible::AllocError) -> VmaError {
+impl From<xaqu_fallible::AllocError> for VmaError {
+    fn from(_: xaqu_fallible::AllocError) -> VmaError {
         VmaError::NoMemory
     }
 }
@@ -625,7 +625,7 @@ impl AddressSpace {
             .0
             .resize(buffer_footprint::<Vma>(target))
             .map_err(|_| VmaError::NoMemory)?;
-        if let Err(error) = ferrix_fallible::try_reserve(&mut self.regions, additional) {
+        if let Err(error) = xaqu_fallible::try_reserve(&mut self.regions, additional) {
             let _ = self.room.0.resize(buffer_footprint::<Vma>(room));
             return Err(error.into());
         }
@@ -790,7 +790,7 @@ impl AddressSpace {
         // A carve splits at most one region, and the new one goes in after.
         let mut unmapped = self.room_to_carve(range, 2)?;
         self.carve(range, &mut |removed| {
-            let _ = ferrix_fallible::push_within(&mut unmapped, removed);
+            let _ = xaqu_fallible::push_within(&mut unmapped, removed);
         });
         self.place(Vma {
             range,
@@ -815,7 +815,7 @@ impl AddressSpace {
         self.check_range(range)?;
         let mut unmapped = self.room_to_carve(range, 1)?;
         self.carve(range, &mut |removed| {
-            let _ = ferrix_fallible::push_within(&mut unmapped, removed);
+            let _ = xaqu_fallible::push_within(&mut unmapped, removed);
         });
         Ok(unmapped)
     }
@@ -882,7 +882,7 @@ impl AddressSpace {
         let touched = self
             .first_beyond(range.end)
             .saturating_sub(self.first_touching(range.start));
-        let unmapped = ferrix_fallible::try_with_capacity(touched.saturating_add(1))?;
+        let unmapped = xaqu_fallible::try_with_capacity(touched.saturating_add(1))?;
         self.grow(regions)?;
         Ok(unmapped)
     }
@@ -1001,7 +1001,7 @@ impl AddressSpace {
         let len = self.regions.len();
         let mut room =
             Charge::bytes(buffer_footprint::<Vma>(len)).map_err(|_| VmaError::NoMemory)?;
-        let mut regions = ferrix_fallible::try_with_capacity(len)?;
+        let mut regions = xaqu_fallible::try_with_capacity(len)?;
         let _ = room.resize(buffer_footprint::<Vma>(regions.capacity()));
         for region in &mut self.regions {
             if needs_cow(region) {

@@ -4,11 +4,11 @@
 //! Every lookup descends a tree from its root, so the same few nodes are read on
 //! every call. On a read-only volume the bytes at a physical address never
 //! change, so a node read once can be handed out again without asking the
-//! device. Only reads `ferrix-btrfs` marks [`ReadKind::Metadata`] are kept: file
+//! device. Only reads `xaqu-btrfs` marks [`ReadKind::Metadata`] are kept: file
 //! data belongs in the page cache, and the two never hold the same bytes.
 //!
 //! A hit returns exactly the bytes the device would, so nothing downstream
-//! trusts it more: `ferrix-btrfs` still checks every node's level, generation,
+//! trusts it more: `xaqu-btrfs` still checks every node's level, generation,
 //! fsid and checksum against what its parent promised.
 //!
 //! Entries are shared `Arc<[u8]>`s. A hit takes a reference under the lock and
@@ -21,8 +21,8 @@ use alloc::collections::{BTreeMap, VecDeque};
 use alloc::sync::Arc;
 use core::fmt;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::volume::{Device, ReadKind};
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::volume::{Device, ReadKind};
 
 use crate::SpinLock;
 

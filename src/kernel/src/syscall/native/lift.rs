@@ -6,24 +6,24 @@
 
 use super::{Errno, NativeCall, Process};
 
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub(super) fn call(_call: NativeCall, _process: &Process, _a: &[u64; 6]) -> Result<usize, Errno> {
     Err(Errno::ENOSYS)
 }
 
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(super) use served::call;
 
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 mod served {
-    use ferrix_native_abi::handle::Handle;
-    use ferrix_native_abi::rights::Rights;
+    use xaqu_native_abi::handle::Handle;
+    use xaqu_native_abi::rights::Rights;
 
     use super::{Errno, NativeCall, Process};
     use crate::object::Object;
     use crate::syscall::native::{copy_in, table_error};
     use crate::syscall::uaccess;
-    use ferrix_native_abi::status;
+    use xaqu_native_abi::status;
 
     /// The most bytes one call moves: its time is bounded by this.
     const MOST: u64 = 4096;
@@ -68,7 +68,7 @@ mod served {
 
     /// `THREAD_RESERVE`: the kernel's own authority, a job handle with `SET_LIMIT`, ahead of
     /// anything linuxd asks of a program (ledger 7088 E.2).
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     fn thread_reserve(process: &Process, a: &[u64; 6]) -> Result<usize, Errno> {
         use crate::sched::reserve::{self, Refusal, Reservation};
         let job = super::super::job_in(
@@ -86,7 +86,7 @@ mod served {
             crate::audit::LIMIT_SET,
             crate::audit::Subject::of(process),
             job.id(),
-            ferrix_native_abi::nr::THREAD_RESERVE as u64,
+            xaqu_native_abi::nr::THREAD_RESERVE as u64,
             a[1],
         );
         let answer = if a[1] == 0 && a[2] == 0 && a[3] == 0 {
@@ -107,13 +107,13 @@ mod served {
     }
 
     /// Without `schedule=edf`, the call has no body.
-    #[cfg(not(ferrix_schedule = "edf"))]
+    #[cfg(not(xaqu_schedule = "edf"))]
     fn thread_reserve(_: &Process, _: &[u64; 6]) -> Result<usize, Errno> {
         Err(status::NOT_SUPPORTED)
     }
 
     #[cfg_attr(
-        ferrix_personality = "user",
+        xaqu_personality = "user",
         expect(
             clippy::too_many_lines,
             reason = "the lift's calls, one arm each, as the native table's dispatch"
@@ -144,7 +144,7 @@ mod served {
                 Ok(0)
             }
             NativeCall::ObjectKind => {
-                use ferrix_native_abi::lift::{KIND_CHANNEL, KIND_OTHER, KIND_PORT, KIND_VMO};
+                use xaqu_native_abi::lift::{KIND_CHANNEL, KIND_OTHER, KIND_PORT, KIND_VMO};
                 let handle = Handle(u32::try_from(a[0]).map_err(|_| status::BAD_HANDLE)?);
                 process.with_handles(|table| {
                     let (object, rights) = table.get(handle).map_err(table_error)?;
@@ -158,7 +158,7 @@ mod served {
                 })
             }
             NativeCall::ThreadAffinity => {
-                let mut words = [0_u64; ferrix_sched::WORDS];
+                let mut words = [0_u64; xaqu_sched::WORDS];
                 let wanted = a[2] as usize;
                 if wanted > words.len() {
                     return Err(status::INVALID_ARGS);
@@ -180,9 +180,9 @@ mod served {
                     }
                     thread.task().ok_or(status::BAD_STATE)?
                 };
-                let set = ferrix_sched::CpuSet::from_words(words);
+                let set = xaqu_sched::CpuSet::from_words(words);
                 let _ = crate::sched::set_affinity(&task, &set).map_err(|why| match why {
-                    #[cfg(ferrix_schedule = "edf")]
+                    #[cfg(xaqu_schedule = "edf")]
                     crate::sched::AffinityRefusal::Reserved => status::ALREADY_BOUND,
                     _ => status::INVALID_ARGS,
                 })?;
@@ -226,7 +226,7 @@ mod served {
                     .map_err(crate::syscall::native::lift_space_status)
             }
             NativeCall::SpacePlace => {
-                use ferrix_native_abi::lift::{PLACE_EXECUTE, PLACE_MOST, PLACE_WRITE};
+                use xaqu_native_abi::lift::{PLACE_EXECUTE, PLACE_MOST, PLACE_WRITE};
                 let count = a[3] as usize;
                 if count == 0 || count > PLACE_MOST {
                     return Err(status::INVALID_ARGS);

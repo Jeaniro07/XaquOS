@@ -123,7 +123,7 @@ def main() -> int:
     ap.add_argument("--note", default="")
     ap.add_argument("--post", metavar="SHA")
     ap.add_argument("--url", default=os.environ.get("VERDICT_URL"))
-    ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "ferrix-os/ferrix"))
+    ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "xaqu-os/xaqu"))
     a = ap.parse_args()
     if ".." not in a.range:
         ap.error("give a range, base..head")

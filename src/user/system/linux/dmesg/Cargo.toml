@@ -1,4 +1,4 @@
-# Ferrix's `dmesg`: `/bin/dmesg`, the kernel log as util-linux's `dmesg` shows
+# Xaqu's `dmesg`: `/bin/dmesg`, the kernel log as util-linux's `dmesg` shows
 # it -- `[    1.234567] text`, `-T` wall-clock times, `-x` facility and level,
 # `-l`/`-f` filters, `-w` to follow -- read from `/dev/kmsg`, or through
 # `syslog(2)` where there is none (src/lib.rs says what it takes).
@@ -7,10 +7,10 @@
 # with std against the target's own musl, speaking only the Linux ABI.
 [package]
 name = "dmesg"
-description = "Ferrix's dmesg: the kernel log from /dev/kmsg or syslog(2), as util-linux shows it"
+description = "Xaqu's dmesg: the kernel log from /dev/kmsg or syslog(2), as util-linux shows it"
 version = "0.3.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -31,9 +31,9 @@ libc = "0.2.189"
 
 [dev-dependencies]
 # The kernel's own writer of both formats, which the tests read back.
-ferrix-linux-abi = { path = "../../../../lib/proto/linux-abi" }
+xaqu-linux-abi = { path = "../../../../lib/proto/linux-abi" }
 
-# The Ferrix discipline, as dhcp's: every failing call is a line saying so,
+# The Xaqu discipline, as dhcp's: every failing call is a line saying so,
 # never an abort. `unsafe` is only the libc calls in `src/sys.rs`, each with
 # its SAFETY comment.
 [lints.rust]

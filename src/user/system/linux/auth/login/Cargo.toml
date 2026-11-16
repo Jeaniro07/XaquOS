@@ -11,10 +11,10 @@ publish.workspace = true
 # Declarations only: flock, setgroups, setresgid, setresuid and their
 # read-backs are the C library std already links.
 libc = "0.2.189"
-ferrix-auth-client = { path = "../client" }
-ferrix-auth-account = { path = "../account" }
+xaqu-auth-client = { path = "../client" }
+xaqu-auth-account = { path = "../account" }
 # The init's control socket, for the session's scope (docs/INIT.md §5.6).
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 
 [lints]
 workspace = true

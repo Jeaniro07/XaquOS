@@ -27,9 +27,9 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_blkring::{Device, DeviceFlags, DiskName};
-use ferrix_block::{Limits, Request, Token};
-use ferrix_vfs::Errno;
+use xaqu_blkring::{Device, DeviceFlags, DiskName};
+use xaqu_block::{Limits, Request, Token};
+use xaqu_vfs::Errno;
 
 use super::{MAX_PARTS, Payload, PayloadReserve, RingDisk, answer, ticks};
 use crate::object::port::Port;
@@ -173,9 +173,9 @@ pub(super) mod reserve {
 
     use alloc::sync::Arc;
 
-    use ferrix_blkring::{Device, DeviceFlags, DiskName};
-    use ferrix_block::{Limits, Request, Token};
-    use ferrix_vfs::Errno;
+    use xaqu_blkring::{Device, DeviceFlags, DiskName};
+    use xaqu_block::{Limits, Request, Token};
+    use xaqu_vfs::Errno;
 
     use super::super::{
         MAX_PARTS, Payload, PayloadReserve, RESERVE_ELEMENTS, RingDisk, answer, request_bytes,
@@ -296,7 +296,7 @@ pub(super) mod reserve {
             "reserve-waiter",
             waiting_writer,
             0,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
         )?;
         // Listed on the reserve's queue before the answer, not guessed from
         // how long it was given.

@@ -20,7 +20,7 @@
 //! hold each against its source; interlaced, doubled-clock and
 //! doubled-line modes are left out, as no driver here lists them.
 
-use ferrix_displayctl::message::Timing;
+use xaqu_displayctl::message::Timing;
 
 /// One timing: the clock in kHz, the four horizontal and four vertical
 /// spans, and whether each sync is active high.

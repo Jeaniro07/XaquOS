@@ -287,7 +287,7 @@ pub(crate) fn test_audio(args: &Args) -> Result<()> {
 }
 
 /// Where the aplay boot's counter is on the guest.
-const COUNTER_WAV: &str = "usr/share/ferrix/counter.wav";
+const COUNTER_WAV: &str = "usr/share/xaqu/counter.wav";
 
 /// What the aplay boot's shell runs: ferrousli's aplay, through alsa-lib's
 /// `default` device and so its configuration and `plug`, playing the same
@@ -295,7 +295,7 @@ const COUNTER_WAV: &str = "usr/share/ferrix/counter.wav";
 /// The shell stays up after, as tone does: were init to exit, the machine
 /// would power off with QEMU's audio backend still holding the last 100 ms
 /// or so, which never reach the file.
-const APLAY_SCRIPT: &str = "aplay -D default /usr/share/ferrix/counter.wav \
+const APLAY_SCRIPT: &str = "aplay -D default /usr/share/xaqu/counter.wav \
     && echo 'tone: done' || echo \"tone: failed: aplay exited $?\"; sleep 30";
 
 /// The fourth boot, on x86-64, where the ports are built (`docs/AUDIO.md`,

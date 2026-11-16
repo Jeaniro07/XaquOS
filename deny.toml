@@ -1,4 +1,4 @@
-# cargo-deny policy for the Ferrix workspace: RUSTSEC advisories, a licence
+# cargo-deny policy for the Xaqu workspace: RUSTSEC advisories, a licence
 # allow-list, banned/duplicate crates and registry sources. Run locally with:
 #
 #     cargo deny check advisories bans licenses sources
@@ -54,7 +54,7 @@ deny = [
     # Through cpufeatures alone: it reads the auxiliary vector with libc on
     # hosted Arm and Apple targets and on no freestanding one, and reaches the
     # tree only through hbs-lms's sha2 and sha3, a dev-dependency of
-    # ferrix-sigverify for its host cross-check (docs/SIGNING.md §5.1).
+    # xaqu-sigverify for its host cross-check (docs/SIGNING.md §5.1).
     { name = "libc", wrappers = ["cpufeatures"], reason = "a freestanding kernel has no host libc; if this appears, a dependency turned on a std feature" },
     { name = "winapi" },
     { name = "windows-sys" },

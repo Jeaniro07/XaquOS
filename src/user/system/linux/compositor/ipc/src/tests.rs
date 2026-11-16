@@ -267,7 +267,7 @@ fn snapshot() -> Snapshot {
             transform: compositor_config::Transform::Normal,
             focused: true,
             description: "Headless output 1".to_owned(),
-            make: "Ferrix".to_owned(),
+            make: "Xaqu".to_owned(),
             model: "hyprix".to_owned(),
             serial: String::new(),
             reserved: (0, 0, 0, 0),
@@ -1587,7 +1587,7 @@ fn the_plugins_are_listed_as_hyprland_lists_them() {
     let mut snap = snapshot();
     snap.plugins = vec![crate::Plugin {
         name: "swap".to_owned(),
-        author: "ferrix".to_owned(),
+        author: "xaqu".to_owned(),
         version: "1.0".to_owned(),
         description: "swaps the two windows".to_owned(),
         handle: 0x2a,
@@ -1600,7 +1600,7 @@ fn the_plugins_are_listed_as_hyprland_lists_them() {
         }
     };
     let readable = ask(&snap, "plugin list");
-    assert!(readable.contains("Plugin swap by ferrix:"), "{readable}");
+    assert!(readable.contains("Plugin swap by xaqu:"), "{readable}");
     assert!(readable.contains("\tHandle: 2a\n"), "{readable}");
     assert!(readable.contains("\tVersion: 1.0\n"), "{readable}");
     assert!(
@@ -1678,7 +1678,7 @@ fn told() -> Snapshot {
         description: "Start recording".to_owned(),
     }];
     snapshot.system = System {
-        os: "Ferrix".to_owned(),
+        os: "Xaqu".to_owned(),
         kernel: "0.1.0".to_owned(),
         counts: (1, 2, 3),
         uptime: 42,
@@ -1776,7 +1776,7 @@ fn the_compositor_says_what_it_is_and_what_went_wrong() {
         "hyprix: 1 monitor\nhyprix: frames 1\n"
     );
     let written = told_text("systeminfo");
-    for wanted in ["os: Ferrix", "monitors: 1", "windows: 2", "uptime: 42 s"] {
+    for wanted in ["os: Xaqu", "monitors: 1", "windows: 2", "uptime: 42 s"] {
         assert!(written.contains(wanted), "{wanted:?} in {written:?}");
     }
     // `status` is the same answer under another name, as Hyprland's is.

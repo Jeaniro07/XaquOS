@@ -6,7 +6,7 @@ pub fn counting() -> bool {
 pub struct Preempt;
 // SAFETY: a lock's holder in ring 3 can always be preempted; the shim's locks
 // yield behind one, and no code here relies on not being preempted.
-unsafe impl ferrix_sync::PreemptControl for Preempt {
+unsafe impl xaqu_sync::PreemptControl for Preempt {
     fn disable() {}
     fn enable() {}
 }

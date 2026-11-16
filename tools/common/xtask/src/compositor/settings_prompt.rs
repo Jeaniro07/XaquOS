@@ -1,9 +1,9 @@
 //! `test-compositor --boot settings-prompt`: the trusted prompt
-//! (`docs/SETTINGS-WRITER.md` §12) on a desktop that is `ferrix`'s, with
+//! (`docs/SETTINGS-WRITER.md` §12) on a desktop that is `xaqu`'s, with
 //! authd, settingsd and sessiond.
 //!
 //! The person's keys are QEMU's (`input-send-event`): the seat's own
-//! devices. A program of `ferrix`'s, started by a bind, asks settingsd for
+//! devices. A program of `xaqu`'s, started by a bind, asks settingsd for
 //! a change and then, as an attacker of the same uid would, types the
 //! password and Return with a virtual keyboard and takes a screenshot while
 //! the prompt is up. What is required, each with the sentence its control
@@ -32,7 +32,7 @@ use crate::paths::{self, Arch};
 use crate::qemu::Watching;
 use crate::{Error, Result};
 
-/// `ferrix`'s password, seeded by this boot alone, typed on the US layout.
+/// `xaqu`'s password, seeded by this boot alone, typed on the US layout.
 const PASSWORD: &str = "prompt";
 
 /// The boot's configuration: a window under everything, and a bind for each
@@ -48,7 +48,7 @@ bind = , F5, exec, /bin/sh /etc/ask.sh s5 unlisted
 bind = , F9, exec, /bin/sh -c 'echo probe: bind-fired'
 ";
 
-/// The program of `ferrix`'s that asks: the request in the background, and
+/// The program of `xaqu`'s that asks: the request in the background, and
 /// while its prompt is up, an attacker's injected keys and a screenshot.
 const ASK: &str = r#"#!/bin/sh
 exec 2>&1
@@ -81,7 +81,7 @@ if [ -n "$request" ]; then
 fi
 while read -r line; do echo "probe: $tag $line"; done </tmp/answer
 link=no
-ls /etc/ferrix/units/multi-user.target.wants/sshd.service >/dev/null 2>&1 && link=yes
+ls /etc/xaqu/units/multi-user.target.wants/sshd.service >/dev/null 2>&1 && link=yes
 echo "probe: $tag end names $(cat /etc/hostname) $(hostname) sshd-linked $link"
 "#;
 
@@ -140,7 +140,7 @@ pub(super) fn test_settings_prompt(arch: Arch, programs: &Programs, args: &Args)
         mode,
         content: crate::ports::Content::Bytes(text.as_bytes().to_vec()),
     };
-    let mut ports = super::hyprlock::hyprlock_files(arch, Some(("ferrix", PASSWORD)))?;
+    let mut ports = super::hyprlock::hyprlock_files(arch, Some(("xaqu", PASSWORD)))?;
     let settings = crate::settingsd::carried(arch)?;
     if settings.is_empty() {
         return Err(Error::new(format!("{arch}: settingsd is not built for it")));
@@ -148,13 +148,13 @@ pub(super) fn test_settings_prompt(arch: Arch, programs: &Programs, args: &Args)
     ports.extend(settings);
     ports.extend([
         file("etc/ask.sh", 0o755, ASK),
-        file("lib/ferrix/units/sshd.service", 0o644, SSHD_UNIT),
+        file("lib/xaqu/units/sshd.service", 0o644, SSHD_UNIT),
         file(
-            "etc/ferrix/auth/services/settings.services.d/10-none.conf",
+            "etc/xaqu/auth/services/settings.services.d/10-none.conf",
             0o644,
             NO_PASSWORD,
         ),
-        file("etc/hostname", 0o644, "ferrix\n"),
+        file("etc/hostname", 0o644, "xaqu\n"),
     ]);
     let carried = Carried {
         busybox: Some(busybox),
@@ -193,7 +193,7 @@ pub(super) fn test_settings_prompt(arch: Arch, programs: &Programs, args: &Args)
     }
     judge_still_running(arch, &said)?;
     println!(
-        "  {arch}: as ferrix, settingsd asked on the seat; injected keys, a bind and a \
+        "  {arch}: as xaqu, settingsd asked on the seat; injected keys, a bind and a \
          screenshot reached nothing while the prompt was up and QEMU's screen showed no \
          client; a wrong password changed nothing and the right one renamed the machine; an \
          Allow-only prompt waited its second; Escape made nothing; a program off the list was \
@@ -333,7 +333,7 @@ fn drive(
     type_in(&mut qmp, "wrong")?;
     let s1 = ended(watching, from, "s1")?;
     if !has(&s1, "settingsctl: refused: authentication-failed")
-        || !has(&s1, "end names ferrix ferrix")
+        || !has(&s1, "end names xaqu xaqu")
     {
         failures.push(format!(
             "a wrong password in the prompt was not refused: {s1:?}"
@@ -352,7 +352,7 @@ fn drive(
     let s2 = ended(watching, from, "s2")?;
     if !has(
         &s2,
-        "settingsctl: done: the computer is called box (was ferrix)",
+        "settingsctl: done: the computer is called box (was xaqu)",
     ) || !has(&s2, "end names box box")
     {
         failures.push(format!(

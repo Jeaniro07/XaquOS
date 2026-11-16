@@ -23,7 +23,7 @@
 //!
 //! A third way is the test server's, where the frames are drawn through
 //! `virgl_test_server` on the GPU's own EGL (`--renderer vtest`, N3c) and
-//! the server is Ferrix's patched one: the server imports the descriptor as
+//! the server is Xaqu's patched one: the server imports the descriptor as
 //! an EGL image and samples it, which is the only way a buffer in video
 //! memory -- NVIDIA's block-linear ones, which no processor can map -- is
 //! shown at all. What that EGL says it imports is what is offered
@@ -123,7 +123,7 @@ impl Importer {
     /// render node if there is one, found by its driver's name (the
     /// consultant's B8, ledger 316): the server's own node speaks the
     /// vendor's ioctls, not virgl's, and nothing could be imported through
-    /// it. Ferrix's Intel node is render-only: a buffer mapped here is read
+    /// it. Xaqu's Intel node is render-only: a buffer mapped here is read
     /// by the CPU and never reaches a display plane, so its driver's
     /// `gem::SCANOUT` stays as it is. Otherwise frames drawn on a GPU import
     /// through the first render node.

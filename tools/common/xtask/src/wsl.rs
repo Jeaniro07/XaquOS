@@ -121,7 +121,7 @@ pub(crate) fn home() -> Option<PathBuf> {
 /// `cargo` with `arguments`, run in the default distribution in `dir`.
 ///
 /// The target directory is on the distribution's own filesystem, under
-/// `~/.cache/ferrix/`, rather than the checkout's `target/`: a Windows build
+/// `~/.cache/xaqu/`, rather than the checkout's `target/`: a Windows build
 /// already lives there, cargo's fingerprints for one host mean nothing to the
 /// other, and a build over WSL's view of an NTFS drive is several times slower
 /// than one on ext4. Each checkout gets its own, named after its path, so two
@@ -138,7 +138,7 @@ pub(crate) fn cargo(dir: &Path, arguments: &[&str]) -> Command {
         .arg(dir)
         .args(["--exec", "bash", "-lc"])
         .arg(format!(
-            "export CARGO_TARGET_DIR=\"$HOME/.cache/ferrix/target/{}\"; exec cargo \"$@\"",
+            "export CARGO_TARGET_DIR=\"$HOME/.cache/xaqu/target/{}\"; exec cargo \"$@\"",
             target_name(dir)
         ))
         // `$0` for the script, and then the arguments as `$@`, so that none of
@@ -169,7 +169,7 @@ pub(crate) fn bash_building(
         .arg(dir)
         .args(["--exec", "bash", "-lc"])
         .arg(format!(
-            "export CARGO_TARGET_DIR=\"$HOME/.cache/ferrix/target/{}\"; {script}",
+            "export CARGO_TARGET_DIR=\"$HOME/.cache/xaqu/target/{}\"; {script}",
             target_name(builds)
         ))
         .arg("bash")

@@ -3,23 +3,23 @@
 Design, 2026-10-22, stream `wake-affine`. It is an addendum to the EEVDF
 lag design note (ef-sys, 2026-10-21; consultant ledger 2742), and it builds
 on the idle wake placement L.sched.85 (ledger 2658, 2984, 3052). Core ring:
-`src/kernel/src/sched/**` and `ferrix-sched`. The design review comes
+`src/kernel/src/sched/**` and `xaqu-sched`. The design review comes
 before any code.
 
 ## 1. What was measured
 
 Agent Y's prototype is `eevdf-coalesce` dca552289, behind
-`ferrix.coalesce=affine`. It was measured with `efsched` under KVM with 4
+`xaqu.coalesce=affine`. It was measured with `efsched` under KVM with 4
 vCPUs, beside Linux 7.0 in the same guest shape. Two placement patterns
-separate Ferrix from Linux. Under Wine both are everywhere: the
+separate Xaqu from Linux. Under Wine both are everywhere: the
 wineserver/client futex and socket hand-overs, and the render and present
 threads.
 
 - **(a) Wakes stay at home.** Linux runs a futex wakee on its partner's
-  processor 7,608 times out of 7,609 (`wake_affine`). Ferrix wakes it at
+  processor 7,608 times out of 7,609 (`wake_affine`). Xaqu wakes it at
   home every time (7,820 of 7,820), so each hand-over preempts a second,
   busy processor.
-- **(b) New threads stay with their creator.** Ferrix leaves a new thread
+- **(b) New threads stay with their creator.** Xaqu leaves a new thread
   on its creator's processor when no processor is idle (18,064 of 24,066
   light wakes on one processor). Linux spreads new tasks at fork and exec.
 
@@ -63,7 +63,7 @@ So the outliers are a placement-density effect (too many pollers, plus the
 pair, on one processor) made worse by colliding phases. They are not a
 cost of the affine move. The mechanism behind the tail is a woken poller
 that carries negative lag. A poller that ran while its neighbours waited
-comes back owing (`ferrix-sched` returns negative lag, where Linux's
+comes back owing (`xaqu-sched` returns negative lag, where Linux's
 DELAY_ZERO clips it to zero; note §6.5). It is ineligible until the
 spinner has paid the debt off, which takes up to two slices. In
 `efsched6`, the light wakes later than 300 us were mostly on the
@@ -99,7 +99,7 @@ the bounds in §2.
    because the waker runs on it.
 3. **Weight** (Linux's `wake_affine_weight` with WA_BIAS, imbalance_pct
    117). The wakee is pulled only if `here`'s load average × 100 is below
-   home's × 108. Ferrix has no per-task load average, so the wakee's own
+   home's × 108. Xaqu has no per-task load average, so the wakee's own
    load is left out of both sides. That is generous to the pull for a
    heavy wakee. A task woken from a call is the hand-over case, which is
    light, and §5 measures the heavy case.
@@ -141,12 +141,12 @@ conditions, the waker records the wakee (Linux's `record_wakee`):
 The wake is wide, and the pull is refused, when
 `min(flips) >= factor && max(flips) >= min(flips) × factor`. Here `factor`
 is the number of processors in the domain, which stands in for Linux's
-`sd_llc_size`. Every Ferrix target today has one last-level cache per
+`sd_llc_size`. Every Xaqu target today has one last-level cache per
 domain. A server that wakes many clients (wineserver) and a client of
 such a server therefore stay where they are, and Linux's tie-breaks then
 spread them.
 
-The arithmetic (`wake_wide`, `flip`) lives in `ferrix-sched` and is
+The arithmetic (`wake_wide`, `flip`) lives in `xaqu-sched` and is
 host-tested.
 
 ## 4. Rule C: a new task charges the processor it is placed on (withdrawn, §8)
@@ -209,7 +209,7 @@ Each gets a stage 5 self-check with three attempts:
 
 Each gets a negative control through `gate.sh control --expect`, with the
 rule removed, and the case must fail with its own sentence. Host tests in
-`ferrix-sched` cover `wake_wide`, the flip decay, the weight comparison
+`xaqu-sched` cover `wake_wide`, the flip decay, the weight comparison
 and `Load::charge`.
 
 ## 7. Review
@@ -262,7 +262,7 @@ communicating tasks together, as Linux has. That is p2-151.
 first, then the heavy phase. Three rotated rounds of `efsched6` under
 `fleet/bench.lock`, 4 vCPUs pinned 7-10, host load 2 to 4. Throughput was
 3.84 to 3.88 processors on all three, and the light-wake p50 was 8.6 us on
-Ferrix and 11.4 to 19.4 us on Linux 7.0.
+Xaqu and 11.4 to 19.4 us on Linux 7.0.
 
 | | main 48fc08e3b | branch | Linux 7.0 |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 //! The window switcher: `ALT+TAB` as GNOME has it (`docs/DESKTOP.md` §1.2).
 //!
-//! `switcher next` (Ferrix light binds it to `ALT+Tab` and `SUPER+Tab`)
+//! `switcher next` (Xaqu light binds it to `ALT+Tab` and `SUPER+Tab`)
 //! shows every window -- minimized ones too, dimmed -- in a row across the
 //! focused monitor, most recently focused first, with the one before the
 //! focused window picked. Each further `switcher next` or `switcher prev`

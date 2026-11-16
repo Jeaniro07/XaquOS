@@ -16,8 +16,8 @@
 # binary loads, and the ANGLE libraries epoxy opens at run time, are copied
 # beside it, so the directory runs on its own.
 #
-# Writes $FERRIX_QEMU_DIR (default ~/.local/share/ferrix/qemu in the Windows
-# home); the source and the build are in $FERRIX_QEMU_WORK (default the same
+# Writes $XAQU_QEMU_DIR (default ~/.local/share/xaqu/qemu in the Windows
+# home); the source and the build are in $XAQU_QEMU_WORK (default the same
 # path with `-build`), about 3 GiB. Needs MSYS2 at $MSYS2_ROOT (default C:/msys64); installs the
 # packages it needs there with pacman. Run from Git Bash or MSYS2.
 #
@@ -29,7 +29,7 @@ version=v11.1.0
 # What `--version` says after the version, and how xtask tells this build
 # from another: `whpx-gva` is 0005, without which a WHPX guest is given one
 # processor (tools/common/xtask/src/qemu.rs, `processors`).
-pkgversion="ferrix: whpx-gva"
+pkgversion="xaqu: whpx-gva"
 spice_protocol=v0.14.5
 here=$(cd "$(dirname "$0")/../../.." && pwd)
 
@@ -45,17 +45,17 @@ if [ "${1:-}" != --in-msys2 ]; then
         exit 1
     fi
     home=${USERPROFILE:-$HOME}
-    out=$(cygpath -m "${FERRIX_QEMU_DIR:-$home/.local/share/ferrix/qemu}")
-    work=$(cygpath -m "${FERRIX_QEMU_WORK:-$out-build}")
+    out=$(cygpath -m "${XAQU_QEMU_DIR:-$home/.local/share/xaqu/qemu}")
+    work=$(cygpath -m "${XAQU_QEMU_WORK:-$out-build}")
     script=$(cygpath -m "$here/tools/common/fetch/$(basename "$0")")
     MSYSTEM=MINGW64 CHERE_INVOKING=1 exec "$msys/usr/bin/bash.exe" -lc \
         'exec bash "$0" --in-msys2 "$1" "$2" "$3"' "$script" "$out" "$work" \
-        "${FERRIX_QEMU_JOBS:-}"
+        "${XAQU_QEMU_JOBS:-}"
 fi
 
 out=$(cygpath -u "$2")
 work=$(cygpath -u "$3")
-FERRIX_QEMU_JOBS=${4:-}
+XAQU_QEMU_JOBS=${4:-}
 mkdir -p "$out" "$work"
 
 pacman -S --needed --noconfirm --disable-download-timeout \
@@ -110,10 +110,10 @@ rm -rf "$src/build"
         --disable-werror --enable-install-blobs --prefix="$out" \
         --with-pkgversion="$pkgversion" >/dev/null
 )
-# FERRIX_QEMU_JOBS caps the build, for a machine someone is using
+# XAQU_QEMU_JOBS caps the build, for a machine someone is using
 # (ninja's default is every processor).
-ninja -C "$src/build" ${FERRIX_QEMU_JOBS:+-j "$FERRIX_QEMU_JOBS"} >/dev/null
-ninja -C "$src/build" ${FERRIX_QEMU_JOBS:+-j "$FERRIX_QEMU_JOBS"} install >/dev/null
+ninja -C "$src/build" ${XAQU_QEMU_JOBS:+-j "$XAQU_QEMU_JOBS"} >/dev/null
+ninja -C "$src/build" ${XAQU_QEMU_JOBS:+-j "$XAQU_QEMU_JOBS"} install >/dev/null
 
 # The DLLs it links against, and theirs in turn, until nothing new appears;
 # epoxy opens ANGLE's EGL and GLES by name, so those two go in by hand.

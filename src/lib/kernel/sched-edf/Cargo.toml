@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-sched-edf"
+name = "xaqu-sched-edf"
 description = "Partitioned EDF with a hard constant-bandwidth server, over the fair class"
 version.workspace = true
 edition.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-ferrix-sched = { workspace = true }
+xaqu-sched = { workspace = true }
 
 [lints]
 workspace = true

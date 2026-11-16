@@ -1,5 +1,5 @@
 //! init's socket: units' standard output and error, a line at a time, with
-//! who wrote it (`ferrix_lode_core::units`, `docs/LOGGING.md` §4.2).
+//! who wrote it (`xaqu_lode_core::units`, `docs/LOGGING.md` §4.2).
 //!
 //! `/run/lode/units`, made by lode while it is still root and left root's,
 //! mode 0600; lode also refuses a peer whose uid is not 0, so only init --
@@ -8,9 +8,9 @@
 
 use alloc::vec::Vec;
 
-use ferrix_lode_core::ingest::Now;
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::units::{self, Pairing};
+use xaqu_lode_core::ingest::Now;
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::units::{self, Pairing};
 
 use crate::sys;
 

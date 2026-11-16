@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-driver-model-examples"
-description = "The driver model design page's two examples, an STM32 SPI controller and an LM75 on I2C, kept compiling against ferrix-driver as its test: linted for every architecture by cargo xtask check, never put in an image"
+name = "xaqu-driver-model-examples"
+description = "The driver model design page's two examples, an STM32 SPI controller and an LM75 on I2C, kept compiling against xaqu-driver as its test: linted for every architecture by cargo xtask check, never put in an image"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -20,9 +20,9 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-driver.workspace = true
-ferrix-platform.workspace = true
-ferrix-rt.workspace = true
+xaqu-driver.workspace = true
+xaqu-platform.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

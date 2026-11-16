@@ -11,10 +11,10 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_vma::VmaFlags;
 
 use crate::object::Object;
 use crate::object::job::{Budget, Job, JobError};

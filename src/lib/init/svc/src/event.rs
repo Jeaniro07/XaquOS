@@ -41,7 +41,7 @@ pub struct Token(pub u64);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Errno(pub i32);
 
-/// A name in the directory (§6): `ferrix.clipboard`.
+/// A name in the directory (§6): `xaqu.clipboard`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name(pub String);
 
@@ -90,7 +90,7 @@ impl fmt::Display for GroupPath {
     }
 }
 
-pub use ferrix_restart::Exit;
+pub use xaqu_restart::Exit;
 
 /// Everything that happened, as the backends saw it.
 #[derive(Debug, Clone, PartialEq, Eq)]

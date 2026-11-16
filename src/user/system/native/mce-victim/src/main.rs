@@ -23,19 +23,19 @@
 #![no_std]
 #![no_main]
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_chardevctl::message::{self, Hello, MAX_NODES, Message, VERSION};
-use ferrix_chardevctl::node::RENDER_MINOR;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::PinAccess;
-use ferrix_rt::native::{channel, vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_chardevctl::message::{self, Hello, MAX_NODES, Message, VERSION};
+use xaqu_chardevctl::node::RENDER_MINOR;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::PinAccess;
+use xaqu_rt::native::{channel, vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page.
 const PAGE: usize = 4096;
@@ -52,14 +52,14 @@ const SAID: &str = "mce-victim:";
 
 fn main(bootstrap: Bootstrap) -> i32 {
     let Some(boot) = bootstrap else {
-        ferrix_rt::err!("{SAID} no bootstrap channel");
+        xaqu_rt::err!("{SAID} no bootstrap channel");
         return FAILED;
     };
     let _ = boot.wait_one(Signals::READABLE, Deadline::Never);
     let mut bytes = [0_u8; START_BYTES];
     let mut handles = [Handle::INVALID; 1];
     let Ok(received) = boot.read(&mut bytes, &mut handles) else {
-        ferrix_rt::err!("{SAID} no START");
+        xaqu_rt::err!("{SAID} no START");
         return FAILED;
     };
     if !matches!(
@@ -67,7 +67,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
         Ok(StartMessage::Start(_))
     ) || received.handles != 1
     {
-        ferrix_rt::err!("{SAID} not a START with one handle");
+        xaqu_rt::err!("{SAID} not a START with one handle");
         return FAILED;
     }
     let device = Device::from_owned(OwnedHandle::from_raw(Kernel, handles[0]));
@@ -76,23 +76,23 @@ fn main(bootstrap: Bootstrap) -> i32 {
         _ => 0,
     };
     let Ok(memory) = vmo::create(Kernel, PAGE) else {
-        ferrix_rt::err!("{SAID} no page");
+        xaqu_rt::err!("{SAID} no page");
         return FAILED;
     };
     let Ok(pin) = device.pin(&memory, 0, PAGE, PinAccess::ReadWrite) else {
-        ferrix_rt::err!("{SAID} the page's pin was refused");
+        xaqu_rt::err!("{SAID} the page's pin was refused");
         return FAILED;
     };
     let Ok(at) = memory.map(None, PAGE, Protection::ReadWrite, 0) else {
-        ferrix_rt::err!("{SAID} the page would not map");
+        xaqu_rt::err!("{SAID} the page would not map");
         return FAILED;
     };
     let Ok((ours, theirs)) = channel::create(Kernel) else {
-        ferrix_rt::err!("{SAID} no channel");
+        xaqu_rt::err!("{SAID} no channel");
         return FAILED;
     };
     // SAFETY: no pointer argument; `getpid` reads nothing of ours.
-    let pid = unsafe { ferrix_rt::linux::call(ferrix_rt::linux::numbers::GETPID, [0; 6]) }
+    let pid = unsafe { xaqu_rt::linux::call(xaqu_rt::linux::numbers::GETPID, [0; 6]) }
         .unwrap_or(0) as u64;
     let words = at as *mut u64;
     for n in 0..PAGE / 8 {
@@ -104,7 +104,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
                 .write_volatile(MAGIC << 32 | (pid & 0xffff) << 16 | n as u64);
         }
     }
-    ferrix_rt::err!("{SAID} pid {pid} va {at:#x}");
+    xaqu_rt::err!("{SAID} pid {pid} va {at:#x}");
     // Held for the life of the start: its close would end the publication.
     let Some(_control) = hello(&device, location) else {
         return FAILED;
@@ -132,7 +132,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
 /// The control channel, or `None` with the reason said.
 fn hello(device: &Device<Kernel>, location: u32) -> Option<channel::Channel<Kernel>> {
     let Ok(control) = device.chardev_control() else {
-        ferrix_rt::err!("{SAID} no chardev control");
+        xaqu_rt::err!("{SAID} no chardev control");
         return None;
     };
     let mut minors = [0; MAX_NODES];
@@ -149,7 +149,7 @@ fn hello(device: &Device<Kernel>, location: u32) -> Option<channel::Channel<Kern
         .write(Message::Hello(hello).encode().as_bytes())
         .is_err()
     {
-        ferrix_rt::err!("{SAID} HELLO not sent");
+        xaqu_rt::err!("{SAID} HELLO not sent");
         return None;
     }
     let _ = control.wait_one(Signals::READABLE | Signals::PEER_CLOSED, Deadline::Never);
@@ -159,7 +159,7 @@ fn hello(device: &Device<Kernel>, location: u32) -> Option<channel::Channel<Kern
     match Message::decode(bytes.get(..read.bytes).unwrap_or(&[])) {
         Ok(Message::Ready(_)) => Some(control),
         _ => {
-            ferrix_rt::err!("{SAID} HELLO refused");
+            xaqu_rt::err!("{SAID} HELLO refused");
             None
         }
     }

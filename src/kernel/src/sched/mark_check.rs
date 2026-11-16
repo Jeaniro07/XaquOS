@@ -20,7 +20,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use super::WaitQueue;
 use super::wait::{self, Mark, ReadyList};

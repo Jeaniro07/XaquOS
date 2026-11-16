@@ -3,7 +3,7 @@
 //!
 //! The guest's half is `src/kernel/src/fs/btrfs_write_check.rs`, which builds a
 //! tree on the third disk, unmounts, mounts again and reads it all back; it
-//! proves the bytes survive a round trip through Ferrix. It cannot prove the
+//! proves the bytes survive a round trip through Xaqu. It cannot prove the
 //! trees are the ones btrfs would have written — a writer can be
 //! self-consistent and still wrong about the format. That is what this
 //! command adds: after the boot, `btrfs check --check-data-csum` from
@@ -81,7 +81,7 @@ impl Checker {
         Checker::find().ok_or_else(|| {
             Error::new(
                 "btrfs check is not on this host: install btrfs-progs (on Windows, in WSL), \
-                 because the exit criterion is what it says about the volume Ferrix wrote",
+                 because the exit criterion is what it says about the volume Xaqu wrote",
             )
         })
     }
@@ -123,7 +123,7 @@ impl Checker {
             + &String::from_utf8_lossy(&output.stdout);
         if !output.status.success() {
             return Err(Error::new(format!(
-                "{arch}: btrfs check refused the volume Ferrix wrote:\n{}",
+                "{arch}: btrfs check refused the volume Xaqu wrote:\n{}",
                 said.trim()
             )));
         }
@@ -131,7 +131,7 @@ impl Checker {
         // versions; a volume with errors says so in words as well.
         if said.contains("ERROR") || said.contains("errors found") {
             return Err(Error::new(format!(
-                "{arch}: btrfs check found errors in the volume Ferrix wrote:\n{}",
+                "{arch}: btrfs check found errors in the volume Xaqu wrote:\n{}",
                 said.trim()
             )));
         }

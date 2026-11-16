@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 description = "Linux syscall ABI numbers, errno values and structure layouts"
 version = "0.1.0"
 edition = "2024"

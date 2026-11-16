@@ -9,16 +9,16 @@
 #
 # RIG_NO_INVTSC=1 leaves invtsc out, the clock's negative control: the
 # guest must then not say tsc. Run from the host, never while linux-3060 or
-# ferrix-3060 runs (the same host processors).
+# xaqu-3060 runs (the same host processors).
 #
-#   FERRIX_LINUX_BASELINE  the baseline's directory  ~/.local/share/ferrix/linux-baseline
-#   FERRIX_RUSTC_SYSROOT   the rustc volume's        ~/.local/share/ferrix/rustc
+#   XAQU_LINUX_BASELINE  the baseline's directory  ~/.local/share/xaqu/linux-baseline
+#   XAQU_RUSTC_SYSROOT   the rustc volume's        ~/.local/share/xaqu/rustc
 #   QEMU                   the emulator              the patched one the card guests use
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
-base=${FERRIX_LINUX_BASELINE:-$HOME/.local/share/ferrix/linux-baseline}
-volume=${FERRIX_RUSTC_SYSROOT:-$HOME/.local/share/ferrix/rustc}/rustc.img
-qemu=${QEMU:-/usr/local/lib/ferrix/qemu/bin/qemu-system-x86_64}
+base=${XAQU_LINUX_BASELINE:-$HOME/.local/share/xaqu/linux-baseline}
+volume=${XAQU_RUSTC_SYSROOT:-$HOME/.local/share/xaqu/rustc}/rustc.img
+qemu=${QEMU:-/usr/local/lib/xaqu/qemu/bin/qemu-system-x86_64}
 warm=${1:-30}
 port=2369
 # linux-3060.xml's <cputune>: vCPU n on host processor ${pins[n]}, QEMU's
@@ -57,16 +57,16 @@ echo "linux-guest: pid $pid, vCPUs pinned to ${pins[*]}, QEMU on $emulator, -cpu
 ssho=(-o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=no
 	-o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10 -i "$base/ssh/id_ed25519")
 for _ in $(seq 1 90); do
-	ssh "${ssho[@]}" -p $port ferrix@127.0.0.1 true 2>/dev/null </dev/null && break
+	ssh "${ssho[@]}" -p $port xaqu@127.0.0.1 true 2>/dev/null </dev/null && break
 	sleep 2
 done
 scp -q "${ssho[@]}" -P $port "$run/rig" "$here/load.sh" "$here/load-crate.rs" "$here/measure.sh" \
-	ferrix@127.0.0.1:/tmp/
+	xaqu@127.0.0.1:/tmp/
 # The volume read-only at /mnt/rustc, by the root the image's user may
 # reach with sudo; everything after that as that user.
-ssh "${ssho[@]}" -p $port ferrix@127.0.0.1 \
+ssh "${ssho[@]}" -p $port xaqu@127.0.0.1 \
 	"sudo mkdir -p /mnt/rustc && sudo mount -o ro /dev/disk/by-id/virtio-rustc /mnt/rustc &&
 	 echo \"linux-guest: \$(uname -sr), \$(nproc) processors, \$(id -un) (uid \$(id -u))\" &&
 	 PATH=/tmp:/mnt/rustc/rust/bin:\$PATH RIG_DISK=\$HOME sh /tmp/measure.sh $warm" </dev/null
-ssh "${ssho[@]}" -p $port ferrix@127.0.0.1 sudo poweroff </dev/null 2>/dev/null || true
+ssh "${ssho[@]}" -p $port xaqu@127.0.0.1 sudo poweroff </dev/null 2>/dev/null || true
 for _ in $(seq 1 30); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done

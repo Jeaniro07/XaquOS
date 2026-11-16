@@ -43,8 +43,8 @@ const LIGHT: usize = PANEL_W * PANEL_H / 2;
 const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
-echo "notices-probe: lode.d:"; ls -l /etc/ferrix/lode.d 2>&1
-echo "notices-probe: rules:"; cat /etc/ferrix/lode.d/notices.rules 2>&1
+echo "notices-probe: lode.d:"; ls -l /etc/xaqu/lode.d 2>&1
+echo "notices-probe: rules:"; cat /etc/xaqu/lode.d/notices.rules 2>&1
 echo "notices-probe: reload:"; /sbin/lode reload 2>&1
 ( /sbin/lode alerts > /tmp/notices-alerts.txt 2>&1 & )
 sleep 20
@@ -60,7 +60,7 @@ echo "notices-probe: alerts-file-2:"; cat /tmp/notices-alerts.txt 2>&1
 while :; do sleep 2; done
 "#;
 
-/// The rule lode reads in the guest, in `/etc/ferrix/lode.d`: a `notify`
+/// The rule lode reads in the guest, in `/etc/xaqu/lode.d`: a `notify`
 /// alert is a line on `/run/lode/alerts`, which notifyd reads and shows
 /// as a banner. The record it matches is the mark the script writes.
 const RULES: &str =
@@ -140,7 +140,7 @@ pub(super) fn test_notices(arch: Arch, programs: &Programs, args: &Args) -> Resu
     // The rule that turns the mark into an alert, read by lode when it
     // starts.
     carried.ports.push(crate::ports::File {
-        path: "etc/ferrix/lode.d/notices.rules".to_owned(),
+        path: "etc/xaqu/lode.d/notices.rules".to_owned(),
         mode: 0o644,
         content: crate::ports::Content::Bytes(RULES.as_bytes().to_vec()),
     });

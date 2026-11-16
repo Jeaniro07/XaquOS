@@ -2,7 +2,7 @@
 //!
 //! A read is one record: `prio,seq,usec,flags[,...];text`, a newline, and
 //! then any `KEY=value` continuation lines, each beginning with a space,
-//! which Ferrix's kernel does not write. `prio` is the facility shifted left
+//! which Xaqu's kernel does not write. `prio` is the facility shifted left
 //! three and the level. The text's bytes outside printable ASCII, and the
 //! backslash, are written `\xNN`, as Linux's `msg_add_ext_text` writes them.
 

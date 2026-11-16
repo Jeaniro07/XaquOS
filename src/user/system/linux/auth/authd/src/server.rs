@@ -14,8 +14,8 @@ use std::os::fd::{AsRawFd as _, FromRawFd as _, OwnedFd};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use ferrix_auth_client::{send_packet, socklen};
-use ferrix_auth_proto::{MAX_RECORD, Record};
+use xaqu_auth_client::{send_packet, socklen};
+use xaqu_auth_proto::{MAX_RECORD, Record};
 
 use crate::audit::say;
 use crate::engine::{Conversation, Engine, Peer, Reply};

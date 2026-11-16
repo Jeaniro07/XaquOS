@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-qr"
+name = "xaqu-qr"
 description = "QR code encoder for the panic screen, ported from Linux's drm_panic_qr.rs"
 version = "0.1.0"
 edition = "2024"

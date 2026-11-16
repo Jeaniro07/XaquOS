@@ -2,24 +2,24 @@
 //! `n150-install` puts on the box's EFI system partition by default, and
 //! the one `test-n150-desktop` boots the way the box will.
 //!
-//! hyprix on the firmware's framebuffer (`ferrix.efifb`, H6: the box's Intel
+//! hyprix on the firmware's framebuffer (`xaqu.efifb`, H6: the box's Intel
 //! graphics have no driver), with the boot console drawn on that screen
-//! until hyprix takes it (`ferrix.fbcon`: the box has no serial port), and
+//! until hyprix takes it (`xaqu.fbcon`: the box has no serial port), and
 //! the self-checks skipped, as on every desktop a person switches on.
 //! yserver for X11, Wine's and Proton's links into the program tree at
 //! `/data`, and `gryphlink`, which starts GRYPHLINK, in fuzzel's list and
 //! a terminal away.
 //!
-//! The desktop is a session of the user `ferrix`, started by `sessiond`
+//! The desktop is a session of the user `xaqu`, started by `sessiond`
 //! (`crate::session`), not root's: the compositor and everything it starts,
-//! GRYPHLINK and Wine's prefix in `/home/ferrix` among them, run as that
+//! GRYPHLINK and Wine's prefix in `/home/xaqu` among them, run as that
 //! user. What has to stay root is init's: a script, a unit of
 //! `multi-user.target` and so not the compositor's, brings the wired
 //! interface up -- the YT6801's on the box, QEMU's under the test -- and
 //! says what it found, whether hyprix runs or not.
 //!
 //! The launcher's background video is blocked, as
-//! `FERRIX_ENDFIELD_NO_VIDEO=1` blocks it for `test-endfield-proton`
+//! `XAQU_ENDFIELD_NO_VIDEO=1` blocks it for `test-endfield-proton`
 //! (`docs/WINE.md` §10): played in software it took 3.2 of 4 processors. Its
 //! host resolves nowhere in `/etc/hosts`, which the image carries, and in
 //! the Wine prefix's own hosts file, which `/bin/gryphlink` writes before
@@ -39,8 +39,8 @@ use crate::{Error, Result};
 pub(crate) const VIDEO_HOST: &str = super::endfield::VIDEO_HOST;
 
 /// What the image's loader adds to the kernel's command line
-/// (`FERRIX/DEFAULTS.TXT`), before any `--kernel-option`.
-pub(crate) const BOX_OPTIONS: &str = "ferrix.checks=skip ferrix.efifb ferrix.fbcon";
+/// (`XAQU/DEFAULTS.TXT`), before any `--kernel-option`.
+pub(crate) const BOX_OPTIONS: &str = "xaqu.checks=skip xaqu.efifb xaqu.fbcon";
 
 /// Where [`SCRIPT`] is in the image.
 const SCRIPT_PATH: &str = "etc/n150-desktop.sh";
@@ -91,15 +91,15 @@ echo "n150-desktop: ready"
 
 /// Where [`UNIT`] is in the image, and the link that makes
 /// `multi-user.target` want it.
-const UNIT_PATH: &str = "etc/ferrix/units/n150-desktop.service";
-const UNIT_WANTED: &str = "etc/ferrix/units/multi-user.target.wants/n150-desktop.service";
+const UNIT_PATH: &str = "etc/xaqu/units/n150-desktop.service";
+const UNIT_WANTED: &str = "etc/xaqu/units/multi-user.target.wants/n150-desktop.service";
 
 /// [`SCRIPT`]'s unit: root's, of `multi-user.target`, so the lease does not
 /// wait on the compositor's card (`docs/BACKLOG.md`: the box was
 /// unreachable whenever hyprix did not run). `simple`, not `oneshot`:
 /// `graphical.target` comes after `multi-user.target`, and a oneshot would
 /// hold the compositor back while the script waits for its X server.
-const UNIT: &str = "# The N150 box's root part of its desktop, which runs as ferrix \
+const UNIT: &str = "# The N150 box's root part of its desktop, which runs as xaqu \
                     (tools/common/xtask/src/compositor/n150_box.rs).\n\
                     [Unit]\n\
                     Description=The N150 box's network and launcher checks\n\
@@ -118,7 +118,7 @@ const UNIT: &str = "# The N150 box's root part of its desktop, which runs as fer
 const GRYPHLINK: &str = r#"#!/bin/busybox sh
 # The N150 box's start of GRYPHLINK (cargo xtask n150-install, docs/N150.md):
 # the launcher's background video blocked in the Wine prefix's hosts file
-# too, as FERRIX_ENDFIELD_NO_VIDEO=1 does for test-endfield-proton
+# too, as XAQU_ENDFIELD_NO_VIDEO=1 does for test-endfield-proton
 # (docs/WINE.md section 10), then the volume's own start.
 prefix="${WINEPREFIX:-$HOME/.local/share/gryphlink/prefix}"
 hosts="$prefix/drive_c/windows/system32/drivers/etc/hosts"
@@ -129,11 +129,11 @@ fi
 exec /data/usr/bin/gryphlink "$@"
 "#;
 
-/// The image's `/etc/hosts`: the machine's own name, `ferrix`
+/// The image's `/etc/hosts`: the machine's own name, `xaqu`
 /// (`/etc/hostname`), on 127.0.1.1 as Debian puts it, so a program that
 /// resolves the host it runs on finds it -- the box needed it by hand for
 /// the launcher (2026-10-18) -- and the video host blocked.
-const HOSTS: &str = "127.0.0.1 localhost\n127.0.1.1 ferrix\n::1 localhost\n0.0.0.0 @HOST@\n";
+const HOSTS: &str = "127.0.0.1 localhost\n127.0.1.1 xaqu\n::1 localhost\n0.0.0.0 @HOST@\n";
 
 /// The compositor's configuration ahead of what [`desktop`] adds: a
 /// terminal to start with and one a key away, fuzzel a key away, the
@@ -202,7 +202,7 @@ pub(crate) fn image(args: &Args) -> Result<(PathBuf, PathBuf)> {
     let busybox = gates_busybox(arch).ok_or_else(|| {
         Error::new(
             "the N150 desktop needs a static busybox: Alpine's busybox-static at \
-             ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from \
+             ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from \
              `cargo xtask busybox`",
         )
     })?;
@@ -262,7 +262,7 @@ pub(crate) fn image(args: &Args) -> Result<(PathBuf, PathBuf)> {
 /// `net` off for `desktop`: the script's unit, not an `exec-once`, asks for
 /// the lease. No moving or shipped wallpaper unless one is named: each
 /// frame is drawn in software on four small cores. The desktop is
-/// `ferrix`'s session, never root's. And it is Xaqu, as the live ISO and the
+/// `xaqu`'s session, never root's. And it is Xaqu, as the live ISO and the
 /// system it installs are, unless `--theme` names another: before
 /// 2026-10-28 the box's image had no theme at all, so Xaqu's dock, started
 /// by hand, drew every icon as a box (no Phosphor face), and its title
@@ -321,7 +321,7 @@ mod tests {
         };
         let hosts = find("etc/hosts").expect("the image's /etc/hosts");
         assert!(hosts.contains(&format!("0.0.0.0 {VIDEO_HOST}")));
-        assert!(hosts.lines().any(|line| line == "127.0.1.1 ferrix"));
+        assert!(hosts.lines().any(|line| line == "127.0.1.1 xaqu"));
         let start = find("bin/gryphlink").expect("/bin/gryphlink");
         let block = start
             .find("drivers/etc/hosts")

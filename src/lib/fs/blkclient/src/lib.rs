@@ -2,7 +2,7 @@
 //! `docs/MICROKERNEL.md` §3's *Retired calls*): what `interfaces/block_ring` does
 //! in a hybrid kernel, on channels, VMOs and ports. The driver is unchanged.
 //!
-//! The ring's rules are `ferrix_blkring::kernel`'s, the same code the kernel's core
+//! The ring's rules are `xaqu_blkring::kernel`'s, the same code the kernel's core
 //! runs: the driver's indices are hostile, and a bad one ends the ring. The driver
 //! can write these pages at any moment, so every read of them is a volatile load,
 //! into memory only this side can reach, and what the caller checks it checks
@@ -21,24 +21,24 @@ use alloc::vec;
 use core::mem::ManuallyDrop;
 use core::sync::atomic::{Ordering, compiler_fence, fence};
 
-pub use ferrix_blkring::RingMemory;
-use ferrix_blkring::bell::{BELL_SUBMIT, Wait};
-use ferrix_blkring::control::{Hello, Message, PORT_RIGHTS, Refusal, VMO_RIGHTS};
-use ferrix_blkring::geometry::{Device, DeviceFlags};
-use ferrix_blkring::kernel::{Completed, Ending, KernelSide, Slot};
-use ferrix_blkring::layout::{Status, Submission};
-use ferrix_native::call::Syscall;
-use ferrix_native::channel::Channel;
-use ferrix_native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_native::pending::Protection;
-use ferrix_native::port::{self, Port};
-use ferrix_native::vmo::Vmo;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
+pub use xaqu_blkring::RingMemory;
+use xaqu_blkring::bell::{BELL_SUBMIT, Wait};
+use xaqu_blkring::control::{Hello, Message, PORT_RIGHTS, Refusal, VMO_RIGHTS};
+use xaqu_blkring::geometry::{Device, DeviceFlags};
+use xaqu_blkring::kernel::{Completed, Ending, KernelSide, Slot};
+use xaqu_blkring::layout::{Status, Submission};
+use xaqu_native::call::Syscall;
+use xaqu_native::channel::Channel;
+use xaqu_native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_native::pending::Protection;
+use xaqu_native::port::{self, Port};
+use xaqu_native::vmo::Vmo;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
 
 /// The most bytes of a control message.
-const MESSAGE_BYTES: usize = ferrix_blkring::control::MAX_BYTES;
+const MESSAGE_BYTES: usize = xaqu_blkring::control::MAX_BYTES;
 
 /// The key of the control channel's closing, on this side's port.
 const KEY_CONTROL: u64 = 0xC0;
@@ -354,7 +354,7 @@ fn take_up<S: Syscall + Copy>(
     // get at any moment, on a port it gave us, and a wrong object refuses it.
     if matches!(
         driver_port.queue(BELL_SUBMIT, [0, 0]),
-        Err(ferrix_native::error::Error::WrongType)
+        Err(xaqu_native::error::Error::WrongType)
     ) {
         return Err(refuse(Refusal::Rights, &mapped));
     }
@@ -463,7 +463,7 @@ impl<S: Syscall + Copy> Disk<S> {
         self.location
     }
 
-    /// `ferrix_blkring`'s device flags.
+    /// `xaqu_blkring`'s device flags.
     #[must_use]
     pub const fn flags(&self) -> u32 {
         self.device.flags().0

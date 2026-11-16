@@ -2,13 +2,13 @@
 
 use core::ptr;
 
-use ferrix_bootinfo::{
+use xaqu_bootinfo::{
     IdentityPlan, IdentityTree, KERNEL_VIRT_BASE, LAYOUT, MemKind, MemRegion, PAGE_SIZE,
     PHYSMAP_ALIGN, PHYSMAP_BASE, PHYSMAP_END, Placement, direct_map_runs, physmap_origin,
     read_only_span, rsdp_region, split_run,
 };
-use ferrix_elf::{Elf, PF_W, PF_X, Segment};
-use ferrix_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
+use xaqu_elf::{Elf, PF_W, PF_X, Segment};
+use xaqu_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
 
 use crate::arch::{self, PageEncoding};
 use crate::services::{Allocation, BootError, MemoryMap, Result, Services};
@@ -36,7 +36,7 @@ impl LoaderMemory {
         let pool = services.allocate(
             "allocating the page table pool",
             TABLE_POOL_BYTES,
-            MemoryType::FERRIX_PAGE_TABLES,
+            MemoryType::XAQU_PAGE_TABLES,
         )?;
         Ok(LoaderMemory { pool, used: 0 })
     }
@@ -156,7 +156,7 @@ pub(crate) fn place_kernel(services: &Services, elf: &Elf<'_>, virt: u64) -> Res
     let memory = services.allocate(
         "allocating the kernel image",
         len,
-        MemoryType::FERRIX_KERNEL,
+        MemoryType::XAQU_KERNEL,
     )?;
 
     for segment in elf.loadable() {
@@ -514,7 +514,7 @@ pub(crate) fn build_address_space(
 /// starts at 3 GiB — those addresses are the kernel's half, which the tree of
 /// the loader's own does not translate at all. There the mapping is the
 /// loader's own image, in the kernel's tree, and the kernel unmaps it when it
-/// drops the rest of the identity map. [`ferrix_bootinfo::Layout`] is where
+/// drops the rest of the identity map. [`xaqu_bootinfo::Layout`] is where
 /// the two cases are told apart.
 fn map_identity(
     kernel: &Mapper<PageEncoding>,
@@ -608,7 +608,7 @@ fn segment_pages(segment: &Segment) -> (u64, u64) {
     (base, length)
 }
 
-/// Convert one firmware memory descriptor into a Ferrix memory region.
+/// Convert one firmware memory descriptor into a Xaqu memory region.
 pub(crate) fn describe(descriptor: &MemoryDescriptor) -> MemRegion {
     MemRegion {
         base: descriptor.physical_start,

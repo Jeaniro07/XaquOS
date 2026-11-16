@@ -5,4 +5,4 @@
 //! native root task can serve it from a timer object as well as a Linux
 //! init serves it from `clock_gettime(CLOCK_MONOTONIC)`.
 
-pub use ferrix_restart::Instant;
+pub use xaqu_restart::Instant;

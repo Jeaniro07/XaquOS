@@ -2,7 +2,7 @@
 //!
 //! `grim` is what a person runs on wlroots, and `hyprshot` is Hyprland's
 //! wrapper round it; both go through `zwlr_screencopy_v1` and nothing else.
-//! Neither is on Ferrix, so this is the same protocol in the smallest honest
+//! Neither is on Xaqu, so this is the same protocol in the smallest honest
 //! form: bind the manager and a `wl_output`, ask for a frame, make the
 //! `wl_shm` buffer the compositor says to make, hand it over, and read back
 //! what was written into it.

@@ -1,6 +1,6 @@
 # Certification
 
-A theoretical assessment of Ferrix against four assurance ratings, conducted
+A theoretical assessment of Xaqu against four assurance ratings, conducted
 2026-09-25. Theoretical because no accredited laboratory, notified body or
 independent assessor has been engaged — the audit is internal, and says so
 everywhere it matters.
@@ -36,7 +36,7 @@ specific, measured, and mostly documents rather than code.
 * [TODO.md](TODO.md) — start here to re-audit: what to re-measure, and what not to write
 * [CLAIM.md](CLAIM.md) — **PROPOSED, not decided**: what "Linux software on a kernel that can be assured" can mean, the first standard, freedom from interference for the ring-0 load, and the milestones; the customer's two decisions are open
 * [SAFETY-MANUAL.md](SAFETY-MANUAL.md) — the out-of-context argument: assumed requirements, safe state, eleven assumptions of use, element failure analysis
-* [ITEM.md](ITEM.md) — what the ratings attach to, and why it is not all of Ferrix
+* [ITEM.md](ITEM.md) — what the ratings attach to, and why it is not all of Xaqu
 * [FINDINGS.md](FINDINGS.md) — the audit register, 30 open findings and 76 closed, of 106
 * [AUDIT.md](AUDIT.md) — the security audit of the TSF's own decisions, built and claimed (F-21b)
 * [SECURITY-TARGET.md](SECURITY-TARGET.md) — EAL5+ claim, SFRs, and where it would fail evaluation
@@ -63,7 +63,7 @@ directory look more finished than it is.
 
 ## 1. What the item is
 
-Not Ferrix. Ferrix's acceptance test is that it hosts `rustc` and builds
+Not Xaqu. Xaqu's acceptance test is that it hosts `rustc` and builds
 itself, which requires a general-purpose OS with a browser, a compositor and a
 self-hosting toolchain — the opposite of a frozen, analysable configuration.
 
@@ -158,7 +158,7 @@ see. The alias is read only now, every boot sweeps for it, and no interface
 that maps a caller's physical address will map the image.
 
 *Missing:* Design evidence at module granularity for `ADV_TDS.3`; the SysML model
-describes Ferrix, not the TOE (F-15). The TSF no longer names the load ring anywhere
+describes Xaqu, not the TOE (F-15). The TSF no longer names the load ring anywhere
 (`ADV_INT.2`; F-07, F-09 and F-33 closed), but the gate reads names, not types, and
 the crate root is exempt by file (SECURITY-TARGET §9.6). The side-channel defences and KASLR are built and on by
 default (F-31, closed), but there is no cache partitioning and no KPTI, so a
@@ -187,7 +187,7 @@ tractable. Zero Cargo features in the item, and one kernel profile, `present`, w
 build flags are each fixed (`docs/BUILD-FLAGS.md`), mean the configuration
 space is enumerated in a sentence. Deactivated code is confined to three
 architectures behind `cfg`, and to what the ad-hoc flag values compile out,
-the side-channel defences behind `ferrix_mitigations = "off"` among them.
+the side-channel defences behind `xaqu_mitigations = "off"` among them.
 
 *Missing:* every planning document — PSAC, SDP, SVP, SCMP, SQAP — none drafted.
 Low-level requirements (F-15) and requirements-to-test traceability (F-14),

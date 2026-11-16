@@ -7,7 +7,7 @@
 //! fail on that, since a performance feature must not stop a boot. They fail
 //! on a request composed wrongly and on a count that disagrees with the
 //! processors that have the feature. The preference the request carries is
-//! `ferrix.epp`'s (`L.x86_64.182`): its values chosen from a table, and the
+//! `xaqu.epp`'s (`L.x86_64.182`): its values chosen from a table, and the
 //! one in force compared with the command line's.
 
 use core::arch::x86_64::__cpuid;
@@ -96,7 +96,7 @@ pub fn check_hwp_processors() -> Result<(), &'static str> {
     Ok(())
 }
 
-/// `ferrix.epp`'s values, each with the choice it must give: no option is
+/// `xaqu.epp`'s values, each with the choice it must give: no option is
 /// the default, performance; the four names their Linux values; one to
 /// three digits their number up to 255; and everything else, a sign, a
 /// `0x`, a fourth digit, a number above 255, an empty value, another case
@@ -105,10 +105,10 @@ pub fn check_hwp_processors() -> Result<(), &'static str> {
 /// Verifies: `L.x86_64.182`
 fn preferences_chosen() -> Result<(), &'static str> {
     if choose_preference(None) != Preference::Default || Preference::Default.epp() != 0 {
-        return Err("the preference without ferrix.epp is not performance");
+        return Err("the preference without xaqu.epp is not performance");
     }
     if Preference::NotUnderstood.epp() != 0 {
-        return Err("the preference for a ferrix.epp not understood is not performance");
+        return Err("the preference for a xaqu.epp not understood is not performance");
     }
     let understood: [(&str, u8); 9] = [
         ("performance", 0x00),
@@ -123,7 +123,7 @@ fn preferences_chosen() -> Result<(), &'static str> {
     ];
     for (value, epp) in understood {
         if choose_preference(Some(value)) != Preference::Asked(epp) {
-            return Err("a ferrix.epp name or number did not choose its preference");
+            return Err("a xaqu.epp name or number did not choose its preference");
         }
     }
     let refused = [
@@ -142,13 +142,13 @@ fn preferences_chosen() -> Result<(), &'static str> {
     ];
     for value in refused {
         if choose_preference(Some(value)) != Preference::NotUnderstood {
-            return Err("a ferrix.epp value outside the four names and 0 to 255 was not refused");
+            return Err("a xaqu.epp value outside the four names and 0 to 255 was not refused");
         }
     }
     Ok(())
 }
 
-/// The preference every processor asks for is the one `ferrix.epp` on this
+/// The preference every processor asks for is the one `xaqu.epp` on this
 /// boot's command line chooses, read here by the caller from the command
 /// line itself rather than from anything `read_preference` kept: so a boot
 /// whose option was never read fails here whenever it named another
@@ -161,7 +161,7 @@ fn preferences_chosen() -> Result<(), &'static str> {
 /// The preference in force is not the command line's.
 pub(crate) fn check_preference_read(value: Option<&str>) -> Result<(), &'static str> {
     if preference() != choose_preference(value).epp() {
-        return Err("the preference every processor asks for is not the one ferrix.epp chose");
+        return Err("the preference every processor asks for is not the one xaqu.epp chose");
     }
     Ok(())
 }

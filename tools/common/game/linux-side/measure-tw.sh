@@ -1,13 +1,13 @@
 #!/bin/bash
 # Host side: one Teeworlds measurement on the linux-3060 domain.
 #   measure-tw.sh <label> <nvidia|soft> <gfx_vsync 0|1> [seconds=30] [settle=20]
-# card-ssh.sh and the results are the baseline's ($FERRIX_LINUX_BASELINE).
+# card-ssh.sh and the results are the baseline's ($XAQU_LINUX_BASELINE).
 set -u
 l=$1 mode=$2 vs=$3 secs=${4:-30} settle=${5:-20}
 S=$(cd "$(dirname "$0")" && pwd)
-B=${FERRIX_LINUX_BASELINE:-$HOME/.local/share/ferrix/linux-baseline}; R=$B/results/linux; mkdir -p "$R"
+B=${XAQU_LINUX_BASELINE:-$HOME/.local/share/xaqu/linux-baseline}; R=$B/results/linux; mkdir -p "$R"
 gs() { "$B/card-ssh.sh" ssh "$@" < /dev/null; }
-gs "pkill -f '^./teeworlds cl_'; sleep 1; lb/twrun.sh $mode $vs /home/ferrix/lb/$l.log"
+gs "pkill -f '^./teeworlds cl_'; sleep 1; lb/twrun.sh $mode $vs /home/xaqu/lb/$l.log"
 sleep "$settle"
 gs 'bash lb/cpusnap.sh' > "$R/$l.cpu0"; s0=$(gs "wc -l < lb/$l.log")
 sleep "$secs"

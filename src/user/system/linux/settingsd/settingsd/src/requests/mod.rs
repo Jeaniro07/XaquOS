@@ -11,7 +11,7 @@ pub(crate) mod time;
 
 use std::path::PathBuf;
 
-use ferrix_settings_proto::{Refusal, Request};
+use xaqu_settings_proto::{Refusal, Request};
 
 pub(crate) use service::{Control, Init};
 
@@ -93,7 +93,7 @@ pub(crate) fn plan(request: &Request, system: &System) -> Result<Plan, Refusal> 
 ///
 /// # Errors
 ///
-/// [`ferrix_settings_proto::RefusalKind::Failed`], with what was and was
+/// [`xaqu_settings_proto::RefusalKind::Failed`], with what was and was
 /// not done.
 pub(crate) fn apply(plan: &Plan, system: &System) -> Result<String, Refusal> {
     match &plan.action {

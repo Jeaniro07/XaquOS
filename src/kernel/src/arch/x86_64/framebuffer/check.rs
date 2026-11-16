@@ -3,15 +3,15 @@
 
 #![cfg(target_arch = "x86_64")]
 
-use ferrix_kernel_core::arch::x86_64 as core_x86_64;
+use xaqu_kernel_core::arch::x86_64 as core_x86_64;
 
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 /// The kernel's framebuffer window is write-combining from its first map,
 /// and every processor translates it by the kernel's table alone: every
 /// page of the window reads back write-combining, not device, writable, not
 /// user's and global; the boot processor's `IA32_PAT` read when the window
-/// was mapped was [`ferrix_paging::X86_PAT`]; every secondary arrived in
+/// was mapped was [`xaqu_paging::X86_PAT`]; every secondary arrived in
 /// `secondary_start` with its trampoline's write of it already in place,
 /// before it programmed it again; and every processor counted as
 /// programmed; and every cache line of the window was flushed before its
@@ -39,7 +39,7 @@ pub fn check_framebuffer_window() -> Result<(), &'static str> {
         );
         return Ok(());
     };
-    if core_x86_64::framebuffer::window_pat() != Some(ferrix_paging::X86_PAT) {
+    if core_x86_64::framebuffer::window_pat() != Some(xaqu_paging::X86_PAT) {
         return Err("the PAT in force when the framebuffer window was mapped was not X86_PAT");
     }
     let root = crate::mm::root_table();

@@ -1,0 +1,13 @@
+"compatibilitytools"
+{
+  "compat_tools"
+  {
+    "xaqu_direct"
+    {
+      "install_path" "."
+      "display_name" "Xaqu: run directly"
+      "from_oslist" "linux"
+      "to_oslist" "linux"
+    }
+  }
+}

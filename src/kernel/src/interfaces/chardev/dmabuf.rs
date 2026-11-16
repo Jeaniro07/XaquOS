@@ -67,7 +67,7 @@
 //!   `Arc`, nothing is taken under it, and a fence it gives up is dropped
 //!   after it is released, since a fence's drop takes its control's table.
 //!
-//! [`Op::DmabufImport`]: ferrix_chardevctl::message::Op::DmabufImport
+//! [`Op::DmabufImport`]: xaqu_chardevctl::message::Op::DmabufImport
 //!
 //! # Name-only dmabufs
 //!
@@ -82,22 +82,22 @@
 //! `fstat` and `lseek` only (N3). Everything else above holds for it as
 //! written: the table, the cap, one object per cookie and the release.
 //!
-//! [`Op::DmabufRelease`]: ferrix_chardevctl::message::Op::DmabufRelease
+//! [`Op::DmabufRelease`]: xaqu_chardevctl::message::Op::DmabufRelease
 
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     DMABUF_CLOEXEC, DMABUF_FLAGS, DMABUF_MADE, DMABUF_NAME_MAX, DMABUF_NAME_ONLY, DMABUF_TELL_MADE,
     DMABUF_WRITABLE,
 };
-use ferrix_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
+use xaqu_vfs::{Inode, Metadata, Readiness, Result as VfsResult};
 
 use crate::object::Object;
 use crate::object::process::Host;
@@ -370,7 +370,7 @@ fn import(process: &Process, dmabuf: &Dmabuf, arg: u64) -> Result<usize, Errno> 
 /// and answered with the driver's answer; nothing in the kernel waits on
 /// the fence.
 pub(super) fn import_as(client: &Arc<Process>, dmabuf: &Dmabuf, arg: u64) -> Result<usize, Errno> {
-    use ferrix_chardevctl::message::{IMPORT_FOREIGN, IMPORT_OWN, IMPORT_SIGNALLED, Op};
+    use xaqu_chardevctl::message::{IMPORT_FOREIGN, IMPORT_OWN, IMPORT_SIGNALLED, Op};
 
     let process: &Process = client;
     let (flags, fd) = sync_file_argument(process, arg)?;

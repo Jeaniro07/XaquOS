@@ -16,7 +16,7 @@ pub const IFF_LOWER_UP: u32 = 0x1_0000;
 ///
 /// The loopback interface never sets an operational state, so Linux reports
 /// it `unknown`. Any other is `up` when it is up and has its carrier, and
-/// `down` otherwise: Ferrix has no dormant or testing states to report.
+/// `down` otherwise: Xaqu has no dormant or testing states to report.
 #[must_use]
 pub const fn operstate(flags: u32) -> &'static [u8] {
     if flags & IFF_LOOPBACK != 0 {

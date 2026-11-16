@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The Intel GPU's box checkpoint (docs/INTEL-GPU.md §6, M3): run Mesa's
 # anv (`vulkaninfo --summary`) and iris (`eglinfo -B`) on the N150 box's
-# running Ferrix, and keep what they say.
+# running Xaqu, and keep what they say.
 #
 # Run from a machine that reaches both the box over ssh (as root, the box's
 # default) and nazuna (`nazuna-wg`), where fetch-intel-uapi.sh's tree is:
@@ -19,11 +19,11 @@
 #    kernel's lines about the Intel GPU, chardev and the IOMMU, then runs
 #    vulkaninfo with anv's manifest alone and eglinfo -B, each through the
 #    tree's own loader;
-# 3. writes everything to ~/.local/share/ferrix/n150-linux/evidence/
+# 3. writes everything to ~/.local/share/xaqu/n150-linux/evidence/
 #    intel-checkpoint-<UTC time>.txt here, and says the file.
 #
 # It boots nothing, writes nothing on the box but /tmp/intel-uapi, and needs
-# the box already running a Ferrix with `ferrix.efifb ferrix.intelgpu` (K4:
+# the box already running a Xaqu with `xaqu.efifb xaqu.intelgpu` (K4:
 # the desktop, and with it the box's sshd, needs a card) and the Intel
 # driver; main schedules box time. What a run shows depends on where M2 and
 # K2 stand: before K2 translates 00:02.0's DMA the kernel refuses the render
@@ -35,9 +35,9 @@ set -euo pipefail
 box=${1:-192.168.178.146}
 shift || true
 ssh_box=(ssh -o BatchMode=yes -o ConnectTimeout=10 "$@" "root@$box")
-tree=/home/sebastian/.local/share/ferrix/intel-uapi/tree
+tree=/home/sebastian/.local/share/xaqu/intel-uapi/tree
 there=/tmp/intel-uapi
-evidence=$HOME/.local/share/ferrix/n150-linux/evidence
+evidence=$HOME/.local/share/xaqu/n150-linux/evidence
 mkdir -p "$evidence"
 out=$evidence/intel-checkpoint-$(date -u +%Y%m%dT%H%M%SZ).txt
 

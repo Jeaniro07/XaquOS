@@ -333,7 +333,7 @@ def connections(model: Model, *qualified: str) -> Figure | None:
             if child.kind != "part" or not child.name:
                 continue
             if child.typed_by in drawn_types:
-                # `part ferrix : Ferrix` inside the deployment, where Ferrix's
+                # `part xaqu : Xaqu` inside the deployment, where Xaqu's
                 # own members are on the diagram: drawing both is drawing the
                 # same thing twice, and the box would sit inside its own
                 # contents. The connections into it land on those members.
@@ -373,9 +373,9 @@ def connections(model: Model, *qualified: str) -> Figure | None:
 def _chain_node(
     model: Model, figure: Figure, members: dict[str, Element], chain: str, scope: str = ""
 ) -> str | None:
-    """Find the box a feature chain such as `ferrix.loader.efi` lands on.
+    """Find the box a feature chain such as `xaqu.loader.efi` lands on.
 
-    The chain walks members: `ferrix` is a part, `loader` a part of its type,
+    The chain walks members: `xaqu` is a part, `loader` a part of its type,
     `efi` a port on that. The box is the deepest segment that is drawn, which
     is how a connection written at the deployment level still lands on the
     loader rather than on the whole system.
@@ -473,7 +473,7 @@ def stages(model: Model) -> Figure | None:
     the lifecycle keyword, so the boundary between what runs and what is owed
     is the boundary between the greens and the greys.
     """
-    package = model.package("FerrixRoadmap")
+    package = model.package("XaquRoadmap")
     if package is None:
         return None
     figure = Figure(
@@ -588,7 +588,7 @@ def trace(
 
 
 def _chain_label(reference: str) -> str:
-    """`ferrix.kernel.mm` under a box called `mm`, so the path is not lost.
+    """`xaqu.kernel.mm` under a box called `mm`, so the path is not lost.
 
     A reference that is already just a name repeats the label, and a box that
     says the same thing twice is a box with less room for the thing it says.
@@ -598,7 +598,7 @@ def _chain_label(reference: str) -> str:
 
 def goals(model: Model) -> Figure | None:
     """The goal, its parts, and the stage each part waits for."""
-    package = model.package("FerrixRequirements")
+    package = model.package("XaquRequirements")
     if package is None:
         return None
     goal = None
@@ -644,7 +644,7 @@ def goals(model: Model) -> Figure | None:
             target = model.resolve(reference, relation.origin)
             if target is None or figure.node(target.qualified_name) is None:
                 continue
-            if source.package != "FerrixRoadmap":
+            if source.package != "XaquRoadmap":
                 continue
             figure.add(
                 _node(

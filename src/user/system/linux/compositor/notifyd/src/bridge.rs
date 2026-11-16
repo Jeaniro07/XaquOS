@@ -1,11 +1,11 @@
-//! The bridge's reading half: bytes from `\0ferrix.devmgr.events` into
+//! The bridge's reading half: bytes from `\0xaqu.devmgr.events` into
 //! whole lines, and the replay a reconnect brings told from new events
 //! (`docs/DESKTOP.md` §4.2). No socket here.
 
 use std::collections::VecDeque;
 
 /// The abstract socket name, without its leading NUL.
-pub const SOCKET: &[u8] = b"ferrix.devmgr.events";
+pub const SOCKET: &[u8] = b"xaqu.devmgr.events";
 
 /// How many lines the helper replays to a reader that connects: its
 /// `KEPT`. A reader remembers as many.

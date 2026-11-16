@@ -10,7 +10,7 @@
  * RSI, RDX and R10, so all three are treated as clobbered.
  *
  * The numbers are the ABI's own. `cargo xtask check`'s host tests read this
- * file and compare every NV_* number with ferrix_native_abi's
+ * file and compare every NV_* number with xaqu_native_abi's
  * (tools/common/xtask/src/nvrm/tests.rs), so the two cannot drift.
  */
 #ifndef NVRM_NATIVE_H
@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-/* Call numbers (ferrix_native_abi::nr). */
+/* Call numbers (xaqu_native_abi::nr). */
 #define NV_HANDLE_CLOSE 0x1000
 #define NV_OBJECT_WAIT_ONE 0x1008
 #define NV_CHANNEL_READ 0x1012
@@ -30,7 +30,7 @@
 #define NV_DEVICE_GET_LIMIT 0x1058
 #define NV_DEVICE_ISOLATION 0x1059
 
-/* Signals (ferrix_native_abi::signals). */
+/* Signals (xaqu_native_abi::signals). */
 #define NV_SIGNAL_READABLE 0x1
 #define NV_SIGNAL_PEER_CLOSED 0x4
 

@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     NLM_F_DUMP, NLM_F_REQUEST, NlMsgHdr, RTM_GETADDR, RTM_GETLINK, RTM_GETROUTE,
 };
 

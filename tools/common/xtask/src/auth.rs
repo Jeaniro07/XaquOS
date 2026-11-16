@@ -6,8 +6,8 @@
 //! program against the target's own musl, linked by rust-lld. [`carried`]
 //! returns what an image carries for it: `/sbin/authd`, `/bin/passwd`,
 //! `/bin/authctl`, the shipped service policies in
-//! `/lib/ferrix/auth/services`, and `auth.socket` and `auth.service` in
-//! `/lib/ferrix/units` with the socket wanted by `sockets.target`. It adds the
+//! `/lib/xaqu/auth/services`, and `auth.socket` and `auth.service` in
+//! `/lib/xaqu/units` with the socket wanted by `sockets.target`. It adds the
 //! `auth` account (uid [`UID`]) that `authd` runs as. Only an image that
 //! carries init can start it; the others carry none of it.
 //!
@@ -16,14 +16,14 @@
 //! `--auth-seed ACCOUNT` asks on this terminal for a password,
 //! `--auth-seed-file ACCOUNT=FILE` reads one from a file, and either is
 //! hashed here with `src/lib/crypto/argon2` at the floor and carried as
-//! `/lib/ferrix/auth/seed/ACCOUNT`. `authd` takes a seed as the account's
+//! `/lib/xaqu/auth/seed/ACCOUNT`. `authd` takes a seed as the account's
 //! first password only while the account has none, so a password changed on
 //! the machine survives the next image (`docs/AUTH.md` §5.3).
 //!
 //! # The test
 //!
 //! One boot per architecture of init with authd, typed at the console the
-//! getty gives, as `test-init` is. The image seeds `ferrix` with a password
+//! getty gives, as `test-init` is. The image seeds `xaqu` with a password
 //! only this test knows, and carries a `gate` policy that lets root name any
 //! account. Every refusal has a line of its own, and a sabotage that turns it
 //! off (`--sabotage NAME`, which builds `authd` with that refusal gone) must
@@ -31,7 +31,7 @@
 //!
 //! | What is required | Its sabotage |
 //! |---|---|
-//! | the seeded password opens `ferrix`, and a wrong one fails after the delay | `accept-any` |
+//! | the seeded password opens `xaqu`, and a wrong one fails after the delay | `accept-any` |
 //! | an unknown account fails with a wrong password's words, and six failures answer as an account's six do | `tell-unknown` |
 //! | uid 1000 naming root is refused before any prompt | `let-anyone-name` |
 //! | the fifth attempt after four failures is refused unlooked-at | `no-throttle` |
@@ -67,14 +67,14 @@ pub(crate) const TASKS: &[Task] = &[Task {
 }];
 
 /// What only a sabotaged `authd` carries (`src/user/system/linux/auth/authd/src/sabotage.rs`).
-const MARKER: &[u8] = b"FERRIX-AUTH-SABOTAGED-BUILD";
+const MARKER: &[u8] = b"XAQU-AUTH-SABOTAGED-BUILD";
 
 /// Set by `test-auth --sabotage` alone: the one run whose image may carry a
 /// sabotaged `authd`.
 static SABOTAGE_ASKED: AtomicBool = AtomicBool::new(false);
 
 /// Refuse an image whose `authd` is sabotaged, unless `test-auth
-/// --sabotage` is building it (ferrix-55's review, 2026-09-26).
+/// --sabotage` is building it (xaqu-55's review, 2026-09-26).
 ///
 /// # Errors
 ///
@@ -101,20 +101,20 @@ pub(crate) fn refuse_sabotaged(files: &[File]) -> Result<()> {
 pub(crate) const UID: u32 = 90;
 
 /// Its `/etc/passwd` line.
-pub(crate) const PASSWD_LINE: &str = "auth:x:90:90:authd:/var/lib/ferrix/auth:/sbin/nologin\n";
+pub(crate) const PASSWD_LINE: &str = "auth:x:90:90:authd:/var/lib/xaqu/auth:/sbin/nologin\n";
 
-/// Its `/etc/group` line, and `wheel` with `ferrix` in it: who may become
+/// Its `/etc/group` line, and `wheel` with `xaqu` in it: who may become
 /// root with `su` and their own password (decision 5).
-pub(crate) const GROUP_LINE: &str = "auth:x:90:\nwheel:x:10:ferrix\n";
+pub(crate) const GROUP_LINE: &str = "auth:x:90:\nwheel:x:10:xaqu\n";
 
 /// The shipped policies and units, beside this module in the tree.
 const SERVICES: &str = "src/user/system/linux/auth/services";
 const UNITS: &str = "src/user/system/linux/auth/units";
 
-/// The password the gate seeds `ferrix` with.
+/// The password the gate seeds `xaqu` with.
 const GATE_PASSWORD: &str = "the gate own horse battery";
 
-/// The password `passwd` gives `ferrix` in the gate.
+/// The password `passwd` gives `xaqu` in the gate.
 const CHANGED: &str = "a second password, set on the guest";
 
 /// How long to wait for one answer; a check under emulation is slow.
@@ -147,9 +147,9 @@ pub(crate) fn built(arch: Arch, sabotage: Option<&str>) -> Result<Option<Built>>
         println!("  authd is not built for {} yet", arch.name());
         return Ok(None);
     };
-    if sabotage.is_none() && std::env::var_os("FERRIX_AUTH_SABOTAGE").is_some() {
+    if sabotage.is_none() && std::env::var_os("XAQU_AUTH_SABOTAGE").is_some() {
         return Err(Error::new(
-            "FERRIX_AUTH_SABOTAGE is set in this environment, and would sabotage the authd of an \
+            "XAQU_AUTH_SABOTAGE is set in this environment, and would sabotage the authd of an \
              ordinary image; unset it (test-auth --sabotage NAME is how a control is asked for)",
         ));
     }
@@ -180,7 +180,7 @@ pub(crate) fn built(arch: Arch, sabotage: Option<&str>) -> Result<Option<Built>>
     .env("CARGO_TARGET_DIR", &target_dir)
     .env("RUSTFLAGS", zinc::RUSTFLAGS);
     if let Some(name) = sabotage {
-        build = build.env("FERRIX_AUTH_SABOTAGE", name);
+        build = build.env("XAQU_AUTH_SABOTAGE", name);
     }
     build
         .output(&built.authd)
@@ -232,7 +232,7 @@ pub(crate) fn carried(arch: Arch, sabotage: Option<&str>) -> Result<Vec<File>> {
         file("sbin/authd".to_owned(), 0o755, read(&built.authd)?),
         file("bin/passwd".to_owned(), 0o755, read(&built.passwd)?),
         file("bin/authctl".to_owned(), 0o755, read(&built.authctl)?),
-        // Ferrix's own, in busybox's place (`docs/AUTH.md` §6.2).
+        // Xaqu's own, in busybox's place (`docs/AUTH.md` §6.2).
         file("bin/login".to_owned(), 0o755, read(&built.login)?),
         // Set-uid root (`docs/AUTH.md` §4.2): a member of wheel becomes root
         // with their own password. In busybox's place.
@@ -245,25 +245,25 @@ pub(crate) fn carried(arch: Arch, sabotage: Option<&str>) -> Result<Vec<File>> {
             continue;
         }
         files.push(file(
-            format!("lib/ferrix/auth/services/{name}"),
+            format!("lib/xaqu/auth/services/{name}"),
             0o644,
             bytes,
         ));
     }
     for (name, bytes) in shipped(UNITS)? {
-        files.push(file(format!("lib/ferrix/units/{name}"), 0o644, bytes));
+        files.push(file(format!("lib/xaqu/units/{name}"), 0o644, bytes));
     }
     files.push(File {
-        path: "lib/ferrix/units/sockets.target.wants/auth.socket".to_owned(),
+        path: "lib/xaqu/units/sockets.target.wants/auth.socket".to_owned(),
         mode: 0o777,
-        content: Content::Link("/lib/ferrix/units/auth.socket".to_owned()),
+        content: Content::Link("/lib/xaqu/units/auth.socket".to_owned()),
     });
     Ok(files)
 }
 
 /// What `cargo xtask run --auth-seed ACCOUNT` or `--login` adds to the image
 /// init boots: authd with its units and policies, the seeds, an
-/// `/etc/passwd` and `/etc/group` with root, `ferrix` and `auth`, which that
+/// `/etc/passwd` and `/etc/group` with root, `xaqu` and `auth`, which that
 /// image has none of otherwise, and with `--login` the getty's drop-in.
 /// Nothing when neither was asked for.
 pub(crate) fn with_seeds(arch: Arch, args: &Args) -> Result<Vec<File>> {
@@ -288,7 +288,7 @@ pub(crate) fn with_seeds(arch: Arch, args: &Args) -> Result<Vec<File>> {
         // `ExecStart=` emptied, then getty with `--login`: the console asks
         // who is there instead of opening root's shell.
         files.push(File {
-            path: "etc/ferrix/units/getty@.service.d/login.conf".to_owned(),
+            path: "etc/xaqu/units/getty@.service.d/login.conf".to_owned(),
             mode: 0o644,
             content: Content::Bytes(LOGIN_DROP_IN.as_bytes().to_vec()),
         });
@@ -358,7 +358,7 @@ pub(crate) fn seed(account: &str, password: &str) -> Result<File> {
     {
         return Err(Error::new(format!("{account:?} is not an account name")));
     }
-    let params = ferrix_argon2::Params {
+    let params = xaqu_argon2::Params {
         memory_kib: 19_456,
         passes: 2,
         lanes: 1,
@@ -371,11 +371,11 @@ pub(crate) fn seed(account: &str, password: &str) -> Result<File> {
     let blocks = params
         .blocks()
         .map_err(|why| Error::new(format!("{why:?}")))?;
-    let mut memory = vec![ferrix_argon2::Block::ZERO; blocks];
+    let mut memory = vec![xaqu_argon2::Block::ZERO; blocks];
     let mut tag = [0_u8; 32];
-    ferrix_argon2::hash(
+    xaqu_argon2::hash(
         &params,
-        &ferrix_argon2::Inputs {
+        &xaqu_argon2::Inputs {
             password: password.as_bytes(),
             salt: &salt,
             secret: &[],
@@ -385,22 +385,22 @@ pub(crate) fn seed(account: &str, password: &str) -> Result<File> {
         &mut tag,
     )
     .map_err(|why| Error::new(format!("hashing the seed: {why:?}")))?;
-    let encoded = ferrix_argon2::phc::Encoded::new(params, &salt, &tag)
+    let encoded = xaqu_argon2::phc::Encoded::new(params, &salt, &tag)
         .map_err(|why| Error::new(format!("the seed: {why:?}")))?;
     Ok(File {
-        path: format!("lib/ferrix/auth/seed/{account}"),
+        path: format!("lib/xaqu/auth/seed/{account}"),
         mode: 0o600,
         content: Content::Bytes(format!("{encoded}\n").into_bytes()),
     })
 }
 
-/// The test's accounts: root, `ferrix`, and `auth`.
+/// The test's accounts: root, `xaqu`, and `auth`.
 fn passwd() -> String {
-    format!("root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/:/bin/sh\n{PASSWD_LINE}")
+    format!("root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/:/bin/sh\n{PASSWD_LINE}")
 }
 
 fn group() -> String {
-    format!("root:x:0:\nferrix:x:1000:\n{GROUP_LINE}")
+    format!("root:x:0:\nxaqu:x:1000:\n{GROUP_LINE}")
 }
 
 /// `cargo xtask test-auth`.
@@ -430,9 +430,9 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
         return Err(Error::new(format!("authd is not built for {arch}")));
     }
     files.extend(auth);
-    files.push(seed("ferrix", GATE_PASSWORD)?);
+    files.push(seed("xaqu", GATE_PASSWORD)?);
     files.push(File {
-        path: "etc/ferrix/auth/services/gate".to_owned(),
+        path: "etc/xaqu/auth/services/gate".to_owned(),
         mode: 0o644,
         content: Content::Bytes(GATE_POLICY.as_bytes().to_vec()),
     });
@@ -493,7 +493,7 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
         return Err(Error::new(message));
     }
     println!(
-        "  {arch}: authd ran as auth, opened ferrix for its password alone, failed a wrong one \
+        "  {arch}: authd ran as auth, opened xaqu for its password alone, failed a wrong one \
          and an unknown account alike after the delay, refused a user naming root, throttled \
          the fifth attempt, kept a changed password across a restart, kept the store from a \
          user, and logged every attempt and no password"
@@ -544,7 +544,7 @@ fn answer<'a>(lines: &'a [String], prefix: &str) -> Option<&'a str> {
 }
 
 const FAILED: &str = "authctl: failed: Authentication failed (retry after 0 ms)";
-const ACCEPTED: &str = "authctl: accepted ferrix (1000)";
+const ACCEPTED: &str = "authctl: accepted xaqu (1000)";
 
 fn session(
     at: &mut Watching<'_>,
@@ -591,12 +591,12 @@ fn seeded(
     timings: &mut Vec<String>,
 ) -> Result<()> {
     // The seed was imported, and authd became auth to answer.
-    let status = run(at, "authctl status ferrix", "st")?;
-    if answer(&status, "authctl: ferrix:")
-        != Some("authctl: ferrix: a password is set; not throttled")
+    let status = run(at, "authctl status xaqu", "st")?;
+    if answer(&status, "authctl: xaqu:")
+        != Some("authctl: xaqu: a password is set; not throttled")
     {
         failures.push(format!(
-            "authctl status ferrix did not find the seeded password: {status:?}"
+            "authctl status xaqu did not find the seeded password: {status:?}"
         ));
     }
     let all = everything(at);
@@ -606,34 +606,34 @@ fn seeded(
     }
     if all
         .iter()
-        .any(|line| line.contains("authd: FERRIX-AUTH-SABOTAGED-BUILD"))
+        .any(|line| line.contains("authd: XAQU-AUTH-SABOTAGED-BUILD"))
     {
         timings.push("this run's authd is sabotaged, as --sabotage asked".into());
     }
     Ok(())
 }
 
-/// The seeded password opens ferrix, a wrong one fails after the delay, and an unknown account fails alike.
+/// The seeded password opens xaqu, a wrong one fails after the delay, and an unknown account fails alike.
 fn wrong_and_unknown(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
-    // The seeded password opens ferrix; a wrong one fails after the delay.
+    // The seeded password opens xaqu; a wrong one fails after the delay.
     let right = run(
         at,
-        &format!("echo '{GATE_PASSWORD}' | authctl try gate ferrix"),
+        &format!("echo '{GATE_PASSWORD}' | authctl try gate xaqu"),
         "ok",
     )?;
     if answer(&right, "authctl: ") != Some(ACCEPTED) {
         failures.push(format!(
-            "the seeded password did not open ferrix: {right:?}"
+            "the seeded password did not open xaqu: {right:?}"
         ));
     }
     let wrong = run(
         at,
-        "t0=$(date +%s); echo 'not it' | authctl try gate ferrix; t1=$(date +%s); echo \"wr-took $((t1-t0))\"",
+        "t0=$(date +%s); echo 'not it' | authctl try gate xaqu; t1=$(date +%s); echo \"wr-took $((t1-t0))\"",
         "wr",
     )?;
     if answer(&wrong, "authctl: ") != Some(FAILED) {
         failures.push(format!(
-            "a wrong password for ferrix did not fail as a wrong password: {wrong:?} (accept-any)"
+            "a wrong password for xaqu did not fail as a wrong password: {wrong:?} (accept-any)"
         ));
     }
     let took = answer(&wrong, "wr-took ")
@@ -659,11 +659,11 @@ fn wrong_and_unknown(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Resul
 fn alike(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     // Six failures in a row answer the same for an account and for a name
     // that is none, throttle and all.
-    let _ = run(at, "authctl reset ferrix", "r0")?;
+    let _ = run(at, "authctl reset xaqu", "r0")?;
     let six = |name: &str| {
         format!("for i in 1 2 3 4 5 6; do echo 'not it' | authctl try gate {name}; done")
     };
-    let real = run(at, &six("ferrix"), "s1")?;
+    let real = run(at, &six("xaqu"), "s1")?;
     let ghost = run(at, &six("ghost"), "s2")?;
     let words = |lines: &[String]| -> Vec<String> {
         lines
@@ -683,12 +683,12 @@ fn alike(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     };
     if words(&real).len() != 6 || words(&real) != words(&ghost) {
         failures.push(format!(
-            "six failures answered differently for ferrix and for ghost, which is no account: {:?} against {:?} (tell-unknown)",
+            "six failures answered differently for xaqu and for ghost, which is no account: {:?} against {:?} (tell-unknown)",
             words(&real),
             words(&ghost)
         ));
     }
-    let _ = run(at, "authctl reset ferrix", "r1")?;
+    let _ = run(at, "authctl reset xaqu", "r1")?;
     Ok(())
 }
 
@@ -697,15 +697,15 @@ fn naming(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     // uid 1000 may use its own account, and may not name root.
     let own = run(
         at,
-        &format!("su ferrix -c \"echo '{GATE_PASSWORD}' | authctl try hyprlock\""),
+        &format!("su xaqu -c \"echo '{GATE_PASSWORD}' | authctl try hyprlock\""),
         "own",
     )?;
     if answer(&own, "authctl: ") != Some(ACCEPTED) {
         failures.push(format!(
-            "ferrix could not unlock with its own password through hyprlock's policy: {own:?}"
+            "xaqu could not unlock with its own password through hyprlock's policy: {own:?}"
         ));
     }
-    let named = run(at, "su ferrix -c \"echo x | authctl try gate root\"", "nm")?;
+    let named = run(at, "su xaqu -c \"echo x | authctl try gate root\"", "nm")?;
     if answer(&named, "authctl: ")
         != Some("authctl: unavailable: only root may name another account")
     {
@@ -722,7 +722,7 @@ fn throttle(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let throttled = run(
         at,
         &format!(
-            "for i in 1 2 3 4; do echo 'not it' | authctl try gate ferrix; done; echo '{GATE_PASSWORD}' | authctl try gate ferrix"
+            "for i in 1 2 3 4; do echo 'not it' | authctl try gate xaqu; done; echo '{GATE_PASSWORD}' | authctl try gate xaqu"
         ),
         "th",
     )?;
@@ -732,11 +732,11 @@ fn throttle(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
             "the attempt after four failures was not throttled: {throttled:?} (no-throttle)"
         ));
     }
-    let reset = run(at, "authctl reset ferrix", "rs")?;
-    if answer(&reset, "authctl: ferrix:")
-        != Some("authctl: ferrix: a password is set; not throttled")
+    let reset = run(at, "authctl reset xaqu", "rs")?;
+    if answer(&reset, "authctl: xaqu:")
+        != Some("authctl: xaqu: a password is set; not throttled")
     {
-        failures.push(format!("root could not reset ferrix's throttle: {reset:?}"));
+        failures.push(format!("root could not reset xaqu's throttle: {reset:?}"));
     }
     Ok(())
 }
@@ -747,36 +747,36 @@ fn change(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     // and the seed does not come back.
     let changed = run(
         at,
-        &format!("printf '%s\\n%s\\n' '{CHANGED}' '{CHANGED}' | passwd ferrix"),
+        &format!("printf '%s\\n%s\\n' '{CHANGED}' '{CHANGED}' | passwd xaqu"),
         "pw",
     )?;
     // The start of its line: init's journal may share the console line after it (fl-067).
     if !answer(&changed, "passwd: ")
-        .is_some_and(|line| line.starts_with("passwd: the password for ferrix is changed"))
+        .is_some_and(|line| line.starts_with("passwd: the password for xaqu is changed"))
     {
         failures.push(format!(
-            "passwd ferrix did not change the password: {changed:?}"
+            "passwd xaqu did not change the password: {changed:?}"
         ));
     }
     let _ = run(at, "svc restart auth.service", "re")?;
     let after_new = run(
         at,
-        &format!("echo '{CHANGED}' | authctl try gate ferrix"),
+        &format!("echo '{CHANGED}' | authctl try gate xaqu"),
         "an",
     )?;
     if answer(&after_new, "authctl: ") != Some(ACCEPTED) {
         failures.push(format!(
-            "the changed password did not open ferrix after authd restarted: {after_new:?}"
+            "the changed password did not open xaqu after authd restarted: {after_new:?}"
         ));
     }
     let after_old = run(
         at,
-        &format!("echo '{GATE_PASSWORD}' | authctl try gate ferrix"),
+        &format!("echo '{GATE_PASSWORD}' | authctl try gate xaqu"),
         "ao",
     )?;
     if answer(&after_old, "authctl: ") != Some(FAILED) {
         failures.push(format!(
-            "the seed's password still opened ferrix after it was changed: {after_old:?}"
+            "the seed's password still opened xaqu after it was changed: {after_old:?}"
         ));
     }
     Ok(())
@@ -787,16 +787,16 @@ fn store_and_log(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()
     // The store is not a user's to read; the log has attempts and no password.
     let denied = run(
         at,
-        "su ferrix -c 'cat /var/lib/ferrix/auth/users/ferrix' >/dev/null 2>&1 || echo \"sd-denied\"",
+        "su xaqu -c 'cat /var/lib/xaqu/auth/users/xaqu' >/dev/null 2>&1 || echo \"sd-denied\"",
         "sd",
     )?;
     if answer(&denied, "sd-denied").is_none() {
-        failures.push("uid 1000 could read ferrix's credential record".into());
+        failures.push("uid 1000 could read xaqu's credential record".into());
     }
     let logged = run(
         at,
         &format!(
-            "echo \"lg-failed $(grep -c result=failed /var/log/ferrix/auth.log) lg-secret $(grep -c -e '{GATE_PASSWORD}' -e '{CHANGED}' /var/log/ferrix/auth.log)\""
+            "echo \"lg-failed $(grep -c result=failed /var/log/xaqu/auth.log) lg-secret $(grep -c -e '{GATE_PASSWORD}' -e '{CHANGED}' /var/log/xaqu/auth.log)\""
         ),
         "lg",
     )?;

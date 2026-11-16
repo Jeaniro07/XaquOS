@@ -1,4 +1,4 @@
-//! `ferrix.init=` and `reboot(2)`'s commit, the kernel's half of the init
+//! `xaqu.init=` and `reboot(2)`'s commit, the kernel's half of the init
 //! (`docs/INIT.md` §11, K0 and K7), checked by `test-shell` after its
 //! built-in boot.
 //!
@@ -6,7 +6,7 @@
 //!
 //! The same shell and the same script as the built-in boot, started from
 //! files instead: the shell at `/bin/sh`, the script at [`SCRIPT_FILE`] behind
-//! a `#!/bin/sh` line, and `ferrix.init=/etc/shell-test` on the command line.
+//! a `#!/bin/sh` line, and `xaqu.init=/etc/shell-test` on the command line.
 //! The kernel still has the shell and the script built in, as the fallback a
 //! missing file falls back to, so the script's lines alone cannot tell which
 //! ran. The kernel's own lines can: it must say it started
@@ -20,11 +20,11 @@
 //! two volumes, a fresh copy of the blank fixture attached at `/data` and of
 //! the home fixture, which the kernel mounts at `/home` by its label:
 //!
-//! 1. `ferrix.init=/etc/k7-write`: write `/data/k7` and `/home/k7`, then
+//! 1. `xaqu.init=/etc/k7-write`: write `/data/k7` and `/home/k7`, then
 //!    `poweroff -f -n`.
 //!    A test boot has no root disk and so no committer, so nothing but the
 //!    call itself can commit the file before the power goes.
-//! 2. `ferrix.init=/etc/k7-read ferrix.onexit=panic`: read both back and exit
+//! 2. `xaqu.init=/etc/k7-read xaqu.onexit=panic`: read both back and exit
 //!    0, after which the kernel must panic with `FX-1501` -- §8.3's option,
 //!    checked on the same boot because it costs nothing more.
 //!
@@ -47,7 +47,7 @@ use crate::ports::{Content, File};
 use crate::qemu::{self, SUCCESS_MARKER};
 use crate::{Error, Result, btrfs_disk, fat, initramfs, shell};
 
-/// Where the script is, and what `ferrix.init=` names on the first boot.
+/// Where the script is, and what `xaqu.init=` names on the first boot.
 pub(crate) const SCRIPT_FILE: &str = "/etc/shell-test";
 
 /// The second and third boots' programs.
@@ -100,7 +100,7 @@ const K8_SLEEP_SECONDS: u32 = 45;
 /// What `reboot(2)` says as it powers the machine off, Linux's line.
 const POWER_DOWN: &str = "reboot: Power down";
 
-/// The catalog code of the panic `ferrix.onexit=panic` asks for.
+/// The catalog code of the panic `xaqu.onexit=panic` asks for.
 const INIT_EXITED: &str = "FX-1501";
 
 /// What every boot here is made from: the built-in boot's loader, kernel and
@@ -119,7 +119,7 @@ pub(crate) struct Parts<'a> {
     pub(crate) carried: &'a [File],
 }
 
-/// Boot the shell from a file by `ferrix.init=` and judge it; then, where
+/// Boot the shell from a file by `xaqu.init=` and judge it; then, where
 /// `busybox` says the shell has a `poweroff`, the two K7 boots.
 ///
 /// # Errors
@@ -133,7 +133,7 @@ pub(crate) fn test(parts: &Parts<'_>, args: &Args, busybox: bool) -> Result<()> 
     let shell = std::fs::read(program)
         .map_err(|error| Error::new(format!("reading {}: {error}", program.display())))?;
 
-    println!("  {arch}: starting the shell from {SCRIPT_FILE}, as ferrix.init= names it");
+    println!("  {arch}: starting the shell from {SCRIPT_FILE}, as xaqu.init= names it");
     let script = format!("#!/bin/sh\n{}", shell::SCRIPT);
     let image = parts.image(
         &shell,
@@ -145,7 +145,7 @@ pub(crate) fn test(parts: &Parts<'_>, args: &Args, busybox: bool) -> Result<()> 
     let lines = qemu::watch_to_power_off(arch, &image, kernel, args, SUCCESS_MARKER)?;
     judge_from_file(after_marker(&lines)).map_err(|why| failed(arch, &why))?;
     println!(
-        "  {arch}: ferrix.init= started the shell from {SCRIPT_FILE}, and it exited with {}",
+        "  {arch}: xaqu.init= started the shell from {SCRIPT_FILE}, and it exited with {}",
         shell::STATUS
     );
 
@@ -171,9 +171,9 @@ pub(crate) fn test(parts: &Parts<'_>, args: &Args, busybox: bool) -> Result<()> 
     let lines = qemu::watch_to_power_off(arch, &image, kernel, &with_volume, SUCCESS_MARKER)?;
     judge_k7_write(&lines).map_err(|why| failed(arch, &why))?;
 
-    println!("  {arch}: reading /data/k7 and /home/k7 back, under ferrix.onexit=panic");
+    println!("  {arch}: reading /data/k7 and /home/k7 back, under xaqu.onexit=panic");
     with_volume.data_image_kept = false;
-    let cmdline = format!("{} ferrix.onexit=panic", qemu::init_option(K7_READ));
+    let cmdline = format!("{} xaqu.onexit=panic", qemu::init_option(K7_READ));
     let image = parts.image(&shell, K7_READ, &read_script(), &cmdline, false)?;
     let deadline = Instant::now() + Duration::from_secs(args.timeout);
     let lines = qemu::watch_then(arch, &image, kernel, &with_volume, SUCCESS_MARKER, |at| {
@@ -210,7 +210,7 @@ pub(crate) fn test(parts: &Parts<'_>, args: &Args, busybox: bool) -> Result<()> 
     })?;
     judge_k8_write(&lines).map_err(|why| failed(arch, &why))?;
     k8.data_image_kept = false;
-    let cmdline = format!("{} ferrix.onexit=panic", qemu::init_option(K8_READ));
+    let cmdline = format!("{} xaqu.onexit=panic", qemu::init_option(K8_READ));
     let image = parts.image(&shell, K8_READ, &k8_read_script(), &cmdline, false)?;
     let deadline = Instant::now() + Duration::from_secs(args.timeout);
     let lines = qemu::watch_then(arch, &image, kernel, &k8, SUCCESS_MARKER, |at| {
@@ -389,7 +389,7 @@ fn failed(arch: Arch, why: &str) -> Error {
 }
 
 /// Whether the shell ran the script from [`SCRIPT_FILE`], started by
-/// `ferrix.init=` and not by the fallback.
+/// `xaqu.init=` and not by the fallback.
 fn judge_from_file(after: &[String]) -> std::result::Result<(), String> {
     if let Some(line) = after.iter().find(|line| line.contains(FELL_BACK)) {
         return Err(format!(
@@ -400,7 +400,7 @@ fn judge_from_file(after: &[String]) -> std::result::Result<(), String> {
     let started = format!("init     starting /bin/sh {SCRIPT_FILE}");
     let Some(at) = after.iter().position(|line| line.trim() == started) else {
         return Err(format!(
-            "the kernel never said `{started}`, so ferrix.init= was not followed"
+            "the kernel never said `{started}`, so xaqu.init= was not followed"
         ));
     };
     let mut remaining = after.iter().skip(at);
@@ -501,7 +501,7 @@ fn judge_k7_read(after: &[String]) -> std::result::Result<(), String> {
     };
     if !after.iter().skip(at).any(|line| line.contains(INIT_EXITED)) {
         return Err(format!(
-            "init exited under ferrix.onexit=panic and the kernel did not panic with {INIT_EXITED}"
+            "init exited under xaqu.onexit=panic and the kernel did not panic with {INIT_EXITED}"
         ));
     }
     Ok(())
@@ -535,7 +535,7 @@ mod tests {
     fn the_built_in_shell_after_a_fallback_fails() {
         let mut lines = transcript(&[
             SUCCESS_MARKER,
-            "  init     ferrix.init=/etc/nope could not be started: errno 2; falling back to \
+            "  init     xaqu.init=/etc/nope could not be started: errno 2; falling back to \
              the built-in program",
             "  init     1024 KiB program built in, starting `sh -c` with a built-in script",
         ]);
@@ -608,7 +608,7 @@ mod tests {
             "k7: read back /data/k7: committed by reboot(2)",
             "k7: /home/k7 is not there",
             "  init     /etc/k7-read exited with 0",
-            "  code      FX-1501  init exited, and ferrix.onexit=panic asked for a panic",
+            "  code      FX-1501  init exited, and xaqu.onexit=panic asked for a panic",
         ]);
         let why = judge_k7_read(&lost).unwrap_err();
         assert!(why.contains("/home/k7 did not survive"), "{why}");

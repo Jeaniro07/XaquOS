@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Assert no development signing key is in the tree (docs/SIGNING.md §6.4, D5).
 
-The development soft signer, `ferrix-softsign`, keeps each key's private
+The development soft signer, `xaqu-softsign`, keeps each key's private
 state in a file whose first line is `FXSOFTSIGN-STATE-1`, under
-`~/.local/share/ferrix/signing-dev/`, outside every repository and image.
+`~/.local/share/xaqu/signing-dev/`, outside every repository and image.
 It refuses to make a key inside a git work tree. This check holds the other
 direction: a state file copied into the tree by hand, or committed by
 mistake, fails the gate, and the development anchor it belongs to is then

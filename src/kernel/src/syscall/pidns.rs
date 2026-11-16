@@ -32,9 +32,9 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{SIGKILL, SIGSTOP};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{SIGKILL, SIGSTOP};
 
 use crate::fallible;
 use crate::object::process::{PID_MAX, RESERVED};

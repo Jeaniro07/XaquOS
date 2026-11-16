@@ -1,10 +1,10 @@
-//! The `--everything` desktop as a session of the user `ferrix`
+//! The `--everything` desktop as a session of the user `xaqu`
 //! (`docs/AUTH.md` §6, customer 2026-10-03).
 //!
-//! `init`'s `hyprix.service` starts `/bin/sessiond --user ferrix --headless
+//! `init`'s `hyprix.service` starts `/bin/sessiond --user xaqu --headless
 //! WxH --display-wait SECONDS -- /bin/hyprix ...` instead of the compositor
 //! itself. `sessiond` is root and owns seat0's devices; the compositor, and every program it starts, run as
-//! `ferrix` (`src/user/system/linux/compositor/sessiond`).
+//! `xaqu` (`src/user/system/linux/compositor/sessiond`).
 //!
 //! What the desktop's configuration started as root and has to stay root
 //! becomes a unit of `graphical.target` here instead of an `exec-once`:
@@ -24,11 +24,11 @@
 //! `~/.config/hypr` with the rest, and `/etc/hyprland.conf` sources that copy
 //! where the host's text was (`source = ~/.config/hypr/hyprland.conf`), with
 //! xtask's own lines before and after it as they were: an edit made to it in
-//! Ferrix is what the next start reads.
+//! Xaqu is what the next start reads.
 //!
 //! The carried dotfiles go to `/etc/skel` instead of root's home, and
-//! `sessiond` copies each into `/home/ferrix` the first time, so an edit made
-//! in Ferrix is kept; `--reset-flash` starts the home over and the next boot
+//! `sessiond` copies each into `/home/xaqu` the first time, so an edit made
+//! in Xaqu is kept; `--reset-flash` starts the home over and the next boot
 //! copies them again. A carried file under `home/`, which a host's
 //! configuration names by its host path, goes to [`HOME_COPY`] instead,
 //! since the home disk's mount hides the archive's `/home`; `sessiond` puts
@@ -37,13 +37,13 @@
 use crate::ports::{Content, File};
 
 /// The account the session runs as.
-pub(crate) const USER: &str = "ferrix";
+pub(crate) const USER: &str = "xaqu";
 
 /// What `sessiond` seeds the account's home from, once a file.
 pub(crate) const SKEL: &str = "etc/skel";
 
 /// What `sessiond` copies into `/home` at every boot.
-pub(crate) const HOME_COPY: &str = "usr/share/ferrix/home";
+pub(crate) const HOME_COPY: &str = "usr/share/xaqu/home";
 
 /// The programs a desktop's configuration starts that must stay root, by the
 /// path its `exec-once` names: the unit each becomes, and its type.
@@ -68,12 +68,12 @@ const DATA_HOME: &str = "#!/bin/sh\n\
 for dir in /data/home /data/steam; do\n\
 \t[ -d \"$dir\" ] || continue\n\
 \t[ \"$(stat -c %u \"$dir\")\" = 1000 ] && continue\n\
-\tchown -R 1000:1000 \"$dir\" && echo \"data-home: $dir is ferrix's\"\n\
+\tchown -R 1000:1000 \"$dir\" && echo \"data-home: $dir is xaqu's\"\n\
 done\n\
 exit 0\n";
 
 /// Where [`DATA_HOME`] goes.
-const DATA_HOME_PATH: &str = "etc/ferrix/data-home.sh";
+const DATA_HOME_PATH: &str = "etc/xaqu/data-home.sh";
 
 /// `config` and `ports` made into a session's: the root programs' lines
 /// taken out and made units, the units for them and for `/data`'s home
@@ -171,14 +171,14 @@ fn unit(name: &str, kind: &str, description: &str, command: &str) -> [File; 2] {
     );
     [
         File {
-            path: format!("etc/ferrix/units/{name}.service"),
+            path: format!("etc/xaqu/units/{name}.service"),
             mode: 0o644,
             content: Content::Bytes(text.into_bytes()),
         },
         File {
-            path: format!("etc/ferrix/units/graphical.target.wants/{name}.service"),
+            path: format!("etc/xaqu/units/graphical.target.wants/{name}.service"),
             mode: 0o777,
-            content: Content::Link(format!("/etc/ferrix/units/{name}.service")),
+            content: Content::Link(format!("/etc/xaqu/units/{name}.service")),
         },
     ]
 }
@@ -211,7 +211,7 @@ impl Bus {
 
 /// Where [`SESSION_BUS_CONF`] goes: in the image, root's, not on the volume
 /// the daemon comes from.
-pub(crate) const SESSION_BUS_CONF_PATH: &str = "etc/ferrix/session-bus.conf";
+pub(crate) const SESSION_BUS_CONF_PATH: &str = "etc/xaqu/session-bus.conf";
 
 /// The session bus's configuration (the certification consultant's G1
 /// condition 5, ledger line 3123): Debian's `session.conf` less what G1
@@ -222,7 +222,7 @@ pub(crate) const SESSION_BUS_CONF_PATH: &str = "etc/ferrix/session-bus.conf";
 /// authentication alone, so no anonymous or cookie client and no TCP, the
 /// services the volume ships as the only ones it starts, no eavesdropping,
 /// and no `<include>` of any other file. Debian's limits are kept.
-pub(crate) const SESSION_BUS_CONF: &str = r#"<!-- The session's bus on Ferrix (docs/GNOME.md, G1; tools/common/xtask/src/session.rs). -->
+pub(crate) const SESSION_BUS_CONF: &str = r#"<!-- The session's bus on Xaqu (docs/GNOME.md, G1; tools/common/xtask/src/session.rs). -->
 <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
@@ -276,7 +276,7 @@ exit 0
 "#;
 
 /// Where [`DATA_NOSUID`] goes.
-const DATA_NOSUID_PATH: &str = "etc/ferrix/data-nosuid.sh";
+const DATA_NOSUID_PATH: &str = "etc/xaqu/data-nosuid.sh";
 
 /// What `data-nosuid.service` prints before `/data`'s line.
 pub(crate) const DATA_NOSUID_SAID: &str = "data-nosuid: ";
@@ -304,7 +304,7 @@ const BAR_LENGTHS: [&str; 4] = ["height", "width", "spacing", "icon-size"];
 /// `--bar-zoom`: the carried waybar `by` times its size. Every `px` length in
 /// its `style.css`, and the [`BAR_LENGTHS`] its configuration gives, are
 /// multiplied; the host's own files are not touched, only what the image
-/// seeds the home with. Ferrix's waybar draws at the output's scale 1, so a
+/// seeds the home with. Xaqu's waybar draws at the output's scale 1, so a
 /// desktop's bar on a phone is as many pixels as on a monitor a third as
 /// dense: this is what makes it read there.
 pub(crate) fn zoom_bar(ports: &mut [File], by: f64) {
@@ -512,7 +512,7 @@ mod tests {
     #[test]
     fn root_programs_become_units_and_the_rest_stays() {
         let config = "env = XDG_RUNTIME_DIR,/tmp\n\
-                      env = FONTCONFIG_FILE,/usr/share/ferrix/fonts/fonts.conf\n\
+                      env = FONTCONFIG_FILE,/usr/share/xaqu/fonts/fonts.conf\n\
                       exec-once = /bin/term /bin/zinc\n\
                       exec-once = /bin/sshdt -b 0.0.0.0 -p 22\n\
                       exec-once = /bin/dhcpc -i eth0 -n\n\
@@ -550,12 +550,12 @@ mod tests {
         );
         let sshd = ports
             .iter()
-            .find(|file| file.path == "etc/ferrix/units/sshd.service")
+            .find(|file| file.path == "etc/xaqu/units/sshd.service")
             .expect("sshd.service");
         assert!(bytes(sshd).contains("ExecStart=/bin/sshdt -b 0.0.0.0 -p 22\n"));
         let net = ports
             .iter()
-            .find(|file| file.path == "etc/ferrix/units/net.service")
+            .find(|file| file.path == "etc/xaqu/units/net.service")
             .expect("net.service");
         assert!(bytes(net).contains("Type=simple\n"));
         assert!(
@@ -564,11 +564,11 @@ mod tests {
                 .any(|file| file.path == "etc/skel/.config/waybar/config.jsonc")
         );
         assert!(ports.iter().any(
-            |file| file.path == "usr/share/ferrix/home/sebastian/.local/bin/hypr-launcher"
+            |file| file.path == "usr/share/xaqu/home/sebastian/.local/bin/hypr-launcher"
         ));
         assert!(
             ports.iter().any(
-                |file| file.path == "etc/ferrix/units/graphical.target.wants/data-home.service"
+                |file| file.path == "etc/xaqu/units/graphical.target.wants/data-home.service"
             )
         );
     }

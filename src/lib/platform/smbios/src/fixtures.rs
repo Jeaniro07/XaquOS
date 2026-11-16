@@ -2,13 +2,13 @@
 //! `/sys/firmware/dmi/tables` showed them unaltered, captured 2026-10-15 by
 //! the probe runs d1-probe-ep32 and d1-probe-ep64 (commit 6b6f6b77d, never
 //! landed: `od -An -tx1 -v` of both files in `cargo xtask test-vfs --arch
-//! x86_64`, the second with `FERRIX_X86_MACHINE=smbios-entry-point-type=64`).
+//! x86_64`, the second with `XAQU_X86_MACHINE=smbios-entry-point-type=64`).
 //!
 //! The machine is QEMU's `pc-q35-10.2` given xtask's `-smbios` arguments
 //! (`tools/common/xtask/src/smbios.rs` at a56c234f7):
 //!
 //! ```text
-//! -smbios type=1,manufacturer=Ferrix QEMU \u{e9},product=Ferrix test machine,
+//! -smbios type=1,manufacturer=Xaqu QEMU \u{e9},product=Xaqu test machine,
 //!         serial=FXSER-SYS-71c3e9,uuid=5f0d9a7e-3b21-4c8e-9d4a-0b6e2f8c1d33
 //! -smbios type=2,serial=FXSER-BRD-2a90d4
 //! -smbios type=3,serial=FXSER-CHS-e5b017

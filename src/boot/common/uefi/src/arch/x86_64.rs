@@ -2,7 +2,7 @@
 
 use core::arch::asm;
 
-use ferrix_bootinfo::Arch;
+use xaqu_bootinfo::Arch;
 
 use super::Handoff;
 
@@ -10,10 +10,10 @@ use super::Handoff;
 pub(crate) const ARCH: Arch = Arch::X86_64;
 
 /// The `e_machine` a kernel for this architecture must carry.
-pub(crate) const ELF_MACHINE: u16 = ferrix_elf::EM_X86_64;
+pub(crate) const ELF_MACHINE: u16 = xaqu_elf::EM_X86_64;
 
 /// The ELF class a kernel for this architecture must be.
-pub(crate) const ELF_CLASS: ferrix_elf::Class = ferrix_elf::Class::Elf64;
+pub(crate) const ELF_CLASS: xaqu_elf::Class = xaqu_elf::Class::Elf64;
 
 /// Extended Feature Enable Register.
 const IA32_EFER: u32 = 0xC000_0080;
@@ -119,7 +119,7 @@ const MAX_BANKS: u32 = 32;
 /// the machine-check architecture, on a vendor whose rules it knows, and
 /// only banks below `MCG_CAP`'s count.
 pub(crate) fn left_bank_pages(out: &mut [u32]) -> usize {
-    use ferrix_bootinfo::pstore::{BankRules, left_page};
+    use xaqu_bootinfo::pstore::{BankRules, left_page};
     // CPUID 1, EDX: MCE (bit 7) and MCA (bit 14).
     let features = core::arch::x86_64::__cpuid(1).edx;
     if features & (1 << 7) == 0 || features & (1 << 14) == 0 {

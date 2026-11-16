@@ -1,10 +1,10 @@
 # Thread times: kernel time, switch counts, and a sampling profiler
 
-The first steps of a per-thread profile on Ferrix
+The first steps of a per-thread profile on Xaqu
 (`docs/backlog/p2.md`, *A per-thread profile of a program cannot be taken
-on Ferrix*). The customer's goal behind it: Endfield playable on the N150
+on Xaqu*). The customer's goal behind it: Endfield playable on the N150
 box, where the GRYPHLINK launcher's video decode took 4.9 times a Zen 5
-core's time against about 2.7 expected, and Ferrix could not say where
+core's time against about 2.7 expected, and Xaqu could not say where
 the difference went.
 
 Ids: `H.SCHED.14` and `L.sched.80-83`, reserved on `main` at d04cff26a and ff18add48.
@@ -29,9 +29,9 @@ Ids: `H.SCHED.14` and `L.sched.80-83`, reserved on `main` at d04cff26a and ff18a
 samples the mode at each tick and scales the split to the exact runtime
 (`cputime_adjust`). With `CONFIG_VIRT_CPU_ACCOUNTING_GEN` (nohz_full
 processors) it reads the clock at every kernel entry and exit instead.
-Ferrix has no periodic tick -- a processor running one task with nothing
+Xaqu has no periodic tick -- a processor running one task with nothing
 behind it gets none (`sched::charge_running`'s comment) -- so a sampled
-split would read nothing for exactly the threads to be profiled. Ferrix
+split would read nothing for exactly the threads to be profiled. Xaqu
 does what `VIRT_CPU_ACCOUNTING_GEN` does.
 
 **The rule.** A task's *kernel time* is the time from each entry from user
@@ -58,8 +58,8 @@ counter read and no division:
 
 | Where | What |
 |---|---|
-| x86-64 `ferrix_syscall_entry`, after the fast-path branch, before `general_entry` | `entered`: `since = now`, and should a stint still be open (no return closed it) `pending += now - since` first, so a missed return counts time as kernel time rather than dropping it |
-| x86-64 `ferrix_syscall_entry` after `general_entry` returns, and `answer_here`'s `rt_sigreturn` and `enter_compat_after_execve` before their `resume_context`, which never return | `leaving`: `pending += now - since; since = 0` |
+| x86-64 `xaqu_syscall_entry`, after the fast-path branch, before `general_entry` | `entered`: `since = now`, and should a stint still be open (no return closed it) `pending += now - since` first, so a missed return counts time as kernel time rather than dropping it |
+| x86-64 `xaqu_syscall_entry` after `general_entry` returns, and `answer_here`'s `rt_sigreturn` and `enter_compat_after_execve` before their `resume_context`, which never return | `leaving`: `pending += now - since; since = 0` |
 | x86-64 `frame_tail`'s general branch, before its `enable_interrupts` | `entered` |
 | x86-64, the fast path's `Tail` and `Done` answers after `frame_tail` / `leave` | `leaving`, which finds `since == 0` unless a general switch or the general branch opened a stint |
 | `trap::dispatch`, when the frame `came_from_user()`, first and last (after `return_to_user`, `throttle_current` and every other step that can open interrupts) | `entered` and `leaving`: every interrupt and exception from user mode, and the Arm system calls |
@@ -222,14 +222,14 @@ kernel time.
 The protocol of `.claude/skills/optimize-ipc-round-trip`: `bench-ipc
 --release --accel kvm --smp 1 --alternate <main> --rounds 5 --record`, the
 `domain-call` line, on the general path (the default) and with
-`--kernel-option ferrix.fastpath=on`, both ABAB against `main`. Figures:
+`--kernel-option xaqu.fastpath=on`, both ABAB against `main`. Figures:
 in the landing's commit message and its record under
 `docs/hotpaths/results/ipc-round-trip/`.
 
 **Measured** (nazuna, x86_64 under KVM, `--smp 1` pinned to core 11 at
 `performance`, SMT sibling 0% busy, host load 2.1 to 2.4; `bench-ipc
 --release --accel kvm --smp 1 --arch x86_64 --init <musl busybox>
---alternate ff18add48 --rounds 5 --kernel-option ferrix.checks=skip`,
+--alternate ff18add48 --rounds 5 --kernel-option xaqu.checks=skip`,
 through `gate.sh`, tags `tt4-bench-general` and `tt4-bench-fast`, on
 3afc3e8bf, whose kernel is this landing's; the boot checks skipped on both
 sides because stage 10's chardev check failed release boots of `main`
@@ -237,8 +237,8 @@ itself twice in three, `docs/backlog/flakes.md` fl-071):
 
 | Path | This tree, p50 a round trip | `main` ff18add48 | Ratio, median of 5 (spread) |
 |---|---|---|---|
-| general (`ferrix.fastpath` off, the default) | 1,348 to 1,358 ns | 1,318 to 1,328 ns | 1.023 (1.023 to 1.030) |
-| fast (`ferrix.fastpath=on`) | 729 to 739 ns | 719 to 729 ns | 1.014 (1.000 to 1.028) |
+| general (`xaqu.fastpath` off, the default) | 1,348 to 1,358 ns | 1,318 to 1,328 ns | 1.023 (1.023 to 1.030) |
+| fast (`xaqu.fastpath=on`) | 729 to 739 ns | 719 to 729 ns | 1.014 (1.000 to 1.028) |
 
 That was the first build: the general path paid its four counter reads,
 about 30 ns a round trip, 7.5 ns a read. **After the trim** (§2, the
@@ -289,8 +289,8 @@ What would let a Linux-side tool attribute a thread's time to code:
 2. **The record.** A per-processor ring of fixed 32-byte records,
    allocated when profiling starts, overwritten oldest-first, with a lost
    count. No allocation in the interrupt.
-3. **The interface.** First a Ferrix file,
-   `/proc/ferrix/profile` (root only): writing `start <hz> [pid]` or
+3. **The interface.** First a Xaqu file,
+   `/proc/xaqu/profile` (root only): writing `start <hz> [pid]` or
    `stop`, reading drains the rings as text lines
    `cpu tid ns u|k ip [nr]`. A host tool snapshots `/proc/<pid>/maps`
    at the start and end and attributes each user address to a mapping
@@ -307,7 +307,7 @@ What would let a Linux-side tool attribute a thread's time to code:
    profiling on, the exit stamp adds its span to a per-thread table by
    call number, read as `/proc/<pid>/task/<tid>/syscalls`, which is what
    `strace -c` would show on Linux and the quickest way to find a call that
-   costs Ferrix more than Linux.
+   costs Xaqu more than Linux.
 
 Estimate: 1 to 3 (5 to 8 points), the interface and host tool included;
 the `perf` subset 15 to 25 points more.

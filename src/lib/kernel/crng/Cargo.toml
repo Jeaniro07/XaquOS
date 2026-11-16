@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-crng"
+name = "xaqu-crng"
 description = "ChaCha20 with fast key erasure: the kernel's random number generator"
 version = "0.1.0"
 edition = "2024"

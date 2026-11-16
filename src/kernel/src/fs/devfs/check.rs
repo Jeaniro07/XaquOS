@@ -32,16 +32,16 @@ use alloc::vec::Vec;
 use core::mem::offset_of;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, BLKGETSIZE64, BLKROGET, BLKRRPART, BLKSSZGET, DT_BLK, DT_CHR, DT_DIR, DT_LNK,
     MAP_ANONYMOUS, MAP_PRIVATE, O_PATH, O_RDONLY, O_RDWR, PROT_READ, PROT_WRITE, S_IFBLK, SEEK_END,
     STATX_BASIC_STATS, Statx, TCGETS,
 };
-use ferrix_vfs::Errno;
-use ferrix_vfs::dirent;
-use ferrix_vfs::initramfs::makedev;
+use xaqu_vfs::Errno;
+use xaqu_vfs::dirent;
+use xaqu_vfs::initramfs::makedev;
 
 use crate::fs;
 use crate::fs::block::BlockDevice;
@@ -66,9 +66,9 @@ pub struct Report {
 }
 
 /// The check disk's name.
-const NAME: &[u8] = b"ferrixcheck0";
+const NAME: &[u8] = b"xaqucheck0";
 /// A second disk's, registered part-way through a listing.
-const SECOND: &[u8] = b"ferrixcheck1";
+const SECOND: &[u8] = b"xaqucheck1";
 /// The check disk's major number: Linux's first local/experimental block
 /// major, which no driver here takes.
 const MAJOR: u32 = 254;
@@ -85,9 +85,9 @@ const READ_SECTORS: u64 = 2;
 
 /// `/proc/partitions` with the check disk registered, as Linux would print
 /// it: 64 sectors of 512 bytes are 32 KiB.
-const PARTITIONS: &[u8] = b"major minor  #blocks  name\n\n 254      250         32 ferrixcheck0\n";
+const PARTITIONS: &[u8] = b"major minor  #blocks  name\n\n 254      250         32 xaqucheck0\n";
 
-/// The character nodes, in the order `/dev` lists them; `ferrix-crashes`
+/// The character nodes, in the order `/dev` lists them; `xaqu-crashes`
 /// is root:root 0400 (`fs::crashes`).
 const STATIC_NODES: [&[u8]; 10] = [
     b"null",
@@ -99,7 +99,7 @@ const STATIC_NODES: [&[u8]; 10] = [
     b"console",
     b"ptmx",
     b"kmsg",
-    b"ferrix-crashes",
+    b"xaqu-crashes",
 ];
 
 /// `shm`, which `/dev` lists after the disks and always: the one directory
@@ -129,11 +129,11 @@ const AT_WRITABLE_NODE: u64 = 96;
 const AT_DATA: u64 = 2048;
 
 const DEV: &[u8] = b"/dev\0";
-const NODE: &[u8] = b"/dev/ferrixcheck0\0";
-const WRITABLE_NODE: &[u8] = b"/dev/ferrixcheck2\0";
+const NODE: &[u8] = b"/dev/xaqucheck0\0";
+const WRITABLE_NODE: &[u8] = b"/dev/xaqucheck2\0";
 
 /// The writable disk's name and minor.
-const WRITABLE: &[u8] = b"ferrixcheck2";
+const WRITABLE: &[u8] = b"xaqucheck2";
 const WRITABLE_MINOR: u32 = MINOR + 4;
 /// Its sectors: few, so a write over its end is cheap to set up.
 const WRITABLE_SECTORS: u64 = 4;
@@ -709,7 +709,7 @@ fn check_refusals(disk: &Arc<CheckDisk>) -> Result<(), &'static str> {
             "a disk's name in use was not NameInUse",
         ),
         (
-            b"ferrixcheck9",
+            b"xaqucheck9",
             MINOR,
             BlockRefused::NumberInUse,
             "a number in use was not NumberInUse",

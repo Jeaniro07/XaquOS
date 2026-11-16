@@ -86,7 +86,7 @@ impl Forwarder {
         let sender = self.sender.clone();
         let waker = self.waker.clone();
         let started = std::thread::Builder::new()
-            .name("ferrix-net-ping".to_owned())
+            .name("xaqu-net-ping".to_owned())
             .spawn(move || {
                 if echo(request.destination, &request.body)
                     && sender.send(request).is_ok()

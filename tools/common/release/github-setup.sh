@@ -1,5 +1,5 @@
 #!/bin/sh
-# One-time GitHub settings for ferrix-os/ferrix: what search, the repository
+# One-time GitHub settings for xaqu-os/xaqu: what search, the repository
 # page and link previews show. Everything here is public the moment it runs;
 # read it first. Needs `gh auth login` with admin rights on the repository.
 #
@@ -9,12 +9,12 @@
 # The social preview image cannot be set through the API. Upload
 # docs/brand/social-preview.png by hand: Settings -> General -> Social preview.
 set -eu
-repo=ferrix-os/ferrix
+repo=xaqu-os/xaqu
 
 # Keep the public description short enough to read in repository search.
 gh repo edit "$repo" \
-  --description "Linux apps without Linux. Ferrix is an experimental Rust OS with a Wayland desktop and drivers outside the kernel." \
-  --homepage "https://ferrix-os.github.io/" \
+  --description "Linux apps without Linux. Xaqu is an experimental Rust OS with a Wayland desktop and drivers outside the kernel." \
+  --homepage "https://xaqu-os.github.io/" \
   --enable-discussions \
   --enable-issues \
   --enable-wiki=false
@@ -26,9 +26,9 @@ gh api -X PUT "repos/$repo/topics" --input - <<'JSON'
 JSON
 
 # Pages from Actions, in the website's own repository, whose Website
-# workflow deploys it to https://ferrix-os.github.io/ (components.toml).
-gh api -X POST "repos/ferrix-os/ferrix-os.github.io/pages" -f build_type=workflow >/dev/null 2>&1 \
-  || gh api -X PUT "repos/ferrix-os/ferrix-os.github.io/pages" -f build_type=workflow
+# workflow deploys it to https://xaqu-os.github.io/ (components.toml).
+gh api -X POST "repos/xaqu-os/xaqu-os.github.io/pages" -f build_type=workflow >/dev/null 2>&1 \
+  || gh api -X PUT "repos/xaqu-os/xaqu-os.github.io/pages" -f build_type=workflow
 
 # Private vulnerability reporting, which SECURITY.md points to.
 gh api -X PUT "repos/$repo/private-vulnerability-reporting"
@@ -39,12 +39,12 @@ if [ "${1:-}" = releases ]; then
   for tag in stage-9 stage-9.1-console-and-iommu stage-11-ring-3-disk-and-btrfs \
              stage-11.1-network-display-and-threads; do
     gh release view "$tag" -R "$repo" >/dev/null 2>&1 && continue
-    python3 tools/common/gen/release-notes.py "$tag" > /tmp/ferrix-notes.md
+    python3 tools/common/gen/release-notes.py "$tag" > /tmp/xaqu-notes.md
     gh release create "$tag" -R "$repo" --verify-tag \
       --title "$(python3 tools/common/gen/release-notes.py --title "$tag")" \
-      --notes-file /tmp/ferrix-notes.md
+      --notes-file /tmp/xaqu-notes.md
   done
-  rm -f /tmp/ferrix-notes.md
+  rm -f /tmp/xaqu-notes.md
 fi
 
 echo "done. Now upload docs/brand/social-preview.png under Settings -> General -> Social preview."

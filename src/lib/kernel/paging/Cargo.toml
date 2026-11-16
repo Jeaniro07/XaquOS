@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-paging"
+name = "xaqu-paging"
 description = "Architecture-neutral page table construction for x86-64, AArch64 and ARMv7-A"
 version.workspace = true
 edition.workspace = true

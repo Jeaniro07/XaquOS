@@ -6,7 +6,7 @@
 //!
 //! ARMv7-A has two descriptor formats. The short one is 32 bits wide, has two
 //! levels and no privileged-execute-never bit; the long one — LPAE — is the
-//! format AArch64 went on to adopt nearly bit for bit. Ferrix uses the long
+//! format AArch64 went on to adopt nearly bit for bit. Xaqu uses the long
 //! one for exactly that reason: what follows is [`super::aarch64`] with two
 //! differences, and the memory attributes are the same agreement, split
 //! across two registers instead of held in one.
@@ -39,7 +39,7 @@ const VALID: u64 = 1 << 0;
 const TABLE_OR_PAGE: u64 = 1 << 1;
 
 /// Access flag. As on AArch64, a descriptor without it faults on first touch,
-/// and Ferrix does not use access-flag faults, so every mapping sets it.
+/// and Xaqu does not use access-flag faults, so every mapping sets it.
 const ACCESS_FLAG: u64 = 1 << 10;
 /// Not global: tagged with an ASID. Set on user mappings, clear on kernel ones.
 const NOT_GLOBAL: u64 = 1 << 11;

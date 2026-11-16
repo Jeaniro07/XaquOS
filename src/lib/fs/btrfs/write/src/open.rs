@@ -12,16 +12,16 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::chunk::{ChunkItem, FIRST_CHUNK_TREE_OBJECTID};
-use ferrix_btrfs::items::{
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::chunk::{ChunkItem, FIRST_CHUNK_TREE_OBJECTID};
+use xaqu_btrfs::items::{
     CHUNK_ITEM_KEY, CHUNK_TREE_OBJECTID, DEV_ITEM_KEY, DEV_ITEMS_OBJECTID, DevItem,
     EXTENT_TREE_OBJECTID, FIRST_FREE_OBJECTID, LAST_FREE_OBJECTID, ROOT_ITEM_KEY,
     ROOT_TREE_OBJECTID, RootItem,
 };
-use ferrix_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_SIZE, Superblock};
-use ferrix_btrfs::tree::{BtrfsKey, NodeHeader};
-use ferrix_btrfs::volume::{Device, ReadKind};
+use xaqu_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_SIZE, Superblock};
+use xaqu_btrfs::tree::{BtrfsKey, NodeHeader};
+use xaqu_btrfs::volume::{Device, ReadKind};
 
 use crate::bytes::{get_u32, get_u64};
 use crate::chunks::{Chunk, Chunks};
@@ -60,7 +60,7 @@ impl<D: WriteDevice> WriteVolume<D> {
     ///
     /// [`Error::Unsupported`] names the reason a volume this writer does not
     /// maintain is refused; such a volume can still be read with
-    /// `ferrix-btrfs`.
+    /// `xaqu-btrfs`.
     pub fn open(device: D) -> Result<Self> {
         let mut volume = Self::open_committed(device)?;
         // Files unlinked while open when the volume was last in use: nothing
@@ -315,8 +315,8 @@ impl<D: WriteDevice> WriteVolume<D> {
         for tree in [
             EXTENT_TREE_OBJECTID,
             FREE_SPACE_TREE_OBJECTID,
-            ferrix_btrfs::items::CSUM_TREE_OBJECTID,
-            ferrix_btrfs::items::DEV_TREE_OBJECTID,
+            xaqu_btrfs::items::CSUM_TREE_OBJECTID,
+            xaqu_btrfs::items::DEV_TREE_OBJECTID,
         ] {
             let _ = self.root(tree)?;
         }
@@ -425,7 +425,7 @@ impl<D: WriteDevice> WriteVolume<D> {
 
 /// Refuse a volume this writer would damage.
 fn check_writable(sb: &Superblock<'_>) -> Result<()> {
-    use ferrix_btrfs::superblock::IncompatFlags;
+    use xaqu_btrfs::superblock::IncompatFlags;
     let incompat = sb.incompat_flags();
     if incompat.unknown() != 0 {
         return Err(Error::Volume(BtrfsError::UnsupportedFeature(

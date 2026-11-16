@@ -8,20 +8,20 @@
 
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::pstore::Stop;
-use ferrix_kernel_load::arch;
-use ferrix_kernel_load::console::println;
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::uaccess;
-use ferrix_linux_abi::errno::Errno;
+use xaqu_bootinfo::pstore::Stop;
+use xaqu_kernel_load::arch;
+use xaqu_kernel_load::console::println;
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::uaccess;
+use xaqu_linux_abi::errno::Errno;
 
 /// `reboot(.., RESTART2, arg)`.
 pub fn restart_with_word(process: &Process, arg: u64) -> Result<usize, Errno> {
-    ferrix_kernel_load::power::sync_disks();
-    let caller = ferrix_kernel_load::object::process::Host::core(process);
-    ferrix_kernel_load::audit::power(
-        ferrix_kernel_load::audit::Subject::of(caller),
-        ferrix_audit::power::RESTART,
+    xaqu_kernel_load::power::sync_disks();
+    let caller = xaqu_kernel_load::object::process::Host::core(process);
+    xaqu_kernel_load::audit::power(
+        xaqu_kernel_load::audit::Subject::of(caller),
+        xaqu_audit::power::RESTART,
     );
     // Linux copies at most 255 bytes into a 256-byte buffer and cuts
     // a longer word off there; a word with no NUL in that reach is
@@ -33,11 +33,11 @@ pub fn restart_with_word(process: &Process, arg: u64) -> Result<usize, Errno> {
     println!("reboot: Restarting system with command '{word}'");
     // Where the firmware reads a word, on the one machine that has
     // one: a DK board's U-Boot, whose support registers with power.
-    match ferrix_kernel_load::power::request_boot_mode(word) {
+    match xaqu_kernel_load::power::request_boot_mode(word) {
         Ok(what) => println!("reboot: {what}"),
         Err(why) => println!("reboot: '{word}' changes nothing: {why}"),
     }
-    ferrix_kernel_load::watchdog::stop_for_shutdown("a restart");
-    let _ = ferrix_kernel_load::console::pstore::stop(Stop::Restart);
+    xaqu_kernel_load::watchdog::stop_for_shutdown("a restart");
+    let _ = xaqu_kernel_load::console::pstore::stop(Stop::Restart);
     arch::reset()
 }

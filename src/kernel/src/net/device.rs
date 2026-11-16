@@ -25,8 +25,8 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_net::iface::Interface;
-use ferrix_net::{Stack, iface::Backing};
+use xaqu_net::iface::Interface;
+use xaqu_net::{Stack, iface::Backing};
 
 use super::NetNamespace;
 use crate::object::port::Port;
@@ -199,7 +199,7 @@ pub(crate) fn come_home(key: u32, mut interface: Interface, waker: Option<Arc<Po
                 .core()
                 .look(|stack| stack.interface_by_name(&candidate).is_none())
             {
-                interface.name = ferrix_net::iface::Name::new(&candidate);
+                interface.name = xaqu_net::iface::Name::new(&candidate);
                 break;
             }
             n += 1;
@@ -222,7 +222,7 @@ pub(crate) fn come_home(key: u32, mut interface: Interface, waker: Option<Arc<Po
 /// does: it comes down and loses its addresses, and what the driver said of
 /// the link stays.
 pub(crate) fn flush(interface: &mut Interface) {
-    use ferrix_net::iface::{IFF_LOWER_UP, IFF_RUNNING, IFF_UP};
+    use xaqu_net::iface::{IFF_LOWER_UP, IFF_RUNNING, IFF_UP};
     interface.addresses.clear();
     interface.flags &= !(IFF_UP | IFF_RUNNING);
     if !matches!(interface.backing, Backing::Device(_)) {

@@ -1,5 +1,5 @@
 #!/bin/bash
-# The long-lived card VM: one Ferrix desktop on the RTX 3060 that agents
+# The long-lived card VM: one Xaqu desktop on the RTX 3060 that agents
 # deploy into over ssh instead of rebooting the domain for every test.
 #
 #   card.sh up [--everything] [xtask args]   boot it under card.lock (background)
@@ -15,26 +15,26 @@
 #   card.sh down                              end it; xtask destroys the domain
 #   card.sh reboot [xtask args]               down, then up again (kernel or nvrm changes only)
 #
-# Every swap is announced in ~/.local/share/ferrix/steam-race/cardvm.md
+# Every swap is announced in ~/.local/share/xaqu/steam-race/cardvm.md
 # (CARD_AGENT=<your name> says who). The protocol is in that file.
 #
 # CARD_WT: the worktree `up` builds from (default: this script's checkout).
 # CARD_PORT: the host port forwarded to the guest's sshd (default 2360).
 set -u
-D=${CARD_DIR:-$HOME/.local/share/ferrix/nvidia}
+D=${CARD_DIR:-$HOME/.local/share/xaqu/nvidia}
 STATE=$D/cardvm.env
 STOP=$D/cardvm-stop
 ARGS=$D/cardvm.args
 OUT=$D/cardvm-xtask.log
-NOTES=$HOME/.local/share/ferrix/steam-race/cardvm.md
-KEY=$HOME/.local/share/ferrix/ssh/id_ed25519
+NOTES=$HOME/.local/share/xaqu/steam-race/cardvm.md
+KEY=$HOME/.local/share/xaqu/ssh/id_ed25519
 PORT=${CARD_PORT:-2360}
 WT=${CARD_WT:-$(cd "$(dirname "$0")/../../.." && pwd)}
 AGENT=${CARD_AGENT:-${USER}}
-# The customer's G303 belongs to Ferrix; never the Keychron (host keyboard).
+# The customer's G303 belongs to Xaqu; never the Keychron (host keyboard).
 # n3c's private NVIDIA tree (virgl debs) when it is there: hyprix composites on the GPU.
-[ -z "${FERRIX_NVIDIA:-}" ] && [ -d "$HOME/.local/share/ferrix/nvidia-n3c" ] && export FERRIX_NVIDIA=$HOME/.local/share/ferrix/nvidia-n3c
-export FERRIX_NVIDIA_INPUT=${FERRIX_NVIDIA_INPUT:-/dev/input/by-id/usb-Logitech_Gaming_Mouse_G303_0F8934563031-event-mouse:/dev/input/by-id/usb-Logitech_Gaming_Mouse_G303_0F8934563031-if01-event-kbd}
+[ -z "${XAQU_NVIDIA:-}" ] && [ -d "$HOME/.local/share/xaqu/nvidia-n3c" ] && export XAQU_NVIDIA=$HOME/.local/share/xaqu/nvidia-n3c
+export XAQU_NVIDIA_INPUT=${XAQU_NVIDIA_INPUT:-/dev/input/by-id/usb-Logitech_Gaming_Mouse_G303_0F8934563031-event-mouse:/dev/input/by-id/usb-Logitech_Gaming_Mouse_G303_0F8934563031-if01-event-kbd}
 
 keeper() { pgrep -f tv-keeper-cardvm.sh > /dev/null; }
 
@@ -114,11 +114,11 @@ down() {
   [ -f "$STATE" ] || { echo "card: not up"; return 0; }
   . "$STATE"
   touch "$STOP"
-  echo "card: asked xtask $PID to stop; it destroys ferrix-3060"
+  echo "card: asked xtask $PID to stop; it destroys xaqu-3060"
   while kill -0 "$PID" 2>/dev/null; do sleep 1; done
   rm -f "$STOP"
   keeper && echo "card: the TV keeper boots it again within seconds unless a want-* file is there"
-  grep -E 'ferrix-3060: (destroyed|virsh)' "$OUT" | tail -1
+  grep -E 'xaqu-3060: (destroyed|virsh)' "$OUT" | tail -1
   announce "card VM down"
 }
 
@@ -130,7 +130,7 @@ swap() {
   case $what in
     yserver)
       # /etc/yserver.sh runs /yserver-dev/yserver when the boot carries one
-      # (FERRIX_YSERVER_DEV) and the volume's /data/yserver/yserver otherwise:
+      # (XAQU_YSERVER_DEV) and the volume's /data/yserver/yserver otherwise:
       # the one it runs is the one replaced. The running server is found by
       # its command line (either path, ":0") and ended by pid; a client that
       # does not leave with its server is said, not killed.
@@ -177,7 +177,7 @@ swap() {
       ;;
     *)
       push "$2" "/bin/$what"
-      gssh "if [ -e /etc/ferrix/units/$what.service ]; then svc restart $what.service; else echo 'card: /bin/$what replaced; no $what.service to restart'; fi"
+      gssh "if [ -e /etc/xaqu/units/$what.service ]; then svc restart $what.service; else echo 'card: /bin/$what replaced; no $what.service to restart'; fi"
       ;;
   esac
   t1=$(date +%s.%N)

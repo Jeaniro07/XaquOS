@@ -1,10 +1,10 @@
 //! A fake 0x601 and its readings: what stage 3 drives the power core over
 //! (`super::check`), and what the node stands on under the test-only
-//! `ferrix.powerctl.fake` (`L.x86_64.207`), so `cargo xtask test-power`
+//! `xaqu.powerctl.fake` (`L.x86_64.207`), so `cargo xtask test-power`
 //! shows a lease lapse and a holder's death end to end through devmgr and
 //! the real driver. Nothing here reaches an MSR, and every kernel line
 //! under it says `(fake)` (ledger 3130, condition 9). Its values are the
-//! N150's as `ferrix.msrlog` read them: 25 A, `TjMax` 105 C.
+//! N150's as `xaqu.msrlog` read them: 25 A, `TjMax` 105 C.
 //!
 //! For the interleaving checks a fake can carry an exit restore to run
 //! between the accesses of a write or of a task restore
@@ -28,7 +28,7 @@ pub(in crate::arch::x86_64) const fn therm(below: u64) -> u64 {
     (1 << 31) | (below << 16)
 }
 
-/// The file under `ferrix.powerctl.fake`.
+/// The file under `xaqu.powerctl.fake`.
 pub(in crate::arch::x86_64) static FAKE: Fake = Fake::new();
 
 /// A restore scheduled between a write's accesses.

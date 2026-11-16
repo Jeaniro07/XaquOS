@@ -152,7 +152,7 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -161,7 +161,7 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -326,11 +326,11 @@ dependencies = [
  "compositor-seat",
  "compositor-socket",
  "compositor-wire",
- "ferrix-auth-proto",
- "ferrix-lode-core",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-svc-proto",
+ "xaqu-auth-proto",
+ "xaqu-lode-core",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-svc-proto",
  "libc",
 ]
 
@@ -374,7 +374,7 @@ name = "compositor-tone"
 version = "0.1.0"
 dependencies = [
  "compositor-evecho",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -400,7 +400,7 @@ dependencies = [
  "compositor-protocol",
  "compositor-socket",
  "compositor-wire",
- "ferrix-vdagent",
+ "xaqu-vdagent",
  "libc",
 ]
 
@@ -505,61 +505,61 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-fbtext"
+name = "xaqu-fbtext"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-lode-capture"
+name = "xaqu-lode-capture"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-lode-core"
+name = "xaqu-lode-core"
 version = "0.3.0"
 dependencies = [
- "ferrix-slots",
+ "xaqu-slots",
  "ruzstd",
 ]
 
 [[package]]
-name = "ferrix-native"
+name = "xaqu-native"
 version = "0.3.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-sha256"
+name = "xaqu-sha256"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-slots"
+name = "xaqu-slots"
 version = "0.3.0"
 dependencies = [
- "ferrix-sha256",
+ "xaqu-sha256",
 ]
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-vdagent"
+name = "xaqu-vdagent"
 version = "0.3.0"
 
 [[package]]
@@ -631,10 +631,10 @@ dependencies = [
  "compositor-virgl",
  "compositor-wire",
  "compositor-xkb",
- "ferrix-fbtext",
- "ferrix-linux-abi",
- "ferrix-lode-capture",
- "ferrix-svc-proto",
+ "xaqu-fbtext",
+ "xaqu-linux-abi",
+ "xaqu-lode-capture",
+ "xaqu-svc-proto",
  "libc",
 ]
 

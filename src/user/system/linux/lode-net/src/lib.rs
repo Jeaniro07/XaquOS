@@ -1,6 +1,6 @@
 //! lode over the network (`docs/LOGGING.md` §10.2, §10.3).
 //!
-//! * [`upload`]: `lode-upload`, on a Ferrix machine: what follows each
+//! * [`upload`]: `lode-upload`, on a Xaqu machine: what follows each
 //!   destination's cursor in the store, sent over HTTP or HTTPS, the cursor
 //!   moved on the destination's `2xx`.
 //! * [`receive`]: `lode-receive`, on a Linux host: the uploads taken in over
@@ -11,7 +11,7 @@
 //!   numbers alone.
 //! * [`tls`]: the client's and the server's TLS configuration.
 //! * [`store`]: a lode store on a file system, read and written with
-//!   `ferrix-lode-core`.
+//!   `xaqu-lode-core`.
 
 pub mod pki;
 pub mod provider;

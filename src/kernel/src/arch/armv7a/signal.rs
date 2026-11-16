@@ -21,9 +21,9 @@
 //! USR mode's stack pointer and link register are banked rather than in the
 //! trap frame, so [`UserContext`] carries them beside it.
 
-use ferrix_bootinfo::is_user_address;
-use ferrix_linux_abi::types::{SA_RESTORER, SA_SIGINFO};
-use ferrix_native_abi::exception::Armv7aRegisters as ExceptionRegisters;
+use xaqu_bootinfo::is_user_address;
+use xaqu_linux_abi::types::{SA_RESTORER, SA_SIGINFO};
+use xaqu_native_abi::exception::Armv7aRegisters as ExceptionRegisters;
 
 use super::cpu;
 use super::switch::{self, UserState};
@@ -151,7 +151,7 @@ impl UserContext {
         let _ = orig_nr;
         self.frame.r[0] = orig_arg0 as u32;
         if restart_block {
-            self.frame.r[7] = ferrix_linux_abi::nr::arm::RESTART_SYSCALL as u32;
+            self.frame.r[7] = xaqu_linux_abi::nr::arm::RESTART_SYSCALL as u32;
         }
         let back = if self.frame.cpsr & CPSR_THUMB != 0 {
             2

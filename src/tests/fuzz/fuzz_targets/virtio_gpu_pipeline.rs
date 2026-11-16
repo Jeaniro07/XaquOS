@@ -21,9 +21,9 @@
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use ferrix_displayctl::message::{Attach, FORMAT, Message, PAGE_SIZE, Rect};
-use ferrix_virtio::gpu::{Command, DeviceError, MemEntry, Response};
-use ferrix_virtio_gpu::pipeline::{Pipeline, Request, Step};
+use xaqu_displayctl::message::{Attach, FORMAT, Message, PAGE_SIZE, Rect};
+use xaqu_virtio::gpu::{Command, DeviceError, MemEntry, Response};
+use xaqu_virtio_gpu::pipeline::{Pipeline, Request, Step};
 use libfuzzer_sys::fuzz_target;
 
 const ENTRIES: [MemEntry; 1] = [MemEntry {
@@ -168,7 +168,7 @@ fuzz_target!(|bytes: &[u8]| {
                     assert!(matches!(
                         message,
                         Message::Detached { buffer: got, status }
-                            if got == buffer && status != ferrix_displayctl::message::Status::Ok
+                            if got == buffer && status != xaqu_displayctl::message::Status::Ok
                     ));
                 }
                 let (kind, buffer) = expected.pop_front().expect("a reply nobody asked for");
@@ -177,7 +177,7 @@ fuzz_target!(|bytes: &[u8]| {
                     Message::Attached { buffer: got, status } => {
                         assert_eq!(got, buffer);
                         let _ = pending.remove(&got);
-                        if status == ferrix_displayctl::message::Status::Ok {
+                        if status == xaqu_displayctl::message::Status::Ok {
                             let _ = attached.insert(got);
                         }
                     }

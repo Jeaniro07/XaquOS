@@ -1,8 +1,8 @@
 # Post-mortem: what a failed boot leaves behind
 
 Version 1, written 2026-10-11 by postmortem. The customer's ask, after
-installing Ferrix on the WD SN720 of a PC that has never booted it: "add some
-minimal script for debugging to ferrix, so that we can have post mortem
+installing Xaqu on the WD SN720 of a PC that has never booted it: "add some
+minimal script for debugging to xaqu, so that we can have post mortem
 analysis". A first bare-metal boot may stop with no picture (no framebuffer
 driver yet), and a panic halts. After the reset into Ubuntu, something has to
 say what happened.
@@ -11,9 +11,9 @@ Three pieces, each useful without the next:
 
 | | What | Where | Item? |
 |---|---|---|---|
-| PM1 | `ferrix-postmortem.sh`, a host script that reads a Ferrix disk read-only and prints what is there | `tools/common/debug/` | no |
-| PM2 | The loader's boot log, `FERRIX/BOOTLOG.TXT` on the ESP | `src/boot/common/uefi` | outside the TOE, A.FIRMWARE |
-| PM3 | The kernel's log across a reset (a minimal pstore), copied by the next boot's loader to `FERRIX/LASTKERNEL.TXT` | loader, `ferrix-bootinfo`, kernel console | **yes**: console ring, panic path |
+| PM1 | `xaqu-postmortem.sh`, a host script that reads a Xaqu disk read-only and prints what is there | `tools/common/debug/` | no |
+| PM2 | The loader's boot log, `XAQU/BOOTLOG.TXT` on the ESP | `src/boot/common/uefi` | outside the TOE, A.FIRMWARE |
+| PM3 | The kernel's log across a reset (a minimal pstore), copied by the next boot's loader to `XAQU/LASTKERNEL.TXT` | loader, `xaqu-bootinfo`, kernel console | **yes**: console ring, panic path |
 
 PM4 (§4, 2026-10-17) added the event log across a power cycle. §0 is
 version 3's plan for the whole.
@@ -23,18 +23,18 @@ version 3's plan for the whole.
 Version 3, 2026-10-21 (crashlog). The customer's ask: "a true
 production-ready persistent crash log", the best of Fuchsia, QNX, Linux and
 others. PM1 to PM4 are the parts of it that exist. This section compares
-them with what others do, says what Ferrix takes from each, and puts the
+them with what others do, says what Xaqu takes from each, and puts the
 rest in order as slices S1 to S7. §5 is S1's design.
 
 ### 0.1 What others do
 
-The 2026-10-17 survey (`~/.local/share/ferrix/n150-linux/panic-log-design.md`
+The 2026-10-17 survey (`~/.local/share/xaqu/n150-linux/panic-log-design.md`
 §2, on the gate host) compared where a kernel panic's record is stored:
 ramoops, efi-pstore, ERST, pstore-blk and mtdoops, Windows' dump stack,
 Fuchsia, ChromeOS, seL4 and QNX's kdumper. Its option E became PM4. This
 comparison widens it to every part of a crash log:
 
-| Part | Fuchsia | QNX | Linux | Android | Windows | Certified systems (seL4; ARINC 653: LynxOS-178, INTEGRITY-178, PikeOS) | Ferrix takes |
+| Part | Fuchsia | QNX | Linux | Android | Windows | Certified systems (seL4; ARINC 653: LynxOS-178, INTEGRITY-178, PikeOS) | Xaqu takes |
 |---|---|---|---|---|---|---|---|
 | Kernel panic | Zircon's crashlog: persistent RAM with a header, uptime, a typed reason and the log's tail; the bootloader names the region | kdumper, set up at startup, writes a dump to reserved RAM or a raw device | pstore records the oops; kdump boots a second kernel to save a vmcore | pstore ramoops (`console-ramoops`, formerly `last_kmsg`) | a bugcheck writes through a second, polled copy of the disk driver to blocks of the page file resolved at boot | seL4's kernel keeps no log, faults go to a user-level handler; ARINC 653 sends module errors to the Health Monitor (HM) | RAM only at panic time (PM3), as Fuchsia and ramoops do |
 | A hang | a lockup detector (a heartbeat per processor) records a software watchdog; a hardware watchdog for the rest | HAM heartbeats; a board watchdog | soft and hard lockup detectors (NMI), `hung_task`, `/dev/watchdog` (iTCO) | as Linux, and the bootloader reads the watchdog's bit | the DPC watchdog (bugcheck 0x133), the ACPI WDAT table | HM deadline and heartbeat errors, each with a configured action | a cross-processor lockup detector that panics, then the PCH's TCO watchdog (S4) |
@@ -44,13 +44,13 @@ comparison widens it to every part of a crash log:
 | Warm reset / power cycle | RAM, then user space stores it on the next boot | per board | ramoops in RAM; efi, ERST and blk across a power cycle | ramoops, then `/data` | disk | per product, often NVRAM | PM3 in RAM, PM4's partition written by the next boot's loader; no firmware call or disk write at panic time |
 | Integrity | magic and version | | ramoops' optional ECC | a versioned protobuf | checksummed dump headers | CRC'd records | CRC-32C, versions, two header copies, torn writes safe; unchecked text said so |
 | Privacy | uploads need consent; logs are redacted | | `dmesg_restrict`, `kptr_restrict`; makedumpfile drops user pages | tombstones readable by the system alone | the minidump keeps the least | the security target says | no memory contents kept, kernel addresses as image offsets, root alone reads (S5) |
-| Readers | the feedback component, `ffx` | gdb on cores | `/sys/fs/pstore`, `crash` | `bootstat`, `logcat -b crash`, bugreport | WinDbg, the event viewer | ground tools | the loader's lines, `ferrix-eventlog`, PM1 on a host, a reader on Ferrix (S6) |
+| Readers | the feedback component, `ffx` | gdb on cores | `/sys/fs/pstore`, `crash` | `bootstat`, `logcat -b crash`, bugreport | WinDbg, the event viewer | ground tools | the loader's lines, `xaqu-eventlog`, PM1 on a host, a reader on Xaqu (S6) |
 | Certification | | QNX OS for Safety uses HAM | | | | HM: a configured table of error and action whose log is evidence | records feed problem reports (IEC 62304 §9, DO-178C's problem reporting) and field data; every reason is a requirement with a gate and a control |
 
 The other systems' facts are from their documentation as I remember it.
 They were not looked up again for this version.
 
-### 0.2 What Ferrix takes, and why
+### 0.2 What Xaqu takes, and why
 
 The pattern is **Fuchsia's and ChromeOS's**: the failing context writes RAM
 and nothing else, and a healthy next boot keeps the record on disk. The
@@ -66,7 +66,7 @@ records take Android's shape, and the policy is ARINC 653's Health Monitor.
   The stopper writes it, because it alone knows. What no stopper wrote
   (a hang, a watchdog, power loss) is inferred, as Windows does from its
   missing mark.
-* **Ring-3 crashes matter most here.** Ferrix's drivers are processes, so a
+* **Ring-3 crashes matter most here.** Xaqu's drivers are processes, so a
   driver's crash is the commonest failure there is. Android's tombstone is
   the right size of record. Core dumps are left out for their size and
   for what they disclose. The record is made by a ring-3 service, with
@@ -81,11 +81,11 @@ records take Android's shape, and the policy is ARINC 653's Health Monitor.
 | Slice | What | Item | Points |
 |---|---|---|---|
 | S1 | §5: the stop word in the pstore header (version 2), the write-back on `reboot(2)`'s path, the loader's line, the gate's stop cases | kernel (console, power, reboot), loader | 4-5 |
-| S2 | the event log's kinds beyond panic: user stop, power loss or hang (no record after a cold boot that the previous boot did not end cleanly, which needs a mark on disk that init writes at shutdown), watchdog | loader, init, `ferrix-eventlog` | 3 |
+| S2 | the event log's kinds beyond panic: user stop, power loss or hang (no record after a cold boot that the previous boot did not end cleanly, which needs a mark on disk that init writes at shutdown), watchdog | loader, init, `xaqu-eventlog` | 3 |
 | S3 | PM2's ESP files: `BOOTLOG.TXT` and `LASTKERNEL.TXT` (branch `postmortem`) | loader | 3 |
 | S4 | §6: the lockup detector (a panic with its own reason), then the TCO watchdog, fed from the kernel's timer and armed only when asked | kernel, a design review of its own | 15-19 (re-sized in §6.7) |
 | S5 | ring-3 tombstones: the kernel's exception snapshot to a crash service, the record's format crate, rate and size limits, a summary in the event log | kernel interface, ring-3 service | 10-14 |
-| S6 | readers: a listing on Ferrix, PM1's decoding of the event log | ring 3, host | 2-3 |
+| S6 | readers: a listing on Xaqu, PM1's decoding of the event log | ring 3, host | 2-3 |
 | S7 | a thermal reason, and the certification wiring (the HM table, problem-report use) | kernel, docs | 2-3 |
 
 About 30 to 39 points in all. Each slice is reviewed on its own before its
@@ -93,18 +93,18 @@ code.
 
 ## 1. PM1: the host script
 
-`tools/common/debug/ferrix-postmortem.sh [--image FILE]` on the host (Ubuntu):
+`tools/common/debug/xaqu-postmortem.sh [--image FILE]` on the host (Ubuntu):
 
-* finds the disk by **GPT partition name** `ferrix-esp` and `ferrix-root`
+* finds the disk by **GPT partition name** `xaqu-esp` and `xaqu-root`
   (`/dev/disk/by-partlabel/`), never by device name; `--image` takes a disk
   image instead (a loop device, read-only, `losetup -r -P`);
 * mounts the ESP (`vfat`, `ro`) and the root (`btrfs`, `ro,norecovery`) under
   a fresh directory in `$XDG_RUNTIME_DIR`, through `sudo` or `pkexec`;
-* prints `FERRIX/BOOTLOG.TXT`, `BOOTLOG.PRV`, `LASTKERNEL.TXT` and
+* prints `XAQU/BOOTLOG.TXT`, `BOOTLOG.PRV`, `LASTKERNEL.TXT` and
   `LASTKERNEL.PRV` when present, `CMDLINE.TXT`, the ESP's file list;
 * decodes the A/B control record from the partition of type
   `c29aa8c5-…` (both copies, `cargo xtask bootctl-read`, which uses
-  `ferrix-slots` on the host, read-only `O_RDONLY`) and each slot header;
+  `xaqu-slots` on the host, read-only `O_RDONLY`) and each slot header;
 * lists the newest files under the root's `/var/log` and prints their tails;
 * unmounts and detaches on every exit path (`trap`).
 
@@ -117,7 +117,7 @@ record decoder opens `O_RDONLY`.
 The loader's console (`console.rs`) also appends every line to a static
 buffer of 32 KiB (truncated, never wrapped: the first lines say the most).
 Before `exit_boot_services` -- or on the error path, before returning to
-firmware -- the loader writes it to `FERRIX/BOOTLOG.TXT` on its own volume
+firmware -- the loader writes it to `XAQU/BOOTLOG.TXT` on its own volume
 through `SimpleFileSystem`, after copying the previous `BOOTLOG.TXT` to
 `BOOTLOG.PRV` (FAT 8.3; one previous boot is kept, each file at most
 32 KiB). Lines it adds for the log: the firmware vendor and revision, the
@@ -172,7 +172,7 @@ magic, version, header, capacity (a power of two from 4 KiB to 16 MiB, and
 `min(written, capacity) - 1` bytes, in order (the place being claimed is
 always in flight, as in the in-kernel ring), every byte that is not printable
 ASCII, tab or newline shown as `?`. The format, the CRC, validation and the
-extraction are one host-tested module, `ferrix-bootinfo`'s `pstore`, which
+extraction are one host-tested module, `xaqu-bootinfo`'s `pstore`, which
 both the loader and the kernel compile.
 
 What the CRC does not cover is the ring. A firmware that wrote into the
@@ -199,7 +199,7 @@ The loader looks before it allocates anything but the RAM-measuring buffer
 it already frees (`measure_direct_map`) and the boot info area, right after
 the command line is read (§3.3), and takes the region with
 `AllocatePages(AllocateAddress)` of memory type `0x8000_0006`
-(`FERRIX_PSTORE`, beside the five Ferrix types already in use).
+(`XAQU_PSTORE`, beside the five Xaqu types already in use).
 
 **Version 2.1 (2026-10-17, panic-reboot):** the rule is first tried with
 **1 GiB** in place of 64 MiB (`PREFERRED_ABOVE_LOWEST`), and only a map with
@@ -230,10 +230,10 @@ new `MemKind::Pstore` (value 14, appended; existing values unchanged). It is
 RAM (`is_ram`, so the direct map covers it), not free at boot, not
 reclaimable; every match on kinds names it (P4).
 
-**Off switch** (P7): `ferrix.pstore=off` on the command line (the ESP's
+**Off switch** (P7): `xaqu.pstore=off` on the command line (the ESP's
 `CMDLINE.TXT` or the slot's) makes the loader skip §3.3 entirely: it neither
 reads nor writes the region and hands over `pstore_len = 0`. No option, or
-exactly `ferrix.pstore=on`, is on; any other value is said and taken as
+exactly `xaqu.pstore=on`, is on; any other value is said and taken as
 **off** (the consultant's Q4: a misspelt switch keeps no log nobody asked
 for). The reference configuration has it **on** (the customer's ask;
 ITEM.md row and certification-item.json say so). Every loader line that
@@ -244,7 +244,7 @@ leaves the boot without a region ends `no region this boot`.
 After the command line is read (`boot_info_area`), before the kernel is
 staged:
 
-1. `ferrix.pstore=off` -> the line `pstore   off (ferrix.pstore=off)`, and
+1. `xaqu.pstore=off` -> the line `pstore   off (xaqu.pstore=off)`, and
    `pstore_len = 0`.
 2. Choose the address (§3.2) from a fresh memory map; none -> one line,
    `pstore_len = 0`. `AllocatePages(AllocateAddress)` it; refused -> one line,
@@ -258,7 +258,7 @@ staged:
    its pages), is not handed over, and the boot goes without a pstore, said
    on the console; the record waits in RAM for the next boot or the
    inspection Linux (the consultant's E2). The same holds when a log may be
-   there and cannot be used (`ferrix_eventlog::classify`, fail closed):
+   there and cannot be used (`xaqu_eventlog::classify`, fail closed):
    more than one partition of the log's type, a damaged table or entry
    array, a log entry outside the usable blocks or overlapping another, a
    partition too small or a block size the log is not kept on, or a failed
@@ -302,14 +302,14 @@ netboot-pm sends, with no extra plumbing):
 
 ```
   pstore   at 0x1000000, 1 MiB: boot 7's kernel log, 48211 bytes, 48211 kept (unchecked)
-  pstore   boot 7's last report: panicked: init exited, and ferrix.onexit=panic asks for a panic
+  pstore   boot 7's last report: panicked: init exited, and xaqu.onexit=panic asks for a panic
 ```
 
-The second line is the last `FERRIX-PANIC ` line of the text with that
+The second line is the last `XAQU-PANIC ` line of the text with that
 marker left off (so no gate's log reader takes a loader line for a panic of
 this boot), or `did not panic; its last line: ...` when there is none.
 Each is cut at 160 columns, every byte that is not printable shown as `?`,
-and every other `FERRIX-` in it made `FERRIX_` (Q6). The quoted line is
+and every other `XAQU-` in it made `XAQU_` (Q6). The quoted line is
 **untrusted text** (L1): whatever the previous boot's programs printed to
 the console, or RAM firmware scribbled on.
 
@@ -317,15 +317,15 @@ Then the whole text, by where the loader was started from (each its own
 review, P10; the consultant's ruling on deviation (c), ledger line 1238):
 
 * **A disk boot** (ESP or slot): **built** (2026-10-24, the customer's path A
-  for lode's import, `docs/LOGGING.md` §5). `FERRIX/LASTKERNEL.TXT` on the
+  for lode's import, `docs/LOGGING.md` §5). `XAQU/LASTKERNEL.TXT` on the
   loader's own volume, the previous one moved to `LASTKERNEL.PRV` first,
-  headed by the report's lines above (as printed, `FERRIX-` defused, one a
+  headed by the report's lines above (as printed, `XAQU-` defused, one a
   line) and then the region's whole text, oldest first, through
   `Services::replace_file` (PM2's, taken from the archived WIP 925ff2b05:
   delete, create, write, close; no `SetInfo`). One line says it was kept and
   how many bytes, or why not; a volume firmware will not write is that line
   and the boot goes on. `test-postmortem`'s record case reads the file off
-  the image's ESP with `ferrix-fat`, the reader lode imports it with, and
+  the image's ESP with `xaqu-fat`, the reader lode imports it with, and
   requires the head lines to be boot 2's loader's and the rest boot 1's
   region text byte for byte. The rest of PM2, `BOOTLOG.TXT`, is not built.
 * **A netboot** (iPXE with `REPORT.TXT`): the last 32 KiB of the text sent as
@@ -366,10 +366,10 @@ PM1's host script prints `LASTKERNEL.TXT` already.
   16 448 at 64-byte lines, 32 896 at the Cortex-A7's 32. Stated in
   MEMORY-AND-TIMING §2.2o. Then one unlogged line, `pstore    written back
   for the next boot`, and a drain: the point from which a reset keeps the
-  whole report (Q7). The same write-back runs before `ferrix.onexit=reset`'s
+  whole report (Q7). The same write-back runs before `xaqu.onexit=reset`'s
   reset. An abridged report (a second
   processor) writes nothing back: the first report does, last.
-  If `ferrix.panic=reset` (bm-nvme, AB-BOOT §6.4) lands, its wait and reset
+  If `xaqu.panic=reset` (bm-nvme, AB-BOOT §6.4) lands, its wait and reset
   come after this write-back (R12); whichever lands second places it.
 * **Never free** (P4): the region is `MemKind::Pstore`; `is_free_at_boot`
   and `is_reclaimable` match kinds positively, and the boot check asserts no
@@ -383,7 +383,7 @@ layout lines excluded), `L.console.43` (attaching fails closed, P3),
 `L.console.44` (the panic write-back, P5), `L.mm.75` (Pstore is never free,
 P4).
 
-* **Host tests**: `ferrix-bootinfo::pstore` -- header encode/validate and
+* **Host tests**: `xaqu-bootinfo::pstore` -- header encode/validate and
   every refusal (each field, CRC, bound, version), extraction across a wrap
   and with `written` below and above capacity, the printable filter, the
   address choice over sample maps (none, an occupied 64 MiB, an OVMF-shaped map, a map whose
@@ -394,7 +394,7 @@ P4).
   assertion, said on every boot that attached.
 * **Gate `cargo xtask test-postmortem`** (P9), x86-64 under KVM and AArch64:
   one QEMU, no `-no-reboot`, a QMP port, the image's command line
-  `ferrix.onexit=panic`. Boot 1 runs to init's exit and panics on purpose
+  `xaqu.onexit=panic`. Boot 1 runs to init's exit and panics on purpose
   (FX-1501); the gate waits for the report's `stopped` line, then QMP
   `system_reset`; it requires the loader banner a second time, the
   loader's `pstore   at ...: boot 1's kernel log` line and `boot 1's last
@@ -402,7 +402,7 @@ P4).
   attaching boot 2. A third check: boot 1's kernel attached (`pstore
   mirroring`), and its loader said `nothing there` (cold).
 * **Controls** (Q15; gate.sh control, each must FIRE; the tags and
-  verdicts are in `~/.local/share/ferrix/handover/pm3.md`):
+  verdicts are in `~/.local/share/xaqu/handover/pm3.md`):
   1. the mirror removed (`console::pstore::record` records nothing) ->
      test-postmortem: `missing from the region's end`;
   2. placement's Pstore clause removed -> the boot's placement check:
@@ -412,14 +412,14 @@ P4).
      (host tests print no guest line, so gate.sh cannot judge them: run
      with a private target, the output kept in the handover);
   5. unlogged lines mirrored -> test-postmortem: `holds an unlogged line`;
-  6. `ferrix.pstore=off` ignored by the loader -> test-postmortem's switch,
+  6. `xaqu.pstore=off` ignored by the loader -> test-postmortem's switch,
      caught by off_problem's first check, the loader's line: `the loader did
-     not say \`pstore   off (ferrix.pstore=off)` (pm3-ctl-off2; pm3-ctl-off
+     not say \`pstore   off (xaqu.pstore=off)` (pm3-ctl-off2; pm3-ctl-off
      shows the sabotage took effect, its --expect-line named the later arm;
      ledger line 1335);
   7. `0x8000_0006` translated as Usable -> stage 1: `does not describe the
      pstore region as Pstore`;
-  8. the quotation's `FERRIX-` defusing removed -> host test
+  8. the quotation's `XAQU-` defusing removed -> host test
      `quoted_markers_are_defused` (as 4);
   9. the copy of the log so far at attach removed -> test-postmortem: `does
      not start with the kernel's first lines`;
@@ -440,32 +440,32 @@ P4).
 * The loader reports a found record on the console first, so it reaches
   the serial port, BOOTLOG.TXT (PM2) and the netboot server (netboot-pm)
   even before the LASTKERNEL file and the netboot send are wired.
-* The test uses `ferrix.onexit=panic` (an existing deliberate panic) and a
+* The test uses `xaqu.onexit=panic` (an existing deliberate panic) and a
   QMP reset, since no kernel resets on a panic yet.
 
 ## 4. PM4: the event log, across a power cycle
 
 Version 1, 2026-10-17 (n150), the design of
-`~/.local/share/ferrix/n150-linux/panic-log-design.md` option E; the
+`~/.local/share/xaqu/n150-linux/panic-log-design.md` option E; the
 consultant's verdict **OK IF (E1)-(E12)**, ledger line 2153. The customer
 chose the partition's place on the N150 box: the gap before its ESP.
 
 PM3's record lives in RAM and is lost to a power cycle. PM4 keeps a
 panicked boot's record on disk, written by **the next boot's loader**, on a
 machine that is not failing, through firmware's own Block I/O -- never by
-the panicked kernel, which writes nothing but RAM. With `ferrix.panic=reset`
+the panicked kernel, which writes nothing but RAM. With `xaqu.panic=reset`
 (H.FAIL.5) the machine resets itself, RAM survives the warm reset, and the
 loader that comes up 10 to 20 seconds later appends the record before it
 gives the region a fresh header. When the boot manager starts the
 inspection Linux instead, its init appends the same record with
-`ferrix-eventlog append`, from `/dev/mem`.
+`xaqu-eventlog append`, from `/dev/mem`.
 
 ### 4.1 The partition and its format
 
-A GPT partition of type **Ferrix event log**,
-`0a0323e0-d79d-498d-a4d6-dbea6af3bab0`, name `ferrix-events`. On the N150
+A GPT partition of type **Xaqu event log**,
+`0a0323e0-d79d-498d-a4d6-dbea6af3bab0`, name `xaqu-events`. On the N150
 box: LBA 40-2047, 2008 sectors in the gap before the ESP (LBA 2048). The
-format is `ferrix-eventlog` (`src/lib/proto/eventlog`: `no_std`,
+format is `xaqu-eventlog` (`src/lib/proto/eventlog`: `no_std`,
 `#![forbid(unsafe_code)]`, host-tested), which the loader, the Linux tool
 and xtask share:
 
@@ -491,10 +491,10 @@ below the header's `appended`; records are ordered by index, the log's own
 count, not by the pstore's boot sequence (it starts again at 1 after every
 cold boot) nor by firmware's clock (informative only, Unix seconds) (E7).
 
-**The text** (E5, C2): the report first -- from the last `FERRIX-PANIC`
+**The text** (E5, C2): the report first -- from the last `XAQU-PANIC`
 line to the end of the kernel log -- then `-- the log before the report --`
 and as much of the log before it as fits, from a line's start; every byte
-as `pstore::shown` prints it and every `FERRIX-` made `FERRIX_`. A record
+as `pstore::shown` prints it and every `XAQU-` made `XAQU_`. A record
 holds at most 32 672 bytes of the 1 MiB ring: the report and the log's
 tail, never the whole ring (flag `truncated` says it was cut). Every record
 carries `unchecked`: the pstore ring has no checksum, so firmware may have
@@ -507,7 +507,7 @@ regions.
 holds a panic report. A record without one (a clean reboot, or a hang a
 warm reset ended) and no record at all (a cold boot, a power cut, the
 first boot after an install, after a Linux boot or after
-`ferrix.pstore=off`) log nothing: telling them apart needs the kernel's
+`xaqu.pstore=off`) log nothing: telling them apart needs the kernel's
 clean-shutdown mark, an item change with its own id and control, which is
 left for its own review. Nothing is ever logged as "power loss" or "hang".
 
@@ -533,14 +533,14 @@ left for its own review. Nothing is ever logged as "power loss" or "hang".
   carries the header's magic. A `bad_frames = choice` loader set to
   `reset` or `off` (MACHINE-CHECK-RESTART §10) writes (b) never and keeps
   fewer frames out.
-* **EL4** The inspection Linux's `ferrix-eventlog append`, and root's
-  `ferrix-eventlog clear-bad-frames` (§9.4 there), write by the same
-  functions to the partition device named `ferrix-events`, and never writes
+* **EL4** The inspection Linux's `xaqu-eventlog append`, and root's
+  `xaqu-eventlog clear-bad-frames` (§9.4 there), write by the same
+  functions to the partition device named `xaqu-events`, and never writes
   the pstore region.
 
 ### 4.3 The append (E2, E3, E4, E8)
 
-`ferrix_eventlog::append`, in this order: read the header (two copies; a
+`xaqu_eventlog::append`, in this order: read the header (two copies; a
 fresh header, both copies, only when neither copy carries `FXEVENTS`:
 copies that carry it and both fail to decode -- damage, or a newer format
 -- get no write, MACHINE-CHECK-RESTART §9.2); read the newest record
@@ -567,25 +567,25 @@ collapse.
 ### 4.4 Readers
 
 The loader says on every boot with a log: `events   N records; newest
-#I: boot B panicked, C time(s): FERRIX_PANIC ...`, and `events   boot B's
-panic kept as record #I (slot S)` when it appends. `ferrix-eventlog list
+#I: boot B panicked, C time(s): XAQU_PANIC ...`, and `events   boot B's
+panic kept as record #I (slot S)` when it appends. `xaqu-eventlog list
 DEVICE [--text]` (a static Linux binary, also in the inspection image)
 prints every record, oldest first, with the whole text on `--text`. Root
 only: it reads the raw partition (VULNERABILITY-ANALYSIS V-15). Since
-2026-11-08 every Ferrix image with a shell carries it too, built against
-the target's musl (`/bin/ferrix-eventlog`, xtask `eventlog.rs`), so a
-machine reads its own records: `ferrix-eventlog list /dev/vda3 --text` on
-the N150 box, where Ferrix names the `ferrix-events` partition `vda3`.
+2026-11-08 every Xaqu image with a shell carries it too, built against
+the target's musl (`/bin/xaqu-eventlog`, xtask `eventlog.rs`), so a
+machine reads its own records: `xaqu-eventlog list /dev/vda3 --text` on
+the N150 box, where Xaqu names the `xaqu-events` partition `vda3`.
 
 ### 4.5 The gate and its controls (E12)
 
 `cargo xtask test-postmortem` (x86-64): the image's ESP in a GUID partition
 table with the log at LBA 40-2047, as on the box. Boot 1 panics and resets
-by itself (`ferrix.panic=reset`); boot 2's loader says it kept the record;
+by itself (`xaqu.panic=reset`); boot 2's loader says it kept the record;
 the QEMU process is ended (the power cut); a second process boots the disk
 cold: boot 3's loader finds no pstore and quotes boot 1's panic from the
-log, and the host reads the record back with `ferrix-eventlog`, its text
-starting with boot 1's panic line. Host tests in `ferrix-eventlog`: the
+log, and the host reads the record back with `xaqu-eventlog`, its text
+starting with boot 1's panic line. Host tests in `xaqu-eventlog`: the
 formats and every refused field, the CRC across head and text, the text's
 composition and truncation, 300 hostile regions, idempotence, the collapse,
 the ring's wrap, torn appends, torn header copies, and the range check.
@@ -628,7 +628,7 @@ loader's. The word is unchecked as `written` is, but it checks itself: a
 word whose high half is not the complement of its low half is **damaged**,
 never taken for a stop. A scribbled byte or a stale half reads as damaged,
 not as some other code. The codes are a closed list, kept in
-`ferrix_bootinfo::pstore::Stop`:
+`xaqu_bootinfo::pstore::Stop`:
 
 | Code | Stop | Written by |
 |---|---|---|
@@ -637,7 +637,7 @@ not as some other code. The codes are a closed list, kept in
 | 2 | a restart a program asked for | `reboot(2)` RESTART and RESTART2 |
 | 3 | a power-off a program asked for | `reboot(2)` POWER_OFF |
 | 4 | a halt a program asked for | `reboot(2)` HALT |
-| 5 | a reset after init exited | `power::finish`, `ferrix.onexit=reset` |
+| 5 | a reset after init exited | `power::finish`, `xaqu.onexit=reset` |
 | 6 | a power-off after init exited | `power::finish`, the default |
 | 7 | a lockup | the lockup detector (§6.2; reserved by its branch) |
 | 8 | a machine check | `panic::begin_report`, when the first report is the machine check's (`docs/MACHINE-CHECK-RESTART.md` §2.1) |
@@ -683,10 +683,10 @@ from a power cut needs a mark on disk. That is S2's, written by init before
     This is the restart path's missing write-back.
   * `power::finish`: `Stop::ExitReset` before the reset (in place of
     today's bare `write_back`) and `Stop::ExitPowerOff` before the
-    power-off. `ferrix.onexit=panic` goes through the panic.
+    power-off. `xaqu.onexit=panic` goes through the panic.
 
   What the architecture's stop prints comes after the write-back and may
-  miss the region: `FERRIX-POWER-OFF` and `FERRIX-POWER-OFF-FAILED`,
+  miss the region: `XAQU-POWER-OFF` and `XAQU-POWER-OFF-FAILED`,
   AArch64's `firmware did not reset the machine; powering off`. So may a
   line another processor logs while `reboot(2)` runs, since it stops
   nobody else.
@@ -753,23 +753,23 @@ in place of "by inspection" for the count. L.console.44 keeps the panic's
 write-back and finish's, now through `stop`, with its units updated, so no
 clause is claimed by two ids.
 
-* **Host tests** (`ferrix-bootinfo::pstore`): every stop's word round-trips
+* **Host tests** (`xaqu-bootinfo::pstore`): every stop's word round-trips
   and 0 is none; every single-bit change to a word is damaged; an
   unassigned code is a newer kernel's; version 1 reads with no stop word
   whatever bytes 72 to 80 hold, version 3 is refused; the kernel's
   acceptance refuses version 1, a count, and every nonzero word. In
-  `ferrix-eventlog`: a version-1 region with a panic is kept.
+  `xaqu-eventlog`: a version-1 region with a panic is kept.
 * **`cargo xtask test-postmortem`**, x86-64 under KVM and AArch64, adds
   **the stops** (C6). One QEMU each, its RAM kept across a reset as in
   `across_a_reset`, busybox at `/bin/sh` with links for `reboot`,
   `poweroff`, `halt` and `sleep`, the compositor's `reboot` at
-  `/bin/reboot2`, and a script that `ferrix.init=` starts:
+  `/bin/reboot2`, and a script that `xaqu.init=` starts:
   * `reboot -f` (RESTART) and `/bin/reboot2 pm-word` (RESTART2): the
     machine resets by itself;
   * `poweroff -f`, `halt -f`, and init's exit in `test-boot`'s image
     (code 6): QEMU pauses at the stop, the gate asks QMP whether it is
     paused, then resets it;
-  * `ferrix.onexit=reset` in `test-boot`'s image: it resets by itself;
+  * `xaqu.onexit=reset` in `test-boot`'s image: it resets by itself;
   * the script says it is waiting and sleeps, and the gate resets the
     machine over QMP: `no stop recorded: ...`. This is the evidence that
     nothing writes the word unasked.
@@ -785,7 +785,7 @@ clause is claimed by two ids.
   2. RESTART2's `stop` removed -> the RESTART2 case;
   3. `begin_report`'s `panicked` removed -> the record's case;
   4. POWER_OFF's and HALT's codes swapped -> the power-off case;
-  5. finish storing 6 for `ferrix.onexit=reset` -> the reset-after-init
+  5. finish storing 6 for `xaqu.onexit=reset` -> the reset-after-init
      case;
   6. the attach storing a restart -> the reset-from-outside case;
   7. the complement check removed -> `a_changed_bit_is_damaged`;
@@ -804,7 +804,7 @@ clause is claimed by two ids.
 
 Which of seven stops ended the previous boot. The text beside it already
 says that (the `reboot:` line, the panic), so V-14's acceptance covers it
-and `ferrix.pstore=off` still takes no region. VULNERABILITY-ANALYSIS's
+and `xaqu.pstore=off` still takes no region. VULNERABILITY-ANALYSIS's
 V-14 names the word.
 
 ## 6. S4: a hang ends in a report or a reset
@@ -813,14 +813,14 @@ Version 1, 2026-10-21 (lockup). The customer's purpose: the N150 box runs
 unattended overnight, and a hard hang must reset it on its own. Today a
 hang is the one failure that leaves the box stopped. A processor that spins
 with interrupts masked stops taking anything, the kernel never panics, and
-`ferrix.panic=reset` never runs. S4 adds two layers, each its own landing:
+`xaqu.panic=reset` never runs. S4 adds two layers, each its own landing:
 S4a, a **lockup detector** in which processors watch each other and turn a
 hang of one into a panic report; S4b, the PCH's **TCO watchdog**, which
 resets the machine when the kernel as a whole stops feeding it.
 
 ### 6.1 What the box has (2026-10-16 capture, not memory)
 
-From `~/.local/share/ferrix/n150-linux/box-2026-10-16/` on the gate host:
+From `~/.local/share/xaqu/n150-linux/box-2026-10-16/` on the gate host:
 
 * `lspci.txt`: `00:1f.4 SMBus [0c05]: Intel Corporation Alder Lake-N
   SMBus [8086:54a3]`, beside the eSPI controller at 00:1f.0 (8086:5481).
@@ -834,7 +834,7 @@ From `~/.local/share/ferrix/n150-linux/box-2026-10-16/` on the gate host:
 
 Linux's drivers name 8086:54a3 a TCO of **version 6** (`i2c-i801.c`,
 `FEATURE_TCO_CNL`; `i801_add_tco_cnl`, `.version = 6`; read from
-torvalds/linux v6.17, kept in `~/.local/share/ferrix/ref-linux-tco/`).
+torvalds/linux v6.17, kept in `~/.local/share/xaqu/ref-linux-tco/`).
 `iTCO_wdt.c` gives version 6's layout: TCO_RLD at +0x00 (a write reloads),
 TCO1_STS +0x04 (bit 3 TIMEOUT), TCO2_STS +0x06 (bit 1 SECOND_TO_STS, bit 2
 BOOT_STS), TCO1_CNT +0x08 (bit 11 TCO_TMR_HLT, bit 12 TCO_LOCK, bit 0
@@ -855,8 +855,8 @@ step reads it.
 
 ### 6.2 S4a: processors watch each other
 
-* **Off unless asked**: `ferrix.lockup=on`. Any other value is said and taken
-  as off, as `ferrix.panic`'s are. The reference configuration keeps it
+* **Off unless asked**: `xaqu.lockup=on`. Any other value is said and taken
+  as off, as `xaqu.panic`'s are. The reference configuration keeps it
   off: an emulator host that starves a virtual processor for seconds (FX-0001
   measured 3.6 s) must not turn a slow gate into a panic. The N150's
   command line asks for it.
@@ -865,7 +865,7 @@ step reads it.
   processor with interrupts masked bumps nothing.
 * **Every processor ticks**: with the detector on, a processor's one-shot is
   never armed later than **1 s** ahead, and never stopped (`timer::after`,
-  `after_from`, `stop` clamp to the watch period). Ferrix is tickless, so an
+  `after_from`, `stop` clamp to the watch period). Xaqu is tickless, so an
   idle processor would otherwise sleep, unwatched and unwatching. One
   interrupt a second per processor is the cost.
 * **A ring watch**: on each tick, processor *i* reads the heartbeat of the
@@ -884,7 +884,7 @@ step reads it.
   (NMIs blocked, the target in an NMI already), the watcher records the
   word and panics itself. It names the processor, its last heartbeat and
   the counter. AArch64 and ARMv7-A have no NMI without GICv3's
-  pseudo-NMIs, which Ferrix does not use: the watcher reports at once, with
+  pseudo-NMIs, which Xaqu does not use: the watcher reports at once, with
   the stuck processor's identity and no backtrace.
 * **The stop word**: code 7, `a lockup`. The stop-word list (§5.1) gains
   it. `panicked` stores the panic's word only when no lockup's word is
@@ -899,7 +899,7 @@ step reads it.
 
 ### 6.3 S4b: the TCO watchdog
 
-* **Off unless asked**: `ferrix.watchdog=tco` (any other value said and
+* **Off unless asked**: `xaqu.watchdog=tco` (any other value said and
   taken as off). The reference configuration keeps it off.
 * **Where it is, read from PCI, never assumed.** A device of a table of
   verified identities: 8086:54a3 (version 6, TCOBASE and TCOCTL at 0x50 and
@@ -920,7 +920,7 @@ step reads it.
   alone feeds.
 * **A panic stops feeding**: the report runs with interrupts masked, so the
   TCO resets the machine 30 to 60 s after the panic whether it halts or
-  `ferrix.panic=reset` resets first. A halt, the default, becomes a reset
+  `xaqu.panic=reset` resets first. A halt, the default, becomes a reset
   once the watchdog is armed. SAFETY-MANUAL says so.
 * **Power-off and reboot** leave it running. A reset restarts the platform,
   and a power-off ends it. In QEMU, whose TCO survives a reset, the next
@@ -951,7 +951,7 @@ the kernel stopped feeding), L.lockup.1-5, L.tco.1-6, L.console.49 (code
 
 * **S4a's gate**, `cargo xtask test-postmortem`'s lockup case (x86-64 under
   KVM, 4 processors, and AArch64): a check-only boot option
-  `ferrix.check.lockup=irqoff` (`*_check.rs`, outside the product) makes
+  `xaqu.check.lockup=irqoff` (`*_check.rs`, outside the product) makes
   processor 2 spin with interrupts masked once boot is up. The report must
   come within 10 to 20 s, name processor 2, carry the catalog's `LOCKUP` code
   and, on x86-64, a backtrace through the check's spin. After a QMP reset
@@ -961,8 +961,8 @@ the kernel stopped feeding), L.lockup.1-5, L.tco.1-6, L.console.49 (code
   where none is due) and the ring check removed (no report, the gate's
   timeout); on x86-64, the NMI handler's lockup arm removed (the watcher's
   own report, without the backtrace).
-* **S4b's gate** (x86-64, q35): `ferrix.watchdog=tco` with
-  `ferrix.check.lockup=all`, every processor masked. The detector cannot
+* **S4b's gate** (x86-64, q35): `xaqu.watchdog=tco` with
+  `xaqu.check.lockup=all`, every processor masked. The detector cannot
   report, and the machine must reset by itself within 30 to 70 s. The next
   loader says the TCO reset it, and the next kernel says it cleared
   SECOND_TO_STS. Controls: feeding regardless of heartbeats (no reset
@@ -980,11 +980,11 @@ the kernel stopped feeding), L.lockup.1-5, L.tco.1-6, L.console.49 (code
    refusal), then `sudo modprobe -r iTCO_wdt`; and `sudo setpci -s 00:1f.4
    50.l 54.l`. Nothing is armed: the driver arms only when `/dev/watchdog`
    is opened.
-2. After S4a lands: an image of its hash with `ferrix.lockup=on
-   ferrix.check.lockup=irqoff ferrix.panic=reset`. The box must panic with
+2. After S4a lands: an image of its hash with `xaqu.lockup=on
+   xaqu.check.lockup=irqoff xaqu.panic=reset`. The box must panic with
    `LOCKUP` within 20 s, reset itself 10 s later, and its next loader say
    `boot 1 ended: a lockup`.
-3. After S4b lands: `ferrix.watchdog=tco ferrix.check.lockup=all`. The box
+3. After S4b lands: `xaqu.watchdog=tco xaqu.check.lockup=all`. The box
    must reset by itself within 70 s, and its next loader say the TCO reset
    it.
 
@@ -994,7 +994,7 @@ S4a 6-8 points, S4b 8-10, the box steps about 1: 15 to 19 points.
 
 ### 6.8 As the design review asks (ledger line 2889, OK IF D1-D14)
 
-* **D2, D3: who halts and who clears.** Every Ferrix boot's loader, having
+* **D2, D3: who halts and who clears.** Every Xaqu boot's loader, having
   reported the previous boot (§6.4), writes SECOND_TO_STS and TIMEOUT back
   to clear them and sets TCO_TMR_HLT. One write each, through the TCO it
   found, outside the TOE. So a TCO reset is reported once, and no boot
@@ -1004,8 +1004,8 @@ S4a 6-8 points, S4b 8-10, the box steps about 1: 15 to 19 points.
   kernel never sets TCO_LOCK. A boot of another system after a TCO-armed
   one is box step 4 (D2): Linux with the watchdog off must not be reset 30
   to 60 s later.
-* **D7.** `ferrix.watchdog=tco` brings the heartbeats and the 1 s watch tick
-  with it. The lockup *report* stays `ferrix.lockup=on`'s.
+* **D7.** `xaqu.watchdog=tco` brings the heartbeats and the 1 s watch tick
+  with it. The lockup *report* stays `xaqu.lockup=on`'s.
 * **D4.** The NMI fallback is per-target state (the NMI's time), decided
   on a later tick. No tick waits.
 * **D6.** With both options off, the timer path reads one set-once flag and
@@ -1019,7 +1019,7 @@ S4a 6-8 points, S4b 8-10, the box steps about 1: 15 to 19 points.
 ### 6.11 The box's watchdog, as landed (2026-11-08, box-watchdog, crash-tools)
 
 **Why.** On 2026-11-08 at about 00:09 the N150 box went silent under a game
-with `ferrix.panic=reset` on its command line and stayed so until the plug
+with `xaqu.panic=reset` on its command line and stayed so until the plug
 was cycled four minutes later; the power cut took the pstore region, and a
 hang and a panic whose report never shipped read the same. Its later hangs
 that night were a btrfs transaction aborted out of memory, user space then
@@ -1028,7 +1028,7 @@ here claims to explain 00:09 (consultant ledger 7925 BW.13): its finding
 number waits for the root cause.
 
 **What landed** (consultant ledger lines 7925 and 8078, OK IF SW.1-SW.12),
-off unless `ferrix.watchdog=on`, which the reference configuration does not
+off unless `xaqu.watchdog=on`, which the reference configuration does not
 give (H.FAIL.14, L.lockup.6-9; SAFETY-MANUAL AoU-48):
 
 * `/dev/watchdog`, 10:130, 0600, Linux's interface (`src/kernel/src/fs/watchdog.rs`,
@@ -1040,13 +1040,13 @@ give (H.FAIL.14, L.lockup.6-9; SAFETY-MANUAL AoU-48):
 * A deadline on the kernel's clock (`src/kernel/src/watchdog.rs`, the core),
   looked at once a second by the kernel task `watchdog`. Past it: FX-9008,
   naming the opener, its timeout and the time since the last feed, then
-  `ferrix.panic`'s halt or reset. A feed or a new timeout moves only an armed
+  `xaqu.panic`'s halt or reset. A feed or a new timeout moves only an armed
   deadline, by a compare-and-swap from one that is not 0, so a deadline
   disarmed meanwhile is never armed again by them.
 * Every stop on purpose -- `reboot(2)`'s restart, power-off and halt, the
-  settings' restart, init's exit under `ferrix.onexit`, linuxd's exit --
+  settings' restart, init's exit under `xaqu.onexit`, linuxd's exit --
   disarms first and says `watchdog disarmed for ...`.
-* The feeder is init's (`ferrix.init.watchdog=<seconds>`, S4c's feeder): it
+* The feeder is init's (`xaqu.init.watchdog=<seconds>`, S4c's feeder): it
   opens `/dev/watchdog` with that timeout and feeds a third of it apart from
   its own loop. A kernel timer is no feeder: it ticks on while all of user
   space waits (2026-10-31: ping answered, every program stopped).
@@ -1055,7 +1055,7 @@ give (H.FAIL.14, L.lockup.6-9; SAFETY-MANUAL AoU-48):
 timer: it reports ring 3 that stops feeding while the kernel runs. A kernel
 that stops -- every processor masked, the scheduler gone, a report that never
 ends -- stops the task too, and nothing reports it or resets the machine. A
-report resets only under `ferrix.panic=reset`; otherwise it halts.
+report resets only under `xaqu.panic=reset`; otherwise it halts.
 
 **Parked** (`docs/BACKLOG.md`, one row each):
 
@@ -1075,28 +1075,28 @@ report resets only under `ferrix.panic=reset`; otherwise it halts.
 **Gate**, `cargo xtask test-watchdog` (x86-64 under KVM; busybox's
 `watchdog -F -T 5 -t 1`): (1) the feeder stopped by `SIGSTOP`, FX-9008 3.5 to
 15 s later naming the opener, its 5 s timeout and the last feed, and a halt;
-(2) the same under `ferrix.panic=reset`, the reset line, the machine starting
+(2) the same under `xaqu.panic=reset`, the reset line, the machine starting
 again and boot 2's loader quoting the report; (3) the feeder killed, its
 release without `V` said to leave it armed, FX-9008 in the window; (4) fed for
 four timeouts, a second open `EBUSY`, the magic close, a timeout of 0
 `EINVAL`, 10 s more and no report; (5) `src/tests/watchdog` disarms with
 `WDIOS_DISABLECARD`, writes and holds it open, no report in 10 s; (6)
 `halt -f` with the feeder running says it disarmed for a halt; (7) init
-feeding with `ferrix.init.watchdog=5` for 20 s, no report; (8)
-`ferrix.watchdog=On` said not understood, no node. The halt stops the
+feeding with `xaqu.init.watchdog=5` for 20 s, no report; (8)
+`xaqu.watchdog=On` said not understood, no node. The halt stops the
 machine at once, so no case can wait past a stop's timeout: case (6) checks
 the line.
 
 **Seen on the box** (a hardware observation, not a gate row): on
 main-cfde84d79 (develop 589fcb096 plus never-land diagnostics carrying this
-watchdog) with `ferrix.watchdog=on ferrix.init.watchdog=15
-ferrix.panic=reset`, `kill -STOP 1` at 02:32:52 on 2026-11-08 ended in
+watchdog) with `xaqu.watchdog=on xaqu.init.watchdog=15
+xaqu.panic=reset`, `kill -STOP 1` at 02:32:52 on 2026-11-08 ended in
 FX-9008 (`armed by process 1 (init) with a 15 s timeout, last fed 15894 ms
 ago`), a reset by itself and the record kept on the event log
 (`BOX-QUEUE.md`, 02:34); and main-8b09e2409 (develop 197835013 plus the same
 diagnostics) played Endfield 75 minutes, 04:13-05:29, with the watchdog fed
 and no false report. Whether the box runs unattended with
-`ferrix.watchdog=on` is the product owner's decision (D14).
+`xaqu.watchdog=on` is the product owner's decision (D14).
 
 ## 7. Where it stands
 
@@ -1113,7 +1113,7 @@ S4b, each with its own code review.
 
 2026-10-21, version 3 (crashlog): §0's survey and slices, and §5's S1
 design. Design verdict **OK IF C1-C12** (consultant ledger
-`~/.local/share/ferrix/cert-consultant/reviews.md` line 2749); §5 is as
+`~/.local/share/xaqu/cert-consultant/reviews.md` line 2749); §5 is as
 amended for C1-C10 and the lesser points L1 and L2. §0.1's facts about
 other systems are from memory and are not evidence (L4). Code verdict
 **OK IF K1-K4** (ledger line 2821): the rows and the nine controls on the
@@ -1128,7 +1128,7 @@ as AB-BOOT's control record does.
 2026-10-11:
 
 * **Design verdict: OK IF P1-P10** (consultant ledger
-  `~/.local/share/ferrix/cert-consultant/reviews.md` line 744). PM1 outside
+  `~/.local/share/xaqu/cert-consultant/reviews.md` line 744). PM1 outside
   the item; PM2 outside the TOE (no code review, but P1's doc restatements:
   A.FIRMWARE, the A/B AoU (AoU-29, renumbered from a second AoU-28 on 2026-10-12) and
   line 727's "writes nothing but one control block" must name the
@@ -1142,12 +1142,12 @@ as AB-BOOT's control record does.
   variable, ITEM.md row (P7), BootInfo v8 refused on mismatch (P8),
   test-postmortem with a QMP reset on x86-64 and AArch64, BACKLOG row for
   the first SN720 PC run (P9), code review before land.sh take (P10).
-* **PM1 landed-ready** (this commit): `tools/common/debug/ferrix-postmortem.sh`
-  and `ferrix-slots-decode.py`. The decoder is Python, not `ferrix-slots`,
+* **PM1 landed-ready** (this commit): `tools/common/debug/xaqu-postmortem.sh`
+  and `xaqu-slots-decode.py`. The decoder is Python, not `xaqu-slots`,
   so the customer's host needs no build; checked by hand against a record
   built to §3 (CRC-32C check value, a failed-trial record). Not yet run
   against a loop-mounted image (needs root); `shellcheck` is not installed.
-  Owed: a host test that decodes records and headers `ferrix-slots` wrote.
+  Owed: a host test that decodes records and headers `xaqu-slots` wrote.
 * **PM2 in progress**, uncommitted / WIP on branch `postmortem`:
   `bootlog.rs` (console tee into a 32 KiB buffer, `save` writes
   BOOTLOG.TXT and moves the old one to BOOTLOG.PRV), `Services::replace_file`
@@ -1165,9 +1165,9 @@ as AB-BOOT's control record does.
 * **PM3** (§3, version 2, 2026-10-15, branch `pm3`): design verdict
   **OK IF (Q1)-(Q16)**, ledger line 1238. Ids `L.console.42-44` and
   `L.mm.75` reserved on branch `pm3-reserve` (docs only, to land first).
-  Code on `pm3`: the format and its host tests (`ferrix-bootinfo::pstore`),
+  Code on `pm3`: the format and its host tests (`xaqu-bootinfo::pstore`),
   BootInfo v8 and `MemKind::Pstore`, the loader's region and report, the
   kernel's mirror, attach, placement check, never-free check, panic and
   reset write-back, the audit record `Config::Pstore`, `cargo xtask
   test-postmortem`, and `test-boot --reset`'s record check (Q8). Rows and
-  controls: `~/.local/share/ferrix/handover/pm3.md`.
+  controls: `~/.local/share/xaqu/handover/pm3.md`.

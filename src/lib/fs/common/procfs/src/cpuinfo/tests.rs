@@ -95,8 +95,8 @@ fn table(leaves: &[(u32, u32, [u32; 4])]) -> impl Fn(u32, u32) -> [u32; 4] + '_ 
     }
 }
 
-/// x87, SSE and AVX: what Ferrix enables.
-const FERRIX: Enabled = Enabled {
+/// x87, SSE and AVX: what Xaqu enables.
+const XAQU: Enabled = Enabled {
     xcr0: 0b111,
     fsgsbase: false,
     protection_keys: false,
@@ -142,7 +142,7 @@ fn the_signature_is_extended_as_linux_extends_it() {
 #[test]
 fn an_intel_block_is_linuxs() {
     let leaves = intel_leaves();
-    let id = Identity::read(&table(&leaves), FERRIX);
+    let id = Identity::read(&table(&leaves), XAQU);
     let processors = [
         Processor {
             number: 0,
@@ -213,21 +213,21 @@ fn a_flag_the_kernel_did_not_enable_is_not_claimed() {
             "{flag} missing from {everything:?}"
         );
     }
-    // Ferrix's: no AVX-512 state, no FSGSBASE, no keys.
-    let ferrix = flags(FERRIX);
+    // Xaqu's: no AVX-512 state, no FSGSBASE, no keys.
+    let xaqu = flags(XAQU);
     for flag in ["avx512f", "fsgsbase", "pku"] {
-        assert!(!ferrix.contains(&flag), "{flag} claimed in {ferrix:?}");
+        assert!(!xaqu.contains(&flag), "{flag} claimed in {xaqu:?}");
     }
-    assert!(ferrix.contains(&"avx2"));
+    assert!(xaqu.contains(&"avx2"));
     // No AVX state: AVX goes, and AVX2, which needs it, with it.
     let sse = flags(Enabled {
         xcr0: 0b11,
-        ..FERRIX
+        ..XAQU
     });
     assert!(!sse.contains(&"avx") && !sse.contains(&"avx2"), "{sse:?}");
     assert!(sse.contains(&"xsave"));
     // No XSAVE at all: xsave goes too.
-    let none = flags(Enabled { xcr0: 0, ..FERRIX });
+    let none = flags(Enabled { xcr0: 0, ..XAQU });
     assert!(!none.contains(&"xsave"), "{none:?}");
 }
 
@@ -259,7 +259,7 @@ fn an_amd_processor_gets_linuxs_amd_flags_and_l2_size() {
         // Automatic IBRS.
         (0x8000_0021, 0, [1 << 8, 0, 0, 0]),
     ];
-    let id = Identity::read(&table(&leaves), FERRIX);
+    let id = Identity::read(&table(&leaves), XAQU);
     let flags: Vec<_> = id.flags().collect();
     assert_eq!(
         flags,
@@ -318,7 +318,7 @@ fn smt_siblings_share_a_core() {
         (0xB, 0, [1, 2, 0x100, 0]),
         (0xB, 1, [2, 4, 0x201, 0]),
     ];
-    let id = Identity::read(&table(&leaves), FERRIX);
+    let id = Identity::read(&table(&leaves), XAQU);
     let processors: Vec<Processor> = (0..8)
         .map(|n| Processor {
             number: n,
@@ -366,7 +366,7 @@ fn smt_siblings_share_a_core() {
 #[test]
 fn no_brand_string_falls_back_to_family_and_model() {
     let leaves = [(0, 0, [1, 0, 0, 0]), (1, 0, [0x0000_0663, 0, 0, 0])];
-    let id = Identity::read(&table(&leaves), FERRIX);
+    let id = Identity::read(&table(&leaves), XAQU);
     assert_eq!(id.model_name(), b"06/06");
 }
 

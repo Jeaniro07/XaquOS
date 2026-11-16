@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make Ferrix's brand images: the logo's SVG files, the icons, the README
+"""Make Xaqu's brand images: the logo's SVG files, the icons, the README
 banners and the social preview.
 
 The logo is drawn once, in `docs/brand/src/`: `mark.svgfrag` is the FX mark
@@ -55,14 +55,14 @@ ARCHES = "x86-64 &middot; AArch64 &middot; ARMv7-A"
 # Real lines from test-rustc and test-selfhost serial logs, timestamps included.
 # The first four are test-rustc's on Rust 1.99.1 (gate r199-rustc, 2026-11-06).
 LOG = [
-    ("t", "37.16", "FERRIX-BOOT-OK stages 1-12"),
+    ("t", "37.16", "XAQU-BOOT-OK stages 1-12"),
     ("t", "37.41", "rustc 1.99.1 (58cf8f9c3 2026-10-13)"),
     ("t", "37.53", "cargo 1.99.1 (5f94df478 2026-08-27)"),
-    ("h", "38.79", "rustc-gate: hello from rustc on Ferrix"),
+    ("h", "38.79", "rustc-gate: hello from rustc on Xaqu"),
     ("g", "", ""),
-    ("t", "51.81", "   Compiling ferrix-kernel v0.1.0"),
-    ("t", "106.99", "  image build/x86_64/ferrix.img"),
-    ("h", "", "Ferrix built its own image, and it booted"),
+    ("t", "51.81", "   Compiling xaqu-kernel v0.1.0"),
+    ("t", "106.99", "  image build/x86_64/xaqu.img"),
+    ("h", "", "Xaqu built its own image, and it booted"),
 ]
 
 THEMES = {
@@ -117,8 +117,8 @@ def logo_file(body, box, pad):
     """A standalone SVG file: grey and rust, ink and deep rust on a light page."""
     x, y, w, h = box
     view = f"{x - pad} {y - pad} {w + 2 * pad} {h + 2 * pad}"
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="{view}" role="img" aria-label="Ferrix">
-<title>Ferrix</title>
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="{view}" role="img" aria-label="Xaqu">
+<title>Xaqu</title>
 <style>
 {logo_css("dark")}
 @media (prefers-color-scheme: light) {{ {logo_css("light")} }}
@@ -220,11 +220,11 @@ def social():
     {TAGLINE}
   </div>
   <div class="muted" style="font-size:22px;margin-top:22px;max-width:590px;line-height:1.45">
-    Chrome, <code>rustc</code>, <code>git</code> and <code>curl</code> run unchanged on Ferrix’s Rust kernel.
+    Chrome, <code>rustc</code>, <code>git</code> and <code>curl</code> run unchanged on Xaqu’s Rust kernel.
     Drivers run as separate processes and can restart after a crash.
   </div>
   <div style="margin-top:auto" class="muted"><span style="font-size:21px;font-weight:600">{ARCHES}</span>
-    <span style="font-size:21px">&nbsp;&nbsp;&middot;&nbsp;&nbsp;github.com/ferrix-os/ferrix</span></div>
+    <span style="font-size:21px">&nbsp;&nbsp;&middot;&nbsp;&nbsp;github.com/xaqu-os/xaqu</span></div>
 </div>
 <div style="position:absolute;right:60px;top:150px;width:540px">{terminal(t)}</div>
 """
@@ -261,7 +261,7 @@ def wallpaper():
   rgba(38,56,92,.95) 0%,rgba(38,56,92,.55) 35%,rgba(38,56,92,.18) 70%,rgba(38,56,92,0) 100%)"></div>
 <div class="mark" style="position:absolute;left:1031px;top:465px;width:317px;height:258px;opacity:.55">{logo_svg(MARK, MARK_BOX)}</div>
 """
-    return base(t, 1920, 1080, body), (1920, 1080), "wallpaper/ferrix-wallpaper.png"
+    return base(t, 1920, 1080, body), (1920, 1080), "wallpaper/xaqu-wallpaper.png"
 
 
 JOBS = {
@@ -303,7 +303,7 @@ def main():
         if key == "wallpaper":
             (BRAND / "wallpaper").mkdir(exist_ok=True)
             for width, height in WALLPAPER_SIZES:
-                out = BRAND / "wallpaper" / f"ferrix-wallpaper-{width}x{height}.png"
+                out = BRAND / "wallpaper" / f"xaqu-wallpaper-{width}x{height}.png"
                 render(html, size, out, width / size[0])
                 print(f"{out.relative_to(ROOT)}  {width}x{height}")
             continue

@@ -11,10 +11,10 @@
 
 #![no_main]
 
-use ferrix_sigverify::{Anchor, Expect, Kind, lms, verify};
+use xaqu_sigverify::{Anchor, Expect, Kind, lms, verify};
 use libfuzzer_sys::fuzz_target;
 
-/// The development key the seed was signed with (`ferrix-softsign keygen`,
+/// The development key the seed was signed with (`xaqu-softsign keygen`,
 /// `LMS_SHA256_M24_H10`; its private state was never in the tree).
 const SEED_KEY: [u8; 52] = [
     0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x07, 0x06, 0x45, 0x93, 0xd7,

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-net"
+name = "xaqu-net"
 description = "The net core: interfaces, routes, neighbours, IP, ICMP, UDP and TCP sockets over the wire formats"
 version = "0.1.0"
 edition = "2024"
@@ -8,9 +8,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-kmem = { workspace = true }
-ferrix-netwire = { workspace = true }
-ferrix-nettcp = { workspace = true }
+xaqu-kmem = { workspace = true }
+xaqu-netwire = { workspace = true }
+xaqu-nettcp = { workspace = true }
 
 [lints]
 workspace = true

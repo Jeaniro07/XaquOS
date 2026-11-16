@@ -52,7 +52,7 @@ use alloc::sync::{Arc, Weak};
 use core::fmt;
 use core::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint, footprint};
+use xaqu_kmem::{Charge, arc_footprint, footprint};
 
 use crate::Result;
 use crate::SpinLock;
@@ -173,7 +173,7 @@ impl Dentry {
         }))
     }
 
-    /// The job its heap is charged to (`ferrix_kmem::NOBODY` for none), and
+    /// The job its heap is charged to (`xaqu_kmem::NOBODY` for none), and
     /// how many bytes: what a reclaim of that job's cached dentries asks of
     /// it ([`crate::Namespace::shrink`]).
     pub(crate) fn charge(&self) -> (u32, u64) {
@@ -246,7 +246,7 @@ impl Dentry {
     /// The new dentry and its key are made before the lock, where the heap
     /// may reclaim or kill for them, and fallibly; under the lock only the
     /// map's node is allocated, inside the host's reserved section
-    /// (`ferrix_fallible::try_map_insert`). A spin lock keeps its holder from
+    /// (`xaqu_fallible::try_map_insert`). A spin lock keeps its holder from
     /// blocking, so an allocation made under it that the heap refused had no
     /// answer but a stop (test-btrfs-pressure's hog boot, 2026-11-08: FX-0008
     /// on the 204-byte copy of a name here). One made and not used -- a
@@ -276,7 +276,7 @@ impl Dentry {
             return Ok(None);
         }
         children.retain(|_, weak| weak.strong_count() > 0);
-        let _ = ferrix_fallible::try_map_insert(&mut children, key, Arc::downgrade(&child))
+        let _ = xaqu_fallible::try_map_insert(&mut children, key, Arc::downgrade(&child))
             .map_err(|_| crate::Errno::ENOMEM)?;
         drop(children);
         Ok(Some((child, true)))
@@ -339,7 +339,7 @@ impl Dentry {
             // then its entry is replaced in place and nothing is allocated.
             if let Some(entry) = children.get_mut(name) {
                 *entry = Arc::downgrade(&target);
-            } else if ferrix_fallible::try_map_insert(&mut children, key, Arc::downgrade(&target))
+            } else if xaqu_fallible::try_map_insert(&mut children, key, Arc::downgrade(&target))
                 .is_err()
             {
                 drop(children);

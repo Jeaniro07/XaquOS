@@ -23,7 +23,7 @@
 //! [`MAX_NAME`], so both sides keep one on the stack: native programs have
 //! no allocator, and this module allocates nothing.
 
-/// The longest name, in bytes: `ferrix.clipboard` and its kin.
+/// The longest name, in bytes: `xaqu.clipboard` and its kin.
 pub const MAX_NAME: usize = 64;
 
 /// The longest message, in bytes.
@@ -170,10 +170,10 @@ mod tests {
     fn every_kind_comes_back_as_it_went() {
         let messages = [
             Message::ready(),
-            Message::named(Kind::Offer, "ferrix.test", ""),
-            Message::named(Kind::Open, "ferrix.test", ""),
-            Message::named(Kind::Connect, "ferrix.test", "asker.service"),
-            Message::named(Kind::Refused, "ferrix.test", "not in Uses="),
+            Message::named(Kind::Offer, "xaqu.test", ""),
+            Message::named(Kind::Open, "xaqu.test", ""),
+            Message::named(Kind::Connect, "xaqu.test", "asker.service"),
+            Message::named(Kind::Refused, "xaqu.test", "not in Uses="),
         ];
         for message in messages {
             let mut out = [0_u8; MAX_MESSAGE];

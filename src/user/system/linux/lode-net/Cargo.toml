@@ -1,9 +1,9 @@
 # lode-net: the log over the network (docs/LOGGING.md §10.2, §10.3).
 #
-# `lode-upload`, on a Ferrix machine, sends its log on to collectors;
+# `lode-upload`, on a Xaqu machine, sends its log on to collectors;
 # `lode-receive`, on a Linux host, takes it in and keeps a lode store for
 # each machine that sends, which `lode-viewer` opens. Both read and write
-# stores with the tree's own `ferrix-lode-core`.
+# stores with the tree's own `xaqu-lode-core`.
 #
 # A workspace of its own, as dhcp's and init's are: a Linux user program
 # built with std against the target's own musl. TLS is rustls with a
@@ -12,10 +12,10 @@
 # ChaCha20-Poly1305, X25519 and Ed25519 alone, since we make both ends.
 [package]
 name = "lode-net"
-description = "lode's store-and-forward over TLS: lode-upload on Ferrix, lode-receive on a Linux host"
+description = "lode's store-and-forward over TLS: lode-upload on Xaqu, lode-receive on a Linux host"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -34,7 +34,7 @@ name = "lode-receive"
 path = "src/bin/lode-receive.rs"
 
 [dependencies]
-ferrix-lode-core = { path = "../../../../lib/log/lode" }
+xaqu-lode-core = { path = "../../../../lib/log/lode" }
 # TLS, without its own crypto (ring and aws-lc need a C compiler).
 rustls = { version = "0.23.45", default-features = false, features = ["std"] }
 # The provider's primitives, all pure Rust, none with getrandom.

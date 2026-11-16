@@ -1,6 +1,6 @@
-# Ferrix — architecture
+# Xaqu — architecture
 
-Ferrix is an operating system written in Rust for x86-64, AArch64 and ARMv7-A,
+Xaqu is an operating system written in Rust for x86-64, AArch64 and ARMv7-A,
 whose acceptance test is that it compiles Rust. Not "has a shell", not "draws a
 window": it hosts `rustc`, which is the hardest thing a general-purpose OS is
 routinely asked to do and the only goal that forces every subsystem to be real.
@@ -34,7 +34,7 @@ discovered to be dead ends at the end.
 
 ## 1. Shape of the system
 
-> **Being replaced (customer, 2026-10-13).** Ferrix is to become a
+> **Being replaced (customer, 2026-10-13).** Xaqu is to become a
 > microkernel whose ring 0 is the certified item whole, with the Linux ABI
 > served from user space by `linuxd` (`docs/MICROKERNEL.md`;
 > `docs/BACKLOG.md`, Decisions). This section and §2 describe the system as
@@ -44,7 +44,7 @@ discovered to be dead ends at the end.
         ┌─────────────────────────────────────────────────────────────┐
         │ userspace                                                    │
         │   rustc, busybox, init      │ devmgr │ virtio-blk │ virtio-net│
-        │   (static musl, Linux ABI)  │  (Ferrix native ABI, handles)  │
+        │   (static musl, Linux ABI)  │  (Xaqu native ABI, handles)  │
         └───────────┬─────────────────┴────────────┬───────────────────┘
                     │ syscall (Linux ABI)          │ channels, VMOs, IRQ objects
         ┌───────────┴──────────────────────────────┴───────────────────┐
@@ -71,7 +71,7 @@ as exceptions here so that they stay the only ones. The serial port writer
 carries early boot and panic output, when no userspace exists to talk to. The
 firmware's framebuffer is drawn on by a panic, once, with the same text the
 serial port carried, for a machine that has a screen and no cable. When the
-command line asks for it with `ferrix.fbcon`, the kernel's own console lines are
+command line asks for it with `xaqu.fbcon`, the kernel's own console lines are
 drawn there as they are printed too, for a machine whose only log is read back
 after a reset, like the Pixel 7. That boot console stops for good when a panic
 draws or a display driver takes the screen, and it never draws a program's
@@ -98,8 +98,8 @@ Two ABIs coexist:
 * **Linux ABI**, syscall numbers 0.., each architecture's table as Linux
   defines it — on ARMv7-A, the EABI one. Everything about it is a compatibility obligation; we do not get
   to have opinions.
-* **Ferrix native ABI**, syscall numbers from `0x1000`, capability-handle based.
-  This is what device drivers, `devmgr` and anything else Ferrix-specific speaks.
+* **Xaqu native ABI**, syscall numbers from `0x1000`, capability-handle based.
+  This is what device drivers, `devmgr` and anything else Xaqu-specific speaks.
   It is where the design opinions live.
 
 A process may use both: a musl program can make native calls for the parts
@@ -402,7 +402,7 @@ weakest. This is the largest single piece of work in the project and the
 schedule should say so.
 
 **How it is verified**, which matters more than the feature: every CI run builds
-an image with real `mkfs.btrfs`, mounts it under Ferrix in QEMU, runs a
+an image with real `mkfs.btrfs`, mounts it under Xaqu in QEMU, runs a
 workload, and then hands the resulting image to `btrfs check` on the host. A
 filesystem that only our own reader can read is not a filesystem. Power-fail
 injection — killing QEMU mid-transaction and checking what survives — is the
@@ -417,8 +417,8 @@ test that a CoW filesystem actually has to pass.
 | Byte-level logic: ELF, cpio, btrfs item parsing, seccomp BPF, page-table arithmetic, allocators | `src/lib/` | `cargo test`, Miri, fuzzers |
 | Loader | `src/boot/common/uefi/` | QEMU boot test |
 | Kernel | `src/kernel/` | QEMU boot test, in-kernel test harness |
-| Ring-3 programs on Ferrix's own ABI: the native runtime, `devmgr`, drivers, test programs | `src/user/system/native/` | Built and linted with clippy per kernel target; xtask checks each program's ELF shape; run under the QEMU boot test |
-| Ring-3 programs on the Linux ABI: init, `authd`, the compositor and its clients, ferrousli, zinc, the installer, the media player and sound server, `statd`, `adbd` | `src/user/system/linux/`, each its own cargo workspace | `cargo test` on the host, and the `test-*` boots on Ferrix |
+| Ring-3 programs on Xaqu's own ABI: the native runtime, `devmgr`, drivers, test programs | `src/user/system/native/` | Built and linted with clippy per kernel target; xtask checks each program's ELF shape; run under the QEMU boot test |
+| Ring-3 programs on the Linux ABI: init, `authd`, the compositor and its clients, ferrousli, zinc, the installer, the media player and sound server, `statd`, `adbd` | `src/user/system/linux/`, each its own cargo workspace | `cargo test` on the host, and the `test-*` boots on Xaqu |
 | Test programs and fuzzing outside any one crate | `src/tests/` | the boots, and `cargo fuzz` |
 | Host tooling | `tools/common/`, and `tools/vendor/` for one vendor's hardware | `cargo test`, and the gates that run them |
 

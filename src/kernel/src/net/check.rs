@@ -36,9 +36,9 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_net::socket::Family;
-use ferrix_net::{Endpoint, IpAddress, Ipv4, Ipv6};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_net::socket::Family;
+use xaqu_net::{Endpoint, IpAddress, Ipv4, Ipv6};
 
 use super::socket::{InetKind, InetSocket, of};
 use crate::net;
@@ -61,7 +61,7 @@ pub struct Report {
 }
 
 /// The body every check sends, chosen so a truncation shows.
-const BODY: &[u8] = b"Ferrix carries this over its own loopback, both ways.";
+const BODY: &[u8] = b"Xaqu carries this over its own loopback, both ways.";
 
 /// Run the check.
 ///
@@ -283,7 +283,7 @@ fn streams(
 
     // A close at one end is the end of the stream at the other.
     client
-        .shutdown(ferrix_linux_abi::socket::SHUT_WR)
+        .shutdown(xaqu_linux_abi::socket::SHUT_WR)
         .map_err(|_| "a connection could not be shut down")?;
     let mut out = [0_u8; 8];
     let (end, _) = server
@@ -343,7 +343,7 @@ fn refused(
 /// loopback on a port a wildcard listener holds, and a listen of a socket
 /// bound beside a listener before it listened, are both `EADDRINUSE`.
 fn listeners_keep_their_port(report: &mut Report, port: u16) -> Result<(), &'static str> {
-    use ferrix_linux_abi::socket::{SO_REUSEADDR, SOL_SOCKET, Width};
+    use xaqu_linux_abi::socket::{SO_REUSEADDR, SOL_SOCKET, Width};
     let reusing = || {
         let made = socket(Family::V4, InetKind::Stream)?;
         made.set_option(
@@ -386,11 +386,11 @@ fn listeners_keep_their_port(report: &mut Report, port: u16) -> Result<(), &'sta
 /// read as Linux's defaults, then as set; one out of range is `EINVAL`, and
 /// the IPv6 ones on an IPv4 socket are `ENOPROTOOPT`.
 fn options_read_back(report: &mut Report) -> Result<(), &'static str> {
-    use ferrix_linux_abi::inet::{
+    use xaqu_linux_abi::inet::{
         IP_MTU_DISCOVER, IP_PMTUDISC_DO, IPV6_DONTFRAG, IPV6_MTU_DISCOVER, SOL_IP, SOL_IPV6,
         SOL_TCP, TCP_KEEPCNT, TCP_KEEPIDLE, TCP_KEEPINTVL, TCP_SYNCNT,
     };
-    use ferrix_linux_abi::socket::{Linger, SO_LINGER, SO_OOBINLINE, SOL_SOCKET, Width};
+    use xaqu_linux_abi::socket::{Linger, SO_LINGER, SO_OOBINLINE, SOL_SOCKET, Width};
     let dual = socket(Family::V6, InetKind::Stream)?;
     let read = |level, name| {
         dual.get_option(level, name, Width::Bits64)
@@ -465,13 +465,13 @@ fn raw_icmp(report: &mut Report) -> Result<(), &'static str> {
     let loopback = encode(IpAddress::V4(Ipv4::LOOPBACK), 0);
     let ping = socket(Family::V4, InetKind::Raw { protocol: ICMP })?;
     let filtered = socket(Family::V4, InetKind::Raw { protocol: ICMP })?;
-    let replies_only = 1_u32 << ferrix_netwire::icmpv4::kind::ECHO_REPLY;
+    let replies_only = 1_u32 << xaqu_netwire::icmpv4::kind::ECHO_REPLY;
     filtered
         .set_option(
-            ferrix_linux_abi::inet::SOL_RAW,
-            ferrix_linux_abi::inet::ICMP_FILTER,
+            xaqu_linux_abi::inet::SOL_RAW,
+            xaqu_linux_abi::inet::ICMP_FILTER,
             &replies_only.to_ne_bytes(),
-            ferrix_linux_abi::socket::Width::Bits64,
+            xaqu_linux_abi::socket::Width::Bits64,
         )
         .map_err(|_| "ICMP_FILTER was refused on a raw ICMP socket")?;
 
@@ -486,12 +486,12 @@ fn raw_icmp(report: &mut Report) -> Result<(), &'static str> {
     let seen = drain(&ping)?;
     report.raw_packets += seen.len();
     let types = echo_types(&seen)?;
-    if !types.contains(&ferrix_netwire::icmpv4::kind::ECHO_REQUEST) {
+    if !types.contains(&xaqu_netwire::icmpv4::kind::ECHO_REQUEST) {
         return Err("a raw ICMP socket was not handed its own echo request off the loopback");
     }
     let reply = seen.iter().find(|packet| {
         icmp_at(packet).is_some_and(|message| {
-            message.first() == Some(&ferrix_netwire::icmpv4::kind::ECHO_REPLY)
+            message.first() == Some(&xaqu_netwire::icmpv4::kind::ECHO_REPLY)
                 && message.get(4..6) == Some(RAW_IDENTIFIER.to_be_bytes().as_slice())
                 && message.get(8..) == Some(BODY)
         })
@@ -503,10 +503,10 @@ fn raw_icmp(report: &mut Report) -> Result<(), &'static str> {
     let held_back = drain(&filtered)?;
     report.raw_packets += held_back.len();
     let filtered_types = echo_types(&held_back)?;
-    if !filtered_types.contains(&ferrix_netwire::icmpv4::kind::ECHO_REQUEST) {
+    if !filtered_types.contains(&xaqu_netwire::icmpv4::kind::ECHO_REQUEST) {
         return Err("a raw ICMP socket filtering replies read nothing at all");
     }
-    if filtered_types.contains(&ferrix_netwire::icmpv4::kind::ECHO_REPLY) {
+    if filtered_types.contains(&xaqu_netwire::icmpv4::kind::ECHO_REPLY) {
         return Err("ICMP_FILTER let the echo reply it names through");
     }
     report.refusals += 1;
@@ -523,8 +523,8 @@ fn raw_icmp(report: &mut Report) -> Result<(), &'static str> {
 /// blocks. `IPV6_CHECKSUM` at `SOL_IPV6` on an ICMPv6 socket and an odd offset
 /// are refused, as RFC 3542 and `do_rawv6_setsockopt` refuse them.
 fn raw_icmpv6(report: &mut Report) -> Result<(), &'static str> {
-    use ferrix_linux_abi::inet::{IPV6_2292HOPLIMIT, SOL_IPV6};
-    use ferrix_netwire::icmpv6::kind::{ECHO_REPLY, ECHO_REQUEST};
+    use xaqu_linux_abi::inet::{IPV6_2292HOPLIMIT, SOL_IPV6};
+    use xaqu_netwire::icmpv6::kind::{ECHO_REPLY, ECHO_REQUEST};
 
     let loopback = encode(IpAddress::V6(Ipv6::LOOPBACK), 0);
     let ping = socket(Family::V6, InetKind::Raw { protocol: ICMPV6 })?;
@@ -553,7 +553,7 @@ fn raw_icmpv6(report: &mut Report) -> Result<(), &'static str> {
         report.raw_packets += 1;
         let message = out.get(..received.bytes).unwrap_or_default();
         let sum = {
-            let pseudo = ferrix_netwire::checksum::Pseudo::V6 {
+            let pseudo = xaqu_netwire::checksum::Pseudo::V6 {
                 source: Ipv6::LOOPBACK.octets(),
                 destination: Ipv6::LOOPBACK.octets(),
             };
@@ -612,11 +612,11 @@ fn set_up_ping6(
     ping: &Arc<InetSocket>,
     filtered: &Arc<InetSocket>,
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::inet::{
+    use xaqu_linux_abi::inet::{
         ICMPV6_FILTER, IPV6_2292HOPLIMIT, IPV6_CHECKSUM, SOL_ICMPV6, SOL_IPV6, SOL_RAW,
     };
-    use ferrix_linux_abi::socket::Width;
-    use ferrix_netwire::icmpv6::kind::ECHO_REQUEST;
+    use xaqu_linux_abi::socket::Width;
+    use xaqu_netwire::icmpv6::kind::ECHO_REQUEST;
 
     let two = 2_i32.to_ne_bytes();
     ping.set_option(SOL_RAW, IPV6_CHECKSUM, &two, Width::Bits64)
@@ -661,19 +661,19 @@ fn raw_header_included(report: &mut Report, port: u16) -> Result<(), &'static st
         .map_err(|_| "a datagram socket could not bind the loopback for the raw check")?;
     let sender = socket(Family::V4, InetKind::Raw { protocol: 255 })?;
 
-    let pseudo = ferrix_netwire::checksum::Pseudo::V4 {
+    let pseudo = xaqu_netwire::checksum::Pseudo::V4 {
         source: Ipv4::LOOPBACK.octets(),
         destination: Ipv4::LOOPBACK.octets(),
     };
-    let mut datagram = alloc::vec![0_u8; ferrix_netwire::udp::HEADER_LEN + BODY.len()];
-    let _ = ferrix_netwire::udp::Header {
+    let mut datagram = alloc::vec![0_u8; xaqu_netwire::udp::HEADER_LEN + BODY.len()];
+    let _ = xaqu_netwire::udp::Header {
         source_port: port.wrapping_add(1),
         destination_port: port,
     }
     .emit(BODY, pseudo, &mut datagram)
     .map_err(|_| "the raw check's UDP datagram did not fit")?;
-    let mut packet = alloc::vec![0_u8; ferrix_netwire::ipv4::MIN_HEADER_LEN];
-    let fields: [(usize, u8); 3] = [(0, 0x45), (8, 64), (9, ferrix_netwire::udp::PROTOCOL)];
+    let mut packet = alloc::vec![0_u8; xaqu_netwire::ipv4::MIN_HEADER_LEN];
+    let fields: [(usize, u8); 3] = [(0, 0x45), (8, 64), (9, xaqu_netwire::udp::PROTOCOL)];
     for (at, value) in fields {
         *packet
             .get_mut(at)
@@ -711,12 +711,12 @@ fn raw_header_included(report: &mut Report, port: u16) -> Result<(), &'static st
 /// An echo request with its checksum, as `ping` builds one.
 fn echo_request(identifier: u16, body: &[u8]) -> Result<Vec<u8>, &'static str> {
     let [high, low] = identifier.to_be_bytes();
-    let header = ferrix_netwire::icmpv4::Header {
-        kind: ferrix_netwire::icmpv4::kind::ECHO_REQUEST,
+    let header = xaqu_netwire::icmpv4::Header {
+        kind: xaqu_netwire::icmpv4::kind::ECHO_REQUEST,
         code: 0,
         rest: [high, low, 0, 1],
     };
-    let mut message = alloc::vec![0_u8; ferrix_netwire::icmpv4::HEADER_LEN + body.len()];
+    let mut message = alloc::vec![0_u8; xaqu_netwire::icmpv4::HEADER_LEN + body.len()];
     let _ = header
         .emit(body, &mut message)
         .map_err(|_| "the raw check's echo request did not fit")?;
@@ -764,18 +764,18 @@ fn echo_types(packets: &[Vec<u8>]) -> Result<Vec<u8>, &'static str> {
 fn encode(address: IpAddress, port: u16) -> Vec<u8> {
     let endpoint = Endpoint::new(address, port);
     let inet = match endpoint.address {
-        IpAddress::V4(four) => ferrix_linux_abi::inet::InetAddress::V4 {
+        IpAddress::V4(four) => xaqu_linux_abi::inet::InetAddress::V4 {
             port: endpoint.port,
             address: four.octets(),
         },
-        IpAddress::V6(six) => ferrix_linux_abi::inet::InetAddress::V6 {
+        IpAddress::V6(six) => xaqu_linux_abi::inet::InetAddress::V6 {
             port: endpoint.port,
             flow_info: 0,
             address: six.octets(),
             scope_id: 0,
         },
     };
-    let mut bytes = alloc::vec![0_u8; ferrix_linux_abi::inet::SOCKADDR_STORAGE_SIZE];
+    let mut bytes = alloc::vec![0_u8; xaqu_linux_abi::inet::SOCKADDR_STORAGE_SIZE];
     let written = inet.encode(&mut bytes).unwrap_or(0);
     bytes.truncate(written);
     bytes

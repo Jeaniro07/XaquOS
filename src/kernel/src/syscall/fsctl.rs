@@ -46,7 +46,7 @@
 //! # Per-mount flags, enforced
 //!
 //! `MS_RDONLY`, `MS_NOSUID`, `MS_NODEV` and `MS_NOEXEC` are the mount's own
-//! (`ferrix_vfs::MountFlags`), for every type, and each is enforced where the
+//! (`xaqu_vfs::MountFlags`), for every type, and each is enforced where the
 //! operation it governs is decided: a change through a read-only mount is
 //! `EROFS` (the VFS), a device on a `nodev` one `EACCES` (the VFS's `open`), a
 //! program on a `noexec` one `EACCES` and its executable mapping `EPERM`
@@ -79,7 +79,7 @@
 //!
 //! `MS_BIND` mounts the place the source names -- a directory, a
 //! subdirectory, a file or a socket -- on the target, with `MS_REC` the
-//! mounts below it too (`ferrix_vfs::Namespace::bind`); the new mount has
+//! mounts below it too (`xaqu_vfs::Namespace::bind`); the new mount has
 //! the source mount's flags, whatever else `mount` was passed, as on Linux,
 //! where a bind read-only takes a remount after it. `MS_PRIVATE`,
 //! `MS_SLAVE` and `MS_UNBINDABLE`, with or without `MS_REC`, are accepted on
@@ -108,17 +108,17 @@
 use alloc::sync::Arc;
 use core::mem::size_of;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     ARM_STATFS64_UNPACKED_SIZE, AT_FDCWD, AT_SYMLINK_NOFOLLOW, FALLOC_FL_KEEP_SIZE, MNT_DETACH,
     MNT_EXPIRE, MNT_FORCE, MS_BIND, MS_MGC_MSK, MS_MGC_VAL, MS_MOVE, MS_NOATIME, MS_NODEV,
     MS_NODIRATIME, MS_NOEXEC, MS_NOSUID, MS_PRIVATE, MS_RDONLY, MS_REC, MS_RELATIME, MS_REMOUNT,
     MS_SHARED, MS_SILENT, MS_SLAVE, MS_STRICTATIME, MS_UNBINDABLE, UMOUNT_NOFOLLOW,
 };
-use ferrix_vfs::access::{MAY_EXEC, MAY_WRITE};
-use ferrix_vfs::statfs::StatfsLayout;
-use ferrix_vfs::{FileSystem, FileType, Location, MountFlags, Namespace, SetAttributes};
+use xaqu_vfs::access::{MAY_EXEC, MAY_WRITE};
+use xaqu_vfs::statfs::StatfsLayout;
+use xaqu_vfs::{FileSystem, FileType, Location, MountFlags, Namespace, SetAttributes};
 
 use crate::fs;
 use crate::fs::devfs::Devfs;
@@ -311,7 +311,7 @@ pub(crate) fn sys_fstatfs64(
 
 /// An open file a call that acts through a descriptor may use: `O_PATH` names
 /// a file without opening it, and is `EBADF` to these as to `read`.
-fn usable(process: &Process, fd: i32) -> Result<Arc<ferrix_vfs::OpenFile>, Errno> {
+fn usable(process: &Process, fd: i32) -> Result<Arc<xaqu_vfs::OpenFile>, Errno> {
     let file = fd::file(process, fd)?;
     if file.is_path() {
         return Err(Errno::EBADF);
@@ -362,7 +362,7 @@ pub(crate) fn sys_fsync(process: &Process, fd: i32, data_only: bool) -> Result<u
 }
 
 /// Bring what `file` holds to its disk: `fsync`'s body, and each file `msync` finds mapped.
-pub(crate) fn fsync_open_file(file: &ferrix_vfs::OpenFile, data_only: bool) -> Result<(), Errno> {
+pub(crate) fn fsync_open_file(file: &xaqu_vfs::OpenFile, data_only: bool) -> Result<(), Errno> {
     match file.kind() {
         FileType::Regular | FileType::Directory => {
             file.location().inode()?.fsync(data_only)?;
@@ -706,7 +706,7 @@ fn remount_at(mounts: &Namespace, place: &Location, flags: u32) -> Result<usize,
 /// The filesystem is written out first, as Linux's unmount does before it
 /// lets a superblock go. It was not: a btrfs volume unmounted without a
 /// `sync` came back without what was written since its last commit -- files,
-/// directories, renames, a 40 MiB file cut to 32 MiB (ferrix-ea's black-box
+/// directories, renames, a 40 MiB file cut to 32 MiB (xaqu-ea's black-box
 /// pass, 2026-09-26). A write-out that fails keeps the mount, with the
 /// error, so nothing is lost silently; `MNT_FORCE` unmounts it anyway.
 pub(crate) fn sys_umount2(process: &Process, target: u64, flags: u32) -> Result<usize, Errno> {

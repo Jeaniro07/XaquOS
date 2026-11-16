@@ -1,4 +1,4 @@
-//! `settings.conf`: the settings a person chose in Ferrix's Settings app,
+//! `settings.conf`: the settings a person chose in Xaqu's Settings app,
 //! kept so they survive a restart (`docs/RUNTIME-SETTINGS.md` §3.3).
 //!
 //! The file is hyprlang, read after the configuration as if a `source`
@@ -49,7 +49,7 @@ pub fn default_path() -> Option<PathBuf> {
 
 /// What the file starts with when the compositor writes it first.
 const HEADER: &str = "\
-# Ferrix's Settings: what `hyprctl setting KEY VALUE` keeps, read by hyprix
+# Xaqu's Settings: what `hyprctl setting KEY VALUE` keeps, read by hyprix
 # after hyprland.conf, so these win. Change them in Settings, or with
 # `hyprctl setting`; a line edited here takes at the next `hyprctl reload`.
 ";
@@ -333,7 +333,7 @@ mod tests {
         )
         .expect("written");
         let text = std::fs::read_to_string(&path).expect("there");
-        assert!(text.starts_with("# Ferrix's Settings"), "{text}");
+        assert!(text.starts_with("# Xaqu's Settings"), "{text}");
         let settings: Vec<&str> = text.lines().filter(|line| !line.starts_with('#')).collect();
         assert_eq!(
             settings,

@@ -22,8 +22,8 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vma::VmaFlags;
 
 use crate::fallible::{self, AllocError};
 use crate::mm;
@@ -85,7 +85,7 @@ fn object<T>(result: Result<T, VmoError>, what: &'static str) -> Result<T, Refus
 /// have for the mapping is running out of memory too.
 fn arena<T>(result: Result<T, VmapError>, what: &'static str) -> Result<T, Refusal> {
     result.map_err(|error| match error {
-        VmapError::OutOfMemory | VmapError::MapFailed(ferrix_paging::MapError::OutOfMemory) => {
+        VmapError::OutOfMemory | VmapError::MapFailed(xaqu_paging::MapError::OutOfMemory) => {
             Refusal::NoMemory
         }
         _ => {

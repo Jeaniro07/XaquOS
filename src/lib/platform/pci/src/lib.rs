@@ -50,7 +50,7 @@
 //! nobody chose.
 //!
 //! ```
-//! # use ferrix_pci::{ConfigSpace, walk::Walk};
+//! # use xaqu_pci::{ConfigSpace, walk::Walk};
 //! # fn example<C: ConfigSpace>(space: &C) {
 //! for found in Walk::new(space, 0, 0..=255) {
 //!     match found {
@@ -135,7 +135,7 @@ pub trait ConfigSpace {
 /// again.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Address {
-    /// The PCI segment group, which on every machine Ferrix boots on is 0.
+    /// The PCI segment group, which on every machine Xaqu boots on is 0.
     segment: u16,
     /// The bus number.
     bus: u8,

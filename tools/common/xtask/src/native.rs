@@ -23,7 +23,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_elf::{EM_AARCH64, EM_ARM, EM_X86_64, ET_EXEC, Elf, PT_DYNAMIC, PT_INTERP, Segment};
+use xaqu_elf::{EM_AARCH64, EM_ARM, EM_X86_64, ET_EXEC, Elf, PT_DYNAMIC, PT_INTERP, Segment};
 
 use crate::cargo;
 use crate::paths::{self, Arch};
@@ -44,143 +44,143 @@ pub(crate) struct Program {
 /// Every native program the initramfs carries.
 pub(crate) const PROGRAMS: &[Program] = &[
     Program {
-        package: "ferrix-restricted-check",
+        package: "xaqu-restricted-check",
         binary: "restricted-check",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-channel-echo",
+        package: "xaqu-channel-echo",
         binary: "channel-echo",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-pong",
+        package: "xaqu-pong",
         binary: "pong",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-ipc-bench",
+        package: "xaqu-ipc-bench",
         binary: "ipc-bench",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-ipc-equiv",
+        package: "xaqu-ipc-equiv",
         binary: "ipc-equiv",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-devmgr",
+        package: "xaqu-devmgr",
         binary: "devmgr",
         directory: DIRECTORY,
     },
     Program {
-        package: "ferrix-blk",
+        package: "xaqu-blk",
         binary: "blk",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-nvme-driver",
+        package: "xaqu-nvme-driver",
         binary: "nvme",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-ahci-driver",
+        package: "xaqu-ahci-driver",
         binary: "ahci",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-sdmmc",
+        package: "xaqu-sdmmc",
         binary: "sdmmc",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-net-driver",
+        package: "xaqu-net-driver",
         binary: "net",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-yt6801-driver",
+        package: "xaqu-yt6801-driver",
         binary: "yt6801",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-rtl8169-driver",
+        package: "xaqu-rtl8169-driver",
         binary: "rtl8169",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-gpu",
+        package: "xaqu-gpu",
         binary: "gpu",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-efifb",
+        package: "xaqu-efifb",
         binary: "efifb",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-ltdc",
+        package: "xaqu-ltdc",
         binary: "ltdc",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-input",
+        package: "xaqu-input",
         binary: "input",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-usbhid",
+        package: "xaqu-usbhid",
         binary: "usbhid",
         directory: DRIVERS,
     },
     // The class driver of the USB serial interfaces usbhid exports, which
     // devmgr starts per interface (docs/USB-SERIAL.md §6.1).
     Program {
-        package: "ferrix-usbserial",
+        package: "xaqu-usbserial",
         binary: "usbserial",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-usbdev",
+        package: "xaqu-usbdev",
         binary: "usbdev",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-power-driver",
+        package: "xaqu-power-driver",
         binary: "power",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-gc400-driver",
+        package: "xaqu-gc400-driver",
         binary: "gc400",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-intel-driver",
+        package: "xaqu-intel-driver",
         binary: "intel",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-vport",
+        package: "xaqu-vport",
         binary: "vport",
         directory: DRIVERS,
     },
     Program {
-        package: "ferrix-snd",
+        package: "xaqu-snd",
         binary: "snd",
         directory: DRIVERS,
     },
     // lode, the log manager (docs/LOGGING.md): the service init starts in a
     // sealed job, and the reader `/bin/lode` and `/bin/journalctl` link to.
     Program {
-        package: "ferrix-lode",
+        package: "xaqu-lode",
         binary: "lode",
         directory: DIRECTORY,
     },
     // memscrub, the RAM scrubber's pace (docs/RAM-SCRUBBER.md §5): a service
     // init starts and grants the memory scrub token.
     Program {
-        package: "ferrix-memscrub",
+        package: "xaqu-memscrub",
         binary: "memscrub",
         directory: DIRECTORY,
     },
@@ -188,7 +188,7 @@ pub(crate) const PROGRAMS: &[Program] = &[
     // restarts through (docs/DESKTOP.md §4.2), handed to it as an image
     // the way drvupdated is, and named by no table entry.
     Program {
-        package: "ferrix-devmgr-events",
+        package: "xaqu-devmgr-events",
         binary: "devmgr-events",
         directory: DRIVERS,
     },
@@ -232,7 +232,7 @@ pub(crate) fn build_in(arch: Arch, release: bool, target_dir: &Path) -> Result<V
         .chain(lifted.then_some(&PARTMGR))
         .chain(served.then_some(&BTRFSD))
         .chain(
-            std::env::var_os("FERRIX_TEST_NETD")
+            std::env::var_os("XAQU_TEST_NETD")
                 .is_some()
                 .then_some(&NETD),
         )
@@ -246,14 +246,14 @@ pub(crate) fn build_in(arch: Arch, release: bool, target_dir: &Path) -> Result<V
 /// `cargo xtask test-restart --update` boots carry it (the certification
 /// consultant's C1, 2026-10-07), which [`refuse_updater`] holds.
 pub(crate) const UPDATER: Program = Program {
-    package: "ferrix-drvupdated",
+    package: "xaqu-drvupdated",
     binary: "drvupdated",
     directory: DRIVERS,
 };
 
 /// The partition manager (`docs/microkernel/BOOT-AUTHORITY.md` §8), likewise.
 pub(crate) const PARTMGR: Program = Program {
-    package: "ferrix-partmgr",
+    package: "xaqu-partmgr",
     binary: "partmgr",
     directory: DIRECTORY,
 };
@@ -261,14 +261,14 @@ pub(crate) const PARTMGR: Program = Program {
 /// A program that ends at once: under a first process's name in
 /// `test-first-processes`' images.
 pub(crate) const CRASH_AT_START: Program = Program {
-    package: "ferrix-crash-at-start",
+    package: "xaqu-crash-at-start",
     binary: "crash-at-start",
     directory: DRIVERS,
 };
 
 /// The filesystem server (`docs/microkernel/BTRFSD.md`), in an `fs=server` image alone.
 pub(crate) const BTRFSD: Program = Program {
-    package: "ferrix-btrfsd",
+    package: "xaqu-btrfsd",
     binary: "btrfsd",
     directory: DIRECTORY,
 };
@@ -276,14 +276,14 @@ pub(crate) const BTRFSD: Program = Program {
 /// The network switch (`docs/microkernel/M8.md` §2): only `test-netd`'s image for now,
 /// until the row's review.
 pub(crate) const NETD: Program = Program {
-    package: "ferrix-netd",
+    package: "xaqu-netd",
     binary: "netd",
     directory: DRIVERS,
 };
 
 /// A partition's `linuxd` that dies at once: only `test-partitions`' images.
 pub(crate) const LINUXD_DIES: Program = Program {
-    package: "ferrix-linuxd-dies",
+    package: "xaqu-linuxd-dies",
     binary: "linuxd-dies",
     directory: DIRECTORY,
 };
@@ -291,14 +291,14 @@ pub(crate) const LINUXD_DIES: Program = Program {
 /// A block driver over memory that misbehaves on purpose: only
 /// `test-btrfsd-restart`'s archive, under the name `blk`.
 pub(crate) const BLK_VICTIM: Program = Program {
-    package: "ferrix-blk-victim",
+    package: "xaqu-blk-victim",
     binary: "blk-victim",
     directory: DRIVERS,
 };
 
 /// A test image of a safety partition: only `test-first-processes`' archive.
 pub(crate) const PARTITION_HELLO: Program = Program {
-    package: "ferrix-partition-hello",
+    package: "xaqu-partition-hello",
     binary: "partition-hello",
     directory: DIRECTORY,
 };
@@ -307,7 +307,7 @@ pub(crate) const PARTITION_HELLO: Program = Program {
 /// Not in [`PROGRAMS`]: its crates take the kernel's flags, and no other image
 /// carries it.
 pub(crate) const LINUXD: Program = Program {
-    package: "ferrix-linuxd",
+    package: "xaqu-linuxd",
     binary: "linuxd",
     directory: DIRECTORY,
 };
@@ -338,7 +338,7 @@ pub(crate) fn build_one(
 }
 
 /// Replace the virtio-net driver in `natives` with one built fault-armed
-/// (`FERRIX_NET_FAULT`): a frame it sends holding its marker makes it corrupt
+/// (`XAQU_NET_FAULT`): a frame it sends holding its marker makes it corrupt
 /// its own ring, so that the kernel ends the ring under a live driver, as a
 /// torn index once did. `test-net`'s last program asks for that, mid-transfer,
 /// and requires the driver to be started again and the transfer to finish
@@ -360,7 +360,7 @@ pub(crate) fn arm_net_fault(natives: &mut [Built], arch: Arch, release: bool) ->
         program.package,
         program.binary,
         &target,
-        &[("FERRIX_NET_FAULT", "armed")],
+        &[("XAQU_NET_FAULT", "armed")],
     )?;
     let bytes = std::fs::read(&path)
         .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))?;
@@ -379,7 +379,7 @@ pub(crate) fn arm_net_fault(natives: &mut [Built], arch: Arch, release: bool) ->
 
 /// Refuse a `net` that carries [`arm_net_fault`]'s fault: every image but
 /// `test-net`'s gets this build, and a driver whose network any sender can
-/// take down must not reach one -- through a `FERRIX_NET_FAULT` left in the
+/// take down must not reach one -- through a `XAQU_NET_FAULT` left in the
 /// environment, say. An unarmed build compiles the marker out entirely.
 ///
 /// # Errors
@@ -389,7 +389,7 @@ fn refuse_armed(binary: &str, bytes: &[u8]) -> Result<()> {
     let marker = crate::net::FAULT_MARKER.as_bytes();
     if binary == "net" && bytes.windows(marker.len()).any(|window| window == marker) {
         return Err(Error::new(
-            "net was built fault-armed (FERRIX_NET_FAULT is set?): only test-net's images \
+            "net was built fault-armed (XAQU_NET_FAULT is set?): only test-net's images \
              may carry that driver",
         ));
     }
@@ -401,14 +401,14 @@ fn refuse_armed(binary: &str, bytes: &[u8]) -> Result<()> {
 /// test's images carry it, beside a `devmgr` built with its table row
 /// ([`TEST_DEVMGR`]), which [`refuse_test_driver`] holds.
 pub(crate) const TEST_DRIVER: Program = Program {
-    package: "ferrix-test-seconds-driver",
+    package: "xaqu-test-seconds-driver",
     binary: "testseconds",
     directory: DRIVERS,
 };
 
 /// The variable that compiles `test-driver-model`'s row into `devmgr`'s
 /// table of generic nodes' drivers, and its value.
-pub(crate) const TEST_DEVMGR: (&str, &str) = ("FERRIX_DEVMGR_TEST_DRIVER", "on");
+pub(crate) const TEST_DEVMGR: (&str, &str) = ("XAQU_DEVMGR_TEST_DRIVER", "on");
 
 /// Set by `test-driver-model` alone: the one run whose images may carry
 /// [`TEST_DRIVER`].
@@ -556,7 +556,7 @@ pub(crate) fn verify(arch: Arch, image: &[u8]) -> std::result::Result<(), String
     Ok(())
 }
 
-/// `ferrix-process-builder` maps an executable page and never copies it
+/// `xaqu-process-builder` maps an executable page and never copies it
 /// (`docs/microkernel/K15.md`, ledger 5726 (2)), so every executable page must
 /// be one mapping can show: the segment's offset and address agree within a page,
 /// its memory ends with its file contents, and no other segment shares its pages.

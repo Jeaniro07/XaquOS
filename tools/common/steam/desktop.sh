@@ -1,5 +1,5 @@
 # Steam on the `cargo xtask run-compositor --everything` desktop
-# (docs/STEAM.md): started by hyprix's exec-once -- as root, or as ferrix
+# (docs/STEAM.md): started by hyprix's exec-once -- as root, or as xaqu
 # where sessiond starts the session -- and again by fuzzel's Steam entry. The desktop's own
 # script starts yserver on :0 and the network's lease; this waits for the
 # X server, gives the volume's home and Steam's tree to uid 1000, and runs
@@ -14,7 +14,7 @@ if [ ! -S /tmp/.X11-unix/X0 ]; then
     echo "steam-desktop: no X server on :0 after ${waited}s; Steam is not started" | tee /tmp/steam.log
     exit 1
 fi
-# A desktop whose session runs as ferrix (sessiond) starts this as ferrix,
+# A desktop whose session runs as xaqu (sessiond) starts this as xaqu,
 # and init's data-home.service has already given the volume's home and
 # Steam's tree to it: the client runs as it is.
 if [ "$(id -u)" != 0 ]; then
@@ -27,4 +27,4 @@ fi
 if [ "$(stat -c %u /data/steam)" != 1000 ] || [ "$(stat -c %u /data/home)" != 1000 ]; then
     chown -R 1000:1000 /data/home /data/steam
 fi
-su -s /bin/sh ferrix -c '/bin/busybox sh /steam/client.sh' 2>&1 | /bin/lode cat -t steam --tee /tmp/steam.log
+su -s /bin/sh xaqu -c '/bin/busybox sh /steam/client.sh' 2>&1 | /bin/lode cat -t steam --tee /tmp/steam.log

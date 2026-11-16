@@ -1,5 +1,5 @@
 # Builds nvrm, the ring-3 host of NVIDIA's resource manager
-# (docs/NVIDIA.md §4.1), statically against ferrousli, Ferrix's own C
+# (docs/NVIDIA.md §4.1), statically against ferrousli, Xaqu's own C
 # library, for x86-64, and nvrm-core, RM's core linked on its own for nvrm
 # to load from the NVIDIA volume.
 #
@@ -11,7 +11,7 @@
 # each step needs from the one before:
 #
 #  1. nvrm's objects: its entry and main (src/), NVIDIA's kept C and the
-#     glue (os/), and ferrix-nvos (os/nvos), the OS layer in Rust;
+#     glue (os/), and xaqu-nvos (os/nvos), the OS layer in Rust;
 #  2. core-calls.S, nvrm's stubs for every function of the core its
 #     objects call, each a jump through a table core.c fills at load;
 #  3. nvrm.unpinned, linked with a build-id and a zeroed .nvrm_core_sha256;
@@ -29,11 +29,11 @@
 # keep the machine up while nvrm runs. Every program links against crt-less
 # ferrousli and libgcc, and nothing from the host's C library.
 
-OUT    ?= $(HOME)/.local/share/ferrix/target-nvidia/nvrm
+OUT    ?= $(HOME)/.local/share/xaqu/target-nvidia/nvrm
 CC     ?= gcc
 LD     ?= ld
 NVRM   := $(CURDIR)
-NVIDIA ?= $(HOME)/.local/share/ferrix/nvidia/580.173.02
+NVIDIA ?= $(HOME)/.local/share/xaqu/nvidia/580.173.02
 NVSRC  := $(NVIDIA)/src
 RM_OBJ := $(NVIDIA)/objects/nv-kernel.o
 KMS_OBJ := $(NVIDIA)/objects/nv-modeset-kernel.o
@@ -43,7 +43,7 @@ LINK   := python3 $(NVRM)/core/core-link.py
 FERROUSLI        := $(abspath $(NVRM)/../../ferrousli)
 FERROUSLI_TARGET ?= $(OUT)/ferrousli
 FERROUSLI_LIB    := $(FERROUSLI_TARGET)/release/libferrousli.a
-NVOS_LIB         := $(OUT)/nvos/release/libferrix_nvos.a
+NVOS_LIB         := $(OUT)/nvos/release/libxaqu_nvos.a
 
 # The largest nvrm the kernel's driver read takes: one heap block of
 # 4 MiB, less half a mebibyte of margin (docs/NVIDIA.md §4.1, "The core").
@@ -61,7 +61,7 @@ START_CFLAGS := $(filter-out -fstack-protector-strong,$(CFLAGS)) -fno-stack-prot
 # glue does, but not as Linux: with __linux__ undefined, nv.h and its
 # headers take their portable branch and never reach conftest.h. They
 # declare the C library calls they make themselves (os/include/
-# nv-ferrix.h), so no libc header is read.
+# nv-xaqu.h), so no libc header is read.
 OS_CFLAGS := -std=gnu11 -O2 -g -ffreestanding -nostdinc \
 	-isystem $(shell $(CC) -print-file-name=include) \
 	-I$(NVRM)/os/include -I$(NVSRC)/kernel-open/common/inc -I$(NVSRC)/kernel-open/nvidia \
@@ -144,7 +144,7 @@ $(OUT)/core-calls.o: $(OUT)/core-calls.S
 
 # Steps 3 to 5, for each program: nvrm, started by devmgr from start.c's
 # native entry, and nvrm-link-test, an ordinary program (crt1.o) that runs
-# RM's no-GPU path on the host and on Ferrix. Each has its own core,
+# RM's no-GPU path on the host and on Xaqu. Each has its own core,
 # linked against its own addresses, so each core runs under one program.
 #
 #   $(call program,NAME,OBJECTS,CRT1)   CRT1 non-empty links ferrousli's crt1.o

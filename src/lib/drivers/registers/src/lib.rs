@@ -1,6 +1,6 @@
 //! Typed registers, without a kernel: the access types, values and value
-//! encodings `ferrix-driver-derive`'s `register_map!` and `bitfields!`
-//! generate code against. `ferrix-driver` re-exports all of it and adds the
+//! encodings `xaqu-driver-derive`'s `register_map!` and `bitfields!`
+//! generate code against. `xaqu-driver` re-exports all of it and adds the
 //! mapping (`Registers`); this crate holds what can be tested on the host.
 //!
 //! A register is [`ReadWrite`], [`ReadOnly`] or [`WriteOnly`], so a write to a
@@ -17,9 +17,9 @@
 //! cannot hold fails the build:
 //!
 //! ```compile_fail
-//! extern crate ferrix_registers as ferrix_driver;
+//! extern crate xaqu_registers as xaqu_driver;
 //!
-//! ferrix_driver_derive::bitfields! {
+//! xaqu_driver_derive::bitfields! {
 //!     pub Configuration1 {
 //!         frame_size: bits 0..=4 as OffsetByOne<4, 32>,
 //!     }
@@ -35,9 +35,9 @@
 //! while the same with a value the field holds builds:
 //!
 //! ```
-//! extern crate ferrix_registers as ferrix_driver;
+//! extern crate xaqu_registers as xaqu_driver;
 //!
-//! ferrix_driver_derive::bitfields! {
+//! xaqu_driver_derive::bitfields! {
 //!     pub Configuration1 {
 //!         frame_size: bits 0..=4 as OffsetByOne<4, 32>,
 //!     }
@@ -56,7 +56,7 @@
 //!
 //! Hand-written rather than `tock-registers`: the design page names its own
 //! access types and value encodings, full words throughout, and the macros
-//! are a page of `ferrix-driver-derive`; a dependency would bring its own
+//! are a page of `xaqu-driver-derive`; a dependency would bring its own
 //! names (`ReadWrite<u32, Register::Register>`, `register_bitfields!`) for
 //! the same things.
 
@@ -64,7 +64,7 @@
 
 // The derive's macros are what the doctests and tests exercise.
 #[cfg(test)]
-use ferrix_driver_derive as _;
+use xaqu_driver_derive as _;
 
 use core::marker::PhantomData;
 
@@ -162,7 +162,7 @@ pub trait Access {
     ///
     /// (DEVICE) `address` is mapped device memory, aligned for the register,
     /// for as long as the result lives: `register_map!` alone calls it, on a
-    /// mapping `ferrix_driver::Registers` holds.
+    /// mapping `xaqu_driver::Registers` holds.
     unsafe fn at(address: usize) -> Self;
 }
 

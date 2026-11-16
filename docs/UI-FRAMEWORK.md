@@ -1,6 +1,6 @@
 # tole, the UI framework
 
-Ferrix's own framework for the windows its apps draw: a declarative tree of
+Xaqu's own framework for the windows its apps draw: a declarative tree of
 items with typed properties and bindings, written in a QML-like markup and
 compiled into Rust when the app is built. It is modelled on Qt Quick and QML
 and draws through the desktop's own client libraries, `compositor-toolkit`
@@ -20,7 +20,7 @@ model; the customer answered the design's open questions the same day
 
 ## 1. Why, and what it replaces
 
-Every graphical program Ferrix writes itself draws by hand today. The lode
+Every graphical program Xaqu writes itself draws by hand today. The lode
 viewer (an app, `docs/APPS.md`) is the largest: 6,400 lines, of which
 about 2,700 are drawing -- `draw.rs`'s `Canvas` (rounded boxes, outlines,
 dashes, hatching, text in two faces), `ui/mod.rs`, `ui/logs.rs` and
@@ -99,7 +99,7 @@ interpreter -- and gives them a retained tree to say all of this once.
   `compositor-toolkit`, and headless (PNG) for tests.
 * **Text documents, rich text beyond `compositor-text`'s Pango subset, and
   bidirectional editing.** The viewer and Settings need neither yet.
-* **Translations (`qsTr`).** Later, when Ferrix has a second language.
+* **Translations (`qsTr`).** Later, when Xaqu has a second language.
 
 ### 2.3 The theme
 
@@ -562,7 +562,7 @@ unchanged and still host-tested.
                                        │                     ├ CPU: tiny-skia + compositor-text
                                        │                     └ GPU: Vulkan through ash (§4.6)
                                        │   window host
-                                       └── ├ Wayland: compositor-toolkit (Ferrix, any Linux desktop)
+                                       └── ├ Wayland: compositor-toolkit (Xaqu, any Linux desktop)
                                            └ headless: a PNG, for tests and --render
 ```
 
@@ -677,7 +677,7 @@ renderer later implements the same trait over the compositor's render path
 The customer asked for a GPU renderer on Vulkan, presenting natively on
 Wayland, on an existing permissively licensed crate rather than one
 written from scratch where one fits. What it has to run on: Mesa's anv on
-the N150 (Ferrix's ring-3 Intel driver), lavapipe in QEMU, and any
+the N150 (Xaqu's ring-3 Intel driver), lavapipe in QEMU, and any
 Linux desktop's driver; what it has to fit: the trait above, the damage
 of §4.4, `compositor-text`'s glyphs (text must look as the CPU draws it),
 and `compositor-toolkit`, which speaks Wayland in pure Rust with no
@@ -758,7 +758,7 @@ its own -- NVIDIA's driver takes over a second to start the first time
 -- and the window draws on the CPU until it is ready. A program built without the `gpu` feature has no GPU code at all;
 with it, a missing library, no device, or a device that fails
 mid-frame each draw on the CPU from then on, said once on standard
-error (`tole: drawing on the CPU: no Vulkan library: ...`). On Ferrix
+error (`tole: drawing on the CPU: no Vulkan library: ...`). On Xaqu
 every client is a static program, which cannot load a library: Mesa is
 reached by a glibc build run from the yserver volume, as yserver itself
 runs (`test-compositor --boot tole-demo-gpu`).
@@ -779,7 +779,7 @@ Keys go to the item with active focus and bubble to its ancestors through
 Every control sets `Accessible.role`, `name` and `description`, and the
 tree keeps them now, so nothing in the controls changes when an exporter
 is written. The exporter (AT-SPI over D-Bus, on the tree's `dbus` crate)
-comes when Ferrix has a screen reader to talk to.
+comes when Xaqu has a screen reader to talk to.
 
 ### 4.9 DPI and scaling
 
@@ -795,7 +795,7 @@ takes a real-valued scale.
 * **Wayland, through `compositor-toolkit`:** a toplevel (and popups for
   menus and combo boxes that leave the window), the seat, the cursor, the
   clipboard, timers for animations and Live, the frame callback as the
-  animation clock. The same code runs on Ferrix under hyprix and on a
+  animation clock. The same code runs on Xaqu under hyprix and on a
   Linux development host on any Wayland desktop (`WAYLAND_DISPLAY`): the
   toolkit is pure Rust over the socket, no libwayland.
 * **Headless:** the tree laid out and painted at a given size and scale
@@ -824,7 +824,7 @@ the lock file.
 
 ### 4.13 Where it lives
 
-tole is a repository of its own, https://github.com/ferrix-os/tole
+tole is a repository of its own, https://github.com/xaqu-os/tole
 (customer, 2026-10-23), and a component of this tree (`components.toml`),
 checked out at `src/user/system/linux/tole`: a workspace of the crates
 `tole` (runtime) and `tole-compiler` (compiler and the `Fx` and
@@ -857,7 +857,7 @@ component (`docs/CONVENTIONS.md`).
   a small stated antialiasing tolerance (customer, 2026-10-23) -- each
   channel within a few levels, and only on pixels that an edge or a glyph
   partly covers. Settings the same.
-* **On Ferrix:** the viewer's existing `test-compositor` row starts it
+* **On Xaqu:** the viewer's existing `test-compositor` row starts it
   under hyprix and screenshots it; after the port that row runs the
   framework's Wayland host end to end.
 
@@ -867,11 +867,11 @@ Short, typeable, a word, like lode. Checked as lode was
 (`docs/backlog/DECISIONS.md`, 2026-10-23): crates.io, Arch, the AUR,
 Homebrew, Ubuntu, npm, PyPI, GitHub's best-known repositories, commands on
 the development host, and this tree. Every short word is taken on
-crates.io by something, so the crates would be `ferrix-<name>` as lode's
+crates.io by something, so the crates would be `xaqu-<name>` as lode's
 is; what matters is whether a well-known project, a command or another UI
 library already answers to it.
 
-| Name | Meaning | crates.io | Distributions, commands | npm / PyPI | GitHub, best known | Ferrix |
+| Name | Meaning | crates.io | Distributions, commands | npm / PyPI | GitHub, best known | Xaqu |
 |---|---|---|---|---|---|---|
 | **tole** | Painted sheet metal (French *tôle*): the painted surface over iron | free | none (Ubuntu, Arch, AUR, Homebrew); no command | free / free | nothing named tole (look-alikes: tolerant-php-parser) | unused |
 | **vein** | Where the ore runs: lode's sibling, the way you see into what lode keeps | `vein`, a RubyGems proxy, 353 downloads | none; no command | taken, small / taken, small | veinmind-tools (1.6k ★, container security), vector-vein | only in lode's own name note |
@@ -919,7 +919,7 @@ more.
   4. **One style:** Settings and the desktop clients take tole's
      `Fx.Controls` look; theme tokens give light and dark and the accents.
 * **U1 built** (2026-10-23), landed as 91eb77d24 in the compositor's
-  workspace, then moved with its history to ferrix-os/tole (§4.13), pinned
+  workspace, then moved with its history to xaqu-os/tole (§4.13), pinned
   here. The
   property cells and bindings with dependency tracking (lazy: a change
   marks, a read evaluates; dropped dependencies forgotten; loops found and
@@ -931,7 +931,7 @@ more.
   stops at a clip without a layer. 15 host tests.
 * The lode viewer, the first consumer, is being landed by another session;
   its port (U8) starts once it is on `develop`.
-* **U2 built** (2026-10-23): `tole-compiler`, in ferrix-os/tole. `.tole`
+* **U2 built** (2026-10-23): `tole-compiler`, in xaqu-os/tole. `.tole`
   files lexed, parsed, gathered and type-checked, then written out as one
   Rust module for `tole::include_ui!()` from a `build.rs`; errors with
   file, line and column. It knows `struct`, `enum`, components on a kind
@@ -941,7 +941,7 @@ more.
   once, anything that reads a property bound. Signals and handlers come
   with input (U3). Six host tests; and the `tole-examples` crate builds
   real `.tole` programs and draws them.
-* **Demos** (the customer's ask, 2026-10-23): `examples/` in ferrix-os/tole,
+* **Demos** (the customer's ask, 2026-10-23): `examples/` in xaqu-os/tole,
   each `.tole` program drawn headless at scale 2 into
   `docs/screenshots/`, shown in its README beside its markup; a test fails
   when a picture is stale. hello and layouts so far; controls, a 100,000-row
@@ -1072,7 +1072,7 @@ more.
   `MenuItem`, `MenuSeparator`, `ScrollBar` and `FileDialog`, an in-app
   modal chooser. Departures: popups stay inside the window rather than
   in `xdg_popup` surfaces (the plan's first cut); the file chooser is
-  in-app, since Ferrix has no XDG portal; a `ScrollBar` is bound to what
+  in-app, since Xaqu has no XDG portal; a `ScrollBar` is bound to what
   it scrolls by its user and says `moved`, rather than Qt's attached
   `ScrollBar.vertical`; a `SplitView`'s `orientation` is chosen once,
   when it is made. 77 host tests.
@@ -1103,7 +1103,7 @@ more.
   generated markup 437 KiB: over §4.11's 400 KB, the generated code's
   closures the larger part); whole frames of 100,000 records within a
   millisecond of before, and a window draws only the damage. The
-  viewer's `test-compositor` rows run tole's window on Ferrix. What tole
+  viewer's `test-compositor` rows run tole's window on Xaqu. What tole
   took from the port:
   1. **Painters draw what the viewer drew**: discs (`Path::circle`, as
      tiny-skia's circle), polygons, polylines with flat ends, mitres and
@@ -1140,7 +1140,7 @@ more.
 * **After U8** (2026-10-24), the customer's items for the viewer, on
   tole: errors and warnings drawn as blocks in the table's strip and the
   swim lanes, not a ladder of dashes; the record pane naming its fields
-  from lode's own table (`ferrix_lode_core::fields`), grouped, whole,
+  from lode's own table (`xaqu_lode_core::fields`), grouped, whole,
   each copied with a press; a Crashes page, crashes grouped by program,
   place and signal, with the screenshot lode kept and the log around;
   saved queries named, renamed, deleted with Undo, moved, and kept in
@@ -1148,7 +1148,7 @@ more.
   picture scaled into a rectangle), the ComboBox's chevron and the
   CheckBox's tick drawn as shapes (IBM Plex has neither glyph), and the
   Theme's `accentInv`. `test-compositor --boot tole-demo` boots tole's
-  controls demo in a window on Ferrix and checks the screen shows it.
+  controls demo in a window on Xaqu and checks the screen shows it.
 * **The file chooser** (2026-10-24, the customer's "Key File Dialog"
   design): `FileDialog` rewritten as the chooser every tole program gets
   -- list or grid with thumbnails, Up, breadcrumbs, places, a search in
@@ -1176,7 +1176,7 @@ more.
   light) of a home made at run time with its clock fixed -- no file
   shaped like a private key is kept in the tree. 90 host tests.
 * **shelf** (2026-10-24), the file manager after the customer's "File
-  Explorer v2" design, the second app on tole (ferrix-os/apps `shelf/`):
+  Explorer v2" design, the second app on tole (xaqu-os/apps `shelf/`):
   tabs, two panes, folder sizes, archives read in place, tags, Quick
   access, filter chips, bulk rename and the freedesktop.org trash, every
   change asked first. tole gained `Ui::modifiers` (Shift and Control at a
@@ -1233,7 +1233,7 @@ more.
   `set-hostname`, Time zone `set-timezone`, Remote login's switch
   `service-enable-persistent sshd.service ... now`; the person confirms in
   the compositor's trusted prompt (§12), so the window takes no password.
-  The pages read `/etc/ferrix/image-manifest` and show their values
+  The pages read `/etc/xaqu/image-manifest` and show their values
   read-only, "Fixed by this build (profile X)", when the build fixes them
   or does not say. The date and time, Users, Power and Boot options keep
   "Not kept yet" (`set-time` is parked; B4, B5 wait for design reviews).
@@ -1261,7 +1261,7 @@ more.
   whole GPU frame exactly; seven host tests in tole (the atlas, the kept
   frame, the fallback, the shaders' SPIR-V against their GLSL) and one
   in the demos. `test-compositor --boot tole-demo-gpu` runs the controls
-  demo on Ferrix under hyprix drawn by lavapipe, from a glibc build run on
+  demo on Xaqu under hyprix drawn by lavapipe, from a glibc build run on
   the yserver volume's loader and Mesa, through the same keys as
   `tole-demo`; `tole-demo` now asks its static build for the GPU and
   requires that it says why not and draws on the CPU. The window also

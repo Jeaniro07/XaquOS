@@ -656,7 +656,7 @@ fn a_capset_command_takes_only_its_own_response() {
 fn a_context_is_created_by_a_command_that_names_it_in_its_header() {
     let command = Command::CtxCreate {
         capset: 2,
-        name: "ferrix",
+        name: "xaqu",
     };
     let mut out = vec![0xAAu8; 256];
     let len = command
@@ -673,7 +673,7 @@ fn a_context_is_created_by_a_command_that_names_it_in_its_header() {
     assert_eq!(u32_at(&out, 16), 7, "the header's ctx_id");
     assert_eq!(u32_at(&out, 24), 6, "nlen, the name's length");
     assert_eq!(u32_at(&out, 28), 2, "context_init's capset");
-    assert_eq!(&out[32..38], b"ferrix");
+    assert_eq!(&out[32..38], b"xaqu");
     assert!(
         out[38..24 + 8 + 64].iter().all(|&byte| byte == 0),
         "the rest of debug_name is written, not left"

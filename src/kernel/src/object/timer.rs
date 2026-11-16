@@ -58,8 +58,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_native_abi::signals::Signals;
-use ferrix_sync::IrqSpinLock;
+use xaqu_native_abi::signals::Signals;
+use xaqu_sync::IrqSpinLock;
 
 use crate::arch;
 use crate::fallible::{self, AllocError};
@@ -167,7 +167,7 @@ pub struct Timer {
         dead_code,
         reason = "AUDIT: held for its drop, which uncharges the job"
     )]
-    heap: ferrix_kmem::Charge,
+    heap: xaqu_kmem::Charge,
 }
 
 /// Why a timer call was refused.
@@ -188,14 +188,14 @@ impl From<AllocError> for TimerError {
 /// memory (`L.object.213`).
 #[doc(hidden)]
 pub fn heap_bytes() -> usize {
-    ferrix_kmem::arc_footprint::<TimerCore>()
-        .saturating_add(ferrix_kmem::arc_footprint::<Timer>())
-        .saturating_add(ferrix_kmem::boxed_footprint::<ferrix_sched::Node<sched::Due>>())
-        .saturating_add(ferrix_kmem::buffer_footprint::<Observer>(TIMER_OBSERVERS))
-        .saturating_add(ferrix_kmem::buffer_footprint::<(Observer, Signals)>(
+    xaqu_kmem::arc_footprint::<TimerCore>()
+        .saturating_add(xaqu_kmem::arc_footprint::<Timer>())
+        .saturating_add(xaqu_kmem::boxed_footprint::<xaqu_sched::Node<sched::Due>>())
+        .saturating_add(xaqu_kmem::buffer_footprint::<Observer>(TIMER_OBSERVERS))
+        .saturating_add(xaqu_kmem::buffer_footprint::<(Observer, Signals)>(
             TIMER_OBSERVERS,
         ))
-        .saturating_add(ferrix_kmem::buffer_footprint::<Arc<Port>>(TIMER_OBSERVERS))
+        .saturating_add(xaqu_kmem::buffer_footprint::<Arc<Port>>(TIMER_OBSERVERS))
 }
 
 impl Timer {
@@ -209,7 +209,7 @@ impl Timer {
     /// nothing made and nothing charged.
     pub fn new(clock: Clock) -> Result<Arc<Timer>, TimerError> {
         let object = Charge::running(Resource::Objects, 1).map_err(|_| TimerError::NoMemory)?;
-        let heap = ferrix_kmem::Charge::bytes(heap_bytes()).map_err(|_| TimerError::NoMemory)?;
+        let heap = xaqu_kmem::Charge::bytes(heap_bytes()).map_err(|_| TimerError::NoMemory)?;
         let slot = SleepSlot::new()?;
         let observers = Observers::with_room(TIMER_OBSERVERS)?;
         let mut spent = Vec::new();
@@ -320,7 +320,7 @@ impl TimerCore {
 
     /// Hand back the ports kept, with the lock let go, for the caller to
     /// drop in task context.
-    fn spend(&self, mut state: ferrix_sync::IrqSpinLockGuard<'_, State, arch::Irq>) -> Spent {
+    fn spend(&self, mut state: xaqu_sync::IrqSpinLockGuard<'_, State, arch::Irq>) -> Spent {
         let mut kept = Spent::default();
         for (place, port) in kept.0.iter_mut().zip(state.spent.drain(..)) {
             *place = Some(port);
@@ -555,7 +555,7 @@ impl Drop for TimerCore {
 /// self-checks, and the boundary gate keeps product code from naming it (the K10
 /// delta review, ledger 2919, (1), 6137): the product never takes an arm off its
 /// sleeper set without its lock.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub fn take_arm(timer: &TimerCore) -> Option<(Armed, SleepSlot)> {
     sched::unfile_timer(timer.filed_cpu.load(Ordering::Relaxed), timer)

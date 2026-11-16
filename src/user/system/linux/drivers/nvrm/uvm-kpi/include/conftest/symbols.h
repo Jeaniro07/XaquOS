@@ -1,4 +1,4 @@
-/* uvm-kpi: what Ferrix's Linux-compatible layer provides (see ferrix_kpi.h). */
+/* uvm-kpi: what Xaqu's Linux-compatible layer provides (see xaqu_kpi.h). */
 #define NV_IS_EXPORT_SYMBOL_PRESENT_timer_delete_sync 1
 #define NV_IS_EXPORT_SYMBOL_PRESENT_swiotlb_map_sg_attrs 0
 #define NV_IS_EXPORT_SYMBOL_PRESENT_swiotlb_dma_ops 0

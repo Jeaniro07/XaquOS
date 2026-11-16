@@ -21,28 +21,28 @@
 //!   ([`Action::Refuse`]); init forwards the client's end as CONNECT, or
 //!   answers REFUSED.
 //!
-//! [`directory`]: ferrix_native_abi::directory
-//! [`Action::Route`]: ferrix_svc::event::Action::Route
-//! [`Action::Refuse`]: ferrix_svc::event::Action::Refuse
+//! [`directory`]: xaqu_native_abi::directory
+//! [`Action::Route`]: xaqu_svc::event::Action::Route
+//! [`Action::Refuse`]: xaqu_svc::event::Action::Refuse
 
 use std::collections::BTreeMap;
 use std::os::fd::{BorrowedFd, RawFd};
 
-use ferrix_native::channel::{self, Channel, ReadError};
-use ferrix_native::job::{self, Job};
-use ferrix_native::pending::{self, Process};
-use ferrix_native::port::{self, Port};
-use ferrix_native::{
+use xaqu_native::channel::{self, Channel, ReadError};
+use xaqu_native::job::{self, Job};
+use xaqu_native::pending::{self, Process};
+use xaqu_native::port::{self, Port};
+use xaqu_native::{
     Deadline, Error, Handle, Object, OwnedHandle, Requested, Rights, Signals, vmo,
 };
-use ferrix_native_abi::bootstrap::{
+use xaqu_native_abi::bootstrap::{
     AUDIT_MAGIC, CPU_SERVICE_MAGIC, DEVMGR_STARTER_MAGIC, MEMORY_SCRUB_MAGIC, ROOT_MAGIC,
     ROOT_SWITCHED, init_hello_version, read_after_hello,
 };
-use ferrix_native_abi::directory::{self as wire, Kind, MAX_MESSAGE, Message};
-use ferrix_native_abi::types::{PACKET_SIGNAL, PROCESS_EXITED, PROCESS_KILLED};
-use ferrix_svc::event::{Event, Exit, Name, Pid, Token, UnitId};
-use ferrix_svc::value::Signal;
+use xaqu_native_abi::directory::{self as wire, Kind, MAX_MESSAGE, Message};
+use xaqu_native_abi::types::{PACKET_SIGNAL, PROCESS_EXITED, PROCESS_KILLED};
+use xaqu_svc::event::{Event, Exit, Name, Pid, Token, UnitId};
+use xaqu_svc::value::Signal;
 
 use crate::spawn::Ids;
 use crate::sys::{self, Forked, Native};
@@ -66,7 +66,7 @@ struct End {
 /// The directory's state.
 #[derive(Debug)]
 pub(crate) struct Directory {
-    /// Pid 1's own channel: the hello, then under `ferrix.devmgr=init`
+    /// Pid 1's own channel: the hello, then under `xaqu.devmgr=init`
     /// devmgr's starter and, later, where `/` is (§7.3, L12).
     own: Option<Channel<Native>>,
     /// The starter the kernel gave pid 1, with which it asks the kernel to
@@ -545,14 +545,14 @@ fn make_native(
         .map_err(|error| format!("vmo_write: {error:?}"))?;
     let name = program.rsplit('/').next().unwrap_or(program);
     let name = name
-        .get(..name.len().min(ferrix_native_abi::nr::PROCESS_NAME_MAX))
+        .get(..name.len().min(xaqu_native_abi::nr::PROCESS_NAME_MAX))
         .unwrap_or(name);
-    let elf = ferrix_process_builder::image(elf).map_err(|error| format!("image: {error:?}"))?;
-    let built = ferrix_process_builder::build(
+    let elf = xaqu_process_builder::image(elf).map_err(|error| format!("image: {error:?}"))?;
+    let built = xaqu_process_builder::build(
         &job,
         &elf,
         name,
-        ferrix_process_builder::machine_named(std::env::consts::ARCH),
+        xaqu_process_builder::machine_named(std::env::consts::ARCH),
     )
     .map_err(|error| format!("build: {error:?}"))?;
     built

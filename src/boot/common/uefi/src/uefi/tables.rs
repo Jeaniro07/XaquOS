@@ -36,7 +36,7 @@ impl AllocateType {
 /// standard types firmware reports back are matched numerically in
 /// `load::describe`, which is the one place they are read.
 ///
-/// The `FERRIX_*` values are in the range the specification reserves for an OS
+/// The `XAQU_*` values are in the range the specification reserves for an OS
 /// loader (`0x8000_0000` and up). Using them means firmware's own memory map
 /// tells the kernel which allocations are ours and what each one is for — so
 /// the kernel does not have to be told separately, and the two cannot disagree.
@@ -49,26 +49,26 @@ impl MemoryType {
     /// the memory map buffer.
     pub(crate) const LOADER_DATA: MemoryType = MemoryType(2);
     /// The kernel image.
-    pub(crate) const FERRIX_KERNEL: MemoryType = MemoryType(0x8000_0000);
+    pub(crate) const XAQU_KERNEL: MemoryType = MemoryType(0x8000_0000);
     /// Page tables the loader built, which are live when the kernel starts.
-    pub(crate) const FERRIX_PAGE_TABLES: MemoryType = MemoryType(0x8000_0001);
+    pub(crate) const XAQU_PAGE_TABLES: MemoryType = MemoryType(0x8000_0001);
     /// The stack the kernel is entered on.
-    pub(crate) const FERRIX_BOOT_STACK: MemoryType = MemoryType(0x8000_0002);
+    pub(crate) const XAQU_BOOT_STACK: MemoryType = MemoryType(0x8000_0002);
     /// The boot info structure and the memory map array inside it.
-    pub(crate) const FERRIX_BOOT_INFO: MemoryType = MemoryType(0x8000_0003);
+    pub(crate) const XAQU_BOOT_INFO: MemoryType = MemoryType(0x8000_0003);
     /// The initial ramdisk, when the image carries one.
-    pub(crate) const FERRIX_INITRD: MemoryType = MemoryType(0x8000_0004);
+    pub(crate) const XAQU_INITRD: MemoryType = MemoryType(0x8000_0004);
     /// The loader's copy of the device tree, which the kernel keeps for good.
-    pub(crate) const FERRIX_DEVICE_TREE: MemoryType = MemoryType(0x8000_0005);
+    pub(crate) const XAQU_DEVICE_TREE: MemoryType = MemoryType(0x8000_0005);
     /// The region the kernel keeps its log in across a reset, at the address
     /// `pstore::choose` gives (`docs/POSTMORTEM.md` §3.2).
-    pub(crate) const FERRIX_PSTORE: MemoryType = MemoryType(0x8000_0006);
+    pub(crate) const XAQU_PSTORE: MemoryType = MemoryType(0x8000_0006);
     /// The loader's copy of firmware's SMBIOS tables, which the kernel keeps
     /// for good.
-    pub(crate) const FERRIX_SMBIOS: MemoryType = MemoryType(0x8000_0007);
+    pub(crate) const XAQU_SMBIOS: MemoryType = MemoryType(0x8000_0007);
     /// A page the loader kept out of use as bad (`docs/MACHINE-CHECK-RESTART.md`
     /// §2.5): the boot before retired it, or a machine-check bank names it.
-    pub(crate) const FERRIX_BAD_FRAME: MemoryType = MemoryType(0x8000_0008);
+    pub(crate) const XAQU_BAD_FRAME: MemoryType = MemoryType(0x8000_0008);
 }
 
 /// One entry of the UEFI memory map.

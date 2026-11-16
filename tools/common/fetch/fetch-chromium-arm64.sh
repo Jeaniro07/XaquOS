@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetch Debian's Chromium for arm64 and every library it loads, and put them
-# on a btrfs volume: the disk Chromium runs from on an AArch64 Ferrix -- the
+# on a btrfs volume: the disk Chromium runs from on an AArch64 Xaqu -- the
 # Pixel 7's VM above all (docs/CHROME.md §11).
 #
 # Why not Google's build: Chrome for Testing publishes linux64 alone, and
@@ -11,19 +11,19 @@
 # The package list is Chromium's dependency closure as
 # `tools/common/gen/debian-closure.py --arch arm64 chromium --skip ...` resolved it
 # from trixie, trixie-updates and trixie-security on 2026-09-26, leaving out
-# what no Ferrix volume runs -- debconf, systemd and D-Bus's daemons, GTK
+# what no Xaqu volume runs -- debconf, systemd and D-Bus's daemons, GTK
 # (which Chromium only `dlopen`s, for its file dialog and theme) and Mesa's GL
 # drivers and LLVM (Chromium draws in software here, with `--disable-gpu`).
 # Every download is pinned by the SHA-256 its index gave. After unpacking,
 # every library each ELF file on the volume needs is looked for on it, so a
-# library the closure left out fails here rather than on Ferrix.
+# library the closure left out fails here rather than on Xaqu.
 #
 # The volume is a Debian-shaped tree at its root -- `usr/lib`,
-# `usr/lib/aarch64-linux-gnu`, Chromium in `usr/lib/chromium` -- which Ferrix
+# `usr/lib/aarch64-linux-gnu`, Chromium in `usr/lib/chromium` -- which Xaqu
 # mounts at `/data`; the image links the directories glibc names into it.
 #
-# Writes $FERRIX_CHROMIUM_VOLUME/chromium.img (default
-# ~/.local/share/ferrix/chromium-arm64/chromium.img). Needs curl, sha256sum,
+# Writes $XAQU_CHROMIUM_VOLUME/chromium.img (default
+# ~/.local/share/xaqu/chromium-arm64/chromium.img). Needs curl, sha256sum,
 # dpkg-deb, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-chromium-arm64.sh
@@ -32,16 +32,16 @@ set -euo pipefail
 
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
-out=${FERRIX_CHROMIUM_VOLUME:-$HOME/.local/share/ferrix/chromium-arm64}
+out=${XAQU_CHROMIUM_VOLUME:-$HOME/.local/share/xaqu/chromium-arm64}
 # Where a pinned file comes from once the mirror has dropped it, as
 # trixie-security drops Chromium's update when the next one comes:
 # snapshot.debian.org's archive as it was the day the closure was resolved.
 # The SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_time=20260926T235959Z
-# The downloads, kept between runs; FERRIX_CHROMIUM_POOL names another
+# The downloads, kept between runs; XAQU_CHROMIUM_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_CHROMIUM_POOL:-$out/pool}
+pool=${XAQU_CHROMIUM_POOL:-$out/pool}
 
 # `<archive> <pool path> <sha256>`: main and updates come from $debian,
 # security from $security.

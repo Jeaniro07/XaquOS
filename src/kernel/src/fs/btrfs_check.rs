@@ -26,10 +26,10 @@
 
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_btrfs::crc32c;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_btrfs::crc32c;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType};
 
 use crate::fs;
 use crate::interfaces::block_ring::VIRTIO_BLK_MAJOR;
@@ -200,8 +200,8 @@ fn unhex(hex: &str) -> Result<Vec<u8>, &'static str> {
 /// through the mapping. An empty file is opened and not mapped: Linux maps
 /// none either.
 fn map_each(files: &[(Vec<u8>, u64, u32)]) -> Result<(), &'static str> {
-    use ferrix_linux_abi::nr::Syscall;
-    use ferrix_linux_abi::types::{
+    use xaqu_linux_abi::nr::Syscall;
+    use xaqu_linux_abi::types::{
         AT_FDCWD, MAP_ANONYMOUS, MAP_PRIVATE, O_RDONLY, PROT_READ, PROT_WRITE,
     };
     const CWD: u64 = AT_FDCWD as i64 as u64;

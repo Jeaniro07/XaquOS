@@ -1,15 +1,15 @@
 # Stage 23 — Arknights: Endfield  ·  *≈ 205 points as a first guess, step 5 unknown*
 
-The Windows game *Arknights: Endfield* runs on Ferrix: through Wine, drawing
+The Windows game *Arknights: Endfield* runs on Xaqu: through Wine, drawing
 with DXVK on NVIDIA's Vulkan, on the RTX 3060. Put on the roadmap by the
 customer on 2026-10-10 as the road after Steam ("update the roadmap to
 Endfield"). On that day nothing of it was built; steps 1 to 4 have begun since,
 as each step below says. A feasibility study was written the same
-day (`~/.local/share/ferrix/endfield/STUDY.md` on nazuna, research only); this
+day (`~/.local/share/xaqu/endfield/STUDY.md` on nazuna, research only); this
 page is that study's route as a stage, with each claim about the tree checked
 against `main` 557b939ed and the four places it was wrong corrected below.
 
-**Exit.** The game reaches its world past the login on Ferrix and is playable
+**Exit.** The game reaches its world past the login on Xaqu and is playable
 at 1920x1080 and 60 frames a second on the RTX 3060: step 6 below. It is a
 recorded run on the card with the customer's account, not a boot that stays
 in CI, because the game is closed, needs an account and needs the card; the
@@ -20,7 +20,7 @@ account.
 against the RTX 3060, and the game has since run elsewhere: on the customer's
 N150 box ([`docs/N150.md`](../N150.md)), on its Intel GPU's driver, with
 Endfield started from Steam and drawn by DXVK on `anv` through yserver. A
-capture of 2026-10-23 shows it windowed on Ferrix's desktop; on 2026-10-24 its
+capture of 2026-10-23 shows it windowed on Xaqu's desktop; on 2026-10-24 its
 start reached the world on 5 of 11 tries (`docs/BACKLOG.md`, fl-081), and in
 the world it renders about 25 frames a second at 720p, limited by the GPU
 (`docs/GAME-MODE.md` §2.3), or about 21 rendered and 42 shown at 1024x600 with
@@ -110,11 +110,11 @@ NVIDIA's Vulkan, and Wine's X11 driver against yserver.
 * **On glibc, not ferrousli**, to keep the C library out of the first passes.
 * **Not the Android version.** It would need binder and an Android
   userspace, a translator for Arm code, and a Mesa-shaped graphics stack;
-  none exists on Ferrix (the study's inference; no report of it was found).
+  none exists on Xaqu (the study's inference; no report of it was found).
 
 ## What it depends on
 
-* **[Stage 21](stage-21-bare-metal-gpu-ferrix.md), and what of it is not
+* **[Stage 21](stage-21-bare-metal-gpu-xaqu.md), and what of it is not
   landed.** `main` has NVIDIA's Vulkan for Chrome's WebGL (N2 to N4). A
   window of an X program drawn by the card is on branches only: `nv-next`
   (DRI3 and Present in yserver over the card, VRAM dmabufs, the zero-copy
@@ -128,15 +128,15 @@ NVIDIA's Vulkan, and Wine's X11 driver against yserver.
   85 to 94 swaps a second between stalls of about 5 s. The stall's cause is
   found: `nvrm` never delivers the semaphore-surface callback, so a
   presentation's sync fence is never signalled and ends at a 5 s deadline
-  (`~/.local/share/ferrix/steam-race/present.md`). A fix is being written
+  (`~/.local/share/xaqu/steam-race/present.md`). A fix is being written
   and is not landed. As a desktop `nv-next` stalled when its GPU clients
   started together; `nv-next-stall` came up once without that, which does
   not yet establish a fix.
 * **A Linux baseline on the same card** exists since 2026-10-10
-  (`~/.local/share/ferrix/linux-baseline/README.md`): Debian 13 with the
+  (`~/.local/share/xaqu/linux-baseline/README.md`): Debian 13 with the
   same NVIDIA 580.173.02 in a libvirt guest of the same shape (8
   processors, 16 GiB, the 3060 passed through). The same Teeworlds reads 220
-  frames a second there on software GL where Ferrix reads 83, and 2,400 on
+  frames a second there on software GL where Xaqu reads 83, and 2,400 on
   NVIDIA's GL. Step 0 uses that guest, and step 6 is judged against it.
 * **Stage 22**, for what already runs: 32-bit x86 programs (I1 to I4),
   yserver, sound through `pulsed`, the network and TLS that Steam signs in
@@ -175,7 +175,7 @@ answer can end the stage.
 
 ### Step 0: the game on plain Linux, in the same VM shape  ·  8 points
 
-No Ferrix work. The Debian guest of the baseline above, the 3060 passed
+No Xaqu work. The Debian guest of the baseline above, the 3060 passed
 through, DW-Proton, the official installer.
 
 * **E0.1** Room for it: about 110 GB for the guest's disk, on nazuna or on a
@@ -186,7 +186,7 @@ through, DW-Proton, the official installer.
   KVM guest with a passed-through card is the answer this step exists for. 1.
 * **E0.4** The same with GE-Proton and with an unpatched Wine, to know
   which of DW-Proton's patches the game cannot do without. 2.
-* **E0.5** What Ferrix will be asked: a system-call count of Wine and the
+* **E0.5** What Xaqu will be asked: a system-call count of Wine and the
   game over a session (`strace -f -c`), every call sorted into answered,
   refused and missing against `src/lib/proto/linux-abi/src/nr.rs`; the
   Vulkan extensions DXVK enables; video memory in use; and the frame rate at
@@ -195,7 +195,7 @@ through, DW-Proton, the official installer.
 **Proved by** a recorded run in which the game reaches the world past the
 login and the anti-cheat, twice. **If ACE refuses the guest, the stage stops
 after step 3**: steps 1 to 3 still serve stage 22, and steps 4 to 6 wait
-until Ferrix runs on the machine rather than in it, which is stage 21's own
+until Xaqu runs on the machine rather than in it, which is stage 21's own
 exit (an inference: nobody has reported this game under Wine in a VM either
 way).
 
@@ -205,7 +205,7 @@ RTX 3060 passed through), GRYPHLINK's downloader 1.6.0.1607 ran and the game
 downloaded. At the game's start, ACE Center said: "The application can not
 run under a virtual machine. Please do not run game in virtual environment
 or system made from virtual environment image. (13-65544-2)". By this
-step's own rule, steps 4 to 6 wait for Ferrix on the machine rather than in
+step's own rule, steps 4 to 6 wait for Xaqu on the machine rather than in
 it, and the customer chose that way the same day. The game's data has
 since been deleted from the guest on the customer's word.
 
@@ -214,7 +214,7 @@ since been deleted from the guest on the customer's word.
   software rendering; the plan, the disk image and its QEMU gate are
   [`docs/N150.md`](../N150.md) (`n150-install`, `test-n150`).
 * *On the machine (2026-10-15 and 16, from the customer's Windows PC):*
-  Ferrix, built from branch `ahci` (4a0db8a97), booted interactively on
+  Xaqu, built from branch `ahci` (4a0db8a97), booted interactively on
   the N150 box: hyprix's desktop on the
   firmware framebuffer, the terminal on the USB keyboard, `/` on btrfs on
   the box's SATA drive (a new AHCI driver, [`docs/AHCI.md`](../AHCI.md)),
@@ -225,7 +225,7 @@ since been deleted from the guest on the customer's word.
   and the NIC poll ([`docs/N150.md`](../N150.md) §13). The kernel
   bring-up is on `main` since the n150k landing (ledger 1884), evidenced on QEMU only and not yet run on the box with checks on (BACKLOG).
   The box has no NVIDIA card: its GPU route is the Intel GPU driver
-  ([stage 21's page](stage-21-bare-metal-gpu-ferrix.md), `docs/INTEL-GPU.md`),
+  ([stage 21's page](stage-21-bare-metal-gpu-xaqu.md), `docs/INTEL-GPU.md`),
   whose M1 and M2 ran on the box on 2026-10-20; the first Endfield run on it
   (the launcher on lavapipe, only the game on anv) is prepared, not made.
 * *Not known, and worth stating:* whether ACE accepts Wine or Proton on
@@ -233,7 +233,7 @@ since been deleted from the guest on the customer's word.
   none was checked here; ACE has broken under Wine more than once in 2026.
 * *Not done:* E0.4 and E0.5, which need the game past ACE.
 
-### Step 1: plain Wine starts on Ferrix  ·  42 points
+### Step 1: plain Wine starts on Xaqu  ·  42 points
 
 When this page was written 64-bit Wine could not start: it keeps Windows's
 thread block at `%gs`, and `arch_prctl` answered `ARCH_SET_FS` alone, with
@@ -283,7 +283,7 @@ desktop to type into.
   provider, as Xwayland does, so Wine finds `WAYLAND-1` at 96 DPI and drops
   `UseXRandR=N`; yserver sets `WM_STATE` on a mapped top-level, as a window
   manager does, so notepad takes its tile's size; and the gate types
-  `hello ferrix` into it, finds the line on the screen and reads it and a
+  `hello xaqu` into it, finds the line on the screen and reads it and a
   double-clicked word back through X's clipboard. Nothing in the kernel was
   needed for it. A prefix on the btrfs volume ran out of space because the
   volume was too small (683 MB free for a prefix that takes 1.1 GB there),
@@ -302,7 +302,7 @@ desktop to type into.
   E1.4 (2026-10-15): Debian's Wine 10.0 has no esync, fsync or ntsync, and
   GE-Proton11-7 no esync either -- Proton dropped it -- so the fast path is
   Proton's fsync, for which the kernel gained `futex_waitv` (449; consultant
-  OK IF (1) to (10), ledger line 1172). Proton's Wine takes fsync on Ferrix
+  OK IF (1) to (10), ledger line 1172). Proton's Wine takes fsync on Xaqu
   from its 64-bit and 32-bit sides, and a turn handed between two threads
   takes 4.9 µs instead of 90.6 (`test-wine-sync`, `docs/WINE.md` §11).
 * *Still to do:* whether btrfs's write path leaves more of a
@@ -319,7 +319,7 @@ it, the way `test-xwindow` finds xev's.
   screen's rate. It waits on the fence fix and on `nv-next` landing (above);
   what it finds beyond them is this point. 5.
 * **E2.2** DXVK in the prefix, and a small Direct3D 11 program drawing on
-  the card. A full `vulkaninfo` from Ferrix on the 3060, which does not
+  the card. A full `vulkaninfo` from Xaqu on the 3060, which does not
   exist yet, is compared with the extensions and features DXVK requires
   (the study checked them only against the same userspace on the host's
   other card). Two known weak places: `VK_NV_optical_flow` fails device
@@ -335,7 +335,7 @@ it, the way `test-xwindow` finds xev's.
 **Where step 2 stands (2026-10-12, branch `endfield-dxvk`; `docs/WINE.md`
 §6).** Lavapipe satisfies DXVK: DXVK 3.1.1, the newest release, makes a
 feature level 11.1 device on Mesa 25.0.7's lavapipe, in Wine 10.0, on Linux
-and on Ferrix alike. `cargo xtask test-dxvk` runs a small Direct3D 11
+and on Xaqu alike. `cargo xtask test-dxvk` runs a small Direct3D 11
 program through it under KVM with no card: offscreen, comparing the frame
 it reads back with one xtask draws, then presenting through a swap chain
 in a window of hyprix's, by way of Wine's Vulkan surface on yserver's X11,
@@ -344,7 +344,7 @@ and finding the frame on the screen.
 * *Done:* E2.4, and the card-free half of E2.2: DXVK in the prefix (the
   release's DLLs beside the program, pinned by hash, from
   `fetch-dxvk.sh`), a Direct3D 11 program offscreen and presenting, the
-  gate and its negative controls. Ferrix answered nothing wrongly on the
+  gate and its negative controls. Xaqu answered nothing wrongly on the
   way.
 * *Still to do:* the presented window is drawn at the size the program
   asked for and not at its tile's, as notepad's is (step 1's lead, in
@@ -384,7 +384,7 @@ step 0's guest.
 * **E3.8** The record. 2.
 
 **Where step 3 stands (2026-10-13, branch `endfield-s3`; `docs/WINE.md`
-§9).** A real Unity game runs on Ferrix with no card: Unity's *Spaceship
+§9).** A real Unity game runs on Xaqu with no card: Unity's *Spaceship
 Demo* (Unity 2021.2.3f1, the High Definition Render Pipeline, Mono,
 64-bit, Direct3D 11, no anti-cheat, downloaded with no account and pinned
 by hash) starts in Wine 10.0, makes a feature level 11.1 device through
@@ -398,7 +398,7 @@ KVM: `cargo xtask test-unity`, about 1.3 frames a second at 1024 by 768 on
   run on the Linux host instead, the guest holding the card): it stands in
   for Endfield's engine, API and renderer weight, not for IL2CPP, which no
   freely fetchable Direct3D 11 title was found with. A fetch script, the
-  gate, two negative controls. Of E3.6, nothing so far: Ferrix answered
+  gate, two negative controls. Of E3.6, nothing so far: Xaqu answered
   nothing wrongly between `wineboot` and the walkthrough.
 * *Still to do:* the customer's word on the game (E3.1), and its figures
   on step 0's guest. An IL2CPP title. Input into the game, which the
@@ -419,7 +419,7 @@ screen, and no failed allocation or mapping in `nvrm`'s log.
   is a 32-bit program. 3.
 * **E4.3** The launcher's window. Its technology is not known; if it is a
   browser engine built for Windows, that Chromium and Steam's helper run on
-  Ferrix as Linux programs says little about it. 8, a guess.
+  Xaqu as Linux programs says little about it. 8, a guess.
 * **E4.4** 60 GB down: one connection makes 10 to 15 MB/s through xtask's
   gateway, and more needs TCP window scaling there (`docs/STEAM.md` §7,
   BACKLOG). 5.
@@ -430,7 +430,7 @@ screen, and no failed allocation or mapping in `nvrm`'s log.
 **Proved by** the launcher showing its start button with the files verified.
 
 **Where step 4 stands (2026-10-14; `docs/WINE.md` §8 and §10).** It stopped when step 0 found that ACE refuses a VM. Before
-that, GRYPHLINK's launcher drew its first screen on Ferrix under KVM, in
+that, GRYPHLINK's launcher drew its first screen on Xaqu under KVM, in
 Debian's Wine 10.0, in software, on hyprix through yserver, with its news
 and pictures fetched from the network through xtask's gateway. Nothing was
 logged into and nothing of the game was downloaded.
@@ -451,24 +451,24 @@ logged into and nothing of the game was downloaded.
   setting added (`docs/WINE.md` §8).
 * *Found and fixed (branch `endfield-mmsg`):* the launcher's own queries
   to Gryphline (`launcher.gryphline.com`, `game-config.gryphline.com`)
-  never connected, because their name lookups failed on Ferrix. Wine's
+  never connected, because their name lookups failed on Xaqu. Wine's
   `ws2_32` calls glibc's `getaddrinfo` with `AF_UNSPEC` and no
   `AI_ADDRCONFIG`, glibc then sends the A and AAAA queries together with
-  `sendmmsg`, and Ferrix had neither `sendmmsg` nor `recvmmsg`, so glibc
+  `sendmmsg`, and Xaqu had neither `sendmmsg` nor `recvmmsg`, so glibc
   took `ENOSYS` as a failed query and answered `EAI_AGAIN`. Both calls are
   in the kernel now, and a static glibc probe that failed both names with
   flags 0 resolves them (`docs/WINE.md` §8). With the fix the launcher
-  reached its server on Ferrix: Gryphline answered its version query with
+  reached its server on Xaqu: Gryphline answered its version query with
   200 (`test-endfield-launcher`).
 * *Done (2026-10-14):* the launcher's gate, `test-endfield-launcher`, and
   the same in GE-Proton11-7's Wine, `test-endfield-proton`, which the
   customer asked for because Debian's Wine 10.0 draws the launcher's
   translucent dialogs blank. In Proton the install dialog draws whole on
-  Ferrix, in Open Sans for the Segoe UI the launcher names (`docs/WINE.md`
+  Xaqu, in Open Sans for the Segoe UI the launcher names (`docs/WINE.md`
   §10). Proton needed two kernel fixes (f0c812f01): `mprotect` kept no
   `MAP_SHARED`, and a write-only region refused a read.
 * *Done (2026-10-14):* E4.1 for a comparison run in the VM: a 160 GB
-  btrfs image on the SN720's `ferrix-root` partition, attached writable.
+  btrfs image on the SN720's `xaqu-root` partition, attached writable.
   The download first failed at once: Wine's Schannel lacked GnuTLS, and
   the launcher's download SDK (libcurl over OpenSSL, roots from the
   Windows store) found no roots, because Wine's `crypt32` reads
@@ -503,20 +503,20 @@ logged into and nothing of the game was downloaded.
   downloads at about 3.7 MB/s. A restart starts the download over: the
   Wine prefix is on tmpfs, so a new launcher has no download path and
   clears its tasks; `ef-night` keeps the prefix on the volume
-  (`FERRIX_ENDFIELD_KEEP`), and that the launcher then resumes is
+  (`XAQU_ENDFIELD_KEEP`), and that the launcher then resumes is
   unproven.
 * *Still to do:* the image path of another process (`ptrace` and
   `/proc/<pid>/mem`, E5.2, which the launcher asks for every five seconds
-  and Wine cannot give it on Ferrix); the current launcher version; a download run again on
+  and Wine cannot give it on Xaqu); the current launcher version; a download run again on
   `main`, now that `mm-pcache` and the net ring's fix are on it; a resumed
-  download shown after a restart; and, when Ferrix runs on the machine, E4.1, the
+  download shown after a restart; and, when Xaqu runs on the machine, E4.1, the
   installer itself (E4.2), then E4.4 to E4.6.
 
 ### Step 5: past the anti-cheat  ·  29 points as a guess; unknown
 
 What ACE's driver, running inside DW-Proton's Wine, asks of the kernel under
 it. Nobody knows before step 0's trace (E0.5) and a first run. **Nothing in
-this step is built to hide anything from the anti-cheat.** Ferrix answers
+this step is built to hide anything from the anti-cheat.** Xaqu answers
 what Linux answers, truthfully about itself; if ACE refuses that, the step
 ends and the customer decides.
 
@@ -535,12 +535,12 @@ ends and the customer decides.
   2331) and Syscall User Dispatch (on `main` since 2026-10-18,
   `docs/SECCOMP.md` §13, ledger line 2323; `test-sud`, and `test-wine-dispatch`
   runs a PE probe's direct call in GE-Proton), each landed on its own review. DW's filter also needs
-  Ferrix's mmap layout to match Linux's (`ENDFIELD-GAME.md` (b)), which is
+  Xaqu's mmap layout to match Linux's (`ENDFIELD-GAME.md` (b)), which is
   not part of either. 8.
-* **E5.4** What Ferrix says of itself. `uname -s` says `Ferrix` (the
+* **E5.4** What Xaqu says of itself. `uname -s` says `Xaqu` (the
   customer's choice, 2026-09-13), Wine can show the host's `uname` to
   Windows code, and `/proc` has known gaps in format (`docs/STEAM.md` §3).
-  The gaps are closed as defects. Whether Ferrix says `Linux` to this one
+  The gaps are closed as defects. Whether Xaqu says `Linux` to this one
   program is the customer's decision, not a session's. 3.
 * **E5.5** The record. 2.
 
@@ -580,14 +580,14 @@ exists.
 **Proved by** Steam installing and starting the game by itself, which also
 meets stage 22's third exit step. Valve's own Proton has lacked the patches
 ACE needs under Wine (the study's timeline), so this step may wait on Valve
-or on the publisher whatever Ferrix does.
+or on the publisher whatever Xaqu does.
 
 ### In sum
 
 | Step | What | Points |
 |---|---|---|
 | 0 | The game on Linux in the same VM shape | 8 |
-| 1 | Wine starts on Ferrix | 42 |
+| 1 | Wine starts on Xaqu | 42 |
 | 2 | Direct3D 11 through DXVK on the card | 18 |
 | 3 | A Unity game on DirectX 11, no anti-cheat | 54 |
 | 4 | Installer, launcher, login | 25 |
@@ -603,7 +603,7 @@ the sized scope the [burndown](status.md) is drawn on.
 
 ## What can stop this regardless of engineering
 
-From the study, with its sources. None of these is Ferrix's to fix.
+From the study, with its sources. None of these is Xaqu's to fix.
 
 1. **The anti-cheat's tolerance of Wine is not a promise.** The game runs
    on Linux because community patches let ACE's driver run inside Wine. It
@@ -614,10 +614,10 @@ From the study, with its sources. None of these is Ferrix's to fix.
    The study found no statement from Gryphline or Hypergryph that Linux is
    supported; the Steam page lists Windows only. Tencent or the publisher
    can end it with one update.
-2. **A virtual machine may be refused.** Ferrix has the card inside a KVM
+2. **A virtual machine may be refused.** Xaqu has the card inside a KVM
    guest. Kernel-level anti-cheats commonly refuse or flag virtual
    machines, and the study found no report either way for this game under
-   Wine in one. Step 0 answers it before any Ferrix work is spent on steps
+   Wine in one. Step 0 answers it before any Xaqu work is spent on steps
    4 to 6.
 3. **The account may be banned.** The study found no report of a Linux
    player banned and no statement that it cannot happen. A kernel nobody
@@ -627,9 +627,9 @@ From the study, with its sources. None of these is Ferrix's to fix.
    the study did not read. Whether running it under Wine, or with a
    third-party Proton build, is permitted is not confirmed. Reading it is
    owed before step 4, and the decision is the customer's.
-5. **Ferrix is not Linux to a fingerprint.** ACE under Wine sees what Wine
+5. **Xaqu is not Linux to a fingerprint.** ACE under Wine sees what Wine
    shows it, and that can include the host's `uname`, timing and `/proc`.
-   Whether ACE looks is not known. Step 5 does not disguise Ferrix.
+   Whether ACE looks is not known. Step 5 does not disguise Xaqu.
 6. **The Steam release on 2026-10-15 may change the picture either way.**
    An allowance for the Steam Deck would help; a stricter configuration of
    ACE would hurt. The state is read again after that date and before

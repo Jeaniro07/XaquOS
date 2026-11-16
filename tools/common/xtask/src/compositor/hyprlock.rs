@@ -2,7 +2,7 @@
 //! wrong password through `authd` and lets the right one through, and
 //! `hyprlock-unset`, where with no password set hyprlock refuses to lock at
 //! all (decision 4), both `docs/AUTH.md` P1.5's; and `hyprlock-session`,
-//! P2.5's, where the session is the user `ferrix`'s and a lock goes only on
+//! P2.5's, where the session is the user `xaqu`'s and a lock goes only on
 //! `authd`'s grant.
 //!
 //! All run `/bin/hyprlock` against a real `authd` in the image, as a
@@ -193,7 +193,7 @@ const HYPRLOCK_UNSET_EXPECTED: [(&str, &str); 2] = [
 const HYPRLOCK_UNSET_BINDS: [(&str, &[&str]); 1] = [("L, which runs hyprlock", &["l"])];
 
 /// What the hyprlock boots carry: hyprlock and its configuration, authd,
-/// root's, `ferrix`'s and authd's accounts, the font, and one account's
+/// root's, `xaqu`'s and authd's accounts, the font, and one account's
 /// password where one is given.
 pub(super) fn hyprlock_files(
     arch: Arch,
@@ -227,7 +227,7 @@ pub(super) fn hyprlock_files(
             "etc/passwd",
             0o644,
             format!(
-                "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/sh\n{}",
+                "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/sh\n{}",
                 crate::auth::PASSWD_LINE
             )
             .into_bytes(),
@@ -235,10 +235,10 @@ pub(super) fn hyprlock_files(
         file(
             "etc/group",
             0o644,
-            format!("root:x:0:\nferrix:x:1000:\n{}", crate::auth::GROUP_LINE).into_bytes(),
+            format!("root:x:0:\nxaqu:x:1000:\n{}", crate::auth::GROUP_LINE).into_bytes(),
         ),
         file(
-            "usr/share/ferrix/fonts/LiberationSans-Regular.ttf",
+            "usr/share/xaqu/fonts/LiberationSans-Regular.ttf",
             0o644,
             read(&fonts.join("LiberationSans-Regular.ttf"))?,
         ),
@@ -306,7 +306,7 @@ struct Step {
     unwanted: &'static [&'static str],
 }
 
-/// `ferrix`'s password, typed key by key on a German keyboard: `y` is `z`.
+/// `xaqu`'s password, typed key by key on a German keyboard: `y` is `z`.
 const SESSION_PASSWORD: [&[&str]; 6] = [&["g"], &["a"], &["t"], &["e"], &["y"], &["ret"]];
 
 /// The steps, in order.
@@ -319,11 +319,11 @@ const SESSION_STEPS: [Step; 6] = [
         unwanted: &[],
     },
     Step {
-        what: "ferrix's password, granted by authd for lock 1, unlocks",
+        what: "xaqu's password, granted by authd for lock 1, unlocks",
         keys: &SESSION_PASSWORD,
         until: "hyprix: the session is unlocked",
         wanted: &[
-            "service=hyprlock account=ferrix",
+            "service=hyprlock account=xaqu",
             "result=granted",
             "seat-epoch=1",
         ],
@@ -337,7 +337,7 @@ const SESSION_STEPS: [Step; 6] = [
         unwanted: &[],
     },
     Step {
-        what: "a program of ferrix's killed hyprlock, took the lock over and asked to unlock at \
+        what: "a program of xaqu's killed hyprlock, took the lock over and asked to unlock at \
                once: the screen stayed locked",
         keys: &[],
         // The attacker's `/bin/lock` believes it unlocked, and exits: its
@@ -368,7 +368,7 @@ const SESSION_STEPS: [Step; 6] = [
     },
 ];
 
-/// P2.5's boot (`docs/AUTH.md` §3.7): the desktop as `ferrix`, whose
+/// P2.5's boot (`docs/AUTH.md` §3.7): the desktop as `xaqu`, whose
 /// locks go on `authd`'s grant through `sessiond`. The certification
 /// consultant's G5 and G6 are steps of it: a uid-1000 program cannot open the
 /// compositor's lock channel, and killing hyprlock to take its lock over and
@@ -390,8 +390,8 @@ pub(super) fn test_hyprlock_session(arch: Arch, programs: &Programs, args: &Args
     };
     judge_still_running(arch, &said)?;
     for wanted in [
-        "authd: offering ferrix.auth.seat",
-        "ferrix.auth.seat is up",
+        "authd: offering xaqu.auth.seat",
+        "xaqu.auth.seat is up",
         "hyprix: the session's locks go on authd's grant",
         "hyprix: authd can grant the session's locks",
     ] {
@@ -402,15 +402,15 @@ pub(super) fn test_hyprlock_session(arch: Arch, programs: &Programs, args: &Args
         }
     }
     println!(
-        "  {arch}: as ferrix, a lock went only on authd's grant; killing hyprlock and taking its \
+        "  {arch}: as xaqu, a lock went only on authd's grant; killing hyprlock and taking its \
          lock over with an immediate unlock left the screen locked; the lock channel would not \
          open through /proc; and a new hyprlock took the lock over and the password let it go"
     );
     Ok(())
 }
 
-/// A desktop as `ferrix` from `config`, with `script` at `/etc/attack.sh`,
-/// `/bin/lock` and `ferrix`'s password seeded, driven through `steps`: the
+/// A desktop as `xaqu` from `config`, with `script` at `/etc/attack.sh`,
+/// `/bin/lock` and `xaqu`'s password seeded, driven through `steps`: the
 /// transcript, or `None` where the machine has no busybox for the keys.
 fn session_boot(
     arch: Arch,
@@ -424,7 +424,7 @@ fn session_boot(
         println!("  {arch}: no busybox on this machine for the boot's keys; skipped");
         return Ok(None);
     };
-    let mut ports = hyprlock_files(arch, Some(("ferrix", HYPRLOCK_PASSWORD)))?;
+    let mut ports = hyprlock_files(arch, Some(("xaqu", HYPRLOCK_PASSWORD)))?;
     ports.push(crate::ports::File {
         path: "etc/attack.sh".to_owned(),
         mode: 0o755,
@@ -554,7 +554,7 @@ exec-once = /bin/pattern checkerboard one
 exec-once = /bin/sh /etc/attack.sh
 ";
 
-/// The suspend boot's script (`docs/APP-SUSPEND.md` §3.1), as `ferrix` in
+/// The suspend boot's script (`docs/APP-SUSPEND.md` §3.1), as `xaqu` in
 /// the session's scope: a counter -- a program and a child of its own, both
 /// beside the compositor in the scope -- suspended for five seconds and
 /// resumed; then the window, the pattern, suspended and resumed. What it
@@ -600,7 +600,7 @@ const SUSPEND_STEPS: [Step; 1] = [Step {
 }];
 
 /// `test-compositor --boot suspend` (`docs/APP-SUSPEND.md` §3.1): as
-/// ferrix, whose session's scope `sessiond` delegated, a counter in that
+/// xaqu, whose session's scope `sessiond` delegated, a counter in that
 /// scope beside the compositor is suspended -- moved into a cgroup of its
 /// own beneath the scope and frozen there -- and resumed five seconds later.
 /// Required: the cgroup was the one made beneath the scope and said `frozen
@@ -800,7 +800,7 @@ fn fake_bus_wrong(said: &[String]) -> Option<String> {
         .is_none_or(|ids| !ids.starts_with("1000 gid 1000"))
     {
         return Some(format!(
-            "the stand-in bus ran as {}, not ferrix (1000)",
+            "the stand-in bus ran as {}, not xaqu (1000)",
             uid.unwrap_or_else(|| "nobody it said".to_owned())
         ));
     }
@@ -845,7 +845,7 @@ bindl = , L, exec, /bin/hyprlock -c /etc/hypr/hyprlock.conf
 ";
 
 /// The compromised client of P2.7 (`docs/AUTH.md` §6.4), a program of
-/// ferrix's as any could be: a heartbeat in the session, a process that
+/// xaqu's as any could be: a heartbeat in the session, a process that
 /// moves itself into a scope of its own to outlive the session, a lock it
 /// is refused while hyprlock holds the screen and an unlock of it, a read
 /// of `authd`'s store, and then `kill -9` of the compositor.
@@ -859,9 +859,9 @@ named() {
 }
 ( while :; do echo heartbeat; sleep 1; done ) &
 compositor=$(named hyprix)
-# Out of the session's scope, into one of ferrix's own, as a user may: it
+# Out of the session's scope, into one of xaqu's own, as a user may: it
 # outlives the session, and then asks the init for the session back.
-sh -c 'svc scope --unit ferrix-linger.scope --slice user-1000.slice $$ >/dev/null 2>&1
+sh -c 'svc scope --unit xaqu-linger.scope --slice user-1000.slice $$ >/dev/null 2>&1
 echo \"linger-scope: $?\"
 while [ -d /proc/$1 ]; do sleep 1; done
 sleep 4
@@ -876,7 +876,7 @@ while [ -z \"$(named hyprlock)\" ]; do sleep 1; done
 sleep 3
 /bin/lock 0
 echo refused-lock-done
-out=$(cat /var/lib/ferrix/auth/users/ferrix 2>&1)
+out=$(cat /var/lib/xaqu/auth/users/xaqu 2>&1)
 echo \"store-probe: $? $out\"
 sleep 1
 kill -9 $compositor
@@ -893,7 +893,7 @@ const END_STEPS: [Step; 6] = [
         unwanted: &[],
     },
     Step {
-        what: "a program of ferrix's asked for a lock while hyprlock held it, was refused, and its \
+        what: "a program of xaqu's asked for a lock while hyprlock held it, was refused, and its \
                unlock let nothing go",
         keys: &[],
         until: "refused-lock-done",
@@ -901,11 +901,11 @@ const END_STEPS: [Step; 6] = [
         unwanted: &["hyprix: the session is unlocked"],
     },
     Step {
-        what: "it could not read authd's store: the record is there, and not ferrix's to read",
+        what: "it could not read authd's store: the record is there, and not xaqu's to read",
         keys: &[],
         until: "store-probe: ",
         // On the probe's own line: cat's refusal of that very path.
-        wanted: &["can't open '/var/lib/ferrix/auth/users/ferrix': Permission denied"],
+        wanted: &["can't open '/var/lib/xaqu/auth/users/xaqu': Permission denied"],
         unwanted: &["store-probe: 0", "No such file"],
     },
     Step {
@@ -916,7 +916,7 @@ const END_STEPS: [Step; 6] = [
         unwanted: &["hyprix: the session is unlocked"],
     },
     Step {
-        what: "a process of ferrix's that had left the session asked the init for it back with \
+        what: "a process of xaqu's that had left the session asked the init for it back with \
                svc start and svc restart, and was refused both",
         keys: &[],
         until: "linger-svc-restart: ",
@@ -936,7 +936,7 @@ const END_STEPS: [Step; 6] = [
 ];
 
 /// P2.7's boot (`docs/AUTH.md` §6.4): a compromised client of the session
-/// as ferrix kills the compositor, and lands at the console's login, not on
+/// as xaqu kills the compositor, and lands at the console's login, not on
 /// a fresh desktop. The certification consultant's E2 to E4.
 pub(super) fn test_session_end(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let steps: Vec<&Step> = END_STEPS.iter().collect();
@@ -967,7 +967,7 @@ pub(super) fn test_session_end(arch: Arch, programs: &Programs, args: &Args) -> 
     }
     let sessions = said
         .iter()
-        .filter(|line| line.contains("sessiond: seat0's session for ferrix"))
+        .filter(|line| line.contains("sessiond: seat0's session for xaqu"))
         .count();
     if sessions != 1 {
         return Err(Error::new(format!(
@@ -1014,10 +1014,10 @@ pub(super) fn test_session_end(arch: Arch, programs: &Programs, args: &Args) -> 
         )));
     }
     println!(
-        "  {arch}: as ferrix, a refused lock unlocked nothing, the store stayed closed, and \
+        "  {arch}: as xaqu, a refused lock unlocked nothing, the store stayed closed, and \
          killing the compositor ended the session at the console's login, no process of it left \
-         -- its session bus, ferrix's with only its address pipe, among them -- and nothing of \
-         ferrix's able to start it again"
+         -- its session bus, xaqu's with only its address pipe, among them -- and nothing of \
+         xaqu's able to start it again"
     );
     Ok(())
 }

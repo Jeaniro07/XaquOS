@@ -2,7 +2,7 @@
 
 use std::vec::Vec;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use super::support::{device, identity};
 use crate::control::{

@@ -24,7 +24,7 @@
 //! The tables hold [`Weak`] references to their owners, and every look at one
 //! first sweeps out the entries whose owner is gone. So a `flock` or OFD lock
 //! ends when its description does -- on `close`, on `exit`, on `execve`
-//! closing a close-on-exec descriptor -- without `ferrix_vfs::OpenFile` having
+//! closing a close-on-exec descriptor -- without `xaqu_vfs::OpenFile` having
 //! to know that locks exist. Nothing is woken at that moment, because nothing
 //! of this module runs then; a waiter sees the lock gone at its wait's next
 //! recheck, which `WaitQueue::wait_until_deadline` makes every few
@@ -65,23 +65,23 @@
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     F_GETLK, F_GETLK64, F_OFD_GETLK, F_OFD_SETLK, F_OFD_SETLKW, F_RDLCK, F_SETLK, F_SETLK64,
     F_SETLKW, F_SETLKW64, F_UNLCK, F_WRLCK, LOCK_EX, LOCK_NB, LOCK_SH, LOCK_UN, SEEK_CUR, SEEK_END,
     SEEK_SET,
 };
-use ferrix_vfs::fd::FdTable;
-use ferrix_vfs::{OpenFile, Whence};
+use xaqu_vfs::fd::FdTable;
+use xaqu_vfs::{OpenFile, Whence};
 
 use crate::sched::WaitQueue;
 use crate::sync::SpinLock;
 use crate::syscall::{fd, signal};
 use crate::trap::Abi;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod check;
 use crate::syscall::process::Process;
 use crate::syscall::uaccess;

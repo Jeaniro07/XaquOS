@@ -30,7 +30,7 @@
 //! Each bitmap is as long as `input-event-codes.h`'s `*_CNT` for its kind,
 //! rounded up to whole bytes, bit `n` in byte `n / 8` at `1 << (n % 8)`: the
 //! order virtio-input answers in and Linux keeps its `unsigned long` bitmaps
-//! in on a little-endian machine. The numbers are `ferrix-linux-abi`'s, which
+//! in on a little-endian machine. The numbers are `xaqu-linux-abi`'s, which
 //! its probe pins against the headers. `EV_SYN` and `EV_REP` have no code
 //! bitmap: Linux keeps none for either (`handle_eviocgbit` in
 //! `drivers/input/evdev.c` has no case for them), and virtio-input answers
@@ -44,11 +44,11 @@
 
 use ::core::fmt;
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_CNT, EV_ABS, EV_CNT, EV_KEY, EV_LED, EV_MSC, EV_REL, EV_REP, EV_SW, EV_SYN, INPUT_PROP_CNT,
     KEY_CNT, LED_CNT, MSC_CNT, REL_CNT, SW_CNT,
 };
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 /// The protocol version this crate speaks.
 pub const VERSION: u16 = 1;
@@ -570,7 +570,7 @@ impl RawEvent {
     /// Whether the event ends a report.
     #[must_use]
     pub const fn is_report(&self) -> bool {
-        self.kind == EV_SYN && self.code == ferrix_linux_abi::input::SYN_REPORT
+        self.kind == EV_SYN && self.code == xaqu_linux_abi::input::SYN_REPORT
     }
 }
 

@@ -3,43 +3,43 @@
 version = 4
 
 [[package]]
-name = "ferrix-chardevctl"
+name = "xaqu-chardevctl"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-displayctl"
+name = "xaqu-displayctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-native"
+name = "xaqu-native"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-nvos"
+name = "xaqu-nvos"
 version = "0.1.0"
 dependencies = [
- "ferrix-chardevctl",
- "ferrix-displayctl",
- "ferrix-linux-abi",
- "ferrix-native",
- "ferrix-native-abi",
+ "xaqu-chardevctl",
+ "xaqu-displayctl",
+ "xaqu-linux-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
 ]

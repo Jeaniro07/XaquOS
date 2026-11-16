@@ -22,55 +22,55 @@ mod arch;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use core::time::Duration;
-use ferrix_rt::log::Level;
+use xaqu_rt::log::Level;
 
-use ferrix_blkring::control::{Block, CONTROL_RIGHTS, DEVICE_RIGHTS, Message as Ring, Start};
-use ferrix_blkring::identity::DiskName;
-use ferrix_devmgr_proto::admission::{self, Admit, Admitted};
-use ferrix_devmgr_proto::choice::{self, Chooser, Wanted};
-use ferrix_devmgr_proto::gpu::{self, HandOver, SetRefused, Unanswered};
-use ferrix_devmgr_proto::{
+use xaqu_blkring::control::{Block, CONTROL_RIGHTS, DEVICE_RIGHTS, Message as Ring, Start};
+use xaqu_blkring::identity::DiskName;
+use xaqu_devmgr_proto::admission::{self, Admit, Admitted};
+use xaqu_devmgr_proto::choice::{self, Chooser, Wanted};
+use xaqu_devmgr_proto::gpu::{self, HandOver, SetRefused, Unanswered};
+use xaqu_devmgr_proto::{
     ANSWER_BUSY, ANSWER_DONE, ANSWER_FAILED, ANSWER_NO_DEVICE, BUS_PCI, BUS_PLATFORM, CORE_BYTES,
     CoreOpen, CoreOpened, CorePublished, DEVICES_MAX_BYTES, DevicesView, Message, NAME_BYTES,
     SHORT_BYTES,
 };
-use ferrix_drvupdate_proto::{self as update, Answer, Fingerprint, Outcome, REQUEST_BYTES};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_drvupdate_proto::{self as update, Answer, Fingerprint, Outcome, REQUEST_BYTES};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     CHANNEL_MAX_HANDLES, DEVICE_NOT_PCI, DEVICE_TREE_BLOCKS, DEVICE_TREE_GENERIC,
     DEVICE_VIRTIO_PCI, DeviceInfo, PROCESS_EXITED, PROCESS_KILLED, ProcessStatus, TREE_FIRMWARE_FB,
     TREE_GS201_DWC3, TREE_STM32_GPU, TREE_STM32_HDMI, TREE_STM32_SDMMC, TREE_STM32_USBH,
     TREE_X86_POWER,
 };
-use ferrix_netring::control::{
+use xaqu_netring::control::{
     CONTROL_RIGHTS as NET_CONTROL_RIGHTS, DEVICE_RIGHTS as NET_DEVICE_RIGHTS, MAX_MESSAGE,
     Message as NetRing, Start as NetStart,
 };
-use ferrix_process_builder::build;
-use ferrix_restart::{Ended, Escalation, Exit, Instant, Next, Policy, Restart, Signal};
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::device::{Device, Limit};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::pending::Process;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_process_builder::build;
+use xaqu_restart::{Ended, Escalation, Exit, Instant, Next, Policy, Restart, Signal};
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::device::{Device, Limit};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::pending::Process;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
 mod generic;
 mod usb;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The most devices devmgr keeps, over every DEVICES message: ARMv7-A's
 /// machine publishes 36.
 const MAX_DEVICES: usize = 64;
 /// The most drivers, as the protocol fixes it.
-const MAX_DRIVERS: usize = ferrix_devmgr_proto::MAX_DRIVERS;
+const MAX_DRIVERS: usize = xaqu_devmgr_proto::MAX_DRIVERS;
 
 /// virtio's PCI vendor, and virtio-blk's and virtio-net's modern and
 /// transitional device ids.
@@ -139,7 +139,7 @@ const INTEL_VENDOR: u16 = 0x8086;
 /// The Alder Lake-N GPUs (`INTEL_ADLN_IDS`, Linux's `pciids.h`): the N150
 /// box's is 0x46D4. Driven by `intel` as an engine while it serves no
 /// subsystem (`docs/INTEL-GPU.md` §7, M1 and M2): the kernel lends the
-/// function only under `ferrix.intelgpu` without `ferrix.efifb`, and its
+/// function only under `xaqu.intelgpu` without `xaqu.efifb`, and its
 /// isolated-interrupts mark is not set until the box's VT-d remaps
 /// (intel-gpu-split.md, Q2).
 const ADLN_IDS: [u16; 5] = [0x46D0, 0x46D1, 0x46D2, 0x46D3, 0x46D4];
@@ -149,7 +149,7 @@ const YT6801_IDS: [u16; 1] = [0x6801];
 /// Realtek's PCI vendor id, and the 8168 family's device id: the RTL8111H
 /// on nazuna's board, driven by `rtl8169` over a net ring as virtio-net is.
 /// The driver refuses every member of the family but the RTL8168H and the
-/// RTL8168M it is handled as, by the chip's own XID (`ferrix-rtl8169`).
+/// RTL8168M it is handled as, by the chip's own XID (`xaqu-rtl8169`).
 const REALTEK_VENDOR: u16 = 0x10EC;
 const RTL8168_IDS: [u16; 1] = [0x8168];
 
@@ -335,10 +335,10 @@ const DRIVERS: [(u16, &[u16], &[u8], Kind); 6] = [
 /// a time, so no other tree device's PUBLISHED can be in flight meanwhile.
 ///
 /// The firmware's framebuffer, which the kernel publishes as a node only
-/// under `ferrix.efifb`, is a card, driven by `efifb` (`docs/DISPLAY.md` §8).
+/// under `xaqu.efifb`, is a card, driven by `efifb` (`docs/DISPLAY.md` §8).
 ///
 /// The x86-64 power node, which the kernel publishes only under
-/// `ferrix.powerctl` on a processor its table names, is driven by `power`
+/// `xaqu.powerctl` on a processor its table names, is driven by `power`
 /// (`docs/POWERCTL.md`).
 const TREE_DRIVERS: [(u16, &[u8], Kind); 7] = [
     (TREE_STM32_HDMI, b"ltdc", Kind::Display),
@@ -358,16 +358,16 @@ const TREE_DRIVERS: [(u16, &[u8], Kind); 7] = [
 ///
 /// The one row is `test-driver-model`'s (`docs/DRIVER-MODEL.md` §8): a
 /// made-up compatible on QEMU `virt`'s PL031, served by `testseconds`. It is
-/// compiled in only when the build says `FERRIX_DEVMGR_TEST_DRIVER=on`,
+/// compiled in only when the build says `XAQU_DEVMGR_TEST_DRIVER=on`,
 /// which that test's images alone do, so no other image's table has it.
 const GENERIC_DRIVERS: &[(&str, &[u8], &str)] = if TEST_DRIVER {
-    &[("ferrix,test-seconds", b"testseconds", "testseconds")]
+    &[("xaqu,test-seconds", b"testseconds", "testseconds")]
 } else {
     &[]
 };
 
 /// Whether this build carries `test-driver-model`'s row.
-const TEST_DRIVER: bool = match option_env!("FERRIX_DEVMGR_TEST_DRIVER") {
+const TEST_DRIVER: bool = match option_env!("XAQU_DEVMGR_TEST_DRIVER") {
     Some(value) => matches!(value.as_bytes(), b"on"),
     None => false,
 };
@@ -420,7 +420,7 @@ fn policy_for(kind: Kind, location: u32) -> Policy {
 
 /// Monotonic now, if the clock answers.
 fn now() -> Option<Instant> {
-    ferrix_rt::linux::monotonic_nanos()
+    xaqu_rt::linux::monotonic_nanos()
         .ok()
         .map(Instant::from_nanos)
 }
@@ -504,7 +504,7 @@ struct Started {
     /// The device's place among the DEVICES the kernel sent: what BOUND,
     /// UNBOUND, BIND and UNBIND name it by.
     index: u32,
-    /// Whether it was started only under `ferrix.unisolated`, for the count
+    /// Whether it was started only under `xaqu.unisolated`, for the count
     /// [`report`] says.
     unisolated: bool,
     /// The driver's place among DEVICES' names.
@@ -589,8 +589,8 @@ struct Given {
     names: [[u8; NAME_BYTES]; MAX_DRIVERS],
     /// How many of `images` and `names` are filled.
     drivers: usize,
-    /// Whether the boot carries `ferrix.unisolated`, from the first
-    /// message's flags (`ferrix_devmgr_proto::admission`).
+    /// Whether the boot carries `xaqu.unisolated`, from the first
+    /// message's flags (`xaqu_devmgr_proto::admission`).
     unisolated_allowed: bool,
 }
 
@@ -646,7 +646,7 @@ fn run(channel: &Channel<Kernel>) -> Result<(), Step> {
         };
         let index = u32::try_from(index).unwrap_or(u32::MAX);
         let Ok(info) = device.info() else {
-            ferrix_rt::warn!("devmgr   device {index}: no info; not started");
+            xaqu_rt::warn!("devmgr   device {index}: no info; not started");
             failed += 1;
             continue;
         };
@@ -780,11 +780,11 @@ fn settle(
 const ENDED_PATIENCE_NANOS: u64 = 1_000_000_000;
 
 /// Whether a driver that ended before it published stopped cleanly with
-/// nothing to serve: exited with status 0, `ferrix_driver::Step::Idle` (a
+/// nothing to serve: exited with status 0, `xaqu_driver::Step::Idle` (a
 /// controller with no disk behind it). One whose exit cannot be seen in
 /// time, or with no clock to bound the wait, did not.
 fn stopped_idle(process: &Process<Kernel>) -> bool {
-    let Ok(now) = ferrix_rt::linux::monotonic_nanos() else {
+    let Ok(now) = xaqu_rt::linux::monotonic_nanos() else {
         return false;
     };
     let deadline = Deadline::At(now.saturating_add(ENDED_PATIENCE_NANOS));
@@ -823,7 +823,7 @@ fn say_started(
         ),
     );
     if !published && !idle {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "devmgr   {name} {:#010x}: exit status {}",
             info.location,
             died_status(exit_of(process))
@@ -847,7 +847,7 @@ fn bound(channel: &Channel<Kernel>, index: u32, driver: u16) {
 fn say_start_failed(name: &str, location: u32, plan: &Plan) {
     say_unstarted(Level::Err, name, location, "could not be started");
     if let Plan::Gpu(program) = plan {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "devmgr   gpu {} not started: {program} could not be started",
             gpu::Place(location)
         );
@@ -908,7 +908,7 @@ fn spawn_updater(drivers: &Drivers<'_>, port: &Port<Kernel>) -> Option<Updater> 
         .and_then(Option::as_ref)?;
     let started = (|| {
         let job = drivers.job.create_sealed_child().ok()?;
-        let built = build(&job, image, "drvupdated", ferrix_rt::ELF_MACHINE).ok()?;
+        let built = build(&job, image, "drvupdated", xaqu_rt::ELF_MACHINE).ok()?;
         let (near, far) = channel::create(Kernel).ok()?;
         let process = built.run(far.into_owned()).ok()?;
         near.wait_async(port, Signals::READABLE | Signals::PEER_CLOSED, KEY_UPDATE)
@@ -920,9 +920,9 @@ fn spawn_updater(drivers: &Drivers<'_>, port: &Port<Kernel>) -> Option<Updater> 
         })
     })();
     if started.is_none() {
-        ferrix_rt::warn!("devmgr   drvupdated could not be started: no driver updates");
+        xaqu_rt::warn!("devmgr   drvupdated could not be started: no driver updates");
     } else {
-        ferrix_rt::info!("devmgr   drvupdated started: driver updates are taken");
+        xaqu_rt::info!("devmgr   drvupdated started: driver updates are taken");
     }
     started
 }
@@ -946,7 +946,7 @@ impl Events {
     /// waits on it.
     fn tell(
         events: Option<&Self>,
-        what: ferrix_devmgr_events_proto::What,
+        what: xaqu_devmgr_events_proto::What,
         entry: &Started,
         value: u32,
         drivers: &Drivers<'_>,
@@ -965,7 +965,7 @@ impl Events {
                 name.get(..end).unwrap_or_default()
             })
             .unwrap_or_default();
-        let event = ferrix_devmgr_events_proto::Event::new(what, entry.location, value, name);
+        let event = xaqu_devmgr_events_proto::Event::new(what, entry.location, value, name);
         let _ = events.channel.write(&event.encode());
     }
 }
@@ -980,7 +980,7 @@ fn spawn_events(drivers: &Drivers<'_>) -> Option<Events> {
         .and_then(Option::as_ref)?;
     let started = (|| {
         let job = drivers.job.create_child().ok()?;
-        let built = build(&job, image, "devmgr-events", ferrix_rt::ELF_MACHINE).ok()?;
+        let built = build(&job, image, "devmgr-events", xaqu_rt::ELF_MACHINE).ok()?;
         let (near, far) = channel::create(Kernel).ok()?;
         let process = built.run(far.into_owned()).ok()?;
         Some(Events {
@@ -1048,8 +1048,8 @@ fn report(
         .filter(|entry| entry.unisolated)
         .count();
     if unisolated != 0 {
-        ferrix_rt::warn!(
-            "devmgr   {unisolated} devices started under ferrix.unisolated: their drivers are \
+        xaqu_rt::warn!(
+            "devmgr   {unisolated} devices started under xaqu.unisolated: their drivers are \
              trusted with all of memory, and this boot carries no claim"
         );
     }
@@ -1174,7 +1174,7 @@ struct Drivers<'a> {
     /// the kernel hands images without `DUPLICATE`, and a keeper is given
     /// a read-only duplicate of this at every start.
     worker: Option<Vmo<Kernel>>,
-    /// Whether the boot carries `ferrix.unisolated`.
+    /// Whether the boot carries `xaqu.unisolated`.
     unisolated_allowed: bool,
 }
 
@@ -1246,7 +1246,7 @@ fn receive(channel: &Channel<Kernel>) -> Result<Given, Step> {
                 // After the images: lines go to the kernel's debug log, this
                 // kernel having no `/dev/kmsg` of its own.
                 let at = base + 2 * devices + drivers;
-                ferrix_rt::log::use_debug_log(handles.get(at).copied().unwrap_or(Handle::INVALID));
+                xaqu_rt::log::use_debug_log(handles.get(at).copied().unwrap_or(Handle::INVALID));
             }
             if view.cores {
                 let at = base + 2 * devices + drivers + usize::from(view.debug_log);
@@ -1505,7 +1505,7 @@ fn serve(
         );
         Events::tell(
             events.as_ref(),
-            ferrix_devmgr_events_proto::What::Died,
+            xaqu_devmgr_events_proto::What::Died,
             entry,
             died_status(exit).cast_unsigned(),
             drivers,
@@ -1518,7 +1518,7 @@ fn serve(
         if !entry.quiesced {
             Events::tell(
                 events.as_ref(),
-                ferrix_devmgr_events_proto::What::GaveUp,
+                xaqu_devmgr_events_proto::What::GaveUp,
                 entry,
                 restarts(entry),
                 drivers,
@@ -1557,7 +1557,7 @@ fn escalate(
         Next::Stay => {}
         Next::Restart(at) => {
             entry.due = Some(Due { at, reinit: false });
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "devmgr   {name} {location:#010x}: restart {} in {} ms",
                 restarts(entry),
                 millis(at)
@@ -1565,7 +1565,7 @@ fn escalate(
         }
         Next::Reinit(at) => {
             entry.due = Some(Due { at, reinit: true });
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "devmgr   {name} {location:#010x}: {} restarts in a row died within {} s of their start; the device is reinitialised -- quiesced again and its configuration checked -- and the driver started once more in {} ms",
                 Escalation::FAILED_RESTARTS,
                 SETTLE.as_secs(),
@@ -1573,7 +1573,7 @@ fn escalate(
             );
             Events::tell(
                 events,
-                ferrix_devmgr_events_proto::What::Reinit,
+                xaqu_devmgr_events_proto::What::Reinit,
                 entry,
                 restarts(entry),
                 drivers,
@@ -1586,12 +1586,12 @@ fn escalate(
             drivers,
         ),
         Next::GiveUp => {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "devmgr   {name} {location:#010x}: not started again: its {MAX_RESTARTS} restarts are spent"
             );
             Events::tell(
                 events,
-                ferrix_devmgr_events_proto::What::GaveUp,
+                xaqu_devmgr_events_proto::What::GaveUp,
                 entry,
                 restarts(entry),
                 drivers,
@@ -1608,14 +1608,14 @@ fn quarantine(entry: &mut Started, why: &str, events: Option<&Events>, drivers: 
     entry.quarantined = true;
     entry.due = None;
     let name = driver_name(drivers.names, entry.driver);
-    ferrix_rt::err!(
+    xaqu_rt::err!(
         "devmgr   {name} {:#010x} quarantined after {} restarts: {why}. Nothing is started on it again until a bind asks; its dead drivers' pins stay in the kernel's quarantine",
         entry.location,
         restarts(entry)
     );
     Events::tell(
         events,
-        ferrix_devmgr_events_proto::What::Quarantined,
+        xaqu_devmgr_events_proto::What::Quarantined,
         entry,
         restarts(entry),
         drivers,
@@ -1672,7 +1672,7 @@ fn launch_due(
             // What a file server's ring holds of a dead driver goes with it: said
             // for the row that holds it to that (BTRFSD, H.4).
             if BLOCK_CORES.load(Ordering::Relaxed) != 0
-                && let Ok(quota) = drivers.job.quota(ferrix_rt::native::job::Resource::Memory)
+                && let Ok(quota) = drivers.job.quota(xaqu_rt::native::job::Resource::Memory)
             {
                 say(
                     Level::Info,
@@ -1688,7 +1688,7 @@ fn launch_due(
             );
             Events::tell(
                 events,
-                ferrix_devmgr_events_proto::What::Restarted,
+                xaqu_devmgr_events_proto::What::Restarted,
                 entry,
                 restarts(entry),
                 drivers,
@@ -1715,7 +1715,7 @@ fn launch_due(
         );
         Events::tell(
             events,
-            ferrix_devmgr_events_proto::What::Died,
+            xaqu_devmgr_events_proto::What::Died,
             entry,
             died_status(exit).cast_unsigned(),
             drivers,
@@ -1848,8 +1848,8 @@ fn answer(
         done(channel, token, ANSWER_NO_DEVICE);
         return;
     };
-    #[cfg(ferrix_row_driver_kill)]
-    if driver == ferrix_devmgr_proto::KILL_DRIVER {
+    #[cfg(xaqu_row_driver_kill)]
+    if driver == xaqu_devmgr_proto::KILL_DRIVER {
         let _ = entry.job.kill();
         done(channel, token, ANSWER_DONE);
         return;
@@ -1954,7 +1954,7 @@ fn take_updates(
         }
     };
     if gone {
-        ferrix_rt::warn!("devmgr   drvupdated has ended: no more driver updates");
+        xaqu_rt::warn!("devmgr   drvupdated has ended: no more driver updates");
         *updates = None;
     } else if let Some(updater) = updates.as_ref() {
         let _ =
@@ -2001,7 +2001,7 @@ fn update_driver(
         // the updater carries both.
         let keeper = worker_image(entry.plan, drivers).is_some();
         if keeper {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "devmgr   an update of {program} alone is refused: it runs as a keeper over {WORKER_NAME}, and the two are replaced together or not at all"
             );
         }
@@ -2029,7 +2029,7 @@ fn update_driver(
         };
     };
     if !loads(drivers.job, &image.vmo, program) {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "devmgr   update of {program} refused: the kernel's loader did not take {} bytes, fnv64 {:016x}, or its trial did not end",
             image.length,
             image.fingerprint
@@ -2102,10 +2102,10 @@ fn loads(job: &Job<Kernel>, image: &Vmo<Kernel>, program: &str) -> bool {
     let Ok(scratch) = job.create_sealed_child() else {
         return false;
     };
-    let loaded = match build(&scratch, image, program, ferrix_rt::ELF_MACHINE) {
+    let loaded = match build(&scratch, image, program, xaqu_rt::ELF_MACHINE) {
         Ok(built) => {
             let _ = scratch.kill();
-            let deadline = ferrix_rt::linux::monotonic_nanos().map_or(Deadline::Never, |now| {
+            let deadline = xaqu_rt::linux::monotonic_nanos().map_or(Deadline::Never, |now| {
                 Deadline::At(now.saturating_add(TRIAL_PATIENCE_NANOS))
             });
             // A trial that is not gone in time refuses the update with
@@ -2143,7 +2143,7 @@ fn swap(
     // update that could not be timed or kept. A copy rather than a second
     // handle, so no handle in devmgr is passed on with the rights it holds
     // (P6, `budget_tests`), and each device keeps its image apart.
-    let Ok(now) = ferrix_rt::linux::monotonic_nanos() else {
+    let Ok(now) = xaqu_rt::linux::monotonic_nanos() else {
         return Outcome::Unanswered;
     };
     let Some(mine) = copy_image(&image.vmo, image.length) else {
@@ -2167,13 +2167,13 @@ fn swap(
         .encode(),
     );
     if !entry.quiesced {
-        ferrix_rt::err!("devmgr   {program} {place} update failed: the device would not quiesce");
+        xaqu_rt::err!("devmgr   {program} {place} update failed: the device would not quiesce");
         return Outcome::Failed;
     }
     let previous = entry.image.replace(mine);
     let deadline = Deadline::At(now.saturating_add(UPDATE_PATIENCE_NANOS));
     if launch_again(channel, port, slot, entry, drivers, inbox, deadline) {
-        ferrix_rt::notice!(
+        xaqu_rt::notice!(
             "devmgr   {program} {place} updated: {} bytes, fnv64 {:016x} (was {was})",
             image.length,
             image.fingerprint
@@ -2189,14 +2189,14 @@ fn swap(
     take_requests(channel, inbox);
     entry.image = previous;
     if entry.quiesced && launch_again(channel, port, slot, entry, drivers, inbox, Deadline::Never) {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "devmgr   {program} {place} rolled back: {} bytes, fnv64 {:016x} did not publish; {was} drives it again",
             image.length,
             image.fingerprint
         );
         return Outcome::RolledBack;
     }
-    ferrix_rt::err!(
+    xaqu_rt::err!(
         "devmgr   {program} {place} update failed: neither image published; the device stays quiesced"
     );
     Outcome::Failed
@@ -2337,7 +2337,7 @@ fn launch_again(
 
 /// Whether this boot is outside the claim, where a driver may be started on
 /// a node the kernel depends on (D4): every ARMv7-A image, which is outside
-/// it until an SMMU is driven, and any boot under `ferrix.unisolated`,
+/// it until an SMMU is driven, and any boot under `xaqu.unisolated`,
 /// which carries no claim.
 const fn outside_claim(unisolated_allowed: bool) -> bool {
     arch::ARMV7A || unisolated_allowed
@@ -2594,7 +2594,7 @@ fn start_netd(
         let (near, far) = channel::create(Kernel).map_err(|_| ())?;
         let log = core::mem::ManuallyDrop::new(OwnedHandle::from_raw(
             Kernel,
-            ferrix_rt::log::debug_log().unwrap_or(Handle::INVALID),
+            xaqu_rt::log::debug_log().unwrap_or(Handle::INVALID),
         ));
         let log = log
             .duplicate(Requested::Exactly(Rights(
@@ -2610,7 +2610,7 @@ fn start_netd(
         // Its own space, while it can still be had (`process_space` refuses a started
         // process): so that it can let a dead driver's ring go.
         let child_job = job.create_sealed_child().map_err(|_| ())?;
-        let built = build(&child_job, image, "netd", ferrix_rt::ELF_MACHINE).map_err(|_| ())?;
+        let built = build(&child_job, image, "netd", xaqu_rt::ELF_MACHINE).map_err(|_| ())?;
         let space = built
             .process()
             .space(Requested::Exactly(Rights(
@@ -2713,7 +2713,7 @@ fn core_control(
     channel.write(&open.encode()).map_err(|_| ())?;
     // A bound, so that a hung server costs this driver's start and no other's
     // (ledger 6027, CO.3): the driver is then not started, on its line.
-    let deadline = ferrix_rt::linux::monotonic_nanos().map_or(Deadline::Never, |now| {
+    let deadline = xaqu_rt::linux::monotonic_nanos().map_or(Deadline::Never, |now| {
         Deadline::At(now.saturating_add(CORE_PATIENCE_NANOS))
     });
     let _ = channel
@@ -2765,9 +2765,9 @@ fn bind_first(keep: &Device<Kernel>, info: &DeviceInfo, what: &str) -> bool {
 }
 
 /// Whether `keep`'s device may be handed to its driver: the admission
-/// rule on what `device_isolation` answers (`ferrix_devmgr_proto::
+/// rule on what `device_isolation` answers (`xaqu_devmgr_proto::
 /// admission`), translation alone on AArch64 (the customer's G4), the
-/// opt-out when the boot carries `ferrix.unisolated`. A device refused, or
+/// opt-out when the boot carries `xaqu.unisolated`. A device refused, or
 /// admitted only by the opt-out, is said on its line.
 fn admit(
     keep: &Device<Kernel>,
@@ -2874,16 +2874,16 @@ const TREE_NANOS: u64 = 5_000_000_000;
 /// then not quiesced and nothing is started on it again.
 fn end_job_tree(job: &Job<Kernel>, location: u32) -> bool {
     let _ = job.kill();
-    let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+    let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
     let ended = job
         .wait_one(Signals::EMPTY, Deadline::At(now.saturating_add(TREE_NANOS)))
         .is_ok();
     if ended {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "devmgr   the driver of {location:#010x} and every process in its job have ended"
         );
     } else {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "devmgr   the driver of {location:#010x} left a process in its job {} s after the kill; the device is not handed on",
             TREE_NANOS / 1_000_000_000
         );
@@ -2896,7 +2896,7 @@ fn end_job_tree(job: &Job<Kernel>, location: u32) -> bool {
 const KEEPER_JOB_RIGHTS: Rights = Rights(Rights::TRANSFER.0 | Rights::WAIT.0 | Rights::MANAGE.0);
 
 /// The rights a keeper holds on its worker's image: enough to start it.
-const WORKER_IMAGE_RIGHTS: Rights = ferrix_native_abi::rights::IMAGE_RIGHTS;
+const WORKER_IMAGE_RIGHTS: Rights = xaqu_native_abi::rights::IMAGE_RIGHTS;
 
 /// Start the Intel GPU's keeper: START as an engine's, with two more
 /// handles after the device, its own job and the worker's image
@@ -2989,11 +2989,11 @@ impl gpu::Node for GpuNode<'_> {
 }
 
 /// The boot option that names the GPU `nvrm` drives, as `ssss:bb:dd.f` or
-/// `bb:dd.f` (`ferrix_devmgr_proto::choice`); without it, the first GPU
+/// `bb:dd.f` (`xaqu_devmgr_proto::choice`); without it, the first GPU
 /// met. Read by this program from `/proc/cmdline`, never by the kernel.
-const NVIDIA_OPTION: &str = "ferrix.nvidia";
+const NVIDIA_OPTION: &str = "xaqu.nvidia";
 /// [`NVIDIA_OPTION`] as it starts its word.
-const NVIDIA_WORD: &[u8] = b"ferrix.nvidia=";
+const NVIDIA_WORD: &[u8] = b"xaqu.nvidia=";
 
 /// The chooser of the one GPU, from the command line. Unreadable, it is
 /// said, and the first GPU met is the one.
@@ -3028,7 +3028,7 @@ fn chosen_gpu(chooser: &mut Chooser, info: &DeviceInfo) -> bool {
 
 /// `/proc/cmdline` into `line`: its length, or `None`.
 fn read_cmdline(line: &mut [u8]) -> Option<usize> {
-    use ferrix_rt::linux::{self, numbers};
+    use xaqu_rt::linux::{self, numbers};
     const AT_FDCWD: usize = (-100_isize) as usize;
     const O_RDONLY: usize = 0;
     let path = b"/proc/cmdline\0";
@@ -3071,17 +3071,17 @@ fn hand_over_gpu(keep: &Device<Kernel>, info: &DeviceInfo) -> bool {
     };
     say(level, format_args!("{}", outcome.line(info.location)));
     if let HandOver::Start { budget, .. } = outcome {
-        ferrix_rt::info!("{}", budget.line(info.location));
+        xaqu_rt::info!("{}", budget.line(info.location));
     }
     outcome.starts()
 }
 
 /// A line of devmgr's log at `level`: a record of its own on `/dev/kmsg`
-/// (`ferrix_rt::log`), which the console prints and lode stores with its
+/// (`xaqu_rt::log`), which the console prints and lode stores with its
 /// level as stated -- how devmgr's own decisions reach the boot log, since
 /// the kernel prints only what the bootstrap protocol carries.
 fn say(level: Level, arguments: fmt::Arguments<'_>) {
-    ferrix_rt::log::line(level, arguments);
+    xaqu_rt::log::line(level, arguments);
 }
 
 /// A disk's driver -- virtio-blk's, an NVMe or AHCI controller's, or an
@@ -3104,7 +3104,7 @@ fn start_block(
         info.location,
         Device::block_ring,
     )?;
-    let block = |block: ferrix_native_abi::types::DeviceBlock| Block {
+    let block = |block: xaqu_native_abi::types::DeviceBlock| Block {
         phys: block.phys,
         offset: block.offset,
         length: block.length,
@@ -3230,7 +3230,7 @@ fn start_display(
         info.location,
         Device::display_control,
     )?;
-    let block = |block: ferrix_native_abi::types::DeviceBlock| Block {
+    let block = |block: xaqu_native_abi::types::DeviceBlock| Block {
         phys: block.phys,
         offset: block.offset,
         length: block.length,
@@ -3287,7 +3287,7 @@ fn start_input(
         info.location,
         Device::input_control,
     )?;
-    let block = |block: ferrix_native_abi::types::DeviceBlock| Block {
+    let block = |block: xaqu_native_abi::types::DeviceBlock| Block {
         phys: block.phys,
         offset: block.offset,
         length: block.length,
@@ -3341,7 +3341,7 @@ fn start_sound(
         info.location,
         Device::sound_control,
     )?;
-    let block = |block: ferrix_native_abi::types::DeviceBlock| Block {
+    let block = |block: xaqu_native_abi::types::DeviceBlock| Block {
         phys: block.phys,
         offset: block.offset,
         length: block.length,
@@ -3420,7 +3420,7 @@ fn start_host(
     port: &Port<Kernel>,
     key: u64,
 ) -> Result<Launched, ()> {
-    let mut opened: [Option<OwnedHandle<Kernel>>; ferrix_native_abi::types::USB_INPUT_FUNCTIONS] =
+    let mut opened: [Option<OwnedHandle<Kernel>>; xaqu_native_abi::types::USB_INPUT_FUNCTIONS] =
         core::array::from_fn(|_| None);
     if CORES.load(Ordering::Relaxed) != 0 {
         for slot in &mut opened {
@@ -3438,14 +3438,14 @@ fn start_host(
     if opened.iter().any(Option::is_some) {
         let _ = launched
             .2
-            .write_slots(ferrix_native_abi::types::INPUT_CHANNELS_MARK, &mut opened);
+            .write_slots(xaqu_native_abi::types::INPUT_CHANNELS_MARK, &mut opened);
     }
     Ok(launched)
 }
 
 /// START for a driver that gets its device alone, or a keeper's.
 fn plain_start(info: &DeviceInfo, program: &str) -> Start {
-    let block = |block: ferrix_native_abi::types::DeviceBlock| Block {
+    let block = |block: xaqu_native_abi::types::DeviceBlock| Block {
         phys: block.phys,
         offset: block.offset,
         length: block.length,
@@ -3484,7 +3484,7 @@ const SETTLE_NANOS: u64 = 5_000_000_000;
 /// [`SETTLE_NANOS`]: whichever comes first. What it says is not read; a
 /// driver that says nothing costs the boot the wait and no more.
 fn await_settled(bootstrap: &Channel<Kernel>) {
-    let Ok(now) = ferrix_rt::linux::monotonic_nanos() else {
+    let Ok(now) = xaqu_rt::linux::monotonic_nanos() else {
         return;
     };
     let _ = bootstrap.wait_one(
@@ -3518,14 +3518,14 @@ fn launch_in<const N: usize>(
     start: &[u8],
     handles: [OwnedHandle<Kernel>; N],
 ) -> Result<Launched, ()> {
-    let built = build(&child_job, image, program, ferrix_rt::ELF_MACHINE).map_err(|_| ())?;
+    let built = build(&child_job, image, program, xaqu_rt::ELF_MACHINE).map_err(|_| ())?;
     let (near, far) = channel::create(Kernel).map_err(|_| ())?;
     // With no /dev/kmsg to open, a driver's lines go where devmgr's do: a message
-    // ahead of START, which a driver's start takes (`ferrix_driver::model`).
-    if let Some(log) = ferrix_rt::log::debug_log() {
+    // ahead of START, which a driver's start takes (`xaqu_driver::model`).
+    if let Some(log) = xaqu_rt::log::debug_log() {
         let log = core::mem::ManuallyDrop::new(OwnedHandle::from_raw(Kernel, log));
         if let Ok(copy) = log.duplicate(Requested::Exactly(Rights::WRITE | Rights::TRANSFER)) {
-            near.write_with(ferrix_rt::log::BOOTSTRAP_MARK, [copy])
+            near.write_with(xaqu_rt::log::BOOTSTRAP_MARK, [copy])
                 .map_err(|_| ())?;
         }
     }

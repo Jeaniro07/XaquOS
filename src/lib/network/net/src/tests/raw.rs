@@ -4,7 +4,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::{icmpv4, ipv4, udp};
+use xaqu_netwire::{icmpv4, ipv4, udp};
 
 use crate::addr::{IpAddress, Ipv4};
 use crate::socket::{Error, Family, Socket, SocketId};
@@ -65,7 +65,7 @@ fn filter(stack: &mut Stack, id: SocketId, mask: u32) {
 fn a_raw_icmp_socket_reads_the_echo_reply_with_its_ip_header() {
     let mut wire = Wire::new();
     let ping = wire.one.open_raw(Family::V4, ICMP);
-    let request = echo_request(0x4242, 1, b"ferrix");
+    let request = echo_request(0x4242, 1, b"xaqu");
     let now = wire.now;
     let sent = wire
         .one

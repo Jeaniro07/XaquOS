@@ -366,7 +366,7 @@ been predictable.
 
 **Done — the time of day, and random numbers worth a key.** The loader asks
 firmware for both before it leaves boot services: `GetTime`, turned into Unix
-nanoseconds by `ferrix_bootinfo::unix_nanos`, and 32 bytes from
+nanoseconds by `xaqu_bootinfo::unix_nanos`, and 32 bytes from
 `EFI_RNG_PROTOCOL`. `BootInfo` version 5 carries them, with a flag for each
 that firmware provided. The kernel starts `CLOCK_REALTIME` at that time after
 stage 3's timer check.
@@ -402,7 +402,7 @@ and the phone now boots `seeded with 448 bits: 8 bytes from firmware, 48 from
 its TRNG`. QEMU's firmware has no TRNG and answers 0. The boot check
 reads the generator twice and panics as FX-0306 if the two reads match. Its negative control, not
 committed, on x86-64: with the second read replaced by a copy of the first, the
-boot printed `FERRIX-PANIC random generator check failed: two reads of the
+boot printed `XAQU-PANIC random generator check failed: two reads of the
 random generator were the same` under FX-0306. The clock's: with the loader's
 time flag cleared, the boot said `firmware has no clock: CLOCK_REALTIME starts
 at the epoch`.
@@ -501,7 +501,7 @@ status of 3, a piped stdin, stderr on its own stream, `ssh -T`, `sftp` and
 private key at all -- a sandbox whose `~/.ssh` was empty -- being told
 `Permission denied (publickey)` before any session was opened. So a machine
 now has a key of its own for its guests: `ssh-keygen` makes
-`~/.local/share/ferrix/ssh/id_ed25519` beside the host key the first time,
+`~/.local/share/xaqu/ssh/id_ed25519` beside the host key the first time,
 every `--ssh` boot authorizes it, and the boot prints the `ssh -i` line that
 uses it. `--ssh-key <FILE|KEY>` authorizes a key that is in neither place, a
 file read whole or a key written out. Password authentication stays off,
@@ -547,14 +547,14 @@ given the listener's flag, so a server that accepted on a non-blocking
 listener and then read with a timeout saw `EAGAIN` before the client's bytes
 arrived. The boot checks ask both families.
 
-**Done — a DHCP client of Ferrix's own (2026-10-19).** `/bin/dhcpc`
+**Done — a DHCP client of Xaqu's own (2026-10-19).** `/bin/dhcpc`
 (`src/user/system/linux/dhcp`, 1f1db198d) asks DISCOVER, OFFER, REQUEST and
 ACK over an `AF_PACKET` socket and applies the lease itself over rtnetlink --
 the link up, the address, the default route through the first router and
 `/etc/resolv.conf` -- so no lease script, shell, `ip` or `sed` runs. It
 replaces busybox's `udhcpc` in the desktop boots, `test-net`, the devloop,
 the N150 box's script and the Steam, Claude Code and adb gates; the release
-image carries it as Ferrix's own program (aacbd72a6). Also on `main` on
+image carries it as Xaqu's own program (aacbd72a6). Also on `main` on
 2026-10-15: the gateway scales the guest's TCP window and probes a shut one
 (a7af71269), and the guest's receive buffer is 1 MiB with the reassembly
 list capped at 1,024 runs (7a367b755).
@@ -569,7 +569,7 @@ DMA's interrupts back until it is disabled. The facts are from Linux's
 `dwmac-motorcomm.c` and Motorcomm's series posted to netdev (v4); no code was
 taken from either. It is three crates and a kernel change:
 
-* `src/lib/drivers/net/dwmac` (`ferrix-dwmac`): the core as logic over
+* `src/lib/drivers/net/dwmac` (`xaqu-dwmac`): the core as logic over
   registers, a clock and DMA memory -- software reset, the PHY over the core's
   MDIO in clause 22, one channel and one queue each way with sixteen-byte
   descriptors, tails written one past each ring as doorbells, written-back
@@ -578,14 +578,14 @@ taken from either. It is three crates and a kernel change:
   core that walks the rings by device address over scattered pages and lies
   when asked (a reset that never ends, a busy bus, no PHY, lengths past the
   buffer, error summaries, context descriptors, split frames, a bus error).
-* `src/lib/drivers/net/yt6801` (`ferrix-yt6801`): the chip around the core --
+* `src/lib/drivers/net/yt6801` (`xaqu-yt6801`): the chip around the core --
   its reset, the PHY's release, the address from the eFuse's patch region
   (else what firmware left in the core, else a locally administered
   `02:1f:0a:…`), interrupts let out, and the core's options for one vector.
   10 host tests against a model of BAR 0 that refuses any touch of the MSI-X
   table.
 * `src/user/system/native/drivers/net/yt6801` (`yt6801`): the process, the
-  virtio-net program with this device under it, over `ferrix-netserve`; it
+  virtio-net program with this device under it, over `xaqu-netserve`; it
   polls every millisecond until it has seen an interrupt and asks the PHY
   about the link every 250 ms, sending LINK on a change. `devmgr` starts it on
   `1F0A:6801`.
@@ -628,7 +628,7 @@ session reading it must check:
 8. `yt6801   link Up { speed: Thousand, full_duplex: true }` with a cable to
    a gigabit switch, and then `ping` and `wget` as `test-net` does.
 9. Linux disables ASPM's L1 on this chip because some cards deliver no MSI
-   with it on; Ferrix leaves link power management as firmware set it. If
+   with it on; Xaqu leaves link power management as firmware set it. If
    step 7 fails, that is the first suspect.
 
 **Done in a VM, owed on bare metal — nazuna's onboard port, a Realtek
@@ -640,7 +640,7 @@ kernel needs no change. The facts are from Linux's `r8169` (6.18's
 `r8169_main.c` and `r8169_phy_config.c`) and Realtek's public datasheets;
 no code was taken from either. Two crates:
 
-* `src/lib/drivers/net/rtl8169` (`ferrix-rtl8169`): the chip as logic over
+* `src/lib/drivers/net/rtl8169` (`xaqu-rtl8169`): the chip as logic over
   8/16/32-bit registers, a clock and DMA memory -- its four indirect buses
   (ERI, MAC OCP, the PHY's OCP bus addressed by page without a page
   selector, the PCIe PHY), the XID check that refuses every other member of
@@ -683,7 +683,7 @@ down at 235 and 372 Mbit/s, 512 MiB up at 405 Mbit/s, no frame dropped for
 want of a slot. The ceiling is the stack's, not the chip's: the receive ring
 ran dry thousands of times a second while the net ring was full, as
 virtio-net's does under KVM (43 MB/s). Logs:
-`~/.local/share/ferrix/rtl8169/hw2.log`, `hw3.log`, `bench.log`. Tools:
+`~/.local/share/xaqu/rtl8169/hw2.log`, `hw3.log`, `bench.log`. Tools:
 `rtl-tovfio.sh`/`rtl-tohost.sh` (pkexec), the QEMU wrapper, `drive.py`
 and `netbench.py`, in the same directory; the guest needs `--memory 2048`
 under the 4 GiB memlock limit.
@@ -691,7 +691,7 @@ under the 4 GiB memlock limit.
 **Owed: nazuna's bare metal.** QEMU models no 8168, so only the host models
 gate it. On bare metal there is no AMD-Vi driver: the NIC's DMA is
 untranslated, which is degraded trusted mode, and once the bus-master gate
-lands a dev image needs `ferrix.unisolated` on its command line for devmgr
+lands a dev image needs `xaqu.unisolated` on its command line for devmgr
 to start the driver (DMA-GATE, ledger 3906); with AMD-Vi it does not. The
 boot must show the lines above, a lease and a ping (BACKLOG, P3).
 

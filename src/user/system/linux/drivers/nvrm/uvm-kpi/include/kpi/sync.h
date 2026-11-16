@@ -8,8 +8,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#ifndef FERRIX_KPI_SYNC_H
-#define FERRIX_KPI_SYNC_H
+#ifndef XAQU_KPI_SYNC_H
+#define XAQU_KPI_SYNC_H
 
 /* ---- Atomics. ---- */
 typedef struct { int counter; } atomic_t;

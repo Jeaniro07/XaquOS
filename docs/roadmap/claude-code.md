@@ -1,24 +1,24 @@
-# Claude Code — Anthropic's coding agent on Ferrix  ·  *the command line, 2026-09-30; the desktop app assessed, 2026-10-14*
+# Claude Code — Anthropic's coding agent on Xaqu  ·  *the command line, 2026-09-30; the desktop app assessed, 2026-10-14*
 
 Placed after Chrome without a number of its own. The customer asked on
-2026-09-30 for Claude Code on Ferrix, the command line first and then the
+2026-09-30 for Claude Code on Xaqu, the command line first and then the
 desktop app; `docs/CLAUDE-CODE.md` is the account. The program is
 Anthropic's prebuilt native release for linux-x64, 2.1.280, on Debian 13's
 glibc, from a btrfs volume `tools/common/fetch/fetch-claude-code.sh` makes
 from pinned downloads, as Chrome's is.
 
-**Exit:** Claude Code runs on Ferrix and uses a tool there, and the desktop
+**Exit:** Claude Code runs on Xaqu and uses a tool there, and the desktop
 has it. Met for the command line on x86-64 (2026-09-30): `cargo xtask
 test-claude-code` runs `claude --version`, then one turn of `claude -p`
 against a Messages API xtask serves, in which the model asks for a Bash
-command and Claude Code runs it in bash on Ferrix and sends its output
+command and Claude Code runs it in bash on Xaqu and sends its output
 back; `--everything` runs the same on the `run-compositor --everything`
 desktop's volume, whose terminals, and `remote-desktop`'s, have `claude`.
 
 **Done (2026-09-30).** In the order running it found them:
 
 * AVX for programs. Claude Code's Bun runtime is built for AVX2 with no
-  fallback, and spun forever in its first string conversion on a Ferrix
+  fallback, and spun forever in its first string conversion on a Xaqu
   that neither saved AVX nor offered it. The kernel now sets `CR4.OSXSAVE`,
   enables x87, SSE and AVX in `XCR0`, saves them with `XSAVE` at every
   switch, and carries them in signal frames as Linux does; xtask's x86-64

@@ -5,7 +5,7 @@
 //! table replaced the *lookup* and not the calls, as stage 7 said it would:
 //! each still copies from or to user memory in bounded pieces and reports the
 //! count it managed. What a descriptor names is now a
-//! `ferrix_vfs::OpenFile`, and the console is one of those like any other.
+//! `xaqu_vfs::OpenFile`, and the console is one of those like any other.
 //!
 //! # Through a bounce buffer, a page at a time
 //!
@@ -40,8 +40,8 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::{OpenFile, Whence};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::{OpenFile, Whence};
 
 use crate::syscall::fd;
 use crate::syscall::process::Process;

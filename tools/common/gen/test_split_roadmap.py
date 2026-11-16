@@ -32,7 +32,7 @@ sys.modules["split_roadmap"] = sr
 _spec.loader.exec_module(sr)
 
 ROADMAP = """\
-# Ferrix — roadmap
+# Xaqu — roadmap
 
 The rules. See [the design](ARCHITECTURE.md) and stage 1, [below](#stage-1--boot----week).
 

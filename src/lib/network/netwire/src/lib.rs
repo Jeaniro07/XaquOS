@@ -37,9 +37,9 @@
 //! packet inside an `unsafe` block for nothing.
 //!
 //! ```
-//! use ferrix_netwire::ethernet;
+//! use xaqu_netwire::ethernet;
 //!
-//! # fn main() -> Result<(), ferrix_netwire::Error> {
+//! # fn main() -> Result<(), xaqu_netwire::Error> {
 //! let frame = [
 //!     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // destination: broadcast
 //!     0x52, 0x54, 0x00, 0x12, 0x34, 0x56, // source

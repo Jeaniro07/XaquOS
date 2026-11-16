@@ -3,7 +3,7 @@
 //! Stage 5 of `docs/ROADMAP.md`. Until now the kernel has run one thread of
 //! control per processor, and every "CPU" in the code has meant a processor.
 //! From here a processor runs a *task*, chosen from a queue of its own, and
-//! the choosing is `ferrix_sched`'s EEVDF fair class — written in `src/lib/` and
+//! the choosing is `xaqu_sched`'s EEVDF fair class — written in `src/lib/` and
 //! tested on the host, because a scheduler that is wrong is wrong in a way
 //! nothing on the machine can print.
 //!
@@ -45,7 +45,7 @@ mod borrow;
 mod borrow_check;
 mod check;
 mod deadline_check;
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub mod direct;
 pub(crate) mod fast;
 pub(crate) mod leftovers;
@@ -55,10 +55,10 @@ mod preempt_check;
 mod queue;
 pub mod rehome_check;
 /// `schedule=edf`'s reservations (ledger 7088).
-#[cfg(ferrix_schedule = "edf")]
+#[cfg(xaqu_schedule = "edf")]
 pub mod reserve;
 /// Its boot check.
-#[cfg(all(ferrix_schedule = "edf", ferrix_checks = "on"))]
+#[cfg(all(xaqu_schedule = "edf", xaqu_checks = "on"))]
 pub mod reserve_check;
 mod slice_check;
 mod task;
@@ -71,8 +71,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sched::{Balance, CpuSet, Domain, Mode, NICE_0_WEIGHT, Placement, check_partition};
-use ferrix_sync::{IrqControl, IrqSpinLock, Once, SpinLock};
+use xaqu_sched::{Balance, CpuSet, Domain, Mode, NICE_0_WEIGHT, Placement, check_partition};
+use xaqu_sync::{IrqControl, IrqSpinLock, Once, SpinLock};
 
 use crate::arch;
 use crate::fallible;
@@ -188,7 +188,7 @@ fn per_cpu_words(online: usize) {
 
 /// `work` with this processor's published group `group`, as if another job's task had just
 /// run on it: what K16's check shows a kernel task's allocation does not read.
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 pub(crate) fn with_running_group_for_check<R>(group: u32, work: impl FnOnce() -> R) -> R {
     let saved = <arch::Irq as IrqControl>::disable();
     let slot = this_cpu().and_then(|cpu| RUNNING_GROUP.get()?.get(cpu));
@@ -329,7 +329,7 @@ pub(crate) fn nothing_due_here() -> bool {
 /// it. A machine with no `cpu.max` set pays one load. With interrupts masked.
 #[inline(always)]
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 fn throttled_here(cpu: usize) -> bool {
@@ -512,8 +512,8 @@ static IDLE: AtomicU64 = AtomicU64::new(0);
 /// [`init`] and cleared only by [`take_out_of_service`]. Every placement --
 /// [`choose_cpu`], [`may_place`], [`place_on_idle`], the pull, the steal and
 /// the balance -- and every wake at a task's home asks it.
-static ACTIVE: [AtomicU64; ferrix_sched::MAX_CPUS / 64] =
-    [const { AtomicU64::new(0) }; ferrix_sched::MAX_CPUS / 64];
+static ACTIVE: [AtomicU64; xaqu_sched::MAX_CPUS / 64] =
+    [const { AtomicU64::new(0) }; xaqu_sched::MAX_CPUS / 64];
 
 /// Whether a placer may put a task on processor `cpu`, or `cpu` take one
 /// from another: whether it is in service (L.sched.102). Every placer asks
@@ -591,7 +591,7 @@ static ZOMBIES: IrqSpinLock<Zombies, arch::Irq> = IrqSpinLock::new(Zombies::new(
 #[derive(Debug)]
 struct Zombies {
     /// The tasks, keyed by the order they died in.
-    list: ferrix_sched::Timeline<Arc<Task>>,
+    list: xaqu_sched::Timeline<Arc<Task>>,
     /// The next one's place in that order.
     next: u64,
 }
@@ -600,7 +600,7 @@ impl Zombies {
     /// None.
     const fn new() -> Zombies {
         Zombies {
-            list: ferrix_sched::Timeline::new(),
+            list: xaqu_sched::Timeline::new(),
             next: 0,
         }
     }
@@ -1353,7 +1353,7 @@ fn domain_cpus() -> Option<&'static CpuSet> {
     DOMAIN.get().map(Domain::cpus)
 }
 
-/// Ask `ferrix_sched` where a task should go, given what every processor is
+/// Ask `xaqu_sched` where a task should go, given what every processor is
 /// carrying right now.
 ///
 /// Takes every run queue's lock in turn, which is why it is never called with
@@ -1846,7 +1846,7 @@ pub(crate) fn exit() -> ! {
 fn exit_counted(leaving: bool) -> ! {
     // Its frames and charge now: a processor keeps this task as its previous until it next
     // switches, which an idle one may not for a long time (ledger 6787 W11).
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     arch::window_forget_own();
     // A ticket it adopted is let go of here, with interrupts still open: the
     // last reference frees memory (`docs/microkernel/K7.md`, 2525 (5)).
@@ -2368,7 +2368,7 @@ pub fn sync_placed() -> [u32; SyncPlaced::COUNT] {
 /// preemption and a warm cache (Linux's `wake_affine_idle`), a busy share
 /// not yet measured, or this processor's load average with the task's load
 /// added at 108% of the home's with it taken away or more
-/// (`ferrix_sched::pull_fits`, Linux's `wake_affine_weight`).
+/// (`xaqu_sched::pull_fits`, Linux's `wake_affine_weight`).
 fn refuses(how: Onto, here: &CpuQueue, home: &CpuQueue, task: &Task) -> bool {
     match how {
         Onto::Sync => here.waiting() != 0,
@@ -2381,7 +2381,7 @@ fn refuses(how: Onto, here: &CpuQueue, home: &CpuQueue, task: &Task) -> bool {
             };
             let load =
                 busy.saturating_mul(u64::from(task.base_weight())) / u64::from(NICE_0_WEIGHT);
-            !ferrix_sched::pull_fits(here.load_average(), home.load_average(), load)
+            !xaqu_sched::pull_fits(here.load_average(), home.load_average(), load)
         }
     }
 }
@@ -2434,7 +2434,7 @@ fn pull_onto_waker(task: &Arc<Task>) -> bool {
 /// never pulls. It records the wakee whatever the answer, as Linux's
 /// `record_wakee` does on every wake. Then the domain must steal work and
 /// hold both processors, the task must not be pinned and must be allowed
-/// here, the wake must not be wide (`ferrix_sched::wake_wide`, with the
+/// here, the wake must not be wide (`xaqu_sched::wake_wide`, with the
 /// domain's processor count as the factor), and no processor the task may
 /// run on other than its home may be idle: an idle one is L.sched.85's to
 /// take, as Linux's `select_idle_sibling` comes before stacking on the
@@ -2455,7 +2455,7 @@ fn pull_target(task: &Arc<Task>) -> Option<usize> {
         return None;
     }
     let factor = u32::try_from(domain.cpus().len()).unwrap_or(u32::MAX);
-    if ferrix_sched::wake_wide(waker_flips, task.wakee_flips(), factor) {
+    if xaqu_sched::wake_wide(waker_flips, task.wakee_flips(), factor) {
         return None;
     }
     if idle_allowed(task, domain) {
@@ -3070,7 +3070,7 @@ pub fn rehomed(cpu: usize) -> u64 {
 /// the same `insert`.
 fn move_onto(
     task: &Arc<Task>,
-    state: Option<ferrix_sched::EntityState>,
+    state: Option<xaqu_sched::EntityState>,
     to: usize,
     queue: &mut CpuQueue,
 ) {
@@ -3348,7 +3348,7 @@ pub(crate) fn unfile_timer(
 // CHECKS-ONLY: object/timer_check.rs
 /// Whether processor `cpu`'s sleeper set holds a timer's arm; a pinned task may
 /// stay on it (`L.sched.104`).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub fn holds_arm_on(cpu: usize) -> bool {
     let saved = <arch::Irq as IrqControl>::disable();
@@ -3372,7 +3372,7 @@ pub fn holds_arm_on(cpu: usize) -> bool {
 /// decision's pass does, then evacuate as a processor parking does. So a
 /// check reaches [`evacuate`]'s fire of that buffer with nothing else able
 /// to fire it first (L.sched.104).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub fn evacuate_with_fired_for_check() {
     let saved = <arch::Irq as IrqControl>::disable();
@@ -3904,7 +3904,7 @@ fn swap_address_space(previous_task: &Task, next_task: &Task) {
         } else {
             // The exit's refill rests on a root write around it under ERAPS: no way here
             // leaves the mark up with none, as a mode changes only with a flip (ledger 6747 (1a)).
-            #[cfg(ferrix_fast_restricted)]
+            #[cfg(xaqu_fast_restricted)]
             if arch::restricted_ran_here()
                 && let (Some(before), Some(after)) = (previous, next)
                 && Arc::ptr_eq(before, after)
@@ -4065,7 +4065,7 @@ pub(crate) unsafe fn with_own_user_state<R>(
 /// (`docs/microkernel/K1.md` §7.1 (3)). With interrupts masked.
 #[inline(always)]
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 pub(crate) fn set_active_user_state(record: *mut arch::UserState) {
@@ -4073,7 +4073,7 @@ pub(crate) fn set_active_user_state(record: *mut arch::UserState) {
 }
 
 #[cfg_attr(
-    not(ferrix_restricted_fastpath = "on"),
+    not(xaqu_restricted_fastpath = "on"),
     allow(dead_code, reason = "K1's fast crossings alone ask it")
 )]
 /// Read the running task's own record, whichever is active.
@@ -4479,7 +4479,7 @@ fn reap_up_to(most: usize) -> usize {
         let mut zombies = ZOMBIES.lock();
         while taken.len() < most {
             let Some(task) = zombies.pop() else { break };
-            #[cfg(ferrix_schedule = "edf")]
+            #[cfg(xaqu_schedule = "edf")]
             reserve::forget(&task);
             if let Some(stack) = task.stack() {
                 let _ = fallible::push_within(&mut stacks, stack);
@@ -4508,7 +4508,7 @@ fn reap_one_at_a_time(most: usize) -> usize {
         let Some(task) = ZOMBIES.lock().pop() else {
             break;
         };
-        #[cfg(ferrix_schedule = "edf")]
+        #[cfg(xaqu_schedule = "edf")]
         reserve::forget(&task);
         if let Some(stack) = task.stack() {
             // SAFETY: (KMEM) as in `reap_up_to`.
@@ -4766,7 +4766,7 @@ pub(crate) fn print_picks(cpu: usize) {
 /// One processor's run queue, for a check or the boot log.
 #[derive(Clone, Copy, Debug)]
 pub struct CpuReport {
-    /// Its decaying load average, out of `ferrix_sched::LOAD_SCALE`.
+    /// Its decaying load average, out of `xaqu_sched::LOAD_SCALE`.
     pub(crate) load: u64,
     /// The slice it is currently handing out.
     pub(crate) slice_ns: u64,

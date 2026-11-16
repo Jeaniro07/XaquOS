@@ -18,7 +18,7 @@
 //! read from the machine the image is built on.
 //!
 //! A monitor found is also saved, with the registry, under
-//! `~/.local/share/ferrix/edid/`, and a machine without the monitor --
+//! `~/.local/share/xaqu/edid/`, and a machine without the monitor --
 //! it is asleep, and a DP port says `disconnected`, or it was never
 //! plugged in here -- takes it from there. That directory is the user's,
 //! outside the tree, and a copy of it is how a Windows machine gets it.
@@ -28,7 +28,7 @@
 
 use std::path::{Path, PathBuf};
 
-use ferrix_displayctl::edid;
+use xaqu_displayctl::edid;
 
 use crate::{Error, Result};
 
@@ -114,7 +114,7 @@ pub(crate) fn for_run(asked: Option<&str>) -> Result<Option<Carried>> {
 }
 
 /// Where a monitor found on this machine is saved, for a boot when it is off
-/// or on another machine: `~/.local/share/ferrix/edid`. A DP monitor
+/// or on another machine: `~/.local/share/xaqu/edid`. A DP monitor
 /// that is asleep is `disconnected`, EDID and all, and a copy of this
 /// directory is how a machine the monitor was never plugged into (Windows,
 /// whose `run-compositor` reads the same `hyprland.conf`) gives it anyway.
@@ -123,7 +123,7 @@ fn saved_dir() -> Option<PathBuf> {
         crate::dotfiles::home()?
             .join(".local")
             .join("share")
-            .join("ferrix")
+            .join("xaqu")
             .join("edid"),
     )
 }
@@ -320,7 +320,7 @@ fn sanitized(name: &str) -> String {
 }
 
 /// A monitor no machine has, for a gate on a machine without the one asked
-/// for: `FRX`, "Ferrix Test", serial `EDID0001`, one base block with a
+/// for: `FRX`, "Xaqu Test", serial `EDID0001`, one base block with a
 /// 1024x768 detailed timing. `FRX` is not in the PNP registry, so its make
 /// is the code wherever the gate runs.
 pub(crate) fn stand_in() -> Monitor {
@@ -350,7 +350,7 @@ pub(crate) fn stand_in() -> Monitor {
         }
         descriptor
     };
-    block[72..90].copy_from_slice(&text(0xFC, b"Ferrix Test"));
+    block[72..90].copy_from_slice(&text(0xFC, b"Xaqu Test"));
     block[90..108].copy_from_slice(&text(0xFF, b"EDID0001"));
     block[108..126].copy_from_slice(&text(0xFE, b"stand-in"));
     let sum = block[..127]
@@ -373,10 +373,10 @@ mod tests {
     #[test]
     fn a_monitor_is_described_as_the_compositor_describes_it() {
         let monitor = stand_in();
-        assert_eq!(monitor.description, "FRX Ferrix Test EDID0001");
+        assert_eq!(monitor.description, "FRX Xaqu Test EDID0001");
         assert_eq!(
             describe(&monitor.bytes, Some(REGISTRY_LINES)).as_deref(),
-            Some("Not really Ferrix Test EDID0001")
+            Some("Not really Xaqu Test EDID0001")
         );
         assert_eq!(describe(&[0u8; 128], None), None);
         let mut checked = monitor.bytes;
@@ -397,14 +397,14 @@ mod tests {
             std::fs::create_dir_all(root.join(connector)).unwrap();
             std::fs::write(root.join(connector).join("edid"), bytes).unwrap();
         }
-        let found = find(&root, "Not really Ferrix", Some(REGISTRY_LINES))
+        let found = find(&root, "Not really Xaqu", Some(REGISTRY_LINES))
             .unwrap()
             .unwrap();
         assert_eq!(found.connector, "card2-DP-3");
-        assert_eq!(found.description, "Not really Ferrix Test EDID0001");
+        assert_eq!(found.description, "Not really Xaqu Test EDID0001");
         // The code finds it too, as a host without the registry names it.
         assert!(
-            find(&root, "FRX Ferrix", Some(REGISTRY_LINES))
+            find(&root, "FRX Xaqu", Some(REGISTRY_LINES))
                 .unwrap()
                 .is_some()
         );
@@ -430,10 +430,10 @@ mod tests {
         // The registry saved beside it names the make, as on the host it
         // was saved on.
         let registry = std::fs::read_to_string(dir.join(SAVED_REGISTRY)).unwrap();
-        let found = find_saved(&dir, "Not really Ferrix", Some(&registry))
+        let found = find_saved(&dir, "Not really Xaqu", Some(&registry))
             .unwrap()
             .unwrap();
-        assert_eq!(found.connector, "Not-really-Ferrix-Test-EDID0001.bin");
+        assert_eq!(found.connector, "Not-really-Xaqu-Test-EDID0001.bin");
         assert_eq!(found.bytes, monitor.bytes);
         assert!(
             find_saved(&dir, "Lenovo", Some(&registry))
@@ -448,7 +448,7 @@ mod tests {
         let carried = carry(&stand_in(), Some(REGISTRY_LINES.to_owned()));
         assert_eq!(
             carried.argument,
-            "drm.edid_firmware=edid/FRX-Ferrix-Test.bin"
+            "drm.edid_firmware=edid/FRX-Xaqu-Test.bin"
         );
         let paths: Vec<&str> = carried
             .files
@@ -458,7 +458,7 @@ mod tests {
         assert_eq!(
             paths,
             [
-                "lib/firmware/edid/FRX-Ferrix-Test.bin",
+                "lib/firmware/edid/FRX-Xaqu-Test.bin",
                 "usr/share/hwdata/pnp.ids"
             ]
         );

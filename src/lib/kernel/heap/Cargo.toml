@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-heap"
+name = "xaqu-heap"
 description = "Size-class kernel heap, generic over its page supply"
 version.workspace = true
 edition.workspace = true

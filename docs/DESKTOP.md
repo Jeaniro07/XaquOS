@@ -25,7 +25,7 @@ can be seen:
 |---|---|---|
 | 1a | f6584da2c | `general:layout = floating` and `workspace = N, layout:floating`; new windows choose their size, centred and cascaded in the work area; floating windows told no tiled edge |
 | 1b | 20d4e496b | `snapwindow max\|left\|right\|restore\|toggle`; `set_maximized` and the taskbar's maximize on floating windows; drag to a top edge maximizes, to a side halves, with a tile preview; a snapped window dragged away takes its old size under the pointer |
-| 2b | 521897720 | `hyprix/themes/ferrix-light.conf`; `hyprix:own_frames` (no compositor border round a window that draws its own frame, nothing round a maximized one); GTK 4's identity viewport no longer stops the window-geometry crop |
+| 2b | 521897720 | `hyprix/themes/xaqu-light.conf`; `hyprix:own_frames` (no compositor border round a window that draws its own frame, nothing round a maximized one); GTK 4's identity viewport no longer stops the window-geometry crop |
 | 1c | 7459f3c01 | minimize: `set_minimized`, the taskbar's request, `minimize`; focusing brings it back |
 | 1d | 76ef1a29b | the overview: `overview toggle`, SUPER alone; a grid of the shown workspace's windows, a strip of the other workspaces in miniature, click to pick, Escape to close |
 
@@ -35,11 +35,11 @@ a622d2266 with no conflict, on 88654b7cc: `build --arch all --release`
 (`hg-p1-release`), `test-boot` x86_64 KVM (`hg-p1-boot-kvm`) and TCG
 (`hg-p1-boot-tcg`), aarch64 (`hg-p1-boot-aarch64`), armv7a
 (`hg-p1-boot-armv7a`) and armv7a `--smp 2` (`hg-p1-boot-armv7a-smp2`), all
-PASSED. Logs in `~/.local/share/ferrix/logs/queue/`. Host tests: layout 199, hyprix lib
+PASSED. Logs in `~/.local/share/xaqu/logs/queue/`. Host tests: layout 199, hyprix lib
 141, `two_clients` 33 (one new: the floating workspace), `theme` 1. foot
 against the compositor printed no missing protocol. Screenshots, headless
 runs with zenity (GTK 4) and pattern clients:
-`~/.local/share/ferrix/hyprix-gnome/shots/`.
+`~/.local/share/xaqu/hyprix-gnome/shots/`.
 
 Part 1's leftovers were fixed after it landed (995f8012f): the tile
 preview is drawn under the dragged window, taskbars are told `maximized`
@@ -64,7 +64,7 @@ the release. Now, in the GNOME and Hyprland ways:
   click, or `Return` on the tile the arrow keys or `Tab` picked, focuses
   the window and brings it back; `overview next|prev|pick` are the same
   for a bind or a script. The keys it takes have their release taken too.
-* **`ALT+Tab` and `SUPER+Tab`** (and with `SHIFT`, back) in Ferrix light
+* **`ALT+Tab` and `SUPER+Tab`** (and with `SHIFT`, back) in Xaqu light
   run hyprix's new `switcher` dispatcher (`hyprix/src/switcher.rs`): every
   window on an ordinary workspace and every minimized one, most recently
   focused first, in a row over the focused monitor with the window before
@@ -75,7 +75,7 @@ the release. Now, in the GNOME and Hyprland ways:
   over `zwlr_foreign_toplevel_management_v1` on the bar's own connection:
   a button a window with `active`, `minimized`, `maximized`, `fullscreen`
   and its application id as classes, and waybar's `minimize-raise` on a
-  click (the default here). It is not in Ferrix light's bar, which is
+  click (the default here). It is not in Xaqu light's bar, which is
   GNOME's top bar and has no window list, nor in the customer's own
   `~/.config/waybar`, which says its window list is the dock along the
   bottom (`hypr-dock`); `--everything` and the dotfiles desktop carry that
@@ -114,15 +114,15 @@ aarch64 musl linker on this host), before any boot.
 |---|---|---|
 | 2a | aa3ba1296 | `hyprix:titlebars = 1`: a header bar above each floating window that asked for the compositor's frame -- title, minimize, maximize, close drawn in code; press to move, double click to maximize; the layout keeps the bar inside the work area |
 | 2b | 521897720 | (with part 1) the theme file and `hyprix:own_frames` |
-| 2c | 0d1a18248 | `hyprix/themes/ferrix-light-bar/`: the top bar as a waybar `config.jsonc` and `style.css` |
+| 2c | 0d1a18248 | `hyprix/themes/xaqu-light-bar/`: the top bar as a waybar `config.jsonc` and `style.css` |
 
 Gates on 537c767f1: `check`, `test-compositor`, `build --arch all --release`
 and `test-boot` on x86_64 KVM and TCG, aarch64, armv7a and armv7a
 `--smp 2`, all PASSED (`hg-p2-*`, logs in
-`~/.local/share/ferrix/logs/queue/`).
+`~/.local/share/xaqu/logs/queue/`).
 
-Screenshots of the whole look: `2-ferrix-light-desktop.png`,
-`2-ferrix-light-snapped-right.png` and `2-ferrix-light-overview.png` in
+Screenshots of the whole look: `2-xaqu-light-desktop.png`,
+`2-xaqu-light-snapped-right.png` and `2-xaqu-light-overview.png` in
 the same folder. Left of part 2: pointer motion over a title bar still
 reaches the window under it, buttons have no hover state, tiled windows get
 no bar, and images do not yet carry the bar's configuration or start it.
@@ -151,17 +151,17 @@ unplugs a virtio-gpu head from outside, and none has the Intel display
 registers); the N150 box test of §3.4 is what shows them.
 
 **3h was agreed with the coordinator as three steps, and its h1 and h2 are on `develop`**: h1, the planner,
-printed under `ferrix.intelgpu.modeset=dry` and writing nothing; then a
+printed under `xaqu.intelgpu.modeset=dry` and writing nothing; then a
 read-only register dump of the same registers while Linux drives the
 second HDMI port, the ground truth; then h2, the writes, behind
-`ferrix.intelgpu.modeset=on`.
+`xaqu.intelgpu.modeset=on`.
 
 h1 is built (57ce6f566): the WRPLL, DPLL, transcoder timing, DDI, pipe
 source and primary plane words for the mode the EDID prefers, printed under
 `modeset=dry`.
 
 **h2 is built**, after the ground truth: the box's inspection Linux with
-a monitor on each HDMI port (`~/.local/share/ferrix/n150-linux/evidence/3h-dump-2026-10-23`;
+a monitor on each HDMI port (`~/.local/share/xaqu/n150-linux/evidence/3h-dump-2026-10-23`;
 Linux had a 1024x600 DVI monitor on pipe A, DDI B, DPLL1 and the TV on
 pipe B, DDI A, DPLL0). The planner's PLL words for both clocks, the
 transcoder's timings and source, `TRANS_DDI_FUNC_CTL`'s port, sync and
@@ -183,7 +183,7 @@ now there:
   identical on both PHYs), pipe B's DBUF share and watermarks (i915's for
   1080p at 148.5 MHz, so modes above that clock are refused).
 
-`ferrix.intelgpu.modeset=on` reads the display first and writes nothing if
+`xaqu.intelgpu.modeset=on` reads the display first and writes nothing if
 it is not as the steps expect (pipe B or port B on, MBUS joined, DC
 states on, no free PLL, a clock above 148.5 MHz), then takes each step,
 saying it, and stops at the first wait that does not end. The new monitor
@@ -196,7 +196,7 @@ compare every value with the dump. The box run is the coordinator's.
 
 | Step | Commit | What |
 |---|---|---|
-| 4a | 1f92468ad | `devmgr-events`, a native helper `devmgr` starts after REPORT: each DIED, RESTARTED and gave-up as one line to every reader of `\0ferrix.devmgr.events`, the last 32 kept for a late reader; `devmgr` never waits on it |
+| 4a | 1f92468ad | `devmgr-events`, a native helper `devmgr` starts after REPORT: each DIED, RESTARTED and gave-up as one line to every reader of `\0xaqu.devmgr.events`, the last 32 kept for a late reader; `devmgr` never waits on it |
 | 4b | 19e64e50b | `compositor/dbus`: SASL `EXTERNAL`, the little-endian marshalling, `Hello`, `RequestName`, calls, returns, errors and signals; tested against byte strings and against the host's `dbus-daemon` |
 | 4c, 4d | ec382429d | `notifyd`: `org.freedesktop.Notifications`, GNOME-like banners at the top centre (a fixed-size overlay surface whose input region is only the cards), the list from the bar's clock (`notifyd --toggle-list`) with Clear, and the bridge: one banner per device with a count, gave-up critical, a reconnect's replay dropped. The theme starts it; the compositor's test image carries it |
 | | 09c64c30e | found on the way: a layer surface with a zone of 0 is placed after every exclusive one, as wlroots does, so a banner that started before the bar is not under it |
@@ -216,7 +216,7 @@ covers the monitor (4bac20cb0); a monitor plugged back in after its card's
 last screen went is found again, at its old place (f5accc7ef).
 
 **The second scanout is built** (the customer, 2026-10-23: extended
-monitors, not mirroring). Under `ferrix.intelgpu.modeset=on`, `card0`
+monitors, not mirroring). Under `xaqu.intelgpu.modeset=on`, `card0`
 says HELLO with two scanouts:
 
 * pipe B gets a surface of its own: 1920x1200 at a 7680-byte stride,
@@ -388,7 +388,7 @@ Chrome without its own frame) has none. The top bar is `waybar`, ported
   code, no libadwaita CSS copied into the theme (the colours are our own
   values, chosen to read alike, not its variables), no GNOME name or foot
   logo anywhere in the theme, the bar or the docs a person sees. The theme
-  is called "Ferrix light" in the configuration.
+  is called "Xaqu light" in the configuration.
 
 ### 2.3 Order and points
 
@@ -407,8 +407,8 @@ Kernel lines: 0.
 
 Every connected connector of every card is a screen at start
 (`Drm::open_all`), placed and scaled by `monitor =` rules matched on name
-or EDID description. A card says its connectors changed with Ferrix's own
-`EVENT_FERRIX_CONNECTORS` (`docs/DISPLAY.md` §9.3) -- the core raises it on
+or EDID description. A card says its connectors changed with Xaqu's own
+`EVENT_XAQU_CONNECTORS` (`docs/DISPLAY.md` §9.3) -- the core raises it on
 every `MODES` from a driver (a virtio-gpu window resized, a scanout enabled
 or disabled) and every finished `MODE_LIST` -- and hyprix follows the
 preferred mode then (`follow_modes`). `hyprctl reload` and `hyprctl keyword
@@ -492,7 +492,7 @@ at a bounded rate -- every 500 ms, the way i915 falls back to polling
 arrives (it has not on this box, INTEL-GPU.md §3.4), with a 100 ms
 debounce. On a change it sends what virtio-gpu sends: `MODES` with scanout
 0's `enabled` off for an unplug, and on a plug `MODES` enabled and a fresh
-`MODE_LIST`. The display core turns either into `EVENT_FERRIX_CONNECTORS`
+`MODE_LIST`. The display core turns either into `EVENT_XAQU_CONNECTORS`
 and `GETCONNECTOR`'s connected/disconnected, and hyprix's 3a does the rest.
 While unplugged the driver keeps the plane and its GGTT entries as they
 are and drops copies; on replug it checks that pipe A and the DDI are still
@@ -610,7 +610,7 @@ There is no notification daemon and no D-Bus code in Rust in the tree.
   reached) to the kernel, it writes the same event to the helper, with the
   driver's name and kind added (which `devmgr` knows from its table and the
   kernel's message does not carry). The helper binds the abstract socket
-  `\0ferrix.devmgr.events` and writes each event as one line to every
+  `\0xaqu.devmgr.events` and writes each event as one line to every
   connected reader (`died snd 0x00000010 status 137`, `restarted snd
   0x00000010 1`, `gave-up gpu 0x00000008 8`, and since 2026-10-30 a crash
   loop's `reinit` and `quarantined`, `docs/DEVMGR.md` §4), keeping the last 32 for a
@@ -639,7 +639,7 @@ There is no notification daemon and no D-Bus code in Rust in the tree.
   dismissed; a click on a banner invokes its default action. A list of
   past notifications opens from the top bar's clock (a waybar custom module
   that runs `notifyd --toggle-list`), with "Clear".
-* **The bridge** is inside `notifyd`: it reads `\0ferrix.devmgr.events`
+* **The bridge** is inside `notifyd`: it reads `\0xaqu.devmgr.events`
   and turns each event into a notification of its own -- "Graphics driver
   restarted (gpu, restart 2)", "Network driver crashed, restarting
   (virtio-net)", critical "Sound driver stopped after 8 restarts" -- and
@@ -691,9 +691,9 @@ title-bar and output-management changes (`hyprix/probe/real-client.sh`);
 The customer's request of 2026-10-24: their design "Xaqu WM" (Claude
 Design project c2446633-7510-48b1-be87-c1906fddac9b, kept with its
 `support.js`, the Nocturne token sheet and a render at 1920x1080 in
-`~/.local/share/ferrix/design/xaqu-wm/`) becomes the look of Ferrix's
+`~/.local/share/xaqu/design/xaqu-wm/`) becomes the look of Xaqu's
 desktop on hyprix: the default for `run-compositor --everything` and the
-desktop image, with Ferrix light (§2) still selectable, and a person's own
+desktop image, with Xaqu light (§2) still selectable, and a person's own
 `~/.config/hypr` and `~/.config/waybar` still winning where they exist.
 
 Kernel lines: **0**. Everything is hyprix, its clients, tole and xtask, all
@@ -791,7 +791,7 @@ and Chrome follow a live change. GTK 3 reads `settings.ini` only when a
 program starts: a running GTK 3 program is not claimed to follow (not
 verified). It offers no other portal.
 
-The file chooser is Ferrix's own on Xaqu: portald answers
+The file chooser is Xaqu's own on Xaqu: portald answers
 `org.freedesktop.portal.FileChooser` (OpenFile and SaveFile, the filters,
 the current folder and name) by opening the `chooser` app, tole's
 `FileDialog` after the customer's Key File Dialog design, with a name
@@ -845,31 +845,31 @@ as frame times from hyprix's frame statistics with and without each.
 * title bars styled by `hyprix:titlebar:*` (height, rounding, colours, the
   buttons' size and discs, the title's side and face, a top line of the
   accent's gradient fading over 48 px, a hairline at the foot); the
-  defaults are Ferrix light's, so its look is unchanged;
+  defaults are Xaqu light's, so its look is unchanged;
 * `docs/brand/xaqu/xaqu-nocturne.svg`, the wallpaper: the design's Nocturne
   gradient in the tokens, with a faint grain against banding (0.25 s to
   draw at 1080p);
 * Phosphor 2.1.1 vendored in `assets/fonts/phosphor` with its licence;
-* `--theme xaqu|ferrix-light|none` on `run-compositor`, `flash
+* `--theme xaqu|xaqu-light|none` on `run-compositor`, `flash
   --compositor` and `release-image`, Xaqu by default: the theme is
   sourced first, so the person's own lines win, and a configuration of
   their own takes its look and not its keys; Xaqu's wallpaper stands where
-  the shipped Ferrix one would have been chosen, and a kept picture or
+  the shipped Xaqu one would have been chosen, and a kept picture or
   video still wins;
 * `test-compositor --boot xaqu`: two pattern windows in the theme,
   screenshotted and judged by Nocturne's ground, the bars' surface and the
-  accent's line (`~/.local/share/ferrix/xaqu/shots/Y1-xaqu-1024x768.png`).
+  accent's line (`~/.local/share/xaqu/xaqu/shots/Y1-xaqu-1024x768.png`).
 
 Left of Y1: a window under a title bar has square bottom corners (as in
-Ferrix light: the renderer rounds all four corners or none); the
+Xaqu light: the renderer rounds all four corners or none); the
 animations' styles (`popin`, `slidefade`) are written and not yet drawn
 by hyprix, which moves windows and does not yet slide workspaces.
 
 **Y2, the dock, is built** (8 points estimated):
 
 * tole windows can be layer-shell surfaces (`WindowOptions::layer`,
-  `Window::set_layer`, `Window::set_input_region`; ferrix-os/tole);
-* `xaqu-shell`, a new app (ferrix-os/apps) on tole: the design's dock as
+  `Window::set_layer`, `Window::set_input_region`; xaqu-os/tole);
+* `xaqu-shell`, a new app (xaqu-os/apps) on tole: the design's dock as
   a `xaqu-dock` layer surface 60 px high, 6 px above the foot, its
   exclusive zone keeping windows clear of it; the frame of the three
   accents; the search; the workspaces 1 to 4 (and any other that exists)
@@ -888,7 +888,7 @@ by hyprix, which moves windows and does not yet slide workspaces.
 * the title bars' face is `Inter Variable`, the family name of the
   vendored Inter;
 * the `xaqu` boot now carries the dock and judges it too, once the screen
-  has stopped changing (`~/.local/share/ferrix/xaqu/shots/Y2-xaqu-dock-1024x768.png`).
+  has stopped changing (`~/.local/share/xaqu/xaqu/shots/Y2-xaqu-dock-1024x768.png`).
 
 **What it costs** (`compositor-render`'s ignored `xaqu_frame_cost`, a
 whole 1920x1080 frame of two windows over a wallpaper, the median of 20 on
@@ -939,7 +939,7 @@ accent, Inter, radius 14 -- which `SUPER Space` and the dock's
 search start fuzzel with (`--config`); a person's own `fuzzel.ini` is what
 their own binds use. `test-compositor --boot xaqu-launcher` opens it over
 the Xaqu desktop and judges its card
-(`~/.local/share/ferrix/xaqu/shots/Y3-xaqu-launcher-1024x768.png`). The
+(`~/.local/share/xaqu/xaqu/shots/Y3-xaqu-launcher-1024x768.png`). The
 palette's second half -- windows, actions and workspaces beside the
 applications, in `xaqu-shell` -- is still to come (5 points).
 
@@ -986,10 +986,10 @@ applications, in `xaqu-shell` -- is still to come (5 points).
   boot `quick`).
 * **GTK and Chrome in the tokens**: Nocturne for GTK 3 and 4 and GTK's
   settings naming it; `portald`, answering `org.freedesktop.portal.Settings`
-  (dark or light, the accent, the theme) and `FileChooser` with Ferrix's own dialog
+  (dark or light, the accent, the theme) and `FileChooser` with Xaqu's own dialog
   (the `chooser` app, tole's FileDialog), which GTK 3 (`GTK_USE_PORTAL`),
   GTK 4 (`GDK_DEBUG=portals`) and Chrome use on Xaqu; Chrome's volume in
-  four versions side by side under `~/.local/share/ferrix` -- 2 GTK 3, 3
+  four versions side by side under `~/.local/share/xaqu` -- 2 GTK 3, 3
   GTK's file chooser's schemas, MIME data and loaders, 4 a session bus, GTK
   4 and zenity -- each named by `chrome::VOLUME` only in the commit that
   landed it. Boots `chrome-xaqu`, `chrome-save`, `gtk-chooser`.
@@ -1038,7 +1038,7 @@ built and the size of what is not (points as the backlog counts them).
 | Widget sidebars, edge reveal, pin to reserve room | yes (boot `sidebars`) | |
 | Widgets: clock and month calendar | yes | |
 | Widgets: weather (Open-Meteo, opt-in, §6.6) | yes: off until a place is typed, a name looked up once and kept as rounded coordinates, now and feels like, seven days, eight hours (boot `weather`) | |
-| Widgets: quick settings (brightness, volume, mic, appearance, theme colour, Wi-Fi, Bluetooth, DND, night light, focus, auto-tile) | yes but what Ferrix has no backend for: focus, auto-tile (for every workspace), theme colour and appearance, DND, brightness on a backlight, volume and mute through pulsed, the microphone where a source is (boot `quick`); Wi-Fi, Bluetooth and night light faint | a microphone (capture in pulsed) -- 1; night light (gamma) -- 1; auto-tile per workspace -- 1 |
+| Widgets: quick settings (brightness, volume, mic, appearance, theme colour, Wi-Fi, Bluetooth, DND, night light, focus, auto-tile) | yes but what Xaqu has no backend for: focus, auto-tile (for every workspace), theme colour and appearance, DND, brightness on a backlight, volume and mute through pulsed, the microphone where a source is (boot `quick`); Wi-Fi, Bluetooth and night light faint | a microphone (capture in pulsed) -- 1; night light (gamma) -- 1; auto-tile per workspace -- 1 |
 | Widgets: to-do | yes, kept in the person's file | |
 | Command palette: windows, actions, workspaces, fuzzy | applications, windows and files, the shell's Spotlight on SUPER Space | actions, workspaces, the shortcut sheet -- 5 |
 | Switcher cards | hyprix's own | restyle -- 2 |
@@ -1053,7 +1053,7 @@ built and the size of what is not (points as the backlog counts them).
 | Wallpaper picker: cover flow and grid, folders, colour filters, sorts, add pictures and videos | yes, SUPER I (boot `walls`): cover and grid, folders and a new one, the colour dots, the sorts, live (IVF) wallpapers listed | adding pictures from the picker -- 2 |
 | Video wallpapers | `pattern --video`, and the picker sets an IVF | |
 | Sounds on snap, open, close | no | 2 |
-| Chrome and GTK apps in the tokens | yes: Nocturne for GTK 3 and 4, portald's settings, GTK in Chrome's volume (boot `chrome-xaqu`), and Ferrix's file chooser for GTK and Chrome through the portal (boots `chrome-save`, `gtk-chooser`) | |
+| Chrome and GTK apps in the tokens | yes: Nocturne for GTK 3 and 4, portald's settings, GTK in Chrome's volume (boot `chrome-xaqu`), and Xaqu's file chooser for GTK and Chrome through the portal (boots `chrome-save`, `gtk-chooser`) | |
 
 The stash, the wallpaper picker and the widgets (the weather and most
 quick settings with them) are built, as the customer asked them in that order; and Files is
@@ -1063,7 +1063,7 @@ default handler (`inode/directory`, `xdg-open`) open it (boot `files`).
 ### 6.8 Application menus
 
 An application can put its own menus in the menu bar with
-`ferrix_appmenu_v1` (`compositor/protocol/protocols/ferrix-appmenu-v1.xml`):
+`xaqu_appmenu_v1` (`compositor/protocol/protocols/xaqu-appmenu-v1.xml`):
 `get_menu` for one of its toplevels, then `add_menu`, `add_item`,
 `add_separator` and `commit`. At most 16 menus, 256 entries, 128-byte labels;
 anything else is a protocol error. tole wraps it as `Window::set_menu` and

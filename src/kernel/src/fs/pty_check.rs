@@ -8,10 +8,10 @@
 //! writes, and every request goes in through `syscall::tty`'s handlers as a
 //! program's does.
 
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     BOTHER, CBAUD, IBSHIFT, TCGETS2, TCSETS, TCSETS2, TERMIOS_BYTES, TERMIOS2_BYTES,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs::pty::{self, MasterFile, SlaveFile};
 use crate::fs::terminal::Termios;
@@ -187,7 +187,7 @@ pub(crate) fn check_a_pty_keeps_its_speeds_as_numbers(
 /// Raw settings: no canonical lines, no echo, no signal characters, no
 /// input mapping, no flow control, `VMIN` 0.
 fn raw() -> Termios {
-    use ferrix_linux_abi::types::{ECHO, ICANON, ICRNL, IEXTEN, ISIG, VMIN};
+    use xaqu_linux_abi::types::{ECHO, ICANON, ICRNL, IEXTEN, ISIG, VMIN};
     let mut termios = Termios {
         iflag: Termios::DEFAULT.iflag & !(ICRNL | IXON),
         lflag: Termios::DEFAULT.lflag & !(ICANON | ECHO | ISIG | IEXTEN),
@@ -218,7 +218,7 @@ const LINE: usize = 4095;
 /// writable after it; a blocking write with no room and its slave gone ends
 /// with `EIO`.
 pub(crate) fn check_a_master_write_takes_only_what_fits() -> Result<(), &'static str> {
-    use ferrix_vfs::Inode as _;
+    use xaqu_vfs::Inode as _;
 
     let pair = pair()?;
     pair.master.pty.set_termios(raw(), true);
@@ -291,7 +291,7 @@ pub(crate) fn check_a_master_write_takes_only_what_fits() -> Result<(), &'static
 /// bytes of room left, and the start character once a read has left fewer
 /// than 128 held.
 pub(crate) fn check_flow_control_acts_on_a_pty() -> Result<(), &'static str> {
-    use ferrix_vfs::Inode as _;
+    use xaqu_vfs::Inode as _;
 
     let pair = pair()?;
     let mut buf = [0_u8; 64];
@@ -344,7 +344,7 @@ const OUTPUT: usize = 8192;
 /// Fill a pair's input with `IXOFF` set until it throttles, and take the
 /// stop character it sends the master.
 fn throttle(pair: &Pair) -> Result<(), &'static str> {
-    use ferrix_vfs::Inode as _;
+    use xaqu_vfs::Inode as _;
     let _ = pair.master.write_stream(&[b'f'; QUEUE - 100], true);
     let mut said = [0_u8; 8];
     if pair.master.read_stream(&mut said, true) != Ok(1) || said.first() != Some(&STOP) {
@@ -355,7 +355,7 @@ fn throttle(pair: &Pair) -> Result<(), &'static str> {
 
 /// Whether the master's next read is `IXOFF`'s start character alone.
 fn started(pair: &Pair) -> bool {
-    use ferrix_vfs::Inode as _;
+    use xaqu_vfs::Inode as _;
     let mut said = [0_u8; 8];
     pair.master.read_stream(&mut said, true) == Ok(1) && said.first() == Some(&START)
 }
@@ -374,8 +374,8 @@ pub(crate) fn check_flow_control_through_a_flush_and_full_queues(
     process: &Process,
     page: u64,
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{TCFLSH, TCIFLUSH, TCSETSF};
-    use ferrix_vfs::Inode as _;
+    use xaqu_linux_abi::types::{TCFLSH, TCIFLUSH, TCSETSF};
+    use xaqu_vfs::Inode as _;
 
     // (F1) TCFLSH, TCSETSF, and IXOFF dropped.
     let pair = pair()?;
@@ -482,8 +482,8 @@ pub(crate) fn check_flow_control_through_a_flush_and_full_queues(
 /// stop the master. More bytes are taken -- the write is not `EAGAIN` --
 /// and dropped, and a newline still ends the line, which reads whole.
 pub(crate) fn check_a_full_canonical_line_does_not_block_the_master() -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{ECHO, ICRNL};
-    use ferrix_vfs::Inode as _;
+    use xaqu_linux_abi::types::{ECHO, ICRNL};
+    use xaqu_vfs::Inode as _;
 
     let pair = pair()?;
     let canonical = Termios {
@@ -528,8 +528,8 @@ pub(crate) fn check_a_full_canonical_line_does_not_block_the_master() -> Result<
 pub(crate) fn check_a_masters_close_hangs_its_slave_up() -> Result<(), &'static str> {
     use crate::syscall::process;
     use crate::syscall::signal::bit;
-    use ferrix_linux_abi::types::SIGHUP;
-    use ferrix_vfs::Inode as _;
+    use xaqu_linux_abi::types::SIGHUP;
+    use xaqu_vfs::Inode as _;
 
     let leader = process::new_for_check().map_err(|_| "could not make a session leader")?;
     let _ = crate::syscall::family::sys_setsid(&leader);

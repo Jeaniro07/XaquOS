@@ -6,7 +6,7 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_native_abi::handle::Handle;
+use xaqu_native_abi::handle::Handle;
 
 use crate::object::bare::Bare;
 use crate::object::job::Job;
@@ -15,7 +15,7 @@ use crate::syscall::native;
 use crate::syscall::uaccess;
 use crate::trap::SyscallArgs;
 use crate::user::space::AddressSpace;
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 /// A process that makes native calls from the kernel's side.
 pub(crate) struct NativeSide {
@@ -34,7 +34,7 @@ impl NativeSide {
     /// End its process with `status`: what it holds, its handles among them,
     /// is let go once no thread of it is live, and it never had one
     /// (`Bare::end`).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub(crate) fn end(&self, status: i32) {
         self.host.end(status);
     }

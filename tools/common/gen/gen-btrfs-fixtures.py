@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the btrfs test images from real `mkfs.btrfs`, and pack them small.
 
-`ferrix-btrfs` is tested against structures its own tests build, and that
+`xaqu-btrfs` is tested against structures its own tests build, and that
 catches a parser putting a field in the wrong place. It cannot catch a parser
 that agrees with its own tests and disagrees with btrfs. Only an image btrfs
 itself wrote can, so this makes some.
@@ -46,12 +46,12 @@ to fit it. It is what
 the reader's fallback to a second copy is tested on, for nodes and for data
 sectors alike.
 
-`root.img.packed` is the same empty volume at 1 GiB, labelled `ferrix-root`:
+`root.img.packed` is the same empty volume at 1 GiB, labelled `xaqu-root`:
 what `cargo xtask run` boots with as `/`, and the label is how the kernel
 tells it from any other btrfs disk. The system alone is tens of megabytes,
 which 128 MiB of DUP metadata and single data cannot hold with room to work.
 
-`home.img.packed` is an empty 8 GiB volume labelled `ferrix-home`, with UUIDs
+`home.img.packed` is an empty 8 GiB volume labelled `xaqu-home`, with UUIDs
 of its own: the disk `cargo xtask run` keeps the users' files on, at `/home`,
 which `--reset-root` leaves alone. The kernel tells it apart by its label.
 
@@ -83,10 +83,10 @@ DUP_SIZE = 256 * 1024 * 1024
 ROOT = "root"
 IMAGE_SIZE = 128 * 1024 * 1024
 ROOT_SIZE = 1024 * 1024 * 1024
-ROOT_LABEL = "ferrix-root"
+ROOT_LABEL = "xaqu-root"
 HOME = "home"
 HOME_SIZE = 8 * 1024 * 1024 * 1024
-HOME_LABEL = "ferrix-home"
+HOME_LABEL = "xaqu-home"
 HOME_FS_UUID = "0f3c3a5e-2222-4222-8333-444455556666"
 HOME_DEVICE_UUID = "0f3c3a5e-bbbb-4bbb-8ccc-ddddeeeeffff"
 BLOCK = 4096

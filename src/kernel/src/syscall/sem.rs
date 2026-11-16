@@ -57,10 +57,10 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicI32, AtomicU64, Ordering};
 
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_sync::Once;
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_sync::Once;
 
 use crate::arch::{self, StatLayout};
 use crate::sched::{self, Task, WaitQueue};
@@ -639,8 +639,8 @@ fn create(
     if nsems == 0 {
         return Err(Errno::EINVAL);
     }
-    let bytes = ferrix_kmem::arc_footprint::<Set>()
-        .saturating_add(ferrix_kmem::buffer_footprint::<Semaphore>(nsems))
+    let bytes = xaqu_kmem::arc_footprint::<Set>()
+        .saturating_add(xaqu_kmem::buffer_footprint::<Semaphore>(nsems))
         .saturating_add(size_of::<Slot>());
     let charge = Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)?;
     let mut sems = Vec::new();
@@ -905,8 +905,8 @@ pub(crate) fn semop(
         make_undo(&caller.ns, &set, undo_list)?;
     }
     let bytes = size_of::<Pending>()
-        .saturating_add(ferrix_kmem::buffer_footprint::<SemBuf>(sops.len()))
-        .saturating_add(ferrix_kmem::arc_footprint::<Ticket>());
+        .saturating_add(xaqu_kmem::buffer_footprint::<SemBuf>(sops.len()))
+        .saturating_add(xaqu_kmem::arc_footprint::<Ticket>());
     let charge = Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)?;
     let ticket = crate::fallible::try_arc(Ticket {
         state: AtomicI32::new(WAITING),
@@ -958,7 +958,7 @@ fn make_undo(ns: &Arc<IpcNamespace>, set: &Arc<Set>, undo_list: &UndoList) -> Re
     {
         return Ok(());
     }
-    let bytes = size_of::<Undo>().saturating_add(ferrix_kmem::buffer_footprint::<i16>(set.nsems));
+    let bytes = size_of::<Undo>().saturating_add(xaqu_kmem::buffer_footprint::<i16>(set.nsems));
     let charge = Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)?;
     let mut adjust = Vec::new();
     adjust

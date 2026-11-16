@@ -8,9 +8,9 @@
 //! one only the caller's own. A woken wait reads its word again: a wake can
 //! come from any process that can read the word.
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::types::{
     ADDRESS_BY_VMO, ADDRESS_COMPARE, ADDRESS_SHARED, ADDRESS_WAIT_ANY_MAX, AddressWord,
 };
 

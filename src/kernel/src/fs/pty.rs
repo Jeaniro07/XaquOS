@@ -4,7 +4,7 @@
 //! screen and a keyboard. The program that opens `/dev/ptmx` -- a terminal
 //! emulator, `script`, a session over the network -- holds the *master*; the
 //! program it starts opens `/dev/pts/<n>`, the *slave*, and cannot tell it
-//! from a serial console. That is what a terminal emulator on Ferrix needs,
+//! from a serial console. That is what a terminal emulator on Xaqu needs,
 //! and `docs/ROADMAP.md` stage 18's exit asks for one.
 //!
 //! # What goes which way
@@ -46,12 +46,12 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     BOTHER, CBAUD, IBSHIFT, ONLCR, OPOST, SIGWINCH, TERMIOS_BYTES, TERMIOS2_BYTES,
 };
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
 
 use crate::fs::terminal::{Discipline, ReadStep, ReadTimer, Termios, Winsize};
 use crate::sched::WaitQueue;
@@ -779,7 +779,7 @@ impl Drop for MasterFile {
 /// processes, nothing is sent, as `signal_foreground` loses its signal.
 fn signal_leader(session: u32) {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::{SIGCONT, SIGHUP};
+    use xaqu_linux_abi::types::{SIGCONT, SIGHUP};
     for target in crate::syscall::registry::live().unwrap_or_default() {
         if target.pid() == session {
             crate::syscall::kill::send(&target, SIGHUP, Origin::Kernel);
@@ -888,7 +888,7 @@ impl Inode for MasterFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.pty.changed));
         true
     }
@@ -1006,7 +1006,7 @@ impl Inode for SlaveFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.pty.changed));
         true
     }
@@ -1033,7 +1033,7 @@ fn slave_metadata_owned(number: u32, (uid, gid): (u32, u32)) -> Metadata {
         ino: SLAVE_INO_BASE + u64::from(number),
         kind: FileType::CharDevice,
         // What Linux's devpts gives a slave: the owner's to read and write,
-        // and the `tty` group's to write. Ferrix has no `tty` group, so the
+        // and the `tty` group's to write. Xaqu has no `tty` group, so the
         // group is the opener's.
         permissions: 0o620,
         nlink: 1,

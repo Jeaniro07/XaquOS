@@ -31,8 +31,8 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use ferrix_vdagent::chunk::Reassembler;
-use ferrix_vdagent::message::{ClipboardType, Message, Selection, Shape, Types};
+use xaqu_vdagent::chunk::Reassembler;
+use xaqu_vdagent::message::{ClipboardType, Message, Selection, Shape, Types};
 
 use super::{HOST_CAPS, send};
 use crate::args::Args;
@@ -101,7 +101,7 @@ pub(crate) fn start(arch: Arch, args: &Args) -> Option<Bridge> {
 fn bridge(arch: Arch) -> Result<Bridge, String> {
     // In the temporary directory: a Unix socket's path must fit in 108 bytes.
     let socket = std::env::temp_dir().join(format!(
-        "ferrix-clipboard-host-{}-{arch}.sock",
+        "xaqu-clipboard-host-{}-{arch}.sock",
         std::process::id()
     ));
     let _ = std::fs::remove_file(&socket);

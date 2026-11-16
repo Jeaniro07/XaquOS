@@ -1,6 +1,6 @@
 //! The libraries ported onto ferrousli that apps build against: built by
 //! the scripts in `src/user/system/linux/ferrousli/tools/ports/`, installed
-//! under `~/.local/share/ferrix/ports/ferrousli` (or `$FERRIX_PORTS`).
+//! under `~/.local/share/xaqu/ports/ferrousli` (or `$XAQU_PORTS`).
 //!
 //! The programs once ported here -- curl, git, sshdt, foot, vkgears, ALSA's
 //! library and utilities, btop -- are apps (`docs/APPS.md`) since
@@ -167,7 +167,7 @@ pub(crate) fn read_entry(
 /// The directory the ports are installed under: on Windows, WSL's home's,
 /// where the scripts that build them run, and the btop app's libcxx with them.
 pub(crate) fn root() -> Result<PathBuf> {
-    if let Some(dir) = std::env::var_os("FERRIX_PORTS") {
+    if let Some(dir) = std::env::var_os("XAQU_PORTS") {
         return Ok(PathBuf::from(dir));
     }
     let home = if cfg!(windows)
@@ -178,11 +178,11 @@ pub(crate) fn root() -> Result<PathBuf> {
         std::env::home_dir()
     };
     home.map(|home| {
-        [".local", "share", "ferrix", "ports", "ferrousli"]
+        [".local", "share", "xaqu", "ports", "ferrousli"]
             .iter()
             .fold(home, |dir, name| dir.join(name))
     })
-    .ok_or_else(|| Error::new("no home directory to find the ports under; set FERRIX_PORTS"))
+    .ok_or_else(|| Error::new("no home directory to find the ports under; set XAQU_PORTS"))
 }
 
 /// `cargo xtask ports`: run the `build.sh` of every port `arch` builds, in
@@ -192,7 +192,7 @@ pub(crate) fn build(arch: Arch) -> Result<()> {
     let ferrousli = crate::paths::workspace_root().join("src/user/system/linux/ferrousli");
     let ports = ports_for(arch);
     // One build of them all, in order, since each later port reads what an
-    // earlier one installed: a build `FERRIX_BUILDS` may record or replay,
+    // earlier one installed: a build `XAQU_BUILDS` may record or replay,
     // reading the sources the scripts would otherwise download from
     // `root/src`, and making the tree images carry, `root/<arch>`.
     let script = format!(
@@ -201,16 +201,16 @@ pub(crate) fn build(arch: Arch) -> Result<()> {
         arch.name()
     );
     if cfg!(windows) {
-        // In WSL, as an app's build.sh is. Without `FERRIX_PORTS` the
-        // scripts' own default there is `root`; a Windows `FERRIX_PORTS` is
+        // In WSL, as an app's build.sh is. Without `XAQU_PORTS` the
+        // scripts' own default there is `root`; a Windows `XAQU_PORTS` is
         // handed over as WSL names it.
         crate::wsl::require_toolchain(
             "the ports are built with a Linux host's gcc and its kernel's UAPI headers",
         )?;
-        let given = std::env::var_os("FERRIX_PORTS");
+        let given = std::env::var_os("XAQU_PORTS");
         let (script, arguments) = match &given {
             Some(dir) => (
-                format!("export FERRIX_PORTS=\"$(wslpath -u \"$1\")\"\n{script}"),
+                format!("export XAQU_PORTS=\"$(wslpath -u \"$1\")\"\n{script}"),
                 vec![dir.to_string_lossy().into_owned()],
             ),
             None => (script, Vec::new()),
@@ -240,7 +240,7 @@ pub(crate) fn build(arch: Arch) -> Result<()> {
         &ferrousli,
     )
     .args(["-c", &script])
-    .env("FERRIX_PORTS", &root)
+    .env("XAQU_PORTS", &root)
     .reads_dir(root.join("src"))
     .output(root.join(arch.name()));
     // ferrousli gets a directory of its own inside the caller's target

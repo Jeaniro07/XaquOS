@@ -65,7 +65,7 @@ numbers only, so figures with ranges are strings). Its members:
 
 | Member | What |
 |---|---|
-| `schema` | `ferrix-hotpath/1` |
+| `schema` | `xaqu-hotpath/1` |
 | `id` | the file's name, and the results directory's |
 | `title`, `skill`, `spec`, `history` | what it is, and the documents it is written from |
 | `as_of` | the date, `main`'s commit, and which branches hold unlanded work |
@@ -149,7 +149,7 @@ hw-fingerprint x86_64: <sha256> (directory <12 hex>); host <sha256>; cpu <sha256
   (`-S`), and each feature property is read with `qom-get`, so what KVM
   filtered out is seen as absent (asking for `+pcid` on nazuna reads back
   `false`). No guest code runs.
-- `schema`: `ferrix-hw-fingerprint/1`.
+- `schema`: `xaqu-hw-fingerprint/1`.
 
 The kernel's own account of the processor it found -- its boot log's `cpu`
 lines, such as which speculation defences it turned on -- is not in the
@@ -194,21 +194,21 @@ chose; a published record's should be read before it goes out.
 docs/hotpaths/results/<path>/<hw hash, 12 hex>/<UTC time>-<commit, 12 hex>-<configuration hash, 8 hex>.json
 ```
 
-so the four keys -- hot path, hardware, Ferrix commit, configuration -- are
+so the four keys -- hot path, hardware, Xaqu commit, configuration -- are
 all in its name, and two measurements never collide. Its members:
 
 | Member | What |
 |---|---|
-| `schema` | `ferrix-hotpath-result/1` |
+| `schema` | `xaqu-hotpath-result/1` |
 | `path`, `figure` | the hot path's id; the figure's line, statistic and unit |
 | `hw_hash`, `host_hash`, `cpu_hash`, `hardware` | the fingerprint whole, and its hashes |
-| `ferrix` | `commit`, and `dirty` if the tree differed from it outside the results directory |
+| `xaqu` | `commit`, and `dirty` if the tree differed from it outside the results directory |
 | `configuration`, `configuration_hash` | every option that changes what is measured: release, accelerator, processors, memory, pin, mitigations, kernel options, `--init`'s file name, rounds, the alternated ref |
 | `runs` | each boot's summary statistics (n, min, p50, p90, p99, mean of each line) and its host line |
 | `reference` | the alternated tree (ref, commit, its runs) or the other kernel's p50s, or `null` |
 | `summary` | rounds, the median p50, the reference's, and the per-round ratios' median, least and most in thousandths |
 | `kernel_view` | the kernel's boot-log statements about the processor and its defences |
-| `log` | `FERRIX_HOTPATH_LOG`, the path of the run's full output, if given |
+| `log` | `XAQU_HOTPATH_LOG`, the path of the run's full output, if given |
 | `taken` | UTC |
 
 **On a board** nothing can be probed from the build host, and QEMU is not
@@ -243,13 +243,13 @@ Nothing here is built, no repository is made and nothing is pushed: results
 leaving this repository is outward-facing, and the customer's call.
 
 **The proposal.**
-- A public repository in the ferrix-os organization, for example
-  `ferrix-os/hotpath-results`, with the same layout as
+- A public repository in the xaqu-os organization, for example
+  `xaqu-os/hotpath-results`, with the same layout as
   `docs/hotpaths/results/`: `<path>/<hw hash>/<record>.json`, plus a copy of
   each path's data file at the commit its records were taken at.
 - **Submission by pull request.** CI runs the same record check as §6 and
-  refuses a record whose hashes do not recompute, whose `ferrix.commit` is not
-  a commit of `ferrix-os/ferrix`, whose `dirty` is true, or that holds a
+  refuses a record whose hashes do not recompute, whose `xaqu.commit` is not
+  a commit of `xaqu-os/xaqu`, whose `dirty` is true, or that holds a
   field the privacy rules exclude. A human or the product owner merges.
 - **Records are claims, not proofs.** An agent that finds a result for its
   `hw_hash` reproduces it with the record's own configuration before relying

@@ -1,12 +1,12 @@
 /*
  * window32: the 32-bit Windows program `cargo xtask test-wine` runs in
- * Debian's 64-bit Wine on Ferrix, through Wine's WoW64 (stage 23, E1.6;
+ * Debian's 64-bit Wine on Xaqu, through Wine's WoW64 (stage 23, E1.6;
  * docs/WINE.md §7).
  *
  *   window32.exe RRGGBB SECONDS
  *
  * It says what it runs as, then makes a top-level window titled
- * "Ferrix WoW64" whose client area it paints in the colour given, and
+ * "Xaqu WoW64" whose client area it paints in the colour given, and
  * closes it after SECONDS. The line the gate judges:
  *
  *   window32: pointer=4 wow64=1 process=014c native=8664
@@ -87,12 +87,12 @@ int main(int argc, char **argv) {
     class.lpfnWndProc = window_proc;
     class.hInstance = GetModuleHandleA(NULL);
     class.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
-    class.lpszClassName = "FerrixWow64";
+    class.lpszClassName = "XaquWow64";
     if (!RegisterClassA(&class)) {
         printf("window32: RegisterClass failed: %lu\n", GetLastError());
         return 1;
     }
-    window = CreateWindowA("FerrixWow64", "Ferrix WoW64", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    window = CreateWindowA("XaquWow64", "Xaqu WoW64", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            CW_USEDEFAULT, CW_USEDEFAULT, 480, 320, NULL, NULL,
                            class.hInstance, NULL);
     if (!window) {

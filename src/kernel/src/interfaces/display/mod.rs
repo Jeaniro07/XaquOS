@@ -1,7 +1,7 @@
 //! The display core: the kernel's end of a display driver's control channel,
 //! and the cards it publishes.
 //!
-//! `docs/DISPLAY.md` §2 is the design and `ferrix-displayctl` checks every
+//! `docs/DISPLAY.md` §2 is the design and `xaqu-displayctl` checks every
 //! word of the protocol. A process holding a device with `MANAGE` asks for a
 //! control channel with `DISPLAY_CONTROL_CREATE` and hands its end to a
 //! display driver. One kernel task per card then:
@@ -39,21 +39,21 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_blkring::identity::Location;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_displayctl::message::{
+use xaqu_blkring::identity::Location;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_displayctl::message::{
     Attach, AttachObject, FORMAT, Hello, Listed, MAX_BUFFER_PAGES, MAX_BYTES, MAX_LISTED_MODES,
     MAX_SCANOUTS, Message, Ready, Rect, Refusal, ScanoutMode, Status, Timing, Timings,
 };
-use ferrix_displayctl::session::{Event, RequestError, Session};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_displayctl::session::{Event, RequestError, Session};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
 
-use ferrix_native_abi::types::DEVICE_NOT_PCI;
+use xaqu_native_abi::types::DEVICE_NOT_PCI;
 
 use crate::claim::StillServed;
 use crate::claim::{Claims, Numbers};
@@ -69,11 +69,11 @@ use crate::sync::{SchedParker, SpinLock};
 use crate::syscall::native;
 use crate::timer;
 use crate::user::vmo::Vmo;
-use ferrix_displayctl::card::{self as master, Became, OpenId, Taken};
-use ferrix_linux_abi::errno::Errno as CardErrno;
-use ferrix_sync::SleepLock;
+use xaqu_displayctl::card::{self as master, Became, OpenId, Taken};
+use xaqu_linux_abi::errno::Errno as CardErrno;
+use xaqu_sync::SleepLock;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 pub(crate) mod drm;
@@ -751,8 +751,8 @@ impl Card {
 
     /// What `stat` says of the card: a character device whose size is the
     /// most its buffers may take together (§2.1).
-    pub(crate) fn metadata(&self) -> ferrix_vfs::Metadata {
-        use ferrix_vfs::{FileType, Metadata, Timespec};
+    pub(crate) fn metadata(&self) -> xaqu_vfs::Metadata {
+        use xaqu_vfs::{FileType, Metadata, Timespec};
         Metadata {
             ino: (1u64 << 40) + u64::from(self.index),
             kind: FileType::CharDevice,
@@ -764,7 +764,7 @@ impl Card {
             uid: 0,
             gid: 0,
             size: CARD_BYTES,
-            rdev: ferrix_vfs::initramfs::makedev(DRM_MAJOR, self.index),
+            rdev: xaqu_vfs::initramfs::makedev(DRM_MAJOR, self.index),
             blocks: 0,
             block_size: 4096,
             atime: Timespec::default(),
@@ -1131,7 +1131,7 @@ impl Card {
         }
     }
 
-    /// CURSOR: show `buffer` -- [`ferrix_displayctl::message::CURSOR_SIZE`]
+    /// CURSOR: show `buffer` -- [`xaqu_displayctl::message::CURSOR_SIZE`]
     /// square, or 0 for none -- as
     /// `scanout`'s cursor with its hotspot at `hot` and its top-left corner
     /// at `at`, and wait for FLIPPED, which says the image is on the device.
@@ -1302,15 +1302,15 @@ impl Card {
 /// for, or one somebody filled meanwhile, is left as it was.
 fn commit_contiguous(vmo: &Vmo, offset: u64, bytes: u64) -> bool {
     let pages = bytes / PAGE_SIZE;
-    let largest = 1u64 << ferrix_frame::MAX_ORDER;
+    let largest = 1u64 << xaqu_frame::MAX_ORDER;
     let (block, (order, blocks)) =
-        match (0..=ferrix_frame::MAX_ORDER).find(|&order| 1u64 << order >= pages) {
+        match (0..=xaqu_frame::MAX_ORDER).find(|&order| 1u64 << order >= pages) {
             Some(order) => (crate::mm::allocate_frames(order), (order, 1)),
             None => {
                 let blocks = pages.div_ceil(largest);
                 (
                     crate::mm::allocate_frame_run(blocks),
-                    (ferrix_frame::MAX_ORDER, blocks),
+                    (xaqu_frame::MAX_ORDER, blocks),
                 )
             }
         };
@@ -1395,7 +1395,7 @@ pub fn install() -> Result<(), Full> {
 pub(crate) fn may_copy(device: &Arc<DeviceNode>) -> bool {
     device.framebuffer_mode().is_some()
         || crate::interfaces::chardev::publishes_for(device)
-        // The Intel GPU lent the framebuffer under `ferrix.intelgpu`, by its
+        // The Intel GPU lent the framebuffer under `xaqu.intelgpu`, by its
         // identity alone (K4, `L.device.48`).
         || device.may_copy_lent()
 }
@@ -1410,7 +1410,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_blkring::control::CONTROL_RIGHTS,
+        xaqu_blkring::control::CONTROL_RIGHTS,
         |node| {
             create(node).map_err(|why| match why {
                 CreateError::InUse => status::ALREADY_BOUND,
@@ -1438,7 +1438,7 @@ pub(crate) fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, CreateErro
         device: Arc::clone(node),
         location,
     });
-    if sched::spawn("display", run, id, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("display", run, id, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = take_start(id);
         CLAIMS.release(node);
         return Err(CreateError::NoMemory);

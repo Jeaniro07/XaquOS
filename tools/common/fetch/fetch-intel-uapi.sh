@@ -13,7 +13,7 @@
 # under usr/bin and the library directories must find each library it needs
 # on the volume, or the script stops and names it.
 #
-# Writes $FERRIX_INTEL_UAPI (default ~/.local/share/ferrix/intel-uapi):
+# Writes $XAQU_INTEL_UAPI (default ~/.local/share/xaqu/intel-uapi):
 # pool/ (the .debs), tree/ (unpacked), intel-uapi.img (the btrfs volume)
 # and intel-uapi.stamp, the volume's version below, which xtask compares
 # with its own (`intel_uapi::VOLUME`) so that a volume an older script made
@@ -29,7 +29,7 @@ security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_time=20261018T235959Z
 version=1
-out=${FERRIX_INTEL_UAPI:-$HOME/.local/share/ferrix/intel-uapi}
+out=${XAQU_INTEL_UAPI:-$HOME/.local/share/xaqu/intel-uapi}
 pool=$out/pool
 
 debs=(

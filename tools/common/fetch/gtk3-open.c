@@ -1,7 +1,7 @@
 /* gtk3-open: GTK 3's GtkFileChooserNative, which a GTK 3 program opens for
  * a file, and which goes to the desktop portal when GTK_USE_PORTAL=1. Built
  * by fetch-chrome.sh against the volume's own GTK, for the boot that shows
- * Ferrix's file chooser comes up for GTK 3 too (docs/CHROME.md §10). No
+ * Xaqu's file chooser comes up for GTK 3 too (docs/CHROME.md §10). No
  * headers: the four calls it makes are declared here. */
 #include <stdio.h>
 

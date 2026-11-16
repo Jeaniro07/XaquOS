@@ -1,15 +1,15 @@
-# Chrome on Ferrix: what it would take
+# Chrome on Xaqu: what it would take
 
 Asked by the customer on 2026-09-18, and answered by reading the tree rather
 than by guessing. This is an assessment, not a decision and not a stage: what
-a browser needs, what Ferrix has, what is missing, and what the missing part
+a browser needs, what Xaqu has, what is missing, and what the missing part
 would cost. Whether any of it is worth doing was the product owner's to say,
 and on 2026-09-23 the customer asked for the work to start.
 
 ## Where it stands, 2026-09-26
 
 **Chrome runs on ferrousli in glibc's place, since 2026-09-26.** The same
-headless Chrome, its forty Debian libraries unchanged, runs on Ferrix on
+headless Chrome, its forty Debian libraries unchanged, runs on Xaqu on
 ferrousli's `ld.so` and `libc.so.6` instead of Debian's loader and glibc,
 and `cargo xtask test-chrome --interpreter ferrousli --library ferrousli`
 requires the same three things of it -- the version, a page's script run by
@@ -19,13 +19,13 @@ does on glibc (§8). **So does the full browser in a window, the same day:**
 ferrousli` requires its page on the compositor's screen, and still there
 after a click and typing (§8).
 
-**Chrome runs on Ferrix, in a window on the compositor, since 2026-09-24.**
+**Chrome runs on Xaqu, in a window on the compositor, since 2026-09-24.**
 `cargo xtask run-compositor --chrome` opens it on the desktop, and
 `cargo xtask test-chrome-window` requires its page on the screen (§9).
 
-**Headless Chrome runs on Ferrix, since 2026-09-24.** Google's prebuilt
+**Headless Chrome runs on Xaqu, since 2026-09-24.** Google's prebuilt
 `chrome-headless-shell` 154.0.8037.57 -- Chrome for Testing's linux64 build,
-not one built here -- starts on Ferrix with its GPU process and renderers,
+not one built here -- starts on Xaqu with its GPU process and renderers,
 runs a page's JavaScript in V8 and writes a screenshot, and `cargo xtask
 test-chrome` requires all three (§8). It is not on the image: it lives on a
 btrfs volume `tools/common/fetch/fetch-chrome.sh` makes from pinned downloads, with
@@ -35,7 +35,7 @@ what is left:
 | | state |
 |---|---|
 | Dynamic linking: a glibc program on ferrousli's loader and `libc.so.6`, `dlopen` and every TLS model | **done** 2026-09-23, on all three architectures (§2.1, §4) |
-| Somewhere to put it: btrfs written from Ferrix | **done** 2026-09-21, stage 12 (§2.3) |
+| Somewhere to put it: btrfs written from Xaqu | **done** 2026-09-21, stage 12 (§2.3) |
 | `/dev/shm`, and `clone` refusing the namespaces it cannot give | **done** 2026-09-19, on `main` 2026-09-23 (§2.4, §3) |
 | The compositor a window would appear in, drawing on the GPU | **done**, stage 19's GPU path (§1, §5) |
 | `execve` of a binary past 64 MiB, mapped from the file on demand | **done** 2026-09-24, on all three architectures, with `execve("/proc/self/exe")` from a fork (§2.2) |
@@ -43,22 +43,22 @@ what is left:
 | `madvise` and `signalfd` | **done** 2026-09-24, on all three architectures (§2.3, §3) |
 | A vDSO | **done** 2026-09-26, x86-64: `clock_gettime`, `gettimeofday` and `time` read the TSC in the program (§3, §9) |
 | libwayland-client, libxkbcommon, fontconfig with freetype and expat, a font | **done** 2026-09-24, built against ferrousli with foot (§3, §6) |
-| foot, a Wayland terminal nobody here wrote, drawing on the compositor on Ferrix | **done** 2026-09-24, x86-64, `cargo xtask test-foot` (§6) |
-| Headless Chrome on Ferrix: `--dump-dom` and `--screenshot`, multi-process, with `--no-sandbox` (and `--no-zygote` until 2026-09-26) | **done** 2026-09-24, x86-64, `cargo xtask test-chrome` (§8) |
+| foot, a Wayland terminal nobody here wrote, drawing on the compositor on Xaqu | **done** 2026-09-24, x86-64, `cargo xtask test-foot` (§6) |
+| Headless Chrome on Xaqu: `--dump-dom` and `--screenshot`, multi-process, with `--no-sandbox` (and `--no-zygote` until 2026-09-26) | **done** 2026-09-24, x86-64, `cargo xtask test-chrome` (§8) |
 | What running it found missing: `CLOCK_THREAD_CPUTIME_ID` and `CLOCK_PROCESS_CPUTIME_ID`, `clock_getres`, `creat`, and `/proc/<pid>/task`'s link count | **done** 2026-09-24 (§8) |
 | Chrome in a window on the compositor, a Wayland client drawing in software | **done** 2026-09-24, x86-64, `cargo xtask test-chrome-window`, `run-compositor --chrome` (§9) |
 | The zygote, which could not learn its children's pids until `SCM_CREDENTIALS` carried them | **done** 2026-09-26: `test-chrome` (glibc and ferrousli) and `test-chrome-window` run without `--no-zygote` (§8) |
 | Chrome's speed: a futex wait woken every 5 ms, the HPET as the clock under KVM, `munmap` walking every page of a reservation, a shootdown for every write to a page after a fork, and the virtio-gpu doorbell held by QEMU | **done** 2026-09-26: idle 443% of a processor → 15%, the machine 96% busy → 6%, a turning box 1.5 frames a second → 60.8; then a vDSO (idle → 13%) and a kick to one processor (QEMU on the host 81% of a core → 65%); `cargo xtask bench-chrome` (§9) |
 | Chrome playing a video with its sound, every futex call in the system behind one lock | **done** 2026-09-26: the kernel's futex table in 256 buckets; Chrome's processor time a third lower and flat, video frames dropped 29% → 19%, three alternated runs of each at a host load of 25–39; the sound's remaining gaps follow the host's load; `cargo xtask bench-chrome-video` (§9) |
 | Chrome on the desktop's persistent btrfs root | **done** 2026-09-26: `/dev/shm` was not mounted there; `cargo xtask test-chrome-window --btrfs-root` (§9) |
-| Chrome's text, its name for the system, and Chrome for Testing's bar | **done** 2026-09-26: Inter and Liberation from the tree with slight hinting, Ferrix in the user agent, no bar; `navigator.platform` and the client hints are Chrome's build's and say Linux (§9) |
+| Chrome's text, its name for the system, and Chrome for Testing's bar | **done** 2026-09-26: Inter and Liberation from the tree with slight hinting, Xaqu in the user agent, no bar; `navigator.platform` and the client hints are Chrome's build's and say Linux (§9) |
 | Chrome on ferrousli's `libc.so.6` in glibc's place | **done** 2026-09-26, x86-64, headless and in a window: `cargo xtask test-chrome` and `test-chrome-window`, each with `--interpreter ferrousli --library ferrousli` (§8); `run-compositor --chrome` does not take the flags |
 | Chrome on the STM32MP157D-DK1: an armhf Chromium, an SDMMC driver, page-cache eviction | under way (§10), ≈ 45–55 points: the armhf Chromium runs headless on ARMv7-A under QEMU in 512 MiB, the card has a driver and a read-only btrfs gives back clean pages; nothing has run on the board |
 | Chromium built against ferrousli, with Alpine's musl patches rebased | not needed for a first Chrome: the prebuilt one runs (§5, §8) |
 | A guest with the ~2 GiB a page wants | `test-chrome` boots 4 GiB, as `test-rustc` does (§2.3) |
 
 **Done, 2026-09-24: a foreign toolkit client inside the guest** (§6).
-`foot` 1.24.0, a real Wayland terminal nobody here wrote, runs on Ferrix's
+`foot` 1.24.0, a real Wayland terminal nobody here wrote, runs on Xaqu's
 compositor and draws a program's output in the image's font. It is built
 by the foot port, now the `foot` app, against ferrousli with libffi 3.5.2,
 wayland 1.24.0, wayland-protocols 1.45, libxkbcommon 1.11.0, pixman 0.46.4,
@@ -83,7 +83,7 @@ three architectures, `dlopen` included (§2.1, §4), and btrfs is writable
 now zero.
 
 `docs/ROADMAP.md` stage 22 already names a browser once -- Steam's client
-starts one as a helper -- but a browser of Ferrix's own is on no stage, and
+starts one as a helper -- but a browser of Xaqu's own is on no stage, and
 nothing on the roadmap arrives at one on the way to something else.
 
 **The short answer:** on the order of 120 to 170 points of new work, on top of
@@ -115,7 +115,7 @@ are worth naming because each was built for something else and pays here.
 * **A C++ runtime that is exercised.** `src/user/system/linux/ferrousli/tools/ports/libcxx` builds
   LLVM 23.1.1's libc++, libc++abi and libunwind against ferrousli, exceptions
   and all, and btop 1.4.7 -- a C++23 program with threads -- draws its panels
-  on Ferrix. curl fetches over HTTPS and git clones, both built the same way.
+  on Xaqu. curl fetches over HTTPS and git clones, both built the same way.
 * **A compositor a toolkit will start against.** `src/user/system/linux/compositor/hyprix` advertises
   every global Chromium's Ozone backend binds: `wl_compositor`,
   `wl_subcompositor`, `wl_shm`, `wl_seat`, `wl_data_device_manager`,
@@ -201,7 +201,7 @@ xtask test-chrome`:
 * on Debian's `ld-linux` and glibc, `execve` of the 198 MB file succeeds, the
   linker maps its libraries and Chrome runs, until PartitionAlloc's first
   `madvise` is refused with `ENOSYS`. Its `CHECK` executes `int3`, which a
-  program on Ferrix is ended for with `SIGSEGV`: `pid 215 ended by signal 11
+  program on Xaqu is ended for with `SIGSEGV`: `pid 215 ended by signal 11
   at 0x0, pc 0x55555726974d`, the `int3` after `madvise@plt` at
   `0x1d1474d`. With `madvise` answered 0, a trial kernel that is not landed,
   it prints `Google Chrome for Testing 154.0.8037.57`; `--dump-dom` then
@@ -252,7 +252,7 @@ back.
 ### 2.4 The sandbox, and a bug worth fixing whatever is decided
 
 Chrome's zygote wants user, pid and mount namespaces and a seccomp-bpf filter.
-Ferrix has neither: `unshare` refuses everything it cannot honour
+Xaqu has neither: `unshare` refuses everything it cannot honour
 (`src/kernel/src/syscall/namespace.rs`), and there is no `seccomp` or `bpf` number
 at all. Running `--no-sandbox` is the honest first target; stage 13 is the
 other answer.
@@ -420,7 +420,7 @@ stood on 2026-09-18.
 **Overtaken again on 2026-09-21: 27 of the 39 are done, 12 left.**
 `src/user/system/linux/ferrousli/ld` is a working loader -- symbol versions, `COPY`, initial-exec
 TLS, `DT_FINI` -- and `src/user/system/linux/ferrousli/tools/build-shared.sh` links ferrousli as a
-versioned `libc.so.6`. Debian's own dynamic busybox runs on Ferrix with
+versioned `libc.so.6`. Debian's own dynamic busybox runs on Xaqu with
 glibc's loader on all three architectures, and with ferrousli's in glibc's
 place on x86-64. What Chrome still needs of it is most of the 12:
 `dlopen` and the rest of `dlfcn.h`, and general-dynamic TLS, which a
@@ -496,7 +496,7 @@ Two milestones before the browser, each of which is worth having on its own.
 **First, a foreign toolkit client inside the guest.** `foot` is already the
 compositor's real-client probe, but `src/user/system/linux/compositor/hyprix/probe/real-client.sh`
 says in its own header that it is a development-host check: no client that was
-not written against this tree's crates has ever run *on* Ferrix. Building
+not written against this tree's crates has ever run *on* Xaqu. Building
 libwayland-client and libxkbcommon against ferrousli and running foot in the
 guest proves the client story end to end for a fraction of a browser's cost,
 and it is on the browser's path rather than beside it.
@@ -535,7 +535,7 @@ background, which the firmware's screen does not have.
 the compositor, the GPU, input and the whole font-theme surface, and still
 exercises everything genuinely hard: the multi-process model, Mojo over
 `AF_UNIX`, hundreds of threads, PartitionAlloc and V8. If a headless Chrome
-writes a PNG on Ferrix, the Wayland half afterwards is comparatively small,
+writes a PNG on Xaqu, the Wayland half afterwards is comparatively small,
 because §1 says the compositor is already ready for it.
 
 And two fixes that stood on their own merits, whatever is decided about any of
@@ -574,7 +574,7 @@ which is the honest reason the last row of §5 is unsized.
 
 ---
 
-## 8. Headless Chrome on Ferrix, 2026-09-24
+## 8. Headless Chrome on Xaqu, 2026-09-24
 
 The customer chose, on 2026-09-24, to run Google's prebuilt Chrome first
 rather than build Chromium: a first result in days rather than in the
@@ -591,7 +591,7 @@ its SHA-256. After unpacking, it looks up every library each ELF file on the
 volume needs, which found two -- `libcap` and `libsqlite3` -- that Debian's
 builds need and the development host's did not. The same volume ran Chrome
 on example's own kernel, through a copy whose `PT_INTERP` named the volume's
-loader, before it was tried on Ferrix. It is not on the image: 809 MiB.
+loader, before it was tried on Xaqu. It is not on the image: 809 MiB.
 
 **What `cargo xtask test-chrome` requires**, booting 4 GiB with the volume at
 `/data`: `--version`; `--dump-dom` of a page whose script writes `6*7` into
@@ -622,14 +622,14 @@ reading where it stopped:
    fork, and none of its children started. Done, 2026-09-26: the zygote
    forks a child, and the child says hello on a socket whose reader set
    `SO_PASSCRED`. The zygote learns the child's real pid from the
-   `SCM_CREDENTIALS` message the kernel attaches, and Ferrix attached none,
+   `SCM_CREDENTIALS` message the kernel attaches, and Xaqu attached none,
    so the zygote gave the child up. A unix socket message now carries its
    sender's pid and ids when its reader asked for them, or when the sender
    named them. `/proc/<pid>/oom_score_adj`, which the browser sets for
    each renderer, is kept and reported but acted on by nothing. The tests
    ran with `--no-zygote` until then, which made the browser `execve` the
    294 MB program afresh for every child; they no longer do. `--no-sandbox`
-   remains, because Ferrix has no namespaces or seccomp (§2.4).
+   remains, because Xaqu has no namespaces or seccomp (§2.4).
 
 A trial kernel that let `madvise` answer and raised the read limit, never
 landed, is how the later items were found before the earlier were fixed;
@@ -657,7 +657,7 @@ Chrome's `PT_INTERP` names and ferrousli as `/lib/libc.so.6`, with
 the volume's. The first run that passed printed the version, `computed
 42`, and wrote a 4796-byte screenshot, with no ANGLE or Vulkan error. Each
 stop was found by running Chrome on example's own kernel first, through a
-copy whose `PT_INTERP` names ferrousli's loader, then on Ferrix. In the
+copy whose `PT_INTERP` names ferrousli's loader, then on Xaqu. In the
 order they were found:
 
 1. **Twelve names the count above missed.** It said every glibc name was
@@ -701,13 +701,13 @@ order they were found:
 8. **TLS in a `dlopen`ed library.** The GPU process opens four with TLS --
    ANGLE's EGL and GLES, the Vulkan loader and SwiftShader -- and the loader
    refused them, so ANGLE had no Vulkan, the GPU process fell back, and on
-   Ferrix the fallback stopped at the sandbox's
+   Xaqu the fallback stopped at the sandbox's
    `proc_util.cc:115` check with `ENOENT`. The loader now keeps glibc's
    1664-byte surplus of static TLS, gives such a library a block there,
    and a thread copies the images of libraries opened since it last looked
    the first time it asks `__tls_get_addr` for one. With that the GPU
    process runs SwiftShader and the fallback is not taken; why the fallback
-   meets `ENOENT` on Ferrix is not found.
+   meets `ENOENT` on Xaqu is not found.
 
 **The window on ferrousli, 2026-09-26, and passing.** `cargo xtask
 test-chrome-window --interpreter ferrousli --library ferrousli` stands
@@ -718,7 +718,7 @@ given to what the compositor starts. The full browser loads 80 objects
 where the headless shell loads 46 -- cairo, pango, CUPS, GnuTLS, Kerberos
 and what they need -- and opens seven more later. Found by running it on
 example's own kernel first, through a copy whose `PT_INTERP` names
-ferrousli's loader, then passing on Ferrix at the first boot:
+ferrousli's loader, then passing on Xaqu at the first boot:
 
 1. **The loader held 64 objects.** It refused the browser with "too many
    shared objects" before `main`. It holds 256; the scope, a few hundred
@@ -738,18 +738,18 @@ ferrousli's loader, then passing on Ferrix at the first boot:
    to `dladdr`, `dl_iterate_phdr`, `link_map` and `RTLD_DI_ORIGIN`.
    `tests/link.rs`'s check 85 requires both.
 
-One trap in the host copy, which Ferrix does not have: the loader knows
+One trap in the host copy, which Xaqu does not have: the loader knows
 itself by the file name of the program's `PT_INTERP`, so a copy that named
 it `/tmp/cwf-ld.so` loaded glibc's `ld-linux-x86-64.so.2` beside it for the
 libraries that need that name, and GnuTLS's finaliser faulted in glibc's
-`__tls_get_addr` at exit. Named with glibc's file name, as on Ferrix, it
+`__tls_get_addr` at exit. Named with glibc's file name, as on Xaqu, it
 answers for itself.
 
 Running Chrome on the host showed one thing that is the host's: with
 `WAYLAND_DISPLAY` set, ANGLE wants `VK_KHR_wayland_surface`, which
 SwiftShader offers only if it can open `libwayland-client.so.0`. glibc's
 loader found the host's copy in `/lib/x86_64-linux-gnu`; ferrousli's, which
-has no such default, found none, and the volume has none. On Ferrix the
+has no such default, found none, and the volume has none. On Xaqu the
 variable is not set.
 
 ---
@@ -768,9 +768,9 @@ with its own libwayland, and draws through `wl_shm` with `--disable-gpu`. It
 was run against the compositor on example's own kernel first, from the
 volume's files, and drew its tab strip, toolbar and page there; the only
 thing it needed was the crash handler's `PT_INTERP` pointed at the volume's
-loader too, which on Ferrix `/lib64` does.
+loader too, which on Xaqu `/lib64` does.
 
-On Ferrix it drew its window, and ended its connection seven seconds later
+On Xaqu it drew its window, and ended its connection seven seconds later
 on a protocol error: "no global 0 at version 3". The compositor made a
 request's new object at its parent's version, which is Wayland's rule, and
 refused it when that was above the version the object's own interface
@@ -997,7 +997,7 @@ and then:
 - the frames the device took in each host second;
 - the silences and jumps inside the tone.
 
-`FERRIX_BENCH_VIDEO` names another video. The C library is named, never
+`XAQU_BENCH_VIDEO` names another video. The C library is named, never
 defaulted: glibc, or ferrousli with `--interpreter` or `--library`.
 
 The first runs found Chrome's processor time climbing phase by phase on
@@ -1036,7 +1036,7 @@ sampler's own longest gaps (301 ms), as with `bench-chrome`'s dips above.
 One run at load 25 had no underrun and no silence but the loop's.
 
 **Real YouTube, over the network, the next night.** A probe kept outside
-the tree (`~/ferrix-logs/chrome-perf/youtube/bench-page-probe.patch` on
+the tree (`~/xaqu-logs/chrome-perf/youtube/bench-page-probe.patch` on
 example) lets the bench open any page with `--net`, taking a screen every
 ten seconds. YouTube's embed refuses to play as a page of its own ("error
 153"), and its watch page opens behind a consent dialog. So the probe opens
@@ -1079,28 +1079,28 @@ Chrome for Testing is for automated testing only.
   anywhere: Inter 4.1 as the sans-serif, and Liberation 2.1.5, the faces
   metric-compatible with Arial, Times New Roman and Courier New, which are
   Chrome's own defaults on Linux. Both are under the SIL Open Font
-  License. xtask carries them to `/usr/share/ferrix/fonts` with
+  License. xtask carries them to `/usr/share/xaqu/fonts` with
   `assets/fonts/fonts.conf`, which `FONTCONFIG_FILE` names. That file adds the
   directory, puts Inter first for `sans`, `sans-serif` and `system-ui`,
   asks for greyscale antialiasing with slight hinting, and then includes
   the system's configuration. A page's CSS `sans-serif` is not fontconfig's
   alias. It is a preference of Chrome's own, Arial on Linux, so a page
   gets Liberation Sans.
-- **The name.** `--user-agent` gives `Mozilla/5.0 (X11; Ferrix; not Linux
-  x86_64) ... Chrome/154.0.0.0`, and nothing else. It said `(Ferrix
+- **The name.** `--user-agent` gives `Mozilla/5.0 (X11; Xaqu; not Linux
+  x86_64) ... Chrome/154.0.0.0`, and nothing else. It said `(Xaqu
   x86_64)` at first, and Google's search answered with its page for a
   browser it no longer supports, three times in three: a site that knows
-  the platforms it serves does not know Ferrix. With the words `Linux
+  the platforms it serves does not know Xaqu. With the words `Linux
   x86_64` in it -- Ubuntu's Firefox said `X11; Ubuntu; Linux x86_64` for
   years -- the same search is answered as Chrome's own user agent is.
   Measured on the host:
   `navigator.platform` stays `Linux x86_64`, even with `uname` faked to say
-  Ferrix. `navigator.userAgentData.platform` and the `Sec-CH-UA-Platform`
+  Xaqu. `navigator.userAgentData.platform` and the `Sec-CH-UA-Platform`
   header stay `Linux`. All three are constants in Chrome's build, and no
   switch reaches them. For a few hours an extension of the tree's own
   rewrote them in each page. The customer did not want an extension only
-  to say Ferrix, and chose the flag alone over patching Google's binary
-  or building Chromium. So Ferrix says Ferrix (`uname -s`), and Chrome's
+  to say Xaqu, and chose the flag alone over patching Google's binary
+  or building Chromium. So Xaqu says Xaqu (`uname -s`), and Chrome's
   user agent does. The platform in `navigator` and the client hints says
   Linux until Chrome is built from source. With a user agent of its own,
   Chrome also leaves the `architecture` client hint empty.
@@ -1119,7 +1119,7 @@ configuration assumes, since Hyprland hands the line to the shell.
 
 The customer asked what Chrome on the board would take. The board has two
 800 MHz Cortex-A7 cores, 512 MiB of RAM, a Vivante GC400 and an SD card, and
-Ferrix already runs its HDMI Wayland desktop with a USB keyboard and mouse.
+Xaqu already runs its HDMI Wayland desktop with a USB keyboard and mouse.
 Everything the x86-64 run needed of the kernel -- `execve` from the file,
 `/proc/self/exe`, `madvise`, `timerfd`, `signalfd`, `creat`,
 `clock_getres` -- is on ARMv7-A too, and Debian's armhf glibc runs there.
@@ -1169,7 +1169,7 @@ stood in the way, each fixed on the branch:
   (`po10-cgctl/cgctl`'s reclaim) and a writable one's not yet.
 
 **The volume cannot live in RAM on the board.** The DK1 has 479 MiB that
-Ferrix sees (OP-TEE and the firmware keep the rest), 469 MiB managed by
+Xaqu sees (OP-TEE and the firmware keep the rest), 469 MiB managed by
 the frame allocator (its boot log of 2026-09-12); QEMU's 512 MiB machine leaves 405 MiB free at the end of boot,
 so the board should leave about 395. An initramfs costs twice its size:
 the loader's copy of the archive is kept for the life of the system
@@ -1225,9 +1225,9 @@ scan at the root switch publishes its partitions, and `mount -t btrfs
   with hardware flow control and never turns the internal DMA on. That is
   the driver's property, not the kernel's: nothing in front of SDMMC1
   checks what a driver programs into it (`certification/VULNERABILITY-ANALYSIS.md`, V-03).
-* **Writes only to `ferrix-` partitions.** The driver reads the card's
+* **Writes only to `xaqu-` partitions.** The driver reads the card's
   GPT at start and serves a write only inside one partition whose name
-  begins `ferrix-`; the firmware partitions (`fsbl1`, `fsbl2`, `fip`),
+  begins `xaqu-`; the firmware partitions (`fsbl1`, `fsbl2`, `fip`),
   `bootfs`, both tables and unpartitioned space answer `ReadOnly`. A card
   with no such partition, or a table that does not check, is announced
   read-only whole: the board's card today is.
@@ -1238,7 +1238,7 @@ scan at the root switch publishes its partitions, and `mount -t btrfs
   (certification consultant po10-chrome-b-cert, design OK IF C1-C7, ledger
   lines 478-480).
 * **Evidence.** Host tests against a register-level model of the
-  controller and a card (`ferrix-stm32-sdmmc`'s 22 tests, the overrun
+  controller and a card (`xaqu-stm32-sdmmc`'s 22 tests, the overrun
   without flow control and a DMA enable each shown to fail). No emulator
   has this controller, so the card itself has only those: the board run
   is `docs/BACKLOG.md`'s row, read-only first, a scratch partition after
@@ -1263,7 +1263,7 @@ Adwaita icons to the volume's, as it does the fonts.
 
 A volume with new contents is made under a directory of its own, so that a
 machine keeps running the one it had until the commit naming the new one
-lands: `~/.local/share/ferrix/chrome-2` (`chrome::VOLUME`), the first,
+lands: `~/.local/share/xaqu/chrome-2` (`chrome::VOLUME`), the first,
 `chrome`, left as it was. Under Xaqu, whose image carries Nocturne for GTK
 and GTK's settings naming it, Chrome draws its frame in Nocturne's dark
 colours; `test-compositor --boot chrome-xaqu` requires the toolbar above
@@ -1283,10 +1283,10 @@ loader for the SVG icons. The image links `usr/share/glib-2.0` and
 presses Ctrl+S in Chrome under Xaqu and requires GTK's "Save File" window,
 gone again at Escape with Chrome still running.
 
-The fourth, `chrome-4`, carries what Ferrix's own file chooser is shown
+The fourth, `chrome-4`, carries what Xaqu's own file chooser is shown
 with through the desktop portal: a session bus (Debian's `dbus-daemon`,
 which the portal boots start), GTK 4 and zenity, and `gtk3-open`, four
 calls of GTK 3's native chooser built by the script against the volume's
 GTK (`tools/common/fetch/gtk3-open.c`). With them, `test-compositor --boot
-chrome-save` requires Chrome's Save-as to be Ferrix's chooser, not GTK's,
+chrome-save` requires Chrome's Save-as to be Xaqu's chooser, not GTK's,
 and `--boot gtk-chooser` the same of a GTK 3 and a GTK 4 program.

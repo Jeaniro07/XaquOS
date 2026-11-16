@@ -2,14 +2,14 @@
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_native::address::{self, Word};
-use ferrix_native::handle::Deadline;
-use ferrix_native::handle::{Object as _, OwnedHandle};
-use ferrix_native::lift_calls;
-use ferrix_native::region;
-use ferrix_native::space::{Access, Space};
-use ferrix_native_abi::handle::Handle;
-use ferrix_rt::Kernel;
+use xaqu_native::address::{self, Word};
+use xaqu_native::handle::Deadline;
+use xaqu_native::handle::{Object as _, OwnedHandle};
+use xaqu_native::lift_calls;
+use xaqu_native::region;
+use xaqu_native::space::{Access, Space};
+use xaqu_native_abi::handle::Handle;
+use xaqu_rt::Kernel;
 
 /// Sleep on `word` while it reads 0, until `deadline` (u64::MAX: no limit).
 pub fn park(word: &AtomicU32, deadline: u64) {
@@ -34,7 +34,7 @@ pub fn park(word: &AtomicU32, deadline: u64) {
     crate::sched::account::unparked(since);
     match answer {
         Ok(())
-        | Err(ferrix_native::error::Error::TimedOut | ferrix_native::error::Error::ShouldWait) => {}
+        | Err(xaqu_native::error::Error::TimedOut | xaqu_native::error::Error::ShouldWait) => {}
         Err(why) => crate::println!("linuxd: park: {why:?}"),
     }
 }
@@ -107,7 +107,7 @@ pub fn space_fill(handle: u32, page: u64, physical: u64, write: bool, execute: b
 }
 /// `SPACE_PLACE`: how many went in.
 pub fn place(space: u32, vmo: u32, entries: &[(u64, u64, bool, bool)]) -> usize {
-    use ferrix_native_abi::lift::{PLACE_EXECUTE, PLACE_MOST, PLACE_WRITE};
+    use xaqu_native_abi::lift::{PLACE_EXECUTE, PLACE_MOST, PLACE_WRITE};
     let mut bytes = [0_u8; PLACE_MOST * 16];
     for (out, &(page, offset, write, execute)) in bytes.chunks_exact_mut(16).zip(entries) {
         let flags = if write { PLACE_WRITE } else { 0 } | if execute { PLACE_EXECUTE } else { 0 };
@@ -127,10 +127,10 @@ pub fn place(space: u32, vmo: u32, entries: &[(u64, u64, bool, bool)]) -> usize 
 /// The arena's VMO, by handle: one to write it, one that may map it executable.
 pub mod arena {
     use core::sync::atomic::{AtomicU32, Ordering};
-    use ferrix_native::handle::OwnedHandle;
-    use ferrix_native::vmo::Vmo;
-    use ferrix_native_abi::handle::Handle;
-    use ferrix_rt::Kernel;
+    use xaqu_native::handle::OwnedHandle;
+    use xaqu_native::vmo::Vmo;
+    use xaqu_native_abi::handle::Handle;
+    use xaqu_rt::Kernel;
     static WRITABLE: AtomicU32 = AtomicU32::new(0);
     static EXECUTABLE: AtomicU32 = AtomicU32::new(0);
     pub fn set(writable: u32, executable: u32) {
@@ -158,14 +158,14 @@ pub mod arena {
 }
 
 /// `THREAD_RESERVE` on the partition's job.
-#[cfg(ferrix_schedule = "edf")]
+#[cfg(xaqu_schedule = "edf")]
 pub fn thread_reserve(
     runtime: u64,
     deadline: u64,
     period: u64,
 ) -> Result<(), crate::sched::reserve::Refusal> {
     use crate::sched::reserve::Refusal;
-    use ferrix_native::Error;
+    use xaqu_native::Error;
     lift_calls::thread_reserve(
         Kernel,
         Handle(JOB.load(Ordering::Acquire)),
@@ -210,7 +210,7 @@ pub fn process_new(name: &[u8]) -> Result<(u32, u32), ()> {
         Kernel,
         Handle(REGION.load(Ordering::Acquire)),
     )));
-    let job = core::mem::ManuallyDrop::new(ferrix_native::job::Job::from_owned(
+    let job = core::mem::ManuallyDrop::new(xaqu_native::job::Job::from_owned(
         OwnedHandle::from_raw(Kernel, Handle(JOB.load(Ordering::Acquire))),
     ));
     let (process, space) = region.process_create(&job, name).map_err(|why| {
@@ -232,7 +232,7 @@ pub fn kernel_job_of(job: usize) -> Option<u32> {
     if let Some((_, handle)) = jobs.iter().find(|(at, _)| *at == job) {
         return Some(*handle);
     }
-    let parent = core::mem::ManuallyDrop::new(ferrix_native::job::Job::from_owned(
+    let parent = core::mem::ManuallyDrop::new(xaqu_native::job::Job::from_owned(
         OwnedHandle::from_raw(Kernel, Handle(JOB.load(Ordering::Acquire))),
     ));
     let child = parent
@@ -255,7 +255,7 @@ pub fn kill_kernel_job(job: usize) {
         .find(|(at, _)| *at == job)
         .map(|(_, handle)| *handle);
     if let Some(handle) = found {
-        let job = core::mem::ManuallyDrop::new(ferrix_native::job::Job::from_owned(
+        let job = core::mem::ManuallyDrop::new(xaqu_native::job::Job::from_owned(
             OwnedHandle::from_raw(Kernel, Handle(handle)),
         ));
         if let Err(why) = job.kill() {
@@ -269,27 +269,27 @@ pub fn forget_kernel_job(job: usize) {
     let mut jobs = KERNEL_JOBS.lock();
     if let Some(at) = jobs.iter().position(|(at, _)| *at == job) {
         let (_, handle) = jobs.swap_remove(at);
-        drop(ferrix_native::job::Job::from_owned(OwnedHandle::from_raw(
+        drop(xaqu_native::job::Job::from_owned(OwnedHandle::from_raw(
             Kernel,
             Handle(handle),
         )));
     }
 }
 /// Another handle to a kernel job, to give away.
-pub fn duplicate_job(handle: u32) -> Result<u32, ferrix_native::error::Error> {
-    let job = core::mem::ManuallyDrop::new(ferrix_native::job::Job::from_owned(
+pub fn duplicate_job(handle: u32) -> Result<u32, xaqu_native::error::Error> {
+    let job = core::mem::ManuallyDrop::new(xaqu_native::job::Job::from_owned(
         OwnedHandle::from_raw(Kernel, Handle(handle)),
     ));
     let copy = job
         .as_owned()
-        .duplicate(ferrix_native_abi::rights::Requested::Same)?;
+        .duplicate(xaqu_native_abi::rights::Requested::Same)?;
     let raw = copy.raw().0;
     core::mem::forget(copy);
     Ok(raw)
 }
 /// Start a kernel process's first thread in linuxd's code.
 pub fn process_start(process: u32, entry: usize, stack: usize) -> Result<(), ()> {
-    let process = core::mem::ManuallyDrop::new(ferrix_native::pending::Process::from_owned(
+    let process = core::mem::ManuallyDrop::new(xaqu_native::pending::Process::from_owned(
         OwnedHandle::from_raw(Kernel, Handle(process)),
     ));
     region::process_start_shared(&*process, entry, stack, None).map_err(|why| {
@@ -317,7 +317,7 @@ pub fn thread_ended(handle: u32) -> bool {
     )));
     thread
         .wait_one(
-            ferrix_native_abi::signals::Signals::TERMINATED,
+            xaqu_native_abi::signals::Signals::TERMINATED,
             Deadline::At(0),
         )
         .is_ok()

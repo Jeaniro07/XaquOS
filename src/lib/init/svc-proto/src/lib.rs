@@ -2,7 +2,7 @@
 //!
 //! Two, both between `/sbin/init` and programs it does not trust:
 //!
-//! * [`control`] -- what `svc` and init say on `/run/ferrix/control`: one
+//! * [`control`] -- what `svc` and init say on `/run/xaqu/control`: one
 //!   [`Call`](control::Call) from the client, then one or more
 //!   [`Answer`](control::Answer)s from init, the last of them final. Each is
 //!   a length-prefixed record, not text, so `svc`'s output can change

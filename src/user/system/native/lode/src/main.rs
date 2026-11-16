@@ -41,9 +41,9 @@ mod units;
 mod upload;
 mod zone;
 
-use ferrix_rt::Bootstrap;
+use xaqu_rt::Bootstrap;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 fn main(bootstrap: Bootstrap) -> i32 {
     match bootstrap {

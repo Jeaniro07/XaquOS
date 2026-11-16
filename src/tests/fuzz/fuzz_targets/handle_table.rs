@@ -23,9 +23,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_objects::table::{HandleTable, TableError};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_objects::table::{HandleTable, TableError};
 use libfuzzer_sys::fuzz_target;
 
 /// The most operations one input may run, so a long input stays fast.

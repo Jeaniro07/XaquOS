@@ -2,7 +2,7 @@
  * nvrm-link-test: RM's core, loaded and run with no GPU (docs/NVIDIA.md
  * §7, N1c). The same objects as nvrm, with this main in place of nvrm's:
  * it is an ordinary program (crt1.o, argv), so it runs on the host as on
- * Ferrix, and it has its own core, linked against its own addresses.
+ * Xaqu, and it has its own core, linked against its own addresses.
  *
  *   nvrm-link-test CORE                 load CORE, then RM's no-GPU path
  *   nvrm-link-test --control-rwx        the maps check's negative control
@@ -22,7 +22,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "class/cl0080.h"
 
 #include "core-calls.h"
@@ -38,7 +38,7 @@ void *mmap(void *, unsigned long, int, int, int, long);
 /* Where the core is linked (core/nvrm-core.ld; rmcore::BASE). */
 #define CORE_BASE 0x40000000UL
 
-/* From pin.c, core-calls.S and ferrix-nvos (os/nvos/src/rmcore.rs). */
+/* From pin.c, core-calls.S and xaqu-nvos (os/nvos/src/rmcore.rs). */
 extern const unsigned char nvrm_core_sha256[32];
 int nvos_core_load(const char *path, const unsigned char (*pin)[32],
 		   unsigned long long *table, NvU32 exports, NvU32 data);

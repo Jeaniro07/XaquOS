@@ -5,7 +5,7 @@
 //! things they name. It holds no socket and no descriptor of its own -- a
 //! descriptor is an `i32` here and nothing more -- so it is host-tested and
 //! fuzzed the way `src/lib/network/netwire` and `src/lib/proto/inputctl` are, and the server
-//! above it is the only part that has to run on Ferrix to be tried.
+//! above it is the only part that has to run on Xaqu to be tried.
 //!
 //! Written from `/usr/share/wayland/wayland.xml` and the format
 //! `wayland-util.c`, `connection.c` and `wire.c` implement, not from a
@@ -35,7 +35,7 @@
 //!   next one that arrived.
 //!
 //! The words are in the machine's own byte order, because both ends of the
-//! socket are on one machine; every architecture Ferrix builds for is
+//! socket are on one machine; every architecture Xaqu builds for is
 //! little-endian, so this crate writes little-endian and says so, rather
 //! than depending on the host that ran the test.
 //!

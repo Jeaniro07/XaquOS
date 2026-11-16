@@ -4,7 +4,7 @@
 //! `ENXIO` here, so the mount does not open it: it takes the node's `st_rdev`
 //! and asks devfs's registry for the [`BlockDevice`] behind that number, the
 //! one the block ring's kernel side registered when the driver said hello.
-//! Everything above that is `ferrix-btrfs-vfs`, which reads the volume through
+//! Everything above that is `xaqu-btrfs-vfs`, which reads the volume through
 //! a [`Device`] — bytes at physical offsets — and keeps file data in the pages
 //! the kernel's [`VmoStorage`] lends it. [`Disk`] is the adapter between the
 //! two: whole sectors on one side, byte offsets on the other.
@@ -21,12 +21,12 @@
 //! A writable mount keeps the tree nodes it read and did not change, a cache
 //! of the disk, in kernel heap: up to 4096 of them between operations, about
 //! twice a node's size each, on every writable volume. That heap is charged
-//! to no job -- neither `ferrix-btrfs-write` nor `ferrix-btrfs-vfs` makes a
-//! `ferrix_kmem` charge -- so a job's `memory.max` reclaim has no claim on
+//! to no job -- neither `xaqu-btrfs-write` nor `xaqu-btrfs-vfs` makes a
+//! `xaqu_kmem` charge -- so a job's `memory.max` reclaim has no claim on
 //! it, and only a reclaim of the whole machine takes it ([`drop_clean`],
 //! asked by the filesystem's shrinker). Every writable mount is listed here
 //! for that, weakly, and asked in turn: a volume an operation holds is
-//! skipped, never waited for (`ferrix_btrfs_vfs::rw`, "Clean tree nodes are
+//! skipped, never waited for (`xaqu_btrfs_vfs::rw`, "Clean tree nodes are
 //! given back between operations"). What they hold is counted for
 //! `/proc/meminfo` ([`clean_bytes`]).
 //!
@@ -41,12 +41,12 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::volume::{Device, ReadKind};
-use ferrix_btrfs_vfs::Btrfs;
-use ferrix_btrfs_vfs::rw::RwBtrfs;
-use ferrix_btrfs_write::{Error as WriteError, WriteDevice};
-use ferrix_vfs::{Errno, FileSystem};
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::volume::{Device, ReadKind};
+use xaqu_btrfs_vfs::Btrfs;
+use xaqu_btrfs_vfs::rw::RwBtrfs;
+use xaqu_btrfs_write::{Error as WriteError, WriteDevice};
+use xaqu_vfs::{Errno, FileSystem};
 
 use super::block::BlockDevice;
 use super::devfs;
@@ -60,7 +60,7 @@ static WRITABLE: SpinLock<Vec<Weak<RwBtrfs<Disk>>>> = SpinLock::new(Vec::new());
 /// A registered disk as a btrfs volume reads it: bytes at physical offsets,
 /// fetched in whole sectors.
 ///
-/// Cloned for every operation, as `ferrix-btrfs-vfs` asks of its handle; a
+/// Cloned for every operation, as `xaqu-btrfs-vfs` asks of its handle; a
 /// clone is one `Arc` and the sector size.
 #[derive(Clone)]
 pub(crate) struct Disk {
@@ -211,7 +211,7 @@ pub(crate) fn label(rdev: u64) -> Option<Vec<u8>> {
 
 /// Mount the btrfs volume on the registered disk numbered `rdev` for writing.
 ///
-/// Stage 12's mount. The volume must be one `ferrix-btrfs-write` maintains —
+/// Stage 12's mount. The volume must be one `xaqu-btrfs-write` maintains —
 /// a single device, no subvolume but the top-level one, no quotas, no
 /// unreplayed log — and the disk must take writes; everything else is
 /// `EROFS`, and mounting read-only still works for all of them.

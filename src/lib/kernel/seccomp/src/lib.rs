@@ -18,7 +18,7 @@
 //!
 //! # Byte order
 //!
-//! `struct seccomp_data` is host-endian. Every target Ferrix has is
+//! `struct seccomp_data` is host-endian. Every target Xaqu has is
 //! little-endian; a filter loads a 32-bit word of the structure, and
 //! [`SeccompData::word`] is the word of its fields as little-endian bytes.
 
@@ -86,9 +86,9 @@ pub const KILL_THREAD: u32 = 0x0000_0000;
 pub const TRAP: u32 = 0x0003_0000;
 /// `SECCOMP_RET_ERRNO`: fail the call with the data as its errno.
 pub const ERRNO: u32 = 0x0005_0000;
-/// `SECCOMP_RET_USER_NOTIF`: ask a supervisor, which Ferrix has none of.
+/// `SECCOMP_RET_USER_NOTIF`: ask a supervisor, which Xaqu has none of.
 pub const USER_NOTIF: u32 = 0x7fc0_0000;
-/// `SECCOMP_RET_TRACE`: ask a tracer, which Ferrix has none of.
+/// `SECCOMP_RET_TRACE`: ask a tracer, which Xaqu has none of.
 pub const TRACE: u32 = 0x7ff0_0000;
 /// `SECCOMP_RET_LOG`: allow, and log.
 pub const LOG: u32 = 0x7ffc_0000;

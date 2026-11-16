@@ -6,8 +6,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::format::{self, bytes_text};
-use ferrix_lode_core::segment;
+use xaqu_lode_core::format::{self, bytes_text};
+use xaqu_lode_core::segment;
 
 use crate::cli::{self, Known, Options, complain, out};
 use crate::control::{self, Request};

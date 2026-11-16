@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-drvupdated"
+name = "xaqu-drvupdated"
 description = "drvupdated: takes a new driver image from root over an abstract socket and hands it to devmgr as a VMO (docs/DEVMGR.md 4.1)"
 version.workspace = true
 edition.workspace = true
@@ -14,8 +14,8 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-drvupdate-proto.workspace = true
-ferrix-rt.workspace = true
+xaqu-drvupdate-proto.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

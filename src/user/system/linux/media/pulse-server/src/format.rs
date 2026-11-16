@@ -156,7 +156,7 @@ pub(crate) fn frame_bytes(spec: &SampleSpec) -> u32 {
 const MAX_LENGTH: u32 = 4 * 1024 * 1024;
 
 /// What `tlength` is when left: 250 ms. `PulseAudio`'s two seconds is for a
-/// desktop that trades latency for fewer wake-ups; Ferrix's card has 320 ms
+/// desktop that trades latency for fewer wake-ups; Xaqu's card has 320 ms
 /// of buffer of its own.
 const TARGET: Duration = Duration::from_millis(250);
 

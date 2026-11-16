@@ -1,5 +1,5 @@
 //! `test-compositor --boot chrome-save`: Chrome's Save-as on Xaqu's
-//! desktop is Ferrix's own file chooser. Chrome asks the desktop portal --
+//! desktop is Xaqu's own file chooser. Chrome asks the desktop portal --
 //! `org.freedesktop.portal.FileChooser`, on the session bus -- and portald
 //! opens the `chooser` app, tole's `FileDialog` after the customer's Key File
 //! Dialog design, rather than GTK's dialog.
@@ -88,7 +88,7 @@ pub(super) fn test_chrome_save(arch: Arch, programs: &Programs, args: &Args) -> 
                 &Error::new(format!(
                     "{arch}: chrome-save: Ctrl+S opened {}",
                     if gtk {
-                        "GTK's Save File dialog, not Ferrix's chooser: the portal was not asked"
+                        "GTK's Save File dialog, not Xaqu's chooser: the portal was not asked"
                     } else {
                         "no dialog at all"
                     }
@@ -99,7 +99,7 @@ pub(super) fn test_chrome_save(arch: Arch, programs: &Programs, args: &Args) -> 
         std::thread::sleep(Duration::from_secs(5));
         qmp.screendump(Some(DEVICE_ID), &dump)?;
         println!(
-            "  {arch}: chrome-save: Ferrix's chooser is up (the screen is {})",
+            "  {arch}: chrome-save: Xaqu's chooser is up (the screen is {})",
             dump.display()
         );
         let from = watching.after().len();
@@ -131,7 +131,7 @@ pub(super) fn test_chrome_save(arch: Arch, programs: &Programs, args: &Args) -> 
         }
         if failures.is_empty() {
             println!(
-                "  {arch}: chrome-save: Ctrl+S opened Ferrix's chooser through the portal, Escape closed it, Chrome went on"
+                "  {arch}: chrome-save: Ctrl+S opened Xaqu's chooser through the portal, Escape closed it, Chrome went on"
             );
             Ok(())
         } else {

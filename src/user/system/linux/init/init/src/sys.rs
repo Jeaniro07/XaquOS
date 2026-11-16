@@ -11,25 +11,25 @@ use std::mem::MaybeUninit;
 use std::os::fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 use std::ptr;
 
-use ferrix_svc::event::Exit;
-use ferrix_svc::value::Signal;
+use xaqu_svc::event::Exit;
+use xaqu_svc::value::Signal;
 
 /// Native calls (`docs/ARCHITECTURE.md` §2), made the way a Linux program
 /// makes them: through the same `syscall` instruction, numbered from
 /// `0x1000`. `src/lib/proto/native` describes each call as a [`Raw`] and asks this to
 /// make it.
 ///
-/// [`Raw`]: ferrix_native::Raw
+/// [`Raw`]: xaqu_native::Raw
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Native;
 
-impl ferrix_native::Syscall for Native {
-    fn call(self, raw: ferrix_native::Raw<'_>) -> usize {
+impl xaqu_native::Syscall for Native {
+    fn call(self, raw: xaqu_native::Raw<'_>) -> usize {
         let [a0, a1, a2, a3, a4, a5] = raw.args();
         let number = libc::c_long::try_from(raw.number()).unwrap_or(-1);
         // SAFETY: `src/lib/proto/native` built `raw` from borrowed memory, and every
         // pointer among its arguments names memory it borrows for as long as
-        // `raw` lives, which is past this call (`ferrix_native::call`).
+        // `raw` lives, which is past this call (`xaqu_native::call`).
         let ret = unsafe { libc::syscall(number, a0, a1, a2, a3, a4, a5) };
         if ret == -1 {
             // The C library turned the kernel's `-errno` into -1 and errno;

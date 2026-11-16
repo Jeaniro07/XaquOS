@@ -302,7 +302,7 @@ fn no_page_for_a_table_is_no_memory() {
     assert_eq!(refused, Err(Error::NoMemory));
     assert_eq!(
         crate::backend::errno(Error::NoMemory),
-        ferrix_linux_abi::errno::Errno::ENOMEM
+        xaqu_linux_abi::errno::Errno::ENOMEM
     );
     be.platform().gpu.tables.limit = None;
     assert_eq!(be.bind(vm, 0x40_0000_0000, &memory, 4 << 20, 0), Ok(()));
@@ -399,7 +399,7 @@ fn the_front_ends_backend_trait_reaches_it() {
     };
     assert_eq!(
         Backend::context_create(&mut be, vm, copy, frontend::ContextParams::DEFAULT),
-        Err(ferrix_linux_abi::errno::Errno::EINVAL)
+        Err(xaqu_linux_abi::errno::Errno::EINVAL)
     );
     Backend::submit(&mut be, ctx, 0x1_0000_0000, 64, 41).expect("taken");
     let _ = be.platform().gpu.run();
@@ -441,7 +441,7 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         _r: u64,
         address: u64,
         out: &mut [u8],
-    ) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    ) -> Result<(), xaqu_linux_abi::errno::Errno> {
         let at = (address - BASE) as usize;
         out.copy_from_slice(&self.memory[at..at + out.len()]);
         Ok(())
@@ -452,7 +452,7 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         _r: u64,
         address: u64,
         bytes: &[u8],
-    ) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    ) -> Result<(), xaqu_linux_abi::errno::Errno> {
         let at = (address - BASE) as usize;
         self.memory[at..at + bytes.len()].copy_from_slice(bytes);
         Ok(())
@@ -471,7 +471,7 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         _m: &Vec<u64>,
         _o: u64,
         _wc: bool,
-    ) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    ) -> Result<(), xaqu_linux_abi::errno::Errno> {
         self.reply(request, 0);
         Ok(())
     }
@@ -483,15 +483,15 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         _c: u64,
         _w: bool,
         _x: bool,
-    ) -> Result<crate::frontend::Installed, ferrix_linux_abi::errno::Errno> {
-        Err(ferrix_linux_abi::errno::Errno::ENODEV)
+    ) -> Result<crate::frontend::Installed, xaqu_linux_abi::errno::Errno> {
+        Err(xaqu_linux_abi::errno::Errno::ENODEV)
     }
 
-    fn dmabuf_resolve(&mut self, _r: u64, _fd: i32) -> Result<u64, ferrix_linux_abi::errno::Errno> {
-        Err(ferrix_linux_abi::errno::Errno::EBADF)
+    fn dmabuf_resolve(&mut self, _r: u64, _fd: i32) -> Result<u64, xaqu_linux_abi::errno::Errno> {
+        Err(xaqu_linux_abi::errno::Errno::EBADF)
     }
 
-    fn dmabuf_fence(&mut self, _d: u64, _f: u64) -> Result<(), ferrix_linux_abi::errno::Errno> {
+    fn dmabuf_fence(&mut self, _d: u64, _f: u64) -> Result<(), xaqu_linux_abi::errno::Errno> {
         Ok(())
     }
 
@@ -500,16 +500,16 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         _r: u64,
         _f: u64,
         _x: bool,
-    ) -> Result<i32, ferrix_linux_abi::errno::Errno> {
-        Err(ferrix_linux_abi::errno::Errno::ENODEV)
+    ) -> Result<i32, xaqu_linux_abi::errno::Errno> {
+        Err(xaqu_linux_abi::errno::Errno::ENODEV)
     }
 
     fn sync_resolve(
         &mut self,
         _r: u64,
         _fd: i32,
-    ) -> Result<(u64, bool), ferrix_linux_abi::errno::Errno> {
-        Err(ferrix_linux_abi::errno::Errno::EINVAL)
+    ) -> Result<(u64, bool), xaqu_linux_abi::errno::Errno> {
+        Err(xaqu_linux_abi::errno::Errno::EINVAL)
     }
 
     fn sync_signal(&mut self, _f: u64, _s: i32) {}
@@ -522,7 +522,7 @@ impl crate::frontend::Host<Vec<u64>> for Program {
         false
     }
 
-    fn say(&mut self, _level: ferrix_linux_abi::kmsg::Level, _line: core::fmt::Arguments<'_>) {}
+    fn say(&mut self, _level: xaqu_linux_abi::kmsg::Level, _line: core::fmt::Arguments<'_>) {}
 }
 
 /// The front end over the real back end, on the model: a program opens the
@@ -763,7 +763,7 @@ fn the_policy_steps_as_i915_steps() {
     assert_eq!(park_step(30, i32::MIN, 12), (12, i32::MIN));
 }
 
-/// Ferrix's rules: no park while anything is in flight, a park only after
+/// Xaqu's rules: no park while anything is in flight, a park only after
 /// the idle hold; no down step below RP1 while unparked; a waiter's boost
 /// to RP0 and no down step while it waits.
 #[test]

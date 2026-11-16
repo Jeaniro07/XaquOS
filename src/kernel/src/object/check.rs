@@ -20,18 +20,18 @@ use core::any::Any;
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     CHANNEL_MAX_BYTES, JOB_MEMORY, MAP_READ, MAP_WRITE, PACKET_INTERRUPT, PACKET_SIGNAL,
     PACKET_USER,
 };
-use ferrix_vma::VmaFlags;
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::device::{self, DeviceNode};
@@ -49,7 +49,7 @@ use crate::syscall::{self as linux, Outcome, SyscallArgs, native, uaccess};
 use crate::user::memory_type;
 use crate::user::space::{Access, Destination, FileMapping, FilePlace, SpaceError, WindowPages};
 use crate::user::vmo::Vmo;
-use ferrix_elf::Class;
+use xaqu_elf::Class;
 
 /// Where each check process keeps its buffers. Stage 10's ring check borrows
 /// the second page of it.
@@ -820,7 +820,7 @@ fn check_an_unstarted_child_ends_with_its_handles(
 fn check_a_program_ended_by_its_fault_is_heard_and_freed(
     counter: &mut Counter,
 ) -> Result<(), &'static str> {
-    const SEGV_STATUS: i32 = 128 + ferrix_linux_abi::types::SIGSEGV as i32;
+    const SEGV_STATUS: i32 = 128 + xaqu_linux_abi::types::SIGSEGV as i32;
     const WATCH_KEY: u64 = 61;
 
     if arch::USER_FAULT_PROGRAM.is_empty() {
@@ -841,7 +841,7 @@ fn check_a_program_ended_by_its_fault_is_heard_and_freed(
         &file,
         &[b"/fault"],
         &[],
-        [0x3b; ferrix_ustack::RANDOM_BYTES],
+        [0x3b; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that faults could not be loaded")?;
 
@@ -1991,7 +1991,7 @@ fn check_a_wait_is_woken_by_what_it_waits_for(counter: &mut Counter) -> Result<(
         "native waker",
         write_after_a_delay,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     )
     .map_err(|_| "could not start the waker")?;
     stage_deadline(&side, PATIENCE_NANOS)?;
@@ -2249,7 +2249,7 @@ fn native_program(role: u8) -> Result<Arc<Process>, &'static str> {
         &file,
         &[b"/native"],
         &[],
-        [0x39; ferrix_ustack::RANDOM_BYTES],
+        [0x39; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the native program could not be loaded")
 }
@@ -2528,7 +2528,7 @@ fn check_a_coherent_pin_of_a_snooping_device_changes_nothing(
         &[2 * PAGE_SIZE],
         "vmo_create for a coherent pin failed",
     )?;
-    let coherent = ferrix_native_abi::types::PIN_COHERENT;
+    let coherent = xaqu_native_abi::types::PIN_COHERENT;
     let pin = side.handle(
         nr::VMO_PIN,
         &[reg(handle), reg(vmo), 0, PAGE_SIZE, coherent],
@@ -2607,7 +2607,7 @@ fn check_a_device_gives_exactly_its_own_memory(counter: &mut Counter) -> Result<
     }
 
     // Not the function holding a lent firmware framebuffer, which nobody
-    // drives (`ferrix.efifb`).
+    // drives (`xaqu.efifb`).
     let Some((node, aperture)) = device::devices()
         .iter()
         .filter(|node| !node.yielded())
@@ -2707,12 +2707,12 @@ fn check_write_combining(counter: &mut Counter) -> Result<(), &'static str> {
     {
         return Err("a processor's PAT was not programmed with its write-combining entry");
     }
-    // Not the lent firmware framebuffer's node (`ferrix.efifb`), whose
+    // Not the lent firmware framebuffer's node (`xaqu.efifb`), whose
     // window the kernel holds write-combining for good: the uncached and
     // cached mappings below would be refused for that, not for the rule.
     let lent = |node: &DeviceNode| {
         crate::discovery::firmware::may_lend()
-            && node.binding() == ferrix_native_abi::types::TREE_FIRMWARE_FB
+            && node.binding() == xaqu_native_abi::types::TREE_FIRMWARE_FB
     };
     let find = |prefetchable: bool| {
         device::devices()
@@ -3271,7 +3271,7 @@ fn check_an_endpoint_survives_a_bad_buffer(
 const STRADDLE: u64 = SCRATCH + PAGE_SIZE - 3;
 
 /// Where the private-file check's file lives.
-const PRIVATE_FILE: &[u8] = b"/tmp/ferrix-channel-private";
+const PRIVATE_FILE: &[u8] = b"/tmp/xaqu-channel-private";
 
 /// A message read into a private file mapping lands in the mapping's own copy
 /// of the page, never in the file.
@@ -3289,12 +3289,12 @@ fn check_a_message_is_read_into_a_private_file_mapping(
     counter: &mut Counter,
 ) -> Result<(), &'static str> {
     let ns = crate::fs::namespace();
-    let flags = ferrix_vfs::OpenFlags {
+    let flags = xaqu_vfs::OpenFlags {
         read: true,
         write: true,
         create: true,
         truncate: true,
-        ..ferrix_vfs::OpenFlags::default()
+        ..xaqu_vfs::OpenFlags::default()
     };
     let file = ns
         .open(&ns.context(), None, PRIVATE_FILE, &flags, 0o600)
@@ -3309,7 +3309,7 @@ fn check_a_message_is_read_into_a_private_file_mapping(
 fn read_into_a_private_file_mapping(
     side: &Side,
     counter: &mut Counter,
-    file: &Arc<ferrix_vfs::OpenFile>,
+    file: &Arc<xaqu_vfs::OpenFile>,
 ) -> Result<(), &'static str> {
     let page = usize::try_from(PAGE_SIZE).map_err(|_| "the page size does not fit")?;
     let kept: Vec<u8> = (0..2 * page).map(|at| (at % 251) as u8).collect();
@@ -3347,7 +3347,7 @@ fn deliver_into_file_pages(
     counter: &mut Counter,
     at: u64,
     kept: &[u8],
-    file: &ferrix_vfs::OpenFile,
+    file: &xaqu_vfs::OpenFile,
 ) -> Result<(), &'static str> {
     const SENT: &[u8] = b"privately";
     let straddle = at + PAGE_SIZE - 3;
@@ -3724,7 +3724,7 @@ fn check_a_port_wait_is_woken_by_a_message(counter: &mut Counter) -> Result<(), 
         "port waker",
         write_after_a_delay,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     )
     .map_err(|_| "could not start the waker")?;
     stage_deadline(&side, PATIENCE_NANOS)?;
@@ -3838,7 +3838,7 @@ fn check_an_interrupt_wakes_its_waiter(
                 "interrupt firer",
                 fire_after_a_delay,
                 usize::try_from(extra).unwrap_or(0),
-                ferrix_sched::NICE_0_WEIGHT,
+                xaqu_sched::NICE_0_WEIGHT,
             )
             .map_err(|_| "could not start the interrupt firer")?;
             stage_deadline(side, PATIENCE_NANOS)?;

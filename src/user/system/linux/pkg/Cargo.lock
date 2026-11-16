@@ -3,24 +3,24 @@
 version = 4
 
 [[package]]
-name = "ferrix-argon2"
+name = "xaqu-argon2"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-cpio"
+name = "xaqu-cpio"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-pkg"
+name = "xaqu-pkg"
 version = "0.1.0"
 dependencies = [
- "ferrix-argon2",
+ "xaqu-argon2",
 ]
 
 [[package]]
 name = "pkg"
 version = "0.1.0"
 dependencies = [
- "ferrix-cpio",
- "ferrix-pkg",
+ "xaqu-cpio",
+ "xaqu-pkg",
 ]

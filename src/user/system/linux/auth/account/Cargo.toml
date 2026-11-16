@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-auth-account"
+name = "xaqu-auth-account"
 description = "An account as /etc/passwd and /etc/group say it, and becoming it: shared by /bin/login and /bin/su (docs/AUTH.md §6.2)"
 version.workspace = true
 edition.workspace = true

@@ -44,10 +44,10 @@
 use alloc::boxed::Box;
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::Arch;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::Arch;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     NSIG, SA_NOCLDSTOP, SA_NOCLDWAIT, SA_NODEFER, SA_ONSTACK, SA_RESETHAND, SIG_BLOCK, SIG_DFL,
     SIG_IGN, SIG_SETMASK, SIG_UNBLOCK, SIGABRT, SIGBUS, SIGCHLD, SIGCONT, SIGFPE, SIGILL, SIGKILL,
     SIGQUIT, SIGSEGV, SIGSTOP, SIGSYS, SIGTRAP, SIGTSTP, SIGTTIN, SIGTTOU, SIGURG, SIGWINCH,
@@ -1090,7 +1090,7 @@ pub(crate) const fn deliverable(process: &Signals, thread: &ThreadSignals) -> u6
 /// Without it the way back was skipped and the call's restart code reached
 /// the program -- glibc's `pthread_join` under a 1 ms timer saw `-512` and
 /// aborted with "The futex facility returned an unexpected error code"
-/// (ferrix-ea, ARMv7-A, 2026-09-27).
+/// (xaqu-ea, ARMv7-A, 2026-09-27).
 #[inline(always)]
 pub(crate) const fn needs_attention(process: &Signals, thread: &ThreadSignals) -> bool {
     (deliverable(process, thread) != 0) | thread.saved_mask.is_some() | thread.restart.is_some()

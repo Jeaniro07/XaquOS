@@ -18,7 +18,7 @@ Sizes are order-of-magnitude, in the sense of "a weekend / a week / a month /
 longer". This is a long program of work: stages 1–8 are a conventional kernel
 bring-up, 9–14 are the parts this design chose to do properly, 15–16 are the
 goal, and 17–19 are the goal after it: a Hyprland-shaped Wayland compositor,
-written in Rust, running on Ferrix (decided 2026-09-13). From that date
+written in Rust, running on Xaqu (decided 2026-09-13). From that date
 sizes for new work are story points, measured into time only after the fact
 -- and since 2026-09-18, at the customer's word, measured *forward* as well.
 The status table after *Where it stands* records the pointed remainder and

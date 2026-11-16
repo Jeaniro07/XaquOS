@@ -1,11 +1,11 @@
 //! Little-endian field access for the structures this crate builds.
 //!
-//! The same discipline as `ferrix-btrfs`: every access is checked, and a field
+//! The same discipline as `xaqu-btrfs`: every access is checked, and a field
 //! that does not fit is `None` rather than a panic. The writers exist because
 //! this crate builds structures, and a builder that indexes would be the one
 //! place a wrong length becomes a crash instead of an error.
 
-use ferrix_btrfs::tree::{BtrfsKey, KEY_SIZE};
+use xaqu_btrfs::tree::{BtrfsKey, KEY_SIZE};
 
 /// Copy `bytes` into `buf` at `at`, or `None` if they do not fit.
 pub(crate) fn put(buf: &mut [u8], at: usize, bytes: &[u8]) -> Option<()> {

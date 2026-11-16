@@ -1,4 +1,4 @@
-//! `test-yserver`: the X server Steam will draw through, started on Ferrix
+//! `test-yserver`: the X server Steam will draw through, started on Xaqu
 //! with no display of its own and asked who it is (stage 22, the yserver
 //! feasibility pass).
 //!
@@ -6,12 +6,12 @@
 //! against Debian 13's libraries, and runs here on them from a data volume, as
 //! Chrome does. With no DRM card it starts headless and renders through
 //! Vulkan on the CPU, Mesa's lavapipe; with no input device it starts only
-//! when `YSERVER_ALLOW_NO_INPUT` says so, which a patch of Ferrix's adds.
+//! when `YSERVER_ALLOW_NO_INPUT` says so, which a patch of Xaqu's adds.
 //! [`RUN`], carried in the image, starts it on `:1`, runs `xdpyinfo` against
 //! it, and prints the server's log.
 //!
 //! `tools/common/fetch/fetch-yserver.sh` builds yserver from the customer's fork
-//! and makes the volume (docs/YSERVER.md §3). It carries no `ferrix-root`
+//! and makes the volume (docs/YSERVER.md §3). It carries no `xaqu-root`
 //! label, so the kernel mounts it at `/data`, under QEMU's `snapshot=on`.
 //! The gate needs no network, but it attaches a volume, so it runs on demand
 //! as `test-steamcmd` does and is not in the image row.
@@ -98,7 +98,7 @@ const DESKTOP_PATH: &str = "etc/yserver.sh";
 ///
 /// It renders on lavapipe even where the desktop has Venus. Every frame
 /// yserver hands hyprix is read back to the CPU, and on Venus that read,
-/// and every client image written, crosses memory Ferrix maps uncached
+/// and every client image written, crosses memory Xaqu maps uncached
 /// (the device calls it write-combining): Steam's maximized window took
 /// 22 ms a frame to read back and its uploads half the server's time. On
 /// lavapipe both are copies in RAM. Venus pays once hyprix takes dmabufs.
@@ -213,7 +213,7 @@ pub(crate) fn pinned() -> &'static str {
 }
 
 /// Where `tools/common/fetch/fetch-yserver.sh` writes, unless
-/// `FERRIX_YSERVER_VOLUME` names another directory.
+/// `XAQU_YSERVER_VOLUME` names another directory.
 ///
 /// The image must hold the yserver the script pins: one made before the pin
 /// moved runs, and answers `xdpyinfo`, but lacks what later commits of the
@@ -224,7 +224,7 @@ pub(crate) fn pinned() -> &'static str {
 ///
 /// The volume has not been made, or was made from another commit.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_YSERVER_VOLUME") {
+    let directory = match std::env::var_os("XAQU_YSERVER_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("yserver")?,
     };
@@ -304,7 +304,7 @@ pub(crate) fn test_yserver(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running yserver on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running yserver on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -314,7 +314,7 @@ pub(crate) fn test_yserver(args: &Args) -> Result<()> {
         .map(str::trim);
     match exited {
         Some(status) if status == STATUS.to_string() => {
-            println!("  {arch}: xdpyinfo reached yserver on Ferrix");
+            println!("  {arch}: xdpyinfo reached yserver on Xaqu");
             Ok(())
         }
         Some("3") => Err(Error::new(format!(

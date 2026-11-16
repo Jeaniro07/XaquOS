@@ -1,5 +1,5 @@
 /*
- * The layout of a Ferrix native program, on all three architectures.
+ * The layout of a Xaqu native program, on all three architectures.
  *
  * What the kernel's ELF loader (src/kernel/src/syscall/load.rs) requires:
  *

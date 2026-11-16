@@ -1,7 +1,7 @@
 //! Drawing the banners and the list (`docs/DESKTOP.md` §4.2): rounded
 //! light cards with the app's name small, the summary bold, the body, and
 //! the actions as buttons under them; a close cross in the corner.
-//! Ferrix light's own colours.
+//! Xaqu light's own colours.
 
 use compositor_text::tiny_skia::{
     FillRule, LineCap, Paint, PathBuilder, Pixmap, Stroke, Transform,

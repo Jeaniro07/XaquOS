@@ -120,14 +120,14 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::Ordering;
 
-use ferrix_chardevctl::message::{Hello, MAX_NODES, Message, Op, VERSION, VERSION_INTERRUPTS};
-use ferrix_chardevctl::node::{MODE, RENDER_MINOR};
-use ferrix_chardevctl::session::Refusal;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
+use xaqu_chardevctl::message::{Hello, MAX_NODES, Message, Op, VERSION, VERSION_INTERRUPTS};
+use xaqu_chardevctl::node::{MODE, RENDER_MINOR};
+use xaqu_chardevctl::session::Refusal;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
 
 use super::{
     Answer, Ask, CONTROLS, Control, DRIVER_RIGHTS, MAX_OUTSTANDING, MapReply, Request, STARTING,
@@ -253,7 +253,7 @@ pub fn run() -> Result<Report, &'static str> {
     let nodes: Vec<Arc<DeviceNode>> = device::devices()
         .iter()
         // Not the function holding a lent firmware framebuffer, which
-        // nobody drives (`ferrix.efifb`).
+        // nobody drives (`xaqu.efifb`).
         .filter(|node| matches!(node.location(), device::Location::Pci(_)) && !node.yielded())
         .take(2)
         .cloned()
@@ -373,11 +373,11 @@ fn combining_maps(
     program: &Side,
     report: &mut Report,
 ) -> Result<(), &'static str> {
-    use ferrix_chardevctl::message::{MAP_VMO, MAP_WRITE_COMBINING};
+    use xaqu_chardevctl::message::{MAP_VMO, MAP_WRITE_COMBINING};
     let wc = MAP_VMO | MAP_WRITE_COMBINING;
     // By the architecture first, not by what the product's own tests say,
     // so that a product test answering true off x86-64 is caught.
-    let made_here = matches!(crate::arch::ARCH, ferrix_bootinfo::Arch::X86_64)
+    let made_here = matches!(crate::arch::ARCH, xaqu_bootinfo::Arch::X86_64)
         && crate::arch::user_combining()
         && crate::object::io_mapping::combining_ready();
     report.combining = made_here;
@@ -414,11 +414,11 @@ fn combining_maps(
     let (memfd, file_vmo) = memfd_vmo(side, program)?;
     let mapped = side.handle(nr::VMO_CREATE, &[4096], "vmo_create failed")?;
     let held = vmo_object(side, mapped)?;
-    let flags = ferrix_vma::VmaFlags {
+    let flags = xaqu_vma::VmaFlags {
         read: true,
         write: true,
         shared: true,
-        ..ferrix_vma::VmaFlags::NONE
+        ..xaqu_vma::VmaFlags::NONE
     };
     let _at = side
         .process
@@ -504,11 +504,11 @@ fn coherent_syscalls(side: &Side, program: &Side, at: u64) -> Result<(), &'stati
 /// write-combining and not device; answers where.
 fn combining_leaf(program: &Side, vmo: &Arc<crate::user::vmo::Vmo>) -> Result<u64, &'static str> {
     let space = program.process.space();
-    let flags = ferrix_vma::VmaFlags {
+    let flags = xaqu_vma::VmaFlags {
         read: true,
         write: true,
         shared: true,
-        ..ferrix_vma::VmaFlags::NONE
+        ..xaqu_vma::VmaFlags::NONE
     };
     let at = space
         .map_object(None, 4096, Arc::clone(vmo), 0, flags)
@@ -763,7 +763,7 @@ fn imports(
     (own, signalled): (i32, i32),
     report: &mut Report,
 ) -> Result<(), &'static str> {
-    use ferrix_chardevctl::message::{IMPORT_OWN, IMPORT_SIGNALLED};
+    use xaqu_chardevctl::message::{IMPORT_OWN, IMPORT_SIGNALLED};
     let slot = super::dmabuf::slot(dmabuf).ok_or("the slot was empty")?;
     for (fd, kind, file, answer) in [
         (own, IMPORT_OWN, SLOT[0], 0_i64),
@@ -1197,7 +1197,7 @@ fn taken(process: &Process) {
 
 /// `SIGUSR1`, and the handler address its disposition names: never run,
 /// since the check's programs have no thread.
-const SIGUSR1: u32 = ferrix_linux_abi::types::SIGUSR1;
+const SIGUSR1: u32 = xaqu_linux_abi::types::SIGUSR1;
 const HANDLER: u64 = 0x1000;
 
 /// (d) of ledger 3471: to a driver whose HELLO named version 1, a signal
@@ -1539,8 +1539,8 @@ fn dmabufs(
     program: &Side,
     report: &mut Report,
 ) -> Result<Kept, &'static str> {
-    use ferrix_native_abi::rights::Rights;
-    use ferrix_native_abi::types::{DMABUF_MADE, DMABUF_TELL_MADE, DMABUF_WRITABLE};
+    use xaqu_native_abi::rights::Rights;
+    use xaqu_native_abi::types::{DMABUF_MADE, DMABUF_TELL_MADE, DMABUF_WRITABLE};
     drain_channel(side, control);
     let vmo = side.handle(nr::VMO_CREATE, &[DMABUF_BYTES], "vmo_create failed")?;
     let other = side.handle(nr::VMO_CREATE, &[DMABUF_BYTES], "vmo_create failed")?;
@@ -1664,7 +1664,7 @@ fn handle_refusals(
     handles: [Handle; 4],
     report: &mut Report,
 ) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::DMABUF_WRITABLE;
+    use xaqu_native_abi::types::DMABUF_WRITABLE;
     let [vmo, control, no_transfer, read_only] = handles;
     for (handle, flags, wanted, what) in [
         (
@@ -1710,7 +1710,7 @@ fn memory_refusals(
     vmo: Handle,
     report: &mut Report,
 ) -> Result<(i32, Handle), &'static str> {
-    use ferrix_native_abi::types::DMABUF_TELL_MADE;
+    use xaqu_native_abi::types::DMABUF_TELL_MADE;
     // A file's VMO -- a memfd's, in tmpfs -- is not plain anonymous memory,
     // even with every right (L.user.126; the consultant's B5, ledger 726).
     let (memfd, file_vmo) = memfd_vmo(side, program)?;
@@ -1842,7 +1842,7 @@ fn abandoned_refused(
 /// A memfd of [`DMABUF_BYTES`] in `program`, and a handle in `side` to its
 /// VMO with every right a dmabuf needs: the descriptor and the handle.
 fn memfd_vmo(side: &Side, program: &Side) -> Result<(i32, Handle), &'static str> {
-    use ferrix_native_abi::rights::Rights;
+    use xaqu_native_abi::rights::Rights;
     const NAME_AT: u64 = BUFFER + 0x100;
     program.put(NAME_AT, b"dmabuf-check\0")?;
     let fd = crate::syscall::memfd::sys_memfd_create(&program.process, NAME_AT, 0)
@@ -1878,7 +1878,7 @@ fn vmo_object(side: &Side, handle: Handle) -> Result<Arc<crate::user::vmo::Vmo>,
 /// starting inside it and one longer than it (the consultant's (1)).
 fn past_end_refused(process: &Process, fd: i32) -> Result<(), &'static str> {
     use crate::syscall::memory::{MmapRequest, OffsetUnit};
-    use ferrix_linux_abi::types::{MAP_SHARED, PROT_READ};
+    use xaqu_linux_abi::types::{MAP_SHARED, PROT_READ};
     for (offset, len) in [(4096, DMABUF_BYTES), (0, DMABUF_BYTES + 4096)] {
         let mapped = crate::syscall::memory::sys_mmap(
             process,
@@ -1904,7 +1904,7 @@ fn past_end_refused(process: &Process, fd: i32) -> Result<(), &'static str> {
 /// `mprotect` of the mapping at `at` to it `EACCES` (B1, ledger 726).
 fn exec_refused(process: &Process, fd: i32, at: u64) -> Result<(), &'static str> {
     use crate::syscall::memory::{MmapRequest, OffsetUnit};
-    use ferrix_linux_abi::types::{MAP_SHARED, PROT_EXEC, PROT_READ};
+    use xaqu_linux_abi::types::{MAP_SHARED, PROT_EXEC, PROT_READ};
     let mapped = crate::syscall::memory::sys_mmap(
         process,
         &MmapRequest {
@@ -2177,7 +2177,7 @@ fn gone_control_fence_has_a_maker(program: &Side, fd: i32) -> Result<(), &'stati
 /// A driver's deadline of 0 is the default, one past the maximum the
 /// maximum, any other kept (S2).
 fn deadlines_clamped() -> Result<(), &'static str> {
-    use ferrix_native_abi::types::{SYNC_DEADLINE_DEFAULT_MS, SYNC_DEADLINE_MAX_MS};
+    use xaqu_native_abi::types::{SYNC_DEADLINE_DEFAULT_MS, SYNC_DEADLINE_MAX_MS};
     if super::sync::deadline_ms(0) != SYNC_DEADLINE_DEFAULT_MS
         || super::sync::deadline_ms(u64::MAX) != SYNC_DEADLINE_MAX_MS
         || super::sync::deadline_ms(3) != 3
@@ -2250,7 +2250,7 @@ fn signalled_once(
 
 /// How often the fence `fd` of `process` names has woken its queue.
 fn fence_wakes(process: &Process, fd: i32) -> Result<Option<u64>, &'static str> {
-    use ferrix_vfs::Inode;
+    use xaqu_vfs::Inode;
     let file = crate::syscall::fd::file(process, fd).map_err(|_| "a fence's descriptor went")?;
     let fence = super::sync::of(file.io()).ok_or("a fence's descriptor is no sync_file")?;
     Ok(fence.poll_changes())
@@ -2320,8 +2320,8 @@ fn file_info(program: &Side, fd: i32, report: &mut Report) -> Result<(), &'stati
         report.sync_refusals += 1;
     }
     let mut byte = [0u8; 1];
-    if ferrix_vfs::Inode::read_at(&*fence, 0, &mut byte) != Err(Errno::EINVAL)
-        || ferrix_vfs::Inode::mapping_at(&*fence, 0).is_some()
+    if xaqu_vfs::Inode::read_at(&*fence, 0, &mut byte) != Err(Errno::EINVAL)
+        || xaqu_vfs::Inode::mapping_at(&*fence, 0).is_some()
     {
         return Err("a fence was read or mapped");
     }
@@ -2466,7 +2466,7 @@ fn fence_syscalls(process: &Process, fd: i32) -> Result<(), &'static str> {
     if crate::syscall::file::sys_write(process, fd, BUFFER, 8) != Err(Errno::EBADF) {
         return Err("a fence was written");
     }
-    if mmap_errno(process, fd, ferrix_linux_abi::types::MAP_SHARED) != Err(Errno::ENODEV) {
+    if mmap_errno(process, fd, xaqu_linux_abi::types::MAP_SHARED) != Err(Errno::ENODEV) {
         return Err("a fence was mapped");
     }
     not_executable(process, fd).map_err(|_| "a fence was executed")
@@ -2489,7 +2489,7 @@ fn start_poll(program: &Side, fd: i32) -> Result<u64, &'static str> {
     program.put(POLLFD, &pollfd)?;
     *POLLED.lock() = None;
     *POLL_ON.lock() = Some((Arc::clone(&program.process), fd));
-    let _ = sched::spawn("chardev-poll", poll_helper, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let _ = sched::spawn("chardev-poll", poll_helper, 0, xaqu_sched::NICE_0_WEIGHT)?;
     sched::sleep_for(STILL_NANOS);
     if POLLED.lock().is_some() {
         return Err("a poll on an unsignalled fence returned before its driver died");
@@ -2640,7 +2640,7 @@ fn names(
     foreign: Option<(&Side, Handle, &Arc<Control>)>,
     report: &mut Report,
 ) -> Result<i32, &'static str> {
-    use ferrix_native_abi::types::{DMABUF_MADE, DMABUF_NAME_ONLY, DMABUF_TELL_MADE};
+    use xaqu_native_abi::types::{DMABUF_MADE, DMABUF_NAME_ONLY, DMABUF_TELL_MADE};
     drain_channel(side, control);
     let vmo = side.handle(nr::VMO_CREATE, &[DMABUF_BYTES], "vmo_create failed")?;
     let request = admit(core, &program.process, IOCTL).map_err(|_| "an ioctl was not taken in")?;
@@ -2730,7 +2730,7 @@ fn register_refusals(
     vmo: Handle,
     report: &mut Report,
 ) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::{DMABUF_NAME_MAX, DMABUF_NAME_ONLY, DMABUF_WRITABLE};
+    use xaqu_native_abi::types::{DMABUF_NAME_MAX, DMABUF_NAME_ONLY, DMABUF_WRITABLE};
     let name = DMABUF_NAME_ONLY;
     for (vmo_register, flags, size, what) in [
         (0, name, 0, "a name-only dmabuf of no bytes was installed"),
@@ -2781,7 +2781,7 @@ fn kind_refusals(
     vmo: Handle,
     report: &mut Report,
 ) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::DMABUF_NAME_ONLY;
+    use xaqu_native_abi::types::DMABUF_NAME_ONLY;
     let name = DMABUF_NAME_ONLY;
     for (vmo_register, cookie, flags, size, what) in [
         (
@@ -2864,8 +2864,8 @@ fn foreign_refused(
 /// A name-only dmabuf says its size and maps nothing, shared or private
 /// (N5), through the program's own `mmap`.
 fn unmappable(process: &Process, fd: i32, report: &mut Report) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{MAP_PRIVATE, MAP_SHARED};
-    use ferrix_vfs::Inode;
+    use xaqu_linux_abi::types::{MAP_PRIVATE, MAP_SHARED};
+    use xaqu_vfs::Inode;
     let size = crate::syscall::fd::file(process, fd)
         .ok()
         .and_then(|file| super::dmabuf::of(file.io()))
@@ -2896,7 +2896,7 @@ fn name_outlived(program: &Side, fd: i32, report: &mut Report) -> Result<(), &'s
 /// `mmap` of the dmabuf `fd` of `process`, read-only, with `flags`.
 fn mmap_errno(process: &Process, fd: i32, flags: u32) -> Result<u64, Errno> {
     use crate::syscall::memory::{MmapRequest, OffsetUnit};
-    use ferrix_linux_abi::types::PROT_READ;
+    use xaqu_linux_abi::types::PROT_READ;
     crate::syscall::memory::sys_mmap(
         process,
         &MmapRequest {
@@ -2916,7 +2916,7 @@ fn mmap_errno(process: &Process, fd: i32, flags: u32) -> Result<u64, Errno> {
 /// `fexecve` makes it -- is refused before anything is mapped, and the
 /// program keeps the mappings it had (ledger 724, V2).
 fn not_executable(process: &Process, fd: i32) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::AT_EMPTY_PATH;
+    use xaqu_linux_abi::types::AT_EMPTY_PATH;
     const EMPTY_AT: u64 = BUFFER + 0x180;
     uaccess_put(process, EMPTY_AT, &[0])?;
     let regions = |process: &Process| process.space().with_regions(|regions| regions.count());
@@ -2946,7 +2946,7 @@ fn uaccess_put(process: &Process, at: u64, bytes: &[u8]) -> Result<(), &'static 
 /// dmabuf, one made by `dup` and closed by `close`, the other closed by its
 /// holder's exit (ledger 724, V1).
 fn dup_and_exit(side: &Side, control: Handle, core: &Arc<Control>) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::DMABUF_NAME_ONLY;
+    use xaqu_native_abi::types::DMABUF_NAME_ONLY;
     const HELD: u64 = NAME_COOKIE + 5;
     let holder = Side::new()?;
     let request = admit(core, &holder.process, IOCTL).map_err(|_| "an ioctl was not taken in")?;
@@ -2988,7 +2988,7 @@ fn dup_and_exit(side: &Side, control: Handle, core: &Arc<Control>) -> Result<(),
 /// Map the whole dmabuf `fd` of `process`, shared and read-only.
 fn map_dmabuf(process: &Process, fd: i32) -> Result<u64, &'static str> {
     use crate::syscall::memory::{MmapRequest, OffsetUnit};
-    use ferrix_linux_abi::types::{MAP_SHARED, PROT_READ};
+    use xaqu_linux_abi::types::{MAP_SHARED, PROT_READ};
     crate::syscall::memory::sys_mmap(
         process,
         &MmapRequest {
@@ -3179,7 +3179,7 @@ fn read(side: &Side, control: Handle) -> Option<Vec<u8>> {
             &[
                 reg(control),
                 INBOX,
-                ferrix_chardevctl::message::MAX_BYTES as u64,
+                xaqu_chardevctl::message::MAX_BYTES as u64,
                 IN_HANDLES,
                 0,
                 ACTUAL,
@@ -3293,7 +3293,7 @@ fn in_flight(request: &Request) {
 fn start(job: Job) -> Result<(), &'static str> {
     *OUTCOME.lock() = None;
     *JOB.lock() = Some(job);
-    let _ = sched::spawn("chardev-check", helper, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let _ = sched::spawn("chardev-check", helper, 0, xaqu_sched::NICE_0_WEIGHT)?;
     Ok(())
 }
 

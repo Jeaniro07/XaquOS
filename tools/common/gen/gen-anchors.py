@@ -5,7 +5,7 @@
     python3 tools/common/gen/gen-anchors.py --check      # the gate
     python3 tools/common/gen/gen-anchors.py --self-test
 
-A block is 512 bytes, as `ferrix-boot-policy`'s `encode_block` lays it out:
+A block is 512 bytes, as `xaqu-boot-policy`'s `encode_block` lays it out:
 
      0  magic    "FXPOLICY"
      8  version  u16 = 1
@@ -19,7 +19,7 @@ Four blocks, one per table and mode, in src/boot/common/uefi/anchors/:
 `release-off.bin` and `release-required.bin` hold the `[release]` slot
 anchors of tools/common/data/signing-anchors.toml, `development-off.bin`
 and `development-required.bin` its `[development]` slot anchors. xtask
-picks one for each loader it builds (FERRIX_ANCHORS): a development image
+picks one for each loader it builds (XAQU_ANCHORS): a development image
 takes `development-off`, an image of a profile `release-<slot_signing>`,
 and the signing gate's relinked loader `development-required`.
 
@@ -32,7 +32,7 @@ holds the profiles to the rules of §10.6 (ledger 4016):
   slot anchor, since an empty release table under `required` boots
   nothing.
 
-A host test of `ferrix-boot` parses each block with `parse_block` and
+A host test of `xaqu-boot` parses each block with `parse_block` and
 checks its mode and anchors (the Rust and this script lay it out alike).
 
 `--self-test` plants a stale block and a `required` profile with an empty

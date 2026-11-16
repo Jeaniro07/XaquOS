@@ -8,11 +8,11 @@
  * loud stub.
  *
  * Prototypes are NVIDIA's (export_nvswitch.h, nvlink_os.h, MIT, from the
- * fetched tree); the bodies are Ferrix's.
+ * fetched tree); the bodies are Xaqu's.
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "export_nvswitch.h"
 #include "nvlink_os.h"
 #include "nvlink_errors.h"

@@ -78,7 +78,7 @@ pub const XRGB8888: u32 = u32::from_le_bytes(*b"XR24");
 
 /// [`Message::Outputs`]' modifier when the outputs are memfds, not dmabufs
 /// (`DRM_FORMAT_MOD_INVALID`): the compositor maps and copies them, as a
-/// `wl_shm` buffer. A device that exports no dmabufs -- lavapipe on Ferrix
+/// `wl_shm` buffer. A device that exports no dmabufs -- lavapipe on Xaqu
 /// -- draws into these.
 pub const MODIFIER_MEMFD: u64 = 0x00ff_ffff_ffff_ffff;
 

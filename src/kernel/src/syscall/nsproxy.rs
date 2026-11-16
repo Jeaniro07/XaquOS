@@ -24,9 +24,9 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::Charge;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::Once;
+use xaqu_kmem::Charge;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::Once;
 
 use crate::object::job::{self, Job};
 use crate::syscall::process::Process;

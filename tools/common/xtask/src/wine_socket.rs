@@ -5,9 +5,9 @@
 //! failed every connect to its game server with `SocketException: Invalid
 //! arguments` (`WSAEINVAL`). Wine reads a Windows program's `getsockopt` of
 //! `SO_LINGER`, `SO_OOBINLINE`, TCP's keep-alive timing and Don't Fragment
-//! from the Linux socket, and maps `ENOPROTOOPT` to `WSAEINVAL`; Ferrix's
+//! from the Linux socket, and maps `ENOPROTOOPT` to `WSAEINVAL`; Xaqu's
 //! sockets refused all of them. The kernel now keeps them as Linux does
-//! (`ferrix_linux_abi::inet::InetTunables`).
+//! (`xaqu_linux_abi::inet::InetTunables`).
 //!
 //! The gate attaches Proton's volume (`fetch-proton.sh`) with no display and
 //! carries `tools/common/test/dual-socket.c`, built here with mingw-w64. It
@@ -148,7 +148,7 @@ pub(crate) fn test_wine_socket(args: &Args) -> Result<()> {
     let archive = initramfs::build(Some(&busybox), &natives, Some(&bytes), &files)?;
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
     println!(
-        "  {arch}: running the probe in Proton's Wine on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running the probe in Proton's Wine on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;

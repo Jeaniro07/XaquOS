@@ -21,7 +21,7 @@ use std::collections::BTreeMap;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::blk::{FEATURE_FLUSH, FEATURE_SIZE_MAX};
+use xaqu_virtio::blk::{FEATURE_FLUSH, FEATURE_SIZE_MAX};
 
 use super::fake::{PAGE, Rig, Setup};
 use crate::{Accepted, Completion, Op, Status, SubmitError};

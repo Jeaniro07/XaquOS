@@ -1,8 +1,8 @@
 # The arm64 half of tools/common/fetch/fetch-rustc-sysroot.sh, sourced in
-# place of its amd64 lists when it runs with FERRIX_SYSROOT_ARCH=arm64: the
+# place of its amd64 lists when it runs with XAQU_SYSROOT_ARCH=arm64: the
 # same packages from the same snapshots, each resolved by name in that
 # suite's binary-arm64 Packages file and pinned by the SHA-256 given there.
-# It is the toolchain for a Ferrix that compiles on AArch64 -- stage 20 on
+# It is the toolchain for a Xaqu that compiles on AArch64 -- stage 20 on
 # Arm, first in the Pixel 7's crosvm guest. libquadmath0 has no arm64 build
 # and is left out; gawk, grep, ninja-build and rpcsvc-proto are arm64 binNMUs
 # (+b1, +b2) of the amd64 versions. The Rust components are the

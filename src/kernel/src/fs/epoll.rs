@@ -9,7 +9,7 @@
 //! # The ready list
 //!
 //! Each registration hooks the wait queues its file names
-//! ([`ferrix_vfs::Inode::poll_queues`]) with a [`Mark`]. A wake of any of them
+//! ([`xaqu_vfs::Inode::poll_queues`]) with a [`Mark`]. A wake of any of them
 //! puts the registration's serial on the set's marks, once until a wait takes
 //! it, and wakes the set's own queue ([`crate::sched::wait`]'s hooks). A wait
 //! takes the marks onto the set's `pending` list, Linux's `rdllist`, and
@@ -125,12 +125,12 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::types::{
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::types::{
     EPOLLERR, EPOLLET, EPOLLHUP, EPOLLIN, EPOLLONESHOT, EPOLLOUT, EPOLLPRI, EPOLLRDNORM,
     EPOLLWRNORM,
 };
-use ferrix_vfs::{Errno, Inode, Metadata, OpenFile, Readiness, WakeSource};
+use xaqu_vfs::{Errno, Inode, Metadata, OpenFile, Readiness, WakeSource};
 
 use crate::fallible;
 use crate::fs;
@@ -574,7 +574,7 @@ impl Items {
     /// Room for one more registration, charged to `room`.
     fn reserve(&mut self, room: &mut Charge) -> Result<(), Errno> {
         if self.free.is_empty() {
-            ferrix_kmem::reserve(&mut self.slots, 1, room).map_err(|_| Errno::ENOMEM)?;
+            xaqu_kmem::reserve(&mut self.slots, 1, room).map_err(|_| Errno::ENOMEM)?;
         }
         let more = self
             .slots
@@ -583,8 +583,8 @@ impl Items {
             .saturating_sub(self.free.len());
         fallible::try_reserve(&mut self.free, more).map_err(|_| Errno::ENOMEM)?;
         room.resize(
-            ferrix_kmem::buffer_footprint::<Option<Item>>(self.slots.capacity())
-                .saturating_add(ferrix_kmem::buffer_footprint::<u32>(self.free.capacity())),
+            xaqu_kmem::buffer_footprint::<Option<Item>>(self.slots.capacity())
+                .saturating_add(xaqu_kmem::buffer_footprint::<u32>(self.free.capacity())),
         )
         .map_err(|_| Errno::ENOMEM)
     }
@@ -974,7 +974,7 @@ impl Epoll {
                 .saturating_add(arc_footprint::<Mark>())
                 .saturating_add(HOOK_ROOM * MAX_HOOKS * size_of::<Arc<Mark>>())
                 // At most one boxed list a hooked queue: an upper bound.
-                .saturating_add(MAX_HOOKS * ferrix_kmem::buffer_footprint::<Vec<Arc<Mark>>>(1)),
+                .saturating_add(MAX_HOOKS * xaqu_kmem::buffer_footprint::<Vec<Arc<Mark>>>(1)),
         )
         .map_err(|_| Errno::ENOMEM)?;
         match &nested {
@@ -1048,16 +1048,16 @@ impl Epoll {
             ..
         } = &mut *state;
         items.reserve(items_room)?;
-        ferrix_kmem::reserve(pending, room.saturating_sub(pending.len()), pending_room)
+        xaqu_kmem::reserve(pending, room.saturating_sub(pending.len()), pending_room)
             .map_err(|_| Errno::ENOMEM)?;
-        ferrix_kmem::reserve(scratch, room.saturating_sub(scratch.len()), scratch_room)
+        xaqu_kmem::reserve(scratch, room.saturating_sub(scratch.len()), scratch_room)
             .map_err(|_| Errno::ENOMEM)?;
         // The ready list and the room a wait takes it into, charged together.
         let listed = self.ready.reserve(room).map_err(|_| Errno::ENOMEM)?;
         fallible::try_reserve(taken, room.max(listed).saturating_sub(taken.len()))
             .map_err(|_| Errno::ENOMEM)?;
-        let footprint = ferrix_kmem::buffer_footprint::<u64>(listed)
-            .saturating_add(ferrix_kmem::buffer_footprint::<u64>(taken.capacity()));
+        let footprint = xaqu_kmem::buffer_footprint::<u64>(listed)
+            .saturating_add(xaqu_kmem::buffer_footprint::<u64>(taken.capacity()));
         // Refused, the room stays, uncharged, until the set goes: the job is
         // at its limit and gets no registration for it.
         marks_room.resize(footprint).map_err(|_| Errno::ENOMEM)?;
@@ -1108,7 +1108,7 @@ impl Epoll {
             ..
         } = &mut *state;
         parents.retain(|held| held.strong_count() > 0);
-        ferrix_kmem::reserve(parents, 1, parents_room).map_err(|_| Errno::ENOMEM)?;
+        xaqu_kmem::reserve(parents, 1, parents_room).map_err(|_| Errno::ENOMEM)?;
         // NOALLOC: room was had just above.
         parents.push(parent.clone());
         Ok(())
@@ -1154,7 +1154,7 @@ impl Epoll {
             .position(|item| (item.key, item.fd) == (key, fd))
             .ok_or(Errno::ENOENT)?;
         let item = state.items.get_mut(at).ok_or(Errno::ENOENT)?;
-        if item.events & ferrix_linux_abi::types::EPOLLEXCLUSIVE != 0 {
+        if item.events & xaqu_linux_abi::types::EPOLLEXCLUSIVE != 0 {
             return Err(Errno::EINVAL);
         }
         item.events = interest.events | EPOLLERR | EPOLLHUP;

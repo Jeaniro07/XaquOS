@@ -37,13 +37,13 @@ pub(crate) const TASKS: &[Task] = &[Task {
     help_at: 197,
     help: &[
         "phone-boot    test-boot's AArch64 boot on the Pixel 7's own KVM (crosvm, over adb as root), judged as",
-        "              test-boot judges it; FERRIX_PIXEL7_SERIAL or ~/.local/share/ferrix/pixel7/serial names the phone",
+        "              test-boot judges it; XAQU_PIXEL7_SERIAL or ~/.local/share/xaqu/pixel7/serial names the phone",
     ],
     run: |_, args| phone_boot(args),
 }];
 
 /// Where everything this command puts on the phone goes, and nowhere else.
-const PHONE_DIR: &str = "/data/local/tmp/ferrix-gate";
+const PHONE_DIR: &str = "/data/local/tmp/xaqu-gate";
 
 /// Android's crosvm, in the virtualization APEX.
 const CROSVM: &str = "/apex/com.android.virt/bin/crosvm";
@@ -57,7 +57,7 @@ const MAX_TENTHS_C: u32 = 450;
 
 /// The Pixel 7 loader's target and package.
 const LOADER_TARGET: &str = "aarch64-unknown-none-softfloat";
-const LOADER_PACKAGE: &str = "ferrix-boot-pixel7";
+const LOADER_PACKAGE: &str = "xaqu-boot-pixel7";
 
 /// The script the phone runs as root: start crosvm on the image and disks,
 /// wait for the kernel's verdict or the timeout, give a powering-off guest
@@ -77,7 +77,7 @@ P=$!
 echo "PID $P"
 end=$(( ${t0%.*} + T ))
 while kill -0 $P 2>/dev/null && [ "$(cut -d. -f1 /proc/uptime)" -lt $end ]; do
-  if grep -q -e FERRIX-BOOT-OK -e FERRIX-PANIC -e FERRIX-BOOT-UNCHECKED serial.log 2>/dev/null; then
+  if grep -q -e XAQU-BOOT-OK -e XAQU-PANIC -e XAQU-BOOT-UNCHECKED serial.log 2>/dev/null; then
     t=$(cut -d' ' -f1 /proc/uptime); echo "MARK $t0 $t"; break
   fi
   sleep 0.05
@@ -216,10 +216,10 @@ fn wrap(arch: Arch) -> Result<PathBuf> {
             LOADER_TARGET,
             "--release",
         ])
-        .env("FERRIX_PIXEL7_KERNEL", &kernel)
-        .env("FERRIX_PIXEL7_KERNEL_DIGEST", digest(&kernel)?)
-        .env("FERRIX_PIXEL7_INITRD", &initrd)
-        .env("FERRIX_PIXEL7_INITRD_DIGEST", digest(&initrd)?)
+        .env("XAQU_PIXEL7_KERNEL", &kernel)
+        .env("XAQU_PIXEL7_KERNEL_DIGEST", digest(&kernel)?)
+        .env("XAQU_PIXEL7_INITRD", &initrd)
+        .env("XAQU_PIXEL7_INITRD_DIGEST", digest(&initrd)?)
         .status()?;
     if !status.success() {
         return Err(Error::new("the Pixel 7 loader did not build"));
@@ -258,19 +258,19 @@ struct Phone {
 }
 
 impl Phone {
-    /// `FERRIX_PIXEL7_SERIAL`, else the one line of
-    /// `~/.local/share/ferrix/pixel7/serial`, as the Pixel 7's own tools
+    /// `XAQU_PIXEL7_SERIAL`, else the one line of
+    /// `~/.local/share/xaqu/pixel7/serial`, as the Pixel 7's own tools
     /// name it: the repository names no phone.
     fn named() -> Result<Phone> {
-        let serial = std::env::var("FERRIX_PIXEL7_SERIAL").ok().or_else(|| {
+        let serial = std::env::var("XAQU_PIXEL7_SERIAL").ok().or_else(|| {
             let home = std::env::var_os("HOME")?;
-            let file = Path::new(&home).join(".local/share/ferrix/pixel7/serial");
+            let file = Path::new(&home).join(".local/share/xaqu/pixel7/serial");
             std::fs::read_to_string(file).ok()
         });
         match serial.map(|serial| serial.trim().to_owned()) {
             Some(serial) if !serial.is_empty() => Ok(Phone { serial }),
             _ => Err(Error::new(
-                "no phone named: set FERRIX_PIXEL7_SERIAL or write ~/.local/share/ferrix/pixel7/serial",
+                "no phone named: set XAQU_PIXEL7_SERIAL or write ~/.local/share/xaqu/pixel7/serial",
             )),
         }
     }

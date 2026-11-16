@@ -8,8 +8,8 @@
 //! Also here: the common ioctls that need no table of their own (`VERSION`,
 //! `GET_CAP`, `SET_CLIENT_NAME`), and opening and releasing a file.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::kmsg::Level;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::kmsg::Level;
 
 use super::fence::{self, Hold};
 use super::objects::{Context, File, Tables};

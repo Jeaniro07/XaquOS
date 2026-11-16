@@ -1,6 +1,6 @@
 //! Reaching the firmware tables from the kernel.
 //!
-//! `ferrix_acpi` never dereferences a pointer: it asks a [`Tables`] for bytes
+//! `xaqu_acpi` never dereferences a pointer: it asks a [`Tables`] for bytes
 //! at a physical address. This is the kernel's answer to that question, and it
 //! is the only place in the tree that turns a number firmware wrote into a
 //! reference the parser will read.
@@ -20,8 +20,8 @@
 //! shipped years ago, and the RSDP is the one pointer the kernel is handed
 //! without having computed it.
 
-use ferrix_acpi::{Acpi, AcpiError, RootKind, Rsdp, Tables};
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_acpi::{Acpi, AcpiError, RootKind, Rsdp, Tables};
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
 
 /// Physical memory, as the table parser is allowed to see it.
 #[derive(Clone, Copy, Debug)]
@@ -81,7 +81,7 @@ impl Firmware {
     ///
     /// # Errors
     ///
-    /// Any of `ferrix_acpi`'s parse errors, plus [`AcpiError::Unreadable`] for
+    /// Any of `xaqu_acpi`'s parse errors, plus [`AcpiError::Unreadable`] for
     /// an RSDP the loader did not report at all — which is not a failure on
     /// AArch64, where the device tree is the other way to describe a machine.
     pub(crate) fn open(view: &BootView<'_>) -> Result<Self, AcpiError> {

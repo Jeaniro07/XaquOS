@@ -288,7 +288,7 @@ pub(crate) static ALLOCATION_ABORTED: Explanation = Explanation {
 };
 
 /// For `check_allocation_failure` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_ALLOCATION: Explanation = Explanation {
     code: "FX-0902",
     title: "an allocation failure was not survived",
@@ -318,7 +318,7 @@ pub static STAGE9_ALLOCATION: Explanation = Explanation {
 };
 
 /// For `check_native_refusals` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_REFUSALS: Explanation = Explanation {
     code: "FX-0903",
     title: "a native call accepted what the ABI says it refuses",
@@ -344,7 +344,7 @@ pub static STAGE9_REFUSALS: Explanation = Explanation {
 };
 
 /// For `check_services` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static SERVICES: Explanation = Explanation {
     code: "FX-0904",
     title: "a service the item leans on failed its self-check",
@@ -367,7 +367,7 @@ pub static SERVICES: Explanation = Explanation {
 };
 
 /// For `check_quotas` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_QUOTAS: Explanation = Explanation {
     code: "FX-0905",
     title: "a job quota did not bound what it claims to",
@@ -428,7 +428,7 @@ pub static STAGE9_RESERVE: Explanation = Explanation {
 /// For `check_pager` in `stages_check.rs`, when `object::pager_check::run`
 /// fails.
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_PAGER: Explanation = Explanation {
     code: "FX-0915",
     title: "a pager-backed VMO's fault, wait or dirty tracking was not as K3 states",
@@ -492,7 +492,7 @@ pub static STAGE9_TICKETS: Explanation = Explanation {
 };
 
 /// For `check_kernel_memory` in `stages_check.rs`, when `fs::kmem_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_KMEM: Explanation = Explanation {
     code: "FX-0906",
     title: "the kernel heap a job drove through the Linux calls was not bounded by its job",
@@ -508,7 +508,7 @@ pub static STAGE9_KMEM: Explanation = Explanation {
               kernel heap from the rest through a path its memory limit does not see \
               (certification finding F-37, T.EXHAUST).",
     causes: &[
-        "An allocation site stopped carrying a `ferrix_kmem::Charge`, or made the object \
+        "An allocation site stopped carrying a `xaqu_kmem::Charge`, or made the object \
          before charging it, so a refusal left something behind.",
         "A charge was made to the wrong job: a buffer's growth to the running task where it \
          belongs to the object's maker, or the other way round.",
@@ -639,7 +639,7 @@ pub static VMAP_ARENA_BRING_UP: Explanation = Explanation {
     title: "the kernel address arena could not be created",
     meaning: "`vmap::init` creates the arena that hands out kernel virtual ranges, from which \
               every device window and every guard-paged kernel stack is later taken. It \
-              fails only if `ferrix_vma` rejects the arena's bounds as misaligned or empty. \
+              fails only if `xaqu_vma` rejects the arena's bounds as misaligned or empty. \
               Nothing that needs a device register or a new stack can run without it.",
     causes: &[
         "`ARENA_BASE` and `ARENA_END`, or the `KERNEL_VMAP_BASE`, `KERNEL_VMAP_RESERVED` \
@@ -650,7 +650,7 @@ pub static VMAP_ARENA_BRING_UP: Explanation = Explanation {
 };
 
 /// For `check_allocators_and_traps` in `stages_check.rs`, when `mm::check::memory_check` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE2_ALLOCATORS: Explanation = Explanation {
     code: "FX-0203",
     title: "the memory allocators failed their self-check",
@@ -701,7 +701,7 @@ pub static STAGE2_FINISH_MEMORY: Explanation = Explanation {
         "A loader mapped the direct map writable over the kernel's text or read-only data, \
          or something mapped those frames writable later; the `sealed` line gives the \
          mapping's address. Both loaders cut the direct map around the span \
-         `ferrix_bootinfo::read_only_span` computes.",
+         `xaqu_bootinfo::read_only_span` computes.",
         "The direct map does not alias all of the image's text, so the sealed sweep checked \
          nothing; the `sealed` line gives where the alias should have been.",
         "The architecture's `drop_identity_map` did not remove the lower half, so address \
@@ -717,7 +717,7 @@ pub static STAGE2_FINISH_MEMORY: Explanation = Explanation {
 };
 
 /// For `kmain` in `main.rs`, when `trap_check` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE3_TRAPS: Explanation = Explanation {
     code: "FX-0301",
     title: "a deliberate trap did not come back correctly",
@@ -856,7 +856,7 @@ pub static CONSOLE_INPUT: Explanation = Explanation {
 };
 
 /// For `kmain` in `main.rs`, when `console::output::check` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static CONSOLE_OUTPUT: Explanation = Explanation {
     code: "FX-0504",
     title: "console output did not go out by interrupt",
@@ -885,7 +885,7 @@ pub static CONSOLE_OUTPUT: Explanation = Explanation {
 };
 
 /// For `kmain` in `main.rs`, when `logctl::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static LOG_CONTROL: Explanation = Explanation {
     code: "FX-1008",
     title: "the log core did not serve the kernel log to a driver",
@@ -953,7 +953,7 @@ pub static RANDOM_GENERATOR: Explanation = Explanation {
 };
 
 /// For `check_speculation` in `stages_check.rs`, when `arch::check_speculation` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static SPECULATION_DEFENCES: Explanation = Explanation {
     code: "FX-0307",
     title: "the side-channel defences did not hold",
@@ -992,7 +992,7 @@ pub static TSC_AUX: Explanation = Explanation {
               brought up (`L.x86_64.211`; `RDPID` reads the same register). Linux and \
               Windows put the processor's number in `IA32_TSC_AUX`; a program comparing it \
               with `getcpu` or `GetCurrentProcessorNumber` saw 0 on every processor before \
-              Ferrix wrote it.",
+              Xaqu wrote it.",
     causes: &[
         "A bring-up path that stopped calling `syscall::init` with the processor's logical \
          number, or the write of `IA32_TSC_AUX` taken out of it.",
@@ -1109,7 +1109,7 @@ pub static SECONDARY_START: Explanation = Explanation {
          rejected; the message says which.",
         "On x86-64 there is no free frame below 1 MiB for the trampoline or its root table, \
          or a processor's APIC ID is above 255 while the boot runs in xAPIC mode \
-         (`ferrix.apic=x2apic` runs it in x2APIC mode).",
+         (`xaqu.apic=x2apic` runs it in x2APIC mode).",
         "On x86-64 the local APIC never accepted the INIT or start-up IPI.",
         "On ARMv7-A the entry sequence, a stack, a per-CPU record or the start block lies \
          above 4 GiB and cannot be passed in a 32-bit register.",
@@ -1271,7 +1271,7 @@ pub static SCHEDULER_BRING_UP: Explanation = Explanation {
          and joining.",
         "The machine has more processors than a scheduling domain's `CpuSet` can hold.",
         "The vmap arena had no stack left for the boot processor's idle task.",
-        "`ferrix_sched` rejected the scheduler's slice constant when a run queue was built.",
+        "`xaqu_sched` rejected the scheduler's slice constant when a run queue was built.",
     ],
     see: "src/kernel/src/sched/mod.rs init; src/kernel/src/sched/mod.rs wait_for_processors; \
           docs/ROADMAP.md stage 5",
@@ -1607,7 +1607,7 @@ pub static ITEM_REHOMED_CALLS: Explanation = Explanation {
 };
 
 /// For `check_user_memory` in `stages_check.rs`, when `user::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE6_USER_MEMORY: Explanation = Explanation {
     code: "FX-0601",
     title: "the memory a process is built from failed its self-check",
@@ -1635,7 +1635,7 @@ pub static STAGE6_USER_MEMORY: Explanation = Explanation {
 };
 
 /// For `check_reverse_map` in `stages_check.rs`, when `user::rmap_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE6_REVERSE_MAP: Explanation = Explanation {
     code: "FX-0602",
     title: "a page taken from a mapped object stayed reachable, or was not taken as it should be",
@@ -1699,7 +1699,7 @@ pub static STAGE10_PCI: Explanation = Explanation {
 };
 
 /// For `check_btrfs_disk` in `stages_check.rs`, when `fs::btrfs_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE11_MOUNT: Explanation = Explanation {
     code: "FX-1101",
     title: "the btrfs disk did not mount and read back as the host wrote it",
@@ -1724,7 +1724,7 @@ pub static STAGE11_MOUNT: Explanation = Explanation {
 };
 
 /// For `check_cgroupfs` in `stages_check.rs`, when `fs::cgroupfs::check` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_CGROUPFS: Explanation = Explanation {
     code: "FX-1301",
     title: "cgroupfs did not show the job tree as cgroup v2",
@@ -1809,7 +1809,7 @@ pub static STAGE13_CGROUPFS: Explanation = Explanation {
 
 /// For `check_seccomp` in `stages_check.rs`, when `syscall::seccomp_check::run`
 /// fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_SECCOMP: Explanation = Explanation {
     code: "FX-1302",
     title: "seccomp's filter was not asked first at every entry, or not as the entry's own",
@@ -1843,7 +1843,7 @@ pub static STAGE13_SECCOMP: Explanation = Explanation {
 
 /// For `check_seccomp_filters` in `stages_check.rs`, when
 /// `syscall::seccomp_filters_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_SECCOMP_FILTERS: Explanation = Explanation {
     code: "FX-1303",
     title: "a seccomp filter was not installed, judged, inherited, ordered or released as specified",
@@ -1890,7 +1890,7 @@ pub static STAGE13_SECCOMP_FILTERS: Explanation = Explanation {
 
 /// For `check_user_dispatch` in `stages_check.rs`, when
 /// `syscall::seccomp::user_dispatch_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_USER_DISPATCH: Explanation = Explanation {
     code: "FX-1304",
     title: "Syscall User Dispatch did not judge, dispatch or refuse a call as Linux does",
@@ -1928,7 +1928,7 @@ pub static STAGE13_USER_DISPATCH: Explanation = Explanation {
 /// For `check_address_waits` in `stages_check.rs`, when
 /// `user::address_wait_check::run` fails.
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_ADDRESS_WAIT: Explanation = Explanation {
     code: "FX-0911",
     title: "the waits on a user address failed their self-check",
@@ -1969,7 +1969,7 @@ pub static SMBIOS: Explanation = Explanation {
               the kernel would read firmware data it has not bounded, or show none it should.",
     causes: &[
         "A bound in `range` in src/kernel/src/discovery/smbios.rs was loosened or dropped.",
-        "`ferrix_smbios::Smbios::new` stopped checking the table's length or the checksum; \
+        "`xaqu_smbios::Smbios::new` stopped checking the table's length or the checksum; \
          its host tests pin both.",
     ],
     see: "src/kernel/src/discovery/smbios.rs; src/kernel/src/discovery/smbios_check.rs; \
@@ -1980,7 +1980,7 @@ pub static SMBIOS: Explanation = Explanation {
 /// For `check_exceptions` in `stages_check.rs`, when `object::exception_check::run`
 /// fails (`docs/microkernel/K4.md` §5).
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_EXCEPTIONS: Explanation = Explanation {
     code: "FX-0917",
     title: "an exception channel was attached where it must be refused, or refused where it \
@@ -2007,7 +2007,7 @@ pub static STAGE9_EXCEPTIONS: Explanation = Explanation {
 };
 
 /// `AddressSpace::unmap` on a window decided wrongly.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub static WINDOW_UNMAP: Explanation = Explanation {
     code: "FX-0949",
     title: "a window's unmap flushed the wrong thing",
@@ -2019,7 +2019,7 @@ pub static WINDOW_UNMAP: Explanation = Explanation {
 };
 
 /// A window's holder never gave it back.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) static WINDOW_HELD: Explanation = Explanation {
     code: "FX-0929",
     title: "a restricted window was not given back",
@@ -2045,7 +2045,7 @@ pub(crate) static VECTOR_IN_THE_KERNEL: Explanation = Explanation {
 };
 
 /// A fast crossing's flip of a space that has only the one root.
-#[cfg(ferrix_fast_restricted)]
+#[cfg(xaqu_fast_restricted)]
 pub(crate) static FLIP_WITH_NO_NORMAL_ROOT: Explanation = Explanation {
     code: "FX-0924",
     title: "a fast crossing flipped a space with no normal root",
@@ -2056,7 +2056,7 @@ pub(crate) static FLIP_WITH_NO_NORMAL_ROOT: Explanation = Explanation {
 };
 
 /// A switch between normal-mode threads with restricted code's mark up.
-#[cfg(ferrix_fast_restricted)]
+#[cfg(xaqu_fast_restricted)]
 pub(crate) static MARK_WITH_NO_ROOT_WRITE: Explanation = Explanation {
     code: "FX-0923",
     title: "restricted code's mark up at a switch with no root write",
@@ -2142,10 +2142,10 @@ pub static SYSFS: Explanation = Explanation {
 };
 
 /// For `check_btrfs_write` in `main.rs`, when `fs::btrfs_write_check::run`
-/// fails, or `fs::btrfs_powerfail`'s churn or replay under `ferrix.btrfs=`.
+/// fails, or `fs::btrfs_powerfail`'s churn or replay under `xaqu.btrfs=`.
 pub static STAGE12_WRITE: Explanation = Explanation {
     code: "FX-1201",
-    title: "a btrfs volume Ferrix wrote did not read back as it was written",
+    title: "a btrfs volume Xaqu wrote did not read back as it was written",
     meaning: "Stage 12's exit, the guest's half: xtask attaches a fresh copy of the `blank` \
               fixture, an empty volume made by real mkfs.btrfs, as the third virtio-blk disk; \
               `fs::btrfs_write_check::run` mounts it writable at /mnt-rw, builds a tree on it — \
@@ -2153,7 +2153,7 @@ pub static STAGE12_WRITE: Explanation = Explanation {
               rename and an unlink — syncs, unmounts, mounts again and reads everything back. \
               After the unmount nothing is cached, so every byte compared came off the disk. \
               Then one file fills the volume until a write answers ENOSPC, and the volume must \
-              still sync, read back and take a new file once that one is deleted. Under `ferrix.btrfs=churn` or `=replay`, which only `cargo xtask test-powerfail` \
+              still sync, read back and take a new file once that one is deleted. Under `xaqu.btrfs=churn` or `=replay`, which only `cargo xtask test-powerfail` \
               sets, the same disk is instead rewritten until QEMU is killed, and then mounted \
               again — replaying any log the kill left — and every file whose trailer says its \
               body was made durable is checked against that trailer.",
@@ -2216,7 +2216,7 @@ pub static NET_CORE: Explanation = Explanation {
 };
 
 /// For `check_net_ring` in `stages_check.rs`, when the net ring's self-check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static NET_RING: Explanation = Explanation {
     code: "FX-1151",
     title: "the net ring did not carry a frame between the kernel and a driver",
@@ -2247,7 +2247,7 @@ pub static NET_RING: Explanation = Explanation {
 };
 
 /// For `check_netlink` in `stages_check.rs`, when the netlink self-check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static NETLINK: Explanation = Explanation {
     code: "FX-1152",
     title: "AF_NETLINK did not answer the requests `ip` makes",
@@ -2285,7 +2285,7 @@ pub static NETLINK: Explanation = Explanation {
 pub static DEVMGR_BY_INIT: Explanation = Explanation {
     code: "FX-1009",
     title: "a devmgr pid 1 started did not keep device authority to itself",
-    meaning: "Under ferrix.devmgr=init (docs/INIT.md §7.3, L12) pid 1 asks the kernel to start \
+    meaning: "Under xaqu.devmgr=init (docs/INIT.md §7.3, L12) pid 1 asks the kernel to start \
               devmgr with the starter it was given, and gets back a handle to the process. The \
               kernel makes the DEVICES channel -- MANAGE on every device node, and through them \
               DMA -- and puts one end in devmgr's table and keeps the other. Every start checks, \
@@ -2304,13 +2304,13 @@ pub static DEVMGR_BY_INIT: Explanation = Explanation {
           docs/INIT.md §7.3; docs/certification/ITEM.md §5",
 };
 
-/// For `fs::root_disk`'s switch under `ferrix.devmgr=init`, when pid 1 did
+/// For `fs::root_disk`'s switch under `xaqu.devmgr=init`, when pid 1 did
 /// not move onto the volume with it.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static ROOT_PID1: Explanation = Explanation {
     code: "FX-1202",
     title: "pid 1 did not move onto the root volume with the switch",
-    meaning: "Under ferrix.devmgr=init pid 1 starts on the tmpfs, since the root disk's driver \
+    meaning: "Under xaqu.devmgr=init pid 1 starts on the tmpfs, since the root disk's driver \
               comes from the devmgr it starts. When devmgr has reported, the kernel switches / \
               to the btrfs root volume and, in the same step, moves pid 1's root and working \
               directory onto it, under pid 1's filesystem lock. After the switch pid 1's root \
@@ -2344,7 +2344,7 @@ pub static RELEASE: Explanation = Explanation {
         "`release` in src/kernel/src/fs/mod.rs or `give_back_initrd` in src/kernel/src/mm.rs gave \
          back other frames than the archive's whole pages, or left the watermark as it was.",
         "`init::set_inputs` kept a slice of the archive instead of a copy.",
-        "`ferrix_vfs::initramfs::remove` left a name of the archive, or removed a spared one.",
+        "`xaqu_vfs::initramfs::remove` left a name of the archive, or removed a spared one.",
     ],
     see: "src/kernel/src/fs/release_check.rs; docs/RAM-RELEASE.md §2",
 };
@@ -2400,7 +2400,7 @@ pub static STAGE10_DRIVER: Explanation = Explanation {
 };
 
 /// For `check_block_ring` in `main.rs`, when `block_ring::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE10_RING: Explanation = Explanation {
     code: "FX-1004",
     title: "the block ring's control plane answered a driver wrongly",
@@ -2418,7 +2418,7 @@ pub static STAGE10_RING: Explanation = Explanation {
          than a device, or a device that already has a ring.",
         "The ring's task answered a HELLO with the wrong refusal, or none: the order of checks \
          in `block_ring::check_hello` and `take_up` no longer matches BLOCK-RING.md section 6.2, \
-         or `ferrix-blkring`'s validation changed.",
+         or `xaqu-blkring`'s validation changed.",
         "An accepted HELLO published no disk, or one with another geometry or name: the \
          registration in `take_up`, or `DiskName::minor`, disagrees with section 6.1.",
         "The disk stayed published after the control channel closed: the ring's task did not \
@@ -2436,7 +2436,7 @@ pub static STAGE10_RING: Explanation = Explanation {
 
 /// For `check_chardev` in `stages_check.rs`, when `chardev::check::run`
 /// fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE10_CHARDEV: Explanation = Explanation {
     code: "FX-1013",
     title: "the chardev core answered a driver or a program wrongly",
@@ -2450,7 +2450,7 @@ pub static STAGE10_CHARDEV: Explanation = Explanation {
               refused, the queue to a driver that reads nothing bounded (F-63), and a program \
               woken with ENODEV when its driver goes.",
     causes: &[
-        "A refusal, or its absence: `ferrix_chardevctl::session::judge` or `publish` no longer \
+        "A refusal, or its absence: `xaqu_chardevctl::session::judge` or `publish` no longer \
          refuses what the message names.",
         "The driver's end was made with `DUPLICATE` or `TRANSFER`: `DRIVER_RIGHTS` changed.",
         "A copy reached a request it must not: `control_of` stopped matching the driver's end, \
@@ -2467,7 +2467,7 @@ pub static STAGE10_CHARDEV: Explanation = Explanation {
 
 /// For `check_display_copies` in `stages_check.rs`, when
 /// `display::check::modes` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE10_DISPLAY_MODES: Explanation = Explanation {
     code: "FX-1015",
     title: "the display core would set a mode its driver did not list",
@@ -2478,7 +2478,7 @@ pub static STAGE10_DISPLAY_MODES: Explanation = Explanation {
               a listed size at a refresh nobody listed and a size nobody listed, a list sent in two \
               pages to be taken, and a list with two preferred modes to be refused.",
     causes: &[
-        "`ferrix_displayctl::listed::listed_match` was widened to take a size or refresh no \
+        "`xaqu_displayctl::listed::listed_match` was widened to take a size or refresh no \
          entry has.",
         "The session's page checks (`Session::receive` of MODE_LIST) stopped counting \
          preferred entries or tracking the page order.",
@@ -2489,14 +2489,14 @@ pub static STAGE10_DISPLAY_MODES: Explanation = Explanation {
 
 /// For `check_display_copies` in `stages_check.rs`, when
 /// `display::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE10_DISPLAY_COPIES: Explanation = Explanation {
     code: "FX-1014",
     title: "the display core would let the wrong driver copy",
     meaning: "A display driver whose HELLO says it copies is handed each buffer's VMO with \
               `MAP`, so it can read every frame. The core allows that only for a device the chardev \
               core serves (NVIDIA's) and for the firmware framebuffer's node under \
-              `ferrix.efifb` (`docs/DISPLAY.md` section 8). `display::check::run` requires a \
+              `xaqu.efifb` (`docs/DISPLAY.md` section 8). `display::check::run` requires a \
               made-up device tree node and every other published node refused, the firmware \
               framebuffer's node allowed, and the copying card handed with `READ` and `MAP` and \
               never `WRITE`.",
@@ -2604,7 +2604,7 @@ pub(crate) static STAGE10_DMA_FAULT: Explanation = Explanation {
         "A VT-d unit's invalidation queue stopped (`FSTS.IQE` or `ITE`) and the unit was marked \
          failed: it takes no invalidation again, and nothing its domains may reach is released \
          until reboot. The line before names the unit and which error stopped it; a descriptor \
-         the unit would not take is a kernel encoding fault (`ferrix_paging::vtd::queue`).",
+         the unit would not take is a kernel encoding fault (`xaqu_paging::vtd::queue`).",
     ],
     see: "src/kernel/src/iommu.rs audit_faults; src/kernel/src/iommu/check.rs check_dma_faults; \
           src/kernel/src/discovery/pci/virtio.rs probe_out_of_domain; \
@@ -2688,7 +2688,7 @@ pub static STAGE10_CONFIG: Explanation = Explanation {
     causes: &[
         "`device_aperture` cut an address or a length, or reported a BAR, offset or flag other \
          than the minted aperture's.",
-        "`ferrix_pci::window::writable` let a kernel-owned byte through -- the header, MSI, \
+        "`xaqu_pci::window::writable` let a kernel-owned byte through -- the header, MSI, \
          MSI-X, PCI Express, ATS, device-dependent space or virtio's `pci_cfg_data` -- or \
          refused a vendor capability's body.",
         "`Writable::allows` tested fewer than all of a write's bytes.",
@@ -2737,7 +2737,7 @@ pub(crate) static X2APIC_LOCKED: Explanation = Explanation {
     title: "a processor's local APIC is locked in x2APIC mode",
     meaning: "The boot processor chooses the local APIC's mode once: x2APIC, through its MSRs, \
               where firmware locked it (`IA32_XAPIC_DISABLE_STATUS`), left it on, or \
-              `ferrix.apic=x2apic` asked; xAPIC, through its MMIO window, otherwise. Every \
+              `xaqu.apic=x2apic` asked; xAPIC, through its MMIO window, otherwise. Every \
               application processor follows it, and in xAPIC mode one firmware left in x2APIC \
               mode is switched back (`docs/NVIDIA.md` section 12.3, condition G6). A processor \
               locked in x2APIC mode while the boot processor runs in xAPIC mode cannot be \
@@ -2746,7 +2746,7 @@ pub(crate) static X2APIC_LOCKED: Explanation = Explanation {
     causes: &[
         "The platform locks some processors' local APICs in x2APIC mode and not the boot \
          processor's, or reports the lock only on some processors.",
-        "`ferrix.apic=xapic` on a platform whose application processors are locked in x2APIC \
+        "`xaqu.apic=xapic` on a platform whose application processors are locked in x2APIC \
          mode.",
     ],
     see: "src/kernel/src/arch/x86_64/apic.rs enter_mode; src/kernel/src/arch/x86_64/smp.rs \
@@ -2788,7 +2788,7 @@ pub(crate) static SPACE_IDS_EXHAUSTED: Explanation = Explanation {
 };
 
 /// For `check_path_calls` in `stages_check.rs`, when `syscall::check::run_paths` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_PATH_CALLS: Explanation = Explanation {
     code: "FX-0820",
     title: "the system calls that take a path failed their self-check",
@@ -2893,7 +2893,7 @@ pub static STAGE9_BUILD: Explanation = Explanation {
 /// For `check_spaces` in `stages_check.rs`, when `object::space_check::run`
 /// fails.
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_SPACES: Explanation = Explanation {
     code: "FX-0916",
     title: "an address space reached by handle was not held to the handle's rights",
@@ -2920,7 +2920,7 @@ pub static STAGE9_SPACES: Explanation = Explanation {
         "`quota::charging_to` no longer moves the target-side half of a by-handle copy to \
          the space's owner.",
         "`AddressSpace::fork` no longer takes the source's writable translations down \
-         before it answers, or `ferrix_vma`'s `protect` no longer marks a private region \
+         before it answers, or `xaqu_vma`'s `protect` no longer marks a private region \
          made writable copy-on-write (F-41).",
     ],
     see: "src/kernel/src/object/space_check.rs; src/kernel/src/object/space.rs; \
@@ -2929,7 +2929,7 @@ pub static STAGE9_SPACES: Explanation = Explanation {
 };
 
 /// For `check_native_objects` in `stages_check.rs`, when `object::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_OBJECTS: Explanation = Explanation {
     code: "FX-0901",
     title: "the native ABI's objects failed their self-check",
@@ -2983,7 +2983,7 @@ pub static STAGE9_OBJECTS: Explanation = Explanation {
 // CHECKS-ONLY: stages_check.rs
 /// K14: sealing, measured spaces and the digest record.
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_SEALING: Explanation = Explanation {
     code: "FX-0951",
     title: "the sealing self-check failed",
@@ -3026,7 +3026,7 @@ pub static STAGE10_AUTHORITY: Explanation = Explanation {
 /// For `check_timers` in `stages_check.rs`, when `object::timer_check::run`
 /// fails.
 #[doc(hidden)]
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE9_TIMERS: Explanation = Explanation {
     code: "FX-0913",
     title: "the timer objects failed their self-check",
@@ -3056,7 +3056,7 @@ pub static STAGE9_TIMERS: Explanation = Explanation {
 };
 
 /// For `check_syscalls` in `stages_check.rs`, when `syscall::check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE7_SYSCALLS: Explanation = Explanation {
     code: "FX-0701",
     title: "the system call dispatch path failed its self-check",
@@ -3108,7 +3108,7 @@ pub static STAGE8_ROOT: Explanation = Explanation {
               reserved as `Initrd`.",
     causes: &[
         "The archive is malformed or truncated: `tools/common/xtask/src/initramfs.rs` wrote something the \
-         newc reader in `src/lib/fs/common/cpio` refuses, or the loader read less of FERRIX/INITRD.IMG \
+         newc reader in `src/lib/fs/common/cpio` refuses, or the loader read less of XAQU/INITRD.IMG \
          than it reported.",
         "The loader placed the archive outside the direct map, which it is meant to refuse \
          before the hand-off.",
@@ -3143,7 +3143,7 @@ pub static STAGE8_FILESYSTEM: Explanation = Explanation {
 
 /// For `standard_streams` in `syscall/fd.rs`, when a new process cannot be
 /// given the console.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static CONSOLE_DESCRIPTORS: Explanation = Explanation {
     code: "FX-0810",
     title: "a new process could not be given the console as descriptors 0, 1 and 2",
@@ -3218,7 +3218,7 @@ pub static STAGE8_PSEUDO_FILESYSTEMS: Explanation = Explanation {
 
 /// For `sysrq_trigger` in `fs/procfs.rs`, when a program writes `c` to
 /// /proc/sysrq-trigger.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static SYSRQ_CRASH: Explanation = Explanation {
     code: "FX-0850",
     title: "a panic was requested through /proc/sysrq-trigger",
@@ -3285,7 +3285,7 @@ pub static STAGE8_PIPES_AND_FILESYSTEM_CALLS: Explanation = Explanation {
 };
 
 /// For `check_filesystems` in `main.rs`, when the memfd check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_MEMFD: Explanation = Explanation {
     code: "FX-0880",
     title: "memfd_create or its seals failed their self-check",
@@ -3325,7 +3325,7 @@ pub static STAGE8_MEMFD: Explanation = Explanation {
 };
 
 /// For `check_epoll` in `stages_check.rs`, when the epoll check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_EPOLL: Explanation = Explanation {
     code: "FX-0881",
     title: "epoll failed its self-check",
@@ -3369,7 +3369,7 @@ pub static STAGE8_EPOLL: Explanation = Explanation {
 
 /// For `check_mount_flags` in `stages_check.rs`, when `fs::mount_check::run`
 /// fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_MOUNT_FLAGS: Explanation = Explanation {
     code: "FX-0885",
     title: "A mount's flags failed their self-check",
@@ -3402,7 +3402,7 @@ pub static STAGE8_MOUNT_FLAGS: Explanation = Explanation {
 };
 
 /// For `check_binds` in `stages_check.rs`, when `fs::bind_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_BINDS: Explanation = Explanation {
     code: "FX-0886",
     title: "A bind mount failed its self-check",
@@ -3437,7 +3437,7 @@ pub static STAGE8_BINDS: Explanation = Explanation {
 
 /// For `check_namespaces` in `stages_check.rs`, when
 /// `fs::namespace_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_MOUNT_NAMESPACES: Explanation = Explanation {
     code: "FX-0887",
     title: "A mount namespace failed its self-check",
@@ -3479,7 +3479,7 @@ pub static STAGE13_MOUNT_NAMESPACES: Explanation = Explanation {
 
 /// For `check_user_namespaces` in `stages_check.rs`, when
 /// `fs::userns_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_USER_NAMESPACES: Explanation = Explanation {
     code: "FX-0888",
     title: "A user namespace failed its self-check",
@@ -3496,7 +3496,7 @@ pub static STAGE13_USER_NAMESPACES: Explanation = Explanation {
 
 /// For `check_small_namespaces` in `stages_check.rs`, when
 /// `fs::smallns_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_SMALL_NAMESPACES: Explanation = Explanation {
     code: "FX-0892",
     title: "A UTS, IPC or cgroup namespace, or setns, failed its self-check",
@@ -3514,7 +3514,7 @@ pub static STAGE13_SMALL_NAMESPACES: Explanation = Explanation {
 
 /// For `check_pid_namespaces` in `stages_check.rs`, when
 /// `fs::pidns_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_PID_NAMESPACES: Explanation = Explanation {
     code: "FX-0891",
     title: "A pid namespace failed its self-check",
@@ -3534,7 +3534,7 @@ pub static STAGE13_PID_NAMESPACES: Explanation = Explanation {
 
 /// For `check_network_namespaces` in `stages_check.rs`, when
 /// `fs::netns_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_NETWORK_NAMESPACES: Explanation = Explanation {
     code: "FX-0893",
     title: "A network namespace failed its self-check",
@@ -3551,13 +3551,13 @@ pub static STAGE13_NETWORK_NAMESPACES: Explanation = Explanation {
 
 /// For `check_task_view` in `stages_check.rs`, when
 /// `sched::inspect_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE5_TASK_VIEW: Explanation = Explanation {
     code: "FX-0536",
     title: "the view of a blocked task read it wrongly",
     meaning: "`sched::inspect` reads a task that is not running from outside it, for /proc/<pid>/task/<tid>/syscall, wchan and stack (docs/DEBUG.md): its entry frame and its frame-pointer chain, each word through mm::read_kernel_word, which translates under the page tables' lock and reads only RAM through the direct map. The check holds a kernel task blocked after it recorded its own chain, and requires the view's chain to end in that chain at link addresses; then reads a freed stack and a device window, which must answer nothing. A wrong view sends a person debugging a frozen program to the wrong place; a read that faults stops the kernel from a /proc read.",
     causes: &[
-        "`arch::SWITCH_FRAME` no longer names the frame pointer or return address `ferrix_switch` saves, after a change to the switch's pushes.",
+        "`arch::SWITCH_FRAME` no longer names the frame pointer or return address `xaqu_switch` saves, after a change to the switch's pushes.",
         "`chain_of` does not take `backtrace::slide` off, or reports a word that failed `backtrace::in_image`.",
         "`mm::read_kernel_word` reads an address that is unmapped or not RAM instead of answering None.",
         "`sample` reads a task that has not finished its switch away, or is the queue's current.",
@@ -3567,7 +3567,7 @@ pub static STAGE5_TASK_VIEW: Explanation = Explanation {
 
 /// For `check_proc_access` in `stages_check.rs`, when
 /// `fs::procaccess_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_PROC_ACCESS: Explanation = Explanation {
     code: "FX-0894",
     title: "/proc let a process look into another's tree",
@@ -3584,7 +3584,7 @@ pub static STAGE13_PROC_ACCESS: Explanation = Explanation {
 /// For `check_time_namespaces` in `stages_check.rs`, when
 /// `fs::timens_check::run` fails.
 // CHECKS-ONLY: for `check_time_namespaces` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_TIME_NAMESPACES: Explanation = Explanation {
     code: "FX-0910",
     title: "A time namespace failed its self-check",
@@ -3602,7 +3602,7 @@ pub static STAGE13_TIME_NAMESPACES: Explanation = Explanation {
 /// For `check_mount_permissions` in `stages_check.rs`, when
 /// `fs::mountperm_check::run` fails.
 // CHECKS-ONLY: for `check_mount_permissions` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE13_MOUNT_PERMISSIONS: Explanation = Explanation {
     code: "FX-0900",
     title: "Mount permissions failed their self-check",
@@ -3618,7 +3618,7 @@ pub static STAGE13_MOUNT_PERMISSIONS: Explanation = Explanation {
 
 /// For `check_semaphores` in `stages_check.rs`, when `syscall::sem_check::run`
 /// fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE7_SEMAPHORES: Explanation = Explanation {
     code: "FX-0702",
     title: "System V semaphores failed their self-check",
@@ -3654,7 +3654,7 @@ pub static STAGE7_SEMAPHORES: Explanation = Explanation {
 
 /// For `check_shared_memory` in `stages_check.rs`, when
 /// `syscall::shm_check::run` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE7_SHARED_MEMORY: Explanation = Explanation {
     code: "FX-0703",
     title: "System V shared memory failed its self-check",
@@ -3684,7 +3684,7 @@ pub static STAGE7_SHARED_MEMORY: Explanation = Explanation {
 };
 
 /// For `check_eventfd` in `stages_check.rs`, when the eventfd check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_EVENTFD: Explanation = Explanation {
     code: "FX-0882",
     title: "eventfd failed its self-check",
@@ -3725,7 +3725,7 @@ pub static STAGE8_EVENTFD: Explanation = Explanation {
 };
 
 /// For `check_timerfd` in `stages_check.rs`, when the timerfd check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_TIMERFD: Explanation = Explanation {
     code: "FX-0883",
     title: "timerfd failed its self-check",
@@ -3768,7 +3768,7 @@ pub static STAGE8_TIMERFD: Explanation = Explanation {
 /// For `start_worker` and `join_worker` in `stages_check.rs`, when a check on a
 /// worker could not start or did not end.
 // CHECKS-ONLY: for `WORKER_CHECKS` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static BOOT_CHECK_WORKER: Explanation = Explanation {
     code: "FX-0972",
     title: "a boot check on a worker did not run to its end",
@@ -3786,11 +3786,11 @@ pub static BOOT_CHECK_WORKER: Explanation = Explanation {
 /// For `check_crash_hold` in `stages_check.rs`, when the crash hold's check
 /// fails.
 // CHECKS-ONLY: for `check_crash_hold` in `stages_check.rs`.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_CRASH_HOLD: Explanation = Explanation {
     code: "FX-0895",
     title: "the crash hold failed its self-check",
-    meaning: "`syscall::deliver::check_the_crash_hold` arms /dev/ferrix-crashes from a check \
+    meaning: "`syscall::deliver::check_the_crash_hold` arms /dev/xaqu-crashes from a check \
               process and makes faults through the fault path's own entry. Unarmed, a fault must \
               end its process at once. Armed, a fatal fault must be held: its line read, its \
               process shown as t (tracing stop), its other thread parked, not stopped, and not \
@@ -3813,7 +3813,7 @@ pub static STAGE8_CRASH_HOLD: Explanation = Explanation {
 };
 
 /// For `check_signalfd` in `stages_check.rs`, when the signalfd check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_SIGNALFD: Explanation = Explanation {
     code: "FX-0884",
     title: "signalfd failed its self-check",
@@ -3850,7 +3850,7 @@ pub static STAGE8_SIGNALFD: Explanation = Explanation {
 };
 
 /// For `check_madvise` in `stages_check.rs`, when the madvise check fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_MADVISE: Explanation = Explanation {
     code: "FX-0872",
     title: "madvise failed its self-check",
@@ -3916,7 +3916,7 @@ pub static STAGE8_FILE_MAPPINGS: Explanation = Explanation {
 
 /// For `check_program_files` in `stages_check.rs`, when the check of programs mapped
 /// from their files fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static STAGE8_PROGRAM_FILES: Explanation = Explanation {
     code: "FX-0871",
     title: "a program mapped from its file failed its self-check",
@@ -3947,32 +3947,32 @@ pub static STAGE8_PROGRAM_FILES: Explanation = Explanation {
           docs/CHROME.md",
 };
 
-/// For `finish` in `power.rs`, when init exits under `ferrix.onexit=panic`.
+/// For `finish` in `power.rs`, when init exits under `xaqu.onexit=panic`.
 pub static INIT_EXITED: Explanation = Explanation {
     code: "FX-1501",
-    title: "init exited, and ferrix.onexit=panic asked for a panic",
-    meaning: "The program the kernel started as pid 1 -- the one `ferrix.init=` named, or the \
-              one built in -- has exited, and the command line carries `ferrix.onexit=panic`, \
+    title: "init exited, and xaqu.onexit=panic asked for a panic",
+    meaning: "The program the kernel started as pid 1 -- the one `xaqu.init=` named, or the \
+              one built in -- has exited, and the command line carries `xaqu.onexit=panic`, \
               which asks for what Linux does when init dies. Without the option the machine \
-              commits its disks and powers off, and with `ferrix.onexit=reset` it resets. \
+              commits its disks and powers off, and with `xaqu.onexit=reset` it resets. \
               The disks were committed before this panic, as they are before a power-off.",
     causes: &[
         "Init ran to its end: a shell whose session was ended with `exit`, or a script that \
          finished.",
         "Init failed and exited: the `init ... exited with` line above this report gives its \
          status, and its own output above that says why.",
-        "Nothing could be started at all: no program is built in, `ferrix.init=` named a file \
+        "Nothing could be started at all: no program is built in, `xaqu.init=` named a file \
          that would not start, and the image carries no /sbin/init.",
     ],
     see: "src/kernel/src/power.rs finish; src/kernel/src/init.rs run; docs/INIT.md §8.3",
 };
 
 /// For `check_init_inputs` in `stages_check.rs`, when `init::check` fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static INIT_INPUTS: Explanation = Explanation {
     code: "FX-1503",
     title: "init took or refused an input other than set_inputs says",
-    meaning: "`init::check` judges sets of entries under `.ferrix/init/` made up as an \
+    meaning: "`init::check` judges sets of entries under `.xaqu/init/` made up as an \
               initramfs could carry them, as `fs::init` hands the boot archive's to \
               `init::set_inputs`: the program, the script and the commands are each taken \
               when one regular file with one link carries them, and refused -- the input \
@@ -3992,7 +3992,7 @@ pub static INIT_INPUTS: Explanation = Explanation {
 
 /// For `check_init_calls` in `stages_check.rs`, when `syscall::init_calls_check::run`
 /// fails.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub static INIT_CALLS: Explanation = Explanation {
     code: "FX-1502",
     title: "a kernel call init needs did not do what docs/INIT.md §11 says",
@@ -4134,8 +4134,8 @@ pub(crate) static KERNEL_STACK_OVERFLOW: Explanation = Explanation {
          `cargo xtask check-stack-depth` walks the known ones.",
         "A very large local in a function, or a recursion.",
     ],
-    see: "src/kernel/src/arch/aarch64/trap.rs ferrix_stack_hit; \
-          src/kernel/src/arch/armv7a/trap.rs ferrix_stack_hit; src/kernel/src/trap.rs stack_overflow",
+    see: "src/kernel/src/arch/aarch64/trap.rs xaqu_stack_hit; \
+          src/kernel/src/arch/armv7a/trap.rs xaqu_stack_hit; src/kernel/src/trap.rs stack_overflow",
 };
 
 /// For `dispatch` in `trap.rs`, the report naming any other exception.
@@ -4160,7 +4160,7 @@ pub(crate) static UNEXPECTED_EXCEPTION: Explanation = Explanation {
           src/kernel/src/arch/aarch64/trap.rs class_name; src/kernel/src/arch/armv7a/trap.rs abort",
 };
 
-/// For `ferrix_paranoid_entry` in `arch/x86_64/paranoid.rs`, a machine check.
+/// For `xaqu_paranoid_entry` in `arch/x86_64/paranoid.rs`, a machine check.
 pub(crate) static MACHINE_CHECK: Explanation = Explanation {
     code: "FX-9005",
     title: "the processor reported a hardware error",
@@ -4178,10 +4178,10 @@ pub(crate) static MACHINE_CHECK: Explanation = Explanation {
          instruction pointer then lies in the kernel image, just after it.",
     ],
     see: "src/kernel/src/arch/x86_64/paranoid.rs; src/kernel/src/arch/x86_64/trap.rs \
-          ferrix_paranoid_common",
+          xaqu_paranoid_common",
 };
 
-/// For `ferrix_paranoid_entry` in `arch/x86_64/paranoid.rs`, a second entry
+/// For `xaqu_paranoid_entry` in `arch/x86_64/paranoid.rs`, a second entry
 /// onto an interrupt stack its first is still using.
 pub(crate) static NESTED_INTERRUPT_STACK: Explanation = Explanation {
     code: "FX-9006",
@@ -4203,7 +4203,7 @@ pub(crate) static NESTED_INTERRUPT_STACK: Explanation = Explanation {
          overflowed or faulted.",
     ],
     see: "src/kernel/src/arch/x86_64/paranoid.rs; src/kernel/src/arch/x86_64/trap.rs \
-          ferrix_paranoid_common; src/kernel/src/arch/x86_64/gdt.rs",
+          xaqu_paranoid_common; src/kernel/src/arch/x86_64/gdt.rs",
 };
 
 /// `docs/microkernel/K9.md`: `schedule=edf`'s boot check.
@@ -4238,7 +4238,7 @@ pub static FIRST_PROCESSES: Explanation = Explanation {
 pub static PARTITION_DESCRIPTION: Explanation = Explanation {
     code: "FX-0953",
     title: "the partitions' description cannot be honoured",
-    meaning: "`.ferrix/partitions` is malformed, or names a device no node matches, or one that \
+    meaning: "`.xaqu/partitions` is malformed, or names a device no node matches, or one that \
               shares its requester id or its pages with something it does not also name. Reading \
               it as empty would hand a safety partition's device to `devmgr`, so the boot stops.",
     causes: &[
@@ -4266,12 +4266,12 @@ pub static PARTITION_MANAGER_ENDED: Explanation = Explanation {
 pub(crate) static WATCHDOG_STARVED: Explanation = Explanation {
     code: "FX-9008",
     title: "user space stopped feeding its watchdog",
-    meaning: "With `ferrix.watchdog=on` a privileged program -- init, under \
-              `ferrix.init.watchdog=` -- opened `/dev/watchdog` and so promised to feed it within \
+    meaning: "With `xaqu.watchdog=on` a privileged program -- init, under \
+              `xaqu.init.watchdog=` -- opened `/dev/watchdog` and so promised to feed it within \
               its timeout. No feed came for that long: the program's own loop did not turn. \
               The kernel still ran -- its watchdog task woke to see the deadline pass -- so \
               what stopped is user space, or the part of the kernel it waits on. The \
-              machine resets after this report only under `ferrix.panic=reset`.",
+              machine resets after this report only under `xaqu.panic=reset`.",
     causes: &[
         "Every program blocked on a kernel lock, a wait or a page that never comes: the \
          system froze under them. The log's last lines before this report say what ran \
@@ -4303,17 +4303,17 @@ pub(crate) static ALL: &[&Explanation] = &[
     &STAGE1_HANDOFF,
     &MEMORY_BRING_UP,
     &VMAP_ARENA_BRING_UP,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE2_ALLOCATORS,
     &STAGE2_FINISH_MEMORY,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE3_TRAPS,
     &STAGE3_TIMER,
     &INTERRUPT_BRING_UP,
     &TIMER_REGISTRATION,
     &CONSOLE_INPUT,
     &RANDOM_GENERATOR,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &SPECULATION_DEFENCES,
     &STAGE3_MACHINE,
     &AUDIT_STORE,
@@ -4331,7 +4331,7 @@ pub(crate) static ALL: &[&Explanation] = &[
     &SCHEDULER_BRING_UP,
     &STAGE5_SCHEDULER,
     &SCHEDULE_WITH_PREEMPTION_HELD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &CONSOLE_OUTPUT,
     &CONSOLE_LOG,
     &PREEMPT_COUNT_WITHOUT_RECORD,
@@ -4342,105 +4342,105 @@ pub(crate) static ALL: &[&Explanation] = &[
     &FAST_PATH_CONTINUATION_MASKED,
     &TASK_SLOT_RETURNED_TWICE,
     &ENDPOINT_CLOSED_MASKED,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE5_TASK_VIEW,
     &BLOCK_IN_AN_INTERRUPT,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE6_USER_MEMORY,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE6_REVERSE_MAP,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE7_SYSCALLS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE7_SEMAPHORES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE7_SHARED_MEMORY,
     &STAGE8_ROOT,
     &STAGE8_FILESYSTEM,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &CONSOLE_DESCRIPTORS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_PATH_CALLS,
     &STAGE8_PSEUDO_FILESYSTEMS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &SYSRQ_CRASH,
     &STAGE8_PIPES_AND_FILESYSTEM_CALLS,
     &STAGE8_FILE_MAPPINGS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_PROGRAM_FILES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_MADVISE,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_MEMFD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_EPOLL,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_EVENTFD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_TIMERFD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_SIGNALFD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_MOUNT_FLAGS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_BINDS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_MOUNT_NAMESPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_USER_NAMESPACES,
     &SYSFS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_PID_NAMESPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_SMALL_NAMESPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_NETWORK_NAMESPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_PROC_ACCESS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE8_CRASH_HOLD,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_MOUNT_PERMISSIONS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_OBJECTS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_ALLOCATION,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_REFUSALS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &SERVICES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_QUOTAS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_KMEM,
     &SPECULATION_DOMAIN_LEAVE_MAY_NOT_WAIT,
     &CHECK_HOOK_LEFT_ARMED,
     &SMBIOS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_TIME_NAMESPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_ADDRESS_WAIT,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_TICKETS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_TIMERS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_RESERVE,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_PAGER,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_SPACES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_EXCEPTIONS,
-    #[cfg(ferrix_fast_restricted)]
+    #[cfg(xaqu_fast_restricted)]
     &MARK_WITH_NO_ROOT_WRITE,
-    #[cfg(ferrix_fast_restricted)]
+    #[cfg(xaqu_fast_restricted)]
     &FLIP_WITH_NO_NORMAL_ROOT,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_REGIONS,
     &STAGE9_LEVELS,
     &VECTOR_IN_THE_KERNEL,
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     &WINDOW_HELD,
     &STAGE9_BUILD,
     &STAGE6_REHOMED_MEMORY,
@@ -4449,62 +4449,62 @@ pub(crate) static ALL: &[&Explanation] = &[
     &ITEM_REHOMED_CALLS,
     &STAGE9_REBIND,
     &STAGE9_BARE,
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     &WINDOW_UNMAP,
     &STAGE10_AUTHORITY,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE9_SEALING,
     &FIRST_PROCESSES,
     &PARTITION_DESCRIPTION,
     &PARTITION_MANAGER_ENDED,
     &SCHEDULE_EDF,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &BOOT_CHECK_WORKER,
     &RECLAIM_IN_RECLAIM,
     &BLOCK_HOLDING_AN_IRQ_LOCK,
     &STAGE10_PCI,
     &STAGE10_DEVICES,
     &STAGE10_IOMMU,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE10_RING,
     &STAGE10_DRIVER,
     &STAGE10_DEVMGR,
     &STAGE10_DMA_FAULT,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &LOG_CONTROL,
     &DEVMGR_BY_INIT,
     &STAGE10_DISTRIBUTOR,
     &STAGE10_CONFIG,
     &STAGE10_REMAP,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE10_CHARDEV,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE10_DISPLAY_COPIES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE10_DISPLAY_MODES,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE11_MOUNT,
     &NET_CORE,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &NET_RING,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &NETLINK,
     &STAGE12_WRITE,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &ROOT_PID1,
     &RELEASE,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_CGROUPFS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_SECCOMP,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_SECCOMP_FILTERS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &STAGE13_USER_DISPATCH,
     &INIT_EXITED,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &INIT_CALLS,
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     &INIT_INPUTS,
     &UNHANDLED_PAGE_FAULT,
     &SYSTEM_CALL_TRAP,

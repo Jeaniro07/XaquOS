@@ -259,7 +259,7 @@ pub struct UnitSection {
     pub refuse_manual_stop: bool,
     /// `StopWhenUnneeded=`.
     pub stop_when_unneeded: bool,
-    /// `StartableBy=` (Ferrix's): users, by name or number, who may `svc
+    /// `StartableBy=` (Xaqu's): users, by name or number, who may `svc
     /// start` the unit without being root -- lode's alerts
     /// (`docs/LOGGING.md` §7.4).
     pub startable_by: Vec<String>,

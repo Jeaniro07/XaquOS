@@ -8,7 +8,7 @@ only QEMU's emulated controller has shown so far, and the checklist for the
 first run on a real drive.
 
 **Update, 2026-10-21 (the customer's word):** the driver has driven a real
-WD PC SN720 through VFIO and installed Ferrix onto it. The record of that run
+WD PC SN720 through VFIO and installed Xaqu onto it. The record of that run
 is not in this document, so §8, §9 and §11 below are still the plan and the
 checklist, not the result. The rest of this document is as written on
 2026-10-10, when nothing had run on a real drive: every claim below that says
@@ -19,8 +19,8 @@ show.
 
 | Part | Where | What |
 |---|---|---|
-| The logic | `src/lib/drivers/block/nvme` (`ferrix-nvme`) | The controller as logic over registers and memory: reset and enable, Identify, queues, PRP lists, read, write and flush, the Host Memory Buffer, timeouts, shutdown, quirks. `no_std`, no `unsafe`, 40 host tests against a model of a controller |
-| The process | `src/user/system/native/drivers/block/nvme` (`nvme`) | The glue: the BAR, pinned memory, a clock, host memory, the console lines. Serves the block ring through `ferrix-driver`'s `block` subsystem, exactly as `blk` does |
+| The logic | `src/lib/drivers/block/nvme` (`xaqu-nvme`) | The controller as logic over registers and memory: reset and enable, Identify, queues, PRP lists, read, write and flush, the Host Memory Buffer, timeouts, shutdown, quirks. `no_std`, no `unsafe`, 40 host tests against a model of a controller |
+| The process | `src/user/system/native/drivers/block/nvme` (`nvme`) | The glue: the BAR, pinned memory, a clock, host memory, the console lines. Serves the block ring through `xaqu-driver`'s `block` subsystem, exactly as `blk` does |
 | The bus | `src/user/system/native/driver/src/pci.rs` | A PCI function that is not virtio, for any driver: BARs by `device_aperture`, vector 0, pinned memory, runs of contiguous memory |
 | The match | `devmgr`'s `PCI_DRIVERS` | Class code `01:08:02`, any vendor, drives `nvme` as a disk |
 | The gates | `cargo xtask test-nvme`, `cargo xtask test-restart --boot nvme` | §7 |
@@ -28,7 +28,7 @@ show.
 The kernel is not changed. An NVMe disk reaches it as a virtio disk does:
 HELLO on a block ring, so the block core, the partition scan, btrfs and
 everything above them are the same code. The driver, `devmgr` and
-`ferrix-driver` are outside the certified item
+`xaqu-driver` are outside the certified item
 (`tools/common/data/certification-item.json`).
 
 ## 2. What the driver does, in order
@@ -78,12 +78,12 @@ bit says the entry is written.
 
 The interrupt is MSI-X entry 0 (or the function's one MSI message), bound
 to the port the ring's bell arrives on, so the serve loop's sleep handshake
-(`ferrix-blkserve`) covers both; the driver never sleeps without it.
+(`xaqu-blkserve`) covers both; the driver never sleeps without it.
 
 ### When a command does not come back
 
 Every 100 ms while requests are in flight and nothing was heard
-(`ferrix-driver`'s watch):
+(`xaqu-driver`'s watch):
 
 * registers read all ones: the drive left the bus; the driver exits;
 * `CSTS.CFS`: the controller is reset, set up again as it was (host memory
@@ -128,7 +128,7 @@ is built and tested against the model.
 |---|---|---|---|
 | Driver model | ring 3, behind `blkring`, started by `devmgr` on the PCI class | the same | |
 | Gate | `test-install --usb-live`, target on `nvme`, after H4 | `test-nvme` and `test-restart --boot nvme` now; the installer's gate still waits for H3 and H4 | The driver can be shown without a USB stick to boot from |
-| Names | `/dev/nvme0n1`, `/dev/nvme0n1p1`, Linux's numbers (§5.2) | `/dev/vdX`, in PCI order with the virtio disks | A ring disk's name is checked by the kernel's block ring and `ferrix-blkring` as `vd` and letters, with virtio-blk's major. Changing that is a change to the kernel's interface and the certified boot checks that read `vda`; it is not needed to boot, since `/` is found by label on any disk. A `docs/BACKLOG.md` row |
+| Names | `/dev/nvme0n1`, `/dev/nvme0n1p1`, Linux's numbers (§5.2) | `/dev/vdX`, in PCI order with the virtio disks | A ring disk's name is checked by the kernel's block ring and `xaqu-blkring` as `vd` and letters, with virtio-blk's major. Changing that is a change to the kernel's interface and the certified boot checks that read `vda`; it is not needed to boot, since `/` is found by label on any disk. A `docs/BACKLOG.md` row |
 | I/O queues | not said | one pair | One process serves one ring from one thread; a queue per processor has nobody to submit on it. The logic takes up to four pairs and spreads requests across them (tested against the model with two); the process asks for one. Worth revisiting only with a serve loop per processor |
 | TRIM | not said | none | The block ring has no discard operation. Dataset Management is never sent |
 | Namespaces | not said | the first active one per controller | A ring serves one disk per device. Consumer drives have one namespace |
@@ -178,7 +178,7 @@ so **all of it is shown against the model only** (§8).
 ## 6. Quirks
 
 Facts from Linux 6.18's `drivers/nvme/host/pci.c` and `core.c`; the table
-(`ferrix-nvme`'s `quirks.rs`) and code are Ferrix's own.
+(`xaqu-nvme`'s `quirks.rs`) and code are Xaqu's own.
 
 | Quirk | Controllers | What the driver does |
 |---|---|---|
@@ -198,7 +198,7 @@ suspend.
 
 | Gate | What it requires |
 |---|---|
-| `cargo test -p ferrix-nvme` | 40 tests: register fields, each command's bytes by offset, queue indices and phase, PRP lists up to a chained list, bring-up order, both block sizes, `MDTS`, refused namespaces, retries, abort then reset, a fatal controller, the reset limit, a controller gone, host memory lent, refused and returned, shutdown order, each quirk |
+| `cargo test -p xaqu-nvme` | 40 tests: register fields, each command's bytes by offset, queue indices and phase, PRP lists up to a chained list, bring-up order, both block sizes, `MDTS`, refused namespaces, retries, abort then reset, a fatal controller, the reset limit, a controller gone, host memory lent, refused and returned, shutdown order, each quirk |
 | `cargo xtask test-nvme` (`--boot io`) | x86-64. `/` on an NVMe drive of 512-byte blocks **below a root port and a PCIe switch**, and a second drive of 4096-byte blocks on a root port. Both drivers' lines; `/` installed on the NVMe root; the first block, the last block and 128 KiB in one request (a PRP list) read back as written; 24 blocks written with a flush, read back, and found in the image with their neighbours untouched; Flush commands in QEMU's own trace; both drivers killed twice under a reading loop with every read right; a file on `/` after each; host `btrfs check` |
 | `cargo xtask test-nvme --boot fault` | A read QEMU fails (blkdebug, `EIO`) fails in the guest, the driver says so, the blocks beside it still read, and the controller is neither reset nor given up |
 | `cargo xtask test-nvme --boot bench` | §10 |
@@ -247,7 +247,7 @@ Not shown at all, because QEMU is not a drive:
   up to `CAP.TO` (often 20 to 60 s worst case) to become ready and to
   disable. The waits are there; their lengths have never been needed;
 * **real DMA.** QEMU reads guest memory by address; ordering, caching and
-  an IOMMU's real behaviour (AMD-Vi on the target PC, which Ferrix does
+  an IOMMU's real behaviour (AMD-Vi on the target PC, which Xaqu does
   not drive yet, §11) are untested. The driver puts a full fence before
   every doorbell;
 * **real MSI-X**, interrupt coalescing, and a drive that completes many
@@ -266,7 +266,7 @@ No agent writes to a real disk (`device-testing-no-persistent-writes`):
 this is a checklist for a person, with the product owner's word for the
 hardware.
 
-### Before Ferrix: read the drive under Linux
+### Before Xaqu: read the drive under Linux
 
 With the drive fitted and Linux booted, as root, and keep the output:
 
@@ -333,13 +333,13 @@ command, and the line that says which follows. If the lines do not come:
 
 ### The order of the first run
 
-1. Boot the live image with `/` in memory (`ferrix.root=tmpfs`), so nothing
+1. Boot the live image with `/` in memory (`xaqu.root=tmpfs`), so nothing
    mounts the drive. Read the `nvme` line.
 2. Read only: `dd if=/dev/vdX of=/dev/null bs=1M count=1024`, and compare
    `sha256sum` of the first gigabyte with Linux's of the same range.
 3. Only on a drive with nothing to lose: write, flush, read back, power off
    from the shell, boot Linux, compare, and read `smartctl -a` again
-   (`unsafe_shutdowns` will have gone up by one per Ferrix power-off until
+   (`unsafe_shutdowns` will have gone up by one per Xaqu power-off until
    the kernel sends STOP, §2).
 4. Kill the driver from a shell (`kill -9`), and see it come back.
 
@@ -349,7 +349,7 @@ command, and the line that says which follows. If the lines do not come:
 for a 4 KiB read through the block ring and its ring-3 driver. The row's
 own method (20,000 samples around `rdtsc`, alternated with Redox's image)
 measures the kernel's path with a program this tree does not carry for
-Ferrix; the kernel's `seam` boot line measures the first virtio disk only.
+Xaqu; the kernel's `seam` boot line measures the first virtio disk only.
 `test-nvme --boot bench` therefore measures what can be compared in one
 boot: `dd` reading 4096 blocks of 4 KiB from the virtio-blk pattern disk
 and from the NVMe scratch drive in turn, five runs each after a warm-up,
@@ -407,7 +407,7 @@ What the driver must not assume about it, and does not: where the MSI-X
 table is, how many queues it grants, `MDTS`, that a write cache is present,
 that the format is 512 bytes, that firmware left it disabled, and that it
 sits on a root port. Nothing in `devmgr`'s match, the driver, or
-`ferrix-driver`'s PCI bus looks at a function's parent: the match is the
+`xaqu-driver`'s PCI bus looks at a function's parent: the match is the
 class code, the BAR and vectors come from the function's own node, and the
 gate's root drive sits below a root port and a two-port switch on purpose.
 
@@ -421,11 +421,11 @@ tables. It is DRAM-less; whether it asks for host memory was not verified
 This driver is one slice of `docs/INSTALLER.md` §9's *Real PCs*. On this PC
 the rest of the distance is:
 
-* **H0, the first boot on a PC at all**: Ferrix has only booted under QEMU
+* **H0, the first boot on a PC at all**: Xaqu has only booted under QEMU
   and on two Arm boards. ACPI as a real firmware writes it, interrupt
   routing, the timer, and a console (the board has no serial port without
   a header or a card; the firmware's framebuffer is H6).
-* **An AMD IOMMU driver.** Ferrix drives Intel's VT-d and Arm's SMMUv3. A
+* **An AMD IOMMU driver.** Xaqu drives Intel's VT-d and Arm's SMMUv3. A
   Ryzen's IOMMU is AMD-Vi, described by the `IVRS` table, and nothing
   drives it. Without it no device has a translated domain, and what the
   kernel does with a driver's pins on such a machine has to be decided,
@@ -449,5 +449,5 @@ the rest of the distance is:
 
 2026-10-10: built as above on branch `nvme-driver`; gated on QEMU's
 controller under KVM and TCG; never run on hardware. Next, in order: the
-first run of §9 once the drive is fitted and the PC boots Ferrix at all
+first run of §9 once the drive is fitted and the PC boots Xaqu at all
 (H0); STOP at power-off; AArch64 in the gate once uutils is built for it.

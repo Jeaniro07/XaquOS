@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-procfs"
+name = "xaqu-procfs"
 description = "The text of /proc: maps, meminfo, status, stat, /proc/stat, mounts, partitions and the sysctl values, byte for byte as Linux prints them"
 version = "0.1.0"
 edition = "2024"

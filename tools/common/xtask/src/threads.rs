@@ -89,7 +89,7 @@ fn build(arch: Arch, negative: bool, i686: bool) -> Result<PathBuf> {
     if negative {
         build = build.args(["--features", "negative-control"]);
     }
-    // Ferrix's own `.cargo/config.toml` uses this triple for the ARMv7-A
+    // Xaqu's own `.cargo/config.toml` uses this triple for the ARMv7-A
     // loader, with its linker script, and cargo merges a parent directory's
     // flags for a target into `src/tests/threads/`'s. The variable replaces every
     // configured flag, so the program is linked as the other two are.

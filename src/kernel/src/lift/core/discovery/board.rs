@@ -9,9 +9,9 @@ use alloc::collections::BTreeSet;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt;
-use ferrix_bootinfo::BootView;
-use ferrix_fdt::Fdt;
-use ferrix_fdt::GicInterrupt;
+use xaqu_bootinfo::BootView;
+use xaqu_fdt::Fdt;
+use xaqu_fdt::GicInterrupt;
 #[derive(Debug)]
 pub struct BoardDevice {
     pub registers: Vec<(u64, u64)>,

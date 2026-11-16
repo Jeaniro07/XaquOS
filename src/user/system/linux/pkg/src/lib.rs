@@ -1,7 +1,7 @@
-//! Ferrix's package manager: what `/bin/pkg` does, on any root.
+//! Xaqu's package manager: what `/bin/pkg` does, on any root.
 //!
 //! A package is a newc archive of its files and its record,
-//! `lib/ferrix/packages/<name>.toml` (`docs/APPS.md` §6); an installed
+//! `lib/xaqu/packages/<name>.toml` (`docs/APPS.md` §6); an installed
 //! package is its record in the root, beside the files it lists. So this
 //! keeps no database: [`installed`] reads the records, [`install`] unpacks
 //! a package whose every file its record vouches for, and [`remove`]
@@ -12,7 +12,7 @@
 //! entry is not what its record says or a file its record lists is missing,
 //! when it is installed already (unless it is to replace it,
 //! [`install_replacing`]), when what it depends on is not installed or
-//! coming with it (`ferrix_pkg::plan`), and when it would put down a path
+//! coming with it (`xaqu_pkg::plan`), and when it would put down a path
 //! that is there already -- another package's, or the system's. A removal is
 //! refused while an installed package depends on it. The record is written
 //! last and deleted first, so a package whose files are half there has no
@@ -24,9 +24,9 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use ferrix_cpio::{Archive, FileType};
-use ferrix_pkg::plan::plan;
-use ferrix_pkg::record::{self, Installed, Record};
+use xaqu_cpio::{Archive, FileType};
+use xaqu_pkg::plan::plan;
+use xaqu_pkg::record::{self, Installed, Record};
 
 /// Why something was refused, or failed: the line `pkg` prints.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -194,7 +194,7 @@ pub fn read(archive: &[u8]) -> Result<Package, Error> {
         ));
     }
     for (path, mode, content) in &entries {
-        if !ferrix_cpio::is_safe_path(path) {
+        if !xaqu_cpio::is_safe_path(path) {
             return refuse(format!("{name}'s package holds {path}, outside the root"));
         }
         let found = match content {

@@ -6,16 +6,16 @@
 //! `check-first-rows.py` reads these tables against the design's and these call sites
 //! against these tables. No row holds the root job: there is no such kind.
 
-use ferrix_native_abi::rights::{IMAGE_RIGHTS, Rights};
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_native_abi::rights::{IMAGE_RIGHTS, Rights};
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
 
 use crate::discovery::devmgr::{GIVEN_DEVICE_RIGHTS, KEPT_DEVICE_RIGHTS};
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 use crate::object::Object;
 
 /// A kind of handle a first process may hold.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     expect(
         dead_code,
         reason = "only `devmgr`'s row is read without `personality=user`"
@@ -54,14 +54,14 @@ pub(crate) struct Row {
     pub rights: Rights,
     /// How many of it this role may hold: what bounds a role's count.
     #[cfg_attr(
-        not(ferrix_personality = "user"),
+        not(xaqu_personality = "user"),
         expect(dead_code, reason = "only `judge` reads it, under `personality=user`")
     )]
     pub most: usize,
 }
 
 /// Whether `object` is of the kind `held` names, and not the root job.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn is_of(object: &Object, held: Held) -> bool {
     match (object, held) {
         (Object::Job(job), Held::Job) => !job.is_root(),
@@ -107,7 +107,7 @@ impl Rows {
     /// # Errors
     ///
     /// What was out of its row.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub(crate) fn judge<'a>(
         &self,
         given: impl Iterator<Item = (&'a Object, Rights)>,
@@ -132,14 +132,14 @@ impl Rows {
 }
 
 /// The most kinds a row has.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 const MOST_ROWS: usize = 8;
 /// As a channel message holds.
 const MANY: usize = CHANNEL_MAX_HANDLES;
 
 const LOG_TO_PASS_ON: Rights = Rights(Rights::WRITE.0 | Rights::DUPLICATE.0 | Rights::TRANSFER.0);
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     expect(
         dead_code,
         reason = "only `devmgr`'s row is read without `personality=user`"
@@ -149,7 +149,7 @@ const ARCHIVE: Rights = Rights(Rights::VMO.0 & !Rights::WRITE.0);
 
 /// The partition manager's.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     expect(
         dead_code,
         reason = "only `devmgr`'s row is read without `personality=user`"
@@ -192,7 +192,7 @@ pub(crate) const MANAGER: Rows = Rows(&[
 /// work into a job that may have a reservation it does not draw from itself (K16 §4).
 const DRIVERS_JOB: Rights = Rights(
     Rights::JOB.0
-        | if cfg!(ferrix_kernel_memory = "retyped") {
+        | if cfg!(xaqu_kernel_memory = "retyped") {
             Rights::RESERVE.0
         } else {
             0
@@ -235,7 +235,7 @@ pub(crate) const DEVMGR: Rows = Rows(&[
 
 /// The first `linuxd`'s.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     expect(
         dead_code,
         reason = "only `devmgr`'s row is read without `personality=user`"
@@ -275,7 +275,7 @@ pub(crate) const LINUXD: Rows = Rows(&[
 ]);
 
 /// A further partition's `linuxd`: no console, no cores, no `devmgr` (N.9).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) const FURTHER: Rows = Rows(&[
     Row {
         held: Held::Job,

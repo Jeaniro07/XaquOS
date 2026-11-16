@@ -2,12 +2,12 @@
 //! (moved whole from `syscall/time.rs`; `docs/KERNEL-CRATES.md` §6.2). The
 //! clock and `set_realtime` stay the load's, which also sets it at boot.
 
-use ferrix_kernel_load::syscall::credentials;
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::time::{TimeWidth, nanos_of, read_pair, set_realtime};
-use ferrix_kernel_load::syscall::uaccess;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::CLOCK_REALTIME;
+use xaqu_kernel_load::syscall::credentials;
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::time::{TimeWidth, nanos_of, read_pair, set_realtime};
+use xaqu_kernel_load::syscall::uaccess;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::CLOCK_REALTIME;
 
 /// The latest second the wall clock may be set to: `TIME_SETTOD_SEC_MAX`,
 /// which is `KTIME_SEC_MAX` less thirty years of uptime, so that the clock
@@ -41,7 +41,7 @@ pub fn sys_clock_settime(
     // `CAP_SYS_TIME`, after the time is found settable, as Linux orders it.
     credentials::require_privilege(process)?;
     set_realtime(target);
-    ferrix_kernel_load::fs::timerfd::clock_was_set();
+    xaqu_kernel_load::fs::timerfd::clock_was_set();
     Ok(0)
 }
 
@@ -83,7 +83,7 @@ pub fn sys_settimeofday(
     credentials::require_privilege(process)?;
     if let Some(target) = target {
         set_realtime(target);
-        ferrix_kernel_load::fs::timerfd::clock_was_set();
+        xaqu_kernel_load::fs::timerfd::clock_was_set();
     }
     Ok(0)
 }

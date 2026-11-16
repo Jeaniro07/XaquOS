@@ -10,7 +10,7 @@ could attach to the switch. Section 8 lists what the customer still decides.
 
 ## 1. What it is
 
-`/bin/settings`, the `settings` app in ferrix-os/apps (`docs/APPS.md`), in
+`/bin/settings`, the `settings` app in xaqu-os/apps (`docs/APPS.md`), in
 every image a person runs, with a launcher entry and an icon of its own. A
 window with the pages down its left side and the chosen page beside it.
 
@@ -37,7 +37,7 @@ it from there.
 
 ## 2. "All applications" is the launcher's list
 
-Ferrix has no registry of applications. A launcher lists `.desktop` entries
+Xaqu has no registry of applications. A launcher lists `.desktop` entries
 from the XDG data directories: `~/.local/share/applications`, then
 `/usr/share/applications` (or what `XDG_DATA_HOME` and `XDG_DATA_DIRS` say).
 The system's own entries are installed there by every desktop
@@ -64,13 +64,13 @@ game it starts inherits its mark (§4).
 
 ## 3. The file
 
-`$XDG_CONFIG_HOME/ferrix/game-mode.conf`, which is
-`~/.config/ferrix/game-mode.conf` where that is not set: beside the other
-per-user configuration, under a directory of Ferrix's own. Plain text, one
+`$XDG_CONFIG_HOME/xaqu/game-mode.conf`, which is
+`~/.config/xaqu/game-mode.conf` where that is not set: beside the other
+per-user configuration, under a directory of Xaqu's own. Plain text, one
 desktop-file ID a line:
 
 ```text
-# Ferrix game mode: the applications started in game mode, one desktop-file
+# Xaqu game mode: the applications started in game mode, one desktop-file
 # ID a line. Written by Settings (/bin/settings); edit it freely. A launcher
 # reads it each time it starts an application (docs/SETTINGS.md).
 pattern.desktop
@@ -102,8 +102,8 @@ The format, the path, the write and the mark are
 two variables in its environment:
 
 ```text
-FERRIX_GAME_MODE=1
-FERRIX_GAME_MODE_APP=<its desktop-file ID>
+XAQU_GAME_MODE=1
+XAQU_GAME_MODE_APP=<its desktop-file ID>
 ```
 
 Everything it starts inherits them, which is how a game Steam starts has
@@ -120,7 +120,7 @@ gate host ran at a load above 30).
 **Where the mark is given.** In one place: the launcher's start
 (`exec::start` in the fuzzel app, through
 `game_mode::mark_for_launch` and `Mark::apply`). fuzzel is otherwise a port
-that follows upstream; this is the one thing in it that is Ferrix's.
+that follows upstream; this is the one thing in it that is Xaqu's.
 
 **What is not covered.**
 
@@ -138,7 +138,7 @@ path or is not this landing's to decide:
 
 | Candidate | What stands in the way |
 |---|---|
-| A larger `cpu.weight` for the game's cgroup (`docs/GAME-PATH.md` §5.3, G0) | The `--everything` desktop runs as the user `ferrix`. A user may make a scope only under their own `user-<uid>.slice` and may set no property on it (`init`'s control socket: only root changes state), so the launcher cannot raise a weight; and a scope beside the session's own would outlive the session (`docs/AUTH.md` §6.4 leaves that to the customer). It needs init, or the session service of `docs/GAME-PATH.md` §5.4, to grant it. G0 is stage 24's, with a design review and a measurement owed first |
+| A larger `cpu.weight` for the game's cgroup (`docs/GAME-PATH.md` §5.3, G0) | The `--everything` desktop runs as the user `xaqu`. A user may make a scope only under their own `user-<uid>.slice` and may set no property on it (`init`'s control socket: only root changes state), so the launcher cannot raise a weight; and a scope beside the session's own would outlive the session (`docs/AUTH.md` §6.4 leaves that to the customer). It needs init, or the session service of `docs/GAME-PATH.md` §5.4, to grant it. G0 is stage 24's, with a design review and a measurement owed first |
 | A lower nice value | `setpriority` below the caller's own needs privilege, as on Linux; the launcher has none |
 | Affinity | `sched_setaffinity` is accepted and not applied (`docs/GAME-PATH.md` §5.1) |
 | Turning vertical sync off (`vblank_mode=0`, `__GL_SYNC_TO_VBLANK=0`) | It works through the environment, but it trades tearing for latency, which is the customer's choice per game (`docs/GAME-PATH.md` §4.4), not a default to slip in |
@@ -191,7 +191,7 @@ Nothing here is promised; each is its own landing with its own review.
   typed by `/bin/vkbd` filter the list to a probe application and turn its
   switch on; Settings says it wrote the file; `settings --list` in a second
   process reads the switch back as on; fuzzel starts the probe, a zinc
-  script, which prints `FERRIX_GAME_MODE=1` and its own ID and reads its ID
+  script, which prints `XAQU_GAME_MODE=1` and its own ID and reads its ID
   out of the file with the shell's `read`; the switch is turned off; the
   probe started again prints no mark and finds the file without its ID. The
   screen with the switch on is kept as `build/<arch>/settings.ppm`.
@@ -291,7 +291,7 @@ So the proposal separates two lists:
 
 | | Game mode (built) | Driver domain (proposed) |
 |---|---|---|
-| Where | `~/.config/ferrix/game-mode.conf` | `/etc/ferrix/game-domain.conf`, root's, `0644` |
+| Where | `~/.config/xaqu/game-mode.conf` | `/etc/xaqu/game-domain.conf`, root's, `0644` |
 | Who writes it | the user, or any program of theirs | root only: Settings asks `authd` for the user's password and a `wheel` membership, as `su` does (`docs/AUTH.md`), and a small set-up helper writes the line |
 | What it can cost | nothing, later a share of the user's own processor time | the separation between the driver and, in effect, every program of that user while the admitted one runs |
 | Read by | the launcher | the session service only |
@@ -303,7 +303,7 @@ treated as a game, and an administrator accepted the trade for it.
 page would have to say so. The list names a desktop-file ID, and what that
 ID runs is the user's: an entry under the user's own directory shadows the
 system's, and the `Exec` line, the game's files and its environment are the
-user's to write. `FERRIX_GAME_MODE_APP` can be set by any program, and a
+user's to write. `XAQU_GAME_MODE_APP` can be set by any program, and a
 window's app id is chosen by the client. Neither the launcher nor hyprix is
 a trusted source of which process is which application. So while an
 admitted process runs, the grant is in effect to *every program of that
@@ -558,7 +558,7 @@ has to state.
 The certification consultant reviewed this section as a design on
 2026-10-11, at commit 21b54b3d7. It is an internal review, not independent
 verification (F-27, F-29). Ledger line 698 of
-`~/.local/share/ferrix/cert-consultant/reviews.md` on the gate host:
+`~/.local/share/xaqu/cert-consultant/reviews.md` on the gate host:
 
 > OK IF (G1)-(G9) for §7/§8 to land as a proposal; opt-in code (A or B) NOT
 > YET — a design round of its own on (B1)-(B13), and not before the one-way
@@ -687,7 +687,7 @@ rest are open.
 launcher's start, the host tests, `test-compositor --boot settings` passing
 on x86-64 under KVM and its negative control fired. Not run: the boot on
 AArch64 and ARMv7-A; the page on the `--everything` desktop as the user
-`ferrix` (the boot's desktop is root's, its home `/`); a screen with a
+`xaqu` (the boot's desktop is root's, its home `/`); a screen with a
 buffer scale above one other than in the host test. §7 was reviewed as a
 design by the certification consultant (OK IF G1 to G9, which this
 document carries; code NOT YET; ledger line 698, §7.9). The same day the

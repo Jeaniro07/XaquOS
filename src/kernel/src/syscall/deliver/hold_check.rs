@@ -5,7 +5,7 @@
 //! path's own entry -- [`super::fault_signal`] once, unarmed, and
 //! [`super::force_held`] after -- so the case runs the same on every
 //! architecture and writes the identity line once. The reader is a task of a
-//! process of its own, which opens `/dev/ferrix-crashes` through the
+//! process of its own, which opens `/dev/xaqu-crashes` through the
 //! namespace as a program would. A thread that is to park comes back
 //! through [`super::return_to_user`] as the delivery cap's check drives it.
 //!
@@ -36,9 +36,9 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_linux_abi::types::{SIG_DFL, SIGCONT, SIGKILL, SIGSEGV, SIGUSR1};
-use ferrix_sync::IrqControl;
-use ferrix_vfs::{Errno, OpenFile, OpenFlags};
+use xaqu_linux_abi::types::{SIG_DFL, SIGCONT, SIGKILL, SIGSEGV, SIGUSR1};
+use xaqu_sync::IrqControl;
+use xaqu_vfs::{Errno, OpenFile, OpenFlags};
 
 use crate::arch;
 use crate::fs::crashes::{HOLD_NANOS, SLOTS};
@@ -301,7 +301,7 @@ fn cases() -> Result<Report, &'static str> {
         ..OpenFlags::default()
     };
     let open = |flags: &OpenFlags| {
-        ns.open(&ctx, None, b"/dev/ferrix-crashes", flags, 0)
+        ns.open(&ctx, None, b"/dev/xaqu-crashes", flags, 0)
             .and_then(crate::fs::devfs::attach_device)
     };
 
@@ -311,11 +311,11 @@ fn cases() -> Result<Report, &'static str> {
         return Err("(a) an unarmed fault did not end its process at once by its signal");
     }
     if open(&ro).err() != Some(Errno::EINVAL) {
-        return Err("a read-only open of /dev/ferrix-crashes was not EINVAL");
+        return Err("a read-only open of /dev/xaqu-crashes was not EINVAL");
     }
-    let file = open(&rw).map_err(|_| "/dev/ferrix-crashes did not open read-write for root")?;
+    let file = open(&rw).map_err(|_| "/dev/xaqu-crashes did not open read-write for root")?;
     if open(&rw).err() != Some(Errno::EBUSY) {
-        return Err("a second open of /dev/ferrix-crashes was not EBUSY");
+        return Err("a second open of /dev/xaqu-crashes was not EBUSY");
     }
     // Nothing queued: EAGAIN without waiting, and a wait a signal ends.
     let mut room = [0_u8; 256];
@@ -548,8 +548,8 @@ fn reader(_: usize) {
         ..OpenFlags::default()
     };
     let again = ns
-        .open(&ctx, None, b"/dev/ferrix-crashes", &rw, 0)
-        .map_err(|_| "(g) /dev/ferrix-crashes did not open again after its close");
+        .open(&ctx, None, b"/dev/xaqu-crashes", &rw, 0)
+        .map_err(|_| "(g) /dev/xaqu-crashes did not open again after its close");
     let at = crate::timer::now_nanos();
     let _ = super::force_held(SIGSEGV, CODE, ADDRESS, PC);
     let held = crate::timer::now_nanos().saturating_sub(at) > AT_ONCE_NANOS;

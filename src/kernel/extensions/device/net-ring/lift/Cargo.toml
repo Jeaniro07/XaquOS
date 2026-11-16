@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lift-net-ring"
+name = "xaqu-lift-net-ring"
 description = "A network driver's ring's one source built for linuxd"
 version.workspace = true
 edition.workspace = true
@@ -9,19 +9,19 @@ publish.workspace = true
 build = "../../../../build.rs"
 
 [lib]
-name = "ferrix_kernel_net_ring"
+name = "xaqu_kernel_net_ring"
 path = "../src/lib.rs"
 
 [dependencies]
-ferrix-kernel-core = { package = "ferrix-lift-core", path = "../../../../lift/core" }
-ferrix-kernel-load = { package = "ferrix-lift-load", path = "../../../../lift/load" }
-ferrix-blkring.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-net.workspace = true
-ferrix-netring.workspace = true
-ferrix-sched.workspace = true
+xaqu-kernel-core = { package = "xaqu-lift-core", path = "../../../../lift/core" }
+xaqu-kernel-load = { package = "xaqu-lift-load", path = "../../../../lift/load" }
+xaqu-blkring.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-net.workspace = true
+xaqu-netring.workspace = true
+xaqu-sched.workspace = true
 
 [lints]
 workspace = true

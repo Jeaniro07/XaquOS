@@ -1,11 +1,11 @@
 //! Frame buffers from nvidia-drm, for the vtest renderer to draw into
-//! (`~/.local/share/ferrix/steam-race/zerocopy.md`, P5's first half).
+//! (`~/.local/share/xaqu/steam-race/zerocopy.md`, P5's first half).
 //!
 //! On the RTX 3060 hyprix's frames are drawn by virglrenderer's test server
 //! on NVIDIA's EGL. Drawn into a texture of the server's own, every frame is
 //! read back and copied to the card. Drawn into a buffer NVKMS can scan out
 //! -- allocated here through nvidia-drm and handed to the server as a
-//! dmabuf, which Ferrix's patched server imports -- the frame is already
+//! dmabuf, which Xaqu's patched server imports -- the frame is already
 //! where the display engine can show it, once the display core flips such
 //! buffers (displayctl v9, the consultant's Z1-Z10).
 //!
@@ -30,7 +30,7 @@ const PITCH_ALIGN: u32 = 256;
 /// until the display core flips them (displayctl v9): before that the
 /// frame is still fetched, from a buffer in system memory, which gains
 /// nothing over the server's own texture.
-const SCANOUT_ENV: &str = "FERRIX_VTEST_SCANOUT";
+const SCANOUT_ENV: &str = "XAQU_VTEST_SCANOUT";
 
 /// nvidia-drm's render node, and the lines for the log.
 #[derive(Debug)]
@@ -61,7 +61,7 @@ impl Drop for Held {
 
 impl NvidiaScanouts {
     /// nvidia-drm's render node, if there is one and the environment asks
-    /// for it (`FERRIX_VTEST_SCANOUT=1`).
+    /// for it (`XAQU_VTEST_SCANOUT=1`).
     pub(crate) fn open() -> Option<Self> {
         if !std::env::var(SCANOUT_ENV).is_ok_and(|value| value.trim() == "1") {
             return None;

@@ -1,7 +1,7 @@
 //! What goes wrong: a core that is not there or never finishes, memory it
 //! cannot use, and a driver that forgets a clean or an invalidate.
 
-use ferrix_usb_device::acm::DATA_IN;
+use xaqu_usb_device::acm::DATA_IN;
 
 use super::model::{DWC31, Memory, Model, Regs, Shared, Time};
 use super::rig::{Rig, parts};

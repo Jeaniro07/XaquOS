@@ -6,25 +6,25 @@ version = 4
 name = "dhcp"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-netlink",
- "ferrix-netwire",
+ "xaqu-linux-abi",
+ "xaqu-netlink",
+ "xaqu-netwire",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-netlink"
+name = "xaqu-netlink"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-netwire"
+name = "xaqu-netwire"
 version = "0.1.0"
 
 [[package]]

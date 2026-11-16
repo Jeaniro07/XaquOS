@@ -19,7 +19,7 @@ and the order of the work.
 The log manager is called **lode** (customer, 2026-10-23: "lode sounds
 good"; a vein of ore, where you dig for what happened; recorded in
 `docs/backlog/DECISIONS.md`). The program and the service are `lode`, the
-crate `ferrix-lode`, its units `lode.service`, `lode-dev.socket` and so
+crate `xaqu-lode`, its units `lode.service`, `lode-dev.socket` and so
 on, its user `lode`. (`logctl` is taken: it is the kernel's log protocol
 for the Pixel 7's USB driver, `src/lib/proto/logctl`.)
 
@@ -36,7 +36,7 @@ The whole is called **the log**.
 
 ## 0. Summary
 
-* `lode` is a **native Ferrix program** in a **sealed job of its own**,
+* `lode` is a **native Xaqu program** in a **sealed job of its own**,
   started early by init as `lode.service`, running as a user of its own
   (`lode`), holding only the descriptors and channels init hands it. It
   takes no device, no network and no handle that reaches another service.
@@ -47,7 +47,7 @@ The whole is called **the log**.
 * **Sources**: the kernel log through `/dev/kmsg` (the parallel branch
   `feature/etxtbsy-kmsg-dmesg`), every unit's standard output and error
   (init's pipes, as today), `/dev/log` (syslog), systemd's native protocol
-  and stdout streams, a native channel `ferrix.log` for ring-3 drivers and
+  and stdout streams, a native channel `xaqu.log` for ring-3 drivers and
   native services, the `devmgr-events` feed, the last boot's kernel log
   from pstore, and files of programs that write nowhere else (§5).
 * **Records** are journald's `FIELD=value` pairs; the trusted `_` fields
@@ -88,8 +88,8 @@ What the N150 box showed in October 2026, each item seen there:
 
 | Pain | Cause |
 |---|---|
-| Every boot message gone within minutes | The kernel log is a 128 KiB ring; the Intel GPU driver's `ferrix.intelgpu.freqlog` writes a line a second to standard error, which is the console, which is the ring |
-| Logs in five places | Kernel, drivers, init's units, `sessiond`, hyprix in `dmesg`; `/tmp/yserver.log` (`/etc/yserver.sh`); `/home/ferrix/plog/proton.out` and `plog/dxvk/` (`tools/common/n150/endfield/ef-*.sh`); Steam's `logs/console_log.txt`; the game's logs in the Wine prefix |
+| Every boot message gone within minutes | The kernel log is a 128 KiB ring; the Intel GPU driver's `xaqu.intelgpu.freqlog` writes a line a second to standard error, which is the console, which is the ring |
+| Logs in five places | Kernel, drivers, init's units, `sessiond`, hyprix in `dmesg`; `/tmp/yserver.log` (`/etc/yserver.sh`); `/home/xaqu/plog/proton.out` and `plog/dxvk/` (`tools/common/n150/endfield/ef-*.sh`); Steam's `logs/console_log.txt`; the game's logs in the Wine prefix |
 | No times | `dmesg` printed none (fixed on the kmsg branch) |
 | Nothing survives a reboot | The ring is RAM; init's per-unit ring (`docs/INIT.md` §10, 256 lines) is RAM; only panics survive, through pstore (`docs/POSTMORTEM.md`) |
 | Box tests lose lines | Tests poll `dmesg` over ssh, and what the ring overwrote between two polls is gone without a trace |
@@ -102,7 +102,7 @@ What exists and is reused:
   Linux's record format (`prio,seq,usec,-;text`), `EPIPE` once for an
   overrun reader, `SEEK_SET`/`SEEK_DATA`/`SEEK_END`, `log_buf_len=` up to
   4 MiB, `** N printk messages dropped **`, times through `syslog(2)`, and
-  Ferrix's own `/bin/dmesg`. Programs' console output is `LOG_USER` info
+  Xaqu's own `/bin/dmesg`. Programs' console output is `LOG_USER` info
   (14), kernel lines `KERN_INFO` (6). `lode` consumes this and duplicates
   none of it.
 * **init's log pipes** (`src/user/system/linux/init/init/src/logs.rs`):
@@ -115,9 +115,9 @@ What exists and is reused:
   service, as systemd does for `systemd-journald.socket`.
 * **`devmgr-events`** (`src/user/system/native/devmgr-events`,
   `docs/DESKTOP.md` §4.2): each driver's DIED, RESTARTED and gave-up as one
-  line to every reader of the abstract socket `ferrix.devmgr.events`.
+  line to every reader of the abstract socket `xaqu.devmgr.events`.
 * **pstore** (`docs/POSTMORTEM.md` §3): the kernel log across a reset, which
-  the next boot's loader copies to `FERRIX/LASTKERNEL.TXT`.
+  the next boot's loader copies to `XAQU/LASTKERNEL.TXT`.
 * **The audit record** (`docs/certification/AUDIT.md`): the kernel's FAU
   rings, read by init into `/var/log/audit/<id>.bin`. It stays as it is
   (§15).
@@ -160,7 +160,7 @@ rule (§7.2); multi-line messages (24) in §5; namespaces (25) as an indexed
 field (§4.1). A TUI viewer (20) waits until the top five exist, as the
 research advises.
 
-## 3. How others do it, and what Ferrix takes
+## 3. How others do it, and what Xaqu takes
 
 **systemd-journald.** One daemon reads `/dev/kmsg`, `/dev/log`, its
 native datagram socket, stdout streams handed to services, and audit. A
@@ -174,10 +174,10 @@ arrays, offsets, optional sealing) written through a shared mapping,
 rotated by size and time, with `journalctl` reading the files directly.
 Sockets belong to systemd's socket units, so datagrams queue in the
 kernel while journald restarts, and journald parks its stdout streams in
-systemd's descriptor store so they survive a restart. **Ferrix takes**:
+systemd's descriptor store so they survive a restart. **Xaqu takes**:
 the field model, trusted fields, the protocols, the limiter's shape,
 socket ownership by init, the descriptor store, journalctl's command line,
-the export and JSON formats, `--flush`/`--relinquish-var`. **Ferrix
+the export and JSON formats, `--flush`/`--relinquish-var`. **Xaqu
 leaves**: the file format and its in-place updates through a mapping (the
 cause of #40262, §8.6), scaling a limit by free disk (a surprise,
 USER-WISHES theme 15), attribution by reading `/proc` after the fact
@@ -188,10 +188,10 @@ USER-WISHES theme 15), attribution by reading `/proc` after the fact
 written in a configuration language; lenient RFC 3164 and strict RFC 5424
 parsers; filters with `and`, `or` and `not`; flow control between a source
 and a slow destination; a disk buffer that makes a remote destination
-reliable across restarts and outages. **Ferrix takes**: the lenient
+reliable across restarts and outages. **Xaqu takes**: the lenient
 parsers' rules, a boolean filter language used in more than one place, and
 the disk-backed cursor for forwarding: the store itself is the buffer, and
-a forwarder keeps only its cursor (§10). **Ferrix leaves**: the
+a forwarder keeps only its cursor (§10). **Xaqu leaves**: the
 configuration language and the general graph; there is one store and the
 forwarders read it.
 
@@ -204,7 +204,7 @@ and counted. The archivist tells a component the lowest severity anyone
 wants (`interest`), so debug lines are not even formatted until someone
 asks for them. The kernel's log reaches it through a read-only kernel
 handle; readers (`log_listener`, `ffx log`) subscribe with filters. The
-archivist is an ordinary sandboxed component. **Ferrix takes**:
+archivist is an ordinary sandboxed component. **Xaqu takes**:
 attribution by the party that started the writer -- init for units,
 `devmgr` for drivers -- carried in the channel's routing, not the message
 (§4.2); a per-source budget with a counted overflow; `INTEREST` on the
@@ -232,18 +232,18 @@ anything journald accepts round-trips.
 | `MESSAGE`, `PRIORITY`, `SYSLOG_FACILITY`, `SYSLOG_IDENTIFIER`, `SYSLOG_PID`, `MESSAGE_ID`, `CODE_FILE`, `CODE_LINE`, `CODE_FUNC`, `ERRNO`, `TRACE_ID`, `SPAN_ID`, any other non-`_` field | the sender | the protocol |
 | `_PID`, `_UID`, `_GID` | `lode` | §4.2 |
 | `_COMM`, `_EXE` | `lode` | §4.2 |
-| `_SYSTEMD_UNIT`, `_SYSTEMD_SLICE`, `_SYSTEMD_CGROUP`, `_SYSTEMD_USER_UNIT`, `_SYSTEMD_INVOCATION_ID` | `lode` | §4.2. Ferrix's init builds systemd's cgroup tree and unit names (`docs/INIT.md` §5.1), so systemd's field names are the honest ones and tools that filter on them work. The invocation id is new in init: 128 random bits per start of a unit, in the service's environment as `INVOCATION_ID`, as systemd's |
-| `_STREAM` | `lode` | `stdout` or `stderr`, for lines that came through a unit's pipes (Ferrix's; #5019) |
-| `_FERRIX_DRIVER`, `_FERRIX_DEVICE` | `lode` | `devmgr`'s attestation (§5) |
+| `_SYSTEMD_UNIT`, `_SYSTEMD_SLICE`, `_SYSTEMD_CGROUP`, `_SYSTEMD_USER_UNIT`, `_SYSTEMD_INVOCATION_ID` | `lode` | §4.2. Xaqu's init builds systemd's cgroup tree and unit names (`docs/INIT.md` §5.1), so systemd's field names are the honest ones and tools that filter on them work. The invocation id is new in init: 128 random bits per start of a unit, in the service's environment as `INVOCATION_ID`, as systemd's |
+| `_STREAM` | `lode` | `stdout` or `stderr`, for lines that came through a unit's pipes (Xaqu's; #5019) |
+| `_XAQU_DRIVER`, `_XAQU_DEVICE` | `lode` | `devmgr`'s attestation (§5) |
 | `_NAMESPACE` | `lode` | the writer's mount and network namespace ids, from `/proc/<pid>/ns/` at attribution; an ordinary indexed field, not a separate store per namespace (USER-WISHES theme 25) |
-| `_TRANSPORT` | `lode` | `kernel`, `stdout`, `syslog`, `journal`, `driver`, `driver-fallback`, `pstore`, `devmgr`, `file`, `remote`, `audit` (§15); all but journald's first five are Ferrix's |
+| `_TRANSPORT` | `lode` | `kernel`, `stdout`, `syslog`, `journal`, `driver`, `driver-fallback`, `pstore`, `devmgr`, `file`, `remote`, `audit` (§15); all but journald's first five are Xaqu's |
 | `_BOOT_ID` | `lode` | 128 random bits drawn when `lode` first starts in a boot, kept in `/run/log/boot_id` so a restarted `lode` keeps it. The kernel has no `/proc/sys/kernel/random/boot_id`; if one is added later for its own reasons, `lode` uses it |
 | `_MACHINE_ID` | `lode` | `/etc/machine-id`, written once by the installer or at first boot |
 | `_HOSTNAME` | `lode` | `uname`'s nodename |
 | `_SOURCE_REALTIME_TIMESTAMP`, `_SOURCE_MONOTONIC_TIMESTAMP` | `lode` | the kernel's stamp for kernel records (`usec` in `/dev/kmsg`), init's receive time for unit lines it buffered, the sender's for native-protocol records that carry one |
-| `_KERNEL_SEQNUM` | `lode` | `/dev/kmsg`'s sequence number (Ferrix's): how a restarted `lode` knows where it stopped (§11.3) |
+| `_KERNEL_SEQNUM` | `lode` | `/dev/kmsg`'s sequence number (Xaqu's): how a restarted `lode` knows where it stopped (§11.3) |
 | `REPEATED`, `LAST_MESSAGE`, `N_SUPPRESSED`, `N_DROPPED`, `N_BLANK` | `lode` | on the records that say what a rule folded or dropped (§7) |
-| `FERRIX_PRIORITY_SOURCE`, `FERRIX_PRIORITY_WORD` | `lode` | where the level came from, and the words a derived one was read from (below) |
+| `XAQU_PRIORITY_SOURCE`, `XAQU_PRIORITY_WORD` | `lode` | where the level came from, and the words a derived one was read from (below) |
 | `__REALTIME_TIMESTAMP`, `__MONOTONIC_TIMESTAMP`, `__UTC_OFFSET`, `__SEQNUM`, `__CURSOR` | the store | when `lode` stored it; the UTC offset in force then (USER-WISHES theme 8; journald keeps none, #6589); the store's own sequence; a cursor in journald's text shape |
 
 A sender that writes a field beginning with `_` has it dropped, as
@@ -253,15 +253,15 @@ journald drops it. `_CMDLINE` is not recorded by default (§12.3).
 customer, 2026-10-23). A record nobody gave a level is never shown as info:
 
 * The store keeps a level on every record, 0 to 7 or `unspecified` (8 in
-  the entry's priority byte), and `FERRIX_PRIORITY_SOURCE` says where it
+  the entry's priority byte), and `XAQU_PRIORITY_SOURCE` says where it
   came from: `stated` (the writer said it: `PRIORITY=`, a `<PRI>` or `<N>`
   prefix, a `tracing` line's `WARN`, lode's own records, and a program's
   `/dev/kmsg` write that named its level: one of a facility no console
   line has, as the ring-3 drivers' and devmgr's `LOG_DAEMON` records
-  (`ferrix_rt::log`), or `LOG_USER` at another level than info), `kernel`
+  (`xaqu_rt::log`), or `LOG_USER` at another level than info), `kernel`
   (a level other than info on the kernel's own facility), `derived` (read from the line's words, `failed` or
-  `refused`, with the words in `FERRIX_PRIORITY_WORD`), or `unspecified`.
-  A sender's own `FERRIX_PRIORITY_SOURCE` or `FERRIX_LEVEL` is dropped.
+  `refused`, with the words in `XAQU_PRIORITY_WORD`), or `unspecified`.
+  A sender's own `XAQU_PRIORITY_SOURCE` or `XAQU_LEVEL` is dropped.
 * Info that arrives with no word from the writer says nothing and is
   stored as unspecified: the kernel's own lines and programs' console
   output all come at info (a `/dev/kmsg` write of `<6>` at `LOG_USER`
@@ -269,7 +269,7 @@ customer, 2026-10-23). A record nobody gave a level is never shown as info:
   header says another level; `lode cat` without `-p` sends none, and `-p
   info` puts `<6>` on each line. A syslog datagram without `<PRI>` and a
   native datagram without `PRIORITY` are unspecified too.
-* **`FERRIX_LEVEL`** is the explicit level every output that shows fields
+* **`XAQU_LEVEL`** is the explicit level every output that shows fields
   carries (`json`, `export`, `verbose`): `0` to `7` or `unspecified`, made
   from the record, never stored, so a viewer never infers one. journald's
   `PRIORITY` is written only for a known level, as journald's own records
@@ -288,14 +288,14 @@ customer, 2026-10-23). A record nobody gave a level is never shown as info:
 
 journald learns `_SYSTEMD_UNIT` by reading `/proc/<pid>/cgroup` after a
 datagram arrives, and loses it when the sender has already exited -- the
-last lines of a crashing service (#2913). Ferrix takes identity *when the
+last lines of a crashing service (#2913). Xaqu takes identity *when the
 writer is connected, from the party that connected it*, wherever it can,
 with no kernel change:
 
 | Path | Identity, and from whom | Race? |
 |---|---|---|
 | A unit's standard output and error | init, which made the pipes for that unit's spawn: unit, invocation, main pid, stream, ids (as built: each line on the root-only `/run/lode/units`, §18) | none: a dying service's last lines are its unit's, whatever the process |
-| A native channel (`ferrix.log`) | init, when it routes the OPEN (`CONNECT` names the client unit, `docs/INIT.md` §6); `devmgr` for a driver's channel | none |
+| A native channel (`xaqu.log`) | init, when it routes the OPEN (`CONNECT` names the client unit, `docs/INIT.md` §6); `devmgr` for a driver's channel | none |
 | A stdout stream (`lode cat`, hyprix's programs) | `SO_PEERCRED` at `connect`, resolved through `/proc` at `accept`, while the writer is necessarily alive, and kept for the stream's life | none after accept |
 | `/dev/log`, the journal socket | `SCM_CREDENTIALS`, stamped by the kernel at send time (pid, uid, gid); unit, comm and exe from `/proc` at receive, with a per-pid cache of the last resolution kept 10 s after the pid's last record | uid and pid: none. Unit, comm, exe: only for a sender that exits before its *first* datagram is read |
 
@@ -317,7 +317,7 @@ matches a driver's name prefix (`intelgpu: ...`), with `SYSLOG_IDENTIFIER`
 from the prefix, and `kernel` otherwise. Since 2026-10-24 the ring-3
 drivers and `devmgr` write each line as a `/dev/kmsg` record of its own,
 `<N>` at `LOG_DAEMON` with the level the line's writer gave it
-(`ferrix_rt::log`: `err!`, `warn!`, `notice!`, `info!`, `debug!`), and
+(`xaqu_rt::log`: `err!`, `warn!`, `notice!`, `info!`, `debug!`), and
 `lode` stores that level as stated (§4.1); the text and the identifier
 from its prefix (`intel:`, `devmgr`) are as before. `lode` reads the ring as fast as
 it fills, so once it runs nothing the ring overwrites is lost: the
@@ -327,11 +327,11 @@ before `lode` starts (§11.5).
 
 **Units' standard output and error.** init keeps reading the pipes it
 makes today (`StandardOutput=log`, the default) and sends each line to
-`lode` over its `ferrix.log` channel as one record with the unit, the
+`lode` over its `xaqu.log` channel as one record with the unit, the
 invocation, the spawn's pid and the stream. A line beginning with `<N>`
 sets its priority, as journald's `SyslogLevelPrefix=`; otherwise stdout is
 info (6) and stderr warning (4) unless the unit says `SyslogLevel=`. A
-unit with `LogFormat=json` (Ferrix's key; USER-WISHES theme 17, systemd
+unit with `LogFormat=json` (Xaqu's key; USER-WISHES theme 17, systemd
 #19683) has each line that parses as one JSON object turned into fields
 (`message`/`msg` to `MESSAGE`, `level` to `PRIORITY`, other keys upper-cased
 with non-name bytes as `_`). A unit with `LogMultiline=indent` or
@@ -353,7 +353,7 @@ the priority and whether `<N>` prefixes are read, then lines) -- what
 `systemd-cat` and `sd_journal_stream_fd()` do, and what GNOME's launcher
 does under systemd. The identifier is the program's name, the unit its
 `app-<name>-<n>.scope` (`docs/INIT.md` §5.6). Scripts use `lode cat`
-(Ferrix's `systemd-cat`, also linked as `systemd-cat`): `lode cat -t yserver
+(Xaqu's `systemd-cat`, also linked as `systemd-cat`): `lode cat -t yserver
 /data/yserver/bin/yserver ...`.
 
 **`/dev/log`**, a datagram socket owned by init's `lode-dev.socket` with
@@ -374,12 +374,12 @@ passed as a sealed memfd with `SCM_RIGHTS` (memfd and its seals exist).
 socket, which the kernel refuses today** (§1). So until §14's optional
 item, a program linked against libsystemd gets `EOPNOTSUPP` from
 `sd_journal_*` and those lines are lost unless it also writes to standard
-error, which most do. Ferrix's own programs use the native channel or a
+error, which most do. Xaqu's own programs use the native channel or a
 connected socket (`lode cat --journal` connects first), which works.
 
-**The native channel `ferrix.log`.** `lode`'s unit says
-`Offers=ferrix.log`; a native service, or a Linux one that makes native
-calls, opens it through init's directory (`Uses=ferrix.log`). Messages, in
+**The native channel `xaqu.log`.** `lode`'s unit says
+`Offers=xaqu.log`; a native service, or a Linux one that makes native
+calls, opens it through init's directory (`Uses=xaqu.log`). Messages, in
 `src/lib/proto/logproto` (`no_std`, no allocation, host-tested, in
 `logctl`'s shape):
 
@@ -397,32 +397,32 @@ debug lines at all, and `lode level intel-xelp debug --for 10m` (theme
 
 **Drivers.** Drivers are `devmgr`'s children, started with
 `process_create` in sealed jobs; their standard error is the console. In
-images that boot init (`ferrix.devmgr=init`, every image but the certified
-reference), `devmgr.service` says `Uses=ferrix.log`; `devmgr` opens one
-`ferrix.log` channel per driver it starts, tells `lode` on its own channel
-which driver and device that channel is (`_FERRIX_DRIVER=intel-xelp`,
-`_FERRIX_DEVICE=0000:00:02.0`), and hands the client end over the
+images that boot init (`xaqu.devmgr=init`, every image but the certified
+reference), `devmgr.service` says `Uses=xaqu.log`; `devmgr` opens one
+`xaqu.log` channel per driver it starts, tells `lode` on its own channel
+which driver and device that channel is (`_XAQU_DRIVER=intel-xelp`,
+`_XAQU_DEVICE=0000:00:02.0`), and hands the client end over the
 driver's bootstrap. The driver library's log macro writes to the channel
 when it has one and to standard error otherwise. A driver whose channel
 closes (`lode` restarted) falls back to standard error -- the kernel ring,
 which `lode` reads -- until `devmgr` hands it a new end, which it does
 when it sees `lode` come back. Nothing a driver logs is lost to a `lode`
 restart; it loses only its attribution for the moment. Under
-`ferrix.devmgr=kernel` (the certified reference, no init) drivers keep
+`xaqu.devmgr=kernel` (the certified reference, no init) drivers keep
 writing to standard error, as today.
 
 **`devmgr`'s events.** `lode` is one more reader of
-`\0ferrix.devmgr.events`; each event becomes a record
-(`_TRANSPORT=devmgr`, `MESSAGE_ID` per kind, `_FERRIX_DRIVER`, the exit
+`\0xaqu.devmgr.events`; each event becomes a record
+(`_TRANSPORT=devmgr`, `MESSAGE_ID` per kind, `_XAQU_DRIVER`, the exit
 cause), so "which driver died, when, and how" is `lode -t devmgr`.
 
 **The last boot's kernel log**, from pstore (**built**, 2026-10-24, the
 customer's path A of §21.10). Each boot's loader keeps the previous boot's
-region as the ESP's `FERRIX/LASTKERNEL.TXT` (`docs/POSTMORTEM.md` §3.5).
+region as the ESP's `XAQU/LASTKERNEL.TXT` (`docs/POSTMORTEM.md` §3.5).
 `lode-pstore.service`, root's one-shot (`lode pstore-fetch`), finds the ESP
--- a GUID partition table's EFI system partition through `ferrix-partition`,
+-- a GUID partition table's EFI system partition through `xaqu-partition`,
 or a FAT32 disk with no table -- reads the file read only through
-`ferrix-fat` (at most 1 MiB + 1 KiB), waiting up to 2 min for the disk's
+`xaqu-fat` (at most 1 MiB + 1 KiB), waiting up to 2 min for the disk's
 driver, and copies it to `/run/log/lastkernel.txt`, lode's, 0600: lode is
 uid 91 by then and opens no disk. lode then imports the lines it did not
 store as records of *that* boot (`_TRANSPORT=pstore`, `PSTORE_BOOT`,
@@ -449,10 +449,10 @@ stored line once.
 
 **Programs that write only files** (Steam's `console_log.txt`, a game's
 logs in its Wine prefix): a file source watched with inotify, configured
-per path in `/etc/ferrix/lode.d/*.conf`, each line a record with the
+per path in `/etc/xaqu/lode.d/*.conf`, each line a record with the
 configured identifier and the file's owner as `_UID` (`_TRANSPORT=file`;
 syslog-ng's `file()`, Vector's file source). journald has no such source;
-Ferrix's desktop needs one.
+Xaqu's desktop needs one.
 
 **Syslog over the network** (theme 9): `lode-receive.service`, opt-in, its
 own user and job, listens for RFC 3164/5424 on TCP, TLS and, if asked,
@@ -518,7 +518,7 @@ limited by `lode`: the kernel decides what it says.
 
 ### 7.2 Ingest rules
 
-`/etc/ferrix/lode.d/*.rules`, one rule a line, read at start and on
+`/etc/xaqu/lode.d/*.rules`, one rule a line, read at start and on
 `lode reload` (theme 21), applied in order after the limiter:
 
 ```
@@ -566,7 +566,7 @@ session bus relay, never something `lode` does itself (§11.2).
 The box froze on 2026-10-24 from 14:19 to 14:22: yserver at
 `RUST_LOG=info,present_pace=debug` wrote thousands of lines a second, and
 they reached the console, a framebuffer console printed synchronously
-(`ferrix.fbcon`), and the kernel log ("232205 printk messages dropped"),
+(`xaqu.fbcon`), and the kernel log ("232205 printk messages dropped"),
 until userland starved -- hyprix's flips 5.7 s apart. Two ways got them
 there: hyprix wraps each program in `lode cat --echo`, which copied every
 line on to hyprix's output, and init prints every unit line on the
@@ -582,7 +582,7 @@ loses its own debug lines before a quiet one loses anything. Every shed is
 said, once a window: `N lines dropped (debug: a, info: b) from SOURCE in T
 s`, at the level of the most severe line dropped.
 
-**The mechanism** is `ferrix-log-shed` (`src/lib/log/shed`), one per
+**The mechanism** is `xaqu-log-shed` (`src/lib/log/shed`), one per
 source and sink: over each second, a line of severity `s` passes while
 fewer lines than the cap of `s` passed, and the caps rise with severity, so
 a rising rate sheds debug first and errors last. It is journald's
@@ -611,7 +611,7 @@ synchronously is held up by whatever reaches it, and the producers above
 are what keep it fed at a person's rate; a deferred console is a kernel
 change for its own review, not needed for this.
 
-**Checks.** Host tests (`ferrix-log-shed`): a 10,000-a-second debug flood
+**Checks.** Host tests (`xaqu-log-shed`): a 10,000-a-second debug flood
 with a warning and an error every 100 lines keeps every warning and error
 and about 100 debug lines a second, a quiet source keeps everything, the
 drop is said; info and notice stop before warnings. `test-log`: `lode cat
@@ -622,7 +622,7 @@ serial console as every warning, at most a few hundred debug lines and
 init's `lines dropped ... to the console` line; a writer through `lode cat`
 to a stopped lode is done within a second, and the first line after lode
 comes back says what was shed, the error after the flood kept (`behind`);
-`--tee` as user ferrix makes its file 0644 and a second writer opens it
+`--tee` as user xaqu makes its file 0644 and a second writer opens it
 (`tee mode`).
 
 ## 8. Storage
@@ -729,7 +729,7 @@ can match (theme 2; completion that scans the journal is systemd #6238).
 
 **Indexes in a sealed segment**: for `_SYSTEMD_UNIT`,
 `_SYSTEMD_INVOCATION_ID`, `SYSLOG_IDENTIFIER`, `PRIORITY`, `_TRANSPORT`,
-`_UID`, `_PID`, `_COMM`, `_FERRIX_DRIVER`, `MESSAGE_ID`, `TRACE_ID`: a
+`_UID`, `_PID`, `_COMM`, `_XAQU_DRIVER`, `MESSAGE_ID`, `TRACE_ID`: a
 sorted table of values with the 64 KiB frames their records are in. A
 sparse time index: the first timestamp of each frame. An online segment's
 indexes are kept in memory by `lode` and rebuilt by a scan in a reader.
@@ -751,7 +751,7 @@ and each class is its own series of segments, so expiry is deleting whole
 files, never rewriting:
 
 ```
-# /etc/ferrix/lode.d/retention.conf
+# /etc/xaqu/lode.d/retention.conf
 class errors  where priority <= err                 keep 1y   max 1G
 class auth    where unit in ["auth.service"]        keep 90d  max 64M
 class desktop where unit = "app-*.scope"            keep 7d   max 512M
@@ -768,7 +768,7 @@ of its class by default) has its own oldest records dropped from that
 class at the next seal, never another source's: a driver logging a line a
 second for a month crowds out its own history, not the boot.
 `SystemKeepFree=` is checked before every batch, not at rotation only: a
-full root volume is everyone's `ENOSPC` on Ferrix.
+full root volume is everyone's `ENOSPC` on Xaqu.
 
 **Deleting by match** (Unix & Linux's most-viewed journalctl question):
 `lode delete --where 'unit = "nginx.service"' [--since --until]`,
@@ -778,29 +778,29 @@ whom and how many.
 
 ### 8.6 Why not journald's file format
 
-| | journald's format | Ferrix's segments |
+| | journald's format | Xaqu's segments |
 |---|---|---|
 | Readers | real `journalctl`, libsystemd's `sd_journal_*`, Python's `systemd.journal`, Vector, promtail | `lode`; anything else through `-o export` or `-o json` |
 | Licence | documented in systemd's `docs/JOURNAL_FILE_FORMAT.md`; a clean-room MIT writer is allowed; linking libsystemd (LGPL-2.1+) is not needed for either choice | MIT, ours, documented in `src/lib/log/store/FORMAT.md` (step 1) so `zgrep`-style tools can be written against it |
 | Effort | journald's `journal-file.c` and `sd-journal` are about 8,000 lines of C: hash tables, entry arrays, the tail's offsets, compact mode, compression, sealing, online/offline states. A compatible writer is about 25 points, then every corner real readers check | part of §17's step 1 |
 | Crash behaviour | a file not closed cleanly is renamed aside and a new one started | the torn entry alone is dropped |
 | Write cost | in-place updates through a mapping per record (#40262) | one append per batch |
-| Getting Ferrix's logs into systemd's tools | copy the files | `journalctl -o export \| systemd-journal-remote -o x.journal -` on a Linux machine makes a real journal file |
+| Getting Xaqu's logs into systemd's tools | copy the files | `journalctl -o export \| systemd-journal-remote -o x.journal -` on a Linux machine makes a real journal file |
 
-Nothing on Ferrix needs to *read* journal files with libsystemd; programs
+Nothing on Xaqu needs to *read* journal files with libsystemd; programs
 that *write* through libsystemd need only the socket (§5). The store sits
 behind a trait (`Store`), so a journald-format backend could be added
 without touching sources, rules or queries; nothing asks for it.
 
 ### 8.7 Configuration
 
-`/etc/ferrix/lode.conf` with journald's keys and meanings where they exist
+`/etc/xaqu/lode.conf` with journald's keys and meanings where they exist
 (`Storage=`, `SystemMaxUse=`, `SystemKeepFree=`, `RuntimeMaxUse=`,
 `MaxRetentionSec=`, `SyncIntervalSec=`, `RateLimitIntervalSec=`,
 `RateLimitBurst=`, `MaxLevelStore=`, `MaxLevelConsole=`,
-`ForwardToConsole=`), Ferrix's where they do not (`WriteIntervalMs=`,
+`ForwardToConsole=`), Xaqu's where they do not (`WriteIntervalMs=`,
 `SegmentMaxSize=`, `SourceMaxShare=`); rules, classes, alerts and file
-sources in `/etc/ferrix/lode.d/`. Read with init's INI reader
+sources in `/etc/xaqu/lode.d/`. Read with init's INI reader
 (`src/lib/init/svc`'s `ini`), so the syntax corners are systemd's.
 `lode config` prints the effective configuration (systemd #34830).
 
@@ -854,9 +854,9 @@ invocation's own last lines rather than a hint to run another command.
 * **Templates** (#3449): `--format '{time:iso} {unit} {priority:letter}
   {message}'` over any field, with `time:iso|rfc3339|mono|delta`,
   `priority:letter|name|num` and width and padding; saved as a named
-  format in `/etc/ferrix/lode.d/formats.conf` and in
-  `~/.config/ferrix/lode/formats.conf`.
-* **Ferrix's default, `-o human`**, when no `-o` is given:
+  format in `/etc/xaqu/lode.d/formats.conf` and in
+  `~/.config/xaqu/lode/formats.conf`.
+* **Xaqu's default, `-o human`**, when no `-o` is given:
   `2026-10-23 14:01:02.123 +02:00 E hyprix[812]: message` -- the year and
   the zone (theme 8), the priority as a letter (`E W N I D`, `?` for a
   record with no level (§4.1), and colour on a terminal; #39281), the
@@ -919,9 +919,9 @@ the reconnecting, writes the stream to the run's log directory, and turns
 lode-receive, as built". RFC 5424 and OTLP are still to come.)
 
 `lode-upload.service`, its own unit, user and sealed job, off unless
-`/etc/ferrix/lode-upload.conf` names a destination (theme 9):
+`/etc/xaqu/lode-upload.conf` names a destination (theme 9):
 
-* **One cursor per destination**, in `/var/lib/ferrix/lode-upload/<dest>`,
+* **One cursor per destination**, in `/var/lib/xaqu/lode-upload/<dest>`,
   advanced only after the destination acknowledged. The store is the disk
   buffer (syslog-ng's lesson): an outage of the destination delays
   forwarding with exponential back-off up to 5 min and loses nothing that
@@ -943,7 +943,7 @@ lode-receive, as built". RFC 5424 and OTLP are still to come.)
 ### 10.3 Receiving
 
 (Built first as `lode-receive` on a Linux host, for the viewer on nazuna:
-§18, "TLS and lode-receive, as built". The Ferrix-side service below is
+§18, "TLS and lode-receive, as built". The Xaqu-side service below is
 still to come.)
 
 `lode-receive.service` (opt-in) takes journal-upload's export, RFC
@@ -963,8 +963,8 @@ one boot, order is by monotonic time, which survives a wall-clock jump
 
 ### 11.1 What `lode` is
 
-A **native** program (`no_std` + `alloc`, `ferrix_rt`, in
-`src/user/system/native/lode`, crate `ferrix-lode`; all three roles of the summary's table), the shape of `devmgr` and
+A **native** program (`no_std` + `alloc`, `xaqu_rt`, in
+`src/user/system/native/lode`, crate `xaqu-lode`; all three roles of the summary's table), the shape of `devmgr` and
 `devmgr-events`. Its logic is in `src/lib/log/` (`record`, `filter`,
 `limit`, `rules`, `store`, `query`, `parse` for RFC 3164/5424, the native
 protocol, stdout streams and JSON lines, `format`), `no_std` + `alloc`,
@@ -973,7 +973,7 @@ parser (theme 19: the parser is the attack surface). It talks to the world
 through two fronts:
 
 * **the native front**, always: its bootstrap channel to init, the
-  `ferrix.log` channels it serves, the `devmgr-events` socket, and storage;
+  `xaqu.log` channels it serves, the `devmgr-events` socket, and storage;
 * **the Linux front**, only where the kernel has the Linux personality
   (`linux_abi=on`, every image today): `/dev/kmsg`, `/dev/log`, the journal
   sockets, `lode`'s socket, and storage as files. It is a module behind a
@@ -1000,7 +1000,7 @@ trait. Neither is this design's to build, and neither changes
 | Ids | user and group `lode`, through init's native helper for a `User=` native service (`docs/INIT.md` §5.2, P0b). No supplementary groups |
 | Limits | `MemoryMax=64M`, `TasksMax=8`, `CPUWeight=50`, `IOWeight=50`, `OOMPolicy=stop` (then restarted) |
 | Descriptors, opened by init as root and handed over (§11.2.1) | `/dev/kmsg` read-only; the sockets of `lode-dev.socket`, `lode-journal.socket`, `lode-stdout.socket` and `lode-control.socket`; directory descriptors for `/run/log/journal` and `/var/log/journal` (the latter from `lode-flush` on); its stored stdout streams (§11.3) |
-| Channels | its bootstrap to init (READY, OFFER `ferrix.log`, WATCHDOG, START for alerts); the `ferrix.log` channels routed to it |
+| Channels | its bootstrap to init (READY, OFFER `xaqu.log`, WATCHDOG, START for alerts); the `xaqu.log` channels routed to it |
 | Files it may write | `/run/log/` and `/var/log/journal/`, which `lode` owns, and nothing else `lode` owns; under `ProtectSystem=strict` once init applies L13's mount keys to native services |
 | System calls | an allow-list (`SystemCallFilter=`, L13c) once init installs filters for native starts; until then, the uid and the job are the box |
 | Network | none: it never makes an inet socket; forwarding and receiving are other units (§10) |
@@ -1018,7 +1018,7 @@ its memory and CPU budget.
 A Linux service gets its sockets at `execve`, in `LISTEN_FDS`. A native
 service is made by `process_create` and has only standard input, output
 and error. So init gives a native unit its descriptors over its control
-socket: the service connects to `/run/ferrix/control`, asks `FDS`, and
+socket: the service connects to `/run/xaqu/control`, asks `FDS`, and
 init -- after checking with `SO_PEERCRED` that the caller's pid is in that
 unit's job -- answers with the unit's `.socket` descriptors and its
 `OpenFile=` paths (systemd 253's key: init opens the path as root, so the
@@ -1061,7 +1061,7 @@ cannot be counted -- a datagram a sender gave up on.
 
 ### 11.4 It must not take down anything else
 
-* **No one waits for `lode`.** init writes to its `ferrix.log` channel
+* **No one waits for `lode`.** init writes to its `xaqu.log` channel
   without waiting; when the channel is full or `lode` is down, init keeps
   the lines in the unit's buffer -- today's ring of 256 lines a unit,
   raised to a byte budget of 64 KiB a unit and 1 MiB in all -- counts what
@@ -1099,7 +1099,7 @@ in the kernel ring, which `lode` reads from its oldest record when it
 first starts; kernel and service records share one time base, the kernel's
 monotonic clock (theme 16). `log_buf_len=1M` on images that boot init
 keeps all of that (an N150 boot to the desktop is about 300 KiB of log
-with `ferrix.intelgpu.trace` off).
+with `xaqu.intelgpu.trace` off).
 
 ## 12. Who may read what
 
@@ -1114,8 +1114,8 @@ with `ferrix.intelgpu.trace` off).
 
 The directory is `lode:lode 2755`; system segments `lode:adm 0640`; a user's
 directory `user-<uid>/` is `lode:<uid> 0750` and its segments
-`lode:<uid's primary group> 0640`, which with Ferrix's user private groups
-(`ferrix:x:1000:`) is that user alone. Only `lode` writes. (As built, a
+`lode:<uid's primary group> 0640`, which with Xaqu's user private groups
+(`xaqu:x:1000:`) is that user alone. Only `lode` writes. (As built, a
 user's directory and segments are `lode:adm`, like the system's, and the
 user is handed theirs by lode: one group per file cannot be both the
 user's and `adm`'s, §18 "Users' own records and units' runs".) USER-WISHES
@@ -1130,7 +1130,7 @@ person who wants it is added to `adm` with `authctl`. The image's
 Records from a session are `_UID=1000`, so they go to that user's
 segments. `authd`'s lines are `_UID` of `auth`, in system segments
 readable by `adm`. Its audit lines keep going to
-`/var/log/ferrix/auth.log` as `docs/AUTH.md` §3.6 says.
+`/var/log/xaqu/auth.log` as `docs/AUTH.md` §3.6 says.
 
 ### 12.3 Privacy
 
@@ -1153,9 +1153,9 @@ readable by `adm`. Its audit lines keep going to
 
 | Today | After |
 |---|---|
-| `freqlog`, a line a second to standard error | the driver's `ferrix.log` channel at debug (step 7), so `ram-only` by default (§8.5) and `INTEREST`-gated: not formatted unless someone follows it, `lode --driver intel-xelp -p debug -f` |
+| `freqlog`, a line a second to standard error | the driver's `xaqu.log` channel at debug (step 7), so `ram-only` by default (§8.5) and `INTEREST`-gated: not formatted unless someone follows it, `lode --driver intel-xelp -p debug -f` |
 | `/tmp/yserver.log` from `/etc/yserver.sh` | `lode cat -t yserver` in the script; the file goes |
-| `/home/ferrix/plog/proton.out` | `lode cat -t proton` around Proton; the fps channel is `lode -t proton -g trace:fps` |
+| `/home/xaqu/plog/proton.out` | `lode cat -t proton` around Proton; the fps channel is `lode -t proton -g trace:fps` |
 | DXVK's `plog/dxvk/*.log` | `DXVK_LOG_PATH=none`, so DXVK writes to standard error, which `lode cat` holds |
 | Steam's `console_log.txt`, a game's logs in its prefix | the file source (§5) |
 | hyprix, waybar, `sessiond`, Steam's standard output | per-program streams (step 6) |
@@ -1175,7 +1175,7 @@ to the console only at or above `MaxLevelConsole=` (default `notice`;
 `info` on gate images, whose expectations read unit lines from the serial
 console; `docs/INIT.md` §8.1's boot-log lines are init's own and always
 go). Before `lode` is up, and after it has failed, init writes everything
-as now. Gate images set it with `ferrix.log.console=info` on the kernel
+as now. Gate images set it with `xaqu.log.console=info` on the kernel
 command line, read by init, so no gate's transcript changes.
 
 ## 14. The kernel
@@ -1209,8 +1209,8 @@ address for `recvfrom`. It adds no `unsafe`. Nothing here waits for it.
   that branch's review, marked PENDING there.
 * **What the consultant should still look at**, as a design review before
   step 7:
-  1. **`devmgr`'s drivers gain a `ferrix.log` end.** `devmgr` is outside
-     the item and the reference configuration is `ferrix.devmgr=kernel`,
+  1. **`devmgr`'s drivers gain a `xaqu.log` end.** `devmgr` is outside
+     the item and the reference configuration is `xaqu.devmgr=kernel`,
      where nothing changes; but `devmgr-proto` is the protocol the item's
      kernel half speaks to `devmgr`. The design puts the new messages in
      `logproto` and the hand-over in the driver bootstrap `devmgr` alone
@@ -1234,11 +1234,11 @@ address for `recvfrom`. It adds no `unsafe`. Nothing here waits for it.
 
 1. §14's optional kernel item (datagram to a name): build it, so
    libsystemd's programs log and `NOTIFY_SOCKET` works, or not.
-2. `adm` as the readers' group, or a Ferrix name.
+2. `adm` as the readers' group, or a Xaqu name.
 3. `SyncIntervalSec=5s` (more writes, shorter loss) or journald's 5 min;
    §8.3's budget is written for 5 s.
 4. Debug records `ram-only` by default (§8.5), or on disk like journald.
-5. Ferrix's `-o human` as the default output (§9.3), or journald's `short`.
+5. Xaqu's `-o human` as the default output (§9.3), or journald's `short`.
 6. Forwarding's first output to build (§10.2): journal-upload's export, or
    JSON lines.
 
@@ -1268,10 +1268,10 @@ OTLP outputs.
 | 1 | `src/lib/log/`: record, segment format with `FORMAT.md`, torn-tail recovery, sealing with zstd and indexes, summaries, retention classes, vacuum; `logproto` | 9 | host tests; Miri; fuzz `log_segment`; `check` |
 | 2 | `src/lib/log/`: the filter language and its planner, limiter, ingest rules, parsers (RFC 3164/5424, native, stdout stream, JSON lines), formats (journald's byte for byte against goldens from systemd's test data; `human`; templates) | 7 | host tests; fuzz `log_filter`, `log_syslog`, `log_native` |
 | 3 | `lode`: kmsg import with sequence tracking, the sockets, RAM and disk tiers, flush and relinquish, boot and machine id, restart record, `lode`'s socket | 8 | its loop over a fake front, host-tested; `test-log` parts A and C |
-| 4 | init: `lode.service` and its sockets, `Type=native` + sealed job, `OpenFile=` and `FDS` for native units, the descriptor store, `WatchdogSec=`, `INVOCATION_ID`, unit output to `ferrix.log` with buffer and replay, `MaxLevelConsole=`, `LogFormat=`, `LogMultiline=` | 9 | `svc` host tests; `test-init` unchanged; `test-log` part B |
+| 4 | init: `lode.service` and its sockets, `Type=native` + sealed job, `OpenFile=` and `FDS` for native units, the descriptor store, `WatchdogSec=`, `INVOCATION_ID`, unit output to `xaqu.log` with buffer and replay, `MaxLevelConsole=`, `LogFormat=`, `LogMultiline=` | 9 | `svc` host tests; `test-init` unchanged; `test-log` part B |
 | 5 | the reader and administration roles, `lode cat`, the `journalctl` link; `svc log` and `svc status` through them; `cargo xtask box-log` | 7 | host tests over fixture stores; `test-log` part D; the benchmark, part F |
 | 6 | sessions: `sessiond` and hyprix give each program a stream; yserver, Proton and DXVK scripts; alerts' `notify` | 3 | `test-desktop`: waybar's and foot's lines under their own identifiers |
-| 7 | drivers: `logproto` client in the driver library with `INTEREST`, `devmgr` hands ends and re-hands after a restart, `freqlog` moved, `devmgr-events` import | 6 | `test-devmgr`: a driver's line with `_FERRIX_DRIVER`; a `lode` kill during driver logging loses no line |
+| 7 | drivers: `logproto` client in the driver library with `INTEREST`, `devmgr` hands ends and re-hands after a restart, `freqlog` moved, `devmgr-events` import | 6 | `test-devmgr`: a driver's line with `_XAQU_DRIVER`; a `lode` kill during driver logging loses no line |
 | 8 | `lode-upload` (journal-upload export, RFC 5424, JSON lines, OTLP) and `lode-receive`, cursors, back-off, verified TLS, `--merge` | 8 | `test-net`: upload to the host's `systemd-journal-remote`, read back by the host's own `journalctl`; the destination down for a minute loses nothing |
 | 9 | file sources; pstore import (built: `test-log-pstore`) | 4 | `test-log` part G: a forced panic, then `lode -b -1` ends with it |
 | 10 | the N150 box run (§17.2) | 3 | box |
@@ -1338,7 +1338,7 @@ When something crashes -- a process killed by a fault, a driver restarted,
 a game's error popup that is gone before anyone looks (Endfield's
 "illegal instruction" on the N150) -- lode keeps a picture of the screen at
 that moment, linked to the crash's record, so `lode --around` shows it
-beside the lines. **Off by default**: `/etc/ferrix/lode.d/capture.conf`
+beside the lines. **Off by default**: `/etc/xaqu/lode.d/capture.conf`
 with `Capture=yes` turns it on.
 
 **An open interface, not a hyprix hookup.** lode never reads `card0` or
@@ -1435,7 +1435,7 @@ nothing here is in the item.
 
 ### Step 1, as built
 
-`src/lib/log/lode` (`ferrix-lode-core`, `no_std`, no `unsafe`, 31 host
+`src/lib/log/lode` (`xaqu-lode-core`, `no_std`, no `unsafe`, 31 host
 tests) and `src/user/system/native/lode` (the native program, `/sbin/lode`
 in every initramfs, `/bin/lode` and `/bin/journalctl` linking to it in
 every image that boots init). Kernel lines: 0.
@@ -1463,9 +1463,9 @@ every image that boots init). Kernel lines: 0.
   since init writes every unit line to the console as `  init
   NAME[PID]: TEXT`; lode reads that into `UNIT`, `SYSLOG_IDENTIFIER`
   and `SYSLOG_PID` -- not the trusted `_SYSTEMD_UNIT`, since anything can
-  write to the console. init's `ferrix.log` channel (step 4 of §17)
+  write to the console. init's `xaqu.log` channel (step 4 of §17)
   brings the trusted fields. Kernel subsystems' `  name     text` lines
-  get `FERRIX_SUBSYSTEM`, a driver's `name: text` the identifier.
+  get `XAQU_SUBSYSTEM`, a driver's `name: text` the identifier.
 * **The reader**: `-b [N|ID]`, `--list-boots`, `-k`, `-u`, `-t`, `-T`,
   `-p P[..Q]`, `-g` (globs, any case for a lower-case pattern), `-S`/`-U`
   in every form it prints, `-n`, `-r`, `-e`, `-f`, `-o human|short|
@@ -1490,7 +1490,7 @@ every image that boots init). Kernel lines: 0.
 Floods held, retention per class, deletion, crashes (§7, §8.5; the
 N150's needs 3a and 5):
 
-* **Rules** in `/etc/ferrix/lode.d/*.rules` (`drop`, `sample 1/N`, `level
+* **Rules** in `/etc/xaqu/lode.d/*.rules` (`drop`, `sample 1/N`, `level
   P`, `fold DURATION`, `limit BURST/DURATION`, each `where` a filter), read
   at start; a file that does not read is said in an error record and not
   used. A rule that held records back says how many every 10 s (`RULE`,
@@ -1533,11 +1533,11 @@ N150's needs 3a and 5):
 
 Session ids (§19.1). What already existed is reused, not doubled:
 `sessiond` owns seat0 and numbers its sessions from the count `login`
-keeps (`/run/ferrix/login/next`, `session-<n>.scope`), so the session id is
+keeps (`/run/xaqu/login/next`, `session-<n>.scope`), so the session id is
 that `n`, the one its scope already has.
 
 * `sessiond` draws a 16-byte token per session from `/dev/urandom`, gives
-  it to the compositor in `FERRIX_SESSION_TOKEN` beside the card's channel,
+  it to the compositor in `XAQU_SESSION_TOKEN` beside the card's channel,
   and once the scope exists writes `SESSION <n> seat=seat0 uid=U pid=P
   scope=session-<n>.scope unit=<its own unit> token=<hex>` to lode's
   `/run/lode/seat`; `END <n>` when the session is gone. A lode that is not
@@ -1560,11 +1560,11 @@ that `n`, the one its scope already has.
 
 Crash screenshots (§19), on the session token of step 2a.
 
-* `src/lib/proto/lode-capture` (`ferrix-lode-capture`, `no_std`, no
+* `src/lib/proto/lode-capture` (`xaqu-lode-capture`, `no_std`, no
   `unsafe`): the provider protocol's seven messages as frames, decoded
   strictly, and a QOI encoder and decoder -- the one picture format every
   provider can write without a library. Host-tested.
-* lode (`capture.rs`): off unless `/etc/ferrix/lode.d/capture.conf` says
+* lode (`capture.rs`): off unless `/etc/xaqu/lode.d/capture.conf` says
   `Capture=yes`; then `/run/lode/capture` (0666) and
   `<journal>/captures/` (`lode:adm 2750`). A REGISTER is accepted only from
   the pid `sessiond` named for the seat with that session's token
@@ -1577,7 +1577,7 @@ Crash screenshots (§19), on the session token of step 2a.
   is a record, `CAPTURE_OF=<seqnum>` and `CAPTURE=stored|none|declined|
   timed-out|skipped|binned`; a stored picture is
   `captures/<boot>-<seqnum>-<time>.qoi`, 0640, kept 7 days and 256 MiB.
-* hyprix (`lodeshot.rs`): takes `FERRIX_SESSION_TOKEN` out of its
+* hyprix (`lodeshot.rs`): takes `XAQU_SESSION_TOKEN` out of its
   environment first thing in `main`, registers for seat0, and answers each
   CAPTURE with its first screen as last shown (the GPU's or a client's
   buffer, or the software canvas), or declines while the session is
@@ -1634,7 +1634,7 @@ Box tests stream to nazuna (§10.1; the N150's needs 2 and 10).
 
 * `cargo xtask box-log --host <DEST> [-- <lode options>] [--until-match
   TEXT] [--out FILE]` runs `lode -f -o json` on the machine over ssh,
-  writes every record to `~/.local/share/ferrix/logs/box/<UTC>-<host>.jsonl`
+  writes every record to `~/.local/share/xaqu/logs/box/<UTC>-<host>.jsonl`
   (its first line naming the host, this tree's commit and the time, so the
   evidence can be cited) and a line of each to the terminal, and keeps the
   last record's cursor. A dropped connection -- the machine rebooting --
@@ -1651,9 +1651,9 @@ Box tests stream to nazuna (§10.1; the N150's needs 2 and 10).
 Queries that stay fast as the store grows (USER-WISHES top item 2, §8.4).
 
 * At every seal the service writes `<segment>.sum` beside the segment
-  (`ferrix-lode-core` `summary`): its sequence and time range, record
+  (`xaqu-lode-core` `summary`): its sequence and time range, record
   count, priority range, and every value of `SYSLOG_IDENTIFIER`, `UNIT`,
-  `_SYSTEMD_UNIT`, `_TRANSPORT`, `SESSION_ID` and `_FERRIX_DRIVER` it
+  `_SYSTEMD_UNIT`, `_TRANSPORT`, `SESSION_ID` and `_XAQU_DRIVER` it
   holds, with counts, under a CRC; a new file renamed over the old. At
   start it summarises up to 64 sealed segments that have none (an older
   lode's); vacuum removes a summary with its segment; `lode delete`
@@ -1694,7 +1694,7 @@ wrong, fixed in one landing before step 6:
   two words before (`0 rows refused`); for the kernel's own lines only the
   error words and an upper-case `WARNING:`, since its boot checks report
   what they refused on purpose -- or unspecified.
-* **`FERRIX_SUBSYSTEM`** (on 155 of 1,907): the subsystem a line names,
+* **`XAQU_SUBSYSTEM`** (on 155 of 1,907): the subsystem a line names,
   else the program that wrote it, else `kernel` for the kernel's own lines.
   Every line that says who wrote it now has one.
 * **The empty `MESSAGE`** (record 2) was a blank console line: blank
@@ -1722,7 +1722,7 @@ wrong, fixed in one landing before step 6:
 
 The customer's: the Intel driver's lines reached lode as unspecified.
 Every ring-3 driver and devmgr now says each line at a level it chose
-(`ferrix_rt::log`: `err!`, `warn!`, `notice!`, `info!`, `debug!`, or
+(`xaqu_rt::log`: `err!`, `warn!`, `notice!`, `info!`, `debug!`, or
 `log::line(level, ...)`; intel-xelp's `Host::say` and the keeper's take a
 `Level`): refusals a program takes for a lost device at error, other
 refusals and work-arounds at warning, steps at info, `freqlog`, uapi
@@ -1741,7 +1741,7 @@ driver (§17) is still to come; this is its fallback made exact.
 `lode upload`, `lode-upload.service`, sends the log on to collectors.
 
 * **The store is the buffer.** Each destination keeps a cursor in
-  `/var/lib/ferrix/lode-upload/<name>`: the store sequence number of the
+  `/var/lib/xaqu/lode-upload/<name>`: the store sequence number of the
   last record it acknowledged. The cursor is written through a new file
   renamed over the old one, and only after the destination answered
   `2xx`. A destination that is down is tried again after 1 s, 2, 4, ...,
@@ -1753,7 +1753,7 @@ driver (§17) is still to come; this is its fallback made exact.
   at a reboot) are counted in a record of their own: `MESSAGE_ID`
   e2a6c4b8d0f24e1a9c3b5d7f9e1a3c5b, `N_UNSENT`, `UPLOAD_DESTINATION`, the
   range.
-* **Configuration**: `/etc/ferrix/lode-upload.conf`, one destination a
+* **Configuration**: `/etc/xaqu/lode-upload.conf`, one destination a
   line, `NAME URL FORMAT [auth] [where EXPR]`. No file, or no line: it
   says so and ends. `export` posts the Journal Export Format as
   `systemd-journal-upload` posts it (`POST /upload`, `Content-Type:
@@ -1819,24 +1819,24 @@ driver (§17) is still to come; this is its fallback made exact.
   (box-watchdog, 2026-11-08).** The cause: the box's ESP was written by an
   older `xtask`, whose FAT32 volume says 226 sectors more than its table
   numbers clusters for (`fat.rs` has said where its last cluster ends since);
-  Linux and firmware clamp such a volume, `ferrix-fat` refused it ("a table
+  Linux and firmware clamp such a volume, `xaqu-fat` refused it ("a table
   too small for its clusters"), and `read()` dropped the refusal. Now
-  `ferrix-fat` takes the clusters the table numbers (host test
+  `xaqu-fat` takes the clusters the table numbers (host test
   `a_volume_longer_than_its_table_reads_the_clusters_the_table_numbers`,
   failing without the fix), and `lode pstore-fetch` names each refused
   volume and why before it says no disk holds the file. Read off the box
   (`/dev/vda1`'s boot sector: 1,048,576 sectors, 2 tables of 8,064, so
   1,032,416 data clusters against 1,032,190 numbered). The report as it was:
   on the N150 box
-  `lode pstore-fetch` says "no disk holds FERRIX/LASTKERNEL.TXT" on every
+  `lode pstore-fetch` says "no disk holds XAQU/LASTKERNEL.TXT" on every
   boot since at least 2026-11-07 21:53, run by hand as root too, while the
   loader writes the file: the box's ESP (`/dev/vda1`, in `/proc/partitions`
-  with `vda` and `vda2`) holds `FERRIX/LASTKERNEL.TXT` and `.PRV` (read with
+  with `vda` and `vda2`) holds `XAQU/LASTKERNEL.TXT` and `.PRV` (read with
   mtools on the box, 2026-11-08 02:10; the hang-3 panic report was in it).
   So `pstore.rs`'s GPT or FAT reading refuses the box's disk without a
   word: `read()` drops `Volume::open`'s and `esps`' errors. Say why per
   disk, then fix the refusal. Until then nothing of a box panic reaches
-  `lode -b -1` or the uploader; the event-log partition (`ferrix-events`,
+  `lode -b -1` or the uploader; the event-log partition (`xaqu-events`,
   sda3 since 2026-11-08) keeps the report itself.
 
 ### Compression, as built (§8.2)
@@ -1845,7 +1845,7 @@ driver (§17) is still to come; this is its fallback made exact.
   compresses it: its entries in zstd frames of about 64 KiB of whole
   entries (`ruzstd`'s fastest level, the crate the btrfs code already
   uses), each frame with its unpacked and packed length and a CRC-32C, and
-  the segment's header kept whole in front (`ferrix-lode-core`
+  the segment's header kept whole in front (`xaqu-lode-core`
   `compress`, magic `FXJZSTD1`). Written to a new file, synced, renamed
   over the sealed one: a crash leaves one or the other.
 * **Unpacked, it is the segment it was made from, byte for byte** (cut at
@@ -1872,16 +1872,16 @@ driver (§17) is still to come; this is its fallback made exact.
 
 ### The viewer, as built (2026-10-23)
 
-The customer's design of a log viewer (`~/.local/share/ferrix/design/lode-app`
+The customer's design of a log viewer (`~/.local/share/xaqu/design/lode-app`
 on nazuna) is the app `lode-viewer`, in every image a
 person runs and "Logs" in the launcher. It reads the store as `lode`
-does, with `ferrix-lode-core` (segments, compressed or not, summaries, the
+does, with `xaqu-lode-core` (segments, compressed or not, summaries, the
 filter language, the JSON output), as the person running it, and follows it for Live as `lode -f`
 does. It also opens a JSONL export (`lode -o json`, `cargo xtask box-log`'s
-files) on Ferrix or a Linux host. Its window is the desktop's own
+files) on Xaqu or a Linux host. Its window is the desktop's own
 `compositor-toolkit`, drawn on the CPU; egui and iced were set aside because
 both reach Wayland through winit, which loads libwayland and libxkbcommon at
-run time, which a static Ferrix program cannot.
+run time, which a static Xaqu program cannot.
 
 * **Overview** (a boot's track, lanes, tiles, activity per 10 s, rate
   against the limiter, top sources, the window's warnings and worse first),
@@ -1895,7 +1895,7 @@ run time, which a static Ferrix program cannot.
   query into it and requires the 13 records of 801 it must find (x86-64).
 * On a Linux desktop too (nazuna's GNOME, any Wayland session; its
   README's `install-linux.sh`), with a machine picker over the stores
-  `lode-receive` keeps, `~/.local/share/ferrix/lode-receive/<machine-id>/`
+  `lode-receive` keeps, `~/.local/share/xaqu/lode-receive/<machine-id>/`
   (or `host-<hostname>/`), each followed Live; `--import FILE.jsonl --into
   DIR` makes such a store from an export.
 * Not yet: the design's Timeline, Sources, Crashes, Boots and Rules pages,
@@ -1989,7 +1989,7 @@ requires every line stored and none lost (`verify --kernel`).
 | 20,000 lines of 100 bytes, about 2,000 a second | 2.61 | 3 | 3 |
 
 * **Field names as indexes.** An entry wrote every field's name in full
-  -- `_SOURCE_MONOTONIC_TIMESTAMP`, `FERRIX_PRIORITY_SOURCE` and five more
+  -- `_SOURCE_MONOTONIC_TIMESTAMP`, `XAQU_PRIORITY_SOURCE` and five more
   on every kernel record, 128 bytes of a 380-byte record for a 100-byte
   message. The 40 names records carry most (`segment::NAMES`, append only)
   are now written as a two-byte index (a name length with its top bit set,
@@ -1999,7 +1999,7 @@ requires every line stored and none lost (`verify --kernel`).
 * **The slow load is btrfs's.** A minute with lode running and no load
   writes 60 KiB to the volume; with the load, 532 KiB for 12 KiB of
   messages: about 40 KiB for each of the twelve five-second `fdatasync`s,
-  whatever lode wrote (2.6 KiB). That is the commit Ferrix's btrfs makes
+  whatever lode wrote (2.6 KiB). That is the commit Xaqu's btrfs makes
   for an `fsync`; lode can only sync less often (`SyncIntervalSec=`). The
   row holds the slow load to 50, so it cannot grow, and says it is over
   the design's 40. Meeting 40 is the file system's: an `fsync` through a
@@ -2007,14 +2007,14 @@ requires every line stored and none lost (`verify --kernel`).
 
 ### TLS and lode-receive, as built (§10.2, §10.3)
 
-The customer's order: a Ferrix machine's log over TLS to nazuna, kept
+The customer's order: a Xaqu machine's log over TLS to nazuna, kept
 there for the viewer. One workspace, `src/user/system/linux/lode-net`, a
 std program against musl as dhcp is, with two programs:
 
 * **`lode-upload`** (`/bin/lode-upload`, `lode-upload.service`), in the
   desktop's image and `test-log`'s, replaces the native `lode upload`:
   the same cursor, back-off and reading of the store (std's file system,
-  `ferrix-lode-core`'s formats), and now `https://` to any host. A line is
+  `xaqu-lode-core`'s formats), and now `https://` to any host. A line is
   `NAME https://HOST:PORT/upload export ca=FILE [cert=FILE key=FILE]
   [where EXPR]`; plain `http://` stays limited to this machine. The keys
   are read as root before it becomes uid 92. Each upload says
@@ -2030,12 +2030,12 @@ std program against musl as dhcp is, with two programs:
   the machines it keeps; `install-service` writes and starts a systemd user
   unit; `show --machine DIR` prints a machine's records as JSON lines. Exit
   status 0 done, 1 error, 2 usage, 3 not running (`check`), 4 certificates.
-* **The stores**: `~/.local/share/ferrix/lode-receive/<machine-id>/` (or
+* **The stores**: `~/.local/share/xaqu/lode-receive/<machine-id>/` (or
   `host-<hostname>/` for a machine with no machine id), each a lode store
   as lode lays out its own -- `system@<boot>-<seq>.fxj`, `.sum` beside, the
   sealed ones compressed -- with a `machine` file (`hostname=`,
   `last_seen=`, `paired=`); `.pki/` and `.receive.lock` beside them. The
-  viewer opens them with `ferrix-lode-core`. A machine directory is bound to
+  viewer opens them with `xaqu-lode-core`. A machine directory is bound to
   the certificate it was first paired with: another is refused.
 * **Once, and only after it is safe.** The receiver answers 200 only after
   the records are synced; a record whose sequence number it already holds
@@ -2052,7 +2052,7 @@ std program against musl as dhcp is, with two programs:
   RustCrypto organisation's `rustls-rustcrypto` is an alpha that pins an
   older `rustls-webpki` and brings RSA (RUSTSEC-2023-0071), so its glue for
   our three algorithms is copied, with attribution, not the crate.
-  Randomness is the kernel's alone, `getrandom(2)` with no flags (on Ferrix
+  Randomness is the kernel's alone, `getrandom(2)` with no flags (on Xaqu
   the kernel's ChaCha20 generator seeded from firmware and the processor,
   `src/kernel/src/random.rs`); no seeding in user space, no fallback, and a
   failed read fails the handshake or the key. The client must present a
@@ -2073,7 +2073,7 @@ std program against musl as dhcp is, with two programs:
   more while the uploader fails and backs off, brings it back, and
   requires all forty kept once, in order, under the guest's host name.
 * Not yet: a machine id at first boot (today a guest is
-  `host-ferrix/`); RFC 5424 and OTLP; certificate revocation (a paired
+  `host-xaqu/`); RFC 5424 and OTLP; certificate revocation (a paired
   machine is unpaired by removing its `.pki/clients/NAME.pem`).
 
 ### Users' own records and units' runs, as built (2026-10-23)
@@ -2086,7 +2086,7 @@ The first of the three steps the customer approved after §20's audit
   inherits a log gets its own), and hands lode every line on
   `/run/lode/units` -- made by lode as root, 0600, any peer but root
   refused -- with the unit, its run, the process, its uid and gid and the
-  stream (`ferrix-lode-core` `units`). lode stores it with
+  stream (`xaqu-lode-core` `units`). lode stores it with
   `_SYSTEMD_UNIT`, `_SYSTEMD_INVOCATION_ID`, `_STREAM`, `_PID`, `_UID` and
   `_GID`, `_TRANSPORT=stdout`, and the identifier and level its words say,
   as before. Nothing waits for lode: init's connection is non-blocking,
@@ -2102,7 +2102,7 @@ The first of the three steps the customer approved after §20's audit
   socket full -- is stored as before, with `UNIT` read from its text. A
   trusted line waits for its copy until the kernel log has been read to its
   end and 2 s have passed. Standard error is not raised to warning (§5
-  said it would be): most of Ferrix's services write their ordinary lines
+  said it would be): most of Xaqu's services write their ordinary lines
   there, so a stream says where a line went, not how bad it is.
 * **Runs** (§9.2). init draws 32 hex digits each time a unit's cgroup is
   made -- each start -- gives them to its processes as `INVOCATION_ID`,
@@ -2135,7 +2135,7 @@ The first of the three steps the customer approved after §20's audit
   records, which are the system's; root finds `user-1000/` and reads them.
 * **The viewer**: `lode-viewer` already looks in `user-<uid>/` as root or
   `adm`; a person who is neither needs it to ask `/run/lode/read` as `lode`
-  does (`ferrix_lode_core::access` has the packets) -- a change in the
+  does (`xaqu_lode_core::access` has the packets) -- a change in the
   viewer, told to its agent. The store's format did not change.
 * Not yet: `_EXE`; init writing units' lines to the console only at or
   above `MaxLevelConsole=` once lode takes them (§13.2), which waits for the
@@ -2150,7 +2150,7 @@ The second of the three steps the customer approved after §20's audit.
 * **`-F FIELD` and `-N`**: each value of a field, and each field name,
   once, over the records the other options choose (`-b`, `-u`, ...), as
   journalctl prints them, `PRIORITY`, `_BOOT_ID` and `_HOSTNAME` included.
-* **`-g` is a regular expression** (`ferrix-lode-core` `regex`, the tree's
+* **`-g` is a regular expression** (`xaqu-lode-core` `regex`, the tree's
   own, no crate): PCRE2's syntax a person writes at a shell -- classes,
   `\d \w \s \b`, `[:alpha:]`, `* + ? {n,m}` and their lazy forms,
   groups, `|`, anchors, `(?i)` -- matched by a Pike VM, so no pattern can
@@ -2214,7 +2214,7 @@ The third of the three steps the customer approved after §20's audit
   wholly in the window with no filter is counted from its summary alone,
   the rest from their records. **`lode top --live [SECONDS]`** prints every
   few seconds who wrote what since the last look, per second.
-* **Alerts** (`ferrix-lode-core` `alert`): `alert [NAME] [rate > N/DURATION]
+* **Alerts** (`xaqu-lode-core` `alert`): `alert [NAME] [rate > N/DURATION]
   [where EXPR] notify "TEXT"` or `... start UNIT` in any `*.rules` file.
   Records are counted as they arrive, before the limiter, so a flood it
   holds back is still seen; per source, more than N in a window fires, and
@@ -2305,7 +2305,7 @@ trace.
   script's (`sh /etc/yserver.sh` is `yserver`); the echo keeps the console,
   and every gate that reads it, as it was. The echo's copy comes back as
   hyprix's unit's line, and lode keeps the two as one: an echoed stream's
-  line (`FERRIX_ECHOED=1`, the stream header's seventh line) waits up to
+  line (`XAQU_ECHOED=1`, the stream header's seventh line) waits up to
   2 s for its copy and takes the copy's kernel sequence number
   (`units::Echoes`). `session-streams off` in `events.conf` turns it off.
 * **Names on every record with a pid** (`process-names`): `_COMM` and
@@ -2319,7 +2319,7 @@ trace.
 * **App errors and windows** (hyprix, `lode_events.rs`): when a window
   first maps, a window whose class is Windows' dialog class `#32770` or
   whose title or class says error, failed, failure, fatal, exception or
-  crash is an `app-error` record (native protocol: `FERRIX_EVENT=app-error`,
+  crash is an `app-error` record (native protocol: `XAQU_EVENT=app-error`,
   `WINDOW_TITLE`, `WINDOW_CLASS`, `WINDOW_PID`, `WINDOW_COMM`, `WINDOW_EXE`,
   `WINDOW_DIALOG` for a modal or child window, at warning). For an X
   program's window, whose Wayland client is the X server, hyprix asks the
@@ -2332,13 +2332,13 @@ trace.
   window a `window-opened` record when that kind is on (off by default).
   lode takes a screenshot of an app error as of a crash (§19), and desktop
   images ship `Capture=yes`.
-* **`events.conf`** (`/etc/ferrix/lode.d/`, a person's
-  `~/.config/ferrix/lode/events.conf` over it for their session's kinds):
+* **`events.conf`** (`/etc/xaqu/lode.d/`, a person's
+  `~/.config/xaqu/lode/events.conf` over it for their session's kinds):
   `KIND on|off [LEVEL]` for `window-opened` (off), `app-error`,
   `session-streams`, `crash-names`, `process-names`, `capture` (on).
   `lode events` lists them with where each was set; which records of a
   kind are kept is the rules' (`drop where event = window-opened and id =
-  waybar`; `event` is `FERRIX_EVENT` in the filter language). hyprix reads
+  waybar`; `event` is `XAQU_EVENT` in the filter language). hyprix reads
   the files each time it would make an event; **`lode reload`** (root's,
   on the control socket) has lode read its rules, alerts and events again.
 * `test-log` ("streams", "names" rows): `--tee` keeps the file and the
@@ -2356,7 +2356,7 @@ trace.
 What the night of the Endfield start failures needed beyond streams.
 
 * **`lode snapshot PID [-n N] [--reason TEXT]`**: one record set under a
-  `SNAPSHOT` id (`FERRIX_EVENT=snapshot`): the process's record --
+  `SNAPSHOT` id (`XAQU_EVENT=snapshot`): the process's record --
   `SNAPSHOT_COMM`, `SNAPSHOT_EXE`, `SNAPSHOT_CMDLINE`, `SNAPSHOT_FDS` (how
   many descriptors), `SNAPSHOT_STATUS` (its whole `status`, the `Sig*` lines
   included), `SNAPSHOT_TAIL` (its last N lines in the log), `SNAPSHOT_REASON`
@@ -2380,7 +2380,7 @@ What the night of the Endfield start failures needed beyond streams.
   `BOOT_CMDLINE` (the kernel's command line), `BOOT_DEPLOY` (a deploy's
   `n150.deploy=` nonce) and `BOOT_IMAGE` (the tree's commit the image was
   built from, `-dirty` for a changed tree), which xtask writes to
-  `/etc/ferrix/image` in every image that boots init.
+  `/etc/xaqu/image` in every image that boots init.
 * **Echoes, second form**: a unit's line that arrives before the echo it
   copies is held up to 0.5 s while an echoing stream is open, so the order
   the two arrive in does not matter.
@@ -2416,7 +2416,7 @@ architectures.
 | 6 | Every entry attributed; stdout vs stderr | built | sockets: `_PID/_UID/_GID` from `SO_PEERCRED`, `_COMM` and cgroup read from `/proc` when the sender connects; units' lines handed over by init with `_SYSTEMD_UNIT`, `_SYSTEMD_INVOCATION_ID`, `_STREAM`, `_PID`, `_UID`, `_GID` (§18 "Users' own records and units' runs"; `test-log` "stream" row) | 0.5: `_EXE` |
 | 7 | Output usable without flags | partly | `-o human` with year, zone and level letter (`?` for none), never truncated; 11 journald formats | 2: `--format` templates; colour on a terminal; a pager |
 | 8 | A crash costs at most the unsynced tail | built | per-entry CRC and torn-tail cut, restart without loss (`test-log`: SIGKILL mid-flood, `verify --kernel` "unsaid gaps: none"), sealed segments immutable | 1: a full or failing disk degrading to RAM (§11.4) is untested |
-| 9 | Store-and-forward, syslog in and out | partly | `lode-upload` with cursor, back-off, TLS; `lode-receive` (`test-log-remote`); `/dev/log` in | 3: RFC 5424 out over TCP/TLS, OTLP out; 2: `lode-receive` on Ferrix and a merged view (§10.3, §10.4) |
+| 9 | Store-and-forward, syslog in and out | partly | `lode-upload` with cursor, back-off, TLS; `lode-receive` (`test-log-remote`); `/dev/log` in | 3: RFC 5424 out over TCP/TLS, OTLP out; 2: `lode-receive` on Xaqu and a merged view (§10.3, §10.4) |
 | 10 | The right slice by default | built | `-b`, `--list-boots`, persistent by default, `-u` globs, `-u UNIT@last`/`@-1`, `-s` sessions, marks, users' own segments (`test-log` "runs" and "user" rows) | 0 |
 
 ### 20.2 The themes after the top ten (USER-WISHES.md)
@@ -2432,7 +2432,7 @@ architectures.
 | 17 Structured logging from programs | partly | native protocol, `lode cat --journal`; tracing lines read for crate and level | 1: JSON lines on stdout turned into fields (§5) |
 | 18 Logging never stalls the system | partly | `logger` returns at once with no lode (`test-log` "no lode"); compression a frame at a time | 1: a test that a stalled disk never blocks a writer |
 | 19 The collector's own security | built | lode in a sealed job, its own user (`test-log`: uid 91, cgroup, move refused); uploader uid 92 | 1: the uploader as a native service in a sealed job |
-| 20 A viewer | partly | `lode-viewer` (the viewer agent's), on Ferrix and on nazuna, over `lode-receive`'s stores | the viewer agent's |
+| 20 A viewer | partly | `lode-viewer` (the viewer agent's), on Xaqu and on nazuna, over `lode-receive`'s stores | the viewer agent's |
 | 21 Runtime log levels per service | missing | no `INTEREST` or `lode level` | 3 (with drivers, plan step 7) |
 | 22 Alerts and actions | built | `alert` rules with a rate, `notify` to `/run/lode/alerts` (notifyd's banners, `lode alerts`), `start` through init with `StartableBy=` (`test-log` "alerts" row) | 0 |
 | 23 Privacy and redaction | missing | no `redact` rule; `_CMDLINE` is not recorded | 1 |
@@ -2464,7 +2464,7 @@ architectures.
 | 9.7 | Benchmark | partly | `lode bench` at 200,000 records | 1 |
 | 10.1 | `box-log` | built | `cargo xtask box-log` | 0 |
 | 10.2 | Continuous forwarding | partly | export and JSON over HTTP(S), TLS 1.3, client certificates (`test-log-remote`) | 3: RFC 5424, OTLP |
-| 10.3 | Receiving | partly | `lode-receive` on Linux | 2: on Ferrix, RFC 3164/5424 in |
+| 10.3 | Receiving | partly | `lode-receive` on Linux | 2: on Xaqu, RFC 3164/5424 in |
 | 10.4 | A merged view | missing | `-m` accepted and ignored | 2 |
 | 11 | Isolation, restart without loss, start order | built | `test-log` | 0 |
 | 12.1 | Who may read what | built | root and `adm` everything, a user their own (theme 14) | 0 |
@@ -2531,15 +2531,15 @@ architectures.
 ### 20.6 Where logs still go that lode does not get (the audit, 2026-10-24)
 
 The customer: "if there is a gap, we need to close it." Every place on a
-Ferrix image where something writes a log, and whether lode has it.
+Xaqu image where something writes a log, and whether lode has it.
 
 | Where | Who writes it | lode has it? | What closes it, or why not |
 |---|---|---|---|
 | The kernel log, drivers' prints | the kernel, ring-3 drivers on standard error | yes | `/dev/kmsg`, from its first record |
 | Units' standard output and error | every unit | yes | init's pipes, trusted (§18 "Users' own records and units' runs") |
 | `devmgr`'s DIED/RESTARTED events | `devmgr-events` | partly | `devmgr`'s own lines reach the kernel log; the event socket itself is not read (plan step 7) |
-| The panic log in pstore | the kernel at a panic | no | `FERRIX/LASTKERNEL.TXT` on the ESP, imported as `lode -b -1`'s end (§5, built) |
-| Firmware and EFI logs | the firmware, the loader | partly | the loader's lines are the kernel log's first; the firmware's own (UEFI's console, TF-A's) are not kept anywhere on Ferrix |
+| The panic log in pstore | the kernel at a panic | no | `XAQU/LASTKERNEL.TXT` on the ESP, imported as `lode -b -1`'s end (§5, built) |
+| Firmware and EFI logs | the firmware, the loader | partly | the loader's lines are the kernel log's first; the firmware's own (UEFI's console, TF-A's) are not kept anywhere on Xaqu |
 | `/tmp/yserver.log` | the desktop's X server | yes, landing | `lode cat -t yserver --tee` |
 | `/tmp/steam.log` | Steam's `desktop.sh` | yes, landing | `lode cat -t steam --tee` |
 | `~/plog/proton.out` | the N150's game script | yes, landing | `lode cat -t proton --tee` |
@@ -2548,14 +2548,14 @@ Ferrix image where something writes a log, and whether lode has it.
 | hyprix's programs' standard output | waybar, notifyd, fuzzel, `exec` lines | yes, under hyprix's unit; under their own names with `session-streams on` | the wrapper loses a program's output if the program outlives its session (§18) |
 | Programs started from a terminal | foot's children | no | a terminal's programs write to the terminal; `lode cat` in a person's pipeline is the way |
 | `/var/log/audit/<id>.bin` | init, the kernel's FAU rings | no, by design | §15: the audit record stays its own store |
-| `/var/log/ferrix/auth.log` | `authd` | no | `authd`'s lines could also go to `/dev/log` with `LOG_AUTHPRIV`; its own file stays (`docs/AUTH.md` §3.6) |
+| `/var/log/xaqu/auth.log` | `authd` | no | `authd`'s lines could also go to `/dev/log` with `LOG_AUTHPRIV`; its own file stays (`docs/AUTH.md` §3.6) |
 | Test rigs' `/tmp/yserver.log` (`:1`) | `test-yserver`, `test-dxvk`, shader cache | no, by choice | gate rigs read their own file and run without lode |
 | A hung process's threads | -- | on asking | `lode snapshot PID`; hyprix takes one at an app error |
 
 ## 21. Tombstones (researched 2026-10-24; the customer approved the three landings)
 
 The customer asked what Android records when a process crashes, how Linux
-does the same, and what Ferrix could keep: a "tombstone" record in lode
+does the same, and what Xaqu could keep: a "tombstone" record in lode
 that links a crash to its log tail, its screenshot (§19) and its session.
 
 ### 21.1 What Android records
@@ -2598,7 +2598,7 @@ that links a crash to its log tail, its screenshot (§19) and its session.
   Privacy: a core holds the process's memory, so it is root's (or the
   user's own, through ACLs), and `Storage=none` keeps only the entry.
 
-### 21.3 What Ferrix can capture, and where
+### 21.3 What Xaqu can capture, and where
 
 | Part | Where | Cost |
 |---|---|---|
@@ -2606,7 +2606,7 @@ that links a crash to its log tail, its screenshot (§19) and its session.
 | signal, code, fault address, trap | the kernel: built (`ended by signal`) | 0 |
 | registers of the faulting thread | the kernel at the fault: the trap frame is there; one more line of the same kind | about 30 kernel lines, three architectures |
 | every thread's state, the open fds, the maps, the status lines | a ring-3 collector reading `/proc/<pid>/{task/*/stat,status,fd,maps}` while the process is held | ring 3: the kernel must hold a fatally signalled process instead of reaping it at once, which is Linux's `core_pattern` pipe's own semantics: about 60 kernel lines, in the load ring |
-| a backtrace of every thread | ring 3: unwind from each thread's registers through `.eh_frame` of the mapped files, without symbols (offsets and build ids); `ferrix-lode-core` gains a CFA interpreter (about 600 lines, host-tested on the tree's own binaries); reading another process's memory needs `process_vm_readv` or `/proc/<pid>/mem`, which the kernel has for a ptrace-able target | 0 kernel lines if the hold above exists |
+| a backtrace of every thread | ring 3: unwind from each thread's registers through `.eh_frame` of the mapped files, without symbols (offsets and build ids); `xaqu-lode-core` gains a CFA interpreter (about 600 lines, host-tested on the tree's own binaries); reading another process's memory needs `process_vm_readv` or `/proc/<pid>/mem`, which the kernel has for a ptrace-able target | 0 kernel lines if the hold above exists |
 | memory around the registers | ring 3, the same reads | 0 |
 | the abort message | ring 3: ferrousli and musl write `abort()`'s reason to standard error, which units' streams carry; a field would need the C library to say it | 0 |
 | the log tail | lode: the crashing process's last 50 records by `_PID` and its unit's, linked by cursor | 0 |
@@ -2630,7 +2630,7 @@ fields. Build it in three landings:
    signal ends until the collector says it is done or 2 s pass (a load-ring
    change of about 60 lines with a consultant review); the collector reads
    threads, fds, maps and status, and unwinds each thread through
-   `.eh_frame` (`ferrix-lode-core` `unwind`, no symbols). Registers through
+   `.eh_frame` (`xaqu-lode-core` `unwind`, no symbols). Registers through
    the same `/proc/<pid>/task/<tid>/` reads it uses for ptrace's
    `PTRACE_GETREGS`.
 3. **Retention and privacy** (1 point): tombstones are a retention class
@@ -2661,7 +2661,7 @@ inside lode, one tool, and without the heavy parts slowing the log.
   file, `pack-<first id>.fxb`, with an index of ids to offsets written when
   the pack is sealed (at 16 MiB or a day); each entry a header (id,
   length, type, CRC-32C) and the bytes, zstd-compressed except for an
-  already compressed type (PNG, QOI stays raw: it is small). On Ferrix's
+  already compressed type (PNG, QOI stays raw: it is small). On Xaqu's
   btrfs every `fdatasync` costs about 40 KiB whatever was written (§8.3), so
   one pack synced once a batch costs what a record batch costs, where a
   file a blob would cost a commit each.
@@ -2682,7 +2682,7 @@ inside lode, one tool, and without the heavy parts slowing the log.
   a record whose blob went is shown with `blob expired`.
 * **Lazy.** Queries, `-f`, summaries, `lode top`, the viewer's lists and
   forwarding of records never read a blob. A blob is read when someone asks
-  for it by id: `lode blob ID`, `ferrix-lode-core`'s `blob(id)`, the viewer
+  for it by id: `lode blob ID`, `xaqu-lode-core`'s `blob(id)`, the viewer
   opening a crash or a screenshot, `lode tombstone SEQ` printing a
   tombstone whole.
 * **No stall.** Blobs have a writer path of their own in lode, after the
@@ -2735,7 +2735,7 @@ the blob references `BLOB_BACKTRACE`, `BLOB_MAPS`, `BLOB_FDS`,
 
 ### 21.5 Built: the blob container and tombstone step 1 (2026-10-24)
 
-* **The container** (`ferrix-lode-core` `blob`, lode `blobs.rs`):
+* **The container** (`xaqu-lode-core` `blob`, lode `blobs.rs`):
   `<store>/blobs/pack-<16 hex>.fxb`, entries as §21.4 says (SHA-256 id,
   zstd unless the type is packed already, CRC-32C), an index written at
   sealing (16 MiB), a scan for a pack without one. lode queues a blob
@@ -2749,7 +2749,7 @@ the blob references `BLOB_BACKTRACE`, `BLOB_MAPS`, `BLOB_FDS`,
 * **Screenshots are blobs.** `captures/` is gone: a stored capture's
   record names `BLOB_SCREENSHOT=<id> <size> qoi|png`, and `lode blob ID`
   gives the bytes. `CAPTURE_FILE` is no longer written.
-* **Tombstones, step 1** (`ferrix-lode-core` `tombstone`): for each crash
+* **Tombstones, step 1** (`xaqu-lode-core` `tombstone`): for each crash
   record, once stored, lode writes a tombstone (`TOMBSTONE=1`, the
   `MESSAGE_ID` of §21.4, at err) with `TOMBSTONE_PID`, `_COMM`, `_EXE`,
   `_CMDLINE`, `_SIGNAL`, `_ADDRESS`, `_PC`, `_TRAP`, `_MODULE`,
@@ -2783,7 +2783,7 @@ the blob references `BLOB_BACKTRACE`, `BLOB_MAPS`, `BLOB_FDS`,
 ### `lode reload`, whole (2026-10-24; Settings plan B8, RUNTIME-SETTINGS finding 2)
 
 `lode reload` (root's, on the control socket) has lode read every file of
-`/etc/ferrix/lode.d` again and answers with what changed, which `lode
+`/etc/xaqu/lode.d` again and answers with what changed, which `lode
 reload` prints and a record keeps: `reloaded: N rule(s), M alert(s);
 retention changed, segments sealed|unchanged; capture on|off|turned
 on|turned off|on in the file, but lode must restart to listen; events
@@ -2819,11 +2819,11 @@ answer. SIGHUP is not used: lode's control socket is root's and answers.
 ### 21.7 Built: tombstones step 2, the crash hold (2026-10-24)
 
 Variant a of §21.3, with the consultant's OK IF (ledger lines 3501 and
-3524; the arming file is a device, not `/proc/ferrix/crashes`, since procfs
+3524; the arming file is a device, not `/proc/xaqu/crashes`, since procfs
 files are snapshots made at open).
 
 * **The kernel** (`fs::crashes`, load ring, no core or item line). While a
-  root reader holds `/dev/ferrix-crashes` (char 1:13, root's 0400, opened
+  root reader holds `/dev/xaqu-crashes` (char 1:13, root's 0400, opened
   read-write by a caller privileged in the first user namespace, one at a
   time, `EBUSY` for a second), a fatal fault of a program's own instruction
   (`deliver::force_held`, reached only from `fault_signal`: seccomp's ends,
@@ -2852,7 +2852,7 @@ files are snapshots made at open).
 * **The collector**: `lode crashd`, `lode-crashd.service` (root, enabled
   on the desktop and in `test-log`), reads each held process's threads (as
   `lode snapshot` does), `status`, `maps` and descriptors from `/proc`,
-  sends them to lode in one native-protocol record (`FERRIX_EVENT=
+  sends them to lode in one native-protocol record (`XAQU_EVENT=
   crash-collected`, at most 216 KiB of parts) and writes `done`. lode takes
   the record only from uid 0 and keeps its `COLLECTED_THREADS`, `_MAPS`,
   `_FDS` and `_STATUS` for the crash's tombstone (the record keeps
@@ -2916,9 +2916,9 @@ line.
 * **The second stream.** `lode-upload` sends each destination its blobs
   behind its records: only when that destination's records are caught up,
   only blobs of records it has acknowledged, one `POST` a blob to the URL's
-  path with `/blob` after it (`Content-Type: application/vnd.ferrix.blob`,
+  path with `/blob` after it (`Content-Type: application/vnd.xaqu.blob`,
   `X-Lode-Blob: <id> <type>`), with a cursor of its own
-  (`/var/lib/ferrix/lode-upload/<name>.blobs`). The newest 4096 ids sent
+  (`/var/lib/xaqu/lode-upload/<name>.blobs`). The newest 4096 ids sent
   are not sent again; a blob gone from the store (expired) is said and
   passed. A destination that answers a blob 404, 405 or 415 takes none:
   said once, and its records go on alone -- so a `systemd-journal-remote`
@@ -2985,7 +2985,7 @@ gives the faulting thread's `pc`, not its `sp`. Missing, and contrary to
    held process's other threads park on the return path, where the load
    holds their whole `UserContext`. At the park, `syscall/process.rs`
    copies `pc`, `sp`, `fp` and `lr` into the thread (about 15 lines, cleared
-   when it leaves the park), and `/proc/<pid>/task/<tid>/regs`, a Ferrix
+   when it leaves the park), and `/proc/<pid>/task/<tid>/regs`, a Xaqu
    file, prints them as one line `pc sp fp lr` while the process is held
    and is empty otherwise (`fs/procfs.rs` and `fs/procfs/debug.rs`, about
    15). All three architectures alike, unlike `syscall`.
@@ -3021,7 +3021,7 @@ held), each with a boot-check sub-case and a gate.sh control.
 
 **Ring 3's part: about 1,100 lines, no kernel.**
 
-* `ferrix-lode-core::unwind` (about 800 lines, `no_std`, host-tested):
+* `xaqu-lode-core::unwind` (about 800 lines, `no_std`, host-tested):
   an `.eh_frame`/`.eh_frame_hdr` parser and CFA interpreter for x86-64
   and AArch64; ARMv7-A's `.ARM.exidx` is left out at first (its frames
   come from the frame-pointer chain, then a bounded stack scan, each frame
@@ -3051,12 +3051,12 @@ lines, or should the faulting thread instead park on the return path like
 the others, which needs no core line but moves the hold out of
 `fault_signal` (about 60 load lines, and the "ended by signal" order the
 core prints changes)? (b) `mem` restricted to held processes: enough, or
-too narrow to name `/proc/<pid>/mem`? (c) A Ferrix-only `regs` file, or
+too narrow to name `/proc/<pid>/mem`? (c) A Xaqu-only `regs` file, or
 should (3) wait for `docs/DEBUG.md` §1.1's Arm entry frames and use
 `syscall` everywhere?
 
 **Reviewed**: OK IF (1)-(8), ledger line 3570 (verdict 3571). The core
-hook (1) is preferred to the return-path park, and a Ferrix-only `regs`
+hook (1) is preferred to the return-path park, and a Xaqu-only `regs`
 file is accepted. `/proc/<pid>/mem` is **the customer's decision first**:
 whether the `present` configuration ships it, always or behind a named
 setting. If not, the hold copies a bounded stack image (about 16 KiB from
@@ -3069,32 +3069,32 @@ DMA-pinned, shared and `PROT_NONE` regions refused `EIO`; an absent page
 ### 21.10 Design question: the pstore import (for a decision, 2026-10-24)
 
 §5's import ("`lode -b -1` ends with what the machine said before it hung")
-was planned on the loader's `FERRIX/LASTKERNEL.TXT`. Nothing writes that
+was planned on the loader's `XAQU/LASTKERNEL.TXT`. Nothing writes that
 file today: the write was owed with PM2 (branch `postmortem`, not on
 develop; `docs/POSTMORTEM.md` §3.5, the consultant's ledger 1238 and 1202
-C3). And a running Ferrix cannot read it: there is no FAT in the running
+C3). And a running Xaqu cannot read it: there is no FAT in the running
 system (`docs/INSTALLER.md`). The kernel never reads the region back
 (`console/pstore.rs`), and the loader resets it at each boot. Two paths:
 
 * **A: the file.** The loader's `LASTKERNEL.TXT` write lands with PM2
   (loader, its own review). lode reads it through a small read-only FAT32
-  reader of the ESP partition in ring 3 (`ferrix-lode-core`, about 400
+  reader of the ESP partition in ring 3 (`xaqu-lode-core`, about 400
   lines; the partition from `src/lib/fs/common/partition`, as root). No
   kernel lines. Costs: two reviews, a FAT reader, and lode opening a raw
   block device.
 * **B: Linux's way.** The loader copies the previous boot's text into a
   second region handed over in the boot info, as it already reads it for
   its two console lines. The kernel exposes it read-only as
-  `/sys/fs/pstore/console-ferrix-0`, the path `systemd-pstore` reads, and
+  `/sys/fs/pstore/console-xaqu-0`, the path `systemd-pstore` reads, and
   lode imports from there. About 80 kernel lines (the boot-info region
   checked as the pstore region is, in `console/pstore.rs` and
-  `ferrix-bootinfo`, core; the sysfs file, load) and about 40 loader
+  `xaqu-bootinfo`, core; the sysfs file, load) and about 40 loader
   lines. No FAT, no block device.
 
 **Ruled**: the choice is the customer's (ledger line 3570). A needs PM2's
 loader write under its open conditions, and the FAT reader is bounded and
 fuzzed. B needs a design review of its boot-info region, under
-`ferrix.pstore`, and a loader review.
+`xaqu.pstore`, and a loader review.
 
 Recommendation: **B**, as Linux and systemd do, unless the customer's
 slim-kernel rule rules out 80 lines here; A is then the path, and step 9's

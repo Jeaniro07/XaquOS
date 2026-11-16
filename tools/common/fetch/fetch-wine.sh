@@ -26,8 +26,8 @@
 # trixie-updates' and trixie-security's Packages files on 2026-10-10 (the
 # i386 `libwine` on 2026-10-12).
 #
-# Writes $FERRIX_WINE_VOLUME/wine.img (default
-# ~/.local/share/ferrix/wine/wine.img), about 3.7 GB with 2 GiB of room for
+# Writes $XAQU_WINE_VOLUME/wine.img (default
+# ~/.local/share/xaqu/wine/wine.img), about 3.7 GB with 2 GiB of room for
 # a prefix, and yserver.commit
 # beside it, the commit of the yserver it carries. Needs curl,
 # sha256sum, dpkg-deb, readelf and mkfs.btrfs; no root.
@@ -38,17 +38,17 @@ set -euo pipefail
 
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
-out=${FERRIX_WINE_VOLUME:-$HOME/.local/share/ferrix/wine}
-yserver=${FERRIX_YSERVER_VOLUME:-$HOME/.local/share/ferrix/yserver}
+out=${XAQU_WINE_VOLUME:-$HOME/.local/share/xaqu/wine}
+yserver=${XAQU_YSERVER_VOLUME:-$HOME/.local/share/xaqu/yserver}
 # Where a pinned Debian file comes from once the mirror has dropped it, as
 # trixie-security drops a package's update when the next one comes:
 # snapshot.debian.org's archive as it was on the days the pins were taken,
 # tried in turn. The SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_times=(20261010T235959Z 20261012T235959Z)
-# The downloads, kept between runs; FERRIX_WINE_POOL names another
+# The downloads, kept between runs; XAQU_WINE_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_WINE_POOL:-$out/pool}
+pool=${XAQU_WINE_POOL:-$out/pool}
 
 # Pool path and SHA-256 of each package, from the main archive.
 debs=(
@@ -216,7 +216,7 @@ done
 [ "$missing" = 0 ] || exit 1
 
 # Room for a prefix on the volume and logs. wineboot's prefix is 768 MB of
-# files (du), and took 1.1 GB of the volume on Ferrix: small files, two
+# files (du), and took 1.1 GB of the volume on Xaqu: small files, two
 # copies of the metadata. With 1024 MiB more than the tree the volume had
 # 683 MB free and wineboot ran out at 684 MB of prefix (2026-10-12); with
 # 2048 it made the prefix and left 627 MB.

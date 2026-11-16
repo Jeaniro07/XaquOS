@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-driver"
+name = "xaqu-driver"
 description = "What every ring-3 driver process shares: its start, its registers and DMA memory, a bus's transport, and the protocol its subsystem speaks"
 version.workspace = true
 edition.workspace = true
@@ -10,25 +10,25 @@ publish.workspace = true
 [features]
 # The input subsystem, and the virtio-input device logic it serves through the
 # virtio bus. A driver asks for what it is; the rest is not compiled.
-input = ["dep:ferrix-inputctl", "dep:ferrix-virtio-input"]
+input = ["dep:xaqu-inputctl", "dep:xaqu-virtio-input"]
 # The block subsystem, and the virtio-blk device logic it serves through the
 # virtio bus.
-block = ["dep:ferrix-blkserve", "dep:ferrix-virtio-blk"]
+block = ["dep:xaqu-blkserve", "dep:xaqu-virtio-blk"]
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-devmgr-proto.workspace = true
-ferrix-driver-derive.workspace = true
-ferrix-fdt.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-registers.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio.workspace = true
-ferrix-blkserve = { workspace = true, optional = true }
-ferrix-inputctl = { workspace = true, optional = true }
-ferrix-virtio-blk = { workspace = true, optional = true }
-ferrix-virtio-input = { workspace = true, optional = true }
+xaqu-blkring.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-driver-derive.workspace = true
+xaqu-fdt.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-registers.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio.workspace = true
+xaqu-blkserve = { workspace = true, optional = true }
+xaqu-inputctl = { workspace = true, optional = true }
+xaqu-virtio-blk = { workspace = true, optional = true }
+xaqu-virtio-input = { workspace = true, optional = true }
 
 [lints]
 workspace = true

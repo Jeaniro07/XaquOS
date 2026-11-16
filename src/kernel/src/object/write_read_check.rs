@@ -45,11 +45,11 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::{self, Errno};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
+use xaqu_linux_abi::errno::{self, Errno};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
 
 use super::channel::{Endpoint, ReadError, Sender, WriteFailure};
 use super::job::KILLED_STATUS;
@@ -763,9 +763,9 @@ fn wake_from(
         "write_read sync writer",
         write_from_another_processor,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
         writer_cpu,
-        ferrix_sched::CpuSet::of(writer_cpu),
+        xaqu_sched::CpuSet::of(writer_cpu),
     )?;
     // Asleep while the writer writes: a move needs nothing else queued on
     // the writer's processor, and at two processors this check's own task,

@@ -21,7 +21,7 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::object::process::{self as table, Host};
 use crate::syscall::pidns::{self, Numbers};
@@ -159,7 +159,7 @@ pub(crate) fn live() -> Result<Vec<Arc<Process>>, Errno> {
     Ok(hosts.into_iter().filter_map(table::downcast).collect())
 }
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 /// The boot self-check's part: numbers are distinct, found, listed in order,
 /// given back when a process goes, and not handed straight out again; a
 /// reaped process is found by none of them though it is still held.

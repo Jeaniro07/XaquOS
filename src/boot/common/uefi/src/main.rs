@@ -1,4 +1,4 @@
-//! The Ferrix UEFI loader.
+//! The Xaqu UEFI loader.
 //!
 //! Firmware calls [`efi_main`] with a stack set up and the MMU on — in 64-bit
 //! mode on the 64-bit pair, in SVC mode on ARMv7-A — which is why this project
@@ -38,7 +38,7 @@ use core::convert::Infallible;
 use core::panic::PanicInfo;
 use core::ptr;
 
-use ferrix_bootinfo::{
+use xaqu_bootinfo::{
     BOOT_STACK_SIZE, BOOTINFO_MAGIC, BOOTINFO_VERSION, BootInfo, FIRMWARE_SEED, FIRMWARE_TIME,
     Framebuffer, MemRegion, PAGE_SIZE,
 };
@@ -50,22 +50,22 @@ use uefi::tables::{ACPI_10_GUID, ACPI_20_GUID, DEVICE_TREE_GUID, MemoryType, Sys
 use uefi::{Handle, Status};
 
 /// Where the kernel lives on the EFI system partition.
-const KERNEL_PATH: &str = "/FERRIX/KERNEL.ELF";
+const KERNEL_PATH: &str = "/XAQU/KERNEL.ELF";
 
 /// Where the initramfs is, when the image carries one.
-const INITRD_PATH: &str = "/FERRIX/INITRD.IMG";
+const INITRD_PATH: &str = "/XAQU/INITRD.IMG";
 
 /// Where the loader looks for a kernel command line: a text file beside the
-/// kernel, so an option such as `ferrix.onexit=reset` survives a reset that
+/// kernel, so an option such as `xaqu.onexit=reset` survives a reset that
 /// clears what firmware was told.
-const CMDLINE_PATH: &str = "/FERRIX/CMDLINE.TXT";
+const CMDLINE_PATH: &str = "/XAQU/CMDLINE.TXT";
 
 /// Where the image keeps options of its own: `cargo xtask flash --compositor`
-/// writes `ferrix.checks=skip` here, and every `flash` rewrites or removes it.
+/// writes `xaqu.checks=skip` here, and every `flash` rewrites or removes it.
 /// A file of its own rather than lines in `CMDLINE.TXT`, which is the card
 /// owner's and which `flash` never touches; appended after it, so that an
 /// option given in both is the owner's, the kernel taking the first of a key.
-const DEFAULTS_PATH: &str = "/FERRIX/DEFAULTS.TXT";
+const DEFAULTS_PATH: &str = "/XAQU/DEFAULTS.TXT";
 
 /// Bytes set aside for the boot info structure and the memory map behind it.
 /// At 24 bytes a region this holds around 2700 of them; firmware typically
@@ -102,7 +102,7 @@ extern "efiapi" fn efi_main(image: Handle, system_table: *mut SystemTable) -> St
     }
 
     println!(
-        "Ferrix loader {} ({})",
+        "Xaqu loader {} ({})",
         env!("CARGO_PKG_VERSION"),
         arch::ARCH.name()
     );
@@ -112,7 +112,7 @@ extern "efiapi" fn efi_main(image: Handle, system_table: *mut SystemTable) -> St
         // and the compiler knows it.
         Ok(never) => match never {},
         Err(error) => {
-            println!("FERRIX-PANIC loader: {error}");
+            println!("XAQU-PANIC loader: {error}");
             // Netbooted, the boot log says why on the server too -- unless
             // the loader was already leaving firmware, when nothing of it
             // may be called again.
@@ -184,7 +184,7 @@ fn boot(image: Handle, system_table: *mut SystemTable) -> Result<Infallible> {
     let stack = services.allocate(
         "allocating the boot stack",
         BOOT_STACK_SIZE,
-        MemoryType::FERRIX_BOOT_STACK,
+        MemoryType::XAQU_BOOT_STACK,
     )?;
     let device_tree = copy_device_tree(&services)?;
     let smbios = smbios::copy(&services);
@@ -329,7 +329,7 @@ fn initrd_of(services: &Services, source: &slots::Choice) -> Result<Option<(Allo
 /// In memory the map reports as `Initrd`, which nothing reclaims: the kernel
 /// reads the archive through the direct map after the loader is gone.
 fn load_initrd(services: &Services) -> Result<Option<(Allocation, u64)>> {
-    match services.read_file(INITRD_PATH, MemoryType::FERRIX_INITRD) {
+    match services.read_file(INITRD_PATH, MemoryType::XAQU_INITRD) {
         Ok((file, len)) => {
             println!("  initramfs {} KiB", len.div_ceil(1024));
             Ok(Some((file, len)))
@@ -379,7 +379,7 @@ fn copy_device_tree(services: &Services) -> Result<Option<(Allocation, u64)>> {
     let copy = services.allocate(
         "copying the device tree",
         len,
-        MemoryType::FERRIX_DEVICE_TREE,
+        MemoryType::XAQU_DEVICE_TREE,
     )?;
     // SAFETY: firmware's tree is `len` bytes long by its own header, the copy
     // is a fresh allocation of at least that many, and the two cannot overlap.
@@ -390,7 +390,7 @@ fn copy_device_tree(services: &Services) -> Result<Option<(Allocation, u64)>> {
 
 /// The kernel file and the image copied out of it.
 ///
-/// The file allocation is kept because the parsed [`ferrix_elf::Elf`] borrows
+/// The file allocation is kept because the parsed [`xaqu_elf::Elf`] borrows
 /// it, and the address space is built from the same parse that placed it.
 #[derive(Clone, Copy, Debug)]
 struct StagedKernel {
@@ -401,7 +401,7 @@ struct StagedKernel {
 
 impl StagedKernel {
     /// Re-borrow the file bytes as a parsed image.
-    fn elf(&self) -> Result<ferrix_elf::Elf<'_>> {
+    fn elf(&self) -> Result<xaqu_elf::Elf<'_>> {
         // SAFETY: `file` is our own allocation, firmware filled `file_len` of
         // its bytes, and it is identity mapped and not freed until we exit.
         let bytes = unsafe {
@@ -418,7 +418,7 @@ fn boot_info_area(services: &Services) -> Result<(Allocation, u64, slots::Choice
     let info_area = services.allocate(
         "allocating the boot info",
         BOOT_INFO_BYTES,
-        MemoryType::FERRIX_BOOT_INFO,
+        MemoryType::XAQU_BOOT_INFO,
     )?;
     let capacity = (REGIONS_OFFSET - CMDLINE_OFFSET) as usize;
     // SAFETY: these bytes are inside `info_area`, the loader's own zeroed
@@ -470,7 +470,7 @@ fn boot_info_and_pstore(
         &mut opened,
         mode,
     );
-    #[cfg(ferrix_bad_frames = "choice")]
+    #[cfg(xaqu_bad_frames = "choice")]
     badframes::release(services, &mut kept, mode);
     Ok((area, pstore))
 }
@@ -765,7 +765,7 @@ fn read_command_file<'a>(services: &Services, path: &str, capacity: usize) -> Op
     // SAFETY: `read_file` filled `len` bytes of its own allocation, which is
     // identity mapped under boot services, never freed and not written again.
     let bytes = unsafe { core::slice::from_raw_parts(file.address as *const u8, len as usize) };
-    match ferrix_bootinfo::command_line_from_file(bytes, capacity) {
+    match xaqu_bootinfo::command_line_from_file(bytes, capacity) {
         Ok(text) => Some(text),
         Err(why) => {
             println!("  cmdline  {path} is ignored: {why}");
@@ -807,7 +807,7 @@ fn record_memory_map(map: &MemoryMap, info_area: Allocation, tags: &services::Ta
     // Firmware was asked for loader data wherever the loader wanted a type
     // of its own (`Services::firmware_kind`); say which here.
     for tag in tags.iter() {
-        count = ferrix_bootinfo::retag(slots, count, tag.base, tag.len, load::kind_of(tag.kind.0))?;
+        count = xaqu_bootinfo::retag(slots, count, tag.base, tag.len, load::kind_of(tag.kind.0))?;
     }
 
     Some(count as u64)
@@ -826,7 +826,7 @@ fn finish_boot_info(info_area: Allocation, regions: u64, direct: DirectMap, map:
     // Again from the final map, which is the one the frame allocator walks,
     // so what the kernel reads is what the allocator will do.
     if value.framebuffer.is_present() {
-        let owned = ferrix_bootinfo::allocator_owns(
+        let owned = xaqu_bootinfo::allocator_owns(
             map.entries().map(|descriptor| load::describe(&descriptor)),
             value.framebuffer.phys,
             value.framebuffer.size,
@@ -844,7 +844,7 @@ fn finish_boot_info(info_area: Allocation, regions: u64, direct: DirectMap, map:
 /// letting it wander.
 #[panic_handler]
 fn panic(info: &PanicInfo<'_>) -> ! {
-    println!("FERRIX-PANIC loader: {info}");
+    println!("XAQU-PANIC loader: {info}");
     loop {
         core::hint::spin_loop();
     }

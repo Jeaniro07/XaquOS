@@ -10,15 +10,15 @@ publish.workspace = true
 [dependencies]
 # The socket, its peer's credentials, poll, and dropping to the `auth` user.
 libc = "0.2.189"
-ferrix-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
-ferrix-argon2 = { path = "../../../../../lib/crypto/argon2" }
+xaqu-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
+xaqu-argon2 = { path = "../../../../../lib/crypto/argon2" }
 # The policy files are in the unit files' syntax, read by the same parser.
-ferrix-svc = { path = "../../../../../lib/init/svc" }
+xaqu-svc = { path = "../../../../../lib/init/svc" }
 # The socket helpers the clients use too.
-ferrix-auth-client = { path = "../client" }
+xaqu-auth-client = { path = "../client" }
 # The seat channel (docs/AUTH.md §3.7): init's bootstrap, OFFER and CONNECT.
-ferrix-native = { path = "../../../../../lib/proto/native" }
-ferrix-native-abi = { path = "../../../../../lib/proto/native-abi" }
+xaqu-native = { path = "../../../../../lib/proto/native" }
+xaqu-native-abi = { path = "../../../../../lib/proto/native-abi" }
 
 [lints]
 workspace = true

@@ -1,4 +1,4 @@
-//! `cargo xtask test-seat`: type into a window on Ferrix, from QEMU's far
+//! `cargo xtask test-seat`: type into a window on Xaqu, from QEMU's far
 //! end.
 //!
 //! `test-input` proves the path from QEMU's `input-send-event` to a program

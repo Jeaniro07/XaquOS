@@ -2,7 +2,7 @@
 """Assert no commit carries a `Co-authored-by:` trailer, or names a tool as its
 author or committer (customer, 2026-11-04: worse than a co-author).
 
-Ferrix records one author per commit. `.githooks/commit-msg` refuses a trailer
+Xaqu records one author per commit. `.githooks/commit-msg` refuses a trailer
 when a message is written and `.githooks/pre-push` refuses it again over the
 range being published, which the hooks' README describes as the rule being
 "checked in two places rather than one".
@@ -198,7 +198,7 @@ def main() -> int:
                 print(f"      {line}", file=sys.stderr)
         print(file=sys.stderr)
         print(
-            "Ferrix commits name one author, never a tool. Rewrite them -- `git rebase -i`, or\n"
+            "Xaqu commits name one author, never a tool. Rewrite them -- `git rebase -i`, or\n"
             "`git commit --amend --reset-author` for the tip (a plain amend keeps the author), "
             "or for older commits\n"
             "`git rebase --exec 'git commit --amend --no-edit --reset-author' BASE` -- and push again.",

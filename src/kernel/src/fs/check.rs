@@ -22,18 +22,18 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, AT_REMOVEDIR, F_GETFD, F_GETFL, FALLOC_FL_KEEP_SIZE, FALLOC_FL_PUNCH_HOLE,
     FD_CLOEXEC, FIOCLEX, FIONBIO, FIONCLEX, MAP_ANONYMOUS, MAP_PRIVATE, MS_NODEV, MS_NOEXEC,
     MS_NOSUID, MS_RELATIME, O_APPEND, O_CLOEXEC, O_CREAT, O_NONBLOCK, O_RDONLY, O_RDWR, O_TRUNC,
     O_WRONLY, PROT_READ, PROT_WRITE, SEEK_CUR, SPLICE_F_NONBLOCK,
 };
-use ferrix_vfs::pipe::{PIPE_CAPACITY, PIPEFS_MAGIC};
-use ferrix_vfs::tmpfs::{PageSource, Pages, Storage, TMPFS_MAGIC};
-use ferrix_vfs::{Errno, FileType, Namespace, NewNode, OpenFlags, RenameMode};
-use ferrix_vma::VmaFlags;
+use xaqu_vfs::pipe::{PIPE_CAPACITY, PIPEFS_MAGIC};
+use xaqu_vfs::tmpfs::{PageSource, Pages, Storage, TMPFS_MAGIC};
+use xaqu_vfs::{Errno, FileType, Namespace, NewNode, OpenFlags, RenameMode};
+use xaqu_vma::VmaFlags;
 
 use crate::fs::pages::VmoStorage;
 use crate::fs::{self, Report as Built};
@@ -49,7 +49,7 @@ use crate::user::vmo::Vmo;
 const MARKER: &[u8] = b"unpacked by the kernel from a cpio archive the loader handed it\n";
 
 /// Where the marker is unpacked.
-const MARKER_PATH: &[u8] = b"/etc/ferrix/initramfs";
+const MARKER_PATH: &[u8] = b"/etc/xaqu/initramfs";
 
 /// What the checks measured, for the boot log.
 #[derive(Debug, Clone, Copy)]
@@ -160,14 +160,14 @@ fn check_the_archive_unpacked_intact() -> Result<(), &'static str> {
         .and_then(|at| ns.stat(&at))
         .map_err(|_| "the initramfs marker would not stat")?;
     let link = ns
-        .resolve(&ctx, None, b"/etc/ferrix/initramfs.link", false)
+        .resolve(&ctx, None, b"/etc/xaqu/initramfs.link", false)
         .and_then(|at| ns.stat(&at))
         .map_err(|_| "the initramfs hard link is missing")?;
     if link.metadata.ino != marker.metadata.ino || marker.metadata.nlink != 2 {
         return Err("the initramfs hard link is a copy, not a second name");
     }
 
-    let symlink = b"/etc/ferrix/initramfs.symlink";
+    let symlink = b"/etc/xaqu/initramfs.symlink";
     let kind = ns
         .resolve(&ctx, None, symlink, false)
         .and_then(|at| ns.stat(&at))
@@ -184,19 +184,19 @@ fn check_the_archive_unpacked_intact() -> Result<(), &'static str> {
     if whole.as_deref() != Ok(MARKER) {
         return Err("reading a whole file through a symbolic link did not give the marker");
     }
-    if fs::read_file(&ctx, None, b"/etc/ferrix") != Err(Errno::EISDIR) {
+    if fs::read_file(&ctx, None, b"/etc/xaqu") != Err(Errno::EISDIR) {
         return Err("reading a directory as a whole file was not refused");
     }
     // And the read that must stay beneath a directory -- the display core's
     // of `drm.edid_firmware`'s file under `/lib/firmware` -- reads a file
     // there, and follows no link, not even one that stays inside.
-    if fs::read_file_beneath(&ctx, b"/etc", b"ferrix/initramfs").as_deref() != Ok(MARKER) {
+    if fs::read_file_beneath(&ctx, b"/etc", b"xaqu/initramfs").as_deref() != Ok(MARKER) {
         return Err("a whole-file read beneath a directory did not give the marker");
     }
-    if fs::read_file_beneath(&ctx, b"/etc", b"ferrix/initramfs.symlink") != Err(Errno::ELOOP) {
+    if fs::read_file_beneath(&ctx, b"/etc", b"xaqu/initramfs.symlink") != Err(Errno::ELOOP) {
         return Err("a whole-file read beneath a directory followed a symbolic link");
     }
-    if fs::read_file_beneath(&ctx, b"/etc/ferrix", b"../ferrix/initramfs") != Err(Errno::EINVAL) {
+    if fs::read_file_beneath(&ctx, b"/etc/xaqu", b"../xaqu/initramfs") != Err(Errno::EINVAL) {
         return Err("a whole-file read beneath a directory climbed out through `..`");
     }
     Ok(())
@@ -508,7 +508,7 @@ struct CheckSource {
 }
 
 impl PageSource for CheckSource {
-    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> ferrix_vfs::Result<usize> {
+    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> xaqu_vfs::Result<usize> {
         let _ = self.calls.fetch_add(1, Ordering::Relaxed);
         if first == self.fail_at.load(Ordering::Relaxed) {
             return Err(Errno::EIO);
@@ -1528,7 +1528,7 @@ const SMALL_SEND: u64 = 24;
 /// rest: the client's stream was torn. Wine's server treats a short count as
 /// a protocol error and ends the client.
 fn fill_a_socket_with_small_sends(process: &Process, page: u64) -> Result<(), &'static str> {
-    use ferrix_linux_abi::socket::{SOCK_NONBLOCK, SOCKET_BUFFER_DEFAULT};
+    use xaqu_linux_abi::socket::{SOCK_NONBLOCK, SOCKET_BUFFER_DEFAULT};
     const AF_UNIX: u64 = 1;
     const SOCK_STREAM: u64 = 1;
     answers(

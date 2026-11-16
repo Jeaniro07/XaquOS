@@ -248,7 +248,7 @@ unstarted child's handle dropped with the channel message carrying it; and one
 whose only handle is closed, which must be heard and freed.
 
 **Done — pid 1 starts `devmgr` (2026-09-27, `docs/INIT.md` L12).** On an
-image booted with `ferrix.devmgr=init`, the kernel writes pid 1 a second
+image booted with `xaqu.devmgr=init`, the kernel writes pid 1 a second
 message after its hello carrying a starter: a token with `MANAGE` alone,
 no `TRANSFER` and no `DUPLICATE`, so it never leaves pid 1's table. The new
 native call `devmgr_start(starter, job)` (0x1052) loads `/sbin/devmgr` in

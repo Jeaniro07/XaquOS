@@ -1,4 +1,4 @@
-//! `test-steamcmd`: Valve's steamcmd on Ferrix, logging in to Steam
+//! `test-steamcmd`: Valve's steamcmd on Xaqu, logging in to Steam
 //! anonymously (`docs/I386.md`, I5a).
 //!
 //! steamcmd is the Steam client's core without its display: a 32-bit glibc
@@ -12,7 +12,7 @@
 //! # The volume, and the network
 //!
 //! `tools/common/fetch/fetch-steamcmd.sh` makes the volume: Debian's `libc6:i386`
-//! and steamcmd, unpacked and not yet updated. It carries no `ferrix-root`
+//! and steamcmd, unpacked and not yet updated. It carries no `xaqu-root`
 //! label, so the kernel mounts it at `/data`, attached under QEMU's
 //! `snapshot=on`, so the update steamcmd writes beside itself is thrown away
 //! with the run and every run starts from the same files. glibc names its
@@ -22,7 +22,7 @@
 //!
 //! Steam's runtime reads the processor's clock rate from cpufreq or from
 //! `/proc/cpuinfo`'s `cpu MHz`, and stops without it ("Unable to determine
-//! CPU Frequency"). Ferrix prints `cpu MHz` when its counter is the TSC, whose
+//! CPU Frequency"). Xaqu prints `cpu MHz` when its counter is the TSC, whose
 //! rate it measured against the HPET; under TCG the counter is the HPET
 //! itself, whose rate says nothing about the processor's, and the line is not
 //! printed rather than wrong. So the gate boots under KVM unless `--accel`
@@ -104,7 +104,7 @@ exit 17
 /// `/bin/steamcmd` on the `--everything` desktop: steamcmd with whatever the
 /// terminal gave it, started again while it exits 42 after updating itself.
 /// Valve's `steamcmd.sh` does the same, but only once `uname` says `Linux`,
-/// and Ferrix's says `Ferrix`.
+/// and Xaqu's says `Xaqu`.
 const WRAPPER: &str = r#"#!/bin/sh
 cd /data/steamcmd || { echo "steamcmd: /data/steamcmd is not on this volume" >&2; exit 1; }
 export LD_LIBRARY_PATH=/data/steamcmd/linux32${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
@@ -160,14 +160,14 @@ const MEMORY: u32 = 2048;
 const TIMEOUT: u64 = 3600;
 
 /// Where `tools/common/fetch/fetch-steamcmd.sh` writes, unless
-/// `FERRIX_STEAMCMD_VOLUME` names another directory.
+/// `XAQU_STEAMCMD_VOLUME` names another directory.
 ///
 /// # Errors
 ///
 /// The volume has not been fetched, which `crate::everything::volume`, for
 /// which steamcmd is optional, says and carries on without.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_STEAMCMD_VOLUME") {
+    let directory = match std::env::var_os("XAQU_STEAMCMD_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("steamcmd")?,
     };
@@ -243,7 +243,7 @@ pub(crate) fn test_steamcmd(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running steamcmd on Ferrix with {} MiB (timeout {}s), on the network",
+        "  {arch}: running steamcmd on Xaqu with {} MiB (timeout {}s), on the network",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;

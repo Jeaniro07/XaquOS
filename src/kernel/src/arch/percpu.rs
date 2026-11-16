@@ -41,7 +41,7 @@
 use core::sync::atomic::{Ordering, compiler_fence};
 
 #[cfg(not(target_arch = "x86_64"))]
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 /// Add `delta` to the word `offset` bytes into this processor's record and
 /// return what it held, atomically against interrupts and migration.

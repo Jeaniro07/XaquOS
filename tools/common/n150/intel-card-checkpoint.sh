@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # The Intel driver's card0 on the N150 box (docs/INTEL-GPU.md §4.3, M6's
-# first step): under `ferrix.efifb ferrix.intelgpu`, K4 lends the firmware
+# first step): under `xaqu.efifb xaqu.intelgpu`, K4 lends the firmware
 # framebuffer to 00:02.0, and the `intel` driver serves `card0` over the lit
-# plane as a copying card, beside `renderD128`. This checks a running Ferrix
+# plane as a copying card, beside `renderD128`. This checks a running Xaqu
 # desktop on the box over ssh, as intel-checkpoint.sh does, and judges it:
 #
 #   tools/common/n150/intel-card-checkpoint.sh [BOX] [BOX_SSH_OPTIONS...]
@@ -15,12 +15,12 @@
 #   the compositor (hyprix) running on card0;
 #   no "intel: card0 stopped" or "no card0" line.
 # It boots nothing and writes nothing on the box; the evidence goes to
-# ~/.local/share/ferrix/n150-linux/evidence/intel-card-<UTC time>.txt here.
+# ~/.local/share/xaqu/n150-linux/evidence/intel-card-<UTC time>.txt here.
 set -euo pipefail
 box=${1:-192.168.178.146}
 shift || true
 ssh_box=(ssh -o BatchMode=yes -o ConnectTimeout=10 "$@" "root@$box")
-evidence=$HOME/.local/share/ferrix/n150-linux/evidence
+evidence=$HOME/.local/share/xaqu/n150-linux/evidence
 mkdir -p "$evidence"
 out=$evidence/intel-card-$(date -u +%Y%m%dT%H%M%SZ).txt
 "${ssh_box[@]}" true || { echo "intel-card-checkpoint: the box at $box does not answer ssh" >&2; exit 1; }

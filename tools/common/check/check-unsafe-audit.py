@@ -59,8 +59,8 @@ whose comment spells it any other way (measured, rustc 1.97.1, and again on
 name two ids, `(FRAME, DMA)`, when its one operation meets both; the per-id
 counts count it under each.
 
-Since 2026-10-02 the item also includes two library crates, `ferrix-btrfs`
-and `ferrix-btrfs-write` (`crates` in the manifest). Their product files --
+Since 2026-10-02 the item also includes two library crates, `xaqu-btrfs`
+and `xaqu-btrfs-write` (`crates` in the manifest). Their product files --
 what their module trees reach except through `#[cfg(test)] mod`; their tests
 are host tests and never in the image -- are item files here, named by their
 path from the repository root. Both are `#![forbid(unsafe_code)]` today, so

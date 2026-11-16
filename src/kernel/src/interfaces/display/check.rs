@@ -6,7 +6,7 @@
 //! here, so the check runs on every machine -- is refused, as is every
 //! published node that is neither the firmware framebuffer's nor one the
 //! chardev core serves; the firmware framebuffer's node, where
-//! `ferrix.efifb` published one, is allowed. A driver allowed to copy is
+//! `xaqu.efifb` published one, is allowed. A driver allowed to copy is
 //! handed the card with `READ | MAP` and never `WRITE`, and one that is not
 //! with no `MAP` either.
 //!
@@ -18,8 +18,8 @@
 
 use alloc::sync::Arc;
 
-use ferrix_displayctl::message::Ready;
-use ferrix_native_abi::rights::Rights;
+use xaqu_displayctl::message::Ready;
+use xaqu_native_abi::rights::Rights;
 
 use super::{budget_bytes, may_copy, reclaim_plan, tally};
 use crate::device::{self, DeviceNode, Location};
@@ -119,8 +119,8 @@ pub struct ModesReport {
 ///
 /// What was not true.
 pub fn modes() -> Result<ModesReport, &'static str> {
-    use ferrix_displayctl::listed::listed_match;
-    use ferrix_displayctl::message::{Listed, Timing};
+    use xaqu_displayctl::listed::listed_match;
+    use xaqu_displayctl::message::{Listed, Timing};
 
     let mut report = ModesReport::default();
     // Made-up entries, as a driver lists them: a mode of `width` by
@@ -181,13 +181,13 @@ pub fn modes() -> Result<ModesReport, &'static str> {
 /// [`modes`]'s session half: a list in two pages taken, and a finished list
 /// with two preferred entries refused. How many pages were judged.
 fn pages(
-    at: &dyn Fn(u16, u16, u32, bool) -> ferrix_displayctl::message::Listed,
+    at: &dyn Fn(u16, u16, u32, bool) -> xaqu_displayctl::message::Listed,
 ) -> Result<usize, &'static str> {
-    use ferrix_displayctl::message::{
+    use xaqu_displayctl::message::{
         Hello, Listed, MAX_SCANOUTS, MODES_A_PAGE, Message, ModePage, Refusal, ScanoutMode,
         Timings, VERSION,
     };
-    use ferrix_displayctl::session::{Event, Session};
+    use xaqu_displayctl::session::{Event, Session};
 
     let mut report = ModesReport::default();
     let mut modes = [ScanoutMode::default(); MAX_SCANOUTS];

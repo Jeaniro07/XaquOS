@@ -101,7 +101,7 @@ pub(crate) fn snapshot(words: &[String]) -> i32 {
     let mut id = [0_u8; 8];
     let _ = sys::random(&mut id);
     let mut id_text = String::new();
-    ferrix_lode_core::segment::push_hex(&mut id_text, &id);
+    xaqu_lode_core::segment::push_hex(&mut id_text, &id);
     let (records, printed) = records_of(&taken, &id_text, &reason);
     out(printed.as_bytes());
     match cli::connect_datagram(b"/run/systemd/journal/socket") {
@@ -171,7 +171,7 @@ fn records_of(taken: &Taken, id: &str, reason: &str) -> (Vec<Fields>, String) {
                 String::from("SYSLOG_IDENTIFIER"),
                 Vec::from(&b"lode-snapshot"[..])
             ),
-            (String::from("FERRIX_EVENT"), Vec::from(&b"snapshot"[..])),
+            (String::from("XAQU_EVENT"), Vec::from(&b"snapshot"[..])),
             (String::from("SNAPSHOT"), Vec::from(id.as_bytes())),
             (
                 String::from("SNAPSHOT_PID"),
@@ -321,7 +321,7 @@ fn last_lines(pid: &str, count: usize) -> Vec<u8> {
     let segments = cli::known(&source);
     let zone = crate::zone::reader();
     let boot = cli::chosen_boot("", &cli::boots(&segments)).ok();
-    let mut found: Vec<ferrix_lode_core::record::Record> = Vec::new();
+    let mut found: Vec<xaqu_lode_core::record::Record> = Vec::new();
     for each in cli::candidates(&segments, boot, &options, (None, None)) {
         found.extend(
             cli::records_of(each)
@@ -334,9 +334,9 @@ fn last_lines(pid: &str, count: usize) -> Vec<u8> {
     let skip = found.len().saturating_sub(count);
     let mut text = Vec::new();
     for record in found.iter().skip(skip) {
-        ferrix_lode_core::format::write(
+        xaqu_lode_core::format::write(
             record,
-            ferrix_lode_core::format::Output::Short,
+            xaqu_lode_core::format::Output::Short,
             &zone,
             &mut text,
         );

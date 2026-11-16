@@ -1,43 +1,43 @@
-//! The A/B layout (`docs/DEV-ON-FERRIX.md` §4.4, D8): which partitions of a
-//! disk are Ferrix's EFI system partition, control record, two system slots
+//! The A/B layout (`docs/DEV-ON-XAQU.md` §4.4, D8): which partitions of a
+//! disk are Xaqu's EFI system partition, control record, two system slots
 //! and root, and the checks that keep every other partition unwritten.
 //!
-//! A partition is writable here only by its GPT *type*: Ferrix's slot type
+//! A partition is writable here only by its GPT *type*: Xaqu's slot type
 //! or its control-record type ([`SLOT_TYPE`], [`CONTROL_TYPE`]); any other
 //! type is refused whatever it is named, so a host's live swap partition
-//! beside Ferrix's can never be written (the certification consultant's
+//! beside Xaqu's can never be written (the certification consultant's
 //! ruling, 2026-10-11). The names the customer's disk was given on
-//! 2026-10-11 (`ferrix-esp`, `ferrix-bootctl`, `ferrix-slot-a`,
-//! `ferrix-slot-b`, `ferrix-root`) tell slot A from slot B. On top of the
+//! 2026-10-11 (`xaqu-esp`, `xaqu-bootctl`, `xaqu-slot-a`,
+//! `xaqu-slot-b`, `xaqu-root`) tell slot A from slot B. On top of the
 //! type, [`check_writable`] looks at what a partition holds and refuses one
 //! holding swap, btrfs, NTFS, ext4 or a partition table.
 
 use std::fs::File;
 use std::io;
 
-use ferrix_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition};
+use xaqu_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition};
 
 use crate::disk::{self, SECTOR, Table};
 
-/// Ferrix's own partition types (`docs/AB-BOOT.md` §2, §3), `ferrix-slots`'.
+/// Xaqu's own partition types (`docs/AB-BOOT.md` §2, §3), `xaqu-slots`'.
 /// The customer's disk carries Linux's data type on its slots until these
 /// are written there (the product owner's write phase).
-pub const SLOT_TYPE: Guid = Guid(ferrix_slots::gpt::SLOT_TYPE);
-pub const CONTROL_TYPE: Guid = Guid(ferrix_slots::gpt::CONTROL_TYPE);
-/// Linux swap, which a disk shared with a Linux host may hold beside Ferrix.
+pub const SLOT_TYPE: Guid = Guid(xaqu_slots::gpt::SLOT_TYPE);
+pub const CONTROL_TYPE: Guid = Guid(xaqu_slots::gpt::CONTROL_TYPE);
+/// Linux swap, which a disk shared with a Linux host may hold beside Xaqu.
 pub const LINUX_SWAP: Guid =
     Guid::from_fields(0x0657_fd6d, 0xa4ab, 0x43c4, 0x84e5, 0x0933_c84b_4f4f);
 
-pub const ESP_NAME: &str = "ferrix-esp";
-pub const CONTROL_NAME: &str = "ferrix-bootctl";
-pub const SLOT_NAMES: [&str; 2] = ["ferrix-slot-a", "ferrix-slot-b"];
-pub const ROOT_NAME: &str = "ferrix-root";
+pub const ESP_NAME: &str = "xaqu-esp";
+pub const CONTROL_NAME: &str = "xaqu-bootctl";
+pub const SLOT_NAMES: [&str; 2] = ["xaqu-slot-a", "xaqu-slot-b"];
+pub const ROOT_NAME: &str = "xaqu-root";
 
 /// The control record's partition holds two copies, at 0 and at 64 KiB:
 /// it must be at least 128 KiB (`docs/AB-BOOT.md` §3).
 pub const CONTROL_BYTES: u64 = 128 << 10;
 
-pub use ferrix_slots::Slot;
+pub use xaqu_slots::Slot;
 
 /// One partition of the layout: its number (1-based, as its node is
 /// named), its entry, and its node.
@@ -59,11 +59,11 @@ impl Part {
 #[derive(Debug, Clone)]
 pub struct AbDisk {
     pub disk: String,
-    /// The disk's GUID, which the loader names (`ferrix.slot.disk=`).
+    /// The disk's GUID, which the loader names (`xaqu.slot.disk=`).
     pub guid: Guid,
-    /// The layout as `ferrix-slots` reads it, the loader's reading: the
+    /// The layout as `xaqu-slots` reads it, the loader's reading: the
     /// control record is written through it.
-    pub slots_layout: ferrix_slots::gpt::Layout,
+    pub slots_layout: xaqu_slots::gpt::Layout,
     pub esp: Option<Part>,
     pub control: Part,
     pub slots: [Part; 2],
@@ -116,21 +116,21 @@ pub fn find(disk: &str, table: &Table) -> Result<Option<AbDisk>, String> {
         return match named(CONTROL_NAME) {
             None => Ok(None),
             Some(control) => Err(format!(
-                "{} is named {CONTROL_NAME} but its type is {}, not Ferrix's boot control \
-                 type {CONTROL_TYPE}; bootctl writes only partitions of Ferrix's two types",
+                "{} is named {CONTROL_NAME} but its type is {}, not Xaqu's boot control \
+                 type {CONTROL_TYPE}; bootctl writes only partitions of Xaqu's two types",
                 control.node, control.entry.type_guid
             )),
         };
     }
     let [control] = controls.as_slice() else {
         return Err(format!(
-            "{disk} has {} partitions of Ferrix's boot control type; it needs one",
+            "{disk} has {} partitions of Xaqu's boot control type; it needs one",
             controls.len()
         ));
     };
     let [a, b] = slots.as_slice() else {
         return Err(format!(
-            "{disk} has {} partitions of Ferrix's system slot type; it needs two",
+            "{disk} has {} partitions of Xaqu's system slot type; it needs two",
             slots.len()
         ));
     };
@@ -147,8 +147,8 @@ pub fn find(disk: &str, table: &Table) -> Result<Option<AbDisk>, String> {
     let root = named(ROOT_NAME).filter(|root| root.entry.type_guid == LINUX_FILESYSTEM);
     // The loader's own reading of the same table must find the same three.
     let slots_layout = loaders_reading(table)
-        .map_err(|why| format!("{disk}: ferrix-slots refuses its table: {why:?}"))?;
-    let agrees = |mine: &Part, theirs: &ferrix_slots::gpt::Part| {
+        .map_err(|why| format!("{disk}: xaqu-slots refuses its table: {why:?}"))?;
+    let agrees = |mine: &Part, theirs: &xaqu_slots::gpt::Part| {
         mine.entry.first == theirs.first_lba && mine.entry.last == theirs.last_lba
     };
     if !agrees(control, &slots_layout.control)
@@ -170,16 +170,16 @@ pub fn find(disk: &str, table: &Table) -> Result<Option<AbDisk>, String> {
     }))
 }
 
-/// `ferrix-slots`' reading of `table`: the loader's.
+/// `xaqu-slots`' reading of `table`: the loader's.
 fn loaders_reading(
     table: &Table,
-) -> Result<ferrix_slots::gpt::Layout, ferrix_slots::gpt::GptError> {
+) -> Result<xaqu_slots::gpt::Layout, xaqu_slots::gpt::GptError> {
     let block = SECTOR as u32;
-    let header = ferrix_slots::gpt::parse_header(&table.raw_header, table.sectors, block)?;
-    ferrix_slots::gpt::find(&header, &table.raw_array, table.sectors, block)
+    let header = xaqu_slots::gpt::parse_header(&table.raw_header, table.sectors, block)?;
+    xaqu_slots::gpt::find(&header, &table.raw_array, table.sectors, block)
 }
 
-/// Whether `table` has any partition of Ferrix's boot control type.
+/// Whether `table` has any partition of Xaqu's boot control type.
 fn has_control(table: &Table) -> bool {
     table
         .entries
@@ -189,7 +189,7 @@ fn has_control(table: &Table) -> bool {
 
 /// The one disk with the A/B layout (`docs/AB-BOOT.md` §5; the
 /// consultant's S1): of `disks`, each a path and its table, exactly one
-/// may carry a partition of Ferrix's boot control type, and it must be the
+/// may carry a partition of Xaqu's boot control type, and it must be the
 /// one the loader names by its GUID (`booted`) when it named one, and the
 /// one `named` when a disk is named. A disk named that has no control
 /// partition is refused with what is wrong with it.
@@ -209,17 +209,17 @@ pub fn choose(
         return Err(match disks.iter().find(|(path, _)| path == name) {
             Some((path, table)) => match find(path, table)? {
                 Some(_) => unreachable_layout(path),
-                None => format!("{path} has no partition of Ferrix's boot control type"),
+                None => format!("{path} has no partition of Xaqu's boot control type"),
             },
             None => format!("{name} has no GUID partition table"),
         });
     }
     let [(path, table)] = carrying.as_slice() else {
         return Err(if carrying.is_empty() {
-            "no disk has a partition of Ferrix's boot control type".to_owned()
+            "no disk has a partition of Xaqu's boot control type".to_owned()
         } else {
             format!(
-                "more than one disk has a partition of Ferrix's boot control type ({}); \
+                "more than one disk has a partition of Xaqu's boot control type ({}); \
                  bootctl acts only when there is one",
                 carrying
                     .iter()
@@ -294,7 +294,7 @@ pub const HEAD_BYTES: usize = 0x10040 + 8;
 pub fn check_writable(part: &Part, file: &mut File) -> Result<(), String> {
     if part.entry.type_guid != SLOT_TYPE && part.entry.type_guid != CONTROL_TYPE {
         return Err(format!(
-            "{} is of type {}, not a Ferrix slot or control record",
+            "{} is of type {}, not a Xaqu slot or control record",
             part.node, part.entry.type_guid
         ));
     }
@@ -302,7 +302,7 @@ pub fn check_writable(part: &Part, file: &mut File) -> Result<(), String> {
     disk::read_at(file, 0, &mut head).map_err(|e: io::Error| format!("{}: {e}", part.node))?;
     match foreign(&head) {
         Some(what) => Err(format!(
-            "{} holds {what}; a slot is written only when it is empty or holds a Ferrix image",
+            "{} holds {what}; a slot is written only when it is empty or holds a Xaqu image",
             part.node
         )),
         None => Ok(()),
@@ -312,7 +312,7 @@ pub fn check_writable(part: &Part, file: &mut File) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ferrix_partition::{parse_entries, parse_header, write_table};
+    use xaqu_partition::{parse_entries, parse_header, write_table};
 
     /// The customer's layout, in MiB, scaled down, on disk `disk`.
     fn table_of(slot_type: Guid, disk: u8) -> Table {
@@ -371,7 +371,7 @@ mod tests {
     fn a_slot_of_linux_type_is_refused() {
         // The customer's disk as partitioned: named, but Linux's data type.
         let why = find("/dev/nvme0n1", &table(LINUX_FILESYSTEM)).unwrap_err();
-        assert!(why.contains("not Ferrix's boot control type"), "{why}");
+        assert!(why.contains("not Xaqu's boot control type"), "{why}");
     }
 
     #[test]
@@ -394,7 +394,7 @@ mod tests {
         assert!(why.contains("booted from disk"), "{why}");
         // The SN720 as it is, named: refused, saying why.
         let why = choose(&one, Some("/dev/vdf"), None).unwrap_err();
-        assert!(why.contains("not Ferrix's boot control type"), "{why}");
+        assert!(why.contains("not Xaqu's boot control type"), "{why}");
         // Two carrying disks: refused, whichever is named or booted.
         let two = vec![ab("d"), ab("e")];
         for (named, booted) in [

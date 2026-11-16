@@ -19,7 +19,7 @@
 //! * then `rm -rf` of the lot, with a probe that wakes every 100 ms and
 //!   records how late it woke, which must stay under [`STALL_LIMIT_CS`].
 //!
-//! `FERRIX_PRESSURE_BOOTS=cgroup` (or `all`) runs it with the writers and
+//! `XAQU_PRESSURE_BOOTS=cgroup` (or `all`) runs it with the writers and
 //! readers in a cgroup at `memory.max`, half the machine: not part of the
 //! gate yet, since that path fails on defects of its own
 //! (`docs/BTRFS-PRESSURE.md`, "At memory.max").
@@ -407,14 +407,14 @@ fn run(arch: Arch, args: &Args) -> Result<()> {
     let mut failures = Vec::new();
     // The machine's floor and the eviction under a burst of small files are
     // the gate, and so is the commit under a burst of names at the floor
-    // (2026-11-08). The boot at `memory.max` is run when `FERRIX_PRESSURE_BOOTS`
+    // (2026-11-08). The boot at `memory.max` is run when `XAQU_PRESSURE_BOOTS`
     // names `cgroup` (or says `all`): it fails on main and with this fix
     // alike, on defects of the memory.max path of their own
     // (docs/BTRFS-PRESSURE.md, "At memory.max"). The variable is a comma list
     // of `floor`, `evict`, `commit`, `hog` and `cgroup`; the hog boot, the
     // kernel's heap growing with no clean cache left, joined the gate on
     // 2026-11-08 (mem-pressure).
-    let boots = std::env::var("FERRIX_PRESSURE_BOOTS")
+    let boots = std::env::var("XAQU_PRESSURE_BOOTS")
         .unwrap_or_else(|_| "floor,evict,commit,hog".to_owned());
     for kind in [
         Kind::Floor,
@@ -480,7 +480,7 @@ fn guest_script(kind: Kind, machine: &Args) -> String {
 }
 
 impl Kind {
-    /// Its name in `FERRIX_PRESSURE_BOOTS`.
+    /// Its name in `XAQU_PRESSURE_BOOTS`.
     fn name(self) -> &'static str {
         match self {
             Kind::Floor => "floor",
@@ -675,7 +675,7 @@ fn judge_evict(ours: &[&str]) -> std::result::Result<(), String> {
 /// Whether the commit boot finished, nothing failed, every name was made,
 /// and the kernel never said that a transaction was aborted: what the
 /// writable mount says, through its notice, when an edit or a commit fails
-/// half-way (`ferrix_btrfs_vfs::rw`, "After an aborted transaction").
+/// half-way (`xaqu_btrfs_vfs::rw`, "After an aborted transaction").
 fn judge_commit(ours: &[&str], kernel: &[&str]) -> std::result::Result<(), String> {
     if let Some(aborted) = kernel
         .iter()
@@ -836,10 +836,10 @@ mod tests {
         let lines = |text: &[&str]| text.iter().map(|l| (*l).to_owned()).collect::<Vec<_>>();
         assert!(!stopped(&lines(&["pressure: hog: 643 MiB held"])));
         assert!(!stopped(&lines(&[
-            "FERRIX-PANIC memory allocation of 204 bytes failed"
+            "XAQU-PANIC memory allocation of 204 bytes failed"
         ])));
         assert!(stopped(&lines(&[
-            "   28.62 | FERRIX-PANIC memory allocation of 204 bytes failed",
+            "   28.62 | XAQU-PANIC memory allocation of 204 bytes failed",
             "   28.63 |   trace     #0  0xffffffffc54ebcda",
             "   28.63 |   code      FX-0008  an allocation that cannot report failure",
         ])));

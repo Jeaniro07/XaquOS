@@ -18,14 +18,14 @@ evidenced on QEMU only and not yet run on the box with checks on (BACKLOG). Outs
 
 | Part | Where | What |
 |---|---|---|
-| The logic | `src/lib/drivers/block/ahci` (`ferrix-ahci`) | The host bus adapter as logic over registers, memory and a clock: the BIOS handoff, AHCI enable, finding the drive, IDENTIFY DEVICE, polled reads, writes and flushes, recovery and shutdown. `no_std`, no `unsafe`, host tests against a model HBA (`src/tests/`) |
-| The process | `src/user/system/native/drivers/block/ahci` (`ahci`) | The glue: ABAR (BAR 5) through `ferrix-driver`'s PCI bus, pinned memory, the monotonic clock, the console lines. Serves the block ring through `ferrix-driver`'s `block` subsystem, as `nvme` and `blk` do |
+| The logic | `src/lib/drivers/block/ahci` (`xaqu-ahci`) | The host bus adapter as logic over registers, memory and a clock: the BIOS handoff, AHCI enable, finding the drive, IDENTIFY DEVICE, polled reads, writes and flushes, recovery and shutdown. `no_std`, no `unsafe`, host tests against a model HBA (`src/tests/`) |
+| The process | `src/user/system/native/drivers/block/ahci` (`ahci`) | The glue: ABAR (BAR 5) through `xaqu-driver`'s PCI bus, pinned memory, the monotonic clock, the console lines. Serves the block ring through `xaqu-driver`'s `block` subsystem, as `nvme` and `blk` do |
 | The match | `devmgr`'s PCI table | Class code `01:06:01` (mass storage, SATA, AHCI 1.0), any vendor, drives `ahci` as a disk |
 | The gate | `cargo xtask test-n150-sata` | `test-n150` with its disk a SATA drive on q35's AHCI controller (`docs/N150.md` §9) |
 
 The kernel is not changed for it: the disk reaches the block core over a
 block ring, so the partition scan, btrfs and everything above them are the
-same code as for a virtio or NVMe disk. `ferrix-pci` learned that an AHCI
+same code as for a virtio or NVMe disk. `xaqu-pci` learned that an AHCI
 controller's ABAR is BAR slot 5, sized and mappable whole.
 
 ## 2. What it does

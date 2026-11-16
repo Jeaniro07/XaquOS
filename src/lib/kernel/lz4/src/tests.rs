@@ -123,7 +123,7 @@ fn input_past_64_kib_is_refused() {
 }
 
 /// Measured, not asserted: the ratio on a page of each kind. Run with
-/// `cargo test -p ferrix-lz4 --release -- --ignored --nocapture ratio`.
+/// `cargo test -p xaqu-lz4 --release -- --ignored --nocapture ratio`.
 #[test]
 #[ignore = "a measurement for docs/MEMORY-COMPRESSION.md"]
 #[expect(clippy::print_stdout, reason = "the measurement is its output")]

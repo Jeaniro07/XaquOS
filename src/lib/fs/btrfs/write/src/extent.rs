@@ -23,8 +23,8 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
-use ferrix_btrfs::crc32c::crc32c_update;
-use ferrix_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::crc32c::crc32c_update;
+use xaqu_btrfs::tree::BtrfsKey;
 
 use crate::bytes::{get_u8, get_u32, get_u64, put_u8, put_u32, put_u64};
 use crate::{Error, Result, Unsupported, fallible};

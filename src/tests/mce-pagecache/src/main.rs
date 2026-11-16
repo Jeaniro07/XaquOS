@@ -68,8 +68,8 @@ fn main() -> ExitCode {
             say(&format!("mce-pc: {line}"));
         }
     }
-    show("/proc/ferrix-mce");
-    show("/proc/ferrix-mce-retired");
+    show("/proc/xaqu-mce");
+    show("/proc/xaqu-mce-retired");
     say("mce-pc: done");
     ExitCode::SUCCESS
 }

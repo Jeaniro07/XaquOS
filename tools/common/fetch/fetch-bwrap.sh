@@ -9,8 +9,8 @@
 # point release changes nothing here until this script is changed. glibc is
 # the one fetch-debian-busybox.sh pins.
 #
-# The six files land flat under `$FERRIX_BWRAP/x86_64/` (default
-# ~/.local/share/ferrix/bwrap), where `test-bwrap` looks for them:
+# The six files land flat under `$XAQU_BWRAP/x86_64/` (default
+# ~/.local/share/xaqu/bwrap), where `test-bwrap` looks for them:
 #
 #   bwrap  ld.so  libc.so.6  libcap.so.2  libselinux.so.1  libpcre2-8.so.0
 #
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 mirror=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
-out=${FERRIX_BWRAP:-$HOME/.local/share/ferrix/bwrap}
+out=${XAQU_BWRAP:-$HOME/.local/share/xaqu/bwrap}
 
 # Pool path and SHA-256 of each package.
 packages=(

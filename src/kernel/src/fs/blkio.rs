@@ -14,7 +14,7 @@
 //!
 //! A limit on a job's bytes or operations a second, each way, on one disk. A
 //! request finds, in every job from its submitter's up, the instant that job's
-//! limit next lets work start (`ferrix_block::Throttle`), waits in its
+//! limit next lets work start (`xaqu_block::Throttle`), waits in its
 //! submitter until the latest of them, and pays them all the same start. A
 //! job's children therefore share its limit however they split it.
 //!
@@ -31,8 +31,8 @@
 //!
 //! While any cgroup has a weight other than the default or a latency target
 //! ([`SHAPED`]), a disk serves one request at a time in a fair queue
-//! (`ferrix_block::Fair`): a request costs its bytes scaled by the weights on
-//! the way up (`ferrix_block::weighted_cost`), and the disk goes to the waiting request
+//! (`xaqu_block::Fair`): a request costs its bytes scaled by the weights on
+//! the way up (`xaqu_block::weighted_cost`), and the disk goes to the waiting request
 //! with the least virtual finish, so cgroups that contend for it get it in
 //! proportion to their weights. A request of a cgroup that is missing its
 //! `io.latency` target on the disk, or under one that is, is urgent and goes
@@ -52,10 +52,10 @@ use alloc::vec::Vec;
 
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_block::{Fair, Throttle, weighted_cost};
-use ferrix_cgroupfs::io::{Limits, Stat};
-use ferrix_kmem::Charge;
-use ferrix_vfs::Errno;
+use xaqu_block::{Fair, Throttle, weighted_cost};
+use xaqu_cgroupfs::io::{Limits, Stat};
+use xaqu_kmem::Charge;
+use xaqu_vfs::Errno;
 
 use super::block::BlockDevice;
 use crate::fallible;
@@ -148,7 +148,7 @@ static DEFAULTS: SpinLock<BTreeMap<u32, (u32, Charge)>> = SpinLock::new(BTreeMap
 const DEFAULT_HEAP: usize = 2 * size_of::<u32>() + 3 * size_of::<(u32, Charge)>();
 
 /// How long a disk is held for the group it served last, when that group's
-/// next request would win anyway (`ferrix_block::Fair`'s hold): 2 ms, time
+/// next request would win anyway (`xaqu_block::Fair`'s hold): 2 ms, time
 /// for a task to queue its next request, where BFQ's `slice_idle` is 8 ms.
 const HOLD_NANOS: u64 = 2_000_000;
 
@@ -188,7 +188,7 @@ fn weight_on(
         .map(|shape| shape.weight)
         .filter(|&weight| weight != 0)
         .or_else(|| defaults.get(&slot).map(|&(weight, _)| weight))
-        .unwrap_or(ferrix_cgroupfs::io::WEIGHT_DEFAULT)
+        .unwrap_or(xaqu_cgroupfs::io::WEIGHT_DEFAULT)
 }
 
 /// The slots a request of the running task is charged to: its job's, then
@@ -363,7 +363,7 @@ pub(crate) fn default_weight(slot: u32) -> u32 {
     DEFAULTS
         .lock()
         .get(&slot)
-        .map_or(ferrix_cgroupfs::io::WEIGHT_DEFAULT, |&(weight, _)| weight)
+        .map_or(xaqu_cgroupfs::io::WEIGHT_DEFAULT, |&(weight, _)| weight)
 }
 
 /// Set the job in `slot`'s default `io.weight`.
@@ -372,7 +372,7 @@ pub(crate) fn default_weight(slot: u32) -> u32 {
 ///
 /// `ENOMEM` when the job cannot pay for keeping it.
 pub(crate) fn set_default_weight(slot: u32, weight: u32) -> Result<(), Errno> {
-    let gone = if weight == ferrix_cgroupfs::io::WEIGHT_DEFAULT {
+    let gone = if weight == xaqu_cgroupfs::io::WEIGHT_DEFAULT {
         DEFAULTS.lock().remove(&slot)
     } else {
         let charge = Charge::to(slot, DEFAULT_HEAP).map_err(|_| Errno::ENOMEM)?;

@@ -24,10 +24,10 @@ fn check_the_rollback() -> Result<(), &'static str> {
 fn check_an_image_of_another_machine() -> Result<(), &'static str> {
     /// `EM_AARCH64`.
     const EM_AARCH64: u16 = 183;
-    if arch::image_abi(ferrix_elf::Class::Elf64, EM_AARCH64).is_some() {
+    if arch::image_abi(xaqu_elf::Class::Elf64, EM_AARCH64).is_some() {
         return Err("image_abi answered an ABI for an image of another machine");
     }
-    if arch::image_abi(ferrix_elf::Class::Elf64, arch::ARCH.elf_machine()) != Some(Abi::Native) {
+    if arch::image_abi(xaqu_elf::Class::Elf64, arch::ARCH.elf_machine()) != Some(Abi::Native) {
         return Err("image_abi answered no ABI for an image of this machine");
     }
     Ok(())

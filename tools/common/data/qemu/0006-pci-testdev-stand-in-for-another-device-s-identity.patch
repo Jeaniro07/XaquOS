@@ -11,7 +11,7 @@ guest's user space that finds devices by their PCI identity in sysfs
 (libdrm's drmGetDevices2, which Mesa's anv filters by vendor 0x8086)
 sees that device.
 
-Ferrix's test-intel-uapi boots one at 00:02.0 as 8086:46d4, class
+Xaqu's test-intel-uapi boots one at 00:02.0 as 8086:46d4, class
 030000, Alder Lake-N's integrated GPU, and serves it with the Intel
 driver's fake back end (docs/INTEL-GPU.md section 6). The device does
 nothing more than the test device does.

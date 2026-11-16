@@ -3,7 +3,7 @@
 //! The kernel cannot start on it. The disk driver is a ring-3 program on the
 //! root filesystem, so the root it starts on is the tmpfs the initramfs is
 //! unpacked into (`fs`'s module comment, and `docs/ARCHITECTURE.md` §7).
-//! Linux's answer is `switch_root`, and this is Ferrix's: once the driver is
+//! Linux's answer is `switch_root`, and this is Xaqu's: once the driver is
 //! serving the disk, [`switch`] mounts the btrfs volume on it at
 //! [`SYSROOT`], installs the system on it from the same archive, mounts
 //! `/dev`, `/dev/shm`, `/proc`, `/sys` and `/tmp` inside it, and from then
@@ -23,7 +23,7 @@
 //! for it. `cargo xtask run` and
 //! `run-compositor` attach `build/root.img`, a 1 GiB volume made from the
 //! `root` fixture the first time and kept after that; the test boots do not
-//! attach it, and without it — or with `ferrix.root=tmpfs` on the command
+//! attach it, and without it — or with `xaqu.root=tmpfs` on the command
 //! line — the root stays the tmpfs, as it always was.
 //!
 //! # The system on it
@@ -34,8 +34,8 @@
 //! and everything else a user put on the volume stays. A file the new archive
 //! also carries is replaced by the archive's; one it no longer carries is
 //! left where it was. A directory with files in it, where the archive has a
-//! link or a file, is moved aside to `<name>.ferrix-old` and said, never
-//! emptied (`ferrix_vfs::initramfs`).
+//! link or a file, is moved aside to `<name>.xaqu-old` and said, never
+//! emptied (`xaqu_vfs::initramfs`).
 //!
 //! # What reaches the disk
 //!
@@ -52,7 +52,7 @@
 //!
 //! # When pid 1 starts `devmgr`
 //!
-//! Under `ferrix.devmgr=init` (`docs/INIT.md` §7.3, L12) the disk's driver
+//! Under `xaqu.devmgr=init` (`docs/INIT.md` §7.3, L12) the disk's driver
 //! does not exist until pid 1 has started `devmgr`, so pid 1 starts on the
 //! tmpfs and the switch comes after it: [`switch_after_devmgr`] waits for
 //! `devmgr`'s REPORT, switches, mounts the data and home disks, gives back
@@ -70,33 +70,33 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_btrfs::crc32c::crc32c;
-use ferrix_sync::Once;
-use ferrix_vfs::initramfs::{self, makedev};
-use ferrix_vfs::{Access, Context, Errno, FileSystem, Location, OpenFlags, SetAttributes};
+use xaqu_bootinfo::BootView;
+use xaqu_btrfs::crc32c::crc32c;
+use xaqu_sync::Once;
+use xaqu_vfs::initramfs::{self, makedev};
+use xaqu_vfs::{Access, Context, Errno, FileSystem, Location, OpenFlags, SetAttributes};
 
 use crate::console::println;
 use crate::fs::{devfs, procfs, sysfs};
 use crate::{fs, sched};
 
-/// The label the root volume carries: `mkfs.btrfs -L ferrix-root`.
-const LABEL: &[u8] = b"ferrix-root";
+/// The label the root volume carries: `mkfs.btrfs -L xaqu-root`.
+const LABEL: &[u8] = b"xaqu-root";
 
 /// Where the volume is mounted in the kernel's own tree.
 const SYSROOT: &[u8] = b"/sysroot";
 
 /// The command-line option that keeps the tmpfs root.
-const OPTION: &str = "ferrix.root";
+const OPTION: &str = "xaqu.root";
 
 /// Which archive the volume last got, relative to its root: the length and
 /// the CRC-32C, in hex.
-const STAMP: &[u8] = b"/.ferrix-initramfs";
+const STAMP: &[u8] = b"/.xaqu-initramfs";
 
 /// How often everything written is committed without being asked.
 const COMMIT_INTERVAL: u64 = 30_000_000_000;
 
-/// Whether `ferrix.root=tmpfs` asked for the tmpfs root.
+/// Whether `xaqu.root=tmpfs` asked for the tmpfs root.
 static TMPFS: AtomicBool = AtomicBool::new(false);
 
 /// The volume, and where it is: set once [`switch`] has finished.
@@ -120,7 +120,7 @@ pub(crate) fn is_root(rdev: u64) -> bool {
     fs::btrfs::label(rdev).as_deref() == Some(LABEL)
 }
 
-/// Read `ferrix.root`, once, early.
+/// Read `xaqu.root`, once, early.
 pub fn init(view: &BootView<'_>) {
     match view.option(OPTION) {
         None | Some("btrfs") => {}
@@ -146,7 +146,7 @@ pub(crate) fn process_context() -> Context {
 /// Put `/` on the root disk, if this machine has one and nothing asked for
 /// the tmpfs. Says what it did either way.
 pub fn switch() {
-    // Any disk or partition labelled `ferrix-root`: an installed disk's is
+    // Any disk or partition labelled `xaqu-root`: an installed disk's is
     // its second partition (`docs/INSTALLER.md` §4.2).
     fs::partitions::scan();
     let Some(disk) = devfs::disks()
@@ -275,7 +275,7 @@ pub(crate) fn start_committer() -> bool {
         "disk commit",
         commit_forever,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     )
     .is_ok();
     if !spawned {
@@ -334,7 +334,7 @@ fn install_from(inside: &Context, archive: &[u8]) -> Result<Installed, &'static 
         );
     }
     // AoU-24 on the volume too: pid 1's inputs stay in the archive.
-    if ns.resolve(inside, None, b"/.ferrix", false).is_ok() {
+    if ns.resolve(inside, None, b"/.xaqu", false).is_ok() {
         return Err("could not take the system: pid 1's inputs were unpacked onto it");
     }
     // Written last, so a boot that dies part-way through installs again.
@@ -447,11 +447,11 @@ pub(crate) fn sync() -> Result<(), Errno> {
 /// start every driver, under TCG.
 const DEVMGR_PATIENCE_NANOS: u64 = 60_000_000_000;
 
-/// Under `ferrix.devmgr=init`: a task that waits for `devmgr`'s REPORT,
+/// Under `xaqu.devmgr=init`: a task that waits for `devmgr`'s REPORT,
 /// then does what bring-up does without the option -- the switch and the
 /// data disk -- checks that pid 1 moved, and tells pid 1 where `/` is.
 pub fn switch_after_devmgr() {
-    if sched::spawn("root switch", after_devmgr, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("root switch", after_devmgr, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         println!("  root     no task to switch / on: it stays in memory");
         fs::release_boot_copies();
         crate::init::notify_root(false);

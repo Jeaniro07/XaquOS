@@ -3,10 +3,10 @@
 
 use std::vec;
 
-use ferrix_usb_device::acm::{
+use xaqu_usb_device::acm::{
     DEVICE, FULL_SPEED_CONFIGURATION, HIGH_SPEED_CONFIGURATION, LineCoding, SerialPort,
 };
-use ferrix_usb_device::{EndpointInfo, Function, Reply, Setup, Speed, Status};
+use xaqu_usb_device::{EndpointInfo, Function, Reply, Setup, Speed, Status};
 
 use super::model::{ABL_EVENTS, HostError, PAGES, Regs};
 use super::rig::{ADDRESS, Rig};
@@ -66,7 +66,7 @@ fn enumerates_like_linux() {
     assert_eq!(found.languages, [4, 3, 0x09, 0x04], "US English");
     assert_eq!(
         found.strings,
-        ["Ferrix", "Ferrix console", "P7-TEST"],
+        ["Xaqu", "Xaqu console", "P7-TEST"],
         "the strings"
     );
     assert_eq!(rig.model.borrow().host_address, ADDRESS as u8, "addressed");

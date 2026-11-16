@@ -13,7 +13,7 @@ flip for `fast` and `max` needs MICROKERNEL §7's rows and is not decided here.
 
 **One source, chosen by flags (the customer, 2026-11-03).** The goal is a tiny
 kernel in `fast` and `max`, selected only by compile-time flags from one tree.
-The same `ferrix-kernel-load` source builds into ring 0 for `desktop` and into
+The same `xaqu-kernel-load` source builds into ring 0 for `desktop` and into
 `linuxd` for `fast` and `max`, with no fork of it. **"The flip" compiles the load
 out of `personality=user` builds; it deletes nothing the hybrid uses.** Kernel
 code no building profile needs any more, `desktop` and `present` included, may be
@@ -21,39 +21,39 @@ deleted, through the consultant as any item change.
 
 ## 1. The shape
 
-The lift is **one source built twice**. `ferrix-kernel-load`'s root
+The lift is **one source built twice**. `xaqu-kernel-load`'s root
 (`src/kernel/src/kernel_load.rs`) and every file under it stay where they are.
 A new package compiles the same root as a user-space library, against a shim
 in place of the core and the item:
 
 | Package | Root | What | Depends on |
 |---|---|---|---|
-| `ferrix-kernel-load` | `src/kernel/src/kernel_load.rs` | as today, in the hybrid kernel | core, item |
-| `ferrix-lift-core`, renamed `ferrix_kernel_core` | `src/kernel/src/lift_core.rs` | the shim: the core's interface as the load names it | `ferrix-rt`'s native layer, native-abi |
-| `ferrix-lift-item`, renamed `ferrix_kernel_item` | `src/kernel/src/lift_item.rs` | the item's interface: `syscall::{Personality, native, program, ...}`, `discovery::devmgr`, `init` | lift-core |
-| `ferrix-lift-load`, lib name `ferrix_kernel_load` | `src/kernel/src/kernel_load.rs`, **the same file** | the load, built with `ferrix_load_built="lift"` | lift-core, lift-item, the same libraries |
+| `xaqu-kernel-load` | `src/kernel/src/kernel_load.rs` | as today, in the hybrid kernel | core, item |
+| `xaqu-lift-core`, renamed `xaqu_kernel_core` | `src/kernel/src/lift_core.rs` | the shim: the core's interface as the load names it | `xaqu-rt`'s native layer, native-abi |
+| `xaqu-lift-item`, renamed `xaqu_kernel_item` | `src/kernel/src/lift_item.rs` | the item's interface: `syscall::{Personality, native, program, ...}`, `discovery::devmgr`, `init` | lift-core |
+| `xaqu-lift-load`, lib name `xaqu_kernel_load` | `src/kernel/src/kernel_load.rs`, **the same file** | the load, built with `xaqu_load_built="lift"` | lift-core, lift-item, the same libraries |
 | `linuxd` | `src/user/system/native/linuxd/src/main.rs` | the program: entry, boot (§6), the restricted loop (§4.2), the global allocator | lift-load |
 
 * **`crate::` paths keep working** in load files, as KERNEL-CRATES §1's rule
-  has them: `pub use ferrix_kernel_item::*` is in the shared root.
+  has them: `pub use xaqu_kernel_item::*` is in the shared root.
 * **The shim's files sit under `src/kernel/lift/`** except those reused
   by position (§3, class S): `lift_core.rs` writes `pub mod fallible;`, found
   beside it as `kernel_core.rs`'s is. So a pure file has one source and two
   crates. `check-item-boundary.py`'s rule "each file is reached by exactly one
   crate" (KERNEL-CRATES §3 (2)) gains one exception, its own list,
   `lift_reuse` in `certification-item.json`: a listed file may be reached by
-  its ring's crate **and** `ferrix-lift-core` and by nothing else. An unlisted
+  its ring's crate **and** `xaqu-lift-core` and by nothing else. An unlisted
   file reached twice still fails; a planted one is the control. The load's
-  files are reached by `ferrix-kernel-load` and `ferrix-lift-load` by the same
+  files are reached by `xaqu-kernel-load` and `xaqu-lift-load` by the same
   list's second key, the root alone: both crates' roots are the one file.
 * **Which load modules the shared root builds**: a new derived cfg.
-  `ferrix_load_built` is written by `build.rs`, never set by a profile:
+  `xaqu_load_built` is written by `build.rs`, never set by a profile:
   `"ring0"` for the kernel's crates under `personality=kernel`, `"none"` for
-  them under `personality=user` or `none`, `"lift"` for `ferrix-lift-*`. Every
-  `cfg(ferrix_linux_abi = ...)` in `main.rs` and the kernel's crate roots that
+  them under `personality=user` or `none`, `"lift"` for `xaqu-lift-*`. Every
+  `cfg(xaqu_linux_abi = ...)` in `main.rs` and the kernel's crate roots that
   today means "the load is in this kernel" reads it instead:
-  `ferrix_linux_abi = "on"` becomes `ferrix_load_built = "ring0"` and `"off"`
-  becomes `any(ferrix_load_built = "none")`. Under `present` and `desktop` the
+  `xaqu_linux_abi = "on"` becomes `xaqu_load_built = "ring0"` and `"off"`
+  becomes `any(xaqu_load_built = "none")`. Under `present` and `desktop` the
   value is `"ring0"` where `linux_abi=on` was, so nothing changes in those
   images (§8's check). The *flag*'s meaning does not move: `linux_abi=on` with
   `personality=user` is `max`'s and `fast`'s line, and the boot line prints both.
@@ -74,8 +74,8 @@ in place of the core and the item:
 ## 2. The kernel under `personality=user`
 
 **No load ring.** `main.rs` composes `NoLinux` (`Personality`: every Linux number
-outside restricted mode answers `ENOSYS`), and does not name `ferrix_kernel_load`,
-so the crate is not linked; a symbol check (`nm` finds no `ferrix_kernel_load`)
+outside restricted mode answers `ENOSYS`), and does not name `xaqu_kernel_load`,
+so the crate is not linked; a symbol check (`nm` finds no `xaqu_kernel_load`)
 is milestone 1's gate, with a control that names one load item from `main.rs`.
 What today's `linux_abi=off` lacks, in `LINUX-ABI-SEPARATION.md` §7's rows, is
 added to the item under this cfg alone:
@@ -88,7 +88,7 @@ added to the item under this cfg alone:
 * **The first-image loader** (row 10, K15's "one loader only"), new file
   `first_image.rs`, item ring, held to the item's rules: reads the three
   first images from the initramfs by a read-only directory walk that needs no
-  VFS (`ferrix-elf` for the headers). Read K15 on `feature/mk-m2` and use its
+  VFS (`xaqu-elf` for the headers). Read K15 on `feature/mk-m2` and use its
   file if it is ahead; the two are one loader at landing. Boot authority, what
   each first process holds, is mk-authority's (§5); until it lands this kernel
   starts `linuxd` alone with the handles §6 lists.
@@ -112,7 +112,7 @@ no call here makes one. Only what lands is released, in the commit that writes i
 **The `load`-to-kernel seams that vanish**: `register_load`, `ReturnPath`'s Linux
 half, `init::Launcher`, `devmgr::register_reader`, `power::register_flush` and
 the served calls' `register_server` have no caller; `main.rs` under
-`ferrix_load_built="none"` has its own short `register_load`. `DEVMGR_START` and
+`xaqu_load_built="none"` has its own short `register_load`. `DEVMGR_START` and
 the retired calls of MICROKERNEL §3 answer `ENOSYS` there, from the first
 build. `decode_syscall`'s Linux tables and `signal_frame.rs` are not reached
 in this kernel (§2.1); deleting them from it is M6's.
@@ -289,8 +289,8 @@ built: devmgr detached, then `linuxd`; the manager is not there yet.
 
 1. The kernel boots as `linux_abi=off` does. **Those checks that need a Linux
    program are not built** (`LINUX-ABI-SEPARATION.md` §11.11, row 13), so this image
-   prints `FERRIX-BOOT-UNCHECKED`, a third text naming `personality=user`, and a row
-   passes on linuxd's own `  linuxd   booted` with `FERRIX-BOOT-OK` absent.
+   prints `XAQU-BOOT-UNCHECKED`, a third text naming `personality=user`, and a row
+   passes on linuxd's own `  linuxd   booted` with `XAQU-BOOT-OK` absent.
 2. `linuxd_start.rs` makes a region on a `linux` child job, loads `/sbin/linuxd` with
    the first-image loader, and hands it a **boot page** (R8, accepted until
    BOOT-AUTHORITY lands, then one format, BA.5): `BootPage` in `native-abi`, 64 bytes,
@@ -301,11 +301,11 @@ built: devmgr detached, then `linuxd`; the manager is not there yet.
 4. It serves until pid 1 ends. Pid 1's end or `reboot(2)` ends the partition
    (`sys::end_partition`), and a `linuxd` that dies does too.
 5. **The disk**: `fs::root_disk`, `data_disk` and `home_disk` are linuxd's, over a
-   driver devmgr started (§11). `ferrix.root=` comes from the boot page's command line.
+   driver devmgr started (§11). `xaqu.root=` comes from the boot page's command line.
 
 **Owed rows** (R8): L.init.2 is not the kernel's here; `job::root().new_child()`
-becomes the `linux` job; `ferrix_vfs::initramfs` in an item file gives way to a
-`ferrix-cpio` walk; `first_image::load_at` joins L.user.205's list; `linuxd_start.rs`
+becomes the `linux` job; `xaqu_vfs::initramfs` in an item file gives way to a
+`xaqu-cpio` walk; `first_image::load_at` joins L.user.205's list; `linuxd_start.rs`
 enters the manifest.
 
 ## 7. Milestones and gates
@@ -333,7 +333,7 @@ each reported, none loosened; a miss goes to `morning-questions.md`.
   ARMv7-A, before and after: same symbols with the same sizes (as
   LINUX-ABI-SEPARATION §11.11 showed), four boots' lines compared.
 * New kernel files (`native_host.rs`, `first_image.rs`, the calls of §2) are
-  `#[cfg(ferrix_load_built = "none")]`, so they are not in those images. New native
+  `#[cfg(xaqu_load_built = "none")]`, so they are not in those images. New native
   numbers are declared in `native-abi` and answered `ENOSYS` from the default arm
   there, which a boot check proves (the table's check already does).
 * The boundary gate's `lift_reuse`, the generated map's `--check` and the new
@@ -342,7 +342,7 @@ each reported, none loosened; a miss goes to `morning-questions.md`.
   held to its rules (requirements from the block, every `unsafe` traced, fallible
   allocation, no reachable panic) and reviewed before landing. **No claim attaches
   to `personality=user` until M7**: the build line says `no claim`, level `none`.
-* The shim, `linuxd` and `ferrix-lift-*` are not in any ring: `linuxd` is outside
+* The shim, `linuxd` and `xaqu-lift-*` are not in any ring: `linuxd` is outside
   the TSF (MICROKERNEL §6.1). They are classed `user` in the manifest's crates list,
   so the gate knows them.
 
@@ -368,7 +368,7 @@ The shim came out thinner than §3 first planned, and the difference is a design
 change, sent to the consultant with milestone 2's commit:
 
 * **`user/` and `object/` are the kernel's own sources**, compiled by position into
-  `ferrix-lift-core` (`user/{space,vmo,cache,address_wait,memory_type}.rs`,
+  `xaqu-lift-core` (`user/{space,vmo,cache,address_wait,memory_type}.rs`,
   `object/*`, `syscall/uaccess.rs`, `signal_frame.rs`, `fallible.rs`, `hooks.rs`,
   `claim.rs`, `panic/catalog.rs`, `arch/x86_64/signal.rs`, and in the item `init.rs`,
   `syscall/program.rs`). None holds `asm!` or an entry. What is reimplemented is
@@ -379,7 +379,7 @@ change, sent to the consultant with milestone 2's commit:
   page lists, copy on write, `mremap`, `madvise`, the page cache and the rmap are
   the same code in both shapes.
 * **A program's page tables are a shadow in arena frames**, walked by the same
-  `ferrix-paging`. `mm::map_in` writes only the shadow; **the kernel's restricted
+  `xaqu-paging`. `mm::map_in` writes only the shadow; **the kernel's restricted
   space is a cache of it**, filled by `SPACE_MAP` of arena pages when K1 reports a
   fault (`fill::resolve`), and emptied by `SPACE_UNMAP` in `mm::unmap_in`. W^X is
   K2's on every mapping: the arena has one writable handle and one `VMO_EXECUTABLE`
@@ -421,11 +421,11 @@ Folded in or owed, by number; each is closed in the landing that says so.
 | # | Condition | State at the landing |
 |---|---|---|
 | 1 | map `--check` fails only on an unplaced item; placement by module rule; control | built; control `mkl-l-map` through `gate.sh` on the landing hash |
-| 2 | `ferrix_load_built` derived once in `build.rs`, not a flag | built: `--set` cannot reach it, no flag declares it. `check-build-flags.py` has no row for it: BACKLOG |
+| 2 | `xaqu_load_built` derived once in `build.rs`, not a flag | built: `--set` cannot reach it, no flag declares it. `check-build-flags.py` has no row for it: BACKLOG |
 | 3 | all sites classified: `ring0`, or `any(ring0, lift)` for the load's Linux modules, checks `ring0` | built; `check-lift.py` counts `lift` sites, and every `linux_abi` cfg in the kernel's crates became one of these |
 | 4 | `present`, `desktop`: release, three architectures, section bytes or per-symbol hash, four boots | on the landing hash; the comparison is named in the commit |
 | 5 | lint allows at `"none"`: no wider, no claim | as `linux_abi=off` had them; 3257 (2)'s control not re-run: BACKLOG |
-| 6 | `native_host`, the arms and linuxd's start keyed on `personality=user`; `linux_abi=off` image unchanged | built: code for a ring-0 kernel with linuxd reads `ferrix_personality = "user"` (W1); the image in the comparison of (4) |
+| 6 | `native_host`, the arms and linuxd's start keyed on `personality=user`; `linux_abi=off` image unchanged | built: code for a ring-0 kernel with linuxd reads `xaqu_personality = "user"` (W1); the image in the comparison of (4) |
 | 7 | `lift_reuse`, a ratchet with reasons; lift packages their own key; cargo metadata both ways | built; controls `mkl-l-unlisted`, `mkl-l-asm`, `mkl-l-dep` |
 | 8 | no `#[path]`: `lift_core.rs` declares inline `lift` modules | built |
 | 9 | a reused file holds no `asm!` or entry; `cfg(lift)` in load files a counted list | built, in `check-lift.py`; control `mkl-l-asm` |
@@ -439,7 +439,7 @@ Folded in or owed, by number; each is closed in the landing that says so.
 | 17 | the kernel makes the region, internally by `Region::new` with the `linux` job, not by the `REGION_CREATE` call (ledger 6012) | built: `linuxd_start.rs` |
 | 18 | `personality.user` is `built="adhoc"`; a resolver test holds `fast` and `max` not buildable | built: `fast_and_max_stay_not_buildable_with_the_lift_in` |
 | 19 | milestone 5 waits for K8; linuxd a client only | K8 landed first; linuxd serves through devmgr's cores channel, and holds no device's `MANAGE` |
-| 20 | a third marker text; a row passes only on it, `FERRIX-BOOT-OK` absent; controls | built; control `mkl-l-marker`: the marker under `present` fails `test-boot` |
+| 20 | a third marker text; a row passes only on it, `XAQU-BOOT-OK` absent; controls | built; control `mkl-l-marker`: the marker under `present` fails `test-boot` |
 
 ## 11. The bridge (revision 3, 2026-11-04)
 
@@ -481,7 +481,7 @@ objects. `lift/core/bridge.rs` is the edge, a thread per direction:
   at its `SYSCALL`. Linuxd fills and continues, or answers the `FAULT` status, never a
   signal. Folded into K1 by 2f2f68b27's copy-miss (P1 to P6): linuxd passes `ENTER_COPY_MISS_EXITS` on its own entry, and a row and real init's negative control are this landing's (6529 Q5).
 * **A row's kill of a driver** (L9): `kill:<slot>` to a driver's `unbind`, compiled only
-  with `FERRIX_ROW_DRIVER_KILL`. It shows a restart after a kill, not after a crash.
+  with `XAQU_ROW_DRIVER_KILL`. It shows a restart after a kill, not after a crash.
 
 ## 12. Rows and figures (2026-11-04, x86-64 KVM, tip of `feature/mk-lift`)
 
@@ -531,7 +531,7 @@ same tree reads 231 us (fork-exit 121 us), so it is 1.6x to 1.9x, not the 0.8x a
 
 ## 13. The window (ledger 6411, W1-W8)
 
-`SPACE_WINDOW` (0x10BC) and `SPACE_PLACE` (0x10BD), under `ferrix_personality="user"`: the first
+`SPACE_WINDOW` (0x10BC) and `SPACE_PLACE` (0x10BD), under `xaqu_personality="user"`: the first
 hardware mappings in the kernel with no region, rmap or reference behind them. It is
 shape-specific kernel code: **it goes if K3 comes back** (M6, R3).
 
@@ -567,7 +567,7 @@ shape-specific kernel code: **it goes if K3 comes back** (M6, R3).
 
 * Design, 2026-11-03: reviewed **OK IF (1) to (20)**, ledger 5714; §10 above is the
   table. Revision 2's change of §3 goes back with milestone 2.
-* **Milestone 1 holds**: `--personality user` builds on x86-64, no `ferrix_kernel_load`
+* **Milestone 1 holds**: `--personality user` builds on x86-64, no `xaqu_kernel_load`
   symbol in the kernel, and `linuxd`.
 * **Milestone 2 holds** on `feature/mk-lift` bd9bd269f, over K1's and K11's and K15's
   unlanded branches: `cargo xtask test-linuxd --personality user`, KVM.

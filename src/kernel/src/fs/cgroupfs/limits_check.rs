@@ -23,13 +23,13 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{JOB_CPU_WEIGHT, JOB_MEMORY, JOB_TASKS, UNLIMITED};
-use ferrix_vfs::{Access, OpenFlags};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{JOB_CPU_WEIGHT, JOB_MEMORY, JOB_TASKS, UNLIMITED};
+use xaqu_vfs::{Access, OpenFlags};
 
 use super::{Checked, Harness, delegation_check, native_check};
 use crate::object::Object;

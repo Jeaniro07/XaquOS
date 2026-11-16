@@ -92,7 +92,7 @@ fn block_a_moment(case: i32) -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             port,
-            u64::from(ferrix_native_abi::signals::Signals::READABLE.0),
+            u64::from(xaqu_native_abi::signals::Signals::READABLE.0),
             (&raw const deadline).addr() as u64,
             (&raw mut observed).addr() as u64,
             0,
@@ -124,7 +124,7 @@ fn settle_on(given: &Given, cpu: u64, case: i32) -> Result<(), i32> {
 }
 
 /// A context of `image` on [`PROGRAM_PAGE`]'s `FS`.
-fn on_program_fs(image: u64) -> ferrix_native_abi::restricted::Context {
+fn on_program_fs(image: u64) -> xaqu_native_abi::restricted::Context {
     let mut context = at(image);
     context.fs_base = PROGRAM_PAGE;
     context
@@ -243,7 +243,7 @@ fn channel_only() -> Given {
         job: 0,
         space: 0,
         region_space: 0,
-        start_answers: ferrix_linux_abi::errno::Errno::ENOSYS,
+        start_answers: xaqu_linux_abi::errno::Errno::ENOSYS,
     }
 }
 
@@ -344,10 +344,10 @@ fn vectors_in_the_gap(given: &Given) -> Result<(), i32> {
     let mut context = at(arch::fs_vectors());
     context.fs_base = PROGRAM_PAGE;
     arch::set_first(&mut context, FIRST);
-    let mut image = [0_u8; ferrix_native_abi::restricted::VECTORS_BYTES];
+    let mut image = [0_u8; xaqu_native_abi::restricted::VECTORS_BYTES];
     syscall_exit(&enter(&context), arch::GETPPID, 175)?;
     let bytes =
-        ferrix_rt::native::region::vectors_read(ferrix_rt::Kernel, &mut image).map_err(|_| 175)?;
+        xaqu_rt::native::region::vectors_read(xaqu_rt::Kernel, &mut image).map_err(|_| 175)?;
     hold(bytes == image.len(), 175)?;
     let word = image
         .get(XMM5_AT..XMM5_AT + 8)
@@ -372,12 +372,12 @@ fn vectors_in_the_gap(given: &Given) -> Result<(), i32> {
 
     syscall_exit(&enter(&context), arch::GETPPID, 177)?;
     let _ =
-        ferrix_rt::native::region::vectors_read(ferrix_rt::Kernel, &mut image).map_err(|_| 177)?;
+        xaqu_rt::native::region::vectors_read(xaqu_rt::Kernel, &mut image).map_err(|_| 177)?;
     image
         .get_mut(XMM5_AT..XMM5_AT + 8)
         .ok_or(177)?
         .copy_from_slice(&THIRD.to_ne_bytes());
-    ferrix_rt::native::region::vectors_write(ferrix_rt::Kernel, &image).map_err(|_| 177)?;
+    xaqu_rt::native::region::vectors_write(xaqu_rt::Kernel, &image).map_err(|_| 177)?;
     fault_exit(&resume(0), arch::VECTOR_BREAKPOINT, 177)?;
     hold(read()?.rax == THIRD, 177)
 }
@@ -417,7 +417,7 @@ fn shootdown_across_fast_trips(given: &Given) -> Result<(), i32> {
     if !asked(given, ASK_TWO_PROCESSORS, 0, None)? {
         return Ok(());
     }
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(
         nr::SPACE_ALLOCATE,
         [given.space, SHOOTDOWN_PAGE, 0x1000, write, 0, 0],
@@ -623,7 +623,7 @@ fn killed_in_a_loop_of_trips(given: &Given) -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             process,
-            u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+            u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
             (&raw const deadline).addr() as u64,
             (&raw mut observed).addr() as u64,
             0,

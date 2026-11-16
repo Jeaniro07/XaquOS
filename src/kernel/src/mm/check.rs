@@ -13,13 +13,13 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use core::sync::atomic::Ordering;
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_paging::{Leaf, MapFlags, Mapper, PhysAddr, WalkOutcome};
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_paging::{Leaf, MapFlags, Mapper, PhysAddr, WalkOutcome};
 
 use super::{KernelPhysMem, PHYSMAP, PHYSMAP_PHYS, ROOT_TABLE, TABLES, direct_map};
 use crate::console::{println, println_unlogged};
 use crate::{fallible, mm, vmap};
-use ferrix_paging::PhysMem;
+use xaqu_paging::PhysMem;
 
 // ---------------------------------------------------------------------------
 // The sweeps at the end of bring-up
@@ -417,9 +417,9 @@ pub fn memory_check(stats: &mm::Stats) -> Result<(), &'static str> {
     // of slab pages across several classes; a heap that kept them would pass
     // every other check here and grow monotonically for the life of the
     // system. What it is allowed to keep is one page per size class, which is
-    // the rule `ferrix_heap` states.
+    // the rule `xaqu_heap` states.
     let kept = mm::heap_pages().saturating_sub(pages_before);
-    if kept > ferrix_heap::CLASSES {
+    if kept > xaqu_heap::CLASSES {
         return Err("the heap kept more slab pages than one per size class");
     }
 
@@ -526,10 +526,10 @@ fn check_the_watermark(stats: &mm::Stats) -> Result<(), &'static str> {
     // most of the check's time. What is left, a block's worth above the
     // watermark and whatever smaller blocks lie free, the program routes
     // take below.
-    let largest = 1u64 << ferrix_frame::MAX_ORDER;
+    let largest = 1u64 << xaqu_frame::MAX_ORDER;
     let mut blocks = Chain::new();
     while mm::free_frames() > floor + 2 * largest {
-        match mm::allocate_frames(ferrix_frame::MAX_ORDER) {
+        match mm::allocate_frames(xaqu_frame::MAX_ORDER) {
             Some(block) => blocks.push(block),
             None => break,
         }
@@ -541,7 +541,7 @@ fn check_the_watermark(stats: &mm::Stats) -> Result<(), &'static str> {
         let _ = mm::release_frame(frame);
     }
     while let Some(block) = blocks.pop() {
-        mm::deallocate_frames(block, ferrix_frame::MAX_ORDER);
+        mm::deallocate_frames(block, xaqu_frame::MAX_ORDER);
     }
     outcome?;
     let kept = window.kept();
@@ -786,7 +786,7 @@ fn check_stacks() -> Result<(), &'static str> {
     let stack = vmap::allocate_stack().map_err(|_| "no kernel stack could be allocated")?;
     check_one_stack(stack, vmap::STACK_PAGES, free_before)?;
     // A boot check's worker's, the boot stack's size (`stages_check::WORKER_CHECKS`).
-    let pages = ferrix_bootinfo::BOOT_STACK_SIZE / PAGE_SIZE;
+    let pages = xaqu_bootinfo::BOOT_STACK_SIZE / PAGE_SIZE;
     let stack = vmap::allocate_stack_of(pages).map_err(|_| "no kernel stack could be allocated")?;
     check_one_stack(stack, pages, free_before)
 }
@@ -898,7 +898,7 @@ fn check_kept_out(table: Option<u64>) -> Result<(), &'static str> {
 ///
 /// Verifies: L.mm.91, L.mm.92
 fn check_retired() -> Result<(), &'static str> {
-    use ferrix_frame::State;
+    use xaqu_frame::State;
     let before = super::RETIRED_COUNT.load(Ordering::Relaxed);
     super::hold_table(true);
     let checked = retire_three();
@@ -952,7 +952,7 @@ fn fresh_free_frame() -> Result<super::Frame, &'static str> {
 ///
 /// Verifies: L.mm.101, L.mm.102, L.mm.104, L.mm.105
 pub fn check_scrubber(view: &BootView<'_>, memory: mm::scrub::Memory) -> Result<(), &'static str> {
-    use ferrix_frame::State;
+    use xaqu_frame::State;
     use mm::scrub;
     let verdict = scrub::verdict(view, memory);
     if !verdict.runs() {
@@ -988,7 +988,7 @@ pub fn check_scrubber(view: &BootView<'_>, memory: mm::scrub::Memory) -> Result<
 /// [`check_scrubber`]'s cases; the two frames retired, for the caller to
 /// free once forgotten.
 fn scrubber_cases() -> Result<(super::Frame, super::Frame), &'static str> {
-    use ferrix_frame::State;
+    use xaqu_frame::State;
     use mm::scrub;
     let blocks = || super::with_frames(|frames| frames.free_blocks());
     let kept = |frame| {
@@ -1140,7 +1140,7 @@ fn only_block_skipped() -> Result<(), &'static str> {
 /// checked, then the full set. The frames, for the caller to free once they
 /// are forgotten.
 fn retire_three() -> Result<(super::Frame, super::Frame, super::Frame), &'static str> {
-    use ferrix_frame::State;
+    use xaqu_frame::State;
     let allocated = |frame| mm::frame_state(frame) == Some(State::Allocated);
 
     let shared = mm::allocate_frames(0).ok_or("no frame for the retirement check")?;
@@ -1329,7 +1329,7 @@ fn check_vmap_guards(mapping: vmap::Mapping) -> Result<(), &'static str> {
 ///
 /// **Deliberately allocates nothing on the heap.** `Vec` would be far more
 /// convenient here and would also make the check meaningless: growing one takes
-/// slab pages out of this very allocator, and `ferrix_heap` documents that slab
+/// slab pages out of this very allocator, and `xaqu_heap` documents that slab
 /// pages are never returned. The first version of this used a `Vec` and
 /// reported a leak that was the heap working as designed.
 ///
@@ -1392,7 +1392,7 @@ fn frames_hammer() -> Result<(), &'static str> {
 ///
 /// Verifies: L.mm.2
 fn check_frame_zero_is_never_managed() -> Result<(), &'static str> {
-    if mm::frame_state(0).is_some_and(|state| state != ferrix_frame::State::Reserved) {
+    if mm::frame_state(0).is_some_and(|state| state != xaqu_frame::State::Reserved) {
         return Err("frame 0 is managed by the frame allocator");
     }
     if let Some(frame) = mm::allocate_frames_below(0, 1) {
@@ -1569,7 +1569,7 @@ pub fn check_pstore_never_free() -> Result<(), &'static str> {
         // frame the allocator owns, free or already handed out.
         if !matches!(
             mm::frame_state(frame),
-            None | Some(ferrix_frame::State::Reserved)
+            None | Some(xaqu_frame::State::Reserved)
         ) {
             return Err("a frame of the pstore region is the allocator's, free or handed out");
         }
@@ -1602,7 +1602,7 @@ pub fn check_the_heap_killer_draws_outside_a_section() -> Result<u64, &'static s
         let served = if in_section {
             fallible::try_arc([0x5A_u8; 200]).is_ok_and(|made| made.iter().all(|&b| b == 0x5A))
         } else {
-            ferrix_fallible::try_box([0x5A_u8; 200])
+            xaqu_fallible::try_box([0x5A_u8; 200])
                 .is_ok_and(|made| made.iter().all(|&b| b == 0x5A))
         };
         let (after, _) = mm::reserve_counts();
@@ -1703,10 +1703,10 @@ fn a_large_block_goes_back_once() -> Result<(), &'static str> {
 /// The class the cache checks use, 2 KiB: the one the kernel allocates
 /// least of between two lines of a check, so an interrupt's allocation on
 /// the same processor is least likely to move its counts.
-const CHECK_CLASS: usize = ferrix_heap::CLASSES - 1;
+const CHECK_CLASS: usize = xaqu_heap::CLASSES - 1;
 
 /// [`CHECK_CLASS`]'s size, and a layout of it.
-const CHECK_SIZE: usize = ferrix_heap::CLASS_SIZES[CHECK_CLASS];
+const CHECK_SIZE: usize = xaqu_heap::CLASS_SIZES[CHECK_CLASS];
 
 /// A layout of [`CHECK_CLASS`].
 fn check_layout() -> core::alloc::Layout {
@@ -1793,8 +1793,8 @@ const ONE_PROCESSOR_ATTEMPTS: usize = 5;
 /// One attempt of [`caches_on_one_processor`]; gives back everything it
 /// took, whatever it answers.
 fn caches_on_one_processor_once() -> Result<(), &'static str> {
-    let refill = ferrix_heap::REFILL;
-    let depth = ferrix_heap::CACHE_DEPTH;
+    let refill = xaqu_heap::REFILL;
+    let depth = xaqu_heap::CACHE_DEPTH;
     // Objects to free into a full cache later, made before the drain so
     // the drain leaves the class empty.
     let mut spare = Vec::new();
@@ -2030,7 +2030,7 @@ fn reserve_refusal_drains(large: Option<core::alloc::Layout>) -> Result<(), &'st
     const MADE: usize = 32;
     /// The end of the list of the class's spare objects.
     const END: u64 = u64::MAX;
-    let request = ferrix_heap::Request::new(CHECK_SIZE, CHECK_SIZE);
+    let request = xaqu_heap::Request::new(CHECK_SIZE, CHECK_SIZE);
     // Full first, so the one refusal the case makes is the one it names.
     drop(super::reserve::reserve(None).map_err(|_| "the reserve did not fill before the check")?);
     let _ = mm::drain_caches();
@@ -2125,8 +2125,8 @@ static CACHE_HANDOFF: crate::sync::SpinLock<Vec<(usize, usize)>> =
 fn cache_worker(index: usize) {
     let mut rounds = 0usize;
     while !CACHE_STOP.load(Ordering::Acquire) && rounds < 2000 {
-        let class = (index + rounds) % ferrix_heap::CLASSES;
-        let size = ferrix_heap::CLASS_SIZES.get(class).copied().unwrap_or(8);
+        let class = (index + rounds) % xaqu_heap::CLASSES;
+        let size = xaqu_heap::CLASS_SIZES.get(class).copied().unwrap_or(8);
         let Ok(layout) = core::alloc::Layout::from_size_align(size, 8) else {
             break;
         };
@@ -2156,7 +2156,7 @@ fn cache_worker(index: usize) {
         // Another worker's object, freed on this processor.
         let taken = CACHE_HANDOFF.lock().pop();
         if let Some((address, class)) = taken {
-            let size = ferrix_heap::CLASS_SIZES.get(class).copied().unwrap_or(0);
+            let size = xaqu_heap::CLASS_SIZES.get(class).copied().unwrap_or(0);
             if let Ok(layout) = core::alloc::Layout::from_size_align(size, 8) {
                 // SAFETY: (KMEM) a worker made it with this class's layout, and it
                 // left the list once.
@@ -2195,13 +2195,13 @@ fn caches_on_every_processor() -> Result<(), &'static str> {
         .try_reserve(online)
         .map_err(|_| "no room for the workers")?;
     for cpu in 0..online {
-        let mut only = ferrix_sched::CpuSet::empty();
+        let mut only = xaqu_sched::CpuSet::empty();
         only.insert(cpu).map_err(|_| "no such processor")?;
         tasks.push(crate::sched::spawn_on(
             "heap-cache",
             cache_worker,
             cpu,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
             cpu,
             only,
         )?);
@@ -2220,7 +2220,7 @@ fn caches_on_every_processor() -> Result<(), &'static str> {
     // Whatever is left in the handoff list, freed here.
     let left: Vec<(usize, usize)> = core::mem::take(&mut *CACHE_HANDOFF.lock());
     for (address, class) in left {
-        let size = ferrix_heap::CLASS_SIZES.get(class).copied().unwrap_or(0);
+        let size = xaqu_heap::CLASS_SIZES.get(class).copied().unwrap_or(0);
         if let Ok(layout) = core::alloc::Layout::from_size_align(size, 8) {
             // SAFETY: (KMEM) as in `cache_worker`.
             unsafe { alloc::alloc::dealloc(address as *mut u8, layout) };
@@ -2343,10 +2343,10 @@ fn check_the_reservation_floors() -> Result<(), &'static str> {
     let floor = mm::watermark();
     let before = super::reservation::outstanding();
     let window = mm::FrameWindow::open();
-    let largest = 1u64 << ferrix_frame::MAX_ORDER;
+    let largest = 1u64 << xaqu_frame::MAX_ORDER;
     let mut blocks = Chain::new();
     while mm::free_frames() > floor + PROMISED + 2 * largest {
-        match mm::allocate_frames(ferrix_frame::MAX_ORDER) {
+        match mm::allocate_frames(xaqu_frame::MAX_ORDER) {
             Some(block) => blocks.push(block),
             None => break,
         }
@@ -2377,7 +2377,7 @@ fn check_the_reservation_floors() -> Result<(), &'static str> {
         let _ = mm::release_frame(frame);
     }
     while let Some(block) = blocks.pop() {
-        mm::deallocate_frames(block, ferrix_frame::MAX_ORDER);
+        mm::deallocate_frames(block, xaqu_frame::MAX_ORDER);
     }
     mm::reservation_unbind(entry);
     let (_, taken) = outcome?;

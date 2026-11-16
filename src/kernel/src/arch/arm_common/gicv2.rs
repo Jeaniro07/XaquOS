@@ -16,8 +16,8 @@
 
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_pci::msix;
-use ferrix_sync::IrqSpinLock;
+use xaqu_pci::msix;
+use xaqu_sync::IrqSpinLock;
 
 use crate::irq::Msi;
 use crate::mmio::Mmio;

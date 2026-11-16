@@ -1,8 +1,8 @@
 //! The SD card driver process for an STM32MP15 board's SDMMC1: a ring-3
 //! program that serves the microSD card to the kernel over the block ring.
 //!
-//! `ferrix-stm32-sdmmc` knows the controller and the card, and is tested on
-//! the host. `ferrix-driver` is the rest: START, the device tree bus, and
+//! `xaqu-stm32-sdmmc` knows the controller and the card, and is tested on
+//! the host. `xaqu-driver` is the rest: START, the device tree bus, and
 //! the block ring's conversation with the kernel (`docs/BLOCK-RING.md`).
 //! What is here is the glue: the controller's registers through the node's
 //! mapping, a clock to time out by, the data region the kernel copies
@@ -20,11 +20,11 @@
 //! front of SDMMC1 would stop a driver that did program the DMA
 //! (`docs/certification/VULNERABILITY-ANALYSIS.md`, V-03).
 //!
-//! # Writes go only to `ferrix-` partitions
+//! # Writes go only to `xaqu-` partitions
 //!
-//! The card holds the board's firmware and Ferrix's boot files. A write is
+//! The card holds the board's firmware and Xaqu's boot files. A write is
 //! served only when every block of it lies in one GPT partition whose name
-//! begins `ferrix-` (`ferrix_stm32_sdmmc::gpt`); any other is completed
+//! begins `xaqu-` (`xaqu_stm32_sdmmc::gpt`); any other is completed
 //! `ReadOnly`. A card with no such partition, or whose table does not
 //! check, is announced read-only, so every partition the kernel publishes
 //! from it is read-only too.
@@ -32,7 +32,7 @@
 //! Requests are served one at a time, each completed before `submit`
 //! returns: there is no queue in the controller to fill.
 //!
-//! The exit status is a `ferrix_driver::Step`, 0 a clean STOP.
+//! The exit status is a `xaqu_driver::Step`, 0 a clean STOP.
 
 #![no_std]
 #![no_main]
@@ -40,27 +40,27 @@
 use core::fmt;
 use core::ptr;
 
-use ferrix_blkring::control::VMO_RIGHTS;
-use ferrix_blkring::geometry::{Device as Geometry, DeviceFlags};
-use ferrix_blkserve::Disk;
-use ferrix_driver::tree::{self, Binding};
-use ferrix_driver::{Probe, Step, Stopped, Stuck, block};
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::types::TREE_STM32_SDMMC;
-use ferrix_rt::native::handle::{Deadline, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_stm32_sdmmc::card::Card;
-use ferrix_stm32_sdmmc::gpt::{Table, Writable};
-use ferrix_stm32_sdmmc::host::Controller;
-use ferrix_stm32_sdmmc::{BLOCK_BYTES, Clock, Registers, Words};
-use ferrix_virtio_blk::{
+use xaqu_blkring::control::VMO_RIGHTS;
+use xaqu_blkring::geometry::{Device as Geometry, DeviceFlags};
+use xaqu_blkserve::Disk;
+use xaqu_driver::tree::{self, Binding};
+use xaqu_driver::{Probe, Step, Stopped, Stuck, block};
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::types::TREE_STM32_SDMMC;
+use xaqu_rt::native::handle::{Deadline, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_stm32_sdmmc::card::Card;
+use xaqu_stm32_sdmmc::gpt::{Table, Writable};
+use xaqu_stm32_sdmmc::host::Controller;
+use xaqu_stm32_sdmmc::{BLOCK_BYTES, Clock, Registers, Words};
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, Drained, Op, Request, Status, SubmitError,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Pages of data region: four of the largest requests.
 const DATA_PAGES: usize = 64;
@@ -115,7 +115,7 @@ impl fmt::Debug for Monotonic {
 
 impl Clock for Monotonic {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn pause(&mut self) {
@@ -195,12 +195,12 @@ impl Probe for Sdmmc {
         let port = port::create(Kernel).map_err(|_| Step::Events)?;
         let host = Controller::take_over(Regs(device), Monotonic { port }, kernel_hz).map_err(
             |error| {
-                ferrix_rt::err!("sdmmc    the controller was not taken over: {error:?}");
+                xaqu_rt::err!("sdmmc    the controller was not taken over: {error:?}");
                 Step::Device
             },
         )?;
         let mut card = Card::init(host).map_err(|(_, error)| {
-            ferrix_rt::err!("sdmmc    no card came up: {error:?}");
+            xaqu_rt::err!("sdmmc    no card came up: {error:?}");
             Step::Device
         })?;
         let identity = *card.identity();
@@ -225,7 +225,7 @@ impl Probe for Sdmmc {
             DATA_BYTES as u64,
         )
         .map_err(|_| Step::Hello)?;
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "sdmmc    card {:#06x}: {} blocks ({} MiB), {}, {} kHz, {}",
             identity.rca,
             identity.blocks,
@@ -239,7 +239,7 @@ impl Probe for Sdmmc {
             if writable.is_empty() {
                 "read-only"
             } else {
-                "writable in its ferrix- partitions only"
+                "writable in its xaqu- partitions only"
             }
         );
         Ok(Sdmmc {
@@ -269,7 +269,7 @@ fn writable(card: &mut Card<Regs, Monotonic>, blocks: u64) -> Writable {
     let mut table = match table {
         Ok(table) => table,
         Err(why) => {
-            ferrix_rt::warn!("sdmmc    the card is read-only: {why}");
+            xaqu_rt::warn!("sdmmc    the card is read-only: {why}");
             return Writable::NONE;
         }
     };
@@ -277,7 +277,7 @@ fn writable(card: &mut Card<Regs, Monotonic>, blocks: u64) -> Writable {
         match read(card, table.entries_at() + index) {
             Ok(block) => table.feed(&block),
             Err(_) => {
-                ferrix_rt::warn!("sdmmc    the card is read-only: its table could not be read");
+                xaqu_rt::warn!("sdmmc    the card is read-only: its table could not be read");
                 return Writable::NONE;
             }
         }
@@ -285,12 +285,12 @@ fn writable(card: &mut Card<Regs, Monotonic>, blocks: u64) -> Writable {
     match table.finish() {
         Ok(writable) => {
             for &(first, last) in writable.ranges() {
-                ferrix_rt::info!("sdmmc    blocks {first} to {last} are writable");
+                xaqu_rt::info!("sdmmc    blocks {first} to {last} are writable");
             }
             writable
         }
         Err(why) => {
-            ferrix_rt::warn!("sdmmc    the card is read-only: its table was refused, {why:?}");
+            xaqu_rt::warn!("sdmmc    the card is read-only: its table was refused, {why:?}");
             Writable::NONE
         }
     }
@@ -298,10 +298,10 @@ fn writable(card: &mut Card<Regs, Monotonic>, blocks: u64) -> Writable {
 
 impl Sdmmc {
     /// Say a failed request, the first few times.
-    fn failed(&mut self, request: &Request, error: ferrix_stm32_sdmmc::host::Error) {
+    fn failed(&mut self, request: &Request, error: xaqu_stm32_sdmmc::host::Error) {
         self.errors = self.errors.saturating_add(1);
         if self.errors <= SAID_ERRORS {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "sdmmc    {:?} of {} blocks at {} failed: {error:?}",
                 request.op,
                 request.count,

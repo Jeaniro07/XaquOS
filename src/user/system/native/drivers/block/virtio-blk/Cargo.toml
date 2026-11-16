@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-blk"
-description = "The virtio-blk driver process: the block ring's driver end over a virtio-blk PCI device, on ferrix-rt"
+name = "xaqu-blk"
+description = "The virtio-blk driver process: the block ring's driver end over a virtio-blk PCI device, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,11 +14,11 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-blkserve.workspace = true
-ferrix-driver = { workspace = true, features = ["block"] }
-ferrix-rt.workspace = true
-ferrix-virtio-blk.workspace = true
+xaqu-blkring.workspace = true
+xaqu-blkserve.workspace = true
+xaqu-driver = { workspace = true, features = ["block"] }
+xaqu-rt.workspace = true
+xaqu-virtio-blk.workspace = true
 
 [lints]
 workspace = true

@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-boot"
-description = "UEFI loader for the Ferrix kernel"
+name = "xaqu-boot"
+description = "UEFI loader for the Xaqu kernel"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,17 +8,17 @@ license.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "ferrix-boot"
+name = "xaqu-boot"
 path = "src/main.rs"
 
 [dependencies]
-ferrix-boot-policy.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-elf.workspace = true
-ferrix-eventlog.workspace = true
-ferrix-paging.workspace = true
-ferrix-slots.workspace = true
-ferrix-smbios.workspace = true
+xaqu-boot-policy.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-elf.workspace = true
+xaqu-eventlog.workspace = true
+xaqu-paging.workspace = true
+xaqu-slots.workspace = true
+xaqu-smbios.workspace = true
 
 [lints]
 workspace = true

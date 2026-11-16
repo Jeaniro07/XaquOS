@@ -606,8 +606,8 @@ fn the_audit_reads_every_unit_that_translates_or_remaps() {
 
 /// Verifies: `L.iommu.71`
 #[test]
-fn only_ferrix_vtd_off_leaves_the_units_alone() {
-    assert_eq!(unit::OFF_OPTION, "ferrix.vtd");
+fn only_xaqu_vtd_off_leaves_the_units_alone() {
+    assert_eq!(unit::OFF_OPTION, "xaqu.vtd");
     assert!(unit::switched_off(Some("off")));
     for value in [
         None,

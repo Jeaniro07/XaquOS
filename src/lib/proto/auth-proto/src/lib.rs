@@ -51,7 +51,7 @@ mod tests;
 pub use secret::Secret;
 
 /// Where `authd` listens.
-pub const SOCKET: &str = "/run/ferrix/auth";
+pub const SOCKET: &str = "/run/xaqu/auth";
 
 /// The protocol version every record carries.
 pub const VERSION: u8 = 1;
@@ -116,7 +116,7 @@ pub enum Record<'a> {
     },
     /// Let the seat's lock go, audited. Only root may.
     UnlockSeat,
-    /// The seat's current lock, from `sessiond` on the `ferrix.auth.seat`
+    /// The seat's current lock, from `sessiond` on the `xaqu.auth.seat`
     /// channel (`docs/AUTH.md` §3.7): the next accepted conversation of a
     /// `Grant=seat` service for `uid` grants it. Never taken from the socket.
     Arm {

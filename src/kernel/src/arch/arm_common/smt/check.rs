@@ -43,7 +43,7 @@ pub(crate) fn check_arm_smt() -> Result<(), &'static str> {
         return Err("smt: a processor did not read its own MPIDR");
     }
     let mt = MT_SET.load(Ordering::Relaxed);
-    let off = cfg!(ferrix_smt = "off");
+    let off = cfg!(xaqu_smt = "off");
     match found() {
         Found::Map {
             table,

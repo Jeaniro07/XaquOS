@@ -36,7 +36,7 @@ fn described(root: &std::path::Path, row: &str) -> Result<crate::ports::File> {
         &[out_text.as_str(), root_text.as_str()],
     )?;
     Ok(crate::ports::File {
-        path: "etc/ferrix/partitions".to_owned(),
+        path: "etc/xaqu/partitions".to_owned(),
         mode: 0o644,
         content: crate::ports::Content::Bytes(
             std::fs::read(&out).map_err(|e| Error::new(e.to_string()))?,

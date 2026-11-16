@@ -118,7 +118,7 @@ impl SuperblockBuilder {
         put_u16(&mut bytes, offset::CSUM_TYPE, 0);
         bytes[offset::ROOT_LEVEL] = 1;
         bytes[offset::CHUNK_ROOT_LEVEL] = 0;
-        let label = b"ferrix";
+        let label = b"xaqu";
         bytes[offset::LABEL..offset::LABEL + label.len()].copy_from_slice(label);
         SuperblockBuilder { bytes }
     }
@@ -198,7 +198,7 @@ fn a_well_formed_superblock_parses() {
     assert_eq!(superblock.csum_type(), ChecksumType::Crc32c);
     assert_eq!(
         superblock.label(),
-        Some("ferrix"),
+        Some("xaqu"),
         "the label is NUL padded"
     );
     assert_eq!(superblock.total_bytes(), 1 << 30);

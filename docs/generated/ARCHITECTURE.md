@@ -1,4 +1,4 @@
-# Ferrix — architecture, from the model
+# Xaqu — architecture, from the model
 
 _Generated from docs/sysml/. Every element carries the maturity keyword the model gives it._
 
@@ -72,7 +72,7 @@ _Generated from docs/sysml/. Every element carries the maturity keyword the mode
   - [S22 — Stage 22 steam](#s22-stage-22-steam)
   - [S23 — Stage 23 endfield](#s23-stage-23-endfield)
   - [S24 — Stage 24 game path](#s24-stage-24-game-path)
-  - [S25 — Stage 25 xaqu](#s25-stage-25-xaqu)
+  - [S25 — Stage 25 Xaqu](#s25-stage-25-xaqu)
   - [S20 — Stage 20 self hosting](#s20-stage-20-self-hosting)
   - [Ordering](#ordering)
 - [Assurance](#assurance)
@@ -95,35 +95,35 @@ This is generated from the SysML v2 model in `docs/sysml/`, which is itself an i
 
 | Package | File | What it holds |
 | --- | --- | --- |
-| `FerrixLifecycle` | `00-lifecycle.sysml` | Every other package marks its elements with one of the keywords defined here, so a reader can tell what runs today from what docs/ROADMAP.md still owes. The model is one model; the keywords are the seam between "current" and "future". |
-| `FerrixRequirements` | `01-requirements.sysml` | docs/ARCHITECTURE.md §0 read as a specification, plus the design rules the rest of the model has to satisfy and the promises it deliberately does not make. Ids in angle brackets are stable; the roadmap and assurance packages cite them. |
-| `FerrixStructure` | `02-structure.sysml` | The shape of the system (docs/ARCHITECTURE.md §1), the workspace it is built from (§9), the architecture facade, and the three architectures behind it. Subsystem internals live in the packages that follow; this one says what exists and how it is connected. |
-| `FerrixBoot` | `03-boot.sysml` | The hand-off ABI, the two address layouts, the loader's sequence, the kernel's bring-up with every stage's self-check to stage 12, and the trap path. All of this runs today on all three architectures. |
-| `FerrixMemory` | `04-memory.sysml` | docs/ARCHITECTURE.md §4. The physical allocator, the heap, the page-table arithmetic and the kernel arena since stage 2; VMOs, process address spaces, demand paging and copy-on-write since stage 6, file mappings since stage 8. Reclaim is stage 13's and not built. |
-| `FerrixScheduling` | `05-scheduling.sysml` | Stages 3 to 5 run today: interrupts, a clock, every processor online, IPIs, TLB shootdown, grace periods, fair locks, and tasks scheduled by EEVDF in one Throughput domain. Stage 14's real-time domains are designed here (docs/ARCHITECTURE.md §5) and not yet written. |
-| `FerrixObjects` | `06-objects.sysml` | docs/ARCHITECTURE.md §2 and §3. The constants for the Linux half are in src/lib/proto/linux-abi and for the native half in src/lib/proto/native-abi. The objects a handle can name exist in src/kernel/src/object, the core half of a process among them; the POSIX half and threads in src/kernel/src/syscall. No handle names an address space or a thread yet. |
-| `FerrixIsolation` | `07-isolation.sysml` | docs/ARCHITECTURE.md §6: namespaces, cgroups v2, seccomp, credentials. Stage 13, designed in from the start so that no global table has to be found later. The credentials exist since stage 7, and cgroup v2 since 2026-09-23 (docs/CGROUPS.md), over the job tree. Of the namespaces, mount, user, UTS, IPC, cgroup, pid and network namespaces are in (docs/NAMESPACES.md): unshare and clone copy one, and bubblewrap runs as root. Time namespaces answer as a Linux built without them does. Seccomp's classic-BPF checker and interpreter, its hook at the four system-call entries, its filters, SECCOMP_RET_TRAP and TSYNC are built (S1 to S5, docs/SECCOMP.md), and test-seccomp runs a guest program on four ABIs (S6). Syscall User Dispatch (prctl 59, docs/SECCOMP.md section 13) is a second rule in the same look, judged before the chain, x86-64 only. |
-| `FerrixDrivers` | `08-drivers.sysml` | docs/ARCHITECTURE.md §7. The kernel enumerates buses because that needs ACPI or a device tree and privileged access; it does not drive devices. Everything from the device node outward is stage 10, which is done: the drivers are processes devmgr starts. What it still owes is named on the part that owes it. |
-| `FerrixStorage` | `09-storage.sysml` | docs/ARCHITECTURE.md §8. Block core, VFS, the small in-kernel filesystems and btrfs in three stages. What exists today is marked on each part. |
-| `FerrixRoadmap` | `10-roadmap.sysml` | docs/ROADMAP.md as requirements: one per stage, each with its exit criterion, its status, the boot test that verifies it, and the part of the system that satisfies or will satisfy it. Each stage's status keyword says whether it is done; docs/ROADMAP.md's "Where it stands" is the prose this follows. |
-| `FerrixAssurance` | `11-assurance.sysml` | docs/RELIABILITY.md and docs/ASSEMBLY.md: the quality gates, what each one verifies, and what the tests can actually reach. The gates cargo xtask check runs are in CI. Of the xtask boot gates, CI runs test-boot and test-rustc; the ones that need a binary the repository does not carry, a disk judged on the host or a screendump run in the landing gates of docs/BACKLOG.md instead (docs/ROADMAP.md, Continuously). |
-| `FerrixViews` | `12-views.sysml` | How to read the one model as two: what runs today, and what the roadmap still owes. The filters key on the lifecycle keywords every element carries. |
-| `FerrixItemRequirements` | `13-item-requirements.sysml` | The high-level requirements of the certified item (the `core` and `item` rings of docs/certification/ITEM.md): what each subsystem promises at its interface, decomposed from the Security Target's objectives (docs/certification/SECURITY-TARGET.md §4.1 and §8.2) and the safety manual's assumed safety requirements (SAFETY-MANUAL.md §2). The low-level requirements, one per unit of code, go in one file per subsystem after this one. docs/certification/IMPLEMENTATION.md W-8 is the design, and tools/common/check/check-traceability.py the gate that reads these and writes docs/certification/TRACEABILITY.md. |
-| `FerrixObjectRequirements` | `14-object-requirements.sysml` | What each unit of src/kernel/src/object/ does, as `ItemLowLevel` requirements (part 13 defines the format): the core ring's object layer -- what a handle names and how it is dropped, channels, ports, interrupts, I/O mappings, pins, the job quotas, jobs, the core half of a process, and the scoped OOM kill. The handle table itself and the rights arithmetic are `src/lib/kernel/objects` and `src/lib/proto/native-abi`, whose host tests verify H.OBJ.1 to H.OBJ.4 directly; nothing here restates them. L.object.253, reserved for init's grant of the memory scrub token to memscrub, is released unwritten: the grant is ring-3 init's, outside the item, and the item relies on nothing from it (ledger 5140 (3)). |
-| `FerrixSchedRequirements` | `15-sched-requirements.sysml` | What each unit of src/kernel/src/sched/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14's pilot settled how they are cut). The scheduling decision itself is `src/lib/kernel/sched`'s `RunQueue`, an EEVDF queue the kernel's per-processor queue wraps; its host tests are the checks, and each requirement names the kernel function that carries the behaviour into the item as its `unit`. |
-| `FerrixIommuRequirements` | `16-iommu-requirements.sysml` | What each unit of src/kernel/src/iommu.rs and src/kernel/src/iommu/ does, as `ItemLowLevel` requirements (part 13 defines the format): where firmware puts each PCI function's DMA, the units the kernel turns translation on for, the domains a driver pins pages into, the gate a wait on a unit is made through, and the faults a unit records. The pins a program makes through a handle, and the quarantine a dead driver's pins go to, are object/'s (part 14, `L.object.45` to `L.object.49`); this is the domain side under them. |
-| `FerrixMemoryRequirements` | `17-memory-requirements.sysml` | What each unit of the item's memory management does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies), in two id spaces. |
-| `FerrixX8664Requirements` | `18-x86-64-requirements.sysml` | What each unit of src/kernel/src/arch/x86_64/, src/kernel/src/trap.rs and src/kernel/src/syscall/mod.rs's dispatcher does, as `ItemLowLevel` requirements (part 13 defines the format): the descriptor tables and which selectors ring 3 may hold, the context switch and the user state it carries, starting processors, the paranoid entries, the speculation defences, the counter and timer, both ABIs' signal frames, SYSCALL and int $0x80, the exception gates and what a fault becomes, and which calls reach which answer. |
-| `FerrixAarch64Requirements` | `19-aarch64-requirements.sysml` | What each unit of src/kernel/src/arch/aarch64/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): the trap path and the signal frames it builds, the context switch, the interrupt controllers and the generic timer, the boot console, the system registers, translation and the TLB, starting the other processors, the speculation defences, and what firmware is asked for -- power, reset, entropy. The PL011 and the GICv2 are arch/arm_common's, shared with ARMv7-A, and are not here. |
-| `FerrixDeviceRequirements` | `20-device-requirements.sysml` | What each unit of src/kernel/src/claim.rs and src/kernel/src/device.rs does, and the quiesce in src/kernel/src/syscall/native.rs, as `ItemLowLevel` requirements (part 13 defines the format): a device claimed through its core's control channels, the number its node is published under, the apertures and vectors a node hands out and nothing past them, the MSI-X vectors it mints, the bus mastering a quiesce turns off, and the quiesce itself, which waits out every core that serves the device before the next driver is given it. The objects a driver holds for a device -- its mapping, its interrupt, its pins -- are object/'s (part 14); the domain under them is iommu's (part 16). |
-| `FerrixArmv7aRequirements` | `21-armv7a-requirements.sysml` | ARMv7-A, the Cortex-A7 of the STM32MP157, has no requirements of its own beyond these: what the system call path does for the filter the core asks about every call (seccomp, `docs/SECCOMP.md` §3.3), what its switch barrier does inside a speculation domain (`docs/OPAQUE-KERNEL.md` §9), and what of the generic timer user mode may read (`CNTKCTL`), and what the switch does with the two thread ID registers (`docs/OPAQUE-KERNEL.md` §9.14, 3b and F-66), and how it leaves VFP off for a program that never uses it (§9.15). The rest of the architecture waits in the baseline with the other architectures' unwritten rows. Ids are `L.armv7a.<n>`, flat through the architecture; the rules of part 19 hold. |
-| `FerrixSmpRequirements` | `22-smp-requirements.sysml` | What each unit of src/kernel/src/smp.rs does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): finding the processors and giving each a record it finds itself by, starting the secondaries, the inter-processor interrupt, the TLB shootdown -- whole and scoped, and the bound on how long it waits -- grace periods, stopping the other processors for a panic, and the scheduler's kick. The start sequences themselves, the per-processor register and the interrupt controller are each architecture's (src/kernel/src/arch/\<isa>/smp.rs), and belong to the arch slices; this is the architecture-independent half above them. |
-| `FerrixConsoleRequirements` | `23-console-requirements.sysml` | What each unit of src/kernel/src/console.rs and src/kernel/src/console/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): the kernel's lines to the port, whole and in order; the way a failure report gets past a lock nobody will release; the recent-output ring a panic screen draws; the transmit ring and the writers who queue into it, wait for room or poll; the receive ring the port's interrupt fills; the kernel log every byte is recorded in, what it promises a reader and what it keeps out; and the boot console drawn on the framebuffer. The ports themselves are each architecture's (src/kernel/src/arch/\<isa>/console.rs) and belong to the arch slices; the two of their functions that decide \*which\* console the kernel writes to, and whose checks test that, are here too (`Ports`), at the coordinator's asking. |
-| `FerrixBtrfsRequirements` | `24-btrfs-requirements.sysml` | What each unit of the two btrfs crates in the item does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): `ferrix-btrfs` (src/lib/fs/btrfs/format), the reader, and `ferrix-btrfs-write` (src/lib/fs/btrfs/write), the write path. They joined the item on 2026-10-02 (the customer's decision; ITEM.md). Their interface below is the `Device` and `WriteDevice` traits, which the kernel's block layer answers; above, `Volume` and `WriteVolume`, which the VFS glue in the load (`ferrix-btrfs-vfs`, src/kernel/src/fs/btrfs\*.rs) calls. A unit is named from the crate's src/, led by the crate's name: `ferrix_btrfs::volume::Volume::read_node`. |
-| `FerrixInitRequirements` | `25-init-requirements.sysml` | What init does with what an image gives it to start as pid 1, as `ItemLowLevel` requirements in the pilot's format (part 13 defines it, part 14 is the pilot). Since 2026-10-04 the program init starts when nothing is named, the script for its `sh -c` and the list of commands are not compiled into the kernel: an image carries them in its initramfs under `.ferrix/init/`, and `fs::init` reads them where the archive is and hands them to `init::set_inputs` (docs/certification/ITEM.md section 2). The certification consultant's OK IF of 2026-10-04 (ledger lines 328 and 332) asked for these rows and their parent, H.BOOT.15 in part 13; that `ferrix-vfs`'s unpacker, in no ring, creates none of the inputs is SAFETY-MANUAL AoU-24 rather than a row (line 333), and L.init.4, reserved for it, is not written. |
-| `FerrixSigningRequirements` | `26-signing-requirements.sysml` | docs/SIGNING.md is the design (the certification consultant's OK IF at ledger lines 3667 and 3738; the customer's decisions at 3731). Slice S1 builds the verify-only crate `ferrix-sigverify` (src/lib/crypto/sigverify) and the hash it rests on, `ferrix-sha256` (src/lib/crypto/sha256), both in the item ring (certification-item.json's crates). What the UEFI loader, init's configuration verifier and devmgr do with the verifier's answer is theirs, and gets ids in their own slices (S4, S8, S9). |
+| `XaquLifecycle` | `00-lifecycle.sysml` | Every other package marks its elements with one of the keywords defined here, so a reader can tell what runs today from what docs/ROADMAP.md still owes. The model is one model; the keywords are the seam between "current" and "future". |
+| `XaquRequirements` | `01-requirements.sysml` | docs/ARCHITECTURE.md §0 read as a specification, plus the design rules the rest of the model has to satisfy and the promises it deliberately does not make. Ids in angle brackets are stable; the roadmap and assurance packages cite them. |
+| `XaquStructure` | `02-structure.sysml` | The shape of the system (docs/ARCHITECTURE.md §1), the workspace it is built from (§9), the architecture facade, and the three architectures behind it. Subsystem internals live in the packages that follow; this one says what exists and how it is connected. |
+| `XaquBoot` | `03-boot.sysml` | The hand-off ABI, the two address layouts, the loader's sequence, the kernel's bring-up with every stage's self-check to stage 12, and the trap path. All of this runs today on all three architectures. |
+| `XaquMemory` | `04-memory.sysml` | docs/ARCHITECTURE.md §4. The physical allocator, the heap, the page-table arithmetic and the kernel arena since stage 2; VMOs, process address spaces, demand paging and copy-on-write since stage 6, file mappings since stage 8. Reclaim is stage 13's and not built. |
+| `XaquScheduling` | `05-scheduling.sysml` | Stages 3 to 5 run today: interrupts, a clock, every processor online, IPIs, TLB shootdown, grace periods, fair locks, and tasks scheduled by EEVDF in one Throughput domain. Stage 14's real-time domains are designed here (docs/ARCHITECTURE.md §5) and not yet written. |
+| `XaquObjects` | `06-objects.sysml` | docs/ARCHITECTURE.md §2 and §3. The constants for the Linux half are in src/lib/proto/linux-abi and for the native half in src/lib/proto/native-abi. The objects a handle can name exist in src/kernel/src/object, the core half of a process among them; the POSIX half and threads in src/kernel/src/syscall. No handle names an address space or a thread yet. |
+| `XaquIsolation` | `07-isolation.sysml` | docs/ARCHITECTURE.md §6: namespaces, cgroups v2, seccomp, credentials. Stage 13, designed in from the start so that no global table has to be found later. The credentials exist since stage 7, and cgroup v2 since 2026-09-23 (docs/CGROUPS.md), over the job tree. Of the namespaces, mount, user, UTS, IPC, cgroup, pid and network namespaces are in (docs/NAMESPACES.md): unshare and clone copy one, and bubblewrap runs as root. Time namespaces answer as a Linux built without them does. Seccomp's classic-BPF checker and interpreter, its hook at the four system-call entries, its filters, SECCOMP_RET_TRAP and TSYNC are built (S1 to S5, docs/SECCOMP.md), and test-seccomp runs a guest program on four ABIs (S6). Syscall User Dispatch (prctl 59, docs/SECCOMP.md section 13) is a second rule in the same look, judged before the chain, x86-64 only. |
+| `XaquDrivers` | `08-drivers.sysml` | docs/ARCHITECTURE.md §7. The kernel enumerates buses because that needs ACPI or a device tree and privileged access; it does not drive devices. Everything from the device node outward is stage 10, which is done: the drivers are processes devmgr starts. What it still owes is named on the part that owes it. |
+| `XaquStorage` | `09-storage.sysml` | docs/ARCHITECTURE.md §8. Block core, VFS, the small in-kernel filesystems and btrfs in three stages. What exists today is marked on each part. |
+| `XaquRoadmap` | `10-roadmap.sysml` | docs/ROADMAP.md as requirements: one per stage, each with its exit criterion, its status, the boot test that verifies it, and the part of the system that satisfies or will satisfy it. Each stage's status keyword says whether it is done; docs/ROADMAP.md's "Where it stands" is the prose this follows. |
+| `XaquAssurance` | `11-assurance.sysml` | docs/RELIABILITY.md and docs/ASSEMBLY.md: the quality gates, what each one verifies, and what the tests can actually reach. The gates cargo xtask check runs are in CI. Of the xtask boot gates, CI runs test-boot and test-rustc; the ones that need a binary the repository does not carry, a disk judged on the host or a screendump run in the landing gates of docs/BACKLOG.md instead (docs/ROADMAP.md, Continuously). |
+| `XaquViews` | `12-views.sysml` | How to read the one model as two: what runs today, and what the roadmap still owes. The filters key on the lifecycle keywords every element carries. |
+| `XaquItemRequirements` | `13-item-requirements.sysml` | The high-level requirements of the certified item (the `core` and `item` rings of docs/certification/ITEM.md): what each subsystem promises at its interface, decomposed from the Security Target's objectives (docs/certification/SECURITY-TARGET.md §4.1 and §8.2) and the safety manual's assumed safety requirements (SAFETY-MANUAL.md §2). The low-level requirements, one per unit of code, go in one file per subsystem after this one. docs/certification/IMPLEMENTATION.md W-8 is the design, and tools/common/check/check-traceability.py the gate that reads these and writes docs/certification/TRACEABILITY.md. |
+| `XaquObjectRequirements` | `14-object-requirements.sysml` | What each unit of src/kernel/src/object/ does, as `ItemLowLevel` requirements (part 13 defines the format): the core ring's object layer -- what a handle names and how it is dropped, channels, ports, interrupts, I/O mappings, pins, the job quotas, jobs, the core half of a process, and the scoped OOM kill. The handle table itself and the rights arithmetic are `src/lib/kernel/objects` and `src/lib/proto/native-abi`, whose host tests verify H.OBJ.1 to H.OBJ.4 directly; nothing here restates them. L.object.253, reserved for init's grant of the memory scrub token to memscrub, is released unwritten: the grant is ring-3 init's, outside the item, and the item relies on nothing from it (ledger 5140 (3)). |
+| `XaquSchedRequirements` | `15-sched-requirements.sysml` | What each unit of src/kernel/src/sched/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14's pilot settled how they are cut). The scheduling decision itself is `src/lib/kernel/sched`'s `RunQueue`, an EEVDF queue the kernel's per-processor queue wraps; its host tests are the checks, and each requirement names the kernel function that carries the behaviour into the item as its `unit`. |
+| `XaquIommuRequirements` | `16-iommu-requirements.sysml` | What each unit of src/kernel/src/iommu.rs and src/kernel/src/iommu/ does, as `ItemLowLevel` requirements (part 13 defines the format): where firmware puts each PCI function's DMA, the units the kernel turns translation on for, the domains a driver pins pages into, the gate a wait on a unit is made through, and the faults a unit records. The pins a program makes through a handle, and the quarantine a dead driver's pins go to, are object/'s (part 14, `L.object.45` to `L.object.49`); this is the domain side under them. |
+| `XaquMemoryRequirements` | `17-memory-requirements.sysml` | What each unit of the item's memory management does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies), in two id spaces. |
+| `XaquX8664Requirements` | `18-x86-64-requirements.sysml` | What each unit of src/kernel/src/arch/x86_64/, src/kernel/src/trap.rs and src/kernel/src/syscall/mod.rs's dispatcher does, as `ItemLowLevel` requirements (part 13 defines the format): the descriptor tables and which selectors ring 3 may hold, the context switch and the user state it carries, starting processors, the paranoid entries, the speculation defences, the counter and timer, both ABIs' signal frames, SYSCALL and int $0x80, the exception gates and what a fault becomes, and which calls reach which answer. |
+| `XaquAarch64Requirements` | `19-aarch64-requirements.sysml` | What each unit of src/kernel/src/arch/aarch64/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): the trap path and the signal frames it builds, the context switch, the interrupt controllers and the generic timer, the boot console, the system registers, translation and the TLB, starting the other processors, the speculation defences, and what firmware is asked for -- power, reset, entropy. The PL011 and the GICv2 are arch/arm_common's, shared with ARMv7-A, and are not here. |
+| `XaquDeviceRequirements` | `20-device-requirements.sysml` | What each unit of src/kernel/src/claim.rs and src/kernel/src/device.rs does, and the quiesce in src/kernel/src/syscall/native.rs, as `ItemLowLevel` requirements (part 13 defines the format): a device claimed through its core's control channels, the number its node is published under, the apertures and vectors a node hands out and nothing past them, the MSI-X vectors it mints, the bus mastering a quiesce turns off, and the quiesce itself, which waits out every core that serves the device before the next driver is given it. The objects a driver holds for a device -- its mapping, its interrupt, its pins -- are object/'s (part 14); the domain under them is iommu's (part 16). |
+| `XaquArmv7aRequirements` | `21-armv7a-requirements.sysml` | ARMv7-A, the Cortex-A7 of the STM32MP157, has no requirements of its own beyond these: what the system call path does for the filter the core asks about every call (seccomp, `docs/SECCOMP.md` §3.3), what its switch barrier does inside a speculation domain (`docs/OPAQUE-KERNEL.md` §9), and what of the generic timer user mode may read (`CNTKCTL`), and what the switch does with the two thread ID registers (`docs/OPAQUE-KERNEL.md` §9.14, 3b and F-66), and how it leaves VFP off for a program that never uses it (§9.15). The rest of the architecture waits in the baseline with the other architectures' unwritten rows. Ids are `L.armv7a.<n>`, flat through the architecture; the rules of part 19 hold. |
+| `XaquSmpRequirements` | `22-smp-requirements.sysml` | What each unit of src/kernel/src/smp.rs does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): finding the processors and giving each a record it finds itself by, starting the secondaries, the inter-processor interrupt, the TLB shootdown -- whole and scoped, and the bound on how long it waits -- grace periods, stopping the other processors for a panic, and the scheduler's kick. The start sequences themselves, the per-processor register and the interrupt controller are each architecture's (src/kernel/src/arch/\<isa>/smp.rs), and belong to the arch slices; this is the architecture-independent half above them. |
+| `XaquConsoleRequirements` | `23-console-requirements.sysml` | What each unit of src/kernel/src/console.rs and src/kernel/src/console/ does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): the kernel's lines to the port, whole and in order; the way a failure report gets past a lock nobody will release; the recent-output ring a panic screen draws; the transmit ring and the writers who queue into it, wait for room or poll; the receive ring the port's interrupt fills; the kernel log every byte is recorded in, what it promises a reader and what it keeps out; and the boot console drawn on the framebuffer. The ports themselves are each architecture's (src/kernel/src/arch/\<isa>/console.rs) and belong to the arch slices; the two of their functions that decide \*which\* console the kernel writes to, and whose checks test that, are here too (`Ports`), at the coordinator's asking. |
+| `XaquBtrfsRequirements` | `24-btrfs-requirements.sysml` | What each unit of the two btrfs crates in the item does, as `ItemLowLevel` requirements (part 13 defines the format, part 14 is the pilot this copies): `xaqu-btrfs` (src/lib/fs/btrfs/format), the reader, and `xaqu-btrfs-write` (src/lib/fs/btrfs/write), the write path. They joined the item on 2026-10-02 (the customer's decision; ITEM.md). Their interface below is the `Device` and `WriteDevice` traits, which the kernel's block layer answers; above, `Volume` and `WriteVolume`, which the VFS glue in the load (`xaqu-btrfs-vfs`, src/kernel/src/fs/btrfs\*.rs) calls. A unit is named from the crate's src/, led by the crate's name: `xaqu_btrfs::volume::Volume::read_node`. |
+| `XaquInitRequirements` | `25-init-requirements.sysml` | What init does with what an image gives it to start as pid 1, as `ItemLowLevel` requirements in the pilot's format (part 13 defines it, part 14 is the pilot). Since 2026-10-04 the program init starts when nothing is named, the script for its `sh -c` and the list of commands are not compiled into the kernel: an image carries them in its initramfs under `.xaqu/init/`, and `fs::init` reads them where the archive is and hands them to `init::set_inputs` (docs/certification/ITEM.md section 2). The certification consultant's OK IF of 2026-10-04 (ledger lines 328 and 332) asked for these rows and their parent, H.BOOT.15 in part 13; that `xaqu-vfs`'s unpacker, in no ring, creates none of the inputs is SAFETY-MANUAL AoU-24 rather than a row (line 333), and L.init.4, reserved for it, is not written. |
+| `XaquSigningRequirements` | `26-signing-requirements.sysml` | docs/SIGNING.md is the design (the certification consultant's OK IF at ledger lines 3667 and 3738; the customer's decisions at 3731). Slice S1 builds the verify-only crate `xaqu-sigverify` (src/lib/crypto/sigverify) and the hash it rests on, `xaqu-sha256` (src/lib/crypto/sha256), both in the item ring (certification-item.json's crates). What the UEFI loader, init's configuration verifier and devmgr do with the verifier's answer is theirs, and gets ids in their own slices (S4, S8, S9). |
 
-27 files, 168 packages, 10315 elements, 220 relations. Model digest `d3f88000db02e57a`.
+27 files, 168 packages, 10315 elements, 220 relations. Model digest `57bb0e2222062d28`.
 
 | Maturity | Elements | Meaning |
 | --- | ---: | --- |
@@ -139,7 +139,7 @@ An element carries its own keyword or none; a keyword is never inherited from a 
 
 ### The goal
 
-The acceptance test: a statically linked musl `rustc` compiles `hello.rs` on Ferrix, the binary it produced runs, and CI proves both. Not "has a shell", not "draws a window". Hosting a compiler is the hardest thing a general-purpose OS is routinely asked to do and the only goal that forces every subsystem to be real.
+The acceptance test: a statically linked musl `rustc` compiles `hello.rs` on Xaqu, the binary it produced runs, and CI proves both. Not "has a shell", not "draws a window". Hosting a compiler is the hardest thing a general-purpose OS is routinely asked to do and the only goal that forces every subsystem to be real.
 
 | Id | Requirement | What it forces |
 | --- | --- | --- |
@@ -154,44 +154,44 @@ The acceptance test: a statically linked musl `rustc` compiles `hello.rs` on Fer
 
 ```mermaid
 flowchart LR
-  n0_FerrixRequirements_hostsRustc["G  Hosts rustc"]
-  n1_FerrixRequirements_hostsRustc_kernelThre["G.1  Kernel threads"]
-  n2_FerrixRequirements_hostsRustc_addressSpa["G.2  Address space scale"]
-  n3_FerrixRequirements_hostsRustc_signalDeli["G.3  Signal delivery"]
-  n4_FerrixRequirements_hostsRustc_processSpa["G.4  Process spawn"]
-  n5_FerrixRequirements_hostsRustc_syscallSur["G.5  Syscall surface"]
-  n6_FerrixRequirements_hostsRustc_procfs["G.6  Procfs"]
-  n7_FerrixRequirements_hostsRustc_durableFil["G.7  Durable filesystem"]
-  n8_FerrixRequirements_hostsRustc_memoryPres["G.8  Memory pressure"]
-  n9_FerrixRoadmap_stage5Scheduler["S5  Stage 5 scheduler<br>Done"]
-  n10_FerrixRoadmap_stage6UserMode["S6  Stage 6 user mode<br>Done"]
-  n11_FerrixRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI<br>Done"]
-  n12_FerrixRoadmap_stage8Vfs["S8  Stage 8 VFS<br>Done"]
-  n13_FerrixRoadmap_stage12BtrfsWrite["S12  Stage 12 btrfs write<br>Done"]
-  n14_FerrixRoadmap_stage13Isolation["S13  Stage 13 isolation<br>Done"]
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n1_FerrixRequirements_hostsRustc_kernelThre
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n2_FerrixRequirements_hostsRustc_addressSpa
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n3_FerrixRequirements_hostsRustc_signalDeli
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n4_FerrixRequirements_hostsRustc_processSpa
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n5_FerrixRequirements_hostsRustc_syscallSur
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n6_FerrixRequirements_hostsRustc_procfs
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n7_FerrixRequirements_hostsRustc_durableFil
-  n0_FerrixRequirements_hostsRustc -- "part of" --> n8_FerrixRequirements_hostsRustc_memoryPres
-  n9_FerrixRoadmap_stage5Scheduler -. "depends on" .-> n1_FerrixRequirements_hostsRustc_kernelThre
-  n10_FerrixRoadmap_stage6UserMode -. "depends on" .-> n2_FerrixRequirements_hostsRustc_addressSpa
-  n11_FerrixRoadmap_stage7LinuxAbi -. "depends on" .-> n3_FerrixRequirements_hostsRustc_signalDeli
-  n11_FerrixRoadmap_stage7LinuxAbi -. "depends on" .-> n4_FerrixRequirements_hostsRustc_processSpa
-  n12_FerrixRoadmap_stage8Vfs -. "depends on" .-> n5_FerrixRequirements_hostsRustc_syscallSur
-  n12_FerrixRoadmap_stage8Vfs -. "depends on" .-> n6_FerrixRequirements_hostsRustc_procfs
-  n13_FerrixRoadmap_stage12BtrfsWrite -. "depends on" .-> n7_FerrixRequirements_hostsRustc_durableFil
-  n14_FerrixRoadmap_stage13Isolation -. "depends on" .-> n8_FerrixRequirements_hostsRustc_memoryPres
+  n0_XaquRequirements_hostsRustc["G  Hosts rustc"]
+  n1_XaquRequirements_hostsRustc_kernelThread["G.1  Kernel threads"]
+  n2_XaquRequirements_hostsRustc_addressSpace["G.2  Address space scale"]
+  n3_XaquRequirements_hostsRustc_signalDelive["G.3  Signal delivery"]
+  n4_XaquRequirements_hostsRustc_processSpawn["G.4  Process spawn"]
+  n5_XaquRequirements_hostsRustc_syscallSurfa["G.5  Syscall surface"]
+  n6_XaquRequirements_hostsRustc_procfs["G.6  Procfs"]
+  n7_XaquRequirements_hostsRustc_durableFiles["G.7  Durable filesystem"]
+  n8_XaquRequirements_hostsRustc_memoryPressu["G.8  Memory pressure"]
+  n9_XaquRoadmap_stage5Scheduler["S5  Stage 5 scheduler<br>Done"]
+  n10_XaquRoadmap_stage6UserMode["S6  Stage 6 user mode<br>Done"]
+  n11_XaquRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI<br>Done"]
+  n12_XaquRoadmap_stage8Vfs["S8  Stage 8 VFS<br>Done"]
+  n13_XaquRoadmap_stage12BtrfsWrite["S12  Stage 12 btrfs write<br>Done"]
+  n14_XaquRoadmap_stage13Isolation["S13  Stage 13 isolation<br>Done"]
+  n0_XaquRequirements_hostsRustc -- "part of" --> n1_XaquRequirements_hostsRustc_kernelThread
+  n0_XaquRequirements_hostsRustc -- "part of" --> n2_XaquRequirements_hostsRustc_addressSpace
+  n0_XaquRequirements_hostsRustc -- "part of" --> n3_XaquRequirements_hostsRustc_signalDelive
+  n0_XaquRequirements_hostsRustc -- "part of" --> n4_XaquRequirements_hostsRustc_processSpawn
+  n0_XaquRequirements_hostsRustc -- "part of" --> n5_XaquRequirements_hostsRustc_syscallSurfa
+  n0_XaquRequirements_hostsRustc -- "part of" --> n6_XaquRequirements_hostsRustc_procfs
+  n0_XaquRequirements_hostsRustc -- "part of" --> n7_XaquRequirements_hostsRustc_durableFiles
+  n0_XaquRequirements_hostsRustc -- "part of" --> n8_XaquRequirements_hostsRustc_memoryPressu
+  n9_XaquRoadmap_stage5Scheduler -. "depends on" .-> n1_XaquRequirements_hostsRustc_kernelThread
+  n10_XaquRoadmap_stage6UserMode -. "depends on" .-> n2_XaquRequirements_hostsRustc_addressSpace
+  n11_XaquRoadmap_stage7LinuxAbi -. "depends on" .-> n3_XaquRequirements_hostsRustc_signalDelive
+  n11_XaquRoadmap_stage7LinuxAbi -. "depends on" .-> n4_XaquRequirements_hostsRustc_processSpawn
+  n12_XaquRoadmap_stage8Vfs -. "depends on" .-> n5_XaquRequirements_hostsRustc_syscallSurfa
+  n12_XaquRoadmap_stage8Vfs -. "depends on" .-> n6_XaquRequirements_hostsRustc_procfs
+  n13_XaquRoadmap_stage12BtrfsWrite -. "depends on" .-> n7_XaquRequirements_hostsRustc_durableFiles
+  n14_XaquRoadmap_stage13Isolation -. "depends on" .-> n8_XaquRequirements_hostsRustc_memoryPressu
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n9_FerrixRoadmap_stage5Scheduler,n10_FerrixRoadmap_stage6UserMode,n11_FerrixRoadmap_stage7LinuxAbi,n12_FerrixRoadmap_stage8Vfs,n13_FerrixRoadmap_stage12BtrfsWrite,n14_FerrixRoadmap_stage13Isolation implemented
+  class n9_XaquRoadmap_stage5Scheduler,n10_XaquRoadmap_stage6UserMode,n11_XaquRoadmap_stage7LinuxAbi,n12_XaquRoadmap_stage8Vfs,n13_XaquRoadmap_stage12BtrfsWrite,n14_XaquRoadmap_stage13Isolation implemented
 ```
 
 **Figure 1 — Hosts rustc.** The goal's parts, and the roadmap stage each one waits for. A part with no stage pointing at it is one nothing on the roadmap has claimed yet. [SVG](diagrams/goal-decomposition.svg) Source: `01-requirements.sysml`.
 
-> **Self hosting** — `G+` — Stage 20: build Ferrix on Ferrix. The image the Ferrix-hosted compiler produces boots and passes every boot test.
+> **Self hosting** — `G+` — Stage 20: build Xaqu on Xaqu. The image the Xaqu-hosted compiler produces boots and passes every boot test.
 
 ### Design rules
 
@@ -254,7 +254,7 @@ Address spaces, the frames under them and the mappings that reach them: O.ISOLAT
 | `H.MEM.19` | Once a grace period the kernel waits for has ended, no read-side section that was running on any processor when the wait began shall still be running. | A writer that replaces an object every other online processor is reading, waits a grace period and poisons the replaced one, 100 times over, leaves 0 reads of a poisoned object among more than 0 reads (the `grace` line). | `O.ISOLATE, ASR-1` |
 | `H.OBJ.28` | A pager with a keeper whose handle closes shall hold its outstanding requests until pager_take_up, which shall send each again to the new port under its own id, or the keeper's close, or each waiter's bound, whichever comes first; present pages and their Dirty state shall stay; and everything held meanwhile shall stay charged to the job that was charged for it. | Stage 9's `rebind` line: read, dirty and copy waits across a close answered by the next instance, two cycles, each waiter's bound and the keeper's close ending parked waits. | `O.ISOLATE` |
 | `H.OBJ.27` | A native process made by process_make shall begin with an empty address space, and shall run only what its creator mapped, entered at an entry point and on a stack the kernel has checked lie in user space. In a kernel built with personality=user the kernel shall parse no image on any call a program can make. | Stage 9's `build` line; in a personality=user build, the numbers of process_create and process_start answer ENOSYS. | `O.VALIDATE, O.ISOLATE` |
-| `H.MEM.26` | In a kernel built with personality=user, the kernel's one loader shall load only images read from the initramfs, for the processes the kernel itself starts, and constants of the in-kernel checks. | check-item-boundary.py's loader rule: first_image::load is called only from discovery/devmgr.rs and check files, with a planted caller failing it. In present and desktop ferrix.devmgr=init still parses what pid 1 left at /sbin/devmgr, as ITEM.md section 5 and VULNERABILITY-ANALYSIS.md say. | `O.VALIDATE` |
+| `H.MEM.26` | In a kernel built with personality=user, the kernel's one loader shall load only images read from the initramfs, for the processes the kernel itself starts, and constants of the in-kernel checks. | check-item-boundary.py's loader rule: first_image::load is called only from discovery/devmgr.rs and check files, with a planted caller failing it. In present and desktop xaqu.devmgr=init still parses what pid 1 left at /sbin/devmgr, as ITEM.md section 5 and VULNERABILITY-ANALYSIS.md say. | `O.VALIDATE` |
 | `H.MEM.27` | On every profile, the kernel's one loader shall leave no page both writable and executable, and shall refuse a malformed image and never panic; what a refused devmgr then does is stage 10's stated fatal. | Stage 9's `build` line: 0 leaves writable and executable, 7 malformed images refused. | `O.WXN, ASR-2` |
 | `H.MEM.28` | A write through a shared mapping of a disk file shall keep its page in the set fsync writes until a write-back that began after the write has ended; a page in that set shall not be reclaimed, and a page not written shall not be reported. | Stage 6's `dirty` line and test-powerfail's mapped round. | `O.ISOLATE` |
 | `H.MEM.24` | An address space reached by handle shall be mapped, unmapped, protected and read only as that handle's rights allow; no mapping made by handle shall be both writable and executable; an executable mapping by handle shall need EXECUTE on the space handle and on the VMO handle; and a process's space shall be given by handle only to its creator, before it starts. | Stage 9's `space` line: every by-handle call refused without its right, an executable mapping refused without EXECUTE on either handle and made with both, a writable and executable protection refused by the decoder and by the space itself, process_space refused without MANAGE, for a process its handle cannot reach and after the start, and the sweep of every user root the check reached finding 0 leaves writable and executable and more than 0 executable. | `O.ISOLATE, O.WXN, O.CAPABILITY, ASR-2, ASR-3` |
@@ -393,7 +393,7 @@ kernel : Kernel
     tasks : Task
       stack : KernelStack
       cpu : PerCpu
-      addressSpace : FerrixMemory::ProcessAddressSpace
+      addressSpace : XaquMemory::ProcessAddressSpace
       thread : UserThread
     waitQueues : WaitQueue
   sched : Scheduler  [implemented]
@@ -478,7 +478,7 @@ userland : Userland  [in progress]
       children : Job
       quota : JobQuota
     ioMappings : IoMapping
-      domain : FerrixDrivers::IommuDomain
+      domain : XaquDrivers::IommuDomain
     interrupts : Interrupt
     eventPort : Port
     dmaBuffers : Vmo
@@ -490,29 +490,29 @@ userland : Userland  [in progress]
 
 ```mermaid
 flowchart LR
-  subgraph n0_FerrixStructure_Deployment_machine_g["Deployment"]
-    n0_FerrixStructure_Deployment_machine["machine<br>: Machine<br>efi : EfiHandoffPort"]
+  subgraph n0_XaquStructure_Deployment_machine_g["Deployment"]
+    n0_XaquStructure_Deployment_machine["machine<br>: Machine<br>efi : EfiHandoffPort"]
   end
-  subgraph n1_FerrixStructure_Ferrix_loader_g["Ferrix"]
-    n1_FerrixStructure_Ferrix_loader["loader<br>: Loader<br>efi : EfiHandoffPort<br>handoff : BootHandoffPort"]
-    n2_FerrixStructure_Ferrix_kernel["kernel<br>: Kernel<br>handoff : BootHandoffPort<br>console : SerialConsolePort<br>linuxAbi : LinuxSyscallPort<br>nativeAbi : NativeSyscallPort"]
-    n3_FerrixStructure_Ferrix_initramfs["initramfs<br>: Initramfs"]
-    n4_FerrixStructure_Ferrix_userland["userland<br>: Userland<br>posix : LinuxSyscallPort<br>native : NativeSyscallPort"]
+  subgraph n1_XaquStructure_Xaqu_loader_g["Xaqu"]
+    n1_XaquStructure_Xaqu_loader["loader<br>: Loader<br>efi : EfiHandoffPort<br>handoff : BootHandoffPort"]
+    n2_XaquStructure_Xaqu_kernel["kernel<br>: Kernel<br>handoff : BootHandoffPort<br>console : SerialConsolePort<br>linuxAbi : LinuxSyscallPort<br>nativeAbi : NativeSyscallPort"]
+    n3_XaquStructure_Xaqu_initramfs["initramfs<br>: Initramfs"]
+    n4_XaquStructure_Xaqu_userland["userland<br>: Userland<br>posix : LinuxSyscallPort<br>native : NativeSyscallPort"]
   end
-  n1_FerrixStructure_Ferrix_loader -- "handoff → handoff" --> n2_FerrixStructure_Ferrix_kernel
-  n4_FerrixStructure_Ferrix_userland -- "posix → linuxAbi · native → nativeAbi" --> n2_FerrixStructure_Ferrix_kernel
-  n0_FerrixStructure_Deployment_machine -- "efi → efi" --> n1_FerrixStructure_Ferrix_loader
+  n1_XaquStructure_Xaqu_loader -- "handoff → handoff" --> n2_XaquStructure_Xaqu_kernel
+  n4_XaquStructure_Xaqu_userland -- "posix → linuxAbi · native → nativeAbi" --> n2_XaquStructure_Xaqu_kernel
+  n0_XaquStructure_Deployment_machine -- "efi → efi" --> n1_XaquStructure_Xaqu_loader
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
-  class n3_FerrixStructure_Ferrix_initramfs implemented
-  class n4_FerrixStructure_Ferrix_userland inProgress
+  class n3_XaquStructure_Xaqu_initramfs implemented
+  class n4_XaquStructure_Xaqu_userland inProgress
 ```
 
 **Figure 2 — The pieces and the ports between them.** Each box lists the ports it declares; each line is a `connect` statement, labelled with the two ports it joins. [SVG](diagrams/interfaces.svg) Source: `02-structure.sysml`.
 
 ### The machine
 
-The system context. Ferrix targets QEMU's q35 and virt machines in CI and the STM32MP157 on the ARMv7-A side.
+The system context. Xaqu targets QEMU's q35 and virt machines in CI and the STM32MP157 on the ARMv7-A side.
 
 | Feature | Type | Multiplicity | Note |
 | --- | --- | --- | --- |
@@ -530,7 +530,7 @@ The system context. Ferrix targets QEMU's q35 and virt machines in CI and the ST
 - **`BootHandoffPort`** — The loader and the kernel are two programs linked for different targets that meet at exactly one struct, declared once in src/lib/proto/bootinfo. A mismatch is a type error rather than a triple fault.
 - **`LinuxSyscallPort`** — Syscall numbers 0.., each architecture's table as Linux defines it (the EABI table on ARMv7-A). A compatibility obligation: no opinions live here. src/lib/proto/linux-abi holds the numbers, errnos and repr(C) layouts.
 - **`NativeSyscallPort`** — Syscall numbers from 0x1000, capability-handle based. Where the design opinions live; what devmgr and drivers speak. A process may use both ports.
-- **`SerialConsolePort`** — Early boot and panic output. The boot test reads this stream and waits for the marker FERRIX-BOOT-OK.
+- **`SerialConsolePort`** — Early boot and panic output. The boot test reads this stream and waits for the marker XAQU-BOOT-OK.
 
 ### The loader
 
@@ -547,20 +547,20 @@ src/boot/common/uefi/: the UEFI loader. Reads the kernel from the volume it was 
 
 ```mermaid
 flowchart LR
-  n0_FerrixStructure_Loader["Loader<br>stage 1"]
-  n1_FerrixStructure_Loader_uefi["uefi<br>: UefiBindings"]
-  n2_FerrixStructure_Loader_services["services<br>: Services"]
-  n3_FerrixStructure_Loader_load["load<br>: ImageLoading"]
-  n4_FerrixStructure_Loader_arch["arch<br>: LoaderArch"]
-  n0_FerrixStructure_Loader -- "part of" --> n1_FerrixStructure_Loader_uefi
-  n0_FerrixStructure_Loader -- "part of" --> n2_FerrixStructure_Loader_services
-  n0_FerrixStructure_Loader -- "part of" --> n3_FerrixStructure_Loader_load
-  n0_FerrixStructure_Loader -- "part of" --> n4_FerrixStructure_Loader_arch
+  n0_XaquStructure_Loader["Loader<br>stage 1"]
+  n1_XaquStructure_Loader_uefi["uefi<br>: UefiBindings"]
+  n2_XaquStructure_Loader_services["services<br>: Services"]
+  n3_XaquStructure_Loader_load["load<br>: ImageLoading"]
+  n4_XaquStructure_Loader_arch["arch<br>: LoaderArch"]
+  n0_XaquStructure_Loader -- "part of" --> n1_XaquStructure_Loader_uefi
+  n0_XaquStructure_Loader -- "part of" --> n2_XaquStructure_Loader_services
+  n0_XaquStructure_Loader -- "part of" --> n3_XaquStructure_Loader_load
+  n0_XaquStructure_Loader -- "part of" --> n4_XaquStructure_Loader_arch
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n0_FerrixStructure_Loader implemented
+  class n0_XaquStructure_Loader implemented
 ```
 
-**Figure 3 — Loader and its parts.** The parts `Loader` is made of, coloured by the lifecycle keyword each carries. [SVG](diagrams/ferrix-structure-loader.svg) Source: `02-structure.sysml`.
+**Figure 3 — Loader and its parts.** The parts `Loader` is made of, coloured by the lifecycle keyword each carries. [SVG](diagrams/xaqu-structure-loader.svg) Source: `02-structure.sysml`.
 
 ### The kernel
 
@@ -573,7 +573,7 @@ src/kernel/: monolithic core, capability seams, userspace device drivers. Entere
 | `linuxAbi` | `LinuxSyscallPort` | `#implemented` | — |  |
 | `nativeAbi` | `NativeSyscallPort` | `#implemented` | — |  |
 | `arch` | `ArchLayer` | — | — |  |
-| `printer` | `Console` | `#implemented` | — | src/kernel/src/console.rs: println over the arch console, behind a lock that a panicking CPU waits a bounded time for, so a fault while printing still produces its FERRIX-PANIC line. |
+| `printer` | `Console` | `#implemented` | — | src/kernel/src/console.rs: println over the arch console, behind a lock that a panicking CPU waits a bounded time for, so a fault while printing still produces its XAQU-PANIC line. |
 | `early` | `EarlyMemory` | `#implemented` | — |  |
 | `trap` | `TrapDispatch` | `#implemented` | — |  |
 | `mm` | `PhysicalMemory` | `#implemented` | — |  |
@@ -605,72 +605,72 @@ src/kernel/: monolithic core, capability seams, userspace device drivers. Entere
 
 ```mermaid
 flowchart LR
-  n0_FerrixStructure_Kernel["Kernel"]
-  n1_FerrixStructure_Kernel_arch["arch<br>: ArchLayer"]
-  n2_FerrixStructure_Kernel_printer["printer<br>: Console"]
-  n3_FerrixStructure_Kernel_early["early<br>: EarlyMemory"]
-  n4_FerrixStructure_Kernel_trap["trap<br>: TrapDispatch"]
-  n5_FerrixStructure_Kernel_mm["mm<br>: PhysicalMemory"]
-  n6_FerrixStructure_Kernel_vmap["vmap<br>: VmapArena"]
-  n7_FerrixStructure_Kernel_mmio["mmio<br>: MmioWindows"]
-  n8_FerrixStructure_Kernel_irq["irq<br>: IrqTable"]
-  n9_FerrixStructure_Kernel_timer["timer<br>: Timer"]
-  n10_FerrixStructure_Kernel_smp["smp<br>: Smp"]
-  n11_FerrixStructure_Kernel_acpi["acpi<br>: AcpiAccess"]
-  n12_FerrixStructure_Kernel_fdt["fdt<br>: FdtAccess"]
-  n13_FerrixStructure_Kernel_tasks["tasks<br>: Tasks"]
-  n14_FerrixStructure_Kernel_sched["sched<br>: Scheduler"]
-  n15_FerrixStructure_Kernel_vm["vm<br>: VirtualMemory"]
-  n16_FerrixStructure_Kernel_syscalls["syscalls<br>: LinuxSyscallLayer"]
-  n17_FerrixStructure_Kernel_native["native<br>: NativeAbi"]
-  n18_FerrixStructure_Kernel_futex["futex<br>: Futex"]
-  n19_FerrixStructure_Kernel_signals["signals<br>: Signals"]
-  n20_FerrixStructure_Kernel_ipc["ipc<br>: PosixIpc"]
-  n21_FerrixStructure_Kernel_vfs["vfs<br>: Vfs"]
-  n22_FerrixStructure_Kernel_pageCache["pageCache<br>: PageCache"]
-  n23_FerrixStructure_Kernel_filesystems["filesystems<br>: Filesystems"]
-  n24_FerrixStructure_Kernel_blockCore["blockCore<br>: BlockCore"]
-  n25_FerrixStructure_Kernel_netCore["netCore<br>: NetCore"]
-  n26_FerrixStructure_Kernel_namespaces["namespaces<br>: Namespaces"]
-  n27_FerrixStructure_Kernel_cgroups["cgroups<br>: Cgroups"]
-  n28_FerrixStructure_Kernel_seccomp["seccomp<br>: Seccomp"]
-  n29_FerrixStructure_Kernel_devices["devices<br>: DeviceEnumeration"]
-  n30_FerrixStructure_Kernel_iommu["iommu<br>: IommuDomains"]
-  n0_FerrixStructure_Kernel -- "part of" --> n1_FerrixStructure_Kernel_arch
-  n0_FerrixStructure_Kernel -- "part of" --> n2_FerrixStructure_Kernel_printer
-  n0_FerrixStructure_Kernel -- "part of" --> n3_FerrixStructure_Kernel_early
-  n0_FerrixStructure_Kernel -- "part of" --> n4_FerrixStructure_Kernel_trap
-  n0_FerrixStructure_Kernel -- "part of" --> n5_FerrixStructure_Kernel_mm
-  n0_FerrixStructure_Kernel -- "part of" --> n6_FerrixStructure_Kernel_vmap
-  n0_FerrixStructure_Kernel -- "part of" --> n7_FerrixStructure_Kernel_mmio
-  n0_FerrixStructure_Kernel -- "part of" --> n8_FerrixStructure_Kernel_irq
-  n0_FerrixStructure_Kernel -- "part of" --> n9_FerrixStructure_Kernel_timer
-  n0_FerrixStructure_Kernel -- "part of" --> n10_FerrixStructure_Kernel_smp
-  n0_FerrixStructure_Kernel -- "part of" --> n11_FerrixStructure_Kernel_acpi
-  n0_FerrixStructure_Kernel -- "part of" --> n12_FerrixStructure_Kernel_fdt
-  n0_FerrixStructure_Kernel -- "part of" --> n13_FerrixStructure_Kernel_tasks
-  n0_FerrixStructure_Kernel -- "part of" --> n14_FerrixStructure_Kernel_sched
-  n0_FerrixStructure_Kernel -- "part of" --> n15_FerrixStructure_Kernel_vm
-  n0_FerrixStructure_Kernel -- "part of" --> n16_FerrixStructure_Kernel_syscalls
-  n0_FerrixStructure_Kernel -- "part of" --> n17_FerrixStructure_Kernel_native
-  n0_FerrixStructure_Kernel -- "part of" --> n18_FerrixStructure_Kernel_futex
-  n0_FerrixStructure_Kernel -- "part of" --> n19_FerrixStructure_Kernel_signals
-  n0_FerrixStructure_Kernel -- "part of" --> n20_FerrixStructure_Kernel_ipc
-  n0_FerrixStructure_Kernel -- "part of" --> n21_FerrixStructure_Kernel_vfs
-  n0_FerrixStructure_Kernel -- "part of" --> n22_FerrixStructure_Kernel_pageCache
-  n0_FerrixStructure_Kernel -- "part of" --> n23_FerrixStructure_Kernel_filesystems
-  n0_FerrixStructure_Kernel -- "part of" --> n24_FerrixStructure_Kernel_blockCore
-  n0_FerrixStructure_Kernel -- "part of" --> n25_FerrixStructure_Kernel_netCore
-  n0_FerrixStructure_Kernel -- "part of" --> n26_FerrixStructure_Kernel_namespaces
-  n0_FerrixStructure_Kernel -- "part of" --> n27_FerrixStructure_Kernel_cgroups
-  n0_FerrixStructure_Kernel -- "part of" --> n28_FerrixStructure_Kernel_seccomp
-  n0_FerrixStructure_Kernel -- "part of" --> n29_FerrixStructure_Kernel_devices
-  n0_FerrixStructure_Kernel -- "part of" --> n30_FerrixStructure_Kernel_iommu
+  n0_XaquStructure_Kernel["Kernel"]
+  n1_XaquStructure_Kernel_arch["arch<br>: ArchLayer"]
+  n2_XaquStructure_Kernel_printer["printer<br>: Console"]
+  n3_XaquStructure_Kernel_early["early<br>: EarlyMemory"]
+  n4_XaquStructure_Kernel_trap["trap<br>: TrapDispatch"]
+  n5_XaquStructure_Kernel_mm["mm<br>: PhysicalMemory"]
+  n6_XaquStructure_Kernel_vmap["vmap<br>: VmapArena"]
+  n7_XaquStructure_Kernel_mmio["mmio<br>: MmioWindows"]
+  n8_XaquStructure_Kernel_irq["irq<br>: IrqTable"]
+  n9_XaquStructure_Kernel_timer["timer<br>: Timer"]
+  n10_XaquStructure_Kernel_smp["smp<br>: Smp"]
+  n11_XaquStructure_Kernel_acpi["acpi<br>: AcpiAccess"]
+  n12_XaquStructure_Kernel_fdt["fdt<br>: FdtAccess"]
+  n13_XaquStructure_Kernel_tasks["tasks<br>: Tasks"]
+  n14_XaquStructure_Kernel_sched["sched<br>: Scheduler"]
+  n15_XaquStructure_Kernel_vm["vm<br>: VirtualMemory"]
+  n16_XaquStructure_Kernel_syscalls["syscalls<br>: LinuxSyscallLayer"]
+  n17_XaquStructure_Kernel_native["native<br>: NativeAbi"]
+  n18_XaquStructure_Kernel_futex["futex<br>: Futex"]
+  n19_XaquStructure_Kernel_signals["signals<br>: Signals"]
+  n20_XaquStructure_Kernel_ipc["ipc<br>: PosixIpc"]
+  n21_XaquStructure_Kernel_vfs["vfs<br>: Vfs"]
+  n22_XaquStructure_Kernel_pageCache["pageCache<br>: PageCache"]
+  n23_XaquStructure_Kernel_filesystems["filesystems<br>: Filesystems"]
+  n24_XaquStructure_Kernel_blockCore["blockCore<br>: BlockCore"]
+  n25_XaquStructure_Kernel_netCore["netCore<br>: NetCore"]
+  n26_XaquStructure_Kernel_namespaces["namespaces<br>: Namespaces"]
+  n27_XaquStructure_Kernel_cgroups["cgroups<br>: Cgroups"]
+  n28_XaquStructure_Kernel_seccomp["seccomp<br>: Seccomp"]
+  n29_XaquStructure_Kernel_devices["devices<br>: DeviceEnumeration"]
+  n30_XaquStructure_Kernel_iommu["iommu<br>: IommuDomains"]
+  n0_XaquStructure_Kernel -- "part of" --> n1_XaquStructure_Kernel_arch
+  n0_XaquStructure_Kernel -- "part of" --> n2_XaquStructure_Kernel_printer
+  n0_XaquStructure_Kernel -- "part of" --> n3_XaquStructure_Kernel_early
+  n0_XaquStructure_Kernel -- "part of" --> n4_XaquStructure_Kernel_trap
+  n0_XaquStructure_Kernel -- "part of" --> n5_XaquStructure_Kernel_mm
+  n0_XaquStructure_Kernel -- "part of" --> n6_XaquStructure_Kernel_vmap
+  n0_XaquStructure_Kernel -- "part of" --> n7_XaquStructure_Kernel_mmio
+  n0_XaquStructure_Kernel -- "part of" --> n8_XaquStructure_Kernel_irq
+  n0_XaquStructure_Kernel -- "part of" --> n9_XaquStructure_Kernel_timer
+  n0_XaquStructure_Kernel -- "part of" --> n10_XaquStructure_Kernel_smp
+  n0_XaquStructure_Kernel -- "part of" --> n11_XaquStructure_Kernel_acpi
+  n0_XaquStructure_Kernel -- "part of" --> n12_XaquStructure_Kernel_fdt
+  n0_XaquStructure_Kernel -- "part of" --> n13_XaquStructure_Kernel_tasks
+  n0_XaquStructure_Kernel -- "part of" --> n14_XaquStructure_Kernel_sched
+  n0_XaquStructure_Kernel -- "part of" --> n15_XaquStructure_Kernel_vm
+  n0_XaquStructure_Kernel -- "part of" --> n16_XaquStructure_Kernel_syscalls
+  n0_XaquStructure_Kernel -- "part of" --> n17_XaquStructure_Kernel_native
+  n0_XaquStructure_Kernel -- "part of" --> n18_XaquStructure_Kernel_futex
+  n0_XaquStructure_Kernel -- "part of" --> n19_XaquStructure_Kernel_signals
+  n0_XaquStructure_Kernel -- "part of" --> n20_XaquStructure_Kernel_ipc
+  n0_XaquStructure_Kernel -- "part of" --> n21_XaquStructure_Kernel_vfs
+  n0_XaquStructure_Kernel -- "part of" --> n22_XaquStructure_Kernel_pageCache
+  n0_XaquStructure_Kernel -- "part of" --> n23_XaquStructure_Kernel_filesystems
+  n0_XaquStructure_Kernel -- "part of" --> n24_XaquStructure_Kernel_blockCore
+  n0_XaquStructure_Kernel -- "part of" --> n25_XaquStructure_Kernel_netCore
+  n0_XaquStructure_Kernel -- "part of" --> n26_XaquStructure_Kernel_namespaces
+  n0_XaquStructure_Kernel -- "part of" --> n27_XaquStructure_Kernel_cgroups
+  n0_XaquStructure_Kernel -- "part of" --> n28_XaquStructure_Kernel_seccomp
+  n0_XaquStructure_Kernel -- "part of" --> n29_XaquStructure_Kernel_devices
+  n0_XaquStructure_Kernel -- "part of" --> n30_XaquStructure_Kernel_iommu
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n2_FerrixStructure_Kernel_printer,n3_FerrixStructure_Kernel_early,n4_FerrixStructure_Kernel_trap,n5_FerrixStructure_Kernel_mm,n6_FerrixStructure_Kernel_vmap,n7_FerrixStructure_Kernel_mmio,n8_FerrixStructure_Kernel_irq,n9_FerrixStructure_Kernel_timer,n10_FerrixStructure_Kernel_smp,n11_FerrixStructure_Kernel_acpi,n12_FerrixStructure_Kernel_fdt,n13_FerrixStructure_Kernel_tasks,n14_FerrixStructure_Kernel_sched,n15_FerrixStructure_Kernel_vm,n16_FerrixStructure_Kernel_syscalls,n17_FerrixStructure_Kernel_native,n18_FerrixStructure_Kernel_futex,n19_FerrixStructure_Kernel_signals,n20_FerrixStructure_Kernel_ipc,n21_FerrixStructure_Kernel_vfs,n22_FerrixStructure_Kernel_pageCache,n23_FerrixStructure_Kernel_filesystems,n24_FerrixStructure_Kernel_blockCore,n25_FerrixStructure_Kernel_netCore,n26_FerrixStructure_Kernel_namespaces,n27_FerrixStructure_Kernel_cgroups,n28_FerrixStructure_Kernel_seccomp,n29_FerrixStructure_Kernel_devices,n30_FerrixStructure_Kernel_iommu implemented
+  class n2_XaquStructure_Kernel_printer,n3_XaquStructure_Kernel_early,n4_XaquStructure_Kernel_trap,n5_XaquStructure_Kernel_mm,n6_XaquStructure_Kernel_vmap,n7_XaquStructure_Kernel_mmio,n8_XaquStructure_Kernel_irq,n9_XaquStructure_Kernel_timer,n10_XaquStructure_Kernel_smp,n11_XaquStructure_Kernel_acpi,n12_XaquStructure_Kernel_fdt,n13_XaquStructure_Kernel_tasks,n14_XaquStructure_Kernel_sched,n15_XaquStructure_Kernel_vm,n16_XaquStructure_Kernel_syscalls,n17_XaquStructure_Kernel_native,n18_XaquStructure_Kernel_futex,n19_XaquStructure_Kernel_signals,n20_XaquStructure_Kernel_ipc,n21_XaquStructure_Kernel_vfs,n22_XaquStructure_Kernel_pageCache,n23_XaquStructure_Kernel_filesystems,n24_XaquStructure_Kernel_blockCore,n25_XaquStructure_Kernel_netCore,n26_XaquStructure_Kernel_namespaces,n27_XaquStructure_Kernel_cgroups,n28_XaquStructure_Kernel_seccomp,n29_XaquStructure_Kernel_devices,n30_XaquStructure_Kernel_iommu implemented
 ```
 
-**Figure 4 — Kernel and its parts.** The parts `Kernel` is made of, coloured by the lifecycle keyword each carries. [SVG](diagrams/ferrix-structure-kernel.svg) Source: `02-structure.sysml`.
+**Figure 4 — Kernel and its parts.** The parts `Kernel` is made of, coloured by the lifecycle keyword each carries. [SVG](diagrams/xaqu-structure-kernel.svg) Source: `02-structure.sysml`.
 
 > **Lock order** — mm.rs: TABLES serialises every walk and change of the kernel page tables and is taken before FRAMES (a mapping may need a frame for a table) and before HEAP (an unmap records what it released). Never the other way round. Stage 5 adds a run queue's lock outside the heap's and the frame allocator's, with nothing ever taken outside it.
 
@@ -680,20 +680,20 @@ src/kernel/src/arch/mod.rs: the one module generic code reaches the CPU through.
 
 ```mermaid
 flowchart TB
-  n0_FerrixStructure_ArchFacade["ArchFacade<br>attribute NAME<br>attribute TLB_FLUSH_IS_BROADCAST<br>part encoding<br>action initConsole<br>action initTraps<br>action breakpoint"]
-  n1_FerrixStructure_X86_64Arch["X86_64Arch"]
-  n2_FerrixStructure_AArch64Arch["AArch64Arch"]
-  n3_FerrixStructure_Armv7aArch["Armv7aArch"]
-  n4_FerrixStructure_ArchLayer["ArchLayer"]
-  n1_FerrixStructure_X86_64Arch -- "specializes" --> n0_FerrixStructure_ArchFacade
-  n2_FerrixStructure_AArch64Arch -- "specializes" --> n0_FerrixStructure_ArchFacade
-  n3_FerrixStructure_Armv7aArch -- "specializes" --> n0_FerrixStructure_ArchFacade
-  n4_FerrixStructure_ArchLayer -- "specializes" --> n0_FerrixStructure_ArchFacade
+  n0_XaquStructure_ArchFacade["ArchFacade<br>attribute NAME<br>attribute TLB_FLUSH_IS_BROADCAST<br>part encoding<br>action initConsole<br>action initTraps<br>action breakpoint"]
+  n1_XaquStructure_X86_64Arch["X86_64Arch"]
+  n2_XaquStructure_AArch64Arch["AArch64Arch"]
+  n3_XaquStructure_Armv7aArch["Armv7aArch"]
+  n4_XaquStructure_ArchLayer["ArchLayer"]
+  n1_XaquStructure_X86_64Arch -- "specializes" --> n0_XaquStructure_ArchFacade
+  n2_XaquStructure_AArch64Arch -- "specializes" --> n0_XaquStructure_ArchFacade
+  n3_XaquStructure_Armv7aArch -- "specializes" --> n0_XaquStructure_ArchFacade
+  n4_XaquStructure_ArchLayer -- "specializes" --> n0_XaquStructure_ArchFacade
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n1_FerrixStructure_X86_64Arch,n2_FerrixStructure_AArch64Arch,n3_FerrixStructure_Armv7aArch implemented
+  class n1_XaquStructure_X86_64Arch,n2_XaquStructure_AArch64Arch,n3_XaquStructure_Armv7aArch implemented
 ```
 
-**Figure 5 — Arch facade and its subtypes.** 4 definitions specialize `ArchFacade`; the hollow arrow points at what they have in common. [SVG](diagrams/ferrix-structure-arch-facade.svg) Source: `02-structure.sysml`.
+**Figure 5 — Arch facade and its subtypes.** 4 definitions specialize `ArchFacade`; the hollow arrow points at what they have in common. [SVG](diagrams/xaqu-structure-arch-facade.svg) Source: `02-structure.sysml`.
 
 | Target | Definition | Maturity | TLB flush broadcasts | Notes |
 | --- | --- | --- | --- | --- |
@@ -815,7 +815,7 @@ Version 4. Every type is repr(C); the kernel refuses to start if the magic or ve
 
 | Field | Type | Value | Note |
 | --- | --- | --- | --- |
-| `magic` | `String` | `FERRIXBI` |  |
+| `magic` | `String` | `XAQUBI` |  |
 | `version` | `Natural` | `4` |  |
 | `arch` | `Arch` |  |  |
 | `regions` | `MemRegion` |  | Sorted, non-overlapping, describing the loader's own allocations — without which the frame allocator would hand out the frames holding its own page tables. |
@@ -876,7 +876,7 @@ Firmware calls efi_main in 64-bit mode (SVC mode on ARMv7-A) with a stack and th
 
 1. `initFirmwareConsole` — Firmware's con_out, until console::shutdown just before ExitBootServices.
 2. `prepareCpu`
-3. `stageKernel` — Read /FERRIX/KERNEL.ELF from the volume the loader came from, parse it with src/lib/platform/elf, copy the segments to their link address. Malformed segments are refused here rather than discovered by the MMU. /FERRIX/INITRD.IMG, when the volume has one, is read into memory of its own kind, Initrd, which nothing reclaims; absent is not an error.
+3. `stageKernel` — Read /XAQU/KERNEL.ELF from the volume the loader came from, parse it with src/lib/platform/elf, copy the segments to their link address. Malformed segments are refused here rather than discovered by the MMU. /XAQU/INITRD.IMG, when the volume has one, is read into memory of its own kind, Initrd, which nothing reclaims; absent is not an error.
 4. `allocateBootAreas` — Boot stack (64 KiB), boot info (64 KiB, around 2700 regions of room), memory map buffer.
 5. `buildAddressSpace` — src/lib/kernel/paging Mapper: the image at its link address, the direct map from the lowest RAM address, and an identity plan for the loader's own code so the instruction after the switch is fetchable. The loader also maps itself where the kernel can reach it, so the kernel can drop the map rather than abandon a table.
 6. `writeBootInfo`
@@ -887,36 +887,36 @@ Firmware calls efi_main in 64-bit mode (SVC mode on ARMv7-A) with a stack and th
 
 ```mermaid
 flowchart TB
-  n0_FerrixBoot_LoaderSequence_start(["start"])
-  n1_FerrixBoot_LoaderSequence_initFirmwareCo("initFirmwareConsole")
-  n2_FerrixBoot_LoaderSequence_prepareCpu("prepareCpu")
-  n3_FerrixBoot_LoaderSequence_stageKernel("stageKernel")
-  n4_FerrixBoot_LoaderSequence_allocateBootAr("allocateBootAreas")
-  n5_FerrixBoot_LoaderSequence_buildAddressSp("buildAddressSpace")
-  n6_FerrixBoot_LoaderSequence_writeBootInfo("writeBootInfo")
-  n7_FerrixBoot_LoaderSequence_leaveFirmware("leaveFirmware")
-  n8_FerrixBoot_LoaderSequence_recordMemoryMa("recordMemoryMap")
-  n9_FerrixBoot_LoaderSequence_cleanDcache("cleanDcache")
-  n10_FerrixBoot_LoaderSequence_enterKernel("enterKernel")
-  n11_FerrixBoot_LoaderSequence_done(["done"])
-  n0_FerrixBoot_LoaderSequence_start --> n1_FerrixBoot_LoaderSequence_initFirmwareCo
-  n1_FerrixBoot_LoaderSequence_initFirmwareCo --> n2_FerrixBoot_LoaderSequence_prepareCpu
-  n2_FerrixBoot_LoaderSequence_prepareCpu --> n3_FerrixBoot_LoaderSequence_stageKernel
-  n3_FerrixBoot_LoaderSequence_stageKernel --> n4_FerrixBoot_LoaderSequence_allocateBootAr
-  n4_FerrixBoot_LoaderSequence_allocateBootAr --> n5_FerrixBoot_LoaderSequence_buildAddressSp
-  n5_FerrixBoot_LoaderSequence_buildAddressSp --> n6_FerrixBoot_LoaderSequence_writeBootInfo
-  n6_FerrixBoot_LoaderSequence_writeBootInfo --> n7_FerrixBoot_LoaderSequence_leaveFirmware
-  n7_FerrixBoot_LoaderSequence_leaveFirmware --> n8_FerrixBoot_LoaderSequence_recordMemoryMa
-  n8_FerrixBoot_LoaderSequence_recordMemoryMa --> n9_FerrixBoot_LoaderSequence_cleanDcache
-  n9_FerrixBoot_LoaderSequence_cleanDcache --> n10_FerrixBoot_LoaderSequence_enterKernel
-  n10_FerrixBoot_LoaderSequence_enterKernel --> n11_FerrixBoot_LoaderSequence_done
+  n0_XaquBoot_LoaderSequence_start(["start"])
+  n1_XaquBoot_LoaderSequence_initFirmwareCons("initFirmwareConsole")
+  n2_XaquBoot_LoaderSequence_prepareCpu("prepareCpu")
+  n3_XaquBoot_LoaderSequence_stageKernel("stageKernel")
+  n4_XaquBoot_LoaderSequence_allocateBootArea("allocateBootAreas")
+  n5_XaquBoot_LoaderSequence_buildAddressSpac("buildAddressSpace")
+  n6_XaquBoot_LoaderSequence_writeBootInfo("writeBootInfo")
+  n7_XaquBoot_LoaderSequence_leaveFirmware("leaveFirmware")
+  n8_XaquBoot_LoaderSequence_recordMemoryMap("recordMemoryMap")
+  n9_XaquBoot_LoaderSequence_cleanDcache("cleanDcache")
+  n10_XaquBoot_LoaderSequence_enterKernel("enterKernel")
+  n11_XaquBoot_LoaderSequence_done(["done"])
+  n0_XaquBoot_LoaderSequence_start --> n1_XaquBoot_LoaderSequence_initFirmwareCons
+  n1_XaquBoot_LoaderSequence_initFirmwareCons --> n2_XaquBoot_LoaderSequence_prepareCpu
+  n2_XaquBoot_LoaderSequence_prepareCpu --> n3_XaquBoot_LoaderSequence_stageKernel
+  n3_XaquBoot_LoaderSequence_stageKernel --> n4_XaquBoot_LoaderSequence_allocateBootArea
+  n4_XaquBoot_LoaderSequence_allocateBootArea --> n5_XaquBoot_LoaderSequence_buildAddressSpac
+  n5_XaquBoot_LoaderSequence_buildAddressSpac --> n6_XaquBoot_LoaderSequence_writeBootInfo
+  n6_XaquBoot_LoaderSequence_writeBootInfo --> n7_XaquBoot_LoaderSequence_leaveFirmware
+  n7_XaquBoot_LoaderSequence_leaveFirmware --> n8_XaquBoot_LoaderSequence_recordMemoryMap
+  n8_XaquBoot_LoaderSequence_recordMemoryMap --> n9_XaquBoot_LoaderSequence_cleanDcache
+  n9_XaquBoot_LoaderSequence_cleanDcache --> n10_XaquBoot_LoaderSequence_enterKernel
+  n10_XaquBoot_LoaderSequence_enterKernel --> n11_XaquBoot_LoaderSequence_done
 ```
 
-**Figure 6 — Loader sequence.** 12 steps, as `LoaderSequence` orders them. [SVG](diagrams/ferrix-boot-loader-sequence.svg) Source: `03-boot.sysml`.
+**Figure 6 — Loader sequence.** 12 steps, as `LoaderSequence` orders them. [SVG](diagrams/xaqu-boot-loader-sequence.svg) Source: `03-boot.sysml`.
 
 ### The kernel's bring-up
 
-kmain. Every stage's exit criterion runs here on every boot, and each failure panics with its own message so the boot test fails with a reason rather than a timeout. The marker at the end reads FERRIX-BOOT-OK stages 1-12. ferrix.checks=skip (a desktop's image, src/kernel/src/checks.rs) keeps every bring-up step and leaves out the checks, and the marker then reads FERRIX-BOOT-UNCHECKED, which no boot test accepts. Stages 1 to 5 are broken down into their checks below; from stage 6 on each step names the check function in src/kernel/src/main.rs, in the order kmain calls them, which is not the stages' order.
+kmain. Every stage's exit criterion runs here on every boot, and each failure panics with its own message so the boot test fails with a reason rather than a timeout. The marker at the end reads XAQU-BOOT-OK stages 1-12. xaqu.checks=skip (a desktop's image, src/kernel/src/checks.rs) keeps every bring-up step and leaves out the checks, and the marker then reads XAQU-BOOT-UNCHECKED, which no boot test accepts. Stages 1 to 5 are broken down into their checks below; from stage 6 on each step names the check function in src/kernel/src/main.rs, in the order kmain calls them, which is not the stages' order.
 
 1. `validateHandoff` — Magic, version, arch and layout constants. No console yet, so a mismatch halts silently: there is no valid way to make one.
 2. `initConsole`
@@ -953,76 +953,76 @@ kmain. Every stage's exit criterion runs here on every boot, and each failure pa
 
 ```mermaid
 flowchart TB
-  n0_FerrixBoot_KernelBringUp_start(["start"])
-  n1_FerrixBoot_KernelBringUp_validateHandoff("validateHandoff")
-  n2_FerrixBoot_KernelBringUp_initConsole("initConsole")
-  n3_FerrixBoot_KernelBringUp_reportHandoff("reportHandoff")
-  n4_FerrixBoot_KernelBringUp_stage1SelfCheck("stage1SelfCheck")
-  n5_FerrixBoot_KernelBringUp_installTraps("installTraps")
-  n6_FerrixBoot_KernelBringUp_initPhysicalMem("initPhysicalMemory")
-  n7_FerrixBoot_KernelBringUp_initVmapArena("initVmapArena")
-  n8_FerrixBoot_KernelBringUp_stage2SelfCheck("stage2SelfCheck")
-  n9_FerrixBoot_KernelBringUp_stage3TrapCheck("stage3TrapCheck")
-  n10_FerrixBoot_KernelBringUp_initInterrupts("initInterrupts")
-  n11_FerrixBoot_KernelBringUp_initTimer("initTimer")
-  n12_FerrixBoot_KernelBringUp_enableInterrupt("enableInterrupts")
-  n13_FerrixBoot_KernelBringUp_stage3TimerChec("stage3TimerCheck")
-  n14_FerrixBoot_KernelBringUp_stage4Processor("stage4Processors")
-  n15_FerrixBoot_KernelBringUp_stage5Scheduler("stage5Scheduler")
-  n16_FerrixBoot_KernelBringUp_stage6MemoryObj("stage6MemoryObjects<br>stage 6")
-  n17_FerrixBoot_KernelBringUp_stage8RootFiles("stage8RootFilesystem<br>stage 8")
-  n18_FerrixBoot_KernelBringUp_stage7Syscalls("stage7Syscalls<br>stage 7")
-  n19_FerrixBoot_KernelBringUp_stage6ReverseMa("stage6ReverseMap<br>stage 6")
-  n20_FerrixBoot_KernelBringUp_entryPaths("entryPaths")
-  n21_FerrixBoot_KernelBringUp_stage8PathCalls("stage8PathCalls<br>stage 8")
-  n22_FerrixBoot_KernelBringUp_stage9NativeObj("stage9NativeObjects<br>stage 9")
-  n23_FerrixBoot_KernelBringUp_stage10Devices("stage10Devices<br>stage 10")
-  n24_FerrixBoot_KernelBringUp_stage9DeviceObj("stage9DeviceObjects<br>stage 9")
-  n25_FerrixBoot_KernelBringUp_stage10Drivers("stage10Drivers<br>stage 10")
-  n26_FerrixBoot_KernelBringUp_stage11BtrfsRea("stage11BtrfsRead<br>stage 11")
-  n27_FerrixBoot_KernelBringUp_stage12BtrfsWri("stage12BtrfsWrite<br>stage 12")
-  n28_FerrixBoot_KernelBringUp_networkingCheck("networkingCheck")
-  n29_FerrixBoot_KernelBringUp_finishMemory("finishMemory")
-  n30_FerrixBoot_KernelBringUp_reportSuccess("reportSuccess")
-  n31_FerrixBoot_KernelBringUp_startInit("startInit")
-  n32_FerrixBoot_KernelBringUp_shutdown("shutdown")
-  n33_FerrixBoot_KernelBringUp_done(["done"])
-  n0_FerrixBoot_KernelBringUp_start --> n1_FerrixBoot_KernelBringUp_validateHandoff
-  n1_FerrixBoot_KernelBringUp_validateHandoff --> n2_FerrixBoot_KernelBringUp_initConsole
-  n2_FerrixBoot_KernelBringUp_initConsole --> n3_FerrixBoot_KernelBringUp_reportHandoff
-  n3_FerrixBoot_KernelBringUp_reportHandoff --> n4_FerrixBoot_KernelBringUp_stage1SelfCheck
-  n4_FerrixBoot_KernelBringUp_stage1SelfCheck --> n5_FerrixBoot_KernelBringUp_installTraps
-  n5_FerrixBoot_KernelBringUp_installTraps --> n6_FerrixBoot_KernelBringUp_initPhysicalMem
-  n6_FerrixBoot_KernelBringUp_initPhysicalMem --> n7_FerrixBoot_KernelBringUp_initVmapArena
-  n7_FerrixBoot_KernelBringUp_initVmapArena --> n8_FerrixBoot_KernelBringUp_stage2SelfCheck
-  n8_FerrixBoot_KernelBringUp_stage2SelfCheck --> n9_FerrixBoot_KernelBringUp_stage3TrapCheck
-  n9_FerrixBoot_KernelBringUp_stage3TrapCheck --> n10_FerrixBoot_KernelBringUp_initInterrupts
-  n10_FerrixBoot_KernelBringUp_initInterrupts --> n11_FerrixBoot_KernelBringUp_initTimer
-  n11_FerrixBoot_KernelBringUp_initTimer --> n12_FerrixBoot_KernelBringUp_enableInterrupt
-  n12_FerrixBoot_KernelBringUp_enableInterrupt --> n13_FerrixBoot_KernelBringUp_stage3TimerChec
-  n13_FerrixBoot_KernelBringUp_stage3TimerChec --> n14_FerrixBoot_KernelBringUp_stage4Processor
-  n14_FerrixBoot_KernelBringUp_stage4Processor --> n15_FerrixBoot_KernelBringUp_stage5Scheduler
-  n15_FerrixBoot_KernelBringUp_stage5Scheduler --> n16_FerrixBoot_KernelBringUp_stage6MemoryObj
-  n16_FerrixBoot_KernelBringUp_stage6MemoryObj --> n17_FerrixBoot_KernelBringUp_stage8RootFiles
-  n17_FerrixBoot_KernelBringUp_stage8RootFiles --> n18_FerrixBoot_KernelBringUp_stage7Syscalls
-  n18_FerrixBoot_KernelBringUp_stage7Syscalls --> n19_FerrixBoot_KernelBringUp_stage6ReverseMa
-  n19_FerrixBoot_KernelBringUp_stage6ReverseMa --> n20_FerrixBoot_KernelBringUp_entryPaths
-  n20_FerrixBoot_KernelBringUp_entryPaths --> n21_FerrixBoot_KernelBringUp_stage8PathCalls
-  n21_FerrixBoot_KernelBringUp_stage8PathCalls --> n22_FerrixBoot_KernelBringUp_stage9NativeObj
-  n22_FerrixBoot_KernelBringUp_stage9NativeObj --> n23_FerrixBoot_KernelBringUp_stage10Devices
-  n23_FerrixBoot_KernelBringUp_stage10Devices --> n24_FerrixBoot_KernelBringUp_stage9DeviceObj
-  n24_FerrixBoot_KernelBringUp_stage9DeviceObj --> n25_FerrixBoot_KernelBringUp_stage10Drivers
-  n25_FerrixBoot_KernelBringUp_stage10Drivers --> n26_FerrixBoot_KernelBringUp_stage11BtrfsRea
-  n26_FerrixBoot_KernelBringUp_stage11BtrfsRea --> n27_FerrixBoot_KernelBringUp_stage12BtrfsWri
-  n27_FerrixBoot_KernelBringUp_stage12BtrfsWri --> n28_FerrixBoot_KernelBringUp_networkingCheck
-  n28_FerrixBoot_KernelBringUp_networkingCheck --> n29_FerrixBoot_KernelBringUp_finishMemory
-  n29_FerrixBoot_KernelBringUp_finishMemory --> n30_FerrixBoot_KernelBringUp_reportSuccess
-  n30_FerrixBoot_KernelBringUp_reportSuccess --> n31_FerrixBoot_KernelBringUp_startInit
-  n31_FerrixBoot_KernelBringUp_startInit --> n32_FerrixBoot_KernelBringUp_shutdown
-  n32_FerrixBoot_KernelBringUp_shutdown --> n33_FerrixBoot_KernelBringUp_done
+  n0_XaquBoot_KernelBringUp_start(["start"])
+  n1_XaquBoot_KernelBringUp_validateHandoff("validateHandoff")
+  n2_XaquBoot_KernelBringUp_initConsole("initConsole")
+  n3_XaquBoot_KernelBringUp_reportHandoff("reportHandoff")
+  n4_XaquBoot_KernelBringUp_stage1SelfCheck("stage1SelfCheck")
+  n5_XaquBoot_KernelBringUp_installTraps("installTraps")
+  n6_XaquBoot_KernelBringUp_initPhysicalMemor("initPhysicalMemory")
+  n7_XaquBoot_KernelBringUp_initVmapArena("initVmapArena")
+  n8_XaquBoot_KernelBringUp_stage2SelfCheck("stage2SelfCheck")
+  n9_XaquBoot_KernelBringUp_stage3TrapCheck("stage3TrapCheck")
+  n10_XaquBoot_KernelBringUp_initInterrupts("initInterrupts")
+  n11_XaquBoot_KernelBringUp_initTimer("initTimer")
+  n12_XaquBoot_KernelBringUp_enableInterrupts("enableInterrupts")
+  n13_XaquBoot_KernelBringUp_stage3TimerCheck("stage3TimerCheck")
+  n14_XaquBoot_KernelBringUp_stage4Processors("stage4Processors")
+  n15_XaquBoot_KernelBringUp_stage5Scheduler("stage5Scheduler")
+  n16_XaquBoot_KernelBringUp_stage6MemoryObjec("stage6MemoryObjects<br>stage 6")
+  n17_XaquBoot_KernelBringUp_stage8RootFilesys("stage8RootFilesystem<br>stage 8")
+  n18_XaquBoot_KernelBringUp_stage7Syscalls("stage7Syscalls<br>stage 7")
+  n19_XaquBoot_KernelBringUp_stage6ReverseMap("stage6ReverseMap<br>stage 6")
+  n20_XaquBoot_KernelBringUp_entryPaths("entryPaths")
+  n21_XaquBoot_KernelBringUp_stage8PathCalls("stage8PathCalls<br>stage 8")
+  n22_XaquBoot_KernelBringUp_stage9NativeObjec("stage9NativeObjects<br>stage 9")
+  n23_XaquBoot_KernelBringUp_stage10Devices("stage10Devices<br>stage 10")
+  n24_XaquBoot_KernelBringUp_stage9DeviceObjec("stage9DeviceObjects<br>stage 9")
+  n25_XaquBoot_KernelBringUp_stage10Drivers("stage10Drivers<br>stage 10")
+  n26_XaquBoot_KernelBringUp_stage11BtrfsRead("stage11BtrfsRead<br>stage 11")
+  n27_XaquBoot_KernelBringUp_stage12BtrfsWrite("stage12BtrfsWrite<br>stage 12")
+  n28_XaquBoot_KernelBringUp_networkingCheck("networkingCheck")
+  n29_XaquBoot_KernelBringUp_finishMemory("finishMemory")
+  n30_XaquBoot_KernelBringUp_reportSuccess("reportSuccess")
+  n31_XaquBoot_KernelBringUp_startInit("startInit")
+  n32_XaquBoot_KernelBringUp_shutdown("shutdown")
+  n33_XaquBoot_KernelBringUp_done(["done"])
+  n0_XaquBoot_KernelBringUp_start --> n1_XaquBoot_KernelBringUp_validateHandoff
+  n1_XaquBoot_KernelBringUp_validateHandoff --> n2_XaquBoot_KernelBringUp_initConsole
+  n2_XaquBoot_KernelBringUp_initConsole --> n3_XaquBoot_KernelBringUp_reportHandoff
+  n3_XaquBoot_KernelBringUp_reportHandoff --> n4_XaquBoot_KernelBringUp_stage1SelfCheck
+  n4_XaquBoot_KernelBringUp_stage1SelfCheck --> n5_XaquBoot_KernelBringUp_installTraps
+  n5_XaquBoot_KernelBringUp_installTraps --> n6_XaquBoot_KernelBringUp_initPhysicalMemor
+  n6_XaquBoot_KernelBringUp_initPhysicalMemor --> n7_XaquBoot_KernelBringUp_initVmapArena
+  n7_XaquBoot_KernelBringUp_initVmapArena --> n8_XaquBoot_KernelBringUp_stage2SelfCheck
+  n8_XaquBoot_KernelBringUp_stage2SelfCheck --> n9_XaquBoot_KernelBringUp_stage3TrapCheck
+  n9_XaquBoot_KernelBringUp_stage3TrapCheck --> n10_XaquBoot_KernelBringUp_initInterrupts
+  n10_XaquBoot_KernelBringUp_initInterrupts --> n11_XaquBoot_KernelBringUp_initTimer
+  n11_XaquBoot_KernelBringUp_initTimer --> n12_XaquBoot_KernelBringUp_enableInterrupts
+  n12_XaquBoot_KernelBringUp_enableInterrupts --> n13_XaquBoot_KernelBringUp_stage3TimerCheck
+  n13_XaquBoot_KernelBringUp_stage3TimerCheck --> n14_XaquBoot_KernelBringUp_stage4Processors
+  n14_XaquBoot_KernelBringUp_stage4Processors --> n15_XaquBoot_KernelBringUp_stage5Scheduler
+  n15_XaquBoot_KernelBringUp_stage5Scheduler --> n16_XaquBoot_KernelBringUp_stage6MemoryObjec
+  n16_XaquBoot_KernelBringUp_stage6MemoryObjec --> n17_XaquBoot_KernelBringUp_stage8RootFilesys
+  n17_XaquBoot_KernelBringUp_stage8RootFilesys --> n18_XaquBoot_KernelBringUp_stage7Syscalls
+  n18_XaquBoot_KernelBringUp_stage7Syscalls --> n19_XaquBoot_KernelBringUp_stage6ReverseMap
+  n19_XaquBoot_KernelBringUp_stage6ReverseMap --> n20_XaquBoot_KernelBringUp_entryPaths
+  n20_XaquBoot_KernelBringUp_entryPaths --> n21_XaquBoot_KernelBringUp_stage8PathCalls
+  n21_XaquBoot_KernelBringUp_stage8PathCalls --> n22_XaquBoot_KernelBringUp_stage9NativeObjec
+  n22_XaquBoot_KernelBringUp_stage9NativeObjec --> n23_XaquBoot_KernelBringUp_stage10Devices
+  n23_XaquBoot_KernelBringUp_stage10Devices --> n24_XaquBoot_KernelBringUp_stage9DeviceObjec
+  n24_XaquBoot_KernelBringUp_stage9DeviceObjec --> n25_XaquBoot_KernelBringUp_stage10Drivers
+  n25_XaquBoot_KernelBringUp_stage10Drivers --> n26_XaquBoot_KernelBringUp_stage11BtrfsRead
+  n26_XaquBoot_KernelBringUp_stage11BtrfsRead --> n27_XaquBoot_KernelBringUp_stage12BtrfsWrite
+  n27_XaquBoot_KernelBringUp_stage12BtrfsWrite --> n28_XaquBoot_KernelBringUp_networkingCheck
+  n28_XaquBoot_KernelBringUp_networkingCheck --> n29_XaquBoot_KernelBringUp_finishMemory
+  n29_XaquBoot_KernelBringUp_finishMemory --> n30_XaquBoot_KernelBringUp_reportSuccess
+  n30_XaquBoot_KernelBringUp_reportSuccess --> n31_XaquBoot_KernelBringUp_startInit
+  n31_XaquBoot_KernelBringUp_startInit --> n32_XaquBoot_KernelBringUp_shutdown
+  n32_XaquBoot_KernelBringUp_shutdown --> n33_XaquBoot_KernelBringUp_done
 ```
 
-**Figure 7 — Kernel bring up.** 34 steps, as `KernelBringUp` orders them. [SVG](diagrams/ferrix-boot-kernel-bring-up.svg) Source: `03-boot.sysml`.
+**Figure 7 — Kernel bring up.** 34 steps, as `KernelBringUp` orders them. [SVG](diagrams/xaqu-boot-kernel-bring-up.svg) Source: `03-boot.sysml`.
 
 ### The self-checks each boot runs
 
@@ -1102,38 +1102,38 @@ One dispatch path above every architecture, reached only through the facade: cla
 
 ```mermaid
 flowchart TB
-  n0_FerrixBoot_Dispatch_start(["start"])
-  n1_FerrixBoot_Dispatch_decide{"decide"}
-  n2_FerrixBoot_Dispatch_breakpoint("breakpoint")
-  n3_FerrixBoot_Dispatch_pageFault("pageFault")
-  n4_FerrixBoot_Dispatch_interrupt("interrupt")
-  n5_FerrixBoot_Dispatch_systemCall("systemCall<br>stage 7")
-  n6_FerrixBoot_Dispatch_report("report")
-  n0_FerrixBoot_Dispatch_start --> n1_FerrixBoot_Dispatch_decide
-  n1_FerrixBoot_Dispatch_decide -- "trap.kind == TrapKind::Breakpoint" --> n2_FerrixBoot_Dispatch_breakpoint
-  n1_FerrixBoot_Dispatch_decide -- "trap.kind == TrapKind::PageFault" --> n3_FerrixBoot_Dispatch_pageFault
-  n1_FerrixBoot_Dispatch_decide -- "trap.kind == TrapKind::Interrupt" --> n4_FerrixBoot_Dispatch_interrupt
-  n1_FerrixBoot_Dispatch_decide -- "trap.kind == TrapKind::SystemCall" --> n5_FerrixBoot_Dispatch_systemCall
-  n1_FerrixBoot_Dispatch_decide -- "else" --> n6_FerrixBoot_Dispatch_report
+  n0_XaquBoot_Dispatch_start(["start"])
+  n1_XaquBoot_Dispatch_decide{"decide"}
+  n2_XaquBoot_Dispatch_breakpoint("breakpoint")
+  n3_XaquBoot_Dispatch_pageFault("pageFault")
+  n4_XaquBoot_Dispatch_interrupt("interrupt")
+  n5_XaquBoot_Dispatch_systemCall("systemCall<br>stage 7")
+  n6_XaquBoot_Dispatch_report("report")
+  n0_XaquBoot_Dispatch_start --> n1_XaquBoot_Dispatch_decide
+  n1_XaquBoot_Dispatch_decide -- "trap.kind == TrapKind::Breakpoint" --> n2_XaquBoot_Dispatch_breakpoint
+  n1_XaquBoot_Dispatch_decide -- "trap.kind == TrapKind::PageFault" --> n3_XaquBoot_Dispatch_pageFault
+  n1_XaquBoot_Dispatch_decide -- "trap.kind == TrapKind::Interrupt" --> n4_XaquBoot_Dispatch_interrupt
+  n1_XaquBoot_Dispatch_decide -- "trap.kind == TrapKind::SystemCall" --> n5_XaquBoot_Dispatch_systemCall
+  n1_XaquBoot_Dispatch_decide -- "else" --> n6_XaquBoot_Dispatch_report
 ```
 
-**Figure 8 — Dispatch.** 7 steps, as `Dispatch` orders them, with 5 guarded branches. [SVG](diagrams/ferrix-boot-dispatch.svg) Source: `03-boot.sysml`.
+**Figure 8 — Dispatch.** 7 steps, as `Dispatch` orders them, with 5 guarded branches. [SVG](diagrams/xaqu-boot-dispatch.svg) Source: `03-boot.sysml`.
 
 ```mermaid
 flowchart TB
-  n0_FerrixBoot_HandlePageFault_start(["start"])
-  n1_FerrixBoot_HandlePageFault_decide{"decide"}
-  n2_FerrixBoot_HandlePageFault_mapDemandPage("mapDemandPage")
-  n3_FerrixBoot_HandlePageFault_reportFault("reportFault")
-  n4_FerrixBoot_HandlePageFault_done(["done"])
-  n0_FerrixBoot_HandlePageFault_start --> n1_FerrixBoot_HandlePageFault_decide
-  n1_FerrixBoot_HandlePageFault_decide -- "fault.inDemandWindow" --> n2_FerrixBoot_HandlePageFault_mapDemandPage
-  n1_FerrixBoot_HandlePageFault_decide -- "else" --> n3_FerrixBoot_HandlePageFault_reportFault
-  n2_FerrixBoot_HandlePageFault_mapDemandPage --> n4_FerrixBoot_HandlePageFault_done
-  n3_FerrixBoot_HandlePageFault_reportFault --> n4_FerrixBoot_HandlePageFault_done
+  n0_XaquBoot_HandlePageFault_start(["start"])
+  n1_XaquBoot_HandlePageFault_decide{"decide"}
+  n2_XaquBoot_HandlePageFault_mapDemandPage("mapDemandPage")
+  n3_XaquBoot_HandlePageFault_reportFault("reportFault")
+  n4_XaquBoot_HandlePageFault_done(["done"])
+  n0_XaquBoot_HandlePageFault_start --> n1_XaquBoot_HandlePageFault_decide
+  n1_XaquBoot_HandlePageFault_decide -- "fault.inDemandWindow" --> n2_XaquBoot_HandlePageFault_mapDemandPage
+  n1_XaquBoot_HandlePageFault_decide -- "else" --> n3_XaquBoot_HandlePageFault_reportFault
+  n2_XaquBoot_HandlePageFault_mapDemandPage --> n4_XaquBoot_HandlePageFault_done
+  n3_XaquBoot_HandlePageFault_reportFault --> n4_XaquBoot_HandlePageFault_done
 ```
 
-**Figure 9 — Handle page fault.** 5 steps, as `HandlePageFault` orders them, with 2 guarded branches. [SVG](diagrams/ferrix-boot-handle-page-fault.svg) Source: `03-boot.sysml`.
+**Figure 9 — Handle page fault.** 5 steps, as `HandlePageFault` orders them, with 2 guarded branches. [SVG](diagrams/xaqu-boot-handle-page-fault.svg) Source: `03-boot.sysml`.
 
 Classified into terms all three architectures share: `PageFault`, `Breakpoint`, `IllegalInstruction`, `Interrupt`, `SystemCall` and `Fault`. Why the kernel was entered, in terms all three architectures share. Each arch module classifies its own frame into this and the policy is written once.
 
@@ -1147,18 +1147,18 @@ docs/ARCHITECTURE.md §4. The physical allocator, the heap, the page-table arith
 
 ```mermaid
 flowchart TB
-  n0_FerrixMemory_DemandFault_start(["start"])
-  n1_FerrixMemory_DemandFault_findVma("findVma")
-  n2_FerrixMemory_DemandFault_decide{"decide"}
-  n3_FerrixMemory_DemandFault_copyOnWrite("copyOnWrite<br>stage 6")
-  n4_FerrixMemory_DemandFault_anonymousZeroPa("anonymousZeroPage")
-  n0_FerrixMemory_DemandFault_start --> n1_FerrixMemory_DemandFault_findVma
-  n1_FerrixMemory_DemandFault_findVma --> n2_FerrixMemory_DemandFault_decide
-  n2_FerrixMemory_DemandFault_decide -- "fault.write and vma.cow" --> n3_FerrixMemory_DemandFault_copyOnWrite
-  n2_FerrixMemory_DemandFault_decide -- "else" --> n4_FerrixMemory_DemandFault_anonymousZeroPa
+  n0_XaquMemory_DemandFault_start(["start"])
+  n1_XaquMemory_DemandFault_findVma("findVma")
+  n2_XaquMemory_DemandFault_decide{"decide"}
+  n3_XaquMemory_DemandFault_copyOnWrite("copyOnWrite<br>stage 6")
+  n4_XaquMemory_DemandFault_anonymousZeroPage("anonymousZeroPage")
+  n0_XaquMemory_DemandFault_start --> n1_XaquMemory_DemandFault_findVma
+  n1_XaquMemory_DemandFault_findVma --> n2_XaquMemory_DemandFault_decide
+  n2_XaquMemory_DemandFault_decide -- "fault.write and vma.cow" --> n3_XaquMemory_DemandFault_copyOnWrite
+  n2_XaquMemory_DemandFault_decide -- "else" --> n4_XaquMemory_DemandFault_anonymousZeroPage
 ```
 
-**Figure 10 — Demand fault.** 5 steps, as `DemandFault` orders them, with 2 guarded branches. [SVG](diagrams/ferrix-memory-demand-fault.svg) Source: `04-memory.sysml`.
+**Figure 10 — Demand fault.** 5 steps, as `DemandFault` orders them, with 2 guarded branches. [SVG](diagrams/xaqu-memory-demand-fault.svg) Source: `04-memory.sysml`.
 
 **FrameState** — `Reserved`, `Free`, `FreeTail` and `Allocated`. 
 
@@ -1401,7 +1401,7 @@ A sorted, non-overlapping set of regions in a Vec searched by binary search — 
 
 `#implemented`  ·  stage 6
 
-src/kernel/src/user/vmo.rs. A pageable memory object: pages, not a mapping. Anonymous memory, page-cache pages, shared memory and DMA buffers are all VMOs. The load-bearing unification: a block driver filling a page-cache page fills the VMO the cache already holds, with no copy, which is what makes userspace drivers affordable for a compiler workload. All three kinds exist: a file's VMO is its page cache since stage 8 (FerrixStorage's PageCache), filled from a disk by a Filler before a fault commits the page, and a VMO's pages are pinned into a device's IOMMU domain for DMA since stage 10, held where they are by Vmo::hold. The shape was the one they extended rather than unpicked. An object knows which spaces map it (Vmo::attach), so it can take a page away from under them. Frames go back through the per-frame refcount.
+src/kernel/src/user/vmo.rs. A pageable memory object: pages, not a mapping. Anonymous memory, page-cache pages, shared memory and DMA buffers are all VMOs. The load-bearing unification: a block driver filling a page-cache page fills the VMO the cache already holds, with no copy, which is what makes userspace drivers affordable for a compiler workload. All three kinds exist: a file's VMO is its page cache since stage 8 (XaquStorage's PageCache), filled from a disk by a Filler before a fault commits the page, and a VMO's pages are pinned into a device's IOMMU domain for DMA since stage 10, held where they are by Vmo::hold. The shape was the one they extended rather than unpicked. An object knows which spaces map it (Vmo::attach), so it can take a page away from under them. Frames go back through the per-frame refcount.
 
 | Feature | Kind | Type | Maturity | Note |
 | --- | --- | --- | --- | --- |
@@ -1493,19 +1493,19 @@ Stages 3 to 5 run today: interrupts, a clock, every processor online, IPIs, TLB 
 
 ```mermaid
 stateDiagram-v2
-  state "running" as n0_FerrixScheduling_DomainLifecycle_running
-  state "draining" as n1_FerrixScheduling_DomainLifecycle_drainin
-  n1_FerrixScheduling_DomainLifecycle_drainin : Stop admitting.
-  state "migrating" as n2_FerrixScheduling_DomainLifecycle_migrati
-  state "swapping" as n3_FerrixScheduling_DomainLifecycle_swappin
-  [*] --> n0_FerrixScheduling_DomainLifecycle_running
-  n0_FerrixScheduling_DomainLifecycle_running --> n1_FerrixScheduling_DomainLifecycle_drainin : request
-  n1_FerrixScheduling_DomainLifecycle_drainin --> n2_FerrixScheduling_DomainLifecycle_migrati : elapsed
-  n2_FerrixScheduling_DomainLifecycle_migrati --> n3_FerrixScheduling_DomainLifecycle_swappin
-  n3_FerrixScheduling_DomainLifecycle_swappin --> n0_FerrixScheduling_DomainLifecycle_running
+  state "running" as n0_XaquScheduling_DomainLifecycle_running
+  state "draining" as n1_XaquScheduling_DomainLifecycle_draining
+  n1_XaquScheduling_DomainLifecycle_draining : Stop admitting.
+  state "migrating" as n2_XaquScheduling_DomainLifecycle_migrating
+  state "swapping" as n3_XaquScheduling_DomainLifecycle_swapping
+  [*] --> n0_XaquScheduling_DomainLifecycle_running
+  n0_XaquScheduling_DomainLifecycle_running --> n1_XaquScheduling_DomainLifecycle_draining : request
+  n1_XaquScheduling_DomainLifecycle_draining --> n2_XaquScheduling_DomainLifecycle_migrating : elapsed
+  n2_XaquScheduling_DomainLifecycle_migrating --> n3_XaquScheduling_DomainLifecycle_swapping
+  n3_XaquScheduling_DomainLifecycle_swapping --> n0_XaquScheduling_DomainLifecycle_running
 ```
 
-**Figure 11 — Domain lifecycle.** 4 states and 4 transitions; a label is the event the transition accepts. [SVG](diagrams/ferrix-scheduling-domain-lifecycle.svg) Source: `05-scheduling.sysml`.
+**Figure 11 — Domain lifecycle.** 4 states and 4 transitions; a label is the event the transition accepts. [SVG](diagrams/xaqu-scheduling-domain-lifecycle.svg) Source: `05-scheduling.sysml`.
 
 #### TicketSpinLock
 
@@ -1627,7 +1627,7 @@ src/kernel/src/sched/task.rs: a kernel thread — a guard-paged stack, a saved s
 | `sleepDeadline` | attribute | `Natural` |  |  |
 | `stack` | part | `KernelStack` |  |  |
 | `cpu` | part | `PerCpu` |  |  |
-| `addressSpace` | part | `FerrixMemory::ProcessAddressSpace` |  | The address space its user half is translated through, absent for a kernel thread. |
+| `addressSpace` | part | `XaquMemory::ProcessAddressSpace` |  | The address space its user half is translated through, absent for a kernel thread. |
 | `thread` | part | `UserThread` |  | The user thread it runs, absent for a kernel thread. |
 | `schedClass` | attribute | `SchedClass` | `#planned` |  |
 | `policy` | attribute | `LinuxPolicy` | `#planned` |  |
@@ -1642,7 +1642,7 @@ A line of execution through a program, as the scheduler sees it: src/kernel/src/
 
 | Feature | Kind | Type | Maturity | Note |
 | --- | --- | --- | --- | --- |
-| `process` | part | `FerrixObjects::Process` |  |  |
+| `process` | part | `XaquObjects::Process` |  |  |
 
 #### Tasks
 
@@ -1887,32 +1887,32 @@ docs/ARCHITECTURE.md §2 and §3. The constants for the Linux half are in src/li
 
 ```mermaid
 flowchart TB
-  n0_FerrixObjects_KernelObject["KernelObject<br>stage 9<br>attribute refcount"]
-  n1_FerrixObjects_VmoObject["VmoObject"]
-  n2_FerrixObjects_AddressSpaceObject["AddressSpaceObject"]
-  n3_FerrixObjects_Channel["Channel"]
-  n4_FerrixObjects_Port["Port"]
-  n5_FerrixObjects_Interrupt["Interrupt"]
-  n6_FerrixObjects_IoMapping["IoMapping"]
-  n7_FerrixObjects_TaskObject["TaskObject<br>stage 5"]
-  n8_FerrixObjects_Process["Process<br>stage 6"]
-  n9_FerrixObjects_Job["Job"]
-  n1_FerrixObjects_VmoObject -- "specializes" --> n0_FerrixObjects_KernelObject
-  n2_FerrixObjects_AddressSpaceObject -- "specializes" --> n0_FerrixObjects_KernelObject
-  n3_FerrixObjects_Channel -- "specializes" --> n0_FerrixObjects_KernelObject
-  n4_FerrixObjects_Port -- "specializes" --> n0_FerrixObjects_KernelObject
-  n5_FerrixObjects_Interrupt -- "specializes" --> n0_FerrixObjects_KernelObject
-  n6_FerrixObjects_IoMapping -- "specializes" --> n0_FerrixObjects_KernelObject
-  n7_FerrixObjects_TaskObject -- "specializes" --> n0_FerrixObjects_KernelObject
-  n8_FerrixObjects_Process -- "specializes" --> n0_FerrixObjects_KernelObject
-  n9_FerrixObjects_Job -- "specializes" --> n0_FerrixObjects_KernelObject
+  n0_XaquObjects_KernelObject["KernelObject<br>stage 9<br>attribute refcount"]
+  n1_XaquObjects_VmoObject["VmoObject"]
+  n2_XaquObjects_AddressSpaceObject["AddressSpaceObject"]
+  n3_XaquObjects_Channel["Channel"]
+  n4_XaquObjects_Port["Port"]
+  n5_XaquObjects_Interrupt["Interrupt"]
+  n6_XaquObjects_IoMapping["IoMapping"]
+  n7_XaquObjects_TaskObject["TaskObject<br>stage 5"]
+  n8_XaquObjects_Process["Process<br>stage 6"]
+  n9_XaquObjects_Job["Job"]
+  n1_XaquObjects_VmoObject -- "specializes" --> n0_XaquObjects_KernelObject
+  n2_XaquObjects_AddressSpaceObject -- "specializes" --> n0_XaquObjects_KernelObject
+  n3_XaquObjects_Channel -- "specializes" --> n0_XaquObjects_KernelObject
+  n4_XaquObjects_Port -- "specializes" --> n0_XaquObjects_KernelObject
+  n5_XaquObjects_Interrupt -- "specializes" --> n0_XaquObjects_KernelObject
+  n6_XaquObjects_IoMapping -- "specializes" --> n0_XaquObjects_KernelObject
+  n7_XaquObjects_TaskObject -- "specializes" --> n0_XaquObjects_KernelObject
+  n8_XaquObjects_Process -- "specializes" --> n0_XaquObjects_KernelObject
+  n9_XaquObjects_Job -- "specializes" --> n0_XaquObjects_KernelObject
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef planned fill:#e4e7ea,stroke:#6a737e,color:#16191d
-  class n0_FerrixObjects_KernelObject,n1_FerrixObjects_VmoObject,n3_FerrixObjects_Channel,n4_FerrixObjects_Port,n5_FerrixObjects_Interrupt,n6_FerrixObjects_IoMapping,n8_FerrixObjects_Process,n9_FerrixObjects_Job implemented
-  class n2_FerrixObjects_AddressSpaceObject,n7_FerrixObjects_TaskObject planned
+  class n0_XaquObjects_KernelObject,n1_XaquObjects_VmoObject,n3_XaquObjects_Channel,n4_XaquObjects_Port,n5_XaquObjects_Interrupt,n6_XaquObjects_IoMapping,n8_XaquObjects_Process,n9_XaquObjects_Job implemented
+  class n2_XaquObjects_AddressSpaceObject,n7_XaquObjects_TaskObject planned
 ```
 
-**Figure 12 — Kernel object and its subtypes.** 9 definitions specialize `KernelObject`; the hollow arrow points at what they have in common. [SVG](diagrams/ferrix-objects-kernel-object.svg) Source: `06-objects.sysml`.
+**Figure 12 — Kernel object and its subtypes.** 9 definitions specialize `KernelObject`; the hollow arrow points at what they have in common. [SVG](diagrams/xaqu-objects-kernel-object.svg) Source: `06-objects.sysml`.
 
 #### KernelObject
 
@@ -1977,7 +1977,7 @@ An MMIO aperture, mappable into a driver's address space, with its IOMMU domain.
 | --- | --- | --- | --- | --- |
 | `phys` | attribute | `Natural` |  |  |
 | `len` | attribute | `Natural` |  |  |
-| `domain` | part | `FerrixDrivers::IommuDomain` |  |  |
+| `domain` | part | `XaquDrivers::IommuDomain` |  |  |
 
 #### TaskObject
 
@@ -2012,12 +2012,12 @@ A group of threads sharing an address space, fd table, fs context and signal dis
 | `fdTable` | part | `FdTable` |  |  |
 | `fsContext` | part | `FsContext` |  |  |
 | `sigHandlers` | part | `SignalDispositions` |  |  |
-| `namespaces` | part | `FerrixIsolation::NsSet` |  |  |
-| `credentials` | attribute | `FerrixIsolation::Credentials` |  |  |
+| `namespaces` | part | `XaquIsolation::NsSet` |  |  |
+| `credentials` | attribute | `XaquIsolation::Credentials` |  |  |
 
 #### Thread
 
-`#implemented`  ·  stage 7  ·  specialises `FerrixScheduling::UserThread`
+`#implemented`  ·  stage 7  ·  specialises `XaquScheduling::UserThread`
 
 One line of execution through a PosixProcess: src/kernel/src/syscall/thread.rs. Its thread id from the pid space, its own signal mask and queue, the address to clear when it ends. The task that runs it holds it only as a UserThread, and the personality has it back by downcast.
 
@@ -2285,61 +2285,61 @@ docs/ARCHITECTURE.md §7. The kernel enumerates buses because that needs ACPI or
 
 ```mermaid
 flowchart TB
-  n0_FerrixDrivers_DriverProcess["DriverProcess<br>stage 10<br>part job<br>part ioMappings<br>part interrupts<br>part eventPort<br>part dmaBuffers<br>part channel"]
-  n1_FerrixDrivers_VirtioBlkDriver["VirtioBlkDriver<br>stage 10"]
-  n2_FerrixDrivers_VirtioNetDriver["VirtioNetDriver"]
-  n3_FerrixDrivers_VirtioGpuDriver["VirtioGpuDriver<br>stage 17"]
-  n4_FerrixDrivers_VirtioInputDriver["VirtioInputDriver<br>stage 17"]
-  n5_FerrixDrivers_UsbHidDriver["UsbHidDriver<br>stage 17"]
-  n6_FerrixDrivers_Gc400Driver["Gc400Driver<br>stage 19"]
-  n7_FerrixDrivers_Stm32SdmmcDriver["Stm32SdmmcDriver<br>stage 10"]
-  n8_FerrixDrivers_NvmeDriver["NvmeDriver<br>stage 10"]
-  n9_FerrixDrivers_AhciDriver["AhciDriver<br>stage 10"]
-  n10_FerrixDrivers_Yt6801Driver["Yt6801Driver<br>stage 10"]
-  n11_FerrixDrivers_Rtl8169Driver["Rtl8169Driver<br>stage 10"]
-  n12_FerrixDrivers_EfifbDriver["EfifbDriver<br>stage 21"]
-  n13_FerrixDrivers_IntelGpuDriver["IntelGpuDriver<br>stage 21"]
-  n1_FerrixDrivers_VirtioBlkDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n2_FerrixDrivers_VirtioNetDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n3_FerrixDrivers_VirtioGpuDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n4_FerrixDrivers_VirtioInputDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n5_FerrixDrivers_UsbHidDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n6_FerrixDrivers_Gc400Driver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n7_FerrixDrivers_Stm32SdmmcDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n8_FerrixDrivers_NvmeDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n9_FerrixDrivers_AhciDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n10_FerrixDrivers_Yt6801Driver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n11_FerrixDrivers_Rtl8169Driver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n12_FerrixDrivers_EfifbDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
-  n13_FerrixDrivers_IntelGpuDriver -- "specializes" --> n0_FerrixDrivers_DriverProcess
+  n0_XaquDrivers_DriverProcess["DriverProcess<br>stage 10<br>part job<br>part ioMappings<br>part interrupts<br>part eventPort<br>part dmaBuffers<br>part channel"]
+  n1_XaquDrivers_VirtioBlkDriver["VirtioBlkDriver<br>stage 10"]
+  n2_XaquDrivers_VirtioNetDriver["VirtioNetDriver"]
+  n3_XaquDrivers_VirtioGpuDriver["VirtioGpuDriver<br>stage 17"]
+  n4_XaquDrivers_VirtioInputDriver["VirtioInputDriver<br>stage 17"]
+  n5_XaquDrivers_UsbHidDriver["UsbHidDriver<br>stage 17"]
+  n6_XaquDrivers_Gc400Driver["Gc400Driver<br>stage 19"]
+  n7_XaquDrivers_Stm32SdmmcDriver["Stm32SdmmcDriver<br>stage 10"]
+  n8_XaquDrivers_NvmeDriver["NvmeDriver<br>stage 10"]
+  n9_XaquDrivers_AhciDriver["AhciDriver<br>stage 10"]
+  n10_XaquDrivers_Yt6801Driver["Yt6801Driver<br>stage 10"]
+  n11_XaquDrivers_Rtl8169Driver["Rtl8169Driver<br>stage 10"]
+  n12_XaquDrivers_EfifbDriver["EfifbDriver<br>stage 21"]
+  n13_XaquDrivers_IntelGpuDriver["IntelGpuDriver<br>stage 21"]
+  n1_XaquDrivers_VirtioBlkDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n2_XaquDrivers_VirtioNetDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n3_XaquDrivers_VirtioGpuDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n4_XaquDrivers_VirtioInputDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n5_XaquDrivers_UsbHidDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n6_XaquDrivers_Gc400Driver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n7_XaquDrivers_Stm32SdmmcDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n8_XaquDrivers_NvmeDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n9_XaquDrivers_AhciDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n10_XaquDrivers_Yt6801Driver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n11_XaquDrivers_Rtl8169Driver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n12_XaquDrivers_EfifbDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
+  n13_XaquDrivers_IntelGpuDriver -- "specializes" --> n0_XaquDrivers_DriverProcess
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
-  class n0_FerrixDrivers_DriverProcess,n1_FerrixDrivers_VirtioBlkDriver,n2_FerrixDrivers_VirtioNetDriver,n3_FerrixDrivers_VirtioGpuDriver,n4_FerrixDrivers_VirtioInputDriver,n5_FerrixDrivers_UsbHidDriver implemented
-  class n6_FerrixDrivers_Gc400Driver,n7_FerrixDrivers_Stm32SdmmcDriver,n8_FerrixDrivers_NvmeDriver,n9_FerrixDrivers_AhciDriver,n10_FerrixDrivers_Yt6801Driver,n11_FerrixDrivers_Rtl8169Driver,n12_FerrixDrivers_EfifbDriver,n13_FerrixDrivers_IntelGpuDriver inProgress
+  class n0_XaquDrivers_DriverProcess,n1_XaquDrivers_VirtioBlkDriver,n2_XaquDrivers_VirtioNetDriver,n3_XaquDrivers_VirtioGpuDriver,n4_XaquDrivers_VirtioInputDriver,n5_XaquDrivers_UsbHidDriver implemented
+  class n6_XaquDrivers_Gc400Driver,n7_XaquDrivers_Stm32SdmmcDriver,n8_XaquDrivers_NvmeDriver,n9_XaquDrivers_AhciDriver,n10_XaquDrivers_Yt6801Driver,n11_XaquDrivers_Rtl8169Driver,n12_XaquDrivers_EfifbDriver,n13_XaquDrivers_IntelGpuDriver inProgress
 ```
 
-**Figure 13 — Driver process and its subtypes.** 13 definitions specialize `DriverProcess`; the hollow arrow points at what they have in common. [SVG](diagrams/ferrix-drivers-driver-process.svg) Source: `08-drivers.sysml`.
+**Figure 13 — Driver process and its subtypes.** 13 definitions specialize `DriverProcess`; the hollow arrow points at what they have in common. [SVG](diagrams/xaqu-drivers-driver-process.svg) Source: `08-drivers.sysml`.
 
 ```mermaid
 flowchart TB
-  n0_FerrixDrivers_DriverBootstrap_start(["start"])
-  n1_FerrixDrivers_DriverBootstrap_mountInitr("mountInitramfsAsRoot")
-  n2_FerrixDrivers_DriverBootstrap_startDevMg("startDevMgr")
-  n3_FerrixDrivers_DriverBootstrap_spawnBlock("spawnBlockDriver")
-  n4_FerrixDrivers_DriverBootstrap_mountBtrfs("mountBtrfs")
-  n5_FerrixDrivers_DriverBootstrap_pivotRoot("pivotRoot")
-  n6_FerrixDrivers_DriverBootstrap_startInit("startInit")
-  n7_FerrixDrivers_DriverBootstrap_done(["done"])
-  n0_FerrixDrivers_DriverBootstrap_start --> n1_FerrixDrivers_DriverBootstrap_mountInitr
-  n1_FerrixDrivers_DriverBootstrap_mountInitr --> n2_FerrixDrivers_DriverBootstrap_startDevMg
-  n2_FerrixDrivers_DriverBootstrap_startDevMg --> n3_FerrixDrivers_DriverBootstrap_spawnBlock
-  n3_FerrixDrivers_DriverBootstrap_spawnBlock --> n4_FerrixDrivers_DriverBootstrap_mountBtrfs
-  n4_FerrixDrivers_DriverBootstrap_mountBtrfs --> n5_FerrixDrivers_DriverBootstrap_pivotRoot
-  n5_FerrixDrivers_DriverBootstrap_pivotRoot --> n6_FerrixDrivers_DriverBootstrap_startInit
-  n6_FerrixDrivers_DriverBootstrap_startInit --> n7_FerrixDrivers_DriverBootstrap_done
+  n0_XaquDrivers_DriverBootstrap_start(["start"])
+  n1_XaquDrivers_DriverBootstrap_mountInitram("mountInitramfsAsRoot")
+  n2_XaquDrivers_DriverBootstrap_startDevMgr("startDevMgr")
+  n3_XaquDrivers_DriverBootstrap_spawnBlockDr("spawnBlockDriver")
+  n4_XaquDrivers_DriverBootstrap_mountBtrfs("mountBtrfs")
+  n5_XaquDrivers_DriverBootstrap_pivotRoot("pivotRoot")
+  n6_XaquDrivers_DriverBootstrap_startInit("startInit")
+  n7_XaquDrivers_DriverBootstrap_done(["done"])
+  n0_XaquDrivers_DriverBootstrap_start --> n1_XaquDrivers_DriverBootstrap_mountInitram
+  n1_XaquDrivers_DriverBootstrap_mountInitram --> n2_XaquDrivers_DriverBootstrap_startDevMgr
+  n2_XaquDrivers_DriverBootstrap_startDevMgr --> n3_XaquDrivers_DriverBootstrap_spawnBlockDr
+  n3_XaquDrivers_DriverBootstrap_spawnBlockDr --> n4_XaquDrivers_DriverBootstrap_mountBtrfs
+  n4_XaquDrivers_DriverBootstrap_mountBtrfs --> n5_XaquDrivers_DriverBootstrap_pivotRoot
+  n5_XaquDrivers_DriverBootstrap_pivotRoot --> n6_XaquDrivers_DriverBootstrap_startInit
+  n6_XaquDrivers_DriverBootstrap_startInit --> n7_XaquDrivers_DriverBootstrap_done
 ```
 
-**Figure 14 — Driver bootstrap.** 8 steps, as `DriverBootstrap` orders them. [SVG](diagrams/ferrix-drivers-driver-bootstrap.svg) Source: `08-drivers.sysml`.
+**Figure 14 — Driver bootstrap.** 8 steps, as `DriverBootstrap` orders them. [SVG](diagrams/xaqu-drivers-driver-bootstrap.svg) Source: `08-drivers.sysml`.
 
 #### AcpiAccess
 
@@ -2476,7 +2476,7 @@ A native program on src/user/system/native/rt, not a musl binary: src/user/syste
 
 `#inProgress`  ·  stage 10
 
-src/user/system/native/drvupdated: the helper through which a new driver image reaches DevMgr, which reads no files and waits on one port. Started by devmgr from /lib/drivers when the image carries it -- only test-restart --update's do (SAFETY-MANUAL AoU-26) -- it takes root's connections on the abstract socket ferrix.devmgr.update, refuses any other peer and any header past 8 MiB before it makes a VMO, and hands devmgr the request and the image's VMO on a channel. /bin/drvupdate is its client. docs/DEVMGR.md section 4.1.
+src/user/system/native/drvupdated: the helper through which a new driver image reaches DevMgr, which reads no files and waits on one port. Started by devmgr from /lib/drivers when the image carries it -- only test-restart --update's do (SAFETY-MANUAL AoU-26) -- it takes root's connections on the abstract socket xaqu.devmgr.update, refuses any other peer and any header past 8 MiB before it makes a VMO, and hands devmgr the request and the image's VMO on a channel. /bin/drvupdate is its client. docs/DEVMGR.md section 4.1.
 
 #### VirtioBlkDriver
 
@@ -2506,7 +2506,7 @@ src/user/system/native/drivers/input/virtio-input over src/lib/drivers/input/vir
 
 `#implemented`  ·  stage 17  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/usb/usbhid over src/lib/drivers/usb/usb-host: the STM32MP157's EHCI controller, its hubs, and HID keyboards, mice and media keys read by their report descriptors, each served to the input core over a control channel of its own, keyboards' LEDs lit by the core's STATUS. devmgr starts it as a bus host and does not wait for it; its memory is pinned PIN_COHERENT. No QEMU machine has the device, so no boot test exercises it: its gates are src/lib/drivers/usb/usb-host's tests against a model of EHCI and the board's bus, and it ran on the DK1 on 2026-09-23 (docs/INPUT.md §7). Since 2026-10-10 it also drives a PC's xHCI controller, picked by what START names (docs/XHCI.md; a bulk-only disk is read and not yet served to the block core), gated under QEMU by cargo xtask test-usb; a USB keyboard worked on the N150 box on 2026-10-15. Since 2026-10-25 a tablet's absolute axes reach the input core as ABS_X, ABS_Y and ABS_WHEEL with the HID field's range (test-usb attaches a usb-tablet and requires two places); and the boot word ferrix.usbhid.reports, or the file /run/usbhid-reports, makes it log each interrupt report of the functions named at debug (docs/XHCI.md section 13).
+src/user/system/native/drivers/usb/usbhid over src/lib/drivers/usb/usb-host: the STM32MP157's EHCI controller, its hubs, and HID keyboards, mice and media keys read by their report descriptors, each served to the input core over a control channel of its own, keyboards' LEDs lit by the core's STATUS. devmgr starts it as a bus host and does not wait for it; its memory is pinned PIN_COHERENT. No QEMU machine has the device, so no boot test exercises it: its gates are src/lib/drivers/usb/usb-host's tests against a model of EHCI and the board's bus, and it ran on the DK1 on 2026-09-23 (docs/INPUT.md §7). Since 2026-10-10 it also drives a PC's xHCI controller, picked by what START names (docs/XHCI.md; a bulk-only disk is read and not yet served to the block core), gated under QEMU by cargo xtask test-usb; a USB keyboard worked on the N150 box on 2026-10-15. Since 2026-10-25 a tablet's absolute axes reach the input core as ABS_X, ABS_Y and ABS_WHEEL with the HID field's range (test-usb attaches a usb-tablet and requires two places); and the boot word xaqu.usbhid.reports, or the file /run/usbhid-reports, makes it log each interrupt report of the functions named at debug (docs/XHCI.md section 13).
 
 #### Gc400Driver
 
@@ -2518,13 +2518,13 @@ src/user/system/native/drivers/gpu/gc400 over src/lib/drivers/gpu/gc400: the STM
 
 `#inProgress`  ·  stage 10  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/block/stm32-sdmmc over src/lib/drivers/block/stm32-sdmmc: the STM32MP157's SDMMC1 as a disk behind the block ring, so the kernel's GPT scan publishes the card's partitions and btrfs mounts from one (docs/CHROME.md 10.1). The kernel publishes the controller as a device tree node and writes none of its registers: U-Boot left it running. The driver moves every word through the FIFO with hardware flow control and never turns the internal DMA on, and serves a write only inside a partition named ferrix-\*. Its gates are the library's host tests against a model of the controller and a card, and the boot check of the one tree disk; no emulator has the controller, and it has not run on the board (2026-10-08).
+src/user/system/native/drivers/block/stm32-sdmmc over src/lib/drivers/block/stm32-sdmmc: the STM32MP157's SDMMC1 as a disk behind the block ring, so the kernel's GPT scan publishes the card's partitions and btrfs mounts from one (docs/CHROME.md 10.1). The kernel publishes the controller as a device tree node and writes none of its registers: U-Boot left it running. The driver moves every word through the FIFO with hardware flow control and never turns the internal DMA on, and serves a write only inside a partition named xaqu-\*. Its gates are the library's host tests against a model of the controller and a card, and the boot check of the one tree disk; no emulator has the controller, and it has not run on the board (2026-10-08).
 
 #### NvmeDriver
 
 `#inProgress`  ·  stage 10  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/block/nvme over src/lib/drivers/block/nvme: an NVM Express controller's first namespace as a disk behind the block ring (docs/NVME.md), the first driver for a disk a PC has. devmgr starts it on any function of class code 01:08:02; the kernel is not changed. It resets and enables the controller, transfers straight into the ring's data region through PRP lists, lends a drive without DRAM its host memory buffer, aborts and resets on a command that does not come back, and notifies the controller before it disables it. Its gates are the library's host tests against a model of a controller, and cargo xtask test-nvme on QEMU's emulated one, with / on a drive below a PCIe switch. It has since driven a real WD SN720 through VFIO and installed Ferrix onto it (the customer's word, 2026-10-21).
+src/user/system/native/drivers/block/nvme over src/lib/drivers/block/nvme: an NVM Express controller's first namespace as a disk behind the block ring (docs/NVME.md), the first driver for a disk a PC has. devmgr starts it on any function of class code 01:08:02; the kernel is not changed. It resets and enables the controller, transfers straight into the ring's data region through PRP lists, lends a drive without DRAM its host memory buffer, aborts and resets on a command that does not come back, and notifies the controller before it disables it. Its gates are the library's host tests against a model of a controller, and cargo xtask test-nvme on QEMU's emulated one, with / on a drive below a PCIe switch. It has since driven a real WD SN720 through VFIO and installed Xaqu onto it (the customer's word, 2026-10-21).
 
 #### AhciDriver
 
@@ -2536,25 +2536,25 @@ src/user/system/native/drivers/block/ahci over src/lib/drivers/block/ahci: a SAT
 
 `#inProgress`  ·  stage 10  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/net/yt6801 over src/lib/drivers/net/yt6801 and src/lib/drivers/net/dwmac: the Motorcomm YT6801, the N150 box's gigabit port (networking page), speaking the net ring under ferrix-netserve's loop. devmgr starts it on 1F0A:6801. The kernel holds the function's MSI-X off and grants its table page (L.device.35-37). Its gates are the libraries' tests against models of the chip and the DesignWare core, and a QEMU e1000e for the kernel change; on the box on 2026-10-15 the link came up at one gigabit, and the driver polls every millisecond until its one MSI arrives, which it does rarely (docs/BACKLOG.md).
+src/user/system/native/drivers/net/yt6801 over src/lib/drivers/net/yt6801 and src/lib/drivers/net/dwmac: the Motorcomm YT6801, the N150 box's gigabit port (networking page), speaking the net ring under xaqu-netserve's loop. devmgr starts it on 1F0A:6801. The kernel holds the function's MSI-X off and grants its table page (L.device.35-37). Its gates are the libraries' tests against models of the chip and the DesignWare core, and a QEMU e1000e for the kernel change; on the box on 2026-10-15 the link came up at one gigabit, and the driver polls every millisecond until its one MSI arrives, which it does rarely (docs/BACKLOG.md).
 
 #### Rtl8169Driver
 
 `#inProgress`  ·  stage 10  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/net/rtl8169 over src/lib/drivers/net/rtl8169: Realtek's RTL8111H (8168H, XID 0x541), nazuna's onboard gigabit port (networking page), speaking the net ring under ferrix-netserve's loop. devmgr starts it on 10EC:8168 and the driver refuses any other XID. No kernel change: registers in BAR 2, MSI-X table in BAR 4. Its gates are the library's tests against a model of the chip and cargo xtask check; QEMU models no 8168. On 2026-10-24 it drove the real chip through vfio in a KVM guest: link at one gigabit, DHCP, ping, TCP at 235 to 405 Mbit/s.
+src/user/system/native/drivers/net/rtl8169 over src/lib/drivers/net/rtl8169: Realtek's RTL8111H (8168H, XID 0x541), nazuna's onboard gigabit port (networking page), speaking the net ring under xaqu-netserve's loop. devmgr starts it on 10EC:8168 and the driver refuses any other XID. No kernel change: registers in BAR 2, MSI-X table in BAR 4. Its gates are the library's tests against a model of the chip and cargo xtask check; QEMU models no 8168. On 2026-10-24 it drove the real chip through vfio in a KVM guest: link at one gigabit, DHCP, ping, TCP at 235 to 405 Mbit/s.
 
 #### EfifbDriver
 
 `#inProgress`  ·  stage 21  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/display/efifb: the firmware's framebuffer as the display core's card0, for a PC whose GPU has no driver (docs/DISPLAY.md section 8). Under the kernel option ferrix.efifb the last finder lends the framebuffer to a node of its own, write-combining from its first map, and the driver copies each flushed rectangle onto it; hyprix composites into dumb buffers as on virtio-gpu. Its gate is cargo xtask test-compositor --boot firmware-screen; hyprix drew on the N150 box's framebuffer on 2026-10-15.
+src/user/system/native/drivers/display/efifb: the firmware's framebuffer as the display core's card0, for a PC whose GPU has no driver (docs/DISPLAY.md section 8). Under the kernel option xaqu.efifb the last finder lends the framebuffer to a node of its own, write-combining from its first map, and the driver copies each flushed rectangle onto it; hyprix composites into dumb buffers as on virtio-gpu. Its gate is cargo xtask test-compositor --boot firmware-screen; hyprix drew on the N150 box's framebuffer on 2026-10-15.
 
 #### IntelGpuDriver
 
 `#inProgress`  ·  stage 21  ·  specialises `DriverProcess`
 
-src/user/system/native/drivers/gpu/intel over src/lib/drivers/gpu/intel-xelp: a render driver for the N150's Xe-LP graphics (docs/INTEL-GPU.md), following i915 file by file. The library is the i915 uAPI front end over a back end, the GT's bring-up, execlists, the PPGTT and the power management a host does, all host-tested; the process serves a render-only chardev node and is started on ferrix.intelgpu. The kernel lends it the screen by identity and maps its buffers write-combining. On the box, M1 (the device answers) and M2 (the first GPU commands) ran on 2026-10-20; M3, the render node over the GT back end, is wired and not shown on the box.
+src/user/system/native/drivers/gpu/intel over src/lib/drivers/gpu/intel-xelp: a render driver for the N150's Xe-LP graphics (docs/INTEL-GPU.md), following i915 file by file. The library is the i915 uAPI front end over a back end, the GT's bring-up, execlists, the PPGTT and the power management a host does, all host-tested; the process serves a render-only chardev node and is started on xaqu.intelgpu. The kernel lends it the screen by identity and maps its buffers write-combining. On the box, M1 (the device answers) and M2 (the first GPU commands) ran on 2026-10-20; M3, the render node over the GT back end, is wired and not shown on the box.
 
 #### DriverBootstrap
 
@@ -2584,24 +2584,24 @@ docs/ARCHITECTURE.md §8. Block core, VFS, the small in-kernel filesystems and b
 
 ```mermaid
 flowchart TB
-  n0_FerrixStorage_Filesystem["Filesystem<br>action mount<br>action lookup<br>action read<br>action write"]
-  n1_FerrixStorage_Tmpfs["Tmpfs<br>stage 8"]
-  n2_FerrixStorage_Devfs["Devfs<br>stage 8"]
-  n3_FerrixStorage_Procfs["Procfs<br>stage 8"]
-  n4_FerrixStorage_Sysfs["Sysfs"]
-  n5_FerrixStorage_Cgroupfs["Cgroupfs<br>stage 13"]
-  n6_FerrixStorage_Btrfs["Btrfs<br>stage 11"]
-  n1_FerrixStorage_Tmpfs -- "specializes" --> n0_FerrixStorage_Filesystem
-  n2_FerrixStorage_Devfs -- "specializes" --> n0_FerrixStorage_Filesystem
-  n3_FerrixStorage_Procfs -- "specializes" --> n0_FerrixStorage_Filesystem
-  n4_FerrixStorage_Sysfs -- "specializes" --> n0_FerrixStorage_Filesystem
-  n5_FerrixStorage_Cgroupfs -- "specializes" --> n0_FerrixStorage_Filesystem
-  n6_FerrixStorage_Btrfs -- "specializes" --> n0_FerrixStorage_Filesystem
+  n0_XaquStorage_Filesystem["Filesystem<br>action mount<br>action lookup<br>action read<br>action write"]
+  n1_XaquStorage_Tmpfs["Tmpfs<br>stage 8"]
+  n2_XaquStorage_Devfs["Devfs<br>stage 8"]
+  n3_XaquStorage_Procfs["Procfs<br>stage 8"]
+  n4_XaquStorage_Sysfs["Sysfs"]
+  n5_XaquStorage_Cgroupfs["Cgroupfs<br>stage 13"]
+  n6_XaquStorage_Btrfs["Btrfs<br>stage 11"]
+  n1_XaquStorage_Tmpfs -- "specializes" --> n0_XaquStorage_Filesystem
+  n2_XaquStorage_Devfs -- "specializes" --> n0_XaquStorage_Filesystem
+  n3_XaquStorage_Procfs -- "specializes" --> n0_XaquStorage_Filesystem
+  n4_XaquStorage_Sysfs -- "specializes" --> n0_XaquStorage_Filesystem
+  n5_XaquStorage_Cgroupfs -- "specializes" --> n0_XaquStorage_Filesystem
+  n6_XaquStorage_Btrfs -- "specializes" --> n0_XaquStorage_Filesystem
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n0_FerrixStorage_Filesystem,n1_FerrixStorage_Tmpfs,n2_FerrixStorage_Devfs,n3_FerrixStorage_Procfs,n4_FerrixStorage_Sysfs,n5_FerrixStorage_Cgroupfs,n6_FerrixStorage_Btrfs implemented
+  class n0_XaquStorage_Filesystem,n1_XaquStorage_Tmpfs,n2_XaquStorage_Devfs,n3_XaquStorage_Procfs,n4_XaquStorage_Sysfs,n5_XaquStorage_Cgroupfs,n6_XaquStorage_Btrfs implemented
 ```
 
-**Figure 15 — Filesystem and its subtypes.** 6 definitions specialize `Filesystem`; the hollow arrow points at what they have in common. [SVG](diagrams/ferrix-storage-filesystem.svg) Source: `09-storage.sysml`.
+**Figure 15 — Filesystem and its subtypes.** 6 definitions specialize `Filesystem`; the hollow arrow points at what they have in common. [SVG](diagrams/xaqu-storage-filesystem.svg) Source: `09-storage.sysml`.
 
 #### BlockCore
 
@@ -2851,7 +2851,7 @@ docs/ARCHITECTURE.md §9. src/lib/ is host-testable by design and is the only co
 | `src/lib/proto/native` | `#implemented` | — | `forbid` | 30 | Typed, safe wrappers over every native system call, with owned handles, written against a raw call trait: src/user/system/native/rt implements it with the trap instruction, and the tests with a recorder that plays the kernel's part. |
 | `src/lib/proto/renderctl` | `#implemented` | 19 | `forbid` | 24 | The render control protocol between the kernel's render core and a ring-3 GPU driver (docs/GPU.md §3.3), in displayctl's shape: fixed messages decoded strictly, command buffers passed through as bytes the driver understands and the core does not, and the… |
 | `src/lib/drivers/gpu/gc400` | `#implemented` | 19 | `forbid` | 28 | The STM32MP157's Vivante GC400T as logic over registers and command memory (docs/GPU.md §6.3): the registers and the command stream from the etnaviv project's MIT-licensed register database, the identity, reset and initialisation in the order Linux's etnaviv… |
-| `src/lib/kernel/fbtext` | `#implemented` | — | `forbid` | 30 | Text and filled rectangles on a linear framebuffer, with an embedded Spleen 8x16 font, clipped rather than refused and allocating nothing: what the panic screen (src/kernel/src/panic/screen.rs) draws with, and the term app (ferrix-os/apps) as well. |
+| `src/lib/kernel/fbtext` | `#implemented` | — | `forbid` | 30 | Text and filled rectangles on a linear framebuffer, with an embedded Spleen 8x16 font, clipped rather than refused and allocating nothing: what the panic screen (src/kernel/src/panic/screen.rs) draws with, and the term app (xaqu-os/apps) as well. |
 | `src/lib/kernel/qr` | `#implemented` | — | `forbid` | 20 | A QR code encoder with no heap, ported from Linux's drm_panic_qr.rs, for the panic screen's report. |
 | `src/lib/drivers/console/vdagent` | `#implemented` | — | `forbid` | 17 | SPICE's vdagent protocol as bytes, the chunk framing and the clipboard messages (docs/CLIPBOARD.md §4). |
 | `src/lib/drivers/console/virtio-console` | `#implemented` | — | allowed | 15 | The virtio-console driver: bring-up, the control conversation until a named port is open, and that port's bytes (docs/CLIPBOARD.md §3). |
@@ -2865,178 +2865,178 @@ docs/ARCHITECTURE.md §9. src/lib/ is host-testable by design and is the only co
 
 ```mermaid
 flowchart LR
-  n0_FerrixStructure_Workspace_bootinfo["bootinfo<br>src/lib/proto/bootinfo"]
-  n1_FerrixStructure_Workspace_elf["elf<br>src/lib/platform/elf"]
-  n2_FerrixStructure_Workspace_frameCrate["frameCrate<br>src/lib/kernel/frame"]
-  n3_FerrixStructure_Workspace_heap["heap<br>src/lib/kernel/heap"]
-  n4_FerrixStructure_Workspace_paging["paging<br>src/lib/kernel/paging"]
-  n5_FerrixStructure_Workspace_acpi["acpi<br>src/lib/platform/acpi"]
-  n6_FerrixStructure_Workspace_fdt["fdt<br>src/lib/platform/fdt"]
-  n7_FerrixStructure_Workspace_sync["sync<br>src/lib/kernel/sync"]
-  n8_FerrixStructure_Workspace_crng["crng<br>src/lib/kernel/crng"]
-  n9_FerrixStructure_Workspace_sched["sched<br>src/lib/kernel/sched"]
-  n10_FerrixStructure_Workspace_vma["vma<br>src/lib/kernel/vma"]
-  n11_FerrixStructure_Workspace_linuxAbi["linuxAbi<br>src/lib/proto/linux-abi"]
-  n12_FerrixStructure_Workspace_ustack["ustack<br>src/lib/kernel/ustack"]
-  n13_FerrixStructure_Workspace_cpio["cpio<br>src/lib/fs/common/cpio"]
-  n14_FerrixStructure_Workspace_vfs["vfs<br>src/lib/fs/common/vfs"]
-  n15_FerrixStructure_Workspace_procfs["procfs<br>src/lib/fs/common/procfs"]
-  n16_FerrixStructure_Workspace_sysfs["sysfs<br>src/lib/fs/common/sysfs"]
-  n17_FerrixStructure_Workspace_virtio["virtio<br>src/lib/drivers/virtio"]
-  n18_FerrixStructure_Workspace_netwire["netwire<br>src/lib/network/netwire"]
-  n19_FerrixStructure_Workspace_nettcp["nettcp<br>src/lib/network/nettcp"]
-  n20_FerrixStructure_Workspace_netCore["netCore<br>src/lib/network/net"]
-  n21_FerrixStructure_Workspace_netServe["netServe<br>src/lib/drivers/net/netserve"]
-  n22_FerrixStructure_Workspace_netRing["netRing<br>src/lib/proto/netring"]
-  n23_FerrixStructure_Workspace_netlink["netlink<br>src/lib/network/netlink"]
-  n24_FerrixStructure_Workspace_virtioNet["virtioNet<br>src/lib/drivers/net/virtio-net"]
-  n25_FerrixStructure_Workspace_virtioGpu["virtioGpu<br>src/lib/drivers/display/virtio-gpu"]
-  n26_FerrixStructure_Workspace_virtioSnd["virtioSnd<br>src/lib/drivers/sound/virtio-snd"]
-  n27_FerrixStructure_Workspace_virtioInput["virtioInput<br>src/lib/drivers/input/virtio-input"]
-  n28_FerrixStructure_Workspace_displayctl["displayctl<br>src/lib/proto/displayctl"]
-  n29_FerrixStructure_Workspace_inputctl["inputctl<br>src/lib/proto/inputctl"]
-  n30_FerrixStructure_Workspace_sndctl["sndctl<br>src/lib/proto/sndctl"]
-  n31_FerrixStructure_Workspace_logctl["logctl<br>src/lib/proto/logctl"]
-  n32_FerrixStructure_Workspace_audit["audit<br>src/lib/proto/audit"]
-  n33_FerrixStructure_Workspace_pci["pci<br>src/lib/platform/pci"]
-  n34_FerrixStructure_Workspace_nativeAbi["nativeAbi<br>src/lib/proto/native-abi"]
-  n35_FerrixStructure_Workspace_objects["objects<br>src/lib/kernel/objects"]
-  n36_FerrixStructure_Workspace_btrfs["btrfs<br>src/lib/fs/btrfs/format"]
-  n37_FerrixStructure_Workspace_btrfsWrite["btrfsWrite<br>src/lib/fs/btrfs/write"]
-  n38_FerrixStructure_Workspace_btrfsVfs["btrfsVfs<br>src/lib/fs/btrfs/vfs"]
-  n39_FerrixStructure_Workspace_blockQueue["blockQueue<br>src/lib/fs/common/block"]
-  n40_FerrixStructure_Workspace_blkRing["blkRing<br>src/lib/proto/blkring"]
-  n41_FerrixStructure_Workspace_blkServe["blkServe<br>src/lib/drivers/block/blkserve"]
-  n42_FerrixStructure_Workspace_virtioBlk["virtioBlk<br>src/lib/drivers/block/virtio-blk"]
-  n43_FerrixStructure_Workspace_devmgrProto["devmgrProto<br>src/lib/proto/devmgr-proto"]
-  n44_FerrixStructure_Workspace_nativeCrate["nativeCrate<br>src/lib/proto/native"]
-  n45_FerrixStructure_Workspace_renderctl["renderctl<br>src/lib/proto/renderctl"]
-  n46_FerrixStructure_Workspace_gc400["gc400<br>src/lib/drivers/gpu/gc400"]
-  n47_FerrixStructure_Workspace_fbtext["fbtext<br>src/lib/kernel/fbtext"]
-  n48_FerrixStructure_Workspace_qr["qr<br>src/lib/kernel/qr"]
-  n49_FerrixStructure_Workspace_vdagent["vdagent<br>src/lib/drivers/console/vdagent"]
-  n50_FerrixStructure_Workspace_virtioConsole["virtioConsole<br>src/lib/drivers/console/virtio-console"]
-  n51_FerrixStructure_Workspace_seccompBpf["seccompBpf<br>src/lib/kernel/seccomp"]
-  n52_FerrixStructure_Workspace_bootCrate["bootCrate<br>src/boot/common/uefi"]
-  n53_FerrixStructure_Workspace_kernelCrate["kernelCrate<br>src/kernel"]
-  n54_FerrixStructure_Workspace_xtask["xtask<br>tools/common/xtask"]
-  n55_FerrixStructure_Workspace_fuzz["fuzz<br>src/tests/fuzz"]
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n5_FerrixStructure_Workspace_acpi
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n40_FerrixStructure_Workspace_blkRing
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n39_FerrixStructure_Workspace_blockQueue
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n0_FerrixStructure_Workspace_bootinfo
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n36_FerrixStructure_Workspace_btrfs
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n38_FerrixStructure_Workspace_btrfsVfs
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n37_FerrixStructure_Workspace_btrfsWrite
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n8_FerrixStructure_Workspace_crng
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n43_FerrixStructure_Workspace_devmgrProto
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n28_FerrixStructure_Workspace_displayctl
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n1_FerrixStructure_Workspace_elf
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n47_FerrixStructure_Workspace_fbtext
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n6_FerrixStructure_Workspace_fdt
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n2_FerrixStructure_Workspace_frameCrate
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n3_FerrixStructure_Workspace_heap
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n29_FerrixStructure_Workspace_inputctl
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n20_FerrixStructure_Workspace_netCore
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n23_FerrixStructure_Workspace_netlink
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n22_FerrixStructure_Workspace_netRing
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n19_FerrixStructure_Workspace_nettcp
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n18_FerrixStructure_Workspace_netwire
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n35_FerrixStructure_Workspace_objects
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n4_FerrixStructure_Workspace_paging
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n33_FerrixStructure_Workspace_pci
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n15_FerrixStructure_Workspace_procfs
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n48_FerrixStructure_Workspace_qr
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n45_FerrixStructure_Workspace_renderctl
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n9_FerrixStructure_Workspace_sched
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n7_FerrixStructure_Workspace_sync
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n16_FerrixStructure_Workspace_sysfs
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n12_FerrixStructure_Workspace_ustack
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n14_FerrixStructure_Workspace_vfs
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n53_FerrixStructure_Workspace_kernelCrate -. "depends on" .-> n10_FerrixStructure_Workspace_vma
-  n52_FerrixStructure_Workspace_bootCrate -. "depends on" .-> n0_FerrixStructure_Workspace_bootinfo
-  n52_FerrixStructure_Workspace_bootCrate -. "depends on" .-> n1_FerrixStructure_Workspace_elf
-  n52_FerrixStructure_Workspace_bootCrate -. "depends on" .-> n4_FerrixStructure_Workspace_paging
-  n54_FerrixStructure_Workspace_xtask -. "depends on" .-> n1_FerrixStructure_Workspace_elf
-  n54_FerrixStructure_Workspace_xtask -. "depends on" .-> n18_FerrixStructure_Workspace_netwire
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n5_FerrixStructure_Workspace_acpi
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n40_FerrixStructure_Workspace_blkRing
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n39_FerrixStructure_Workspace_blockQueue
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n36_FerrixStructure_Workspace_btrfs
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n13_FerrixStructure_Workspace_cpio
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n28_FerrixStructure_Workspace_displayctl
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n1_FerrixStructure_Workspace_elf
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n6_FerrixStructure_Workspace_fdt
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n2_FerrixStructure_Workspace_frameCrate
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n29_FerrixStructure_Workspace_inputctl
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n20_FerrixStructure_Workspace_netCore
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n23_FerrixStructure_Workspace_netlink
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n19_FerrixStructure_Workspace_nettcp
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n18_FerrixStructure_Workspace_netwire
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n35_FerrixStructure_Workspace_objects
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n33_FerrixStructure_Workspace_pci
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n45_FerrixStructure_Workspace_renderctl
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n30_FerrixStructure_Workspace_sndctl
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n7_FerrixStructure_Workspace_sync
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n12_FerrixStructure_Workspace_ustack
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n14_FerrixStructure_Workspace_vfs
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n42_FerrixStructure_Workspace_virtioBlk
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n25_FerrixStructure_Workspace_virtioGpu
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n27_FerrixStructure_Workspace_virtioInput
-  n55_FerrixStructure_Workspace_fuzz -. "depends on" .-> n24_FerrixStructure_Workspace_virtioNet
-  n40_FerrixStructure_Workspace_blkRing -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n40_FerrixStructure_Workspace_blkRing -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n41_FerrixStructure_Workspace_blkServe -. "depends on" .-> n40_FerrixStructure_Workspace_blkRing
-  n41_FerrixStructure_Workspace_blkServe -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n41_FerrixStructure_Workspace_blkServe -. "depends on" .-> n42_FerrixStructure_Workspace_virtioBlk
-  n38_FerrixStructure_Workspace_btrfsVfs -. "depends on" .-> n36_FerrixStructure_Workspace_btrfs
-  n38_FerrixStructure_Workspace_btrfsVfs -. "depends on" .-> n37_FerrixStructure_Workspace_btrfsWrite
-  n38_FerrixStructure_Workspace_btrfsVfs -. "depends on" .-> n7_FerrixStructure_Workspace_sync
-  n38_FerrixStructure_Workspace_btrfsVfs -. "depends on" .-> n14_FerrixStructure_Workspace_vfs
-  n37_FerrixStructure_Workspace_btrfsWrite -. "depends on" .-> n36_FerrixStructure_Workspace_btrfs
-  n28_FerrixStructure_Workspace_displayctl -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n28_FerrixStructure_Workspace_displayctl -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n29_FerrixStructure_Workspace_inputctl -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n29_FerrixStructure_Workspace_inputctl -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n30_FerrixStructure_Workspace_sndctl -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n30_FerrixStructure_Workspace_sndctl -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n34_FerrixStructure_Workspace_nativeAbi -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n44_FerrixStructure_Workspace_nativeCrate -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n44_FerrixStructure_Workspace_nativeCrate -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n20_FerrixStructure_Workspace_netCore -. "depends on" .-> n18_FerrixStructure_Workspace_netwire
-  n20_FerrixStructure_Workspace_netCore -. "depends on" .-> n19_FerrixStructure_Workspace_nettcp
-  n23_FerrixStructure_Workspace_netlink -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n22_FerrixStructure_Workspace_netRing -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n22_FerrixStructure_Workspace_netRing -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n21_FerrixStructure_Workspace_netServe -. "depends on" .-> n22_FerrixStructure_Workspace_netRing
-  n21_FerrixStructure_Workspace_netServe -. "depends on" .-> n24_FerrixStructure_Workspace_virtioNet
-  n19_FerrixStructure_Workspace_nettcp -. "depends on" .-> n18_FerrixStructure_Workspace_netwire
-  n35_FerrixStructure_Workspace_objects -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n45_FerrixStructure_Workspace_renderctl -. "depends on" .-> n34_FerrixStructure_Workspace_nativeAbi
-  n12_FerrixStructure_Workspace_ustack -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n14_FerrixStructure_Workspace_vfs -. "depends on" .-> n13_FerrixStructure_Workspace_cpio
-  n14_FerrixStructure_Workspace_vfs -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n14_FerrixStructure_Workspace_vfs -. "depends on" .-> n7_FerrixStructure_Workspace_sync
-  n17_FerrixStructure_Workspace_virtio -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n42_FerrixStructure_Workspace_virtioBlk -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n50_FerrixStructure_Workspace_virtioConsole -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n25_FerrixStructure_Workspace_virtioGpu -. "depends on" .-> n28_FerrixStructure_Workspace_displayctl
-  n25_FerrixStructure_Workspace_virtioGpu -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n27_FerrixStructure_Workspace_virtioInput -. "depends on" .-> n29_FerrixStructure_Workspace_inputctl
-  n27_FerrixStructure_Workspace_virtioInput -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n27_FerrixStructure_Workspace_virtioInput -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n26_FerrixStructure_Workspace_virtioSnd -. "depends on" .-> n11_FerrixStructure_Workspace_linuxAbi
-  n26_FerrixStructure_Workspace_virtioSnd -. "depends on" .-> n30_FerrixStructure_Workspace_sndctl
-  n26_FerrixStructure_Workspace_virtioSnd -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
-  n24_FerrixStructure_Workspace_virtioNet -. "depends on" .-> n17_FerrixStructure_Workspace_virtio
+  n0_XaquStructure_Workspace_bootinfo["bootinfo<br>src/lib/proto/bootinfo"]
+  n1_XaquStructure_Workspace_elf["elf<br>src/lib/platform/elf"]
+  n2_XaquStructure_Workspace_frameCrate["frameCrate<br>src/lib/kernel/frame"]
+  n3_XaquStructure_Workspace_heap["heap<br>src/lib/kernel/heap"]
+  n4_XaquStructure_Workspace_paging["paging<br>src/lib/kernel/paging"]
+  n5_XaquStructure_Workspace_acpi["acpi<br>src/lib/platform/acpi"]
+  n6_XaquStructure_Workspace_fdt["fdt<br>src/lib/platform/fdt"]
+  n7_XaquStructure_Workspace_sync["sync<br>src/lib/kernel/sync"]
+  n8_XaquStructure_Workspace_crng["crng<br>src/lib/kernel/crng"]
+  n9_XaquStructure_Workspace_sched["sched<br>src/lib/kernel/sched"]
+  n10_XaquStructure_Workspace_vma["vma<br>src/lib/kernel/vma"]
+  n11_XaquStructure_Workspace_linuxAbi["linuxAbi<br>src/lib/proto/linux-abi"]
+  n12_XaquStructure_Workspace_ustack["ustack<br>src/lib/kernel/ustack"]
+  n13_XaquStructure_Workspace_cpio["cpio<br>src/lib/fs/common/cpio"]
+  n14_XaquStructure_Workspace_vfs["vfs<br>src/lib/fs/common/vfs"]
+  n15_XaquStructure_Workspace_procfs["procfs<br>src/lib/fs/common/procfs"]
+  n16_XaquStructure_Workspace_sysfs["sysfs<br>src/lib/fs/common/sysfs"]
+  n17_XaquStructure_Workspace_virtio["virtio<br>src/lib/drivers/virtio"]
+  n18_XaquStructure_Workspace_netwire["netwire<br>src/lib/network/netwire"]
+  n19_XaquStructure_Workspace_nettcp["nettcp<br>src/lib/network/nettcp"]
+  n20_XaquStructure_Workspace_netCore["netCore<br>src/lib/network/net"]
+  n21_XaquStructure_Workspace_netServe["netServe<br>src/lib/drivers/net/netserve"]
+  n22_XaquStructure_Workspace_netRing["netRing<br>src/lib/proto/netring"]
+  n23_XaquStructure_Workspace_netlink["netlink<br>src/lib/network/netlink"]
+  n24_XaquStructure_Workspace_virtioNet["virtioNet<br>src/lib/drivers/net/virtio-net"]
+  n25_XaquStructure_Workspace_virtioGpu["virtioGpu<br>src/lib/drivers/display/virtio-gpu"]
+  n26_XaquStructure_Workspace_virtioSnd["virtioSnd<br>src/lib/drivers/sound/virtio-snd"]
+  n27_XaquStructure_Workspace_virtioInput["virtioInput<br>src/lib/drivers/input/virtio-input"]
+  n28_XaquStructure_Workspace_displayctl["displayctl<br>src/lib/proto/displayctl"]
+  n29_XaquStructure_Workspace_inputctl["inputctl<br>src/lib/proto/inputctl"]
+  n30_XaquStructure_Workspace_sndctl["sndctl<br>src/lib/proto/sndctl"]
+  n31_XaquStructure_Workspace_logctl["logctl<br>src/lib/proto/logctl"]
+  n32_XaquStructure_Workspace_audit["audit<br>src/lib/proto/audit"]
+  n33_XaquStructure_Workspace_pci["pci<br>src/lib/platform/pci"]
+  n34_XaquStructure_Workspace_nativeAbi["nativeAbi<br>src/lib/proto/native-abi"]
+  n35_XaquStructure_Workspace_objects["objects<br>src/lib/kernel/objects"]
+  n36_XaquStructure_Workspace_btrfs["btrfs<br>src/lib/fs/btrfs/format"]
+  n37_XaquStructure_Workspace_btrfsWrite["btrfsWrite<br>src/lib/fs/btrfs/write"]
+  n38_XaquStructure_Workspace_btrfsVfs["btrfsVfs<br>src/lib/fs/btrfs/vfs"]
+  n39_XaquStructure_Workspace_blockQueue["blockQueue<br>src/lib/fs/common/block"]
+  n40_XaquStructure_Workspace_blkRing["blkRing<br>src/lib/proto/blkring"]
+  n41_XaquStructure_Workspace_blkServe["blkServe<br>src/lib/drivers/block/blkserve"]
+  n42_XaquStructure_Workspace_virtioBlk["virtioBlk<br>src/lib/drivers/block/virtio-blk"]
+  n43_XaquStructure_Workspace_devmgrProto["devmgrProto<br>src/lib/proto/devmgr-proto"]
+  n44_XaquStructure_Workspace_nativeCrate["nativeCrate<br>src/lib/proto/native"]
+  n45_XaquStructure_Workspace_renderctl["renderctl<br>src/lib/proto/renderctl"]
+  n46_XaquStructure_Workspace_gc400["gc400<br>src/lib/drivers/gpu/gc400"]
+  n47_XaquStructure_Workspace_fbtext["fbtext<br>src/lib/kernel/fbtext"]
+  n48_XaquStructure_Workspace_qr["qr<br>src/lib/kernel/qr"]
+  n49_XaquStructure_Workspace_vdagent["vdagent<br>src/lib/drivers/console/vdagent"]
+  n50_XaquStructure_Workspace_virtioConsole["virtioConsole<br>src/lib/drivers/console/virtio-console"]
+  n51_XaquStructure_Workspace_seccompBpf["seccompBpf<br>src/lib/kernel/seccomp"]
+  n52_XaquStructure_Workspace_bootCrate["bootCrate<br>src/boot/common/uefi"]
+  n53_XaquStructure_Workspace_kernelCrate["kernelCrate<br>src/kernel"]
+  n54_XaquStructure_Workspace_xtask["xtask<br>tools/common/xtask"]
+  n55_XaquStructure_Workspace_fuzz["fuzz<br>src/tests/fuzz"]
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n5_XaquStructure_Workspace_acpi
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n40_XaquStructure_Workspace_blkRing
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n39_XaquStructure_Workspace_blockQueue
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n0_XaquStructure_Workspace_bootinfo
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n36_XaquStructure_Workspace_btrfs
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n38_XaquStructure_Workspace_btrfsVfs
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n37_XaquStructure_Workspace_btrfsWrite
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n8_XaquStructure_Workspace_crng
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n43_XaquStructure_Workspace_devmgrProto
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n28_XaquStructure_Workspace_displayctl
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n1_XaquStructure_Workspace_elf
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n47_XaquStructure_Workspace_fbtext
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n6_XaquStructure_Workspace_fdt
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n2_XaquStructure_Workspace_frameCrate
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n3_XaquStructure_Workspace_heap
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n29_XaquStructure_Workspace_inputctl
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n20_XaquStructure_Workspace_netCore
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n23_XaquStructure_Workspace_netlink
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n22_XaquStructure_Workspace_netRing
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n19_XaquStructure_Workspace_nettcp
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n18_XaquStructure_Workspace_netwire
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n35_XaquStructure_Workspace_objects
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n4_XaquStructure_Workspace_paging
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n33_XaquStructure_Workspace_pci
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n15_XaquStructure_Workspace_procfs
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n48_XaquStructure_Workspace_qr
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n45_XaquStructure_Workspace_renderctl
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n9_XaquStructure_Workspace_sched
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n7_XaquStructure_Workspace_sync
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n16_XaquStructure_Workspace_sysfs
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n12_XaquStructure_Workspace_ustack
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n14_XaquStructure_Workspace_vfs
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n53_XaquStructure_Workspace_kernelCrate -. "depends on" .-> n10_XaquStructure_Workspace_vma
+  n52_XaquStructure_Workspace_bootCrate -. "depends on" .-> n0_XaquStructure_Workspace_bootinfo
+  n52_XaquStructure_Workspace_bootCrate -. "depends on" .-> n1_XaquStructure_Workspace_elf
+  n52_XaquStructure_Workspace_bootCrate -. "depends on" .-> n4_XaquStructure_Workspace_paging
+  n54_XaquStructure_Workspace_xtask -. "depends on" .-> n1_XaquStructure_Workspace_elf
+  n54_XaquStructure_Workspace_xtask -. "depends on" .-> n18_XaquStructure_Workspace_netwire
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n5_XaquStructure_Workspace_acpi
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n40_XaquStructure_Workspace_blkRing
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n39_XaquStructure_Workspace_blockQueue
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n36_XaquStructure_Workspace_btrfs
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n13_XaquStructure_Workspace_cpio
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n28_XaquStructure_Workspace_displayctl
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n1_XaquStructure_Workspace_elf
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n6_XaquStructure_Workspace_fdt
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n2_XaquStructure_Workspace_frameCrate
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n29_XaquStructure_Workspace_inputctl
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n20_XaquStructure_Workspace_netCore
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n23_XaquStructure_Workspace_netlink
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n19_XaquStructure_Workspace_nettcp
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n18_XaquStructure_Workspace_netwire
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n35_XaquStructure_Workspace_objects
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n33_XaquStructure_Workspace_pci
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n45_XaquStructure_Workspace_renderctl
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n30_XaquStructure_Workspace_sndctl
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n7_XaquStructure_Workspace_sync
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n12_XaquStructure_Workspace_ustack
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n14_XaquStructure_Workspace_vfs
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n42_XaquStructure_Workspace_virtioBlk
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n25_XaquStructure_Workspace_virtioGpu
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n27_XaquStructure_Workspace_virtioInput
+  n55_XaquStructure_Workspace_fuzz -. "depends on" .-> n24_XaquStructure_Workspace_virtioNet
+  n40_XaquStructure_Workspace_blkRing -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n40_XaquStructure_Workspace_blkRing -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n41_XaquStructure_Workspace_blkServe -. "depends on" .-> n40_XaquStructure_Workspace_blkRing
+  n41_XaquStructure_Workspace_blkServe -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n41_XaquStructure_Workspace_blkServe -. "depends on" .-> n42_XaquStructure_Workspace_virtioBlk
+  n38_XaquStructure_Workspace_btrfsVfs -. "depends on" .-> n36_XaquStructure_Workspace_btrfs
+  n38_XaquStructure_Workspace_btrfsVfs -. "depends on" .-> n37_XaquStructure_Workspace_btrfsWrite
+  n38_XaquStructure_Workspace_btrfsVfs -. "depends on" .-> n7_XaquStructure_Workspace_sync
+  n38_XaquStructure_Workspace_btrfsVfs -. "depends on" .-> n14_XaquStructure_Workspace_vfs
+  n37_XaquStructure_Workspace_btrfsWrite -. "depends on" .-> n36_XaquStructure_Workspace_btrfs
+  n28_XaquStructure_Workspace_displayctl -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n28_XaquStructure_Workspace_displayctl -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n29_XaquStructure_Workspace_inputctl -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n29_XaquStructure_Workspace_inputctl -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n30_XaquStructure_Workspace_sndctl -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n30_XaquStructure_Workspace_sndctl -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n34_XaquStructure_Workspace_nativeAbi -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n44_XaquStructure_Workspace_nativeCrate -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n44_XaquStructure_Workspace_nativeCrate -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n20_XaquStructure_Workspace_netCore -. "depends on" .-> n18_XaquStructure_Workspace_netwire
+  n20_XaquStructure_Workspace_netCore -. "depends on" .-> n19_XaquStructure_Workspace_nettcp
+  n23_XaquStructure_Workspace_netlink -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n22_XaquStructure_Workspace_netRing -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n22_XaquStructure_Workspace_netRing -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n21_XaquStructure_Workspace_netServe -. "depends on" .-> n22_XaquStructure_Workspace_netRing
+  n21_XaquStructure_Workspace_netServe -. "depends on" .-> n24_XaquStructure_Workspace_virtioNet
+  n19_XaquStructure_Workspace_nettcp -. "depends on" .-> n18_XaquStructure_Workspace_netwire
+  n35_XaquStructure_Workspace_objects -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n45_XaquStructure_Workspace_renderctl -. "depends on" .-> n34_XaquStructure_Workspace_nativeAbi
+  n12_XaquStructure_Workspace_ustack -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n14_XaquStructure_Workspace_vfs -. "depends on" .-> n13_XaquStructure_Workspace_cpio
+  n14_XaquStructure_Workspace_vfs -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n14_XaquStructure_Workspace_vfs -. "depends on" .-> n7_XaquStructure_Workspace_sync
+  n17_XaquStructure_Workspace_virtio -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n42_XaquStructure_Workspace_virtioBlk -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n50_XaquStructure_Workspace_virtioConsole -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n25_XaquStructure_Workspace_virtioGpu -. "depends on" .-> n28_XaquStructure_Workspace_displayctl
+  n25_XaquStructure_Workspace_virtioGpu -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n27_XaquStructure_Workspace_virtioInput -. "depends on" .-> n29_XaquStructure_Workspace_inputctl
+  n27_XaquStructure_Workspace_virtioInput -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n27_XaquStructure_Workspace_virtioInput -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n26_XaquStructure_Workspace_virtioSnd -. "depends on" .-> n11_XaquStructure_Workspace_linuxAbi
+  n26_XaquStructure_Workspace_virtioSnd -. "depends on" .-> n30_XaquStructure_Workspace_sndctl
+  n26_XaquStructure_Workspace_virtioSnd -. "depends on" .-> n17_XaquStructure_Workspace_virtio
+  n24_XaquStructure_Workspace_virtioNet -. "depends on" .-> n17_XaquStructure_Workspace_virtio
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n0_FerrixStructure_Workspace_bootinfo,n1_FerrixStructure_Workspace_elf,n2_FerrixStructure_Workspace_frameCrate,n3_FerrixStructure_Workspace_heap,n4_FerrixStructure_Workspace_paging,n5_FerrixStructure_Workspace_acpi,n6_FerrixStructure_Workspace_fdt,n7_FerrixStructure_Workspace_sync,n8_FerrixStructure_Workspace_crng,n9_FerrixStructure_Workspace_sched,n10_FerrixStructure_Workspace_vma,n11_FerrixStructure_Workspace_linuxAbi,n12_FerrixStructure_Workspace_ustack,n13_FerrixStructure_Workspace_cpio,n14_FerrixStructure_Workspace_vfs,n15_FerrixStructure_Workspace_procfs,n16_FerrixStructure_Workspace_sysfs,n17_FerrixStructure_Workspace_virtio,n18_FerrixStructure_Workspace_netwire,n19_FerrixStructure_Workspace_nettcp,n20_FerrixStructure_Workspace_netCore,n21_FerrixStructure_Workspace_netServe,n22_FerrixStructure_Workspace_netRing,n23_FerrixStructure_Workspace_netlink,n24_FerrixStructure_Workspace_virtioNet,n25_FerrixStructure_Workspace_virtioGpu,n26_FerrixStructure_Workspace_virtioSnd,n27_FerrixStructure_Workspace_virtioInput,n28_FerrixStructure_Workspace_displayctl,n29_FerrixStructure_Workspace_inputctl,n30_FerrixStructure_Workspace_sndctl,n31_FerrixStructure_Workspace_logctl,n32_FerrixStructure_Workspace_audit,n33_FerrixStructure_Workspace_pci,n34_FerrixStructure_Workspace_nativeAbi,n35_FerrixStructure_Workspace_objects,n36_FerrixStructure_Workspace_btrfs,n37_FerrixStructure_Workspace_btrfsWrite,n38_FerrixStructure_Workspace_btrfsVfs,n39_FerrixStructure_Workspace_blockQueue,n40_FerrixStructure_Workspace_blkRing,n41_FerrixStructure_Workspace_blkServe,n42_FerrixStructure_Workspace_virtioBlk,n43_FerrixStructure_Workspace_devmgrProto,n44_FerrixStructure_Workspace_nativeCrate,n45_FerrixStructure_Workspace_renderctl,n46_FerrixStructure_Workspace_gc400,n47_FerrixStructure_Workspace_fbtext,n48_FerrixStructure_Workspace_qr,n49_FerrixStructure_Workspace_vdagent,n50_FerrixStructure_Workspace_virtioConsole,n51_FerrixStructure_Workspace_seccompBpf,n52_FerrixStructure_Workspace_bootCrate,n53_FerrixStructure_Workspace_kernelCrate,n54_FerrixStructure_Workspace_xtask,n55_FerrixStructure_Workspace_fuzz implemented
+  class n0_XaquStructure_Workspace_bootinfo,n1_XaquStructure_Workspace_elf,n2_XaquStructure_Workspace_frameCrate,n3_XaquStructure_Workspace_heap,n4_XaquStructure_Workspace_paging,n5_XaquStructure_Workspace_acpi,n6_XaquStructure_Workspace_fdt,n7_XaquStructure_Workspace_sync,n8_XaquStructure_Workspace_crng,n9_XaquStructure_Workspace_sched,n10_XaquStructure_Workspace_vma,n11_XaquStructure_Workspace_linuxAbi,n12_XaquStructure_Workspace_ustack,n13_XaquStructure_Workspace_cpio,n14_XaquStructure_Workspace_vfs,n15_XaquStructure_Workspace_procfs,n16_XaquStructure_Workspace_sysfs,n17_XaquStructure_Workspace_virtio,n18_XaquStructure_Workspace_netwire,n19_XaquStructure_Workspace_nettcp,n20_XaquStructure_Workspace_netCore,n21_XaquStructure_Workspace_netServe,n22_XaquStructure_Workspace_netRing,n23_XaquStructure_Workspace_netlink,n24_XaquStructure_Workspace_virtioNet,n25_XaquStructure_Workspace_virtioGpu,n26_XaquStructure_Workspace_virtioSnd,n27_XaquStructure_Workspace_virtioInput,n28_XaquStructure_Workspace_displayctl,n29_XaquStructure_Workspace_inputctl,n30_XaquStructure_Workspace_sndctl,n31_XaquStructure_Workspace_logctl,n32_XaquStructure_Workspace_audit,n33_XaquStructure_Workspace_pci,n34_XaquStructure_Workspace_nativeAbi,n35_XaquStructure_Workspace_objects,n36_XaquStructure_Workspace_btrfs,n37_XaquStructure_Workspace_btrfsWrite,n38_XaquStructure_Workspace_btrfsVfs,n39_XaquStructure_Workspace_blockQueue,n40_XaquStructure_Workspace_blkRing,n41_XaquStructure_Workspace_blkServe,n42_XaquStructure_Workspace_virtioBlk,n43_XaquStructure_Workspace_devmgrProto,n44_XaquStructure_Workspace_nativeCrate,n45_XaquStructure_Workspace_renderctl,n46_XaquStructure_Workspace_gc400,n47_XaquStructure_Workspace_fbtext,n48_XaquStructure_Workspace_qr,n49_XaquStructure_Workspace_vdagent,n50_XaquStructure_Workspace_virtioConsole,n51_XaquStructure_Workspace_seccompBpf,n52_XaquStructure_Workspace_bootCrate,n53_XaquStructure_Workspace_kernelCrate,n54_XaquStructure_Workspace_xtask,n55_XaquStructure_Workspace_fuzz implemented
 ```
 
 **Figure 16 — The crate graph.** 114 `dependency` statements; an arrow points from the thing that needs to the thing it needs. [SVG](diagrams/crate-dependencies.svg) Source: `02-structure.sysml`.
@@ -3083,87 +3083,87 @@ Two rules govern the ordering: every stage ends in something that runs, and noth
 
 ```mermaid
 flowchart TB
-  n0_FerrixRoadmap_stage0Foundation["S0  Stage 0 foundation<br>Done · weekend"]
-  n1_FerrixRoadmap_stage1Boot["S1  Stage 1 boot<br>Done · week"]
-  n2_FerrixRoadmap_stage2Memory["S2  Stage 2 memory<br>Done · week"]
-  n3_FerrixRoadmap_stage3TrapsInterruptsTime["S3  Stage 3 traps interrupts time<br>Done · week"]
-  n4_FerrixRoadmap_stage4Smp["S4  Stage 4 SMP<br>Done · week"]
-  n5_FerrixRoadmap_armv7aPort["SA  ARMv7-A port<br>Done · month"]
-  n6_FerrixRoadmap_stage5Scheduler["S5  Stage 5 scheduler<br>Done · week"]
-  n7_FerrixRoadmap_stage6UserMode["S6  Stage 6 user mode<br>Done · week"]
-  n8_FerrixRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI<br>Done · month"]
-  n9_FerrixRoadmap_stage8Vfs["S8  Stage 8 VFS<br>Done · month"]
-  n10_FerrixRoadmap_stage9NativeAbi["S9  Stage 9 native ABI<br>Done · week"]
-  n11_FerrixRoadmap_stage10UserspaceDrivers["S10  Stage 10 userspace drivers<br>Done · month"]
-  n12_FerrixRoadmap_stage11BtrfsRead["S11  Stage 11 btrfs read<br>Done · month"]
-  n13_FerrixRoadmap_stageNetworking["SN  Stage networking<br>Done · month"]
-  n14_FerrixRoadmap_stageDynamicLinking["SD  Stage dynamic linking<br>Done · 39 points, spent; ferrousli's port about 34, spent"]
-  n15_FerrixRoadmap_stageSysfs["SY  Stage sysfs<br>Done · 26 points, spent"]
-  n16_FerrixRoadmap_stageChrome["SC  Stage chrome<br>InProgress · headless and a window spent; the DK1 about 45 to 55 points"]
-  n17_FerrixRoadmap_stage12BtrfsWrite["S12  Stage 12 btrfs write<br>Done · about 60 points, spent"]
-  n18_FerrixRoadmap_stage13Isolation["S13  Stage 13 isolation<br>Done · month"]
-  n19_FerrixRoadmap_stage14RealTime["S14  Stage 14 real time<br>Planned · month"]
-  n20_FerrixRoadmap_stage15Userland["S15  Stage 15 userland<br>InProgress · week, about 20 points, of which job control is spent"]
-  n21_FerrixRoadmap_stage16Rustc["S16  Stage 16 rustc<br>Done · the goal; about 40 guessed, 8 spent"]
-  n22_FerrixRoadmap_stage17DisplayAndInput["S17  Stage 17 display and input<br>Done · 74 points, spent"]
-  n23_FerrixRoadmap_stage18Compositor["S18  Stage 18 compositor<br>Done · 96 points, spent"]
-  n24_FerrixRoadmap_stage19HyprlandFidelity["S19  Stage 19 hyprland fidelity<br>InProgress · 178 points, about 8 left"]
-  n25_FerrixRoadmap_stage21BareMetalGpu["S21  Stage 21 bare metal gpu<br>InProgress · unsized, over 100 points"]
-  n26_FerrixRoadmap_stage22Steam["S22  Stage 22 steam<br>InProgress · unsized, over 300 points"]
-  n27_FerrixRoadmap_stage23Endfield["S23  Stage 23 endfield<br>InProgress · about 205 points as a first guess, step 5 unknown"]
-  n28_FerrixRoadmap_stage24GamePath["S24  Stage 24 game path<br>InProgress · about 68 points before the game domain, about 190 with it and the later rows"]
-  n29_FerrixRoadmap_stage25Xaqu["S25  Stage 25 xaqu<br>InProgress · 63 points estimated, about 27 built; the Files app unsized"]
-  n30_FerrixRoadmap_stage20SelfHosting["S20  Stage 20 self hosting<br>InProgress · longer"]
-  n0_FerrixRoadmap_stage0Foundation -. "depends on" .-> n1_FerrixRoadmap_stage1Boot
-  n1_FerrixRoadmap_stage1Boot -. "depends on" .-> n2_FerrixRoadmap_stage2Memory
-  n2_FerrixRoadmap_stage2Memory -. "depends on" .-> n3_FerrixRoadmap_stage3TrapsInterruptsTime
-  n3_FerrixRoadmap_stage3TrapsInterruptsTime -. "depends on" .-> n4_FerrixRoadmap_stage4Smp
-  n4_FerrixRoadmap_stage4Smp -. "depends on" .-> n6_FerrixRoadmap_stage5Scheduler
-  n6_FerrixRoadmap_stage5Scheduler -. "depends on" .-> n7_FerrixRoadmap_stage6UserMode
-  n3_FerrixRoadmap_stage3TrapsInterruptsTime -. "depends on" .-> n7_FerrixRoadmap_stage6UserMode
-  n7_FerrixRoadmap_stage6UserMode -. "depends on" .-> n8_FerrixRoadmap_stage7LinuxAbi
-  n8_FerrixRoadmap_stage7LinuxAbi -. "depends on" .-> n9_FerrixRoadmap_stage8Vfs
-  n9_FerrixRoadmap_stage8Vfs -. "depends on" .-> n10_FerrixRoadmap_stage9NativeAbi
-  n10_FerrixRoadmap_stage9NativeAbi -. "depends on" .-> n11_FerrixRoadmap_stage10UserspaceDrivers
-  n11_FerrixRoadmap_stage10UserspaceDrivers -. "depends on" .-> n12_FerrixRoadmap_stage11BtrfsRead
-  n12_FerrixRoadmap_stage11BtrfsRead -. "depends on" .-> n13_FerrixRoadmap_stageNetworking
-  n11_FerrixRoadmap_stage10UserspaceDrivers -. "depends on" .-> n13_FerrixRoadmap_stageNetworking
-  n9_FerrixRoadmap_stage8Vfs -. "depends on" .-> n14_FerrixRoadmap_stageDynamicLinking
-  n8_FerrixRoadmap_stage7LinuxAbi -. "depends on" .-> n14_FerrixRoadmap_stageDynamicLinking
-  n9_FerrixRoadmap_stage8Vfs -. "depends on" .-> n15_FerrixRoadmap_stageSysfs
-  n11_FerrixRoadmap_stage10UserspaceDrivers -. "depends on" .-> n15_FerrixRoadmap_stageSysfs
-  n14_FerrixRoadmap_stageDynamicLinking -. "depends on" .-> n16_FerrixRoadmap_stageChrome
-  n17_FerrixRoadmap_stage12BtrfsWrite -. "depends on" .-> n16_FerrixRoadmap_stageChrome
-  n23_FerrixRoadmap_stage18Compositor -. "depends on" .-> n16_FerrixRoadmap_stageChrome
-  n12_FerrixRoadmap_stage11BtrfsRead -. "depends on" .-> n17_FerrixRoadmap_stage12BtrfsWrite
-  n17_FerrixRoadmap_stage12BtrfsWrite -. "depends on" .-> n18_FerrixRoadmap_stage13Isolation
-  n18_FerrixRoadmap_stage13Isolation -. "depends on" .-> n19_FerrixRoadmap_stage14RealTime
-  n4_FerrixRoadmap_stage4Smp -. "depends on" .-> n19_FerrixRoadmap_stage14RealTime
-  n19_FerrixRoadmap_stage14RealTime -. "depends on" .-> n20_FerrixRoadmap_stage15Userland
-  n20_FerrixRoadmap_stage15Userland -. "depends on" .-> n21_FerrixRoadmap_stage16Rustc
-  n11_FerrixRoadmap_stage10UserspaceDrivers -. "depends on" .-> n22_FerrixRoadmap_stage17DisplayAndInput
-  n8_FerrixRoadmap_stage7LinuxAbi -. "depends on" .-> n22_FerrixRoadmap_stage17DisplayAndInput
-  n22_FerrixRoadmap_stage17DisplayAndInput -. "depends on" .-> n23_FerrixRoadmap_stage18Compositor
-  n23_FerrixRoadmap_stage18Compositor -. "depends on" .-> n24_FerrixRoadmap_stage19HyprlandFidelity
-  n21_FerrixRoadmap_stage16Rustc -. "depends on" .-> n30_FerrixRoadmap_stage20SelfHosting
-  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n25_FerrixRoadmap_stage21BareMetalGpu
-  n14_FerrixRoadmap_stageDynamicLinking -. "depends on" .-> n25_FerrixRoadmap_stage21BareMetalGpu
-  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n26_FerrixRoadmap_stage22Steam
-  n14_FerrixRoadmap_stageDynamicLinking -. "depends on" .-> n26_FerrixRoadmap_stage22Steam
-  n17_FerrixRoadmap_stage12BtrfsWrite -. "depends on" .-> n26_FerrixRoadmap_stage22Steam
-  n18_FerrixRoadmap_stage13Isolation -. "depends on" .-> n26_FerrixRoadmap_stage22Steam
-  n13_FerrixRoadmap_stageNetworking -. "depends on" .-> n26_FerrixRoadmap_stage22Steam
-  n26_FerrixRoadmap_stage22Steam -. "depends on" .-> n27_FerrixRoadmap_stage23Endfield
-  n25_FerrixRoadmap_stage21BareMetalGpu -. "depends on" .-> n27_FerrixRoadmap_stage23Endfield
-  n25_FerrixRoadmap_stage21BareMetalGpu -. "depends on" .-> n28_FerrixRoadmap_stage24GamePath
-  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n28_FerrixRoadmap_stage24GamePath
-  n24_FerrixRoadmap_stage19HyprlandFidelity -. "depends on" .-> n29_FerrixRoadmap_stage25Xaqu
+  n0_XaquRoadmap_stage0Foundation["S0  Stage 0 foundation<br>Done · weekend"]
+  n1_XaquRoadmap_stage1Boot["S1  Stage 1 boot<br>Done · week"]
+  n2_XaquRoadmap_stage2Memory["S2  Stage 2 memory<br>Done · week"]
+  n3_XaquRoadmap_stage3TrapsInterruptsTime["S3  Stage 3 traps interrupts time<br>Done · week"]
+  n4_XaquRoadmap_stage4Smp["S4  Stage 4 SMP<br>Done · week"]
+  n5_XaquRoadmap_armv7aPort["SA  ARMv7-A port<br>Done · month"]
+  n6_XaquRoadmap_stage5Scheduler["S5  Stage 5 scheduler<br>Done · week"]
+  n7_XaquRoadmap_stage6UserMode["S6  Stage 6 user mode<br>Done · week"]
+  n8_XaquRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI<br>Done · month"]
+  n9_XaquRoadmap_stage8Vfs["S8  Stage 8 VFS<br>Done · month"]
+  n10_XaquRoadmap_stage9NativeAbi["S9  Stage 9 native ABI<br>Done · week"]
+  n11_XaquRoadmap_stage10UserspaceDrivers["S10  Stage 10 userspace drivers<br>Done · month"]
+  n12_XaquRoadmap_stage11BtrfsRead["S11  Stage 11 btrfs read<br>Done · month"]
+  n13_XaquRoadmap_stageNetworking["SN  Stage networking<br>Done · month"]
+  n14_XaquRoadmap_stageDynamicLinking["SD  Stage dynamic linking<br>Done · 39 points, spent; ferrousli's port about 34, spent"]
+  n15_XaquRoadmap_stageSysfs["SY  Stage sysfs<br>Done · 26 points, spent"]
+  n16_XaquRoadmap_stageChrome["SC  Stage chrome<br>InProgress · headless and a window spent; the DK1 about 45 to 55 points"]
+  n17_XaquRoadmap_stage12BtrfsWrite["S12  Stage 12 btrfs write<br>Done · about 60 points, spent"]
+  n18_XaquRoadmap_stage13Isolation["S13  Stage 13 isolation<br>Done · month"]
+  n19_XaquRoadmap_stage14RealTime["S14  Stage 14 real time<br>Planned · month"]
+  n20_XaquRoadmap_stage15Userland["S15  Stage 15 userland<br>InProgress · week, about 20 points, of which job control is spent"]
+  n21_XaquRoadmap_stage16Rustc["S16  Stage 16 rustc<br>Done · the goal; about 40 guessed, 8 spent"]
+  n22_XaquRoadmap_stage17DisplayAndInput["S17  Stage 17 display and input<br>Done · 74 points, spent"]
+  n23_XaquRoadmap_stage18Compositor["S18  Stage 18 compositor<br>Done · 96 points, spent"]
+  n24_XaquRoadmap_stage19HyprlandFidelity["S19  Stage 19 hyprland fidelity<br>InProgress · 178 points, about 8 left"]
+  n25_XaquRoadmap_stage21BareMetalGpu["S21  Stage 21 bare metal gpu<br>InProgress · unsized, over 100 points"]
+  n26_XaquRoadmap_stage22Steam["S22  Stage 22 steam<br>InProgress · unsized, over 300 points"]
+  n27_XaquRoadmap_stage23Endfield["S23  Stage 23 endfield<br>InProgress · about 205 points as a first guess, step 5 unknown"]
+  n28_XaquRoadmap_stage24GamePath["S24  Stage 24 game path<br>InProgress · about 68 points before the game domain, about 190 with it and the later rows"]
+  n29_XaquRoadmap_stage25Xaqu["S25  Stage 25 Xaqu<br>InProgress · 63 points estimated, about 27 built; the Files app unsized"]
+  n30_XaquRoadmap_stage20SelfHosting["S20  Stage 20 self hosting<br>InProgress · longer"]
+  n0_XaquRoadmap_stage0Foundation -. "depends on" .-> n1_XaquRoadmap_stage1Boot
+  n1_XaquRoadmap_stage1Boot -. "depends on" .-> n2_XaquRoadmap_stage2Memory
+  n2_XaquRoadmap_stage2Memory -. "depends on" .-> n3_XaquRoadmap_stage3TrapsInterruptsTime
+  n3_XaquRoadmap_stage3TrapsInterruptsTime -. "depends on" .-> n4_XaquRoadmap_stage4Smp
+  n4_XaquRoadmap_stage4Smp -. "depends on" .-> n6_XaquRoadmap_stage5Scheduler
+  n6_XaquRoadmap_stage5Scheduler -. "depends on" .-> n7_XaquRoadmap_stage6UserMode
+  n3_XaquRoadmap_stage3TrapsInterruptsTime -. "depends on" .-> n7_XaquRoadmap_stage6UserMode
+  n7_XaquRoadmap_stage6UserMode -. "depends on" .-> n8_XaquRoadmap_stage7LinuxAbi
+  n8_XaquRoadmap_stage7LinuxAbi -. "depends on" .-> n9_XaquRoadmap_stage8Vfs
+  n9_XaquRoadmap_stage8Vfs -. "depends on" .-> n10_XaquRoadmap_stage9NativeAbi
+  n10_XaquRoadmap_stage9NativeAbi -. "depends on" .-> n11_XaquRoadmap_stage10UserspaceDrivers
+  n11_XaquRoadmap_stage10UserspaceDrivers -. "depends on" .-> n12_XaquRoadmap_stage11BtrfsRead
+  n12_XaquRoadmap_stage11BtrfsRead -. "depends on" .-> n13_XaquRoadmap_stageNetworking
+  n11_XaquRoadmap_stage10UserspaceDrivers -. "depends on" .-> n13_XaquRoadmap_stageNetworking
+  n9_XaquRoadmap_stage8Vfs -. "depends on" .-> n14_XaquRoadmap_stageDynamicLinking
+  n8_XaquRoadmap_stage7LinuxAbi -. "depends on" .-> n14_XaquRoadmap_stageDynamicLinking
+  n9_XaquRoadmap_stage8Vfs -. "depends on" .-> n15_XaquRoadmap_stageSysfs
+  n11_XaquRoadmap_stage10UserspaceDrivers -. "depends on" .-> n15_XaquRoadmap_stageSysfs
+  n14_XaquRoadmap_stageDynamicLinking -. "depends on" .-> n16_XaquRoadmap_stageChrome
+  n17_XaquRoadmap_stage12BtrfsWrite -. "depends on" .-> n16_XaquRoadmap_stageChrome
+  n23_XaquRoadmap_stage18Compositor -. "depends on" .-> n16_XaquRoadmap_stageChrome
+  n12_XaquRoadmap_stage11BtrfsRead -. "depends on" .-> n17_XaquRoadmap_stage12BtrfsWrite
+  n17_XaquRoadmap_stage12BtrfsWrite -. "depends on" .-> n18_XaquRoadmap_stage13Isolation
+  n18_XaquRoadmap_stage13Isolation -. "depends on" .-> n19_XaquRoadmap_stage14RealTime
+  n4_XaquRoadmap_stage4Smp -. "depends on" .-> n19_XaquRoadmap_stage14RealTime
+  n19_XaquRoadmap_stage14RealTime -. "depends on" .-> n20_XaquRoadmap_stage15Userland
+  n20_XaquRoadmap_stage15Userland -. "depends on" .-> n21_XaquRoadmap_stage16Rustc
+  n11_XaquRoadmap_stage10UserspaceDrivers -. "depends on" .-> n22_XaquRoadmap_stage17DisplayAndInput
+  n8_XaquRoadmap_stage7LinuxAbi -. "depends on" .-> n22_XaquRoadmap_stage17DisplayAndInput
+  n22_XaquRoadmap_stage17DisplayAndInput -. "depends on" .-> n23_XaquRoadmap_stage18Compositor
+  n23_XaquRoadmap_stage18Compositor -. "depends on" .-> n24_XaquRoadmap_stage19HyprlandFidelity
+  n21_XaquRoadmap_stage16Rustc -. "depends on" .-> n30_XaquRoadmap_stage20SelfHosting
+  n24_XaquRoadmap_stage19HyprlandFidelity -. "depends on" .-> n25_XaquRoadmap_stage21BareMetalGpu
+  n14_XaquRoadmap_stageDynamicLinking -. "depends on" .-> n25_XaquRoadmap_stage21BareMetalGpu
+  n24_XaquRoadmap_stage19HyprlandFidelity -. "depends on" .-> n26_XaquRoadmap_stage22Steam
+  n14_XaquRoadmap_stageDynamicLinking -. "depends on" .-> n26_XaquRoadmap_stage22Steam
+  n17_XaquRoadmap_stage12BtrfsWrite -. "depends on" .-> n26_XaquRoadmap_stage22Steam
+  n18_XaquRoadmap_stage13Isolation -. "depends on" .-> n26_XaquRoadmap_stage22Steam
+  n13_XaquRoadmap_stageNetworking -. "depends on" .-> n26_XaquRoadmap_stage22Steam
+  n26_XaquRoadmap_stage22Steam -. "depends on" .-> n27_XaquRoadmap_stage23Endfield
+  n25_XaquRoadmap_stage21BareMetalGpu -. "depends on" .-> n27_XaquRoadmap_stage23Endfield
+  n25_XaquRoadmap_stage21BareMetalGpu -. "depends on" .-> n28_XaquRoadmap_stage24GamePath
+  n24_XaquRoadmap_stage19HyprlandFidelity -. "depends on" .-> n28_XaquRoadmap_stage24GamePath
+  n24_XaquRoadmap_stage19HyprlandFidelity -. "depends on" .-> n29_XaquRoadmap_stage25Xaqu
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
   classDef planned fill:#e4e7ea,stroke:#6a737e,color:#16191d
-  class n0_FerrixRoadmap_stage0Foundation,n1_FerrixRoadmap_stage1Boot,n2_FerrixRoadmap_stage2Memory,n3_FerrixRoadmap_stage3TrapsInterruptsTime,n4_FerrixRoadmap_stage4Smp,n5_FerrixRoadmap_armv7aPort,n6_FerrixRoadmap_stage5Scheduler,n7_FerrixRoadmap_stage6UserMode,n8_FerrixRoadmap_stage7LinuxAbi,n9_FerrixRoadmap_stage8Vfs,n10_FerrixRoadmap_stage9NativeAbi,n11_FerrixRoadmap_stage10UserspaceDrivers,n12_FerrixRoadmap_stage11BtrfsRead,n13_FerrixRoadmap_stageNetworking,n14_FerrixRoadmap_stageDynamicLinking,n15_FerrixRoadmap_stageSysfs,n17_FerrixRoadmap_stage12BtrfsWrite,n18_FerrixRoadmap_stage13Isolation,n21_FerrixRoadmap_stage16Rustc,n22_FerrixRoadmap_stage17DisplayAndInput,n23_FerrixRoadmap_stage18Compositor implemented
-  class n16_FerrixRoadmap_stageChrome,n20_FerrixRoadmap_stage15Userland,n24_FerrixRoadmap_stage19HyprlandFidelity,n25_FerrixRoadmap_stage21BareMetalGpu,n26_FerrixRoadmap_stage22Steam,n27_FerrixRoadmap_stage23Endfield,n28_FerrixRoadmap_stage24GamePath,n29_FerrixRoadmap_stage25Xaqu,n30_FerrixRoadmap_stage20SelfHosting inProgress
-  class n19_FerrixRoadmap_stage14RealTime planned
+  class n0_XaquRoadmap_stage0Foundation,n1_XaquRoadmap_stage1Boot,n2_XaquRoadmap_stage2Memory,n3_XaquRoadmap_stage3TrapsInterruptsTime,n4_XaquRoadmap_stage4Smp,n5_XaquRoadmap_armv7aPort,n6_XaquRoadmap_stage5Scheduler,n7_XaquRoadmap_stage6UserMode,n8_XaquRoadmap_stage7LinuxAbi,n9_XaquRoadmap_stage8Vfs,n10_XaquRoadmap_stage9NativeAbi,n11_XaquRoadmap_stage10UserspaceDrivers,n12_XaquRoadmap_stage11BtrfsRead,n13_XaquRoadmap_stageNetworking,n14_XaquRoadmap_stageDynamicLinking,n15_XaquRoadmap_stageSysfs,n17_XaquRoadmap_stage12BtrfsWrite,n18_XaquRoadmap_stage13Isolation,n21_XaquRoadmap_stage16Rustc,n22_XaquRoadmap_stage17DisplayAndInput,n23_XaquRoadmap_stage18Compositor implemented
+  class n16_XaquRoadmap_stageChrome,n20_XaquRoadmap_stage15Userland,n24_XaquRoadmap_stage19HyprlandFidelity,n25_XaquRoadmap_stage21BareMetalGpu,n26_XaquRoadmap_stage22Steam,n27_XaquRoadmap_stage23Endfield,n28_XaquRoadmap_stage24GamePath,n29_XaquRoadmap_stage25Xaqu,n30_XaquRoadmap_stage20SelfHosting inProgress
+  class n19_XaquRoadmap_stage14RealTime planned
 ```
 
 **Figure 17 — The roadmap, stage by stage.** An arrow points from a stage to the stage it unblocks. The two stages with a second arrow into them are the ones that need more than their predecessor. [SVG](diagrams/roadmap-stages.svg) Source: `10-roadmap.sysml`.
@@ -3199,7 +3199,7 @@ flowchart TB
 | `S22` | 22 | Stage 22 steam | InProgress | unsized, over 300 points | `#inProgress` |
 | `S23` | 23 | Stage 23 endfield | InProgress | about 205 points as a first guess, step 5 unknown | `#inProgress` |
 | `S24` | 24 | Stage 24 game path | InProgress | about 68 points before the game domain, about 190 with it and the later rows | `#inProgress` |
-| `S25` | 25 | Stage 25 xaqu | InProgress | 63 points estimated, about 27 built; the Files app unsized | `#inProgress` |
+| `S25` | 25 | Stage 25 Xaqu | InProgress | 63 points estimated, about 27 built; the Files app unsized | `#inProgress` |
 | `S20` | 20 | Stage 20 self hosting | InProgress | longer | `#inProgress` |
 
 Sizes are order-of-magnitude and not a schedule.
@@ -3216,9 +3216,9 @@ Workspace, the quality gates ported from Starling, CI, the first host-testable l
 
 UEFI loader in Rust to a kernel Rust entry point, zero bootstrap assembly. Exit, met on all three: the hand-off's magic, version and layout agree; the memory map is sorted, non-overlapping, has usable RAM and describes the loader's own allocations; the direct map aliases physical memory; the kernel can walk and extend the loader's tables.
 
-**Satisfied by: **`ferrix.loader`
+**Satisfied by: **`xaqu.loader`
 
-**Verified by: **`FerrixRoadmap::bootAArch64`, `FerrixRoadmap::bootArmv7a` and `FerrixRoadmap::bootX86`
+**Verified by: **`XaquRoadmap::bootAArch64`, `XaquRoadmap::bootArmv7a` and `XaquRoadmap::bootX86`
 
 ### S2 — Stage 2 memory
 
@@ -3226,9 +3226,9 @@ UEFI loader in Rust to a kernel Rust entry point, zero bootstrap assembly. Exit,
 
 Buddy allocator, heap, vmap arena with guard pages and stacks, identity map dropped, W^X sweep, boot memory reclaimed, empty slab pages returned. Exit, met: 4096 blocks allocated and freed with the free count returning exactly; Box, Vec, BTreeMap; arena and stack checks; address zero translates to nothing; the sweep finds no writable-and-executable leaf.
 
-**Satisfied by: **`ferrix.kernel.mm` and `ferrix.kernel.vmap`
+**Satisfied by: **`xaqu.kernel.mm` and `xaqu.kernel.vmap`
 
-**Verified by: **`FerrixRoadmap::bootAArch64`, `FerrixRoadmap::bootArmv7a` and `FerrixRoadmap::bootX86`
+**Verified by: **`XaquRoadmap::bootAArch64`, `XaquRoadmap::bootArmv7a` and `XaquRoadmap::bootX86`
 
 - **`perCpuCaches`** — Needs a workload that can measure them; the per-CPU area exists since stage 4.
 
@@ -3238,9 +3238,9 @@ Buddy allocator, heap, vmap arena with guard pages and stacks, identity map drop
 
 Vectors on every architecture, one dispatch above them; LAPIC, I/O APIC, HPET (TSC/PIT fallback); GICv2 and the architected virtual timer; the facade's irq::register, timer::after and trap::Frame. Exit, met: two breakpoints with a register canary, four page faults with an exact frame bound, a one-shot that fires once, a thousand ticks measured against the counter at 998 to 999 Hz for a requested 1000.
 
-**Satisfied by: **`ferrix.kernel.trap`, `ferrix.kernel.irq` and `ferrix.kernel.timer`
+**Satisfied by: **`xaqu.kernel.trap`, `xaqu.kernel.irq` and `xaqu.kernel.timer`
 
-**Verified by: **`FerrixRoadmap::bootAArch64`, `FerrixRoadmap::bootArmv7a` and `FerrixRoadmap::bootX86`
+**Verified by: **`XaquRoadmap::bootAArch64`, `XaquRoadmap::bootArmv7a` and `XaquRoadmap::bootX86`
 
 - **`gicv3`** — Refused rather than guessed; needs a second boot-test configuration.
 - **`tscDeadline`** — Calibration exists; waits for a tickless scheduler.
@@ -3251,9 +3251,9 @@ Vectors on every architecture, one dispatch above them; LAPIC, I/O APIC, HPET (T
 
 Every processor online: INIT-SIPI-SIPI and a real-mode trampoline, PSCI CPU_ON through an identity map of the entry; a record per processor; every "one CPU" global now a lock; IPIs; TLB shootdown where hardware does not broadcast; grace periods. Exit, met: four processors increment one counter under one ticket lock 25,000 times each to exactly 100,000 with their shares overlapping in time, while an unlocked count beside it loses updates.
 
-**Satisfied by: **`ferrix.kernel.smp`
+**Satisfied by: **`xaqu.kernel.smp`
 
-**Verified by: **`FerrixRoadmap::bootAArch64`, `FerrixRoadmap::bootArmv7a` and `FerrixRoadmap::bootX86`
+**Verified by: **`XaquRoadmap::bootAArch64`, `XaquRoadmap::bootArmv7a` and `XaquRoadmap::bootX86`
 
 - **`x2apic`** — APIC IDs above 255 refused; QEMU's are 0 to 3.
 - **`psciParking`** — Refused, not guessed at.
@@ -3265,9 +3265,9 @@ Every processor online: INIT-SIPI-SIPI and a real-mode trampoline, PSCI CPU_ON t
 
 The third architecture, joined after stage 3 and brought through stage 4: the same loader converted ELF to PE32, a 32-bit layout argued rather than shrunk, LPAE as a paging geometry, device tree only, traps without mode stacks. Exit, met: the same self-checks and the same marker under U-Boot on QEMU virt.
 
-**Satisfied by: **`ferrixArmv7a`
+**Satisfied by: **`xaquArmv7a`
 
-**Verified by: **`FerrixRoadmap::BoardBoot` and `FerrixRoadmap::bootArmv7a`
+**Verified by: **`XaquRoadmap::BoardBoot` and `XaquRoadmap::bootArmv7a`
 
 - **`ed1Ev1Boards`** — 1 GiB boards put RAM's identity range on the direct map; plan_identity_map refuses, so they need a trampoline page.
 - **`hardwareBootTest`** — Automated hardware boot testing beyond watch-serial.
@@ -3278,9 +3278,9 @@ The third architecture, joined after stage 3 and brought through stage 4: the sa
 
 Task, kernel stacks, context switch, per-CPU runqueues, the class stack, EEVDF in src/lib/kernel/sched. Scheduling domains from the start with Throughput alone implemented. Exit, met on all three: a thousand kernel threads spawned on one processor run bounded work to completion and give every stack back (about 28,000 switches and 1,000 steals when it landed); then twelve spinners at two weights, each required to stay within EEVDF's own bound of its weighted share, the bound printed beside the lag. Three bugs it found: an idle processor never told of work, vmap::free releasing the address before unmapping, and banked private interrupt enables leaving every other core's timer off.
 
-**Satisfied by: **`ferrix.kernel.sched` and `ferrix.kernel.tasks`
+**Satisfied by: **`xaqu.kernel.sched` and `xaqu.kernel.tasks`
 
-**Verified by: **`FerrixRoadmap::bootAArch64`, `FerrixRoadmap::bootArmv7a` and `FerrixRoadmap::bootX86`
+**Verified by: **`XaquRoadmap::bootAArch64`, `XaquRoadmap::bootArmv7a` and `XaquRoadmap::bootX86`
 
 ### S6 — Stage 6 user mode
 
@@ -3288,7 +3288,7 @@ Task, kernel stacks, context switch, per-CPU runqueues, the class stack, EEVDF i
 
 AddressSpace, VMOs, the VMA tree as a process map, demand paging, copy-on-write, the ELF loader, the ring-3/EL0/USR transition. Exit, met on all three: a program at user privilege writes to fd 1 and exits with 42, with a page fault serviced along the way -- counted either side of the program and required to be non-zero. Down to user mode by sysretq on x86-64, eret to EL0 on AArch64 and rfeia to USR on ARMv7-A, each onto a dedicated entry stack. Also landed: fork with copy-on-write, TLB invalidation where a live mapping changes, tasks carrying an address space with the root swapped in choose_next, and a read of an inaccessible region refused. Left: scoping the user TLB shootdown, the missing invalidation in protect, and reading the console on Arm.
 
-**Allocated to: **`ferrix.kernel.vm`
+**Allocated to: **`xaqu.kernel.vm`
 
 ### S7 — Stage 7 Linux ABI
 
@@ -3304,7 +3304,7 @@ The console a terminal: termios honoured by a line discipline, the terminal and 
 
 Left: threads, and the stand-ins for a tty, a clock chip and an entropy source. The fault-to-signal catch and an SA_RESTART interrupted read are proven at the kernel's decision, not yet end-to-end by a user program.
 
-**Allocated to: **`ferrix.kernel.syscalls`, `ferrix.kernel.signals` and `ferrix.kernel.futex`
+**Allocated to: **`xaqu.kernel.syscalls`, `xaqu.kernel.signals` and `xaqu.kernel.futex`
 
 ### S8 — Stage 8 VFS
 
@@ -3312,7 +3312,7 @@ Left: threads, and the stand-ins for a tty, a clock chip and an entropy source. 
 
 Inode and dentry caches, the mount table, fd sharing rules, tmpfs, devfs, procfs, cpio initramfs. Exit: busybox ls -R /proc, cat /proc/self/maps, a script manipulating files under tmpfs.
 
-**Allocated to: **`ferrix.kernel.vfs` and `ferrix.kernel.filesystems`
+**Allocated to: **`xaqu.kernel.vfs` and `xaqu.kernel.filesystems`
 
 ### S9 — Stage 9 native ABI
 
@@ -3322,7 +3322,7 @@ Handle tables, Channel with handle passing, Port, Interrupt, IoMapping, Job; the
 
 Built: the byte-level half, in src/lib/proto/native-abi and src/lib/kernel/objects, host-tested, fuzzed and under Miri; and in src/kernel/src/object and syscall/native, handle tables on every Process, channels carrying handles, VMOs, signals and object_wait_one, Job, ports with object_wait_async, and IoMapping and Interrupt minted from stage 10's device nodes, with interrupts delivered to ports. The exit criterion runs in the boot test: two user-mode programs exchange a message and a VMO handle over a channel, and a job kill ends every program in the job and beneath it. Since: Vmo::hold, which keeps a page a DMA pin holds on its frame, an interrupt that wakes its waiter from the handler, and vmo_map, shared and never executable. Left for later: an EXECUTE right on a VMO handle, with the native loader, sub-page apertures, and process creation in the native ABI.
 
-**Allocated to: **`ferrix.kernel.native`
+**Allocated to: **`xaqu.kernel.native`
 
 ### S10 — Stage 10 userspace drivers
 
@@ -3330,9 +3330,9 @@ Built: the byte-level half, in src/lib/proto/native-abi and src/lib/kernel/objec
 
 Enumeration, IOMMU domains, devmgr, the shared-ring block protocol, virtio-blk as a user process. Exit: a sector read through a ring-3 driver with the IOMMU on, and a deliberate out-of-domain DMA attempt faulting.
 
-Built: PCI configuration space in src/lib/platform/pci, host-tested, fuzzed and under Miri; kernel enumeration from the MCFG and the device tree, in the boot test on all three architectures against a virtio-rng-pci device; device nodes whose apertures and vectors are tokens only device.rs mints; a virtio-rng device driven by DMA from the boot check, 64 bytes on every architecture; MSI-X tables and pending bits withheld from apertures; the DMAR and IORT parsed; the ten defects a review found fixed, apertures screened against everything the kernel owns and each other; the virtio-rng completion delivered by MSI-X on every architecture, through arch::msi_allocate (local APIC vectors, GICv2m SPIs); PCI vectors minted per MSI-X entry and masked at the entry, which stage 9's Interrupt uses; every IOMMU found and each PCI function placed behind one (DMAR, IORT, device tree), virtio's DMA sent through it on x86-64 and AArch64, and VT-d and stage-2 table encodings in src/lib/kernel/paging; an iommu::Domain every device node has, which the entropy check's DMA goes through; VT-d programmed at boot on x86-64 and the SMMUv3 under ACPI on AArch64, with translated domains. VMO_PIN pinning VMO pages into a device's domain; the out-of-domain write faulted on x86-64 and AArch64. The block ring (ferrix-blkring, BLOCK-RING.md) with its kernel side, block_ring_create and a disk in the devfs registry from an accepted HELLO; the kernel half of devmgr (device_info, device_quiesce, START, bus mastering at the first pin; DEVMGR.md). Exit met: /sbin/blk, the virtio-blk driver in ring 3, started from the boot check with START, reads sectors through the ring with VT-d and the SMMUv3 translating, ARMv7-A in degraded trusted mode. devmgr the program started by the kernel with every device and driver image, starting blk per disk. Still owed after the exit: trusting decoding-off BARs.
+Built: PCI configuration space in src/lib/platform/pci, host-tested, fuzzed and under Miri; kernel enumeration from the MCFG and the device tree, in the boot test on all three architectures against a virtio-rng-pci device; device nodes whose apertures and vectors are tokens only device.rs mints; a virtio-rng device driven by DMA from the boot check, 64 bytes on every architecture; MSI-X tables and pending bits withheld from apertures; the DMAR and IORT parsed; the ten defects a review found fixed, apertures screened against everything the kernel owns and each other; the virtio-rng completion delivered by MSI-X on every architecture, through arch::msi_allocate (local APIC vectors, GICv2m SPIs); PCI vectors minted per MSI-X entry and masked at the entry, which stage 9's Interrupt uses; every IOMMU found and each PCI function placed behind one (DMAR, IORT, device tree), virtio's DMA sent through it on x86-64 and AArch64, and VT-d and stage-2 table encodings in src/lib/kernel/paging; an iommu::Domain every device node has, which the entropy check's DMA goes through; VT-d programmed at boot on x86-64 and the SMMUv3 under ACPI on AArch64, with translated domains. VMO_PIN pinning VMO pages into a device's domain; the out-of-domain write faulted on x86-64 and AArch64. The block ring (xaqu-blkring, BLOCK-RING.md) with its kernel side, block_ring_create and a disk in the devfs registry from an accepted HELLO; the kernel half of devmgr (device_info, device_quiesce, START, bus mastering at the first pin; DEVMGR.md). Exit met: /sbin/blk, the virtio-blk driver in ring 3, started from the boot check with START, reads sectors through the ring with VT-d and the SMMUv3 translating, ARMv7-A in degraded trusted mode. devmgr the program started by the kernel with every device and driver image, starting blk per disk. Still owed after the exit: trusting decoding-off BARs.
 
-**Allocated to: **`ferrix.kernel.devices` and `ferrix.kernel.iommu`
+**Allocated to: **`xaqu.kernel.devices` and `xaqu.kernel.iommu`
 
 ### S11 — Stage 11 btrfs read
 
@@ -3342,7 +3342,7 @@ Block core, then btrfs stage A. Exit: an image made by real mkfs.btrfs is mounte
 
 Built, host-side: the btrfs read path in src/lib/fs/btrfs/format (mount bootstrap, lookup, readdir, read, zlib/LZO/zstd), reading four real mkfs.btrfs images back exactly; the mount over stage 8's traits in src/lib/fs/btrfs/vfs; the block queue in src/lib/fs/common/block. In the kernel: mount -t btrfs on a registered block device, read-only, file data in the inode's VMO pages. Exit met: the mkfs.btrfs fixture on a second virtio-blk disk, served by the ring-3 driver, mounted at /mnt and read back against its manifest on all three architectures.
 
-**Allocated to: **`ferrix.kernel.blockCore`
+**Allocated to: **`xaqu.kernel.blockCore`
 
 ### SN — Stage networking
 
@@ -3350,7 +3350,7 @@ Built, host-side: the btrfs read path in src/lib/fs/btrfs/format (mount bootstra
 
 Placed after stage 11 without a number of its own, as the ARMv7-A port sits after stage 4. The net core: AF_UNIX, AF_INET and AF_INET6 sockets, the AF_NETLINK route family, interfaces, routes and loopback; virtio-net as a userspace driver on stage 10's device objects; /proc/net; parsers and the TCP state machine in src/lib/, fuzzed. The host side exists already, in tools/common/xtask/src/gateway/: a NAT gateway on QEMU's dgram backend, written rather than reusing -netdev user because that is slirp and slirp is an optional QEMU build dependency, while tap and unprivileged user namespaces both need privilege a build tool must not ask for. Exit: under that gateway, busybox configures eth0 with ip, route and netstat report through /proc/net, wget fetches a file byte-for-byte, and nc carries a stream over loopback and an AF_UNIX socket. Met: cargo xtask test-net does all of it on all three architectures, and the AF_UNIX stream is proven by the stage 7 boot check, because this busybox's nc has no -U and cannot open a local socket at all.
 
-**Allocated to: **`ferrix.kernel.netCore`
+**Allocated to: **`xaqu.kernel.netCore`
 
 ### SD — Stage dynamic linking
 
@@ -3360,7 +3360,7 @@ Placed after Networking without a number of its own: nothing on rustc's path nee
 
 The first half is met on all three architectures and the second on x86-64 (2026-09-21): the kernel half, the loader with symbol versions, COPY relocations, every TLS form and dlfcn.h, and a libc.so.6 carrying glibc's versions. ferrousli's own port to AArch64 and ARMv7-A, which the customer put inside this stage, and then the loader and the version tables there, completed the exit on all three architectures (2026-09-23).
 
-**Allocated to: **`ferrix.kernel.syscalls` and `ferrix.userland`
+**Allocated to: **`xaqu.kernel.syscalls` and `xaqu.userland`
 
 ### SY — Stage sysfs
 
@@ -3368,7 +3368,7 @@ The first half is met on all three architectures and the second on x86-64 (2026-
 
 Placed after stage 12 without a number of its own, built on 2026-09-24 in the shape the customer chose that day: an in-kernel view like procfs and cgroupfs, fed by the services that own each fact, with bind and unbind sent to devmgr to decide (docs/SYSFS.md). Exit met: the boot check walks a whole sysfs on all three architectures after devmgr has started its drivers and holds it against enumeration, the cores and devmgr, and cargo xtask test-sysfs reads what libdrm reads from a shell and unbinds and binds the card's driver through sysfs.
 
-**Allocated to: **`ferrix.kernel.filesystems`
+**Allocated to: **`xaqu.kernel.filesystems`
 
 ### SC — Stage chrome
 
@@ -3376,13 +3376,13 @@ Placed after stage 12 without a number of its own, built on 2026-09-24 in the sh
 
 Placed after sysfs without a number of its own, asked for by the customer on 2026-09-23 (docs/CHROME.md). Google's prebuilt Chrome for Testing on Debian's glibc from a btrfs volume, by the customer's choice of 2026-09-24. Exit met on x86-64: cargo xtask test-chrome runs it headless, and cargo xtask test-chrome-window in a window on the compositor. On ferrousli in glibc's place, headless and in a window, since 2026-09-26: cargo xtask test-chrome and test-chrome-window with --interpreter ferrousli --library ferrousli. On the persistent btrfs root since 2026-09-26. With its zygote since 2026-09-26, once SCM_CREDENTIALS carried its children's pids; idle at 13% of a processor where it took 443%, after the futex, clock, munmap, shootdown and doorbell fixes and a vDSO (cargo xtask bench-chrome); and playing sound through /dev/snd (cargo xtask test-chrome-audio). Since 2026-10-25 a second volume (GTK 3) lets Chrome draw in Nocturne under the Xaqu desktop (test-compositor --boot chrome-xaqu), and a third (GSettings schemas, the MIME database, gdk-pixbuf's loaders) gives GTK's file chooser (--boot chrome-save opens Save-as with Ctrl+S); the first volume is left as it was (docs/CHROME.md). Owed: the GPU (inotify landed on 2026-09-27); and the STM32MP157D-DK1, where nothing has run yet. Debian's armhf Chromium runs headless on ARMv7-A under QEMU in 512 MiB (2026-10-08, after ARM's send and recv, cacheflush and mmap of a read-only btrfs were fixed); the SD card has a ring-3 SDMMC1 driver (2026-10-08); the cgroup controllers (2026-10-07) let the page cache give back a read-only btrfs's clean pages.
 
-**Allocated to: **`ferrix.userland`
+**Allocated to: **`xaqu.userland`
 
 ### S12 — Stage 12 btrfs write
 
 **Done**  ·  size about 60 points, spent  ·  `#implemented`
 
-btrfs stage B. Exit, strict: Ferrix writes a tree and host btrfs check finds nothing; then the power-fail test — kill QEMU at a random point inside a transaction, remount, replay, check again — over hundreds of seeds. Met: cargo xtask test-btrfs and cargo xtask test-powerfail. Owed beside it: writeback of MAP_SHARED pages.
+btrfs stage B. Exit, strict: Xaqu writes a tree and host btrfs check finds nothing; then the power-fail test — kill QEMU at a random point inside a transaction, remount, replay, check again — over hundreds of seeds. Met: cargo xtask test-btrfs and cargo xtask test-powerfail. Owed beside it: writeback of MAP_SHARED pages.
 
 ### S13 — Stage 13 isolation
 
@@ -3394,7 +3394,7 @@ Cgroups first (customer, 2026-09-23): stage 15's init is planned as if they exis
 
 Namespaces, for Steam's container, designed in docs/NAMESPACES.md (39 points, N1 to N6) and reviewed by the certification consultant on 2026-09-28. N1 done on 2026-09-28: per-mount flags enforced, MS_REMOUNT and mountinfo. N2 done on 2026-09-30: binds, MS_REC, MNT_DETACH of a subtree, and a superblock per filesystem so a plain remount reaches every bind of it. N3, mount namespaces with pivot_root and openat2, on 2026-09-30. The user, UTS, IPC, cgroup, pid and network namespaces are in too, and so are seccomp's classic-BPF checker and interpreter, its hook at the four system-call entries and its filters (S1 to S3, the last on 2026-10-04). SECCOMP_RET_TRAP, TSYNC and test-seccomp (S4 to S6) and Syscall User Dispatch are on main since 2026-10-18, and test-container, the exit criterion as one program, since 2026-10-14: it passed on all three architectures, so the exit is met. A writable mount's clean pages are reclaimed since 2026-10-15 (L.object.188-190). The stage is done on that scope; memory.reclaim, cpu.max.burst, cpu.idle, io.weight, io.latency and memory.stat's anon and pagetables were built on 2026-10-26 (L.object.182 to 185), and the dentry and inode caches' reclaim, time namespaces, N5, Linux's seccomp_bpf selftest and the native weight an idle job refuses the same day (L.object.186-187): every follow-on built.
 
-**Allocated to: **`ferrix.kernel.namespaces`, `ferrix.kernel.cgroups` and `ferrix.kernel.seccomp`
+**Allocated to: **`xaqu.kernel.namespaces`, `xaqu.kernel.cgroups` and `xaqu.kernel.seccomp`
 
 ### S14 — Stage 14 real time
 
@@ -3402,7 +3402,7 @@ Namespaces, for Steam's container, designed in docs/NAMESPACES.md (39 points, N1
 
 SoftRt and HardRt: FIFO/RR, threaded interrupts, PI mutexes, EDF with CBS admission, the runtime mode switch with its quiescence protocol. Exit: a cyclictest-shaped boot test on a HardRt domain while a Throughput domain is saturated, maximum wake-up latency inside the stated bound; plus an admission test that refuses an unschedulable set.
 
-**Allocated to: **`ferrix.kernel.sched`
+**Allocated to: **`xaqu.kernel.sched`
 
 ### S15 — Stage 15 userland
 
@@ -3420,21 +3420,21 @@ Next: authentication (docs/AUTH.md, approved by the customer on 2026-09-26): aut
 
 Designed on 2026-09-23 in docs/INIT.md: pid 1 and a service manager, systemd-shaped units, a cgroup per service, a pure manager in src/lib/init/svc behind backends a microkernel could serve. 67 points to L10, all spent; the stage 13 cgroups its first boot needs landed on 2026-09-24.
 
-**Allocated to: **`ferrix.userland`
+**Allocated to: **`xaqu.userland`
 
-**Verified by: **`FerrixRoadmap::InitSession` and `FerrixRoadmap::JobsSession`
+**Verified by: **`XaquRoadmap::InitSession` and `XaquRoadmap::JobsSession`
 
 ### S16 — Stage 16 rustc
 
 **Done**  ·  size the goal; about 40 guessed, 8 spent  ·  `#implemented`
 
-The remaining syscall surface, the memory scale, the spawn path for rust-lld, a sysroot on btrfs. Exit: rustc hello.rs && ./hello on Ferrix, in CI.
+The remaining syscall surface, the memory scale, the spawn path for rust-lld, a sysroot on btrfs. Exit: rustc hello.rs && ./hello on Xaqu, in CI.
 
 Met on 2026-09-22 on x86-64, verified by rustcTest: the rust-lang.org rustc (1.97.1 then, 1.99.1 since 2026-11-06), run by Debian's ld-linux and linking through cc and rust-lld, from a btrfs volume mounted at /data. What was new: the sysroot, the gate, and faults on a disk file's mapping that fill from the disk.
 
-**Allocated to: **`ferrix.userland.rustc`
+**Allocated to: **`xaqu.userland.rustc`
 
-**Verified by: **`FerrixRoadmap::RustcTest`
+**Verified by: **`XaquRoadmap::RustcTest`
 
 ### S17 — Stage 17 display and input
 
@@ -3442,13 +3442,13 @@ Met on 2026-09-22 on x86-64, verified by rustcTest: the rust-lang.org rustc (1.9
 
 A display core and a virtio-gpu driver in ring 3 behind /dev/dri/card0, an input core and a virtio-input driver behind /dev/input/eventN, and the calls a Rust event loop makes: epoll, eventfd, FIONBIO, memfd sealing, AF_UNIX with SCM_RIGHTS. Nothing is drawn by the kernel.
 
-The display iteration is done (xtask test-display) and so is the input iteration (xtask test-input, which sends a key and a touch through QMP and requires them back out of the nodes on x86-64 and AArch64, with a negative control that must fail). The seat came with the compositor: xtask test-seat types into a window on Ferrix from QEMU's far end, and the stage is met. docs/DISPLAY.md and docs/INPUT.md are the designs.
+The display iteration is done (xtask test-display) and so is the input iteration (xtask test-input, which sends a key and a touch through QMP and requires them back out of the nodes on x86-64 and AArch64, with a negative control that must fail). The seat came with the compositor: xtask test-seat types into a window on Xaqu from QEMU's far end, and the stage is met. docs/DISPLAY.md and docs/INPUT.md are the designs.
 
 ### S18 — Stage 18 compositor
 
 **Done**  ·  size 96 points, spent  ·  `#implemented`
 
-The compositor itself: the Wayland wire protocol and its server, xdg-shell, wl_shm, the dwindle and master layouts, a CPU renderer, hyprland.conf and the hyprctl socket. Exit: two real Wayland clients tiled on Ferrix's screen, pixel for pixel as the renderer draws them, which xtask test-compositor requires on x86-64 and AArch64. Met.
+The compositor itself: the Wayland wire protocol and its server, xdg-shell, wl_shm, the dwindle and master layouts, a CPU renderer, hyprland.conf and the hyprctl socket. Exit: two real Wayland clients tiled on Xaqu's screen, pixel for pixel as the renderer draws them, which xtask test-compositor requires on x86-64 and AArch64. Met.
 
 ### S19 — Stage 19 hyprland fidelity
 
@@ -3458,11 +3458,11 @@ What makes a Hyprland rather than a tiling compositor: animations with bezier cu
 
 Well under way: every one of Hyprland's globals, dispatchers and hyprctl commands is answered, and a person's own hyprland.conf -- 377 lines, a bar, a dock and a wallpaper daemon -- runs with no diagnostic.
 
-The GPU path, decided on 2026-09-18 and built on 2026-09-19 (docs/GPU.md 3.7 and 3.8), is Path A: the host's driver through virtio-gpu 3D. All four of its pieces are in -- the ring-3 driver's 3D commands, a render node with the virtgpu ioctls and 3D scanout, the host half in xtask, and a Rust virgl encoder behind a renderer trait with the software renderer still under it. The desktop composites on the GPU: a 1920x1080 frame of a video wallpaper behind a blurred translucent terminal went from 39 ms to 12, where 60 fps is 16.7. A card of Ferrix's own is stage 21. Since 2026-09-23 a served desktop takes the 3D card by default (docs/GPU.md 3.9) and the pointer is on virtio-gpu's cursor plane, so moving it draws no frame (docs/GPU.md 3.10). The driver keeps eight commands in flight on the control queue and has the device read a command stream where it lies, and an upload and a stream return once they are on their way, so a frame waits once, for its flush (docs/GPU.md 3.11).
+The GPU path, decided on 2026-09-18 and built on 2026-09-19 (docs/GPU.md 3.7 and 3.8), is Path A: the host's driver through virtio-gpu 3D. All four of its pieces are in -- the ring-3 driver's 3D commands, a render node with the virtgpu ioctls and 3D scanout, the host half in xtask, and a Rust virgl encoder behind a renderer trait with the software renderer still under it. The desktop composites on the GPU: a 1920x1080 frame of a video wallpaper behind a blurred translucent terminal went from 39 ms to 12, where 60 fps is 16.7. A card of Xaqu's own is stage 21. Since 2026-09-23 a served desktop takes the 3D card by default (docs/GPU.md 3.9) and the pointer is on virtio-gpu's cursor plane, so moving it draws no frame (docs/GPU.md 3.10). The driver keeps eight commands in flight on the control queue and has the device read a command stream where it lies, and an upload and a stream return once they are on their way, so a frame waits once, for its flush (docs/GPU.md 3.11).
 
-Of the 178, about 8 are left: the desktop's speed as it is watched (client pages as texture backing: 8 of 34, the cursor plane and the device queue spent). The pointer-driven options and second-pass effects (xray, no_screen_share, blur_popups, precise_mouse_move) landed on 2026-10-07. The X server the stage counted 40 for is yserver, a Rust X11 server with a rootless Wayland backend of Ferrix's own, 36 points, done on 2026-09-29 (docs/YSERVER.md). The rest of the GPU road is for clients that render for themselves, not for the compositor: zwp_linux_dmabuf_v1 in hyprix and a GBM-shaped allocator, so a client's GPU buffer is shown where it lies, built on 2026-10-07 and landed on 2026-10-08 (docs/GPU.md 3.13), and a Mesa on ferrousli, which is left.
+Of the 178, about 8 are left: the desktop's speed as it is watched (client pages as texture backing: 8 of 34, the cursor plane and the device queue spent). The pointer-driven options and second-pass effects (xray, no_screen_share, blur_popups, precise_mouse_move) landed on 2026-10-07. The X server the stage counted 40 for is yserver, a Rust X11 server with a rootless Wayland backend of Xaqu's own, 36 points, done on 2026-09-29 (docs/YSERVER.md). The rest of the GPU road is for clients that render for themselves, not for the compositor: zwp_linux_dmabuf_v1 in hyprix and a GBM-shaped allocator, so a client's GPU buffer is shown where it lies, built on 2026-10-07 and landed on 2026-10-08 (docs/GPU.md 3.13), and a Mesa on ferrousli, which is left.
 
-Gears, the customer's order of 2026-09-24 (docs/GPU.md 6): vkgears through Venus -- Mesa's Vulkan driver in the guest, the host's GPU under virglrenderer's render server -- on the Linux host, 39 points, done the same day: vkgears draws on the host's RADV (cargo xtask test-vkgears); and gears drawn by the DK1's own Vivante GC400T, an OpenGL ES 2.0 core with no Vulkan in any driver, through a ring-3 driver of Ferrix's own, 32 points, of which G1 and G2 (11) ran on the board the same day: the core runs a command buffer, its events by interrupt.
+Gears, the customer's order of 2026-09-24 (docs/GPU.md 6): vkgears through Venus -- Mesa's Vulkan driver in the guest, the host's GPU under virglrenderer's render server -- on the Linux host, 39 points, done the same day: vkgears draws on the host's RADV (cargo xtask test-vkgears); and gears drawn by the DK1's own Vivante GC400T, an OpenGL ES 2.0 core with no Vulkan in any driver, through a ring-3 driver of Xaqu's own, 32 points, of which G1 and G2 (11) ran on the board the same day: the core runs a command buffer, its events by interrupt.
 
 The desktop's own clients, begun on 2026-09-26 at the customer's request: waybar, fuzzel, hyprlock and hypridle in Rust, reading their own configuration files unchanged, over a shared foundation of 21 points. waybar and fuzzel are on main (2026-09-27) and run the customer's own configuration on run-compositor --everything, and hypridle is on main (2026-09-26); hyprlock is on main too (2026-10-03), its lock over authd.
 
@@ -3472,13 +3472,13 @@ The Xaqu desktop (docs/DESKTOP.md section 6) carries Nocturne for GTK 3 and GTK 
 
 **InProgress**  ·  size unsized, over 100 points  ·  `#inProgress`
 
-Ferrix on bare metal with an NVIDIA card driven by Ferrix itself: Path B of the GPU decision of 2026-09-18, opened when the customer wants real hardware. NVIDIA's open kernel modules as a ring-3 driver process behind an OS interface layer written for Ferrix, their GSP firmware, and a userspace that is either glibc-built closed libraries or Mesa's NVK over a Rust driver such as Linux's Nova, weighed when the stage opens. The customer chose NVIDIA's own driver and userspace on 2026-10-02 (docs/NVIDIA.md): N0, the kernel prerequisites, and N1, nvrm booting the RTX 3060's GSP with nvidia-smi, are on main (2026-10-03), and the chardev core's queue bound (F-63) with stage 10's chardev self-check since 2026-10-05. N2 to N4 and the screen on the customer's TV landed on 2026-10-05, and N3b's kernel half (a chardev render node, dmabufs and sync-file fences) on 2026-10-11. N3c, hyprix compositing on the card, is on main; run-compositor --nvidia keeps the software compositor unless FERRIX_NVIDIA_VTEST=1, because Chrome's WebGL page is faster under it (2026-10-25). nvrm follows a monitor plugged, unplugged or swapped, answers IMPORT_SYNC_FILE on its dmabufs, and quiesces its adapter when /run/nvrm-quiesce appears (docs/NVIDIA.md section 13): on the card it shut the adapter down in 1.45 s with NV_PMC_BOOT_0 unchanged and no Xid, and the kept card VMs quiesce on stop or yield; the monitor following and the sync-file import ran on the card too. The customer's Intel N150 box is the stage's first bare-metal machine (docs/N150.md): Ferrix booted on it on 2026-10-15, its drivers (AHCI, the YT6801, a firmware framebuffer, VT-d, SMBIOS, an event log) and a render driver for its Intel GPU (docs/INTEL-GPU.md) are on main, and the kernel bring-up is evidenced on QEMU only. Since 2026-10-21 main also holds that driver's 2 MiB and 64 KiB GPU pages and 2 MiB VT-d entries for a pin's aligned runs, a modeset of the second HDMI port with hot-plug and the monitor's EDID, and a ring-3 power driver; several of their box runs are BACKLOG rows. Exit: the stage 19 exit on real hardware, drawn by the card.
+Xaqu on bare metal with an NVIDIA card driven by Xaqu itself: Path B of the GPU decision of 2026-09-18, opened when the customer wants real hardware. NVIDIA's open kernel modules as a ring-3 driver process behind an OS interface layer written for Xaqu, their GSP firmware, and a userspace that is either glibc-built closed libraries or Mesa's NVK over a Rust driver such as Linux's Nova, weighed when the stage opens. The customer chose NVIDIA's own driver and userspace on 2026-10-02 (docs/NVIDIA.md): N0, the kernel prerequisites, and N1, nvrm booting the RTX 3060's GSP with nvidia-smi, are on main (2026-10-03), and the chardev core's queue bound (F-63) with stage 10's chardev self-check since 2026-10-05. N2 to N4 and the screen on the customer's TV landed on 2026-10-05, and N3b's kernel half (a chardev render node, dmabufs and sync-file fences) on 2026-10-11. N3c, hyprix compositing on the card, is on main; run-compositor --nvidia keeps the software compositor unless XAQU_NVIDIA_VTEST=1, because Chrome's WebGL page is faster under it (2026-10-25). nvrm follows a monitor plugged, unplugged or swapped, answers IMPORT_SYNC_FILE on its dmabufs, and quiesces its adapter when /run/nvrm-quiesce appears (docs/NVIDIA.md section 13): on the card it shut the adapter down in 1.45 s with NV_PMC_BOOT_0 unchanged and no Xid, and the kept card VMs quiesce on stop or yield; the monitor following and the sync-file import ran on the card too. The customer's Intel N150 box is the stage's first bare-metal machine (docs/N150.md): Xaqu booted on it on 2026-10-15, its drivers (AHCI, the YT6801, a firmware framebuffer, VT-d, SMBIOS, an event log) and a render driver for its Intel GPU (docs/INTEL-GPU.md) are on main, and the kernel bring-up is evidenced on QEMU only. Since 2026-10-21 main also holds that driver's 2 MiB and 64 KiB GPU pages and 2 MiB VT-d entries for a pin's aligned runs, a modeset of the second HDMI port with hot-plug and the monitor's EDID, and a ring-3 power driver; several of their box runs are BACKLOG rows. Exit: the stage 19 exit on real hardware, drawn by the card.
 
 ### S22 — Stage 22 steam
 
 **InProgress**  ·  size unsized, over 300 points  ·  `#inProgress`
 
-Steam on Ferrix, put on the roadmap by the customer on 2026-09-18 as the step after the GPU decision; a guest's stage first, on Path A's GPU, that does not wait for bare metal. What it stands on that nothing else staged: the 32-bit x86 ABI for the i386 client and 32-bit Wine, glibc's place taken by ferrousli under the Steam runtime, bubblewrap's needs over stage 13, a root on btrfs, XWayland, sound (virtio-snd, an audio core, a PulseAudio or PipeWire server), and Vulkan through Venus on a KVM host. Exit in three boots: the client logs in with its browser helper drawing; a native game installs, plays and sounds; a Windows game runs through Proton.
+Steam on Xaqu, put on the roadmap by the customer on 2026-09-18 as the step after the GPU decision; a guest's stage first, on Path A's GPU, that does not wait for bare metal. What it stands on that nothing else staged: the 32-bit x86 ABI for the i386 client and 32-bit Wine, glibc's place taken by ferrousli under the Steam runtime, bubblewrap's needs over stage 13, a root on btrfs, XWayland, sound (virtio-snd, an audio core, a PulseAudio or PipeWire server), and Vulkan through Venus on a KVM host. Exit in three boots: the client logs in with its browser helper drawing; a native game installs, plays and sounds; a Windows game runs through Proton.
 
 Under way since 2026-09-26. Sound's playback is done (docs/AUDIO.md, 24 points): a ring-3 virtio-snd driver, the kernel's audio core and /dev/snd, verified by cargo xtask test-audio on x86-64 and AArch64; alsa-lib (U1, 3) and a sound server (U2, unsized) are left. The 32-bit x86 ABI is designed in docs/I386.md, I1 to I4 at 42 points, and I1 is met: a 32-bit program entered in compatibility mode, making its calls through int $0x80, on a GDT in Linux's order. I2 to I4 followed on 2026-09-27 (threads, signals, fork, and Alpine's and Debian's i386 busybox), with I5a: Valve's steamcmd logs in to Steam. Sound was finished the same day with alsa-lib and pulsed, a PulseAudio-protocol server. On 2026-09-29 the Steam client, unchanged, drew its sign-in window on hyprix through yserver (docs/STEAM.md, cargo xtask test-steam-window), with launch-side workarounds each owned by a fix: namespaces for pressure-vessel, the /proc gaps, and a SIGBUS that needs a 16 GiB guest. On 2026-09-30 the exit's first step was met: on the --everything desktop, its 64-bit side on ferrousli, the client signs in and shows its store, gated by cargo xtask test-steam-store with a test account. Its sandbox waits on stage 13, and its GPU process on user copies through a device window and a render group (docs/STEAM.md section 6). On 2026-10-01 the second step got its gate, cargo xtask test-steam-game, not passing then (the customer reports a game running by 2026-10-21): Teeworlds installs on request and downloads, and Steam then stalls staging it, for a reason not yet known (docs/STEAM.md section 7). Since 2026-10-10 a native game can be preinstalled on the host and started by a compatibility tool outside the runtime's container.
 
@@ -3486,27 +3486,27 @@ Under way since 2026-09-26. Sound's playback is done (docs/AUDIO.md, 24 points):
 
 **InProgress**  ·  size about 205 points as a first guess, step 5 unknown  ·  `#inProgress`
 
-The Windows game Arknights: Endfield on Ferrix, through Wine with DXVK on NVIDIA's Vulkan, put on the roadmap by the customer on 2026-10-10 as the road after Steam. A feasibility study was written the same day; step 0 answered on 2026-10-13 (the anti-cheat refuses a virtual machine), Wine, DXVK and a Unity game run on Ferrix with no card, and Endfield's launcher draws its install dialog in Debian's Wine and in GE-Proton11-7's; the game's download stopped on ENOSPC from Ferrix's btrfs, whose cause, a writable mount's page cache never reclaimed, is fixed on main since 2026-10-15; Syscall User Dispatch and seccomp's TRAP are on main. Since 2026-10-23 the game, started from Steam, has run on the customer's N150 box on its Intel GPU's driver and reaches its world on about half its starts, at about 25 frames a second at 720p (docs/GAME-MODE.md); the steps below are not brought up to those runs. Eight steps in the order they can be proved: the game on plain Linux in the same VM shape, which costs no Ferrix work and answers whether its anti-cheat accepts a virtual machine; plain Wine starts on Ferrix, which needs arch_prctl(ARCH_SET_GS) first; a Direct3D 11 program draws through DXVK on the card, on stage 21's unlanded branches; a Unity DirectX 11 game without anti-cheat; the game's installer, launcher and login; past the anti-cheat, unknown until it is run; playable; and, optional, by way of Steam's own Proton, which is also stage 22's third exit step. What Wine needs of the kernel is sized here and not in stage 22. The anti-cheat's tolerance of Wine and of a virtual machine, an account ban and the game's terms are outside Ferrix's engineering and can stop it. Exit: the game reaches its world past the login and is playable at 1920x1080 and 60 frames a second on the RTX 3060; a recorded run on the card with the customer's account, not a boot in CI.
+The Windows game Arknights: Endfield on Xaqu, through Wine with DXVK on NVIDIA's Vulkan, put on the roadmap by the customer on 2026-10-10 as the road after Steam. A feasibility study was written the same day; step 0 answered on 2026-10-13 (the anti-cheat refuses a virtual machine), Wine, DXVK and a Unity game run on Xaqu with no card, and Endfield's launcher draws its install dialog in Debian's Wine and in GE-Proton11-7's; the game's download stopped on ENOSPC from Xaqu's btrfs, whose cause, a writable mount's page cache never reclaimed, is fixed on main since 2026-10-15; Syscall User Dispatch and seccomp's TRAP are on main. Since 2026-10-23 the game, started from Steam, has run on the customer's N150 box on its Intel GPU's driver and reaches its world on about half its starts, at about 25 frames a second at 720p (docs/GAME-MODE.md); the steps below are not brought up to those runs. Eight steps in the order they can be proved: the game on plain Linux in the same VM shape, which costs no Xaqu work and answers whether its anti-cheat accepts a virtual machine; plain Wine starts on Xaqu, which needs arch_prctl(ARCH_SET_GS) first; a Direct3D 11 program draws through DXVK on the card, on stage 21's unlanded branches; a Unity DirectX 11 game without anti-cheat; the game's installer, launcher and login; past the anti-cheat, unknown until it is run; playable; and, optional, by way of Steam's own Proton, which is also stage 22's third exit step. What Wine needs of the kernel is sized here and not in stage 22. The anti-cheat's tolerance of Wine and of a virtual machine, an account ban and the game's terms are outside Xaqu's engineering and can stop it. Exit: the game reaches its world past the login and is playable at 1920x1080 and 60 frames a second on the RTX 3060; a recorded run on the card with the customer's account, not a boot in CI.
 
 ### S24 — Stage 24 game path
 
 **InProgress**  ·  size about 68 points before the game domain, about 190 with it and the later rows  ·  `#inProgress`
 
-The game path: a fullscreen game faster on Ferrix than on a stock Linux desktop on the same hardware, in the time from an input to the picture that shows it and in how even the frames are under a background load. docs/GAME-PATH.md is the design and the build plan, written on 2026-10-10; the customer made it a stage the same day. R1, the frame recorder, R2, the latency probe, and R3, the load and the pinned guests, landed on 2026-10-14; nothing is measured on the card yet. In order: the measuring rig (R1 to R5, 19 to 21 points), the same binaries on both systems; then the first cut that can be compared with Linux, 47 points: the flip's time, the game lane (a fullscreen client's buffer scanned out as it is), input on its own thread, tearing, the just-in-time hold, a session with what the scheduler has, and drawing backwards from the deadline. The game domain (G1 to G5, 52 points) is stage 14's ground, in the item's core ring, and is outside this stage's points until the customer decides whether it may open stage 14 early; later rows, 73 points, are each built only on a measurement. It stands on stage 21's zero-copy work, which is not landed: displayctl v9, yserver's dmabuf hand-over and a hardware cursor, other sessions' and counted elsewhere. Nine of the design's ten questions are open. Exit, by the stage's own rig on the RTX 3060 at 1920x1080 and 60 Hz: input to scan-out with vsync on at a median of at most half a refresh plus the game's frame time plus 2 ms, and at least one refresh under stock Linux; and under the background load at most one missed refresh a minute, and fewer than stock Linux. A recorded run on the card, not a boot in CI.
+The game path: a fullscreen game faster on Xaqu than on a stock Linux desktop on the same hardware, in the time from an input to the picture that shows it and in how even the frames are under a background load. docs/GAME-PATH.md is the design and the build plan, written on 2026-10-10; the customer made it a stage the same day. R1, the frame recorder, R2, the latency probe, and R3, the load and the pinned guests, landed on 2026-10-14; nothing is measured on the card yet. In order: the measuring rig (R1 to R5, 19 to 21 points), the same binaries on both systems; then the first cut that can be compared with Linux, 47 points: the flip's time, the game lane (a fullscreen client's buffer scanned out as it is), input on its own thread, tearing, the just-in-time hold, a session with what the scheduler has, and drawing backwards from the deadline. The game domain (G1 to G5, 52 points) is stage 14's ground, in the item's core ring, and is outside this stage's points until the customer decides whether it may open stage 14 early; later rows, 73 points, are each built only on a measurement. It stands on stage 21's zero-copy work, which is not landed: displayctl v9, yserver's dmabuf hand-over and a hardware cursor, other sessions' and counted elsewhere. Nine of the design's ten questions are open. Exit, by the stage's own rig on the RTX 3060 at 1920x1080 and 60 Hz: input to scan-out with vsync on at a median of at most half a refresh plus the game's frame time plus 2 ms, and at least one refresh under stock Linux; and under the background load at most one missed refresh a minute, and fewer than stock Linux. A recorded run on the card, not a boot in CI.
 
-### S25 — Stage 25 xaqu
+### S25 — Stage 25 Xaqu
 
 **InProgress**  ·  size 63 points estimated, about 27 built; the Files app unsized  ·  `#inProgress`
 
 The customer's design "Xaqu WM" as the desktop's look and shell on hyprix (docs/DESKTOP.md section 6, 2026-10-24; docs/roadmap/stage-25-xaqu.md). Kernel lines: 0. Built, each with a test-compositor boot: Y1, the tokens (boot xaqu); Y2, the dock, and its stash (xaqu-dock, stash); the launcher in Xaqu's look, Y3's first half (xaqu-launcher); Y4, the widget sidebars, whose weather and quick settings tabs say "not kept yet" (sidebars); the wallpaper picker of Y7 (walls); Settings showing what hyprix has in force; Nocturne for GTK 3 and 4 with portald; and Chrome's GTK volumes (chrome-xaqu, chrome-save). Still to do: the palette (Y3, 5 points), snapping as the design has it (Y5, 13), the helpers (Y6, 8), the accent from the wallpaper and parallax (Y7), lock, notifications and the switcher in the tokens, and sounds (Y8, 5), the weather and quick settings of Y4, Y1's square bottom corners and undrawn animations, Y2's FX mark, tooltips and Bar layout, and a Files app as a follow-up. Exit: every slice of section 6.3 landed with its boot. Not met.
 
-**Allocated to: **`ferrix.userland`
+**Allocated to: **`xaqu.userland`
 
 ### S20 — Stage 20 self hosting
 
 **InProgress**  ·  size longer  ·  `#inProgress`
 
-Build Ferrix on Ferrix; the image the hosted compiler produces boots and passes every test above. First step met 2026-09-23: `cargo xtask test-selfhost` runs `cargo xtask build --arch x86_64` on Ferrix, from the toolchain, the tree and its vendored crates on a btrfs volume, and the image it made passes the boot test on the host. It fixed the writable btrfs's write offset and dirty-inode lifetime, made MAP_FIXED one step under a per-space layout lock, and added /proc/sys/vm/overcommit_memory. On Arm hardware since 2026-10-03: on a Pixel 7, the phone's own desktop image in crosvm runs `cargo xtask build --arch aarch64` from an AArch64 toolchain volume, and `test-selfhost --arch aarch64 --volume` boots the image it made. The matrix's plan mode is complete since 2026-10-05 (S-2): every test builds its variants before its first boot, 162 distinct builds against 139. Owed: ARMv7-A, the programs the other tests boot (musl std, a C compiler for ferrousli, the compositor's crates), and the whole matrix on the guest's images.
+Build Xaqu on Xaqu; the image the hosted compiler produces boots and passes every test above. First step met 2026-09-23: `cargo xtask test-selfhost` runs `cargo xtask build --arch x86_64` on Xaqu, from the toolchain, the tree and its vendored crates on a btrfs volume, and the image it made passes the boot test on the host. It fixed the writable btrfs's write offset and dirty-inode lifetime, made MAP_FIXED one step under a per-space layout lock, and added /proc/sys/vm/overcommit_memory. On Arm hardware since 2026-10-03: on a Pixel 7, the phone's own desktop image in crosvm runs `cargo xtask build --arch aarch64` from an AArch64 toolchain volume, and `test-selfhost --arch aarch64 --volume` boots the image it made. The matrix's plan mode is complete since 2026-10-05 (S-2): every test builds its variants before its first boot, 162 distinct builds against 139. Owed: ARMv7-A, the programs the other tests boot (musl std, a C compiler for ferrousli, the compositor's crates), and the whole matrix on the guest's images.
 
 ### Ordering
 
@@ -3554,34 +3554,34 @@ A check that fails the build. Cheapest first in cargo xtask check, so the gate m
 
 ```mermaid
 flowchart LR
-  n0_FerrixAssurance_hooksArmed["Hooks armed"]
-  n1_FerrixRequirements_Principles_aGateNeeds["P.17  A gate needs no arming"]
-  n2_FerrixAssurance_commitAuthorship["Commit authorship"]
-  n3_FerrixRequirements_Principles_oneAuthorP["P.16  One author per commit"]
-  n4_FerrixAssurance_assemblyAllowList["Assembly allow list"]
-  n5_FerrixRequirements_Principles_assemblyOn["P.7  Assembly only where the machine defines it"]
-  n6_FerrixAssurance_unsafeAudit["Unsafe audit"]
-  n7_FerrixRequirements_Principles_unsafeIsEx["P.12  Unsafe is expensive"]
-  n8_FerrixAssurance_panicAudit["Panic audit"]
-  n9_FerrixRequirements_Principles_noReachabl["P.13  No reachable panic"]
-  n10_FerrixAssurance_crateLayering["Crate layering"]
-  n11_FerrixRequirements_Principles_pureFuncti["P.5  Pure functions in libs"]
-  n12_FerrixRequirements_Principles_oneArchFac["P.6  One arch facade"]
-  n13_FerrixAssurance_bootTest["Boot test"]
-  n14_FerrixRequirements_Principles_everyStage["P.11  Every stage ends in something that runs"]
-  n15_FerrixRequirements_Principles_provedOnEv["P.15  Proved on every boot"]
-  n0_FerrixAssurance_hooksArmed -. "verified by" .-> n1_FerrixRequirements_Principles_aGateNeeds
-  n2_FerrixAssurance_commitAuthorship -. "verified by" .-> n3_FerrixRequirements_Principles_oneAuthorP
-  n2_FerrixAssurance_commitAuthorship -. "verified by" .-> n1_FerrixRequirements_Principles_aGateNeeds
-  n4_FerrixAssurance_assemblyAllowList -. "verified by" .-> n5_FerrixRequirements_Principles_assemblyOn
-  n6_FerrixAssurance_unsafeAudit -. "verified by" .-> n7_FerrixRequirements_Principles_unsafeIsEx
-  n8_FerrixAssurance_panicAudit -. "verified by" .-> n9_FerrixRequirements_Principles_noReachabl
-  n10_FerrixAssurance_crateLayering -. "verified by" .-> n11_FerrixRequirements_Principles_pureFuncti
-  n10_FerrixAssurance_crateLayering -. "verified by" .-> n12_FerrixRequirements_Principles_oneArchFac
-  n13_FerrixAssurance_bootTest -. "verified by" .-> n14_FerrixRequirements_Principles_everyStage
-  n13_FerrixAssurance_bootTest -. "verified by" .-> n15_FerrixRequirements_Principles_provedOnEv
+  n0_XaquAssurance_hooksArmed["Hooks armed"]
+  n1_XaquRequirements_Principles_aGateNeedsNo["P.17  A gate needs no arming"]
+  n2_XaquAssurance_commitAuthorship["Commit authorship"]
+  n3_XaquRequirements_Principles_oneAuthorPer["P.16  One author per commit"]
+  n4_XaquAssurance_assemblyAllowList["Assembly allow list"]
+  n5_XaquRequirements_Principles_assemblyOnly["P.7  Assembly only where the machine defines it"]
+  n6_XaquAssurance_unsafeAudit["Unsafe audit"]
+  n7_XaquRequirements_Principles_unsafeIsExpe["P.12  Unsafe is expensive"]
+  n8_XaquAssurance_panicAudit["Panic audit"]
+  n9_XaquRequirements_Principles_noReachableP["P.13  No reachable panic"]
+  n10_XaquAssurance_crateLayering["Crate layering"]
+  n11_XaquRequirements_Principles_pureFunction["P.5  Pure functions in libs"]
+  n12_XaquRequirements_Principles_oneArchFacad["P.6  One arch facade"]
+  n13_XaquAssurance_bootTest["Boot test"]
+  n14_XaquRequirements_Principles_everyStageEn["P.11  Every stage ends in something that runs"]
+  n15_XaquRequirements_Principles_provedOnEver["P.15  Proved on every boot"]
+  n0_XaquAssurance_hooksArmed -. "verified by" .-> n1_XaquRequirements_Principles_aGateNeedsNo
+  n2_XaquAssurance_commitAuthorship -. "verified by" .-> n3_XaquRequirements_Principles_oneAuthorPer
+  n2_XaquAssurance_commitAuthorship -. "verified by" .-> n1_XaquRequirements_Principles_aGateNeedsNo
+  n4_XaquAssurance_assemblyAllowList -. "verified by" .-> n5_XaquRequirements_Principles_assemblyOnly
+  n6_XaquAssurance_unsafeAudit -. "verified by" .-> n7_XaquRequirements_Principles_unsafeIsExpe
+  n8_XaquAssurance_panicAudit -. "verified by" .-> n9_XaquRequirements_Principles_noReachableP
+  n10_XaquAssurance_crateLayering -. "verified by" .-> n11_XaquRequirements_Principles_pureFunction
+  n10_XaquAssurance_crateLayering -. "verified by" .-> n12_XaquRequirements_Principles_oneArchFacad
+  n13_XaquAssurance_bootTest -. "verified by" .-> n14_XaquRequirements_Principles_everyStageEn
+  n13_XaquAssurance_bootTest -. "verified by" .-> n15_XaquRequirements_Principles_provedOnEver
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
-  class n0_FerrixAssurance_hooksArmed,n2_FerrixAssurance_commitAuthorship,n4_FerrixAssurance_assemblyAllowList,n6_FerrixAssurance_unsafeAudit,n8_FerrixAssurance_panicAudit,n10_FerrixAssurance_crateLayering,n13_FerrixAssurance_bootTest implemented
+  class n0_XaquAssurance_hooksArmed,n2_XaquAssurance_commitAuthorship,n4_XaquAssurance_assemblyAllowList,n6_XaquAssurance_unsafeAudit,n8_XaquAssurance_panicAudit,n10_XaquAssurance_crateLayering,n13_XaquAssurance_bootTest implemented
 ```
 
 **Figure 18 — The gates and the rules they uphold.** Each gate, and the design rule it exists to enforce. A rule with no gate into it is a rule enforced by review. [SVG](diagrams/gates-and-rules.svg) Source: `11-assurance.sysml`.
@@ -3605,7 +3605,7 @@ flowchart LR
 | `panicCatalog` | `python3 tools/common/gen/gen-panic-catalog.py --check` | — | The explanations a panic prints, rendered into a document that goes stale the moment an entry changes without it. |
 | `crateLayering` | `tools/common/check/check-crate-layering.sh` | `pureFunctionsInLibs` and `oneArchFacade` | src/lib/ depend on nothing above them; generic kernel code names no architecture; cfg(target_arch) only under arch/. |
 | `clippy` | `cargo clippy -- -D warnings` | — | Ten runs: the host (libraries and xtask), and the kernel, the loader, and the native runtime with its programs for each of the three targets, because cfg(target_arch) code is invisible to a lint pass for another machine. |
-| `hostTests` | `cargo test --workspace --exclude ferrix-kernel --exclude ferrix-boot` | — | 1950 unit tests across src/lib/ on 2026-09-23 (about 520 when this gate was first written down), plus doc tests and xtask's 242. |
+| `hostTests` | `cargo test --workspace --exclude xaqu-kernel --exclude xaqu-boot` | — | 1950 unit tests across src/lib/ on 2026-09-23 (about 520 when this gate was first written down), plus doc tests and xtask's 242. |
 | `cargoDeny` | `cargo deny check` | — |  |
 | `docsBuild` | `cargo doc` | — | Broken intra-doc links are denied. |
 | `miri` | `cargo miri test` | — | The src/lib crates MIRI_PACKAGES names in tools/common/xtask/src/check.rs. |
@@ -3663,7 +3663,7 @@ Total cap `1600` lines; ratio backstop `0.06`, target `0.001`.
 
 ### The boot tests
 
-cargo xtask test-boot --arch \<a>: boot firmware, loader and kernel under QEMU and require FERRIX-BOOT-OK within the timeout. Every stage's exit criterion is a self-check in kmain and a line in this log. Under tcg by default, except an x86-64 guest on an x86-64 Linux host outside CI, which runs under kvm; kvm and --accel auto use the host's MMU and TLB, which is the only way a missing invalidation is reachable.
+cargo xtask test-boot --arch \<a>: boot firmware, loader and kernel under QEMU and require XAQU-BOOT-OK within the timeout. Every stage's exit criterion is a self-check in kmain and a line in this log. Under tcg by default, except an x86-64 guest on an x86-64 Linux host outside CI, which runs under kvm; kvm and --accel auto use the host's MMU and TLB, which is the only way a missing invalidation is reachable.
 
 | Boot test | Architecture | Verifies |
 | --- | --- | --- |
@@ -3677,138 +3677,138 @@ Every satisfy, allocate and verify edge the model draws, resolved against the el
 
 ```mermaid
 flowchart LR
-  n0_FerrixRoadmap_stage1Boot["S1  Stage 1 boot"]
-  n1_FerrixStructure_Ferrix_loader["loader<br>ferrix.loader"]
-  n2_FerrixRoadmap_stage2Memory["S2  Stage 2 memory"]
-  n3_FerrixStructure_Kernel_mm["mm<br>ferrix.kernel.mm"]
-  n4_FerrixStructure_Kernel_vmap["vmap<br>ferrix.kernel.vmap"]
-  n5_FerrixRoadmap_stage3TrapsInterruptsTime["S3  Stage 3 traps interrupts time"]
-  n6_FerrixStructure_Kernel_trap["trap<br>ferrix.kernel.trap"]
-  n7_FerrixStructure_Kernel_irq["irq<br>ferrix.kernel.irq"]
-  n8_FerrixStructure_Kernel_timer["timer<br>ferrix.kernel.timer"]
-  n9_FerrixRoadmap_stage4Smp["S4  Stage 4 SMP"]
-  n10_FerrixStructure_Kernel_smp["smp<br>ferrix.kernel.smp"]
-  n11_FerrixRoadmap_armv7aPort["SA  ARMv7-A port"]
-  n12_FerrixStructure_ferrixArmv7a["ferrixArmv7a"]
-  n13_FerrixRoadmap_stage5Scheduler["S5  Stage 5 scheduler"]
-  n14_FerrixStructure_Kernel_sched["sched<br>ferrix.kernel.sched"]
-  n15_FerrixStructure_Kernel_tasks["tasks<br>ferrix.kernel.tasks"]
-  n16_FerrixRoadmap_stage6UserMode["S6  Stage 6 user mode"]
-  n17_FerrixStructure_Kernel_vm["vm<br>ferrix.kernel.vm"]
-  n18_FerrixRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI"]
-  n19_FerrixStructure_Kernel_syscalls["syscalls<br>ferrix.kernel.syscalls"]
-  n20_FerrixStructure_Kernel_signals["signals<br>ferrix.kernel.signals"]
-  n21_FerrixStructure_Kernel_futex["futex<br>ferrix.kernel.futex"]
-  n22_FerrixRoadmap_stage8Vfs["S8  Stage 8 VFS"]
-  n23_FerrixStructure_Kernel_vfs["vfs<br>ferrix.kernel.vfs"]
-  n24_FerrixStructure_Kernel_filesystems["filesystems<br>ferrix.kernel.filesystems"]
-  n25_FerrixRoadmap_stageSysfs["SY  Stage sysfs"]
-  n26_FerrixRoadmap_stageChrome["SC  Stage chrome"]
-  n27_FerrixStructure_Ferrix_userland["userland<br>ferrix.userland"]
-  n28_FerrixRoadmap_stage25Xaqu["S25  Stage 25 xaqu"]
-  n29_FerrixRoadmap_stage9NativeAbi["S9  Stage 9 native ABI"]
-  n30_FerrixStructure_Kernel_native["native<br>ferrix.kernel.native"]
-  n31_FerrixRoadmap_stage10UserspaceDrivers["S10  Stage 10 userspace drivers"]
-  n32_FerrixStructure_Machine_devices["devices<br>ferrix.kernel.devices"]
-  n33_FerrixStructure_Machine_iommu["iommu<br>ferrix.kernel.iommu"]
-  n34_FerrixRoadmap_stage11BtrfsRead["S11  Stage 11 btrfs read"]
-  n35_FerrixStructure_Kernel_blockCore["blockCore<br>ferrix.kernel.blockCore"]
-  n36_FerrixRoadmap_stageNetworking["SN  Stage networking"]
-  n37_FerrixStructure_Kernel_netCore["netCore<br>ferrix.kernel.netCore"]
-  n38_FerrixRoadmap_stageDynamicLinking["SD  Stage dynamic linking"]
-  n39_FerrixRoadmap_stage13Isolation["S13  Stage 13 isolation"]
-  n40_FerrixStructure_Kernel_namespaces["namespaces<br>ferrix.kernel.namespaces"]
-  n41_FerrixStructure_Kernel_cgroups["cgroups<br>ferrix.kernel.cgroups"]
-  n42_FerrixStructure_Kernel_seccomp["seccomp<br>ferrix.kernel.seccomp"]
-  n43_FerrixRoadmap_stage14RealTime["S14  Stage 14 real time"]
-  n44_FerrixRoadmap_stage15Userland["S15  Stage 15 userland"]
-  n45_FerrixRoadmap_stage16Rustc["S16  Stage 16 rustc"]
-  n46_FerrixStructure_Userland_rustc["rustc<br>ferrix.userland.rustc"]
-  n0_FerrixRoadmap_stage1Boot -. "satisfy" .-> n1_FerrixStructure_Ferrix_loader
-  n2_FerrixRoadmap_stage2Memory -. "satisfy" .-> n3_FerrixStructure_Kernel_mm
-  n2_FerrixRoadmap_stage2Memory -. "satisfy" .-> n4_FerrixStructure_Kernel_vmap
-  n5_FerrixRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n6_FerrixStructure_Kernel_trap
-  n5_FerrixRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n7_FerrixStructure_Kernel_irq
-  n5_FerrixRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n8_FerrixStructure_Kernel_timer
-  n9_FerrixRoadmap_stage4Smp -. "satisfy" .-> n10_FerrixStructure_Kernel_smp
-  n11_FerrixRoadmap_armv7aPort -. "satisfy" .-> n12_FerrixStructure_ferrixArmv7a
-  n13_FerrixRoadmap_stage5Scheduler -. "satisfy" .-> n14_FerrixStructure_Kernel_sched
-  n13_FerrixRoadmap_stage5Scheduler -. "satisfy" .-> n15_FerrixStructure_Kernel_tasks
-  n16_FerrixRoadmap_stage6UserMode -. "allocate" .-> n17_FerrixStructure_Kernel_vm
-  n18_FerrixRoadmap_stage7LinuxAbi -. "allocate" .-> n19_FerrixStructure_Kernel_syscalls
-  n18_FerrixRoadmap_stage7LinuxAbi -. "allocate" .-> n20_FerrixStructure_Kernel_signals
-  n18_FerrixRoadmap_stage7LinuxAbi -. "allocate" .-> n21_FerrixStructure_Kernel_futex
-  n22_FerrixRoadmap_stage8Vfs -. "allocate" .-> n23_FerrixStructure_Kernel_vfs
-  n22_FerrixRoadmap_stage8Vfs -. "allocate" .-> n24_FerrixStructure_Kernel_filesystems
-  n25_FerrixRoadmap_stageSysfs -. "allocate" .-> n24_FerrixStructure_Kernel_filesystems
-  n26_FerrixRoadmap_stageChrome -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
-  n28_FerrixRoadmap_stage25Xaqu -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
-  n29_FerrixRoadmap_stage9NativeAbi -. "allocate" .-> n30_FerrixStructure_Kernel_native
-  n31_FerrixRoadmap_stage10UserspaceDrivers -. "allocate" .-> n32_FerrixStructure_Machine_devices
-  n31_FerrixRoadmap_stage10UserspaceDrivers -. "allocate" .-> n33_FerrixStructure_Machine_iommu
-  n34_FerrixRoadmap_stage11BtrfsRead -. "allocate" .-> n35_FerrixStructure_Kernel_blockCore
-  n36_FerrixRoadmap_stageNetworking -. "allocate" .-> n37_FerrixStructure_Kernel_netCore
-  n38_FerrixRoadmap_stageDynamicLinking -. "allocate" .-> n19_FerrixStructure_Kernel_syscalls
-  n38_FerrixRoadmap_stageDynamicLinking -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
-  n39_FerrixRoadmap_stage13Isolation -. "allocate" .-> n40_FerrixStructure_Kernel_namespaces
-  n39_FerrixRoadmap_stage13Isolation -. "allocate" .-> n41_FerrixStructure_Kernel_cgroups
-  n39_FerrixRoadmap_stage13Isolation -. "allocate" .-> n42_FerrixStructure_Kernel_seccomp
-  n43_FerrixRoadmap_stage14RealTime -. "allocate" .-> n14_FerrixStructure_Kernel_sched
-  n44_FerrixRoadmap_stage15Userland -. "allocate" .-> n27_FerrixStructure_Ferrix_userland
-  n45_FerrixRoadmap_stage16Rustc -. "allocate" .-> n46_FerrixStructure_Userland_rustc
+  n0_XaquRoadmap_stage1Boot["S1  Stage 1 boot"]
+  n1_XaquStructure_Xaqu_loader["loader<br>xaqu.loader"]
+  n2_XaquRoadmap_stage2Memory["S2  Stage 2 memory"]
+  n3_XaquStructure_Kernel_mm["mm<br>xaqu.kernel.mm"]
+  n4_XaquStructure_Kernel_vmap["vmap<br>xaqu.kernel.vmap"]
+  n5_XaquRoadmap_stage3TrapsInterruptsTime["S3  Stage 3 traps interrupts time"]
+  n6_XaquStructure_Kernel_trap["trap<br>xaqu.kernel.trap"]
+  n7_XaquStructure_Kernel_irq["irq<br>xaqu.kernel.irq"]
+  n8_XaquStructure_Kernel_timer["timer<br>xaqu.kernel.timer"]
+  n9_XaquRoadmap_stage4Smp["S4  Stage 4 SMP"]
+  n10_XaquStructure_Kernel_smp["smp<br>xaqu.kernel.smp"]
+  n11_XaquRoadmap_armv7aPort["SA  ARMv7-A port"]
+  n12_XaquStructure_xaquArmv7a["xaquArmv7a"]
+  n13_XaquRoadmap_stage5Scheduler["S5  Stage 5 scheduler"]
+  n14_XaquStructure_Kernel_sched["sched<br>xaqu.kernel.sched"]
+  n15_XaquStructure_Kernel_tasks["tasks<br>xaqu.kernel.tasks"]
+  n16_XaquRoadmap_stage6UserMode["S6  Stage 6 user mode"]
+  n17_XaquStructure_Kernel_vm["vm<br>xaqu.kernel.vm"]
+  n18_XaquRoadmap_stage7LinuxAbi["S7  Stage 7 Linux ABI"]
+  n19_XaquStructure_Kernel_syscalls["syscalls<br>xaqu.kernel.syscalls"]
+  n20_XaquStructure_Kernel_signals["signals<br>xaqu.kernel.signals"]
+  n21_XaquStructure_Kernel_futex["futex<br>xaqu.kernel.futex"]
+  n22_XaquRoadmap_stage8Vfs["S8  Stage 8 VFS"]
+  n23_XaquStructure_Kernel_vfs["vfs<br>xaqu.kernel.vfs"]
+  n24_XaquStructure_Kernel_filesystems["filesystems<br>xaqu.kernel.filesystems"]
+  n25_XaquRoadmap_stageSysfs["SY  Stage sysfs"]
+  n26_XaquRoadmap_stageChrome["SC  Stage chrome"]
+  n27_XaquStructure_Xaqu_userland["userland<br>xaqu.userland"]
+  n28_XaquRoadmap_stage25Xaqu["S25  Stage 25 Xaqu"]
+  n29_XaquRoadmap_stage9NativeAbi["S9  Stage 9 native ABI"]
+  n30_XaquStructure_Kernel_native["native<br>xaqu.kernel.native"]
+  n31_XaquRoadmap_stage10UserspaceDrivers["S10  Stage 10 userspace drivers"]
+  n32_XaquStructure_Machine_devices["devices<br>xaqu.kernel.devices"]
+  n33_XaquStructure_Machine_iommu["iommu<br>xaqu.kernel.iommu"]
+  n34_XaquRoadmap_stage11BtrfsRead["S11  Stage 11 btrfs read"]
+  n35_XaquStructure_Kernel_blockCore["blockCore<br>xaqu.kernel.blockCore"]
+  n36_XaquRoadmap_stageNetworking["SN  Stage networking"]
+  n37_XaquStructure_Kernel_netCore["netCore<br>xaqu.kernel.netCore"]
+  n38_XaquRoadmap_stageDynamicLinking["SD  Stage dynamic linking"]
+  n39_XaquRoadmap_stage13Isolation["S13  Stage 13 isolation"]
+  n40_XaquStructure_Kernel_namespaces["namespaces<br>xaqu.kernel.namespaces"]
+  n41_XaquStructure_Kernel_cgroups["cgroups<br>xaqu.kernel.cgroups"]
+  n42_XaquStructure_Kernel_seccomp["seccomp<br>xaqu.kernel.seccomp"]
+  n43_XaquRoadmap_stage14RealTime["S14  Stage 14 real time"]
+  n44_XaquRoadmap_stage15Userland["S15  Stage 15 userland"]
+  n45_XaquRoadmap_stage16Rustc["S16  Stage 16 rustc"]
+  n46_XaquStructure_Userland_rustc["rustc<br>xaqu.userland.rustc"]
+  n0_XaquRoadmap_stage1Boot -. "satisfy" .-> n1_XaquStructure_Xaqu_loader
+  n2_XaquRoadmap_stage2Memory -. "satisfy" .-> n3_XaquStructure_Kernel_mm
+  n2_XaquRoadmap_stage2Memory -. "satisfy" .-> n4_XaquStructure_Kernel_vmap
+  n5_XaquRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n6_XaquStructure_Kernel_trap
+  n5_XaquRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n7_XaquStructure_Kernel_irq
+  n5_XaquRoadmap_stage3TrapsInterruptsTime -. "satisfy" .-> n8_XaquStructure_Kernel_timer
+  n9_XaquRoadmap_stage4Smp -. "satisfy" .-> n10_XaquStructure_Kernel_smp
+  n11_XaquRoadmap_armv7aPort -. "satisfy" .-> n12_XaquStructure_xaquArmv7a
+  n13_XaquRoadmap_stage5Scheduler -. "satisfy" .-> n14_XaquStructure_Kernel_sched
+  n13_XaquRoadmap_stage5Scheduler -. "satisfy" .-> n15_XaquStructure_Kernel_tasks
+  n16_XaquRoadmap_stage6UserMode -. "allocate" .-> n17_XaquStructure_Kernel_vm
+  n18_XaquRoadmap_stage7LinuxAbi -. "allocate" .-> n19_XaquStructure_Kernel_syscalls
+  n18_XaquRoadmap_stage7LinuxAbi -. "allocate" .-> n20_XaquStructure_Kernel_signals
+  n18_XaquRoadmap_stage7LinuxAbi -. "allocate" .-> n21_XaquStructure_Kernel_futex
+  n22_XaquRoadmap_stage8Vfs -. "allocate" .-> n23_XaquStructure_Kernel_vfs
+  n22_XaquRoadmap_stage8Vfs -. "allocate" .-> n24_XaquStructure_Kernel_filesystems
+  n25_XaquRoadmap_stageSysfs -. "allocate" .-> n24_XaquStructure_Kernel_filesystems
+  n26_XaquRoadmap_stageChrome -. "allocate" .-> n27_XaquStructure_Xaqu_userland
+  n28_XaquRoadmap_stage25Xaqu -. "allocate" .-> n27_XaquStructure_Xaqu_userland
+  n29_XaquRoadmap_stage9NativeAbi -. "allocate" .-> n30_XaquStructure_Kernel_native
+  n31_XaquRoadmap_stage10UserspaceDrivers -. "allocate" .-> n32_XaquStructure_Machine_devices
+  n31_XaquRoadmap_stage10UserspaceDrivers -. "allocate" .-> n33_XaquStructure_Machine_iommu
+  n34_XaquRoadmap_stage11BtrfsRead -. "allocate" .-> n35_XaquStructure_Kernel_blockCore
+  n36_XaquRoadmap_stageNetworking -. "allocate" .-> n37_XaquStructure_Kernel_netCore
+  n38_XaquRoadmap_stageDynamicLinking -. "allocate" .-> n19_XaquStructure_Kernel_syscalls
+  n38_XaquRoadmap_stageDynamicLinking -. "allocate" .-> n27_XaquStructure_Xaqu_userland
+  n39_XaquRoadmap_stage13Isolation -. "allocate" .-> n40_XaquStructure_Kernel_namespaces
+  n39_XaquRoadmap_stage13Isolation -. "allocate" .-> n41_XaquStructure_Kernel_cgroups
+  n39_XaquRoadmap_stage13Isolation -. "allocate" .-> n42_XaquStructure_Kernel_seccomp
+  n43_XaquRoadmap_stage14RealTime -. "allocate" .-> n14_XaquStructure_Kernel_sched
+  n44_XaquRoadmap_stage15Userland -. "allocate" .-> n27_XaquStructure_Xaqu_userland
+  n45_XaquRoadmap_stage16Rustc -. "allocate" .-> n46_XaquStructure_Userland_rustc
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
   classDef planned fill:#e4e7ea,stroke:#6a737e,color:#16191d
-  class n0_FerrixRoadmap_stage1Boot,n2_FerrixRoadmap_stage2Memory,n3_FerrixStructure_Kernel_mm,n4_FerrixStructure_Kernel_vmap,n5_FerrixRoadmap_stage3TrapsInterruptsTime,n6_FerrixStructure_Kernel_trap,n7_FerrixStructure_Kernel_irq,n8_FerrixStructure_Kernel_timer,n9_FerrixRoadmap_stage4Smp,n10_FerrixStructure_Kernel_smp,n11_FerrixRoadmap_armv7aPort,n13_FerrixRoadmap_stage5Scheduler,n14_FerrixStructure_Kernel_sched,n15_FerrixStructure_Kernel_tasks,n16_FerrixRoadmap_stage6UserMode,n17_FerrixStructure_Kernel_vm,n18_FerrixRoadmap_stage7LinuxAbi,n19_FerrixStructure_Kernel_syscalls,n20_FerrixStructure_Kernel_signals,n21_FerrixStructure_Kernel_futex,n22_FerrixRoadmap_stage8Vfs,n23_FerrixStructure_Kernel_vfs,n24_FerrixStructure_Kernel_filesystems,n25_FerrixRoadmap_stageSysfs,n29_FerrixRoadmap_stage9NativeAbi,n30_FerrixStructure_Kernel_native,n31_FerrixRoadmap_stage10UserspaceDrivers,n34_FerrixRoadmap_stage11BtrfsRead,n35_FerrixStructure_Kernel_blockCore,n36_FerrixRoadmap_stageNetworking,n37_FerrixStructure_Kernel_netCore,n38_FerrixRoadmap_stageDynamicLinking,n39_FerrixRoadmap_stage13Isolation,n40_FerrixStructure_Kernel_namespaces,n41_FerrixStructure_Kernel_cgroups,n42_FerrixStructure_Kernel_seccomp,n45_FerrixRoadmap_stage16Rustc,n46_FerrixStructure_Userland_rustc implemented
-  class n26_FerrixRoadmap_stageChrome,n27_FerrixStructure_Ferrix_userland,n28_FerrixRoadmap_stage25Xaqu,n44_FerrixRoadmap_stage15Userland inProgress
-  class n43_FerrixRoadmap_stage14RealTime planned
+  class n0_XaquRoadmap_stage1Boot,n2_XaquRoadmap_stage2Memory,n3_XaquStructure_Kernel_mm,n4_XaquStructure_Kernel_vmap,n5_XaquRoadmap_stage3TrapsInterruptsTime,n6_XaquStructure_Kernel_trap,n7_XaquStructure_Kernel_irq,n8_XaquStructure_Kernel_timer,n9_XaquRoadmap_stage4Smp,n10_XaquStructure_Kernel_smp,n11_XaquRoadmap_armv7aPort,n13_XaquRoadmap_stage5Scheduler,n14_XaquStructure_Kernel_sched,n15_XaquStructure_Kernel_tasks,n16_XaquRoadmap_stage6UserMode,n17_XaquStructure_Kernel_vm,n18_XaquRoadmap_stage7LinuxAbi,n19_XaquStructure_Kernel_syscalls,n20_XaquStructure_Kernel_signals,n21_XaquStructure_Kernel_futex,n22_XaquRoadmap_stage8Vfs,n23_XaquStructure_Kernel_vfs,n24_XaquStructure_Kernel_filesystems,n25_XaquRoadmap_stageSysfs,n29_XaquRoadmap_stage9NativeAbi,n30_XaquStructure_Kernel_native,n31_XaquRoadmap_stage10UserspaceDrivers,n34_XaquRoadmap_stage11BtrfsRead,n35_XaquStructure_Kernel_blockCore,n36_XaquRoadmap_stageNetworking,n37_XaquStructure_Kernel_netCore,n38_XaquRoadmap_stageDynamicLinking,n39_XaquRoadmap_stage13Isolation,n40_XaquStructure_Kernel_namespaces,n41_XaquStructure_Kernel_cgroups,n42_XaquStructure_Kernel_seccomp,n45_XaquRoadmap_stage16Rustc,n46_XaquStructure_Userland_rustc implemented
+  class n26_XaquRoadmap_stageChrome,n27_XaquStructure_Xaqu_userland,n28_XaquRoadmap_stage25Xaqu,n44_XaquRoadmap_stage15Userland inProgress
+  class n43_XaquRoadmap_stage14RealTime planned
 ```
 
 **Figure 19 — Stages and the parts that answer them.** Each line carries the word the model wrote: `satisfy` where the part exists, `allocate` where it is one the stage still owes. [SVG](diagrams/stages-and-parts.svg) Source: `10-roadmap.sysml`.
 
 ```mermaid
 flowchart LR
-  n0_FerrixRoadmap_bootX86["Boot x86"]
-  n1_FerrixRoadmap_stage1Boot["S1  stage1Boot"]
-  n2_FerrixRoadmap_stage2Memory["S2  stage2Memory"]
-  n3_FerrixRoadmap_stage3TrapsInterruptsTime["S3  stage3TrapsInterruptsTime"]
-  n4_FerrixRoadmap_stage4Smp["S4  stage4Smp"]
-  n5_FerrixRoadmap_stage5Scheduler["S5  stage5Scheduler"]
-  n6_FerrixRoadmap_bootAArch64["Boot aarch64"]
-  n7_FerrixRoadmap_bootArmv7a["Boot ARMv7-A"]
-  n8_FerrixRoadmap_armv7aPort["SA  armv7aPort"]
-  n9_FerrixRoadmap_BoardBoot["Board boot"]
-  n10_FerrixRoadmap_JobsSession["Jobs session"]
-  n11_FerrixRoadmap_stage15Userland["S15  stage15Userland"]
-  n12_FerrixRoadmap_InitSession["Init session"]
-  n13_FerrixRoadmap_RustcTest["Rustc test"]
-  n14_FerrixRequirements_hostsRustc["G  hostsRustc"]
-  n15_FerrixRoadmap_stage16Rustc["S16  stage16Rustc"]
-  n0_FerrixRoadmap_bootX86 -. "verified by" .-> n1_FerrixRoadmap_stage1Boot
-  n0_FerrixRoadmap_bootX86 -. "verified by" .-> n2_FerrixRoadmap_stage2Memory
-  n0_FerrixRoadmap_bootX86 -. "verified by" .-> n3_FerrixRoadmap_stage3TrapsInterruptsTime
-  n0_FerrixRoadmap_bootX86 -. "verified by" .-> n4_FerrixRoadmap_stage4Smp
-  n0_FerrixRoadmap_bootX86 -. "verified by" .-> n5_FerrixRoadmap_stage5Scheduler
-  n6_FerrixRoadmap_bootAArch64 -. "verified by" .-> n1_FerrixRoadmap_stage1Boot
-  n6_FerrixRoadmap_bootAArch64 -. "verified by" .-> n2_FerrixRoadmap_stage2Memory
-  n6_FerrixRoadmap_bootAArch64 -. "verified by" .-> n3_FerrixRoadmap_stage3TrapsInterruptsTime
-  n6_FerrixRoadmap_bootAArch64 -. "verified by" .-> n4_FerrixRoadmap_stage4Smp
-  n6_FerrixRoadmap_bootAArch64 -. "verified by" .-> n5_FerrixRoadmap_stage5Scheduler
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n1_FerrixRoadmap_stage1Boot
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n2_FerrixRoadmap_stage2Memory
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n3_FerrixRoadmap_stage3TrapsInterruptsTime
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n4_FerrixRoadmap_stage4Smp
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n5_FerrixRoadmap_stage5Scheduler
-  n7_FerrixRoadmap_bootArmv7a -. "verified by" .-> n8_FerrixRoadmap_armv7aPort
-  n9_FerrixRoadmap_BoardBoot -. "verified by" .-> n8_FerrixRoadmap_armv7aPort
-  n10_FerrixRoadmap_JobsSession -. "verified by" .-> n11_FerrixRoadmap_stage15Userland
-  n12_FerrixRoadmap_InitSession -. "verified by" .-> n11_FerrixRoadmap_stage15Userland
-  n13_FerrixRoadmap_RustcTest -. "verified by" .-> n14_FerrixRequirements_hostsRustc
-  n13_FerrixRoadmap_RustcTest -. "verified by" .-> n15_FerrixRoadmap_stage16Rustc
+  n0_XaquRoadmap_bootX86["Boot x86"]
+  n1_XaquRoadmap_stage1Boot["S1  stage1Boot"]
+  n2_XaquRoadmap_stage2Memory["S2  stage2Memory"]
+  n3_XaquRoadmap_stage3TrapsInterruptsTime["S3  stage3TrapsInterruptsTime"]
+  n4_XaquRoadmap_stage4Smp["S4  stage4Smp"]
+  n5_XaquRoadmap_stage5Scheduler["S5  stage5Scheduler"]
+  n6_XaquRoadmap_bootAArch64["Boot aarch64"]
+  n7_XaquRoadmap_bootArmv7a["Boot ARMv7-A"]
+  n8_XaquRoadmap_armv7aPort["SA  armv7aPort"]
+  n9_XaquRoadmap_BoardBoot["Board boot"]
+  n10_XaquRoadmap_JobsSession["Jobs session"]
+  n11_XaquRoadmap_stage15Userland["S15  stage15Userland"]
+  n12_XaquRoadmap_InitSession["Init session"]
+  n13_XaquRoadmap_RustcTest["Rustc test"]
+  n14_XaquRequirements_hostsRustc["G  hostsRustc"]
+  n15_XaquRoadmap_stage16Rustc["S16  stage16Rustc"]
+  n0_XaquRoadmap_bootX86 -. "verified by" .-> n1_XaquRoadmap_stage1Boot
+  n0_XaquRoadmap_bootX86 -. "verified by" .-> n2_XaquRoadmap_stage2Memory
+  n0_XaquRoadmap_bootX86 -. "verified by" .-> n3_XaquRoadmap_stage3TrapsInterruptsTime
+  n0_XaquRoadmap_bootX86 -. "verified by" .-> n4_XaquRoadmap_stage4Smp
+  n0_XaquRoadmap_bootX86 -. "verified by" .-> n5_XaquRoadmap_stage5Scheduler
+  n6_XaquRoadmap_bootAArch64 -. "verified by" .-> n1_XaquRoadmap_stage1Boot
+  n6_XaquRoadmap_bootAArch64 -. "verified by" .-> n2_XaquRoadmap_stage2Memory
+  n6_XaquRoadmap_bootAArch64 -. "verified by" .-> n3_XaquRoadmap_stage3TrapsInterruptsTime
+  n6_XaquRoadmap_bootAArch64 -. "verified by" .-> n4_XaquRoadmap_stage4Smp
+  n6_XaquRoadmap_bootAArch64 -. "verified by" .-> n5_XaquRoadmap_stage5Scheduler
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n1_XaquRoadmap_stage1Boot
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n2_XaquRoadmap_stage2Memory
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n3_XaquRoadmap_stage3TrapsInterruptsTime
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n4_XaquRoadmap_stage4Smp
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n5_XaquRoadmap_stage5Scheduler
+  n7_XaquRoadmap_bootArmv7a -. "verified by" .-> n8_XaquRoadmap_armv7aPort
+  n9_XaquRoadmap_BoardBoot -. "verified by" .-> n8_XaquRoadmap_armv7aPort
+  n10_XaquRoadmap_JobsSession -. "verified by" .-> n11_XaquRoadmap_stage15Userland
+  n12_XaquRoadmap_InitSession -. "verified by" .-> n11_XaquRoadmap_stage15Userland
+  n13_XaquRoadmap_RustcTest -. "verified by" .-> n14_XaquRequirements_hostsRustc
+  n13_XaquRoadmap_RustcTest -. "verified by" .-> n15_XaquRoadmap_stage16Rustc
   classDef implemented fill:#dceae2,stroke:#2c6e4e,color:#16191d
   classDef inProgress fill:#dae5f0,stroke:#2a5f8f,color:#16191d
-  class n1_FerrixRoadmap_stage1Boot,n2_FerrixRoadmap_stage2Memory,n3_FerrixRoadmap_stage3TrapsInterruptsTime,n4_FerrixRoadmap_stage4Smp,n5_FerrixRoadmap_stage5Scheduler,n8_FerrixRoadmap_armv7aPort,n13_FerrixRoadmap_RustcTest,n15_FerrixRoadmap_stage16Rustc implemented
-  class n11_FerrixRoadmap_stage15Userland inProgress
+  class n1_XaquRoadmap_stage1Boot,n2_XaquRoadmap_stage2Memory,n3_XaquRoadmap_stage3TrapsInterruptsTime,n4_XaquRoadmap_stage4Smp,n5_XaquRoadmap_stage5Scheduler,n8_XaquRoadmap_armv7aPort,n13_XaquRoadmap_RustcTest,n15_XaquRoadmap_stage16Rustc implemented
+  class n11_XaquRoadmap_stage15Userland inProgress
 ```
 
 **Figure 20 — The boot tests and the stages they verify.** Each verification case, and every stage whose exit criterion it demonstrates on a boot. [SVG](diagrams/tests-and-stages.svg) Source: `10-roadmap.sysml`.
@@ -3817,16 +3817,16 @@ flowchart LR
 
 | Requirement | Element |
 | --- | --- |
-| `stage1Boot` | `ferrix.loader` |
-| `stage2Memory` | `ferrix.kernel.mm` |
-| `stage2Memory` | `ferrix.kernel.vmap` |
-| `stage3TrapsInterruptsTime` | `ferrix.kernel.trap` |
-| `stage3TrapsInterruptsTime` | `ferrix.kernel.irq` |
-| `stage3TrapsInterruptsTime` | `ferrix.kernel.timer` |
-| `stage4Smp` | `ferrix.kernel.smp` |
-| `armv7aPort` | `ferrixArmv7a` |
-| `stage5Scheduler` | `ferrix.kernel.sched` |
-| `stage5Scheduler` | `ferrix.kernel.tasks` |
+| `stage1Boot` | `xaqu.loader` |
+| `stage2Memory` | `xaqu.kernel.mm` |
+| `stage2Memory` | `xaqu.kernel.vmap` |
+| `stage3TrapsInterruptsTime` | `xaqu.kernel.trap` |
+| `stage3TrapsInterruptsTime` | `xaqu.kernel.irq` |
+| `stage3TrapsInterruptsTime` | `xaqu.kernel.timer` |
+| `stage4Smp` | `xaqu.kernel.smp` |
+| `armv7aPort` | `xaquArmv7a` |
+| `stage5Scheduler` | `xaqu.kernel.sched` |
+| `stage5Scheduler` | `xaqu.kernel.tasks` |
 
 10 edges — each reads “requirement is satisfied by element”.
 
@@ -3834,28 +3834,28 @@ flowchart LR
 
 | Requirement | Element |
 | --- | --- |
-| `stage6UserMode` | `ferrix.kernel.vm` |
-| `stage7LinuxAbi` | `ferrix.kernel.syscalls` |
-| `stage7LinuxAbi` | `ferrix.kernel.signals` |
-| `stage7LinuxAbi` | `ferrix.kernel.futex` |
-| `stage8Vfs` | `ferrix.kernel.vfs` |
-| `stage8Vfs` | `ferrix.kernel.filesystems` |
-| `stageSysfs` | `ferrix.kernel.filesystems` |
-| `stageChrome` | `ferrix.userland` |
-| `stage25Xaqu` | `ferrix.userland` |
-| `stage9NativeAbi` | `ferrix.kernel.native` |
-| `stage10UserspaceDrivers` | `ferrix.kernel.devices` |
-| `stage10UserspaceDrivers` | `ferrix.kernel.iommu` |
-| `stage11BtrfsRead` | `ferrix.kernel.blockCore` |
-| `stageNetworking` | `ferrix.kernel.netCore` |
-| `stageDynamicLinking` | `ferrix.kernel.syscalls` |
-| `stageDynamicLinking` | `ferrix.userland` |
-| `stage13Isolation` | `ferrix.kernel.namespaces` |
-| `stage13Isolation` | `ferrix.kernel.cgroups` |
-| `stage13Isolation` | `ferrix.kernel.seccomp` |
-| `stage14RealTime` | `ferrix.kernel.sched` |
-| `stage15Userland` | `ferrix.userland` |
-| `stage16Rustc` | `ferrix.userland.rustc` |
+| `stage6UserMode` | `xaqu.kernel.vm` |
+| `stage7LinuxAbi` | `xaqu.kernel.syscalls` |
+| `stage7LinuxAbi` | `xaqu.kernel.signals` |
+| `stage7LinuxAbi` | `xaqu.kernel.futex` |
+| `stage8Vfs` | `xaqu.kernel.vfs` |
+| `stage8Vfs` | `xaqu.kernel.filesystems` |
+| `stageSysfs` | `xaqu.kernel.filesystems` |
+| `stageChrome` | `xaqu.userland` |
+| `stage25Xaqu` | `xaqu.userland` |
+| `stage9NativeAbi` | `xaqu.kernel.native` |
+| `stage10UserspaceDrivers` | `xaqu.kernel.devices` |
+| `stage10UserspaceDrivers` | `xaqu.kernel.iommu` |
+| `stage11BtrfsRead` | `xaqu.kernel.blockCore` |
+| `stageNetworking` | `xaqu.kernel.netCore` |
+| `stageDynamicLinking` | `xaqu.kernel.syscalls` |
+| `stageDynamicLinking` | `xaqu.userland` |
+| `stage13Isolation` | `xaqu.kernel.namespaces` |
+| `stage13Isolation` | `xaqu.kernel.cgroups` |
+| `stage13Isolation` | `xaqu.kernel.seccomp` |
+| `stage14RealTime` | `xaqu.kernel.sched` |
+| `stage15Userland` | `xaqu.userland` |
+| `stage16Rustc` | `xaqu.userland.rustc` |
 
 22 edges — each reads “requirement is allocated to element”.
 
@@ -3863,37 +3863,37 @@ flowchart LR
 
 | Requirement | Element |
 | --- | --- |
-| `stage1Boot` | `FerrixRoadmap::bootX86` |
-| `stage2Memory` | `FerrixRoadmap::bootX86` |
-| `stage3TrapsInterruptsTime` | `FerrixRoadmap::bootX86` |
-| `stage4Smp` | `FerrixRoadmap::bootX86` |
-| `stage5Scheduler` | `FerrixRoadmap::bootX86` |
-| `stage1Boot` | `FerrixRoadmap::bootAArch64` |
-| `stage2Memory` | `FerrixRoadmap::bootAArch64` |
-| `stage3TrapsInterruptsTime` | `FerrixRoadmap::bootAArch64` |
-| `stage4Smp` | `FerrixRoadmap::bootAArch64` |
-| `stage5Scheduler` | `FerrixRoadmap::bootAArch64` |
-| `stage1Boot` | `FerrixRoadmap::bootArmv7a` |
-| `stage2Memory` | `FerrixRoadmap::bootArmv7a` |
-| `stage3TrapsInterruptsTime` | `FerrixRoadmap::bootArmv7a` |
-| `stage4Smp` | `FerrixRoadmap::bootArmv7a` |
-| `stage5Scheduler` | `FerrixRoadmap::bootArmv7a` |
-| `armv7aPort` | `FerrixRoadmap::bootArmv7a` |
-| `armv7aPort` | `FerrixRoadmap::BoardBoot` |
-| `stage15Userland` | `FerrixRoadmap::JobsSession` |
-| `stage15Userland` | `FerrixRoadmap::InitSession` |
-| `hostsRustc` | `FerrixRoadmap::RustcTest` |
-| `stage16Rustc` | `FerrixRoadmap::RustcTest` |
-| `aGateNeedsNoArming` | `FerrixAssurance::hooksArmed` |
-| `oneAuthorPerCommit` | `FerrixAssurance::commitAuthorship` |
-| `aGateNeedsNoArming` | `FerrixAssurance::commitAuthorship` |
-| `assemblyOnlyWhereTheMachineDefinesIt` | `FerrixAssurance::assemblyAllowList` |
-| `unsafeIsExpensive` | `FerrixAssurance::unsafeAudit` |
-| `noReachablePanic` | `FerrixAssurance::panicAudit` |
-| `pureFunctionsInLibs` | `FerrixAssurance::crateLayering` |
-| `oneArchFacade` | `FerrixAssurance::crateLayering` |
-| `everyStageEndsInSomethingThatRuns` | `FerrixAssurance::bootTest` |
-| `provedOnEveryBoot` | `FerrixAssurance::bootTest` |
+| `stage1Boot` | `XaquRoadmap::bootX86` |
+| `stage2Memory` | `XaquRoadmap::bootX86` |
+| `stage3TrapsInterruptsTime` | `XaquRoadmap::bootX86` |
+| `stage4Smp` | `XaquRoadmap::bootX86` |
+| `stage5Scheduler` | `XaquRoadmap::bootX86` |
+| `stage1Boot` | `XaquRoadmap::bootAArch64` |
+| `stage2Memory` | `XaquRoadmap::bootAArch64` |
+| `stage3TrapsInterruptsTime` | `XaquRoadmap::bootAArch64` |
+| `stage4Smp` | `XaquRoadmap::bootAArch64` |
+| `stage5Scheduler` | `XaquRoadmap::bootAArch64` |
+| `stage1Boot` | `XaquRoadmap::bootArmv7a` |
+| `stage2Memory` | `XaquRoadmap::bootArmv7a` |
+| `stage3TrapsInterruptsTime` | `XaquRoadmap::bootArmv7a` |
+| `stage4Smp` | `XaquRoadmap::bootArmv7a` |
+| `stage5Scheduler` | `XaquRoadmap::bootArmv7a` |
+| `armv7aPort` | `XaquRoadmap::bootArmv7a` |
+| `armv7aPort` | `XaquRoadmap::BoardBoot` |
+| `stage15Userland` | `XaquRoadmap::JobsSession` |
+| `stage15Userland` | `XaquRoadmap::InitSession` |
+| `hostsRustc` | `XaquRoadmap::RustcTest` |
+| `stage16Rustc` | `XaquRoadmap::RustcTest` |
+| `aGateNeedsNoArming` | `XaquAssurance::hooksArmed` |
+| `oneAuthorPerCommit` | `XaquAssurance::commitAuthorship` |
+| `aGateNeedsNoArming` | `XaquAssurance::commitAuthorship` |
+| `assemblyOnlyWhereTheMachineDefinesIt` | `XaquAssurance::assemblyAllowList` |
+| `unsafeIsExpensive` | `XaquAssurance::unsafeAudit` |
+| `noReachablePanic` | `XaquAssurance::panicAudit` |
+| `pureFunctionsInLibs` | `XaquAssurance::crateLayering` |
+| `oneArchFacade` | `XaquAssurance::crateLayering` |
+| `everyStageEndsInSomethingThatRuns` | `XaquAssurance::bootTest` |
+| `provedOnEveryBoot` | `XaquAssurance::bootTest` |
 
 31 edges — each reads “requirement is verified by element”.
 
@@ -4415,7 +4415,7 @@ flowchart LR
 | `L.iommu.67` | `anRmrrTheTableCannotPlaceHoldsItsUnits` | — | — | — |
 | `L.iommu.68` | `protectedRegionsAreOnlyReadWhereTheyExist` | — | — | — |
 | `L.iommu.70` | `faultEventsMasked` | — | — | — |
-| `L.iommu.71` | `ferrixVtdOffLeavesEveryUnitAlone` | — | — | — |
+| `L.iommu.71` | `xaquVtdOffLeavesEveryUnitAlone` | — | — | — |
 | `L.iommu.72` | `anUncheckedBootSaysItsFaults` | — | — | — |
 | `L.iommu.73` | `anRmrrIsIdentityMappedForItsFunction` | — | — | — |
 | `L.iommu.74` | `anRmrrThatCannotBeHonouredHoldsItsUnit` | — | — | — |
@@ -5505,26 +5505,26 @@ Work a finished stage explicitly left behind, each with the reason that stage ga
 
 | Item | Recorded against | Stage | Reason |
 | --- | --- | ---: | --- |
-| `tscDeadline` | `FerrixStructure::X86_64Arch` | — | Replaces the LAPIC countdown with a comparator against the TSC; the calibration exists. Waits for a tickless scheduler to want it. |
-| `x2apic` | `FerrixStructure::X86_64Arch` | — | APIC IDs above 255 are refused with a message; QEMU's are 0 to 3. |
-| `amdVi` | `FerrixStructure::X86_64Arch` | — | Nothing reads an IVRS table or drives an AMD IOMMU, so on such a machine DMA would not be translated. Left after stage 10's exit: none of it was on the path to rustc. |
-| `gicv3` | `FerrixStructure::AArch64Arch` | — | gic::init refuses anything that is not a GICv2; QEMU virt gives GICv2 unless asked, so this needs a second boot-test configuration as much as code. |
-| `parking` | `FerrixStructure::AArch64Arch` | — | For firmware without PSCI. Refused, not guessed at. |
-| `boardDeferred` | `FerrixStructure::Armv7aArch` | — | The ED1 and EV1 have 1 GiB, whose identity range lands on the direct map; Layout::plan_identity_map refuses rather than guesses, so they need a trampoline page not yet written. |
-| `highRam` | `FerrixStructure::Armv7aArch` | — | RAM beyond the 1.25 GiB direct map: a machine with it boots and reports the excess unused. RAM above the 2 GiB split, which the board's DDR at 3 GiB needs, works since 9ae0180f. |
-| `thumb2` | `FerrixStructure::Armv7aArch` | — | ARM code generation only, as docs/arm32.md argues. |
-| `vfp` | `FerrixStructure::Armv7aArch` | — | Soft float; a UEFI application may not assume firmware enabled the VFP. |
-| `smmu` | `FerrixStructure::Armv7aArch` | — | The device tree's SMMUv3 is found and left alone: U-Boot's virtio-pci driver resets when a device offers VIRTIO_F_ACCESS_PLATFORM, so the machine's virtio devices would bypass it anyway, and stage 10's exit runs ARMv7-A in degraded trusted mode, as decided. |
-| `perCpuCaches` | `FerrixMemory::PhysicalMemory` | — | Each allocator is one lock, which is correct; the per-CPU magazines are a performance change waiting for a workload that can measure them. |
-| `offlining` | `FerrixScheduling::Smp` | — | Nothing takes a processor offline; records and stacks live for the life of the machine. |
-| `perCpuCaches` | `FerrixRoadmap::stage2Memory` | — | Needs a workload that can measure them; the per-CPU area exists since stage 4. |
-| `gicv3` | `FerrixRoadmap::stage3TrapsInterruptsTime` | — | Refused rather than guessed; needs a second boot-test configuration. |
-| `tscDeadline` | `FerrixRoadmap::stage3TrapsInterruptsTime` | — | Calibration exists; waits for a tickless scheduler. |
-| `x2apic` | `FerrixRoadmap::stage4Smp` | — | APIC IDs above 255 refused; QEMU's are 0 to 3. |
-| `psciParking` | `FerrixRoadmap::stage4Smp` | — | Refused, not guessed at. |
-| `cpuOffline` | `FerrixRoadmap::stage4Smp` | — | Nothing takes a processor offline. |
-| `ed1Ev1Boards` | `FerrixRoadmap::armv7aPort` | — | 1 GiB boards put RAM's identity range on the direct map; plan_identity_map refuses, so they need a trampoline page. |
-| `hardwareBootTest` | `FerrixRoadmap::armv7aPort` | — | Automated hardware boot testing beyond watch-serial. |
+| `tscDeadline` | `XaquStructure::X86_64Arch` | — | Replaces the LAPIC countdown with a comparator against the TSC; the calibration exists. Waits for a tickless scheduler to want it. |
+| `x2apic` | `XaquStructure::X86_64Arch` | — | APIC IDs above 255 are refused with a message; QEMU's are 0 to 3. |
+| `amdVi` | `XaquStructure::X86_64Arch` | — | Nothing reads an IVRS table or drives an AMD IOMMU, so on such a machine DMA would not be translated. Left after stage 10's exit: none of it was on the path to rustc. |
+| `gicv3` | `XaquStructure::AArch64Arch` | — | gic::init refuses anything that is not a GICv2; QEMU virt gives GICv2 unless asked, so this needs a second boot-test configuration as much as code. |
+| `parking` | `XaquStructure::AArch64Arch` | — | For firmware without PSCI. Refused, not guessed at. |
+| `boardDeferred` | `XaquStructure::Armv7aArch` | — | The ED1 and EV1 have 1 GiB, whose identity range lands on the direct map; Layout::plan_identity_map refuses rather than guesses, so they need a trampoline page not yet written. |
+| `highRam` | `XaquStructure::Armv7aArch` | — | RAM beyond the 1.25 GiB direct map: a machine with it boots and reports the excess unused. RAM above the 2 GiB split, which the board's DDR at 3 GiB needs, works since 9ae0180f. |
+| `thumb2` | `XaquStructure::Armv7aArch` | — | ARM code generation only, as docs/arm32.md argues. |
+| `vfp` | `XaquStructure::Armv7aArch` | — | Soft float; a UEFI application may not assume firmware enabled the VFP. |
+| `smmu` | `XaquStructure::Armv7aArch` | — | The device tree's SMMUv3 is found and left alone: U-Boot's virtio-pci driver resets when a device offers VIRTIO_F_ACCESS_PLATFORM, so the machine's virtio devices would bypass it anyway, and stage 10's exit runs ARMv7-A in degraded trusted mode, as decided. |
+| `perCpuCaches` | `XaquMemory::PhysicalMemory` | — | Each allocator is one lock, which is correct; the per-CPU magazines are a performance change waiting for a workload that can measure them. |
+| `offlining` | `XaquScheduling::Smp` | — | Nothing takes a processor offline; records and stacks live for the life of the machine. |
+| `perCpuCaches` | `XaquRoadmap::stage2Memory` | — | Needs a workload that can measure them; the per-CPU area exists since stage 4. |
+| `gicv3` | `XaquRoadmap::stage3TrapsInterruptsTime` | — | Refused rather than guessed; needs a second boot-test configuration. |
+| `tscDeadline` | `XaquRoadmap::stage3TrapsInterruptsTime` | — | Calibration exists; waits for a tickless scheduler. |
+| `x2apic` | `XaquRoadmap::stage4Smp` | — | APIC IDs above 255 refused; QEMU's are 0 to 3. |
+| `psciParking` | `XaquRoadmap::stage4Smp` | — | Refused, not guessed at. |
+| `cpuOffline` | `XaquRoadmap::stage4Smp` | — | Nothing takes a processor offline. |
+| `ed1Ev1Boards` | `XaquRoadmap::armv7aPort` | — | 1 GiB boards put RAM's identity range on the direct map; plan_identity_map refuses, so they need a trampoline page. |
+| `hardwareBootTest` | `XaquRoadmap::armv7aPort` | — | Automated hardware boot testing beyond watch-serial. |
 
 20 records. The model writes most of them twice — once against the stage that closed, once against the part that lacks them — so the register reads from either end.
 
@@ -5534,200 +5534,200 @@ Every element carrying @stage, which names the roadmap stage that owns it. An el
 
 | Stage | Element | Kind | Maturity |
 | ---: | --- | --- | --- |
-| 1 | `FerrixStructure::Loader` | part | `#implemented` |
-| 1 | `FerrixBoot::BootInfo` | item | `#implemented` |
-| 1 | `FerrixBoot::LoaderSequence` | action | `#implemented` |
-| 1 | `FerrixBoot::EarlyMemory` | part | `#implemented` |
-| 1 | `FerrixBoot::Stage1SelfCheck` | action | `#implemented` |
-| 1 | `FerrixMemory::Mapper` | part | `#implemented` |
-| 1 | `FerrixDrivers::FdtAccess` | part | `#implemented` |
-| 2 | `FerrixBoot::Stage2SelfCheck` | action | `#implemented` |
-| 2 | `FerrixBoot::FinishMemory` | action | `#implemented` |
-| 2 | `FerrixMemory::FrameAllocator` | part | `#implemented` |
-| 2 | `FerrixMemory::PhysicalMemory` | part | `#implemented` |
-| 2 | `FerrixMemory::KernelHeap` | part | `#implemented` |
-| 2 | `FerrixMemory::KernelPageTables` | part | `#implemented` |
-| 2 | `FerrixMemory::VmapArena` | part | `#implemented` |
-| 3 | `FerrixBoot::Stage3TrapCheck` | action | `#implemented` |
-| 3 | `FerrixBoot::Stage3TimerCheck` | action | `#implemented` |
-| 3 | `FerrixBoot::TrapDispatch` | part | `#implemented` |
-| 3 | `FerrixScheduling::IrqTable` | part | `#implemented` |
-| 3 | `FerrixScheduling::Timer` | part | `#implemented` |
-| 3 | `FerrixDrivers::AcpiAccess` | part | `#implemented` |
-| 3 | `FerrixDrivers::MmioWindows` | part | `#implemented` |
-| 4 | `FerrixBoot::Stage4BringUp` | action | `#implemented` |
-| 4 | `FerrixScheduling::TicketSpinLock` | part | `#implemented` |
-| 4 | `FerrixScheduling::PerCpu` | part | `#implemented` |
-| 4 | `FerrixScheduling::Smp` | part | `#implemented` |
-| 5 | `FerrixStructure::Workspace::sched` | part | `#implemented` |
-| 5 | `FerrixBoot::Stage5SchedulerCheck` | action | `#implemented` |
-| 5 | `FerrixMemory::KernelHeap::objectSlabs` | part | `#planned` |
-| 5 | `FerrixScheduling::PerCpu::runqueue` | part | `#implemented` |
-| 5 | `FerrixScheduling::Task` | part | `#implemented` |
-| 5 | `FerrixScheduling::Tasks` | part | `#implemented` |
-| 5 | `FerrixScheduling::WaitQueue` | part | `#implemented` |
-| 5 | `FerrixScheduling::Runqueue` | part | `#implemented` |
-| 5 | `FerrixScheduling::EevdfRunQueue` | part | `#implemented` |
-| 5 | `FerrixScheduling::LoadAverage` | part | `#implemented` |
-| 5 | `FerrixScheduling::Placement` | part | `#implemented` |
-| 5 | `FerrixScheduling::Balancing` | part | `#implemented` |
-| 5 | `FerrixScheduling::SchedulingDomain` | part | `#implemented` |
-| 5 | `FerrixScheduling::Scheduler` | part | `#implemented` |
-| 5 | `FerrixObjects::TaskObject` | part | `#planned` |
-| 6 | `FerrixStructure::UserProcess` | part | `#implemented` |
-| 6 | `FerrixStructure::ArchFacade::prepareUserRoot` | action | — |
-| 6 | `FerrixStructure::ArchFacade::installUserRoot` | action | — |
-| 6 | `FerrixStructure::ArchFacade::uninstallUserRoot` | action | — |
-| 6 | `FerrixStructure::ArchFacade::enterUser` | action | `#implemented` |
-| 6 | `FerrixStructure::ArchFacade::systemCall` | action | `#implemented` |
-| 6 | `FerrixStructure::ArchFacade::syscallEntry` | action | `#implemented` |
-| 6 | `FerrixBoot::KernelBringUp::stage6MemoryObjects` | action | — |
-| 6 | `FerrixBoot::KernelBringUp::stage6ReverseMap` | action | — |
-| 6 | `FerrixMemory::PageEntry::owner` | attribute | `#planned` |
-| 6 | `FerrixMemory::PageEntry::flags` | attribute | `#planned` |
-| 6 | `FerrixMemory::VmaMap` | part | `#implemented` |
-| 6 | `FerrixMemory::Vmo` | part | `#implemented` |
-| 6 | `FerrixMemory::ProcessAddressSpace` | part | `#implemented` |
-| 6 | `FerrixMemory::ProcessAddressSpace::invalidate` | action | — |
-| 6 | `FerrixMemory::ProcessAddressSpace::install` | action | — |
-| 6 | `FerrixMemory::ProcessAddressSpace::forkSpace` | action | — |
-| 6 | `FerrixMemory::DemandFault` | action | `#implemented` |
-| 6 | `FerrixMemory::DemandFault::copyOnWrite` | action | — |
-| 6 | `FerrixMemory::VirtualMemory` | part | `#implemented` |
-| 6 | `FerrixMemory::UserElfLoader` | part | `#implemented` |
-| 6 | `FerrixScheduling::Task::addressSpace` | part | — |
-| 6 | `FerrixScheduling::Task::thread` | part | — |
-| 6 | `FerrixScheduling::UserThread` | part | `#implemented` |
-| 6 | `FerrixScheduling::Tasks::spawnInAddressSpace` | action | — |
-| 6 | `FerrixScheduling::Tasks::swapAddressSpace` | action | — |
-| 6 | `FerrixObjects::Process` | part | `#implemented` |
-| 6 | `FerrixObjects::PosixProcess` | part | `#implemented` |
-| 6 | `FerrixAssurance::AssemblyBudget::syscallEntrySites` | attribute | `#implemented` |
-| 7 | `FerrixStructure::Workspace::linuxAbi` | part | `#implemented` |
-| 7 | `FerrixStructure::Workspace::ustack` | part | `#implemented` |
-| 7 | `FerrixBoot::KernelBringUp::stage7Syscalls` | action | — |
-| 7 | `FerrixBoot::Dispatch::systemCall` | action | — |
-| 7 | `FerrixMemory::ProcessAddressSpace::mmap` | action | `#implemented` |
-| 7 | `FerrixMemory::ProcessAddressSpace::mprotect` | action | `#implemented` |
-| 7 | `FerrixMemory::ProcessAddressSpace::brk` | action | `#implemented` |
-| 7 | `FerrixMemory::DemandFault::deliverSigsegv` | action | `#implemented` |
-| 7 | `FerrixScheduling::Task::policy` | attribute | `#planned` |
-| 7 | `FerrixScheduling::Scheduler::setScheduler` | action | `#inProgress` |
-| 7 | `FerrixScheduling::Futex` | part | `#implemented` |
-| 7 | `FerrixObjects::Thread` | part | `#implemented` |
-| 7 | `FerrixObjects::Clone` | action | `#implemented` |
-| 7 | `FerrixObjects::LinuxSyscallLayer` | part | `#implemented` |
-| 7 | `FerrixObjects::Signals` | part | `#implemented` |
-| 7 | `FerrixIsolation::Credentials` | attribute | `#implemented` |
-| 7 | `FerrixAssurance::ShellTest` | verification | `#implemented` |
-| 7 | `FerrixAssurance::ThreadsTest` | verification | `#implemented` |
-| 8 | `FerrixStructure::Initramfs` | part | `#implemented` |
-| 8 | `FerrixStructure::Workspace::cpio` | part | `#implemented` |
-| 8 | `FerrixStructure::Workspace::vfs` | part | `#implemented` |
-| 8 | `FerrixStructure::Workspace::procfs` | part | `#implemented` |
-| 8 | `FerrixBoot::KernelBringUp::stage8RootFilesystem` | action | — |
-| 8 | `FerrixBoot::KernelBringUp::stage8PathCalls` | action | — |
-| 8 | `FerrixMemory::Vmo::fileFill` | action | `#implemented` |
-| 8 | `FerrixMemory::DemandFault::pageCacheFill` | action | `#implemented` |
-| 8 | `FerrixStorage::Inode` | part | `#implemented` |
-| 8 | `FerrixStorage::Dentry` | part | `#implemented` |
-| 8 | `FerrixStorage::Mount` | part | `#implemented` |
-| 8 | `FerrixStorage::Vfs` | part | `#implemented` |
-| 8 | `FerrixStorage::PageCache` | part | `#implemented` |
-| 8 | `FerrixStorage::Tmpfs` | part | `#implemented` |
-| 8 | `FerrixStorage::Devfs` | part | `#implemented` |
-| 8 | `FerrixStorage::Procfs` | part | `#implemented` |
-| 8 | `FerrixStorage::InitramfsUnpack` | part | `#implemented` |
-| 8 | `FerrixAssurance::VfsTest` | verification | `#implemented` |
-| 9 | `FerrixStructure::Workspace::nativeAbi` | part | `#implemented` |
-| 9 | `FerrixStructure::Workspace::objects` | part | `#implemented` |
-| 9 | `FerrixBoot::KernelBringUp::stage9NativeObjects` | action | — |
-| 9 | `FerrixBoot::KernelBringUp::stage9DeviceObjects` | action | — |
-| 9 | `FerrixObjects::KernelObject` | part | `#implemented` |
-| 9 | `FerrixObjects::HandleTable` | part | `#implemented` |
-| 9 | `FerrixObjects::NativeAbi` | part | `#implemented` |
-| 10 | `FerrixStructure::ArchFacade::iommu` | part | `#implemented` |
-| 10 | `FerrixStructure::X86_64Arch::vtd` | part | `#implemented` |
-| 10 | `FerrixStructure::AArch64Arch::smmu` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::virtio` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::virtioNet` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::pci` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::blkRing` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::blkServe` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::virtioBlk` | part | `#implemented` |
-| 10 | `FerrixStructure::Workspace::devmgrProto` | part | `#implemented` |
-| 10 | `FerrixBoot::KernelBringUp::stage10Devices` | action | — |
-| 10 | `FerrixBoot::KernelBringUp::stage10Drivers` | action | — |
-| 10 | `FerrixDrivers::DeviceNode` | part | `#implemented` |
-| 10 | `FerrixDrivers::DeviceEnumeration` | part | `#implemented` |
-| 10 | `FerrixDrivers::IommuDomain` | part | `#implemented` |
-| 10 | `FerrixDrivers::IommuDomains` | part | `#implemented` |
-| 10 | `FerrixDrivers::DriverProcess` | part | `#implemented` |
-| 10 | `FerrixDrivers::SharedRing` | part | `#implemented` |
-| 10 | `FerrixDrivers::DevMgr` | part | `#implemented` |
-| 10 | `FerrixDrivers::DrvUpdated` | part | `#inProgress` |
-| 10 | `FerrixDrivers::VirtioBlkDriver` | part | `#implemented` |
-| 10 | `FerrixDrivers::Stm32SdmmcDriver` | part | `#inProgress` |
-| 10 | `FerrixDrivers::NvmeDriver` | part | `#inProgress` |
-| 10 | `FerrixDrivers::AhciDriver` | part | `#inProgress` |
-| 10 | `FerrixDrivers::Yt6801Driver` | part | `#inProgress` |
-| 10 | `FerrixDrivers::Rtl8169Driver` | part | `#inProgress` |
-| 10 | `FerrixDrivers::DriverBootstrap` | action | `#implemented` |
-| 10 | `FerrixAssurance::RestartTest` | verification | `#implemented` |
-| 11 | `FerrixStructure::Workspace::btrfs` | part | `#implemented` |
-| 11 | `FerrixStructure::Workspace::btrfsVfs` | part | `#implemented` |
-| 11 | `FerrixStructure::Workspace::blockQueue` | part | `#implemented` |
-| 11 | `FerrixBoot::KernelBringUp::stage11BtrfsRead` | action | — |
-| 11 | `FerrixStorage::BlockCore` | part | `#implemented` |
-| 11 | `FerrixStorage::BtrfsParsing` | part | `#implemented` |
-| 11 | `FerrixStorage::Btrfs` | part | `#implemented` |
-| 11 | `FerrixStorage::BtrfsRead` | part | `#implemented` |
-| 12 | `FerrixStructure::Workspace::btrfsWrite` | part | `#implemented` |
-| 12 | `FerrixBoot::KernelBringUp::stage12BtrfsWrite` | action | — |
-| 12 | `FerrixStorage::BtrfsWrite` | part | `#implemented` |
-| 12 | `FerrixAssurance::BtrfsCheck` | verification | `#implemented` |
-| 12 | `FerrixAssurance::PowerFailInjection` | verification | `#implemented` |
-| 13 | `FerrixStructure::Workspace::seccompBpf` | part | `#implemented` |
-| 13 | `FerrixMemory::Reclaim` | part | `#planned` |
-| 13 | `FerrixObjects::JobQuota` | part | `#implemented` |
-| 13 | `FerrixObjects::LinuxSyscallLayer::seccompCheck` | action | `#planned` |
-| 13 | `FerrixIsolation::Namespace` | part | `#implemented` |
-| 13 | `FerrixIsolation::NsSet` | part | `#planned` |
-| 13 | `FerrixIsolation::Namespaces` | part | `#implemented` |
-| 13 | `FerrixIsolation::Cgroup` | part | `#implemented` |
-| 13 | `FerrixIsolation::Cgroups` | part | `#implemented` |
-| 13 | `FerrixIsolation::Seccomp` | part | `#implemented` |
-| 13 | `FerrixIsolation::ClassicBpfInterpreter` | part | `#implemented` |
-| 13 | `FerrixStorage::Cgroupfs` | part | `#implemented` |
-| 14 | `FerrixScheduling::Task::schedClass` | attribute | `#planned` |
-| 14 | `FerrixScheduling::Task::priority` | attribute | `#planned` |
-| 14 | `FerrixScheduling::Task::bandwidth` | attribute | `#planned` |
-| 14 | `FerrixScheduling::DomainLifecycle` | state | `#planned` |
-| 14 | `FerrixScheduling::Scheduler::fifoRr` | part | `#planned` |
-| 14 | `FerrixScheduling::Scheduler::edf` | part | `#planned` |
-| 14 | `FerrixScheduling::Scheduler::switchDomainMode` | action | `#planned` |
-| 14 | `FerrixAssurance::CyclicTest` | verification | `#planned` |
-| 15 | `FerrixStructure::Userland::init` | part | `#implemented` |
-| 15 | `FerrixObjects::PosixIpc` | part | `#implemented` |
-| 17 | `FerrixStructure::Workspace::virtioGpu` | part | `#implemented` |
-| 17 | `FerrixStructure::Workspace::virtioInput` | part | `#implemented` |
-| 17 | `FerrixStructure::Workspace::displayctl` | part | `#implemented` |
-| 17 | `FerrixStructure::Workspace::inputctl` | part | `#implemented` |
-| 17 | `FerrixDrivers::VirtioGpuDriver` | part | `#implemented` |
-| 17 | `FerrixDrivers::VirtioInputDriver` | part | `#implemented` |
-| 17 | `FerrixDrivers::UsbHidDriver` | part | `#implemented` |
-| 17 | `FerrixAssurance::DisplayTest` | verification | `#implemented` |
-| 17 | `FerrixAssurance::InputTest` | verification | `#implemented` |
-| 17 | `FerrixAssurance::UsbTest` | verification | `#implemented` |
-| 17 | `FerrixAssurance::SeatTest` | verification | `#implemented` |
-| 18 | `FerrixAssurance::CompositorTest` | verification | `#implemented` |
-| 18 | `FerrixAssurance::PtyTest` | verification | `#implemented` |
-| 19 | `FerrixStructure::Workspace::renderctl` | part | `#implemented` |
-| 19 | `FerrixStructure::Workspace::gc400` | part | `#implemented` |
-| 19 | `FerrixDrivers::Gc400Driver` | part | `#inProgress` |
-| 19 | `FerrixAssurance::VideoTest` | verification | `#implemented` |
-| 21 | `FerrixDrivers::EfifbDriver` | part | `#inProgress` |
-| 21 | `FerrixDrivers::IntelGpuDriver` | part | `#inProgress` |
+| 1 | `XaquStructure::Loader` | part | `#implemented` |
+| 1 | `XaquBoot::BootInfo` | item | `#implemented` |
+| 1 | `XaquBoot::LoaderSequence` | action | `#implemented` |
+| 1 | `XaquBoot::EarlyMemory` | part | `#implemented` |
+| 1 | `XaquBoot::Stage1SelfCheck` | action | `#implemented` |
+| 1 | `XaquMemory::Mapper` | part | `#implemented` |
+| 1 | `XaquDrivers::FdtAccess` | part | `#implemented` |
+| 2 | `XaquBoot::Stage2SelfCheck` | action | `#implemented` |
+| 2 | `XaquBoot::FinishMemory` | action | `#implemented` |
+| 2 | `XaquMemory::FrameAllocator` | part | `#implemented` |
+| 2 | `XaquMemory::PhysicalMemory` | part | `#implemented` |
+| 2 | `XaquMemory::KernelHeap` | part | `#implemented` |
+| 2 | `XaquMemory::KernelPageTables` | part | `#implemented` |
+| 2 | `XaquMemory::VmapArena` | part | `#implemented` |
+| 3 | `XaquBoot::Stage3TrapCheck` | action | `#implemented` |
+| 3 | `XaquBoot::Stage3TimerCheck` | action | `#implemented` |
+| 3 | `XaquBoot::TrapDispatch` | part | `#implemented` |
+| 3 | `XaquScheduling::IrqTable` | part | `#implemented` |
+| 3 | `XaquScheduling::Timer` | part | `#implemented` |
+| 3 | `XaquDrivers::AcpiAccess` | part | `#implemented` |
+| 3 | `XaquDrivers::MmioWindows` | part | `#implemented` |
+| 4 | `XaquBoot::Stage4BringUp` | action | `#implemented` |
+| 4 | `XaquScheduling::TicketSpinLock` | part | `#implemented` |
+| 4 | `XaquScheduling::PerCpu` | part | `#implemented` |
+| 4 | `XaquScheduling::Smp` | part | `#implemented` |
+| 5 | `XaquStructure::Workspace::sched` | part | `#implemented` |
+| 5 | `XaquBoot::Stage5SchedulerCheck` | action | `#implemented` |
+| 5 | `XaquMemory::KernelHeap::objectSlabs` | part | `#planned` |
+| 5 | `XaquScheduling::PerCpu::runqueue` | part | `#implemented` |
+| 5 | `XaquScheduling::Task` | part | `#implemented` |
+| 5 | `XaquScheduling::Tasks` | part | `#implemented` |
+| 5 | `XaquScheduling::WaitQueue` | part | `#implemented` |
+| 5 | `XaquScheduling::Runqueue` | part | `#implemented` |
+| 5 | `XaquScheduling::EevdfRunQueue` | part | `#implemented` |
+| 5 | `XaquScheduling::LoadAverage` | part | `#implemented` |
+| 5 | `XaquScheduling::Placement` | part | `#implemented` |
+| 5 | `XaquScheduling::Balancing` | part | `#implemented` |
+| 5 | `XaquScheduling::SchedulingDomain` | part | `#implemented` |
+| 5 | `XaquScheduling::Scheduler` | part | `#implemented` |
+| 5 | `XaquObjects::TaskObject` | part | `#planned` |
+| 6 | `XaquStructure::UserProcess` | part | `#implemented` |
+| 6 | `XaquStructure::ArchFacade::prepareUserRoot` | action | — |
+| 6 | `XaquStructure::ArchFacade::installUserRoot` | action | — |
+| 6 | `XaquStructure::ArchFacade::uninstallUserRoot` | action | — |
+| 6 | `XaquStructure::ArchFacade::enterUser` | action | `#implemented` |
+| 6 | `XaquStructure::ArchFacade::systemCall` | action | `#implemented` |
+| 6 | `XaquStructure::ArchFacade::syscallEntry` | action | `#implemented` |
+| 6 | `XaquBoot::KernelBringUp::stage6MemoryObjects` | action | — |
+| 6 | `XaquBoot::KernelBringUp::stage6ReverseMap` | action | — |
+| 6 | `XaquMemory::PageEntry::owner` | attribute | `#planned` |
+| 6 | `XaquMemory::PageEntry::flags` | attribute | `#planned` |
+| 6 | `XaquMemory::VmaMap` | part | `#implemented` |
+| 6 | `XaquMemory::Vmo` | part | `#implemented` |
+| 6 | `XaquMemory::ProcessAddressSpace` | part | `#implemented` |
+| 6 | `XaquMemory::ProcessAddressSpace::invalidate` | action | — |
+| 6 | `XaquMemory::ProcessAddressSpace::install` | action | — |
+| 6 | `XaquMemory::ProcessAddressSpace::forkSpace` | action | — |
+| 6 | `XaquMemory::DemandFault` | action | `#implemented` |
+| 6 | `XaquMemory::DemandFault::copyOnWrite` | action | — |
+| 6 | `XaquMemory::VirtualMemory` | part | `#implemented` |
+| 6 | `XaquMemory::UserElfLoader` | part | `#implemented` |
+| 6 | `XaquScheduling::Task::addressSpace` | part | — |
+| 6 | `XaquScheduling::Task::thread` | part | — |
+| 6 | `XaquScheduling::UserThread` | part | `#implemented` |
+| 6 | `XaquScheduling::Tasks::spawnInAddressSpace` | action | — |
+| 6 | `XaquScheduling::Tasks::swapAddressSpace` | action | — |
+| 6 | `XaquObjects::Process` | part | `#implemented` |
+| 6 | `XaquObjects::PosixProcess` | part | `#implemented` |
+| 6 | `XaquAssurance::AssemblyBudget::syscallEntrySites` | attribute | `#implemented` |
+| 7 | `XaquStructure::Workspace::linuxAbi` | part | `#implemented` |
+| 7 | `XaquStructure::Workspace::ustack` | part | `#implemented` |
+| 7 | `XaquBoot::KernelBringUp::stage7Syscalls` | action | — |
+| 7 | `XaquBoot::Dispatch::systemCall` | action | — |
+| 7 | `XaquMemory::ProcessAddressSpace::mmap` | action | `#implemented` |
+| 7 | `XaquMemory::ProcessAddressSpace::mprotect` | action | `#implemented` |
+| 7 | `XaquMemory::ProcessAddressSpace::brk` | action | `#implemented` |
+| 7 | `XaquMemory::DemandFault::deliverSigsegv` | action | `#implemented` |
+| 7 | `XaquScheduling::Task::policy` | attribute | `#planned` |
+| 7 | `XaquScheduling::Scheduler::setScheduler` | action | `#inProgress` |
+| 7 | `XaquScheduling::Futex` | part | `#implemented` |
+| 7 | `XaquObjects::Thread` | part | `#implemented` |
+| 7 | `XaquObjects::Clone` | action | `#implemented` |
+| 7 | `XaquObjects::LinuxSyscallLayer` | part | `#implemented` |
+| 7 | `XaquObjects::Signals` | part | `#implemented` |
+| 7 | `XaquIsolation::Credentials` | attribute | `#implemented` |
+| 7 | `XaquAssurance::ShellTest` | verification | `#implemented` |
+| 7 | `XaquAssurance::ThreadsTest` | verification | `#implemented` |
+| 8 | `XaquStructure::Initramfs` | part | `#implemented` |
+| 8 | `XaquStructure::Workspace::cpio` | part | `#implemented` |
+| 8 | `XaquStructure::Workspace::vfs` | part | `#implemented` |
+| 8 | `XaquStructure::Workspace::procfs` | part | `#implemented` |
+| 8 | `XaquBoot::KernelBringUp::stage8RootFilesystem` | action | — |
+| 8 | `XaquBoot::KernelBringUp::stage8PathCalls` | action | — |
+| 8 | `XaquMemory::Vmo::fileFill` | action | `#implemented` |
+| 8 | `XaquMemory::DemandFault::pageCacheFill` | action | `#implemented` |
+| 8 | `XaquStorage::Inode` | part | `#implemented` |
+| 8 | `XaquStorage::Dentry` | part | `#implemented` |
+| 8 | `XaquStorage::Mount` | part | `#implemented` |
+| 8 | `XaquStorage::Vfs` | part | `#implemented` |
+| 8 | `XaquStorage::PageCache` | part | `#implemented` |
+| 8 | `XaquStorage::Tmpfs` | part | `#implemented` |
+| 8 | `XaquStorage::Devfs` | part | `#implemented` |
+| 8 | `XaquStorage::Procfs` | part | `#implemented` |
+| 8 | `XaquStorage::InitramfsUnpack` | part | `#implemented` |
+| 8 | `XaquAssurance::VfsTest` | verification | `#implemented` |
+| 9 | `XaquStructure::Workspace::nativeAbi` | part | `#implemented` |
+| 9 | `XaquStructure::Workspace::objects` | part | `#implemented` |
+| 9 | `XaquBoot::KernelBringUp::stage9NativeObjects` | action | — |
+| 9 | `XaquBoot::KernelBringUp::stage9DeviceObjects` | action | — |
+| 9 | `XaquObjects::KernelObject` | part | `#implemented` |
+| 9 | `XaquObjects::HandleTable` | part | `#implemented` |
+| 9 | `XaquObjects::NativeAbi` | part | `#implemented` |
+| 10 | `XaquStructure::ArchFacade::iommu` | part | `#implemented` |
+| 10 | `XaquStructure::X86_64Arch::vtd` | part | `#implemented` |
+| 10 | `XaquStructure::AArch64Arch::smmu` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::virtio` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::virtioNet` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::pci` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::blkRing` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::blkServe` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::virtioBlk` | part | `#implemented` |
+| 10 | `XaquStructure::Workspace::devmgrProto` | part | `#implemented` |
+| 10 | `XaquBoot::KernelBringUp::stage10Devices` | action | — |
+| 10 | `XaquBoot::KernelBringUp::stage10Drivers` | action | — |
+| 10 | `XaquDrivers::DeviceNode` | part | `#implemented` |
+| 10 | `XaquDrivers::DeviceEnumeration` | part | `#implemented` |
+| 10 | `XaquDrivers::IommuDomain` | part | `#implemented` |
+| 10 | `XaquDrivers::IommuDomains` | part | `#implemented` |
+| 10 | `XaquDrivers::DriverProcess` | part | `#implemented` |
+| 10 | `XaquDrivers::SharedRing` | part | `#implemented` |
+| 10 | `XaquDrivers::DevMgr` | part | `#implemented` |
+| 10 | `XaquDrivers::DrvUpdated` | part | `#inProgress` |
+| 10 | `XaquDrivers::VirtioBlkDriver` | part | `#implemented` |
+| 10 | `XaquDrivers::Stm32SdmmcDriver` | part | `#inProgress` |
+| 10 | `XaquDrivers::NvmeDriver` | part | `#inProgress` |
+| 10 | `XaquDrivers::AhciDriver` | part | `#inProgress` |
+| 10 | `XaquDrivers::Yt6801Driver` | part | `#inProgress` |
+| 10 | `XaquDrivers::Rtl8169Driver` | part | `#inProgress` |
+| 10 | `XaquDrivers::DriverBootstrap` | action | `#implemented` |
+| 10 | `XaquAssurance::RestartTest` | verification | `#implemented` |
+| 11 | `XaquStructure::Workspace::btrfs` | part | `#implemented` |
+| 11 | `XaquStructure::Workspace::btrfsVfs` | part | `#implemented` |
+| 11 | `XaquStructure::Workspace::blockQueue` | part | `#implemented` |
+| 11 | `XaquBoot::KernelBringUp::stage11BtrfsRead` | action | — |
+| 11 | `XaquStorage::BlockCore` | part | `#implemented` |
+| 11 | `XaquStorage::BtrfsParsing` | part | `#implemented` |
+| 11 | `XaquStorage::Btrfs` | part | `#implemented` |
+| 11 | `XaquStorage::BtrfsRead` | part | `#implemented` |
+| 12 | `XaquStructure::Workspace::btrfsWrite` | part | `#implemented` |
+| 12 | `XaquBoot::KernelBringUp::stage12BtrfsWrite` | action | — |
+| 12 | `XaquStorage::BtrfsWrite` | part | `#implemented` |
+| 12 | `XaquAssurance::BtrfsCheck` | verification | `#implemented` |
+| 12 | `XaquAssurance::PowerFailInjection` | verification | `#implemented` |
+| 13 | `XaquStructure::Workspace::seccompBpf` | part | `#implemented` |
+| 13 | `XaquMemory::Reclaim` | part | `#planned` |
+| 13 | `XaquObjects::JobQuota` | part | `#implemented` |
+| 13 | `XaquObjects::LinuxSyscallLayer::seccompCheck` | action | `#planned` |
+| 13 | `XaquIsolation::Namespace` | part | `#implemented` |
+| 13 | `XaquIsolation::NsSet` | part | `#planned` |
+| 13 | `XaquIsolation::Namespaces` | part | `#implemented` |
+| 13 | `XaquIsolation::Cgroup` | part | `#implemented` |
+| 13 | `XaquIsolation::Cgroups` | part | `#implemented` |
+| 13 | `XaquIsolation::Seccomp` | part | `#implemented` |
+| 13 | `XaquIsolation::ClassicBpfInterpreter` | part | `#implemented` |
+| 13 | `XaquStorage::Cgroupfs` | part | `#implemented` |
+| 14 | `XaquScheduling::Task::schedClass` | attribute | `#planned` |
+| 14 | `XaquScheduling::Task::priority` | attribute | `#planned` |
+| 14 | `XaquScheduling::Task::bandwidth` | attribute | `#planned` |
+| 14 | `XaquScheduling::DomainLifecycle` | state | `#planned` |
+| 14 | `XaquScheduling::Scheduler::fifoRr` | part | `#planned` |
+| 14 | `XaquScheduling::Scheduler::edf` | part | `#planned` |
+| 14 | `XaquScheduling::Scheduler::switchDomainMode` | action | `#planned` |
+| 14 | `XaquAssurance::CyclicTest` | verification | `#planned` |
+| 15 | `XaquStructure::Userland::init` | part | `#implemented` |
+| 15 | `XaquObjects::PosixIpc` | part | `#implemented` |
+| 17 | `XaquStructure::Workspace::virtioGpu` | part | `#implemented` |
+| 17 | `XaquStructure::Workspace::virtioInput` | part | `#implemented` |
+| 17 | `XaquStructure::Workspace::displayctl` | part | `#implemented` |
+| 17 | `XaquStructure::Workspace::inputctl` | part | `#implemented` |
+| 17 | `XaquDrivers::VirtioGpuDriver` | part | `#implemented` |
+| 17 | `XaquDrivers::VirtioInputDriver` | part | `#implemented` |
+| 17 | `XaquDrivers::UsbHidDriver` | part | `#implemented` |
+| 17 | `XaquAssurance::DisplayTest` | verification | `#implemented` |
+| 17 | `XaquAssurance::InputTest` | verification | `#implemented` |
+| 17 | `XaquAssurance::UsbTest` | verification | `#implemented` |
+| 17 | `XaquAssurance::SeatTest` | verification | `#implemented` |
+| 18 | `XaquAssurance::CompositorTest` | verification | `#implemented` |
+| 18 | `XaquAssurance::PtyTest` | verification | `#implemented` |
+| 19 | `XaquStructure::Workspace::renderctl` | part | `#implemented` |
+| 19 | `XaquStructure::Workspace::gc400` | part | `#implemented` |
+| 19 | `XaquDrivers::Gc400Driver` | part | `#inProgress` |
+| 19 | `XaquAssurance::VideoTest` | verification | `#implemented` |
+| 21 | `XaquDrivers::EfifbDriver` | part | `#inProgress` |
+| 21 | `XaquDrivers::IntelGpuDriver` | part | `#inProgress` |
 
 194 elements across 19 stages.
 
@@ -5739,19 +5739,19 @@ Every diagram in this document, drawn from the model by tools/common/gen/sysml/d
 | ---: | --- | --- | --- | --- |
 | 1 | Hosts rustc | 15 nodes, 16 edges | `01-requirements.sysml` | [goal-decomposition.svg](diagrams/goal-decomposition.svg) |
 | 2 | The pieces and the ports between them | 5 nodes, 3 edges | `02-structure.sysml` | [interfaces.svg](diagrams/interfaces.svg) |
-| 3 | Loader and its parts | 5 nodes, 4 edges | `02-structure.sysml` | [ferrix-structure-loader.svg](diagrams/ferrix-structure-loader.svg) |
-| 4 | Kernel and its parts | 31 nodes, 30 edges | `02-structure.sysml` | [ferrix-structure-kernel.svg](diagrams/ferrix-structure-kernel.svg) |
-| 5 | Arch facade and its subtypes | 5 nodes, 4 edges | `02-structure.sysml` | [ferrix-structure-arch-facade.svg](diagrams/ferrix-structure-arch-facade.svg) |
-| 6 | Loader sequence | 12 nodes, 11 edges | `03-boot.sysml` | [ferrix-boot-loader-sequence.svg](diagrams/ferrix-boot-loader-sequence.svg) |
-| 7 | Kernel bring up | 34 nodes, 33 edges | `03-boot.sysml` | [ferrix-boot-kernel-bring-up.svg](diagrams/ferrix-boot-kernel-bring-up.svg) |
-| 8 | Dispatch | 7 nodes, 6 edges | `03-boot.sysml` | [ferrix-boot-dispatch.svg](diagrams/ferrix-boot-dispatch.svg) |
-| 9 | Handle page fault | 5 nodes, 5 edges | `03-boot.sysml` | [ferrix-boot-handle-page-fault.svg](diagrams/ferrix-boot-handle-page-fault.svg) |
-| 10 | Demand fault | 5 nodes, 4 edges | `04-memory.sysml` | [ferrix-memory-demand-fault.svg](diagrams/ferrix-memory-demand-fault.svg) |
-| 11 | Domain lifecycle | 5 nodes, 5 edges | `05-scheduling.sysml` | [ferrix-scheduling-domain-lifecycle.svg](diagrams/ferrix-scheduling-domain-lifecycle.svg) |
-| 12 | Kernel object and its subtypes | 10 nodes, 9 edges | `06-objects.sysml` | [ferrix-objects-kernel-object.svg](diagrams/ferrix-objects-kernel-object.svg) |
-| 13 | Driver process and its subtypes | 14 nodes, 13 edges | `08-drivers.sysml` | [ferrix-drivers-driver-process.svg](diagrams/ferrix-drivers-driver-process.svg) |
-| 14 | Driver bootstrap | 8 nodes, 7 edges | `08-drivers.sysml` | [ferrix-drivers-driver-bootstrap.svg](diagrams/ferrix-drivers-driver-bootstrap.svg) |
-| 15 | Filesystem and its subtypes | 7 nodes, 6 edges | `09-storage.sysml` | [ferrix-storage-filesystem.svg](diagrams/ferrix-storage-filesystem.svg) |
+| 3 | Loader and its parts | 5 nodes, 4 edges | `02-structure.sysml` | [xaqu-structure-loader.svg](diagrams/xaqu-structure-loader.svg) |
+| 4 | Kernel and its parts | 31 nodes, 30 edges | `02-structure.sysml` | [xaqu-structure-kernel.svg](diagrams/xaqu-structure-kernel.svg) |
+| 5 | Arch facade and its subtypes | 5 nodes, 4 edges | `02-structure.sysml` | [xaqu-structure-arch-facade.svg](diagrams/xaqu-structure-arch-facade.svg) |
+| 6 | Loader sequence | 12 nodes, 11 edges | `03-boot.sysml` | [xaqu-boot-loader-sequence.svg](diagrams/xaqu-boot-loader-sequence.svg) |
+| 7 | Kernel bring up | 34 nodes, 33 edges | `03-boot.sysml` | [xaqu-boot-kernel-bring-up.svg](diagrams/xaqu-boot-kernel-bring-up.svg) |
+| 8 | Dispatch | 7 nodes, 6 edges | `03-boot.sysml` | [xaqu-boot-dispatch.svg](diagrams/xaqu-boot-dispatch.svg) |
+| 9 | Handle page fault | 5 nodes, 5 edges | `03-boot.sysml` | [xaqu-boot-handle-page-fault.svg](diagrams/xaqu-boot-handle-page-fault.svg) |
+| 10 | Demand fault | 5 nodes, 4 edges | `04-memory.sysml` | [xaqu-memory-demand-fault.svg](diagrams/xaqu-memory-demand-fault.svg) |
+| 11 | Domain lifecycle | 5 nodes, 5 edges | `05-scheduling.sysml` | [xaqu-scheduling-domain-lifecycle.svg](diagrams/xaqu-scheduling-domain-lifecycle.svg) |
+| 12 | Kernel object and its subtypes | 10 nodes, 9 edges | `06-objects.sysml` | [xaqu-objects-kernel-object.svg](diagrams/xaqu-objects-kernel-object.svg) |
+| 13 | Driver process and its subtypes | 14 nodes, 13 edges | `08-drivers.sysml` | [xaqu-drivers-driver-process.svg](diagrams/xaqu-drivers-driver-process.svg) |
+| 14 | Driver bootstrap | 8 nodes, 7 edges | `08-drivers.sysml` | [xaqu-drivers-driver-bootstrap.svg](diagrams/xaqu-drivers-driver-bootstrap.svg) |
+| 15 | Filesystem and its subtypes | 7 nodes, 6 edges | `09-storage.sysml` | [xaqu-storage-filesystem.svg](diagrams/xaqu-storage-filesystem.svg) |
 | 16 | The crate graph | 56 nodes, 114 edges | `02-structure.sysml` | [crate-dependencies.svg](diagrams/crate-dependencies.svg) |
 | 17 | The roadmap, stage by stage | 31 nodes, 44 edges | `10-roadmap.sysml` | [roadmap-stages.svg](diagrams/roadmap-stages.svg) |
 | 18 | The gates and the rules they uphold | 16 nodes, 10 edges | `11-assurance.sysml` | [gates-and-rules.svg](diagrams/gates-and-rules.svg) |

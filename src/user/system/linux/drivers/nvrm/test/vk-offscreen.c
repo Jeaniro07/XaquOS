@@ -5,7 +5,7 @@
  * checks every pixel. A transfer queue's work, the GPU's own memory, DMA
  * into system memory and a fence, without a window or a shader.
  *
- * Built on the host against the system's Vulkan headers and run on Ferrix
+ * Built on the host against the system's Vulkan headers and run on Xaqu
  * from the NVIDIA volume with Debian's loader and NVIDIA's ICD. Prints one
  * line, "vk-offscreen: ...", and exits 0 only if every pixel came back.
  *

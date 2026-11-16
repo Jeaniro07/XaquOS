@@ -16,9 +16,9 @@
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::time::{Duration, Instant};
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::ipv4;
-use ferrix_netwire::udp as wire;
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::ipv4;
+use xaqu_netwire::udp as wire;
 
 use super::{Core, DNS_IP, MTU, Result, bump};
 use crate::Error;
@@ -194,7 +194,7 @@ impl Core {
             ipv4::protocol::UDP,
             source,
             destination,
-            out.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            out.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 

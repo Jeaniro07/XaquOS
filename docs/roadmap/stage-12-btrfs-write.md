@@ -4,7 +4,7 @@ Copy-on-write allocation through the extent tree, delayed refs, transaction
 commit against both superblocks with correct flush/FUA ordering, the free-space
 tree, and log-tree replay.
 
-**Exit, and it is a strict one:** Ferrix writes a tree, and host `btrfs check`
+**Exit, and it is a strict one:** Xaqu writes a tree, and host `btrfs check`
 finds nothing. Then the power-fail test — kill QEMU at a random point inside a
 transaction, remount, replay, `btrfs check` again — over hundreds of seeds.
 
@@ -148,13 +148,13 @@ that, a second `fsync` wrote its items into the blocks the first had
 promised, and a crash between the two replayed the wrong file.
 
 **Done — the power-fail test (8 points, 2026-09-21). The exit is met.**
-`cargo xtask test-powerfail --seeds N` boots with `ferrix.btrfs=churn`: the
+`cargo xtask test-powerfail --seeds N` boots with `xaqu.btrfs=churn`: the
 guest (`src/kernel/src/fs/btrfs_powerfail.rs`) rewrites four files on a blank
 volume and makes each durable — the body with `fsync`, then a 32-byte
 trailer naming the body's length and CRC-32C with a second `fsync`, and a
 whole `sync` every eighth pass — until xtask kills QEMU at a moment the seed
 picks. Host `btrfs check` reads what is left; a second boot with
-`ferrix.btrfs=replay` mounts the same disk, which replays any log the kill
+`xaqu.btrfs=replay` mounts the same disk, which replays any log the kill
 left, checks every file that ends in a trailer against it, and unmounts; and
 `btrfs check` reads the volume again. A trailer is written only after its
 body was promised, so a body that does not match it is a completed promise
@@ -183,7 +183,7 @@ twenty-five points each are opened, replayed, checked for consistency and
 for any completed promise rolled back. `tools/common/test/btrfs-check-writer.sh` runs
 it at that size, and `cargo test` a small one.
 
-**Since the exit — `umount` writes the volume out (ferrix-e4,
+**Since the exit — `umount` writes the volume out (xaqu-e4,
 2026-09-27).** `umount2` never called the filesystem's `sync`, so a volume
 unmounted without one came back without what was written since its last
 commit -- a black-box pass lost files, renames and the tail of a 40 MiB
@@ -192,7 +192,7 @@ keeps the mount and returns the error, and `MNT_FORCE` unmounts anyway.
 Still open from the same pass: no file grows past 32 MiB, and eight
 concurrent writers leave the mount answering `EIO` (`docs/BACKLOG.md`).
 
-**Since the exit — the marker.** The boot marker moved to `FERRIX-BOOT-OK
+**Since the exit — the marker.** The boot marker moved to `XAQU-BOOT-OK
 stages 1-12` on 2026-09-23. Stage 12's write check had run before it in
 every boot since the exit; the marker was simply left behind when the stage
 was called done.
@@ -206,13 +206,13 @@ it when the archive differs from the one it last got, mounts `/dev`, `/proc`
 and `/tmp` inside it, and starts init and every process after it with the
 volume as `/`. It commits every 30 seconds, as Linux's btrfs does by default,
 and once more when it powers the machine off itself. `--reset-root` starts
-the volume over, and `--tmpfs-root` or `ferrix.root=tmpfs` keeps `/` in
+the volume over, and `--tmpfs-root` or `xaqu.root=tmpfs` keeps `/` in
 memory. The test boots keep the tmpfs root. What is still an init's work,
 which stage 15 owes: `pivot_root` itself, so the kernel's tmpfs can be
 unmounted from under the switched root (the kernel allows it since every
 `/` stands on a bottom mount, `docs/NAMESPACES.md` §2.1; the init has yet
 to call it). The root disk is found by its btrfs
-label, `ferrix-root`, as Linux's `root=LABEL=` finds one, and any other btrfs
+label, `xaqu-root`, as Linux's `root=LABEL=` finds one, and any other btrfs
 disk from `vdd` on is mounted at `/data` inside whichever `/` processes have:
 `test-rustc` gives the guest its compiler that way. A page of a mapped
 btrfs file that nothing had read used to show zeros, which kept dynamically

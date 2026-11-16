@@ -83,4 +83,4 @@ cp -R "$dir/zsh-$ZSH_VERSION/Functions/." "$dir/zsh-functions/"
 cp -R "$dir/zsh-$ZSH_VERSION/Completion" "$dir/zsh-functions/Completion"
 rm -rf "$dir/zsh-$ZSH_VERSION"
 [ -f "$dir/zsh-functions/Misc/is-at-least" ] || { echo "${0##*/}: zsh $ZSH_VERSION has no Functions/Misc/is-at-least" >&2; exit 1; }
-echo "export FERRIX_OMZ='$dir/oh-my-zsh' FERRIX_ZSH_FUNCTIONS='$dir/zsh-functions'"
+echo "export XAQU_OMZ='$dir/oh-my-zsh' XAQU_ZSH_FUNCTIONS='$dir/zsh-functions'"

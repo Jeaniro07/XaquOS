@@ -6,14 +6,14 @@
  *
  * devmgr has set the device's isolated-interrupts mark, found its
  * interrupts isolated and set its pin budget before starting this
- * (ferrix_devmgr_proto::gpu). nvrm then:
+ * (xaqu_devmgr_proto::gpu). nvrm then:
  *
  *  1. reads START and its device from the bootstrap channel, as every
  *     driver devmgr starts does;
  *  2. says what the device is (device_info);
  *  3. reads device_isolation, prints it, and refuses the device unless
  *     bit 1 (interrupts isolated) holds: the second guard after devmgr's,
- *     and the line that verifies F-57's closure on the ferrix-3060 domain
+ *     and the line that verifies F-57's closure on the xaqu-3060 domain
  *     at N1's first boot;
  *  4. prints its pin budget (device_get_limit);
  *  4a. loads RM's core from the NVIDIA volume (docs/NVIDIA.md §4.1, "The
@@ -27,11 +27,11 @@
  *  6. maps BAR0 and reads its first register: NV_PMC_BOOT_0, the chip's
  *     boot identity, on an NVIDIA GPU; on the test device any register;
  *  7. runs a thread and joins it, since RM needs threads (§4.1);
- *  7a. on an NVIDIA GPU (N1d): attaches the device to ferrix-nvos,
+ *  7a. on an NVIDIA GPU (N1d): attaches the device to xaqu-nvos,
  *     starts RM (nvrm_module_init) and probes and starts the GPU
  *     (os/kept/nv-pci.c), through rm_init_adapter, which boots its GSP;
  *     the test device has no RM to start and skips this;
- *  7b. on the test device: attaches it to ferrix-nvos and maps and unmaps
+ *  7b. on the test device: attaches it to xaqu-nvos and maps and unmaps
  *     BAR0's first page through os_map_kernel_space more times than nvrm
  *     has handles, then holds more mappings at once than the 64 the table
  *     once had: RM maps a page per channel and unmaps it with the channel,
@@ -83,7 +83,7 @@ enum step {
 /* Where the NVIDIA volume, mounted at /data, carries RM's core (written
  * there by xtask beside the nvrm it was linked for, not by
  * fetch-nvidia.sh), and how long nvrm waits for it. */
-#define CORE_PATH "/data/usr/lib/ferrix/nvrm-core"
+#define CORE_PATH "/data/usr/lib/xaqu/nvrm-core"
 #define VOLUME_PATIENCE_MS 60000
 #define VOLUME_POLL_MS 250
 
@@ -91,7 +91,7 @@ enum step {
 extern const unsigned char nvrm_core_sha256[32];
 extern unsigned long long nvrm_core_table[];
 
-/* From ferrix-nvos (os/nvos/src/rmcore.rs): 0, or the refusal's status
+/* From xaqu-nvos (os/nvos/src/rmcore.rs): 0, or the refusal's status
  * after its line. */
 extern int nvos_core_load(const char *path, const unsigned char (*pin)[32],
 			  unsigned long long *table, uint32_t exports,
@@ -100,7 +100,7 @@ extern int nvos_core_load(const char *path, const unsigned char (*pin)[32],
 /* From start.c. */
 extern uint32_t nvrm_bootstrap;
 
-/* ferrix-nvos (include/nvos.h) and the kept C (include/nv-ferrix.h), which
+/* xaqu-nvos (include/nvos.h) and the kept C (include/nv-xaqu.h), which
  * this file, built against ferrousli's headers alone, declares itself. */
 extern uint32_t nvos_device_attach(uint32_t handle);
 extern void *os_map_kernel_space(uint64_t start, uint64_t size, uint32_t mode);
@@ -337,7 +337,7 @@ static int bar0(uint32_t device, const struct nv_device_info *info)
 }
 
 /* Maps made and unmapped one after another: more than the 4096 handles a
- * process has and the 1024 mappings ferrix-nvos keeps, so a handle or a
+ * process has and the 1024 mappings xaqu-nvos keeps, so a handle or a
  * slot that outlived its unmap stops the run. */
 #define MAP_CYCLES 5000
 /* Mappings held at once: more than the 64 slots the table once had. */

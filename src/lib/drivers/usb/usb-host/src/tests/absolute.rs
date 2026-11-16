@@ -3,8 +3,8 @@
 
 use std::vec::Vec;
 
-use ferrix_inputctl::message::{AxisRange, Hello, RawEvent};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::{AxisRange, Hello, RawEvent};
+use xaqu_linux_abi::input::{
     ABS_WHEEL, ABS_X, ABS_Y, BTN_LEFT, BTN_MISC, BTN_RIGHT, EV_ABS, EV_KEY, EV_REL, EV_SYN,
     REL_HWHEEL, REL_WHEEL, SYN_REPORT,
 };
@@ -41,7 +41,7 @@ fn hello_of(reader: &Interpreter) -> Hello {
         vendor: 0x0627,
         product: 0x0001,
         release: 0,
-        name: ferrix_inputctl::message::Text::new(b"QEMU USB Tablet").expect("a name"),
+        name: xaqu_inputctl::message::Text::new(b"QEMU USB Tablet").expect("a name"),
     };
     hid::hello(reader, &identity, 0)
 }
@@ -169,7 +169,7 @@ fn a_joystick_an_empty_range_and_an_out_of_range_value_are_no_position() {
     assert!(stick.bits().has_code(EV_KEY, BTN_MISC));
     assert_eq!(
         stick.axes(),
-        [AxisRange::default(); ferrix_inputctl::message::AXES]
+        [AxisRange::default(); xaqu_inputctl::message::AXES]
     );
     assert_eq!(
         run(&mut stick, &[1, 0x80, 0x80]),
@@ -200,18 +200,18 @@ fn a_joystick_an_empty_range_and_an_out_of_range_value_are_no_position() {
 
 #[test]
 fn the_switch_reads_the_first_word_and_every_form_of_its_value() {
-    let watch = |line: &str| Watch::from_command_line(line.as_bytes(), b"ferrix.usbhid.reports");
-    assert_eq!(watch("ferrix.fbcon quiet"), Watch::OFF);
-    assert_eq!(watch("ferrix.fbcon ferrix.usbhid.reports"), Watch::ALL);
-    assert_eq!(watch("ferrix.usbhid.reports=all"), Watch::ALL);
+    let watch = |line: &str| Watch::from_command_line(line.as_bytes(), b"xaqu.usbhid.reports");
+    assert_eq!(watch("xaqu.fbcon quiet"), Watch::OFF);
+    assert_eq!(watch("xaqu.fbcon xaqu.usbhid.reports"), Watch::ALL);
+    assert_eq!(watch("xaqu.usbhid.reports=all"), Watch::ALL);
     assert_eq!(
-        watch("ferrix.usbhid.reports=off ferrix.usbhid.reports"),
+        watch("xaqu.usbhid.reports=off xaqu.usbhid.reports"),
         Watch::OFF
     );
-    assert_eq!(watch("ferrix.usbhid.reportsx=1"), Watch::OFF, "another key");
-    assert_eq!(watch("ferrix.usbhid.reports=nonsense"), Watch::OFF);
+    assert_eq!(watch("xaqu.usbhid.reportsx=1"), Watch::OFF, "another key");
+    assert_eq!(watch("xaqu.usbhid.reports=nonsense"), Watch::OFF);
 
-    let kvm = watch("ferrix.usbhid.reports=1d6b:0104\n");
+    let kvm = watch("xaqu.usbhid.reports=1d6b:0104\n");
     assert!(kvm.is_on());
     assert!(kvm.covers(0x1D6B, 0x0104, Kind::Keyboard));
     assert!(kvm.covers(0x1D6B, 0x0104, Kind::Mouse));

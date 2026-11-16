@@ -31,7 +31,7 @@ never by vendor, and with no table of parts.
   `uninstall_user_root` the bare kernel root; every write flushes; the
   space's set is joined and left at the same points. The off path adds one
   relaxed store per install (the value written, for that check).
-- **No KPTI.** Ferrix has no user/kernel table split (`speculation.rs`:
+- **No KPTI.** Xaqu has no user/kernel table split (`speculation.rs`:
   "KPTI is not built", AoU-11), so there is one PCID per space, not a pair.
 - **INVPCID is not used.** A full flush stays `CR4.PGE` toggled
   (`flush_tlb_including_global`), which invalidates every PCID, global
@@ -158,7 +158,7 @@ processor the scheduler never starts.
 `/sbin/ipc-bench`'s `domain-call` p50 (the skill's figure, fast path off):
 
 - **N150** (Intel N150, Gracemont; bare metal, the desktop image by
-  `deploy.sh`, `ferrix.checks=skip`), five runs a boot, ABAB by deploy:
+  `deploy.sh`, `xaqu.checks=skip`), five runs a boot, ABAB by deploy:
   PCIDs 3,632 and 3,637 ns against develop 0736ab1d8's 4,930 and 4,947:
   **0.737 and 0.735**. A first pair, each right after its build's boot,
   read 4,778 against 7,222 (0.66). The box's clock differs boot to boot;
@@ -170,7 +170,7 @@ processor the scheduler never starts.
   host, load up to 61, read 1.020 with spread 0.826 to 1.363 and is not
   evidence.)
 
-Logs: `~/.local/share/ferrix/logs/pcid/` -- the N150's `box-run-1-fbac16c0b.log`
+Logs: `~/.local/share/xaqu/logs/pcid/` -- the N150's `box-run-1-fbac16c0b.log`
 to `box-run-4-0736ab1d8.log`, `box-pcid-run1.log`, `box-base-run1.log`;
 nazuna's `nazuna-bench-abab-2.log.out` (quiet) and
 `nazuna-bench-abab.log.out` (busy).
@@ -193,7 +193,7 @@ nazuna's `nazuna-bench-abab-2.log.out` (quiet) and
   and the speculation read-back passed (K3's positive case). The boot then
   stopped at stage 10's IOMMU check (FX-1012), as develop 0736ab1d8 does
   with the same words, so not PCIDs; a first try with the deploy flow's
-  `ferrix.msrlog` stopped earlier at the console log check (FX-0505).
-  Summary and logs: `~/.local/share/ferrix/logs/pcid/r1-summary.txt`.
+  `xaqu.msrlog` stopped earlier at the console log check (FX-0505).
+  Summary and logs: `~/.local/share/xaqu/logs/pcid/r1-summary.txt`.
 - Measured (§6): N150 0.737 and 0.735 of develop's round trip; nazuna (off
   path) 1.000.

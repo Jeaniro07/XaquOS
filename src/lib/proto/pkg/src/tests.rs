@@ -47,7 +47,7 @@ host-tests = true
 
 [[smoke]]
 run = "ferrofetch --no-logo --no-color"
-expect = "OS: Ferrix"
+expect = "OS: Xaqu"
 
 [[smoke]]
 run = "ferrofetch --version"
@@ -368,7 +368,7 @@ fn a_record_reads_back_what_was_written() {
     );
     assert_eq!(
         record::path("ferrofetch"),
-        "lib/ferrix/packages/ferrofetch.toml"
+        "lib/xaqu/packages/ferrofetch.toml"
     );
     let paths: Vec<String> = record.paths().collect();
     assert_eq!(
@@ -377,7 +377,7 @@ fn a_record_reads_back_what_was_written() {
             "bin/ferrofetch",
             "usr/share/ferrofetch/note.txt",
             "usr/bin/ferrofetch",
-            "lib/ferrix/packages/ferrofetch.toml",
+            "lib/xaqu/packages/ferrofetch.toml",
         ]
     );
 }
@@ -448,7 +448,7 @@ fn the_plan_refuses_a_set_that_does_not_install() {
     // A file where another package's record goes.
     plan_refuses(
         &[
-            package("a", "1", &[], &["lib/ferrix/packages/b.toml"]),
+            package("a", "1", &[], &["lib/xaqu/packages/b.toml"]),
             package("b", "1", &[], &["bin/b"]),
         ],
         "installed by both",

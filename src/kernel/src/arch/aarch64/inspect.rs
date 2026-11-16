@@ -4,8 +4,8 @@
 //! vector's `sub sp, sp, #304` on `SP_EL1` and stores a [`TrapFrame`] there:
 //! one frame for a call and a trap alike, the number in `x8` and the
 //! arguments in `x0` to `x5`. But `SP_EL1` is, at that moment, wherever it
-//! stood at the task's last `eret`, which `ferrix_enter_user` and
-//! `ferrix_resume_user` leave where their caller's stack was: no fixed place
+//! stood at the task's last `eret`, which `xaqu_enter_user` and
+//! `xaqu_resume_user` leave where their caller's stack was: no fixed place
 //! the view could find, so it reads no call here yet (`docs/DEBUG.md` §1.1).
 //! The chain, which starts at the switch frame, it reads.
 
@@ -42,7 +42,7 @@ pub(crate) const fn entry_frame(_abi: Abi, _in_call: bool) -> Option<EntryFrame>
     None
 }
 
-/// `ferrix_switch`'s first store is `stp x29, x30, [sp, #-96]!`, so the
+/// `xaqu_switch`'s first store is `stp x29, x30, [sp, #-96]!`, so the
 /// saved stack pointer names x29 and the link register is the word above.
 pub(crate) const SWITCH_FRAME: SwitchFrame = SwitchFrame {
     frame_pointer: 0,

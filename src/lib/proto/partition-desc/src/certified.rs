@@ -1,4 +1,4 @@
-//! `etc/ferrix/certified`: the images a grant may name
+//! `etc/xaqu/certified`: the images a grant may name
 //! (`docs/microkernel/K14.md` §5). Magic `FXCL`, version u32 = 1, count u32, then
 //! `count` × (digest 32 bytes, name 32 bytes), at most [`MOST`]. A malformed file
 //! reads as no list at all.

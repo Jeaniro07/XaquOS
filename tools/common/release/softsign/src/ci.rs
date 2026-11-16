@@ -331,7 +331,7 @@ impl Signer<'_> {
             log,
             "{} {q} {} {}",
             hex(&self.key.id),
-            hex(&ferrix_sha256::digest(data)),
+            hex(&xaqu_sha256::digest(data)),
             self.context
         )
         .and_then(|()| log.sync_all())

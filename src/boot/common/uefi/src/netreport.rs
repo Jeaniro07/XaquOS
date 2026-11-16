@@ -6,7 +6,7 @@
 //! have written (`bootlog.rs`) to `cargo xtask netboot`, which keeps it in a
 //! directory for the machine and prints it.
 //!
-//! Only when both hold: the loader's volume has `FERRIX/REPORT.TXT` -- the
+//! Only when both hold: the loader's volume has `XAQU/REPORT.TXT` -- the
 //! URL to send to, which only the server's `boot.ipxe` fetches into iPXE's
 //! file system and no disk image carries -- and the loader's device handle
 //! carries iPXE's download protocol, which iPXE puts on every program it
@@ -47,7 +47,7 @@ use crate::uefi::protocols::IpxeDownload;
 use crate::uefi::tables::MemoryType;
 
 /// The file `boot.ipxe` fetches the report URL into.
-const REPORT_PATH: &str = "/FERRIX/REPORT.TXT";
+const REPORT_PATH: &str = "/XAQU/REPORT.TXT";
 
 /// Raw bytes of the log in one request: twice that in hex, a query of about
 /// 1 KiB, well inside the server's 16 KiB request head. Small enough that

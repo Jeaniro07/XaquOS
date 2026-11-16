@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel-item"
-description = "The Ferrix kernel's item ring above the core"
+name = "xaqu-kernel-item"
+description = "The Xaqu kernel's item ring above the core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,27 +16,27 @@ build = "../build.rs"
 path = "../src/kernel_item.rs"
 
 [dependencies]
-ferrix-kernel-core.workspace = true
-ferrix-audit.workspace = true
-ferrix-blkring.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-crng.workspace = true
-ferrix-devmgr-proto.workspace = true
-ferrix-elf.workspace = true
-ferrix-fdt.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-objects.workspace = true
-ferrix-paging.workspace = true
-ferrix-pci.workspace = true
-ferrix-sched.workspace = true
-ferrix-smbios.workspace = true
-ferrix-sync.workspace = true
-ferrix-cpio.workspace = true
-ferrix-partition-desc.workspace = true
-ferrix-vfs.workspace = true
-ferrix-virtio.workspace = true
-ferrix-vma.workspace = true
+xaqu-kernel-core.workspace = true
+xaqu-audit.workspace = true
+xaqu-blkring.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-crng.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-elf.workspace = true
+xaqu-fdt.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-objects.workspace = true
+xaqu-paging.workspace = true
+xaqu-pci.workspace = true
+xaqu-sched.workspace = true
+xaqu-smbios.workspace = true
+xaqu-sync.workspace = true
+xaqu-cpio.workspace = true
+xaqu-partition-desc.workspace = true
+xaqu-vfs.workspace = true
+xaqu-virtio.workspace = true
+xaqu-vma.workspace = true
 
 [lints]
 workspace = true

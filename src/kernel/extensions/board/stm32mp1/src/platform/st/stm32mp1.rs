@@ -61,10 +61,10 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_fdt::{Fdt, GicInterrupt, Node};
-use ferrix_native_abi::types::TREE_STM32_HDMI;
-use ferrix_sync::Once;
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_fdt::{Fdt, GicInterrupt, Node};
+use xaqu_native_abi::types::TREE_STM32_HDMI;
+use xaqu_sync::Once;
 
 use crate::device::DmaShape;
 use crate::discovery::board::{self, BoardBinding, BoardDevice};

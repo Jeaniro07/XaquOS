@@ -20,7 +20,7 @@
 //! per operation, per frame: a blurred frame is six passes and the
 //! conversions either side of them, so a 30 fps video wallpaper was on the
 //! order of a thousand threads a second -- and what a thread costs is not
-//! only the starting. Ferrix frees an exited task's kernel stack by
+//! only the starting. Xaqu frees an exited task's kernel stack by
 //! invalidating the address everywhere, which interrupts every processor on
 //! the machine and waits for each to answer; the pointer stuttered and the
 //! bar stuttered while the video played, because the cost of *this* program's

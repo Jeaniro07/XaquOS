@@ -1,7 +1,7 @@
 //! fuzzel on the desktop: the applications it lists, their icons, and the
 //! boot that drives it.
 //!
-//! fuzzel lists `.desktop` files, and Ferrix's image has almost no programs
+//! fuzzel lists `.desktop` files, and Xaqu's image has almost no programs
 //! that come with one. So the image carries entries of the tree's own for
 //! what the desktop does have -- [`APPLICATIONS`], one small list: the
 //! terminal running zinc, the test pattern, busybox's `top`, Chrome when
@@ -29,11 +29,11 @@ const APPLICATIONS: [&str; 3] = ["terminal", "pattern", "top"];
 
 /// The icons, by name.
 const ICONS: [&str; 5] = [
-    "ferrix-terminal",
-    "ferrix-pattern",
-    "ferrix-monitor",
-    "ferrix-browser",
-    "ferrix-gears",
+    "xaqu-terminal",
+    "xaqu-pattern",
+    "xaqu-monitor",
+    "xaqu-browser",
+    "xaqu-gears",
 ];
 
 /// The entry for vkgears, which only a desktop with Venus lists: on any other
@@ -75,7 +75,7 @@ pub(crate) fn files(chrome: Option<&str>, vkgears: bool) -> Result<Vec<File>> {
         let text = format!(
             "[Desktop Entry]\nType=Application\nName=Chrome for Testing\nGenericName=Web Browser\n\
              Comment=Chrome for Testing, from the data disk\nExec={command}\n\
-             Icon=ferrix-browser\nTerminal=false\nKeywords=web;internet;browser;\n\
+             Icon=xaqu-browser\nTerminal=false\nKeywords=web;internet;browser;\n\
              Categories=Network;WebBrowser;\n"
         );
         out.push(File {
@@ -171,7 +171,7 @@ pub(crate) fn boot_files(program: &std::path::Path) -> Result<Vec<File>> {
             content: Content::Bytes(read(&crate::apps::folder("fuzzel")?.join(BOOT_INI))?),
         },
         File {
-            path: "usr/share/ferrix/fonts/liberation/LiberationSerif-Regular.ttf".to_owned(),
+            path: "usr/share/xaqu/fonts/liberation/LiberationSerif-Regular.ttf".to_owned(),
             mode: 0o644,
             content: Content::Bytes(read(&root.join(BOOT_FONT))?),
         },

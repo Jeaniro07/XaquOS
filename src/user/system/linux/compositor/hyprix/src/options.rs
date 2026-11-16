@@ -250,11 +250,11 @@ mod tests {
         assert_eq!(options.exec, ["one", "two"]);
         assert_eq!(options.deadline, Some(5000));
         assert_eq!(
-            parse(&["--instance", "ferrix"])
+            parse(&["--instance", "xaqu"])
                 .expect("valid")
                 .instance
                 .as_deref(),
-            Some("ferrix")
+            Some("xaqu")
         );
     }
 

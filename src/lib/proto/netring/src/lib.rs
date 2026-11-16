@@ -130,7 +130,7 @@ pub use layout::{HeaderError, Op, RingLayout, Status, Submission};
 /// driver's ring and the kernel's inherited them: under a long download the
 /// driver stopped on a "corrupt" ring about every 35 minutes, and when the
 /// kernel was the side that saw it, the interface was parked under a driver
-/// that never noticed (`docs/BACKLOG.md`; `ferrix-blkring` had the same bug
+/// that never noticed (`docs/BACKLOG.md`; `xaqu-blkring` had the same bug
 /// first). Memory only one side touches at a time, as a test's is, may
 /// compose them from bytes.
 ///
@@ -138,7 +138,7 @@ pub use layout::{HeaderError, Op, RingLayout, Status, Submission};
 ///
 /// ```compile_fail,E0046
 /// struct Bytes;
-/// impl ferrix_netring::RingMemory for Bytes {
+/// impl xaqu_netring::RingMemory for Bytes {
 ///     fn read_u8(&self, _offset: usize) -> u8 {
 ///         0
 ///     }

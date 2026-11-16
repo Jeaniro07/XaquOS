@@ -1,8 +1,8 @@
-//! `ferrix_appmenu_v1`: an application's own menus for its toplevel.
+//! `xaqu_appmenu_v1`: an application's own menus for its toplevel.
 
 use compositor_appmenu::{Builder, Step, Tree, Wrong};
 use compositor_protocol::appmenu::{
-    FERRIX_APPMENU_V1, ferrix_appmenu_manager_v1 as manager, ferrix_appmenu_v1 as menu,
+    XAQU_APPMENU_V1, xaqu_appmenu_manager_v1 as manager, xaqu_appmenu_v1 as menu,
 };
 use compositor_wire::{Arg, ArgType, ObjectId};
 
@@ -35,7 +35,7 @@ impl Client {
                     return true;
                 }
                 self.forget_menus_of(toplevel);
-                if self.make(id, &FERRIX_APPMENU_V1, version, Role::AppMenu) {
+                if self.make(id, &XAQU_APPMENU_V1, version, Role::AppMenu) {
                     let _ = self.appmenus.insert(id, toplevel);
                     let _ = self.builders.insert(id, Builder::default());
                 }

@@ -12,7 +12,7 @@ symbol of the crate, nor any of the load's mechanisms only the crate calls
 the crate's. The symbols are read with `nm --demangle` from the ELF the
 build left, release, on each architecture (`cargo xtask test-removable`).
 
-    check-removable-symbols.py --elf KERNEL --crate ferrix-kernel-settings --value fixed
+    check-removable-symbols.py --elf KERNEL --crate xaqu-kernel-settings --value fixed
     check-removable-symbols.py --self-test
 """
 
@@ -50,7 +50,7 @@ def judge(names: list[str], entry: dict, value: str) -> list[str]:
 
 def seam_problems(elf: Path, names: list[str], entry: dict, value: str) -> list[str]:
     """The seam's symbols in a kernel built with `value` (ledger 3934 (4)):
-    each `__ferrix_*` symbol the record lists defined exactly once, and in a
+    each `__xaqu_*` symbol the record lists defined exactly once, and in a
     build with the present value each one's code calling into the crate (its
     implementation's methods are out of line for this); in another build the
     load's `Absent`, inlined or not, and nothing of the crate (`judge`)."""
@@ -103,11 +103,11 @@ def symbols(elf: Path) -> list[str]:
 
 
 def self_test() -> list[str]:
-    entry = {"flag": "runtime_settings", "present_when": "live", "symbol": "ferrix_kernel_settings",
-             "absent_symbols": ["<ferrix_kernel_load::syscall::system::UtsNamespace>::set_hostname"]}
-    live = ["<ferrix_kernel_settings::Live as ferrix_kernel_load::setters::Setters>::sethostname",
-            "__ferrix_setters_sethostname"]
-    fixed = ["__ferrix_setters_sethostname"]
+    entry = {"flag": "runtime_settings", "present_when": "live", "symbol": "xaqu_kernel_settings",
+             "absent_symbols": ["<xaqu_kernel_load::syscall::system::UtsNamespace>::set_hostname"]}
+    live = ["<xaqu_kernel_settings::Live as xaqu_kernel_load::setters::Setters>::sethostname",
+            "__xaqu_setters_sethostname"]
+    fixed = ["__xaqu_setters_sethostname"]
     failures = []
     if judge(live, entry, "live") or judge(fixed, entry, "fixed"):
         failures.append("a live kernel with the crate or a fixed one without it was refused")
@@ -115,13 +115,13 @@ def self_test() -> list[str]:
         failures.append("a live kernel without the crate passed")
     if not judge(live, entry, "fixed"):
         failures.append("a fixed kernel with the crate passed")
-    leaked = fixed + ["<ferrix_kernel_load::syscall::system::UtsNamespace>::set_hostname"]
+    leaked = fixed + ["<xaqu_kernel_load::syscall::system::UtsNamespace>::set_hostname"]
     if not judge(leaked, entry, "fixed"):
         failures.append("a fixed kernel holding a mechanism only the crate calls passed")
-    seam = dict(entry, seam_symbols=["__ferrix_setters_sethostname"])
+    seam = dict(entry, seam_symbols=["__xaqu_setters_sethostname"])
     if seam_problems(Path("/nonexistent"), fixed, seam, "fixed"):
         failures.append("a fixed kernel with its seam symbol once was refused")
-    if not seam_problems(Path("/nonexistent"), fixed + ["__ferrix_setters_sethostname"], seam, "fixed"):
+    if not seam_problems(Path("/nonexistent"), fixed + ["__xaqu_setters_sethostname"], seam, "fixed"):
         failures.append("a seam symbol defined twice passed")
     if not seam_problems(Path("/nonexistent"), [], seam, "fixed"):
         failures.append("a seam symbol not defined passed")

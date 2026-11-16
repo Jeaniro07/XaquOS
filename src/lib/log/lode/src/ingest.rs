@@ -69,7 +69,7 @@ pub fn from_kernel(kernel: &KernelRecord, now: Now) -> Record {
         record.set_level(level, LevelSource::Stated);
     } else if let Some((level, word)) = guess_level(&said.message, kernel.facility == 0) {
         record.set_level(level, LevelSource::Derived);
-        record.push("FERRIX_PRIORITY_WORD", word.as_bytes());
+        record.push("XAQU_PRIORITY_WORD", word.as_bytes());
     } else {
         record.set_level(UNSPECIFIED, LevelSource::Unspecified);
     }
@@ -91,8 +91,8 @@ pub fn from_kernel(kernel: &KernelRecord, now: Now) -> Record {
             record.set_level(3, LevelSource::Derived);
             record
                 .fields
-                .retain(|field| field.name != "FERRIX_PRIORITY_WORD");
-            record.push("FERRIX_PRIORITY_WORD", b"signal");
+                .retain(|field| field.name != "XAQU_PRIORITY_WORD");
+            record.push("XAQU_PRIORITY_WORD", b"signal");
             record.push("MESSAGE_ID", MESSAGE_ID_CRASH.as_bytes());
             record.push("CRASH_PID", alloc::format!("{}", crash.pid).as_bytes());
             record.push("CRASH_SIGNAL", crash.signal.as_bytes());
@@ -129,7 +129,7 @@ pub fn from_kernel(kernel: &KernelRecord, now: Now) -> Record {
         .or(said.identifier.as_deref())
         .or((kernel.facility == 0).then_some("kernel"));
     if let Some(subsystem) = subsystem {
-        record.push("FERRIX_SUBSYSTEM", subsystem.as_bytes());
+        record.push("XAQU_SUBSYSTEM", subsystem.as_bytes());
     }
     record.push("SYSLOG_FACILITY", facility.as_bytes());
     record.push("_KERNEL_SEQNUM", seq.as_bytes());
@@ -303,14 +303,14 @@ pub struct KernelGaps {
 /// `could not`, `cannot`, `unable` and `error:` an error; `refused`,
 /// `denied`, `lost`, `dropped`, `timed out` and `warning` a warning --
 /// none of them after `0` or `no`, which is a count of nothing
-/// (`0 refused`); `FERRIX-PANIC` critical. The kernel's own lines report
+/// (`0 refused`); `XAQU-PANIC` critical. The kernel's own lines report
 /// what its boot checks refused on purpose, so for `kernel` only the error
 /// words and an upper-case `WARNING:` count.
 #[must_use]
 pub fn guess_level(message: &[u8], kernel: bool) -> Option<(u8, &'static str)> {
     let text = core::str::from_utf8(message).ok()?;
-    if text.contains("FERRIX-PANIC") {
-        return Some((2, "FERRIX-PANIC"));
+    if text.contains("XAQU-PANIC") {
+        return Some((2, "XAQU-PANIC"));
     }
     let shouted = text.contains("WARNING:");
     let lower = text.to_ascii_lowercase();

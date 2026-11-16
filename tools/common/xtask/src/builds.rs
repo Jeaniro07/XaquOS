@@ -4,29 +4,29 @@
 //! Every program xtask boots is compiled by one of the [`Build`]s here -- a
 //! `cargo build` in a directory of the tree, with some environment and the
 //! files it names -- and the rest of xtask only packs and boots what they
-//! produce. So "Ferrix's images, compiled on Ferrix" is three steps:
+//! produce. So "Xaqu's images, compiled on Xaqu" is three steps:
 //!
-//! 1. **Record.** With `FERRIX_BUILDS=record:<DIR>`, xtask builds as usual and
+//! 1. **Record.** With `XAQU_BUILDS=record:<DIR>`, xtask builds as usual and
 //!    also writes each build down in `<DIR>/plan`: its command, its
 //!    environment, the files it reads, and the digests of what it made. A file
 //!    it reads that an earlier build made is written down as that build's
 //!    output; any other is copied into `<DIR>/files`. Paths inside the tree,
-//!    the target directory and `~/.local/share/ferrix` are written as
+//!    the target directory and `~/.local/share/xaqu` are written as
 //!    `${ROOT}`, `${TARGET}` and `${DATA}`.
 //! 2. **Carry out.** `cargo xtask builds-execute --plan <DIR>` makes every
-//!    build in the plan, in order, with this machine's compiler -- on Ferrix,
+//!    build in the plan, in order, with this machine's compiler -- on Xaqu,
 //!    under `test-selfhost --plan` -- and keeps each one's outputs in
 //!    `<DIR>/store/<key>/`. A build that reads an earlier build's output reads
 //!    the one made here.
-//! 3. **Replay.** With `FERRIX_BUILDS=replay:<DIR>/store`, xtask makes no
+//! 3. **Replay.** With `XAQU_BUILDS=replay:<DIR>/store`, xtask makes no
 //!    build at all: each is answered from the store, and a build the store
 //!    does not have is an error that names it. Every test then boots what
-//!    Ferrix compiled.
+//!    Xaqu compiled.
 //!
 //! A build's key is the SHA-256 of what it is -- the command, the
 //! environment, the paths with the placeholders in them -- and of the bytes
 //! of every file it reads. Step 2 and step 3 compute it from the same
-//! things: in both, an input made by an earlier build is Ferrix's.
+//! things: in both, an input made by an earlier build is Xaqu's.
 //!
 //! A script build also reads files at places of its own rather than through
 //! a variable -- the source archives it would otherwise download -- and names
@@ -63,7 +63,7 @@ fn execute_plan(args: &crate::args::Args) -> Result<()> {
 }
 
 /// The variable that switches between building, recording and replaying.
-const VARIABLE: &str = "FERRIX_BUILDS";
+const VARIABLE: &str = "XAQU_BUILDS";
 
 /// What a build runs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -242,7 +242,7 @@ pub(crate) fn active() -> bool {
 }
 
 /// Whether builds are recorded without booting what they made
-/// (`FERRIX_BUILDS=plan:<DIR>`): a plan written in minutes and with no
+/// (`XAQU_BUILDS=plan:<DIR>`): a plan written in minutes and with no
 /// machine to boot, as a scheduled CI job makes one. `crate::qemu` refuses
 /// every boot then, and a test stops at its first.
 pub(crate) fn boots_skipped() -> bool {
@@ -258,7 +258,7 @@ pub(crate) fn boots_skipped() -> bool {
 pub(crate) fn refuse_boot(arch: impl std::fmt::Display) -> Result<()> {
     if boots_skipped() {
         return Err(Error::new(format!(
-            "{arch}: not booted: FERRIX_BUILDS=plan: records the builds and boots nothing"
+            "{arch}: not booted: XAQU_BUILDS=plan: records the builds and boots nothing"
         )));
     }
     Ok(())
@@ -334,7 +334,7 @@ struct Places {
 impl Places {
     fn here() -> Places {
         let data = std::env::home_dir()
-            .map(|home| text(home.join(".local/share/ferrix").as_os_str()))
+            .map(|home| text(home.join(".local/share/xaqu").as_os_str()))
             .unwrap_or_default();
         Places {
             root: text(paths::workspace_root().as_os_str()),
@@ -740,7 +740,7 @@ fn replay(store: &Path, build: &Build) -> Result<()> {
     let stored = store.join(&key);
     if !stored.is_dir() {
         return Err(Error::new(format!(
-            "{} was not built on Ferrix: {} has no build {key}",
+            "{} was not built on Xaqu: {} has no build {key}",
             build.what,
             store.display()
         )));
@@ -748,7 +748,7 @@ fn replay(store: &Path, build: &Build) -> Result<()> {
     for (index, output) in build.outputs.iter().enumerate() {
         copy_output(&stored.join(index.to_string()), output)?;
     }
-    println!("  {}: Ferrix's build {}", build.what, short(&key));
+    println!("  {}: Xaqu's build {}", build.what, short(&key));
     Ok(())
 }
 
@@ -893,9 +893,9 @@ mod tests {
 
     fn places() -> Places {
         Places {
-            root: "/home/me/ferrix".to_owned(),
-            target: "/home/me/ferrix/target".to_owned(),
-            data: "/home/me/.local/share/ferrix".to_owned(),
+            root: "/home/me/xaqu".to_owned(),
+            target: "/home/me/xaqu/target".to_owned(),
+            data: "/home/me/.local/share/xaqu".to_owned(),
         }
     }
 
@@ -921,18 +921,18 @@ mod tests {
     fn places_become_placeholders_target_first() {
         let places = places();
         assert_eq!(
-            places.portable("/home/me/ferrix/target/zinc"),
+            places.portable("/home/me/xaqu/target/zinc"),
             "${TARGET}/zinc"
         );
-        assert_eq!(places.portable("/home/me/ferrix/zinc"), "${ROOT}/zinc");
+        assert_eq!(places.portable("/home/me/xaqu/zinc"), "${ROOT}/zinc");
         assert_eq!(
-            places.portable("/home/me/.local/share/ferrix/busybox"),
+            places.portable("/home/me/.local/share/xaqu/busybox"),
             "${DATA}/busybox"
         );
         let there = Places {
             root: "/data/src".to_owned(),
             target: "/data/target".to_owned(),
-            data: "/data/home/.local/share/ferrix".to_owned(),
+            data: "/data/home/.local/share/xaqu".to_owned(),
         };
         assert_eq!(there.local("${TARGET}/zinc"), "/data/target/zinc");
         assert_eq!(there.local("${ROOT}/zinc"), "/data/src/zinc");
@@ -966,18 +966,18 @@ mod tests {
         };
         let two = Planned {
             key: "k2".to_owned(),
-            what: "cargo build -p ferrix-kernel".to_owned(),
+            what: "cargo build -p xaqu-kernel".to_owned(),
             program: Program::Bash,
             dir: "${ROOT}".to_owned(),
             args: vec![],
             env: vec![(
-                "FERRIX_INIT_SCRIPT".to_owned(),
+                "XAQU_INIT_SCRIPT".to_owned(),
                 "echo hi\nexit 3\n".to_owned(),
             )],
             inputs: vec![
-                ("FERRIX_INIT".to_owned(), Source::Output("d1".to_owned())),
+                ("XAQU_INIT".to_owned(), Source::Output("d1".to_owned())),
                 (
-                    "FERRIX_INIT_COMMANDS".to_owned(),
+                    "XAQU_INIT_COMMANDS".to_owned(),
                     Source::File("f9".to_owned()),
                 ),
             ],
@@ -996,7 +996,7 @@ mod tests {
 
     #[test]
     fn a_key_follows_the_input_bytes_and_not_their_path() {
-        let directory = std::env::temp_dir().join(format!("ferrix-builds-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("xaqu-builds-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let first = directory.join("a");
         let second = directory.join("b");
@@ -1004,11 +1004,11 @@ mod tests {
         std::fs::write(&second, b"same").unwrap();
         let places = places();
         let build = |file: &Path| {
-            Build::cargo("k", "/home/me/ferrix")
+            Build::cargo("k", "/home/me/xaqu")
                 .args(["build"])
-                .env("CARGO_TARGET_DIR", "/home/me/ferrix/target/x")
-                .input("FERRIX_INIT", file)
-                .output("/home/me/ferrix/target/x/k")
+                .env("CARGO_TARGET_DIR", "/home/me/xaqu/target/x")
+                .input("XAQU_INIT", file)
+                .output("/home/me/xaqu/target/x/k")
         };
         let a = key(&build(&first), &places).unwrap();
         assert_eq!(a, key(&build(&second), &places).unwrap());
@@ -1018,12 +1018,12 @@ mod tests {
         let there = Places {
             root: "/data/src".to_owned(),
             target: "/data/target".to_owned(),
-            data: "/data/home/.local/share/ferrix".to_owned(),
+            data: "/data/home/.local/share/xaqu".to_owned(),
         };
         let moved = Build::cargo("k", "/data/src")
             .args(["build"])
             .env("CARGO_TARGET_DIR", "/data/target/x")
-            .input("FERRIX_INIT", &first)
+            .input("XAQU_INIT", &first)
             .output("/data/target/x/k");
         assert_eq!(a, key(&moved, &there).unwrap());
         std::fs::remove_dir_all(&directory).unwrap();
@@ -1032,7 +1032,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn a_directory_output_is_kept_whole() {
-        let root = std::env::temp_dir().join(format!("ferrix-tree-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("xaqu-tree-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let tree = root.join("tree");
         std::fs::create_dir_all(tree.join("sub")).unwrap();
@@ -1063,7 +1063,7 @@ mod tests {
     fn record_execute_and_replay_agree() {
         // A plan of two builds, the second reading the first's output, carried
         // out by `bash` in place of cargo; then each is replayed.
-        let root = std::env::temp_dir().join(format!("ferrix-plan-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("xaqu-plan-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
         let places = Places {

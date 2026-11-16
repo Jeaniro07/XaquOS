@@ -1,4 +1,4 @@
-//! `dhcpc`: Ferrix's DHCPv4 client, in place of busybox's `udhcpc`.
+//! `dhcpc`: Xaqu's DHCPv4 client, in place of busybox's `udhcpc`.
 //!
 //! ```text
 //! dhcpc -i IFACE [-n] [-q] [-t TRIES] [-T SECONDS] [-A SECONDS] [-f]
@@ -18,7 +18,7 @@
 //!
 //! and progress and refusals go to standard error, `dhcpc: ` first.
 //!
-//! The command line is `udhcpc`'s, as far as Ferrix's callers use it: `-i`
+//! The command line is `udhcpc`'s, as far as Xaqu's callers use it: `-i`
 //! the interface, `-t` how many DISCOVERs (and REQUESTs) to send, `-T` how
 //! long to wait for each answer, `-n` to exit with status 1 rather than try
 //! again after `-A` seconds when none came, and `-q` to exit with status 0
@@ -31,10 +31,10 @@
 //!
 //! Everything that decides is here and runs on the host: [`message`], the
 //! DHCP message both ways; [`frame`], the IPv4 and UDP around it, by the
-//! kernel's own `ferrix-netwire`; [`client`], the state machine, driven by a
+//! kernel's own `xaqu-netwire`; [`client`], the state machine, driven by a
 //! clock the caller passes in, so a test walks a day-long lease in
 //! microseconds; [`rtnl`], the rtnetlink requests and the replies' walk,
-//! by the kernel's own `ferrix-netlink`; and [`args`], the command line.
+//! by the kernel's own `xaqu-netlink`; and [`args`], the command line.
 //! `src/main.rs` and its `sys` module are the sockets and the loop.
 
 #![forbid(unsafe_code)]

@@ -1,6 +1,6 @@
-# Contributing to Ferrix
+# Contributing to Xaqu
 
-Boot Ferrix, try something, and tell us where it breaks. A clear report is as
+Boot Xaqu, try something, and tell us where it breaks. A clear report is as
 useful as a patch.
 
 ## Report what you find
@@ -44,7 +44,7 @@ the two lanes, and how `develop` reaches `main`.
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the map of the tree, and
 [the roadmap](docs/roadmap/README.md) says what each stage still needs.
 
-## How Ferrix is made
+## How Xaqu is made
 
 Most code is written in Claude sessions. The project owner chooses what to
 build and reviews the results. Contributions from other people go through the

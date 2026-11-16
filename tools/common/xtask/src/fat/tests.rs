@@ -168,11 +168,11 @@ fn round_trips_a_file_larger_than_one_cluster() {
     let payload: Vec<u8> = (0..cluster * 3 + 17)
         .map(|byte| (byte % 251) as u8)
         .collect();
-    fs.add_file("FERRIX/KERNEL.ELF", &payload).unwrap();
+    fs.add_file("XAQU/KERNEL.ELF", &payload).unwrap();
 
     let image = fs.finish();
     let reader = Reader::new(&image);
-    let read = reader.read("FERRIX/KERNEL.ELF").unwrap();
+    let read = reader.read("XAQU/KERNEL.ELF").unwrap();
     assert_eq!(
         read.len(),
         payload.len(),
@@ -187,7 +187,7 @@ fn two_files_in_one_directory_do_not_overwrite_each_other() {
     fs.add_file("EFI/BOOT/BOOTX64.EFI", b"loader").unwrap();
     fs.add_file("EFI/BOOT/BOOTAA64.EFI", b"other loader")
         .unwrap();
-    fs.add_file("FERRIX/KERNEL.ELF", b"kernel").unwrap();
+    fs.add_file("XAQU/KERNEL.ELF", b"kernel").unwrap();
 
     let image = fs.finish();
     let reader = Reader::new(&image);
@@ -200,7 +200,7 @@ fn two_files_in_one_directory_do_not_overwrite_each_other() {
         Some(&b"other loader"[..])
     );
     assert_eq!(
-        reader.read("FERRIX/KERNEL.ELF").as_deref(),
+        reader.read("XAQU/KERNEL.ELF").as_deref(),
         Some(&b"kernel"[..])
     );
 }
@@ -294,14 +294,14 @@ fn the_volume_label_is_in_the_root_directory() {
         .filter(|entry| entry[11] & ATTR_VOLUME_ID != 0)
         .collect();
     assert_eq!(labels.len(), 1);
-    assert_eq!(&labels[0][0..11], b"FERRIX     ");
+    assert_eq!(&labels[0][0..11], b"XAQU     ");
 }
 
 #[test]
 fn both_copies_of_the_allocation_table_agree() {
     let mut fs = small_image();
     let payload: Vec<u8> = (0..20_000u32).map(|byte| byte as u8).collect();
-    fs.add_file("FERRIX/KERNEL.ELF", &payload).unwrap();
+    fs.add_file("XAQU/KERNEL.ELF", &payload).unwrap();
 
     let fat_sectors = fs.fat_sectors as usize * SECTOR;
     let image = fs.finish();
@@ -326,7 +326,7 @@ fn the_image_is_reproducible() {
     let build = || {
         let mut fs = Fat32::new(IMAGE_BYTES).unwrap();
         fs.add_file("EFI/BOOT/BOOTX64.EFI", b"loader").unwrap();
-        fs.add_file("FERRIX/KERNEL.ELF", b"kernel").unwrap();
+        fs.add_file("XAQU/KERNEL.ELF", b"kernel").unwrap();
         fs.finish()
     };
     assert_eq!(
@@ -338,25 +338,25 @@ fn the_image_is_reproducible() {
 
 #[test]
 fn a_directory_named_like_the_volume_label_is_still_found() {
-    // Regression: `FERRIX` as a directory name is byte-identical to `FERRIX` as
+    // Regression: `XAQU` as a directory name is byte-identical to `XAQU` as
     // a volume label, and the lookup matched the label first -- returning its
     // first-cluster field, which is 0 and not a cluster at all. Every write
-    // under FERRIX/ then computed a negative cluster offset.
+    // under XAQU/ then computed a negative cluster offset.
     let mut fs = small_image();
-    fs.add_file("FERRIX/KERNEL.ELF", b"kernel").unwrap();
-    fs.add_file("FERRIX/INITRD.IMG", b"initrd").unwrap();
+    fs.add_file("XAQU/KERNEL.ELF", b"kernel").unwrap();
+    fs.add_file("XAQU/INITRD.IMG", b"initrd").unwrap();
 
     let image = fs.finish();
     let reader = Reader::new(&image);
-    let (cluster, _, attr) = reader.find(reader.root_cluster, "FERRIX").unwrap();
+    let (cluster, _, attr) = reader.find(reader.root_cluster, "XAQU").unwrap();
     assert!(cluster >= 2, "a directory must start at a real cluster");
     assert_ne!(attr & ATTR_DIRECTORY, 0);
     assert_eq!(
-        reader.read("FERRIX/KERNEL.ELF").as_deref(),
+        reader.read("XAQU/KERNEL.ELF").as_deref(),
         Some(&b"kernel"[..])
     );
     assert_eq!(
-        reader.read("FERRIX/INITRD.IMG").as_deref(),
+        reader.read("XAQU/INITRD.IMG").as_deref(),
         Some(&b"initrd"[..])
     );
 }

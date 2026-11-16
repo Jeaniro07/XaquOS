@@ -1,6 +1,6 @@
-# Ferrix — releases
+# Xaqu — releases
 
-These are snapshots of older Ferrix milestones, newest first. Each one records
+These are snapshots of older Xaqu milestones, newest first. Each one records
 what worked and what was still missing at the time. For the current state,
 read [the roadmap](roadmap/where-it-stands.md).
 
@@ -8,11 +8,11 @@ Milestone tags are annotated and checked by the project owner before they are
 published. The release workflow uses the matching section from this file as
 its notes, and attaches the Pixel 7 app's desktop in its two editions, which
 the app updates the phone from ([tools/vendor/google/pixel7/README.md](../tools/vendor/google/pixel7/README.md#updates)),
-and the x86-64 desktop for plain QEMU, `ferrix-x86_64-desktop.zip`, which
+and the x86-64 desktop for plain QEMU, `xaqu-x86_64-desktop.zip`, which
 [`tools/common/release/package-desktop.py`](../tools/common/release/package-desktop.py)
 builds, with each image's licence inventory and the corresponding sources of
 every GPL and LGPL program in them ([LICENSES.md](LICENSES.md)). Every
-release also carries the desktop's wallpaper, `ferrix-wallpaper-1920x1080.png`,
+release also carries the desktop's wallpaper, `xaqu-wallpaper-1920x1080.png`,
 `-2560x1440.png` and `-3840x2160.png`, which the desktop images show
 (`/bin/wallpaper` on every screen) and
 [`gen-brand-images.py wallpaper`](../tools/common/gen/gen-brand-images.py)
@@ -31,13 +31,13 @@ for how future releases should be presented.
 
 ## v0.3.0 (2026-11-08), surviving bad hardware
 
-Nine days of work since v0.2.0, most of it below the desktop: Ferrix now
+Nine days of work since v0.2.0, most of it below the desktop: Xaqu now
 reads the processor's error banks and survives memory that fails, the
 compositor can freeze a program and thaw it later, the kernel runs more
 lightly under a game's load, and the switch to a microkernel has its first
 working build. The live ISO and its installer are the same as v0.2.0's.
-Download `ferrix-v0.3.0-x86_64.iso` below, check it against `SHA256SUMS`,
-and follow [Try Ferrix](https://github.com/ferrix-os/ferrix/blob/v0.3.0/docs/TRY-FERRIX.md).
+Download `xaqu-v0.3.0-x86_64.iso` below, check it against `SHA256SUMS`,
+and follow [Try Xaqu](https://github.com/xaqu-os/xaqu/blob/v0.3.0/docs/TRY-XAQU.md).
 
 **This is still a development preview, not a finished system.** What
 v0.2.0's notes say about Secure Boot, signatures, the IOMMU and the
@@ -48,9 +48,9 @@ New since v0.2.0:
 
 - **A log of hardware errors.** The kernel reads and enables every
   processor's machine-check banks, polls them every 5 s, and logs each
-  error with its bank, address and kind; `/proc/ferrix-mce` counts them
+  error with its bank, address and kind; `/proc/xaqu-mce` counts them
   per processor. Corrected errors (ECC, a cache retry) are what an
-  unstable overclock or a failing DIMM shows first, and Ferrix used to
+  unstable overclock or a failing DIMM shows first, and Xaqu used to
   see none of them. Intel's and AMD's own rules are both followed (AMD's
   SMCA banks included; with Intel's rules every uncorrected error stopped
   a Ryzen), and on Intel a corrected error interrupts its processor at
@@ -62,7 +62,7 @@ New since v0.2.0:
   a bad page in a clean cached file costs a disk read; a ring-3 driver
   that reads one ends alone and `devmgr` starts it again. A retired frame
   stays out after a warm reset and, on a boot disk, after a power cycle
-  (`ferrix.badframes=persist|reset|off`). A RAM scrubber tests free
+  (`xaqu.badframes=persist|reset|off`). A RAM scrubber tests free
   memory while the machine idles and retires a frame that fails twice
   (on bare metal only: in a virtual machine it stands down). A processor
   that keeps reporting errors of its own is taken out of service while the
@@ -97,12 +97,12 @@ New since v0.2.0:
   builds on AArch64 and runs Linux programs there (busybox, Rust threads,
   btrfs, the init) in the test machines. The live ISO's kernel is still
   the `desktop` profile, the Linux layer in ring 0, and nothing of this
-  is claimed for anything yet ([docs/microkernel/FLIP.md](https://github.com/ferrix-os/ferrix/blob/v0.3.0/docs/microkernel/FLIP.md)).
+  is claimed for anything yet ([docs/microkernel/FLIP.md](https://github.com/xaqu-os/xaqu/blob/v0.3.0/docs/microkernel/FLIP.md)).
 - **Smaller things.** `msync(MS_SYNC)` writes a shared file mapping's pages
   to the disk; a fullscreen window of another shape is fitted, not
   stretched, and covers the dock; an X program's crash report names the
   program, not the X server; `authd`'s password hashing takes at most a
-  quarter of free memory; Ferrix calls itself 0.3.0 (`uname`, the boot
+  quarter of free memory; Xaqu calls itself 0.3.0 (`uname`, the boot
   lines, `ferrofetch`), where v0.2.0 still said 0.1.0. Built with Rust
   1.99.1.
 - **Fixed:** a game that filled memory on the N150 stopped the kernel
@@ -111,23 +111,23 @@ New since v0.2.0:
   looped with no report, before stopping (F-103); a task freed from an
   interrupt ran work that may sleep there (F-104).
 
-On v0.3.0's live ISO, in Try Ferrix's QEMU machine:
+On v0.3.0's live ISO, in Try Xaqu's QEMU machine:
 
-![A program suspended with SUPER+Z: its window, a clock stopped at 23:52:12, at half opacity over ferrofetch, while a terminal reads its cgroup as frozen and the time as 23:52:48](https://raw.githubusercontent.com/ferrix-os/ferrix/589fcb09648ce4ab2cd67405b05021fe10569284/docs/brand/screenshots/suspend.png)
+![A program suspended with SUPER+Z: its window, a clock stopped at 23:52:12, at half opacity over ferrofetch, while a terminal reads its cgroup as frozen and the time as 23:52:48](https://raw.githubusercontent.com/xaqu-os/xaqu/589fcb09648ce4ab2cd67405b05021fe10569284/docs/brand/screenshots/suspend.png)
 
 *SUPER+Z froze the clock's terminal at 23:52:12: half opacity, `frozen 1`,
 and `date` 36 seconds later.*
 
-![A terminal reading uname as Ferrix 0.3.0, /proc/ferrix-mce with one corrected error on cpu2, the RAM scrubber standing down, and the resident set split by kind](https://raw.githubusercontent.com/ferrix-os/ferrix/589fcb09648ce4ab2cd67405b05021fe10569284/docs/brand/screenshots/machine-check.png)
+![A terminal reading uname as Xaqu 0.3.0, /proc/xaqu-mce with one corrected error on cpu2, the RAM scrubber standing down, and the resident set split by kind](https://raw.githubusercontent.com/xaqu-os/xaqu/589fcb09648ce4ab2cd67405b05021fe10569284/docs/brand/screenshots/machine-check.png)
 
 *A corrected memory error injected on processor 2 through QEMU's monitor,
 logged and counted; the scrubber stands down in a virtual machine.*
 
 What does not work, yet (unchanged from v0.2.0 unless it says so):
 
-- **Installing from a CD or a USB stick**: Ferrix has no CD driver and
+- **Installing from a CD or a USB stick**: Xaqu has no CD driver and
   does not yet read USB disks as disks. Attach the ISO to a virtual
-  machine as a virtio, SATA or NVMe disk to install; Try Ferrix shows how.
+  machine as a virtio, SATA or NVMe disk to install; Try Xaqu shows how.
 - **Graphics on a PC are the firmware's framebuffer**, drawn in software;
   Intel graphics only under an option this image does not set; AMD and
   NVIDIA graphics not at all. **Input on a PC is USB only**, no PS/2.
@@ -138,7 +138,7 @@ What does not work, yet (unchanged from v0.2.0 unless it says so):
 - **Not signed for Secure Boot**: turn it off to start the ISO.
 - **Very heavy programs** can still stall the system under load (F-95).
 - In the live session, `dmesg` and `journalctl` show the session's user
-  nothing of the kernel's log; `/proc/ferrix-mce` is readable.
+  nothing of the kernel's log; `/proc/xaqu-mce` is readable.
 - The dock's clock shows UTC whatever the time zone. The installer does
   not resize another system's partition or write a firmware boot entry,
   and speaks English only.
@@ -148,21 +148,21 @@ image row's gates
 (`check`, the release build, boots on x86-64 under KVM and under QEMU's
 emulator, AArch64 and ARMv7-A at four and at two processors, and ring 0's
 size budget); the release workflow's dry run, which built every asset;
-and the dry run's ISO booted to the desktop on Try Ferrix's virtio
+and the dry run's ISO booted to the desktop on Try Xaqu's virtio
 machine. The pictures above come from the same check one commit of code
 earlier (182712930, before the fault path's revert, which changes no
 screen). Real PCs, VirtualBox and VMware were not checked.
 
 ## v0.2.0 (2026-10-29), the first live ISO
 
-A live ISO you can boot: Ferrix's desktop, Xaqu, starts from memory, with
-an installer that puts Ferrix on a disk of its own. Download
-`ferrix-v0.2.0-x86_64.iso` below, check it against `SHA256SUMS`, and follow
-[Try Ferrix](https://github.com/ferrix-os/ferrix/blob/v0.2.0/docs/TRY-FERRIX.md):
+A live ISO you can boot: Xaqu's desktop, Xaqu, starts from memory, with
+an installer that puts Xaqu on a disk of its own. Download
+`xaqu-v0.2.0-x86_64.iso` below, check it against `SHA256SUMS`, and follow
+[Try Xaqu](https://github.com/xaqu-os/xaqu/blob/v0.2.0/docs/TRY-XAQU.md):
 it has the QEMU command line, the settings VirtualBox and VMware need, how
 to write a USB stick, and what the installer asks.
 
-**This is a development preview, not a finished system.** Ferrix is young:
+**This is a development preview, not a finished system.** Xaqu is young:
 it has run on very few PCs, and parts of authentication and process
 isolation are still being finished. The image is not signed for Secure
 Boot (turn Secure Boot off to start it) and carries no signature its
@@ -170,23 +170,23 @@ loader checks. Do not put anything on it that you cannot lose.
 
 The live ISO's command line is not a configuration any certification
 claim is made of: it skips the boot self-checks, lends the firmware's
-framebuffer to a driver (`ferrix.efifb`) and, on a machine without an
-IOMMU, lets drivers run unisolated (`ferrix.unisolated`, below).
+framebuffer to a driver (`xaqu.efifb`) and, on a machine without an
+IOMMU, lets drivers run unisolated (`xaqu.unisolated`, below).
 
 What is in it:
 
 - **A live session.** The ISO boots under UEFI (no legacy BIOS) as a CD,
   a virtual disk or, written with `dd`, Rufus's DD mode or balenaEtcher, a
   USB stick: El Torito and a GUID partition table over the same EFI system
-  partition. `/` is in memory and the session logs in as `ferrix` with no
+  partition. `/` is in memory and the session logs in as `xaqu` with no
   password; nothing on the machine's disks is touched.
 - **Xaqu on hyprix**, the default desktop of both the live session and the
-  installed system: Ferrix's own Wayland compositor, with the dock,
+  installed system: Xaqu's own Wayland compositor, with the dock,
   sidebars, launcher and wallpaper picker in the Nocturne design; a
   terminal running zinc, the zsh-compatible shell; Settings, the Files app
   (shelf), `btop`, `curl`, `git`, `foot`, `ferrofetch` and the rest of the
   apps a desktop image carries.
-- **Install Ferrix**, a graphical installer in the style of Ubuntu's:
+- **Install Xaqu**, a graphical installer in the style of Ubuntu's:
   language, keyboard, the disk -- erase it whole, with a warning in red, or
   install into free space or one partition you choose, leaving the others
   alone --, your account, the time zone, a summary, progress, and restart.
@@ -196,13 +196,13 @@ What is in it:
   console drivers run as processes and are restarted when they crash.
 - **Licences and sources**: `THIRD_PARTY_LICENSES.MD` in the ISO (and
   `LICENSES.MD` on its EFI system partition, and the asset
-  `ferrix-v0.2.0-x86_64-iso-THIRD-PARTY-LICENSES.md`) lists every part of
+  `xaqu-v0.2.0-x86_64-iso-THIRD-PARTY-LICENSES.md`) lists every part of
   the image, its licence and the licence's text;
-  `ferrix-v0.2.0-sources.tar.gz` holds the exact source of every GPL and
+  `xaqu-v0.2.0-sources.tar.gz` holds the exact source of every GPL and
   LGPL program in it. The ISO carries no firmware, no Google Chrome and no
-  NVIDIA software, and no artwork but Ferrix's own.
+  NVIDIA software, and no artwork but Xaqu's own.
 
-**Drivers and the IOMMU.** Ferrix runs each driver that does DMA behind
+**Drivers and the IOMMU.** Xaqu runs each driver that does DMA behind
 the IOMMU (Intel VT-d, AMD-Vi), so a driver cannot reach memory it was not
 given. The **live session** also starts drivers on a machine with no IOMMU
 (VirtualBox's and VMware's defaults, a PC with VT-d or AMD-Vi off), and
@@ -214,7 +214,7 @@ system will have no USB keyboard, mouse or disk drivers.
 
 What was checked for this release, in QEMU 10.2 with OVMF (UEFI):
 
-- **Try Ferrix's virtio machine** (KVM, virtio-gpu, virtio input, disk and
+- **Try Xaqu's virtio machine** (KVM, virtio-gpu, virtio input, disk and
   network, an Intel IOMMU): the live desktop as a CD, as a USB stick and as
   a virtual disk, and an install onto a blank virtual disk that then boots
   alone to the person's locked Xaqu session -- the release's gates
@@ -226,21 +226,21 @@ What was checked for this release, in QEMU 10.2 with OVMF (UEFI):
   graphical install onto an NVMe disk, which then booted alone, isolated,
   and opened Xaqu to the password typed on the USB keyboard.
 - **Not checked for this release:** real PCs, VirtualBox and VMware.
-  Ferrix itself has run on the Intel N150 mini PC it is developed on (its
+  Xaqu itself has run on the Intel N150 mini PC it is developed on (its
   AHCI SATA disk and Motorcomm YT6801 Ethernet), but this ISO has not been
   booted there.
 
 What does not work, yet:
 
-- **Installing from a CD or a USB stick.** Ferrix has no CD driver and
+- **Installing from a CD or a USB stick.** Xaqu has no CD driver and
   does not yet read USB disks as disks, so booted that way the live session
   works but the installer cannot read the system to copy: it says so at
   Install and writes nothing. To install, attach the ISO to a virtual
-  machine as a disk -- virtio, SATA or NVMe (Try Ferrix shows how, for
+  machine as a disk -- virtio, SATA or NVMe (Try Xaqu shows how, for
   QEMU, VirtualBox and VMware); installing on a PC from a USB stick comes
   in a later release.
 - **Graphics on a PC are the firmware's framebuffer**: the resolution the
-  firmware chose, no GPU acceleration. Ferrix drives virtio-gpu in virtual
+  firmware chose, no GPU acceleration. Xaqu drives virtio-gpu in virtual
   machines; Intel graphics only under an option this image does not set;
   AMD and NVIDIA graphics not at all.
 - **Input on a PC is USB only** (keyboards and mice on an xHCI controller).
@@ -275,15 +275,15 @@ cargo xtask test-iso-install --arch x86_64        # installs it, boots the disk
 
 The first release with its downloads: the x86-64 desktop as one zip,
 booted by a script with plain QEMU. v0.1.0 was tagged but built none of its
-assets (see below). Download `ferrix-x86_64-desktop.zip` below, unpack it,
+assets (see below). Download `xaqu-x86_64-desktop.zip` below, unpack it,
 and run
 
 ```
-sh ferrix-x86_64-desktop/run.sh                                                  # Linux, macOS
-powershell -ExecutionPolicy Bypass -File ferrix-x86_64-desktop\run.ps1           # Windows
+sh xaqu-x86_64-desktop/run.sh                                                  # Linux, macOS
+powershell -ExecutionPolicy Bypass -File xaqu-x86_64-desktop\run.ps1           # Windows
 ```
 
-The [install guide](https://github.com/ferrix-os/ferrix/blob/main/docs/INSTALL.md)
+The [install guide](https://github.com/xaqu-os/xaqu/blob/main/docs/INSTALL.md)
 walks through it step by step, with pictures, on Windows and Linux. The
 script uses KVM, WHPX or HVF where it can and QEMU's emulator otherwise,
 and finds the UEFI firmware QEMU or the distribution installed.
@@ -294,7 +294,7 @@ Since v0.1.0:
   mirror, checked against the same pin, and the workflow has a dry run that
   builds all three assets for a commit before it is tagged; this tag's
   commit passed one.
-- **Ferrix's own DHCP client.** `dhcpc`, in Rust, takes the address,
+- **Xaqu's own DHCP client.** `dhcpc`, in Rust, takes the address,
   route and DNS servers and keeps the lease renewed, where busybox's
   `udhcpc` and a shell script did; busybox itself is still in the image.
 - **Fixed:** a boot self-check of the character-device core (stage 10) that
@@ -309,7 +309,7 @@ What it has:
   `fuzzel`, `waybar` and `ferrofetch`. The network is QEMU's own, so
   `curl https://example.com` works from the first prompt.
 - **Linux programs:** Chrome, `rustc`, `git`, `curl` and Valve's
-  `steamcmd` run unpatched on Ferrix's own Rust kernel, 32-bit x86 programs
+  `steamcmd` run unpatched on Xaqu's own Rust kernel, 32-bit x86 programs
   included; Steam signs in and starts a native game; Claude Code runs a
   session on the desktop. Those that need a volume of their own are in a
   build from source (`cargo xtask run-compositor --everything`), not in the
@@ -319,19 +319,19 @@ What it has:
   and are restarted when they crash.
 - **Users and storage:** passwords checked by `authd` as Argon2id hashes; a
   btrfs root that keeps what is written to it, a command-line installer
-  (`ferrix-install`, to virtual disks so far: no graphical installer and no
+  (`xaqu-install`, to virtual disks so far: no graphical installer and no
   live medium yet), and A/B system slots with a way back.
-- **Three architectures** in the boot tests, and Ferrix has booted on an
+- **Three architectures** in the boot tests, and Xaqu has booted on an
   STM32MP157D-DK1 and a Pixel 7.
-- **Licences and sources:** `ferrix-v0.1.1-THIRD-PARTY-LICENSES.md` (also
+- **Licences and sources:** `xaqu-v0.1.1-THIRD-PARTY-LICENSES.md` (also
   in the zip) lists every part of the x86-64 image, the licence it is
   shipped under and every licence text, and each Pixel 7 edition has its own
-  (`ferrix-pixel7-<edition>-THIRD-PARTY-LICENSES.md`). `ferrix-v0.1.1-sources.tar.gz`
+  (`xaqu-pixel7-<edition>-THIRD-PARTY-LICENSES.md`). `xaqu-v0.1.1-sources.tar.gz`
   holds the exact upstream source, build script, patches and config of
   every GPL and LGPL program in these images (busybox, git, alsa-utils,
   alsa-lib) and of what is linked into one, and the Debian package list
   of the Pixel 7 Chromium volume with where each package's source is
-  ([docs/LICENSES.md](https://github.com/ferrix-os/ferrix/blob/main/docs/LICENSES.md)).
+  ([docs/LICENSES.md](https://github.com/xaqu-os/xaqu/blob/main/docs/LICENSES.md)).
 
 Known limits:
 
@@ -340,19 +340,19 @@ Known limits:
   nothing survives QEMU exiting; the screen is drawn in software, with no
   host GPU; the keyboard layout is US; there is no sound card.
 - With released QEMU under WHPX the guest gets one processor: QEMU 11.1's
-  WHPX faults Ferrix's ring-3 drivers with more.
+  WHPX faults Xaqu's ring-3 drivers with more.
   `tools/common/fetch/fetch-qemu-windows.sh` builds one that does not.
 - QEMU's window can open at 640x480 on Windows; make it bigger and the
   desktop follows.
 - On an Apple Silicon Mac the x86-64 guest is emulated and slow.
-- The zip's desktop runs as root with no login. Ferrix is not ready to be
+- The zip's desktop runs as root with no login. Xaqu is not ready to be
   anybody's everyday OS: parts of authentication and process isolation are
   unfinished.
 
 What to test:
 
 ```
-sh ferrix-x86_64-desktop/run.sh --vnc 5        # no window: VNC on 127.0.0.1:5905
+sh xaqu-x86_64-desktop/run.sh --vnc 5        # no window: VNC on 127.0.0.1:5905
 cargo xtask run-compositor --arch x86_64        # the same desktop from source
 cargo xtask test-boot --arch all
 ```
@@ -365,11 +365,11 @@ runners. v0.1.1 is the same system with the downloads.
 
 The first numbered release, and the first one anybody can boot without
 building it: the x86-64 desktop as one zip, booted by a script with plain
-QEMU. Download `ferrix-x86_64-desktop.zip` below, unpack it, and run
+QEMU. Download `xaqu-x86_64-desktop.zip` below, unpack it, and run
 
 ```
-sh ferrix-x86_64-desktop/run.sh                                                  # Linux, macOS
-powershell -ExecutionPolicy Bypass -File ferrix-x86_64-desktop\run.ps1           # Windows
+sh xaqu-x86_64-desktop/run.sh                                                  # Linux, macOS
+powershell -ExecutionPolicy Bypass -File xaqu-x86_64-desktop\run.ps1           # Windows
 ```
 
 The script uses KVM, WHPX or HVF where it can and QEMU's emulator
@@ -385,7 +385,7 @@ each.
   `fuzzel`, `waybar` and `ferrofetch`. The network is QEMU's own, so
   `curl https://example.com` works from the first prompt.
 - **Linux programs:** Chrome, `rustc`, `git`, `curl` and Valve's
-  `steamcmd` run unpatched on Ferrix's own Rust kernel, 32-bit x86 programs
+  `steamcmd` run unpatched on Xaqu's own Rust kernel, 32-bit x86 programs
   included; Steam signs in and starts a native game; Claude Code runs a
   session on the desktop. Those that need a volume of their own are in a
   build from source (`cargo xtask run-compositor --everything`), not in the
@@ -395,20 +395,20 @@ each.
   and are restarted when they crash.
 - **Users and storage:** passwords checked by `authd` as Argon2id hashes; a
   btrfs root that keeps what is written to it, a command-line installer
-  (`ferrix-install`, to virtual disks so far: no graphical installer and no
+  (`xaqu-install`, to virtual disks so far: no graphical installer and no
   live medium yet), and A/B system
   slots with a way back.
-- **Three architectures** in the boot tests, and Ferrix has booted on an
+- **Three architectures** in the boot tests, and Xaqu has booted on an
   STM32MP157D-DK1 and a Pixel 7.
-- **Licences and sources:** `ferrix-v0.1.0-THIRD-PARTY-LICENSES.md` (also
+- **Licences and sources:** `xaqu-v0.1.0-THIRD-PARTY-LICENSES.md` (also
   in the zip) lists every part of the x86-64 image, the licence it is
   shipped under and every licence text, and each Pixel 7 edition has its own
-  (`ferrix-pixel7-<edition>-THIRD-PARTY-LICENSES.md`). `ferrix-v0.1.0-sources.tar.gz`
+  (`xaqu-pixel7-<edition>-THIRD-PARTY-LICENSES.md`). `xaqu-v0.1.0-sources.tar.gz`
   holds the exact upstream source, build script, patches and config of
   every GPL and LGPL program in these images (busybox, git, alsa-utils,
   alsa-lib) and of what is linked into one, and the Debian package list
   of the Pixel 7 Chromium volume with where each package's source is
-  ([docs/LICENSES.md](https://github.com/ferrix-os/ferrix/blob/main/docs/LICENSES.md)).
+  ([docs/LICENSES.md](https://github.com/xaqu-os/xaqu/blob/main/docs/LICENSES.md)).
 
 Known limits:
 
@@ -417,17 +417,17 @@ Known limits:
   nothing survives QEMU exiting; the screen is drawn in software, with no
   host GPU; the keyboard layout is US; there is no sound card.
 - With released QEMU under WHPX the guest gets one processor: QEMU 11.1's
-  WHPX faults Ferrix's ring-3 drivers with more.
+  WHPX faults Xaqu's ring-3 drivers with more.
   `tools/common/fetch/fetch-qemu-windows.sh` builds one that does not.
 - On an Apple Silicon Mac the x86-64 guest is emulated and slow.
-- The zip's desktop runs as root with no login. Ferrix is not ready to be
+- The zip's desktop runs as root with no login. Xaqu is not ready to be
   anybody's everyday OS: parts of authentication and process isolation are
   unfinished.
 
 What to test:
 
 ```
-sh ferrix-x86_64-desktop/run.sh --vnc 5        # no window: VNC on 127.0.0.1:5905
+sh xaqu-x86_64-desktop/run.sh --vnc 5        # no window: VNC on 127.0.0.1:5905
 cargo xtask run-compositor --arch x86_64        # the same desktop from source
 cargo xtask test-boot --arch all
 ```
@@ -534,12 +534,12 @@ read through it; threads begun; ferrousli's busybox as the userland.
   and the SMMUv3 (AArch64) translating its DMA, a deliberate out-of-domain
   write faults, and a driver's death resets its device before any pinned
   frame is freed. ARMv7-A runs its driver in degraded trusted mode, as
-  decided. `FERRIX-BOOT-OK stages 1-10`.
+  decided. `XAQU-BOOT-OK stages 1-10`.
 - Stage 11's exit: an image made by real `mkfs.btrfs` is mounted read-only
   at `/mnt` through that driver and 101 files, 17 directories and a link
   read back byte for byte on all three architectures, with every data sector
   checked against the checksum tree and the default subvolume honoured.
-  `FERRIX-BOOT-OK stages 1-11`.
+  `XAQU-BOOT-OK stages 1-11`.
 - The page cache is the inode's VMO on tmpfs and btrfs alike: files fill
   from a page source, and `mmap` of a file with `MAP_SHARED` maps those pages
   — writes go both ways, `msync` answers, a touch past the end is `SIGBUS`.
@@ -551,9 +551,9 @@ read through it; threads begun; ferrousli's busybox as the userland.
 - Native process creation: `process_create` and `process_start`, `vmo_map`,
   process observers, and a start argument on entry; `devmgr`'s kernel half.
 - `SA_RESTART`, pid 1 with orphans reparented, a program killed by its own
-  fault no longer panics the kernel, `uname -s` says `Ferrix`.
+  fault no longer panics the kernel, `uname -s` says `Xaqu`.
 - All three architectures take console input by interrupt (x86-64's COM1
-  through the I/O APIC); ARMv7-A boots with 2 GiB; `ferrix.onexit=reset`
+  through the I/O APIC); ARMv7-A boots with 2 GiB; `xaqu.onexit=reset`
   returns the DK1 to U-Boot with no hand at it — proven on the board, with
   the flash-from-Windows procedure in the board guide.
 - Every frame-counted self-check nets heap pages against free frames and
@@ -561,7 +561,7 @@ read through it; threads begun; ferrousli's busybox as the userland.
   handle's close; the wake check counts wakes rather than timing them.
 - ferrousli: its busybox links (from 154 undefined symbols to none) and is
   the primary busybox the gates run — `test-shell` and `test-vfs` pass with
-  it on Ferrix, with the musl and glibc busyboxes kept as compatibility
+  it on Xaqu, with the musl and glibc busyboxes kept as compatibility
   checks. `cargo xtask busybox` builds it; `--init ferrousli` runs it.
 - Decisions of record: POSIX.1-2024 compatibility is a goal, Linux winning
   where they differ; the goal after `rustc` is a Hyprland-shaped compositor
@@ -589,7 +589,7 @@ failures fixed.
   the console drains before power-off so the last line arrives whole.
 - glibc programs run as init: `/proc/self/exe` is absolute, so Ubuntu's
   static busybox reaches its prompt
-  (`FERRIX_INIT=/usr/bin/busybox cargo xtask run --arch x86_64`).
+  (`XAQU_INIT=/usr/bin/busybox cargo xtask run --arch x86_64`).
 - Stage 10: VT-d on x86-64 and SMMUv3 on AArch64 translate every device's
   DMA, an out-of-domain write is caught by the unit's fault record, a driver
   can pin VMO pages for its device, and IOMMU waits run with interrupts on.
@@ -614,11 +614,11 @@ failures fixed.
 What to test:
 
 ```
-cargo xtask run --arch armv7a --init '~/.local/share/ferrix/busybox/{arch}/bin/busybox.static'
-FERRIX_INIT=/usr/bin/busybox cargo xtask run --arch x86_64
+cargo xtask run --arch armv7a --init '~/.local/share/xaqu/busybox/{arch}/bin/busybox.static'
+XAQU_INIT=/usr/bin/busybox cargo xtask run --arch x86_64
 ```
 
-Type at the `ferrix#` prompt on the Arm machine; the second starts Ubuntu's
+Type at the `xaqu#` prompt on the Arm machine; the second starts Ubuntu's
 glibc busybox as init on x86-64.
 
 ## stage-9 — 2026-09-13, commit 80d0ea7
@@ -626,7 +626,7 @@ glibc busybox as init on x86-64.
 Stages 1–9 done, every known stage 5 and 6 intermittent failure fixed.
 
 - Boots from UEFI firmware (EDK2, U-Boot) into a Rust kernel on x86-64,
-  AArch64 and ARMv7-A; the boot marker reads `FERRIX-BOOT-OK stages 1-9`.
+  AArch64 and ARMv7-A; the boot marker reads `XAQU-BOOT-OK stages 1-9`.
 - Memory: buddy allocator, slab heap, guard-paged vmap arena, demand paging,
   copy-on-write fork, W^X sweep, boot memory reclaimed.
 - Traps, interrupts and time on every architecture; SMP with every vCPU
@@ -638,7 +638,7 @@ Stages 1–9 done, every known stage 5 and 6 intermittent failure fixed.
 - Static musl busybox runs a script and an interactive shell on all three
   architectures.
 - On hardware, verified after the tag at `fd4442e`: an STM32MP157D-DK1 at two
-  cores reaches `FERRIX-BOOT-OK stages 1-9` and runs `test-shell`'s script.
+  cores reaches `XAQU-BOOT-OK stages 1-9` and runs `test-shell`'s script.
   Known defect: the last console line before power-off is cut, because the
   STM32 USART driver does not wait for its transmitter to drain.
 - VFS with tmpfs, devfs, procfs and initramfs; `ls -R /proc`,
@@ -655,9 +655,9 @@ What to test:
 
 ```
 cargo xtask test-boot  --arch all
-cargo xtask test-shell --arch all --init '~/.local/share/ferrix/busybox/{arch}/bin/busybox.static'
-cargo xtask test-vfs   --arch all --init '~/.local/share/ferrix/busybox/{arch}/bin/busybox.static'
-FERRIX_INIT=~/.local/share/ferrix/busybox/x86_64/bin/busybox.static cargo xtask run --arch x86_64
+cargo xtask test-shell --arch all --init '~/.local/share/xaqu/busybox/{arch}/bin/busybox.static'
+cargo xtask test-vfs   --arch all --init '~/.local/share/xaqu/busybox/{arch}/bin/busybox.static'
+XAQU_INIT=~/.local/share/xaqu/busybox/x86_64/bin/busybox.static cargo xtask run --arch x86_64
 ```
 
 The last gives an interactive busybox shell on the serial console; type after

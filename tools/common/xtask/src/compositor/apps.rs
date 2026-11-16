@@ -31,7 +31,7 @@ use crate::{Error, Result};
 /// an error off.
 const FOOT_CONFIG: &str = "\
 # Carried into the initramfs by `cargo xtask test-foot`.
-exec-once = /bin/foot --log-level=info --log-colorize=never --log-no-syslog --hold /usr/libexec/ferrix/foot-check
+exec-once = /bin/foot --log-level=info --log-colorize=never --log-no-syslog --hold /usr/libexec/xaqu/foot-check
 ";
 
 /// What foot runs in `test-foot`: something to draw (`hyprctl version`), and
@@ -42,7 +42,7 @@ const FOOT_CHECK: &str =
     "#!/bin/sh\n/bin/hyprctl version\nread line\necho \"foot-typed: $line\" > /dev/console\n";
 
 /// Where [`FOOT_CHECK`] goes.
-const FOOT_CHECK_PATH: &str = "usr/libexec/ferrix/foot-check";
+const FOOT_CHECK_PATH: &str = "usr/libexec/xaqu/foot-check";
 
 /// The line the console shows once foot has passed the typed keys on.
 const FOOT_TYPED: &str = "foot-typed: ok";
@@ -127,13 +127,13 @@ fn with_foot_files(mut ports: Vec<crate::ports::File>) -> Vec<crate::ports::File
 }
 
 /// `test-foot`: foot, a Wayland terminal nobody here wrote, on the
-/// compositor, on Ferrix.
+/// compositor, on Xaqu.
 ///
 /// `docs/CHROME.md` §6's first milestone. The compositor's own tests use
 /// clients written against its own crates, which proves the two halves
 /// agree, not that the protocol is right; `src/user/system/linux/compositor/hyprix/probe` runs
 /// foot against the compositor on a development host, which proves the
-/// protocol and nothing about Ferrix. This is both at once: foot and every
+/// protocol and nothing about Xaqu. This is both at once: foot and every
 /// library it links -- libwayland-client, libxkbcommon, pixman, freetype,
 /// fontconfig, fcft -- built against ferrousli by
 /// the foot app, started by the compositor on the guest,
@@ -280,7 +280,7 @@ const VKGEARS_FRAMES: &str = " frames in ";
 /// the render node.
 const VKGEARS_PATIENCE: Duration = Duration::from_secs(120);
 
-/// `test-vkgears`: Vulkan's gears on Ferrix, drawn by the host's GPU.
+/// `test-vkgears`: Vulkan's gears on Xaqu, drawn by the host's GPU.
 ///
 /// `docs/GPU.md` §6.1's exit. vkgears is mesa-demos' own, and Mesa's Venus
 /// driver is linked into it (the vkgears app): it opens the
@@ -329,7 +329,7 @@ pub(crate) fn test_vkgears(args: &Args) -> Result<()> {
         let _ = watching.read_more(Instant::now() + VKGEARS_PATIENCE, |lines| {
             lines
                 .iter()
-                .any(|line| line.contains(VKGEARS_FRAMES) || line.contains("FERRIX-PANIC"))
+                .any(|line| line.contains(VKGEARS_FRAMES) || line.contains("XAQU-PANIC"))
         })?;
         said = watching
             .lines()
@@ -352,7 +352,7 @@ fn judge_vkgears(arch: Arch, said: &[String]) -> Result<()> {
             .join("\n")
     };
     let fail = |why: String| Err(Error::new(format!("{arch}: {why}\n{}", transcript())));
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return fail(format!(
             "the kernel stopped while vkgears ran: {}",
             line.trim()
@@ -398,7 +398,7 @@ fn judge_foot(arch: Arch, said: &[String], screen: Option<&Image>, dump: &Path) 
             .join("\n")
     };
     let fail = |why: String| Err(Error::new(format!("{arch}: {why}\n{}", transcript())));
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return fail(format!(
             "the kernel stopped while foot ran: {}",
             line.trim()
@@ -508,7 +508,7 @@ pub(crate) fn test_xwindow(args: &Args) -> Result<()> {
     }
     let args = xwindow_args(args)?;
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-xwindow needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-xwindow needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let ports = xwindow_ports(arch)?;

@@ -350,7 +350,7 @@ impl Client {
                 zwlr_output_head_v1::event::DESCRIPTION,
                 output.description.clone(),
             ),
-            (zwlr_output_head_v1::event::MAKE, "Ferrix".to_owned()),
+            (zwlr_output_head_v1::event::MAKE, "Xaqu".to_owned()),
             (zwlr_output_head_v1::event::MODEL, "hyprix".to_owned()),
             (
                 zwlr_output_head_v1::event::SERIAL_NUMBER,

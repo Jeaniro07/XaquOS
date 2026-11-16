@@ -27,7 +27,7 @@
 //!
 //! A file is rendered when it is opened, as procfs's are, so one open reads
 //! one snapshot. A directory lists its names in the order of a hash of each
-//! name and resumes after the last hash it gave (`ferrix_sysfs::order`), so
+//! name and resumes after the last hash it gave (`xaqu_sysfs::order`), so
 //! a device coming or going between two `getdents64` calls neither repeats
 //! nor hides a name that stayed. Inode numbers are hashes of paths: the same
 //! node has the same number every time it is looked at.
@@ -45,13 +45,13 @@
 //! `/sys/kernel`, `/sys/power`, `/sys/firmware` but for `dmi/tables` while
 //! the kernel holds an SMBIOS table it accepted (`docs/DMI.md`), and
 //! `/sys/module` but for `nvidia/initstate` while `nvrm` serves its nodes,
-//! which Ferrix has nothing true to put in; a PCI function's `resource`, `config`
+//! which Xaqu has nothing true to put in; a PCI function's `resource`, `config`
 //! and `irq`, which enumeration does not keep; a processor's `topology`,
 //! which firmware's tables do not say reliably enough to print; and uevents
 //! themselves -- the `uevent` files say what an event would carry, and no
 //! event is sent. `docs/SYSFS.md` §6 says what each would take.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 use alloc::boxed::Box;
@@ -60,15 +60,15 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_sysfs::input::{self as input_text, Map};
-use ferrix_sysfs::name::{self, Slot};
-use ferrix_sysfs::{attr, drm as drm_text, net as net_text, order, path, pci as pci_text, uevent};
-use ferrix_vfs::{
+use xaqu_sysfs::input::{self as input_text, Map};
+use xaqu_sysfs::name::{self, Slot};
+use xaqu_sysfs::{attr, drm as drm_text, net as net_text, order, path, pci as pci_text, uevent};
+use xaqu_vfs::{
     DirEntry, Errno, FileSystem, FileType, Inode, Metadata, NewNode, OpenFile, Result, StatFs,
     Timespec,
 };
 
-use ferrix_smbios::{Field, Smbios};
+use xaqu_smbios::{Field, Smbios};
 
 use crate::device::{self, Location};
 use crate::discovery::devmgr::{self, Bus};
@@ -280,7 +280,7 @@ enum Dir {
     Fs,
     /// `/sys/fs/cgroup`: an empty directory for cgroup2 to be mounted on.
     FsCgroup,
-    /// `/sys/module`: the one module Ferrix has something true to say of.
+    /// `/sys/module`: the one module Xaqu has something true to say of.
     Module,
     /// `/sys/module/nvidia`, while a driver serves NVIDIA's nodes through
     /// the chardev core (`docs/NVIDIA.md` §4.4).
@@ -689,11 +689,11 @@ fn device_name(index: usize) -> Option<Vec<u8>> {
         Location::VirtioMmio(base) => name::platform(&mut out, base, "virtio_mmio"),
         Location::Tree(base) => {
             let kind = match node.binding() {
-                ferrix_native_abi::types::TREE_STM32_HDMI => "display-controller",
-                ferrix_native_abi::types::TREE_STM32_USBH => "usbh-ehci",
-                ferrix_native_abi::types::TREE_GS201_DWC3 => "dwc3",
+                xaqu_native_abi::types::TREE_STM32_HDMI => "display-controller",
+                xaqu_native_abi::types::TREE_STM32_USBH => "usbh-ehci",
+                xaqu_native_abi::types::TREE_GS201_DWC3 => "dwc3",
                 // Linux's name for the same thing: `simple-framebuffer`.
-                ferrix_native_abi::types::TREE_FIRMWARE_FB => "simple-framebuffer",
+                xaqu_native_abi::types::TREE_FIRMWARE_FB => "simple-framebuffer",
                 _ => "device",
             };
             name::platform(&mut out, base, kind);
@@ -782,7 +782,7 @@ struct Interface {
     mtu: u32,
     flags: u32,
     loopback: bool,
-    counters: ferrix_net::iface::Counters,
+    counters: xaqu_net::iface::Counters,
 }
 
 /// Every interface, copied out: nothing may sleep inside the net core's
@@ -799,7 +799,7 @@ fn interfaces() -> Vec<Interface> {
                 hardware: interface.hardware,
                 mtu: interface.mtu,
                 flags: interface.flags,
-                loopback: interface.medium == ferrix_net::iface::Medium::Loopback,
+                loopback: interface.medium == xaqu_net::iface::Medium::Loopback,
                 counters: interface.counters,
             })
             .collect()
@@ -824,7 +824,7 @@ fn char_node(slot: usize) -> Option<(devfs::CharNode, Class)> {
 
 /// `Some` while a driver serves NVIDIA's nodes through the chardev core.
 fn nvidia_served() -> Option<()> {
-    crate::interfaces::chardev::published(ferrix_chardevctl::node::CONTROL_MINOR).map(|_| ())
+    crate::interfaces::chardev::published(xaqu_chardevctl::node::CONTROL_MINOR).map(|_| ())
 }
 
 /// The absolute path of `dir`, if what it shows is still there.
@@ -1711,7 +1711,7 @@ fn render_cpus(out: &mut Vec<u8>, attr: Attr) {
             attr::cpu_list(out, &offline);
         }
         Attr::KernelMax => {
-            attr::decimal(out, (ferrix_sched::MAX_CPUS as u64).saturating_sub(1));
+            attr::decimal(out, (xaqu_sched::MAX_CPUS as u64).saturating_sub(1));
         }
         _ => {
             let all: Vec<u32> = (0..count).collect();

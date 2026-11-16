@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-usbserial"
-description = "The class driver of one USB serial interface usbhid exported, in a process of its own: an FTDI UART as a terminal, a USB-Blaster as JTAG command lines, on ferrix-rt"
+name = "xaqu-usbserial"
+description = "The class driver of one USB serial interface usbhid exported, in a process of its own: an FTDI UART as a terminal, a USB-Blaster as JTAG command lines, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,11 +14,11 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-usb-serial.workspace = true
-ferrix-usbif.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-usb-serial.workspace = true
+xaqu-usbif.workspace = true
 
 [lints]
 workspace = true

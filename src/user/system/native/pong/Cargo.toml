@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-pong"
+name = "xaqu-pong"
 description = "A native test service for the init's directory: READY, then an answer down each channel CONNECT hands it"
 version.workspace = true
 edition.workspace = true
@@ -14,8 +14,8 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
 
 [lints]
 workspace = true

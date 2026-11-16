@@ -10,8 +10,8 @@
 
 use core::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_seccomp::SeccompData;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_seccomp::SeccompData;
 
 use crate::arch;
 use crate::syscall::seccomp::{self, NATIVE_ARCH};
@@ -297,14 +297,14 @@ fn step_cost() -> u64 {
     const RUNS: u64 = 500;
 
     let mut insns =
-        alloc::vec![ferrix_seccomp::Insn::new(LOAD, 0, 0, 0); ferrix_seccomp::MAX_INSNS - 1];
-    insns.push(ferrix_seccomp::Insn::new(
+        alloc::vec![xaqu_seccomp::Insn::new(LOAD, 0, 0, 0); xaqu_seccomp::MAX_INSNS - 1];
+    insns.push(xaqu_seccomp::Insn::new(
         RETURN,
         0,
         0,
-        ferrix_seccomp::ALLOW,
+        xaqu_seccomp::ALLOW,
     ));
-    let Ok(program) = ferrix_seccomp::verify(&insns) else {
+    let Ok(program) = xaqu_seccomp::verify(&insns) else {
         return 0;
     };
     let data = SeccompData {
@@ -316,7 +316,7 @@ fn step_cost() -> u64 {
     let steps = program.len() as u64 * RUNS;
     let start = crate::timer::now_nanos();
     for _ in 0..RUNS {
-        let _ = black_box(ferrix_seccomp::run(black_box(&program), black_box(&data)));
+        let _ = black_box(xaqu_seccomp::run(black_box(&program), black_box(&data)));
     }
     crate::timer::now_nanos().saturating_sub(start) * 10 / steps
 }
@@ -368,7 +368,7 @@ fn errnos(report: &mut Report) -> Result<(), &'static str> {
 /// checked on a slot of the check's own, because the core's is registered
 /// before anything can run.
 fn registration() -> Result<(), &'static str> {
-    use ferrix_sync::Once;
+    use xaqu_sync::Once;
 
     fn first(_: &SyscallArgs) -> Verdict {
         Verdict::Errno(11)
@@ -425,7 +425,7 @@ fn rollback() -> Result<(), &'static str> {
 /// written as the return value and never passes the dispatcher, which is the
 /// only thing that marks a call for restart, so it cannot be taken for one.
 fn trap_verdict() -> Result<(), &'static str> {
-    use ferrix_sync::Once;
+    use xaqu_sync::Once;
     fn trapping(_: &SyscallArgs) -> Verdict {
         Verdict::Trap
     }
@@ -566,8 +566,8 @@ fn native_range(report: &mut Report) -> Result<(), &'static str> {
         return Err("the decoder has no getpid");
     };
     // A number in the native range that no native call has.
-    let gap = ferrix_native_abi::nr::LAST;
-    if ferrix_native_abi::nr::decode(gap).is_some() {
+    let gap = xaqu_native_abi::nr::LAST;
+    if xaqu_native_abi::nr::decode(gap).is_some() {
         return Err("the last number of the native range is a call");
     }
     let linux = token_for(Abi::Native);

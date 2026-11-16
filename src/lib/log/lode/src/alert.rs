@@ -1,7 +1,7 @@
 //! Alerts: a rule with an action (`docs/LOGGING.md` §7.4, USER-WISHES
 //! theme 22).
 //!
-//! An alert is a line of `/etc/ferrix/lode.d/*.rules`:
+//! An alert is a line of `/etc/xaqu/lode.d/*.rules`:
 //!
 //! ```text
 //! alert [NAME] [rate > N/DURATION] [where EXPR] notify "TEXT"

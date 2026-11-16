@@ -1,7 +1,7 @@
 //! `vptr <hz> <seconds> [<pixels>] [--log FILE]`: move the pointer back and
 //! forth through `zwlr_virtual_pointer_v1`, so the compositor sends relative
 //! motion to the focused client as a mouse would. hyprix and sway both serve
-//! the protocol, so the same program injects on Ferrix and on Linux.
+//! the protocol, so the same program injects on Xaqu and on Linux.
 //!
 //! It is the injector of stage 24's latency probe (docs/GAME-PATH.md §2.4,
 //! R2): with `--log` it writes, when it is done, one line a motion,

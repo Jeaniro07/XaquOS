@@ -3,7 +3,7 @@
 //! an STM32MP157 DK board wires between them and its HDMI socket.
 //!
 //! `src/user/system/native/drivers/display/stm32-ltdc` runs this in a ring-3 process under devmgr, as `src/user/system/native/drivers/display/virtio-gpu` runs
-//! `ferrix-virtio-gpu` (`docs/DISPLAY.md` §6). The process holds an
+//! `xaqu-virtio-gpu` (`docs/DISPLAY.md` §6). The process holds an
 //! `IoMapping` of each controller's registers, the LTDC's interrupt, the card
 //! VMO it pins buffers from, and the control channel to the kernel's display
 //! core. None of those exist in a unit test, so everything that decides a

@@ -4,7 +4,7 @@
 
 use core::arch::{asm, global_asm};
 
-use ferrix_native_abi::restricted::Context;
+use xaqu_native_abi::restricted::Context;
 
 /// `int3`'s vector.
 pub(crate) const VECTOR_BREAKPOINT: u64 = 3;
@@ -346,7 +346,7 @@ entries!(
 
 /// `CHANNEL_WRITE_READ`, one word each way.
 pub(crate) fn channel_write_read(end: u64, count: u64, word: u64) -> Result<(u64, u64), ()> {
-    let (mut number, mut first_word) = (ferrix_native_abi::nr::CHANNEL_WRITE_READ as u64, count);
+    let (mut number, mut first_word) = (xaqu_native_abi::nr::CHANNEL_WRITE_READ as u64, count);
     // SAFETY: the call touches no memory of this program's; it destroys what the ABI says.
     unsafe {
         asm!(
@@ -509,7 +509,7 @@ pub(crate) fn forged(good: &Context, case: usize) -> Option<Context> {
         2 => bad.ss = 0x10,
         3 => bad.ss = 0,
         4 => bad.rip = 0xFFFF_8000_0000_0000,
-        5 => bad.rip = ferrix_native_abi::restricted::SHARED_BASE,
+        5 => bad.rip = xaqu_native_abi::restricted::SHARED_BASE,
         6 => bad.rsp = 0xFFFF_8000_0000_0000,
         7 => bad.rflags = 0x202 | (3 << 12),
         8 => bad.rflags = 0x202 | (1 << 17),
@@ -524,7 +524,7 @@ pub(crate) fn forged(good: &Context, case: usize) -> Option<Context> {
         17 => bad.es = 1 << 16,
         18 => bad.fs = 4 | 3,
         19 => bad.fs_base = 0x8000_0000_0000,
-        20 => bad.gs_base = ferrix_native_abi::restricted::SHARED_BASE,
+        20 => bad.gs_base = xaqu_native_abi::restricted::SHARED_BASE,
         // A descriptor with DPL 0, and one with L set, and a system one.
         21 => bad.tls[0] = 0x00CF_9200_0000_FFFF,
         22 => bad.tls[0] = 0x00AF_F200_0000_FFFF,

@@ -1,5 +1,5 @@
 //! Units' lines handed to lode with who wrote them (`docs/LOGGING.md`
-//! §4.2, §5; the wire format is `ferrix_lode_core::units`).
+//! §4.2, §5; the wire format is `xaqu_lode_core::units`).
 //!
 //! init made each spawn's log pipes, so it alone knows, without asking
 //! anyone, which unit, which run of it, which process and which stream a
@@ -65,7 +65,7 @@ pub(crate) fn invocation_id() -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-/// `said` as one line of lode's socket (`ferrix_lode_core::units::encode`):
+/// `said` as one line of lode's socket (`xaqu_lode_core::units::encode`):
 /// `L <unit> <invocation|-> <pid> <uid> <gid> <out|err> <µs> <text>\n`.
 pub(crate) fn encode(said: &Said, unit: &str, monotonic_us: u64) -> Vec<u8> {
     let whose = &said.whose;
@@ -166,9 +166,9 @@ impl Lode {
 mod tests {
     use super::*;
     use crate::logs::Whose;
-    use ferrix_svc::event::UnitId;
+    use xaqu_svc::event::UnitId;
 
-    /// The same bytes `ferrix_lode_core`'s test of the format decodes.
+    /// The same bytes `xaqu_lode_core`'s test of the format decodes.
     #[test]
     fn a_line_is_lodes_wire_format() {
         let said = Said {

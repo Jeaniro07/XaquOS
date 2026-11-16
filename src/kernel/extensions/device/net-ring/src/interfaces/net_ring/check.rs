@@ -34,17 +34,17 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
-use ferrix_net::addr::{IpAddress, IpCidr, Ipv4};
-use ferrix_net::iface::Address;
-use ferrix_netring::control::{Hello, Interface, InterfaceFlags, MAX_MESSAGE};
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::layout::{Op, Status, Submission, VERSION};
-use ferrix_netwire::arp;
-use ferrix_netwire::ethernet::{self, ethertype};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
+use xaqu_net::addr::{IpAddress, IpCidr, Ipv4};
+use xaqu_net::iface::Address;
+use xaqu_netring::control::{Hello, Interface, InterfaceFlags, MAX_MESSAGE};
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::layout::{Op, Status, Submission, VERSION};
+use xaqu_netwire::arp;
+use xaqu_netwire::ethernet::{self, ethertype};
 
 use super::Pages;
 use crate::device::{self, DeviceNode};
@@ -121,7 +121,7 @@ fn refuse_a_bad_hello(node: &Arc<DeviceNode>, report: &mut Report) -> Result<(),
     );
     driver.send_hello(&control, too_many)?;
     match driver.read(&control)? {
-        (ferrix_netring::Message::Refused(ferrix_netring::Refusal::Handles), _) => {
+        (xaqu_netring::Message::Refused(xaqu_netring::Refusal::Handles), _) => {
             report.refusals += 1;
         }
         _ => return Err("a HELLO with duplicable VMOs was not refused for its handles"),
@@ -136,8 +136,8 @@ fn serve_a_ring(node: &Arc<DeviceNode>, report: &mut Report) -> Result<(), &'sta
     let mut driver = Driver::new()?;
     driver.send_hello(&control, vmo_rights())?;
     match driver.read(&control)? {
-        (ferrix_netring::Message::Ready, Some(port)) => driver.completion_port = Some(port),
-        (ferrix_netring::Message::Ready, None) => {
+        (xaqu_netring::Message::Ready, Some(port)) => driver.completion_port = Some(port),
+        (xaqu_netring::Message::Ready, None) => {
             return Err("READY came without the completion port it must carry");
         }
         _ => return Err("a HELLO as specified was not answered with READY"),
@@ -176,7 +176,7 @@ fn check_parked(index: u32) -> Result<(), &'static str> {
         let Some(interface) = stack.interface(index) else {
             return Err("the interface did not outlive the driver that brought it");
         };
-        if interface.flags & ferrix_net::iface::IFF_RUNNING != 0 {
+        if interface.flags & xaqu_net::iface::IFF_RUNNING != 0 {
             return Err("a parked interface kept its carrier");
         }
         if !interface.owns(IpAddress::V4(OURS)) {
@@ -194,7 +194,7 @@ fn take_it_up_again(node: &Arc<DeviceNode>, index: u32) -> Result<(), &'static s
     let driver = Driver::new()?;
     driver.send_hello(&control, vmo_rights())?;
     match driver.read(&control)? {
-        (ferrix_netring::Message::Ready, Some(_)) => {}
+        (xaqu_netring::Message::Ready, Some(_)) => {}
         _ => return Err("a HELLO for a parked interface was not answered with READY"),
     }
     if wait_for_interface()? != index {
@@ -204,7 +204,7 @@ fn take_it_up_again(node: &Arc<DeviceNode>, index: u32) -> Result<(), &'static s
         let Some(interface) = stack.interface(index) else {
             return Err("the interface taken up again went away");
         };
-        if interface.flags & ferrix_net::iface::IFF_RUNNING == 0 {
+        if interface.flags & xaqu_net::iface::IFF_RUNNING == 0 {
             return Err("an interface taken up again did not get its carrier back");
         }
         if !interface.owns(IpAddress::V4(OURS)) {
@@ -228,7 +228,7 @@ const PACKET_BODY: &[u8] = b"a frame a packet socket wrote";
 fn packet_socket(index: u32) -> Result<Arc<net::packet::PacketSocket>, &'static str> {
     let file = net::packet::PacketSocket::open(
         net::first(),
-        ferrix_net::packet::PacketKind::Datagram,
+        xaqu_net::packet::PacketKind::Datagram,
         ethertype::ARP.to_be(),
         false,
         (0, 0),
@@ -243,9 +243,9 @@ fn packet_socket(index: u32) -> Result<Arc<net::packet::PacketSocket>, &'static 
 
 /// A `sockaddr_ll` naming an interface, a protocol and a hardware address.
 fn link_name(index: u32, protocol: u16, address: [u8; 6]) -> Vec<u8> {
-    let mut name = vec![0_u8; ferrix_linux_abi::socket::SOCKADDR_LL_SIZE];
+    let mut name = vec![0_u8; xaqu_linux_abi::socket::SOCKADDR_LL_SIZE];
     let fields: [(usize, &[u8]); 5] = [
-        (0, &ferrix_linux_abi::socket::AF_PACKET.to_ne_bytes()),
+        (0, &xaqu_linux_abi::socket::AF_PACKET.to_ne_bytes()),
         (2, &protocol.to_be_bytes()),
         (4, &index.to_ne_bytes()),
         (11, &[6]),
@@ -450,7 +450,7 @@ impl Driver {
 
     /// Send HELLO with the three handles, at the rights given.
     fn send_hello(&self, control: &Arc<Endpoint>, rights: Rights) -> Result<(), &'static str> {
-        let hello = ferrix_netring::Message::Hello(Hello {
+        let hello = xaqu_netring::Message::Hello(Hello {
             version: VERSION,
             entries: ENTRIES,
             slot_bytes: SLOT,
@@ -490,7 +490,7 @@ impl Driver {
     fn read(
         &self,
         control: &Arc<Endpoint>,
-    ) -> Result<(ferrix_netring::Message, Option<Arc<Port>>), &'static str> {
+    ) -> Result<(xaqu_netring::Message, Option<Arc<Port>>), &'static str> {
         let deadline = timer::now_nanos().saturating_add(PATIENCE_NANOS);
         loop {
             match control.read(CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, false) {
@@ -500,7 +500,7 @@ impl Driver {
                         _ => None,
                     });
                     crate::object::dispose(message.handles.into_iter().map(|(object, _)| object));
-                    return ferrix_netring::Message::decode(&message.bytes)
+                    return xaqu_netring::Message::decode(&message.bytes)
                         .map(|decoded| (decoded, port))
                         .map_err(|_| "the kernel sent a message that would not decode");
                 }

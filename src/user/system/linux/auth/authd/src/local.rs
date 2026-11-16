@@ -2,13 +2,13 @@
 //! `FirstPassword=local`): read from the kernel, never taken from the caller.
 //!
 //! `/proc/<pid>/stat`'s seventh field, `tty_nr`, is the controlling
-//! terminal's device number as Linux encodes it. Ferrix gives the console's,
+//! terminal's device number as Linux encodes it. Xaqu gives the console's,
 //! 5:1, to a process whose session holds the console, and 0 to every other,
 //! a pseudo-terminal's session among them (`src/kernel/src/fs/procfs/render.rs`).
 //! Anything else -- no file, a pid gone, a field that does not parse -- is
 //! not the console.
 
-/// The console's `tty_nr`: major 5, minor 1, as Ferrix's procfs encodes it
+/// The console's `tty_nr`: major 5, minor 1, as Xaqu's procfs encodes it
 /// (`CONSOLE_TTY_NR`, `5 << 8 | 1`, 1281). `test-init` prints what the
 /// console's own shell reads, so the number is seen on the target, not only
 /// assumed from Linux's formula.

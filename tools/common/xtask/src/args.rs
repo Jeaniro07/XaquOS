@@ -47,7 +47,7 @@ pub(crate) struct Args {
     pub(crate) ferrousli: bool,
     /// `--zinc`: `check` also runs zinc's gates, its own workspace.
     pub(crate) zinc: bool,
-    /// `--installer`: the image carries `/sbin/ferrix-install` and the root
+    /// `--installer`: the image carries `/sbin/xaqu-install` and the root
     /// volume it writes: the live image (`docs/INSTALLER.md` §11).
     pub(crate) installer: bool,
     /// `test-install`'s live disk and target, attached as `vdd` and `vde`.
@@ -78,7 +78,7 @@ pub(crate) struct Args {
     /// `--jobs`, how many crates `miri` interprets at once; `None` for as
     /// many as it picks itself.
     pub(crate) jobs: Option<u32>,
-    /// `--reset`: the image carries `ferrix.onexit=reset` in `CMDLINE.TXT`, and
+    /// `--reset`: the image carries `xaqu.onexit=reset` in `CMDLINE.TXT`, and
     /// `test-boot` requires QEMU to see the machine reset rather than power off.
     pub(crate) reset: bool,
     /// `--compositor`: `flash` and `deploy` put the desktop on the card --
@@ -171,12 +171,12 @@ pub(crate) struct Args {
     pub(crate) nvidia: bool,
     /// `--nazuna-layout`: with `--nvidia`, the domain boots as nazuna does
     /// on bare metal: an emulated card is the firmware's display and the
-    /// kernel's console (`ferrix.fbcon`), the 3060 is not, and
-    /// `FERRIX_NAZUNA_EFIFB=1` lends that display to `efifb` too
+    /// kernel's console (`xaqu.fbcon`), the 3060 is not, and
+    /// `XAQU_NAZUNA_EFIFB=1` lends that display to `efifb` too
     /// (`crate::nvidia`'s `Layout::Nazuna`).
     pub(crate) nazuna_layout: bool,
     /// `--session`: `flash --compositor`'s desktop runs as the user
-    /// `ferrix` through `sessiond`, as `run-compositor --everything`'s does
+    /// `xaqu` through `sessiond`, as `run-compositor --everything`'s does
     /// (`crate::session`): `--config`'s dotfiles seed the home disk once,
     /// and what is edited there is kept. The Pixel 7's VM desktop with the
     /// user's own `hyprland.conf` (`tools/vendor/google/pixel7`).
@@ -268,10 +268,10 @@ pub(crate) struct Args {
     /// `--against-*` runs take. `None` is three.
     pub(crate) rounds: Option<u32>,
     /// `--against-sel4`: `bench-ipc` alternates with the seL4 image in
-    /// `~/.local/share/ferrix/sel4`.
+    /// `~/.local/share/xaqu/sel4`.
     pub(crate) against_sel4: bool,
     /// `--against-redox`: `bench-ipc` alternates with the Redox image in
-    /// `~/.local/share/ferrix/redox-bench`.
+    /// `~/.local/share/xaqu/redox-bench`.
     pub(crate) against_redox: bool,
     /// `--record`: `bench-ipc` files its result under
     /// `docs/hotpaths/results/` (`docs/HOTPATHS.md` §6).
@@ -307,11 +307,11 @@ pub(crate) struct Args {
     /// `ferrousli` names the busybox built against ferrousli, in `busybox.rs`.
     pub(crate) init: Option<String>,
     /// `--init-path`, a file in the image the kernel starts as pid 1:
-    /// `ferrix.init=<PATH>` in `CMDLINE.TXT`. Absolute, and one word, since
+    /// `xaqu.init=<PATH>` in `CMDLINE.TXT`. Absolute, and one word, since
     /// the command line is split at white space.
     pub(crate) init_path: Option<String>,
     /// `--kernel-option`, each a word added to `CMDLINE.TXT` as it is, for a
-    /// kernel option no flag here names: `ferrix.fbcon`, which the Pixel 7's
+    /// kernel option no flag here names: `xaqu.fbcon`, which the Pixel 7's
     /// loader passes, is one a QEMU boot has to be able to ask for too.
     pub(crate) kernel_options: Vec<String>,
     /// Not a flag: set by `test-power` for its row whose processor answers
@@ -324,7 +324,7 @@ pub(crate) struct Args {
     /// takes, [`Args::x86_cpu`] or [`crate::qemu::x86_cpu`]'s.
     pub(crate) x86_cpu_extra: Option<String>,
     /// Not a flag: set by `test-compositor` for every boot of an architecture
-    /// after its first, whose images then carry `ferrix.checks=skip`. The
+    /// after its first, whose images then carry `xaqu.checks=skip`. The
     /// first boot runs the self-checks on the compositor's machine, and
     /// `test-boot` runs them on every row (`docs/TEST-TIME.md`, C2).
     pub(crate) checks_skipped: bool,
@@ -496,7 +496,7 @@ pub(crate) struct Args {
     /// Given nothing it shows one of them, another each run.
     pub(crate) wallpaper: Option<String>,
     /// `--theme <NAME>`: the look a watched desktop is drawn in -- `xaqu`
-    /// (the default), `ferrix-light`, or `none` for hyprix's own defaults
+    /// (the default), `xaqu-light`, or `none` for hyprix's own defaults
     /// (`docs/DESKTOP.md` §6). A desktop with its own configuration takes
     /// the theme's look under its own lines, and not its keys.
     pub(crate) theme: Option<String>,
@@ -542,11 +542,11 @@ pub(crate) struct Args {
     /// QEMU line and a PC (`test-iso`'s power-off, `L.x86_64.213`). Never a
     /// flag of its own.
     pub(crate) no_debug_exit: bool,
-    /// `--plan <DIR>`: a plan of builds `FERRIX_BUILDS=record:` wrote, which
-    /// `test-selfhost` has Ferrix carry out and `builds-execute` carries out
+    /// `--plan <DIR>`: a plan of builds `XAQU_BUILDS=record:` wrote, which
+    /// `test-selfhost` has Xaqu carry out and `builds-execute` carries out
     /// (see `crate::builds`).
     pub(crate) plan: Option<String>,
-    /// `--volume <IMG>`: a volume Ferrix built on elsewhere, which
+    /// `--volume <IMG>`: a volume Xaqu built on elsewhere, which
     /// `test-selfhost` judges instead of building one: `btrfs check`, the
     /// image and kernel taken out, and the image booted (the Pixel 7's
     /// `tools/vendor/google/pixel7/selfhost.sh` makes one on the phone).
@@ -905,7 +905,7 @@ impl Args {
     }
 
     /// `--plan` and `--volume`, what `test-selfhost` is given instead of
-    /// building one image on Ferrix (`crate::selfhost`).
+    /// building one image on Xaqu (`crate::selfhost`).
     fn selfhost(&mut self, flag: &str, items: &mut impl Iterator<Item = String>) -> Result<()> {
         let raw = value(items, flag)?;
         if flag == "--plan" {
@@ -1148,7 +1148,7 @@ fn kernel_option(items: &mut impl Iterator<Item = String>) -> Result<String> {
             "--kernel-option wants one word, not `{option}`; give the flag once for each"
         )));
     }
-    if option.starts_with("ferrix.fastpath") {
+    if option.starts_with("xaqu.fastpath") {
         return Err(Error::new(format!(
             "--kernel-option {option}: the boot option is retired, and the fast path is built or \
              not; use `--set ipc_fastpath=on --no-claim` or `--kernel-profile desktop`"
@@ -1471,7 +1471,7 @@ mod tests {
 
     #[test]
     fn the_fast_paths_retired_option_is_refused_by_name() {
-        let refused = parse(&["test-boot", "--kernel-option", "ferrix.fastpath=on"]);
+        let refused = parse(&["test-boot", "--kernel-option", "xaqu.fastpath=on"]);
         let message = refused
             .err()
             .map(|error| error.to_string())
@@ -1488,11 +1488,11 @@ mod tests {
         let args = parse(&[
             "test-boot",
             "--kernel-option",
-            "ferrix.fbcon",
+            "xaqu.fbcon",
             "--kernel-option",
             "nosmp",
         ]);
-        assert_eq!(args.unwrap().kernel_options, ["ferrix.fbcon", "nosmp"]);
+        assert_eq!(args.unwrap().kernel_options, ["xaqu.fbcon", "nosmp"]);
         assert!(parse(&["test-boot", "--kernel-option", "a b"]).is_err());
         assert!(parse(&["test-boot", "--kernel-option", ""]).is_err());
     }

@@ -24,7 +24,7 @@
 //! the timer while it prepares a device -- so a reader takes nothing, and
 //! nothing is allocated when the machine is stopping.
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 /// A list of at most `N` registrations of `T`, in the order they were made.
 #[derive(Debug)]

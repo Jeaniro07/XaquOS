@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-acpi"
-description = "ACPI table parser for the Ferrix kernel"
+name = "xaqu-acpi"
+description = "ACPI table parser for the Xaqu kernel"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"

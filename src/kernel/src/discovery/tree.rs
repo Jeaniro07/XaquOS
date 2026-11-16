@@ -9,8 +9,8 @@ use core::fmt;
 use core::ops::ControlFlow;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_fdt::{Fdt, GicInterrupt, Node, VIRTIO_MMIO_COMPATIBLE, identity};
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_fdt::{Fdt, GicInterrupt, Node, VIRTIO_MMIO_COMPATIBLE, identity};
 
 use crate::device::{self, DeviceNode, Location, Reserved};
 use crate::discovery::description::{self, Description};
@@ -21,7 +21,7 @@ use crate::sync::SpinLock;
 /// Every `virtio,mmio` node in the device tree, on a machine without ACPI.
 ///
 /// Its vectors are decoded only when the tree's interrupt controller takes
-/// three-cell GIC specifiers, which is every tree Ferrix boots with; a node's
+/// three-cell GIC specifiers, which is every tree Xaqu boots with; a node's
 /// `interrupt-parent` is not followed, so a machine with a second interrupt
 /// controller would need that first. A vector is taken only if it is a shared
 /// peripheral interrupt that no kernel handler and no earlier node holds. The
@@ -149,7 +149,7 @@ static SEALED: AtomicBool = AtomicBool::new(false);
 ///
 /// [`ClaimRefused::Sealed`] once sealed; [`ClaimRefused::NoMemory`].
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -188,7 +188,7 @@ fn covered_by(claims: &[KernelUse], start: u64, end: u64) -> bool {
 
 /// Whether a claim made before the seal covers physical `start..end`.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -246,7 +246,7 @@ pub(crate) fn use_window_in(
 /// # Errors
 ///
 /// [`ClaimRefused`].
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn claim_early_windows() -> Result<(), ClaimRefused> {
     crate::early::device_windows()
         .try_for_each(|(start, end)| claim_kernel_use(KernelUse::Range(start, end)))
@@ -255,7 +255,7 @@ pub(crate) fn claim_early_windows() -> Result<(), ClaimRefused> {
 /// Seal the kernel-owned set: from now on every [`claim_kernel_use`] is
 /// refused. Idempotent.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -268,7 +268,7 @@ pub(crate) fn seal() {
 
 /// Whether the kernel-owned set is sealed.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -284,7 +284,7 @@ pub(crate) fn sealed() -> bool {
 ///
 /// [`AllocError`].
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -309,7 +309,7 @@ pub(crate) fn claims() -> Result<Vec<KernelUse>, AllocError> {
 ///
 /// [`ClaimRefused`], from the first claim that was refused.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -329,7 +329,7 @@ pub(crate) fn claim_tree_uses(tree: &Fdt<'_>, reserved: &Reserved) -> Result<(),
 
 /// Claim a node.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -342,7 +342,7 @@ fn claim_node(node: Node<'_>) -> Result<(), ClaimRefused> {
 /// The nodes the kernel's accessors find: the console, the interrupt
 /// controller, the architected timer, PSCI and the `SMMUv3`s.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -358,12 +358,12 @@ fn claim_accessor_nodes(tree: &Fdt<'_>) -> Result<(), ClaimRefused> {
     found.into_iter().flatten().try_for_each(claim_node)?;
     tree.nodes()
         .filter(|candidate| {
-            ferrix_fdt::PSCI_COMPATIBLES
+            xaqu_fdt::PSCI_COMPATIBLES
                 .iter()
                 .any(|binding| candidate.is_compatible(binding))
         })
         .try_for_each(claim_node)?;
-    tree.compatible_nodes(ferrix_fdt::SMMU_V3_COMPATIBLE)
+    tree.compatible_nodes(xaqu_fdt::SMMU_V3_COMPATIBLE)
         .try_for_each(claim_node)
 }
 
@@ -372,7 +372,7 @@ fn claim_accessor_nodes(tree: &Fdt<'_>) -> Result<(), ClaimRefused> {
 /// `/reserved-memory` and `/chosen`, and each processor's spin-table
 /// release address.
 #[cfg_attr(
-    not(ferrix_personality = "user"),
+    not(xaqu_personality = "user"),
     allow(
         dead_code,
         reason = "publication is personality=user's; a hybrid's check alone reaches this"
@@ -542,7 +542,7 @@ impl Ownership {
 
     /// How many nodes are kernel-owned.
     #[cfg_attr(
-        not(ferrix_personality = "user"),
+        not(xaqu_personality = "user"),
         allow(
             dead_code,
             reason = "publication is personality=user's; a hybrid's check alone reaches this"

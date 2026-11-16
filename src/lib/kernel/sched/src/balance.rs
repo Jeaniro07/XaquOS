@@ -401,7 +401,7 @@ pub const fn flip(flips: u32, halved_at: u64, now: u64, changed: bool) -> (u32, 
 ///
 /// Linux's `wake_wide`: the smaller count must reach `factor` and the
 /// larger must be `factor` times the smaller. `factor` is the number of
-/// processors sharing a cache, which for Ferrix is the domain's.
+/// processors sharing a cache, which for Xaqu is the domain's.
 #[must_use]
 pub const fn wake_wide(waker_flips: u32, wakee_flips: u32, factor: u32) -> bool {
     let (master, slave) = if waker_flips < wakee_flips {

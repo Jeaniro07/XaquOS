@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-snd"
-description = "The virtio-snd driver process: the sound control channel's driver end over a virtio-snd PCI device, on ferrix-rt"
+name = "xaqu-snd"
+description = "The virtio-snd driver process: the sound control channel's driver end over a virtio-snd PCI device, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,12 +14,12 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-sndctl.workspace = true
-ferrix-virtio.workspace = true
-ferrix-virtio-snd.workspace = true
+xaqu-blkring.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-sndctl.workspace = true
+xaqu-virtio.workspace = true
+xaqu-virtio-snd.workspace = true
 
 [lints]
 workspace = true

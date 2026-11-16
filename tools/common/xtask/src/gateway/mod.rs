@@ -94,8 +94,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use ferrix_netwire::ethernet::{self, Mac, ethertype};
-use ferrix_netwire::{arp, icmpv4, ipv4};
+use xaqu_netwire::ethernet::{self, Mac, ethertype};
+use xaqu_netwire::{arp, icmpv4, ipv4};
 
 use crate::{Error, Result};
 
@@ -266,8 +266,8 @@ impl Counters {
     }
 }
 
-impl From<ferrix_netwire::Error> for Error {
-    fn from(error: ferrix_netwire::Error) -> Self {
+impl From<xaqu_netwire::Error> for Error {
+    fn from(error: xaqu_netwire::Error) -> Self {
         Error::new(error.to_string())
     }
 }
@@ -329,7 +329,7 @@ impl Gateway {
         let stop = Arc::new(AtomicBool::new(false));
         let signal = Arc::clone(&stop);
         let thread = std::thread::Builder::new()
-            .name("ferrix-net-gateway".to_owned())
+            .name("xaqu-net-gateway".to_owned())
             .spawn(move || serve(core, &signal))
             .map_err(|error| Error::new(format!("could not start the gateway thread: {error}")))?;
         Ok(Gateway {
@@ -563,7 +563,7 @@ impl Core {
         self.send_frame(
             packet.sender_mac,
             ethertype::ARP,
-            reply.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            reply.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 
@@ -665,7 +665,7 @@ impl Core {
             ipv4::protocol::ICMP,
             from,
             to,
-            reply.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            reply.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 
@@ -723,7 +723,7 @@ impl Core {
         self.send_frame(
             mac,
             ethertype::IPV4,
-            packet.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            packet.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 
@@ -739,7 +739,7 @@ impl Core {
         let at = header.emit(&mut frame)?;
         put(&mut frame, at, payload)?;
         let len = (at + payload.len()).max(MIN_FRAME);
-        let bytes = frame.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?;
+        let bytes = frame.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?;
         // A send that fails is a guest that has gone: QEMU has exited. That is
         // not this thread's to report, and should not stop it serving whatever
         // is still open. With no guest address yet there is nobody to send to,
@@ -763,9 +763,9 @@ impl Core {
 fn put(out: &mut [u8], at: usize, field: &[u8]) -> Result<()> {
     let end = at
         .checked_add(field.len())
-        .ok_or(ferrix_netwire::Error::NoSpace)?;
+        .ok_or(xaqu_netwire::Error::NoSpace)?;
     out.get_mut(at..end)
-        .ok_or(ferrix_netwire::Error::NoSpace)?
+        .ok_or(xaqu_netwire::Error::NoSpace)?
         .copy_from_slice(field);
     Ok(())
 }
@@ -808,7 +808,7 @@ impl Resolver {
     fn find() -> Resolver {
         let (sender, receiver) = std::sync::mpsc::channel();
         let started = std::thread::Builder::new()
-            .name("ferrix-net-resolver".to_owned())
+            .name("xaqu-net-resolver".to_owned())
             .spawn(move || {
                 let _ = sender.send(default_resolver());
             });

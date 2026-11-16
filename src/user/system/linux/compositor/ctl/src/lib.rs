@@ -4,7 +4,7 @@
 //! `$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket.sock`, writes
 //! one line, reads the answer and prints it. That is the whole of it, and
 //! this is the same program: a client of the socket `src/user/system/linux/compositor/hyprix`
-//! serves, written here because Ferrix has no Hyprland to take one from.
+//! serves, written here because Xaqu has no Hyprland to take one from.
 //!
 //! The shape of a request and of an answer is `src/user/system/linux/compositor/ipc`'s, which is
 //! host-tested against Hyprland's own documented forms and against real
@@ -67,7 +67,7 @@ pub fn event_socket() -> Result<PathBuf, String> {
 /// Read the event socket for as long as it is open, giving each line to
 /// `each`.
 ///
-/// Hyprland's own readers use `socat - .socket2.sock`; Ferrix has no socat,
+/// Hyprland's own readers use `socat - .socket2.sock`; Xaqu has no socat,
 /// so this is it. The socket is never written to.
 ///
 /// # Errors

@@ -23,8 +23,8 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::{IrqControl, SpinLock};
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::{IrqControl, SpinLock};
 
 use super::Task;
 use super::affinity::{AffinityRefusal, pushed, set_affinity, set_mask};

@@ -1,4 +1,4 @@
-//! `.ferrix/partitions`: the static description of a machine's safety
+//! `.xaqu/partitions`: the static description of a machine's safety
 //! partitions (`docs/microkernel/BOOT-AUTHORITY.md` §5).
 //!
 //! Fixed-width and little-endian, with no pointers, so that a reader needs no
@@ -73,7 +73,7 @@ pub const KIND_TREE: u32 = 2;
 pub const FLAG_NEEDS_CERTIFIED: u32 = 1;
 
 /// The handles of the manager's first message before its images and devices, as
-/// `ferrix-native-abi`'s `first` has it.
+/// `xaqu-native-abi`'s `first` has it.
 const MANAGER_FIXED_HANDLES: usize = 3;
 /// A channel message's most handles.
 const MANAGER_MOST_HANDLES: usize = 64;

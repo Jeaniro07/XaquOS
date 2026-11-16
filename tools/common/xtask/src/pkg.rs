@@ -15,8 +15,8 @@
 
 use std::path::PathBuf;
 
-use ferrix_pkg::manifest;
-use ferrix_pkg::record::{self, Installed, Record};
+use xaqu_pkg::manifest;
+use xaqu_pkg::record::{self, Installed, Record};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -41,7 +41,7 @@ pub(crate) const TASKS: &[Task] = &[
         help_at: 240,
         help: &[
             "install-app   Build the app --app NAME for this machine and put it in the running system in the place of",
-            "              the version installed, with `pkg install --replace` (on Ferrix, as root; --to DIR installs",
+            "              the version installed, with `pkg install --replace` (on Xaqu, as root; --to DIR installs",
             "              into the root at DIR instead, which is the only way it runs on another system)",
         ],
         run,
@@ -164,10 +164,10 @@ P=/var/lib/pkg-test
 echo "pkg-test: started"
 pkg install $P/statd.fxpkg && echo "pkg-test: ok installed"
 pkg list | while read -r line; do case "$line" in statd*) echo "pkg-test: ok listed";; esac; done
-pkg info statd | while read -r line; do case "$line" in '/sbin/ferrix-statd '*) echo "pkg-test: ok info";; esac; done
-ferrix-statd --seconds 1 | while read -r line; do case "$line" in FERRIX-STAT-END*) echo "pkg-test: ok ran";; esac; done
+pkg info statd | while read -r line; do case "$line" in '/sbin/xaqu-statd '*) echo "pkg-test: ok info";; esac; done
+xaqu-statd --seconds 1 | while read -r line; do case "$line" in XAQU-STAT-END*) echo "pkg-test: ok ran";; esac; done
 pkg remove statd && echo "pkg-test: ok removed"
-ferrix-statd --seconds 1 || echo "pkg-test: ok gone"
+xaqu-statd --seconds 1 || echo "pkg-test: ok gone"
 pkg list | while read -r line; do case "$line" in statd*) echo "pkg-test: still listed";; esac; done
 pkg install $P/changed.fxpkg || echo "pkg-test: ok refused a changed file"
 read -r line < /bin/pkg-base || echo "pkg-test: ok nothing of it went in"
@@ -313,25 +313,25 @@ pub(crate) fn run(command: &str, args: &Args) -> Result<()> {
 
 /// `cargo xtask install-app --app NAME [--to DIR]`: build each app named
 /// for this machine and put it in the running system, each in the place of
-/// the version installed (`docs/DEV-ON-FERRIX.md` §4.4, D5): what a developer
-/// on Ferrix types between an edit and running the result.
+/// the version installed (`docs/DEV-ON-XAQU.md` §4.4, D5): what a developer
+/// on Xaqu types between an edit and running the result.
 ///
 /// It is `build-apps` and then `pkg install --replace`, with the `pkg` this
 /// tree builds, so that the tree being worked on decides what a replacement
-/// is. On Ferrix the root is `/`, and writing it is root's, as `pkg`'s is;
+/// is. On Xaqu the root is `/`, and writing it is root's, as `pkg`'s is;
 /// anywhere else the root has to be named with `--to`, since `/` there is
-/// not a Ferrix system and an app's files have no business in it.
+/// not a Xaqu system and an app's files have no business in it.
 ///
 /// # Errors
 ///
-/// No `--app`, a root that is not named off Ferrix, a build that fails, or a
+/// No `--app`, a root that is not named off Xaqu, a build that fails, or a
 /// refusal of `pkg`'s, which it prints.
 pub(crate) fn install_app(args: &Args) -> Result<()> {
     if args.apps.is_empty() {
         return Err(Error::new("install-app needs the app: --app NAME"));
     }
     let arch = Arch::host();
-    let root = install_root(args.to.as_deref(), on_ferrix())?;
+    let root = install_root(args.to.as_deref(), on_xaqu())?;
     let program = build(arch)?.ok_or_else(|| Error::new(format!("pkg is not built for {arch}")))?;
     let mut packages = Vec::new();
     for name in &args.apps {
@@ -347,7 +347,7 @@ pub(crate) fn install_app(args: &Args) -> Result<()> {
         return Err(Error::new(format!(
             "pkg did not replace {}: it said why above{}",
             args.apps.join(", "),
-            if on_ferrix() && root == "/" {
+            if on_xaqu() && root == "/" {
                 " (writing / is root's: `su -c 'cargo xtask install-app ...'`)"
             } else {
                 ""
@@ -357,13 +357,13 @@ pub(crate) fn install_app(args: &Args) -> Result<()> {
     Ok(())
 }
 
-/// The root [`install_app`] writes: `--to`'s, or `/` on Ferrix alone.
-fn install_root(to: Option<&str>, on_ferrix: bool) -> Result<String> {
+/// The root [`install_app`] writes: `--to`'s, or `/` on Xaqu alone.
+fn install_root(to: Option<&str>, on_xaqu: bool) -> Result<String> {
     match to {
         Some(dir) => Ok(dir.to_owned()),
-        None if on_ferrix => Ok("/".to_owned()),
+        None if on_xaqu => Ok("/".to_owned()),
         None => Err(Error::new(
-            "install-app puts an app into a running Ferrix; on another system name the root to \
+            "install-app puts an app into a running Xaqu; on another system name the root to \
              install into with --to DIR",
         )),
     }
@@ -381,12 +381,12 @@ fn pkg_arguments(root: &str, packages: &[PathBuf]) -> Vec<std::ffi::OsString> {
     arguments
 }
 
-/// Whether this process runs on Ferrix, whose `uname -s` says so.
-fn on_ferrix() -> bool {
+/// Whether this process runs on Xaqu, whose `uname -s` says so.
+fn on_xaqu() -> bool {
     std::process::Command::new("uname")
         .arg("-s")
         .output()
-        .is_ok_and(|out| String::from_utf8_lossy(&out.stdout).trim() == "Ferrix")
+        .is_ok_and(|out| String::from_utf8_lossy(&out.stdout).trim() == "Xaqu")
 }
 
 #[cfg(test)]
@@ -394,7 +394,7 @@ mod tests {
     use super::{SCRIPT, WANTED, install_root, pkg_arguments};
 
     #[test]
-    fn install_app_writes_slash_on_ferrix_alone() {
+    fn install_app_writes_slash_on_xaqu_alone() {
         assert_eq!(install_root(None, true).unwrap(), "/");
         assert!(install_root(None, false).is_err());
         assert_eq!(install_root(Some("/tmp/r"), false).unwrap(), "/tmp/r");

@@ -3,7 +3,7 @@ From: SetZero <info@magical.rocks>
 Date: Sat, 31 Oct 2026 03:00:00 +0100
 Subject: [PATCH] target/i386: CMCI under TCG, behind a cmci CPU property
 
-Ferrix's corrected machine check interrupt (docs/MACHINE-CHECK-CMCI.md)
+Xaqu's corrected machine check interrupt (docs/MACHINE-CHECK-CMCI.md)
 needs a machine that offers it, and 10.2.1 does not: MCE_CAP_DEF has no
 MCG_CMCI_P, MCi_CTL2 reads as 0 and drops writes, and the local APIC has
 no CMCI LVT entry.
@@ -128,7 +128,7 @@ diff --color -ruN -x build -x X11IncludeHack qemu-build/qemu-10.2.1/include/hw/i
      uint32_t tmr[8];  /* trigger mode register */
      uint32_t irr[8]; /* interrupt request register */
      uint32_t lvt[APIC_LVT_NB];
-+    uint32_t lvt_cmci; /* LVT CMCI, 0x2f0 (ferrix-cmci) */
++    uint32_t lvt_cmci; /* LVT CMCI, 0x2f0 (xaqu-cmci) */
      uint32_t esr; /* error register */
      uint32_t icr[2];
  
@@ -222,7 +222,7 @@ diff --color -ruN -x build -x X11IncludeHack qemu-build/qemu-10.2.1/target/i386/
 +        && tcg_enabled() && !(params->mcg_status & MCG_STATUS_MCIP)
 +        && !(params->status & (MCI_STATUS_PCC | MCI_STATUS_S | MCI_STATUS_AR))) {
 +        /*
-+         * ferrix-cmci: an uncorrected record with PCC, S and AR clear is
++         * xaqu-cmci: an uncorrected record with PCC, S and AR clear is
 +         * UCNA (SDM vol. 3B 16.6.2), which Intel logs and signals by CMCI,
 +         * not by #MC; MCIP clear is the injection's way of asking for it.
 +         */

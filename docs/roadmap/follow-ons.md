@@ -8,7 +8,7 @@ was checked against `main`'s code on that day and is not built.
 `memory.reclaim`, `cpu.max.burst`, `cpu.idle`, `io.weight`, `io.latency`, and
 `anon` and `pagetables` in `memory.stat` were built since, on 2026-10-26
 (`docs/CGROUPS.md` §10, §12 and §13, L.object.182 to 185), and so, the same
-day, was every row below, on the branch `claude/ferrix-roadmap-completion-hkxlpp`:
+day, was every row below, on the branch `claude/xaqu-roadmap-completion-hkxlpp`:
 **all of stage 13's follow-ons are built, and on `main` since 2026-10-26**
 (3a65627b9 to 71a51fc11, on `develop` first and in `main` by 700373fb5). None
 is counted in the sized scope.

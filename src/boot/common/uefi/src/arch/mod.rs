@@ -39,13 +39,13 @@ pub(crate) use x86_64::{
 
 /// The page table descriptor layout this machine uses.
 #[cfg(target_arch = "x86_64")]
-pub(crate) type PageEncoding = ferrix_paging::x86_64::X86_64;
+pub(crate) type PageEncoding = xaqu_paging::x86_64::X86_64;
 /// The page table descriptor layout this machine uses.
 #[cfg(target_arch = "aarch64")]
-pub(crate) type PageEncoding = ferrix_paging::aarch64::AArch64;
+pub(crate) type PageEncoding = xaqu_paging::aarch64::AArch64;
 /// The page table descriptor layout this machine uses.
 #[cfg(target_arch = "arm")]
-pub(crate) type PageEncoding = ferrix_paging::armv7a::Armv7a;
+pub(crate) type PageEncoding = xaqu_paging::armv7a::Armv7a;
 
 /// Whether the identity map needs a root table of its own.
 ///
@@ -80,7 +80,7 @@ pub(crate) struct Handoff {
     pub(crate) boot_info: u64,
     /// Physical address of a trampoline page holding a copy of the switch, on
     /// a machine where the loader's own image cannot be identity mapped; see
-    /// `ferrix_bootinfo::IdentityTree::Trampoline`. Only ever set on ARMv7-A.
+    /// `xaqu_bootinfo::IdentityTree::Trampoline`. Only ever set on ARMv7-A.
     #[cfg_attr(
         not(target_arch = "arm"),
         expect(dead_code, reason = "a 64-bit layout never plans a trampoline")

@@ -1,4 +1,4 @@
-//! `test-rustc`: stage 16's exit, `rustc hello.rs && ./hello` on Ferrix,
+//! `test-rustc`: stage 16's exit, `rustc hello.rs && ./hello` on Xaqu,
 //! with a smoke check that the matching Cargo starts too.
 //!
 //! The compiler is the rust-lang.org release and not one built here: a
@@ -13,7 +13,7 @@
 //! # Where the compiler lives
 //!
 //! On a btrfs volume, `tools/common/fetch/fetch-rustc-sysroot.sh` makes it from pinned
-//! downloads. It carries no `ferrix-root` label, so the kernel mounts it at
+//! downloads. It carries no `xaqu-root` label, so the kernel mounts it at
 //! `/data`, as it does any other btrfs disk; this test attaches it under
 //! QEMU's `snapshot=on` so the image is never changed by a run. The volume
 //! holds a Debian-shaped tree at its root and the toolchain under `rust/`.
@@ -81,19 +81,19 @@ cd /tmp
 read -r t idle < /proc/uptime; echo "rows-time start $t"
 rustc -vV || exit 3
 cargo -V || exit 6
-echo 'fn main() { println!("rustc-gate: hello from rustc on Ferrix"); }' > hello.rs
+echo 'fn main() { println!("rustc-gate: hello from rustc on Xaqu"); }' > hello.rs
 read -r t idle < /proc/uptime; echo "rows-time compile $t"
 rustc hello.rs || exit 4
 read -r t idle < /proc/uptime; echo "rows-time compiled $t"
 ./hello || exit 5
 echo '#include <stdio.h>' > hello.c
-echo 'int main(void) { puts("rustc-gate: hello from gcc on Ferrix"); return 0; }' >> hello.c
+echo 'int main(void) { puts("rustc-gate: hello from gcc on Xaqu"); return 0; }' >> hello.c
 cc hello.c -o hello-c || exit 7
 ./hello-c || exit 8
 read -r t idle < /proc/uptime; echo "rows-time cold $t"
-while read -r l; do echo "cold $l"; done < /proc/ferrix-seam
+while read -r l; do echo "cold $l"; done < /proc/xaqu-seam
 rustc hello.rs -o hello-again || exit 4
-while read -r l; do echo "warm $l"; done < /proc/ferrix-seam
+while read -r l; do echo "warm $l"; done < /proc/xaqu-seam
 read -r t idle < /proc/uptime; echo "rows-time warm $t"
 rustc hello.rs -o hello-again || exit 4
 rustc hello.rs -o hello-again || exit 4
@@ -143,11 +143,11 @@ fn script(ferrousli: bool) -> String {
 }
 
 /// What the program rustc made must print.
-const HELLO: &str = "rustc-gate: hello from rustc on Ferrix";
+const HELLO: &str = "rustc-gate: hello from rustc on Xaqu";
 
 /// What the program gcc made must print: `cc` compiles C as well as links,
 /// which a volume without `cc1` could not, although rustc passed.
-const C_HELLO: &str = "rustc-gate: hello from gcc on Ferrix";
+const C_HELLO: &str = "rustc-gate: hello from gcc on Xaqu";
 
 /// What `rustc -vV` prints first, which says the compiler ran.
 const VERSION: &str = "rustc 1.99.1";
@@ -172,7 +172,7 @@ pub(crate) const LINKS: &[(&str, &str)] = &[
 /// shell's `/bin` PATH; the gate sets its own PATH instead. glibc's and the
 /// kernel's headers are the volume's `/usr/include`, where gcc looks: without
 /// them `cc hello.c` stops at `stdio.h`. The editor and its language
-/// server are there too (`docs/DEV-ON-FERRIX.md`, D1): helix finds its
+/// server are there too (`docs/DEV-ON-XAQU.md`, D1): helix finds its
 /// runtime beside its program, and rust-analyzer on `PATH`. On a volume
 /// fetched before 2026-10-11 the two links lead nowhere, and `hx` is not
 /// found, as on a system without it.
@@ -204,9 +204,9 @@ const MEMORY: u32 = 4096;
 const TIMEOUT: u64 = 1800;
 
 /// Where `tools/common/fetch/fetch-rustc-sysroot.sh` writes, unless
-/// `FERRIX_RUSTC_SYSROOT` names another directory.
+/// `XAQU_RUSTC_SYSROOT` names another directory.
 fn directory() -> Result<std::path::PathBuf> {
-    match std::env::var_os("FERRIX_RUSTC_SYSROOT") {
+    match std::env::var_os("XAQU_RUSTC_SYSROOT") {
         Some(directory) => Ok(std::path::PathBuf::from(directory)),
         None => crate::paths::volume_directory("rustc"),
     }
@@ -230,7 +230,7 @@ pub(crate) fn volume() -> Result<std::path::PathBuf> {
 /// # Errors
 ///
 /// When it is not there, or is from before the script fetched Cargo and the
-/// standard libraries Ferrix's x86-64 image is built against.
+/// standard libraries Xaqu's x86-64 image is built against.
 pub(crate) fn tree() -> Result<std::path::PathBuf> {
     let tree = directory()?.join("tree");
     let needed = [
@@ -249,14 +249,14 @@ pub(crate) fn tree() -> Result<std::path::PathBuf> {
 
 /// Attach the installed toolchain to a person-facing x86-64 boot. A machine
 /// without the optional download still boots, but an explicitly named
-/// `FERRIX_RUSTC_SYSROOT` must be valid rather than silently ignored.
+/// `XAQU_RUSTC_SYSROOT` must be valid rather than silently ignored.
 pub(crate) fn prepare_default(arch: Arch, args: &mut Args) -> Result<()> {
     if arch != Arch::X86_64 {
         return Ok(());
     }
     let image = match volume() {
         Ok(image) => image,
-        Err(error) if std::env::var_os("FERRIX_RUSTC_SYSROOT").is_some() => return Err(error),
+        Err(error) if std::env::var_os("XAQU_RUSTC_SYSROOT").is_some() => return Err(error),
         Err(error) => {
             println!("  rustc not in this boot: {error}");
             return Ok(());
@@ -279,7 +279,7 @@ pub(crate) fn prepare_default(arch: Arch, args: &mut Args) -> Result<()> {
 
 /// What the script fetches since 2026-09-24 and a volume made before then
 /// lacks: gcc 14's driver came without `cpp-14`, whose package holds `cc1`,
-/// so `cc hello.c` failed on Ferrix although rustc, which only links through
+/// so `cc hello.c` failed on Xaqu although rustc, which only links through
 /// gcc, worked.
 const COMPILER: &str = "usr/libexec/gcc/x86_64-linux-gnu/15/cc1";
 
@@ -391,7 +391,7 @@ pub(crate) fn test_rustc(args: &Args) -> Result<()> {
     )?;
 
     println!(
-        "  {arch}: compiling hello.rs on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: compiling hello.rs on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -421,7 +421,7 @@ fn judge(arch: Arch, lines: &[String]) -> Result<()> {
     match exited {
         Some(status) if status == STATUS.to_string() && ran && cargo_ran && said && c_said => {
             println!(
-                "  {arch}: rustc compiled hello.rs on Ferrix, Cargo started, gcc compiled \
+                "  {arch}: rustc compiled hello.rs on Xaqu, Cargo started, gcc compiled \
                  hello.c, and both ran"
             );
             // What crossed the seam, as the kernel counted it: the second
@@ -536,7 +536,7 @@ mod tests {
         }];
         carried.extend(default_links(&args));
         let bytes = initramfs::build(None, &[], None, &carried).unwrap();
-        let archive = ferrix_cpio::Archive::new(&bytes);
+        let archive = xaqu_cpio::Archive::new(&bytes);
         assert_eq!(
             archive
                 .find("usr/libexec/git-core/git")

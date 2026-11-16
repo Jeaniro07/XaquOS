@@ -3,11 +3,11 @@
 //! `login` itself in it, so the shell it execs and everything that shell
 //! starts are the session's.
 //!
-//! `n` counts from 1 at every boot, in `/run/ferrix/login/next`, a file in a
+//! `n` counts from 1 at every boot, in `/run/xaqu/login/next`, a file in a
 //! directory only root may enter, under `flock` so that two consoles never
 //! take the same number.
 //!
-//! A session on the console is also named in `/run/ferrix/login/console`,
+//! A session on the console is also named in `/run/xaqu/login/console`,
 //! and the next `login` on the console stops it before it asks who is there:
 //! a program the last person left running there, in their scope or in one
 //! of its own under their slice, ends with it. getty's hangup has already
@@ -19,10 +19,10 @@ use std::os::unix::fs::{DirBuilderExt as _, OpenOptionsExt as _};
 use std::os::unix::net::UnixStream;
 use std::time::Duration;
 
-use ferrix_svc_proto::control::{Answer, Call, Framer, SOCKET};
+use xaqu_svc_proto::control::{Answer, Call, Framer, SOCKET};
 
 /// Where the count is kept.
-const DIRECTORY: &str = "/run/ferrix/login";
+const DIRECTORY: &str = "/run/xaqu/login";
 
 /// Put this process in a new session scope of `uid`'s: its unit's name
 /// and its slice's, or why not. A session on the console is the seat's
@@ -41,7 +41,7 @@ pub(crate) fn join(uid: u32, console: bool) -> Result<(String, String), String> 
 }
 
 /// Where the console's session is named.
-const CONSOLE: &str = "/run/ferrix/login/console";
+const CONSOLE: &str = "/run/xaqu/login/console";
 
 /// `/dev/console`'s device number, 5:1, as `fstat` reports it.
 const CONSOLE_RDEV: u64 = (5 << 8) | 1;

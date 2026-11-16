@@ -77,12 +77,12 @@ requirement. §3's coverage is of the kernel's boots and does not measure
 these crates; a floor for them is TODO.md §4.7.
 
 **Checks that run only under a boot option.** The firmware framebuffer's
-node (`ferrix.efifb`, SAFETY-MANUAL AoU-31) is checked on two kinds of boot.
+node (`xaqu.efifb`, SAFETY-MANUAL AoU-31) is checked on two kinds of boot.
 Every boot runs stage 10's `check_lending` against made-up ranges, which
 verifies L.device.38's exemption and its refusals whether or not the option
 is given, and the display core's `display::check`. Only `cargo xtask
-test-compositor --boot firmware-screen`, which gives `ferrix.efifb
-ferrix.fbcon`, publishes the node, so only it runs `check_framebuffer`
+test-compositor --boot firmware-screen`, which gives `xaqu.efifb
+xaqu.fbcon`, publishes the node, so only it runs `check_framebuffer`
 (L.device.1's exemption clause, L.device.38's prefetchable node, L.device.39's
 refused domain and write-combining type hold, L.device.40's holder found from
 its BARs, L.device.41's stopped console, and L.device.43's write-combining
@@ -110,12 +110,12 @@ gives up after 50 ms of the interrupt's silence: `stx-ctl-silent-kvm`,
 away, at its two-second cap: `stx-ctl-cap-kvm`), the writer made not to
 queue (FX-0504), the HPET's counter held still, the
 CPUID arithmetic halved, and the x2APIC end-of-interrupt removed under
-`ferrix.apic=x2apic` each fail the boot. The no-HPET, no-PIT case of
+`xaqu.apic=x2apic` each fail the boot. The no-HPET, no-PIT case of
 L.x86_64.39 is the control `n150k3-ctl-no-clock` (KVM, `hpet=off,pit=off`:
 the 200 MHz floor's WARNING, then "no HPET, the PIT did not answer, and
 CPUID reports no TSC rate"); QEMU implements neither CPUID leaf, so the
 CPUID rate itself is BACKLOG's box row. x2APIC mode is booted by
-test-boot with `--kernel-option ferrix.apic=x2apic` under KVM and TCG.
+test-boot with `--kernel-option xaqu.apic=x2apic` under KVM and TCG.
 
 ---
 
@@ -147,16 +147,16 @@ plugin — `cargo xtask coverage` runs them. Twelve gates on x86-64:
 `test-restart` and `test-sysfs`, and four more boots of `test-boot` on
 machines or command lines the rest do not present: `boot-legacy`, a q35 with
 no HPET and a processor with `RDRAND` and no `RDSEED`
-(`FERRIX_X86_MACHINE=hpet=off`, `FERRIX_X86_CPU`), whose clock is the TSC
+(`XAQU_X86_MACHINE=hpet=off`, `XAQU_X86_CPU`), whose clock is the TSC
 measured against the PIT; `boot-reset`, which ends in the firmware's reset
 rather than a power-off; `boot-single`, one processor; and `boot-options`,
 the options no other gate gives -- the boot console on the framebuffer, a pid
-1 the image does not have, an `ferrix.onexit` the kernel does not know, and
+1 the image does not have, an `xaqu.onexit` the kernel does not know, and
 `nokaslr`. Fifteen boots on AArch64 and fourteen on ARMv7-A (`--smp 2`): the
 x86-64-only three are `test-jobs`, `test-restart` and `test-sysfs`, which carry
 uutils. `test-vfs` joined the Arm pair's suite on 2026-09-27, once its
 permissions row judged the words of whichever `cat` the image carries. AArch64 boots `test-boot` again on a `virt` with a GICv3 and its ITS
-(`FERRIX_ARM_MACHINE=gic-version=3`), from its device tree with no ACPI, once
+(`XAQU_ARM_MACHINE=gic-version=3`), from its device tree with no ACPI, once
 with the GICv2 and once as the Pixel 7 is (a GICv3 and ITS on a `max`
 processor), with `nosmp`, into a reset, and with the options above. ARMv7-A
 boots it again on a Cortex-A15, the one other core `virt` takes and one the
@@ -193,7 +193,7 @@ profile's of 2026-09-27 the evidence held until now. Against that evidence,
 75 from *not reached*, 7 from a gate or host test alone) and none away from
 it; 18 arguments whose statements are reached now, or are no statement in
 this profile, were dropped and four trimmed to the lines still unreached
-(`~/ferrix-logs/kernel-split-s3/argued-changes.txt` on nazuna). Decision
+(`~/xaqu-logs/kernel-split-s3/argued-changes.txt` on nazuna). Decision
 coverage over the same traces: the item's other branches taken both ways
 4,889 of 14,881 (32.9%).
 
@@ -215,7 +215,7 @@ the item's growth, not by what the suite reaches: of the 29,345 statements
 of the 2026-09-27 measurement's boot kernel (e5f3110f) that it reached,
 mapped line by line to this tree, 28 are unreached now, and none in code the
 split changed beyond visibility. Each is given its cause in
-`~/ferrix-logs/kernel-split-s3/floor-proof.txt` on nazuna (by
+`~/xaqu-logs/kernel-split-s3/floor-proof.txt` on nazuna (by
 `floor_proof.py` beside it): 4 are the entry and exit rows of a function the
 split made `pub` in its library crate, whose callers there inline it while
 the out-of-line copy kept for the crates above runs for nobody (its body's
@@ -234,7 +234,7 @@ measured on the split (`docs/BACKLOG.md`, which owes it to this landing).
 The Arm pair's figures are a little below their previous measurement (90.2%
 and 84.8%) although the suite reached more: in between, init's start of
 `devmgr` (L12, `docs/INIT.md` §7.3) added statements to `devmgr.rs` that only
-a boot under `ferrix.devmgr=init` takes, and the suite's boots keep the
+a boot under `xaqu.devmgr=init` takes, and the suite's boots keep the
 kernel's start, the reference configuration. They are 78 of AArch64's and 82
 of ARMv7-A's statements that need a test.
 
@@ -323,7 +323,7 @@ narrowed to the lines still unreached; the generator's check holds every one
 to its line.
 
 The failure path is mostly covered now, and by a passing test: `test-shell`'s
-last boot asks for `ferrix.onexit=panic` and gets FX-1501, so the panic report
+last boot asks for `xaqu.onexit=panic` and gets FX-1501, so the panic report
 runs. What is left of it is argued, with each `fatal!` arm that follows a
 self-check: a passing boot is one that never takes it.
 
@@ -417,9 +417,9 @@ plain `test-boot` build's.
 To reproduce, with QEMU's `contrib/plugins/libdrcov.so` built:
 
 ```
-FERRIX_DRCOV=/path/to/qemu/build/contrib/plugins/libdrcov.so \
+XAQU_DRCOV=/path/to/qemu/build/contrib/plugins/libdrcov.so \
   cargo xtask coverage --arch x86_64 \
-    --init "$HOME/.local/share/ferrix/busybox/{arch}/bin/busybox.static"
+    --init "$HOME/.local/share/xaqu/busybox/{arch}/bin/busybox.static"
 ```
 
 That runs the suite with `--accel tcg` (a TCG plugin observes nothing under
@@ -592,7 +592,7 @@ A **guard** is a branch one of whose successors runs, with no other decision
 or call first, into a panic: an overflow or bounds check, an `unwrap`, a
 `debug_assert!`, one of `core`'s debug-build precondition checks, a
 `fatal!`. A passing run never takes its panicking way -- none did on any
-architecture but the one `test-shell` asks for with `ferrix.onexit=panic` on
+architecture but the one `test-shell` asks for with `xaqu.onexit=panic` on
 x86-64 -- so a passing suite can never take it both ways. The guards are
 left out of the second and third rows below, as the statement residual's
 "reached only when something has already failed" is argued rather than

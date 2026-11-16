@@ -3,14 +3,14 @@
 version = 4
 
 [[package]]
-name = "ferrix-adb"
+name = "xaqu-adb"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-adbd"
+name = "xaqu-adbd"
 version = "0.1.0"
 dependencies = [
- "ferrix-adb",
+ "xaqu-adb",
  "libc",
 ]
 

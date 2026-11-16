@@ -85,7 +85,7 @@ argument type, descriptors travelling beside the bytes rather than in them,
 and the per-client object map that keeps a client's ids and the server's in
 their own halves. It holds no socket and no descriptor -- an `fd` is an `i32`
 here and nothing more -- so it is host-tested and fuzzed as `src/lib/network/netwire`
-and `src/lib/proto/inputctl` are, and the part that has to run on Ferrix to be tried
+and `src/lib/proto/inputctl` are, and the part that has to run on Xaqu to be tried
 is only the socket above it.
 
 It is written from the protocol and from `connection.c`, so by construction
@@ -161,7 +161,7 @@ reports `src/user/system/linux/compositor/protocol/src/generated/core.rs is stal
 socket, no descriptor and no pixel: a `Client` is handed the bytes that
 arrived and the descriptors that came with them and gives back the bytes to
 send, so object lifetimes, versions and every way a client can break the
-rules are host-tested, and running it on Ferrix will test the socket rather
+rules are host-tested, and running it on Xaqu will test the socket rather
 than the protocol. A connection starts as libwayland starts one, with
 `wl_display` as object 1 and nothing else. `sync` makes a `wl_callback`,
 fires it and takes the id back with `wl_display.delete_id`; `get_registry`
@@ -241,7 +241,7 @@ and not obeyed, and `move`, `resize` and `show_window_menu` are ignored, as
 Hyprland ignores them for a tiled window.
 
 `src/user/system/linux/compositor/socket` is the first part of the compositor that has to be on
-Ferrix to be tried: an `AF_UNIX` listener and the `sendmsg`/`recvmsg` control
+Xaqu to be tried: an `AF_UNIX` listener and the `sendmsg`/`recvmsg` control
 messages that carry descriptors, which the standard library has no stable way
 to do. It is the crate's only `unsafe`, split one operation to a block as the
 rest of the tree is, and its tests send a descriptor through a socket pair and
@@ -374,7 +374,7 @@ general:gaps_in 40` re-tiling both windows from 485 pixels wide to 450 while
 the compositor runs. A compositor that took the keyword and did not re-tile
 would still have said `ok`, so the test requires the sizes.
 
-**Done — the compositor on a screen, on Ferrix (2026-09-17).**
+**Done — the compositor on a screen, on Xaqu (2026-09-17).**
 `src/user/system/linux/compositor/drm` is the card, lifted out of `src/user/system/linux/compositor/blank`: the legacy
 mode-setting calls and nothing a compositor does not need. `blank` drives the
 screen through it still -- `cargo xtask test-display` passes unchanged,
@@ -384,7 +384,7 @@ card scans out of the same memory the compositor is writing. That is still
 the software path; since stage 19 the GPU path shows the card the texture
 the GPU drew into instead.
 
-`cargo xtask test-compositor` boots the compositor as init on Ferrix with a
+`cargo xtask test-compositor` boots the compositor as init on Xaqu with a
 virtio-gpu and requires the screen. It opened `/dev/dri/card0` through the
 kernel's display core and the ring-3 virtio-gpu driver, set the card's
 preferred mode, bound its Wayland socket, drew a frame with
@@ -478,13 +478,13 @@ pixels, three times over, and the test also requires the three pictures to be
 three pictures -- a compositor that ignored both keybinds would otherwise
 pass every comparison if two expected images happened to be the same file.
 
-The IPC half runs on the guest. Hyprland's `hyprctl` is not on Ferrix's
+The IPC half runs on the guest. Hyprland's `hyprctl` is not on Xaqu's
 image, so `src/user/system/linux/compositor/ctl` is the same program written here: it finds
 `$XDG_RUNTIME_DIR/hypr/<instance>/.socket.sock` where Hyprland's looks,
 writes one line and prints the answer. `probe/hyprctl.sh` now runs every
 read-only command through both clients against one compositor in one session,
 and a test requires the two answers to be identical -- which is the whole
-claim it makes. On Ferrix, two more binds run it:
+claim it makes. On Xaqu, two more binds run it:
 
     bind = SUPER, C, exec, /bin/hyprctl clients
     bind = SUPER, W, exec, /bin/hyprctl activewindow
@@ -517,7 +517,7 @@ two changes in one pass are reported together and in one fixed order, which
 no reader can tell from two changes a millisecond apart.
 
 `hyprctl subscribe` reads it. That is not one of Hyprland's commands -- its
-own readers are `socat - .socket2.sock` -- but Ferrix has no socat, and a
+own readers are `socat - .socket2.sock` -- but Xaqu has no socat, and a
 socket nothing on the image can read is a socket nothing proves. `cargo xtask
 test-compositor` now starts it as the configuration's first `exec-once`, so
 the transcript holds the whole stream: the monitor, the workspace, both
@@ -549,13 +549,13 @@ left.
 `src/user/system/linux/compositor/pattern --bar 30` is a bar, asking for what `waybar` asks for in
 the order it asks. On the host it is drawn beside two windows and the frame
 is compared against an image `src/user/system/linux/compositor/render`'s own tests bless; on
-Ferrix, `cargo xtask test-compositor` boots a second time with a bar in the
+Xaqu, `cargo xtask test-compositor` boots a second time with a bar in the
 `hyprland.conf` and requires the same picture from QEMU's screendump. Every
 one of 786,432 pixels, on x86-64 and AArch64.
 
 **Done — the terminal (2026-09-17).** The last thing this stage owed. It
 needed pseudoterminals, which the kernel did not have and now does, and a
-terminal emulator, which is the term app (ferrix-os/apps since 2026-10-04): stage 19's own entry has the
+terminal emulator, which is the term app (xaqu-os/apps since 2026-10-04): stage 19's own entry has the
 whole of it, since that is where the work landed. `cargo xtask test-pty`
 proves the pair without a window and `cargo xtask test-compositor` boots a
 terminal in the compositor and requires the picture it makes.
@@ -582,7 +582,7 @@ The board's own numbers wait on its display driver.
 
 This stage's exit criterion is met in full, and its 96 points are spent.
 The visible iterations the customer ordered on 2026-09-16 -- a blank screen
-on Ferrix in QEMU first, then the protocol server, the seat, the IPC and the
+on Xaqu in QEMU first, then the protocol server, the seat, the IPC and the
 clients -- landed in that order.
 
 **Exit:** in a test of its own on x86-64 and AArch64, the compositor starts

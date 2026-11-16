@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-netlink"
+name = "xaqu-netlink"
 description = "Netlink messages: walking a buffer of them and their attributes, and building replies into a caller's buffer"
 version = "0.1.0"
 edition = "2024"
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
+xaqu-linux-abi = { workspace = true }
 
 [lints]
 workspace = true

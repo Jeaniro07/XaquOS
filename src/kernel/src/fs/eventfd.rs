@@ -19,8 +19,8 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
 
 use crate::fs;
 use crate::sched::WaitQueue;
@@ -179,7 +179,7 @@ impl Inode for EventFd {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(&self.readable));
         visit(fs::wake::shared(&self.writable));
         true
@@ -195,7 +195,7 @@ impl Inode for EventFd {
     }
 
     /// Eight bytes of the counter, taken; `EAGAIN` or a wait while it is zero.
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         let out = buf.get_mut(..VALUE_BYTES).ok_or(Errno::EINVAL)?;
         let caller = process::current();
         loop {
@@ -222,7 +222,7 @@ impl Inode for EventFd {
     }
 
     /// Add the eight-byte value; `EAGAIN` or a wait while it does not fit.
-    fn write_stream(&self, data: &[u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         let bytes = data.first_chunk::<VALUE_BYTES>().ok_or(Errno::EINVAL)?;
         let value = u64::from_ne_bytes(*bytes);
         if value == u64::MAX {

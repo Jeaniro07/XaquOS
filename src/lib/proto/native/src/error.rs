@@ -5,9 +5,9 @@
 //! travels as, and [`Error`] turns it back into the name, so a caller matches
 //! on [`Error::PeerClosed`] rather than on `EPIPE`.
 
-use ferrix_linux_abi::errno::{Errno, MAX_ERRNO};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::status;
+use xaqu_linux_abi::errno::{Errno, MAX_ERRNO};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::status;
 
 /// Why a native call failed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

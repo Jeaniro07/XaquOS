@@ -6,19 +6,19 @@ extern crate std;
 use core::cell::RefCell;
 use std::vec::Vec;
 
-use ferrix_elf::{EHDR_SIZE, PF_R, PF_W, PF_X, PHDR_SIZE, PT_INTERP, PT_LOAD};
-use ferrix_native::handle::OwnedHandle;
-use ferrix_native::job::Job;
-use ferrix_native::vmo::Vmo;
-use ferrix_native::{Handle, Raw, Syscall};
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::IMAGE_RIGHTS;
-use ferrix_native_abi::types::{MAP_EXECUTE, MAP_NO_PAGER, MAP_NONE, MAP_READ, MAP_WRITE};
+use xaqu_elf::{EHDR_SIZE, PF_R, PF_W, PF_X, PHDR_SIZE, PT_INTERP, PT_LOAD};
+use xaqu_native::handle::OwnedHandle;
+use xaqu_native::job::Job;
+use xaqu_native::vmo::Vmo;
+use xaqu_native::{Handle, Raw, Syscall};
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::IMAGE_RIGHTS;
+use xaqu_native_abi::types::{MAP_EXECUTE, MAP_NO_PAGER, MAP_NONE, MAP_READ, MAP_WRITE};
 
 use super::*;
 
 /// The machine of the images built here.
-const NATIVE_ELF_MACHINE: u16 = ferrix_elf::EM_X86_64;
+const NATIVE_ELF_MACHINE: u16 = xaqu_elf::EM_X86_64;
 
 const SPACE: usize = 0x77;
 const PROCESS: usize = 0x55;

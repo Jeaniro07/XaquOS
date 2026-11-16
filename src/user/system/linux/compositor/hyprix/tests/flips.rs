@@ -1,6 +1,6 @@
 //! The loop goes on while a card shows a frame.
 //!
-//! On Ferrix the kernel answers `PAGE_FLIP` once the card's driver has shown
+//! On Xaqu the kernel answers `PAGE_FLIP` once the card's driver has shown
 //! the frame: the Intel driver's card0 in its next vertical blank, 7 to 17 ms
 //! later, and a stuck one only when the kernel gives up after five seconds.
 //! Made on the compositor's loop, every one of those waits was the pointer's
@@ -77,7 +77,7 @@ impl Desk {
     fn new(name: &str) -> Self {
         let work = std::env::temp_dir().join(format!("hyprix-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&work);
-        let instance = work.join("runtime").join("hypr").join("ferrix-test");
+        let instance = work.join("runtime").join("hypr").join("xaqu-test");
         std::fs::create_dir_all(&instance).expect("an instance directory");
         Self {
             socket: work.join("wayland"),

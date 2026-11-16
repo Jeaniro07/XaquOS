@@ -25,11 +25,11 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write as _};
 use std::time::{Duration, Instant};
 
-use ferrix_audit::{RECORD_BYTES, Record};
-use ferrix_native::OwnedHandle;
-use ferrix_native::pending;
-use ferrix_native_abi::nr::AUDIT_READ_MAX;
-use ferrix_native_abi::types::{AUDIT_BOOT, AUDIT_HIGH, AUDIT_REFUSALS};
+use xaqu_audit::{RECORD_BYTES, Record};
+use xaqu_native::OwnedHandle;
+use xaqu_native::pending;
+use xaqu_native_abi::nr::AUDIT_READ_MAX;
+use xaqu_native_abi::types::{AUDIT_BOOT, AUDIT_HIGH, AUDIT_REFUSALS};
 
 use crate::sys::Native;
 
@@ -62,7 +62,7 @@ pub(crate) struct Reader {
 }
 
 /// A native call's refusal, as an I/O error.
-fn refused(error: ferrix_native::Error) -> io::Error {
+fn refused(error: xaqu_native::Error) -> io::Error {
     io::Error::other(format!("audit_read: {error:?}"))
 }
 

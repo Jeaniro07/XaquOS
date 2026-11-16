@@ -51,8 +51,8 @@ the item goes through the consultant as `docs/CONVENTIONS.md` says.
 3. The resolver in xtask: `--kernel-profile`, `--set` (an ad-hoc build, no
    claim), `cargo xtask flags`; rustc's `--check-cfg` generated from the flag
    file and `unexpected_cfgs` denied.
-4. `mitigations` moved onto the new scheme (`ferrix_mitigations="off"` in
-   place of `ferrix_mitigations_off`), `build.rs`'s link-mode choice with
+4. `mitigations` moved onto the new scheme (`xaqu_mitigations="off"` in
+   place of `xaqu_mitigations_off`), `build.rs`'s link-mode choice with
    it; **byte-identical images** are its check.
 5. The kernel's boot line, computed from `cfg!` constants, which is also
    the start-up configuration audit record (FAU_GEN.1 b); the gate compares
@@ -60,7 +60,7 @@ the item goes through the consultant as `docs/CONVENTIONS.md` says.
 6. The profile rule in `check-item-boundary.py`, with
    `certification-item.json` gaining the levels, the flags' and components'
    levels and `present` as the reference configuration.
-7. The checks, each with a planted negative control: no `ferrix_` cfg in any
+7. The checks, each with a planted negative control: no `xaqu_` cfg in any
    crate but the kernel's; no read of an undeclared boot option; a `--set`
    build refused; a below-level value refused in a certified profile
    (`program_barrier=session` in `max`, `runtime_trades=game_mode` in
@@ -75,12 +75,12 @@ BF6's and DF6's item-review notes, and the plans for `smt=off`,
 `ssbd=on_request` and `program_barrier=session`, are in
 `docs/microkernel/M0-B-PROPOSALS.md` (2026-10-14, for the consultant).
 
-* **`ipc_fastpath`** replaces the boot option `ferrix.fastpath`, under the
+* **`ipc_fastpath`** replaces the boot option `xaqu.fastpath`, under the
   customer's rule of 2026-10-02 (`max` off until a coverage run has measured
   the fast path and its vulnerability-analysis entry exists; `fast` and
   `desktop` on). Its own item review first (BF6): L.x86_64.159 and .161
   restated, the composition-root hook, stage 9's line, the gate rows that
-  pass `--kernel-option ferrix.fastpath=on`, the controls fired again,
+  pass `--kernel-option xaqu.fastpath=on`, the controls fired again,
   coverage per profile.
 * **`smt=off`**: the kernel parks each core's sibling threads itself, after
   the setup a parked thread needs (CR4.MCE on Intel), found from CPUID's
@@ -141,8 +141,8 @@ planted file is its control.
   **Built 2026-10-14 against upstream Rust 1.95.0, not yet with Ferrocene's
   binary**: `cargo xtask check` (alone: `cargo xtask check-ferrocene`) runs
   `tools/common/check/check-ferrocene-rust.py`, which type-checks
-  `ferrix-kernel` and the item's library crates (ferrix-btrfs,
-  ferrix-btrfs-write, ferrix-fallible, ferrix-sync) for the three kernel
+  `xaqu-kernel` and the item's library crates (xaqu-btrfs,
+  xaqu-btrfs-write, xaqu-fallible, xaqu-sync) for the three kernel
   targets with Rust 1.95.0, the upstream release Ferrocene 26.05.0, the
   newest, is built from (its `release/1.95` branch's `src/version`; 26.08 is
   still "upcoming" in its release notes), with `RUSTC_BOOTSTRAP` cleared and
@@ -160,7 +160,7 @@ planted file is its control.
   Windows PC (the Android SDK's platform-tools) or on nazuna. The read is
   `adb shell cat /sys/devices/system/cpu/cpu*/regs/identification/midr_el1`
   and `/proc/cpuinfo` (no root), filed as a measurement in the mode
-  "Android host, not Ferrix" (ledger 959).
+  "Android host, not Xaqu" (ledger 959).
 * **The boards** (the customer: about €200; a used Orin Nano was €450):
   **the Pixel 7**, already owned, for the A78 family's measurements, and
   **no board bought in M0**: a CIX P1 board (Orange Pi 6 Plus 16 GB,
@@ -168,14 +168,14 @@ planted file is its control.
   for AArch64 bring-up with a real SMMUv3 and UEFI, and QEMU's SMMUv3 until
   then (`MICROKERNEL.md` §6.5; the O6 costs €353 and up in Europe). The Lock-mode evidence platform (the VEK385 or another) is deferred
   until funded; its open facts stay as RC4 left them (ledger 957). On the
-  boards only ad-hoc or `desktop` builds run, the boot line says, where Ferrix does not drive the board's IOMMU (the Pixel 7's; a CIX P1 board's SMMUv3 is driven), that it is not driven, and says `profile=none level=none` (or `desktop`),
+  boards only ad-hoc or `desktop` builds run, the boot line says, where Xaqu does not drive the board's IOMMU (the Pixel 7's; a CIX P1 board's SMMUv3 is driven), that it is not driven, and says `profile=none level=none` (or `desktop`),
   and their logs are filed as measurements, never as gate rows or FIRED
-  controls (OB4, ledger 958). Figures from the Pixel 7 are taken with Ferrix on the phone itself, not as a crosvm guest, and each log names its mode (ledger 959).
+  controls (OB4, ledger 958). Figures from the Pixel 7 are taken with Xaqu on the phone itself, not as a crosvm guest, and each log names its mode (ledger 959).
 
 ## What the customer does in M0
 
 * **Send the first two contact messages** (drafts in
-  `~/.local/share/ferrix/microkernel/contacts/`): an accredited
+  `~/.local/share/xaqu/microkernel/contacts/`): an accredited
   certification body for the pre-assessment, and Ferrous Systems for
   Ferrocene. Proofcraft follows in M0 to M1.
 * **Buy the standards' texts** that E's clause check needs; they are not in
@@ -238,7 +238,7 @@ about 33 of the program's about 70 points were spent at the wind-down of
 2026-10-19 (`docs/BACKLOG.md`).
 
 **The overnight run, 2026-11-03 to 2026-11-04** (the customer's order: work on
-everything that makes Ferrix a microkernel until 13:00). The first landing is B5's orphan step (b4a6b3ff9, 2026-11-03,
+everything that makes Xaqu a microkernel until 13:00). The first landing is B5's orphan step (b4a6b3ff9, 2026-11-03,
 `docs/microkernel/B5.md`): a `xtask check` step
 (`check-evidence-homes.py`) failing a core or item requirement that only checks
 leaving with the load verify, 135 ids on its list (70 after class A, bd64fc419; 69 at 1fcd9afb2) and 299 more on a ratchet,

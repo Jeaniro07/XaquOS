@@ -74,7 +74,7 @@ enum Mode {
 
 /// The victim, carried under `intel`.
 const VICTIM_PROGRAM: Program = Program {
-    package: "ferrix-mce-victim",
+    package: "xaqu-mce-victim",
     binary: "mce-victim",
     directory: native::DRIVERS,
 };
@@ -94,7 +94,7 @@ for i in $(busybox seq 40); do
     busybox sleep 2
     echo "mce-driver-gate: alive $i"
 done
-busybox sed 's/^/mce-driver-gate: /' /proc/ferrix-mce-retired
+busybox sed 's/^/mce-driver-gate: /' /proc/xaqu-mce-retired
 echo "mce-driver-gate: done"
 exit 17
 "#;
@@ -169,7 +169,7 @@ fn test(args: &Args, mode: Mode) -> Result<()> {
         zinc::built(arch)?.ok_or_else(|| Error::new("zinc could not be built for x86-64"))?;
     let loader = cargo::build_loader(arch, args.release)?;
     let kernel = cargo::build_kernel_with_init(arch, args.release, &shell, SCRIPT)?;
-    let movs = symbol(&kernel.elf, "ferrix_copy_mc_movs")?;
+    let movs = symbol(&kernel.elf, "xaqu_copy_mc_movs")?;
     let mut natives = native::build(arch, args.release)?;
     let victim = native::build_one(arch, args.release, &paths::target_dir(), &VICTIM_PROGRAM)?;
     natives
@@ -368,7 +368,7 @@ fn judge(mode: Mode, lines: &[String], injected: &Injected) -> std::result::Resu
     let page = format!("{RETIRED_FILE}{:#x}", injected.page);
     if !restarted_after.iter().any(|line| line.contains(&page)) {
         return Err(format!(
-            "/proc/ferrix-mce-retired does not hold {:#x} at the end",
+            "/proc/xaqu-mce-retired does not hold {:#x} at the end",
             injected.page
         ));
     }

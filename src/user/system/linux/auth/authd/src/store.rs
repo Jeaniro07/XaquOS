@@ -6,7 +6,7 @@
 //!
 //! ```text
 //! format 1
-//! account ferrix 1000
+//! account xaqu 1000
 //! password $argon2id$v=19$m=19456,t=2,p=1$…$…
 //! changed 1790000000
 //! ```
@@ -262,7 +262,7 @@ mod tests {
     fn a_record_round_trips_and_is_0600() {
         let (store, root) = store("round");
         let credential = Credential {
-            account: "ferrix".to_owned(),
+            account: "xaqu".to_owned(),
             uid: 1000,
             password: Some(
                 "$argon2id$v=19$m=8,t=1,p=1$c29tZXNhbHQ$aGFzaGhhc2hoYXNoaGFzaA".to_owned(),
@@ -271,8 +271,8 @@ mod tests {
             changed: 1_790_000_000,
         };
         store.set_credential(&credential).unwrap();
-        assert_eq!(store.credential("ferrix"), Ok(Some(credential)));
-        let mode = fs::metadata(root.join("var/lib/ferrix/auth/users/ferrix"))
+        assert_eq!(store.credential("xaqu"), Ok(Some(credential)));
+        let mode = fs::metadata(root.join("var/lib/xaqu/auth/users/xaqu"))
             .unwrap()
             .permissions()
             .mode();
@@ -294,11 +294,11 @@ mod tests {
             assert_eq!(Credential::parse(bad), None, "{bad:?}");
         }
         let (store, root) = store("damaged");
-        fs::write(root.join("var/lib/ferrix/auth/users/a"), "garbage").unwrap();
+        fs::write(root.join("var/lib/xaqu/auth/users/a"), "garbage").unwrap();
         assert_eq!(store.credential("a"), Err(Damaged));
         // A record whose account line names another account.
         fs::write(
-            root.join("var/lib/ferrix/auth/users/b"),
+            root.join("var/lib/xaqu/auth/users/b"),
             "format 1\naccount a 1\nchanged 0\n",
         )
         .unwrap();
@@ -309,13 +309,13 @@ mod tests {
     #[test]
     fn tallies_round_trip_and_default() {
         let (store, root) = store("tally");
-        assert_eq!(store.tally("ferrix"), Tally::default());
+        assert_eq!(store.tally("xaqu"), Tally::default());
         let tally = Tally {
             failures: 4,
             not_before_ms: 1_790_000_000_123,
         };
-        store.set_tally("ferrix", tally).unwrap();
-        assert_eq!(store.tally("ferrix"), tally);
+        store.set_tally("xaqu", tally).unwrap();
+        assert_eq!(store.tally("xaqu"), tally);
         let _ = fs::remove_dir_all(&root);
     }
 }

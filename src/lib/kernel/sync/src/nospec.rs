@@ -11,8 +11,8 @@
 //! the index with *arithmetic* the processor cannot predict, so that on the
 //! mispredicted path the load reads slot zero rather than wherever the program
 //! aimed. [`bounded`] is that, for the tables that live in the host-testable
-//! libraries -- the native ABI's handle table in `ferrix-objects` and the
-//! descriptor table in `ferrix-vfs` -- which cannot use the kernel's own
+//! libraries -- the native ABI's handle table in `xaqu-objects` and the
+//! descriptor table in `xaqu-vfs` -- which cannot use the kernel's own
 //! version: that one is a line of assembly per architecture in
 //! `src/kernel/src/arch/*/speculation.rs`, and a library here may contain neither
 //! assembly nor an architecture conditional.

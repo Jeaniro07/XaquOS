@@ -19,16 +19,16 @@
 #![no_std]
 #![no_main]
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pin::PinAccess;
-use ferrix_rt::native::vmo;
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pin::PinAccess;
+use xaqu_rt::native::vmo;
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page.
 const PAGE: usize = 4096;
@@ -41,24 +41,24 @@ const SAID: &str = "crash-at-start:";
 
 fn main(bootstrap: Bootstrap) -> i32 {
     let Some(boot) = bootstrap else {
-        ferrix_rt::err!("{SAID} no bootstrap channel");
+        xaqu_rt::err!("{SAID} no bootstrap channel");
         return DIED;
     };
     let _ = boot.wait_one(Signals::READABLE, Deadline::Never);
     let mut bytes = [0_u8; START_BYTES];
     let mut handles = [Handle::INVALID; 1];
     let Ok(received) = boot.read(&mut bytes, &mut handles) else {
-        ferrix_rt::err!("{SAID} no START");
+        xaqu_rt::err!("{SAID} no START");
         return DIED;
     };
     let Ok(StartMessage::Start(start)) =
         StartMessage::decode(bytes.get(..received.bytes).unwrap_or_default())
     else {
-        ferrix_rt::err!("{SAID} not a START");
+        xaqu_rt::err!("{SAID} not a START");
         return DIED;
     };
     if received.handles != 1 {
-        ferrix_rt::err!("{SAID} START carried {} handles, not 1", received.handles);
+        xaqu_rt::err!("{SAID} START carried {} handles, not 1", received.handles);
         return DIED;
     }
     let device = Device::from_owned(OwnedHandle::from_raw(Kernel, handles[0]));
@@ -69,13 +69,13 @@ fn main(bootstrap: Bootstrap) -> i32 {
             .ok()
             .map(|pin| (memory, pin))
     });
-    let millis = ferrix_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000_000;
+    let millis = xaqu_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000_000;
     let pin = if pinned.is_some() {
         "pinned 1 page"
     } else {
         "a pin of 1 page was refused"
     };
-    ferrix_rt::err!("{SAID} {location:#010x} at {millis} ms: {pin}; dying at my start");
+    xaqu_rt::err!("{SAID} {location:#010x} at {millis} ms: {pin}; dying at my start");
     // Held to the end: the death, not this program, gives the pin up, so the
     // kernel quarantines it as a dead driver's.
     let _held = core::mem::ManuallyDrop::new(pinned);

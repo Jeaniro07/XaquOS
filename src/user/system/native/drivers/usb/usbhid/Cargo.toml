@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-usbhid"
-description = "The USB host driver process: an input control channel per keyboard or mouse, and a terminal per FTDI serial adapter or USB-Blaster, found behind an STM32MP15 board's EHCI controller or a PC's xHCI controller, on ferrix-rt"
+name = "xaqu-usbhid"
+description = "The USB host driver process: an input control channel per keyboard or mouse, and a terminal per FTDI serial adapter or USB-Blaster, found behind an STM32MP15 board's EHCI controller or a PC's xHCI controller, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,13 +14,13 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-inputctl.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-usb-host.workspace = true
-ferrix-usbif.workspace = true
+xaqu-blkring.workspace = true
+xaqu-inputctl.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-usb-host.workspace = true
+xaqu-usbif.workspace = true
 
 [lints]
 workspace = true

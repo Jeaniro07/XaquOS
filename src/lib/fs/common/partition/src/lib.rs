@@ -94,7 +94,7 @@ impl fmt::Display for Guid {
 
 /// The EFI system partition's type.
 pub const ESP: Guid = Guid::from_fields(0xC12A_7328, 0xF81F, 0x11D2, 0xBA4B, 0x00A0_C93E_C93B);
-/// Linux's generic filesystem data type, which Ferrix's root partition takes.
+/// Linux's generic filesystem data type, which Xaqu's root partition takes.
 pub const LINUX_FILESYSTEM: Guid =
     Guid::from_fields(0x0FC6_3DAF, 0x8483, 0x4772, 0x8E79, 0x3D69_D847_7DE4);
 

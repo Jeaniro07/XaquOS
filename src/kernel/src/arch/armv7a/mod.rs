@@ -51,10 +51,10 @@ pub use signal::{SIGNAL_RED_ZONE, UserContext, restore_signal_frame, setup_signa
 
 use core::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
-use ferrix_bootinfo::{Arch, BootView};
-use ferrix_fdt::{GicVersion, PsciConduit};
-use ferrix_linux_abi::nr::{self, Syscall};
-use ferrix_linux_abi::types::{self, OpenFlagBits};
+use xaqu_bootinfo::{Arch, BootView};
+use xaqu_fdt::{GicVersion, PsciConduit};
+use xaqu_linux_abi::nr::{self, Syscall};
+use xaqu_linux_abi::types::{self, OpenFlagBits};
 
 use super::arm_common::gicv2;
 use crate::early::{EarlyError, EarlyMemory};
@@ -128,7 +128,7 @@ pub const STAT_LAYOUT: super::StatLayout = super::StatLayout::Stat64;
 pub const EPOLL_EVENT_BYTES: usize = 16;
 
 /// The page table descriptor layout this machine uses.
-pub(crate) type PageEncoding = ferrix_paging::armv7a::Armv7a;
+pub(crate) type PageEncoding = xaqu_paging::armv7a::Armv7a;
 
 /// Bring up the early console: the port the device tree names.
 ///
@@ -278,13 +278,13 @@ pub const fn syscall_rollback_value(
 
 /// The ABI a program image runs in, or `None` for one this machine cannot
 /// run: this machine's own images, natively. There is no second ABI here.
-pub fn image_abi(_class: ferrix_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
+pub fn image_abi(_class: xaqu_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
     (machine == ARCH.elf_machine()).then_some(crate::trap::Abi::Native)
 }
 
 /// One past the highest address a compatibility-mode program's space may
 /// hold: this architecture has none, so it is the native bound, never asked.
-pub const COMPAT_USER_END: u64 = ferrix_bootinfo::USER_VIRT_END;
+pub const COMPAT_USER_END: u64 = xaqu_bootinfo::USER_VIRT_END;
 
 /// A compatibility-mode call: none on this architecture, which has no
 /// second ABI to run. Every entry here is [`crate::trap::Abi::Native`], so
@@ -1124,14 +1124,14 @@ pub fn hardware_random() -> Option<u64> {
 /// write-combining, so stores may gather into bursts where a device mapping
 /// sends each one out alone. On the Pixel 7 the boot console drawing through
 /// a device mapping cost about 21 of a boot's 95 seconds.
-pub(crate) const FRAMEBUFFER_FLAGS: ferrix_paging::MapFlags = ferrix_paging::MapFlags {
+pub(crate) const FRAMEBUFFER_FLAGS: xaqu_paging::MapFlags = xaqu_paging::MapFlags {
     device: false,
     uncached: true,
     write_combining: false,
-    ..ferrix_paging::MapFlags::KERNEL_DEVICE
+    ..xaqu_paging::MapFlags::KERNEL_DEVICE
 };
 
-/// Whether `ferrix.efifb` may lend the framebuffer to a ring-3 driver: no.
+/// Whether `xaqu.efifb` may lend the framebuffer to a ring-3 driver: no.
 /// [`FRAMEBUFFER_FLAGS`] map it normal non-cacheable, which no user mapping
 /// of an aperture can match yet (`discovery::firmware`).
 pub const LENDS_FRAMEBUFFER: bool = false;
@@ -1144,12 +1144,12 @@ pub fn firmware_entropy(_view: &BootView<'_>, _out: &mut [u8]) -> usize {
 
 /// `AT_HWCAP` and `AT_HWCAP2` for a program started on this machine: what the
 /// core's identification registers say it has, in the bits
-/// `arch/arm/include/uapi/asm/hwcap.h` numbers. See `ferrix_linux_abi::hwcap`.
+/// `arch/arm/include/uapi/asm/hwcap.h` numbers. See `xaqu_linux_abi::hwcap`.
 ///
 /// `AT_HWCAP2` is zero: on this architecture it holds only the `ARMv8` `AArch32`
 /// cryptography bits, which no ARMv7-A core has.
 pub fn user_hwcaps() -> (u64, u64) {
-    use ferrix_linux_abi::hwcap::arm::{IdRegisters, hwcap};
+    use xaqu_linux_abi::hwcap::arm::{IdRegisters, hwcap};
     let (mvfr0, mvfr1) = cpu::user_fpu_features();
     let ids = IdRegisters {
         id_isar0: cpu::read_id_isar0(),
@@ -1164,7 +1164,7 @@ pub fn user_hwcaps() -> (u64, u64) {
 ///
 /// `arch/arm/include/asm/elf.h` sets `ELF_PLATFORM` from the core's
 /// architecture number in `CPUID`, as `"v6l"`, `"v7l"` and so on for a
-/// little-endian kernel. Ferrix targets ARMv7-A only, on the DK1 board and
+/// little-endian kernel. Xaqu targets ARMv7-A only, on the DK1 board and
 /// under QEMU's `virt` machine, so this is always `"v7l"` rather than a value
 /// read out of an identification register the way `user_hwcaps` reads several.
 /// There is no second ABI here, so `abi` is always the native one.
@@ -1479,14 +1479,14 @@ pub(crate) fn send_ipi_to_others() -> Result<(), &'static str> {
     Ok(())
 }
 
-/// How `ferrix_sync`'s interrupt-masking lock masks interrupts here.
+/// How `xaqu_sync`'s interrupt-masking lock masks interrupts here.
 #[derive(Debug)]
 pub struct Irq;
 
 // SAFETY: (SHARED) `disable` masks every interrupt on this CPU and returns the CPSR it
 // found; `restore` puts back exactly that value's mask bits and nothing else,
 // so nesting two critical sections cannot unmask halfway out of the outer one.
-unsafe impl ferrix_sync::IrqControl for Irq {
+unsafe impl xaqu_sync::IrqControl for Irq {
     fn disable() -> usize {
         let previous = cpu::read_cpsr();
         cpu::disable_interrupts();
@@ -1675,14 +1675,14 @@ pub(crate) fn permit_user_access() {}
 pub(crate) fn forbid_user_access() {}
 
 /// No board this architecture boots leaves a watchdog running.
-pub const fn init_watchdogs(_tree: &ferrix_fdt::Fdt<'_>) {}
+pub const fn init_watchdogs(_tree: &xaqu_fdt::Fdt<'_>) {}
 
 /// Nothing to feed: see [`init_watchdogs`].
 pub const fn start_watchdogs() {}
 
 /// No vDSO here: nothing has written its code for this architecture yet, so a
 /// program is started without `AT_SYSINFO_EHDR` and makes the system call.
-pub fn vdso_spec() -> Option<ferrix_vdso::Spec<'static>> {
+pub fn vdso_spec() -> Option<xaqu_vdso::Spec<'static>> {
     None
 }
 

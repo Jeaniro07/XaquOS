@@ -1,4 +1,4 @@
-//! The fields of the registers `ferrix.msrlog` prints (`L.x86_64.189`):
+//! The fields of the registers `xaqu.msrlog` prints (`L.x86_64.189`):
 //! pure functions of a raw value, checked on fixed values at boot
 //! (`super::check`). Layouts as Linux's `intel_rapl_common.c` and
 //! `msr-index.h`, and turbostat's names for the limit reasons.

@@ -1,8 +1,8 @@
 //! Channels: messages of bytes and handles between two endpoints.
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::types::{
     CHANNEL_MAX_HANDLES, POWER_READ_WORDS, TICKET_ADOPT, TICKET_END, TICKET_ISSUE, TICKET_LEAVE,
     TicketIssuer,
 };
@@ -156,7 +156,7 @@ impl<S: Syscall> Channel<S> {
     }
 
     /// `power_read` on a power claim: the kernel's readings
-    /// (`ferrix_native_abi::types::POWER_READ_*`). Renews the claim's lease.
+    /// (`xaqu_native_abi::types::POWER_READ_*`). Renews the claim's lease.
     ///
     /// # Errors
     ///

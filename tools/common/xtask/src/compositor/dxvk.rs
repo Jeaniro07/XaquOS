@@ -185,7 +185,7 @@ pub(crate) fn test_dxvk_window(args: &Args, volume: PathBuf, dxvk: &Path) -> Res
     args.gl = false;
     args.data_image = Some(volume);
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-dxvk needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-dxvk needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let mut ports = crate::yserver::desktop_files(&[]);

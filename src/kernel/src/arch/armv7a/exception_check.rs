@@ -8,7 +8,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_native_abi::exception::Armv7aRegisters as Registers;
+use xaqu_native_abi::exception::Armv7aRegisters as Registers;
 
 // CHECKS-ONLY: object/exception_check.rs
 /// `bkpt #0`, then `exit_group(97)`, which only a program resumed past its
@@ -29,7 +29,7 @@ pub const BREAKPOINT_PROGRAM: &[u8] = &[
 // CHECKS-ONLY: object/exception_check.rs
 /// How a program's breakpoint instruction is reported.
 #[doc(hidden)]
-pub const BREAKPOINT_KIND: u32 = ferrix_native_abi::exception::KIND_BREAKPOINT;
+pub const BREAKPOINT_KIND: u32 = xaqu_native_abi::exception::KIND_BREAKPOINT;
 
 // CHECKS-ONLY: object/exception_check.rs
 /// The architecture's code a breakpoint's report carries: not compared,

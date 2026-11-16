@@ -6,7 +6,7 @@
 //! procfs is a view of processes, so nothing is stored here: each lookup asks
 //! the job, and each file renders what the job says when it is opened.
 //!
-//! The text of every file, and how every write is read, is `ferrix-cgroupfs`'s,
+//! The text of every file, and how every write is read, is `xaqu-cgroupfs`'s,
 //! where the host tests and the fuzzer reach it. What this module adds is the
 //! kernel's half: which job, which process, which errno.
 //!
@@ -33,7 +33,7 @@
 //! whoever opened the file. So a user given a subtree by `chown` moves its
 //! processes within it and not out of it. `clone3`'s `CLONE_INTO_CGROUP`
 //! asks the same, of the caller, through [`clone_target`]. The
-//! no-internal-process rule is `ferrix-cgroupfs`'s and the job's.
+//! no-internal-process rule is `xaqu-cgroupfs`'s and the job's.
 
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -41,16 +41,16 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_cgroupfs::controllers::{self, Controller, Set};
-use ferrix_cgroupfs::files::{self, Kind};
-use ferrix_cgroupfs::write::{self, Target};
-use ferrix_cgroupfs::{Refusal, name, render};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::status;
-use ferrix_vfs::access::{Access, MAY_READ, MAY_WRITE};
-use ferrix_vfs::{
+use xaqu_cgroupfs::controllers::{self, Controller, Set};
+use xaqu_cgroupfs::files::{self, Kind};
+use xaqu_cgroupfs::write::{self, Target};
+use xaqu_cgroupfs::{Refusal, name, render};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::status;
+use xaqu_vfs::access::{Access, MAY_READ, MAY_WRITE};
+use xaqu_vfs::{
     DirEntry, FIRST_CURSOR, FileSystem, FileType, Inode, Metadata, NewNode, OpenFile, Readiness,
     SetAttributes, StatFs, Timespec,
 };
@@ -69,29 +69,29 @@ use crate::syscall::native;
 use crate::syscall::process::{self, Process};
 use crate::syscall::registry;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod controllers_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod cpu_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod creator_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod delegation_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod events_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod freeze_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod io_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod limits_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod native_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod oom_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod reclaim_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 mod sealed_check;
 
 /// The result every operation here returns.
@@ -861,7 +861,7 @@ impl Inode for EventsFile {
 
     /// The job's event queue, which every flip wakes, or its memory event
     /// queue, which every OOM and OOM kill counted in it wakes.
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(self.queue()));
         true
     }
@@ -898,9 +898,9 @@ fn render_cpu_stat(out: &mut Vec<u8>, job: &Arc<Job>) {
     // Whoever runs without a tick has not been charged for it yet.
     crate::sched::charge_running();
     let (user, system) = job.cpu_times();
-    ferrix_cgroupfs::cpu::render_stat(
+    xaqu_cgroupfs::cpu::render_stat(
         out,
-        ferrix_cgroupfs::cpu::Stat {
+        xaqu_cgroupfs::cpu::Stat {
             usage: (user / 1000).saturating_add(system / 1000),
             user: user / 1000,
             system: system / 1000,
@@ -937,14 +937,14 @@ fn contents(job: &Arc<Job>, kind: Kind) -> Vec<u8> {
         Kind::CpuWeight => render::number(&mut out, u64::from(shown_weight(job))),
         Kind::CpuIdle => render::number(&mut out, u64::from(job.cpu_idle())),
         Kind::CpuWeightNice => {
-            let nice = ferrix_cgroupfs::cpu::nice_from_weight(shown_weight(job));
+            let nice = xaqu_cgroupfs::cpu::nice_from_weight(shown_weight(job));
             out.extend_from_slice(alloc::format!("{nice}\n").as_bytes());
         }
         Kind::CpuMax => {
             let (quota, period) = job.bandwidth();
-            ferrix_cgroupfs::cpu::render_max(
+            xaqu_cgroupfs::cpu::render_max(
                 &mut out,
-                ferrix_cgroupfs::cpu::Max {
+                xaqu_cgroupfs::cpu::Max {
                     quota: (quota != quota::UNLIMITED).then_some(quota / 1000),
                     period: period / 1000,
                 },
@@ -953,17 +953,17 @@ fn contents(job: &Arc<Job>, kind: Kind) -> Vec<u8> {
         Kind::CpuMaxBurst => render::number(&mut out, job.burst() / 1000),
         Kind::IoStat => {
             for (device, stat) in super::blkio::stats(job.quota_index()) {
-                ferrix_cgroupfs::io::render_stat(&mut out, device, stat);
+                xaqu_cgroupfs::io::render_stat(&mut out, device, stat);
             }
         }
         Kind::IoMax => {
             for (device, limits) in super::blkio::limits(job.quota_index()) {
-                ferrix_cgroupfs::io::render_max(&mut out, device, limits);
+                xaqu_cgroupfs::io::render_max(&mut out, device, limits);
             }
         }
         Kind::IoWeight => {
             let slot = job.quota_index();
-            ferrix_cgroupfs::io::render_weight(
+            xaqu_cgroupfs::io::render_weight(
                 &mut out,
                 super::blkio::default_weight(slot),
                 &super::blkio::weights(slot),
@@ -971,7 +971,7 @@ fn contents(job: &Arc<Job>, kind: Kind) -> Vec<u8> {
         }
         Kind::IoLatency => {
             for (device, micros) in super::blkio::latencies(job.quota_index()) {
-                ferrix_cgroupfs::io::render_latency(&mut out, device, Some(micros));
+                xaqu_cgroupfs::io::render_latency(&mut out, device, Some(micros));
             }
         }
         Kind::CpuStat => render_cpu_stat(&mut out, job),
@@ -1036,7 +1036,7 @@ fn memory_stat(job: &Job) -> render::MemoryStat {
         quota::NONE => (0, 0),
         slot => crate::user::cache::resident(slot),
     };
-    let bytes = |pages: u64| pages.saturating_mul(ferrix_bootinfo::PAGE_SIZE);
+    let bytes = |pages: u64| pages.saturating_mul(xaqu_bootinfo::PAGE_SIZE);
     let kernel = usage(job, Resource::Kernel).used;
     let pagetables = usage(job, Resource::Tables).used;
     // What is left of its memory once the files' pages, the memory
@@ -1202,7 +1202,7 @@ fn set_mark(job: &Job, kind: Kind, data: &[u8]) -> Result<()> {
     let value = write::parse_memory_max(data)
         .map_err(errno)?
         .map_or(quota::UNLIMITED, |bytes| {
-            bytes - bytes % ferrix_bootinfo::PAGE_SIZE
+            bytes - bytes % xaqu_bootinfo::PAGE_SIZE
         });
     // Not audited: the audit record names a limit that refuses charges, and
     // a mark refuses nothing.
@@ -1238,7 +1238,7 @@ fn reclaim(job: &Job, data: &[u8]) -> Result<()> {
     }
     let want = ask
         .bytes
-        .map_or(u64::MAX, |bytes| bytes / ferrix_bootinfo::PAGE_SIZE);
+        .map_or(u64::MAX, |bytes| bytes / xaqu_bootinfo::PAGE_SIZE);
     let caller = process::current();
     let interrupted = || {
         caller
@@ -1255,23 +1255,23 @@ fn reclaim(job: &Job, data: &[u8]) -> Result<()> {
 /// A write to `io.max`: a disk, then the limits to change on it.
 fn set_io_max(job: &Job, data: &[u8]) -> Result<()> {
     let slot = job.quota_index();
-    let ((major, minor), words) = ferrix_cgroupfs::io::parse_device(data).map_err(errno)?;
-    if super::devfs::block_device(ferrix_vfs::initramfs::makedev(major, minor)).is_none() {
+    let ((major, minor), words) = xaqu_cgroupfs::io::parse_device(data).map_err(errno)?;
+    if super::devfs::block_device(xaqu_vfs::initramfs::makedev(major, minor)).is_none() {
         return Err(Errno::ENODEV);
     }
     let held = super::blkio::limits_on(slot, (major, minor));
-    let limits = ferrix_cgroupfs::io::parse_limits(words, held).map_err(errno)?;
+    let limits = xaqu_cgroupfs::io::parse_limits(words, held).map_err(errno)?;
     super::blkio::set_limits(slot, (major, minor), limits)
 }
 
 /// A write to `io.weight`: the cgroup's default, or its weight on one disk.
 fn set_io_weight(job: &Job, data: &[u8]) -> Result<()> {
-    use ferrix_cgroupfs::io::WeightWrite;
+    use xaqu_cgroupfs::io::WeightWrite;
     let slot = job.quota_index();
-    match ferrix_cgroupfs::io::parse_weight(data).map_err(errno)? {
+    match xaqu_cgroupfs::io::parse_weight(data).map_err(errno)? {
         WeightWrite::Default(weight) => super::blkio::set_default_weight(slot, weight),
         WeightWrite::Device((major, minor), weight) => {
-            if super::devfs::block_device(ferrix_vfs::initramfs::makedev(major, minor)).is_none() {
+            if super::devfs::block_device(xaqu_vfs::initramfs::makedev(major, minor)).is_none() {
                 return Err(Errno::ENODEV);
             }
             super::blkio::set_weight(slot, (major, minor), weight)
@@ -1282,20 +1282,20 @@ fn set_io_weight(job: &Job, data: &[u8]) -> Result<()> {
 /// A write to `io.latency`: a disk, then its target.
 fn set_io_latency(job: &Job, data: &[u8]) -> Result<()> {
     let slot = job.quota_index();
-    let ((major, minor), words) = ferrix_cgroupfs::io::parse_device(data).map_err(errno)?;
-    if super::devfs::block_device(ferrix_vfs::initramfs::makedev(major, minor)).is_none() {
+    let ((major, minor), words) = xaqu_cgroupfs::io::parse_device(data).map_err(errno)?;
+    if super::devfs::block_device(xaqu_vfs::initramfs::makedev(major, minor)).is_none() {
         return Err(Errno::ENODEV);
     }
     let held = super::blkio::latency_on(slot, (major, minor));
-    let target = ferrix_cgroupfs::io::parse_latency(words, held).map_err(errno)?;
+    let target = xaqu_cgroupfs::io::parse_latency(words, held).map_err(errno)?;
     super::blkio::set_latency(slot, (major, minor), target)
 }
 
 /// A write to `cpu.max`.
 fn set_cpu_max(job: &Job, data: &[u8]) -> Result<()> {
     let (_, period) = job.bandwidth();
-    let max = ferrix_cgroupfs::cpu::parse_max(data, period / 1000).map_err(errno)?;
-    if !ferrix_cgroupfs::cpu::burst_fits(max.quota, job.burst() / 1000) {
+    let max = xaqu_cgroupfs::cpu::parse_max(data, period / 1000).map_err(errno)?;
+    if !xaqu_cgroupfs::cpu::burst_fits(max.quota, job.burst() / 1000) {
         return Err(Errno::EINVAL);
     }
     let runtime = max.quota.map_or(quota::UNLIMITED, |us| us * 1000);
@@ -1307,7 +1307,7 @@ fn set_cpu_max(job: &Job, data: &[u8]) -> Result<()> {
             audit::CGROUP_LIMIT,
             writer(),
             job.id(),
-            ferrix_audit::resource::CPU_MAX,
+            xaqu_audit::resource::CPU_MAX,
             max.quota.unwrap_or(u64::MAX),
         );
     }
@@ -1317,10 +1317,10 @@ fn set_cpu_max(job: &Job, data: &[u8]) -> Result<()> {
 /// A write to `cpu.max.burst`: microseconds, no more than `cpu.max`'s quota
 /// when there is one (`docs/CGROUPS.md` §12).
 fn set_burst(job: &Job, data: &[u8]) -> Result<()> {
-    let burst = ferrix_cgroupfs::cpu::parse_burst(data).map_err(errno)?;
+    let burst = xaqu_cgroupfs::cpu::parse_burst(data).map_err(errno)?;
     let (quota, _) = job.bandwidth();
     let quota = (quota != quota::UNLIMITED).then_some(quota / 1000);
-    if !ferrix_cgroupfs::cpu::burst_fits(quota, burst) {
+    if !xaqu_cgroupfs::cpu::burst_fits(quota, burst) {
         return Err(Errno::EINVAL);
     }
     let _ = job.set_burst(burst * 1000);
@@ -1341,7 +1341,7 @@ fn shown_weight(job: &Job) -> u32 {
 /// again changes nothing, and a cgroup let off it is at `cpu.weight` 100
 /// again, whatever it had before.
 fn set_idle(job: &Job, data: &[u8]) -> Result<()> {
-    let idle = ferrix_cgroupfs::cpu::parse_idle(data).map_err(errno)?;
+    let idle = xaqu_cgroupfs::cpu::parse_idle(data).map_err(errno)?;
     if idle == job.cpu_idle() {
         return Ok(());
     }
@@ -1353,7 +1353,7 @@ fn set_idle(job: &Job, data: &[u8]) -> Result<()> {
             audit::CGROUP_LIMIT,
             writer(),
             job.id(),
-            ferrix_audit::resource::CPU_WEIGHT,
+            xaqu_audit::resource::CPU_WEIGHT,
             u64::from(quota::DEFAULT_WEIGHT),
         );
     }
@@ -1371,7 +1371,7 @@ fn set_weight(job: &Job, weight: u32) -> Result<()> {
             audit::CGROUP_LIMIT,
             writer(),
             job.id(),
-            ferrix_audit::resource::CPU_WEIGHT,
+            xaqu_audit::resource::CPU_WEIGHT,
             u64::from(weight),
         );
     }
@@ -1426,7 +1426,7 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
             let limit = write::parse_memory_max(data).map_err(errno)?;
             // Whole pages, as Linux's page counter keeps it.
             let bytes = limit.map_or(quota::UNLIMITED, |bytes| {
-                bytes - bytes % ferrix_bootinfo::PAGE_SIZE
+                bytes - bytes % xaqu_bootinfo::PAGE_SIZE
             });
             if job.set_limit(Resource::Memory, bytes) {
                 limit_set(job, Resource::Memory, bytes);
@@ -1445,7 +1445,7 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
         Kind::MemorySwapMax => return Err(Errno::EOPNOTSUPP),
         Kind::CpuWeight => set_weight(job, write::parse_weight(data).map_err(errno)?)?,
         Kind::CpuWeightNice => {
-            set_weight(job, ferrix_cgroupfs::cpu::parse_nice(data).map_err(errno)?)?;
+            set_weight(job, xaqu_cgroupfs::cpu::parse_nice(data).map_err(errno)?)?;
         }
         Kind::CpuIdle => set_idle(job, data)?,
         Kind::IoMax => set_io_max(job, data)?,
@@ -1619,9 +1619,9 @@ type Checked<T> = core::result::Result<T, &'static str>;
 /// through the namespace as a program's calls would be.
 struct Harness {
     /// The namespace.
-    ns: &'static ferrix_vfs::Namespace,
+    ns: &'static xaqu_vfs::Namespace,
     /// Root's view of it.
-    ctx: ferrix_vfs::Context,
+    ctx: xaqu_vfs::Context,
     /// What was counted.
     report: Report,
 }
@@ -1638,9 +1638,9 @@ impl Harness {
     /// it. `fs::read_file` sizes its buffer from `stat`, and a generated file
     /// -- here as in procfs -- says 0.
     fn read_path(&self, whole: &[u8]) -> Result<Vec<u8>> {
-        let flags = ferrix_vfs::OpenFlags {
+        let flags = xaqu_vfs::OpenFlags {
             read: true,
-            ..ferrix_vfs::OpenFlags::default()
+            ..xaqu_vfs::OpenFlags::default()
         };
         let file = self.ns.open(&self.ctx, None, whole, &flags, 0)?;
         Harness::read_to_end(&file)
@@ -1661,9 +1661,9 @@ impl Harness {
 
     /// The file at `tail` beneath the mount, opened for reading.
     fn open_read(&self, tail: &[u8]) -> Result<Arc<OpenFile>> {
-        let flags = ferrix_vfs::OpenFlags {
+        let flags = xaqu_vfs::OpenFlags {
             read: true,
-            ..ferrix_vfs::OpenFlags::default()
+            ..xaqu_vfs::OpenFlags::default()
         };
         self.ns
             .open(&self.ctx, None, &Harness::path(tail), &flags, 0)
@@ -1681,9 +1681,9 @@ impl Harness {
 
     /// Write `data` to the file at `tail`, in one write.
     fn write(&self, tail: &[u8], data: &[u8]) -> Result<usize> {
-        let flags = ferrix_vfs::OpenFlags {
+        let flags = xaqu_vfs::OpenFlags {
             write: true,
-            ..ferrix_vfs::OpenFlags::default()
+            ..xaqu_vfs::OpenFlags::default()
         };
         self.ns
             .open(&self.ctx, None, &Harness::path(tail), &flags, 0)?
@@ -1720,7 +1720,7 @@ impl Harness {
     }
 }
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 /// Stage 13's cgroupfs check, landing G2: a mount of `cgroup2` shows the job
 /// tree, `mkdir` makes a job and `rmdir` takes an empty one, a pid written to
 /// `cgroup.procs` moves that process, `/proc/<pid>/cgroup` and
@@ -1887,9 +1887,9 @@ fn check_no_move_under_a_supervisor(harness: &mut Harness) -> Checked<()> {
     harness
         .mkdir(b"/check-k4")
         .map_err(|_| "mkdir in cgroupfs failed")?;
-    let flags = ferrix_vfs::OpenFlags {
+    let flags = xaqu_vfs::OpenFlags {
         read: true,
-        ..ferrix_vfs::OpenFlags::default()
+        ..xaqu_vfs::OpenFlags::default()
     };
     let directory = harness
         .ns

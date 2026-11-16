@@ -5,7 +5,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_linux_abi::drm::{self, Field, GetBlob, GetProperty};
+use xaqu_linux_abi::drm::{self, Field, GetBlob, GetProperty};
 
 use crate::edid::*;
 

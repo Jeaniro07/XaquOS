@@ -74,7 +74,7 @@
 //! `/proc` numbers come from a counter and change when a name is looked up
 //! afresh.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 /// `/proc/<pid>/status` of `process`, as a reader of it would read it: for the
@@ -95,7 +95,7 @@ mod render;
 
 /// The kernel command line, kept at boot for `/proc/cmdline`: the loader's
 /// boot info, where it arrived, is memory the kernel takes back.
-static COMMAND_LINE: ferrix_sync::Once<Vec<u8>> = ferrix_sync::Once::new();
+static COMMAND_LINE: xaqu_sync::Once<Vec<u8>> = xaqu_sync::Once::new();
 
 /// Keep the command line the loader passed, for `/proc/cmdline`. Once, at
 /// bring-up, from the crate root.
@@ -117,9 +117,9 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_fallible::{AllocError, Chunks, Meter};
-use ferrix_kmem::{Charge, arc_footprint, buffer_footprint};
-use ferrix_vfs::{
+use xaqu_fallible::{AllocError, Chunks, Meter};
+use xaqu_kmem::{Charge, arc_footprint, buffer_footprint};
+use xaqu_vfs::{
     DirEntry, Errno, FIRST_CURSOR, FileSystem, FileType, Inode, Location, Metadata, OpenFile,
     Result, StatFs, Timespec,
 };
@@ -371,7 +371,7 @@ const fn reporting_directory(
 /// `/proc/net`: what `route`, `netstat`, `arp` and `ifconfig` read.
 ///
 /// On Linux this is a symbolic link to `/proc/self/net`, because each network
-/// namespace has its own. Ferrix gives each its own files too, but this is a
+/// namespace has its own. Xaqu gives each its own files too, but this is a
 /// directory whose files read the reader's namespace; a program that follows
 /// the link finds the same files either way.
 static NET: [Entry<Kernel>; 7] = [
@@ -405,19 +405,19 @@ pub(crate) static TOP: [Entry<Kernel>; 22] = [
     file(b"cmdline", render::cmdline_file),
     file(b"cpuinfo", render::cpuinfo),
     reporting_directory(b"driver", &DRIVER),
-    file(b"ferrix-mce", render::machine_check),
+    file(b"xaqu-mce", render::machine_check),
     // Physical addresses: root's alone (`docs/MACHINE-CHECK.md` §3.6).
     Entry {
-        name: b"ferrix-mce-retired",
+        name: b"xaqu-mce-retired",
         permissions: 0o400,
         content: Content::File {
             render: render::retired_frames,
             write: None,
         },
     },
-    file(b"ferrix-scrub", render::scrub),
-    file(b"ferrix-seam", render::seam),
-    file(b"ferrix-service", render::service),
+    file(b"xaqu-scrub", render::scrub),
+    file(b"xaqu-seam", render::seam),
+    file(b"xaqu-service", render::service),
     file(b"filesystems", render::filesystems),
     file(b"interrupts", render::interrupts),
     file(b"loadavg", render::loadavg),

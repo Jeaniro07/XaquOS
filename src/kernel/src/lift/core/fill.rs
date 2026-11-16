@@ -139,7 +139,7 @@ pub fn resolve(
     // The fault was the load's to answer, and it did. What another thread did since, an
     // unmap or a MADV_DONTNEED, is another fault, as it is in the hybrid: back to the
     // instruction either way. A refused fill is the one answer that ends it.
-    let (around, count) = if !cfg!(ferrix_fault_ahead = "on") {
+    let (around, count) = if !cfg!(xaqu_fault_ahead = "on") {
         ([0; crate::user::space::AROUND_PAGES as usize], 0)
     } else if access.write {
         space.write_ahead(address)

@@ -4,7 +4,7 @@
 //! table into memory the map reports as `MemKind::Smbios`, and said where in
 //! `BootInfo`. This module accepts that copy or refuses it, once, at boot:
 //! [`range`] decides from numbers alone whether the copy is where the kernel
-//! may read it, [`decode`] checks it again with `ferrix_smbios` and walks it,
+//! may read it, [`decode`] checks it again with `xaqu_smbios` and walks it,
 //! and [`open`] keeps the result for sysfs, which shows it.
 //!
 //! It fails closed: a copy that is absent or refused leaves nothing kept, and
@@ -12,9 +12,9 @@
 //! the boot. The copy is borrowed, not copied again: the memory is the
 //! loader's, which nothing reclaims or writes.
 
-use ferrix_bootinfo::{BootView, MemKind, MemRegion, SMBIOS_ENTRY_BYTES};
-use ferrix_smbios::{Error, Smbios, TABLE_MAX, Value};
-use ferrix_sync::Once;
+use xaqu_bootinfo::{BootView, MemKind, MemRegion, SMBIOS_ENTRY_BYTES};
+use xaqu_smbios::{Error, Smbios, TABLE_MAX, Value};
+use xaqu_sync::Once;
 
 /// Why the loader's copy was refused, or that there was none.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -31,7 +31,7 @@ pub enum Refusal {
     Region,
     /// The copy is not wholly inside the direct map.
     DirectMap,
-    /// `ferrix_smbios` refused it on reading it again.
+    /// `xaqu_smbios` refused it on reading it again.
     Parse(Error),
 }
 

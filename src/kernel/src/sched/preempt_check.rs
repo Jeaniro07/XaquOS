@@ -8,8 +8,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::IrqControl;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::IrqControl;
 
 use super::Task;
 use super::preempt::{self, word_here};
@@ -143,13 +143,13 @@ fn may_block_reads_its_own_count() -> Result<(), &'static str> {
 /// A `try_lock` that fails leaves this processor's count and locks held
 /// where it found them, with interrupts on and masked, and with them masked
 /// switches nothing; one that succeeds raises both by one until its guard
-/// drops. `ferrix_sync::SpinLock::try_lock_manually`, which the run queues
+/// drops. `xaqu_sync::SpinLock::try_lock_manually`, which the run queues
 /// will use, touches neither.
 ///
 /// Verifies: L.sched.23
 fn a_failed_try_leaves_the_count() -> Result<(), &'static str> {
     static LOCK: crate::sync::SpinLock<u32> = crate::sync::SpinLock::new(0);
-    static PLAIN: ferrix_sync::SpinLock<u32> = ferrix_sync::SpinLock::new(0);
+    static PLAIN: xaqu_sync::SpinLock<u32> = xaqu_sync::SpinLock::new(0);
     let me = super::current().ok_or("the checking task is not running")?;
     let (_, count, held) = word_here().ok_or("this processor has no record")?;
 

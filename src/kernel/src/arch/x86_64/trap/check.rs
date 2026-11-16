@@ -19,9 +19,9 @@
 
 #![cfg(target_arch = "x86_64")]
 
-use ferrix_kernel_core::arch::x86_64 as core_x86_64;
+use xaqu_kernel_core::arch::x86_64 as core_x86_64;
 
-use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV};
+use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV};
 
 use crate::console::println;
 use core_x86_64::cpu;
@@ -843,13 +843,13 @@ fn check_breakpoint() -> Result<(), &'static str> {
 /// Verifies: `L.x86_64.210`
 fn check_overflow() -> Result<(), &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         OVERFLOW_I386,
     );
     let status =
-        crate::syscall::exec::run(&file, &[b"/into"], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+        crate::syscall::exec::run(&file, &[b"/into"], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
             .map_err(|_| "the i386 overflow program could not be started")?;
     let failed = match status {
         HELLO_I386_STATUS => None,
@@ -943,13 +943,13 @@ fn check_arch_prctl_reads() -> Result<(), &'static str> {
 /// Verifies: `L.x86_64.2`, `L.x86_64.54`, `L.x86_64.72`, H.TRAP.8
 fn check_compat() -> Result<(), &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         HELLO_I386,
     );
     let status =
-        crate::syscall::exec::run(&file, &[b"/i386"], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+        crate::syscall::exec::run(&file, &[b"/i386"], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
             .map_err(|_| "an i386 program could not be started")?;
     if status != HELLO_I386_STATUS {
         println!("  i386     the i386 program ended with {status}, not {HELLO_I386_STATUS}");
@@ -1005,7 +1005,7 @@ fn check_compat() -> Result<(), &'static str> {
 /// and once for a frame it must take. Answers how many were refused.
 /// Verifies: `L.x86_64.48`
 fn check_forged_frames() -> Result<u32, &'static str> {
-    use ferrix_linux_abi::sigframe32::sigcontext;
+    use xaqu_linux_abi::sigframe32::sigcontext;
     // `uc_mcontext` is 20 bytes into the `ucontext`, and each field is
     // `sigcontext_32`'s offset past that.
     let mcontext = |field: usize| (20 + field) as u8;
@@ -1052,7 +1052,7 @@ fn check_forged_frames() -> Result<u32, &'static str> {
             .ok_or("the forged program is too short")?
             .copy_from_slice(&value.to_le_bytes());
         let file = crate::syscall::image::build_with(
-            ferrix_elf::Class::Elf32,
+            xaqu_elf::Class::Elf32,
             EM_386,
             crate::syscall::image::Shape::Good,
             &code,
@@ -1061,7 +1061,7 @@ fn check_forged_frames() -> Result<u32, &'static str> {
             &file,
             &[b"/forged"],
             &[],
-            [0x7e; ferrix_ustack::RANDOM_BYTES],
+            [0x7e; xaqu_ustack::RANDOM_BYTES],
         )
         .map_err(|_| "the forged-frame program could not be started")
     };
@@ -1086,7 +1086,7 @@ fn check_forged_frames() -> Result<u32, &'static str> {
 /// names, with Linux's refusals in Linux's order.
 fn check_socketcall() -> Result<(), &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         SOCKETCALL_I386,
@@ -1095,7 +1095,7 @@ fn check_socketcall() -> Result<(), &'static str> {
         &file,
         &[b"/socketcall"],
         &[],
-        [0x7e; ferrix_ustack::RANDOM_BYTES],
+        [0x7e; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the i386 socketcall program could not be started")?;
     let failed = match status {
@@ -1124,7 +1124,7 @@ fn check_socketcall() -> Result<(), &'static str> {
 /// Verifies: `L.x86_64.15`, `L.x86_64.47`, `L.x86_64.64`, `L.x86_64.73`
 fn check_signals_and_fork() -> Result<(), &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf32,
+        xaqu_elf::Class::Elf32,
         EM_386,
         crate::syscall::image::Shape::Good,
         SIGNALS_I386,
@@ -1133,7 +1133,7 @@ fn check_signals_and_fork() -> Result<(), &'static str> {
         &file,
         &[b"/signals"],
         &[],
-        [0x7e; ferrix_ustack::RANDOM_BYTES],
+        [0x7e; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the i386 signal program could not be started")?;
     let failed = match status {
@@ -1175,13 +1175,13 @@ fn check_thread_areas() -> Result<u32, &'static str> {
         [(b"/tls-low", TLS_I386_LOW), (b"/tls-high", TLS_I386_HIGH)];
     for (name, code) in programs {
         let file = crate::syscall::image::build_with(
-            ferrix_elf::Class::Elf32,
+            xaqu_elf::Class::Elf32,
             EM_386,
             crate::syscall::image::Shape::Good,
             code,
         );
         let process =
-            crate::syscall::exec::load(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+            crate::syscall::exec::load(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
                 .map_err(|_| "an i386 thread-area program could not be loaded")?;
         let task = crate::syscall::process::start_on(&process, Some(cpu))
             .map_err(|_| "an i386 thread-area program could not be started")?;
@@ -1206,12 +1206,12 @@ fn check_thread_areas() -> Result<u32, &'static str> {
 /// Build `code` into a program called `name`, run it, and answer its status.
 fn run_program(name: &[u8], code: &[u8]) -> Result<i32, &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_x86_64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         code,
     );
-    crate::syscall::exec::run(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+    crate::syscall::exec::run(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that faults on purpose could not be started")
 }
 

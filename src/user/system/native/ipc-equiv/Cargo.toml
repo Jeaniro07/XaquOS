@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-ipc-equiv"
+name = "xaqu-ipc-equiv"
 description = "The cases channel_write_read must answer alike on the general path and, once it exists, the fast path (docs/OPAQUE-KERNEL.md §9.7 part 6): one transcript line each"
 version.workspace = true
 edition.workspace = true
@@ -14,9 +14,9 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-process-builder.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-process-builder.workspace = true
 
 [lints]
 workspace = true

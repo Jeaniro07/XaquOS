@@ -14,8 +14,8 @@
 use std::io::Write as _;
 use std::process::ExitCode;
 
-use ferrix_auth_client::{Answer, Connection, State, Terminal, Verdict, converse};
-use ferrix_auth_proto::{Record, method};
+use xaqu_auth_client::{Answer, Connection, State, Terminal, Verdict, converse};
+use xaqu_auth_proto::{Record, method};
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();

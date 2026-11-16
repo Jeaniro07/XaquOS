@@ -2,7 +2,7 @@
 use core::sync::atomic::Ordering;
 use core::sync::atomic::compiler_fence;
 #[cfg(not(target_arch = "x86_64"))]
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 #[cfg(target_arch = "x86_64")]
 /// Nothing is per processor here: the count is linuxd's own.
 ///

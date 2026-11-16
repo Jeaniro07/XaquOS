@@ -21,8 +21,8 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vma::VmaFlags;
 
 use super::{crc32c, pattern, read_pattern, write_at, write_file};
 use crate::fs;

@@ -7,7 +7,7 @@
 //! `L.x86_64.250`), which runs its round at once and unmasks the entry
 //! after it ([`after_round`]); a storm leaves the entry masked and the
 //! round once a second until a round finds nothing ([`Storm`],
-//! `L.x86_64.251`). `ferrix.mce.cmci=off` claims nothing (`L.x86_64.252`).
+//! `L.x86_64.251`). `xaqu.mce.cmci=off` claims nothing (`L.x86_64.252`).
 
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
@@ -28,17 +28,17 @@ const CMCI_P: u64 = 1 << 10;
 /// The lowest highest-LVT index a local APIC with the CMCI entry names.
 const CMCI_LVT: u32 = 6;
 /// The kernel option that turns CMCI off.
-pub(super) const OPTION: &str = "ferrix.mce.cmci";
+pub(super) const OPTION: &str = "xaqu.mce.cmci";
 /// The check builds' option that holds the masked window open
 /// ([`hold_window`]).
-pub(super) const WINDOW_OPTION: &str = "ferrix.mce.cmci-window";
+pub(super) const WINDOW_OPTION: &str = "xaqu.mce.cmci-window";
 /// Interrupt-driven rounds within one second past which the entry stays
 /// masked (Linux's `CMCI_STORM_THRESHOLD`).
 pub(super) const STORM_ROUNDS: u32 = 15;
 /// A second, the storm's window and its round's period, in nanoseconds.
 pub(super) const SECOND: u64 = 1_000_000_000;
 
-/// Whether `ferrix.mce.cmci` leaves CMCI on.
+/// Whether `xaqu.mce.cmci` leaves CMCI on.
 static ON: AtomicBool = AtomicBool::new(true);
 /// Whether [`on_cmci`] is registered on the vector.
 static REGISTERED: AtomicBool = AtomicBool::new(false);
@@ -67,7 +67,7 @@ const fn ctl2(bank: usize) -> u32 {
     MC0_CTL2 + bank as u32
 }
 
-/// `ferrix.mce.cmci`, from `start`: `off` turns CMCI off, said; any other
+/// `xaqu.mce.cmci`, from `start`: `off` turns CMCI off, said; any other
 /// value is not understood, said, and CMCI stays on.
 pub(super) fn read_option(asked: Option<&str>) {
     match asked {
@@ -81,14 +81,14 @@ pub(super) fn read_option(asked: Option<&str>) {
 }
 
 /// Seconds the first interrupt-driven round holds the masked window open
-/// before its unmask, from `ferrix.mce.cmci-window`; 0 for none. Check
+/// before its unmask, from `xaqu.mce.cmci-window`; 0 for none. Check
 /// builds only: what test-mce-cmci's window mode injects into, so that
 /// the look after the unmask is what finds the record (`L.x86_64.253`).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 static WINDOW: AtomicU64 = AtomicU64::new(0);
 
-/// `ferrix.mce.cmci-window=<seconds>` (1 to 60), check builds only; said.
-#[cfg(ferrix_checks = "on")]
+/// `xaqu.mce.cmci-window=<seconds>` (1 to 60), check builds only; said.
+#[cfg(xaqu_checks = "on")]
 pub(super) fn read_window(asked: Option<&str>) {
     let Some(seconds) = asked.and_then(|value| value.parse::<u64>().ok()) else {
         return;
@@ -99,12 +99,12 @@ pub(super) fn read_window(asked: Option<&str>) {
 }
 
 /// A product build holds no window and reads no option.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 pub(super) const fn read_window(_asked: Option<&str>) {}
 
 /// Hold processor `index`'s masked window open once, where the check
 /// build's option asks: said, so the gate injects into it.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn hold_window(index: usize) {
     let seconds = WINDOW.swap(0, Ordering::Relaxed);
     if seconds > 0 {
@@ -114,7 +114,7 @@ fn hold_window(index: usize) {
 }
 
 /// A product build holds no window.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 const fn hold_window(_index: usize) {}
 
 /// Register [`on_cmci`] on the vector, once, on the boot processor before
@@ -401,7 +401,7 @@ pub(super) const fn next_wait(storm: Storm, period: u64) -> u64 {
     if storm.storming() { SECOND } else { period }
 }
 
-/// `/proc/ferrix-mce`'s CMCI line for processor `index`, after its counts'
+/// `/proc/xaqu-mce`'s CMCI line for processor `index`, after its counts'
 /// line: `cmci<n> interrupts <n> held <n> storms <n> owned <mask>`, named apart from
 /// the counts' `cpu<n>` so a reader of that line finds it alone.
 pub(super) fn render(out: &mut impl core::fmt::Write, index: usize) -> core::fmt::Result {

@@ -1329,7 +1329,7 @@ mod aarch64_bits {
 
     #[test]
     fn every_mapping_sets_the_access_flag() {
-        // Without it the first touch takes an access-flag fault, and Ferrix has
+        // Without it the first touch takes an access-flag fault, and Xaqu has
         // no handler for one because it does not use them for page aging.
         for flags in [
             MapFlags::KERNEL_CODE,

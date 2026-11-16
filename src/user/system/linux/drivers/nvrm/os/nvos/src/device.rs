@@ -19,10 +19,10 @@ use core::mem::ManuallyDrop;
 use core::ptr;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_native::device::{Device, Interrupt, IoMapping};
-use ferrix_native::port::{self, Port};
-use ferrix_native::{Deadline, Handle, IoMappingSpec, OwnedHandle};
-use ferrix_native_abi::types::{APERTURE_PREFETCHABLE, ApertureInfo, DeviceInfo, PACKET_INTERRUPT};
+use xaqu_native::device::{Device, Interrupt, IoMapping};
+use xaqu_native::port::{self, Port};
+use xaqu_native::{Deadline, Handle, IoMappingSpec, OwnedHandle};
+use xaqu_native_abi::types::{APERTURE_PREFETCHABLE, ApertureInfo, DeviceInfo, PACKET_INTERRUPT};
 
 use crate::futex::Kernel;
 use crate::log::say;

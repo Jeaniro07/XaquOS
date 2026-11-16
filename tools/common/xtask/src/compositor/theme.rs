@@ -1,5 +1,5 @@
 //! The look a watched desktop is drawn in (`docs/DESKTOP.md` §6): Xaqu,
-//! the customer's design and the default since 2026-10-24; Ferrix light
+//! the customer's design and the default since 2026-10-24; Xaqu light
 //! (§2); or none, hyprix's own defaults.
 //!
 //! A theme is a configuration file hyprix ships (`hyprix/themes/`), put in
@@ -83,7 +83,7 @@ pub(super) enum Theme {
     /// The customer's design, on Nocturne.
     Xaqu,
     /// GNOME-like and light.
-    FerrixLight,
+    XaquLight,
     /// hyprix's own defaults: nothing sourced.
     None,
 }
@@ -98,10 +98,10 @@ impl Theme {
         match args.theme.as_deref() {
             None => Ok(None),
             Some("xaqu") => Ok(Some(Self::Xaqu)),
-            Some("ferrix-light") => Ok(Some(Self::FerrixLight)),
+            Some("xaqu-light") => Ok(Some(Self::XaquLight)),
             Some("none") => Ok(Some(Self::None)),
             Some(other) => Err(Error::new(format!(
-                "--theme {other}: xaqu, ferrix-light or none"
+                "--theme {other}: xaqu, xaqu-light or none"
             ))),
         }
     }
@@ -114,7 +114,7 @@ pub(super) fn default_for_a_person(args: &mut Args) {
     }
 }
 
-/// Whether the shipped Ferrix wallpaper should give way to the theme's
+/// Whether the shipped Xaqu wallpaper should give way to the theme's
 /// own: under Xaqu, which has one, unless `--wallpaper` named it.
 pub(super) fn has_own_wallpaper(args: &Args) -> bool {
     matches!(Theme::of(args), Ok(Some(Theme::Xaqu)))
@@ -141,7 +141,7 @@ pub(super) fn apply(config: String, args: &Args, files: &mut Vec<File>) -> Resul
         (Theme::None, _) => return Ok(config),
         (Theme::Xaqu, false) => &["xaqu.conf", "xaqu-keys.conf"],
         (Theme::Xaqu, true) => &["xaqu.conf"],
-        (Theme::FerrixLight, _) => &["ferrix-light.conf"],
+        (Theme::XaquLight, _) => &["xaqu-light.conf"],
     };
     let root = crate::paths::workspace_root();
     let themes = root.join("src/user/system/linux/compositor/hyprix/themes");

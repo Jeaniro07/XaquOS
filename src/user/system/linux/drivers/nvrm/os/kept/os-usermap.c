@@ -22,15 +22,15 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/os-usermap.c at 580.173.02, under the MIT licence
- * above. Changes: nv-ferrix.h in place of nv-linux.h.
+ * above. Changes: nv-xaqu.h in place of nv-linux.h.
  */
 
 #define  __NO_VERSION__
 
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 NV_STATUS NV_API_CALL os_match_mmap_offset(
     void  *pAllocPrivate,

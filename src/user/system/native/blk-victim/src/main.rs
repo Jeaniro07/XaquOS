@@ -12,30 +12,30 @@
 #![no_std]
 #![no_main]
 
-use ferrix_blkclient::Shared;
-use ferrix_blkring::bell::BELL_SUBMIT;
-use ferrix_blkring::control::{MAX_BYTES, Message, START_BYTES, VMO_RIGHTS};
-use ferrix_blkring::driver::{Consumed, DriverSide};
-use ferrix_blkring::geometry::{Device as Geometry, DeviceFlags};
-use ferrix_blkring::identity::{DiskName, Identity, Location};
-use ferrix_blkring::layout::{Op, RingLayout, Status};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::PACKET_USER;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::PinAccess;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkclient::Shared;
+use xaqu_blkring::bell::BELL_SUBMIT;
+use xaqu_blkring::control::{MAX_BYTES, Message, START_BYTES, VMO_RIGHTS};
+use xaqu_blkring::driver::{Consumed, DriverSide};
+use xaqu_blkring::geometry::{Device as Geometry, DeviceFlags};
+use xaqu_blkring::identity::{DiskName, Identity, Location};
+use xaqu_blkring::layout::{Op, RingLayout, Status};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::PACKET_USER;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::PinAccess;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
-/// `ferrix-blkclient` links `alloc` for its other side; `Shared` takes nothing from it.
+/// `xaqu-blkclient` links `alloc` for its other side; `Shared` takes nothing from it.
 struct NoHeap;
 
 // SAFETY: it never hands out a block, so no block's rules can be broken.
@@ -176,7 +176,7 @@ fn serve(boot: &Channel<Kernel>) -> Option<i32> {
     };
     let port_share = port_here
         .as_owned()
-        .duplicate(Requested::Exactly(ferrix_blkring::control::PORT_RIGHTS))
+        .duplicate(Requested::Exactly(xaqu_blkring::control::PORT_RIGHTS))
         .ok()?;
     control
         .write_with(
@@ -229,8 +229,8 @@ fn serve(boot: &Channel<Kernel>) -> Option<i32> {
             let _ = their_port.queue(bell.key(), bell.packet().data);
         }
         match side.prepare_to_sleep().ok()? {
-            ferrix_blkring::bell::Wait::Pending(_) => continue,
-            ferrix_blkring::bell::Wait::Sleep => {}
+            xaqu_blkring::bell::Wait::Pending(_) => continue,
+            xaqu_blkring::bell::Wait::Sleep => {}
         }
         let packet = port_here.wait(Deadline::Never).ok()?;
         side.woke();

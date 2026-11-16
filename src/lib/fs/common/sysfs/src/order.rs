@@ -42,7 +42,7 @@ pub fn inode(path: &[&[u8]]) -> u64 {
 }
 
 /// Where listings begin: cursors 0 and 1 are `.` and `..`, which the VFS
-/// gives itself (`ferrix_vfs::FIRST_CURSOR`).
+/// gives itself (`xaqu_vfs::FIRST_CURSOR`).
 pub const FIRST_CURSOR: u64 = 2;
 
 /// The cursor a name is listed at: its hash in 62 bits, above

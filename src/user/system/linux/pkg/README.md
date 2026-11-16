@@ -1,9 +1,9 @@
 # pkg
 
-Ferrix's package manager, `/bin/pkg` (`docs/APPS.md` §7). An app is built
+Xaqu's package manager, `/bin/pkg` (`docs/APPS.md` §7). An app is built
 into a package, a newc archive of its files and its record,
-`lib/ferrix/packages/<name>.toml`; an image is packages installed into a
-root. `pkg` does the same on a running Ferrix:
+`lib/xaqu/packages/<name>.toml`; an image is packages installed into a
+root. `pkg` does the same on a running Xaqu:
 
 ```
 pkg [--root DIR] list               the packages installed

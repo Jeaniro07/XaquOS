@@ -56,8 +56,8 @@ pub(crate) const TLS_SLOTS: usize = 3;
 
 const _: () = assert!(
     TLS_FIRST_SLOT + TLS_SLOTS < GDT_SLOTS
-        && TLS_FIRST_SLOT as u32 == ferrix_linux_abi::user_desc::TLS_FIRST_ENTRY
-        && TLS_SLOTS == ferrix_linux_abi::user_desc::TLS_ENTRIES,
+        && TLS_FIRST_SLOT as u32 == xaqu_linux_abi::user_desc::TLS_FIRST_ENTRY
+        && TLS_SLOTS == xaqu_linux_abi::user_desc::TLS_ENTRIES,
     "the thread-local slots are Linux's, inside the table"
 );
 
@@ -205,7 +205,7 @@ const IST_STACK_SIZE: usize = 16 * 1024;
 const IST_OCCUPANCY_RESERVE: u64 = 16;
 
 const _: () = assert!(
-    IST_STACK_SIZE as u64 == crate::vmap::STACK_PAGES * ferrix_bootinfo::PAGE_SIZE,
+    IST_STACK_SIZE as u64 == crate::vmap::STACK_PAGES * xaqu_bootinfo::PAGE_SIZE,
     "the boot processor's interrupt stacks are the size a secondary's vmap stacks are"
 );
 
@@ -531,7 +531,7 @@ pub(crate) unsafe fn read_tls() -> [u64; TLS_SLOTS] {
 /// # Safety
 ///
 /// (CONTEXT) Interrupts must be masked, and every nonzero descriptor must be one
-/// `ferrix_linux_abi::user_desc` built: ring 3 data, which no kernel selector
+/// `xaqu_linux_abi::user_desc` built: ring 3 data, which no kernel selector
 /// names.
 pub(crate) unsafe fn write_tls(tls: &[u64; TLS_SLOTS]) {
     if let Some(table) = noted_table() {

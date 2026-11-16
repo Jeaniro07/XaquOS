@@ -1,8 +1,8 @@
 # Stage 25 — Xaqu, the main UI  ·  *63 points estimated; about 30 built*
 
-The customer's design "Xaqu WM" becomes the look and the shell of Ferrix's
+The customer's design "Xaqu WM" becomes the look and the shell of Xaqu's
 desktop on hyprix: the default of `run-compositor --everything` and of the
-desktop image, with Ferrix light still selectable and a person's own
+desktop image, with Xaqu light still selectable and a person's own
 `~/.config/hypr` and `~/.config/waybar` still winning where they exist.
 [`docs/DESKTOP.md`](../DESKTOP.md) §6 is the design, the order of its
 slices Y1 to Y8 and the customer's answers of 2026-10-24; this page is that
@@ -19,7 +19,7 @@ tokens. Not met.
 
 The count is by slice: Y1 5, Y2 8, Y3 3 of 8, Y4 8 of 8 (the sidebars, the
 clock, the to-do, the weather and the quick settings, whose microphone,
-Wi-Fi, Bluetooth and night light wait on backends Ferrix lacks), Y7 6 of 8
+Wi-Fi, Bluetooth and night light wait on backends Xaqu lacks), Y7 6 of 8
 (the picker and the theme engine; parallax not). The stash, Settings
 live, and GTK and Chrome in the tokens are of the exit, outside the slices'
 estimates. `docs/DESKTOP.md` §6.7 is the design feature by feature.
@@ -46,7 +46,7 @@ estimates. `docs/DESKTOP.md` §6.7 is the design feature by feature.
   with `hyprctl --batch getoption`.
 * **GTK and Chrome in the tokens**: Nocturne for GTK 3 and GTK 4, and
   `portald`, which answers `org.freedesktop.portal.Settings` (dark, the
-  accent, the theme's name) and `FileChooser` with Ferrix's own dialog,
+  accent, the theme's name) and `FileChooser` with Xaqu's own dialog,
   which GTK 3, GTK 4 and Chrome use on Xaqu; Chrome's volumes 2 (GTK 3;
   boot `chrome-xaqu`), 3 (GTK's file chooser) and 4 (a session bus, GTK 4;
   boots `chrome-save`, `gtk-chooser`).

@@ -114,31 +114,31 @@ pub fn parse(name: &str, passwd: &str, group: &str) -> Option<Account> {
 mod tests {
     use super::*;
 
-    const PASSWD: &str = "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\nshut:x:1002:1002::/:/sbin/nologin\n";
-    const GROUP: &str = "root:x:0:\nferrix:x:1000:\naudio:x:29:ferrix,other\nvideo:x:44:other\n";
+    const PASSWD: &str = "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\nshut:x:1002:1002::/:/sbin/nologin\n";
+    const GROUP: &str = "root:x:0:\nxaqu:x:1000:\naudio:x:29:xaqu,other\nvideo:x:44:other\n";
 
     #[test]
     fn an_account_has_its_ids_home_shell_and_groups() {
-        let ferrix = parse("ferrix", PASSWD, GROUP);
+        let xaqu = parse("xaqu", PASSWD, GROUP);
         assert_eq!(
-            ferrix,
+            xaqu,
             Some(Account {
-                name: "ferrix".to_owned(),
+                name: "xaqu".to_owned(),
                 uid: 1000,
                 gid: 1000,
-                home: "/home/ferrix".to_owned(),
+                home: "/home/xaqu".to_owned(),
                 shell: "/bin/zsh".to_owned(),
                 groups: vec![1000, 29],
             })
         );
-        assert!(ferrix.is_some_and(|account| account.may_log_in()));
+        assert!(xaqu.is_some_and(|account| account.may_log_in()));
         assert!(parse("shut", PASSWD, GROUP).is_some_and(|account| !account.may_log_in()));
         assert_eq!(parse("nobody", PASSWD, GROUP), None);
     }
 
     #[test]
     fn names_and_terms_are_plain() {
-        assert!(is_a_name("ferrix"));
+        assert!(is_a_name("xaqu"));
         for bad in ["", "-r", "a b", "a/b", "a:b", &"x".repeat(33)] {
             assert!(!is_a_name(bad), "{bad:?}");
         }

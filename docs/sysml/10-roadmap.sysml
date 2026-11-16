@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 10: the roadmap.
+ * Xaqu — SysML v2 model, part 10: the roadmap.
  *
  * docs/ROADMAP.md as requirements: one per stage, each with its exit
  * criterion, its status, the boot test that verifies it, and the part of
@@ -7,12 +7,12 @@
  * keyword says whether it is done; docs/ROADMAP.md's "Where it stands" is
  * the prose this follows.
  */
-package FerrixRoadmap {
+package XaquRoadmap {
     private import ScalarValues::*;
     private import VerificationCases::*;
-    private import FerrixLifecycle::*;
-    private import FerrixStructure::*;
-    private import FerrixRequirements::*;
+    private import XaquLifecycle::*;
+    private import XaquStructure::*;
+    private import XaquRequirements::*;
 
     requirement def Stage {
         doc /* Two rules govern the ordering: every stage ends in something
@@ -21,7 +21,7 @@ package FerrixRoadmap {
         attribute number : Natural;
         attribute status : StageStatus;
         attribute size : String;
-        subject os : Ferrix;
+        subject os : Xaqu;
         requirement exitCriterion {
             doc /* How the stage knows it is finished: a QEMU boot that
                  * demonstrates the capability and stays in CI. */
@@ -30,15 +30,15 @@ package FerrixRoadmap {
 
     verification def BootTest {
         doc /* cargo xtask test-boot --arch <a>: boot firmware, loader and
-             * kernel under QEMU and require FERRIX-BOOT-OK within the
+             * kernel under QEMU and require XAQU-BOOT-OK within the
              * timeout. Every stage's exit criterion is a self-check in kmain
              * and a line in this log. Under tcg by default, except an x86-64
              * guest on an x86-64 Linux host outside CI, which runs under kvm;
              * kvm and --accel auto use the host's MMU and TLB, which is the
              * only way a missing invalidation is reachable. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         attribute arch : IsaFamily;
-        attribute marker : String = "FERRIX-BOOT-OK stages 1-12";
+        attribute marker : String = "XAQU-BOOT-OK stages 1-12";
     }
 
     // -----------------------------------------------------------------------
@@ -135,7 +135,7 @@ package FerrixRoadmap {
         #implemented requirement boardUart {
             doc /* The STM32 USART driver and the flash/watch-serial/deploy
                  * path, run on hardware on 2026-09-13 at fd4442e: an
-                 * STM32MP157D-DK1 at two cores reached FERRIX-BOOT-OK stages
+                 * STM32MP157D-DK1 at two cores reached XAQU-BOOT-OK stages
                  * 1-9 and ran stage 7's script, its exit line whole once the
                  * console drained before power-off. */
         }
@@ -339,7 +339,7 @@ package FerrixRoadmap {
              * programmed at boot on x86-64 and the SMMUv3 under ACPI on
              * AArch64, with translated domains. VMO_PIN pinning VMO pages into
              * a device's domain; the out-of-domain write faulted on x86-64
-             * and AArch64. The block ring (ferrix-blkring, BLOCK-RING.md)
+             * and AArch64. The block ring (xaqu-blkring, BLOCK-RING.md)
              * with its kernel side, block_ring_create and a disk in the devfs
              * registry from an accepted HELLO; the kernel half of devmgr
              * (device_info, device_quiesce, START, bus mastering at the first
@@ -475,7 +475,7 @@ package FerrixRoadmap {
         attribute :>> number = 12;
         attribute :>> status = StageStatus::Done;
         attribute :>> size = "about 60 points, spent";
-        doc /* btrfs stage B. Exit, strict: Ferrix writes a tree and host
+        doc /* btrfs stage B. Exit, strict: Xaqu writes a tree and host
              * btrfs check finds nothing; then the power-fail test — kill QEMU
              * at a random point inside a transaction, remount, replay, check
              * again — over hundreds of seeds. Met: cargo xtask test-btrfs and
@@ -619,7 +619,7 @@ package FerrixRoadmap {
         attribute :>> size = "the goal; about 40 guessed, 8 spent";
         doc /* The remaining syscall surface, the memory scale, the spawn path
              * for rust-lld, a sysroot on btrfs. Exit: rustc hello.rs &&
-             * ./hello on Ferrix, in CI.
+             * ./hello on Xaqu, in CI.
              *
              * Met on 2026-09-22 on x86-64, verified by rustcTest: the
              * rust-lang.org rustc (1.97.1 then, 1.99.1 since 2026-11-06),
@@ -644,7 +644,7 @@ package FerrixRoadmap {
              * touch through QMP and requires them back out of the nodes on
              * x86-64 and AArch64, with a negative control that must fail).
              * The seat came with the compositor: xtask test-seat types into
-             * a window on Ferrix from QEMU's far end, and the stage is met.
+             * a window on Xaqu from QEMU's far end, and the stage is met.
              * docs/DISPLAY.md and docs/INPUT.md are the designs. */
     }
 
@@ -655,7 +655,7 @@ package FerrixRoadmap {
         doc /* The compositor itself: the Wayland wire protocol and its
              * server, xdg-shell, wl_shm, the dwindle and master layouts, a
              * CPU renderer, hyprland.conf and the hyprctl socket. Exit: two
-             * real Wayland clients tiled on Ferrix's screen, pixel for pixel
+             * real Wayland clients tiled on Xaqu's screen, pixel for pixel
              * as the renderer draws them, which xtask test-compositor
              * requires on x86-64 and AArch64. Met. */
     }
@@ -683,7 +683,7 @@ package FerrixRoadmap {
              * renderer still under it. The desktop composites on the GPU:
              * a 1920x1080 frame of a video wallpaper behind a blurred
              * translucent terminal went from 39 ms to 12, where 60 fps is
-             * 16.7. A card of Ferrix's own is stage 21. Since 2026-09-23 a
+             * 16.7. A card of Xaqu's own is stage 21. Since 2026-09-23 a
              * served desktop takes the 3D card by default (docs/GPU.md 3.9)
              * and the pointer is on virtio-gpu's cursor plane, so moving it
              * draws no frame (docs/GPU.md 3.10). The driver keeps eight
@@ -698,7 +698,7 @@ package FerrixRoadmap {
              * and second-pass effects (xray, no_screen_share, blur_popups,
              * precise_mouse_move) landed on 2026-10-07. The X server the stage
              * counted 40 for is yserver, a Rust X11 server with a rootless
-             * Wayland backend of Ferrix's own, 36 points, done on
+             * Wayland backend of Xaqu's own, 36 points, done on
              * 2026-09-29 (docs/YSERVER.md). The rest
              * of the GPU road is for clients that render for themselves, not
              * for the compositor: zwp_linux_dmabuf_v1 in hyprix and a
@@ -712,7 +712,7 @@ package FerrixRoadmap {
              * Linux host, 39 points, done the same day: vkgears draws on
              * the host's RADV (cargo xtask test-vkgears); and gears drawn by
              * the DK1's own Vivante GC400T, an OpenGL ES 2.0 core with no
-             * Vulkan in any driver, through a ring-3 driver of Ferrix's own,
+             * Vulkan in any driver, through a ring-3 driver of Xaqu's own,
              * 32 points, of which G1 and G2 (11) ran on the board the same
              * day: the core runs a command buffer, its events by interrupt.
              *
@@ -734,11 +734,11 @@ package FerrixRoadmap {
         attribute :>> number = 21;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "unsized, over 100 points";
-        doc /* Ferrix on bare metal with an NVIDIA card driven by Ferrix
+        doc /* Xaqu on bare metal with an NVIDIA card driven by Xaqu
              * itself: Path B of the GPU decision of 2026-09-18, opened when
              * the customer wants real hardware. NVIDIA's open kernel modules
              * as a ring-3 driver process behind an OS interface layer written
-             * for Ferrix, their GSP firmware, and a userspace that is either
+             * for Xaqu, their GSP firmware, and a userspace that is either
              * glibc-built closed libraries or Mesa's NVK over a Rust driver
              * such as Linux's Nova, weighed when the stage opens. The
              * customer chose NVIDIA's own driver and userspace on 2026-10-02
@@ -750,7 +750,7 @@ package FerrixRoadmap {
              * kernel half (a chardev render node, dmabufs and sync-file
              * fences) on 2026-10-11. N3c, hyprix compositing on the card,
              * is on main; run-compositor --nvidia keeps the software
-             * compositor unless FERRIX_NVIDIA_VTEST=1, because Chrome's
+             * compositor unless XAQU_NVIDIA_VTEST=1, because Chrome's
              * WebGL page is faster under it (2026-10-25). nvrm follows a
              * monitor plugged, unplugged or swapped, answers
              * IMPORT_SYNC_FILE on its dmabufs, and quiesces its adapter
@@ -759,7 +759,7 @@ package FerrixRoadmap {
              * unchanged and no Xid, and the kept card VMs quiesce on stop or
              * yield; the monitor following and the sync-file import ran on
              * the card too. The customer's Intel N150 box is the
-             * stage's first bare-metal machine (docs/N150.md): Ferrix booted
+             * stage's first bare-metal machine (docs/N150.md): Xaqu booted
              * on it on 2026-10-15, its drivers (AHCI, the YT6801, a
              * firmware framebuffer, VT-d, SMBIOS, an event log) and a render
              * driver for its Intel GPU (docs/INTEL-GPU.md) are on main, and
@@ -776,7 +776,7 @@ package FerrixRoadmap {
         attribute :>> number = 22;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "unsized, over 300 points";
-        doc /* Steam on Ferrix, put on the roadmap by the customer on
+        doc /* Steam on Xaqu, put on the roadmap by the customer on
              * 2026-09-18 as the step after the GPU decision; a guest's
              * stage first, on Path A's GPU, that does not wait for bare
              * metal. What it stands on that nothing else staged: the 32-bit
@@ -825,14 +825,14 @@ package FerrixRoadmap {
         attribute :>> number = 23;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "about 205 points as a first guess, step 5 unknown";
-        doc /* The Windows game Arknights: Endfield on Ferrix, through Wine
+        doc /* The Windows game Arknights: Endfield on Xaqu, through Wine
              * with DXVK on NVIDIA's Vulkan, put on the roadmap by the
              * customer on 2026-10-10 as the road after Steam. A feasibility study
              * was written the same day; step 0 answered on 2026-10-13 (the
              * anti-cheat refuses a virtual machine), Wine, DXVK and a Unity
-             * game run on Ferrix with no card, and Endfield's launcher draws
+             * game run on Xaqu with no card, and Endfield's launcher draws
              * its install dialog in Debian's Wine and in GE-Proton11-7's;
-             * the game's download stopped on ENOSPC from Ferrix's btrfs,
+             * the game's download stopped on ENOSPC from Xaqu's btrfs,
              * whose cause, a writable mount's page cache never reclaimed, is
              * fixed on main since 2026-10-15; Syscall User Dispatch and
              * seccomp's TRAP are on main. Since 2026-10-23 the game, started
@@ -841,9 +841,9 @@ package FerrixRoadmap {
              * at about 25 frames a second at 720p (docs/GAME-MODE.md); the
              * steps below are not brought up to those runs. Eight
              * steps in the order they can be proved: the game on plain
-             * Linux in the same VM shape, which costs no Ferrix work and
+             * Linux in the same VM shape, which costs no Xaqu work and
              * answers whether its anti-cheat accepts a virtual machine;
-             * plain Wine starts on Ferrix, which needs
+             * plain Wine starts on Xaqu, which needs
              * arch_prctl(ARCH_SET_GS) first; a Direct3D 11 program draws
              * through DXVK on the card, on stage 21's unlanded branches; a
              * Unity DirectX 11 game without anti-cheat; the game's
@@ -852,7 +852,7 @@ package FerrixRoadmap {
              * own Proton, which is also stage 22's third exit step. What
              * Wine needs of the kernel is sized here and not in stage 22.
              * The anti-cheat's tolerance of Wine and of a virtual machine,
-             * an account ban and the game's terms are outside Ferrix's
+             * an account ban and the game's terms are outside Xaqu's
              * engineering and can stop it.
              * Exit: the game reaches its world past the login and is
              * playable at 1920x1080 and 60 frames a second on the RTX
@@ -864,7 +864,7 @@ package FerrixRoadmap {
         attribute :>> number = 24;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "about 68 points before the game domain, about 190 with it and the later rows";
-        doc /* The game path: a fullscreen game faster on Ferrix than on a
+        doc /* The game path: a fullscreen game faster on Xaqu than on a
              * stock Linux desktop on the same hardware, in the time from an
              * input to the picture that shows it and in how even the frames
              * are under a background load. docs/GAME-PATH.md is the design
@@ -923,10 +923,10 @@ package FerrixRoadmap {
         attribute :>> number = 20;
         attribute :>> status = StageStatus::InProgress;
         attribute :>> size = "longer";
-        doc /* Build Ferrix on Ferrix; the image the hosted compiler produces
+        doc /* Build Xaqu on Xaqu; the image the hosted compiler produces
              * boots and passes every test above. First step met 2026-09-23:
              * `cargo xtask test-selfhost` runs `cargo xtask build --arch
-             * x86_64` on Ferrix, from the toolchain, the tree and its
+             * x86_64` on Xaqu, from the toolchain, the tree and its
              * vendored crates on a btrfs volume, and the image it made
              * passes the boot test on the host. It fixed the writable
              * btrfs's write offset and dirty-inode lifetime, made MAP_FIXED
@@ -993,39 +993,39 @@ package FerrixRoadmap {
     // What satisfies what
     // -----------------------------------------------------------------------
 
-    satisfy stage1Boot by ferrix.loader;
-    satisfy stage2Memory by ferrix.kernel.mm;
-    satisfy stage2Memory by ferrix.kernel.vmap;
-    satisfy stage3TrapsInterruptsTime by ferrix.kernel.trap;
-    satisfy stage3TrapsInterruptsTime by ferrix.kernel.irq;
-    satisfy stage3TrapsInterruptsTime by ferrix.kernel.timer;
-    satisfy stage4Smp by ferrix.kernel.smp;
-    satisfy armv7aPort by ferrixArmv7a;
-    satisfy stage5Scheduler by ferrix.kernel.sched;
-    satisfy stage5Scheduler by ferrix.kernel.tasks;
+    satisfy stage1Boot by xaqu.loader;
+    satisfy stage2Memory by xaqu.kernel.mm;
+    satisfy stage2Memory by xaqu.kernel.vmap;
+    satisfy stage3TrapsInterruptsTime by xaqu.kernel.trap;
+    satisfy stage3TrapsInterruptsTime by xaqu.kernel.irq;
+    satisfy stage3TrapsInterruptsTime by xaqu.kernel.timer;
+    satisfy stage4Smp by xaqu.kernel.smp;
+    satisfy armv7aPort by xaquArmv7a;
+    satisfy stage5Scheduler by xaqu.kernel.sched;
+    satisfy stage5Scheduler by xaqu.kernel.tasks;
 
-    allocate stage6UserMode to ferrix.kernel.vm;
-    allocate stage7LinuxAbi to ferrix.kernel.syscalls;
-    allocate stage7LinuxAbi to ferrix.kernel.signals;
-    allocate stage7LinuxAbi to ferrix.kernel.futex;
-    allocate stage8Vfs to ferrix.kernel.vfs;
-    allocate stage8Vfs to ferrix.kernel.filesystems;
-    allocate stageSysfs to ferrix.kernel.filesystems;
-    allocate stageChrome to ferrix.userland;
-    allocate stage25Xaqu to ferrix.userland;
-    allocate stage9NativeAbi to ferrix.kernel.native;
-    allocate stage10UserspaceDrivers to ferrix.kernel.devices;
-    allocate stage10UserspaceDrivers to ferrix.kernel.iommu;
-    allocate stage11BtrfsRead to ferrix.kernel.blockCore;
-    allocate stageNetworking to ferrix.kernel.netCore;
-    allocate stageDynamicLinking to ferrix.kernel.syscalls;
-    allocate stageDynamicLinking to ferrix.userland;
-    allocate stage13Isolation to ferrix.kernel.namespaces;
-    allocate stage13Isolation to ferrix.kernel.cgroups;
-    allocate stage13Isolation to ferrix.kernel.seccomp;
-    allocate stage14RealTime to ferrix.kernel.sched;
-    allocate stage15Userland to ferrix.userland;
-    allocate stage16Rustc to ferrix.userland.rustc;
+    allocate stage6UserMode to xaqu.kernel.vm;
+    allocate stage7LinuxAbi to xaqu.kernel.syscalls;
+    allocate stage7LinuxAbi to xaqu.kernel.signals;
+    allocate stage7LinuxAbi to xaqu.kernel.futex;
+    allocate stage8Vfs to xaqu.kernel.vfs;
+    allocate stage8Vfs to xaqu.kernel.filesystems;
+    allocate stageSysfs to xaqu.kernel.filesystems;
+    allocate stageChrome to xaqu.userland;
+    allocate stage25Xaqu to xaqu.userland;
+    allocate stage9NativeAbi to xaqu.kernel.native;
+    allocate stage10UserspaceDrivers to xaqu.kernel.devices;
+    allocate stage10UserspaceDrivers to xaqu.kernel.iommu;
+    allocate stage11BtrfsRead to xaqu.kernel.blockCore;
+    allocate stageNetworking to xaqu.kernel.netCore;
+    allocate stageDynamicLinking to xaqu.kernel.syscalls;
+    allocate stageDynamicLinking to xaqu.userland;
+    allocate stage13Isolation to xaqu.kernel.namespaces;
+    allocate stage13Isolation to xaqu.kernel.cgroups;
+    allocate stage13Isolation to xaqu.kernel.seccomp;
+    allocate stage14RealTime to xaqu.kernel.sched;
+    allocate stage15Userland to xaqu.userland;
+    allocate stage16Rustc to xaqu.userland.rustc;
 
     // Which goal requirements each stage discharges.
     dependency from stage5Scheduler to hostsRustc::kernelThreads;
@@ -1075,7 +1075,7 @@ package FerrixRoadmap {
         doc /* cargo xtask deploy --arch armv7a: flash two files onto the
              * card's bootfs, watch the ST-LINK serial port for the marker.
              * Manual today; the automated form is deferred above. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         objective { verify armv7aPort; }
     }
 
@@ -1088,7 +1088,7 @@ package FerrixRoadmap {
              * the getty init respawned. The only gate here that types
              * rather than reading what the guest said. x86-64 only: sleep is
              * uutils', which is built for x86-64 alone. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         objective { verify stage15Userland; }
     }
 
@@ -1096,7 +1096,7 @@ package FerrixRoadmap {
 
     verification def InitSession {
         doc /* cargo xtask test-init: boot /sbin/init as pid 1 from
-             * ferrix.init= on all three architectures and type at the shell
+             * xaqu.init= on all three architectures and type at the shell
              * its getty gives. Its own session and the console as its
              * controlling terminal, from /proc/self/stat; a failing
              * service's restart budget; a daemon's grandchild in its
@@ -1104,7 +1104,7 @@ package FerrixRoadmap {
              * shutdown order after kill -TERM 1; and btrfs check of the
              * volume afterwards. docs/INIT.md section 15, stages one and
              * two. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         objective { verify stage15Userland; }
     }
 
@@ -1116,7 +1116,7 @@ package FerrixRoadmap {
              * makes -- a btrfs volume the kernel mounts at /data -- under
              * snapshot=on, and zinc runs rustc -vV, rustc hello.rs and
              * ./hello, each with an exit status of its own. x86-64 only. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         objective {
             verify hostsRustc;
             verify stage16Rustc;

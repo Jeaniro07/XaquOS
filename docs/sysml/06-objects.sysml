@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 6: kernel objects and the two ABIs.
+ * Xaqu — SysML v2 model, part 6: kernel objects and the two ABIs.
  *
  * docs/ARCHITECTURE.md §2 and §3. The constants for the Linux half are in
  * src/lib/proto/linux-abi and for the native half in src/lib/proto/native-abi. The objects a
@@ -7,11 +7,11 @@
  * among them; the POSIX half and threads in src/kernel/src/syscall. No handle
  * names an address space or a thread yet.
  */
-package FerrixObjects {
+package XaquObjects {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
-    private import FerrixMemory::*;
-    private import FerrixScheduling::Task;
+    private import XaquLifecycle::*;
+    private import XaquMemory::*;
+    private import XaquScheduling::Task;
 
     // -----------------------------------------------------------------------
     // The nine kernel objects, stage 9 (Task and Process earlier)
@@ -28,7 +28,7 @@ package FerrixObjects {
         attribute refcount : Natural;
     }
 
-    // Vmo and ProcessAddressSpace are defined in FerrixMemory; they are two of
+    // Vmo and ProcessAddressSpace are defined in XaquMemory; they are two of
     // the nine.
     #implemented part def VmoObject :> KernelObject, Vmo;
     #planned part def AddressSpaceObject :> KernelObject, ProcessAddressSpace;
@@ -63,7 +63,7 @@ package FerrixObjects {
              * Aperture a device node minted, and whole pages or none. */
         attribute phys : Natural;
         attribute len : Natural;
-        ref part domain : FerrixDrivers::IommuDomain[0..1];
+        ref part domain : XaquDrivers::IommuDomain[0..1];
     }
 
     #planned part def TaskObject :> KernelObject, Task {
@@ -111,11 +111,11 @@ package FerrixObjects {
         ref part fdTable : FdTable;
         ref part fsContext : FsContext;
         ref part sigHandlers : SignalDispositions;
-        ref part namespaces : FerrixIsolation::NsSet;
-        attribute credentials : FerrixIsolation::Credentials;
+        ref part namespaces : XaquIsolation::NsSet;
+        attribute credentials : XaquIsolation::Credentials;
     }
 
-    #implemented part def Thread :> FerrixScheduling::UserThread {
+    #implemented part def Thread :> XaquScheduling::UserThread {
         @stage { number = 7; }
         doc /* One line of execution through a PosixProcess:
              * src/kernel/src/syscall/thread.rs. Its thread id from the pid space,

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-fallible"
+name = "xaqu-fallible"
 description = "Fallible construction of Box, Vec, VecDeque and String on stable Rust"
 version = "0.1.0"
 edition = "2024"
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-sync = { workspace = true }
+xaqu-sync = { workspace = true }
 
 [lints]
 workspace = true

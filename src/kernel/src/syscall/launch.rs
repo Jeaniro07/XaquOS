@@ -21,10 +21,10 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::status;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::status;
 
 use crate::fs;
 use crate::hooks::Full;
@@ -140,7 +140,7 @@ pub(crate) fn make_native(creator: Option<&dyn Host>, name: &[u8]) -> Result<Arc
 type FromCreator<'a> = (
     Option<&'a Process>,
     Credentials,
-    Option<ferrix_vfs::Context>,
+    Option<xaqu_vfs::Context>,
     Option<Arc<crate::syscall::pidns::PidNamespace>>,
 );
 

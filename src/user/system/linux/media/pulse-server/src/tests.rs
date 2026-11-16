@@ -28,8 +28,8 @@ use super::{Broken, Card, ClientId, Server};
 /// The card: 48 kHz, S16LE, stereo, 40 ms from write to ear.
 fn card() -> Card {
     Card {
-        name: c"ferrix".to_owned(),
-        description: c"Ferrix sound card".to_owned(),
+        name: c"xaqu".to_owned(),
+        description: c"Xaqu sound card".to_owned(),
         spec: stereo_48k(),
         latency: Duration::from_millis(40),
     }
@@ -260,7 +260,7 @@ fn the_card_is_the_one_sink_and_the_default_and_there_is_no_source() {
     let mut client = Client::handshake(&mut server);
     let seq = client.send(&mut server, &Command::GetServerInfo);
     let info: ServerInfo = client.reply(&mut server, seq);
-    assert_eq!(info.default_sink_name.as_deref(), Some(c"ferrix"));
+    assert_eq!(info.default_sink_name.as_deref(), Some(c"xaqu"));
     assert_eq!(info.default_source_name, None);
     assert_eq!(info.sample_spec, stereo_48k());
     assert_eq!(info.cookie, 7);
@@ -269,7 +269,7 @@ fn the_card_is_the_one_sink_and_the_default_and_there_is_no_source() {
         &mut server,
         &Command::GetSinkInfo(GetSinkInfo {
             index: None,
-            name: Some(c"ferrix".to_owned()),
+            name: Some(c"xaqu".to_owned()),
         }),
     );
     let sink: SinkInfo = client.reply(&mut server, seq);
@@ -291,7 +291,7 @@ fn the_card_is_the_one_sink_and_the_default_and_there_is_no_source() {
     let seq = client.send(&mut server, &Command::GetSourceInfoList);
     let sources: Vec<protocol::SourceInfo> = client.reply(&mut server, seq);
     assert!(sources.is_empty());
-    let seq = client.send(&mut server, &Command::LookupSink(c"ferrix".to_owned()));
+    let seq = client.send(&mut server, &Command::LookupSink(c"xaqu".to_owned()));
     let found: protocol::LookupReply = client.reply(&mut server, seq);
     assert_eq!(found.0, 0);
 }

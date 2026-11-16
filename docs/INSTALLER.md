@@ -19,19 +19,19 @@ the customer to decide.
 
 What a person does with it, start to finish:
 
-1. Download `ferrix-<version>-x86_64.iso` (or `.img`) from a GitHub release.
+1. Download `xaqu-<version>-x86_64.iso` (or `.img`) from a GitHub release.
 2. Write it to a USB stick with `dd`, Rufus or balenaEtcher, or attach it to
    a virtual machine as a CD or a disk.
-3. Boot it. Ferrix starts from the stick with `/` in memory -- the *live
+3. Boot it. Xaqu starts from the stick with `/` in memory -- the *live
    session* -- and the desktop comes up with the installer open. Nothing on
    the machine's disks has been touched, and the live session is a working
-   Ferrix to try first.
+   Xaqu to try first.
 4. In the installer: pick a keyboard layout; pick a disk; choose **Erase the
    disk** or **Install beside** what is on it (§4.4); make a user and a
    password; read the summary; press **Install**.
 5. The installer partitions, formats, copies the system, installs the boot
    loader, and says to remove the stick and restart.
-6. The machine boots Ferrix from its own disk -- through Ferrix's boot menu,
+6. The machine boots Xaqu from its own disk -- through Xaqu's boot menu,
    which also offers the other system when there is one.
 
 It is not a package manager, an updater or a recovery tool. It installs the
@@ -39,7 +39,7 @@ system the live medium carries and nothing else; network installs, updates
 of an installed system and repair are later work, not in this design.
 
 It boots with Secure Boot on, through Ubuntu's Microsoft-signed shim and
-a key of Ferrix's own that the person enrolls once (§5.7).
+a key of Xaqu's own that the person enrolls once (§5.7).
 
 **Exit of this design:** on x86-64, two gates and one machine.
 
@@ -47,7 +47,7 @@ a key of Ferrix's own that the person enrolls once (§5.7).
   with a blank virtio disk and a second disk holding a fake "other system";
   the installer, driven by an answer file, installs beside it; the guest
   powers off; QEMU then boots the target disk alone, the boot menu chooses
-  Ferrix, and Ferrix reaches `FERRIX-BOOT-OK` with `/` on the installed btrfs
+  Xaqu, and Xaqu reaches `XAQU-BOOT-OK` with `/` on the installed btrfs
   root. The other system's partitions are compared byte for byte, unchanged.
 * `cargo xtask test-compositor --boot installer`: the graphical installer's
   pages match their screenshots, and a click-through with a virtual pointer
@@ -57,19 +57,19 @@ a key of Ferrix's own that the person enrolls once (§5.7).
 
 ## 2. What exists today (surveyed 2026-09-28)
 
-Ferrix has half an installer already, and none of the other half.
+Xaqu has half an installer already, and none of the other half.
 
 **What is there:**
 
 * Every `run` boot *installs* already: the kernel starts on the initramfs
-  in tmpfs, finds a btrfs volume labelled `ferrix-root`, unpacks the
+  in tmpfs, finds a btrfs volume labelled `xaqu-root`, unpacks the
   initramfs onto it, and switches `/` there (`src/kernel/src/fs/root_disk.rs`,
   `docs/GUIDE.md` §Getting started). An installed system is exactly that volume
   plus something that boots it.
-* `ferrix.root=tmpfs` (and `--tmpfs-root`) is a live session: `/` in memory,
+* `xaqu.root=tmpfs` (and `--tmpfs-root`) is a live session: `/` in memory,
   no disk written.
-* The UEFI loader `src/boot/common/uefi` reads `FERRIX/KERNEL.ELF`, `FERRIX/INITRD.IMG`
-  and `FERRIX/CMDLINE.TXT` from the FAT volume it was loaded from, and hands
+* The UEFI loader `src/boot/common/uefi` reads `XAQU/KERNEL.ELF`, `XAQU/INITRD.IMG`
+  and `XAQU/CMDLINE.TXT` from the FAT volume it was loaded from, and hands
   the kernel the firmware's GOP framebuffer.
 * `tools/common/xtask/src/fat.rs` writes FAT32 in plain Rust, with no mtools.
 * `src/lib/fs/btrfs/write` writes btrfs that `btrfs check` accepts, including
@@ -90,8 +90,8 @@ Ferrix has half an installer already, and none of the other half.
 | No partition tables | root is found by label on a *whole* virtio disk, and only `vdd`..`vdg` (`root_disk.rs:78`) |
 | No mkfs for btrfs | every volume is unpacked from a host fixture |
 | No FAT in the running system | the ESP can be written on the host only |
-| No image with a partition table, no ISO | `ferrix.img` is a bare FAT32 volume; releases carry notes only |
-| No boot menu | the loader boots Ferrix and nothing else |
+| No image with a partition table, no ISO | `xaqu.img` is a bare FAT32 volume; releases carry notes only |
+| No boot menu | the loader boots Xaqu and nothing else |
 | No UEFI variables from the OS | the kernel does not keep the firmware's runtime services |
 | Only virtio disks | no NVMe, AHCI, or USB mass storage |
 | No USB 3, no PS/2 | `usb-host` is EHCI; a modern PC's keyboard and sticks sit on xHCI or i8042 |
@@ -108,15 +108,15 @@ to test:
 ```
 GPT (protective MBR; on the .iso also an ISO 9660 volume and El Torito)
  1  ESP, FAT32, 64 MiB   EFI/BOOT/BOOTX64.EFI      the loader
-                         FERRIX/KERNEL.ELF
-                         FERRIX/INITRD.IMG          the whole system, installer included
-                         FERRIX/CMDLINE.TXT         "ferrix.live ferrix.root=tmpfs"
+                         XAQU/KERNEL.ELF
+                         XAQU/INITRD.IMG          the whole system, installer included
+                         XAQU/CMDLINE.TXT         "xaqu.live xaqu.root=tmpfs"
 ```
 
 The live system *is* the initramfs, as every test boot is today, so the
 medium needs no root partition and no squashfs. The initramfs is also the
 installer's source: what it copies to the target is what the live session
-is running. A live session keeps the medium's ESP label `FERRIX-LIVE` so
+is running. A live session keeps the medium's ESP label `XAQU-LIVE` so
 the installer knows which disk not to offer.
 
 The `.iso` is the `.img` with an ISO 9660 filesystem and an El Torito catalog
@@ -137,9 +137,9 @@ Pixel keep their `xtask flash` paths; an installer on them is not asked for.
 ### 3.3 Building and releasing
 
 `cargo xtask live --arch x86_64 --release` writes
-`build/x86_64/ferrix-live.img` and `ferrix-live.iso`. The release workflow
+`build/x86_64/xaqu-live.img` and `xaqu-live.iso`. The release workflow
 (`.github/workflows/release.yml`) builds both for x86-64 and AArch64, names
-them `ferrix-<tag>-<arch>.{img,iso}`, writes `SHA256SUMS`, and attaches all
+them `xaqu-<tag>-<arch>.{img,iso}`, writes `SHA256SUMS`, and attaches all
 of it to the release it creates. The release notes gain a short "Install"
 section pointing at `docs/INSTALL.md`, the user-facing guide (§8).
 
@@ -149,9 +149,9 @@ section pointing at `docs/INSTALL.md`, the user-facing guide (§8).
 
 ```
 src/user/system/linux/installer/
-  engine/   ferrix-installer-engine: a library, no I/O of its own beyond a Disk trait
-  cli/      /bin/ferrix-install: runs an answer file, prints progress; the gates use it
-  gui/      /bin/ferrix-installer: the desktop app, on toolkit + render + text
+  engine/   xaqu-installer-engine: a library, no I/O of its own beyond a Disk trait
+  cli/      /bin/xaqu-install: runs an answer file, prints progress; the gates use it
+  gui/      /bin/xaqu-installer: the desktop app, on toolkit + render + text
 ```
 
 The engine takes a **plan** and turns it into a list of **steps**, each
@@ -182,7 +182,7 @@ An answer file is the plan in TOML; the GUI builds the same struct.
    512 MiB, root the rest. On *Beside*: root in the chosen free range, and a
    new ESP only if the disk has none. Then `BLKRRPART` and wait for the
    kernel to list the new partitions.
-2. **Format.** `mkfs.btrfs` of our own (§5.3) on root, label `ferrix-root`,
+2. **Format.** `mkfs.btrfs` of our own (§5.3) on root, label `xaqu-root`,
    a new filesystem UUID. `mkfs.fat` on a new ESP.
 3. **Copy the system.** Mount the new root read-write and unpack the running
    initramfs onto it, which is the kernel's `root_disk::install` done from
@@ -192,15 +192,15 @@ An answer file is the plan in TOML; the GUI builds the same struct.
    config, the time zone, and the account through `authd` (a `useradd`-like
    request with `--root` pointing at the new volume, `docs/AUTH.md`).
 5. **Boot files.** Copy `BOOTX64.EFI`, `KERNEL.ELF` and `INITRD.IMG` into
-   `EFI/ferrix/` on the ESP, and write `EFI/ferrix/CMDLINE.TXT` with
-   `ferrix.root=PARTUUID=<root's>`. On an ESP of its own, also the fallback
+   `EFI/xaqu/` on the ESP, and write `EFI/xaqu/CMDLINE.TXT` with
+   `xaqu.root=PARTUUID=<root's>`. On an ESP of its own, also the fallback
    `EFI/BOOT/BOOTX64.EFI`; on a shared one, never (it belongs to the other
    system).
-6. **Boot entry.** Add a `Boot####` variable "Ferrix" pointing at
-   `\EFI\ferrix\BOOTX64.EFI` and put it first in `BootOrder`, through
+6. **Boot entry.** Add a `Boot####` variable "Xaqu" pointing at
+   `\EFI\xaqu\BOOTX64.EFI` and put it first in `BootOrder`, through
    `/sys/firmware/efi/efivars` (§5.5). A firmware that forgets it (some do)
-   still finds Ferrix through the fallback path on an ESP of its own; on a
-   shared ESP the summary says to pick "Ferrix" in the firmware's boot menu.
+   still finds Xaqu through the fallback path on an ESP of its own; on a
+   shared ESP the summary says to pick "Xaqu" in the firmware's boot menu.
 7. **Sync and unmount**, then say to remove the medium and restart.
 
 A failure before step 1 finishes changes nothing. After it, the installer
@@ -212,7 +212,7 @@ partition table, which is a second chance to lose data.
 Every disk the kernel lists, except the one the live system booted from,
 with its model, size, and what is on it: the partitions, their file system
 by magic (FAT, NTFS, ext4, btrfs, swap, BitLocker, Apple's APFS), their
-labels, and "Windows", "Ubuntu" and so on when an ESP holds a loader Ferrix
+labels, and "Windows", "Ubuntu" and so on when an ESP holds a loader Xaqu
 recognises (§5.6). A disk with an MBR partition table rather than a GPT is
 offered only for *Erase*: converting it would change what the other system
 boots from.
@@ -222,17 +222,17 @@ boots from.
 The page offers three ways, as Ubuntu's does:
 
 * **Install beside `<system>`**, with a divider between the two systems that
-  the person drags. Ferrix takes free space first; when that is not enough,
+  the person drags. Xaqu takes free space first; when that is not enough,
   the installer **shrinks the other system's partition** to make room
   (§4.6). The divider stops where the other system's data ends plus a
-  margin, and Ferrix needs at least 16 GiB.
-* **Replace a partition**: pick one, its data is lost, Ferrix goes there.
+  margin, and Xaqu needs at least 16 GiB.
+* **Replace a partition**: pick one, its data is lost, Xaqu goes there.
   The page shows what it holds before it is picked.
 * **Erase the disk.**
 
 The rule that makes *beside* safe: **no byte outside the chosen range and
 the GPT's own sectors is written**, and the ESP is written only inside
-`EFI/ferrix/`. The gate (§7) checks it by hashing every other partition
+`EFI/xaqu/`. The gate (§7) checks it by hashing every other partition
 before and after. A shrink is the one exception, and §4.6 is its own rule.
 
 ### 4.5 The graphical installer
@@ -240,7 +240,7 @@ before and after. A shrink is the one exception, and §4.6 is its own rule.
 A toplevel window on hyprix, 900 × 640, one page at a time with *Back* and
 *Next*, as Calamares and Ubuntu's installer are laid out:
 
-1. **Welcome**: "Try Ferrix" (closes the installer) or "Install Ferrix".
+1. **Welcome**: "Try Xaqu" (closes the installer) or "Install Xaqu".
 2. **Keyboard**: a list of layouts and a field to try it in.
 3. **Disk**: the disks of §4.3 as bars coloured by partition, and the three
    choices of §4.4 under the chosen disk; the bar shows the result.
@@ -258,7 +258,7 @@ the toolkit, so later apps get them too. They draw with `render` and `text`
 as the other clients do, and follow the desktop's theme colours.
 
 The live session's hyprix config starts the installer on login, and the live
-session logs in without a password as user `ferrix`.
+session logs in without a password as user `xaqu`.
 
 ### 4.6 Shrinking the other system
 
@@ -281,7 +281,7 @@ never moves, so nothing the other system's boot loader points at changes.
 | anything else | APFS, ZFS, LUKS, LVM, BitLocker | not shrunk; the installer says what it found and offers free space and *Replace* only |
 
 `ntfsresize` and `resize2fs` are GPL and are read as references, never
-copied (Ferrix is MIT); Microsoft's published NTFS structures and the
+copied (Xaqu is MIT); Microsoft's published NTFS structures and the
 Linux kernel's `Documentation/filesystems/ext4` are the specifications.
 
 **When it refuses**, and says why in words the person can act on:
@@ -315,7 +315,7 @@ Linux kernel's `Documentation/filesystems/ext4` are the specifications.
    the GPT shrinks last, after the file system's own size is flushed.
 4. **Check after**, with the same pass as step 1, and compare the file tree
    (names, sizes, and a hash of every file's contents) with the one read
-   before. A mismatch stops the install before Ferrix writes anything, and
+   before. A mismatch stops the install before Xaqu writes anything, and
    says so.
 
 A person is shown, before **Install**, in red: "Resizing `<system>` can lose
@@ -351,8 +351,8 @@ and makes `/dev/vda1`, `/dev/nvme0n1p1`, `/dev/sda1` with Linux's minor
 numbers, plus `/sys/class/block/<name>/{partition,start,size}` and
 `/dev/disk/by-partuuid/`.
 
-Root is then found by `ferrix.root=PARTUUID=…` or `ferrix.root=LABEL=…` on
-any disk or partition; with neither, as today, by the label `ferrix-root`,
+Root is then found by `xaqu.root=PARTUUID=…` or `xaqu.root=LABEL=…` on
+any disk or partition; with neither, as today, by the label `xaqu-root`,
 now scanned on every disk rather than `vdd`..`vdg`. The live medium is found
 the same way by its ESP label, so the loader need not say which disk it was.
 
@@ -372,13 +372,13 @@ makes of the same size and comparing their trees item by item.
 opening an existing FAT32 (or FAT16) volume, walking directories, long
 names, and adding files to it -- which is what writing into another
 system's ESP needs. It is a library the installer links, not a kernel
-filesystem: nothing mounts the ESP while Ferrix runs. `xtask` keeps using it
+filesystem: nothing mounts the ESP while Xaqu runs. `xtask` keeps using it
 for its images.
 
 ### 5.5 UEFI variables
 
 The loader passes the firmware's runtime services table and the memory map's
-runtime regions to the kernel (`ferrix-bootinfo`), which calls
+runtime regions to the kernel (`xaqu-bootinfo`), which calls
 `SetVirtualAddressMap` and keeps a ring-0 call path for `GetVariable`,
 `GetNextVariableName` and `SetVariable`, serialised by one lock, with the
 calls' memory mapped only while one runs. `/sys/firmware/efi/efivars` is
@@ -395,36 +395,36 @@ pressed) when the ESP it is on holds another system's loader:
 `grubx64.efi`, `EFI/fedora/…`, `EFI/debian/…`, `EFI/arch/…`, any
 `EFI/*/BOOTX64.EFI`. Choosing one starts it with `LoadImage` and
 `StartImage`. It draws on the GOP framebuffer with `fbtext`'s font and
-takes the firmware's keyboard, so it works before any Ferrix driver.
-`EFI/ferrix/MENU.TXT` sets the default and the time-out. With no other
+takes the firmware's keyboard, so it works before any Xaqu driver.
+`EFI/xaqu/MENU.TXT` sets the default and the time-out. With no other
 loader there is no menu and no wait, as today.
 
 ### 5.7 Secure Boot, through Ubuntu's shim
 
 A PC with Secure Boot on starts only what Microsoft's UEFI CA signed.
-Ferrix cannot get its loader signed, and it cannot borrow Ubuntu's GRUB:
+Xaqu cannot get its loader signed, and it cannot borrow Ubuntu's GRUB:
 in Secure Boot mode that GRUB starts only kernels signed with Canonical's
 key. What it can borrow is **shim**, the small first stage every Linux
 distribution has Microsoft sign. Shim starts a second stage signed by its
 vendor *or by any key the machine's owner has enrolled* in its MokManager.
-That second path is the one Ferrix takes, as Ventoy does (the customer's
+That second path is the one Xaqu takes, as Ventoy does (the customer's
 decision of 2026-09-28):
 
 * `tools/common/fetch/fetch-shim.sh` takes `shimx64.efi` and `mmx64.efi` (and the
   `aa64` pair) from Ubuntu's `shim-signed` package, pinned by version and
-  SHA-256, into `~/.local/share/ferrix/shim`. The repository carries none
+  SHA-256, into `~/.local/share/xaqu/shim`. The repository carries none
   of it. A build without it makes images that need Secure Boot off, and
   says so.
 * The medium's ESP becomes `EFI/BOOT/BOOTX64.EFI` = shim,
-  `EFI/BOOT/grubx64.efi` = Ferrix's loader (shim starts its second stage by
-  that name), `EFI/BOOT/mmx64.efi`, and `FERRIX.CER` at the root. The
-  installed ESP has the same four in `EFI/ferrix/`, and the boot entry names
+  `EFI/BOOT/grubx64.efi` = Xaqu's loader (shim starts its second stage by
+  that name), `EFI/BOOT/mmx64.efi`, and `XAQU.CER` at the root. The
+  installed ESP has the same four in `EFI/xaqu/`, and the boot entry names
   shim.
-* `xtask` signs the loader Authenticode-style with a Ferrix key, in Rust, as
+* `xtask` signs the loader Authenticode-style with a Xaqu key, in Rust, as
   it writes FAT and ISO without host tools. A checkout makes a development
-  key under `~/.local/share/ferrix/keys` on first use; the release workflow
+  key under `~/.local/share/xaqu/keys` on first use; the release workflow
   signs with a key kept as a GitHub secret, whose certificate is the
-  `FERRIX.CER` that releases carry.
+  `XAQU.CER` that releases carry.
 * The loader checks `KERNEL.ELF` and `INITRD.IMG` before starting them,
   against a detached Ed25519 signature made with the same release key and a
   public key built into the loader. It enforces this when the firmware's
@@ -432,7 +432,7 @@ decision of 2026-09-28):
   takes PE images only, and the kernel is an ELF, hence the loader's own.
 * **First boot with Secure Boot on:** shim finds the loader unsigned by
   Canonical and not yet enrolled, and opens MokManager: *Enroll key from
-  disk* → `FERRIX.CER` → a password → reboot → confirm with that password.
+  disk* → `XAQU.CER` → a password → reboot → confirm with that password.
   `docs/INSTALL.md` shows each screen. The key stays in the firmware's
   variables, so the installed system boots without asking again.
 * **Revocation.** Microsoft and the distributions revoke old shims through
@@ -444,7 +444,7 @@ decision of 2026-09-28):
 
 ## 6. Real PCs
 
-Everything above runs in a VM on virtio. A PC also needs Ferrix to see its
+Everything above runs in a VM on virtio. A PC also needs Xaqu to see its
 disk, the stick it booted from, its keyboard and mouse, and its screen.
 Each is a ring-3 driver behind an existing protocol, started by `devmgr` on
 the PCI class it matches:
@@ -463,7 +463,7 @@ framebuffer the loader already hands over, at the mode the firmware chose,
 with no mode setting, no vsync and no GPU. That is how every Linux live
 image starts before its GPU driver loads, and it is enough for an installer
 and a desktop. Stage 21's NVIDIA driver is not needed for any of this.
-**Built 2026-10-15** (branch `bm-h6-gop`): under `ferrix.efifb` the kernel
+**Built 2026-10-15** (branch `bm-h6-gop`): under `xaqu.efifb` the kernel
 lends the framebuffer to a node of its own, the ring-3 driver `efifb`
 serves it as `card0` by copying, and `test-compositor --boot
 firmware-screen` checks hyprix's two tiled clients on QEMU's VGA, pixel for
@@ -480,7 +480,7 @@ the PC's own firmware network driver: [`docs/NETBOOT.md`](NETBOOT.md).
 Nothing on the PC's disk is written, which also means a netbooted run
 leaves no post-mortem record on it (NETBOOT.md §6).
 
-The unknown is bring-up: Ferrix has never booted on an x86 PC, only under
+The unknown is bring-up: Xaqu has never booted on an x86 PC, only under
 QEMU and on two Arm boards. ACPI tables, interrupt routing, and firmware
 that behaves unlike OVMF will each cost something no estimate can see. §9's
 H0 is a slice for exactly that, run on the reference machine before the
@@ -491,8 +491,8 @@ drivers, with its points a guess.
 | Gate | What it proves | In `check` |
 |---|---|---|
 | host tests of `partition`, `btrfs-mkfs`, `fat`, `installer-engine` | tables, volumes, and plans, including "no write outside the range", with `btrfs check` and `sgdisk --verify` on what they write | yes |
-| `test-install --arch x86_64` | ISO boots under OVMF, answer file installs on a blank disk, power off, target boots alone to `FERRIX-BOOT-OK` with `/ is btrfs on vda2` | yes |
-| `test-install --beside` | as above on a disk pre-made with an ESP holding a stub `bootmgfw.efi` (an EFI app of ours that prints `OTHER-OS`) and an NTFS-looking partition; after install, both partitions hash unchanged; the menu boots Ferrix, and with a key press the stub | yes |
+| `test-install --arch x86_64` | ISO boots under OVMF, answer file installs on a blank disk, power off, target boots alone to `XAQU-BOOT-OK` with `/ is btrfs on vda2` | yes |
+| `test-install --beside` | as above on a disk pre-made with an ESP holding a stub `bootmgfw.efi` (an EFI app of ours that prints `OTHER-OS`) and an NTFS-looking partition; after install, both partitions hash unchanged; the menu boots Xaqu, and with a key press the stub | yes |
 | `test-install --secure-boot` | the medium under OVMF's Secure Boot build with Microsoft's keys enrolled; the gate drives MokManager's enrollment over the serial console, installs, and boots the target with Secure Boot on; an image with a tampered `KERNEL.ELF` must stop at the loader | yes, when the shim is fetched |
 | `test-install --arch aarch64` | the first gate on AArch64 | yes |
 | `test-install --usb-live` | the ISO attached as `usb-storage` on `qemu-xhci`, target on `nvme`: H1, H3 and H4 under QEMU | after H4 |
@@ -509,8 +509,8 @@ then only tests the machine.
 
 ## 8. Documentation
 
-`docs/INSTALL.md`, for someone who has never built Ferrix: where to
-download, how to write a stick on Windows, macOS and Linux, enrolling Ferrix's Secure
+`docs/INSTALL.md`, for someone who has never built Xaqu: where to
+download, how to write a stick on Windows, macOS and Linux, enrolling Xaqu's Secure
 Boot key, what "beside" can and cannot do, and how to boot a VM from the
 ISO in QEMU, VirtualBox, virt-manager and UTM. `README.md` and the website
 point at it before they point at `cargo xtask run`.
@@ -518,7 +518,7 @@ point at it before they point at `cargo xtask run`.
 ## 9. The slices and their points
 
 In landing order. The VM path is first and complete on its own: after I9
-anyone can install Ferrix in a VM from a release. The PC slices can start
+anyone can install Xaqu in a VM from a release. The PC slices can start
 beside it (they touch nothing the VM slices do) once H0 has shown the
 reference machine boots.
 
@@ -528,7 +528,7 @@ reference machine boots.
 | I2 | `src/lib/fs/common/partition`, partitions in the block core, root by `PARTUUID`/`LABEL` on any disk (§5.2) | 8 |
 | I3 | `src/lib/fs/btrfs/mkfs`, `/sbin/mkfs.btrfs` (§5.3) | 8 |
 | I4 | `src/lib/fs/fat` with read-and-add, `mkfs.fat` (§5.4) | 5 |
-| I5 | The engine and `/bin/ferrix-install`, answer files; `root_disk::install` shared (§4.1, §4.2) | 8 |
+| I5 | The engine and `/bin/xaqu-install`, answer files; `root_disk::install` shared (§4.1, §4.2) | 8 |
 | I6 | `xtask live`: GPT `.img`, hybrid `.iso` (§3.1) | 8 |
 | I7 | `test-install`, blank disk and `--beside`, x86-64 and AArch64 (§7) | 5 |
 | I8 | The loader's boot menu (§5.6) | 5 |
@@ -564,7 +564,7 @@ needs the engine and the gate) and beside the GUI; S1 can start at once.
 
 1. **Shrinking the other system.** *Decided 2026-09-28: the installer
    shrinks it itself*, NTFS, ext4 and btrfs (§4.6, slices S1–S6, 76 points).
-2. **The live session's account.** A user `ferrix` with no password, logged
+2. **The live session's account.** A user `xaqu` with no password, logged
    in automatically, as Ubuntu's live session does. *Recommended.* Or a
    login prompt with a password printed on the boot screen.
 3. **The reference PC.** Which machine H0 and H7 are run on, and whether the
@@ -572,7 +572,7 @@ needs the engine and the gate) and beside the GUI; S1 can start at once.
    owner alone decides hardware use; nothing is written to its internal disk
    except in H7, and only beside what is there).
 4. **Secure Boot.** *Decided 2026-09-28: supported*, through Ubuntu's
-   signed shim and a Ferrix key enrolled once in MokManager (§5.7, I13).
+   signed shim and a Xaqu key enrolled once in MokManager (§5.7, I13).
 5. **A text-mode fallback.** The CLI of §4.1 exists anyway for the gates; it
    can gain a menu for machines where the desktop does not come up (2
    points). *Recommended*, since H6 is the only screen a PC is sure of.
@@ -586,17 +586,17 @@ own, a full shrinker (§4.6); decision 4, Secure Boot through Ubuntu's shim
 VM path does not wait on it. I1 is built (§5.1).
 
 **The MVP (2026-09-28, the customer: "land a MVP for now, we need to save
-tokens").** What installs Ferrix in a VM today, built from what exists:
+tokens").** What installs Xaqu in a VM today, built from what exists:
 
-* `build --installer` carries `/sbin/ferrix-install` (`src/user/system/linux/installer`)
+* `build --installer` carries `/sbin/xaqu-install` (`src/user/system/linux/installer`)
   and the packed empty root volume. The live image is the usual FAT image,
   attached as a virtio disk.
-* `ferrix-install [--yes] [--from /dev/vdX] /dev/vdY` wipes the target and
+* `xaqu-install [--yes] [--from /dev/vdX] /dev/vdY` wipes the target and
   writes a GPT (`src/lib/fs/common/partition`): an ESP that is a byte copy of the live
-  FAT volume, and a root partition holding the 1 GiB `ferrix-root` volume.
+  FAT volume, and a root partition holding the 1 GiB `xaqu-root` volume.
   No mkfs.btrfs (I3) and no FAT writer (I4) were needed.
 * The kernel publishes GPT partitions as disks (`fs/partitions.rs`, once,
-  before the root is looked for) and finds `ferrix-root` on any disk or
+  before the root is looked for) and finds `xaqu-root` on any disk or
   partition, not only `vdd`..`vdg`. Its first boot installs the system, as
   for `run`.
 * `cargo xtask test-install` (x86-64) installs from a live disk onto a blank
@@ -606,28 +606,28 @@ tokens").** What installs Ferrix in a VM today, built from what exists:
 **I6a, the live medium on a GUID partition table (2026-10-07, po10-install,
 5 points).** §3.1's `.img`, without the ISO yet:
 
-* `cargo xtask live` writes `build/<arch>/ferrix-live.img` for x86-64 and
+* `cargo xtask live` writes `build/<arch>/xaqu-live.img` for x86-64 and
   AArch64: a GUID partition table whose one partition, at 1 MiB, is an EFI
-  system partition named `FERRIX-LIVE`, holding the image `build
+  system partition named `XAQU-LIVE`, holding the image `build
   --installer` writes with its BPB's hidden sectors set, and
-  `FERRIX/CMDLINE.TXT` saying `ferrix.root=tmpfs`. The live session keeps
+  `XAQU/CMDLINE.TXT` saying `xaqu.root=tmpfs`. The live session keeps
   `/` in memory, so booting the medium never mounts or installs onto a disk
   the machine already has. The partition's name does what §3.1's ESP label
   was to do. The disk and partition GUIDs are fixed, so two builds of one
   tree write the same image.
-* `ferrix-install` without `--from` finds the live system by itself: the
-  `FERRIX-LIVE` partition holding `xtask`'s FAT volume, or, for the MVP's
+* `xaqu-install` without `--from` finds the live system by itself: the
+  `XAQU-LIVE` partition holding `xtask`'s FAT volume, or, for the MVP's
   image, a whole disk starting with it; more than one is an error. It
   refuses a target that holds the live partition (`/dev/vdd` for
   `/dev/vdd1`), and on the installed disk's copy of the volume it rewrites
-  `ferrix.root=tmpfs` to `ferrix.root=btrfs` in place, with a reader of
+  `xaqu.root=tmpfs` to `xaqu.root=btrfs` in place, with a reader of
   `xtask`'s FAT volumes that §5.4's library (I4) replaces, as it replaces
-  the copied `CMDLINE.TXT` with §4.2 step 5's `EFI/ferrix/`.
+  the copied `CMDLINE.TXT` with §4.2 step 5's `EFI/xaqu/`.
 * `test-install` boots the medium alone first, as a virtio disk through
   OVMF, and requires `vdd1` published and the tmpfs command line read from
   it; then asks the installer for `/dev/vdd`, which it must refuse, then
   installs on `/dev/vde` with the live system found by itself. A host test
-  reads the medium's table back with `ferrix-partition`.
+  reads the medium's table back with `xaqu-partition`.
 
 **H1, the NVMe driver (2026-10-10, nvme-driver, 8 points estimated).**
 `docs/NVME.md`. Built ahead of H0, since it needs no PC to gate: a ring-3
@@ -649,31 +649,31 @@ design review of its own (XHCI.md §6), so `test-install --usb-live` waits.
 H0 has not run: XHCI.md §8 lists what QEMU's controller never showed, and
 §9 the first run on the PC.
 
-**The A/B layout (2026-10-11, ab-sys, D8 of `docs/DEV-ON-FERRIX.md`).**
-`ferrix-install --slots [--swap-mib N] [--esp-mib N] [--slot-mib N]`
+**The A/B layout (2026-10-11, ab-sys, D8 of `docs/DEV-ON-XAQU.md`).**
+`xaqu-install --slots [--swap-mib N] [--esp-mib N] [--slot-mib N]`
 gives a blank disk the layout the customer's SN720 was given -- an
-optional swap partition, `ferrix-esp`, the boot control partition, two
-system slots and `ferrix-root` -- or reuses a disk that already has it,
-found by Ferrix's partition types (`docs/AB-BOOT.md` §2, §3), writing no
-partition table and no partition but Ferrix's own. Any other disk with a
+optional swap partition, `xaqu-esp`, the boot control partition, two
+system slots and `xaqu-root` -- or reuses a disk that already has it,
+found by Xaqu's partition types (`docs/AB-BOOT.md` §2, §3), writing no
+partition table and no partition but Xaqu's own. Any other disk with a
 table is refused: this mode erases nothing it did not make. It fills the
 ESP (the loader, and the live system as the loader's rescue path), slot A
 (verified after writing as the loader verifies it), the first control
 record and the root. `/sbin/bootctl` is the running system's half:
 `status`, `try`, `verify`, `good`, `rollback`, `init` (`docs/AB-BOOT.md`
-§5). `cargo xtask slot-image` writes `build/<arch>/ferrix-slot.img` beside
+§5). `cargo xtask slot-image` writes `build/<arch>/xaqu-slot.img` beside
 the image; `bootctl try` also takes an image's FAT volume as it is. Proved
 by `cargo xtask test-install --slots` (x86-64, KVM), not in `check` yet;
 the host tests of the installer's workspace are.
 
 **I3, mkfs.btrfs (2026-10-19, branch i3-mkfs, 8 points estimated).**
 `src/lib/fs/btrfs/mkfs` makes an empty volume the size of its device, and
-`ferrix-install` formats the root partition with it, whole-disk and
-`--slots` alike, labelled `ferrix-root` with new UUIDs, where it used to
+`xaqu-install` formats the root partition with it, whole-disk and
+`--slots` alike, labelled `xaqu-root` with new UUIDs, where it used to
 copy the 1 GiB fixture (which the initramfs no longer carries). It departs
 from §5.3 in one place: it makes one first chunk of each kind (`DUP`
 system and metadata, `SINGLE` data, sized as Linux sizes a first chunk) and
-leaves the rest of the device unallocated for `ferrix-btrfs-write` to make
+leaves the rest of the device unallocated for `xaqu-btrfs-write` to make
 chunks in as the volume fills, so there is no separate grow step. Its nodes
 are 16 KiB, as `mkfs.btrfs`'s. Host tests: the reader and the writer open
 it at 128 MiB to 1 TiB with 4, 16 and 64 KiB nodes; the writer fills one to
@@ -687,35 +687,35 @@ group's usage understated by a node) made `btrfs check` fail.
 installer is its only user so far.
 
 **The live ISO, I6b and I11 for the first public release (2026-10-25,
-branch feature/live-iso).** [TRY-FERRIX.md](TRY-FERRIX.md) is the user's
+branch feature/live-iso).** [TRY-XAQU.md](TRY-XAQU.md) is the user's
 page.
 
-* `cargo xtask iso` writes `build/x86_64/ferrix-live.iso`: the release
+* `cargo xtask iso` writes `build/x86_64/xaqu-live.iso`: the release
   desktop (Xaqu, the default apps) as a live session from memory
-  (`ferrix.root=tmpfs ferrix.live`), logged in as uid 1000 `ferrix` with no
+  (`xaqu.root=tmpfs xaqu.live`), logged in as uid 1000 `xaqu` with no
   password (§10 decision 2), in a hybrid ISO written in Rust
   (`tools/common/xtask/src/iso.rs`): El Torito's EFI entry and a GUID
-  partition table over one EFI system partition named `FERRIX-LIVE`, sized
+  partition table over one EFI system partition named `XAQU-LIVE`, sized
   to what it holds (196 MiB). The MBR is the protective one; there is no
   legacy BIOS boot. The build runs `licences.py` over the image and refuses
   it on an unaccounted part; the inventory goes into the ISO's root and the
   ESP.
-* The graphical installer is `ferrix-installer`, an app on tole in
+* The graphical installer is `xaqu-installer`, an app on tole in
   Nocturne (the apps repository's `installer`), which the live session
-  starts at login. It asks root's `ferrix-installd.service`
-  (`ferrix-install --serve`, only under `ferrix.live`, peers of uid 0 or
-  1000) over `/run/ferrix-installer.sock` for the disks and the install.
+  starts at login. It asks root's `xaqu-installd.service`
+  (`xaqu-install --serve`, only under `xaqu.live`, peers of uid 0 or
+  1000) over `/run/xaqu-installer.sock` for the disks and the install.
   The engine (`installer/src/engine.rs`) erases a disk or installs into a
   free range or one partition of a GUID partition table, in empty entries,
   so every other partition keeps its number and bytes.
-* The person's answers travel in `FERRIX/SETUP.TXT`, a placeholder the
+* The person's answers travel in `XAQU/SETUP.TXT`, a placeholder the
   installer fills in on the installed ESP, the password as an Argon2id PHC
-  string; `ferrix-setup.service` (`ferrix-install --apply`) applies them at
+  string; `xaqu-setup.service` (`xaqu-install --apply`) applies them at
   every boot before the session: uid 1000 renamed, the seed for `authd`,
   hostname, keyboard, time zone, and the session starting behind hyprlock,
   which is its login. `sessiond --user 1000` names the account by uid.
 * An unattended install, as Ubuntu's autoinstall: a GUID partition named
-  `FERRIX-ANSWERS` holding `ferrix-answers 1` and the install's `key=value`
+  `XAQU-ANSWERS` holding `xaqu-answers 1` and the install's `key=value`
   lines.
 * Gates: `cargo xtask test-iso` (the ISO as a CD and as a USB stick under
   OVMF; the session, the daemon, the installer's window and a drawn screen)
@@ -723,7 +723,7 @@ page.
   then that disk alone: answers applied, the session `kira`'s and locked,
   her password opens it).
 * Not yet: installing from a CD or from a USB stick on a PC (the medium
-  must be a disk Ferrix drives; the in-memory source needs the kernel to
+  must be a disk Xaqu drives; the in-memory source needs the kernel to
   expose its kept initramfs, a change to the certified item), a firmware
   boot entry (I9), the boot menu (I8), Secure Boot (I13), shrinking.
 

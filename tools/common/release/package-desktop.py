@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build and pack the x86-64 desktop a release carries for people with QEMU and nothing else.
 
-    tools/common/release/package-desktop.py <out-dir> [--tag TAG] [--image ferrix-x86_64.img]
+    tools/common/release/package-desktop.py <out-dir> [--tag TAG] [--image xaqu-x86_64.img]
 
 Fetches the pinned shell trees (tools/common/fetch/fetch-shell-trees.sh),
 builds the image with `cargo xtask release-image` (run-compositor's desktop,
@@ -10,16 +10,16 @@ unless `--image` names one already built beside its `.initrd`, writes its
 licence inventory with licences.py -- which stops the packing if any part
 of the image has no licence it can name -- and writes into `out-dir`:
 
-    ferrix-x86_64-desktop.zip           the folder below, for every host
-    ferrix-x86_64-desktop.zip.sha256    its SHA-256, as sha256sum prints it
-    ferrix-<tag>-THIRD-PARTY-LICENSES.md    the inventory, as an asset of its own
+    xaqu-x86_64-desktop.zip           the folder below, for every host
+    xaqu-x86_64-desktop.zip.sha256    its SHA-256, as sha256sum prints it
+    xaqu-<tag>-THIRD-PARTY-LICENSES.md    the inventory, as an asset of its own
 
-    ferrix-x86_64-desktop/
-        ferrix-x86_64.img   the UEFI disk: loader, kernel, initramfs
+    xaqu-x86_64-desktop/
+        xaqu-x86_64.img   the UEFI disk: loader, kernel, initramfs
         run.sh              boots it with plain QEMU on Linux and macOS
         run.ps1             the same on Windows
         README.txt          what it is, what is left out, and why
-        LICENSE             Ferrix's
+        LICENSE             Xaqu's
         THIRD-PARTY-LICENSES.md   every part of the image, its licence and its text
         VERSION             the tag and the commit it was built from
 
@@ -41,8 +41,8 @@ import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 HERE = pathlib.Path(__file__).resolve().parent / "desktop"
-NAME = "ferrix-x86_64-desktop"
-IMAGE = "ferrix-x86_64.img"
+NAME = "xaqu-x86_64-desktop"
+IMAGE = "xaqu-x86_64.img"
 # 1980-01-01, the earliest time a zip entry has: no build's own time in it.
 EPOCH = (1980, 1, 1, 0, 0, 0)
 
@@ -56,9 +56,9 @@ def shell_trees(directory: pathlib.Path) -> None:
         capture_output=True,
         text=True,
     ).stdout
-    os.environ["FERRIX_OMZ"] = str(directory.resolve() / "oh-my-zsh")
-    os.environ["FERRIX_ZSH_FUNCTIONS"] = str(directory.resolve() / "zsh-functions")
-    os.environ["FERRIX_SHELL_TREES"] = str(directory.resolve())
+    os.environ["XAQU_OMZ"] = str(directory.resolve() / "oh-my-zsh")
+    os.environ["XAQU_ZSH_FUNCTIONS"] = str(directory.resolve() / "zsh-functions")
+    os.environ["XAQU_SHELL_TREES"] = str(directory.resolve())
     print(printed.strip())
 
 
@@ -148,7 +148,7 @@ def main() -> None:
         sys.exit(f"package-desktop: no image and initramfs at {image} and {initrd}")
     licences = inventory(initrd, args.out / "licences", args.tag)
     pack(image, licences, args.out, args.tag)
-    asset = args.out / f"ferrix-{args.tag}-THIRD-PARTY-LICENSES.md"
+    asset = args.out / f"xaqu-{args.tag}-THIRD-PARTY-LICENSES.md"
     asset.write_bytes(licences.read_bytes())
     print(f"{asset}: {asset.stat().st_size} bytes")
 

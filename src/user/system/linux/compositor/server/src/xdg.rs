@@ -74,7 +74,7 @@ pub struct Toplevel {
     /// just been focused is the same size and a different state, and a client
     /// that is not told has a title bar that never lights up.
     pub states: Vec<u32>,
-    /// The application's own menus, from `ferrix_appmenu_v1`.
+    /// The application's own menus, from `xaqu_appmenu_v1`.
     pub menu: Option<compositor_appmenu::Tree>,
 }
 

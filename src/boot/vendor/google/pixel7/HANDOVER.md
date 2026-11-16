@@ -1,4 +1,4 @@
-# Handover: Ferrix on the Pixel 7 (2026-09-26)
+# Handover: Xaqu on the Pixel 7 (2026-09-26)
 
 For the agent picking this up on example. `README.md` in this directory says
 what the loader is. This file is the working state behind it: what is proven
@@ -8,13 +8,13 @@ you touch the phone.
 
 ## State at a glance
 
-**2026-09-27, 00:30 (ferrix-9c): the phone updated itself.** Android's
+**2026-09-27, 00:30 (xaqu-9c): the phone updated itself.** Android's
 automatic system update installed CP3A.260905.009 into slot `b` and made
-it active; the first reboot after that (a Ferrix run's reset) booted it
+it active; the first reboot after that (a Xaqu run's reset) booted it
 (`sys.boot.reason` `reboot,ota`, `ro.boot.slot_suffix` `_b`). Slot `b`'s
 `init_boot` is not Magisk-patched, so there is no root: `su` is gone,
 and with it the `ramoops` reads after a native boot, the monitor's root
-shell and graphs, and the launcher's crosvm VM. Nothing of Ferrix's wrote
+shell and graphs, and the launcher's crosvm VM. Nothing of Xaqu's wrote
 storage (it has no storage driver on the phone). Re-rooting is a flash
 and the owner's; `panther.dts` and `vendor_boot.img` here are from the
 old build (CP2A.260705.006), and the product owner has suspended phone
@@ -26,22 +26,22 @@ developer options to keep it from happening mid-work again.
 `init_boot` from Google's factory image (SHA-256 checked) was patched in
 the phone's Magisk app and flashed to `init_boot_b` only; `su` works again
 (Magisk 30.7). Both images and their sums are in
-`~/.local/share/ferrix/pixel7/cp3a/` for an undo; automatic system updates
+`~/.local/share/xaqu/pixel7/cp3a/` for an undo; automatic system updates
 are off (`ota_disable_automatic_update=1`). The new build's device tree is
 `cp3a/panther-cp3a.dts`: against `panther.dts` it moves only
 `pkvm_guest_firmware`'s reserved region (`0x8B00_0000` to `0xB500_0000`,
 still `0xD_0000` long; the loader takes reserved memory from the tree at
 every boot, so it follows) and ABL's own initrd, and every node
-Ferrix's loader, kernel and USB driver use is byte-identical.
+Xaqu's loader, kernel and USB driver use is byte-identical.
 
 
-**Update, 2026-09-27 (ferrix-0a): `main` boots the phone on all eight
-cores to `FERRIX-BOOT-OK`, seeded from TF-A's TRNG, with the kernel, the
+**Update, 2026-09-27 (xaqu-0a): `main` boots the phone on all eight
+cores to `XAQU-BOOT-OK`, seeded from TF-A's TRNG, with the kernel, the
 direct map and the vmap arena moved by KASLR, and the boot console drawn in
 74 s a boot. "What to do next" is empty; each item is under "Done".**
 None of it is pushed.
 
-* **The loader surveys the USB controller** (ferrix-9c, 2026-09-26,
+* **The loader surveys the USB controller** (xaqu-9c, 2026-09-26,
   `src/usb.rs`), reading only, after the display: the PMU's PHY isolation
   words, `pd-hsi0`, and, when that reads on, the DWC3's registers and the
   PHY's first words. The S2MPU is not read (a security block). Run
@@ -49,21 +49,21 @@ None of it is pushed.
   §8 has the values. It adds about 60 lines to every record.
 * **The GICv3 ITS** (`c21ce40f..a8680955`) landed after a rebase and a
   re-gate: `cargo xtask check` passed, and `test-boot` reached
-  `FERRIX-BOOT-OK stages 1-12` on x86_64, armv7a, armv7a `--smp 2`,
-  aarch64, and aarch64 with `FERRIX_ARM_MACHINE=gic-version=3` at `--smp 1`
+  `XAQU-BOOT-OK stages 1-12` on x86_64, armv7a, armv7a `--smp 2`,
+  aarch64, and aarch64 with `XAQU_ARM_MACHINE=gic-version=3` at `--smp 1`
   and `--smp 2`.
 * **`--kernel-option WORD`** (xtask) puts any word in the image's
   `CMDLINE.TXT`, once for each time it is given, so a QEMU boot can ask for
-  `ferrix.fbcon`.
+  `xaqu.fbcon`.
 * **The seed** (`dc9d44d5`) and **the boot console** (`534178cf`) landed
   after run 4. `cargo xtask check` passed on them, and `test-boot` reached
-  `FERRIX-BOOT-OK` on x86_64, armv7a, armv7a `--smp 2` and aarch64, and on
-  aarch64 `--smp 2 --kernel-option ferrix.fbcon` on GICv2 and GICv3.
+  `XAQU-BOOT-OK` on x86_64, armv7a, armv7a `--smp 2` and aarch64, and on
+  aarch64 `--smp 2 --kernel-option xaqu.fbcon` on GICv2 and GICv3.
 * **Run 4** (`$P/run4b/boot.img`, `$P/run-fbcon4-nosmp.log`), with
-  `ferrix.fbcon nosmp`: **the owner saw Ferrix's boot text on the screen.**
+  `xaqu.fbcon nosmp`: **the owner saw Xaqu's boot text on the screen.**
   The record has the loader's `/chosen holds 8 random bytes, passed on to
   the kernel's seed`, the kernel's `random   NOT SEEDED: 64 of 256 bits`,
-  and `FERRIX-BOOT-OK stages 1-12`. Android was back 80 s after
+  and `XAQU-BOOT-OK stages 1-12`. Android was back 80 s after
   `fastboot boot`, not 52. Drawing costs that time: the checks that print
   most got slower (stage 6's `handlers` 94 to 2027 ms, `signals` 70 to
   719, `fork` 168 to 479, `execve` 5 to 327 against run 3), and the
@@ -92,25 +92,25 @@ None of it is pushed.
     and before writing an answer. The same source without them assembles
     to the old bytes exactly.
   With both, runs 8, 8-2 and 8-3 (`$P/run8-dmb*/`) reached
-  `FERRIX-BOOT-OK stages 1-12` on 8 cores, 88 s each. The gate passed on
+  `XAQU-BOOT-OK stages 1-12` on 8 cores, 88 s each. The gate passed on
   all three commits: `cargo xtask check`, and `test-boot` on x86_64,
   armv7a, armv7a `--smp 2`, aarch64, aarch64 `--smp 2`, and GICv3
-  `--smp 2 --kernel-option ferrix.fbcon`.
+  `--smp 2 --kernel-option xaqu.fbcon`.
 * **Mixed cores and the side-channel check.** Run 9 failed with FX-0307
   (`the branch history loop's count disagrees with the plan`): the
   certification session's defences decided the plan on the boot core, an
   A55 needing no Spectre-BHB loop, and the A78s and X1s raised the loop's
-  count anyway. ferrix-55 fixed it in `41327ee3`: each secondary decides
+  count anyway. xaqu-55 fixed it in `41327ee3`: each secondary decides
   the loop and SSBS for its own core. Run 10 (`$P/run10-bhb/`), that fix
-  with `nosmp` dropped, reached `FERRIX-BOOT-OK stages 1-12` with
+  with `nosmp` dropped, reached `XAQU-BOOT-OK stages 1-12` with
   `speculation defences read back on 8 processors`, 88 s. The commit that
   drops `nosmp` landed on top, in a tree identical to run 10's, after
-  `cargo xtask check` passed. ferrix-55 has two follow-ups queued: a
+  `cargo xtask check` passed. xaqu-55 has two follow-ups queued: a
   machine-wide exposure line, since the one printed is the boot core's, and
   Linux's Spectre v2 safe list (A35/A53/A55), since the A55 is reported as
   `NOT covered` for v2.
   Both landed as `f70b2516`, and run 11 (`$P/run11-v2/`, `main` at that
-  commit) reached `FERRIX-BOOT-OK` on 8 cores in 89 s, with one exposure
+  commit) reached `XAQU-BOOT-OK` on 8 cores in 89 s, with one exposure
   line per kind of core: 4 x Cortex-A55 not affected by Spectre v2 or BHB,
   2 x Cortex-A78 and 2 x Cortex-X1 not affected by v2 (CSV2) and covered for
   BHB (32 branches), store bypass covered and Meltdown not affected on all
@@ -124,7 +124,7 @@ None of it is pushed.
 * **On `main`**, merged 2026-09-26 by fast-forward after the whole gate row
   for "anything the image contains" passed on example. **Not pushed**: pushes
   are the owner's to authorise.
-* **Ferrix boots on the phone to `FERRIX-BOOT-OK stages 1-12`, on one core**,
+* **Xaqu boots on the phone to `XAQU-BOOT-OK stages 1-12`, on one core**,
   and **draws on the screen**: the kernel's panic screen has been seen on the
   panel, in the right colours.
 * The Pixel 7 commits, oldest first (the first three were `pixel7/bootloader`):
@@ -132,7 +132,7 @@ None of it is pushed.
   | Commit | What |
   |---|---|
   | `6e83f794` | The loader as a probe: what ABL hands over |
-  | `6c3da42a` | Load and start Ferrix; `ramoops` console; stops at stage 3 |
+  | `6c3da42a` | Load and start Xaqu; `ramoops` console; stops at stage 3 |
   | `8520dc49` | The first handover, from the Windows session |
   | `499381a2` | Device-tree path on AArch64 + GICv3 driver (`gicv3.rs`, `gic.rs` front) |
   | `ab996c9b` | Docs: boots to stage 12 on one core |
@@ -154,12 +154,12 @@ None of it is pushed.
   on x86_64, aarch64, armv7a and armv7a `--smp 2`. The first three `check`
   runs failed on the certification item boundary, the complexity floor and
   crate layering, and those three commits answer them. Also
-  `FERRIX_ARM_MACHINE=gic-version=3 test-boot --arch aarch64` reaches stages
+  `XAQU_ARM_MACHINE=gic-version=3 test-boot --arch aarch64` reaches stages
   3-5 and stops at stage 10, as expected without an ITS.
 
 ## The phone
 
-Pixel 7, `panther`; its serial is in `~/.local/share/ferrix/pixel7/serial`.
+Pixel 7, `panther`; its serial is in `~/.local/share/xaqu/pixel7/serial`.
 Stock Android 17, build
 `CP2A.260705.006`, slot `a`. Bootloader **unlocked**; rooted with Magisk 30.7
 (patched `init_boot_a`); `su` works from `adb shell` (context
@@ -169,11 +169,11 @@ human can see the screen.
 
 Tooling on example, all without sudo:
 
-* Google's platform-tools in `~/.local/share/ferrix/pixel7/platform-tools`,
+* Google's platform-tools in `~/.local/share/xaqu/pixel7/platform-tools`,
   linked into `~/.local/bin` (`adb`, `fastboot`). Both reach the phone as the
   desktop user through `uaccess`, with no udev rule needed, and example's adb
   key is authorised.
-* In `~/.local/share/ferrix/pixel7/`: the factory zip (SHA-256
+* In `~/.local/share/xaqu/pixel7/`: the factory zip (SHA-256
   `ed94a24e…0372b0b`), `vendor_boot.img` extracted from it, `avbtool.py`,
   `panther.dts` (the phone's live device tree), `display-src/gs-display`
   (Google's display driver, the source of the register offsets), and the
@@ -183,14 +183,14 @@ Tooling on example, all without sudo:
 ## One run, end to end
 
 ```sh
-P=~/.local/share/ferrix/pixel7
+P=~/.local/share/xaqu/pixel7
 cargo xtask flash --arch aarch64 --release --stage "$P/stage"      # ~2 min
-K="$P/stage/FERRIX/KERNEL.ELF" I="$P/stage/FERRIX/INITRD.IMG"
-FERRIX_PIXEL7_KERNEL="$K" FERRIX_PIXEL7_KERNEL_DIGEST="$(sha256sum "$K" | cut -d' ' -f1)" \
-FERRIX_PIXEL7_INITRD="$I" FERRIX_PIXEL7_INITRD_DIGEST="$(sha256sum "$I" | cut -d' ' -f1)" \
-    cargo build -p ferrix-boot-pixel7 --target aarch64-unknown-none-softfloat --release
+K="$P/stage/XAQU/KERNEL.ELF" I="$P/stage/XAQU/INITRD.IMG"
+XAQU_PIXEL7_KERNEL="$K" XAQU_PIXEL7_KERNEL_DIGEST="$(sha256sum "$K" | cut -d' ' -f1)" \
+XAQU_PIXEL7_INITRD="$I" XAQU_PIXEL7_INITRD_DIGEST="$(sha256sum "$I" | cut -d' ' -f1)" \
+    cargo build -p xaqu-boot-pixel7 --target aarch64-unknown-none-softfloat --release
 "$(rustc --print sysroot)"/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-objcopy \
-    -O binary target/aarch64-unknown-none-softfloat/release/ferrix-boot-pixel7 "$P/Image"
+    -O binary target/aarch64-unknown-none-softfloat/release/xaqu-boot-pixel7 "$P/Image"
 python3 src/boot/vendor/google/pixel7/mkbootimg.py "$P/Image" "$P/boot.img"
 python3 "$P/avbtool.py" add_hash_footer --image "$P/boot.img" \
     --partition_size 67108864 --partition_name boot --algorithm NONE
@@ -202,7 +202,7 @@ fastboot boot "$P/boot.img"
 # listed and thinks the phone is back. Then about 52 s to adb:
 until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do sleep 2; done
 adb exec-out "su -c 'cat /sys/fs/pstore/console-ramoops-0'" > "$P/run.log"
-sed -n '/ferrix-pixel7 loader/,/welcome to lk/p' "$P/run.log"
+sed -n '/xaqu-pixel7 loader/,/welcome to lk/p' "$P/run.log"
 ```
 
 * **Timing tells you what happened:** ~52 s means the boot ended normally,
@@ -258,7 +258,7 @@ them). Check any new one against the phone before you rely on it.
   triggered; `display::take_over` unmasks the TE trigger once, and from then
   on every framebuffer write reaches the glass.
 * **The kernel only draws on a panic.** To see the screen, build with
-  `ferrix.onexit=panic` added to `board::CMDLINE` (temporarily; do not commit
+  `xaqu.onexit=panic` added to `board::CMDLINE` (temporarily; do not commit
   it). The panic screen stays up until the watchdog fires, 30-60 s.
 * **`499381a2` fails AArch64 clippy on its own.** rustfmt ran after clippy;
   `f250c0bb` fixes it. Run clippy again *after* `cargo fmt`.
@@ -281,9 +281,9 @@ them). Check any new one against the phone before you rely on it.
 * **Ask the owner to watch in a question, right before the run.** A line
   in a message saying "watch the screen" was missed, and a run's picture
   was lost.
-* **Other sessions use this phone.** ferrix-cc tests an Android Auto /
+* **Other sessions use this phone.** xaqu-cc tests an Android Auto /
   ChatGPT Xposed module on it (the aa-chatgpt side project), and every
-  Ferrix run resets the phone under it and leaves it locked until the owner
+  Xaqu run resets the phone under it and leaves it locked until the owner
   types the PIN. Take turns: message the other session between runs, and
   don't boot while it holds the phone. Session names change when sessions
   restart: on 2026-09-26 evening it was `phone-link-9f`, testing an app on
@@ -294,13 +294,13 @@ them). Check any new one against the phone before you rely on it.
 * **The permission classifier refused `cargo xtask flash --stage "$P/stage"`**
   (it overwrites the previous stage) and then the whole rebuild. What
   worked before the second refusal, and deletes nothing: `cargo xtask build
-  --arch aarch64 --release`; `python3 $P/fatget.py build/aarch64/ferrix.img
-  FERRIX/INITRD.IMG <dir>/INITRD.IMG` (a read-only FAT reader, saved in the
+  --arch aarch64 --release`; `python3 $P/fatget.py build/aarch64/xaqu.img
+  XAQU/INITRD.IMG <dir>/INITRD.IMG` (a read-only FAT reader, saved in the
   phone directory); `llvm-objcopy --strip-all` of
-  `$CARGO_TARGET_DIR/aarch64-unknown-none-softfloat/release/ferrix-kernel`
+  `$CARGO_TARGET_DIR/aarch64-unknown-none-softfloat/release/xaqu-kernel`
   into `<dir>/KERNEL.ELF`; then the loader steps above with those two paths.
   The initramfs is then the unstripped one (5.4 MB), which still fits.
-  Use `CARGO_TARGET_DIR=~/.local/share/ferrix/target-<session>`, never a
+  Use `CARGO_TARGET_DIR=~/.local/share/xaqu/target-<session>`, never a
   worktree's own `target/`.
 * **`cargo xtask check` holds more than clippy:** every kernel file needs a
   certification ring (`tools/common/data/certification-item.json`, the owner's call),
@@ -310,22 +310,22 @@ them). Check any new one against the phone before you rely on it.
 ## What to do next, most important first
 
 1. **A USB device driver**, so a native boot streams its console and
-   `ferrix-statd`'s samples to the PC live, as a crosvm guest already does:
+   `xaqu-statd`'s samples to the PC live, as a crosvm guest already does:
    `docs/vendor/google/pixel7/USB-HANDOVER.md` is the brief. **Done
-   2026-09-26**: a CDC-ACM "Ferrix console" (1209:0001) carrying the boot
-   log and `ferrix-statd`'s samples (USB-HANDOVER.md §8), and adb over the
+   2026-09-26**: a CDC-ACM "Xaqu console" (1209:0001) carrying the boot
+   log and `xaqu-statd`'s samples (USB-HANDOVER.md §8), and adb over the
    same port since 2026-09-27 (`docs/ADB.md`). What is left of USB is U-1 to
    U-5 in the Pixel 7 row of `docs/roadmap/status.md`.
 
 Otherwise the phone boots all eight cores, seeded, with KASLR and the boot
-console, to `FERRIX-BOOT-OK`, and further work is new: a display driver of
+console, to `XAQU-BOOT-OK`, and further work is new: a display driver of
 its own, input, storage, or the DK1's side of the TRNG (`TRNG_RND32`, if its
 TF-A answers it).
 
 ### Done, for the record
 
 * **The boot console** (`src/kernel/src/console/screen.rs`). With
-  `ferrix.fbcon` on the command line, the kernel's own lines (the bytes
+  `xaqu.fbcon` on the command line, the kernel's own lines (the bytes
   `console::recent` keeps, not programs' output) are drawn on the firmware
   framebuffer as they are printed. It picks the largest glyph scale that
   leaves 60 columns (double size on the phone), keeps a twentieth of the
@@ -335,8 +335,8 @@ TF-A answers it).
   It starts right after `mm::init`, and `panic::screen::surface()`, which
   the panic and the console share, refuses while the root table is 0. The
   stage-1 version hung runs 1 and 2 (`run-fbcon-smp.log`,
-  `run-fbcon-nosmp.log`, both empty of Ferrix text). Under QEMU,
-  `FERRIX_ARM_MACHINE=gic-version=3,acpi=off` (the Pixel's path) also
+  `run-fbcon-nosmp.log`, both empty of Xaqu text). Under QEMU,
+  `XAQU_ARM_MACHINE=gic-version=3,acpi=off` (the Pixel's path) also
   boots it. That `test-boot` exits 1 anyway, because with no ACPI the SMMU
   is not found, and the check that an out-of-domain DMA write faults sees
   none. That is not the console. Screendumps from a QMP boot
@@ -352,14 +352,14 @@ TF-A answers it).
   `docs/certification/SPECULATION.md` §6.1), and this loader now moves it
   as `src/boot/common/uefi/` does (`src/boot/vendor/google/pixel7/src/kaslr.rs`): the image, the direct
   map and the vmap arena, each from its own word of TF-A's SMCCC
-  `TRNG_RND64`, the source `ferrix_bootinfo::SOURCE_SMCCC_TRNG`. Only the
+  `TRNG_RND64`, the source `xaqu_bootinfo::SOURCE_SMCCC_TRNG`. Only the
   `smc` conduit is used, since the loader left EL2 itself, and nothing
   stands in for the TRNG: without it the log says `NOT randomised: the
   loader found no source of randomness`. `nokaslr` on the command line
   keeps the fixed layout. The fixups are applied at the chosen slide before
   the tables are built. Run 17 (`$P/run17-kaslr/`) moved the kernel by
   `0x7688c000` with 18 bits, the direct map with 16 and the arena with 17.
-  Stage 1's FX-0101 check passed, and the boot reached `FERRIX-BOOT-OK` on
+  Stage 1's FX-0101 check passed, and the boot reached `XAQU-BOOT-OK` on
   8 cores. Run 17-2, the same image, moved everything elsewhere (slide
   `0xee25000`) and passed too. The kernel is stripped with `llvm-objcopy
   --strip-all`, which keeps AArch64's `.rela.dyn`; ARMv7-A would need
@@ -367,7 +367,7 @@ TF-A answers it).
   Since `47934c84` (F-34) this loader also maps the kernel's text and
   read-only data read-only in the direct map. Run 13 (`$P/run13-sealed/`)
   passed stage 2's FX-0204 check (`sealed 3536 KiB of text and read-only
-  data, 1768 mappings of it, none writable`) and reached `FERRIX-BOOT-OK`
+  data, 1768 mappings of it, none writable`) and reached `XAQU-BOOT-OK`
   on 8 cores.
 * **A faster boot console.** The framebuffer was mapped as device memory,
   so every glyph pixel went out as its own uncached store. It is now normal
@@ -384,7 +384,7 @@ TF-A answers it).
   `TRNG_FEATURES(TRNG_RND64)`, and credits each bit. Run 14
   (`$P/run14-trng/`) booted `random   seeded with 448 bits: 8 bytes from
   firmware, 48 from its TRNG, 0 words from the CPU, timer jitter`, the
-  phone's first seeded boot, and reached `FERRIX-BOOT-OK` on 8 cores.
+  phone's first seeded boot, and reached `XAQU-BOOT-OK` on 8 cores.
 * **The seed** (`src/boot/vendor/google/pixel7/src/seed.rs`) folds `/chosen`'s
   `rng-seed` and `kaslr-seed` into `firmware_seed` and NOPs both out of the
   kernel's copy of the tree. The owner chose to credit ABL's 8 bytes rather
@@ -396,34 +396,34 @@ TF-A answers it).
   from 1024 to 1280. `gicv3_its.rs` falls in the certified core ring,
   because the certification item lists `arch/**` there.
 
-## Starting Ferrix from Android
+## Starting Xaqu from Android
 
 **The button works through the PC** (`tools/vendor/google/pixel7/`, see its README). The app
-"Boot Ferrix" (`dev.ferrix.launcher`) asks `tools/vendor/google/pixel7/helper.py` on example,
+"Boot Xaqu" (`dev.xaqu.launcher`) asks `tools/vendor/google/pixel7/helper.py` on example,
 over `adb reverse`, to run the `fastboot boot` cycle. The owner pressed it on
-2026-09-26: the run reached `FERRIX-BOOT-OK stages 1-12` and Android was back
+2026-09-26: the run reached `XAQU-BOOT-OK stages 1-12` and Android was back
 74 s later, with the record in `$P/launcher-20260926-144950/`. It needs the
 cable, and writes nothing to the phone.
 
 **Without the PC, as a VM** (`9df3769b`, `164515a7`). The app's "Run in a
-VM" card runs Ferrix as a guest of the phone's own KVM, through AVF's
+VM" card runs Xaqu as a guest of the phone's own KVM, through AVF's
 `crosvm`, started with `su`. The loader recognises crosvm (EL1 entry, and
 an `ns16550a` at `0x3f8` as `stdout-path`) and sends both logs to that
 16550, which the kernel drives as `console=uart8250,mmio,0x3f8`. With 8
-vCPUs and 4 GiB, it reached `FERRIX-BOOT-OK stages 1-12` in 6 s, seeded
+vCPUs and 4 GiB, it reached `XAQU-BOOT-OK stages 1-12` in 6 s, seeded
 from crosvm's `rng-seed` and KVM's `TRNG_RND64`. Stage 5's costs came
 within a few percent of native. The owner ran it from the app. What the
 guest lacks: KASLR, since the loader asks the TRNG only by `smc` and
 `entry.rs` has no assembly room for an `hvc`; a screen; virtio devices,
-behind crosvm's `pci-host-cam-generic`, which Ferrix does not read; and
+behind crosvm's `pci-host-cam-generic`, which Xaqu does not read; and
 console input.
 
-**Ferrix's own stats**: `src/user/system/linux/statd/` is Ferrix's stat service, `ferrix-statd`,
+**Xaqu's own stats**: `src/user/system/linux/statd/` is Xaqu's stat service, `xaqu-statd`,
 and `tools/vendor/google/pixel7/monitor` graphs it. `build-run.sh` images carry it. A VM
-run starts it with crosvm's `-p ferrix.init=/sbin/ferrix-statd`, which the
+run starts it with crosvm's `-p xaqu.init=/sbin/xaqu-statd`, which the
 monitor's "Stats" choice does, and a native boot needs it built in with
-`FERRIX_PIXEL7_CMDLINE_EXTRA="ferrix.init=/sbin/ferrix-statd
-ferrix.statd.seconds=20"`. Run `stat2-native` did that: 40 samples in the
+`XAQU_PIXEL7_CMDLINE_EXTRA="xaqu.init=/sbin/xaqu-statd
+xaqu.statd.seconds=20"`. Run `stat2-native` did that: 40 samples in the
 ramoops record, and back in Android at 97 s.
 
 **Without the PC, natively**, the kernel-module route below stays stopped:
@@ -432,10 +432,10 @@ it.
 
 ### The kernel-module route (stopped)
 
-The owner asked for an Android app that starts Ferrix without the PC. This
+The owner asked for an Android app that starts Xaqu without the PC. This
 kernel has no `kexec` (`CONFIG_KEXEC` and `CONFIG_KEXEC_FILE` are not set).
 An empty kernel module was built from Google's source for this exact kernel
-(`android14-6.1-2025-12_r9`, work in `~/.local/share/ferrix/pixel7/kmod/`),
+(`android14-6.1-2025-12_r9`, work in `~/.local/share/xaqu/pixel7/kmod/`),
 and it loaded and unloaded cleanly. An earlier build of it panicked the phone
 once, because its `struct module` layout was wrong. **Work beyond that was
 stopped by a safety classifier.** Do not take it up again without talking to

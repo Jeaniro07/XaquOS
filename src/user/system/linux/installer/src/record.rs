@@ -2,15 +2,15 @@
 //!
 //! Every decision -- which copy is current, where the next write goes, which
 //! block that is and that it lies inside the control partition, the flush
-//! and the read-back -- is `ferrix-slots`' `read_current` and
+//! and the read-back -- is `xaqu-slots`' `read_current` and
 //! `write_record`, the loader's own write path. This is only the disk they
 //! run on: a whole disk open as a file, in blocks of its logical size.
 
 use std::fs::File;
 
-use ferrix_slots::gpt::Part;
-use ferrix_slots::plan::record_block;
-use ferrix_slots::record::{
+use xaqu_slots::gpt::Part;
+use xaqu_slots::plan::record_block;
+use xaqu_slots::record::{
     ControlDisk, Current, DeviceError, RECORD_LEN, Record, read_current, write_record,
 };
 

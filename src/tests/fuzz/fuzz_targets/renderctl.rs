@@ -29,12 +29,12 @@
 
 #![no_main]
 
-use ferrix_native_abi::rights::Rights;
-use ferrix_renderctl::message::{
+use xaqu_native_abi::rights::Rights;
+use xaqu_renderctl::message::{
     Hello, MAX_OBJECT_BYTES, MAX_WORK_BYTES, MakeBlob, Message, NAME_BYTES, NO_RING, NO_WINDOW,
     Status, VERSION, Work, features, flags,
 };
-use ferrix_renderctl::session::{MAX_IN_FLIGHT, RequestError, Session};
+use xaqu_renderctl::session::{MAX_IN_FLIGHT, RequestError, Session};
 use libfuzzer_sys::fuzz_target;
 
 fn u32_at(bytes: &[u8], at: usize) -> u32 {

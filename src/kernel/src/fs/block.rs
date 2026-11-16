@@ -19,7 +19,7 @@
 
 use core::fmt;
 
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 /// A disk: a run of equal-sized sectors that can be read.
 pub(crate) trait BlockDevice: Send + Sync + fmt::Debug {

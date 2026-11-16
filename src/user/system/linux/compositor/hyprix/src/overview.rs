@@ -1,6 +1,6 @@
 //! The activities overview (`docs/DESKTOP.md` §1.2, step 1d).
 //!
-//! One key (`overview toggle`, which Ferrix light binds to `SUPER`) shows
+//! One key (`overview toggle`, which Xaqu light binds to `SUPER`) shows
 //! every window of each monitor's workspace side by side, scaled to fit a
 //! grid, with the monitor's other workspaces as a strip of thumbnails above
 //! it. A minimized window is in its workspace's grid too, after the others

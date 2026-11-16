@@ -5,7 +5,7 @@
 //! the descriptors that came with them, and gives back the bytes to send; what
 //! moves those bytes is the binary above it. So the whole of the protocol --
 //! object lifetimes, versions, every way a client can break the rules and what
-//! the server answers -- is host-tested, and running it on Ferrix tests the
+//! the server answers -- is host-tested, and running it on Xaqu tests the
 //! socket rather than the protocol.
 //!
 //! # How a request is answered

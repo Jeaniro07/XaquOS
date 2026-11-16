@@ -3,7 +3,7 @@
 //! for the like-for-like comparison.
 //!
 //! It is the in-tree form of the `lbench` that measured Linux's own floors
-//! under the same QEMU and KVM line (`~/.local/share/ferrix/linux-bench`,
+//! under the same QEMU and KVM line (`~/.local/share/xaqu/linux-bench`,
 //! 2026-10-06) and of `rbench`'s ping-pongs on the host: `lfence; rdtsc;
 //! lfence` around each sample, one sample one round trip, 2,000 untimed
 //! round trips and then 20,000 timed, five times, the samples sorted and the
@@ -354,13 +354,13 @@ fn bench_futex(samples: &mut Samples) {
     let _ = unsafe { libc::waitpid(child, &raw mut status, 0) };
 }
 
-/// With `profile`: Ferrix's system call count and this process's switches,
+/// With `profile`: Xaqu's system call count and this process's switches,
 /// so a run says how many calls and switches a round trip took.
 fn counters(when: &str) {
     if ONLY.is_none() {
         return;
     }
-    for path in ["/proc/ferrix-seam", "/proc/self/status"] {
+    for path in ["/proc/xaqu-seam", "/proc/self/status"] {
         if let Ok(text) = std::fs::read_to_string(path) {
             for line in text.lines() {
                 if line.starts_with("seam") || line.contains("ctxt_switches") {
@@ -391,12 +391,12 @@ const MEMBER_FIFO: &str = "/tmp/pipe-bench-fifo";
 #[derive(Debug, Clone, Copy)]
 struct Native;
 
-impl ferrix_native::Syscall for Native {
-    fn call(self, raw: ferrix_native::Raw<'_>) -> usize {
+impl xaqu_native::Syscall for Native {
+    fn call(self, raw: xaqu_native::Raw<'_>) -> usize {
         let [a0, a1, a2, a3, a4, a5] = raw.args();
         let number = libc::c_long::try_from(raw.number()).unwrap_or(-1);
         // SAFETY: `raw` borrows every memory its arguments name for as long
-        // as it lives, which is past this call (`ferrix_native::call`).
+        // as it lives, which is past this call (`xaqu_native::call`).
         let ret = unsafe { libc::syscall(number, a0, a1, a2, a3, a4, a5) };
         if ret == -1 {
             let errno = std::io::Error::last_os_error()
@@ -409,14 +409,14 @@ impl ferrix_native::Syscall for Native {
     }
 }
 
-/// On Ferrix, after the tests: run them again in a process started by
+/// On Xaqu, after the tests: run them again in a process started by
 /// `process_create` into a new job marked as one speculation domain (the
 /// matched configuration `bench-ipc`'s `domain-call` is measured in), whose
 /// forked child is then a member too, and print what it prints. A starter
 /// with MANAGE on a cgroup's job is all this takes (`docs/OPAQUE-KERNEL.md`
 /// §9.2); nothing in the kernel is asked to change.
 fn run_in_domain() -> Result<(), String> {
-    use ferrix_native::{Requested, Rights, channel, job, pending, vmo};
+    use xaqu_native::{Requested, Rights, channel, job, pending, vmo};
     for (source, target, kind) in [
         (c"proc", c"/proc", c"proc"),
         (c"sys", c"/sys", c"sysfs"),
@@ -458,12 +458,12 @@ fn run_in_domain() -> Result<(), String> {
     if unsafe { libc::mkfifo(fifo.as_ptr(), 0o600) } != 0 {
         return Err(format!("mkfifo: {}", std::io::Error::last_os_error()));
     }
-    let elf = ferrix_process_builder::image(elf).map_err(|error| format!("image: {error:?}"))?;
-    let built = ferrix_process_builder::build(
+    let elf = xaqu_process_builder::image(elf).map_err(|error| format!("image: {error:?}"))?;
+    let built = xaqu_process_builder::build(
         &domain,
         &elf,
         "pipe-bench",
-        ferrix_process_builder::machine_named(std::env::consts::ARCH),
+        xaqu_process_builder::machine_named(std::env::consts::ARCH),
     )
     .map_err(|error| format!("build: {error:?}"))?;
     let (ours, theirs) = channel::create(Native).map_err(|error| format!("channel: {error:?}"))?;
@@ -580,9 +580,9 @@ fn main() {
         let _ = std::io::stdout().flush();
         return;
     }
-    // On Ferrix only, and not in a profile build, which times one thing.
+    // On Xaqu only, and not in a profile build, which times one thing.
     if (ONLY.is_none() || PROFILE_IN_DOMAIN)
-        && std::path::Path::new("/proc/ferrix-seam").exists()
+        && std::path::Path::new("/proc/xaqu-seam").exists()
         && let Err(why) = run_in_domain()
     {
         println!("LB error domain: {why}");

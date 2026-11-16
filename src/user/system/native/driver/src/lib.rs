@@ -47,8 +47,8 @@ pub mod virtio;
 
 // The driver model (`docs/DRIVER-MODEL.md`; [`model`]): what a driver of a
 // generic device-tree node is written against.
-pub use ferrix_devmgr_proto::requirements;
-pub use ferrix_driver_derive::{PinStates, Resources, bitfields, register_map};
+pub use xaqu_devmgr_proto::requirements;
+pub use xaqu_driver_derive::{PinStates, Resources, bitfields, register_map};
 pub use model::{
     BindContext, DeviceHandle, DeviceInfo, Driver, Errno, Event, Flow, FromNode, Interrupt,
     InterruptOccurrence, Node, PinControl, PinStateName, PinStates, ProviderLost, Reference,
@@ -64,10 +64,10 @@ pub use registers::{
 #[macro_export]
 macro_rules! entry {
     () => {
-        ::ferrix_rt::entry!(__ferrix_driver_start);
+        ::xaqu_rt::entry!(__xaqu_driver_start);
 
         /// Keep the bootstrap channel, then run the driver.
-        fn __ferrix_driver_start(bootstrap: ::ferrix_rt::Bootstrap) -> i32 {
+        fn __xaqu_driver_start(bootstrap: ::xaqu_rt::Bootstrap) -> i32 {
             $crate::model::keep_bootstrap(bootstrap);
             main();
             0

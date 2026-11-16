@@ -7,8 +7,8 @@
 
 #![no_main]
 
-use ferrix_argon2::Block;
-use ferrix_argon2::phc::Encoded;
+use xaqu_argon2::Block;
+use xaqu_argon2::phc::Encoded;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

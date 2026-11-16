@@ -13,15 +13,15 @@
 //! establish. It is the first thing in the tree to put a root the kernel built
 //! into a processor's root register.
 
-use ferrix_bootinfo::{KERNEL_HALF_BASE, PAGE_SIZE};
+use xaqu_bootinfo::{KERNEL_HALF_BASE, PAGE_SIZE};
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::IrqControl;
-use ferrix_vma::VmaFlags;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::IrqControl;
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::mm;

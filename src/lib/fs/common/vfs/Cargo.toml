@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-vfs"
+name = "xaqu-vfs"
 description = "The virtual filesystem: dentries, mounts, path walking, open files, descriptor tables and tmpfs"
 version = "0.1.0"
 edition = "2024"
@@ -8,14 +8,14 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-cpio.workspace = true
-ferrix-fallible.workspace = true
-ferrix-kmem.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-sync.workspace = true
+xaqu-cpio.workspace = true
+xaqu-fallible.workspace = true
+xaqu-kmem.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-sync.workspace = true
 
 [dev-dependencies]
-ferrix-kmem = { workspace = true, features = ["testing"] }
+xaqu-kmem = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

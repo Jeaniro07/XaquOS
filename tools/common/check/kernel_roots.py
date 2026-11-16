@@ -9,7 +9,7 @@ walks kernel files takes them from here, never from a literal of its own, so a
 part added to the record is walked by every one of them (ledger 7346 (4), (5)).
 
 A walker calls `note_walked(tool, paths)` with the files it read. When
-`FERRIX_WALK_LOG` names a file, the paths are appended to it, one
+`XAQU_WALK_LOG` names a file, the paths are appended to it, one
 `<tool>\\t<repo-relative path>` line each; `check-kernel-roots.py` runs every
 registered walker so, and compares what it walked with its own count of the
 files under the roots (`git ls-files`), never through the walker's own walk.
@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 MANIFEST = ROOT / "tools" / "common" / "data" / "certification-item.json"
-EXTRA_ENV = "FERRIX_KERNEL_ROOTS_EXTRA"
+EXTRA_ENV = "XAQU_KERNEL_ROOTS_EXTRA"
 
 
 PRIMARY = "src/kernel/src"
@@ -142,7 +142,7 @@ def root_dirs(manifest: dict | None = None, root: Path = ROOT) -> list[Path]:
 
 def note_walked(tool: str, paths) -> None:
     """Record the files a walker read, when the parity guard asks for it."""
-    log = os.environ.get("FERRIX_WALK_LOG")
+    log = os.environ.get("XAQU_WALK_LOG")
     if not log:
         return
     lines = []

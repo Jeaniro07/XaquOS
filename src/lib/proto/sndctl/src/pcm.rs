@@ -32,9 +32,9 @@
 //! the program chose ([`Stream::clock`]), as nanoseconds. Nothing here reads
 //! a clock, waits or allocates.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::{
     ACCESS_RW_INTERLEAVED, FORMAT_S16_LE, HwParams, INFO_BATCH, INFO_BLOCK_TRANSFER,
     INFO_INTERLEAVED, INFO_PERFECT_DRAIN, INTERVALS, MmapStatus, PCM_VERSION, STATE_DISCONNECTED,
     STATE_DRAINING, STATE_OPEN, STATE_PAUSED, STATE_PREPARED, STATE_RUNNING, STATE_SETUP,
@@ -138,7 +138,7 @@ impl Config {
     /// else, with `TICK_TIME` left as it came, as Linux leaves it.
     #[must_use]
     pub const fn constraints(&self) -> Constraints {
-        let intervals: [ferrix_linux_abi::sound::Interval; INTERVALS] = [
+        let intervals: [xaqu_linux_abi::sound::Interval; INTERVALS] = [
             single(self.sample_bits),
             single(self.sample_bits * self.channels),
             single(self.channels),

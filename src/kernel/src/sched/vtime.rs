@@ -7,7 +7,7 @@
 //! user mode, and all of the time of a task with no user mode; `stime` in
 //! `/proc` is that, `utime` the rest. It is counted the way Linux's
 //! `VIRT_CPU_ACCOUNTING_GEN` counts it, with a counter reading at each
-//! boundary, because Ferrix has no periodic tick for a sampled split to
+//! boundary, because Xaqu has no periodic tick for a sampled split to
 //! read: a processor running one task gets none.
 //!
 //! # The state
@@ -272,7 +272,7 @@ fn settle_slot(slot: &Slot, running: Option<&Task>, now: Option<u64>) {
 /// closed, into it with a reading should an entry have opened it, so that
 /// the task switched to, which leaves by the frame tail's quiet exit, starts
 /// in user time. Under the queue's lock with interrupts masked.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub(super) fn direct_switch(cpu: usize, previous: &Task) {
     if !counting() {
         return;

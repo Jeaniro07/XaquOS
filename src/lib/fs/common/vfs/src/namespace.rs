@@ -8,9 +8,9 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::{Parker, SleepLock};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::{Parker, SleepLock};
 
 use crate::Result;
 use crate::SpinLock;
@@ -115,7 +115,7 @@ impl MountFlags {
     /// `ST_*` bit of each flag, Linux's `flags_by_mnt`.
     #[must_use]
     pub fn statfs_flags(self) -> u64 {
-        use ferrix_linux_abi::types::{
+        use xaqu_linux_abi::types::{
             ST_NOATIME, ST_NODEV, ST_NODIRATIME, ST_NOEXEC, ST_NOSUID, ST_RDONLY, ST_RELATIME,
             ST_VALID,
         };
@@ -797,7 +797,7 @@ impl fmt::Debug for Namespace {
 
 impl Namespace {
     /// A namespace whose root is `fs`, whose sleeping locks wait as `parker`
-    /// says: the kernel's wait queues, or [`ferrix_sync::SpinParker`] on the
+    /// says: the kernel's wait queues, or [`xaqu_sync::SpinParker`] on the
     /// host.
     #[must_use]
     pub fn new(fs: Arc<dyn FileSystem>, parker: Arc<dyn Parker>) -> Namespace {

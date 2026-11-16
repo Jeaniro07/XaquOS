@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 description = "The init's wire formats: svc's control records and a service's readiness lines, as docs/INIT.md §5.3 and §10 fix them"
 version.workspace = true
 edition.workspace = true

@@ -1,6 +1,6 @@
 # Robustness: no program stops the machine
 
-**The customer's order (2026-11-08):** "find out how we can make ferrix
+**The customer's order (2026-11-08):** "find out how we can make xaqu
 more robust, because a process in ring 3 should never crash the whole
 kernel".
 
@@ -12,7 +12,7 @@ in §8, and this document does not repeat them.
 
 Each class says what Linux does about it. That part was checked against
 Linux v7.0's own source (fetched 2026-11-08 to
-`~/.local/share/ferrix/robustness-ref/linux-v7.0/` from git.kernel.org).
+`~/.local/share/xaqu/robustness-ref/linux-v7.0/` from git.kernel.org).
 It is cited by file and function, and it was read, not copied.
 
 The rule it follows is the customer's of 2026-10-22: keep the kernel slim.
@@ -51,7 +51,7 @@ but stalls for 15 s under one program's teardown is not robust.
 
 * FX-0008 "memory allocation of 131072 bytes failed", twice: catch3 #2,
   and catch4 `eventlog-fault-relanding-1121.txt` #7 (11:17, under load).
-  The first was ferrix-btrfs-vfs `Scratch::new`, found by reading the
+  The first was xaqu-btrfs-vfs `Scratch::new`, found by reading the
   code. The second record names no caller, because the trace goes to the
   port only (BACKLOG, ledger 8043 MK.5).
 * FX-0008 for a 204-byte path clone in `openat`, in
@@ -118,14 +118,14 @@ make the second and third points exact:
   must be able to block (`__GFP_DIRECT_RECLAIM`), must never be used where
   sleeping is forbidden, and is not supported for buddy orders above 1.
   Larger requests are told to use `kvmalloc()`. So Linux has no
-  equivalent of Ferrix's implicit infallible `Box` under a spin lock.
+  equivalent of Xaqu's implicit infallible `Box` under a spin lock.
   The kernel's coding rule is that a `GFP_ATOMIC` caller handles NULL.
 * **Atomic callers get a reserve, by flag.**
   `mm/page_alloc.c:__zone_watermark_ok` lets `ALLOC_MIN_RESERVE`
   (`__GFP_HIGH`) use half of the `min` watermark. `ALLOC_NON_BLOCK`
   (`GFP_ATOMIC`) gets a quarter more, and `ALLOC_OOM` (an OOM victim on
   its way out) gets half again. `gfp_to_alloc_flags` turns the caller's
-  context into these bits. Ferrix has one watermark, and it infers "may
+  context into these bits. Xaqu has one watermark, and it infers "may
   not block" from the preemption count (`heap_may_reclaim`) instead of
   being told. That inference is why every allocation under a
   `SpinLock` is a no-reclaim, no-kill one.
@@ -133,7 +133,7 @@ make the second and third points exact:
   `memalloc_nofs_save`, `memalloc_noio_save` and `memalloc_noreclaim_save`
   mark a region of code, and `current_gfp_context` strips `__GFP_FS`/`IO`
   inside it. A filesystem holding its own locks is then never re-entered
-  by reclaim. Ferrix's "inside a reclaim" mark (FX catalog
+  by reclaim. Xaqu's "inside a reclaim" mark (FX catalog
   `RECLAIM_IN_RECLAIM`, the kill "marked inside a reclaim") is the same
   idea for one case. R6 makes it a general scope.
 * **Mempools for the paths that must make progress.**
@@ -141,7 +141,7 @@ make the second and third points exact:
   without direct reclaim, then takes a preallocated element, then, if it
   may block, waits for one to be freed and retries. The writeback and
   block paths use this, so I/O that frees memory never needs fresh
-  memory to start. Ferrix's `mm/reserve.rs` reserved sections are the
+  memory to start. Xaqu's `mm/reserve.rs` reserved sections are the
   same shape for the item. §6.2 (3) and the kill that allocates (§2.2)
   are the cases that need one.
 * **The OOM killer does not help a large block.**
@@ -151,8 +151,8 @@ make the second and third points exact:
   `__alloc_pages_slowpath` tries direct compaction first for costly
   orders, and a caller that can take virtual contiguity uses `kvmalloc`
   (`mm/slub.c:__kvmalloc_node_noprof`, falling back to vmalloc).
-  Ferrix's `heap_or_kill` declining to kill above the watermark is
-  therefore Linux's behaviour. What Ferrix lacks is the other half:
+  Xaqu's `heap_or_kill` declining to kill above the watermark is
+  therefore Linux's behaviour. What Xaqu lacks is the other half:
   neither compaction nor a `kvmalloc` fallback. R6 adds the fallback.
 
 ### 2.3 The audit (2026-11-08, develop 3c4498db2)
@@ -171,18 +171,18 @@ counted.
 | `syscall/` | 121 | 33 | 29 |
 | `net/` | 70 | 10 | 2 |
 | kernel extension crates (boards, logctl, net ring) | 24 | 7 | 1 |
-| of which the linked libraries: `ferrix-vfs` | 144 | 12 | 22 |
-| `ferrix-net` | 87 | 13 | 0 |
-| `ferrix-procfs` | 74 | 11 | 0 |
-| `ferrix-btrfs-vfs` | 46 | 3 | 8 |
-| `ferrix-block`, `ferrix-sysfs` | 39 each | 5, 7 | 2, 0 |
+| of which the linked libraries: `xaqu-vfs` | 144 | 12 | 22 |
+| `xaqu-net` | 87 | 13 | 0 |
+| `xaqu-procfs` | 74 | 11 | 0 |
+| `xaqu-btrfs-vfs` | 46 | 3 | 8 |
+| `xaqu-block`, `xaqu-sysfs` | 39 each | 5, 7 | 2, 0 |
 | 24 other crates | 1 to 15 each | | |
 
-The files with the most are `ferrix-vfs` `namespace.rs` (64),
+The files with the most are `xaqu-vfs` `namespace.rs` (64),
 `fs/procfs/render.rs` (56), `fs/sysfs.rs` (50),
 `interfaces/display/mod.rs` (45), `interfaces/display/drm.rs` (41),
-`interfaces/render/mod.rs` (35), `ferrix-vfs` `tmpfs.rs` (32),
-`fs/devfs.rs` (31), `fs/socket.rs` (29) and `ferrix-btrfs-vfs` `rw.rs`
+`interfaces/render/mod.rs` (35), `xaqu-vfs` `tmpfs.rs` (32),
+`fs/devfs.rs` (31), `fs/socket.rs` (29) and `xaqu-btrfs-vfs` `rw.rs`
 (28).
 
 **How much a program can reach.** Nearly all of it. The load ring *is*
@@ -239,14 +239,14 @@ F-23's, over a per-file baseline. Three other options were rejected:
 | Option | Why not now |
 |---|---|
 | clippy `disallowed-methods` on `Box::new`, `Vec::push` and so on | It is typed and has no false positives, which is better than tokens. But it is workspace-wide or per-crate in `.clippy.toml`, and on today's code it needs 1,382 `#[expect]`s at once. **Adopted per crate later:** once a crate's count reaches 0, its `.clippy.toml` gains the list, and the ratchet entry goes (R7). |
-| `try_` APIs only, in "syscall crates" | The kernel's load is one crate, `ferrix-kernel-load`, so there is no boundary to put the rule on. |
+| `try_` APIs only, in "syscall crates" | The kernel's load is one crate, `xaqu-kernel-load`, so there is no boundary to put the rule on. |
 | An allocator that never fails (a reserve big enough for everything) | It moves the stop instead of removing it. A reserve is right for atomic sections, which is R6, and wrong as a policy. |
 
 `check-ring0-alloc.py` covers every load-ring product file of the
 kernel's source that F-23's gate does not scan, and the product files of
 every workspace crate the kernel links (the shipping dependencies of
-`ferrix-kernel`, `-core`, `-item` and `-load`, followed through the
-workspace), apart from the item's crates and `ferrix-fallible`. The
+`xaqu-kernel`, `-core`, `-item` and `-load`, followed through the
+workspace), apart from the item's crates and `xaqu-fallible`. The
 baseline is `tools/common/data/ring0-alloc-baseline.json`. The gate
 fails in two cases: a file's unmarked count rises, or a new file appears
 with any unmarked call. A newly linked crate counts as new files, because
@@ -279,7 +279,7 @@ only whether a failure can be reported.
 
 **Negative controls.** These hand runs are diagnosis, not evidence: a
 planted `Box::new` in `src/kernel/src/fs/pipe.rs` failed the gate with
-"pipe.rs: 10 -> 11", exit 1, and a `vec!` planted in `ferrix-btrfs-vfs`
+"pipe.rs: 10 -> 11", exit 1, and a `vec!` planted in `xaqu-btrfs-vfs`
 `rw.rs` failed it too. The `gate.sh control` runs that count as evidence
 are cited in the landing's commit. The self-test covers the dependency
 walk (renames, target tables, build dependencies excluded), the count,
@@ -290,8 +290,8 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
 
 * (a) `const _: fn() -> Box<u8> = || Box::new(1);` in `fs/pipe.rs` gave
   `control: FIRED (host): src/kernel/src/fs/pipe.rs: 10 -> 11`
-  (`~/.local/share/ferrix/logs/queue/rob-r1-ctl-pipe.log`).
-* (b) the same with `vec![1]` in `ferrix-btrfs-vfs`'s `rw.rs` gave
+  (`~/.local/share/xaqu/logs/queue/rob-r1-ctl-pipe.log`).
+* (b) the same with `vec![1]` in `xaqu-btrfs-vfs`'s `rw.rs` gave
   `control: FIRED (host): src/lib/fs/btrfs/vfs/src/rw.rs: 28 -> 29`
   (`rob-r1-ctl-rw.log`).
 * The `check` row passed: `run: PASSED`, with `ring0-alloc: 1382 ...
@@ -315,7 +315,7 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
 
 * Job quotas (`object/quota.rs`, F-35) charge frames, native objects and
   tasks hierarchically, under `memory.max`.
-* `ferrix-kmem` (F-37) charges kernel heap to the job that caused it. Its
+* `xaqu-kmem` (F-37) charges kernel heap to the job that caused it. Its
   `Charge` token lives inside the object and is used in 38 kernel files:
   pipes, sockets, epoll, inotify, timerfd, procfs buffers, namespaces,
   semaphores and so on.
@@ -335,7 +335,7 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
   that its exit can finish (`__gfp_pfmemalloc_flags`). `oom_reaper`
   (`oom_reap_task`, at most `MAX_OOM_REAP_RETRIES`, 10, tries) unmaps
   the victim's anonymous memory without waiting for its exit, so a
-  victim stuck on a lock still gives memory back. Ferrix empties a
+  victim stuck on a lock still gives memory back. Xaqu empties a
   victim's space in `object::oom` the same way, but its victim gets no
   reserve. That is the hole `docs/BTRFS-PRESSURE.md` names ("Linux lets
   an OOM victim use reserves to finish").
@@ -353,7 +353,7 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
 2. **GPU and display buffers.** An object a driver allocated for a
    client is charged to the driver's job, or to nobody. The render
    interface already knows the client for each buffer. R9 charges the
-   client's job through `ferrix-kmem`, the way Linux charges a DRM GEM
+   client's job through `xaqu-kmem`, the way Linux charges a DRM GEM
    object to the cgroup of the process that made it.
 3. **OOM selection.** The victim's score becomes its resident pages plus
    the kernel bytes and buffers its own end would release, divided by the
@@ -377,7 +377,7 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
   It reproduces 3 of 3 on develop. The suspect is GPU teardown. The root
   cause is fault-relanding's.
 * The records show no lockup report. A processor spinning with
-  interrupts masked would have one, given `ferrix.lockup=on`, which is
+  interrupts masked would have one, given `xaqu.lockup=on`, which is
   not landed. So the stall is one in which interrupts keep coming and
   user space gets no turn.
 
@@ -385,7 +385,7 @@ The evidence, on 1ceeac1d2 through `gate.sh control ... --expect-host
 
 `crate::sync::SpinLock` is a `PreemptSpinLock`. It raises the processor's
 preemption count before it takes its ticket, so the holder stays on its
-processor (`ferrix-sync`, `lock`). **A waiter also spins with preemption
+processor (`xaqu-sync`, `lock`). **A waiter also spins with preemption
 off.** One task that holds a widely used lock across a long teardown
 (an address space's frames, a VMO's pages, a pin table, a render node's
 buffers) therefore makes every other processor that wants that lock
@@ -399,7 +399,7 @@ it is. The class exists whatever the dump shows.
 
 * **Waiters spin with preemption off there too.** A non-RT
   `spin_lock` disables preemption and then spins on the lock
-  (`include/linux/spinlock_api_smp.h`, `__raw_spin_lock`). Ferrix's
+  (`include/linux/spinlock_api_smp.h`, `__raw_spin_lock`). Xaqu's
   `PreemptSpinLock` behaves the same way. So Linux does not avoid this
   stall through its lock. It avoids it through two rules: nothing long
   is done under a spin lock, and a detector reports any CPU that has not
@@ -433,7 +433,7 @@ it is. The class exists whatever the dump shows.
   in batches through `mm/mmu_gather.c` (`tlb_next_batch`,
   `MAX_GATHER_BATCH_COUNT`), with a `cond_resched()` per batch in the
   free loop. `fs/file.c:close_files` `cond_resched()`s while it closes
-  an exiting task's descriptors. Ferrix's `Drop for AddressSpace` has
+  an exiting task's descriptors. Xaqu's `Drop for AddressSpace` has
   none of these points. R5 adds them.
 
 ### 4.3 Where today's teardown is unbounded
@@ -456,7 +456,7 @@ it is. The class exists whatever the dump shows.
    `SpinLock` guard. Linux does the same with `cond_resched()` in
    `unmap_page_range`'s callers and `zap_page_range`'s batching. A
    bound written into `MEMORY-AND-TIMING.md` replaces "the whole space".
-2. **A long-hold detector (R3), Linux's soft lockup in Ferrix's
+2. **A long-hold detector (R3), Linux's soft lockup in Xaqu's
    terms.** Each processor bumps a counter only when its preemption count
    goes from 0 to held, and keeps the `track_caller` line that raised it,
    which FX-0503 already does. There is no clock read on the lock path
@@ -469,7 +469,7 @@ it is. The class exists whatever the dump shows.
    class, and it gives R5 its list.
 3. **Spinning waiters are not changed.** A ticket waiter holds its
    ticket from the `fetch_add` on, so it cannot be switched out without
-   recreating the convoy that c7413ba fixed (ferrix-sync's own comment;
+   recreating the convoy that c7413ba fixed (xaqu-sync's own comment;
    the consultant's A1). Linux's non-RT waiters spin with preemption off
    too. The fix is no long holds (R5) and a detector that finds them
    (R3), not a waiter change. A lock redesign would be its own reviewed
@@ -481,7 +481,7 @@ it is. The class exists whatever the dump shows.
 behind develop) carries S4a: per-processor heartbeats, a ring watch, a 10
 s bound and the NMI report. Its S4c part, `/dev/watchdog` and init's
 feeder, has landed as POSTMORTEM §6.11. **Recommendation: land S4a**,
-rebased and off unless `ferrix.lockup=on`, with the box's command line
+rebased and off unless `xaqu.lockup=on`, with the box's command line
 asking for it. There are two reasons:
 
 * It catches the stop S4c cannot: every processor masked, so the
@@ -511,7 +511,7 @@ rides on top of it.
 Init feeds `/dev/watchdog` from its event loop. When the deadline
 passes, the kernel's watchdog task reports FX-9008 (who armed it, the
 timeout, the time since the last feed, and the log's tail) and then
-halts, or resets under `ferrix.panic=reset` (`src/kernel/src/watchdog.rs`).
+halts, or resets under `xaqu.panic=reset` (`src/kernel/src/watchdog.rs`).
 There is one stage, and it is the last one. The report names no blocked
 task, so each of today's hangs needed its own diagnostic image.
 
@@ -539,7 +539,7 @@ task, so each of today's hangs needed its own diagnostic image.
 | 0. Supervision | always | init (ring 3) | Each service's own liveness: a service with `WatchdogSec=` notifies init, as systemd's `sd_notify("WATCHDOG=1")` does. A service that misses is killed and restarted under its `Restart=`. hyprix, the GPU driver and lode get one. A wedged service is then a restart, not a stalled init. |
 | 1. Name the stuck | pre-timeout (half the timeout, Linux's `WDIOC_SETPRETIMEOUT`) | the kernel, a fixed report | The **hang dump** (R4): every task blocked for more than 5 s, with its state, its wait channel, the last lock line it took and its kernel stack, plus every processor's preemption-off holder (R3). It goes to the console, pstore and the event log. This is fault-relanding's dump, made a standing mechanism. |
 | 2. Kill the culprit | pre-timeout + grace | **policy registered by ring 3 in advance**, carried out by the kernel | At arm time, init names a *sacrifice set*: jobs whose processes may be killed when user space has stopped (the game's session job, say), through a typed ioctl on `/dev/watchdog` that takes a job handle. At pre-timeout the kernel `SIGKILL`s that set. The policy (which jobs) is init's. The kernel has one typed list and one kill. If feeds resume, the record says "recovered by killing job N". |
-| 3. Reset | timeout | the kernel | As today: FX-9008, then `ferrix.panic`'s reset. |
+| 3. Reset | timeout | the kernel | As today: FX-9008, then `xaqu.panic`'s reset. |
 
 Stage 2 helps only when the stall is user space waiting on the culprit.
 A kernel lock held by the culprit's own teardown (class C) will not let
@@ -551,11 +551,11 @@ fix. Stage 0 is cheap and is init's alone.
 lode, auth and hyprix died of `SIGBUS` because their next text page was
 on a root that answered `EIO`. R10: init, lode, hyprix and the GPU
 driver lock their text once they have started (`mlockall(MCL_CURRENT)`).
-A failing filesystem then cannot fault their code out. `ferrix-vma` keeps
+A failing filesystem then cannot fault their code out. `xaqu-vma` keeps
 an `mlock`ed state on a region, but whether it keeps file-backed pages
 out of reclaim has not been checked, so R10 checks that first. lode
 also needs a write path that does not depend on root: the ESP or pstore,
-which `ferrix-eventlog` already reads.
+which `xaqu-eventlog` already reads.
 
 ## 6. Class E: a filesystem error that becomes a global one
 
@@ -587,7 +587,7 @@ memory. Rules (1) to (3) below are those three.
 2. **"Out of memory" is never final.** A failure caused by memory is
    retried at the next use. Only damage on the disk is final. This has
    landed for the reload. R11 audits the other "unreadable" and
-   "poisoned" states in `ferrix-btrfs-vfs`, `ferrix-vfs` and the block
+   "poisoned" states in `xaqu-btrfs-vfs`, `xaqu-vfs` and the block
    layer for the same mistake.
 3. **Recovery needs memory reserved for it.** A reload that needs memory
    at the moment memory ran out is the trap. R11 gives the reload a
@@ -610,7 +610,7 @@ The points are story points. The first five are the ones to start.
 | R4 | **The staged watchdog**: the pre-timeout hang dump (stage 1), then the sacrifice set (stage 2), §5.3. The dump first, in its own landing. | D | 3 + 5 | open, dump with fault-relanding |
 | R5 | **Bounded teardown**: address space, VMO, descriptor table and `munmap` in steps of N with no lock held between them (§4.4 (1)). Its order comes from R3's list and fault-relanding's root cause. | C | 8 | open, after fault-relanding |
 | R6 | **No contiguous runs for requests above a page**: served through `vmap` from order-0 frames, fallibly. Plus a sized, accounted reserve for allocations under a spin lock, in place of today's implicit headroom (§2.2). | A | 5 | open |
-| R7 | **Burn down class A by area**, highest exposure first: the allocations under a lock (tmpfs's maps and `move_child`, then R13's list), `syscall/`, `fs/socket.rs`, `fs/pipe.rs`, `ferrix-vfs` (`namespace`, `tmpfs`, `dentry`), `interfaces/render` and `display` (the GPU ioctls), `ferrix-net`. A crate at 0 gets clippy `disallowed-methods` and leaves the ratchet. Step 1 is a reachability map from the entry points. About 1 point per 40 sites. | A | ~35 | per area owner |
+| R7 | **Burn down class A by area**, highest exposure first: the allocations under a lock (tmpfs's maps and `move_child`, then R13's list), `syscall/`, `fs/socket.rs`, `fs/pipe.rs`, `xaqu-vfs` (`namespace`, `tmpfs`, `dentry`), `interfaces/render` and `display` (the GPU ioctls), `xaqu-net`. A crate at 0 gets clippy `disallowed-methods` and leaves the ratchet. Step 1 is a reachability map from the entry points. About 1 point per 40 sites. | A | ~35 | per area owner |
 | R8 | **OOM selection counts charged kernel memory and buffers**, plus init's typed `oom_protect` (§3.3 (3), (4)). | B | 5 | open |
 | R9 | **Charge the GPU's and the display's buffers to the client's job**, and add a "charged or argued" column to the ratchet (§3.3 (1), (2)). | B | 5 | open, with the intelgpu owner |
 | R10 | **Critical services survive a filesystem failure**: `mlockall` in init, lode, hyprix and the GPU driver; lode's root-independent write path; init's `WatchdogSec=` (stage 0) (§5.3, §5.4). | D, E | 5 | init, lode |
@@ -651,7 +651,7 @@ The entry is at ledger line 8202.
   restated safety argument for `Drop`; R6's opt-in for consumers that
   need physical contiguity; R8's score of only what a death releases.
   RD.8 says no review is owed for R7 in the load ring and in non-item
-  crates, for R9, for R10, for R11 on `ferrix-btrfs-vfs`, or for R12 and
+  crates, for R9, for R10, for R11 on `xaqu-btrfs-vfs`, or for R12 and
   R13 as xtask rows. Review is owed for R11 on the item's btrfs crates
   and for R13's counter in `mm.rs`.
 * The consultant checked the document's claims about the code and found

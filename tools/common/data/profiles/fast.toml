@@ -36,13 +36,13 @@ linux_abi = "on"
 runtime_settings = "fixed"
 
 [boot_options]
-"ferrix.checks" = ["run"]
-"ferrix.root" = ["*"]
-"ferrix.init" = ["*"]
-"ferrix.onexit" = ["*"]
-"ferrix.panic" = ["halt"]
-"ferrix.vtd" = ["on"]
-"ferrix.amdvi" = ["on"]
+"xaqu.checks" = ["run"]
+"xaqu.root" = ["*"]
+"xaqu.init" = ["*"]
+"xaqu.onexit" = ["*"]
+"xaqu.panic" = ["halt"]
+"xaqu.vtd" = ["on"]
+"xaqu.amdvi" = ["on"]
 console = ["*"]
 
 # The build settings that change code without a cfg (BF4), compared with the

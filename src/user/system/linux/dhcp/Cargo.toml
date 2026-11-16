@@ -8,10 +8,10 @@
 # client and the stack that answers it cannot disagree about either.
 [package]
 name = "dhcp"
-description = "Ferrix's DHCPv4 client: a lease over a packet socket, applied over rtnetlink"
+description = "Xaqu's DHCPv4 client: a lease over a packet socket, applied over rtnetlink"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -26,14 +26,14 @@ name = "dhcpc"
 path = "src/main.rs"
 
 [dependencies]
-ferrix-linux-abi = { path = "../../../../lib/proto/linux-abi" }
-ferrix-netlink = { path = "../../../../lib/network/netlink" }
-ferrix-netwire = { path = "../../../../lib/network/netwire" }
+xaqu-linux-abi = { path = "../../../../lib/proto/linux-abi" }
+xaqu-netlink = { path = "../../../../lib/network/netlink" }
+xaqu-netwire = { path = "../../../../lib/network/netwire" }
 # The packet and netlink sockets and poll, none of which std offers; the
 # version adbd and zinc already build with.
 libc = "0.2.189"
 
-# The Ferrix discipline, as pkg's: every failing call is a line saying so,
+# The Xaqu discipline, as pkg's: every failing call is a line saying so,
 # never an abort. `unsafe` is only the socket calls in `src/sys.rs`, each
 # with its SAFETY comment.
 [lints.rust]

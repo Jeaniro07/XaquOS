@@ -48,9 +48,9 @@ pub use signal::{SIGNAL_RED_ZONE, UserContext, restore_signal_frame, setup_signa
 
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::{Arch, BootView};
-use ferrix_linux_abi::nr::{self, Syscall};
-use ferrix_linux_abi::types::{self, OpenFlagBits};
+use xaqu_bootinfo::{Arch, BootView};
+use xaqu_linux_abi::nr::{self, Syscall};
+use xaqu_linux_abi::types::{self, OpenFlagBits};
 
 use crate::early::{EarlyError, EarlyMemory};
 use crate::irq::Report;
@@ -84,7 +84,7 @@ pub const STAT_LAYOUT: super::StatLayout = super::StatLayout::Generic;
 pub const EPOLL_EVENT_BYTES: usize = 16;
 
 /// The page table descriptor layout this machine uses.
-pub(crate) type PageEncoding = ferrix_paging::aarch64::AArch64;
+pub(crate) type PageEncoding = xaqu_paging::aarch64::AArch64;
 
 /// Bring up the early console.
 ///
@@ -163,14 +163,14 @@ pub unsafe fn init_traps() {
 /// write-combining, so stores may gather into bursts where a device mapping
 /// sends each one out alone. On the Pixel 7 the boot console drawing through
 /// a device mapping cost about 21 of a boot's 95 seconds.
-pub(crate) const FRAMEBUFFER_FLAGS: ferrix_paging::MapFlags = ferrix_paging::MapFlags {
+pub(crate) const FRAMEBUFFER_FLAGS: xaqu_paging::MapFlags = xaqu_paging::MapFlags {
     device: false,
     uncached: true,
     write_combining: false,
-    ..ferrix_paging::MapFlags::KERNEL_DEVICE
+    ..xaqu_paging::MapFlags::KERNEL_DEVICE
 };
 
-/// Whether `ferrix.efifb` may lend the framebuffer to a ring-3 driver: no.
+/// Whether `xaqu.efifb` may lend the framebuffer to a ring-3 driver: no.
 /// [`FRAMEBUFFER_FLAGS`] map it normal non-cacheable, which no user mapping
 /// of an aperture can match yet (`discovery::firmware`).
 pub const LENDS_FRAMEBUFFER: bool = false;
@@ -302,13 +302,13 @@ pub const fn syscall_rollback_value(
 
 /// The ABI a program image runs in, or `None` for one this machine cannot
 /// run: this machine's own images, natively. There is no second ABI here.
-pub fn image_abi(_class: ferrix_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
+pub fn image_abi(_class: xaqu_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
     (machine == ARCH.elf_machine()).then_some(crate::trap::Abi::Native)
 }
 
 /// One past the highest address a compatibility-mode program's space may
 /// hold: this architecture has none, so it is the native bound, never asked.
-pub const COMPAT_USER_END: u64 = ferrix_bootinfo::USER_VIRT_END;
+pub const COMPAT_USER_END: u64 = xaqu_bootinfo::USER_VIRT_END;
 
 /// A compatibility-mode call: none on this architecture, which has no
 /// second ABI to run. Every entry here is [`crate::trap::Abi::Native`], so
@@ -1128,9 +1128,9 @@ pub(crate) fn enable_console_receive(irq: u32) {
 /// `AT_HWCAP` and `AT_HWCAP2` for a program started on this machine: what the
 /// core's identification registers say it has, in the bits
 /// `arch/arm64/include/uapi/asm/hwcap.h` numbers, and only the features a
-/// program can use without more from the kernel. See `ferrix_linux_abi::hwcap`.
+/// program can use without more from the kernel. See `xaqu_linux_abi::hwcap`.
 pub fn user_hwcaps() -> (u64, u64) {
-    use ferrix_linux_abi::hwcap::aarch64::{IdRegisters, hwcap, hwcap2};
+    use xaqu_linux_abi::hwcap::aarch64::{IdRegisters, hwcap, hwcap2};
     let ids = IdRegisters {
         pfr0: cpu::read_id_aa64pfr0(),
         isar0: cpu::read_id_aa64isar0(),
@@ -1312,7 +1312,7 @@ pub fn shutdown() -> ! {
 
 /// Find the watchdogs the device tree lists that firmware left running --
 /// the Pixel 7's two -- and feed them once. Nothing elsewhere.
-pub fn init_watchdogs(tree: &ferrix_fdt::Fdt<'_>) {
+pub fn init_watchdogs(tree: &xaqu_fdt::Fdt<'_>) {
     watchdog::init(tree);
 }
 
@@ -1442,7 +1442,7 @@ pub(crate) fn send_ipi_to_others() -> Result<(), &'static str> {
     Ok(())
 }
 
-/// How `ferrix_sync`'s interrupt-masking lock masks interrupts here.
+/// How `xaqu_sync`'s interrupt-masking lock masks interrupts here.
 #[derive(Debug)]
 pub struct Irq;
 
@@ -1450,7 +1450,7 @@ pub struct Irq;
 // value it found; `restore` puts exactly that value back, so nesting two
 // critical sections cannot unmask halfway out of the outer one. `DAIF` is
 // four bits wide and fits a `usize` on every target this kernel builds for.
-unsafe impl ferrix_sync::IrqControl for Irq {
+unsafe impl xaqu_sync::IrqControl for Irq {
     fn disable() -> usize {
         let previous = cpu::read_daif();
         cpu::disable_interrupts();
@@ -1676,16 +1676,16 @@ const VDSO_CODE: [u8; 12] = {
 };
 
 /// What the vDSO exports: the trampoline, after its `nop`.
-const VDSO_FUNCTIONS: &[ferrix_vdso::Function<'static>] = &[ferrix_vdso::Function {
-    name: ferrix_vdso::SIGRETURN,
+const VDSO_FUNCTIONS: &[xaqu_vdso::Function<'static>] = &[xaqu_vdso::Function {
+    name: xaqu_vdso::SIGRETURN,
     alias: None,
     offset: 4,
 }];
 
 /// The vDSO, which here is the signal return trampoline and nothing else.
-pub fn vdso_spec() -> Option<ferrix_vdso::Spec<'static>> {
-    Some(ferrix_vdso::Spec {
-        machine: ferrix_elf::EM_AARCH64,
+pub fn vdso_spec() -> Option<xaqu_vdso::Spec<'static>> {
+    Some(xaqu_vdso::Spec {
+        machine: xaqu_elf::EM_AARCH64,
         code: &VDSO_CODE,
         functions: VDSO_FUNCTIONS,
     })

@@ -1,7 +1,7 @@
-# Init: a service manager for Ferrix
+# Init: a service manager for Xaqu
 
 Version 2, a draft. Written on 2026-09-23 at the customer's asking: *a real
-init, fitting to our kernel, usable if Ferrix later becomes a microkernel,
+init, fitting to our kernel, usable if Xaqu later becomes a microkernel,
 and somewhat extensible like systemd*. Version 2 follows the customer's
 second order of the same day: *build stage 13's cgroups first, and plan the
 init as if they exist*. §14 lists the decisions that
@@ -133,7 +133,7 @@ five mechanisms. This design takes all five, and adds one of its own:
 | Targets, slices and `[Install]` | Hook into boot at a named point, and into the resource tree at a named branch |
 | Generators | Write units from the machine's state at boot (a getty per console) |
 | Socket activation | Start a service on its first connection |
-| **The directory** (Ferrix's own, §6) | Offer or use a named native service, started on first use |
+| **The directory** (Xaqu's own, §6) | Offer or use a named native service, started on first use |
 
 Unit *kinds* are a trait in `src/lib/init/svc` (§4.2). A new kind, such as `timer` or
 `path`, is a new implementation of the trait; the graph and the operations
@@ -212,7 +212,7 @@ hyprlang parser has.
 The syntax is systemd's INI subset: `[Section]`, `Key=value`, `#` and `;`
 comments, a trailing backslash to continue a line, and repeated keys adding
 to a list, where an empty assignment clears it. It is chosen for familiarity
-over elegance: anyone who has written a systemd unit can write a Ferrix one,
+over elegance: anyone who has written a systemd unit can write a Xaqu one,
 and a distribution's unit file mostly loads. A key init does not know is a
 warning in the log, not an error, so such a file still loads.
 
@@ -220,9 +220,9 @@ Units are searched in three directories, each overriding the one below it:
 
 | Directory | Who writes it | Lives on |
 |---|---|---|
-| `/run/ferrix/units` | generators, at every boot | tmpfs |
-| `/etc/ferrix/units` | the administrator; `svc enable` | the root volume |
-| `/lib/ferrix/units` | the image (`xtask`) | the initramfs, installed onto `/` |
+| `/run/xaqu/units` | generators, at every boot | tmpfs |
+| `/etc/xaqu/units` | the administrator; `svc enable` | the root volume |
+| `/lib/xaqu/units` | the image (`xtask`) | the initramfs, installed onto `/` |
 
 A drop-in `name.service.d/*.conf`, in any of the three, overrides single keys
 of `name.service`, with files applied in name order. A unit linked to
@@ -294,7 +294,7 @@ rescue.target      one shell on the console, nothing else
 shutdown.target / poweroff.target / reboot.target
 ```
 
-`default.target` is a link to one of them, and `ferrix.target=` on the kernel
+`default.target` is a link to one of them, and `xaqu.target=` on the kernel
 command line overrides it, as `systemd.unit=` does.
 
 **Devices.** A unit can wait for a device node: `hyprix.service` says
@@ -323,7 +323,7 @@ the directory does not exist yet (`/dev/dri` before the first card), and
 ### 4.4 Services
 
 ```ini
-# /lib/ferrix/units/getty@.service
+# /lib/xaqu/units/getty@.service
 [Unit]
 Description=Login prompt on %i
 After=basic.target
@@ -364,7 +364,7 @@ loads on systemd should load here. The keys of L13 are all carried out
 (§4.5).
 
 `[Install]` takes `WantedBy=`, `RequiredBy=` and `Alias=`. `svc enable` makes
-the links in `/etc/ferrix/units/<target>.wants/` that systemd makes.
+the links in `/etc/xaqu/units/<target>.wants/` that systemd makes.
 
 ### 4.5 Sandboxing (L13)
 
@@ -380,13 +380,13 @@ sandboxing keys systemd has (`ProtectHome=`, `PrivateDevices=`,
 `ReadOnlyPaths=`, ...) still warn by name, and the
 service runs without them (§4.4).
 
-| Key | systemd | Ferrix |
+| Key | systemd | Xaqu |
 |---|---|---|
-| `NoNewPrivileges=` | A boolean. No `execve` of the service or anything it starts gains a privilege, through set-uid or set-gid bits or file capabilities (`PR_SET_NO_NEW_PRIVS`). | The same `prctl`, the last step before `execve`. The kernel drops a set-id program's bits under it (`syscall/exec.rs`). Ferrix has no file capabilities, so set-id bits are all it covers. systemd's extra of mounting everything `nosuid` in a new mount namespace is not done; the flag makes it unneeded. |
+| `NoNewPrivileges=` | A boolean. No `execve` of the service or anything it starts gains a privilege, through set-uid or set-gid bits or file capabilities (`PR_SET_NO_NEW_PRIVS`). | The same `prctl`, the last step before `execve`. The kernel drops a set-id program's bits under it (`syscall/exec.rs`). Xaqu has no file capabilities, so set-id bits are all it covers. systemd's extra of mounting everything `nosuid` in a new mount namespace is not done; the flag makes it unneeded. |
 | `PrivateTmp=` | A boolean or `disconnected`. `yes`: a new mount namespace whose `/tmp` and `/var/tmp` are directories of the host's own `/tmp` and `/var/tmp`, made per unit and removed when it stops, and shared with units that name it in `JoinsNamespaceOf=`. `disconnected` (since 256): a new tmpfs on each. | `yes` and `disconnected` alike are a new tmpfs on `/tmp` and `/var/tmp`, mode 1777, `nosuid,nodev`, made in each process's own namespace. Nothing is left on the host to remove; what the service wrote goes with its namespace. **Differs:** each command of the unit gets its own, so what `ExecStartPre=` writes to `/tmp` is not seen by `ExecStart=`, and there is no `JoinsNamespaceOf=`. `/var` and `/var/tmp` are made if missing. |
-| `ProtectSystem=` | A boolean, `full` or `strict`. `yes`: `/usr`, `/boot` and `/efi` read-only. `full`: and `/etc`. `strict`: the whole hierarchy but `/dev`, `/proc` and `/sys`; with `PrivateTmp=` the private `/tmp` and `/var/tmp` stay writable. `ReadWritePaths=` opens places again. | Each place is remounted `MS_REMOUNT\|MS_BIND\|MS_RDONLY` in the service's own mount namespace, keeping the mount's `nosuid`, `nodev`, `noexec` and atime flags as `mountinfo` gives them, since a bind remount sets exactly the flags it is given. A place that is no mount's root is bound onto itself first, with `MS_REC`. Every mount beneath it, from `/proc/self/mountinfo` read in the parent, is remounted the same way, so `/data` and `/run` under `/` are read-only under `strict`. **Differs:** `yes` adds `/bin`, `/sbin`, `/lib` and `/lib64` when they are directories, since Ferrix's images keep them at the top where a merged `/usr` would have them under `/usr`; a link among them is left, as what it names is covered where it is. `ReadWritePaths=` is not built. |
-| `PrivateNetwork=` | A boolean. A new network namespace with only `lo` in it, up; implies a private mount namespace, and `/sys` is remounted for the new namespace. | Since L13b: `unshare(CLONE_NEWNET)` in the child, then `lo` up (`SIOCGIFFLAGS`, `IFF_UP`, `SIOCSIFFLAGS`), which gives it 127.0.0.1 and `::1`; a mount namespace is implied, as systemd implies it. **Differs:** `/sys` is not remounted, since Ferrix's sysfs shows no interfaces per namespace; `JoinsNamespaceOf=` and the key on a socket unit are not built. Abstract `AF_UNIX` names are per network namespace here as on Linux, so `vport`'s and the like are out of reach. |
-| `SystemCallFilter=` | A list of system call names and `@group`s. Without `~` it is an allow-list: only those (and `@default`, added first) run. With `~` a deny-list. Later assignments add to the set when they agree with the first and take from it otherwise; an empty one resets. A denied call kills the process with `SIGSYS`, or returns `SystemCallErrorNumber=`'s errno, or a deny-list word's own `:errno`. A `User=` service gets `NoNewPrivileges=` implied, since it has no `CAP_SYS_ADMIN` to install the filter without it. | Parsed with the merge kept as an ordered list of words, each marked add or take, since expanding a group needs its per-ABI members. Unknown groups and malformed names or actions warn. Since L13c: compiled in the parent to one classic BPF program (below) and installed by the child with `seccomp(SECCOMP_SET_MODE_FILTER)` as its last step before `execve`; `NoNewPrivileges=` is implied for a `User=` service. **Ferrix adds** `@ferrix-native`, the native call range, allowed by an allow-list when the unit has `Uses=` or `Offers=`. |
+| `ProtectSystem=` | A boolean, `full` or `strict`. `yes`: `/usr`, `/boot` and `/efi` read-only. `full`: and `/etc`. `strict`: the whole hierarchy but `/dev`, `/proc` and `/sys`; with `PrivateTmp=` the private `/tmp` and `/var/tmp` stay writable. `ReadWritePaths=` opens places again. | Each place is remounted `MS_REMOUNT\|MS_BIND\|MS_RDONLY` in the service's own mount namespace, keeping the mount's `nosuid`, `nodev`, `noexec` and atime flags as `mountinfo` gives them, since a bind remount sets exactly the flags it is given. A place that is no mount's root is bound onto itself first, with `MS_REC`. Every mount beneath it, from `/proc/self/mountinfo` read in the parent, is remounted the same way, so `/data` and `/run` under `/` are read-only under `strict`. **Differs:** `yes` adds `/bin`, `/sbin`, `/lib` and `/lib64` when they are directories, since Xaqu's images keep them at the top where a merged `/usr` would have them under `/usr`; a link among them is left, as what it names is covered where it is. `ReadWritePaths=` is not built. |
+| `PrivateNetwork=` | A boolean. A new network namespace with only `lo` in it, up; implies a private mount namespace, and `/sys` is remounted for the new namespace. | Since L13b: `unshare(CLONE_NEWNET)` in the child, then `lo` up (`SIOCGIFFLAGS`, `IFF_UP`, `SIOCSIFFLAGS`), which gives it 127.0.0.1 and `::1`; a mount namespace is implied, as systemd implies it. **Differs:** `/sys` is not remounted, since Xaqu's sysfs shows no interfaces per namespace; `JoinsNamespaceOf=` and the key on a socket unit are not built. Abstract `AF_UNIX` names are per network namespace here as on Linux, so `vport`'s and the like are out of reach. |
+| `SystemCallFilter=` | A list of system call names and `@group`s. Without `~` it is an allow-list: only those (and `@default`, added first) run. With `~` a deny-list. Later assignments add to the set when they agree with the first and take from it otherwise; an empty one resets. A denied call kills the process with `SIGSYS`, or returns `SystemCallErrorNumber=`'s errno, or a deny-list word's own `:errno`. A `User=` service gets `NoNewPrivileges=` implied, since it has no `CAP_SYS_ADMIN` to install the filter without it. | Parsed with the merge kept as an ordered list of words, each marked add or take, since expanding a group needs its per-ABI members. Unknown groups and malformed names or actions warn. Since L13c: compiled in the parent to one classic BPF program (below) and installed by the child with `seccomp(SECCOMP_SET_MODE_FILTER)` as its last step before `execve`; `NoNewPrivileges=` is implied for a `User=` service. **Xaqu adds** `@xaqu-native`, the native call range, allowed by an allow-list when the unit has `Uses=` or `Offers=`. |
 | `SystemCallErrorNumber=` | An errno name or number, or `kill`: what a call the filter denies gets instead of `SIGSYS`. | Since L13c, the same. |
 | `SystemCallArchitectures=` | `native`, `x86-64`, `x86`, `arm64`, `arm`, ...: the ABIs a call may come through; any other is killed. | Since L13c: per ABI the kernel serves the service (x86-64's `syscall` and its i386 `int $0x80`, AArch64, ARMv7-A), an ABI left out is one `KILL_PROCESS`; x32 numbers are killed whenever the key is set. |
 
@@ -400,7 +400,7 @@ lookup. The child then, after its signals, session, terminal and streams:
    `unshare(CLONE_NEWNS)`; `/` and everything under it made slaves
    (`MS_REC|MS_SLAVE`, accepted and a no-op today, since no mount is ever
    shared); `/var` and `/var/tmp` made if missing; a tmpfs on each of `/tmp`
-   and `/var/tmp`, then `chmod 1777`, because Ferrix's tmpfs reads no
+   and `/var/tmp`, then `chmod 1777`, because Xaqu's tmpfs reads no
    options; then the read-only remounts. A failure is systemd's
    `EXIT_NAMESPACE`, 226.
 3. **Directory and user**, as before (§5.2): `chdir` resolves in the new
@@ -412,7 +412,7 @@ lookup. The child then, after its signals, session, terminal and streams:
 7. `execve`.
 
 The mounts come before the user change because only a privileged process
-may make a mount namespace or mount (Ferrix's `unshare` and `mount` ask for
+may make a mount namespace or mount (Xaqu's `unshare` and `mount` ask for
 privilege as Linux asks for `CAP_SYS_ADMIN`). `no_new_privs` comes after the
 user change and before the filter because a filter needs it, or privilege,
 to be installed, and a filter that ran earlier would have to allow
@@ -425,7 +425,7 @@ started by `execve` and has no Linux mount namespace of its own to change.
 `IFF_UP` on `lo` through a datagram socket made and closed there (a stack
 `ifreq`, so nothing is allocated), which gives the namespace 127.0.0.1 and
 `::1` (`docs/NETNS.md` §2.2). It implies a mount namespace, as systemd's
-does; `/sys` is not remounted, since Ferrix's sysfs shows no network
+does; `/sys` is not remounted, since Xaqu's sysfs shows no network
 devices per namespace. A socket unit's `PrivateNetwork=` and
 `JoinsNamespaceOf=` are not in this design. `plan` sets a flag and `enter`
 does step 1 (`sys::loopback_up`).
@@ -441,14 +441,14 @@ ARMv7-A; `docs/SECCOMP.md` §3.2):
    are generated by `tools/common/gen/gen-init-syscall-tables.py` from
    Linux's `unistd` and `errno` headers and systemd's listing, committed
    under `src/lib/init/svc/data/`; `check` runs the generator's `--check`,
-   and a host test holds them against `ferrix-linux-abi`'s numbers. A name the ABI
+   and a host test holds them against `xaqu-linux-abi`'s numbers. A name the ABI
    lacks is left out of that ABI's filter, as libseccomp leaves it; a name
    no ABI has warns, as systemd's does.
-2. An allow-list starts with `@default`, as systemd's does. **Ferrix adds** the native calls a unit's `Uses=` or
+2. An allow-list starts with `@default`, as systemd's does. **Xaqu adds** the native calls a unit's `Uses=` or
    `Offers=` imply (`process_bootstrap` and the channel calls, §6), since
    the native range goes through the filter like any other number
    (`docs/SECCOMP.md` SR2) and the program takes its bootstrap channel after
-   `execve`; and a group `@ferrix-native` names the whole range for a unit
+   `execve`; and a group `@xaqu-native` names the whole range for a unit
    that wants it. On ARMv7-A the private calls (`set_tls`, `cacheflush`)
    are in the ARM table, named as libseccomp names them.
 3. A classic BPF program: load `arch`; for each ABI a block, entered by its
@@ -621,7 +621,7 @@ these a service uses is set by its `Type=`:
   passed it. `READY=1` means ready and `STATUS=…` is shown by `svc status`.
   This is s6's readiness descriptor with sd_notify's words. It is not
   sd_notify itself, because that protocol sends a datagram to a named socket
-  and Ferrix answers that with `EOPNOTSUPP` today. When the kernel sends
+  and Xaqu answers that with `EOPNOTSUPP` today. When the kernel sends
   datagrams to names, `NOTIFY_SOCKET` is a second transport for the same
   parser, and ported daemons that speak sd_notify work unchanged.
 * `native`: the service's first message on its bootstrap channel is READY.
@@ -642,7 +642,7 @@ begins at a start, holds while no more than the interval has passed since,
 and the first start after that begins the next, counting from one. Each restart doubles the delay, up to
 `RestartSec=` times 32. A restart always begins with an empty cgroup: a
 service's leftovers from its last run are killed before it starts again.
-While `lode crashd` holds `/dev/ferrix-crashes` open, a unit or a driver
+While `lode crashd` holds `/dev/xaqu-crashes` open, a unit or a driver
 that ends by a fault of its own ends up to 2 s later, so its restart, by
 init or by `devmgr` (T0's driver restart included), can start up to 2 s
 later too (`docs/LOGGING.md` §21.7, MEMORY-AND-TIMING §2.2y).
@@ -698,7 +698,7 @@ then on like a service it did not start. A scope has no `ExecStart=`, is
 stopped by signal and `cgroup.kill`, and is removed once empty. `login`
 creates `session-N.scope` under `user-<uid>.slice` for the session it
 starts, while it is still root (`docs/AUTH.md` §6.2; `getty --login` execs
-it). On the console it also names the scope in `/run/ferrix/login/console`,
+it). On the console it also names the scope in `/run/xaqu/login/console`,
 and the next `login` there stops that scope, if it is still there, before it
 asks who is logging in. hyprix creates
 `app-<name>-<n>.scope` for each program it starts, so `svc status` answers
@@ -743,18 +743,18 @@ REFUSED  init -> service   name; why
 A unit declares what it offers and uses:
 
 ```ini
-# /lib/ferrix/units/clipboard.service
+# /lib/xaqu/units/clipboard.service
 [Service]
 Type=native
 ExecStart=/sbin/vdagent
-Offers=ferrix.clipboard
+Offers=xaqu.clipboard
 
-# /lib/ferrix/units/hyprix.service
+# /lib/xaqu/units/hyprix.service
 [Unit]
 Wants=clipboard.service
 [Service]
 ExecStart=/bin/hyprix --config /etc/hyprland.conf
-Uses=ferrix.clipboard
+Uses=xaqu.clipboard
 Delegate=yes
 ```
 
@@ -766,8 +766,8 @@ on the two talk directly; init is out of the path. A name nobody offers, or
 that the unit does not declare, gets REFUSED.
 
 The first pair a shipped image uses (2026-10-03, `docs/AUTH.md` §3.7):
-`auth.service` says `Offers=ferrix.auth.seat`, and a session's
-`hyprix.service` says `Uses=ferrix.auth.seat`. There the unit's own process
+`auth.service` says `Offers=xaqu.auth.seat`, and a session's
+`hyprix.service` says `Uses=xaqu.auth.seat`. There the unit's own process
 is `sessiond`, which takes the bootstrap and relays to the compositor it
 starts as the user: a bootstrap belongs to the process init spawned and is
 sealed at `execve`, so a child cannot take it.
@@ -824,7 +824,7 @@ started by nobody, stopped by nobody.
 vfs.builtin   net.builtin   block.builtin   devmgr.builtin
 ```
 
-A unit written today says `After=net.builtin` or `Uses=ferrix.vfs`, and it is
+A unit written today says `After=net.builtin` or `Uses=xaqu.vfs`, and it is
 correct on both kernels. The day the network stack becomes a server,
 `net.builtin` is replaced by `net.service` with `Alias=net.builtin`, and no
 unit that depended on it changes. The names are the contract. Whether a kernel
@@ -864,7 +864,7 @@ through init: init is given a *starter* instead, and the kernel does the
 rest. And the images that boot init opt in, so the certified configuration
 keeps the kernel's path.
 
-* `ferrix.devmgr=init` on the command line, which the images that boot
+* `xaqu.devmgr=init` on the command line, which the images that boot
   `/sbin/init` carry (`run`, the desktop, `test-init`, `test-compositor`,
   `test-jobs`). Without it, or with `kernel`, the kernel starts `devmgr` at
   bring-up as before; that is the reference configuration
@@ -908,7 +908,7 @@ keeps the kernel's path.
   volume, and init mounts a fresh `/run` there rather than moving the old
   one across as Linux's `mount --move /run` would. The rule is an abstract
   `AF_UNIX` name, gated on the peer's `SO_PEERCRED` in place of a file
-  mode: `vport`'s `\0ferrix.vport` is the first (ferrix-e4, 2026-09-27).
+  mode: `vport`'s `\0xaqu.vport` is the first (xaqu-e4, 2026-09-27).
   Abstract names are per network namespace, so a unit with L13's
   `PrivateNetwork=` will not see them.
 * When a unit's cgroup goes, init removes the cgroups beneath it first and
@@ -922,9 +922,9 @@ keeps the kernel's path.
 ### 8.1 Boot
 
 The kernel runs its boot checks, starts `devmgr`, switches the root, then
-starts **the program `ferrix.init=` names** (K0, built in L3). The file may
+starts **the program `xaqu.init=` names** (K0, built in L3). The file may
 be a `#!` script, run under its interpreter as `execve` runs one. A file that
-is missing or will not start is said on one line (`init     ferrix.init=…
+is missing or will not start is said on one line (`init     xaqu.init=…
 could not be started: …; falling back to the built-in program`), and the
 built-in program runs as before. With nothing named, the order is the
 built-in program, then `/sbin/init` if the image has one, then nothing. The
@@ -942,8 +942,8 @@ Init then:
    is skipped when the kernel already mounted them. That way a kernel that
    stops mounting them changes nothing above it.
 2. Receives K2's first message.
-3. Runs the generators in `/lib/ferrix/generators/`, each with
-   `/run/ferrix/units` as its argument, with a deadline. The first one shipped
+3. Runs the generators in `/lib/xaqu/generators/`, each with
+   `/run/xaqu/units` as its argument, with a deadline. The first one shipped
    is `getty-generator`, which writes a `getty@<name>.service` link into
    `multi-user.target.wants` for every terminal the kernel command line names
    in `console=`, and for `/dev/console` otherwise.
@@ -955,7 +955,7 @@ Init then:
    store named by it, not by a host name two machines may share. A root on
    a disk keeps it; a root in memory gets a new one each boot. Then each
    account's missing home is made.
-5. Loads the units and starts `default.target`, or `ferrix.target=`.
+5. Loads the units and starts `default.target`, or `xaqu.target=`.
 6. Prints one boot-log line per unit that becomes active or fails, in the
    `  init     …` format `xtask` reads.
 
@@ -1000,7 +1000,7 @@ commit.
 Linux panics. The kernel here does what it does today when pid 1 exits: it
 prints `init     … exited with N` and runs `power::finish`, which syncs and
 powers off. That is what every gate relies on, so it stays. The kernel option
-`ferrix.onexit=panic`, beside `reset`, gives Linux's behaviour to anyone who
+`xaqu.onexit=panic`, beside `reset`, gives Linux's behaviour to anyone who
 wants it (L3): the disks are committed, and then the kernel panics with
 `FX-1501`.
 
@@ -1037,7 +1037,7 @@ signals it needs to the port. It would be a different loop over the same
 
 ## 10. Control and logs
 
-`/run/ferrix/control` is a stream socket. Requests and replies are
+`/run/xaqu/control` is a stream socket. Requests and replies are
 length-prefixed records in `src/lib/init/svc-proto`, not text, so `svc`'s output can
 change without breaking another client. `SO_PEERCRED` says who is asking:
 anyone may ask for status. Only root may change state, except that a user
@@ -1114,7 +1114,7 @@ not another user, not a service.
 Tested: `seat.rs`'s host tests (the seat's person, a program the desktop
 started, ssh, another uid, a reused pid, a scope made again; the negative
 control is the same tests with the mark recorded as none, which fail), and
-`cargo xtask test-iso`, where `ferrix` in the live session types `poweroff`
+`cargo xtask test-iso`, where `xaqu` in the live session types `poweroff`
 into a terminal and the machine powers off, then `reboot` and the desktop
 comes back.
 
@@ -1126,7 +1126,7 @@ outside init as well:
 
 | | Change | Also wanted by | Points |
 |---|---|---|---|
-| K0 | `ferrix.init=<path>`: start pid 1 from a file, the embedded program as the fallback. **Done in L3** | any image that is not a gate | 2 |
+| K0 | `xaqu.init=<path>`: start pid 1 from a file, the embedded program as the fallback. **Done in L3** | any image that is not a gate | 2 |
 | K2 | Init started with a bootstrap channel, as `devmgr` is. **Done 2026-09-26**, kernel half of L8 | §7.3 | 2 |
 | K3 | `process_give(pid, handle)`: a parent installs one handle in its own child that has not yet called `execve`; `process_bootstrap()` returns that handle once, to the child. **Done 2026-09-26**, kernel half of L8 | any Linux program that starts a native-aware one | 2 |
 | K4 | `port_fd(port)`: a descriptor readable while the port has packets. **Done 2026-09-26**, kernel half of L8 | hyprix and the terminal, once they use a native service | 3 |
@@ -1177,7 +1177,7 @@ cgroup half is what §0 asks for first.
 | L8 | K2, K3, K4, K6; `Type=native` in the cgroup's job; the directory (§6). **Done 2026-09-26** (§16) | L5, C8 | `test-init` stage five | 16 |
 | L9 | `.socket` units. **Done 2026-09-26** (§16), sshd aside | L4 | `test-init`: sshd activated on connect | 5 |
 | L10 | Move the images over: `cargo xtask run` and `run-compositor` boot init with `multi-user.target` / `graphical.target`; hyprix stops being pid 1 and makes a scope per client. **Done 2026-09-26** (§16) | L5, L6 | `test-compositor` under init | 6 |
-| L11 | `devmgr` shares the restart policy. **Done 2026-09-26** by ferrix-55b: the policy is its own no-alloc crate, `src/lib/init/restart`, with systemd's fixed-window start limit, and devmgr reads each death's status through K6 | L2 | `test-restart` | 2 |
+| L11 | `devmgr` shares the restart policy. **Done 2026-09-26** by xaqu-55b: the policy is its own no-alloc crate, `src/lib/init/restart`, with systemd's fixed-window start limit, and devmgr reads each death's status through K6 | L2 | `test-restart` | 2 |
 | L12 | The kernel starts init alone and init starts `devmgr` (§7.3). **Done 2026-09-27**, re-sized from 8 to 12 for the starter, the re-root and the certification record | L8 | `test-init --arch all` with a root disk, the whole image row | 12 |
 | L13 | The sandboxing keys (§4.5), re-sized from 8 to 10 and split by the kernel half each needs. **L13a built 2026-10-04** (§16), **L13b and L13c built the same day**, gated 2026-10-05: all seven keys parsed and carried out. L13a: `NoNewPrivileges=`, `PrivateTmp=`, `ProtectSystem=`. L13b: `PrivateNetwork=`. L13c: `SystemCallFilter=`, with `SystemCallArchitectures=` and `SystemCallErrorNumber=` | L4; L13a mount and user namespaces (N1 to N3) and `prctl`; L13b network namespaces; L13c S3 | `test-init`'s sandboxing stage | 5 + 1 + 4 |
 
@@ -1202,8 +1202,8 @@ L8 is what makes it one a microkernel could keep.
 5. **Whether `devmgr` moves under init** (L12), and when. Draft: after the
    directory has been used for real, not before.
 6. **What happens when init dies** (§8.3). Draft: keep `power::finish`, and
-   add `ferrix.onexit=panic`.
-7. **The names**: `/sbin/init`, `svc`, `/lib/ferrix/units`, `ferrix.*`
+   add `xaqu.onexit=panic`.
+7. **The names**: `/sbin/init`, `svc`, `/lib/xaqu/units`, `xaqu.*`
    directory names, systemd's slice names. Draft: as written.
 8. **Where the design goes on the roadmap.** Draft: stage 15, whose remaining
    item it is, with stage 13's cgroups as its prerequisite. L12 belongs with
@@ -1213,7 +1213,7 @@ L8 is what makes it one a microkernel could keep.
 ## 15. The test
 
 `cargo xtask test-init` boots `/sbin/init` from the image, with
-`ferrix.init=` and no embedded program, on all three architectures. Each
+`xaqu.init=` and no embedded program, on all three architectures. Each
 landing adds a stage, and each stage requires its lines:
 
 1. **Boot and a terminal** (L4). `multi-user.target` becomes active. The
@@ -1252,14 +1252,14 @@ the system people will actually use.
 
 | | State | On `main` as |
 |---|---|---|
-| L3 | done, 2026-09-24 | "Start pid 1 from the file ferrix.init= names, and commit the disks in reboot(2)" |
+| L3 | done, 2026-09-24 | "Start pid 1 from the file xaqu.init= names, and commit the disks in reboot(2)" |
 | L1 | done, 2026-09-24 | "Read unit files in systemd's syntax" |
 | L2 | done, 2026-09-24 | "Run units as one state machine of events and actions" |
 | L4 | done, 2026-09-26 | "Add /sbin/init, getty and the getty generator around src/lib/init/svc's manager" |
 | L5, L6, L7, L9 | done, 2026-09-26 | "Give the manager reload, a readiness status, and socket units"; "Add src/lib/init/svc-proto: svc's control records and readiness lines"; "Give init svc, the log, readiness, sockets and resources" |
 | L8 | done, 2026-09-26: the kernel half (K2, K3, K4, K6), then init's | "Let a parent hand its child a bootstrap handle across execve" and the five after it; "Route the directory's OPENs, and start Type=native services" |
 | L10 | done, 2026-09-26 | "Boot the images through init, and the compositor as its service" |
-| L11 | done, 2026-09-26, by ferrix-55b with T0 | "Give the restart policy a crate of its own that allocates nothing"; "Restart drivers by the service manager's policy, and report how they died" |
+| L11 | done, 2026-09-26, by xaqu-55b with T0 | "Give the restart policy a crate of its own that allocates nothing"; "Restart drivers by the service manager's policy, and report how they died" |
 | L12 | done, 2026-09-27, as built in §7.3 | "Let pid 1 start devmgr, through a starter the kernel gives it" |
 | L13a | landed 2026-10-04 (1e1f2543a), reconciled 2026-11-02 | "init: carry out NoNewPrivileges=, PrivateTmp= and ProtectSystem= in the child" |
 | L13b | landed 2026-10-05 (3349682db) | |
@@ -1269,7 +1269,7 @@ All of L1 to L12's 81 points are spent. L11 put `devmgr` on the restart
 policy, which moved into `src/lib/init/restart` because `devmgr` has no
 allocator; its start limit became systemd's fixed window. The customer
 counts the init done at L11 (2026-09-26). L12 (2026-09-27) has pid 1 start
-`devmgr` through a starter under `ferrix.devmgr=init`, which every image
+`devmgr` through a starter under `xaqu.devmgr=init`, which every image
 that boots init now sets. `sshd` runs under socket activation in L9's gate
 since 2026-09-27. L13a, the sandboxing keys that need only mount namespaces and
 `prctl`, is built (2026-10-04); L13b, `PrivateNetwork=`, is built over
@@ -1323,7 +1323,7 @@ corpus. What it does, module by module:
   follow: it hands in the file's bytes. Only a link to another name, an
   alias, or to `/dev/null` reaches the crate as a link.
 * `StandardOutput=journal`, `kmsg` and their `+console` forms read as
-  `log`, since the log reaches the console (§10). `console` is Ferrix's own
+  `log`, since the log reaches the console (§10). `console` is Xaqu's own
   value.
 * `NotifyFd=` is a service key: the descriptor §5.3's readiness line is
   written to.
@@ -1357,7 +1357,7 @@ the main process exits. `Restart=` follows systemd's table, with
 limit counts every start in systemd's fixed window; the policy is
 `restart::Policy`, since L11 in `src/lib/init/restart`, which takes
 `Option<Instant>` and is a pure count without a clock, for `devmgr` (L11).
-Boot starts `default.target` or `ferrix.target=`'s, and isolates
+Boot starts `default.target` or `xaqu.target=`'s, and isolates
 `rescue.target` if that cannot start or fails. Shutdown stops everything
 that conflicts with `shutdown.target` in reverse order, writes `cgroup.kill`
 in every cgroup left, deepest first, waits up to 90 seconds for them to
@@ -1431,28 +1431,28 @@ the machine stays the backend's: expanding `$VAR` in a command whose
 `expand_environment` is set, reading `EnvironmentFile=`, looking up `User=`
 and `Group=`, opening `TTYPath=`, and a `Probe` for the conditions.
 
-**L3, as built (3 points).** K0: `ferrix.init=<path>` on the kernel command
+**L3, as built (3 points).** K0: `xaqu.init=<path>` on the kernel command
 line (`CMDLINE.TXT`, or U-Boot's `bootargs` on a board) starts pid 1 from
 that file in the switched root, with the path as its only argument and
 `PATH=/bin HOME=/ TERM=dumb` as its environment; a `#!` script runs under
 its interpreter. The kernel prints `init     starting <argv>`, then
 `init     <path> exited with <status>`. A missing or unstartable file prints
-`init     ferrix.init=<path> could not be started: <why>; falling back to
+`init     xaqu.init=<path> could not be started: <why>; falling back to
 the built-in program`, and a path that is not absolute is refused when the
 option is read. `cargo xtask build`, `run` and `test-boot` take
-`--init-path <PATH>`, which writes `ferrix.init=<PATH>` into `CMDLINE.TXT`;
+`--init-path <PATH>`, which writes `xaqu.init=<PATH>` into `CMDLINE.TXT`;
 `qemu::init_option` builds the same option for a test (§8.1 for the order
 of the defaults). K7: `reboot(2)` calls `power::sync_disks` before power-off,
-halt and restart. `ferrix.onexit=panic` makes init's exit panic with
+halt and restart. `xaqu.onexit=panic` makes init's exit panic with
 `FX-1501` after the disks are committed (§8.3).
 
 `cargo xtask test-shell` is the gate (`tools/common/xtask/src/init_file.rs`). After its
 built-in boot it boots the same shell and script from files,
-`ferrix.init=/etc/shell-test`, and requires the kernel's `starting` and
+`xaqu.init=/etc/shell-test`, and requires the kernel's `starting` and
 `exited with 7` lines and no fallback. Under busybox (`--init`) it then
 writes `/data/k7` on a fresh volume and runs `poweroff -f -n`, which skips
 busybox's own `sync`. A second boot of that volume, under
-`ferrix.onexit=panic`, must read the file back and then panic with
+`xaqu.onexit=panic`, must read the file back and then panic with
 `FX-1501`. A test boot has no root disk, and the committer its data disk
 starts first commits 30 s after the mount, so only the call can have
 committed the file -- which the test checks rather than assumes: the
@@ -1467,15 +1467,15 @@ control that starts the committer from the root's switch alone fired with
 in 45 s"). The three negative controls fired by the
 checks' own messages: a wrong path (the fallback line, then "the kernel
 fell back to the built-in shell"), no `sync_disks` in `reboot(2)` ("/data/k7
-did not survive poweroff -f -n"), and no `ferrix.onexit=panic` ("did not
+did not survive poweroff -f -n"), and no `xaqu.onexit=panic` ("did not
 panic with FX-1501"). Under zinc only the first boot runs, because zinc
 cannot make the call.
 
 **L4, as built (10 points).** `src/user/system/linux/init/` is a workspace of its own beside
 zinc's and built the same way, a static musl program linked by rust-lld on
 any host, for all three architectures: `/sbin/init`, `/sbin/getty` and
-`/lib/ferrix/generators/getty-generator`, with the units of `src/user/system/linux/init/units` in
-`/lib/ferrix/units`. `cargo xtask check` runs its formatting, clippy and 8
+`/lib/xaqu/generators/getty-generator`, with the units of `src/user/system/linux/init/units` in
+`/lib/xaqu/units`. `cargo xtask check` runs its formatting, clippy and 8
 host tests by default, as it runs the compositor's.
 
 * **The loop** is §9's, over L2's manager. Init ignores every signal but
@@ -1517,7 +1517,7 @@ host tests by default, as it runs the compositor's.
   opens and takes it again -- so no open of it made before, what a program
   the last session left running holds, can read it (`docs/AUTH.md` §1,
   since 2026-10-04) -- puts it on descriptors 0, 1 and 2,
-  prints `Ferrix <host> on <tty>`, and becomes `$SHELL`, `/bin/sh` by
+  prints `Xaqu <host> on <tty>`, and becomes `$SHELL`, `/bin/sh` by
   default, as a login shell. There is no `login` yet. `getty-generator`
   links `getty@<name>.service` into `multi-user.target.wants` for each
   `console=` on the command line, and for `console` when there is none,
@@ -1535,8 +1535,8 @@ session to its pty.
 
 **The gate.** `cargo xtask test-init` (`tools/common/xtask/src/init.rs`) is §15's
 stages one and two, and passes on all three architectures. It boots a
-kernel with no program built in, `ferrix.init=/sbin/init`, zinc at
-`/bin/sh`, its own units in `/etc/ferrix/units` and a fresh blank volume at
+kernel with no program built in, `xaqu.init=/sbin/init`, zinc at
+`/bin/sh`, its own units in `/etc/xaqu/units` and a fresh blank volume at
 `/data`, and types at the prompt the getty gives. Every check is on a line
 the kernel or init printed, or on a line the shell printed in answer. A
 marker is built from a variable (`echo "$m-self $s"`), because the console
@@ -1593,7 +1593,7 @@ grandchild 356 alive", after 20 looks 1.5 s apart.
 branch, since each is a part of the same event loop, gated together by
 `test-init`'s stages three to six below on all three architectures.
 
-* **L6, control and the log.** `/run/ferrix/control` is a stream socket,
+* **L6, control and the log.** `/run/xaqu/control` is a stream socket,
   mode 0666; `SO_PEERCRED` says who connected. Anyone may call `status`,
   `list` and `log`; everything else is root's, but for a scope a user makes
   of their own processes under their own `user-<uid>.slice`. A connection
@@ -1606,8 +1606,8 @@ branch, since each is a part of the same event loop, gated together by
   `daemon-reload`, `enable`, `disable`, `mask`, `unmask`, `set-property
   [--persistent]`, `scope` and `top`, with systemctl's exit statuses (3 for
   a unit not active, 4 for one not loaded). `enable` links what `[Install]`
-  names in `/etc/ferrix/units`; `set-property` writes a drop-in
-  (`/run/ferrix/units/<unit>.d/50-set-property.conf`, or `/etc` with
+  names in `/etc/xaqu/units`; `set-property` writes a drop-in
+  (`/run/xaqu/units/<unit>.d/50-set-property.conf`, or `/etc` with
   `--persistent`), reloads, and writes the running cgroup's files; `top`
   reads `memory.current`, `pids.current` and `cpu.stat` itself.
   `daemon-reload` runs the generators and reads the directories again. A
@@ -1649,7 +1649,7 @@ branch, since each is a part of the same event loop, gated together by
 **The gate.** `test-init` now also types, after stage two:
 
 * **Four (L6):** `svc status` gives `echoer.service`'s main pid and `svc
-  log` the line it wrote; `svc restart` changes the pid; `su ferrix -c 'svc
+  log` the line it wrote; `svc restart` changes the pid; `su xaqu -c 'svc
   stop …'` is refused with its reason, exits 1, and changes nothing;
   `set-property TasksMax=7` reaches `pids.max`; `enable` and `disable` make
   and remove the `.wants/` link; `top` lists the unit.
@@ -1693,7 +1693,7 @@ pid-ok-0`".
 * **The getty generator masked every getty on its second run.** `svc
   daemon-reload` runs the generators again; the link from the first run was
   there, `symlink` failed, and the fallback's `File::create` followed the
-  link and emptied `/lib/ferrix/units/getty@.service` -- and an empty unit
+  link and emptied `/lib/xaqu/units/getty@.service` -- and an empty unit
   masks. Shutdown then never ended. The generator now leaves an entry that is
   there and never opens one to write (`create_new`), with a host test.
 * **A running unit a reload fails keeps its settings until it stops.**
@@ -1744,7 +1744,7 @@ path. A Linux program makes each with `syscall(number, ...)`; a failure is
   `execve` seals an empty slot under the same lock a give is judged under, so
   a give racing one lands before it or is refused after it. A slot never
   taken is closed when the process ends.
-* **K2.** Every program `init::run` starts -- `ferrix.init=`'s file, the
+* **K2.** Every program `init::run` starts -- `xaqu.init=`'s file, the
   built-in program, each command of a list, `/sbin/init` -- gets a fresh
   channel from `init::bootstrap_channel` in its slot, put there by
   `exec::run_init` between load and start. Before it runs, the kernel's end
@@ -1818,15 +1818,15 @@ descriptor", after 51 ms with 0 waits woken).
 
 **The gate, stage five.** `src/user/system/native/pong` is a native service (READY, then
 `pong <name> to <client>` down each CONNECTed end); `pong.service` is
-`Type=native` with `Offers=ferrix.test` and wanted by nothing, so only an
+`Type=native` with `Offers=xaqu.test` and wanted by nothing, so only an
 OPEN starts it. `src/user/system/linux/init/dirclient NAME` is a Linux client that OPENs a name
 and prints `dir-answer: …` or `dir-refused: …`. `asker.service`
-(`Uses=ferrix.test`) must print `dir-answer: pong ferrix.test to
-asker.service`; `rogue.service` (`Uses=ferrix.other`) must be REFUSED;
+(`Uses=xaqu.test`) must print `dir-answer: pong xaqu.test to
+asker.service`; `rogue.service` (`Uses=xaqu.other`) must be REFUSED;
 `svc status pong.service`'s main pid must be the one process in its
 `cgroup.procs`; and the kernel's hello must have been read. Passed on all
 three architectures. Negative controls, on x86-64: no `process_give` failed
-with "asker.service's OPEN of ferrix.test was not answered by
+with "asker.service's OPEN of xaqu.test was not answered by
 pong.service: … dir-none"; refusals dropped failed with "rogue.service's OPEN
 … was not REFUSED: … dir-silent". Building it found that a refusal must be
 sent before the end closes, or the client sees only the close.
@@ -1838,17 +1838,17 @@ it to use. Linux services' own OFFERs are kept but no gate offers one yet.
 
 * **`cargo xtask run`**, with no program named, builds a kernel with
   nothing in it and an initramfs with `/sbin/init`, its units, zinc, the
-  utilities and the ports, and `ferrix.init=/sbin/init` on the command line:
+  utilities and the ports, and `xaqu.init=/sbin/init` on the command line:
   the console gets a getty and a zinc session, and `svc` drives the machine.
   `--init <program>` still makes that program pid 1, as it asks.
 * **The desktop** -- every `test-compositor` boot, `run-compositor`, and a
   board's card -- is built the same way by `compositor::build_parts`: init
-  is pid 1, and `/etc/ferrix/units` in the image adds `hyprix.service`
+  is pid 1, and `/etc/xaqu/units` in the image adds `hyprix.service`
   (`Restart=on-failure`, its output on the console), links it into a shipped
   `graphical.target`, and points `default.target` at it. An image with no
   shell masks the getty, which would only fail. A card gets
-  `ferrix.init=/sbin/init` in `FERRIX/DEFAULTS.TXT`, beside
-  `ferrix.checks=skip`, since its `CMDLINE.TXT` is its owner's.
+  `xaqu.init=/sbin/init` in `XAQU/DEFAULTS.TXT`, beside
+  `xaqu.checks=skip`, since its `CMDLINE.TXT` is its owner's.
 * **hyprix** asks init for a scope for each program it starts, on a thread
   of its own with a two-second limit: `app.slice/app-<name>-<pid>.scope`
   (`src/user/system/linux/compositor/hyprix/src/scope.rs`). With no init, there is no socket, and
@@ -1898,7 +1898,7 @@ first boot of the stage showed it from inside a service:
 /run/l13-open/boxed`. `unshare(CLONE_NEWNS)` from a forked root child, the
 `MS_REC|MS_SLAVE` no-op, tmpfs mounts in the copy and `PR_SET_NO_NEW_PRIVS`
 all worked as documented. No kernel gap was found. One difference the code
-works around: Ferrix's tmpfs reads no mount options, so `mode=1777` is
+works around: Xaqu's tmpfs reads no mount options, so `mode=1777` is
 followed by a `chmod`.
 
 **What building it changed.**
@@ -1910,13 +1910,13 @@ followed by a `chmod`.
 * `NoNewPrivs:` is not in `/proc/<pid>/status` until S3, so the stage shows
   `no_new_privs` by its effect, a set-uid root shell that stays uid 1000
   beside one that becomes root, and reads the line too once it exists.
-* `ProtectSystem=yes` covers Ferrix's top-level `/bin`, `/sbin`, `/lib`
+* `ProtectSystem=yes` covers Xaqu's top-level `/bin`, `/sbin`, `/lib`
   and `/lib64` (§4.5).
 
 **The gate, and the negative controls.** First boot, x86-64 under TCG, on
 the host directly: the stage passed with the rest of `test-init`. Four
 negative controls, each a one-line edit of `init/src/sandbox.rs` booted
-once on x86-64 (logs `~/.local/share/ferrix/logs/l13init-ctl-*.out`), each
+once on x86-64 (logs `~/.local/share/xaqu/logs/l13init-ctl-*.out`), each
 failing on its own key's lines and nothing else:
 
 * `no_new_privs` never set: "boxed.service, with NoNewPrivileges=yes,
@@ -1939,7 +1939,7 @@ outside the stage: `svc audit`'s end marker was typed literally, and the
 typed line's echo, wrapped around `svc status` output still arriving, gave a
 line reading it alone, so the wait ended before the records came. The marker
 is built from a variable now, as every other marker in the test is (log kept
-at `~/.local/share/ferrix/logs/l13init-init-armv7-audit-race.log`).
+at `~/.local/share/xaqu/logs/l13init-init-armv7-audit-race.log`).
 
 Estimate against spend: L13a was estimated at 5 of L13's re-sized 10 points
 and took about 5, with two gate rows run twice for the marker fix, four
@@ -1952,7 +1952,7 @@ regenerated. `PrivateNetwork=` stops refusing: the child's first step is
 `unshare(CLONE_NEWNET)` and `lo` up (§4.5). One more host test of the plan,
 one of the gate's judge. `test-init --arch x86_64` passed on the host with
 the new check; its two negative controls, booted once each on x86-64 (logs
-`~/.local/share/ferrix/logs/l13b-ctl-*.out`):
+`~/.local/share/xaqu/logs/l13b-ctl-*.out`):
 
 * no `unshare(CLONE_NEWNET)`: "netns.service, with PrivateNetwork=yes,
   reached the machine's echo.socket on 127.0.0.1:7777".
@@ -1971,19 +1971,19 @@ roadmap paragraph merged by hand and the generated model pages taken from
 as runs of their own (`po6-l13-b-x86`, `-a64`, `-arm`), all passed; both
 controls ran again as `gate.sh control` on x86-64 and FIRED on their own
 lines (`po6-l13-b-ctl-netns`, `po6-l13-b-ctl-loup`; logs in
-`~/.local/share/ferrix/logs/queue/`).
+`~/.local/share/xaqu/logs/queue/`).
 
 **L13c, as built (4 points, 2026-10-04 and 05).** On branch `l13c`, over
 S3 and `l13b`; rebased on 2026-10-05 (po6-l13) onto `l13b` on the passed
 batch tip 3349682db, the code without a conflict. `SystemCallFilter=`,
 `SystemCallErrorNumber=` and `SystemCallArchitectures=` stop refusing: the
-parent compiles the program (`ferrix_svc::filter`, generated tables) and
+parent compiles the program (`xaqu_svc::filter`, generated tables) and
 the child installs it last (§4.5); the gate's refusal check became the five
 filter units. po6's rows and six controls ran on 83f5ac1b0, over `l13b`
 before its last rebase (`po6-l13-c-*`). Batch 20261005T184633Z failed it on
 `test-vfs --arch x86_64 --init ferrousli` alone, the cgroup applet's
 `rmdir` answering "Resource busy"; that image carries neither this init
-nor `ferrix-svc`, and the same failure is logged on 2026-09-26, before
+nor `xaqu-svc`, and the same failure is logged on 2026-09-26, before
 L13c existed (`rcf-gate-ee843753-on-d1379249/vfs-x86-ferrousli.log`).
 
 Rebased onto `main` 4466212c3 on 2026-10-07 (po10-l13c, branch

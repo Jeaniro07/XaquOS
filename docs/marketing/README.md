@@ -1,24 +1,24 @@
-# Ferrix press and brand kit
+# Xaqu press and brand kit
 
-Ferrix is an experimental Rust operating system written by a fleet of Claude
+Xaqu is an experimental Rust operating system written by a fleet of Claude
 Code sessions, with a person, the customer, deciding what they build. Its own
 kernel runs tested Linux programs without changing the binaries, while disk,
 network, graphics, input and power drivers run as restartable processes.
 
 ## Copy you can use
 
-**Short:** Claude Code agents write Ferrix, an operating system that runs
+**Short:** Claude Code agents write Xaqu, an operating system that runs
 Linux apps without Linux. It has its own Rust kernel and drivers that run
 outside the kernel.
 
-**Longer:** Ferrix is an experimental operating system written in Rust by a
+**Longer:** Xaqu is an experimental operating system written in Rust by a
 fleet of Claude Code sessions: a product owner session, worker agents, a
 certification consultant and quality roles, with a person, the customer,
 deciding scope and priorities. You can boot its Wayland desktop in QEMU and
 run unmodified Linux programs such as Chrome, `git`, `curl` and `rustc`; on an
 Intel N150 mini PC it runs a Windows game from Steam through Proton. Its
 disk, network, graphics, input and power drivers run as separate processes
-that can restart after a crash. Ferrix is experimental and not ready for
+that can restart after a crash. Xaqu is experimental and not ready for
 everyday use; certification of its kernel core is an aim, reviewed
 internally, and nothing is certified.
 
@@ -30,7 +30,7 @@ progress as finished.
 ## Logo and images
 
 - [Logo mark (SVG)](logo.svg): the FX mark, the short version, on a transparent background.
-- [Full logo (SVG)](logo-full.svg): the mark with "Ferrix" under it.
+- [Full logo (SVG)](logo-full.svg): the mark with "Xaqu" under it.
 - [Dark banner](../brand/banner-dark.png) and [light banner](../brand/banner-light.png): README headers.
 - [Social preview](../brand/social-preview.png): a wide image for shared links.
 - [Screenshots](../brand/screenshots/CAPTIONS.md): real captures, with notes on how they were made.
@@ -69,9 +69,9 @@ how to try it and what still fails. Give a command, screenshot or source link
 for a technical claim. Avoid grand claims about changing computing or
 “redefining” operating systems. “Linux apps without Linux” is a short hook,
 not a promise that every Linux program works. Lead with the Claude-led build
-process: say early that Claude Code sessions write Ferrix and the customer
-decides. Never call Ferrix a hobby OS.
+process: say early that Claude Code sessions write Xaqu and the customer
+decides. Never call Xaqu a hobby OS.
 
-For a press mention, link to the [website](https://ferrix-os.org/)
-and [source repository](https://github.com/ferrix-os/ferrix). Ferrix is MIT
+For a press mention, link to the [website](https://xaqu-os.org/)
+and [source repository](https://github.com/xaqu-os/xaqu). Xaqu is MIT
 licensed; see [LICENSE](../../LICENSE) for the terms.

@@ -5,7 +5,7 @@
 //!
 //! It reads the keeper's HELLO, says its facts, sends READY, and then runs
 //! each batch of the keeper's calls on the fake through
-//! `ferrix-intel-xelp`'s [`Worker`], answering with what finished. A bind's
+//! `xaqu-intel-xelp`'s [`Worker`], answering with what finished. A bind's
 //! address VMO is closed once the call is done: the fake binds nothing.
 //! It holds its bootstrap channel and nothing else. When its keeper's end
 //! closes it parks rather than exits, so only its job's kill ends it.
@@ -15,24 +15,24 @@
 
 mod fake;
 
-use ferrix_intel_xelp::remote::Worker;
-use ferrix_intel_xelp::remote::wire::{
+use xaqu_intel_xelp::remote::Worker;
+use xaqu_intel_xelp::remote::wire::{
     BATCH_HANDLES, BATCH_RECORDS, Batch, Call, Event, RECORD_BYTES, records,
 };
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::port;
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::port;
+use xaqu_rt::{Bootstrap, Kernel};
 
 // The front end's chardev and START types are `intel-fake`'s, beside it.
-use ferrix_blkring as _;
-use ferrix_chardevctl as _;
+use xaqu_blkring as _;
+use xaqu_chardevctl as _;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The port key of the bootstrap channel.
 const KEY_KEEPER: u64 = 1;
@@ -65,7 +65,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
         Ok(never) => match never {},
         Err(Step::Keeper) => park(),
         Err(step) => {
-            ferrix_rt::err!("intel-fake: the worker stopped at {step:?}");
+            xaqu_rt::err!("intel-fake: the worker stopped at {step:?}");
             step as i32
         }
     }
@@ -86,7 +86,7 @@ fn park() -> i32 {
 }
 
 fn now() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 /// Events on their way to the keeper.
@@ -144,7 +144,7 @@ fn run(keeper: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
         return Err(Step::Hello);
     };
     let facts = fake::facts(device_id, revision, system_memory_bytes);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel-fake: worker {generation}: {location:#010x} 8086:{device_id:04x} rev {revision}: facts {} EUs, DSS {:#x}, CS {} Hz; {}",
         facts.sseu.eu_total,
         facts.sseu.subslice_mask,

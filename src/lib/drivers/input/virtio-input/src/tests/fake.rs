@@ -16,15 +16,15 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::input::{ConfigSelect, DeviceConfig, EVENT_LEN, Event};
-use ferrix_virtio::pci::{
+use xaqu_virtio::input::{ConfigSelect, DeviceConfig, EVENT_LEN, Event};
+use xaqu_virtio::pci::{
     CONFIG_MSIX_VECTOR, CommonConfig, DEVICE_FEATURE, DEVICE_FEATURE_SELECT, DEVICE_STATUS,
     DRIVER_FEATURE, DRIVER_FEATURE_SELECT, FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, NO_VECTOR,
     NUM_QUEUES, QUEUE_DESC, QUEUE_DEVICE, QUEUE_DRIVER, QUEUE_ENABLE, QUEUE_MSIX_VECTOR,
     QUEUE_NOTIFY_OFF, QUEUE_SELECT, QUEUE_SIZE, STATUS_DEVICE_NEEDS_RESET, STATUS_DRIVER_OK,
     STATUS_FEATURES_OK,
 };
-use ferrix_virtio::{Descriptor, Layout, PAGE_SIZE, QueueMemory, SplitQueueDevice};
+use xaqu_virtio::{Descriptor, Layout, PAGE_SIZE, QueueMemory, SplitQueueDevice};
 
 use crate::{DevicePages, EventArea, ISR_QUEUE, Transport};
 

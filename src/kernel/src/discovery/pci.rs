@@ -48,27 +48,27 @@ use core::cell::RefCell;
 use core::fmt;
 use core::ops::RangeInclusive;
 
-use ferrix_bootinfo::BootView;
-use ferrix_fdt::{EcamHost, Fdt, GicInterrupt};
-use ferrix_pci::bar::{self, Region};
-use ferrix_pci::capability::{
+use xaqu_bootinfo::BootView;
+use xaqu_fdt::{EcamHost, Fdt, GicInterrupt};
+use xaqu_pci::bar::{self, Region};
+use xaqu_pci::capability::{
     self as pci_capability, Capabilities, Capability, ExtendedCapabilities, ID_MSI, ID_MSIX, MsiX,
 };
-use ferrix_pci::ecam::{Layout, Window};
-use ferrix_pci::header::{
+use xaqu_pci::ecam::{Layout, Window};
+use xaqu_pci::header::{
     BusNumbers, CLASS_BRIDGE, COMMAND, COMMAND_MEMORY_SPACE, Endpoint, HeaderKind,
     SUBCLASS_HOST_BRIDGE,
 };
-use ferrix_pci::msi::Msi;
-use ferrix_pci::msix as pci_msix;
-use ferrix_pci::topology::Bridge;
-use ferrix_pci::virtio::{self as virtio_pci, SharedMemory, TYPE_ENTROPY, TYPE_GPU, Transport};
-use ferrix_pci::walk::{Function, Walk};
-use ferrix_pci::window;
-use ferrix_pci::{Address, ConfigSpace, PciError};
+use xaqu_pci::msi::Msi;
+use xaqu_pci::msix as pci_msix;
+use xaqu_pci::topology::Bridge;
+use xaqu_pci::virtio::{self as virtio_pci, SharedMemory, TYPE_ENTROPY, TYPE_GPU, Transport};
+use xaqu_pci::walk::{Function, Walk};
+use xaqu_pci::window;
+use xaqu_pci::{Address, ConfigSpace, PciError};
 
 mod held_off_check;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 mod virtio;
 
 use crate::device::{self, ConfigFound, DeviceNode, Reserved, Seen};
@@ -310,7 +310,7 @@ impl Space {
     }
 }
 
-/// Enumeration's writes -- BAR sizing (`ferrix_pci::bar`), ATS left off
+/// Enumeration's writes -- BAR sizing (`xaqu_pci::bar`), ATS left off
 /// ([`keep_ats_off`]) and the virtio entropy check -- go through this, the
 /// walk's own mapping, at stage 10 and before any node is published. They
 /// are outside `device::ConfigWrites` and its lock, which every write of a
@@ -397,7 +397,7 @@ pub(crate) struct Report {
     /// The completion the device reported for the last faulted write anyway,
     /// if it did: a fact about the device model, printed so a boot log shows
     /// it (`virtio::Faulted`).
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     pub(crate) out_of_domain_completed: Option<virtio::Completed>,
     /// Why the last out-of-domain write was not shown to fault, if one was not.
     pub(crate) out_of_domain_skip: Option<&'static str>,
@@ -421,7 +421,7 @@ pub(crate) enum Failure {
     /// `src/lib/platform/pci` refused what a function presented.
     Refused(PciError),
     /// A virtio queue said something impossible about a request in flight.
-    Queue(ferrix_virtio::QueueError),
+    Queue(xaqu_virtio::QueueError),
     /// The entropy self-check saw a completion that cannot be right.
     Entropy(&'static str),
     /// A function kept ATS on after it was switched off, so its device could
@@ -462,8 +462,8 @@ impl From<PciError> for Failure {
     }
 }
 
-impl From<ferrix_virtio::QueueError> for Failure {
-    fn from(error: ferrix_virtio::QueueError) -> Self {
+impl From<xaqu_virtio::QueueError> for Failure {
+    fn from(error: xaqu_virtio::QueueError) -> Self {
         Failure::Queue(error)
     }
 }
@@ -514,7 +514,7 @@ impl Enumeration {
             entropy_by_interrupt: 0,
             entropy_polled: None,
             out_of_domain_faulted: 0,
-            #[cfg(not(ferrix_personality = "user"))]
+            #[cfg(not(xaqu_personality = "user"))]
             out_of_domain_completed: None,
             out_of_domain_skip: None,
         };
@@ -605,7 +605,7 @@ impl Finder for Enumeration {
         if let Some(why) = &report.out_of_domain_skip {
             crate::println!("  pci      an out-of-domain write was not shown to fault: {why}");
         }
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         if let Some(completed) = &report.out_of_domain_completed {
             crate::println!(
                 "  pci      the device completed the faulted write anyway: {} bytes that never \
@@ -780,7 +780,7 @@ fn node_of(
 /// no line and its memory decoded, and in `MSI_PREFERRED`. Anything else
 /// keeps today's path, the table withheld and MSI-X offered. Before that,
 /// QEMU's `e1000e` with QEMU's subsystem gets stage 10's check of the path
-/// ([`held_off_check::held_off_check`]), under `ferrix.checks`.
+/// ([`held_off_check::held_off_check`]), under `xaqu.checks`.
 fn held_off(
     space: &mut Space,
     function: &Function,
@@ -812,8 +812,8 @@ fn held_off(
         && hold_msix_off(space, function.address, msix)
 }
 
-/// Hold the MSI-X of a function in `ferrix_pci::msix::MSI_PREFERRED` off
-/// (`ferrix_pci::msix::hold_off`): Enable 0 and Function Mask 1, written
+/// Hold the MSI-X of a function in `xaqu_pci::msix::MSI_PREFERRED` off
+/// (`xaqu_pci::msix::hold_off`): Enable 0 and Function Mask 1, written
 /// and read back here, at stage 10, before its node is built or published.
 /// A function that does not read back so keeps today's path -- its table
 /// withheld and its MSI-X offered -- and one line says so.
@@ -834,7 +834,7 @@ fn hold_msix_off(space: &mut Space, function: Address, msix: Option<&(Capability
 /// Where `msix`'s table and pending-bit array lie, as `(phys, len)` each,
 /// through the BARs in `regions`.
 fn table_ranges(regions: &[Region], msix: &MsiX) -> [(u64, u64); 2] {
-    let place = |at: ferrix_pci::capability::BarOffset, len: u64| {
+    let place = |at: xaqu_pci::capability::BarOffset, len: u64| {
         regions
             .iter()
             .find(|region| region.index == at.bar)
@@ -852,7 +852,7 @@ fn table_ranges(regions: &[Region], msix: &MsiX) -> [(u64, u64); 2] {
 
 /// What `function`'s configuration window starts from: its `bytes` of
 /// configuration space, the bytes of them its driver may write
-/// (`ferrix_pci::window`), and its command register as enumeration leaves it,
+/// (`xaqu_pci::window`), and its command register as enumeration leaves it,
 /// which the kernel's writes to it start from.
 fn for_the_window(space: &Space, function: &Function, bytes: u16) -> ConfigFound {
     ConfigFound {
@@ -986,12 +986,12 @@ fn check_function(
         // BAR would hand them whatever lies beyond.
         if kind == TYPE_GPU {
             host_visible =
-                SharedMemory::find(&*space, address, ferrix_virtio::gpu::SHM_ID_HOST_VISIBLE)?
+                SharedMemory::find(&*space, address, xaqu_virtio::gpu::SHM_ID_HOST_VISIBLE)?
                     .filter(|window| regions.iter().any(|region| window.fits(region)));
         }
         // A driver's work played once at stage 10, in a hybrid only: under this shape no
         // kernel plays driver (`docs/microkernel/M6.md` §2).
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         if kind == TYPE_ENTROPY {
             match virtio::entropy(
                 space,

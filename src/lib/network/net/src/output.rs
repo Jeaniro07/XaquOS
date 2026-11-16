@@ -13,8 +13,8 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::ethernet::{self, Mac, ethertype};
-use ferrix_netwire::{arp, icmpv6, ipv4, ipv6, ndp};
+use xaqu_netwire::ethernet::{self, Mac, ethertype};
+use xaqu_netwire::{arp, icmpv6, ipv4, ipv6, ndp};
 
 use crate::addr::{IpAddress, Ipv4, Ipv6};
 use crate::iface::Medium;

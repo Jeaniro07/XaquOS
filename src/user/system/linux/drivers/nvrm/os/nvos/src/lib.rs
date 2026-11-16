@@ -1,4 +1,4 @@
-//! `ferrix-nvos`: the OS layer NVIDIA's resource manager runs on inside
+//! `xaqu-nvos`: the OS layer NVIDIA's resource manager runs on inside
 //! `nvrm`, the ring-3 program that hosts it (`docs/NVIDIA.md` §4.2, N1c).
 //!
 //! RM (`nv-kernel.o`, from open-gpu-kernel-modules 580.173.02) was written
@@ -11,8 +11,8 @@
 //! `va_list` is C (`os/glue/`), as are the loud stubs.
 //!
 //! It is a `no_std` static library linked into a C program beside
-//! ferrousli, Ferrix's C library, and calls that library for the heap,
-//! threads, clocks and files; futexes and Ferrix's native calls it makes by
+//! ferrousli, Xaqu's C library, and calls that library for the heap,
+//! threads, clocks and files; futexes and Xaqu's native calls it makes by
 //! the instruction (`futex`). The same library links against glibc for the
 //! host's run of `nvrm-link-test`, where the native calls answer `ENOSYS`
 //! and no device is attached.

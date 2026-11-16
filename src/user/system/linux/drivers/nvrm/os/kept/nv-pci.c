@@ -22,7 +22,7 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.1, §7's N1d) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.1, §7's N1d) from NVIDIA's
  * kernel-open/nvidia/nv-pci.c (nv_pci_probe) and nv.c (nv_start_device,
  * nvidia_isr, nvidia_isr_common_bh) at 580.173.02, under the MIT licence
  * above.
@@ -35,7 +35,7 @@
  * keeps NVIDIA's order and message.
  *
  * What changed: the PCI device is the one devmgr handed nvrm, which
- * ferrix-nvos attached (os/nvos/src/device.rs), so its BARs are its
+ * xaqu-nvos attached (os/nvos/src/device.rs), so its BARs are its
  * apertures and its configuration space is N0d's window. Enabling the
  * device, its memory decoding and bus mastering are the kernel's (the
  * first pin turns bus mastering on). The interrupt is the device's one MSI
@@ -53,7 +53,7 @@
  * from then on and the one that may be running is waited for.
  */
 
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 /* NVIDIA's NV_PCI_DEVFN macros, over nvos's location word. */
 #define LOCATION_DOMAIN(l)  (((l) >> 16) & 0xffff)

@@ -28,7 +28,7 @@
 //! does them, `modeset=dry` prints them, a host model checks them.
 //!
 //! What the steps take from the ground truth rather than from arithmetic
-//! (`~/.local/share/ferrix/n150-linux/evidence/3h-dump-2026-10-23`, the
+//! (`~/.local/share/xaqu/n150-linux/evidence/3h-dump-2026-10-23`, the
 //! box's inspection Linux with a monitor on each HDMI port): the PHY's HDMI
 //! signal level, which i915 reads from the VBT and which Linux programmed
 //! identically on both PHYs (swing select 0xA, N scalar 0x60, cursor 0x3F,

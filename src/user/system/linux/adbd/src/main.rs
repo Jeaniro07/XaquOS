@@ -1,4 +1,4 @@
-//! `adbd`: the device end of the Android Debug Bridge, for Ferrix.
+//! `adbd`: the device end of the Android Debug Bridge, for Xaqu.
 //!
 //! `docs/ADB.md` is the design. This is its first step: adb over TCP, which
 //! the host reaches with `adb connect <address>:<port>`. It offers the
@@ -8,7 +8,7 @@
 //!   pseudo-terminal;
 //! * `adb push` and `adb pull`, through the first sync protocol;
 //! * `adb reboot`;
-//! * `adb forward tcp:<host> tcp:<device>`, a stream to a port in Ferrix.
+//! * `adb forward tcp:<host> tcp:<device>`, a stream to a port in Xaqu.
 //!
 //! What the wire looks like is `src/lib/proto/adb`, tested on the host; what is
 //! here is threads, files, processes and sockets.
@@ -29,7 +29,7 @@
 //! the socket `usbdev` bridges its adb interface to (`/tmp/adbd-usb`), and
 //! adbd connects to it again whenever it is dropped.
 //!
-//! Started as pid 1 (`ferrix.init=/bin/adbd`, as on the phone), it serves
+//! Started as pid 1 (`xaqu.init=/bin/adbd`, as on the phone), it serves
 //! TCP and USB both, reaps what is orphaned to it, and never exits.
 
 use std::collections::HashMap;
@@ -41,7 +41,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use ferrix_adb::message::{
+use xaqu_adb::message::{
     self, CLSE, CNXN, HEADER_BYTES, Header, MAX_PAYLOAD, OKAY, OPEN, VERSION, WRTE,
 };
 
@@ -269,7 +269,7 @@ fn serve(
         match header.command {
             CNXN => {
                 max_payload = header.arg1.clamp(1024, limit);
-                let banner = message::banner("ferrix", "ferrix", "ferrix");
+                let banner = message::banner("xaqu", "xaqu", "xaqu");
                 wire.send(CNXN, VERSION, max_payload, banner.as_bytes())?;
             }
             OPEN => {

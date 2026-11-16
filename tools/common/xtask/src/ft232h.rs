@@ -63,7 +63,7 @@ fn script() -> String {
          sleep 0.3\n\
          stty -F /tmp/ttyUSB0 cs8 -parenb -parodd -cstopb\n\
          sleep 0.3\n\
-         echo hello-from-ferrix > /tmp/ttyUSB0 && echo 'hw: wrote'\n\
+         echo hello-from-xaqu > /tmp/ttyUSB0 && echo 'hw: wrote'\n\
          touch /tmp/usbserial-loopback-0\n\
          sleep 3\n\
          echo '{DONE}'\n\

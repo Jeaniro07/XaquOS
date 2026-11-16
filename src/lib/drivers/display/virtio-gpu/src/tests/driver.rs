@@ -6,13 +6,13 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_displayctl::message::{Attach, FORMAT, Message, Rect as CtlRect, Status};
-use ferrix_virtio::gpu::{
+use xaqu_displayctl::message::{Attach, FORMAT, Message, Rect as CtlRect, Status};
+use xaqu_virtio::gpu::{
     CMD_GET_DISPLAY_INFO, CMD_GET_EDID, CMD_RESOURCE_ATTACH_BACKING, CMD_RESOURCE_UNREF,
     CMD_SUBMIT_3D, Command, Context, DeviceError as Refusal, MemEntry, PAGE_SIZE, Response,
     backing_entries,
 };
-use ferrix_virtio::pci::FEATURE_VERSION_1;
+use xaqu_virtio::pci::FEATURE_VERSION_1;
 
 use super::fake::{Bus, Device, Handle, PAGE, Region};
 use crate::pipeline::{Pipeline, Request, Step};
@@ -480,11 +480,11 @@ fn a_device_that_breaks_the_protocol_is_failed() {
     let cases: [(Setup, DeviceError); 2] = [
         (
             |device| device.misbehave.written = Some(8),
-            DeviceError::Protocol(ferrix_virtio::gpu::GpuError::ResponseTooShort(8)),
+            DeviceError::Protocol(xaqu_virtio::gpu::GpuError::ResponseTooShort(8)),
         ),
         (
             |device| device.misbehave.response = Some(0x1107),
-            DeviceError::Protocol(ferrix_virtio::gpu::GpuError::UnknownResponse(0x1107)),
+            DeviceError::Protocol(xaqu_virtio::gpu::GpuError::UnknownResponse(0x1107)),
         ),
     ];
     for (misbehave, expected) in cases {

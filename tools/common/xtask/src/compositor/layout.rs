@@ -307,7 +307,7 @@ pub(super) fn test_dispatchers(arch: Arch, programs: &Programs, args: &Args) -> 
 /// `xdg_toplevel`s, which until 2026-09-18 left the layout tiling a window
 /// that was not there. The host test in
 /// `src/user/system/linux/compositor/hyprix/tests/two_clients.rs` makes the same claim against
-/// the compositor in a process; this makes it on Ferrix, on the card.
+/// the compositor in a process; this makes it on Xaqu, on the card.
 pub(super) fn test_twin(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let (screens, said) = boot_and_dump(
         arch,
@@ -454,7 +454,7 @@ pub(super) fn test_plugins(arch: Arch, programs: &Programs, args: &Args) -> Resu
     for wanted in [
         // The plugin said what it is, and the compositor lists it.
         "plug: loaded, swapthem added",
-        "Plugin swap by ferrix:",
+        "Plugin swap by xaqu:",
         "Dispatchers: swapthem",
         // And it was handed the dispatcher the keybind pressed.
         "plug: dispatched swapthem",

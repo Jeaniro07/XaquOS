@@ -1,11 +1,11 @@
-//! `ferrix-softsign`: the development soft signer's command line
+//! `xaqu-softsign`: the development soft signer's command line
 //! (`docs/SIGNING.md` §6.4). Development only; never a release.
 //!
 //! ```text
-//! ferrix-softsign keygen  <label> [--height 10|15|20]
-//! ferrix-softsign pubkey  <label>
-//! ferrix-softsign remaining <label>
-//! ferrix-softsign sign    <label> --kind slot|config|driver|revocation
+//! xaqu-softsign keygen  <label> [--height 10|15|20]
+//! xaqu-softsign pubkey  <label>
+//! xaqu-softsign remaining <label>
+//! xaqu-softsign sign    <label> --kind slot|config|driver|revocation
 //!                         --anchor-id <0x8000..> --profile <n> --arch <n>
 //!                         --family <n> --security-version <n>
 //!                         --payload <file> --out <file>
@@ -15,15 +15,15 @@
 //! common: [--dir <keys dir>] [--release-anchors <file of hex keys>]
 //!
 //! The CI development key (`docs/SIGNING.md` §6.5), with no state file:
-//! ferrix-softsign ci-keygen --secret-out <file>   (prints the public key)
-//! ferrix-softsign ci-range  --run-number <n> --run-attempt <a>
-//! ferrix-softsign ci-sign   --run-number <n> --run-attempt <a>
+//! xaqu-softsign ci-keygen --secret-out <file>   (prints the public key)
+//! xaqu-softsign ci-range  --run-number <n> --run-attempt <a>
+//! xaqu-softsign ci-sign   --run-number <n> --run-attempt <a>
 //!                           --prior-logs <file> --log <file>
 //!                           --anchors <signing-anchors.toml> --workflow <path>
 //!                           <sign's manifest flags> --payload <file>
 //!                           --out <file> [--into <slot image>]
-//!                           (the key from FERRIX_CI_SIGNING_KEY)
-//! ferrix-softsign ci-audit  <file of logs>
+//!                           (the key from XAQU_CI_SIGNING_KEY)
+//! xaqu-softsign ci-audit  <file of logs>
 //! ```
 
 #![allow(
@@ -33,16 +33,16 @@
 )]
 
 #[cfg(test)]
-use ferrix_sigverify as _;
+use xaqu_sigverify as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use ferrix_softsign::ci;
-use ferrix_softsign::lms::{
+use xaqu_softsign::ci;
+use xaqu_softsign::lms::{
     LMOTS_SHA256_N24_W4, LMS_SHA256_M24_H10, LMS_SHA256_M24_H15, LMS_SHA256_M24_H20,
 };
-use ferrix_softsign::manifest::{self, Body};
-use ferrix_softsign::token::{
+use xaqu_softsign::manifest::{self, Body};
+use xaqu_softsign::token::{
     CKA_HSS_KEYS_REMAINING, CKA_VALUE, CKM_HSS_KEY_PAIR_GEN, ObjectHandle, SoftToken, Token,
 };
 
@@ -118,7 +118,7 @@ fn token(args: &Args) -> Result<SoftToken, String> {
         Some(d) => PathBuf::from(d),
         None => {
             let home = std::env::var_os("HOME").ok_or("HOME is not set")?;
-            PathBuf::from(home).join(".local/share/ferrix/signing-dev")
+            PathBuf::from(home).join(".local/share/xaqu/signing-dev")
         }
     };
     let mut release = Vec::new();
@@ -166,8 +166,8 @@ fn ci(command: &str, args: &Args) -> Option<Result<(), String>> {
         })(),
         "ci-sign" => (|| {
             let range = run(args)?;
-            let secret = std::env::var("FERRIX_CI_SIGNING_KEY")
-                .map_err(|_| "FERRIX_CI_SIGNING_KEY is not set".to_owned())?;
+            let secret = std::env::var("XAQU_CI_SIGNING_KEY")
+                .map_err(|_| "XAQU_CI_SIGNING_KEY is not set".to_owned())?;
             let key = ci::parse_secret(&secret).map_err(|e| e.to_string())?;
             drop(secret);
             let prior = match args.get("prior-logs") {
@@ -230,12 +230,12 @@ fn ci_keygen(args: &Args) -> Result<(), String> {
         }
         at = dir.parent();
     }
-    let mut random = [0u8; 16 + ferrix_softsign::lms::N];
+    let mut random = [0u8; 16 + xaqu_softsign::lms::N];
     std::fs::File::open("/dev/urandom")
         .and_then(|mut f| f.read_exact(&mut random))
         .map_err(|e| format!("/dev/urandom: {e}"))?;
     let (id, seed) = random.split_at(16);
-    let key = ferrix_softsign::lms::Key {
+    let key = xaqu_softsign::lms::Key {
         lms_type: LMS_SHA256_M24_H20,
         id: id.try_into().map_err(|_| "id")?,
         seed: seed.try_into().map_err(|_| "seed")?,
@@ -274,7 +274,7 @@ fn run(raw: Vec<String>) -> Result<(), String> {
         [command, label] => (command.as_str(), label.clone()),
         _ => {
             return Err(
-                "usage: ferrix-softsign keygen|pubkey|remaining|sign <label> [options]".to_owned(),
+                "usage: xaqu-softsign keygen|pubkey|remaining|sign <label> [options]".to_owned(),
             );
         }
     };
@@ -373,7 +373,7 @@ fn body(args: &Args) -> Result<Body, String> {
         label: padded(args.get("label").unwrap_or(""))?,
         subject: padded(args.get("subject").unwrap_or(""))?,
         payload_len: u64::try_from(payload.len()).map_err(|_| "payload too long")?,
-        payload_sha256: ferrix_sha256::digest(&payload),
+        payload_sha256: xaqu_sha256::digest(&payload),
         floors,
         target_kind: args
             .get("target-kind")
@@ -389,7 +389,7 @@ fn main() -> ExitCode {
     match run(std::env::args().skip(1).collect()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(why) => {
-            eprintln!("ferrix-softsign: {why}");
+            eprintln!("xaqu-softsign: {why}");
             ExitCode::FAILURE
         }
     }

@@ -5,7 +5,7 @@ any code.** Nothing here is built. Nothing in another document changes its
 claims because of it (the pointers in `AB-BOOT.md` and `BUILD-FLAGS.md` say
 what will change).
 
-**The customer's decision (2026-10-24).** Ferrix signs its product artifacts
+**The customer's decision (2026-10-24).** Xaqu signs its product artifacts
 with a stateful hash-based signature: **LMS/HSS** (NIST SP 800-208 [1],
 RFC 8554 [2]). XMSS^MT (RFC 8391 [3]) is used only with a written reason.
 Signing happens only inside an HSM that enforces the one-time-key state.
@@ -16,7 +16,7 @@ scheme covers.
 is a new image signed, and whose key verifies it?" (D3, and SAFETY-MANUAL
 AoU-26). It also answers the signing half of the consultant's ruling on
 signed configuration for `fast` (ledger
-`~/.local/share/ferrix/cert-consultant/reviews.md` line 3564: (S4), (S11),
+`~/.local/share/xaqu/cert-consultant/reviews.md` line 3564: (S4), (S11),
 (S12)). And it gives the A/B slots of `AB-BOOT.md`, which today verify by
 SHA-256 alone, an authenticity check. The consultant's design verdict on
 the scheme was **NOT YET until a design covers (P1) to (P10)** (ledger line
@@ -82,7 +82,7 @@ message `M` (RFC 8554 §6.2), with the randomiser `C` HSS itself prepends
  24  family            u32                  hardware family (§1.4)
  28  reserved          u32 = 0
  32  release           u64                  release sequence, informational (it orders nothing)
- 40  label             [u8; 32]             e.g. "ferrix 0.4.0 a1708b49c", NUL padded, informational
+ 40  label             [u8; 32]             e.g. "xaqu 0.4.0 a1708b49c", NUL padded, informational
  72  subject           [u8; 32]             driver kind: the driver's name as UPDATE names it;
                                             config kind: the package's name; slot kind: zero
 104  payload_len       u64
@@ -128,7 +128,7 @@ loader does today.
 
 **Every signed byte is fixed at release.** In header version 1, bytes
 16..24, `generation`, hold the record sequence `bootctl` armed the slot
-under (`ferrix-slots`'s `lay_out`). That value is per device, inside the
+under (`xaqu-slots`'s `lay_out`). That value is per device, inside the
 seal, and the signer cannot know it. `bootctl sync`'s copy of a slot to the
 other partition would change it again. So in header version 2,
 **`generation` is zero**, and the loader refuses a version-2 header whose
@@ -168,7 +168,7 @@ recognise it.
 | Family | Id | Recognised by |
 |---|---|---|
 | x86-64 UEFI PC | 0x0101 | arch; UEFI |
-| x86-64 Intel N150 (the SOYO M4 Pro) | 0x0102 | SMBIOS processor and board strings (`ferrix-smbios`, already in the loader) |
+| x86-64 Intel N150 (the SOYO M4 Pro) | 0x0102 | SMBIOS processor and board strings (`xaqu-smbios`, already in the loader) |
 | AArch64 UEFI virt (QEMU) | 0x0201 | arch; SMBIOS system "QEMU" |
 | AArch64 Pixel 7 | 0x0202 | its own loader (`src/boot/vendor/google/pixel7`) |
 | ARMv7-A UEFI virt (QEMU) | 0x0301 | arch; SMBIOS system "QEMU" |
@@ -216,7 +216,7 @@ format (§4.3).
 
 **What CNSA 2.0 says.** As quoted, the CNSA 2.0 FAQ approves LMS and XMSS
 from SP 800-208 for national security systems, and excludes HSS and XMSS^MT
-(source 5). `L = 1` keeps that open. None of Ferrix's four certification
+(source 5). `L = 1` keeps that open. None of Xaqu's four certification
 targets requires CNSA 2.0 (ledger 3719 Q1).
 
 The SHA-256/192 code points were "TBD" in SP 800-208's Tables 3 and 4. They
@@ -259,7 +259,7 @@ the message hash Q, and h tree nodes (two blocks each).
 (about 1,807 cycles a block), and **380.53 cycles per byte** for an 8-byte
 message, about 3,044 cycles for a whole one-block call. Both figures are
 medians of the fastest implementation measured there (copy kept in
-`~/.local/share/ferrix/signing-bench/`). Ferrix's own portable SHA-256 is
+`~/.local/share/xaqu/signing-bench/`). Xaqu's own portable SHA-256 is
 not measured on the DK1. The bound below therefore allows **three times**
 that cost. Using the board needs the product owner, and this design asks for
 it in slice S2.
@@ -281,7 +281,7 @@ here. On that host one 47-byte SHA-256 call takes 36 ns, so the two-level
 row's 35 µs is about 980 calls, and the chosen one-level row's 18 µs about
 half that: the analytic mean (about 51 × 7.5 chain calls per level, plus K,
 Q and the tree) within 10%. The program and its output
-are in `~/.local/share/ferrix/signing-bench/`, outside the tree. No
+are in `~/.local/share/xaqu/signing-bench/`, outside the tree. No
 dependency was added.
 
 **W4 rather than W8.** W8 saves 1,200 bytes per signature, which no kind
@@ -372,7 +372,7 @@ released with signed updates.
 ### 3.4 The signature log
 
 Each signature appends one line to the **signature log**, a git repository
-of its own (`ferrix-os/signing-log`, private, signed commits, under
+of its own (`xaqu-os/signing-log`, private, signed commits, under
 configuration management). A line holds:
 
 `time, kind, anchor_id, key I, q, manifest SHA-256 (bytes 0..512), payload SHA-256, release, custodians`
@@ -477,7 +477,7 @@ forbids. The consultant withdrew that alternative at ledger 3667.
 
 ### 5.1 What it is
 
-**`ferrix-sigverify`** is a new crate at `src/lib/crypto/sigverify`
+**`xaqu-sigverify`** is a new crate at `src/lib/crypto/sigverify`
 (`LAYOUT.md`: cryptography that checks). It is `no_std`, `forbid(unsafe_code)`,
 and allocates nothing: every buffer is a slice its caller lends, and the
 largest is the 4 KiB block. It holds:
@@ -495,8 +495,8 @@ signer (§6.4) is a host tool in `tools/`, which no image links.
 `check-item-boundary.py` gains a rule: no crate an image links may depend on
 a signing crate, with a planted dependency as its negative control.
 
-**One SHA-256.** `ferrix-slots` has its own SHA-256 today (AB-BOOT §3). It
-moves into `ferrix-sha256` (`src/lib/crypto/sha256`), which both crates use,
+**One SHA-256.** `xaqu-slots` has its own SHA-256 today (AB-BOOT §3). It
+moves into `xaqu-sha256` (`src/lib/crypto/sha256`), which both crates use,
 so one implementation is qualified once. Its FIPS 180-4 tests move with it,
 joined by the SHA-256/192 vector of RFC 9858 §2.1.
 
@@ -527,15 +527,15 @@ against RFC 8554's algorithms and qualified as §8 says.
 | init's configuration verifier | config, revocation | ring 3 | 3564 (S12): run before any unit reads the configuration |
 | `devmgr` | driver, revocation | ring 3 | On its own copy of the image (§1.3) |
 | `bootctl try` | slot | ring 3 | An early refusal only; the loader's check is the one that counts |
-| The kernel | **none** | ring 0 | No verifier in the kernel (3564 (S12); keep the kernel slim). A check, slice S1, fails if any kernel ELF holds a `ferrix_sigverify` symbol, with a planted use as its control |
+| The kernel | **none** | ring 0 | No verifier in the kernel (3564 (S12); keep the kernel slim). A check, slice S1, fails if any kernel ELF holds a `xaqu_sigverify` symbol, with a planted use as its control |
 
 ### 5.3 Its classification, and that of every enforcement point
 
-**The crate.** `ferrix-sigverify` is classified in `certification-item.json`'s
+**The crate.** `xaqu-sigverify` is classified in `certification-item.json`'s
 `crates` as `item`. It is part of the item's evidence: the update function,
 TSF for FPT_TUD_EXT.1 and the H.SIGN requirements (§10.3). It never appears
-in `in_ring0_when`, because no profile links it into ring 0. `ferrix-smbios`
-is the precedent: an item crate the UEFI loader calls. `ferrix-sha256` goes
+in `in_ring0_when`, because no profile links it into ring 0. `xaqu-smbios`
+is the precedent: an item crate the UEFI loader calls. `xaqu-sha256` goes
 with it.
 
 **Its level uses the existing mechanism.** Today's schema has no per-crate
@@ -556,7 +556,7 @@ becomes a new schema field, with its change to `check-item-boundary.py`, a
 self-test, and its own review. It is not assumed here. `sc4` stays the
 crate's target from its first line: MC/DC-ready structure, no recursion
 and bounded loops. The crate depends on nothing but
-`ferrix-sha256` and `core`, so no upward reference results.
+`xaqu-sha256` and `core`, so no upward reference results.
 
 **The enforcement points.** The claim rests on the callers as much as on the
 crate: a caller that ignores a refusal undoes it. So each check that acts on
@@ -565,9 +565,9 @@ thin caller, as the loader's SMBIOS path is today.
 
 | Enforcement point | Today | Intended classification |
 |---|---|---|
-| `ferrix-sigverify`, `ferrix-sha256` | not built | `item` |
-| `ferrix-slots` (parses the header whose seal is signed; the plan) | unclassified | `item`, with `ferrix-sha256`, since the signed bytes pass through it |
-| The loader's slot, floor and TPM path (`src/boot/common/uefi/src/slots.rs`, and the TPM code S5 adds) | in no ring: the loader is outside the TOE | Its decisions (what to start, whether to raise, the lock) move into an `item` crate, `ferrix-boot-policy` (`src/lib/proto/slots` or a sibling), over a `Services`-style trait for Block I/O and TCG2. `src/boot/common/uefi` keeps the protocol bindings, outside the rings, and the boot cases of §8.4 show the bindings deliver what the crate decided |
+| `xaqu-sigverify`, `xaqu-sha256` | not built | `item` |
+| `xaqu-slots` (parses the header whose seal is signed; the plan) | unclassified | `item`, with `xaqu-sha256`, since the signed bytes pass through it |
+| The loader's slot, floor and TPM path (`src/boot/common/uefi/src/slots.rs`, and the TPM code S5 adds) | in no ring: the loader is outside the TOE | Its decisions (what to start, whether to raise, the lock) move into an `item` crate, `xaqu-boot-policy` (`src/lib/proto/slots` or a sibling), over a `Services`-style trait for Block I/O and TCG2. `src/boot/common/uefi` keeps the protocol bindings, outside the rings, and the boot cases of §8.4 show the bindings deliver what the crate decided |
 | init's configuration verifier | not built | an `item` crate under `src/lib/init/`, called by init before any unit reads configuration |
 | `devmgr`'s kind-3 check | not built | a function of an `item` crate (in `drvupdate-proto` or beside it) that takes `devmgr`'s copy and returns the decision; `devmgr` itself stays load |
 
@@ -576,8 +576,8 @@ that shows the caller acts on the result.
 
 | Decision | Choice | Reason |
 |---|---|---|
-| Crate | `ferrix-sigverify`, `no_std`, no `unsafe`, no allocation, verify only | (P5); a fixed-size format makes it possible |
-| Hash | One `ferrix-sha256`, moved out of `ferrix-slots` | One implementation to qualify |
+| Crate | `xaqu-sigverify`, `no_std`, no `unsafe`, no allocation, verify only | (P5); a fixed-size format makes it possible |
+| Hash | One `xaqu-sha256`, moved out of `xaqu-slots` | One implementation to qualify |
 | Users | The loader, init's verifier, `devmgr`, `bootctl`; never the kernel | 3564 (S12); a symbol check with a control holds it |
 | Existing crates | Neither is used as product code; `hbs-lms` is a host cross-check and the benchmark | Type codes, signing code in the crate, allocation (§5.1) |
 | Classification | `item`, at the item ring's level, the target level by §12 Q9; the enforcement points move into `item` crates | BUILD-FLAGS rule 3; the schema has no per-crate level |
@@ -587,7 +587,7 @@ that shows the caller acts on the result.
 ### 6.1 The chain
 
 ```
-platform firmware ─UEFI Secure Boot: X.509 db / dbx, Authenticode─▶ the Ferrix UEFI loader (PE)
+platform firmware ─UEFI Secure Boot: X.509 db / dbx, Authenticode─▶ the Xaqu UEFI loader (PE)
    the loader ─LMS/HSS, slot anchors compiled in─▶ slot manifest ─SHA-256 seal─▶ kernel, initramfs, command line
       initramfs ─────────────────────────────────▶ init's verifier (config anchors compiled in)  ─▶ configuration package
       initramfs ─────────────────────────────────▶ devmgr (driver anchors compiled in)           ─▶ driver image
@@ -626,9 +626,9 @@ nothing else in this scheme carries any. That is not the dual signature the
 customer ruled out: no artifact is signed twice. The firmware's link and
 this scheme's links are different artifacts.
 
-The integrator enrols Ferrix's `db` certificate, or Ferrix ships a loader
+The integrator enrols Xaqu's `db` certificate, or Xaqu ships a loader
 signed under a key the platform already trusts. The customer chose the
-first: integrators enrol Ferrix's own `db` certificate (§12 Q4). Its key lives in
+first: integrators enrol Xaqu's own `db` certificate (§12 Q4). Its key lives in
 the same HSMs, under the same quorum. It is a classical key (RSA-2048 or
 better, as firmware supports).
 
@@ -638,7 +638,7 @@ signature under an enrolled key, or who controls the firmware, starts a
 loader of their own. Against that, this scheme adds nothing. Where Secure
 Boot is off, the chain has no root at all. On such a machine the scheme
 detects only what it would detect on any machine: a slot, package or image
-signed by no Ferrix key. It is not an authenticity claim against root, who
+signed by no Xaqu key. It is not an authenticity claim against root, who
 can then replace the loader. SECURITY-TARGET's A.FIRMWARE keeps this part of
 the burden (§10.3).
 
@@ -646,7 +646,7 @@ the burden (§10.3).
 reads the UEFI global variables `SecureBoot` and `SetupMode` (UEFI 2.10
 §3.3 [14]). It prints one line,
 `  boot     secureboot <on|off> mode <user|setup>`, and passes
-`ferrix.secureboot=on|off` among its words. The kernel's start-up audit
+`xaqu.secureboot=on|off` among its words. The kernel's start-up audit
 record carries that word (FAU_GEN.1 b), as it carries the build line.
 **The authenticity claim is conditional on `secureboot=on` and
 `mode=user`.** With either one otherwise, the boot still verifies what §1.2
@@ -659,7 +659,7 @@ SAFETY-MANUAL AoU (§10.3) states the same condition for the integrator.
 2026-10-24; the consultant's OK IF (D1)-(D5), ledger 3731). There is no HSM
 and no FPGA until the first claimed release with signed updates (§12 Q2).
 Gates, CI, nightly and development images are signed by the **soft
-signer**, `ferrix-softsign` (`tools/common/release/softsign`, a host
+signer**, `xaqu-softsign` (`tools/common/release/softsign`, a host
 program, slice S1). **It is never used for a release** (D4).
 
 **What it is.**
@@ -710,7 +710,7 @@ program, slice S1). **It is never used for a release** (D4).
   refuses a key whose public key appears in the `[release]` table.
 * **(D5) No private key in the repository or an image.** Development
   private state lives outside the tree, in
-  `~/.local/share/ferrix/signing-dev/`, mode 0600. A check refuses any file
+  `~/.local/share/xaqu/signing-dev/`, mode 0600. A check refuses any file
   in the tree that parses as soft-signer state. A development key committed
   by mistake is revoked by replacing its development anchor: new key, new
   anchor id, and the old anchor deleted from `[development]`.
@@ -758,13 +758,13 @@ There are three kinds of image, and they never mix:
 
 | Decision | Choice | Reason |
 |---|---|---|
-| Slot anchors | Compiled into the UEFI loader; two keys | The loader is the first Ferrix code that runs, and the one Secure Boot verifies |
+| Slot anchors | Compiled into the UEFI loader; two keys | The loader is the first Xaqu code that runs, and the one Secure Boot verifies |
 | Config and driver anchors | Compiled into init's verifier and `devmgr`, inside the signed initramfs | `devmgr` reads no files; the anchors are as authentic as the slot |
 | Handover | Secure Boot's Authenticode verifies the loader; the loader verifies LMS | UEFI has no LMS; no artifact is signed twice |
 | Residual | The firmware's classical chain is outside this scheme; with Secure Boot off there is no root | Stated in A.FIRMWARE and VULNERABILITY-ANALYSIS (§10.3) |
 | Firmware state | `SecureBoot` and `SetupMode` on the loader's line, in its words and in the start-up audit record; the authenticity claim needs `on` and `user` | FAU_GEN.1 b; the claim's condition is visible per boot |
 | Development | Development anchors only in development images (profile 0xFF) and the gate's relinked loader (`level=none anchors=development`); a byte comparison outside the anchor section, and a search of shipped images, each with a control | Gates can sign; a shipped image never trusts a development key |
-| Soft signer | `ferrix-softsign`: the PKCS #11 3.1 HSS subset, `q` committed before release, a reuse check against its own log, development keys only, never for a release | The customer's decision; ledger 3731 (D1)-(D5) |
+| Soft signer | `xaqu-softsign`: the PKCS #11 3.1 HSS subset, `q` committed before release, a reuse check against its own log, development keys only, never for a release | The customer's decision; ledger 3731 (D1)-(D5) |
 
 ### 6.5 A CI development key (reviewed, ledger 4005 and 4188; the customer's OK 2026-10-25)
 
@@ -879,7 +879,7 @@ customer's own OK is needed as well, and nothing is created before both):
 
 **As built (2026-10-25, branch `feature/signing-ci`).**
 
-* **The signer.** `ferrix-softsign` gains `ci-range`, `ci-keygen`,
+* **The signer.** `xaqu-softsign` gains `ci-range`, `ci-keygen`,
   `ci-sign` and `ci-audit` (`tools/common/release/softsign/src/ci.rs`).
   `ci-sign` computes the run attempt's range itself from
   `--run-number` and `--run-attempt` and refuses an attempt outside 1..=4.
@@ -887,7 +887,7 @@ customer's own OK is needed as well, and nothing is created before both):
   (every earlier run's log) holds a leaf of it. That catches a renamed
   workflow, a second workflow and a reset run number (condition 7). Each
   leaf is appended to the run's own log and fsynced before its signature
-  is computed (D2). The key arrives only in `FERRIX_CI_SIGNING_KEY`. The
+  is computed (D2). The key arrives only in `XAQU_CI_SIGNING_KEY`. The
   signer's `Debug` never shows it, and nothing writes it to disk.
 * **The workflow**, `.github/workflows/signing-ci.yml`.
   * It runs on pushes to `develop` and `main` only, in one job, `sign`,
@@ -954,12 +954,12 @@ customer's own OK is needed as well, and nothing is created before both):
 **The key's creation (4005 (8); 4188 (10)).** On 2026-10-25, after the
 consultant's OK IF (1)-(10) at ledger 4188 and the customer's OK of the
 same morning, relayed by the product owner, the product-signing agent ran
-`ferrix-softsign ci-keygen` once on nazuna. It wrote the secret to a 0600
+`xaqu-softsign ci-keygen` once on nazuna. It wrote the secret to a 0600
 file outside any git tree, and the CI anchor's public key is
 `[development.ci-slot-1]`, anchor 36864 (0x9000), created 2026-10-25,
 expiring 2027-01-18. The environment `signing-ci` was created with a branch
 policy of `develop` and `main`, the secret written once as its
-`FERRIX_CI_SIGNING_KEY`, and the local file shredded (`shred -u`). The
+`XAQU_CI_SIGNING_KEY`, and the local file shredded (`shred -u`). The
 private key was never printed, logged or committed, and nothing signed with
 it outside CI.
 
@@ -1071,7 +1071,7 @@ reviewed.
 owner and lockout authorisations only when the person installing chooses a
 claimed profile on a dedicated machine, explicitly, at install time. A
 dual-boot or desktop install never takes them, and its anti-rollback is
-stated absent (`ferrix.rollback=absent`).
+stated absent (`xaqu.rollback=absent`).
 
 **Who writes them: the loader alone,** before `ExitBootServices`, through
 `EFI_TCG2_PROTOCOL.SubmitCommand` [17].
@@ -1098,8 +1098,8 @@ stated absent (`ferrix.rollback=absent`).
 5. `TPM2_NV_WriteLock` on every counter, on **every** boot, raised or not.
    With `TPMA_NV_WRITE_STCLEAR` this locks it until the next TPM reset, so
    nothing after the loader can increment it.
-6. Pass `ferrix.floor.slot=… ferrix.floor.config=… ferrix.floor.driver=…
-   ferrix.floor.revocation=…` and `ferrix.rollback=tpm` among the loader's
+6. Pass `xaqu.floor.slot=… xaqu.floor.config=… xaqu.floor.driver=…
+   xaqu.floor.revocation=…` and `xaqu.rollback=tpm` among the loader's
    words.
 
 **Why the slot carries the other kinds' floors.** Config packages and driver
@@ -1147,16 +1147,16 @@ so that the fallback exists again. AB-BOOT's §6 table gains rows for it
 | Board (family) | Tamper-resistant monotonic storage | Anti-rollback claim |
 |---|---|---|
 | x86-64 UEFI PC with TPM 2.0 enabled (0x0101) | TPM 2.0 NV counters as §7.2 | **absent until S5** shows §7.2's protections on that TPM; then **present against a software attacker with root**, provided a TPM clear needs confirmation at the machine (§7.2) |
-| Intel N150, SOYO M4 Pro (0x0102) | Intel PTT, a firmware TPM 2.0: dmidecode "TPM Device, Vendor ID INTC, Specification Version 2.0, Firmware Revision 600.18", and the ACPI TPM2 table in its dmesg (`~/.local/share/ferrix/n150-linux/box-2026-10-16/`) | as the row above, once S5 has run on the box |
+| Intel N150, SOYO M4 Pro (0x0102) | Intel PTT, a firmware TPM 2.0: dmidecode "TPM Device, Vendor ID INTC, Specification Version 2.0, Firmware Revision 600.18", and the ACPI TPM2 table in its dmesg (`~/.local/share/xaqu/n150-linux/box-2026-10-16/`) | as the row above, once S5 has run on the box |
 | nazuna, ASUS ProArt B650 (the SN720 machine; 0x0101) | AMD fTPM 2.0 (`/sys/class/tpm/tpm0`, version 2) | as the row above; not a release target |
 | x86-64 UEFI PC without a TPM, or with it disabled | none | **absent** |
 | QEMU x86-64 (OVMF) | `swtpm` behind `tpm-crb` for the gate (installed on the host) | **absent**: the gate's TPM is software and resets with its state file |
 | QEMU AArch64 virt, the architecture `max` and `fast` name (0x0201) | none, unless `swtpm` behind `tpm-tis-device` with a TPM-enabled ArmVirtQemu | **absent**; the board that will carry the claim is §12 Q6 |
-| Pixel 7 (0x0202) | UFS RPMB and the Titan M2's rollback indices exist, but they belong to Google's bootloader and TEE. With the bootloader unlocked, as Ferrix boots today, Ferrix reaches neither. Re-locking with an AVB custom key would make AVB enforce a rollback index for the whole boot image under its own RSA signature: a persistent write to the phone (§12 Q5) | **absent**. The Pixel 7 has no slot path either, so there is **no slot authenticity claim** on it: its loader carries the kernel and initramfs it was built with (V-12), and nothing verifies them |
+| Pixel 7 (0x0202) | UFS RPMB and the Titan M2's rollback indices exist, but they belong to Google's bootloader and TEE. With the bootloader unlocked, as Xaqu boots today, Xaqu reaches neither. Re-locking with an AVB custom key would make AVB enforce a rollback index for the whole boot image under its own RSA signature: a persistent write to the phone (§12 Q5) | **absent**. The Pixel 7 has no slot path either, so there is **no slot authenticity claim** on it: its loader carries the kernel and initramfs it was built with (V-12), and nothing verifies them |
 | STM32MP157D-DK1 (0x0302) | none usable: microSD only, and OP-TEE's RPMB secure storage needs eMMC. OP-TEE's REE file system can be rolled back without RPMB. The BSEC OTP fuses could hold a fused counter, but fusing is irreversible: a persistent write needing the customer (§12 Q5) | **absent** |
 | QEMU ARMv7-A virt (0x0301) | none | **absent** |
 
-**Where the claim is absent**, the loader passes `ferrix.rollback=absent` and
+**Where the claim is absent**, the loader passes `xaqu.rollback=absent` and
 the floors as 0. The boot line and the start-up audit record say so
 (FAU_GEN.1 b). Verification of signature, kind, profile and family still
 holds. What is not claimed is that an older signed release cannot be
@@ -1170,7 +1170,7 @@ claims (§10.1), and a family without storage is not among them.
   trees' `I`: with `L = 1`, the keys' own identifiers, and with a later HSS
   key, its lower trees'. It is signed under that kind's **other** key, and
   its `security_version` is the revocation epoch.
-  * For **kind 1**, the loader reads it from `FERRIX/REVOKED.SIG` on the ESP.
+  * For **kind 1**, the loader reads it from `XAQU/REVOKED.SIG` on the ESP.
     Its floor is the kind-4 counter (§7.2). A floor above zero with no file
     at or above it fails closed (§9.1), so deleting the file does not undo
     a revocation. The loader raises the revocation floor to the file's epoch
@@ -1340,7 +1340,7 @@ whose output becomes product data:
 **The detection measure is the device's own check.** Every field the tool
 writes is verified independently by the qualified verifier on the device:
 digest, kind, profile, arch, family, subject, floor. Before publishing, the
-pipeline also runs the host build of the same `ferrix-sigverify` on each
+pipeline also runs the host build of the same `xaqu-sigverify` on each
 block, and boots the release's slot images in the release gate. A wrong
 signature or a wrong field therefore cannot reach a device as a working
 artifact. It is refused there, fail closed (§9). This gives TD1, hence TCL1,
@@ -1371,8 +1371,8 @@ the custody protocol is exercised before any HSM exists (D2).
 | Where | Refused | What happens |
 |---|---|---|
 | Loader, a slot | Any rule of §1.2, header version 1 in a signed profile, or below `floor[1]` | That attempt is not started. The next attempt in AB-BOOT §4's list is tried; a TRIAL attempt that fails verification costs no try and is never decremented (AB-BOOT P1 stands) |
-| Loader, no slot verifies | — | The rescue image (§9.2), verified the same way; otherwise `FERRIX-PANIC loader`, with each slot's reason |
-| Loader, rollback storage unprovisioned (§7.2 step 1) | In a profile whose claim needs it: everything | `FERRIX-PANIC loader: rollback storage missing`; the installer re-provisions. In a profile without that claim: boot, with `ferrix.rollback=absent` |
+| Loader, no slot verifies | — | The rescue image (§9.2), verified the same way; otherwise `XAQU-PANIC loader`, with each slot's reason |
+| Loader, rollback storage unprovisioned (§7.2 step 1) | In a profile whose claim needs it: everything | `XAQU-PANIC loader: rollback storage missing`; the installer re-provisions. In a profile without that claim: boot, with `xaqu.rollback=absent` |
 | Loader, revocation floor above zero and no file at or above it | Every slot | As "no slot verifies" |
 | init, a configuration package | Any rule, below `floor[2]` | The previous active package stays (3564 (S7)); the refused one is not staged; with no valid package at all, the boot stops before any unit reads configuration |
 | `devmgr`, a driver image | Any rule, below `floor[3]`, `subject` not the driver UPDATE names | The answer `refused`; nothing is stopped; the running driver keeps its image (`DEVMGR.md` §4.1, step 1 is never reached) |
@@ -1380,9 +1380,9 @@ the custody protocol is exercised before any HSM exists (D2).
 
 ### 9.2 The rescue image in a signed configuration
 
-AB-BOOT §4 step 7 boots `FERRIX/KERNEL.ELF`, `INITRD.IMG` and `CMDLINE.TXT`
+AB-BOOT §4 step 7 boots `XAQU/KERNEL.ELF`, `INITRD.IMG` and `CMDLINE.TXT`
 unverified. In a profile that requires signing, the loader reads
-`FERRIX/RESCUE.SLT` instead: a slot image file, header version 2, with its
+`XAQU/RESCUE.SLT` instead: a slot image file, header version 2, with its
 manifest, verified exactly as a slot is, **against `floor[1]` like a slot**.
 The unsigned files are not read. A profile without signing keeps today's
 path.
@@ -1412,7 +1412,7 @@ slot); and a fallback refused below the floor after a raise.
   the reason, the label, the manifest's SHA-256, the floor, and the uid of
   the client for a driver update. 3564 (S6)'s boot record names the
   configuration that ran.
-* **The reasons** are one enum in `ferrix-sigverify`, so every verifier
+* **The reasons** are one enum in `xaqu-sigverify`, so every verifier
   names them the same way: `Malformed(field)`, `TypeCode`, `Levels`,
   `UnknownAnchor`, `BadSignature`, `Revoked`, `WrongKind`, `WrongProfile`,
   `WrongArch`, `WrongFamily`, `WrongSubject`, `BelowFloor`, `PayloadMismatch`,
@@ -1442,7 +1442,7 @@ its row and review, as `driver_updates` is.
 
 * **drvupdated D3.** `devmgr` verifies kind 3, as in §1.3 and §9.1. The
   driver floor reaches `devmgr` without a kernel change, through init's
-  start arguments, once `ferrix.devmgr=init` is the only path (M5). D3
+  start arguments, once `xaqu.devmgr=init` is the only path (M5). D3
   becomes buildable. AoU-26 is rewritten for a signed update, and stays "not
   in a claimed configuration" while `driver_updates` is `absent`.
 * **`fast`'s `config_updates = "signed"`.** This design gives (S4)'s
@@ -1463,8 +1463,8 @@ its row and review, as `driver_updates` is.
 |---|---|
 | `SECURITY-TARGET.md` | §1.2 and A.FIRMWARE: the loader verifies a slot's LMS signature and the floors; A.FIRMWARE keeps UEFI, Secure Boot and the loader's own integrity (§6.3). New SFRs: **FCS_COP.1/SigVer** (HSS/LMS verification, SP 800-208, the parameters of §2.1) and **FPT_TUD_EXT.1** (integrity of updates: slot, configuration, driver; the extended component as the OS protection profile words it); FPT_TUD_EXT.2's anti-rollback where `rollback=tpm`; FAU_GEN.1 gains the refusals and the Secure Boot state (§6.3). The authenticity claim is stated as conditional on `secureboot=on` and `mode=user`, and the rollback claim on the TPM state of §7.2. §9.2 "No trusted boot path" is narrowed, not removed |
 | `VULNERABILITY-ANALYSIS.md` | V-12 restated: verified where signing is required, residual = the classical firmware link and Secure Boot off. New rows: OTS-key reuse at the signer (HSM, log, revocation); the parser of hostile signature bytes (fuzzed, §8.5); rollback on families without storage (absent claim); TPM clear by physical presence (denial of service, not rollback); a fault-injected verify (physical; out of scope, stated) |
-| `SAFETY-MANUAL.md` | AoU-26 and AoU-29 updated. New AoUs: the integrator enables Secure Boot in user mode with Ferrix's `db` entry (the claim holds only then, §6.3); provisions the TPM through the installer; keeps TCG Physical Presence confirmation enabled and the firmware setup password-protected, so that a TPM clear needs a person at the machine (§7.2); boards without storage carry no rollback claim; the custodians and the signature log are under configuration management |
-| `ITEM.md`, `certification-item.json` | `ferrix-sigverify` and `ferrix-sha256` classified (§5.3); the gate-only development-anchor exception (§8.4) |
+| `SAFETY-MANUAL.md` | AoU-26 and AoU-29 updated. New AoUs: the integrator enables Secure Boot in user mode with Xaqu's `db` entry (the claim holds only then, §6.3); provisions the TPM through the installer; keeps TCG Physical Presence confirmation enabled and the firmware setup password-protected, so that a TPM clear needs a person at the machine (§7.2); boards without storage carry no rollback claim; the custodians and the signature log are under configuration management |
+| `ITEM.md`, `certification-item.json` | `xaqu-sigverify` and `xaqu-sha256` classified (§5.3); the gate-only development-anchor exception (§8.4) |
 | `MEMORY-AND-TIMING.md` | The verify bound (§2.3, §8.5) |
 | `TOOLS.md` | The signing pipeline and the HSM (§8.6) |
 
@@ -1480,7 +1480,7 @@ verifier's own decision. Its parent is `ASR-7` alone (ledger 3738 (7)):
 O.VALIDATE is the system-call boundary's objective and does not fit. S4
 adds the update objective, its threat, FCS_COP.1/SigVer and FPT_TUD_EXT.1,
 and re-parents H.SIGN then. `L.sigverify` holds §8.1's rows, and `L.sha256`
-holds `ferrix-sha256`'s. None of the three prefixes is used on `develop`.
+holds `xaqu-sha256`'s. None of the three prefixes is used on `develop`.
 What the loader, init and `devmgr` do with a refusal gets ids in their own
 slices, reserved the same way.
 
@@ -1489,7 +1489,7 @@ slices, reserved the same way.
 | | Slice | Needs first | Points |
 |---|---|---|---|
 | S0 | This design; the consultant's verdict; the reservation landing | — | 2 |
-| S1 | `ferrix-sha256` (new; `ferrix-slots` moves onto it in S4); `ferrix-sigverify` (format, LM-OTS, LMS, HSS, policy), its host tests, vectors, controls, fuzz target and coverage; `ferrix-softsign`, the development soft signer (§6.4) | S0; the reservation of §10.4 | 8 |
+| S1 | `xaqu-sha256` (new; `xaqu-slots` moves onto it in S4); `xaqu-sigverify` (format, LM-OTS, LMS, HSS, policy), its host tests, vectors, controls, fuzz target and coverage; `xaqu-softsign`, the development soft signer (§6.4) | S0; the reservation of §10.4 | 8 |
 | S2 | The DK1 measurement of §2.3 and `MEMORY-AND-TIMING.md`'s bound | S1; the product owner's OK for the board | 2 |
 | S3 | The anchors file; xtask's refusal of development keys in claimed images and of the verifier in any kernel; `check-signing-anchors.py`; the hardware-family registry; the kernel-closure and no-signing-dependency rules | S1 | 3 |
 | S4 | The loader: header version 2, the slot and rescue paths, refusal lines; the generated anchor table in the loader (`init`'s and `devmgr`'s come with S8 and S9, §10.6), with the release-image scan; the gate's relinked loader and its byte comparison; `bootctl try`'s check; `test-ab-boot` S1-S3 | S1, S3 | 5 |
@@ -1509,7 +1509,7 @@ says so.
 
 * The control record, header version 1 and the boot info are unchanged.
 * The loader's command-line words keep their form. S4 adds one word at
-  the end of them, `ferrix.slot.sig=<anchor id>|none`. The kernel
+  the end of them, `xaqu.slot.sig=<anchor id>|none`. The kernel
   ignores it, and `bootctl` reads words first-match.
 * Every profile that builds an image today keeps `slot_signing = "off"`
   (below). With it off, the loader still boots header version 1 and the
@@ -1519,7 +1519,7 @@ says so.
   boots it unchanged. It reaches nazuna only when that disk is installed
   again.
 
-**Header version 2** (§1.3, in `ferrix-slots`):
+**Header version 2** (§1.3, in `xaqu-slots`):
 
 * version 2, bytes 16..24 (`generation`) zero, refused otherwise (§1.2);
 * bytes 4096..8192 the manifest block, every blob at or after 8192;
@@ -1527,7 +1527,7 @@ says so.
   layout. `bootctl` writes the version its image is told to.
 
 **The decision, in an item crate.** §5.3 asks for the enforcement point
-to move into an `item` crate. S4 builds it as **`ferrix-boot-policy`**,
+to move into an `item` crate. S4 builds it as **`xaqu-boot-policy`**,
 in `src/lib/proto/boot-policy`, `no_std`, no `unsafe`, no allocation. Its
 one entry point takes:
 
@@ -1537,17 +1537,17 @@ one entry point takes:
 * the floors, all zero until S5.
 
 It returns either `Start { anchor_id, security_version }` or a `Refusal`
-with its reason. The blobs' hashes are still compared in `ferrix-slots`
+with its reason. The blobs' hashes are still compared in `xaqu-slots`
 (`Blob::matches`), on the one copy the loader hands over. The loader's
 `slots.rs` keeps the Block I/O, and it starts a slot only on `Start` with
-every blob matched. `ferrix-slots` moves onto `ferrix-sha256` and becomes
+every blob matched. `xaqu-slots` moves onto `xaqu-sha256` and becomes
 `item` too, as §5.3 says, since the signed seal passes through it.
 
 | Header | `slot_signing = off` | `slot_signing = required` |
 |---|---|---|
-| version 1 | started on its hashes, as today; `ferrix.slot.sig=none` | refused, `Unsigned` |
+| version 1 | started on its hashes, as today; `xaqu.slot.sig=none` | refused, `Unsigned` |
 | version 2 | verified; refused on any refusal | verified; refused on any refusal |
-| ESP, no slots (`run`, the DK1 card, a bare image) | today's unsigned files | `FERRIX/RESCUE.SLT` only, verified as a slot (§9.2); the unsigned files are not read |
+| ESP, no slots (`run`, the DK1 card, a bare image) | today's unsigned files | `XAQU/RESCUE.SLT` only, verified as a slot (§9.2); the unsigned files are not read |
 
 With `off`, a version-2 header is never started unverified. `off` means
 "unsigned slots are accepted", not "signatures are ignored", so a
@@ -1560,7 +1560,7 @@ to eight entries of `kind u16, anchor_id u16, public_key [u8; 52]`
 contiguous, so S3's match by `T` still finds it.
 
 * It sits in a PE section of its own, `.fxanch`. PE images limit section
-  names to 8 bytes, so the first draft's `.ferrix_anchors` could not be
+  names to 8 bytes, so the first draft's `.xaqu_anchors` could not be
   used (§6.4 now says `.fxanch`).
 * The loader reads the block through `core::hint::black_box` of its
   address, so the compiler cannot fold the anchors into code outside the
@@ -1571,7 +1571,7 @@ contiguous, so S3's match by `T` still finds it.
   `development-required`. `--check`, in `cargo xtask check`, refuses a
   file that differs from what the generator would write.
 * Which block a build takes is an environment variable read by the
-  loader's `build.rs` (`FERRIX_ANCHORS`), set only by xtask. It is a build
+  loader's `build.rs` (`XAQU_ANCHORS`), set only by xtask. It is a build
   input, not a Cargo feature or `cfg`, so the loader keeps §8's "no
   feature, no cfg".
 
@@ -1602,15 +1602,15 @@ while `[release]` is empty, with its own self-test.
 **The family** is detected by the registry's rule where the loader already
 has the data:
 
-* SMBIOS through `ferrix-smbios` for the N150 and QEMU;
+* SMBIOS through `xaqu-smbios` for the N150 and QEMU;
 * the architecture's generic family otherwise.
 
 The DK1's device-tree rule is not built, because the DK1 card has no slot
 path (AB-BOOT §4 step 1).
-`ferrix-boot-policy` holds the rule from the registry. The loader passes
+`xaqu-boot-policy` holds the rule from the registry. The loader passes
 it the SMBIOS strings.
 
-**Floors and revocation.** `ferrix.rollback=absent` on every board until
+**Floors and revocation.** `xaqu.rollback=absent` on every board until
 S5: the floors passed are zero, and the line says so. The revoked list is
 empty until S7.
 
@@ -1619,7 +1619,7 @@ prints:
 `  sign     refused slot <a|b|rescue>: <reason> (kind <k> anchor <a> version <v> floor <f>)`,
 and on a start, `  sign     slot <a|b|rescue> anchor <a> version <v>`.
 
-**`bootctl try`'s check** uses `ferrix-boot-policy` with the running
+**`bootctl try`'s check** uses `xaqu-boot-policy` with the running
 image's block, which the running system cannot read from the loader. So
 `bootctl` is built with
 the same generated block as its image's loader, from the same build
@@ -1635,7 +1635,7 @@ plants a development block in a `present` image, which must read FIRED.
 
 **The gate's relinked loader** (§6.4). `test-ab-boot --signed` builds the
 named profile's loader, then builds it again with
-`FERRIX_ANCHORS=development-required`. It compares the two PE files byte
+`XAQU_ANCHORS=development-required`. It compares the two PE files byte
 for byte, outside `.fxanch` and the PE checksum, and fails on any other
 difference. Its control changes one byte outside the section, and must
 read FIRED. The gate's image is written only under the gate's output
@@ -1663,12 +1663,12 @@ development images with `off`. S4-S9 and S11 need S5.
 **Requirements.** The loader's ids are reserved before code (§10.4), in
 a docs-only landing with the consultant's review (ledger 4032):
 
-* `L.bootpolicy.1-12` for `ferrix-boot-policy`;
+* `L.bootpolicy.1-12` for `xaqu-boot-policy`;
 * `L.uefisig.1-5` for the loader's own behaviour, §8.1's `sig-loader-*`
   rows (AB-BOOT's P6 onwards);
 * `H.SIGN.7`, the loader starts only what the policy returned `Start`
   for;
-* `L.slots.1-20` for `ferrix-slots`.
+* `L.slots.1-20` for `xaqu-slots`.
 
 Each is listed below with its statement and check.
 
@@ -1679,13 +1679,13 @@ consultant's ruling on a peripheral in the trust path.
 **The consultant's review** of this design is **OK IF (1)-(12)**, ledger
 4016. (1) is the reservation, and (2) is this text. The rest bind the code:
 
-3. **The block fails closed.** `ferrix-boot-policy` parses it, and each of
+3. **The block fails closed.** `xaqu-boot-policy` parses it, and each of
    these refuses every slot with its own `Refusal`, with a host test and a
    control: an unknown version or mode, a count above 8, non-zero padding,
    a kind other than the slot kind, and a block shorter than 512 bytes.
 4. **The build fails closed.** The loader's `build.rs` declares
-   `rerun-if-env-changed=FERRIX_ANCHORS` and `rerun-if-changed` on the four
-   block files. `FERRIX_ANCHORS` unset or unknown is a build error, never a
+   `rerun-if-env-changed=XAQU_ANCHORS` and `rerun-if-changed` on the four
+   block files. `XAQU_ANCHORS` unset or unknown is a build error, never a
    default block. `.fxanch` is read-only, and the scan checks its flags and
    size.
 5. **The comparison is the evidence.** `black_box` is only the means. The
@@ -1699,13 +1699,13 @@ consultant's ruling on a peripheral in the trust path.
    * N2, a version-1 slot under `required` is refused (`Unsigned`), and the
      ESP's unsigned files are not read;
    * N3, a version-2 slot under `release-off` (an empty table) is refused;
-   * N4, a slot command line carrying `ferrix.slot.sig=` changes nothing.
+   * N4, a slot command line carrying `xaqu.slot.sig=` changes nothing.
 
    Controls, each FIRED by the case named: the downgrade (N1), unsigned
    (N2), a start on a `Refusal` (S1, S3), a start without every blob
    matched (S2), the generation (S10), the scan and the relink.
-8. **`ferrix-slots` into the item.** Its own SHA-256 is removed for
-   `ferrix-sha256`, with identical digests. `certification-item.json`
+8. **`xaqu-slots` into the item.** Its own SHA-256 is removed for
+   `xaqu-sha256`, with identical digests. `certification-item.json`
    gains both crates. The traceability, fallible-allocation and unsafe
    baselines are updated, host coverage covers both, and after the final
    rebase carry-coverage then `gen-coverage-justification --check` run,
@@ -1713,7 +1713,7 @@ consultant's ruling on a peripheral in the trust path.
 9. **Transcripts.** The new `sign` lines, and the recorded transcripts they
    change, are listed for all four boots (ARMv7-A at `--smp 2`). Under
    `off` with version 1, the lines match the merge base apart from
-   `ferrix.slot.sig=none`.
+   `xaqu.slot.sig=none`.
 10. **`present`.** No document claims signed slots for `present` until S6
     flips it. SECURITY-TARGET and CLAIM.md state the residual: an unsigned
     version-1 slot boots on `present`. S6's design writes signed slots
@@ -1730,7 +1730,7 @@ consultant's ruling on a peripheral in the trust path.
 
 | Id | Statement | Check |
 |---|---|---|
-| H.SIGN.7 | The loader starts a slot only when `ferrix-boot-policy` returned `Start` for it and every blob matched its signed digest on the copy it starts | boot: S1-S3, N1, N2 with controls |
+| H.SIGN.7 | The loader starts a slot only when `xaqu-boot-policy` returned `Start` for it and every blob matched its signed digest on the copy it starts | boot: S1-S3, N1, N2 with controls |
 | L.bootpolicy.1 | A policy block that is short, of an unknown version or mode, with a count above 8, non-zero padding or a non-slot kind refuses every slot, by its own refusal | host: one test and one control per case (condition 3): `a_short_block_refuses_every_slot`, `an_unknown_block_version_or_mode_refuses_every_slot`, `a_count_above_eight_refuses_every_slot`, `non_zero_block_padding_refuses_every_slot`, `a_non_slot_anchor_kind_refuses_every_slot` |
 | L.bootpolicy.2 | A version-1 header is started on its hashes under `off`, with no anchor, and refused `Unsigned` under `required` | host |
 | L.bootpolicy.3 | A version-2 header with a non-zero `generation` is refused | host |
@@ -1741,7 +1741,7 @@ consultant's ruling on a peripheral in the trust path.
 | L.bootpolicy.8 | The family is the registry's rule over the SMBIOS strings; missing or bad strings give the generic family; a claimed profile accepts exactly its families | host |
 | L.bootpolicy.9 | The floors passed are the caller's (all zero while `rollback = absent`) | host |
 | L.bootpolicy.10 | Under `required`, a disk with no verified slot yields only the rescue slot image, never the unsigned files | host |
-| L.bootpolicy.11 | `Start` carries the anchor id and security version the loader prints and writes as `ferrix.slot.sig` | host |
+| L.bootpolicy.11 | `Start` carries the anchor id and security version the loader prints and writes as `xaqu.slot.sig` | host |
 | L.bootpolicy.12 | Every input gives `Start` or one `Refusal`, with no panic | host: the fuzz target and the panic audit |
 | L.uefisig.1 | The loader refuses a version-2 slot with a bad signature under `off` | boot: N1 |
 | L.uefisig.2 | The loader refuses a version-1 slot under `required`, and a version-2 slot under an empty table | boot: N2, N3 |
@@ -1749,14 +1749,14 @@ consultant's ruling on a peripheral in the trust path.
 | L.uefisig.4 | The loader refuses a version-2 header with a non-zero `generation` | boot: S10 |
 | L.uefisig.5 | With both slots refused, a signed rescue image boots, and without one the loader panics with each slot's reason | boot: R1 |
 
-`L.bootpolicy.1-12` are `ferrix-boot-policy`'s, checked on the host.
+`L.bootpolicy.1-12` are `xaqu-boot-policy`'s, checked on the host.
 `L.uefisig.1-5` are the loader's own behaviour (`src/boot/common/uefi`,
 in no ring), checked by boots: they are §8.1's `sig-loader-*` rows. One
 namespace holds one crate's units (ledger 4032 (1)).
 
-`L.slots.1-20` hold `ferrix-slots`' behaviour as AB-BOOT §2-§4 states it
+`L.slots.1-20` hold `xaqu-slots`' behaviour as AB-BOOT §2-§4 states it
 (the header, the record, the GPT scan, the plan, the words). They are
-reserved without a list. The slice that moves `ferrix-slots` into the
+reserved without a list. The slice that moves `xaqu-slots` into the
 item lists each id with its statement and one check before its code
 review, and releases the ids it does not use (4032 (6)).
 
@@ -1765,7 +1765,7 @@ review, and releases the ids it does not use (4032 (6)).
 | Today's slots | Header version 1, the record and the boot info unchanged; `off` boots them | nazuna's slot B, and every install so far |
 | `off` and version 2 | Verified, never downgraded | A signed slot cannot lose its signature by a profile setting |
 | `present` | Stays `off` until a release key exists | An empty release table under `required` boots nothing |
-| Policy | `ferrix-boot-policy`, `item` | §5.3 |
+| Policy | `xaqu-boot-policy`, `item` | §5.3 |
 | Section | `.fxanch`, a 512-byte block, read through `black_box` | The PE 8-byte name limit; nothing folded outside the section |
 | init and devmgr tables | S8 and S9 | No reader before then |
 
@@ -1828,7 +1828,7 @@ review, and releases the ids it does not use (4032 (6)).
 20. ISO 26262-8:2018, clause 11 (TI, TD, TCL).
 
 Local copies of 1, 2, 4, 6 and 7, with the benchmark, are in
-`~/.local/share/ferrix/signing-bench/`.
+`~/.local/share/xaqu/signing-bench/`.
 
 ## 12. The customer's answers (2026-10-24)
 
@@ -1841,7 +1841,7 @@ Every answer takes the consultant's recommendation (ledger lines 3719 and
 | Q1 | HSS 10/15 or plain LMS? | **Plain LMS, `L = 1`, `LMS_SHA256_M24_H20`**, two independent keys per kind in two modules. Moving to HSS later costs a new key, not a format change. Read the primary NSA text before relying on CNSA 2.0 | §2.1, §4 |
 | Q2 | Which HSM, how many? | **None until the first claimed release with signed updates.** Development uses software keys (§6.4). Then two FIPS 140-3 level 3 modules with LMS on their CMVP certificate (confirmed before purchase), at two sites. Each module added later gets new keys of its own | §3.3, §4.2, slice S6 |
 | Q3 | Custodians | From then: 2 of 3, the customer and two external custodians under contract, with the independent assessor as witness. Until then, **single-person custody is a stated residual**, acceptable while no claimed release exists | §3.2 |
-| Q4 | Secure Boot | Integrators **enrol Ferrix's own `db` certificate**, stated as an AoU. No shim and no Microsoft CA for now. The classical firmware link is a stated residual | §6.3, §10.3 |
+| Q4 | Secure Boot | Integrators **enrol Xaqu's own `db` certificate**, stated as an AoU. No shim and no Microsoft CA for now. The classical firmware link is a stated residual | §6.3, §10.3 |
 | Q5 | Boards without storage | **Anti-rollback absent** on the DK1, the Pixel 7 and every QEMU target. No fuses, no relock | §7.3 |
 | Q6 | The AArch64 claim board | A Lock-mode Cortex-A78AE platform (MICROKERNEL.md's: an AMD VEK385, an NXP S32N7, or the integrator's SoC), bought when a project funds it. Whether its security subsystem offers a usable monotonic counter or RPMB is confirmed with the vendor before purchase. To bring the mechanism up before then, any cheap board with eMMC RPMB and upstream OP-TEE, checked before buying; no claim rests on it | §7.3 |
 | Q7 | The budget | **2^20 per key**, so 2^21 per kind, with an **alarm at 50%** of a key's leaves. CI, nightly and gate images never use a product key. No H25 | §2.2, §4.2 |
@@ -1860,7 +1860,7 @@ released, and it can never use a product key (§6.4, ledger 3731
 
 2026-10-24: this design, on branch `docs/product-signing`. The
 consultant's verdict is **OK IF (1)-(12)**, ledger
-`~/.local/share/ferrix/cert-consultant/reviews.md` line 3667, against the
+`~/.local/share/xaqu/cert-consultant/reviews.md` line 3667, against the
 brief at line 3608. The conditions are folded in above:
 
 1. a release-stable seal, with `generation` zero in header version 2 (§1.2);
@@ -1910,7 +1910,7 @@ id reservation **OK IF (6)-(8)**, ledger line 3738, folded in:
    residual, with its state on one host (§6.4);
 5. this record.
 
-The reservation adds `L.sha256` for `ferrix-sha256`, and `H.SIGN`'s parent
+The reservation adds `L.sha256` for `xaqu-sha256`, and `H.SIGN`'s parent
 is `ASR-7` alone (§10.4). Lesser points C1, what reads
 `CKA_HSS_KEYS_REMAINING` (§2.2), and C2, the state on one host (§6.4), are
 taken in.
@@ -1926,11 +1926,11 @@ against the re-reviewed design.
 crates were built, along with their evidence, the model's part 26 and
 check wiring.
 
-*`ferrix-sha256`* (`src/lib/crypto/sha256`) is a copy of `ferrix-slots`'
+*`xaqu-sha256`* (`src/lib/crypto/sha256`) is a copy of `xaqu-slots`'
 SHA-256 with SHA-256/192 added. Its message schedule was rewritten so that
-every index is a constant. `ferrix-slots` moves onto it in S4.
+every index is a constant. `xaqu-slots` moves onto it in S4.
 
-*`ferrix-sigverify`* (`src/lib/crypto/sigverify`) holds the manifest and
+*`xaqu-sigverify`* (`src/lib/crypto/sigverify`) holds the manifest and
 LMS/HSS verification.
 
 * The algorithms are written once for every SHA-256/192 set. The public
@@ -1947,9 +1947,9 @@ LMS/HSS verification.
   `L.sigverify.11` (time) and `L.sigverify.12` (stack) are in the baseline
   until S2 and S4 measure them.
 
-*`ferrix-softsign`* (`tools/common/release/softsign`) is the soft signer of
+*`xaqu-softsign`* (`tools/common/release/softsign`) is the soft signer of
 §6.4, a host tool. It is in no ring and not a normal dependency of any item
-crate (a dev-dependency of `ferrix-sigverify`'s tests). It reproduces RFC
+crate (a dev-dependency of `xaqu-sigverify`'s tests). It reproduces RFC
 9858 A.4's one-time signature from its seed, byte for byte.
 
 **Evidence.**
@@ -2017,7 +2017,7 @@ anchor.
   * slot, anchor id 0x8000;
   * config, anchor id 0x8001;
   * driver, anchor id 0x8002.
-* Their private state is in `~/.local/share/ferrix/signing-dev/` on
+* Their private state is in `~/.local/share/xaqu/signing-dev/` on
   nazuna (D5).
 
 *The hardware-family registry*, `tools/common/data/hardware-families.toml`,
@@ -2042,9 +2042,9 @@ recognise it by (S4).
   source paths, as debug information and panic locations carry them. That
   is §5.2's kernel check.
   * It was shown to fire on a real build: a kernel package given a real
-    dependency on `ferrix-sigverify` and one call into it, built as the
+    dependency on `xaqu-sigverify` and one call into it, built as the
     shipped x86-64 release kernel, was refused for holding
-    `ferrix_sigverify` (`~/.local/share/ferrix/signing-bench/kernel-scan-integration-*.log`).
+    `xaqu_sigverify` (`~/.local/share/xaqu/signing-bench/kernel-scan-integration-*.log`).
   * The countermeasure is still the dependency rule below. The scan is its
     backstop.
 * The loader and every initramfs of a claimed profile's image are refused
@@ -2123,12 +2123,12 @@ departures, each for the consultant's code review:
 
 Evidence on the branch:
 
-* `ferrix-boot-policy`'s 17 host tests; `ferrix-slots`' 30.
+* `xaqu-boot-policy`'s 17 host tests; `xaqu-slots`' 30.
 * Host coverage of the four signing crates: 1,284 of 1,296 lines and 322
   of 326 branch outcomes. The 16 not reached are argued: const evaluation,
   and defensive arms the fixed layouts never take.
 * `test-ab-boot-signed`, run locally: the relink, S1-S3, S10, N1-N4 and R1
-  held (`~/.local/share/ferrix/signing-bench/s4-signed-local6.log`).
+  held (`~/.local/share/xaqu/signing-bench/s4-signed-local6.log`).
 * `gen-anchors.py --check` and `--self-test` in `check`.
 * The release-image scan's host test.
 

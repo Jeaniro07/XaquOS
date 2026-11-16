@@ -1,5 +1,5 @@
 //! Fuzz init's wire formats (`src/lib/init/svc-proto`): any bytes a local program
-//! sends to `/run/ferrix/control` or writes to a readiness descriptor.
+//! sends to `/run/xaqu/control` or writes to a readiness descriptor.
 //!
 //! Decoding must never panic, a record that decodes must encode back to the
 //! same bytes, and the framer must give the same records however the stream
@@ -7,8 +7,8 @@
 
 #![no_main]
 
-use ferrix_svc_proto::control::{Answer, Call, Framer};
-use ferrix_svc_proto::notify::{self, Lines};
+use xaqu_svc_proto::control::{Answer, Call, Framer};
+use xaqu_svc_proto::notify::{self, Lines};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

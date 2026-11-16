@@ -19,7 +19,7 @@
 
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_fdt::Fdt;
+use xaqu_fdt::Fdt;
 
 use crate::console::println;
 use crate::mmio::Mmio;
@@ -99,7 +99,7 @@ pub(crate) fn start() {
     {
         return;
     }
-    if sched::spawn("watchdog", feed_forever, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("watchdog", feed_forever, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         println!("  watchdog no task to feed them: the phone will reset within seconds");
     }
 }

@@ -1,5 +1,5 @@
-//! What `ferrix-install` and `bootctl` share: reading a disk's GUID
-//! partition table, and the A/B layout of `docs/DEV-ON-FERRIX.md` §4.4 (D8)
+//! What `xaqu-install` and `bootctl` share: reading a disk's GUID
+//! partition table, and the A/B layout of `docs/DEV-ON-XAQU.md` §4.4 (D8)
 //! -- which partitions are the two system slots and the control record, and
 //! the checks that keep every other partition unwritten.
 

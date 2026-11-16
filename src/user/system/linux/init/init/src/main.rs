@@ -16,8 +16,8 @@
 //! 2. Mount a tmpfs on `/run`, then cgroup2 on `/sys/fs/cgroup`, move into
 //!    `init.scope`, and enable the controllers the kernel has (§5.1). The
 //!    kernel mounts `/proc`, `/dev`, `/sys` and `/tmp` itself.
-//! 3. Run each generator in `/lib/ferrix/generators` with
-//!    `/run/ferrix/units` as its argument, each for up to five seconds.
+//! 3. Run each generator in `/lib/xaqu/generators` with
+//!    `/run/xaqu/units` as its argument, each for up to five seconds.
 //! 4. Read the three unit directories and hand the manager
 //!    [`Event::Boot`].
 //!
@@ -54,15 +54,15 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::Path;
 use std::time::Duration;
 
-use ferrix_svc::event::Role;
-use ferrix_svc::event::{
+use xaqu_svc::event::Role;
+use xaqu_svc::event::{
     Action, ClientId, Event, Exit, MountSpec, Pid, PowerAction, Reply, Request, Status, UnitId,
     Whom,
 };
-use ferrix_svc::kind::{Config, ServiceType};
-use ferrix_svc::source::Source;
-use ferrix_svc::{Instant, Manager, Options};
-use ferrix_svc_proto::control::{Answer, Call, UnitStatus};
+use xaqu_svc::kind::{Config, ServiceType};
+use xaqu_svc::source::Source;
+use xaqu_svc::{Instant, Manager, Options};
+use xaqu_svc_proto::control::{Answer, Call, UnitStatus};
 
 use crate::cgroup::Groups;
 use crate::control::{Control, Heard};
@@ -75,10 +75,10 @@ use crate::sockets::Sockets;
 use crate::spawn::Report;
 
 /// The unit directory generators write to (§8.1).
-const RUNTIME_UNITS: &str = "/run/ferrix/units";
+const RUNTIME_UNITS: &str = "/run/xaqu/units";
 
 /// Where generators are.
-const GENERATORS: &str = "/lib/ferrix/generators";
+const GENERATORS: &str = "/lib/xaqu/generators";
 
 /// How long one generator may take, in polls of 10 ms.
 const GENERATOR_PATIENCE: u32 = 500;
@@ -172,7 +172,7 @@ struct Init {
     logs: Logs,
     /// Each unit's lines to the console, shed by severity under load
     /// (`docs/LOGGING.md` §7.5): lode and the ring take them all.
-    console: BTreeMap<UnitId, ferrix_log_shed::Shed>,
+    console: BTreeMap<UnitId, xaqu_log_shed::Shed>,
     /// The connection to lode, which units' lines go to with who wrote
     /// them.
     lode: lode::Lode,
@@ -190,14 +190,14 @@ struct Init {
     /// Bootstrap channels, native services and the directory (§6), unless
     /// the kernel has no native calls to make them with.
     directory: Option<Directory>,
-    /// Under `ferrix.devmgr=init` (§7.3, L12): whether the boot waits for
+    /// Under `xaqu.devmgr=init` (§7.3, L12): whether the boot waits for
     /// the kernel to say where `/` is, having started only `devmgr.service`.
     awaiting_root: bool,
     /// The audit record's reader, once `/` is settled
     /// (`docs/certification/AUDIT.md` §4).
     audit: Option<audit::Reader>,
     /// The kernel's user watchdog, fed from this loop under
-    /// `ferrix.init.watchdog=` (`docs/POSTMORTEM.md` §6.11).
+    /// `xaqu.init.watchdog=` (`docs/POSTMORTEM.md` §6.11).
     watchdog: watchdog::Watchdog,
 }
 
@@ -275,7 +275,7 @@ impl Init {
         let options = Options {
             target: command_line
                 .split_whitespace()
-                .find_map(|word| word.strip_prefix("ferrix.target="))
+                .find_map(|word| word.strip_prefix("xaqu.target="))
                 .map(str::to_owned),
         };
         let source = units::read(&mut log);
@@ -322,7 +322,7 @@ impl Init {
             Err(error) => {
                 say(&format!(
                     "the control socket {} could not be made: {error}",
-                    ferrix_svc_proto::control::SOCKET
+                    xaqu_svc_proto::control::SOCKET
                 ));
                 None
             }
@@ -343,7 +343,7 @@ impl Init {
                 None
             }
         };
-        // Under `ferrix.devmgr=init`: devmgr.service alone, until the kernel
+        // Under `xaqu.devmgr=init`: devmgr.service alone, until the kernel
         // has switched `/` and said so; then the units again, from the
         // volume, and the boot (§7.3, L12).
         let awaiting_root = directory.as_ref().is_some_and(Directory::has_starter);
@@ -695,7 +695,7 @@ impl Init {
                 let result = self.sockets.listen(unit, &spec).map_err(|error| {
                     let name = self.display(unit);
                     say(&format!("{name}: {error}"));
-                    ferrix_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EINVAL))
+                    xaqu_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EINVAL))
                 });
                 self.queue.push_back(Event::Listening { unit, result });
             }
@@ -757,13 +757,13 @@ impl Init {
     }
 
     /// Start a process for `unit`.
-    fn spawn(&mut self, unit: UnitId, spec: &ferrix_svc::event::SpawnSpec) {
+    fn spawn(&mut self, unit: UnitId, spec: &xaqu_svc::event::SpawnSpec) {
         let failed = |init: &mut Init, errno: i32, why: &str| {
             let name = init.display(unit);
             say(&format!("{name}: {why}"));
             init.queue.push_back(Event::SpawnFailed {
                 unit,
-                error: ferrix_svc::event::Errno(errno),
+                error: xaqu_svc::event::Errno(errno),
             });
         };
         let passed = spawn::Passed {
@@ -910,13 +910,13 @@ impl Init {
     /// Start a `Type=native` service's main process (§5.2): in the job
     /// behind its cgroup, from the ELF file `ExecStart=` names, with a
     /// bootstrap channel of its own. Its pid is the one its cgroup has.
-    fn spawn_native(&mut self, unit: UnitId, spec: &ferrix_svc::event::SpawnSpec) {
+    fn spawn_native(&mut self, unit: UnitId, spec: &xaqu_svc::event::SpawnSpec) {
         let name = self.display(unit);
         let fail = |init: &mut Init, why: String| {
             say(&format!("{name}: {why}"));
             init.queue.push_back(Event::SpawnFailed {
                 unit,
-                error: ferrix_svc::event::Errno(libc::EINVAL),
+                error: xaqu_svc::event::Errno(libc::EINVAL),
             });
         };
         if !spec.sandbox.is_empty() {
@@ -1020,7 +1020,7 @@ impl Init {
             }
             Err(error) => say(&format!(
                 "the control socket {} could not be made again: {error}",
-                ferrix_svc_proto::control::SOCKET
+                xaqu_svc_proto::control::SOCKET
             )),
         }
     }
@@ -1029,13 +1029,13 @@ impl Init {
     /// starter, in the job behind its cgroup (§7.3, L12): the kernel loads
     /// `devmgr` and hands it its devices; init gets only a handle to the
     /// process, and watches it as a native service's.
-    fn spawn_devmgr(&mut self, unit: UnitId, spec: &ferrix_svc::event::SpawnSpec) {
+    fn spawn_devmgr(&mut self, unit: UnitId, spec: &xaqu_svc::event::SpawnSpec) {
         let name = self.display(unit);
         let fail = |init: &mut Init, why: String| {
             say(&format!("{name}: {why}"));
             init.queue.push_back(Event::SpawnFailed {
                 unit,
-                error: ferrix_svc::event::Errno(libc::EINVAL),
+                error: xaqu_svc::event::Errno(libc::EINVAL),
             });
         };
         let Some(cgroup) = self.groups.dir(&spec.group) else {
@@ -1218,15 +1218,15 @@ impl Init {
         for line in said {
             let name = self.display(line.whose.unit);
             // lode first, the console after: lode pairs the console's copy
-            // with the line it was handed (`ferrix_lode_core::units`).
+            // with the line it was handed (`xaqu_lode_core::units`).
             self.lode.send(&lode::encode(&line, &name, monotonic_us));
             // The console only as fast as a person reads it: a flood's
             // least severe lines are shed first, and said (§7.5). lode has
             // every line already.
             let level =
-                ferrix_log_shed::level_of(line.line.as_bytes()).unwrap_or(ferrix_log_shed::UNKNOWN);
+                xaqu_log_shed::level_of(line.line.as_bytes()).unwrap_or(xaqu_log_shed::UNKNOWN);
             let shed = self.console.entry(line.whose.unit).or_insert_with(|| {
-                ferrix_log_shed::Shed::new(ferrix_log_shed::Caps::CONSOLE, monotonic_us)
+                xaqu_log_shed::Shed::new(xaqu_log_shed::Caps::CONSOLE, monotonic_us)
             });
             if shed.admit(level, monotonic_us) {
                 say(&format!("{name}[{}]: {}", line.whose.pid, line.line));
@@ -1242,7 +1242,7 @@ impl Init {
     /// unit, `NAME: N lines dropped (debug: a, ...) from NAME in T s to the
     /// console; lode kept them`, which lode reads as a warning.
     fn say_shed(&mut self, monotonic_us: u64) {
-        let owed: Vec<(UnitId, ferrix_log_shed::Said)> = self
+        let owed: Vec<(UnitId, xaqu_log_shed::Said)> = self
             .console
             .iter_mut()
             .filter_map(|(unit, shed)| shed.said(monotonic_us).map(|said| (*unit, said)))
@@ -1250,7 +1250,7 @@ impl Init {
         for (unit, said) in owed {
             let name = self.display(unit);
             let mut text = String::new();
-            let _ = ferrix_log_shed::describe(&said, &name, &mut text);
+            let _ = xaqu_log_shed::describe(&said, &name, &mut text);
             say(&format!("{name}: {text} to the console; lode kept them"));
         }
     }
@@ -1260,7 +1260,7 @@ impl Init {
     fn next_said(&self) -> Option<Duration> {
         self.console
             .values()
-            .any(ferrix_log_shed::Shed::pending)
+            .any(xaqu_log_shed::Shed::pending)
             .then_some(Duration::from_secs(1))
     }
 
@@ -1713,15 +1713,15 @@ fn run_generator(path: &Path) -> Result<Exit, String> {
 
 /// Mount a `.mount` unit. A mount the kernel has made already is a
 /// success (§8.1).
-fn mount(spec: &MountSpec) -> Result<(), ferrix_svc::event::Errno> {
+fn mount(spec: &MountSpec) -> Result<(), xaqu_svc::event::Errno> {
     let errno =
-        |error: io::Error| ferrix_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EIO));
+        |error: io::Error| xaqu_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EIO));
     if mounted(&spec.r#where) {
         return Ok(());
     }
     let _ = fs::create_dir_all(&spec.r#where);
     let (flags, data) = mount_options(&spec.options);
-    let c = |text: &str| CString::new(text).map_err(|_| ferrix_svc::event::Errno(libc::EINVAL));
+    let c = |text: &str| CString::new(text).map_err(|_| xaqu_svc::event::Errno(libc::EINVAL));
     let what = c(&spec.what)?;
     let target = c(&spec.r#where)?;
     let fs_type = c(spec.fs_type.as_deref().unwrap_or("auto"))?;
@@ -1738,10 +1738,10 @@ fn mount(spec: &MountSpec) -> Result<(), ferrix_svc::event::Errno> {
 }
 
 /// Unmount what a `.mount` unit mounted.
-fn unmount(target: &str) -> Result<(), ferrix_svc::event::Errno> {
-    let target = CString::new(target).map_err(|_| ferrix_svc::event::Errno(libc::EINVAL))?;
+fn unmount(target: &str) -> Result<(), xaqu_svc::event::Errno> {
+    let target = CString::new(target).map_err(|_| xaqu_svc::event::Errno(libc::EINVAL))?;
     sys::unmount(&target)
-        .map_err(|error| ferrix_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EIO)))
+        .map_err(|error| xaqu_svc::event::Errno(error.raw_os_error().unwrap_or(libc::EIO)))
 }
 
 /// Whether something is mounted at `target`, by `/proc/self/mounts`.

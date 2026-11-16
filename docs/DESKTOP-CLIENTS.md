@@ -2,13 +2,13 @@
 
 ## 1. The aim
 
-The customer runs Hyprland on example, and Ferrix's compositor
+The customer runs Hyprland on example, and Xaqu's compositor
 (`src/user/system/linux/compositor/hyprix`) already reads their `~/.config/hypr/hyprland.conf`.
 That file starts `waybar` and `hypridle`, binds fuzzel to `SUPER+R` and
-hyprlock to `SUPER+L`. None of the four is on Ferrix, and all four are C or
+hyprlock to `SUPER+L`. None of the four is on Xaqu, and all four are C or
 C++ on GTK, Pango, cairo, fontconfig and libwayland, none of which is either.
 The customer asked (2026-09-26) for the four to be written in Rust for
-Ferrix, so that their own configuration works there *unchanged*:
+Xaqu, so that their own configuration works there *unchanged*:
 
 | program | the file it reads | its upstream |
 |---|---|---|
@@ -21,7 +21,7 @@ Five streams do it at once: one for each program and one, `clients-base`,
 for the foundation the four share (§2). The fidelity target is the file:
 every line either does what it does upstream, or is reported by name on
 standard error in the upstream program's own words -- never ignored in
-silence, and never a reason to refuse the file. What cannot work on Ferrix
+silence, and never a reason to refuse the file. What cannot work on Xaqu
 is said (§7), not faked.
 
 Each program is a binary named after its upstream, in a crate of the
@@ -94,9 +94,9 @@ program hands it, and returns a `Vec<Event>`.
 
 ### 2.2 `src/user/system/linux/compositor/text` -- fonts, shaping, glyphs, layout, markup
 
-* **Finding a face**: `Fonts::system()` scans `$FERRIX_FONT_DIRS`,
+* **Finding a face**: `Fonts::system()` scans `$XAQU_FONT_DIRS`,
   `~/.local/share/fonts`, `~/.fonts`, `/usr/share/fonts`,
-  `/usr/local/share/fonts` and `/usr/share/ferrix/fonts`, reading each
+  `/usr/local/share/fonts` and `/usr/share/xaqu/fonts`, reading each
   face's name and OS/2 tables. `Fonts::find(family, weight, style)` is a
   small fontconfig: the family (any of the face's typographic or legacy
   names, case and spaces ignored), then CSS's nearest-weight rule, then the
@@ -193,7 +193,7 @@ DejaVu Sans, and the host's `sans-serif` and `monospace`.
 `src/user/system/linux/compositor/caption` is the smallest program on the whole
 foundation: a line of text in a named font on an overlay layer surface,
 held 40 pixels from the top-left corner. `cargo xtask test-compositor
---boot caption` draws `Ferrix 12:34 — AVATAR To…` at 32 points in the font
+--boot caption` draws `Xaqu 12:34 — AVATAR To…` at 32 points in the font
 `~/.config/hypr/hyprlock.conf` names first (`$font Light`, which is Ubuntu
 at weight 300), with that font's files carried as `run-compositor` carries
 them. The font is the user's and is never committed, so the expected
@@ -204,7 +204,7 @@ match it pixel for pixel on `x86_64` (within 2 a channel elsewhere).
 
 ## 3. waybar
 
-The waybar app (ferrix-os/apps) is `/bin/waybar`: it reads `config.jsonc` and
+The waybar app (xaqu-os/apps) is `/bin/waybar`: it reads `config.jsonc` and
 `style.css` the way waybar 0.15 (Alexays/Waybar at 1684389) and GTK 3.24
 read them, and draws the bar GTK would draw from them. Upstream's source is
 the reference, read file by file; `waybar-probe` is the host-side check
@@ -265,7 +265,7 @@ that lists what of the user's real files is not carried out.
   every module run to its first answer -- the picture a boot of the same
   files must show.
 
-What the user's file does on Ferrix, line by line where it differs:
+What the user's file does on Xaqu, line by line where it differs:
 
 * `"output": "Lenovo Group Limited R27qe Gen2 UTP03KBB"` matches no QEMU
   screen, which has no EDID; upstream would draw no bar, and so does this.
@@ -275,14 +275,14 @@ What the user's file does on Ferrix, line by line where it differs:
   line matches as on example.
 * The ten `custom/ws-N`, `custom/clock` and `custom/logout`'s click run
   `/home/johndoe/.local/bin/hypr-workspaces`, `ba-calendar` and
-  `hypr-logout`, Python scripts that are not on Ferrix. `sh` answers 127,
+  `hypr-logout`, Python scripts that are not on Xaqu. `sh` answers 127,
   and waybar hides a module whose script fails or prints nothing, so the
   desktop chips and the clock are hidden -- and `ba-calendar daemon` logs
   waybar's own `clock stopped unexpectedly, is it endless?`. The launcher
   and logout chips have no `exec` and show. What would fill the gap is a
   Rust equivalent of each script; that is the user's call.
 * `pulseaudio`: waybar connects with `PA_CONTEXT_NOFAIL` and shows its
-  starting values until a server answers. Ferrix's own, `pulsed`
+  starting values until a server answers. Xaqu's own, `pulsed`
   (`docs/AUDIO.md`, U2d), runs on the desktop only beside Chrome's sound
   (`run-compositor --everything`), and hyprix then tells every client
   `PULSE_SERVER`. Its one sink, the card, is its default, and the default
@@ -292,8 +292,8 @@ What the user's file does on Ferrix, line by line where it differs:
   card: it reads the sink at 100%, a wheel turned three clicks down over
   the chip sets it, and the subscription's word that the sink changed
   brings `vol 97%` (2026-09-27). `on-click`'s `wpctl` and
-  `on-click-right`'s `pavucontrol` are not on Ferrix.
-* `cpu`'s `{load}`: no `/proc/loadavg` on Ferrix and `sysinfo` loads of 0,
+  `on-click-right`'s `pavucontrol` are not on Xaqu.
+* `cpu`'s `{load}`: no `/proc/loadavg` on Xaqu and `sysinfo` loads of 0,
   so `0`, said once.
 * `network`: `ethernet` over the default route, the address from the
   `ifreq` ioctls; no nl80211, so never `wifi`, said once.
@@ -310,7 +310,7 @@ matches).
 
 ### Where it stands
 
-2026-09-27: waybar draws the user's bar on the Ferrix desktop. Landed on
+2026-09-27: waybar draws the user's bar on the Xaqu desktop. Landed on
 `main`: the part that needs no screen (2026-09-26); hyprix's half -- a
 popup of a layer surface, the pointer reaching layer surfaces, a virtual
 pointer giving the seat a pointer, `lastwindow` in `j/workspaces`; and the
@@ -329,7 +329,7 @@ channel (2026-09-27). The screenshot is `build/<arch>/waybar.ppm`. The
 first aarch64 run found that `libc::c_char` is `u8` there, which the
 interface ioctls had taken for `i8`; both boots pass on aarch64 now.
 
-With the user's own `config.jsonc` the bar on Ferrix shows the launcher, the
+With the user's own `config.jsonc` the bar on Xaqu shows the launcher, the
 volume chip (`vol 0%` with no `pulsed`), `ram N%`, the network chip and logout; the
 workspace chips and the clock stay hidden until their scripts exist (the
 list above). The `output` line matches through the EDID override that
@@ -352,9 +352,9 @@ on the host with GTK before blessing a golden image.
 
 ## 4. fuzzel
 
-The fuzzel app (ferrix-os/apps), `/bin/fuzzel`: a port of fuzzel 1.12
+The fuzzel app (xaqu-os/apps), `/bin/fuzzel`: a port of fuzzel 1.12
 (codeberg.org/dnkl/fuzzel, read from a shallow clone in
-`~/.local/share/ferrix/clients-ref/fuzzel`). Each module names the part of
+`~/.local/share/xaqu/clients-ref/fuzzel`). Each module names the part of
 fuzzel's source it follows: `config` is `config.c`, with every option and its
 default, the file search, line splitting, unquoting, `include`, `--override`,
 the key-binding table with its collision check, and fuzzel's own diagnostic
@@ -380,7 +380,7 @@ The image lists `.desktop` entries of the tree's own, for what it carries:
 `top`), plus Chrome under `--chrome`, with icons in a `hicolor` of their own
 (`tools/common/xtask/src/fuzzel.rs`).
 
-### What each of the user's lines does on Ferrix
+### What each of the user's lines does on Xaqu
 
 Every line of their `fuzzel.ini` is read and carried out: the font
 (GFS Didot, which clients-base's `run-compositor --config` carries from the host), `layer`,
@@ -396,7 +396,7 @@ the border and `[dmenu]`. What differs:
   `foot top: failed to execute: No such file or directory (2)`, exit 1.
 * The user opens fuzzel through `/home/johndoe/.local/bin/hypr-launcher`
   (SUPER+R, and a bare SUPER tap). That script and its GTK scrim are not
-  in the image, so on Ferrix their binds start nothing. `/bin/fuzzel` itself
+  in the image, so on Xaqu their binds start nothing. `/bin/fuzzel` itself
   works; the wrapper's `--keyboard-focus=on-demand
   --no-exit-on-keyboard-focus-loss` is taken.
 * The single-instance lock: hyprix hands its children `WAYLAND_DISPLAY` as a
@@ -439,7 +439,7 @@ Run once against the user's real `fuzzel.ini` and fonts (a local boot, not
 committed): the window came up 530x525 at the centre in GFS Didot, with the
 placeholder, three entries with icons, Terminal selected and its icon large
 underneath. It is the boot's first picture in the other face, 3607 pixels
-apart. Its screendump is kept in `~/.local/share/ferrix/logs/fuzzel/`. It
+apart. Its screendump is kept in `~/.local/share/xaqu/logs/fuzzel/`. It
 took about 30 seconds from start to window with 20 host font files. The
 boot's tree font took about 4. `--print-timing-info` is in the boot now to
 say which stage it is. Suspect the font scan under TCG.
@@ -452,8 +452,8 @@ clicked (hyprix); the startup time above; aarch64 boot.
 
 ## 5. hyprlock
 
-The hyprlock app (ferrix-os/apps) is hyprlock 0.9.6 (`/var/cache/hyprland-build/src/
-hyprlock`) for Ferrix, installed as `/bin/hyprlock`. It reads
+The hyprlock app (xaqu-os/apps) is hyprlock 0.9.6 (`/var/cache/hyprland-build/src/
+hyprlock`) for Xaqu, installed as `/bin/hyprlock`. It reads
 `~/.config/hypr/hyprlock.conf` unchanged, or the file `-c` names, found
 as upstream's `findConfig` finds it (`$XDG_CONFIG_HOME`, `$HOME/.config`,
 `$XDG_CONFIG_DIRS`, `/etc/xdg`). The command line is upstream's: `-c`,
@@ -480,7 +480,7 @@ as upstream's `findConfig` finds it (`$XDG_CONFIG_HOME`, `$HOME/.config`,
   output, trimmed as `general:text_trim` says. A text is Pango markup in a
   Pango font description at a point size (96 dpi), drawn by
   `src/user/system/linux/compositor/text` to its logical rectangle, which is what upstream's
-  label texture is. The clock is UTC: Ferrix's image has no `TZ` and no
+  label texture is. The clock is UTC: Xaqu's image has no `TZ` and no
   `/etc/localtime`, which is when upstream falls back to UTC too.
 * **The input field**: dots of `dots_size`, `dots_spacing`, `dots_center`,
   `dots_rounding`, or `dots_text_format`; the placeholder, check and fail
@@ -516,12 +516,12 @@ as upstream's `findConfig` finds it (`$XDG_CONFIG_HOME`, `$HOME/.config`,
   `/bin/sh -c`, as upstream's `spawnAsync`, when a button goes down over
   it.
 
-### 5.2 What `auth { pam { enabled = true } }` means on Ferrix
+### 5.2 What `auth { pam { enabled = true } }` means on Xaqu
 
-Ferrix has no PAM. It authenticates through `authd` (`docs/AUTH.md`,
+Xaqu has no PAM. It authenticates through `authd` (`docs/AUTH.md`,
 approved by the customer 2026-09-26, all eleven decisions as recommended),
 a service owning every credential and answering a conversation on
-`/run/ferrix/auth`. hyprlock knows authentication through one interface,
+`/run/xaqu/auth`. hyprlock knows authentication through one interface,
 `auth::Backend`, the one `docs/AUTH.md` §4.4 settles on: `begin()` opens a
 conversation and gives the first prompt, whose text is `$PAMPROMPT` before
 anybody types; `respond(secret)` gives the next prompt or a verdict --
@@ -536,14 +536,14 @@ zeroed when dropped.
   two-second hold on a refusal, which hyprlock waits out and does not add
   to. Every desktop image carries `authd`. Where the account has no
   password, or no `authd` answers, hyprlock **does not take the lock** and
-  says why (``not locking: no password is set for ferrix: run `passwd`
+  says why (``not locking: no password is set for xaqu: run `passwd`
   first``; `docs/AUTH.md` §5.4, decision 4: a lock nothing can open would
-  lock the person out). `passwd` on the desktop, or `--auth-seed ferrix`
+  lock the person out). `passwd` on the desktop, or `--auth-seed xaqu`
   when the image is built, gives the account one.
 * The gate seeds a real store entry (`crate::auth::seed`), so there is no
   test-only backend and no `hyprlock-gate` binary.
 * hyprlock never reads a credential. `$USER` and `$DESC` are the uid's
-  `/etc/passwd` line (upstream's `getpwuid(getuid())`): `ferrix` on the
+  `/etc/passwd` line (upstream's `getpwuid(getuid())`): `xaqu` on the
   `--everything` desktop, which runs as that user (`docs/AUTH.md` §6.1),
   and root on the other desktops and in the judged boots, which still run
   as root (decision 3).
@@ -557,7 +557,7 @@ zeroed when dropped.
 
 ### 5.3 What cannot work, and what it does instead
 
-| line | on Ferrix |
+| line | on Xaqu |
 |---|---|
 | `auth:pam:*` | the `Backend` interface above; `authd` behind it from phase 1 |
 | `SIGUSR1`, `--grace` | not honoured: `authctl unlock-seat` and `misc:lock_grace` (decision 11) |
@@ -587,14 +587,14 @@ against the host's drawing of the same configuration
 (`hyprlock/tests/gate.rs`), and `hyprlock-unset`, where with no password
 set `L` leaves the windows as they were and hyprlock says why. The
 `everything-desktop` boot presses the user's own `SUPER L` on the desktop
-that runs as `ferrix`, and requires hyprlock to refuse to lock an account
+that runs as `xaqu`, and requires hyprlock to refuse to lock an account
 with no password, `authd` answering for it. Left: the
 grant hyprix unlocks on and a locker taking over a dead lock (P2.5), an
 AArch64 boot, and `SIGUSR1` as `authctl unlock-seat`.
 
 ## 6. hypridle
 
-The hypridle app (in ferrix-os/apps) is upstream hypridle 0.1.8
+The hypridle app (in xaqu-os/apps) is upstream hypridle 0.1.8
 (`/var/cache/hyprland-build/src/hypridle`) in Rust: `/bin/hypridle`, with
 `-c`/`--config`, `-q`, `-v`, `-V` and `-h` as upstream's `main.cpp` has
 them, and the file looked for where `Hyprutils::Path::findConfig` looks
@@ -633,7 +633,7 @@ socket. hypridle has no surface and no wire code of its own.
 logind emits `org.freedesktop.login1.Session.Lock`, which `loginctl
 lock-session` causes. The user's file uses exactly that: the 10-minute
 listener's `on-timeout` is `loginctl lock-session`, and the lock itself is
-`lock_cmd`. Ferrix has no logind and no D-Bus. So the crate also builds a
+`lock_cmd`. Xaqu has no logind and no D-Bus. So the crate also builds a
 `/bin/loginctl` that does logind's part of that one job: `lock-session`,
 `unlock-session`, `lock-sessions` and `unlock-sessions` send one line to
 `$XDG_RUNTIME_DIR/hypridle.sock` (the temporary directory when the variable
@@ -646,12 +646,12 @@ session manager for one signal. With nothing listening, `loginctl` says
 "nothing is listening for lock-session at … is hypridle running?" and exits
 1. systemd's `loginctl` succeeds at nothing there, but a lock that silently
 did not happen is the one failure a screen locker must not have. Every
-other verb is refused by name: "Ferrix has no logind". A second hypridle
+other verb is refused by name: "Xaqu has no logind". A second hypridle
 finds the socket answered and runs without it ("Is hypridle already
 running?").
 
 **What cannot work, said once at start as a `[WARN]` naming the option.**
-`before_sleep_cmd` and `after_sleep_cmd`: Ferrix has no suspend and no
+`before_sleep_cmd` and `after_sleep_cmd`: Xaqu has no suspend and no
 logind to announce one (`PrepareForSleep`), so they never run.
 `inhibit_sleep`: there is no sleep to delay. `ignore_dbus_inhibit` and
 `ignore_systemd_inhibit`: no program can ask over
@@ -660,7 +660,7 @@ logind to announce one (`PrepareForSleep`), so they never run.
 D-Bus inhibit counter (`onInhibit`) is left out because nothing could raise
 it. Upstream exits when the system bus is missing. This one does not.
 
-**The user's file on Ferrix** (`idle-user` boot, 2026-09-26, x86_64 and
+**The user's file on Xaqu** (`idle-user` boot, 2026-09-26, x86_64 and
 aarch64: F
 pressed for `hyprctl dispatch forceidle 901`, then N):
 
@@ -705,17 +705,17 @@ aarch64, and every other `test-compositor` boot on x86_64. The file is read
 through `src/user/system/linux/compositor/hyprlang` (`hypridle/src/conf.rs` is the
 schema and the adapter into the model), and Wayland is spoken through
 `src/user/system/linux/compositor/toolkit`, so hypridle carries no copy of either. Left
-for Ferrix to grow: a suspend (`before_sleep_cmd`, `after_sleep_cmd`,
+for Xaqu to grow: a suspend (`before_sleep_cmd`, `after_sleep_cmd`,
 `inhibit_sleep`) and a D-Bus `ScreenSaver.Inhibit`. The user's `lock_cmd`
 locks as soon as `/bin/hyprlock` is in the image. Until then it says
 `hyprlock: not found`.
 
-## 7. What cannot work on Ferrix, and what each such line does instead
+## 7. What cannot work on Xaqu, and what each such line does instead
 
-Ferrix has no D-Bus, no systemd or logind, no PipeWire (its audio server
+Xaqu has no D-Bus, no systemd or logind, no PipeWire (its audio server
 speaks the PulseAudio protocol, `docs/AUDIO.md`), no StatusNotifierItem
 tray and no PAM. Each program's section says what its lines that need one
-of those do on Ferrix; the foundation's part is only that a command line
+of those do on Xaqu; the foundation's part is only that a command line
 naming a program that is not there (`loginctl`, `wpctl`) fails the way a
 shell says it does, and the program reports it.
 
@@ -758,7 +758,7 @@ shell says it does, and the program reports it.
   ascent and descent -- `vol 0%` is 44 wide, `cpu 19%` 57, `abc` 24, a line
   17 with its baseline at 14 -- and `Fonts::shape` now does the same, where
   it kept HarfBuzz's fractions (44.50, 23.46). All eight of the reference
-  numbers in `~/.local/share/ferrix/logs/waybar/pango-reference.txt` match
+  numbers in `~/.local/share/xaqu/logs/waybar/pango-reference.txt` match
   (`widths_are_pangos_on_the_hosts_ubuntu`, ignored: it reads the host's
   Ubuntu). `approximate_char_width` stays fractional, as Pango's is.
 * **The dotfiles and fonts carried by `run-compositor --config` (§2.5), and

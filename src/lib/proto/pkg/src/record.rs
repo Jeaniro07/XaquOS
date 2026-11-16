@@ -1,10 +1,10 @@
-//! The record an installed package leaves: `lib/ferrix/packages/<name>.toml`.
+//! The record an installed package leaves: `lib/xaqu/packages/<name>.toml`.
 //!
 //! The package's `[package]`, built for one architecture, and a
 //! `[[files]]` entry for each file it put down with the file's mode, size
 //! and BLAKE2b-256 digest; a symbolic link has its target as `link`, and its
 //! size and digest are the target's. It is inside the package, beside the files, so
-//! installing -- which is unpacking -- puts it down too: a running Ferrix
+//! installing -- which is unpacking -- puts it down too: a running Xaqu
 //! knows what its image was built with, and what to delete to remove one.
 
 use alloc::borrow::ToOwned;
@@ -13,13 +13,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt::{self, Write};
 
-use ferrix_argon2::blake2b;
+use xaqu_argon2::blake2b;
 
 use crate::manifest::{self, Error, Package, refuse};
 use crate::toml::{self, Table};
 
 /// Where records are, from the root.
-pub const RECORDS: &str = "lib/ferrix/packages";
+pub const RECORDS: &str = "lib/xaqu/packages";
 
 /// The bytes of a digest.
 pub const DIGEST: usize = 32;

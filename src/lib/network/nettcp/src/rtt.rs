@@ -22,7 +22,7 @@ pub type Millis = u64;
 ///
 /// RFC 6298 says one second. Linux uses a fifth of that, because a second is
 /// an age on any link built since the specification was written, and because
-/// every peer Ferrix will talk to is a Linux one that has made the same choice.
+/// every peer Xaqu will talk to is a Linux one that has made the same choice.
 pub const MIN_RTO: Millis = 200;
 
 /// The longest retransmission timeout, Linux's `TCP_RTO_MAX`.

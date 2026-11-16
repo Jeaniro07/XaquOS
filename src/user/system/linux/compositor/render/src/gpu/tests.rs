@@ -485,7 +485,7 @@ fn a_waiting_draw_keeps_the_pixels_it_was_written_with() {
     assert_eq!(at(40, 8), Some(vec![0xff, 0x00, 0x00]), "the second");
 }
 
-/// Xaqu's decorations (Ferrix's docs/DESKTOP.md §6): the focused window's
+/// Xaqu's decorations (Xaqu's docs/DESKTOP.md §6): the focused window's
 /// glow over its deep shadow, a lighter shadow under the other, drawn the
 /// same by the GPU as by the software renderer.
 fn xaqu_style() -> Style {

@@ -15,7 +15,7 @@ emulator or host here offers CMCI (QEMU 10.2.1's `MCE_CAP_DEF` is `MCG_CTL_P
 ## 1. What is there today
 
 One kernel task per processor, pinned there, polls every bank every
-`ferrix.mce.poll` seconds (1 to 3600, 5 by default) and prints, counts and
+`xaqu.mce.poll` seconds (1 to 3600, 5 by default) and prints, counts and
 clears each corrected and no-action record (`arch/x86_64/mce.rs` `run`,
 `poll`; L.x86_64.223). A corrected error is therefore seen up to a period
 late, and a UCNA's frame (Intel's no-action record with an address) is
@@ -48,7 +48,7 @@ processor (pinned), in task context, after that processor's local APIC is
 up and after the vector's handler is registered (§3.2). Only where the
 processor takes Intel's rules (L.x86_64.233), `MCG_CAP` has `CMCI_P` (bit
 10), the local APIC's version register names at least seven LVT entries
-(max LVT >= 6, as Linux's `intel_init_cmci` requires), `ferrix.mce.cmci` is
+(max LVT >= 6, as Linux's `intel_init_cmci` requires), `xaqu.mce.cmci` is
 not `off` and the handler is registered.
 
 Under one global lock (`CLAIM`, a spin lock holding preemption off with
@@ -168,8 +168,8 @@ check has not come, is the machine check's, and kicking on it would spin the
 task (ledger 5348 (ii)). So a record that landed between the round's read
 of its bank and the unmask waits one more round, not a period.
 
-**The held window** (check builds only, `cfg(ferrix_checks = "on")`):
-`ferrix.mce.cmci-window=<1..60>` makes the first round a CMCI drove sleep
+**The held window** (check builds only, `cfg(xaqu_checks = "on")`):
+`xaqu.mce.cmci-window=<1..60>` makes the first round a CMCI drove sleep
 that many seconds before its unmask, saying `mce: cpu <n> cmci window held
 <s> s`. test-mce-cmci's window mode injects into it, so that only the look
 after the unmask can find the record before the hour's period. A product
@@ -183,15 +183,15 @@ build has no option and no sleep (`read_window`, `hold_window` are empty
   accesses` where any was. Once, on the boot processor, after the poll
   tasks are started: `mce: cmci offered` or `mce: cmci not offered` (its own
   `CMCI_P`, max LVT, option and registration), and `mce:
-  ferrix.mce.cmci=off: ...` where the option said so.
-* `/proc/ferrix-mce` gains, after each processor's `cpu<n> ...` line, a line
+  xaqu.mce.cmci=off: ...` where the option said so.
+* `/proc/xaqu-mce` gains, after each processor's `cpu<n> ...` line, a line
   `cmci<n> interrupts <n> held <n> storms <n> owned <mask hex>` (`held`:
   interrupts whose wake was held for the processor's return): a line of its own,
   so the existing judges that read the last `cpu<n>` line or its end
   (`test-mce-broadcast`, `test-mce-copy`) are unchanged. lode reads `mce:`
   lines from `/dev/kmsg`, not this file.
 
-### 3.6 `ferrix.mce.cmci`
+### 3.6 `xaqu.mce.cmci`
 
 `off` claims nothing and leaves every entry masked: the poll alone, as
 today. For an operator whose firmware takes CMCI itself in a way the claim
@@ -239,7 +239,7 @@ of asking for it; ledger 5348 (v)). Without `cmci=on` the CPU, its MSRs and
 its APIC are QEMU's: the 0x2F0 arms answer as the default arms do. Its
 `lvt_cmci` and `mce_ctl2` are not in vmstate (no gate snapshots; C1).
 
-**The shared xtask QEMU** (`~/.local/share/ferrix/qemu`) is rebuilt with the
+**The shared xtask QEMU** (`~/.local/share/xaqu/qemu`) is rebuilt with the
 patch by `fetch-qemu-linux.sh` only with the product owner's go-ahead, with
 no gate running or by installing to a new prefix and swapping it in whole
 (ledger 5348 (6)). Before any test-mce-cmci row counts, these run PASSED on
@@ -247,11 +247,11 @@ the rebuilt QEMU, their logs named in the code landing: the existing
 test-mce-corrected, -srar, -broadcast, -srao, -left, -recover-off and -kill
 rows; test-mce under KVM and under TCG; test-amd-vi. `test-mce-cmci` refuses,
 naming the rebuild, on a QEMU that does not take `cmci=on`. Until then the
-rows run locally with `FERRIX_QEMU_DIR` naming a build of the series with
-0008 (`~/.local/share/ferrix/qemu-cmci`, `--version` "ferrix-cfi-cmci").
+rows run locally with `XAQU_QEMU_DIR` naming a build of the series with
+0008 (`~/.local/share/xaqu/qemu-cmci`, `--version` "xaqu-cfi-cmci").
 
 **`test-mce-cmci`** (x86-64, TCG, Intel's model with `cmci=on`, `--smp 2`,
-`ferrix.mce.poll=3600` so the period cannot be what finds a record; the
+`xaqu.mce.poll=3600` so the period cannot be what finds a record; the
 guest is test-mce's victim, which reads a page for 20 s):
 
 * every mode with CMCI on requires `mce: cmci offered` and **each**
@@ -266,11 +266,11 @@ guest is test-mce's victim, which reads a page for 20 s):
 * **Storm**: 40 corrected records into bank 1 of processor 1, 20 ms apart:
   the storm line, at most 16 interrupts counted, and `storm over` within
   10 s of the last record.
-* **Window** (L.x86_64.253): `ferrix.mce.cmci-window=3`; a first record;
+* **Window** (L.x86_64.253): `xaqu.mce.cmci-window=3`; a first record;
   on `mce: cpu 1 cmci window held` a second record, which raises nothing
   (the entry is masked); within 10 s the second corrected line, from the
   look after the unmask.
-* **Off**: `Corrected` with `ferrix.mce.cmci=off`: the option's line, no
+* **Off**: `Corrected` with `xaqu.mce.cmci=off`: the option's line, no
   `cmci on banks` line, `interrupts 0`, and no corrected line within 10 s.
 * **Unoffered**: `Corrected` without `cmci=on`: `mce: cmci not offered`,
   nothing claimed, no line within 10 s. The existing `test-mce-*` rows are
@@ -308,7 +308,7 @@ To reserve before code, in one docs-only landing (free on origin/develop):
 
 * **L.x86_64.249**: a processor taking Intel's rules whose `MCG_CAP` has
   `CMCI_P` and whose local APIC names at least seven LVT entries shall, in
-  its poll task before its first round and with `ferrix.mce.cmci` not `off`,
+  its poll task before its first round and with `xaqu.mce.cmci` not `off`,
   claim each bank whose `MCi_CTL2` it can read with `CMCI_EN` clear by
   setting `CMCI_EN` and threshold 1 and reading it back, under one lock
   across processors, and count as claimed only a bank whose read-back has
@@ -321,7 +321,7 @@ To reserve before code, in one docs-only landing (free on origin/develop):
 * **L.x86_64.251**: more than 15 rounds a CMCI drove within one second shall
   leave the entry masked and the round once a second, said once, until a
   one-second round finds no record, which unmasks it, said.
-* **L.x86_64.252** (`ferrix.mce.cmci=off`): no bank claimed, every entry
+* **L.x86_64.252** (`xaqu.mce.cmci=off`): no bank claimed, every entry
   left masked, said.
 * **L.x86_64.253**: after a round that leaves the entry to be unmasked, the
   poll task shall unmask it and read each claimed bank's status once more,

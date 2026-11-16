@@ -1,9 +1,9 @@
 //! The device side of USB, for whatever controller carries it: chapter 9's
 //! standard requests, and a CDC-ACM serial port as the one function.
 //!
-//! The Pixel 7 is to show up on a PC as `/dev/ttyACM*` while it runs Ferrix
+//! The Pixel 7 is to show up on a PC as `/dev/ttyACM*` while it runs Xaqu
 //! natively (`docs/vendor/google/pixel7/USB-HANDOVER.md`). Its controller, a DWC3, is
-//! driven by `ferrix-dwc3`; nothing here knows it. A controller driver
+//! driven by `xaqu-dwc3`; nothing here knows it. A controller driver
 //! needs only three things from the function it carries, and [`Function`]
 //! is those three:
 //!
@@ -20,7 +20,7 @@
 //! [`acm`] is the serial port: its descriptors and the three class requests
 //! Linux's `cdc_acm` sends. Everything is a pure function of the packets, so
 //! it is tested here on its own, byte by byte against the specifications,
-//! and again under `ferrix-dwc3`'s model of the controller.
+//! and again under `xaqu-dwc3`'s model of the controller.
 //!
 //! # What is not here
 //!

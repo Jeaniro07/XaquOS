@@ -30,15 +30,15 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, MAP_ANONYMOUS, MAP_FIXED, MAP_NORESERVE, MAP_PRIVATE, MAP_SHARED, MS_ASYNC, MS_SYNC,
     O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, PROT_EXEC, PROT_NONE, PROT_READ, PROT_WRITE, SEEK_SET,
 };
-use ferrix_vfs::{Errno, OpenFile, OpenFlags};
-use ferrix_vma::VmaFlags;
+use xaqu_vfs::{Errno, OpenFile, OpenFlags};
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::fs;
@@ -54,7 +54,7 @@ use crate::user::vmo::Vmo;
 const CWD: u64 = AT_FDCWD as i64 as u64;
 
 /// The file the check maps, with the terminator a program's copy carries.
-const PATH: &[u8] = b"/tmp/ferrix-mmap-check\0";
+const PATH: &[u8] = b"/tmp/xaqu-mmap-check\0";
 /// Where [`PATH`] is staged in the check's page.
 const AT_PATH: u64 = 0;
 /// A directory, which has nothing to map.
@@ -121,7 +121,7 @@ const ANON_REGIONS: u64 = 2_000;
 /// kernel heap block (4 MiB) holds.
 const FILE_REGIONS: u64 = 1_400;
 /// The directory the deep file is made in.
-const DEEP_TOP: &[u8] = b"/tmp/ferrix-maps-check";
+const DEEP_TOP: &[u8] = b"/tmp/xaqu-maps-check";
 /// How many directories deep the file is, each named by [`DEEP_NAME`] bytes.
 const DEEP_LEVELS: usize = 14;
 /// The length of each directory's name: within `NAME_MAX`.
@@ -987,7 +987,7 @@ fn check_a_program_writes_privately(file: &Arc<OpenFile>) -> Result<(), &'static
         &image,
         &[b"/rmap"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the private write program could not be loaded")?;
     let object = file

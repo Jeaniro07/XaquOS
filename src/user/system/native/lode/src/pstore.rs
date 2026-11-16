@@ -1,9 +1,9 @@
-//! The loader's `FERRIX/LASTKERNEL.TXT` off the ESP (`docs/LOGGING.md` §5):
+//! The loader's `XAQU/LASTKERNEL.TXT` off the ESP (`docs/LOGGING.md` §5):
 //! the disks `/proc/partitions` names, each read through its `/dev` node,
 //! its GUID partition table's EFI system partition -- or the disk itself,
 //! when it is a FAT32 volume with no table, as the test images are -- and
-//! the file through `ferrix-fat`, read only, at most
-//! [`ferrix_lode_core::lastkernel::MOST`] bytes.
+//! the file through `xaqu-fat`, read only, at most
+//! [`xaqu_lode_core::lastkernel::MOST`] bytes.
 //!
 //! Root's alone: a raw block device opens only for root (VULNERABILITY-
 //! ANALYSIS V-17), and the lode service is uid 91 by the time a disk's
@@ -15,9 +15,9 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_fat::{Device, Error, Volume};
-use ferrix_lode_core::lastkernel;
-use ferrix_partition::{ESP, parse_entries, parse_header};
+use xaqu_fat::{Device, Error, Volume};
+use xaqu_lode_core::lastkernel;
+use xaqu_partition::{ESP, parse_entries, parse_header};
 
 use crate::sys;
 
@@ -155,7 +155,7 @@ pub(crate) enum Missing {
 
 /// The file's bytes off the first volume that has it, or why there are
 /// none: [`Missing::Absent`] when no volume has it, which is a boot with
-/// nothing to import (a cold boot, or `ferrix.pstore=off`) unless one of its
+/// nothing to import (a cold boot, or `xaqu.pstore=off`) unless one of its
 /// lines says a volume was refused.
 pub(crate) fn read() -> Result<Vec<u8>, Missing> {
     let mut refused = Vec::new();

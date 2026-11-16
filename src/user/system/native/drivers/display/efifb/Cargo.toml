@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-efifb"
-description = "The firmware framebuffer's driver process: the display control channel's driver end over the screen firmware left lit, copying each frame into it, on ferrix-rt"
+name = "xaqu-efifb"
+description = "The firmware framebuffer's driver process: the display control channel's driver end over the screen firmware left lit, copying each frame into it, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,11 +14,11 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-display-modes.workspace = true
-ferrix-displayctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-display-modes.workspace = true
+xaqu-displayctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

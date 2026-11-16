@@ -26,7 +26,7 @@
 //! not yet retired, so the request goes to RP0 and no down step is taken
 //! until the request retires (the back end counts the waiters).
 //!
-//! Ferrix's changes to the policy (see [`rps::park_decision`]): while
+//! Xaqu's changes to the policy (see [`rps::park_decision`]): while
 //! unparked the request never steps below RP1 ([`rps::active_floor`]), and
 //! the back end parks only after [`rps::IDLE_HOLD_NS`] with nothing in
 //! flight.
@@ -51,7 +51,7 @@ pub struct Rps {
     pub mode: Power,
     /// The command streamer's clock, for the PM intervals.
     pub clock_hz: u32,
-    /// A fixed request (`ferrix.intelgpu.freq`, or the checkpoint's holds):
+    /// A fixed request (`xaqu.intelgpu.freq`, or the checkpoint's holds):
     /// no policy, no park.
     pub pinned: bool,
     /// `intel_rps_is_active`: unparked.

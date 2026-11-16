@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-virtio-input"
+name = "xaqu-virtio-input"
 description = "A virtio-input driver, as logic over a transport and DMA memory it is handed"
 version = "0.1.0"
 edition = "2024"
@@ -8,9 +8,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-inputctl = { workspace = true }
-ferrix-linux-abi = { workspace = true }
-ferrix-virtio = { workspace = true }
+xaqu-inputctl = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-virtio = { workspace = true }
 
 [lints]
 workspace = true

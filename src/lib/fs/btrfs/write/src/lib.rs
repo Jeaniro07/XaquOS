@@ -1,6 +1,6 @@
 //! The btrfs write path: copy-on-write trees, allocation, and commit.
 //!
-//! `ferrix-btrfs` reads a volume and allocates nothing. This crate changes one,
+//! `xaqu-btrfs` reads a volume and allocates nothing. This crate changes one,
 //! and it is the part of the filesystem where a mistake is not a failed read
 //! but a volume that no longer mounts, so its design is built around one rule
 //! and three consequences of it.
@@ -44,7 +44,7 @@
 //! One device, `SINGLE` or `DUP` chunks, CRC-32C, skinny metadata, and the
 //! free-space tree — which is what `mkfs.btrfs` has made by default for years
 //! — and no subvolume but the top-level one, no quota tree, and no unreplayed
-//! log. Anything else opens read-only through `ferrix-btrfs` and is refused
+//! log. Anything else opens read-only through `xaqu-btrfs` and is refused
 //! here with [`Error::Unsupported`] saying why: a snapshot shares tree blocks
 //! between roots, and copying a shared block needs reference bookkeeping on
 //! its children this crate does not do, so writing one would corrupt the
@@ -52,8 +52,8 @@
 //!
 //! # Totality
 //!
-//! As in `ferrix-btrfs`: no `unsafe`, no indexing, no panics. A node read from
-//! the disk is parsed and checked by `ferrix-btrfs` before this crate edits it,
+//! As in `xaqu-btrfs`: no `unsafe`, no indexing, no panics. A node read from
+//! the disk is parsed and checked by `xaqu-btrfs` before this crate edits it,
 //! and a node this crate writes is built from typed items, never patched.
 //!
 //! Nor does running out of memory stop the machine: every allocation goes
@@ -69,8 +69,8 @@ extern crate alloc;
 
 use core::fmt;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::volume::Device;
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::volume::Device;
 
 mod bytes;
 mod chunks;

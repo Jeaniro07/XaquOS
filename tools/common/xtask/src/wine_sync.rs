@@ -1,4 +1,4 @@
-//! `test-wine-sync`: Proton's Wine waits through fsync on Ferrix, and how
+//! `test-wine-sync`: Proton's Wine waits through fsync on Xaqu, and how
 //! much it saves (stage 23, E1.4 and E3.5; docs/WINE.md §11).
 //!
 //! GE-Proton11-7's Wine has no esync. Its fast synchronisation is fsync:
@@ -123,7 +123,7 @@ const TIMEOUT_SECONDS: u64 = 900;
 ///
 /// It has not been made, or carries another Proton than the script pins.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_PROTON_VOLUME") {
+    let directory = match std::env::var_os("XAQU_PROTON_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("proton")?,
     };
@@ -326,7 +326,7 @@ pub(crate) fn test_wine_sync(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running the bench in Proton's Wine on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running the bench in Proton's Wine on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -353,7 +353,7 @@ pub(crate) fn test_wine_sync(args: &Args) -> Result<()> {
     for figure in judge(arch, &lines)? {
         println!("  {arch}: {figure}");
     }
-    println!("  {arch}: Proton's Wine took fsync on Ferrix, from its 64-bit and 32-bit sides");
+    println!("  {arch}: Proton's Wine took fsync on Xaqu, from its 64-bit and 32-bit sides");
     Ok(())
 }
 

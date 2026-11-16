@@ -9,7 +9,7 @@ the difference between a dependency and a finding.
 
 Two facts, both measured here rather than asserted:
 
-  1. **The certified item contains no SOUP.** `ferrix-kernel` and `ferrix-boot`
+  1. **The certified item contains no SOUP.** `xaqu-kernel` and `xaqu-boot`
      link no external crate on any of the three architectures. Everything in
      the shipping graph is first-party code in this repository, developed under
      the lifecycle the rest of docs/certification describes. That is the single
@@ -41,12 +41,12 @@ OUTPUT = ROOT / "docs" / "certification" / "SOUP.md"
 # every target it is built for. A crate that appears in none of these is not in
 # the device, whatever else it is in.
 SHIPPING = [
-    ("ferrix-kernel", "x86_64-unknown-none"),
-    ("ferrix-kernel", "aarch64-unknown-none-softfloat"),
-    ("ferrix-kernel", "armv7a-none-eabi"),
-    ("ferrix-boot", "x86_64-unknown-uefi"),
-    ("ferrix-boot", "aarch64-unknown-uefi"),
-    ("ferrix-boot", "armv7-unknown-linux-musleabi"),
+    ("xaqu-kernel", "x86_64-unknown-none"),
+    ("xaqu-kernel", "aarch64-unknown-none-softfloat"),
+    ("xaqu-kernel", "armv7a-none-eabi"),
+    ("xaqu-boot", "x86_64-unknown-uefi"),
+    ("xaqu-boot", "aarch64-unknown-uefi"),
+    ("xaqu-boot", "armv7-unknown-linux-musleabi"),
 ]
 
 
@@ -72,7 +72,7 @@ def shipping_externals() -> dict[tuple[str, str], list[str]]:
             for line in result.stdout.splitlines()
             if line.strip() and not line.startswith(" ")
         }
-        found[(package, target)] = sorted(n for n in names if not n.startswith("ferrix-"))
+        found[(package, target)] = sorted(n for n in names if not n.startswith("xaqu-"))
     return found
 
 

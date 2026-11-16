@@ -1,9 +1,9 @@
 //! The AHCI driver process: a ring-3 program that serves the first SATA
 //! disk of an AHCI controller to the kernel over the block ring.
 //!
-//! `ferrix-ahci` knows the controller and is tested on the host: it brings
+//! `xaqu-ahci` knows the controller and is tested on the host: it brings
 //! the HBA up, finds the first port with a drive, identifies it, and moves
-//! one request at a time, polled. `ferrix-driver` is the rest: START, the
+//! one request at a time, polled. `xaqu-driver` is the rest: START, the
 //! PCI bus, pinned memory, and the block ring's conversation with the
 //! kernel (`docs/BLOCK-RING.md`). What is here is the glue, as the NVMe
 //! driver's is (`docs/NVME.md`): the controller's registers through BAR 5
@@ -35,10 +35,10 @@
 //! One line when the function is found, before a register is written; one
 //! when the drive is up, naming its model, serial and size; one line for
 //! each failed request, and for each request whose command had to be issued
-//! again (`ferrix_ahci::driver::ATTEMPTS`), up to a limit; one line when it
+//! again (`xaqu_ahci::driver::ATTEMPTS`), up to a limit; one line when it
 //! is shut down.
 //!
-//! The exit status is a `ferrix_driver::Step`, 0 a clean STOP, or a clean
+//! The exit status is a `xaqu_driver::Step`, 0 a clean STOP, or a clean
 //! stop before HELLO when the controller has no ATA disk (`Step::Idle`).
 
 #![no_std]
@@ -47,22 +47,22 @@
 use core::fmt::{self, Write as _};
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_ahci::{Ahci, CONTROL_PAGES, Clock, Memory, Op as AhciOp, Registers, Segment};
-use ferrix_blkring::control::VMO_RIGHTS;
-use ferrix_blkring::geometry::{Device as Geometry, DeviceFlags};
-use ferrix_blkserve::Disk;
-use ferrix_driver::dma::{Dma, PAGE};
-use ferrix_driver::pci::{self, Function};
-use ferrix_driver::{Probe, Step, Stopped, Stuck, block, mmio};
-use ferrix_native_abi::types::DeviceInfo;
-use ferrix_rt::native::handle::{Deadline, OwnedHandle};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio_blk::{
+use xaqu_ahci::{Ahci, CONTROL_PAGES, Clock, Memory, Op as AhciOp, Registers, Segment};
+use xaqu_blkring::control::VMO_RIGHTS;
+use xaqu_blkring::geometry::{Device as Geometry, DeviceFlags};
+use xaqu_blkserve::Disk;
+use xaqu_driver::dma::{Dma, PAGE};
+use xaqu_driver::pci::{self, Function};
+use xaqu_driver::{Probe, Step, Stopped, Stuck, block, mmio};
+use xaqu_native_abi::types::DeviceInfo;
+use xaqu_rt::native::handle::{Deadline, OwnedHandle};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, Drained, Op, Request, Status, SubmitError,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The BAR an AHCI controller's registers are in: ABAR, BAR 5.
 const ABAR: u8 = 5;
@@ -132,7 +132,7 @@ impl fmt::Debug for Monotonic {
 
 impl Clock for Monotonic {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn pause(&mut self, nanos: u64) {
@@ -245,7 +245,7 @@ impl Probe for Sata {
         let registers = device.map_bar(ABAR)?;
         // Said before the controller is touched, so a boot that stops in
         // the reset still says how far it came.
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "ahci     {} {:04x}:{:04x} found: BAR 5 maps {} bytes, interrupt by {}",
             Place(info.location),
             info.vendor_id,
@@ -256,7 +256,7 @@ impl Probe for Sata {
         said_registers(&info, &registers);
         let pinned = |pages: usize| {
             device.dma(pages).inspect_err(|_| {
-                ferrix_rt::err!(
+                xaqu_rt::err!(
                     "ahci     {} {pages} pages could not be pinned for the controller",
                     Place(info.location)
                 );
@@ -295,16 +295,16 @@ impl Probe for Sata {
             // A controller with no ATA disk behind it -- q35's built-in one
             // with only a CD-ROM, or none -- is not a failure: there is
             // nothing to serve, and every port it tried was stopped
-            // (`ferrix-ahci`'s `NoDrive`).
-            Err(ferrix_ahci::Error::NoDrive) => {
-                ferrix_rt::warn!(
+            // (`xaqu-ahci`'s `NoDrive`).
+            Err(xaqu_ahci::Error::NoDrive) => {
+                xaqu_rt::warn!(
                     "ahci     {} has no ATA disk: nothing to serve",
                     Place(info.location)
                 );
                 return Err(Step::Idle);
             }
             Err(error) => {
-                ferrix_rt::err!(
+                xaqu_rt::err!(
                     "ahci     {} did not come up: {error:?}",
                     Place(info.location)
                 );
@@ -326,7 +326,7 @@ impl Probe for Sata {
         let geometry = match geometry {
             Ok(geometry) if sector.is_power_of_two() && sector >= 512 => geometry,
             _ => {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "ahci     {} sectors of {sector} bytes: not served",
                     Place(info.location)
                 );
@@ -415,14 +415,14 @@ impl Sata {
             self.errors = self.errors.saturating_add(1);
             if self.errors <= SAID_ERRORS {
                 if attempt > 0 {
-                    ferrix_rt::err!(
+                    xaqu_rt::err!(
                         "ahci     request {} ({:?} of {count} sectors at {lba}) failed with \
                          {error:?} and was done on attempt {attempt}",
                         request.id,
                         request.op
                     );
                 } else {
-                    ferrix_rt::err!(
+                    xaqu_rt::err!(
                         "ahci     request {} ({:?} of {count} sectors at {lba}) failed with \
                          {error:?} first, and on every attempt after",
                         request.id,
@@ -439,7 +439,7 @@ impl Sata {
             Err(error) => {
                 self.errors = self.errors.saturating_add(1);
                 if self.errors <= SAID_ERRORS {
-                    ferrix_rt::err!(
+                    xaqu_rt::err!(
                         "ahci     request {} ({:?} of {count} sectors at {lba}) failed: {error:?}",
                         request.id,
                         request.op
@@ -681,7 +681,7 @@ impl block::Device for Sata {
         // Nothing the ring asked for is held between requests: nothing is
         // abandoned. A window being read ahead is waited for first.
         let (_, _, control) = logic.shutdown();
-        ferrix_rt::info!("ahci     shut down: the port stopped");
+        xaqu_rt::info!("ahci     shut down: the port stopped");
         let stopped = device.stopped();
         control.0.free(&stopped);
         data.free(&stopped);
@@ -707,7 +707,7 @@ fn said_registers(info: &DeviceInfo, registers: &mmio::Block) {
         }
     };
     let implemented = read(0x0C);
-    ferrix_rt::debug!(
+    xaqu_rt::debug!(
         "ahci     {} CAP {:08x} GHC {:08x} PI {implemented:08x} VS {:08x} CAP2 {:08x} BOHC {:08x}",
         Place(info.location),
         read(0x00),
@@ -718,7 +718,7 @@ fn said_registers(info: &DeviceInfo, registers: &mmio::Block) {
     );
     for index in (0..32_u32).filter(|index| implemented & (1 << index) != 0) {
         let at = 0x100 + 0x80 * index;
-        ferrix_rt::debug!(
+        xaqu_rt::debug!(
             "ahci     port {index}: SSTS {:08x} SCTL {:08x} TFD {:08x} SIG {:08x} CMD {:08x} SERR {:08x}",
             read(at + 0x28),
             read(at + 0x2C),
@@ -737,7 +737,7 @@ fn said_up(info: &DeviceInfo, logic: &Logic) {
         .sectors
         .saturating_mul(u64::from(identity.sector_size))
         >> 20;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "ahci     {} {:04x}:{:04x} port {}: {} serial {}: {} sectors of {} ({mebibytes} MiB)",
         Place(info.location),
         info.vendor_id,

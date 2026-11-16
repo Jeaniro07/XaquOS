@@ -76,7 +76,7 @@ fn the_three_mount_and_privilege_keys_take_systemds_values() {
         assert!(warnings.is_empty(), "{value}: {warnings:?}");
         assert_eq!(s.protect_system, level, "{value}");
     }
-    // systemd 256's `disconnected` is what Ferrix's `yes` does already.
+    // systemd 256's `disconnected` is what Xaqu's `yes` does already.
     let (s, warnings) = sandbox("PrivateTmp=disconnected\n");
     assert!(warnings.is_empty());
     assert!(s.private_tmp);

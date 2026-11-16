@@ -5,8 +5,8 @@
 use core::arch::asm;
 
 use super::cpu;
-use ferrix_bootinfo::BootView;
-use ferrix_sync::IrqControl;
+use xaqu_bootinfo::BootView;
+use xaqu_sync::IrqControl;
 
 /// Whether this processor can scrub: it always can on x86-64, whose
 /// `MOVNTI` writes without reading (SSE2, which every x86-64 has).

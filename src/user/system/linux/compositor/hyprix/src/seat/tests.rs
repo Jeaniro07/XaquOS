@@ -536,7 +536,7 @@ fn a_locked_pointer_stays_put_and_still_reports_the_distance() {
     assert_eq!(seat.pointer(), (512.0, 384.0));
 }
 
-/// `bindr = SUPER, Super_L`: SUPER alone fires it, as Ferrix light's
+/// `bindr = SUPER, Super_L`: SUPER alone fires it, as Xaqu light's
 /// overview is opened; SUPER held for another bind -- SUPER H, SUPER Tab
 /// -- does not, or every SUPER chord would open the overview as SUPER is
 /// let go. GNOME and Hyprland both leave the release alone then.

@@ -3,7 +3,7 @@
 //!
 //! **The record.** One QEMU, kept across a reset: no `-no-reboot`, a power-off
 //! only pauses it, and a QMP port. The image's command line says
-//! `ferrix.onexit=panic`, so boot 1 runs to init's exit and panics on purpose
+//! `xaqu.onexit=panic`, so boot 1 runs to init's exit and panics on purpose
 //! (`FX-1501`). Once the report says the region is written back, the gate
 //! saves the region's RAM over QMP and resets the machine, as a warm reset
 //! does: RAM kept, firmware and the loader started again. It requires
@@ -19,23 +19,23 @@
 //!    renders it, and boot 2's kernel mirroring boot 2.
 //!
 //! **The switch.** A second QEMU of an image whose command line says
-//! `ferrix.pstore=off`: the loader takes no region and says so, and the
+//! `xaqu.pstore=off`: the loader takes no region and says so, and the
 //! kernel has none.
 //!
-//! **The reset** (`ferrix.panic=reset`, the stop-gap of
+//! **The reset** (`xaqu.panic=reset`, the stop-gap of
 //! `src/kernel/src/panic/reset.rs`). A third QEMU, kept across a reset as the
-//! first, whose command line adds `ferrix.panic=reset` and which nobody
+//! first, whose command line adds `xaqu.panic=reset` and which nobody
 //! resets: boot 1's report must say the reset is coming, the machine must
 //! reset by itself no sooner than the wait and not much later, and boot 2's
 //! loader must quote boot 1's panic. The first QEMU, without the option, is
 //! the default's evidence: its report says the processor halts, and no reset
-//! line. A fourth, with `ferrix.panic=Reset`, shows a misspelt value
+//! line. A fourth, with `xaqu.panic=Reset`, shows a misspelt value
 //! said as not understood and taken as halt.
 //!
 //! **The stops** (`docs/POSTMORTEM.md` §5). One QEMU for each way the kernel
 //! stops on purpose but a panic, kept across a reset as the first: a program's
 //! `reboot(2)` RESTART, RESTART2, `POWER_OFF` and HALT, and init's exit under
-//! `ferrix.onexit=reset` and under the default. A power-off or a halt only
+//! `xaqu.onexit=reset` and under the default. A power-off or a halt only
 //! pauses QEMU, which the gate resets over QMP. Boot 2's loader must say how
 //! boot 1 ended, and boot 2's kernel attach the fresh header. One more QEMU
 //! is reset over QMP while its program sleeps, and boot 2's loader must say
@@ -49,12 +49,12 @@
 //! region go; then the power is cut (the QEMU process ends) and a second
 //! process boots the disk cold: boot 3's loader finds no pstore and quotes
 //! boot 1's panic from the log, and the host reads the same record back
-//! through `ferrix-eventlog`.
+//! through `xaqu-eventlog`.
 
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use ferrix_bootinfo::pstore::{self, Ended, HEADER_BYTES, Stop, Text};
+use xaqu_bootinfo::pstore::{self, Ended, HEADER_BYTES, Stop, Text};
 
 use crate::args::Args;
 use crate::display::Qmp;
@@ -68,7 +68,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     name: "test-postmortem",
     help_at: 500,
     help: &[
-        "test-postmortem  the kernel's log across a warm reset: a panic, a QMP reset, the next loader quotes it; ferrix.pstore=off; ferrix.panic=reset (x86_64, aarch64)",
+        "test-postmortem  the kernel's log across a warm reset: a panic, a QMP reset, the next loader quotes it; xaqu.pstore=off; xaqu.panic=reset (x86_64, aarch64)",
     ],
     run: |_, args| test_postmortem(args, crate::build_image),
 }];
@@ -83,10 +83,10 @@ const GOES_TO: &str = "'s kernel log goes to ";
 const NONE: &str = "no region this boot";
 const LAST_REPORT: &str = "'s last report: panicked: ";
 /// The loader's banner, which a reset brings back.
-pub(crate) const LOADER_BANNER: &str = "Ferrix loader ";
-/// The report's line under `ferrix.panic=reset`, before the wait.
-pub(crate) const RESET_LINE: &str = "  reset     in 10 s, as ferrix.panic=reset asks";
-/// The report's `stopped` line under `ferrix.panic=reset`, and without it.
+pub(crate) const LOADER_BANNER: &str = "Xaqu loader ";
+/// The report's line under `xaqu.panic=reset`, before the wait.
+pub(crate) const RESET_LINE: &str = "  reset     in 10 s, as xaqu.panic=reset asks";
+/// The report's `stopped` line under `xaqu.panic=reset`, and without it.
 const STOPPED_RESETS: &str = "  stopped   this processor resets the machine after the report";
 const STOPPED_HALTS: &str = "  stopped   this processor halts here";
 /// The wait between the reset line and the reset, less the slack a host
@@ -157,7 +157,7 @@ fn across_a_reset(
     build: &impl Fn(Arch, &Args) -> Result<(PathBuf, PathBuf)>,
 ) -> Result<()> {
     let mut wanted = args.clone();
-    wanted.kernel_options.push("ferrix.onexit=panic".to_owned());
+    wanted.kernel_options.push("xaqu.onexit=panic".to_owned());
     wanted.keep_ram = true;
     let port = crate::display::free_port()?;
     wanted.qmp_port = Some(port);
@@ -215,22 +215,22 @@ fn across_a_reset(
     if let Some(problem) = kept_file_problem(&disk, &region, &after) {
         return Err(Error::new(format!("{arch}: {problem}")));
     }
-    println!("  {arch}: boot 2's loader kept boot 1's log in FERRIX/LASTKERNEL.TXT on the ESP");
+    println!("  {arch}: boot 2's loader kept boot 1's log in XAQU/LASTKERNEL.TXT on the ESP");
     Ok(())
 }
 
-/// Why the ESP's `FERRIX/LASTKERNEL.TXT`, which boot 2's loader wrote, is
+/// Why the ESP's `XAQU/LASTKERNEL.TXT`, which boot 2's loader wrote, is
 /// not the report lines it printed followed by boot 1's region text, if it
-/// is not (`docs/POSTMORTEM.md` §3.5). Read with `ferrix-fat`, the reader
+/// is not (`docs/POSTMORTEM.md` §3.5). Read with `xaqu-fat`, the reader
 /// `lode` imports it with.
 fn kept_file_problem(disk: &[u8], region: &[u8], after: &[String]) -> Option<String> {
-    let mut volume = match ferrix_fat::Volume::open(disk) {
+    let mut volume = match xaqu_fat::Volume::open(disk) {
         Ok(volume) => volume,
         Err(why) => return Some(format!("the image's ESP does not read as FAT32: {why:?}")),
     };
-    let file = match volume.read_file("FERRIX/LASTKERNEL.TXT", 4 << 20) {
+    let file = match volume.read_file("XAQU/LASTKERNEL.TXT", 4 << 20) {
         Ok(file) => file,
-        Err(why) => return Some(format!("FERRIX/LASTKERNEL.TXT does not read: {why:?}")),
+        Err(why) => return Some(format!("XAQU/LASTKERNEL.TXT does not read: {why:?}")),
     };
     let header: &[u8; HEADER_BYTES] = region.get(..HEADER_BYTES)?.try_into().ok()?;
     let found = pstore::validate(header, region.len() as u64).ok()?;
@@ -244,14 +244,14 @@ fn kept_file_problem(disk: &[u8], region: &[u8], after: &[String]) -> Option<Str
         .and_then(|at| file.get(..at))
     else {
         return Some(format!(
-            "FERRIX/LASTKERNEL.TXT holds {} bytes, fewer than boot 1's log's {}",
+            "XAQU/LASTKERNEL.TXT holds {} bytes, fewer than boot 1's log's {}",
             file.len(),
             text.len()
         ));
     };
     if file.get(head.len()..) != Some(text.as_slice()) {
         return Some(
-            "FERRIX/LASTKERNEL.TXT does not end with boot 1's log as the region held it".into(),
+            "XAQU/LASTKERNEL.TXT does not end with boot 1's log as the region held it".into(),
         );
     }
     let head = String::from_utf8_lossy(head);
@@ -264,12 +264,12 @@ fn kept_file_problem(disk: &[u8], region: &[u8], after: &[String]) -> Option<Str
     for line in head.lines() {
         if !said.iter().any(|each| each.ends_with(line.trim_end())) {
             return Some(format!(
-                "FERRIX/LASTKERNEL.TXT's head line `{line}` is not one boot 2's loader printed"
+                "XAQU/LASTKERNEL.TXT's head line `{line}` is not one boot 2's loader printed"
             ));
         }
     }
     if !head.contains("last report: panicked:") {
-        return Some("FERRIX/LASTKERNEL.TXT's head does not quote boot 1's panic".into());
+        return Some("XAQU/LASTKERNEL.TXT's head does not quote boot 1's panic".into());
     }
     None
 }
@@ -306,13 +306,13 @@ fn judge(arch: Arch, boot_1: &[String], region: &[u8], after: &[String]) -> Resu
     // The default: the report halts, and says so.
     if let Some(line) = boot_1.iter().find(|line| line.contains(RESET_LINE)) {
         return fail(format!(
-            "a panic without ferrix.panic=reset announced a reset: `{}`",
+            "a panic without xaqu.panic=reset announced a reset: `{}`",
             line.trim()
         ));
     }
     if !boot_1.iter().any(|line| line.contains(STOPPED_HALTS)) {
         return fail(format!(
-            "boot 1's report, without ferrix.panic=reset, did not say `{}`",
+            "boot 1's report, without xaqu.panic=reset, did not say `{}`",
             STOPPED_HALTS.trim()
         ));
     }
@@ -330,8 +330,8 @@ fn judge(arch: Arch, boot_1: &[String], region: &[u8], after: &[String]) -> Resu
     }
     let panic = boot_1
         .iter()
-        .find_map(|line| line.trim_end().strip_prefix("FERRIX-PANIC "))
-        .ok_or_else(|| Error::new(format!("{arch}: boot 1 printed no FERRIX-PANIC line")))?;
+        .find_map(|line| line.trim_end().strip_prefix("XAQU-PANIC "))
+        .ok_or_else(|| Error::new(format!("{arch}: boot 1 printed no XAQU-PANIC line")))?;
     let quoted = format!("boot 1{LAST_REPORT}{}", rendered(panic));
     if !after.iter().any(|line| line.trim_end().ends_with(&quoted)) {
         return fail(format!(
@@ -387,7 +387,7 @@ fn panic_word_problem(region: &[u8], after: &[String]) -> Option<String> {
 fn write_back_problem(boot_1: &[String]) -> Option<String> {
     let panic = boot_1
         .iter()
-        .position(|line| line.starts_with("FERRIX-PANIC "))?;
+        .position(|line| line.starts_with("XAQU-PANIC "))?;
     let report = boot_1.get(panic..)?;
     let Some(back) = report.iter().position(|line| line.contains(WRITTEN_BACK)) else {
         return Some(format!("boot 1's report never said `{WRITTEN_BACK}`"));
@@ -409,7 +409,7 @@ fn write_back_problem(boot_1: &[String]) -> Option<String> {
     None
 }
 
-/// A line as the loader quotes it: printable, cut, `FERRIX-` defused.
+/// A line as the loader quotes it: printable, cut, `XAQU-` defused.
 fn rendered(line: &str) -> String {
     let mut bytes: Vec<u8> = line.bytes().take(SHOWN).map(pstore::shown).collect();
     pstore::defuse(&mut bytes);
@@ -465,7 +465,7 @@ fn region_problem(boot_1: &[String], region: &[u8]) -> Option<String> {
     // copied in when the region was attached.
     let banner = boot_1
         .iter()
-        .position(|line| line.starts_with("Ferrix ") && !line.starts_with(LOADER_BANNER))?;
+        .position(|line| line.starts_with("Xaqu ") && !line.starts_with(LOADER_BANNER))?;
     let mut problem = Some(
         "the region does not start with the kernel's first lines, its banner and the empty line \
          before it"
@@ -558,7 +558,7 @@ fn matches_serial(recorded: &[&str], serial: &[String]) -> Option<String> {
     None
 }
 
-/// `ferrix.panic=reset`: boot 1 panics and the machine resets itself after
+/// `xaqu.panic=reset`: boot 1 panics and the machine resets itself after
 /// the wait; boot 2's loader quotes boot 1's panic.
 ///
 /// Verifies: H.FAIL.5, `L.panic.2`, `L.panic.3`, `L.panic.4`
@@ -569,8 +569,8 @@ fn reset_by_itself(
     early: bool,
 ) -> Result<()> {
     let mut wanted = args.clone();
-    wanted.kernel_options.push("ferrix.onexit=panic".to_owned());
-    wanted.kernel_options.push("ferrix.panic=reset".to_owned());
+    wanted.kernel_options.push("xaqu.onexit=panic".to_owned());
+    wanted.kernel_options.push("xaqu.panic=reset".to_owned());
     if early {
         wanted.kernel_options.push(EARLY_OPTION.to_owned());
     }
@@ -586,7 +586,7 @@ fn reset_by_itself(
         })?;
         if !announced {
             return Err(Error::new(format!(
-                "{arch}: boot 1's report under ferrix.panic=reset never said `{}`",
+                "{arch}: boot 1's report under xaqu.panic=reset never said `{}`",
                 RESET_LINE.trim()
             )));
         }
@@ -651,7 +651,7 @@ fn reset_by_itself(
         );
     } else {
         println!(
-            "  {arch}: ferrix.panic=reset reset the machine by itself, and the next loader quoted the panic"
+            "  {arch}: xaqu.panic=reset reset the machine by itself, and the next loader quoted the panic"
         );
     }
     Ok(())
@@ -659,8 +659,8 @@ fn reset_by_itself(
 
 /// The check-only option that holds the console's lock for good from the
 /// first report's start, and its line.
-const HELD_OPTION: &str = "ferrix.check.panic=held";
-const HELD_LINE: &str = "ferrix.check.panic=held: the console's lock is held from here";
+const HELD_OPTION: &str = "xaqu.check.panic=held";
+const HELD_LINE: &str = "xaqu.check.panic=held: the console's lock is held from here";
 /// The longest from the report's first line to its reset line with the
 /// console's lock held for good: one bounded wait for the lock, not one per
 /// write (`L.console.15`; a wait per write took tens of seconds).
@@ -677,8 +677,8 @@ fn held_lock(
     build: &impl Fn(Arch, &Args) -> Result<(PathBuf, PathBuf)>,
 ) -> Result<()> {
     let mut wanted = args.clone();
-    wanted.kernel_options.push("ferrix.onexit=panic".to_owned());
-    wanted.kernel_options.push("ferrix.panic=reset".to_owned());
+    wanted.kernel_options.push("xaqu.onexit=panic".to_owned());
+    wanted.kernel_options.push("xaqu.panic=reset".to_owned());
     wanted.kernel_options.push(HELD_OPTION.to_owned());
     wanted.keep_ram = true;
     let (image, kernel) = build(arch, &wanted)?;
@@ -737,9 +737,9 @@ fn held_lock(
 
 /// The check-only option that faults inside the first report, before its
 /// reset line (`src/kernel/src/panic/reset_check.rs`, `L.panic.4`).
-const EARLY_OPTION: &str = "ferrix.check.panic=early";
+const EARLY_OPTION: &str = "xaqu.check.panic=early";
 /// The check's line as it faults, and the abridged report's.
-const EARLY_FAULTING: &str = "ferrix.check.panic=early: faulting inside the report now";
+const EARLY_FAULTING: &str = "xaqu.check.panic=early: faulting inside the report now";
 const ABRIDGED: &str = "  stopped   during another report, so this one is abridged";
 
 /// Why the early case's boot 1 does not show the fault where it must: the
@@ -761,7 +761,7 @@ fn early_problem(boot_1: &[String]) -> Option<String> {
     }
 }
 
-/// Why a `ferrix.panic=reset` boot did not reset as it should, if it did not:
+/// Why a `xaqu.panic=reset` boot did not reset as it should, if it did not:
 /// the report's `stopped` line says so, the reset came after the wait and
 /// not much later, and the next loader quotes boot 1's panic.
 fn reset_problem(boot_1: &[String], after: &[String], waited: Option<Duration>) -> Option<String> {
@@ -793,14 +793,14 @@ fn reset_problem_with(
     }
     let mut panics = boot_1
         .iter()
-        .filter_map(|line| line.trim_end().strip_prefix("FERRIX-PANIC "));
+        .filter_map(|line| line.trim_end().strip_prefix("XAQU-PANIC "));
     let panic = if last {
         panics.next_back()
     } else {
         panics.next()
     };
     let Some(panic) = panic else {
-        return Some("boot 1 printed no FERRIX-PANIC line".to_owned());
+        return Some("boot 1 printed no XAQU-PANIC line".to_owned());
     };
     let quoted = format!("boot 1{LAST_REPORT}{}", rendered(panic));
     if !after.iter().any(|line| line.trim_end().ends_with(&quoted)) {
@@ -835,7 +835,7 @@ struct Case {
     ended: Ended,
 }
 
-/// The script's path, which `ferrix.init=` names.
+/// The script's path, which `xaqu.init=` names.
 pub(crate) const STOP_SCRIPT: &str = "/etc/pm-stop";
 /// What the hang case's script says before it sleeps.
 const WAITING: &str = "pm-stop: waiting for the reset";
@@ -877,11 +877,11 @@ const CASES: [Case; 7] = [
         ended: Ended::Stopped(Stop::Halt),
     },
     Case {
-        name: "init's exit under ferrix.onexit=reset",
+        name: "init's exit under xaqu.onexit=reset",
         script: None,
-        option: Some("ferrix.onexit=reset"),
+        option: Some("xaqu.onexit=reset"),
         how: How::ByItself,
-        stopping: "  power    resetting, as ferrix.onexit=reset asks",
+        stopping: "  power    resetting, as xaqu.onexit=reset asks",
         ended: Ended::Stopped(Stop::ExitReset),
     },
     Case {
@@ -889,7 +889,7 @@ const CASES: [Case; 7] = [
         script: None,
         option: None,
         how: How::Paused,
-        stopping: "FERRIX-POWER-OFF",
+        stopping: "XAQU-POWER-OFF",
         ended: Ended::Stopped(Stop::ExitPowerOff),
     },
     Case {
@@ -1123,8 +1123,8 @@ fn kept_across_power(
     build: &impl Fn(Arch, &Args) -> Result<(PathBuf, PathBuf)>,
 ) -> Result<()> {
     let mut wanted = args.clone();
-    wanted.kernel_options.push("ferrix.onexit=panic".to_owned());
-    wanted.kernel_options.push("ferrix.panic=reset".to_owned());
+    wanted.kernel_options.push("xaqu.onexit=panic".to_owned());
+    wanted.kernel_options.push("xaqu.panic=reset".to_owned());
     wanted.keep_ram = true;
     let (image, kernel) = build(arch, &wanted)?;
     let disk = paths::build_dir(arch).join("eventlog-disk.img");
@@ -1156,8 +1156,8 @@ fn kept_across_power(
     let _ = qemu::watch_then(arch, &disk, &kernel, &wanted, qemu::PANIC_MARKER, hook)?;
     let panic = boot_1
         .iter()
-        .find_map(|line| line.trim_end().strip_prefix("FERRIX-PANIC "))
-        .ok_or_else(|| Error::new(format!("{arch}: boot 1 printed no FERRIX-PANIC line")))?
+        .find_map(|line| line.trim_end().strip_prefix("XAQU-PANIC "))
+        .ok_or_else(|| Error::new(format!("{arch}: boot 1 printed no XAQU-PANIC line")))?
         .to_owned();
     if !boot_2.iter().any(|line| line.contains(KEPT)) {
         return Err(Error::new(format!(
@@ -1192,10 +1192,10 @@ fn kept_across_power(
 /// The newest record on the disk's event log: its count, its first line
 /// and its text, or why there is none.
 fn read_log(disk: &std::path::Path) -> Result<Option<(u32, String)>> {
-    use ferrix_eventlog::{self as eventlog, Geometry, RECORD_LEN};
+    use xaqu_eventlog::{self as eventlog, Geometry, RECORD_LEN};
     let file = std::fs::File::open(disk)?;
     let mut device = LogDisk(&file);
-    let part = ferrix_slots::gpt::Part {
+    let part = xaqu_slots::gpt::Part {
         index: 0,
         unique: [0; 16],
         first_lba: EVENTS_RANGE.0,
@@ -1230,7 +1230,7 @@ fn kept_problem(panic: &str, boot_3: &[String], record: &Option<(u32, String)>) 
     let Some((_, text)) = record else {
         return Some("the event log on the disk holds no record after the power cycle".to_owned());
     };
-    let first = format!("FERRIX_PANIC {}", rendered(panic));
+    let first = format!("XAQU_PANIC {}", rendered(panic));
     if !text.starts_with(&first) {
         return Some(format!(
             "the event log's record does not start with boot 1's panic: wanted `{first}`"
@@ -1258,24 +1258,24 @@ fn kept_problem(panic: &str, boot_3: &[String], record: &Option<(u32, String)>) 
 /// [`EVENTS_RANGE`] (zeroed: no header yet), and `image`, the ESP, from
 /// [`ESP_FIRST`].
 pub(crate) fn write_disk(image: &std::path::Path, disk: &std::path::Path) -> Result<()> {
-    use ferrix_partition::{ESP, Guid, Partition, write_table};
+    use xaqu_partition::{ESP, Guid, Partition, write_table};
     let esp = std::fs::read(image)?;
     let esp_sectors = (esp.len() as u64).div_ceil(512);
     let sectors = ESP_FIRST + esp_sectors + 2048;
     let partitions = [
         Partition::new(
-            Guid(ferrix_eventlog::EVENTS_TYPE),
+            Guid(xaqu_eventlog::EVENTS_TYPE),
             Guid::random([0x31; 16]),
             EVENTS_RANGE.0,
             EVENTS_RANGE.1,
-            "ferrix-events",
+            "xaqu-events",
         ),
         Partition::new(
             ESP,
             Guid::random([0x32; 16]),
             ESP_FIRST,
             ESP_FIRST + esp_sectors - 1,
-            "ferrix-esp",
+            "xaqu-esp",
         ),
     ];
     let table = write_table(sectors, 512, Guid::random([0x33; 16]), &partitions)
@@ -1297,14 +1297,14 @@ pub(crate) fn write_disk(image: &std::path::Path, disk: &std::path::Path) -> Res
 
 /// The event log of a disk [`write_disk`] wrote, as a device and its
 /// geometry: for reading it back, and for the host's clear.
-pub(crate) fn log_device(file: &std::fs::File) -> Result<(LogDisk<'_>, ferrix_eventlog::Geometry)> {
-    let part = ferrix_slots::gpt::Part {
+pub(crate) fn log_device(file: &std::fs::File) -> Result<(LogDisk<'_>, xaqu_eventlog::Geometry)> {
+    let part = xaqu_slots::gpt::Part {
         index: 0,
         unique: [0; 16],
         first_lba: EVENTS_RANGE.0,
         last_lba: EVENTS_RANGE.1,
     };
-    let geometry = ferrix_eventlog::Geometry::of(&part, 512)
+    let geometry = xaqu_eventlog::Geometry::of(&part, 512)
         .map_err(|why| Error::new(format!("the log: {why:?}")))?;
     Ok((LogDisk(file), geometry))
 }
@@ -1313,7 +1313,7 @@ pub(crate) fn log_device(file: &std::fs::File) -> Result<(LogDisk<'_>, ferrix_ev
 /// host's clear (the file must then be open for writing).
 pub(crate) struct LogDisk<'a>(&'a std::fs::File);
 
-impl ferrix_slots::record::ControlDisk for LogDisk<'_> {
+impl xaqu_slots::record::ControlDisk for LogDisk<'_> {
     fn block_size(&self) -> u32 {
         512
     }
@@ -1321,35 +1321,35 @@ impl ferrix_slots::record::ControlDisk for LogDisk<'_> {
         &mut self,
         lba: u64,
         bytes: &[u8],
-    ) -> std::result::Result<(), ferrix_slots::record::DeviceError> {
+    ) -> std::result::Result<(), xaqu_slots::record::DeviceError> {
         use std::io::{Seek, SeekFrom, Write};
         let mut file = self.0;
         file.seek(SeekFrom::Start(lba * 512))
             .and_then(|_| file.write_all(bytes))
-            .map_err(|_| ferrix_slots::record::DeviceError)
+            .map_err(|_| xaqu_slots::record::DeviceError)
     }
-    fn flush(&mut self) -> std::result::Result<(), ferrix_slots::record::DeviceError> {
+    fn flush(&mut self) -> std::result::Result<(), xaqu_slots::record::DeviceError> {
         self.0
             .sync_data()
-            .map_err(|_| ferrix_slots::record::DeviceError)
+            .map_err(|_| xaqu_slots::record::DeviceError)
     }
     fn read_block(
         &mut self,
         lba: u64,
         bytes: &mut [u8],
-    ) -> std::result::Result<(), ferrix_slots::record::DeviceError> {
+    ) -> std::result::Result<(), xaqu_slots::record::DeviceError> {
         use std::io::{Read, Seek, SeekFrom};
         let mut file = self.0;
         file.seek(SeekFrom::Start(lba * 512))
             .and_then(|_| file.read_exact(bytes))
-            .map_err(|_| ferrix_slots::record::DeviceError)
+            .map_err(|_| xaqu_slots::record::DeviceError)
     }
 }
 
-/// What the kernel says of a value of `ferrix.panic` it does not take.
-const MISSPELT: &str = "  panic    ferrix.panic=Reset is not understood; a panic halts";
+/// What the kernel says of a value of `xaqu.panic` it does not take.
+const MISSPELT: &str = "  panic    xaqu.panic=Reset is not understood; a panic halts";
 
-/// `ferrix.panic=Reset`: said as not understood, and the panic halts.
+/// `xaqu.panic=Reset`: said as not understood, and the panic halts.
 ///
 /// Verifies: `L.panic.1`
 fn misspelt(
@@ -1358,8 +1358,8 @@ fn misspelt(
     build: &impl Fn(Arch, &Args) -> Result<(PathBuf, PathBuf)>,
 ) -> Result<()> {
     let mut wanted = args.clone();
-    wanted.kernel_options.push("ferrix.onexit=panic".to_owned());
-    wanted.kernel_options.push("ferrix.panic=Reset".to_owned());
+    wanted.kernel_options.push("xaqu.onexit=panic".to_owned());
+    wanted.kernel_options.push("xaqu.panic=Reset".to_owned());
     let (image, kernel) = build(arch, &wanted)?;
     let mut lines = Vec::new();
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
@@ -1380,11 +1380,11 @@ fn misspelt(
     misspelt_problem(&lines).map_or(Ok(()), |problem| {
         Err(Error::new(format!("{arch}: {problem}")))
     })?;
-    println!("  {arch}: ferrix.panic=Reset was not understood, and the panic halted");
+    println!("  {arch}: xaqu.panic=Reset was not understood, and the panic halted");
     Ok(())
 }
 
-/// Why a `ferrix.panic=Reset` boot did not take the value as halt, if it
+/// Why a `xaqu.panic=Reset` boot did not take the value as halt, if it
 /// did not.
 fn misspelt_problem(lines: &[String]) -> Option<String> {
     if !lines.iter().any(|line| line.contains(MISSPELT)) {
@@ -1392,39 +1392,39 @@ fn misspelt_problem(lines: &[String]) -> Option<String> {
     }
     if let Some(line) = lines.iter().find(|line| line.contains(RESET_LINE)) {
         return Some(format!(
-            "a misspelt ferrix.panic=Reset announced a reset: `{}`",
+            "a misspelt xaqu.panic=Reset announced a reset: `{}`",
             line.trim()
         ));
     }
     if !lines.iter().any(|line| line.contains(STOPPED_HALTS)) {
         return Some(format!(
-            "the report under ferrix.panic=Reset did not say `{}`",
+            "the report under xaqu.panic=Reset did not say `{}`",
             STOPPED_HALTS.trim()
         ));
     }
     None
 }
 
-/// The switch: `ferrix.pstore=off` takes no region, on both sides.
+/// The switch: `xaqu.pstore=off` takes no region, on both sides.
 fn switched_off(
     arch: Arch,
     args: &Args,
     build: &impl Fn(Arch, &Args) -> Result<(PathBuf, PathBuf)>,
 ) -> Result<()> {
     let mut off = args.clone();
-    off.kernel_options.push("ferrix.pstore=off".to_owned());
+    off.kernel_options.push("xaqu.pstore=off".to_owned());
     let (image, kernel) = build(arch, &off)?;
     let lines = qemu::watch_lines(arch, &image, &kernel, &off, qemu::SUCCESS_MARKER)?;
     off_problem(&lines).map_or(Ok(()), |problem| {
         Err(Error::new(format!("{arch}: {problem}")))
     })?;
-    println!("  {arch}: ferrix.pstore=off took no region");
+    println!("  {arch}: xaqu.pstore=off took no region");
     Ok(())
 }
 
-/// Why a `ferrix.pstore=off` boot kept a log, if it did.
+/// Why a `xaqu.pstore=off` boot kept a log, if it did.
 fn off_problem(lines: &[String]) -> Option<String> {
-    let said_off = format!("pstore   off (ferrix.pstore=off): {NONE}");
+    let said_off = format!("pstore   off (xaqu.pstore=off): {NONE}");
     if !lines.iter().any(|line| line.contains(&said_off)) {
         return Some(format!("the loader did not say `{said_off}`"));
     }

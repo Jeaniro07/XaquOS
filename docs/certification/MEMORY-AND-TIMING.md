@@ -25,7 +25,7 @@ processor (§1.8):
 |---|---|
 | Buddy (`src/lib/kernel/frame`) | physical frames |
 | Kernel heap (`src/lib/kernel/heap`) | `GlobalAlloc` behind `Box`, `Vec`, `Arc`, the maps |
-| Per-processor heap caches (`mm::CACHES`, `ferrix_heap::CpuCache`) | free heap objects of each size class kept by each processor, in front of the heap's lock; `MAX_CPUS` `IrqSpinLock`s of static storage, about 300 KiB |
+| Per-processor heap caches (`mm::CACHES`, `xaqu_heap::CpuCache`) | free heap objects of each size class kept by each processor, in front of the heap's lock; `MAX_CPUS` `IrqSpinLock`s of static storage, about 300 KiB |
 | `vmap` arena | kernel virtual address space for device windows and stacks |
 | Demand paging / CoW (`user/vmo.rs`) | a program's pages, on first touch |
 
@@ -60,11 +60,11 @@ else: a count may fall and not rise, and a new unmarked site fails the build.
 
 **Pid 1's inputs allocate nothing (2026-10-04).** The program init starts,
 its `sh -c` script and the list of commands come from the boot initramfs
-under `.ferrix/init/` (`init::set_inputs`, ITEM.md §2). They are not copied:
+under `.xaqu/init/` (`init::set_inputs`, ITEM.md §2). They are not copied:
 each is a `&'static` slice of the archive `fs::init` keeps for the whole boot
 (`fs::ARCHIVE`), and `init.rs` keeps three such slices in a `Once`. Judging the
 entries is a three-slot array on the stack and a pass over an iterator, so
-an archive with any number of entries under `.ferrix/` costs time in
+an archive with any number of entries under `.xaqu/` costs time in
 proportion to them and no memory; each refusal is one console line.
 
 **`msync(MS_SYNC)` (2026-11-05, F-106).** Over k regions it is k lookups, each a walk of up to the space's region count under its lock, and no lock is held across an fsync.
@@ -77,12 +77,12 @@ proportion to them and no memory; each refusal is one console line.
 `discovery/devmgr.rs::write_devices` encodes each DEVICES message into one
 array on the calling task's kernel stack before copying it to the heap
 `Vec` the channel takes. It runs at bring-up (`start`) and, under
-`ferrix.devmgr=init`, from `devmgr_start`'s system call (`start_in`). Its
+`xaqu.devmgr=init`, from `devmgr_start`'s system call (`start_in`). Its
 size is `DEVICES_HEADER_BYTES + MAX_DRIVERS x NAME_BYTES`, 24 + 32 x 32 =
 1,048 bytes at `MAX_DRIVERS` 32 (536 at 16), on a 16 KiB kernel stack
 (`vmap::STACK_PAGES` 4; 24 KiB and 6 on AArch64 since F-101). It is not nested or recursive, and
 `write_devices` holds no lock of its own while it is live. All three
-constants are `ferrix-devmgr-proto`'s, a crate the item does not classify
+constants are `xaqu-devmgr-proto`'s, a crate the item does not classify
 (F-76's class), so a review of `MAX_DRIVERS` or `NAME_BYTES` is a review of
 this frame. A const assertion in `devmgr.rs` holds the buffer at 1,048
 bytes, so that growing it is a diff to the core file as well.
@@ -149,7 +149,7 @@ against 1.99.1 (2026-11-06). `src/kernel/` and
 Only `Vec::try_reserve` is stable. So fallible construction is built from
 stable parts, in two kinds:
 
-* **What can be made fallible directly.** `src/lib/kernel/fallible` (`ferrix-fallible`)
+* **What can be made fallible directly.** `src/lib/kernel/fallible` (`xaqu-fallible`)
   gives `Box`, `Vec`, `VecDeque` and `String` fallible constructors.
   `try_box` allocates `Layout::new::<T>()` through the global allocator and
   makes the box with `Box::from_raw`: `Box`'s documentation makes that
@@ -268,7 +268,7 @@ memory is free: an unprivileged program with enough regions, or long
 enough mapped paths, stopped the machine by reading its own maps, and no job
 limit helped, since the snapshot was charged only after the render. Now
 each line is formatted into room reserved for its longest form, and the
-text is kept in page-sized blocks (`ferrix_fallible::Chunks`), each charged
+text is kept in page-sized blocks (`xaqu_fallible::Chunks`), each charged
 to the opener's job before it is taken; a refusal answers the open
 `ENOMEM`. mountinfo, mounts, `/proc/net/tcp`, `udp` and `unix`, and the
 cgroupfs listings still render into one buffer (F-97's residual, F-98).
@@ -278,7 +278,7 @@ The heap takes its pages from the same frame allocator as a program's
 memory, so a program in a job with no limit could take the last free frame,
 and the next infallible allocation in the load stopped the machine: an
 `epoll_wait` did, with FX-0008, when Wine's own Direct3D used up an 8 GiB
-guest (endfield-s3's control, `~/.local/share/ferrix/logs/queue/endfield-s3-ctl-wined3d.log`).
+guest (endfield-s3's control, `~/.local/share/xaqu/logs/queue/endfield-s3-ctl-wined3d.log`).
 Since then a program's frames, its runs of frames and its page tables are
 refused when taking them would leave fewer than the watermark free, decided
 in the same hold of the frame allocator's lock as the take
@@ -448,7 +448,7 @@ frames always took: clean cache reclaimed first, then the fault fails
   so refusing at the watermark adds no new failure path.
 
 Where it stands: the consultant's design review is OK IF W1 to W11 (ledger
-2026-10-13, line 797, `~/.local/share/ferrix/cert-consultant/reviews.md`);
+2026-10-13, line 797, `~/.local/share/xaqu/cert-consultant/reviews.md`);
 the stage-2 check and its four negative controls are in the landing
 (a7a32bf19), and the landing was accepted (ledger line 854). The same Wine
 run at 8 GiB that stopped the kernel ended without it on 2026-10-13
@@ -634,7 +634,7 @@ even for an instant, and a refused charge takes nothing.
   page cache's fill) and when `map_in` builds a page table for a user
   space, to the job of the task that caused it. The frame record keeps the
   slot's index in the link an allocated frame does not use
-  (`ferrix_frame::Frames::set_owner`), so `release_frame` and
+  (`xaqu_frame::Frames::set_owner`), so `release_frame` and
   `deallocate_frames` take the charge back wherever the frame is freed, with
   no lookup and no lock -- the deferred page-table frees of F-36 included. A
   refusal is an allocation failure, which §1.2 made an answer everywhere.
@@ -666,7 +666,7 @@ even for an instant, and a refused charge takes nothing.
   queue (made whole at boot and never grown) are the machine's, each with a
   fixed bound; the dentries that queue lets go of while their files hold
   cached pages are kept beside it, by id, until reclaim has taken the pages
-  or the name goes (since 2026-10-18, `ferrix_vfs::namespace`, `Paged`;
+  or the name goes (since 2026-10-18, `xaqu_vfs::namespace`, `Paged`;
   `docs/BTRFS-PRESSURE.md`, "The page cache dropped whole"): each such
   dentry stays charged to the job that looked it up, as before, and its map
   entry, a few dozen bytes of uncharged heap, is the machine's -- at most one
@@ -798,7 +798,7 @@ the item's own source holds for both: the fallible-allocation gate counts 0
 allocating calls in either that cannot report failure, and `cargo xtask
 check` holds them at 0 (`L.btrfs.22`).
 
-**The reader allocates nothing.** `ferrix-btrfs` is `no_std` without
+**The reader allocates nothing.** `xaqu-btrfs` is `no_std` without
 `alloc`: its chunk map's storage, its node buffer and the buffers a file
 read expands extents into are lent by its caller (`ChunkStorage`,
 `ExtentBuffers`), and a volume with more chunks than the map holds is
@@ -806,17 +806,17 @@ refused with `ChunkMapFull`, not grown into. Its memory is what the caller
 lends: one node (at most 64 KiB), two extent buffers of 128 KiB and zstd's
 workspace, at the size the kernel's glue picks.
 
-**The write path allocates, and reports failure.** `ferrix-btrfs-write`
+**The write path allocates, and reports failure.** `xaqu-btrfs-write`
 holds the running transaction in memory -- every node it copied (`dirty`),
 the delayed reference changes, each block group's free, pinned and reserved
 ranges -- and a cache of nodes read and unchanged (`clean`). Every one of its
-allocations goes through its `fallible` module, over `ferrix-fallible`, and a
+allocations goes through its `fallible` module, over `xaqu-fallible`, and a
 refusal is `Error::OutOfMemory`, which the VFS glue answers `ENOMEM`:
 
 * a vector is reserved with `try_reserve` before it grows, as in §1.1;
 * a `BTreeMap` or `BTreeSet` insert runs in a reserved section, as the
   kernel's own do: a library crate cannot name `mm/reserve.rs`, so
-  `ferrix-fallible` dispatches to a section the kernel installs at boot
+  `xaqu-fallible` dispatches to a section the kernel installs at boot
   (`fallible::install_library_sections`, right after the boot processor's
   reserve is filled). One insert per section; a map is copied one insert
   at a time. A map whose nodes are larger than the largest size class is
@@ -846,7 +846,7 @@ T.EXHAUST).
 | What | Bound | Where it is set |
 |---|---|---|
 | Clean nodes cached | 4,096 nodes between operations (`CLEAN_NODES`): 64 MiB of 16 KiB nodes, before the in-memory form's overhead; within one operation, that and what the operation loads (below) | the item, `volume.rs`, `clean.rs`; trimmed by the load's `rw.rs` |
-| Nodes a transaction holds (`dirty`) | none in the item; the glue commits once `dirty_bytes()` or the data written reaches 32 MiB (`COMMIT_THRESHOLD`) | the load, `ferrix-btrfs-vfs` `rw.rs` |
+| Nodes a transaction holds (`dirty`) | none in the item; the glue commits once `dirty_bytes()` or the data written reaches 32 MiB (`COMMIT_THRESHOLD`) | the load, `xaqu-btrfs-vfs` `rw.rs` |
 | A writeback's copy buffer | 256 pages, 1 MiB (`WRITEBACK_PAGES`) | the load, `rw.rs` |
 | Delayed references, ranges per block group | none: they grow with the transaction's edits and the volume's fragmentation | -- |
 | A log replayed at mount | none: proportional to the log the last mount left | the item, `log.rs` |
@@ -908,7 +908,7 @@ next hold of the lock, and to a reclaim of the machine meanwhile (§2.2d).
 
 **Clean nodes are reclaimable, and counted** (`docs/RAM-RELEASE.md` §3).
 The nodes are kernel heap charged to no job: neither btrfs crate makes a
-`ferrix_kmem` charge. So the filesystem's shrinker takes them only for a
+`xaqu_kmem` charge. So the filesystem's shrinker takes them only for a
 reclaim whose `takes` admits the kernel's owner, `quota::NONE` -- a reclaim
 of the whole machine -- and a job's `memory.max` reclaim never does
 (`L.btrfs.120`). Each volume keeps the heap its clean nodes hold as an exact
@@ -965,7 +965,7 @@ reader has the bytes when a frame goes.
   `unlink` or `rmdir`, under the locks those take; a file still open or
   mapped keeps its pages until its last reference goes (`H.MEM.9`).
 * **What it leaves.** On the kernel path nothing is kept for `devmgr`. Under
-  `ferrix.devmgr=init` the kernel keeps devmgr's program and its drivers'
+  `xaqu.devmgr=init` the kernel keeps devmgr's program and its drivers'
   images for the boot (`L.user.174`): 398 pages on the box's image, 378 of
   them the driver images a running devmgr holds anyway.
 
@@ -979,7 +979,7 @@ it takes none. A write-back's list is allocated first, and with no memory `fsync
 
 ### K15: who pays for a process's image
 
-`ferrix-process-builder` maps text and read-only data from the image's VMO. Those frames
+`xaqu-process-builder` maps text and read-only data from the image's VMO. Those frames
 stay charged to whoever filled the VMO (devmgr's job, or the kernel for an image it made)
 **outside the child's limit**, while any child maps them, and they are bounded by the
 image's size, not by anything the child does. Everything else a build commits is the
@@ -1127,7 +1127,7 @@ return another value, start a program or choose registers.
 a filter is at most 4,096 instructions, every jump goes forward (so it runs at
 most its length), and the filters one thread holds may total 32,768
 instructions, each counted with four more (`MAX_INSNS_PER_PATH`,
-`ferrix_seccomp::fits_path`). So **one call runs at most 32,768 interpreter
+`xaqu_seccomp::fits_path`). So **one call runs at most 32,768 interpreter
 steps**. The crate's constant was `1 << 18` in S1, eight times too large; it is
 32,768 from the crate's own correction, the one S3 enforces at install, which
 refuses a filter that would pass it with `ENOMEM`.
@@ -1345,7 +1345,7 @@ and says so beside it. Its first, with the exact `bench-ipc` (sorted samples,
 one pinned processor, `--alternate` turn about), x86-64 under KVM on nazuna,
 one processor, `--mitigations on`, in one speculation domain: `domain-call`
 p50 2,287 ns against 2,427 ns without step 3, the median of five rounds,
-ratio 0.942 (`~/.local/share/ferrix/logs/queue/po7-ipcB-s3r-bench-1.log` on
+ratio 0.942 (`~/.local/share/xaqu/logs/queue/po7-ipcB-s3r-bench-1.log` on
 nazuna, on step 2f; OPAQUE-KERNEL.md §9.9).
 
 Two decisions the round trip's wakes defer are bounded, though no check
@@ -1479,7 +1479,7 @@ domain (`iommu::vtd_unit_for`, under the device node's domain lock): for
 each of the unit's kept DMAR scopes, a path of at most 124 hops each
 matched against every bridge, and then up to 256 steps up the bus numbers,
 each a pass over the bridges -- at most scopes × (hops + 256) × bridges
-comparisons, a few thousand on any machine Ferrix boots, with no
+comparisons, a few thousand on any machine Xaqu boots, with no
 allocation and no wait. Placement at boot (`iommu::discover`) holds it the
 same way once per function.
 
@@ -1503,7 +1503,7 @@ owner's slot, an arm's made with its timer and charged to its job. Stage 9's
 `timer` line reports the hold after moving 260 arms, the check's figure at
 that count on that boot.
 
-**Measured** (ledger 4932 (B4)): `/proc/ferrix-service`'s `move-hold-max-ns`
+**Measured** (ledger 4932 (B4)): `/proc/xaqu-service`'s `move-hold-max-ns`
 is the longest such hold since boot. In `test-quarantine` -- four
 CPU-bound loops, 24 readers blocked on pipes, then fifty times processors
 1 to 3 out and back -- it read 3.0 to 31.2 µs across fourteen runs under
@@ -1577,7 +1577,7 @@ two types are mapped at once, so the effect is stale data over the
 device's own memory, not a machine-wide one (VULNERABILITY-ANALYSIS
 T.DMA path 7). A flush when a cached hold is released would close it.
 
-**The lent framebuffer's read-back (`ferrix.efifb` only).** The kernel's
+**The lent framebuffer's read-back (`xaqu.efifb` only).** The kernel's
 own panic window is write-combining from its first map on x86-64
 (L.x86_64.176), so lending the firmware framebuffer
 (`discovery::firmware`) changes no type: `window_combining` reads the
@@ -1673,7 +1673,7 @@ The function's configuration space is mapped once, before the lock is first
 taken, and kept; an MSI mint takes it inside the vector's own `minted` lock,
 which is the order (`minted`, then `config`). So the longest hold is about
 twenty uncached configuration accesses, a few microseconds on any machine
-Ferrix boots, with interrupts masked on the holding processor; it adds to the
+Xaqu boots, with interrupts masked on the holding processor; it adds to the
 masked windows AoU-4 budgets.
 
 What the window keeps per node is made with the node at stage 10 and never
@@ -1750,7 +1750,7 @@ clear `STOP` and `SIGNAL`. The personality's `needs_attention`, with its two
 references and two locks, runs only after a set bit -- or, with the
 self-checks on, at a clear word too (`L.sched.33`), which is the cost every
 return paid before 2c. So the way out's span shrinks only in a boot run with
-`ferrix.checks=skip`; the default boot keeps the old cost and the check. And
+`xaqu.checks=skip`; the default boot keeps the old cost and the check. And
 no saving is claimed for 2c until 2a lands: `look` still takes the run
 queue's lock to find the running task, which costs about what the two
 references it replaced did.
@@ -1865,7 +1865,7 @@ waits for the driver's answer as for an ioctl (above). No wait on the fence
 itself is made by the kernel, by the importing program's call, or by any
 other program.
 
-### 2.2l A tmpfs inode's locks (`ferrix_vfs::tmpfs::Node`, load ring, F-70)
+### 2.2l A tmpfs inode's locks (`xaqu_vfs::tmpfs::Node`, load ring, F-70)
 
 Two locks per inode since 2026-10-10, taken in one order: a regular file's
 `FileIo::io`, a `SleepLock` over the scheduler's parker (`SchedParker`, which
@@ -1890,7 +1890,7 @@ reader throttled at `memory.high` slept holding it (F-70), and with Steam's
 eighty staging threads listing and `stat`-ing one directory the holders and
 waiters switched out mid-turn kept all four processors spinning in
 `metadata` for as long as Steam ran (docs/STEAM.md §7; the same convoy
-875b66f3b took out of the rest of `ferrix-vfs` on 2026-10-03).
+875b66f3b took out of the rest of `xaqu-vfs` on 2026-10-03).
 
 **The dmabufs (N3b, ledgers 316 and 726).** A control's `dmabufs` table
 holds one entry per live dmabuf it made, at most `MAX_DMABUFS`, 4096; the
@@ -1997,7 +1997,7 @@ allocates nothing. Its time is bounded by the hardware:
   32-byte lines (the DK1), 16 448 at 64.
 
 The same write-back runs, through `console::pstore::stop` (`docs/POSTMORTEM.md`
-§5), before the reset `ferrix.onexit=reset` asks for and before finish's
+§5), before the reset `xaqu.onexit=reset` asks for and before finish's
 power-off, and in each of `reboot(2)`'s four stopping arms (`L.console.47`):
 there in a system call after `sync_disks`, with interrupts on, the other
 processors running and no lock held, once, on a path that ends the machine.
@@ -2005,7 +2005,7 @@ Each stop adds one atomic update of the stop word before its write-back
 (`L.console.46`), a compare-and-exchange that only a stop racing another on
 a second processor repeats, at most once per such stop; the first report adds
 one store of the panic's word as it begins.
-Under `ferrix.panic=reset` (H.FAIL.5) the panic path's bound gains 10 s on
+Under `xaqu.panic=reset` (H.FAIL.5) the panic path's bound gains 10 s on
 the counter, then `arch::reset`'s bounded tries. Since 2026-11-08 (ledger
 7973): the 10 s wait ends early once the counter has read the same 50,000,000
 times (`L.panic.3`); a report waits out one failed bound of 10,000,000 tries of
@@ -2025,7 +2025,7 @@ after the reclaim, on the boot processor.
 ### 2.2p The firmware's SMBIOS tables (2026-10-15)
 
 * **Memory.** The loader's copy is the entry point padded to 32 bytes and
-  the table, at most 1 MiB (`ferrix_smbios::TABLE_MAX`), rounded up to
+  the table, at most 1 MiB (`xaqu_smbios::TABLE_MAX`), rounded up to
   pages, in `MemKind::Smbios`, resident for the life of the system. The
   kernel copies nothing: it borrows it (`discovery::smbios`).
 * **Time.** The kernel checks and walks the table once at boot, O(length),
@@ -2278,7 +2278,7 @@ ledger 3062; design in `docs/SCHED-WAKE-AFFINE.md`.
 
 ### 2.2w The power core (`arch::x86_64::powerctl`, 2026-10-22)
 
-Present only under `ferrix.powerctl` on the N150 (`docs/POWERCTL.md`).
+Present only under `xaqu.powerctl` on the N150 (`docs/POWERCTL.md`).
 **Memory:** a claim allocates a channel pair and one task, both fallibly
 (`NO_MEMORY` to the caller, nothing kept); nothing else. **Locks:**
 `STATE`, a spin lock, is held for one call's validation, at most one write
@@ -2310,7 +2310,7 @@ is `log::record`'s, which takes no lock (L.console.35). Ledger 3366.
 
 ### 2.2y Waiting for a kernel spin lock, and the holds a program can ask for (F-95, 2026-10-24)
 
-**The wait.** `crate::sync::SpinLock` (`ferrix_sync::PreemptSpinLock`)
+**The wait.** `crate::sync::SpinLock` (`xaqu_sync::PreemptSpinLock`)
 raises the processor's preemption count and then waits for its ticket.
 Ticket order is arrival order, so each waiter waits out every hold queued
 ahead of it, and does so with the count raised: its processor makes no
@@ -2380,7 +2380,7 @@ verdict of ledger line 3950.
   leaves. Run only after a ring-3 machine check, with interrupts open. Its
   worst case is the walk of 2^18 leaves and their tables, measured on no
   hardware yet: a row of `docs/BACKLOG.md`.
-* **The poll**: a task per processor, every `ferrix.mce.poll` seconds, at
+* **The poll**: a task per processor, every `xaqu.mce.poll` seconds, at
   most 32 bank reads and 32 lines; no lock while it reads a bank.
 * **The bad-frame table** (`docs/MACHINE-CHECK-RESTART.md` §2.3, §2.4): each
   newly retired frame costs one `fetch_add` on the table's count, one store
@@ -2613,13 +2613,13 @@ build's frames differ.
 
 ### 2.2al The watchdog's deadline (`watchdog`, H.FAIL.14, 2026-11-08)
 
-Only under `ferrix.watchdog=on` (`docs/POSTMORTEM.md` §6.11); off, nothing
+Only under `xaqu.watchdog=on` (`docs/POSTMORTEM.md` §6.11); off, nothing
 below runs. It allocates nothing after boot but its one task's stack, made
 once at `watchdog::start`, and takes no lock: its state is atomics.
 
 * **The task**: once a second, one load of the deadline and one read of the
   clock, then `sched::sleep_for`'s own bound. A passed deadline ends in the
-  report, whose bounds are the panic path's (§2.2o; under `ferrix.panic=reset`
+  report, whose bounds are the panic path's (§2.2o; under `xaqu.panic=reset`
   10 s more, above).
 * **A feed** (a write, `WDIOC_KEEPALIVE`, a new timeout): one read of the
   clock and one compare-and-swap on the deadline, with one store on success.
@@ -2769,14 +2769,14 @@ A fault on, or a kernel copy into, an absent page of a pager-backed VMO
   bound with it, as Linux's `mmap_lock` holders do behind a slow
   `filemap_fault`. Known: a tmpfs or page-cache inode's I/O lock across
   `write(2)`'s copy-in from a buffer that is a pager mapping
-  (`ferrix_vfs::tmpfs`, §2.2l); `Process`'s heap lock where a call copies
+  (`xaqu_vfs::tmpfs`, §2.2l); `Process`'s heap lock where a call copies
   under it. A `PAGER_VMO_NO_COPY_WAIT` VMO never makes a copy wait.
 
 ### 2.2r An RMRR's identity domain at bring-up (`iommu::bring_up_vtd`, K2)
 
 Before any program runs, once per VT-d unit whose RMRRs are honoured
 (`L.iommu.73`), `vtd::Unit::attach_identity` maps each RMRR page at its own
-address: at most 2^18 pages an RMRR (`ferrix_paging::vtd::rmrr::MOST_PAGES`,
+address: at most 2^18 pages an RMRR (`xaqu_paging::vtd::rmrr::MOST_PAGES`,
 1 GiB; the N150's is 17,408), and at most as many RMRRs as the DMAR's
 length holds (24 bytes and a scope each, the table's length a 32-bit
 field), each page one `mm::map_io` whose table writes are
@@ -2861,7 +2861,7 @@ lines 3501 and 3524). The hold is load-ring code; no core or item line
 changes, and nothing here is on a path the item's own bounds name.
 
 Time. **A fatal user fault may delay its process's end by at most 2 s
-while `/dev/ferrix-crashes` is armed; at most 16 processes are held at
+while `/dev/xaqu-crashes` is armed; at most 16 processes are held at
 once.** The deadline is fixed at the fault (`HOLD_NANOS`, from the faulting
 thread's own `wait_until_deadline`, no new timer) and no read extends it.
 Within it the line waits at most `SETTLE_NANOS`, 200 ms, for the other
@@ -2883,7 +2883,7 @@ Memory. None on the fault path beyond today's `crash_identity`: the ring is
 static, the line is written on the stack (160 bytes). An open allocates its
 one small object (`fallible::try_arc`, `ENOMEM` leaves the device unarmed).
 
-### 2.2z Product signing's verifier (`ferrix-sigverify`, item, 2026-10-24)
+### 2.2z Product signing's verifier (`xaqu-sigverify`, item, 2026-10-24)
 
 `docs/SIGNING.md` §2.3 and §8.5. These are the verifier's own bounds,
 `L.sigverify.11` (time) and `L.sigverify.12` (stack). No kernel path
@@ -2922,7 +2922,7 @@ mean and max of the 10 calls after it.
 row (board use: the customer's approval of 2026-10-24, "DK1 is plugged in
 and can be tested", relayed by the product owner).
 
-* The source was `ferrix-sigverify` and `ferrix-sha256` as landed in
+* The source was `xaqu-sigverify` and `xaqu-sha256` as landed in
   546080e4b. Their files are byte-identical on this landing.
 * The build used Rust 1.97.1 for `armv7a-none-eabi`, with
   `-C relocation-model=static -C force-frame-pointers=yes` and the
@@ -2992,8 +2992,8 @@ figure over 4 KiB held in L1 is within 3% of each.
 |---|---:|---:|
 | Reading 32 MiB (a word XOR loop) | 0.89 | 0.05 s |
 | Copying 16 MiB | 1.07 | -- |
-| `ferrix-sha256` as landed in S1 | 127.7 | 6.59 s |
-| `ferrix-slots`' SHA-256 before S1 | 57.0 | 2.94 s |
+| `xaqu-sha256` as landed in S1 | 127.7 | 6.59 s |
+| `xaqu-slots`' SHA-256 before S1 | 57.0 | 2.94 s |
 | Textbook Rust (64-word schedule) | 52.4 | 2.71 s |
 | Unrolled rounds over a 16-word ring | 44.5 | 2.30 s |
 | `sha2` 0.10.9, its software backend | 40.4 | 2.08 s |
@@ -3045,7 +3045,7 @@ signed start's decision in counter ticks: header decode, policy block
 parse and one H15 manifest verify, under KVM on nazuna's Ryzen 9 9900X,
 whose invariant TSC runs at its 4.4 GHz base clock. Eight starts of
 `test-ab-boot-signed` took 1.73 to 2.59 M ticks, about 0.39 to 0.59 ms
-(`~/.local/share/ferrix/signing-bench/s4-signed-local7.log`; the landing's
+(`~/.local/share/xaqu/signing-bench/s4-signed-local7.log`; the landing's
 gate row repeats it). That is a development build of the loader on a
 development H15 key; the bound above, from the DK1, stays the worst case.
 
@@ -3065,9 +3065,9 @@ What closes the rest:
   regardless would pass any image. S4 uses software and states the cost.
 
 The S2 program and its data, the raw binaries with their SHA-256, and the
-board's console log are kept in `~/.local/share/ferrix/signing-bench/dk1-s2/`;
+board's console log are kept in `~/.local/share/xaqu/signing-bench/dk1-s2/`;
 the investigation's bench, its variants, binaries (`SHA256SUMS`), runs and
-`FINDINGS.md` in `~/.local/share/ferrix/signing-bench/dk1-sha/` (ledger 3988).
+`FINDINGS.md` in `~/.local/share/xaqu/signing-bench/dk1-sha/` (ledger 3988).
 The board was not written: the program went over the serial line with
 `loady`, and the board was left booted as it was found.
 
@@ -3128,7 +3128,7 @@ and says so in §1.5.
 
 ### 2.2ai A processor's reservations (`schedule=edf`, 2026-11-05)
 
-`ferrix-sched-edf`, under the queue's lock, with interrupts masked: a pick, a refill's look and each of the
+`xaqu-sched-edf`, under the queue's lock, with interrupts masked: a pick, a refill's look and each of the
 fair-beside-it answers scan **at most 32 entries**, a bound of the array, with no allocation after construction.
 A reservation's `Task` holds its slot as any task does; the table is in `CpuQueue`, about 4 KiB a processor. Refills
 are at most one per millisecond per reservation (`LEAST_PERIOD_NS`), so at most 32 timer events a millisecond on one processor.

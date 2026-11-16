@@ -50,7 +50,7 @@ mod tests;
 /// Served with a newline after it. Without one the guest's `wget` leaves the
 /// cursor mid-line and the kernel's next line continues it, which is a
 /// passing fetch that reads as a failure.
-const HELLO_BODY: &str = "ferrix: fetched over TCP through the gateway";
+const HELLO_BODY: &str = "xaqu: fetched over TCP through the gateway";
 
 /// The path that serves it.
 const HELLO_PATH: &str = "/hello";
@@ -84,7 +84,7 @@ const PACED_BEFORE_FAULT: usize = 256 * 1024;
 /// What a datagram must hold for a fault-armed virtio-net driver to make the
 /// kernel end its ring (`src/user/system/native/drivers/net/virtio-net`,
 /// `fault`): its `FAULT_MARKER`, which the two must agree on.
-pub(crate) const FAULT_MARKER: &str = "ferrix-netring-fault";
+pub(crate) const FAULT_MARKER: &str = "xaqu-netring-fault";
 
 /// What the kernel prints, in this order, when the fault-armed driver lost
 /// its ring and `devmgr` started it again: the driver's own word that the
@@ -106,7 +106,7 @@ pub(crate) const GIT_REPO_PATH: &str = "/repo.git";
 const GIT_FILE: &str = "greeting";
 
 /// What is in it, which the guest prints after cloning.
-const GIT_CONTENT: &str = "hello from ferrix";
+const GIT_CONTENT: &str = "hello from xaqu";
 
 /// Its one commit's subject, which the guest prints after cloning.
 const GIT_SUBJECT: &str = "first commit";
@@ -124,7 +124,7 @@ const GIT_DATE: &str = "2026-01-01T00:00:00+00:00";
 const BIG_BYTES: usize = 256 * 1024;
 
 /// The name the DNS stub answers, and the only one it knows.
-const NAME: &str = "ferrix.test";
+const NAME: &str = "xaqu.test";
 
 /// What the stub answers it with: the gateway, which is the host's loopback,
 /// so a fetch by name and a fetch by address reach the same server.
@@ -141,7 +141,7 @@ const MAX_REQUEST: usize = 8192;
 const MAX_DATAGRAM: usize = 1500;
 
 /// What the UDP echo puts in front of what it was sent.
-const UDP_PREFIX: &str = "ferrix-udp: ";
+const UDP_PREFIX: &str = "xaqu-udp: ";
 
 /// The bodies the guest fetches, made the same way on both sides.
 ///
@@ -158,7 +158,7 @@ fn text_body(length: usize) -> Vec<u8> {
     let mut body = Vec::with_capacity(length + 64);
     let mut line = 0_u32;
     while body.len() < length {
-        body.extend_from_slice(format!("ferrix net line {line:08} ").as_bytes());
+        body.extend_from_slice(format!("xaqu net line {line:08} ").as_bytes());
         body.extend(std::iter::repeat_n(b'.', 40));
         body.push(b'\n');
         line = line.wrapping_add(1);
@@ -258,13 +258,13 @@ impl Servers {
 
         let stop = Arc::new(AtomicBool::new(false));
         let threads = vec![
-            spawn("ferrix-net-http", &stop, move |signal| {
+            spawn("xaqu-net-http", &stop, move |signal| {
                 serve_http(&listener, signal, &repository);
             })?,
-            spawn("ferrix-net-dns", &stop, move |signal| {
+            spawn("xaqu-net-dns", &stop, move |signal| {
                 serve_datagrams(&resolver, signal, answer_query);
             })?,
-            spawn("ferrix-net-echo", &stop, move |signal| {
+            spawn("xaqu-net-echo", &stop, move |signal| {
                 serve_datagrams(&echo, signal, |sent, out| {
                     out.extend_from_slice(UDP_PREFIX.as_bytes());
                     out.extend_from_slice(sent);
@@ -509,11 +509,11 @@ pub(crate) fn write_repository_of(
         let _ = command
             .args(arguments)
             .current_dir(directory)
-            .env("GIT_AUTHOR_NAME", "ferrix")
-            .env("GIT_AUTHOR_EMAIL", "ferrix@ferrix.test")
+            .env("GIT_AUTHOR_NAME", "xaqu")
+            .env("GIT_AUTHOR_EMAIL", "xaqu@xaqu.test")
             .env("GIT_AUTHOR_DATE", GIT_DATE)
-            .env("GIT_COMMITTER_NAME", "ferrix")
-            .env("GIT_COMMITTER_EMAIL", "ferrix@ferrix.test")
+            .env("GIT_COMMITTER_NAME", "xaqu")
+            .env("GIT_COMMITTER_EMAIL", "xaqu@xaqu.test")
             .env("GIT_COMMITTER_DATE", GIT_DATE)
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
             .env("GIT_CONFIG_SYSTEM", "/dev/null");
@@ -765,10 +765,10 @@ pub(crate) fn commands(servers: &Servers, curl: bool, git: bool) -> Vec<Command>
             argv: leak_argv(vec![
                 "sh".to_owned(),
                 "-c".to_owned(),
-                format!("echo ferrix | nc -u -w 3 10.0.2.2 {udp}"),
+                format!("echo xaqu | nc -u -w 3 10.0.2.2 {udp}"),
             ]),
             status: 0,
-            expect: Expect::Lines(leak_argv(vec![format!("{UDP_PREFIX}ferrix")])),
+            expect: Expect::Lines(leak_argv(vec![format!("{UDP_PREFIX}xaqu")])),
         },
         // What the connections left behind: `/proc/net/tcp` and the neighbour
         // table, which `arp` reads out of `/proc/net/arp`.
@@ -888,7 +888,7 @@ fn speed_command(http: u16) -> Command {
 /// Who owns a connection, as `lsof` and Steam's client ask it: the
 /// inode a listener's row in `/proc/net/tcp` names is the one its
 /// process's descriptor links to, and the uid is the one it runs as,
-/// `ferrix` (1000) and not root, so that a row printing 0 for everyone
+/// `xaqu` (1000) and not root, so that a row printing 0 for everyone
 /// fails. `su` and `sh -c exec` keep the pid `$!` names. busybox's `nc`
 /// listens on `::`, so the row may be in either table. Port 45679 is
 /// `B26F`.
@@ -897,7 +897,7 @@ const fn socket_owner_command() -> Command {
         argv: &[
             "sh",
             "-c",
-            "su -s /bin/sh ferrix -c 'exec nc -l -p 45679' & p=$!; sleep 1; \
+            "su -s /bin/sh xaqu -c 'exec nc -l -p 45679' & p=$!; sleep 1; \
              set -- $(awk '$2 ~ /:B26F$/ { print $8, $10 }' /proc/net/tcp /proc/net/tcp6); \
              if [ \"$1\" = 1000 ] && ls -l /proc/$p/fd | grep -q \"socket:\\[$2\\]\"; \
              then echo tcp-row-names-the-fd-and-its-user; else echo \"row: uid $1 inode $2\"; fi; \
@@ -941,8 +941,8 @@ fn git_command(http: u16) -> Command {
 /// cannot be reconfigured from this tree.
 fn git_program(http: u16) -> String {
     format!(
-        "set -e; export HOME=/tmp GIT_AUTHOR_NAME=ferrix GIT_AUTHOR_EMAIL=ferrix@ferrix.test \
-         GIT_COMMITTER_NAME=ferrix GIT_COMMITTER_EMAIL=ferrix@ferrix.test GIT_PAGER=cat; \
+        "set -e; export HOME=/tmp GIT_AUTHOR_NAME=xaqu GIT_AUTHOR_EMAIL=xaqu@xaqu.test \
+         GIT_COMMITTER_NAME=xaqu GIT_COMMITTER_EMAIL=xaqu@xaqu.test GIT_PAGER=cat; \
          cd /tmp; git init -q -b main work; cd work; \
          echo '{GIT_CONTENT}' > {GIT_FILE}; git add {GIT_FILE}; git commit -q -m '{GIT_SUBJECT}'; \
          git clone -q --bare /tmp/work /tmp/bare.git; \
@@ -995,7 +995,7 @@ fn curl_commands(http: u16, digest: u32) -> Vec<Command> {
 }
 
 /// [`curl_commands`]' HTTPS program.
-const HTTPS_PROGRAM: &str = "T=/usr/share/ferrix/tls-test; /usr/libexec/ferrix/ssl_server2 server_port=4433 crt_file=$T/server5.crt key_file=$T/server5.key >/dev/null 2>&1 & sleep 3; echo verified $(curl -sS --cacert $T/test-ca2.crt https://localhost:4433/ | grep -c 'Successful connection'); curl -sS -o /dev/null https://localhost:4433/ 2>/dev/null; echo untrusted $?; kill $!";
+const HTTPS_PROGRAM: &str = "T=/usr/share/xaqu/tls-test; /usr/libexec/xaqu/ssl_server2 server_port=4433 crt_file=$T/server5.crt key_file=$T/server5.key >/dev/null 2>&1 & sleep 3; echo verified $(curl -sS --cacert $T/test-ca2.crt https://localhost:4433/ | grep -c 'Successful connection'); curl -sS -o /dev/null https://localhost:4433/ 2>/dev/null; echo untrusted $?; kill $!";
 
 /// Leak owned strings into the `'static` slice a [`Command`] holds, for its
 /// arguments and for the lines it must print.

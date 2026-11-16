@@ -6,7 +6,7 @@
 //! uid; `Hello` and `RequestName`; reading method calls and answering them;
 //! sending signals. Nothing else of D-Bus -- no introspection data, no
 //! properties, no match rules, no file descriptors, no big-endian peers
-//! (dbus-daemon writes little-endian on every machine Ferrix runs on).
+//! (dbus-daemon writes little-endian on every machine Xaqu runs on).
 //!
 //! [`wire`] and [`message`] are pure and host-tested; [`Connection`] is the
 //! socket.

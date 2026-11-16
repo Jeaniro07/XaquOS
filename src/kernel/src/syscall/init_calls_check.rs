@@ -49,19 +49,19 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{EPOLL_CTL_ADD, EPOLLIN, F_GETFD, FD_CLOEXEC};
-use ferrix_native_abi::bootstrap::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{EPOLL_CTL_ADD, EPOLLIN, F_GETFD, FD_CLOEXEC};
+use xaqu_native_abi::bootstrap::{
     INIT_HELLO_BYTES, INIT_HELLO_HANDLES, INIT_HELLO_VERSION, init_hello_version,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{PORT_FD_CLOEXEC, PROCESS_EXITED, PROCESS_KILLED, PROCESS_RUNNING};
-use ferrix_vfs::OpenFlags;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{PORT_FD_CLOEXEC, PROCESS_EXITED, PROCESS_KILLED, PROCESS_RUNNING};
+use xaqu_vfs::OpenFlags;
 
 use crate::arch;
 use crate::init;
@@ -223,9 +223,9 @@ fn check_init_takes_its_channel() -> Result<(), &'static str> {
         return Ok(());
     }
     let class = if size_of::<usize>() == 8 {
-        ferrix_elf::Class::Elf64
+        xaqu_elf::Class::Elf64
     } else {
-        ferrix_elf::Class::Elf32
+        xaqu_elf::Class::Elf32
     };
     let program = image::build_with(
         class,
@@ -239,7 +239,7 @@ fn check_init_takes_its_channel() -> Result<(), &'static str> {
         &program,
         &[b"/init-bootstrap"],
         &[],
-        [0x4c; ferrix_ustack::RANDOM_BYTES],
+        [0x4c; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program to take init's channel could not be loaded")?;
     exec::give_bootstrap(
@@ -300,7 +300,7 @@ fn process_statuses(side: &Side, report: &mut Report) -> Result<(), &'static str
     if status_of(side, on_signal)? != (PROCESS_RUNNING, 0) {
         return Err("process_status of a process nothing has ended did not say running");
     }
-    let sigterm = ferrix_linux_abi::types::SIGTERM;
+    let sigterm = xaqu_linux_abi::types::SIGTERM;
     process::kill(&signalled, 128 + sigterm as i32);
     process::kill(&jobbed, object::job::KILLED_STATUS);
     let killed = status_of(side, on_signal)?;
@@ -312,7 +312,7 @@ fn process_statuses(side: &Side, report: &mut Report) -> Result<(), &'static str
         );
         return Err("process_status of a process a signal ended did not say killed, by it");
     }
-    if status_of(side, on_job)? != (PROCESS_KILLED, ferrix_linux_abi::types::SIGKILL) {
+    if status_of(side, on_job)? != (PROCESS_KILLED, xaqu_linux_abi::types::SIGKILL) {
         return Err("process_status of a process its job's kill ended did not say SIGKILL");
     }
     report.statuses += 2;
@@ -342,9 +342,9 @@ fn process_statuses(side: &Side, report: &mut Report) -> Result<(), &'static str
         return Ok(());
     }
     let class = if size_of::<usize>() == 8 {
-        ferrix_elf::Class::Elf64
+        xaqu_elf::Class::Elf64
     } else {
-        ferrix_elf::Class::Elf32
+        xaqu_elf::Class::Elf32
     };
     let program = image::build_with(
         class,
@@ -356,7 +356,7 @@ fn process_statuses(side: &Side, report: &mut Report) -> Result<(), &'static str
         &program,
         &[b"/exits"],
         &[],
-        [0x4d; ferrix_ustack::RANDOM_BYTES],
+        [0x4d; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that exits could not be loaded")?;
     let on_exit = process_handle(side, &exiting, Rights::PROCESS)?;
@@ -436,7 +436,7 @@ fn port_fd_refusals(
         .with_handles(|table| {
             table.duplicate(
                 port,
-                ferrix_native_abi::rights::Requested::Exactly(Rights::READ),
+                xaqu_native_abi::rights::Requested::Exactly(Rights::READ),
             )
         })
         .map_err(|_| "could not make a port handle without WAIT")?;
@@ -545,7 +545,7 @@ fn check_a_packet_wakes_the_wait(
     let the_set = crate::fs::epoll::of(&set_file).ok_or("an epoll set is not one")?;
     let wakes_before = the_set.queue().waits_ended_by_a_wake();
     *LATE_PORT.lock() = Some(Arc::clone(the_port));
-    let task = crate::sched::spawn("port-fd check", queue_late, 0, ferrix_sched::NICE_0_WEIGHT)
+    let task = crate::sched::spawn("port-fd check", queue_late, 0, xaqu_sched::NICE_0_WEIGHT)
         .map_err(|_| "no task to queue a packet from")?;
     let started = crate::timer::now_nanos();
     let reported = events(side, set, 5_000)?;
@@ -575,7 +575,7 @@ fn check_a_packet_wakes_the_wait(
 }
 
 /// The port behind a `port_fd` descriptor.
-fn fs_port(file: &ferrix_vfs::OpenFile) -> Result<Arc<Port>, &'static str> {
+fn fs_port(file: &xaqu_vfs::OpenFile) -> Result<Arc<Port>, &'static str> {
     crate::fs::portfd::of(file)
         .map(|file| Arc::clone(file.port()))
         .ok_or("port_fd's descriptor is not a port's")
@@ -714,7 +714,7 @@ fn give_and_take(
         .with_handles(|table| {
             table.duplicate(
                 given,
-                ferrix_native_abi::rights::Requested::Exactly(Rights::READ),
+                xaqu_native_abi::rights::Requested::Exactly(Rights::READ),
             )
         })
         .map_err(|_| "could not make a handle without TRANSFER")?;
@@ -865,9 +865,9 @@ fn check_a_program_takes_it_after_execve() -> Result<bool, &'static str> {
         return Ok(false);
     }
     let class = if size_of::<usize>() == 8 {
-        ferrix_elf::Class::Elf64
+        xaqu_elf::Class::Elf64
     } else {
-        ferrix_elf::Class::Elf32
+        xaqu_elf::Class::Elf32
     };
     let machine = arch::ARCH.elf_machine();
     let target = image::build_with(
@@ -920,7 +920,7 @@ fn run_the_programs(caller: &[u8]) -> Result<(), &'static str> {
         caller,
         &[b"/bootstrap-caller"],
         &[],
-        [0x4b; ferrix_ustack::RANDOM_BYTES],
+        [0x4b; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that calls execve could not be loaded")?;
     let child = process::fork_for_check(&parent)

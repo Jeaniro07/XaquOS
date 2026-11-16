@@ -6,9 +6,9 @@ use super::std::collections::VecDeque;
 use super::std::vec;
 use super::std::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::{
     HwParams, Interval, Mask, PCM_VERSION, STATE_DISCONNECTED, STATE_DRAINING, STATE_OPEN,
     STATE_PREPARED, STATE_RUNNING, STATE_SETUP, STATE_XRUN, SYNC_PTR_APPL, SYNC_PTR_AVAIL_MIN,
     SYNC_PTR_HWSYNC, SwParams,

@@ -10,23 +10,23 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::UnsafeCell;
 
-use ferrix_blkclient::{Disk, Failure, accept};
-use ferrix_blkring::control::CONTROL_RIGHTS;
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::volume::{Device as BtrfsDevice, ReadKind};
-use ferrix_btrfs_write::Error as WriteError;
-use ferrix_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, CorePublished};
-use ferrix_fsproto::wire::DiskUp;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{self, Channel};
-use ferrix_rt::native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_rt::native::job::{Job, Resource};
-use ferrix_rt::native::space::Space;
+use xaqu_blkclient::{Disk, Failure, accept};
+use xaqu_blkring::control::CONTROL_RIGHTS;
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::volume::{Device as BtrfsDevice, ReadKind};
+use xaqu_btrfs_write::Error as WriteError;
+use xaqu_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, CorePublished};
+use xaqu_fsproto::wire::DiskUp;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{self, Channel};
+use xaqu_rt::native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_rt::native::job::{Job, Resource};
+use xaqu_rt::native::space::Space;
 
 /// How long a driver has between its `CORE_OPEN` and its HELLO.
 pub(crate) const HELLO_PATIENCE_NANOS: u64 = 10_000_000_000;
@@ -41,7 +41,7 @@ const PARKED_LOOK_NANOS: u64 = 10_000_000;
 
 /// The nanoseconds since boot.
 pub(crate) fn now() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 /// A driver that was given its channel and has not said HELLO.
@@ -59,7 +59,7 @@ pub(crate) struct Entry {
     parked_at: u64,
     pub(crate) sectors: u64,
     pub(crate) sector_size: u32,
-    pub(crate) filesystem: Option<alloc::sync::Arc<dyn ferrix_vfs::FileSystem>>,
+    pub(crate) filesystem: Option<alloc::sync::Arc<dyn xaqu_vfs::FileSystem>>,
     pub(crate) writable: bool,
 }
 
@@ -114,7 +114,7 @@ pub(crate) fn disks() -> &'static mut Disks {
 
 fn unmap(at: usize, bytes: usize) {
     if let Err(why) = disks().space.unmap(at, bytes) {
-        ferrix_rt::notice!("btrfsd   a dead driver's ring would not unmap: {why:?}");
+        xaqu_rt::notice!("btrfsd   a dead driver's ring would not unmap: {why:?}");
     }
 }
 
@@ -136,14 +136,14 @@ impl Disks {
         }
         .encode();
         if let Err(why) = answer.as_ref() {
-            ferrix_rt::notice!("btrfsd   CORE_OPEN refused: errno {}", why.0);
+            xaqu_rt::notice!("btrfsd   CORE_OPEN refused: errno {}", why.0);
         }
         let sent = match answer {
             Ok(end) => self.cores.write_with(&reply, [end]).is_ok(),
             Err(_) => self.cores.write(&reply).is_ok(),
         };
         if !sent {
-            ferrix_rt::notice!("btrfsd   devmgr's channel would not take an answer");
+            xaqu_rt::notice!("btrfsd   devmgr's channel would not take an answer");
         }
     }
 
@@ -212,7 +212,7 @@ impl Disks {
             }
             if at > pending.until {
                 let late = self.pending.remove(index);
-                ferrix_rt::notice!("btrfsd   {:#x}: no HELLO in time", late.location);
+                xaqu_rt::notice!("btrfsd   {:#x}: no HELLO in time", late.location);
                 continue;
             }
             index += 1;
@@ -231,12 +231,12 @@ impl Disks {
         ) {
             Ok(disk) => disk,
             Err(refused) => {
-                ferrix_rt::notice!("btrfsd   {location:#x}: refused: {:?}", refused.0);
+                xaqu_rt::notice!("btrfsd   {location:#x}: refused: {:?}", refused.0);
                 return;
             }
         };
         if disk.location() != location {
-            ferrix_rt::notice!("btrfsd   {location:#x}: its HELLO names another place");
+            xaqu_rt::notice!("btrfsd   {location:#x}: its HELLO names another place");
             return;
         }
         let mut name = [0_u8; 8];
@@ -257,10 +257,10 @@ impl Disks {
             .find(|entry| entry.location == location)
         {
             entry.disk = Some(disk);
-            ferrix_rt::notice!("btrfsd   {} is back", shown(&name));
+            xaqu_rt::notice!("btrfsd   {} is back", shown(&name));
         } else {
             if self.entries.len() >= MOST_DISKS {
-                ferrix_rt::notice!("btrfsd   {location:#x}: too many disks");
+                xaqu_rt::notice!("btrfsd   {location:#x}: too many disks");
                 return;
             }
             self.entries.push(Entry {
@@ -278,7 +278,7 @@ impl Disks {
                 .job
                 .quota(Resource::Memory)
                 .map_or(0, |quota| quota.used / 1024);
-            ferrix_rt::notice!(
+            xaqu_rt::notice!(
                 "btrfsd   {} is up; this server holds {holds} KiB",
                 shown(&name)
             );
@@ -287,7 +287,7 @@ impl Disks {
         self.tell();
         let published = CorePublished { location }.encode();
         if self.cores.write(&published).is_err() {
-            ferrix_rt::notice!("btrfsd   devmgr's channel would not take PUBLISHED");
+            xaqu_rt::notice!("btrfsd   devmgr's channel would not take PUBLISHED");
         }
     }
 
@@ -334,10 +334,10 @@ impl Disks {
                         // accept (H.4).
                         entry.disk = None;
                         entry.parked_at = now();
-                        ferrix_rt::notice!("btrfsd   {} parked", shown(&entry.name));
+                        xaqu_rt::notice!("btrfsd   {} parked", shown(&entry.name));
                     }
                     Err(Failure::Io) => {
-                        ferrix_rt::notice!("btrfsd   {}: an I/O error", shown(&entry.name));
+                        xaqu_rt::notice!("btrfsd   {}: an I/O error", shown(&entry.name));
                         return Err(Errno::EIO);
                     }
                     Err(Failure::Range) => return Err(Errno::EINVAL),
@@ -387,13 +387,13 @@ impl Disks {
             if ended {
                 entry.disk = None;
                 entry.parked_at = now();
-                ferrix_rt::notice!("btrfsd   {} parked: its driver ended", shown(&entry.name));
+                xaqu_rt::notice!("btrfsd   {} parked: its driver ended", shown(&entry.name));
             }
         }
     }
 }
 
-impl ferrix_btrfs_write::WriteDevice for Volume {
+impl xaqu_btrfs_write::WriteDevice for Volume {
     fn write_at(&mut self, physical: u64, data: &[u8]) -> Result<(), WriteError> {
         let failed = WriteError::DeviceWrite { physical };
         if data.is_empty() {

@@ -23,12 +23,12 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::PORT_FD_CLOEXEC;
-use ferrix_vfs::{Errno, Inode, Metadata, Readiness};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::PORT_FD_CLOEXEC;
+use xaqu_vfs::{Errno, Inode, Metadata, Readiness};
 
 use crate::fs;
 use crate::hooks::Full;
@@ -38,7 +38,7 @@ use crate::syscall::native;
 use crate::syscall::process;
 
 /// The name `/proc/self/fd` shows.
-const NAME: &[u8] = b"anon_inode:[ferrix-port]";
+const NAME: &[u8] = b"anon_inode:[xaqu-port]";
 
 /// A port, seen as a file.
 pub(crate) struct PortFile {
@@ -82,7 +82,7 @@ fn port_fd(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errno> {
     let process = process::of_host(caller).ok_or(status::BAD_HANDLE)?;
     let port = native::port_in(
         caller.core(),
-        ferrix_native_abi::handle::Handle::from_register(port),
+        xaqu_native_abi::handle::Handle::from_register(port),
         Rights::WAIT,
     )?;
     let charge = Charge::bytes(arc_footprint::<PortFile>()).map_err(|_| Errno::ENOMEM)?;
@@ -124,7 +124,7 @@ impl Inode for PortFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(self.port.shared_waiters()));
         true
     }
@@ -139,17 +139,17 @@ impl Inode for PortFile {
     }
 
     /// Packets are taken with `port_wait`, not read.
-    fn read_stream(&self, _buf: &mut [u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, _buf: &mut [u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         Err(Errno::EINVAL)
     }
 
     /// Nor written: `port_queue` queues one.
-    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         Err(Errno::EINVAL)
     }
 }
 
 /// The port file an open file is, if it is one.
-pub(crate) fn of(file: &ferrix_vfs::OpenFile) -> Option<Arc<PortFile>> {
+pub(crate) fn of(file: &xaqu_vfs::OpenFile) -> Option<Arc<PortFile>> {
     Arc::clone(file.io()).into_any().downcast::<PortFile>().ok()
 }

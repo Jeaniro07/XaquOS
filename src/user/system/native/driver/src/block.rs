@@ -9,7 +9,7 @@
 //!    brings the kernel's completion port back.
 //! 3. One port carries every event: the kernel's bell (`BELL_SUBMIT`), the
 //!    device's interrupt, and the control channel becoming readable.
-//!    `ferrix-blkserve` decides what each means.
+//!    `xaqu-blkserve` decides what each means.
 //! 4. STOP ends it: the device is reset, whatever it abandoned is completed
 //!    `IoError` on the ring, STOPPED goes back, and the process exits. A
 //!    device that will not reset keeps its memory for good, and the process
@@ -22,27 +22,27 @@
 use core::ptr;
 use core::sync::atomic::{AtomicI32, Ordering, fence};
 
-use ferrix_blkring::RingMemory;
-use ferrix_blkring::bell::{BELL_SUBMIT, Doorbell, Wait};
-use ferrix_blkring::control::{MAX_BYTES, Message, PORT_RIGHTS, VMO_RIGHTS};
-use ferrix_blkring::driver::DriverSide;
-use ferrix_blkring::geometry::Device as Geometry;
-use ferrix_blkring::identity::{DiskName, Identity, Location, SERIAL_BYTES};
-use ferrix_blkring::layout::{RingLayout, Status as RingStatus};
-use ferrix_blkserve::{Disk, Fault, Serve};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{PACKET_INTERRUPT, PACKET_SIGNAL, PACKET_USER};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio::QueueError;
-use ferrix_virtio_blk::{Completion, DeviceError, Status};
+use xaqu_blkring::RingMemory;
+use xaqu_blkring::bell::{BELL_SUBMIT, Doorbell, Wait};
+use xaqu_blkring::control::{MAX_BYTES, Message, PORT_RIGHTS, VMO_RIGHTS};
+use xaqu_blkring::driver::DriverSide;
+use xaqu_blkring::geometry::Device as Geometry;
+use xaqu_blkring::identity::{DiskName, Identity, Location, SERIAL_BYTES};
+use xaqu_blkring::layout::{RingLayout, Status as RingStatus};
+use xaqu_blkserve::{Disk, Fault, Serve};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{PACKET_INTERRUPT, PACKET_SIGNAL, PACKET_USER};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio::QueueError;
+use xaqu_virtio_blk::{Completion, DeviceError, Status};
 
 use crate::dma::PAGE;
 use crate::start::{self, Bind, Started};
@@ -65,13 +65,13 @@ const KEY_INTERRUPT: u64 = 3;
 const KEY_CONTROL: u64 = 4;
 
 /// A disk, as the block ring needs it: the requests it serves are
-/// `ferrix-blkserve`'s [`Disk`].
+/// `xaqu-blkserve`'s [`Disk`].
 pub trait Device: Probe + Disk {
     /// Its geometry, as the ring announces it.
     fn geometry(&self) -> Geometry;
 
     /// The handle to its data region HELLO hands the kernel, with exactly
-    /// `ferrix_blkring::control::VMO_RIGHTS`: made at probe, before the
+    /// `xaqu_blkring::control::VMO_RIGHTS`: made at probe, before the
     /// device logic took the memory, and given once.
     ///
     /// # Errors
@@ -206,7 +206,7 @@ fn serve_disk<D: Device>(boot: &Channel<Kernel>) -> Result<(), Step> {
     // the device is timed where the processor's counter can be read, for
     // the seam's measurement (docs/OPAQUE-KERNEL.md, S0).
     let mut serve: Serve<Ring, D, { ENTRIES as usize }> = Serve::new(side, disk);
-    if ferrix_rt::counter().is_some() {
+    if xaqu_rt::counter().is_some() {
         serve = serve.timed(ticks);
     }
     let ended = serve_until(&mut serve, &port, &kernel_port, &control);
@@ -218,7 +218,7 @@ fn serve_disk<D: Device>(boot: &Channel<Kernel>) -> Result<(), Step> {
 /// The processor's counter, for [`Serve::timed`]: zero where it cannot be
 /// read, which the loop is never given.
 fn ticks() -> u64 {
-    ferrix_rt::counter().unwrap_or(0)
+    xaqu_rt::counter().unwrap_or(0)
 }
 
 /// Why the loop ended.
@@ -262,7 +262,7 @@ fn watch(busy: bool) -> Deadline {
     if !busy {
         return Deadline::Never;
     }
-    match ferrix_rt::linux::monotonic_nanos() {
+    match xaqu_rt::linux::monotonic_nanos() {
         Ok(now) => Deadline::At(now.saturating_add(WATCH_NANOS)),
         Err(_) => Deadline::Never,
     }
@@ -399,7 +399,7 @@ impl RingMemory for Ring {
     // The indices the kernel moves while this side reads them are `u32`s, and
     // each is one access here: composed from bytes, a tail stepping from
     // 0x00ff to 0x0100 reads 0x01ff on the other side, which is "the peer's
-    // tail ran more than a ring ahead" and ends the ring (`ferrix-blkring`'s
+    // tail ran more than a ring ahead" and ends the ring (`xaqu-blkring`'s
     // `RingMemory`). The ring VMO is mapped page-aligned and the layout puts
     // every index at an aligned offset; anything unaligned is composed.
 

@@ -2,7 +2,7 @@
 
 POSIX.1-2024 is a goal by the customer's decision of 2026-09-13, on the
 condition that it never breaks Linux compatibility: where the two differ, Linux
-wins (`docs/BACKLOG.md`, Decisions). Ferrix takes POSIX through its C library
+wins (`docs/BACKLOG.md`, Decisions). Xaqu takes POSIX through its C library
 over the Linux ABI, so the library half of that goal is `src/user/system/linux/ferrousli/`'s. This
 file measures it, one interface at a time, against the standard's own list of
 system interfaces, and prices what is missing in story points.
@@ -56,7 +56,7 @@ new subsystem. Every area's missing names are in the index at the end.
 | Time and clocks | 29 | 3 | 0 | 3 | `getdate` and `getdate_err` 2; `timespec_get` 1 |
 | Threads and scheduling | 145 | 4 | 0 | 2 | the `clock` variants of the condition, mutex and read-write lock waits 2. Landed: `pthread_atfork`; `thrd_equal` as a function as well as a macro; cancellation, `pthread_cancel` and `pthread_testcancel` with their cancellation points |
 | Memory mapping and System V IPC | 23 | 0 | 0 | 0 | landed: `ftok`, for NSPR (`docs/CHROME.md`) |
-| Realtime: asynchronous I/O, message queues, timers, shared memory | 27 | 20 | 0 | 10 | `aio.h` over threads 3; the rest of `mqueue.h`, `mq_open` to `mq_notify`, 3; `SIGEV_THREAD` for `timer_create`, which refuses it with `ENOTSUP`, 3; `clock_getcpuclockid` 1. Landed: `timer_create`, `timer_settime`, `timer_gettime`, `timer_getoverrun` and `timer_delete`, each its system call, for Claude Code on the `--everything` desktop (`docs/CLAUDE-CODE.md` §5; Ferrix's kernel answers them `ENOSYS` today, as it does glibc's); `shm_open` and `shm_unlink`, for LLVM (`docs/roadmap/chrome.md`). Typed memory (`posix_typed_mem_*`, `posix_mem_offset`) is the TYM option, which ferrousli does not claim: 0 |
+| Realtime: asynchronous I/O, message queues, timers, shared memory | 27 | 20 | 0 | 10 | `aio.h` over threads 3; the rest of `mqueue.h`, `mq_open` to `mq_notify`, 3; `SIGEV_THREAD` for `timer_create`, which refuses it with `ENOTSUP`, 3; `clock_getcpuclockid` 1. Landed: `timer_create`, `timer_settime`, `timer_gettime`, `timer_getoverrun` and `timer_delete`, each its system call, for Claude Code on the `--everything` desktop (`docs/CLAUDE-CODE.md` §5; Xaqu's kernel answers them `ENOSYS` today, as it does glibc's); `shm_open` and `shm_unlink`, for LLVM (`docs/roadmap/chrome.md`). Typed memory (`posix_typed_mem_*`, `posix_mem_offset`) is the TYM option, which ferrousli does not claim: 0 |
 | Terminals and devices | 25 | 2 | 0 | 2 | `ctermid` 1; `posix_devctl` and `<devctl.h>` 1. Landed: `posix_openpt`, `grantpt`, `unlockpt`, `ptsname`, `ptsname_r`, for foot (`docs/CHROME.md`) |
 | Networking and name resolution | 55 | 0 | 0 | 0 | landed: `getaddrinfo`, `getnameinfo`, `freeaddrinfo` and `gai_strerror` over `/etc/hosts` and a DNS stub resolver; the hosts, networks, protocols and services databases; `if_nameindex`, `if_freenameindex`, `if_indextoname`; `in6addr_any`, `in6addr_loopback`, `sockatmark` |
 | Patterns, paths and search | 23 | 2 | 0 | 3 | `wordexp` 3. Landed: `nftw`, musl's with glibc's type flags and `FTW_ACTIONRETVAL`, for GLib (`docs/CHROME.md`); `glob` and `globfree`; `search.h`'s hash table, trees, linear search and queues; `libgen.h`'s `basename` and `dirname`, and `regex.h`, replacing five stubs |
@@ -87,24 +87,24 @@ header and then failed to link, or ran and got the wrong answer.
   `__signbit`, `__signbitf` and `__signbitl` are defined now, the `long double`
   ones reading the x87 value as musl does, unnormals classifying as NaN.
 
-## Where Ferrix differs from Linux
+## Where Xaqu differs from Linux
 
 **Credentials are per process.** Linux keeps user and group ids per thread in
 the kernel (setuid(2), "C library/kernel differences"). POSIX requires every
 thread of a process to share them, and glibc's and musl's `set*id` wrappers
-emulate that by making every thread repeat the call. Ferrix's kernel keeps
+emulate that by making every thread repeat the call. Xaqu's kernel keeps
 `Credentials` on the `Process` (`src/kernel/src/syscall/process.rs`), which is what
-POSIX requires, so on Ferrix one thread's `setuid` changes them all without the
+POSIX requires, so on Xaqu one thread's `setuid` changes them all without the
 broadcast. The product owner's ruling of 2026-09-14 is to keep it: no kernel
 change. What follows from it:
 
 * A program that relies on per-thread credentials through the raw system call,
   such as a file server that gives each thread its own ids, sees a difference on
-  Ferrix.
+  Xaqu.
 * `ferrousli` on a Linux host does not conform until its `set*id` functions
-  broadcast to every thread as NPTL's do. That broadcast is harmless on Ferrix,
+  broadcast to every thread as NPTL's do. That broadcast is harmless on Xaqu,
   where each repeat sets ids the process already has.
-* musl's broadcast is proven safe on Ferrix by `cargo xtask test-threads`
+* musl's broadcast is proven safe on Xaqu by `cargo xtask test-threads`
   since 2026-10-12: two threads survive root's `setuid(1000)`, whose repeat
   on the second thread asks for the 1000 the process already has. musl kills
   the process when a repeat fails, so the step holds only while setting an id

@@ -116,10 +116,10 @@ pub const fn left_on(control: u64) -> bool {
     control & CONTROL_FIRMWARE != 0
 }
 
-/// The word that turns `ferrix.amdvi` off, as the command line gives it.
-pub const OFF_OPTION: &str = "ferrix.amdvi";
+/// The word that turns `xaqu.amdvi` off, as the command line gives it.
+pub const OFF_OPTION: &str = "xaqu.amdvi";
 
-/// Whether the command line's `ferrix.amdvi` value leaves every AMD-Vi
+/// Whether the command line's `xaqu.amdvi` value leaves every AMD-Vi
 /// unit alone: `off` exactly; `on`, no option, and anything else do not
 /// (L.iommu.98).
 #[must_use]

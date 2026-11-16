@@ -1,4 +1,4 @@
-//! `test-seccomp-selftest`: Linux's own seccomp selftest on Ferrix
+//! `test-seccomp-selftest`: Linux's own seccomp selftest on Xaqu
 //! (`docs/SECCOMP.md` §8.2).
 //!
 //! `tools/testing/selftests/seccomp/seccomp_bpf.c` from Linux v6.12, built
@@ -10,7 +10,7 @@
 //! `tools/common/data/seccomp-selftest/expected.txt` names every test that
 //! does not pass, with what it gets and why. The gate fails on a test that
 //! fails or skips and is not listed, or not as listed, and on a listed test
-//! that now passes, so the list stays the truth: it shrinks as Ferrix grows,
+//! that now passes, so the list stays the truth: it shrinks as Xaqu grows,
 //! and nothing slips onto it unseen. A run that stops before its totals fails
 //! too.
 
@@ -24,7 +24,7 @@ use crate::{Error, Result};
 
 /// Seconds the run may take unless `--timeout` says: the harness gives each
 /// of its tests 30 before it kills it, and the tests that wait on `ptrace`,
-/// which Ferrix has not, take those 30.
+/// which Xaqu has not, take those 30.
 const TIMEOUT: u64 = 3600;
 
 /// What a test got.
@@ -45,16 +45,16 @@ impl Outcome {
     }
 }
 
-/// Where the fetch script put the builds: `$FERRIX_SECCOMP_SELFTEST`, or
-/// `~/.local/share/ferrix/seccomp-selftest`.
+/// Where the fetch script put the builds: `$XAQU_SECCOMP_SELFTEST`, or
+/// `~/.local/share/xaqu/seccomp-selftest`.
 fn selftest_dir() -> Result<PathBuf> {
-    if let Some(dir) = std::env::var_os("FERRIX_SECCOMP_SELFTEST") {
+    if let Some(dir) = std::env::var_os("XAQU_SECCOMP_SELFTEST") {
         return Ok(PathBuf::from(dir));
     }
     let home = std::env::var_os("HOME")
         .or_else(|| std::env::var_os("USERPROFILE"))
         .ok_or_else(|| Error::new("neither HOME nor USERPROFILE is set"))?;
-    Ok(PathBuf::from(home).join(".local/share/ferrix/seccomp-selftest"))
+    Ok(PathBuf::from(home).join(".local/share/xaqu/seccomp-selftest"))
 }
 
 /// The expected list: `<arch|all> <fail|skip> <test>  # why`, a line each.

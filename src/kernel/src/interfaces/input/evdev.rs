@@ -2,7 +2,7 @@
 //!
 //! `docs/INPUT.md` §3.3 fixes the subset. Where it leaves a rule to Linux --
 //! which errors, which lengths, what a read returns -- the rule is
-//! `drivers/input/evdev.c`, and `ferrix-inputctl`'s queue is where the
+//! `drivers/input/evdev.c`, and `xaqu-inputctl`'s queue is where the
 //! reading and the dropping live. This is the file object over them: a read,
 //! a poll, and the `EVIOC*` requests.
 //!
@@ -19,17 +19,17 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_inputctl::message::RawEvent;
-use ferrix_inputctl::queue::{Clock, ReadError, ReadFlags};
-use ferrix_inputctl::session::GrabError;
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::RawEvent;
+use xaqu_inputctl::queue::{Clock, ReadError, ReadFlags};
+use xaqu_inputctl::session::GrabError;
+use xaqu_linux_abi::input::{
     self, EV_ABS, EV_CNT, EV_LED, EV_REP, EV_SYN, EV_VERSION, EVIOCGID, EVIOCGRAB, EVIOCGREP,
     EVIOCGVERSION, EVIOCREVOKE, EVIOCSCLOCKID, EVIOCSREP, Event,
 };
-use ferrix_linux_abi::layout::{Field, Layout};
-use ferrix_linux_abi::socket::Width;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{
+use xaqu_linux_abi::layout::{Field, Layout};
+use xaqu_linux_abi::socket::Width;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{
     DirEntry, Errno, FIRST_CURSOR, FileType, Inode, Metadata, Readiness, Result as VfsResult,
     Timespec,
 };
@@ -125,7 +125,7 @@ impl Inode for EventFile {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(crate::fs::wake::shared(&self.device.changed));
         true
     }
@@ -239,7 +239,7 @@ pub(crate) fn metadata(index: u32) -> Metadata {
     Metadata {
         ino: EVENT_INO_BASE + u64::from(index),
         kind: FileType::CharDevice,
-        // 0660 and root's, as `card0` is: Ferrix has no `input` group.
+        // 0660 and root's, as `card0` is: Xaqu has no `input` group.
         permissions: 0o660,
         nlink: 1,
         uid: 0,
@@ -585,7 +585,7 @@ fn get_abs(process: &Process, file: &Arc<EventFile>, axis: u16, arg: u64) -> Res
 /// gave no such string.
 fn text(
     process: &Process,
-    value: &ferrix_inputctl::message::Text,
+    value: &xaqu_inputctl::message::Text,
     arg: u64,
     size: u32,
 ) -> Result<usize, Errno> {
@@ -627,10 +627,10 @@ fn write_i32(process: &Process, arg: u64, value: i32) -> Result<usize, Errno> {
 
 /// The width of the caller, which decides how wide an `input_event` is.
 ///
-/// Every architecture Ferrix builds a compositor for is 64-bit, and ARMv7-A
+/// Every architecture Xaqu builds a compositor for is 64-bit, and ARMv7-A
 /// takes no part in the input gates (`docs/INPUT.md` §3.3), so this is the
 /// pointer width of the kernel itself. A 32-bit caller on a 64-bit kernel
-/// would need the `compat` flag a `personality` brings, which Ferrix does not
+/// would need the `compat` flag a `personality` brings, which Xaqu does not
 /// have.
 const fn caller_width() -> Width {
     if usize::BITS == 32 {

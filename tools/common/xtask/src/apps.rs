@@ -1,9 +1,9 @@
 //! Apps: optional programs, each a folder of its own under `src/user/apps/`
-//! (`docs/APPS.md`), which is the ferrix-os/apps repository checked out there
+//! (`docs/APPS.md`), which is the xaqu-os/apps repository checked out there
 //! (`components.toml`).
 //!
 //! Nothing here names an app. Every folder in [`PLACES`] is one, described by
-//! its `app.toml`, which `ferrix-pkg` reads; this module builds each into a
+//! its `app.toml`, which `xaqu-pkg` reads; this module builds each into a
 //! package, installs packages into the images a person runs, gates each in
 //! `check`, and boots them all once in `test-apps`. Adding an app is adding a
 //! folder, and the check that nothing outside the folder names it is here
@@ -17,10 +17,10 @@ use std::process::Command;
 
 pub(crate) use new::new_app;
 
-use ferrix_cpio::{Archive, FileType};
-use ferrix_pkg::manifest::{self, Abi, Build, FileSpec, Recipe, Source};
-use ferrix_pkg::plan::plan;
-use ferrix_pkg::record::{self, Installed, Record};
+use xaqu_cpio::{Archive, FileType};
+use xaqu_pkg::manifest::{self, Abi, Build, FileSpec, Recipe, Source};
+use xaqu_pkg::plan::plan;
+use xaqu_pkg::record::{self, Installed, Record};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -66,7 +66,7 @@ pub(crate) const TASKS: &[Task] = &[
 ];
 
 /// Where apps are, and where a new app goes, from the workspace's root: the
-/// ferrix-os/apps repository's checkout (`components.toml`).
+/// xaqu-os/apps repository's checkout (`components.toml`).
 pub(crate) const PLACE: &str = "src/user/apps";
 
 /// Every place apps are found, for a message and for [`discover`].
@@ -212,7 +212,7 @@ fn discover_in(place: &Path, entries: fs::ReadDir) -> Result<Vec<App>> {
 /// `apps` with each after the apps it depends on, and otherwise in the
 /// order given: an app is built after what it links, as git after curl's
 /// library. A dependency that is not an app, or a circle, is left for
-/// `ferrix_pkg::plan` to refuse at install.
+/// `xaqu_pkg::plan` to refuse at install.
 fn in_build_order(mut apps: Vec<App>) -> Vec<App> {
     let mut ordered: Vec<App> = Vec::with_capacity(apps.len());
     while !apps.is_empty() {
@@ -785,7 +785,7 @@ fn build(app: &App, arch: Arch, release: bool) -> Result<Option<Built>> {
                             std::ffi::OsStr::new(arch.name()),
                         ])
                         .args([out.as_os_str()])
-                        .env("FERRIX_PORTS", &ports)
+                        .env("XAQU_PORTS", &ports)
                         .reads_dir(ports.join("src"))
                         .output(&out);
                 if let Some(dir) =
@@ -846,7 +846,7 @@ fn built_by_it(app: &App) -> impl Iterator<Item = &FileSpec> {
 /// Read back out of each archive with the kernel's own cpio reader, as the
 /// package manager will read them: every file must be its record's, with
 /// the size and digest the record says, and the set must install whole
-/// (`ferrix_pkg::plan`) before one file is taken.
+/// (`xaqu_pkg::plan`) before one file is taken.
 fn install(packages: &[Vec<u8>]) -> Result<Vec<ports::File>> {
     let mut records = Vec::new();
     for bytes in packages {
@@ -1451,8 +1451,8 @@ fn write(path: &Path, bytes: &[u8]) -> Result<()> {
 mod tests {
     use super::{App, install, quoted, script};
     use crate::ports;
-    use ferrix_pkg::manifest;
-    use ferrix_pkg::record::{self, Installed, Record};
+    use xaqu_pkg::manifest;
+    use xaqu_pkg::record::{self, Installed, Record};
 
     use super::{assign, names_target_tmpdir, outputs_in_metadata};
 
@@ -1543,7 +1543,7 @@ mod tests {
         assert_ne!(dir_of("fuzzel"), dir_of("hyprlock"));
         // Which directory the lighter apps share is the balance of their
         // lockfiles' weights, which a dependency added in the tree moves
-        // (ferrix-slots on ferrix-sha256 moved fuzzel): only the rules
+        // (xaqu-slots on xaqu-sha256 moved fuzzel): only the rules
         // above are held, not one app's place.
         assert_eq!(
             dir_of("waybar"),
@@ -1701,7 +1701,7 @@ mod tests {
             .collect();
         entries.push((&path, 0o644, text.as_bytes()));
         crate::initramfs::plain(
-            &["bin", "lib", "lib/ferrix", "lib/ferrix/packages"],
+            &["bin", "lib", "lib/xaqu", "lib/xaqu/packages"],
             &entries,
         )
         .expect("an archive")
@@ -1720,7 +1720,7 @@ mod tests {
         let old = record::render(&record).replace("license = \"MIT\"\n", "");
         let path = record::path("a");
         let stale = crate::initramfs::plain(
-            &["bin", "lib", "lib/ferrix", "lib/ferrix/packages"],
+            &["bin", "lib", "lib/xaqu", "lib/xaqu/packages"],
             &[("bin/a", 0o755, b"elf"), (&path, 0o644, old.as_bytes())],
         )
         .expect("an archive");
@@ -1750,7 +1750,7 @@ mod tests {
         let good = package("a", &[("bin/a", b"one")], &[("bin/a", b"one")]);
         let files = install(&[good]).expect("it installs");
         let paths: Vec<&str> = files.iter().map(|file| file.path.as_str()).collect();
-        assert_eq!(paths, ["bin/a", "lib/ferrix/packages/a.toml"]);
+        assert_eq!(paths, ["bin/a", "lib/xaqu/packages/a.toml"]);
         let changed = package("a", &[("bin/a", b"two")], &[("bin/a", b"one")]);
         assert!(install(&[changed]).is_err(), "a file unlike its record");
         let unlisted = package(

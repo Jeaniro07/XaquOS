@@ -16,7 +16,7 @@
 //! directory, so the builds queue while the boots run side by side.
 //!
 //! A child is told it is one by [`CHILD`], and runs its architecture as the
-//! command always did. `FERRIX_ARCHES_IN_TURN=1` keeps the old order, for a
+//! command always did. `XAQU_ARCHES_IN_TURN=1` keeps the old order, for a
 //! host where running them at once is not wanted.
 
 use std::path::PathBuf;
@@ -40,10 +40,10 @@ pub(crate) const COMMANDS: &[&str] = &["test-boot", "test-init", "test-audio"];
 
 /// Set in a child's environment: it runs one architecture, and must not
 /// start children of its own.
-const CHILD: &str = "FERRIX_XTASK_ONE_ARCH";
+const CHILD: &str = "XAQU_XTASK_ONE_ARCH";
 
 /// Set by a person who wants the architectures one after another.
-const IN_TURN: &str = "FERRIX_ARCHES_IN_TURN";
+const IN_TURN: &str = "XAQU_ARCHES_IN_TURN";
 
 /// Whether `command` with `args` is run as a child an architecture.
 pub(crate) fn wanted(command: &str, args: &Args) -> bool {

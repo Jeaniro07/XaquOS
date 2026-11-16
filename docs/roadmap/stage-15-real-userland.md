@@ -44,14 +44,14 @@ answer to each keystroke. `qemu::Watching::type_in` is the new half of the
 harness: until now every gate here only read what the guest said.
 
 **Done -- the kernel's half of starting an init (L3, 2026-09-24).**
-`ferrix.init=<path>` on the kernel command line starts pid 1 from that file
+`xaqu.init=<path>` on the kernel command line starts pid 1 from that file
 in the switched root, a `#!` script under its interpreter, and falls back to
 the built-in program with one line saying why when the file will not start;
 xtask's `--init-path` writes it into `CMDLINE.TXT`. `reboot(2)` commits `/`
 and `/data` before it stops the machine, as the kernel's own power-off does,
-and `ferrix.onexit=panic` gives Linux's answer to init exiting (`FX-1501`).
+and `xaqu.onexit=panic` gives Linux's answer to init exiting (`FX-1501`).
 `cargo xtask test-shell` boots its shell a second time from
-`ferrix.init=/etc/shell-test`, and under busybox writes `/data/k7`, powers
+`xaqu.init=/etc/shell-test`, and under busybox writes `/data/k7`, powers
 off with `poweroff -f -n` and reads the file back on a second boot of the
 same volume. `docs/INIT.md` §16 has the details and the negative controls.
 
@@ -106,7 +106,7 @@ shutdown order, and a clean `btrfs check` afterwards. Both negative controls
 fired. `docs/INIT.md` §16 has the details.
 
 **Done -- L5, L6, L7 and L9 (2026-09-26, 19 points), and L8's kernel half.**
-`/bin/svc` over `/run/ferrix/control` with systemctl's verbs, root-only
+`/bin/svc` over `/run/xaqu/control` with systemctl's verbs, root-only
 changes judged by `SO_PEERCRED`, and a per-unit log of what services print
 (L6); `Type=notify` readiness over `NotifyFd=` and `forking` services by
 their `PIDFile=` (L7); `.socket` units with `LISTEN_FDS` for `Accept=no` and
@@ -142,7 +142,7 @@ each driver died through K6.
 in progress until authentication's phase 1 lands.
 
 **Done -- L12, pid 1 starts `devmgr` (2026-09-27, 12 points).** Every image
-that boots init sets `ferrix.devmgr=init`: the kernel gives pid 1 a one-shot
+that boots init sets `xaqu.devmgr=init`: the kernel gives pid 1 a one-shot
 starter, and init runs `devmgr.service` by asking the kernel to start
 `devmgr` in its cgroup's job, getting back only a handle to the process --
 the device authority never passes through init. `/` switches to the root
@@ -211,7 +211,7 @@ hyprlock over `authd` (P1.5, 2026-10-03).
 
 *Phase 2, the desktop as a user: done but for three items.* All but the
 console revoke on 2026-10-03, each with the certification consultant's OK:
-`--everything`'s desktop runs as `ferrix` under `sessiond`, with its own
+`--everything`'s desktop runs as `xaqu` under `sessiond`, with its own
 home disk (P2.4); hyprix unlocks only on `authd`'s grant over the seat
 channel, and a new locker takes over a dead one's lock (P2.5); `login` on
 the console, with a first password chosen there (P2.3, `cargo xtask run
@@ -262,10 +262,10 @@ each (formatting, clippy on the host and the targets, host tests, and that
 nothing outside the folder names it), `run` and `run-compositor` install
 each `default` one from its package, and `test-apps` boots once and runs
 every app's `[[smoke]]` lines. A package is a newc archive of the files and
-a record, `lib/ferrix/packages/<name>.toml`, with each file's BLAKE2b-256;
+a record, `lib/xaqu/packages/<name>.toml`, with each file's BLAKE2b-256;
 `src/lib/proto/pkg` reads manifests and records and plans an install, and is
 the package manager's engine from the start. The one change to the system an
-app needs is `ferrix_rt::linux::call` and `numbers`: any Linux call by
+app needs is `xaqu_rt::linux::call` and `numbers`: any Linux call by
 number. The first app is `ferrofetch`, a native fastfetch; `test-apps`
 passes its three checks on x86-64, and fails, naming the check, with one
 `expect` changed to a line it never prints. The same day the stat service

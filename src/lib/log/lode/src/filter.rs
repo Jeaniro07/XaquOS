@@ -193,7 +193,7 @@ fn order(left: &[u8], right: &[u8]) -> core::cmp::Ordering {
 /// What a name in an expression reads.
 fn selector(name: &str) -> Selector {
     let names: &[&str] = match name {
-        "priority" | "PRIORITY" | "prio" | "level" | "FERRIX_LEVEL" => {
+        "priority" | "PRIORITY" | "prio" | "level" | "XAQU_LEVEL" => {
             return Selector::Priority;
         }
         "unit" => &["_SYSTEMD_UNIT", "UNIT"],
@@ -201,14 +201,14 @@ fn selector(name: &str) -> Selector {
         "message" | "msg" => &["MESSAGE"],
         "pid" => &["_PID", "SYSLOG_PID"],
         "transport" => &["_TRANSPORT"],
-        "subsystem" => &["FERRIX_SUBSYSTEM"],
+        "subsystem" => &["XAQU_SUBSYSTEM"],
         "mark" => &["MARK"],
         "crash" => &["CRASH_SIGNAL"],
         "rule" => &["RULE"],
         "session" => &["SESSION_ID"],
-        "driver" => &["_FERRIX_DRIVER"],
+        "driver" => &["_XAQU_DRIVER"],
         "invocation" => &["_SYSTEMD_INVOCATION_ID"],
-        "event" => &["FERRIX_EVENT"],
+        "event" => &["XAQU_EVENT"],
         "stream" => &["_STREAM"],
         "uid" => &["_UID"],
         other => {

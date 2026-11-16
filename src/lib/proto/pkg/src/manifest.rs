@@ -140,7 +140,7 @@ impl fmt::Display for Dependency {
 /// Which ABI a package's programs speak.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Abi {
-    /// Ferrix's own, through the runtime.
+    /// Xaqu's own, through the runtime.
     Native,
     /// Linux's.
     Linux,

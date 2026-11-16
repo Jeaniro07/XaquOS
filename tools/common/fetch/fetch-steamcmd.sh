@@ -11,8 +11,8 @@
 # names, and `libgcc_s.so.1` for the `libstdc++` it carries -- Debian's
 # certificate authorities as the bundle `/etc/ssl/certs/ca-certificates.crt`
 # steamcmd's OpenSSL reads, and steamcmd, unpacked and not yet updated, under `steamcmd/`.
-# Ferrix mounts it at `/data`, and the test's image links the directories
-# glibc names into it, as test-chrome's does. steamcmd's first run on Ferrix
+# Xaqu mounts it at `/data`, and the test's image links the directories
+# glibc names into it, as test-chrome's does. steamcmd's first run on Xaqu
 # downloads its own update, as it does anywhere, so the test needs the
 # network and room on the volume for it.
 #
@@ -22,15 +22,15 @@
 # fails here rather than running something unchecked; take the new file's
 # hash and change STEAMCMD_SHA256.
 #
-# Writes $FERRIX_STEAMCMD_VOLUME/steamcmd.img (default
-# ~/.local/share/ferrix/steamcmd/steamcmd.img). Needs curl, sha256sum,
+# Writes $XAQU_STEAMCMD_VOLUME/steamcmd.img (default
+# ~/.local/share/xaqu/steamcmd/steamcmd.img). Needs curl, sha256sum,
 # dpkg-deb, tar, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-steamcmd.sh
 
 set -euo pipefail
 
-out=${FERRIX_STEAMCMD_VOLUME:-$HOME/.local/share/ferrix/steamcmd}
+out=${XAQU_STEAMCMD_VOLUME:-$HOME/.local/share/xaqu/steamcmd}
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 
 LIBC6=main/g/glibc/libc6_2.41-12+deb13u4_i386.deb

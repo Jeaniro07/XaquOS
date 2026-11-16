@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel-board-gs201-usb"
-description = "The Ferrix kernel's gs201 USB glue (the Pixel 7): a load-ring part the composition root installs"
+name = "xaqu-kernel-board-gs201-usb"
+description = "The Xaqu kernel's gs201 USB glue (the Pixel 7): a load-ring part the composition root installs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,11 +17,11 @@ build = "../../../build.rs"
 path = "src/lib.rs"
 
 [dependencies]
-ferrix-kernel-core.workspace = true
-ferrix-kernel-item.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-fdt.workspace = true
-ferrix-native-abi.workspace = true
+xaqu-kernel-core.workspace = true
+xaqu-kernel-item.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-fdt.workspace = true
+xaqu-native-abi.workspace = true
 
 [lints]
 workspace = true

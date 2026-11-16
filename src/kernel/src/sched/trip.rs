@@ -52,7 +52,7 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 use crate::arch;
 

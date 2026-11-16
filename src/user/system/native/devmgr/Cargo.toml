@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-devmgr"
+name = "xaqu-devmgr"
 description = "devmgr: matches the devices the kernel hands it to the drivers it was given, starts each in a job of its own, and quiesces a device whose driver died"
 version.workspace = true
 edition.workspace = true
@@ -14,17 +14,17 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-devmgr-proto.workspace = true
-ferrix-devmgr-events-proto.workspace = true
-ferrix-drvupdate-proto.workspace = true
-ferrix-fdt.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-process-builder.workspace = true
-ferrix-netring.workspace = true
-ferrix-restart.workspace = true
-ferrix-rt.workspace = true
-ferrix-usbif.workspace = true
+xaqu-blkring.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-devmgr-events-proto.workspace = true
+xaqu-drvupdate-proto.workspace = true
+xaqu-fdt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-process-builder.workspace = true
+xaqu-netring.workspace = true
+xaqu-restart.workspace = true
+xaqu-rt.workspace = true
+xaqu-usbif.workspace = true
 
 [lints]
 workspace = true

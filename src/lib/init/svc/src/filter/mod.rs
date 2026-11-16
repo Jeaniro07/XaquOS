@@ -14,7 +14,7 @@
 //! block ld  [0]                      nr
 //!       jge 0x40000000, 0, 1         x86-64 only: an x32 number
 //!       ret <x32>
-//!       jge 0x1000, 0, 2             Ferrix's native range,
+//!       jge 0x1000, 0, 2             Xaqu's native range,
 //!       jgt 0x1fff, 1, 0             when it differs from the default
 //!       ret <native>
 //!       jeq <nr>, 0, 1               per call whose action is not the
@@ -70,16 +70,16 @@ const ARCH: u32 = 4;
 
 /// The bit an x32 call's number carries on x86-64's entry.
 const X32_BIT: u32 = 0x4000_0000;
-/// Ferrix's native calls (`docs/ARCHITECTURE.md` §2), which pass through a
+/// Xaqu's native calls (`docs/ARCHITECTURE.md` §2), which pass through a
 /// filter like any other number (`docs/SECCOMP.md` SR2).
 const NATIVE: (u32, u32) = (0x1000, 0x1fff);
 
 /// Most instructions in one filter: Linux's `BPF_MAXINSNS`.
 pub const MAX_INSNS: usize = 4096;
 
-/// The groups init knows beyond systemd's: `@ferrix-native`, Ferrix's
+/// The groups init knows beyond systemd's: `@xaqu-native`, Xaqu's
 /// native calls, and systemd's `@known`, every call the ABI's table has.
-const EXTRA_GROUPS: [&str; 2] = ["ferrix-native", "known"];
+const EXTRA_GROUPS: [&str; 2] = ["xaqu-native", "known"];
 
 /// One `struct sock_filter`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,7 +195,7 @@ fn expand(name: &str, abi: Abi, out: &mut Expanded, depth: u8) {
         return;
     };
     match group_name {
-        "ferrix-native" => out.native = true,
+        "xaqu-native" => out.native = true,
         "known" => out
             .calls
             .extend(abi.table().iter().map(|&(_, number)| number)),

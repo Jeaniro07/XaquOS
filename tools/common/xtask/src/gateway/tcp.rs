@@ -17,7 +17,7 @@
 //! # What this is not
 //!
 //! It is not `src/lib/network/nettcp`. That crate is the *guest's* stack — the thing on
-//! the other end of this wire — and using it here would mean testing Ferrix's
+//! the other end of this wire — and using it here would mean testing Xaqu's
 //! TCP against itself, where a shared misreading of RFC 9293 cancels out and
 //! both sides agree on something no other host does.
 //!
@@ -89,9 +89,9 @@ use std::net::{Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpListener, TcpStr
 use std::ops::Range;
 use std::time::{Duration, Instant};
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::ipv4;
-use ferrix_netwire::tcp::{self as wire, Flags};
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::ipv4;
+use xaqu_netwire::tcp::{self as wire, Flags};
 
 use super::{Core, Forward, GATEWAY_IP, GUEST_IP, MTU, Result, bump};
 use crate::Error;
@@ -127,7 +127,7 @@ pub(super) const RETRANSMIT: Duration = Duration::from_millis(20);
 const REDIAL: Duration = Duration::from_millis(200);
 
 /// The most segments the gateway has unacknowledged at once, over all its
-/// connections together: what the guest can hold. Ferrix's network driver
+/// connections together: what the guest can hold. Xaqu's network driver
 /// keeps 64 receive slots posted for every connection at once, since
 /// 2026-10-01 (it was 16); more than this in flight and the rest are dropped
 /// before the guest sees them, which the numbers at the top of this file
@@ -967,7 +967,7 @@ impl Core {
     fn start_connect(&self, key: Key) {
         let sender = self.connected.0.clone();
         let _ = std::thread::Builder::new()
-            .name("ferrix-net-connect".to_owned())
+            .name("xaqu-net-connect".to_owned())
             .spawn(move || {
                 let target = SocketAddr::V4(super::host_of(key.seen));
                 let stream = TcpStream::connect_timeout(&target, CONNECT_TIMEOUT);
@@ -1198,7 +1198,7 @@ impl Core {
             ipv4::protocol::TCP,
             source,
             destination,
-            bytes.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            bytes.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 

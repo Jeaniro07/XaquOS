@@ -15,10 +15,10 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use ferrix_lode_core::format::{Output, write};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::time::Zone;
-use ferrix_lode_core::upload::{self, Format};
+use xaqu_lode_core::format::{Output, write};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::time::Zone;
+use xaqu_lode_core::upload::{self, Format};
 use lode_net::pki::Pki;
 use lode_net::receive::{self, Receiver};
 use lode_net::store;
@@ -266,7 +266,7 @@ fn a_blob_is_kept_once_and_checked_against_its_id() {
     let destination = upload::parse_config(&line).unwrap().remove(0);
     assert_eq!(destination.blobs, upload::Blobs::Small);
     let maps = b"00400000-00401000 r-xp 00000000 00:00 0 /sbin/lode\n".repeat(100);
-    let id = ferrix_lode_core::blob::id_of(&maps);
+    let id = xaqu_lode_core::blob::id_of(&maps);
     let machine = "0123456789abcdef0123456789abcdef";
     let send = |bytes: &[u8]| {
         let request = upload::blob_request(&destination.url, &id, "text", bytes, machine, "box");
@@ -282,7 +282,7 @@ fn a_blob_is_kept_once_and_checked_against_its_id() {
         .collect();
     assert_eq!(packs.len(), 1);
     let pack = std::fs::read(packs[0].path()).unwrap();
-    assert_eq!(ferrix_lode_core::blob::scan(&pack).len(), 1);
+    assert_eq!(xaqu_lode_core::blob::scan(&pack).len(), 1);
     let (kind, bytes) = store::blob(std::slice::from_ref(&store), &id).unwrap();
     assert_eq!((kind.as_str(), bytes), ("text", maps.clone()));
     // Bytes that are not the id's.
@@ -309,7 +309,7 @@ fn a_destination_says_which_blobs_it_takes() {
     );
     assert!(parse("a http://localhost/ export blobs=some").is_err());
     let small = parse("a http://localhost/upload export").unwrap();
-    let reference = |size: u64| ferrix_lode_core::blob::Reference {
+    let reference = |size: u64| xaqu_lode_core::blob::Reference {
         id: [0; 32],
         size,
         kind: String::from("text"),

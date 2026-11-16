@@ -166,8 +166,8 @@ fn boxed_slices_and_strs_are_exact_and_allocated_once() {
     assert_eq!(&*filled.unwrap(), &[7, 7, 7, 7, 7]);
     assert_eq!(log, vec![(10, 2)]);
 
-    let (text, log) = record(|| try_boxed_str("ferrix"));
-    assert_eq!(&*text.unwrap(), "ferrix");
+    let (text, log) = record(|| try_boxed_str("xaqu"));
+    assert_eq!(&*text.unwrap(), "xaqu");
     assert_eq!(log, vec![(6, 1)]);
 
     refuse_in(0);
@@ -281,16 +281,16 @@ fn deques_push_at_both_ends_and_report_a_refusal() {
 fn strings_copy_append_and_format() {
     let mut text = try_string("fer").unwrap();
     try_push_str(&mut text, "rix").unwrap();
-    assert_eq!(text, "ferrix");
+    assert_eq!(text, "xaqu");
 
     let formatted = try_format(format_args!("{text} {} {:#x}", 3, 255)).unwrap();
-    assert_eq!(formatted, "ferrix 3 0xff");
+    assert_eq!(formatted, "xaqu 3 0xff");
 
     text.shrink_to_fit();
     refuse_in(0);
     assert_eq!(try_push_str(&mut text, "!"), Err(AllocError));
     refuse_none();
-    assert_eq!(text, "ferrix");
+    assert_eq!(text, "xaqu");
 
     // The first piece fits the first reservation; the long second one needs
     // another, and that is the one refused.

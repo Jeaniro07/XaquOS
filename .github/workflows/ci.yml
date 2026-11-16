@@ -344,13 +344,13 @@ jobs:
         id: libc-test-cache
         uses: actions/cache/restore@v4
         with:
-          path: ~/.cache/ferrix/libc-test
+          path: ~/.cache/xaqu/libc-test
           key: libc-test-${{ env.LIBC_TEST_COMMIT }}
 
       - name: Fetch libc-test's tables
         if: steps.libc-test-cache.outputs.cache-hit != 'true'
         run: |
-          dir="$HOME/.cache/ferrix/libc-test"
+          dir="$HOME/.cache/xaqu/libc-test"
           for try in 1 2 3; do
             rm -rf "$dir"
             if git clone --quiet https://repo.or.cz/libc-test.git "$dir"; then
@@ -365,12 +365,12 @@ jobs:
         if: steps.libc-test-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: ~/.cache/ferrix/libc-test
+          path: ~/.cache/xaqu/libc-test
           key: libc-test-${{ env.LIBC_TEST_COMMIT }}
 
       - name: Use libc-test's tables
         run: |
-          dir="$HOME/.cache/ferrix/libc-test"
+          dir="$HOME/.cache/xaqu/libc-test"
           test "$(git -C "$dir" rev-parse HEAD)" = "$LIBC_TEST_COMMIT"
           echo "FERROUSLI_LIBC_TEST=$dir" >> "$GITHUB_ENV"
 
@@ -406,7 +406,7 @@ jobs:
       - name: Upload the image
         uses: actions/upload-artifact@v4
         with:
-          name: ferrix-${{ matrix.arch }}
+          name: xaqu-${{ matrix.arch }}
           path: build/${{ matrix.arch }}/
           if-no-files-found: error
 
@@ -460,8 +460,8 @@ jobs:
         if: matrix.arch == 'x86_64'
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/ferrix/qemu
-          key: qemu-ferrix-cfi-${{ runner.os }}-${{ hashFiles('tools/common/fetch/fetch-qemu-linux.sh', 'tools/common/data/qemu/**') }}
+          path: ~/.local/share/xaqu/qemu
+          key: qemu-xaqu-cfi-${{ runner.os }}-${{ hashFiles('tools/common/fetch/fetch-qemu-linux.sh', 'tools/common/data/qemu/**') }}
 
       # On every run, not only when building: a cached QEMU still needs the
       # libraries it was linked against, and without them `--version` fails
@@ -485,7 +485,7 @@ jobs:
         run: cargo xtask test-boot --arch ${{ matrix.arch }} --release --timeout 120
 
       # The smallest machine every architecture boots today, so that what
-      # Ferrix needs cannot grow unseen (docs/SMALL-MEMORY.md). 128 MiB is
+      # Xaqu needs cannot grow unseen (docs/SMALL-MEMORY.md). 128 MiB is
       # the firmware's floor as much as ours: EDK2 refuses to start aarch64
       # in less, U-Boot runs out below 48 MiB, and the loader, holding the
       # kernel file, the kernel and the initramfs at once, below 128 MiB.
@@ -501,17 +501,17 @@ jobs:
           if-no-files-found: ignore
 
   # ----------------------------------------------------------------
-  # Stage 16's exit: `rustc hello.rs && ./hello` on Ferrix. The compiler is
+  # Stage 16's exit: `rustc hello.rs && ./hello` on Xaqu. The compiler is
   # the rust-lang.org release on Debian's glibc, from a btrfs volume
   # tools/common/fetch/fetch-rustc-sysroot.sh makes out of pinned downloads; the
   # downloads are cached by the script's hash, which pins them. Under KVM,
   # which the hosted runners have once /dev/kvm is opened to the user: LLVM
   # emulated instruction by instruction takes minutes where this takes
-  # seconds. Then stage 20's first step on the same volume's tree: Ferrix
+  # seconds. Then stage 20's first step on the same volume's tree: Xaqu
   # runs `cargo xtask build` on itself, and the image it made must boot.
   # ----------------------------------------------------------------
   rustc:
-    name: rustc on Ferrix, and Ferrix built on Ferrix (x86_64)
+    name: rustc on Xaqu, and Xaqu built on Xaqu (x86_64)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -540,8 +540,8 @@ jobs:
         id: qemu-cache
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/ferrix/qemu
-          key: qemu-ferrix-cfi-${{ runner.os }}-${{ hashFiles('tools/common/fetch/fetch-qemu-linux.sh', 'tools/common/data/qemu/**') }}
+          path: ~/.local/share/xaqu/qemu
+          key: qemu-xaqu-cfi-${{ runner.os }}-${{ hashFiles('tools/common/fetch/fetch-qemu-linux.sh', 'tools/common/data/qemu/**') }}
 
       # On every run, not only when building: a cached QEMU still needs the
       # libraries it was linked against, and without them `--version` fails
@@ -570,13 +570,13 @@ jobs:
       - name: Cache the sysroot's downloads
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/ferrix/rustc/pool
+          path: ~/.local/share/xaqu/rustc/pool
           key: rustc-sysroot-${{ hashFiles('tools/common/fetch/fetch-rustc-sysroot.sh') }}
 
       - name: Make the rustc volume
         run: tools/common/fetch/fetch-rustc-sysroot.sh
 
-      - name: Compile and run hello.rs on Ferrix
+      - name: Compile and run hello.rs on Xaqu
         run: cargo xtask test-rustc --release --accel kvm --timeout 900
 
       # Before the next boot writes the serial log again.
@@ -584,13 +584,13 @@ jobs:
         if: always()
         run: cp build/x86_64/serial.log build/x86_64/rustc-serial.log || true
 
-      # Stage 20's first step: `cargo xtask build` run inside Ferrix, and the
+      # Stage 20's first step: `cargo xtask build` run inside Xaqu, and the
       # image it made booted. Its crates are vendored from Cargo's cache, so
       # every one the lock names is fetched first.
       - name: Fetch every crate the workspace locks
         run: cargo fetch --locked
 
-      - name: Build Ferrix on Ferrix, and boot what it built
+      - name: Build Xaqu on Xaqu, and boot what it built
         run: cargo xtask test-selfhost --accel kvm --timeout 1800
 
       - name: Keep the serial logs
@@ -659,16 +659,16 @@ jobs:
 
       - name: Miri (ELF reader)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-elf --lib
+        run: cargo +nightly miri test -p xaqu-elf --lib
 
       # Reservations: a pure crate over the fair class, its tree's nodes moving through it.
       - name: Miri (reservations)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-sched-edf --lib
+        run: cargo +nightly miri test -p xaqu-sched-edf --lib
 
       - name: Miri (handoff ABI)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-bootinfo --lib
+        run: cargo +nightly miri test -p xaqu-bootinfo --lib
 
       # The initial process stack. Every address in the image is arithmetic on
       # a stack top, and the image is read back through a second set of index
@@ -676,21 +676,21 @@ jobs:
       # rather than against the crate's own idea of where the buffer ends.
       - name: Miri (process stack image)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-ustack --lib
+        run: cargo +nightly miri test -p xaqu-ustack --lib
 
       # The handle table. Every native system call starts by turning a number
       # a program chose into a slot index, and the table hands objects out by
       # value across `mem::replace`; Miri checks both against real provenance.
       - name: Miri (handle table and message queue)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-objects --lib
+        run: cargo +nightly miri test -p xaqu-objects --lib
 
       # The VFS takes up to four inode locks for one rename and hands out
       # dentries through weak references, which is aliasing Miri can see and
       # a test that merely passes cannot.
       - name: Miri (VFS)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-vfs --lib
+        run: cargo +nightly miri test -p xaqu-vfs --lib
 
       # PCI configuration space. The crate forbids unsafe, so what Miri adds
       # here is narrower than for the crates above: every offset a device's
@@ -698,7 +698,7 @@ jobs:
       # checks those indices against the buffers' real extent.
       - name: Miri (PCI configuration space)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-pci --lib
+        run: cargo +nightly miri test -p xaqu-pci --lib
 
       # The block core. It forbids unsafe too, so again the gain is narrower
       # than aliasing: it keeps a unit's parts in one allocation that is moved
@@ -707,7 +707,7 @@ jobs:
       # the model-based sequences over exactly that churn.
       - name: Miri (block request queue)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-block --lib
+        run: cargo +nightly miri test -p xaqu-block --lib
 
       # The block ring. The crate forbids unsafe, so as for PCI, what Miri adds
       # is a check of every entry offset and probe index against the test
@@ -715,14 +715,14 @@ jobs:
       # that race the two sides' want-bell handshakes on real threads.
       - name: Miri (block ring)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-blkring --lib
+        run: cargo +nightly miri test -p xaqu-blkring --lib
 
       # The native call wrappers. The crate forbids unsafe too; what Miri
       # checks is the tests' kernel writing through each call's borrowed
       # output buffers by address, which is the aliasing a real trap relies on.
       - name: Miri (native call wrappers)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-native --lib
+        run: cargo +nightly miri test -p xaqu-native --lib
 
       # The virtio-blk driver. Its tests run it against a fake device over a
       # fake IOMMU, where every ring offset and device address the driver
@@ -731,7 +731,7 @@ jobs:
       # each index against the buffer's real extent.
       - name: Miri (virtio-blk driver)
         if: matrix.part == 2
-        run: cargo +nightly miri test -p ferrix-virtio-blk --lib
+        run: cargo +nightly miri test -p xaqu-virtio-blk --lib
 
       # The buddy allocator, which every page in the kernel comes from. Its
       # state is one array of entries addressed by frame number, split and
@@ -741,7 +741,7 @@ jobs:
       # length it alone was nine minutes of interpretation.
       - name: Miri (frame allocator)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-frame --lib
+        run: cargo +nightly miri test -p xaqu-frame --lib
 
       # The kernel heap. It keeps its free lists inside the free objects,
       # read and written through an unsafe trait at addresses it computes from
@@ -750,7 +750,7 @@ jobs:
       # each link against the buffer it was carved from.
       - name: Miri (heap)
         if: matrix.part == 2
-        run: cargo +nightly miri test -p ferrix-heap --lib
+        run: cargo +nightly miri test -p xaqu-heap --lib
 
       # Fallible construction for the certified item (finding F-23). `try_box`
       # writes a value into memory the global allocator handed back and turns
@@ -759,7 +759,7 @@ jobs:
       # the `Box` is freed with, and the recording allocator itself.
       - name: Miri (fallible construction)
         if: matrix.part == 1
-        run: cargo +nightly miri test -p ferrix-fallible --lib
+        run: cargo +nightly miri test -p xaqu-fallible --lib
 
       # Page-table construction for every encoding the kernel builds: the
       # three CPUs', VT-d's second level and the SMMU's stage 2. The walk
@@ -767,14 +767,14 @@ jobs:
       # which is exactly the arithmetic this job's comment is about.
       - name: Miri (page tables)
         if: matrix.part == 3
-        run: cargo +nightly miri test -p ferrix-paging --lib
+        run: cargo +nightly miri test -p xaqu-paging --lib
 
       # The service manager's pure core. It forbids unsafe, so what Miri
       # adds is the parser's slicing of bytes a unit file chose, and the
       # borrows the loader and the manager take into the unit set.
       - name: Miri (service manager)
         if: matrix.part == 3
-        run: cargo +nightly miri test -p ferrix-svc --lib
+        run: cargo +nightly miri test -p xaqu-svc --lib
 
       # The password hash authd keeps credentials under. It forbids unsafe;
       # what Miri adds is the index arithmetic that picks each reference
@@ -782,14 +782,14 @@ jobs:
       # memory it was given.
       - name: Miri (password hash)
         if: matrix.part == 2
-        run: cargo +nightly miri test -p ferrix-argon2 --lib
+        run: cargo +nightly miri test -p xaqu-argon2 --lib
 
       # seccomp's verifier and interpreter, which run a filter a process wrote
       # in ring 0. The crate forbids `unsafe`, so what Miri checks is the
       # arithmetic and the indexing of the machine, over every rule's tests.
       - name: Miri (seccomp)
         if: matrix.part == 2
-        run: cargo +nightly miri test -p ferrix-seccomp --lib
+        run: cargo +nightly miri test -p xaqu-seccomp --lib
 
       # btrfs's reader, which parses a volume someone else wrote: its trees,
       # chunks and extents, and the three decompressors (zlib, LZO, zstd)
@@ -812,7 +812,7 @@ jobs:
       # item 7, says what it does not reach. Plain cargo test runs them all.
       - name: Miri (btrfs reader)
         if: matrix.part == 4
-        run: cargo +nightly miri test -p ferrix-btrfs --lib
+        run: cargo +nightly miri test -p xaqu-btrfs --lib
 
   # ----------------------------------------------------------------
   # Fuzz the surfaces that parse bytes somebody else chose.
@@ -923,7 +923,7 @@ jobs:
   # job skipped by its own `if` (dependency review outside pull requests)
   # counts as passed.
   #
-  # ADVISORY jobs are run and shown but do not decide: "rustc on Ferrix"
+  # ADVISORY jobs are run and shown but do not decide: "rustc on Xaqu"
   # fails most runs on the hosted runner's KVM with two kernel self-check
   # panics no other host shows (getrusage(RUSAGE_THREAD) above the wall
   # clock; the stage 9 XINUSE wake check), and while it does, a required

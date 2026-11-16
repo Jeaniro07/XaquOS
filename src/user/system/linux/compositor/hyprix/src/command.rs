@@ -185,10 +185,10 @@ mod tests {
     #[test]
     fn a_quoted_argument_keeps_its_spaces_and_commas() {
         assert_eq!(
-            split("chrome '--user-agent=Mozilla/5.0 (Ferrix x86_64) (KHTML, like Gecko)' page"),
+            split("chrome '--user-agent=Mozilla/5.0 (Xaqu x86_64) (KHTML, like Gecko)' page"),
             [
                 "chrome",
-                "--user-agent=Mozilla/5.0 (Ferrix x86_64) (KHTML, like Gecko)",
+                "--user-agent=Mozilla/5.0 (Xaqu x86_64) (KHTML, like Gecko)",
                 "page"
             ]
         );

@@ -1,6 +1,6 @@
 ---
 name: certification-consultant
-description: Work as Ferrix's certification consultant. Review changes to the certified item before land.sh take, give design reviews, watch main for item changes that skipped review, keep docs/certification true, and keep the review ledger. Use when the customer says "you are the certification agent/consultant", when a session sends a branch or diff for certification review, when resuming the consultant role after a restart, or when auditing main against certification-item.json.
+description: Work as Xaqu's certification consultant. Review changes to the certified item before land.sh take, give design reviews, watch main for item changes that skipped review, keep docs/certification true, and keep the review ledger. Use when the customer says "you are the certification agent/consultant", when a session sends a branch or diff for certification review, when resuming the consultant role after a restart, or when auditing main against certification-item.json.
 ---
 
 # Certification consultant
@@ -21,14 +21,14 @@ as that.
 
 | What | Where |
 |---|---|
-| Review ledger (every verdict, its conditions, open queue at the end) | `~/.local/share/ferrix/cert-consultant/reviews.md` |
-| Handover from the previous consultant | `~/.local/share/ferrix/cert-consultant/HANDOVER.md` (older ones beside it) |
-| Your own parked items | `~/.local/share/ferrix/cert-consultant/next-batch.md` |
+| Review ledger (every verdict, its conditions, open queue at the end) | `~/.local/share/xaqu/cert-consultant/reviews.md` |
+| Handover from the previous consultant | `~/.local/share/xaqu/cert-consultant/HANDOVER.md` (older ones beside it) |
+| Your own parked items | `~/.local/share/xaqu/cert-consultant/next-batch.md` |
 | The item's boundary | `tools/common/data/certification-item.json` (rings `core`, `item`, `load`; `crates`) |
 | Evidence | `docs/certification/` (FINDINGS, TRACEABILITY, VULNERABILITY-ANALYSIS, coverage JSON, ...) |
 | Requirement id reservations | `tools/common/data/requirement-reservations.json` |
-| Gate and control logs | `~/.local/share/ferrix/fleet/gate.sh status`, the fleet INDEX |
-| Landing lock and log | `~/.local/share/ferrix/fleet/land.sh`, `~/.local/share/ferrix/fleet/log` |
+| Gate and control logs | `~/.local/share/xaqu/fleet/gate.sh status`, the fleet INDEX |
+| Landing lock and log | `~/.local/share/xaqu/fleet/land.sh`, `~/.local/share/xaqu/fleet/log` |
 
 `reviews.md` is large. Read its head for the entry format and its tail for the
 open queue. Never load the whole file at once.

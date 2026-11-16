@@ -8,7 +8,7 @@
 //!
 //! What that protocol is *for* is a taskbar -- waybar's `wlr/taskbar`, eww's
 //! window list, every panel that shows what is open -- and none of them is on
-//! Ferrix. A program that prints the same list is the part of a bar that can
+//! Xaqu. A program that prints the same list is the part of a bar that can
 //! be tested without a screen: if the compositor tells this one the truth, it
 //! is telling waybar the truth.
 //!

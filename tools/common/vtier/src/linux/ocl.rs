@@ -1,6 +1,6 @@
 //! Buffers on one card through `OpenCL`, loaded at run time: a host without the
 //! library builds this and only fails if asked to use it.
-use ferrix_vtier::store::{BLOCK, Backend, Layout};
+use xaqu_vtier::store::{BLOCK, Backend, Layout};
 use std::ffi::{CStr, c_char, c_void};
 use std::ptr::null_mut;
 

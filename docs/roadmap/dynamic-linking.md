@@ -9,7 +9,7 @@ that asks for glibc's `ld-linux`. `src/kernel/src/syscall/load.rs` used to refus
 `PT_INTERP` by name; since 2026-09-20 it loads the linker the program asks for
 and enters it, which is the first bullet below. Since the same day there is a
 linker to name — `src/user/system/linux/ferrousli/ld`, the second bullet — and since 2026-09-21 it
-runs Debian's glibc busybox inside Ferrix on x86-64, which is the exit's
+runs Debian's glibc busybox inside Xaqu on x86-64, which is the exit's
 second half there.
 The question of 2026-09-16 that put this here was
 whether Steam could run; the answer began with this section, before the
@@ -81,7 +81,7 @@ Three parts, in the order they can be tested:
   image's initial value and a dependency's persistent block.
 
   **12 of the 21 done, 2026-09-21: what a glibc program needs of it, on
-  x86-64, and run inside Ferrix.** Symbol versions: a reference naming
+  x86-64, and run inside Xaqu.** Symbol versions: a reference naming
   `printf@GLIBC_2.2.5` is answered only by a definition carrying that
   version (or none), a hidden `name@VERSION` only by a reference naming it,
   and the hash chain is walked past definitions that do not answer.
@@ -241,7 +241,7 @@ the exit names, pinned by checksum.
    lays them out —
 
    ```
-   D=~/.local/share/ferrix/busybox/debian
+   D=~/.local/share/xaqu/busybox/debian
    cargo xtask test-shell --arch all --init "$D/{arch}/busybox" \
        --interpreter "$D/{arch}/ld.so" \
        --library "$D/{arch}/libc.so.6" --library "$D/{arch}/libresolv.so.2"
@@ -261,7 +261,7 @@ the exit names, pinned by checksum.
    exits 7 —
 
    ```
-   D=~/.local/share/ferrix/busybox/debian
+   D=~/.local/share/xaqu/busybox/debian
    cargo xtask test-shell --arch x86_64 --init "$D/{arch}/busybox" \
        --interpreter ferrousli --library ferrousli
    ```
@@ -313,7 +313,7 @@ runs only x86-64's suite, because the cross compilers and QEMU's user mode
 the Arm suites need are not on its runners; `docs/BACKLOG.md` has the row.
 
 **Done — AArch64's string routines, for the Pixel 7, 2026-09-23.** The
-customer means to run ferrousli on a rooted Pixel 7 that boots Ferrix
+customer means to run ferrousli on a rooted Pixel 7 that boots Xaqu
 itself, whose Tensor G2 is Cortex-X1, A78 and A55 cores. On AArch64
 `memcpy`, `memmove`, `memset`, `memcmp`, `memchr`, `strlen` and
 `strchrnul` work sixteen bytes at a time in Advanced SIMD registers
@@ -328,7 +328,7 @@ atomics needed nothing: the outline helpers every atomic calls take LSE
 instructions once a constructor reads `HWCAP_ATOMICS`, and a test holds
 that to `AT_HWCAP`. The string and thread suites pass under QEMU at
 `-cpu` `cortex-a55` and `cortex-a76` (the phone's cores), `cortex-a72`
-(Ferrix's QEMU machine), `cortex-a53` (no LSE) and `max`. Outside the
+(Xaqu's QEMU machine), `cortex-a53` (no LSE) and `max`. Outside the
 stage's points.
 
 

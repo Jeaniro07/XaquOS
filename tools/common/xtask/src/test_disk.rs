@@ -17,7 +17,7 @@
 //! | Offset    | Bytes | Contents                                          |
 //! |-----------|-------|---------------------------------------------------|
 //! | 0         | 8     | `n`, little-endian `u64`                          |
-//! | 8         | 9     | [`MAGIC`], `b"FERRIXBLK"`                          |
+//! | 8         | 9     | [`MAGIC`], `b"XAQU-BLKS"`                          |
 //! | 17        | 1     | [`VERSION`], currently 1                          |
 //! | 18 to 511 | 494   | for byte offset `i`: `(n * K >> (8 * (i % 8))) as u8 ^ i as u8` |
 //!
@@ -53,7 +53,7 @@ pub(crate) const SECTOR_SIZE: usize = 512;
 pub(crate) const SECTORS: u64 = 64 * 1024 * 1024 / SECTOR_SIZE as u64;
 
 /// What every sector carries at offset 8.
-pub(crate) const MAGIC: &[u8; 9] = b"FERRIXBLK";
+pub(crate) const MAGIC: &[u8; 9] = b"XAQU-BLKS";
 
 /// The layout's version, at offset 17 of every sector. Bump it whenever the
 /// layout changes, and every tree regenerates its image.
@@ -221,7 +221,7 @@ mod tests {
         let line = describe();
         for part in [
             "131072 sectors of 512 bytes",
-            "FERRIXBLK",
+            "XAQUBLK",
             "0x9e3779b97f4a7c15",
         ] {
             assert!(line.contains(part), "`{part}` missing from `{line}`");
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn a_stale_or_short_image_is_not_current() {
         let directory =
-            std::env::temp_dir().join(format!("ferrix-test-disk-{}", std::process::id()));
+            std::env::temp_dir().join(format!("xaqu-test-disk-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let path = directory.join("disk.img");
         assert!(!is_current(&path), "a missing image");

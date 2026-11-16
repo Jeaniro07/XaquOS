@@ -9,9 +9,9 @@ use super::*;
 fn files() -> BTreeMap<String, Vec<u8>> {
     [
         ("EFI/BOOT/BOOTX64.EFI", b"loader".to_vec()),
-        ("FERRIX/CMDLINE.TXT", b"ferrix.live".to_vec()),
-        ("FERRIX/INITRD.IMG", vec![7; 3000]),
-        ("FERRIX/KERNEL.ELF", vec![9; 70_000]),
+        ("XAQU/CMDLINE.TXT", b"xaqu.live".to_vec()),
+        ("XAQU/INITRD.IMG", vec![7; 3000]),
+        ("XAQU/KERNEL.ELF", vec![9; 70_000]),
     ]
     .into_iter()
     .map(|(path, bytes)| (path.to_owned(), bytes))
@@ -41,11 +41,11 @@ fn boot_script_fetches_each_file_by_its_volume_path_and_starts_the_loader_last()
     let script = boot_script(&files(), "abc123").unwrap();
     assert!(script.starts_with("#!ipxe\n"), "{script}");
     assert!(
-        script.contains("echo Ferrix netboot: commit abc123\n"),
+        script.contains("echo Xaqu netboot: commit abc123\n"),
         "{script}"
     );
     assert!(
-        script.contains("imgfetch --name FERRIX\\KERNEL.ELF FERRIX/KERNEL.ELF || goto failed\n"),
+        script.contains("imgfetch --name XAQU\\KERNEL.ELF XAQU/KERNEL.ELF || goto failed\n"),
         "{script}"
     );
     assert!(script.contains("pciscan pcidev"), "{script}");
@@ -63,7 +63,7 @@ fn boot_script_fetches_each_file_by_its_volume_path_and_starts_the_loader_last()
         "the loader is chained, not fetched"
     );
     let report = script
-        .find("imgfetch --name FERRIX\\REPORT.TXT report/hello/${netX/mac:hexhyp} || echo ")
+        .find("imgfetch --name XAQU\\REPORT.TXT report/hello/${netX/mac:hexhyp} || echo ")
         .expect("the report URL is fetched, and its failure is not fatal");
     assert!(report < chain, "the report URL before the loader");
 }
@@ -78,7 +78,7 @@ fn boot_script_refuses_an_image_without_a_loader() {
 #[test]
 fn the_embedded_script_retries_and_names_the_server() {
     let script = embedded_script("10.0.2.2:8086");
-    assert!(script.contains("chain http://10.0.2.2:8086/ferrix/boot.ipxe || goto failed"));
+    assert!(script.contains("chain http://10.0.2.2:8086/xaqu/boot.ipxe || goto failed"));
     assert!(script.contains("dhcp || goto failed"), "{script}");
     assert!(script.ends_with("goto retry\n"), "{script}");
 }
@@ -127,12 +127,12 @@ fn the_stick_is_a_partition_table_with_the_volume_at_one_mebibyte() {
 
 #[test]
 fn a_request_head_is_read_for_method_path_and_keep_alive() {
-    let head = http::parse(b"GET /ferrix/boot.ipxe?x=1 HTTP/1.1\r\nHost: h\r\n\r\n");
+    let head = http::parse(b"GET /xaqu/boot.ipxe?x=1 HTTP/1.1\r\nHost: h\r\n\r\n");
     assert_eq!(
         head,
         http::Head {
             method: "GET".to_owned(),
-            path: "/ferrix/boot.ipxe".to_owned(),
+            path: "/xaqu/boot.ipxe".to_owned(),
             query: "x=1".to_owned(),
             host: "h".to_owned(),
             keep: true
@@ -158,27 +158,27 @@ fn get(server: &http::Server, path: &str) -> (u16, Vec<u8>) {
 fn the_server_serves_its_files_under_its_prefix_and_logs_each_request() {
     let server = http::Server::start("127.0.0.1:0".parse().unwrap(), PREFIX, files()).unwrap();
     assert_eq!(
-        get(&server, "/ferrix/FERRIX/KERNEL.ELF"),
+        get(&server, "/xaqu/XAQU/KERNEL.ELF"),
         (200, vec![9; 70_000])
     );
-    assert_eq!(get(&server, "/ferrix/FERRIX/NONE.ELF").0, 404);
+    assert_eq!(get(&server, "/xaqu/XAQU/NONE.ELF").0, 404);
     assert_eq!(
-        get(&server, "/FERRIX/KERNEL.ELF").0,
+        get(&server, "/XAQU/KERNEL.ELF").0,
         404,
         "outside the prefix"
     );
     assert_eq!(
-        get(&server, "/ferrix/report/pci/0000:00:03.0/1af4:1041/020000").0,
+        get(&server, "/xaqu/report/pci/0000:00:03.0/1af4:1041/020000").0,
         200
     );
     server.serve_under("/wrong/");
-    assert_eq!(get(&server, "/ferrix/FERRIX/KERNEL.ELF").0, 404, "moved");
-    assert_eq!(get(&server, "/wrong/FERRIX/KERNEL.ELF").0, 200);
+    assert_eq!(get(&server, "/xaqu/XAQU/KERNEL.ELF").0, 404, "moved");
+    assert_eq!(get(&server, "/wrong/XAQU/KERNEL.ELF").0, 200);
     let requests = server.stop();
     let seen: Vec<(String, u16)> = requests.into_iter().map(|r| (r.path, r.status)).collect();
     assert_eq!(seen.len(), 6, "{seen:?}");
-    assert_eq!(seen[0], ("/ferrix/FERRIX/KERNEL.ELF".to_owned(), 200));
-    assert_eq!(seen[4], ("/ferrix/FERRIX/KERNEL.ELF".to_owned(), 404));
+    assert_eq!(seen[0], ("/xaqu/XAQU/KERNEL.ELF".to_owned(), 200));
+    assert_eq!(seen[4], ("/xaqu/XAQU/KERNEL.ELF".to_owned(), 404));
 }
 
 #[test]
@@ -187,22 +187,22 @@ fn the_server_keeps_a_connection_for_the_next_request() {
     let mut stream = TcpStream::connect(server.address()).unwrap();
     write!(
         stream,
-        "GET /ferrix/FERRIX/CMDLINE.TXT HTTP/1.1\r\n\r\n\
-         GET /ferrix/FERRIX/CMDLINE.TXT HTTP/1.1\r\nConnection: close\r\n\r\n"
+        "GET /xaqu/XAQU/CMDLINE.TXT HTTP/1.1\r\n\r\n\
+         GET /xaqu/XAQU/CMDLINE.TXT HTTP/1.1\r\nConnection: close\r\n\r\n"
     )
     .unwrap();
     let mut answer = Vec::new();
     let _ = stream.read_to_end(&mut answer).unwrap();
     let text = String::from_utf8_lossy(&answer);
     assert_eq!(text.matches("HTTP/1.1 200 OK").count(), 2, "{text}");
-    assert_eq!(text.matches("ferrix.live").count(), 2, "{text}");
+    assert_eq!(text.matches("xaqu.live").count(), 2, "{text}");
     assert_eq!(server.stop().len(), 2, "both answered on one connection");
 }
 
 #[test]
 fn the_negative_control_wants_an_ipxe_error_code() {
     let refused = [http::Request {
-        path: "/ferrix/boot.ipxe".to_owned(),
+        path: "/xaqu/boot.ipxe".to_owned(),
         status: 404,
     }];
     let banner =
@@ -217,11 +217,11 @@ fn the_negative_control_wants_an_ipxe_error_code() {
         "iPXE's look for autoexec.ipxe is not the script's error"
     );
     let error = vec![
-        "http://10.0.2.2:8086/ferrix/boot.ipxe... Not found (https://ipxe.org/2d0c618e)".to_owned(),
+        "http://10.0.2.2:8086/xaqu/boot.ipxe... Not found (https://ipxe.org/2d0c618e)".to_owned(),
     ];
     assert_eq!(
         check_refused(&error, &refused).unwrap(),
-        "http://10.0.2.2:8086/ferrix/boot.ipxe... Not found (https://ipxe.org/2d0c618e)"
+        "http://10.0.2.2:8086/xaqu/boot.ipxe... Not found (https://ipxe.org/2d0c618e)"
     );
     assert!(check_refused(&error, &[]).is_err(), "no 404, no control");
 }
@@ -233,7 +233,7 @@ mod loader_report_url;
 #[test]
 fn the_loader_takes_only_a_short_printable_http_url() {
     use loader_report_url::report_url;
-    let good = b"http://10.0.2.2:8086/ferrix/report/box/52-54-00-12-34-56/";
+    let good = b"http://10.0.2.2:8086/xaqu/report/box/52-54-00-12-34-56/";
     assert_eq!(report_url(good), Ok(&good[..]));
     let mut ended = good.to_vec();
     ended.extend_from_slice(b"\r\n");
@@ -361,19 +361,19 @@ fn the_server_names_the_report_url_and_keeps_a_whole_report() {
     server.keep_reports_in(directory.clone());
     let host = "10.0.2.2:8086";
     assert_eq!(
-        get_from(&server, "/ferrix/report/hello/52-54-00-12-34-56", host),
+        get_from(&server, "/xaqu/report/hello/52-54-00-12-34-56", host),
         (
             200,
-            b"http://10.0.2.2:8086/ferrix/report/box/52-54-00-12-34-56/\n".to_vec()
+            b"http://10.0.2.2:8086/xaqu/report/box/52-54-00-12-34-56/\n".to_vec()
         )
     );
-    assert_eq!(get_from(&server, "/ferrix/report/hello/..", host).0, 400);
+    assert_eq!(get_from(&server, "/xaqu/report/hello/..", host).0, 400);
     assert_eq!(
-        get_from(&server, "/ferrix/report/hello/52-54-00-12-34-56", "a/b").0,
+        get_from(&server, "/xaqu/report/hello/52-54-00-12-34-56", "a/b").0,
         400,
         "a Host that is no host"
     );
-    let base = "/ferrix/report/box/52-54-00-12-34-56/BOOTLOG.TXT";
+    let base = "/xaqu/report/box/52-54-00-12-34-56/BOOTLOG.TXT";
     assert_eq!(
         get_from(&server, &format!("{base}?part=1&of=2&data=21"), host).0,
         400,

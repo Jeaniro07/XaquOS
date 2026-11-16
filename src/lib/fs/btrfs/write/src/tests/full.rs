@@ -6,7 +6,7 @@
 extern crate std;
 use std::vec;
 
-use ferrix_btrfs::items::{S_IFREG, Timespec};
+use xaqu_btrfs::items::{S_IFREG, Timespec};
 
 use super::{BLANK, MemDevice, check};
 use crate::ranges::RangeSet;

@@ -1,9 +1,9 @@
 //! `/proc/sysrq-trigger`'s write (moved whole from `fs/procfs.rs`;
 //! `docs/KERNEL-CRATES.md` §6.2).
 
-use ferrix_kernel_load::fs::procfs::Kernel;
-use ferrix_kernel_load::panic::{catalog, fatal};
-use ferrix_vfs::Result;
+use xaqu_kernel_load::fs::procfs::Kernel;
+use xaqu_kernel_load::panic::{catalog, fatal};
+use xaqu_vfs::Result;
 
 /// `/proc/sysrq-trigger`: writing `c` panics the kernel, on purpose.
 ///

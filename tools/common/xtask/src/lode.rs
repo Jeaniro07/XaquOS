@@ -32,7 +32,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     run: |_, args| test_log(args),
 }];
 
-/// The service's unit, shipped in `/lib/ferrix/units` with init's.
+/// The service's unit, shipped in `/lib/xaqu/units` with init's.
 pub(crate) const UNIT: &str = "lode.service";
 
 /// The links an image that boots init carries to the program.
@@ -47,7 +47,7 @@ pub(crate) fn links() -> Vec<File> {
         .collect()
 }
 
-/// `/etc/ferrix/image`: the tree's commit the image was built from, with
+/// `/etc/xaqu/image`: the tree's commit the image was built from, with
 /// `-dirty` when the tree had changes, for lode's boot record
 /// (`docs/LOGGING.md` §18 "The boot record").
 pub(crate) fn image_file() -> File {
@@ -65,7 +65,7 @@ pub(crate) fn image_file() -> File {
     let dirty = git(&["status", "--porcelain", "--untracked-files=no"])
         .is_some_and(|changes| !changes.is_empty());
     File {
-        path: "etc/ferrix/image".to_owned(),
+        path: "etc/xaqu/image".to_owned(),
         mode: 0o644,
         content: Content::Bytes(
             format!("commit={commit}{}\n", if dirty { "-dirty" } else { "" }).into_bytes(),
@@ -76,9 +76,9 @@ pub(crate) fn image_file() -> File {
 /// The link that starts `lode.service` with `basic.target`.
 pub(crate) fn enabled() -> File {
     File {
-        path: format!("etc/ferrix/units/basic.target.wants/{UNIT}"),
+        path: format!("etc/xaqu/units/basic.target.wants/{UNIT}"),
         mode: 0o777,
-        content: Content::Link(format!("/lib/ferrix/units/{UNIT}")),
+        content: Content::Link(format!("/lib/xaqu/units/{UNIT}")),
     }
 }
 
@@ -89,9 +89,9 @@ pub(crate) const CRASHD_UNIT: &str = "lode-crashd.service";
 /// kernel holds a crashing process for it (`docs/LOGGING.md` §21).
 pub(crate) fn crashd_enabled() -> File {
     File {
-        path: format!("etc/ferrix/units/multi-user.target.wants/{CRASHD_UNIT}"),
+        path: format!("etc/xaqu/units/multi-user.target.wants/{CRASHD_UNIT}"),
         mode: 0o777,
-        content: Content::Link(format!("/lib/ferrix/units/{CRASHD_UNIT}")),
+        content: Content::Link(format!("/lib/xaqu/units/{CRASHD_UNIT}")),
     }
 }
 
@@ -99,13 +99,13 @@ pub(crate) fn crashd_enabled() -> File {
 pub(crate) const PSTORE_UNIT: &str = "lode-pstore.service";
 
 /// The link that starts `lode-pstore.service` with `multi-user.target`:
-/// root copies the loader's `FERRIX/LASTKERNEL.TXT` for lode to import as
+/// root copies the loader's `XAQU/LASTKERNEL.TXT` for lode to import as
 /// the previous boot's end (`docs/LOGGING.md` §5).
 pub(crate) fn pstore_enabled() -> File {
     File {
-        path: format!("etc/ferrix/units/multi-user.target.wants/{PSTORE_UNIT}"),
+        path: format!("etc/xaqu/units/multi-user.target.wants/{PSTORE_UNIT}"),
         mode: 0o777,
-        content: Content::Link(format!("/lib/ferrix/units/{PSTORE_UNIT}")),
+        content: Content::Link(format!("/lib/xaqu/units/{PSTORE_UNIT}")),
     }
 }
 
@@ -115,12 +115,12 @@ pub(crate) fn pstore_enabled() -> File {
 pub(crate) fn desktop_settings() -> Vec<File> {
     [
         (
-            "etc/ferrix/lode.d/capture.conf",
+            "etc/xaqu/lode.d/capture.conf",
             "# Crash and app-error screenshots (docs/LOGGING.md §19): at most one\n\
              # each 10 s, kept 7 days and 256 MiB, readable as the journal is.\n\
              Capture=yes\n",
         ),
-        ("etc/ferrix/lode.d/events.conf", EVENTS_CONF),
+        ("etc/xaqu/lode.d/events.conf", EVENTS_CONF),
     ]
     .into_iter()
     .map(|(path, text)| File {
@@ -134,7 +134,7 @@ pub(crate) fn desktop_settings() -> Vec<File> {
 /// `events.conf` as a desktop image ships it: the defaults, said.
 const EVENTS_CONF: &str = "\
 # Which kinds of event the log takes (docs/LOGGING.md §18, `lode events`).
-# KIND on|off [LEVEL]; ~/.config/ferrix/lode/events.conf overrides the
+# KIND on|off [LEVEL]; ~/.config/xaqu/lode/events.conf overrides the
 # kinds made in a person's session. Which records of a kind are kept is the
 # rules' (*.rules): `drop where event = window-opened and id = waybar`.
 window-opened   off
@@ -190,7 +190,7 @@ alert crit where id = alerty and priority <= crit start alert-handler.service
 alert nostart where id = alertn start twice.service
 ";
 
-/// A unit that runs as the user `ferrix` (uid 1000): its lines go to that
+/// A unit that runs as the user `xaqu` (uid 1000): its lines go to that
 /// user's segments, and as that user it reads them through lode's
 /// `/run/lode/read` -- and nothing of the system's.
 const USER_UNIT: &str = "\
@@ -200,7 +200,7 @@ Description=Write as a user, and read one's own records back
 
 [Service]
 Type=oneshot
-User=ferrix
+User=xaqu
 ExecStart=/bin/busybox sh /lib/lode-user.sh
 ";
 
@@ -299,7 +299,7 @@ upload_wait 15
 $bb sleep 1
 say "upload: $(upload_count) $($bb grep '^MESSAGE=upload ' $up | $bb sort -u | $bb wc -l) $($bb grep -c '^SYSLOG_IDENTIFIER=uploadme$' $up) $($bb grep -vc '^MESSAGE=upload \|^$\|=' $up) $(/bin/lode -b -t lode-upload -o cat | $bb grep -c 'trying again in')"
 say "fields: $(/bin/lode -b -t similar -o json | $bb grep -c '"REPEATED":"19"') $(/bin/lode -b -t similar -o json | $bb grep -c '"LAST_MESSAGE":"frame 19 at 57,99"') $(/bin/lode -b -t usbhid -o cat | $bb grep -c '^glued$')"
-say "levels: $(/bin/lode -b -t levelless -o json | $bb grep -c '"FERRIX_LEVEL":"unspecified"') $(/bin/lode -b -t levelless -o json | $bb grep -c '"PRIORITY"') $(/bin/lode -b -t levelless -p err -o cat | $bb wc -l) $(/bin/lode -b -t levelless -p err,unspecified -o cat | $bb wc -l) $(/bin/lode -b -t levelless | $bb grep -c ' ? levelless: just words') $(/bin/lode -b -t levelless -o verbose | $bb grep -c '^    FERRIX_LEVEL=unspecified$') $(/bin/lode -b -t guessy -p err -o json | $bb grep -c '"FERRIX_PRIORITY_SOURCE":"derived"') $(/bin/lode levels -b | $bb grep -c '^levelless ')"
+say "levels: $(/bin/lode -b -t levelless -o json | $bb grep -c '"XAQU_LEVEL":"unspecified"') $(/bin/lode -b -t levelless -o json | $bb grep -c '"PRIORITY"') $(/bin/lode -b -t levelless -p err -o cat | $bb wc -l) $(/bin/lode -b -t levelless -p err,unspecified -o cat | $bb wc -l) $(/bin/lode -b -t levelless | $bb grep -c ' ? levelless: just words') $(/bin/lode -b -t levelless -o verbose | $bb grep -c '^    XAQU_LEVEL=unspecified$') $(/bin/lode -b -t guessy -p err -o json | $bb grep -c '"XAQU_PRIORITY_SOURCE":"derived"') $(/bin/lode levels -b | $bb grep -c '^levelless ')"
 say "classes: $($bb ls /var/log/journal | $bb grep -c '^errors@') $(/bin/lode -b -t erring -o cat | $bb wc -l)"
 say "delete: $(/bin/lode delete --where 'id = deleteme')"
 say "deleted: $(/bin/lode -b -t deleteme -o cat | $bb wc -l) $(/bin/lode -b -t lode-delete -o cat | $bb grep -c 'removed 2 record')"
@@ -422,7 +422,7 @@ $bb sleep 2
 say "flood-echo: $($bb grep -c '^<7>floody' /tmp/floody.echo) $($bb grep -c '^<4>floody' /tmp/floody.echo) $($bb grep -c '^<3>floody' /tmp/floody.echo) $($bb grep -c 'lines dropped (debug: [0-9]*) from floody' /tmp/floody.echo)"
 say "flood-kept: $(/bin/lode -b -t floody -o cat | $bb grep -c 'floody: late') $(/bin/lode -b -t floody -o cat | $bb grep -c 'floody: lost')"
 # --tee's file is 0644 under the umask, so a restarted writer -- yserver's
-# after its restart, as user ferrix -- opens it again.
+# after its restart, as user xaqu -- opens it again.
 /bin/svc start tee-user.service > /dev/null 2>&1
 say "tee mode: $($bb stat -c %a /tmp/teeu.log) $($bb cat /tmp/teeu.log)"
 # The same flood as a unit's own output: init sheds what goes to the
@@ -441,10 +441,10 @@ $bb sleep 3
 say "behind: $(( $($bb cat /tmp/behind.end) - began )) $(/bin/lode -b -t behindy -o cat | $bb grep -c 'while lode was behind') $(/bin/lode -b -t behindy -o cat | $bb grep -c 'the error after')"
 # lode reload says what changed: an event kind switched, retention given
 # a class (its segments sealed first), capture as it was.
-echo 'window-opened on' > /etc/ferrix/lode.d/events.conf
-echo 'class all keep 7d' > /etc/ferrix/lode.d/retention.conf
+echo 'window-opened on' > /etc/xaqu/lode.d/events.conf
+echo 'class all keep 7d' > /etc/xaqu/lode.d/retention.conf
 say "reload: $(/bin/lode reload | $bb grep -c 'retention changed, segments sealed; capture on; events window-opened on$')"
-$bb rm /etc/ferrix/lode.d/events.conf /etc/ferrix/lode.d/retention.conf
+$bb rm /etc/xaqu/lode.d/events.conf /etc/xaqu/lode.d/retention.conf
 /bin/lode reload > /dev/null
 say "names: $(/bin/lode -b -t teey -o json | $bb grep -c '"_CMDLINE":"/bin/lode cat -t teey --tee /tmp/teey.log"') $(/bin/lode -b -u lode-test -g 'to stderr once' -o json | $bb grep -c '"_EXE":"/bin/busybox"')"
 # For a box run (the customer's acceptance case): what a hung process is
@@ -543,7 +543,7 @@ Type=oneshot
 ExecStart=/bin/busybox sh /lib/lode-floodc.sh
 ";
 
-/// `lode cat --tee` as user ferrix, twice, as a restarted writer does.
+/// `lode cat --tee` as user xaqu, twice, as a restarted writer does.
 const TEE_UNIT: &str = "\
 # test-log's --tee as a user (tools/common/xtask/src/lode.rs).
 [Unit]
@@ -551,7 +551,7 @@ Description=Tee a file twice as a user
 
 [Service]
 Type=oneshot
-User=ferrix
+User=xaqu
 ExecStart=/bin/busybox sh /lib/lode-teeu.sh
 ";
 
@@ -575,19 +575,19 @@ done
 fn test_units() -> Vec<File> {
     let mut files = Vec::new();
     for (path, text) in [
-        ("etc/ferrix/units/lode-user.service", USER_UNIT),
-        ("etc/ferrix/units/floodc.service", FLOODC_UNIT),
+        ("etc/xaqu/units/lode-user.service", USER_UNIT),
+        ("etc/xaqu/units/floodc.service", FLOODC_UNIT),
         ("lib/lode-floodc.sh", FLOODC_SCRIPT),
-        ("etc/ferrix/units/tee-user.service", TEE_UNIT),
+        ("etc/xaqu/units/tee-user.service", TEE_UNIT),
         ("lib/lode-teeu.sh", TEE_SCRIPT),
-        ("etc/ferrix/units/twice.service", TWICE_UNIT),
-        ("etc/ferrix/units/alert-handler.service", HANDLER_UNIT),
+        ("etc/xaqu/units/twice.service", TWICE_UNIT),
+        ("etc/xaqu/units/alert-handler.service", HANDLER_UNIT),
         ("lib/lode-user.sh", USER_SCRIPT),
         (
             "etc/passwd",
-            "root:x:0:0:root:/:/bin/sh\nlode:x:91:4:lode:/:/sbin/nologin\nferrix:x:1000:1000:ferrix:/:/bin/sh\n",
+            "root:x:0:0:root:/:/bin/sh\nlode:x:91:4:lode:/:/sbin/nologin\nxaqu:x:1000:1000:xaqu:/:/bin/sh\n",
         ),
-        ("etc/group", "root:x:0:\nferrix:x:1000:\n"),
+        ("etc/group", "root:x:0:\nxaqu:x:1000:\n"),
     ] {
         files.push(File {
             path: path.to_owned(),
@@ -629,29 +629,29 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
     files.push(crashd_enabled());
     files.extend(crate::lode_net::carried(arch)?);
     files.push(File {
-        path: format!("etc/ferrix/units/multi-user.target.wants/{UPLOAD_UNIT}"),
+        path: format!("etc/xaqu/units/multi-user.target.wants/{UPLOAD_UNIT}"),
         mode: 0o777,
-        content: Content::Link(format!("/lib/ferrix/units/{UPLOAD_UNIT}")),
+        content: Content::Link(format!("/lib/xaqu/units/{UPLOAD_UNIT}")),
     });
     files.push(File {
-        path: "etc/ferrix/lode-upload.conf".to_owned(),
+        path: "etc/xaqu/lode-upload.conf".to_owned(),
         mode: 0o644,
         content: Content::Bytes(UPLOAD_CONF.as_bytes().to_vec()),
     });
     // No shell for a console getty to start: masked, so its retries do not
     // write half lines into the log the flood is counted in.
     files.push(File {
-        path: "etc/ferrix/units/getty@.service".to_owned(),
+        path: "etc/xaqu/units/getty@.service".to_owned(),
         mode: 0o777,
         content: Content::Link("/dev/null".to_owned()),
     });
     files.push(File {
-        path: "etc/ferrix/lode.d/capture.conf".to_owned(),
+        path: "etc/xaqu/lode.d/capture.conf".to_owned(),
         mode: 0o644,
         content: Content::Bytes(b"Capture=yes\ncapture where mark = \"capture me*\"\n".to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/lode.d/test.rules".to_owned(),
+        path: "etc/xaqu/lode.d/test.rules".to_owned(),
         mode: 0o644,
         content: Content::Bytes(TEST_RULES.as_bytes().to_vec()),
     });
@@ -662,14 +662,14 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
     });
     files.extend(test_units());
     files.push(File {
-        path: "etc/ferrix/units/lode-test.service".to_owned(),
+        path: "etc/xaqu/units/lode-test.service".to_owned(),
         mode: 0o644,
         content: Content::Bytes(TEST_UNIT.as_bytes().to_vec()),
     });
     files.push(File {
-        path: "etc/ferrix/units/multi-user.target.wants/lode-test.service".to_owned(),
+        path: "etc/xaqu/units/multi-user.target.wants/lode-test.service".to_owned(),
         mode: 0o777,
-        content: Content::Link("/etc/ferrix/units/lode-test.service".to_owned()),
+        content: Content::Link("/etc/xaqu/units/lode-test.service".to_owned()),
     });
     println!("  {arch}: building an image whose init starts lode");
     let loader = cargo::build_loader(arch, args.release)?;

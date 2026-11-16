@@ -5,11 +5,11 @@ use alloc::collections::VecDeque;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netring::RingMemory;
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::kernel::{Completed, KernelSide};
-use ferrix_netring::layout::{COMPLETION_LEN, HEADER_LEN, Op, SUBMISSION_LEN, Status};
-use ferrix_virtio_net::{DeviceError, Event, Frame, SubmitError};
+use xaqu_netring::RingMemory;
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::kernel::{Completed, KernelSide};
+use xaqu_netring::layout::{COMPLETION_LEN, HEADER_LEN, Op, SUBMISSION_LEN, Status};
+use xaqu_virtio_net::{DeviceError, Event, Frame, SubmitError};
 
 use crate::{Fault, Nic, Serve};
 
@@ -481,7 +481,7 @@ fn a_throttled_loop_sleeps_rather_than_spinning_on_a_ring_it_will_not_drain() {
                 .side
                 .prepare_to_sleep(&mut bench.ring)
                 .expect("a ring answer"),
-            ferrix_netring::Wait::Pending(_)
+            xaqu_netring::Wait::Pending(_)
         ),
         "the ring has submissions, so on its own it says do not sleep"
     );
@@ -491,7 +491,7 @@ fn a_throttled_loop_sleeps_rather_than_spinning_on_a_ring_it_will_not_drain() {
         .expect("a verdict");
     assert_eq!(
         wait,
-        ferrix_netring::Wait::Sleep,
+        xaqu_netring::Wait::Sleep,
         "a throttled loop sleeps and waits for the device"
     );
 
@@ -504,7 +504,7 @@ fn a_throttled_loop_sleeps_rather_than_spinning_on_a_ring_it_will_not_drain() {
         .serve
         .before_sleep(&mut bench.ring, &mut bench.side)
         .expect("a verdict");
-    assert_eq!(wait, ferrix_netring::Wait::Sleep, "and the ring is empty");
+    assert_eq!(wait, xaqu_netring::Wait::Sleep, "and the ring is empty");
 }
 
 /// The loop remembers no more receive slots than a ring can have, so `Serve`
@@ -513,7 +513,7 @@ fn a_throttled_loop_sleeps_rather_than_spinning_on_a_ring_it_will_not_drain() {
 fn the_slot_queue_is_the_rings_own_limit() {
     assert_eq!(
         crate::MAX_POSTED,
-        ferrix_netring::layout::MAX_ENTRIES as usize
+        xaqu_netring::layout::MAX_ENTRIES as usize
     );
     assert!(size_of::<Serve>() < 2048, "{}", size_of::<Serve>());
 }

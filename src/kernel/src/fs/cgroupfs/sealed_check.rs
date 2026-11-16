@@ -22,13 +22,13 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::SAME_RIGHTS;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::JOB_SEALED;
-use ferrix_vfs::OpenFlags;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::SAME_RIGHTS;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::JOB_SEALED;
+use xaqu_vfs::OpenFlags;
 
 use super::native_check::{descriptor, held};
 use super::{Checked, Harness};

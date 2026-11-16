@@ -1,8 +1,8 @@
 //! Jobs: what a set of processes is killed as.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::types;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::types;
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode_handle, decode_unit};

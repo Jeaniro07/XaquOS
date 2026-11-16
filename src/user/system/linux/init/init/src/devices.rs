@@ -21,7 +21,7 @@ use std::os::fd::{AsRawFd as _, OwnedFd, RawFd};
 use std::path::Path;
 use std::time::{Duration, Instant};
 
-use ferrix_svc::event::UnitId;
+use xaqu_svc::event::UnitId;
 
 use crate::{say, sys};
 

@@ -14,14 +14,14 @@
 #![no_std]
 #![no_main]
 
-use ferrix_rt::native::channel::{self, ReadError};
-use ferrix_rt::native::{Deadline, Error, Object, Signals};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_rt::native::channel::{self, ReadError};
+use xaqu_rt::native::{Deadline, Error, Object, Signals};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// What goes through the channel.
-const MESSAGE: &[u8] = b"carried by a native program built on ferrix-rt";
+const MESSAGE: &[u8] = b"carried by a native program built on xaqu-rt";
 
 /// Run the steps and turn the first failure into the exit status.
 fn main(bootstrap: Bootstrap) -> i32 {

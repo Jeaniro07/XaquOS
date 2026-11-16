@@ -11,7 +11,7 @@ use std::vec::Vec;
 const BOX_RMRR: (u64, u64) = (0x7C00_0000, 0x803F_FFFF);
 
 /// The box's memory map as Linux read it from firmware -- Linux's e820, not
-/// Ferrix's own loader map, which the box row in BACKLOG records --
+/// Xaqu's own loader map, which the box row in BACKLOG records --
 /// (`box-2026-10-16/dmesg.txt`, the `BIOS-e820` lines): every region it
 /// calls RAM -- System RAM, ACPI data and ACPI NVS -- as `(base, len)`.
 /// The RMRR lies in 0x7B000000-0x803FFFFF, "device reserved".

@@ -4,14 +4,14 @@ use core::mem::ManuallyDrop;
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::OwnedHandle;
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_virtio::QueueMemory;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::OwnedHandle;
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_virtio::QueueMemory;
 
 use crate::{Step, Stopped};
 
@@ -318,14 +318,14 @@ unsafe impl QueueMemory for Dma {
 }
 
 #[cfg(feature = "input")]
-impl ferrix_virtio_input::DevicePages for Dma {
+impl xaqu_virtio_input::DevicePages for Dma {
     fn device_pages(&self) -> &[u64] {
         Dma::device_pages(self)
     }
 }
 
 #[cfg(feature = "input")]
-impl ferrix_virtio_input::EventArea for Dma {
+impl xaqu_virtio_input::EventArea for Dma {
     fn read_u8(&self, offset: usize) -> u8 {
         Dma::read_u8(self, offset)
     }
@@ -336,14 +336,14 @@ impl ferrix_virtio_input::EventArea for Dma {
 }
 
 #[cfg(feature = "block")]
-impl ferrix_virtio_blk::DevicePages for Dma {
+impl xaqu_virtio_blk::DevicePages for Dma {
     fn device_pages(&self) -> &[u64] {
         Dma::device_pages(self)
     }
 }
 
 #[cfg(feature = "block")]
-impl ferrix_virtio_blk::RequestArea for Dma {
+impl xaqu_virtio_blk::RequestArea for Dma {
     fn read_u8(&self, offset: usize) -> u8 {
         Dma::read_u8(self, offset)
     }

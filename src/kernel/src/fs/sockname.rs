@@ -40,7 +40,7 @@ use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 
-use ferrix_vfs::{Context, Errno, FileType, Location, NewNode};
+use xaqu_vfs::{Context, Errno, FileType, Location, NewNode};
 
 use crate::fs;
 use crate::fs::socket::Socket;

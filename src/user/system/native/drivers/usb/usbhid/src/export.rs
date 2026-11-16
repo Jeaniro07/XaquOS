@@ -1,5 +1,5 @@
 //! The interfaces this process drives no class of, served to class
-//! drivers in processes of their own (`ferrix-usbif`, `docs/USB-SERIAL.md`
+//! drivers in processes of their own (`xaqu-usbif`, `docs/USB-SERIAL.md`
 //! §6.1).
 //!
 //! Each exported interface gets a channel and a VMO of its own. The
@@ -18,18 +18,18 @@
 //! The controller's DMA memory stays this process's: every byte is copied
 //! between it and the VMO, and no page of a class driver's is pinned.
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Object, OwnedHandle};
-use ferrix_rt::native::port::Port;
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_usb_host::bus::{Bus, ExportError, MAX_EXPORTS};
-use ferrix_usb_host::host::Host;
-use ferrix_usbif::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Object, OwnedHandle};
+use xaqu_rt::native::port::Port;
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_usb_host::bus::{Bus, ExportError, MAX_EXPORTS};
+use xaqu_usb_host::host::Host;
+use xaqu_usbif::{
     CONTROL_AT, CONTROL_BYTES, IN_AT, IN_SLOT_BYTES, IN_SLOTS, MAX_BYTES, MAX_ENDPOINTS, Message,
     OUT_AT, OUT_SLOT_BYTES, OUT_SLOTS, Status, VMO_BYTES,
 };
@@ -126,7 +126,7 @@ impl Exports {
         let identity = export.identity;
         match made {
             Ok(served) => {
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "usbhid: interface {} of {:04x}:{:04x} exported for its class driver (key {:#x})",
                     identity.interface,
                     identity.vendor,
@@ -137,7 +137,7 @@ impl Exports {
                     *slot = Some(served);
                 }
             }
-            Err(error) => ferrix_rt::warn!(
+            Err(error) => xaqu_rt::warn!(
                 "usbhid: interface {} of {:04x}:{:04x} could not be exported: {error:?}",
                 identity.interface,
                 identity.vendor,
@@ -177,7 +177,7 @@ impl Exports {
                     match Message::decode(bytes.get(..received.bytes).unwrap_or_default()) {
                         Ok(message) => answer(served, bus, index, message),
                         Err(_) => {
-                            ferrix_rt::warn!(
+                            xaqu_rt::warn!(
                                 "usbhid: export {index}'s driver sent what is no message; it is cut off"
                             );
                             gone = true;
@@ -209,7 +209,7 @@ impl Exports {
             *slot = None;
         }
         bus.export_release(index);
-        ferrix_rt::info!("usbhid: export {index}'s class driver went; attached again");
+        xaqu_rt::info!("usbhid: export {index}'s class driver went; attached again");
         self.attach(bus, index, boot, port);
     }
 
@@ -233,8 +233,8 @@ fn status(error: ExportError) -> Status {
         ExportError::Refused => Status::Refused,
         ExportError::Busy => Status::Busy,
         ExportError::Transfer(error) => match error {
-            ferrix_usb_host::host::Error::Stall => Status::Stall,
-            ferrix_usb_host::host::Error::Timeout => Status::Timeout,
+            xaqu_usb_host::host::Error::Stall => Status::Stall,
+            xaqu_usb_host::host::Error::Timeout => Status::Timeout,
             _ => Status::Failed,
         },
     }

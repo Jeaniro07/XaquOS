@@ -19,7 +19,7 @@ records the address every executed block starts at. So a branch took its
 outcome if some block starts at its fall-through.
 
     python3 tools/common/gen/decision-coverage.py --arch x86_64 \\
-        --elf build/coverage/x86_64/ferrix-kernel-<hash>.elf \\
+        --elf build/coverage/x86_64/xaqu-kernel-<hash>.elf \\
         --drcov build/coverage/x86_64/*.drcov
 
 `cargo xtask coverage` runs it after the statement report, over the same
@@ -255,13 +255,13 @@ PANICKING = re.compile(
     r"|alloc::alloc::handle_alloc_error"
     r"|alloc::raw_vec::(handle_error|capacity_overflow)"
     r"|rust_begin_unwind"
-    r"|ferrix_kernel(?:_core|_item|_load)?::panic::explain"
-    r"|ferrix_kernel(?:_core|_item|_load)?::trap::fatal)"
+    r"|xaqu_kernel(?:_core|_item|_load)?::panic::explain"
+    r"|xaqu_kernel(?:_core|_item|_load)?::trap::fatal)"
 )
 # The kernel's own two, by whichever of its crates defines them
 # (`docs/KERNEL-CRATES.md`): an image in which neither is named is refused,
 # since every guard that ends in them would read as an ordinary decision.
-KERNEL_GUARDS = re.compile(r"^ferrix_kernel(?:_core|_item|_load)?::(?:panic::explain|trap::fatal)")
+KERNEL_GUARDS = re.compile(r"^xaqu_kernel(?:_core|_item|_load)?::(?:panic::explain|trap::fatal)")
 # `callq *0x54dd86(%rip) # 0xffffffff8054ddd8 <...>`: x86-64's kernel code
 # calls most functions through a slot the loader relocates.
 SLOT = re.compile(r"^\*0x[0-9a-f]+\(%rip\)\s+# 0x([0-9a-f]+)")

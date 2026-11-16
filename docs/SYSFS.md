@@ -16,7 +16,7 @@ functions from `/sys/bus/pci/devices/*/uevent`, glibc counts processors in
 `/sys/devices/system/cpu`, btop reads an interface's `statistics`, and init
 mounts cgroup2 on `/sys/fs/cgroup` (`docs/INIT.md` C1).
 
-It is **not** where any of that is decided. Ferrix's drivers are processes,
+It is **not** where any of that is decided. Xaqu's drivers are processes,
 `devmgr` is the one that matches devices to drivers and starts them, and the
 kernel's cores accept what the drivers publish (`ARCHITECTURE.md` §7). sysfs
 keeps that split: it stores nothing, and every directory and file is computed,
@@ -80,7 +80,7 @@ nothing else reads it.
 Names follow Linux: a PCI function is its slot, `0000:00:02.0`; a device tree
 node is its unit address and node name, `5a001000.display-controller`; a
 connector is `card0-Virtual-1`. There is no `virtio<N>` layer between a
-function and its class devices: Ferrix's drivers drive the PCI function
+function and its class devices: Xaqu's drivers drive the PCI function
 directly, so a card's `device` link leads to the function, whose `subsystem`
 is `pci`, and libdrm reads the vendor and device it needs there.
 
@@ -189,7 +189,7 @@ the net, input and serial cores do not yet, so a bind there may answer `EIO`.
   sysfs: every other file is read-only, and a mount with `ro` is not enforced
   on `bind`/`unbind`.
 * **A `virtio<N>` bus layer** between a function and its class devices, which
-  Linux has and Ferrix's drivers do not.
+  Linux has and Xaqu's drivers do not.
 
 ## 7. How it is checked
 

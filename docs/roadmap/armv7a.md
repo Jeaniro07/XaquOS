@@ -62,7 +62,7 @@ the kernel `cargo xtask test-shell` builds, copied to the card through U-Boot's
 
 | | QEMU `virt`, `--smp 2` | STM32MP157D-DK1 |
 |---|---|---|
-| Boot marker | `FERRIX-BOOT-OK stages 1-9` | `FERRIX-BOOT-OK stages 1-9` |
+| Boot marker | `XAQU-BOOT-OK stages 1-9` | `XAQU-BOOT-OK stages 1-9` |
 | `ACTLR.SMP` | clear on 2 of 2 | set on 2 of 2 |
 | Stage 3 | 251 ticks at 998 Hz | 251 ticks at 999 Hz |
 | Stage 4 | 50000 of 50000 | 50000 of 50000 |
@@ -77,7 +77,7 @@ powers the board off while that line is still being sent. The console now
 drains before power-off (`571316a9`), and a rerun on the board the same day
 received the exit line whole (`docs/vendor/st/stm32mp157-dk.md`). The first run's serial
 log is kept outside the repository, at
-`~/.local/share/ferrix/board-boot-fd4442e-2026-09-13.log`.
+`~/.local/share/xaqu/board-boot-fd4442e-2026-09-13.log`.
 
 ---
 

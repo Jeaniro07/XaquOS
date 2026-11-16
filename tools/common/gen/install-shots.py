@@ -4,9 +4,9 @@
     install-shots.py stamp IN.png OUT.png WHERE "what it shows" [--crop L,T,R,B]
     install-shots.py terminal IN.txt OUT.png WHERE "what it shows" [--title T] [--cols N]
 
-WHERE is ferrix, linux-host or windows. Every image gets a banner naming the
+WHERE is xaqu, linux-host or windows. Every image gets a banner naming the
 system it was taken on, so a picture of a host's terminal is never taken for
-Ferrix (the customer's rule of 2026-10-12, docs/brand/screenshots/CAPTIONS.md).
+Xaqu (the customer's rule of 2026-10-12, docs/brand/screenshots/CAPTIONS.md).
 
 `stamp` puts the banner on a capture as it is: a VNC grab of the guest's
 screen, or a host window grabbed by its handle. `terminal` draws a
@@ -35,12 +35,12 @@ BOLD = FONTS / "LiberationSans-Bold.ttf"
 MONO = FONTS / "LiberationMono-Regular.ttf"
 
 WHERE = {
-    "ferrix": ((24, 140, 60), "FERRIX"),
-    "linux-host": ((180, 30, 30), "LINUX HOST - not Ferrix"),
-    "windows": ((30, 90, 200), "WINDOWS HOST - not Ferrix"),
+    "xaqu": ((24, 140, 60), "XAQU"),
+    "linux-host": ((180, 30, 30), "LINUX HOST - not Xaqu"),
+    "windows": ((30, 90, 200), "WINDOWS HOST - not Xaqu"),
 }
 LIMIT = 500 * 1024
-# A terminal's colours: Ferrix's brand background and text (docs/marketing/README.md).
+# A terminal's colours: Xaqu's brand background and text (docs/marketing/README.md).
 BACKGROUND = (13, 15, 18)
 TEXT = (238, 241, 245)
 MUTED = (154, 164, 178)

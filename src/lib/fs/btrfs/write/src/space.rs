@@ -25,7 +25,7 @@
 
 use alloc::collections::BTreeMap;
 
-use ferrix_btrfs::chunk::{
+use xaqu_btrfs::chunk::{
     BLOCK_GROUP_DATA, BLOCK_GROUP_METADATA, BLOCK_GROUP_SYSTEM, BLOCK_GROUP_TYPE_MASK,
 };
 

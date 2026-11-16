@@ -1,15 +1,15 @@
-# Claude Code on Ferrix
+# Claude Code on Xaqu
 
 Asked by the customer on 2026-09-30: "add Claude Code (CLI first, then the
-desktop) to Ferrix". This is the account of the first half -- the command
+desktop) to Xaqu". This is the account of the first half -- the command
 line -- and of what running it found. The desktop app is §7.
 
 ## Where it stands, 2026-10-11
 
-**Claude Code runs on Ferrix, since 2026-09-30.** Anthropic's prebuilt
+**Claude Code runs on Xaqu, since 2026-09-30.** Anthropic's prebuilt
 native release 2.1.280 for linux-x64 -- not one built here -- starts on
-Ferrix, takes a prompt with `claude -p`, sends it to a Messages API, runs
-the Bash command the model answers with in bash on Ferrix, and sends back
+Xaqu, takes a prompt with `claude -p`, sends it to a Messages API, runs
+the Bash command the model answers with in bash on Xaqu, and sends back
 what it printed. `cargo xtask test-claude-code` requires all of it, against
 an API xtask serves itself (§4), in about two seconds of the guest's time.
 
@@ -17,7 +17,7 @@ an API xtask serves itself (§4), in about two seconds of the guest's time.
 |---|---|
 | Claude Code's native linux-x64 build on Debian's glibc, from a pinned volume | **done** 2026-09-30, `tools/common/fetch/fetch-claude-code.sh` (§2) |
 | AVX for programs: `XSAVE` in the kernel, and x86-64-v3 on the QEMU model | **done** 2026-09-30, the one thing running it found missing (§3) |
-| `claude --version`, and a turn of `claude -p` that runs a tool on Ferrix | **done** 2026-09-30, `cargo xtask test-claude-code` (§4) |
+| `claude --version`, and a turn of `claude -p` that runs a tool on Xaqu | **done** 2026-09-30, `cargo xtask test-claude-code` (§4) |
 | `claude` in the terminals of `run-compositor --everything`, and so of `remote-desktop`'s desktop | **done** 2026-09-30; broken there until 2026-10-01, when the gate learned to run it on ferrousli as that desktop does (§5) |
 | On ferrousli's loader and `libc.so.6` in glibc's place, as the `--everything` desktop runs every glibc program | **done** 2026-10-01, ferrousli's POSIX timers; `cargo xtask test-claude-code --everything` (§5) |
 | The interactive TUI, typed at on the console: a prompt, the tool's answer drawn, `/exit` | **done** 2026-09-30, the same gate's second half (§5) |
@@ -73,7 +73,7 @@ claims, which the verification auditor (os-db) found. Both were run again on
 `main` 503d65aa, x86_64 under TCG, each a throwaway tree booted once, and both
 fired. With `restore_fpu`'s `set_xstate_bv(components)` and `set_xstate_bv`'s
 `kept = components` (both masks out), the boot stopped at 7.51 s on
-"FERRIX-PANIC general protection fault", vector 13 in ring 0 with the
+"XAQU-PANIC general protection fault", vector 13 in ring 0 with the
 frame's all-ones `XSTATE_BV` in `rbx`, before any `xstate` line. With the
 guest rule taken out of `speculation::zenbleed`, it stopped on "side-channel
 defence self-check failed: a processor was given the wrong verdict on
@@ -139,7 +139,7 @@ simdutf chooses its implementation at run time from what the processor
 offers. Bun's x86-64 build -- the one Claude Code ships -- is compiled for
 Haswell and carries no implementation older than AVX2, and a program may
 use AVX only when `CPUID` says the operating system saves it (`OSXSAVE`) and
-`XGETBV` says it is enabled. On Ferrix neither was true twice over:
+`XGETBV` says it is enabled. On Xaqu neither was true twice over:
 
 * **The kernel** saved a program's floating-point state with `FXSAVE`, which
   holds x87 and SSE and not the upper halves of the `YMM` registers, and so
@@ -239,7 +239,7 @@ One boot, x86-64, with the network. The script takes a lease for `eth0`,
 runs `claude --version`, then one prompt:
 
 ```
-claude -p 'ferrix-gate: run the check' --allowedTools Bash --max-turns 3 < /dev/null
+claude -p 'xaqu-gate: run the check' --allowedTools Bash --max-turns 3 < /dev/null
 ```
 
 `ANTHROPIC_BASE_URL` points at a Messages API in a thread of xtask
@@ -248,17 +248,17 @@ claude -p 'ferrix-gate: run the check' --allowedTools Bash --max-turns 3 < /dev/
 requires the made-up key the script gives, and answers:
 
 * the prompt, when it comes with tools, with a call of the Bash tool
-  running `echo ferrix-bash-$((6*7)); uname -s`, streamed as the API
+  running `echo xaqu-bash-$((6*7)); uname -s`, streamed as the API
   streams one;
 * the request that carries that command's output back as a tool result --
-  `ferrix-bash-42`, then `Ferrix` -- with the text
-  `claude-code-gate: bash on Ferrix said ferrix-bash-42`;
+  `xaqu-bash-42`, then `Xaqu` -- with the text
+  `claude-code-gate: bash on Xaqu said xaqu-bash-42`;
 * anything else Claude Code asks on its own with a word, and its keyless
   reachability check, `HEAD /api/hello`, with an empty 200.
 
 The gate passes when `--version` printed Claude Code's version, the guest
 printed that last text, the API saw the tool result, and the script got to
-its end. The text exists only if bash ran the command on Ferrix: the
+its end. The text exists only if bash ran the command on Xaqu: the
 script's source holds neither `42` nor the reply. No model is called, no
 account is needed, nothing leaves the host, and the result is the same on
 a machine with no internet. `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
@@ -269,7 +269,7 @@ the input is not a terminal, and the console is not one to it: the script
 gives it `/dev/null`.
 
 **The negative control** (2026-09-30): the same gate with
-`FERRIX_X86_CPU` set to the model before this change fails -- the boot log
+`XAQU_X86_CPU` set to the model before this change fails -- the boot log
 says `saved with FXSAVE; no XSAVE, so no AVX`, and `claude -p` spins until
 the timeout.
 
@@ -306,7 +306,7 @@ without a weak binding: `timer_create`, `timer_settime`, `timer_delete` and
 `__cxa_at_quick_exit`. ferrousli's loader binds every name at start, so the
 first missing one ends the program, though a session calls none of the
 timers (traced on the host). ferrousli now has all five POSIX timer
-functions, each its system call as in musl -- Ferrix's kernel answers them
+functions, each its system call as in musl -- Xaqu's kernel answers them
 `ENOSYS`, as it answers glibc's, and a Linux host runs ferrousli's C test of
 them for real -- with `SIGEV_THREAD` refused by `ENOTSUP` until ferrousli
 starts timer threads; and `__cxa_at_quick_exit`. The weak ones it lacks
@@ -340,7 +340,7 @@ volume has been fetched, `Terminal=true`, so fuzzel opens it in a terminal.
 On `run-compositor --everything --accel kvm`, against a scripted Messages
 API on the host reached as `10.0.2.2` (streamed replies, tool calls, a
 dummy key; no account, nothing leaving the host), Claude Code was driven
-as a developer drives it: in term with zinc on the desktop, as `ferrix`,
+as a developer drives it: in term with zinc on the desktop, as `xaqu`,
 over VNC, and over `ssh -tt` through a host pty rendered by a terminal
 emulator. The same binary ran on the host against the same API as the
 reference. Everything below behaved as on the host:
@@ -386,7 +386,7 @@ account with subscription" (or "Anthropic Console account" for API
 billing), sign in in the Chrome window that opens, and approve; Chrome
 returns to Claude Code on `localhost` and the session starts. If the
 redirect does not arrive, they copy the code the page shows into "Paste
-code here". The credential is then kept in `~/.claude` on Ferrix's home
+code here". The credential is then kept in `~/.claude` on Xaqu's home
 disk, across reboots, and in no other place. `ANTHROPIC_API_KEY` in the
 environment is the other way, without a browser.
 
@@ -406,8 +406,8 @@ What is left:
 * **AArch64**: done 2026-10-15, under QEMU TCG. Anthropic publishes
   linux-arm64, the same 2.1.280; its Bun build needs no AVX.
   `fetch-claude-code.sh arm64` makes a volume of its own,
-  `~/.local/share/ferrix/claude-code-arm64` (or
-  `FERRIX_CLAUDE_CODE_ARM64_VOLUME`), from that build -- checked against
+  `~/.local/share/xaqu/claude-code-arm64` (or
+  `XAQU_CLAUDE_CODE_ARM64_VOLUME`), from that build -- checked against
   the SHA-256 the release's `manifest.json` gives -- and Debian 13's
   arm64 `libc6`, `libgcc-s1`, `bash`, `libtinfo6`, `ripgrep` and
   `libpcre2-8-0`. The program is a non-PIE executable for
@@ -415,7 +415,7 @@ What is left:
   writable segment of about 140 MiB backed by the file.
   `cargo xtask test-claude-code --arch aarch64` boots that volume with the
   same script, API and verdict as x86-64 (§4, §5): `--version`, a turn of
-  `claude -p` whose Bash call runs on Ferrix, and the TUI typed at on the
+  `claude -p` whose Bash call runs on Xaqu, and the TUI typed at on the
   console up to `/exit`. The initramfs links the arm64 loader and glibc's
   directories into the volume (`claude_code::ARM64_LINKS`, Chromium's
   AArch64 links less the fonts). Nothing in the kernel had to change: the
@@ -445,13 +445,13 @@ x86-64 and arm64, from an apt repository of Anthropic's own
 (`code.claude.com/docs/en/desktop-linux`; its `postinst` says the
 repository has served a signed index since a July 2026 launch). It is the
 same release as the Windows one, 2.37337.1, on the same Electron. So the
-Electron app on Ferrix is now the same job as Chrome on Ferrix (§7.3, (d)),
+Electron app on Xaqu is now the same job as Chrome on Xaqu (§7.3, (d)),
 and it is the recommendation. Repackaging the Windows bundle, (b), is
 moot.
 
 ### 7.1 What was fetched, and how it was checked
 
-Both downloads are on nazuna, under `~/.local/share/ferrix/claude-desktop/`,
+Both downloads are on nazuna, under `~/.local/share/xaqu/claude-desktop/`,
 each in a new directory of its own. They were read as data only: no
 maintainer script ran, no program ran, and nothing was started on the host.
 
@@ -465,13 +465,13 @@ maintainer script ran, no program ran, and nothing was started on the host.
 The index lists 2.31226.0, 2.31226.1 and 2.37337.1, so earlier versions
 stay in the pool and a fetch script can pin one.
 
-### 7.2 What the Linux build is, to Ferrix
+### 7.2 What the Linux build is, to Xaqu
 
 * **`claude-desktop`**: a 229 MB position-independent glibc program on
   `/lib64/ld-linux-x86-64.so.2`. It is Chromium plus Node, like Chrome for
   Testing's `chrome`, with SwiftShader, `libvulkan` and `libffmpeg` beside
   it. Unlike Chrome, it links GTK 3 directly.
-* **Its libraries against what Ferrix already carries.** A closure check
+* **Its libraries against what Xaqu already carries.** A closure check
   read the `NEEDED` entries of every ELF file in the package (39
   libraries) and looked for each on the `--everything` volume's tree on
   nazuna. Four are missing:
@@ -502,7 +502,7 @@ stay in the pool and a fetch script can pin one.
 * **The maintainer scripts** write an AppArmor profile, register
   Anthropic's apt repository and unattended upgrades, register a GNOME
   search provider and the MIME types for `.mcpb`, `.dxt` and `.skill`, and
-  link `/usr/bin/ccd` when the build ships one (this one does not). Ferrix
+  link `/usr/bin/ccd` when the build ships one (this one does not). Xaqu
   runs none of them (`docs/APPS.md` §4, rule 4). What matters of them is
   declarative: `com.anthropic.Claude.desktop`, with
   `MimeType=x-scheme-handler/claude;…` and `StartupWMClass=com.anthropic.Claude`,
@@ -524,19 +524,19 @@ stay in the pool and a fetch script can pin one.
 
 ### 7.3 The ways compared
 
-| | What runs | What it gets | What Ferrix lacks for it | Size | Verdict |
+| | What runs | What it gets | What Xaqu lacks for it | Size | Verdict |
 |---|---|---|---|---|---|
-| **(a)** The Windows build under Wine 10 or GE-Proton11-7 | Chromium 152's Windows build and Node, from the unpacked MSIX, under Wine on yserver | The app, without Cowork, notifications or a sandbox | Wine installs no MSIX, so the zip is unpacked by hand and the app runs outside its package identity (`getCurrentPackageFamilyName`, the `Claude-Data` move). Its Chromium sandbox has to be off. ANGLE's D3D11 goes through DXVK or SwiftShader. Cowork is `cowork-svc.exe`, a LocalSystem service on Hyper-V's compute service, and there is nothing to run it on. The Code tab runs `conpty.node` on Wine's pseudo-console, with Claude Code's Windows build and a Windows bash under it. Wine on Ferrix still lacks `ptrace` and `/proc/<pid>/mem` (`docs/WINE.md` §10; stage 23's E5.2) | 30–60, a guess with the widest spread here | **No.** Two translation layers to reach what Ferrix runs natively, and the Chromium under Wine is 65 versions newer than the QtWebEngine Wine was proven with (87, `docs/WINE.md` §8) |
+| **(a)** The Windows build under Wine 10 or GE-Proton11-7 | Chromium 152's Windows build and Node, from the unpacked MSIX, under Wine on yserver | The app, without Cowork, notifications or a sandbox | Wine installs no MSIX, so the zip is unpacked by hand and the app runs outside its package identity (`getCurrentPackageFamilyName`, the `Claude-Data` move). Its Chromium sandbox has to be off. ANGLE's D3D11 goes through DXVK or SwiftShader. Cowork is `cowork-svc.exe`, a LocalSystem service on Hyper-V's compute service, and there is nothing to run it on. The Code tab runs `conpty.node` on Wine's pseudo-console, with Claude Code's Windows build and a Windows bash under it. Wine on Xaqu still lacks `ptrace` and `/proc/<pid>/mem` (`docs/WINE.md` §10; stage 23's E5.2) | 30–60, a guess with the widest spread here | **No.** Two translation layers to reach what Xaqu runs natively, and the Chromium under Wine is 65 versions newer than the QtWebEngine Wine was proven with (87, `docs/WINE.md` §8) |
 | **(b)** The Windows `app.asar` on Linux's Electron 44.7.0 | GitHub's `electron-v44.7.0-linux-x64.zip`, which exists (SHA-256 `3ae7d5bd…555a` in its `SHASUMS256.txt`), with the Windows bundle's JavaScript | What (d) gets, less what the stubs remove | The Windows native modules (`claude-native`, `conpty`, `msal-node-runtime`) replaced by stubs, and the code that branches on the platform patched, again for every release | 15–25, then some at every release (a guess) | **No.** (d) is the same `app.asar`, built for Linux by Anthropic with Linux native modules. (b) would also mean modifying Anthropic's proprietary code (§7.5) |
-| **(c)** claude.ai in Chrome | Chrome 154, which runs on the desktop | Chat, projects, artifacts and claude.ai's Claude Code on the web. Not: local Code sessions, local MCP servers and `.mcpb` extensions, Cowork, Quick Entry | Nothing. Chrome reaches claude.ai's sign-in page on Ferrix already (§5.2) | 1, a launcher entry with `--app=https://claude.ai` (a guess) | **The baseline**, and the fallback while (d) is built |
+| **(c)** claude.ai in Chrome | Chrome 154, which runs on the desktop | Chat, projects, artifacts and claude.ai's Claude Code on the web. Not: local Code sessions, local MCP servers and `.mcpb` extensions, Cowork, Quick Entry | Nothing. Chrome reaches claude.ai's sign-in page on Xaqu already (§5.2) | 1, a launcher entry with `--app=https://claude.ai` (a guess) | **The baseline**, and the fallback while (d) is built |
 | **(d)** Anthropic's Linux build, natively | `claude-desktop` 2.37337.1 on the volume's glibc, or on ferrousli in its place, as a Wayland client of hyprix (or an X client of yserver) | The app as on Debian, less Cowork (§7.4) | §7.4 | 12–18 to run it with sign-in by hand; 21–33 with a saved sign-in and notifications (§7.6) | **Recommended** |
 
-### 7.4 What Ferrix lacks for (d)
+### 7.4 What Xaqu lacks for (d)
 
 * **The kernel.** Nothing is known to be missing. Chromium 154 runs on
-  Ferrix already, and this app is Chromium 152. What Electron adds is Node
+  Xaqu already, and this app is Chromium 152. What Electron adds is Node
   in the main process. Its libuv uses `io_uring` where the kernel offers
-  it (assumed to fall back on `ENOSYS`), `inotify` (Ferrix has it) and
+  it (assumed to fall back on `ENOSYS`), `inotify` (Xaqu has it) and
   ptys (term uses them). Chrome's first run found four small calls (§8 of
   `docs/CHROME.md`), so expect a few here too. That is the guess in C2.
 * **Libraries.** GTK 3 and its closure, and PipeWire's client library
@@ -549,22 +549,22 @@ stay in the pool and a fetch script can pin one.
 * **Sandboxing.** `--no-sandbox`, as Chrome runs. Anthropic's page names
   the switch, for running as root. Stage 13 has user, pid and network
   namespaces and seccomp filters, but Chromium's own sandbox does not run
-  on Ferrix yet (`docs/SECCOMP.md`, S7 and S8). Until it does, a
+  on Xaqu yet (`docs/SECCOMP.md`, S7 and S8). Until it does, a
   compromised renderer of claude.ai's content has the user's rights, as in
-  Chrome on Ferrix today. When Chrome's sandbox runs, this app's does.
+  Chrome on Xaqu today. When Chrome's sandbox runs, this app's does.
 * **Auto-update.** None is needed: the Linux build has no updater.
-  Ferrix's fetch script pins a version and its SHA-256, as
+  Xaqu's fetch script pins a version and its SHA-256, as
   `fetch-claude-code.sh` does. It could also follow `stable` by checking
   `InRelease` against the pinned key fingerprint, as apt does, so a new
-  release needs no Ferrix commit.
+  release needs no Xaqu commit.
 * **Secret storage.**
   * What the app needs: Electron's `safeStorage` on Linux wants a Secret
-    Service (GNOME Keyring or KWallet) over D-Bus. Ferrix has no D-Bus
+    Service (GNOME Keyring or KWallet) over D-Bus. Xaqu has no D-Bus
     (`docs/WRITE-DOMAINS.md` §3).
   * What happens without one: the backend is `basic_text`, the app runs,
     and the sign-in is not kept (§7.2). The person signs in at every start.
   * What would fix it: a session bus and a Secret Service (C6). That is a
-    decision for the customer, since `docs/DEV-ON-FERRIX.md` §9 points
+    decision for the customer, since `docs/DEV-ON-XAQU.md` §9 points
     secrets at an `authd` keyring later.
 * **Notifications and the tray.** libnotify needs
   `org.freedesktop.Notifications`, and the tray needs StatusNotifierItem.
@@ -574,16 +574,16 @@ stay in the pool and a fetch script can pin one.
 * **Protocol handlers.** `claude://` carries the desktop actions, the
   return from MCP servers' OAuth, and claude.ai's "open in the app" links.
   Electron registers the scheme on Linux through `xdg-settings`, which
-  Ferrix lacks. Ferrix's `/bin/xdg-open` (`chrome.rs`, `opener`) hands
+  Xaqu lacks. Xaqu's `/bin/xdg-open` (`chrome.rs`, `opener`) hands
   every argument to Chrome. It has to dispatch by scheme: `claude:` to
   `claude-desktop`, the web to Chrome. A second start hands its URL to the
   first through Electron's singleton, a Unix socket in the profile, which
-  Ferrix has.
+  Xaqu has.
 * **The file chooser.** No portal, so Electron falls back to GTK's own
   dialog (assumed).
 * **Cowork.** Cowork needs QEMU with `/dev/kvm` and `/dev/vhost-vsock` on
-  the machine the app runs on, meaning a hypervisor in Ferrix
-  (`docs/DEV-ON-FERRIX.md` §9, 2: months, in the certified item). It is
+  the machine the app runs on, meaning a hypervisor in Xaqu
+  (`docs/DEV-ON-XAQU.md` §9, 2: months, in the certified item). It is
   not in this plan. Without it the tab says "Cowork requires hardware
   virtualization (KVM)".
 * **The account.** The desktop app takes no API key, so no gate can get
@@ -597,14 +597,14 @@ stay in the pool and a fetch script can pin one.
   under the MIT licence, and Chromium's licences are in
   `LICENSES.chromium.html`. Nothing in the package grants a right to
   redistribute the app.
-* **So Ferrix carries none of it.** It goes in no image, no Ferrix
-  repository and no `.fxpkg` Ferrix publishes. A fetch script downloads
+* **So Xaqu carries none of it.** It goes in no image, no Xaqu
+  repository and no `.fxpkg` Xaqu publishes. A fetch script downloads
   it on the person's own machine from `downloads.claude.ai`, verified as
   in §7.1, the way Claude Code's volume and Steam come. The person agrees
   to Anthropic's terms when they sign in.
 * **Not modifying it.** Patching the app, as (b) needs, is assumed not to
   be permitted. That reading was not checked by counsel.
-* **Not taking over the host.** Ferrix does not run the `postinst`. That
+* **Not taking over the host.** Xaqu does not run the `postinst`. That
   script would make the machine follow Anthropic's apt repository.
 
 ### 7.6 The plan for (d), sized
@@ -643,11 +643,11 @@ the launcher. Then build (d), C1 to C4. The customer ordered C1 to C4 on
 * The counts of platform APIs in the main process's code.
 * That the app fetches Claude Code at run time.
 * That Electron 44.7.0's Linux build is published.
-* Ferrix's `xdg-open`, which sends everything to Chrome.
+* Xaqu's `xdg-open`, which sends everything to Chrome.
 
 **Assumed, and not tried:**
 * Everything about running either build. Neither ran anywhere, and no
-  Ferrix boot was made: (a) is not cheap to try, and (d) needs C1 first.
+  Xaqu boot was made: (a) is not cheap to try, and (d) needs C1 first.
 * Wine's behaviour with this Chromium.
 * GTK 3's closure.
 * That the app runs without D-Bus, a keyring, PipeWire running or a
@@ -658,7 +658,7 @@ the launcher. Then build (d), C1 to C4. The customer ordered C1 to C4 on
 
 ### 7.8 Where C1 to C4 stand, 2026-10-15
 
-**The app runs on Ferrix and shows its sign-in screen.** On the
+**The app runs on Xaqu and shows its sign-in screen.** On the
 `--everything` desktop, under KVM, it draws claude.ai's "Claude for
 Linux" screen, its mark and its "Get started" button, about four
 seconds after hyprix comes up. It runs as Chrome does there: a Wayland
@@ -682,7 +682,7 @@ software), `libnotify`, and GTK's pixbuf loaders for one symbolic icon.
 page, fetched through the QEMU gateway, as `test-steam-store` fetches
 Steam's store. Its verdict depends on claude.ai being reachable and on
 Anthropic's page still matching `signed_out`'s thresholds, neither of
-which Ferrix controls. So it is a landing row only for changes to
+which Xaqu controls. So it is a landing row only for changes to
 `claude_desktop.rs`, `fetch-claude-desktop.sh` and the app's carry on the
 `--everything` desktop; when it goes red while the app's window is
 listed, treat it first as possibly external. It is not evidence for any
@@ -691,8 +691,8 @@ certification consultant's OK IF, ledger line 1113, 2026-10-15). It uses
 no account, and the app starts on a fresh profile under `/dev/shm` each
 boot.
 
-**Gates** (`~/.local/share/ferrix/logs/queue/<tag>.log` on nazuna): see
-the handover note `~/.local/share/ferrix/handover/claude-desktop.md`.
+**Gates** (`~/.local/share/xaqu/logs/queue/<tag>.log` on nazuna): see
+the handover note `~/.local/share/xaqu/handover/claude-desktop.md`.
 
 **Spent:** about 6 points of the 12–18, C2's spread mostly unused: the
 loader's `DT_RPATH` was the only gap.

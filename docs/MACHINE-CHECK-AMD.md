@@ -209,7 +209,7 @@ vendors), **.228** (per vendor). `H.FAIL.8` per A10.
   support requested feature ... succor"), so under TCG every AMD mode that
   would recover requires the fail-closed stop instead. KVM on nazuna's AMD
   host passes both. Measured on 1bdb00dcf by `gate.sh`
-  (`~/.local/share/ferrix/logs/queue/amd-1bdb00dcf-amd-srar-kvm.log`):
+  (`~/.local/share/xaqu/logs/queue/amd-1bdb00dcf-amd-srar-kvm.log`):
   `cpuid 80000007 ebx=0x3`, recovery reported, the victim's handler
   printed `code=4 ... lsb=12 err=0x0`; under TCG (`...-amd-srar-tcg.log`)
   `ebx=0x0`, recovery not reported, stopped as FX-9005. So AMD recovery is
@@ -239,7 +239,7 @@ ruling (a), §6's SMCA wording corrected and every mode pinning its vendor
 ## 7. Where it stands
 
 Design v1 written (19b56cf8c). **Design review: OK IF A1-A13** (the
-consultant's ledger line 4820, `~/.local/share/ferrix/cert-consultant/reviews.md`,
+consultant's ledger line 4820, `~/.local/share/xaqu/cert-consultant/reviews.md`,
 2026-10-30; internal review, not independent verification, F-27). Checked
 against Linux 6.18.54: its `mce_severity_amd` has no `TCC` test, and its
 `amd_mce_usable_address` requires `ADDRV` and then, on SMCA, `Poison` alone
@@ -274,7 +274,7 @@ against Linux 6.18.54: its `mce_severity_amd` has no `TCC` test, and its
   first, hashed, recorded here; BACKLOG line 48 updated.
 * A9 ids reserved from `L.x86_64.233` as many as one check each needs
   (likely .233-.242); .221, .224, .225, .228 restated.
-* A10 `H.FAIL.8` and AoU-36 per A4/A5/A7; `ferrix.mce.recover=off` shown on
+* A10 `H.FAIL.8` and AoU-36 per A4/A5/A7; `xaqu.mce.recover=off` shown on
   an AMD-rule mode.
 * A11 VULNERABILITY-ANALYSIS: `ipid=`/`synd=` to privileged kmsg only; new
   inputs bounded.
@@ -287,7 +287,7 @@ Design v2 written (A1), carrying A2-A5 and A8, for the consultant's check
 at the code review.
 
 **Landing record (A12, A13).** Logs in
-`~/.local/share/ferrix/logs/queue/<tag>.log`, each with its `gate.sh`
+`~/.local/share/xaqu/logs/queue/<tag>.log`, each with its `gate.sh`
 header.
 
 * Engineering, on 1bdb00dcf (the code before the squash, its kernel the
@@ -339,7 +339,7 @@ stage 3's rows and L.x86_64.235 restated (B2); McaX's control (B3); the
 `config` write allowed in `smca_bank_up` alone (B4).
 
 **Final landing record (R1-R7).** Logs in
-`~/.local/share/ferrix/logs/queue/<tag>.log`, each with its header:
+`~/.local/share/xaqu/logs/queue/<tag>.log`, each with its header:
 
 * on 6deacfc3d, `run: PASSED` with the accelerator named:
   `amd-land-6deacfc3d-build-all`, `-boot-x86-kvm`, `-boot-x86-tcg`,

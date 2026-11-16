@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-restricted-check"
+name = "xaqu-restricted-check"
 description = "Runs in a shared process's normal mode and drives a program in restricted mode, for the boot's K1 and K11 checks"
 version.workspace = true
 edition.workspace = true
@@ -14,9 +14,9 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-linux-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
 
 [lints]
 workspace = true

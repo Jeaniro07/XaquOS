@@ -23,18 +23,18 @@ fn a_manifest_s_dependencies_are_read_by_kind() {
 name = "a"
 
 [dependencies]
-ferrix-b.workspace = true
-local = { package = "ferrix-c", path = "../package-c" }
+xaqu-b.workspace = true
+local = { package = "xaqu-c", path = "../package-c" }
 plain = { path = "../package-d" } # a comment
 
 [target.'cfg(unix)'.dependencies]
-ferrix-e.workspace = true
+xaqu-e.workspace = true
 
 [build-dependencies]
-ferrix-f = "1"
+xaqu-f = "1"
 
 [dev-dependencies]
-ferrix-heap.workspace = true
+xaqu-heap.workspace = true
 
 [lints]
 workspace = true
@@ -43,16 +43,16 @@ workspace = true
     let names = |set: &BTreeSet<String>| set.iter().cloned().collect::<Vec<_>>();
     assert_eq!(
         names(&linked),
-        ["ferrix-b", "ferrix-c", "ferrix-e", "ferrix-f", "plain"]
+        ["xaqu-b", "xaqu-c", "xaqu-e", "xaqu-f", "plain"]
     );
     assert_eq!(
         names(&named),
         [
-            "ferrix-b",
-            "ferrix-c",
-            "ferrix-e",
-            "ferrix-f",
-            "ferrix-heap",
+            "xaqu-b",
+            "xaqu-c",
+            "xaqu-e",
+            "xaqu-f",
+            "xaqu-heap",
             "plain"
         ]
     );
@@ -62,8 +62,8 @@ workspace = true
 #[test]
 fn a_manifest_shape_this_does_not_read_fails_closed() {
     for text in [
-        "[dependencies.ferrix-b]\nworkspace = true\n",
-        "[dependencies]\nferrix-b = { workspace = true,\n  features = [\"x\"] }\n",
+        "[dependencies.xaqu-b]\nworkspace = true\n",
+        "[dependencies]\nxaqu-b = { workspace = true,\n  features = [\"x\"] }\n",
         "[dependencies]\nnothing here\n",
     ] {
         let (_, _, unread) = dependencies(text);
@@ -75,20 +75,20 @@ fn a_manifest_shape_this_does_not_read_fails_closed() {
 fn the_item_and_everything_it_links_are_never_cached() {
     let members = [
         member(
-            "ferrix-kernel",
+            "xaqu-kernel",
             "src/kernel",
-            &["ferrix-heap", "ferrix-sync"],
+            &["xaqu-heap", "xaqu-sync"],
             &[],
         ),
-        member("ferrix-heap", "src/lib/heap", &["ferrix-frame"], &[]),
-        member("ferrix-frame", "src/lib/frame", &[], &[]),
-        member("ferrix-sync", "src/lib/sync", &[], &[]),
-        member("ferrix-btrfs", "src/lib/fs/btrfs/format", &[], &[]),
+        member("xaqu-heap", "src/lib/heap", &["xaqu-frame"], &[]),
+        member("xaqu-frame", "src/lib/frame", &[], &[]),
+        member("xaqu-sync", "src/lib/sync", &[], &[]),
+        member("xaqu-btrfs", "src/lib/fs/btrfs/format", &[], &[]),
         // Only a dev-dependency on the item: its own code is not linked.
-        member("ferrix-driver", "src/lib/driver", &[], &["ferrix-heap"]),
-        member("xtask", "tools/common/xtask", &["ferrix-elf"], &[]),
-        member("ferrix-elf", "src/lib/elf", &[], &[]),
-        member("ferrix-fuzzed", "src/lib/fuzzed", &[], &["proptest"]),
+        member("xaqu-driver", "src/lib/driver", &[], &["xaqu-heap"]),
+        member("xtask", "tools/common/xtask", &["xaqu-elf"], &[]),
+        member("xaqu-elf", "src/lib/elf", &[], &[]),
+        member("xaqu-fuzzed", "src/lib/fuzzed", &[], &["proptest"]),
     ];
     let item = [
         "src/kernel/".to_owned(),
@@ -97,38 +97,38 @@ fn the_item_and_everything_it_links_are_never_cached() {
     let verdicts = verdicts(&members, &item);
     let never = |name: &str| verdicts.get(name).cloned().flatten();
     assert!(
-        never("ferrix-kernel")
+        never("xaqu-kernel")
             .unwrap()
             .contains("the item's (src/kernel/)")
     );
-    assert!(never("ferrix-btrfs").unwrap().contains("the item's"));
+    assert!(never("xaqu-btrfs").unwrap().contains("the item's"));
     assert!(
-        never("ferrix-heap")
+        never("xaqu-heap")
             .unwrap()
-            .contains("linked by the item's ferrix-kernel")
+            .contains("linked by the item's xaqu-kernel")
     );
     assert!(
-        never("ferrix-frame")
+        never("xaqu-frame")
             .unwrap()
-            .contains("linked by the item's ferrix-heap")
+            .contains("linked by the item's xaqu-heap")
     );
-    assert!(never("ferrix-sync").is_some());
-    assert!(never("ferrix-fuzzed").unwrap().contains("proptest"));
-    assert_eq!(never("ferrix-driver"), None);
+    assert!(never("xaqu-sync").is_some());
+    assert!(never("xaqu-fuzzed").unwrap().contains("proptest"));
+    assert_eq!(never("xaqu-driver"), None);
     assert_eq!(never("xtask"), None);
-    assert_eq!(never("ferrix-elf"), None);
+    assert_eq!(never("xaqu-elf"), None);
 }
 
 #[test]
 fn an_item_crate_another_links_says_it_is_the_item_s_own() {
     let members = [
         member(
-            "ferrix-btrfs-write",
+            "xaqu-btrfs-write",
             "src/lib/fs/btrfs/write",
-            &["ferrix-btrfs"],
+            &["xaqu-btrfs"],
             &[],
         ),
-        member("ferrix-btrfs", "src/lib/fs/btrfs/format", &[], &[]),
+        member("xaqu-btrfs", "src/lib/fs/btrfs/format", &[], &[]),
     ];
     let item = [
         "src/lib/fs/btrfs/format/".to_owned(),
@@ -141,11 +141,11 @@ fn an_item_crate_another_links_says_it_is_the_item_s_own() {
 
 #[test]
 fn a_member_whose_manifest_was_not_read_whole_is_never_cached() {
-    let mut odd = member("ferrix-odd", "src/lib/odd", &[], &[]);
+    let mut odd = member("xaqu-odd", "src/lib/odd", &[], &[]);
     odd.unread = Some("the table [dependencies.x]".to_owned());
     let verdicts = verdicts(&[odd], &[]);
     assert!(
-        verdicts["ferrix-odd"]
+        verdicts["xaqu-odd"]
             .as_deref()
             .unwrap()
             .contains("not read whole")
@@ -160,12 +160,12 @@ fn the_real_workspace_keeps_the_item_s_test_binaries_running() {
     let verdicts = verdicts(&members, &item);
     // The item's, its allow-list's and a library only the kernel links.
     for package in [
-        "ferrix-btrfs",
-        "ferrix-btrfs-write",
-        "ferrix-fallible",
-        "ferrix-sync",
-        "ferrix-heap",
-        "ferrix-kernel",
+        "xaqu-btrfs",
+        "xaqu-btrfs-write",
+        "xaqu-fallible",
+        "xaqu-sync",
+        "xaqu-heap",
+        "xaqu-kernel",
     ] {
         assert!(
             verdicts.get(package).cloned().flatten().is_some(),
@@ -173,16 +173,16 @@ fn the_real_workspace_keeps_the_item_s_test_binaries_running() {
         );
     }
     // Host tests outside the item that verify the item's requirements
-    // (ferrix-native's L.device.24, xtask's tags).
-    for package in ["ferrix-native", "xtask"] {
+    // (xaqu-native's L.device.24, xtask's tags).
+    for package in ["xaqu-native", "xtask"] {
         assert!(
             verdicts
                 .get(package)
                 .cloned()
                 .flatten()
                 .is_some_and(|why| why.starts_with("it verifies")
-                    || (package == "ferrix-native"
-                        && why == "linked by the item's ferrix-lift-core")),
+                    || (package == "xaqu-native"
+                        && why == "linked by the item's xaqu-lift-core")),
             "{package}: {:?}",
             verdicts.get(package)
         );
@@ -201,10 +201,10 @@ fn a_binary_s_unit_is_named_by_its_package_place_and_stem() {
     );
     assert_eq!(
         unit_name(
-            "ferrix-argon2",
+            "xaqu-argon2",
             Path::new("/t/debug/examples/timing-7c807c24e957b5d2")
         ),
-        "test:ferrix-argon2:examples/timing"
+        "test:xaqu-argon2:examples/timing"
     );
     assert_eq!(
         unit_name("a", Path::new("/t/debug/deps/no-hash")),
@@ -358,11 +358,11 @@ fn a_package_whose_files_say_they_verify_a_requirement_is_never_cached() {
     let mut ids = BTreeSet::new();
     tagged("let x = \"Verifies:\").skip(1);", &mut ids);
     assert_eq!(ids.into_iter().collect::<Vec<_>>(), ["(an id not read)"]);
-    let mut tagged = member("ferrix-tagged", "src/lib/tagged", &[], &[]);
+    let mut tagged = member("xaqu-tagged", "src/lib/tagged", &[], &[]);
     tagged.verifies = Some(said);
     let verdicts = verdicts(&[tagged], &[]);
     assert!(
-        verdicts["ferrix-tagged"]
+        verdicts["xaqu-tagged"]
             .as_deref()
             .unwrap()
             .starts_with("it verifies")
@@ -374,12 +374,12 @@ fn a_package_whose_files_say_they_verify_a_requirement_is_never_cached() {
 
 #[test]
 fn a_dependency_the_workspace_renames_leaves_its_users_unread() {
-    let manifest = "[workspace]\nmembers = [\"a\", \"b\"]\n\n[workspace.dependencies]\nferrix-x = { path = \"x\" }\nalias = { package = \"ferrix-y\", path = \"y\" }\n\n[profile.dev]\nopt-level = 1\n";
+    let manifest = "[workspace]\nmembers = [\"a\", \"b\"]\n\n[workspace.dependencies]\nxaqu-x = { path = \"x\" }\nalias = { package = \"xaqu-y\", path = \"y\" }\n\n[profile.dev]\nopt-level = 1\n";
     let renamed = workspace_renames(manifest);
     assert_eq!(renamed.into_iter().collect::<Vec<_>>(), ["alias"]);
     let root = scratch("renames");
     std::fs::write(root.join("Cargo.toml"), manifest).unwrap();
-    for (name, dependency) in [("a", "alias"), ("b", "ferrix-x")] {
+    for (name, dependency) in [("a", "alias"), ("b", "xaqu-x")] {
         std::fs::create_dir_all(root.join(name)).unwrap();
         std::fs::write(
             root.join(name).join("Cargo.toml"),
@@ -398,14 +398,14 @@ fn a_dependency_the_workspace_renames_leaves_its_users_unread() {
 #[test]
 fn an_item_the_workspace_does_not_hold_whole_caches_nothing() {
     let members = [
-        member("ferrix-kernel", "src/kernel", &["ferrix-heap"], &[]),
-        member("ferrix-heap", "src/lib/heap", &["ferrix-elsewhere"], &[]),
+        member("xaqu-kernel", "src/kernel", &["xaqu-heap"], &[]),
+        member("xaqu-heap", "src/lib/heap", &["xaqu-elsewhere"], &[]),
     ];
     let item = ["src/kernel/".to_owned()];
     assert!(
         links_outside(&members, &item)
             .unwrap()
-            .contains("ferrix-elsewhere")
+            .contains("xaqu-elsewhere")
     );
     assert_eq!(links_outside(&members[..1], &[]), None);
     let root = scratch("outside");
@@ -413,10 +413,10 @@ fn an_item_the_workspace_does_not_hold_whole_caches_nothing() {
     std::fs::write(root.join("src/kernel/Cargo.toml"), "").unwrap();
     std::fs::write(
         root.join("Cargo.lock"),
-        "[[package]]\nname = \"ferrix-kernel\"\n",
+        "[[package]]\nname = \"xaqu-kernel\"\n",
     )
     .unwrap();
-    let whole = [member("ferrix-kernel", "src/kernel", &[], &[])];
+    let whole = [member("xaqu-kernel", "src/kernel", &[], &[])];
     assert_eq!(refusal(&root, &whole, &item), None);
     // A crate under the item that is no member.
     std::fs::write(root.join("src/kernel/core/Cargo.toml"), "").unwrap();
@@ -430,7 +430,7 @@ fn an_item_the_workspace_does_not_hold_whole_caches_nothing() {
 
 #[test]
 fn a_randomizing_crate_in_the_lock_caches_nothing() {
-    let lock = "version = 4\n\n[[package]]\nname = \"ferrix-a\"\nversion = \"0.1.0\"\n";
+    let lock = "version = 4\n\n[[package]]\nname = \"xaqu-a\"\nversion = \"0.1.0\"\n";
     assert_eq!(locked_randomizers(lock), None);
     let with = format!("{lock}\n[[package]]\nname = \"proptest\"\nversion = \"1.0.0\"\n");
     assert_eq!(locked_randomizers(&with), Some("proptest"));

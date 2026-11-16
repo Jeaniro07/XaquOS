@@ -31,7 +31,7 @@
 //!   `ping` uses, and the unreachable messages a closed port earns.
 //! * UDP, with the socket-matching rules Linux uses, so a connected socket
 //!   still receives when somebody opens a wildcard one.
-//! * TCP over [`ferrix_nettcp`]: connections, listeners with a backlog, and a
+//! * TCP over [`xaqu_nettcp`]: connections, listeners with a backlog, and a
 //!   reset for a segment with nowhere to go.
 //! * `AF_INET6` sockets that carry IPv4 through `::ffff:0:0/96` unless
 //!   `IPV6_V6ONLY` says otherwise.

@@ -1,4 +1,4 @@
-//! Pictures for Ferrix's desktop clients.
+//! Pictures for Xaqu's desktop clients.
 //!
 //! waybar draws its chips from SVG `background-image`s, fuzzel draws each
 //! application's icon (PNG or SVG, from the icon theme), hyprlock draws a

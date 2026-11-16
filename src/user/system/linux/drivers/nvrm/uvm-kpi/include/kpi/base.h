@@ -4,8 +4,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#ifndef FERRIX_KPI_BASE_H
-#define FERRIX_KPI_BASE_H
+#ifndef XAQU_KPI_BASE_H
+#define XAQU_KPI_BASE_H
 
 /* ---- Configuration: the "kernel" uvm-kpi stands for. ---- */
 #define CONFIG_X86_64 1
@@ -17,7 +17,7 @@
 #define BITS_PER_LONG 64
 #define LINUX_VERSION_CODE KERNEL_VERSION(6, 8, 0)
 #define KERNEL_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + ((c) > 255 ? 255 : (c)))
-#define UTS_RELEASE "6.8.0-ferrix"
+#define UTS_RELEASE "6.8.0-xaqu"
 
 /* ---- Limits (the freestanding <limits.h> needs the C library's). ---- */
 #define CHAR_BIT 8

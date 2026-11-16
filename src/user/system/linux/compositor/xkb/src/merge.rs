@@ -15,7 +15,7 @@
 //!
 //! libxkbcommon compiles such a keymap out of the XKB data files, and this
 //! compositor has neither: the data is tens of megabytes of a desktop
-//! distribution and libxkbcommon is not on a machine running Ferrix, which is
+//! distribution and libxkbcommon is not on a machine running Xaqu, which is
 //! why [`crate::generated`] ships keymaps that libxkbcommon printed on a host
 //! (`probe/`). So the multi-group keymap has to be assembled here, out of the
 //! single-group texts we were given, and [`merged`] is that assembly.

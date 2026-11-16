@@ -8,7 +8,7 @@
 //! [`plan`], [`publish`] and [`parse_completion`] turn a request into a
 //! descriptor chain and a completion back into a status. What drives a device
 //! — the order of the status protocol, what happens when it misbehaves, which
-//! request a completion belongs to — is `ferrix-virtio-blk`'s, which runs in a
+//! request a completion belongs to — is `xaqu-virtio-blk`'s, which runs in a
 //! user process over kernel handles and so cannot live in the kernel's crates.
 //!
 //! # Device addresses are not physical addresses

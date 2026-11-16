@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="800" viewBox="0 0 1040 800" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#1f2328">
-<title>Ferrix burndown</title>
+<title>Xaqu burndown</title>
 <rect width="1040" height="800" fill="#ffffff"/>
 <text x="56.0" y="28.0" text-anchor="start" font-size="16" fill="#1f2328" font-weight="bold">Sized points remaining at the end of each day, from 11-03</text>
 <text x="56.0" y="46.0" text-anchor="start" font-size="12" fill="#656d76" font-weight="normal">3,072 points in the status table's unfinished rows, 2,554 of them estimated on 11-03, many as guesses; scope added later moves the date</text>

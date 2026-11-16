@@ -7,15 +7,15 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_inputctl::message::{Hello, MAX_EVENTS, Message, RawEvent, Ready, Refusal};
-use ferrix_inputctl::session::{MAX_REPORT, Received, Session};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::{Hello, MAX_EVENTS, Message, RawEvent, Ready, Refusal};
+use xaqu_inputctl::session::{MAX_REPORT, Received, Session};
+use xaqu_linux_abi::input::{
     ABS_X, ABS_Y, BTN_LEFT, EV_ABS, EV_KEY, EV_LED, EV_REL, EV_SND, EV_SYN, KEY_A, LED_CAPSL,
     REL_X, SYN_MT_REPORT, SYN_REPORT,
 };
-use ferrix_virtio::QueueError;
-use ferrix_virtio::input::{Event, InputError};
-use ferrix_virtio::pci::{
+use xaqu_virtio::QueueError;
+use xaqu_virtio::input::{Event, InputError};
+use xaqu_virtio::pci::{
     FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, STATUS_DRIVER_OK, STATUS_FAILED,
     STATUS_FEATURES_OK, TransportError,
 };
@@ -186,7 +186,7 @@ fn test_inputs_sequence_reaches_the_core_as_whole_reports() {
     let mut delivered: [Vec<Vec<RawEvent>>; 2] = [Vec::new(), Vec::new()];
     for (index, rig) in [&mut keyboard, &mut tablet].into_iter().enumerate() {
         for message in messages(&mut rig.driver) {
-            let events = ferrix_inputctl::message::Events::new(&message).expect("fits");
+            let events = xaqu_inputctl::message::Events::new(&message).expect("fits");
             let received = sessions[index]
                 .receive(&Message::Events(events), 1, |report| {
                     delivered[index].push(report.events().to_vec());
@@ -301,7 +301,7 @@ fn a_report_longer_than_a_message_or_the_core_is_sent_whole() {
         for message in messages(&mut rig.driver) {
             assert!(message.len() <= MAX_EVENTS);
             messages_sent += 1;
-            let events = ferrix_inputctl::message::Events::new(&message).expect("fits");
+            let events = xaqu_inputctl::message::Events::new(&message).expect("fits");
             let _ = session
                 .receive(&Message::Events(events), 0, |report| {
                     delivered.push(report.events().len());
@@ -417,7 +417,7 @@ fn messages_from_the_core_are_followed_in_turn() {
     let mut rig = build_with(keyboard(), |_| {});
     for message in [
         Message::Stopped,
-        Message::Events(ferrix_inputctl::message::Events::new(&[]).expect("empty")),
+        Message::Events(xaqu_inputctl::message::Events::new(&[]).expect("empty")),
     ] {
         assert_eq!(
             rig.driver.on_control(&message),
@@ -438,7 +438,7 @@ fn messages_from_the_core_are_followed_in_turn() {
     let _ = rig.driver.on_interrupt().expect("sound");
     // A program's LED write, taken while running.
     let leds =
-        ferrix_inputctl::message::Events::new(&[RawEvent::new(EV_LED, LED_CAPSL, 1)]).expect("one");
+        xaqu_inputctl::message::Events::new(&[RawEvent::new(EV_LED, LED_CAPSL, 1)]).expect("one");
     assert_eq!(
         rig.driver.on_control(&Message::Status(leds)),
         Ok(Control::Status)

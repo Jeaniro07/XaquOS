@@ -39,7 +39,7 @@ def sdt(signature, body, revision=1):
     table = bytearray(36) + body
     table[0:4] = signature
     struct.pack_into("<IBB6s8sIII", table, 4, len(table), revision, 0,
-                     b"FERRIX", b"SEEDTBL ", 1, 0x4C544E49, 1)
+                     b"XAQU", b"SEEDTBL ", 1, 0x4C544E49, 1)
     checksum_fix(table, 9)
     return table
 
@@ -47,7 +47,7 @@ def sdt(signature, body, revision=1):
 def rsdp(revision, rsdt=0, xsdt=0):
     table = bytearray(36 if revision >= 2 else 20)
     table[0:8] = b"RSD PTR "
-    struct.pack_into("<6sBI", table, 9, b"FERRIX", revision, rsdt)
+    struct.pack_into("<6sBI", table, 9, b"XAQU", revision, rsdt)
     checksum_fix(table, 8)
     if revision >= 2:
         struct.pack_into("<IQ", table, 20, 36, xsdt)

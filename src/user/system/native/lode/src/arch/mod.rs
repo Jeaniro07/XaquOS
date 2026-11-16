@@ -2,7 +2,7 @@
 //! ARMv7-A's 32-bit uid calls and `mmap2`, where the 64-bit tables have the
 //! plain names. Nothing else in lode names an architecture.
 
-use ferrix_rt::linux::numbers;
+use xaqu_rt::linux::numbers;
 
 /// `fchown`.
 #[cfg(target_arch = "arm")]

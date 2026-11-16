@@ -1,6 +1,6 @@
 //! Two connections and a wire between them, both under the test's control.
 //!
-//! Every segment goes out through `ferrix_netwire`'s emit and comes back in
+//! Every segment goes out through `xaqu_netwire`'s emit and comes back in
 //! through its parse, checksum and all, so a test exercises the same path a
 //! packet takes -- and a header this crate builds that the wire format refuses
 //! fails a test here rather than on a network.
@@ -12,8 +12,8 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::tcp::Header;
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::tcp::Header;
 
 use crate::conn::{Config, Connection, Request};
 use crate::rtt::Millis;
@@ -215,7 +215,7 @@ impl Link {
     }
 
     /// The first segment to the server makes the server.
-    fn accept_or_feed(&mut self, segment: &ferrix_netwire::tcp::Segment<'_>) {
+    fn accept_or_feed(&mut self, segment: &xaqu_netwire::tcp::Segment<'_>) {
         if let Some(server) = self.server.as_mut() {
             let _ = server.on_segment(self.now, segment);
             return;
@@ -224,7 +224,7 @@ impl Link {
             || !segment
                 .header
                 .flags
-                .contains(ferrix_netwire::tcp::Flags::SYN)
+                .contains(xaqu_netwire::tcp::Flags::SYN)
         {
             return;
         }

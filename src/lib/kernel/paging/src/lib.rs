@@ -24,9 +24,9 @@
 //! the compiler can be made to catch for free.
 //!
 //! ```
-//! # use ferrix_paging::{Mapper, MapFlags, PhysAddr, VirtAddr, x86_64::X86_64};
-//! # fn example(memory: &mut impl ferrix_paging::PhysMem) -> Result<(), ferrix_paging::MapError> {
-//! let root = memory.allocate_table().ok_or(ferrix_paging::MapError::OutOfMemory)?;
+//! # use xaqu_paging::{Mapper, MapFlags, PhysAddr, VirtAddr, x86_64::X86_64};
+//! # fn example(memory: &mut impl xaqu_paging::PhysMem) -> Result<(), xaqu_paging::MapError> {
+//! let root = memory.allocate_table().ok_or(xaqu_paging::MapError::OutOfMemory)?;
 //! let mut mapper: Mapper<X86_64> = Mapper::new(root);
 //! mapper.map_range(
 //!     memory,

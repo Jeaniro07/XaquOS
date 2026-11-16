@@ -17,8 +17,8 @@
 use std::io::Write as _;
 use std::process::ExitCode;
 
-use ferrix_auth_client::Terminal;
-use ferrix_settings_client::{Client, Conversation, Outcome, Refusal, Request, Step};
+use xaqu_auth_client::Terminal;
+use xaqu_settings_client::{Client, Conversation, Outcome, Refusal, Request, Step};
 
 const USAGE: &str = "usage: settingsctl [--dry-run] [--as-given] set-hostname NAME\n       \
                      settingsctl [--dry-run] [--as-given] service-enable-persistent UNIT on|off [now]\n       \
@@ -96,7 +96,7 @@ fn parse(arguments: &[String]) -> Option<Request> {
 /// Carry a conversation to its end, asking `person`.
 fn finish(
     mut talk: Conversation,
-    person: &mut dyn ferrix_settings_client::Person,
+    person: &mut dyn xaqu_settings_client::Person,
 ) -> Result<Outcome, Refusal> {
     loop {
         match talk.step() {
@@ -105,7 +105,7 @@ fn finish(
                 None => {
                     talk.cancel();
                     return Err(Refusal::new(
-                        ferrix_settings_client::RefusalKind::Cancelled,
+                        xaqu_settings_client::RefusalKind::Cancelled,
                         "no answer was given",
                     ));
                 }

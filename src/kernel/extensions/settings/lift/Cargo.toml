@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lift-settings"
+name = "xaqu-lift-settings"
 description = "The run-time setting entries' one source built for linuxd"
 version.workspace = true
 edition.workspace = true
@@ -9,18 +9,18 @@ publish.workspace = true
 build = "../../../build.rs"
 
 [lib]
-name = "ferrix_kernel_settings"
+name = "xaqu_kernel_settings"
 path = "../src/lib.rs"
 
 [dependencies]
-ferrix-kernel-core = { package = "ferrix-lift-core", path = "../../../lift/core" }
-ferrix-kernel-load = { package = "ferrix-lift-load", path = "../../../lift/load" }
-ferrix-audit.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-procfs.workspace = true
-ferrix-sysfs.workspace = true
-ferrix-vfs.workspace = true
+xaqu-kernel-core = { package = "xaqu-lift-core", path = "../../../lift/core" }
+xaqu-kernel-load = { package = "xaqu-lift-load", path = "../../../lift/load" }
+xaqu-audit.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-procfs.workspace = true
+xaqu-sysfs.workspace = true
+xaqu-vfs.workspace = true
 
 [lints]
 workspace = true

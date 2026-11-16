@@ -22,7 +22,7 @@ pub(crate) use aarch64::rehome_check;
 pub(crate) use armv7a::rehome_check;
 #[cfg(target_arch = "x86_64")]
 pub(crate) use x86_64::rehome_check;
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 pub mod fast_check;
 mod speculation;
 pub mod speculation_check;
@@ -34,7 +34,7 @@ pub(crate) use speculation::exit_barrier_built;
 pub(crate) use speculation::exit_barrier_offered;
 pub use speculation::nospec_index;
 pub(crate) use speculation::restricted_barriers;
-#[cfg(ferrix_fast_restricted)]
+#[cfg(xaqu_fast_restricted)]
 pub(crate) use speculation::restricted_ran_here;
 pub use speculation::{
     CheckHook, HARDENED, arm_forget_hook, arm_leave_hook, barrier_decisions_on, disarm_forget_hook,
@@ -289,13 +289,13 @@ pub(crate) fn evict_to_coherency(_virt: u64, _len: u64) {}
 
 /// Not asked on ARMv7-A, which stands down whatever it runs on.
 #[cfg(target_arch = "arm")]
-pub(crate) const fn is_guest(_view: &ferrix_bootinfo::BootView<'_>) -> bool {
+pub(crate) const fn is_guest(_view: &xaqu_bootinfo::BootView<'_>) -> bool {
     false
 }
 
 /// Not asked on ARMv7-A, which stands down whatever it runs on.
 #[cfg(target_arch = "arm")]
-pub(crate) const fn hypervisor_seen(_view: &ferrix_bootinfo::BootView<'_>) -> bool {
+pub(crate) const fn hypervisor_seen(_view: &xaqu_bootinfo::BootView<'_>) -> bool {
     false
 }
 
@@ -365,7 +365,7 @@ pub const fn write_combining_processors() -> Option<usize> {
     None
 }
 
-// `ferrix.msrlog`, x86-64's read-only MSR log (`L.x86_64.187`); none on Arm.
+// `xaqu.msrlog`, x86-64's read-only MSR log (`L.x86_64.187`); none on Arm.
 #[cfg(target_arch = "x86_64")]
 pub use x86_64::start_machine_check_log;
 #[cfg(target_arch = "x86_64")]
@@ -373,73 +373,73 @@ pub use x86_64::start_msr_log;
 
 /// No MSRs: the Arm kernels have no such log.
 #[cfg(not(target_arch = "x86_64"))]
-pub const fn start_msr_log(_view: &ferrix_bootinfo::BootView<'_>) {}
+pub const fn start_msr_log(_view: &xaqu_bootinfo::BootView<'_>) {}
 
 /// The machine-check log: nothing here, which has no machine-check banks.
 #[cfg(not(target_arch = "x86_64"))]
-pub const fn start_machine_check_log(_view: &ferrix_bootinfo::BootView<'_>) {}
+pub const fn start_machine_check_log(_view: &xaqu_bootinfo::BootView<'_>) {}
 
 // The power core, x86-64's VR current limit through typed calls on a claim
 // (`docs/POWERCTL.md`, `L.x86_64.194`-`208`, `L.device.51`-`53`); none on
 // Arm, whose kernels publish no power node and answer the calls WRONG_TYPE.
-#[cfg(all(target_arch = "x86_64", not(ferrix_personality = "user")))]
+#[cfg(all(target_arch = "x86_64", not(xaqu_personality = "user")))]
 pub(crate) use x86_64::restore_power;
-#[cfg(all(target_arch = "x86_64", not(ferrix_personality = "user")))]
+#[cfg(all(target_arch = "x86_64", not(xaqu_personality = "user")))]
 pub use x86_64::{power_claim, power_probe, power_read, power_set, power_unserved};
 
 /// No power node on Arm.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
-pub const fn power_probe(_view: &ferrix_bootinfo::BootView<'_>) -> bool {
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
+pub const fn power_probe(_view: &xaqu_bootinfo::BootView<'_>) -> bool {
     false
 }
 
 /// No power core on Arm.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
 pub fn power_claim()
--> Result<alloc::sync::Arc<crate::object::channel::Endpoint>, ferrix_linux_abi::errno::Errno> {
-    Err(ferrix_native_abi::status::WRONG_TYPE)
+-> Result<alloc::sync::Arc<crate::object::channel::Endpoint>, xaqu_linux_abi::errno::Errno> {
+    Err(xaqu_native_abi::status::WRONG_TYPE)
 }
 
 /// No power core on Arm.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
 pub fn power_set(
     _claim: &alloc::sync::Arc<crate::object::channel::Endpoint>,
     _eighths: u64,
-) -> Result<usize, ferrix_linux_abi::errno::Errno> {
-    Err(ferrix_native_abi::status::WRONG_TYPE)
+) -> Result<usize, xaqu_linux_abi::errno::Errno> {
+    Err(xaqu_native_abi::status::WRONG_TYPE)
 }
 
 /// No power core on Arm.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
 pub fn power_read(
     _claim: &alloc::sync::Arc<crate::object::channel::Endpoint>,
-) -> Result<[u64; ferrix_native_abi::types::POWER_READ_WORDS], ferrix_linux_abi::errno::Errno> {
-    Err(ferrix_native_abi::status::WRONG_TYPE)
+) -> Result<[u64; xaqu_native_abi::types::POWER_READ_WORDS], xaqu_linux_abi::errno::Errno> {
+    Err(xaqu_native_abi::status::WRONG_TYPE)
 }
 
 /// No power claim on Arm.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
 pub const fn power_unserved() -> bool {
     true
 }
 
 /// Nothing raised on Arm, so nothing to restore.
-#[cfg(any(not(target_arch = "x86_64"), ferrix_personality = "user"))]
+#[cfg(any(not(target_arch = "x86_64"), xaqu_personality = "user"))]
 pub(crate) const fn restore_power(_what: &'static str) {}
 
 // The boot options an architecture's bring-up reads before its traps are
-// installed, and stage 3's check of what it chose: x86-64's `ferrix.epp`
+// installed, and stage 3's check of what it chose: x86-64's `xaqu.epp`
 // (`L.x86_64.182`); none on Arm.
 #[cfg(target_arch = "x86_64")]
 pub use x86_64::{check_boot_options, read_boot_options};
 
 /// Nothing to read: the Arm kernels take no boot option before their traps.
 #[cfg(not(target_arch = "x86_64"))]
-pub const fn read_boot_options(_view: &ferrix_bootinfo::BootView<'_>) {}
+pub const fn read_boot_options(_view: &xaqu_bootinfo::BootView<'_>) {}
 
 /// Nothing to check: [`read_boot_options`] chose nothing here.
 #[cfg(not(target_arch = "x86_64"))]
-pub const fn check_boot_options(_view: &ferrix_bootinfo::BootView<'_>) -> Result<(), &'static str> {
+pub const fn check_boot_options(_view: &xaqu_bootinfo::BootView<'_>) -> Result<(), &'static str> {
     Ok(())
 }
 
@@ -603,7 +603,7 @@ pub use x86_64::{
 };
 #[cfg(target_arch = "x86_64")]
 pub(crate) use x86_64::{exception_code, fault_signal};
-#[cfg(all(target_arch = "x86_64", not(ferrix_shape = "micro")))]
+#[cfg(all(target_arch = "x86_64", not(xaqu_shape = "micro")))]
 pub use x86_64::{restore_signal_frame, setup_signal_frame};
 // The scoped TLB shootdown: one page invalidated, one processor interrupted,
 // and the program that checks it from user mode.
@@ -750,7 +750,7 @@ pub(crate) const fn check_machine_check_enabled() -> Result<(), &'static str> {
 #[cfg(target_arch = "x86_64")]
 pub(crate) use x86_64::{machine_check_marked, machine_check_signal, retire_poisoned};
 
-/// `/proc/ferrix-mce`: nothing here, which has no machine check.
+/// `/proc/xaqu-mce`: nothing here, which has no machine check.
 #[cfg(not(target_arch = "x86_64"))]
 pub fn render_machine_check(_out: &mut impl core::fmt::Write) -> core::fmt::Result {
     Ok(())
@@ -770,7 +770,7 @@ pub(crate) const fn machine_check_marked(_frame: &TrapFrame) -> bool {
 /// were.
 #[cfg(not(target_arch = "x86_64"))]
 pub(crate) const fn machine_check_signal(_frame: &mut TrapFrame) -> Option<(u32, i32, u64, bool)> {
-    Some((ferrix_linux_abi::types::SIGBUS, 0x80, 0, false))
+    Some((xaqu_linux_abi::types::SIGBUS, 0x80, 0, false))
 }
 
 /// Retire a frame a copy consumed poison in, dropping the cached page it
@@ -779,7 +779,7 @@ pub(crate) const fn machine_check_signal(_frame: &mut TrapFrame) -> Option<(u32,
 /// were.
 #[cfg(not(target_arch = "x86_64"))]
 pub(crate) fn retire_poisoned(page: u64) {
-    let _ = crate::user::cache::drop_poisoned(page / ferrix_bootinfo::PAGE_SIZE);
+    let _ = crate::user::cache::drop_poisoned(page / xaqu_bootinfo::PAGE_SIZE);
 }
 
 // How many hardware threads of a core run work, checked once all are online
@@ -880,7 +880,7 @@ pub const fn check_hwp_processors() -> Result<(), &'static str> {
 
 /// The Arm kernels' framebuffer flags, normal non-cacheable: their constant.
 #[cfg(not(target_arch = "x86_64"))]
-pub(crate) const fn framebuffer_flags() -> ferrix_paging::MapFlags {
+pub(crate) const fn framebuffer_flags() -> xaqu_paging::MapFlags {
     FRAMEBUFFER_FLAGS
 }
 
@@ -893,7 +893,7 @@ pub const fn program_memory_types() {}
 #[cfg(not(target_arch = "x86_64"))]
 pub const fn flush_window(_virt: u64, _len: u64) {}
 
-// Whether `ferrix.efifb` may lend the framebuffer to a ring-3 driver: only
+// Whether `xaqu.efifb` may lend the framebuffer to a ring-3 driver: only
 // where a user mapping of an aperture can take the kernel's own type for it.
 #[cfg(target_arch = "aarch64")]
 pub use aarch64::LENDS_FRAMEBUFFER;
@@ -982,7 +982,7 @@ pub(crate) use no_restricted::{
 pub use no_restricted::{
     restricted_context_bytes, restricted_set_vector_bytes, restricted_vector_bytes,
 };
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub use x86_64::restricted::window_report;
 #[cfg(target_arch = "x86_64")]
 pub(crate) use x86_64::restricted::{
@@ -993,44 +993,44 @@ pub(crate) use x86_64::restricted::{
 };
 // CHECKS-ONLY: syscall/region_check.rs
 /// Trips and declines on every processor.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[doc(hidden)]
 pub fn window_counts() -> (u64, u64) {
     x86_64::restricted::window_counts()
 }
 // CHECKS-ONLY: syscall/region_check.rs
 /// Whether the boot decided this machine has a window.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[doc(hidden)]
 pub fn window_on() -> bool {
     x86_64::restricted::window_on()
 }
 // CHECKS-ONLY: syscall/region_check.rs
 /// How many windows are alive.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[doc(hidden)]
 pub fn windows_live() -> u64 {
     x86_64::restricted::windows_live()
 }
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 pub(crate) use x86_64::restricted::{window_forget_own, window_release_for_stop};
 // CHECKS-ONLY: syscall/region_check.rs
 /// No window: the region check's asks answer as a machine without one.
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 #[doc(hidden)]
 pub const fn window_counts() -> (u64, u64) {
     (0, 0)
 }
 // CHECKS-ONLY: syscall/region_check.rs
 /// See [`window_counts`].
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 #[doc(hidden)]
 pub const fn window_on() -> bool {
     false
 }
 // CHECKS-ONLY: syscall/region_check.rs
 /// See [`window_counts`].
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 #[doc(hidden)]
 pub const fn windows_live() -> u64 {
     0
@@ -1048,9 +1048,9 @@ pub const HAS_RESTRICTED: bool = !cfg!(target_arch = "arm");
 #[cfg(target_arch = "arm")]
 mod no_restricted {
     #![allow(clippy::unnecessary_wraps, reason = "the same signatures as x86-64's")]
-    use ferrix_linux_abi::errno::Errno;
-    use ferrix_native_abi::restricted::{CONTEXT_BYTES, FaultKind, VECTORS_BYTES};
-    use ferrix_native_abi::status;
+    use xaqu_linux_abi::errno::Errno;
+    use xaqu_native_abi::restricted::{CONTEXT_BYTES, FaultKind, VECTORS_BYTES};
+    use xaqu_native_abi::status;
 
     /// Nothing is ever held.
     #[derive(Debug)]

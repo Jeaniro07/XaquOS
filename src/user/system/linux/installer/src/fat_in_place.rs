@@ -1,13 +1,13 @@
 //! A file of a FAT32 volume read whole, or rewritten in place with bytes of
 //! its own length, following its cluster chain: how the installer fills in
-//! the copied volume's `FERRIX/SETUP.TXT` and the installed system reads it
+//! the copied volume's `XAQU/SETUP.TXT` and the installed system reads it
 //! back, with no FAT writer.
 
 use std::fs::File;
 use std::io;
 
-use ferrix_install::disk;
-use ferrix_install::fat::Fat;
+use xaqu_install::disk;
+use xaqu_install::fat::Fat;
 
 /// The file at `path` in the volume at byte `at` of `file`, if it is there.
 pub fn read(file: &mut File, at: u64, path: &[&[u8; 11]]) -> io::Result<Option<Vec<u8>>> {

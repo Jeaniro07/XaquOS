@@ -33,7 +33,7 @@ reports success:
 
 Two bugs this stage found, both of which would have been very hard to diagnose
 later: firmware reports a reserved aperture at 1 TiB that must not be counted as
-RAM, and `FERRIX` as a directory name is byte-identical to `FERRIX` as a FAT
+RAM, and `XAQU` as a directory name is byte-identical to `XAQU` as a FAT
 volume label.
 
 ---

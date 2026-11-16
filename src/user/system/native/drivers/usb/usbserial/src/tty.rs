@@ -3,7 +3,7 @@
 //!
 //! `/dev` is a fixed table nothing can be added to (`src/kernel/src/fs/
 //! devfs.rs`), and the kernel forwards no character device of a ring-3
-//! driver but NVIDIA's (`ferrix_chardevctl::node`). A pseudoterminal is the
+//! driver but NVIDIA's (`xaqu_chardevctl::node`). A pseudoterminal is the
 //! terminal the kernel already gives a program, line discipline, `termios`
 //! and hang-up included, so the slave is a serial port to every program
 //! that opens it, and the master is where the driver stands:
@@ -23,13 +23,13 @@
 
 use core::fmt::Write as _;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     AT_FDCWD, CBAUD, ECHO, ECHOCTL, ECHOE, ECHOK, ECHOKE, O_CLOEXEC, O_NOCTTY, O_NONBLOCK, O_RDWR,
     OPOST, TCGETS2, TCSETS2, TERMIOS2_BYTES, TIOCGPTN, TIOCSPTLCK,
 };
-use ferrix_rt::linux;
-use ferrix_usb_serial::ftdi::Termios;
+use xaqu_rt::linux;
+use xaqu_usb_serial::ftdi::Termios;
 
 /// How often a terminal's settings are looked at when nothing else wakes
 /// the driver: a program's `stty` reaches the chip within this.
@@ -200,7 +200,7 @@ impl Tty {
             )
         };
         if linked.is_err() {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "usbserial: /tmp/{name}{index} could not be linked to /dev/pts/{number}"
             );
         }

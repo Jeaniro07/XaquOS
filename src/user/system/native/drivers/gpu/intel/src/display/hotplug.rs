@@ -1,6 +1,6 @@
 //! A monitor plugged into or pulled out of the lit port (`docs/DESKTOP.md`
 //! §3.4, step 3f): the port's live hot-plug state read every
-//! [`POLL_MS`](ferrix_intel_xelp::display::hotplug::POLL_MS) -- no MSI has
+//! [`POLL_MS`](xaqu_intel_xelp::display::hotplug::POLL_MS) -- no MSI has
 //! reached this driver on the box -- debounced, and each settled change
 //! told to the display core as virtio-gpu tells it, by `MODES` with the
 //! scanout enabled or not and, on a plug, the mode list again. The core
@@ -14,12 +14,12 @@
 //! having run on; a `DisplayPort` one needs its link trained again, which
 //! this driver does not do (step 3h), so it stays reported disconnected.
 
-use ferrix_intel_xelp::display::gmbus;
-use ferrix_intel_xelp::display::hotplug::{
+use xaqu_intel_xelp::display::gmbus;
+use xaqu_intel_xelp::display::hotplug::{
     Debounce, POLL_MS, Port, SDEISR, SETTLE_MS, SHOTPLUG_CTL_DDI, TRANSCONF_A, TRANSCONF_ENABLE,
 };
-use ferrix_intel_xelp::io::{Clock, Mmio};
-use ferrix_intel_xelp::plane::{
+use xaqu_intel_xelp::io::{Clock, Mmio};
+use xaqu_intel_xelp::plane::{
     TRANS_DDI_FUNC_CTL_A, TRANS_DDI_FUNC_ENABLE, TRANS_DDI_MODE_DP_MST, TRANS_DDI_MODE_DP_SST,
     TRANS_DDI_MODE_SELECT_SHIFT,
 };
@@ -44,7 +44,7 @@ impl Watch {
     pub(crate) fn start(regs: &mut Regs) -> Option<Self> {
         let function = regs.read32(TRANS_DDI_FUNC_CTL_A);
         let Some(port) = Port::of_ddi_func_ctl(function) else {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: card0: no hotplug: TRANS_DDI_FUNC_CTL_A {function:#010x} names no port"
             );
             return None;
@@ -59,7 +59,7 @@ impl Watch {
     /// a Type-C port.
     pub(crate) fn on(regs: &mut Regs, port: Port, pipe: u32) -> Option<Self> {
         let Some(bit) = port.live_bit() else {
-            ferrix_rt::notice!(
+            xaqu_rt::notice!(
                 "intel: card0: no hotplug: port {} is Type-C, whose live state is not read yet",
                 port.name()
             );
@@ -69,7 +69,7 @@ impl Watch {
         let enable = port.detect_enable();
         if control & enable == 0 {
             regs.write32(SHOTPLUG_CTL_DDI, control | enable);
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "intel: card0: hotplug detection on port {} enabled (SHOTPLUG_CTL_DDI {control:#010x} -> {:#010x})",
                 port.name(),
                 regs.read32(SHOTPLUG_CTL_DDI)
@@ -80,7 +80,7 @@ impl Watch {
         let display_port = function & TRANS_DDI_FUNC_ENABLE != 0
             && (mode == TRANS_DDI_MODE_DP_SST || mode == TRANS_DDI_MODE_DP_MST);
         let live = regs.read32(SDEISR) & bit != 0;
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: card0: watching port {} for hotplug (SDEISR bit {}), {} now",
             port.name(),
             bit.trailing_zeros(),
@@ -111,14 +111,14 @@ impl Watch {
         let pin = gmbus::pin_of(self.port);
         match gmbus::read_edid(regs, &mut Monotonic, pin, &mut out) {
             Ok(length) => {
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "intel: card0: port {}'s monitor's EDID read over GMBUS pin {pin}: {length} bytes",
                     self.port.name()
                 );
                 Some((out, length))
             }
             Err(why) => {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "intel: card0: no EDID from port {} over GMBUS pin {pin}: {why:?}",
                     self.port.name()
                 );
@@ -141,7 +141,7 @@ impl Watch {
         let Some(connected) = changed else {
             return (None, now_ms + next);
         };
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: card0: port {} {}",
             self.port.name(),
             if connected {
@@ -161,7 +161,7 @@ impl Watch {
         let transcoder = regs.read32(TRANSCONF_A + at) & TRANSCONF_ENABLE != 0;
         let function = regs.read32(TRANS_DDI_FUNC_CTL_A + at) & TRANS_DDI_FUNC_ENABLE != 0;
         if self.display_port || !transcoder || !function {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: card0: port {} has a sink again, but {}",
                 self.port.name(),
                 if self.display_port {
@@ -182,7 +182,7 @@ pub(crate) struct Monotonic;
 
 impl Clock for Monotonic {
     fn now_us(&mut self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0) / 1_000
     }
 
     fn delay_us(&mut self, us: u32) {

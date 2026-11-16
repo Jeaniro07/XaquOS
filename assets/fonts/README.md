@@ -1,8 +1,8 @@
 # Fonts
 
-The faces a Ferrix desktop draws text in, carried in the tree so that no
+The faces a Xaqu desktop draws text in, carried in the tree so that no
 image depends on a font being installed anywhere else. `cargo xtask` puts
-them in `/usr/share/ferrix/fonts` on every image that runs Chrome in a window
+them in `/usr/share/xaqu/fonts` on every image that runs Chrome in a window
 (`run-compositor --chrome`, `test-chrome-window`, `bench-chrome`), with
 `fonts.conf` beside them and `FONTCONFIG_FILE` naming it.
 

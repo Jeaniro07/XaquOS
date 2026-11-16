@@ -27,7 +27,7 @@
 //! stage; endpoints configured; a halt -- is done before its status stage
 //! is started, so the host does not see the request done before it is.
 
-use ferrix_usb_device::{Effect, Function, Reply, Setup, Status};
+use xaqu_usb_device::{Effect, Function, Reply, Setup, Status};
 
 use crate::controller::{Controller, Notice};
 use crate::event::{CONTROL_DATA, CONTROL_STATUS, EndpointEvent};

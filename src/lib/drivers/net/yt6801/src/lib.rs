@@ -1,5 +1,5 @@
 //! The Motorcomm YT6801's own registers: the part of the chip around its
-//! `DesignWare` Ethernet `QoS` core, which `ferrix-dwmac` drives.
+//! `DesignWare` Ethernet `QoS` core, which `xaqu-dwmac` drives.
 //!
 //! The YT6801 is a PCIe gigabit adapter, PCI `1F0A:6801`, with the core at
 //! offset [`GMAC_OFFSET`] of its BAR 0 and a YT8531S PHY inside it at MDIO
@@ -22,7 +22,7 @@
 //! # The MSI-X table shares the page
 //!
 //! The chip's MSI-X table and pending-bit array are at `0x1200` and
-//! `0x1300` of BAR 0, in the same page as everything above. Ferrix's kernel
+//! `0x1300` of BAR 0, in the same page as everything above. Xaqu's kernel
 //! never lets a driver map a page holding an MSI-X table it uses, so for
 //! this chip it does not use MSI-X at all: it holds MSI-X disabled, grants
 //! the page as an ordinary aperture, and offers the function's one MSI
@@ -51,7 +51,7 @@ extern crate std;
 #[cfg(test)]
 mod tests;
 
-use ferrix_dwmac::{Bus, Clock, Options, Registers, regs};
+use xaqu_dwmac::{Bus, Clock, Options, Registers, regs};
 
 /// How long the driver's look waits at first, and again as soon as a look
 /// moves a frame, while the chip's interrupts are not arriving: 1 ms.
@@ -281,7 +281,7 @@ fn efuse_byte<R: Registers, C: Clock>(bar: &mut R, clock: &mut C, address: u32) 
     );
     let deadline = clock.now_nanos().saturating_add(EFUSE_PATIENCE_NANOS);
     // The clock before the look, so a byte that came in while this process
-    // was off the processor is not one that never did (`ferrix-dwmac`'s
+    // was off the processor is not one that never did (`xaqu-dwmac`'s
     // MDIO wait says more).
     loop {
         let late = clock.now_nanos() >= deadline;
@@ -430,7 +430,7 @@ pub fn rearm<R: Registers>(bar: &mut R) -> u32 {
 /// from a 25 MHz crystal), with preamble suppression, as Motorcomm's
 /// driver sets them. The FIFO is believed up to 80 KiB and the receive
 /// FIFO split four ways, as the chip's four receive queues share it. The
-/// core's interrupt mode is 2 ([`ferrix_dwmac::Options::interrupt_mode`]),
+/// core's interrupt mode is 2 ([`xaqu_dwmac::Options::interrupt_mode`]),
 /// as Motorcomm's driver sets it on MSI and MSI-X alike: the per-channel
 /// lines are levels, raised while the channel's status is, and those are
 /// what the glue's aggregator latches and turns into the one MSI

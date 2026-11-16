@@ -6,7 +6,7 @@
     "command": "bench-ipc",
     "init": "busybox.static",
     "kernel_options": [
-      "ferrix.fastpath=on"
+      "xaqu.fastpath=on"
     ],
     "memory_mib": 512,
     "mitigations": "on",
@@ -17,7 +17,7 @@
   },
   "configuration_hash": "b6a51bb1b575780ea491525abf62fca97a8e6d139a4cf6acfef0cb2ff6a09435",
   "cpu_hash": "2291b09857f1b58dde3edb099203527542da83284d33e3809c718f6c8c2f493c",
-  "ferrix": {
+  "xaqu": {
     "commit": "d250b62673d30aee1d96c0fa1f36756e0c0a4f09",
     "dirty": false
   },
@@ -172,7 +172,7 @@
         "vmscape": "Mitigation: IBPB on VMEXIT"
       }
     },
-    "schema": "ferrix-hw-fingerprint/1",
+    "schema": "xaqu-hw-fingerprint/1",
     "vm": {
       "accel": "kvm",
       "arch": "x86_64",
@@ -227,7 +227,7 @@
       "cpu_model": "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand,+rdseed,+ssse3,+sse4.1,+sse4.2,+popcnt,+cx16,+movbe,+xsave,+xsaveopt,+avx,+avx2,+f16c,+fma,+bmi1,+bmi2,+abm,+pclmulqdq,+aes,+x2apic,+spec-ctrl,+stibp,+ssbd,+arch-capabilities,+auto-ibrs,+invtsc,+eraps,+xgetbv1",
       "probe": "qom-get",
       "qemu": "10.2.1",
-      "qemu_package": "ferrix-cfi"
+      "qemu_package": "xaqu-cfi"
     }
   },
   "host_hash": "8f71a3ca9c7fe85216ffdbd1e2de79d39fabaaf984f67528c2cde7b26896264b",
@@ -282,7 +282,7 @@
       }
     }
   ],
-  "schema": "ferrix-hotpath-result/1",
+  "schema": "xaqu-hotpath-result/1",
   "summary": {
     "p50_ns_median": 1388,
     "ratio_milli": null,

@@ -9,7 +9,7 @@ fn main() {
         std::process::exit(2);
     }
     // `subscribe` is not one of Hyprland's commands: its own readers are
-    // `socat - .socket2.sock`, and Ferrix has no socat. Everything else is a
+    // `socat - .socket2.sock`, and Xaqu has no socat. Everything else is a
     // request on the other socket.
     if arguments.first().map(String::as_str) == Some("subscribe") {
         let read = compositor_ctl::event_socket()

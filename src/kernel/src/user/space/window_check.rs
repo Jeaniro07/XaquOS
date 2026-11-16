@@ -8,7 +8,7 @@ use core::sync::atomic::Ordering;
 
 use super::{AddressSpace, PageRange, Vmo};
 use crate::user::vmo;
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 /// Where the made-up window's pages sit: inside one 2 MiB table, at its start.
 const BASE: u64 = 0x10_0000_0000;
@@ -109,7 +109,7 @@ fn take_down(
     space: &AddressSpace,
     at: u64,
     pages: u64,
-) -> Result<(crate::smp::TlbPages, Option<ferrix_sched::CpuSet>), &'static str> {
+) -> Result<(crate::smp::TlbPages, Option<xaqu_sched::CpuSet>), &'static str> {
     let range = PageRange::from_len(at, pages * PAGE_SIZE).map_err(|_| "a range")?;
     Ok(space.window_take_down(range))
 }
@@ -117,7 +117,7 @@ fn take_down(
 /// What `unmap` does after the decision.
 fn finish(
     space: &AddressSpace,
-    cpus: Option<ferrix_sched::CpuSet>,
+    cpus: Option<xaqu_sched::CpuSet>,
     flush: &mut crate::smp::TlbPages,
 ) {
     if let Some(cpus) = cpus {

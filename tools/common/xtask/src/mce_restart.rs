@@ -1,5 +1,5 @@
 //! `cargo xtask test-mce-restart`: a fatal machine check, the warm reset
-//! `ferrix.panic=reset` makes, and the next boot keeping the bad frame out
+//! `xaqu.panic=reset` makes, and the next boot keeping the bad frame out
 //! from its start (`docs/MACHINE-CHECK-RESTART.md` §5, slice 8a).
 //!
 //! One QEMU kept across the reset (no `-no-reboot`, RAM kept), Intel's
@@ -14,7 +14,7 @@
 //! left record and find the frame already retired. The restart's time, from
 //! the report to boot 2's poll, is said with its parts.
 //!
-//! Boot 2 is judged up to its poll's lines and not to `FERRIX-BOOT-OK`:
+//! Boot 2 is judged up to its poll's lines and not to `XAQU-BOOT-OK`:
 //! stage 12's write check needs the fresh writable btrfs disk xtask makes for
 //! each QEMU start, and a warm reset keeps the disk boot 1 wrote.
 
@@ -33,7 +33,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-restart",
         help_at: 258,
         help: &[
-            "test-mce-restart  A fatal machine check under ferrix.panic=reset: the next boot keeps the bad frame out from",
+            "test-mce-restart  A fatal machine check under xaqu.panic=reset: the next boot keeps the bad frame out from",
             "                  its start (the pstore table and the banks), and the restart's time is said",
         ],
         run: |_, args| test(args),
@@ -60,7 +60,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-restart-reset",
         help_at: 262,
         help: &[
-            "test-mce-restart-reset  ferrix.badframes=reset on a bad_frames = choice image (--kernel-profile desktop):",
+            "test-mce-restart-reset  xaqu.badframes=reset on a bad_frames = choice image (--kernel-profile desktop):",
             "                        the frame kept out across the warm reset, nothing written to the event log",
         ],
         run: |_, args| test_reset(args),
@@ -69,7 +69,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-restart-off",
         help_at: 263,
         help: &[
-            "test-mce-restart-off  ferrix.badframes=off on a bad_frames = choice image (--kernel-profile desktop):",
+            "test-mce-restart-off  xaqu.badframes=off on a bad_frames = choice image (--kernel-profile desktop):",
             "                      the fatal record's page released by the next boot's loader, nothing left out",
         ],
         run: |_, args| test_off(args),
@@ -81,9 +81,9 @@ const TEST_PROGRAM: &str = "mce";
 /// The victim's line: `mce-test: victim pid=<pid> va=<address>`.
 const VICTIM: &str = "mce-test: victim pid=";
 /// The report's line before the reset's wait.
-const RESET_LINE: &str = "  reset     in 10 s, as ferrix.panic=reset asks";
+const RESET_LINE: &str = "  reset     in 10 s, as xaqu.panic=reset asks";
 /// The loader's banner, which begins boot 2.
-const LOADER_BANNER: &str = "Ferrix loader ";
+const LOADER_BANNER: &str = "Xaqu loader ";
 /// The poll's start line, boot 2's: the scheduler and the poll tasks run.
 const POLLING: &str = "mce: polling on ";
 /// The poll's finding of the left record's frame, boot 2's last line judged.
@@ -99,7 +99,7 @@ const SRAR: u64 = 0xbd80_0000_0000_0134;
 const DONE: &str = "mce-test: done";
 /// The kernel's last line as it powers off, which pauses a QEMU that keeps
 /// RAM.
-const POWERED_OFF: &str = "FERRIX-POWER-OFF";
+const POWERED_OFF: &str = "XAQU-POWER-OFF";
 /// `MCG_STATUS`: `RIPV EIPV MCIP`.
 const CONSUMER: u64 = 0x7;
 /// `MCi_MISC`: a physical address, recoverable to the page.
@@ -146,7 +146,7 @@ fn test(args: &Args) -> Result<()> {
         crate::cargo::build_kernel_with_init(arch, args.release, &program, crate::shell::SCRIPT)?;
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &[])?;
-    let options = "ferrix.mce.poll=1 ferrix.panic=reset nokaslr\n";
+    let options = "xaqu.mce.poll=1 xaqu.panic=reset nokaslr\n";
     let image = crate::fat::write_image_with(arch, &loader, &kernel, &archive, Some(options))?;
     let port = free_port()?;
     let mut qemu_args = args.clone();
@@ -325,7 +325,7 @@ fn judge(seen: &Seen) -> std::result::Result<(), String> {
 /// must keep the frame out from the table alone (`kept out (table)`, not
 /// `as already`, and no `(left)`), and its kernel leave it out; boot 2 then
 /// stops in stage 12's write check on the disk boot 1 wrote, which
-/// `ferrix.panic=reset` turns into the second reset; boot 3's loader must
+/// `xaqu.panic=reset` turns into the second reset; boot 3's loader must
 /// keep the frame out again, from the table boot 2's attach wrote.
 ///
 /// # Errors
@@ -417,7 +417,7 @@ fn test_retired(args: &Args) -> Result<()> {
 }
 
 /// The image the recovered-retirement modes boot: test-mce as init, polled
-/// banks, `ferrix.panic=reset`, no KASLR.
+/// banks, `xaqu.panic=reset`, no KASLR.
 fn retired_image(
     arch: Arch,
     args: &Args,
@@ -429,7 +429,7 @@ fn retired_image(
         crate::cargo::build_kernel_with_init(arch, args.release, &program, crate::shell::SCRIPT)?;
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &[])?;
-    let options = format!("ferrix.mce.poll=1 ferrix.panic=reset nokaslr{extra}\n");
+    let options = format!("xaqu.mce.poll=1 xaqu.panic=reset nokaslr{extra}\n");
     let image = crate::fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
     Ok((image, kernel))
 }
@@ -483,9 +483,9 @@ fn next_boot(watching: &mut qemu::Watching<'_>, from: usize) -> Result<Option<Ve
 }
 
 /// The bad-frame set's generation and frames on the test disk's event log:
-/// what the host's `ferrix-eventlog list` reads.
+/// what the host's `xaqu-eventlog list` reads.
 fn log_set(disk: &std::path::Path) -> Result<(u64, Vec<u32>)> {
-    use ferrix_eventlog::{self as eventlog, Current};
+    use xaqu_eventlog::{self as eventlog, Current};
     let file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -499,14 +499,14 @@ fn log_set(disk: &std::path::Path) -> Result<(u64, Vec<u32>)> {
     }
 }
 
-/// The host's `ferrix-eventlog clear-bad-frames` on the test disk.
+/// The host's `xaqu-eventlog clear-bad-frames` on the test disk.
 fn clear_set(disk: &std::path::Path) -> Result<Vec<u32>> {
     let file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
         .open(disk)?;
     let (mut device, geometry) = crate::postmortem::log_device(&file)?;
-    ferrix_eventlog::clear_bad_frames(&mut device, &geometry)
+    xaqu_eventlog::clear_bad_frames(&mut device, &geometry)
         .map(|dropped| dropped.frames().to_vec())
         .map_err(|why| Error::new(format!("the clear: {why:?}")))
 }
@@ -547,7 +547,7 @@ fn test_power(args: &Args) -> Result<()> {
     }
     // The word on a persist build (ledger 5579 (9)): ignored, as its loader
     // compiles no read of it; every line is PowerCycle's.
-    let (image, kernel) = retired_image(arch, args, " ferrix.badframes=off")?;
+    let (image, kernel) = retired_image(arch, args, " xaqu.badframes=off")?;
     let log = crate::paths::build_dir(arch).join("serial.log");
     let failed = |why: String| {
         Error::new(format!(
@@ -816,7 +816,7 @@ fn require_choice(what: &str) -> Result<()> {
 }
 
 /// `reset` (`docs/MACHINE-CHECK-RESTART.md` §10.6): as `PowerCycle`'s first
-/// boots, under `ferrix.badframes=reset` on a `choice` image: boot 2's
+/// boots, under `xaqu.badframes=reset` on a `choice` image: boot 2's
 /// loader keeps the frame out from the table, writes nothing to the event
 /// log (its set and generation as before) and renews the region; a cold
 /// boot 3 keeps nothing out and leaves the set as it was. Firmware holding
@@ -832,7 +832,7 @@ fn test_reset(args: &Args) -> Result<()> {
         return Ok(());
     }
     require_choice("test-mce-restart-reset")?;
-    let (image, kernel) = retired_image(arch, args, " ferrix.badframes=reset")?;
+    let (image, kernel) = retired_image(arch, args, " xaqu.badframes=reset")?;
     let log = crate::paths::build_dir(arch).join("serial.log");
     let failed = |why: String| {
         Error::new(format!(
@@ -930,7 +930,7 @@ fn after_boot_2_reset(boot_1: &[String], boot_2: &[String], page: u64) -> Step {
     if !has(boot_1, &format!("mce: frame {page:#x} retired")) {
         return Step::Fail(format!("boot 1 did not retire {page:#x}"));
     }
-    if !has(boot_2, "badframe mode reset (ferrix.badframes)") {
+    if !has(boot_2, "badframe mode reset (xaqu.badframes)") {
         return Step::Fail("boot 2's loader did not say `badframe mode reset`".to_owned());
     }
     if has(boot_2, "kept in the event log") {
@@ -954,7 +954,7 @@ fn after_boot_2_reset(boot_1: &[String], boot_2: &[String], page: u64) -> Step {
 }
 
 /// `off` (`docs/MACHINE-CHECK-RESTART.md` §10.6): a fatal record under
-/// `ferrix.panic=reset` on a `choice` image with `ferrix.badframes=off`:
+/// `xaqu.panic=reset` on a `choice` image with `xaqu.badframes=off`:
 /// boot 2's loader keeps the page the banks name out first, as every loader
 /// does, then releases it once it has read its mode, takes nothing from the
 /// table, and its kernel leaves nothing out.
@@ -969,7 +969,7 @@ fn test_off(args: &Args) -> Result<()> {
         return Ok(());
     }
     require_choice("test-mce-restart-off")?;
-    let (image, kernel) = retired_image(arch, args, " ferrix.badframes=off")?;
+    let (image, kernel) = retired_image(arch, args, " xaqu.badframes=off")?;
     let port = free_port()?;
     let qemu_args = retired_args(args, port);
     let mut page = 0;
@@ -1008,9 +1008,9 @@ fn test_off(args: &Args) -> Result<()> {
 
 /// Whether boot 2 under `off` released the banks' page and left nothing out.
 fn judge_off(boot_2: &[String], page: u64) -> std::result::Result<(), String> {
-    let mode = "badframe mode off (ferrix.badframes)";
+    let mode = "badframe mode off (xaqu.badframes)";
     let left = format!("badframe {page:#x} kept out (left)");
-    let released = format!("badframe {page:#x} released (ferrix.badframes=off)");
+    let released = format!("badframe {page:#x} released (xaqu.badframes=off)");
     if !has(boot_2, mode) {
         return Err(format!("boot 2's loader did not say `{mode}`"));
     }

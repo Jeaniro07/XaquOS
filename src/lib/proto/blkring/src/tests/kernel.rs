@@ -5,8 +5,8 @@ use std::collections::BTreeMap;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{PACKET_USER, PortPacket};
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{PACKET_USER, PortPacket};
 
 use super::support::{Rng, Shared, Who, device, read, with_pair};
 use crate::bell::{BELL_COMPLETE, BELL_SUBMIT, Rung, Wait, port_queue_rung, rung};

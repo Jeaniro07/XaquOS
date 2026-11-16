@@ -20,7 +20,7 @@
 //!
 //! # The properties
 //!
-//! Not panicking is the floor. Beyond it, `ferrix_block::model` checks every
+//! Not panicking is the floor. Beyond it, `xaqu_block::model` checks every
 //! step against a flat model of the rules — the same harness the crate's
 //! seeded tests drive — and this target fails on the first rule broken:
 //!
@@ -40,7 +40,7 @@
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
-    if let Err(violation) = ferrix_block::model::run(data) {
+    if let Err(violation) = xaqu_block::model::run(data) {
         panic!("{violation:?}");
     }
 });

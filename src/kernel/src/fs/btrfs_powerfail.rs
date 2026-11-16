@@ -2,9 +2,9 @@
 //! a transaction, and a mount that has to make sense of what is on the disk.
 //!
 //! The host drives it. `cargo xtask test-powerfail` boots with
-//! `ferrix.btrfs=churn`, waits for the marker below, kills QEMU at a random
+//! `xaqu.btrfs=churn`, waits for the marker below, kills QEMU at a random
 //! moment, runs host `btrfs check` over the image, boots the same image again
-//! with `ferrix.btrfs=replay` — which mounts it, and mounting replays
+//! with `xaqu.btrfs=replay` — which mounts it, and mounting replays
 //! whatever log the crash left — and runs `btrfs check` once more, which must
 //! find nothing at all.
 //!
@@ -32,12 +32,12 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicU8, AtomicU64, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_btrfs::crc32c::crc32c_update;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, NewNode};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_btrfs::crc32c::crc32c_update;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, NewNode};
+use xaqu_vma::VmaFlags;
 
 use crate::console::println;
 use crate::fs;
@@ -69,8 +69,8 @@ const MAGIC: u32 = 0x5046_5831;
 const CHURNING: &str = "  btrfs-pf churning on vdc";
 
 /// The command-line options: the mode, and the seed that picks the churn.
-const MODE_OPTION: &str = "ferrix.btrfs";
-const SEED_OPTION: &str = "ferrix.btrfs.seed";
+const MODE_OPTION: &str = "xaqu.btrfs";
+const SEED_OPTION: &str = "xaqu.btrfs.seed";
 
 /// What the boot does with the writable disk.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,7 +89,7 @@ pub enum Mode {
 static MODE: AtomicU8 = AtomicU8::new(0);
 static SEED: AtomicU64 = AtomicU64::new(1);
 
-/// Read `ferrix.btrfs` and `ferrix.btrfs.seed` from the command line, once,
+/// Read `xaqu.btrfs` and `xaqu.btrfs.seed` from the command line, once,
 /// early, so a typo is reported at the top of the log.
 pub fn init(view: &BootView<'_>) {
     match view.option(MODE_OPTION) {
@@ -511,7 +511,7 @@ fn log_root() -> Result<u64, &'static str> {
 }
 
 /// The CRC-32C of the first `len` bytes of a file, a piece at a time.
-fn checksum(inode: &Arc<dyn ferrix_vfs::Inode>, len: u64) -> Result<u32, &'static str> {
+fn checksum(inode: &Arc<dyn xaqu_vfs::Inode>, len: u64) -> Result<u32, &'static str> {
     let mut buffer = vec![0u8; PIECE];
     let mut register = !0u32;
     let mut at = 0u64;

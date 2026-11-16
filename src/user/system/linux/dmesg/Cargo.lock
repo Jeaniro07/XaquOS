@@ -6,12 +6,12 @@ version = 4
 name = "dmesg"
 version = "0.3.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]

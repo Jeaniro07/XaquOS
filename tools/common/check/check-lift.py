@@ -10,10 +10,10 @@ what `present` and `desktop` build:
    an unlisted file is refused, and so is a listed one nothing reaches.
 2. No listed file holds `asm!`, `global_asm!` or `#[no_mangle]`, none is a
    `*_check.rs`, none a raised check's home.
-3. `lift_cfg_sites` counts the `ferrix_load_built` cfgs in each load file other
+3. `lift_cfg_sites` counts the `xaqu_load_built` cfgs in each load file other
    than the crate roots. A site more than the count fails: a load file learning
    about the lift is a decision, not a side effect.
-4. `ferrix_load_built` is derived in `build.rs` alone: no flag table names it.
+4. `xaqu_load_built` is derived in `build.rs` alone: no flag table names it.
 5. The lift's packages name no kernel crate as a dependency except by their own
    lib names, and no kernel crate names one of them.
 6. `--plant KIND`, for the controls: pretend a violation of a given kind.
@@ -47,9 +47,9 @@ ROOTS = {
 SHIM_DIR = "lift/"
 MOD = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+(\w+)\s*(;|\{)")
 # What the lift's build leaves out: the ring-0 load's own, and a checks build's.
-CFG_OUT = re.compile(r'#\[cfg\((?:not\(ferrix_load_built\s*=\s*"lift"\)|ferrix_checks\s*=\s*"on")\)\]')
+CFG_OUT = re.compile(r'#\[cfg\((?:not\(xaqu_load_built\s*=\s*"lift"\)|xaqu_checks\s*=\s*"on")\)\]')
 FORBIDDEN = re.compile(r"\b(?:global_)?asm!|#\[(?:unsafe\()?no_mangle")
-SITE = re.compile(r"ferrix_load_built\s*=")
+SITE = re.compile(r"xaqu_load_built\s*=")
 
 
 def strip_comment(line: str) -> str:
@@ -199,16 +199,16 @@ def main() -> int:
     for rel, count in sorted(sites.items()):
         most = allowed_sites.get(rel, 0)
         if count > most:
-            problems.append(f"{rel}: {count} ferrix_load_built sites, lift_cfg_sites allows {most}")
+            problems.append(f"{rel}: {count} xaqu_load_built sites, lift_cfg_sites allows {most}")
     for rel, most in sorted(allowed_sites.items()):
         if sites.get(rel, 0) < most:
             problems.append(f"{rel}: lift_cfg_sites allows {most}, it has {sites.get(rel, 0)}: lower it")
 
     flags = FLAGS.read_text(encoding="utf-8")
     if args.plant == "flag":
-        flags += "\nferrix_load_built = 1\n"
-    if "ferrix_load_built" in flags:
-        problems.append("build-flags.toml names ferrix_load_built: it is derived in build.rs, not a flag")
+        flags += "\nxaqu_load_built = 1\n"
+    if "xaqu_load_built" in flags:
+        problems.append("build-flags.toml names xaqu_load_built: it is derived in build.rs, not a flag")
 
     # The shim's packages under src/kernel/lift/, and each part's twin in its
     # own lift/ directory (CRATE-SPLIT.md §2.1), by their package names.
@@ -227,15 +227,15 @@ def main() -> int:
             # part's old place) is a problem, not an absence.
             problems.append(f"{cargo.relative_to(ROOT)}: no such kernel manifest")
         else:
-            planted = {"ferrix-lift-core"} if args.plant == "dep" and cargo == kernel_cargos[0] else set()
+            planted = {"xaqu-lift-core"} if args.plant == "dep" and cargo == kernel_cargos[0] else set()
             for name in sorted((dependencies(cargo) | planted) & names):
                 problems.append(f"{cargo.relative_to(ROOT)}: a kernel crate names {name}")
     for name, cargo in lift_packages.items():
         for dep in sorted(dependencies(cargo)):
             # Any kernel package, a part's included: a twin names its
-            # ferrix-kernel-* dependencies only as `package = "ferrix-lift-*"`
+            # xaqu-kernel-* dependencies only as `package = "xaqu-lift-*"`
             # (CRATE-SPLIT.md §2.3, ledger 7608 S1.6).
-            if dep == "ferrix-kernel" or dep.startswith("ferrix-kernel-"):
+            if dep == "xaqu-kernel" or dep.startswith("xaqu-kernel-"):
                 problems.append(f"{cargo.relative_to(ROOT)}: the lift names the kernel crate {dep}")
 
     # The shim's map is true of the tree (5714 (1)): an item no rule places, or a stale map.

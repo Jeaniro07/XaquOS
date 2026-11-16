@@ -8,7 +8,7 @@
 use std::fs;
 use std::path::Path;
 
-use ferrix_pkg::manifest::{self, Abi};
+use xaqu_pkg::manifest::{self, Abi};
 
 use super::PLACE;
 use crate::args::Args;
@@ -167,7 +167,7 @@ bench = false
 
 # The runtime, on the kernel's targets only: the host builds the lib alone.
 [target.'cfg(target_os = "none")'.dependencies]
-ferrix-rt = { path = "../../system/native/rt" }
+xaqu-rt = { path = "../../system/native/rt" }
 
 [profile.dev]
 panic = "abort"
@@ -188,8 +188,8 @@ const NATIVE_BUILD: &str = r#"//! Link the program with the runtime's layout, on
 )]
 
 fn main() {
-    println!("cargo::rerun-if-env-changed=DEP_FERRIX_RT_LINKER_SCRIPT");
-    if let Ok(script) = std::env::var("DEP_FERRIX_RT_LINKER_SCRIPT") {
+    println!("cargo::rerun-if-env-changed=DEP_XAQU_RT_LINKER_SCRIPT");
+    if let Ok(script) = std::env::var("DEP_XAQU_RT_LINKER_SCRIPT") {
         println!("cargo::rustc-link-arg-bins=-T{script}");
         println!("cargo::rerun-if-changed={script}");
     }
@@ -201,9 +201,9 @@ const NATIVE_MAIN: &str = r#"//! `{name}`: a native program, started from a shel
 #![no_std]
 #![no_main]
 
-use ferrix_rt::{Bootstrap, linux};
+use xaqu_rt::{Bootstrap, linux};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Standard output.
 const STDOUT: usize = 1;
@@ -245,7 +245,7 @@ lto = true
 strip = true
 "#;
 
-const LINUX_MAIN: &str = r#"//! `{name}`: a Linux program, on Ferrix's Linux ABI.
+const LINUX_MAIN: &str = r#"//! `{name}`: a Linux program, on Xaqu's Linux ABI.
 
 use std::io::Write as _;
 
@@ -257,7 +257,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::files;
-    use ferrix_pkg::manifest::{self, Abi};
+    use xaqu_pkg::manifest::{self, Abi};
 
     #[test]
     fn a_new_apps_manifest_reads_and_names_its_program() {

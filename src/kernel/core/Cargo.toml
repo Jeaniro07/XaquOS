@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel-core"
-description = "The Ferrix kernel's core ring: what every other part rests on"
+name = "xaqu-kernel-core"
+description = "The Xaqu kernel's core ring: what every other part rests on"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,31 +16,31 @@ build = "../build.rs"
 path = "../src/kernel_core.rs"
 
 [dependencies]
-ferrix-acpi.workspace = true
-ferrix-audit.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-cgroupfs.workspace = true
-ferrix-description.workspace = true
-ferrix-elf.workspace = true
-ferrix-fallible.workspace = true
-ferrix-fbtext.workspace = true
-ferrix-fdt.workspace = true
-ferrix-frame.workspace = true
-ferrix-heap.workspace = true
-ferrix-kmem.workspace = true
-ferrix-sha256.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-objects.workspace = true
-ferrix-paging.workspace = true
-ferrix-pci.workspace = true
-ferrix-qr.workspace = true
-ferrix-sched.workspace = true
-ferrix-sched-edf.workspace = true
-ferrix-sync.workspace = true
-ferrix-vdso.workspace = true
-ferrix-vfs.workspace = true
-ferrix-vma.workspace = true
+xaqu-acpi.workspace = true
+xaqu-audit.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-cgroupfs.workspace = true
+xaqu-description.workspace = true
+xaqu-elf.workspace = true
+xaqu-fallible.workspace = true
+xaqu-fbtext.workspace = true
+xaqu-fdt.workspace = true
+xaqu-frame.workspace = true
+xaqu-heap.workspace = true
+xaqu-kmem.workspace = true
+xaqu-sha256.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-objects.workspace = true
+xaqu-paging.workspace = true
+xaqu-pci.workspace = true
+xaqu-qr.workspace = true
+xaqu-sched.workspace = true
+xaqu-sched-edf.workspace = true
+xaqu-sync.workspace = true
+xaqu-vdso.workspace = true
+xaqu-vfs.workspace = true
+xaqu-vma.workspace = true
 
 [lints]
 workspace = true

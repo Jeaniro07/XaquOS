@@ -6,11 +6,11 @@
  * which step replaces it.
  *
  * Written from NVIDIA's prototypes (kernel-open/common/inc/nv.h and
- * os-interface.h) by ~/.local/share/ferrix/nvidia/n1c-wip/gen.py.
+ * os-interface.h) by ~/.local/share/xaqu/nvidia/n1c-wip/gen.py.
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 void nvos_stub_called(const char *name, const char *why)
 {
@@ -295,7 +295,7 @@ void NV_API_CALL nv_i2c_unregister_clients(nv_state_t *a0)
 }
 
 
-/* x86 port I/O, which no Ferrix driver is given. */
+/* x86 port I/O, which no Xaqu driver is given. */
 
 NvU8 NV_API_CALL os_io_read_byte(NvU32 a0)
 {
@@ -380,12 +380,12 @@ NV_STATUS NV_API_CALL os_unlock_user_pages(NvU64 a0, void *a1, NvU32 a2)
 
 NV_STATUS NV_API_CALL nv_acquire_fabric_mgmt_cap(int a0, int*a1)
 {
-    nvos_stub_called("nv_acquire_fabric_mgmt_cap", "not on Ferrix yet");
+    nvos_stub_called("nv_acquire_fabric_mgmt_cap", "not on Xaqu yet");
     return NV_ERR_NOT_SUPPORTED;
 }
 
 
 void NV_API_CALL os_pci_remove(void *a0)
 {
-    nvos_stub_called("os_pci_remove", "not on Ferrix yet");
+    nvos_stub_called("os_pci_remove", "not on Xaqu yet");
 }

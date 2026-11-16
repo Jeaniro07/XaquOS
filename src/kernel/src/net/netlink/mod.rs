@@ -43,7 +43,7 @@
 //! the stack's tables and writing bytes, which is the rule
 //! [`crate::net::NetCore::with`] states.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 pub(crate) mod link;
 mod route;
@@ -55,19 +55,19 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint, buffer_footprint, reserve_deque};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::netlink::{
+use xaqu_kmem::{Charge, arc_footprint, buffer_footprint, reserve_deque};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::netlink::{
     NETLINK_ADD_MEMBERSHIP, NETLINK_DROP_MEMBERSHIP, NETLINK_KOBJECT_UEVENT, NETLINK_ROUTE,
     NetlinkAddress, NlMsgHdr, SOL_NETLINK,
 };
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::socket::{
     AF_NETLINK, MSG_DONTWAIT, MSG_PEEK, SO_DOMAIN, SO_ERROR, SO_PROTOCOL, SO_RCVBUF,
     SO_RCVTIMEO_NEW, SO_RCVTIMEO_OLD, SO_SNDBUF, SO_SNDTIMEO_NEW, SO_SNDTIMEO_OLD, SO_TYPE,
     SOCKET_BUFFER_DEFAULT, SOL_SOCKET, Width,
 };
-use ferrix_netlink::Messages;
-use ferrix_vfs::{Inode, Metadata, OpenFile, Readiness};
+use xaqu_netlink::Messages;
+use xaqu_vfs::{Inode, Metadata, OpenFile, Readiness};
 
 use super::socket::Received;
 use crate::fs;
@@ -559,7 +559,7 @@ impl Inode for NetlinkSocket {
         Some(self.ns.core().progress().wakes())
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(self.ns.core().progress_source());
         true
     }
@@ -569,12 +569,12 @@ impl Inode for NetlinkSocket {
         true
     }
 
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.recv(buf, 0, nonblock)
             .map(|(received, _from)| received.bytes)
     }
 
-    fn write_stream(&self, data: &[u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         // A request is answered as it is made, so a send never waits and the
         // descriptor's non-blocking flag has nothing to change.
         self.send(data, None)
@@ -614,7 +614,7 @@ fn clamp_buffer(requested: i32) -> usize {
         .unwrap_or(0)
         .saturating_mul(2);
     wanted.clamp(
-        ferrix_linux_abi::socket::SOCKET_BUFFER_MIN,
-        ferrix_linux_abi::socket::SOCKET_BUFFER_MAX,
+        xaqu_linux_abi::socket::SOCKET_BUFFER_MIN,
+        xaqu_linux_abi::socket::SOCKET_BUFFER_MAX,
     )
 }

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-virtio-console"
+name = "xaqu-virtio-console"
 description = "The virtio-console driver: four queues, the control conversation, and a port's bytes in and out"
 version.workspace = true
 edition.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-virtio = { workspace = true }
+xaqu-virtio = { workspace = true }
 
 [lints]
 workspace = true

@@ -13,11 +13,11 @@
 use std::io::Write as _;
 use std::process::ExitCode;
 
-use ferrix_native::channel::{self, Channel, ReadError};
-use ferrix_native::pending;
-use ferrix_native::port;
-use ferrix_native::{Deadline, Error, Object, Raw, Signals, Syscall};
-use ferrix_native_abi::directory::{Kind, MAX_MESSAGE, Message};
+use xaqu_native::channel::{self, Channel, ReadError};
+use xaqu_native::pending;
+use xaqu_native::port;
+use xaqu_native::{Deadline, Error, Object, Raw, Signals, Syscall};
+use xaqu_native_abi::directory::{Kind, MAX_MESSAGE, Message};
 
 /// Native calls through `syscall`, as `src/user/system/linux/init/init/src/sys.rs` makes them.
 #[derive(Debug, Clone, Copy)]

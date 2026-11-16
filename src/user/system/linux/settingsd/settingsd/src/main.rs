@@ -6,7 +6,7 @@
 //! ```
 //!
 //! Root, started by init on the first connection to `settings.socket`
-//! (`LISTEN_FDS`), or binding `/run/ferrix/settings` itself. Each connection
+//! (`LISTEN_FDS`), or binding `/run/xaqu/settings` itself. Each connection
 //! carries one request and is served on a thread of its own: at most
 //! [`MAX_CONNECTIONS`] at once, and [`MAX_PER_UID`] for any one uid, so a
 //! person who leaves a password prompt open holds up nobody else. It never
@@ -34,8 +34,8 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use ferrix_auth_client::{seqpacket_socket, socklen, unix_address};
-use ferrix_settings_proto::{RefusalKind, ToClient};
+use xaqu_auth_client::{seqpacket_socket, socklen, unix_address};
+use xaqu_settings_proto::{RefusalKind, ToClient};
 
 use crate::audit::say;
 use crate::authority::Authd;
@@ -106,7 +106,7 @@ fn run() -> Result<(), String> {
     let _ = unsafe { libc::signal(libc::SIGPIPE, libc::SIG_IGN) };
     let socket = options
         .socket
-        .unwrap_or_else(|| under(&options.root, ferrix_settings_proto::SOCKET));
+        .unwrap_or_else(|| under(&options.root, xaqu_settings_proto::SOCKET));
     let listener =
         listener(&socket).map_err(|e| format!("cannot listen on {}: {e}", socket.display()))?;
     let live = options.root == Path::new("/");
@@ -117,13 +117,13 @@ fn run() -> Result<(), String> {
             init: Box::new(Control::at(
                 options
                     .control
-                    .unwrap_or_else(|| PathBuf::from(ferrix_svc_proto::control::SOCKET)),
+                    .unwrap_or_else(|| PathBuf::from(xaqu_svc_proto::control::SOCKET)),
             )),
         },
         authority: Box::new(Authd::at(
             options
                 .authd
-                .unwrap_or_else(|| PathBuf::from(ferrix_auth_proto::SOCKET)),
+                .unwrap_or_else(|| PathBuf::from(xaqu_auth_proto::SOCKET)),
         )),
         passwd: under(&options.root, "/etc/passwd"),
         writing: Mutex::new(()),
@@ -168,7 +168,7 @@ fn serve(listener: &OwnedFd, context: &Arc<Context>) {
         if !admit(&busy, peer.uid) {
             let _ = wire::send(
                 connection.as_raw_fd(),
-                &ToClient::Refused(ferrix_settings_proto::Refusal::new(
+                &ToClient::Refused(xaqu_settings_proto::Refusal::new(
                     RefusalKind::Unavailable,
                     "settingsd is busy with other requests; try again",
                 )),

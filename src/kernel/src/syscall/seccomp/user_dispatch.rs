@@ -24,7 +24,7 @@
 //! **Per thread, never copied.** Every new thread, fork child and vfork
 //! child starts with it off (`Thread::with`), as Linux's `dup_task_struct`
 //! clears it, and `execve` clears it for the calling thread. Only the thread
-//! itself writes it; Ferrix has no ptrace.
+//! itself writes it; Xaqu has no ptrace.
 //!
 //! **The selector is read through `uaccess::copy_from_user`** at every call
 //! that needs it, which checks and clamps the address each time. The read
@@ -39,7 +39,7 @@
 //! architecture has `GENERIC_ENTRY`. On AArch64 and ARMv7-A every mode is
 //! `EINVAL` and nothing is set.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::{ENOSYS, SIGSYS, mark_dead, report};
 use crate::arch;
@@ -66,7 +66,7 @@ pub(crate) const SYSCALL_DISPATCH_FILTER_BLOCK: u8 = 1;
 const SIGSEGV: u32 = 11;
 
 /// Whether this architecture offers it.
-pub(crate) const BUILT: bool = matches!(arch::ARCH, ferrix_bootinfo::Arch::X86_64);
+pub(crate) const BUILT: bool = matches!(arch::ARCH, xaqu_bootinfo::Arch::X86_64);
 
 /// One thread's dispatch settings, as Linux's `struct syscall_user_dispatch`
 /// stores them: an inclusive range is kept inverted, so one test serves both

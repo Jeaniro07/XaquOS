@@ -1,8 +1,8 @@
 # A/B system slots: a trial boot with a way back
 
-Version 1, written 2026-10-11 by ab-boot for D8 of `docs/DEV-ON-FERRIX.md`
-(§4.4 (1), §10). The customer's ask: rebuild and update Ferrix from inside
-Ferrix, its kernel included, and a kernel that panics at boot must come back
+Version 1, written 2026-10-11 by ab-boot for D8 of `docs/DEV-ON-XAQU.md`
+(§4.4 (1), §10). The customer's ask: rebuild and update Xaqu from inside
+Xaqu, its kernel included, and a kernel that panics at boot must come back
 on the good slot by itself -- in this design, on the next reset, with no
 other action (§6.3). This document is the loader's half and the
 on-disk formats both halves share; the user-space half (`bootctl`, the
@@ -20,7 +20,7 @@ by SHA-256 alone, with no authenticity claim.
 ## 1. What it is, and what it is not
 
 * Two **system slots**, A and B, raw partitions each holding what the ESP's
-  `FERRIX/` holds today: a kernel, an initramfs and a command line (§2).
+  `XAQU/` holds today: a kernel, an initramfs and a command line (§2).
 * A **control record** on a small partition of its own (§3): the good slot,
   the trial slot and the tries left, in two checksummed copies.
 * The **loader** (`src/boot/common/uefi`) reads the record through UEFI's
@@ -32,19 +32,19 @@ by SHA-256 alone, with no authenticity claim.
 
 It is not: an A/B of the loader itself (the loader on the ESP is the fixed
 point the scheme stands on; it is changed by the installer, §7); a second
-root (one btrfs root is shared, `DEV-ON-FERRIX.md` §9, 4, and §6 below);
+root (one btrfs root is shared, `DEV-ON-XAQU.md` §9, 4, and §6 below);
 secure or measured boot (the slot's hashes detect a torn or wrong write,
 they do not authenticate; §8); a way back from a kernel that *hangs* without
 a reset (§6.3).
 
 ## 2. The slot
 
-A slot is a GPT partition of type **Ferrix system slot**,
+A slot is a GPT partition of type **Xaqu system slot**,
 `5475b681-82f5-47da-a5a1-55db0e7e2bd3`. Exactly two such partitions on the
 disk the loader was started from; **A is the one with the lower GPT entry
 index**, B the other. (The SN720: p4 is A, p5 is B, 4 GiB each.)
 
-Raw, no file system: Ferrix has no FAT writer (INSTALLER.md I4), and a raw
+Raw, no file system: Xaqu has no FAT writer (INSTALLER.md I4), and a raw
 slot is a byte copy for `bootctl` and a few block reads for the loader, with
 no dependence on firmware binding a FAT driver to a non-ESP partition.
 
@@ -55,7 +55,7 @@ byte 0     slot header, 4096 bytes (all little-endian)
             10  header_len  u16 = 4096
             12  blobs       u32 = 3
             16  generation  u64   the record sequence bootctl armed it under (informational)
-            24  label       [u8; 32]  e.g. "ferrix 0.1.0 a6d863da3", NUL padded (informational)
+            24  label       [u8; 32]  e.g. "xaqu 0.1.0 a6d863da3", NUL padded (informational)
             56  blob[0]     kernel:   offset u64, length u64, sha256 [u8; 32]   (48 bytes)
            104  blob[1]     initrd:   same; length 0 = none
            152  blob[2]     cmdline:  same; UTF-8, at most 2048 bytes
@@ -81,7 +81,7 @@ check and use.
 
 ## 3. The control record
 
-A GPT partition of type **Ferrix boot control**,
+A GPT partition of type **Xaqu boot control**,
 `c29aa8c5-c19c-4147-838f-01accca28be4`, exactly one on the boot disk, at
 least 128 KiB (the SN720's p3 is 1 MiB). It holds **two copies** of a
 512-byte record:
@@ -122,12 +122,12 @@ read-back makes a lost write visible to the writer that needs to know.
 
 The formats, the selection, the next-write computation and the decision of
 §4 are one `no_std`, `forbid(unsafe_code)`, allocation-free crate,
-**`ferrix-slots`** (`src/lib/proto/slots`), with its own CRC-32C, CRC-32
+**`xaqu-slots`** (`src/lib/proto/slots`), with its own CRC-32C, CRC-32
 (for the GPT) and SHA-256, used by the loader and by `bootctl`. Its host
 tests: round trips, every field's refusal, the selection over every pair of
 {valid old, valid new, torn, zero}, a write torn at every byte of the block,
 SHA-256 against the FIPS 180-4 vectors, the GPT scan against tables
-`ferrix-partition` writes, and the decision table of §4 exhaustively over
+`xaqu-partition` writes, and the decision table of §4 exhaustively over
 the record's states.
 
 ## 4. The loader's algorithm
@@ -146,7 +146,7 @@ the record's states.
    overlapping any other entry are each refused. Anything else -> say
    why, step 7. The loader reads no other disk.
 3. Read both record copies; select (§3).
-4. Make the attempt list (a pure function, `ferrix_slots::plan`):
+4. Make the attempt list (a pure function, `xaqu_slots::plan`):
       record                          attempts, in order
       uninitialised                   A, B                    (no write, ever)
       trial t, tries > 0              t as TRIAL, good  (no fallback: the
@@ -155,7 +155,7 @@ the record's states.
                                       fallback; the ESP's rescue comes first)
       no trial                        good, other as FALLBACK
 5. For each attempt: read the slot header and blobs into memory, verify (§2);
-   since SIGNING.md's S4, `ferrix-boot-policy` decides first whether the
+   since SIGNING.md's S4, `xaqu-boot-policy` decides first whether the
    header may start at all: version 1 only while the build's
    `slot_signing` is `off`, version 2 only when its manifest verifies
    under the loader's compiled anchors (`SIGNING.md` §10.6), refusing with
@@ -167,17 +167,17 @@ the record's states.
    not confirmed -> say so, free, next attempt (the good slot). Only then
    go on with this slot's kernel, initramfs and command line.
 6. No attempt verified -> step 7.
-7. Today's path: FERRIX/KERNEL.ELF, INITRD.IMG, CMDLINE.TXT, DEFAULTS.TXT
+7. Today's path: XAQU/KERNEL.ELF, INITRD.IMG, CMDLINE.TXT, DEFAULTS.TXT
    from the ESP (the rescue path on an installed disk, the only path
-   elsewhere). With `slot_signing = required`, only FERRIX/RESCUE.SLT, a
-   slot image decided as a slot is, and the unsigned files are not read. Absent -> FERRIX-PANIC loader: no slot verifies and the ESP
+   elsewhere). With `slot_signing = required`, only XAQU/RESCUE.SLT, a
+   slot image decided as a slot is, and the unsigned files are not read. Absent -> XAQU-PANIC loader: no slot verifies and the ESP
    holds no kernel.
 ```
 
 The loader **writes nothing but one block of the control partition**, at the
 byte offset of one copy, and only in step 5 -- and, outside the slots and the
 control partition, the previous kernel's log as the ESP's two files
-`FERRIX/LASTKERNEL.TXT` and `.PRV` (`docs/POSTMORTEM.md` §3.5).
+`XAQU/LASTKERNEL.TXT` and `.PRV` (`docs/POSTMORTEM.md` §3.5).
 
 What those two files cost the ESP (the consultant, ledger line 3693, (1)):
 
@@ -194,9 +194,9 @@ What those two files cost the ESP (the consultant, ledger line 3693, (1)):
   are on other partitions and unaffected, but the loader that reads them is
   on the ESP. Residual risk, accepted for the reference configuration's
   disks: a write of about 1 MiB a boot, against the many-minute run between
-  boots; the integrator who will not take it sets `ferrix.pstore=off`, which
+  boots; the integrator who will not take it sets `xaqu.pstore=off`, which
   writes nothing (VULNERABILITY-ANALYSIS V-17).
-* **Wear.** One boot after an `ferrix.pstore=on` boot writes up to about
+* **Wear.** One boot after an `xaqu.pstore=on` boot writes up to about
   2 MiB to the ESP (the old file moved, the new one written) and two
   directory updates: on an SD card or eMMC board, about 2 MiB of writes a
   boot, a few hundred times a day at the most for a machine that reboots
@@ -213,17 +213,17 @@ words first -- the kernel takes the first word with a key, so a slot's own
 command line cannot forge them -- then the slot's:
 
 ```
-ferrix.slot=a|b ferrix.slot.boot=trial|good|fallback ferrix.slot.seq=<sequence> ferrix.slot.disk=<disk GUID> ferrix.slot.sig=<anchor id>|none <the slot's command line>
+xaqu.slot=a|b xaqu.slot.boot=trial|good|fallback xaqu.slot.seq=<sequence> xaqu.slot.disk=<disk GUID> xaqu.slot.sig=<anchor id>|none <the slot's command line>
 ```
 
-`ferrix.slot.disk` is the boot disk's GPT disk GUID, lowercase in its usual
+`xaqu.slot.disk` is the boot disk's GPT disk GUID, lowercase in its usual
 text form, so that `bootctl` writes only the disk the loader booted from
 (the consultant's G4, for ab-sys's S1). The longest words -- `fallback`, a
 sequence of 2^64 - 1, the GUID -- and the longest slot command line (2048
 bytes) fit the boot info's command-line area with room to spare; a host
-test holds that against `ferrix-bootinfo`'s `BootInfo`.
+test holds that against `xaqu-bootinfo`'s `BootInfo`.
 
-`ferrix.slot.seq` is the sequence of the record the loader acted on (the one
+`xaqu.slot.seq` is the sequence of the record the loader acted on (the one
 it wrote, for a trial). The ESP's `CMDLINE.TXT` and `DEFAULTS.TXT` are not
 read on a slot boot: the slot carries the whole command line. The kernel
 needs no change: it ignores keys it does not know, and `/proc/cmdline` shows
@@ -234,7 +234,7 @@ command line as they do to `CMDLINE.TXT` (SAFETY-MANUAL).
 Cost: one GPT read, two record reads, one write + flush + read for a trial,
 and SHA-256 over the kernel and initramfs (measured in §9's gate, expected
 well under a second at hundreds of MB/s on x86-64). **Not so on ARMv7-A:**
-`ferrix-sha256` hashes at 44.4 cycles per byte on the DK1's Cortex-A7 at
+`xaqu-sha256` hashes at 44.4 cycles per byte on the DK1's Cortex-A7 at
 650 MHz, about 2.3 s per 32 MiB, since S4's fix; it was 127.7, 6.6 s, as
 landed in S1 (`docs/certification/MEMORY-AND-TIMING.md` §2.2z,
 2026-10-24). The 157D's HASH1 peripheral would take 0.38 s, but a
@@ -243,7 +243,7 @@ in software.
 
 ## 5. `bootctl` (ab-sys builds it; the rules it must keep)
 
-* **Writes only partitions of the two Ferrix types**, found by type GUID on
+* **Writes only partitions of the two Xaqu types**, found by type GUID on
   the disk holding the running slot, never by name or number -- the guard
   that keeps the SN720's p1 (the host's live swap) and every other
   partition unwritable.
@@ -253,8 +253,8 @@ in software.
   tries 0). 2. Write the image to the idle slot, fsync, read back and verify
   it as the loader does (§2). 3. Write the record: trial = idle, tries = N.
 * `bootctl good`: allowed only when `/proc/cmdline` says
-  `ferrix.slot.boot=trial`, and the record's trial is that slot and its
-  sequence is the `ferrix.slot.seq` booted (so a later re-arm is not marked
+  `xaqu.slot.boot=trial`, and the record's trial is that slot and its
+  sequence is the `xaqu.slot.seq` booted (so a later re-arm is not marked
   by an older boot). Writes good = that slot, trial none, tries 0.
 * `bootctl rollback`: takes an armed trial back -- writes the record with
   trial none, tries 0 and good unchanged -- and nothing else. It never makes
@@ -277,7 +277,7 @@ in software.
 | Good slot does not verify (bit rot, a bug in `bootctl`), **no trial armed** | the other slot as FALLBACK, then the ESP's rescue files |
 | Good slot does not verify, a trial armed or its tries spent | the trial, if armed and verified, after its recorded try; otherwise the ESP's rescue files next -- never the trial slot as a FALLBACK |
 | Good slot does not verify, and the other slot is a **failed trial** (trial set, tries 0) | the ESP's rescue files; the failed trial is never started again by the loader (the consultant's A2) |
-| Both slots bad, no rescue files | the loader stops with FERRIX-PANIC loader and says which check failed on each slot |
+| Both slots bad, no rescue files | the loader stops with XAQU-PANIC loader and says which check failed on each slot |
 | Record uninitialised or both copies corrupt | A, then B, no write; `bootctl init` repairs |
 | The disk lies about flush | outside the design: the read-back catches a write the device did not keep; a device that acknowledges, returns the new bytes and then loses them on power-off is not survived |
 | Trial slot damages the root volume | not survived by a slot (one shared root, §6.2) |
@@ -290,7 +290,7 @@ trial slot's system files overwrite the root's, and the next boot of the
 good slot finds its own archive differs from the stamp and puts its files
 back; files only the trial carried stay behind. A kernel that panics before
 the root switch never touches the root. This works without a kernel change;
-a snapshot before a trial is the later answer (`DEV-ON-FERRIX.md` §9, 4).
+a snapshot before a trial is the later answer (`DEV-ON-XAQU.md` §9, 4).
 
 ### 6.3 A panic halts; it does not reset
 
@@ -298,7 +298,7 @@ a snapshot before a trial is the later answer (`DEV-ON-FERRIX.md` §9, 4).
 `ExitBootServices`. So "comes back by itself" means: **on the next reset**
 (a person, or a power cycle), with no other action and no rescue medium. The
 gate (§9) models that reset as a power cycle of the guest. An automatic
-reset after a trial boot's panic -- `ferrix.panic=reset`, which the loader
+reset after a trial boot's panic -- `xaqu.panic=reset`, which the loader
 would add only on a TRIAL boot -- is a change to the core's `panic.rs` and is
 **proposed as a separate review, not part of this design**; so is a
 hardware watchdog for a trial that hangs rather than panics.
@@ -307,7 +307,7 @@ hardware watchdog for a trial that hangs rather than panics.
 
 | Where | Change |
 |---|---|
-| `src/lib/proto/slots` (new) | `ferrix-slots`: §2's header, §3's record, the selection, the next write, §4's plan, the GPT scan, CRC-32, CRC-32C, SHA-256; `no_std`, no `unsafe`, no allocation |
+| `src/lib/proto/slots` (new) | `xaqu-slots`: §2's header, §3's record, the selection, the next write, §4's plan, the GPT scan, CRC-32, CRC-32C, SHA-256; `no_std`, no `unsafe`, no allocation |
 | `src/boot/common/uefi` | Block I/O and Device Path protocol bindings (`uefi/protocols.rs`); `LocateDevicePath` (`tables.rs`); a `slots.rs` doing §4 steps 1-6 through `Services`; `main.rs` takes the kernel, initramfs and command line from a slot or, as today, from the ESP |
 | `tools/common/xtask` | a slot image writer (the crate's encoder), `test-ab-boot` (§9) |
 | kernel | **none** |
@@ -329,7 +329,7 @@ What the item's documents gain:
 * **A.FIRMWARE** names the slot path: the loader delivers the image of the
   slot the control record selects, verified against the slot header's
   SHA-256 digests, and writes nothing but one block of the control partition
-  and the ESP's two `FERRIX/LASTKERNEL` files.
+  and the ESP's two `XAQU/LASTKERNEL` files.
 * **V-12** stays true and gains a sentence: the slot hashes detect a torn or
   misdirected write and are no integrity claim against an attacker -- whoever
   writes a slot writes its header. No secure or measured boot is claimed.
@@ -360,7 +360,7 @@ statement, and §9 names the gate case or control for each):
 * **P3** a slot is started only if it verifies (§2);
 * **P4** the loader writes only the control partition's two record blocks,
   inside a range that overlaps no other GPT entry, and the ESP's two
-  `FERRIX/LASTKERNEL` files through firmware's FAT;
+  `XAQU/LASTKERNEL` files through firmware's FAT;
 * **P5** a slot boot's command line begins with the loader's slot words and
   is never truncated.
 
@@ -370,12 +370,12 @@ statement, and §9 names the gate case or control for each):
 AArch64): a virtual disk with the SN720's layout scaled down -- p1 a dummy
 "swap" partition filled with a pattern, p2 an ESP holding only the loader,
 p3 the control partition, p4/p5 slots, p6 a root -- built by xtask with
-`ferrix-partition` and `ferrix-slots`. Each boot is a fresh QEMU process on
+`xaqu-partition` and `xaqu-slots`. Each boot is a fresh QEMU process on
 the same disk file (a power cycle).
 
 | # | Setup | Required |
 |---|---|---|
-| 1 | good A; trial B with a system that panics at boot; tries 1 | boot 1: loader says it decremented, B starts, `FERRIX-PANIC`; boot 2: loader boots A as good, `FERRIX-BOOT-…`, `ferrix.slot=a` in `/proc/cmdline`; record tries 0, sequence +1 |
+| 1 | good A; trial B with a system that panics at boot; tries 1 | boot 1: loader says it decremented, B starts, `XAQU-PANIC`; boot 2: loader boots A as good, `XAQU-BOOT-…`, `xaqu.slot=a` in `/proc/cmdline`; record tries 0, sequence +1 |
 | 2 | good A; trial B, a good system; tries 1 | boot 1: B as trial; the record is marked good (by `bootctl good` once ab-sys's lands; by the crate from the host until then); boot 2: B as good |
 | 3 | as 1, newest record copy corrupted | the older copy is used, and the loader writes over the corrupt one |
 | 4 | as 2, one byte of B's initramfs flipped | B does not verify; A boots; no write (sequence unchanged) |
@@ -396,7 +396,7 @@ consultant's A1, A7); no `cfg`, no feature:
   in p1: p1's hash changes;
 * the failed-trial ordering removed (`plan` falls back to the failed trial):
   case 6 starts B;
-* `no_readback`: a host test of `ferrix_slots::write_record`, since a
+* `no_readback`: a host test of `xaqu_slots::write_record`, since a
   dropped write cannot be made in QEMU: a disk double that drops writes is
   refused with the read-back and, with the read-back sabotaged, accepted.
 
@@ -411,13 +411,13 @@ consultant's A1, A7); no `cfg`, no feature:
 The `test-boot` rows for x86-64 and AArch64 are unchanged: their images have
 no HardDrive node, and the loader takes today's path.
 
-Host tests of `ferrix-slots` as §3 lists, in `check`.
+Host tests of `xaqu-slots` as §3 lists, in `check`.
 
 ## 10. Slices
 
 | | Slice | Points |
 |---|---|---|
-| AB1 | `ferrix-slots` and its host tests; this document | 3 |
+| AB1 | `xaqu-slots` and its host tests; this document | 3 |
 | AB2 | The loader: Block I/O, GPT, record, slots, plan, command line | 5 |
 | AB3 | `test-ab-boot` with its controls | 3 |
 | (ab-sys) | `bootctl`, installer `--slots`, `test-install --slots` | theirs |
@@ -425,11 +425,11 @@ Host tests of `ferrix-slots` as §3 lists, in `check`.
 ## 11. Where it stands
 
 2026-10-11: this design; the consultant's design verdict **OK IF A1-A10**
-(ledger `~/.local/share/ferrix/cert-consultant/reviews.md` line 727), its
+(ledger `~/.local/share/xaqu/cert-consultant/reviews.md` line 727), its
 conditions folded in above; no requirement ids (line 727 (a)). AB1-AB3
 built on branch `ab-boot`; the code review's verdict **OK IF G1-G6** (line
-733): G1 Ferrix partitions only inside the usable blocks, G4
-`ferrix.slot.disk`, G5 §6's qualified rows, G3 AoU-28 also taken by
+733): G1 Xaqu partitions only inside the usable blocks, G4
+`xaqu.slot.disk`, G5 §6's qualified rows, G3 AoU-28 also taken by
 softgl-clock -- whichever lands second renumbers. Both landed on
 2026-10-11 as AoU-28; on 2026-10-12 this design's became **AoU-29**
 (SAFETY-MANUAL §4, SECURITY-TARGET A.FIRMWARE, ITEM.md), and

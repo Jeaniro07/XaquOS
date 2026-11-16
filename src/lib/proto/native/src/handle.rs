@@ -18,10 +18,10 @@
 
 use core::mem::ManuallyDrop;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Requested, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Requested, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode, decode_handle, decode_unit};
@@ -291,7 +291,7 @@ macro_rules! object_handle {
             /// As `OwnedHandle::duplicate`.
             pub fn duplicate(
                 &self,
-                rights: ferrix_native_abi::rights::Requested,
+                rights: xaqu_native_abi::rights::Requested,
             ) -> Result<Self, $crate::error::Error> {
                 self.0.duplicate(rights).map(Self)
             }
@@ -303,7 +303,7 @@ macro_rules! object_handle {
             /// As `OwnedHandle::replace`, which gives the original back.
             pub fn replace(
                 self,
-                rights: ferrix_native_abi::rights::Requested,
+                rights: xaqu_native_abi::rights::Requested,
             ) -> Result<Self, ($crate::error::Error, Self)> {
                 self.0
                     .replace(rights)
@@ -313,7 +313,7 @@ macro_rules! object_handle {
         }
 
         impl<S: $crate::call::Syscall> $crate::handle::Object<S> for $name<S> {
-            fn handle(&self) -> ferrix_native_abi::handle::Handle {
+            fn handle(&self) -> xaqu_native_abi::handle::Handle {
                 self.0.raw()
             }
 

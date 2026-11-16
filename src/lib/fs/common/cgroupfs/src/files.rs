@@ -77,11 +77,11 @@ pub enum Kind {
     MemoryMin,
     /// `memory.events`.
     MemoryEvents,
-    /// `memory.stat`: the keys Ferrix has a source for.
+    /// `memory.stat`: the keys Xaqu has a source for.
     MemoryStat,
     /// `memory.reclaim`: a write of a size asks for that much to be given
     /// back now. Write-only, as on Linux: mode 0200. Linux's root has it too;
-    /// Ferrix's root has no memory file, and a reclaim of the whole machine
+    /// Xaqu's root has no memory file, and a reclaim of the whole machine
     /// would not spare what the children's `memory.min` protects.
     MemoryReclaim,
     /// `memory.swap.current`: bytes of the cgroup's pages that are in swap.

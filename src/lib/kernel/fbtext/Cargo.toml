@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-fbtext"
+name = "xaqu-fbtext"
 description = "Text and filled rectangles on a linear framebuffer, with an embedded bitmap font"
 version = "0.1.0"
 edition = "2024"

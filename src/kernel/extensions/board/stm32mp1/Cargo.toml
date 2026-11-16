@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel-board-stm32mp1"
-description = "The Ferrix kernel's STM32MP1 board glue (the DK1): a load-ring part the composition root installs"
+name = "xaqu-kernel-board-stm32mp1"
+description = "The Xaqu kernel's STM32MP1 board glue (the DK1): a load-ring part the composition root installs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,12 +17,12 @@ build = "../../../build.rs"
 path = "src/lib.rs"
 
 [dependencies]
-ferrix-kernel-core.workspace = true
-ferrix-kernel-item.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-fdt.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-sync.workspace = true
+xaqu-kernel-core.workspace = true
+xaqu-kernel-item.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-fdt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-sync.workspace = true
 
 [lints]
 workspace = true

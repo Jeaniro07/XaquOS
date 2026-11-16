@@ -15,7 +15,7 @@ Status: **reviewed and being built** (§12): N1 landed 2026-09-28.
 
 Two host traces, 2026-09-28, on nazuna (Linux 7.0, AppArmor restricting
 unprivileged user namespaces), kept in
-`~/.local/share/ferrix/steam-ref/userns/`:
+`~/.local/share/xaqu/steam-ref/userns/`:
 
 * `req.strace` -- `strace -f` of scout's `steam-runtime-check-requirements`,
   the check `steam.sh` runs before every start and whose exit 71 ("Steam now
@@ -45,7 +45,7 @@ bwrap [--not-a-security-boundary] [--level-prefix] [--perms 0700 --dir /]
 
 and passes when the plain one exits 0. On the host `srt-bwrap` is refused
 by AppArmor (`setting up uid map: Permission denied`) and the checker falls
-back to `/usr/bin/bwrap`, which succeeds; on Ferrix there is only
+back to `/usr/bin/bwrap`, which succeeds; on Xaqu there is only
 `srt-bwrap`. The checker also reads `/proc/sys/kernel/unprivileged_userns_clone`
 and `/proc/sys/user/max_user_namespaces`, only to word its error message.
 
@@ -115,11 +115,11 @@ Inside, `pv-adverb` uses `PR_SET_CHILD_SUBREAPER`, `PR_SET_PDEATHSIG`,
 `F_OFD_SETLK`, `close_range`, and runs `ldconfig` into the ldso tmpfs.
 Before bwrap, `pressure-vessel-wrap` builds a mutable copy of the runtime
 with 6,601 `linkat` calls, `utimensat`, `fchmod` and `getxattr`. None of
-that is a namespace; §9's last slice finds what of it Ferrix lacks.
+that is a namespace; §9's last slice finds what of it Xaqu lacks.
 
 ### 1.4 As root it is a different program
 
-Steam runs as root on Ferrix today (`tools/common/xtask/src/steam.rs`: `USER=root`).
+Steam runs as root on Xaqu today (`tools/common/xtask/src/steam.rs`: `USER=root`).
 bwrap turns a user namespace on only for a caller that is neither setuid
 nor uid 0 (`if (!is_privileged && getuid () != 0) opt_unshare_user = TRUE`);
 as root it keeps its capabilities and makes a mount namespace alone:
@@ -135,7 +135,7 @@ bind, remount and `pivot_root` sequence is the same. So:
   client needs to be uid 1000 throughout for its semaphores too.
 * bwrap as root also makes `/proc/sys`, `/proc/sysrq-trigger` read-only by
   binding each onto itself and remounting it `ro` when `access(W_OK)`
-  passes, which for root it does. Ferrix has `/proc/sysrq-trigger`, so a
+  passes, which for root it does. Xaqu has `/proc/sysrq-trigger`, so a
   bind of one file of procfs onto itself, and read-only enforced on
   procfs, are needed for the root path too.
 
@@ -158,7 +158,7 @@ bind, remount and `pivot_root` sequence is the same. So:
 
 Numbers, from the local UAPI headers (QEMU's `linux-headers/`, and the
 host's `linux/sched.h`, `linux/mount.h`, `linux/prctl.h`,
-`linux/capability.h`), all already in Ferrix's tables and routed:
+`linux/capability.h`), all already in Xaqu's tables and routed:
 
 | Call | x86-64 | i386 | AArch64 | ARMv7-A |
 |---|---:|---:|---:|---:|
@@ -183,7 +183,7 @@ host's `linux/sched.h`, `linux/mount.h`, `linux/prctl.h`,
 
 ### 2.1 Mount namespaces
 
-Today there is one `ferrix_vfs::Namespace` (`fs::namespace()`): a root
+Today there is one `xaqu_vfs::Namespace` (`fs::namespace()`): a root
 mount, a table of mounts keyed by `(mount id, dentry id)` of the place each
 covers, a dentry cache and a rename lock. A `Location` is `(Arc<Mount>,
 Arc<Dentry>)`, and most of `Namespace`'s methods already act on a location
@@ -839,7 +839,7 @@ after the final rebase; the consultant's OK on the diff before each
 | NP | procfs by `ptrace_may_access` (M8): `root`, `cwd`, `exe`, `fd/*` and `fd`'s listing, `fdinfo`, `maps`, `ns/*` (`mountinfo` is not guarded, as on Linux) (dumpable is cleared by a set-id `execve` since 2026-09-30); closes the `proc_fd_link` row of `docs/BACKLOG.md` and the "procfs honouring `PR_SET_DUMPABLE`" part of `docs/AUTH.md`'s phase 2 | M8 | boot checks of §8's M8 line | 3 |
 | N5 | Unprivileged mounting: `may_mount` by `ns_capable`, M2's types and forced flags, M3's locking on copy, M4, M5, the lock's move on `pivot_root` | **bwrap as uid 1000 works** | boot checks: M1 to M5; `test-bwrap` as uid 1000 | 6 |
 | N6 | `test-steam-bootstrap` as uid 1000 (§11) without the set-aside: the image gets what bwrap's sandbox execs (`/usr/bin/true`, a static busybox under `/usr`, since the volume's libraries are links into `/data` that dangle inside the sandbox); the checker must exit 0 | the customer's end point | `test-steam-bootstrap --arch x86_64` | 3 |
-| N7 | pressure-vessel on Ferrix: `_v2-entry-point` running the §1 probe in the steamrt64 container, as uid 1000; whatever it needs beyond namespaces is filed as rows (hard links on btrfs, `F_OFD_SETLK`, the host `/usr` layout it copies graphics drivers from) | the container `steamwebhelper` runs in | a probe script in `test-steam-bootstrap` | 3, plus what it finds |
+| N7 | pressure-vessel on Xaqu: `_v2-entry-point` running the §1 probe in the steamrt64 container, as uid 1000; whatever it needs beyond namespaces is filed as rows (hard links on btrfs, `F_OFD_SETLK`, the host `/usr` layout it copies graphics drivers from) | the container `steamwebhelper` runs in | a probe script in `test-steam-bootstrap` | 3, plus what it finds |
 
 **39 points** for N1 to N6 with NP, 42 with N7's probe. Order as listed: each
 builds on the one before, and N3 already turns the requirements check green
@@ -1161,7 +1161,7 @@ How it differs from the design, and what is open:
   the reference count, and the flags half is checked); a real `execve` of a
   set-id file under a namespace (`Credentials::exec` is the decision point and
   is checked); the `max_user_namespaces` sysctl (N5 adds it, with the
-  enforcement). `verify_root_map` needs file capabilities, which Ferrix has
+  enforcement). `verify_root_map` needs file capabilities, which Xaqu has
   none of; add it if it ever does.
 * **Gated:** `cargo xtask check`; the boot on x86_64, aarch64 and armv7a at
   `--smp 2`; `test-shell`, `test-vfs` and `test-init` on x86_64; and, in the
@@ -1338,7 +1338,7 @@ What a program sees:
   is `CAP_SYS_ADMIN` over the namespace's owner (S2).
 * **IPC.** The semaphore table is the namespace's, with its keys, ids,
   `IPC_INFO`, `SEM_INFO` and undo records; the sets go with the namespace.
-  There is no `/proc/sysvipc/sem` in Ferrix to make per namespace.
+  There is no `/proc/sysvipc/sem` in Xaqu to make per namespace.
 * **cgroup.** The creator's cgroup is the root. `/proc/<pid>/cgroup` is told
   from the reader's root with `..` for what lies outside it; a `cgroup2`
   mounted by a process in the namespace has the root as its `/`; a writer of
@@ -1363,7 +1363,7 @@ How it differs from Linux, and from the design above:
   context (`CLONE_FS`) is `EINVAL`; Linux copies the struct and succeeds for
   a mount namespace.
 * **`/proc/<pid>/ns/*` opens by the same person or root** (S5); Linux asks
-  `ptrace_may_access`, including dumpability, which Ferrix does not yet have
+  `ptrace_may_access`, including dumpability, which Xaqu does not yet have
   for these links (the M8 landing, NP, adds it for `root`, `cwd`, `exe`, `fd`).
 * **Native processes** (`process_create`) start in their creator's UTS, IPC
   and cgroup namespaces, as in its mount namespace since N3
@@ -1406,7 +1406,7 @@ How it differs from Linux, and from the design above:
 * **`sethostname` by sysctl write** is judged by the file's mode only (root's
   0644), as before; fake root writes the file only through `sethostname`.
 * No `/proc/sys/kernel/sem` or other per-namespace IPC sysctls, and no
-  shared memory or message queues, which Ferrix does not have.
+  shared memory or message queues, which Xaqu does not have.
 * `NS_GET_MNTNS_ID`, `NS_GET_ID`, `NS_MNT_GET_*` and the pid requests of
   a newer `nsfs.h` are `ENOTTY`.
 

@@ -1,5 +1,5 @@
 //! Whether this boot runs the stages' self-checks: the core's own copy of
-//! the answer `checks::init` reads from `ferrix.checks`.
+//! the answer `checks::init` reads from `xaqu.checks`.
 //!
 //! The item's `checks` module parses the option and says what it asked for;
 //! the flag itself lives here, in the core, so that a check the core runs
@@ -16,7 +16,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 static SKIPPED: AtomicBool = AtomicBool::new(false);
 
 /// Record that this boot skips the self-checks: `checks::init`, once, when
-/// it read `ferrix.checks=skip`.
+/// it read `xaqu.checks=skip`.
 pub fn skip() {
     SKIPPED.store(true, Ordering::Relaxed);
 }
@@ -25,7 +25,7 @@ pub fn skip() {
 /// kernel built with the build flag `checks=off` (`docs/BUILD-FLAGS.md` §3,
 /// BF7), where [`run`] is the constant `false` and every check it gates, the
 /// core's included, is compiled out of the image.
-pub const COMPILED_IN: bool = !cfg!(ferrix_checks = "off");
+pub const COMPILED_IN: bool = !cfg!(xaqu_checks = "off");
 
 /// Whether the self-checks run on this boot: true unless [`skip`] was called,
 /// and never in a kernel built `checks=off` ([`COMPILED_IN`]).

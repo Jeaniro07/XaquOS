@@ -749,7 +749,7 @@ struct WorkerCheck {
 const WORKER_PATIENCE_NANOS: u64 = 60_000_000_000;
 
 /// Pages of a worker's stack: the boot stack's.
-const WORKER_STACK_PAGES: u64 = ferrix_bootinfo::BOOT_STACK_SIZE / PAGE_SIZE;
+const WORKER_STACK_PAGES: u64 = xaqu_bootinfo::BOOT_STACK_SIZE / PAGE_SIZE;
 
 /// The checks workers run.
 static WORKER_CHECKS: [WorkerCheck; 1] = [
@@ -825,7 +825,7 @@ fn end_crash_hold() {
 }
 
 /// The crash hold's check (`fs::crashes`, `docs/LOGGING.md` §21): a fault
-/// held while `/dev/ferrix-crashes` is armed, released every way it can be,
+/// held while `/dev/xaqu-crashes` is armed, released every way it can be,
 /// and not held otherwise.
 fn check_crash_hold() {
     let held = match syscall::deliver::check_the_crash_hold() {
@@ -836,7 +836,7 @@ fn check_crash_hold() {
         ),
     };
     println!(
-        "  crashes  a fault held while /dev/ferrix-crashes is armed and not otherwise; released \
+        "  crashes  a fault held while /dev/xaqu-crashes is armed and not otherwise; released \
          by done in {} us, by SIGKILL, exit_group and the reader's close at once, by the \
          deadline after {} ms, each by the fault's signal; {} held at once, {} more counted \
          dropped; the reader's own and a sharer's faults not held",
@@ -904,7 +904,7 @@ pub(super) fn check_init_inputs() {
         ),
     };
     println!(
-        "  inputs   {} sets of entries under .ferrix/init judged, {} entries refused as each \
+        "  inputs   {} sets of entries under .xaqu/init judged, {} entries refused as each \
          should be and taken as absent, a second set_inputs refused",
         report.cases, report.refusals
     );
@@ -1079,9 +1079,9 @@ pub(super) fn check_trap_flag_entry() {
     }
 
     let class = if usize::BITS == 64 {
-        ferrix_elf::Class::Elf64
+        xaqu_elf::Class::Elf64
     } else {
-        ferrix_elf::Class::Elf32
+        xaqu_elf::Class::Elf32
     };
     let file = syscall::image::build_with(
         class,
@@ -1090,7 +1090,7 @@ pub(super) fn check_trap_flag_entry() {
         arch::USER_STEP_PROGRAM,
     );
     let Ok(status) =
-        syscall::exec::run(&file, &[b"/step"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+        syscall::exec::run(&file, &[b"/step"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
     else {
         fatal!(
             catalog::STAGE7_SYSCALLS,
@@ -2033,7 +2033,7 @@ pub(super) fn check_chardev() {
 ///
 /// Halts rather than returning, as every other stage's check does.
 pub(super) fn check_net_ring() {
-    let report = match ferrix_kernel_net_ring::interfaces::net_ring::check::run() {
+    let report = match xaqu_kernel_net_ring::interfaces::net_ring::check::run() {
         Ok(report) => report,
         Err(problem) => fatal!(catalog::NET_RING, "net ring self-check failed: {problem}"),
     };
@@ -2079,7 +2079,7 @@ pub(super) fn check_netlink() {
 /// oldest bytes and then the next, a second reader refused, a driver that
 /// breaks the protocol refused, and a claim ended by its channel.
 pub(super) fn check_log_control() {
-    match ferrix_kernel_logctl::interfaces::logctl::check::run() {
+    match xaqu_kernel_logctl::interfaces::logctl::check::run() {
         Ok(report) => println!(
             "  logctl   {} bytes from the log's oldest in two DATA ({} lost before them), a \
              second reader refused, a driver that lied lost its claim, a closed claim ended in {} ms",
@@ -2356,11 +2356,11 @@ pub(super) fn check_a_skipped_arm() -> Result<SkippedArm, &'static str> {
 fn one_deadline_twice() -> Result<u64, &'static str> {
     let before = timer::ticks();
     let writes = timer::writes_here();
-    let saved = <arch::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <arch::Irq as xaqu_sync::IrqControl>::disable();
     let start = timer::now_nanos();
     timer::after_from(SHORT_ARM_NANOS, start);
     timer::after_from(SHORT_ARM_NANOS, start);
-    <arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+    <arch::Irq as xaqu_sync::IrqControl>::restore(saved);
     let give_up = start.saturating_add(LONG_ARM_NANOS + ARRIVAL_NANOS);
     while !wait_unless(|| timer::ticks() != before || timer::now_nanos() >= give_up) {}
     if timer::ticks() == before {
@@ -2379,11 +2379,11 @@ fn short_fires_in_time(arms: &[u64]) -> Option<u64> {
     // Masked, as `timer::after` is called: a tick between an arm and the
     // bound it keeps would leave the bound over a quiet timer, and every
     // later arm on this processor skipped.
-    let saved = <arch::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <arch::Irq as xaqu_sync::IrqControl>::disable();
     for nanos in arms {
         timer::after(*nanos);
     }
-    <arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+    <arch::Irq as xaqu_sync::IrqControl>::restore(saved);
     let give_up = start.saturating_add(LONG_ARM_NANOS + ARRIVAL_NANOS);
     while !wait_unless(|| timer::ticks() != before || timer::now_nanos() >= give_up) {}
     let took = timer::now_nanos().saturating_sub(start);
@@ -2766,9 +2766,9 @@ pub(super) fn check_no_early_window_wraps(memory: &mut EarlyMemory) -> Result<()
 /// check on x86-64 under TCG at a load of about 12
 /// (`logs/queue/batch-20261007T145820Z-9.log` on nazuna).
 fn wait_unless(done: impl Fn() -> bool) -> bool {
-    let saved = <arch::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <arch::Irq as xaqu_sync::IrqControl>::disable();
     if done() {
-        <arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+        <arch::Irq as xaqu_sync::IrqControl>::restore(saved);
         return true;
     }
     arch::wait_for_work();

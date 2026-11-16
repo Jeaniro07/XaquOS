@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-linuxd-dies"
+name = "xaqu-linuxd-dies"
 description = "A test image in linuxd's place: a partition's linuxd that dies at its start. It never ships in a product image."
 version.workspace = true
 edition.workspace = true
@@ -14,7 +14,7 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

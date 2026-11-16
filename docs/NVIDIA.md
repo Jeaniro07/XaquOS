@@ -1,11 +1,11 @@
-# NVIDIA's own driver on Ferrix
+# NVIDIA's own driver on Xaqu
 
 Version 2, 2026-10-02. Version 1 was the draft for the customer, who
 answered §9 the same day; the design below follows those answers.
 The customer chose the path that day (`docs/BACKLOG.md` Decisions): a real
 NVIDIA driver, not nouveau and not NVK. NVIDIA's
 [open-gpu-kernel-modules](https://github.com/NVIDIA/open-gpu-kernel-modules)
-is ported so that its OS-agnostic core runs as a Ferrix driver. NVIDIA's own
+is ported so that its OS-agnostic core runs as a Xaqu driver. NVIDIA's own
 userspace (`libnvidia-*`, the Vulkan and GL ICD, and later CUDA) then runs
 unmodified under the Linux personality. It talks to `/dev/nvidiactl`,
 `/dev/nvidia0`, `/dev/nvidia-modeset` and `/dev/nvidia-uvm` as it does on
@@ -13,7 +13,7 @@ Linux. This document is the feasibility pass (§2) and the design that comes
 out of it. Nothing in it is built yet beyond the probe in §2.3.
 
 It replaces the sketch in `docs/GPU.md` §4 ("Path B") and gives
-`docs/roadmap/stage-21-bare-metal-gpu-ferrix.md` its first sizing. One of that
+`docs/roadmap/stage-21-bare-metal-gpu-xaqu.md` its first sizing. One of that
 sketch's premises no longer holds: it called glibc-built closed libraries
 "the part most likely to decide the whole path". Since then Chrome and
 yserver run from data volumes through Debian's `ld-linux`, and NVIDIA's
@@ -26,7 +26,7 @@ This is:
 * **the driver**: NVIDIA's resource manager (`src/nvidia`, "RM") and its
   display half (`src/nvidia-modeset`, "NVKMS"), built from NVIDIA's own
   makefiles. They run in a ring-3 process, `nvrm`, under an OS layer written
-  for Ferrix (§4.1–4.3);
+  for Xaqu (§4.1–4.3);
 * **the device files**: a kernel core that serves NVIDIA's character
   devices, `/proc/driver/nvidia` and the rest of what the userspace probes,
   by forwarding each request to `nvrm` (§4.4);
@@ -36,15 +36,15 @@ This is:
 It is not nouveau, NVK or Nova. Those were weighed in `docs/GPU.md` §4, and
 the customer has now decided against them.
 
-It is not a GPU of Ferrix's own design. Everything above the OS layer is
+It is not a GPU of Xaqu's own design. Everything above the OS layer is
 NVIDIA's code, at a pinned release, unmodified.
 
-It is not something every Ferrix machine gets. It needs an NVIDIA GPU that
-Ferrix owns, either on bare metal or passed through by KVM. The WHPX world
+It is not something every Xaqu machine gets. It needs an NVIDIA GPU that
+Xaqu owns, either on bare metal or passed through by KVM. The WHPX world
 on the customer's Windows machine has no passthrough, so this path does not
 exist there (§8, R6).
 
-**Exit of this design (N1):** on nazuna, in the libvirt domain `ferrix-3060`,
+**Exit of this design (N1):** on nazuna, in the libvirt domain `xaqu-3060`,
 NVIDIA's GSP firmware boots on the RTX 3060. NVIDIA's unmodified
 `nvidia-smi`, run from a data volume, lists `NVIDIA GeForce RTX 3060` with
 its memory and its PCI address. N2–N4 then put pixels and programs on it.
@@ -67,7 +67,7 @@ its memory and its PCI address. N2–N4 then put pixels and programs on it.
   the 32-bit libraries, is 326 MB. Neither was downloaded: the analysis
   used the installed copies.
 * **The tree**: a shallow clone is 152 MB, in
-  `~/.local/share/ferrix/nvidia-ref/ogkm-580.173.02` (not committed).
+  `~/.local/share/xaqu/nvidia-ref/ogkm-580.173.02` (not committed).
 
 ### 2.2 The core builds as freestanding objects
 
@@ -80,7 +80,7 @@ makefiles and the host's gcc 15, built both objects on the first try:
 | `nv-modeset-kernel.o` (NVKMS) | 1.5 MB | 2,694 | 69 |
 
 What RM needs from the OS (the full lists are in
-`~/.local/share/ferrix/nvidia-ref/*.undef`):
+`~/.local/share/xaqu/nvidia-ref/*.undef`):
 
 * **150 `os_*` functions.** By area:
   * memory: `os_alloc_mem`, `os_alloc_pages_node`, `os_get_page`;
@@ -157,11 +157,11 @@ of the 580.173.02 libraries on nazuna (`libnvidia-glcore`, `libnvidia-eglcore`,
     `/proc/devices`;
   * `/dev/char/<maj>:<min>` links.
   If a node is missing, the libraries run `/usr/bin/nvidia-modprobe` to
-  make it, so Ferrix should simply have the nodes.
+  make it, so Xaqu should simply have the nodes.
 * **`/proc/driver/nvidia/`**: `params` (DeviceFileUID/GID/Mode and
   ModifyDeviceFiles are read before any open), `gpus/<bdf>/…` (`information`,
   `numa_status`), `capabilities/…` (MIG only), and `version`.
-* **`/sys`**: `/sys/bus/pci/devices` (which Ferrix has) and
+* **`/sys`**: `/sys/bus/pci/devices` (which Xaqu has) and
   `…/<bdf>/rescan`. Also `/sys/devices/system/memory/…` (NUMA onlining, for
   coherent platforms only), `/sys/module/<name>/initstate`, and CPU
   topology under `/sys/devices/system/cpu`.
@@ -208,10 +208,10 @@ of the 580.173.02 libraries on nazuna (`libnvidia-glcore`, `libnvidia-eglcore`,
 
 **Setup.**
 
-* **Domain**: `ferrix-3060` in `qemu:///system`. Its XML is
-  `~/ferrix-nvidia-vm/ferrix-3060.xml`, and Appendix A has a copy.
+* **Domain**: `xaqu-3060` in `qemu:///system`. Its XML is
+  `~/xaqu-nvidia-vm/xaqu-3060.xml`, and Appendix A has a copy.
 * **Image**: the `nvidia` branch's x86-64 image, copied to
-  `~/ferrix-nvidia-vm/ferrix.img`.
+  `~/xaqu-nvidia-vm/xaqu.img`.
 * **Machine**:
   * q35 with OVMF (`OVMF_CODE_4M.fd`, no Secure Boot) and KVM;
   * 2 vCPUs (`host-passthrough`, `maxphysaddr` passthrough, `invtsc`
@@ -228,9 +228,9 @@ of the 580.173.02 libraries on nazuna (`libnvidia-glcore`, `libnvidia-eglcore`,
 Before every start, the customer's domains that share the card (GameLab,
 win11, manjaro, manjaro-kde-test, manjaro-xfce-test, manjaro-sway-test) were
 checked to be shut off. They were each time. The domain was shut off after
-each boot. Six boots were made; the logs are in `~/ferrix-nvidia-vm/serial*.log`.
+each boot. Six boots were made; the logs are in `~/xaqu-nvidia-vm/serial*.log`.
 
-**What Ferrix saw:**
+**What Xaqu saw:**
 
 ```
   nvidia   0000:00:05.0: 10de:2504 rev a1 class 030000, memory decoding on
@@ -242,7 +242,7 @@ each boot. Six boots were made; the logs are in `~/ferrix-nvidia-vm/serial*.log`
   nvidia   0000:00:05.0: BAR0 read: NV_PMC_BOOT_0 0xb76000a1, NV_PMC_BOOT_42 0x176a1000
   nvidia   0000:00:05.0: resizable BAR1: now 16384 MiB, sizes 0x40000 (bit n+4 = 2^n MiB), more 0x0
   iommu    pci 0000:00:05.0 behind the VtD unit at 0xfed90000 as stream 0x28
-FERRIX-BOOT-OK stages 1-12
+XAQU-BOOT-OK stages 1-12
 ```
 
 What these lines show:
@@ -255,7 +255,7 @@ What these lines show:
   * BAR3 is 32 MiB;
   * BAR5 is I/O.
   
-  OVMF placed the 64-bit BARs at about 56 TiB. Ferrix's 64-bit sizing
+  OVMF placed the 64-bit BARs at about 56 TiB. Xaqu's 64-bit sizing
   (`src/lib/platform/pci/src/bar.rs`) needed no change.
 * **The CPU reaches the chip's registers.** `NV_PMC_BOOT_42` `0x176a1000`
   is architecture 0x17 (Ampere), implementation 6 (GA106), revision A1.
@@ -263,14 +263,14 @@ What these lines show:
   size, so the guest cannot change BAR1's size, and does not need to.
 * **There is no MSI-X capability, only MSI** (`05@0x68`). The same holds
   behind a root port, where the PCIe capability (`10@0x78`) appears too.
-  Ferrix delivers only MSI-X (`src/kernel/src/discovery/pci.rs`,
+  Xaqu delivers only MSI-X (`src/kernel/src/discovery/pci.rs`,
   `src/kernel/src/arch/x86_64/msi.rs`). So **today the 3060 gets 0
   interrupt vectors**, and the boot's `devices` line says
   `0 vectors`. This is prerequisite N0b.
 * **The IOMMU path works when the card is on the root bus.** Placed at
   `00:05.0`, the card gets a translated VT-d domain (stream 0x28). The
   same unit's out-of-domain probe on the virtio-rng faulted as it must,
-  and the boot ended `FERRIX-BOOT-OK stages 1-12`. The card made no DMA,
+  and the boot ended `XAQU-BOOT-OK stages 1-12`. The card made no DMA,
   because there was no driver for it yet. The first real test of its DMA
   is GSP boot itself, which fetches its firmware from system memory (N1d).
 * **Behind a PCIe root port, where libvirt puts a hostdev by default**, the
@@ -282,7 +282,7 @@ What these lines show:
   PCIe capability for link state, and QEMU hides that capability on the root
   bus.
 
-**What failed on the way**, all in the domain rather than in Ferrix, and
+**What failed on the way**, all in the domain rather than in Xaqu, and
 written down so that the `run-nvidia` command in N0e avoids each one:
 
 1. **Both functions of the card in one domain behind a vIOMMU** were
@@ -293,12 +293,12 @@ written down so that the `run-nvidia` command in N0e avoids each one:
    group 14 stays bound to `vfio-pci` on the host.
 2. **libvirt's virtio devices bypass the vIOMMU** unless they are given
    `<driver iommu='on'/>`, which xtask's `iommu_platform=on` gives them.
-   Without it, Ferrix's stage 10 out-of-domain probe sees an unmapped write
+   Without it, Xaqu's stage 10 out-of-domain probe sees an unmapped write
    complete with no fault, and panics (FX-1001). That is correct: in that
    configuration it is unsafe.
 3. **libvirt's QEMU cannot traverse `~/.local/share`** (mode 0700), and
    virtlogd's serial log files are root's. So the image lives in
-   `~/ferrix-nvidia-vm/` (0755), and the serial port is a TCP socket on
+   `~/xaqu-nvidia-vm/` (0755), and the serial port is a TCP socket on
    127.0.0.1:47060 read by `capture.py`.
 4. **libvirt picks `OVMF.amdsev.fd`** when `firmware='efi'` is left to it.
    The loader is named explicitly.
@@ -309,19 +309,19 @@ Nothing NVIDIA ships is committed here: not the kernel modules, not the
 firmware, and not the userspace. Instead, `tools/common/fetch/fetch-nvidia.sh`
 does the following, as `fetch-steam.sh` and `fetch-yserver.sh` do:
 
-Everything it writes is under `~/.local/share/ferrix/nvidia/580.173.02/`
-(`$FERRIX_NVIDIA` moves the root), and it refuses a directory inside a git
+Everything it writes is under `~/.local/share/xaqu/nvidia/580.173.02/`
+(`$XAQU_NVIDIA` moves the root), and it refuses a directory inside a git
 checkout:
 
 * **The sources.** It fetches GitHub's tarball of open-gpu-kernel-modules'
   580.173.02 tag. It checks a pinned sha256 and that the tarball's header
   names the tag's commit, `20e4e6e1`. It unpacks the tarball into `src/`.
   `cargo xtask test-uvm` and `uvm-kpi`'s Makefile build UVM from there,
-  unless `FERRIX_NVIDIA_SRC` names another tree.
+  unless `XAQU_NVIDIA_SRC` names another tree.
 * **The build.** It builds `nv-kernel.o` and `nv-modeset-kernel.o` with
   NVIDIA's own makefiles, unmodified, in `src/`, and copies them to
   `objects/` with lists of what each defines and imports. The summary
-  compares those counts with §2.2's. Ferrix needs no patch to the core;
+  compares those counts with §2.2's. Xaqu needs no patch to the core;
   if one is ever needed, it is carried as a numbered patch in
   `tools/common/fetch/nvidia/` and justified there.
 * **The userspace.** It downloads the matching `.run`, pinned by the sha256
@@ -330,7 +330,7 @@ checkout:
   images. Where the host has the same release installed, it also compares
   them with the installed files; on nazuna they are byte-identical.
 * **The volume.** `nvidia.img` is a btrfs image of `tree/`, built like
-  Chrome's and yserver's, which Ferrix mounts at `/data`. It holds:
+  Chrome's and yserver's, which Xaqu mounts at `/data`. It holds:
   * the x86-64 libraries and the links NVIDIA's installer would make, read
     from the `.run`'s manifest, in `usr/lib/x86_64-linux-gnu`;
   * Debian 13's glibc, the build `fetch-chrome.sh` pins, so that
@@ -353,13 +353,13 @@ checkout:
 The license allows vendoring: the core is MIT file by file (2,751 `SPDX: MIT`
 headers, and nothing else in `src/`). The GPLv2 half of NVIDIA's dual
 license applies only "when linked together to form a Linux kernel module",
-which Ferrix never does. Vendoring is still not recommended, because it
+which Xaqu never does. Vendoring is still not recommended, because it
 would put about 2 million lines and 150 MB into this repository for code that
 is never edited (decision D2). The firmware and the userspace are under
 NVIDIA's proprietary licenses, which allow redistributing them unmodified
 with a driver. They are fetched by each user and never committed.
 
-Ferrix's own code is the OS layer and the shim around NVIDIA's objects. It
+Xaqu's own code is the OS layer and the shim around NVIDIA's objects. It
 lives in `src/user/system/linux/drivers/nvrm/`, and `xtask` links it with
 the fetched objects into `/lib/drivers/nvrm`. A machine with no fetch has
 no `nvrm`, and devmgr leaves an NVIDIA function undriven, as it does today.
@@ -372,7 +372,7 @@ The decision of 2026-09-13 keeps drivers out of the kernel, and it applies
 here too. Because the core links as an ordinary user program (§2.2),
 running it in ring 3 costs nothing at link time.
 
-**Which runtime.** Ferrix's native programs (`ferrix-rt`) have no threads
+**Which runtime.** Xaqu's native programs (`xaqu-rt`) have no threads
 and no clock (`docs/DEVMGR.md` §3). RM needs both:
 
 * a thread that takes the interrupt and runs `rm_isr`;
@@ -431,7 +431,7 @@ small and load the core at run time (§10, N1c):
   `nvrm`'s objects import, computed per build, 17 today. Finally the core's
   sha256 is written into `nvrm` with `objcopy --update-section`.
 * **Where it comes from.** The core is read from the NVIDIA volume at
-  `/data/usr/lib/ferrix/nvrm-core`, and never from the initramfs. `read(2)`
+  `/data/usr/lib/xaqu/nvrm-core`, and never from the initramfs. `read(2)`
   copies it into anonymous memory of `nvrm`'s own, so nothing maps the file
   and no page of it is filled from the disk afterwards. The disk's own
   driver serves the volume. `nvrm` is never a disk's driver.
@@ -495,7 +495,7 @@ compromised `nvrm` running any code at all.
 ### 4.2 The OS layer
 
 The ≈ 260 functions of §2.2 come in four groups. The estimates are lines of
-Ferrix code.
+Xaqu code.
 
 1. **C kept from `kernel-open/nvidia` (MIT), with its Linux calls
    replaced.** About 9k of the 25k lines survive. Most of it is the
@@ -504,7 +504,7 @@ Ferrix code.
    `/proc/driver/nvidia` text. This logic is OS-neutral in all but its
    calls, and rewriting it would only add risk. FreeBSD's NVIDIA driver is
    built the same way.
-2. **A Rust OS library under it, `ferrix-nvos`, about 5k lines.** It
+2. **A Rust OS library under it, `xaqu-nvos`, about 5k lines.** It
    provides:
    * memory: `os_alloc_mem` from the process heap, and `nv_alloc_pages` as
      VMOs pinned into the device's domain;
@@ -526,7 +526,7 @@ Ferrix code.
 
 * **DMA.** RM allocates system memory through `nv_alloc_pages`, maps it
   for the device with `nv_dma_map_alloc`, and uses the returned addresses.
-  On Ferrix:
+  On Xaqu:
   * each allocation is a VMO pinned with `vmo_pin` into the card's IOMMU
     domain;
   * `VMO_PIN_ADDRESSES` gives the device addresses. These are
@@ -555,12 +555,12 @@ Ferrix code.
   vector, 64-bit address, not maskable per vector. It is minted from the
   same 64-vector pool and delivered as `PACKET_INTERRUPT`. The interrupt
   thread in `nvrm` calls `rm_isr`. If that asks for the bottom half, the
-  thread runs `rm_isr_bh` on the work queue and then acknowledges. Ferrix's
+  thread runs `rm_isr_bh` on the work queue and then acknowledges. Xaqu's
   storm bound stays in force. N0g puts every message through VT-d's
   interrupt remapping, so the card can raise only its own vector (§12.3).
 * **Write-combining.** BAR1, and most of RM's system memory mapped into
   clients, must be write-combined. Uncached BAR1 makes every vertex upload
-  a series of single PCIe writes. x86-64 Ferrix does not program the PAT
+  a series of single PCIe writes. x86-64 Xaqu does not program the PAT
   (`src/kernel/src/arch/x86_64/mod.rs`: "Write-combining needs the PAT, which
   is not programmed"). N0c programs it and adds a `write_combining` flag to
   `IoMapping` and to client mappings.
@@ -593,7 +593,7 @@ sits in the `load` ring beside display and render (§6).
   * a name for `/proc/devices` for each.
   
   The core makes the devfs nodes and `/dev/char` links, and lists the
-  names in `/proc/devices`, which Ferrix does not have yet.
+  names in `/proc/devices`, which Xaqu does not have yet.
 * **Requests.** `open`, `ioctl(cmd, arg)`, `mmap(offset, len, prot)`,
   `poll` and `release` each become a message on `nvrm`'s port. A message
   carries:
@@ -640,7 +640,7 @@ sits in the `load` ring beside display and render (§6).
 
 **As built in N1e (2026-10-03), and what is deferred** (the consultant's
 N11 and N15, ledger 294 and 297). Registration is the driver's HELLO on its
-control channel, judged by `ferrix_chardevctl::session`, not a native call
+control channel, judged by `xaqu_chardevctl::session`, not a native call
 (N1), and the kernel names the nodes (N3); `nvidia-uvm`'s majors are not
 registered yet. The core forwards `open`, `ioctl` and `release`, nothing
 else:
@@ -744,7 +744,7 @@ same forwarding core. That is enough for:
   for display queries and surface memory;
 * the later choice of scanning out on the 3060's own outputs (N6).
 
-Without N6, the card drives no monitor, and Ferrix's screen stays
+Without N6, the card drives no monitor, and Xaqu's screen stays
 virtio-gpu, seen over VNC or SPICE.
 
 **As built (N6a, 2026-10-03; landed 2026-10-04 ahead of its conditions, the certification consultant's ledger 318, with the owed rows in `docs/BACKLOG.md`).**
@@ -753,7 +753,7 @@ virtio-gpu, seen over VNC or SPICE.
   `nv-kernel.o` into one object, `rm-kms.o` (its `nvstatusToString` made
   local), which is the core nvrm loads from the volume: 15 MB, under the
   loader's 64 MiB. Its OS layer is NVIDIA's `nvidia-modeset-linux.c`, kept
-  as `os/kept/nvidia-modeset.c`: ferrix-nvos's semaphores, timers and work
+  as `os/kept/nvidia-modeset.c`: xaqu-nvos's semaphores, timers and work
   queue, kernel-space (KAPI) clients only, no suspend. The RM side is
   `os/kept/nv-modeset-interface.c`.
 * **First light.** `os/glue/kms.c` is nvrm's KAPI client, as nvidia-drm is
@@ -761,16 +761,16 @@ virtio-gpu, seen over VNC or SPICE.
   connector's EDID, and on the first connected display sets the preferred
   mode with a pitch-linear `XRGB8888` surface in VRAM, mapped through BAR1.
   On the customer's LG TV on the 3060's HDMI port, 1920x1080 at 60 Hz
-  showed the test pattern (log `~/.local/share/ferrix/nvidia/
+  showed the test pattern (log `~/.local/share/xaqu/nvidia/
   n3-first-modeset.log`). A display not connected at start is looked for
   every two seconds; RM reporting every connector empty, by every method,
   with every EDID read failing, has meant the monitor was not reaching the
   card (asleep, or on another input).
 * **The card.** nvrm then serves that head as a card of the kernel's
   display core (`docs/DISPLAY.md`), a third driver beside virtio-gpu and the
-  STM32 LTDC, through ferrix-nvos's `display.rs`. Its HELLO offers the one
+  STM32 LTDC, through xaqu-nvos's `display.rs`. Its HELLO offers the one
   running mode and sets displayctl v8's `copies` flag; each FLUSH copies
-  the flushed rectangle from the buffer's own VMO, which ferrix-nvos maps
+  the flushed rectangle from the buffer's own VMO, which xaqu-nvos maps
   read-only at ATTACH and unmaps at DETACH (displayctl v9), into the VRAM
   surface, and is answered at once. Its HELLO names the lit display's
   connector type and it sends the display's own EDID (displayctl v10), so
@@ -792,7 +792,7 @@ The card renders. The problem is getting its pixels to a compositor that
 today takes only `wl_shm` (`docs/YSERVER.md` §1: no `zwp_linux_dmabuf_v1`).
 There are three steps, and each one stands on its own:
 
-1. **Copy presentation (N3a).** A Vulkan layer of Ferrix's, `VK_LAYER_FERRIX_wsi`,
+1. **Copy presentation (N3a).** A Vulkan layer of Xaqu's, `VK_LAYER_XAQU_wsi`,
    implements `VK_KHR_wayland_surface` and the swapchain over NVIDIA's
    driver:
    * the swapchain's images are ordinary device images;
@@ -807,7 +807,7 @@ There are three steps, and each one stands on its own:
    3090, which this work must not touch.
 2. **dmabuf (N3b).** This step makes NVIDIA's own WSI, EGL and GBM work
    unmodified, which Chrome and every EGL program need:
-   * Ferrix serves `/dev/dri/renderD129` with nvidia-drm's subset over RM
+   * Xaqu serves `/dev/dri/renderD129` with nvidia-drm's subset over RM
      and NVKMS. That subset is GEM handles, PRIME export and import,
      `drm_syncobj`, and NVIDIA's private ioctls `0x00`–`0x18` (Appendix B).
      It is written in `nvrm`, not ported from nvidia-drm's 15k Linux-DRM
@@ -823,9 +823,9 @@ There are three steps, and each one stands on its own:
    As built, the frames are drawn through `virgl_test_server` on NVIDIA's
    EGL (`--renderer vtest`), and the modifiers hyprix offers follow how it
    can take a buffer in (`compositor_server::modifiers_offered`):
-   * Ferrix's patched server (`fetch-virgl-server.sh`) is asked which
+   * Xaqu's patched server (`fetch-virgl-server.sh`) is asked which
      modifiers its EGL imports `ARGB8888` and `XRGB8888` with
-     (`VCMD_FERRIX_DMABUF_MODIFIERS`: `eglQueryDmaBufModifiersEXT`), and
+     (`VCMD_XAQU_DMABUF_MODIFIERS`: `eglQueryDmaBufModifiersEXT`), and
      hyprix offers each one EGL imports as a 2D texture and then linear;
      never the implicit layout, which NVIDIA's GBM answers with a layout
      nobody named. On the development host's RTX 3090 with 580.173.02
@@ -834,7 +834,7 @@ There are three steps, and each one stands on its own:
      only; the 3060's are whatever its EGL answers.
    * A buffer of one of them is a name-only dmabuf in video memory. It
      cannot be mapped, so it is taken only if a screen's renderer imports
-     it there and then (`VCMD_FERRIX_RESOURCE_IMPORT_FD`, an EGL image
+     it there and then (`VCMD_XAQU_RESOURCE_IMPORT_FD`, an EGL image
      with the modifier) and is sampled where it lies; otherwise `create`
      is answered `failed` with one line, `hyprix: a dmabuf could not be
      imported: ...`. A buffer that can be mapped (linear system memory) is
@@ -1007,7 +1007,7 @@ nvidia-drm. That leaves two options:
   same X11 path. That costs one Mesa build in the volume and no NVIDIA
   GLX.
 
-(b) needs less from Ferrix. (a) is what NVIDIA supports, and the customer
+(b) needs less from Xaqu. (a) is what NVIDIA supports, and the customer
 chose it (D4, 2026-10-02): yserver gains DRI3 and Present over N3b.
 
 **Chrome.** Chrome runs `--enable-gpu` over EGL or ANGLE-Vulkan, with
@@ -1016,7 +1016,7 @@ dmabuf presentation to Wayland. It needs N3b.
 **Steam.** The client's web helper keeps its software path. Games need
 either GL or Vulkan through yserver, as above.
 
-## 5. What other parts of Ferrix need
+## 5. What other parts of Xaqu need
 
 * **The kernel**, as prerequisites N0a–N0d, N0f and N0g (§7, §12):
   * DMAR scopes through bridges;
@@ -1035,7 +1035,7 @@ either GL or Vulkan through yserver, as above.
 * **hyprix**: `zwp_linux_dmabuf_v1` and the syncobj protocol (N3b).
 * **xtask**:
   * `run-nvidia`, which checks that the shared domains are shut off,
-    defines `ferrix-3060` from a template, copies the image, captures
+    defines `xaqu-3060` from a template, copies the image, captures
     serial, and shuts the domain down at the end;
   * the gates that follow `test-yserver`'s shape, but run only on nazuna
     and only when the card is free (§6).
@@ -1111,10 +1111,10 @@ unit tests.
 | N0e | `run-nvidia` and `test-nvidia-probe` (libvirt, the shared-domain guard, capture) | 2 |
 | N0f | A per-device pin budget, set by devmgr through `SET_LIMIT`, in place of the quarantine's fixed cap, with `2B` a hard bound per device (§12.2) | 3 |
 | F-58 | Not NVIDIA's: VT-d table-walk coherency, a pre-existing defect in the item, fixed on its own by another agent before N0g (§12.3). Not counted in N0 | 2 |
-| N0g | Interrupt remapping on VT-d, closing F-57: queued invalidation for everything, remappable-format MSI, MSI-X and I/O APIC messages, an interrupt remapping table with one validated entry per minted vector and source-ID checks, compatibility format blocked, a patched QEMU that implements that block for the gates and the `ferrix-3060` domain, and xtask's q35 with `intremap=on` on a split interrupt controller; before N1 hands the 3060 and its GSP firmware to `nvrm` (§12.3). Design reviewed twice, OK IF; its code goes back to the consultant | 10 |
+| N0g | Interrupt remapping on VT-d, closing F-57: queued invalidation for everything, remappable-format MSI, MSI-X and I/O APIC messages, an interrupt remapping table with one validated entry per minted vector and source-ID checks, compatibility format blocked, a patched QEMU that implements that block for the gates and the `xaqu-3060` domain, and xtask's q35 with `intremap=on` on a split interrupt controller; before N1 hands the 3060 and its GSP firmware to `nvrm` (§12.3). Design reviewed twice, OK IF; its code goes back to the consultant | 10 |
 | N1a | `fetch-nvidia.sh`: sources, objects, `.run` extraction, the volume | 3 |
 | N1b | `nvrm` skeleton: a ferrousli static program started by devmgr, with handles over bootstrap | 4 |
-| N1c | The OS layer (§4.2), with the 9k lines of kept C and `ferrix-nvos` | 10 |
+| N1c | The OS layer (§4.2), with the 9k lines of kept C and `xaqu-nvos` | 10 |
 | N1d | GSP boots on the 3060: firmware load, booter, WPR, the first RPCs | 6 |
 | N1e | The forwarding core, `/dev/nvidia{ctl,0}`, `/proc/driver/nvidia`, `/proc/devices` | 6 |
 | N1f | `nvidia-smi` from the volume lists the GPU (`test-nvidia-smi`) | 3 |
@@ -1183,13 +1183,13 @@ refuses (R1).
     that made them.
   * `os_get_max_user_va`: RM wants the client's address-space limits.
   
-  Each has a Ferrix answer in §4.4. The risk is the ones not found
+  Each has a Xaqu answer in §4.4. The risk is the ones not found
   until N2.
 * **R4 — mapping volume.** Vulkan maps many small BAR1 and system-memory
   ranges into clients, and RM may revoke them. The kernel's client-window
   bookkeeping was sized for one virtio-gpu window (`docs/GPU.md` §6.1).
 * **R5 — the userspace's other probes.** NVML reads PCI configuration
-  through sysfs (`config`, `resource`), which Ferrix lacks
+  through sysfs (`config`, `resource`), which Xaqu lacks
   (`docs/SYSFS.md`), and it may refuse a GPU without them. `nvidia-smi` at
   N1f is where this is found out.
 * **R6 — where it runs.** Only on nazuna under libvirt with KVM and VFIO,
@@ -1203,7 +1203,7 @@ refuses (R1).
 * **R8 — pinned version.** RM and the userspace must match exactly
   (`NV_ESC_CHECK_VERSION_STR`). Moving the pin means a new fetch, rebuilt
   objects, and N1f to N2 run again. The host's own driver updates are
-  independent of Ferrix.
+  independent of Xaqu.
 * **R9 — CUDA.** UVM is 146k lines written against Linux's memory manager:
   `mmu_notifier`, HMM, `migrate_vma`, and GPU fault replay. libcuda opens
   `/dev/nvidia-uvm` and manages GPU virtual address space through it even
@@ -1221,7 +1221,7 @@ and took the recommended answer for D2, D3 and D5.
    program built against ferrousli, using native calls for the device
    (§4.1). Not native threads, not the kernel.
 3. **D2 — the sources are fetched, never committed**: a pinned tag built
-   out of tree by `fetch-nvidia.sh`; only Ferrix's OS layer is in the
+   out of tree by `fetch-nvidia.sh`; only Xaqu's OS layer is in the
    repository (§3).
 4. **D3 — the release is 580.173.02**, nazuna's own userspace and
    firmware.
@@ -1242,7 +1242,7 @@ and took the recommended answer for D2, D3 and D5.
 9. **D8 — the platform changes inside the item** (N0a–d, f) go one by one
    through the certification consultant, each as its own commit with its
    tests and negative controls.
-10. **D9 — the card's time.** An agent may start `ferrix-3060` whenever
+10. **D9 — the card's time.** An agent may start `xaqu-3060` whenever
     GameLab, win11 and the manjaro domains are shut off, checked before
     every start, and shuts it down when done. The RTX 3090 is never
     touched.
@@ -1253,8 +1253,8 @@ and took the recommended answer for D2, D3 and D5.
   * Sources at 580.173.02 fetched outside the repository. The two objects
     were built, their imports listed and counted, and they link into a
     user program.
-  * The `ferrix-3060` domain is defined and shut off.
-  * Ferrix enumerates the 3060, sizes its 16 GiB BAR1, reads its
+  * The `xaqu-3060` domain is defined and shut off.
+  * Xaqu enumerates the 3060, sizes its 16 GiB BAR1, reads its
     registers, and gives it a VT-d domain on the root bus. It does not
     give it one behind a root port (N0a), and it gives it no interrupt
     (N0b).
@@ -1269,10 +1269,10 @@ and took the recommended answer for D2, D3 and D5.
   * the command register written under one lock per node;
   * L.device.22 proven whole: test-boot requires the MSI check's mint and
     both deliveries, INTx is read back off, and the mask registers move to
-    `ferrix_pci::msi` with host tests (L.device.23);
+    `xaqu_pci::msi` with host tests (L.device.23);
   * L.iommu.45 split into the topology rule and the kernel's placement
     (L.iommu.46);
-  * `ferrix-pci` and `ferrix-acpi` named in ITEM.md §2, with a row to
+  * `xaqu-pci` and `xaqu-acpi` named in ITEM.md §2, with a row to
     classify them;
   * coverage re-argued, the documents updated, a new AoU-19;
   * no MSI vector allocated before a 32-bit capability is refused;
@@ -1282,7 +1282,7 @@ and took the recommended answer for D2, D3 and D5.
 * **2026-10-02 — N0's owed conditions, fixed forward** (branch
   `nvidia-n0-conds`, for the consultant). N0 landed ahead of its
   re-review's conditions; these meet A2, A3 and B1-B3:
-  * A2: `ferrix_pci::topology::claims` decides every placement and is
+  * A2: `xaqu_pci::topology::claims` decides every placement and is
     never `Own` where `behind` says aliased; host-tested (L.iommu.45).
   * B1: one memory type per device page across every user mapping, both
     directions, render-node windows included (L.user.109,
@@ -1312,7 +1312,7 @@ and took the recommended answer for D2, D3 and D5.
     it lands.
 * **2026-10-02 — C0a: UVM runs its own tests on `uvm-kpi`.** On branch
   `nvidia-cuda-c0`, in `src/user/system/linux/drivers/nvrm/uvm-kpi/`
-  (5.6k lines of C, all Ferrix's):
+  (5.6k lines of C, all Xaqu's):
   * **The header set.** It has 127 empty `<linux/…>`, `<asm/…>` and
     `<generated/…>` names over four headers (`include/kpi/`), conftest answers, and a 67-line
     `nv-linux.h` of its own, because UVM uses only seven names from
@@ -1337,18 +1337,18 @@ and took the recommended answer for D2, D3 and D5.
     groups, thread context sanity and perf, and CPU chunk sizes.
   * **Two shim bugs** were found by those tests and fixed: `krealloc` to
     size 0, and an inode without a mapping.
-  * **Not done then.** The run under Ferrix waited for disk space: the
+  * **Not done then.** The run under Xaqu waited for disk space: the
     host had 5.8 GB free when C0a's build finished, under the 6 GB stop
-    line, so no Ferrix image was built. It is the next entry. Linking into
+    line, so no Xaqu image was built. It is the next entry. Linking into
     `nvrm` waits for N1b; `uvm-selftest` stands in for it.
-* **2026-10-02 — C0a: the same tests pass under Ferrix.** On branch
+* **2026-10-02 — C0a: the same tests pass under Xaqu.** On branch
   `nvidia-c0b`:
   * **The build.** `uvm-selftest` is linked statically against ferrousli,
-    Ferrix's own C library, and nothing else: `crt1.o`, the objects above,
+    Xaqu's own C library, and nothing else: `crt1.o`, the objects above,
     `libferrousli.a` and `libgcc`. No object changed, because no UVM or
     `uvm-kpi` unit includes a C library header (`kpi/libc.h` declares the
     27 calls `uvm-kpi` makes). It linked with nothing undefined at the
-    first try. `uvm-kpi`'s Makefile builds it as `make ferrix`.
+    first try. `uvm-kpi`'s Makefile builds it as `make xaqu`.
   * **The run.** Booted as init on x86-64, it passes all 15 GPU-free tests
     and its four range-group setups, as on the host, and exits 0. This
     held under KVM and under TCG, at four processors. The times under KVM
@@ -1359,9 +1359,9 @@ and took the recommended answer for D2, D3 and D5.
     Linux: futex waits and wakes, `memfd_create` with `ftruncate` and a
     shared `mmap` that `vmap` maps again, `getrandom`, `sched_getcpu`,
     `clock_nanosleep` and threads. The serial log shows no `ENOSYS` from
-    the program. No bug was found in `uvm-kpi`, and no gap in Ferrix.
+    the program. No bug was found in `uvm-kpi`, and no gap in Xaqu.
   * **The gate.** `cargo xtask test-uvm` builds the program with `make`
-    from the tree `FERRIX_NVIDIA_SRC` names (by default the fetched one
+    from the tree `XAQU_NVIDIA_SRC` names (by default the fetched one
     above) and boots it. It requires every test line to say PASS, in order,
     the summary line, and exit 0. Then it boots a negative control: the
     same program with `uvm-kpi`'s `krealloc` keeping a block that it is
@@ -1382,7 +1382,7 @@ and took the recommended answer for D2, D3 and D5.
   * **The window**: `device_config_read` (0x1055) and
     `device_config_write` (0x1056), both needing `MANAGE`. Every byte reads.
     A write is made only inside a vendor capability's body
-    (`ferrix_pci::window`, host-tested), virtio's `pci_cfg_data` excepted
+    (`xaqu_pci::window`, host-tested), virtio's `pci_cfg_data` excepted
     (D1), and any other is refused whole. The first refusal at each dword
     prints one line naming the register, after the lock is dropped, from a
     bitmap made at stage 10 (D3).
@@ -1440,7 +1440,7 @@ and took the recommended answer for D2, D3 and D5.
     path narrows it away. A set is `BAD_STATE` under live pins and
     `NO_MEMORY` past the ceiling, a quarter of RAM counted at stage 10;
     the default is not counted (F5).
-  * **devmgr's rule for `nvrm`** (F4) is `ferrix_devmgr_proto::budget`,
+  * **devmgr's rule for `nvrm`** (F4) is `xaqu_devmgr_proto::budget`,
     with its four lines. devmgr has no `Gpu` kind until N1b, so the rule is
     host-tested at 16, 8, 4 and 1 GiB and with the ceiling partly taken,
     and not yet called.
@@ -1524,7 +1524,7 @@ and took the recommended answer for D2, D3 and D5.
   The customer answered the same day:
   * `nvrm`'s budget is an eighth of RAM, at least 1 GiB, and the floor
     yields to the ceiling, with named lines;
-  * the patched QEMU is accepted, for the gates and as the `ferrix-3060`
+  * the patched QEMU is accepted, for the gates and as the `xaqu-3060`
     domain's emulator;
   * no accepting boot option for now;
   * a firmware-locked x2APIC stops the boot by name.
@@ -1536,9 +1536,9 @@ and took the recommended answer for D2, D3 and D5.
   * `0002-intel_iommu-honour-CFI-and-block-compatibility-format.patch`
     against v10.2.1, with a qtest that fails with either half removed;
   * `fetch-qemu-linux.sh` builds it, x86-64 only, as
-    `QEMU emulator version 10.2.1 (ferrix-cfi)` into
-    `~/.local/share/ferrix/qemu`, and prints the root line that installs
-    it for the `ferrix-3060` domain;
+    `QEMU emulator version 10.2.1 (xaqu-cfi)` into
+    `~/.local/share/xaqu/qemu`, and prints the root line that installs
+    it for the `xaqu-3060` domain;
   * xtask takes it for x86-64 and refuses any other QEMU on Linux hosts;
     CI builds and caches it. test-boot passes on it under KVM and TCG.
   * Found while reading QEMU: under the split irqchip a refused route
@@ -1551,7 +1551,7 @@ and took the recommended answer for D2, D3 and D5.
   queue** (landed as slice 1, 68c49655a). The first of §12.3's steps, as its own slice:
   * register-based invalidation is gone; each invalidation is one
     descriptor and a fenced, sequence-numbered wait through F-58's
-    helpers (`ferrix_paging::vtd::queue`, six host tests);
+    helpers (`xaqu_paging::vtd::queue`, six host tests);
   * a unit without `ECAP.QI` is refused; firmware's `IRE` and `QIE` are
     turned off and read back; `CFI` is no longer a standing bit;
   * a failed invalidation releases nothing, and `IQE` or `ITE` marks
@@ -1599,7 +1599,7 @@ and took the recommended answer for D2, D3 and D5.
 
 * **2026-10-03 — N1a: `fetch-nvidia.sh`** (branch `nvidia-n1a`). §3 is now
   what the script does. It writes everything under
-  `~/.local/share/ferrix/nvidia/580.173.02/`. No GPU was used.
+  `~/.local/share/xaqu/nvidia/580.173.02/`. No GPU was used.
   * **What it pins**:
     * GitHub's tarball of the 580.173.02 tag: sha256 `a2cd41cf…`, whose
       header names commit `20e4e6e1`;
@@ -1626,8 +1626,8 @@ and took the recommended answer for D2, D3 and D5.
     `run/` 1.5 GB, and the image 1.3 GB. The tree is hard links into
     `run/`.
   * **`test-uvm`** now defaults to the tree in `src/`, and passes on it.
-    `FERRIX_NVIDIA_SRC` still names another tree. The feasibility pass's
-    `~/.local/share/ferrix/nvidia-ref/` is no longer read by anything.
+    `XAQU_NVIDIA_SRC` still names another tree. The feasibility pass's
+    `~/.local/share/xaqu/nvidia-ref/` is no longer read by anything.
   * **Not done.** No gate attaches the volume yet; N1f's
     `test-nvidia-smi` will. The volume has no 32-bit libraries, which
     N4's 32-bit games may want.
@@ -1641,7 +1641,7 @@ and took the recommended answer for D2, D3 and D5.
     property; `vfio-pci`'s needs a host device), so the test device stands
     in, and is matched only by that image's presence. `edu` was not used:
     stage 10's check W7 leaves it refused until reboot.
-  * **The hand-over**, `ferrix_devmgr_proto::gpu::hand_over`, host-tested
+  * **The hand-over**, `xaqu_devmgr_proto::gpu::hand_over`, host-tested
     with a fake device for every outcome and its order: the mark first
     (obligation b: `isolation::launch`, a refused mark fails the launch),
     then `device_isolation` bit 1 (obligation c: the launch is refused
@@ -1694,11 +1694,11 @@ and took the recommended answer for D2, D3 and D5.
     16 MiB. `nvrm` is now linked with `--strip-debug` and boots, but with
     RM's 13 MB core linked in it will be near those limits; N1c must find
     which one it was (the log is kept in
-    `~/.local/share/ferrix/nvidia-n1b-logs/`).
+    `~/.local/share/xaqu/nvidia-n1b-logs/`).
   * **Left for N1c**: the OS layer (§4.2) and the kept C, threads and
     timers on ferrousli (one thread ran here), `interrupt_create` and
     `vmo_pin` under the mark, and `nvrm` in `run-nvidia`'s image for the
-    `ferrix-3060` domain, where its first boot shows bit 1 for real.
+    `xaqu-3060` domain, where its first boot shows bit 1 for real.
 
 * **2026-10-03 — N1c: RM runs in `nvrm`, its core loaded from the NVIDIA
   volume** (branch `nvidia-n1c`). This is outside the certified item:
@@ -1716,13 +1716,13 @@ and took the recommended answer for D2, D3 and D5.
     defines, each a loud stub. The `nv_dma_*` and `nv_acpi_*` stubs are
     N1d's to make real.
   * **`cargo xtask test-nvrm-link`** (on demand, as it needs the fetch)
-    runs `nvrm-link-test` on the host and on Ferrix under KVM. RM
+    runs `nvrm-link-test` on the host and on Xaqu under KVM. RM
     initialises, allocates a root client, and refuses `NV01_DEVICE_0` with
     status 0x40, since there is no GPU, then exits 0. The eight negative
     controls each refuse with their own line and exit status: a flipped
     byte 25, unpinned 20, another build 35, a segment past 2 GiB 30, a W+X
     segment 29, a bad magic 32, an rwx mapping 41, and the core's base
-    already mapped 37 (`MAP_FIXED_NOREPLACE`'s EEXIST, on Ferrix as on the
+    already mapped 37 (`MAP_FIXED_NOREPLACE`'s EEXIST, on Xaqu as on the
     host).
   * **`cargo xtask test-nvrm`** now attaches a volume carrying the core.
     In the handed-over boot, `nvrm` waits for the volume after devmgr's
@@ -1733,13 +1733,13 @@ and took the recommended answer for D2, D3 and D5.
   * **The code review: OK IF** (ledger line 291). Conditions 1-9 of line
     289 were found met, and four more were set and are met in this branch:
     * C1: `core-link.py`'s privileged scan also refuses the UMIP
-      instructions (Ferrix sets CR4.UMIP), `clac`/`stac`,
+      instructions (Xaqu sets CR4.UMIP), `clac`/`stac`,
       `monitor`/`mwait`, `xsaves`/`xrstors`, `sysexit`, and the VMX and
       SVM instructions by name. It was shown firing on scratch objects with
       `sgdt (%rax)` and `mov %cr0,%rax`.
     * C2: the pin's same-layout check refuses when readelf or nm fails or
       prints nothing.
-    * C3: `cargo xtask check` runs ferrix-nvos's host tests, its formatting
+    * C3: `cargo xtask check` runs xaqu-nvos's host tests, its formatting
       and its clippy (step `nvos`).
     * C4: this entry.
 
@@ -1748,34 +1748,34 @@ and took the recommended answer for D2, D3 and D5.
       symbol;
     * a count computed per build replaces the design's estimate of 161;
     * the negative controls belong in `test-nvrm-link` itself, judged by
-      their own line and status on the host and on Ferrix, in place of
+      their own line and status on the host and on Xaqu, in place of
       `gate.sh control`. A PASSED row of that gate on the landing hash is
       their evidence.
 
-    The eighth control, base taken, was its advisory A1. It found Ferrix answering
+    The eighth control, base taken, was its advisory A1. It found Xaqu answering
     `MAP_FIXED_NOREPLACE` over a mapped page with EINVAL, where Linux answers
     EEXIST. `mmap` now answers EEXIST, checked by the kernel's
     `check_noreplace_refuses_a_taken_place` and its control
     `n1c-ctl-noreplace2`. The call was refused either way, so there is no
     finding (ledger line 292).
   * **Left for N1d**: the real `nvidia.img` must carry
-    `usr/lib/ferrix/nvrm-core`, which xtask writes because it depends on
+    `usr/lib/xaqu/nvrm-core`, which xtask writes because it depends on
     `nvrm`'s build. After that comes the first boot on the 3060 and GSP
     boot.
 
 * **2026-10-03 — N1d: GSP boot on the RTX 3060** (branch `nvidia-n1d`).
   Outside the item.
-  * **`cargo xtask run-nvidia`** (N0e) boots Ferrix in libvirt's
-    `ferrix-3060`. It refuses to start while a domain sharing the card runs
+  * **`cargo xtask run-nvidia`** (N0e) boots Xaqu in libvirt's
+    `xaqu-3060`. It refuses to start while a domain sharing the card runs
     or while `01:00.0` is not on `vfio-pci`, and it needs the patched QEMU
-    at `/usr/local/lib/ferrix/qemu` (installed as root on 2026-10-03, with
+    at `/usr/local/lib/xaqu/qemu` (installed as root on 2026-10-03, with
     three local AppArmor rules for that directory). The domain has VT-d
     with `intremap='on'` on a split interrupt controller, the card behind a
     root port, the three fixture disks and the NVIDIA volume as `vdd`, the
     serial port over TCP, and the card's option ROM off: with a monitor on
     the card, OVMF's GOP put a boot framebuffer in BAR1, which the kernel
     keeps for its console and so withheld from `nvrm`. The boot's
-    self-checks are skipped there (`ferrix.checks=skip`; they are
+    self-checks are skipped there (`xaqu.checks=skip`; they are
     `test-boot`'s evidence), since a timing check flakes at two vCPUs on a
     loaded host. Each boot ends with the domain destroyed.
   * **First boot**: `nvrm: device_isolation 0x3: interrupts isolated (bit 1),
@@ -1791,7 +1791,7 @@ and took the recommended answer for D2, D3 and D5.
     physical address. **`rm_init_adapter` succeeds**: FWSEC, the booter and
     GSP-RM run on the card.
   * **Contiguous memory.** RM asks for physically contiguous system memory
-    (the booter's ucode, among others). Ferrix commits a VMO's pages one at
+    (the booter's ucode, among others). Xaqu commits a VMO's pages one at
     a time, so nvos retries a contiguous request until its pins follow each
     other (interim; up to 8 attempts were seen). The kernel's
     `PIN_CONTIGUOUS` replaces it (design OK IF, ledger 293, D1–D10 owed).
@@ -1836,7 +1836,7 @@ and took the recommended answer for D2, D3 and D5.
   * `vulkaninfo` names the RTX 3060 (Vulkan 1.4.312), `vk-offscreen`
     clears an image on it and reads it back, and headless Chrome's WebGL
     renderer is "ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA GeForce RTX 3060))"
-    (`~/.local/share/ferrix/nvidia/n4-first-chrome-webgl.log`).
+    (`~/.local/share/xaqu/nvidia/n4-first-chrome-webgl.log`).
   * NVKMS lit the customer's LG TV on the 3060's HDMI port, 1920x1080 at
     60 Hz, with a test pattern (`n3-first-modeset.log`), and `nvrm` serves
     it as the display core's card (§4.5).
@@ -1916,7 +1916,7 @@ Three things are CUDA's own:
   * `madvise` and `mremap`, which are in its imports.
   
   Large `PROT_NONE` reservations for CUDA's unified address space cost
-  nothing on Ferrix: anonymous VMOs are sparse, overcommit is 1, and user
+  nothing on Xaqu: anonymous VMOs are sparse, overcommit is 1, and user
   space is 128 TiB.
 
 **The UVM ioctls libcuda issues.** These are raw numbers (§2.2). Its code
@@ -1963,12 +1963,12 @@ internally at context creation, the fault windows of §11.4 move from C3 into C2
   * RM's interrupt path already hands UVM its interrupts: `nv.c` calls
     `nv_uvm_event_interrupt`, which runs UVM's top half.
   * So the GPU side of UVM, including replayable GPU faults and their
-    servicing, needs nothing from Ferrix beyond what RM needs: the MSI of
+    servicing, needs nothing from Xaqu beyond what RM needs: the MSI of
     N0b, and DMA through pinned VMOs.
 * **License.**
   * 228 of the 229 source files carry the MIT text.
   * `uvm_common.c` (307 lines) is GPL-2.0-or-later. It holds errno
-    mapping, debug switches and a spin loop. Ferrix is MIT, so `nvrm`
+    mapping, debug switches and a spin loop. Xaqu is MIT, so `nvrm`
     replaces it with its own code and never links it.
   * The module is declared "Dual MIT/GPL". As for RM (§3), the GPL half
     binds only a Linux kernel module.
@@ -1987,15 +1987,15 @@ internally at context creation, the fault windows of §11.4 move from C3 into C2
 There is no seam to stub, so the experiment builds UVM against the host
 kernel's own headers (7.0.0-29). It uses NVIDIA's Kbuild in a scratch copy
 of `kernel-open`, with `nvidia` beside it so that the conftests run. The
-imports of the resulting `nvidia-uvm.o` are what a Ferrix shim has to
+imports of the resulting `nvidia-uvm.o` are what a Xaqu shim has to
 provide.
 
 | Build | `.c` files | Text | Defined globals | Undefined | Linux symbols among them |
 |---|---|---|---|---|---|
 | Whole module | 127 | 1.47 MB | 2,420 | 322 | 246 |
-| Ferrix profile | 97 | 0.83 MB | 2,196 | 299 | 220 |
+| Xaqu profile | 97 | 0.83 MB | 2,196 | 299 | 220 |
 
-The Ferrix profile does four things:
+The Xaqu profile does four things:
 
 * it turns off HMM, ATS and coherent device memory
   (`UVM_IS_CONFIG_HMM`, `UVM_HMM_RANGE_FAULT_SUPPORTED`,
@@ -2041,7 +2041,7 @@ Unlike RM, these objects **cannot be linked into `nvrm` as they are**.
 They were compiled with the kernel's inline internals: `current` read
 through `%gs`, `__preempt_count`, `pv_ops`, and `vmemmap_base` for
 `page_to_pfn`. So UVM is rebuilt from source against **`uvm-kpi`**, a
-Linux-compatible header set of Ferrix's own, in the way FreeBSD's
+Linux-compatible header set of Xaqu's own, in the way FreeBSD's
 LinuxKPI hosts Linux drivers. It covers only the 117 headers UVM includes,
 and only what UVM uses from them:
 
@@ -2053,19 +2053,19 @@ and only what UVM uses from them:
   identities.
 
 The scratch build was deleted after counting. The import lists are kept in
-`~/.local/share/ferrix/nvidia-ref/`: `uvm-whole.undef`,
+`~/.local/share/xaqu/nvidia-ref/`: `uvm-whole.undef`,
 `uvm-profile.undef`, `uvm-profile-linux.undef`, and
 `nvidia-glue-linux.undef` for RM's glue.
 
 ### 11.4 The Linux mm services UVM uses, and where each goes
 
-| Service | What UVM does on Linux | On Ferrix |
+| Service | What UVM does on Linux | On Xaqu |
 |---|---|---|
 | Ioctls without encoded sizes | its dispatcher copies a per-command struct | The forwarding core of §4.4 is undecoded, so nothing changes in the kernel. `nvrm` knows each command's size from `uvm_ioctl.h` and copies with `request_copy_in`/`_out` |
 | fd identity | `MAP_EXTERNAL_ALLOCATION` and `REGISTER_GPU` name the client's RM file (`rmCtrlFd`, `hClient`) | `request_file` (§4.4) |
 | Its own system memory | `alloc_pages` for CPU chunks, page tables and push buffers; `dma_map_page` for the GPU | Pages of `nvrm`'s pool VMOs, pinned into the card's domain with `vmo_pin` as RM's are (§4.3). `uvm_cpu_chunk_allocation_sizes=4K` means no chunk needs physically contiguous memory, at the cost of 4 KiB GPU mappings of system memory |
 | Kernel mappings | `vmap`, `kmap`, `page_address` | The pool is mapped in `nvrm`'s own space, so these are table lookups |
-| Locks, threads, work queues, time | — | Shared with RM's `ferrix-nvos` (§4.2) |
+| Locks, threads, work queues, time | — | Shared with RM's `xaqu-nvos` (§4.2) |
 | The semaphore pool | `vm_insert_page` of its pages at `mmap` | A window of pool pages, inserted when the client calls `mmap` (K1 below). §4.4's VMO-range reply would also do |
 | **Managed memory: a CPU fault** | the vma's `->fault` services the page: allocate, copy back from the GPU, then `vm_insert_page` with read or read-write access | **K1**: the kernel forwards the fault to `nvrm`, which runs UVM's own handler and inserts the pages; the faulting thread then retries |
 | **Managed memory: migration to the GPU** | `unmap_mapping_range` on the va_space's `address_space`, keyed by `offset == address`, in every process that maps the file | **K1**: `window_revoke`, a shootdown of every mapping of that window |
@@ -2080,7 +2080,7 @@ The scratch build was deleted after counting. The import lists are kept in
 
 **K1, the kernel piece that cannot be avoided: fault windows.** Linux
 lets UVM put its own pages into a client's page tables at any address and
-take them out again. Ferrix today maps a VMO linearly
+take them out again. Xaqu today maps a VMO linearly
 (`AddressSpace::map_file`), or maps a device range that can never be
 revoked (`map_window`, `Backing::Device`). Its page faults are resolved
 in the kernel. The only callout, the page cache's `Filler`
@@ -2196,7 +2196,7 @@ kind of region and three native calls:
   their bounds go into MEMORY-AND-TIMING.
 * **One walker.** The new region kind is matched in `forget_in`,
   `take_down`, naming, `copyable`, `advise_region`, `shared_object` and
-  `Named`, so revoke reuses `forget_runs`. The `ferrix-vma` variant is
+  `Named`, so revoke reuses `forget_runs`. The `xaqu-vma` variant is
   host-tested: a window region is never split, merged, marked
   copy-on-write or moved, and `clone_for_fork` shares it.
 
@@ -2286,7 +2286,7 @@ The same object also answers two things §4.4 and §8 left open:
 | C0b | The samples: `cuda-samples` built on nazuna with the installed CUDA 12.9 `nvcc` (`/usr/local/cuda-12.9`, not on `PATH`) for `sm_86`, in a data volume beside the userspace; `test-cuda` in `xtask`, with the card guard of §6 | 2 |
 | C1 | `deviceQuery`: `/dev/nvidia-uvm` and `/dev/nvidia-uvm-tools` nodes with their dynamic major in `/proc/devices`; UVM loaded in `nvrm`, its GPU registered through `nv_uvm_interface.c`; the C1 ioctls; the logged trace of every UVM call | 6 |
 | C2 | `vectorAdd`, `bandwidthTest` (pinned and pageable), `simpleStreams`: VA-space and channel registration, external ranges, the semaphore pool window, replayable and non-replayable fault interrupts, UVM's CE channels | 10 |
-| C3-K | K1 in the kernel (`core` ring, the consultant's conditions): fault windows, insert, revoke, fault forwarding from user faults with a killable wait, kernel copies that never wait, the promised `UNMAPPED`, refused partial operations, server death; the `ferrix-vma` host tests; boot checks A–L with their controls under QEMU on four ISAs with a test server, no GPU; the certification documents of §11.7 | 10 |
+| C3-K | K1 in the kernel (`core` ring, the consultant's conditions): fault windows, insert, revoke, fault forwarding from user faults with a killable wait, kernel copies that never wait, the promised `UNMAPPED`, refused partial operations, server death; the `xaqu-vma` host tests; boot checks A–L with their controls under QEMU on four ISAs with a test server, no GPU; the certification documents of §11.7 | 10 |
 | C3-U | Managed memory in `nvrm`: the vma shim (`close` from `UNMAPPED`, no splits), CPU faults through UVM's own handler, GPU fault migration, prefetch and advice; `UnifiedMemoryStreams`, `UnifiedMemoryPerf`, and `cudaMallocManaged` with the CPU and the GPU touching the same pages in turn | 8 |
 | C4 | Samples suite: `0_Introduction`, `1_Utilities` and `6_Performance` of `cuda-samples` minus IPC, multi-GPU, graphics interop and MPS; fix what they find | 8 |
 
@@ -2315,7 +2315,7 @@ is checked under QEMU.
   * `mremap`, a partial `munmap` or `mprotect` of a UVM mapping, which
     K1 refuses;
   * `/proc/self/maps` naming `/dev/nvidia-uvm` for its mappings;
-  * `MAP_SHARED_VALIDATE`, which Ferrix refuses with `EINVAL`.
+  * `MAP_SHARED_VALIDATE`, which Xaqu refuses with `EINVAL`.
   
   C1's trace finds them. The host's 3090 could show the same sequence in
   a minute, but it is off limits.
@@ -2326,7 +2326,7 @@ is checked under QEMU.
   faults into `nvrm`. If a program needs it, the wait can be added for
   system calls, with window faults served by dedicated `nvrm` threads.
 * **RC3: pinned volume.** Every managed page on the CPU side is pinned,
-  since Ferrix has no swap and UVM DMA-maps every chunk. A managed
+  since Xaqu has no swap and UVM DMA-maps every chunk. A managed
   working set larger than `nvrm`'s pin budget (N0f) fails to allocate
   rather than paging.
 * **RC4: the shim's fidelity.** UVM leans on `struct page` reference
@@ -2428,8 +2428,8 @@ All five were answered on 2026-10-02:
   with the kernel's fault windows cut to the minimum of §11.4: no waiting
   kernel copies, no partial unmaps, nothing new in `fork` or `madvise`.
   Not stopping at C2.
-* **D-C2 — NVIDIA's own UVM**, unmodified, rebuilt against Ferrix's
-  `uvm-kpi` header set. Not a UVM of Ferrix's own.
+* **D-C2 — NVIDIA's own UVM**, unmodified, rebuilt against Xaqu's
+  `uvm-kpi` header set. Not a UVM of Xaqu's own.
 * **D-C3 — order: beside graphics after N1.** C0a starts now, and so does
   C3-K's design, which goes to the certification consultant before any
   `core` code is written. Neither uses the card.
@@ -2490,7 +2490,7 @@ on `main` as a docs-only landing before any of the three is written, as
   six `u16`s.
 * A driver cannot read or write configuration space at all. The kernel
   writes it in five places:
-  * enumeration's BAR sizing (`ferrix_pci::bar`), and the virtio entropy
+  * enumeration's BAR sizing (`xaqu_pci::bar`), and the virtio entropy
     check, both at stage 10 before any node is handed out;
   * bus mastering (`DeviceNode::set_bus_master`, under the node's
     `command` lock);
@@ -2562,7 +2562,7 @@ write is refused whole: `ACCESS_DENIED`, nothing written, nothing
 partially written. Refused, not silently dropped. A dropped write hides a
 broken driver, and RM checks its writes by reading back. The writable
 ranges are an allowlist, computed once at stage 10 from the function's
-two capability lists by a new `ferrix_pci::window::writable` (host-tested,
+two capability lists by a new `xaqu_pci::window::writable` (host-tested,
 below):
 
 | Range | Writable? | Why |
@@ -2665,7 +2665,7 @@ a function's configuration space under one lock per node. Today's
 `MsiFunction::set_masked` writes the MSI capability from interrupt
 handlers, and a plain lock taken there could deadlock against a holder on
 the same processor. The lock holds a `ConfigWrites` guard. That guard is
-the only type that implements `ferrix_pci::ConfigSpace`'s writes over the
+the only type that implements `xaqu_pci::ConfigSpace`'s writes over the
 node's mapping. `MappedConfig` loses its `write16` and `write32`, and
 keeps its reads. So a write without the lock does not compile. Every
 writer takes it:
@@ -2678,7 +2678,7 @@ writer takes it:
   the guard like the rest (D4);
 * `device_config_write`.
 
-Enumeration's writers, BAR sizing (`ferrix_pci::bar`) and the virtio
+Enumeration's writers, BAR sizing (`xaqu_pci::bar`) and the virtio
 entropy check, run at stage 10 before the node is published, through
 enumeration's own mapping and outside the type. So `L.object.117` speaks of
 a *published* node, and is exact (D4).
@@ -2693,8 +2693,8 @@ read-modify-write interleavings in the kernel's own sequences, which is
 the race N0b's condition 2 named.
 
 **Rings.** `device.rs`, the two calls and `device_aperture` are `core` and
-`item`, as `device_info` is. `ferrix_pci::window` joins
-`ferrix_pci::topology` and `ferrix_pci::msi` in ITEM.md §2's unclassified
+`item`, as `device_info` is. `xaqu_pci::window` joins
+`xaqu_pci::topology` and `xaqu_pci::msi` in ITEM.md §2's unclassified
 list. A clippy `disallowed-methods` entry is unnecessary: the guard type
 already makes an unlocked write unrepresentable.
 
@@ -2717,7 +2717,7 @@ ARMv7-A has ECAM under the device tree too, but no device with a writable
 vendor capability. Checks W2 to W5 and W7 run there with W3 skipped, and
 the log says so.
 
-**Host tests**, `ferrix_pci::window`, over synthetic configuration
+**Host tests**, `xaqu_pci::window`, over synthetic configuration
 spaces:
 
 * the table above, row by row, virtio's `pci_cfg_data` exception and the
@@ -2736,7 +2736,7 @@ ATS test fails.
 * MEMORY-AND-TIMING: the `config` lock's section.
 * VULNERABILITY-ANALYSIS: T.DMA gains the BAR-path residual, under AoU-22,
   and the breach detector.
-* ITEM.md §2: `ferrix_pci::window`.
+* ITEM.md §2: `xaqu_pci::window`.
 * `device.rs`'s comments that a driver "cannot walk configuration space"
   (`RegisterBlock`, `PciFunction`) are amended.
 
@@ -3014,7 +3014,7 @@ two verdicts on 2026-10-02: C on the first N0g text (C1–C6, points
 | EIME=0 and the xAPIC destination format | "The table and its entries" |
 | IRTE written high half first, low with Present last; IEC and wait before unmask; a present IRTE never edited | "The table and its entries" |
 | G1: QEMU implements no `CFI`; `CFIS`=0 proves nothing there, and the boot line must not claim "blocked" from it | "The patched QEMU"; "Bring-up order"'s line |
-| G2 (ruling 2): option (a) required, in xtask's QEMU and in the `ferrix-3060` domain's `<emulator>` | "The patched QEMU" (the customer said yes) |
+| G2 (ruling 2): option (a) required, in xtask's QEMU and in the `xaqu-3060` domain's `<emulator>` | "The patched QEMU" (the customer said yes) |
 | G3: the console's line is live before IR bring-up: convert it at bring-up; service the port once; a defined no-scope outcome; no compatibility-format MSI minted by then; IRTE and IEC outside `CONSOLE_INPUT`'s lock | "The I/O APIC"; checks R5, R9 |
 | G4: isolated needs `IRE`=1 and `CFIS`=0 on **every** DMAR unit, refused ones included | "Unisolated interrupts" |
 | G5: the isolated-interrupts mark is set-once; devmgr's GPU launch fails if setting it fails | "Unisolated interrupts"; check R10 |
@@ -3028,7 +3028,7 @@ two verdicts on 2026-10-02: C on the first N0g text (C1–C6, points
 
 **What comes first: F-58.** The consultant confirmed the coherency gap as
 **F-58** (Moderate, pre-existing). On a unit with `ECAP.C`=0, `vtd.rs`
-writes root and context entries, and `ferrix_paging` writes second-level
+writes root and context entries, and `xaqu_paging` writes second-level
 ones, with no `clflush`. A cleared entry may then still be read as present
 after its invalidation, and a fresh table may be read as stale present
 entries. QEMU reports `C`=0 but walks coherently, so no gate shows it. The
@@ -3055,7 +3055,7 @@ N0g builds on it:
 **What a unit must offer.** `Unit::open` gains these checks, in this
 order:
 
-* **The DMAR's `INTR_REMAP` flag** (`ferrix_acpi::dmar::FLAG_INTR_REMAP`,
+* **The DMAR's `INTR_REMAP` flag** (`xaqu_acpi::dmar::FLAG_INTR_REMAP`,
   bit 0) and **`ECAP.IR`** (bit 3). Without both, the unit translates DMA
   as today but remaps no interrupts, and the machine's interrupts are not
   isolated (below).
@@ -3084,7 +3084,7 @@ left translating. For the rest:
 * **`CFI` left set**: removed from `STANDING`, so the first kernel `GCMD`
   write clears it, and "Bring-up order" reads `CFIS` back.
 * **x2APIC left on** (`IA32_APIC_BASE.EXTD`, bit 10), **on every
-  processor** (G6). Ferrix drives the local APIC through its MMIO window
+  processor** (G6). Xaqu drives the local APIC through its MMIO window
   (`apic.rs`), which does not exist in x2APIC mode. INIT does not take a
   processor out of x2APIC mode, so an AP can be in it whatever the boot
   processor found.
@@ -3186,7 +3186,7 @@ side.
   no second lock is needed: the index is taken by the existing
   compare-and-swap, and two vectors never share an index. Indexes 64–255
   are never present, and a message naming one faults with 0x21 or 0x22.
-* **EIME=0, xAPIC format.** Ferrix runs xAPIC and refuses APIC IDs above
+* **EIME=0, xAPIC format.** Xaqu runs xAPIC and refuses APIC IDs above
   255 (`apic.rs`: `send`; `smp.rs`). The destination is built by one
   function, `irte_destination(apic_id) -> Result<u32>`, which puts the ID
   in bits 15:8 of the IRTE's 32-bit destination field and refuses an ID
@@ -3231,7 +3231,7 @@ three architectures share (G7). The Arm implementations
 untouched, and "no Arm file changes" holds. x86-64's implementation
 resolves the unit inside itself: it asks `iommu` for the unit whose
 placement holds that requester ID on segment 0, the only segment x86-64
-Ferrix enumerates. Then:
+Xaqu enumerates. Then:
 
 * **Remapping on for that unit**: `iommu::remap(requester, slot, vector,
   apic_id)` writes the IRTE as above. The message is
@@ -3251,9 +3251,9 @@ Ferrix enumerates. Then:
   carrying its own handle.
 
 **The I/O APIC (G3).** `IoApicInput` gains the I/O APIC's MADT ID
-(`ferrix_acpi::IoApic::id`) and its source ID. The source ID comes from
+(`xaqu_acpi::IoApic::id`) and its source ID. The source ID comes from
 matching that ID against the `enumeration_id` of a DMAR scope of type
-`SCOPE_IOAPIC` (`ferrix_acpi::dmar::DeviceScope`), never by order. Under
+`SCOPE_IOAPIC` (`xaqu_acpi::dmar::DeviceScope`), never by order. Under
 QEMU this is source ID 0xFF00: the scope's start bus is
 `Q35_PSEUDO_BUS_PLATFORM` (0xFF) and its one hop is devfn 0
 (`Q35_PSEUDO_DEVFN_IOAPIC`), in QEMU 9.2.4 and 10.2.1 alike.
@@ -3317,7 +3317,7 @@ QEMU's I/O APIC sends without a source ID (`X86_IOMMU_SID_INVALID`,
 `vtd_mem_ir_write`), so QEMU checks no SID for it. The SID match is shown
 by a host test over QEMU's DMAR, and argued for hardware.
 
-**The HPET.** Ferrix reads the HPET only as a counter
+**The HPET.** Xaqu reads the HPET only as a counter
 (`arch/x86_64/clock.rs`), and never programs a comparator or an FSB
 message. So it needs no IRTE. An HPET FSB message, if firmware left one
 armed, would be compatibility format and blocked. The clock module's doc
@@ -3433,21 +3433,21 @@ no unit, can send a compatibility message that no unit blocks. So:
   * it fetches the v10.2.1 release tarball by its pinned sha256, and
     applies the patches named in `tools/common/data/qemu/series-10.2.1`;
   * it configures `--target-list=x86_64-softmmu
-    --with-pkgversion=ferrix-cfi`, with the display features the gates use
+    --with-pkgversion=xaqu-cfi`, with the display features the gates use
     from Ubuntu's build: GTK, OpenGL, virglrenderer, VNC, and spice
     protocol for `qemu-vdagent`, plus slirp, PulseAudio, PipeWire, ALSA
     and the TCG plugins;
-  * it runs the qtest, then installs into `~/.local/share/ferrix/qemu`
+  * it runs the qtest, then installs into `~/.local/share/xaqu/qemu`
     (`bin/`, `share/`; QEMU finds its firmware relative to the binary).
 * **How xtask selects it.** `paths.rs`: `own_qemu` looks in
-  `~/.local/share/ferrix/qemu/bin`, or the directory itself for the
+  `~/.local/share/xaqu/qemu/bin`, or the directory itself for the
   Windows build's layout, before `PATH`, on any host. With only
   `qemu-system-x86_64` built there, x86-64 boots take it, and AArch64 and
-  ARMv7-A keep the QEMU on `PATH`. `FERRIX_QEMU` still overrides, as
+  ARMv7-A keep the QEMU on `PATH`. `XAQU_QEMU` still overrides, as
   today.
 * **How xtask refuses an unpatched QEMU.** Before an x86-64 boot,
   `qemu.rs` reads the chosen binary's `--version`. If it lacks
-  `(ferrix-cfi`, the boot is refused with
+  `(xaqu-cfi`, the boot is refused with
   `x86-64 boots need a QEMU that blocks compatibility-format interrupts (F-57); run tools/common/fetch/fetch-qemu-linux.sh`.
   On Linux hosts only for now: the Windows build (11.1.0) does not carry
   the patch yet, which is a BACKLOG row. The kernel's check R1 decides independently: on an unpatched QEMU the
@@ -3455,17 +3455,17 @@ no unit, can send a compatibility message that no unit blocks. So:
 * **CI** runs the same script in the two jobs that boot x86-64 (`boot`'s
   x86_64 entry and `rustc`). Its build is cached by the hash of the
   script and of `tools/common/data/qemu/`.
-* **The `ferrix-3060` domain's `<emulator>`.** libvirt's `qemu:///system`
+* **The `xaqu-3060` domain's `<emulator>`.** libvirt's `qemu:///system`
   runs QEMU as its own user under its AppArmor profile, which does not
   let it run a binary from a home directory. So:
   * the same build is installed once by the user, as root, to
-    `/usr/local/lib/ferrix/qemu/`. The script prints the `sudo install`
+    `/usr/local/lib/xaqu/qemu/`. The script prints the `sudo install`
     line and never runs it. It never touches `/usr/local/bin`, which
     holds the root-installed 9.2.4.
-  * The domain's XML (`~/ferrix-nvidia-vm/ferrix-3060-rootport.xml`, N0e's
-    template) names `/usr/local/lib/ferrix/qemu/bin/qemu-system-x86_64`.
+  * The domain's XML (`~/xaqu-nvidia-vm/xaqu-3060-rootport.xml`, N0e's
+    template) names `/usr/local/lib/xaqu/qemu/bin/qemu-system-x86_64`.
   * `run-nvidia` refuses to start the domain unless its `<emulator>` is
-    that path and that binary's `--version` says `ferrix-cfi`.
+    that path and that binary's `--version` says `xaqu-cfi`.
   
   This matters there as much as in the gates. `nvrm` could produce a
   compatibility message through vfio's emulated MSI capability, by way of
@@ -3490,7 +3490,7 @@ The new text:
 
 F-57 closes when N0g lands with checks R1 to R10 and their controls,
 where `INTERRUPTS_ISOLATED` holds on x86-64. That covers bare metal with
-VT-d IR, the gates' patched QEMU, and the `ferrix-3060` domain on it.
+VT-d IR, the gates' patched QEMU, and the `xaqu-3060` domain on it.
 
 **Arm (C5).** No Arm code changes. The documents gain T.DMA **path 6's
 GICv2m residual**, recorded apart from F-57:
@@ -3501,7 +3501,7 @@ GICv2m residual**, recorded apart from F-57:
 * xtask's AArch64 reference machine is GICv2 with v2m (`virt`, the
   default `gic-version`), so this residual is the reference
   configuration's.
-* GICv3 with an ITS (`FERRIX_ARM_MACHINE=gic-version=3`) translates by
+* GICv3 with an ITS (`XAQU_ARM_MACHINE=gic-version=3`) translates by
   the DeviceID from the requester ID, and is resisted.
 * `device_isolation`'s bit 1 is never set under v2m.
 
@@ -3533,12 +3533,12 @@ GICv2m residual**, recorded apart from F-57:
     refuses `intremap=on` with a whole in-kernel irqchip (`x86-iommu.c`).
     TCG needs no change.
   * `seam.rs`'s machine gets the same, so measurements stay comparable.
-* The `ferrix-3060` domain (N0e) gets
+* The `xaqu-3060` domain (N0e) gets
   `<iommu model='intel'><driver intremap='on' caching_mode='on' eim='off'/></iommu>`,
   `<ioapic driver='qemu'/>`, and the `<emulator>` above. There, the GPU's
   own DMA writes are also checked by the host's VT-d, through VFIO. In the
-  guest, Ferrix's IR isolates the vectors QEMU's vIOMMU translates.
-* The split irqchip moves the I/O APIC and PIC into QEMU. Ferrix uses
+  guest, Xaqu's IR isolates the vectors QEMU's vIOMMU translates.
+* The split irqchip moves the I/O APIC and PIC into QEMU. Xaqu uses
   neither on the hot path (MSI-X and the local APIC timer), so the
   boot-time cost should be small. It is measured on the gate and reported
   in the landing, given the test-time priority.
@@ -3590,8 +3590,8 @@ prove nothing. The consultant accepted the argument from the code: one
 function writes an IRTE, and its last statement before returning is the
 IEC and wait. A host test over a mock unit asserts the descriptor order.
 
-**Host tests.** These are new, in `ferrix_paging::vtd` or a new
-`ferrix_pci`-style host crate for the encodings:
+**Host tests.** These are new, in `xaqu_paging::vtd` or a new
+`xaqu_pci`-style host crate for the encodings:
 
 * the IRTE builder's every field, and `irte_destination`;
 * the remappable MSI address, and the RTE encoding for handles 0, 63 and
@@ -3600,7 +3600,7 @@ IEC and wait. A host test over a mock unit asserts the descriptor order.
 * the descriptor encodings (context, IOTLB, IEC, wait) against the
   spec's layouts;
 * the DMAR IOAPIC-scope match by enumeration ID, over QEMU's DMAR
-  (`ferrix_acpi`'s test table) and over one with two I/O APICs listed out
+  (`xaqu_acpi`'s test table) and over one with two I/O APICs listed out
   of order;
 * the `INTERRUPTS_ISOLATED` rule over a list of units, one refused (G4).
 
@@ -3671,7 +3671,7 @@ What each states:
     is refused with bus mastering off.
   * `L.device.26`: the writable ranges are the allowlist of §12.1,
     computed from both capability lists (verified by
-    `ferrix_pci::window`'s host tests).
+    `xaqu_pci::window`'s host tests).
   * `L.object.117`: every configuration write to a published node's
     function, by the kernel or a driver, is made under the node's one
     lock.
@@ -3739,7 +3739,7 @@ the text below is the design as it was written.
 
 ### 13.1 Why
 
-Every boot on the card ends with `xtask` destroying the `ferrix-3060`
+Every boot on the card ends with `xtask` destroying the `xaqu-3060`
 domain, which kills QEMU. Until this section `nvrm` had no stop at all:
 `rm_init_adapter` at start, and nothing that undoes it. The GSP firmware and
 the lit head were left running, and the host's reset of the function at the
@@ -3748,7 +3748,7 @@ next open was the only clean-up. That worked for every boot from
 0xffffffff` on every boot until the host was restarted.
 
 **The cause of that is not known, and the logs do not show that the missing
-stop was it** (`~/.local/share/ferrix/steam-race/quiesce.md` has the
+stop was it** (`~/.local/share/xaqu/steam-race/quiesce.md` has the
 evidence): four sessions that night were destroyed in the same state and
 three of them were followed by a healthy boot. A guest killed by its
 hypervisor gives no driver a stop either, NVIDIA's own included. This
@@ -3800,7 +3800,7 @@ the machine away can make one:
   real machine and is an item change (`src/kernel/src/power.rs`).
 
 **The order** is §13.2's first path, with the clients first, since on
-Ferrix they are still alive when the machine is taken away:
+Xaqu they are still alive when the machine is taken away:
 
 1. **The device files** (`os/glue/chardev.c`, `nvrm_chardev_quiesce`).
    From one instant, taken under the file table's lock, OPEN, IOCTL and
@@ -3871,7 +3871,7 @@ end in `Running`'s drop.
   down and no client alive, which is the simplest first card test.
 * **A desktop without `--ssh`** has no way in, and is destroyed as before,
   with a line that says so.
-* **`FERRIX_NVIDIA_NO_QUIESCE=1`** in `xtask`'s environment leaves all of
+* **`XAQU_NVIDIA_NO_QUIESCE=1`** in `xtask`'s environment leaves all of
   this out, script and destroy alike: a boot as before §13, for telling a
   fault of the quiesce from a fault it was meant to prevent.
 
@@ -3895,7 +3895,7 @@ client that was not root was refused its unmap with `NV_ERR_INVALID_CLIENT`
 in the closing process and passes.
 
 What supports it: on 2026-10-09 and -10 the assertions appear in all four
-desktop boots whose log has `sessiond`'s session for `ferrix` (uid 1000),
+desktop boots whose log has `sessiond`'s session for `xaqu` (uid 1000),
 and in none of the eight without one, where the desktop's programs run as
 root; each of the twelve had the same three GPU-process deaths.
 
@@ -3918,7 +3918,7 @@ on the fix.
 * `xtask`'s reading of the lines has unit tests (done, done without the
   adapter, stuck, pending).
 * A second session read the commit against NVIDIA's sources without my
-  conclusions (`~/.local/share/ferrix/nv-quiesce/review-1.md`). Its three
+  conclusions (`~/.local/share/xaqu/nv-quiesce/review-1.md`). Its three
   defects are fixed: a RELEASE under way was not waited for, the watch
   was armed while `nvrm_kms_show` still used the device, and the adapter
   was shut down even when requests were still under way. Its open risks
@@ -3958,20 +3958,20 @@ K1's owed provenance of the kept files (`docs/BACKLOG.md`) has to carry.
 
 ## Appendix A: the probe's domain
 
-`~/ferrix-nvidia-vm/ferrix-3060.xml`, defined with
+`~/xaqu-nvidia-vm/xaqu-3060.xml`, defined with
 `virsh -c qemu:///system define`. The image is the branch's
-`build/x86_64/ferrix.img`, copied next to it. Serial output is read with
+`build/x86_64/xaqu.img`, copied next to it. Serial output is read with
 `python3 capture.py serial.log` before `virsh start`.
 
 ```xml
 <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
-  <name>ferrix-3060</name>
+  <name>xaqu-3060</name>
   <memory unit='GiB'>4</memory>
   <vcpu>2</vcpu>
   <os>
     <type arch='x86_64' machine='q35'>hvm</type>
     <loader readonly='yes' type='pflash' format='raw'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
-    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.fd' templateFormat='raw' format='raw'>/var/lib/libvirt/qemu/nvram/ferrix-3060_VARS.fd</nvram>
+    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.fd' templateFormat='raw' format='raw'>/var/lib/libvirt/qemu/nvram/xaqu-3060_VARS.fd</nvram>
   </os>
   <features><acpi/><apic/></features>
   <cpu mode='host-passthrough' check='none' migratable='off'><maxphysaddr mode='passthrough'/><feature policy='require' name='invtsc'/></cpu>
@@ -3979,7 +3979,7 @@ K1's owed provenance of the kept files (`docs/BACKLOG.md`) has to carry.
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='raw'/>
-      <source file='/home/sebastian/ferrix-nvidia-vm/ferrix.img'/>
+      <source file='/home/sebastian/xaqu-nvidia-vm/xaqu.img'/>
       <target dev='sda' bus='sata'/><boot order='1'/>
     </disk>
     <serial type='tcp'>
@@ -4003,7 +4003,7 @@ K1's owed provenance of the kept files (`docs/BACKLOG.md`) has to carry.
 </domain>
 ```
 
-`ferrix-3060-rootport.xml` next to it is the same domain with the
+`xaqu-3060-rootport.xml` next to it is the same domain with the
 hostdev's guest address left to libvirt, which puts it behind a root port.
 That is the run that showed N0a.
 

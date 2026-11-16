@@ -38,7 +38,7 @@ pub const LINEAR: u64 = 0;
 
 /// `DRM_FORMAT_MOD_INVALID`, which an output says when it is no dmabuf but
 /// plain shared memory (a memfd): what a device without dmabuf export --
-/// lavapipe on Ferrix -- draws the frame into, and the card is handed
+/// lavapipe on Xaqu -- draws the frame into, and the card is handed
 /// as a copy, as a `wl_shm` buffer is.
 pub const MEMFD: u64 = compositor_gpu_protocol::MODIFIER_MEMFD;
 
@@ -989,7 +989,7 @@ impl Vulkan {
     }
 
     /// An output: a linear dmabuf where the device exports them, else a
-    /// memfd ([`Vulkan::host_output`]) -- lavapipe on Ferrix.
+    /// memfd ([`Vulkan::host_output`]) -- lavapipe on Xaqu.
     ///
     /// # Errors
     ///

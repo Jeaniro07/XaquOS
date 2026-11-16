@@ -4,7 +4,7 @@
 
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     ARPHRD_ETHER, IFA_ADDRESS, IFA_LOCAL, IFF_BROADCAST, IFF_RUNNING, IFF_UP, IFLA_ADDRESS,
     IFLA_IFNAME, IFLA_MTU, IfAddrMsg, IfInfoMsg, NLM_F_MULTI, NlMsgHdr, RT_SCOPE_UNIVERSE,
     RT_TABLE_MAIN, RTA_GATEWAY, RTA_OIF, RTA_PRIORITY, RTM_NEWADDR, RTM_NEWLINK, RTM_NEWROUTE,
@@ -104,7 +104,7 @@ fn a_dump_walks_back_to_the_messages_it_was_built_from() {
             RTM_NEWLINK,
             RTM_NEWADDR,
             RTM_NEWROUTE,
-            ferrix_linux_abi::netlink::NLMSG_DONE
+            xaqu_linux_abi::netlink::NLMSG_DONE
         ]
     );
 }

@@ -1,6 +1,6 @@
 //! Where the kernel image, the direct map and the vmap arena go this boot.
 //!
-//! `src/boot/common/uefi/src/kaslr.rs`'s choice, over `ferrix_bootinfo`'s same slots, with
+//! `src/boot/common/uefi/src/kaslr.rs`'s choice, over `xaqu_bootinfo`'s same slots, with
 //! the one source of randomness this phone has for it: TF-A's True Random
 //! Number Generator, asked through SMCCC `TRNG_RND64` (Arm DEN0098), the way
 //! Android's `smccc_trng` driver and the kernel's own seeding ask it. ABL's 8
@@ -15,12 +15,12 @@
 //! The image, the direct map and the arena each get their own random word,
 //! so that one leaked address gives away one region, not three.
 
-use ferrix_bootinfo::{
+use xaqu_bootinfo::{
     KASLR_DECLINED, KASLR_FIXED_IMAGE, KASLR_MOVED, KASLR_NO_ENTROPY, Kaslr, LAYOUT, PAGE_SIZE,
     SOURCE_SMCCC_TRNG,
 };
-use ferrix_elf::Elf;
-use ferrix_fdt::{Fdt, PsciConduit};
+use xaqu_elf::Elf;
+use xaqu_fdt::{Fdt, PsciConduit};
 
 use crate::entry;
 use crate::log::say;
@@ -62,7 +62,7 @@ impl Choice {
 
 /// Whether the command line asks for no randomisation.
 pub(crate) fn declined(cmdline: &str) -> bool {
-    ferrix_bootinfo::flag_in(cmdline, "nokaslr")
+    xaqu_bootinfo::flag_in(cmdline, "nokaslr")
 }
 
 /// Three full-entropy words from TF-A's TRNG, or `None` where the device

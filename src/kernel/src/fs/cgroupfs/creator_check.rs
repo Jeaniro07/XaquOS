@@ -14,13 +14,13 @@
 
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::PROCESS_EXITED;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::PROCESS_EXITED;
 
 use super::{Checked, Harness, delegation_check, native_check};
 use crate::arch;
@@ -174,7 +174,7 @@ fn create(side: &Side, job: Handle, file: &[u8]) -> Checked<Handle> {
         .map_anonymous(
             IMAGE_AT,
             len.div_ceil(PAGE_SIZE) * PAGE_SIZE,
-            ferrix_vma::VmaFlags::READ_WRITE,
+            xaqu_vma::VmaFlags::READ_WRITE,
         )
         .map_err(|_| "no room for the creator check's image")?;
     side.put(IMAGE_AT, file)?;

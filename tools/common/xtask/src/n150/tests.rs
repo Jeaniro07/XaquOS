@@ -82,7 +82,7 @@ const FIRST: &[&str] = &[
     "  0.900 |   nvme     0000:03:00.0: NVMe 1.4 controller, QEMU NVMe Ctrl",
     "  1.234 |   root     / is btrfs on vde2; the system was installed on it (4096 KiB), \
      committed every 30 s",
-    "  2.000 | n150: marker ferrix-n150-fixture",
+    "  2.000 | n150: marker xaqu-n150-fixture",
     "  2.001 | n150: nothing kept yet",
     "  2.050 | n150: kept written and synced",
 ];
@@ -112,7 +112,7 @@ fn the_sata_boot_asks_for_the_ahci_drive_not_the_nvme_one() {
         "{error}"
     );
     let mut sata = lines(FIRST);
-    sata[0] = "  0.900 |   ahci     8086:2922 port 0: QEMU HARDDISK serial ferrix-n150: \
+    sata[0] = "  0.900 |   ahci     8086:2922 port 0: QEMU HARDDISK serial xaqu-n150: \
                2097152 sectors of 512 (1024 MiB)"
         .to_owned();
     check_first(&sata, true).unwrap();
@@ -147,8 +147,8 @@ const DESKTOP: [&str; 15] = [
     "n150-desktop: a lease for eth0",
     "n150-desktop: yserver is up on :0 after 2s",
     "n150-desktop: ready",
-    "sessiond: seat0's session for ferrix (uid 1000): /bin/hyprix --config /etc/hyprland.conf, pid 41, in user-1000.slice/session-1.scope",
-    "  root     /bin/gryphlink was a directory with files where the system has a link or a file; kept as /bin/gryphlink.ferrix-old",
+    "sessiond: seat0's session for xaqu (uid 1000): /bin/hyprix --config /etc/hyprland.conf, pid 41, in user-1000.slice/session-1.scope",
+    "  root     /bin/gryphlink was a directory with files where the system has a link or a file; kept as /bin/gryphlink.xaqu-old",
     "n150-desktop: the default route: default via 10.0.2.2 dev eth0",
     "  init     lode.service: active",
 ];
@@ -162,7 +162,7 @@ fn the_desktop_boot_passes_with_every_line_and_fails_naming_the_missing_one() {
         (6, "video host is not blocked"),
         (8, "got no lease"),
         (9, "yserver did not start"),
-        (11, "not the user ferrix's session"),
+        (11, "not the user xaqu's session"),
         (12, "did not move the directory at /bin/gryphlink aside"),
         (13, "set no default route"),
         (14, "lode, the log manager, did not start"),

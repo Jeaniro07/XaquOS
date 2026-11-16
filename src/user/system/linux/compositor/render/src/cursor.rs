@@ -2,7 +2,7 @@
 //!
 //! A compositor with a mouse and no arrow on the screen is one a person
 //! cannot use, and the arrow has to come from somewhere. Hyprland loads an
-//! `XCursor` or a `hyprcursor` theme; Ferrix has no theme files and no
+//! `XCursor` or a `hyprcursor` theme; Xaqu has no theme files and no
 //! library to read them with, so the one this draws when no client has said
 //! otherwise is here, in code, as a shape rather than as a file.
 //!

@@ -28,11 +28,11 @@ Detail kept out of [`docs/BACKLOG.md`](../BACKLOG.md), which holds a short line 
 
 ### wc-003
 
-* Developing Ferrix on Ferrix (2026-10-11): the six decisions of
-  `docs/DEV-ON-FERRIX.md` §9 -- the editor (helix with rust-analyzer
+* Developing Xaqu on Xaqu (2026-10-11): the six decisions of
+  `docs/DEV-ON-XAQU.md` §9 -- the editor (helix with rust-analyzer
   recommended, VS Code assessed later), how a kernel is tried from inside (a
   second slot with a way back recommended, and a two-point measurement of
-  QEMU on Ferrix), where secrets live before the PC, a second root for the
+  QEMU on Xaqu), where secrets live before the PC, a second root for the
   second slot, live driver updates on a developer image, and when the shared
   toolchain volume is fetched again.
 
@@ -44,8 +44,8 @@ Detail kept out of [`docs/BACKLOG.md`](../BACKLOG.md), which holds a short line 
   of disk for the Linux guest (nazuna's root volume had 88 GB free that
   evening); and the card for the run. Before step 4: whether the game's
   third-party EULA permits Wine and a third-party Proton build, which nobody
-  has read. In step 5: whether Ferrix may answer `Linux` to this one program
-  where `uname -s` says `Ferrix`. And whether the stage's ≈ 205 points enter
+  has read. In step 5: whether Xaqu may answer `Linux` to this one program
+  where `uname -s` says `Xaqu`. And whether the stage's ≈ 205 points enter
   the burndown's scope.
 
 ### wc-005
@@ -54,7 +54,7 @@ Detail kept out of [`docs/BACKLOG.md`](../BACKLOG.md), which holds a short line 
   check refuses a kernel without them ("Steam now requires user namespaces
   to be enabled", exit 71, fatal in `steam.sh`), and the client's UI,
   `steamwebhelper`, runs in a pressure-vessel (bubblewrap) container.
-  Ferrix answered every namespace flag `EINVAL` until N3 (`syscall/namespace.rs`);
+  Xaqu answered every namespace flag `EINVAL` until N3 (`syscall/namespace.rs`);
   stage 13 parks the init's L13 on namespaces too. `test-steam-bootstrap`
   sets the check aside meanwhile, and says so.
   **Answered 2026-09-28:** the customer decided to build user and mount

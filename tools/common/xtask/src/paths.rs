@@ -142,7 +142,7 @@ pub(crate) fn target_dir() -> PathBuf {
 }
 
 /// Where a `tools/common/fetch/` script that makes a btrfs volume writes unless
-/// its own variable says otherwise: `~/.local/share/ferrix/<name>`.
+/// its own variable says otherwise: `~/.local/share/xaqu/<name>`.
 ///
 /// Those scripts need `dpkg-deb`, `mkfs.btrfs` and a file system that keeps
 /// symbolic links, so on Windows they run in WSL, and the home is the
@@ -166,7 +166,7 @@ pub(crate) fn volume_directory(name: &str) -> Result<PathBuf> {
     };
     // One component at a time: on Windows the home is a UNC path, which
     // wants its separators all the same.
-    Ok(home.join(".local").join("share").join("ferrix").join(name))
+    Ok(home.join(".local").join("share").join("xaqu").join(name))
 }
 
 /// The firmware QEMU boots an architecture with.
@@ -191,20 +191,20 @@ pub(crate) enum Firmware {
 ///
 /// Distributions and the Windows build of QEMU disagree about both the names
 /// and the location, so this is a search rather than a path. Two variables
-/// override it: `FERRIX_UBOOT` names U-Boot for ARMv7-A, and
-/// `FERRIX_OVMF_CODE` and `FERRIX_OVMF_VARS` name an EDK2 image for any
+/// override it: `XAQU_UBOOT` names U-Boot for ARMv7-A, and
+/// `XAQU_OVMF_CODE` and `XAQU_OVMF_VARS` name an EDK2 image for any
 /// architecture — which on ARMv7-A is a second opinion, since EDK2's 32-bit
 /// Arm build still exists where it has not yet been dropped.
 pub(crate) fn find_firmware(arch: Arch) -> Result<Firmware> {
     if arch == Arch::Armv7a
-        && let Some(uboot) = std::env::var_os("FERRIX_UBOOT")
+        && let Some(uboot) = std::env::var_os("XAQU_UBOOT")
     {
         return Ok(Firmware::Bios(PathBuf::from(uboot)));
     }
-    if let Some(code) = std::env::var_os("FERRIX_OVMF_CODE") {
+    if let Some(code) = std::env::var_os("XAQU_OVMF_CODE") {
         return Ok(Firmware::Pflash {
             code: PathBuf::from(code),
-            vars: std::env::var_os("FERRIX_OVMF_VARS").map(PathBuf::from),
+            vars: std::env::var_os("XAQU_OVMF_VARS").map(PathBuf::from),
         });
     }
 
@@ -244,7 +244,7 @@ pub(crate) fn find_firmware(arch: Arch) -> Result<Firmware> {
             "could not find UEFI firmware for {arch}.\n  \
              Looked for {code_names:?} under:\n{}\n  \
              Install it (Debian/Ubuntu: `ovmf` and `qemu-efi-aarch64`) or set \
-             FERRIX_OVMF_CODE.",
+             XAQU_OVMF_CODE.",
             listing(&roots)
         ))
     })?;
@@ -283,7 +283,7 @@ fn find_uboot() -> Result<Firmware> {
                 "could not find U-Boot for QEMU's 32-bit Arm `virt` machine.\n  \
                  Looked for u-boot.bin under:\n{}\n  \
                  Install it (Debian/Ubuntu, or on Windows inside WSL: `u-boot-qemu`) \
-                 or set FERRIX_UBOOT.",
+                 or set XAQU_UBOOT.",
                 listing(&roots)
             ))
         })
@@ -345,10 +345,10 @@ fn find_in(roots: &[PathBuf], names: &[&str]) -> Option<PathBuf> {
     None
 }
 
-/// What `FERRIX_QEMU` names, for `program`: a directory holding the QEMU
+/// What `XAQU_QEMU` names, for `program`: a directory holding the QEMU
 /// binaries, or one binary.
 ///
-/// A binary only answers for the architecture it is. A `FERRIX_QEMU`
+/// A binary only answers for the architecture it is. A `XAQU_QEMU`
 /// pointing straight at `qemu-system-x86_64` cannot serve an aarch64 boot,
 /// and saying nothing there lets `PATH` answer that one rather than
 /// failing the boot.
@@ -373,7 +373,7 @@ fn named_qemu(named: &Path, program: &str) -> Option<PathBuf> {
 
 /// Look up an executable on `PATH`, the way `which` does.
 ///
-/// `FERRIX_QEMU` comes first and is taken as written: a directory holding
+/// `XAQU_QEMU` comes first and is taken as written: a directory holding
 /// the QEMU binaries, or one binary. A QEMU built by hand -- for the 3D
 /// card, which a distribution's package is unlikely to have
 /// (`docs/GPU.md` §3.1) -- is then usable without being installed over the
@@ -391,10 +391,10 @@ pub(crate) fn which(program: &str) -> Option<PathBuf> {
 /// A machine can have two QEMUs and only one of them with the 3D card -- a
 /// hand-built one first on `PATH` and the distribution's behind it is the
 /// usual way -- and a boot that wants the card is better served by the
-/// second than by falling back to the 2D one. `FERRIX_QEMU` is still the
+/// second than by falling back to the 2D one. `XAQU_QEMU` is still the
 /// last word: what it names is the only answer.
 pub(crate) fn which_all(program: &str) -> Vec<PathBuf> {
-    if let Some(named) = std::env::var_os("FERRIX_QEMU").filter(|value| !value.is_empty())
+    if let Some(named) = std::env::var_os("XAQU_QEMU").filter(|value| !value.is_empty())
         && let Some(found) = named_qemu(Path::new(&named), program)
     {
         return vec![found];
@@ -420,7 +420,7 @@ pub(crate) fn which_all(program: &str) -> Vec<PathBuf> {
     found
 }
 
-/// `~/.local/share/ferrix/qemu` -- or `$FERRIX_QEMU_DIR`, the fetch
+/// `~/.local/share/xaqu/qemu` -- or `$XAQU_QEMU_DIR`, the fetch
 /// script's own override, for a build tried beside the shared one -- where
 /// the fetch scripts install a QEMU with the fixes in
 /// `tools/common/data/qemu/`, looked in before `PATH`. Taken whenever it is
@@ -438,14 +438,14 @@ pub(crate) fn which_all(program: &str) -> Vec<PathBuf> {
 fn own_qemu() -> Option<PathBuf> {
     // The fetch script's own override, for a build kept beside the shared
     // one while it is tried (tools/common/fetch/fetch-qemu-linux.sh).
-    if let Some(dir) = std::env::var_os("FERRIX_QEMU_DIR").map(PathBuf::from) {
+    if let Some(dir) = std::env::var_os("XAQU_QEMU_DIR").map(PathBuf::from) {
         return Some(dir.join("bin")).filter(|bin| bin.is_dir());
     }
     let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
     let dir = PathBuf::from(home)
         .join(".local")
         .join("share")
-        .join("ferrix")
+        .join("xaqu")
         .join("qemu");
     let bin = dir.join("bin");
     if bin.is_dir() {
@@ -468,11 +468,11 @@ fn same_file(one: &Path, other: &Path) -> bool {
 mod tests {
     use super::*;
 
-    /// `FERRIX_QEMU` takes a directory of QEMU binaries or one binary, and
+    /// `XAQU_QEMU` takes a directory of QEMU binaries or one binary, and
     /// a binary answers only for the architecture it is.
     #[test]
     fn a_named_qemu_is_a_directory_or_one_binary() {
-        let scratch = std::env::temp_dir().join(format!("ferrix-qemu-{}", std::process::id()));
+        let scratch = std::env::temp_dir().join(format!("xaqu-qemu-{}", std::process::id()));
         std::fs::create_dir_all(&scratch).expect("a scratch directory");
         let binary = scratch.join("qemu-system-x86_64");
         std::fs::write(&binary, b"not really qemu").expect("a file");

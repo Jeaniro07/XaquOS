@@ -1,5 +1,5 @@
 #!/bin/sh
-# R3's check inside a guest, the same on the Linux guest and on Ferrix
+# R3's check inside a guest, the same on the Linux guest and on Xaqu
 # (docs/GAME-PATH.md §2.4 and §8.1): the clock, the launch timer on a
 # stand-in (and on RIG_GAME, when it names one), a timed sleep's overshoot
 # idle, then the background load, every processor's busy share under it,
@@ -20,7 +20,7 @@ source=/sys/devices/system/clocksource/clocksource0/current_clocksource
 if [ -r "$source" ]; then
 	echo "measure: clocksource $(cat "$source")"
 else
-	echo "measure: clocksource not in sysfs (Ferrix prints it at boot: the kernel's clock line)"
+	echo "measure: clocksource not in sysfs (Xaqu prints it at boot: the kernel's clock line)"
 fi
 # The launch timer against a stand-in that reports its first swap 100 ms
 # after its constructor: the line must say about 100 ms more for the swap.

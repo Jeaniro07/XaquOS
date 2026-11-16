@@ -45,11 +45,11 @@ use alloc::collections::VecDeque;
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     PACKET_INTERRUPT, PACKET_PAGE_REQUEST, PACKET_SIGNAL, PACKET_USER, PortPacket,
 };
-use ferrix_sync::IrqSpinLock;
+use xaqu_sync::IrqSpinLock;
 
 use crate::arch;
 use crate::fallible::{self, AllocError};

@@ -11,8 +11,8 @@
 
 use core::arch::asm;
 
-use ferrix_bootinfo::Arch;
-use ferrix_paging::aarch64::MAIR_EL1;
+use xaqu_bootinfo::Arch;
+use xaqu_paging::aarch64::MAIR_EL1;
 
 use super::Handoff;
 
@@ -20,10 +20,10 @@ use super::Handoff;
 pub(crate) const ARCH: Arch = Arch::AArch64;
 
 /// The `e_machine` a kernel for this architecture must carry.
-pub(crate) const ELF_MACHINE: u16 = ferrix_elf::EM_AARCH64;
+pub(crate) const ELF_MACHINE: u16 = xaqu_elf::EM_AARCH64;
 
 /// The ELF class a kernel for this architecture must be.
-pub(crate) const ELF_CLASS: ferrix_elf::Class = ferrix_elf::Class::Elf64;
+pub(crate) const ELF_CLASS: xaqu_elf::Class = xaqu_elf::Class::Elf64;
 
 /// `TCR_EL1` with 48-bit addressing and a 4 KiB granule in both halves.
 ///

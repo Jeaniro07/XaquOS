@@ -307,7 +307,7 @@ pub fn snapshot(
         })
         .collect();
     snapshot.system = compositor_ipc::System {
-        os: "Ferrix".to_owned(),
+        os: "Xaqu".to_owned(),
         kernel: env!("CARGO_PKG_VERSION").to_owned(),
         counts: (
             snapshot.monitors.len(),

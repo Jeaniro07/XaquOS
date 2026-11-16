@@ -110,16 +110,16 @@ const SKEW: u64 = 200;
 /// How well each window of the song must match the reference.
 const CORRELATION: f64 = 0.9;
 
-/// Where the fetched video is: `$FERRIX_BADAPPLE`, or
-/// `~/.local/share/ferrix/badapple`.
+/// Where the fetched video is: `$XAQU_BADAPPLE`, or
+/// `~/.local/share/xaqu/badapple`.
 fn media_dir() -> Result<PathBuf> {
-    if let Some(dir) = std::env::var_os("FERRIX_BADAPPLE") {
+    if let Some(dir) = std::env::var_os("XAQU_BADAPPLE") {
         return Ok(PathBuf::from(dir));
     }
     let home = std::env::var_os("HOME")
         .or_else(|| std::env::var_os("USERPROFILE"))
         .ok_or_else(|| Error::new("neither HOME nor USERPROFILE is set"))?;
-    Ok(PathBuf::from(home).join(".local/share/ferrix/badapple"))
+    Ok(PathBuf::from(home).join(".local/share/xaqu/badapple"))
 }
 
 /// The fetched source, checked.
@@ -229,7 +229,7 @@ fn prepared(dir: &Path, source: &Path, tool: &Path) -> Result<(PathBuf, PathBuf)
 /// The flags a player is built with for `arch`: a static program at a fixed
 /// address, as every app's (`apps.rs`), and on ARMv7-A for the Cortex-A7.
 ///
-/// That core is the one ARMv7-A core Ferrix runs on: the DK1's, and the one
+/// That core is the one ARMv7-A core Xaqu runs on: the DK1's, and the one
 /// QEMU is given (`qemu.rs`). The target's own baseline has no NEON and
 /// sixteen double registers, so every loop over pixels was scalar; this core
 /// has NEON, thirty-two registers (which the kernel saves for a program on a
@@ -658,7 +658,7 @@ pub(crate) fn on_the_desktop(
         let mut command = if cfg!(windows) {
             crate::wsl::bash(
                 &paths::workspace_root(),
-                "FERRIX_BADAPPLE=\"$(wslpath -u \"$1\")\" exec bash tools/common/fetch/fetch-badapple.sh",
+                "XAQU_BADAPPLE=\"$(wslpath -u \"$1\")\" exec bash tools/common/fetch/fetch-badapple.sh",
                 &[&dir.to_string_lossy()],
             )
         } else {

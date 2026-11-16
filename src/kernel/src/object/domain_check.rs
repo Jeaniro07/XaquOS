@@ -43,14 +43,14 @@
 use alloc::sync::Arc;
 
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::JOB_SPECULATION_DOMAIN;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::JOB_SPECULATION_DOMAIN;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::IrqControl;
+use xaqu_native_abi::handle::Handle;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::IrqControl;
 
 use super::check::Side;
 use super::job::{self, Job};

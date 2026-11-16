@@ -79,7 +79,7 @@
 //! # Use
 //!
 //! ```
-//! use ferrix_qr::{Error, MIN_MODULES_LEN, MIN_TMP_LEN, generate, max_data_size};
+//! use xaqu_qr::{Error, MIN_MODULES_LEN, MIN_TMP_LEN, generate, max_data_size};
 //!
 //! let mut modules = [0u8; MIN_MODULES_LEN];
 //! let mut tmp = [0u8; MIN_TMP_LEN];

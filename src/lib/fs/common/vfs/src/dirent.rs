@@ -11,14 +11,14 @@
 //!
 //! The same on all three architectures, because every field is fixed-width
 //! and the record is padded explicitly — which is the point of the `64` in
-//! the name, and why this is the only directory-reading call Ferrix answers.
+//! the name, and why this is the only directory-reading call Xaqu answers.
 //!
 //! The name starts at byte 19, not at `size_of::<linux_dirent64>()`, which
 //! Rust and C both round up to 24. A packer that used the size would skip five
 //! bytes of every name, and every program would see its directory entries
 //! missing their first letters.
 
-use ferrix_linux_abi::types::DIRENT64_NAME_OFFSET;
+use xaqu_linux_abi::types::DIRENT64_NAME_OFFSET;
 
 /// Records are padded to a multiple of this.
 const ALIGN: usize = 8;

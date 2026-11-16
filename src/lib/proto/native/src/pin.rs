@@ -6,8 +6,8 @@
 //! [`Pin::addresses`] reads back where the device sees each page. The pages are
 //! not contiguous to the device, so there is one address per page.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::nr;
+use xaqu_native_abi::types::{
     PIN_BLOCK_ORDER_SHIFT, PIN_BLOCKS, PIN_COHERENT, PIN_CONTIGUOUS, PIN_READ_ONLY,
 };
 

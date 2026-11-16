@@ -28,10 +28,10 @@
 //! to do — pin, submit a command, unpin, reply, or wait — and the glue reports
 //! back with [`Pipeline::pinned`] and [`Pipeline::done`].
 
-use ferrix_displayctl::message::{
+use xaqu_displayctl::message::{
     Attach, AttachObject, BYTES_PER_PIXEL, Message, Rect as CtlRect, Status,
 };
-use ferrix_virtio::gpu::{Command, DeviceError as Refusal, Format, MemEntry, Rect, Response};
+use xaqu_virtio::gpu::{Command, DeviceError as Refusal, Format, MemEntry, Rect, Response};
 
 /// Requests waiting behind the one being run.
 pub const QUEUE_DEPTH: usize = 16;
@@ -256,7 +256,7 @@ pub struct Pipeline {
 }
 
 /// How the device reads a 2D transfer's `offset`, which the two machines
-/// Ferrix's GPU runs under disagree about.
+/// Xaqu's GPU runs under disagree about.
 ///
 /// virtio 1.2 §5.7.6.8 makes it the offset into the resource's backing, and
 /// QEMU and Linux's driver read it as where the rectangle starts there:

@@ -50,9 +50,9 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::types::{
     PACKET_PAGE_REQUEST, PAGE_REQUEST_DIRTY, PAGE_REQUEST_READ, PAGER_VMO_NO_COPY_WAIT,
     PAGER_VMO_TRAP_DIRTY, PAGER_WAIT_MAX_NS, PAGER_WAIT_MIN_NS, page_request,
 };
@@ -172,7 +172,7 @@ struct Request {
     /// Where they wait.
     queue: WaitQueue,
     /// The record's heap, charged to the job whose fault opened it (F-37).
-    _heap: ferrix_kmem::Charge,
+    _heap: xaqu_kmem::Charge,
 }
 
 impl Request {
@@ -220,7 +220,7 @@ pub struct Pager {
     /// The kernel object it is, charged to the job that made it.
     _charge: Charge,
     /// Its heap, charged likewise (F-37).
-    _heap: ferrix_kmem::Charge,
+    _heap: xaqu_kmem::Charge,
     /// The criticality level of the job that made it: who holds this handle fills
     /// what its VMOs read (`docs/microkernel/K17.md`).
     level: u8,
@@ -284,7 +284,7 @@ pub struct Keeper {
     /// The kernel object it is.
     _charge: Charge,
     /// The registry's heap.
-    _heap: ferrix_kmem::Charge,
+    _heap: xaqu_kmem::Charge,
 }
 
 impl Drop for Keeper {
@@ -327,8 +327,8 @@ impl Pager {
     /// [`AllocError`] at the job's limits or with no memory.
     pub fn new(port: Arc<Port>, wait_ns: u64, level: u8) -> Result<Pager, AllocError> {
         let charge = Charge::running(Resource::Objects, 1).map_err(|_| AllocError)?;
-        let heap = ferrix_kmem::Charge::bytes(
-            ferrix_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
+        let heap = xaqu_kmem::Charge::bytes(
+            xaqu_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
         )
         .map_err(|_| AllocError)?;
         let list = fallible::try_with_capacity(4)?;
@@ -368,8 +368,8 @@ impl Pager {
     /// `Ok(None)` when it has one; [`AllocError`] at the job's limits.
     pub fn keep(&self) -> Result<Option<Keeper>, AllocError> {
         let charge = Charge::running(Resource::Objects, 1).map_err(|_| AllocError)?;
-        let heap = ferrix_kmem::Charge::bytes(
-            ferrix_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
+        let heap = xaqu_kmem::Charge::bytes(
+            xaqu_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
         )
         .map_err(|_| AllocError)?;
         let mut registry = self.core.requests.lock();
@@ -409,8 +409,8 @@ impl Keeper {
     /// [`TakeUpRefused`]; the pager stays as it was.
     pub fn take_up(&self, port: &Arc<Port>) -> Result<Pager, TakeUpRefused> {
         let charge = Charge::running(Resource::Objects, 1).map_err(|_| TakeUpRefused::NoMemory)?;
-        let heap = ferrix_kmem::Charge::bytes(
-            ferrix_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
+        let heap = xaqu_kmem::Charge::bytes(
+            xaqu_kmem::arc_footprint::<PagerCore>().saturating_add(4 * size_of::<Arc<Request>>()),
         )
         .map_err(|_| TakeUpRefused::NoMemory)?;
         let mut promises: Vec<Promise>;
@@ -734,7 +734,7 @@ impl PagerLink {
         let issuer = faulting.map_or(Sender::KERNEL, Sender::of);
         let job = sched::running_group();
         let ticket = issue_for(issuer, job).map_err(|_| Refusal::NoMemory)?;
-        let heap = ferrix_kmem::Charge::bytes(ferrix_kmem::arc_footprint::<Request>())
+        let heap = xaqu_kmem::Charge::bytes(xaqu_kmem::arc_footprint::<Request>())
             .map_err(|_| Refusal::NoMemory)?;
         let fresh = fallible::try_arc(Request {
             id: ticket.id(),

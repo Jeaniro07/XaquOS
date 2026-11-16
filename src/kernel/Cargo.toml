@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel"
-description = "The Ferrix kernel"
+name = "xaqu-kernel"
+description = "The Xaqu kernel"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,30 +8,30 @@ license.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "ferrix-kernel"
+name = "xaqu-kernel"
 path = "src/main.rs"
 
 [dependencies]
-ferrix-kernel-load.workspace = true
+xaqu-kernel-load.workspace = true
 # The removable run-time setting entries: always compiled, linked only when
 # the composition root names them, under runtime_settings=live
 # (docs/KERNEL-CRATES.md §6; ledger 3558 (10), 3623 (R1)).
-ferrix-kernel-settings.workspace = true
+xaqu-kernel-settings.workspace = true
 # The board glue, installed by the composition root (docs/microkernel/
 # CRATE-SPLIT.md S2).
-ferrix-kernel-board-gs201-usb.workspace = true
-ferrix-kernel-board-stm32mp1.workspace = true
-ferrix-kernel-logctl.workspace = true
-ferrix-kernel-net-ring.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-crng.workspace = true
-ferrix-elf.workspace = true
-ferrix-paging.workspace = true
-ferrix-sched.workspace = true
-ferrix-smbios.workspace = true
-ferrix-sync.workspace = true
-ferrix-ustack.workspace = true
+xaqu-kernel-board-gs201-usb.workspace = true
+xaqu-kernel-board-stm32mp1.workspace = true
+xaqu-kernel-logctl.workspace = true
+xaqu-kernel-net-ring.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-crng.workspace = true
+xaqu-elf.workspace = true
+xaqu-paging.workspace = true
+xaqu-sched.workspace = true
+xaqu-smbios.workspace = true
+xaqu-sync.workspace = true
+xaqu-ustack.workspace = true
 
 [lints]
 workspace = true

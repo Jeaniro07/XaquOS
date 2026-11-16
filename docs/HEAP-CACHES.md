@@ -19,8 +19,8 @@ one cache line.
 ## 2. The design
 
 **A cache per processor and size class.** Each processor has, for each of the
-nine size classes (`ferrix_heap::CLASS_SIZES`, 8 B to 2 KiB), a stack of at
-most `CACHE_DEPTH` (16) free objects of that class: `ferrix_heap::CpuCache`,
+nine size classes (`xaqu_heap::CLASS_SIZES`, 8 B to 2 KiB), a stack of at
+most `CACHE_DEPTH` (16) free objects of that class: `xaqu_heap::CpuCache`,
 safe Rust over `Heap` and `Backing`, host-tested. Requests larger than
 `LARGEST_CLASS` go to the heap as now.
 
@@ -108,7 +108,7 @@ held when it starts.
 
 ## 5. Evidence planned
 
-* Host tests in `ferrix-heap` with negative controls: a pop that takes the
+* Host tests in `xaqu-heap` with negative controls: a pop that takes the
   heap, an overflow that gives back none, a refusal with no drain, a retried
   injection; Miri on the crate.
 * Boot checks: the balance on one processor; every cache full and the heap
@@ -125,7 +125,7 @@ held when it starts.
 
 * 2026-10-30: design OK IF 1-10, ledger line 4914; conditions 1-4 written
   in above.
-* 2026-10-30, built: `ferrix_heap::CpuCache` with three host tests;
+* 2026-10-30, built: `xaqu_heap::CpuCache` with three host tests;
   `mm::CACHES`, `allocate_through_caches`, the overflow in `dealloc`,
   `heap_or_drain` on every refusal (refill, large request, reserve fill)
   with `fallible::injected_failures` keeping an injected refusal from a

@@ -3,7 +3,7 @@
 
 use std::io::Cursor;
 
-use ferrix_partition::{ESP, Partition, parse_entries, parse_header};
+use xaqu_partition::{ESP, Partition, parse_entries, parse_header};
 
 use super::{LIVE_FIRST, LIVE_NAME, SECTOR, lay_out};
 use crate::fat::Fat32;
@@ -11,7 +11,7 @@ use crate::fat::Fat32;
 /// A small FAT32 volume with a file in it, as `xtask` writes its images.
 fn volume() -> Vec<u8> {
     let mut fs = Fat32::new(64 << 20).unwrap();
-    fs.add_file("FERRIX/CMDLINE.TXT", b"ferrix.root=tmpfs")
+    fs.add_file("XAQU/CMDLINE.TXT", b"xaqu.root=tmpfs")
         .unwrap();
     fs.finish()
 }
@@ -22,7 +22,7 @@ fn sector(bytes: &[u8], lba: u64) -> &[u8] {
 }
 
 /// The medium has a valid GUID partition table at both ends whose one
-/// partition is the EFI system partition named `FERRIX-LIVE`, over exactly
+/// partition is the EFI system partition named `XAQU-LIVE`, over exactly
 /// the volume; the volume's bytes are there unchanged but for the hidden
 /// sectors, which now say where it starts.
 #[test]
@@ -38,7 +38,7 @@ fn the_live_medium_holds_the_volume_in_its_one_partition() {
     assert_eq!(&sector(&medium, 0)[510..512], &[0x55, 0xAA]);
     assert_eq!(sector(&medium, 0)[446 + 4], 0xEE);
 
-    // The primary table, read as the kernel and `ferrix-install` read it.
+    // The primary table, read as the kernel and `xaqu-install` read it.
     let volume_sectors = volume.len() as u64 / SECTOR;
     let header = parse_header(sector(&medium, 1), sectors).unwrap();
     assert_eq!(header.alternate, sectors - 1, "the backup header's place");
@@ -68,7 +68,7 @@ fn the_live_medium_holds_the_volume_in_its_one_partition() {
     let start = usize::try_from(LIVE_FIRST * SECTOR).unwrap();
     let placed = &medium[start..start + volume.len()];
     let hidden = u32::try_from(LIVE_FIRST).unwrap().to_le_bytes();
-    assert_eq!(&placed[3..11], b"FERRIX  ", "the boot sector");
+    assert_eq!(&placed[3..11], b"XAQU  ", "the boot sector");
     assert_eq!(&placed[28..32], &hidden, "the boot sector's hidden sectors");
     assert_eq!(&placed[6 * 512 + 28..6 * 512 + 32], &hidden, "the backup's");
     let mut expected = volume.clone();

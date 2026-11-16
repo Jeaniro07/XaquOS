@@ -13,7 +13,7 @@
 //! A pipe closed on exec tells the parent how that went (§5.2 step 5). The
 //! child writes the step that failed and its error number to it; a success
 //! closes it with nothing written, which is
-//! [`Event::Execed`](ferrix_svc::event::Event). A child that fails ends with
+//! [`Event::Execed`](xaqu_svc::event::Event). A child that fails ends with
 //! systemd's exit code for the step, so its unit fails as the unit of a
 //! program that could not run fails there.
 //!
@@ -22,7 +22,7 @@
 //! the directory and the user change, and locked last, after init's
 //! go-ahead and just before `execve`.
 //!
-//! [`Event::SpawnFailed`]: ferrix_svc::event::Event
+//! [`Event::SpawnFailed`]: xaqu_svc::event::Event
 
 use std::collections::BTreeMap;
 use std::ffi::{CString, c_char};
@@ -32,9 +32,9 @@ use std::os::fd::{AsRawFd, BorrowedFd, OwnedFd, RawFd};
 use std::os::unix::fs::PermissionsExt as _;
 use std::ptr;
 
-use ferrix_svc::event::SpawnSpec;
-use ferrix_svc::exec::Command;
-use ferrix_svc::kind::{Input, Output, ServiceType};
+use xaqu_svc::event::SpawnSpec;
+use xaqu_svc::exec::Command;
+use xaqu_svc::kind::{Input, Output, ServiceType};
 
 use crate::sandbox::{self, Plan};
 use crate::sys::{self, Forked};
@@ -337,7 +337,7 @@ pub(crate) fn prepare(
     let listen_pid = environment.keys().position(|name| name == "LISTEN_PID");
     Ok(Prepared {
         listen_pid,
-        waits_for_bootstrap: spec.bootstrap && spec.role == ferrix_svc::event::Role::Main,
+        waits_for_bootstrap: spec.bootstrap && spec.role == xaqu_svc::event::Role::Main,
         path: c_string(&path)?,
         argv: argv
             .iter()
@@ -397,7 +397,7 @@ fn arguments(command: &Command, environment: &BTreeMap<String, String>) -> Vec<S
     let mut argv = Vec::new();
     for word in &command.argv {
         if let Some(name) = word.strip_prefix('$')
-            && ferrix_svc::value::is_env_name(name)
+            && xaqu_svc::value::is_env_name(name)
         {
             if let Some(value) = environment.get(name) {
                 argv.extend(value.split_whitespace().map(str::to_owned));
@@ -459,7 +459,7 @@ fn environment_file(text: &str) -> Vec<(String, String)> {
                 .unwrap_or(value);
             (name.trim().to_owned(), unquoted.to_owned())
         })
-        .filter(|(name, _)| ferrix_svc::value::is_env_name(name))
+        .filter(|(name, _)| xaqu_svc::value::is_env_name(name))
         .collect()
 }
 
@@ -883,7 +883,7 @@ mod tests {
             argv: argv.iter().map(|word| (*word).to_owned()).collect(),
             ignore_failure: false,
             expand_environment: expand,
-            privilege: ferrix_svc::exec::Privilege::Unit,
+            privilege: xaqu_svc::exec::Privilege::Unit,
         }
     }
 

@@ -1,7 +1,7 @@
 //! The guest half of `cargo xtask test-mce`'s recovery modes
 //! (`docs/MACHINE-CHECK.md` §5), run as init on x86-64.
 //!
-//! It prints `/proc/ferrix-mce`, then forks a victim that maps a page, writes
+//! It prints `/proc/xaqu-mce`, then forks a victim that maps a page, writes
 //! it, prints `mce-test: victim pid=<pid> va=<address>` and reads the page in
 //! a loop for [`SPIN_SECONDS`]. The gate finds the page's physical address
 //! through QEMU's monitor and injects a machine check at it. With a handler
@@ -28,7 +28,7 @@ const PATTERN: u8 = 0xa5;
 
 fn main() -> ExitCode {
     say("mce-test: started");
-    show("/proc/ferrix-mce");
+    show("/proc/xaqu-mce");
     // SAFETY: fork in a single-threaded program; the child runs only
     // `victim`, which never returns.
     let pid = unsafe { libc::fork() };
@@ -56,8 +56,8 @@ fn main() -> ExitCode {
     } else {
         return failed("the victim neither exited nor was killed");
     }
-    show("/proc/ferrix-mce");
-    show("/proc/ferrix-mce-retired");
+    show("/proc/xaqu-mce");
+    show("/proc/xaqu-mce-retired");
     // SAFETY: as above; the child exits at once.
     let second = unsafe { libc::fork() };
     if second == 0 {

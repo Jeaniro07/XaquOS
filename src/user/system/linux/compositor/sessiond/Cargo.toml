@@ -20,13 +20,13 @@ compositor-socket = { path = "../socket" }
 compositor-wire = { path = "../wire" }
 # The seat channel to authd (docs/AUTH.md §3.7): init's bootstrap, OPEN, and
 # the ARM, DISARM and GRANT records.
-ferrix-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
-ferrix-native = { path = "../../../../../lib/proto/native" }
-ferrix-native-abi = { path = "../../../../../lib/proto/native-abi" }
+xaqu-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
+xaqu-native = { path = "../../../../../lib/proto/native" }
+xaqu-native-abi = { path = "../../../../../lib/proto/native-abi" }
 # The line that tells lode of the session (docs/LOGGING.md §19.1).
-ferrix-lode-core = { path = "../../../../../lib/log/lode" }
+xaqu-lode-core = { path = "../../../../../lib/log/lode" }
 # The session's scope, through the init's control socket (docs/INIT.md §5.6).
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 
 [features]
 default = ["settings-prompt"]

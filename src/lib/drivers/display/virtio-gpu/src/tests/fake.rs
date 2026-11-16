@@ -13,7 +13,7 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::gpu::{
+use xaqu_virtio::gpu::{
     CMD_GET_DISPLAY_INFO, CMD_GET_EDID, CMD_MOVE_CURSOR, CMD_RESOURCE_ATTACH_BACKING,
     CMD_RESOURCE_CREATE_2D, CMD_RESOURCE_DETACH_BACKING, CMD_RESOURCE_FLUSH, CMD_RESOURCE_UNREF,
     CMD_SET_SCANOUT, CMD_SUBMIT_3D, CMD_TRANSFER_TO_HOST_2D, CMD_UPDATE_CURSOR, CURSOR_LEN,
@@ -21,13 +21,13 @@ use ferrix_virtio::gpu::{
     RESP_ERR_INVALID_RESOURCE_ID, RESP_ERR_UNSPEC, RESP_OK_DISPLAY_INFO, RESP_OK_EDID,
     RESP_OK_NODATA,
 };
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     CONFIG_MSIX_VECTOR, CommonConfig, DEVICE_FEATURE, DEVICE_FEATURE_SELECT, DEVICE_STATUS,
     DRIVER_FEATURE, DRIVER_FEATURE_SELECT, FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, NO_VECTOR,
     NUM_QUEUES, QUEUE_DESC, QUEUE_DEVICE, QUEUE_DRIVER, QUEUE_ENABLE, QUEUE_MSIX_VECTOR,
     QUEUE_NOTIFY_OFF, QUEUE_SELECT, QUEUE_SIZE, STATUS_DEVICE_NEEDS_RESET, STATUS_DRIVER_OK,
 };
-use ferrix_virtio::{Descriptor, Layout, QueueMemory, SplitQueueDevice};
+use xaqu_virtio::{Descriptor, Layout, QueueMemory, SplitQueueDevice};
 
 use crate::{CommandArea, DevicePages, ISR_QUEUE, Transport};
 

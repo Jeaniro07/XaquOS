@@ -13,19 +13,19 @@ everything after it are not started. The 2026-09-16 decision stood until
 a cheaper trip to ring 3 (*The verdict of S0*, below).
 
 **2026-09-30: the trip is being cut** (§ 8). The customer chose a direction
-for Ferrix, Linux software beside safety functions on a kernel that can be
+for Xaqu, Linux software beside safety functions on a kernel that can be
 assured. Getting the btrfs parser out of ring 0 is one step of that, and it
 needs the trip cheap first. The trace now says where a trip's time goes,
 and the fixes are landing one at a time.
 
-Drafted by ferrix-55b on 2026-09-27. The certification consultant reviewed
+Drafted by xaqu-55b on 2026-09-27. The certification consultant reviewed
 §2 and §5, and the init owner reviewed §3. Both decisions are recorded in
 `docs/BACKLOG.md`, Decisions, 2026-09-27.
 
 ## The verdict of S0
 
 Worth it for filesystems on paper, not yet for the network stack, and not
-before the trip to ring 3 is made cheap. That trip is what today's Ferrix
+before the trip to ring 3 is made cheap. That trip is what today's Xaqu
 already pays for every cold disk read.
 
 **How often a build crosses to ring 3.** A warm `rustc` compile made 4,345
@@ -39,12 +39,12 @@ its driver in ring 0, took 27 to 48 us: 10 to 20 times less. On AArch64 under
 TCG the figures were 453 us and 145 us. With 32 reads in flight the 99th
 percentile reaches 150 to 230 ms (§ *S0's second result*).
 
-**What that costs a whole workload.** No Ferrix with in-kernel drivers exists
+**What that costs a whole workload.** No Xaqu with in-kernel drivers exists
 (the 2026-09-13 decision forbids building one), so stock Linux stands in for
-one. Each trip costs Ferrix 252 to 817 us more. Multiplied by the trips each
+one. Each trip costs Xaqu 252 to 817 us more. Multiplied by the trips each
 run made (x86-64, KVM; the `test-rustc` gate on 2026-09-27):
 
-| Workload | Time on today's Ferrix | Trips to ring 3 | Lost to the seam vs in-kernel drivers | Option B would add |
+| Workload | Time on today's Xaqu | Trips to ring 3 | Lost to the seam vs in-kernel drivers | Option B would add |
 | --- | --- | --- | --- | --- |
 | Cold: `rustc -vV`, `cargo -V`, rustc and gcc compile and run | 4.35 s | 2,982 | 0.75 to 2.4 s (17 to 56%) | about 0.9 to 2.5 s more (a server trip per fill) |
 | Warm: the second `rustc hello.rs` | 0.14 s | 1 | under 1 ms | under 1 ms |
@@ -56,7 +56,7 @@ the run.
 
 **Why the cost looks like the implementation, not the design.** Kernels that
 run drivers in user mode, such as seL4 and Fuchsia, pass a request between
-processes in about a microsecond; Ferrix's trip costs hundreds. A median of 2
+processes in about a microsecond; Xaqu's trip costs hundreds. A median of 2
 to 4 ms with a 99th percentile of 150 to 230 ms at depth 32 is the shape of
 missed wake-ups rescued by timers, not of crossing into ring 3. Known costs
 sit on the path:
@@ -83,7 +83,7 @@ but that is not measured.
    target such as within twice Linux's per trip.
 5. Add the direct measure of a cold `rustc` run.
 
-That work pays off whatever is decided: every cold read on today's Ferrix
+That work pays off whatever is decided: every cold read on today's Xaqu
 pays the trip. If the trip cannot be brought near the target, today's ring-3
 disk driver deserves a harder look too. BACKLOG has a row for each: the stall,
 and cutting the trip.
@@ -101,12 +101,12 @@ rows in P2, which were measured on 2026-09-27 (*The verdict of S0*).
 The door was kept open. C8 (2026-09-23) builds every cgroup over a `Job` "so a
 future microkernel keeps working". init treats the kernel's subsystems as
 `vfs.builtin`, `net.builtin`, `block.builtin`, which become `*.service`
-aliases the day they are servers (INIT.md §7). L12, which ferrix-15 is building
+aliases the day they are servers (INIT.md §7). L12, which xaqu-15 is building
 now, makes init start devmgr, and is the first step of that on-ramp.
 
 **What has changed since 09-16:**
 - The customer now wants live kernel update and restartable parts of the
-  system: the hot-patch plan (kept outside the repository, in `~/.local/share/ferrix/live-update/PLAN.md` on the build host), and
+  system: the hot-patch plan (kept outside the repository, in `~/.local/share/xaqu/live-update/PLAN.md` on the build host), and
   T0, landed 2026-09-27. That is exactly the "restarting a subsystem" the
   decision gave up.
 - T0 showed the cost of keeping services in ring 0. Every driver kind needed
@@ -249,11 +249,11 @@ Each is useful on its own, and each is a landing.
    boundary gate refuses an item-to-load call unless it is a registered hook
    (the F-04/F-07/F-08 pattern).
 
-## 3. Supervision and boot (agreed with ferrix-15)
+## 3. Supervision and boot (agreed with xaqu-15)
 
 - **L12 lands first and unchanged:** the kernel starts only init, and init
   starts devmgr. This plan adds successor landings to INIT.md §7.3 rather than
-  changing L12. L12's parts stay: the opt-in `ferrix.devmgr=init`, init
+  changing L12. L12's parts stay: the opt-in `xaqu.devmgr=init`, init
   starting nothing but `devmgr.service` before ROOT, and pid 1 re-rooted once.
 - **Servers are `Type=native` units** in a system slice, and `net.builtin`
   becomes `net.service` with `Alias=net.builtin` (INIT.md's own scheme).
@@ -267,7 +267,7 @@ Each is useful on its own, and each is a landing.
   cgroupfs and `/proc/cmdline` are kernel-made.
 - **The root switch** stays the kernel's under L12. Moving btrfs out makes
   "switch" the fs server's job, and the kernel's re-root of pid 1 must be
-  re-argued then (ferrix-15).
+  re-argued then (xaqu-15).
 
 ## 4. Stages
 
@@ -341,7 +341,7 @@ taken up; they stand as they were asked, for whoever reopens the plan.
 
 ## 8. Cutting the trip (2026-09-30, os-35)
 
-**Why now.** The customer chose a direction for Ferrix: unmodified Linux
+**Why now.** The customer chose a direction for Xaqu: unmodified Linux
 software running as a non-safety partition beside safety functions, on a
 kernel item that can be assured. The certification consultant (os-9f)
 proposed the route, with IEC 61508 SIL 2 as the first target; the claim's
@@ -492,7 +492,7 @@ host load, and goes to the certification consultant before it lands.
     unlanded work*.
 
 Hazards the ring work found:
-- The new `ferrix-driver` ring (`src/user/system/native/driver/src/block.rs`)
+- The new `xaqu-driver` ring (`src/user/system/native/driver/src/block.rs`)
   still reads and writes the shared indices a byte at a time. That is
   F-45 on the driver's side, and it has a BACKLOG row.
 - Only four commands fit in flight: four 128 KiB regions of a 512 KiB data
@@ -721,7 +721,7 @@ failing 0x1013 leaving registers 2 to 4 exactly as sent.
 When this lands, §9 carries this review as its "where it stands" verdict.
 The code goes back to the consultant with the check's logs and each of the
 four controls' logs, each showing its marker and the check's own
-`FERRIX-PANIC`.
+`XAQU-PANIC`.
 
 ### 9.3b The consultant's code review (os-ad, 2026-10-01) and what changed
 
@@ -952,7 +952,7 @@ each met on the branch:
    free to move in at least one of 8 rounds. A pinned reader is woken
    where it is pinned.
 3. The timer keeps the clock read after the arm, so a skip is never late
-   (the `arm` line). The clock's conversion is ferrix-vdso's
+   (the `arm` line). The clock's conversion is xaqu-vdso's
    `counter_nanos`, host-tested against the 128-bit formula. The deferred
    decisions are bounded in MEMORY-AND-TIMING §2.2c. The rows are
    L.sched.5-8.
@@ -996,7 +996,7 @@ measures it.
   - os-35's sync wake and idle poll, `os-35/ipc-wake` (dbd392808, §8).
 - *How the work is run:*
   - Builds and gates run on nazuna. The gate pool is
-    `~/.local/share/ferrix/fleet/gate.sh`, with verdicts in its INDEX.
+    `~/.local/share/xaqu/fleet/gate.sh`, with verdicts in its INDEX.
   - Landings take the lock with `fleet/land.sh` and follow
     `docs/CONVENTIONS.md`.
   - Requirement ids are reserved before they are written.
@@ -1025,25 +1025,25 @@ measures it.
 - *How it is compared.*
   - Both kernels boot under the same QEMU and KVM, with the same `-cpu` model
     and one virtual processor pinned to one host core.
-  - They run alternately: seL4, Ferrix, seL4, Ferrix.
+  - They run alternately: seL4, Xaqu, seL4, Xaqu.
   - The figure is the ratio of their p50s within one run. nazuna's load moves
     absolute figures from hour to hour; a ratio taken in one run holds.
   - Both are kept in TSC ticks, which count at a fixed rate rather than at the
     core's clock.
 - *Configuration: the gate figure has the protections matched.*
-  - **Ferrix**: every mitigation on, and the two programs in one speculation
+  - **Xaqu**: every mitigation on, and the two programs in one speculation
     domain.
     - On Zen 5 that means AutoIBRS and `STIBP`, both set once at boot, and the
       return-stack refill at every switch of address space (§9.3a, A2).
-    - Ferrix builds no page-table isolation, and Zen 5 needs none.
+    - Xaqu builds no page-table isolation, and Zen 5 needs none.
   - **seL4**, built for the same processor:
     - `KernelSkimWindow` off. This is its Meltdown defence, which Zen 5 does
       not need.
-    - `KernelX86RSBOnContextSwitch` on, to match Ferrix's refill.
+    - `KernelX86RSBOnContextSwitch` on, to match Xaqu's refill.
     - `KernelX86IBPBOnContextSwitch` off, as by default.
     - PCIDs on (`KernelSupportPCID`, also its default).
   - **Reported beside the gate figure**, not gated:
-    - Ferrix with `--mitigations off`, against seL4's defaults.
+    - Xaqu with `--mitigations off`, against seL4's defaults.
     - Both kernels with `IBPB` at every switch. `IBPB` alone costs about 2 us
       a switch on this processor, so no design reaches the target between
       programs that are not in one domain. The report says so.
@@ -1334,7 +1334,7 @@ matched, inside a domain.
 What the new target changes:
 - Step 5's perf row fails above 1.10 times seL4, not 1.65; the margin is
   for the spread of a busy host (a busy SMT sibling adds 15 to 20%).
-- Ferrix's software outside the switch must come to about seL4's, some
+- Xaqu's software outside the switch must come to about seL4's, some
   90 ns a direction (its 220 ns one way, less the 130 ns switch below),
   where §9.5's 1.5 times left about 200.
 - The items below under *what seL4 does not do* are part of the plan now,
@@ -1359,7 +1359,7 @@ What this changes in §9.5:
 - sel4bench's own one-way figures read a `cpuid` beside every sample, which
   exits the virtual machine. Their sum, 2,640 ticks, is larger than the
   round trip measured, so the root task's figure is the one to compare.
-- Ferrix's `ipc-bench` still differs in its counter read (no `lfence`) and
+- Xaqu's `ipc-bench` still differs in its counter read (no `lfence`) and
   its p50 (a histogram floored to an eighth of a power of two). Those are the
   "made exact" part of step 0, still to do.
 
@@ -1394,14 +1394,14 @@ with a PCID" is about 110 ns on nazuna, for both kernels.
   nazuna has no LMSLE), AMD's SVM ASIDs (they tag virtual machines, not
   processes).
 
-To repeat: `~/.local/share/ferrix/sel4/` on nazuna (`fetch.sh`, `build.sh`,
+To repeat: `~/.local/share/xaqu/sel4/` on nazuna (`fetch.sh`, `build.sh`,
 `run.sh`, `series.sh`, `summarize.py`, the patch to sel4bench's `apps/ipc`,
 and every run's log). The sources are sel4bench-manifest 80add415, with seL4
 at c6ce4d2a.
 
 ### 9.6a Redox measured on nazuna (2026-10-03)
 
-The customer asked how Ferrix compares with Redox, the other Rust OS whose
+The customer asked how Xaqu compares with Redox, the other Rust OS whose
 services run as user-space servers. Redox publishes no round-trip figure,
 only its base system call (116 cycles), so it was measured here, the way
 seL4 was: the gate's QEMU and KVM, the gate's CPU model with `+rdtscp` and
@@ -1416,7 +1416,7 @@ with kernel 0.5.12 (`16282036`) as shipped. One benchmark program, `rbench`,
 built for `x86_64-unknown-redox` against relibc, was added to the image with
 the `redoxfs` host tool.
 
-| What one sample is | Redox | Ferrix, `main` a305c35c3 | Linux, the host, native |
+| What one sample is | Redox | Xaqu, `main` a305c35c3 | Linux, the host, native |
 |---|---|---|---|
 | An unknown system call answering `ENOSYS` | 29 ns (129 ticks, batched) | about 275 ns (`bench-ipc`'s floor) | 37 ns |
 | A request and its answer between two processes | 1,965 ns: one `SYS_WRITE` to a user-space scheme daemon (2,025 ns by `SYS_CALL`) | 2,556 ns: `channel_write_read` in one domain | 2,105 ns: a pipe ping-pong |
@@ -1427,7 +1427,7 @@ the `redoxfs` host tool.
 **What the comparison is worth.**
 - *Redox runs with no speculative-execution defence at all.* Its kernel was
   disassembled: no write to `SPEC_CTRL` or `PRED_CMD`, so no IBRS, IBPB or
-  STIBP; no return-stack refill; no `VERW`; no retpolines. Ferrix's figure
+  STIBP; no return-stack refill; no `VERW`; no retpolines. Xaqu's figure
   has every defence of §9.6's matched configuration. So Redox's lead in the
   round trip is partly the defences it does not have.
 - *Its round trip is the general path.* A scheme request is queued, the
@@ -1436,7 +1436,7 @@ the `redoxfs` host tool.
   fast path. Steps 2 to 4 aim at 440 ns, about 4.5 times faster than Redox,
   with every defence on.
 - *Block I/O is where Redox is ahead,* 4 to 10 times, and nothing in §9.5 to
-  §9.8 changes that: Ferrix's 4 KiB read is dominated by the block ring's
+  §9.8 changes that: Xaqu's 4 KiB read is dominated by the block ring's
   copies and its four commands in flight, not by the round trip. The BACKLOG
   row "Block I/O faster than Redox" takes Redox's 80 us as the figure to
   beat.
@@ -1447,7 +1447,7 @@ the `redoxfs` host tool.
 - *The host was shared.* Load was 9 to 26. A boot with core 11's SMT sibling
   44% busy ran about 30% slower; it is the top of each range in the logs.
 
-To repeat: `~/.local/share/ferrix/redox-bench/` on nazuna (`rbench/` and its
+To repeat: `~/.local/share/xaqu/redox-bench/` on nazuna (`rbench/` and its
 `build.sh`, `run.py`, `linux.sh`, `series.sh`, `summarize.py`, and every
 run's log with its command, load and sibling-busy figures in `.meta`).
 
@@ -1471,7 +1471,7 @@ design.
 
 **Why a fast path at all.** seL4's own fast path saves it only 35 ns a
 direction on nazuna (§9.6: 510 ns a round trip without it, 440 ns with it),
-because seL4's general path is already short. Ferrix's is not: after steps 2
+because seL4's general path is already short. Xaqu's is not: after steps 2
 and 3 the general 0x1013 is guessed at 0.45 to 0.65 us a direction, against
 the 90 ns of software the target leaves (§9.6). The gap is the general
 system call machinery itself: the dispatch, the wait queue, the wake's
@@ -1593,7 +1593,7 @@ reviewed on its own, and the target does not need it.
 
 #### Part 2: the fast path for 0x1013
 
-**Where it is entered.** At the top of `ferrix_syscall_entry`, the Rust
+**Where it is entered.** At the top of `xaqu_syscall_entry`, the Rust
 function x86-64's `SYSCALL` stub calls once it has pushed the frame. It
 comes before `filter_system_call`, `answer_here` and the interrupt enable.
 It returns into the stub's own exit, so entry and exit hardening are the
@@ -1603,22 +1603,22 @@ entry have no fast path. Its first act, as `trap::system_call`'s is, is
 (condition 2).
 
 **Entry hardening runs before the insertion point** (condition 2). Every
-row of SPECULATION.md §3, as `ferrix_syscall_stub` and the boot plan apply
+row of SPECULATION.md §3, as `xaqu_syscall_stub` and the boot plan apply
 it on `ipc-step1`:
 
 | §3 row | Where it runs | Before the fast path? |
 |---|---|---|
 | Spectre v1: clamps | the handle index, in `HandleTable::get` under `channel_in`. The number is compared, not used as an index | shared: the fast path calls `channel_in` |
-| Spectre v1: registers zeroed on `SYSCALL` entry | the stub, after the frame is pushed and before `callq ferrix_syscall_entry`, all fourteen | yes |
+| Spectre v1: registers zeroed on `SYSCALL` entry | the stub, after the frame is pushed and before `callq xaqu_syscall_entry`, all fourteen | yes |
 | Spectre v1: `lfence` after the conditional `swapgs` | interrupt entry only. `SYSCALL`'s `swapgs` is unconditional | not on this path |
 | Spectre v2, program → kernel (enhanced IBRS, AutoIBRS, IBRS) | set in `IA32_SPEC_CTRL` or `EFER` at boot, on every processor; nothing per entry | yes, standing |
 | Spectre v2, program → program (`IBPB`, refill, `STIBP`) | `IBPB` and the refill in `install` (part 4). `STIBP` is set at boot | the switch is `install` |
 | Speculative store bypass (`SSBD`) | set at boot | yes, standing |
-| MDS (`VERW` on return to ring 3) | `FERRIX_CLEAR_BUFFERS` in the stub's exit, after the pops, before `swapgs` and `sysretq` | after: the fast path returns into it |
+| MDS (`VERW` on return to ring 3) | `XAQU_CLEAR_BUFFERS` in the stub's exit, after the pops, before `swapgs` and `sysretq` | after: the fast path returns into it |
 | Zenbleed, GDS | `DE_CFG[9]` or the microcode switch at boot, else no AVX | yes, standing |
 | (not a §3 row) `SFMASK`: IF, TF, DF, AC and the rest cleared by `SYSCALL`; `cld` in the stub | the processor, then the stub | yes |
 
-So nothing of §3 runs between `callq ferrix_syscall_entry` and the general
+So nothing of §3 runs between `callq xaqu_syscall_entry` and the general
 dispatch that the fast path would skip.
 
 **Interrupts are masked from entry to `sysret`**, as `SFMASK` left them: the
@@ -1666,7 +1666,7 @@ within a few instructions whatever else is held.
 | the caller's half's inbox, the peer's half's inbox | T6 to T10, the commit | `try_lock`, by side. Since po9 (§9.11) `sync::try_lock_masked`, counted for A3 |
 | the peer's half's observers (`Half::observers`) | T10's read | `try_lock`, under the peer's inbox lock: inbox before observers, the order `write_small`'s `trigger` already takes |
 | the peer's half's wait queue (`WaitQueue::waiters`) | T10's read | `try_lock`, under the peer's inbox lock. No path takes an inbox lock under it: `wait_sliced` lets it go before `ready()` takes the inbox |
-| this processor's run queue | T11 to T13, `hand_over`, `switch_chosen`, the switch | a new `try_lock_manually` beside `lock_manually`, which `choose_next` uses, handed over at the switch as there. `try_lock` exists on every lock type in `ferrix_sync` |
+| this processor's run queue | T11 to T13, `hand_over`, `switch_chosen`, the switch | a new `try_lock_manually` beside `lock_manually`, which `choose_next` uses, handed over at the switch as there. `try_lock` exists on every lock type in `xaqu_sync` |
 | the peer's `run_slot` and `sleep_slot` (`asleep_at_home`'s `holds_slots`); the caller's `run_slot` (`detach_current`'s `return_run_slot`); the peer's (`insert`'s `take_run_slot`) | A1, `hand_over` | leaves: a `SpinLock<Option<TaskSlot>>` taken for one `take`, store or `is_some`, with nothing under it |
 | `ZOMBIES` | `finish_switch`, for a dead previous task only | not reached: the caller is blocked, not dead |
 
@@ -1695,7 +1695,7 @@ returns them. So a 0x1013 reader on the fast path *parks*:
 **The general continuation** (condition 3) re-enters the general path at a
 point from which everything it would still have done is done, with the
 call's own arguments:
-1. It opens interrupts, as `ferrix_syscall_entry` does before
+1. It opens interrupts, as `xaqu_syscall_entry` does before
    `trap::system_call`, and checks `sched::may_block()`, the check FX-0907's
    leave makes. A continuation reached with interrupts masked or a lock held
    stops the machine there.
@@ -1884,7 +1884,7 @@ gives the whole list, function by function.
 #### Part 2a: every effect of the general 0x1013 (condition 1)
 
 The walk was made by reading `ipc-step1` at 5d7186d00. It goes from
-`ferrix_syscall_stub` to `sysretq`, through every function a successful
+`xaqu_syscall_stub` to `sysretq`, through every function a successful
 round trip reaches on both sides: the caller's call, the wake of the peer,
 the peer's resumption and its way out. Each is marked:
 - **composed**: the fast path calls it, or its tail or the direct switch
@@ -1897,8 +1897,8 @@ the peer's resumption and its way out. Each is marked:
 
 | # | Function | Mark |
 |---|---|---|
-| 1 | `ferrix_syscall_stub`, entry: `swapgs`, the stack, the frame, the zeroing, `cld` | composed (the stub's) |
-| 2 | the stub's exit: the pops, `FERRIX_CLEAR_BUFFERS`, `swapgs`, `sysretq` | composed (the stub's) |
+| 1 | `xaqu_syscall_stub`, entry: `swapgs`, the stack, the frame, the zeroing, `cld` | composed (the stub's) |
+| 2 | the stub's exit: the pops, `XAQU_CLEAR_BUFFERS`, `swapgs`, `sysretq` | composed (the stub's) |
 | 3 | `filter_system_call`, through `trap::ask` and `seccomp::check` | declined by T2 |
 | 4 | `answer_here` (`arch_prctl`, `rt_sigreturn`) | not done on success, because it answers only those two numbers and returns false for 0x1013 |
 | 5 | `enable_interrupts` / `disable_interrupts` around the dispatch | not done on the fast trip, because the fast path runs masked by design (part 6 bounds the span); done on the general continuation and branch |
@@ -2144,7 +2144,7 @@ stays off (§9.6).
 **What is argued, and what is not.** This is a tested equivalence argument,
 not a proof. seL4's fast path is covered by its refinement proof: the
 fast path's C is proved to implement the same abstract specification as the
-slow path. Ferrix has no such specification and no proof. What it has:
+slow path. Xaqu has no such specification and no proof. What it has:
 - the composition principle, so most of what the fast path does is the
   general path's own code, verified by that code's own checks;
 - `hand_over`'s host-tested equality;
@@ -2165,12 +2165,12 @@ the general path's requirements (L.object.126 to 130 and the channel's
 rows), not from the results of observed runs, and the check states each
 set with the row it comes from.
 
-**The boot switch.** `ferrix.fastpath=off` turns the fast path off.
-`ferrix.fastpath=on` turns it on. Which is the default in the certified
+**The boot switch.** `xaqu.fastpath=off` turns the fast path off.
+`xaqu.fastpath=on` turns it on. Which is the default in the certified
 configuration is the customer's call. The consultant recommends off for the
 first release, with on in development builds and in the perf rows, and the
 Safety Manual describing the option. The option is read as
-`ferrix.checks` is, from the loader's command line and then the device
+`xaqu.checks` is, from the loader's command line and then the device
 tree's `bootargs`. Stage 9 prints one line either way, `ipc fast path for
 channel_write_read: on` or `off`, and with any other value says it was
 ignored. The kernel keeps counters: trips taken, parks, and declines per
@@ -2402,7 +2402,7 @@ end. Where the time goes, and what step 5 can take:
   cell and no other register, and leaves by the general way out when any
   work is pending.
 - *L.object or L.syscall:* the filtered flag is set one way and inherited.
-- *L.x86_64:* `ferrix.fastpath` turns the fast path off, and the boot says
+- *L.x86_64:* `xaqu.fastpath` turns the fast path off, and the boot says
   which path it runs.
 - *L.x86_64:* the fast path raises `IN_CALL` at entry, and runs after every
   entry measure of SPECULATION.md §3 (condition 2).
@@ -2519,7 +2519,7 @@ the seat empty, as the customer allowed (§9.5's decision 4), and is recorded
 in the consultant's ledger. Each condition, and what it changed:
 
 1. **The effect list, before any code.** A walk of every function the
-   general 0x1013 reaches, from `ferrix_syscall_entry` to `SYSRET`, each
+   general 0x1013 reaches, from `xaqu_syscall_entry` to `SYSRET`, each
    marked composed, declined by a test, or not done on success with the
    reason. Done now, from `ipc-step1` at 5d7186d00: part 2a. It has 44
    rows: 26 composed, 7 declined, 11 not done. It changed four things: T2
@@ -2602,7 +2602,7 @@ is off and AMX is not enabled (part 5). Part 7's locked operations are to be
 measured before ERAPS is counted on. Step 1 has five conditions (part 5).
 
 **The customer's calls (2026-10-02).**
-- *The default of `ferrix.fastpath`:* off in the certified configuration the
+- *The default of `xaqu.fastpath`:* off in the certified configuration the
   Safety Manual names, for the first certified release, as the consultant
   recommends. It is on in development builds and in the gate's perf rows. The
   certified default becomes on once one coverage run has measured the fast
@@ -2623,10 +2623,10 @@ consultant with the logs of every case and control in part 6, and of the
 
 Groundwork that needs neither 2a nor session A's files, built on branch
 `step4-prep`; no fast-path code yet.
-- **`ferrix.fastpath`** (part 6's boot switch, `src/kernel/src/fastpath.rs`,
-  in the item ring beside `checks.rs`). Read once with `ferrix.checks`, from
+- **`xaqu.fastpath`** (part 6's boot switch, `src/kernel/src/fastpath.rs`,
+  in the item ring beside `checks.rs`). Read once with `xaqu.checks`, from
   the loader's command line then the device tree's `bootargs`; `on` only for
-  `ferrix.fastpath=on`, off otherwise, the certified default (the customer,
+  `xaqu.fastpath=on`, off otherwise, the certified default (the customer,
   2026-10-02). Stage 9 prints `fastpath ipc fast path for channel_write_read:
   off (by default)` and says the call takes the general path, since no fast
   path exists. L.x86_64.150.
@@ -2655,7 +2655,7 @@ Groundwork that needs neither 2a nor session A's files, built on branch
 Built by po7-ipc4 on branch `po7/step4` with `step4-prep`'s groundwork;
 taken over by po8 at po7-ipc4's usage limit and landed from `po8/step4`, on
 `main` 80f32db1f, which holds 2f, 3a and 3b, ERAPS and the vector reset.
-Behind `ferrix.fastpath=on`, x86-64 only. **Code review: OK IF**
+Behind `xaqu.fastpath=on`, x86-64 only. **Code review: OK IF**
 (consultant, 2026-10-06, its ledger's line 404). Its three blocking
 conditions are met in the landing: a declined call lowers `IN_CALL` (item 13),
 the timer's skip and stop are stated and checked (item 11), and this section
@@ -2719,7 +2719,7 @@ send back:
    general branch when it is not quiet. Condition 8's flag on `Process`,
    with its `TSYNC` and tracer rows, stays owed by the landings that bring
    them. *Since 2026-10-07 (po9-sched, ledger line 415, H4):* the predicate
-   is no registered pointer but a link-time hook, `ferrix_filter_quiet`,
+   is no registered pointer but a link-time hook, `xaqu_filter_quiet`,
    which `trap.rs` declares and `main.rs` defines as one call of
    `seccomp::quiet`; the pointer's indirect call cost about 8 ns of the
    9.4 a look took. The filter and its predicate are registered by one call,
@@ -2730,10 +2730,10 @@ send back:
    the flag beside a filter registered without it. `filter_quiet` reads
    both at every call.
 3. **T1 is a flag.** `fastpath::init` raises the core's fast-path flag
-   (`trap::set_fast_write_read`) only for `ferrix.fastpath=on`, before the
+   (`trap::set_fast_write_read`) only for `xaqu.fastpath=on`, before the
    first program, and nothing lowers it; the entry reads it (Acquire) at
    every call and, when it is raised, calls the fast path directly
-   through the link-time hook `ferrix_fast_write_read`, which `main.rs`
+   through the link-time hook `xaqu_fast_write_read`, which `main.rs`
    defines as one call of `syscall::native::fast_write_read`. Until
    2026-10-07 this was a registered pointer, a `Once`, whose unset slot was
    off. The hooks, the gate that holds them (`check-item-boundary.py`,
@@ -2808,7 +2808,7 @@ send back:
       They reopen 3b's condition 8 and stay on `po7/step4-selectors` with the
       consultant's advisory reading (its ledger's line 398: S3 not met, the
       skip also covers `FS` and `GS`).
-    - *The scheduler's 128-bit divisions.* `ferrix_sched` divides in 64 bits
+    - *The scheduler's 128-bit divisions.* `xaqu_sched` divides in 64 bits
       when the operands fit, and not at all for the unit weight, with a host
       test against the 128-bit formulas at every boundary. On both paths.
 12. **The cases.** Cases 4, 9, 10, 11, 13 and 14 are stage-9 cases made by
@@ -2858,7 +2858,7 @@ send back:
     is a single atomic and so linearisable (`L.sched.63`). The give-back
     was first proposed as a load and a store; `loom` 0.7.2 lost a node
     given back that way against a concurrent swap, so it is the
-    compare-exchange, which also makes FX-0534's test exact. `ferrix_sched`
+    compare-exchange, which also makes FX-0534's test exact. `xaqu_sched`
     stays free of `unsafe`: `Slot::into_box` and `from_box` are safe, and
     `Node` is public but opaque. The kernel's `Box::into_raw`/`from_raw`
     are traced `KMEM`. Nothing is allocated (F-23).
@@ -2900,7 +2900,7 @@ send back:
     a give-back and a look; a give-back against a take; a double give-back
     stopped. Its controls are a take as a load and a store, and a
     give-back as a plain store, and both fail as required. The
-    `ferrix-sched` host test takes a slot apart and puts it together
+    `xaqu-sched` host test takes a slot apart and puts it together
     around an enqueue, a pick and a removal. A1's control (T12 removed, so
     the pick is not the peer) and T11's control were fired again on this
     code.
@@ -3136,7 +3136,7 @@ closes that window.
 `PreemptSpinLock` exists and keeps the bookkeeping: the count is raised
 before the attempt and lowered if it fails. A failed attempt with interrupts
 masked never switches, because the deferred decision is made only with
-interrupts on. Step 2 adds, in `ferrix_sync::SpinLock`, `try_lock_manually`
+interrupts on. Step 2 adds, in `xaqu_sync::SpinLock`, `try_lock_manually`
 beside `lock_manually`, for the run queue (§9.7's table), and documents that
 the handle table's `try_with_handles` and the wait queue's `try_lock` sit on
 `PreemptSpinLock::try_lock`. With the lighter lock the try variants cost the
@@ -3356,7 +3356,7 @@ two processors:
 7. *`SIGNAL`, saved mask*: `ppoll` with a signal mask that returns on its
    timeout; the program's mask afterwards is its own. Control:
    `suspend_with` posts nothing, and the temporary mask stays.
-8. *`SIGNAL`, restart*: ferrix-ea's case, a process-directed signal waking
+8. *`SIGNAL`, restart*: xaqu-ea's case, a process-directed signal waking
    one thread's restartable wait and taken by another; the first thread's
    call restarts and never returns `-512`. Control: `mark_restart` posts
    nothing.
@@ -3392,7 +3392,7 @@ for `END` posted by the core. The personality keeps the rest as the stated
 interface: `execve`'s `END` (`end_other_threads`), `STOP` and `SIGNAL`.
 
 *The bit table is checked, not only argued* (condition 4). In check mode
-(`ferrix.checks`) the way out calls the personality's `needs_attention`
+(`xaqu.checks`) the way out calls the personality's `needs_attention`
 even when the word is clear, and stops the machine with a new FX code if
 that answers true: the word said nothing was pending, and something was.
 That check runs across the five boots, `test-shell`, `test-threads`,
@@ -3507,7 +3507,7 @@ differs from the draft, and what the walk on the code found:
 **What changes.** x86-64's `answer_here` decodes every call against the Linux
 table twice, once for `arch_prctl` and once for `rt_sigreturn`, each a clamp
 and a jump-table `match`, before a native call reaches `native_call`. The
-native range is tested first instead (`ferrix_native_abi::nr::is_native`, a
+native range is tested first instead (`xaqu_native_abi::nr::is_native`, a
 compare), and a native number skips `answer_here` altogether; a Linux
 number is decoded once and matched against both. `dispatch_with` already
 dispatches a native call before any Linux table (`syscall/mod.rs`), so
@@ -3893,7 +3893,7 @@ declaration names RAX, RCX, RDX, RSI, RDI, R8 to R11, `XMM`/`YMM` 0 to 15,
 MMX registers, and AMX tiles where the target has them. The explicit
 operands override it for the registers that carry arguments and results. So
 the compiler keeps no live value in a vector register across those calls.
-The functions in `ferrix_native` for the three calls use `trap_blocking`, and
+The functions in `xaqu_native` for the three calls use `trap_blocking`, and
 the native ABI's documentation states the contract per call.
 
 **What the kernel does.**
@@ -3963,7 +3963,7 @@ state, and Arm has no fast path in step 4 to pay for it (question 9).
 - *L.x86_64:* a task switched out runnable, or blocked in another call, is
   saved and restored in full.
 - *L.x86_64:* PKRU, when enabled, is never part of the reset.
-- *The native ABI's contract*, in `ferrix_native_abi`'s documentation and the
+- *The native ABI's contract*, in `xaqu_native_abi`'s documentation and the
   Safety Manual: the three calls destroy the caller-saved vector registers.
 
 **Checks and controls.** Stage 9, x86-64:
@@ -4036,7 +4036,7 @@ L.x86_64.152-157).** As designed, with five differences for the review:
   `clobber_abi("sysv64")` instead of a second block `trap_blocking`: the
   assembly budget stood at 1,606 of 1,610 lines with 3a's three kernel
   instructions (`stmxcsr`, `fnstcw`, `fldcw`), and a second trap block is 13.
-  Every call through `ferrix_rt` is then compiled as if it lost the vector
+  Every call through `xaqu_rt` is then compiled as if it lost the vector
   registers, which costs a program only the compiler's choice to keep a value
   there across a call that would have kept it. The kernel's contract is still
   the three numbers (`syscall::vectors_die_in`).
@@ -4166,7 +4166,7 @@ and without it (under TCG not decided, below); and an i386 program
 (`USER_DS`) and a 64-bit one (0) trading the processor, each reading its
 own; (iv) two 64-bit programs with `DS` and `ES` 0 trading the processor
 count more than 0 switches that left `DS` or `ES` unloaded, and with
-`ferrix.fastpath=on` the counts line after the bench names the skips the
+`xaqu.fastpath=on` the counts line after the bench names the skips the
 direct switch took. Accepted by the consultant OK IF (ledger line 414). Under QEMU's TCG
 the compatibility-mode read is not decided: TCG loads a null selector as
 an absent segment but never checks a data access against it, so the read
@@ -4183,7 +4183,7 @@ mode 1,388, 1,388 and 1,408 ns against 1,548 (ratios 0.897, 0.897,
 round crossed modes (1,158 against 1,548). The skip saves 120 to 160 ns a
 round trip, 60 to 80 a direction. Records under
 `docs/hotpaths/results/ipc-round-trip/6bc2646211ca/`, logs
-`~/.local/share/ferrix/logs/po9-sel/dses/` on nazuna.
+`~/.local/share/xaqu/logs/po9-sel/dses/` on nazuna.
 
 **Reopened for `FS` and `GS` (2026-10-07, 3c).** po10-sel-cert's design
 verdict (ledger line 445, K1 to K10) gave the same skip for `FS` and `GS`,
@@ -4216,7 +4216,7 @@ is the same address, which reads its own word at every turn; and the first
 reads its own word again after a `nanosleep`, its recorded base back.
 
 **The controls (2026-10-05 and -06, on 4a8b8dfee, x86-64 under KVM; logs
-`~/.local/share/ferrix/logs/queue/po6-ipcB-s3-<name>.log` on nazuna), each
+`~/.local/share/xaqu/logs/queue/po6-ipcB-s3-<name>.log` on nazuna), each
 FIRED with the text named:**
 - `c1-1`, 3a check 1: the reset skipped on a resume (`state.unsaved =
   false` for `reset_vectors`): "read another program's vector registers".
@@ -4405,7 +4405,7 @@ shape with `FS` and `GS`, and its bases set by `arch_prctl`
   Control: the skip on the processor alone (`held_gs == 0`), which must
   fire in this case or (ii).
 - (v) two readers with `FS` = `GS` = 0 trade the processor and
-  `FSGS_SKIPS` moves above 0; with `ferrix.fastpath=on` the counts line
+  `FSGS_SKIPS` moves above 0; with `xaqu.fastpath=on` the counts line
   after the bench names the `FS`/`GS` skips the direct switch took.
   Control: the skip removed (the load always taken), which must fire "no
   switch between two programs with null FS and GS left them unloaded".
@@ -4414,7 +4414,7 @@ shape with `FS` and `GS`, and its bases set by `arch_prctl`
   `GS` base may be any user address, and stage 9's `fsbase` line trades two
   such bases 10,000 times each (L.x86_64.9, verified since). The paragraph
   stays as what was true when 3c was built.
-- *The `GS` base (the consultant's K2).* Ferrix has no `ARCH_SET_GS`
+- *The `GS` base (the consultant's K2).* Xaqu has no `ARCH_SET_GS`
   (`arch_prctl` answers `ARCH_SET_FS` alone, and `paranoid.rs` rests on
   that), and none is added here: a 64-bit program's recorded `GS` base is
   always 0. So the `GS` half of (i) to (iii) checks that base with what
@@ -4458,7 +4458,7 @@ section, its ledger line and the amended answer 12: *"... except `DS`,
 *Measured* (ablation 1, the load skip alone, on 4066f41dd as 52aba9e0d,
 alternated against 4066f41dd under the bench lock, fast path on, 5 boots
 a side, every boot ran, load 0.8 to 1.4 at each start; logs
-`~/.local/share/ferrix/logs/po10-sel/fsgsA/` on nazuna). Both sides
+`~/.local/share/xaqu/logs/po10-sel/fsgsA/` on nazuna). Both sides
 boot in one of the two modes: main 1,048 and 1,068 ns in the low mode
 (2 boots), 1,298, 1,298, 1,298 in the high (3); the skip 888 and 908 in
 the low (2), 1,118, 1,118, 1,128 in the high (3). **-160 to -180 ns a
@@ -4479,7 +4479,7 @@ which hands ring 3 the same four instructions, so (F1 to F5):
   is compared with a per-processor record; both bases are written at
   every switch.
 - *F2, the entries.* The paranoid entry (`trap.rs`,
-  `ferrix_paranoid_common`) decides `swapgs` by the sign of `GS_BASE`
+  `xaqu_paranoid_common`) decides `swapgs` by the sign of `GS_BASE`
   (`rdmsr` of `0xC0000101`, `js`), on the ground that "no program can
   load one" (`paranoid.rs`). With `FSGSBASE` a program can `WRGSBASE` any
   canonical address, a kernel one included, and an NMI, `#DB` or `#MC` in
@@ -4487,7 +4487,7 @@ which hands ring 3 the same four instructions, so (F1 to F5):
   pointer. So the paranoid entry must take Linux's form: save `GS_BASE`
   by `RDGSBASE`, write the kernel's per-CPU base found without `GS`
   (`RDPID` or the CPU number in a GDT limit, as Linux's `GET_PERCPU_BASE`;
-  Ferrix has neither yet), and restore by `WRGSBASE` on the way out. The
+  Xaqu has neither yet), and restore by `WRGSBASE` on the way out. The
   ordinary entries decide by `CS` and the `SYSCALL` entry swaps always, so
   they stand; the conditional `swapgs` and its `lfence` (CVE-2019-1125,
   SPECULATION.md's SWAPGS fence row) leave the paranoid path, and that row
@@ -4495,7 +4495,7 @@ which hands ring 3 the same four instructions, so (F1 to F5):
   kernel's and needs the entries right, nothing more.
 - *F3, what programs are told.* `user_hwcaps` (`arch/x86_64/mod.rs`)
   answers `AT_HWCAP2` 0 today; it would carry `HWCAP2_FSGSBASE` (bit 1)
-  when `CR4.FSGSBASE` is set, and a `ferrix.fsgsbase=off` option (F-31's
+  when `CR4.FSGSBASE` is set, and a `xaqu.fsgsbase=off` option (F-31's
   on/off pattern, Linux's `nofsgsbase`) clears both.
 - *F4, capture and signal frames.* `UserState::capture` already reads the
   live registers for a fork child, so it stays right; an x86-64 signal
@@ -4514,7 +4514,7 @@ on, under the bench lock):
 - *The writes and the reads together* (ablation 3, F1's `RDFSBASE` and
   `swapgs; RDGSBASE; swapgs` at every save on top of the writes, on
   4066f41dd as 4bfbe4ecf; alternated against ablation 1 on the same base,
-  logs `~/.local/share/ferrix/logs/po10-sel/fsgsB/`): **not decided.**
+  logs `~/.local/share/xaqu/logs/po10-sel/fsgsB/`): **not decided.**
   po9-sel's first run of it (612bf99c4) stopped at every boot on 3b's
   cleared-base check, which answers 139 as well as 3 when the cleared base
   stays cleared, as F1 says it must; with the check taking both, it boots.
@@ -4532,7 +4532,7 @@ and no ABI change, and its argument is line 393's with the base part
 added. Slice B is **not proposed now**: net of its reads it is worth at
 most a few tens of ns a round trip (to be measured on a quiet host after
 po9/fx0902 lands), and it costs a paranoid-entry rewrite in the item (F2,
-with a per-CPU base found without `GS`, which Ferrix does not have), an
+with a per-CPU base found without `GS`, which Xaqu does not have), an
 ABI change for programs (F3), and the restatement of 3b's rows (F1). It
 stays here as the design to come back to, with F1 to F5 answered as far as
 they can be without code.
@@ -4627,7 +4627,7 @@ a run where the control can fire; its case cannot show it on this host.
 *Measured (K8, G8).* The built tip 09da3bbcd against its base main
 f8b44e04c, in a quiet window the PO made by pausing the fleet
 (2026-10-07 20:11 to 20:14 local), turn about, 6 rounds, fast path on,
-KVM, `--smp 1`, load 0.9 to 4.3 (logs `~/.local/share/ferrix/logs/po10/quietbench.out`
+KVM, `--smp 1`, load 0.9 to 4.3 (logs `~/.local/share/xaqu/logs/po10/quietbench.out`
 and `logs/po9-obj/quiet-fsgs-{mine,base}-N.log` on nazuna): the skip 858,
 1,068, 888, 1,068, 1,048, 1,068 ns; main 1,238, 1,228, 998, 1,228, 1,238,
 1,238. By boot mode: the high mode 1,048 to 1,068 (4 boots) against 1,228
@@ -4648,7 +4648,7 @@ side by side if the files they touch do not meet. What each piece touches:
 | 2d | `arch/x86_64/syscall.rs` (`answer_here`), `syscall/mod.rs` (`native_call`) |
 | 2e | `object/channel.rs`, `syscall/native.rs` |
 | 2f | `sched/mod.rs` (`set_idle`, `choose_next`'s clones, `take_resched`, `regroup_current`), `sched/queue.rs`, `arch/speculation.rs`, `object/quota.rs` |
-| 3a | `arch/x86_64/switch.rs`, `sched/mod.rs` (`switch_user_state`), `arch/x86_64/syscall.rs` (the entry mark), the native runtime, `ferrix_native_abi`'s documentation |
+| 3a | `arch/x86_64/switch.rs`, `sched/mod.rs` (`switch_user_state`), `arch/x86_64/syscall.rs` (the entry mark), the native runtime, `xaqu_native_abi`'s documentation |
 | 3b | `arch/x86_64/switch.rs`, `arch/x86_64/syscall.rs` (`arch_prctl`) |
 
 `sched/mod.rs` and `smp.rs` are where the pieces meet, so one session owns
@@ -4896,7 +4896,7 @@ boot switch, the park protocol's `loom` model and `ipc-equiv`).
 path, step 5 and step 4b are not started.
 
 **What changed in the plan on the way:**
-- The target is seL4's figure itself, not 1.5 times it, so Ferrix's software
+- The target is seL4's figure itself, not 1.5 times it, so Xaqu's software
   outside the switch has about 90 ns a direction (§9.6).
 - No PCID on nazuna: step 3's PCIDs wait for hardware that has them, and the
   budget's 20 ns for `CR3` is about 110 ns here, for both kernels (§9.6).
@@ -4913,7 +4913,7 @@ The session's account, with every landing and every decision, is
 `bench-exact` is on `main` (3349682db). 3a and 3b are one commit on it, as
 §9.8's *As built* paragraphs say, with every row, check and control there.
 Gated on that commit, x86-64 under KVM unless named, logs
-`~/.local/share/ferrix/logs/queue/po6-ipcB-s3-<name>.log` on nazuna: `check`
+`~/.local/share/xaqu/logs/queue/po6-ipcB-s3-<name>.log` on nazuna: `check`
 (`check-5`), the boots on x86-64 under KVM and TCG (`kvm-4` ran on 6dcb56b6a,
 which differs from 4a8b8dfee only in where one `cfg_attr` stands in
 `sched/mod.rs` and in coverage data; the KVM boots of `thr-x86-1`,
@@ -4924,7 +4924,7 @@ ARMv7-A at `--smp 2` (`tcg-1`, `a64-1`, `a32-1`, `a32s2-1`),
 FIRED. Rebased onto 2f (`main` at 445d09420), the kernel, the native ABI
 and the runtime are byte-identical to 4a8b8dfee's but for one `Verifies:`
 tag, so the controls stand; `check` PASSED on the rebased tree
-(`~/.local/share/ferrix/logs/queue/po7-ipcB-s3r-check-1.log`).
+(`~/.local/share/xaqu/logs/queue/po7-ipcB-s3r-check-1.log`).
 `bench-ipc --release --accel kvm --smp 1 --alternate main --rounds 5` on it
 (`po7-ipcB-s3r-bench-1`), against `main` with 2f: `domain-call` p50 2,287 ns
 against 2,427 ns, the median of five rounds turn about, ratio 0.942 (0.930
@@ -4960,7 +4960,7 @@ TSC moves in steps of 44 ticks (10 ns), so a span is quoted as the mean of
 its samples up to its p90. The spans add up to the direction: 1,209 to
 1,300 ns net, against the 1,130 ns half of the uninstrumented `domain-call`
 p50 of 2,257 ns on the same tree. Host load was 1 to 6 with the SMT
-sibling idle. The logs are `~/.local/share/ferrix/logs/po7-ipcM/prof-*.log`
+sibling idle. The logs are `~/.local/share/xaqu/logs/po7-ipcM/prof-*.log`
 on nazuna. `prof-7.log` and `prof-8.log` are the figures below.
 
 **One direction today** (ns, net of stamps):
@@ -5059,7 +5059,7 @@ direction for the switch (`CR3`, a user TLB of a page or two, its 20 ns
 refill), and about 90 ns of entry and software. It switches no segment
 state and, with the FPU off in sel4bench, no vector state. Its fast path
 never enters a scheduler queue. Without its refill it measures 400 to 410
-ns here, which is the figure Ferrix with ERAPS is really compared with.
+ns here, which is the figure Xaqu with ERAPS is really compared with.
 Being under 400 means doing a direction in less software and fewer user
 TLB misses than seL4, with the vector and segment state seL4 does not have.
 
@@ -5116,7 +5116,7 @@ counted.
 
 The customer's target for the round is `domain-call` p50 matched to seL4's
 440 ns (every mitigation on, both programs in one speculation domain,
-`ferrix.fastpath=on`). The consultant's design verdicts are its ledger's
+`xaqu.fastpath=on`). The consultant's design verdicts are its ledger's
 lines 409 (G1 to G11, every stream) and 410 to 412 (one per stream). Each
 stream records here what it changed and how each condition is met.
 
@@ -5145,7 +5145,7 @@ the reason.
 **Cut 1: the masked locks and the reply in registers.**
 - *The halves' and the handle table's locks are held under the entry's
   interrupt mask, without the guard's full `disable` and `enable`.*
-  `ferrix_sync::PreemptSpinLock::try_lock_masked` takes the same ticket
+  `xaqu_sync::PreemptSpinLock::try_lock_masked` takes the same ticket
   lock without them, so it excludes every holder as `try_lock` does (host
   test `a_masked_try_lock_excludes_every_holder_and_leaves_the_count_alone`,
   whose control, the count raised, fails it). The kernel's
@@ -5195,14 +5195,14 @@ with that check's message: the cache left empty (`po10-obj2-ctl-core`), and
 the cache holding another process's core, each fast path echo task given
 the previous echo's (`po10-obj2-ctl-other2`). This form, measured by hand
 turn about against `main` 4066f41dd, 8 rounds, load 0.4 to 1.5
-(`~/.local/share/ferrix/logs/po10/c2a-abab.txt`), is preliminary: in the
+(`~/.local/share/xaqu/logs/po10/c2a-abab.txt`), is preliminary: in the
 high mode 1,268 to 1,278 ns (7 boots) against 1,298 to 1,308 (4 boots),
 about -30 ns; in the low mode 1,028 against 1,078, one boot each; base's
 other three boots read 1,138 to 1,228. No mode had 5 boots a side, so §9.10
 counts no figure from it (ledger 432, C3). The first form (the cached
 pointer, ledger 428) measured 1,008 to 1,018 ns (4 boots) against 1,048 to
 1,058 (6 boots) in the low mode, load 1 to 4
-(`~/.local/share/ferrix/logs/po9-obj/c2-abab.txt`).
+(`~/.local/share/xaqu/logs/po9-obj/c2-abab.txt`).
 
 #### The user side (po9-user; ledger lines 413 and 456)
 
@@ -5212,7 +5212,7 @@ pages in the runtime (a1, U1 to U3); 2 MiB text pages (a2) were built on a
 branch and measured no gain, so they were dropped; global user pages (a3)
 are not yet, a design of their own.
 
-- *The channel call inlined in every native program.* `ferrix-native`'s
+- *The channel call inlined in every native program.* `xaqu-native`'s
   `Channel::write_read`, `decode` and its kin are `#[inline]`, `decode`'s
   failure out of line and `#[cold]`, and `Words::of` reads whole words as
   words instead of copying a run-time length into a padded buffer (a
@@ -5220,7 +5220,7 @@ are not yet, a design of their own.
   touched three text pages and the GOT a trip; now it is one text page and
   makes no call. A short last word may still compile to a `memcpy` call;
   a message of whole words makes none. Outside the item: the kernel links
-  `ferrix-native-abi`, not `ferrix-native`; `ipc-bench` is unchanged (G8).
+  `xaqu-native-abi`, not `xaqu-native`; `ipc-bench` is unchanged (G8).
 - *U2:* the host test `words_of_packs_every_length_as_one_copy_would` holds
   `Words::of` to the old padded copy for every length 0 to 24 and the
   refusal of 25; its three controls (a non-zero pad, big-endian words, the
@@ -5284,7 +5284,7 @@ O9, are released.
   whose source tree is the same.
 - *Measured* by hand turn about against `main` 7b06cef25 (fast path on both
   sides, under `bench.lock`, 10 rounds,
-  `~/.local/share/ferrix/logs/po10-obj/c3-abab.txt`), on a busy host (load
+  `~/.local/share/xaqu/logs/po10-obj/c3-abab.txt`), on a busy host (load
   16 to 69 before a boot, the protocol's quiet host was not to be had that
   evening): in the low mode 958 to 968 ns (5 boots) against 988 to 1,008
   (7 boots), about -40 to -50 ns a round trip, the four looks a trip makes
@@ -5320,7 +5320,7 @@ tables four times: `SGDT` in `gdt::read_tls` (the save), again in
 `gdt::write_tls` (the restore), and `STR` with a third `SGDT` in
 `set_privilege_stack`, which then decoded the TSS descriptor. Both
 instructions are microcoded; the timing-only probe (`po10-quick/probe`
-47afa304f, `~/.local/share/ferrix/logs/po10-quick/boot-probe1.log`) read
+47afa304f, `~/.local/share/xaqu/logs/po10-quick/boot-probe1.log`) read
 `SGDT` at 31.4 ticks a loop iteration and `STR` at 22.5 against an empty loop
 of 16.9, the probe's figures only.
 
@@ -5351,13 +5351,13 @@ FX-0409 otherwise, in every build. That check verifies `L.x86_64.6`, which
 was baselined; `L.x86_64.59`'s two-programs check and `L.x86_64.7`'s
 thread-area check exercise the readers through the record.
 
-**Q4 measured (preliminary: 3 boots a side, below G8's 5, so §9.10 does not count it yet).** Measured with os-76's long bench (`os76/p0-measure` 712cec722 on each tree, measurement only; `~/.local/share/ferrix/logs/po10-quick/perf/v2-*-join.txt`): host perf on the vCPU thread, 60 s of 50,000-trip blocks a boot, turn about with `main` 523fc3d50, 3 boots a side, the fast clock mode's blocks (core 11's SMT sibling 1 to 10% busy in them). `main`: 5,045, 5,045 and 5,041 instructions and 4,608, 4,656 and 4,608 cycles a round trip, 820, 825 and 820 ns. Q4: 5,020, 5,038 and 5,019 instructions (about -18, -0.4%) and 4,560, 4,558 and 4,510 cycles (about -80, -1.8%), 809 ns in all three (about -12 ns a round trip). Branch misses (14.0 against 14.0) do not move; the saving is the four microcoded `SGDT`/`STR` a switch.
+**Q4 measured (preliminary: 3 boots a side, below G8's 5, so §9.10 does not count it yet).** Measured with os-76's long bench (`os76/p0-measure` 712cec722 on each tree, measurement only; `~/.local/share/xaqu/logs/po10-quick/perf/v2-*-join.txt`): host perf on the vCPU thread, 60 s of 50,000-trip blocks a boot, turn about with `main` 523fc3d50, 3 boots a side, the fast clock mode's blocks (core 11's SMT sibling 1 to 10% busy in them). `main`: 5,045, 5,045 and 5,041 instructions and 4,608, 4,656 and 4,608 cycles a round trip, 820, 825 and 820 ns. Q4: 5,020, 5,038 and 5,019 instructions (about -18, -0.4%) and 4,560, 4,558 and 4,510 cycles (about -80, -1.8%), 809 ns in all three (about -12 ns a round trip). Branch misses (14.0 against 14.0) do not move; the saving is the four microcoded `SGDT`/`STR` a switch.
 
 **Q6, dead end** (no code; ledger line 507). Skipping the `FS_BASE` or
 `KERNEL_GS_BASE` `WRMSR` when an `RDMSR` of the same register already reads
 the target would have kept condition 8, but under KVM on the Zen 5 reference
 host the read costs more than the write: the timing-only probe
-(`po10-quick/probe` 47afa304f, `~/.local/share/ferrix/logs/po10-quick/boot-probe1.log`)
+(`po10-quick/probe` 47afa304f, `~/.local/share/xaqu/logs/po10-quick/boot-probe1.log`)
 read `RDMSR FS_BASE` at 128.7 TSC ticks a loop iteration against 89.8 for the
 `WRMSR`, and `KERNEL_GS_BASE` at 129.6 against 90.7. Bare metal and Intel
 were not measured.
@@ -5371,7 +5371,7 @@ round trip, 851 to 869 ns, against `main`'s figures above. The probe's
 estimate, about 6 ns of division a reading, is refuted by that measurement:
 Zen 5's 64-bit `DIV` is cheaper than the reciprocal's multiply chain.
 ARMv7-A, where a 64-bit division is a library call, was not measured. The
-kernel's clock arithmetic lives in `ferrix-vdso`, which the item manifest
+kernel's clock arithmetic lives in `xaqu-vdso`, which the item manifest
 does not classify, with or without Q1 (`docs/BACKLOG.md`).
 
 #### Q8, calls through the GOT (po10-quick; ledger line 533, Q8-C1 to C7)
@@ -5391,11 +5391,11 @@ the pinned stable toolchain. A kernel built with `-Z plt=yes` under
 direct but kept every library call in the GOT: the prebuilt sysroot carries
 the target's default through fat LTO.
 
-What Q8 changes: `ferrix_switch` is a naked function (`#[unsafe(naked)]`,
+What Q8 changes: `xaqu_switch` is a naked function (`#[unsafe(naked)]`,
 stable since Rust 1.88) of the kernel crate instead of a `global_asm!`
 symbol declared `extern "C"`, so its four call sites are `call rel32`, with
 no slot and no relocation. Recorded by objdump
-(`~/.local/share/ferrix/logs/po10-quick/q8-objdump.txt`): the same fifteen
+(`~/.local/share/xaqu/logs/po10-quick/q8-objdump.txt`): the same fifteen
 instructions in the same order, with no prologue, epilogue or `endbr`; four
 direct call sites; 4,907 `rip`-relative indirect calls against 4,911, and
 `.rela.dyn` all `R_X86_64_RELATIVE`, 6,417 against 6,418, the switch's slot
@@ -5409,7 +5409,7 @@ changed upstream, preferred) and of mapping the GOT read-only meanwhile is at
 the ledger's line 533 and in `docs/BACKLOG.md`. po9-sched measured an
 indirect call at about 3.5 ns more than a direct one.
 
-**Q8 measured.** Measured with os-76's long bench (`os76/p0-measure` 712cec722 on each tree, measurement only; `~/.local/share/ferrix/logs/po10-quick/perf/v2-*-join.txt`): host perf on the vCPU thread, 60 s of 50,000-trip blocks a boot, turn about with `main` 523fc3d50, 3 boots a side, the fast clock mode's blocks (core 11's SMT sibling 1 to 10% busy in them). `main`: 5,045, 5,045 and 5,041 instructions and 4,608, 4,656 and 4,608 cycles a round trip, 820, 825 and 820 ns. Q8: 5,043, 5,060 and 5,030 instructions (no change, as expected: a direct call replaces an indirect one) and 4,664, 4,549 and 4,567 cycles (about -30, -0.7%, inside the run-to-run spread), 823, 806 and 820 ns. One indirect call a direction is below what this bench resolves; the change is kept for what it removes -- an indirect branch and a writable code pointer on every switch -- not for a figure.
+**Q8 measured.** Measured with os-76's long bench (`os76/p0-measure` 712cec722 on each tree, measurement only; `~/.local/share/xaqu/logs/po10-quick/perf/v2-*-join.txt`): host perf on the vCPU thread, 60 s of 50,000-trip blocks a boot, turn about with `main` 523fc3d50, 3 boots a side, the fast clock mode's blocks (core 11's SMT sibling 1 to 10% busy in them). `main`: 5,045, 5,045 and 5,041 instructions and 4,608, 4,656 and 4,608 cycles a round trip, 820, 825 and 820 ns. Q8: 5,043, 5,060 and 5,030 instructions (no change, as expected: a direct call replaces an indirect one) and 4,664, 4,549 and 4,567 cycles (about -30, -0.7%, inside the run-to-run spread), 823, 806 and 820 ns. One indirect call a direction is below what this bench resolves; the change is kept for what it removes -- an indirect branch and a writable code pointer on every switch -- not for a figure.
 **F-65: the caller's endpoint let go with interrupts open (po10-obj;
 ledger lines 511 and 520).** Not a cut for the figure but a fix: the
 endpoint reference the fast path holds across its park was let go masked on
@@ -5423,7 +5423,7 @@ continuation. The frame tail's return now opens and masks interrupts once
 more a direction: about +40 to +50 instructions and +20 to +40 cycles a
 round trip, measured by os-76's long bench with perf against main
 523fc3d50, the median 819 to 858 ns on both sides, no p50 change resolved
-(`~/.local/share/ferrix/logs/po10-obj/perf/f65b-*`).
+(`~/.local/share/xaqu/logs/po10-obj/perf/f65b-*`).
 
 #### The scheduler side: the job loads folded (po10-sched; ledger line 461, J1 and J2)
 
@@ -5440,7 +5440,7 @@ on that job's load (the peer's join, the caller's leave) and two walks of
 
 **J1, the fold.** Before any charge, `Direct::hand_over` stores the peer's
 state and counts it in its word (`Task::join_word`), reads the caller's
-word, and plans (`ferrix_sched::plan_job_fold`): a fold only when the
+word, and plans (`xaqu_sched::plan_job_fold`): a fold only when the
 peer's word joined a job `g` and the caller's word names `g` and is
 counted; otherwise the peer's load is added at once, as `set_state_from`
 adds it, and the caller's leave is `between`'s, as before. Under a fold,
@@ -5448,7 +5448,7 @@ adds it, and the caller's leave is `between`'s, as before. Under a fold,
 stores its state and lets its word go (`Task::leave_word`), the store
 first as in `set_state_from`, and `PendingJoin::settle` makes the load's
 one change by the net of the two weights, none at zero
-(`ferrix_sched::settle_job_fold`); `between`'s own `set_state_from` then
+(`xaqu_sched::settle_job_fold`); `between`'s own `set_state_from` then
 finds the word let go and changes nothing. A way out of `hand_over` that
 does not reach the caller's leave makes the peer's join alone, in one
 place, `PendingJoin`'s drop; every such way out ends in FX-0530, so no boot
@@ -5484,7 +5484,7 @@ caught it, ledger 461 (b).)
 `load(g) = L+bp`. Under a fold the peer is counted in its word and not in
 the load, so both are computed by `quota::effective_with(g, base, bp)`,
 `effective`'s own walk with `bp` added to the first level's load and to no
-other (`ferrix_sched::carried_weight_with`; no level above `g` changes, by
+other (`xaqu_sched::carried_weight_with`; no level above `g` changes, by
 J1's argument). `account_with` hands `follow_group_share` the extra, which
 keeps `account`'s early returns, the job test and the eighth's hysteresis
 in one function, and answers the base and the due it computed; the peer
@@ -5495,7 +5495,7 @@ for both is the general execution in which no other processor wrote
 between them: within D1, not the memo it forbids (ledger 461 (e)).
 
 **Checks.**
-- `ferrix_sched`'s host test
+- `xaqu_sched`'s host test
   `the_direct_switch_folds_its_job_loads_as_the_general_sequence_leaves_them`
   drives `plan_job_fold` and `settle_job_fold` against a model of
   `quota::adjust` (the model's doc names it: a drift is caught by review)
@@ -5620,10 +5620,10 @@ The direction, read from the code (**inferred**):
   job-load operations, and `install`'s CPU mask join and leave.
 - **About 10 to 14 64-bit `DIV`s:** two in `now_nanos`, the rest in
   `slice_for`, `RunQueue::hand_over` and `effective_weight`.
-- **The way back.** B resumes through `ferrix_switch` and returns up its
+- **The way back.** B resumes through `xaqu_switch` and returns up its
   whole kernel call chain: `Direct::switch`, `send_direct`, the closure,
   `fast_write_read`, the hook, `trap::fast_write_read_now` and
-  `ferrix_syscall_entry`, then the frame tail, `take_reply` and
+  `xaqu_syscall_entry`, then the frame tail, `take_reply` and
   `write_outcome`. Every return address on that chain was pushed before the
   `CR3` write, which with ERAPS empties the return-address predictor. So
   each of those eight or nine returns probably mispredicts (**inferred**;
@@ -5645,7 +5645,7 @@ Kernel software is the piece this section is for. seL4 does its fast path
 in about 50 ns a direction (§9.10). It does so because nothing is live on a
 kernel stack while a thread waits in `Call` or `ReplyRecv`: the fast path
 writes the message into the receiver's saved registers, switches the space
-and returns to user mode from them. Ferrix keeps a kernel stack per task and
+and returns to user mode from them. Xaqu keeps a kernel stack per task and
 resumes a waiting task by switching to it and returning up its call chain.
 That costs a context switch, a `finish_switch` and an unwind that the
 predictor has just forgotten. This design removes all three for the trip
@@ -5678,9 +5678,9 @@ a channel half in two ways:
 A per-task mark, `continuation`, says which kind a record names. It is set
 by the direct switch, under the run-queue lock, when it parks its caller.
 It is cleared in the trampoline after `finish_switch` and before either
-branch. A commit to an unmarked peer switches to it with `ferrix_switch` as
+branch. A commit to an unmarked peer switches to it with `xaqu_switch` as
 today, and the peer takes its reply from the cell. Its caller, though, is
-still parked as a continuation: `ferrix_switch` is given a scratch save word
+still parked as a continuation: `xaqu_switch` is given a scratch save word
 instead of the caller's own slot, so the caller's slot keeps the resume
 frame's address (V2-15). A commit to a marked peer is made by the direct
 resume.
@@ -5693,16 +5693,16 @@ cases include a re-park after a signal.
 pushes, before the call: `subq $64, %rsp`, and `addq $64, %rsp` before the
 pops. Stack tops are 16-byte aligned (L.mm.55) and the pushes are 128 bytes,
 so the call is entered aligned as the ABI wants. The upper 56 bytes are the
-resume frame, in `ferrix_switch`'s shape: six registers and a return
+resume frame, in `xaqu_switch`'s shape: six registers and a return
 address. No code on the call chain touches the reserve. The I3 check
-requires its size, position and alignment at `ferrix_syscall_entry`, and
+requires its size, position and alignment at `xaqu_syscall_entry`, and
 its control, a 56-byte reserve, must fire. The reserve is made on every
 `SYSCALL`, so it is in the certified configuration with
-`ferrix.fastpath=off` too, and G6 applies to it (V2-11).
+`xaqu.fastpath=off` too, and G6 applies to it (V2-11).
 
 **The park, made a continuation.** When the direct switch parks its caller
 A, under the run-queue lock as today, it also:
-1. writes A's resume frame: zeros, and `ferrix_fast_resume` as the return
+1. writes A's resume frame: zeros, and `xaqu_fast_resume` as the return
    word;
 2. sets A's saved stack pointer to that frame;
 3. sets A's `continuation` mark.
@@ -5713,14 +5713,14 @@ into a named place or released before the park, and a check with a
 forgotten-`Arc` control shows that every one is freed.
 
 **One way in for a resumed continuation: the trampoline.**
-`ferrix_fast_resume` is a stub in `ferrix_task_entry`'s shape:
+`xaqu_fast_resume` is a stub in `xaqu_task_entry`'s shape:
 1. it zeroes RBP;
 2. it reserves 64 bytes again, so that its own calls never reach the frame;
 3. it calls `fast_resume(frame)` through a third link-time hook. The
    trampoline is core and the continuation is item code, so L.x86_64.161 is
    restated (V2-8);
 4. when `fast_resume` returns, it jumps to the stub's one way out: `addq`,
-   the pops, `FERRIX_CLEAR_BUFFERS`, `swapgs` and `ferrix_syscall_sysret`
+   the pops, `XAQU_CLEAR_BUFFERS`, `swapgs` and `xaqu_syscall_sysret`
    (V2-9).
 
 `fast_resume` makes, in this order:
@@ -5738,11 +5738,11 @@ forgotten-`Arc` control shows that every one is freed.
 
 **Two ways to reach the trampoline.** The first is the general resume. Any
 wake but a commit (a general writer, the peer's close, `END`, a kill) wakes
-A as today. A processor that picks A switches to it with `ferrix_switch`,
-which pops the resume frame and returns into `ferrix_fast_resume`. Before
+A as today. A processor that picks A switches to it with `xaqu_switch`,
+which pops the resume frame and returns into `xaqu_fast_resume`. Before
 any switch to a marked task, an always-on assert requires its saved stack
 pointer to be its resume frame and the frame's return word to be
-`ferrix_fast_resume`, under an FX code of its own (I1, V2-3). Its control
+`xaqu_fast_resume`, under an FX code of its own (I1, V2-3). Its control
 leaves the frame unwritten, and fires on the first switch to a marked task.
 
 The second is the direct resume, which carries the saving. A commit to a
@@ -5755,12 +5755,12 @@ marked peer B, on A's stack with interrupts masked and the lock held:
    `rax`, `rsi`, `rdx` and `r10` in B's frame, as `write_outcome`'s
    `ReturnWords` writes them, and nothing else. It also marks B "replied".
 3. **The jump.** RSP moves to the bottom of B's frame, which is where
-   `ferrix_switch`'s `ret` from B's resume frame would leave it. Execution
-   jumps to `ferrix_fast_resume`. No registers are pushed, and nothing
+   `xaqu_switch`'s `ret` from B's resume frame would leave it. Execution
+   jumps to `xaqu_fast_resume`. No registers are pushed, and nothing
    returns.
 
 From the jump, B's own trampoline runs on B's stack. Its `finish_switch`
-releases the lock (a plain store, ferrix_sync's own function) and takes
+releases the lock (a plain store, xaqu_sync's own function) and takes
 `queue.previous`, which is A. Its `frame_tail` makes B's quiet look and
 leaves through the stub's exit.
 
@@ -5773,10 +5773,10 @@ stack owner and the release-after-jump ordering. The model is not
 "unchanged": that ordering is new.
 
 **What the direct resume drops (V2-5).** Part 2a's list, written out:
-- A's `ferrix_switch` (six pushes, a store, and the `ret` it never makes);
+- A's `xaqu_switch` (six pushes, a store, and the `ret` it never makes);
 - B's return up its chain: `Direct::switch`, `send_direct`, the closure,
   `fast_write_read`, the hook, `fast_write_read_now`, and the Tail and Done
-  arms of `ferrix_syscall_entry`;
+  arms of `xaqu_syscall_entry`;
 - `take_reply` and the reply cell, for a marked peer;
 - the entry's own return into the stub.
 
@@ -5793,7 +5793,7 @@ Every effect each of those had is made by the trampoline or by
 - The new assembly goes on the allowlist, and every new `unsafe` is
   traced.
 
-**Diagnostics.** Ferrix has no dump that walks a blocked task's stack
+**Diagnostics.** Xaqu has no dump that walks a blocked task's stack
 (`panic.rs`), so nothing else changes. The panic report of a marked task
 says "continuation, resume frame at ...".
 
@@ -5858,12 +5858,12 @@ Ledger 404's F3 stays owed.
 
 1. **The unwind ablation**, timing only, built as `os76/unwind-abl`
    9b8d04556 on `main` 08984c2db. Every function on the chain above
-   `ferrix_switch` is `#[inline(always)]`, and the entry calls the item past
+   `xaqu_switch` is `#[inline(always)]`, and the entry calls the item past
    the hook. Its disassembly shows B's way back as three returns
-   (`ferrix_switch`, the fast path's closure, `ferrix_syscall_entry`)
+   (`xaqu_switch`, the fast path's closure, `xaqu_syscall_entry`)
    against about nine on `main`. Alternated against `main`, 5 boots a side
    in one mode, in os-76's first bench window. If it reads under about 10
-   ns a direction, G1 is argued by `ferrix_switch` and `finish_switch`
+   ns a direction, G1 is argued by `xaqu_switch` and `finish_switch`
    alone, and is re-weighed against its cost in rows.
 2. **This text re-read by the consultant**, docs only: G1 with C1 and C2
    under V2-1 to V2-14.
@@ -5921,9 +5921,9 @@ anything in the trampoline can drop an endpoint.
 The four points it was asked to check:
 - **(a)** The alignment chain holds. Taking the stack top T as 16-byte
   aligned:
-  - the stub's call enters `ferrix_syscall_entry` at T−200, as the ABI
+  - the stub's call enters `xaqu_syscall_entry` at T−200, as the ABI
     wants;
-  - `ferrix_switch`'s return leaves RSP at T−128;
+  - `xaqu_switch`'s return leaves RSP at T−128;
   - the trampoline's re-reserve and call reach T−200 again.
 
   The exit label sits on the `addq $64` itself, and every caller computes
@@ -5943,7 +5943,7 @@ The four points it was asked to check:
 
 The added conditions, each to be met by the code and its review:
 - **V2-15, the first trip.** A commit to an unmarked peer still parks its
-  caller as a continuation, `ferrix_switch` given a scratch save word. It
+  caller as a continuation, `xaqu_switch` given a scratch save word. It
   has a trip-count case. The control passes A's own slot, and I1 must fire.
 - **V2-16, "replied" cannot outlive its trip.** The branch is chosen from
   the entry, for example by a register the resume frame pops as zero, or
@@ -5997,14 +5997,14 @@ The timing ablation's figures:
 So G1's premise is false: the ten return mispredicts a trip are not the
 kernel's unwind. A per-function profile places them after the user's
 `syscall` in `trap_words`, at `finish_switch`'s `Arc<Task>` drop and in
-`load_selectors`. G1's remaining saving is `ferrix_switch`,
+`load_selectors`. G1's remaining saving is `xaqu_switch`,
 `finish_switch` and the reply cell, a few dozen instructions out of about
 5,000 a trip.
 
 **G1 is not built.** It is weighed again against the profile: the
 scheduler's hand-over is about 2,500 instructions a trip, and that comes
 first. The profile is on the gate host, at
-`~/.local/share/ferrix/logs/os76/profile-main60.txt`.
+`~/.local/share/xaqu/logs/os76/profile-main60.txt`.
 
 ### 9.14 ARMv7-A user state: the stub's clobbers, 3a's reset and 3b (design for the consultant, os07-ustate, 2026-10-08)
 
@@ -6020,7 +6020,7 @@ where it differs from the draft below, it rules.
 
 **What was read and measured first.**
 - *F1. The callers hold no VFP value.* Every native program -- the only
-  programs that link `ferrix_rt`, and the only ones that make native calls
+  programs that link `xaqu_rt`, and the only ones that make native calls
   on ARMv7-A (the one other stub in the tree, `nvrm`'s `nv_call`, is an
   x86-64 `syscall`) -- is built for `armv7a-none-eabi`, soft float
   (`tools/common/xtask/src/native.rs`).
@@ -6091,7 +6091,7 @@ none. Instead `rt/src/arch/armv7a.rs` refuses to build hard float:
 declare `clobber_abi("C")` and `out("d8") _` to `out("d15") _` first. A
 soft-float ABI with VFP code enabled by `-C target-feature` (softfp) is not
 caught by that `cfg`; xtask builds native programs with no target features,
-which the guard's comment records as an assumption. `ferrix_native_abi`'s
+which the guard's comment records as an assumption. `xaqu_native_abi`'s
 contract text gains ARMv7-A; AArch64 stays "keeps the whole state".
 
 **(b) 3a's reset, ported.**
@@ -6232,7 +6232,7 @@ the mark and the reset in it), the armv7a boots at one core and at
 **Assembly budget.** The tree is at its cap, 1,619 of 1,619. (b) needs
 `vmrs` at a blocked save and `vmsr` and two `vldmia` at the reset, which the
 soft-float kernel has no Rust spelling for: `switch.rs`'s `global_asm!`
-gains `ferrix_user_fpscr` (4 lines) and `ferrix_user_fpu_reset` (7), and
+gains `xaqu_user_fpscr` (4 lines) and `xaqu_user_fpu_reset` (7), and
 `cpu.rs` the `TPIDRURW` read and write (2). The cap goes to 1,632,
 `switch.rs` to 78, `cpu.rs` to 107, each entry's reason extended. The
 runtime's file gains no line: its guard is Rust.
@@ -6266,7 +6266,7 @@ measured.
 registers, own `FPSCR`) and its two thread ID registers.
 VULNERABILITY-ANALYSIS: a resume path that skips the reset; a user-writable
 register no switch moves (F5's class). FINDINGS: F5, numbered by the
-consultant, closed by U8. `ferrix_native_abi::nr`: the contract per
+consultant, closed by U8. `xaqu_native_abi::nr`: the contract per
 architecture. Coverage: the D16 and no-VFP branches argued (other
 configuration).
 
@@ -6296,7 +6296,7 @@ R9).** F1 was wrong in one place, and that changed the contract.
   and `d8`-`d15` (one `vstmia`, 64 bytes); the reset loads the task's own
   `FPSCR` and `d8`-`d15` from the record and zeros into `d0`-`d7` and
   `d16`-`d31` from the read-only zero block (`d0`-`d7` alone on a D16
-  core). The `ferrix_rt` guard stays for `target_abi = "eabihf"` and asks
+  core). The `xaqu_rt` guard stays for `target_abi = "eabihf"` and asks
   only for `clobber_abi("C")`, which is exactly AAPCS's caller-saved set.
   U3 also shows the victim's own `d8`-`d15` back, with a control U3-d
   ("lost its callee-saved VFP registers"). The saving estimate shrinks: a
@@ -6325,7 +6325,7 @@ R9).** F1 was wrong in one place, and that changed the contract.
 - *R6, the accessor.* `fp()` answers an `unsaved` state as its `FPSCR`,
   its own `d8`-`d15` and zero elsewhere; a state written by `set_fp` is
   whole, `unsaved` cleared, with a control of its own.
-- *R7.* One build of `ferrix_rt` for an eabihf target fails with the
+- *R7.* One build of `xaqu_rt` for an eabihf target fails with the
   guard's text, quoted in the commit; the Safety Manual records the
   assumption that native programs are built with no `-C target-feature`.
 - *R8, evidence.* Every control fires with its own text on an armv7a TCG
@@ -6336,7 +6336,7 @@ R9).** F1 was wrong in one place, and that changed the contract.
 - *R9, documents.* F5 is **F-66** (Major), filed in FINDINGS and closed by
   U8 and R3-b; VULNERABILITY-ANALYSIS gains a resume path that skips the
   reset and a user-writable register no switch moves; FDP_RIP.2 names
-  ARMv7-A's reset and both thread ID registers; `ferrix_native_abi::nr`
+  ARMv7-A's reset and both thread ID registers; `xaqu_native_abi::nr`
   states the contract per architecture.
 
 *Landing order.* F-66 is a security fix and needs nothing of the reset, so
@@ -6346,7 +6346,7 @@ own commit, gated and landable ahead of (a) and (b).
 **Next step, not this item: lazy VFP switching, as seL4 does it.** seL4 on
 ARMv7 keeps `FPEXC.EN` clear until a task's first VFP instruction traps
 (`KernelHaveFPU`), so a `Call`/`ReplyRecv` round trip between two tasks
-that never touch VFP pays no VFP save or restore at all. Ferrix's native
+that never touch VFP pays no VFP save or restore at all. Xaqu's native
 programs never touch VFP (F1), so even with R1 every blocked direction pays
 a `vmrs`, a 64-byte store, a `vmsr`, a 64-byte load and 192 bytes of zeros,
 and every preempted one the full 256 bytes each way -- on equal hardware,
@@ -6383,14 +6383,14 @@ AoU-27, AoU-26 before main gave that number to drvupdated). As R1 to R9 say, wit
   `set_tls`'s answer is `answer_set_tls` and the marked dispatch is
   `dispatch_marked`; the mark is raised and lowered there, interrupts
   masked at both.
-- *The assembly.* `ferrix_user_fpu_keep` (`vmrs`, `str`, `vstmia` of
-  `d8`-`d15`) and `ferrix_user_fpu_reset` (`vmsr`, `vldmia` of `d0`-`d7`
+- *The assembly.* `xaqu_user_fpu_keep` (`vmrs`, `str`, `vstmia` of
+  `d8`-`d15`) and `xaqu_user_fpu_reset` (`vmsr`, `vldmia` of `d0`-`d7`
   and, on a D32 core, `d16`-`d31` from `ZERO_DOUBLES`, a 256-byte
   read-only block, and of `d8`-`d15` from the record): 17 lines; with the
   two `TPIDRURW` accesses the cap is 1,638.
 - *The check* is `arch/armv7a/switch/check.rs`, two fixtures assembled by
   GNU `as` (sources in their doc comments, logs and objects in
-  `~/.local/share/ferrix/logs/os07-ustate/fixtures/` on nazuna). The
+  `~/.local/share/xaqu/logs/os07-ustate/fixtures/` on nazuna). The
   `execve` case copies the fixture's own image to `/tmp/tls-exec` and runs
   it with `argv[0]` "z". The cases run only on a D32 core and say so
   otherwise.
@@ -6509,7 +6509,7 @@ ARMv7-A only; AArch64 is unchanged.
   16-bit and a 32-bit Thumb instruction alike (ARM ARM, exception return
   table; QEMU's `arm_cpu_do_interrupt_aarch32`: `offset = env->thumb ? 2 : 4`;
   Linux's `__und_usr_thumb`: "first half of thumb2 instr at LR - 2").
-  `ferrix_stub_undefined` subtracts 4 in both, so for a Thumb program the
+  `xaqu_stub_undefined` subtracts 4 in both, so for a Thumb program the
   frame's `pc` is two bytes early today. A `SIGILL` report is off by two;
   a retry would execute the halfword before. `SPSR_und` carries the IT
   state of the trapping instruction, so returning with `rfeia` re-executes
@@ -6517,7 +6517,7 @@ ARMv7-A only; AArch64 is unchanged.
 - *S4. Linux* (`arch/arm/vfp/vfpmodule.c`) switches lazily: `EN` is
   cleared at every context switch, the first VFP instruction traps, the
   state is loaded and the instruction re-executed. Hard-float Linux programs
-  on Ferrix (busybox, Thumb; sessiond) therefore already expect nothing of
+  on Xaqu (busybox, Thumb; sessiond) therefore already expect nothing of
   `EN` but that VFP works.
 
 **The design.**
@@ -6551,12 +6551,12 @@ ARMv7-A only; AArch64 is unchanged.
   `vmsr fpexc` 0, record off; if it is off, nothing. So two tasks without
   the bit trade a core with no VFP instruction and no `FPEXC` access, and
   I2 holds whoever ran before, a dead task included.
-- *D5, the first use.* In `ferrix_trap_entry`, before the generic dispatch:
+- *D5, the first use.* In `xaqu_trap_entry`, before the generic dispatch:
   an undefined instruction from USR mode on a core with a VFP whose record
   is off, from a task with user state, is taken as a first use, with
   interrupts masked from the exception entry: the task's bit is set, `EN`
   written with an `isb`, the record set on, the task's own record loaded
-  whole into the registers (§9.14's `ferrix_user_fpu_restore`), and the
+  whole into the registers (§9.14's `xaqu_user_fpu_restore`), and the
   frame's `pc` put back on the instruction (+2 for Thumb, S3); the exception
   returns and the instruction runs. An instruction that was not a VFP one
   traps again, now with `EN` set, and is a `SIGILL` as today -- the old
@@ -6616,12 +6616,12 @@ ARMv7-A only; AArch64 is unchanged.
   shown):** the A7 is an in-order, partially dual-issuing core (Cortex-A7
   MPCore TRM, "About the processor"); Arm's Speculative Processor
   Vulnerability list (Arm doc 110280) names no Cortex-A7 under Spectre,
-  Meltdown (3, 3a) or Spectre-BHB, Linux's `proc-v7-bugs.c` and Ferrix's own
+  Meltdown (3, 3a) or Spectre-BHB, Linux's `proc-v7-bugs.c` and Xaqu's own
   `armv7a/speculation.rs` apply no predictor maintenance to it, and LazyFP
   was disclosed and acknowledged for Intel cores only; Arm has published no
   statement that any core is affected. seL4 leaves the old owner's values
   behind a clear `EN` (S1), which is evidence that its maintainers accept
-  that risk on Arm, not proof. I2 makes Ferrix's claim independent of the
+  that risk on Arm, not proof. I2 makes Xaqu's claim independent of the
   core, so a later out-of-order ARMv7-A target (Cortex-A15, which is under
   3a) needs no new argument.
 - *Remaining channels:* `FPEXC` itself is not readable at PL0; a program can
@@ -6723,9 +6723,9 @@ D5) and `test-ipc-equiv` on armv7a; the x86-64 and AArch64 boots unchanged.
   `EN` is clear, in the record. `H.SCHED.12` unchanged. `L.armv7a.6`-`.9`'s
   criteria say "a task with the bit".
 
-**Assembly.** `ferrix_fpu_disable` (3 lines), `ferrix_fpu_exc` (`vmrs`
-`FPEXC` for C1, C3 and C5, 2 lines), an `isb` in `ferrix_fpu_enable` (1);
-the scrub is `ferrix_user_fpu_restore` of a read-only all-zero `UserState`.
+**Assembly.** `xaqu_fpu_disable` (3 lines), `xaqu_fpu_exc` (`vmrs`
+`FPEXC` for C1, C3 and C5, 2 lines), an `isb` in `xaqu_fpu_enable` (1);
+the scrub is `xaqu_user_fpu_restore` of a read-only all-zero `UserState`.
 The cap rises by 6, `switch.rs`'s entry by 6, reasons extended.
 
 **Documents.** Security Target FDP_RIP.2: I2 and S2 for ARMv7-A.
@@ -6808,10 +6808,10 @@ work is well over 20.
 
 *seL4's matched set-up and this item (the consultant's advisory).* sel4rt
 runs its client with the FPU on, so each seL4 round trip pays two `FPEXC`
-read-modify-writes that a Ferrix round trip between two native programs no
+read-modify-writes that a Xaqu round trip between two native programs no
 longer does. os-07's branch `os07/b2-sel4` (8abeb6ee0) makes the client's FPU
 a build choice, so that the board shows both seL4 rows -- client FPU on, as
-sel4bench ships it, and both threads `fpuDisabled` -- beside Ferrix's.
+sel4bench ships it, and both threads `fpuDisabled` -- beside Xaqu's.
 
 **As built (2026-10-08, branch `os07/lazyvfp`).** As L1 to L12 say, with
 these to note for the code review:
@@ -6821,7 +6821,7 @@ these to note for the code review:
   `scrub_off`, `load_own` (the switch's and the first use's one load),
   `take_first_use`, `capture_vfp`, `load_user_fp` (`sigreturn`) and
   `bring_up_vfp`. `trap.rs`: `point_at_undefined` (F-68) and the first use in
-  `ferrix_trap_entry`, which returns through the stub's `rfeia` and reports a
+  `xaqu_trap_entry`, which returns through the stub's `rfeia` and reports a
   record that disagrees with the bit as a kernel fault (FX-9004's catalog
   entry).
 - *Bring-up writes no record.* On a secondary the per-CPU register that
@@ -6829,13 +6829,13 @@ these to note for the code review:
   exactly that); every record starts off from its initialiser, which is
   what bring-up leaves `EN` as. The bring-up check (L9) sets the record from
   the register after running the sequence.
-- *Assembly.* `ferrix_fpu_disable`, `ferrix_fpu_exc` and the `isb` in
-  `ferrix_fpu_enable`: `switch.rs` 84 to 94 lines, the cap 1,638 to 1,648.
+- *Assembly.* `xaqu_fpu_disable`, `xaqu_fpu_exc` and the `isb` in
+  `xaqu_fpu_enable`: `switch.rs` 84 to 94 lines, the cap 1,638 to 1,648.
 - *The check* is a `lazy` section of `arch/armv7a/switch/check.rs`, run
   before the `vectors` and `tls` cases so that each control fires with its
   own text, on three fixtures assembled by GNU `as` (sources in their doc
   comments; logs, objects and scripts in
-  `~/.local/share/ferrix/logs/os07-lazyvfp/` on nazuna). Boot line (armv7a
+  `~/.local/share/xaqu/logs/os07-lazyvfp/` on nazuna). Boot line (armv7a
   TCG, four cores and `--smp 2`): `lazy  1000 round trips between two
   programs without VFP moved no VFP register and wrote no FPEXC; first uses
   in ARM, Thumb and an IT block, SIGILL at its own address, zero behind a

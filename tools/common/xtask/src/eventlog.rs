@@ -1,7 +1,7 @@
-//! `ferrix-eventlog`, `/bin/ferrix-eventlog` (`src/lib/proto/eventlog`'s
+//! `xaqu-eventlog`, `/bin/xaqu-eventlog` (`src/lib/proto/eventlog`'s
 //! program, `docs/POSTMORTEM.md` §4.4): the event log's reader, built for an
 //! architecture against the target's own musl and carried by every image
-//! with a shell, so that `ferrix-eventlog list /dev/vda3 --text` reads a
+//! with a shell, so that `xaqu-eventlog list /dev/vda3 --text` reads a
 //! machine's panic records on the machine itself, not only on a host that
 //! has its disk. The same source is the host's tool.
 
@@ -12,12 +12,12 @@ use crate::ports::{Content, File};
 use crate::{Error, Result, zinc};
 
 /// The crate, in the workspace.
-const PACKAGE: &str = "ferrix-eventlog";
+const PACKAGE: &str = "xaqu-eventlog";
 
 /// Where the program goes.
-pub(crate) const PROGRAM: &str = "bin/ferrix-eventlog";
+pub(crate) const PROGRAM: &str = "bin/xaqu-eventlog";
 
-/// Build `ferrix-eventlog` for `arch`, or `None` where there is no musl
+/// Build `xaqu-eventlog` for `arch`, or `None` where there is no musl
 /// target.
 ///
 /// # Errors
@@ -25,7 +25,7 @@ pub(crate) const PROGRAM: &str = "bin/ferrix-eventlog";
 /// A build that fails.
 pub(crate) fn build(arch: Arch) -> Result<Option<PathBuf>> {
     let Some(target) = zinc::target(arch) else {
-        println!("  ferrix-eventlog is not built for {arch} yet");
+        println!("  xaqu-eventlog is not built for {arch} yet");
         return Ok(None);
     };
     let target_dir = paths::target_dir().join("eventlog");
@@ -61,7 +61,7 @@ pub(crate) fn build(arch: Arch) -> Result<Option<PathBuf>> {
     Ok(Some(program))
 }
 
-/// What an image carries for the event log on `arch`: `/bin/ferrix-eventlog`.
+/// What an image carries for the event log on `arch`: `/bin/xaqu-eventlog`.
 ///
 /// # Errors
 ///

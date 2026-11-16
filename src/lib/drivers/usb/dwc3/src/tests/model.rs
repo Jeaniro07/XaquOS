@@ -42,7 +42,7 @@ use std::string::String;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_usb_device::Setup;
+use xaqu_usb_device::Setup;
 
 use crate::layout::{AREA_BYTES, CACHE_LINE, EVENT_BYTES, PAGE};
 use crate::regs::{

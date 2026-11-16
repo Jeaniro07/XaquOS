@@ -11,20 +11,20 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::exception::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::exception::{
     FLAG_PC_AT_TRAP, FLAG_WRITE, HAND_ON, KILL, KIND_PAGE_FAULT, REPORT_BYTES, RESUME, Registers,
     Report as Report64, STATE_READ, STATE_WRITE, Words,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{EXCEPTION_TIMEOUT_MAX_MS, JOB_LEVEL_SET, JOB_LEVEL_SHIFT};
-use ferrix_vma::VmaFlags;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{EXCEPTION_TIMEOUT_MAX_MS, JOB_LEVEL_SET, JOB_LEVEL_SHIFT};
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::audit;
@@ -421,11 +421,11 @@ const LONG_MS: u64 = EXCEPTION_TIMEOUT_MAX_MS;
 /// The expiry case's timeout.
 const SHORT_MS: u64 = 5;
 /// `process_status`'s states.
-const EXITED: u32 = ferrix_native_abi::types::PROCESS_EXITED;
+const EXITED: u32 = xaqu_native_abi::types::PROCESS_EXITED;
 /// See [`EXITED`].
-const KILLED: u32 = ferrix_native_abi::types::PROCESS_KILLED;
+const KILLED: u32 = xaqu_native_abi::types::PROCESS_KILLED;
 /// `SIGSEGV`, the default action's signal for a store through null.
-const SIGSEGV: u32 = ferrix_linux_abi::types::SIGSEGV;
+const SIGSEGV: u32 = xaqu_linux_abi::types::SIGSEGV;
 /// `SIGKILL`, a job kill's.
 const SIGKILL: u32 = 9;
 
@@ -452,7 +452,7 @@ fn faults(side: &Side, root: Handle, report: &mut Report) -> Result<(), &'static
     repeats(side, root, fault, report)?;
     unsupervised(side, root, fault)?;
     // A seam only a kernel with its self-checks holds (`force_poison`).
-    #[cfg(ferrix_checks = "on")]
+    #[cfg(xaqu_checks = "on")]
     poison_and_its_supervisors(side, root, fault, report)?;
     no_raise_under_a_supervisor(side, root, fault)?;
     raised_is_never_offered(side)?;
@@ -923,7 +923,7 @@ fn closed_undecided(
 /// again.
 ///
 /// Verifies: L.trap.9, L.trap.12
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn poison_and_its_supervisors(
     side: &Side,
     root: Handle,
@@ -932,8 +932,8 @@ fn poison_and_its_supervisors(
 ) -> Result<(), &'static str> {
     use crate::object::exception::{POISON_ADDRESS, force_poison};
     use crate::trap::Poison;
-    use ferrix_linux_abi::types::SIGBUS;
-    use ferrix_native_abi::exception::KIND_BUS;
+    use xaqu_linux_abi::types::SIGBUS;
+    use xaqu_native_abi::exception::KIND_BUS;
 
     let (job, process) = made(side, root, image)?;
     let channel = attach(side, process, LONG_MS).map_err(|_| "case p: attach failed")?;
@@ -1194,7 +1194,7 @@ fn raised_is_never_offered(side: &Side) -> Result<(), &'static str> {
         },
         &[b"/k4-raised"],
         &[],
-        [0x4b; ferrix_ustack::RANDOM_BYTES],
+        [0x4b; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "case p: a set-id program could not be loaded")?;
     if !raised.supervisor().is_refused() {

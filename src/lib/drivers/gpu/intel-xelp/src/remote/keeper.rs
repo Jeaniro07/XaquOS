@@ -25,8 +25,8 @@
 
 use core::fmt;
 
-use ferrix_linux_abi::errno::Errno;
-pub use ferrix_linux_abi::kmsg::Level;
+use xaqu_linux_abi::errno::Errno;
+pub use xaqu_linux_abi::kmsg::Level;
 
 use super::wire::{Call, Event};
 use crate::frontend::limits;

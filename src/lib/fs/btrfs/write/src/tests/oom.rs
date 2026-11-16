@@ -1,7 +1,7 @@
 //! Running out of memory, at every allocation an operation makes.
 //!
 //! The write path allocates through `crate::fallible`, which asks the
-//! `ferrix_fallible` injection policy before every allocation. The policy
+//! `xaqu_fallible` injection policy before every allocation. The policy
 //! installed here fails the `n`th allocation this thread makes -- or every
 //! one from the `n`th on -- so a test runs one script of file operations and
 //! a commit once for each `n`, and requires of every run:
@@ -16,7 +16,7 @@
 //!   down, so no error is ever reported for a commit on the disk -- and
 //!   [`check`] finds it consistent.
 //!
-//! `ferrix_fallible`'s policy is process-wide but this one reads a
+//! `xaqu_fallible`'s policy is process-wide but this one reads a
 //! thread-local budget, so the other tests in the binary, running beside
 //! these, never see a failure.
 
@@ -25,11 +25,11 @@ use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::items::{FS_TREE_OBJECTID, S_IFDIR, S_IFREG, Timespec};
-use ferrix_btrfs::tree::BtrfsKey;
-use ferrix_btrfs::volume::{Device, ReadKind};
-use ferrix_fallible::map_node_bound;
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::items::{FS_TREE_OBJECTID, S_IFDIR, S_IFREG, Timespec};
+use xaqu_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::volume::{Device, ReadKind};
+use xaqu_fallible::map_node_bound;
 
 use super::{BLANK, MemDevice, POPULATED, check, items};
 use crate::chunks::Chunk;
@@ -59,7 +59,7 @@ super::std::thread_local! {
     static SEEN: Cell<u64> = const { Cell::new(0) };
 }
 
-/// The policy `ferrix_fallible` asks before each allocation.
+/// The policy `xaqu_fallible` asks before each allocation.
 fn policy() -> bool {
     FAIL_AT.with(|fail| {
         let Some(at) = fail.get() else {
@@ -80,8 +80,8 @@ fn policy() -> bool {
 /// Fail this thread's `at`th allocation from now, or with `persist` every
 /// one from it on.
 fn arm(at: u64, persist: bool) {
-    let _ = ferrix_fallible::set_injector(policy);
-    ferrix_fallible::arm(true);
+    let _ = xaqu_fallible::set_injector(policy);
+    xaqu_fallible::arm(true);
     PERSIST.with(|p| p.set(persist));
     SEEN.with(|seen| seen.set(0));
     FAIL_AT.with(|fail| fail.set(Some(at)));
@@ -291,7 +291,7 @@ fn every_map_node_fits_the_kernels_reserve() {
     // The kernel serves a map insert's nodes from a reserve of size-class
     // objects, and refuses one whose nodes are larger than the largest
     // class: every map this crate keeps has to fit.
-    let largest = ferrix_heap::LARGEST_CLASS;
+    let largest = xaqu_heap::LARGEST_CLASS;
     let bounds = [
         ("dirty and clean nodes", map_node_bound::<u64, TreeNode>()),
         ("roots", map_node_bound::<u64, Root>()),

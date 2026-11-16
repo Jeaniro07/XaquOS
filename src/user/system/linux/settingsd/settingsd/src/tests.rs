@@ -10,8 +10,8 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use ferrix_auth_client::{Person, Verdict, send_packet};
-use ferrix_settings_proto::{MAX_RECORD, RefusalKind, Request, ToClient, ToServer};
+use xaqu_auth_client::{Person, Verdict, send_packet};
+use xaqu_settings_proto::{MAX_RECORD, RefusalKind, Request, ToClient, ToServer};
 
 use compositor_seat::prompt::{FromSeat, Secret as SeatSecret, ToSeat};
 
@@ -21,7 +21,7 @@ use crate::identity::{Identify, Program};
 use crate::requests::{Init, System};
 
 const PASSWORD: &str = "correct horse settings";
-const FERRIX: Peer = Peer { pid: 1, uid: 1000 };
+const XAQU: Peer = Peer { pid: 1, uid: 1000 };
 const GUEST: Peer = Peer { pid: 1, uid: 1001 };
 const ROOT: Peer = Peer { pid: 1, uid: 0 };
 
@@ -161,14 +161,14 @@ fn client(fd: OwnedFd, request: Request, dry_run: bool, client: Client) {
     send(fd.as_raw_fd(), &ToServer::Request { dry_run, request });
     let mut buffer = vec![0_u8; MAX_RECORD + 1];
     loop {
-        let got = ferrix_auth_client_receive(fd.as_raw_fd(), &mut buffer);
+        let got = xaqu_auth_client_receive(fd.as_raw_fd(), &mut buffer);
         let Some(packet) = got else { return };
         match ToClient::decode(packet).unwrap() {
             ToClient::Prompt { .. } => match client {
                 Client::Answers => send(
                     fd.as_raw_fd(),
                     &ToServer::Respond(
-                        ferrix_settings_proto::Secret::from_bytes(PASSWORD.as_bytes()).unwrap(),
+                        xaqu_settings_proto::Secret::from_bytes(PASSWORD.as_bytes()).unwrap(),
                     ),
                 ),
                 Client::Cancels => send(fd.as_raw_fd(), &ToServer::Cancel),
@@ -180,7 +180,7 @@ fn client(fd: OwnedFd, request: Request, dry_run: bool, client: Client) {
     }
 }
 
-fn ferrix_auth_client_receive(fd: RawFd, buffer: &mut [u8]) -> Option<&[u8]> {
+fn xaqu_auth_client_receive(fd: RawFd, buffer: &mut [u8]) -> Option<&[u8]> {
     // SAFETY: `buffer` is valid for writes of its whole length.
     let got = unsafe { libc::recv(fd, buffer.as_mut_ptr().cast(), buffer.len(), 0) };
     let got = usize::try_from(got).ok().filter(|&got| got > 0)?;
@@ -193,13 +193,13 @@ fn root(name: &str) -> PathBuf {
     std::fs::create_dir_all(root.join("etc")).unwrap();
     std::fs::write(
         root.join("etc/passwd"),
-        "root:x:0:0::/:/bin/sh\nferrix:x:1000:1000::/:/bin/sh\nguest:x:1001:1001::/:/bin/sh\n",
+        "root:x:0:0::/:/bin/sh\nxaqu:x:1000:1000::/:/bin/sh\nguest:x:1001:1001::/:/bin/sh\n",
     )
     .unwrap();
-    std::fs::write(root.join("etc/hostname"), "ferrix\n").unwrap();
+    std::fs::write(root.join("etc/hostname"), "xaqu\n").unwrap();
     // The allow-lists, naming settingsctl, a root-owned -- here the test's
     // own uid's -- file nobody else may write (S3).
-    for dir in ["", "etc", "bin", "lib", "lib/ferrix", "lib/ferrix/settings"] {
+    for dir in ["", "etc", "bin", "lib", "lib/xaqu", "lib/xaqu/settings"] {
         std::fs::create_dir_all(root.join(dir)).unwrap();
         std::fs::set_permissions(root.join(dir), std::fs::Permissions::from_mode(0o755)).unwrap();
     }
@@ -281,10 +281,10 @@ struct Seat {
 }
 
 fn seat(root: &Path, does: SeatDoes) -> Seat {
-    std::fs::create_dir_all(root.join("lib/ferrix/units")).unwrap();
+    std::fs::create_dir_all(root.join("lib/xaqu/units")).unwrap();
     std::fs::write(
-        root.join("lib/ferrix/units/hyprix.service"),
-        "[Service]\nExecStart=/bin/sessiond --user ferrix -- /bin/hyprix\n",
+        root.join("lib/xaqu/units/hyprix.service"),
+        "[Service]\nExecStart=/bin/sessiond --user xaqu -- /bin/hyprix\n",
     )
     .unwrap();
     let listener = crate::seat::listen(&root.join("prompt"));
@@ -295,7 +295,7 @@ fn seat(root: &Path, does: SeatDoes) -> Seat {
         let fd = connection.as_raw_fd();
         let mut buffer = vec![0_u8; 4096];
         let send = |record: &FromSeat| send_packet(fd, &record.encode().unwrap()).unwrap();
-        while let Some(packet) = ferrix_auth_client_receive(fd, &mut buffer) {
+        while let Some(packet) = xaqu_auth_client_receive(fd, &mut buffer) {
             let record = ToSeat::decode(packet).unwrap();
             let word = format!("{record:?}");
             kept.lock()
@@ -412,23 +412,23 @@ fn root_dir(run: &Run) -> &Path {
 fn an_acceptance_for_the_peer_writes_the_name() {
     let run = run(
         "accepted",
-        FERRIX,
+        XAQU,
         hostname("box"),
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(
         run.answer,
         ToClient::Done {
             changed: true,
-            text: "the computer is called box (was ferrix)".to_owned()
+            text: "the computer is called box (was xaqu)".to_owned()
         }
     );
     assert_eq!(run.hostname(), "box\n");
     assert_eq!(
         *run.script.asked.lock().unwrap(),
-        [("settings.hostname".to_owned(), "ferrix".to_owned())],
+        [("settings.hostname".to_owned(), "xaqu".to_owned())],
         "BEGIN names the account of the peer's uid"
     );
     assert_eq!(*run.script.heard.lock().unwrap(), [PASSWORD.as_bytes()]);
@@ -447,7 +447,7 @@ fn every_other_verdict_writes_nothing() {
     let scripts: Vec<(&str, Script, RefusalKind)> = vec![
         (
             "other-uid",
-            accepts(1001, "ferrix"),
+            accepts(1001, "xaqu"),
             RefusalKind::NotPermitted,
         ),
         (
@@ -471,7 +471,7 @@ fn every_other_verdict_writes_nothing() {
             "unavailable",
             Script {
                 verdict: Some(Ok(Verdict::Unavailable(
-                    "ferrix is not in wheel".to_owned(),
+                    "xaqu is not in wheel".to_owned(),
                 ))),
                 ..Script::default()
             },
@@ -489,14 +489,14 @@ fn every_other_verdict_writes_nothing() {
     for (name, script, kind) in scripts {
         let run = run(
             name,
-            FERRIX,
+            XAQU,
             hostname("box"),
             false,
             script,
             Client::Answers,
         );
         assert_eq!(run.refused(), kind, "{name}");
-        assert_eq!(run.hostname(), "ferrix\n", "{name} wrote");
+        assert_eq!(run.hostname(), "xaqu\n", "{name} wrote");
     }
 }
 
@@ -504,7 +504,7 @@ fn every_other_verdict_writes_nothing() {
 fn a_failure_carries_its_wait() {
     let run = run(
         "wait",
-        FERRIX,
+        XAQU,
         hostname("box"),
         false,
         Script {
@@ -527,13 +527,13 @@ fn a_client_that_cancels_or_leaves_writes_nothing() {
     for (name, client) in [("cancels", Client::Cancels), ("leaves", Client::Leaves)] {
         let run = run(
             name,
-            FERRIX,
+            XAQU,
             hostname("box"),
             false,
-            accepts(1000, "ferrix"),
+            accepts(1000, "xaqu"),
             client,
         );
-        assert_eq!(run.hostname(), "ferrix\n", "{name}");
+        assert_eq!(run.hostname(), "xaqu\n", "{name}");
         assert!(run.script.heard.lock().unwrap().is_empty());
         if let ToClient::Refused(refusal) = &run.answer {
             assert_eq!(refusal.kind, RefusalKind::Cancelled, "{name}");
@@ -546,26 +546,26 @@ fn an_invalid_request_is_refused_before_anyone_is_asked() {
     for bad in ["my pc", "-x", "../../etc/shadow", ""] {
         let run = run(
             "invalid",
-            FERRIX,
+            XAQU,
             hostname(bad),
             false,
-            accepts(1000, "ferrix"),
+            accepts(1000, "xaqu"),
             Client::Answers,
         );
         assert_eq!(run.refused(), RefusalKind::Invalid, "{bad:?}");
         assert_eq!(run.asked(), 0, "{bad:?}");
-        assert_eq!(run.hostname(), "ferrix\n");
+        assert_eq!(run.hostname(), "xaqu\n");
     }
     let run = run(
         "unit",
-        FERRIX,
+        XAQU,
         Request::ServiceEnablePersistent {
             unit: "auth.socket".to_owned(),
             enabled: true,
             now: true,
         },
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(run.refused(), RefusalKind::Invalid);
@@ -587,15 +587,15 @@ fn a_dry_run_asks_nobody_and_writes_nothing() {
         run.answer,
         ToClient::Done {
             changed: true,
-            text: "would call the computer box; it is called ferrix".to_owned()
+            text: "would call the computer box; it is called xaqu".to_owned()
         }
     );
     assert_eq!(run.asked(), 0);
-    assert_eq!(run.hostname(), "ferrix\n");
+    assert_eq!(run.hostname(), "xaqu\n");
     let same = self::run(
         "dry-same",
         GUEST,
-        hostname("ferrix"),
+        hostname("xaqu"),
         true,
         Script::default(),
         Client::Answers,
@@ -629,7 +629,7 @@ fn root_asks_nobody_and_a_uid_with_no_account_is_refused() {
     );
     assert_eq!(nobody.refused(), RefusalKind::NotPermitted);
     assert_eq!(nobody.asked(), 0);
-    assert_eq!(nobody.hostname(), "ferrix\n");
+    assert_eq!(nobody.hostname(), "xaqu\n");
 }
 
 #[test]
@@ -641,10 +641,10 @@ fn a_switch_asks_init_once_it_is_allowed() {
     };
     let run = run(
         "switch",
-        FERRIX,
+        XAQU,
         request.clone(),
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(
@@ -687,15 +687,15 @@ fn the_password_reaches_no_audit_line_and_no_answer() {
     let runs = [
         run(
             "secret-ok",
-            FERRIX,
+            XAQU,
             hostname("box"),
             false,
-            accepts(1000, "ferrix"),
+            accepts(1000, "xaqu"),
             Client::Answers,
         ),
         run(
             "secret-failed",
-            FERRIX,
+            XAQU,
             hostname("box"),
             false,
             Script {
@@ -730,10 +730,10 @@ fn on_seat(
     let seat = does.map(|does| seat(&root, does));
     if does.is_none() {
         // A seat account whose desktop is not running: the unit, no socket.
-        std::fs::create_dir_all(root.join("lib/ferrix/units")).unwrap();
+        std::fs::create_dir_all(root.join("lib/xaqu/units")).unwrap();
         std::fs::write(
-            root.join("lib/ferrix/units/hyprix.service"),
-            "ExecStart=/bin/sessiond --user ferrix -- /bin/hyprix\n",
+            root.join("lib/xaqu/units/hyprix.service"),
+            "ExecStart=/bin/sessiond --user xaqu -- /bin/hyprix\n",
         )
         .unwrap();
     }
@@ -741,7 +741,7 @@ fn on_seat(
     let context = context(&root, &script, Switches::default(), asker);
     let (ours, theirs) = pair();
     let other = std::thread::spawn(move || client(theirs, hostname("box"), false, Client::Answers));
-    let answer = conversation::serve(ours.as_raw_fd(), FERRIX, &context);
+    let answer = conversation::serve(ours.as_raw_fd(), XAQU, &context);
     drop(ours);
     other.join().unwrap();
     let heard = seat.map(Seat::heard).unwrap_or_default();
@@ -758,7 +758,7 @@ fn on_seat(
 fn a_seat_account_is_asked_on_the_seat() {
     let (answer, heard, asked, name) = on_seat(
         "seat",
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Some(SeatDoes::Types),
         Asker::default(),
     );
@@ -766,7 +766,7 @@ fn a_seat_account_is_asked_on_the_seat() {
         answer,
         ToClient::Done {
             changed: true,
-            text: "the computer is called box (was ferrix)".to_owned()
+            text: "the computer is called box (was xaqu)".to_owned()
         }
     );
     assert_eq!(heard, ["Hello", "Ask", "Question", "Close"]);
@@ -775,7 +775,7 @@ fn a_seat_account_is_asked_on_the_seat() {
     let said = crate::audit::SAID.lock().unwrap().clone();
     assert!(
         said.iter().any(|line| line
-            .contains("program=/bin/settingsctl account=ferrix auth=seat+password result=done")),
+            .contains("program=/bin/settingsctl account=xaqu auth=seat+password result=done")),
         "{said:?}"
     );
 }
@@ -788,7 +788,7 @@ fn an_acceptance_with_no_question_waits_for_allow() {
     let none = || Script {
         verdict: Some(Ok(Verdict::Accepted {
             uid: 1000,
-            account: "ferrix".to_owned(),
+            account: "xaqu".to_owned(),
         })),
         prompt: false,
         ..Script::default()
@@ -813,7 +813,7 @@ fn an_acceptance_with_no_question_waits_for_allow() {
         other => panic!("{other:?}"),
     }
     assert_eq!(heard, ["Hello", "Ask", "Confirm", "Close"]);
-    assert_eq!(name, "ferrix\n");
+    assert_eq!(name, "xaqu\n");
 }
 
 /// T10's host half: a denial of the password field makes nothing.
@@ -821,12 +821,12 @@ fn an_acceptance_with_no_question_waits_for_allow() {
 fn a_denied_field_makes_nothing() {
     let (answer, _, _, name) = on_seat(
         "seat-deny",
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Some(SeatDoes::Cancels),
         Asker::default(),
     );
     assert!(matches!(answer, ToClient::Refused(_)), "{answer:?}");
-    assert_eq!(name, "ferrix\n");
+    assert_eq!(name, "xaqu\n");
 }
 
 /// T5's host half: a seat account with no desktop, or a busy seat, is
@@ -834,7 +834,7 @@ fn a_denied_field_makes_nothing() {
 #[test]
 fn a_seat_account_with_no_seat_to_ask_is_refused() {
     let (answer, _, asked, name) =
-        on_seat("seat-none", accepts(1000, "ferrix"), None, Asker::default());
+        on_seat("seat-none", accepts(1000, "xaqu"), None, Asker::default());
     match answer {
         ToClient::Refused(refusal) => {
             assert_eq!(refusal.kind, RefusalKind::Unavailable);
@@ -847,10 +847,10 @@ fn a_seat_account_with_no_seat_to_ask_is_refused() {
         other => panic!("{other:?}"),
     }
     assert_eq!(asked, 0);
-    assert_eq!(name, "ferrix\n");
+    assert_eq!(name, "xaqu\n");
     let (answer, _, asked, _) = on_seat(
         "seat-busy",
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Some(SeatDoes::Busy),
         Asker::default(),
     );
@@ -866,19 +866,19 @@ fn a_seat_account_with_no_seat_to_ask_is_refused() {
 #[test]
 fn only_a_listed_program_bound_to_its_connection_asks() {
     let zinc = Asker(Mutex::new(vec![program("/bin/zinc", 7)]));
-    let (answer, heard, asked, name) = on_seat("seat-zinc", accepts(1000, "ferrix"), None, zinc);
+    let (answer, heard, asked, name) = on_seat("seat-zinc", accepts(1000, "xaqu"), None, zinc);
     assert!(
         matches!(answer, ToClient::Refused(ref r) if r.kind == RefusalKind::NotPermitted),
         "{answer:?}"
     );
     assert!(heard.is_empty(), "{heard:?}");
     assert_eq!(asked, 0);
-    assert_eq!(name, "ferrix\n");
+    assert_eq!(name, "xaqu\n");
     let changed = Asker(Mutex::new(vec![
         program("/bin/settingsctl", 7),
         program("/bin/settingsctl", 8),
     ]));
-    let (answer, _, asked, _) = on_seat("seat-changed", accepts(1000, "ferrix"), None, changed);
+    let (answer, _, asked, _) = on_seat("seat-changed", accepts(1000, "xaqu"), None, changed);
     match answer {
         ToClient::Refused(refusal) => assert!(
             refusal.text.contains("not the one that connected"),
@@ -896,13 +896,13 @@ fn only_a_listed_program_bound_to_its_connection_asks() {
 fn a_relayed_acceptance_with_no_question_is_refused() {
     let run = run(
         "relay-none",
-        FERRIX,
+        XAQU,
         hostname("box"),
         false,
         Script {
             verdict: Some(Ok(Verdict::Accepted {
                 uid: 1000,
-                account: "ferrix".to_owned(),
+                account: "xaqu".to_owned(),
             })),
             prompt: false,
             ..Script::default()
@@ -910,7 +910,7 @@ fn a_relayed_acceptance_with_no_question_is_refused() {
         Client::Answers,
     );
     assert_eq!(run.refused(), RefusalKind::NotPermitted);
-    assert_eq!(run.hostname(), "ferrix\n");
+    assert_eq!(run.hostname(), "xaqu\n");
     let said = crate::audit::SAID.lock().unwrap().clone();
     assert!(
         said.iter().any(|line| line.contains("result=needs-seat")),
@@ -922,14 +922,14 @@ fn a_relayed_acceptance_with_no_question_is_refused() {
 fn now_starts_or_stops_the_unit_after_its_links() {
     let on = run(
         "now-on",
-        FERRIX,
+        XAQU,
         Request::ServiceEnablePersistent {
             unit: "sshd.service".to_owned(),
             enabled: true,
             now: true,
         },
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(
@@ -948,14 +948,14 @@ fn now_starts_or_stops_the_unit_after_its_links() {
     );
     let off = run(
         "now-off",
-        FERRIX,
+        XAQU,
         Request::ServiceEnablePersistent {
             unit: "sshd.socket".to_owned(),
             enabled: false,
             now: true,
         },
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(
@@ -987,14 +987,14 @@ fn now_starts_or_stops_the_unit_after_its_links() {
     FAIL_START.with(|fail| fail.set(true));
     let failed = run(
         "now-failed",
-        FERRIX,
+        XAQU,
         Request::ServiceEnablePersistent {
             unit: "sshd.service".to_owned(),
             enabled: true,
             now: true,
         },
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     FAIL_START.with(|fail| fail.set(false));
@@ -1032,10 +1032,10 @@ fn a_zone_links_localtime_and_writes_the_footer() {
     };
     let done = run(
         "zone",
-        FERRIX,
+        XAQU,
         zone("Europe/Berlin"),
         false,
-        accepts(1000, "ferrix"),
+        accepts(1000, "xaqu"),
         Client::Answers,
     );
     assert_eq!(
@@ -1079,10 +1079,10 @@ fn a_zone_links_localtime_and_writes_the_footer() {
     ] {
         let refused = run(
             name,
-            FERRIX,
+            XAQU,
             zone(bad),
             false,
-            accepts(1000, "ferrix"),
+            accepts(1000, "xaqu"),
             Client::Answers,
         );
         assert_eq!(refused.refused(), RefusalKind::Invalid, "{bad}");
@@ -1105,9 +1105,9 @@ fn a_seat_settingsd_cannot_trust_or_cannot_read_refuses() {
         let root = root(name);
         let seat = wrong_listener.then(|| seat(&root, SeatDoes::Types));
         if !wrong_listener {
-            std::fs::create_dir_all(root.join("lib/ferrix/units/hyprix.service.d")).unwrap();
+            std::fs::create_dir_all(root.join("lib/xaqu/units/hyprix.service.d")).unwrap();
         }
-        let script = Arc::new(accepts(1000, "ferrix"));
+        let script = Arc::new(accepts(1000, "xaqu"));
         let mut context = context(&root, &script, Switches::default(), Asker::default());
         if wrong_listener {
             // The listener is the test's uid: say root is someone else.
@@ -1116,7 +1116,7 @@ fn a_seat_settingsd_cannot_trust_or_cannot_read_refuses() {
         let (ours, theirs) = pair();
         let other =
             std::thread::spawn(move || client(theirs, hostname("box"), false, Client::Answers));
-        let answer = conversation::serve(ours.as_raw_fd(), FERRIX, &context);
+        let answer = conversation::serve(ours.as_raw_fd(), XAQU, &context);
         drop(ours);
         other.join().unwrap();
         let heard = seat.map(Seat::heard).unwrap_or_default();
@@ -1136,7 +1136,7 @@ fn a_seat_settingsd_cannot_trust_or_cannot_read_refuses() {
         assert_eq!(script.asked.lock().unwrap().len(), 0, "{name}");
         assert_eq!(
             std::fs::read_to_string(root.join("etc/hostname")).unwrap(),
-            "ferrix\n"
+            "xaqu\n"
         );
         let _ = std::fs::remove_dir_all(&root);
     }
@@ -1151,12 +1151,12 @@ fn an_unknown_request_is_unsupported_and_said_so() {
     let context = context(&root, &script, Switches::default(), Asker::default());
     let (ours, theirs) = pair();
     // A REQUEST record naming a request this build has not got.
-    let mut packet = vec![1_u8, ferrix_settings_proto::VERSION, 0];
+    let mut packet = vec![1_u8, xaqu_settings_proto::VERSION, 0];
     let name = b"set-moon-phase";
     packet.extend_from_slice(&u16::try_from(name.len()).unwrap().to_le_bytes());
     packet.extend_from_slice(name);
     send_packet(theirs.as_raw_fd(), &packet).unwrap();
-    let answer = conversation::serve(ours.as_raw_fd(), FERRIX, &context);
+    let answer = conversation::serve(ours.as_raw_fd(), XAQU, &context);
     match answer {
         ToClient::Refused(refusal) => {
             assert_eq!(refusal.kind, RefusalKind::Unsupported);

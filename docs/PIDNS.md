@@ -375,7 +375,7 @@ the sabotage is not a changed constant):
 init double-faulted four times out of four. The fault looked like the ioctl
 path's, because that is where a trap landed, but a walk of the frame pointers
 from the double fault's report (a throwaway build that printed them) gave
-`ferrix_syscall_stub`, `trap::system_call`, `dispatch_with`,
+`xaqu_syscall_stub`, `trap::system_call`, `dispatch_with`,
 `linux::dispatch`, `clone_with`, `fork_into`, the closure, `Process::forked_into`,
 `standard_streams`, `open_console`, `Namespace::open` and `open_resolving`, and a
 trap on top, with the stack's bottom 0x80 bytes below. It was a fork, not an
@@ -438,7 +438,7 @@ sabotage each, the boot stopping with the check's own message; where the
 sabotage is not a changed constant it prints `NEGATIVE CONTROL <name>` once,
 and the count of those lines was read from each log). Each sabotage is one exact
 text replaced in the file named, which is how it is reproduced; the logs are kept
-in `~/.local/share/ferrix/logs/pidns-controls-2026-10-01/` on nazuna.
+in `~/.local/share/xaqu/logs/pidns-controls-2026-10-01/` on nazuna.
 
 | Control | File: the text replaced, and by what | Message |
 |---|---|---|

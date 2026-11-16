@@ -29,8 +29,8 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::{IrqControl, SpinLock};
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::{IrqControl, SpinLock};
 
 use super::super::{Task, task};
 use crate::arch;
@@ -149,7 +149,7 @@ fn one_try(home: usize, elsewhere: usize) -> Result<bool, &'static str> {
     // gone, a wake that kept the row has made the blocker runnable, and only
     // one that read the state without the lock left it blocked. A bound of
     // 100 ms on the blocker's return failed a boot at host load 38
-    // (dev-on-ferrix, 2026-10-11) where the blocker was runnable and not
+    // (dev-on-xaqu, 2026-10-11) where the blocker was runnable and not
     // yet run.
     let deadline = crate::timer::now_nanos().saturating_add(super::super::REAPER_PATIENCE_NANOS);
     while !poster.is_dead() {

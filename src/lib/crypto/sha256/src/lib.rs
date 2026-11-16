@@ -1,8 +1,8 @@
 //! SHA-256 (FIPS 180-4), and SHA-256/192, its first 24 bytes (RFC 9858
 //! §2.1, FIPS 180-4 §7).
 //!
-//! The one SHA-256 the product signing verifier, `ferrix-sigverify`, is
-//! built on (`docs/SIGNING.md` §5.1). It was `ferrix-slots`' own; that crate
+//! The one SHA-256 the product signing verifier, `xaqu-sigverify`, is
+//! built on (`docs/SIGNING.md` §5.1). It was `xaqu-slots`' own; that crate
 //! moves onto this one in slice S4, so that one implementation is qualified
 //! once. `no_std`, no `unsafe`, no allocation: a running hash is 112 bytes
 //! of state on its caller's stack.

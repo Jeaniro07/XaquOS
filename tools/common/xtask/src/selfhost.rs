@@ -1,11 +1,11 @@
-//! `test-selfhost`: stage 20's first exit. Ferrix's x86-64 image is built on
-//! Ferrix, by the same `cargo xtask build` a person runs on a Linux host, and
+//! `test-selfhost`: stage 20's first exit. Xaqu's x86-64 image is built on
+//! Xaqu, by the same `cargo xtask build` a person runs on a Linux host, and
 //! the image it made boots.
 //!
 //! # The volume
 //!
 //! One btrfs volume per run, made here and attached writable. It has no
-//! `ferrix-root` label, so the kernel mounts it at `/data`. It holds:
+//! `xaqu-root` label, so the kernel mounts it at `/data`. It holds:
 //!
 //! * the toolchain tree `tools/common/fetch/fetch-rustc-sysroot.sh` keeps beside its own
 //!   image: rustc and Cargo, the standard libraries for the host,
@@ -35,7 +35,7 @@
 //! # The judgement
 //!
 //! The script's own status and the line xtask prints for the image it wrote;
-//! then `btrfs check` over the volume, since Ferrix wrote a gigabyte to it;
+//! then `btrfs check` over the volume, since Xaqu wrote a gigabyte to it;
 //! then `btrfs restore` takes the image and the kernel ELF out, and the image
 //! must pass `test-boot`'s boot test, the kernel resolving its own
 //! backtraces. It is not compared with an image built here: the paths
@@ -44,13 +44,13 @@
 //!
 //! # Every build, with `--plan`
 //!
-//! Given `--plan <DIR>` -- a plan `FERRIX_BUILDS=record:<DIR>` wrote while
+//! Given `--plan <DIR>` -- a plan `XAQU_BUILDS=record:<DIR>` wrote while
 //! the test matrix ran (`crate::builds`) -- the volume carries the plan too,
 //! and the crates of every workspace a build in it may compile, and zinc runs
-//! `cargo xtask builds-execute --plan /data/plan` in place of `build`: Ferrix
+//! `cargo xtask builds-execute --plan /data/plan` in place of `build`: Xaqu
 //! makes every build the matrix made. The host then takes `/data/plan/store`
-//! off the volume into `<DIR>/store`, where `FERRIX_BUILDS=replay:<DIR>/store`
-//! finds it, so that the matrix boots what Ferrix compiled.
+//! off the volume into `<DIR>/store`, where `XAQU_BUILDS=replay:<DIR>/store`
+//! finds it, so that the matrix boots what Xaqu compiled.
 //!
 //! # Where it runs
 //!
@@ -136,9 +136,9 @@ const STATUS: i32 = 20;
 const EXECUTED: &str = "builds: all ";
 
 /// What the guest's xtask prints when it has written the image.
-const BUILT: &str = "built /data/src/build/x86_64/ferrix.img";
+const BUILT: &str = "built /data/src/build/x86_64/xaqu.img";
 
-/// Build Ferrix's x86-64 image on Ferrix, take it out of the volume, and
+/// Build Xaqu's x86-64 image on Xaqu, take it out of the volume, and
 /// boot it.
 ///
 /// # Errors
@@ -185,7 +185,7 @@ pub(crate) fn test_selfhost(args: &Args) -> Result<()> {
 
     let shell =
         zinc::built(arch)?.ok_or_else(|| Error::new("zinc could not be built for x86-64"))?;
-    println!("  {arch}: building an image whose shell builds Ferrix");
+    println!("  {arch}: building an image whose shell builds Xaqu");
     let loader = cargo::build_loader(arch, args.release)?;
     let kernel = cargo::build_kernel_with_init(
         arch,
@@ -208,7 +208,7 @@ pub(crate) fn test_selfhost(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: building Ferrix on Ferrix with {} MiB and {} processors (timeout {}s)",
+        "  {arch}: building Xaqu on Xaqu with {} MiB and {} processors (timeout {}s)",
         build.memory, build.smp, build.timeout
     );
     let lines = qemu::watch_to_power_off(arch, &image, &kernel, &build, crate::shell::EXITED);
@@ -228,15 +228,15 @@ pub(crate) fn test_selfhost(args: &Args) -> Result<()> {
     if let Some(plan) = plan {
         let store = restore_store(&volume, plan)?;
         println!(
-            "  {arch}: Ferrix made every build in the plan; FERRIX_BUILDS=replay:{} answers them",
+            "  {arch}: Xaqu made every build in the plan; XAQU_BUILDS=replay:{} answers them",
             store.display()
         );
         return Ok(());
     }
     let (built, built_kernel) = restore(arch, &volume, &work, args.release)?;
-    println!("  {arch}: booting the image Ferrix built");
+    println!("  {arch}: booting the image Xaqu built");
     qemu::test_boot(arch, &built, &built_kernel, args)?;
-    println!("  {arch}: Ferrix built its own image, and it booted");
+    println!("  {arch}: Xaqu built its own image, and it booted");
     Ok(())
 }
 
@@ -293,9 +293,9 @@ fn judge(arch: Arch, lines: &[String], plan: bool) -> Result<()> {
     match exited {
         Some(status) if status == STATUS.to_string() && built => {
             if plan {
-                println!("  {arch}: every build in the plan was made on Ferrix");
+                println!("  {arch}: every build in the plan was made on Xaqu");
             } else {
-                println!("  {arch}: cargo xtask build finished on Ferrix");
+                println!("  {arch}: cargo xtask build finished on Xaqu");
             }
             Ok(())
         }
@@ -636,7 +636,7 @@ fn script_manifests() -> Vec<PathBuf> {
     let Some(home) = std::env::home_dir() else {
         return Vec::new();
     };
-    let data = home.join(".local/share/ferrix");
+    let data = home.join(".local/share/xaqu");
     let mut manifests: Vec<PathBuf> = std::fs::read_dir(data.join("uutils/ferrousli/build"))
         .into_iter()
         .flatten()
@@ -669,7 +669,7 @@ fn carry_plan(plan: &Path, into: &Path) -> Result<()> {
     std::fs::create_dir_all(into.join("files"))?;
     let _ = std::fs::copy(plan.join("plan"), into.join("plan")).map_err(|error| {
         Error::new(format!(
-            "reading the plan in {}: {error}; FERRIX_BUILDS=record:{} writes one",
+            "reading the plan in {}: {error}; XAQU_BUILDS=record:{} writes one",
             plan.display(),
             plan.display()
         ))
@@ -743,9 +743,9 @@ fn restore(arch: Arch, volume: &Path, work: &Path, release: bool) -> Result<(Pat
         .arg(&out)
         .stdout(Stdio::null());
     cargo::run(command, "btrfs restore")?;
-    let image = out.join(format!("src/build/{arch}/ferrix.img"));
+    let image = out.join(format!("src/build/{arch}/xaqu.img"));
     let kernel = out.join(format!(
-        "target/{}/{profile}/ferrix-kernel",
+        "target/{}/{profile}/xaqu-kernel",
         arch.kernel_target()
     ));
     for file in [&image, &kernel] {
@@ -769,12 +769,12 @@ fn restore(arch: Arch, volume: &Path, work: &Path, release: bool) -> Result<(Pat
 /// each directory on the way down as well, so it names every one.
 fn wanted(arch: Arch, profile: &str) -> String {
     format!(
-        "^/(|src(|/build(|/{arch}(|/ferrix\\.img)))|target(|/{}(|/{profile}(|/ferrix-kernel))))$",
+        "^/(|src(|/build(|/{arch}(|/xaqu\\.img)))|target(|/{}(|/{profile}(|/xaqu-kernel))))$",
         arch.kernel_target().replace('.', "\\.")
     )
 }
 
-/// Judge a volume Ferrix built on somewhere else -- the Pixel 7's crosvm
+/// Judge a volume Xaqu built on somewhere else -- the Pixel 7's crosvm
 /// guest, by `tools/vendor/google/pixel7/selfhost.sh` -- as the build boot's
 /// volume is judged: a clean btrfs, an image and kernel in it, and the image
 /// passing the boot test.
@@ -791,11 +791,11 @@ fn judge_volume(volume: &Path, args: &Args) -> Result<()> {
     let work = paths::build_dir(arch).join("selfhost-volume");
     let (built, built_kernel) = restore(arch, volume, &work, args.release)?;
     println!(
-        "  {arch}: booting the image Ferrix built on {}",
+        "  {arch}: booting the image Xaqu built on {}",
         volume.display()
     );
     qemu::test_boot(arch, &built, &built_kernel, args)?;
-    println!("  {arch}: the image Ferrix built booted");
+    println!("  {arch}: the image Xaqu built booted");
     Ok(())
 }
 
@@ -863,8 +863,8 @@ mod tests {
     #[test]
     fn the_image_line_is_the_one_xtask_prints() {
         // `main.rs`'s `build` prints "built <image>", and the image is
-        // `paths::build_dir`'s `ferrix.img` under the guest's source.
-        assert_eq!(BUILT, format!("built {SOURCE}/build/x86_64/ferrix.img"));
+        // `paths::build_dir`'s `xaqu.img` under the guest's source.
+        assert_eq!(BUILT, format!("built {SOURCE}/build/x86_64/xaqu.img"));
     }
 
     #[test]
@@ -928,10 +928,10 @@ mod tests {
         let x86 = wanted(Arch::X86_64, "debug");
         assert_eq!(
             x86,
-            r"^/(|src(|/build(|/x86_64(|/ferrix\.img)))|target(|/x86_64-unknown-none(|/debug(|/ferrix-kernel))))$"
+            r"^/(|src(|/build(|/x86_64(|/xaqu\.img)))|target(|/x86_64-unknown-none(|/debug(|/xaqu-kernel))))$"
         );
         let arm = wanted(Arch::AArch64, "release");
-        assert!(arm.contains(r"/build(|/aarch64(|/ferrix\.img))"));
-        assert!(arm.contains(r"/aarch64-unknown-none-softfloat(|/release(|/ferrix-kernel))"));
+        assert!(arm.contains(r"/build(|/aarch64(|/xaqu\.img))"));
+        assert!(arm.contains(r"/aarch64-unknown-none-softfloat(|/release(|/xaqu-kernel))"));
     }
 }

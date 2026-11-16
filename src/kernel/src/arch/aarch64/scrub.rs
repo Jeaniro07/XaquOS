@@ -4,7 +4,7 @@
 
 use core::arch::asm;
 
-use ferrix_bootinfo::BootView;
+use xaqu_bootinfo::BootView;
 
 use super::cpu;
 

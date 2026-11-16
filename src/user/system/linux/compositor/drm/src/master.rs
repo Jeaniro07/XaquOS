@@ -24,7 +24,7 @@
 
 use std::io::{self, BufRead, Write};
 
-use ferrix_linux_abi::drm::{self, Field, MapDumb};
+use xaqu_linux_abi::drm::{self, Field, MapDumb};
 
 use crate::card::{Card, Dumb, ioctl_on, plan};
 
@@ -43,7 +43,7 @@ pub(crate) const FIRST: u32 = 0x00C0_3030;
 pub(crate) const SECOND: u32 = 0x0030_C030;
 
 /// How many buffers `NON_MASTER_BUFFERS` is, as the kernel's rules say
-/// (`ferrix_displayctl::card`: half the session's 32).
+/// (`xaqu_displayctl::card`: half the session's 32).
 const NON_MASTER_BUFFERS: usize = 16;
 
 /// `SET_MASTER` or `DROP_MASTER`, which take no argument.

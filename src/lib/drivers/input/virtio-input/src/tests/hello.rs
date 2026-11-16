@@ -1,7 +1,7 @@
 //! HELLO from QEMU's devices, and from devices that stretch the description.
 //!
 //! The numbers on the device's side are written out by hand from QEMU 9.2.4's
-//! `hw/input/virtio-input-hid.c`; the evdev names from `ferrix_linux_abi`
+//! `hw/input/virtio-input-hid.c`; the evdev names from `xaqu_linux_abi`
 //! appear only on the other side of an assertion from them.
 
 use core::cell::RefCell;
@@ -9,14 +9,14 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_inputctl::message::{AxisRange, DeviceId, Hello, KEY_BYTES, bit};
-use ferrix_inputctl::session::{Capabilities, Session};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::{AxisRange, DeviceId, Hello, KEY_BYTES, bit};
+use xaqu_inputctl::session::{Capabilities, Session};
+use xaqu_linux_abi::input::{
     ABS_MT_POSITION_X, ABS_MT_SLOT, ABS_X, ABS_Y, BTN_LEFT, BUS_VIRTUAL, EV_ABS, EV_KEY, EV_LED,
     EV_REL, EV_REP, EV_SYN, INPUT_PROP_DIRECT, KEY_A, KEY_CNT, KEY_ESC, LED_CAPSL, REL_WHEEL,
     REL_X,
 };
-use ferrix_virtio::input::InputError;
+use xaqu_virtio::input::InputError;
 
 use super::fake::{Answer, Bus, Device, Handle, keyboard, mouse, multitouch, qemu_abs, tablet};
 use crate::read_hello;

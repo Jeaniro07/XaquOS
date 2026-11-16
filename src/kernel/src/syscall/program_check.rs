@@ -8,10 +8,10 @@
 
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::NewNode;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::NewNode;
 
 use crate::arch;
 use crate::fs;
@@ -100,7 +100,7 @@ impl Fields {
         }
     }
 
-    /// The word at `(at, width)`, little-endian as every Ferrix target is.
+    /// The word at `(at, width)`, little-endian as every Xaqu target is.
     fn word(&self, image: &[u8], (at, width): (usize, usize)) -> Result<u64, &'static str> {
         let bytes = image.get(at..at + width).ok_or("a short ELF header")?;
         Ok(bytes

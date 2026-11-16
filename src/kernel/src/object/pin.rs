@@ -114,8 +114,8 @@ use alloc::sync::Arc;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_frame::Frame;
-use ferrix_paging::{MapFlags, PAGE_SIZE};
+use xaqu_frame::Frame;
+use xaqu_paging::{MapFlags, PAGE_SIZE};
 
 use crate::device::DeviceNode;
 use crate::fallible::{self, AllocError};
@@ -170,13 +170,13 @@ static UNREAD: AtomicUsize = AtomicUsize::new(0);
 /// The frame plus one that the quarantine treats as retired, for the pin
 /// check: the retired set is full in a check build, so a real retirement
 /// would answer `Full`. 0 for none. Check builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 static RETIRED_FOR_CHECK: AtomicU64 = AtomicU64::new(0);
 
 // CHECKS-ONLY: object/pin/check.rs
 /// Make the quarantine treat `frame` as retired, or none for `None`
 /// (`docs/MACHINE-CHECK-DRIVER.md` §2.1). Check builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 pub fn retire_for_check(frame: Option<Frame>) {
     RETIRED_FOR_CHECK.store(frame.map_or(0, |frame| frame + 1), Ordering::SeqCst);
 }
@@ -184,17 +184,17 @@ pub fn retire_for_check(frame: Option<Frame>) {
 /// A product build has no hook: the quarantine's test is
 /// `mm::frame_retired` alone.
 // CHECKS-ONLY: object/pin/check.rs
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 pub const fn retire_for_check(_frame: Option<Frame>) {}
 
 /// Whether the check names `frame` retired. Check builds only.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn retired_for_check(frame: Frame) -> bool {
     RETIRED_FOR_CHECK.load(Ordering::SeqCst) == frame + 1
 }
 
 /// A product build's: never.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 const fn retired_for_check(_frame: Frame) -> bool {
     false
 }
@@ -225,7 +225,7 @@ static CEILING: AtomicUsize = AtomicUsize::new(0);
 /// devmgr's restart rule allows to have pinned: it starts no driver again
 /// after one that died before its HELLO was accepted.
 ///
-/// The largest pin set a Ferrix driver makes today is the GPU's windows onto
+/// The largest pin set a Xaqu driver makes today is the GPU's windows onto
 /// the display card, 256 MiB (`display::CARD_BYTES`, 65536 pages, which the
 /// display core asserts fits), and every driver's rings, areas and scratch
 /// are under 1024 pages more. Seen in the gates: 1580 pages for a `gpu` at

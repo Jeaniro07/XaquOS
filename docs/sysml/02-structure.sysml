@@ -1,21 +1,21 @@
 /*
- * Ferrix — SysML v2 model, part 2: structure.
+ * Xaqu — SysML v2 model, part 2: structure.
  *
  * The shape of the system (docs/ARCHITECTURE.md §1), the workspace it is
  * built from (§9), the architecture facade, and the three architectures
  * behind it. Subsystem internals live in the packages that follow; this one
  * says what exists and how it is connected.
  */
-package FerrixStructure {
+package XaquStructure {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
-    private import FerrixBoot::*;
-    private import FerrixMemory::*;
-    private import FerrixScheduling::*;
-    private import FerrixObjects::*;
-    private import FerrixIsolation::*;
-    private import FerrixDrivers::*;
-    private import FerrixStorage::*;
+    private import XaquLifecycle::*;
+    private import XaquBoot::*;
+    private import XaquMemory::*;
+    private import XaquScheduling::*;
+    private import XaquObjects::*;
+    private import XaquIsolation::*;
+    private import XaquDrivers::*;
+    private import XaquStorage::*;
 
     // -----------------------------------------------------------------------
     // Context: the machine firmware hands us
@@ -62,7 +62,7 @@ package FerrixStructure {
     part def Device;
 
     part def Machine {
-        doc /* The system context. Ferrix targets QEMU's q35 and virt
+        doc /* The system context. Xaqu targets QEMU's q35 and virt
              * machines in CI and the STM32MP157 on the ARMv7-A side. */
         attribute firmware : FirmwareKind;
         attribute description : MachineDescription;
@@ -126,7 +126,7 @@ package FerrixStructure {
 
     port def SerialConsolePort {
         doc /* Early boot and panic output. The boot test reads this stream
-             * and waits for the marker FERRIX-BOOT-OK. */
+             * and waits for the marker XAQU-BOOT-OK. */
         out item line : String;
     }
 
@@ -134,7 +134,7 @@ package FerrixStructure {
     // The system of interest
     // -----------------------------------------------------------------------
 
-    part def Ferrix {
+    part def Xaqu {
         doc /* An operating system written in Rust for x86-64, AArch64 and
              * ARMv7-A, whose acceptance test is that it compiles Rust. */
 
@@ -149,20 +149,20 @@ package FerrixStructure {
     }
 
     part def Deployment {
-        doc /* Ferrix on a machine. CI instantiates three of these under QEMU;
+        doc /* Xaqu on a machine. CI instantiates three of these under QEMU;
              * the STM32MP157-DK board is the fourth, reached by
              * `cargo xtask deploy --arch armv7a`, which copies two files onto
              * a vendor-provisioned card rather than writing a whole image,
              * because the board's boot chain lives in partitions imaging would
              * destroy, then watches the ST-LINK serial port for the marker.
              * It has run on hardware: an STM32MP157D-DK1 at two cores reached
-             * FERRIX-BOOT-OK stages 1-9 and ran stage 7's script at fd4442e. */
+             * XAQU-BOOT-OK stages 1-9 and ran stage 7's script at fd4442e. */
         part machine : Machine;
-        part ferrix : Ferrix;
-        connect machine.efi to ferrix.loader.efi;
+        part xaqu : Xaqu;
+        connect machine.efi to xaqu.loader.efi;
     }
 
-    part ferrix : Ferrix {
+    part xaqu : Xaqu {
         doc /* The reference instance the roadmap and assurance packages point
              * at. */
     }
@@ -184,7 +184,7 @@ package FerrixStructure {
         port efi : ~EfiHandoffPort;
         port handoff : ~BootHandoffPort;
 
-        attribute kernelPath : String = "/FERRIX/KERNEL.ELF";
+        attribute kernelPath : String = "/XAQU/KERNEL.ELF";
         attribute bootInfoBytes : Natural = 65536;
         attribute bootStackBytes : Natural = 65536;
 
@@ -245,7 +245,7 @@ package FerrixStructure {
         #implemented part printer : Console {
             doc /* src/kernel/src/console.rs: println over the arch console, behind
                  * a lock that a panicking CPU waits a bounded time for, so a
-                 * fault while printing still produces its FERRIX-PANIC line.
+                 * fault while printing still produces its XAQU-PANIC line.
                  * It keeps its last 4 KiB in a lock-free ring, which a panic
                  * draws on the firmware framebuffer when there is one
                  * (src/kernel/src/panic/screen.rs): the second in-kernel output
@@ -305,7 +305,7 @@ package FerrixStructure {
     #implemented part def Initramfs {
         @stage { number = 8; }
         doc /* A cpio "newc" archive xtask writes and the loader reads from
-             * FERRIX/INITRD.IMG into memory nothing reclaims; the kernel
+             * XAQU/INITRD.IMG into memory nothing reclaims; the kernel
              * unpacks it into the tmpfs root through the same VFS calls a
              * program makes. It holds /sbin/devmgr, the drivers devmgr starts
              * under /lib/drivers with a MANIFEST naming them, and /bin, whose
@@ -358,7 +358,7 @@ package FerrixStructure {
         @stage { number = 6; }
         doc /* A running Linux binary -- static musl, a static PIE, or
              * dynamically linked through the interpreter its PT_INTERP names
-             * -- as a Process (see FerrixObjects) speaking the Linux ABI, and
+             * -- as a Process (see XaquObjects) speaking the Linux ABI, and
              * optionally the native one. devmgr and the drivers are native
              * programs on src/user/system/native/rt, which make the few Linux calls they need
              * as well. */
@@ -381,7 +381,7 @@ package FerrixStructure {
                  * each service in a cgroup of its own from clone3, reaps,
                  * restarts, gives the console a getty and a shell with a
                  * session of its own, and powers off. /bin/svc drives it over
-                 * /run/ferrix/control; it waits for notify readiness, starts
+                 * /run/xaqu/control; it waits for notify readiness, starts
                  * services on a socket's first connection, and applies
                  * MemoryMax=, TasksMax= and OOMPolicy= over the scoped OOM
                  * kill. It gives services bootstrap channels, starts native
@@ -390,7 +390,7 @@ package FerrixStructure {
                  * image, where the compositor is hyprix.service and each
                  * program it starts is in a scope of its own (L10). devmgr
                  * restarts drivers by its restart policy (L11), and on an
-                 * image booted with ferrix.devmgr=init pid 1 starts devmgr
+                 * image booted with xaqu.devmgr=init pid 1 starts devmgr
                  * itself, through the kernel's starter (L12, 2026-09-27).
                  * L13a (2026-10-04): NoNewPrivileges=, PrivateTmp= and
                  * ProtectSystem= in a mount namespace per service; L13b
@@ -404,7 +404,7 @@ package FerrixStructure {
                  * every line. */
         }
         #implemented part shell : UserProcess {
-            doc /* busybox sh was the first foreign binary to run on Ferrix:
+            doc /* busybox sh was the first foreign binary to run on Xaqu:
                  * Alpine's static musl build runs a script at stage 7, given
                  * with sh -c, and cargo xtask test-shell still runs it when
                  * --init names it. The image's own shell since 2026-09-18 is
@@ -427,7 +427,7 @@ package FerrixStructure {
         #implemented part settingsd : UserProcess {
             doc /* The settings writer (src/user/system/linux/settingsd,
                  * docs/SETTINGS-WRITER.md): root, socket-activated on
-                 * /run/ferrix/settings. One typed request a connection from
+                 * /run/xaqu/settings. One typed request a connection from
                  * a closed enum (set-hostname, set-timezone,
                  * service-enable-persistent), an authd conversation naming
                  * the peer's account, a trusted prompt that hyprix draws
@@ -843,13 +843,13 @@ package FerrixStructure {
     part def Gicv2; part def Pl011; part def Stm32Usart;
 
     // Configurations, one per CI boot.
-    part ferrixX86 : Ferrix {
+    part xaquX86 : Xaqu {
         part :>> kernel { part :>> arch = ArchLayer::x86; }
     }
-    part ferrixAArch64 : Ferrix {
+    part xaquAArch64 : Xaqu {
         part :>> kernel { part :>> arch = ArchLayer::arm64; }
     }
-    part ferrixArmv7a : Ferrix {
+    part xaquArmv7a : Xaqu {
         part :>> kernel { part :>> arch = ArchLayer::arm32; }
     }
 
@@ -1478,7 +1478,7 @@ package FerrixStructure {
                  * embedded Spleen 8x16 font, clipped rather than refused and
                  * allocating nothing: what the panic screen
                  * (src/kernel/src/panic/screen.rs) draws with, and
-                 * the term app (ferrix-os/apps) as well. */
+                 * the term app (xaqu-os/apps) as well. */
         }
         #implemented part qr : LibraryCrate {
             attribute :>> path = "src/lib/kernel/qr";

@@ -15,10 +15,10 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_seccomp::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_seccomp::{
     ALLOW, ERRNO, Insn, KILL_PROCESS, KILL_THREAD, LOG, MAX_INSNS, MAX_INSNS_PER_PATH, TRACE,
     USER_NOTIF,
 };
@@ -108,7 +108,7 @@ const WAIT_KILLABLE_RECV: u64 = 1 << 5;
 const UNKNOWN_FLAG: u64 = 1 << 6;
 
 /// `SECCOMP_RET_TRAP`: not built until `SIGSYS` is delivered.
-const TRAP: u32 = ferrix_seccomp::TRAP;
+const TRAP: u32 = xaqu_seccomp::TRAP;
 
 /// `EPERM`, the errno the filters in these checks give.
 const EPERM: u32 = 1;
@@ -1053,8 +1053,8 @@ fn longest_chain() -> Result<(usize, u64, u64, u64), &'static str> {
     }
     let expected = {
         let (mut cost, mut count) = (0_usize, 0_usize);
-        while ferrix_seccomp::fits_path(cost, one.len()) {
-            cost = ferrix_seccomp::path_cost(cost, one.len());
+        while xaqu_seccomp::fits_path(cost, one.len()) {
+            cost = xaqu_seccomp::path_cost(cost, one.len());
             count += 1;
         }
         count
@@ -1264,7 +1264,7 @@ fn trap_endings(
         }
         Some(Ending::TrapNative) => {
             let _ = attributes::sys_prctl(process, NO_NEW_PRIVS, [1, 0, 0, 0]);
-            let gap = ferrix_native_abi::nr::LAST;
+            let gap = xaqu_native_abi::nr::LAST;
             thread.with_signals(|shared, _| shared.install_action(SIGSYS_NUMBER, HANDLER, 0));
             let at = env.put(&answering(&[(gap, TRAP | 1)]), None)?;
             if call(seccomp_call, [SET_MODE_FILTER, 0, at, 0, 0, 0])? != 0 {
@@ -1379,7 +1379,7 @@ fn trapped_in_the_task(env: &Env) -> Result<usize, &'static str> {
     // The i386 program on a 64-bit kernel reads the union four bytes lower
     // and a pointer narrower: `_syscall` at 16, `_arch` at 20.
     if size_of::<usize>() == 8 {
-        let small = ferrix_linux_abi::sigframe32::siginfo_from_64(&info);
+        let small = xaqu_linux_abi::sigframe32::siginfo_from_64(&info);
         let word32 = |at: usize| {
             small
                 .get(at..at + 4)

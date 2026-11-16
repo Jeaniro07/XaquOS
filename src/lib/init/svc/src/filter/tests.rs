@@ -1,11 +1,11 @@
 //! The compiler's host tests: every program is verified and run by the
 //! kernel's own interpreter (`src/lib/kernel/seccomp`), on each ABI's
-//! numbers, and the tables are held to `ferrix-linux-abi`'s.
+//! numbers, and the tables are held to `xaqu-linux-abi`'s.
 
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_seccomp::{Insn as Kernel, SeccompData, run, verify};
+use xaqu_seccomp::{Insn as Kernel, SeccompData, run, verify};
 
 use super::*;
 use crate::kind::{Config, FilterAction, Sandbox};
@@ -29,7 +29,7 @@ fn sandbox(keys: &str) -> Sandbox {
 }
 
 /// A filter, compiled for `served`, verified by the kernel's verifier.
-struct Filter(ferrix_seccomp::Program);
+struct Filter(xaqu_seccomp::Program);
 
 impl Filter {
     fn new(keys: &str, served: &[Abi], native_calls: bool) -> Filter {
@@ -153,10 +153,10 @@ fn the_native_range_follows_the_directory_keys_and_its_group() {
     let f = Filter::new("SystemCallFilter=@basic-io\n", &X86, true);
     assert_eq!(f.raw(arch, process_bootstrap), RET_ALLOW);
     assert_eq!(f.raw(arch, 0x2000), RET_KILL_PROCESS);
-    let f = Filter::new("SystemCallFilter=@basic-io @ferrix-native\n", &X86, false);
+    let f = Filter::new("SystemCallFilter=@basic-io @xaqu-native\n", &X86, false);
     assert_eq!(f.raw(arch, 0x1000), RET_ALLOW);
     assert_eq!(f.raw(arch, 0x1fff), RET_ALLOW);
-    let f = Filter::new("SystemCallFilter=~@ferrix-native:EPERM\n", &X86, false);
+    let f = Filter::new("SystemCallFilter=~@xaqu-native:EPERM\n", &X86, false);
     assert_eq!(f.raw(arch, process_bootstrap), EPERM);
     assert_eq!(f.raw(arch, 0), RET_ALLOW);
 }
@@ -230,7 +230,7 @@ fn parsing_checks_names_against_the_tables() {
     assert!(service.sandbox.filters());
 }
 
-/// `ferrix-linux-abi`'s numbers, as its source writes them: `pub const
+/// `xaqu-linux-abi`'s numbers, as its source writes them: `pub const
 /// NAME: usize = N;` inside `pub mod <abi> {`.
 fn linux_abi(module: &str) -> Vec<(String, u32)> {
     let text = include_str!("../../../../proto/linux-abi/src/nr.rs");
@@ -288,6 +288,6 @@ fn every_group_member_is_a_call_or_a_group() {
             }
         }
     }
-    assert!(is_group("system-service") && is_group("known") && is_group("ferrix-native"));
+    assert!(is_group("system-service") && is_group("known") && is_group("xaqu-native"));
     assert!(!is_group("frobnicate"));
 }

@@ -9,7 +9,7 @@ UAPI probe, and QEMU's far end as the test's witness.
 
 ## 1. What this is, and what it is not
 
-Ferrix has no audio at all. `docs/ROADMAP.md` stage 22 names three parts for
+Xaqu has no audio at all. `docs/ROADMAP.md` stage 22 names three parts for
 Steam: a `virtio-snd` driver in ring 3, an audio core with a `/dev/snd`
 shaped enough for a client library, and a server speaking the PulseAudio or
 PipeWire protocol, 30 points as a first guess. `docs/CHROME.md` §3 notes the
@@ -68,7 +68,7 @@ For `aplay -D hw:0,0`, alsa-lib:
    either `mmap` fails, alsa-lib keeps that half in its own memory and asks
    `PCM_SYNC_PTR` after every operation instead. Linux itself allows the
    mapping only on x86, PowerPC and Alpha (`pcm_native.c`), so on every Arm
-   Linux machine alsa-lib already runs the `SYNC_PTR` path. Ferrix refuses
+   Linux machine alsa-lib already runs the `SYNC_PTR` path. Xaqu refuses
    the mapping on all three architectures and implements `SYNC_PTR`.
 5. Clears `O_NONBLOCK`, then configures: twenty or more `PCM_HW_REFINE`s as
    `snd_pcm_hw_params_any` and each `set_*` narrow the space, then
@@ -90,7 +90,7 @@ parameters it changed, and answer `EINVAL` for an empty intersection.
 
 * **The `default` device** is `plug` over `hw` unless
   `/usr/share/alsa/cards/<driver>.conf` exists for the card's driver
-  string. The core names its driver `Ferrix`, which has no such file, so
+  string. The core names its driver `Xaqu`, which has no such file, so
   `default` converts any rate, format and channel count to the card's one
   configuration, and emulates mapped access over a read-write card
   (`mmap_emul`, built by default). dmix, which needs mapped access and
@@ -99,7 +99,7 @@ parameters it changed, and answer `EINVAL` for an empty intersection.
   when `set_access` fails (`alsa-pcm.c`, about lines 2316–2333;
   `api.alsa.disable-mmap` forces it). It uses `snd_pcm_status`, `start`,
   `delay`, `rewind` and `forward`. It uses pause only when `INFO_PAUSE` is
-  set. It finds cards through libudev, which Ferrix does not have, so it is
+  set. It finds cards through libudev, which Xaqu does not have, so it is
   given the card as a static node (`api.alsa.path = "hw:0,0"`).
 * **SDL3** and **Chromium** open `default` with read-write interleaved access
   only, and use `writei`, `avail`, `delay` and `start`. SDL also calls
@@ -331,7 +331,7 @@ for every request. ARMv7-A's differ where a structure holds a `long`,
 `snd_pcm_uframes_t` or a pointer, and L1 pins both widths.
 
 **The control node** answers `CTL_PVERSION` (2.0.9, `SNDRV_CTL_VERSION`),
-`CTL_CARD_INFO` (driver `Ferrix`, name and long name from the device),
+`CTL_CARD_INFO` (driver `Xaqu`, name and long name from the device),
 `CTL_PCM_PREFER_SUBDEVICE` (stored), `CTL_PCM_NEXT_DEVICE`, `CTL_PCM_INFO`
 (`ENOENT` for the capture direction), `CTL_ELEM_LIST` with no elements, and
 `CTL_SUBSCRIBE_EVENTS`, after which `poll` never fires because there are no
@@ -412,7 +412,7 @@ replacement will look there. No client in this iteration needs them.
   QMP `quit` and, if the header still says zero, reads the data from byte 44
   to the end.
 * **The program.** `tone`, a Linux program built as init the way
-  `src/user/system/linux/compositor/evecho` is, over a new `ferrix-linux-abi::sound`. It opens
+  `src/user/system/linux/compositor/evecho` is, over a new `xaqu-linux-abi::sound`. It opens
   `controlC0`, prints `CARD_INFO`'s driver and name, opens `pcmC0D0p`, and
   refines to version 1's configuration exactly as alsa-lib would, including
   one `set_*_near` round of `EINVAL`s. It prints `tone: ready`, then writes
@@ -454,7 +454,7 @@ it.
 | L4 | `src/lib/drivers/sound/virtio-snd`: driver logic over `src/lib/drivers/block/virtio-blk`'s traits (bring-up, `PCM_INFO` into `HELLO`, prepare, one chain per `SUBMIT`, completions into `ELAPSED`, `HALT`), tested against a simulated device with QEMU's five behaviours (§3.3) | no | 3 |
 | L5 | `src/user/system/native/drivers/sound/virtio-snd`, devmgr's table entry and `start_sound`, `SOUND_CONTROL_CREATE`, the core's per-card task and buffer VMOs; exit: the boot line names the card, its published stream and what it left out | yes | 4 |
 | L6 | devfs `/dev/snd/controlC0` and `pcmC0D0p`: per-open objects, the ioctl branch and §3.4's subset, `WRITEI_FRAMES`, `poll`, `EBUSY` for a second opener, `DISCONNECTED`; `/sys/class/sound` | yes | 5 |
-| L7 | `tone` and `ferrix-linux-abi::sound`'s use in it; `xtask test-audio` with the `wav` backend and its negative control; `run --audio` | no | 3 |
+| L7 | `tone` and `xaqu-linux-abi::sound`'s use in it; `xtask test-audio` with the `wav` backend and its negative control; `run --audio` | no | 3 |
 |  | **The audio iteration** |  | **24** |
 
 **Iteration 2, the user space, is not in these 24**:
@@ -551,7 +551,7 @@ U3's SDL and games then find what is missing by running.
    If the first run shows QEMU changing samples with the mixing engine off,
    accept a tolerance of ±1 per sample, or treat it as a finding against
    QEMU and keep the exact check?
-7. **Owner.** ferrix-90, the session that wrote this, from 2026-09-26 at
+7. **Owner.** xaqu-90, the session that wrote this, from 2026-09-26 at
    the customer's word, with a row in `docs/BACKLOG.md`'s owners table.
 8. **Which QEMU `run --audio` uses** (§4). Either reinstall the local
    9.2.4 with its `pa` and `pipewire` backends, which its build is already
@@ -640,7 +640,7 @@ underrun, drop, reset, close and a driver that lies are each checked; the
 refine answers alsa-lib's `any`, `set_*` and `set_*_near` calls. The
 `sndctl` fuzz target ran 5,047,081 scripts in five minutes on example,
 mixing requests, completions and lies, without breaking a property.
-`ferrix-linux-abi` gained `EBADFD` and `ESTRPIPE`.
+`xaqu-linux-abi` gained `EBADFD` and `ESTRPIPE`.
 
 L4 is done (2026-09-26): `src/lib/drivers/sound/virtio-snd` is the driver's logic over a
 transport, its own scratch memory and the core's buffer. §3.3 decided most
@@ -681,7 +681,7 @@ and AArch64:
   stream left out`.
 * **L6.** devfs has `/dev/snd/controlC0` (116:0) and `pcmC0D0p` (116:16)
   while a card is published. `src/kernel/src/interfaces/audio/pcm.rs` answers §3.4's
-  subset over `ferrix-sndctl`'s stream. `WRITEI_FRAMES` copies from the
+  subset over `xaqu-sndctl`'s stream. `WRITEI_FRAMES` copies from the
   program with no lock held and then submits, and a non-blocking descriptor
   gets a short count or `EAGAIN`. Every message the stream asks the driver
   for is written with the stream's lock held, so SUBMITs reach the driver
@@ -847,7 +847,7 @@ symbol the whole of libpulse's closure needed that ferrousli lacked.
 ferrousli has it now (`src/user/system/linux/ferrousli/src/execinfo.rs`). With it
 libpulse loaded, authenticated, asked for the server's information, and
 waited for ever: its threaded main loop's lock is a recursive mutex that
-inherits priority, and Ferrix's futex has no `FUTEX_LOCK_PI`, so the first
+inherits priority, and Xaqu's futex has no `FUTEX_LOCK_PI`, so the first
 contended lock waited as a deadlock would. glibc refuses such a mutex in
 `pthread_mutex_init` with `ENOTSUP` where the kernel has no PI futexes,
 and libpulse then asks for a plain one; ferrousli had accepted it. It

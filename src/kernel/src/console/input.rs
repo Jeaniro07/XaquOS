@@ -20,8 +20,8 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_sync::IrqSpinLock;
+use xaqu_bootinfo::BootView;
+use xaqu_sync::IrqSpinLock;
 
 use crate::arch;
 use crate::sched::WaitQueue;
@@ -144,7 +144,7 @@ pub struct Checked {
 ///
 /// `Ok(None)` when input stays polled: on an x86-64 machine whose MADT gives
 /// COM1's line no I/O APIC input, and on an Arm machine whose device tree names
-/// the port's interrupt in a shape `ferrix_fdt` does not follow.
+/// the port's interrupt in a shape `xaqu_fdt` does not follow.
 ///
 /// Call with interrupts masked, before they are first enabled.
 ///

@@ -102,8 +102,8 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint, buffer_footprint, footprint};
-use ferrix_linux_abi::socket::{
+use xaqu_kmem::{Charge, arc_footprint, buffer_footprint, footprint};
+use xaqu_linux_abi::socket::{
     AF_UNIX, Linger, MSG_DONTWAIT, MSG_NOSIGNAL, MSG_PEEK, MSG_WAITALL, SHUT_RD, SHUT_RDWR,
     SHUT_WR, SIOCINQ, SIOCOUTQ, SO_ACCEPTCONN, SO_BROADCAST, SO_DEBUG, SO_DOMAIN, SO_DONTROUTE,
     SO_ERROR, SO_KEEPALIVE, SO_LINGER, SO_OOBINLINE, SO_PASSCRED, SO_PEERCRED, SO_PRIORITY,
@@ -113,11 +113,11 @@ use ferrix_linux_abi::socket::{
     SOCKET_BUFFER_DEFAULT, SOCKET_BUFFER_MAX, SOCKET_BUFFER_MIN, SOL_SOCKET, SOMAXCONN, Ucred,
     UnixAddress, Width,
 };
-use ferrix_sync::Once;
-use ferrix_vfs::Context;
-use ferrix_vfs::path::NAME_MAX;
-use ferrix_vfs::socket::{Kind, ReadOutcome, SocketBuffer, WriteOutcome};
-use ferrix_vfs::{
+use xaqu_sync::Once;
+use xaqu_vfs::Context;
+use xaqu_vfs::path::NAME_MAX;
+use xaqu_vfs::socket::{Kind, ReadOutcome, SocketBuffer, WriteOutcome};
+use xaqu_vfs::{
     Errno, FileSystem, FileType, Inode, Location, Metadata, OpenFile, OpenFlags, Readiness, StatFs,
     Timespec,
 };
@@ -803,7 +803,7 @@ impl Socket {
         // Who listened, as they were when they did: what this end will name as
         // its peer. A socket takes connections only once `listen` has recorded
         // them, so a target without them is refused rather than named by the
-        // ids it was made with (ferrix-55's review of K-E).
+        // ids it was made with (xaqu-55's review of K-E).
         let listened = (*target.listen_credentials.lock()).ok_or(Errno::ECONNREFUSED)?;
         let deadline = deadline(self.options.lock().send_timeout);
         loop {
@@ -942,7 +942,7 @@ impl Socket {
         match self.kind {
             SocketType::Stream => {
                 if flags & MSG_NOSIGNAL == 0 {
-                    crate::syscall::kill::send_to_current(ferrix_linux_abi::types::SIGPIPE);
+                    crate::syscall::kill::send_to_current(xaqu_linux_abi::types::SIGPIPE);
                 }
                 Errno::EPIPE
             }
@@ -1602,7 +1602,7 @@ impl Inode for Socket {
     }
 
     /// Every queue its readiness reads, as [`Inode::poll_changes`] sums them.
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(&self.receive.readable));
         visit(fs::wake::shared(&self.receive.writable));
         if let Some(peer) = self.send.lock().as_ref() {
@@ -1627,7 +1627,7 @@ impl Inode for Socket {
         Some(own.wrapping_add(peer).wrapping_add(self.arrivals.wakes()))
     }
 
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.recv(buf, 0, nonblock).map(|received| received.bytes)
     }
 
@@ -1646,7 +1646,7 @@ impl Inode for Socket {
     /// ([`SocketBuffer::read_on`]), and never waiting. What came with bytes it
     /// ran into is dropped here, with no buffer locked, closing the files, as
     /// the `read` it goes on does and as Linux's `read` of a socket does.
-    fn read_on(&self, buf: &mut [u8]) -> ferrix_vfs::Result<usize> {
+    fn read_on(&self, buf: &mut [u8]) -> xaqu_vfs::Result<usize> {
         // The guard goes at the end of this statement, before `passed` does.
         let (taken, passed) = self.receive.buffer.lock().read_on(buf);
         if passed.as_ref().is_some_and(Passed::carries_sockets) {
@@ -1659,7 +1659,7 @@ impl Inode for Socket {
         Ok(taken)
     }
 
-    fn write_stream(&self, data: &[u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.send(data, 0, nonblock)
     }
 }

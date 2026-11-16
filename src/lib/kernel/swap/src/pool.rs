@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-use ferrix_lz4::{Table, bound, compress, decompress};
+use xaqu_lz4::{Table, bound, compress, decompress};
 
 use crate::Entry;
 

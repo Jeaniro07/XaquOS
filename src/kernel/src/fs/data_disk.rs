@@ -19,9 +19,9 @@
 
 use alloc::sync::Arc;
 
-use ferrix_sync::Once;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileSystem};
+use xaqu_sync::Once;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileSystem};
 
 use crate::console::println;
 use crate::fs;

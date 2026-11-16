@@ -1,4 +1,4 @@
-//! Boot the Ferrix desktop on another machine and watch it on this one.
+//! Boot the Xaqu desktop on another machine and watch it on this one.
 //!
 //! `run-compositor --vnc :0` already serves the screen over VNC, and README.md
 //! says how to reach it by hand: push the code over, run the command there,
@@ -58,7 +58,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
 /// The ref the code is pushed to over there. Not `refs/heads/...` on purpose:
 /// a checkout refuses a push to the branch it has checked out, and a ref
 /// outside `refs/heads` is never that branch whatever the checkout is doing.
-const REMOTE_REF: &str = "refs/ferrix-desktop/head";
+const REMOTE_REF: &str = "refs/xaqu-desktop/head";
 
 /// Where the remote boot leaves its process id, so a teardown can find it if
 /// closing the connection did not take it with it. The third line is the run
@@ -67,10 +67,10 @@ const PID_FILE: &str = ".remote-desktop.pid";
 
 /// Config files this looks for when `--config` did not say, best first. The
 /// second is under this machine's home directory.
-const SEARCH: [&str; 2] = ["remote-desktop.toml", ".config/ferrix/remote.toml"];
+const SEARCH: [&str; 2] = ["remote-desktop.toml", ".config/xaqu/remote.toml"];
 
 /// The variable that names a config file, for a machine with several.
-const VAR: &str = "FERRIX_REMOTE";
+const VAR: &str = "XAQU_REMOTE";
 
 /// Which commit is sent.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -194,7 +194,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             host: String::new(),
-            dir: "ferrix-desktop".to_owned(),
+            dir: "xaqu-desktop".to_owned(),
             cargo: "cargo".to_owned(),
             env: Vec::new(),
             command: "run-compositor".to_owned(),
@@ -868,7 +868,7 @@ fn snapshot(send: Send, root: &Path) -> Result<(String, String)> {
 
 /// A path for the private index, in this machine's temporary directory.
 fn scratch_index() -> Result<PathBuf> {
-    let name = format!("ferrix-remote-desktop-{}.index", std::process::id());
+    let name = format!("xaqu-remote-desktop-{}.index", std::process::id());
     let path = std::env::temp_dir().join(name);
     // An index left by an earlier run would be read instead of HEAD.
     drop(std::fs::remove_file(&path));
@@ -1442,7 +1442,7 @@ host = "nowhere"
 dir = "~/desktop"
 
 [remote.env]
-FERRIX_QEMU = "/usr/bin"
+XAQU_QEMU = "/usr/bin"
 
 [boot]
 command = "run-compositor"
@@ -1470,7 +1470,7 @@ send = "head"
         assert_eq!(config.dir, "~/desktop");
         assert_eq!(
             config.env,
-            vec![("FERRIX_QEMU".to_owned(), "/usr/bin".to_owned())]
+            vec![("XAQU_QEMU".to_owned(), "/usr/bin".to_owned())]
         );
         assert_eq!(config.boot_args, vec!["--release", "--size", "1600x900"]);
         assert_eq!(config.display, 2);
@@ -1490,7 +1490,7 @@ send = "head"
     #[test]
     fn defaults_are_the_documented_ones() {
         let config = parse_config("[remote]\nhost = \"nowhere\"\n", "test.toml").unwrap();
-        assert_eq!(config.dir, "ferrix-desktop");
+        assert_eq!(config.dir, "xaqu-desktop");
         assert_eq!(config.cargo, "cargo");
         assert_eq!(config.command, "run-compositor");
         assert_eq!(config.arch, "x86_64");
@@ -1546,8 +1546,8 @@ send = "head"
 
     #[test]
     fn a_home_relative_directory_is_written_relative() {
-        assert_eq!(remote_dir("~/ferrix-desktop").unwrap(), "ferrix-desktop");
-        assert_eq!(remote_dir("/srv/ferrix").unwrap(), "/srv/ferrix");
+        assert_eq!(remote_dir("~/xaqu-desktop").unwrap(), "xaqu-desktop");
+        assert_eq!(remote_dir("/srv/xaqu").unwrap(), "/srv/xaqu");
         assert!(
             remote_dir("~").is_err(),
             "the home itself is not a checkout"
@@ -1693,7 +1693,7 @@ send = "head"
         );
         assert!(script.contains("cd 'desktop'"));
         assert!(script.contains("git checkout --quiet --force --detach 'abc123'"));
-        assert!(script.contains("export FERRIX_QEMU='/usr/bin'"));
+        assert!(script.contains("export XAQU_QEMU='/usr/bin'"));
         assert!(
             script.contains("'--vnc' ':2'"),
             "the display the tunnel forwards is the display served: {script}"

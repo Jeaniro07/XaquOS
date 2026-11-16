@@ -64,7 +64,7 @@
 //! cannot meet.
 //!
 //! And if that union comes out writable *and* executable, the image is
-//! refused. Ferrix sweeps its own mappings for W^X at boot and would be
+//! refused. Xaqu sweeps its own mappings for W^X at boot and would be
 //! building one here on purpose otherwise. It does not happen for a binary
 //! linked in this decade — `ld -z separate-code` has been the default for
 //! years, precisely so that text and data never share a page — so refusing
@@ -87,10 +87,10 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
-use ferrix_elf::{Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP, Segment};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
+use xaqu_elf::{Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP, Segment};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::syscall::program::{self, ProgramFile};
@@ -342,7 +342,7 @@ pub(crate) fn interpreter_of(image: Source<'_>) -> Result<Option<Vec<u8>>, LoadE
         }
         (Err(_), _) => return Err(LoadError::BadInterpreter),
     };
-    let path = ferrix_elf::interpreter_name(&data).map_err(|_| LoadError::BadInterpreter)?;
+    let path = xaqu_elf::interpreter_name(&data).map_err(|_| LoadError::BadInterpreter)?;
     Ok(Some(path.to_vec()))
 }
 

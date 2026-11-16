@@ -16,7 +16,7 @@ impl core::fmt::Write for Out<'_> {
 
 /// Append `cgroup.procs` or `cgroup.threads`: one id a line, in the order
 /// given. cgroup v2 promises no order -- only v1's `tasks` was sorted -- and
-/// Ferrix's is the registry's, ascending.
+/// Xaqu's is the registry's, ascending.
 pub fn ids(out: &mut Vec<u8>, ids: &[u32]) {
     for &id in ids {
         let _ = writeln!(Out(out), "{id}");
@@ -34,7 +34,7 @@ pub fn events(out: &mut Vec<u8>, populated: bool, frozen: bool) {
 }
 
 /// Append `cgroup.stat`: the cgroups beneath this one, and the dying ones --
-/// removed but still pinned -- which Ferrix never has, since a removed
+/// removed but still pinned -- which Xaqu never has, since a removed
 /// cgroup is a job that can be dropped at once.
 pub fn stat(out: &mut Vec<u8>, descendants: u32) {
     let _ = write!(
@@ -98,7 +98,7 @@ pub fn pids_events(out: &mut Vec<u8>, max: u64) {
     let _ = writeln!(Out(out), "max {max}");
 }
 
-/// What `memory.stat` prints: only the keys Ferrix has a source for, in
+/// What `memory.stat` prints: only the keys Xaqu has a source for, in
 /// Linux's order, and a reader looks a key up by its name.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct MemoryStat {
@@ -187,7 +187,7 @@ pub struct MemoryEvents {
 }
 
 /// Append `memory.events`, in the order Linux prints it; `oom_group_kill`,
-/// which Ferrix never counts (no `memory.oom.group`), as zero.
+/// which Xaqu never counts (no `memory.oom.group`), as zero.
 pub fn memory_events(out: &mut Vec<u8>, events: MemoryEvents) {
     let _ = write!(
         Out(out),

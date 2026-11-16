@@ -16,9 +16,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-use ferrix_logctl::message::{MAX_BYTES, Message, READ_BYTES, Refusal};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_logctl::message::{MAX_BYTES, Message, READ_BYTES, Refusal};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
 
 use super::CreateError;
 use crate::console::log;

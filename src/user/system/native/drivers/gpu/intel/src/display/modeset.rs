@@ -3,24 +3,24 @@
 //! A, A where it lit B -- on transcoder and pipe B, showing a surface of
 //! its own, `card0`'s second scanout.
 //!
-//! `ferrix.intelgpu.modeset=dry` (h1) prints every step and writes none;
-//! `ferrix.intelgpu.modeset=on` (h2) checks the display is as the steps
+//! `xaqu.intelgpu.modeset=dry` (h1) prints every step and writes none;
+//! `xaqu.intelgpu.modeset=on` (h2) checks the display is as the steps
 //! expect (`light::preflight`, reads only) and then takes them, saying each
 //! and stopping at the first wait that does not end. Nothing is written
 //! without the word.
 
-use ferrix_display_modes::{ModeList, edid_modes};
-use ferrix_intel_xelp::display::gmbus;
-use ferrix_intel_xelp::display::hotplug::{Port, SDEISR};
-use ferrix_intel_xelp::display::light::{self, Light, MAX_CLOCK_KHZ, Step};
-use ferrix_intel_xelp::display::modeset::{Mode, SKL_DSSM, reference_khz};
-use ferrix_intel_xelp::io::Mmio;
+use xaqu_display_modes::{ModeList, edid_modes};
+use xaqu_intel_xelp::display::gmbus;
+use xaqu_intel_xelp::display::hotplug::{Port, SDEISR};
+use xaqu_intel_xelp::display::light::{self, Light, MAX_CLOCK_KHZ, Step};
+use xaqu_intel_xelp::display::modeset::{Mode, SKL_DSSM, reference_khz};
+use xaqu_intel_xelp::io::Mmio;
 
 use super::regs::Regs;
 
 /// The kernel command line's words: the plan printed, or taken.
-const DRY: &[u8] = b"ferrix.intelgpu.modeset=dry";
-const ON: &[u8] = b"ferrix.intelgpu.modeset=on";
+const DRY: &[u8] = b"xaqu.intelgpu.modeset=dry";
+const ON: &[u8] = b"xaqu.intelgpu.modeset=on";
 
 /// What the command line asks for.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -30,7 +30,7 @@ pub(crate) enum Asked {
     On(Written),
 }
 
-/// The proof that the command line says `ferrix.intelgpu.modeset=on`: only
+/// The proof that the command line says `xaqu.intelgpu.modeset=on`: only
 /// [`asked`] makes one, and everything that writes the display or the GGTT
 /// for the second scanout takes it ([`super::surface::Surface::make`]). A
 /// boot without the word cannot reach them.
@@ -57,14 +57,14 @@ pub(crate) fn asked() -> Asked {
 }
 
 /// Print the steps that would light `port`, writing none
-/// (`ferrix.intelgpu.modeset=dry`).
+/// (`xaqu.intelgpu.modeset=dry`).
 pub(crate) fn dry(regs: &mut Regs, port: Port) {
     let tag = "modeset dry";
     let Some(light) = plan(regs, tag, port, 0) else {
         return;
     };
     if let Err(why) = light::preflight(regs, &light) {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: {tag}: port {} would not be lit: {why:?}",
             port.name()
         );
@@ -76,17 +76,17 @@ pub(crate) fn dry(regs: &mut Regs, port: Port) {
         show(tag, step, None);
         true
     });
-    ferrix_rt::info!("intel: {tag}: {taken} steps, none taken");
+    xaqu_rt::info!("intel: {tag}: {taken} steps, none taken");
 }
 
 /// Light `port` on pipe B showing the surface at GGTT `surface`
-/// (`ferrix.intelgpu.modeset=on`): its mode, once lit; `None`, said, when
+/// (`xaqu.intelgpu.modeset=on`): its mode, once lit; `None`, said, when
 /// it is not.
 pub(crate) fn light_port(regs: &mut Regs, port: Port, surface: u32) -> Option<Mode> {
     let tag = "modeset";
     let light = plan(regs, tag, port, surface)?;
     if let Err(why) = light::preflight(regs, &light) {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: {tag}: port {} is not lit: {why:?} (nothing written)",
             port.name()
         );
@@ -101,7 +101,7 @@ pub(crate) fn light_port(regs: &mut Regs, port: Port, surface: u32) -> Option<Mo
         result.is_ok()
     });
     if all {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: modeset: port {} lit, {}x{} on pipe B ({taken} steps)",
             port.name(),
             light.mode.h[0],
@@ -109,7 +109,7 @@ pub(crate) fn light_port(regs: &mut Regs, port: Port, surface: u32) -> Option<Mo
         );
         Some(light.mode)
     } else {
-        ferrix_rt::err!("intel: modeset: stopped at step {taken}; what was done stays as it is");
+        xaqu_rt::err!("intel: modeset: stopped at step {taken}; what was done stays as it is");
         None
     }
 }
@@ -147,7 +147,7 @@ fn show(tag: &str, step: Step, result: Option<Result<u32, u32>>) {
             offset,
             value,
             name,
-        } => ferrix_rt::debug!(
+        } => xaqu_rt::debug!(
             "intel: {tag}: {name:<24} {offset:#08x} <- {value:#010x}{after} (reads {read:#010x})"
         ),
         Step::Rmw {
@@ -155,7 +155,7 @@ fn show(tag: &str, step: Step, result: Option<Result<u32, u32>>) {
             clear,
             set,
             name,
-        } => ferrix_rt::debug!(
+        } => xaqu_rt::debug!(
             "intel: {tag}: {name:<24} {offset:#08x} &~{clear:#010x} |{set:#010x}{after} (reads {read:#010x})"
         ),
         Step::Copy {
@@ -164,7 +164,7 @@ fn show(tag: &str, step: Step, result: Option<Result<u32, u32>>) {
             clear,
             set,
             name,
-        } => ferrix_rt::debug!(
+        } => xaqu_rt::debug!(
             "intel: {tag}: {name:<24} {to:#08x} <- ({from:#08x} &~{clear:#010x} |{set:#010x}){after} (wrote {read:#010x})"
         ),
         Step::Wait {
@@ -173,7 +173,7 @@ fn show(tag: &str, step: Step, result: Option<Result<u32, u32>>) {
             value,
             timeout_us,
             name,
-        } => ferrix_rt::debug!(
+        } => xaqu_rt::debug!(
             "intel: {tag}: wait {name:<19} {offset:#08x} & {mask:#010x} == {value:#010x} within {timeout_us} us{after} (reads {read:#010x})"
         ),
     }
@@ -190,13 +190,13 @@ fn plan(regs: &mut Regs, tag: &str, port: Port, surface: u32) -> Option<Light> {
         .is_some_and(|bit| regs.read32(SDEISR) & bit != 0);
     let dssm = regs.read32(SKL_DSSM);
     let Some(nssc) = reference_khz(dssm) else {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: {tag}: SKL_DSSM {dssm:#010x} names no reference clock; nothing done"
         );
         return None;
     };
     if !live {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: {tag}: port {} has no sink (SDEISR); nothing done",
             port.name()
         );
@@ -204,7 +204,7 @@ fn plan(regs: &mut Regs, tag: &str, port: Port, surface: u32) -> Option<Light> {
     }
     let (mode, hdmi) = sink_mode(regs, tag, port);
     let Some(pll) = light::free_pll(regs) else {
-        ferrix_rt::warn!("intel: {tag}: both combo PLLs are in use; nothing done");
+        xaqu_rt::warn!("intel: {tag}: both combo PLLs are in use; nothing done");
         return None;
     };
     let light = Light {
@@ -218,7 +218,7 @@ fn plan(regs: &mut Regs, tag: &str, port: Port, surface: u32) -> Option<Light> {
         stride: light::SURFACE_PITCH / 64,
         surface_size: light::SURFACE_SIZE,
     };
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: {tag}: {}x{} at {} kHz, h {:?} v {:?}, sync {}{}, PLL {pll}, reference {nssc} kHz, surface {:#x} ({}x{}, stride {} x 64)",
         mode.h[0],
         mode.v[0],
@@ -261,7 +261,7 @@ fn sink_mode(regs: &mut Regs, tag: &str, port: Port) -> (Mode, bool) {
                         .find(|listed| listed.timing.clock_khz <= MAX_CLOCK_KHZ)
                 })
                 .map(|listed| listed.timing);
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "intel: {tag}: port {}'s EDID, {length} bytes, {} modes, {}",
                 port.name(),
                 list.len(),
@@ -289,7 +289,7 @@ fn sink_mode(regs: &mut Regs, tag: &str, port: Port) -> (Mode, bool) {
             )
         }
         Err(why) => {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: {tag}: no EDID on port {} ({why:?}); CEA 1920x1080@60 as DVI",
                 port.name()
             );

@@ -34,9 +34,9 @@ VERSION = 1
 CORE_BASE = 0x4000_0000
 CORE_END = 0x8000_0000
 # The core's data that nvrm reads, by name: a function is found by the
-# calls nvrm's objects make, data is not, since nv-ferrix.h reads it
+# calls nvrm's objects make, data is not, since nv-xaqu.h reads it
 # through the table. Data comes first in the table, so its indices do not
-# depend on the objects that use them: nv-ferrix.h's NVRM_CORE_DATA_*
+# depend on the objects that use them: nv-xaqu.h's NVRM_CORE_DATA_*
 # repeat this list's order.
 DATA = ["pNVRM_ID"]
 # RM's own functions that run a privileged instruction, and the ring-3
@@ -44,7 +44,7 @@ DATA = ["pNVRM_ID"]
 # linker script's assignment overrides the object's definition, so every
 # call in the core reaches nvrm's; RM's own copy stays, never called.
 REPLACED = {"osNv_rdcr4": "nvos_rdcr4"}
-# The instructions ring 3 may not execute, as objdump spells them. Ferrix
+# The instructions ring 3 may not execute, as objdump spells them. Xaqu
 # sets CR4.UMIP (src/kernel/src/arch/x86_64/cpu.rs), so the descriptor-table
 # stores fault too. The VMX and SVM instructions are named one by one: a
 # `vm` prefix would also take AVX's vmovaps and vmulps.

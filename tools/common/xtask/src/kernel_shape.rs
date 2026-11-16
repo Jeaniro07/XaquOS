@@ -31,17 +31,17 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-kernel-symbols",
         help_at: 966,
         help: &[
-            "test-kernel-symbols  With FERRIX_SYMBOLS_BASE=<rev>: this kernel's symbols and sizes against that commit's, for what is said to leave a build unchanged (M.8)",
+            "test-kernel-symbols  With XAQU_SYMBOLS_BASE=<rev>: this kernel's symbols and sizes against that commit's, for what is said to leave a build unchanged (M.8)",
         ],
         run: |_, args| test_kernel_symbols(args),
     },
 ];
 
-/// M.8: this tree's kernel, by this run's flags, against the commit `FERRIX_SYMBOLS_BASE`
+/// M.8: this tree's kernel, by this run's flags, against the commit `XAQU_SYMBOLS_BASE`
 /// names, built from a worktree of its own with the same flags.
 fn test_kernel_symbols(args: &Args) -> Result<()> {
-    let base = std::env::var("FERRIX_SYMBOLS_BASE")
-        .map_err(|_| Error::new("test-kernel-symbols needs FERRIX_SYMBOLS_BASE=<rev>"))?;
+    let base = std::env::var("XAQU_SYMBOLS_BASE")
+        .map_err(|_| Error::new("test-kernel-symbols needs XAQU_SYMBOLS_BASE=<rev>"))?;
     let target = paths::target_dir();
     let tree = target.join("symbols-base");
     let _ = std::fs::remove_dir_all(&tree);
@@ -144,7 +144,7 @@ fn test_kernel_shape(args: &Args) -> Result<()> {
 }
 
 /// The environment variable by which [`test_ring0_budget`] tells each child build its set.
-const BUDGET_SET: &str = "FERRIX_RING0_BUDGET_SET";
+const BUDGET_SET: &str = "XAQU_RING0_BUDGET_SET";
 
 /// `test-ring0-budget`: every build `ring0-budget.json` lists, each a child `test-kernel-shape
 /// --release` with its `--set` values, so that each resolves its flags afresh; then that
@@ -274,7 +274,7 @@ fn described(root: &std::path::Path, row: &str) -> Result<crate::ports::File> {
         &[out_text.as_str(), root_text.as_str()],
     )?;
     Ok(crate::ports::File {
-        path: "etc/ferrix/partitions".to_owned(),
+        path: "etc/xaqu/partitions".to_owned(),
         mode: 0o644,
         content: crate::ports::Content::Bytes(
             std::fs::read(&out).map_err(|e| Error::new(e.to_string()))?,
@@ -439,11 +439,11 @@ fn test_netd(args: &Args) -> Result<()> {
         let busybox = crate::program_for(init, arch)?;
         let without = net_cost(args, arch, &busybox)?;
         // SAFETY: xtask is one thread here, before any build that reads them.
-        unsafe { std::env::set_var("FERRIX_TEST_NETD", "1") };
+        unsafe { std::env::set_var("XAQU_TEST_NETD", "1") };
         let with = net_cost(args, arch, &busybox)?;
         println!("  {arch}: a ping's min/avg/max without netd {without}, with netd {with}");
         // SAFETY: as above.
-        unsafe { std::env::set_var("FERRIX_TEST_NETD_DIES_AFTER", "300") };
+        unsafe { std::env::set_var("XAQU_TEST_NETD_DIES_AFTER", "300") };
         let kernel =
             cargo::build_kernel_with_init(arch, args.release, &busybox, crate::shell::NETD_SCRIPT)?;
         let natives = native::build(arch, args.release)?;

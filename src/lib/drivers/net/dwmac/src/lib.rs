@@ -3,7 +3,7 @@
 //! memory it is lent.
 //!
 //! The core is inside many chips: the Motorcomm YT6801's PCIe gigabit
-//! adapter (`ferrix-yt6801` is the part of that chip that is not this
+//! adapter (`xaqu-yt6801` is the part of that chip that is not this
 //! core), and the STM32MP15's ETH1 among them. A driver process holds an
 //! `IoMapping` of the core's registers and pinned memory whose device
 //! addresses an IOMMU domain chose, none of which a unit test can have; so

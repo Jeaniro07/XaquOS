@@ -1,7 +1,7 @@
 //! The Wayland socket: where a client connects and how descriptors travel.
 //!
 //! Everything above this crate is bytes and object ids. This is the part that
-//! has to be on Ferrix to be tried: an `AF_UNIX` stream socket, `sendmsg` and
+//! has to be on Xaqu to be tried: an `AF_UNIX` stream socket, `sendmsg` and
 //! `recvmsg` with `SCM_RIGHTS`, and the rules about where the socket file
 //! goes.
 //!

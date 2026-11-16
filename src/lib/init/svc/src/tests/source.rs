@@ -52,7 +52,7 @@ fn the_design_documents_getty_template_loads() {
     assert_eq!(unit.name.as_str(), "getty@console.service");
     assert_eq!(
         unit.fragment.as_deref(),
-        Some("/lib/ferrix/units/getty@.service")
+        Some("/lib/xaqu/units/getty@.service")
     );
     assert_eq!(
         unit.unit.description.as_deref(),
@@ -91,7 +91,7 @@ fn a_higher_layer_replaces_the_whole_file() {
     );
     assert_eq!(
         unit.fragment.as_deref(),
-        Some("/etc/ferrix/units/a.service")
+        Some("/etc/xaqu/units/a.service")
     );
 }
 
@@ -167,10 +167,10 @@ fn drop_ins_apply_in_name_order_across_layers() {
     assert_eq!(
         drop_ins,
         [
-            "/etc/ferrix/units/a.service.d/10-etc.conf",
-            "/lib/ferrix/units/a.service.d/20-lib.conf",
-            "/run/ferrix/units/a.service.d/30-hidden.conf",
-            "/lib/ferrix/units/a.service.d/40-exec.conf",
+            "/etc/xaqu/units/a.service.d/10-etc.conf",
+            "/lib/xaqu/units/a.service.d/20-lib.conf",
+            "/run/xaqu/units/a.service.d/30-hidden.conf",
+            "/lib/xaqu/units/a.service.d/40-exec.conf",
         ]
     );
 }

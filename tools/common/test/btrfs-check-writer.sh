@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run host `btrfs check` over every volume the btrfs write path's tests write,
-# and over the volumes `ferrix-btrfs-mkfs` makes.
+# and over the volumes `xaqu-btrfs-mkfs` makes.
 #
 # `src/lib/fs/btrfs/write` checks its own output with a consistency checker of its
 # own and with the stage 11 reader. Neither is btrfs. This script is the
@@ -26,11 +26,11 @@ fi
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 
-FERRIX_BTRFS_OUT="$out" cargo test -q -p ferrix-btrfs-write -- \
+XAQU_BTRFS_OUT="$out" cargo test -q -p xaqu-btrfs-write -- \
     --ignored --exact tests::btrfs_check_images > "$out/test.log" 2>&1 \
     || { cat "$out/test.log" >&2; exit 1; }
-# And what `ferrix-btrfs-mkfs` makes, fresh and filled by the write path.
-FERRIX_BTRFS_OUT="$out" cargo test -q --release -p ferrix-btrfs-mkfs -- \
+# And what `xaqu-btrfs-mkfs` makes, fresh and filled by the write path.
+XAQU_BTRFS_OUT="$out" cargo test -q --release -p xaqu-btrfs-mkfs -- \
     --ignored --exact tests::btrfs_check_images > "$out/mkfs.log" 2>&1 \
     || { cat "$out/mkfs.log" >&2; exit 1; }
 
@@ -57,7 +57,7 @@ done
 # at twenty-five points, every write after the last flush kept or dropped at
 # random (`src/lib/fs/btrfs/write/src/tests/powerfail.rs`). Release, because it
 # is five thousand volumes opened, replayed and checked.
-if cargo test -q --release -p ferrix-btrfs-write -- \
+if cargo test -q --release -p xaqu-btrfs-write -- \
     --ignored --exact tests::powerfail::hundreds_of_cuts > "$out/cuts.log" 2>&1; then
     echo "power-fail: 5000 cuts replayed and checked clean"
 else

@@ -6,7 +6,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
-use ferrix_sync::SpinParker;
+use xaqu_sync::SpinParker;
 
 extern crate std;
 
@@ -681,7 +681,7 @@ fn a_cached_miss_does_not_hide_a_later_create() {
 
 /// A chain of directories far deeper than a stack could drop one frame a
 /// level goes on a small stack: the kernel's double-faulted on a tmpfs 200
-/// deep at `umount` (ferrix-ea, 2026-09-26).
+/// deep at `umount` (xaqu-ea, 2026-09-26).
 #[test]
 fn a_deep_chain_of_dentries_drops_without_recursing() {
     // Miri does not hold a thread to its stack size, so under it the chain
@@ -886,7 +886,7 @@ fn a_remount_acts_only_on_a_mount_root_and_shows_its_options() {
     );
     assert_eq!(crate::MountFlags::NONE.options(), b"rw");
     {
-        use ferrix_linux_abi::types::{
+        use xaqu_linux_abi::types::{
             ST_NODEV, ST_NOEXEC, ST_NOSUID, ST_RDONLY, ST_RELATIME, ST_VALID,
         };
         assert_eq!(
@@ -2001,21 +2001,21 @@ fn an_archive_unpacks_with_links_nodes_and_unsafe_names_skipped() {
 fn pid_1s_inputs_are_read_from_the_archive_and_never_unpacked() {
     let mut archive = Newc::new();
     archive.entry(".", 0o040_700, 1, 2, (0, 0), b"");
-    archive.entry("./.ferrix/", 0o040_755, 2, 2, (0, 0), b"");
-    archive.entry(".ferrix/init", 0o040_755, 3, 2, (0, 0), b"");
+    archive.entry("./.xaqu/", 0o040_755, 2, 2, (0, 0), b"");
+    archive.entry(".xaqu/init", 0o040_755, 3, 2, (0, 0), b"");
     archive.entry(
-        "./.ferrix/init/program",
+        "./.xaqu/init/program",
         0o100_755,
         4,
         1,
         (0, 0),
         b"\x7fELF",
     );
-    archive.entry(".ferrix/init/script", 0o100_644, 5, 1, (0, 0), b"echo hi");
+    archive.entry(".xaqu/init/script", 0o100_644, 5, 1, (0, 0), b"echo hi");
     archive.entry("bin", 0o040_755, 6, 2, (0, 0), b"");
     archive.entry("bin/true", 0o100_755, 7, 1, (0, 0), b"t");
     // Not beneath it: a name that only starts the same way is unpacked.
-    archive.entry(".ferrixish", 0o100_644, 8, 1, (0, 0), b"x");
+    archive.entry(".xaquish", 0o100_644, 8, 1, (0, 0), b"x");
     let archive = archive.finish();
 
     let (ns, ctx) = fresh();
@@ -2024,23 +2024,23 @@ fn pid_1s_inputs_are_read_from_the_archive_and_never_unpacked() {
     assert_eq!(made.skipped, 0);
     assert_eq!(made.files, 2);
     assert_eq!(made.directories, 1);
-    assert!(ns.resolve(&ctx, None, b"/.ferrix", true).is_err());
+    assert!(ns.resolve(&ctx, None, b"/.xaqu", true).is_err());
     assert!(
-        ns.resolve(&ctx, None, b"/.ferrix/init/program", true)
+        ns.resolve(&ctx, None, b"/.xaqu/init/program", true)
             .is_err()
     );
     assert_eq!(read_file(&ns, &ctx, "/bin/true").unwrap(), b"t");
-    assert_eq!(read_file(&ns, &ctx, "/.ferrixish").unwrap(), b"x");
+    assert_eq!(read_file(&ns, &ctx, "/.xaquish").unwrap(), b"x");
 
     let entries: Vec<_> = initramfs::init_entries(&archive).collect();
     let names: Vec<&[u8]> = entries.iter().map(|entry| entry.name).collect();
     assert_eq!(
         names,
         [
-            &b".ferrix"[..],
-            b".ferrix/init",
-            b".ferrix/init/program",
-            b".ferrix/init/script"
+            &b".xaqu"[..],
+            b".xaqu/init",
+            b".xaqu/init/program",
+            b".xaqu/init/script"
         ]
     );
     assert!(!entries[0].regular);
@@ -2070,8 +2070,8 @@ fn removing_an_archive_takes_its_names_and_spares_the_rest() {
     archive.entry("lib/firmware/edid.bin", 0o100_644, 7, 1, (0, 0), b"edid");
     archive.entry("lib/libc.so", 0o100_644, 8, 1, (0, 0), b"libc");
     archive.entry("dev", 0o040_755, 9, 2, (0, 0), b"");
-    archive.entry(".ferrix", 0o040_755, 10, 2, (0, 0), b"");
-    archive.entry(".ferrix/init/script", 0o100_644, 11, 1, (0, 0), b"x");
+    archive.entry(".xaqu", 0o040_755, 10, 2, (0, 0), b"");
+    archive.entry(".xaqu/init/script", 0o100_644, 11, 1, (0, 0), b"x");
     let archive = archive.finish();
 
     let (ns, ctx) = fresh();
@@ -2143,8 +2143,8 @@ fn a_directory_with_files_where_the_archive_has_a_link_is_moved_aside() {
     first.entry("etc", 0o040_755, 2, 2, (0, 0), b"");
     first.entry("etc/fonts", 0o040_755, 3, 2, (0, 0), b"");
     first.entry("etc/fonts/fonts.conf", 0o100_644, 4, 1, (0, 0), b"mine");
-    first.entry("etc/fonts.ferrix-old", 0o040_755, 5, 2, (0, 0), b"");
-    first.entry("etc/fonts.ferrix-old/older", 0o100_644, 6, 1, (0, 0), b"o");
+    first.entry("etc/fonts.xaqu-old", 0o040_755, 5, 2, (0, 0), b"");
+    first.entry("etc/fonts.xaqu-old/older", 0o100_644, 6, 1, (0, 0), b"o");
     first.entry("etc/ca.crt", 0o100_644, 7, 1, (0, 0), b"pem");
     let first = first.finish();
     let mut second = Newc::new();
@@ -2161,17 +2161,17 @@ fn a_directory_with_files_where_the_archive_has_a_link_is_moved_aside() {
     assert_eq!(made.set_aside, 1);
     assert_eq!(
         aside,
-        [(b"etc/fonts".to_vec(), b"etc/fonts.ferrix-old.1".to_vec())]
+        [(b"etc/fonts".to_vec(), b"etc/fonts.xaqu-old.1".to_vec())]
     );
     assert_eq!(made.symlinks, 2);
     assert_eq!(kind(&ns, &ctx, "/etc/fonts", false), Ok(FileType::Symlink));
     assert_eq!(kind(&ns, &ctx, "/etc/ca.crt", false), Ok(FileType::Symlink));
     assert_eq!(
-        read_file(&ns, &ctx, "/etc/fonts.ferrix-old.1/fonts.conf").unwrap(),
+        read_file(&ns, &ctx, "/etc/fonts.xaqu-old.1/fonts.conf").unwrap(),
         b"mine"
     );
     assert_eq!(
-        read_file(&ns, &ctx, "/etc/fonts.ferrix-old/older").unwrap(),
+        read_file(&ns, &ctx, "/etc/fonts.xaqu-old/older").unwrap(),
         b"o"
     );
 }
@@ -2418,7 +2418,7 @@ fn tmpfs_says_what_it_is_and_an_open_file_polls_for_its_access_mode() {
 /// do when a process starts or exits.
 #[derive(Debug, Default)]
 struct Volatile {
-    names: ferrix_sync::SpinLock<Vec<Vec<u8>>>,
+    names: xaqu_sync::SpinLock<Vec<Vec<u8>>>,
 }
 
 impl Volatile {
@@ -3140,7 +3140,7 @@ type Hook = alloc::boxed::Box<dyn FnOnce() + Send>;
 /// At most one armed hook, shared by every inode of a meddling filesystem.
 #[derive(Default)]
 struct Hooks {
-    armed: ferrix_sync::SpinLock<Option<(Moment, Vec<u8>, Hook)>>,
+    armed: xaqu_sync::SpinLock<Option<(Moment, Vec<u8>, Hook)>>,
     /// Whether every regular file says it holds cached pages
     /// ([`crate::Inode::holds_cached_pages`]), as a disk file with pages
     /// read does.
@@ -3517,8 +3517,8 @@ use core::sync::atomic::AtomicUsize;
 /// not, and whether any found a spin lock of the description held, which
 /// nothing may, since a btrfs read sleeps on the disk in there.
 struct Watched {
-    file: ferrix_sync::SpinLock<alloc::sync::Weak<OpenFile>>,
-    bytes: ferrix_sync::SpinLock<Vec<u8>>,
+    file: xaqu_sync::SpinLock<alloc::sync::Weak<OpenFile>>,
+    bytes: xaqu_sync::SpinLock<Vec<u8>>,
     /// The most one read returns; zero for no limit.
     short: usize,
     calls: AtomicUsize,
@@ -3538,8 +3538,8 @@ impl core::fmt::Debug for Watched {
 impl Watched {
     fn new(bytes: &[u8], short: usize) -> Arc<Watched> {
         Arc::new(Watched {
-            file: ferrix_sync::SpinLock::new(alloc::sync::Weak::new()),
-            bytes: ferrix_sync::SpinLock::new(bytes.to_vec()),
+            file: xaqu_sync::SpinLock::new(alloc::sync::Weak::new()),
+            bytes: xaqu_sync::SpinLock::new(bytes.to_vec()),
             short,
             calls: AtomicUsize::new(0),
             held: AtomicBool::new(false),
@@ -3819,13 +3819,13 @@ fn pattern(offset: u64, len: usize) -> Vec<u8> {
 #[derive(Debug, Default)]
 struct Pattern {
     /// `(first, pages asked for)`, a call at a time.
-    asked: ferrix_sync::SpinLock<Vec<(u64, usize)>>,
+    asked: xaqu_sync::SpinLock<Vec<(u64, usize)>>,
     /// Fill at most this many pages a call; zero for as many as asked.
     most: AtomicUsize,
     /// Fail every call with `EIO` while set.
     failing: AtomicBool,
     /// Claim this many pages were filled, whatever was.
-    claim: ferrix_sync::SpinLock<Option<usize>>,
+    claim: xaqu_sync::SpinLock<Option<usize>>,
 }
 
 impl Pattern {
@@ -4080,7 +4080,7 @@ fn two_readers_of_the_same_missing_pages_both_see_the_sources_bytes() {
 
 // -- Socket buffers ----------------------------------------------------------
 
-use ferrix_linux_abi::socket::SOCKET_BUFFER_MIN;
+use xaqu_linux_abi::socket::SOCKET_BUFFER_MIN;
 
 use crate::socket::{Kind, ReadOutcome as SocketRead, SocketBuffer, WriteOutcome as SocketWrite};
 
@@ -4706,7 +4706,7 @@ fn a_socket_buffer_shows_its_ancillary_data_without_taking_it() {
 /// followed the text instead of the object would fail.
 #[derive(Debug, Default)]
 struct Magic {
-    links: ferrix_sync::SpinLock<Vec<(Vec<u8>, Option<Location>)>>,
+    links: xaqu_sync::SpinLock<Vec<(Vec<u8>, Option<Location>)>>,
 }
 
 /// One of [`Magic`]'s links.
@@ -4838,7 +4838,7 @@ fn a_magic_link_leads_to_its_object_and_not_to_its_text() {
 mod charged {
     use alloc::format;
 
-    use ferrix_kmem::testing::Job;
+    use xaqu_kmem::testing::Job;
 
     use super::{RW_CREATE, fresh};
     use crate::Errno;

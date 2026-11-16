@@ -1,8 +1,8 @@
-//! `test-game-rig`: stage 24's R3 on Ferrix, the half that needs no card
+//! `test-game-rig`: stage 24's R3 on Xaqu, the half that needs no card
 //! (`docs/GAME-PATH.md` §2.4 and §8.1).
 //!
 //! The rig's load, its sleep and wake-up program and its clock are judged
-//! on the machine Ferrix runs on under KVM: the same `tools/common/game/`
+//! on the machine Xaqu runs on under KVM: the same `tools/common/game/`
 //! files the Linux guest runs (`linux-guest.sh`), here carried in the
 //! initramfs, with the rustc volume `test-rustc` attaches for the compiler
 //! the load runs. The kernel's `clock` line must name the invariant TSC,
@@ -56,7 +56,7 @@ const STATUS: &str = "16";
 /// The lowest busy share any processor may show under the load, in
 /// percent. Short of 100 by the time a compile loop spends between two
 /// compiler runs, the next one's exec and load: in a ten-second window a
-/// processor whose loop restarts once shows 98 to 99.9 (on Ferrix
+/// processor whose loop restarts once shows 98 to 99.9 (on Xaqu
 /// 2026-10-14, 97.9 to 99.9; on the Linux guest 99.5 to 100). Without the
 /// compile loops it is about 22.
 const BUSY: f64 = 97.0;
@@ -123,7 +123,7 @@ fn files() -> Result<Vec<ports::File>> {
     Ok(files)
 }
 
-/// Boot the rig's load on Ferrix and judge the clock and every processor.
+/// Boot the rig's load on Xaqu and judge the clock and every processor.
 ///
 /// # Errors
 ///

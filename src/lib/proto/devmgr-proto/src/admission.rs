@@ -5,7 +5,7 @@
 //!
 //! The rule is [`admit`], a pure function of what `device_isolation`
 //! answered and of whether the boot carries the opt-out word,
-//! `ferrix.unisolated`, which the kernel forwards in DEVICES' flags. Its
+//! `xaqu.unisolated`, which the kernel forwards in DEVICES' flags. Its
 //! answer to a device `devmgr` may start is an [`Admitted`], which only
 //! [`admit`] makes and which `devmgr`'s one launch of a driver with a device
 //! handle takes, so no path can hand a device over without it.
@@ -55,7 +55,7 @@ pub struct Admitted {
 }
 
 impl Admitted {
-    /// Whether the device is admitted only under `ferrix.unisolated`.
+    /// Whether the device is admitted only under `xaqu.unisolated`.
     #[must_use]
     pub const fn unisolated(&self) -> bool {
         self.unisolated
@@ -125,7 +125,7 @@ pub const fn admit(
     Admit::Refused { bits, required }
 }
 
-/// What the kernel makes of `ferrix.unisolated` on a command line that
+/// What the kernel makes of `xaqu.unisolated` on a command line that
 /// carries it as a bare word (`bare`) and with a value (`valued`): the
 /// opt-out only for the bare word alone. A value, with or without the bare
 /// word beside it, is said and gives no opt-out (ledger 3906 (2), 4153 (2)).
@@ -190,7 +190,7 @@ impl fmt::Display for Line<'_> {
         match admit {
             Admit::Start(_) => write!(
                 f,
-                "devmgr   UNISOLATED: {what} {location} started under ferrix.unisolated: its \
+                "devmgr   UNISOLATED: {what} {location} started under xaqu.unisolated: its \
                  DMA is not translated or its interrupts are not isolated, and its driver is \
                  trusted with all of memory"
             ),

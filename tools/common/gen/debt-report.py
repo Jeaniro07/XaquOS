@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure where Ferrix's technical debt is, from git and the tree.
+"""Measure where Xaqu's technical debt is, from git and the tree.
 
     python3 tools/common/gen/debt-report.py [--days 30] [--top 15] [--flakes-log PATH]
 
@@ -154,7 +154,7 @@ def flake_sources(flakes_log):
             s = item.lower()
             if "done; removed from the backlog" in s:
                 continue
-            if re.search(r"self-check|check\.rs|stages_check|ferrix-panic|stage \d+'s", s):
+            if re.search(r"self-check|check\.rs|stages_check|xaqu-panic|stage \d+'s", s):
                 kinds["kernel boot self-check"] += 1
             elif re.search(r"hyprix|waybar|compositor|two_clients|screenshot", s):
                 kinds["compositor or desktop test"] += 1
@@ -243,7 +243,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--days", type=int, default=30)
     ap.add_argument("--top", type=int, default=15)
-    ap.add_argument("--flakes-log", default=os.path.expanduser("~/.local/share/ferrix/fleet/batch/flakes.log"))
+    ap.add_argument("--flakes-log", default=os.path.expanduser("~/.local/share/xaqu/fleet/batch/flakes.log"))
     a = ap.parse_args()
     since = (date.today() - timedelta(days=a.days)).isoformat()
     log = commits(since)

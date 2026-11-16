@@ -5,7 +5,7 @@
 //! it has -- so a report comes as GETs, the bytes hex in the query:
 //!
 //! ```text
-//! GET /ferrix/report/box/<mac>/<FILE>?part=<i>&of=<n>&data=<hex>
+//! GET /xaqu/report/box/<mac>/<FILE>?part=<i>&of=<n>&data=<hex>
 //! ```
 //!
 //! parts in order from 0, each answered `ok`; the last completes the file.

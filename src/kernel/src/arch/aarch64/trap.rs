@@ -15,7 +15,7 @@
 //! | `0x000` | the current EL, while `SP_EL0` is selected |
 //! | `0x200` | the current EL, while `SP_ELx` is selected — where the kernel's own faults arrive |
 //! | `0x400` | a lower EL running `AArch64` — where user mode's arrive |
-//! | `0x600` | a lower EL running `AArch32`, which Ferrix never enters |
+//! | `0x600` | a lower EL running `AArch32`, which Xaqu never enters |
 //!
 //! and within each block, synchronous, `IRQ`, `FIQ`, `SError` in that order.
 //!
@@ -96,12 +96,12 @@ core::arch::global_asm!(
 
 // One vector entry: stash x0 and x1, record which entry this is, and go.
 // `.align 7` is 128 bytes, which is the spacing the architecture fixes.
-.macro FERRIX_VECTOR index
+.macro XAQU_VECTOR index
 .align 7
     sub  sp, sp, #304
     stp  x0, x1, [sp, #0]
     mov  x0, #\index
-    b    ferrix_trap_save
+    b    xaqu_trap_save
 .endm
 
 // The same, for an entry from EL0, with the Spectre-BHB loop first on a core
@@ -109,7 +109,7 @@ core::arch::global_asm!(
 // left, so no indirect branch in the kernel is predicted from it, and the
 // barrier keeps anything after from running before they have. The count is
 // the largest any core needs, zero for none; see `super::speculation`.
-.macro FERRIX_VECTOR_EL0 index
+.macro XAQU_VECTOR_EL0 index
 .align 7
     sub  sp, sp, #304
     stp  x0, x1, [sp, #0]
@@ -125,7 +125,7 @@ core::arch::global_asm!(
 2:
 .endif
     mov  x0, #\index
-    b    ferrix_trap_save
+    b    xaqu_trap_save
 .endm
 
 // Current EL's synchronous entry, the one every fault in the kernel arrives at:
@@ -136,52 +136,52 @@ core::arch::global_asm!(
 // Vectors 5 to 7 need no such thing: their `stp` faults here. No register is
 // free, so x0 waits in `TPIDRRO_EL0`, which no program can read while the
 // kernel runs and which is zero again before anything leaves this path.
-.macro FERRIX_VECTOR_STACK_CHECKED index
+.macro XAQU_VECTOR_STACK_CHECKED index
 .align 7
     msr  tpidrro_el0, x0
     mov  x0, sp
     at   s1e1w, x0
     isb
     mrs  x0, par_el1
-    tbnz x0, #0, ferrix_stack_hit
+    tbnz x0, #0, xaqu_stack_hit
     mrs  x0, tpidrro_el0
     msr  tpidrro_el0, xzr
     sub  sp, sp, #304
     stp  x0, x1, [sp, #0]
     mov  x0, #\index
-    b    ferrix_trap_save
+    b    xaqu_trap_save
 .endm
 
-.globl ferrix_vectors
+.globl xaqu_vectors
 .align 11
-ferrix_vectors:
-    FERRIX_VECTOR 0    // current EL, SP_EL0: synchronous
-    FERRIX_VECTOR 1    // current EL, SP_EL0: IRQ
-    FERRIX_VECTOR 2    // current EL, SP_EL0: FIQ
-    FERRIX_VECTOR 3    // current EL, SP_EL0: SError
-    FERRIX_VECTOR_STACK_CHECKED 4    // current EL, SP_ELx: synchronous
-    FERRIX_VECTOR 5    // current EL, SP_ELx: IRQ
-    FERRIX_VECTOR 6    // current EL, SP_ELx: FIQ
-    FERRIX_VECTOR 7    // current EL, SP_ELx: SError
-    FERRIX_VECTOR_EL0 8    // lower EL, AArch64: synchronous
-    FERRIX_VECTOR_EL0 9    // lower EL, AArch64: IRQ
-    FERRIX_VECTOR_EL0 10   // lower EL, AArch64: FIQ
-    FERRIX_VECTOR_EL0 11   // lower EL, AArch64: SError
-    FERRIX_VECTOR_EL0 12   // lower EL, AArch32: synchronous
-    FERRIX_VECTOR_EL0 13   // lower EL, AArch32: IRQ
-    FERRIX_VECTOR_EL0 14   // lower EL, AArch32: FIQ
-    FERRIX_VECTOR_EL0 15   // lower EL, AArch32: SError
+xaqu_vectors:
+    XAQU_VECTOR 0    // current EL, SP_EL0: synchronous
+    XAQU_VECTOR 1    // current EL, SP_EL0: IRQ
+    XAQU_VECTOR 2    // current EL, SP_EL0: FIQ
+    XAQU_VECTOR 3    // current EL, SP_EL0: SError
+    XAQU_VECTOR_STACK_CHECKED 4    // current EL, SP_ELx: synchronous
+    XAQU_VECTOR 5    // current EL, SP_ELx: IRQ
+    XAQU_VECTOR 6    // current EL, SP_ELx: FIQ
+    XAQU_VECTOR 7    // current EL, SP_ELx: SError
+    XAQU_VECTOR_EL0 8    // lower EL, AArch64: synchronous
+    XAQU_VECTOR_EL0 9    // lower EL, AArch64: IRQ
+    XAQU_VECTOR_EL0 10   // lower EL, AArch64: FIQ
+    XAQU_VECTOR_EL0 11   // lower EL, AArch64: SError
+    XAQU_VECTOR_EL0 12   // lower EL, AArch32: synchronous
+    XAQU_VECTOR_EL0 13   // lower EL, AArch32: IRQ
+    XAQU_VECTOR_EL0 14   // lower EL, AArch32: FIQ
+    XAQU_VECTOR_EL0 15   // lower EL, AArch32: SError
 
 // The stack pointer is in unmapped memory: a kernel stack has overflowed. This
 // never returns. x0 is in `TPIDRRO_EL0`, x1 goes to `TPIDR_EL0`, a program's
 // thread pointer, which nobody will run to miss. This processor's emergency
 // stack is taken once, so that an overflow of that one stops below.
-ferrix_stack_hit:
+xaqu_stack_hit:
     msr  tpidr_el0, x1
     mrs  x1, tpidr_el1
-    cbz  x1, ferrix_stack_stop
+    cbz  x1, xaqu_stack_stop
     ldr  x0, [x1, #{emergency_stack}]
-    cbz  x0, ferrix_stack_stop
+    cbz  x0, xaqu_stack_stop
     str  xzr, [x1, #{emergency_stack}]
     // Swap x0 and SP with no third register. Nothing touches memory through SP
     // until it holds the emergency stack's top.
@@ -195,12 +195,12 @@ ferrix_stack_hit:
     sub  sp, sp, #304
     stp  x0, x1, [sp, #0]
     mov  x0, #{kind_overflow}
-    b    ferrix_trap_save
+    b    xaqu_trap_save
 
 // No emergency stack to run on: not given yet, or this is the second hit. One
 // stack for the whole machine, for whichever processor gets here first, to say
 // so; any other waits. Registers are given up: this stops the processor.
-ferrix_stack_stop:
+xaqu_stack_stop:
     adrp x0, {stop_claim}
     add  x0, x0, :lo12:{stop_claim}
 1:  ldaxr w1, [x0]
@@ -216,7 +216,7 @@ ferrix_stack_stop:
 2:  wfe
     b    2b
 
-ferrix_trap_save:
+xaqu_trap_save:
     stp  x2, x3, [sp, #16]
     stp  x4, x5, [sp, #32]
     stp  x6, x7, [sp, #48]
@@ -242,9 +242,9 @@ ferrix_trap_save:
     stp  x13, x0, [sp, #280]
     str  xzr, [sp, #296]
     mov  x0, sp
-    bl   ferrix_trap_entry
-.globl ferrix_trap_restore
-ferrix_trap_restore:
+    bl   xaqu_trap_entry
+.globl xaqu_trap_restore
+xaqu_trap_restore:
     ldp  x9, x10, [sp, #248]
     ldr  x11, [sp, #264]
     msr  sp_el0, x9
@@ -280,7 +280,7 @@ ferrix_trap_restore:
     stop_report = sym crate::trap::stack_stop_report,
 );
 
-/// What the save records as the entry when [`ferrix_stack_hit`] ran: past the
+/// What the save records as the entry when [`xaqu_stack_hit`] ran: past the
 /// sixteen real ones.
 const KIND_STACK_OVERFLOW: u64 = 16;
 
@@ -303,17 +303,17 @@ core::arch::global_asm!(
 
 // x0 = a `TrapFrame`, sixteen-byte aligned. Never returns: the frame is
 // restored by the same instructions every exception from EL0 returns through.
-.globl ferrix_resume_user
+.globl xaqu_resume_user
 .align 4
-ferrix_resume_user:
+xaqu_resume_user:
     msr  daifset, #0xf
     mov  sp, x0
-    b    ferrix_trap_restore
+    b    xaqu_trap_restore
 
 // x0 = entry, x1 = user stack. Never returns.
-.globl ferrix_enter_user
+.globl xaqu_enter_user
 .align 4
-ferrix_enter_user:
+xaqu_enter_user:
     // Masked until the eret, which opens them from `USER_SPSR`: an interrupt
     // taken between loading ELR_EL1 and the eret would overwrite it.
     msr  daifset, #0xf
@@ -376,9 +376,9 @@ pub const USER_SPSR: u64 = (1 << 9) | (1 << 8) | (1 << 6);
 
 unsafe extern "C" {
     /// Enter EL0 at `entry` on `stack`.
-    fn ferrix_enter_user(entry: u64, stack: u64, argument: u64) -> !;
+    fn xaqu_enter_user(entry: u64, stack: u64, argument: u64) -> !;
     /// Resume EL0 from a saved frame.
-    fn ferrix_resume_user(frame: *const TrapFrame) -> !;
+    fn xaqu_resume_user(frame: *const TrapFrame) -> !;
 }
 
 /// A program's registers as its system call saved them: the whole trap frame,
@@ -424,7 +424,7 @@ pub(crate) const fn exception_code(frame: &TrapFrame) -> u64 {
 /// undefined instruction or anything else `SIGILL` at the instruction.
 pub(crate) fn fault_signal(frame: &TrapFrame, trap: &crate::trap::Trap) -> (u32, i32, u64) {
     use crate::trap::Trap;
-    use ferrix_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
+    use xaqu_linux_abi::types::{SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP};
 
     /// `si_code`: raised by the kernel for its own reasons.
     const SI_KERNEL: i32 = 0x80;
@@ -470,7 +470,7 @@ pub(crate) fn fault_signal(frame: &TrapFrame, trap: &crate::trap::Trap) -> (u32,
 /// just above it.
 pub unsafe fn resume_user(regs: &UserRegs) -> ! {
     // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract.
-    unsafe { ferrix_resume_user(core::ptr::from_ref(&regs.0)) }
+    unsafe { xaqu_resume_user(core::ptr::from_ref(&regs.0)) }
 }
 
 /// Enter EL0 for the first time, at `entry` on `stack`, with `argument` in x0.
@@ -485,7 +485,7 @@ pub unsafe fn enter_user(entry: u64, stack: u64, argument: u64, abi: crate::trap
     // as [`crate::trap::Abi::Native`], whatever it was asked to be.
     let _ = abi;
     // SAFETY: (CONTEXT) the caller's guarantee is the assembly's contract.
-    unsafe { ferrix_enter_user(entry, stack, argument) }
+    unsafe { xaqu_enter_user(entry, stack, argument) }
 }
 
 /// Service a system call made from EL0 with `svc #0`.
@@ -533,7 +533,7 @@ pub fn system_call(frame: &mut TrapFrame) -> Result<(), &'static str> {
             // `rt_sigreturn` replaces the whole frame, `x0` included, so it has
             // no return value to write: answered here rather than through
             // `dispatch`.
-            if let Some(ferrix_linux_abi::nr::Syscall::RtSigreturn) =
+            if let Some(xaqu_linux_abi::nr::Syscall::RtSigreturn) =
                 super::restricted::decoded_unless_bare(args.number)
             {
                 let mut context = super::signal::UserContext::from_trap(frame);
@@ -583,14 +583,14 @@ pub fn system_call(frame: &mut TrapFrame) -> Result<(), &'static str> {
 
 unsafe extern "C" {
     /// The vector table, aligned as `VBAR_EL1` requires.
-    static ferrix_vectors: [u8; 16 * 128];
+    static xaqu_vectors: [u8; 16 * 128];
 }
 
 /// Where the save sequence hands over.
 ///
 /// Not called from Rust — the `bl` in the assembly above is its only caller.
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_trap_entry(frame: &mut TrapFrame) {
+extern "C" fn xaqu_trap_entry(frame: &mut TrapFrame) {
     if frame.kind == KIND_STACK_OVERFLOW {
         crate::trap::stack_overflow(frame);
     }
@@ -748,8 +748,8 @@ pub(crate) fn report_trap(frame: &TrapFrame) {
 /// before it unmasks interrupts. One table serves every core: it holds code,
 /// and no per-core state.
 pub(crate) unsafe fn init() {
-    let table = (&raw const ferrix_vectors) as u64;
-    // Before the table can be used: `ferrix_stack_hit` reads this to find the
+    let table = (&raw const xaqu_vectors) as u64;
+    // Before the table can be used: `xaqu_stack_hit` reads this to find the
     // processor's record, and reset leaves it unknown. Zero says none yet;
     // `set_cpu_local`, which runs later on every core, gives it its value.
     cpu::write_tpidr_el1(0);
@@ -764,7 +764,7 @@ pub(crate) unsafe fn init() {
 /// `L.aarch64.91`'s check.
 pub(super) fn stack_checked_entry() -> [u32; 6] {
     // SAFETY: (PROBE) the table is in this image, mapped readable, and nothing writes it.
-    let table: &[u8; 16 * 128] = unsafe { &ferrix_vectors };
+    let table: &[u8; 16 * 128] = unsafe { &xaqu_vectors };
     core::array::from_fn(|at| {
         let word = table.get(4 * 128 + at * 4..).unwrap_or_default();
         match word {

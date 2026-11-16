@@ -266,7 +266,7 @@ L.object.253 stays released):
   page.
 * **Negative controls**: the clean test removed (a dirty page is dropped:
   the dirty mode reads the disk's older bytes); the retirement before the
-  take removed (the frame goes back to the allocator: `/proc/ferrix-mce-
+  take removed (the frame goes back to the allocator: `/proc/xaqu-mce-
   retired` lacks it); the mapper's drop answered as `NotCache` (the mapped
   mode signals); `read_piece`'s refill on `Clean` removed (the read fails);
   the retirement answer's test removed (5294 (1)); the frame check in the

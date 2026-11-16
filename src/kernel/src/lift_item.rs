@@ -19,7 +19,7 @@
 
 extern crate alloc;
 
-pub use ferrix_kernel_core::*;
+pub use xaqu_kernel_core::*;
 
 /// The shim's own modules, found by position under `src/kernel/src/lift/item`.
 pub mod lift {

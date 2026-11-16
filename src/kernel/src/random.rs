@@ -31,8 +31,8 @@
 //! read is answered and the boot report is where the warning goes. A key
 //! made on such a machine is only as good as its timer jitter.
 
-use ferrix_bootinfo::{BootInfo, FIRMWARE_SEED};
-use ferrix_crng::{Crng, KEY_BYTES};
+use xaqu_bootinfo::{BootInfo, FIRMWARE_SEED};
+use xaqu_crng::{Crng, KEY_BYTES};
 
 use crate::arch;
 use crate::sync::SpinLock;

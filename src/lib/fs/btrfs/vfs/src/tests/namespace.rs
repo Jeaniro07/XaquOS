@@ -12,10 +12,10 @@ extern crate std;
 
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use ferrix_sync::SpinParker;
-use ferrix_vfs::dirent::DirentWriter;
-use ferrix_vfs::tmpfs::{HeapStorage, Tmpfs};
-use ferrix_vfs::{Clock, Context, Namespace, OpenFlags, RenameMode};
+use xaqu_sync::SpinParker;
+use xaqu_vfs::dirent::DirentWriter;
+use xaqu_vfs::tmpfs::{HeapStorage, Tmpfs};
+use xaqu_vfs::{Clock, Context, Namespace, OpenFlags, RenameMode};
 
 use super::*;
 

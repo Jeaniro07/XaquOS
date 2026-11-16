@@ -1,12 +1,12 @@
 //! `test-install --slots`: the A/B layout (`docs/AB-BOOT.md`) from the
-//! running system's side -- `ferrix-install --slots` and `bootctl` -- on
+//! running system's side -- `xaqu-install --slots` and `bootctl` -- on
 //! virtual disks laid out as the customer's SN720 was on 2026-10-11, scaled
 //! down. x86-64, one QEMU process per boot, so each boot is a power cycle.
 //!
 //! The disks, made on the host:
 //!
 //! * `ab-target.img`, 3 GiB, blank: the installer gives it the layout.
-//! * `ab-premade.img`, 3 GiB, with the layout already (Ferrix's types) and a
+//! * `ab-premade.img`, 3 GiB, with the layout already (Xaqu's types) and a
 //!   first partition standing for the host's swap, filled with a pattern:
 //!   the installer must reuse it, writing neither its table nor its swap.
 //! * `ab-sn720.img`: the SN720 as partitioned -- the names, but Linux's
@@ -47,11 +47,11 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use ferrix_partition::{
+use xaqu_partition::{
     ESP, Guid, LINUX_FILESYSTEM, Partition, parse_entries, parse_header, write_table,
 };
-use ferrix_slots::record::{COPY_OFFSETS, Current, select, write_copy};
-use ferrix_slots::slot::{HEADER_LEN, SlotHeader};
+use xaqu_slots::record::{COPY_OFFSETS, Current, select, write_copy};
+use xaqu_slots::slot::{HEADER_LEN, SlotHeader};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -74,11 +74,11 @@ const SLOT_MIB: u64 = 600;
 const BOOT_SECONDS: u64 = 900;
 
 /// The installer boot's script.
-const INSTALL: &str = "/sbin/ferrix-install --yes --slots --swap-mib 16 --esp-mib 512 --slot-mib 600 /dev/vde\n\
+const INSTALL: &str = "/sbin/xaqu-install --yes --slots --swap-mib 16 --esp-mib 512 --slot-mib 600 /dev/vde\n\
 echo \"slots: blank exited $?\"\n\
-/sbin/ferrix-install --yes --slots /dev/vdf\n\
+/sbin/xaqu-install --yes --slots /dev/vdf\n\
 echo \"slots: premade exited $?\"\n\
-/sbin/ferrix-install --yes --slots /dev/vdg\n\
+/sbin/xaqu-install --yes --slots /dev/vdg\n\
 echo \"slots: sn720 exited $?\"\n\
 /sbin/bootctl status\n\
 echo \"bootctl: two disks exited $?\"\n\
@@ -130,14 +130,14 @@ exit 0\n";
 const E2E: &str = "read line < /proc/cmdline\n\
 echo \"e2e: booted with $line\"\n\
 case \"$line\" in\n\
-*ferrix.slot.boot=trial*) /sbin/bootctl good; echo \"e2e: good exited $?\" ;;\n\
-*ferrix.slot=a*) /sbin/bootctl try /dev/vde; echo \"e2e: try exited $?\" ;;\n\
+*xaqu.slot.boot=trial*) /sbin/bootctl good; echo \"e2e: good exited $?\" ;;\n\
+*xaqu.slot=a*) /sbin/bootctl try /dev/vde; echo \"e2e: try exited $?\" ;;\n\
 esac\n\
 /sbin/bootctl status\n\
 exit 0\n";
 
 /// The end-to-end install, from the end-to-end system's live medium.
-const E2E_INSTALL: &str = "/sbin/ferrix-install --yes --slots --esp-mib 512 --slot-mib 600 /dev/vde\n\
+const E2E_INSTALL: &str = "/sbin/xaqu-install --yes --slots --esp-mib 512 --slot-mib 600 /dev/vde\n\
 echo \"slots: e2e exited $?\"\n\
 exit 0\n";
 
@@ -165,7 +165,7 @@ const INSTALL_EXPECT: &[(&str, &str)] = &[
         "the installer did not refuse the SN720 as partitioned",
     ),
     (
-        "not Ferrix's boot control type",
+        "not Xaqu's boot control type",
         "the installer's refusal of the SN720 does not say why",
     ),
     (
@@ -173,7 +173,7 @@ const INSTALL_EXPECT: &[(&str, &str)] = &[
         "bootctl acted with two disks carrying a control partition",
     ),
     (
-        "more than one disk has a partition of Ferrix's boot control type",
+        "more than one disk has a partition of Xaqu's boot control type",
         "bootctl's two-disk refusal does not say why",
     ),
     (
@@ -190,7 +190,7 @@ const INSTALL_EXPECT: &[(&str, &str)] = &[
 const AS_A_EXPECT: &[(&str, &str)] = &[
     ("bootctl: status exited 0", "bootctl status failed"),
     (
-        "verifies: ferrix installed",
+        "verifies: xaqu installed",
         "slot a, as installed, does not verify",
     ),
     (
@@ -208,7 +208,7 @@ const AS_A_EXPECT: &[(&str, &str)] = &[
         "bootctl did not refuse the SN720 as partitioned",
     ),
     (
-        "not Ferrix's boot control type",
+        "not Xaqu's boot control type",
         "bootctl's refusal of the SN720 does not say why",
     ),
 ];
@@ -281,7 +281,7 @@ pub(super) fn test(args: &Args) -> Result<()> {
     // 1. The installer.
     let lines = gate.run(
         INSTALL,
-        "ferrix.root=tmpfs",
+        "xaqu.root=tmpfs",
         (gate.live.clone(), gate.target.clone()),
         vec![gate.premade.clone(), gate.sn720.clone()],
     )?;
@@ -342,7 +342,7 @@ impl<'a> Gate<'a> {
     /// Build what the boots need and make the disks.
     fn prepare(args: &'a Args) -> Result<Gate<'a>> {
         let arch = Arch::X86_64;
-        let carried = files(arch)?.ok_or_else(|| Error::new("ferrix-install is not built"))?;
+        let carried = files(arch)?.ok_or_else(|| Error::new("xaqu-install is not built"))?;
         let natives = native::build(arch, args.release)?;
         let loader = cargo::build_loader(arch, args.release)?;
         let initramfs = initramfs::build(None, &natives, None, &carried)?;
@@ -430,7 +430,7 @@ impl<'a> Gate<'a> {
         let _ = fresh(&disk, DISK_BYTES)?;
         let lines = self.run(
             E2E_INSTALL,
-            "ferrix.root=tmpfs",
+            "xaqu.root=tmpfs",
             (medium, disk.clone()),
             Vec::new(),
         )?;
@@ -442,14 +442,14 @@ impl<'a> Gate<'a> {
         let image = build.join("ab-e2e-new.img");
         let kernel_bytes = std::fs::read(&system.elf)?;
         let archive = system.initramfs(&self.initramfs)?;
-        let label = "ferrix e2e new";
+        let label = "xaqu e2e new";
         let _ = crate::slot_image::write(
             &image,
-            ferrix_slots::slot::VERSION_1,
+            xaqu_slots::slot::VERSION_1,
             label,
             &kernel_bytes,
             &archive,
-            b"ferrix.root=btrfs",
+            b"xaqu.root=btrfs",
         )?;
 
         let mut booted = self.args.clone();
@@ -516,14 +516,14 @@ impl<'a> Gate<'a> {
         let image = build.join("ab-new-slot.img");
         let kernel_bytes = std::fs::read(&self.kernel.elf)?;
         let archive = self.kernel.initramfs(&self.initramfs)?;
-        let label = "ferrix test-install new";
+        let label = "xaqu test-install new";
         let _ = crate::slot_image::write(
             &image,
-            ferrix_slots::slot::VERSION_1,
+            xaqu_slots::slot::VERSION_1,
             label,
             &kernel_bytes,
             &archive,
-            b"ferrix.root=btrfs",
+            b"xaqu.root=btrfs",
         )?;
         let fat_image = build.join("ab-fat.img");
         let written = fat::write_image_with(
@@ -531,12 +531,12 @@ impl<'a> Gate<'a> {
             &self.loader,
             &self.kernel,
             &self.initramfs,
-            Some("ferrix.root=btrfs"),
+            Some("xaqu.root=btrfs"),
         )?;
         let _ = std::fs::copy(written, &fat_image)?;
         // The loader names the disk it booted from by its GUID.
         let disk = format!(
-            "ferrix.slot.disk={} ferrix.root=tmpfs",
+            "xaqu.slot.disk={} xaqu.root=tmpfs",
             disk_guid(&self.target)?
         );
         let boot = |script: &str, words: String| {
@@ -550,7 +550,7 @@ impl<'a> Gate<'a> {
         };
 
         // 3. Slot A, good.
-        let a_good = "ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=1";
+        let a_good = "xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=1";
         require(&boot(AS_A, a_good.to_owned())?, AS_A_EXPECT)?;
         let sequence = loader_takes_a_try(&self.target)?;
         println!(
@@ -558,13 +558,13 @@ impl<'a> Gate<'a> {
         );
 
         // 4. Slot B on trial.
-        let words = format!("ferrix.slot=b ferrix.slot.boot=trial ferrix.slot.seq={sequence}");
+        let words = format!("xaqu.slot=b xaqu.slot.boot=trial xaqu.slot.seq={sequence}");
         require(&boot(AS_TRIAL_B, words)?, AS_TRIAL_B_EXPECT)?;
         println!("  x86_64: on trial, try was refused and good marked slot b");
 
         // 5. Slot B, good.
         let words = format!(
-            "ferrix.slot=b ferrix.slot.boot=good ferrix.slot.seq={}",
+            "xaqu.slot=b xaqu.slot.boot=good xaqu.slot.seq={}",
             sequence + 1
         );
         require(&boot(AS_B, words)?, AS_B_EXPECT)?;
@@ -611,7 +611,7 @@ fn lay(path: &Path, bytes: u64, parts: &[(Guid, u64, &str)]) -> Result<Vec<(u64,
     let mut file = fresh(path, bytes)?;
     let sectors = bytes / SECTOR;
     let (_, last_usable) =
-        ferrix_partition::usable(sectors, SECTOR as u32).map_err(|e| Error::new(e.to_string()))?;
+        xaqu_partition::usable(sectors, SECTOR as u32).map_err(|e| Error::new(e.to_string()))?;
     let mut at = MIB_SECTORS;
     let mut out = Vec::new();
     let mut entries = Vec::new();
@@ -645,11 +645,11 @@ fn sn720_parts(
 ) -> [(Guid, u64, &'static str); 6] {
     [
         (LINUX_SWAP, SWAP_MIB, "nazuna-swap"),
-        (ESP, esp_mib, "ferrix-esp"),
-        (control, 1, "ferrix-bootctl"),
-        (slot, slot_mib, "ferrix-slot-a"),
-        (slot, slot_mib, "ferrix-slot-b"),
-        (LINUX_FILESYSTEM, 0, "ferrix-root"),
+        (ESP, esp_mib, "xaqu-esp"),
+        (control, 1, "xaqu-bootctl"),
+        (slot, slot_mib, "xaqu-slot-a"),
+        (slot, slot_mib, "xaqu-slot-b"),
+        (LINUX_FILESYSTEM, 0, "xaqu-root"),
     ]
 }
 

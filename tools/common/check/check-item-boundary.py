@@ -29,7 +29,7 @@ So this gate asserts five things.
 
   4. **Library crates are classified whole and held at their manifests.**
      Since 2026-10-02 the item includes two crates outside the kernel,
-     `ferrix-btrfs` and `ferrix-btrfs-write`, under `crates` in the manifest.
+     `xaqu-btrfs` and `xaqu-btrfs-write`, under `crates` in the manifest.
      A classified crate's files are product or test code by its module tree
      (a file reached only through `#[cfg(test)] mod` is a host test; one
      the tree does not reach fails). An item or core crate's shipping
@@ -41,7 +41,7 @@ So this gate asserts five things.
      -- so one no item crate uses may gain a load dependency unremarked.
      Each allowlist entry must
      still be named by a core or item kernel file, which is its reason. And
-     a kernel file that names a classified crate (`ferrix_btrfs::..`) is an
+     a kernel file that names a classified crate (`xaqu_btrfs::..`) is an
      edge to that crate's ring, under the same rules as rule 2. The
      item-scoped gates (complexity, fallible allocation, the unsafe trace)
      read the item crates' product files through `item_crate_product_files`.
@@ -195,7 +195,7 @@ KERNEL_CRATES = _kernel_crates_in_manifest()
 # whose module path is the crate's: `main.rs` and `lib.rs`, and each kernel
 # crate's root beside `main.rs`.
 ROOT_FILES = {"main.rs", "lib.rs"} | {e["root"] for e in KERNEL_CRATES.values() if "root" in e}
-# A path through one of the kernel's own crates, `ferrix_kernel_core::mm`,
+# A path through one of the kernel's own crates, `xaqu_kernel_core::mm`,
 # names the module `crate::mm` names: the four crates share one tree of
 # modules by position, each re-exporting the ones below it.
 KERNEL_CRATE_NAMES = {name.replace("-", "_") for name in KERNEL_CRATES}
@@ -497,7 +497,7 @@ def parse_file(rel: str, source: str, modules: dict[ModPath, Module], refs: list
             and toks[i + 1] == "::"
             and (prev != "$" or tok == "crate")
         ):
-            # `::ferrix_kernel_load::fs`: a path from the crates' root, which
+            # `::xaqu_kernel_load::fs`: a path from the crates' root, which
             # the resolver reads as through the crate named next.
             segs = ["::", _name(tok)] if prev == "::" else [_name(tok)]
             j = i + 1
@@ -693,7 +693,7 @@ def find_edges(manifest: dict, ring_of: dict[str, str], modules, refs) -> list[E
         rule["from"]: set(rule["may_not_reference"])
         for rule in manifest["dependency_rules"]
     }
-    # A path through one of the kernel's own crates (`ferrix_kernel_load::fs`)
+    # A path through one of the kernel's own crates (`xaqu_kernel_load::fs`)
     # is a path into the kernel's one tree of modules, and lands in the ring
     # of the file it names, as `crate::fs` would.
     resolver = Resolver(modules, KERNEL_CRATE_NAMES | {
@@ -1437,21 +1437,21 @@ def removable_problems(removable: dict, read, crate_files: dict[str, list[str]],
         if not values or present not in values:
             problems.append(f"composition_root.removable.{package}: flag {flag!r} or value {present!r} is not declared")
             continue
-        cfg_name = f"ferrix_{flag}"
+        cfg_name = f"xaqu_{flag}"
         symbol = entry.get("symbol", package.replace("-", "_"))
         # The manifests: the crate depends on the load; only the binary on it.
         own = packages.get(package)
         if own is None:
             problems.append(f"{package}: no such package")
-        elif "ferrix-kernel-load" not in own[1].get("dependencies", {}):
-            problems.append(f"{package}: does not depend on ferrix-kernel-load")
+        elif "xaqu-kernel-load" not in own[1].get("dependencies", {}):
+            problems.append(f"{package}: does not depend on xaqu-kernel-load")
         for other, (directory, cargo) in sorted(packages.items()):
             named = cargo.get("dependencies", {}).get(package)
             # A dependency renamed to this lib name is another package: the lift's.
             renamed = isinstance(named, dict) and named.get("package", package) != package
-            if named is not None and not renamed and other != "ferrix-kernel":
+            if named is not None and not renamed and other != "xaqu-kernel":
                 problems.append(f"{directory}: {other} depends on {package}; only the binary may")
-        binary = packages.get("ferrix-kernel")
+        binary = packages.get("xaqu-kernel")
         if binary is not None and package not in binary[1].get("dependencies", {}):
             problems.append(f"src/kernel: the binary's manifest does not list {package} (it is compiled in every build, ledger 3623 (R1))")
         # No kernel file outside the root names the crate.
@@ -1500,7 +1500,7 @@ def removable_problems(removable: dict, read, crate_files: dict[str, list[str]],
         module = entry.get("interface", "").split("::")[0]
         bind_macro = entry.get("bind_macro", "")
         found_bindings: dict[str, list[str]] = defaultdict(list)
-        for match in re.finditer(rf"\b(?:ferrix_kernel_load::)?{re.escape(bind_macro)}!\s*\(\s*([\w:]+)\s*\)\s*;", code):
+        for match in re.finditer(rf"\b(?:xaqu_kernel_load::)?{re.escape(bind_macro)}!\s*\(\s*([\w:]+)\s*\)\s*;", code):
             admitted = _admits(_item_attributes(code, match.start()), cfg_name, values)
             for value in admitted:
                 found_bindings[value].append(match.group(1))
@@ -1527,7 +1527,7 @@ def removable_problems(removable: dict, read, crate_files: dict[str, list[str]],
             if not re.search(rf"\btrait\s+{interface}\s*;", body) or \
                     not re.search(rf"\bbind\s+{re.escape(bind_macro)}\s+in\s+{module}\s*;", body):
                 problems.append(f"{defined_in}: the seam is not trait {interface}, bound by {bind_macro} in {module}")
-            listed = re.findall(r"\bfn\s+([a-z_][a-z0-9_]*)\s+as\s+(__ferrix_[a-z0-9_]+)\s*\(", body)
+            listed = re.findall(r"\bfn\s+([a-z_][a-z0-9_]*)\s+as\s+(__xaqu_[a-z0-9_]+)\s*\(", body)
             methods = [name for name, _ in listed]
             if methods != entry.get("methods", []):
                 problems.append(f"{defined_in}: {interface}'s entries are {methods}, the record says {entry.get('methods')}")
@@ -1571,22 +1571,22 @@ def removable_problems(removable: dict, read, crate_files: dict[str, list[str]],
 
 
 _REMOVABLE_RECORD = {"pkg-x": {"flag": "f", "present_when": "on", "interface": "hooks::Hooks", "defined_in": "hooks.rs",
-                               "binding": {"on": "pkg_x::Live", "off": "ferrix_kernel_load::hooks::Absent"},
-                               "bind_macro": "bind_hooks", "methods": ["a"], "seam_symbols": ["__ferrix_hooks_a"],
+                               "binding": {"on": "pkg_x::Live", "off": "xaqu_kernel_load::hooks::Absent"},
+                               "bind_macro": "bind_hooks", "methods": ["a"], "seam_symbols": ["__xaqu_hooks_a"],
                                "calls": ["user.rs"], "lint_expect": "unused_crate_dependencies", "symbol": "pkg_x"}}
 _REMOVABLE_TREE = {
-    "main.rs": '#![cfg_attr(\n    ferrix_f = "off",\n    expect(unused_crate_dependencies, reason = "r")\n)]\n\n'
-               '#[cfg(ferrix_f = "on")]\nferrix_kernel_load::bind_hooks!(pkg_x::Live);\n'
-               '#[cfg(ferrix_f = "off")]\nferrix_kernel_load::bind_hooks!(ferrix_kernel_load::hooks::Absent);\n',
+    "main.rs": '#![cfg_attr(\n    xaqu_f = "off",\n    expect(unused_crate_dependencies, reason = "r")\n)]\n\n'
+               '#[cfg(xaqu_f = "on")]\nxaqu_kernel_load::bind_hooks!(pkg_x::Live);\n'
+               '#[cfg(xaqu_f = "off")]\nxaqu_kernel_load::bind_hooks!(xaqu_kernel_load::hooks::Absent);\n',
     "hooks.rs": "crate::seam! {\n    $;\n    trait Hooks;\n    bind bind_hooks in hooks;\n"
-                "    fn a as __ferrix_hooks_a() -> ();\n}\npub struct Absent;\nimpl Hooks for Absent {\n    fn a() {}\n}\n",
+                "    fn a as __xaqu_hooks_a() -> ();\n}\npub struct Absent;\nimpl Hooks for Absent {\n    fn a() {}\n}\n",
     "user.rs": "fn u() { crate::hooks::a() }\n",
     "x/root.rs": "pub struct Live;\nimpl Hooks for Live {\n    fn a() {}\n}\n",
 }
 _REMOVABLE_PACKAGES = {
-    "ferrix-kernel": ("src/kernel", {"dependencies": {"pkg-x": {}}}),
-    "ferrix-kernel-load": ("src/kernel/load", {"dependencies": {}}),
-    "pkg-x": ("src/kernel/x", {"dependencies": {"ferrix-kernel-load": {}}}),
+    "xaqu-kernel": ("src/kernel", {"dependencies": {"pkg-x": {}}}),
+    "xaqu-kernel-load": ("src/kernel/load", {"dependencies": {}}),
+    "pkg-x": ("src/kernel/x", {"dependencies": {"xaqu-kernel-load": {}}}),
 }
 _REMOVABLE_PROFILES = {"lo": {"flags": {"f": "off"}}, "hi": {"flags": {"f": "on"}}}
 
@@ -1608,10 +1608,10 @@ def _removable_self_test() -> list[str]:
         ("a planted unconditional dependency", {"tree": {"main.rs": main + "use pkg_x as _;\n"}},
          "would depend on pkg-x"),
         ("a live binding to the absent one", {"tree": {"main.rs": main.replace(
-            "bind_hooks!(pkg_x::Live)", "bind_hooks!(ferrix_kernel_load::hooks::Absent)")}},
+            "bind_hooks!(pkg_x::Live)", "bind_hooks!(xaqu_kernel_load::hooks::Absent)")}},
          "would not depend on pkg-x"),
-        ("a binding made twice", {"tree": {"main.rs": main + '#[cfg(ferrix_f = "on")]\n'
-                                                             "ferrix_kernel_load::bind_hooks!(pkg_x::Live);\n"}},
+        ("a binding made twice", {"tree": {"main.rs": main + '#[cfg(xaqu_f = "on")]\n'
+                                                             "xaqu_kernel_load::bind_hooks!(pkg_x::Live);\n"}},
          "2 bindings"),
         ("a reference from a load file", {"tree": {"user.rs": "fn u() { pkg_x::f(); crate::hooks::a() }\n"}},
          "only the composition root"),
@@ -1620,11 +1620,11 @@ def _removable_self_test() -> list[str]:
          "exports or keeps"),
         ("the lint expectation missing", {"tree": {"main.rs": main.split("\n\n", 1)[1]}}, "no crate-level expect"),
         ("an entry not recorded", {"tree": {"hooks.rs": hooks.replace(
-            "    fn a as __ferrix_hooks_a() -> ();\n",
-            "    fn a as __ferrix_hooks_a() -> ();\n    fn b as __ferrix_hooks_b() -> ();\n")}}, "entries are"),
-        ("a symbol not recorded", {"tree": {"hooks.rs": hooks.replace("__ferrix_hooks_a", "__ferrix_hooks_z")}},
+            "    fn a as __xaqu_hooks_a() -> ();\n",
+            "    fn a as __xaqu_hooks_a() -> ();\n    fn b as __xaqu_hooks_b() -> ();\n")}}, "entries are"),
+        ("a symbol not recorded", {"tree": {"hooks.rs": hooks.replace("__xaqu_hooks_a", "__xaqu_hooks_z")}},
          "symbols are not"),
-        ("a load manifest naming the crate", {"packages": {**_REMOVABLE_PACKAGES, "ferrix-kernel-load": (
+        ("a load manifest naming the crate", {"packages": {**_REMOVABLE_PACKAGES, "xaqu-kernel-load": (
             "src/kernel/load", {"dependencies": {"pkg-x": {}}})}}, "only the binary may"),
         ("an implementation outside the crate", {"tree": {"user.rs": "struct Other;\nimpl Hooks for Other {}\n"
                                                                      "fn u() { crate::hooks::a() }\n"}},
@@ -1639,12 +1639,12 @@ def _removable_self_test() -> list[str]:
     if seam_scan_problems(record, clean, "seam.rs"):
         failures.append(f"removable: a clean tree's seam scan was refused: {seam_scan_problems(record, clean, 'seam.rs')}")
     for what, extra, expect in [
-        ("a definer by name", {"src/lib/x/lib.rs": "#[unsafe(no_mangle)]\nfn __ferrix_hooks_a() {}\n"}, "defines a __ferrix_"),
-        ("an export_name definer", {"src/lib/x/lib.rs": '#[unsafe(export_name = "__ferrix_hooks_a")]\nfn f() {}\n'},
-         "defines a __ferrix_"),
-        ("an assembly definer", {"src/lib/x/lib.rs": 'core::arch::global_asm!(".globl __ferrix_hooks_a");\n'},
-         "defines a __ferrix_"),
-        ("a call around the wrapper", {"src/kernel/src/user.rs": "fn u() { unsafe { __ferrix_hooks_a() } }\n"},
+        ("a definer by name", {"src/lib/x/lib.rs": "#[unsafe(no_mangle)]\nfn __xaqu_hooks_a() {}\n"}, "defines a __xaqu_"),
+        ("an export_name definer", {"src/lib/x/lib.rs": '#[unsafe(export_name = "__xaqu_hooks_a")]\nfn f() {}\n'},
+         "defines a __xaqu_"),
+        ("an assembly definer", {"src/lib/x/lib.rs": 'core::arch::global_asm!(".globl __xaqu_hooks_a");\n'},
+         "defines a __xaqu_"),
+        ("a call around the wrapper", {"src/kernel/src/user.rs": "fn u() { unsafe { __xaqu_hooks_a() } }\n"},
          "only the seam's wrappers"),
     ]:
         found = seam_scan_problems(record, {**clean, **extra}, "seam.rs")
@@ -1667,8 +1667,8 @@ def kernel_crate_problems(manifest: dict, files: list[str], ring_of: dict[str, s
       allows clippy's `disallowed_methods` for a whole file."""
     entries = {k: v for k, v in manifest.get("kernel_crates", {}).items() if not k.startswith("//")}
     problems: list[str] = []
-    if "ferrix-kernel" not in entries:
-        problems.append("kernel_crates: no entry for ferrix-kernel, the kernel binary")
+    if "xaqu-kernel" not in entries:
+        problems.append("kernel_crates: no entry for xaqu-kernel, the kernel binary")
     for package, directory in sorted(members.items()):
         # The lift's own packages are in no ring (M5-LIFT.md §8; check-lift.py).
         if package in manifest.get("lift_packages", ()):
@@ -1807,7 +1807,7 @@ def kernel_paths_unresolved(refs, modules, crate_names: set[str]) -> list[str]:
             continue
         rest = ref.segments[ref.segments.index(first) + 1:]
         if not rest:
-            # `use ferrix_kernel_item::*;`, the crate's root itself.
+            # `use xaqu_kernel_item::*;`, the crate's root itself.
             continue
         if resolver.member((), rest[0], (), len(rest) == 1 and not ref.is_use, frozenset()) is None:
             out.append(f"{ref.file}:{ref.line}: {'::'.join(ref.segments)} names nothing in the kernel's crates")
@@ -1873,7 +1873,7 @@ def kernel_dependency_problems(manifest: dict, cargo_of, workspace: dict,
 
 
 def kernel_crate_libraries(manifest: dict, files: list[str], read, exists) -> dict[str, set[str]]:
-    """`{package: the library names (ferrix_vfs, ...) its files name}`, each
+    """`{package: the library names (xaqu_vfs, ...) its files name}`, each
     file counted for the crate whose module tree reaches it."""
     entries = {k: v for k, v in manifest.get("kernel_crates", {}).items() if not k.startswith("//")}
     reached, _ = kernel_crate_files(entries, read, exists, files)
@@ -1881,7 +1881,7 @@ def kernel_crate_libraries(manifest: dict, files: list[str], read, exists) -> di
     for rel, crates in reached.items():
         if len(crates) != 1:
             continue
-        names = {t for t, _ in rustlex.tokens(rustlex.mask(read(rel))) if t.startswith("ferrix_")}
+        names = {t for t, _ in rustlex.tokens(rustlex.mask(read(rel))) if t.startswith("xaqu_")}
         out.setdefault(crates[0], set()).update(names)
     return out
 
@@ -1949,17 +1949,17 @@ def workspace_packages() -> dict[str, tuple[str, dict]]:
     return out
 
 
-_BUILD_KERNEL = {"ferrix-kernel": "src/kernel", "ferrix-kernel-core": "src/kernel/core",
-                 "ferrix-kernel-item": "src/kernel/item", "ferrix-kernel-load": "src/kernel/load"}
+_BUILD_KERNEL = {"xaqu-kernel": "src/kernel", "xaqu-kernel-core": "src/kernel/core",
+                 "xaqu-kernel-item": "src/kernel/item", "xaqu-kernel-load": "src/kernel/load"}
 
 
 def _build_packages(**changes) -> dict[str, tuple[str, dict]]:
     packages = {
-        "ferrix-kernel": ("src/kernel", {"package": {"name": "ferrix-kernel"}}),
-        "ferrix-kernel-core": ("src/kernel/core", {"package": {"name": "ferrix-kernel-core", "build": "../build.rs"}}),
-        "ferrix-kernel-item": ("src/kernel/item", {"package": {"name": "ferrix-kernel-item", "build": "../build.rs"}}),
-        "ferrix-kernel-load": ("src/kernel/load", {"package": {"name": "ferrix-kernel-load", "build": "../build.rs"}}),
-        "ferrix-net": ("src/lib/net/net", {"package": {"name": "ferrix-net"}}),
+        "xaqu-kernel": ("src/kernel", {"package": {"name": "xaqu-kernel"}}),
+        "xaqu-kernel-core": ("src/kernel/core", {"package": {"name": "xaqu-kernel-core", "build": "../build.rs"}}),
+        "xaqu-kernel-item": ("src/kernel/item", {"package": {"name": "xaqu-kernel-item", "build": "../build.rs"}}),
+        "xaqu-kernel-load": ("src/kernel/load", {"package": {"name": "xaqu-kernel-load", "build": "../build.rs"}}),
+        "xaqu-net": ("src/lib/net/net", {"package": {"name": "xaqu-net"}}),
     }
     for package, build in changes.items():
         directory, cargo = packages[package.replace("_", "-")]
@@ -1981,7 +1981,7 @@ def loader_problems(manifest: dict, sources: dict[str, str]) -> list[str]:
     """
     allowed = manifest.get("loader_callers", {})
     rules = (
-        ("elf_parse", re.compile(r"\bElf::parse\b|\bferrix_elf::Elf\b"), "parses an ELF"),
+        ("elf_parse", re.compile(r"\bElf::parse\b|\bxaqu_elf::Elf\b"), "parses an ELF"),
         ("first_image_load", re.compile(r"\bfirst_image::load(?:_at)?\b"), "calls the kernel's one loader"),
     )
     problems = []
@@ -1998,7 +1998,7 @@ def _loader_self_test() -> list[str]:
     failures = []
     if loader_problems(manifest, good):
         failures.append("loader rule: a named caller was refused")
-    if len(loader_problems(manifest, {"b.rs": "ferrix_elf::Elf::parse(x);"})) != 1:
+    if len(loader_problems(manifest, {"b.rs": "xaqu_elf::Elf::parse(x);"})) != 1:
         failures.append("loader rule: a planted parser passed")
     if len(loader_problems(manifest, {"b.rs": "first_image::load(s, x);"})) != 1:
         failures.append("loader rule: a planted loader call passed")
@@ -2015,11 +2015,11 @@ def _build_script_self_test() -> list[str]:
         failures.append(f"build script: the kernel as built was refused: "
                         f"{build_script_problems(_BUILD_KERNEL, _build_packages(), exists)}")
     for what, changes, expect in [
-        ("a library without the build line", {"ferrix_kernel_core": None}, "ferrix-kernel-core: a kernel crate"),
-        ("a library naming another script", {"ferrix_kernel_item": "other.rs"}, "ferrix-kernel-item: a kernel crate"),
-        ("the load without the build line", {"ferrix_kernel_load": None}, "ferrix-kernel-load: a kernel crate"),
-        ("an outside package naming the script", {"ferrix_net": "../../../kernel/build.rs"},
-         "ferrix-net: builds with src/kernel/build.rs"),
+        ("a library without the build line", {"xaqu_kernel_core": None}, "xaqu-kernel-core: a kernel crate"),
+        ("a library naming another script", {"xaqu_kernel_item": "other.rs"}, "xaqu-kernel-item: a kernel crate"),
+        ("the load without the build line", {"xaqu_kernel_load": None}, "xaqu-kernel-load: a kernel crate"),
+        ("an outside package naming the script", {"xaqu_net": "../../../kernel/build.rs"},
+         "xaqu-net: builds with src/kernel/build.rs"),
     ]:
         found = build_script_problems(_BUILD_KERNEL, _build_packages(**changes), exists)
         if not any(expect in p for p in found):
@@ -2161,13 +2161,13 @@ _GPU_PATHS = ["src/exec.rs", "src/interfaces/chardev/mod.rs", "src/interfaces/xe
 def _gpu_self_test() -> list[str]:
     """Rule 6 finds what it should and nothing else."""
     _, refs, _ = build(sorted(_GPU_REFS), lambda rel: _GPU_REFS[rel])
-    found = gpu_driver_problems(_GPU_PATHS, refs, {"ferrix-kernel": ["ferrix-frame", "intel-xelp", "xenon"]})
+    found = gpu_driver_problems(_GPU_PATHS, refs, {"xaqu-kernel": ["xaqu-frame", "intel-xelp", "xenon"]})
     want = [
         "src/kernel/src/interfaces/xe/mod.rs: the path names an Intel GPU driver",
         "src/kernel/src/gpu/i915.rs: the path names an Intel GPU driver",
         "src/kernel/src/intel-xelp: the path names an Intel GPU driver",
         "src/kernel/src/Xelp_regs.rs: the path names an Intel GPU driver",
-        "ferrix-kernel -> intel-xelp: a kernel crate depends on an Intel GPU driver's crate",
+        "xaqu-kernel -> intel-xelp: a kernel crate depends on an Intel GPU driver's crate",
         "a.rs:1: names the crate `intel_xelp`, an Intel GPU driver's",
         "a.rs:2: names the crate `i915`, an Intel GPU driver's",
     ]
@@ -2271,29 +2271,29 @@ _CRATE_KINDS = {
 }
 
 # The crate-level dependency rule. Each case is the dependencies of a pretend
-# `ferrix-btrfs-write`, and whether the rule must refuse it.
+# `xaqu-btrfs-write`, and whether the rule must refuse it.
 _DEP_MANIFEST = {
     "crates": {
         "members": {
-            "ferrix-btrfs": {"ring": "item", "path": "-"},
-            "ferrix-btrfs-write": {"ring": "item", "path": "-"},
-            "ferrix-btrfs-vfs": {"ring": "load", "path": "-"},
-            "ferrix-low": {"ring": "core", "path": "-"},
+            "xaqu-btrfs": {"ring": "item", "path": "-"},
+            "xaqu-btrfs-write": {"ring": "item", "path": "-"},
+            "xaqu-btrfs-vfs": {"ring": "load", "path": "-"},
+            "xaqu-low": {"ring": "core", "path": "-"},
         },
-        "infrastructure_allowlist": {"ferrix-fallible": "why", "ferrix-sync": "why"},
+        "infrastructure_allowlist": {"xaqu-fallible": "why", "xaqu-sync": "why"},
     }
 }
 _DEP_CASES = [
-    ("the reader, item", {"dependencies": {"ferrix-btrfs": {"workspace": True}}}, False),
-    ("a core crate", {"dependencies": {"ferrix-low": "0.1"}}, False),
-    ("an allowlisted crate", {"dependencies": {"ferrix-fallible": {"workspace": True}}}, False),
-    ("a load crate", {"dependencies": {"ferrix-btrfs-vfs": {"workspace": True}}}, True),
-    ("a crate in no ring", {"dependencies": {"ferrix-vfs": {"workspace": True}}}, True),
-    ("a load crate under a target", {"target": {"cfg(x)": {"dependencies": {"ferrix-btrfs-vfs": "1"}}}}, True),
-    ("a load crate to build with", {"build-dependencies": {"ferrix-btrfs-vfs": "1"}}, True),
-    ("a load crate renamed", {"dependencies": {"vfs": {"package": "ferrix-btrfs-vfs"}}}, True),
-    ("a load crate to test with", {"dev-dependencies": {"ferrix-btrfs-vfs": "1"}}, False),
-    ("the load through the allowlist", {"dependencies": {"ferrix-sync": "1"}}, True),
+    ("the reader, item", {"dependencies": {"xaqu-btrfs": {"workspace": True}}}, False),
+    ("a core crate", {"dependencies": {"xaqu-low": "0.1"}}, False),
+    ("an allowlisted crate", {"dependencies": {"xaqu-fallible": {"workspace": True}}}, False),
+    ("a load crate", {"dependencies": {"xaqu-btrfs-vfs": {"workspace": True}}}, True),
+    ("a crate in no ring", {"dependencies": {"xaqu-vfs": {"workspace": True}}}, True),
+    ("a load crate under a target", {"target": {"cfg(x)": {"dependencies": {"xaqu-btrfs-vfs": "1"}}}}, True),
+    ("a load crate to build with", {"build-dependencies": {"xaqu-btrfs-vfs": "1"}}, True),
+    ("a load crate renamed", {"dependencies": {"vfs": {"package": "xaqu-btrfs-vfs"}}}, True),
+    ("a load crate to test with", {"dev-dependencies": {"xaqu-btrfs-vfs": "1"}}, False),
+    ("the load through the allowlist", {"dependencies": {"xaqu-sync": "1"}}, True),
 ]
 
 
@@ -2306,13 +2306,13 @@ def _crate_self_test() -> list[str]:
         failures.append(f"crate tree: problems {problems}")
     for what, cargo, refused in _DEP_CASES:
         manifests = {
-            "ferrix-btrfs": {}, "ferrix-btrfs-vfs": {}, "ferrix-low": {}, "ferrix-fallible": {},
-            "ferrix-btrfs-write": cargo,
+            "xaqu-btrfs": {}, "xaqu-btrfs-vfs": {}, "xaqu-low": {}, "xaqu-fallible": {},
+            "xaqu-btrfs-write": cargo,
             # Allowlisted, and reaching the load: the allowlist is no door.
-            "ferrix-sync": {"dependencies": {"ferrix-btrfs-vfs": "1"}},
+            "xaqu-sync": {"dependencies": {"xaqu-btrfs-vfs": "1"}},
         }
         problems, _ = crate_dependency_problems(_DEP_MANIFEST, manifests.get, {})
-        mine = [p for p in problems if p.startswith("ferrix-btrfs-write ")]
+        mine = [p for p in problems if p.startswith("xaqu-btrfs-write ")]
         if bool(mine) != refused:
             failures.append(f"crate rule: {what}: {'passed' if not mine else mine}")
     return failures
@@ -2469,21 +2469,21 @@ _KERNEL_TREE = {
                 "fn parent() { meth::T.m(); }\n",
     "sched/meth.rs": "// CHECKS-ONLY-METHODS: home: super\npub struct T;\nimpl T {\n    #[doc(hidden)]\n"
                      "    pub fn m(&self) {}\n}\n",
-    "kernel_item.rs": "pub use ferrix_kernel_core::{mm, object};\npub mod syscall;\n",
+    "kernel_item.rs": "pub use xaqu_kernel_core::{mm, object};\npub mod syscall;\n",
     # The raised architecture check by ledger line 1579's shape A: declared
     # by position with no `cfg`, the file itself `#![cfg(..)]`; and the one
     # arch-neutral re-export of the drivers (ledger line 1585, Q2).
-    "kernel_load.rs": "pub use ferrix_kernel_item::*;\npub mod fs;\n"
-                      "pub mod arch { pub use ferrix_kernel_core::arch::*;\n"
+    "kernel_load.rs": "pub use xaqu_kernel_item::*;\npub mod fs;\n"
+                      "pub mod arch { pub use xaqu_kernel_core::arch::*;\n"
                       "    pub use stage_check::drive_system_call;\n    pub mod stage_check;\n"
                       "    pub mod x86_64 { pub mod trap { pub mod check; } } }\n"
-                      "pub mod object { pub use ferrix_kernel_core::object::*; pub mod check; }\n"
-                      "pub mod syscall { pub use ferrix_kernel_item::syscall::*; pub mod eventfd; }\n",
+                      "pub mod object { pub use xaqu_kernel_core::object::*; pub mod check; }\n"
+                      "pub mod syscall { pub use xaqu_kernel_item::syscall::*; pub mod eventfd; }\n",
     "arch/mod.rs": "pub mod x86_64;\npub fn facade() {}\n",
     "arch/x86_64/mod.rs": "pub mod trap;\n",
     "arch/x86_64/trap.rs": "pub fn entry() {}\n",
     "arch/x86_64/trap/check.rs": "#![cfg(target_arch = \"x86_64\")]\n"
-                                 "pub fn drive_system_call() { ferrix_kernel_core::arch::x86_64::trap::entry(); }\n",
+                                 "pub fn drive_system_call() { xaqu_kernel_core::arch::x86_64::trap::entry(); }\n",
     "arch/stage_check.rs": "#[cfg(target_arch = \"x86_64\")]\npub use super::x86_64::trap::check::drive_system_call;\n",
     # A marker above an attribute of several lines; and the item named from
     # its own module, which reached it before it was made `pub`.
@@ -2498,8 +2498,8 @@ _KERNEL_TREE = {
                        "fn c() { crate::mm::secret(); crate::fs::open(); }\n",
     "syscall/mod.rs": "pub use crate::mm::*;\npub fn dispatch() {}\n",
     "syscall/eventfd.rs": "fn e() { super::dispatch(); }\n",
-    "fs.rs": "pub fn open() { ferrix_kernel_core::mm::frame(); }\n",
-    "stages_check.rs": "fn s() { crate::fs::open(); ferrix_kernel_load::object::make(); }\n",
+    "fs.rs": "pub fn open() { xaqu_kernel_core::mm::frame(); }\n",
+    "stages_check.rs": "fn s() { crate::fs::open(); xaqu_kernel_load::object::make(); }\n",
 }
 _KERNEL_MANIFEST = {
     "rings": {
@@ -2509,20 +2509,20 @@ _KERNEL_MANIFEST = {
     },
     "test_file_patterns": ["check.rs", "*_check.rs"],
     "kernel_crates": {
-        "ferrix-kernel": {"path": "k", "root": "main.rs", "rings": []},
-        "ferrix-kernel-core": {"path": "k/core", "root": "kernel_core.rs", "rings": ["core"]},
-        "ferrix-kernel-item": {"path": "k/item", "root": "kernel_item.rs", "rings": ["item"]},
-        "ferrix-kernel-load": {"path": "k/load", "root": "kernel_load.rs", "rings": ["load"]},
+        "xaqu-kernel": {"path": "k", "root": "main.rs", "rings": []},
+        "xaqu-kernel-core": {"path": "k/core", "root": "kernel_core.rs", "rings": ["core"]},
+        "xaqu-kernel-item": {"path": "k/item", "root": "kernel_item.rs", "rings": ["item"]},
+        "xaqu-kernel-load": {"path": "k/load", "root": "kernel_load.rs", "rings": ["load"]},
     },
     "raised_checks": {"entries": [
-        {"file": "arch/stage_check.rs", "crate": "ferrix-kernel-load"},
-        {"file": "arch/x86_64/trap/check.rs", "crate": "ferrix-kernel-load"},
-        {"file": "object/check.rs", "crate": "ferrix-kernel-load"},
-        {"file": "stages_check.rs", "crate": "ferrix-kernel"},
+        {"file": "arch/stage_check.rs", "crate": "xaqu-kernel-load"},
+        {"file": "arch/x86_64/trap/check.rs", "crate": "xaqu-kernel-load"},
+        {"file": "object/check.rs", "crate": "xaqu-kernel-load"},
+        {"file": "stages_check.rs", "crate": "xaqu-kernel"},
     ]},
 }
-_KERNEL_MEMBERS = {"ferrix-kernel": "k", "ferrix-kernel-core": "k/core",
-                   "ferrix-kernel-item": "k/item", "ferrix-kernel-load": "k/load"}
+_KERNEL_MEMBERS = {"xaqu-kernel": "k", "xaqu-kernel-core": "k/core",
+                   "xaqu-kernel-item": "k/item", "xaqu-kernel-load": "k/load"}
 
 
 def _kernel_break(tree: dict | None = None, raised: list | None = None, members: dict | None = None):
@@ -2550,16 +2550,16 @@ _KERNEL_BREAKS = [
      "reached by no crate"),
     ("crate equals ring: a load file in the core's crate",
      {"tree": {"kernel_core.rs": "pub mod mm;\npub mod object;\npub mod x;\n", "x.rs": ""}},
-     "load ring, reached by ferrix-kernel-core"),
+     "load ring, reached by xaqu-kernel-core"),
     ("a raised check back in its ring's crate is stale",
      {"tree": {"object/mod.rs": "pub mod check;\npub fn make() {}\n",
                "kernel_load.rs": _KERNEL_TREE["kernel_load.rs"].replace(" pub mod check;", "")}},
      "the entry is stale"),
     ("a raised entry naming no file is stale",
-     {"raised": _KERNEL_MANIFEST["raised_checks"]["entries"] + [{"file": "gone_check.rs", "crate": "ferrix-kernel"}]},
+     {"raised": _KERNEL_MANIFEST["raised_checks"]["entries"] + [{"file": "gone_check.rs", "crate": "xaqu-kernel"}]},
      "is no kernel file"),
     ("product code is never raised",
-     {"raised": _KERNEL_MANIFEST["raised_checks"]["entries"] + [{"file": "fs.rs", "crate": "ferrix-kernel-load"}]},
+     {"raised": _KERNEL_MANIFEST["raised_checks"]["entries"] + [{"file": "fs.rs", "crate": "xaqu-kernel-load"}]},
      "is product code"),
     ("a checks-only item named from product code",
      {"tree": {"fs.rs": "pub fn open() { crate::mm::secret(); }\n"}}, "checks-only"),
@@ -2573,7 +2573,7 @@ _KERNEL_BREAKS = [
     ("a checks-only item named through a re-export chain",
      {"tree": {"fs.rs": "pub fn open() { crate::syscall::secret(); }\n"}}, "checks-only"),
     ("a path through a kernel crate that names nothing",
-     {"tree": {"fs.rs": "pub fn open() { ferrix_kernel_core::nothing::here(); }\n"}}, "names nothing"),
+     {"tree": {"fs.rs": "pub fn open() { xaqu_kernel_core::nothing::here(); }\n"}}, "names nothing"),
     ("a whole-file allow of disallowed_methods outside a raised check",
      {"tree": {"fs.rs": "#![allow(clippy::disallowed_methods)]\npub fn open() {}\n"}}, "for the whole file"),
     ("an item allow of disallowed_methods in a product module",
@@ -2601,52 +2601,52 @@ _KERNEL_BREAKS = [
      {"tree": {"fs.rs": "pub fn open() { crate::arch::x86_64::trap::check::drive_system_call(); }\n"}},
      "check code in arch/x86_64/trap/check.rs (raised)"),
     ("a package under src/kernel not in kernel_crates",
-     {"members": dict(_KERNEL_MEMBERS, **{"ferrix-kernel-extra": "k/extra"})}, "not in kernel_crates"),
+     {"members": dict(_KERNEL_MEMBERS, **{"xaqu-kernel-extra": "k/extra"})}, "not in kernel_crates"),
 ]
 
 # The dependency rule for the core's and the item's kernel crates (D2).
 _KDEP_MANIFEST = dict(_KERNEL_MANIFEST, crates={
-    "members": {"ferrix-low": {"ring": "core", "path": "-"}, "ferrix-high": {"ring": "load", "path": "-"}},
-    "infrastructure_allowlist": {"ferrix-sync": "why"},
+    "members": {"xaqu-low": {"ring": "core", "path": "-"}, "xaqu-high": {"ring": "load", "path": "-"}},
+    "infrastructure_allowlist": {"xaqu-sync": "why"},
 })
 # F-76's register (ledger line 1585, Q1): the core's fixture entry lists
-# ferrix-listed, which the core's files name, and ferrix-unnamed, which none
+# xaqu-listed, which the core's files name, and xaqu-unnamed, which none
 # does.
 _KDEP_LISTED = dict(_KDEP_MANIFEST, kernel_crates=dict(_KERNEL_MANIFEST["kernel_crates"], **{
-    "ferrix-kernel-core": dict(_KERNEL_MANIFEST["kernel_crates"]["ferrix-kernel-core"],
-                               unclassified_deps={"ferrix-listed": "F-76", "ferrix-unnamed": "F-76"}),
+    "xaqu-kernel-core": dict(_KERNEL_MANIFEST["kernel_crates"]["xaqu-kernel-core"],
+                               unclassified_deps={"xaqu-listed": "F-76", "xaqu-unnamed": "F-76"}),
 }))
 _KDEP_CASES = [
-    ("a core library", "ferrix-kernel-core", {"ferrix-low": "1", "ferrix-sync": "1"}, None),
-    ("the core, from the item", "ferrix-kernel-item", {"ferrix-kernel-core": "1"}, None),
-    ("the item, from the core", "ferrix-kernel-core", {"ferrix-kernel-item": "1"}, "depends on one holding"),
-    ("a load library, from the core", "ferrix-kernel-core", {"ferrix-high": "1"}, "depends on a load crate"),
-    ("a crate in no ring", "ferrix-kernel-item", {"ferrix-other": "1"}, "in no ring"),
+    ("a core library", "xaqu-kernel-core", {"xaqu-low": "1", "xaqu-sync": "1"}, None),
+    ("the core, from the item", "xaqu-kernel-item", {"xaqu-kernel-core": "1"}, None),
+    ("the item, from the core", "xaqu-kernel-core", {"xaqu-kernel-item": "1"}, "depends on one holding"),
+    ("a load library, from the core", "xaqu-kernel-core", {"xaqu-high": "1"}, "depends on a load crate"),
+    ("a crate in no ring", "xaqu-kernel-item", {"xaqu-other": "1"}, "in no ring"),
     # F-76's register (_KDEP_LISTED).
-    ("a listed unclassified crate", "ferrix-kernel-core", {"ferrix-listed": "1", "ferrix-unnamed": "1"},
-     "no file of the crate names ferrix_unnamed"),
-    ("a listed crate the manifest dropped", "ferrix-kernel-core", {"ferrix-unnamed": "1"},
-     "ferrix-listed is no dependency of the crate's manifest"),
-    ("an unlisted crate beside the register", "ferrix-kernel-core",
-     {"ferrix-listed": "1", "ferrix-unnamed": "1", "ferrix-other": "1"}, "not in its unclassified_deps"),
-    ("the register on the load crate", "ferrix-kernel-load", {}, "holds no core or item alone"),
+    ("a listed unclassified crate", "xaqu-kernel-core", {"xaqu-listed": "1", "xaqu-unnamed": "1"},
+     "no file of the crate names xaqu_unnamed"),
+    ("a listed crate the manifest dropped", "xaqu-kernel-core", {"xaqu-unnamed": "1"},
+     "xaqu-listed is no dependency of the crate's manifest"),
+    ("an unlisted crate beside the register", "xaqu-kernel-core",
+     {"xaqu-listed": "1", "xaqu-unnamed": "1", "xaqu-other": "1"}, "not in its unclassified_deps"),
+    ("the register on the load crate", "xaqu-kernel-load", {}, "holds no core or item alone"),
 ]
-_KDEP_NAMED = {"ferrix-kernel-core": {"ferrix_listed", "ferrix_low", "ferrix_sync"}}
+_KDEP_NAMED = {"xaqu-kernel-core": {"xaqu_listed", "xaqu_low", "xaqu_sync"}}
 
 
 def _kernel_upward_self_test() -> list[str]:
     """The upward-reference rule sees a path through a kernel crate's name
     (ledger line 1565, (2)(b)): a core file and an item file each naming
-    `ferrix_kernel_load::fs`, the load's, are refused."""
+    `xaqu_kernel_load::fs`, the load's, are refused."""
     failures = []
     manifest = dict(_KERNEL_MANIFEST, dependency_rules=[
         {"from": "core", "may_not_reference": ["item", "load"]},
         {"from": "item", "may_not_reference": ["load"]},
     ], crates={"members": {}})
     for what, rel, text, want in [
-        ("a core file", "mm.rs", _KERNEL_TREE["mm.rs"] + "fn up() { ferrix_kernel_load::fs::open(); }\n", "core"),
+        ("a core file", "mm.rs", _KERNEL_TREE["mm.rs"] + "fn up() { xaqu_kernel_load::fs::open(); }\n", "core"),
         ("an item file", "syscall/mod.rs",
-         _KERNEL_TREE["syscall/mod.rs"] + "fn up() { ::ferrix_kernel_load::fs::open(); }\n", "item"),
+         _KERNEL_TREE["syscall/mod.rs"] + "fn up() { ::xaqu_kernel_load::fs::open(); }\n", "item"),
     ]:
         files = dict(_KERNEL_TREE, **{rel: text})
         ring_of, _, _ = classify(manifest, sorted(files))
@@ -2658,7 +2658,7 @@ def _kernel_upward_self_test() -> list[str]:
         finally:
             ROOT_FILES.difference_update(added)
         if not any(e.file == rel and e.from_ring == want and e.to_ring == "load" for e in edges):
-            failures.append(f"kernel crates: {what} naming ferrix_kernel_load::fs passed the upward rule "
+            failures.append(f"kernel crates: {what} naming xaqu_kernel_load::fs passed the upward rule "
                             f"({[(e.file, e.references) for e in edges]})")
     # A `#[macro_export]` macro sits at the crate's root (ledger line 1477, C2):
     # `crate::say!` from a core file names the core file that defines it, not
@@ -2698,13 +2698,13 @@ def _kernel_self_test() -> list[str]:
             manifest = _KDEP_LISTED
         if what == "the register on the load crate":
             manifest = dict(_KDEP_LISTED, kernel_crates=dict(_KDEP_LISTED["kernel_crates"], **{
-                "ferrix-kernel-load": dict(_KERNEL_MANIFEST["kernel_crates"]["ferrix-kernel-load"],
-                                           unclassified_deps={"ferrix-listed": "F-76"})}))
+                "xaqu-kernel-load": dict(_KERNEL_MANIFEST["kernel_crates"]["xaqu-kernel-load"],
+                                           unclassified_deps={"xaqu-listed": "F-76"})}))
         found = [p for p in kernel_dependency_problems(manifest, manifests.get, {}, _KDEP_NAMED)
                  if p.startswith(package) or p.startswith(f"kernel_crates.{package}")]
         if what == "a listed unclassified crate":
-            # Only the unnamed entry may be refused: ferrix-listed passes.
-            if any("ferrix-listed" in p or "ferrix_listed" in p for p in found):
+            # Only the unnamed entry may be refused: xaqu-listed passes.
+            if any("xaqu-listed" in p or "xaqu_listed" in p for p in found):
                 failures.append(f"kernel crates: a listed unclassified crate was refused: {found}")
         if (expect is None) != (not found) or (expect and not any(expect in p for p in found)):
             failures.append(f"kernel crates: dependency {what}: {found or 'passed'}")
@@ -2800,7 +2800,7 @@ def profile_problems(name: str, profile: dict, flags: dict) -> tuple[list[str], 
     build yet). Every flag set (rule 4), each value declared and allowed at
     the profile's level or by a dated exception in `present` alone (rule 3,
     BF1), requirements met, and the boot options it permits declared, with
-    `ferrix.checks` running and no test-only option in a certified one."""
+    `xaqu.checks` running and no test-only option in a certified one."""
     problems, waiting = [], []
     standards, levels = flags.get("standards", {}), flags.get("levels", {})
     declared = flags.get("flags", {})
@@ -2873,8 +2873,8 @@ def profile_problems(name: str, profile: dict, flags: dict) -> tuple[list[str], 
             problems.append(f"a certified profile permits the test-only option {option}")
         if level != "none" and entry.get("claimless"):
             problems.append(f"a certified profile permits {option}, which carries no claim")
-    if level != "none" and profile.get("boot_options", {}).get("ferrix.checks", ["run"]) != ["run"]:
-        problems.append("a certified profile permits ferrix.checks only with the checks running")
+    if level != "none" and profile.get("boot_options", {}).get("xaqu.checks", ["run"]) != ["run"]:
+        problems.append("a certified profile permits xaqu.checks only with the checks running")
     for arch in profile.get("claim_architectures", []):
         if arch not in ARCH_TRIPLES:
             problems.append(f"claims the unknown architecture {arch}")
@@ -2959,7 +2959,7 @@ def reference_problems(manifest: dict, present: dict) -> list[str]:
         ("architectures", reference.get("architectures"), present.get("claim_architectures")),
         ("mitigations", reference.get("mitigations"), present.get("flags", {}).get("mitigations")),
         ("driver_updates", reference.get("driver_updates"), present.get("image", {}).get("driver_updates")),
-        ("devmgr", [reference.get("devmgr")], present.get("boot_options", {}).get("ferrix.devmgr")),
+        ("devmgr", [reference.get("devmgr")], present.get("boot_options", {}).get("xaqu.devmgr")),
     ]
     return [f"reference_configuration.{key} is {mine!r}, profiles/present.toml says {theirs!r}"
             for key, mine, theirs in pairs if mine != theirs]
@@ -2985,14 +2985,14 @@ def judge_profile(name: str, profile: dict, flags: dict, manifest: dict) -> tupl
 
 
 
-_SEAM_DEFINERS = re.compile(r"no_mangle\s*\)?\s*\]\s*(?:pub\s+)?(?:extern\s+\"[^\"]*\"\s+)?fn\s+__ferrix_")
+_SEAM_DEFINERS = re.compile(r"no_mangle\s*\)?\s*\]\s*(?:pub\s+)?(?:extern\s+\"[^\"]*\"\s+)?fn\s+__xaqu_")
 # Read in the unmasked text, since a mask blanks the strings they are in.
-_SEAM_STRING_DEFINERS = re.compile(r"export_name\s*=\s*\"__ferrix_|\.glob(?:a)?l\s+__ferrix_")
+_SEAM_STRING_DEFINERS = re.compile(r"export_name\s*=\s*\"__xaqu_|\.glob(?:a)?l\s+__xaqu_")
 
 
 def seam_scan_problems(removable: dict, linked: dict[str, str], seam_file: str) -> list[str]:
     """Ledger 3934 (2) and (3) over every source file of every crate the kernel
-    links (`linked`: path to text): no file defines a `__ferrix_` symbol by
+    links (`linked`: path to text): no file defines a `__xaqu_` symbol by
     name -- the seam macro's binding is their only definer -- and none but
     a seam's own list and the macro names one, so no call site calls a symbol
     but through the seam's wrappers."""
@@ -3004,17 +3004,17 @@ def seam_scan_problems(removable: dict, linked: dict[str, str], seam_file: str) 
         found += [match.start() for match in _SEAM_STRING_DEFINERS.finditer(text)]
         for start in sorted(found):
             line = text.count("\n", 0, start) + 1
-            problems.append(f"{rel}:{line}: defines a __ferrix_ symbol by name; only a seam's binding macro may (3934 (3))")
+            problems.append(f"{rel}:{line}: defines a __xaqu_ symbol by name; only a seam's binding macro may (3934 (3))")
         if any(rel.endswith("/" + listed) or rel == listed for listed in lists if listed) or rel.endswith(seam_file):
             continue
-        for match in re.finditer(r"\b__ferrix_[a-z0-9_]+", masked):
+        for match in re.finditer(r"\b__xaqu_[a-z0-9_]+", masked):
             line = text.count("\n", 0, match.start()) + 1
             problems.append(f"{rel}:{line}: names {match.group(0)}; only the seam's wrappers call it (3934 (2))")
     return problems
 
 
 def linked_sources() -> dict[str, str]:
-    """Every Rust file of every path crate `ferrix-kernel` reaches in the cargo
+    """Every Rust file of every path crate `xaqu-kernel` reaches in the cargo
     metadata graph, `src/lib` included."""
     out = subprocess.run(["cargo", "metadata", "--format-version", "1", "--offline"], cwd=ROOT,
                          capture_output=True, text=True, check=False)
@@ -3024,7 +3024,7 @@ def linked_sources() -> dict[str, str]:
     data = json.loads(out.stdout)
     packages = {package["id"]: package for package in data["packages"]}
     nodes = {node["id"]: node for node in data["resolve"]["nodes"]}
-    start = [pid for pid, package in packages.items() if package["name"] == "ferrix-kernel"]
+    start = [pid for pid, package in packages.items() if package["name"] == "xaqu-kernel"]
     seen, todo = set(), list(start)
     while todo:
         pid = todo.pop()
@@ -3114,8 +3114,8 @@ def _profile_self_test() -> list[str]:
             "b": {"allows": ["sc2", "none"], "lands": "M3", "built": "yes"},
             "c": {"allows": ["none"], "lands": "M0", "built": "stand-in", "stands_in": "a"},
         }}},
-        "boot_options": {"ferrix.checks": {"values": ["run", "skip"]},
-                         "ferrix.unisolated": {"kind": "flag", "claimless": True}},
+        "boot_options": {"xaqu.checks": {"values": ["run", "skip"]},
+                         "xaqu.unisolated": {"kind": "flag", "claimless": True}},
     }
     if flag_file_problems(flags):
         failures.append(f"a consistent flag file was refused: {flag_file_problems(flags)}")
@@ -3130,11 +3130,11 @@ def _profile_self_test() -> list[str]:
         failures.append("a level table where sc2 covers present was accepted")
     def profile(level, value, exceptions=(), name="p"):
         return {"profile": name, "level": level, "flags": {"f": value},
-                "exceptions": [dict(e) for e in exceptions], "boot_options": {"ferrix.checks": ["run"]}}
+                "exceptions": [dict(e) for e in exceptions], "boot_options": {"xaqu.checks": ["run"]}}
     if profile_problems("p", profile("sc2", "b"), flags)[0]:
         failures.append("a value allowing sc2 was refused at sc2")
     claimless = profile("sc2", "b")
-    claimless["boot_options"]["ferrix.unisolated"] = True
+    claimless["boot_options"]["xaqu.unisolated"] = True
     if not any("carries no claim" in p for p in profile_problems("p", claimless, flags)[0]):
         failures.append("a certified profile permitting a claimless option was accepted")
     claimless["level"] = "none"

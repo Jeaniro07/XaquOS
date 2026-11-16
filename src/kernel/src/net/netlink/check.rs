@@ -24,16 +24,16 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::netlink::{
     IFA_LOCAL, IFF_LOOPBACK, IFF_UP, IFLA_IFNAME, IfAddrMsg, IfInfoMsg, NETLINK_KOBJECT_UEVENT,
     NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP, NLM_F_EXCL, NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR,
     NetlinkAddress, NlMsgErr, NlMsgHdr, RT_SCOPE_UNIVERSE, RT_TABLE_MAIN, RTA_DST, RTA_OIF,
     RTM_DELADDR, RTM_DELROUTE, RTM_GETADDR, RTM_GETLINK, RTM_GETROUTE, RTM_NEWADDR, RTM_NEWROUTE,
     RTN_UNICAST, RTPROT_BOOT, RtMsg,
 };
-use ferrix_linux_abi::socket::{AF_INET, SO_PROTOCOL, SOCK_DGRAM, SOCK_RAW, SOL_SOCKET, Width};
-use ferrix_netlink::{Address, Attr, Messages, Value, Writer};
+use xaqu_linux_abi::socket::{AF_INET, SO_PROTOCOL, SOCK_DGRAM, SOCK_RAW, SOL_SOCKET, Width};
+use xaqu_netlink::{Address, Attr, Messages, Value, Writer};
 
 use super::{NetlinkSocket, Protocol, of};
 
@@ -310,7 +310,7 @@ fn refusals(netlink: &mut Netlink, report: &mut Report) -> Result<(), &'static s
 }
 
 /// The first message of a reply.
-fn first(reply: &[u8]) -> Result<ferrix_netlink::Message<'_>, &'static str> {
+fn first(reply: &[u8]) -> Result<xaqu_netlink::Message<'_>, &'static str> {
     Messages::new(reply)
         .next()
         .ok_or("a reply held no message at all")?

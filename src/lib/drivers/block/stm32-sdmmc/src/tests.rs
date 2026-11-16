@@ -334,7 +334,7 @@ fn dk1_entries() -> Vec<Entry> {
         (basic, 4130, 8225, "fsbl2"),
         (basic, 8226, 16417, "fip"),
         (basic, 16418, 278561, "bootfs"),
-        (basic, 278562, 2375713, "ferrix-scratch"),
+        (basic, 278562, 2375713, "xaqu-scratch"),
     ]
 }
 
@@ -398,7 +398,7 @@ fn read_table(header: &[u8], array: &[u8], blocks: u64) -> Result<Writable, Refu
 const CARD: u64 = 250_000_000;
 
 #[test]
-fn only_a_ferrix_partition_is_writable() {
+fn only_a_xaqu_partition_is_writable() {
     let (header, array) = table(&dk1_entries(), CARD);
     let writable = read_table(&header, &array, CARD).unwrap();
     assert_eq!(

@@ -58,8 +58,8 @@
 //! a process has one thread, and `vfork` copies the space rather than sharing
 //! it -- but `clone(CLONE_VM)` will, and nothing about the copy would say so.
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END, is_user_address};
+use xaqu_linux_abi::errno::Errno;
 
 use crate::arch;
 
@@ -144,7 +144,7 @@ fn resolve<R>(
     let answer = space.route(at).with_page(user_address(at)?, access, touch);
     // A copy that missed: said, and the error goes up as ever. The dispatcher's end
     // decides (`docs/microkernel/K1.md` §2.2, ledger 6529 Q1).
-    #[cfg(not(ferrix_load_built = "lift"))]
+    #[cfg(not(xaqu_load_built = "lift"))]
     if answer.is_err() {
         arch::note_copy_miss(space, at, access.write);
     }

@@ -7,7 +7,7 @@
 //! only to the package that emits it, so this crate cannot pass the flag for
 //! its dependents; it publishes the script's absolute path as `links`
 //! metadata, which cargo hands each dependent's build script as
-//! `DEP_FERRIX_RT_LINKER_SCRIPT`.
+//! `DEP_XAQU_RT_LINKER_SCRIPT`.
 
 // A build script talks to cargo over stdout; that is the whole interface.
 #![allow(

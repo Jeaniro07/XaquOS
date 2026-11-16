@@ -1,4 +1,4 @@
-# Ferrix technical guide
+# Xaqu technical guide
 
 [Back to the project overview](../README.md)
 
@@ -8,7 +8,7 @@ just want to boot the system.
 
 ## Proof you can run
 
-The boot tests do more than start a shell. `cargo xtask test-rustc` boots Ferrix with a
+The boot tests do more than start a shell. `cargo xtask test-rustc` boots Xaqu with a
 btrfs volume holding the rust-lang.org release of `rustc` and Debian's glibc,
 compiles `hello.rs` through `cc`, `collect2` and `rust-lld` — five programs
 nobody here wrote, four `execve`s deep, over some 350 MiB of shared libraries
@@ -17,17 +17,17 @@ mapped from disk — and runs what it made:
 ```
 rustc 1.99.1 (58cf8f9c3 2026-10-13)
 ...
-rustc-gate: hello from rustc on Ferrix
+rustc-gate: hello from rustc on Xaqu
 ```
 
 Since 2026-09-23 it has also built and booted its own x86-64 image.
 `cargo xtask test-selfhost` puts Cargo, this tree and its vendored crates on a
-btrfs volume. Ferrix runs `cargo xtask build --arch x86_64` inside the guest.
-The test then takes the image Ferrix made from the volume and boots it:
+btrfs volume. Xaqu runs `cargo xtask build --arch x86_64` inside the guest.
+The test then takes the image Xaqu made from the volume and boots it:
 
 ```
-   93.49 |   image /data/src/build/x86_64/ferrix.img (63 KiB loader, 75510 KiB kernel, 10666 KiB initramfs)
-  x86_64: Ferrix built its own image, and it booted
+   93.49 |   image /data/src/build/x86_64/xaqu.img (63 KiB loader, 75510 KiB kernel, 10666 KiB initramfs)
+  x86_64: Xaqu built its own image, and it booted
 ```
 
 ## How it is built
@@ -35,7 +35,7 @@ The test then takes the image Ferrix made from the volume and boots it:
 Claude sessions write most of the code, each in a separate git worktree. The
 project owner sets priorities, a coordinator handles merges into `main`, and
 a certification consultant reviews changes to the kernel core. The first
-public commit was on 2026-09-11. `rustc` ran on Ferrix on 2026-09-22; Ferrix
+public commit was on 2026-09-11. `rustc` ran on Xaqu on 2026-09-22; Xaqu
 built and booted its first x86-64 image the next day.
 
 Changes land after their tests pass. Changes to the boot image also run the
@@ -50,7 +50,7 @@ what each session owns and what is left.
 kept current with every landing. In short:
 
 * **The kernel.** Stages 0–12 are in the boot test on all three
-  architectures, which ends in `FERRIX-BOOT-OK stages 1-12`: UEFI hand-off,
+  architectures, which ends in `XAQU-BOOT-OK stages 1-12`: UEFI hand-off,
   a buddy allocator and kernel heap, higher-half virtual memory with no
   mapping both writable and executable, traps, interrupts and timers, SMP
   with TLB shootdown and grace periods, preemptive tasks under an EEVDF fair
@@ -80,13 +80,13 @@ kept current with every landing. In short:
   compositor written from scratch, reads a real `hyprland.conf`, tiles
   windows, and composites on the host GPU through virgl
   ([docs/GPU.md](GPU.md)); a terminal running zinc opens at boot.
-* **A board.** ARMv7-A is the Cortex-A7 of the STM32MP157, and Ferrix boots
+* **A board.** ARMv7-A is the Cortex-A7 of the STM32MP157, and Xaqu boots
   an STM32MP157D-DK1 from its SD card ([the board guide](vendor/st/stm32mp157-dk.md)).
 
 Still to come, in the roadmap's order: the rest of stage 19 (client pages as
 texture backing and the second-pass effects), namespaces, seccomp and the
 rest of cgroups (13), real-time domains (14), the rest of authentication
-(15), self-hosting (20), bare metal with a GPU of Ferrix's own (21), and the
+(15), self-hosting (20), bare metal with a GPU of Xaqu's own (21), and the
 rest of Steam (22), whose client already draws its sign-in window through
 [yserver](YSERVER.md), an X server in Rust ([docs/STEAM.md](STEAM.md)).
 
@@ -164,28 +164,28 @@ read the image too — `btrfs check build/root.img`, or a loop mount on Linux.
 ### Installing on a disk of its own
 
 `cargo xtask build --arch x86_64 --installer` makes a live image,
-`build/x86_64/ferrix.img`, that also carries `/sbin/ferrix-install`. Attach it
+`build/x86_64/xaqu.img`, that also carries `/sbin/xaqu-install`. Attach it
 to a virtual machine with UEFI firmware as a **virtio** disk (virt-manager's
 default), with a second, empty virtio disk of at least 2 GiB, and boot it.
 In the shell:
 
 ```
-ferrix-install /dev/vde        # the empty disk; asks before it erases it
+xaqu-install /dev/vde        # the empty disk; asks before it erases it
 ```
 
 It gives the disk a GUID partition table: an EFI system partition with the
 live image's loader, kernel and initramfs, and a partition with the empty
-`ferrix-root` volume. Remove the live disk and boot the new one: the kernel
-finds `ferrix-root` on its second partition and installs the system there,
+`xaqu-root` volume. Remove the live disk and boot the new one: the kernel
+finds `xaqu-root` on its second partition and installs the system there,
 as `run` does. This is the MVP of [`docs/INSTALLER.md`](INSTALLER.md):
 virtual machines only, the root file system 1 GiB whatever the disk, and
 no graphical installer yet. `cargo xtask test-install` installs and boots
 the result.
 
 `run` and `run-compositor` also keep a home disk, `build/home.img`: an 8 GiB
-btrfs volume labelled `ferrix-home`, which the kernel mounts at `/home`. The
+btrfs volume labelled `xaqu-home`, which the kernel mounts at `/home`. The
 first boot makes it empty, and init makes each account's home on it
-(`/home/ferrix`, `0700`, the account's own). The users' files and settings
+(`/home/xaqu`, `0700`, the account's own). The users' files and settings
 live there, apart from the system's. A root made before 2026-10-03 kept
 `/home` on itself: those files are still on `build/root.img`, hidden under
 the disk's mount rather than deleted, until `--reset-root` starts the root
@@ -197,19 +197,19 @@ one. It keeps the home disk, and `--persistent`'s `/data` below.
 flash was wiped: the root, the home disk and `--persistent`'s `/data`.
 `--tmpfs-root` boots with `/` in memory instead, as every boot did before,
 and leaves the volume untouched for the next boot that wants it; on a kernel
-command line, `ferrix.root=tmpfs` does the same. The test boots never attach
+command line, `xaqu.root=tmpfs` does the same. The test boots never attach
 the volume, so their `/` is the tmpfs and what is on it cannot change what a
 test sees.
 
 On x86-64, `run` and `run-compositor` also attach the stage 16 rustc sysroot
 when `tools/common/fetch/fetch-rustc-sysroot.sh` has made
-`~/.local/share/ferrix/rustc/rustc.img` (or `$FERRIX_RUSTC_SYSROOT/rustc.img`).
+`~/.local/share/xaqu/rustc/rustc.img` (or `$XAQU_RUSTC_SYSROOT/rustc.img`).
 The kernel mounts that btrfs disk at `/data`; QEMU's snapshot mode keeps
 guest writes from changing the source disk. The default system installs links
 for glibc and gcc, plus `/bin/rustc`, `/bin/cargo` and `/bin/cc`, so
 the Rust toolchain is on the PATH in an interactive shell or desktop terminal.
 Run `tools/common/fetch/fetch-rustc-sysroot.sh` again to add Cargo and the standard
-libraries Ferrix's own image is built against to a sysroot made before
+libraries Xaqu's own image is built against to a sysroot made before
 them. Boots with the toolchain use 4 GiB RAM unless `--memory` overrides
 it. Without the fetched disk, those boots still start and say why rustc is
 absent. The FAT boot image and 1 GiB `root.img` do not contain the 1.7 GiB
@@ -218,7 +218,7 @@ will not carry rustc to another host.
 
 `--persistent` keeps `/data` as well, for `run` and for `run-compositor`
 (with `--chrome` or `--everything` too): the first such boot copies the volume
-to `~/.local/share/ferrix/persistent/` and attaches the copy without
+to `~/.local/share/xaqu/persistent/` and attaches the copy without
 snapshot mode, so a Steam sign-in, a game, files under `/data/home` and
 Chrome's profile, which moves from `/dev/shm` to `/data/home/chrome`, are
 all still there at the next boot. What the guest writes reaches the disk at
@@ -232,13 +232,13 @@ with `btrfs-progs`. It stages the sysroot's tree, every file git tracks here
 as the work tree has it, and `cargo vendor --offline` of the workspace's
 crates (run `cargo fetch` once if Cargo's cache lacks one) into
 `build/x86_64/selfhost/`, makes a writable btrfs volume of them, and boots
-Ferrix with 8 GiB to run `cargo xtask build --arch x86_64` on it. After the
+Xaqu with 8 GiB to run `cargo xtask build --arch x86_64` on it. After the
 guest powers off, `btrfs check` judges the volume, `btrfs restore` takes the
 image out, and the boot test boots it. The build boot's serial log is kept in
 `build/x86_64/selfhost/build-serial.log`.
 
 `cargo xtask test-devloop --accel kvm` is the loop a person works in rather
-than the whole image (`docs/DEV-ON-FERRIX.md`, 2026-10-11). Ferrix clones a
+than the whole image (`docs/DEV-ON-XAQU.md`, 2026-10-11). Xaqu clones a
 small fixture over HTTP with git, builds and tests it with the volume's Cargo
 on ferrousli, as the `--everything` desktop runs the toolchain, starts it as
 a service of init's, changes a word of its source, builds, tests, commits and
@@ -248,7 +248,7 @@ pushes, and `svc restart` must put the new build in the running system:
    25.45 | devloop: before greeter: hello from version one
    26.55 | devloop: pushed greeter: say version two
    26.57 | devloop: after greeter: hello from version two
-  x86_64: Ferrix cloned the fixture, built and tested it, ran it as a service, changed it, pushed the change, and replaced the running service with the new build
+  x86_64: Xaqu cloned the fixture, built and tested it, ran it as a service, changed it, pushed the change, and replaced the running service with the new build
 ```
 
 It needs git among the built apps (`cargo xtask build-apps --app curl --app
@@ -256,15 +256,15 @@ git`), and it walks without `cargo fmt` and `cargo clippy`, and without
 helix and rust-analyzer's session, saying so, on a toolchain volume fetched
 before 2026-10-11.
 
-On a running Ferrix, `cargo xtask install-app --app NAME`, as root, builds an
+On a running Xaqu, `cargo xtask install-app --app NAME`, as root, builds an
 app and puts it in place of the installed version with `pkg install
 --replace`.
 
-On Arm the build runs on a Pixel 7 (2026-10-03). `FERRIX_SYSROOT_ARCH=arm64
+On Arm the build runs on a Pixel 7 (2026-10-03). `XAQU_SYSROOT_ARCH=arm64
 tools/common/fetch/fetch-rustc-sysroot.sh` makes the toolchain for an AArch64
 host, and `tools/vendor/google/pixel7/selfhost.sh stage`, `push`, `run` and
 `pull` put it on a volume with the tree and its vendored crates, boot the
-phone's own `desktop.Image` in crosvm with `ferrix.init=/data/selfhost/init`,
+phone's own `desktop.Image` in crosvm with `xaqu.init=/data/selfhost/init`,
 which runs `cargo xtask build --arch aarch64`, and bring the volume back.
 `cargo xtask test-selfhost --arch aarch64 --volume <img>` then judges it as
 above: `btrfs check`, the image taken out, the boot test:
@@ -272,10 +272,10 @@ above: `btrfs check`, the image taken out, the boot test:
 ```
 SELFHOST-BEGIN uptime 7.19 jobs 2
 cargo 1.97.1 (c980f4866 2026-06-30)
-  image /data/src/build/aarch64/ferrix.img (74 KiB loader, 125609 KiB kernel, 22345 KiB initramfs)
+  image /data/src/build/aarch64/xaqu.img (74 KiB loader, 125609 KiB kernel, 22345 KiB initramfs)
 SELFHOST-STATUS 0 uptime 546.14
 ...
-  aarch64: the image Ferrix built booted
+  aarch64: the image Xaqu built booted
 ```
 
 `--net` gives the guest a virtio-net card whose other end is `xtask`'s own
@@ -283,7 +283,7 @@ gateway on a loopback UDP socket: the guest is `10.0.2.15`, `10.0.2.2` is the
 host, `10.0.2.3` forwards DNS to the host's resolver, and TCP and UDP to
 anywhere else are relayed through ordinary host sockets. It needs no
 privilege, and works the same on Linux and on Windows. With `--init`, the
-shell configures `eth0` by DHCP before its first prompt, with Ferrix's
+shell configures `eth0` by DHCP before its first prompt, with Xaqu's
 `dhcpc`, so `wget http://example.com` and `ping 10.0.2.2` work at once.
 
 `--forward <host>:<guest>` goes the other way: the gateway listens on the
@@ -296,7 +296,7 @@ guest over SSH. Every x86-64 image with a busybox carries
 ```
 cargo xtask run --arch x86_64 --init ferrousli --forward 2222:22
 
-ferrix# sshdt -b 0.0.0.0 -p 22 --pubkey 'ssh-ed25519 AAAA... you@host' &
+xaqu# sshdt -b 0.0.0.0 -p 22 --pubkey 'ssh-ed25519 AAAA... you@host' &
         # or --authorized-keys FILE, or --password SECRET
 
 ssh -p 2222 root@127.0.0.1
@@ -313,7 +313,7 @@ firmware. Debian and Ubuntu: `qemu-system-x86`,
 `qemu-system-arm`, `ovmf`, `qemu-efi-aarch64` and `u-boot-qemu`. Windows:
 `winget install SoftwareFreedomConservancy.QEMU`, which ships the 64-bit
 firmware too but not U-Boot; for ARMv7-A, `sudo apt install u-boot-qemu` in
-WSL's default distribution, where `xtask` looks, or point `FERRIX_UBOOT` at a
+WSL's default distribution, where `xtask` looks, or point `XAQU_UBOOT` at a
 `qemu_arm` `u-boot.bin`. Nothing else — the FAT32 image is written by `xtask`,
 so there is no `mtools` or `dosfstools` to install and the image is
 byte-for-byte reproducible.
@@ -322,12 +322,12 @@ x86-64 boots on a Linux host need one QEMU more: a build whose VT-d model
 blocks compatibility-format interrupts, which no released QEMU does
 (`docs/NVIDIA.md` §12.3). `tools/common/fetch/fetch-qemu-linux.sh` builds
 QEMU 10.2.1 with that patch, x86-64 only, into
-`~/.local/share/ferrix/qemu`, where `xtask` looks before `PATH`; it takes
+`~/.local/share/xaqu/qemu`, where `xtask` looks before `PATH`; it takes
 a few minutes and needs the build packages its header lists. Without it
 an x86-64 boot stops with `x86-64 boots need a QEMU that blocks
 compatibility-format interrupts (F-57); run
 tools/common/fetch/fetch-qemu-linux.sh`. AArch64 and ARMv7-A keep the
-distribution's QEMU. `FERRIX_QEMU_JOBS` limits the build's parallelism.
+distribution's QEMU. `XAQU_QEMU_JOBS` limits the build's parallelism.
 
 `cargo xtask check --ferrousli` gates the C library too, whose tests build and
 run Linux programs. On Windows those steps run in WSL's default distribution,
@@ -347,7 +347,7 @@ rather than busybox's, and on x86-64 the uutils family owns the names it
 provides; busybox keeps the rest, which [docs/UUTILS.md](UUTILS.md) §8
 counts down.
 
-The busybox Ferrix is measured with is built against
+The busybox Xaqu is measured with is built against
 [ferrousli](../src/user/system/linux/ferrousli/README.md), this repository's C library, and
 `--init ferrousli` names it. It is x86-64 only for now.
 
@@ -374,8 +374,8 @@ Quit QEMU with `Ctrl-A x`.
 `cargo xtask busybox` runs `src/user/system/linux/ferrousli/tools/busybox/build.sh`, or on Windows
 `build-windows.sh` in Git for Windows' bash. Either downloads busybox 1.37.0
 and Alpine's configuration for it, both checked against pinned sums, builds
-ferrousli and busybox against it under `~/.local/share/ferrix/busybox/ferrousli`
-(`%USERPROFILE%\.local\share\ferrix\busybox\ferrousli` on Windows), and
+ferrousli and busybox against it under `~/.local/share/xaqu/busybox/ferrousli`
+(`%USERPROFILE%\.local\share\xaqu\busybox\ferrousli` on Windows), and
 installs `x86_64/bin/busybox.static` there, where `--init ferrousli` looks. On
 Windows clang cross-compiles and links it, Strawberry Perl's gcc and gmake run
 busybox's own build, and the kernel headers busybox includes come from Alpine's
@@ -422,7 +422,7 @@ where zinc's `fpath` looks. Without it oh-my-zsh starts with a
 ### The display
 
 ```
-cargo xtask run --arch x86_64 --display --init blank    # a window showing Ferrix's screen
+cargo xtask run --arch x86_64 --display --init blank    # a window showing Xaqu's screen
 cargo xtask test-display --arch x86_64                  # the same, judged pixel by pixel
 ```
 
@@ -431,7 +431,7 @@ window. The window starts on the firmware's console (VGA on x86-64, ramfb on
 AArch64), where the loader draws; the card is the other console in the
 window's View menu. `--init blank` builds the compositor's first program,
 [`src/user/system/linux/compositor/blank`](../src/user/system/linux/compositor/README.md), and boots it as init: it opens
-`/dev/dri/card0` through Ferrix's Linux DRM subset, sets the preferred mode
+`/dev/dri/card0` through Xaqu's Linux DRM subset, sets the preferred mode
 (1024×768) and fills the screen with one colour, `#1E1E2E`. Its serial
 line says `compositor: scanout ...`, or why it failed. There is no input and
 no windows yet; [the display design](DISPLAY.md) says what comes next,
@@ -469,7 +469,7 @@ in a scope of its own (`svc list` shows them as `app-*.scope`): the compositor r
 Wayland socket, tiles what connects to it and puts the frame on the screen.
 The configuration it writes into the initramfs starts a terminal first --
 `exec-once = /bin/term /bin/zinc` -- so the boot ends at a shell prompt rather
-than at a picture. The term app (ferrix-os/apps) is the terminal,
+than at a picture. The term app (xaqu-os/apps) is the terminal,
 a character grid with the escape sequences a shell actually sends, and it runs
 the program it is given on a pseudoterminal; that program is
 [zinc](../src/user/system/linux/zinc/README.md), with the busybox applets, the uutils and the ported
@@ -497,7 +497,7 @@ reaches the host's own resolver -- and `--vnc <DISPLAY>` serves the screen at
 e.g. `:0` rather than opening a window, which is what a machine reached over
 `ssh` wants. `--gl` asks QEMU for `virtio-gpu-gl-pci`, the 3D card, with this
 host's GPU behind it through virglrenderer; [the GPU decision](GPU.md)
-says what that gives and what it does not, and `FERRIX_QEMU` names a QEMU
+says what that gives and what it does not, and `XAQU_QEMU` names a QEMU
 that is not the one on `PATH`. A screen served over VNC gets the 3D card
 without being asked, where a QEMU on `PATH` has it and the host has a render
 node to draw on, because a video wallpaper is 38 frames a second in software
@@ -508,7 +508,7 @@ The wallpaper comes from this machine's pictures and from nowhere else.
 `cargo xtask wallpapers --from <directory>`, or `--from host:directory` for a
 machine `ssh` reaches, converts them with `ffmpeg` -- scaled until it covers
 the screen -- and keeps the rows under
-`~/.local/share/ferrix/wallpapers`, or `$FERRIX_WALLPAPERS`. A run reads that
+`~/.local/share/xaqu/wallpapers`, or `$XAQU_WALLPAPERS`. A run reads that
 directory and opens no connection of its own; with nothing in it the
 background is plain and a line says how to change that. `--wallpaper <NAME>`
 picks one by part of its name.
@@ -525,7 +525,7 @@ How much is kept is a person's to change, and is not a compositor option:
 Hyprland has none for a wallpaper either, which is why this machine's
 `hyprland.conf` says `exec-once = booru-wallpaper daemon` and that daemon
 keeps its own commented file. So does this one --
-`~/.config/ferrix/wallpaper.toml`, written with its defaults in it the first
+`~/.config/xaqu/wallpaper.toml`, written with its defaults in it the first
 time `wallpapers` runs:
 
 ```toml
@@ -618,7 +618,7 @@ worth knowing before you go looking for a fault that is not there:
 | `--gl` | wants a QEMU built `--enable-opengl --enable-virglrenderer`, and is what a served screen gets without it being said, where it can be had. A build without one has no `virtio-gpu-gl-pci`, a line says so, and the boot goes on with the 2D card -- it does not fail. With the 3D card present the screen is drawn off screen through `egl-headless` and copied out to the VNC server, so `--gl --vnc` is a real combination and not a fallback. On a machine with two QEMUs the first on `PATH` that has the card is used and a line says which: a source build is often the one *without* it, and the distribution's package the one with |
 | `--rendernode <PATH>` | which GPU draws, as `/dev/dri/renderD128`. `run-compositor` takes the first node whose driver is not NVIDIA's proprietary one when nothing says; other boots leave it to QEMU, which takes the first render node it opens, which on a machine with one GPU is that GPU and on a machine with several is a guess by device number -- and the wrong guess is a proprietary driver that does not do what virglrenderer asks, or an idle card while the fast one watches. `ls -l /dev/dri/by-path/` says which node is which card, and the driver behind one is `basename $(readlink -f /sys/class/drm/renderD128/device/driver)`. Only `egl-headless` takes it, which is the served screen and the headless `test-*` boots; a window's GL goes to the host display's GPU and QEMU gives nobody a say in that |
 | `--screens 2` | puts two cards on the bus and the compositor tiles across both, but a VNC server serves one console, and that console is the first card. The second monitor is there and being drawn; you are watching one of them. `test-compositor`'s monitor boot is what judges both |
-| `SUPER` | every binding in the keyboard table above is on it, and whether a viewer passes it to the guest or eats it for its own menu is the viewer's business, not Ferrix's. Most have a setting for it, or a menu that sends one key |
+| `SUPER` | every binding in the keyboard table above is on it, and whether a viewer passes it to the guest or eats it for its own menu is the viewer's business, not Xaqu's. Most have a setting for it, or a menu that sends one key |
 | speed | a desktop over a tunnel is a desktop over a tunnel. VNC sends what changed, and the compositor already damages only the rows that did, so a shell prompt is fine and a video wallpaper on a machine that has to emulate is the frame a second it already was |
 
 Two ways this refuses rather than guesses. `--vnc` given to a boot with no
@@ -639,13 +639,13 @@ cargo xtask remote-desktop
 ```
 
 Copy [`tools/common/data/remote-desktop.toml.example`](../tools/common/data/remote-desktop.toml.example)
-to `~/.config/ferrix/remote.toml` -- or to `remote-desktop.toml` here, which
-git ignores, or anywhere and name it with `--config` or `$FERRIX_REMOTE` --
+to `~/.config/xaqu/remote.toml` -- or to `remote-desktop.toml` here, which
+git ignores, or anywhere and name it with `--config` or `$XAQU_REMOTE` --
 and fill in the one key that has no default:
 
 On Windows, that home configuration is
-`%USERPROFILE%\.config\ferrix\remote.toml` (in PowerShell,
-`$env:USERPROFILE\.config\ferrix\remote.toml`). The command reads existing
+`%USERPROFILE%\.config\xaqu\remote.toml` (in PowerShell,
+`$env:USERPROFILE\.config\xaqu\remote.toml`). The command reads existing
 configurations from the former Python script unchanged; Python is no longer
 needed for this command.
 
@@ -674,7 +674,7 @@ What the run does, and the two parts of it that are not obvious:
 | | |
 |---|---|
 | sends the **working tree** | uncommitted changes and all, because "does my change work" is the question being asked. It builds the commit in a private `GIT_INDEX_FILE`, so your index is untouched and no branch moves; `[source] send = "head"` sends your last commit instead, and `--send head` says so for one run |
-| pushes to a **side ref** | `refs/ferrix-desktop/head` in a checkout it makes the first time, not a branch -- a checkout refuses a push to the branch it has checked out, and a ref outside `refs/heads` is never that branch. The remote `target/` survives between runs, so the second boot builds almost nothing |
+| pushes to a **side ref** | `refs/xaqu-desktop/head` in a checkout it makes the first time, not a branch -- a checkout refuses a push to the branch it has checked out, and a ref outside `refs/heads` is never that branch. The remote `target/` survives between runs, so the second boot builds almost nothing |
 | one `ssh` | carries both the forward and the boot, so the tunnel lives exactly as long as the machine does and neither can outlive the other |
 | waits for `RFB` | the protocol's own greeting, not a connection: `ssh` accepts on a forwarded port from the moment it starts, so a connection proves only that `ssh` is running |
 | opens the viewer | RealVNC, TigerVNC, UltraVNC, Remmina or macOS Screen Sharing, found on this machine; `[screen] viewer` takes a command line instead, or `none`. Closing the window stops the boot, and the boot ending closes the window |
@@ -719,7 +719,7 @@ for `--ssh 22022`, which starts sshdt in the guest from the compositor's
 prints the command, usually `ssh -p 22022 root@127.0.0.1`. The keys that may
 log in to the remote machine may log in to the guest: its `authorized_keys`
 and the public keys beside it. The guest's host key is kept over there, in
-`~/.local/share/ferrix/ssh`, so it is the same every boot. `[ssh] port = 0`
+`~/.local/share/xaqu/ssh`, so it is the same every boot. `[ssh] port = 0`
 turns it off. `cargo xtask run-compositor --ssh <port>` does the same on this
 machine, with this machine's keys.
 
@@ -732,12 +732,12 @@ yours.
 
 ### Everything at once
 
-One command with every part of Ferrix that composes with the others turned
+One command with every part of Xaqu that composes with the others turned
 on. The few that do not are under it: a screen served instead of shown, a
 second monitor, and the network, which is on already.
 
 ```
-FERRIX_QEMU=<a QEMU with a window and virglrenderer, if the one on PATH has neither> \
+XAQU_QEMU=<a QEMU with a window and virglrenderer, if the one on PATH has neither> \
 cargo xtask run-compositor --arch x86_64 --release --gl --clipboard \
     --size 1920x1080 --layout de,us --variant nodeadkeys, \
     --wallpaper <part of a name> --smp 4 --memory 1024
@@ -754,7 +754,7 @@ The profile supplies release builds, 3D, clipboard, 1920x1080, both keyboard
 layouts, a wallpaper, four CPUs and 1 GiB of memory. `remote-desktop` supplies
 `--vnc :0` itself, so the remote QEMU serves the desktop through the tunnel
 instead of opening a window on the build machine, and a served screen gets
-the 3D card and a render node by itself. Set `[remote.env] FERRIX_QEMU` only
+the 3D card and a render node by itself. Set `[remote.env] XAQU_QEMU` only
 when no QEMU on that machine's `PATH` has virglrenderer, and `--rendernode`
 only to overrule the node it picks.
 
@@ -767,7 +767,7 @@ the last three being the ones not in the line:
 
 | | |
 |---|---|
-| `FERRIX_QEMU` | a QEMU that is not the one on `PATH`, a directory of its binaries or one binary. Distributions often build QEMU without a local display backend, and then there is no window to open -- xtask asks whichever QEMU it is what it has, falls back to VNC when it has none, and says which it chose. `--gl` wants virglrenderer as well |
+| `XAQU_QEMU` | a QEMU that is not the one on `PATH`, a directory of its binaries or one binary. Distributions often build QEMU without a local display backend, and then there is no window to open -- xtask asks whichever QEMU it is what it has, falls back to VNC when it has none, and says which it chose. `--gl` wants virglrenderer as well |
 | `--gl` | the 3D card, with this host's GPU behind it. Turns `--display` on by itself. A served screen has it without the flag where it can be had; `--no-gl` is the 2D card, on which the compositor composites on the CPU |
 | `--rendernode` | which GPU, on a machine with more than one, as `/dev/dri/renderD128`. Only `egl-headless` takes it -- a served screen and the headless `test-*` boots. `run-compositor` takes the first node not driven by NVIDIA's proprietary driver when nothing says; other boots leave it to QEMU, whose pick is a guess by device number rather than by which card can do the work |
 | `--smp`, `--memory` | 4 and 512 MiB by default. A desktop with a video wallpaper is the one workload here that notices more of either |
@@ -780,7 +780,7 @@ the last three being the ones not in the line:
 `--everything` is all of it at once, for a desktop somebody is going to use:
 `--gl`, `--release`, `--clipboard` and `--chrome`, with `rustc` and `cargo`
 in the shell beside Chrome. The kernel mounts one data disk, so it makes a
-third volume at `~/.local/share/ferrix/everything` out of the two trees the
+third volume at `~/.local/share/xaqu/everything` out of the two trees the
 fetch scripts keep -- hard links, not a copy -- and makes it again when
 either is fetched again. Both volumes have to have been fetched. The trees
 of the optional volumes are merged in when they have been made:
@@ -796,13 +796,13 @@ the PulseAudio-protocol server Chrome plays through
 for, since every device a boot does not need is one fewer on the bus, and
 several of them exist to assert exactly what a machine enumerates.
 
-**`--everything` runs as the user `ferrix`** (uid 1000), not as root
+**`--everything` runs as the user `xaqu`** (uid 1000), not as root
 ([`docs/AUTH.md`](AUTH.md) §6.1). `sessiond`, which stays root, starts the
-compositor as `ferrix` and hands it the screen and the input devices, so
-every window, terminal, Chrome and Steam is `ferrix`'s, with `HOME` at
-`/home/ferrix` on the home disk and `XDG_RUNTIME_DIR` at `/run/user/1000`.
-Your `~/.config/{hypr,waybar,fuzzel}` are copied into `/home/ferrix/.config`
-the first time only, so what you change there inside Ferrix is kept; a file
+compositor as `xaqu` and hands it the screen and the input devices, so
+every window, terminal, Chrome and Steam is `xaqu`'s, with `HOME` at
+`/home/xaqu` on the home disk and `XDG_RUNTIME_DIR` at `/run/user/1000`.
+Your `~/.config/{hypr,waybar,fuzzel}` are copied into `/home/xaqu/.config`
+the first time only, so what you change there inside Xaqu is kept; a file
 your configuration names by its host path, such as a script in
 `~/.local/bin`, is put back at that path at every start. `ssh` still logs in
 as root, and `hyprctl` run as root finds the session's socket under
@@ -836,8 +836,8 @@ design](CLIPBOARD.md) is the whole plan, and §8 records what it found.
 ### NVIDIA's driver
 
 `tools/common/fetch/fetch-nvidia.sh` fetches NVIDIA's driver at the
-release Ferrix pins, 580.173.02, into
-`~/.local/share/ferrix/nvidia/580.173.02` (or under `$FERRIX_NVIDIA`). It
+release Xaqu pins, 580.173.02, into
+`~/.local/share/xaqu/nvidia/580.173.02` (or under `$XAQU_NVIDIA`). It
 needs no root and installs nothing. It takes open-gpu-kernel-modules at
 that tag and builds RM's and NVKMS's objects with NVIDIA's makefiles. It
 extracts the matching `.run` without running its installer, and makes
@@ -846,7 +846,7 @@ firmware. Each download is pinned by its SHA-256. A second run checks the
 pins and rebuilds nothing, and it ends with a summary of what it has. The
 userspace and the firmware are NVIDIA's proprietary code: they stay in
 that directory and are never committed. `cargo xtask test-uvm` builds UVM
-from the tree it unpacks there, unless `FERRIX_NVIDIA_SRC` names another.
+from the tree it unpacks there, unless `XAQU_NVIDIA_SRC` names another.
 [`docs/NVIDIA.md`](NVIDIA.md) §3 says what the volume holds.
 
 ### On a PC, over the network
@@ -868,7 +868,7 @@ and a btrfs root at the rest of the disk with a program tree (by default
 the Proton launcher volume's) at `/data`. It writes a file only; carrying
 it to the drive erases the drive and is the owner's step.
 Its EFI system partition holds the box's desktop: hyprix on the firmware's
-framebuffer (`ferrix.efifb`), yserver, and GRYPHLINK's start.
+framebuffer (`xaqu.efifb`), yserver, and GRYPHLINK's start.
 `cargo xtask test-n150` boots such a disk under OVMF as the machine's one
 NVMe boot disk, with the firmware's framebuffer as the only display, and
 `cargo xtask test-n150-desktop` boots the desktop itself the same way.
@@ -895,7 +895,7 @@ powered from that cable, so its serial port is there even when the board is off.
 cargo xtask build --arch armv7a --init PATH/{arch}/busybox.static
 ```
 
-Add `--reset` to put `FERRIX/CMDLINE.TXT` with `ferrix.onexit=reset` in the image:
+Add `--reset` to put `XAQU/CMDLINE.TXT` with `xaqu.onexit=reset` in the image:
 the board then resets itself back to U-Boot when the shell exits, instead of
 powering off.
 
@@ -904,7 +904,7 @@ powering off.
 *before* resetting the board, and only one program can hold it at a time.
 
 - Linux: `/dev/ttyACM0`, in the `dialout` group — `cargo xtask watch-serial`
-  (which exits 0 on `FERRIX-BOOT-OK`), or `picocom -b 115200 /dev/ttyACM0` to type.
+  (which exits 0 on `XAQU-BOOT-OK`), or `picocom -b 115200 /dev/ttyACM0` to type.
 - Windows: `cargo xtask watch-serial` finds the ST-LINK's `COMn` itself
   (`--port COMn` when there are several), or open it in PuTTY as *Serial* at
   115200 to type — Device Manager → *Ports (COM & LPT)* →
@@ -926,9 +926,9 @@ STM32MP> ums 0 mmc 0
 - Windows: `bootfs` appears as a drive — cancel any offer to format the card's
   other partitions, they hold the firmware — and `cargo xtask flash --arch
   armv7a --to E:\` with that drive's letter copies the loader, kernel and
-  initramfs, and flushes each one and the volume. `FERRIX\CMDLINE.TXT`, from a
+  initramfs, and flushes each one and the volume. `XAQU\CMDLINE.TXT`, from a
   `--reset` build, is not among them on either host: copy that one by hand
-  (`7z x build\armv7a\ferrix.img -oflash`). `deploy` works as on Linux.
+  (`7z x build\armv7a\xaqu.img -oflash`). `deploy` works as on Linux.
 
 Press Ctrl-C at the console to end mass-storage mode.
 
@@ -941,14 +941,14 @@ STM32MP> load mmc 0:4 0xc2000000 EFI/BOOT/BOOTARM.EFI
 STM32MP> bootefi 0xc2000000 ${fdtcontroladdr}
 ```
 
-The boot report ends in `FERRIX-BOOT-OK`, then busybox's `ferrix#` prompt, which
+The boot report ends in `XAQU-BOOT-OK`, then busybox's `xaqu#` prompt, which
 takes what you type over the same port. To boot this way by default:
 `setenv bootcmd 'load mmc 0:4 0xc2000000 EFI/BOOT/BOOTARM.EFI; bootefi 0xc2000000 ${fdtcontroladdr}'`
 and `saveenv`.
 
 **Afterwards.** Leaving the shell powers the board off, and from there its reset
 button does nothing: unplug the USB-C cable and plug it back in. With
-`ferrix.onexit=reset` in `CMDLINE.TXT` the board comes back to `STM32MP>` by
+`xaqu.onexit=reset` in `CMDLINE.TXT` the board comes back to `STM32MP>` by
 itself instead.
 
 ## Layout

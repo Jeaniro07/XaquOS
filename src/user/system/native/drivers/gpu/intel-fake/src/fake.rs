@@ -3,11 +3,11 @@
 //! front end over it in one process; `intel-fake-gt` runs it as the
 //! keeper's worker (`docs/INTEL-GPU.md` §12.8).
 
-use ferrix_intel_xelp::frontend::{
+use xaqu_intel_xelp::frontend::{
     Backend, Completion, ContextParams, Engine, Facts, HwContext, RequestId, SubmitError, VmId,
 };
-use ferrix_intel_xelp::sseu::{Fuses, gen12_sseu_info_init};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_intel_xelp::sseu::{Fuses, gen12_sseu_info_init};
+use xaqu_linux_abi::errno::Errno;
 
 /// The engines the fake answers for: the render and copy engines, those
 /// the GT back end drives (M2).
@@ -147,6 +147,6 @@ impl<M> Backend for Fake<M> {
 
     fn timestamp(&mut self) -> u64 {
         // The command streamer's clock at 19.2 MHz, from the monotonic one.
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0) / 1000 * 192 / 10
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0) / 1000 * 192 / 10
     }
 }

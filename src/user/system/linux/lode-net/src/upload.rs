@@ -6,7 +6,7 @@
 //! destination's `2xx`. A destination that is down is tried again after
 //! 1 s, 2, 4, ... up to 5 min, for ever. What the bytes are -- the
 //! configuration, the request, the answer, the back-off, what was gone
-//! before it was sent -- is `ferrix_lode_core::upload`'s; this is the
+//! before it was sent -- is `xaqu_lode_core::upload`'s; this is the
 //! reading, the sockets, TLS and the waiting.
 //!
 //! Blobs (`docs/LOGGING.md` §21.4) follow on a second stream a
@@ -26,11 +26,11 @@ use std::time::{Duration, Instant};
 
 use std::collections::VecDeque;
 
-use ferrix_lode_core::blob::{self, BlobId, Reference};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::segment;
-use ferrix_lode_core::time::Zone;
-use ferrix_lode_core::upload::{self, Backoff, Destination};
+use xaqu_lode_core::blob::{self, BlobId, Reference};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::segment;
+use xaqu_lode_core::time::Zone;
+use xaqu_lode_core::upload::{self, Backoff, Destination};
 use rustls::pki_types::ServerName;
 
 use crate::store::{self, Segment};

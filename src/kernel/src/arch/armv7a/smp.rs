@@ -51,9 +51,9 @@
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE, flag_in};
-use ferrix_fdt::PsciConduit;
-use ferrix_paging::MapFlags;
+use xaqu_bootinfo::{BootView, PAGE_SIZE, flag_in};
+use xaqu_fdt::PsciConduit;
+use xaqu_paging::MapFlags;
 
 use super::{cpu, gicv2};
 use crate::smp::Described;
@@ -214,12 +214,12 @@ core::arch::global_asm!(
 .arm
 .section .text
 .balign 32
-.globl ferrix_secondary_entry
-ferrix_secondary_entry:
+.globl xaqu_secondary_entry
+xaqu_secondary_entry:
     mrs   r6, cpsr
     and   r6, r6, #0x1f
     cmp   r6, #0x13
-    bne   ferrix_secondary_parked
+    bne   xaqu_secondary_parked
     ldm   r0, {{r1-r5, r8-r10, r12}}
     mov   r6, #0
     mcr   p15, 0, r6, c7, c5, 0
@@ -240,19 +240,19 @@ ferrix_secondary_entry:
     mov   r11, #0
     mov   lr, #0
     bx    r10
-ferrix_secondary_parked:
+xaqu_secondary_parked:
     wfi
-    b     ferrix_secondary_parked
-.globl ferrix_secondary_entry_end
-ferrix_secondary_entry_end:
+    b     xaqu_secondary_parked
+.globl xaqu_secondary_entry_end
+xaqu_secondary_entry_end:
 "#
 );
 
 unsafe extern "C" {
     /// Where PSCI starts a secondary core, by its physical address.
-    static ferrix_secondary_entry: [u8; 0];
+    static xaqu_secondary_entry: [u8; 0];
     /// One past the entry sequence's last instruction.
-    static ferrix_secondary_entry_end: [u8; 0];
+    static xaqu_secondary_entry_end: [u8; 0];
 }
 
 /// What a starting core reads, with its MMU off, to get its MMU on.
@@ -372,8 +372,8 @@ impl CpuStarter {
 
         let info = view.raw();
         let physical = |virt: u64| virt - info.kernel_virt + info.kernel_phys;
-        let entry_phys = physical((&raw const ferrix_secondary_entry).addr() as u64);
-        let end_phys = physical((&raw const ferrix_secondary_entry_end).addr() as u64);
+        let entry_phys = physical((&raw const xaqu_secondary_entry).addr() as u64);
+        let end_phys = physical((&raw const xaqu_secondary_entry_end).addr() as u64);
         let identity_base = entry_phys - entry_phys % PAGE_SIZE;
         let identity_len = (end_phys - identity_base).next_multiple_of(PAGE_SIZE);
         let identity = install_identity(identity_base, identity_len)?;
@@ -568,7 +568,7 @@ extern "C" fn secondary_start(record: u32) -> ! {
 
 /// Which processors are threads of one core, as the tree's `cpu-map` says
 /// (`smt`, `L.armv7a.27`).
-fn threads_in_tree(tree: &ferrix_fdt::Fdt<'_>) -> super::super::arm_common::smt::Found {
+fn threads_in_tree(tree: &xaqu_fdt::Fdt<'_>) -> super::super::arm_common::smt::Found {
     use super::super::arm_common::smt::Found;
     match tree.cpu_map() {
         Ok(None) => Found::NoTable,
@@ -577,10 +577,10 @@ fn threads_in_tree(tree: &ferrix_fdt::Fdt<'_>) -> super::super::arm_common::smt:
             cores: map.cores,
             most_a_core: map.most_a_core,
         },
-        Err(ferrix_fdt::CpuMapError::ThreadOutsideCore) => {
+        Err(xaqu_fdt::CpuMapError::ThreadOutsideCore) => {
             Found::Malformed("smt: cpu-map has a thread outside a core")
         }
-        Err(ferrix_fdt::CpuMapError::ThreadWithoutCpu) => {
+        Err(xaqu_fdt::CpuMapError::ThreadWithoutCpu) => {
             Found::Malformed("smt: cpu-map has a thread that names no processor")
         }
     }

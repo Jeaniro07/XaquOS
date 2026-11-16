@@ -9,7 +9,7 @@
 //! and what vacuum (or `lode delete`, or a RAM-only class at a reboot)
 //! removed before it was sent is counted and said.
 //!
-//! `/etc/ferrix/lode-upload.conf`, one destination a line, `#` comments:
+//! `/etc/xaqu/lode-upload.conf`, one destination a line, `#` comments:
 //!
 //! ```text
 //! # NAME     URL                                  FORMAT  [auth] [where EXPR]
@@ -43,10 +43,10 @@ use crate::record::{Record, UNSPECIFIED};
 use crate::time::Zone;
 
 /// Where the uploader's configuration is.
-pub const CONFIG: &str = "/etc/ferrix/lode-upload.conf";
+pub const CONFIG: &str = "/etc/xaqu/lode-upload.conf";
 
 /// Where each destination's cursor is kept, a file a destination.
-pub const STATE: &str = "/var/lib/ferrix/lode-upload";
+pub const STATE: &str = "/var/lib/xaqu/lode-upload";
 
 /// The most records one request carries.
 pub const BATCH: usize = 1000;
@@ -406,7 +406,7 @@ pub const HOST_HEADER: &str = "X-Lode-Hostname";
 pub const BLOB_HEADER: &str = "X-Lode-Blob";
 
 /// A blob's content type.
-pub const BLOB_CONTENT_TYPE: &str = "application/vnd.ferrix.blob";
+pub const BLOB_CONTENT_TYPE: &str = "application/vnd.xaqu.blob";
 
 /// One `POST` of `body` to `url`, the connection closed after, saying it
 /// is from `machine` (32 hex digits, or empty for none) named `host`.
@@ -601,7 +601,7 @@ pub fn request_line(head: &[u8]) -> Option<(&str, &str)> {
 /// The records of a Journal Export Format body, as `-o export` writes them
 /// and journal-upload posts them: the store's own fields taken back into
 /// the record (`__SEQNUM`, the two timestamps, `_BOOT_ID`, `PRIORITY` and
-/// `FERRIX_LEVEL`, `_HOSTNAME` as the host), every other field kept as
+/// `XAQU_LEVEL`, `_HOSTNAME` as the host), every other field kept as
 /// sent.
 ///
 /// # Errors
@@ -677,7 +677,7 @@ fn take_own(record: &mut Record, name: &str, value: &[u8]) -> Result<(), ()> {
                 .filter(|&level| level <= 7)
                 .ok_or(())?;
         }
-        "FERRIX_LEVEL" => {
+        "XAQU_LEVEL" => {
             record.priority = crate::record::level(text()?).ok_or(())?;
         }
         "_HOSTNAME" => record.host = alloc::rc::Rc::from(text()?),

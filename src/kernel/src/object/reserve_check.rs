@@ -10,7 +10,7 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 use crate::mm;
 use crate::object::job::Job;
@@ -387,7 +387,7 @@ fn check_the_heap(reserved: &Arc<Job>, sibling: &Arc<Job>) -> Result<u64, &'stat
         return Err("a reserved job's object freed did not go back to its heap");
     }
     let kept = mm::reservation_usage(entry).1.saturating_sub(before);
-    if outcome.is_ok() && kept > ferrix_heap::CLASSES as u64 {
+    if outcome.is_ok() && kept > xaqu_heap::CLASSES as u64 {
         return Err("a reserved heap kept more than a page a class once its objects were freed");
     }
     outcome

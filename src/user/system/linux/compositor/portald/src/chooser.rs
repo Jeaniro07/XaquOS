@@ -1,5 +1,5 @@
 //! `org.freedesktop.portal.FileChooser`: `OpenFile` and `SaveFile` answered
-//! by Ferrix's own dialog, the `chooser` app (tole's `FileDialog`, the
+//! by Xaqu's own dialog, the `chooser` app (tole's `FileDialog`, the
 //! customer's Key File Dialog design), so GTK's and Chrome's Open and Save
 //! on Xaqu are that one.
 //!
@@ -287,7 +287,7 @@ pub fn response(path: &str, sender: &str, chosen: Option<&str>) -> Message {
     body.u32(u32::from(chosen.is_none()));
     // `uris` is there on a cancel too, empty: GTK 3 reads it whatever the
     // response, and walked an unset list when it was not (both GTK 3's and
-    // GTK 4's dialogs ended on Ferrix's first cancel, 2026-10-25), as
+    // GTK 4's dialogs ended on Xaqu's first cancel, 2026-10-25), as
     // xdg-desktop-portal always sends it.
     let uris: Vec<String> = chosen.map(uri).into_iter().collect();
     let uris: Vec<&str> = uris.iter().map(String::as_str).collect();

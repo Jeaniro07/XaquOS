@@ -22,7 +22,7 @@
 //! [`MAX_CONTEXTS`] contexts, [`MAX_OBJECTS`] objects and
 //! [`MAX_IN_FLIGHT`] submissions waiting to be answered.
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::{
     Direction, Hello, MAX_CAPS_BYTES, MAX_RINGS, MakeBlob, MakeObject, Message, NO_RING, Refusal,

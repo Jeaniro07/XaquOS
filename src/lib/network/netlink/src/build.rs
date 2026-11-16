@@ -13,7 +13,7 @@
 //! [`crate::Messages`] by construction, which is the property the fuzz target
 //! asserts.
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     NLM_F_MULTI, NLMSG_DONE, NLMSG_ERROR, NlAttr, NlMsgErr, NlMsgHdr, nla_align, nlmsg_align,
 };
 

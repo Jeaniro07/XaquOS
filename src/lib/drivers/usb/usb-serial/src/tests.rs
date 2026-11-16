@@ -1,6 +1,6 @@
 //! The chips' arithmetic, the status bytes, termios and the Blaster's
 //! command lines, on their own. The chips on a bus, behind a model
-//! controller, are `ferrix-usb-host`'s tests (`src/tests/serial.rs`).
+//! controller, are `xaqu-usb-host`'s tests (`src/tests/serial.rs`).
 
 use std::string::String;
 use std::vec;

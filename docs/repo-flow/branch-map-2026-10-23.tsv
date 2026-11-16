@@ -1,5 +1,5 @@
 # Branch map of the 2026-10-23 clean-up (docs/REPO-FLOW.md, "Branch clean-up of 2026-10-23").
-# where: local = the nazuna root checkout, origin = github.com/ferrix-os/ferrix.
+# where: local = the nazuna root checkout, origin = github.com/xaqu-os/xaqu.
 # action: delete = every commit already on main; archive = unlanded, stale, kept only as the archive ref;
 #   rename = moved to new_name (local renames were pushed under new_name too); in-use = left as it was;
 #   keep = left as it was (main, develop, already prefixed).
@@ -146,11 +146,11 @@ local	chrome-groundwork	delete		refs/archive/2026-10-23/local/chrome-groundwork	
 local	ci-fixes	delete		refs/archive/2026-10-23/local/ci-fixes	10058f3f6115998cccf865226af284aefd46232f	2026-10-03	0	fully merged into main (ancestor)
 local	claude-desktop	delete		refs/archive/2026-10-23/local/claude-desktop	210c9125be46b34f4fbc37e64f8b1da1bddfdf5b	2026-10-16	0	fully merged into main (ancestor)
 local	claude-desktop-assess	in-use	claude-desktop-assess		e27e974940c5c5c1d89284bcea7829bfab15581a	2026-10-14	0	checked out in .claude/worktrees/claude-desktop-assess
-local	claude-on-ferrix	delete		refs/archive/2026-10-23/local/claude-on-ferrix	174cda7f2f0eb9ad37ef1218667fc4fca077af56	2026-10-11	0	all 2 commits landed on main (patch-id/subject)
+local	claude-on-xaqu	delete		refs/archive/2026-10-23/local/claude-on-xaqu	174cda7f2f0eb9ad37ef1218667fc4fca077af56	2026-10-11	0	all 2 commits landed on main (patch-id/subject)
 local	clipboard-vdagent	rename	park/clipboard-vdagent	refs/archive/2026-10-23/local/clipboard-vdagent	c7d7b93fe331369e408e13fe11cfa1d799c7e715	2026-09-27	1	parked: named in memory/handover notes, 26 d old
 local	cm-cd-stack	rename	feature/cm-cd-stack	refs/archive/2026-10-23/local/cm-cd-stack	e2ab71bfb1485b6e5525b908393be5334e06bda8	2026-10-15	1	active: 8 d old, 1 unlanded commits
 local	cmount-flake	in-use	cmount-flake		cc1c1288ac7cb5724ef48203d4568418c07bf76e	2026-10-15	1	checked out in .claude/worktrees/cmount-flake
-local	codex/ferrix-marketing-seo	in-use	codex/ferrix-marketing-seo		d60c54b5e7cc1bee3c740934092a0e0647324d17	2026-09-27	0	checked out in /home/sebastian/.codex/worktrees/ferrix-marketing-seo/ferrix
+local	codex/xaqu-marketing-seo	in-use	codex/xaqu-marketing-seo		d60c54b5e7cc1bee3c740934092a0e0647324d17	2026-09-27	0	checked out in /home/sebastian/.codex/worktrees/xaqu-marketing-seo/xaqu
 local	codex/marketing-brand-kit	in-use	codex/marketing-brand-kit		c61c2e8f1b9a28a9c02a49f90eb9574f0ab6451c	2026-09-27	0	external tool branch (open PR source); leave
 local	compositor-rate	rename	feature/compositor-rate	refs/archive/2026-10-23/local/compositor-rate	69321c8a257ffb7e646dbf65ca580fbf7b681bf5	2026-10-10	46	active: 13 d old, 46 unlanded commits
 local	cov-before-rebase4	delete		refs/archive/2026-10-23/local/cov-before-rebase4	8938fcc7c95944ee6f51e8fdc0f3888108722051	2026-09-26	0	all 5 commits landed on main (patch-id/subject)
@@ -159,7 +159,7 @@ local	cr0-ne	in-use	cr0-ne		241b704d572381dbcf39afc99db6dd986116e0a5	2026-10-17	
 local	debug-s2-wip	in-use	debug-s2-wip		230c30df869b6e02d7c69294b5440da2ce6c396a	2026-10-21	4	unlanded commit in the last 48 h (1.6 d); may be live elsewhere
 local	default-wallpaper	delete		refs/archive/2026-10-23/local/default-wallpaper	cf4a31647ead381a0a0d9a7796b1a93ba41f8442	2026-09-27	0	all 2 commits landed on main (patch-id/subject)
 local	demo-video	delete		refs/archive/2026-10-23/local/demo-video	a5d8afea865b05d14e9b225daa540a2776cf8c9e	2026-10-18	0	all 1 commits landed on main (patch-id/subject)
-local	dev-on-ferrix	delete		refs/archive/2026-10-23/local/dev-on-ferrix	07f718fd1dd1ebed08e7ffb93eaebda63d95b331	2026-10-11	0	all 1 commits landed on main (patch-id/subject)
+local	dev-on-xaqu	delete		refs/archive/2026-10-23/local/dev-on-xaqu	07f718fd1dd1ebed08e7ffb93eaebda63d95b331	2026-10-11	0	all 1 commits landed on main (patch-id/subject)
 local	develop	keep	develop		39e8fabc1b0133704f67c3ba426e00ce8f24389c	2026-09-17	2	long-lived branch
 local	dhcpc-rel/base	delete		refs/archive/2026-10-23/local/dhcpc-rel/base	c20dbc4ea8cce90663269efad0f10870d32223df	2026-10-20	0	all 1 commits landed on main (patch-id/subject)
 local	dhcpc-rel/fix	delete		refs/archive/2026-10-23/local/dhcpc-rel/fix	d763c29114de763d4543ec877f085ae67e87222f	2026-10-20	0	all 2 commits landed on main (patch-id/subject)
@@ -325,7 +325,7 @@ local	land-claude	delete		refs/archive/2026-10-23/local/land-claude	9b45541dc231
 local	land-claude-r	delete		refs/archive/2026-10-23/local/land-claude-r	dd78e503c229f926557dcf798276c949572ce83e	2026-10-11	0	all 37 commits landed on main (patch-id/subject)
 local	land-crng	delete		refs/archive/2026-10-23/local/land-crng	3a7ebc52cf0b22539b9329a5eaf1b71f0830ee11	2026-09-18	0	fully merged into main (ancestor)
 local	land-devd0-r	rename	chore/land-devd0-r	refs/archive/2026-10-23/local/land-devd0-r	487768adce3e5c3769c400839f5b295dbe3ad8a0	2026-10-11	1	active: 12 d old, 1 unlanded commits
-local	land-devonferrix	delete		refs/archive/2026-10-23/local/land-devonferrix	c4cdd75e11c7e68dcca486ef68aa01711a5a417a	2026-10-11	0	fully merged into main (ancestor)
+local	land-devonxaqu	delete		refs/archive/2026-10-23/local/land-devonxaqu	c4cdd75e11c7e68dcca486ef68aa01711a5a417a	2026-10-11	0	fully merged into main (ancestor)
 local	land-dmabuf	delete		refs/archive/2026-10-23/local/land-dmabuf	171e6c05ca1d9935d8efe48b001493eed54092fb	2026-10-11	0	fully merged into main (ancestor)
 local	land-edid	delete		refs/archive/2026-10-23/local/land-edid	258a446dec5e53a8ecac877f50a6085cfab6bcbf	2026-10-11	0	all 2 commits landed on main (patch-id/subject)
 local	land-edid-r	delete		refs/archive/2026-10-23/local/land-edid-r	dd8f9234547b2f89a5b0fb42c936dcd341e0898d	2026-10-11	0	all 11 commits landed on main (patch-id/subject)
@@ -909,8 +909,8 @@ local	rfds-bhi-forced-measure	rename	feature/rfds-bhi-forced-measure	refs/archiv
 local	rig-fu	in-use	rig-fu		9c8218cb6af473c497d7c47f2781f7dbd7ead87f	2026-10-14	0	checked out in .claude/worktrees/rig-fu
 local	rig-fu2	in-use	rig-fu2		d19dceb7f46618abfef2c03481948053aebff527	2026-10-15	0	checked out in .claude/worktrees/rig-fu2
 local	rig-fu3	in-use	rig-fu3		9a9d8f80928d8091751573d30c92cf4655329321	2026-10-15	0	checked out in .claude/worktrees/rig-fu3
-local	rm-ferrix	delete		refs/archive/2026-10-23/local/rm-ferrix	1f0990d8f3ca785db6a0f2f3ffc646811245f393	2026-10-16	0	fully merged into main (ancestor)
-local	rm-ferrix-pre-bb5364d45	delete		refs/archive/2026-10-23/local/rm-ferrix-pre-bb5364d45	fa26c48a3e7af4e2fec8c5a6ce87a79f79a64f2e	2026-10-15	0	all 8 commits landed on main (patch-id/subject)
+local	rm-xaqu	delete		refs/archive/2026-10-23/local/rm-xaqu	1f0990d8f3ca785db6a0f2f3ffc646811245f393	2026-10-16	0	fully merged into main (ancestor)
+local	rm-xaqu-pre-bb5364d45	delete		refs/archive/2026-10-23/local/rm-xaqu-pre-bb5364d45	fa26c48a3e7af4e2fec8c5a6ce87a79f79a64f2e	2026-10-15	0	all 8 commits landed on main (patch-id/subject)
 local	rn/run-nazuna	rename	feature/rn/run-nazuna	refs/archive/2026-10-23/local/rn/run-nazuna	a93b2f9ee2f8c1e3e38dc0d1e6236cfc4e1e528e	2026-10-13	1	active: 11 d old, 1 unlanded commits
 local	roadmap-endfield	delete		refs/archive/2026-10-23/local/roadmap-endfield	f42c5fd23cca1daae58c162d6e08d4c9b1526c78	2026-10-10	0	fully merged into main (ancestor)
 local	rootless-series-check	rename	feature/rootless-series-check	refs/archive/2026-10-23/local/rootless-series-check	e2310d8f2c24dbea3e6e1346158caf920f26ad25	2026-10-13	1	active: 11 d old, 1 unlanded commits
@@ -1138,8 +1138,8 @@ origin	ahci-n150-kernel	rename	feature/ahci-n150-kernel	refs/archive/2026-10-23/
 origin	ahci-nodrive	delete		refs/archive/2026-10-23/ahci-nodrive	8f186e60bec9fb4dbdf779930caf7c83b53c129d	2026-10-19	0	all 1 commits landed on main (patch-id/subject)
 origin	audit-2	rename	park/audit-2	refs/archive/2026-10-23/audit-2	33aef0ec19bcf12848ff07a79b2573b708e3fada	2026-10-01	1	parked: named in memory/handover notes, 22 d old
 origin	backlog-ivf	delete		refs/archive/2026-10-23/backlog-ivf	0620e1361e973f7c6b2fe4b9f8ea02730439b3cd	2026-10-03	0	all 1 commits landed on main (patch-id/subject)
-origin	backup/2026-09-11/lilith-ferrix	rename	feature/backup/2026-09-11/lilith-ferrix	refs/archive/2026-10-23/backup/2026-09-11/lilith-ferrix	b369e808087efdfcb80d62822e0eb4e0a1d6d4c2	2026-10-18	1	active: 5 d old, 1 unlanded commits
-origin	backup/2026-09-11/lilith-ferrix-work	rename	feature/backup/2026-09-11/lilith-ferrix-work	refs/archive/2026-10-23/backup/2026-09-11/lilith-ferrix-work	d627e3de37c6742f52232712e20e96641e82721d	2026-10-18	1	active: 5 d old, 1 unlanded commits
+origin	backup/2026-09-11/lilith-xaqu	rename	feature/backup/2026-09-11/lilith-xaqu	refs/archive/2026-10-23/backup/2026-09-11/lilith-xaqu	b369e808087efdfcb80d62822e0eb4e0a1d6d4c2	2026-10-18	1	active: 5 d old, 1 unlanded commits
+origin	backup/2026-09-11/lilith-xaqu-work	rename	feature/backup/2026-09-11/lilith-xaqu-work	refs/archive/2026-10-23/backup/2026-09-11/lilith-xaqu-work	d627e3de37c6742f52232712e20e96641e82721d	2026-10-18	1	active: 5 d old, 1 unlanded commits
 origin	backup/2026-10-01/ferrousli-steam	delete		refs/archive/2026-10-23/backup/2026-10-01/ferrousli-steam	c7bbc5c197f19b297de0649550b8be90a96e3d90	2026-09-30	0	all 19 commits landed on main (patch-id/subject)
 origin	backup/2026-10-01/guest-frame-time	archive		refs/archive/2026-10-23/backup/2026-10-01/guest-frame-time	d33a866021c320c36d45f9de650668f4d3db7354	2026-09-18	1	stale: 35 d, 1 unlanded commits, not named in any note
 origin	backup/2026-10-01/os-35/ipc-lazytlb-land	archive		refs/archive/2026-10-23/backup/2026-10-01/os-35/ipc-lazytlb-land	bdc227dbdd9502ee4bab106efe7ed1772bfc5ac7	2026-10-01	1	stale: 22 d, 1 unlanded commits, not named in any note
@@ -1400,7 +1400,7 @@ origin	os07/b4-card	archive		refs/archive/2026-10-23/os07/b4-card	f08ad26cd712e9
 origin	os07/b4-card-images	archive		refs/archive/2026-10-23/os07/b4-card-images	f08ad26cd712e94c2584cb78c54578e226299c55	2026-10-08	15	stale: 15 d, 15 unlanded commits, not named in any note
 origin	os07/b5-posix	rename	park/os07/b5-posix	refs/archive/2026-10-23/os07/b5-posix	6c4353768ec9a643c6f3886e3e571504d1c11267	2026-10-08	3	parked: named in memory/handover notes, 15 d old
 origin	os07/cheap-hold	archive		refs/archive/2026-10-23/os07/cheap-hold	6d4a8f019e4af70ada2f8ab3d900400db236b6c8	2026-10-09	2	stale: 15 d, 2 unlanded commits, not named in any note
-origin	os07/ferrix-posix	archive		refs/archive/2026-10-23/os07/ferrix-posix	b2ce8e689551d049a0c5f816c1758e17972a150f	2026-10-08	5	stale: 15 d, 5 unlanded commits, not named in any note
+origin	os07/xaqu-posix	archive		refs/archive/2026-10-23/os07/xaqu-posix	b2ce8e689551d049a0c5f816c1758e17972a150f	2026-10-08	5	stale: 15 d, 5 unlanded commits, not named in any note
 origin	os07/fposix	archive		refs/archive/2026-10-23/os07/fposix	b2ce8e689551d049a0c5f816c1758e17972a150f	2026-10-08	5	stale: 15 d, 5 unlanded commits, not named in any note
 origin	os07/hold-docs-side	archive		refs/archive/2026-10-23/os07/hold-docs-side	c045e52b8e6cec38aa3db4d13acd1065f702fe2a	2026-10-09	3	stale: 15 d, 3 unlanded commits, not named in any note
 origin	os07/hold-off-side	archive		refs/archive/2026-10-23/os07/hold-off-side	1d1b464a2e903f28ec15ac6bac21a521a4697735	2026-10-09	3	stale: 15 d, 3 unlanded commits, not named in any note
@@ -1430,7 +1430,7 @@ origin	os35land/partb	archive		refs/archive/2026-10-23/os35land/partb	520189e696
 origin	os4b-b3/side	archive		refs/archive/2026-10-23/os4b-b3/side	65a985716497e9d0717863efe52d5eb956c7d573	2026-10-08	3	stale: 15 d, 3 unlanded commits, not named in any note
 origin	os4b/b1-linux	archive		refs/archive/2026-10-23/os4b/b1-linux	8056c00f2d76fb63c94f78aa70437ad537199cf1	2026-10-08	1	stale: 15 d, 1 unlanded commits, not named in any note
 origin	os4b/b2-sel4	archive		refs/archive/2026-10-23/os4b/b2-sel4	bf916aff2e21a7a1e2d680f75ced115cedecc68e	2026-10-08	1	stale: 15 d, 1 unlanded commits, not named in any note
-origin	os4b/b3-ferrix	archive		refs/archive/2026-10-23/os4b/b3-ferrix	65a985716497e9d0717863efe52d5eb956c7d573	2026-10-08	3	stale: 15 d, 3 unlanded commits, not named in any note
+origin	os4b/b3-xaqu	archive		refs/archive/2026-10-23/os4b/b3-xaqu	65a985716497e9d0717863efe52d5eb956c7d573	2026-10-08	3	stale: 15 d, 3 unlanded commits, not named in any note
 origin	os4b/board-matrix	delete		refs/archive/2026-10-23/os4b/board-matrix	81ca69149c2112ed5f32dd17015b1a95866d29cc	2026-10-08	0	all 2 commits landed on main (patch-id/subject)
 origin	os5d/gate-rows	rename	park/os5d/gate-rows	refs/archive/2026-10-23/os5d/gate-rows	e98d519a013db394e7b968e25d2419d1a0ce06d1	2026-10-01	1	parked: named in memory/handover notes, 22 d old
 origin	os76/fastpath-v2	rename	park/os76/fastpath-v2	refs/archive/2026-10-23/os76/fastpath-v2	b2a8f20c2f05ee0dcb96cb69a8f1e6d33099c198	2026-10-08	4	parked: named in memory/handover notes, 16 d old

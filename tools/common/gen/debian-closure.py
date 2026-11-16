@@ -5,7 +5,7 @@ Reads Debian 13's Packages indexes for one architecture -- trixie, and
 trixie-updates and trixie-security, whose newer builds win -- and walks
 `Pre-Depends` and `Depends` from the named package, taking the first of each
 alternative and leaving out every package named with `--skip`: daemons,
-maintainer-script tools and data nothing on a Ferrix volume runs. Prints one
+maintainer-script tools and data nothing on a Xaqu volume runs. Prints one
 line per package, `<archive> <pool path> <sha256>`, which is the list
 `tools/common/fetch/fetch-chromium-arm64.sh` pins, and the total installed size.
 

@@ -1,14 +1,14 @@
 //! Exception channels (`docs/microkernel/K4.md`): a supervisor attached to a
 //! process or a job, which hears the faults of the processes beneath it.
 
-use ferrix_native_abi::nr;
+use xaqu_native_abi::nr;
 
 use crate::call::{Call, Syscall};
 use crate::channel::Channel;
 use crate::error::{Error, decode_handle, decode_unit};
 use crate::handle::{Object, OwnedHandle, object_handle, register};
 
-pub use ferrix_native_abi::exception::{
+pub use xaqu_native_abi::exception::{
     HAND_ON, KILL, RESUME, Registers, Report, STATE_READ, STATE_WRITE, Words,
 };
 

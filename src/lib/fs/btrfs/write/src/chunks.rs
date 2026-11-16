@@ -1,6 +1,6 @@
 //! The chunk layout, with every stripe: where each copy of a logical range is.
 //!
-//! `ferrix_btrfs::chunk::ChunkMap` keeps one stripe per chunk, which is all a
+//! `xaqu_btrfs::chunk::ChunkMap` keeps one stripe per chunk, which is all a
 //! reader needs: every stripe of a mirrored profile is a whole copy. A writer
 //! needs all of them, because a DUP chunk written through its first stripe
 //! alone leaves a second copy that disagrees, and a later read that falls back
@@ -9,12 +9,12 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::chunk::{
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::chunk::{
     BLOCK_GROUP_DUP, BLOCK_GROUP_PROFILE_MASK, BLOCK_GROUP_TYPE_MASK, ChunkItem, Stripe,
 };
 
-use ferrix_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_OFFSETS};
+use xaqu_btrfs::superblock::{PRIMARY_OFFSET, SUPERBLOCK_OFFSETS};
 
 use crate::bytes::{put, put_u16, put_u32, put_u64};
 use crate::ranges::RangeSet;
@@ -127,7 +127,7 @@ impl Chunk {
         let num = u16::try_from(self.stripes.len()).ok()?;
         put_u64(out, 0, self.length)?;
         // The owner is always the extent tree's id, for historical reasons.
-        put_u64(out, 8, ferrix_btrfs::items::EXTENT_TREE_OBJECTID)?;
+        put_u64(out, 8, xaqu_btrfs::items::EXTENT_TREE_OBJECTID)?;
         put_u64(out, 16, STRIPE_LEN)?;
         put_u64(out, 24, self.type_bits)?;
         put_u32(out, 32, STRIPE_LEN as u32)?;

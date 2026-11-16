@@ -1,7 +1,7 @@
 //! The firmware framebuffer as a device node, when the command line asks.
 //!
 //! A machine whose GPU has no driver still has the screen its firmware left
-//! lit: the GOP framebuffer the loader hands over. `ferrix.efifb` lends it to
+//! lit: the GOP framebuffer the loader hands over. `xaqu.efifb` lends it to
 //! a ring-3 driver, `efifb`, which serves it to the display core as a card and
 //! shows each frame by copying it there (`docs/DISPLAY.md` §8). The kernel
 //! still draws nothing but a panic.
@@ -39,8 +39,8 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::{BootView, Framebuffer};
-use ferrix_sync::Once;
+use xaqu_bootinfo::{BootView, Framebuffer};
+use xaqu_sync::Once;
 
 use crate::device::DeviceNode;
 use crate::discovery::finder::{Context, Failed, Finder, OutOfMemory};
@@ -48,7 +48,7 @@ use crate::fallible;
 use crate::user::memory_type::{self, Hold, MemoryType};
 
 /// The command-line word that asks for the node.
-pub(crate) const OPTION: &str = "ferrix.efifb";
+pub(crate) const OPTION: &str = "xaqu.efifb";
 
 /// Whether the command line said [`OPTION`], as the finder read it: what
 /// stage 10's check holds a node to.
@@ -112,7 +112,7 @@ impl FirmwareFramebuffer {
     }
 
     /// Lend the framebuffer to `holder`, the Intel integrated GPU whose
-    /// memory holds it, under `ferrix.intelgpu` (K4, `L.device.46`): its type
+    /// memory holds it, under `xaqu.intelgpu` (K4, `L.device.46`): its type
     /// held as for a node of its own, the function then driven by the Intel
     /// driver, which serves the screen as a copying card.
     fn lend_to(
@@ -178,8 +178,8 @@ impl FirmwareFramebuffer {
 pub(crate) fn window_combining(virt: u64, len: u64) -> bool {
     let root = crate::mm::root_table();
     len != 0
-        && (0..len.div_ceil(ferrix_bootinfo::PAGE_SIZE)).all(|page| {
-            crate::mm::flags_in(root, virt + page * ferrix_bootinfo::PAGE_SIZE).is_some_and(
+        && (0..len.div_ceil(xaqu_bootinfo::PAGE_SIZE)).all(|page| {
+            crate::mm::flags_in(root, virt + page * xaqu_bootinfo::PAGE_SIZE).is_some_and(
                 |flags| {
                     MemoryType::of(false, flags.write_combining && !flags.device) == KERNEL_MAPPING
                         && flags.write
@@ -209,7 +209,7 @@ impl Finder for FirmwareFramebuffer {
         let Some(framebuffer) = self.framebuffer else {
             return Ok(());
         };
-        // Under `ferrix.intelgpu`, to the Intel GPU holding it, if it does
+        // Under `xaqu.intelgpu`, to the Intel GPU holding it, if it does
         // (K4, `L.device.46`): no node of its own, so nothing yields it.
         if let Some(index) = crate::device::lend_target(nodes, crate::device::intel_gpu_allowed())
             && let Some(holder) = nodes.get_mut(index)

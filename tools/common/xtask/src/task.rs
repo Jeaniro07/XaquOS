@@ -45,7 +45,7 @@ pub(crate) struct Task {
 
 /// The head of `--help`, before the commands.
 const HEAD: &str = "\
-Ferrix build driver
+Xaqu build driver
 
 USAGE:
     cargo xtask <COMMAND> [OPTIONS]

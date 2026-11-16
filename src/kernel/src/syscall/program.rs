@@ -21,10 +21,10 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Elf;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::OpenFile;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Elf;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::OpenFile;
 
 use crate::user::vmo::Vmo;
 

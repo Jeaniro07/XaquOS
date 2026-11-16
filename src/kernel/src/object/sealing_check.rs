@@ -6,13 +6,13 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{self, JOB_LEVEL_TOP, MAP_EXECUTE, MAP_READ, MAP_WRITE};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{self, JOB_LEVEL_TOP, MAP_EXECUTE, MAP_READ, MAP_WRITE};
 
 use crate::object::Object;
 use crate::object::check::{SCRATCH, Side, Spawner, reg};

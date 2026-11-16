@@ -24,9 +24,9 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_btrfs_vfs::rw::RwBtrfs;
-use ferrix_vfs::tmpfs::{PageSource, Pages, Storage};
-use ferrix_vfs::{Errno, FileSystem, Inode, NewNode};
+use xaqu_btrfs_vfs::rw::RwBtrfs;
+use xaqu_vfs::tmpfs::{PageSource, Pages, Storage};
+use xaqu_vfs::{Errno, FileSystem, Inode, NewNode};
 
 use super::{crc32c, pattern};
 use crate::fs;
@@ -61,7 +61,7 @@ struct Poisoned {
 }
 
 impl Pages for Poisoned {
-    fn read(&self, offset: u64, buf: &mut [u8]) -> ferrix_vfs::Result<()> {
+    fn read(&self, offset: u64, buf: &mut [u8]) -> xaqu_vfs::Result<()> {
         if self
             .failing
             .as_ref()
@@ -71,7 +71,7 @@ impl Pages for Poisoned {
         }
         self.pages.read(offset, buf)
     }
-    fn write(&self, offset: u64, data: &[u8]) -> ferrix_vfs::Result<()> {
+    fn write(&self, offset: u64, data: &[u8]) -> xaqu_vfs::Result<()> {
         self.pages.write(offset, data)
     }
     fn discard_from(&self, offset: u64) {
@@ -86,7 +86,7 @@ impl Pages for Poisoned {
     fn object(&self) -> Option<Arc<dyn Any + Send + Sync>> {
         self.pages.object()
     }
-    fn mapped_writes(&self) -> ferrix_vfs::Result<(Vec<u64>, bool)> {
+    fn mapped_writes(&self) -> xaqu_vfs::Result<(Vec<u64>, bool)> {
         self.pages.mapped_writes()
     }
 
@@ -106,16 +106,16 @@ impl Poisoning {
 }
 
 impl Storage for Poisoning {
-    fn allocate(&self) -> ferrix_vfs::Result<Box<dyn Pages>> {
+    fn allocate(&self) -> xaqu_vfs::Result<Box<dyn Pages>> {
         Ok(self.wrap(VmoStorage.allocate()?))
     }
-    fn allocate_with(&self, source: Arc<dyn PageSource>) -> ferrix_vfs::Result<Box<dyn Pages>> {
+    fn allocate_with(&self, source: Arc<dyn PageSource>) -> xaqu_vfs::Result<Box<dyn Pages>> {
         Ok(self.wrap(VmoStorage.allocate_with(source)?))
     }
     fn max_file_size(&self) -> u64 {
         VmoStorage.max_file_size()
     }
-    fn parker(&self) -> &dyn ferrix_sync::Parker {
+    fn parker(&self) -> &dyn xaqu_sync::Parker {
         VmoStorage.parker()
     }
     fn capacity(&self) -> (u64, u64) {

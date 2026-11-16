@@ -20,6 +20,6 @@ fn main() {
     linux::run();
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/snd`.
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/snd`.
 #[cfg(not(target_os = "linux"))]
 fn main() {}

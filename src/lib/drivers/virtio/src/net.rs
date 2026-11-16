@@ -8,7 +8,7 @@
 //! and [`plan`], [`publish`], [`parse_receipt`] and [`parse_sent`] turn a frame
 //! into a descriptor chain and a completion back into a length. What drives a
 //! device — the order of the status protocol, two queues rather than one, which
-//! buffer a completion belongs to — is `ferrix-virtio-net`'s, which runs in a
+//! buffer a completion belongs to — is `xaqu-virtio-net`'s, which runs in a
 //! user process over kernel handles and so cannot live in the kernel's crates.
 //!
 //! # The header is twelve bytes here, and the reason is not `MRG_RXBUF`

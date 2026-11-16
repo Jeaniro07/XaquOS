@@ -19,8 +19,8 @@ mod gicv3_its;
 
 use core::sync::atomic::{AtomicU8, Ordering};
 
-use ferrix_acpi::{Acpi, Madt, MadtEntry};
-use ferrix_fdt::{Fdt, GicVersion};
+use xaqu_acpi::{Acpi, Madt, MadtEntry};
+use xaqu_fdt::{Fdt, GicVersion};
 
 use crate::arch::arm_common::gicv2;
 use crate::discovery::acpi::DirectMap;

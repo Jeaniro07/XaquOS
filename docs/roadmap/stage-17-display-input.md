@@ -1,7 +1,7 @@
 # Stage 17 — Display and input ✅  ·  *74 points, spent*
 
 The first stage of the goal after `rustc`: a Hyprland-shaped Wayland
-compositor, written in Rust, running on Ferrix. The compositor is a user
+compositor, written in Rust, running on Xaqu. The compositor is a user
 program on the Linux ABI, so what it needs from the kernel is what a Linux
 compositor needs, and this stage provides it the way stage 10 provides disks:
 a kernel core with a ring-3 driver on stage 10's device objects, exposed
@@ -36,12 +36,12 @@ through the Linux ABI so that Rust's existing compositor crates run unchanged.
 **Done — iteration 1, a colour on the screen (2026-09-16).** `docs/DISPLAY.md`
 is the design. The display core (`src/kernel/src/interfaces/display`) takes a ring-3
 driver's HELLO on a control channel `DISPLAY_CONTROL_CREATE` (0x104C) makes,
-checks it through `ferrix-displayctl`'s session, refuses it when the firmware
+checks it through `xaqu-displayctl`'s session, refuses it when the firmware
 framebuffer is memory the allocator owns, and publishes `/dev/dri/card0`: a
 256 MiB card VMO whose ranges are dumb buffers, mapped by the program through
 the card's inode and pinned read-only by the driver. `src/user/system/native/drivers/display/virtio-gpu`, started by
 devmgr for 0x1050, drives virtio-gpu's 2D commands through
-`ferrix-virtio-gpu` behind VT-d or the SMMUv3. The card answers the legacy
+`xaqu-virtio-gpu` behind VT-d or the SMMUv3. The card answers the legacy
 DRM subset — resources, connector, encoder, CRTC, dumb buffers, `ADDFB`,
 `ADDFB2`, `SETCRTC`, `PAGE_FLIP` with its event, `DIRTYFB` — to one open at a
 time. `cargo xtask test-display` boots `src/user/system/linux/compositor/blank` as init on x86-64
@@ -50,7 +50,7 @@ to be its colour, and its negative control to fail at exactly pixel (0, 0).
 
 **Done — L1 of the input iteration, evdev's numbers (2026-09-16).**
 `docs/INPUT.md` is the design, approved by os-f6 the same day. Its first
-landing is `ferrix-linux-abi::input`: the evdev ioctls `/dev/input/eventN`
+landing is `xaqu-linux-abi::input`: the evdev ioctls `/dev/input/eventN`
 will answer, with the sized ones as functions and a request's parts taken
 apart as the kernel's `_IOC_*` macros do, the event types and the codes the
 test and QEMU's keyboard and tablet use, and `input_event`, `input_id` and
@@ -60,7 +60,7 @@ layout from linux-libc-dev 7.0.0-29.29's headers natively and under
 take, and the tests name each line the module disagrees with.
 
 **Done — L2 of the input iteration, the virtio-input protocol (2026-09-16).**
-`ferrix-virtio::input` asks a device virtio 1.2 §5.8's configuration queries
+`xaqu-virtio::input` asks a device virtio 1.2 §5.8's configuration queries
 (name, serial, ids, property and event bitmaps, each axis's range) and reads
 the 8-byte event. It refuses an answer over 128 bytes or running past the
 configuration block, which QEMU shortens to its longest answer, a structure
@@ -108,10 +108,10 @@ without a failure. No kernel code uses it yet: L5 is the process.
 **Done — L5, L6 and L7 of the input iteration: events, end to end
 (2026-09-17).** The input core (`src/kernel/src/interfaces/input`) takes a ring-3 driver's
 HELLO on a control channel `INPUT_CONTROL_CREATE` (0x104D) makes, judges it
-through `ferrix-inputctl`'s session, and publishes `/dev/input/eventN` with a
+through `xaqu-inputctl`'s session, and publishes `/dev/input/eventN` with a
 boot line naming the device and what it publishes -- `input    event0 QEMU
 Virtio Keyboard: keys, LEDs, repeat`. `src/user/system/native/drivers/input/virtio-input`, started by devmgr for
-0x1052, drives the device through `ferrix-virtio-input` behind VT-d or the
+0x1052, drives the device through `xaqu-virtio-input` behind VT-d or the
 SMMUv3, as `src/user/system/native/drivers/display/virtio-gpu` drives the card. The nodes answer the evdev subset
 `docs/INPUT.md` §2.4 reads out of the `evdev` crate -- `EVIOCGVERSION`,
 `EVIOCGID`, `EVIOCGNAME`, `EVIOCGUNIQ`, `EVIOCGPROP`, `EVIOCGBIT` of each
@@ -119,7 +119,7 @@ type that has a bitmap, `EVIOCGKEY`, `EVIOCGLED`, `EVIOCGSW`, `EVIOCGABS`,
 `EVIOCGREP`/`EVIOCSREP`, `EVIOCGRAB`, `EVIOCREVOKE`, `EVIOCSCLOCKID` -- with
 a queue per open following `evdev.c`'s size, drop and `SYN_DROPPED` rules.
 `src/user/system/linux/compositor/evecho` is the consumer, and it runs on a Linux host's own
-`/dev/input` as well as on Ferrix, which is where it found that `EVIOCGBIT`
+`/dev/input` as well as on Xaqu, which is where it found that `EVIOCGBIT`
 of `EV_REP` is `EINVAL` on Linux. `cargo xtask test-input` boots it as init
 on x86-64 and AArch64, sends a key press, a key release, an absolute position
 and a button through QMP's `input-send-event`, and requires each one back out
@@ -186,10 +186,10 @@ the design.
 **Done — the board's desktop without the boot test in front of it
 (2026-09-24).** The DK1 took some 20 s from reset to a usable desktop, 6.5 s
 of it the kernel's self-checks and 2.5 s the loader reading 47 MB off the
-card. `ferrix.checks=skip` brings every stage up and checks none
-(`src/kernel/src/checks.rs`), ending in `FERRIX-BOOT-UNCHECKED`, which no boot
+card. `xaqu.checks=skip` brings every stage up and checks none
+(`src/kernel/src/checks.rs`), ending in `XAQU-BOOT-UNCHECKED`, which no boot
 test accepts; `flash --compositor` and `run-compositor` put it in the image's
-own `FERRIX/DEFAULTS.TXT`, beside and below the card owner's `CMDLINE.TXT`,
+own `XAQU/DEFAULTS.TXT`, beside and below the card owner's `CMDLINE.TXT`,
 and `test-compositor --boot desktop` gates it. Under QEMU at two processors
 the kernel's banner to its marker is 0.34 s against 4.94 s. `flash` strips
 the card's programs and kernel, and oh-my-zsh loses its documentation and
@@ -395,7 +395,7 @@ after it; 22 calls refused as Linux refuses them; 0 frames leaked` on x86-64;
 AArch64 said 371 us and ARMv7-A 336 us. With the thread's wake removed, the
 boot panics with "a waiter on a timerfd was ended by its recheck, not by the
 deadline's wake". ferrousli's wrappers landed with foot the same day, and
-foot's `cargo xtask test-foot` is the program on Ferrix that uses them: it
+foot's `cargo xtask test-foot` is the program on Xaqu that uses them: it
 creates its timers with them as it starts, and draws its text on the
 compositor (`docs/CHROME.md` §6).
 

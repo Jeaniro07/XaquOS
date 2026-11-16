@@ -1,4 +1,4 @@
-//! Typed, safe wrappers over every Ferrix native system call.
+//! Typed, safe wrappers over every Xaqu native system call.
 //!
 //! `src/lib/proto/native-abi` writes the native ABI down as numbers and layouts; this
 //! crate is how a program *speaks* it. Each call is a function or a method on
@@ -60,8 +60,8 @@ mod tests;
 
 pub use call::{Raw, Syscall};
 pub use error::Error;
-pub use ferrix_native_abi::handle::Handle;
-pub use ferrix_native_abi::rights::{Requested, Rights};
-pub use ferrix_native_abi::signals::Signals;
-pub use ferrix_native_abi::types::{IoMappingSpec, PortPacket};
+pub use xaqu_native_abi::handle::Handle;
+pub use xaqu_native_abi::rights::{Requested, Rights};
+pub use xaqu_native_abi::signals::Signals;
+pub use xaqu_native_abi::types::{IoMappingSpec, PortPacket};
 pub use handle::{Deadline, Object, OwnedHandle};

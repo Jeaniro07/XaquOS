@@ -108,7 +108,7 @@ impl<B: Backend> Worker<B> {
                     (Some(id), Some(memory)) => {
                         self.backend.bind(id, address, memory, bytes, pat_index)
                     }
-                    _ => Err(ferrix_linux_abi::errno::Errno::EINVAL),
+                    _ => Err(xaqu_linux_abi::errno::Errno::EINVAL),
                 };
                 if let Err(errno) = result {
                     out(Event::Refused {
@@ -159,7 +159,7 @@ impl<B: Backend> Worker<B> {
             errno: errno_field(errno),
         };
         let Some(cell) = self.vms.get_mut(slot(vm)) else {
-            out(refused(ferrix_linux_abi::errno::Errno::EINVAL));
+            out(refused(xaqu_linux_abi::errno::Errno::EINVAL));
             return;
         };
         if let Some(old) = cell.take() {
@@ -189,7 +189,7 @@ impl<B: Backend> Worker<B> {
                 self.backend
                     .context_create(id, engine, ContextParams { ring_bytes })
             }
-            _ => Err(ferrix_linux_abi::errno::Errno::EINVAL),
+            _ => Err(xaqu_linux_abi::errno::Errno::EINVAL),
         };
         match result {
             Ok(hw) => {
@@ -217,7 +217,7 @@ impl<B: Backend> Worker<B> {
             out(Event::Refused {
                 kind: kind::SUBMIT,
                 id: request,
-                errno: errno_field(ferrix_linux_abi::errno::Errno::ENOENT),
+                errno: errno_field(xaqu_linux_abi::errno::Errno::ENOENT),
             });
             return;
         };
@@ -240,7 +240,7 @@ impl<B: Backend> Worker<B> {
             out(Event::Refused {
                 kind: kind::SUBMIT,
                 id: request,
-                errno: errno_field(ferrix_linux_abi::errno::Errno::ENOMEM),
+                errno: errno_field(xaqu_linux_abi::errno::Errno::ENOMEM),
             });
         }
     }

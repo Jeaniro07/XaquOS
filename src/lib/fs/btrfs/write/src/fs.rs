@@ -26,14 +26,14 @@
 
 use alloc::vec::Vec;
 
-use ferrix_btrfs::crc32c;
-use ferrix_btrfs::items::{
+use xaqu_btrfs::crc32c;
+use xaqu_btrfs::items::{
     DIR_INDEX_KEY, DIR_ITEM_KEY, DirItemIter, EXTENT_DATA_KEY, ExtentData, ExtentDataBody,
     FILE_EXTENT_INLINE, FILE_EXTENT_REG, FIRST_FREE_OBJECTID, FS_TREE_OBJECTID, INODE_EXTREF_KEY,
     INODE_ITEM_KEY, INODE_ITEM_SIZE, INODE_REF_KEY, InodeItem, InodeRefIter, LAST_FREE_OBJECTID,
     NAME_LEN, Timespec, extref_hash, name_hash,
 };
-use ferrix_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE};
+use xaqu_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE};
 
 use crate::bytes::{put, put_key, put_u8, put_u16, put_u32, put_u64};
 use crate::extent::Backref;
@@ -224,7 +224,7 @@ pub fn encode_inode(item: &InodeItem) -> Result<Vec<u8>> {
 /// The directory-entry type for an inode's mode.
 #[must_use]
 pub const fn entry_type(mode: u32) -> u8 {
-    use ferrix_btrfs::items as it;
+    use xaqu_btrfs::items as it;
     match mode & it::S_IFMT {
         it::S_IFREG => it::FT_REG_FILE,
         it::S_IFDIR => it::FT_DIR,
@@ -565,7 +565,7 @@ impl<D: WriteDevice> WriteVolume<D> {
             .get(FS_TREE, &key)?
             .ok_or(Error::Inconsistent("name without its INODE_REF"))?;
         let mut index = None;
-        for record in ferrix_btrfs::items::InodeExtrefIter::new(&refs) {
+        for record in xaqu_btrfs::items::InodeExtrefIter::new(&refs) {
             let record = record?;
             if record.name == name && record.parent == parent {
                 index = Some(record.index);
@@ -573,7 +573,7 @@ impl<D: WriteDevice> WriteVolume<D> {
         }
         let index = index.ok_or(Error::Inconsistent("name without its INODE_REF"))?;
         let kept = without_record(&refs, name, |data, at| {
-            let record = ferrix_btrfs::items::InodeExtrefIter::new(data.get(at..)?)
+            let record = xaqu_btrfs::items::InodeExtrefIter::new(data.get(at..)?)
                 .next()?
                 .ok()?;
             let named: &[u8] = if record.parent == parent {
@@ -1021,7 +1021,7 @@ impl<D: WriteDevice> WriteVolume<D> {
     /// Read `ino`'s bytes from `offset` into `out` over this transaction's
     /// trees, decompressing as needed. Returns the length read, short only at
     /// the end of the file. What a writer needs to rewrite part of a sector;
-    /// a VFS reads through `ferrix-btrfs`.
+    /// a VFS reads through `xaqu-btrfs`.
     pub fn read_file(&mut self, ino: u64, offset: u64, out: &mut [u8]) -> Result<usize> {
         let item = self.require_inode(ino)?;
         let len = usize::try_from(item.size.saturating_sub(offset))
@@ -1094,16 +1094,16 @@ impl<D: WriteDevice> WriteVolume<D> {
             .ok_or(Error::Inconsistent("data extent has no copy"))?;
         Ok(self
             .device
-            .read_at(physical, dest, ferrix_btrfs::volume::ReadKind::Data)?)
+            .read_at(physical, dest, xaqu_btrfs::volume::ReadKind::Data)?)
     }
 
     /// Decompress an extent's stored bytes into `ram_bytes` bytes.
     fn expand(&self, compression: u8, input: &[u8], ram_bytes: u64) -> Result<Vec<u8>> {
         let mut out =
             fallible::zeroed(usize::try_from(ram_bytes).map_err(|_| Error::ItemTooLarge)?)?;
-        let mut work = fallible::zeroed(ferrix_btrfs::compress::zstd::Workspace::SIZE)?;
-        let mut workspace = ferrix_btrfs::compress::zstd::Workspace::new(&mut work)?;
-        let len = ferrix_btrfs::compress::decompress(
+        let mut work = fallible::zeroed(xaqu_btrfs::compress::zstd::Workspace::SIZE)?;
+        let mut workspace = xaqu_btrfs::compress::zstd::Workspace::new(&mut work)?;
+        let len = xaqu_btrfs::compress::decompress(
             compression,
             input,
             &mut out,

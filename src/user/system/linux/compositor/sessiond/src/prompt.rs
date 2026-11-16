@@ -459,7 +459,7 @@ mod tests {
             area: "hostname".to_owned(),
             program: "/bin/settings".to_owned(),
             parent: "/bin/hyprix".to_owned(),
-            account: "ferrix".to_owned(),
+            account: "xaqu".to_owned(),
             what: "would call the computer box".to_owned(),
         }
     }

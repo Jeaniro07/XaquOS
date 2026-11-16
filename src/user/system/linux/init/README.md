@@ -5,7 +5,7 @@ manager `docs/INIT.md` designs, landings L1 to L13 (§16 records each).
 Every image that boots `/sbin/init` runs it, the desktop's included, where
 the compositor is `hyprix.service`.
 
-The manager itself is `src/lib/init/svc`, a pure `no_std` crate of the Ferrix
+The manager itself is `src/lib/init/svc`, a pure `no_std` crate of the Xaqu
 workspace: unit files in systemd's syntax, the dependency graph, operations,
 the slice tree and every kind's state machine, as `Manager::step(event, now)
 -> actions`. Its restart policy is `src/lib/init/restart`, which allocates
@@ -23,14 +23,14 @@ everything around it that makes system calls:
   `Type=native` services in their cgroup's job with the directory of
   `docs/INIT.md` §6, `User=` on a native service through a helper that has
   become that user, and the audit record. On an image booted with
-  `ferrix.devmgr=init` it starts `devmgr` itself, through the starter the
+  `xaqu.devmgr=init` it starts `devmgr` itself, through the starter the
   kernel gives pid 1 (§7.3, `units/devmgr.service`). `init/src/sys.rs`
   holds the system calls' `unsafe` blocks, and `sockets.rs` and
   `directory.rs` the few that bind a listener or end a helper.
 * `getty/` -- `getty TTY` gives a terminal a session and a login shell;
   `getty-generator DIR` links a getty into `multi-user.target` for each
   console, a console named by its address included.
-* `svc/` -- `/bin/svc`, systemctl's verbs over `/run/ferrix/control`:
+* `svc/` -- `/bin/svc`, systemctl's verbs over `/run/xaqu/control`:
   `svc status`, `svc list`, `svc log <unit>`, `set-property`, `top`,
   `poweroff` (§10). `/bin/poweroff`, `/bin/reboot` and `/bin/shutdown` are
   links to it, each the verb of its name (§8.2).
@@ -43,10 +43,10 @@ everything around it that makes system calls:
   `devmgr.service`, and the services of `lode` (`lode.service`,
   `lode-crashd.service`, `lode-pstore.service`, `lode-upload.service`) and
   of the RAM scrubber (`memscrub.service`), installed in
-  `/lib/ferrix/units`.
+  `/lib/xaqu/units`.
 
 It is a workspace of its own, as zinc and the compositor are, because these
-are Linux programs built with std, and the Ferrix workspace's dependency
+are Linux programs built with std, and the Xaqu workspace's dependency
 policy is written for a kernel.
 
 ## Building and testing

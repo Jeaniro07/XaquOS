@@ -14,12 +14,12 @@
 # use the system's.
 #
 # Two machines: linux-x64 (the default) and linux-arm64, for an AArch64
-# Ferrix. Each has a volume of its own, from the same release and the same
+# Xaqu. Each has a volume of its own, from the same release and the same
 # Debian packages built for it.
 #
 # The volume holds a Debian-shaped tree at its root -- `usr/lib64` and
 # `usr/lib/x86_64-linux-gnu`, or `usr/lib/aarch64-linux-gnu`, and
-# `usr/bin` -- and Claude Code at `claude-code/claude`. Ferrix mounts it at
+# `usr/bin` -- and Claude Code at `claude-code/claude`. Xaqu mounts it at
 # `/data`, and the test's image links the directories glibc names into it,
 # as test-chrome's does.
 #
@@ -27,11 +27,11 @@
 # file (amd64 on 2026-09-30, arm64 on 2026-10-14), and Claude Code's from
 # its release's manifest.json, which publishes one for each platform. After
 # unpacking, every library each ELF file on the volume needs is looked for
-# on it, so a dependency this list lacks fails here rather than on Ferrix.
+# on it, so a dependency this list lacks fails here rather than on Xaqu.
 #
-# Writes $FERRIX_CLAUDE_CODE_VOLUME/claude-code.img (default
-# ~/.local/share/ferrix/claude-code/claude-code.img, or
-# ~/.local/share/ferrix/claude-code-arm64/claude-code.img for arm64). Needs
+# Writes $XAQU_CLAUDE_CODE_VOLUME/claude-code.img (default
+# ~/.local/share/xaqu/claude-code/claude-code.img, or
+# ~/.local/share/xaqu/claude-code-arm64/claude-code.img for arm64). Needs
 # curl, sha256sum, dpkg-deb, readelf and mkfs.btrfs; no root. Nothing it
 # downloads is run.
 #
@@ -51,7 +51,7 @@ CLAUDE_CODE_VERSION=2.1.280
 # the tree, and glibc's library directory.
 case $machine in
     x64)
-        out=${FERRIX_CLAUDE_CODE_VOLUME:-$HOME/.local/share/ferrix/claude-code}
+        out=${XAQU_CLAUDE_CODE_VOLUME:-$HOME/.local/share/xaqu/claude-code}
         CLAUDE_CODE_SHA256=1e08503dbdf3c2cb0d706d32f3408277388d1c76ef108673e8fe42c1b322925b
         loader=usr/lib64/ld-linux-x86-64.so.2
         libdirs=(usr/lib/x86_64-linux-gnu usr/lib64)
@@ -65,7 +65,7 @@ case $machine in
         )
         ;;
     arm64)
-        out=${FERRIX_CLAUDE_CODE_VOLUME:-$HOME/.local/share/ferrix/claude-code-arm64}
+        out=${XAQU_CLAUDE_CODE_VOLUME:-$HOME/.local/share/xaqu/claude-code-arm64}
         CLAUDE_CODE_SHA256=92f2b4fd05d0bdcf7b9a0d4e0ecef4a1e4b368b290cd8fd07cff9a50013f45a2
         loader=usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
         libdirs=(usr/lib/aarch64-linux-gnu)

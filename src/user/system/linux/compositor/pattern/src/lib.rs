@@ -1,7 +1,7 @@
 //! A Wayland client that draws one of the test patterns.
 //!
 //! The compositor's exit tests need clients, and a client built on a toolkit
-//! would bring a toolkit's dependencies onto Ferrix's image and a toolkit's
+//! would bring a toolkit's dependencies onto Xaqu's image and a toolkit's
 //! opinions into the test. This one is the whole Wayland client in one file,
 //! over `src/user/system/linux/compositor/wire` and `src/user/system/linux/compositor/socket` -- the same crates the
 //! server uses, which means the test exercises them from both ends.

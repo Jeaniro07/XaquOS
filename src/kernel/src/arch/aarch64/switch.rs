@@ -23,11 +23,11 @@ global_asm!(
     r#"
 .section .text
 
-// void ferrix_switch(u64 *save, u64 next)
+// void xaqu_switch(u64 *save, u64 next)
 //   x0 = where to write this context's stack pointer
 //   x1 = the stack pointer to resume
-.globl ferrix_switch
-ferrix_switch:
+.globl xaqu_switch
+xaqu_switch:
     stp x29, x30, [sp, #-96]!
     stp x27, x28, [sp, #16]
     stp x25, x26, [sp, #32]
@@ -47,8 +47,8 @@ ferrix_switch:
 
 // Where a task starts the first time it is switched to: `prepare_stack` left
 // its entry point in x19 and its argument in x20.
-.globl ferrix_task_entry
-ferrix_task_entry:
+.globl xaqu_task_entry
+xaqu_task_entry:
     mov x0, x20
     blr x19
     brk #0
@@ -57,9 +57,9 @@ ferrix_task_entry:
 
 unsafe extern "C" {
     /// Save this context and resume another. Declared here; defined above.
-    fn ferrix_switch(save: *mut u64, next: u64);
+    fn xaqu_switch(save: *mut u64, next: u64);
     /// The first instruction a new task runs.
-    fn ferrix_task_entry();
+    fn xaqu_task_entry();
 }
 
 /// Stop running on this stack and continue on `next`, writing this context's
@@ -74,7 +74,7 @@ unsafe extern "C" {
 /// exist.
 pub(crate) unsafe fn switch_to(save: *mut u64, next: u64) {
     // SAFETY: (CONTEXT) the caller's guarantee is exactly the assembly's contract.
-    unsafe { ferrix_switch(save, next) };
+    unsafe { xaqu_switch(save, next) };
 }
 
 /// Lay out a stack so that switching to it calls `entry(argument)`.
@@ -95,7 +95,7 @@ pub(crate) unsafe fn prepare_stack(
     // code that runs before Rust does and has nowhere else to read them from.
     let frame: [u64; 12] = [
         0,                                              // x29
-        ferrix_task_entry as *const () as usize as u64, // x30, the link register
+        xaqu_task_entry as *const () as usize as u64, // x30, the link register
         0,                                              // x27
         0,                                              // x28
         0,                                              // x25
@@ -255,9 +255,9 @@ global_asm!(
 .arch_extension simd
 .section .text
 
-// void ferrix_user_save(UserState *state)
-.globl ferrix_user_save
-ferrix_user_save:
+// void xaqu_user_save(UserState *state)
+.globl xaqu_user_save
+xaqu_user_save:
     mrs  x1, tpidr_el0
     mrs  x2, fpcr
     mrs  x3, fpsr
@@ -281,9 +281,9 @@ ferrix_user_save:
     stp  q30, q31, [x0, #512]
     ret
 
-// void ferrix_user_restore(const UserState *state)
-.globl ferrix_user_restore
-ferrix_user_restore:
+// void xaqu_user_restore(const UserState *state)
+.globl xaqu_user_restore
+xaqu_user_restore:
     ldp  x1, x2, [x0, #0]
     ldr  x3, [x0, #16]
     msr  tpidr_el0, x1
@@ -311,9 +311,9 @@ ferrix_user_restore:
 
 unsafe extern "C" {
     /// Store this processor's user state into `state`.
-    fn ferrix_user_save(state: *mut UserState);
+    fn xaqu_user_save(state: *mut UserState);
     /// Load `state` into this processor's user registers.
-    fn ferrix_user_restore(state: *const UserState);
+    fn xaqu_user_restore(state: *const UserState);
 }
 
 /// Store the program state this processor holds into `state`, in full:
@@ -328,7 +328,7 @@ unsafe extern "C" {
 pub(crate) unsafe fn save_user_state(state: &mut UserState, _blocked: bool) {
     // SAFETY: (CONTEXT) `state` is a live, exclusively borrowed `UserState`, whose layout
     // the assembly's offsets are asserted against.
-    unsafe { ferrix_user_save(core::ptr::from_mut(state)) };
+    unsafe { xaqu_user_save(core::ptr::from_mut(state)) };
 }
 
 /// Load `state` onto this processor for the task about to run.
@@ -344,7 +344,7 @@ pub(crate) unsafe fn restore_user_state(state: &UserState, entry_stack: u64) {
     let _ = entry_stack;
     // SAFETY: (CONTEXT) as above, and loading user registers cannot affect the kernel,
     // which uses none of them.
-    unsafe { ferrix_user_restore(core::ptr::from_ref(state)) };
+    unsafe { xaqu_user_restore(core::ptr::from_ref(state)) };
 }
 
 /// Put this processor's user state back to a program's starting state, as
@@ -356,5 +356,5 @@ pub(crate) unsafe fn restore_user_state(state: &UserState, entry_stack: u64) {
 pub unsafe fn reset_user_state() {
     let fresh = UserState::new();
     // SAFETY: (CONTEXT) loading zeroed user registers cannot affect the kernel.
-    unsafe { ferrix_user_restore(core::ptr::from_ref(&fresh)) };
+    unsafe { xaqu_user_restore(core::ptr::from_ref(&fresh)) };
 }

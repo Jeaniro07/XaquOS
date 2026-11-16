@@ -2,9 +2,9 @@
 //! copying card (`docs/DISPLAY.md` §8.2).
 //!
 //! The machine is the firmware-screen boot's -- no virtio-gpu, a VGA whose
-//! framebuffer `ferrix.efifb` lends to `efifb`, which copies each frame --
+//! framebuffer `xaqu.efifb` lends to `efifb`, which copies each frame --
 //! with the Intel stand-in beside it (`crate::intel_uapi::STANDIN`), driven
-//! by `intel-fake` under `ferrix.intelgpu`, so there is an i915 render node
+//! by `intel-fake` under `xaqu.intelgpu`, so there is an i915 render node
 //! whose buffers are chardev dmabufs, as a game's are on the N150. One
 //! pattern client makes its buffers there (`pattern --dmabuf`, GEM objects
 //! by hand) and draws every frame, as a game does (`--busy`), and a window
@@ -55,7 +55,7 @@ const LEVELS_END: &str = "lode-levels: table ends";
 
 /// The sources -- `SYSLOG_IDENTIFIER`s -- of the ring-3 drivers and devmgr
 /// that this boot runs, each of whose lines must reach lode with the level
-/// its writer gave it (`ferrix_rt::log`): none unspecified, none derived
+/// its writer gave it (`xaqu_rt::log`): none unspecified, none derived
 /// from its words. `intel` is the fake's front end and `intel-fake` its
 /// facts; `efifb` the copying card's, `ahci` the machine's SATA controller's.
 const DRIVERS: [&str; 5] = ["intel", "intel-fake", "devmgr", "efifb", "ahci"];
@@ -76,7 +76,7 @@ exec-once = /bin/pattern checkerboard scanout --dmabuf --busy
 ";
 
 /// The framebuffer lent to `efifb`, and the Intel stand-in driven.
-const OPTION: &str = "ferrix.efifb ferrix.intelgpu";
+const OPTION: &str = "xaqu.efifb xaqu.intelgpu";
 
 /// What hyprix says when it hands the card the client's buffer.
 pub(crate) const SCANNING: &str = "directly";
@@ -163,7 +163,7 @@ fn judge_levels(said: &[String]) -> std::result::Result<Vec<String>, String> {
                 return Err(format!(
                     "{source}: {unspecified} of {records} records reached lode with no level, \
                      {derived} with one read from their words: a driver's lines carry the level \
-                     it gave them (ferrix_rt::log)"
+                     it gave them (xaqu_rt::log)"
                 ));
             }
             _ => {

@@ -58,15 +58,15 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_acpi::dmar::{self, Structure};
-use ferrix_acpi::iort;
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_fdt::{EcamHost, Fdt};
-use ferrix_paging::vtd::rmrr::{self, Identity};
-use ferrix_paging::{MapError, MapFlags};
-use ferrix_pci::Address;
-use ferrix_pci::topology::{self, Bridge};
-use ferrix_sync::Once;
+use xaqu_acpi::dmar::{self, Structure};
+use xaqu_acpi::iort;
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_fdt::{EcamHost, Fdt};
+use xaqu_paging::vtd::rmrr::{self, Identity};
+use xaqu_paging::{MapError, MapFlags};
+use xaqu_pci::Address;
+use xaqu_pci::topology::{self, Bridge};
+use xaqu_sync::Once;
 
 use crate::device::{DeviceNode, Location};
 use crate::discovery::description::{self, Description};
@@ -179,12 +179,12 @@ pub(crate) fn units(view: &BootView<'_>) -> Vec<Unit> {
         // read still names a unit's registers.
         if let Ok(table) = tables.ivrs() {
             for block in table.blocks() {
-                if let ferrix_acpi::ivrs::Block::Ivhd(unit) = block {
+                if let xaqu_acpi::ivrs::Block::Ivhd(unit) = block {
                     add(
                         &mut units,
                         Kind::AmdVi,
                         unit.base,
-                        ferrix_paging::amdvi::unit::KEPT,
+                        xaqu_paging::amdvi::unit::KEPT,
                     );
                 }
             }
@@ -227,7 +227,7 @@ fn behind(units: &[Unit], phys: u64, stream: u32) -> Behind {
 /// sub-hierarchy scope names a bridge, the bridge and everything below it
 /// (VT-d 4.0 §8.3.1). Paths longer than one hop, and the buses below a
 /// bridge, are followed through the bridges enumeration found
-/// (`ferrix_pci::topology`). A function below a named bridge is placed only
+/// (`xaqu_pci::topology`). A function below a named bridge is placed only
 /// when its own requester ID is what arrives there -- every bridge on the way
 /// a PCIe port -- because a domain is built for that ID. One whose DMA
 /// arrives under a bridge's alias, and a path through something that is not
@@ -316,7 +316,7 @@ fn explicit_dmar(
 /// explains: never given a domain, since a second function behind the same
 /// bridge would share it.
 ///
-/// The decision is [`topology::claims`], kept in `ferrix_pci` beside the
+/// The decision is [`topology::claims`], kept in `xaqu_pci` beside the
 /// walks it composes so its host tests (L.iommu.45) run it as this does;
 /// every placement asks it here, so none can answer `Own` where
 /// [`topology::behind`] says aliased.
@@ -442,7 +442,7 @@ pub(crate) struct Report {
     /// PCI functions firmware places behind a unit.
     pub(crate) behind: usize,
     /// Of them, those whose unit does not translate: left alone, turned
-    /// off by `ferrix.vtd=off`, or held to remapping only by an RMRR.
+    /// off by `xaqu.vtd=off`, or held to remapping only by an RMRR.
     pub(crate) untranslated: usize,
     /// PCI functions firmware puts behind no unit.
     pub(crate) bypassing: usize,
@@ -477,7 +477,7 @@ fn discover(view: &BootView<'_>, nodes: &[Arc<DeviceNode>]) -> (Report, Vec<Unit
         .collect();
 
     let mut placements = Vec::new();
-    let mut tally = ferrix_paging::vtd::unit::Tally::default();
+    let mut tally = xaqu_paging::vtd::unit::Tally::default();
     let mut record = |function: Address, found: Behind| match found {
         Behind::Unit { unit, stream } => {
             tally.add(units.get(unit).is_some_and(translates));
@@ -617,7 +617,7 @@ impl core::fmt::Display for Counted {
 }
 
 /// Say how the Intel integrated GPU stands (`docs/INTEL-GPU.md` §4.4 (b)):
-/// not driven without `ferrix.intelgpu`; driven under it, its domain made
+/// not driven without `xaqu.intelgpu`; driven under it, its domain made
 /// now, with the kernel's pin budget, and named as DMA nobody translates
 /// while its unit does not: degraded trusted mode, its driver trusted with
 /// all of memory (VULNERABILITY-ANALYSIS V-03), and no client may reach it
@@ -1726,7 +1726,7 @@ struct Held {
 #[derive(Clone, Copy, Debug)]
 enum Unhonoured {
     /// The region itself, or a frame the allocator holds
-    /// (`ferrix_paging::vtd::rmrr::Refusal`).
+    /// (`xaqu_paging::vtd::rmrr::Refusal`).
     Refused(rmrr::Refusal),
     /// Its identity domain could not be made.
     Attach(&'static str),
@@ -1746,16 +1746,16 @@ impl core::fmt::Display for Unhonoured {
 /// `L.iommu.75`).
 ///
 /// Every RMRR scope that reaches the unit is read
-/// (`ferrix_acpi::dmar::Dmar::rmrr_holds`). One the table cannot place holds
+/// (`xaqu_acpi::dmar::Dmar::rmrr_holds`). One the table cannot place holds
 /// it. Each one naming a function behind it must be whole pages, inside a
 /// domain's reach, bounded, over no region the memory map calls RAM
-/// (`ferrix_paging::vtd::rmrr::identity`), with every frame outside the
+/// (`xaqu_paging::vtd::rmrr::identity`), with every frame outside the
 /// frame allocator, and share no page with the function's other RMRRs.
 /// The first that is not holds the unit, with its reason.
 fn plan_rmrrs(
     table: &dmar::Dmar<'_>,
     unit: &dmar::Drhd<'_>,
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
 ) -> RmrrPlan {
     let ram = || {
         memory
@@ -1821,7 +1821,7 @@ fn plan_rmrrs(
 pub fn frames_outside_allocator(region: Identity) -> Result<(), rmrr::Refusal> {
     for page in region.page_addresses() {
         match mm::frame_state(page / PAGE_SIZE) {
-            None | Some(ferrix_frame::State::Reserved) => {}
+            None | Some(xaqu_frame::State::Reserved) => {}
             Some(_) => return Err(rmrr::Refusal::AllocatorFrame { page }),
         }
     }
@@ -1951,22 +1951,22 @@ struct StreamMap {
     unit: usize,
 }
 
-/// Whether `ferrix.vtd=off` was asked, as [`bring_up`] read it.
+/// Whether `xaqu.vtd=off` was asked, as [`bring_up`] read it.
 static VTD_OFF: AtomicBool = AtomicBool::new(false);
 
-/// Why every VT-d unit was left alone under `ferrix.vtd=off`.
-const VTD_OFF_WHY: &str = "ferrix.vtd=off asked for every unit to be left alone";
+/// Why every VT-d unit was left alone under `xaqu.vtd=off`.
+const VTD_OFF_WHY: &str = "xaqu.vtd=off asked for every unit to be left alone";
 
-/// Whether the command line says `ferrix.vtd=off`
-/// (`ferrix_paging::vtd::unit::switched_off`), for [`bring_up`] and the
+/// Whether the command line says `xaqu.vtd=off`
+/// (`xaqu_paging::vtd::unit::switched_off`), for [`bring_up`] and the
 /// audit record's configuration.
 pub fn vtd_off_asked(view: &BootView<'_>) -> bool {
-    // The literal, not `ferrix_paging::vtd::unit::OFF_OPTION`, which names
+    // The literal, not `xaqu_paging::vtd::unit::OFF_OPTION`, which names
     // the same word: the build-flags gate reads each option by its literal.
-    ferrix_paging::vtd::unit::switched_off(view.option("ferrix.vtd"))
+    xaqu_paging::vtd::unit::switched_off(view.option("xaqu.vtd"))
 }
 
-/// Whether [`bring_up`] left every VT-d unit alone for `ferrix.vtd=off`.
+/// Whether [`bring_up`] left every VT-d unit alone for `xaqu.vtd=off`.
 fn vtd_switched_off() -> bool {
     VTD_OFF.load(Ordering::Acquire)
 }
@@ -2022,11 +2022,11 @@ pub fn bring_up(view: &BootView<'_>) -> BringUp {
     report
 }
 
-/// Whether the command line says `ferrix.amdvi=off`
-/// (`ferrix_paging::amdvi::unit::switched_off`), for the audit record's
+/// Whether the command line says `xaqu.amdvi=off`
+/// (`xaqu_paging::amdvi::unit::switched_off`), for the audit record's
 /// configuration.
 pub fn amdvi_off_asked(view: &BootView<'_>) -> bool {
-    ferrix_paging::amdvi::unit::switched_off(view.option("ferrix.amdvi"))
+    xaqu_paging::amdvi::unit::switched_off(view.option("xaqu.amdvi"))
 }
 
 /// Program every VT-d unit the DMAR describes, and record the functions its
@@ -2042,10 +2042,10 @@ pub fn amdvi_off_asked(view: &BootView<'_>) -> bool {
 /// translation off; its functions' DMA is untranslated and reaches all of
 /// memory, which its line says (`L.iommu.67`).
 ///
-/// With `ferrix.vtd=off` every unit is left alone (`L.iommu.71`).
+/// With `xaqu.vtd=off` every unit is left alone (`L.iommu.71`).
 fn bring_up_vtd(
     table: &dmar::Dmar<'_>,
-    memory: &[ferrix_bootinfo::MemRegion],
+    memory: &[xaqu_bootinfo::MemRegion],
     programmed: &mut Programmed,
     report: &mut BringUp,
 ) {
@@ -2059,7 +2059,7 @@ fn bring_up_vtd(
         let Structure::Drhd(unit) = structure else {
             continue;
         };
-        let mut state = ferrix_paging::vtd::remap::UnitState {
+        let mut state = xaqu_paging::vtd::remap::UnitState {
             remapping: false,
             compatibility_blocked: false,
         };
@@ -2115,7 +2115,7 @@ fn bring_up_vtd(
     record_catch_alls(table, &indices, programmed);
     if switched_off {
         crate::println!(
-            "  iommu    ferrix.vtd=off: every VT-d unit is left alone, so no DMA is translated \
+            "  iommu    xaqu.vtd=off: every VT-d unit is left alone, so no DMA is translated \
              and no interrupt remapped; this is a recovery configuration, not an evaluated one"
         );
     }
@@ -2157,7 +2157,7 @@ fn say_unit(
     unit: &dmar::Drhd<'_>,
     opened: &vtd::Unit,
     hold: Option<Held>,
-    state: ferrix_paging::vtd::remap::UnitState,
+    state: xaqu_paging::vtd::remap::UnitState,
     protected: vtd::Protected,
 ) {
     let remap_words = if state.remapping {
@@ -2336,7 +2336,7 @@ pub fn directly_below_root_port(function: Address) -> bool {
 /// ([`IdentityDomain::claim`]), found by the requester it was attached for.
 /// `None`, no domain at all, while one for it lives, or when enumeration
 /// does not place the function behind that unit as its own requester
-/// (`ferrix_pci::topology::agrees`): never an untranslated one, whose first
+/// (`xaqu_pci::topology::agrees`): never an untranslated one, whose first
 /// pin would say its DMA reaches all of memory while the unit confines it
 /// (`L.iommu.78`). Every other function gets `Some`.
 pub fn domain_for(function: Address) -> Option<Domain> {
@@ -2728,7 +2728,7 @@ pub(crate) fn audit_faults() -> FaultAudit {
     let mut audit = FaultAudit::default();
     if let Some(programmed) = PROGRAMMED.get() {
         for unit in &programmed.vtd {
-            if !ferrix_paging::vtd::unit::audited(unit.translating(), unit.remapping()) {
+            if !xaqu_paging::vtd::unit::audited(unit.translating(), unit.remapping()) {
                 continue;
             }
             if unit.translating() {
@@ -2753,7 +2753,7 @@ pub(crate) fn audit_faults() -> FaultAudit {
 }
 
 /// The same reading of every unit's faults at the end of a boot that skips
-/// its checks (`ferrix.checks=skip`, as the N150 box boots), which nothing
+/// its checks (`xaqu.checks=skip`, as the N150 box boots), which nothing
 /// else would read: one line, never fatal, interrupt requests' faults
 /// included, so a boot on hardware shows what its units refused.
 pub fn report_unchecked_faults() {

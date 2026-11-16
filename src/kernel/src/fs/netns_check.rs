@@ -22,21 +22,21 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::inet::InetAddress;
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::inet::InetAddress;
+use xaqu_linux_abi::netlink::{
     IFA_ADDRESS, IFA_LOCAL, IFF_UP, IFLA_IFNAME, IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO,
     IFLA_NET_NS_FD, IFLA_NET_NS_PID, IfAddrMsg, IfInfoMsg, NLM_F_ACK, NLM_F_CREATE, NLM_F_REQUEST,
     NLMSG_ERROR, NlMsgHdr, RT_SCOPE_UNIVERSE, RT_TABLE_MAIN, RTA_DST, RTA_OIF, RTM_DELLINK,
     RTM_NEWADDR, RTM_NEWLINK, RTM_NEWROUTE, RTM_SETLINK, RTN_UNICAST, RTPROT_STATIC, RtMsg,
     VETH_INFO_PEER,
 };
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::socket::{
     AF_INET, AF_UNIX, IFNAMSIZ, SIOCGIFFLAGS, SIOCSIFFLAGS, SOCK_DGRAM, SOCK_RAW, SOCK_STREAM,
 };
-use ferrix_net::socket::Family;
-use ferrix_netlink::{Address, Attr, Attributes, Messages, Value, Writer};
-use ferrix_vfs::Errno;
+use xaqu_net::socket::Family;
+use xaqu_netlink::{Address, Attr, Attributes, Messages, Value, Writer};
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Page, Report as Counts, Tally, by_number, close, page_for};
 use crate::fs::namespace_check::{read_file, read_link, unshare};
@@ -51,7 +51,7 @@ use crate::syscall::userns;
 /// `CLONE_NEWNET`.
 const CLONE_NEWNET: u64 = namespace::CLONE_NEWNET;
 /// `CLONE_THREAD`.
-const CLONE_THREAD: u64 = ferrix_linux_abi::types::CLONE_THREAD;
+const CLONE_THREAD: u64 = xaqu_linux_abi::types::CLONE_THREAD;
 
 /// The ids the unprivileged process has.
 const UID: u32 = 1000;
@@ -130,7 +130,7 @@ fn in_own_namespace(
 
 /// A `sockaddr_in`.
 fn addr4(octets: [u8; 4], port: u16) -> Vec<u8> {
-    let mut bytes = alloc::vec![0_u8; ferrix_linux_abi::inet::SOCKADDR_STORAGE_SIZE];
+    let mut bytes = alloc::vec![0_u8; xaqu_linux_abi::inet::SOCKADDR_STORAGE_SIZE];
     let written = InetAddress::V4 {
         port,
         address: octets,
@@ -209,10 +209,10 @@ impl Nl {
             .map_err(|_| "a netlink socket could not be opened")?;
         let socket = net::netlink::of(&file).ok_or("a netlink socket is not one")?;
         socket
-            .bind(&ferrix_linux_abi::netlink::NetlinkAddress::default().to_bytes())
+            .bind(&xaqu_linux_abi::netlink::NetlinkAddress::default().to_bytes())
             .map_err(|_| "a netlink socket could not be bound")?;
         let name = socket.local_name();
-        let port = ferrix_linux_abi::netlink::NetlinkAddress::parse(&name, name.len())
+        let port = xaqu_linux_abi::netlink::NetlinkAddress::parse(&name, name.len())
             .map_err(|_| "a netlink socket's name was not a sockaddr_nl")?
             .pid;
         Ok(Nl {
@@ -317,8 +317,8 @@ impl Nl {
         let mut writer = Writer::new(&mut buffer);
         let header = NlMsgHdr {
             len: 0,
-            kind: ferrix_linux_abi::netlink::RTM_GETLINK,
-            flags: NLM_F_REQUEST | ferrix_linux_abi::netlink::NLM_F_DUMP,
+            kind: xaqu_linux_abi::netlink::RTM_GETLINK,
+            flags: NLM_F_REQUEST | xaqu_linux_abi::netlink::NLM_F_DUMP,
             seq: self.seq,
             pid: self.port,
         };
@@ -336,7 +336,7 @@ impl Nl {
             let Some(Ok(message)) = Messages::new(reply).next() else {
                 break;
             };
-            if message.header.kind == ferrix_linux_abi::netlink::NLMSG_DONE {
+            if message.header.kind == xaqu_linux_abi::netlink::NLMSG_DONE {
                 break;
             }
             let attributes = message.attributes(IfInfoMsg::SIZE);
@@ -505,7 +505,7 @@ fn loopback(tally: &mut Tally<'_>, made: &mut Vec<Arc<Process>>) -> Result<(), &
     });
     let lo_up = ns
         .core()
-        .look(|stack| stack.interface(1).is_some_and(ferrix_net::Interface::is_up));
+        .look(|stack| stack.interface(1).is_some_and(xaqu_net::Interface::is_up));
     if links != 1 || lo_up {
         return Err("a new network namespace did not start with a loopback that is down");
     }
@@ -597,7 +597,7 @@ fn ifreq_call(
         [u64::from(AF_INET), u64::from(SOCK_DGRAM), 0, 0, 0, 0],
     )
     .map_err(|_| "a socket for an ioctl could not be made")?;
-    let mut request_bytes = alloc::vec![0_u8; ferrix_linux_abi::socket::IFREQ_BYTES];
+    let mut request_bytes = alloc::vec![0_u8; xaqu_linux_abi::socket::IFREQ_BYTES];
     for (slot, byte) in request_bytes.iter_mut().zip(name.iter().take(IFNAMSIZ - 1)) {
         *slot = *byte;
     }
@@ -1022,11 +1022,11 @@ fn first_pair(
         return Err("a dump of links did not say a veth end is a veth");
     }
     a.configure(ia, [10, 9, 0, 1], tally)?;
-    if a.has(ia, ferrix_net::iface::IFF_RUNNING) {
+    if a.has(ia, xaqu_net::iface::IFF_RUNNING) {
         return Err("a veth end ran before its peer was up");
     }
     b.configure(ib, [10, 9, 0, 2], tally)?;
-    if !a.has(ia, ferrix_net::iface::IFF_LOWER_UP) {
+    if !a.has(ia, xaqu_net::iface::IFF_LOWER_UP) {
         return Err("a veth end did not gain carrier when its peer came up");
     }
     let server = socket_in(&b.ns, InetKind::Datagram)?;
@@ -1219,9 +1219,9 @@ fn open_ns_file(who: &Arc<Process>, page: &mut Page<'_>, pid: u32) -> Result<usi
             page.process,
             Syscall::Openat,
             [
-                ferrix_linux_abi::types::AT_FDCWD as u64,
+                xaqu_linux_abi::types::AT_FDCWD as u64,
                 at,
-                u64::from(ferrix_linux_abi::types::O_RDONLY),
+                u64::from(xaqu_linux_abi::types::O_RDONLY),
                 0,
                 0,
                 0,
@@ -1237,9 +1237,9 @@ fn add_device(
     first: &Arc<NetNamespace>,
 ) -> Result<(u32, u32, Arc<crate::object::port::Port>), &'static str> {
     let key = device::new_key();
-    let mut nic = ferrix_net::Interface::ethernet(0, b"eth-check", [0x02, 0, 0, 0, 0x77, 1], 1500);
-    nic.backing = ferrix_net::iface::Backing::Device(key);
-    nic.flags |= ferrix_net::iface::IFF_UP | ferrix_net::iface::IFF_LOWER_UP;
+    let mut nic = xaqu_net::Interface::ethernet(0, b"eth-check", [0x02, 0, 0, 0, 0x77, 1], 1500);
+    nic.backing = xaqu_net::iface::Backing::Device(key);
+    nic.flags |= xaqu_net::iface::IFF_UP | xaqu_net::iface::IFF_LOWER_UP;
     let home = first.core().add_interface(nic);
     device::place(key, first, home);
     let port = crate::object::port::Port::new().map_err(|_| "no port for a device's bell")?;
@@ -1308,7 +1308,7 @@ fn device_moves(
     if away.core().look(|stack| {
         stack
             .interface(index)
-            .is_none_or(ferrix_net::Interface::is_up)
+            .is_none_or(xaqu_net::Interface::is_up)
     }) {
         return Err("a device came up in the namespace it moved to");
     }
@@ -1572,7 +1572,7 @@ fn ceilings(tally: &mut Tally<'_>, made: &mut Vec<Arc<Process>>) -> Result<(), &
     let mut nl = Nl::open(&root, &ns)?;
     link_up(&mut nl, 1, tally)?;
     // Addresses: up to the ceiling fit and the next does not.
-    let have = ns.core().look(ferrix_net::Stack::address_count);
+    let have = ns.core().look(xaqu_net::Stack::address_count);
     for n in 0..namespace::MAX_ADDRESSES.saturating_sub(have) {
         let octets = [10, 100, (n / 250) as u8, (n % 250) as u8 + 1];
         address_add(&mut nl, 1, octets, 32, tally)?;
@@ -1754,7 +1754,7 @@ fn pid_scope(tally: &mut Tally<'_>, made: &mut Vec<Arc<Process>>) -> Result<(), 
         "root was refused a network namespace",
     )?;
     tally.ok(
-        unshare(&maker, ferrix_linux_abi::types::CLONE_NEWPID),
+        unshare(&maker, xaqu_linux_abi::types::CLONE_NEWPID),
         "root was refused a pid namespace",
     )?;
     let viewer = process::fork_for_check_in(&maker, None)

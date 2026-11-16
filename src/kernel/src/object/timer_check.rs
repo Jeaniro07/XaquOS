@@ -12,17 +12,17 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     PACKET_SIGNAL, TIMER_CLOCK_BOOT, TIMER_CLOCK_MONOTONIC, TIMER_RELATIVE, TimerSpec,
 };
-#[cfg(ferrix_checks = "on")]
-use ferrix_sched::Timeline;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+#[cfg(xaqu_checks = "on")]
+use xaqu_sched::Timeline;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use crate::object::Object;
 use crate::object::check::{SCRATCH, Side, reg};
@@ -30,26 +30,26 @@ use crate::object::job::Job;
 use crate::object::quota::Resource;
 use crate::object::timer::{self, Clock, Timer, TimerCore};
 use crate::sched::{self, WaitQueue};
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 use crate::sched::{Due, Fired};
 use crate::sync::SpinLock;
 
 /// The hook that takes a timer's arm off its sleeper set, which exists only
 /// in a kernel built with its self-checks (the K10 delta review, ledger
 /// 2919, (1)).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 use crate::object::timer::take_arm;
 
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 use crate::sched::{evacuate_with_fired_for_check, holds_arm_on};
 
 /// What stands for it in a kernel built `checks=off`, where no check runs:
 /// nothing here is ever called, and the product has no hook to call.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn evacuate_with_fired_for_check() {}
 
 /// As `evacuate_with_fired_for_check`, in a kernel built `checks=off`.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn holds_arm_on(_: usize) -> bool {
     false
 }
@@ -194,7 +194,7 @@ fn set_on_the_processor_going_out(_argument: usize) {
         for _ in 0..CASE_D_TRIES {
             set.case_d_tries += 1;
             let before = core.report().fires;
-            let saved = <crate::arch::Irq as ferrix_sync::IrqControl>::disable();
+            let saved = <crate::arch::Irq as xaqu_sync::IrqControl>::disable();
             // An arm whose deadline has passed fires in the call: this one is
             // filed one millisecond on and waited out, masked.
             core.set(crate::timer::now_nanos().saturating_add(MS), 0, false);
@@ -204,7 +204,7 @@ fn set_on_the_processor_going_out(_argument: usize) {
             }
             evacuate_with_fired_for_check();
             fired = core.report().fires.wrapping_sub(before);
-            <crate::arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+            <crate::arch::Irq as xaqu_sync::IrqControl>::restore(saved);
             if fired != 0 {
                 break;
             }
@@ -384,9 +384,9 @@ fn run_here() -> Result<Report, &'static str> {
     check_a_deadline_past_four_seconds_arrives_whole(&side)?;
     check_a_cancelled_timer_stays_quiet(&side, port)?;
     // Both drive the arms by a hook only a kernel with its self-checks holds.
-    #[cfg(ferrix_checks = "on")]
+    #[cfg(xaqu_checks = "on")]
     check_a_superseded_arm_in_flight_signals_nothing(&side, port, &mut report)?;
-    #[cfg(ferrix_checks = "on")]
+    #[cfg(xaqu_checks = "on")]
     check_timers_in_one_window_fire_together(&side, port, &mut report)?;
     check_a_past_deadline_fires_in_the_call(&side, &mut report)?;
     check_a_full_batch_loses_nothing(&side, port, &mut report)?;
@@ -420,9 +420,9 @@ fn set(
     deadline: u64,
     slack: u64,
     options: u64,
-) -> Result<usize, ferrix_linux_abi::errno::Errno> {
+) -> Result<usize, xaqu_linux_abi::errno::Errno> {
     side.put(SPEC_AT, &TimerSpec { deadline, slack }.to_bytes())
-        .map_err(|_| ferrix_linux_abi::errno::Errno::EFAULT)?;
+        .map_err(|_| xaqu_linux_abi::errno::Errno::EFAULT)?;
     side.call(nr::TIMER_SET, &[reg(timer), SPEC_AT, options])
 }
 
@@ -577,7 +577,7 @@ fn check_a_cancelled_timer_stays_quiet(side: &Side, port: Handle) -> Result<(), 
 /// fire and fires once, at its own deadline.
 ///
 /// Verifies: L.object.219, L.object.218, H.OBJ.21
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn check_a_superseded_arm_in_flight_signals_nothing(
     side: &Side,
     port: Handle,
@@ -626,7 +626,7 @@ fn check_a_superseded_arm_in_flight_signals_nothing(
 /// another task's entry between the two keys was enough.)
 ///
 /// Verifies: L.object.217
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn check_timers_in_one_window_fire_together(
     side: &Side,
     port: Handle,
@@ -801,7 +801,7 @@ fn check_what_timer_calls_refuse(
         &[reg(timer), u64::from((Rights::WAIT | Rights::DUPLICATE).0)],
         "duplicating a timer without WRITE failed",
     )?;
-    let cases: [(Result<usize, ferrix_linux_abi::errno::Errno>, _, &str); 6] = [
+    let cases: [(Result<usize, xaqu_linux_abi::errno::Errno>, _, &str); 6] = [
         (
             side.call(nr::TIMER_CREATE, &[2, 0]),
             status::INVALID_ARGS,
@@ -890,11 +890,11 @@ fn check_an_early_wake_takes_out_only_its_own_entry() -> Result<(), &'static str
     //
     // Masked around the three, as this processor's interrupts come and go with
     // other sleepers: the terminal's 20 ms poll ended in between (fl-090).
-    let saved = <crate::arch::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <crate::arch::Irq as xaqu_sync::IrqControl>::disable();
     let (before, _) = sched::sleepers_here();
     sched::wake(&task);
     let (after, _) = sched::sleepers_here();
-    <crate::arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+    <crate::arch::Irq as xaqu_sync::IrqControl>::restore(saved);
     let patience = crate::timer::now_nanos().saturating_add(500 * MS);
     while !WOKEN.load(Ordering::Acquire) {
         if crate::timer::now_nanos() >= patience {

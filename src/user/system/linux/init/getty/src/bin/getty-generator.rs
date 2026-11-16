@@ -6,7 +6,7 @@
 //! `/proc/cmdline` to read, it writes one for `console`. Linux's form for a
 //! serial port by its address, `console=uart8250,mmio,<address>` (and
 //! `uart`), names no terminal in `/dev`: it is the port the kernel prints
-//! on, which Ferrix serves as `console`, so it is that getty. crosvm gives
+//! on, which Xaqu serves as `console`, so it is that getty. crosvm gives
 //! its guests that form. Only the link's
 //! name is read, so a link that cannot be made is written as an empty file
 //! of that name instead.
@@ -17,7 +17,7 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 
 /// The template every link points at.
-const TEMPLATE: &str = "/lib/ferrix/units/getty@.service";
+const TEMPLATE: &str = "/lib/xaqu/units/getty@.service";
 
 /// The terminals the command line names, in its order, without repeats.
 fn consoles(command_line: &str) -> Vec<String> {
@@ -118,7 +118,7 @@ mod tests {
 
     #[test]
     fn no_console_option_is_the_console() {
-        assert_eq!(consoles("ferrix.init=/sbin/init"), ["console"]);
+        assert_eq!(consoles("xaqu.init=/sbin/init"), ["console"]);
         assert_eq!(consoles(""), ["console"]);
     }
 

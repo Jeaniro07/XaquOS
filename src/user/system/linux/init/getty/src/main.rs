@@ -109,7 +109,7 @@ fn main() {
 
     let hostname = std::fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
     let mut out = io::stdout().lock();
-    let _ = writeln!(out, "\nFerrix {} on {}\n", hostname.trim(), path.display());
+    let _ = writeln!(out, "\nXaqu {} on {}\n", hostname.trim(), path.display());
     drop(out);
 
     if login {

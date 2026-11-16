@@ -9,7 +9,7 @@
 //! port carried, which by the time this runs end with the report itself. So
 //! the screen and the log cannot disagree, and there is no second copy of the
 //! report to keep in step. The report is picked out from the boot log above it
-//! by colour, from its `FERRIX-PANIC` line on.
+//! by colour, from its `XAQU-PANIC` line on.
 //!
 //! Beside the text, drawn after it, is a QR code of the report itself, as
 //! plain text: a photo of a screen is how a report leaves a machine with no
@@ -30,11 +30,11 @@ use core::cell::UnsafeCell;
 use core::fmt::Write;
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{Framebuffer, PixelFormat};
-use ferrix_fbtext::{
+use xaqu_bootinfo::{Framebuffer, PixelFormat};
+use xaqu_fbtext::{
     BYTES_PER_PIXEL, GLYPH_HEIGHT, GLYPH_WIDTH, PixelOrder, Rect, Rgb, Surface, TextArea,
 };
-use ferrix_qr::{MAX_VERSION, MIN_MODULES_LEN, MIN_TMP_LEN, Symbol};
+use xaqu_qr::{MAX_VERSION, MIN_MODULES_LEN, MIN_TMP_LEN, Symbol};
 
 use crate::{arch, console, mm};
 
@@ -66,7 +66,7 @@ const REPORT_TEXT: Rgb = Rgb::new(0xF2, 0xF2, 0xF2);
 /// Space around the edges, in pixels.
 const MARGIN: usize = 16;
 /// What begins the report, as `panic.rs` prints it.
-const MARKER: &[u8] = b"FERRIX-PANIC";
+const MARKER: &[u8] = b"XAQU-PANIC";
 
 /// Columns the text keeps before the QR code gets any width: as wide as the
 /// report's lines run, so none of them wraps.
@@ -150,7 +150,7 @@ pub(crate) fn draw() {
     // SAFETY: (SHARED) nothing else writes the framebuffer during a panic: the other
     // processors have been asked to stop, the boot console has just stopped,
     // and this is the only report that draws. A ring-3 driver the framebuffer
-    // is lent to (`efifb`, under `ferrix.efifb`) writes it only from a
+    // is lent to (`efifb`, under `xaqu.efifb`) writes it only from a
     // processor, and every other processor has been stopped; a store of its
     // in flight on one that never stops can only leave pixels of its own
     // frame on the screen, never touch what the panic draws with.
@@ -177,7 +177,7 @@ pub(crate) fn draw() {
 /// (SHARED) Nothing else may write the framebuffer while the surface lives. There are
 /// two callers: [`draw`], during the one panic that draws, and the boot
 /// console (`console::screen`), which [`draw`] stops first. The framebuffer
-/// lent to a ring-3 driver under `ferrix.efifb` is written by that driver
+/// lent to a ring-3 driver under `xaqu.efifb` is written by that driver
 /// too: the console is stopped before it can be (`discovery::firmware`), and
 /// [`draw`] runs with the other processors stopped.
 pub(crate) unsafe fn surface() -> Option<Surface<'static>> {
@@ -237,7 +237,7 @@ fn paint(surface: &mut Surface<'_>, text: &[u8], modules: &mut [u8], work: &mut 
         height: GLYPH_HEIGHT.saturating_mul(2),
     };
     let _ = TextArea::new(surface, title, 2, Rgb::WHITE, None)
-        .write_str("Ferrix kernel panic - this processor has stopped");
+        .write_str("Xaqu kernel panic - this processor has stopped");
 
     let top = banner.saturating_add(MARGIN);
     let tall = height.saturating_sub(banner.saturating_add(MARGIN.saturating_mul(2)));
@@ -252,7 +252,7 @@ fn paint(surface: &mut Surface<'_>, text: &[u8], modules: &mut [u8], work: &mut 
     let report = report_start(text).and_then(|start| text.get(start..));
     // The text is drawn first and the code after it: drawing the code takes
     // seconds on a slow processor, and a machine that stops or resets
-    // meanwhile (`ferrix.panic=reset`, a watchdog) must already show the
+    // meanwhile (`xaqu.panic=reset`, a watchdog) must already show the
     // report's own lines -- its code, its processor -- when it goes. So the
     // code's column is kept before the code exists, whenever one fits.
     let code = report.filter(|_| version_for(side).is_some());
@@ -343,7 +343,7 @@ fn encode<'m>(
     work: &mut [u8],
 ) -> Option<Symbol<'m>> {
     let version = version_for(side)?;
-    let room = ferrix_qr::max_data_size(version, 0);
+    let room = xaqu_qr::max_data_size(version, 0);
     let payload = if report.len() <= room {
         report
     } else {
@@ -354,7 +354,7 @@ fn encode<'m>(
             .map_or(room, |end| end + 1);
         fits.get(..line)?
     };
-    ferrix_qr::generate(None, payload, modules, work).ok()
+    xaqu_qr::generate(None, payload, modules, work).ok()
 }
 
 /// The largest QR version whose symbol, with its quiet zone and modules of

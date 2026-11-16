@@ -24,16 +24,16 @@
 
 #![no_main]
 
-use ferrix_inputctl::message::{
+use xaqu_inputctl::message::{
     AXES, AxisRange, Bitmaps, DeviceId, Events, Hello, MAX_EVENTS, Message, RawEvent, Text, VERSION,
 };
-use ferrix_inputctl::queue::{Clock, Clocks, Queue, ReadError, ReadFlags, Stamped};
-use ferrix_inputctl::session::{MAX_REPORT, OpenId, Report, Session};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::queue::{Clock, Clocks, Queue, ReadError, ReadFlags, Stamped};
+use xaqu_inputctl::session::{MAX_REPORT, OpenId, Report, Session};
+use xaqu_linux_abi::input::{
     ABS_MT_SLOT, ABS_X, ABS_Y, BTN_LEFT, EV_ABS, EV_KEY, EV_LED, EV_MSC, EV_REL, EV_REP, EV_SYN,
     Event, KEY_A, LED_CAPSL, MSC_SCAN, REL_WHEEL, REL_X, SYN_DROPPED, SYN_REPORT,
 };
-use ferrix_linux_abi::socket::Width;
+use xaqu_linux_abi::socket::Width;
 use libfuzzer_sys::fuzz_target;
 
 const OPENS: usize = 3;

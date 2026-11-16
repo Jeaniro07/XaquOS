@@ -1,16 +1,16 @@
 //! The cases (`docs/microkernel/K1.md` §10, `docs/microkernel/K11.md` §8). A
 //! failing case's number is the program's exit status.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::restricted::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::restricted::{
     Context, ENTER_COPY_MISS_EXITS, EXIT_PC, FAULT_KIND, FaultKind, HANDLE_KEEP, Reason,
     SHARED_BASE,
 };
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::status;
-use ferrix_rt::linux;
-use ferrix_rt::restricted::{
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::status;
+use xaqu_rt::linux;
+use xaqu_rt::restricted::{
     Exit, continue_, copy_from_program, declare_copy_window, enter, enter_with, resume,
 };
 
@@ -146,7 +146,7 @@ fn asked(given: &Given, what: u8, word: u64, handle: Option<u64>) -> Result<bool
         nr::OBJECT_WAIT_ONE,
         [
             given.channel,
-            u64::from(ferrix_native_abi::signals::Signals::READABLE.0),
+            u64::from(xaqu_native_abi::signals::Signals::READABLE.0),
             0,
             (&raw mut observed).addr() as u64,
             0,
@@ -194,11 +194,11 @@ fn fault_exit(exit: &Exit, vector: u64, case: i32) -> Result<(), i32> {
 
 /// The context the last exit left, as a read gives it.
 fn read() -> Result<Context, i32> {
-    ferrix_rt::native::region::context_read(ferrix_rt::Kernel).map_err(|_| 94)
+    xaqu_rt::native::region::context_read(xaqu_rt::Kernel).map_err(|_| 94)
 }
 
 /// Run every case.
-pub(crate) fn run(bootstrap: ferrix_rt::Bootstrap) -> i32 {
+pub(crate) fn run(bootstrap: xaqu_rt::Bootstrap) -> i32 {
     // Started with nothing, it is the check's process that faults in normal mode
     // (K11 §5): its region's job ends, and this load of a hole does not return.
     if bootstrap.is_none() {
@@ -216,7 +216,7 @@ pub(crate) fn run(bootstrap: ferrix_rt::Bootstrap) -> i32 {
 const START_RETIRED: u8 = 0x52;
 
 /// Take the handles the check sent.
-fn receive(bootstrap: ferrix_rt::Bootstrap) -> Result<Given, i32> {
+fn receive(bootstrap: xaqu_rt::Bootstrap) -> Result<Given, i32> {
     let channel = bootstrap.ok_or(95)?;
     let channel = u64::from(channel.into_owned().into_raw().0);
     let mut handles = [0_u32; 4];
@@ -275,7 +275,7 @@ fn map_space(space: u64) -> Result<(), i32> {
     .map_err(|_| 11)?;
     let vmo = sys(nr::VMO_EXECUTABLE, [vmo, 0, 0, 0, 0, 0]).map_err(|_| 12)?;
     let protection =
-        u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_EXECUTE);
+        u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_EXECUTE);
     sys(
         nr::SPACE_MAP,
         [
@@ -288,10 +288,10 @@ fn map_space(space: u64) -> Result<(), i32> {
         ],
     )
     .map_err(|_| 13)?;
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(nr::SPACE_ALLOCATE, [space, STACK_AT, 0x4000, write, 0, 0]).map_err(|_| 14)?;
     sys(nr::SPACE_ALLOCATE, [space, ZERO_AT, 0x1000, write, 0, 0]).map_err(|_| 15)?;
-    let read = u64::from(ferrix_native_abi::types::MAP_READ);
+    let read = u64::from(xaqu_native_abi::types::MAP_READ);
     sys(
         nr::SPACE_ALLOCATE,
         [space, READ_ONLY_AT, 0x1000, read, 0, 0],
@@ -306,7 +306,7 @@ fn at(offset: u64) -> Context {
 }
 
 /// Every case, in order.
-fn cases(bootstrap: ferrix_rt::Bootstrap) -> Result<(), i32> {
+fn cases(bootstrap: xaqu_rt::Bootstrap) -> Result<(), i32> {
     let given = receive(bootstrap)?;
     map_space(given.space)?;
     round_trip()?;
@@ -431,7 +431,7 @@ fn shared_region(given: &Given) -> Result<(), i32> {
     // A root slot of its own, entered from normal mode so that the normal root
     // copies it, and emptied: its top table must stay (`L.user.180`).
     const OTHER_SLOT: u64 = 0x0100_0000_0000;
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(
         nr::SPACE_ALLOCATE,
         [given.space, OTHER_SLOT, 0x1000, write, 0, 0],
@@ -727,7 +727,7 @@ fn fill(space: u64, address: u64, byte: u8, case: i32) -> Result<(), i32> {
         ],
     )
     .map_err(|_| case)?;
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(
         nr::SPACE_MAP,
         [
@@ -856,7 +856,7 @@ fn continue_after_fault() -> Result<(), i32> {
     // A jump past the user half: whatever the processor saved, `CONTINUE` either
     // retries it or refuses, and the kernel stays up (B4).
     let mut wild = at(arch::fetch());
-    arch::set_first(&mut wild, ferrix_bootinfo_end());
+    arch::set_first(&mut wild, xaqu_bootinfo_end());
     let exit = enter(&wild);
     hold(exit.reason == Reason::Fault as u64, 56)?;
     let retried = continue_();
@@ -1004,7 +1004,7 @@ fn copy_window() -> Result<(), i32> {
     refused(
         sys(
             nr::RESTRICTED_COPY_WINDOW,
-            [code, code + 4, ferrix_bootinfo_end(), 0, 0, 0],
+            [code, code + 4, xaqu_bootinfo_end(), 0, 0, 0],
         ),
         status::INVALID_ARGS,
         69,
@@ -1015,7 +1015,7 @@ fn copy_window() -> Result<(), i32> {
 }
 
 /// One past the region: `USER_VIRT_END`, which is not canonical.
-const fn ferrix_bootinfo_end() -> u64 {
+const fn xaqu_bootinfo_end() -> u64 {
     0x8000_0000_0000
 }
 
@@ -1044,11 +1044,11 @@ fn vectors() -> Result<(), i32> {
     hold(arch::read_vectors() == 0xDEAD_BEEF, 142)?;
     hold(arch::result_of(&back) == 0x1234_5678, 75)?;
     hold(arch::second_result_of(&back) == 0x1234_5678, 76)?;
-    let mut image = [0_u8; ferrix_native_abi::restricted::VECTORS_BYTES];
+    let mut image = [0_u8; xaqu_native_abi::restricted::VECTORS_BYTES];
     let read_bytes =
-        ferrix_rt::native::region::vectors_read(ferrix_rt::Kernel, &mut image).map_err(|_| 77)?;
+        xaqu_rt::native::region::vectors_read(xaqu_rt::Kernel, &mut image).map_err(|_| 77)?;
     hold(read_bytes == image.len(), 77)?;
-    let good = ferrix_rt::native::region::vectors_write(ferrix_rt::Kernel, &image);
+    let good = xaqu_rt::native::region::vectors_write(xaqu_rt::Kernel, &image);
     hold(good.is_ok(), 77)?;
     // A block with the program's registers up: they go to its record as the switch
     // leaves, no other thread reads them, and it finds them on its way back (K1 §7.1 (b)).
@@ -1063,7 +1063,7 @@ fn vectors() -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             port,
-            u64::from(ferrix_native_abi::signals::Signals::READABLE.0),
+            u64::from(xaqu_native_abi::signals::Signals::READABLE.0),
             (&raw const deadline).addr() as u64,
             (&raw mut observed).addr() as u64,
             0,
@@ -1076,7 +1076,7 @@ fn vectors() -> Result<(), i32> {
     hold(arch::result_of(&back) == 0x0BAD_F00D, 143)?;
     // `MXCSR` with its reserved bits set is refused, not masked.
     image[arch::VECTOR_BAD_AT + 2] = 0xFF;
-    let bad = ferrix_rt::native::region::vectors_write(ferrix_rt::Kernel, &image);
+    let bad = xaqu_rt::native::region::vectors_write(xaqu_rt::Kernel, &image);
     hold(bad.is_err(), 78)
 }
 
@@ -1255,7 +1255,7 @@ fn kicks() -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             thread,
-            u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+            u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
             0,
             (&raw mut observed).addr() as u64,
             0,
@@ -1621,7 +1621,7 @@ fn page_with(value: u64, at: u64) -> Result<u64, i32> {
         ],
     )
     .map_err(|_| 128)?;
-    let protection = u64::from(ferrix_native_abi::types::MAP_READ);
+    let protection = u64::from(xaqu_native_abi::types::MAP_READ);
     sys(
         nr::VMO_MAP,
         [
@@ -1654,7 +1654,7 @@ extern "C" fn unmapper(_argument: usize) -> ! {
     let space = SHOOTDOWN_SPACE.load(Acquire);
     let done = sys(nr::SPACE_UNMAP, [space, SHOOTDOWN_AT, 0x1000, 0, 0, 0]);
     SHOOTDOWN_STEP.store(if done.is_ok() { 2 } else { 100 }, Release);
-    // This thread alone. `ferrix_rt::exit` ends the process, with status 0, under
+    // This thread alone. `xaqu_rt::exit` ends the process, with status 0, under
     // the read this case is for.
     let _ = sys(nr::THREAD_EXIT, [0, 0, 0, 0, 0, 0]);
     loop {
@@ -1670,7 +1670,7 @@ extern "C" fn unmapper(_argument: usize) -> ! {
 fn restricted_shootdown(given: &Given) -> Result<(), i32> {
     use core::sync::atomic::Ordering::{Acquire, Release};
     SHOOTDOWN_SPACE.store(given.space, Release);
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(
         nr::SPACE_ALLOCATE,
         [given.space, SHOOTDOWN_AT, 0x1000, write, 0, 0],
@@ -1721,7 +1721,7 @@ static FULL_TABLE_STACK: Stack = Stack(core::cell::UnsafeCell::new([0; 0x8000]))
 /// What case 141's thread does, if it ever runs.
 extern "C" fn through_a_full_table(_argument: usize) -> ! {
     RAN_THROUGH_A_FULL_TABLE.store(true, core::sync::atomic::Ordering::Release);
-    ferrix_rt::exit(141)
+    xaqu_rt::exit(141)
 }
 
 /// Case 141: with the region's table full, `THREAD_CREATE` is `NO_HANDLES` and nothing
@@ -1789,7 +1789,7 @@ fn all_calls_exit() -> Result<(), i32> {
     let mut context = at(arch::sys_twice());
     arch::set_call(&mut context, nr::THREAD_SELF as u64, [0; 6]);
     syscall_exit(
-        &ferrix_rt::restricted::enter_all_calls_exit(&context),
+        &xaqu_rt::restricted::enter_all_calls_exit(&context),
         nr::THREAD_SELF as u64,
         145,
     )?;
@@ -1915,7 +1915,7 @@ fn second_process(given: &Given) -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             process,
-            u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+            u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
             0,
             (&raw mut observed).addr() as u64,
             0,
@@ -1948,7 +1948,7 @@ const ROW_REPEATS: usize = 5;
 /// reads, as it reads the block row off the `seam` line.
 fn row(given: &Given) -> Result<(), i32> {
     let bytes = (ROW_WARMUP + ROW_SAMPLES) * 8;
-    let write = u64::from(ferrix_native_abi::types::MAP_READ | ferrix_native_abi::types::MAP_WRITE);
+    let write = u64::from(xaqu_native_abi::types::MAP_READ | xaqu_native_abi::types::MAP_WRITE);
     sys(
         nr::SPACE_ALLOCATE,
         [
@@ -2071,7 +2071,7 @@ fn kills(given: &Given) -> Result<(), i32> {
             nr::OBJECT_WAIT_ONE,
             [
                 process,
-                u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+                u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
                 0,
                 (&raw mut observed).addr() as u64,
                 0,

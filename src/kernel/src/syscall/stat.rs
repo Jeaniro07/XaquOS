@@ -36,13 +36,13 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::mem::{offset_of, size_of};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     self, AT_EACCESS, AT_EMPTY_PATH, AT_NO_AUTOMOUNT, AT_STATX_SYNC_TYPE, AT_SYMLINK_NOFOLLOW,
     R_OK, STATX_BASIC_STATS, STATX_MNT_ID, STATX_RESERVED, Statx, StatxTimestamp, W_OK, X_OK,
 };
-use ferrix_vfs::dirent::DirentWriter;
-use ferrix_vfs::{Access, Stat, Timespec};
+use xaqu_vfs::dirent::DirentWriter;
+use xaqu_vfs::{Access, Stat, Timespec};
 
 use crate::arch::{self, StatLayout};
 use crate::syscall::fd;

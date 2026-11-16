@@ -2,7 +2,7 @@ extern crate std;
 
 use alloc::vec::Vec;
 
-use ferrix_sched::{Config, EntityState, NICE_0_WEIGHT, Slot};
+use xaqu_sched::{Config, EntityState, NICE_0_WEIGHT, Slot};
 
 use super::*;
 

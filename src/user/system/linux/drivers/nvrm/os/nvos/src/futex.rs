@@ -1,7 +1,7 @@
 //! Futexes, the thread id, and the native calls: the system calls this layer
 //! makes by the instruction rather than through the C library.
 //!
-//! A Ferrix process may make Linux and native calls alike; the kernel picks
+//! A Xaqu process may make Linux and native calls alike; the kernel picks
 //! the table by the number, 0x1000 to 0x1FFF being native
 //! (`docs/ARCHITECTURE.md` §2). Both use Linux's convention: `syscall`, the
 //! number in RAX, arguments in RDI, RSI, RDX, R10, R8 and R9, the result in
@@ -11,7 +11,7 @@
 use core::arch::asm;
 use core::sync::atomic::AtomicU32;
 
-use ferrix_native::{Raw, Syscall};
+use xaqu_native::{Raw, Syscall};
 
 use crate::libc::Timespec;
 
@@ -33,7 +33,7 @@ const FUTEX_WAKE_PRIVATE: usize = 129;
 pub(crate) unsafe fn call6(number: usize, a: [usize; 6]) -> usize {
     let mut result = number;
     // SAFETY: the caller vouches for the call; the instruction clobbers RCX
-    // and R11, and Ferrix's native calls may also write RSI, RDX and R10
+    // and R11, and Xaqu's native calls may also write RSI, RDX and R10
     // back, so all three are declared clobbered.
     unsafe {
         asm!(
@@ -79,7 +79,7 @@ pub(crate) fn wait(word: &AtomicU32, expected: u32, timeout: Option<Timespec>) {
 /// Wake up to `count` threads sleeping on `word`; `u32::MAX` is all of
 /// them.
 ///
-/// The kernel reads the count as an `int`, Linux's and Ferrix's alike, and
+/// The kernel reads the count as an `int`, Linux's and Xaqu's alike, and
 /// wakes ONE sleeper for a count of zero or less. `u32::MAX` is -1 there:
 /// until 2026-10-10 "wake everyone" woke one. A reader-writer lock given
 /// back with a writer and two readers asleep woke one of them, a reader the
@@ -111,7 +111,7 @@ pub(crate) fn tid() -> u32 {
     u32::try_from(result).unwrap_or(0)
 }
 
-/// Ferrix's native calls, by the instruction: what `ferrix-native`'s
+/// Xaqu's native calls, by the instruction: what `xaqu-native`'s
 /// wrappers trap through.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Kernel;
@@ -119,7 +119,7 @@ pub(crate) struct Kernel;
 impl Syscall for Kernel {
     fn call(self, raw: Raw<'_>) -> usize {
         // SAFETY: a `Raw` names only memory it borrows, which lives across
-        // the call (`ferrix_native::call`, where a `Raw` is built).
+        // the call (`xaqu_native::call`, where a `Raw` is built).
         unsafe { call6(raw.number(), raw.args()) }
     }
 }

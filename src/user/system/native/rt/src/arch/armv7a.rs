@@ -8,7 +8,7 @@
 
 use core::arch::{asm, naked_asm};
 
-use ferrix_linux_abi::nr::arm::{CLOCK_GETTIME, EXIT_GROUP, UNLINKAT};
+use xaqu_linux_abi::nr::arm::{CLOCK_GETTIME, EXIT_GROUP, UNLINKAT};
 
 use crate::linux::CLOCK_MONOTONIC;
 
@@ -17,7 +17,7 @@ use crate::linux::CLOCK_MONOTONIC;
 /// A number is this architecture's, so the table it comes from is named here
 /// and nowhere else; `crate::linux` spells every call the same on all three.
 pub(crate) mod nr {
-    pub(crate) use ferrix_linux_abi::nr::arm::{
+    pub(crate) use xaqu_linux_abi::nr::arm::{
         ACCEPT4, BIND, CLOSE, FCNTL, GETSOCKOPT, LISTEN, MUNMAP, READ, REBOOT, SETSOCKOPT, SOCKET,
         WRITE,
     };
@@ -25,20 +25,20 @@ pub(crate) mod nr {
 
 /// This architecture's whole table, for a program that makes a call
 /// `crate::linux` has no function for (`crate::linux::call`).
-pub use ferrix_linux_abi::nr::arm as numbers;
+pub use xaqu_linux_abi::nr::arm as numbers;
 
 /// `AT_FDCWD`: start from the current directory, which an absolute path then
 /// ignores.
 const AT_FDCWD: usize = (-100_isize) as usize;
-use ferrix_native::Raw;
+use xaqu_native::Raw;
 
 /// The process's first instruction.
 ///
-/// `ferrix_enter_user` starts a program with `rfeia`, which leaves the frame
+/// `xaqu_enter_user` starts a program with `rfeia`, which leaves the frame
 /// pointer and link register as whatever it put in them rather than a caller's
 /// frame. They are zeroed so a frame-pointer walk ends here, the stack pointer
 /// is brought to the multiple of 8 the AAPCS requires at a call, and
-/// `ferrix_rt_start` is called. The bootstrap handle's register, R0, is
+/// `xaqu_rt_start` is called. The bootstrap handle's register, R0, is
 /// already the first argument.
 // SAFETY: (ENTRY) the body is the whole function and the process's first
 // instructions: nothing calls it, and it never returns.
@@ -49,7 +49,7 @@ pub(crate) extern "C" fn _start() -> ! {
         "mov r11, #0",
         "mov lr, #0",
         "bic sp, sp, #7",
-        "bl ferrix_rt_start",
+        "bl xaqu_rt_start",
         "udf #0",
     )
 }
@@ -133,7 +133,7 @@ fn trap(number: usize, args: [usize; 6]) -> usize {
 // The VFP registers (`docs/OPAQUE-KERNEL.md` §9.14): `channel_write_read`,
 // `object_wait_one` and `port_wait` lose `d0`-`d7` and `d16`-`d31`, AAPCS's
 // caller-saved VFP registers, as a function call does, and keep `d8`-`d15`
-// and `FPSCR` (`ferrix_native_abi::nr`, the vector-state contract). x86-64's
+// and `FPSCR` (`xaqu_native_abi::nr`, the vector-state contract). x86-64's
 // stub declares its set with `clobber_abi`; this one cannot and need not.
 // A native program is built for `armv7a-none-eabi`, soft float, where the
 // compiler has no VFP register to allocate -- rustc refuses even
@@ -145,7 +145,7 @@ fn trap(number: usize, args: [usize; 6]) -> usize {
 // elsewhere).
 #[cfg(target_abi = "eabihf")]
 compile_error!(
-    "ferrix_rt's ARMv7-A trap declares no VFP clobbers: before building it hard float, add \
+    "xaqu_rt's ARMv7-A trap declares no VFP clobbers: before building it hard float, add \
      clobber_abi(\"C\") to trap_words' asm!, since channel_write_read, object_wait_one and \
      port_wait lose d0-d7 and d16-d31 (docs/OPAQUE-KERNEL.md 9.14)"
 );
@@ -222,5 +222,5 @@ pub(crate) fn exit(status: i32) -> ! {
     }
 }
 
-/// The ELF machine of a native program here (`ferrix-process-builder`).
+/// The ELF machine of a native program here (`xaqu-process-builder`).
 pub const ELF_MACHINE: u16 = 40;

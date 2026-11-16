@@ -4,7 +4,7 @@
 //!
 //! * **Which accounts.** The image's word, not the socket's (ledger 3636
 //!   (1)): the `hyprix.service` unit `sessiond` is started from, in
-//!   `/etc/ferrix/units`, else `/lib/ferrix/units`, whose `ExecStart=` runs
+//!   `/etc/xaqu/units`, else `/lib/xaqu/units`, whose `ExecStart=` runs
 //!   `sessiond --user NAME`. No such unit: no seat. A unit there that
 //!   cannot be read, or that runs `sessiond` naming no account: nothing can
 //!   be said, and every non-root request is refused.
@@ -21,8 +21,8 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use compositor_seat::prompt::{FromSeat, MAX_RECORD, ToSeat, zero};
-use ferrix_auth_client::{Person, seqpacket_socket, socklen, unix_address};
-use ferrix_auth_proto::Secret;
+use xaqu_auth_client::{Person, seqpacket_socket, socklen, unix_address};
+use xaqu_auth_proto::Secret;
 
 use crate::authority::ANSWER_WITHIN;
 
@@ -30,8 +30,8 @@ use crate::authority::ANSWER_WITHIN;
 const READY_WITHIN: Duration = Duration::from_secs(5);
 
 /// Where init looks for units, below the root, in its order of precedence
-/// (`ferrix_svc::source`'s layers: runtime, administrator, image).
-const UNITS: [&str; 3] = ["run/ferrix/units", "etc/ferrix/units", "lib/ferrix/units"];
+/// (`xaqu_svc::source`'s layers: runtime, administrator, image).
+const UNITS: [&str; 3] = ["run/xaqu/units", "etc/xaqu/units", "lib/xaqu/units"];
 
 /// The unit that starts the seat's session.
 const SESSION_UNIT: &str = "hyprix.service";
@@ -209,7 +209,7 @@ impl Channel {
         let mut bytes = record
             .encode()
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "a record too long"))?;
-        let sent = ferrix_auth_client::send_packet(self.fd.as_raw_fd(), &bytes);
+        let sent = xaqu_auth_client::send_packet(self.fd.as_raw_fd(), &bytes);
         zero(&mut bytes);
         sent
     }
@@ -394,35 +394,35 @@ mod tests {
             std::env::temp_dir().join(format!("settingsd-unit-layers-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let units = |dir: &str| root.join(dir);
-        for dir in ["run/ferrix/units", "etc/ferrix/units", "lib/ferrix/units"] {
+        for dir in ["run/xaqu/units", "etc/xaqu/units", "lib/xaqu/units"] {
             std::fs::create_dir_all(units(dir)).unwrap();
         }
         assert_eq!(seat_accounts(&root), Ok(vec![]));
         std::fs::write(
-            units("lib/ferrix/units/hyprix.service"),
-            "ExecStart=/bin/sessiond --user ferrix -- /bin/hyprix\n",
+            units("lib/xaqu/units/hyprix.service"),
+            "ExecStart=/bin/sessiond --user xaqu -- /bin/hyprix\n",
         )
         .unwrap();
-        assert_eq!(seat_accounts(&root), Ok(vec!["ferrix".to_owned()]));
+        assert_eq!(seat_accounts(&root), Ok(vec!["xaqu".to_owned()]));
         // The administrator's copy wins over the image's.
         std::fs::write(
-            units("etc/ferrix/units/hyprix.service"),
+            units("etc/xaqu/units/hyprix.service"),
             "ExecStart=/bin/sessiond --user guest -- /bin/hyprix\n",
         )
         .unwrap();
         assert_eq!(seat_accounts(&root), Ok(vec!["guest".to_owned()]));
         // A drop-in that would change --user: refused.
-        std::fs::create_dir_all(units("etc/ferrix/units/hyprix.service.d")).unwrap();
+        std::fs::create_dir_all(units("etc/xaqu/units/hyprix.service.d")).unwrap();
         assert!(seat_accounts(&root).is_err());
-        std::fs::remove_dir(units("etc/ferrix/units/hyprix.service.d")).unwrap();
+        std::fs::remove_dir(units("etc/xaqu/units/hyprix.service.d")).unwrap();
         // A mask in /run: refused.
-        std::os::unix::fs::symlink("/dev/null", units("run/ferrix/units/hyprix.service")).unwrap();
+        std::os::unix::fs::symlink("/dev/null", units("run/xaqu/units/hyprix.service")).unwrap();
         assert!(seat_accounts(&root).is_err());
-        std::fs::remove_file(units("run/ferrix/units/hyprix.service")).unwrap();
+        std::fs::remove_file(units("run/xaqu/units/hyprix.service")).unwrap();
         // A wrapped sessiond: refused.
         std::fs::write(
-            units("etc/ferrix/units/hyprix.service"),
-            "ExecStart=/bin/wrap /bin/sessiond --user ferrix -- /bin/hyprix\n",
+            units("etc/xaqu/units/hyprix.service"),
+            "ExecStart=/bin/wrap /bin/sessiond --user xaqu -- /bin/hyprix\n",
         )
         .unwrap();
         assert!(seat_accounts(&root).is_err());
@@ -433,9 +433,9 @@ mod tests {
     fn the_seat_s_accounts_are_sessiond_s_user() {
         assert_eq!(
             accounts_in(
-                "[Service]\nExecStart=/bin/sessiond --user ferrix --headless 1920x1200 -- /bin/hyprix\n"
+                "[Service]\nExecStart=/bin/sessiond --user xaqu --headless 1920x1200 -- /bin/hyprix\n"
             ),
-            Some(vec!["ferrix".to_owned()])
+            Some(vec!["xaqu".to_owned()])
         );
         // A root desktop runs hyprix itself: no seat account.
         assert_eq!(

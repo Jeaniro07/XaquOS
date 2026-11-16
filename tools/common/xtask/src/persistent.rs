@@ -11,7 +11,7 @@
 //! `/dev/shm`, which is memory.
 //!
 //! So this attaches a copy of the volume of the machine's own, under
-//! `~/.local/share/ferrix/persistent/`, made from the volume the first time
+//! `~/.local/share/xaqu/persistent/`, made from the volume the first time
 //! and written through from then on, and gives Chrome a profile on it
 //! ([`CHROME_PROFILE`]). The volume itself is left as it was: tests and
 //! other runs keep reading what the fetch scripts made.

@@ -9,10 +9,10 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_chardevctl::message::Op;
-use ferrix_chardevctl::node::{MAJOR, MODE, RENDER_MINOR};
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
+use xaqu_chardevctl::message::Op;
+use xaqu_chardevctl::node::{MAJOR, MODE, RENDER_MINOR};
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Readiness, Result as VfsResult, Timespec};
 
 use crate::syscall::process::{self, Process};
 

@@ -1,4 +1,4 @@
-//! The seat channel (`docs/AUTH.md` §3.7): `ferrix.auth.seat`, which
+//! The seat channel (`docs/AUTH.md` §3.7): `xaqu.auth.seat`, which
 //! `auth.service` offers and only the unit that `Uses=` it may open, so the
 //! other end is init's word and nobody's claim.
 //!
@@ -15,17 +15,17 @@
 
 use std::os::fd::{FromRawFd as _, OwnedFd};
 
-use ferrix_auth_proto::{MAX_RECORD, Record};
-use ferrix_native::channel::{self, Channel, ReadError};
-use ferrix_native::port::{self, Port};
-use ferrix_native::{Deadline, Error, Handle, Object, OwnedHandle, Raw, Signals, Syscall, pending};
-use ferrix_native_abi::directory::{Kind, MAX_MESSAGE, Message};
+use xaqu_auth_proto::{MAX_RECORD, Record};
+use xaqu_native::channel::{self, Channel, ReadError};
+use xaqu_native::port::{self, Port};
+use xaqu_native::{Deadline, Error, Handle, Object, OwnedHandle, Raw, Signals, Syscall, pending};
+use xaqu_native_abi::directory::{Kind, MAX_MESSAGE, Message};
 
 use crate::audit::say;
 use crate::engine::Engine;
 
 /// The name `auth.service` offers.
-pub(crate) const NAME: &str = "ferrix.auth.seat";
+pub(crate) const NAME: &str = "xaqu.auth.seat";
 
 /// The port key of the channel CONNECTs arrive on.
 const OFFERED: u64 = 1;

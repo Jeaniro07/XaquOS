@@ -22,7 +22,7 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.6) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.6) from NVIDIA's
  * kernel-open/nvidia/nv-modeset-interface.c at 580.173.02, under the MIT
  * licence above: the table of RM calls nvidia-modeset (NVKMS) makes, and
  * the callbacks it registers. On Linux the table crosses from nvidia.ko to
@@ -35,7 +35,7 @@
 #include "nv-modeset-interface.h"
 
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "nvstatus.h"
 #include "nv.h"
 
@@ -102,7 +102,7 @@ static void nvidia_modeset_get_gpu_info(nv_gpu_info_t *gpu_info,
     gpu_info->pci_info.slot     = nv->pci_info.slot;
     gpu_info->pci_info.function = nv->pci_info.function;
 
-    /* Ferrix: GPU memory is never onlined as a NUMA node. */
+    /* Xaqu: GPU memory is never onlined as a NUMA node. */
     gpu_info->needs_numa_setup = NV_FALSE;
 
     gpu_info->os_device_ptr = NULL;

@@ -1,24 +1,24 @@
 //! `power`: the x86-64 power driver (`docs/POWERCTL.md` §8).
 //!
 //! `devmgr` starts it on the kernel's power node, which exists only under
-//! `ferrix.powerctl` on a processor the kernel's model table names (or under
-//! the test-only `ferrix.powerctl.fake`). It claims the kernel's power core
+//! `xaqu.powerctl` on a processor the kernel's model table names (or under
+//! the test-only `xaqu.powerctl.fake`). It claims the kernel's power core
 //! with `power_control_create`, then once a second reads the kernel's
 //! readings with `power_read` -- which is also what keeps its lease -- and
-//! decides, by `ferrix_x86_power`'s policy: the next step of the plan its
+//! decides, by `xaqu_x86_power`'s policy: the next step of the plan its
 //! boot words give, or a step down when the hottest reading reaches the soft
 //! limit, or firmware's value for good after three. It writes with
 //! `power_set`; the kernel holds the bounds, the raise floor, its own
 //! backstop and every restore.
 //!
-//! Its lines keep `ferrix.vrcurrent`'s shapes, so the box's scripts read
+//! Its lines keep `xaqu.vrcurrent`'s shapes, so the box's scripts read
 //! them as before: `msr: vrcurrent set N A (was M A)` for each write the
 //! kernel took, `msr: vrcurrent N A, core C C, package P C` every five
 //! seconds, with the ratio, the limit reasons and the package's power.
 //! The kernel says its own writes and restores in raw hex (`power: ...`).
 //!
-//! Without `ferrix.power.vr` it writes nothing and only says what it reads.
-//! `ferrix.power.test=hang@S` and `exit@S` stop renewing, or exit, S seconds
+//! Without `xaqu.power.vr` it writes nothing and only says what it reads.
+//! `xaqu.power.test=hang@S` and `exit@S` stop renewing, or exit, S seconds
 //! after its first write, for `cargo xtask test-power`; with either it first
 //! checks the claim's own refusals (a second claim, a copy of the claim, the
 //! node's memory, mapping and interrupt, a quiesce under it) and says each.
@@ -55,31 +55,31 @@
 
 use core::fmt;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{IoMappingSpec, POWER_READ_WORDS};
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pin::PinAccess;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo;
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_x86_power::decode::{self, Amps, Reading};
-use ferrix_x86_power::options::{self, Options, TestMode, Words};
-use ferrix_x86_power::policy::{Action, Policy, Why};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{IoMappingSpec, POWER_READ_WORDS};
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pin::PinAccess;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo;
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_x86_power::decode::{self, Amps, Reading};
+use xaqu_x86_power::options::{self, Options, TestMode, Words};
+use xaqu_x86_power::policy::{Action, Policy, Why};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The boot words the driver reads (`docs/POWERCTL.md` §9): ring 3's,
 /// not the kernel's, read from `/proc/cmdline`.
 const WORDS: Words<'static> = Words {
-    vr: b"ferrix.power.vr",
-    hot: b"ferrix.power.hot",
-    test: b"ferrix.power.test",
+    vr: b"xaqu.power.vr",
+    hot: b"xaqu.power.hot",
+    test: b"xaqu.power.test",
 };
 
 /// A second, in nanoseconds.
@@ -106,7 +106,7 @@ enum Step {
     Claim = 2,
     /// The kernel ended the claim.
     Ended = 3,
-    /// `ferrix.power.test=exit@S`.
+    /// `xaqu.power.test=exit@S`.
     TestExit = 4,
     /// No port to sleep on.
     Port = 5,
@@ -119,7 +119,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(()) => 0,
         Err(step) => {
-            ferrix_rt::err!("power: stopped at {step:?}");
+            xaqu_rt::err!("power: stopped at {step:?}");
             step as i32
         }
     }
@@ -151,7 +151,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     weigh();
     let options = read_options();
     let claim = device.power_control().map_err(|error| {
-        ferrix_rt::err!("power: the kernel refused the claim: {error:?}");
+        xaqu_rt::err!("power: the kernel refused the claim: {error:?}");
         Step::Claim
     })?;
     if options.test.is_some() {
@@ -160,25 +160,25 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     let idle = port::create(Kernel).map_err(|_| Step::Port)?;
     let first = claim.power_read().map_err(|_| Step::Ended)?;
     let reading = decode::reading(&first);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "power: claimed: firmware {} A, ceiling {} A, back off at {} C",
         Amps(reading.firmware_eighths),
         Amps(reading.ceiling_eighths),
         options.hot
     );
     let Some(plan) = options.plan else {
-        ferrix_rt::notice!("power: no ferrix.power.vr plan: writing nothing");
+        xaqu_rt::notice!("power: no xaqu.power.vr plan: writing nothing");
         return watch(&device, claim, &idle, None, &options);
     };
     let Some((plan, dropped)) = plan.below(u32::try_from(reading.ceiling_eighths / 8).unwrap_or(0))
     else {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "power: every step of the plan is above the kernel's ceiling: writing nothing"
         );
         return watch(&device, claim, &idle, None, &options);
     };
     if dropped > 0 {
-        ferrix_rt::warn!("power: {dropped} steps above the kernel's ceiling dropped");
+        xaqu_rt::warn!("power: {dropped} steps above the kernel's ceiling dropped");
     }
     watch(
         &device,
@@ -196,12 +196,12 @@ fn read_options() -> Options {
         Ok(len) => {
             let options = options::parse(line.get(..len).unwrap_or_default(), &WORDS);
             if options.plan_refused.is_some() || options.hot_refused || options.test_refused {
-                ferrix_rt::warn!("power: a ferrix.power word did not parse and is ignored");
+                xaqu_rt::warn!("power: a xaqu.power word did not parse and is ignored");
             }
             options
         }
         Err(errno) => {
-            ferrix_rt::warn!("power: /proc/cmdline unreadable ({errno:?}): no plan");
+            xaqu_rt::warn!("power: /proc/cmdline unreadable ({errno:?}): no plan");
             Options::default()
         }
     }
@@ -228,7 +228,7 @@ fn watch(
         let at = now();
         let late = at.saturating_sub(due);
         if late > LATE_NANOS {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "power: the loop ran {} ms late (the kernel's lease is 5000 ms)",
                 late / 1_000_000
             );
@@ -259,13 +259,13 @@ fn watch(
         {
             match mode {
                 TestMode::Hang => {
-                    ferrix_rt::notice!("power: test: renewing no more");
+                    xaqu_rt::notice!("power: test: renewing no more");
                     loop {
                         let _ = idle.wait(Deadline::Never);
                     }
                 }
                 TestMode::Exit => {
-                    ferrix_rt::notice!("power: test: exiting");
+                    xaqu_rt::notice!("power: test: exiting");
                     return Err(Step::TestExit);
                 }
             }
@@ -288,25 +288,25 @@ fn reclaim(
     step: Step,
 ) -> Result<(Channel<Kernel>, [u64; POWER_READ_WORDS]), Step> {
     if *reclaims >= MOST_RECLAIMS {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "power: lost the claim, and claimed again {MOST_RECLAIMS} times already: firmware's limit for good"
         );
         return Err(step);
     }
     *reclaims += 1;
-    ferrix_rt::warn!(
+    xaqu_rt::warn!(
         "power: lost the claim: firmware's limit is back; claiming again ({} of {MOST_RECLAIMS})",
         *reclaims
     );
     let claim = device.power_control().map_err(|error| {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "power: the kernel refused the claim again: {error:?}; firmware's limit for good"
         );
         step
     })?;
     let words = read(&claim)?;
     let reading = decode::reading(&words);
-    ferrix_rt::notice!(
+    xaqu_rt::notice!(
         "power: regained the claim: firmware {} A, now {} A; the plan again from its first step",
         Amps(reading.firmware_eighths),
         Amps(reading.vr_eighths.unwrap_or(0))
@@ -320,7 +320,7 @@ fn read(claim: &Channel<Kernel>) -> Result<[u64; POWER_READ_WORDS], Step> {
         let closed = claim
             .wait_one(Signals::PEER_CLOSED, Deadline::At(0))
             .is_ok();
-        ferrix_rt::warn!("power: the kernel ended the claim ({error:?}, closed {closed})");
+        xaqu_rt::warn!("power: the kernel ended the claim ({error:?}, closed {closed})");
         Step::Ended
     })
 }
@@ -337,7 +337,7 @@ fn act(
         Action::Hold => return Ok(()),
         Action::Set { amps, why } => (amps, Some(why)),
         Action::GiveUp { celsius } => {
-            ferrix_rt::warn!("power: giving up at {celsius} C: firmware's limit for good");
+            xaqu_rt::warn!("power: giving up at {celsius} C: firmware's limit for good");
             (
                 u32::try_from(reading.firmware_eighths / 8).unwrap_or(0),
                 None,
@@ -349,9 +349,9 @@ fn act(
     match claim.power_set(eighths) {
         Ok(back) => {
             if let Some(Why::BackOff { celsius }) = why {
-                ferrix_rt::warn!("power: backing off to {amps} A: {celsius} C");
+                xaqu_rt::warn!("power: backing off to {amps} A: {celsius} C");
             }
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "msr: vrcurrent set {} A (was {} A)",
                 Amps(back & 0x1fff),
                 Amps(before)
@@ -359,19 +359,19 @@ fn act(
             Ok(())
         }
         Err(Error::ShouldWait | Error::LimitReached | Error::InvalidArgs) => {
-            ferrix_rt::warn!("power: the kernel refused {amps} A for now");
+            xaqu_rt::warn!("power: the kernel refused {amps} A for now");
             policy.refused(was);
             Ok(())
         }
         Err(error) => {
-            ferrix_rt::warn!("power: the kernel ended the claim at {amps} A ({error:?})");
+            xaqu_rt::warn!("power: the kernel ended the claim at {amps} A ({error:?})");
             policy.refused(was);
             Err(Step::Ended)
         }
     }
 }
 
-/// The five-second line, `ferrix.vrcurrent`'s shape and more; the energy
+/// The five-second line, `xaqu.vrcurrent`'s shape and more; the energy
 /// reading kept for the next.
 fn report(reading: &Reading, energy: Option<((u32, u32), u64)>) -> Option<((u32, u32), u64)> {
     let at = now() / 1_000_000;
@@ -385,7 +385,7 @@ fn report(reading: &Reading, energy: Option<((u32, u32), u64)>) -> Option<((u32,
         reading.core_reasons.unwrap_or(0) | reading.graphics_reasons.unwrap_or(0),
         &mut names,
     );
-    ferrix_rt::debug!(
+    xaqu_rt::debug!(
         "msr: vrcurrent {} A, core {} C, package {} C, ratio {}, package {} mW, limited by {}",
         Amps(reading.vr_eighths.unwrap_or(0)),
         Shown(reading.core),
@@ -410,14 +410,14 @@ fn refusals(device: &Device<Kernel>, claim: &Channel<Kernel>) {
         .err();
     let interrupt = device.interrupt(0).err();
     let quiesce = device.quiesce().err();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "power: refusals: second claim {second:?}, copy {copy:?}, pin {pin:?}, mapping {mapping:?}, interrupt {interrupt:?}, quiesce {quiesce:?}"
     );
 }
 
 /// The monotonic clock, in nanoseconds.
 fn now() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 /// A value, or `-` for one not read.
@@ -451,11 +451,11 @@ impl fmt::Display for Names<'_> {
 }
 
 /// A small file, from its start, into `buf` (`path` NUL-terminated).
-fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, ferrix_linux_abi::errno::Errno> {
-    use ferrix_rt::linux::{self, numbers};
+fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, xaqu_linux_abi::errno::Errno> {
+    use xaqu_rt::linux::{self, numbers};
     const AT_FDCWD: usize = (-100_isize) as usize;
     if path.last() != Some(&0) {
-        return Err(ferrix_linux_abi::errno::Errno::EINVAL);
+        return Err(xaqu_linux_abi::errno::Errno::EINVAL);
     }
     // SAFETY: `path` is NUL-terminated and borrowed for the call.
     let fd = unsafe {
@@ -484,10 +484,10 @@ fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, ferrix_linux_abi::err
 
 /// Send the driver's lines to `/dev/kmsg`, whose writes never wait for the
 /// console's room (the module's note), at once, and say so on standard
-/// error when it cannot be opened (`ferrix_rt::log`).
+/// error when it cannot be opened (`xaqu_rt::log`).
 fn open_log() {
-    if let Err(errno) = ferrix_rt::log::open() {
-        ferrix_rt::warn!(
+    if let Err(errno) = xaqu_rt::log::open() {
+        xaqu_rt::warn!(
             "power: /dev/kmsg unopened ({errno:?}): lines to standard error, which may wait for the console"
         );
     }
@@ -496,7 +496,7 @@ fn open_log() {
 /// Ask for the fair class's heaviest weight (the module's note), and say
 /// what the kernel answered.
 fn weigh() {
-    use ferrix_rt::linux::{self, numbers};
+    use xaqu_rt::linux::{self, numbers};
     const PRIO_PROCESS: usize = 0;
     // SAFETY: no pointer: which, who and the value.
     let answer = unsafe {
@@ -506,7 +506,7 @@ fn weigh() {
         )
     };
     match answer {
-        Ok(_) => ferrix_rt::info!("power: running at nice {NICE}"),
-        Err(errno) => ferrix_rt::warn!("power: nice {NICE} refused ({errno:?}): running at nice 0"),
+        Ok(_) => xaqu_rt::info!("power: running at nice {NICE}"),
+        Err(errno) => xaqu_rt::warn!("power: nice {NICE} refused ({errno:?}): running at nice 0"),
     }
 }

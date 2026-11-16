@@ -52,15 +52,15 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::exception::{self as exception_abi, Words};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr::{self, NativeCall};
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::exception::{self as exception_abi, Words};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr::{self, NativeCall};
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     self, ADDRESS_BY_VMO, ADDRESS_COMPARE, ADDRESS_SHARED, ADDRESS_WAIT_ANY_MAX,
     APERTURE_INFO_BYTES, AddressWord, ApertureInfo, CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES,
     DEVICE_INFO_BYTES, DIRTY_STATE_AWAITING_CLEAN, DIRTY_STATE_DIRTY, DeviceInfo, JOB_LEVEL_SET,
@@ -69,11 +69,11 @@ use ferrix_native_abi::types::{
     PAGER_OP_WRITEBACK_BEGIN, PAGER_OP_WRITEBACK_END, PAGER_VMO_NO_COPY_WAIT, PAGER_VMO_TRAP_DIRTY,
     POWER_READ_WORDS, PortPacket, ProcessStatus, ReadActual, ReadAttested, TREE_X86_POWER,
 };
-use ferrix_objects::message::Message;
-use ferrix_objects::reach::Reach;
-use ferrix_objects::table::TableError;
-use ferrix_sync::Once;
-use ferrix_vma::VmaFlags;
+use xaqu_objects::message::Message;
+use xaqu_objects::reach::Reach;
+use xaqu_objects::table::TableError;
+use xaqu_sync::Once;
+use xaqu_vma::VmaFlags;
 
 mod lift;
 mod region;
@@ -146,11 +146,11 @@ fn decode(number: usize) -> Option<NativeCall> {
 /// it, so that a handler which needs more -- `job_for_cgroup` reads the
 /// caller's descriptors and credentials -- can have its own type back
 /// ([`object::process::downcast`]).
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub(crate) type Handler = fn(&dyn Host, &[u64; 6]) -> Result<usize, Errno>;
 
 /// One call the item leaves to the load ring, and what answers it.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 struct Served {
     /// The call.
     call: NativeCall,
@@ -158,7 +158,7 @@ struct Served {
     handler: Once<Handler>,
 }
 
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 impl Served {
     /// `call`, answered by nothing yet.
     const fn new(call: NativeCall) -> Served {
@@ -177,7 +177,7 @@ impl Served {
 /// of these calls makes a channel for a driver, not the path a driver's work
 /// takes. A `Once` per call, as [`crate::hooks`] keeps them: written at
 /// bring-up, read without a lock.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 static SERVED: [Served; 21] = [
     Served::new(NativeCall::BlockRingCreate),
     Served::new(NativeCall::NetRingCreate),
@@ -210,7 +210,7 @@ static SERVED: [Served; 21] = [
 /// [`Full`] when `call` is not one this table leaves to the load ring, or
 /// already has a handler: either way the load registers more than the item
 /// expects, and the boot says so.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub fn serve(call: NativeCall, handler: Handler) -> Result<(), Full> {
     let served = SERVED
         .iter()
@@ -227,7 +227,7 @@ pub fn serve(call: NativeCall, handler: Handler) -> Result<(), Full> {
 /// The first call left to the load ring that nothing answers: what the boot
 /// checks is `None` before it goes on, so that a call the `match` in
 /// [`dispatch`] no longer answers itself cannot go unanswered unseen.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub fn unserved() -> Option<NativeCall> {
     SERVED
         .iter()
@@ -236,7 +236,7 @@ pub fn unserved() -> Option<NativeCall> {
 }
 
 /// How many calls the load ring answers, for the boot's report.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub fn served_count() -> usize {
     SERVED
         .iter()
@@ -245,7 +245,7 @@ pub fn served_count() -> usize {
 }
 
 /// Answer `call` through the table.
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 fn served(call: NativeCall, caller: &dyn Host, a: &[u64; 6]) -> Result<usize, Errno> {
     let handler = SERVED
         .iter()
@@ -545,7 +545,7 @@ fn answer(call: NativeCall, caller: &dyn Host, a: [u64; 6]) -> Result<usize, Err
         }
         // Retired under this shape: each answers ENOSYS by the last arm, and devmgr
         // asks a core in user space for what these gave (MICROKERNEL.md §3).
-        #[cfg(not(ferrix_shape = "micro"))]
+        #[cfg(not(xaqu_shape = "micro"))]
         NativeCall::BlockRingCreate
         | NativeCall::NetRingCreate
         | NativeCall::DisplayControlCreate
@@ -654,7 +654,7 @@ fn answer(call: NativeCall, caller: &dyn Host, a: [u64; 6]) -> Result<usize, Err
         | NativeCall::RestrictedEnter
         | NativeCall::RestrictedResume
         | NativeCall::RestrictedContinue => region::answer(call, process, &a),
-        #[cfg(ferrix_shape = "micro")]
+        #[cfg(xaqu_shape = "micro")]
         _ => Err(Errno::ENOSYS),
     }
 }
@@ -1335,7 +1335,7 @@ pub fn reply_words(count: usize, a: &[u64; 6]) -> [u64; 3] {
         let kept = if held == WORD {
             value
         } else {
-            // Little-endian (every target Ferrix builds for): the first
+            // Little-endian (every target Xaqu builds for): the first
             // `held` bytes in memory are the low ones.
             value & ((1_usize << (held * 8)) - 1)
         };
@@ -1374,7 +1374,7 @@ fn send_words(
 
 /// Whether a receive may park for a fast writer: on a boot that has the fast
 /// path, and not from restricted mode, whose wait a kick must end.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn may_park() -> bool {
     !crate::sched::running_restricted()
 }
@@ -1393,7 +1393,7 @@ fn receive_words(endpoint: &Endpoint) -> Result<(usize, [u64; 3]), Errno> {
         // can hand the next message over directly. Declined, it waits below
         // as before; woken without a reply, it carries on as after that wait.
         // From restricted mode, the general wait alone, which a kick ends.
-        #[cfg(ferrix_fast_ipc)]
+        #[cfg(xaqu_fast_ipc)]
         if may_park() {
             match park_for_reply(endpoint) {
                 Parked::Replied(answer) => return Ok(answer),
@@ -1423,7 +1423,7 @@ fn receive_words(endpoint: &Endpoint) -> Result<(usize, [u64; 3]), Errno> {
 }
 
 /// What the receive half made of a wait.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 #[derive(Debug)]
 pub enum Parked {
     /// It could not park: the general wait runs.
@@ -1441,7 +1441,7 @@ pub enum Parked {
 /// interrupts on as the general wait blocks. Woken by a commit, it takes its
 /// reply; by anything else, it leaves its record and goes on as after the
 /// general wait.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub fn park_for_reply(endpoint: &Endpoint) -> Parked {
     let Some(task) = crate::sched::current() else {
         return Parked::Declined;
@@ -1477,7 +1477,7 @@ pub fn park_for_reply(endpoint: &Endpoint) -> Parked {
 ///
 /// [`Fast::Tail`]: crate::trap::Fast::Tail
 /// [`Fast::Done`]: crate::trap::Fast::Done
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 pub fn fast_write_read(a: &[u64; 6]) -> crate::trap::Fast {
     // Its first act, as `trap::system_call`'s is: the frame tail or the
     // continuation lowers it. A decline lowers it here, since a declined
@@ -1493,7 +1493,7 @@ pub fn fast_write_read(a: &[u64; 6]) -> crate::trap::Fast {
 }
 
 /// [`fast_write_read`] once it has raised `IN_CALL`.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn fast_write_read_raised(a: &[u64; 6]) -> crate::trap::Fast {
     use crate::sched::direct::{self, Count};
     use crate::trap::Fast;
@@ -1568,7 +1568,7 @@ fn fast_write_read_raised(a: &[u64; 6]) -> crate::trap::Fast {
 /// here stays inside 3a's contract; the frame tail's looks after it see what
 /// came in meanwhile. On a decline, before any switch, the entry goes on
 /// masked as before.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn release_unmasked(endpoint: Arc<Endpoint>) {
     arch::enable_interrupts();
     if !crate::sched::may_block() {
@@ -1588,7 +1588,7 @@ fn release_unmasked(endpoint: Arc<Endpoint>) {
 /// `may_block` check made, then off its record, the call's end as
 /// `dispatch_write_read` makes it, and the way back as `trap::system_call`
 /// makes it. Returns with interrupts masked again.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn continue_general(
     endpoint: Arc<Endpoint>,
     caller: &crate::sched::Task,
@@ -2542,7 +2542,7 @@ fn job_call(call: NativeCall, caller: &dyn Host, a: &[u64; 6]) -> Result<usize, 
         NativeCall::JobKill => job_kill(process, handle(first)),
         NativeCall::JobSetLimit => job_set_limit(process, handle(first), second, third),
         NativeCall::JobGetQuota => job_get_quota(process, handle(first), second, third),
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         NativeCall::ProcessCreate => process_create(
             caller,
             handle(first),
@@ -2552,7 +2552,7 @@ fn job_call(call: NativeCall, caller: &dyn Host, a: &[u64; 6]) -> Result<usize, 
                 count: fourth,
             },
         ),
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         NativeCall::ProcessStart => process_start(process, handle(first), handle(second)),
         NativeCall::ProcessMake => process_make(
             caller,
@@ -2599,9 +2599,9 @@ fn device_call(call: NativeCall, process: &Process, a: &[u64; 6]) -> Result<usiz
         NativeCall::DeviceGetLimit => device_get_limit(process, device, second),
         NativeCall::DeviceIsolation => device_isolation(process, device),
         NativeCall::DeviceBindDomain => device_bind_domain(process, device),
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         NativeCall::DeviceServed => device_served(process, device),
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         NativeCall::VmoHold => vmo_hold(process, device),
         _ => power_call(call, process, a),
     }
@@ -2718,7 +2718,7 @@ fn job_set_limit(process: &Process, job: Handle, resource: u64, at: u64) -> Resu
     let limit = read_u64(process, at)?;
     let number = match limited {
         Limited::Quota(resource) => audit::resource_number(resource),
-        Limited::Weight | Limited::Reserve => ferrix_audit::resource::CPU_WEIGHT,
+        Limited::Weight | Limited::Reserve => xaqu_audit::resource::CPU_WEIGHT,
     };
     let set = match limited {
         Limited::Quota(Resource::Memory) => job.set_limit(
@@ -2777,7 +2777,7 @@ fn job_reserve(process: &Process, job: Handle, at: u64) -> Result<usize, Errno> 
                 audit::LIMIT_SET,
                 audit::Subject::of(process),
                 job.id(),
-                ferrix_audit::resource::RESERVE,
+                xaqu_audit::resource::RESERVE,
                 bytes,
             );
             Ok(0)
@@ -2982,7 +2982,7 @@ fn copy_records(
     let mut at = buffer;
     for record in records.iter().take(read.copied) {
         uaccess::copy_to_user(process.own_space(), at, &record.to_bytes()).map_err(fault)?;
-        at = at.wrapping_add(ferrix_audit::RECORD_BYTES as u64);
+        at = at.wrapping_add(xaqu_audit::RECORD_BYTES as u64);
     }
     // Only once every record is out: a copy that faulted gave the reader
     // none of them, and the power action must still print them as unread.
@@ -2996,7 +2996,7 @@ fn copy_records(
 /// mebibytes, copied into the kernel's own memory before it is loaded.
 const MAX_IMAGE_BYTES: u64 = 16 << 20;
 
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 /// `process_create`.
 ///
 /// The image is read out of the VMO into kernel memory and loaded from there,
@@ -3004,7 +3004,7 @@ const MAX_IMAGE_BYTES: u64 = 16 << 20;
 /// mapped executable. The process is in `job` before the caller hears of it,
 /// so a kill of the job reaches a process that was never started. It runs as
 /// its creator, the `caller`, runs ([`LoadNative`]).
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 fn process_create(
     caller: &dyn Host,
     job: Handle,
@@ -3129,10 +3129,10 @@ fn process_make(caller: &dyn Host, job: Handle, name: Buffer) -> Result<usize, E
 /// move an address from one side of it to the other.
 fn in_user_space(address: u64) -> bool {
     const _: () = assert!(
-        ferrix_bootinfo::USER_VIRT_END.is_multiple_of(2),
+        xaqu_bootinfo::USER_VIRT_END.is_multiple_of(2),
         "the Thumb bit could cross the bound"
     );
-    ferrix_bootinfo::is_user_address(address)
+    xaqu_bootinfo::is_user_address(address)
 }
 
 /// `process_run`: `process_start` with an entry point and a stack, each checked
@@ -3140,7 +3140,7 @@ fn in_user_space(address: u64) -> bool {
 /// first push goes below it.
 fn process_run(process: &Process, a: &[u64; 6]) -> Result<usize, Errno> {
     let [target, entry, stack, bootstrap, ..] = *a;
-    if !in_user_space(entry) || stack > ferrix_bootinfo::USER_VIRT_END {
+    if !in_user_space(entry) || stack > xaqu_bootinfo::USER_VIRT_END {
         return Err(status::INVALID_ARGS);
     }
     start_with(
@@ -3171,7 +3171,7 @@ pub fn image_bytes(vmo: &Vmo) -> Result<crate::vmap::Buffer, Errno> {
     Ok(bytes)
 }
 
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 /// `process_start`.
 ///
 /// In the order that makes a race harmless and a failure clean:
@@ -3190,7 +3190,7 @@ pub fn image_bytes(vmo: &Vmo) -> Result<crate::vmap::Buffer, Errno> {
 /// way out, after both tables' locks are let go. The `Control` held here keeps
 /// a last handle closed meanwhile from killing the process under a start that
 /// is about to succeed.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 fn process_start(process: &Process, target: Handle, bootstrap: Handle) -> Result<usize, Errno> {
     start_with(process, target, bootstrap, None)
 }
@@ -3808,7 +3808,7 @@ fn device_in(process: &Process, device: Handle, needed: Rights) -> Result<Arc<De
         Ok(Arc::clone(node))
     })?;
     // A refused node, and the function holding a firmware framebuffer lent
-    // to its own node (`ferrix.efifb`), are driven by nobody.
+    // to its own node (`xaqu.efifb`), are driven by nobody.
     if needed.contains(Rights::MANAGE) && (node.is_refused() || node.yielded()) {
         return Err(status::BAD_STATE);
     }
@@ -4160,7 +4160,7 @@ fn quiesce_while(node: &Arc<DeviceNode>, cancelled: &dyn Fn() -> bool) -> Result
 /// when it registers the device's binding (`discovery::board::board_clock`). Any
 /// other device has no clock here: `WRONG_TYPE`.
 fn device_clock(process: &Process, device: Handle, hz: u64, options: u64) -> Result<usize, Errno> {
-    use ferrix_native_abi::types::CLOCK_SET;
+    use xaqu_native_abi::types::CLOCK_SET;
     if options & !CLOCK_SET != 0 || hz == 0 {
         return Err(status::INVALID_ARGS);
     }
@@ -4194,7 +4194,7 @@ fn vmo_pin(
     length: u64,
     options: u64,
 ) -> Result<usize, Errno> {
-    use ferrix_native_abi::types::{PIN_COHERENT, PIN_CONTIGUOUS, PIN_READ_ONLY};
+    use xaqu_native_abi::types::{PIN_COHERENT, PIN_CONTIGUOUS, PIN_READ_ONLY};
     let page = PAGE_SIZE;
     let order = pin_block_order(options, offset, length)?;
     let read_only = options & PIN_READ_ONLY != 0;
@@ -4276,7 +4276,7 @@ const PIN_RECLAIMS: u32 = object::oom::MACHINE_RECLAIMS;
 /// order is `PIN_BLOCKS`' alone, and `PIN_BLOCKS` has one, up to the
 /// allocator's largest block, and is no contiguous pin).
 fn pin_block_order(options: u64, offset: u64, length: u64) -> Result<Option<u8>, Errno> {
-    use ferrix_native_abi::types::{
+    use xaqu_native_abi::types::{
         PIN_BLOCK_ORDER_MASK, PIN_BLOCK_ORDER_SHIFT, PIN_BLOCKS, PIN_COHERENT, PIN_CONTIGUOUS,
         PIN_READ_ONLY,
     };
@@ -4315,11 +4315,11 @@ fn commit_blocks_for_pin(
 }
 
 /// A pin's IOMMU flags: read-only for the device, or read and write.
-fn dma_flags(read_only: bool) -> ferrix_paging::MapFlags {
+fn dma_flags(read_only: bool) -> xaqu_paging::MapFlags {
     if read_only {
-        ferrix_paging::MapFlags::DMA_READ_ONLY
+        xaqu_paging::MapFlags::DMA_READ_ONLY
     } else {
-        ferrix_paging::MapFlags::DMA
+        xaqu_paging::MapFlags::DMA
     }
 }
 
@@ -4418,7 +4418,7 @@ fn contiguous_pin(
 fn pin_through(
     node: &DeviceNode,
     held: crate::user::vmo::Held,
-    flags: ferrix_paging::MapFlags,
+    flags: xaqu_paging::MapFlags,
     owner: Arc<object::process::Exit>,
 ) -> Result<Arc<object::pin::Pin>, Errno> {
     let domain = domain_of_call(node)?;
@@ -4654,7 +4654,7 @@ fn device_bind_domain(process: &Process, device: Handle) -> Result<usize, Errno>
 /// kernel does at an accepted HELLO, for a core that is not in the kernel. devmgr
 /// calls it on a server's word, and calling it early widens nothing the driver it
 /// holds the handle of could not already reach: V-20.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn device_served(process: &Process, device: Handle) -> Result<usize, Errno> {
     let node = device_in(process, device, Rights::MANAGE)?;
     // The two kernel steps a HELLO to the in-kernel core makes. A live driver
@@ -4677,7 +4677,7 @@ fn device_served(process: &Process, device: Handle) -> Result<usize, Errno> {
 
 /// The most bytes [`vmo_hold`] holds: a ring and a driver's data region, which
 /// a kernel core held with no more than these, never a disk's worth.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 const HOLD_MOST_PAGES: u64 = (64 * 1024 * 1024) / 4096;
 
 /// `vmo_hold` (BD.2, H.1, H.2): a server's hold of a VMO a driver made, which
@@ -4688,7 +4688,7 @@ const HOLD_MOST_PAGES: u64 = (64 * 1024 * 1024) / 4096;
 /// nothing but the list of frames, bounded by [`HOLD_MOST_PAGES`], and at its
 /// limit the driver is the one refused. A user kernel's ring 0 makes nothing
 /// write-combining (ledger 6426), so no view is taken here.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn vmo_hold(process: &Process, vmo: Handle) -> Result<usize, Errno> {
     let vmo =
         process.with_handles(|table| unpaged_vmo_in(table, vmo, Rights::READ | Rights::MAP))?;
@@ -4839,7 +4839,7 @@ fn io_mapping_map(
 /// Always shared; [`crate::user::space::AddressSpace::map_object`] says why.
 /// The protection needs the rights that grant it, so a read-only handle maps
 /// read-only or not at all. Every mapping reads, because none of the
-/// processors Ferrix runs on can make a user page writable and not readable.
+/// processors Xaqu runs on can make a user page writable and not readable.
 fn vmo_map(
     process: &Process,
     vmo: Handle,
@@ -5115,7 +5115,7 @@ fn space_create(process: &Process) -> Result<usize, Errno> {
 /// executable mappings through handles that carry `EXECUTE`
 /// (`docs/microkernel/K2.md` §2.3, §2.4).
 /// `SPACE_WINDOW` and `SPACE_PLACE`'s look-ups (`native::lift`).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn lift_space(
     process: &Process,
     space: u64,
@@ -5126,7 +5126,7 @@ pub(crate) fn lift_space(
     reach_into(process, target.space())?;
     Ok(target)
 }
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn lift_vmo(
     process: &Process,
     vmo: u64,
@@ -5135,7 +5135,7 @@ pub(crate) fn lift_vmo(
     let handle = Handle(u32::try_from(vmo).map_err(|_| status::BAD_HANDLE)?);
     process.with_handles(|table| vmo_held(table, handle, needed))
 }
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn lift_space_status(why: SpaceError) -> Errno {
     space_status(why)
 }
@@ -5160,7 +5160,7 @@ fn space_map(
     };
     let target = space_in(process, space, on_space)?;
     let reach = ByHandle::of(process, target.space());
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if target.space().is_window() {
         return Err(status::BAD_STATE);
     }
@@ -5238,7 +5238,7 @@ fn space_protect(
         Rights::MAP
     };
     let target = space_in(process, space, needed)?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if target.space().is_window() {
         return Err(status::NOT_SUPPORTED);
     }
@@ -5311,7 +5311,7 @@ fn space_allocate(
 /// `fork` clones one, answered with the handle's own rights and never more.
 fn space_clone(process: &Process, space: Handle) -> Result<usize, Errno> {
     let (source, rights) = space_held(process, space, Rights::READ)?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if source.space().is_window() {
         return Err(status::NOT_SUPPORTED);
     }
@@ -5354,7 +5354,7 @@ fn space_write(
     length: u64,
 ) -> Result<usize, Errno> {
     let target = space_in(process, space, Rights::WRITE)?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if target.space().is_window() {
         return Err(status::NOT_SUPPORTED);
     }
@@ -5427,7 +5427,7 @@ fn space_read(
     length: u64,
 ) -> Result<usize, Errno> {
     let target = space_in(process, space, Rights::READ)?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     if target.space().is_window() {
         return Err(status::NOT_SUPPORTED);
     }
@@ -5760,7 +5760,7 @@ fn observe(target: &Object, observer: Observer) -> Option<Result<(), PortError>>
         | Object::Region(_)
         | Object::Thread(_)
         | Object::Exception(_) => None,
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         Object::Held(_) => None,
     }
 }

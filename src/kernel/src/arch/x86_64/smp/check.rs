@@ -56,7 +56,7 @@ pub(crate) fn check_smt() -> Result<(), &'static str> {
         })
     });
     let parked = found.parked();
-    if cfg!(ferrix_smt = "off") {
+    if cfg!(xaqu_smt = "off") {
         if shared {
             return Err("smt: two online processors share a core under smt=off");
         }

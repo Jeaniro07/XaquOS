@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 11: assurance.
+ * Xaqu — SysML v2 model, part 11: assurance.
  *
  * docs/RELIABILITY.md and docs/ASSEMBLY.md: the quality gates, what each one
  * verifies, and what the tests can actually reach. The gates cargo xtask
@@ -8,18 +8,18 @@
  * disk judged on the host or a screendump run in the landing gates of
  * docs/BACKLOG.md instead (docs/ROADMAP.md, Continuously).
  */
-package FerrixAssurance {
+package XaquAssurance {
     private import ScalarValues::*;
     private import VerificationCases::*;
-    private import FerrixLifecycle::*;
-    private import FerrixStructure::*;
-    private import FerrixRequirements::Principles::*;
+    private import XaquLifecycle::*;
+    private import XaquStructure::*;
+    private import XaquRequirements::Principles::*;
 
     verification def Gate {
         doc /* A check that fails the build. Cheapest first in cargo xtask
              * check, so the gate most likely to fail on a work-in-progress
              * tree fails first. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         attribute command : String;
     }
 
@@ -135,7 +135,7 @@ package FerrixAssurance {
         attribute runs : Natural = 10;
     }
     #implemented verification hostTests : Gate {
-        attribute :>> command = "cargo test --workspace --exclude ferrix-kernel --exclude ferrix-boot";
+        attribute :>> command = "cargo test --workspace --exclude xaqu-kernel --exclude xaqu-boot";
         doc /* 1950 unit tests across src/lib/ on 2026-09-23 (about 520 when
              * this gate was first written down), plus doc tests and xtask's
              * 242. */
@@ -289,7 +289,7 @@ package FerrixAssurance {
              * made, and cargo xtask test-btrfs hands the result to host btrfs
              * check. A filesystem only our own reader can read is not a
              * filesystem. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def PowerFailInjection {
         @stage { number = 12; }
@@ -298,20 +298,20 @@ package FerrixAssurance {
              * test-powerfail. Its adversarial half, every unflushed write
              * kept or dropped at random, is src/lib/fs/btrfs/write's powerfail
              * tests. The test a CoW filesystem actually has to pass. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         attribute seeds : Natural;
     }
 
     // The other xtask boot gates, each an exit criterion that needs something
     // the boot test cannot carry. test-jobs and test-rustc are JobsSession
-    // and RustcTest in FerrixRoadmap.
+    // and RustcTest in XaquRoadmap.
     #implemented verification def ShellTest {
         @stage { number = 7; }
         doc /* cargo xtask test-shell: a static busybox named with --init runs
              * a builtins-only script given to sh -c, and its lines and its
              * exit status of 7 are required after the boot marker; without
              * --init it runs zinc. All three architectures. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def ThreadsTest {
         @stage { number = 7; }
@@ -320,16 +320,16 @@ package FerrixAssurance {
              * booted as init on all three architectures, counting its
              * threads through /proc/self; a build that expects one thread
              * too many must fail on that count. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def VfsTest {
         @stage { number = 8; }
         doc /* cargo xtask test-vfs: ls -R /proc, cat /proc/self/maps and a
              * shell script whose applets are forked programs, on all three
-             * architectures; then su becomes the image's ferrix user, and
+             * architectures; then su becomes the image's xaqu user, and
              * every refusal the kernel owes a user who is not root is
              * required of it. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def NetTest {
         doc /* cargo xtask test-net, Networking's exit, under xtask's own NAT
@@ -337,7 +337,7 @@ package FerrixAssurance {
              * through /proc/net, a name resolved, a file fetched byte for
              * byte, and a stream over the loopback, on all three
              * architectures. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def RestartTest {
         @stage { number = 10; }
@@ -346,7 +346,7 @@ package FerrixAssurance {
              * published again are required each time, with the shell still
              * answering. test-compositor --boot restart does the same under
              * the compositor. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def DisplayTest {
         @stage { number = 17; }
@@ -354,14 +354,14 @@ package FerrixAssurance {
              * served by the ring-3 virtio-gpu driver, required pixel for
              * pixel from QEMU's screendump, on x86-64 and AArch64; with --gl
              * the render node as well. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def InputTest {
         @stage { number = 17; }
         doc /* cargo xtask test-input: a key and a touch sent in at QEMU's far
              * end over QMP and required back out of /dev/input/eventN, on
              * x86-64 and AArch64, with a negative control that must fail. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def UsbTest {
         @stage { number = 17; }
@@ -370,7 +370,7 @@ package FerrixAssurance {
              * required out of /dev/input/eventN (the tablet's as ABS_X and
              * ABS_Y), a device unplugged and plugged in again over QMP, the
              * stick read, the driver killed twice, and a negative control. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def StallTest {
         doc /* cargo xtask test-stall (finding F-95, docs/PREEMPTIBLE-WAITS.md):
@@ -380,14 +380,14 @@ package FerrixAssurance {
              * under its bound; until then the row reports and verifies
              * nothing, and a run whose quiet phases break their bounds is
              * void. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def SeatTest {
         @stage { number = 17; }
         doc /* cargo xtask test-seat: keys typed at QEMU's far end reach a
-             * window on Ferrix and change the screen, and a keybind closes
+             * window on Xaqu and change the screen, and a keybind closes
              * the window it is bound to close, on x86-64 and AArch64. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def CompositorTest {
         @stage { number = 18; }
@@ -395,14 +395,14 @@ package FerrixAssurance {
              * and two Wayland clients tiled on the card, pixel for pixel as
              * the renderer draws them, on x86-64 and AArch64; a later boot
              * requires the picture the terminal makes. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def PtyTest {
         @stage { number = 18; }
         doc /* cargo xtask test-pty: the term app's term --headless runs a program
              * on a pseudoterminal pair, and what it wrote comes back through
              * the master and the terminal's grid. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #implemented verification def VideoTest {
         @stage { number = 19; }
@@ -410,14 +410,14 @@ package FerrixAssurance {
              * into the repository plays as a wallpaper, and the screen must
              * show its frames in turn, where QEMU's machine has a
              * virtio-gpu. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
     #planned verification def CyclicTest {
         @stage { number = 14; }
         doc /* Wake-up latency on a HardRt domain while a Throughput domain on
              * other cores is saturated; the maximum must be inside the stated
              * bound. */
-        subject os : Ferrix;
+        subject os : Xaqu;
         attribute maxLatencyNanos : Natural;
     }
 }

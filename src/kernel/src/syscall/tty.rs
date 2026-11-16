@@ -59,13 +59,13 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     FIONREAD, TCFLSH, TCGETS, TCGETS2, TCIFLUSH, TCIOFLUSH, TCION, TCOFLUSH, TCSETS, TCSETS2,
     TCSETSF, TCSETSF2, TCSETSW, TCSETSW2, TCXONC, TERMIOS_BYTES, TERMIOS2_BYTES, TIOCGPGRP,
     TIOCGPTN, TIOCGSID, TIOCGWINSZ, TIOCNOTTY, TIOCSCTTY, TIOCSPGRP, TIOCSPTLCK, TIOCSWINSZ,
 };
-use ferrix_vfs::OpenFile;
+use xaqu_vfs::OpenFile;
 
 use crate::fs::terminal::{self, Terminal, Termios, Winsize};
 use crate::syscall::pidns;

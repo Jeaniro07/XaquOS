@@ -9,7 +9,7 @@
 //! checksum (§6.4). A fourth build, `development-off`, is the loader of a
 //! development image with signing off. Only the gate's images carry
 //! development anchors, under `build/x86_64/signing-gate/`, never
-//! `build/x86_64/ferrix.img`.
+//! `build/x86_64/xaqu.img`.
 //!
 //! The slots are signed by the development soft signer with nazuna's
 //! development slot key (anchor 32768, `signing-anchors.toml`), so the gate
@@ -17,7 +17,7 @@
 //!
 //! | case | loader | setup (record: good B, A the fallback) | required |
 //! |---|---|---|---|
-//! | S1 | gate | B signed as a configuration package | B refused `WrongKind`; A boots, its own `ferrix.slot.sig=0` overridden (N4) |
+//! | S1 | gate | B signed as a configuration package | B refused `WrongKind`; A boots, its own `xaqu.slot.sig=0` overridden (N4) |
 //! | S2 | gate | B's kernel byte flipped after signing | B refused at its kernel's digest; A boots |
 //! | S3 | gate | B signed for the N150's family | B refused `WrongFamily`; A boots |
 //! | S10 | gate | B's header with generation 1, resealed | B refused `Header(Generation)`; A boots |
@@ -31,9 +31,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use ferrix_slots::Slot;
-use ferrix_slots::record::Record;
-use ferrix_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1, VERSION_2};
+use xaqu_slots::Slot;
+use xaqu_slots::record::Record;
+use xaqu_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1, VERSION_2};
 
 use super::{Bench, Layout, RESCUE_CMDLINE, Setup, copies, swap_pattern};
 use crate::args::Args;
@@ -54,9 +54,9 @@ const PC: &str = "257";
 const N150: &str = "258";
 /// A's own command line, with a forged signature word after the loader's
 /// (N4): the loader's first word is the one that counts.
-const A_CMDLINE: &str = "ferrix.slot.sig=0 ferrix.root=tmpfs";
+const A_CMDLINE: &str = "xaqu.slot.sig=0 xaqu.root=tmpfs";
 /// B's.
-const B_CMDLINE: &str = "ferrix.root=tmpfs";
+const B_CMDLINE: &str = "xaqu.root=tmpfs";
 
 fn fail(what: &str) -> Error {
     Error::new(format!("test-ab-boot-signed: {what}"))
@@ -140,7 +140,7 @@ fn sign(arch: Arch, bytes: &mut [u8], key: &str, extra: &[&str]) -> Result<()> {
             "-q",
             "--release",
             "-p",
-            "ferrix-softsign",
+            "xaqu-softsign",
             "--",
             "sign",
             key,
@@ -266,9 +266,9 @@ fn flipped(image: &[u8]) -> Vec<u8> {
 }
 
 fn slots(arch: Arch, kernel: &[u8], initrd: &[u8]) -> Result<Slots> {
-    let (_, mut a) = image(VERSION_2, "ferrix signed a", kernel, initrd, A_CMDLINE);
+    let (_, mut a) = image(VERSION_2, "xaqu signed a", kernel, initrd, A_CMDLINE);
     sign(arch, &mut a, SLOT_KEY, &[])?;
-    let (_, unsigned_b) = image(VERSION_2, "ferrix signed b", kernel, initrd, B_CMDLINE);
+    let (_, unsigned_b) = image(VERSION_2, "xaqu signed b", kernel, initrd, B_CMDLINE);
     let signed = |key: &str, extra: &[&str]| -> Result<Vec<u8>> {
         let mut out = unsigned_b.clone();
         sign(arch, &mut out, key, extra)?;
@@ -282,12 +282,12 @@ fn slots(arch: Arch, kernel: &[u8], initrd: &[u8]) -> Result<Slots> {
     if let Some(head) = b_generation.get_mut(..HEADER_LEN) {
         head.copy_from_slice(&header.encode());
     }
-    let (_, mut rescue) = image(VERSION_2, "ferrix rescue", kernel, initrd, A_CMDLINE);
+    let (_, mut rescue) = image(VERSION_2, "xaqu rescue", kernel, initrd, A_CMDLINE);
     sign(arch, &mut rescue, SLOT_KEY, &[])?;
     Ok(Slots {
         a_flipped: flipped(&a),
-        a_v1: image(VERSION_1, "ferrix unsigned a", kernel, initrd, B_CMDLINE).1,
-        b_v1: image(VERSION_1, "ferrix unsigned b", kernel, initrd, B_CMDLINE).1,
+        a_v1: image(VERSION_1, "xaqu unsigned a", kernel, initrd, B_CMDLINE).1,
+        b_v1: image(VERSION_1, "xaqu unsigned b", kernel, initrd, B_CMDLINE).1,
         b_kind: signed(
             CONFIG_KEY,
             &["--kind", "config", "--anchor-id", "32769", "--subject", "x"],
@@ -323,7 +323,7 @@ impl Gate<'_> {
             layout: self.layout,
             path: gate_dir(self.arch).join(name),
             args: self.args.clone(),
-            swap_hash: ferrix_slots::sha256::digest(&swap_pattern()),
+            swap_hash: xaqu_slots::sha256::digest(&swap_pattern()),
         })
     }
 
@@ -360,7 +360,7 @@ impl Gate<'_> {
         )?;
         require(
             &lines,
-            "ferrix.slot.sig=32768 ferrix.slot.sig=0 ferrix.root=tmpfs",
+            "xaqu.slot.sig=32768 xaqu.slot.sig=0 xaqu.root=tmpfs",
             &format!(
                 "{case}: A's command line does not begin with the loader's signature word (N4)"
             ),
@@ -378,9 +378,9 @@ fn case_n2(gate: &Gate<'_>, loader: &[u8], kernel: &[u8], initramfs: &[u8]) -> R
     let bench = gate.bench(
         loader,
         &[
-            ("FERRIX/KERNEL.ELF", kernel),
-            ("FERRIX/INITRD.IMG", initramfs),
-            ("FERRIX/CMDLINE.TXT", RESCUE_CMDLINE.as_bytes()),
+            ("XAQU/KERNEL.ELF", kernel),
+            ("XAQU/INITRD.IMG", initramfs),
+            ("XAQU/CMDLINE.TXT", RESCUE_CMDLINE.as_bytes()),
         ],
         "unsigned.img",
     )?;
@@ -440,7 +440,7 @@ fn case_n3(gate: &Gate<'_>, loader: &[u8]) -> Result<()> {
     )?;
     require(
         &lines,
-        "ferrix.slot.sig=none",
+        "xaqu.slot.sig=none",
         "N3: A's command line does not say it is unsigned",
     )?;
     if panicked {
@@ -455,7 +455,7 @@ fn case_r1(gate: &Gate<'_>, loader: &[u8]) -> Result<()> {
     let slots = gate.slots;
     let bench = gate.bench(
         loader,
-        &[("FERRIX/RESCUE.SLT", &slots.rescue)],
+        &[("XAQU/RESCUE.SLT", &slots.rescue)],
         "rescue.img",
     )?;
     let (panicked, lines) = gate.boot(
@@ -481,7 +481,7 @@ fn case_r1(gate: &Gate<'_>, loader: &[u8]) -> Result<()> {
     )?;
     require(
         &lines,
-        "ferrix.slot.sig=32768 ferrix.slot.sig=0 ferrix.root=tmpfs",
+        "xaqu.slot.sig=32768 xaqu.slot.sig=0 xaqu.root=tmpfs",
         "R1: the rescue image's command line does not begin with the loader's signature word (N4)",
     )?;
     if panicked {

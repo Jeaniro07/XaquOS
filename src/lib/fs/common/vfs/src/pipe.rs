@@ -25,7 +25,7 @@
 
 use alloc::collections::VecDeque;
 
-use ferrix_kmem::{Charge, buffer_footprint};
+use xaqu_kmem::{Charge, buffer_footprint};
 
 use crate::node::Readiness;
 

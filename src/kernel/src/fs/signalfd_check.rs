@@ -32,14 +32,14 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     EPOLL_CTL_ADD, EPOLLIN, F_GETFD, F_GETFL, FD_CLOEXEC, MAP_ANONYMOUS, MAP_PRIVATE, O_NONBLOCK,
     PROT_READ, PROT_WRITE, SEEK_CUR, SEEK_SET, SFD_CLOEXEC, SFD_NONBLOCK, SIGALRM, SIGKILL,
     SIGNALFD_SIGINFO_BYTES, SIGSTOP, SIGUSR1, SIGUSR2,
 };
-use ferrix_vfs::{Errno, OpenFile};
+use xaqu_vfs::{Errno, OpenFile};
 
 use crate::fs::signalfd::{self, SignalFd};
 use crate::mm;
@@ -623,7 +623,7 @@ fn wait_out_a_signal(
         )
     };
     let ended_before = ended();
-    let waiter = crate::sched::spawn("signalfd-waiter", waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let waiter = crate::sched::spawn("signalfd-waiter", waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
     until_listed(inner, set);
     if ANSWER.lock().is_some() {
         return Err("a read, poll or epoll_wait on a signalfd with nothing pending did not wait");

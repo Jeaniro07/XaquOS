@@ -20,17 +20,17 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{KERNEL_HALF_BASE, PAGE_SIZE};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall as Call;
-use ferrix_linux_abi::socket::{
+use xaqu_bootinfo::{KERNEL_HALF_BASE, PAGE_SIZE};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall as Call;
+use xaqu_linux_abi::socket::{
     AF_MAX, AF_UNIX, CmsgHdr, MSG_CTRUNC, MSG_NOSIGNAL, MSG_OOB, MSG_PEEK, MSG_TRUNC, MSG_WAITALL,
     MsgHdr, SCM_CREDENTIALS, SCM_MAX_FD, SCM_RIGHTS, SHUT_RD, SHUT_WR, SIOCINQ, SIOCOUTQ,
     SO_ACCEPTCONN, SO_DOMAIN, SO_ERROR, SO_PASSCRED, SO_PEERCRED, SO_PROTOCOL, SO_RCVBUF,
     SO_RCVTIMEO_OLD, SO_TYPE, SOCK_DGRAM, SOCK_NONBLOCK, SOCK_RAW, SOCK_RDM, SOCK_SEQPACKET,
     SOCK_STREAM, SOCKET_BUFFER_MIN, SOL_SOCKET, Ucred, Width, cmsg_len, cmsg_space,
 };
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     AT_FDCWD, F_DUPFD, F_DUPFD_CLOEXEC, F_GETFD, F_GETFL, F_SETFD, F_SETFL, FD_CLOEXEC,
     MAP_ANONYMOUS, MAP_FIXED, MAP_FIXED_NOREPLACE, MAP_PRIVATE, MAP_SHARED, MREMAP_FIXED,
     MREMAP_MAYMOVE, O_APPEND, O_CLOEXEC, O_CREAT, O_EXCL, O_RDONLY, O_RDWR, O_TRUNC, PROT_READ,
@@ -39,7 +39,7 @@ use ferrix_linux_abi::types::{
 
 use crate::arch;
 use crate::mm;
-use ferrix_elf::Class;
+use xaqu_elf::Class;
 
 use crate::console::println;
 use crate::syscall::credentials::Credentials;
@@ -276,7 +276,7 @@ pub fn run() -> Result<Report, &'static str> {
 /// a kernel thread making a system call must still be told no rather than
 /// dereferencing a `None`.
 fn check_a_call_needing_a_process_says_so(counter: &mut Counter) -> Result<(), &'static str> {
-    let Some(number) = number_for(ferrix_linux_abi::nr::Syscall::Brk) else {
+    let Some(number) = number_for(xaqu_linux_abi::nr::Syscall::Brk) else {
         return Err("this architecture has no number for brk");
     };
     let esrch = Outcome::Return(Errno::ESRCH.as_return_value());
@@ -329,14 +329,14 @@ impl Counter {
 /// Verifies: `L.x86_64.119`, H.TRAP.12
 fn check_the_right_table_was_compiled_in(counter: &mut Counter) -> Result<usize, &'static str> {
     let candidates = [
-        ferrix_linux_abi::nr::x86_64::GETPID,
-        ferrix_linux_abi::nr::aarch64::GETPID,
-        ferrix_linux_abi::nr::arm::GETPID,
+        xaqu_linux_abi::nr::x86_64::GETPID,
+        xaqu_linux_abi::nr::aarch64::GETPID,
+        xaqu_linux_abi::nr::arm::GETPID,
     ];
 
     let mut mine = None;
     for number in candidates {
-        if arch::decode_syscall(number) == Some(ferrix_linux_abi::nr::Syscall::Getpid) {
+        if arch::decode_syscall(number) == Some(xaqu_linux_abi::nr::Syscall::Getpid) {
             if mine.is_some() {
                 return Err("two different numbers both decode to getpid");
             }
@@ -357,10 +357,10 @@ fn check_the_right_table_was_compiled_in(counter: &mut Counter) -> Result<usize,
 /// The calls that need no process state answer, and agree with each other.
 fn check_identity_answers(counter: &mut Counter) -> Result<(), &'static str> {
     let uid_calls = [
-        ferrix_linux_abi::nr::Syscall::Getuid,
-        ferrix_linux_abi::nr::Syscall::Geteuid,
-        ferrix_linux_abi::nr::Syscall::Getgid,
-        ferrix_linux_abi::nr::Syscall::Getegid,
+        xaqu_linux_abi::nr::Syscall::Getuid,
+        xaqu_linux_abi::nr::Syscall::Geteuid,
+        xaqu_linux_abi::nr::Syscall::Getgid,
+        xaqu_linux_abi::nr::Syscall::Getegid,
     ];
     for call in uid_calls {
         let Some(number) = number_for(call) else {
@@ -374,9 +374,9 @@ fn check_identity_answers(counter: &mut Counter) -> Result<(), &'static str> {
     // `getpid` and `gettid` must agree while there is one thread per process,
     // and disagreeing later is how a threaded program discovers there is more
     // than one of it.
-    let pid = number_for(ferrix_linux_abi::nr::Syscall::Getpid)
+    let pid = number_for(xaqu_linux_abi::nr::Syscall::Getpid)
         .ok_or("this architecture has no number for getpid")?;
-    let tid = number_for(ferrix_linux_abi::nr::Syscall::Gettid)
+    let tid = number_for(xaqu_linux_abi::nr::Syscall::Gettid)
         .ok_or("this architecture has no number for gettid")?;
     if counter.call(pid) != counter.call(tid) {
         return Err("getpid and gettid disagree with one thread running");
@@ -651,16 +651,16 @@ fn sweep_every_number() -> i32 {
     // Deliberately non-zero and not a valid pointer: a handler that decided to
     // dereference an argument should fault rather than quietly succeed.
     let poison = [0xAAAA_AAAA_AAAA_AAA0_u64; 6];
-    let brk = number_for(ferrix_linux_abi::nr::Syscall::Brk);
+    let brk = number_for(xaqu_linux_abi::nr::Syscall::Brk);
     let esrch = Errno::ESRCH.as_return_value();
     for number in 0..=600 {
         if matches!(
             arch::decode_syscall(number),
             Some(
-                ferrix_linux_abi::nr::Syscall::Exit
-                    | ferrix_linux_abi::nr::Syscall::ExitGroup
-                    | ferrix_linux_abi::nr::Syscall::Pause
-                    | ferrix_linux_abi::nr::Syscall::Alarm
+                xaqu_linux_abi::nr::Syscall::Exit
+                    | xaqu_linux_abi::nr::Syscall::ExitGroup
+                    | xaqu_linux_abi::nr::Syscall::Pause
+                    | xaqu_linux_abi::nr::Syscall::Alarm
             )
         ) {
             continue;
@@ -701,7 +701,7 @@ fn check_errors_encode_as_negative(counter: &mut Counter) -> Result<(), &'static
         return Err("ENOSYS did not encode into the reserved error range");
     }
     if value != -38 {
-        return Err("ENOSYS is 38 on every architecture Ferrix targets");
+        return Err("ENOSYS is 38 on every architecture Xaqu targets");
     }
     Ok(())
 }
@@ -712,7 +712,7 @@ fn check_errors_encode_as_negative(counter: &mut Counter) -> Result<(), &'static
 /// A linear sweep because the tables run one way only: `src/lib/proto/linux-abi` maps a
 /// number to a call and deliberately offers no inverse, since an inverse would
 /// be a second copy of the table to disagree with the first.
-fn number_for(call: ferrix_linux_abi::nr::Syscall) -> Option<usize> {
+fn number_for(call: xaqu_linux_abi::nr::Syscall) -> Option<usize> {
     (0..=600).find(|&number| arch::decode_syscall(number) == Some(call))
 }
 
@@ -725,7 +725,7 @@ fn number_for(call: ferrix_linux_abi::nr::Syscall) -> Option<usize> {
 /// or a routing line that sends the call elsewhere, fails on that architecture.
 pub(crate) fn call_by_number(
     process: &Process,
-    call: ferrix_linux_abi::nr::Syscall,
+    call: xaqu_linux_abi::nr::Syscall,
     args: [u64; 6],
 ) -> Result<usize, Errno> {
     let number = number_for(call).ok_or(Errno::ENOSYS)?;
@@ -954,7 +954,7 @@ fn check_mmap_rejects_what_it_should(process: &Process) -> Result<(), &'static s
 /// Where Linux answers a memory or time call differently from the obvious
 /// reading, the answer here is Linux's.
 fn check_memory_and_time_answer_as_linux_does(process: &Process) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{CLOCK_TAI, PROT_GROWSDOWN, PROT_GROWSUP, PROT_SEM};
+    use xaqu_linux_abi::types::{CLOCK_TAI, PROT_GROWSDOWN, PROT_GROWSUP, PROT_SEM};
 
     // An anonymous mapping ignores its fd, and a whole-page offset; a byte
     // offset off a page boundary is still refused.
@@ -1027,7 +1027,7 @@ fn check_memory_and_time_answer_as_linux_does(process: &Process) -> Result<(), &
 /// `CLOCK_PROCESS_CPUTIME_ID` answers. Chrome's `ThreadTicks` asserts the
 /// first succeeds, and ended its renderer when it was `EINVAL`.
 fn check_the_cpu_time_clocks(process: &Process) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID};
+    use xaqu_linux_abi::types::{CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID};
     const MILLI: u64 = 1_000_000;
     let page = map_rw(process, PAGE_SIZE)?;
     let read = |clock: u32| -> Result<u64, &'static str> {
@@ -1149,7 +1149,7 @@ fn check_nothing_is_mapped_near_page_zero(process: &Process) -> Result<(), &'sta
     // The floor holds whichever call asks, not only `mmap`.
     if process
         .space()
-        .map_anonymous(0, PAGE_SIZE, ferrix_vma::VmaFlags::READ_WRITE)
+        .map_anonymous(0, PAGE_SIZE, xaqu_vma::VmaFlags::READ_WRITE)
         .is_ok()
     {
         return Err("the address space mapped page zero");
@@ -1645,7 +1645,7 @@ fn check_no_new_privs_crosses_a_fork() -> Result<(), &'static str> {
 /// the process already has ends neither.
 fn check_a_change_of_ids_ends_dumpability() -> Result<(), &'static str> {
     use crate::syscall::attributes::{get, sys_prctl, update};
-    use ferrix_linux_abi::nr::Syscall as Call;
+    use xaqu_linux_abi::nr::Syscall as Call;
     let unchanged = u64::from(u32::MAX);
     let process = process::new_for_check()
         .map_err(|_| "could not make a process for the dumpability check")?;
@@ -1837,7 +1837,7 @@ fn large_image_byte(at: usize) -> u8 {
 }
 
 /// `uname` fills all six fields, NUL-terminates each within its 65 bytes, and
-/// names the system `Ferrix` and the host `ferrix`, with a Linux release and
+/// names the system `Xaqu` and the host `xaqu`, with a Linux release and
 /// machine name.
 ///
 /// The buffer is poisoned first. The structure is fixed-width and a reader
@@ -1879,14 +1879,14 @@ fn check_uname_names_the_system(process: &Process) -> Result<(), &'static str> {
     }
     let [sysname, nodename, release, _version, machine, _domainname] = fields;
 
-    if sysname != b"Ferrix" {
-        return Err("uname did not name the system Ferrix");
+    if sysname != b"Xaqu" {
+        return Err("uname did not name the system Xaqu");
     }
-    if nodename != b"ferrix" {
-        return Err("uname did not say ferrix where a person looks");
+    if nodename != b"xaqu" {
+        return Err("uname did not say xaqu where a person looks");
     }
-    if !release.ends_with(b"-ferrix") {
-        return Err("the release does not carry the Ferrix suffix");
+    if !release.ends_with(b"-xaqu") {
+        return Err("the release does not carry the Xaqu suffix");
     }
     // The machine name is decided by the build, and a 32-bit one must not
     // claim to be a 64-bit machine: glibc's loader and every `configure`
@@ -1921,7 +1921,7 @@ fn check_uname_names_the_system(process: &Process) -> Result<(), &'static str> {
 fn check_a_signal_disposition_reads_back_as_it_was_set(
     process: &Process,
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{SA_RESTART, SA_RESTORER, SIGINT, SIGKILL, SIGUSR1};
+    use xaqu_linux_abi::types::{SA_RESTART, SA_RESTORER, SIGINT, SIGKILL, SIGUSR1};
 
     let word = size_of::<usize>();
     let size = word * 3 + 8;
@@ -2030,7 +2030,7 @@ fn check_thread(process: &Process) -> Result<crate::syscall::thread::Thread, &'s
 /// `rt_sigprocmask` applies `how`, never blocks SIGKILL, and leaves `oldset`
 /// untouched when it refuses.
 fn check_the_blocked_mask_follows_how(process: &Process) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{SIG_BLOCK, SIG_SETMASK, SIG_UNBLOCK, SIGINT, SIGKILL, SIGUSR1};
+    use xaqu_linux_abi::types::{SIG_BLOCK, SIG_SETMASK, SIG_UNBLOCK, SIGINT, SIGKILL, SIGUSR1};
 
     let thread = check_thread(process)?;
     let at = map_rw(process, PAGE_SIZE)?;
@@ -2097,7 +2097,7 @@ fn check_the_blocked_mask_follows_how(process: &Process) -> Result<(), &'static 
 fn check_an_alternate_stack_is_recorded_and_refused_when_small(
     process: &Process,
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::SS_DISABLE;
+    use xaqu_linux_abi::types::SS_DISABLE;
 
     let word = size_of::<usize>();
     let size = word * 3;
@@ -2451,7 +2451,7 @@ fn word_pair(first: usize, second: usize) -> [u8; 16] {
 /// the interrupt character is a signal that takes the half-typed line with it.
 fn check_the_line_discipline_follows_its_settings() -> Result<(), &'static str> {
     use crate::fs::terminal::{Discipline, Termios};
-    use ferrix_linux_abi::types::{ECHO, ICANON, SIGINT};
+    use xaqu_linux_abi::types::{ECHO, ICANON, SIGINT};
 
     let mut discipline = Discipline::new();
     let mut echo = Vec::new();
@@ -2517,7 +2517,7 @@ fn check_the_line_discipline_follows_its_settings() -> Result<(), &'static str> 
 /// Raw settings with `VMIN` and `VTIME` as given, for the raw-read checks.
 fn raw_termios(min: u8, time: u8) -> crate::fs::terminal::Termios {
     use crate::fs::terminal::Termios;
-    use ferrix_linux_abi::types::{ECHO, ICANON, VMIN, VTIME};
+    use xaqu_linux_abi::types::{ECHO, ICANON, VMIN, VTIME};
 
     let mut termios = Termios {
         lflag: Termios::DEFAULT.lflag & !(ICANON | ECHO),
@@ -2672,7 +2672,7 @@ fn check_a_raw_read_waits_for_vmin() -> Result<(), &'static str> {
 /// `VMIN` again fails here by name, on a read with `O_NONBLOCK`, rather than
 /// holding the boot in a read that never ends.
 fn check_a_pseudoterminal_slave_reads_as_vmin_and_vtime_say() -> Result<(), &'static str> {
-    use ferrix_vfs::Inode as _;
+    use xaqu_vfs::Inode as _;
 
     let mut buf = [0_u8; 8];
     let master = crate::fs::pty::open_master().map_err(|_| "no pseudoterminal pair to check")?;
@@ -2778,7 +2778,7 @@ fn check_a_pty_as_a_serial_port(process: &Process) -> Result<(), &'static str> {
 /// questions of the console through it -- and `ENXIO` once the session has
 /// let it go.
 fn terminal_answers_through_dev_tty(process: &Process, _page: u64) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::TIOCSCTTY;
+    use xaqu_linux_abi::types::TIOCSCTTY;
 
     // The job-control check let the console go; this session takes it again.
     answers(
@@ -2807,7 +2807,7 @@ fn terminal_answers_through_dev_tty(process: &Process, _page: u64) -> Result<(),
 const REVOKE_PATIENCE_NANOS: u64 = 2_000_000_000;
 
 /// The open the console revoke check's reader reads through.
-static REVOKE_READER: crate::sync::SpinLock<Option<Arc<dyn ferrix_vfs::Inode>>> =
+static REVOKE_READER: crate::sync::SpinLock<Option<Arc<dyn xaqu_vfs::Inode>>> =
     crate::sync::SpinLock::new(None);
 
 /// What that reader's read answered, once it has.
@@ -2839,7 +2839,7 @@ fn check_a_hangup_revokes_the_consoles_reading() -> Result<(), &'static str> {
 
 /// See [`check_a_hangup_revokes_the_consoles_reading`].
 fn hangup_revokes_reading() -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{TCSETS, TIOCSCTTY};
+    use xaqu_linux_abi::types::{TCSETS, TIOCSCTTY};
 
     use crate::fs::console::{self, Reading};
     use crate::fs::terminal;
@@ -2867,7 +2867,7 @@ fn hangup_revokes_reading() -> Result<(), &'static str> {
         "revoke-reader",
         revoke_reader,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     )
     .map_err(|_| "could not start the revoke check's reader")?;
     crate::sched::sleep_for(20_000_000);
@@ -2876,9 +2876,9 @@ fn hangup_revokes_reading() -> Result<(), &'static str> {
     }
 
     // Only root hangs the console up.
-    let ferrix = process::new_for_check().map_err(|_| "could not make a process")?;
-    ferrix.with_credentials(|ids| ids.user.effective = 1000);
-    if tty::vhangup(&ferrix) != Err(Errno::EPERM) {
+    let xaqu = process::new_for_check().map_err(|_| "could not make a process")?;
+    xaqu.with_credentials(|ids| ids.user.effective = 1000);
+    if tty::vhangup(&xaqu) != Err(Errno::EPERM) {
         return Err("vhangup was not refused to uid 1000");
     }
     if tty::vhangup(&leader) != Ok(0) {
@@ -3002,7 +3002,7 @@ fn check_a_dead_leaders_terminals_are_let_go() -> Result<(), &'static str> {
 /// See [`check_the_console_answers_as_a_terminal`].
 fn terminal_settings_answer(process: &Process, page: u64) -> Result<(), &'static str> {
     use crate::fs::terminal::{Termios, Winsize};
-    use ferrix_linux_abi::types::{
+    use xaqu_linux_abi::types::{
         ECHO, ICANON, ICRNL, ISIG, ONLCR, OPOST, TCFLSH, TCSETSF, TCSETSW, TCXONC, TERMIOS_BYTES,
         VERASE, VMIN,
     };
@@ -3101,7 +3101,7 @@ fn terminal_termios2_answers(
     raw: crate::fs::terminal::Termios,
 ) -> Result<(), &'static str> {
     use crate::fs::terminal::Termios;
-    use ferrix_linux_abi::types::{
+    use xaqu_linux_abi::types::{
         B115200, BOTHER, CBAUD, TCGETS2, TCSETS2, TCSETSF2, TERMIOS_BYTES, TERMIOS2_BYTES,
     };
 
@@ -3194,7 +3194,7 @@ fn terminal_termios2_answers(
 
 /// See [`check_the_console_answers_as_a_terminal`].
 fn terminal_job_control_answers(process: &Process, page: u64) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{FIONREAD, TIOCGPGRP, TIOCGSID, TIOCNOTTY, TIOCSCTTY, TIOCSPGRP};
+    use xaqu_linux_abi::types::{FIONREAD, TIOCGPGRP, TIOCGSID, TIOCNOTTY, TIOCSCTTY, TIOCSPGRP};
 
     let at = page + TTY_INT;
     let read_int = || {
@@ -3476,17 +3476,17 @@ fn check_a_dynamic_program_enters_its_linker() -> Result<(), &'static str> {
 /// [`check_a_dynamic_program_enters_its_linker`]'s middle, so that the file it
 /// makes is removed whatever happens.
 fn write_and_run(
-    ns: &ferrix_vfs::Namespace,
-    ctx: &ferrix_vfs::Context,
+    ns: &xaqu_vfs::Namespace,
+    ctx: &xaqu_vfs::Context,
     path: &[u8],
     program: &[u8],
     linker: &[u8],
 ) -> Result<(), &'static str> {
-    let flags = ferrix_vfs::OpenFlags {
+    let flags = xaqu_vfs::OpenFlags {
         write: true,
         create: true,
         truncate: true,
-        ..ferrix_vfs::OpenFlags::default()
+        ..xaqu_vfs::OpenFlags::default()
     };
     let file = ns
         .open(ctx, None, path, &flags, 0o755)
@@ -3514,7 +3514,7 @@ fn write_and_run(
         load::Source::File(&found),
         &[b"/dynamic"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a dynamically linked program could not be started")?;
     match status {
@@ -3954,7 +3954,7 @@ fn record_lock(on: &Process, fd: i32, cmd: u32, at: u64) -> Result<usize, Errno>
         fd,
         cmd,
         at,
-        ferrix_linux_abi::nr::Syscall::Fcntl64,
+        xaqu_linux_abi::nr::Syscall::Fcntl64,
         crate::trap::Abi::Native,
     )
 }
@@ -3970,17 +3970,17 @@ fn record_lock(on: &Process, fd: i32, cmd: u32, at: u64) -> Result<usize, Errno>
 /// of a lock leaves the parts either side. A bad type is `EINVAL`, a write lock
 /// on a read-only descriptor `EBADF`, and an OFD request with a pid `EINVAL`.
 fn check_record_locks_follow_linux(process: &Process, page: u64) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{F_OFD_GETLK, F_OFD_SETLK, F_RDLCK, F_UNLCK, F_WRLCK};
+    use xaqu_linux_abi::types::{F_OFD_GETLK, F_OFD_SETLK, F_RDLCK, F_UNLCK, F_WRLCK};
     let narrow = size_of::<usize>() == 4;
     let (getlk, setlk) = if narrow {
         (
-            ferrix_linux_abi::types::F_GETLK64,
-            ferrix_linux_abi::types::F_SETLK64,
+            xaqu_linux_abi::types::F_GETLK64,
+            xaqu_linux_abi::types::F_SETLK64,
         )
     } else {
         (
-            ferrix_linux_abi::types::F_GETLK,
-            ferrix_linux_abi::types::F_SETLK,
+            xaqu_linux_abi::types::F_GETLK,
+            xaqu_linux_abi::types::F_SETLK,
         )
     };
     let at = page + AT_RESULT;
@@ -4074,7 +4074,7 @@ fn check_record_locks_between_processes(
     [getlk, setlk]: [u32; 2],
     page: u64,
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{F_RDLCK, F_UNLCK, F_WRLCK};
+    use xaqu_linux_abi::types::{F_RDLCK, F_UNLCK, F_WRLCK};
     uaccess::copy_to_user(other.space(), other_page + AT_PATH, CHECK_PATH)
         .map_err(|_| "could not stage the path in another process")?;
     let theirs = open_check_file(other, other_page, O_RDWR)?;
@@ -4151,7 +4151,7 @@ fn check_flock_belongs_to_the_description(
     page: u64,
 ) -> Result<(), &'static str> {
     use crate::syscall::flock::sys_flock;
-    use ferrix_linux_abi::types::{LOCK_EX, LOCK_NB, LOCK_SH, LOCK_UN, O_PATH};
+    use xaqu_linux_abi::types::{LOCK_EX, LOCK_NB, LOCK_SH, LOCK_UN, O_PATH};
     let nb = |fd: i32, operation: u32| sys_flock(process, fd, operation | LOCK_NB);
 
     let first = open_check_file(process, page, O_RDWR | O_CREAT)?;
@@ -4254,7 +4254,7 @@ fn check_readahead_accepts_only_a_readable_file(
     page: u64,
 ) -> Result<(), &'static str> {
     use crate::syscall::fsctl::sys_readahead;
-    use ferrix_linux_abi::types::O_WRONLY;
+    use xaqu_linux_abi::types::O_WRONLY;
 
     let readable = open_check_file(process, page, O_RDONLY)?;
     let answered = sys_readahead(process, readable, 4096);
@@ -4666,8 +4666,8 @@ fn check_a_program_runs_in_user_mode() -> Result<Option<i32>, &'static str> {
     let status = exec::run(
         &file,
         &[b"/hello", b"--first"],
-        &[b"FERRIX=1"],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        &[b"XAQU=1"],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the program could not be started")?;
 
@@ -4770,7 +4770,7 @@ pub(crate) fn spinner(tag: u8, rounds: u32, status: u32) -> Result<Arc<Process>,
     } else {
         &[b"/spin"]
     };
-    process::load(&file, args, &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    process::load(&file, args, &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a spinning program could not be loaded")
 }
 
@@ -4992,17 +4992,17 @@ mod paths {
     use alloc::vec::Vec;
     use core::mem::offset_of;
 
-    use ferrix_bootinfo::PAGE_SIZE;
-    use ferrix_linux_abi::errno::Errno;
-    use ferrix_linux_abi::nr::Syscall;
-    use ferrix_linux_abi::types::{
+    use xaqu_bootinfo::PAGE_SIZE;
+    use xaqu_linux_abi::errno::Errno;
+    use xaqu_linux_abi::nr::Syscall;
+    use xaqu_linux_abi::types::{
         self, AT_EMPTY_PATH, AT_FDCWD, AT_REMOVEDIR, AT_SYMLINK_NOFOLLOW, DT_REG, O_PATH, O_RDONLY,
         O_WRONLY, R_OK, RENAME_EXCHANGE, RENAME_NOREPLACE, S_IFBLK, S_IFCHR, S_IFDIR, S_IFLNK,
         S_IFREG, STATX_BASIC_STATS, Statx, UTIME_OMIT, W_OK, X_OK,
     };
-    use ferrix_vfs::dirent::{self, Record};
-    use ferrix_vfs::initramfs::makedev;
-    use ferrix_vfs::{FileType, Metadata, OpenFlags, Stat, Timespec};
+    use xaqu_vfs::dirent::{self, Record};
+    use xaqu_vfs::initramfs::makedev;
+    use xaqu_vfs::{FileType, Metadata, OpenFlags, Stat, Timespec};
 
     use super::{map_rw, number_for};
     use crate::arch;
@@ -5448,7 +5448,7 @@ mod paths {
     /// Chrome's headless shell writes its screenshot with `creat`, and was
     /// told `ENOSYS` before this.
     fn check_creat_truncates_and_opens_for_writing(p: &mut Paths<'_>) -> Result<(), &'static str> {
-        use ferrix_linux_abi::types::{F_GETFL, O_ACCMODE, O_WRONLY, SEEK_END};
+        use xaqu_linux_abi::types::{F_GETFL, O_ACCMODE, O_WRONLY, SEEK_END};
         let file = p.path(b"/tmp/pathcheck/file")?;
         if number_for(Syscall::Creat).is_none() {
             return if p.call(Syscall::Creat, [file, 0o644, 0, 0, 0, 0]) == Err(Errno::ENOSYS) {
@@ -6048,7 +6048,7 @@ fn check_a_forked_child_is_waited_for() -> Result<Option<i32>, &'static str> {
         image::Shape::Good,
         arch::USER_FORK_PROGRAM,
     );
-    let status = exec::run(&file, &[b"/fork"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    let status = exec::run(&file, &[b"/fork"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that forks could not be started")?;
     match status {
         FORK_STATUS => Ok(Some(status)),
@@ -6084,7 +6084,7 @@ fn check_a_thread_shares_its_process_and_ends_alone() -> Result<Option<i32>, &'s
         &file,
         &[b"/threads"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that makes threads could not be started")?;
     match status {
@@ -6128,7 +6128,7 @@ fn check_clone_refuses_every_namespace() -> Result<(), &'static str> {
         &file,
         &[b"/namespaces"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that asks clone for namespaces could not be started")?;
     match status {
@@ -6236,7 +6236,7 @@ fn kill_a_reader_blocked_in_syslog() -> Result<(), &'static str> {
         &file,
         &[b"/klogd"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that reads syslog could not be loaded")?;
     let task =
@@ -6272,7 +6272,7 @@ fn kill_a_reader_blocked_in_syslog() -> Result<(), &'static str> {
 /// Waited for with a deadline, so an `execve` whose wait for the other thread
 /// never ends fails by name rather than hanging the boot.
 fn check_execve_from_a_thread_ends_the_others() -> Result<Option<i32>, &'static str> {
-    use ferrix_vfs::OpenFlags;
+    use xaqu_vfs::OpenFlags;
 
     if arch::USER_DETHREAD_PROGRAM.is_empty() {
         return Ok(None);
@@ -6321,7 +6321,7 @@ fn run_a_thread_that_execs(image: &[u8]) -> Result<Option<i32>, &'static str> {
         image,
         &[b"/dethread"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that execs from a thread could not be loaded")?;
     let pid = execing.pid();
@@ -6382,7 +6382,7 @@ const STOP_STILL_NANOS: u64 = 50_000_000;
 fn check_a_stop_stops_every_thread_and_a_continue_restarts_their_calls()
 -> Result<Option<i32>, &'static str> {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::SIGKILL;
+    use xaqu_linux_abi::types::SIGKILL;
 
     if arch::USER_STOPPED_PROGRAM.is_empty() {
         return Ok(None);
@@ -6397,7 +6397,7 @@ fn check_a_stop_stops_every_thread_and_a_continue_restarts_their_calls()
         &file,
         &[b"/stopped"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program of three threads could not be loaded")?;
     let _task =
@@ -6442,7 +6442,7 @@ const HANDOFF_PAGE: u64 = 0x6000_0000;
 /// Verifies: `L.syscall.23`
 fn check_a_signal_reaches_the_thread_that_can_take_it() -> Result<Option<i32>, &'static str> {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::SIGKILL;
+    use xaqu_linux_abi::types::SIGKILL;
 
     if arch::USER_HANDOFF_PROGRAM.is_empty() {
         return Ok(None);
@@ -6457,7 +6457,7 @@ fn check_a_signal_reaches_the_thread_that_can_take_it() -> Result<Option<i32>, &
         &file,
         &[b"/handoff"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program of two threads with handlers could not be loaded")?;
     let _task = process::start(&handing)
@@ -6494,7 +6494,7 @@ fn check_a_signal_reaches_the_thread_that_can_take_it() -> Result<Option<i32>, &
 /// hand-off flake). Who took it is decided after this by the handler's own
 /// record, as for the hand-off's second half.
 fn given_to_the_second(handing: &Process, second: u32) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::SIGUSR1;
+    use xaqu_linux_abi::types::SIGUSR1;
 
     match handing.take_handed_to() {
         tid if tid == second => Ok(()),
@@ -6512,7 +6512,7 @@ fn given_to_the_second(handing: &Process, second: u32) -> Result<(), &'static st
 /// The two sends of [`check_a_signal_reaches_the_thread_that_can_take_it`].
 fn hand_a_signal_on(handing: &Process) -> Result<(), &'static str> {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::{SIGUSR1, SIGUSR2};
+    use xaqu_linux_abi::types::{SIGUSR1, SIGUSR2};
 
     let read = |offset: u64| -> Option<u32> {
         let mut bytes = [0_u8; 4];
@@ -6632,7 +6632,7 @@ const REPLACE_REACH_NANOS: u64 = 1_000_000_000;
 /// Verifies: `L.syscall.21`
 fn check_a_replacing_thread_ends_spinning_ones() -> Result<(), &'static str> {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::SIGKILL;
+    use xaqu_linux_abi::types::SIGKILL;
 
     if arch::USER_STOPPED_PROGRAM.is_empty() {
         return Ok(());
@@ -6647,7 +6647,7 @@ fn check_a_replacing_thread_ends_spinning_ones() -> Result<(), &'static str> {
         &file,
         &[b"/stopped"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program of three threads could not be loaded")?;
     let _task =
@@ -6705,7 +6705,7 @@ fn replace_while_two_spin(replaced: &Arc<Process>) -> Result<(), &'static str> {
         crate::sched::sleep_for(STOP_POLL_NANOS);
     }
     *REPLACING.lock() = Some(Arc::clone(replaced));
-    let replacer = crate::sched::spawn("replacer", replace, 0, ferrix_sched::NICE_0_WEIGHT)
+    let replacer = crate::sched::spawn("replacer", replace, 0, xaqu_sched::NICE_0_WEIGHT)
         .map_err(|_| "could not start the task that replaces the program")?;
     let reach = crate::timer::now_nanos().saturating_add(REPLACE_REACH_NANOS);
     while replaced.live_thread_count() > 1 {
@@ -6741,7 +6741,7 @@ enum Stop {
 /// Verifies: `L.syscall.22`, `L.sched.30`, `L.sched.31`, `L.sched.33`
 fn stop_and_continue(stopped: &Process, how: Stop) -> Result<(), &'static str> {
     use crate::syscall::signal::Origin;
-    use ferrix_linux_abi::types::{SIGCONT, SIGSTOP};
+    use xaqu_linux_abi::types::{SIGCONT, SIGSTOP};
 
     let word = |offset: u64| -> Result<u32, &'static str> {
         let mut bytes = [0_u8; 4];
@@ -6947,7 +6947,7 @@ fn check_a_handler_runs_and_returns() -> Result<Option<i32>, &'static str> {
         &file,
         &[b"/signal"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that handles a signal could not be started")?;
     match status {
@@ -7004,7 +7004,7 @@ fn check_a_poisoned_xsave_header_comes_back_safely() -> Result<(), &'static str>
         &file,
         &[b"/xstate"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that poisons its signal frame could not be started")?;
     match status {
@@ -7141,7 +7141,7 @@ fn child_of(parent: &Arc<Process>) -> Result<Arc<Process>, &'static str> {
 /// deliver -- Linux discards a `SIG_IGN` `SIGCHLD` rather than queuing it.
 fn check_a_childs_end_reaches_a_sigchld_handler_and_still_reaps() -> Result<(), &'static str> {
     use crate::syscall::family;
-    use ferrix_linux_abi::types::{SA_RESTART, SIG_IGN, SIGCHLD};
+    use xaqu_linux_abi::types::{SA_RESTART, SIG_IGN, SIGCHLD};
 
     let parent = process::new_for_check().map_err(|_| "could not make a parent process")?;
     parent.with_signals(|signals| signals.install_action(SIGCHLD, CHECK_HANDLER, SA_RESTART));
@@ -7175,7 +7175,7 @@ fn check_a_childs_end_reaches_a_sigchld_handler_and_still_reaps() -> Result<(), 
 /// one with `WCONTINUED`. The negative controls ask without each flag and must
 /// see nothing, since Linux reports a stop or a continue only when asked.
 fn check_a_childs_stop_and_continue_are_reported() -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::SIGTSTP;
+    use xaqu_linux_abi::types::SIGTSTP;
 
     let parent = process::new_for_check().map_err(|_| "could not make a parent process")?;
     let child = child_of(&parent)?;
@@ -7215,7 +7215,7 @@ fn check_a_childs_stop_and_continue_are_reported() -> Result<(), &'static str> {
 fn check_an_alarm_delivers_sigalrm() -> Result<(), &'static str> {
     use crate::syscall::kill;
     use crate::syscall::signal::{Alarm, Origin};
-    use ferrix_linux_abi::types::SIGALRM;
+    use xaqu_linux_abi::types::SIGALRM;
 
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     process.with_signals(|signals| signals.install_action(SIGALRM, CHECK_HANDLER, 0));
@@ -7249,7 +7249,7 @@ fn check_an_alarm_delivers_sigalrm() -> Result<(), &'static str> {
 /// negative control, the same handler without `SA_ONSTACK`, stays on the
 /// program's own stack.
 fn check_sa_onstack_puts_the_handler_on_the_alternate_stack() -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::SA_ONSTACK;
+    use xaqu_linux_abi::types::SA_ONSTACK;
 
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     let alt_sp = 0x2000_0000_u64;
@@ -7279,7 +7279,7 @@ fn check_sa_onstack_puts_the_handler_on_the_alternate_stack() -> Result<(), &'st
 /// spin on the faulting instruction for ever.
 fn check_a_fault_forces_its_signal_past_a_block() -> Result<(), &'static str> {
     use crate::syscall::signal::{Origin, Posted};
-    use ferrix_linux_abi::types::{SA_ONSTACK, SIGSEGV};
+    use xaqu_linux_abi::types::{SA_ONSTACK, SIGSEGV};
 
     // `SEGV_MAPERR`: nothing mapped at the address, as `arch::fault_signal`
     // reports for a write to address zero. Local, as it is there.
@@ -7328,7 +7328,7 @@ fn check_a_fault_forces_its_signal_past_a_block() -> Result<(), &'static str> {
 fn check_a_threads_own_signal_goes_before_its_processs() -> Result<(), &'static str> {
     use crate::syscall::signal::{Origin, Posted};
     use crate::syscall::thread::Thread;
-    use ferrix_linux_abi::types::{SIGINT, SIGUSR2};
+    use xaqu_linux_abi::types::{SIGINT, SIGUSR2};
 
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     let (sent, forced, first, second) = Thread::leader(&process)
@@ -7374,7 +7374,7 @@ fn check_a_threads_own_signal_goes_before_its_processs() -> Result<(), &'static 
 fn check_a_signal_is_judged_against_its_takers_mask() -> Result<(), &'static str> {
     use crate::syscall::signal::{Origin, Posted};
     use crate::syscall::thread::Thread;
-    use ferrix_linux_abi::types::SIGTERM;
+    use xaqu_linux_abi::types::SIGTERM;
 
     let parent = process::new_for_check().map_err(|_| "could not make a process")?;
     let parent_thread =
@@ -7422,7 +7422,7 @@ fn check_signals_are_decided_across_threads() -> Result<(), &'static str> {
     use crate::syscall::kill::{sys_tgkill, sys_tkill};
     use crate::syscall::signal::{Origin, Posted};
     use crate::syscall::thread::Thread;
-    use ferrix_linux_abi::types::{SIGCONT, SIGTERM, SIGTSTP, SIGUSR1};
+    use xaqu_linux_abi::types::{SIGCONT, SIGTERM, SIGTSTP, SIGUSR1};
 
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     let first = Arc::new(Thread::leader(&process).map_err(|_| "no memory for a check's thread")?);
@@ -7526,7 +7526,7 @@ fn check_a_signal_blocked_after_it_was_sent_is_handed_on() -> Result<(), &'stati
     use crate::syscall::deliver::sys_rt_sigsuspend;
     use crate::syscall::signal::{Origin, sys_rt_sigprocmask};
     use crate::syscall::thread::Thread;
-    use ferrix_linux_abi::types::{SIG_BLOCK, SIGUSR1, SIGUSR2};
+    use xaqu_linux_abi::types::{SIG_BLOCK, SIGUSR1, SIGUSR2};
 
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     let first = Arc::new(Thread::leader(&process).map_err(|_| "no memory for a check's thread")?);
@@ -7659,7 +7659,7 @@ fn check_a_copy_on_write_page_is_copied_for_the_side_that_writes()
         image::Shape::Good,
         arch::USER_COW_PROGRAM,
     );
-    let status = exec::run(&file, &[b"/cow"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    let status = exec::run(&file, &[b"/cow"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that writes after fork could not be started")?;
     match status {
         COW_STATUS => Ok(Some(status)),
@@ -7702,7 +7702,7 @@ fn check_a_shared_mapping_is_shared_across_fork() -> Result<Option<i32>, &'stati
         &file,
         &[b"/shared"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that shares a mapping with its child could not be started")?;
     match status {
@@ -7722,7 +7722,7 @@ fn check_a_shared_mapping_is_shared_across_fork() -> Result<Option<i32>, &'stati
 
 /// What [`arch::USER_MPROTECT_PROGRAM`] is ended with when everything is
 /// right: death by `SIGSEGV`.
-const MPROTECT_STATUS: i32 = 128 + ferrix_linux_abi::types::SIGSEGV as i32;
+const MPROTECT_STATUS: i32 = 128 + xaqu_linux_abi::types::SIGSEGV as i32;
 
 /// A program writes a page, makes it read-only with `mprotect`, writes it
 /// again, and is ended by `SIGSEGV`.
@@ -7762,7 +7762,7 @@ fn check_a_write_after_mprotect_read_only_faults() -> Result<Option<i32>, &'stat
         &file,
         &[b"/mprotect"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that narrows its own mapping could not be loaded")?;
     let _task = process::start_on(&program, Some(elsewhere))
@@ -7794,7 +7794,7 @@ fn check_kill_finds_its_targets_and_refuses_what_it_should(
     process: &Process,
 ) -> Result<(), &'static str> {
     use crate::syscall::kill;
-    use ferrix_linux_abi::types::SIGCHLD;
+    use xaqu_linux_abi::types::SIGCHLD;
 
     let pid = i32::try_from(process.pid()).map_err(|_| "a pid does not fit an int")?;
     if kill::sys_kill(process, pid, 0) != Ok(0) {
@@ -7840,7 +7840,7 @@ const EXEC_REAL: &[u8] = b"/exec-target-real";
 /// here.
 /// Verifies: `L.x86_64.69`
 fn check_execve_replaces_the_program() -> Result<Option<(i32, i32)>, &'static str> {
-    use ferrix_vfs::OpenFlags;
+    use xaqu_vfs::OpenFlags;
 
     if arch::USER_EXEC_PROGRAM.is_empty() {
         return Ok(None);
@@ -7880,7 +7880,7 @@ fn check_execve_replaces_the_program() -> Result<Option<(i32, i32)>, &'static st
         &caller,
         &[b"/exec-caller"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that calls execve could not be loaded")?;
     let task =
@@ -7899,7 +7899,7 @@ fn check_execve_replaces_the_program() -> Result<Option<(i32, i32)>, &'static st
         &caller,
         &[b"/exec-caller"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a program that calls execve could not be started a second time")?;
 
@@ -7930,7 +7930,7 @@ fn check_execve_replaces_the_program() -> Result<Option<(i32, i32)>, &'static st
 // would pass it.
 // ---------------------------------------------------------------------------
 
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     FUTEX_CLOCK_REALTIME, FUTEX_CMP_REQUEUE, FUTEX_PRIVATE_FLAG, FUTEX_WAIT, FUTEX_WAIT_BITSET,
     FUTEX_WAKE, FUTEX_WAKE_OP,
 };
@@ -7995,16 +7995,16 @@ type FutexWake = fn(&Process, u64) -> Result<usize, Errno>;
 
 /// The futex table's sabotage hooks, which exist only in a kernel built with
 /// its self-checks (K5's review, condition 4).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 use futex::sabotage as futex_hooks;
 
 /// What stands for the futex table's sabotage hooks in a kernel built
 /// `checks=off`, where no check runs: nothing here is ever called, and the
 /// product has no hook to call.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 mod futex_hooks {
     use crate::object::process::Process;
-    use ferrix_linux_abi::errno::Errno;
+    use xaqu_linux_abi::errno::Errno;
 
     /// No stale entry: none can be listed.
     #[derive(Debug)]
@@ -8170,7 +8170,7 @@ fn check_futexes() -> Result<usize, &'static str> {
 // real waiter behind it.
 // ---------------------------------------------------------------------------
 
-use ferrix_linux_abi::types::{CLOCK_MONOTONIC, CLOCK_REALTIME, FUTEX_32, FUTEX2_PRIVATE};
+use xaqu_linux_abi::types::{CLOCK_MONOTONIC, CLOCK_REALTIME, FUTEX_32, FUTEX2_PRIVATE};
 
 /// `futex_waitv` with five arguments and a 64-bit timespec.
 fn waitv_call(process: &Process, a: [u64; 5]) -> Result<usize, Errno> {
@@ -8531,7 +8531,7 @@ fn waitv_then_wake_from(
     )?;
     *FUTEX_ANSWER.lock() = None;
     *WAITV_SUBJECT.lock() = Some((Arc::clone(process), vector, words.len() as u64, timeout));
-    let waiter = crate::sched::spawn("waitv-waiter", waitv_waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let waiter = crate::sched::spawn("waitv-waiter", waitv_waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
 
     let patience = crate::timer::now_nanos().saturating_add(FUTEX_PATIENCE_NANOS);
     while words
@@ -8898,7 +8898,7 @@ fn wait_then_wake_behind(
     write_timespec(process, timeout, sleep.0, sleep.1)?;
     *FUTEX_ANSWER.lock() = None;
     *FUTEX_SUBJECT.lock() = Some((Arc::clone(process), word, timeout, wait));
-    let waiter = crate::sched::spawn("futex-waiter", futex_waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let waiter = crate::sched::spawn("futex-waiter", futex_waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
 
     let deadline = crate::timer::now_nanos().saturating_add(FUTEX_PATIENCE_NANOS);
     while futex::waiters_on(process, word) <= ahead {
@@ -9035,7 +9035,7 @@ fn call_past_the_heap_lock(
         HeapCall::Map => process.space().layout(),
         HeapCall::Shrink | HeapCall::Fork => process.hold_heap_for_check(),
     };
-    let task = crate::sched::spawn("heap-lock", heap_caller, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let task = crate::sched::spawn("heap-lock", heap_caller, 0, xaqu_sched::NICE_0_WEIGHT)?;
 
     let deadline = crate::timer::now_nanos().saturating_add(HEAP_PATIENCE_NANOS);
     while !HEAP_STARTED.load(Ordering::SeqCst) {
@@ -9187,7 +9187,7 @@ fn check_sysinfo_describes_the_machine(process: &Process, page: u64) -> Result<(
         return Err("sysinfo counted no processes while this one is registered");
     }
     // The loads, in sixteen fractional bits where the averages have eleven.
-    let shift = 16 - ferrix_procfs::loadavg::FSHIFT;
+    let shift = 16 - xaqu_procfs::loadavg::FSHIFT;
     let loads = |averages: [u64; 3]| {
         (0..3).all(|index| {
             let word = le_at(&out, sysinfo_at::LOADS + index * WORD, WORD);
@@ -9307,7 +9307,7 @@ fn check_limits_are_refused_as_linux_refuses_them(
         process,
         page,
         1024,
-        u64::from(ferrix_vfs::fd::MAX_LIMIT) + 1,
+        u64::from(xaqu_vfs::fd::MAX_LIMIT) + 1,
     )?;
     refuses(
         sys_prlimit64(process, 0, NOFILE, page, 0),
@@ -9451,7 +9451,7 @@ fn check_a_task_name_round_trips(process: &Process, page: u64) -> Result<(), &'s
 /// One credential call on `on`, with three arguments.
 fn credential(
     on: &Process,
-    call: ferrix_linux_abi::nr::Syscall,
+    call: xaqu_linux_abi::nr::Syscall,
     [first, second, third]: [u64; 3],
 ) -> Option<Result<usize, Errno>> {
     crate::syscall::credentials::dispatch(call, &[first, second, third, 0, 0, 0], on)
@@ -9465,7 +9465,7 @@ fn credential(
 /// a process of their own, in [`check_a_process_that_drops_root`].
 fn check_credentials_follow_linux_rules(process: &Process, page: u64) -> Result<(), &'static str> {
     use crate::syscall::credentials::sys_getgroups;
-    use ferrix_linux_abi::nr::Syscall as Call;
+    use xaqu_linux_abi::nr::Syscall as Call;
     let unchanged = u64::from(u32::MAX);
 
     if credential(process, Call::Setuid, [unchanged, 0, 0]) != Some(Err(Errno::EINVAL)) {
@@ -9507,7 +9507,7 @@ fn check_credentials_follow_linux_rules(process: &Process, page: u64) -> Result<
 /// Require one credential call on `on` to have answered `want`.
 fn expect_credential(
     on: &Process,
-    call: ferrix_linux_abi::nr::Syscall,
+    call: xaqu_linux_abi::nr::Syscall,
     args: [u64; 3],
     want: Result<usize, Errno>,
     what: &'static str,
@@ -9530,7 +9530,7 @@ fn stage_group(on: &Process, page: u64, gid: u32) -> Result<(), &'static str> {
 /// [`check_what_uid_1000_is_told`].
 fn check_a_process_that_drops_root(user: &Arc<Process>, page: u64) -> Result<(), &'static str> {
     use crate::syscall::credentials::identity;
-    use ferrix_linux_abi::nr::Syscall as Call;
+    use xaqu_linux_abi::nr::Syscall as Call;
     let unchanged = u64::from(u32::MAX);
 
     // An effective uid moved away while the real and saved ids stay 0 comes
@@ -9598,7 +9598,7 @@ fn check_a_process_that_drops_root(user: &Arc<Process>, page: u64) -> Result<(),
 /// Its own uid is still accepted, and `setfsuid(0)` answers 1000 and changes
 /// nothing, however often it is asked.
 fn check_uid_1000_cannot_take_root_back(user: &Process, page: u64) -> Result<(), &'static str> {
-    use ferrix_linux_abi::nr::Syscall as Call;
+    use xaqu_linux_abi::nr::Syscall as Call;
     let unchanged = u64::from(u32::MAX);
     let refusals = [
         (
@@ -9654,7 +9654,7 @@ fn check_uid_1000_cannot_take_root_back(user: &Process, page: u64) -> Result<(),
 /// from it starts with every id and group it has.
 fn check_what_uid_1000_is_told(user: &Arc<Process>, page: u64) -> Result<(), &'static str> {
     use crate::syscall::credentials::sys_getgroups;
-    use ferrix_linux_abi::nr::Syscall as Call;
+    use xaqu_linux_abi::nr::Syscall as Call;
 
     poison_user(user, page, 16)?;
     if credential(user, Call::Getresuid, [page, page + 4, page + 8]) != Some(Ok(0)) {
@@ -9778,7 +9778,7 @@ fn check_setting_the_clock_moves_only_realtime(
 /// the clock back whatever this returns.
 fn set_the_clock_and_read_it_back(process: &Process, page: u64) -> Result<(), &'static str> {
     use crate::syscall::time::{self, TimeWidth};
-    use ferrix_linux_abi::types::{CLOCK_MONOTONIC, CLOCK_REALTIME};
+    use xaqu_linux_abi::types::{CLOCK_MONOTONIC, CLOCK_REALTIME};
     const SEPTEMBER_2001: u64 = 1_000_000_000;
     let word = size_of::<usize>() as u64;
 
@@ -9821,7 +9821,7 @@ fn set_the_clock_and_read_it_back(process: &Process, page: u64) -> Result<(), &'
 /// has no number for `time`, which is every table but x86-64's.
 fn check_time_is_the_realtime_seconds(process: &Process, page: u64) -> Result<(), &'static str> {
     use crate::syscall::time;
-    use ferrix_linux_abi::nr::{Syscall, x86_64};
+    use xaqu_linux_abi::nr::{Syscall, x86_64};
     const SEPTEMBER_2001_NANOS: i64 = 1_000_000_000_000_000_000;
     if arch::decode_syscall(x86_64::TIME) != Some(Syscall::Time) {
         return Ok(());
@@ -9899,7 +9899,7 @@ fn check_absent_setters_refuse(process: &Process, page: u64) -> Result<(), &'sta
 
 /// A name `sethostname` sets is the `nodename` `uname` reports, and a name
 /// longer than 64 bytes is refused. The name is forgotten afterwards, so the
-/// `uname` check and a person reading `uname -a` both still see `ferrix`.
+/// `uname` check and a person reading `uname -a` both still see `xaqu`.
 fn check_a_host_name_reaches_uname(process: &Process, page: u64) -> Result<(), &'static str> {
     uaccess::copy_to_user(process.space(), page, b"check-host")
         .map_err(|_| "could not stage a host name")?;
@@ -10013,7 +10013,7 @@ fn check_peer_credentials_are_the_callers(
 }
 
 /// The name [`check_peer_credentials_are_the_callers`] binds.
-const PEERCRED_NAME: &[u8] = b"\0ferrix-peercred-check";
+const PEERCRED_NAME: &[u8] = b"\0xaqu-peercred-check";
 
 /// Become `uid` and `gid` as the effective ids, as `setresuid` would.
 fn act_as(process: &Process, uid: u32, gid: u32) {
@@ -10123,10 +10123,10 @@ const ADDRESS_LEN: u64 = 0x4F8;
 
 /// The abstract name the check binds. Leading NUL and all, as a program
 /// writes one.
-const ABSTRACT: &[u8] = b"\0ferrix-boot-check";
+const ABSTRACT: &[u8] = b"\0xaqu-boot-check";
 
 /// The path it binds, on the tmpfs the boot check already has.
-const SOCKET_PATH: &[u8] = b"/tmp/ferrix-check.sock";
+const SOCKET_PATH: &[u8] = b"/tmp/xaqu-check.sock";
 
 /// Write a `sockaddr_un` for `name` into the page, answering the pointer and
 /// the length a call must be given.
@@ -10283,7 +10283,7 @@ fn a_name_carries_a_connection(
 }
 
 /// The abstract name [`check_an_accepted_socket_blocks_unless_asked`] binds.
-const ACCEPTING: &[u8] = b"\0ferrix-boot-check-accept";
+const ACCEPTING: &[u8] = b"\0xaqu-boot-check-accept";
 
 /// A socket `accept` takes is non-blocking only when `accept4` asked for it
 /// with `SOCK_NONBLOCK`, never because its listener is, as on Linux: the
@@ -10315,7 +10315,7 @@ fn accepted_sockets_block_unless_asked(
     server: i32,
     clients: [i32; 2],
 ) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::O_NONBLOCK;
+    use xaqu_linux_abi::types::O_NONBLOCK;
 
     let nonblocking = |fd: i32| -> Result<bool, &'static str> {
         let flags = fd::sys_fcntl(process, fd, F_GETFL, 0)
@@ -10392,7 +10392,7 @@ fn check_a_path_carries_a_connection(process: &Process, page: u64) -> Result<(),
             .map_err(|_| "the node a bind made could not be stat'ed")?
             .metadata
             .kind
-            != ferrix_vfs::FileType::Socket
+            != xaqu_vfs::FileType::Socket
         {
             return Err("the node a bind made is not a socket");
         }
@@ -10444,13 +10444,13 @@ fn check_what_a_name_refuses(process: &Process, page: u64) -> Result<(), &'stati
         // A name nobody has bound, in each namespace. A path that is not
         // there is `ENOENT`; an abstract name that is not there is a
         // connection refused, because there is no path to be missing.
-        let (at, len) = put_unix_address(process, page + ADDRESS, b"\0ferrix-nobody")?;
+        let (at, len) = put_unix_address(process, page + ADDRESS, b"\0xaqu-nobody")?;
         refuses(
             socket_call(process, Call::Connect, &[as_arg(socket), at, len, 0, 0, 0]),
             Errno::ECONNREFUSED,
             "connecting to an unbound abstract name was not ECONNREFUSED",
         )?;
-        let (at, len) = put_unix_address(process, page + ADDRESS, b"/tmp/ferrix-nobody.sock")?;
+        let (at, len) = put_unix_address(process, page + ADDRESS, b"/tmp/xaqu-nobody.sock")?;
         refuses(
             socket_call(process, Call::Connect, &[as_arg(socket), at, len, 0, 0, 0]),
             Errno::ENOENT,
@@ -10469,7 +10469,7 @@ fn check_what_a_name_refuses(process: &Process, page: u64) -> Result<(), &'stati
             Errno::EINVAL,
             "listen on an unbound Unix socket was not EINVAL",
         )?;
-        let (at, len) = put_unix_address(process, page + ADDRESS, b"\0ferrix-twice")?;
+        let (at, len) = put_unix_address(process, page + ADDRESS, b"\0xaqu-twice")?;
         if socket_call(process, Call::Bind, &[as_arg(socket), at, len, 0, 0, 0]) != Ok(0) {
             return Err("a Unix socket would not take a name to bind twice");
         }
@@ -11469,7 +11469,7 @@ fn stream_runs_into_descriptors(
     page: u64,
     (one, other): (i32, i32),
     sent_fd: i32,
-    reader: &Arc<ferrix_vfs::OpenFile>,
+    reader: &Arc<xaqu_vfs::OpenFile>,
 ) -> Result<(), &'static str> {
     queue_around_a_descriptor(process, page, one, sent_fd)?;
     let (count, flags, _, control) =
@@ -11524,8 +11524,8 @@ fn a_descriptor_travels(
     page: u64,
     (one, other): (i32, i32),
     sent_fd: i32,
-    reader: &Arc<ferrix_vfs::OpenFile>,
-    sent: &alloc::sync::Weak<ferrix_vfs::OpenFile>,
+    reader: &Arc<xaqu_vfs::OpenFile>,
+    sent: &alloc::sync::Weak<xaqu_vfs::OpenFile>,
 ) -> Result<i32, &'static str> {
     answers(
         message_with_control(process, page, one, SCM_RIGHTS, &rights(&[sent_fd]), None),
@@ -11573,7 +11573,7 @@ fn a_descriptor_with_no_room_is_closed(
     page: u64,
     (one, other): (i32, i32),
     installed: i32,
-    reader: &Arc<ferrix_vfs::OpenFile>,
+    reader: &Arc<xaqu_vfs::OpenFile>,
 ) -> Result<(), &'static str> {
     let sent = message_with_control(process, page, one, SCM_RIGHTS, &rights(&[installed]), None);
     let _ = fd::sys_close(process, installed);
@@ -11960,7 +11960,7 @@ fn check_a_program_is_handed_its_start_argument() -> Result<Option<i32>, &'stati
 /// At the end of the file, and not among the path checks, so that no checked
 /// function above it moves off the lines its coverage was measured on.
 pub fn run_handles() -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::{AT_FDCWD, AT_HANDLE_CONNECTABLE, AT_HANDLE_FID};
+    use xaqu_linux_abi::types::{AT_FDCWD, AT_HANDLE_CONNECTABLE, AT_HANDLE_FID};
     const CWD: u64 = AT_FDCWD as i64 as u64;
     let process = process::new_for_check().map_err(|_| "could not make a process")?;
     let page = map_rw(&process, PAGE_SIZE)?;
@@ -12020,7 +12020,7 @@ const ARM_CACHEFLUSH: usize = 0x000f_0002;
 /// What the maintenance does to the caches no emulator shows: QEMU keeps
 /// its translated code coherent with memory by itself.
 fn check_cacheflush_answers_as_linux_does(process: &Process) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::PROT_EXEC;
+    use xaqu_linux_abi::types::PROT_EXEC;
     let request = |len: u64, prot: u32| MmapRequest {
         addr: 0,
         len,
@@ -12106,7 +12106,7 @@ fn check_cacheflush_answers_as_linux_does(process: &Process) -> Result<(), &'sta
             if by_number != Ok(0) {
                 return Err("cacheflush by its number did not reach its handler");
             }
-        } else if arch::ARCH == ferrix_bootinfo::Arch::Armv7a {
+        } else if arch::ARCH == xaqu_bootinfo::Arch::Armv7a {
             return Err("ARMv7-A's table does not decode 0x0f0002 as cacheflush");
         }
         Ok(())
@@ -12129,7 +12129,7 @@ fn check_send_and_recv_are_sendto_and_recvfrom(process: &Process) -> Result<(), 
     let pair = socket_pair(process, page, SOCK_STREAM);
     let outcome = pair.and_then(|(one, other)| {
         let call = |call: Call, args: [u64; 6]| -> Result<usize, Errno> {
-            if arch::ARCH == ferrix_bootinfo::Arch::Armv7a {
+            if arch::ARCH == xaqu_bootinfo::Arch::Armv7a {
                 call_by_number(process, call, args)
             } else {
                 socket_call(process, call, &args)
@@ -12230,14 +12230,14 @@ pub fn run_seam_count() -> Result<(usize, u64), &'static str> {
     SEAM_DONE.store(0, Ordering::Release);
     let before = crate::fs::seam::syscalls_except(SEAM_LEFT_OUT);
     for cpu in 0..online {
-        let mut only = ferrix_sched::CpuSet::empty();
+        let mut only = xaqu_sched::CpuSet::empty();
         only.insert(cpu)
             .map_err(|_| "no such processor for a seam caller")?;
         let _ = crate::sched::spawn_on(
             "seam-count",
             seam_caller,
             number,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
             cpu,
             only,
         )?;
@@ -12296,7 +12296,7 @@ const BATCH_NOT_SENT: &str = "sendmmsg did not send both datagrams of its batch"
 
 /// `sendmmsg` and `recvmmsg` move a batch of datagrams in one call each, on
 /// a datagram pair: what glibc's resolver does with its A and AAAA queries,
-/// which failed for every name while Ferrix had neither call.
+/// which failed for every name while Xaqu had neither call.
 ///
 /// Two datagrams sent by one `sendmmsg` must arrive as two, each `msg_len`
 /// written; one `recvmmsg` must take both, with each `msg_len` and the bytes
@@ -12320,7 +12320,7 @@ fn check_a_batch_of_messages_travels(process: &Process, page: u64) -> Result<(),
 /// writes it back must replace.
 fn stage_batch(process: &Process, page: u64, buffers: [(u64, u64); 2]) -> Result<(), &'static str> {
     let word = size_of::<usize>() as u64;
-    let stride = ferrix_linux_abi::socket::MmsgHdr::size(width()) as u64;
+    let stride = xaqu_linux_abi::socket::MmsgHdr::size(width()) as u64;
     for (index, (base, len)) in buffers.into_iter().enumerate() {
         let index = index as u64;
         let iov = page + MMSG_IOV + index * word * 2;
@@ -12328,7 +12328,7 @@ fn stage_batch(process: &Process, page: u64, buffers: [(u64, u64); 2]) -> Result
         write_word(process, iov + word, len)?;
         let entry = page + MMSG + index * stride;
         stage_header(process, entry, iov, 1)?;
-        let len_at = entry + ferrix_linux_abi::socket::MmsgHdr::len_offset(width()) as u64;
+        let len_at = entry + xaqu_linux_abi::socket::MmsgHdr::len_offset(width()) as u64;
         uaccess::put_u32(process.space(), len_at, 0xDEAD_BEEF)
             .map_err(|_| "could not stage an mmsghdr's msg_len")?;
     }
@@ -12339,8 +12339,8 @@ fn stage_batch(process: &Process, page: u64, buffers: [(u64, u64); 2]) -> Result
 fn batch_len(process: &Process, page: u64, index: u64) -> Result<u32, &'static str> {
     let at = page
         + MMSG
-        + index * ferrix_linux_abi::socket::MmsgHdr::size(width()) as u64
-        + ferrix_linux_abi::socket::MmsgHdr::len_offset(width()) as u64;
+        + index * xaqu_linux_abi::socket::MmsgHdr::size(width()) as u64
+        + xaqu_linux_abi::socket::MmsgHdr::len_offset(width()) as u64;
     uaccess::get_u32(process.space(), at).map_err(|_| "could not read back an mmsghdr's msg_len")
 }
 
@@ -12536,7 +12536,7 @@ fn batch_timeouts(
         process,
         page,
         other,
-        (2, ferrix_linux_abi::socket::MSG_WAITFORONE),
+        (2, xaqu_linux_abi::socket::MSG_WAITFORONE),
         0,
     );
     let took = crate::timer::now_nanos().saturating_sub(began);
@@ -12559,7 +12559,7 @@ const EXITS_NEVER_MET: &str =
 /// Load [`arch::USER_EXITS_PROGRAM`]'s image for one run of
 /// [`check_two_last_threads_exiting_together_end_their_process`].
 fn load_exits_racer(file: &[u8]) -> Result<Arc<Process>, &'static str> {
-    process::load(file, &[b"/exits"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    process::load(file, &[b"/exits"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program whose threads exit together could not be loaded")
 }
 
@@ -12642,7 +12642,7 @@ pub(crate) fn check_a_reaped_pid_finds_nothing() -> Result<(), &'static str> {
 fn check_an_automatic_reap_finds_nothing() -> Result<(), &'static str> {
     use crate::syscall::kill;
     use crate::syscall::registry::find;
-    use ferrix_linux_abi::types::{SIG_IGN, SIGCHLD};
+    use xaqu_linux_abi::types::{SIG_IGN, SIGCHLD};
 
     let ignorer = process::new_for_check().map_err(|_| "no address space for the reap check")?;
     ignorer.with_signals(|signals| signals.install_action(SIGCHLD, SIG_IGN, 0));
@@ -12731,7 +12731,7 @@ fn kernel_time_program(calls: u32, pages: u32, spins: u32) -> Result<Arc<Process
         &file,
         &[b"/times"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a kernel-time program could not be loaded")
 }
@@ -12987,7 +12987,7 @@ fn times_sleeper(_argument: usize) {
 /// against the switches made, not against the yields.
 /// Verifies: L.sched.83
 fn check_switches_are_counted(cpu: usize) -> Result<[u64; 4], &'static str> {
-    use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+    use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
     TIMES_YIELDED.store(0, Ordering::Release);
     TIMES_ARRIVED.store(0, Ordering::Release);
@@ -13113,7 +13113,7 @@ pub fn run_thread_times() -> Result<(), &'static str> {
 /// other `who` is `EINVAL`. Wine reads a thread's times through it, and a
 /// launcher waiting for them to move spun for ever while they read zero.
 fn check_getrusage_counts(process: &Process) -> Result<(), &'static str> {
-    use ferrix_linux_abi::types::CLOCK_THREAD_CPUTIME_ID;
+    use xaqu_linux_abi::types::CLOCK_THREAD_CPUTIME_ID;
     const MILLI: u64 = 1_000_000;
     let word = size_of::<usize>();
     let page = map_rw(process, PAGE_SIZE)?;

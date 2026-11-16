@@ -29,7 +29,7 @@
 //! length is measured on `PIPE_FRMCOUNT`. A transcoder whose numbers do not
 //! make sense leaves the card copying at once, as before.
 
-use ferrix_intel_xelp::io::Mmio;
+use xaqu_intel_xelp::io::Mmio;
 
 use super::regs::Regs;
 
@@ -127,7 +127,7 @@ fn scanline(regs: &mut Regs) -> u32 {
 pub(crate) struct Pending {
     pub(crate) buffer: u32,
     pub(crate) sequence: u64,
-    pub(crate) rect: ferrix_displayctl::message::Rect,
+    pub(crate) rect: xaqu_displayctl::message::Rect,
     /// When it came.
     pub(crate) at: u64,
 }
@@ -214,7 +214,7 @@ impl Tally {
     }
 
     pub(crate) fn say(&self) {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: card0: flips {} in 10 s, {} waited for the blank (mean {} us, longest {} us), {} not in it; gaps over 50 ms {}, over 66 ms {}, longest {} ms; copies {} (mean {} us, {} us of it evicting, longest {} us); blits {} (submit to seen done mean {} us, longest {} us)",
             self.flips,
             self.waited,

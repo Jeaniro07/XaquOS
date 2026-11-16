@@ -9,9 +9,9 @@
 
 use alloc::vec;
 
-use ferrix_kmem::{Charge, boxed_footprint};
-use ferrix_nettcp::{Connection, Request, SeqNumber, State};
-use ferrix_netwire::tcp::{self, Flags};
+use xaqu_kmem::{Charge, boxed_footprint};
+use xaqu_nettcp::{Connection, Request, SeqNumber, State};
+use xaqu_netwire::tcp::{self, Flags};
 
 use crate::addr::{Endpoint, IpAddress};
 use crate::input::pseudo_of;
@@ -252,9 +252,9 @@ impl Stack {
     /// The error a failed connection reports.
     pub(crate) fn stream_error(connection: &Connection) -> Option<Error> {
         connection.failure().map(|failure| match failure {
-            ferrix_nettcp::Failure::Refused => Error::Refused,
-            ferrix_nettcp::Failure::TimedOut => Error::TimedOut,
-            ferrix_nettcp::Failure::Reset | ferrix_nettcp::Failure::Protocol => Error::Reset,
+            xaqu_nettcp::Failure::Refused => Error::Refused,
+            xaqu_nettcp::Failure::TimedOut => Error::TimedOut,
+            xaqu_nettcp::Failure::Reset | xaqu_nettcp::Failure::Protocol => Error::Reset,
         })
     }
 }

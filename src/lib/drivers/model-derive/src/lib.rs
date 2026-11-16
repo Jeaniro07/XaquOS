@@ -1,11 +1,11 @@
-//! `ferrix-driver`'s derives and register macros (`docs/DRIVER-MODEL.md`;
+//! `xaqu-driver`'s derives and register macros (`docs/DRIVER-MODEL.md`;
 //! the driver model's design page).
 //!
 //! * `#[derive(Resources)]` turns a struct of a driver's resources -- its
 //!   registers, interrupts, clocks, resets, pin states, supplies and parent
 //!   bus, each named by a field attribute -- into an implementation of
-//!   `ferrix_driver::Resources`: the requirement table devmgr checks before it
-//!   starts the driver, embedded in the image's `.ferrix.requirements`
+//!   `xaqu_driver::Resources`: the requirement table devmgr checks before it
+//!   starts the driver, embedded in the image's `.xaqu.requirements`
 //!   section, and the lookup that resolves each field from the node.
 //! * `#[derive(PinStates)]` turns an enum of a binding's pin states into the
 //!   names the tree gives them (`Default` is `default`; `IdleMode` is
@@ -14,8 +14,8 @@
 //!   fields at their offsets, and `bitfields!` a register's value as named
 //!   fields, with value encodings such as `OffsetByOne<MIN, MAX>`.
 //!
-//! The generated code names `::ferrix_driver`, so a crate that uses these
-//! depends on `ferrix-driver`, which re-exports them. Tree and datasheet
+//! The generated code names `::xaqu_driver`, so a crate that uses these
+//! depends on `xaqu-driver`, which re-exports them. Tree and datasheet
 //! names appear only in `tree_name = "..."` strings and comments.
 
 use proc_macro::TokenStream;
@@ -78,7 +78,7 @@ pub fn bitfields(input: TokenStream) -> TokenStream {
 // Resources
 // ---------------------------------------------------------------------------
 
-/// What a field asks for, as `ferrix_devmgr_proto::requirements::What`
+/// What a field asks for, as `xaqu_devmgr_proto::requirements::What`
 /// names it.
 const KINDS: [(&str, &str); 7] = [
     ("registers", "Registers"),
@@ -121,16 +121,16 @@ fn requirement(attribute: &Attribute, optional: bool) -> Result<Tokens, Error> {
     }
     let base = match (name.as_str(), index, tree_name) {
         ("pin_control", None, None) => quote! {
-            ::ferrix_driver::Requirement::named(::ferrix_driver::What::PinControl, "default")
+            ::xaqu_driver::Requirement::named(::xaqu_driver::What::PinControl, "default")
         },
         ("parent_bus", None, None) => quote! {
-            ::ferrix_driver::Requirement::at(::ferrix_driver::What::ParentBus, 0)
+            ::xaqu_driver::Requirement::at(::xaqu_driver::What::ParentBus, 0)
         },
         (_, Some(index), None) => quote! {
-            ::ferrix_driver::Requirement::at(::ferrix_driver::What::#what, #index)
+            ::xaqu_driver::Requirement::at(::xaqu_driver::What::#what, #index)
         },
         (_, None, Some(tree_name)) => quote! {
-            ::ferrix_driver::Requirement::named(::ferrix_driver::What::#what, #tree_name)
+            ::xaqu_driver::Requirement::named(::xaqu_driver::What::#what, #tree_name)
         },
         _ => {
             return Err(Error::new_spanned(
@@ -195,29 +195,29 @@ fn resources(input: &DeriveInput) -> Result<Tokens, Error> {
             .as_ref()
             .ok_or_else(|| Error::new_spanned(field, "a named field"))?;
         resolved.push(quote! {
-            #ident: ::ferrix_driver::FromNode::from_node(node, &#requirement)?
+            #ident: ::xaqu_driver::FromNode::from_node(node, &#requirement)?
         });
         requirements.push(requirement);
     }
     let count = requirements.len();
     Ok(quote! {
-        impl ::ferrix_driver::Resources for #name {
-            const REQUIREMENTS: &'static [::ferrix_driver::Requirement<'static>] = &[
+        impl ::xaqu_driver::Resources for #name {
+            const REQUIREMENTS: &'static [::xaqu_driver::Requirement<'static>] = &[
                 #(#requirements),*
             ];
 
             fn requirement_table() -> &'static [u8] {
-                const NEEDS: [::ferrix_driver::Requirement<'static>; #count] = [
+                const NEEDS: [::xaqu_driver::Requirement<'static>; #count] = [
                     #(#requirements),*
                 ];
                 #[used]
-                #[unsafe(link_section = ".ferrix.requirements")]
-                static TABLE: [u8; ::ferrix_driver::requirements::size(&NEEDS)] =
-                    ::ferrix_driver::requirements::encode(&NEEDS);
+                #[unsafe(link_section = ".xaqu.requirements")]
+                static TABLE: [u8; ::xaqu_driver::requirements::size(&NEEDS)] =
+                    ::xaqu_driver::requirements::encode(&NEEDS);
                 &TABLE
             }
 
-            fn resolve(node: &mut ::ferrix_driver::Node) -> ::ferrix_driver::Result<Self> {
+            fn resolve(node: &mut ::xaqu_driver::Node) -> ::xaqu_driver::Result<Self> {
                 Ok(Self {
                     #(#resolved),*
                 })
@@ -263,13 +263,13 @@ fn pin_states(input: &DeriveInput) -> Result<Tokens, Error> {
             .iter()
             .any(|attribute| attribute.path().is_ident("optional"));
         states.push(quote! {
-            ::ferrix_driver::PinStateName { tree_name: #tree, optional: #optional }
+            ::xaqu_driver::PinStateName { tree_name: #tree, optional: #optional }
         });
         arms.push(quote! { Self::#ident => #tree });
     }
     Ok(quote! {
-        impl ::ferrix_driver::PinStates for #name {
-            const STATES: &'static [::ferrix_driver::PinStateName] = &[#(#states),*];
+        impl ::xaqu_driver::PinStates for #name {
+            const STATES: &'static [::xaqu_driver::PinStateName] = &[#(#states),*];
 
             fn tree_name(&self) -> &'static str {
                 match self {
@@ -361,13 +361,13 @@ impl Maps {
                 quote! {
                     // SAFETY: (DEVICE) the caller's mapping holds `BYTES`
                     // from `base`, and every register lies inside them.
-                    #field: unsafe { <#access as ::ferrix_driver::Access>::at(base + #offset) }
+                    #field: unsafe { <#access as ::xaqu_driver::Access>::at(base + #offset) }
                 }
             });
             let ends = registers.iter().map(|register| {
                 let (access, offset) = (&register.access, &register.offset);
                 quote! {
-                    let end = #offset + <#access as ::ferrix_driver::Access>::BYTES;
+                    let end = #offset + <#access as ::xaqu_driver::Access>::BYTES;
                     if end > bytes {
                         bytes = end;
                     }
@@ -380,7 +380,7 @@ impl Maps {
                     #(#fields),*
                 }
 
-                impl ::ferrix_driver::RegisterMap for #name {
+                impl ::xaqu_driver::RegisterMap for #name {
                     const BYTES: usize = {
                         let mut bytes = 0;
                         #(#ends)*
@@ -527,7 +527,7 @@ impl Values {
                     #(#methods)*
                 }
 
-                impl ::ferrix_driver::Value for #name {
+                impl ::xaqu_driver::Value for #name {
                     type Bits = u32;
 
                     fn into_bits(self) -> u32 {
@@ -571,12 +571,12 @@ fn field_methods(field: &Field) -> Tokens {
             }
         };
     }
-    // The model's own encodings are found in `ferrix_driver` whether or
+    // The model's own encodings are found in `xaqu_driver` whether or
     // not the driver imported them; any other type where the driver names it.
     let encoding = field.encoding.as_ref().map(|encoding| {
         let named = quote! { #encoding }.to_string();
         if named.starts_with("OffsetByOne") {
-            quote! { ::ferrix_driver::#encoding }
+            quote! { ::xaqu_driver::#encoding }
         } else {
             quote! { #encoding }
         }
@@ -615,10 +615,10 @@ fn field_methods(field: &Field) -> Tokens {
         pub(crate) const fn #attempt(
             self,
             value: u32,
-        ) -> ::core::result::Result<Self, ::ferrix_driver::OutOfRange> {
+        ) -> ::core::result::Result<Self, ::xaqu_driver::OutOfRange> {
             let bits = match #encode {
                 Some(bits) if bits <= #mask => bits,
-                _ => return Err(::ferrix_driver::OutOfRange { value }),
+                _ => return Err(::xaqu_driver::OutOfRange { value }),
             };
             Ok(Self((self.0 & !(#mask << #low)) | (bits << #low)))
         }
@@ -656,7 +656,7 @@ mod tests {
         assert!(fields[1].encoding.is_some());
         assert!(fields[2].encoding.is_none());
         let expanded = values.expand().unwrap().to_string();
-        assert!(expanded.contains(":: ferrix_driver :: OffsetByOne"));
+        assert!(expanded.contains(":: xaqu_driver :: OffsetByOne"));
         assert!(expanded.contains("fn frame_size_value"));
         assert!(expanded.contains("fn try_frame_size"));
         let backwards: Values = syn::parse_str("Bad { field: bits 5..=2 }").unwrap();
@@ -669,7 +669,7 @@ mod tests {
             syn::parse_str("Map { 0x00 => first: ReadWrite<u32>, 0x30 => last: ReadOnly<u8>, }")
                 .unwrap();
         let expanded = maps.expand().to_string();
-        assert!(expanded.contains("impl :: ferrix_driver :: RegisterMap for Map"));
+        assert!(expanded.contains("impl :: xaqu_driver :: RegisterMap for Map"));
         assert!(expanded.contains("0x30"));
     }
 }

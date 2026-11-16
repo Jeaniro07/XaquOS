@@ -1,5 +1,5 @@
 //! Which functions' raw input reports the driver says, for finding out what
-//! a device sent: the debug switch `ferrix.usbhid.reports`.
+//! a device sent: the debug switch `xaqu.usbhid.reports`.
 //!
 //! Off unless asked. Asked, each interrupt report of a watched function is
 //! handed on as it came off the pipe, with the time the driver took it, and

@@ -25,7 +25,7 @@
 
 use std::io;
 
-use ferrix_linux_abi::drm::{self, CreateDumb, DestroyDumb, FbCmd2, Field, MapDumb};
+use xaqu_linux_abi::drm::{self, CreateDumb, DestroyDumb, FbCmd2, Field, MapDumb};
 
 /// What the line starts with, which the display test looks for.
 pub const PREFIX: &str = "card-isolation: ";

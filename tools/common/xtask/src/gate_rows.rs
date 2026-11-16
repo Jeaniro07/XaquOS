@@ -69,7 +69,7 @@ const TEST_CONTAINER: &str = "test-container --arch all";
 /// consultant ledger 2026-10-17 line 2314 (7)): its default form, about
 /// 2.5 min. The starved form depends on the host and is never a row.
 const TEST_BTRFS_PRESSURE: &str = "test-btrfs-pressure --arch x86_64 --accel kvm \
-     --init ~/.local/share/ferrix/busybox/{arch}/bin/busybox.static";
+     --init ~/.local/share/xaqu/busybox/{arch}/bin/busybox.static";
 
 /// What asks for [`TEST_BTRFS_PRESSURE`]: the page cache and its reclaim,
 /// the frame allocator and its watermark, btrfs, and the job's memory charge.
@@ -515,7 +515,7 @@ fn rows_for(path: &str, image_crates: &BTreeSet<String>, rows: &mut Rows) {
         .any(|dir| path.starts_with(&format!("{dir}/")));
     let reason = |rows: &mut Rows, why: &str| rows.reasons.push(format!("{path}: {why}"));
     // Each judged by its own lines, since a `personality=user` kernel prints
-    // FERRIX-BOOT-UNCHECKED (BOOT-AUTHORITY.md BA.13, M6.md §3), on top of the kernel's rows.
+    // XAQU-BOOT-UNCHECKED (BOOT-AUTHORITY.md BA.13, M6.md §3), on top of the kernel's rows.
     if path.ends_with("src/kernel/src/boot_authority.rs")
         || path.ends_with("src/kernel/src/first_rows.rs")
         || path.ends_with("src/kernel/src/linuxd_start.rs")
@@ -728,8 +728,8 @@ fn image_crates() -> Result<BTreeSet<String>> {
     let mut found = BTreeSet::new();
     for arch in Arch::ALL {
         for (package, target) in [
-            ("ferrix-kernel", arch.kernel_target()),
-            ("ferrix-boot", arch.loader_target()),
+            ("xaqu-kernel", arch.kernel_target()),
+            ("xaqu-boot", arch.loader_target()),
         ] {
             let output = Command::new(crate::cargo::cargo())
                 .current_dir(&root)

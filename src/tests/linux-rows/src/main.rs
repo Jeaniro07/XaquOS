@@ -426,10 +426,10 @@ fn bench_futex_threads(samples: &mut Samples) {
     }
 }
 
-/// The seam's counters (`/proc/ferrix-seam`): `from-disk` and `submitted`,
+/// The seam's counters (`/proc/xaqu-seam`): `from-disk` and `submitted`,
 /// where the kernel has them.
 fn seam_counters() -> Option<(u64, u64)> {
-    let text = std::fs::read_to_string("/proc/ferrix-seam").ok()?;
+    let text = std::fs::read_to_string("/proc/xaqu-seam").ok()?;
     let words: Vec<&str> = text.split_whitespace().collect();
     let field = |name: &str| -> Option<u64> {
         let at = words.iter().position(|word| *word == name)?;

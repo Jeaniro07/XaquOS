@@ -16,7 +16,7 @@
 //! ([`Scaler`]) the pointer is blended in the mode's pixels and scaled with
 //! the picture, as a frame with the pointer drawn into it would be.
 
-use ferrix_displayctl::message::{CURSOR_SIZE, Rect};
+use xaqu_displayctl::message::{CURSOR_SIZE, Rect};
 
 use crate::scale::Scaler;
 

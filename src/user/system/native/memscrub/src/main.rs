@@ -13,14 +13,14 @@
 #![no_std]
 #![no_main]
 
-use ferrix_native_abi::directory::{self, Kind, MAX_MESSAGE, Message};
-use ferrix_rt::linux::{call, numbers};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::pending;
-use ferrix_rt::native::{Deadline, Error, Handle, Object, OwnedHandle, Requested, Rights, Signals};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::directory::{self, Kind, MAX_MESSAGE, Message};
+use xaqu_rt::linux::{call, numbers};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::pending;
+use xaqu_rt::native::{Deadline, Error, Handle, Object, OwnedHandle, Requested, Rights, Signals};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// How a run ended, as its exit status.
 #[derive(Debug, Clone, Copy)]
@@ -32,7 +32,7 @@ enum Step {
     Wait = 4,
 }
 
-/// The configuration, `/etc/ferrix/memscrub.conf`.
+/// The configuration, `/etc/xaqu/memscrub.conf`.
 #[derive(Debug, Clone, Copy)]
 struct Config {
     /// Seconds for one sweep of free memory.
@@ -151,7 +151,7 @@ fn take_token(channel: &Channel<Kernel>) -> Option<OwnedHandle<Kernel>> {
 /// The configuration, the defaults for anything not given; a file with a
 /// value out of range is not used, and that is said once.
 fn config() -> Config {
-    let Some((bytes, len)) = read_file(b"/etc/ferrix/memscrub.conf\0") else {
+    let Some((bytes, len)) = read_file(b"/etc/xaqu/memscrub.conf\0") else {
         return DEFAULT;
     };
     let text = core::str::from_utf8(bytes.get(..len).unwrap_or_default()).unwrap_or("");
@@ -221,9 +221,9 @@ fn idle_percent(then: (u64, u64), now: (u64, u64)) -> u64 {
     idle.saturating_mul(100) / total
 }
 
-/// The frames the allocator manages, from `/proc/ferrix-scrub`.
+/// The frames the allocator manages, from `/proc/xaqu-scrub`.
 fn managed() -> u64 {
-    let Some((bytes, len)) = read_file(b"/proc/ferrix-scrub\0") else {
+    let Some((bytes, len)) = read_file(b"/proc/xaqu-scrub\0") else {
         return 0;
     };
     let text = core::str::from_utf8(bytes.get(..len).unwrap_or_default()).unwrap_or("");

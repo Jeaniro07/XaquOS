@@ -35,8 +35,8 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_frame::Frame;
-use ferrix_sync::Once;
+use xaqu_frame::Frame;
+use xaqu_sync::Once;
 
 /// Entries the table holds: reservations bound or still draining.
 pub(crate) const MOST: usize = 64;

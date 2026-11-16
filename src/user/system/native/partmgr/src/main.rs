@@ -11,23 +11,23 @@
 #![no_std]
 #![no_main]
 
-use ferrix_native_abi::first::{FIRST_BYTES, FIRST_FIXED_HANDLES, READY_MAGIC, decode};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
-use ferrix_partition_desc::{Description, MAX_BYTES, MAX_PARTITIONS, ROLE_FILES, ROLE_LINUX};
-use ferrix_process_builder::build;
-use ferrix_rt::native::channel::{self, Channel};
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::pending::Process;
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::first::{FIRST_BYTES, FIRST_FIXED_HANDLES, READY_MAGIC, decode};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_partition_desc::{Description, MAX_BYTES, MAX_PARTITIONS, ROLE_FILES, ROLE_LINUX};
+use xaqu_process_builder::build;
+use xaqu_rt::native::channel::{self, Channel};
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::pending::Process;
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Where it gave up, as the exit status.
 #[derive(Clone, Copy)]
@@ -55,7 +55,7 @@ struct Running {
 static mut DESCRIPTION: [u8; MAX_BYTES] = [0; MAX_BYTES];
 
 fn say(what: core::fmt::Arguments<'_>) {
-    ferrix_rt::notice!("partmgr  {}", what);
+    xaqu_rt::notice!("partmgr  {}", what);
 }
 
 fn text(bytes: &[u8]) -> &str {
@@ -80,7 +80,7 @@ fn start(
         return Err("its image's digest is not the description's");
     }
     let name = text(running.name.split(|&byte| byte == 0).next().unwrap_or(&[]));
-    let built = build(&running.job, &running.image, name, ferrix_rt::ELF_MACHINE)
+    let built = build(&running.job, &running.image, name, xaqu_rt::ELF_MACHINE)
         .map_err(|_| "it could not be built")?;
     built
         .process()
@@ -165,7 +165,7 @@ fn run(bootstrap: Bootstrap) -> Result<(), Step> {
     };
     let job = Job::from_owned(handle(0));
     let log = handles[1];
-    ferrix_rt::log::use_debug_log(log);
+    xaqu_rt::log::use_debug_log(log);
     let description_vmo = Vmo::from_owned(handle(2));
 
     let place = core::ptr::addr_of_mut!(DESCRIPTION);
@@ -180,8 +180,8 @@ fn run(bootstrap: Bootstrap) -> Result<(), Step> {
     let length = {
         let mut first = [0_u8; 2];
         first.copy_from_slice(file.get(6..8).ok_or(Step::Description)?);
-        ferrix_partition_desc::HEADER_BYTES
-            + usize::from(u16::from_le_bytes(first)) * ferrix_partition_desc::PARTITION_BYTES
+        xaqu_partition_desc::HEADER_BYTES
+            + usize::from(u16::from_le_bytes(first)) * xaqu_partition_desc::PARTITION_BYTES
     };
     let description = Description::parse(file.get(..length).ok_or(Step::Description)?)
         .map_err(|_| Step::Description)?;

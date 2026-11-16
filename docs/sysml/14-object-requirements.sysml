@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 14: the low-level requirements of object/.
+ * Xaqu — SysML v2 model, part 14: the low-level requirements of object/.
  *
  * What each unit of src/kernel/src/object/ does, as `ItemLowLevel` requirements
  * (part 13 defines the format): the core ring's object layer -- what a handle
@@ -38,8 +38,8 @@
  * Ids are `L.object.<n>`, numbered through the subsystem; the package gives
  * the file.
  */
-package FerrixObjectRequirements {
-    private import FerrixItemRequirements::*;
+package XaquObjectRequirements {
+    private import XaquItemRequirements::*;
 
     package ObjectKinds {
         doc /* src/kernel/src/object/mod.rs: what a handle names, its signals, and
@@ -1004,11 +1004,11 @@ package FerrixObjectRequirements {
         }
         requirement <'L.object.160'> theCarriedWeightIsTheWideFormula : ItemLowLevel {
             attribute :>> statement = "quota::effective shall carry a task's weight up
-                its jobs in 64-bit arithmetic (ferrix_sched::carried_weight), giving,
+                its jobs in 64-bit arithmetic (xaqu_sched::carried_weight), giving,
                 before it clamps the answer, the value the same formula gives in
                 128-bit arithmetic, bit for bit, for every base and entity weight
                 below 2^32 and every load.";
-            attribute :>> criterion = "ferrix-sched's host test compares the two over
+            attribute :>> criterion = "xaqu-sched's host test compares the two over
                 50000 random and boundary bases, weights and loads at each job depth
                 from 1 to 8, and at every weight 2^32 - 1, and finds no difference;
                 with one division made in 32 bits, it finds one.";
@@ -2214,7 +2214,7 @@ package FerrixObjectRequirements {
             attribute :>> unit = ("syscall::native::channel_write_read",
                 "syscall::native::dispatch_write_read", "syscall::native::send_words",
                 "syscall::native::receive_words", "syscall::native::read_refusal",
-                "syscall::native_call", "arch::x86_64::syscall::ferrix_syscall_entry",
+                "syscall::native_call", "arch::x86_64::syscall::xaqu_syscall_entry",
                 "arch::aarch64::trap::system_call", "arch::armv7a::trap::system_call",
                 "arch::armv7a::trap::store_words");
         }
@@ -3991,13 +3991,13 @@ package FerrixObjectRequirements {
             attribute :>> unit = "boot_authority::load_sealed";
         }
         requirement <'L.object.335'> theKernelsCpioWalk : ItemLowLevel {
-            attribute :>> statement = "ferrix_cpio::file_named shall answer the regular file of a safe name,
+            attribute :>> statement = "xaqu_cpio::file_named shall answer the regular file of a safe name,
                 inside the archive's bounds, stop at the first malformed header, allocate nothing and write
                 nothing: ring 0's one parser of the archive under personality=user.";
-            attribute :>> criterion = "ferrix-cpio's host tests of it, its fuzz target, and a refused
+            attribute :>> criterion = "xaqu-cpio's host tests of it, its fuzz target, and a refused
                 archive's boot in test-first-processes.";
             attribute :>> parent = "H.DEV.13";
-            attribute :>> unit = "ferrix_cpio::file_named";
+            attribute :>> unit = "xaqu_cpio::file_named";
         }
         requirement <'L.object.327'> linuxdsDeathKillsItsJob : ItemLowLevel {
             attribute :>> statement = "linuxd's end shall kill what remains of its partition's job.";

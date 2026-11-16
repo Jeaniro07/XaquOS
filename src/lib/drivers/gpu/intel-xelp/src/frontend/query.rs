@@ -9,7 +9,7 @@
 //! OA unit is driven, and `GuC` does not submit: each of those is `ENODEV`,
 //! as i915 answers them.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::drm::Call;
 use super::{Backend, Frontend, Host};

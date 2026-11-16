@@ -173,12 +173,12 @@ fn strings() {
     );
     assert_eq!(
         ask(&mut port, 0x80, 6, 0x0301, 0x0409, 255),
-        Got::In(utf16("Ferrix")),
+        Got::In(utf16("Xaqu")),
         "manufacturer"
     );
     assert_eq!(
         ask(&mut port, 0x80, 6, 0x0302, 0x0409, 255),
-        Got::In(utf16("Ferrix console")),
+        Got::In(utf16("Xaqu console")),
         "product"
     );
     assert_eq!(

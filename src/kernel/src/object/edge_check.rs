@@ -9,12 +9,12 @@
 //! cgroupfs reaches it by where there is one -- the native calls, with raw
 //! registers -- and by name where there is not.
 
-use ferrix_cgroupfs::controllers::{Change, Controller, Set};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::SAME_RIGHTS;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
+use xaqu_cgroupfs::controllers::{Change, Controller, Set};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::SAME_RIGHTS;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
 
 use crate::object::check::{SCRATCH, Side, reg};
 use alloc::sync::Weak;
@@ -131,7 +131,7 @@ fn check_a_job_records_what_cgroupfs_sets() -> Result<(), &'static str> {
     if named.node(3).map(|node| node.uid) != Some(2) {
         return Err("a node's owner set twice was not the second");
     }
-    let limit = ferrix_cgroupfs::write::parse_limit(b"4\n").map_err(|_| "a limit did not parse")?;
+    let limit = xaqu_cgroupfs::write::parse_limit(b"4\n").map_err(|_| "a limit did not parse")?;
     named.set_max_depth(limit);
     if named.limits().0 != limit {
         return Err("a job's depth limit did not read back");

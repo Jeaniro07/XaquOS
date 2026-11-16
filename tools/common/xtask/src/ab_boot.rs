@@ -13,8 +13,8 @@
 //!
 //! Each boot is a fresh QEMU process on the same disk file: a power cycle,
 //! which is what "comes back at the next reset" means (§6.3). The record is
-//! written from the host with `ferrix-slots`, as `bootctl` will write it
-//! from inside Ferrix; `bootctl good` is the host's [`Bench::mark_good`] until
+//! written from the host with `xaqu-slots`, as `bootctl` will write it
+//! from inside Xaqu; `bootctl good` is the host's [`Bench::mark_good`] until
 //! ab-sys's `bootctl` lands.
 //!
 //! | case | setup | required |
@@ -39,11 +39,11 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use ferrix_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition, write_table};
-use ferrix_slots::Slot;
-use ferrix_slots::gpt::{CONTROL_TYPE, Part, SLOT_TYPE};
-use ferrix_slots::record::{self, ControlDisk, Current, DeviceError, Record};
-use ferrix_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1};
+use xaqu_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition, write_table};
+use xaqu_slots::Slot;
+use xaqu_slots::gpt::{CONTROL_TYPE, Part, SLOT_TYPE};
+use xaqu_slots::record::{self, ControlDisk, Current, DeviceError, Record};
+use xaqu_slots::slot::{HEADER_LEN, SlotHeader, VERSION_1};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -61,14 +61,14 @@ const CONTROL_MIB: u64 = 1;
 const ROOT_MIB: u64 = 16;
 /// Linux swap's partition type.
 const SWAP_TYPE: Guid = Guid::from_fields(0x0657_FD6D, 0xA4AB, 0x43C4, 0x84E5, 0x0933_C84B_4F4F);
-/// The test disk's GUID, which the loader names as `ferrix.slot.disk`.
+/// The test disk's GUID, which the loader names as `xaqu.slot.disk`.
 const DISK_GUID: Guid = Guid::random([7; 16]);
 /// The slots' own command line: `/` in memory, so no boot touches p6.
-const SLOT_CMDLINE: &str = "ferrix.root=tmpfs";
+const SLOT_CMDLINE: &str = "xaqu.root=tmpfs";
 /// The ESP's rescue command line.
-const RESCUE_CMDLINE: &str = "ferrix.root=tmpfs";
+const RESCUE_CMDLINE: &str = "xaqu.root=tmpfs";
 /// What a boot that came up prints.
-const BOOTED: &str = "FERRIX-BOOT-OK";
+const BOOTED: &str = "XAQU-BOOT-OK";
 
 /// The disk's partitions, in sectors, as laid out for one size of slot.
 #[derive(Clone, Copy, Debug)]
@@ -221,11 +221,11 @@ impl Bench {
         };
         let partitions = [
             partition(SWAP_TYPE, l.swap, 1, "nazuna-swap"),
-            partition(ESP, l.esp, 2, "ferrix-esp"),
-            partition(Guid(CONTROL_TYPE), l.control, 3, "ferrix-bootctl"),
-            partition(Guid(SLOT_TYPE), l.a, 4, "ferrix-slot-a"),
-            partition(Guid(SLOT_TYPE), l.b, 5, "ferrix-slot-b"),
-            partition(LINUX_FILESYSTEM, l.root, 6, "ferrix-root"),
+            partition(ESP, l.esp, 2, "xaqu-esp"),
+            partition(Guid(CONTROL_TYPE), l.control, 3, "xaqu-bootctl"),
+            partition(Guid(SLOT_TYPE), l.a, 4, "xaqu-slot-a"),
+            partition(Guid(SLOT_TYPE), l.b, 5, "xaqu-slot-b"),
+            partition(LINUX_FILESYSTEM, l.root, 6, "xaqu-root"),
         ];
         let table = write_table(l.sectors, SECTOR as u32, DISK_GUID, &partitions)
             .map_err(|error| Error::new(format!("test-ab-boot's partition table: {error}")))?;
@@ -288,7 +288,7 @@ impl Bench {
         let _ = file.seek(SeekFrom::Start(self.layout.swap.0 * SECTOR))?;
         let mut swap = vec![0_u8; usize::try_from(SWAP_MIB << 20).unwrap_or(0)];
         file.read_exact(&mut swap)?;
-        if ferrix_slots::sha256::digest(&swap) == self.swap_hash {
+        if xaqu_slots::sha256::digest(&swap) == self.swap_hash {
             Ok(())
         } else {
             Err(fail(&format!(
@@ -359,10 +359,10 @@ pub(crate) fn test_ab_boot(args: &Args) -> Result<()> {
     let volume = fat::write_image_with(arch, &loader, &kernel, &initramfs, Some(RESCUE_CMDLINE))?;
     let mut esp = std::fs::read(&volume)?;
 
-    let good = slot_image("ferrix good", &kernel_bytes, &carried);
+    let good = slot_image("xaqu good", &kernel_bytes, &carried);
     // A system that panics at boot: the same kernel, with an initramfs that
     // is not an archive, so stage 8 cannot build the root.
-    let panics = slot_image("ferrix panics", &kernel_bytes, &[0xA5; 4096]);
+    let panics = slot_image("xaqu panics", &kernel_bytes, &[0xA5; 4096]);
     let slot_bytes = good.len().max(panics.len()) as u64 + (1 << 20);
     let layout = Layout::new(esp.len() as u64, slot_bytes);
     installer::hide(&mut esp, layout.esp.0)?;
@@ -376,7 +376,7 @@ pub(crate) fn test_ab_boot(args: &Args) -> Result<()> {
         layout,
         path: paths::build_dir(arch).join("ab-boot.img"),
         args: booted,
-        swap_hash: ferrix_slots::sha256::digest(&swap_pattern()),
+        swap_hash: xaqu_slots::sha256::digest(&swap_pattern()),
     };
 
     case_1(&bench, &good, &panics)?;
@@ -434,9 +434,9 @@ fn case_1(bench: &Bench, good: &[u8], panics: &[u8]) -> Result<()> {
     require(
         &lines,
         &format!(
-            "cmdline  ferrix.slot=a ferrix.slot.boot=good ferrix.slot.seq=3 ferrix.slot.disk={} \
-             ferrix.slot.sig=none ferrix.root=tmpfs",
-            ferrix_slots::gpt::GuidText(DISK_GUID.0)
+            "cmdline  xaqu.slot=a xaqu.slot.boot=good xaqu.slot.seq=3 xaqu.slot.disk={} \
+             xaqu.slot.sig=none xaqu.root=tmpfs",
+            xaqu_slots::gpt::GuidText(DISK_GUID.0)
         ),
         "case 1, boot 2: the command line does not begin with the loader's words",
     )?;

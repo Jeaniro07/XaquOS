@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-btrfsd"
+name = "xaqu-btrfsd"
 description = "The filesystem server: btrfs in a process of its own, over the block ring (docs/microkernel/BTRFSD.md)"
 version.workspace = true
 edition.workspace = true
@@ -14,18 +14,18 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkclient.workspace = true
-ferrix-blkring.workspace = true
-ferrix-btrfs.workspace = true
-ferrix-btrfs-vfs.workspace = true
-ferrix-btrfs-write.workspace = true
-ferrix-sync.workspace = true
-ferrix-devmgr-proto.workspace = true
-ferrix-fsproto.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-vfs.workspace = true
+xaqu-blkclient.workspace = true
+xaqu-blkring.workspace = true
+xaqu-btrfs.workspace = true
+xaqu-btrfs-vfs.workspace = true
+xaqu-btrfs-write.workspace = true
+xaqu-sync.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-fsproto.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-vfs.workspace = true
 
 [lints]
 workspace = true

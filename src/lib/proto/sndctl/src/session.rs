@@ -10,14 +10,14 @@
 //! everything, and the glue quiesces the driver, as it quiesces an input
 //! driver that lies.
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::{
     DIRECTION_CAPTURE, Hello, MAX_PUBLISHED, MAX_STREAMS, Message, Offer, PORT_RIGHTS, Published,
     RATES_DEFINED, Ready, Refusal, Submit, VERSION,
 };
 use crate::pcm::{Config, Effects, Stream, VERSION_1};
-use ferrix_linux_abi::sound::FORMAT_LAST;
+use xaqu_linux_abi::sound::FORMAT_LAST;
 
 /// What the core publishes of a card: the device's stream number and its
 /// configuration.

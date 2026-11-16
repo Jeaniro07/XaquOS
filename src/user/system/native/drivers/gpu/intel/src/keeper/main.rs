@@ -2,9 +2,9 @@
 //! for the Intel GPU when its initramfs carries the GT's worker,
 //! `intel-gt`, and the only one the kernel sees as the driver. It holds the
 //! device handle, the render node's control, the MSI and every pin, and
-//! serves `ferrix-intel-xelp`'s front end -- every program's handles,
+//! serves `xaqu-intel-xelp`'s front end -- every program's handles,
 //! objects, VMs, contexts, syncobjs, sync files and dmabufs -- over a back
-//! end that is a journal ([`ferrix_intel_xelp::remote::keeper`]). It
+//! end that is a journal ([`xaqu_intel_xelp::remote::keeper`]). It
 //! touches no GT register.
 //!
 //! The GT is driven by a worker it starts in a child of its own job, from
@@ -33,26 +33,26 @@ mod serve;
 )]
 mod steps;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_intel_xelp::device_info;
-use ferrix_intel_xelp::frontend::{Backend, Frontend};
-use ferrix_intel_xelp::remote::{Journal, RemoteBackend};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::port;
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_intel_xelp::device_info;
+use xaqu_intel_xelp::frontend::{Backend, Frontend};
+use xaqu_intel_xelp::remote::{Journal, RemoteBackend};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::port;
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_rt::{Bootstrap, Kernel};
 
 // The display card is `intel`'s, not the keeper's, until card0 moves into
 // the keeper (docs/INTEL-GPU.md §12.8, the second step).
-use ferrix_display_modes as _;
-use ferrix_displayctl as _;
+use xaqu_display_modes as _;
+use xaqu_displayctl as _;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// The keeper's journal, about a megabyte: in the program's data, since
 /// the front end's tables already take most of its 8 MiB stack.
@@ -86,7 +86,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(never) => match never {},
         Err(step) => {
-            ferrix_rt::err!("intel: the keeper stopped at {step:?}");
+            xaqu_rt::err!("intel: the keeper stopped at {step:?}");
             step as i32
         }
     }
@@ -109,7 +109,7 @@ fn started(boot: &Channel<Kernel>) -> Result<Given, Step> {
         .map_err(|_| Step::Start)?;
     let [device, job, image] = handles.map(|handle| OwnedHandle::from_raw(Kernel, handle));
     if received.handles != 3 {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "intel: the keeper's START carried {} handles, not the device, a job and the worker's image",
             received.handles
         );
@@ -129,7 +129,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let (device, job, image) = started(boot)?;
     let info = device.info().map_err(|_| Step::Identity)?;
     if device_info::lookup(info.vendor_id, info.device_id).is_none() {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: {:04x}:{:04x} is not a device this driver drives",
             info.vendor_id,
             info.device_id
@@ -137,7 +137,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
         return Err(Step::Identity);
     }
     let revision = device.config_read(0x08, 1).map_or(0, |value| value as u8);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: {:#010x} {:04x}:{:04x} rev {revision}: the keeper; the GT is driven by worker processes it starts and replaces (docs/INTEL-GPU.md §12)",
         info.location,
         info.vendor_id,
@@ -162,7 +162,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let journal = unsafe { &mut *journal };
     let backend = RemoteBackend::start(link, journal).map_err(|_| Step::Worker)?;
     let facts = *backend.facts();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: the GT's worker 1 is up: {} engines, {} EUs, CS {} Hz",
         facts.engines.len(),
         facts.sseu.eu_total,
@@ -173,7 +173,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     match serve::serve(&mut host, &port, &mut frontend, &mut |_, _, _| {}) {
         Ok(never) => match never {},
         Err(stopped) => {
-            ferrix_rt::err!("intel: serving stopped: {stopped:?}");
+            xaqu_rt::err!("intel: serving stopped: {stopped:?}");
             Err(Step::Serve)
         }
     }

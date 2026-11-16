@@ -20,7 +20,7 @@ use std::os::fd::FromRawFd;
 use std::os::unix::net::UnixStream;
 
 /// The variable naming the lock channel's descriptor.
-pub const LOCK_FD_VARIABLE: &str = "FERRIX_LOCK_FD";
+pub const LOCK_FD_VARIABLE: &str = "XAQU_LOCK_FD";
 
 /// The descriptor `sessiond` gives the lock channel in the compositor.
 pub const LOCK_FD: i32 = 4;

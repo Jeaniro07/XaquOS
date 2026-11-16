@@ -47,9 +47,9 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_sync::Once;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{
+use xaqu_sync::Once;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{
     Errno, FileSystem, FileType, Inode, Location, Metadata, Namespace, OpenFile, OpenFlags,
     Readiness, Timespec,
 };
@@ -256,7 +256,7 @@ impl Inode for Console {
         _offset: u64,
         data: &[u8],
         _append: bool,
-    ) -> ferrix_vfs::Result<(usize, u64)> {
+    ) -> xaqu_vfs::Result<(usize, u64)> {
         terminal::write(data);
         Ok((data.len(), 0))
     }
@@ -265,7 +265,7 @@ impl Inode for Console {
     /// [`ConsoleFile`], which knows whether it may still read. Nothing
     /// reads the device itself but a node that stands for it and was never
     /// opened, which is no reader.
-    fn read_at(&self, _offset: u64, _buf: &mut [u8]) -> ferrix_vfs::Result<usize> {
+    fn read_at(&self, _offset: u64, _buf: &mut [u8]) -> xaqu_vfs::Result<usize> {
         Err(Errno::EIO)
     }
 
@@ -279,13 +279,13 @@ impl Inode for Console {
 
     /// The input ring's queue, which its receive interrupt wakes: to be
     /// trusted only when there is one, since polled input wakes nobody.
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::lent(crate::console::input::waiters()));
         crate::console::input::interrupt_driven()
     }
 
     /// Every open is a file of its own, stamped with the hangup count.
-    fn open(&self) -> ferrix_vfs::Result<Option<Arc<dyn Inode>>> {
+    fn open(&self) -> xaqu_vfs::Result<Option<Arc<dyn Inode>>> {
         Ok(Some(open_file()))
     }
 }
@@ -305,16 +305,16 @@ impl Inode for ConsoleFile {
         true
     }
 
-    fn write_at(&self, offset: u64, data: &[u8], append: bool) -> ferrix_vfs::Result<(usize, u64)> {
+    fn write_at(&self, offset: u64, data: &[u8], append: bool) -> xaqu_vfs::Result<(usize, u64)> {
         Console.write_at(offset, data, append)
     }
 
-    fn read_at(&self, _offset: u64, buf: &mut [u8]) -> ferrix_vfs::Result<usize> {
+    fn read_at(&self, _offset: u64, buf: &mut [u8]) -> xaqu_vfs::Result<usize> {
         terminal::read(buf, false, self.opened())
     }
 
     /// A read through a descriptor, which knows whether it may wait.
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         terminal::read(buf, nonblock, self.opened())
     }
 
@@ -337,7 +337,7 @@ impl Inode for ConsoleFile {
         Console.poll_changes()
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         Console.poll_queues(visit)
     }
 }

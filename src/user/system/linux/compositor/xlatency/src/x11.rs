@@ -2,7 +2,7 @@
 //! connection setup, `QueryExtension`, a window, pixmaps and a GC to fill
 //! them, `XInput2`'s `XIQueryVersion` and `XISelectEvents`, and Present's
 //! `QueryVersion`, `SelectInput` and `PresentPixmap`. Xlib is not linked, so
-//! the probe is one static program that runs on Ferrix and on Linux alike,
+//! the probe is one static program that runs on Xaqu and on Linux alike,
 //! as `xmoveresize` is.
 
 use std::io::{Read, Write};

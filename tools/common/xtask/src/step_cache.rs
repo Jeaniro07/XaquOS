@@ -24,7 +24,7 @@
 //! longer be read is a miss. Only passes are recorded: a failure always runs
 //! again.
 //!
-//! Off unless `FERRIX_STEP_CACHE` is `on` (a store in the target
+//! Off unless `XAQU_STEP_CACHE` is `on` (a store in the target
 //! directory); unset, or anything else, runs every unit as before. Release and baseline runs keep it off
 //! (`docs/TEST-TIME.md`). Linux only, since it needs `strace`.
 //!
@@ -41,13 +41,13 @@ use std::time::{Duration, SystemTime};
 use crate::{Error, Result, paths, sha256};
 
 /// The variable that turns the cache on and says where its store is.
-pub(crate) const VARIABLE: &str = "FERRIX_STEP_CACHE";
+pub(crate) const VARIABLE: &str = "XAQU_STEP_CACHE";
 
 /// The variable that names the unit to a `check-unit` child.
-pub(crate) const UNIT_VARIABLE: &str = "FERRIX_CHECK_UNIT";
+pub(crate) const UNIT_VARIABLE: &str = "XAQU_CHECK_UNIT";
 
 /// The first line of a record, with the format's version.
-const MAGIC: &str = "ferrix-step-cache 1";
+const MAGIC: &str = "xaqu-step-cache 1";
 
 /// How long a record stands: a week, after which the unit runs again
 /// whatever its inputs say (the consultant's condition 5).
@@ -154,7 +154,7 @@ const ENVIRONMENT_IGNORED: &[&str] = &[
     "CLAUDECODE",
     // gate.sh's name for the run, which the record keeps as its origin: a
     // different tag every run, and nothing in the tree reads it.
-    "FERRIX_GATE_TAG",
+    "XAQU_GATE_TAG",
     // gate.sh's own settings, which choose where and when a run goes and
     // which nothing in the tree reads, each named: a new GATE_ variable is
     // an input until it is added here (the consultant's lesser point,
@@ -190,8 +190,8 @@ const ENVIRONMENT_IGNORED: &[&str] = &[
     "_",
     // The test runs' directory and the `check` they belong to, which
     // `test-wait` has and the binary it runs does not.
-    "FERRIX_TEST_RUNS",
-    "FERRIX_TEST_RUNS_OWNER",
+    "XAQU_TEST_RUNS",
+    "XAQU_TEST_RUNS_OWNER",
     UNIT_VARIABLE,
     VARIABLE,
 ];
@@ -299,7 +299,7 @@ pub(crate) fn unit_logged(
 /// directory its checks build in (`crate::apps::check_dirs`), worked out
 /// once by `check-side` (or `check-apps`), so that the child runs no
 /// `cargo metadata` and scans no app's sources of its own.
-pub(crate) const APP_DIR_VARIABLE: &str = "FERRIX_CHECK_APP_DIR";
+pub(crate) const APP_DIR_VARIABLE: &str = "XAQU_CHECK_APP_DIR";
 
 /// [`unit_logged`] with the store given.
 fn unit_logged_with(
@@ -1017,7 +1017,7 @@ fn origin(root: &Path, target: &Path) -> String {
     } else {
         "+changes"
     };
-    let tag = std::env::var("FERRIX_GATE_TAG").map_or(String::new(), |tag| format!(" tag {tag}"));
+    let tag = std::env::var("XAQU_GATE_TAG").map_or(String::new(), |tag| format!(" tag {tag}"));
     format!(
         "from {} on {commit}{dirty}, {}{tag}",
         utc_now(),
@@ -1789,7 +1789,7 @@ impl Walk<'_> {
             }
             _ if WRITES.contains(&name) => self.change(call, &paths),
             _ if IGNORED.contains(&name) => {}
-            // A number Linux does not know (Ferrix's own calls, which a host
+            // A number Linux does not know (Xaqu's own calls, which a host
             // test may try): it failed, and did nothing.
             _ if name.starts_with("syscall_0x") && call.returned < 0 => {}
             _ => self.refuse(format!("a call this does not know: {name}")),

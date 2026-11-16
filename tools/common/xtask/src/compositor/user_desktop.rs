@@ -32,7 +32,7 @@ use crate::{Error, Result};
 /// pattern's window it started tiled alone. The first two are the pictures
 /// the fuzzel app's own host test makes of the same frames -- fuzzel's
 /// drawing composited by `src/user/system/linux/compositor/render` as the compositor composites a
-/// layer surface -- so a launcher that drew one pixel differently on Ferrix
+/// layer surface -- so a launcher that drew one pixel differently on Xaqu
 /// fails here.
 pub(super) fn test_fuzzel(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let fuzzel = crate::apps::program(arch, "fuzzel", "fuzzel")?;
@@ -228,7 +228,7 @@ fn drive_fuzzel_user(
 /// start `/bin/term`; and `/bin/vdagent`, appended, must have been started.
 ///
 /// The desktop runs as `run-compositor --everything`'s does, as the user
-/// `ferrix` (`crate::session`): `sessiond` must say it started the session
+/// `xaqu` (`crate::session`): `sessiond` must say it started the session
 /// as uid 1000 and hyprix that its devices came from it, so the screen, the
 /// keys QEMU types and the terminal's pseudoterminal are all the user's.
 ///
@@ -335,11 +335,11 @@ fn everything_desktop_setup(arch: Arch) -> Result<Option<(String, Carried, Strin
 }
 
 /// Whether the desktop ran as its user: `sessiond` said it started the
-/// session as `ferrix`, uid 1000, and hyprix that seat0's devices came from
+/// session as `xaqu`, uid 1000, and hyprix that seat0's devices came from
 /// `sessiond`.
 /// What hyprlock says on the `--everything` desktop, whose account has no
 /// password unless `--auth-seed` gave it one.
-const NOT_LOCKING: &str = "not locking: no password is set for ferrix";
+const NOT_LOCKING: &str = "not locking: no password is set for xaqu";
 
 fn judge_session(arch: Arch, said: &[String]) -> Result<()> {
     let wanted = [

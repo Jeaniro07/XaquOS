@@ -30,9 +30,9 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{AT_FDCWD, O_DIRECTORY, O_RDONLY};
-use ferrix_vfs::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{AT_FDCWD, O_DIRECTORY, O_RDONLY};
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Report as Counts, Tally, by_number, page_for};
 use crate::fs::namespace_check::{staged, unshare};

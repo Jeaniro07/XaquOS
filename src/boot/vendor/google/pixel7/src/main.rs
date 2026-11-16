@@ -1,13 +1,13 @@
-//! Ferrix's second-stage loader for the Pixel 7 (`panther`).
+//! Xaqu's second-stage loader for the Pixel 7 (`panther`).
 //!
 //! The phone's own bootloader, ABL, is signed and cannot be replaced; what an
 //! unlocked one will do is load an Android boot image and jump to its kernel
 //! under the Linux arm64 boot protocol. This program is that kernel. It does
-//! for Ferrix what `src/boot/common/uefi/` does under UEFI -- finds memory, loads the kernel
+//! for Xaqu what `src/boot/common/uefi/` does under UEFI -- finds memory, loads the kernel
 //! and its initramfs, and hands over a `BootInfo` -- from what ABL provides
 //! instead: a device tree, and a machine at EL2 with the MMU off.
 //!
-//! It keeps a log in the `ramoops` console record, which the Ferrix kernel
+//! It keeps a log in the `ramoops` console record, which the Xaqu kernel
 //! continues when the command line tells it to, and which survives the
 //! watchdog reset that ends a run; `README.md` says how to read it.
 
@@ -28,8 +28,8 @@ mod usb;
 use core::panic::PanicInfo;
 use core::ptr;
 
-use ferrix_bootinfo::{Framebuffer, MemKind};
-use ferrix_fdt::Fdt;
+use xaqu_bootinfo::{Framebuffer, MemKind};
+use xaqu_fdt::Fdt;
 
 use board::{CMDLINE, GUEST_CMDLINE, WATCHDOGS, WTCNT, WTCON};
 use log::say;
@@ -53,7 +53,7 @@ extern "C" fn early(device_tree: u64, current_el: u64, loaded_at: u64) {
         board::set_guest();
     }
     log::start();
-    say!("ferrix-pixel7 loader {}", env!("CARGO_PKG_VERSION"));
+    say!("xaqu-pixel7 loader {}", env!("CARGO_PKG_VERSION"));
     say!("  entered at EL{level}, loaded at {loaded_at:#x}, device tree at {device_tree:#x}");
     if level == 2 {
         // SAFETY: the level just read is EL2.
@@ -62,9 +62,9 @@ extern "C" fn early(device_tree: u64, current_el: u64, loaded_at: u64) {
     }
 }
 
-/// Called from the entry sequence at EL1: load Ferrix and start it.
+/// Called from the entry sequence at EL1: load Xaqu and start it.
 extern "C" fn main(device_tree: u64) -> ! {
-    // The count as well as the rate: Ferrix's clock is this counter, and
+    // The count as well as the rate: Xaqu's clock is this counter, and
     // tools/vendor/google/pixel7/monitor places the stat service's samples in the PC's time
     // from this line, the loader starting as the phone leaves USB.
     let (count, frequency) = entry::counter();
@@ -89,26 +89,26 @@ extern "C" fn main(device_tree: u64) -> ! {
         framebuffer
     };
     if let Err(why) = start(device_tree, framebuffer.unwrap_or(Framebuffer::NONE)) {
-        say!("FERRIX-PANIC loader: {why}");
+        say!("XAQU-PANIC loader: {why}");
     }
     // In a guest no watchdog ends the run: whoever started crosvm stops it.
     entry::wait_for_watchdog()
 }
 
-/// The kernel's command line: `base`, then every `ferrix.*` word of the
+/// The kernel's command line: `base`, then every `xaqu.*` word of the
 /// device tree's `bootargs`, as many as `buffer` holds.
 ///
 /// In a guest, `bootargs` is crosvm's, which `crosvm run -p` adds to. On the
 /// phone it is ABL's: Android's own, and the boot image header's command
-/// line, which `tools/vendor/google/pixel7/helper.py` fills for a run that asks for Ferrix's
-/// stat service. Either way only `ferrix.*` words are taken.
+/// line, which `tools/vendor/google/pixel7/helper.py` fills for a run that asks for Xaqu's
+/// stat service. Either way only `xaqu.*` words are taken.
 fn command_line<'a>(base: &'a str, tree: &Fdt<'_>, buffer: &'a mut [u8]) -> &'a str {
     let mut used = 0;
     let words = core::iter::once(base).chain(
         tree.bootargs()
             .unwrap_or("")
             .split_whitespace()
-            .filter(|word| word.starts_with("ferrix.")),
+            .filter(|word| word.starts_with("xaqu.")),
     );
     for word in words {
         let space = usize::from(used > 0);
@@ -248,13 +248,13 @@ fn report_watchdogs() {
 /// Called from every vector: report the exception, and leave the reset to a
 /// watchdog, whose reset keeps the report.
 extern "C" fn trap(kind: u64, syndrome: u64, at: u64, address: u64) -> ! {
-    say!("FERRIX-PANIC loader exception {kind}: ESR {syndrome:#x} ELR {at:#x} FAR {address:#x}");
+    say!("XAQU-PANIC loader exception {kind}: ESR {syndrome:#x} ELR {at:#x} FAR {address:#x}");
     entry::wait_for_watchdog()
 }
 
 /// Report where the loader panicked, and leave the reset to a watchdog.
 #[panic_handler]
 fn panic(info: &PanicInfo<'_>) -> ! {
-    say!("FERRIX-PANIC loader: {info}");
+    say!("XAQU-PANIC loader: {info}");
     entry::wait_for_watchdog()
 }

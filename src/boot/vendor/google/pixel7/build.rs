@@ -6,7 +6,7 @@
 //! between the invocation directory and the root, so a checkout inside another
 //! checkout would pass `-T` twice.
 //!
-//! The payload is named by `FERRIX_PIXEL7_KERNEL` and `FERRIX_PIXEL7_INITRD`,
+//! The payload is named by `XAQU_PIXEL7_KERNEL` and `XAQU_PIXEL7_INITRD`,
 //! the stripped `KERNEL.ELF` and `INITRD.IMG` that `cargo xtask flash --stage`
 //! writes. ABL loads only one image, so the kernel and its archive have to be
 //! inside it. Without the variables the loader is built with nothing to load,
@@ -36,11 +36,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo::rerun-if-changed=build.rs");
 
     // Words appended to the phone's kernel command line, `board::CMDLINE`.
-    println!("cargo::rerun-if-env-changed=FERRIX_PIXEL7_CMDLINE_EXTRA");
-    let extra = std::env::var("FERRIX_PIXEL7_CMDLINE_EXTRA").unwrap_or_default();
+    println!("cargo::rerun-if-env-changed=XAQU_PIXEL7_CMDLINE_EXTRA");
+    let extra = std::env::var("XAQU_PIXEL7_CMDLINE_EXTRA").unwrap_or_default();
     let extra = extra.trim();
     if extra.contains(['\n', '\r']) {
-        return Err("FERRIX_PIXEL7_CMDLINE_EXTRA must be one line".into());
+        return Err("XAQU_PIXEL7_CMDLINE_EXTRA must be one line".into());
     }
     let spaced = if extra.is_empty() {
         String::new()
@@ -50,16 +50,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo::rustc-env=PIXEL7_CMDLINE_EXTRA={spaced}");
 
     println!("cargo::rustc-check-cfg=cfg(payload)");
-    println!("cargo::rerun-if-env-changed=FERRIX_PIXEL7_KERNEL");
-    println!("cargo::rerun-if-env-changed=FERRIX_PIXEL7_INITRD");
-    let kernel = std::env::var_os("FERRIX_PIXEL7_KERNEL");
-    let initrd = std::env::var_os("FERRIX_PIXEL7_INITRD");
+    println!("cargo::rerun-if-env-changed=XAQU_PIXEL7_KERNEL");
+    println!("cargo::rerun-if-env-changed=XAQU_PIXEL7_INITRD");
+    let kernel = std::env::var_os("XAQU_PIXEL7_KERNEL");
+    let initrd = std::env::var_os("XAQU_PIXEL7_INITRD");
     if let (Some(kernel), Some(initrd)) = (kernel, initrd) {
         for (name, path) in [("PIXEL7_KERNEL", &kernel), ("PIXEL7_INITRD", &initrd)] {
             let path = Path::new(path).canonicalize()?;
             println!("cargo::rerun-if-changed={}", path.display());
             println!("cargo::rustc-env={name}={}", path.display());
-            content_named(&format!("FERRIX_{name}"));
+            content_named(&format!("XAQU_{name}"));
         }
         println!("cargo::rustc-cfg=payload");
     }

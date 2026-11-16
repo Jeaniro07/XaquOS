@@ -12,24 +12,24 @@ publish.workspace = true
 # library std already links, or raw system calls through its `syscall`.
 libc = "0.2.189"
 # The manager: unit files, the graph, operations, every kind's state machine.
-ferrix-svc = { path = "../../../../../lib/init/svc" }
+xaqu-svc = { path = "../../../../../lib/init/svc" }
 # The control socket's records and the readiness lines.
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 # A unit's lines to the console shed by severity under load
 # (docs/LOGGING.md §7.5).
-ferrix-log-shed = { path = "../../../../../lib/log/shed" }
+xaqu-log-shed = { path = "../../../../../lib/log/shed" }
 # The native calls, for bootstrap channels, native services and the
 # directory (docs/INIT.md §6): the numbers and layouts, and the typed
 # wrappers over them.
-ferrix-native = { path = "../../../../../lib/proto/native" }
-ferrix-process-builder = { path = "../../../../../lib/proto/process-builder" }
-ferrix-native-abi = { path = "../../../../../lib/proto/native-abi" }
+xaqu-native = { path = "../../../../../lib/proto/native" }
+xaqu-process-builder = { path = "../../../../../lib/proto/process-builder" }
+xaqu-native-abi = { path = "../../../../../lib/proto/native-abi" }
 # The audit record's layout, for the reader (docs/certification/AUDIT.md §4).
-ferrix-audit = { path = "../../../../../lib/proto/audit" }
+xaqu-audit = { path = "../../../../../lib/proto/audit" }
 
 # The computer's name, checked by the same rules settingsd writes it with
 # (docs/SETTINGS-WRITER.md §4, B2; ledger 3636 (18)).
-ferrix-settings-proto = { path = "../../settingsd/proto" }
+xaqu-settings-proto = { path = "../../settingsd/proto" }
 
 [lints]
 workspace = true

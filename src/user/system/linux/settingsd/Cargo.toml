@@ -14,7 +14,7 @@ members = ["client", "proto", "settingsctl", "settingsd"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -22,7 +22,7 @@ publish = false
 # ---------------------------------------------------------------------------
 # Lints
 #
-# The Ferrix discipline, as authd has it. A panic in settingsd ends a
+# The Xaqu discipline, as authd has it. A panic in settingsd ends a
 # person's change half-asked, so the ways of reaching one are denied and a
 # failing call is a refusal with its reason, never an abort.
 # ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@
 
 #![no_main]
 
-use ferrix_elf::{EM_AARCH64, EM_ARM, EM_X86_64, Elf};
+use xaqu_elf::{EM_AARCH64, EM_ARM, EM_X86_64, Elf};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

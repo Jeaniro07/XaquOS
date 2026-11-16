@@ -25,7 +25,7 @@
 
 use core::fmt;
 
-/// Bytes in a driver's name, NUL-padded: `ferrix_devmgr_proto::NAME_BYTES`,
+/// Bytes in a driver's name, NUL-padded: `xaqu_devmgr_proto::NAME_BYTES`,
 /// the kernel's `PROCESS_NAME_MAX`. A crate of its own rather than a module
 /// of that one because the kernel links that one and has no use for this
 /// (the certification consultant's condition C8, 2026-10-07).
@@ -45,7 +45,7 @@ pub const ANY: u32 = u32::MAX;
 pub const MAX_IMAGE: u64 = 8 << 20;
 /// The abstract `AF_UNIX` name `drvupdated` listens on, without its leading
 /// NUL.
-pub const SOCKET_NAME: &[u8] = b"ferrix.devmgr.update";
+pub const SOCKET_NAME: &[u8] = b"xaqu.devmgr.update";
 
 /// What a request asks: put the image on the devices `driver` drives at
 /// `location`.

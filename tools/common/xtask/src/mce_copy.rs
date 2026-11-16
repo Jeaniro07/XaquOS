@@ -7,7 +7,7 @@
 //! a 1 MiB buffer whose words name their page in a loop, or, in the environ
 //! mode, a reader reads another process's 64 KiB environment. The gate stops
 //! the machine until a processor's `rip` is the copy's `rep movsb`
-//! (`ferrix_copy_mc_movs`, from the kernel's ELF: the gate boots `nokaslr`),
+//! (`xaqu_copy_mc_movs`, from the kernel's ELF: the gate boots `nokaslr`),
 //! reads the 8 bytes at its `rsi` (`xp`) to know whose page the copy is
 //! loading, translates `rsi` to the physical page, and injects there. QEMU's
 //! poison is not in memory: what this shows is the decision, the fixup and
@@ -59,7 +59,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-copy-off",
         help_at: 236,
         help: &[
-            "test-mce-copy-off  test-mce-copy with ferrix.mce.recover=off: the kernel must stop",
+            "test-mce-copy-off  test-mce-copy with xaqu.mce.recover=off: the kernel must stop",
         ],
         run: |_, args| test_copy(args, Mode::RecoverOff),
     },
@@ -156,7 +156,7 @@ enum Mode {
     Tcc,
     /// The record names another page than `rsi`'s: stops.
     OtherPage,
-    /// `ferrix.mce.recover=off`: stops.
+    /// `xaqu.mce.recover=off`: stops.
     RecoverOff,
     /// Ring 0 away from the copy: stops.
     Outside,
@@ -232,16 +232,16 @@ fn test_copy(args: &Args, mode: Mode) -> Result<()> {
     let loader = crate::cargo::build_loader(arch, args.release)?;
     let kernel =
         crate::cargo::build_kernel_with_init(arch, args.release, &program, crate::shell::SCRIPT)?;
-    let movs = symbol(&kernel.elf, "ferrix_copy_mc_movs")?;
+    let movs = symbol(&kernel.elf, "xaqu_copy_mc_movs")?;
     if mode == Mode::Copy {
         pinned(&kernel.elf).map_err(|why| Error::new(format!("{arch}: test-mce-copy: {why}")))?;
     }
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &guest_files(mode, &program)?)?;
     let options = if mode == Mode::RecoverOff {
-        "ferrix.mce.poll=1 ferrix.mce.recover=off nokaslr\n"
+        "xaqu.mce.poll=1 xaqu.mce.recover=off nokaslr\n"
     } else {
-        "ferrix.mce.poll=1 nokaslr\n"
+        "xaqu.mce.poll=1 nokaslr\n"
     };
     let image = crate::fat::write_image_with(arch, &loader, &kernel, &archive, Some(options))?;
     let port = free_port()?;
@@ -354,7 +354,7 @@ pub(crate) fn symbol(elf: &std::path::Path, name: &str) -> Result<u64> {
 
 /// `copy_mc` as built (`L.x86_64.244`, ledger 5216 (12)): exactly `mov
 /// rcx, rdx`, the `rep movsb`, `xor edx, edx`, `mov rax, rcx` and `ret` --
-/// so from `ferrix_copy_mc_movs` to `ferrix_copy_mc_out` nothing touches
+/// so from `xaqu_copy_mc_movs` to `xaqu_copy_mc_out` nothing touches
 /// `rcx` or memory but the movs, and nothing is called.
 fn pinned(elf: &std::path::Path) -> std::result::Result<(), String> {
     let output = std::process::Command::new("objdump")
@@ -364,8 +364,8 @@ fn pinned(elf: &std::path::Path) -> std::result::Result<(), String> {
         .map_err(|error| format!("objdump could not run: {error}"))?;
     let text = String::from_utf8_lossy(&output.stdout);
     let start = text
-        .find("<ferrix_copy_mc>:")
-        .ok_or("the kernel has no ferrix_copy_mc")?;
+        .find("<xaqu_copy_mc>:")
+        .ok_or("the kernel has no xaqu_copy_mc")?;
     let body: Vec<String> = text
         .get(start..)
         .unwrap_or_default()
@@ -386,7 +386,7 @@ fn pinned(elf: &std::path::Path) -> std::result::Result<(), String> {
     ];
     if body != want {
         return Err(format!(
-            "ferrix_copy_mc is not one rep movsb and its exit: {body:?}"
+            "xaqu_copy_mc is not one rep movsb and its exit: {body:?}"
         ));
     }
     Ok(())
@@ -589,7 +589,7 @@ fn judge(
         // The machine check's own stop, not a later one: the copy's caller
         // re-checks the page and stops too (`uaccess::poisoned`), which
         // would hide a handler that recovered where it must not.
-        return has("FERRIX-PANIC machine check")
+        return has("XAQU-PANIC machine check")
             .then_some(())
             .ok_or_else(|| "the stop was not the machine check's own".to_owned());
     }
@@ -599,7 +599,7 @@ fn judge(
     let retired = format!("mce: frame {:#x} retired", injected.page);
     let copies = format!("cpu{} ", injected.cpu);
     let counted = lines.iter().any(|line| {
-        line.contains("/proc/ferrix-mce: ") && line.contains(&copies) && line.ends_with(" copies 1")
+        line.contains("/proc/xaqu-mce: ") && line.contains(&copies) && line.ends_with(" copies 1")
     });
     match mode {
         Mode::Copy | Mode::Intel | Mode::File => {
@@ -634,7 +634,7 @@ fn judge(
             }
             counted.then_some(()).ok_or_else(|| {
                 format!(
-                    "/proc/ferrix-mce did not count the copy on cpu{}",
+                    "/proc/xaqu-mce did not count the copy on cpu{}",
                     injected.cpu
                 )
             })
@@ -668,7 +668,7 @@ fn judge(
             }
             counted.then_some(()).ok_or_else(|| {
                 format!(
-                    "/proc/ferrix-mce did not count the copy on cpu{}",
+                    "/proc/xaqu-mce did not count the copy on cpu{}",
                     injected.cpu
                 )
             })

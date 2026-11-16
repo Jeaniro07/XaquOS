@@ -11,7 +11,7 @@
 //! accepted once every byte in front of it has been: a `FIN` taken early would
 //! tell the program the stream ended while data was still missing.
 
-use ferrix_netwire::tcp::{Flags, Segment};
+use xaqu_netwire::tcp::{Flags, Segment};
 
 use crate::conn::{Connection, DELAYED_ACK, Progress};
 use crate::rtt::Millis;

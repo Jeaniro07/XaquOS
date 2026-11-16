@@ -1,7 +1,7 @@
 //! tmpfs: a filesystem that is only memory.
 //!
 //! The root filesystem at boot, `/tmp`, and what an initramfs is unpacked
-//! into. It is the first filesystem Ferrix has, and it is written against the
+//! into. It is the first filesystem Xaqu has, and it is written against the
 //! same [`Inode`] contract btrfs will be.
 //!
 //! # Where file contents live
@@ -58,8 +58,8 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint, footprint};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_kmem::{Charge, arc_footprint, footprint};
+use xaqu_linux_abi::errno::Errno;
 
 use crate::Result;
 use crate::SpinLock;
@@ -297,8 +297,8 @@ pub trait Storage: Send + Sync + fmt::Debug {
     /// default, which is right on the host; the kernel lends the scheduler's,
     /// so a task waiting behind a write that fills or a truncation that cuts
     /// mappings sleeps rather than holds its processor.
-    fn parker(&self) -> &dyn ferrix_sync::Parker {
-        &ferrix_sync::SpinParker
+    fn parker(&self) -> &dyn xaqu_sync::Parker {
+        &xaqu_sync::SpinParker
     }
 
     /// Pages in total and pages free, for `statfs`. Unknown by default, which
@@ -780,7 +780,7 @@ impl Drop for Node {
     /// A directory holds each child's node, so dropping the last hold on one
     /// dropped its children inside its own drop, and theirs inside those: a
     /// chain 200 deep, torn down at `umount` or at power-off, ran off the end
-    /// of the kernel's stack and double-faulted (ferrix-ea, 2026-09-26). Here
+    /// of the kernel's stack and double-faulted (xaqu-ea, 2026-09-26). Here
     /// a child this directory held last gives up its own entries before it
     /// goes, and those wait on a list, so nothing is dropped with children
     /// still in it. The list grows fallibly; a directory whose entries find
@@ -834,7 +834,7 @@ impl fmt::Debug for Node {
 /// -- and it is what serialises a shrink's cut against a write or a read,
 /// which [`Pages::discard_from`] relies on.
 struct FileIo {
-    io: ferrix_sync::SleepLock<()>,
+    io: xaqu_sync::SleepLock<()>,
     pages: Box<dyn Pages>,
     /// Who writes it and who runs it: [`crate::writers`].
     writers: core::sync::atomic::AtomicIsize,
@@ -1069,7 +1069,7 @@ impl Node {
             me: Weak::clone(me),
             shared: Arc::clone(shared),
             file: pages.map(|pages| FileIo {
-                io: ferrix_sync::SleepLock::new((), shared.storage.parker()),
+                io: xaqu_sync::SleepLock::new((), shared.storage.parker()),
                 pages,
                 writers: crate::writers::new_count(),
             }),

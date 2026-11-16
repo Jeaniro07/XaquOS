@@ -6,10 +6,10 @@
 
 use core::sync::atomic::Ordering;
 
-use ferrix_kernel_load::console::log;
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::system::{self, CLEARED};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_kernel_load::console::log;
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::system::{self, CLEARED};
+use xaqu_linux_abi::errno::Errno;
 
 /// `SYSLOG_ACTION_CLEAR` (5): `READ_ALL` starts from here on.
 pub fn clear(_: &Process) -> Result<usize, Errno> {

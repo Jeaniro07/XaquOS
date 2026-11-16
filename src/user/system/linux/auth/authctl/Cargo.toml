@@ -8,8 +8,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-ferrix-auth-client = { path = "../client" }
-ferrix-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
+xaqu-auth-client = { path = "../client" }
+xaqu-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
 
 [lints]
 workspace = true

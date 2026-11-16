@@ -1,10 +1,10 @@
 # Clipboard: the host's selection and the guest's, joined over vdagent
 
-Version 1, drafted. Written by ferrix-d3 on 2026-09-19 at the user's asking
-("shared copy and paste between QEMU Ferrix and the host"). **Not yet approved
+Version 1, drafted. Written by xaqu-d3 on 2026-09-19 at the user's asking
+("shared copy and paste between QEMU Xaqu and the host"). **Not yet approved
 by a product owner:** §7 is the list of decisions that are the owner's and not
 this document's, and no owner session was running when this was written --
-`ferrix-32`, whom `docs/BACKLOG.md` names, has ended. Until one answers, §7's
+`xaqu-32`, whom `docs/BACKLOG.md` names, has ended. Until one answers, §7's
 draft answers are what the code assumes and each is marked where it is used.
 
 It has the shape of `docs/INPUT.md` on purpose, because it is the same kind of
@@ -14,8 +14,8 @@ protocol. Where a rule here differs from that document's, the item says why.
 
 ## 1. What this is, and what it is not
 
-A person watching Ferrix in a QEMU window copies a line in their host editor
-and pastes it into a Ferrix program, and copies in a Ferrix program and pastes
+A person watching Xaqu in a QEMU window copies a line in their host editor
+and pastes it into a Xaqu program, and copies in a Xaqu program and pastes
 it on the host. This document specifies the whole path:
 
 * **the transport**, virtio-serial: a `virtio-console` device with the
@@ -34,13 +34,13 @@ It is **not** the SPICE display, the SPICE server, or a SPICE client. QEMU's
 `qemu-vdagent` chardev (since QEMU 6.1) is the host half of the agent protocol
 with no SPICE anywhere: it bridges the port straight to whatever clipboard the
 active UI has — GTK's, SDL's, or a VNC client's through the RFB extended
-clipboard. So Ferrix speaks vdagent and gets every viewer QEMU has, and this
+clipboard. So Xaqu speaks vdagent and gets every viewer QEMU has, and this
 project does not gain a SPICE dependency.
 
 It is not the mouse, the monitors configuration, the file transfer or the
 audio volume of the same protocol. It is not images on the clipboard: §7(b)
 asks the owner whether `image/png` is in version 1 or not. It is not a
-clipboard between two Ferrix machines, and it is not the guest's clipboard
+clipboard between two Xaqu machines, and it is not the guest's clipboard
 persisting after the program that owns it exits, which is Wayland's rule and
 stays Wayland's rule (`docs/ROADMAP.md`, stage 18: "Wayland's clipboard is a
 promise and not a buffer").
@@ -57,9 +57,9 @@ Three were considered and two rejected, and the reasons are worth keeping
 because the rejected ones look cheaper until the viewer is asked about.
 
 1. **vdagent over virtio-serial** — this document. It costs a device driver
-   Ferrix does not have. It is the only one of the three that reaches the
+   Xaqu does not have. It is the only one of the three that reaches the
    clipboard of a viewer that is not on the QEMU host: the person watching
-   Ferrix from another machine, over VNC or from a QEMU window on a host whose
+   Xaqu from another machine, over VNC or from a QEMU window on a host whose
    build has GTK, has their clipboard joined by QEMU itself.
 2. **A bridge over the network**, guest TCP to a listener in `xtask`, which
    already terminates the guest's TCP on the host (`tools/common/xtask/src/gateway/`). It
@@ -112,7 +112,7 @@ transitional one `0x1003` — the pair `devmgr`'s table takes (`docs/DEVMGR.md`
 §3). The features the driver takes are `VIRTIO_CONSOLE_F_MULTIPORT` (bit 1),
 without which there is no port naming and no control queue and the device is
 one nameless console; `VERSION_1`; and `ACCESS_PLATFORM`, without which a
-device behind the machine's IOMMU refuses `FEATURES_OK`, as every other Ferrix
+device behind the machine's IOMMU refuses `FEATURES_OK`, as every other Xaqu
 virtio driver takes it. `F_SIZE` and `F_EMERG_WRITE` are not asked for.
 
 ### 3.2 The queues, and why the numbering is the awkward part
@@ -228,7 +228,7 @@ Four rules that are the protocol's and not obvious:
    host is a viewer that appears frozen.
 2. **Line endings.** The guest announces neither `GUEST_LINEEND_LF` nor
    `GUEST_LINEEND_CRLF`, so no conversion happens in either direction and
-   bytes are carried as they are. A Ferrix program that copies `\r\n` pastes
+   bytes are carried as they are. A Xaqu program that copies `\r\n` pastes
    `\r\n` on the host.
 3. **A regrab is not a release.** Without
    `CLIPBOARD_NO_RELEASE_ON_REGRAB` (16), which neither side announces here,
@@ -253,7 +253,7 @@ for Linux ones only. And the system call dispatcher takes the native ABI
 (`src/kernel/src/syscall/mod.rs`, `dispatch`). So the two ABIs are not two kinds
 of process. They are two ranges of number, and one program may use both.
 
-`ferrix-rt` has in fact been doing exactly this since it was written: a
+`xaqu-rt` has in fact been doing exactly this since it was written: a
 native program's `exit` is Linux's `exit_group`, called with a Linux number
 through the same instruction as every native call
 (`src/user/system/native/rt/src/arch/x86_64.rs`). The trick this design turns on is already in
@@ -277,14 +277,14 @@ any other. It is a native program: it takes the device in START, maps the
 register blocks, negotiates the features of §3.1, sets up the four queues of
 §3.2 and walks the control conversation of §3.3 until the port named
 `com.redhat.spice.0` is open. Then it binds a Unix socket at the abstract
-name **`\0ferrix.vport`** and answers only a peer whose `SO_PEERCRED` uid is
+name **`\0xaqu.vport`** and answers only a peer whose `SO_PEERCRED` uid is
 0, and everything
 that arrives on the port is written to whoever is connected and everything
 written there goes out on the port. It understands nothing of vdagent: it is
 a pipe with a device on one end.
 
 The name is abstract because of when the driver starts. Under
-`ferrix.devmgr=init` with a root volume (`docs/INIT.md` §7.3), `devmgr` and
+`xaqu.devmgr=init` with a root volume (`docs/INIT.md` §7.3), `devmgr` and
 its drivers start from the initramfs before `/` moves onto the volume, and
 only pid 1 is moved. Until 2026-09-27 the socket was the path `/tmp/vport`,
 bound in the initramfs's `/tmp`, and an agent started from the volume looked
@@ -322,7 +322,7 @@ agent is `std` and the driver is not.
 
 Copy and paste has to be reachable from a keyboard or it is not a feature a
 person has. the term app had **no clipboard code of any kind** when this was written --
-no `wl_data_device`, no paste -- so `CTRL`+`SHIFT`+`V` in a Ferrix terminal
+no `wl_data_device`, no paste -- so `CTRL`+`SHIFT`+`V` in a Xaqu terminal
 would do nothing even with every part above built and working. That was
 found by reading the term app's `src/client.rs` after a person tried exactly
 that key and nothing happened.
@@ -377,7 +377,7 @@ nothing from the kernel and are pure host-tested logic.
 | 8a | `--clipboard`: the device on the bus | `xtask` | landed |
 | 8b | starting the agent, and `test-clipboard` | `xtask` | landed |
 
-**Where it stands, 2026-09-27 (ferrix-e4).** The agent landed, and with it
+**Where it stands, 2026-09-27 (xaqu-e4).** The agent landed, and with it
 the clipboard works both ways through QEMU 10.2.1's `qemu-vdagent` and its
 VNC server: a VNC viewer's copy reaches `clip paste` in the guest, and a
 guest `clip copy` reaches the viewer. Talking to QEMU for the first time
@@ -441,7 +441,7 @@ it begins and when it reaches the second, and once more when the port
 speaks again. A viewer that attaches is joined within a second.
 
 The port that showed it is **`run-compositor --everything`'s own, and its
-clipboard does not work**: that desktop runs as the user `ferrix` through
+clipboard does not work**: that desktop runs as the user `xaqu` through
 `sessiond`, so its `exec-once = /bin/vdagent` is uid 1000, and `vport`
 answers only uid 0 (§6) and closes the agent as it connects. The back-off
 makes that quiet and cheap; it does not make it work. Who may hold the
@@ -455,7 +455,7 @@ the port and offers it on a Unix socket, and what is left is the two programs
 that speak vdagent over it and the gate that drives them. What is left needs no
 kernel, which is
 §5's whole point, and 8a is worth its place in the order after all: `test-boot --arch x86_64
---clipboard` reaches `FERRIX-BOOT-OK` with 9 PCI functions and 4 virtio
+--clipboard` reaches `XAQU-BOOT-OK` with 9 PCI functions and 4 virtio
 transports where a plain boot has 8 and 3, and `devmgr` starts the same two
 drivers and fails none. So the device is enumerated, a node is published for
 it, and nothing claims it -- which is exactly the state landing 6 begins
@@ -488,10 +488,10 @@ whose `-display help` offers only `none`, `spice-app` and `dbus`, and that is
 what made VNC the fallback (`tools/common/xtask/src/window.rs`). But there is a second
 QEMU on this host, built from source at
 `~/Documents/qemu/qemu/build`, and it has `gtk`, `egl-headless` and `curses`
-as well as the `qemu-vdagent` chardev. `FERRIX_QEMU` names it:
+as well as the `qemu-vdagent` chardev. `XAQU_QEMU` names it:
 
 ```text
-FERRIX_QEMU=~/Documents/qemu/qemu/build cargo xtask run --display --clipboard
+XAQU_QEMU=~/Documents/qemu/qemu/build cargo xtask run --display --clipboard
 ```
 
 That opens a real window whose clipboard is this host's, which is the whole

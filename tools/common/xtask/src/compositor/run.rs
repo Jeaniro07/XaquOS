@@ -92,7 +92,7 @@ fn everything_venus(arch: Arch, args: &mut Args) {
 /// Sets `args.config` to the file found, so the caller's own dotfile
 /// carrying (keyed off it) runs unchanged, and returns the file's text with
 /// one line appended: the real config's own binds are whatever the host's
-/// programs are (`$terminal = foot`, and the rest), and one Ferrix does not
+/// programs are (`$terminal = foot`, and the rest), and one Xaqu does not
 /// have fails quietly, as any missing `exec` does. `SUPER RETURN` is kept
 /// working regardless, appended rather than substituted, so a desktop that
 /// carries someone else's binds still opens a shell.
@@ -117,7 +117,7 @@ pub(super) fn everything_config(args: &mut Args) -> Result<Option<String>> {
     Ok(Some(format!(
         "{}\n# Appended by `cargo xtask run-compositor --everything`: the clipboard agent a \
          host's config has no line for, and a terminal always a key away even when the \
-         config's own $terminal is not one of Ferrix's programs.\n\
+         config's own $terminal is not one of Xaqu's programs.\n\
          exec-once = /bin/vdagent\n\
          bind = SUPER, RETURN, exec, /bin/term /bin/zinc\n",
         text.trim_end()
@@ -128,7 +128,7 @@ pub(super) fn everything_config(args: &mut Args) -> Result<Option<String>> {
 /// desktop, its keys, its dock and its sidebars, which a host's own config
 /// would keep out (it starts a bar of its own, and an own config takes a
 /// theme's look and not its keys). The host's config is `--theme none`'s,
-/// `--theme ferrix-light`'s, or `--config`'s.
+/// `--theme xaqu-light`'s, or `--config`'s.
 fn host_config(args: &mut Args) -> Result<Option<String>> {
     if matches!(
         super::theme::Theme::of(args)?,
@@ -146,7 +146,7 @@ fn host_config(args: &mut Args) -> Result<Option<String>> {
 /// name does not resolve and `ping` answers `bad address` for want of a
 /// route rather than for want of a resolver. Every boot check that uses the
 /// network takes a lease first, from its init script; a watched boot has no
-/// init script, so the client goes in as an `exec-once`. It is Ferrix's own,
+/// init script, so the client goes in as an `exec-once`. It is Xaqu's own,
 /// `dhcpc` (`crate::dhcp`), which every desktop image carries, and it applies
 /// the lease itself, over rtnetlink: no lease script, `ip` or `sed`.
 ///
@@ -313,7 +313,7 @@ pub(super) fn desktop_to_boot(args: &Args) -> Result<(Arch, PathBuf, PathBuf, Ar
     let config = match host_config(&mut args)? {
         // A terminal as the desktop starts, beside Chrome and Steam, as
         // `RUN_CONFIG`'s desktop has one; the host's own config names a
-        // terminal Ferrix may not have. Not in `everything_config`, which the
+        // terminal Xaqu may not have. Not in `everything_config`, which the
         // `everything-desktop` boot shares: its first window must be the one
         // its SUPER Q opens.
         Some(config) => format!(
@@ -425,11 +425,11 @@ pub(super) fn screen(arch: Arch, args: &Args) -> Result<Args> {
 
 /// The file `release-image` writes into `--stage`, and the name the
 /// release's run scripts boot (`tools/common/release/desktop/`).
-pub(crate) const RELEASE_IMAGE: &str = "ferrix-x86_64.img";
+pub(crate) const RELEASE_IMAGE: &str = "xaqu-x86_64.img";
 
 /// The file `release-image` writes beside [`RELEASE_IMAGE`]: the image's
 /// initramfs, for the licence inventory to read.
-const RELEASE_INITRAMFS: &str = "ferrix-x86_64.initrd";
+const RELEASE_INITRAMFS: &str = "xaqu-x86_64.initrd";
 
 /// `cargo xtask release-image --stage <DIR>`: the desktop `run-compositor`
 /// boots, as the one disk image a release carries for somebody who has QEMU
@@ -440,7 +440,7 @@ const RELEASE_INITRAMFS: &str = "ferrix-x86_64.initrd";
 /// nothing asked, less everything that would make the image this machine's
 /// rather than anybody's: the keyboard is `us` rather than this host's, the
 /// screen carries no EDID of this host's monitor, and the wallpaper is
-/// `ember`, Ferrix's own, never one of the pictures kept here, which are
+/// `ember`, Xaqu's own, never one of the pictures kept here, which are
 /// somebody else's art (`crate::wallpaper`). The release profile, with the
 /// kernel stripped, as `flash` writes one.
 ///
@@ -448,7 +448,7 @@ const RELEASE_INITRAMFS: &str = "ferrix-x86_64.initrd";
 /// archive's README says so: the rustc volume, a download of its own; the
 /// btrfs root and home disks, so `/` is in memory, as `--tmpfs-root` boots;
 /// and the disks only the self-checks read, which this image skips as every
-/// desktop does. The network is in it: the image runs `dhcpc`, Ferrix's own
+/// desktop does. The network is in it: the image runs `dhcpc`, Xaqu's own
 /// DHCP client (`crate::dhcp`), and the run scripts give QEMU's own user-mode
 /// network, which answers it as xtask's gateway does.
 ///
@@ -519,7 +519,7 @@ pub(crate) fn release_image(args: &Args) -> Result<()> {
         ))
     })?;
     println!("  release image {}", target.display());
-    // The image's initramfs, byte for byte as `FERRIX/INITRD.IMG` holds it:
+    // The image's initramfs, byte for byte as `XAQU/INITRD.IMG` holds it:
     // `tools/common/release/licences.py` reads every file in it and refuses
     // one it cannot name the licence of. Not part of the release's zip.
     let carried = stage.join(RELEASE_INITRAMFS);
@@ -535,7 +535,7 @@ const SERIAL_SHELL: &str = "/bin/busybox setsid -c /bin/busybox sh -i";
 
 /// nazuna's layout (`--nazuna-layout`): the kernel's console on the boot
 /// display, which is the emulated card's; `efifb` only when
-/// `FERRIX_NAZUNA_EFIFB` asks, since it would take card0 from nvrm's card
+/// `XAQU_NAZUNA_EFIFB` asks, since it would take card0 from nvrm's card
 /// (`crate::nvidia`'s `Layout::Nazuna`). Other boots keep `defaults`.
 fn nazuna_defaults(args: &Args, defaults: String) -> Result<String> {
     if !args.nazuna_layout {
@@ -546,33 +546,33 @@ fn nazuna_defaults(args: &Args, defaults: String) -> Result<String> {
             "--nazuna-layout is --nvidia's: the layout is the 3060 domain's",
         ));
     }
-    let efifb = std::env::var_os("FERRIX_NAZUNA_EFIFB").is_some();
+    let efifb = std::env::var_os("XAQU_NAZUNA_EFIFB").is_some();
     println!(
-        "  nazuna layout: boot display on an emulated card (VNC on 127.0.0.1), ferrix.fbcon{}",
-        if efifb { " ferrix.efifb" } else { ", no efifb" }
+        "  nazuna layout: boot display on an emulated card (VNC on 127.0.0.1), xaqu.fbcon{}",
+        if efifb { " xaqu.efifb" } else { ", no efifb" }
     );
     Ok(format!(
-        "{} ferrix.fbcon{}\n",
+        "{} xaqu.fbcon{}\n",
         defaults.trim_end(),
-        if efifb { " ferrix.efifb" } else { "" }
+        if efifb { " xaqu.efifb" } else { "" }
     ))
 }
 
 /// The command-line options a desktop's image carries, in the file the loader
-/// reads after the card owner's `CMDLINE.TXT` (`FERRIX/DEFAULTS.TXT`).
+/// reads after the card owner's `CMDLINE.TXT` (`XAQU/DEFAULTS.TXT`).
 ///
-/// `ferrix.checks=skip`: every stage is brought up and none of its self-checks
+/// `xaqu.checks=skip`: every stage is brought up and none of its self-checks
 /// run (`src/kernel/src/checks.rs`). They were most of the DK1's 6.5 s from the
 /// kernel's banner to its marker on 2026-09-24, and a desktop somebody
 /// switches on is not a boot test; the rows that are boot tests never carry
-/// this file, and a boot waited on for `FERRIX-BOOT-OK` that skipped them
-/// fails. A card's `CMDLINE.TXT` saying `ferrix.checks=run` runs them anyway.
-pub(crate) const DESKTOP_DEFAULTS: &str = "ferrix.checks=skip\n";
+/// this file, and a boot waited on for `XAQU-BOOT-OK` that skipped them
+/// fails. A card's `CMDLINE.TXT` saying `xaqu.checks=run` runs them anyway.
+pub(crate) const DESKTOP_DEFAULTS: &str = "xaqu.checks=skip\n";
 
 /// [`DESKTOP_DEFAULTS`] on a card, which also names `/sbin/init`: a QEMU
 /// image says so in its `CMDLINE.TXT`, and a card's `CMDLINE.TXT` is its
 /// owner's.
-const DESKTOP_BOARD_DEFAULTS: &str = "ferrix.checks=skip ferrix.init=/sbin/init\n";
+const DESKTOP_BOARD_DEFAULTS: &str = "xaqu.checks=skip xaqu.init=/sbin/init\n";
 
 /// The screen a board's HDMI output runs: the DK1's LTDC scans out 720p60
 /// and nothing else (`docs/DISPLAY.md` §6).
@@ -588,7 +588,7 @@ const BOARD_LAYOUT: &str = "input:kb_layout = de\n";
 /// boots -- the compositor as init, its clients, `hyprctl`, a shell -- as the
 /// loader, the kernel and the initramfs `flash` copies.
 ///
-/// No network, since the board has none Ferrix drives. A wallpaper as
+/// No network, since the board has none Xaqu drives. A wallpaper as
 /// `run-compositor` has one, but still unless one that moves is named, and
 /// cut for the screen as the desktop lays it out (`laid_out`): a still
 /// picture of the screen's own size is copied once and costs a frame
@@ -609,7 +609,7 @@ pub(crate) fn board_files(arch: Arch, args: &Args) -> Result<crate::flash::Board
     };
     let config = match (&host, args.session) {
         // A session's desktop is a person's own configuration, which names
-        // a terminal Ferrix may not have: one always a key away, and one to
+        // a terminal Xaqu may not have: one always a key away, and one to
         // start with, as `run-compositor --everything` adds.
         (Some(host), true) => format!(
             "{}\n# Appended by `cargo xtask flash --compositor --session`: a shell to start \
@@ -632,7 +632,7 @@ pub(crate) fn board_files(arch: Arch, args: &Args) -> Result<crate::flash::Board
     let init = args
         .init
         .clone()
-        .or_else(|| std::env::var("FERRIX_INIT").ok())
+        .or_else(|| std::env::var("XAQU_INIT").ok())
         .or_else(|| gates_busybox(arch));
     let args = &Args {
         net: false,

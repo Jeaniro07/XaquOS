@@ -11,9 +11,9 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::format::bytes_text;
-use ferrix_lode_core::limit;
-use ferrix_lode_core::segment;
+use xaqu_lode_core::format::bytes_text;
+use xaqu_lode_core::limit;
+use xaqu_lode_core::segment;
 
 use crate::cli::{self, Known, Options, complain, out};
 use crate::{sys, zone};
@@ -252,7 +252,7 @@ fn rates(options: &Options, source: &cli::Source, rows: usize, seconds: u64) -> 
 /// `14:01:02`, the reader's local time.
 fn stamp(realtime_us: u64) -> String {
     let zone = zone::reader();
-    let when = ferrix_lode_core::time::Civil::at(realtime_us, zone.offset_at(realtime_us));
+    let when = xaqu_lode_core::time::Civil::at(realtime_us, zone.offset_at(realtime_us));
     alloc::format!("{:02}:{:02}:{:02}", when.hour, when.minute, when.second)
 }
 

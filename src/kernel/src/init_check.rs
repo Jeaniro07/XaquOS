@@ -54,8 +54,8 @@ fn judged(entries: &[InputEntry<'static>]) -> (Inputs<'static>, u32) {
 /// Verifies: L.init.2, L.init.3, H.BOOT.15
 pub fn check() -> Result<CheckReport, &'static str> {
     const DIRS: [InputEntry<'static>; 2] = [
-        made_up(b".ferrix", false, true, 2, b""),
-        made_up(b".ferrix/init", false, true, 2, b""),
+        made_up(b".xaqu", false, true, 2, b""),
+        made_up(b".xaqu/init", false, true, 2, b""),
     ];
     let program = made_up(PROGRAM_INPUT, true, false, 1, b"P");
     let script = made_up(SCRIPT_INPUT, true, false, 1, b"S");
@@ -93,7 +93,7 @@ pub fn check() -> Result<CheckReport, &'static str> {
         ),
         (
             &[
-                made_up(b".ferrix/init/other", true, false, 1, b"x"),
+                made_up(b".xaqu/init/other", true, false, 1, b"x"),
                 program,
             ],
             b"P",
@@ -102,7 +102,7 @@ pub fn check() -> Result<CheckReport, &'static str> {
             1,
         ),
         (
-            &[made_up(b".ferrix/init", true, false, 1, b"x"), script],
+            &[made_up(b".xaqu/init", true, false, 1, b"x"), script],
             b"",
             b"S",
             b"",

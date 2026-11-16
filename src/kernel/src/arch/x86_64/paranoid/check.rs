@@ -17,14 +17,14 @@
 
 #![cfg(target_arch = "x86_64")]
 
-use ferrix_kernel_core::arch::x86_64 as core_x86_64;
-use ferrix_kernel_core::arch::x86_64::paranoid as core_paranoid;
+use xaqu_kernel_core::arch::x86_64 as core_x86_64;
+use xaqu_kernel_core::arch::x86_64::paranoid as core_paranoid;
 
 use core::hint::spin_loop;
 use core::sync::atomic::Ordering;
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_sync::IrqControl;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sync::IrqControl;
 
 use crate::console::println;
 use crate::sync::SpinLock;
@@ -53,7 +53,7 @@ fn hits(slot: usize) -> u64 {
 unsafe extern "C" {
     /// The trampoline's `sysretq`, after the `swapgs` back, still on the
     /// program's stack.
-    static ferrix_syscall_sysret: [u8; 0];
+    static xaqu_syscall_sysret: [u8; 0];
 }
 
 /// How long the system call window check may take, program and all.
@@ -278,7 +278,7 @@ fn run_with_window_breakpoints(cpu: usize) -> Result<i32, &'static str> {
     use crate::syscall::exec::{Executable, load_executable};
 
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_x86_64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         if WINDOW_HIGH_GS.load(Ordering::Acquire) {
@@ -298,7 +298,7 @@ fn run_with_window_breakpoints(cpu: usize) -> Result<i32, &'static str> {
         program,
         &[b"/window"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the system call window program could not be loaded")?;
 
@@ -307,7 +307,7 @@ fn run_with_window_breakpoints(cpu: usize) -> Result<i32, &'static str> {
     // a second, of another type, is renamed `.1` by the release profile's link
     // and left undefined.
     let entry = core_x86_64::syscall::stub_address();
-    let sysret = (&raw const ferrix_syscall_sysret) as u64;
+    let sysret = (&raw const xaqu_syscall_sysret) as u64;
     // SAFETY: (PROBE) an instruction of the trampoline, not in the paranoid entry nor
     // on an IST stack, which is what a `#DB` there needs; unarmed until DR7.
     unsafe { cpu::write_breakpoint_address(0, entry) };
@@ -358,7 +358,7 @@ fn check_nmi_in_a_program() -> Result<Option<u64>, &'static str> {
         return Ok(None);
     };
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_x86_64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         SPIN_PROGRAM,
@@ -374,7 +374,7 @@ fn check_nmi_in_a_program() -> Result<Option<u64>, &'static str> {
         program,
         &[b"/nmi-spin"],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the NMI check's program could not be loaded")?;
     let before = USER_NMIS.load(Ordering::Relaxed);

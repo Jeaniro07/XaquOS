@@ -67,7 +67,7 @@ pub(crate) const TASKS: &[Task] = &[
         name: "test-mce-cmci-off",
         help_at: 252,
         help: &[
-            "test-mce-cmci-off  ferrix.mce.cmci=off: nothing claimed, no line before the poll's hour",
+            "test-mce-cmci-off  xaqu.mce.cmci=off: nothing claimed, no line before the poll's hour",
         ],
         run: |_, args| test_cmci(args, Mode::Off),
     },
@@ -92,7 +92,7 @@ enum Mode {
     Storm,
     /// A second record while the first round holds the masked window open.
     Window,
-    /// `ferrix.mce.cmci=off`: no line within the patience.
+    /// `xaqu.mce.cmci=off`: no line within the patience.
     Off,
     /// No `cmci=on`: not offered.
     Unoffered,
@@ -102,9 +102,9 @@ impl Mode {
     /// The kernel options the mode boots with.
     const fn options(self) -> &'static str {
         match self {
-            Mode::Off => "ferrix.mce.poll=3600 ferrix.mce.cmci=off nokaslr\n",
-            Mode::Window => "ferrix.mce.poll=3600 ferrix.mce.cmci-window=3 nokaslr\n",
-            _ => "ferrix.mce.poll=3600 nokaslr\n",
+            Mode::Off => "xaqu.mce.poll=3600 xaqu.mce.cmci=off nokaslr\n",
+            Mode::Window => "xaqu.mce.poll=3600 xaqu.mce.cmci-window=3 nokaslr\n",
+            _ => "xaqu.mce.poll=3600 nokaslr\n",
         }
     }
 
@@ -364,9 +364,9 @@ fn claimed(lines: &[String], cpu: usize) -> Option<u64> {
     })
 }
 
-/// A field of `/proc/ferrix-mce`'s last `cmci<cpu>` line.
+/// A field of `/proc/xaqu-mce`'s last `cmci<cpu>` line.
 fn cmci_field(lines: &[String], cpu: usize, field: &str) -> Option<u64> {
-    let want = format!("/proc/ferrix-mce: cmci{cpu} ");
+    let want = format!("/proc/xaqu-mce: cmci{cpu} ");
     let line = lines.iter().rfind(|line| line.contains(&want))?;
     let mut words = line.split_whitespace();
     let _ = words.find(|&word| word == field)?;
@@ -390,7 +390,7 @@ fn judge(mode: Mode, lines: &[String], at_once: bool) -> std::result::Result<(),
     match mode {
         Mode::Off | Mode::Unoffered => {
             let why = if mode == Mode::Off {
-                "mce: ferrix.mce.cmci=off"
+                "mce: xaqu.mce.cmci=off"
             } else {
                 "mce: cmci not offered"
             };
@@ -445,7 +445,7 @@ fn judge(mode: Mode, lines: &[String], at_once: bool) -> std::result::Result<(),
                 ));
             }
             if interrupts < 1 {
-                return Err(format!("/proc/ferrix-mce counted no CMCI on cpu {CPU}"));
+                return Err(format!("/proc/xaqu-mce counted no CMCI on cpu {CPU}"));
             }
         }
         Mode::Ucna => {
@@ -479,11 +479,11 @@ echo 0 > $cpu/cpu1/online
 say "out $? online $(busybox cat $cpu/online)"
 say parked
 busybox sleep 8
-say "service $(busybox grep '^cpu1 ' /proc/ferrix-service)"
+say "service $(busybox grep '^cpu1 ' /proc/xaqu-service)"
 echo 1 > $cpu/cpu1/online
 say "back $?"
 busybox sleep 10
-busybox sed 's/^/cmci-parked: /' /proc/ferrix-mce
+busybox sed 's/^/cmci-parked: /' /proc/xaqu-mce
 say done
 "#;
 
@@ -518,7 +518,7 @@ fn test_parked(args: &Args) -> Result<()> {
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &files)?;
     let options = format!(
-        "{} ferrix.mce.poll=3600\n",
+        "{} xaqu.mce.poll=3600\n",
         crate::init::command_line().trim_end()
     );
     let image = crate::fat::write_image_with(arch, &loader, &kernel, &archive, Some(&options))?;
@@ -613,7 +613,7 @@ fn judge_parked(lines: &[String], at_once: bool) -> std::result::Result<(), Stri
     let want = format!("cmci-parked: cmci{CPU} interrupts 1 held 1 ");
     if !has(&want) {
         return Err(format!(
-            "/proc/ferrix-mce did not count one CMCI on cpu {CPU}, held for its return"
+            "/proc/xaqu-mce did not count one CMCI on cpu {CPU}, held for its return"
         ));
     }
     Ok(())

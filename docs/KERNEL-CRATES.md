@@ -1,7 +1,7 @@
 # The kernel in four crates
 
 **Design for review, 2026-10-15 (bs-a).** The kernel is one crate of 237k
-lines, `ferrix-kernel`. Whatever file a kernel edit touches, rustc re-hashes
+lines, `xaqu-kernel`. Whatever file a kernel edit touches, rustc re-hashes
 the whole crate, writes its whole incremental state again (178 MB of dep
 graph and 100 MB of query cache) and runs clippy's lint pass over all of it.
 After the dev profile lost its full DWARF and its crate-local ThinLTO (cuts C1
@@ -11,7 +11,7 @@ crate along the certified item's rings, so that an edit recompiles only its
 ring's crate and those above it.
 
 The certification consultant reviewed the shape on 2026-10-15: **OK IF (1) to
-(12)**, ledger line 1477 of `~/.local/share/ferrix/cert-consultant/reviews.md`,
+(12)**, ledger line 1477 of `~/.local/share/xaqu/cert-consultant/reviews.md`,
 with (1) to (4) to be answered here before any code. §3 answers them; §4 is
 the plan for (5) to (12).
 
@@ -19,10 +19,10 @@ the plan for (5) to (12).
 
 | Package | Crate root | What it holds | Depends on |
 |---|---|---|---|
-| `ferrix-kernel-core` | `src/kernel/src/kernel_core.rs` | the core ring's files (104k lines) | the libraries it uses today |
-| `ferrix-kernel-item` | `src/kernel/src/kernel_item.rs` | the item ring's files but `main.rs` (14k lines) | core |
-| `ferrix-kernel-load` | `src/kernel/src/kernel_load.rs` | the load ring's files (122k lines), and the check files of §3 (3) | core, item |
-| `ferrix-kernel` (the binary) | `src/kernel/src/main.rs` | the composition root, as today, and `stages_check.rs` | core, item, load |
+| `xaqu-kernel-core` | `src/kernel/src/kernel_core.rs` | the core ring's files (104k lines) | the libraries it uses today |
+| `xaqu-kernel-item` | `src/kernel/src/kernel_item.rs` | the item ring's files but `main.rs` (14k lines) | core |
+| `xaqu-kernel-load` | `src/kernel/src/kernel_load.rs` | the load ring's files (122k lines), and the check files of §3 (3) | core, item |
+| `xaqu-kernel` (the binary) | `src/kernel/src/main.rs` | the composition root, as today, and `stages_check.rs` | core, item, load |
 
 **Every source file stays where it is.** The rings are keyed by path, so are
 the traceability anchors (`path::function` under `src/kernel/src`), the
@@ -35,12 +35,12 @@ root with Cargo's `[lib] path` (a manifest key, not a `#[path]` attribute).
 and the one `env!` is in `main.rs`.
 
 **`crate::` paths keep working.** Each upper root re-exports the lower crates'
-top-level modules (`pub use ferrix_kernel_core::{arch, mm, object, ...}`), so a
+top-level modules (`pub use xaqu_kernel_core::{arch, mm, object, ...}`), so a
 load file's `crate::mm::zero_frame` names the same function it names today.
 Only the files that declare modules change (§3 (1)), plus visibility (§3 (4)).
 
 **What an edit then costs** (estimates; measured per step, §4): an edit in the
-load ring, where most feature work lands, recompiles `ferrix-kernel-load`
+load ring, where most feature work lands, recompiles `xaqu-kernel-load`
 (about half of today's crate) and the small binary; an item edit about 57% of
 today; a core edit all four crates, each incrementally, about today's cost. The
 kernel clippy pass after a load edit lints the load crate and the binary only.
@@ -50,7 +50,7 @@ its own unit against the core's and item's interface.
 ## 2. The facts it rests on
 
 Measured on `main` f61906141 with the item-boundary gate's own classifier and
-resolver (`~/ferrix-logs/bs-a/split/closure.py` and `surface.py`):
+resolver (`~/xaqu-logs/bs-a/split/closure.py` and `surface.py`):
 
 * **No product file reaches upward.** `known_violations` is empty: no core
   product file names the item or the load, and no item product file names
@@ -101,17 +101,17 @@ None is used. Every module is found by position:
   `src/kernel/src/mm.rs` or `mm/mod.rs`, as `main.rs`'s is today.
 * A directory whose files belong to two rings is declared in each crate that
   owns some of it with an **inline module**, which also resolves by position:
-  `kernel_load.rs` writes `pub mod syscall { pub use ferrix_kernel_item::syscall::*; pub mod eventfd; ... }`,
+  `kernel_load.rs` writes `pub mod syscall { pub use xaqu_kernel_item::syscall::*; pub mod eventfd; ... }`,
   and `syscall/eventfd.rs` is found where it is. `main.rs` already declares
   `platform` this way. The mixed directories are the crate root's own (19
   core and 9 item files), `discovery/` (`mod.rs` item; six core children, two
   item), `syscall/` (`mod.rs` item; 52 load children, five item, one core:
   `uaccess.rs`) and `platform/` (core and load). Their `mod.rs` files stop
   declaring the children another crate owns and re-export them instead
-  (`pub use ferrix_kernel_core::discovery::acpi;`), so `crate::discovery::acpi`
+  (`pub use xaqu_kernel_core::discovery::acpi;`), so `crate::discovery::acpi`
   still names one module.
 * A raised check file is declared the same way by the crate that holds it:
-  `kernel_load.rs` writes `pub mod object { pub use ferrix_kernel_core::object::*; pub mod check; ... }`,
+  `kernel_load.rs` writes `pub mod object { pub use xaqu_kernel_core::object::*; pub mod check; ... }`,
   and the core's `object/mod.rs` no longer declares `mod check;`.
 
 `check-item-boundary.py` keeps refusing both attributes, unchanged.
@@ -157,7 +157,7 @@ starts at the files above and nothing product is raised:
   * `apic/check.rs` and `iommu/check.rs`'s bring-up hooks name the item only
     for `crate::checks::run()`. The flag moves down: the core keeps it
     (`SKIPPED` and `run()` move to a core module), and the item's
-    `checks::init` still parses `ferrix.checks` and sets it, a downward call
+    `checks::init` still parses `xaqu.checks` and sets it, a downward call
     as `sched::work::set_auditing` is today. `apic/check.rs` then needs nothing
     above the core and stays there whole.
   * `iommu/check.rs` is **split in two files**: what a bring-up calls
@@ -231,14 +231,14 @@ Each step is a branch of its own with before and after figures, gated through
 * **S2, the tools learn four roots**, failing closed, before any code moves:
   `check-item-boundary.py` (four roots, (2), (3), the checks-only rule),
   `check-ferrocene-rust.py`'s package list, the kernel clippy step
-  (`-p ferrix-kernel` and the three libraries, with a control that a lint in
+  (`-p xaqu-kernel` and the three libraries, with a control that a lint in
   a core file fires), `check-crate-layering.sh` ((5): the core may depend on
   none of the other three, the item not on the load or the binary,
-  `ferrix-boot` and every user crate on none of the four, with a
+  `xaqu-boot` and every user crate on none of the four, with a
   `gate.sh control` that adds an item dependency to the core's manifest),
   `gate_rows.rs`'s `image_crates`, `gen-soup.py`, `workspace.rs`, and
-  `decision-coverage.py`'s guard symbols (`ferrix_kernel::panic::explain`,
-  `ferrix_kernel::trap::fatal` become `ferrix_kernel_core::`; the script fails
+  `decision-coverage.py`'s guard symbols (`xaqu_kernel::panic::explain`,
+  `xaqu_kernel::trap::fatal` become `xaqu_kernel_core::`; the script fails
   when it finds no guard symbol at all). Each learns the new names while the
   old crate still exists, so its control can run on today's tree.
 * **S3, the split.** The roots, the manifests, the inline modules, the
@@ -250,7 +250,7 @@ Each step is a branch of its own with before and after figures, gated through
   architecture document and model), the SysML kernel structure, the SOUP list,
   `certification-item.json`'s `composition_root` and `crates` text, `ITEM.md`
   §2, `MICROKERNEL.md` M5, `docs/RELIABILITY.md` and the symbolizer's tests,
-  which quote `ferrix_kernel::` names. Coverage, (9): the debug build changes
+  which quote `xaqu_kernel::` names. Coverage, (9): the debug build changes
   as proposal 2's did -- with the coverage profile's crate-local ThinLTO now
   local to each crate, it no longer inlines across them -- so the coverage
   profile is re-measured on three architectures (the Arm QEMU row the
@@ -309,17 +309,17 @@ review and the regenerated evidence), S4 1.
   CHECKS-ONLY marker: a marker the gate cannot place (no item after it, or
   inside braces: an inline module, an `impl`) fails the gate; the
   upward-reference rule is shown refusing a core file and an item file that
-  name `ferrix_kernel_load::...` (the gate now also reads a path from the
-  crates' root, `::ferrix_kernel_load::fs`, which it used to skip); and
+  name `xaqu_kernel_load::...` (the gate now also reads a path from the
+  crates' root, `::xaqu_kernel_load::fs`, which it used to skip); and
   `check-crate-layering.sh` fails when a crate `kernel_crates` lists is not
   in the workspace instead of passing over its rules.
 * **Where the raised architecture checks get their `cfg`** (ledger line
   1579): shape A, no exception to the layering rule. `kernel_load.rs`
   declares the positions without a conditional and without per-architecture
-  re-exports (`pub mod arch { pub use ferrix_kernel_core::arch::*; pub mod
+  re-exports (`pub mod arch { pub use xaqu_kernel_core::arch::*; pub mod
   x86_64 { pub mod trap { pub mod check; } ... } ... }`); each raised
   architecture check starts with `#![cfg(target_arch = "...")]` and reaches
-  the core through `ferrix_kernel_core::arch::<isa>::...`, a mechanical edit
+  the core through `xaqu_kernel_core::arch::<isa>::...`, a mechanical edit
   S3 lists. An exception in `check-crate-layering.sh` for crate roots (shape
   B, conditions B1 to B5) only if shape A does not compile, with the error in
   the S3 commit.
@@ -329,7 +329,7 @@ review and the regenerated evidence), S4 1.
   (S3.1)-(S3.8), ledger 1777 and 1795, S3.2a/b built, then stopped mid-rebase
   on 2026-10-15 (WIP 166cdb0e5 does not build), 440 commits behind with 83
   of its kernel files moved on `main`. It is not rebased; it is redone with
-  its scripts in `~/ferrix-logs/bs-a/s3b/`. A dry run on `main` with
+  its scripts in `~/xaqu-logs/bs-a/s3b/`. A dry run on `main` with
   `linux_abi` (a copy of `split.py` and `crates.py`, nothing kept) shows the
   recipe still works: `crates.py` maps 154 core, 20 item, 198 load files
   (was 138, 13, 193); `split.py` writes the three roots, and the core crate
@@ -338,7 +338,7 @@ review and the regenerated evidence), S4 1.
   `arch/x86_64/framebuffer/check`). **New since S3, and a design question
   for the consultant first:** the build flags are now `cargo::rustc-cfg`
   from the kernel crate's build script alone (M0, BUILD-FLAGS rule 6 b),
-  and 18 core files and 2 item files read a `ferrix_` cfg (the
+  and 18 core files and 2 item files read a `xaqu_` cfg (the
   speculation, checks and `linux_abi` cfgs). Each of the three library
   crates needs the same flags, so the flag emission becomes one build
   script shared by the four kernel crates (the dry run used one, it
@@ -393,8 +393,8 @@ named before; an item `mod.rs` re-exports only core children
 declares `arch::{x86_64,aarch64,armv7a}::{trap,switch,paranoid}::check`
 with no `cfg` and no re-export of an architecture's module; each of those
 files starts with `#![cfg(target_arch = "..")]` and names the core through
-`use ferrix_kernel_core::arch::<isa> as core_<isa>;` and
-`use ferrix_kernel_core::arch::<isa>::<parent> as core_<parent>;`, its
+`use xaqu_kernel_core::arch::<isa> as core_<isa>;` and
+`use xaqu_kernel_core::arch::<isa>::<parent> as core_<parent>;`, its
 `super::super::` and `super::` paths edited to those names (the listed
 mechanical edits; doc comments that only mention `super::` kept). It
 compiled; no exception to the layering rule was needed. The drivers of the
@@ -409,7 +409,7 @@ Q2). The core's `arch/mod.rs`, `aarch64/mod.rs`, `armv7a/mod.rs` and
 2,609 declarations are now, 2,362 of them `pub(crate)` before and 37
 `pub(super)`, the rest private items the crates above use, the roots'
 module lines and the re-export lines a split `use` list gained. Each was
-raised by `~/ferrix-logs/bs-a/s3b/raise.py`, which reads one crate's
+raised by `~/xaqu-logs/bs-a/s3b/raise.py`, which reads one crate's
 `cargo check` errors (E0603, E0624, E0616, E0451, E0364, E0365, the
 private-type error and unresolved paths through a crate below), raises the
 declaration the error names -- for a `use` list only the names asked for,
@@ -490,7 +490,7 @@ are the same; TRACEABILITY.md's statuses are main's, but for the accessor count 
 923, the seven accessors) and x86-64's re-measure below; the four boots' lines are the same but for the
 two that vary from boot to boot (the thread hand-off's wording, the seam
 trip's figures). The coverage evidence was carried with the line matching
-blind to visibility (`~/ferrix-logs/bs-a/s3b/carry_vis.py`), and every
+blind to visibility (`~/xaqu-logs/bs-a/s3b/carry_vis.py`), and every
 carried line checked to stay in its function (`span_check.py`, F-75).
 
 **Release performance** (line 1477 (10)): the IPC round trip on x86-64
@@ -509,7 +509,7 @@ measurement, with the statement-level comparison in
 ### 5.1 The redo on `main` (2026-10-23)
 
 `bs-a-s3b` stopped mid-rebase on 2026-10-15, 440 commits behind; the split
-was redone on `main` 3a4a45e88 with its scripts (`~/ferrix-logs/bs-a/s3b/`:
+was redone on `main` 3a4a45e88 with its scripts (`~/xaqu-logs/bs-a/s3b/`:
 `crates.py`, `split.py`, the raise loop `raise.py`, `carry_vis.py`,
 `span_check.py`, `mkregister.py`), the tools commits of `bs-a-s3b` applied
 three-way, and what `main` had grown since handled by the rulings below.
@@ -538,7 +538,7 @@ policy or an accessor.
 * **One build script for the four crates** (ledger line 3282, (K1), (K2)).
   Since M0 the build flags are `cargo::rustc-cfg` from the kernel's build
   script, which reaches its own crate alone, and 18 core and 2 item files
-  read a `ferrix_` cfg. `src/kernel/{core,item,load}/Cargo.toml` say
+  read a `xaqu_` cfg. `src/kernel/{core,item,load}/Cargo.toml` say
   `build = "../build.rs"`; `build.rs` makes the flags every kernel crate's
   `cfg`s, refuses any other package, and emits the link arguments and the
   link script's rerun for the binary alone. `check-item-boundary.py`'s
@@ -603,14 +603,14 @@ policy or an accessor.
   `core_x86_64`; `object/check.rs` reaches it by one name through
   `arch/stage_check.rs`, which holds the Arm no-op that `arch/mod.rs` held.
 * **The `linux_abi=off` allow in each crate root**: the three library roots
-  carry the binary's `cfg_attr(ferrix_linux_abi = "off", allow(..))` with
+  carry the binary's `cfg_attr(xaqu_linux_abi = "off", allow(..))` with
   its reason, since each crate is now compiled with the flag (3257 (3)).
 * **Checks-only accessors** beside S3's (`node_bars`, `node_msi`,
   `node_msix`, `node_writable`, `node_dma_on`, `node_refused`, `set_wait`,
   taken from `bs-a-s3b`): `Domain::id` and `Domain::detach_translation` for
   the raised `iommu/domain_check.rs`, which since S3 reads them.
 
-**The `linux_abi` cfgs** (3282 (K5)): every `cfg(ferrix_linux_abi = ..)` on
+**The `linux_abi` cfgs** (3282 (K5)): every `cfg(xaqu_linux_abi = ..)` on
 a module declaration moved with its declaration into the crate root that
 now declares it (`split.py` carries a declaration's attributes): the load
 root holds 82, those of the Linux personality's modules of `syscall` (load
@@ -619,14 +619,14 @@ declares now), of `fs`, `net`, `interfaces`, `service_check`, `stage_check`
 and of every raised check; the statements' cfgs in `main.rs` are unchanged
 (41, the three that declared `fs`, `net` and `interfaces` being the load
 root's now); the ones on `smp/check.rs`, x86-64's wrappers and `arch/mod.rs`
-are removed as above. Counted over every `ferrix_linux_abi` site in
-`src/kernel` (`~/ferrix-logs/kernel-split-s3/linux-abi-cfgs.txt`, by
+are removed as above. Counted over every `xaqu_linux_abi` site in
+`src/kernel` (`~/xaqu-logs/kernel-split-s3/linux-abi-cfgs.txt`, by
 `abi_cfgs.py` beside it, against `develop` 92b8fbd17): 148 there, 141 here.
 14 are removed: the six on the x87 and machine-check checks' path (above),
 the six per-architecture `drive_*` re-exports that the load root's one line
 replaces, and two `expect(clippy::unnecessary_wraps)` on the Arm check
 wrappers that no longer apply. 7 are new: that load-root line, `main.rs`'s
-`use ferrix_linux_abi as _`, the `off` allow in the three library roots and
+`use xaqu_linux_abi as _`, the `off` allow in the three library roots and
 the flag word's two `cfg!`. Every other one sits on the same declaration as
 before; the core's and the item's roots declare no `linux_abi`-gated
 module, so the `linux_abi=off` cut is the load root's and the binary's
@@ -687,7 +687,7 @@ boot line of the same shape on all three architectures and the build line
 equal. x86-64's process cost line, `develop` against the split, ms per
 check: `handlers` 666 / 659, `fork` 269 / 272, `signals` 49 / 68,
 `execve` 35 / 35, `futex` 1,185 / 1,186; the AArch64 and ARMv7-A lines move
-by as much either way (`~/ferrix-logs/kernel-split-s3/bootcmp-release.txt`).
+by as much either way (`~/xaqu-logs/kernel-split-s3/bootcmp-release.txt`).
 One boot under a shared host's load, within its noise. The GOT counts are
 in `docs/certification/SPECULATION.md` §8: the release kernel makes 5,524
 calls through it against 5,544, the debug kernel 77,756 against 35,413.
@@ -724,10 +724,10 @@ loads the plugin (`docs/backlog/p2.md`).
 **Built 2026-10-24 (settings-crate).** The certification consultant's
 rulings: ledger line 3558 (run-time settings per profile, (5) to (14)),
 amended by 3595 (crash capture its own feature, `crash_capture`, crate
-`ferrix-kernel-crash`); 3564 (fast's signed configuration, a later
+`xaqu-kernel-crash`); 3564 (fast's signed configuration, a later
 `config_updates` key, not built); and this design's review, **OK IF
 (R1)-(R21), ledger line 3623**. This section is the pattern both crates
-follow, and the first one, `ferrix-kernel-settings`, built with it.
+follow, and the first one, `xaqu-kernel-settings`, built with it.
 `BUILD-FLAGS.md` §3 has the flag and the image key, §5.1 the image
 manifest.
 
@@ -739,7 +739,7 @@ value that means "this code is absent" (3558 (5), Q2: absent code is
 neither dead nor deactivated, DO-178C §6.4.4.3c/d) is realised, and the
 flag is the configuration record of it (3558 addendum (a)).
 
-1. **The crate depends on `ferrix-kernel-load`, never the reverse** (and
+1. **The crate depends on `xaqu-kernel-load`, never the reverse** (and
    on the core, for the flag word). No kernel crate but the binary lists
    it, and only the binary's root names it (3558 (9)). Its root is
    `src/kernel/src/kernel_<name>.rs`, its files under
@@ -753,7 +753,7 @@ flag is the configuration record of it (3558 addendum (a)).
 2. **Load defines one small typed interface**: a trait, generated with
    everything its binding needs by `seam!` (`seam.rs`) from one list in a
    load file of its own (`setters.rs`: trait `Setters`, twelve entries, each
-   a name, its symbol `__ferrix_setters_<entry>` and its signature), with the
+   a name, its symbol `__xaqu_setters_<entry>` and its signature), with the
    load's implementation `Absent` beside it, written against the trait. The
    load's call sites call the module's function of an entry,
    `setters::<entry>(..)`, whose one `unsafe` block calls the symbol; the
@@ -761,10 +761,10 @@ flag is the configuration record of it (3558 addendum (a)).
    macro (§6.3, ledger 3934).
 3. **The composition root binds it** (`main.rs`), once, statically:
    ```rust
-   #[cfg(all(ferrix_linux_abi = "on", ferrix_runtime_settings = "live"))]
-   ferrix_kernel_load::bind_setters!(ferrix_kernel_settings::Live);
-   #[cfg(all(ferrix_linux_abi = "on", ferrix_runtime_settings = "fixed"))]
-   ferrix_kernel_load::bind_setters!(setters::Absent);
+   #[cfg(all(xaqu_linux_abi = "on", xaqu_runtime_settings = "live"))]
+   xaqu_kernel_load::bind_setters!(xaqu_kernel_settings::Live);
+   #[cfg(all(xaqu_linux_abi = "on", xaqu_runtime_settings = "fixed"))]
+   xaqu_kernel_load::bind_setters!(setters::Absent);
    ```
    Each invocation defines every symbol as a `#[unsafe(no_mangle)]`,
    out-of-line Rust-ABI function calling its type's implementation, from the
@@ -772,10 +772,10 @@ flag is the configuration record of it (3558 addendum (a)).
    run-time registration: a root with no invocation leaves the symbols
    undefined and one with two defines them twice, and neither links -- the
    registration check is the linker's, which closes ledger 3762 (2). The
-   crate's flag-word assert is under `cfg(ferrix_runtime_settings = "live")`
+   crate's flag-word assert is under `cfg(xaqu_runtime_settings = "live")`
    too. Under `fixed` the binary names the crate nowhere, so rustc never
    loads it and the linker never sees it; the crate-level
-   `#![cfg_attr(ferrix_runtime_settings = "fixed",
+   `#![cfg_attr(xaqu_runtime_settings = "fixed",
    expect(unused_crate_dependencies, ..))]` is the one lint attribute that
    build needs (3623 (R3)): `expect` is fulfilled there, and `live` builds
    keep the lint under `-D warnings`.
@@ -785,14 +785,14 @@ flag is the configuration record of it (3558 addendum (a)).
    `seam_symbols`, `calls` (the load files calling through the interface),
    `lint_expect`, `symbol` and `absent_symbols` (the load's mechanisms only
    the crate calls).
-   `ferrix-kernel-crash` adds its own entry (`crash_capture`, `hold`, its
+   `xaqu-kernel-crash` adds its own entry (`crash_capture`, `hold`, its
    `CrashHook`, ...) and a line in xtask's `REMOVABLE`, and no new check code.
 5. **The checks are generic over that record** (3558 (11), 3595 (C4)):
    * `check-item-boundary.py`'s `removable_problems` (eleven self-test
      cases): the crate depends on the load and only the binary on it, the
      binary's manifest lists it; no kernel file but the root names it; the
      crate exports nothing a link would keep; every reference to it in the
-     root sits under `cfg(ferrix_<flag> = "<present_when>")`; the
+     root sits under `cfg(xaqu_<flag> = "<present_when>")`; the
      `lint_expect` attribute is there; each value of the flag has exactly
      one invocation of the binding macro, of the recorded type; the seam's
      list has exactly the recorded entries and symbols; only `Absent` in
@@ -801,8 +801,8 @@ flag is the configuration record of it (3558 addendum (a)).
      buildable or not, is refused if its value is not `present_when` and
      its binary would name the crate, or if it is and would not. And
      `seam_scan_problems` (four self-test cases) over every Rust file of
-     every path crate `ferrix-kernel` reaches in the cargo metadata graph,
-     `src/lib` included (3934 (2), (3)): no file defines a `__ferrix_`
+     every path crate `xaqu-kernel` reaches in the cargo metadata graph,
+     `src/lib` included (3934 (2), (3)): no file defines a `__xaqu_`
      symbol by name -- `no_mangle`, `export_name` or an assembly `.globl` --
      and none but the seam's own list and macro names one.
    * **The ELF is the dependency evidence of record** (3623 (R1)): Cargo
@@ -825,10 +825,10 @@ flag is the configuration record of it (3558 addendum (a)).
      `build_flags.rs`'s table and `kernel_core.rs`'s flag word is refused.
    * The negative controls, each through `fleet/gate.sh control --expect`
      and each to read `FIRED`, are listed with their logs in the landing
-     message: (a) a planted dependency, `use ferrix_kernel_settings as _;`
+     message: (a) a planted dependency, `use xaqu_kernel_settings as _;`
      unconditional in `main.rs`; (b) a planted reference pulling the crate
      into a fixed link, the ELF check; (c) a planted
-     `cfg(ferrix_runtime_settings = "live")` in a load file, rule 6e; (d)
+     `cfg(xaqu_runtime_settings = "live")` in a load file, rule 6e; (d)
      the live binding bound to `ABSENT`; (e) `runtime_settings = "live"` in
      `max.toml`, the profile rule, and `settings_writer = "present"` in
      `fast.toml`, the image-key rule; (f) a planted `settingsd` in a
@@ -851,7 +851,7 @@ table of function pointers, no run-time registration. Not every `pub`
 function becomes a trait: only the seams where an implementation is
 chosen (removable crates, policies, platform hooks). Three are in scope:
 `setters::Setters` (§6.1, landed ceb8d678c), `device::check::Policy`
-(ledger 3294), and the coming `CrashHook` of `ferrix-kernel-crash` (ledger
+(ledger 3294), and the coming `CrashHook` of `xaqu-kernel-crash` (ledger
 3595), which is built on this from the start. No behaviour changes: the
 same answers byte for byte, the same boot lines.
 
@@ -880,21 +880,21 @@ same answers byte for byte, the same boot lines.
      Errno>`, ...), and `pub struct Absent;` with `impl Setters for
      Absent`, each answering `EPERM` as `ABSENT`'s fields do today;
    * one `unsafe extern "Rust"` declaration a method,
-     `__ferrix_setters_<entry>`, with the method's signature, and one safe
+     `__xaqu_setters_<entry>`, with the method's signature, and one safe
      load function a method, `setters::<entry>(..)`, which calls it: the
      call sites call these, one call a site, as they call through `bound()`
      now;
    * `#[macro_export] macro_rules! bind_setters { ($chosen:ty) => { .. } }`,
-     which defines each `__ferrix_setters_<entry>` as a
+     which defines each `__xaqu_setters_<entry>` as a
      `#[unsafe(no_mangle)]` Rust-ABI function calling `<$chosen as
      Setters>::<entry>`.
 
    The root invokes it once a flag value, under that value's cfg:
    ```rust
-   #[cfg(all(ferrix_linux_abi = "on", ferrix_runtime_settings = "live"))]
-   ferrix_kernel_load::bind_setters!(ferrix_kernel_settings::Live);
-   #[cfg(all(ferrix_linux_abi = "on", ferrix_runtime_settings = "fixed"))]
-   ferrix_kernel_load::bind_setters!(ferrix_kernel_load::setters::Absent);
+   #[cfg(all(xaqu_linux_abi = "on", xaqu_runtime_settings = "live"))]
+   xaqu_kernel_load::bind_setters!(xaqu_kernel_settings::Live);
+   #[cfg(all(xaqu_linux_abi = "on", xaqu_runtime_settings = "fixed"))]
+   xaqu_kernel_load::bind_setters!(xaqu_kernel_load::setters::Absent);
    ```
    Every call is a direct call the linker resolves to the chosen
    implementation's function: static dispatch, nothing chosen at run time.
@@ -911,13 +911,13 @@ same answers byte for byte, the same boot lines.
 (2).** Today `bind_setters` checks `bound()`'s identity inside itself, so a
 root that never calls it is caught only through `bound()`'s users. With the
 binding at link time there is no run-time bind to forget: a root that
-invokes no `bind_setters!` leaves `__ferrix_setters_<entry>` undefined and
+invokes no `bind_setters!` leaves `__xaqu_setters_<entry>` undefined and
 the kernel does not link; one that invokes it twice defines each twice, and
 does not link either. The SAFETY argument of each `unsafe` call is that the
 macro defines the symbol with the declaration's own signature, from the
 trait's method; a check (`removable_problems`) holds that the declaration
 list and the trait's methods are the same names and that the macro is the
-only definer of `__ferrix_setters_*` (no other `no_mangle` of that prefix
+only definer of `__xaqu_setters_*` (no other `no_mangle` of that prefix
 anywhere under `src/kernel`).
 
 **`CrashHook`** (3595 (C2)): the same shape. The load's `crash_hook.rs` has
@@ -926,7 +926,7 @@ anywhere under `src/kernel`).
 (`held_status(process) -> Option<u32>`), the held park
 (`parked(process, thread)`) -- and `pub struct Absent;` ("never held":
 `false`, `None`, nothing), `bind_crash_hook!`, and the root's two
-invocations under `cfg(ferrix_crash_capture = "hold")` / `"absent"`. The
+invocations under `cfg(xaqu_crash_capture = "hold")` / `"absent"`. The
 three call sites stay in the load (`syscall/deliver.rs`,
 `syscall/process.rs`), each listed in `composition_root.removable`.
 
@@ -936,8 +936,8 @@ three call sites stay in the load (`syscall/deliver.rs`,
 |---|---|---|
 | the interface's shape (`removable_problems`) | the struct has exactly the recorded fields, `ENTRIES` their count, no `Default`, no value built outside the crate and `defined_in` | the trait has exactly the recorded methods; the extern declarations are the same names; `Absent` implements it in the load and the crate's type in the crate; no other type implements it |
 | one binding a flag value | each value's `const SETTERS` binds the recorded path | each value's cfg holds exactly one `bind_<name>!` invocation, of the recorded type |
-| the registration | `bind_setters` checks `bound()` by address at boot | the link: none or two invocations do not link (control (i) becomes "the invocation removed: the build fails to link", FIRED on the linker's `undefined symbol: __ferrix_setters_sethostname`) |
-| the ELF (`check-removable-symbols.py`) | no crate symbol in an absent build | unchanged; and every `__ferrix_setters_*` symbol present in every build, the absent one's calling the load's `Absent` |
+| the registration | `bind_setters` checks `bound()` by address at boot | the link: none or two invocations do not link (control (i) becomes "the invocation removed: the build fails to link", FIRED on the linker's `undefined symbol: __xaqu_setters_sethostname`) |
+| the ELF (`check-removable-symbols.py`) | no crate symbol in an absent build | unchanged; and every `__xaqu_setters_*` symbol present in every build, the absent one's calling the load's `Absent` |
 | the boot | stage 8's `memfd_noexec` write through `bound()` | unchanged: a `fixed` build's `EPERM`, a `live` build's answer, through `setters::<entry>` |
 | `kernel-interface.py` | lists the struct's fields | lists the trait, its methods and the macro; the removed `bind`/`bound`/statics drop out |
 
@@ -955,7 +955,7 @@ binding is sound evidence of static selection under (1)-(5): one load
 macro generates the trait's methods, the extern declarations, the safe
 wrappers and `bind_*!`'s definitions from one signature list (a mismatch
 across crates would link and be undefined behaviour); the one `unsafe` is
-each wrapper's call; the scan for definers of the `__ferrix_` prefixes
+each wrapper's call; the scan for definers of the `__xaqu_` prefixes
 covers every crate the kernel links, `src/lib` included, and
 `export_name` and assembly symbols too; the ELF check shows each symbol
 defined once, reaching the chosen type; and the two link controls, the
@@ -975,9 +975,9 @@ whose job the link now does); `CrashHook` (9) follows in its own landing.
 **Order**: this design, reviewed; then Setters and Policy ported and landed
 (no behaviour change; rows: check, test-boot on the four boots, test-removable,
 test-init; the controls (a)-(j) of §6.1 re-run, (i) as the link); then
-`ferrix-kernel-crash` on `CrashHook`, with 3595's conditions.
+`xaqu-kernel-crash` on `CrashHook`, with 3595's conditions.
 
-### 6.2 `ferrix-kernel-settings`: what moved
+### 6.2 `xaqu-kernel-settings`: what moved
 
 Its files live since 2026-11-06 in `src/kernel/extensions/settings/`
 (`src/lib.rs`, `src/settings/`; `microkernel/CRATE-SPLIT.md` S1), its lift
@@ -1007,7 +1007,7 @@ comments; "code" counts lines that are neither blank nor comment (3623
 **The bodies.** `uts.rs`, `clock.rs`, `sysrq.rs`, `sysctl.rs` and
 `memfd_noexec.rs` hold their functions byte-identical to the removed
 lines but for `pub(crate)`/`pub(super)`/private to `pub` on the entry and
-`crate::fs::timerfd` to `ferrix_kernel_load::fs::timerfd` (the landing
+`crate::fs::timerfd` to `xaqu_kernel_load::fs::timerfd` (the landing
 lists the script diff, 3623 (R21)). Three bodies changed shape, each said
 here: `log.rs` is new code around `read_all`, whose `clear` argument went
 (it now returns the next line's number, which `READ_CLEAR` clears to, and
@@ -1093,10 +1093,10 @@ Security Target as FMT_MOF/FMT_SMF (3623 (R16)).
   from the verified image, `set_realtime` at boot or DeviceClock for the
   time, or linuxd in M5. Owed before a fixed profile is buildable
   (`docs/backlog/p2.md`; max and fast have `linux_abi=on`).
-* **`/dev/ferrix-crashes` and the crash hold**: `ferrix-kernel-crash`'s
+* **`/dev/xaqu-crashes` and the crash hold**: `xaqu-kernel-crash`'s
   (3595 (C2)), not this crate's.
 * **powerctl is still in a `fixed` kernel at this landing** (3623 (R13)),
-  deactivated by `ferrix.powerctl`, which no profile permits
+  deactivated by `xaqu.powerctl`, which no profile permits
   (`POWERCTL.md` §5 states the mechanism). Its parts are core
   (`arch/x86_64/powerctl.rs`, 920 lines, and `arch/mod.rs`'s wrappers) and
   item (`discovery/powerctl.rs`, 55; `syscall/native.rs`'s `power_call`,

@@ -9,12 +9,12 @@
 //! A free-list allocator keeps its links inside the free blocks, which means
 //! every operation is a load or a store to the heap. That would make the whole
 //! thing untestable off a machine, so the loads and stores are behind
-//! [`Backing`] — the same shape as `ferrix_paging::PhysMem`. A test implements
+//! [`Backing`] — the same shape as `xaqu_paging::PhysMem`. A test implements
 //! it over a map; the kernel implements it over the direct map and the buddy
 //! allocator.
 //!
 //! The allocator's own body contains no unsafe at all, but the crate cannot say
-//! `#![forbid(unsafe_code)]` the way `ferrix-frame` and `ferrix-elf` do: that
+//! `#![forbid(unsafe_code)]` the way `xaqu-frame` and `xaqu-elf` do: that
 //! also forbids *declaring* [`Backing`] as an `unsafe trait`, and the `unsafe`
 //! on that declaration is the whole point. It is what obliges an implementor to
 //! have read the contract, and dropping it to satisfy a lint would move the

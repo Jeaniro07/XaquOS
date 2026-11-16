@@ -6,7 +6,7 @@
 //! a few kilobytes where a PPM would be 2.3 MB.
 //!
 //! ```text
-//! magic   "ferrix-xrgb-rle\n"          16 bytes
+//! magic   "xaqu-xrgb-rle\n"          15 bytes
 //! width   u32 little-endian
 //! height  u32 little-endian
 //! rows    height times:
@@ -33,7 +33,7 @@
 use std::path::PathBuf;
 
 /// The file's first bytes.
-const MAGIC: &[u8; 16] = b"ferrix-xrgb-rle\n";
+const MAGIC: &[u8; 16] = b"xaqu-xrgb-rle\n";
 
 /// The variable that makes the tests write their expected images.
 pub const BLESS: &str = "COMPOSITOR_RENDER_BLESS";

@@ -386,7 +386,7 @@ fn the_second_monitor_draws_the_window_moved_to_it() {
 ///
 /// The rule is carried out by `src/user/system/linux/compositor/hyprix`'s `rules`, which calls
 /// `State::float_window`; this calls the same thing, so the picture the
-/// compositor draws on Ferrix and the picture blessed here are made by one
+/// compositor draws on Xaqu and the picture blessed here are made by one
 /// piece of code.
 fn ruled_frame() -> Vec<u8> {
     use std::collections::BTreeMap;
@@ -1075,7 +1075,7 @@ fn a_group_draws_one_member_in_the_slot_they_share() {
     assert_eq!(frame_quiet(&cycled), grouped, "forward twice did not wrap");
 }
 
-/// What makes the group: the dispatchers a keybind runs, here and on Ferrix.
+/// What makes the group: the dispatchers a keybind runs, here and on Xaqu.
 const GROUPING: [(&str, &str); 3] = [
     ("togglegroup", ""),
     ("movefocus", "l"),

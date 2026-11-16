@@ -1,6 +1,6 @@
 //! The audit log (`docs/AUTH.md` §3.6): one line per conversation's end and
 //! per credential change, on standard output for init's per-unit log and
-//! appended with `fsync` to `/var/log/ferrix/auth.log`.
+//! appended with `fsync` to `/var/log/xaqu/auth.log`.
 //!
 //! A line never holds a secret, its length or a hash. What it holds is
 //! chosen by the caller of [`Audit::line`] from fixed words and names that

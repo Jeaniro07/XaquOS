@@ -13,7 +13,7 @@
 # The three files go into the image `test-dxvk` builds, not onto a volume;
 # the Wine volume (`fetch-wine.sh`) is attached as it is.
 #
-# Writes $FERRIX_DXVK_DIR (default ~/.local/share/ferrix/dxvk): d3d11.dll,
+# Writes $XAQU_DXVK_DIR (default ~/.local/share/xaqu/dxvk): d3d11.dll,
 # dxgi.dll, d3d11-triangle.exe, the d3d11-triangle.c it was built from
 # (xtask refuses a program built from another), and dxvk.version, the
 # release the DLLs are from.
@@ -27,8 +27,8 @@ DXVK_VERSION=3.1.1
 DXVK_SHA256=40565b4a724aadc4433fa4e010b4b23916d9b1f1baeee64e17186db94f54e608
 url=https://github.com/doitsujin/dxvk/releases/download/v$DXVK_VERSION/dxvk-$DXVK_VERSION.tar.gz
 
-out=${FERRIX_DXVK_DIR:-$HOME/.local/share/ferrix/dxvk}
-wine=${FERRIX_WINE_VOLUME:-$HOME/.local/share/ferrix/wine}
+out=${XAQU_DXVK_DIR:-$HOME/.local/share/xaqu/dxvk}
+wine=${XAQU_WINE_VOLUME:-$HOME/.local/share/xaqu/wine}
 source="$(cd "$(dirname "$0")/../test" && pwd)/d3d11-triangle.c"
 
 for tool in curl sha256sum tar x86_64-w64-mingw32-gcc; do

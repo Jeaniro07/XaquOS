@@ -16,12 +16,12 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLL_CTL_MOD, EPOLLERR, EPOLLET, EPOLLEXCLUSIVE,
     EPOLLHUP, EPOLLIN, EPOLLOUT, EPOLLWAKEUP,
 };
-use ferrix_vfs::OpenFile;
+use xaqu_vfs::OpenFile;
 
 use crate::fs;
 use crate::fs::epoll::{self, Event, Interest};

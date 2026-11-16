@@ -4,7 +4,7 @@
 //!
 //! Each entry by which a program changes a system setting at run time -- a
 //! system call's handler or a file's write, whole -- lives in the removable
-//! crate `ferrix-kernel-settings`, which depends on this crate and never the
+//! crate `xaqu-kernel-settings`, which depends on this crate and never the
 //! other way round. The load reaches it only through [`Setters`], a trait the
 //! binary's composition root chooses the implementation of statically
 //! (`docs/KERNEL-CRATES.md` §6.3, ledger 3934): `main.rs` invokes
@@ -20,7 +20,7 @@
 //! clear mark, `devmgr`'s requests): an entry is the only way a program
 //! reaches the setting half of each.
 
-pub use ferrix_linux_abi::errno::Errno;
+pub use xaqu_linux_abi::errno::Errno;
 
 pub use crate::discovery::devmgr::Bus;
 pub use crate::fs::procfs::Kernel;
@@ -34,84 +34,84 @@ crate::seam! {
     /// Bind [`Setters`] to the chosen type: the composition root's, once.
     bind bind_setters in setters;
     /// `sethostname(name, len)`.
-    fn sethostname as __ferrix_setters_sethostname(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn sethostname as __xaqu_setters_sethostname(
+        process: &::xaqu_kernel_load::setters::Process,
         name: u64,
         len: i32,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `setdomainname(name, len)`.
-    fn setdomainname as __ferrix_setters_setdomainname(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn setdomainname as __xaqu_setters_setdomainname(
+        process: &::xaqu_kernel_load::setters::Process,
         name: u64,
         len: i32,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `syslog(SYSLOG_ACTION_CLEAR)`, after the call's privilege check.
-    fn syslog_clear as __ferrix_setters_syslog_clear(
-        process: &::ferrix_kernel_load::setters::Process,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    fn syslog_clear as __xaqu_setters_syslog_clear(
+        process: &::xaqu_kernel_load::setters::Process,
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `syslog(SYSLOG_ACTION_READ_CLEAR, buf, len)`, after the call's
     /// privilege check.
-    fn syslog_read_clear as __ferrix_setters_syslog_read_clear(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn syslog_read_clear as __xaqu_setters_syslog_read_clear(
+        process: &::xaqu_kernel_load::setters::Process,
         buf: u64,
         len: i32,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `reboot(.., RESTART2, word)`, after the call's privilege check and
     /// its magic numbers: the commits, the record, the word and the reset.
-    fn restart_with_word as __ferrix_setters_restart_with_word(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn restart_with_word as __xaqu_setters_restart_with_word(
+        process: &::xaqu_kernel_load::setters::Process,
         word: u64,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `clock_settime(clock, at)` and `clock_settime64`.
-    fn clock_settime as __ferrix_setters_clock_settime(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn clock_settime as __xaqu_setters_clock_settime(
+        process: &::xaqu_kernel_load::setters::Process,
         clock: i32,
         at: u64,
-        width: ::ferrix_kernel_load::setters::TimeWidth,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+        width: ::xaqu_kernel_load::setters::TimeWidth,
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// `settimeofday(tv, tz)`.
-    fn settimeofday as __ferrix_setters_settimeofday(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn settimeofday as __xaqu_setters_settimeofday(
+        process: &::xaqu_kernel_load::setters::Process,
         tv: u64,
         tz: u64,
-        width: ::ferrix_kernel_load::setters::TimeWidth,
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+        width: ::xaqu_kernel_load::setters::TimeWidth,
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to `/proc/sysrq-trigger`.
-    fn sysrq_trigger as __ferrix_setters_sysrq_trigger(
-        kernel: &::ferrix_kernel_load::setters::Kernel,
+    fn sysrq_trigger as __xaqu_setters_sysrq_trigger(
+        kernel: &::xaqu_kernel_load::setters::Kernel,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to `/proc/sys/kernel/hostname`.
-    fn sysctl_hostname as __ferrix_setters_sysctl_hostname(
-        kernel: &::ferrix_kernel_load::setters::Kernel,
+    fn sysctl_hostname as __xaqu_setters_sysctl_hostname(
+        kernel: &::xaqu_kernel_load::setters::Kernel,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to `/proc/sys/kernel/domainname`.
-    fn sysctl_domainname as __ferrix_setters_sysctl_domainname(
-        kernel: &::ferrix_kernel_load::setters::Kernel,
+    fn sysctl_domainname as __xaqu_setters_sysctl_domainname(
+        kernel: &::xaqu_kernel_load::setters::Kernel,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to `/proc/sys/vm/memfd_noexec` by the process given.
-    fn sysctl_memfd_noexec as __ferrix_setters_sysctl_memfd_noexec(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn sysctl_memfd_noexec as __xaqu_setters_sysctl_memfd_noexec(
+        process: &::xaqu_kernel_load::setters::Process,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to a driver's `bind` (`false`) or `unbind` (`true`) under
     /// `/sys/bus/<bus>/drivers/<driver>/`.
-    fn driver_bind as __ferrix_setters_driver_bind(
-        bus: ::ferrix_kernel_load::setters::Bus,
+    fn driver_bind as __xaqu_setters_driver_bind(
+        bus: ::xaqu_kernel_load::setters::Bus,
         driver: u16,
         unbind: bool,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
     /// A write to `/sys/devices/system/cpu/cpu<cpu>/online` by the process
     /// given: processor `cpu` taken out of service or brought back
     /// (`docs/CORE-QUARANTINE.md` §4).
-    fn cpu_online as __ferrix_setters_cpu_online(
-        process: &::ferrix_kernel_load::setters::Process,
+    fn cpu_online as __xaqu_setters_cpu_online(
+        process: &::xaqu_kernel_load::setters::Process,
         cpu: u32,
         data: &[u8],
-    ) -> Result<usize, ::ferrix_kernel_load::setters::Errno>;
+    ) -> Result<usize, ::xaqu_kernel_load::setters::Errno>;
 }
 
 /// The implementation of a build without the crate: every entry is refused

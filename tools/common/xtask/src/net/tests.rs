@@ -16,7 +16,7 @@ use super::{
 fn cksum_matches_the_one_posix_specifies() {
     assert_eq!(cksum(b""), 4_294_967_295);
     assert_eq!(cksum(b"a"), 1_220_704_766);
-    assert_eq!(cksum(b"ferrix"), 216_309_028);
+    assert_eq!(cksum(b"xaqu"), 216_309_028);
     assert_eq!(cksum(b"The quick brown fox"), 2_672_498_166);
 }
 
@@ -42,9 +42,9 @@ fn a_request_line_gives_up_its_path() {
 
 #[test]
 fn a_name_is_read_out_of_its_labels() {
-    let query = b"\x06ferrix\x04test\x00rest";
+    let query = b"\x06xaqu\x04test\x00rest";
     let (name, after) = read_name(query, 0).unwrap();
-    assert_eq!(name, "ferrix.test");
+    assert_eq!(name, "xaqu.test");
     assert_eq!(after, 13);
     // A label that runs off the end is not a name.
     assert_eq!(read_name(b"\x06fer", 0), None);
@@ -56,7 +56,7 @@ fn a_name_is_read_out_of_its_labels() {
 #[test]
 fn the_stub_answers_the_name_it_knows_and_nothing_else() {
     let mut query = vec![0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    query.extend_from_slice(b"\x06ferrix\x04test\x00\x00\x01\x00\x01");
+    query.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x01\x00\x01");
     let mut out = Vec::new();
     assert!(answer_query(&query, &mut out));
     assert_eq!(out.get(..2), Some([0x12, 0x34].as_slice()));
@@ -75,7 +75,7 @@ fn the_stub_answers_the_name_it_knows_and_nothing_else() {
     // NXDOMAIN either, because the name exists. `getaddrinfo` asks A and AAAA
     // together and takes NXDOMAIN to either as the name not existing at all.
     let mut quad_a = vec![0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    quad_a.extend_from_slice(b"\x06ferrix\x04test\x00\x00\x1C\x00\x01");
+    quad_a.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x1C\x00\x01");
     out.clear();
     assert!(answer_query(&quad_a, &mut out));
     assert_eq!(out.get(6..8), Some([0x00, 0x00].as_slice()));
@@ -111,15 +111,15 @@ fn the_stubs_serve_what_the_commands_expect() {
         .set_read_timeout(Some(Duration::from_secs(5)))
         .unwrap();
     let mut query = vec![0xAB, 0xCD, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    query.extend_from_slice(b"\x06ferrix\x04test\x00\x00\x01\x00\x01");
+    query.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x01\x00\x01");
     let _ = asking.send_to(&query, servers.dns()).unwrap();
     let mut answer = [0_u8; 512];
     let (read, _) = asking.recv_from(&mut answer).unwrap();
     assert!(answer[..read].ends_with(&NAME_ANSWER.octets()));
 
-    let _ = asking.send_to(b"ferrix", servers.udp).unwrap();
+    let _ = asking.send_to(b"xaqu", servers.udp).unwrap();
     let (read, _) = asking.recv_from(&mut answer).unwrap();
-    assert_eq!(&answer[..read], b"ferrix-udp: ferrix");
+    assert_eq!(&answer[..read], b"xaqu-udp: xaqu");
 }
 
 /// Every command names a program, and the ones with a port in them got one.
@@ -151,7 +151,7 @@ fn the_command_list_is_well_formed() {
         .join(" ");
     assert!(joined.contains(NAME));
     // The address is the gateway's to give, by DHCP, not the list's to name.
-    // Ferrix's own client, not busybox's (`src/user/system/linux/dhcp`).
+    // Xaqu's own client, not busybox's (`src/user/system/linux/dhcp`).
     assert!(joined.contains("dhcpc -i eth0") && !joined.contains("udhcpc"));
     assert!(joined.contains(&format!("curl -sS http://{NAME}:")));
     // The clone over the network names the gateway and the port this

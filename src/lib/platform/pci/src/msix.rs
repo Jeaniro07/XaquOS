@@ -11,7 +11,7 @@
 //! mapping is.
 //!
 //! The messages themselves depend on the interrupt controller rather than on
-//! PCI, and both kinds Ferrix meets are here as plain functions: the local
+//! PCI, and both kinds Xaqu meets are here as plain functions: the local
 //! APIC's fixed address range on x86-64, and a `GICv2m` frame's `SETSPI`
 //! register on the Arm machines.
 

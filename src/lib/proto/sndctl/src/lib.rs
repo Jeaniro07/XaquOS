@@ -23,7 +23,7 @@
 //! to Linux -- the refine, the pointers, when a stream starts, stops or
 //! underruns, what each request answers in each state -- the rule is Linux's
 //! `sound/core/pcm_native.c` and `pcm_lib.c`, copied to
-//! `~/.local/share/ferrix/audio-ref/kernel/` on 2026-09-26 and cited by
+//! `~/.local/share/xaqu/audio-ref/kernel/` on 2026-09-26 and cited by
 //! function. Where the two part, because the core has no device to program
 //! and no mapping to offer, the item says so, and `docs/AUDIO.md` §6 lists
 //! the deviations.

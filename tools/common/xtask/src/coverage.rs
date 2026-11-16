@@ -4,7 +4,7 @@
 //! VERIFICATION.md` §3).
 //!
 //! The measurement is QEMU's `drcov` TCG plugin, named by
-//! `FERRIX_QEMU_PLUGIN`, and `tools/common/gen/coverage-report.py`, which reads the
+//! `XAQU_QEMU_PLUGIN`, and `tools/common/gen/coverage-report.py`, which reads the
 //! trace against the kernel's DWARF line table; `tools/common/gen/decision-coverage.py`
 //! reads the same traces for decision coverage (§3.6). Two things about a suite of
 //! gates make that harder than one boot:
@@ -37,7 +37,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
     name: "coverage",
     help_at: 940,
     help: &[
-        "coverage      Run every boot gate under QEMU's drcov plugin (FERRIX_DRCOV) with --init, and",
+        "coverage      Run every boot gate under QEMU's drcov plugin (XAQU_DRCOV) with --init, and",
         "              require the certified item's statement coverage to hold its recorded floor",
     ],
     run: |_, args| run(args),
@@ -80,7 +80,7 @@ pub(crate) fn plugin_for_boot(plugin: &str, kernel: Option<&Path>) -> Result<Str
 
 /// The `-plugin` value the latest boot was given, if it was given one: what
 /// `crate::kaslr::record_coverage_slide` writes the boot's slide beside. Not
-/// `FERRIX_QEMU_PLUGIN` itself, which names only the first boot's trace.
+/// `XAQU_QEMU_PLUGIN` itself, which names only the first boot's trace.
 pub(crate) fn latest_plugin() -> Option<String> {
     LATEST.lock().ok().and_then(|latest| latest.clone())
 }
@@ -151,8 +151,8 @@ fn keep_kernel(trace: &Path, kernel: &Path) -> Result<String> {
 const PROFILES: [&str; 4] = ["debug", "coverage", "release", "iterate"];
 
 /// What a kept copy of `kernel`, whose content hashes to `digest`, is called:
-/// `ferrix-kernel-<profile>-<16 hex>.elf`, the profile the directory cargo
-/// built it into (`target/<triple>/<profile>/ferrix-kernel`), so that the
+/// `xaqu-kernel-<profile>-<16 hex>.elf`, the profile the directory cargo
+/// built it into (`target/<triple>/<profile>/xaqu-kernel`), so that the
 /// report can say which build it measured. A kernel from anywhere else is
 /// refused, never guessed (the certification consultant, ledger line 1472).
 fn kept_name(kernel: &Path, digest: &str) -> Result<String> {
@@ -170,7 +170,7 @@ fn kept_name(kernel: &Path, digest: &str) -> Result<String> {
             ))
         })?;
     Ok(format!(
-        "ferrix-kernel-{profile}-{}.elf",
+        "xaqu-kernel-{profile}-{}.elf",
         digest.get(..16).unwrap_or(digest)
     ))
 }
@@ -189,14 +189,14 @@ struct Gate {
     /// the others, fails on them for a reason [`SUITE`] gives, or is a second
     /// machine for that architecture.
     only: Option<Arch>,
-    /// `FERRIX_ARM_MACHINE`, for a boot on a different Arm machine.
+    /// `XAQU_ARM_MACHINE`, for a boot on a different Arm machine.
     arm_machine: Option<&'static str>,
-    /// `FERRIX_ARM_CPU`, for a boot on a different Arm processor.
+    /// `XAQU_ARM_CPU`, for a boot on a different Arm processor.
     arm_cpu: Option<&'static str>,
     /// `--reset`: end in a reset, not a power-off.
     reset: bool,
-    /// Anything else the boot's environment needs: `FERRIX_X86_MACHINE`
-    /// and `FERRIX_X86_CPU` for a different PC.
+    /// Anything else the boot's environment needs: `XAQU_X86_MACHINE`
+    /// and `XAQU_X86_CPU` for a different PC.
     env: &'static [(&'static str, &'static str)],
     /// Arguments the gate is given after the suite's own, such as `--smp 1`.
     extra: &'static [&'static str],
@@ -269,7 +269,7 @@ impl Gate {
 ///
 /// * `test-seat` and `test-compositor`: the plugin slows TCG enough that the
 ///   first misses its redraw and the second tripped the TLB shootdown's
-///   bound (`FERRIX-PANIC processor 0 never flushed its TLB for a shootdown`)
+///   bound (`XAQU-PANIC processor 0 never flushed its TLB for a shootdown`)
 ///   while a wait had one bound; not run since it has a late and a stuck one.
 ///   Both pass under TCG without it. A failing run is not coverage evidence.
 /// * `test-foot`, `test-video`, `test-vkgears`, `test-rustc`, `test-chrome`
@@ -304,7 +304,7 @@ const SUITE: &[Gate] = &[
         .only(Arch::Armv7a)
         .on_cpu("cortex-a15"),
     // Every other boot ends in a power-off, so the reset a program's
-    // `reboot` or `ferrix.onexit=reset` asks for was never taken on Arm:
+    // `reboot` or `xaqu.onexit=reset` asks for was never taken on Arm:
     // PSCI's SYSTEM_RESET, after the console has drained. The gate requires
     // the loader to start again.
     Gate::new("test-boot", "boot-reset", false)
@@ -339,13 +339,13 @@ const SUITE: &[Gate] = &[
     Gate::new("test-boot", "boot-legacy", false)
         .only(Arch::X86_64)
         .with_env(&[
-            ("FERRIX_X86_MACHINE", "hpet=off"),
+            ("XAQU_X86_MACHINE", "hpet=off"),
             (
-                "FERRIX_X86_CPU",
+                "XAQU_X86_CPU",
                 "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand",
             ),
         ]),
-    // `ferrix.onexit=reset`: the reset through the FADT's register, which
+    // `xaqu.onexit=reset`: the reset through the FADT's register, which
     // every other gate's power-off never takes.
     Gate::new("test-boot", "boot-reset", false)
         .only(Arch::X86_64)
@@ -358,18 +358,18 @@ const SUITE: &[Gate] = &[
     // The options a boot reads that no other gate gives it: the boot console
     // drawn on the framebuffer, which the Pixel 7 asks for; a pid 1 named on
     // the command line that the image does not have, which is said and falls
-    // back to the built-in program; a `ferrix.onexit` the kernel does not
+    // back to the built-in program; a `xaqu.onexit` the kernel does not
     // understand, which is said and powers off as the default does; and
     // `nokaslr`, the layout a debugger asks for, which every other boot moves.
     // ARMv7-A's `virt` has no framebuffer, so there the console finds none to
     // draw on.
     Gate::new("test-boot", "boot-options", false).with_args(&[
         "--kernel-option",
-        "ferrix.fbcon",
+        "xaqu.fbcon",
         "--kernel-option",
-        "ferrix.init=/sbin/no-such-init",
+        "xaqu.init=/sbin/no-such-init",
         "--kernel-option",
-        "ferrix.onexit=halt",
+        "xaqu.onexit=halt",
         "--kernel-option",
         "nokaslr",
     ]),
@@ -394,7 +394,7 @@ const FLOOR: &str = "docs/certification/coverage-floor.json";
 /// architecture asked for, report the union, and fail below the recorded
 /// floor.
 ///
-/// The plugin is `FERRIX_DRCOV`, the path of QEMU's `libdrcov.so`, which
+/// The plugin is `XAQU_DRCOV`, the path of QEMU's `libdrcov.so`, which
 /// QEMU builds in `contrib/plugins/` and distributions do not package.
 /// Traces go to `--to DIR`, or `build/coverage/<arch>`.
 ///
@@ -402,9 +402,9 @@ const FLOOR: &str = "docs/certification/coverage-floor.json";
 ///
 /// No plugin, no `--init`, a gate that failed, or coverage below the floor.
 pub(crate) fn run(args: &Args) -> Result<()> {
-    let plugin = std::env::var("FERRIX_DRCOV").map_err(|_| {
+    let plugin = std::env::var("XAQU_DRCOV").map_err(|_| {
         Error::new(
-            "coverage needs FERRIX_DRCOV, the path of QEMU's drcov plugin \
+            "coverage needs XAQU_DRCOV, the path of QEMU's drcov plugin \
              (contrib/plugins/libdrcov.so in a QEMU build tree)",
         )
     })?;
@@ -460,7 +460,7 @@ fn clear(directory: &Path) -> Result<()> {
         let ours = name.ends_with(".drcov")
             || name.ends_with(".drcov.kernel")
             || name.ends_with(".drcov.slide")
-            || (name.starts_with("ferrix-kernel-") && name.ends_with(".elf"));
+            || (name.starts_with("xaqu-kernel-") && name.ends_with(".elf"));
         if ours {
             std::fs::remove_file(&path)?;
         }
@@ -484,7 +484,7 @@ fn run_gate(
     let _ = command
         .current_dir(paths::workspace_root())
         .env(
-            "FERRIX_QEMU_PLUGIN",
+            "XAQU_QEMU_PLUGIN",
             format!("{plugin},filename={}", trace.display()),
         )
         .args([gate.command, "--arch", arch.name(), "--accel", "tcg"]);
@@ -500,10 +500,10 @@ fn run_gate(
         let _ = command.arg("--reset");
     }
     if let Some(machine) = gate.arm_machine {
-        let _ = command.env("FERRIX_ARM_MACHINE", machine);
+        let _ = command.env("XAQU_ARM_MACHINE", machine);
     }
     if let Some(cpu) = gate.arm_cpu {
-        let _ = command.env("FERRIX_ARM_CPU", cpu);
+        let _ = command.env("XAQU_ARM_CPU", cpu);
     }
     let _ = command.envs(gate.env.iter().copied()).args(gate.extra);
     if args.release {
@@ -632,14 +632,14 @@ mod tests {
         for profile in PROFILES {
             let kernel = Path::new("/t/x86_64-unknown-none")
                 .join(profile)
-                .join("ferrix-kernel");
+                .join("xaqu-kernel");
             assert_eq!(
                 kept_name(&kernel, digest).unwrap(),
-                format!("ferrix-kernel-{profile}-0123456789abcdef.elf")
+                format!("xaqu-kernel-{profile}-0123456789abcdef.elf")
             );
         }
-        assert!(kept_name(Path::new("/t/elsewhere/ferrix-kernel"), digest).is_err());
-        assert!(kept_name(Path::new("ferrix-kernel"), digest).is_err());
+        assert!(kept_name(Path::new("/t/elsewhere/xaqu-kernel"), digest).is_err());
+        assert!(kept_name(Path::new("xaqu-kernel"), digest).is_err());
     }
 
     #[test]

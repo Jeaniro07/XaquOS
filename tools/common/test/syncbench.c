@@ -1,6 +1,6 @@
 /*
  * syncbench: the Windows program `cargo xtask test-wine-sync` runs in
- * Proton's Wine on Ferrix, with wineserver's synchronisation and with fsync
+ * Proton's Wine on Xaqu, with wineserver's synchronisation and with fsync
  * (stage 23, E1.4 and E3.5; docs/WINE.md §11). Built for x86-64 and for
  * i386, so that both of Proton's Unix sides wait.
  *
@@ -92,8 +92,8 @@ static int threads(void) {
 
 static int child(void) {
     long i;
-    ping = OpenEventA(EVENT_ALL_ACCESS, FALSE, "ferrix-syncbench-ping");
-    pong = OpenEventA(EVENT_ALL_ACCESS, FALSE, "ferrix-syncbench-pong");
+    ping = OpenEventA(EVENT_ALL_ACCESS, FALSE, "xaqu-syncbench-ping");
+    pong = OpenEventA(EVENT_ALL_ACCESS, FALSE, "xaqu-syncbench-pong");
     if (!ping || !pong)
         return 3;
     for (i = 0; i < rounds; i++) {
@@ -112,8 +112,8 @@ static int processes(const char *self) {
     double start, ms;
     DWORD status = 99;
 
-    ping = CreateEventA(NULL, FALSE, FALSE, "ferrix-syncbench-ping");
-    pong = CreateEventA(NULL, FALSE, FALSE, "ferrix-syncbench-pong");
+    ping = CreateEventA(NULL, FALSE, FALSE, "xaqu-syncbench-ping");
+    pong = CreateEventA(NULL, FALSE, FALSE, "xaqu-syncbench-pong");
     if (!ping || !pong) {
         printf("syncbench: processes: could not make the events: %lu\n", GetLastError());
         return 1;

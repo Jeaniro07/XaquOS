@@ -37,9 +37,9 @@
 
 #![no_main]
 
-use ferrix_acpi::dmar::{Dmar, Structure};
-use ferrix_acpi::iort::{Iort, NODE_HEADER_LEN};
-use ferrix_acpi::{
+use xaqu_acpi::dmar::{Dmar, Structure};
+use xaqu_acpi::iort::{Iort, NODE_HEADER_LEN};
+use xaqu_acpi::{
     Acpi, Fadt, Gtdt, Hpet, MADT_HEADER_LEN, MCFG_ENTRY_LEN, MCFG_HEADER_LEN, Madt, MadtEntry,
     Mcfg, RSDP_SIGNATURE, RSDP_V1_LEN, RootKind, RootTable, Rsdp, SDT_HEADER_LEN, Table, Tables,
     read_table,

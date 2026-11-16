@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
@@ -146,7 +146,7 @@ dependencies = [
 name = "media-pcm"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 

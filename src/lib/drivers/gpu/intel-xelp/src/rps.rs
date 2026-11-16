@@ -390,7 +390,7 @@ pub const fn park_step(cur: u32, last_adj: i32, min: u32) -> (u32, i32) {
     (if new < min as i64 { min } else { new as u32 }, adj)
 }
 
-// Ferrix's additions to the policy, each a pure rule so the host tests can
+// Xaqu's additions to the policy, each a pure rule so the host tests can
 // pin it. i915 parks RPS when the GT's last wakeref goes and leans on the
 // client boost (`intel_rps_boost`) to bring a waiting program's work back
 // up; the rules below keep a frame's work from running at the idle

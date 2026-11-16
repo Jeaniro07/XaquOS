@@ -5,12 +5,12 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_elf::Class;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_vfs::Errno;
-use ferrix_vma::VmaFlags;
+use xaqu_elf::Class;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_vfs::Errno;
+use xaqu_vma::VmaFlags;
 
 use super::{pattern, write_file};
 use crate::arch;

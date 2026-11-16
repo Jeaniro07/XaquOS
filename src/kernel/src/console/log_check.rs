@@ -33,7 +33,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use super::log::{self, Line, Lines, Read, Ring, Stamp};
 
@@ -733,9 +733,9 @@ fn contains(haystack: &[u8], needle: &[u8]) -> bool {
 /// taken. Answers how many were refused.
 ///
 /// Verifies: `L.console.43`
-pub fn check_pstore_placement(view: &ferrix_bootinfo::BootView<'_>) -> Result<usize, &'static str> {
-    use ferrix_bootinfo::PAGE_SIZE;
-    use ferrix_bootinfo::pstore::{HEADER, MIN_CAPACITY};
+pub fn check_pstore_placement(view: &xaqu_bootinfo::BootView<'_>) -> Result<usize, &'static str> {
+    use xaqu_bootinfo::PAGE_SIZE;
+    use xaqu_bootinfo::pstore::{HEADER, MIN_CAPACITY};
 
     use super::pstore::placement;
 
@@ -775,7 +775,7 @@ pub fn check_pstore_placement(view: &ferrix_bootinfo::BootView<'_>) -> Result<us
 }
 
 /// Take the console port's lock and never give it back: for
-/// `ferrix.check.panic=held` (`panic::reset_check`), a report written on the
+/// `xaqu.check.panic=held` (`panic::reset_check`), a report written on the
 /// processor that holds it, as a fault inside the console path would leave
 /// it. Whether the lock was taken.
 pub(crate) fn hold_port_for_check() -> bool {

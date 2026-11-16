@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-virtio-gpu"
+name = "xaqu-virtio-gpu"
 description = "A virtio-gpu 2D driver, as logic over a transport and DMA memory it is handed"
 version = "0.1.0"
 edition = "2024"
@@ -8,8 +8,8 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-displayctl = { workspace = true }
-ferrix-virtio = { workspace = true }
+xaqu-displayctl = { workspace = true }
+xaqu-virtio = { workspace = true }
 
 [lints]
 workspace = true

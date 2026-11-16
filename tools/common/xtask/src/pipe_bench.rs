@@ -1,6 +1,6 @@
 //! `bench-pipe`: Linux-ABI round trips between two processes, timed.
 //!
-//! Most programs on Ferrix -- everything linked against ferrousli or musl,
+//! Most programs on Xaqu -- everything linked against ferrousli or musl,
 //! Chrome, the desktop -- talk through pipes, Unix sockets and futexes, not
 //! the native channel `bench-ipc` times. This boots `src/tests/pipe-bench/`,
 //! a static musl program, as init, under `bench-ipc`'s machine: KVM, one

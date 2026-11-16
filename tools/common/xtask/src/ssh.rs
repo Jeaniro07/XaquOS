@@ -12,7 +12,7 @@
 //! Three sources, and the first is always there:
 //!
 //! 1. **This machine's guest key**, made once at
-//!    `~/.local/share/ferrix/ssh/id_ed25519` and authorized by every boot.
+//!    `~/.local/share/xaqu/ssh/id_ed25519` and authorized by every boot.
 //!    It is what a client with no key of its own logs in with, and the boot
 //!    prints the `ssh -i` line that uses it.
 //! 2. The keys that may already log in to the machine running QEMU: its
@@ -39,7 +39,7 @@
 //! # The host key
 //!
 //! Kept on the machine running QEMU, at
-//! `~/.local/share/ferrix/ssh/ssh_host_ed25519_key`, made with `ssh-keygen`
+//! `~/.local/share/xaqu/ssh/ssh_host_ed25519_key`, made with `ssh-keygen`
 //! the first time. The initramfs is rebuilt for every boot, so a key the
 //! guest made itself would be a new one each time, and `ssh` would refuse the
 //! second boot for having changed its key.
@@ -58,10 +58,10 @@ pub(crate) const GUEST_PORT: u16 = 22;
 const SERVER_PATH: &str = "bin/sshdt";
 
 /// Where the keys allowed to log in go in the image.
-const KEYS_PATH: &str = "etc/ferrix/authorized_keys";
+const KEYS_PATH: &str = "etc/xaqu/authorized_keys";
 
 /// Where the host key goes in the image.
-const HOST_KEY_PATH: &str = "etc/ferrix/ssh_host_ed25519_key";
+const HOST_KEY_PATH: &str = "etc/xaqu/ssh_host_ed25519_key";
 
 /// `args` without `--ssh` when its port is already taken on this machine.
 ///
@@ -158,7 +158,7 @@ pub(crate) fn with_server(config: String, args: &Args, carried: &mut Vec<File>) 
 /// Where this machine keeps the guest's keys: the host key the guest proves
 /// itself with, and the key a client may log in to it with.
 fn guest_dir(home: &Path) -> PathBuf {
-    [".local", "share", "ferrix", "ssh"]
+    [".local", "share", "xaqu", "ssh"]
         .iter()
         .fold(home.to_path_buf(), |dir, name| dir.join(name))
 }
@@ -293,7 +293,7 @@ pub(crate) fn test_client_key() -> Result<PathBuf> {
 /// The guest's host key, made with `ssh-keygen` the first time.
 fn host_key(dir: &Path) -> Result<Vec<u8>> {
     let path = dir.join("ssh_host_ed25519_key");
-    keygen(&path, "ferrix-guest", "the guest's host key")?;
+    keygen(&path, "xaqu-guest", "the guest's host key")?;
     std::fs::read(&path).map_err(|error| Error::new(format!("reading {}: {error}", path.display())))
 }
 
@@ -302,11 +302,11 @@ fn host_key(dir: &Path) -> Result<Vec<u8>> {
 /// public half's line, to authorize in the guest.
 ///
 /// It is kept with the host key rather than in `~/.ssh`, because it belongs
-/// to the guest and not to this machine's own logins: nothing but a Ferrix
+/// to the guest and not to this machine's own logins: nothing but a Xaqu
 /// boot is ever reached with it.
 fn client_key(dir: &Path) -> Result<(PathBuf, String)> {
     let path = dir.join("id_ed25519");
-    keygen(&path, "ferrix-client", "a key to log in to the guest with")?;
+    keygen(&path, "xaqu-client", "a key to log in to the guest with")?;
     let public = path.with_extension("pub");
     let line = std::fs::read_to_string(&public)
         .map_err(|error| Error::new(format!("reading {}: {error}", public.display())))?;
@@ -348,7 +348,7 @@ mod tests {
 
     /// A directory of its own under the system's temporary one.
     fn scratch(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("ferrix-ssh-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("xaqu-ssh-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
@@ -365,11 +365,11 @@ mod tests {
         std::fs::write(dir.join("id_ed25519.pub"), "ssh-ed25519 BBBB two@b\n").unwrap();
         std::fs::write(dir.join("id_other.pub"), "ssh-ed25519 CCCC three@c\n").unwrap();
         std::fs::write(dir.join("id_ed25519"), "PRIVATE, never read\n").unwrap();
-        let (file, count) = authorized_keys(&dir, "ssh-ed25519 GGGG ferrix-client\n", &[]).unwrap();
+        let (file, count) = authorized_keys(&dir, "ssh-ed25519 GGGG xaqu-client\n", &[]).unwrap();
         assert_eq!(count, 4, "one line per key, the repeated one once");
         assert_eq!(
             String::from_utf8(file).unwrap(),
-            "ssh-ed25519 GGGG ferrix-client\nssh-rsa AAAA one@a\nssh-ed25519 BBBB two@b\n\
+            "ssh-ed25519 GGGG xaqu-client\nssh-rsa AAAA one@a\nssh-ed25519 BBBB two@b\n\
              ssh-ed25519 CCCC three@c\n",
             "this machine's guest key first, then ~/.ssh's own"
         );
@@ -379,11 +379,11 @@ mod tests {
     #[test]
     fn an_empty_ssh_directory_still_authorizes_the_guest_key() {
         let dir = scratch("none");
-        let (file, count) = authorized_keys(&dir, "ssh-ed25519 GGGG ferrix-client\n", &[]).unwrap();
+        let (file, count) = authorized_keys(&dir, "ssh-ed25519 GGGG xaqu-client\n", &[]).unwrap();
         assert_eq!(count, 1, "an empty ~/.ssh is no longer nobody");
         assert_eq!(
             String::from_utf8(file).unwrap(),
-            "ssh-ed25519 GGGG ferrix-client\n",
+            "ssh-ed25519 GGGG xaqu-client\n",
             "which is what a client with no key of its own logs in with"
         );
         let _ = std::fs::remove_dir_all(&dir);
@@ -398,7 +398,7 @@ mod tests {
             named_keys(&[file.display().to_string(), "ssh-rsa EEEE five@e".to_owned()]).unwrap();
         assert_eq!(named, ["ssh-ed25519 DDDD four@d\n", "ssh-rsa EEEE five@e"]);
         let (carried, count) =
-            authorized_keys(&dir, "ssh-ed25519 GGGG ferrix-client\n", &named).unwrap();
+            authorized_keys(&dir, "ssh-ed25519 GGGG xaqu-client\n", &named).unwrap();
         assert_eq!(count, 3, "the guest key, and the two named");
         assert!(
             String::from_utf8(carried)

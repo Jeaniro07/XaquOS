@@ -16,7 +16,7 @@
 # utime and stime are /proc/<pid>/task/<tid>/stat's fields 14 and 15 in
 # clock ticks of 1/100 s; the switch counts are status's last two lines.
 #
-# On Ferrix (docs/THREAD-TIMES.md) stime is counted at every entry from user
+# On Xaqu (docs/THREAD-TIMES.md) stime is counted at every entry from user
 # mode and return, and switches by why the task left the processor. Run the
 # same script on the Linux baseline for the comparison. Only POSIX sh, awk,
 # cat and sleep: busybox is enough. Reading /proc/*/task/*/stat of another

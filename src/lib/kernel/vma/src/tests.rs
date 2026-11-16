@@ -1897,7 +1897,7 @@ fn a_region_put_back_down_keeps_its_copy_on_write_marking() {
     assert_eq!(space.region_count(), 1, "the refusal changed nothing");
 }
 
-/// Allocation failure, injected through `ferrix_fallible`: every change that
+/// Allocation failure, injected through `xaqu_fallible`: every change that
 /// would have to grow the map refuses with `NoMemory` and changes nothing.
 #[test]
 fn a_change_that_cannot_grow_the_map_changes_nothing() {
@@ -1907,8 +1907,8 @@ fn a_change_that_cannot_grow_the_map_changes_nothing() {
     fn policy() -> bool {
         FAIL.with(core::cell::Cell::get)
     }
-    let _ = ferrix_fallible::set_injector(policy);
-    ferrix_fallible::arm(true);
+    let _ = xaqu_fallible::set_injector(policy);
+    xaqu_fallible::arm(true);
 
     let mut space = space();
     space
@@ -1981,7 +1981,7 @@ fn a_quiet_removal_matches_a_reported_one_and_needs_no_memory_once_reserved() {
 /// charged too, and everything comes back as the maps go.
 #[test]
 fn regions_are_charged_to_the_spaces_job() {
-    let job = ferrix_kmem::testing::Job::enter(8 * 1024);
+    let job = xaqu_kmem::testing::Job::enter(8 * 1024);
     let mut space = AddressSpace::new(0x1000, 0x1_0000_0000).unwrap();
     map(
         &mut space,

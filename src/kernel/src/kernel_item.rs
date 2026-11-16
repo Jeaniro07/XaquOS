@@ -1,4 +1,4 @@
-//! The Ferrix kernel's item ring above the core: the native and Linux system
+//! The Xaqu kernel's item ring above the core: the native and Linux system
 //! call entry, device discovery, the checks flag's parsing, power and
 //! randomness.
 //!
@@ -13,7 +13,7 @@
 // ledger 3257 (3)), and each of the kernel's crates is compiled with its
 // flags. Never in a build with `linux_abi=on`.
 #![cfg_attr(
-    ferrix_load_built = "none",
+    xaqu_load_built = "none",
     allow(
         dead_code,
         unused_imports,
@@ -33,39 +33,39 @@ extern crate alloc;
     reason = "named by its crate's path, so the interface's list sees the core's fn used here"
 )]
 pub const ITEM_FLAG_WORD: u64 =
-    ferrix_kernel_core::flag_word(&ferrix_kernel_core::build_flag_word!());
+    xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
 
-pub use ferrix_kernel_core::*;
+pub use xaqu_kernel_core::*;
 
 // Only `boot_authority`, under `personality=user`, names these.
-#[cfg(not(ferrix_personality = "user"))]
-use ferrix_cpio as _;
-#[cfg(not(ferrix_personality = "user"))]
-use ferrix_partition_desc as _;
+#[cfg(not(xaqu_personality = "user"))]
+use xaqu_cpio as _;
+#[cfg(not(xaqu_personality = "user"))]
+use xaqu_partition_desc as _;
 
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub mod boot_authority;
 pub mod build_flags;
 pub mod checks;
 pub mod discovery;
 pub mod fastpath;
 pub(crate) mod first_rows;
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub mod init;
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub mod init_check;
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) mod linuxd_start;
 pub mod power;
 pub mod random;
 pub mod syscall;
 /// The architecture modules (the core's), with x86-64's framebuffer window check raised to this crate.
 pub mod arch {
-    pub use ferrix_kernel_core::arch::*;
+    pub use xaqu_kernel_core::arch::*;
     /// x86-64's raised check.
     pub mod x86_64 {
         /// The framebuffer window's check.
-        #[cfg(not(ferrix_personality = "user"))]
+        #[cfg(not(xaqu_personality = "user"))]
         pub mod framebuffer {
             pub mod check;
         }

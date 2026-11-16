@@ -71,1506 +71,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
-name = "ferrix-acpi"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-adb"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-ahci"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-ahci-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-ahci",
- "ferrix-blkring",
- "ferrix-blkserve",
- "ferrix-driver",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-virtio-blk",
-]
-
-[[package]]
-name = "ferrix-argon2"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-audit"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-auth-proto"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-blk"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-blkserve",
- "ferrix-driver",
- "ferrix-rt",
- "ferrix-virtio-blk",
-]
-
-[[package]]
-name = "ferrix-blk-victim"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkclient",
- "ferrix-blkring",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-blkclient"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-native",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-blkring"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-blkserve"
-version = "0.1.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-virtio",
- "ferrix-virtio-blk",
-]
-
-[[package]]
-name = "ferrix-block"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-boot"
-version = "0.3.0"
-dependencies = [
- "ferrix-boot-policy",
- "ferrix-bootinfo",
- "ferrix-elf",
- "ferrix-eventlog",
- "ferrix-paging",
- "ferrix-slots",
- "ferrix-smbios",
-]
-
-[[package]]
-name = "ferrix-boot-pixel7"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-elf",
- "ferrix-fdt",
- "ferrix-paging",
-]
-
-[[package]]
-name = "ferrix-boot-policy"
-version = "0.1.0"
-dependencies = [
- "ferrix-sigverify",
- "ferrix-slots",
- "ferrix-softsign",
-]
-
-[[package]]
-name = "ferrix-bootinfo"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-btrfs"
-version = "0.1.0"
-dependencies = [
- "lzokay-native",
- "miniz_oxide",
- "ruzstd",
-]
-
-[[package]]
-name = "ferrix-btrfs-mkfs"
-version = "0.1.0"
-dependencies = [
- "ferrix-btrfs",
- "ferrix-btrfs-write",
-]
-
-[[package]]
-name = "ferrix-btrfs-vfs"
-version = "0.1.0"
-dependencies = [
- "ferrix-btrfs",
- "ferrix-btrfs-write",
- "ferrix-sync",
- "ferrix-vfs",
-]
-
-[[package]]
-name = "ferrix-btrfs-write"
-version = "0.1.0"
-dependencies = [
- "ferrix-btrfs",
- "ferrix-fallible",
- "ferrix-heap",
-]
-
-[[package]]
-name = "ferrix-btrfsd"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkclient",
- "ferrix-blkring",
- "ferrix-btrfs",
- "ferrix-btrfs-vfs",
- "ferrix-btrfs-write",
- "ferrix-devmgr-proto",
- "ferrix-fsproto",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-sync",
- "ferrix-vfs",
-]
-
-[[package]]
-name = "ferrix-cgroupfs"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-channel-echo"
-version = "0.3.0"
-dependencies = [
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-chardevctl"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-cpio"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-crash-at-start"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-crng"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-description"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-devmgr"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-devmgr-events-proto",
- "ferrix-devmgr-proto",
- "ferrix-drvupdate-proto",
- "ferrix-fdt",
- "ferrix-native-abi",
- "ferrix-netring",
- "ferrix-process-builder",
- "ferrix-restart",
- "ferrix-rt",
- "ferrix-usbif",
-]
-
-[[package]]
-name = "ferrix-devmgr-events"
-version = "0.3.0"
-dependencies = [
- "ferrix-devmgr-events-proto",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-devmgr-events-proto"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-devmgr-proto"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-fdt",
- "ferrix-native-abi",
- "ferrix-netring",
-]
-
-[[package]]
-name = "ferrix-display-modes"
-version = "0.1.0"
-dependencies = [
- "ferrix-displayctl",
-]
-
-[[package]]
-name = "ferrix-displayctl"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-blkserve",
- "ferrix-devmgr-proto",
- "ferrix-driver-derive",
- "ferrix-fdt",
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-registers",
- "ferrix-rt",
- "ferrix-virtio",
- "ferrix-virtio-blk",
- "ferrix-virtio-input",
-]
-
-[[package]]
-name = "ferrix-driver-derive"
-version = "0.3.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "ferrix-driver-model-examples"
-version = "0.3.0"
-dependencies = [
- "ferrix-driver",
- "ferrix-platform",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-drvupdate-proto"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-drvupdated"
-version = "0.3.0"
-dependencies = [
- "ferrix-drvupdate-proto",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-dwc3"
-version = "0.1.0"
-dependencies = [
- "ferrix-usb-device",
-]
-
-[[package]]
-name = "ferrix-dwmac"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-efifb"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-display-modes",
- "ferrix-displayctl",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-elf"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-eventlog"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-slots",
-]
-
-[[package]]
-name = "ferrix-fallible"
-version = "0.1.0"
-dependencies = [
- "ferrix-sync",
-]
-
-[[package]]
-name = "ferrix-fat"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-fbtext"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-fdt"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-frame"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-fsproto"
-version = "0.3.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-vfs",
-]
-
-[[package]]
-name = "ferrix-gc400"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-gc400-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-gc400",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-gpu"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-display-modes",
- "ferrix-displayctl",
- "ferrix-native-abi",
- "ferrix-renderctl",
- "ferrix-rt",
- "ferrix-virtio",
- "ferrix-virtio-gpu",
-]
-
-[[package]]
-name = "ferrix-heap"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-input"
-version = "0.3.0"
-dependencies = [
- "ferrix-driver",
- "ferrix-inputctl",
- "ferrix-rt",
- "ferrix-virtio-input",
-]
-
-[[package]]
-name = "ferrix-inputctl"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-intel-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-chardevctl",
- "ferrix-display-modes",
- "ferrix-displayctl",
- "ferrix-intel-xelp",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-process-builder",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-intel-fake"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-chardevctl",
- "ferrix-intel-xelp",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-intel-xelp"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
-]
-
-[[package]]
-name = "ferrix-ipc-bench"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-process-builder",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-ipc-equiv"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-process-builder",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-kernel"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-crng",
- "ferrix-elf",
- "ferrix-kernel-board-gs201-usb",
- "ferrix-kernel-board-stm32mp1",
- "ferrix-kernel-load",
- "ferrix-kernel-logctl",
- "ferrix-kernel-net-ring",
- "ferrix-kernel-settings",
- "ferrix-linux-abi",
- "ferrix-paging",
- "ferrix-sched",
- "ferrix-smbios",
- "ferrix-sync",
- "ferrix-ustack",
-]
-
-[[package]]
-name = "ferrix-kernel-board-gs201-usb"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-fdt",
- "ferrix-kernel-core",
- "ferrix-kernel-item",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-kernel-board-stm32mp1"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-fdt",
- "ferrix-kernel-core",
- "ferrix-kernel-item",
- "ferrix-native-abi",
- "ferrix-sync",
-]
-
-[[package]]
-name = "ferrix-kernel-core"
-version = "0.3.0"
-dependencies = [
- "ferrix-acpi",
- "ferrix-audit",
- "ferrix-bootinfo",
- "ferrix-cgroupfs",
- "ferrix-description",
- "ferrix-elf",
- "ferrix-fallible",
- "ferrix-fbtext",
- "ferrix-fdt",
- "ferrix-frame",
- "ferrix-heap",
- "ferrix-kmem",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-objects",
- "ferrix-paging",
- "ferrix-pci",
- "ferrix-qr",
- "ferrix-sched",
- "ferrix-sched-edf",
- "ferrix-sha256",
- "ferrix-sync",
- "ferrix-vdso",
- "ferrix-vfs",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-kernel-item"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-blkring",
- "ferrix-bootinfo",
- "ferrix-cpio",
- "ferrix-crng",
- "ferrix-devmgr-proto",
- "ferrix-elf",
- "ferrix-fdt",
- "ferrix-kernel-core",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-objects",
- "ferrix-paging",
- "ferrix-partition-desc",
- "ferrix-pci",
- "ferrix-sched",
- "ferrix-smbios",
- "ferrix-sync",
- "ferrix-vfs",
- "ferrix-virtio",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-kernel-load"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-blkring",
- "ferrix-block",
- "ferrix-bootinfo",
- "ferrix-btrfs",
- "ferrix-btrfs-vfs",
- "ferrix-btrfs-write",
- "ferrix-cgroupfs",
- "ferrix-chardevctl",
- "ferrix-displayctl",
- "ferrix-elf",
- "ferrix-fallible",
- "ferrix-frame",
- "ferrix-inputctl",
- "ferrix-kernel-core",
- "ferrix-kernel-item",
- "ferrix-kmem",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-net",
- "ferrix-netlink",
- "ferrix-nettcp",
- "ferrix-netwire",
- "ferrix-paging",
- "ferrix-partition",
- "ferrix-pci",
- "ferrix-procfs",
- "ferrix-renderctl",
- "ferrix-sched",
- "ferrix-seccomp",
- "ferrix-smbios",
- "ferrix-sndctl",
- "ferrix-sync",
- "ferrix-sysfs",
- "ferrix-ustack",
- "ferrix-vdso",
- "ferrix-vfs",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-kernel-logctl"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-kernel-core",
- "ferrix-kernel-item",
- "ferrix-linux-abi",
- "ferrix-logctl",
- "ferrix-native-abi",
- "ferrix-sched",
-]
-
-[[package]]
-name = "ferrix-kernel-net-ring"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-bootinfo",
- "ferrix-kernel-core",
- "ferrix-kernel-load",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-net",
- "ferrix-netring",
- "ferrix-netwire",
- "ferrix-sched",
-]
-
-[[package]]
-name = "ferrix-kernel-settings"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-bootinfo",
- "ferrix-kernel-core",
- "ferrix-kernel-load",
- "ferrix-linux-abi",
- "ferrix-procfs",
- "ferrix-sysfs",
- "ferrix-vfs",
-]
-
-[[package]]
-name = "ferrix-kmem"
-version = "0.1.0"
-dependencies = [
- "ferrix-heap",
- "ferrix-sync",
-]
-
-[[package]]
-name = "ferrix-lift-core"
-version = "0.3.0"
-dependencies = [
- "ferrix-acpi",
- "ferrix-audit",
- "ferrix-bootinfo",
- "ferrix-cgroupfs",
- "ferrix-description",
- "ferrix-elf",
- "ferrix-fallible",
- "ferrix-fbtext",
- "ferrix-fdt",
- "ferrix-frame",
- "ferrix-heap",
- "ferrix-kmem",
- "ferrix-linux-abi",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-objects",
- "ferrix-paging",
- "ferrix-pci",
- "ferrix-qr",
- "ferrix-rt",
- "ferrix-sched",
- "ferrix-sha256",
- "ferrix-sync",
- "ferrix-vdso",
- "ferrix-vfs",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-lift-item"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-blkring",
- "ferrix-bootinfo",
- "ferrix-crng",
- "ferrix-devmgr-proto",
- "ferrix-elf",
- "ferrix-fdt",
- "ferrix-lift-core",
- "ferrix-linux-abi",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-objects",
- "ferrix-paging",
- "ferrix-pci",
- "ferrix-rt",
- "ferrix-sched",
- "ferrix-smbios",
- "ferrix-sync",
- "ferrix-vfs",
- "ferrix-virtio",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-lift-load"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-blkring",
- "ferrix-block",
- "ferrix-bootinfo",
- "ferrix-btrfs",
- "ferrix-btrfs-vfs",
- "ferrix-btrfs-write",
- "ferrix-cgroupfs",
- "ferrix-chardevctl",
- "ferrix-displayctl",
- "ferrix-elf",
- "ferrix-fallible",
- "ferrix-fdt",
- "ferrix-frame",
- "ferrix-fsproto",
- "ferrix-inputctl",
- "ferrix-kmem",
- "ferrix-lift-core",
- "ferrix-lift-item",
- "ferrix-linux-abi",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-net",
- "ferrix-netlink",
- "ferrix-nettcp",
- "ferrix-netwire",
- "ferrix-paging",
- "ferrix-partition",
- "ferrix-pci",
- "ferrix-procfs",
- "ferrix-renderctl",
- "ferrix-rt",
- "ferrix-sched",
- "ferrix-seccomp",
- "ferrix-smbios",
- "ferrix-sndctl",
- "ferrix-sync",
- "ferrix-sysfs",
- "ferrix-ustack",
- "ferrix-vdso",
- "ferrix-vfs",
- "ferrix-vma",
-]
-
-[[package]]
-name = "ferrix-lift-logctl"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-lift-core",
- "ferrix-lift-item",
- "ferrix-linux-abi",
- "ferrix-logctl",
- "ferrix-native-abi",
- "ferrix-sched",
-]
-
-[[package]]
-name = "ferrix-lift-net-ring"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-bootinfo",
- "ferrix-lift-core",
- "ferrix-lift-load",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-net",
- "ferrix-netring",
- "ferrix-sched",
-]
-
-[[package]]
-name = "ferrix-lift-settings"
-version = "0.3.0"
-dependencies = [
- "ferrix-audit",
- "ferrix-bootinfo",
- "ferrix-lift-core",
- "ferrix-lift-load",
- "ferrix-linux-abi",
- "ferrix-procfs",
- "ferrix-sysfs",
- "ferrix-vfs",
-]
-
-[[package]]
-name = "ferrix-linux-abi"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-linuxd"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-lift-core",
- "ferrix-lift-item",
- "ferrix-lift-load",
- "ferrix-lift-logctl",
- "ferrix-lift-net-ring",
- "ferrix-lift-settings",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-linuxd-dies"
-version = "0.3.0"
-dependencies = [
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-lode"
-version = "0.3.0"
-dependencies = [
- "ferrix-fat",
- "ferrix-linux-abi",
- "ferrix-lode-capture",
- "ferrix-lode-core",
- "ferrix-log-shed",
- "ferrix-native-abi",
- "ferrix-partition",
- "ferrix-rt",
- "ferrix-svc-proto",
-]
-
-[[package]]
-name = "ferrix-lode-capture"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-lode-core"
-version = "0.3.0"
-dependencies = [
- "ferrix-slots",
- "ruzstd",
-]
-
-[[package]]
-name = "ferrix-log-shed"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-logctl"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-ltdc"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-displayctl",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-stm32-display",
-]
-
-[[package]]
-name = "ferrix-lz4"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-mce-victim"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-chardevctl",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-memscrub"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-native"
-version = "0.3.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-native-abi"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
-]
-
-[[package]]
-name = "ferrix-net"
-version = "0.1.0"
-dependencies = [
- "ferrix-kmem",
- "ferrix-nettcp",
- "ferrix-netwire",
-]
-
-[[package]]
-name = "ferrix-net-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-netring",
- "ferrix-netserve",
- "ferrix-rt",
- "ferrix-virtio",
- "ferrix-virtio-net",
-]
-
-[[package]]
-name = "ferrix-netd"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkclient",
- "ferrix-devmgr-proto",
- "ferrix-native-abi",
- "ferrix-netring",
- "ferrix-netswitch",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-netlink"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
-]
-
-[[package]]
-name = "ferrix-netring"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-netserve"
-version = "0.1.0"
-dependencies = [
- "ferrix-netring",
- "ferrix-virtio-net",
-]
-
-[[package]]
-name = "ferrix-netswitch"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-nettcp"
-version = "0.1.0"
-dependencies = [
- "ferrix-kmem",
- "ferrix-netwire",
-]
-
-[[package]]
-name = "ferrix-netwire"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-nvme"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-nvme-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-blkserve",
- "ferrix-driver",
- "ferrix-native-abi",
- "ferrix-nvme",
- "ferrix-rt",
- "ferrix-virtio-blk",
-]
-
-[[package]]
-name = "ferrix-objects"
-version = "0.1.0"
-dependencies = [
- "ferrix-fallible",
- "ferrix-native-abi",
- "ferrix-sync",
-]
-
-[[package]]
-name = "ferrix-paging"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-partition"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-partition-desc"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-partition-hello"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-partmgr"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-partition-desc",
- "ferrix-process-builder",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-pci"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-pkg"
-version = "0.1.0"
-dependencies = [
- "ferrix-argon2",
-]
-
-[[package]]
-name = "ferrix-platform"
-version = "0.3.0"
-dependencies = [
- "ferrix-driver",
-]
-
-[[package]]
-name = "ferrix-pong"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-power-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-x86-power",
-]
-
-[[package]]
-name = "ferrix-process-builder"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-elf",
- "ferrix-native",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-procfs"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-qr"
-version = "0.1.0"
-dependencies = [
- "qrcode",
- "rqrr",
-]
-
-[[package]]
-name = "ferrix-registers"
-version = "0.3.0"
-dependencies = [
- "ferrix-driver-derive",
-]
-
-[[package]]
-name = "ferrix-renderctl"
-version = "0.1.0"
-dependencies = [
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-restart"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-restricted-check"
-version = "0.3.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-rt"
-version = "0.3.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-rtl8169"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-rtl8169-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-native-abi",
- "ferrix-netring",
- "ferrix-netserve",
- "ferrix-rt",
- "ferrix-rtl8169",
- "ferrix-virtio-net",
-]
-
-[[package]]
-name = "ferrix-sched"
-version = "0.3.0"
-dependencies = [
- "ferrix-fallible",
-]
-
-[[package]]
-name = "ferrix-sched-edf"
-version = "0.3.0"
-dependencies = [
- "ferrix-sched",
-]
-
-[[package]]
-name = "ferrix-sdmmc"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-blkserve",
- "ferrix-driver",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-stm32-sdmmc",
- "ferrix-virtio-blk",
-]
-
-[[package]]
-name = "ferrix-seccomp"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-sha256"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-sigverify"
-version = "0.1.0"
-dependencies = [
- "ferrix-sha256",
- "ferrix-softsign",
- "hbs-lms",
-]
-
-[[package]]
-name = "ferrix-slots"
-version = "0.3.0"
-dependencies = [
- "ferrix-bootinfo",
- "ferrix-partition",
- "ferrix-sha256",
-]
-
-[[package]]
-name = "ferrix-smbios"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-snd"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-sndctl",
- "ferrix-virtio",
- "ferrix-virtio-snd",
-]
-
-[[package]]
-name = "ferrix-sndctl"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-softsign"
-version = "0.1.0"
-dependencies = [
- "ferrix-sha256",
- "ferrix-sigverify",
-]
-
-[[package]]
-name = "ferrix-stm32-display"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-stm32-sdmmc"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-svc"
-version = "0.1.0"
-dependencies = [
- "ferrix-restart",
- "ferrix-seccomp",
-]
-
-[[package]]
-name = "ferrix-svc-proto"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-swap"
-version = "0.1.0"
-dependencies = [
- "ferrix-crng",
- "ferrix-lz4",
- "ferrix-sha256",
-]
-
-[[package]]
-name = "ferrix-sync"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-sysfs"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-test-seconds-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-driver",
- "ferrix-platform",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-usb-device"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-usb-host"
-version = "0.1.0"
-dependencies = [
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-usb-serial",
- "ferrix-usbif",
-]
-
-[[package]]
-name = "ferrix-usb-serial"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-usbdev"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-dwc3",
- "ferrix-linux-abi",
- "ferrix-logctl",
- "ferrix-native-abi",
- "ferrix-rt",
-]
-
-[[package]]
-name = "ferrix-usbhid"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-usb-host",
- "ferrix-usbif",
-]
-
-[[package]]
-name = "ferrix-usbif"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-usbserial"
-version = "0.3.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-usb-serial",
- "ferrix-usbif",
-]
-
-[[package]]
-name = "ferrix-ustack"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
-]
-
-[[package]]
-name = "ferrix-vdagent"
-version = "0.3.0"
-
-[[package]]
-name = "ferrix-vdso"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-vfs"
-version = "0.1.0"
-dependencies = [
- "ferrix-cpio",
- "ferrix-fallible",
- "ferrix-kmem",
- "ferrix-linux-abi",
- "ferrix-sync",
-]
-
-[[package]]
-name = "ferrix-virtio"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
-]
-
-[[package]]
-name = "ferrix-virtio-blk"
-version = "0.1.0"
-dependencies = [
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-virtio-console"
-version = "0.3.0"
-dependencies = [
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-virtio-gpu"
-version = "0.1.0"
-dependencies = [
- "ferrix-displayctl",
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-virtio-input"
-version = "0.1.0"
-dependencies = [
- "ferrix-inputctl",
- "ferrix-linux-abi",
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-virtio-net"
-version = "0.1.0"
-dependencies = [
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-virtio-snd"
-version = "0.1.0"
-dependencies = [
- "ferrix-linux-abi",
- "ferrix-sndctl",
- "ferrix-virtio",
-]
-
-[[package]]
-name = "ferrix-vma"
-version = "0.1.0"
-dependencies = [
- "ferrix-fallible",
- "ferrix-kmem",
-]
-
-[[package]]
-name = "ferrix-vport"
-version = "0.3.0"
-dependencies = [
- "ferrix-blkring",
- "ferrix-linux-abi",
- "ferrix-native-abi",
- "ferrix-rt",
- "ferrix-virtio",
- "ferrix-virtio-console",
-]
-
-[[package]]
-name = "ferrix-vtier"
-version = "0.1.0"
-
-[[package]]
-name = "ferrix-x86-power"
-version = "0.1.0"
-dependencies = [
- "ferrix-native-abi",
-]
-
-[[package]]
-name = "ferrix-yt6801"
-version = "0.1.0"
-dependencies = [
- "ferrix-dwmac",
-]
-
-[[package]]
-name = "ferrix-yt6801-driver"
-version = "0.3.0"
-dependencies = [
- "ferrix-dwmac",
- "ferrix-native-abi",
- "ferrix-netring",
- "ferrix-netserve",
- "ferrix-rt",
- "ferrix-virtio-net",
- "ferrix-yt6801",
-]
-
-[[package]]
 name = "foldhash"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1812,26 +312,1526 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
+name = "xaqu-acpi"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-adb"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-ahci"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-ahci-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-ahci",
+ "xaqu-blkring",
+ "xaqu-blkserve",
+ "xaqu-driver",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-virtio-blk",
+]
+
+[[package]]
+name = "xaqu-argon2"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-audit"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-auth-proto"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-blk"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-blkserve",
+ "xaqu-driver",
+ "xaqu-rt",
+ "xaqu-virtio-blk",
+]
+
+[[package]]
+name = "xaqu-blk-victim"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkclient",
+ "xaqu-blkring",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-blkclient"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-native",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-blkring"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-blkserve"
+version = "0.1.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-virtio",
+ "xaqu-virtio-blk",
+]
+
+[[package]]
+name = "xaqu-block"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-boot"
+version = "0.3.0"
+dependencies = [
+ "xaqu-boot-policy",
+ "xaqu-bootinfo",
+ "xaqu-elf",
+ "xaqu-eventlog",
+ "xaqu-paging",
+ "xaqu-slots",
+ "xaqu-smbios",
+]
+
+[[package]]
+name = "xaqu-boot-pixel7"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-elf",
+ "xaqu-fdt",
+ "xaqu-paging",
+]
+
+[[package]]
+name = "xaqu-boot-policy"
+version = "0.1.0"
+dependencies = [
+ "xaqu-sigverify",
+ "xaqu-slots",
+ "xaqu-softsign",
+]
+
+[[package]]
+name = "xaqu-bootinfo"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-btrfs"
+version = "0.1.0"
+dependencies = [
+ "lzokay-native",
+ "miniz_oxide",
+ "ruzstd",
+]
+
+[[package]]
+name = "xaqu-btrfs-mkfs"
+version = "0.1.0"
+dependencies = [
+ "xaqu-btrfs",
+ "xaqu-btrfs-write",
+]
+
+[[package]]
+name = "xaqu-btrfs-vfs"
+version = "0.1.0"
+dependencies = [
+ "xaqu-btrfs",
+ "xaqu-btrfs-write",
+ "xaqu-sync",
+ "xaqu-vfs",
+]
+
+[[package]]
+name = "xaqu-btrfs-write"
+version = "0.1.0"
+dependencies = [
+ "xaqu-btrfs",
+ "xaqu-fallible",
+ "xaqu-heap",
+]
+
+[[package]]
+name = "xaqu-btrfsd"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkclient",
+ "xaqu-blkring",
+ "xaqu-btrfs",
+ "xaqu-btrfs-vfs",
+ "xaqu-btrfs-write",
+ "xaqu-devmgr-proto",
+ "xaqu-fsproto",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-sync",
+ "xaqu-vfs",
+]
+
+[[package]]
+name = "xaqu-cgroupfs"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-channel-echo"
+version = "0.3.0"
+dependencies = [
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-chardevctl"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-cpio"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-crash-at-start"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-crng"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-description"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-devmgr"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-devmgr-events-proto",
+ "xaqu-devmgr-proto",
+ "xaqu-drvupdate-proto",
+ "xaqu-fdt",
+ "xaqu-native-abi",
+ "xaqu-netring",
+ "xaqu-process-builder",
+ "xaqu-restart",
+ "xaqu-rt",
+ "xaqu-usbif",
+]
+
+[[package]]
+name = "xaqu-devmgr-events"
+version = "0.3.0"
+dependencies = [
+ "xaqu-devmgr-events-proto",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-devmgr-events-proto"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-devmgr-proto"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-fdt",
+ "xaqu-native-abi",
+ "xaqu-netring",
+]
+
+[[package]]
+name = "xaqu-display-modes"
+version = "0.1.0"
+dependencies = [
+ "xaqu-displayctl",
+]
+
+[[package]]
+name = "xaqu-displayctl"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-blkserve",
+ "xaqu-devmgr-proto",
+ "xaqu-driver-derive",
+ "xaqu-fdt",
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-registers",
+ "xaqu-rt",
+ "xaqu-virtio",
+ "xaqu-virtio-blk",
+ "xaqu-virtio-input",
+]
+
+[[package]]
+name = "xaqu-driver-derive"
+version = "0.3.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "xaqu-driver-model-examples"
+version = "0.3.0"
+dependencies = [
+ "xaqu-driver",
+ "xaqu-platform",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-drvupdate-proto"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-drvupdated"
+version = "0.3.0"
+dependencies = [
+ "xaqu-drvupdate-proto",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-dwc3"
+version = "0.1.0"
+dependencies = [
+ "xaqu-usb-device",
+]
+
+[[package]]
+name = "xaqu-dwmac"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-efifb"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-display-modes",
+ "xaqu-displayctl",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-elf"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-eventlog"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-slots",
+]
+
+[[package]]
+name = "xaqu-fallible"
+version = "0.1.0"
+dependencies = [
+ "xaqu-sync",
+]
+
+[[package]]
+name = "xaqu-fat"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-fbtext"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-fdt"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-frame"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-fsproto"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-vfs",
+]
+
+[[package]]
+name = "xaqu-gc400"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-gc400-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-gc400",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-gpu"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-display-modes",
+ "xaqu-displayctl",
+ "xaqu-native-abi",
+ "xaqu-renderctl",
+ "xaqu-rt",
+ "xaqu-virtio",
+ "xaqu-virtio-gpu",
+]
+
+[[package]]
+name = "xaqu-heap"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-input"
+version = "0.3.0"
+dependencies = [
+ "xaqu-driver",
+ "xaqu-inputctl",
+ "xaqu-rt",
+ "xaqu-virtio-input",
+]
+
+[[package]]
+name = "xaqu-inputctl"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-intel-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-chardevctl",
+ "xaqu-display-modes",
+ "xaqu-displayctl",
+ "xaqu-intel-xelp",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-process-builder",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-intel-fake"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-chardevctl",
+ "xaqu-intel-xelp",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-intel-xelp"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-ipc-bench"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-process-builder",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-ipc-equiv"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-process-builder",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-kernel"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-crng",
+ "xaqu-elf",
+ "xaqu-kernel-board-gs201-usb",
+ "xaqu-kernel-board-stm32mp1",
+ "xaqu-kernel-load",
+ "xaqu-kernel-logctl",
+ "xaqu-kernel-net-ring",
+ "xaqu-kernel-settings",
+ "xaqu-linux-abi",
+ "xaqu-paging",
+ "xaqu-sched",
+ "xaqu-smbios",
+ "xaqu-sync",
+ "xaqu-ustack",
+]
+
+[[package]]
+name = "xaqu-kernel-board-gs201-usb"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-fdt",
+ "xaqu-kernel-core",
+ "xaqu-kernel-item",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-kernel-board-stm32mp1"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-fdt",
+ "xaqu-kernel-core",
+ "xaqu-kernel-item",
+ "xaqu-native-abi",
+ "xaqu-sync",
+]
+
+[[package]]
+name = "xaqu-kernel-core"
+version = "0.3.0"
+dependencies = [
+ "xaqu-acpi",
+ "xaqu-audit",
+ "xaqu-bootinfo",
+ "xaqu-cgroupfs",
+ "xaqu-description",
+ "xaqu-elf",
+ "xaqu-fallible",
+ "xaqu-fbtext",
+ "xaqu-fdt",
+ "xaqu-frame",
+ "xaqu-heap",
+ "xaqu-kmem",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-objects",
+ "xaqu-paging",
+ "xaqu-pci",
+ "xaqu-qr",
+ "xaqu-sched",
+ "xaqu-sched-edf",
+ "xaqu-sha256",
+ "xaqu-sync",
+ "xaqu-vdso",
+ "xaqu-vfs",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-kernel-item"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-blkring",
+ "xaqu-bootinfo",
+ "xaqu-cpio",
+ "xaqu-crng",
+ "xaqu-devmgr-proto",
+ "xaqu-elf",
+ "xaqu-fdt",
+ "xaqu-kernel-core",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-objects",
+ "xaqu-paging",
+ "xaqu-partition-desc",
+ "xaqu-pci",
+ "xaqu-sched",
+ "xaqu-smbios",
+ "xaqu-sync",
+ "xaqu-vfs",
+ "xaqu-virtio",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-kernel-load"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-blkring",
+ "xaqu-block",
+ "xaqu-bootinfo",
+ "xaqu-btrfs",
+ "xaqu-btrfs-vfs",
+ "xaqu-btrfs-write",
+ "xaqu-cgroupfs",
+ "xaqu-chardevctl",
+ "xaqu-displayctl",
+ "xaqu-elf",
+ "xaqu-fallible",
+ "xaqu-frame",
+ "xaqu-inputctl",
+ "xaqu-kernel-core",
+ "xaqu-kernel-item",
+ "xaqu-kmem",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-net",
+ "xaqu-netlink",
+ "xaqu-nettcp",
+ "xaqu-netwire",
+ "xaqu-paging",
+ "xaqu-partition",
+ "xaqu-pci",
+ "xaqu-procfs",
+ "xaqu-renderctl",
+ "xaqu-sched",
+ "xaqu-seccomp",
+ "xaqu-smbios",
+ "xaqu-sndctl",
+ "xaqu-sync",
+ "xaqu-sysfs",
+ "xaqu-ustack",
+ "xaqu-vdso",
+ "xaqu-vfs",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-kernel-logctl"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-kernel-core",
+ "xaqu-kernel-item",
+ "xaqu-linux-abi",
+ "xaqu-logctl",
+ "xaqu-native-abi",
+ "xaqu-sched",
+]
+
+[[package]]
+name = "xaqu-kernel-net-ring"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-bootinfo",
+ "xaqu-kernel-core",
+ "xaqu-kernel-load",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-net",
+ "xaqu-netring",
+ "xaqu-netwire",
+ "xaqu-sched",
+]
+
+[[package]]
+name = "xaqu-kernel-settings"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-bootinfo",
+ "xaqu-kernel-core",
+ "xaqu-kernel-load",
+ "xaqu-linux-abi",
+ "xaqu-procfs",
+ "xaqu-sysfs",
+ "xaqu-vfs",
+]
+
+[[package]]
+name = "xaqu-kmem"
+version = "0.1.0"
+dependencies = [
+ "xaqu-heap",
+ "xaqu-sync",
+]
+
+[[package]]
+name = "xaqu-lift-core"
+version = "0.3.0"
+dependencies = [
+ "xaqu-acpi",
+ "xaqu-audit",
+ "xaqu-bootinfo",
+ "xaqu-cgroupfs",
+ "xaqu-description",
+ "xaqu-elf",
+ "xaqu-fallible",
+ "xaqu-fbtext",
+ "xaqu-fdt",
+ "xaqu-frame",
+ "xaqu-heap",
+ "xaqu-kmem",
+ "xaqu-linux-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-objects",
+ "xaqu-paging",
+ "xaqu-pci",
+ "xaqu-qr",
+ "xaqu-rt",
+ "xaqu-sched",
+ "xaqu-sha256",
+ "xaqu-sync",
+ "xaqu-vdso",
+ "xaqu-vfs",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-lift-item"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-blkring",
+ "xaqu-bootinfo",
+ "xaqu-crng",
+ "xaqu-devmgr-proto",
+ "xaqu-elf",
+ "xaqu-fdt",
+ "xaqu-lift-core",
+ "xaqu-linux-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-objects",
+ "xaqu-paging",
+ "xaqu-pci",
+ "xaqu-rt",
+ "xaqu-sched",
+ "xaqu-smbios",
+ "xaqu-sync",
+ "xaqu-vfs",
+ "xaqu-virtio",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-lift-load"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-blkring",
+ "xaqu-block",
+ "xaqu-bootinfo",
+ "xaqu-btrfs",
+ "xaqu-btrfs-vfs",
+ "xaqu-btrfs-write",
+ "xaqu-cgroupfs",
+ "xaqu-chardevctl",
+ "xaqu-displayctl",
+ "xaqu-elf",
+ "xaqu-fallible",
+ "xaqu-fdt",
+ "xaqu-frame",
+ "xaqu-fsproto",
+ "xaqu-inputctl",
+ "xaqu-kmem",
+ "xaqu-lift-core",
+ "xaqu-lift-item",
+ "xaqu-linux-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-net",
+ "xaqu-netlink",
+ "xaqu-nettcp",
+ "xaqu-netwire",
+ "xaqu-paging",
+ "xaqu-partition",
+ "xaqu-pci",
+ "xaqu-procfs",
+ "xaqu-renderctl",
+ "xaqu-rt",
+ "xaqu-sched",
+ "xaqu-seccomp",
+ "xaqu-smbios",
+ "xaqu-sndctl",
+ "xaqu-sync",
+ "xaqu-sysfs",
+ "xaqu-ustack",
+ "xaqu-vdso",
+ "xaqu-vfs",
+ "xaqu-vma",
+]
+
+[[package]]
+name = "xaqu-lift-logctl"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-lift-core",
+ "xaqu-lift-item",
+ "xaqu-linux-abi",
+ "xaqu-logctl",
+ "xaqu-native-abi",
+ "xaqu-sched",
+]
+
+[[package]]
+name = "xaqu-lift-net-ring"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-bootinfo",
+ "xaqu-lift-core",
+ "xaqu-lift-load",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-net",
+ "xaqu-netring",
+ "xaqu-sched",
+]
+
+[[package]]
+name = "xaqu-lift-settings"
+version = "0.3.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-bootinfo",
+ "xaqu-lift-core",
+ "xaqu-lift-load",
+ "xaqu-linux-abi",
+ "xaqu-procfs",
+ "xaqu-sysfs",
+ "xaqu-vfs",
+]
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-linuxd"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-lift-core",
+ "xaqu-lift-item",
+ "xaqu-lift-load",
+ "xaqu-lift-logctl",
+ "xaqu-lift-net-ring",
+ "xaqu-lift-settings",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-linuxd-dies"
+version = "0.3.0"
+dependencies = [
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-lode"
+version = "0.3.0"
+dependencies = [
+ "xaqu-fat",
+ "xaqu-linux-abi",
+ "xaqu-lode-capture",
+ "xaqu-lode-core",
+ "xaqu-log-shed",
+ "xaqu-native-abi",
+ "xaqu-partition",
+ "xaqu-rt",
+ "xaqu-svc-proto",
+]
+
+[[package]]
+name = "xaqu-lode-capture"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-lode-core"
+version = "0.3.0"
+dependencies = [
+ "ruzstd",
+ "xaqu-slots",
+]
+
+[[package]]
+name = "xaqu-log-shed"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-logctl"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-ltdc"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-displayctl",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-stm32-display",
+]
+
+[[package]]
+name = "xaqu-lz4"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-mce-victim"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-chardevctl",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-memscrub"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-native"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-native-abi"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-net"
+version = "0.1.0"
+dependencies = [
+ "xaqu-kmem",
+ "xaqu-nettcp",
+ "xaqu-netwire",
+]
+
+[[package]]
+name = "xaqu-net-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-netring",
+ "xaqu-netserve",
+ "xaqu-rt",
+ "xaqu-virtio",
+ "xaqu-virtio-net",
+]
+
+[[package]]
+name = "xaqu-netd"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkclient",
+ "xaqu-devmgr-proto",
+ "xaqu-native-abi",
+ "xaqu-netring",
+ "xaqu-netswitch",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-netlink"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-netring"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-netserve"
+version = "0.1.0"
+dependencies = [
+ "xaqu-netring",
+ "xaqu-virtio-net",
+]
+
+[[package]]
+name = "xaqu-netswitch"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-nettcp"
+version = "0.1.0"
+dependencies = [
+ "xaqu-kmem",
+ "xaqu-netwire",
+]
+
+[[package]]
+name = "xaqu-netwire"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-nvme"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-nvme-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-blkserve",
+ "xaqu-driver",
+ "xaqu-native-abi",
+ "xaqu-nvme",
+ "xaqu-rt",
+ "xaqu-virtio-blk",
+]
+
+[[package]]
+name = "xaqu-objects"
+version = "0.1.0"
+dependencies = [
+ "xaqu-fallible",
+ "xaqu-native-abi",
+ "xaqu-sync",
+]
+
+[[package]]
+name = "xaqu-paging"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-partition"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-partition-desc"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-partition-hello"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-partmgr"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-partition-desc",
+ "xaqu-process-builder",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-pci"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-pkg"
+version = "0.1.0"
+dependencies = [
+ "xaqu-argon2",
+]
+
+[[package]]
+name = "xaqu-platform"
+version = "0.3.0"
+dependencies = [
+ "xaqu-driver",
+]
+
+[[package]]
+name = "xaqu-pong"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-power-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-x86-power",
+]
+
+[[package]]
+name = "xaqu-process-builder"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-elf",
+ "xaqu-native",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-procfs"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-qr"
+version = "0.1.0"
+dependencies = [
+ "qrcode",
+ "rqrr",
+]
+
+[[package]]
+name = "xaqu-registers"
+version = "0.3.0"
+dependencies = [
+ "xaqu-driver-derive",
+]
+
+[[package]]
+name = "xaqu-renderctl"
+version = "0.1.0"
+dependencies = [
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-restart"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-restricted-check"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-rt"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-rtl8169"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-rtl8169-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-native-abi",
+ "xaqu-netring",
+ "xaqu-netserve",
+ "xaqu-rt",
+ "xaqu-rtl8169",
+ "xaqu-virtio-net",
+]
+
+[[package]]
+name = "xaqu-sched"
+version = "0.3.0"
+dependencies = [
+ "xaqu-fallible",
+]
+
+[[package]]
+name = "xaqu-sched-edf"
+version = "0.3.0"
+dependencies = [
+ "xaqu-sched",
+]
+
+[[package]]
+name = "xaqu-sdmmc"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-blkserve",
+ "xaqu-driver",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-stm32-sdmmc",
+ "xaqu-virtio-blk",
+]
+
+[[package]]
+name = "xaqu-seccomp"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-sha256"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-sigverify"
+version = "0.1.0"
+dependencies = [
+ "hbs-lms",
+ "xaqu-sha256",
+ "xaqu-softsign",
+]
+
+[[package]]
+name = "xaqu-slots"
+version = "0.3.0"
+dependencies = [
+ "xaqu-bootinfo",
+ "xaqu-partition",
+ "xaqu-sha256",
+]
+
+[[package]]
+name = "xaqu-smbios"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-snd"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-sndctl",
+ "xaqu-virtio",
+ "xaqu-virtio-snd",
+]
+
+[[package]]
+name = "xaqu-sndctl"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-softsign"
+version = "0.1.0"
+dependencies = [
+ "xaqu-sha256",
+ "xaqu-sigverify",
+]
+
+[[package]]
+name = "xaqu-stm32-display"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-stm32-sdmmc"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-svc"
+version = "0.1.0"
+dependencies = [
+ "xaqu-restart",
+ "xaqu-seccomp",
+]
+
+[[package]]
+name = "xaqu-svc-proto"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-swap"
+version = "0.1.0"
+dependencies = [
+ "xaqu-crng",
+ "xaqu-lz4",
+ "xaqu-sha256",
+]
+
+[[package]]
+name = "xaqu-sync"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-sysfs"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-test-seconds-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-driver",
+ "xaqu-platform",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-usb-device"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-usb-host"
+version = "0.1.0"
+dependencies = [
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-usb-serial",
+ "xaqu-usbif",
+]
+
+[[package]]
+name = "xaqu-usb-serial"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-usbdev"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-dwc3",
+ "xaqu-linux-abi",
+ "xaqu-logctl",
+ "xaqu-native-abi",
+ "xaqu-rt",
+]
+
+[[package]]
+name = "xaqu-usbhid"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-usb-host",
+ "xaqu-usbif",
+]
+
+[[package]]
+name = "xaqu-usbif"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-usbserial"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-usb-serial",
+ "xaqu-usbif",
+]
+
+[[package]]
+name = "xaqu-ustack"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-vdagent"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-vdso"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-vfs"
+version = "0.1.0"
+dependencies = [
+ "xaqu-cpio",
+ "xaqu-fallible",
+ "xaqu-kmem",
+ "xaqu-linux-abi",
+ "xaqu-sync",
+]
+
+[[package]]
+name = "xaqu-virtio"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-virtio-blk"
+version = "0.1.0"
+dependencies = [
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-virtio-console"
+version = "0.3.0"
+dependencies = [
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-virtio-gpu"
+version = "0.1.0"
+dependencies = [
+ "xaqu-displayctl",
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-virtio-input"
+version = "0.1.0"
+dependencies = [
+ "xaqu-inputctl",
+ "xaqu-linux-abi",
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-virtio-net"
+version = "0.1.0"
+dependencies = [
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-virtio-snd"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-sndctl",
+ "xaqu-virtio",
+]
+
+[[package]]
+name = "xaqu-vma"
+version = "0.1.0"
+dependencies = [
+ "xaqu-fallible",
+ "xaqu-kmem",
+]
+
+[[package]]
+name = "xaqu-vport"
+version = "0.3.0"
+dependencies = [
+ "xaqu-blkring",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+ "xaqu-rt",
+ "xaqu-virtio",
+ "xaqu-virtio-console",
+]
+
+[[package]]
+name = "xaqu-vtier"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-x86-power"
+version = "0.1.0"
+dependencies = [
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-yt6801"
+version = "0.1.0"
+dependencies = [
+ "xaqu-dwmac",
+]
+
+[[package]]
+name = "xaqu-yt6801-driver"
+version = "0.3.0"
+dependencies = [
+ "xaqu-dwmac",
+ "xaqu-native-abi",
+ "xaqu-netring",
+ "xaqu-netserve",
+ "xaqu-rt",
+ "xaqu-virtio-net",
+ "xaqu-yt6801",
+]
+
+[[package]]
 name = "xtask"
 version = "0.3.0"
 dependencies = [
- "ferrix-adb",
- "ferrix-argon2",
- "ferrix-boot-policy",
- "ferrix-bootinfo",
- "ferrix-cpio",
- "ferrix-devmgr-proto",
- "ferrix-displayctl",
- "ferrix-elf",
- "ferrix-eventlog",
- "ferrix-fat",
- "ferrix-native-abi",
- "ferrix-netwire",
- "ferrix-partition",
- "ferrix-pkg",
- "ferrix-slots",
- "ferrix-usb-serial",
- "ferrix-vdagent",
+ "xaqu-adb",
+ "xaqu-argon2",
+ "xaqu-boot-policy",
+ "xaqu-bootinfo",
+ "xaqu-cpio",
+ "xaqu-devmgr-proto",
+ "xaqu-displayctl",
+ "xaqu-elf",
+ "xaqu-eventlog",
+ "xaqu-fat",
+ "xaqu-native-abi",
+ "xaqu-netwire",
+ "xaqu-partition",
+ "xaqu-pkg",
+ "xaqu-slots",
+ "xaqu-usb-serial",
+ "xaqu-vdagent",
 ]
 
 [[package]]

@@ -18,10 +18,10 @@
 
 #![cfg(target_arch = "aarch64")]
 
-use ferrix_kernel_core::arch::aarch64 as core_aarch64;
-use ferrix_kernel_core::arch::aarch64::trap as core_trap;
+use xaqu_kernel_core::arch::aarch64 as core_aarch64;
+use xaqu_kernel_core::arch::aarch64::trap as core_trap;
 
-use ferrix_linux_abi::types::{SIGBUS, SIGILL, SIGTRAP};
+use xaqu_linux_abi::types::{SIGBUS, SIGILL, SIGTRAP};
 
 use crate::console::println;
 
@@ -142,12 +142,12 @@ pub(crate) fn run() -> Result<(), &'static str> {
 /// Build `code` into a program called `name`, run it, and answer its status.
 fn run_program(name: &[u8], code: &[u8]) -> Result<i32, &'static str> {
     let file = crate::syscall::image::build_with(
-        ferrix_elf::Class::Elf64,
+        xaqu_elf::Class::Elf64,
         core_aarch64::ARCH.elf_machine(),
         crate::syscall::image::Shape::Good,
         code,
     );
-    crate::syscall::exec::run(&file, &[name], &[], [0x7e; ferrix_ustack::RANDOM_BYTES])
+    crate::syscall::exec::run(&file, &[name], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that faults on purpose could not be started")
 }
 
@@ -167,7 +167,7 @@ pub fn drive_system_call(
     args: [u64; 6],
     ip: u64,
 ) -> Option<isize> {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     if abi != crate::trap::Abi::Native {
         return None;
@@ -201,7 +201,7 @@ pub fn drive_system_call(
 /// thread of a check's process, as [`drive_system_call`] is run. An entry
 /// that refuses the frame answers `ENOSYS` with the registers as sent.
 pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     let mut frame = core_trap::TrapFrame {
         x: [0; 31],
@@ -222,7 +222,7 @@ pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
     let value = if done.is_ok() {
         frame.x[0] as i64 as isize
     } else {
-        ferrix_linux_abi::errno::Errno::ENOSYS.as_return_value()
+        xaqu_linux_abi::errno::Errno::ENOSYS.as_return_value()
     };
     (value, [frame.x[1], frame.x[2], frame.x[3]])
 }

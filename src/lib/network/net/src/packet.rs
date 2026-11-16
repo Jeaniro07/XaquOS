@@ -18,8 +18,8 @@ use alloc::collections::VecDeque;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, buffer_footprint, reserve_deque};
-use ferrix_netwire::ethernet::{self, Mac};
+use xaqu_kmem::{Charge, buffer_footprint, reserve_deque};
+use xaqu_netwire::ethernet::{self, Mac};
 
 use crate::iface::Medium;
 use crate::socket::{Error, Readiness, SocketId};

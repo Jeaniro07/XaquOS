@@ -37,11 +37,11 @@
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_frame::Frame;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_frame::Frame;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::mm;
@@ -221,7 +221,7 @@ fn check(a: usize) -> Result<Report, &'static str> {
         image::Shape::Good,
         arch::USER_RMAP_PROGRAM,
     );
-    let parent = process::load(&file, &[b"/rmap"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    let parent = process::load(&file, &[b"/rmap"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "the reverse map check's program could not be loaded")?;
     let shared = VmaFlags {
         shared: true,

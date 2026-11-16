@@ -1,4 +1,4 @@
-"""The entries of a `newc` cpio archive, as Ferrix's initramfs is written.
+"""The entries of a `newc` cpio archive, as Xaqu's initramfs is written.
 
 The kernel reads it with `src/lib/fs/common/cpio`; this is the release tools'
 reading of the same format (`070701` headers, eight hex digits a field,

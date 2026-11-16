@@ -77,23 +77,23 @@ pub mod check;
 
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-#[cfg(ferrix_personality = "user")]
-pub(crate) use ferrix_audit::FIRST_PROCESS_ENDED;
-pub use ferrix_audit::{BOOTED, Config};
-pub use ferrix_audit::{
+#[cfg(xaqu_personality = "user")]
+pub(crate) use xaqu_audit::FIRST_PROCESS_ENDED;
+pub use xaqu_audit::{BOOTED, Config};
+pub use xaqu_audit::{
     BUFFER_DECLARED, CONTROL, DELEGATED, DEVMGR_STARTED, DOMAIN, EXCEPTION_ATTACHED, JOB_KILLED,
     LEVEL, LIMIT_SET, Outcome, PROCESS_MADE, QUIESCED, READER_GIVEN, RIGHTS, ROOT_SWITCHED, Record,
     STARTER_GIVEN, TICKET, UNMEASURED, WIDEN, target,
 };
-pub use ferrix_audit::{
+pub use xaqu_audit::{
     CGROUP_KILLED, CGROUP_LIMIT, DEVICE_LIMIT, DEVICE_LIMIT_SET, Event, NO_UID, saturated,
 };
-pub(crate) use ferrix_audit::{
+pub(crate) use xaqu_audit::{
     CONFIG, CPU_SERVICE, Class, DMA_FAULT, INTERRUPT_FAULT, LIMIT, OOM_KILLED, POWER, SUPPRESSED,
 };
 #[doc(hidden)]
-pub use ferrix_audit::{EXCEPTION_CONTEXT, EXCEPTION_KILLED, PAGER};
-use ferrix_sync::IrqSpinLock;
+pub use xaqu_audit::{EXCEPTION_CONTEXT, EXCEPTION_KILLED, PAGER};
+use xaqu_sync::IrqSpinLock;
 
 use crate::object::process::Process;
 use crate::object::quota::Resource;
@@ -513,7 +513,7 @@ impl<const H: usize, const R: usize> Store<H, R> {
     /// The start-up record, before it is numbered and stamped: its lengths
     /// checked when the store's type is made, so the record can carry them.
     const START_FIELDS: () = assert!(
-        H <= ferrix_audit::MAX_RING && R <= ferrix_audit::MAX_RING,
+        H <= xaqu_audit::MAX_RING && R <= xaqu_audit::MAX_RING,
         "each ring's length fits the half word the start-up record gives it"
     );
 
@@ -651,15 +651,15 @@ pub fn config(key: Config, value: u32, more: u32) {
     );
 }
 
-/// A resource's number in a record (`ferrix_audit::resource`).
+/// A resource's number in a record (`xaqu_audit::resource`).
 pub fn resource_number(resource: Resource) -> u64 {
     match resource {
-        Resource::Memory => ferrix_audit::resource::MEMORY,
-        Resource::Objects => ferrix_audit::resource::OBJECTS,
-        Resource::Tasks => ferrix_audit::resource::TASKS,
-        Resource::Kernel => ferrix_audit::resource::KERNEL,
+        Resource::Memory => xaqu_audit::resource::MEMORY,
+        Resource::Objects => xaqu_audit::resource::OBJECTS,
+        Resource::Tasks => xaqu_audit::resource::TASKS,
+        Resource::Kernel => xaqu_audit::resource::KERNEL,
         // Never limited on its own: a table's charge is refused as memory.
-        Resource::Tables => ferrix_audit::resource::MEMORY,
+        Resource::Tables => xaqu_audit::resource::MEMORY,
     }
 }
 
@@ -702,7 +702,7 @@ pub(crate) fn limit_refused(
 pub fn reservation_refused(subject: Subject, job: u64, asked: u64, free: u64) {
     let target = Target {
         kind: target::RESOURCE,
-        id: ferrix_audit::resource::RESERVE,
+        id: xaqu_audit::resource::RESERVE,
     };
     record(
         LIMIT,
@@ -741,7 +741,7 @@ pub fn device_limit(
     device: usize,
     which: u64,
     [old, new]: [u64; 2],
-    answered: &Result<usize, ferrix_linux_abi::errno::Errno>,
+    answered: &Result<usize, xaqu_linux_abi::errno::Errno>,
 ) {
     let (event, outcome, status) = match answered {
         Ok(_) => (DEVICE_LIMIT_SET, Outcome::Done, 0),
@@ -766,13 +766,13 @@ pub fn device_limit(
 }
 
 /// Record `subject` taking processor `cpu` out of service or bringing it
-/// back (`back`), through `door` (`ferrix_audit::cpu_service`): done, or
+/// back (`back`), through `door` (`xaqu_audit::cpu_service`): done, or
 /// refused with `status`, the refusal's number (`smp::service::Refusal`).
 pub(crate) fn cpu_service(subject: Subject, cpu: usize, back: bool, door: u32, status: i16) {
     let direction = if back {
-        ferrix_audit::cpu_service::BACK
+        xaqu_audit::cpu_service::BACK
     } else {
-        ferrix_audit::cpu_service::OUT
+        xaqu_audit::cpu_service::OUT
     };
     let outcome = if status == 0 {
         Outcome::Done
@@ -812,7 +812,7 @@ pub(crate) fn oom_killed(pid: u32, limited: u64, resident: u64) {
     );
 }
 
-/// Record `subject` asking for power action `action` (`ferrix_audit::power`),
+/// Record `subject` asking for power action `action` (`xaqu_audit::power`),
 /// just before it is taken, and say its number on the console: nothing can
 /// read the record once the machine is off, so the console line is what
 /// shows it was made, beside init's last read, which stops just short of it
@@ -902,7 +902,7 @@ pub fn read(which: Which, from: u64, out: &mut [Record]) -> Read {
 }
 
 /// A first process's end, in one record (`docs/microkernel/BOOT-AUTHORITY.md` §4).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub fn first_process_ended(process: &Process) {
     record(
         FIRST_PROCESS_ENDED,

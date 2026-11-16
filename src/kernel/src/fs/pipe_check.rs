@@ -19,7 +19,7 @@
 use alloc::sync::Arc;
 use alloc::vec;
 
-use ferrix_vfs::{Errno, OpenFile};
+use xaqu_vfs::{Errno, OpenFile};
 
 use crate::fs::pipe;
 use crate::sched::WaitQueue;
@@ -87,7 +87,7 @@ fn ended_by(
     *WAITER_ANSWER.lock() = None;
     *WAITER_FILE.lock() = Some(Arc::clone(waited));
     let ended_before = ended(waited);
-    let task = crate::sched::spawn("pipe-waiter", waiter, what, ferrix_sched::NICE_0_WEIGHT)?;
+    let task = crate::sched::spawn("pipe-waiter", waiter, what, xaqu_sched::NICE_0_WEIGHT)?;
     let deadline = crate::timer::now_nanos().saturating_add(PATIENCE_NANOS);
     while listed(waited) == 0
         && WAITER_ANSWER.lock().is_none()

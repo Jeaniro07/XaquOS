@@ -21,7 +21,7 @@
 //! [`listed`] is the core's share of a driver's mode list (version 11,
 //! `docs/DISPLAY.md` §9): which listed entry a `SETCRTC` names. Making the
 //! list -- an EDID's modes, timings -- is the drivers' alone
-//! (`ferrix-display-modes`).
+//! (`xaqu-display-modes`).
 //!
 //! [`card`] is who may do what on the card itself: the DRM master's rules,
 //! which ioctls only the master may make, and the budget each kind of open

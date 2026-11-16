@@ -20,9 +20,9 @@
 use core::arch::{asm, global_asm};
 use core::slice;
 
-use ferrix_bootinfo::Arch;
-use ferrix_elf::Class;
-use ferrix_paging::armv7a::{MAIR0, MAIR1};
+use xaqu_bootinfo::Arch;
+use xaqu_elf::Class;
+use xaqu_paging::armv7a::{MAIR0, MAIR1};
 
 use super::Handoff;
 
@@ -30,7 +30,7 @@ use super::Handoff;
 pub(crate) const ARCH: Arch = Arch::Armv7a;
 
 /// The `e_machine` a kernel for this architecture must carry.
-pub(crate) const ELF_MACHINE: u16 = ferrix_elf::EM_ARM;
+pub(crate) const ELF_MACHINE: u16 = xaqu_elf::EM_ARM;
 
 /// The ELF class a kernel for this architecture must be.
 pub(crate) const ELF_CLASS: Class = Class::Elf32;
@@ -198,12 +198,12 @@ fn memory_model() -> u32 {
 // On entry: r0 the boot info, r1 and r2 MAIR0 and MAIR1, r3 TTBCR, r4 and r5
 // the two table roots, r8 the stack top, r10 the kernel entry. r12 is scratch.
 global_asm!(
-    ".pushsection .text.ferrix_switch, \"ax\", %progbits",
+    ".pushsection .text.xaqu_switch, \"ax\", %progbits",
     ".arm",
     ".balign 4",
-    ".global ferrix_switch_start",
-    ".global ferrix_switch_end",
-    "ferrix_switch_start:",
+    ".global xaqu_switch_start",
+    ".global xaqu_switch_end",
+    "xaqu_switch_start:",
     "cpsid aif",
     "dsb",
     "isb",
@@ -247,7 +247,7 @@ global_asm!(
     "mov r11, #0",
     "mov lr, #0",
     "bx r10",
-    "ferrix_switch_end:",
+    "xaqu_switch_end:",
     ".popsection",
     mmu = const SCTLR_MMU,
     dcache = const SCTLR_DCACHE,
@@ -257,15 +257,15 @@ global_asm!(
 
 unsafe extern "C" {
     /// The first instruction of the switch.
-    static ferrix_switch_start: u8;
+    static xaqu_switch_start: u8;
     /// One past its last.
-    static ferrix_switch_end: u8;
+    static xaqu_switch_end: u8;
 }
 
 /// The switch's instructions, for copying to a trampoline page.
 pub(crate) fn switch_code() -> Option<&'static [u8]> {
-    let start = &raw const ferrix_switch_start;
-    let end = &raw const ferrix_switch_end;
+    let start = &raw const xaqu_switch_start;
+    let end = &raw const xaqu_switch_end;
     // SAFETY: both symbols bound one block of this image's own text, which is
     // mapped and never written for the loader's whole life.
     Some(unsafe { slice::from_raw_parts(start, end.addr() - start.addr()) })
@@ -289,7 +289,7 @@ pub(crate) unsafe fn enter_kernel(handoff: Handoff) -> ! {
     let kernel_half = (handoff.root_table + TTBR1_OFFSET) as u32;
     let switch = handoff
         .switch
-        .map_or((&raw const ferrix_switch_start).addr() as u32, |page| {
+        .map_or((&raw const xaqu_switch_start).addr() as u32, |page| {
             page as u32
         });
 

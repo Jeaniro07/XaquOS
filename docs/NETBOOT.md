@@ -14,8 +14,8 @@ whatever that tree last built. Nothing on the machine's disk is touched.
 
 | Command | What it does |
 |---|---|
-| `tools/common/fetch/fetch-ipxe.sh` | fetch iPXE 2.0.0's release tarball, pinned by SHA-256, into `~/.local/share/ferrix/netboot/pool` |
-| `cargo xtask netboot-stick --server HOST[:PORT]` | write `build/x86_64/ferrix-netboot-stick.img` for a server at that address (port 8086 if none) |
+| `tools/common/fetch/fetch-ipxe.sh` | fetch iPXE 2.0.0's release tarball, pinned by SHA-256, into `~/.local/share/xaqu/netboot/pool` |
+| `cargo xtask netboot-stick --server HOST[:PORT]` | write `build/x86_64/xaqu-netboot-stick.img` for a server at that address (port 8086 if none) |
 | `cargo xtask netboot [--listen ADDR:PORT\|PORT]` | build the image as `build` does and serve it until Ctrl-C, on this host's default-route address, port 8086 unless told |
 | `cargo xtask test-netboot` | the whole path under QEMU, and its negative control (§4) |
 
@@ -25,7 +25,7 @@ All three are x86-64 only, and need a Linux host: iPXE is built with
 ## 1. The stick
 
 `netboot-stick` writes a 66 MiB image: a GUID partition table whose one
-partition is a 64 MiB FAT32 EFI system partition named `FERRIX-NETBOOT`,
+partition is a 64 MiB FAT32 EFI system partition named `XAQU-NETBOOT`,
 holding iPXE as `EFI/BOOT/BOOTX64.EFI` and a `NETBOOT.TXT` that says what
 it is. The image is the same for the same server, byte for byte (fixed
 GUIDs).
@@ -42,11 +42,11 @@ Built into it is a script:
 ```
 :retry
 dhcp || goto failed
-chain http://HOST:PORT/ferrix/boot.ipxe || goto failed
+chain http://HOST:PORT/xaqu/boot.ipxe || goto failed
 :failed
 echo Network cards iPXE drives (none: the firmware's UEFI network stack is off):
 ifstat ||
-echo FERRIX-NETBOOT-FAILED: the error is above; trying again in 10 seconds
+echo XAQU-NETBOOT-FAILED: the error is above; trying again in 10 seconds
 sleep 10
 goto retry
 ```
@@ -60,7 +60,7 @@ and a failure shows iPXE's error and the cards it can see on the screen.
    `cargo xtask netboot-stick --server <host's LAN address>:8086` (a name
    the machine's DHCP-given DNS resolves works too, and survives the host's
    address changing).
-2. Write `build/x86_64/ferrix-netboot-stick.img` to a USB stick, whole
+2. Write `build/x86_64/xaqu-netboot-stick.img` to a USB stick, whole
    (`dd`, Etcher, or Rufus in "DD image" mode). Everything on the stick is
    lost.
 3. In the machine's firmware setup: Secure Boot **off** (iPXE and the
@@ -80,14 +80,14 @@ The served `boot.ipxe` first walks the machine's PCI bus: each function's
 location, vendor:device and class goes on the screen and, as a request
 for `report/pci/...`, into the server's log, marked `<- network`,
 `<- storage` or `<- display` for those classes. That is how a machine with
-no serial port says which chips it has before Ferrix has a driver for
+no serial port says which chips it has before Xaqu has a driver for
 them. Then it fetches the image's files, and the URL the loader sends its
 boot log to (§5), and starts the loader.
 
 The loader sends its boot log -- every line it printed, up to `handing
 over to the kernel` or the error it stopped at -- back to the server, which
 prints it and keeps it as
-`~/.local/share/ferrix/netboot/reports/<MAC>/<seconds>-BOOTLOG.TXT`, the
+`~/.local/share/xaqu/netboot/reports/<MAC>/<seconds>-BOOTLOG.TXT`, the
 latest also as `BOOTLOG.TXT` beside it, a directory per machine by its
 network card's MAC address. So a loader that stops before the kernel says
 why on the host as well as on the screen.
@@ -109,20 +109,20 @@ the guest the host's loopback), and boots it under OVMF with `--net`:
 * the stick's `snp.efi` must take an address from the gateway's DHCP, run
   `boot.ipxe`, report the PCI bus (the virtio-net card it boots through,
   `1af4:1041` class 02, must be among the functions reported), and fetch
-  every file of the image; and the kernel must reach `FERRIX-BOOT-OK`.
+  every file of the image; and the kernel must reach `XAQU-BOOT-OK`.
   The stick holds no kernel, so a kernel that boots read it through iPXE.
 * The loader's boot log must reach the server: one whole `BOOTLOG.TXT`
-  from the machine, beginning with `Ferrix loader`, every line of it
+  from the machine, beginning with `Xaqu loader`, every line of it
   printed on the guest's console in the same order, kept on the host as it
   arrived; and the loader must say it sent it. The log of some 500 bytes
   goes in two parts, so the reassembly is part of what passes.
 * A second boot against the same server answering every report `404`:
-  the kernel must still reach `FERRIX-BOOT-OK`, and the loader must say
+  the kernel must still reach `XAQU-BOOT-OK`, and the loader must say
   `report   boot log not sent` -- sending never stops a boot.
 * The negative control: the same stick, the same server, every file now
   under `/wrong/`. It must fail with iPXE's own error for
-  `/ferrix/boot.ipxe` (a `... (https://ipxe.org/<code>)` line naming it),
-  the stick's `FERRIX-NETBOOT-FAILED`, a 404 in the server's log, and no
+  `/xaqu/boot.ipxe` (a `... (https://ipxe.org/<code>)` line naming it),
+  the stick's `XAQU-NETBOOT-FAILED`, a 404 in the server's log, and no
   kernel.
 
 The test's stick is `netboot-stick`'s, built by the same code, with only
@@ -132,13 +132,13 @@ the address different.
 
 ### The loader reads its files as it does from a disk
 
-The loader reads `\FERRIX\KERNEL.ELF`, `INITRD.IMG` (and `CMDLINE.TXT`
+The loader reads `\XAQU\KERNEL.ELF`, `INITRD.IMG` (and `CMDLINE.TXT`
 when the image has one) through the `SimpleFileSystem` of the device it was loaded from. When iPXE
 starts an EFI program it installs a file system of its own on that device,
 listing every image it has fetched by its name, and compares the whole of a
 name after the leading backslash (`efi_file.c`). So `boot.ipxe` fetches
 each file under the name of its path on the image's volume
-(`imgfetch --name FERRIX\KERNEL.ELF FERRIX/KERNEL.ELF`) and starts the
+(`imgfetch --name XAQU\KERNEL.ELF XAQU/KERNEL.ELF`) and starts the
 loader with `chain`; the loader finds them where it always looks. Proven by
 `test-netboot` 2026-10-15: the loader says `boot esp` and the kernel
 reaches its boot marker. No `sanboot` of the whole image is needed, so the
@@ -150,9 +150,9 @@ The loader keeps every line it prints in a 32 KiB buffer (`bootlog.rs`,
 `docs/POSTMORTEM.md` PM2's console tee). It sends it to the server
 (`netreport.rs`) only when both hold:
 
-* its volume has `FERRIX/REPORT.TXT`. `boot.ipxe` fetches it as
+* its volume has `XAQU/REPORT.TXT`. `boot.ipxe` fetches it as
   `report/hello/${netX/mac:hexhyp}`, and the server answers with
-  `http://<the Host the request named>/ferrix/report/box/<MAC>/`; no disk
+  `http://<the Host the request named>/xaqu/report/box/<MAC>/`; no disk
   image carries the file. The loader takes it only as one line of at most
   256 bytes, `http://` and printable ASCII without a space, and otherwise
   says it ignored it;
@@ -176,7 +176,7 @@ started cannot make). So the log goes as the query of GETs, 512 bytes a
 part, in hex:
 
 ```
-GET /ferrix/report/box/<MAC>/BOOTLOG.TXT?part=<i>&of=<n>&data=<hex>
+GET /xaqu/report/box/<MAC>/BOOTLOG.TXT?part=<i>&of=<n>&data=<hex>
 ```
 
 parts in order from 0, each answered `ok`; the last completes the file. The
@@ -216,7 +216,7 @@ real machine fails. Keeping `snp.efi` keeps the test about the stick.
 * **The post-mortem of a netbooted run is the loader's boot log, sent to
   the server** (§5). iPXE's file system is read-only and the machine's own
   disk is never written, so nothing is left on the machine, and
-  `ferrix-postmortem.sh` (PM1) has nothing to read. The kernel's own log
+  `xaqu-postmortem.sh` (PM1) has nothing to read. The kernel's own log
   of the previous run (`docs/POSTMORTEM.md` PM3, `LASTKERNEL.TXT`) does not
   exist yet; when it does, the loader sends it the same way. A kernel that
   panics after the handover says so on the screen only.
@@ -230,18 +230,18 @@ real machine fails. Keeping `snp.efi` keeps the test about the stick.
   decide. Anyone who reaches the server can also send it reports for a MAC
   of their choosing; it keeps at most 64 KiB a report and builds no path
   from the request. A disk-booted machine sends nothing.
-* **No network once Ferrix runs on the N150.** Ferrix drives virtio-net
+* **No network once Xaqu runs on the N150.** Xaqu drives virtio-net
   only; the box's Motorcomm YT6801 and Realtek 8852BE have no driver yet.
   The image arrives through the firmware's driver, and nothing after
   `ExitBootServices` can use it.
-* **A machine whose disk holds `ferrix-root` is written.** The kernel
+* **A machine whose disk holds `xaqu-root` is written.** The kernel
   finds its root by that label on any partition, so once the N150 box's
   drive carries the disk `n150-install` writes (`docs/N150.md` §3), a
   netbooted run puts `/` there and installs its initramfs on it, keeping
-  everything else. `--kernel-option ferrix.root=tmpfs` keeps a run off the
+  everything else. `--kernel-option xaqu.root=tmpfs` keeps a run off the
   disk.
-* **The N150's screen is the firmware's.** Ferrix has no driver for its
-  Intel graphics. With `--kernel-option ferrix.efifb` on the image the
+* **The N150's screen is the firmware's.** Xaqu has no driver for its
+  Intel graphics. With `--kernel-option xaqu.efifb` on the image the
   server is started with, the kernel lends the GOP framebuffer the loader
   hands over to `efifb`, and hyprix draws there at the mode the firmware
   chose (`docs/DISPLAY.md` §8, H6). Proven in QEMU only; the window is

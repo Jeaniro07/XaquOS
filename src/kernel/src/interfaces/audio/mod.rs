@@ -3,14 +3,14 @@
 //!
 //! `docs/AUDIO.md` §3 is the design. A driver (`src/user/system/native/drivers/sound/virtio-snd`, started by devmgr)
 //! asks for a control channel with `sound_control_create`; the core's task for
-//! the card waits for its HELLO, judges it with `ferrix_sndctl::session`,
+//! the card waits for its HELLO, judges it with `xaqu_sndctl::session`,
 //! allocates the published stream's buffer, publishes `/dev/snd/controlC<N>`
 //! and `pcmC<N>D0p`, and answers READY with the buffer, which the driver pins
 //! read-only so the device reads samples from the core's pages. From then on
 //! the task relays the driver's completions to the stream, and a program's
 //! requests on the nodes ([`pcm`]) move it the other way.
 //!
-//! Everything the stream decides is `ferrix_sndctl::pcm`'s, host-tested
+//! Everything the stream decides is `xaqu_sndctl::pcm`'s, host-tested
 //! against Linux's rules; this module is the locks, the copies and the
 //! messages around it.
 //!
@@ -29,18 +29,18 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 
-use ferrix_blkring::identity::Location;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::STATE_XRUN;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
-use ferrix_sndctl::message::{BUFFER_RIGHTS, MAX_BYTES, Message, Refusal, Submit};
-use ferrix_sndctl::pcm::{Effects, Stream};
-use ferrix_sndctl::session::{self, Publication, Received, Session};
+use xaqu_blkring::identity::Location;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::STATE_XRUN;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_sndctl::message::{BUFFER_RIGHTS, MAX_BYTES, Message, Refusal, Submit};
+use xaqu_sndctl::pcm::{Effects, Stream};
+use xaqu_sndctl::session::{self, Publication, Received, Session};
 
 use crate::claim::{Claims, Numbers, StillServed};
 use crate::device::DeviceNode;
@@ -78,9 +78,9 @@ const HELLO_PATIENCE_NANOS: u64 = 10_000_000_000;
 const RECHECK_NANOS: u64 = 50_000_000;
 
 /// A page.
-const PAGE_BYTES: usize = ferrix_bootinfo::PAGE_SIZE as usize;
+const PAGE_BYTES: usize = xaqu_bootinfo::PAGE_SIZE as usize;
 
-/// The width of every program: the kernel's own. Ferrix has no compat mode.
+/// The width of every program: the kernel's own. Xaqu has no compat mode.
 pub(crate) const fn width() -> Width {
     if usize::BITS == 32 {
         Width::Bits32
@@ -234,7 +234,7 @@ impl Card {
                     && let Some(frame) = self.buffer.page(page)
                 {
                     let virt =
-                        crate::mm::direct_map(frame * ferrix_bootinfo::PAGE_SIZE) + within as u64;
+                        crate::mm::direct_map(frame * xaqu_bootinfo::PAGE_SIZE) + within as u64;
                     crate::arch::clean_for_device(virt, len as u64);
                 }
                 at += len;
@@ -297,7 +297,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_blkring::control::CONTROL_RIGHTS,
+        xaqu_blkring::control::CONTROL_RIGHTS,
         |node| {
             create(node).map_err(|why| match why {
                 CreateError::InUse => status::ALREADY_BOUND,
@@ -319,7 +319,7 @@ fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, CreateError> {
         device: Arc::clone(node),
         location: crate::interfaces::block_ring::location_of(node),
     });
-    if sched::spawn("audio", run, id, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("audio", run, id, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = take_start(id);
         CLAIMS.release(node);
         return Err(CreateError::NoMemory);

@@ -71,7 +71,7 @@ fn system() -> Vec<u8> {
         1,
         &formatted,
         &[
-            b"Ferrix test",
+            b"Xaqu test",
             b"dmi-d1",
             b"pc-q35",
             b"SER-1",
@@ -212,7 +212,7 @@ fn a_v2_whose_dmi_header_is_bad_is_refused_even_when_its_own_checksum_holds() {
 /// Verifies: L.discovery.2
 #[test]
 fn a_v2_whose_own_checksum_fails_is_refused_though_its_dmi_header_holds() {
-    // Linux would take this as legacy DMI; Ferrix refuses (docs/DMI.md §2).
+    // Linux would take this as legacy DMI; Xaqu refuses (docs/DMI.md §2).
     let mut entry = entry_v2(10, 1, [2, 8]);
     entry[4] ^= 0x10;
     assert_eq!(EntryPoint::parse(&entry), Err(Error::Checksum));
@@ -325,7 +325,7 @@ fn qemus_table_reads_as_linux_shows_it() {
         None,
         "0xFF 0xFF is no release"
     );
-    assert_eq!(read(Field::SysVendor).unwrap(), b"Ferrix test\n");
+    assert_eq!(read(Field::SysVendor).unwrap(), b"Xaqu test\n");
     assert_eq!(read(Field::ProductName).unwrap(), b"dmi-d1\n");
     assert_eq!(read(Field::ProductVersion).unwrap(), b"pc-q35\n");
     assert_eq!(read(Field::ProductSerial).unwrap(), b"SER-1\n");
@@ -405,7 +405,7 @@ fn the_first_structure_of_a_type_wins() {
     let table = [system(), second, end()].concat();
     let entry = entry_v3(len32(&table), [3, 0, 0]);
     let smbios = Smbios::new(&entry, &table).unwrap();
-    assert_eq!(text(&smbios, Field::SysVendor).unwrap(), b"Ferrix test\n");
+    assert_eq!(text(&smbios, Field::SysVendor).unwrap(), b"Xaqu test\n");
 }
 
 /// Verifies: L.discovery.4
@@ -466,7 +466,7 @@ fn the_modalias_is_linuxs() {
     smbios.modalias(&mut |piece| alias.extend_from_slice(piece));
     assert_eq!(
         std::str::from_utf8(&alias).unwrap(),
-        "dmi:bvnEFIDevelopmentKitII/OVMF:bvr0.0.0:bd02/06/2015:br2.0:svnFerrixtest:pndmi-d1:pvrpc-q35:cvnQEMU:ct1:cvr:skuSKU-1:\n"
+        "dmi:bvnEFIDevelopmentKitII/OVMF:bvr0.0.0:bd02/06/2015:br2.0:svnXaqutest:pndmi-d1:pvrpc-q35:cvnQEMU:ct1:cvr:skuSKU-1:\n"
     );
 }
 
@@ -514,7 +514,7 @@ fn with_a_count_the_walk_goes_past_type_127_as_linux_does() {
     let entry = entry_v2(u16::try_from(table.len()).unwrap(), 3, [2, 8]);
     let smbios = Smbios::new(&entry, &table).unwrap();
     assert_eq!(smbios.structures(), 3);
-    assert_eq!(text(&smbios, Field::SysVendor).unwrap(), b"Ferrix test\n");
+    assert_eq!(text(&smbios, Field::SysVendor).unwrap(), b"Xaqu test\n");
 }
 
 /// Verifies: L.discovery.3
@@ -631,8 +631,8 @@ fn reads_as_qemu_built_it(entry: &[u8], table: &[u8], kind: Kind, version: u32) 
     assert_eq!(smbios.table(), table, "QEMU's table is walked whole");
     let read = |field| text(&smbios, field);
     let expected: [(Field, &[u8]); 15] = [
-        (Field::SysVendor, "Ferrix QEMU \u{e9}\n".as_bytes()),
-        (Field::ProductName, b"Ferrix test machine\n"),
+        (Field::SysVendor, "Xaqu QEMU \u{e9}\n".as_bytes()),
+        (Field::ProductName, b"Xaqu test machine\n"),
         (Field::ProductVersion, b"pc-q35-10.2\n"),
         (Field::ProductSerial, b"FXSER-SYS-71c3e9\n"),
         (

@@ -8,14 +8,14 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, Message};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native::channel::Channel;
-use ferrix_native::handle::{Deadline, Object as _, OwnedHandle};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
+use xaqu_devmgr_proto::{CORE_BYTES, CoreOpen, CoreOpened, Message};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native::channel::Channel;
+use xaqu_native::handle::{Deadline, Object as _, OwnedHandle};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
 
 use crate::device::{self, DeviceNode};
 use crate::object::channel::Endpoint;
@@ -37,7 +37,7 @@ const STILL_CLAIMED_NANOS: u64 = 2_000_000_000;
 pub fn serve(call: NativeCall, handler: Handler) {
     HANDLERS
         .lock()
-        .push((ferrix_native_abi::nr::number(call) as u32, handler));
+        .push((xaqu_native_abi::nr::number(call) as u32, handler));
 }
 
 static SERVERS: SpinLock<Vec<&'static crate::syscall::native::Server>> = SpinLock::new(Vec::new());
@@ -79,8 +79,8 @@ pub fn answer_native(args: &crate::trap::SyscallArgs) -> Option<isize> {
 }
 
 fn location_from(raw: u32) -> Option<device::Location> {
-    let location = ferrix_blkring::Location(raw);
-    ferrix_pci::Address::new(
+    let location = xaqu_blkring::Location(raw);
+    xaqu_pci::Address::new(
         location.segment(),
         location.bus(),
         location.device(),
@@ -114,9 +114,9 @@ pub fn node_of(device: u64) -> Option<Arc<DeviceNode>> {
 
 /// `native::control_channel`'s last step: the driver's end across the edge.
 pub fn hand_over(driver_end: Arc<Endpoint>) -> Result<usize, Errno> {
-    let handle = ferrix_kernel_core::bridge::export(
+    let handle = xaqu_kernel_core::bridge::export(
         crate::object::Object::Channel(driver_end),
-        ferrix_native_abi::rights::Rights::CHANNEL,
+        xaqu_native_abi::rights::Rights::CHANNEL,
     )
     .ok_or(Errno::ENOMEM)?;
     *HANDED.lock() = Some(handle);
@@ -190,7 +190,7 @@ fn serve_cores(handle: usize) {
                 loop {
                     let answer = handler(no_caller(), &registers);
                     match answer {
-                        Err(ferrix_native_abi::status::ALREADY_BOUND)
+                        Err(xaqu_native_abi::status::ALREADY_BOUND)
                             if crate::timer::now_nanos() < until =>
                         {
                             quiesced(open.location);
@@ -200,7 +200,7 @@ fn serve_cores(handle: usize) {
                     }
                 }
             }
-            None => Err(u32::from(ferrix_linux_abi::errno::Errno::ENOSYS.0)),
+            None => Err(u32::from(xaqu_linux_abi::errno::Errno::ENOSYS.0)),
         };
         let status = answered.err().unwrap_or(0);
         let handed = HANDED.lock().take();

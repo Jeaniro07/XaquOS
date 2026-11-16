@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-smbios"
-description = "SMBIOS entry point and structure table reader for the Ferrix loader and kernel"
+name = "xaqu-smbios"
+description = "SMBIOS entry point and structure table reader for the Xaqu loader and kernel"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"

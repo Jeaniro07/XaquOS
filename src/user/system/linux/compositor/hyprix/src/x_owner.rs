@@ -306,7 +306,7 @@ mod tests {
         body[16..18].copy_from_slice(&6u16.to_le_bytes());
         body[20] = 1; // screens
         body[21] = 1; // formats
-        body.extend_from_slice(b"Ferrix\0\0");
+        body.extend_from_slice(b"Xaqu\0\0");
         body.extend_from_slice(&[0u8; 8]);
         body.extend_from_slice(&0x1234u32.to_le_bytes());
         body.resize(body.len().div_ceil(4) * 4 + 36, 0);

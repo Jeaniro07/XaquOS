@@ -36,12 +36,12 @@ mod msi;
 mod msrlog;
 pub mod paranoid;
 mod pcid;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 mod powerctl;
 pub(crate) mod restricted;
 pub(crate) mod scrub;
 #[cfg_attr(
-    ferrix_shape = "micro",
+    xaqu_shape = "micro",
     allow(dead_code, unused_imports, reason = "the lift's signals are linuxd's")
 )]
 mod signal;
@@ -53,15 +53,15 @@ pub mod trap;
 
 pub use cpu::hardware_random;
 pub use signal::{SIGNAL_RED_ZONE, UserContext};
-#[cfg(not(ferrix_shape = "micro"))]
+#[cfg(not(xaqu_shape = "micro"))]
 pub use signal::{restore_signal_frame, setup_signal_frame};
 
 use alloc::sync::Arc;
 
-use ferrix_bootinfo::{Arch, BootView};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::{self, Syscall};
-use ferrix_linux_abi::types::{self, OpenFlagBits};
+use xaqu_bootinfo::{Arch, BootView};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::{self, Syscall};
+use xaqu_linux_abi::types::{self, OpenFlagBits};
 
 use crate::early::{EarlyError, EarlyMemory};
 use crate::irq::Report;
@@ -91,7 +91,7 @@ pub const STAT_LAYOUT: super::StatLayout = super::StatLayout::Legacy;
 pub const EPOLL_EVENT_BYTES: usize = 12;
 
 /// The page table descriptor layout this machine uses.
-pub(crate) type PageEncoding = ferrix_paging::x86_64::X86_64;
+pub(crate) type PageEncoding = xaqu_paging::x86_64::X86_64;
 
 /// Bring up the early console.
 ///
@@ -207,7 +207,7 @@ pub fn check_machine() -> Result<(), &'static str> {
     clock::check::run()?;
     // And the hardware P-state request's composition (`L.x86_64.177`).
     cpu::check::run()?;
-    // And `ferrix.msrlog`'s checked MSR read, decoder and period
+    // And `xaqu.msrlog`'s checked MSR read, decoder and period
     // (`L.x86_64.187`-`189`).
     msrlog::check::run()?;
     // And the machine check's classifier, its pending slots and the retired
@@ -217,12 +217,12 @@ pub fn check_machine() -> Result<(), &'static str> {
     // and every interleaving of a write with a restore, none of which
     // writes a register the processor has (`L.x86_64.194`-`208`); and the
     // checked write's fixup (`L.x86_64.192`).
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     powerctl::check::run()?;
     cpu::check::checked_write()
 }
 
-/// Start `ferrix.msrlog`'s read-only MSR log if the word is given
+/// Start `xaqu.msrlog`'s read-only MSR log if the word is given
 /// (`L.x86_64.187`); nothing at all otherwise.
 pub fn start_msr_log(view: &BootView<'_>) {
     msrlog::start(view);
@@ -235,12 +235,12 @@ pub(crate) fn returned_to_service(cpu: usize) {
 }
 
 /// Start the machine-check log's poll on every processor
-/// (`docs/MACHINE-CHECK.md` §3.2), and read `ferrix.mce.recover`.
+/// (`docs/MACHINE-CHECK.md` §3.2), and read `xaqu.mce.recover`.
 pub fn start_machine_check_log(view: &BootView<'_>) {
     mce::start(view);
 }
 
-/// `/proc/ferrix-mce` (`L.x86_64.230`).
+/// `/proc/xaqu-mce` (`L.x86_64.230`).
 pub fn render_machine_check(out: &mut impl core::fmt::Write) -> core::fmt::Result {
     mce::render(out)
 }
@@ -266,15 +266,15 @@ pub(crate) fn retire_poisoned(page: u64) {
 }
 
 /// Stage 10's question for the power node (`L.device.51`).
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub fn power_probe(view: &BootView<'_>) -> bool {
     powerctl::probe(view)
 }
 
 /// A status for a power call the core refused.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 fn power_status(why: powerctl::Refused) -> Errno {
-    use ferrix_native_abi::status;
+    use xaqu_native_abi::status;
     match why {
         powerctl::Refused::OutOfRange => status::INVALID_ARGS,
         powerctl::Refused::Rate => status::SHOULD_WAIT,
@@ -288,9 +288,9 @@ fn power_status(why: powerctl::Refused) -> Errno {
 /// # Errors
 ///
 /// `ALREADY_BOUND`, `BAD_STATE` latched off, `NO_MEMORY`.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub fn power_claim() -> Result<Arc<Endpoint>, Errno> {
-    use ferrix_native_abi::status;
+    use xaqu_native_abi::status;
     powerctl::claim().map_err(|why| match why {
         powerctl::ClaimError::InUse => status::ALREADY_BOUND,
         powerctl::ClaimError::Latched => status::BAD_STATE,
@@ -303,7 +303,7 @@ pub fn power_claim() -> Result<Arc<Endpoint>, Errno> {
 /// # Errors
 ///
 /// As the core refused.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub fn power_set(claim: &Arc<Endpoint>, eighths: u64) -> Result<usize, Errno> {
     powerctl::set(claim, eighths)
         .map(|back| usize::try_from(back).unwrap_or(usize::MAX))
@@ -315,22 +315,22 @@ pub fn power_set(claim: &Arc<Endpoint>, eighths: u64) -> Result<usize, Errno> {
 /// # Errors
 ///
 /// `BAD_STATE` for a handle that is not the claim.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub fn power_read(
     claim: &Arc<Endpoint>,
-) -> Result<[u64; ferrix_native_abi::types::POWER_READ_WORDS], Errno> {
+) -> Result<[u64; xaqu_native_abi::types::POWER_READ_WORDS], Errno> {
     powerctl::read(claim).map_err(power_status)
 }
 
 /// Whether no live holder has the power claim, for a quiesce.
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub fn power_unserved() -> bool {
     powerctl::unserved()
 }
 
 /// Firmware's VR current limit back if the power core raised it: on a
 /// power-off, a reset and both ends of a panic (`L.x86_64.206`).
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub(crate) fn restore_power(what: &'static str) {
     powerctl::restore(what);
 }
@@ -444,13 +444,13 @@ pub unsafe fn init_traps() {
         leak.describe()
     );
     // The whole performance range, turbo included, asked of the hardware
-    // (`L.x86_64.177`): Ferrix manages no frequency itself. Each secondary
+    // (`L.x86_64.177`): Xaqu manages no frequency itself. Each secondary
     // asks for its own in `smp::secondary_start`.
     enable_hwp_and_say();
 }
 
 /// Read the boot options x86-64's bring-up takes before its IDT is loaded:
-/// `ferrix.epp` (`L.x86_64.182`), and nothing else. Called once from
+/// `xaqu.epp` (`L.x86_64.182`), and nothing else. Called once from
 /// `kmain`, on the boot processor, after `checks::init` and before
 /// `init_traps`, so the preference is chosen before any processor asks for
 /// it in `cpu::enable_hwp`. It writes no register and allocates nothing.
@@ -684,10 +684,10 @@ const EM_386: u16 = 3;
 /// run: an x86-64 image natively, and a 32-bit i386 one in compatibility mode
 /// (`docs/I386.md` §3.4). The class is what says 32-bit: an `EM_386` image
 /// claiming 64-bit words is nothing a processor runs.
-pub fn image_abi(class: ferrix_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
+pub fn image_abi(class: xaqu_elf::Class, machine: u16) -> Option<crate::trap::Abi> {
     match (class, machine) {
         (_, machine) if machine == ARCH.elf_machine() => Some(crate::trap::Abi::Native),
-        (ferrix_elf::Class::Elf32, EM_386) => Some(crate::trap::Abi::Compat),
+        (xaqu_elf::Class::Elf32, EM_386) => Some(crate::trap::Abi::Compat),
         _ => None,
     }
 }
@@ -1611,7 +1611,7 @@ fn convert_console_line(
         };
         input.write(match form {
             crate::iommu::remapping::Form::VtdRemappable => {
-                ferrix_paging::vtd::remap::redirection_entry(
+                xaqu_paging::vtd::remap::redirection_entry(
                     handle,
                     new,
                     input.level(),
@@ -1620,7 +1620,7 @@ fn convert_console_line(
                 )
             }
             crate::iommu::remapping::Form::AmdIndexed => {
-                ferrix_paging::amdvi::table::redirection_entry(
+                xaqu_paging::amdvi::table::redirection_entry(
                     handle,
                     input.level(),
                     input.active_low(),
@@ -1950,7 +1950,7 @@ pub(crate) fn frame_pointer() -> u64 {
 /// QEMU's debug-exit device is the way out of a gate's QEMU, whose status is
 /// then 33; real hardware discards the write and is halted.
 pub fn shutdown() -> ! {
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     powerctl::restore("power-off");
     crate::console::announce_power_off();
     crate::console::drain();
@@ -1969,7 +1969,7 @@ pub fn shutdown() -> ! {
 /// `HALT` stays [`shutdown`], which never enters S5 (the consultant's OK IF,
 /// ledger line 4704, condition 1).
 pub fn power_off() -> ! {
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     powerctl::restore("power-off");
     crate::console::announce_power_off();
     crate::console::drain();
@@ -2008,8 +2008,8 @@ const ACPI_ENABLE_WAIT: u32 = 300;
 /// [`acpi_power_off`]: by the time the machine powers off, the tables' memory
 /// has been reclaimed. A hardware-reduced machine, a PM1 block that is
 /// absent, outside I/O space or past 16 bits, and a DSDT with no single
-/// constant `\_S5` record nothing (`ferrix_acpi::sleep`, `L.x86_64.212`).
-fn record_sleep_registers(acpi: &ferrix_acpi::Acpi<'_, crate::discovery::acpi::DirectMap>) {
+/// constant `\_S5` record nothing (`xaqu_acpi::sleep`, `L.x86_64.212`).
+fn record_sleep_registers(acpi: &xaqu_acpi::Acpi<'_, crate::discovery::acpi::DirectMap>) {
     use core::sync::atomic::Ordering::{Relaxed, Release};
     let Some(control) = acpi.sleep_control() else {
         return;
@@ -2112,7 +2112,7 @@ const RESET_CONTROL_HARD_NOW: u8 = 0x06;
 /// box), and its ten pulses are skipped rather than waited out: with the
 /// controller's input-full bit read as set, each would wait its full second.
 pub fn reset() -> ! {
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     powerctl::restore("reset");
     crate::console::drain();
     cpu::disable_interrupts();
@@ -2177,11 +2177,11 @@ fn settle() {
 /// Only a register in I/O space is kept. That is where a PC's firmware puts it;
 /// one in memory space would need a mapping made by a machine on its way down,
 /// and the keyboard controller and the triple fault still follow.
-fn record_reset_register(acpi: &ferrix_acpi::Acpi<'_, crate::discovery::acpi::DirectMap>) {
+fn record_reset_register(acpi: &xaqu_acpi::Acpi<'_, crate::discovery::acpi::DirectMap>) {
     let Some((register, value)) = acpi.fadt().ok().and_then(|fadt| fadt.reset()) else {
         return;
     };
-    if register.address_space_id != ferrix_acpi::GenericAddress::SYSTEM_IO {
+    if register.address_space_id != xaqu_acpi::GenericAddress::SYSTEM_IO {
         return;
     }
     let Ok(port) = u16::try_from(register.address) else {
@@ -2306,7 +2306,7 @@ pub(crate) fn msi_doorbell() -> Option<u64> {
     None
 }
 
-/// How `ferrix_sync`'s interrupt-masking lock masks interrupts here.
+/// How `xaqu_sync`'s interrupt-masking lock masks interrupts here.
 #[derive(Debug)]
 pub struct Irq;
 
@@ -2314,7 +2314,7 @@ pub struct Irq;
 // whether they were unmasked beforehand; `restore` unmasks only if they were,
 // so nesting two critical sections leaves the inner one unable to unmask
 // halfway out of the outer one. Neither touches any other state.
-unsafe impl ferrix_sync::IrqControl for Irq {
+unsafe impl xaqu_sync::IrqControl for Irq {
     fn disable() -> usize {
         let was_enabled = cpu::read_rflags() & cpu::RFLAGS_INTERRUPT != 0;
         cpu::disable_interrupts();
@@ -2481,7 +2481,7 @@ pub(crate) static PAT_PROGRAMMED: core::sync::atomic::AtomicUsize =
 static BOOT_PAT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
 /// Secondaries that arrived in `smp::secondary_start` with `IA32_PAT`
-/// already [`ferrix_paging::X86_PAT`], written by their trampoline before
+/// already [`xaqu_paging::X86_PAT`], written by their trampoline before
 /// paging was on: stage 9 requires every one.
 pub(crate) static PAT_AT_ENTRY: core::sync::atomic::AtomicUsize =
     core::sync::atomic::AtomicUsize::new(0);
@@ -2516,7 +2516,7 @@ pub fn write_combining_processors() -> Option<usize> {
     Some(PAT_PROGRAMMED.load(core::sync::atomic::Ordering::Acquire))
 }
 
-/// Whether `ferrix.efifb` may lend the framebuffer to a ring-3 driver: yes,
+/// Whether `xaqu.efifb` may lend the framebuffer to a ring-3 driver: yes,
 /// since the kernel's window on it is write-combining from its first map
 /// (`framebuffer::framebuffer_flags`), a type a prefetchable aperture's
 /// user mapping takes too (`discovery::firmware`).
@@ -2529,7 +2529,7 @@ pub fn firmware_entropy(_view: &BootView<'_>, _out: &mut [u8]) -> usize {
 }
 
 /// No board this architecture boots leaves a watchdog running.
-pub const fn init_watchdogs(_tree: &ferrix_fdt::Fdt<'_>) {}
+pub const fn init_watchdogs(_tree: &xaqu_fdt::Fdt<'_>) {}
 
 /// Nothing to feed: see [`init_watchdogs`].
 pub const fn start_watchdogs() {}

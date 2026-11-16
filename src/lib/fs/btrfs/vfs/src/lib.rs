@@ -1,6 +1,6 @@
-//! btrfs, mounted: the VFS's [`FileSystem`] and [`Inode`] over `ferrix-btrfs`.
+//! btrfs, mounted: the VFS's [`FileSystem`] and [`Inode`] over `xaqu-btrfs`.
 //!
-//! `ferrix-btrfs` reads a volume through a [`Device`] into buffers its caller
+//! `xaqu-btrfs` reads a volume through a [`Device`] into buffers its caller
 //! supplies, and allocates nothing. The VFS wants `Arc<dyn Inode>` objects that
 //! answer on their own. This crate is the part in between, and what it adds is
 //! ownership, sharing, and the translation into Linux's answers.
@@ -75,16 +75,16 @@ use core::any::Any;
 use core::fmt;
 use core::ops::ControlFlow;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::chunk::ChunkMapEntry;
-use ferrix_btrfs::compress::MAX_UNCOMPRESSED;
-use ferrix_btrfs::compress::zstd::Workspace;
-use ferrix_btrfs::fs::{ExtentBuffers, ReadBuffers, Subvolume, Target};
-use ferrix_btrfs::items::{self, InodeItem};
-use ferrix_btrfs::tree::MAX_NODE_SIZE;
-use ferrix_btrfs::volume::{Device, Volume};
-use ferrix_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
-use ferrix_vfs::{
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::chunk::ChunkMapEntry;
+use xaqu_btrfs::compress::MAX_UNCOMPRESSED;
+use xaqu_btrfs::compress::zstd::Workspace;
+use xaqu_btrfs::fs::{ExtentBuffers, ReadBuffers, Subvolume, Target};
+use xaqu_btrfs::items::{self, InodeItem};
+use xaqu_btrfs::tree::MAX_NODE_SIZE;
+use xaqu_btrfs::volume::{Device, Volume};
+use xaqu_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
+use xaqu_vfs::{
     DirEntry, Errno, FIRST_CURSOR, FileSystem, FileType, Inode, Metadata, NewNode, Result,
     SetAttributes, StatFs, Timespec,
 };
@@ -93,10 +93,10 @@ mod cache;
 pub mod rw;
 
 /// This crate's spin lock: its holder, and a task waiting for its ticket,
-/// stay on their processor, as `ferrix_vfs`'s do. Every walk on a btrfs root
+/// stay on their processor, as `xaqu_vfs`'s do. Every walk on a btrfs root
 /// reads `/`'s metadata under one of these, and on 2026-10-03 a plain ticket
 /// lock there convoyed all four processors of a desktop.
-pub(crate) type SpinLock<T> = ferrix_sync::PreemptSpinLock<T, ferrix_sync::HookedPreempt>;
+pub(crate) type SpinLock<T> = xaqu_sync::PreemptSpinLock<T, xaqu_sync::HookedPreempt>;
 
 use cache::{Cached, NodeCache};
 
@@ -557,7 +557,7 @@ impl<D: BlockHandle> PageSource for FileSource<D> {
 
 impl<D: BlockHandle> Inode for Node<D> {
     /// A regular file whose page cache holds pages: the dentry cache keeps
-    /// its dentry until reclaim has taken them (`ferrix_vfs`'s
+    /// its dentry until reclaim has taken them (`xaqu_vfs`'s
     /// `DEFAULT_CACHE`).
     fn holds_cached_pages(&self) -> bool {
         let pages = self.pages.lock().as_ref().map(Arc::clone);

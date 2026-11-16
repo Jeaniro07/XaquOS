@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-netswitch"
+name = "xaqu-netswitch"
 description = "netd's forwarding: which partitions and the wire a frame goes to, by MAC, with no learning (docs/microkernel/M8.md §2)"
 version.workspace = true
 edition.workspace = true

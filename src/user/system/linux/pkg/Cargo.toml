@@ -1,6 +1,6 @@
 # The package manager: `/bin/pkg` (docs/APPS.md §7).
 #
-# A workspace of its own, not a member of Ferrix's, for the reason init's and
+# A workspace of its own, not a member of Xaqu's, for the reason init's and
 # zinc's are: a Linux user program built with std, speaking only the Linux
 # ABI. What a package is -- the manifest, the record, the plan -- is
 # `src/lib/proto/pkg`, the crate xtask builds images with, and the archive
@@ -8,10 +8,10 @@
 # build cannot disagree about either.
 [package]
 name = "pkg"
-description = "Ferrix's package manager: list, inspect, install and remove packages"
+description = "Xaqu's package manager: list, inspect, install and remove packages"
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -26,10 +26,10 @@ name = "pkg"
 path = "src/main.rs"
 
 [dependencies]
-ferrix-cpio = { path = "../../../../lib/fs/common/cpio" }
-ferrix-pkg = { path = "../../../../lib/proto/pkg" }
+xaqu-cpio = { path = "../../../../lib/fs/common/cpio" }
+xaqu-pkg = { path = "../../../../lib/proto/pkg" }
 
-# The Ferrix discipline, as init's: every failing call is a line saying so,
+# The Xaqu discipline, as init's: every failing call is a line saying so,
 # never an abort.
 [lints.rust]
 unsafe_code = "forbid"

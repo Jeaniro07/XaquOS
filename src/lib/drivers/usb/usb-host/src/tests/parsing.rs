@@ -1,7 +1,7 @@
 //! The descriptors, the key table and the report translation on their own.
 
-use ferrix_inputctl::message::{RawEvent, bit};
-use ferrix_linux_abi::input::{
+use xaqu_inputctl::message::{RawEvent, bit};
+use xaqu_linux_abi::input::{
     BTN_EXTRA, BTN_LEFT, EV_KEY, EV_LED, EV_REL, EV_SYN, REL_WHEEL, SYN_REPORT,
 };
 

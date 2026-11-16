@@ -1,6 +1,6 @@
-# Handover: stage 20's matrix built by Ferrix, and one kernel for every test (2026-10-04)
+# Handover: stage 20's matrix built by Xaqu, and one kernel for every test (2026-10-04)
 
-Wound down on the customer's order, relayed by the product owner (ferrix-d7).
+Wound down on the customer's order, relayed by the product owner (xaqu-d7).
 Branch `selfhost-matrix`, pushed to GitHub; resume from its head (this commit).
 Base: `main` 528cea144. 17 commits on top.
 
@@ -8,7 +8,7 @@ Base: `main` 528cea144. 17 commits on top.
 
 **Item change (needs the consultant; OK IF, ledger lines 328, 331-333, 340, 343).**
 Each test's init program, `sh -c` script and command list moved out of the
-kernel into the image's initramfs under `.ferrix/init/`, so one kernel serves
+kernel into the image's initramfs under `.xaqu/init/`, so one kernel serves
 every test (`src/kernel/build.rs` embeds nothing):
 
 - `src/kernel/src/init.rs`: `InputEntry`, `set_inputs` (taken once),
@@ -16,11 +16,11 @@ every test (`src/kernel/build.rs` embeds nothing):
   `init::run`'s order unchanged.
 - `src/kernel/src/init_check.rs`: the `inputs` boot check (FX-1503), the
   verifier of `L.init.2`, `L.init.3`, `H.BOOT.15`.
-- `src/kernel/src/fs/mod.rs` hands the archive's `.ferrix` entries to
+- `src/kernel/src/fs/mod.rs` hands the archive's `.xaqu` entries to
   `set_inputs` (an empty set when there is no initrd) and refuses a root where
-  `/.ferrix` exists after the unpack; `fs/root_disk.rs` refuses the same on the
+  `/.xaqu` exists after the unpack; `fs/root_disk.rs` refuses the same on the
   volume.
-- `src/lib/fs/vfs/src/initramfs.rs`: `unpack` never creates `.ferrix/**`;
+- `src/lib/fs/vfs/src/initramfs.rs`: `unpack` never creates `.xaqu/**`;
   `init_entries` lists them (SAFETY-MANUAL AoU-24, its host test).
 - xtask: `cargo::Kernel` carries its init into `fat::write_image*` and
   `flash::run` (the card and Pixel/DK1 staging path), which add the inputs
@@ -30,7 +30,7 @@ every test (`src/kernel/build.rs` embeds nothing):
   ITEM.md §2, MEMORY-AND-TIMING, VULNERABILITY-ANALYSIS V-12, A.FIRMWARE,
   TEST-TIME.md item 1. TRACEABILITY.md and the coverage files regenerated.
 
-**Stage 20 harness (outside the item).** `FERRIX_BUILDS=plan:` records every
+**Stage 20 harness (outside the item).** `XAQU_BUILDS=plan:` records every
 build without booting; `selfhost-matrix.sh plan|record|replay` (57 rows,
 `build-apps` first, logs in `DIR/<mode>-run`); script apps recorded as builds;
 `test-selfhost --plan` vendors the plan's workspaces and a workspace whose git
@@ -38,7 +38,7 @@ crate collides apart.
 
 ## What passed
 
-- Host: xtask tests (502+), kernel clippy on three targets, ferrix-vfs tests,
+- Host: xtask tests (502+), kernel clippy on three targets, xaqu-vfs tests,
   check-traceability, check-item-boundary, the coverage and panic-catalog
   generators' `--check`.
 - Boots by hand: test-boot x86_64 (the `inputs` line), test-init x86_64
@@ -47,7 +47,7 @@ crate collides apart.
 - Measured (plan mode, 57-row matrix): 271 builds to 188, 66 kernel builds to
   6, 36 min with no boots; the gap: plan mode misses 23 of 153 distinct
   non-kernel builds (made after a test's first boot).
-- Controls on 5e2eca4b2 (spec `~/.local/share/ferrix/logs/linit-controls.md`,
+- Controls on 5e2eca4b2 (spec `~/.local/share/xaqu/logs/linit-controls.md`,
   invocations `linit-launch.sh` beside it on nazuna): b, c1-c7 and e FIRED.
 
 ## What is owed, in order
@@ -60,7 +60,7 @@ crate collides apart.
    `GATE_SLOT`). Run `cargo xtask check` on the head first (it was stopped at
    the wind-down, not seen to pass).
 2. The batch: `batch.sh join <session> selfhost-matrix selfhost-matrix --gate
-   ~/.local/share/ferrix/selfhost-matrix/batch-gate.txt` (the extra lines the
+   ~/.local/share/xaqu/selfhost-matrix/batch-gate.txt` (the extra lines the
    PO asked for), then `batch.sh wait`. The PO lands a PASSED stack only after
    the one-line report: all controls FIRED and the four boots' transcripts
    equal main's apart from the `inputs` line and the sizes.
@@ -73,11 +73,11 @@ crate collides apart.
 
 - Tests build every variant before their first boot (approved by the PO), so
   plan mode is complete.
-- The weekly CI workflow: plan mode, Ferrix makes the builds in a guest of
+- The weekly CI workflow: plan mode, Xaqu makes the builds in a guest of
   about 8 GB, replay of the rows a runner boots; `shards.sh` in
-  `~/.local/share/ferrix/selfhost-matrix/` runs a replay in 5 shards.
+  `~/.local/share/xaqu/selfhost-matrix/` runs a replay in 5 shards.
 - The Arm C programs (cross gcc and three Rust targets in the toolchain) and
-  the script apps (Mesa's mako and glslang, btop's LLVM runtime) on Ferrix.
+  the script apps (Mesa's mako and glslang, btop's LLVM runtime) on Xaqu.
 
 ## Traps
 

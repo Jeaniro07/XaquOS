@@ -154,7 +154,7 @@ pub(crate) fn check_slice_request(fail: fn(&str) -> !) {
         }
         // In this child, which ends here: Linux takes the flag from anyone
         // and then refuses to clear it without CAP_SYS_NICE, so it is set
-        // where nothing needs it cleared. Ferrix refuses it.
+        // where nothing needs it cleared. Xaqu refuses it.
         let reset = SchedAttr {
             sched_flags: SCHED_FLAG_RESET_ON_FORK,
             ..SchedAttr::default()

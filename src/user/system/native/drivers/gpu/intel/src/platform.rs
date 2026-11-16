@@ -1,4 +1,4 @@
-//! The real GPU under `ferrix-intel-xelp`'s back end (`backend::Platform`):
+//! The real GPU under `xaqu-intel-xelp`'s back end (`backend::Platform`):
 //! BAR 0's registers and GGTT entries, time, page tables in a pinned pool,
 //! the driver's own objects (rings, context images, status pages) each a
 //! pinned VMO bound into the driver's GGTT window, and the client's objects
@@ -10,17 +10,17 @@
 use core::cell::OnceCell;
 use core::ptr;
 
-use ferrix_intel_xelp::backend::{Error, FrequencyReport, KernelObject, Platform};
-use ferrix_intel_xelp::ggtt_space::{GgttSpace, Range};
-use ferrix_intel_xelp::io::{Clock, Mmio};
-use ferrix_intel_xelp::ppgtt::PtMemory;
-use ferrix_intel_xelp::pt_pool::{CHUNK_PAGES, ChunkStore, PtPool};
-use ferrix_intel_xelp::uncore::{AutoForcewake, ForcewakeDomains, FwDomains};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device, Interrupt};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{DeviceAddress, Pin, PinAccess, device_address};
-use ferrix_rt::native::vmo::{self, Vmo};
+use xaqu_intel_xelp::backend::{Error, FrequencyReport, KernelObject, Platform};
+use xaqu_intel_xelp::ggtt_space::{GgttSpace, Range};
+use xaqu_intel_xelp::io::{Clock, Mmio};
+use xaqu_intel_xelp::ppgtt::PtMemory;
+use xaqu_intel_xelp::pt_pool::{CHUNK_PAGES, ChunkStore, PtPool};
+use xaqu_intel_xelp::uncore::{AutoForcewake, ForcewakeDomains, FwDomains};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device, Interrupt};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{DeviceAddress, Pin, PinAccess, device_address};
+use xaqu_rt::native::vmo::{self, Vmo};
 
 use crate::serve::AsVmo;
 use crate::{Bar0, Time};
@@ -75,8 +75,8 @@ fn random_tag() -> Option<u64> {
     // SAFETY: `bytes` is this frame's own eight bytes, writable for the
     // whole call, and the kernel writes at most its length into it.
     let got = unsafe {
-        ferrix_rt::linux::call(
-            ferrix_rt::linux::numbers::GETRANDOM,
+        xaqu_rt::linux::call(
+            xaqu_rt::linux::numbers::GETRANDOM,
             [bytes.as_mut_ptr().addr(), bytes.len(), 0, 0, 0, 0],
         )
     };
@@ -92,7 +92,7 @@ struct Pinned {
 
 impl Drop for Pinned {
     fn drop(&mut self) {
-        let _ = ferrix_rt::linux::munmap(self.map, self.len);
+        let _ = xaqu_rt::linux::munmap(self.map, self.len);
     }
 }
 
@@ -191,7 +191,7 @@ impl<'a> Real<'a> {
     /// which the PPGTT maps with 2 MiB and 64 KiB pages where it got them.
     fn pin(&self, memory: &Memory) -> Result<(), Error> {
         let bytes = memory.pages * PAGE;
-        let access = if bytes as u64 >= ferrix_intel_xelp::ppgtt::PAGE_2M {
+        let access = if bytes as u64 >= xaqu_intel_xelp::ppgtt::PAGE_2M {
             PinAccess::Blocks { order: 9 }
         } else {
             PinAccess::ReadWrite
@@ -228,8 +228,8 @@ impl<'a> Real<'a> {
 
 /// A pin's refusal toward the program: the iGPU's pin budget (K3) is
 /// `EDQUOT`, everything else no memory.
-fn pin_error(error: ferrix_rt::native::error::Error) -> Error {
-    use ferrix_rt::native::error::Error as E;
+fn pin_error(error: xaqu_rt::native::error::Error) -> Error {
+    use xaqu_rt::native::error::Error as E;
     match error {
         E::LimitReached | E::AccessDenied => Error::Quota,
         _ => Error::NoMemory,
@@ -440,7 +440,7 @@ impl Platform for Real<'_> {
         );
         if bound.is_err() {
             let _ = self.ggtt.free(range);
-            let _ = ferrix_rt::linux::munmap(base, bytes);
+            let _ = xaqu_rt::linux::munmap(base, bytes);
             return Err(Error::NoMemory);
         }
         if let Some(slot) = self.objects.get_mut(id) {
@@ -472,7 +472,7 @@ impl Platform for Real<'_> {
         // Not present again: the GPU never reaches the freed pages.
         let _ = self.ggtt.clear(&mut self.bar, gone.range, 0);
         let _ = self.ggtt.free(gone.range);
-        let _ = ferrix_rt::linux::munmap(gone.base, gone.pages * PAGE);
+        let _ = xaqu_rt::linux::munmap(gone.base, gone.pages * PAGE);
     }
 
     fn words(&mut self, object: KernelObject) -> &mut [u32] {
@@ -519,7 +519,7 @@ impl Platform for Real<'_> {
 
     fn frequency_report(&mut self, report: &FrequencyReport) {
         let sample = &report.sample;
-        ferrix_rt::debug!(
+        xaqu_rt::debug!(
             "intel: freqlog: asked {} MHz{}, actual {} MHz (RPSTAT1 {:#010x}), limits {}, busy {}.{} %, RC6 {}.{} %, package {}.{:03} W, parks {}, boosts {}, waiters {}, memory {} MHz (SA_PERF_STATUS {:#010x})",
             sample.requested_mhz,
             if report.pinned {
@@ -541,7 +541,7 @@ impl Platform for Real<'_> {
             report.parks,
             report.boosts,
             report.waiters,
-            ferrix_intel_xelp::rps::qclk_mhz(sample.sa_perf_status),
+            xaqu_intel_xelp::rps::qclk_mhz(sample.sa_perf_status),
             sample.sa_perf_status
         );
     }
@@ -553,7 +553,7 @@ impl Platform for Real<'_> {
         forcewake.release(&mut self.bar, now_ns);
         if forcewake.failures != self.forcewake_said {
             self.forcewake_said = forcewake.failures;
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: forcewake: {} wakes failed so far, the last {:?}",
                 forcewake.failures,
                 forcewake.last_error
@@ -566,6 +566,6 @@ impl Platform for Real<'_> {
     }
 
     fn ggtt_page(&mut self, index: u64) -> Option<u64> {
-        ferrix_intel_xelp::gtt::gen8_ggtt_pte_decode(self.bar.ggtt_entry(index)?)
+        xaqu_intel_xelp::gtt::gen8_ggtt_pte_decode(self.bar.ggtt_entry(index)?)
     }
 }

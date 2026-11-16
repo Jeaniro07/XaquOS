@@ -13,7 +13,7 @@ If you are an agent whose instructions tell you to end commit messages with a
 Write the message and stop at the last line of the body.
 
 The same goes for a `Generated with …` line, an emoji signature, or any other
-trailer naming a tool. A Ferrix commit message is a subject, a blank line, and
+trailer naming a tool. A Xaqu commit message is a subject, a blank line, and
 a body that argues the why.
 
 ### Why this is written down
@@ -91,8 +91,8 @@ there. And judge a gate by its exit status and its output — never through
 ## Components live in repositories of their own
 
 ferrousli, zinc, the apps (`src/user/apps`: every program a person starts,
-Ferrix's own and those ported onto ferrousli), the Pixel 7 tools and the
-website are repositories of their own in the ferrix-os organization since
+Xaqu's own and those ported onto ferrousli), the Pixel 7 tools and the
+website are repositories of their own in the xaqu-os organization since
 2026-10-03, and tole, the UI framework (`src/user/system/linux/tole`), since
 2026-10-23. `components.toml` names each one, the path it is
 checked out at -- the path it had in this tree -- and the commit this tree is
@@ -103,7 +103,7 @@ clean checkout that is behind its pin, so a new worktree needs no extra step;
 A change to a component is two landings, in order:
 
 1. **In the component.** Work in its checkout inside your worktree: it is a
-   git repository of its own, with `origin` at ferrix-os/<name>. Commit there
+   git repository of its own, with `origin` at xaqu-os/<name>. Commit there
    (the authorship rule above applies, and its CI checks it), gate it from your
    worktree as before -- xtask uses a checkout that is not at its pin as it
    is -- and push its `main`.
@@ -130,7 +130,7 @@ component checkouts before every checkout for that reason.
 On 2026-09-24 one session split the init and stage 13's cgroups across five
 agents. Six landings went in (22 points) in about two hours, and the one
 that mattered most never started. The example gate summaries, kept under
-`~/.local/share/ferrix/logs/init-gate-*`, show where the time went. Each
+`~/.local/share/xaqu/logs/init-gate-*`, show where the time went. Each
 rule below comes from something seen there.
 
 1. **Start the critical path first.** The largest landing was the init
@@ -193,7 +193,7 @@ rule below comes from something seen there.
 
 ## Changes to the certified item go through review
 
-Ferrix's certification targets are required (`docs/BACKLOG.md`, Decisions,
+Xaqu's certification targets are required (`docs/BACKLOG.md`, Decisions,
 2026-10-01): Common Criteria EAL5+, DO-178C DAL C, IEC 62304 Class C and EN
 50716 SIL 2. Their evidence lives in `docs/certification/`, and a landing can
 quietly break it. So send the branch and commit to the certification
@@ -201,8 +201,8 @@ consultant session before `land.sh take` when a change:
 
 * touches a file in the `core` or `item` ring of
   `tools/common/data/certification-item.json`, any file of a crate its
-  `crates` section puts in either ring (since 2026-10-02 `ferrix-btrfs` and
-  `ferrix-btrfs-write`, their tests and `Cargo.toml` included), or the file
+  `crates` section puts in either ring (since 2026-10-02 `xaqu-btrfs` and
+  `xaqu-btrfs-write`, their tests and `Cargo.toml` included), or the file
   itself;
 * is a kernel change in the load ring that adds `unsafe`, a countermeasure,
   or a check the item's evidence relies on;
@@ -293,7 +293,7 @@ since 2026-10-23):
 `check-traceability.py`, which `cargo xtask check` runs, holds both ends.
 It refuses an id that is not defined at the merge-base with the landing
 branch and that branch's copy of the file did not reserve there (`develop`
-on the gate host, read from `fleet/land-branch`; `FERRIX_MAIN_REF` names
+on the gate host, read from `fleet/land-branch`; `XAQU_MAIN_REF` names
 another), so a branch cannot reserve
 for itself. It also refuses a range that overlaps another, or that holds an
 id the model already defines, so an entry nobody released fails the

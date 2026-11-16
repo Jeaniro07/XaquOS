@@ -2,9 +2,9 @@
 
 `docs/MICROKERNEL.md` §6.3 and §3's *Retired calls* (0x1048): under `fs=server`, btrfs runs as a process of its own, the two
 crates byte-identical, and a block driver shares its ring with it, a protocol in user space. Ids: L.object.329-333, L.device.81-82. Native calls 0x10C3, 0x10C4 (§2). Panic code none: no kernel code but the start and those two. The customer's Q4 (a certified `btrfsd`) is decided;
-the document set for that item is M7's. BOOT-AUTHORITY starts it (`.ferrix/partitions` or a default row, under K14).
+the document set for that item is M7's. BOOT-AUTHORITY starts it (`.xaqu/partitions` or a default row, under K14).
 
-**Where it stands:** ledger 6027 **OK IF BD.1-BD.12** and CO.1-CO.6, 6052 **OK IF H.1-H.7**, 6803 BL.1-BL.4. In this landing, dark: `fs=server` requires `personality=user`, which no profile builds. Rows on x86_64 alone, under KVM and through `gate.sh`: `test-btrfsd`, `test-btrfsd-restart`, `test-btrfs`, `test-powerfail`, `test-rustc`, each `--set fs=server`. **`built = "yes"` for `fs=server` is true on x86_64 alone**: aarch64 is a BACKLOG row. BD.8 is answered by the customer, 2026-11-04: `btrfsd`'s heap in `max` is its justified deviation, no heap only in `max_plus`. The manifest's entries for `ferrix-fsproto` and `ferrix-blkclient` say no kernel links them; they are `btrfsd`'s item at M7, and F-23's gate holds from here; no claim stands on them before M7 (BD.7).
+**Where it stands:** ledger 6027 **OK IF BD.1-BD.12** and CO.1-CO.6, 6052 **OK IF H.1-H.7**, 6803 BL.1-BL.4. In this landing, dark: `fs=server` requires `personality=user`, which no profile builds. Rows on x86_64 alone, under KVM and through `gate.sh`: `test-btrfsd`, `test-btrfsd-restart`, `test-btrfs`, `test-powerfail`, `test-rustc`, each `--set fs=server`. **`built = "yes"` for `fs=server` is true on x86_64 alone**: aarch64 is a BACKLOG row. BD.8 is answered by the customer, 2026-11-04: `btrfsd`'s heap in `max` is its justified deviation, no heap only in `max_plus`. The manifest's entries for `xaqu-fsproto` and `xaqu-blkclient` say no kernel links them; they are `btrfsd`'s item at M7, and F-23's gate holds from here; no claim stands on them before M7 (BD.7).
 
 **Departures from what was reviewed, for the diff check:**
 * `CORE_OPEN` carries no device handle, since mk-lift's change: the server is told a location alone. So CO.1 falls away, and CO.2's check is the word against what
@@ -20,7 +20,7 @@ the document set for that item is M7's. BOOT-AUTHORITY starts it (`.ferrix/parti
 * `test-rustc` and `test-powerfail` (8 cuts, 6 leaving a log the next mount replayed; `btrfs check` clean before and after each) pass under `fs=server`, on x86_64 under KVM. So does the fuzz target `fsproto_wire` for a minute's run.
 * H.2 is withdrawn for `personality=user`, whose ring 0 builds no `make_combining` (ledger 6426, 6803 (vi); its load keeps it, so hb5 and hb5d are not owed): `Vmo::hold` refuses a sealed VMO itself and no call under this shape makes a kernel VMO write-combining, so `vmo_hold` takes no kernel view, and hb5 and hb5d are why. `make_combining` is the lift's copy's there.
 * While BD.3 is missing a description with a files role and any safety device is refused, by parser and by checker (ledger 6316 P3.3).
-* L.object.329-333 stay here and reserved, not in the model: `check-traceability.py` resolves a unit only in the item's crates, and `ferrix-fsproto` and `ferrix-blkclient` are `btrfsd`'s item at M7 (BD.7, BD.12, Q4). * Not built: a mount's description row (BD.3: every disk `devmgr` opens is this instance's, which holds only while there is one instance and no safety disk behind it); CO.2 compares two QM words, so it proves consistency only; BD.3 is what binds a disk.
+* L.object.329-333 stay here and reserved, not in the model: `check-traceability.py` resolves a unit only in the item's crates, and `xaqu-fsproto` and `xaqu-blkclient` are `btrfsd`'s item at M7 (BD.7, BD.12, Q4). * Not built: a mount's description row (BD.3: every disk `devmgr` opens is this instance's, which holds only while there is one instance and no safety disk behind it); CO.2 compares two QM words, so it proves consistency only; BD.3 is what binds a disk.
 
 **Controls that did not fire, and their successors (ledger 6933 BF.5):** hb3's first run, mbl-bc-cg6, mbl-bd-cg6 and mbl-bc-hb7. hb3 and hb2 planted a call a higher crate cannot name; mbl-bf-hb2, -hb3 plant `served` instead. cg6 expected an older sentence; mbl-g3-cg6 expects today's. hb7 measured a job's figure, which a dead job's charge leaves; mbl-bg-hb7 reads the kernel's own count. Ledger 6933 gives this line its verdict.
 
@@ -28,10 +28,10 @@ the document set for that item is M7's. BOOT-AUTHORITY starts it (`.ferrix/parti
 
 | Thing | Today | Under `fs=server` |
 |---|---|---|
-| `ferrix-btrfs`, `ferrix-btrfs-write` (item ring) | in ring 0 | linked into `btrfsd`, **byte-identical**: same source, same tests, L.btrfs evidence carried (§6.2 *Moves*). Their manifest entry says so; `fast`/`max` no longer link them in ring 0, which the shape gate adds to its list |
-| `ferrix-btrfs-vfs` (load ring) | in ring 0 | in `btrfsd`, as the server's model of a volume, unchanged: the `FileSystem` and `Inode` it already is. Its VMO pages are `btrfsd`'s (§4) |
-| `fs/btrfs.rs` glue: `Disk`, `Device`/`WriteDevice` over a `BlockDevice` | load | `btrfsd`'s `Disk` over `ferrix-blkclient` |
-| `interfaces/block_ring` core | load | **not built**, a client of the ring instead: `ferrix-blkclient`, which is `ferrix_blkring::kernel`'s side of the ring, already a library, on channels, VMOs and ports |
+| `xaqu-btrfs`, `xaqu-btrfs-write` (item ring) | in ring 0 | linked into `btrfsd`, **byte-identical**: same source, same tests, L.btrfs evidence carried (§6.2 *Moves*). Their manifest entry says so; `fast`/`max` no longer link them in ring 0, which the shape gate adds to its list |
+| `xaqu-btrfs-vfs` (load ring) | in ring 0 | in `btrfsd`, as the server's model of a volume, unchanged: the `FileSystem` and `Inode` it already is. Its VMO pages are `btrfsd`'s (§4) |
+| `fs/btrfs.rs` glue: `Disk`, `Device`/`WriteDevice` over a `BlockDevice` | load | `btrfsd`'s `Disk` over `xaqu-blkclient` |
+| `interfaces/block_ring` core | load | **not built**, a client of the ring instead: `xaqu-blkclient`, which is `xaqu_blkring::kernel`'s side of the ring, already a library, on channels, VMOs and ports |
 | The VFS's view of a volume | `fs/btrfs.rs` mounts in the VFS | `fs/served.rs` in the load (`linuxd`): a `FileSystem` and `Inode` over the protocol of §3 |
 
 `fs=lift` (mk-lift's stopgap, btrfs inside `linuxd`) uses the same client library from `linuxd`, so the disk works in both; only `fs=server` is the
@@ -40,11 +40,11 @@ claim's shape.
 ## 2. The block ring in user space
 
 BLOCK-RING.md is unchanged on the driver's side: HELLO, READY, the ring, the doorbells. Driver source is unchanged. `devmgr` asks for a control channel by
-`CORE_OPEN` (`ferrix-devmgr-proto`) on the channel the kernel gave it; the kernel handed the other end to the server (`btrfsd` for `BLOCK_RING_CREATE`,
+`CORE_OPEN` (`xaqu-devmgr-proto`) on the channel the kernel gave it; the kernel handed the other end to the server (`btrfsd` for `BLOCK_RING_CREATE`,
 `linuxd` for the rest; BOOT-AUTHORITY §3). The server:
 
 1. makes a channel pair and answers `CORE_OPENED` with the driver's end, `CONTROL_RIGHTS`;
-2. reads HELLO, validated by `ferrix_blkring::control`, exactly as the core does, refusing with the same `Refusal`s;
+2. reads HELLO, validated by `xaqu_blkring::control`, exactly as the core does, refusing with the same `Refusal`s;
 3. maps the ring and data VMOs read-write. The ring's indices are the other side's to write: `KernelSide::attach` already treats them as hostile (BLOCK-RING §4), and
    its memory trait is implemented over a mapping as it was over frames;
 4. makes a port and answers READY with its write handle;
@@ -62,7 +62,7 @@ server or devmgr widens nothing: devmgr holds the device anyway and a released q
 
 **Who pays.** The server's ring memory is the driver's VMO, charged to the driver. A client's I/O is K7's: a ticket on its channel.
 
-## 3. The file protocol (`ferrix-fsproto`)
+## 3. The file protocol (`xaqu-fsproto`)
 
 A control channel from the kernel: `HELLO`, then per disk `OPEN`, `LABEL` and the raw block ops for its `/dev` node. One channel per mount between `linuxd` and `btrfsd`, opened by `OPEN` with a shared VMO, closed by `CLOSE` at unmount, and with a disk's last channel the volume goes. Requests are channel messages, answered in turn; no ticket yet, so a client's I/O is charged to the server (K7's row owed). Fixed little-endian structures, host-tested, fuzzed on the server's side: **`linuxd` is a QM client, so every request is hostile input to a
 certified server** (ASR-9, T.MEDIA keep their meaning for the volume; a new T.CLIENT for the channel).
@@ -86,7 +86,7 @@ close; then a K3 pager in `btrfsd`, with mk-m2's page cache on K3. `fs/pages.rs`
 
 ## 4. The program
 
-`src/user/system/native/btrfsd`: `no_std` on `ferrix-rt`, a heap (`lode`'s pattern), threads by `THREAD_CREATE`. `ferrix-btrfs-vfs`'s `Storage` is a heap-backed `Pages`. Its `Parker` is K5's address wait.
+`src/user/system/native/btrfsd`: `no_std` on `xaqu-rt`, a heap (`lode`'s pattern), threads by `THREAD_CREATE`. `xaqu-btrfs-vfs`'s `Storage` is a heap-backed `Pages`. Its `Parker` is K5's address wait.
 Started measured under K14, by the manager when a description names it, else by the kernel's table in `boot_authority`. It may be restarted only with its volumes unmounted cleanly: a crash ends the partition's mounts with `EIO`, the journal-free CoW format's own recovery on the next mount (`test-powerfail`).
 
 ## 5. Evidence and gates
@@ -97,7 +97,7 @@ Started measured under K14, by the manager when a description names it, else by 
 * L.object.331: **one volume per channel**: a handle of one channel names nothing in another, with a control.
 * L.object.332: the driver's death answers `EIO` within the bound, never a hang.
 * L.object.333: `btrfsd`'s image is on the certified list under `max` (K14 §5).
-* `check-item-boundary.py` carries `ferrix-btrfs*`: "ring 0 under `fs=kernel`; `btrfsd` under `fs=server`"; the shape gate refuses them in ring 0 under `fs=server`.
+* `check-item-boundary.py` carries `xaqu-btrfs*`: "ring 0 under `fs=kernel`; `btrfsd` under `fs=server`"; the shape gate refuses them in ring 0 under `fs=server`.
 
 **Memory (customer, 2026-11-04).** Under `max`, `btrfsd` allocates from its own heap on its own reservation, the stated deviation K16 has for every job. No allocator after boot is `max_plus`'s, with PR #38.
 
@@ -120,6 +120,6 @@ A Linux partition's `linuxd` is QM and its requests are hostile: T.CLIENT in SEC
 ## 6. Questions
 
 * **Q1.** §2's `hello_accepted`.
-* **Q2.** BACKLOG row 398 (b), the commit reserve: unchanged in `ferrix-btrfs-write`, so it gates as it does.
+* **Q2.** BACKLOG row 398 (b), the commit reserve: unchanged in `xaqu-btrfs-write`, so it gates as it does.
 * **Q3.** Order: client and read-only serve with a boot row; then write; then K3. `fs=lift` uses the client meanwhile. Agreed?
-* **Q4.** `ferrix-btrfs-vfs` was load, and a certified `btrfsd` links it. It moves to the item's crates or becomes `btrfsd`'s own argued code: which? My view: item, 2,730 product lines, with host tests; requirements written at M7.
+* **Q4.** `xaqu-btrfs-vfs` was load, and a certified `btrfsd` links it. It moves to the item's crates or becomes `btrfsd`'s own argued code: which? My view: item, 2,730 product lines, with host tests; requirements written at M7.

@@ -8,7 +8,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::{icmpv4, icmpv6, udp};
+use xaqu_netwire::{icmpv4, icmpv6, udp};
 
 use crate::addr::{Endpoint, IpAddress, Ipv6};
 use crate::socket::{Error, Socket};
@@ -186,7 +186,7 @@ impl Stack {
             _ => return Err(Error::Invalid),
         };
         let protocol = if local.address.is_v4() {
-            ferrix_netwire::ipv4::protocol::ICMP
+            xaqu_netwire::ipv4::protocol::ICMP
         } else {
             icmpv6::PROTOCOL
         };
@@ -282,9 +282,9 @@ impl Stack {
     fn complete_header(&mut self, data: &[u8], source: IpAddress) -> Result<Vec<u8>, Error> {
         let first = *data.first().ok_or(Error::Invalid)?;
         let header_len = usize::from(first & 0x0F) * 4;
-        if data.len() < ferrix_netwire::ipv4::MIN_HEADER_LEN
+        if data.len() < xaqu_netwire::ipv4::MIN_HEADER_LEN
             || first >> 4 != 4
-            || header_len < ferrix_netwire::ipv4::MIN_HEADER_LEN
+            || header_len < xaqu_netwire::ipv4::MIN_HEADER_LEN
             || header_len > data.len()
         {
             return Err(Error::Invalid);
@@ -303,7 +303,7 @@ impl Stack {
         }
         put(&mut packet, 10, &[0, 0])?;
         let header = packet.get(..header_len).ok_or(Error::Invalid)?;
-        let sum = ferrix_netwire::checksum::checksum(header);
+        let sum = xaqu_netwire::checksum::checksum(header);
         put(&mut packet, 10, &sum.to_be_bytes())?;
         Ok(packet)
     }
@@ -331,7 +331,7 @@ impl Stack {
             hop.interface,
             hop.address,
             packet,
-            ferrix_netwire::ethernet::ethertype::IPV4,
+            xaqu_netwire::ethernet::ethertype::IPV4,
             now,
         )
     }
@@ -348,7 +348,7 @@ impl Stack {
             return Err(error);
         }
         let state = stream.connection.state();
-        if state == ferrix_nettcp::State::SynSent {
+        if state == xaqu_nettcp::State::SynSent {
             return Err(Error::InProgress);
         }
         if !state.can_send() {

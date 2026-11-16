@@ -16,7 +16,7 @@ use std::string::String;
 use std::vec::Vec;
 use std::{format, vec};
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::backend::{Completion, ContextParams, Engine, Facts, HwContext, SubmitError, VmId};
 use super::host::{Host, Installed};
@@ -486,7 +486,7 @@ impl Host<Memory> for FakeHost {
         self.privileged
     }
 
-    fn say(&mut self, _level: ferrix_linux_abi::kmsg::Level, line: core::fmt::Arguments<'_>) {
+    fn say(&mut self, _level: xaqu_linux_abi::kmsg::Level, line: core::fmt::Arguments<'_>) {
         self.lines.push(format!("{line}"));
     }
 }
@@ -2401,7 +2401,7 @@ fn trace_says_a_held_wait_and_names_it_when_stuck() {
 
 /// What one settle costs with a game's tables: 300 objects, 120 syncobjs,
 /// 8 kernel fences pending, no work. Run by hand, in release:
-/// `cargo test --release -p ferrix-intel-xelp settle_cost -- --ignored --nocapture`.
+/// `cargo test --release -p xaqu-intel-xelp settle_cost -- --ignored --nocapture`.
 #[test]
 #[ignore = "a measurement, not a check"]
 #[expect(

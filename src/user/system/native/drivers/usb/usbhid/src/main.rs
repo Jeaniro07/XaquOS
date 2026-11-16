@@ -4,7 +4,7 @@
 //! EHCI, which the kernel publishes as a device tree node, or a PC's xHCI,
 //! a PCI function of class 0C:03:30 (`docs/XHCI.md`).
 //!
-//! Everything that knows anything about USB is `ferrix-usb-host`, tested on
+//! Everything that knows anything about USB is `xaqu-usb-host`, tested on
 //! the host against a model of each controller and a bus behind it. This
 //! program is the handles it was written to be wrapped in:
 //!
@@ -34,10 +34,10 @@
 //!
 //! What it finds is said on standard error, which is the console.
 //!
-//! With the debug switch `ferrix.usbhid.reports` on the kernel command line,
+//! With the debug switch `xaqu.usbhid.reports` on the kernel command line,
 //! or the file `/run/usbhid-reports` there, every interrupt report of the
 //! functions it names is said raw at debug, with the time it was taken and
-//! the events it made (`ferrix_usb_host::watch`, `docs/XHCI.md` §13).
+//! the events it made (`xaqu_usb_host::watch`, `docs/XHCI.md` §13).
 //!
 //! The exit status names the step that failed ([`Step`]).
 
@@ -47,36 +47,36 @@
 use core::fmt;
 use core::ptr;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES, Start};
-use ferrix_inputctl::message::{Events, MAX_BYTES, Message, PORT_RIGHTS};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES, Start};
+use xaqu_inputctl::message::{Events, MAX_BYTES, Message, PORT_RIGHTS};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     APERTURE_WHOLE_PAGES, DEVICE_NOT_PCI, IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL,
     PCI_CLASS_XHCI, TREE_STM32_USBH,
 };
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_usb_host::bus::{
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_usb_host::bus::{
     Bus, DiskChange, ExportChange, MAX_FUNCTIONS, Note, Output, SERVICE_POLL,
     SERVICE_POLL_IDLE_MAX, Watched, next_service_poll,
 };
-use ferrix_usb_host::hid::Kind;
-use ferrix_usb_host::host::{self, Host as Controller};
-use ferrix_usb_host::watch::{self, Watch};
-use ferrix_usb_host::{Clock, Dma, MILLISECOND, Parts, Registers, ehci, xhci};
+use xaqu_usb_host::hid::Kind;
+use xaqu_usb_host::host::{self, Host as Controller};
+use xaqu_usb_host::watch::{self, Watch};
+use xaqu_usb_host::{Clock, Dma, MILLISECOND, Parts, Registers, ehci, xhci};
 
 mod export;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -130,7 +130,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(()) => 0,
         Err(step) => {
-            ferrix_rt::err!("usbhid: stopped at {step:?}");
+            xaqu_rt::err!("usbhid: stopped at {step:?}");
             step as i32
         }
     }
@@ -272,7 +272,7 @@ impl Area {
             Some(self.base + offset)
         } else {
             if !self.strayed.replace(true) {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "usbhid: an access of {size} bytes at {offset:#x} is outside the controller's memory; ignored"
                 );
             }
@@ -333,7 +333,7 @@ impl Dma for Area {
     fn barrier(&self) {
         // The controller is outside the processors' shareability domain,
         // which `dmb ish` orders only within.
-        ferrix_rt::device_barrier();
+        xaqu_rt::device_barrier();
     }
 }
 
@@ -344,7 +344,7 @@ struct Time {
 
 impl Clock for Time {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn sleep_nanos(&mut self, nanos: u64) {
@@ -506,7 +506,7 @@ where
     let controller = match controller {
         Ok(controller) => controller,
         Err((error, parts)) => {
-            ferrix_rt::err!("usbhid: the {name} controller would not start: {error:?}");
+            xaqu_rt::err!("usbhid: the {name} controller would not start: {error:?}");
             // Unresponsive may mean still running: its memory stays.
             if matches!(error, host::Error::Unresponsive) {
                 let _kept_for_good = core::mem::ManuallyDrop::new(parts);
@@ -515,7 +515,7 @@ where
             return Err(Step::Controller);
         }
     };
-    ferrix_rt::info!("usbhid: {name} running");
+    xaqu_rt::info!("usbhid: {name} running");
     let booted = boot_watch();
     let mut bus = Bus::with(controller);
     bus.watch(booted);
@@ -530,7 +530,7 @@ where
         channels: [const { None }; MAX_FUNCTIONS],
         exports: export::Exports::new(),
         boot: boot.duplicate(Requested::Same).ok(),
-        opened: [Handle::INVALID; ferrix_native_abi::types::USB_INPUT_FUNCTIONS],
+        opened: [Handle::INVALID; xaqu_native_abi::types::USB_INPUT_FUNCTIONS],
         opened_count: 0,
         opened_read: false,
     };
@@ -567,7 +567,7 @@ struct Driver<H> {
     /// The bootstrap channel, which every ATTACH goes down to devmgr.
     boot: Option<Channel<Kernel>>,
     /// Input channels devmgr opened for this driver, where it cannot itself.
-    opened: [Handle; ferrix_native_abi::types::USB_INPUT_FUNCTIONS],
+    opened: [Handle; xaqu_native_abi::types::USB_INPUT_FUNCTIONS],
     opened_count: usize,
     opened_read: bool,
 }
@@ -581,7 +581,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
     /// `/dev/input` once finds the keyboard (`docs/INPUT.md` §7.3).
     fn serve(&mut self, boot: &Channel<Kernel>, settle: u64) -> Result<(), Step> {
         if settle > 0 {
-            let until = ferrix_rt::linux::monotonic_nanos()
+            let until = xaqu_rt::linux::monotonic_nanos()
                 .unwrap_or(0)
                 .saturating_add(settle);
             let _ = self.port.wait(Deadline::At(until));
@@ -602,7 +602,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
             if self.forward() {
                 service_every = SERVICE_POLL;
             }
-            let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+            let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
             let next_poll = self.bus.next_poll();
             let deadline = if interrupted {
                 next_poll
@@ -621,7 +621,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                 Err(Error::TimedOut) if !interrupted => {
                     if !said {
                         said = true;
-                        ferrix_rt::notice!(
+                        xaqu_rt::notice!(
                             "usbhid: no interrupt from the controller yet: its events are taken every {} to {} ms until one comes",
                             SERVICE_POLL / 1_000_000,
                             SERVICE_POLL_IDLE_MAX / 1_000_000
@@ -633,7 +633,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                     // Doubled here; the next forward puts it back at 8 ms
                     // if this service found anything.
                     service_every = next_service_poll(service_every, false);
-                    if ferrix_rt::linux::monotonic_nanos().unwrap_or(0) >= next_poll {
+                    if xaqu_rt::linux::monotonic_nanos().unwrap_or(0) >= next_poll {
                         self.poll();
                     }
                 }
@@ -655,7 +655,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                 // A terminal's settings wake the wait sooner than the ports
                 // are due.
                 Err(Error::TimedOut) => {
-                    if ferrix_rt::linux::monotonic_nanos().unwrap_or(0) >= self.bus.next_poll() {
+                    if xaqu_rt::linux::monotonic_nanos().unwrap_or(0) >= self.bus.next_poll() {
                         self.poll();
                     }
                 }
@@ -670,7 +670,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
         self.bus.poll();
         let now = file_watch().unwrap_or(self.booted);
         if now != self.bus.watching() {
-            ferrix_rt::notice!("usbhid: watching reports: {now}");
+            xaqu_rt::notice!("usbhid: watching reports: {now}");
             self.bus.watch(now);
         }
     }
@@ -689,7 +689,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
             hex.push(*byte);
         }
         let micros = report.at / 1_000;
-        ferrix_rt::debug!(
+        xaqu_rt::debug!(
             "usbhid: report {:04x}:{:04x} function {} at {}.{:06} s (+{} us){}: {}{}",
             report.vendor,
             report.product,
@@ -712,7 +712,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                 format_args!(" {}:{}={}", event.kind, event.code, event.value),
             );
         }
-        ferrix_rt::debug!("usbhid: function {function} made{}", text.as_str());
+        xaqu_rt::debug!("usbhid: function {function} made{}", text.as_str());
     }
 
     /// Hand on everything the bus has, and say what it found. Answers
@@ -737,7 +737,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                 }
                 ExportChange::Detached(index) => {
                     self.exports.detach(index);
-                    ferrix_rt::info!("usbhid: export {index} unplugged");
+                    xaqu_rt::info!("usbhid: export {index} unplugged");
                 }
             }
         }
@@ -768,7 +768,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                     if let Some(slot) = self.channels.get_mut(function) {
                         *slot = None;
                     }
-                    ferrix_rt::info!("usbhid: function {function} unplugged");
+                    xaqu_rt::info!("usbhid: function {function} unplugged");
                 }
             }
         }
@@ -785,7 +785,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
     fn tell_disk(&mut self, change: DiskChange) {
         let disk = match change {
             DiskChange::Detached(disk) => {
-                ferrix_rt::info!("usbhid: disk {disk} unplugged");
+                xaqu_rt::info!("usbhid: disk {disk} unplugged");
                 return;
             }
             DiskChange::Attached(disk) => disk,
@@ -810,14 +810,14 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                 let sum = first.iter().fold(0xCBF2_9CE4_8422_2325_u64, |sum, &byte| {
                     (sum ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01B3)
                 });
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "usbhid: disk {disk} {vendor} {product}: {} blocks of {} bytes, block 0 fnv {sum:016x}",
                     found.blocks,
                     found.block_bytes
                 );
             }
             Err(error) => {
-                ferrix_rt::err!("usbhid: disk {disk} {vendor} {product} would not read: {error:?}");
+                xaqu_rt::err!("usbhid: disk {disk} {vendor} {product} would not read: {error:?}");
             }
         }
     }
@@ -828,15 +828,15 @@ impl<H: Controller<Clock = Time>> Driver<H> {
     fn opened_control(&mut self) -> Option<Channel<Kernel>> {
         if !self.opened_read {
             self.opened_read = true;
-            let until = ferrix_rt::linux::monotonic_nanos()
+            let until = xaqu_rt::linux::monotonic_nanos()
                 .ok()?
                 .saturating_add(1_000_000_000);
             let boot = self.boot.as_ref()?;
             let _ = boot.wait_one(Signals::READABLE, Deadline::At(until));
-            let mut mark = [0_u8; ferrix_native_abi::types::INPUT_CHANNELS_MARK.len()];
-            let mut handles = [Handle::INVALID; ferrix_native_abi::types::USB_INPUT_FUNCTIONS];
+            let mut mark = [0_u8; xaqu_native_abi::types::INPUT_CHANNELS_MARK.len()];
+            let mut handles = [Handle::INVALID; xaqu_native_abi::types::USB_INPUT_FUNCTIONS];
             let got = boot.read(&mut mark, &mut handles).ok()?;
-            if mark.as_slice() == ferrix_native_abi::types::INPUT_CHANNELS_MARK {
+            if mark.as_slice() == xaqu_native_abi::types::INPUT_CHANNELS_MARK {
                 self.opened = handles;
                 self.opened_count = got.handles;
             }
@@ -859,7 +859,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
             .ok()
             .or_else(|| self.opened_control())
         else {
-            ferrix_rt::warn!("usbhid: no input channel for the {kind} {name}");
+            xaqu_rt::warn!("usbhid: no input channel for the {kind} {name}");
             return;
         };
         let Ok(share) = self
@@ -877,7 +877,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
         }
         match ready(&control) {
             Some(node) => {
-                ferrix_rt::info!("usbhid: {kind} {name} is event{node}");
+                xaqu_rt::info!("usbhid: {kind} {name} is event{node}");
                 let key = KEY_FIRST_CONTROL + function as u64;
                 if control
                     .wait_async(&self.port, Signals::READABLE | Signals::PEER_CLOSED, key)
@@ -887,7 +887,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                     *slot = Some(control);
                 }
             }
-            None => ferrix_rt::warn!("usbhid: the core refused the {kind} {name}"),
+            None => xaqu_rt::warn!("usbhid: the core refused the {kind} {name}"),
         }
     }
 
@@ -912,7 +912,7 @@ impl<H: Controller<Clock = Time>> Driver<H> {
                     }
                     Ok(Message::Status(leds)) => {
                         if let Err(error) = self.bus.set_leds(function, leds.as_slice()) {
-                            ferrix_rt::warn!(
+                            xaqu_rt::warn!(
                                 "usbhid: function {function}'s LEDs were not set: {error:?}"
                             );
                         }
@@ -935,8 +935,8 @@ impl<H: Controller<Clock = Time>> Driver<H> {
     }
 }
 
-/// The debug switch's boot word (`ferrix_usb_host::watch`).
-const WATCH_WORD: &[u8] = b"ferrix.usbhid.reports";
+/// The debug switch's boot word (`xaqu_usb_host::watch`).
+const WATCH_WORD: &[u8] = b"xaqu.usbhid.reports";
 
 /// What the boot word asks to be watched: off when `/proc/cmdline` cannot
 /// be read, which is said.
@@ -946,13 +946,13 @@ fn boot_watch() -> Watch {
         Ok(len) => {
             let watch = Watch::from_command_line(line.get(..len).unwrap_or_default(), WATCH_WORD);
             if watch.is_on() {
-                ferrix_rt::notice!("usbhid: ferrix.usbhid.reports: watching reports: {watch}");
+                xaqu_rt::notice!("usbhid: xaqu.usbhid.reports: watching reports: {watch}");
             }
             watch
         }
         Err(errno) => {
-            ferrix_rt::warn!(
-                "usbhid: /proc/cmdline unreadable ({errno:?}): ferrix.usbhid.reports is off"
+            xaqu_rt::warn!(
+                "usbhid: /proc/cmdline unreadable ({errno:?}): xaqu.usbhid.reports is off"
             );
             Watch::OFF
         }
@@ -967,13 +967,13 @@ fn file_watch() -> Option<Watch> {
 
 /// A small file from its start into `buf` (`path` NUL-terminated): its
 /// length.
-fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, ferrix_linux_abi::errno::Errno> {
-    use ferrix_rt::linux::{self, numbers};
+fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, xaqu_linux_abi::errno::Errno> {
+    use xaqu_rt::linux::{self, numbers};
     const AT_FDCWD: usize = (-100_isize).cast_unsigned();
     const O_RDONLY: usize = 0;
     const O_CLOEXEC: usize = 0o2_000_000;
     if path.last() != Some(&0) {
-        return Err(ferrix_linux_abi::errno::Errno::EINVAL);
+        return Err(xaqu_linux_abi::errno::Errno::EINVAL);
     }
     // SAFETY: `path` is NUL-terminated and borrowed for the call.
     let fd = unsafe {
@@ -1091,7 +1091,7 @@ impl fmt::Display for Lost {
 
 /// Wait for the core's answer to HELLO: the node's number on READY.
 fn ready(control: &Channel<Kernel>) -> Option<u32> {
-    let until = ferrix_rt::linux::monotonic_nanos()
+    let until = xaqu_rt::linux::monotonic_nanos()
         .ok()?
         .saturating_add(READY_PATIENCE);
     let _ = control
@@ -1149,15 +1149,15 @@ fn tell(note: Note) {
             hub_ports,
             functions,
         } => match hub_ports {
-            Some(ports) => ferrix_rt::info!(
+            Some(ports) => xaqu_rt::info!(
                 "usbhid: device {address} {vendor:04x}:{product:04x} {speed:?} speed, a hub of {ports} ports"
             ),
-            None => ferrix_rt::info!(
+            None => xaqu_rt::info!(
                 "usbhid: device {address} {vendor:04x}:{product:04x} {speed:?} speed, {functions} input functions"
             ),
         },
-        Note::Gone { address } => ferrix_rt::info!("usbhid: device {address} gone"),
-        Note::PortEvent { port, status } => ferrix_rt::debug!(
+        Note::Gone { address } => xaqu_rt::info!("usbhid: device {address} gone"),
+        Note::PortEvent { port, status } => xaqu_rt::debug!(
             "usbhid: port status change event, root port {port}: PORTSC {status:08x} {}",
             Portsc(status)
         ),
@@ -1165,7 +1165,7 @@ fn tell(note: Note) {
             port,
             status,
             changed,
-        } => ferrix_rt::warn!(
+        } => xaqu_rt::warn!(
             "usbhid: root port {port}'s device let go ({}): PORTSC {status:08x} {}",
             if changed {
                 "connect status change"
@@ -1176,7 +1176,7 @@ fn tell(note: Note) {
         ),
         // A short packet is how most reports end: not worth a line.
         Note::Transfer(trouble) if trouble.code == 13 && trouble.known => {}
-        Note::Transfer(trouble) => ferrix_rt::warn!(
+        Note::Transfer(trouble) => xaqu_rt::warn!(
             "usbhid: slot {} endpoint {} transfer event code {}{}",
             trouble.slot,
             trouble.endpoint,
@@ -1187,17 +1187,17 @@ fn tell(note: Note) {
                 ", for a TRB it did not queue"
             }
         ),
-        Note::Stopped { function } => ferrix_rt::warn!(
+        Note::Stopped { function } => xaqu_rt::warn!(
             "usbhid: function {function}'s pipe kept failing and is stopped until it is plugged in again"
         ),
         Note::Failed { parent, error } => {
-            ferrix_rt::err!("usbhid: a device at {parent:?} could not be set up: {error:?}");
+            xaqu_rt::err!("usbhid: a device at {parent:?} could not be set up: {error:?}");
         }
         Note::Disk { .. } => {}
         Note::DiskFailed { error } => {
-            ferrix_rt::err!("usbhid: a mass-storage interface would not open as a disk: {error:?}");
+            xaqu_rt::err!("usbhid: a mass-storage interface would not open as a disk: {error:?}");
         }
-        Note::Handed { port } => ferrix_rt::info!(
+        Note::Handed { port } => xaqu_rt::info!(
             "usbhid: root port {port} has a full- or low-speed device, which EHCI hands to its companion"
         ),
     }

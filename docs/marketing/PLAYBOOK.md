@@ -1,6 +1,6 @@
-# Ferrix discovery plan
+# Xaqu discovery plan
 
-Updated 2026-10-23. Ferrix is experimental software. Lead with what a visitor
+Updated 2026-10-23. Xaqu is experimental software. Lead with what a visitor
 can see and try, then explain how it was built.
 
 The reusable logo, colours and short descriptions are in the
@@ -10,7 +10,7 @@ The reusable logo, colours and short descriptions are in the
 
 **Hook:** Linux apps without Linux.
 
-**Plain description:** Ferrix is a Rust operating system with its own kernel.
+**Plain description:** Xaqu is a Rust operating system with its own kernel.
 It runs tested, unmodified Linux programs, including Chrome, `rustc`, `git`
 and `curl`. Its disk, network, graphics and input drivers run as separate
 processes that can restart after a crash.
@@ -18,14 +18,14 @@ processes that can restart after a crash.
 Say *tested Linux programs*, rather than implying all Linux software works.
 Say *builds and boots its own x86-64 image*, rather than claiming complete
 self-hosting. Lead with the AI story (the customer, 2026-10-23): say plainly
-and early that a fleet of Claude Code sessions writes Ferrix and the customer
-decides what they build. Never call Ferrix a hobby OS.
+and early that a fleet of Claude Code sessions writes Xaqu and the customer
+decides what they build. Never call Xaqu a hobby OS.
 
 ## What is already in place
 
 - The website has a descriptive title and summary, canonical URL, social
   preview tags, structured data and an XML sitemap. GitHub Pages serves it at
-  <https://ferrix-os.org/>.
+  <https://xaqu-os.org/>.
 - The repository has a homepage, description, focused topics, README,
   contribution guide, issue forms and Discussions. The live description and
   topics were refreshed on 2026-09-27; `tools/common/release/github-setup.sh`
@@ -40,19 +40,19 @@ decides what they build. Never call Ferrix a hobby OS.
 ## What to do next, in order
 
 1. **Make the first visit easy.** Keep the README's first screen to the hook,
-   what runs, a candid limitation and a command that boots Ferrix. Keep a real
+   what runs, a candid limitation and a command that boots Xaqu. Keep a real
    screenshot nearby. Check the command on a clean machine before a launch.
 2. **Keep GitHub's About panel current.** Its description, homepage and topics
-   now match the site. Review them after major milestones. Pin Ferrix on the
+   now match the site. Review them after major milestones. Pin Xaqu on the
    owner's profile. GitHub lets people browse and search repositories by topic.
 3. **Publish a useful release.** A release should have a specific improvement,
    a screenshot or short demo, the boot command, and known limitations. Attach
    a bootable image when it is practical and tested. People can choose GitHub
    notifications specifically for releases.
-4. **Create a short demo.** Show Ferrix booting, the desktop, one Linux app
+4. **Create a short demo.** Show Xaqu booting, the desktop, one Linux app
    running unchanged, and `rustc` compiling a small program. Link the demo
    from the site and README. Use real captures and label host acceleration.
-5. **Publish technical explanations.** Good topics: how Ferrix runs Linux
+5. **Publish technical explanations.** Good topics: how Xaqu runs Linux
    binaries, restarting a userland driver, and what the self-build test
    actually proves. Each page needs a concrete diagram, log, command or
    source link. Link to it from the relevant website section and README.
@@ -73,12 +73,12 @@ recommends clear titles, useful content, crawlable pages and descriptive
 links. It says there is no way to guarantee a first-place ranking. The
 [sitemap guide](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)
 calls for absolute canonical URLs; it does not promise indexing. The website
-already has a sitemap at <https://ferrix-os.org/sitemap.xml>.
+already has a sitemap at <https://xaqu-os.org/sitemap.xml>.
 
 After deployment, add the GitHub Pages URL to Google Search Console and Bing
 Webmaster Tools, verify ownership and submit the sitemap. The owner must do
 this in those accounts. Review the index coverage and search queries monthly.
-If Ferrix gets a custom domain, update the canonical URL, sitemap, social URLs
+If Xaqu gets a custom domain, update the canonical URL, sitemap, social URLs
 and GitHub homepage together. Keep the old GitHub Pages address reachable.
 
 Do not count on FAQ markup for a search feature: Google [restricts FAQ rich
@@ -88,7 +88,7 @@ answers real questions.
 
 ## GitHub discovery
 
-There is no documented switch for getting Ferrix “featured more often.”
+There is no documented switch for getting Xaqu “featured more often.”
 GitHub documents several practical discovery surfaces:
 
 - [Topics](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics)
@@ -112,5 +112,5 @@ the project, useful issues and repeat contributors.
 
 Check monthly: Search Console impressions and clicks, GitHub's 14-day traffic
 views and referrers, release asset downloads, and issues from first-time
-users. Record which posts brought people who actually tried Ferrix. Avoid
+users. Record which posts brought people who actually tried Xaqu. Avoid
 using star count alone as the project's success metric.

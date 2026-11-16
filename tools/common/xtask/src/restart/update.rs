@@ -70,7 +70,7 @@ pub(super) fn carried(arch: Arch, release: bool) -> Result<Carried> {
     let version = |version: &str| -> Result<Vec<u8>> {
         let target = paths::target_dir().join(format!("drv-{version}"));
         let path =
-            cargo::build_native_version(arch, release, "ferrix-gpu", "gpu", &target, version)?;
+            cargo::build_native_version(arch, release, "xaqu-gpu", "gpu", &target, version)?;
         std::fs::read(&path)
             .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))
     };
@@ -97,7 +97,7 @@ pub(super) fn carried(arch: Arch, release: bool) -> Result<Carried> {
 }
 
 /// FNV-1a over 64 bits, as devmgr's line gives it
-/// (`ferrix_drvupdate_proto::Fingerprint`).
+/// (`xaqu_drvupdate_proto::Fingerprint`).
 fn fnv64(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf2_9ce4_8422_2325, |hash, &byte| {
         (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)

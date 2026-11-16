@@ -1,8 +1,8 @@
 //! A ring-3 network driver's serve loop.
 //!
-//! Two libraries already know everything about their side. `ferrix-netring`'s
+//! Two libraries already know everything about their side. `xaqu-netring`'s
 //! [`DriverSide`] takes the kernel's submissions and makes its completions;
-//! `ferrix-virtio-net`'s driver turns a frame into descriptors and a used
+//! `xaqu-virtio-net`'s driver turns a frame into descriptors and a used
 //! entry into an event. What is left between them is a loop, and the loop is
 //! where the two sides' rules meet.
 //!
@@ -59,11 +59,11 @@ mod tests;
 
 use core::fmt;
 
-use ferrix_netring::bell::Wait;
-use ferrix_netring::driver::{Consumed, DriverError, DriverSide};
-use ferrix_netring::layout::{MAX_ENTRIES, Op, Status, Submission};
-use ferrix_netring::{Corruption, RingMemory};
-use ferrix_virtio_net::{DeviceError, Event, Frame, SubmitError};
+use xaqu_netring::bell::Wait;
+use xaqu_netring::driver::{Consumed, DriverError, DriverSide};
+use xaqu_netring::layout::{MAX_ENTRIES, Op, Status, Submission};
+use xaqu_netring::{Corruption, RingMemory};
+use xaqu_virtio_net::{DeviceError, Event, Frame, SubmitError};
 
 /// How many receive slots the loop remembers.
 ///

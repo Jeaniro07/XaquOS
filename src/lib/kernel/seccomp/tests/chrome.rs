@@ -13,7 +13,7 @@
     reason = "a test that fails by panicking"
 )]
 
-use ferrix_seccomp::{ACTION_FULL, ALLOW, DATA, ERRNO, Insn, SeccompData, TRAP, run, verify};
+use xaqu_seccomp::{ACTION_FULL, ALLOW, DATA, ERRNO, Insn, SeccompData, TRAP, run, verify};
 
 const X86_64: u32 = 0xc000_003e;
 const I386: u32 = 0x4000_0003;
@@ -33,7 +33,7 @@ const PROGRAMS: [(&[u8], &str); 3] = [
     ),
 ];
 
-fn load(bytes: &[u8]) -> ferrix_seccomp::Program {
+fn load(bytes: &[u8]) -> xaqu_seccomp::Program {
     let insns: Vec<Insn> = bytes
         .as_chunks::<8>()
         .0
@@ -75,7 +75,7 @@ fn every_call_gets_the_answer_the_kernel_gave() {
             // x86-64 `uretprobe` (335) and `uprobe` (336): Linux passes them
             // through seccomp unfiltered (`__secure_computing`), because
             // their kernel-made callers could not be told what a filter
-            // said. Ferrix has no probes, so a filter judges them like any
+            // said. Xaqu has no probes, so a filter judges them like any
             // number it does not know -- here, a trap -- which is stricter
             // and safe, and the one place the oracle and this differ.
             let passes_through = matches!(nr, 335 | 336);

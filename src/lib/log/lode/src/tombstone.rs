@@ -318,7 +318,7 @@ pub fn parts(
     (fields, blobs)
 }
 
-/// One line of `/dev/ferrix-crashes`, the kernel's hold (`docs/LOGGING.md`
+/// One line of `/dev/xaqu-crashes`, the kernel's hold (`docs/LOGGING.md`
 /// §21, step 2): `held PID TID SIGNAL CODE ADDRESS PC threads N unparked M
 /// dropped D`.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]

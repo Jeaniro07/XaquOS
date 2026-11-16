@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Build virglrenderer's test server with Ferrix's dmabuf import, for hyprix
+# Build virglrenderer's test server with Xaqu's dmabuf import, for hyprix
 # drawing its frames on the RTX 3060 (`--renderer vtest`, docs/NVIDIA.md §4.6)
 # straight into a buffer the display engine scans out.
 #
 # virgl_test_server is virglrenderer 1.2.0, pinned by the SHA-256 of
-# GitLab's tarball of the tag (commit below), with Ferrix's own patches,
+# GitLab's tarball of the tag (commit below), with Xaqu's own patches,
 # tools/common/data/virgl-server/*.patch in their order:
-# 0001-vtest-ferrix-resource-import-fd.patch, the command
-# VCMD_FERRIX_RESOURCE_IMPORT_FD (vtest_protocol.h, number 64) and the
-# parameter VCMD_PARAM_FERRIX_IMPORT_FD a client asks for first; and
-# 0002-vtest-ferrix-dmabuf-modifiers.patch, VCMD_FERRIX_DMABUF_MODIFIERS
+# 0001-vtest-xaqu-resource-import-fd.patch, the command
+# VCMD_XAQU_RESOURCE_IMPORT_FD (vtest_protocol.h, number 64) and the
+# parameter VCMD_PARAM_XAQU_IMPORT_FD a client asks for first; and
+# 0002-vtest-xaqu-dmabuf-modifiers.patch, VCMD_XAQU_DMABUF_MODIFIERS
 # (65): the modifiers the server's EGL imports a format with, which is what
 # hyprix offers its clients (the parameter's value is then 2). A stock
 # server answers that parameter "not valid", so hyprix works with either;
@@ -24,9 +24,9 @@
 # the program, and Debian's libvirglrenderer1 is not loaded by it.
 #
 # virglrenderer is MIT-licensed (its COPYING, copied beside the program as
-# virgl_test_server.COPYING); the patches are Ferrix's, under the same terms.
+# virgl_test_server.COPYING); the patches are Xaqu's, under the same terms.
 #
-# Writes $FERRIX_VIRGL_SERVER/ (default ~/.local/share/ferrix/virgl-server):
+# Writes $XAQU_VIRGL_SERVER/ (default ~/.local/share/xaqu/virgl-server):
 # downloads/, sysroot/, src/, build/, and out/usr/bin/virgl_test_server with
 # out/usr/share/doc/virgl-server/COPYING and out/virgl-server.version (the
 # stamp: tarball, patches and script hashes). Needs curl, sha256sum, tar,
@@ -39,7 +39,7 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 patch_dir=$here/../data/virgl-server
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
-out_dir=${FERRIX_VIRGL_SERVER:-$HOME/.local/share/ferrix/virgl-server}
+out_dir=${XAQU_VIRGL_SERVER:-$HOME/.local/share/xaqu/virgl-server}
 
 VERSION=1.2.0
 SOURCE_URL=https://gitlab.freedesktop.org/virgl/virglrenderer/-/archive/$VERSION/virglrenderer-$VERSION.tar.gz

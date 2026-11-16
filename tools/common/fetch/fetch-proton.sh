@@ -5,7 +5,7 @@
 # Proton's Wine from (docs/WINE.md §10).
 #
 # Why Proton: Debian's Wine 10.0 draws the launcher's Qt translucent dialogs
-# (its install dialog) blank, on Linux as on Ferrix. Valve's own Proton 11
+# (its install dialog) blank, on Linux as on Xaqu. Valve's own Proton 11
 # ships as source only; GE-Proton is built from it and released as a
 # tarball, which is used as it is, unpacked at `/proton` (`files/bin/wine`,
 # `files/lib/wine/...`, and the libraries it bundles in
@@ -44,12 +44,12 @@
 #
 # The tarball is pinned by the SHA-512 GloriousEggroll publishes beside it
 # (GE-Proton11-7-x86_64.sha512sum); a copy already downloaded is used when
-# FERRIX_PROTON_TARBALL names it and it matches. Every Debian package is
+# XAQU_PROTON_TARBALL names it and it matches. Every Debian package is
 # pinned by its SHA-256, taken from trixie's, trixie-updates' and
 # trixie-security's i386 Packages files on 2026-10-13.
 #
-# Writes $FERRIX_PROTON_VOLUME/proton.img (default
-# ~/.local/share/ferrix/proton/proton.img), about 5.7 GB with 2 GiB of room
+# Writes $XAQU_PROTON_VOLUME/proton.img (default
+# ~/.local/share/xaqu/proton/proton.img), about 5.7 GB with 2 GiB of room
 # for a prefix, with yserver.commit and proton.version beside it. Needs
 # curl, sha256sum, sha512sum, tar, dpkg-deb, readelf, mkfs.btrfs and
 # fetch-wine.sh's tools; no root.
@@ -60,18 +60,18 @@ set -euo pipefail
 
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
-out=${FERRIX_PROTON_VOLUME:-$HOME/.local/share/ferrix/proton}
-shared=$HOME/.local/share/ferrix/wine
-yserver=${FERRIX_YSERVER_VOLUME:-$HOME/.local/share/ferrix/yserver}
+out=${XAQU_PROTON_VOLUME:-$HOME/.local/share/xaqu/proton}
+shared=$HOME/.local/share/xaqu/wine
+yserver=${XAQU_YSERVER_VOLUME:-$HOME/.local/share/xaqu/yserver}
 # Where a pinned Debian file comes from once the mirror has dropped it, as
 # trixie-security drops a package's update when the next one comes:
 # snapshot.debian.org's archive as it was on the days the pins were taken,
 # tried in turn. The SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_times=(20261013T235959Z 20261014T235959Z)
-# The downloads, kept between runs; FERRIX_PROTON_POOL names another
+# The downloads, kept between runs; XAQU_PROTON_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_PROTON_POOL:-$out/pool}
+pool=${XAQU_PROTON_POOL:-$out/pool}
 
 PROTON_VERSION=GE-Proton11-7
 proton_url="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/$PROTON_VERSION/$PROTON_VERSION-x86_64.tar.gz"
@@ -188,7 +188,7 @@ pinned=$(sed -n 's/^YSERVER_COMMIT=//p' "$(dirname "$0")/fetch-yserver.sh")
 if [ ! -d "$wine/tree" ] || [ "$(cat "$wine/yserver.commit" 2> /dev/null)" != "$pinned" ]; then
     mkdir -p "$wine/pool"
     [ ! -d "$shared/pool" ] || cp --update=none "$shared/pool/"*.deb "$wine/pool/" 2> /dev/null || true
-    FERRIX_WINE_VOLUME="$wine" FERRIX_YSERVER_VOLUME="$yserver" "$(dirname "$0")/fetch-wine.sh"
+    XAQU_WINE_VOLUME="$wine" XAQU_YSERVER_VOLUME="$yserver" "$(dirname "$0")/fetch-wine.sh"
     rm -rf "$wine/wine.img" "$wine/root"
 fi
 
@@ -197,9 +197,9 @@ mkdir -p "$pool"
 # Proton's tarball, checked against its SHA-512.
 tarball="$pool/$PROTON_VERSION-x86_64.tar.gz"
 if [ ! -f "$tarball" ]; then
-    if [ -n "${FERRIX_PROTON_TARBALL:-}" ] \
-        && echo "$proton_sum  $FERRIX_PROTON_TARBALL" | sha512sum -c --quiet 2> /dev/null; then
-        ln "$FERRIX_PROTON_TARBALL" "$tarball" 2> /dev/null || cp "$FERRIX_PROTON_TARBALL" "$tarball"
+    if [ -n "${XAQU_PROTON_TARBALL:-}" ] \
+        && echo "$proton_sum  $XAQU_PROTON_TARBALL" | sha512sum -c --quiet 2> /dev/null; then
+        ln "$XAQU_PROTON_TARBALL" "$tarball" 2> /dev/null || cp "$XAQU_PROTON_TARBALL" "$tarball"
     else
         curl -fsSL -o "$tarball.part" "$proton_url"
         mv "$tarball.part" "$tarball"

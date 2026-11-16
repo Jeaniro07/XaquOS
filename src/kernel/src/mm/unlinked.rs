@@ -50,8 +50,8 @@
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::{PhysAddr, PhysMem};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::{PhysAddr, PhysMem};
 
 use super::{KernelPhysMem, Route, count, deallocate_frames};
 

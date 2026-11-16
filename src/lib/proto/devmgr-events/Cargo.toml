@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-devmgr-events-proto"
+name = "xaqu-devmgr-events-proto"
 description = "Driver deaths and restarts as devmgr publishes them to ring-3 readers, as docs/DESKTOP.md 4.2 fixes them"
 version.workspace = true
 edition.workspace = true

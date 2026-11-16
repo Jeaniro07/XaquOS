@@ -10,7 +10,7 @@ Sources: AMD I/O Virtualization Technology (IOMMU) Specification, #48882
 (rev 3.10); Linux 6.18 `drivers/iommu/amd/{init.c,iommu.c,io_pgtable.c,
 amd_iommu_types.h}`; QEMU 10.2.1 `hw/i386/amd_iommu.{c,h}` and
 `hw/i386/acpi-build.c` (`build_amd_iommu`), which the boot rows run; the
-VT-d design this follows, `~/.local/share/ferrix/n150-linux/vtd-design.md`
+VT-d design this follows, `~/.local/share/xaqu/n150-linux/vtd-design.md`
 (never landed in the tree; its verdicts are ledger 2174, 2388, 2392);
 `src/kernel/src/iommu.rs`, `iommu/{vtd,remapping,check,domain_check}.rs`,
 `src/lib/kernel/paging/src/vtd*`, `src/lib/platform/acpi/src/dmar.rs`,
@@ -20,7 +20,7 @@ VT-d design this follows, `~/.local/share/ferrix/n150-linux/vtd-design.md`
 
 ## 0. What this is, and what it is not
 
-**Why.** Ferrix's drivers run in ring 3; isolation is the microkernel's
+**Why.** Xaqu's drivers run in ring 3; isolation is the microkernel's
 premise. Without an IOMMU a DMA-capable device reaches all of memory, and
 the kernel says so (degraded trusted mode, `ARCHITECTURE.md` §7,
 VULNERABILITY-ANALYSIS V-03). On an AMD machine today:
@@ -54,9 +54,9 @@ more than one PCI segment (x86-64 enumerates segment 0 only, as for VT-d).
 
 ---
 
-## 1. What the specification asks, and what Ferrix uses of it
+## 1. What the specification asks, and what Xaqu uses of it
 
-### 1.1 The IVRS (ACPI, `ferrix_acpi::ivrs`, new)
+### 1.1 The IVRS (ACPI, `xaqu_acpi::ivrs`, new)
 
 `IVRS` = 36-byte header, `IVinfo` (u32 at 36), 8 reserved, then blocks
 from byte 48, each `type, flags, length:u16`:
@@ -95,7 +95,7 @@ no known length, so the block's remaining entries **cannot be read**.
 
 The `flags` byte of an entry (`INITPass`, `EIntPass`, `NMIPass`, `Lint0/1`,
 `SysMgt`) is **not** applied: every pass bit in every device table entry is
-0 (§3.3). Linux applies them; Ferrix refuses the passed interrupt types
+0 (§3.3). Linux applies them; Xaqu refuses the passed interrupt types
 outright, which is the stricter side and costs nothing it uses.
 
 What cannot be followed is said, not guessed, as for the DMAR
@@ -124,7 +124,7 @@ which hold every register this driver touches:
 | 0x2010 / 0x2018 | event head / tail | |
 | 0x2020 | status | `EventOverflow` 0, `EventLogRun` 3, `CmdBufRun` 4 |
 
-**Which units** (`ferrix_paging::amdvi::unit::accept`, pure, host-tested,
+**Which units** (`xaqu_paging::amdvi::unit::accept`, pure, host-tested,
 from the EFR, the IVHD type and its attributes, as `vtd::unit::accept` is
 from VER/CAP/ECAP):
 
@@ -174,7 +174,7 @@ Domain IDs: 1 to 65,535, as VT-d's identifiers (`tables.identifiers`).
 
 ### 1.4 Page tables: AMD v1 host tables, three levels
 
-A new `Encoding`, `AmdV1` (`ferrix_paging::amdvi`), with `ROOT_LEVEL =
+A new `Encoding`, `AmdV1` (`xaqu_paging::amdvi`), with `ROOT_LEVEL =
 Level::GIGABYTE`, `VIRT_BITS = 39`, `PHYS_BITS = 52` (masked to the 39
 TRANSLATED_BITS by the domain, as for VT-d), mapped through the same
 `mm::map_io::<E>`, `unmap_io`, `translate_io` VT-d uses:
@@ -191,7 +191,7 @@ TRANSLATED_BITS by the domain, as for VT-d), mapped through the same
 descriptor's value depends on its level. `Encoding::table_descriptor` gains
 a sibling with a default, `table_descriptor_at(table, level, flags)`
 calling `table_descriptor`, and the mapper's one call site
-(`ferrix_paging/src/lib.rs:695`) calls it. Every existing encoding is
+(`xaqu_paging/src/lib.rs:695`) calls it. Every existing encoding is
 byte-identical (the default), which a host test pins for each.
 
 Tables are written through the direct map. **The unit is coherent**
@@ -240,7 +240,7 @@ A 4 KiB log of 256 16-byte events, `EventLogEn` 1, its interrupt off
 (`EventIntEn` 0), read by polling exactly where VT-d's fault records are
 read: `Domain::take_fault`, the probe, and `audit_faults` last in boot.
 `Unit::take_fault` reads the event at head, advances head, and decodes it
-(`ferrix_paging::amdvi::event::decode`, pure, host-tested):
+(`xaqu_paging::amdvi::event::decode`, pure, host-tested):
 
 | event | becomes |
 |---|---|
@@ -281,7 +281,7 @@ AMD-Vi rows, held to the kernel's "on purpose" lines the same way.
 
 `iommu::discover` gets a third firmware source beside the DMAR and the
 IORT. The decision is the one `place_dmar` makes, through the same
-`ferrix_pci::topology::place` (so the report and the domains cannot
+`xaqu_pci::topology::place` (so the report and the domains cannot
 disagree, `L.iommu.45`):
 
 * `Explicit::Own(unit)` for a function whose devid a select, range or
@@ -357,7 +357,7 @@ Converted as VT-d's is (`remapping.rs` steps 1-4), with three differences:
    its vector field (7:0) and delivery mode fixed; the unit reads the
    I/O APIC's message data as the index. `LiveLine::convert` gets the
    entry's form as an argument (`Form::VtdRemappable | Form::AmdIndexed`),
-   and `ferrix_paging::amdvi::remap::redirection_entry` builds the AMD one.
+   and `xaqu_paging::amdvi::remap::redirection_entry` builds the AMD one.
 3. **Edge-triggered lines only.** A level-triggered line's EOI is matched
    by the I/O APIC against the entry's vector field, which now holds the
    index, so it would need directed EOI by index (Linux's
@@ -383,8 +383,8 @@ form before remapping) runs unchanged before `IommuEn`.
 
 An IVMD names memory firmware's devices keep using. It is AMD's RMRR, and
 it gets K2's treatment (`vtd-design.md` §3.9(b), ledger 2388), with the
-same `ferrix_paging::vtd::rmrr::identity` rules moved to a shared module
-(`ferrix_paging::unity`, bodies byte-identical, `rmrr` re-exporting it):
+same `xaqu_paging::vtd::rmrr::identity` rules moved to a shared module
+(`xaqu_paging::unity`, bodies byte-identical, `rmrr` re-exporting it):
 whole pages, inside the 39-bit reach, over no RAM the memory map gives, and
 no frame the allocator holds. Then:
 
@@ -456,14 +456,14 @@ and its log cited in the commit (FIRED counts).
 
 ### 5.2 Host tests
 
-* `ferrix_acpi::ivrs`: QEMU 10.2's IVRS bytes exactly (10h and 11h for one
+* `xaqu_acpi::ivrs`: QEMU 10.2's IVRS bytes exactly (10h and 11h for one
   unit at 0xfed80000, the select/range entries of the row's bus, the
   I/O APIC special entry); **nazuna's IVRS bytes exactly** (§9) as a
   fixture; a 40h block with an ACPI-HID entry; alias select and range;
   extended entries; every truncation (`end < start`, unknown variable
   type, length past the table, a lone end-of-range); one-type-per-unit;
   IVMD 20h/21h/22h with exclusion; the fuzz target `acpi_tables` gains IVRS.
-* `ferrix_paging::amdvi`: `AmdV1` walks (map/unmap/resolve at 0 and at
+* `xaqu_paging::amdvi`: `AmdV1` walks (map/unmap/resolve at 0 and at
   2^39-4K, PDE `NextLevel` per level, `IR`/`IW` on PDEs, leaf flags round
   trip, no blocks); `table_descriptor_at` default byte-identical for every
   existing encoding; DTE encode/decode (blocked, attached, remapped,
@@ -471,7 +471,7 @@ and its log cited in the commit (FIRED counts).
   layout; IRTE 32-bit; the redirection entry; the event decoder with both
   the specification's and QEMU's encodings; `accept` (HATS 11b refused,
   `HATDis` remapping only, EFR source by IVHD type).
-* `ferrix_pci::topology` placement for the IVHD cases (own, aliased,
+* `xaqu_pci::topology` placement for the IVHD cases (own, aliased,
   catch-all, several), as `L.iommu.45`'s tests do for the DMAR.
 
 ### 5.3 Gates
@@ -535,7 +535,7 @@ meaning or VT-d/SMMU body changes.
     boots (VT-d x86-64, aarch64, armv7a, the AMD row's unchanged lines);
     new lines appear only on machines with an AMD unit. The summary line
     gains its AMD count only then.
-11. **`ferrix.vtd=off`** keeps its meaning (VT-d only). O1 asks whether
+11. **`xaqu.vtd=off`** keeps its meaning (VT-d only). O1 asks whether
     AMD gets its own switch.
 
 ---
@@ -576,7 +576,7 @@ gains the DTE `I` bit. If O1 is taken, one more id (94).
 
 **Today**: only `Plan::Gpu` goes through `hand_over`; a NIC, disk, USB host
 or sound card is started whatever `device_isolation` answers. On a machine
-with no IOMMU (or with `ferrix.vtd=off`) they run with DMA to all of memory
+with no IOMMU (or with `xaqu.vtd=off`) they run with DMA to all of memory
 and the kernel announces degraded trusted mode at the first pin.
 
 **Why the GPU is gated and the others are not**: the GPU executes command
@@ -595,9 +595,9 @@ consultant's view is asked in D9):
   firmware with IOMMU off.
 * **(b) Gate every DMA-capable device by default, with a named opt-out.**
   devmgr refuses to start a driver for a function whose `device_isolation`
-  lacks `DMA_TRANSLATED` unless `ferrix.degraded=allow` (or a per-class
+  lacks `DMA_TRANSLATED` unless `xaqu.degraded=allow` (or a per-class
   list) is on the command line; refused in a release image's default line,
-  like `ferrix.intelgpu`. Matches the premise; costs boot-ability on
+  like `xaqu.intelgpu`. Matches the premise; costs boot-ability on
   machines without a working IOMMU (the N150 today has VT-d; a firmware
   with IOMMU disabled in setup would lose its disk and network).
 * **(c) Gate by class.** Bus masters that can be driven from outside the
@@ -650,7 +650,7 @@ is as the journal suggests and holds no IVMD:
 ```
 
 No boot word is needed: AMD-Vi comes up wherever an IVRS describes a unit,
-as VT-d does wherever a DMAR does. If O1 is taken, `ferrix.amdvi=off` is
+as VT-d does wherever a DMAR does. If O1 is taken, `xaqu.amdvi=off` is
 the bare-metal preparation's way back (a GRUB entry with it), and the
 image should carry that entry beside the default one.
 
@@ -672,7 +672,7 @@ IVMD**, so nothing holds the unit to remapping only. Entries:
 * special entries: the HPET (handle 0, devid 00:14.0), I/O APIC 0x20 at
   00:14.0 and I/O APIC 0x21 at 00:00.1. The I/O APIC entry's flags 0xD7
   (INIT, ExtInt, NMI, LINT0 and LINT1 pass, SysMgt 01b) are not applied;
-  Ferrix routes no NMI, INIT or ExtInt through an I/O APIC.
+  Xaqu routes no NMI, INIT or ExtInt through an I/O APIC.
 
 **Not named: 00:00.0, 00:00.1 and 00:00.2.** 00:00.1 enumerates as no
 function. 00:00.0 is the root complex: a host bridge (class 0600), no
@@ -764,8 +764,8 @@ new object, no new capability.
   anything missing?
 * **D9** the NIC gap (§8): which option the consultant supports for the
   customer's decision.
-* **O1** `ferrix.amdvi=off`, a recovery configuration like
-  `ferrix.vtd=off` (L.iommu.71), for nazuna's first boots.
+* **O1** `xaqu.amdvi=off`, a recovery configuration like
+  `xaqu.vtd=off` (L.iommu.71), for nazuna's first boots.
 * The ids L.iommu.79-93 (94 with O1).
 
 ---
@@ -782,7 +782,7 @@ differences, each for the consultant's code review:
   fault, and a refused interrupt request logs nothing. §1.6's QEMU branch
   of the decoder (condition 10) stays, unused by the patched build; the
   AMD-Vi rows need the patched build, which every x86-64 boot already
-  requires (`(ferrix-cfi`).
+  requires (`(xaqu-cfi`).
 * **The checks on `edu`** (`iommu/amdvi_check.rs`) run in stage 10's MSI
   check, before `edu`'s domain is made, because that is the only point a
   device with a DMA engine has no domain: A1's blocked write, A8's unity
@@ -795,18 +795,18 @@ differences, each for the consultant's code review:
 * **A5** is the boot's command and wait counts, with exactly R7's wait
   failing; the planted illegal command is not built (QEMU logs it but
   never stops its buffer, so the failure path cannot be shown on it).
-* **The RMRR rules are used in place** (`ferrix_paging::vtd::rmrr`), not
+* **The RMRR rules are used in place** (`xaqu_paging::vtd::rmrr`), not
   moved to a shared module: no body moves, so no coverage is carried for
   them.
 * **A remapping-only unit's entries are untranslated** (`Mode` 0, `IR` and
   `IW` set), not blocked: its functions' domains are untranslated and must
   reach memory, as a VT-d unit with `TE` off lets them.
-* **`ferrix.amdvi` has no audit configuration item** (VT-d's `Vtd` has one,
+* **`xaqu.amdvi` has no audit configuration item** (VT-d's `Vtd` has one,
   `L.iommu.71`): its boot line says when it was taken. Adding one bumps the
   audit record's format and is left for the consultant to ask for.
 * **Interrupt tables** are 512 entries (2 KiB) in a frame of their own
   (condition 13).
-* **D10** is `ferrix_acpi::ivrs::exempt`, host-tested on nazuna's bytes,
+* **D10** is `xaqu_acpi::ivrs::exempt`, host-tested on nazuna's bytes,
   and applies to IVRS placement alone.
 
 **The code review** (2026-10-24, ledger 4108): OK IF (1)-(7), met so:
@@ -820,7 +820,7 @@ unverified, with its BACKLOG row naming a QEMU IVMD patch. (5)-(7): the
 landing commit's boot-line diffs, rows, controls and record.
 
 **Which check catches each control** (pool round av4 on 50e0ca78c, logs
-`~/.local/share/ferrix/logs/queue/av4-ctl-*.log`; under the 2026-10-01
+`~/.local/share/xaqu/logs/queue/av4-ctl-*.log`; under the 2026-10-01
 ruling a control may fire on an earlier check than the one it targets, and
 this table says which):
 
@@ -851,7 +851,7 @@ this table says which):
   iommu    0 DMA faults recorded that no check provoked, 0 of them unit events other than a refused access, across 1 units that translate or remap (1 translating); 0 late faults from the out-of-domain probe
 ```
 
-**What nazuna should print** (bare metal, `ferrix.checks=skip`; no boot
+**What nazuna should print** (bare metal, `xaqu.checks=skip`; no boot
 word is needed):
 
 ```
@@ -860,7 +860,7 @@ word is needed):
 ```
 
 and, if a console line is routed through I/O APIC 0x20, its conversion
-through devid 0x00a0's table. `ferrix.amdvi=off` is the recovery word for
+through devid 0x00a0's table. `xaqu.amdvi=off` is the recovery word for
 a GRUB entry beside the default one.
 
 **Kernel lines** (as `git diff --stat` counts them, comments included;
@@ -869,7 +869,7 @@ code lines without comments in brackets): `iommu/amdvi.rs` +917 (627),
 `arch/x86_64/{mod,msi}.rs` +50, `device.rs` +27, `object/pin/check.rs` +14,
 `service_check.rs` +1; check code `iommu/amdvi_check.rs` +265,
 `iommu/domain_check.rs` +98, `device/check.rs` +79. Library code linked
-into ring 0 (condition 11): `ferrix_acpi::ivrs` 649 (419), `ferrix_paging`
+into ring 0 (condition 11): `xaqu_acpi::ivrs` 649 (419), `xaqu_paging`
 `amdvi*` 708 (359) plus `table_descriptor_at` +13. Against §10's +1,165
 product estimate, which counted code: about 1,300 code lines, within the
 25 % condition 11 allows; the comments roughly double the raw count.
@@ -877,7 +877,7 @@ product estimate, which counted code: about 1,300 code lines, within the
 ## Consultant verdict
 
 2026-10-24, design review before code (consultant subagent for amd-vi;
-ledger `~/.local/share/ferrix/cert-consultant/reviews.md` line 3867):
+ledger `~/.local/share/xaqu/cert-consultant/reviews.md` line 3867):
 **OK IF (1)-(13)**. Code may start. This is an internal review, not
 independent verification (F-27).
 
@@ -994,7 +994,7 @@ row.
 * **D6** OK, verified in QEMU, if (10).
 * **D7** OK, with K2's conditions carried over.
 * **D8** §6 plus (6).
-* **O1** Yes: `ferrix.amdvi=on|off`, mirroring L.iommu.71 exactly.
+* **O1** Yes: `xaqu.amdvi=on|off`, mirroring L.iommu.71 exactly.
 * **D9 / §8** This is the customer's decision; the consultant's view is
   below.
 

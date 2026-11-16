@@ -37,7 +37,7 @@
       "enumerate -- which is most of why this item is analysable at all.",
       "",
       "The kernel's configuration is its build flags (build-flags.toml): each",
-      "chosen at compile time as `cfg(ferrix_<flag> = \"<value>\")`, set only by",
+      "chosen at compile time as `cfg(xaqu_<flag> = \"<value>\")`, set only by",
       "xtask from a profile file, read only in the kernel crate, and printed by",
       "the kernel on its `build` boot line, which the gate compares with the",
       "profile. `present` sets every one; a build changed by `--set` is ad hoc",
@@ -68,7 +68,7 @@
       "init"
     ],
     "devmgr_why": [
-      "One boot option changes what the item does: `ferrix.devmgr=kernel|init`",
+      "One boot option changes what the item does: `xaqu.devmgr=kernel|init`",
       "(docs/INIT.md 7.3, L12). `kernel`, the default and the reference, has the",
       "kernel start devmgr at bring-up, run the disk checks of stages 10 to 12",
       "through its drivers, and switch / before pid 1. `init` has pid 1 start",
@@ -82,7 +82,7 @@
       "An image key changes what the loader keeps out across a restart:",
       "`bad_frames = persist`, the reference, keeps every frame the machine",
       "checks retired out across a warm reset and a power cycle, and its loader",
-      "compiles no read of `ferrix.badframes`; `choice` (desktop alone, no",
+      "compiles no read of `xaqu.badframes`; `choice` (desktop alone, no",
       "claim) lets that boot word choose persist, reset or off. H.FAIL.12 and",
       "H.FAIL.13 are claimed of a persist image (docs/MACHINE-CHECK-RESTART.md",
       "10, SAFETY-MANUAL AoU-39, ledger 5579)."
@@ -93,7 +93,7 @@
       "off"
     ],
     "pstore_why": [
-      "A second boot option changes what the item does: `ferrix.pstore=on|off`",
+      "A second boot option changes what the item does: `xaqu.pstore=on|off`",
       "(docs/POSTMORTEM.md 3). `on`, the default and the reference, has the",
       "loader give the kernel one region of RAM, which the kernel checks and",
       "mirrors its log into, and writes back at the end of a panic report; the",
@@ -110,7 +110,7 @@
       "on"
     ],
     "efifb_why": [
-      "`ferrix.efifb` lends the boot framebuffer to a ring-3 driver, efifb,",
+      "`xaqu.efifb` lends the boot framebuffer to a ring-3 driver, efifb,",
       "on x86-64 (docs/DISPLAY.md 8; L.device.38-42): stage 10 publishes one",
       "more node whose aperture is the framebuffer's visible lines, the one",
       "exemption from the reserved ranges, and leaves the PCI function that",
@@ -125,7 +125,7 @@
       "reset"
     ],
     "panic_why": [
-      "`ferrix.panic=reset` (H.FAIL.5) resets the machine 10 s after a",
+      "`xaqu.panic=reset` (H.FAIL.5) resets the machine 10 s after a",
       "panic's report: a stop-gap for the N150 box, set by no loader, outside",
       "the claim. `halt`, the default and the reference, is the safe state",
       "H.FAIL.1 and SAFETY-MANUAL 3 claim; any other value is said and taken",
@@ -137,9 +137,9 @@
       "on"
     ],
     "watchdog_why": [
-      "`ferrix.watchdog=on` serves /dev/watchdog (docs/POSTMORTEM.md 6.11): a",
+      "`xaqu.watchdog=on` serves /dev/watchdog (docs/POSTMORTEM.md 6.11): a",
       "deadline a privileged program arms and feeds, reported under FX-9008 when",
-      "no feed comes; a reset follows only under ferrix.panic=reset, and a kernel",
+      "no feed comes; a reset follows only under xaqu.panic=reset, and a kernel",
       "that stops is not detected. For the N150 box, outside the claim: `off`,",
       "the default and the reference, serves no node and runs no task; any other",
       "value is said and taken as off."
@@ -150,7 +150,7 @@
       "off"
     ],
     "vtd_why": [
-      "`ferrix.vtd=off` leaves every VT-d unit alone (L.iommu.71): no DMA is",
+      "`xaqu.vtd=off` leaves every VT-d unit alone (L.iommu.71): no DMA is",
       "translated, no interrupt remapped, the isolated-interrupts mark is",
       "refused, and the audit record's Vtd configuration item reads 0. `on`,",
       "the default and the reference, drives every unit accept takes; any",
@@ -361,7 +361,7 @@
         "",
         "This is not a list of code that matters less. It is the filesystem,",
         "the network stack and the compatibility layer -- most of what makes",
-        "Ferrix useful. It is excluded because a claim over 93,714 lines of",
+        "Xaqu useful. It is excluded because a claim over 93,714 lines of",
         "product code is a claim nobody can afford to substantiate, and one",
         "over ~40,000 is a claim that can be."
       ],
@@ -462,7 +462,7 @@
       "are host-test code and are not read. An allowlisted crate's own",
       "dependencies are held to the same rule only once an item crate depends",
       "on it: while none does, an allowlisted crate may gain a load dependency",
-      "unremarked. A kernel file naming a crate (`ferrix_btrfs::..`) is",
+      "unremarked. A kernel file naming a crate (`xaqu_btrfs::..`) is",
       "an edge to that crate's ring under dependency_rules, as a `crate::`",
       "path is to a file's.",
       "",
@@ -472,7 +472,7 @@
       "it is written against the VFS, which is load."
     ],
     "members": {
-      "ferrix-partition-desc": {
+      "xaqu-partition-desc": {
         "ring": "item",
         "path": "src/lib/proto/partition-desc",
         "in_ring0_when": [
@@ -481,7 +481,7 @@
         "below": "the partitions description's bytes, from the sealed archive (L.object.323)",
         "above": "the kernel's start of the first processes; the certified list's digests"
       },
-      "ferrix-cpio": {
+      "xaqu-cpio": {
         "ring": "item",
         "path": "src/lib/fs/common/cpio",
         "in_ring0_when": [
@@ -490,73 +490,73 @@
         "below": "the archive's bytes, read in ring 0 (`file_named`, L.object.335)",
         "above": "the first processes' images and the partitions description"
       },
-      "ferrix-btrfs": {
+      "xaqu-btrfs": {
         "ring": "item",
         "path": "src/lib/fs/btrfs/format",
         "in_ring0_when": [
           "fs=kernel"
         ],
-        "below": "the `Device` trait (ferrix_btrfs::volume::Device): sector reads the kernel's block layer answers (src/kernel/src/fs/btrfs.rs, `Disk`); and caller-lent memory, `ExtentBuffers` and `ChunkStorage`",
-        "above": "`Volume` and the on-disk format types it returns (superblock, chunk map, keys, items, the fs and compress modules' readers), called by ferrix-btrfs-write, ferrix-btrfs-vfs and src/kernel/src/fs/btrfs*.rs"
+        "below": "the `Device` trait (xaqu_btrfs::volume::Device): sector reads the kernel's block layer answers (src/kernel/src/fs/btrfs.rs, `Disk`); and caller-lent memory, `ExtentBuffers` and `ChunkStorage`",
+        "above": "`Volume` and the on-disk format types it returns (superblock, chunk map, keys, items, the fs and compress modules' readers), called by xaqu-btrfs-write, xaqu-btrfs-vfs and src/kernel/src/fs/btrfs*.rs"
       },
-      "ferrix-btrfs-write": {
+      "xaqu-btrfs-write": {
         "ring": "item",
         "path": "src/lib/fs/btrfs/write",
         "in_ring0_when": [
           "fs=kernel"
         ],
-        "below": "the `WriteDevice` trait (ferrix_btrfs_write::WriteDevice, a `Device` that also writes and flushes), implemented by the kernel's `Disk`; and ferrix-btrfs, item",
-        "above": "`WriteVolume` and its transaction, inode and extent operations, called by ferrix-btrfs-vfs and src/kernel/src/fs/btrfs*.rs"
+        "below": "the `WriteDevice` trait (xaqu_btrfs_write::WriteDevice, a `Device` that also writes and flushes), implemented by the kernel's `Disk`; and xaqu-btrfs, item",
+        "above": "`WriteVolume` and its transaction, inode and extent operations, called by xaqu-btrfs-vfs and src/kernel/src/fs/btrfs*.rs"
       },
-      "ferrix-sha256": {
+      "xaqu-sha256": {
         "ring": "core",
         "path": "src/lib/crypto/sha256",
         "below": "byte slices its caller lends; no trait, no allocation, no dependency",
-        "above": "Sha256 (new, update, finish), digest, finish_192 and digest_192: SHA-256 (FIPS 180-4) and SHA-256/192 (RFC 9858), called by ferrix-sigverify and ferrix-slots (docs/SIGNING.md section 5.1)"
+        "above": "Sha256 (new, update, finish), digest, finish_192 and digest_192: SHA-256 (FIPS 180-4) and SHA-256/192 (RFC 9858), called by xaqu-sigverify and xaqu-slots (docs/SIGNING.md section 5.1)"
       },
-      "ferrix-boot-policy": {
+      "xaqu-boot-policy": {
         "ring": "item",
         "path": "src/lib/proto/boot-policy",
-        "below": "ferrix-sigverify and ferrix-slots, and byte slices its caller lends: the trust-policy block, the slot's header page and manifest block; no trait, no allocation",
+        "below": "xaqu-sigverify and xaqu-slots, and byte slices its caller lends: the trust-policy block, the slot's header page and manifest block; no trait, no allocation",
         "above": "decide, rescue, parse_block, encode_block and generic_family: whether the UEFI loader may start a slot (docs/SIGNING.md section 10.6), called by src/boot/common/uefi/src/slots.rs, which starts only on Start with every blob matched (H.SIGN.7)"
       },
-      "ferrix-sigverify": {
+      "xaqu-sigverify": {
         "ring": "item",
         "path": "src/lib/crypto/sigverify",
-        "below": "ferrix-sha256, and byte slices its caller lends: the 4 KiB manifest block, the anchors and the revoked trees; no trait, no allocation",
+        "below": "xaqu-sha256, and byte slices its caller lends: the 4 KiB manifest block, the anchors and the revoked trees; no trait, no allocation",
         "above": "manifest::verify, Verified::check_payload and Verified::revoked, and lms::hss_verify: verify-only LMS/HSS (RFC 8554, RFC 9858, SP 800-208) and the signed manifest of docs/SIGNING.md, for the UEFI loader, init's configuration verifier and devmgr; no profile links it into ring 0 (SIGNING.md section 5.2)"
       },
-      "ferrix-sched-edf": {
+      "xaqu-sched-edf": {
         "ring": "core",
         "path": "src/lib/kernel/sched-edf",
         "in_ring0_when": [
           "schedule=edf"
         ],
-        "below": "ferrix-sched's run queue, its fair class beneath the reservations.",
+        "below": "xaqu-sched's run queue, its fair class beneath the reservations.",
         "above": "sched/queue.rs's Tier and sched/reserve.rs: partitioned EDF, a hard CBS and per-processor admission, ledger 7011 S.4, 7088. No kernel but schedule=edf's links it."
       },
-      "ferrix-slots": {
+      "xaqu-slots": {
         "ring": "item",
         "path": "src/lib/proto/slots",
-        "below": "ferrix-sha256, and byte slices its caller lends; the ControlDisk trait for the record's one write, implemented by the loader's Disk and bootctl's device; no allocation",
-        "above": "the slot header (versions 1 and 2, its seal), the boot control record, the GPT scan, the loader's plan and command-line words (docs/AB-BOOT.md sections 2-4), called by src/boot/common/uefi, bootctl and ferrix-boot-policy; in the item since slice S4 because the seal a slot manifest signs passes through it (docs/SIGNING.md section 5.3)"
+        "below": "xaqu-sha256, and byte slices its caller lends; the ControlDisk trait for the record's one write, implemented by the loader's Disk and bootctl's device; no allocation",
+        "above": "the slot header (versions 1 and 2, its seal), the boot control record, the GPT scan, the loader's plan and command-line words (docs/AB-BOOT.md sections 2-4), called by src/boot/common/uefi, bootctl and xaqu-boot-policy; in the item since slice S4 because the seal a slot manifest signs passes through it (docs/SIGNING.md section 5.3)"
       },
-      "ferrix-smbios": {
+      "xaqu-smbios": {
         "ring": "item",
         "path": "src/lib/platform/smbios",
         "below": "byte slices its caller lends; no trait, no allocation, no dependency",
         "above": "the entry point parse, the table walk and the identity decode, called by src/boot/common/uefi and src/kernel/src/discovery/smbios.rs"
       },
-      "ferrix-fsproto": {
+      "xaqu-fsproto": {
         "ring": "load",
         "path": "src/lib/fs/fsproto",
         "in_ring0_when": [
           "fs=server"
         ],
-        "below": "ferrix-vfs's `Inode`, which it serves on channel messages, and every length checked in `wire`",
+        "below": "xaqu-vfs's `Inode`, which it serves on channel messages, and every length checked in `wire`",
         "above": "`linuxd`'s fs/served.rs and `btrfsd`. No kernel links it. `in_ring0_when` makes component_problems refuse a profile that chooses fs=server above level none, the fail-closed wanted until `btrfsd`'s item at M7 (BD.7)"
       },
-      "ferrix-blkclient": {
+      "xaqu-blkclient": {
         "ring": "load",
         "path": "src/lib/fs/blkclient",
         "in_ring0_when": [
@@ -565,16 +565,16 @@
         "below": "the block ring's protocol and VMO_HOLD, DEVICE_SERVED by devmgr",
         "above": "`btrfsd`: the other side of a block driver in user space. No kernel links it. `in_ring0_when` makes component_problems refuse a profile that chooses fs=server above level none, the fail-closed wanted until `btrfsd`'s item at M7 (BD.7)"
       },
-      "ferrix-btrfs-vfs": {
+      "xaqu-btrfs-vfs": {
         "ring": "load",
         "path": "src/lib/fs/btrfs/vfs",
         "in_ring0_when": [
           "fs=kernel"
         ],
         "below": "`Volume` and `WriteVolume`, the item's interface above btrfs; it implements `Device` over a cache for them",
-        "above": "ferrix-vfs's `FileSystem` and `Inode`: it is written against the VFS, which is load, and so is load itself"
+        "above": "xaqu-vfs's `FileSystem` and `Inode`: it is written against the VFS, which is load, and so is load itself"
       },
-      "ferrix-elf": {
+      "xaqu-elf": {
         "ring": "core",
         "path": "src/lib/platform/elf",
         "below": "none: bytes a caller lent",
@@ -591,9 +591,9 @@
         "read these crates. Whether they should be classified `core` is open",
         "(docs/certification/ITEM.md section 2)."
       ],
-      "ferrix-fallible": "Fallible Box/Vec/VecDeque/String construction on stable Rust (F-23). The core's own allocation toolkit, src/kernel/src/fallible.rs, is built on it, so an item crate converting to fallible allocation uses the same code the core does rather than a second copy. It also dispatches an item crate's map inserts to the reserved section the kernel installs at boot (set_section, in_section; src/kernel/src/fallible.rs library_section, L.mm.63): ferrix-btrfs-write's every BTreeMap and BTreeSet insert relies on that dispatch to be fallible.",
-      "ferrix-sched": "The fair class and the sleepers' timeline, as the kernel's core has always named them; ferrix-sched-edf's beneath it (ledger 7088 G.3).",
-      "ferrix-sync": "The spin and sleep locks src/kernel/src/sync.rs wraps for the whole core, and ferrix-fallible's one dependency (its injector's `Once`)."
+      "xaqu-fallible": "Fallible Box/Vec/VecDeque/String construction on stable Rust (F-23). The core's own allocation toolkit, src/kernel/src/fallible.rs, is built on it, so an item crate converting to fallible allocation uses the same code the core does rather than a second copy. It also dispatches an item crate's map inserts to the reserved section the kernel installs at boot (set_section, in_section; src/kernel/src/fallible.rs library_section, L.mm.63): xaqu-btrfs-write's every BTreeMap and BTreeSet insert relies on that dispatch to be fallible.",
+      "xaqu-sched": "The fair class and the sleepers' timeline, as the kernel's core has always named them; xaqu-sched-edf's beneath it (ledger 7088 G.3).",
+      "xaqu-sync": "The spin and sleep locks src/kernel/src/sync.rs wraps for the whole core, and xaqu-fallible's one dependency (its injector's `Once`)."
     }
   },
   "dependency_rules": [
@@ -647,7 +647,7 @@
       "subsystems up in order, and runs their boot self-checks. Since the kernel",
       "split (docs/KERNEL-CRATES.md, S3) it is the binary's root and declares no",
       "module of the kernel's but stages_check: each crate's root declares its",
-      "own, and main.rs reaches them through ferrix_kernel_load, which re-exports",
+      "own, and main.rs reaches them through xaqu_kernel_load, which re-exports",
       "the crates below it. Its references into the load are that",
       "composition, which the item's design asks for, so they are not filed",
       "against a finding. They are listed rather than allowed, and ratcheted",
@@ -729,14 +729,14 @@
       "check-removable-symbols.py the linked ELFs (cargo xtask test-removable)."
     ],
     "removable": {
-      "ferrix-kernel-settings": {
+      "xaqu-kernel-settings": {
         "flag": "runtime_settings",
         "present_when": "live",
         "interface": "setters::Setters",
         "defined_in": "setters.rs",
         "absent": "setters::Absent",
         "binding": {
-          "live": "ferrix_kernel_settings::Live",
+          "live": "xaqu_kernel_settings::Live",
           "fixed": "setters::Absent"
         },
         "bind_macro": "bind_setters",
@@ -756,19 +756,19 @@
           "cpu_online"
         ],
         "seam_symbols": [
-          "__ferrix_setters_sethostname",
-          "__ferrix_setters_setdomainname",
-          "__ferrix_setters_syslog_clear",
-          "__ferrix_setters_syslog_read_clear",
-          "__ferrix_setters_restart_with_word",
-          "__ferrix_setters_clock_settime",
-          "__ferrix_setters_settimeofday",
-          "__ferrix_setters_sysrq_trigger",
-          "__ferrix_setters_sysctl_hostname",
-          "__ferrix_setters_sysctl_domainname",
-          "__ferrix_setters_sysctl_memfd_noexec",
-          "__ferrix_setters_driver_bind",
-          "__ferrix_setters_cpu_online"
+          "__xaqu_setters_sethostname",
+          "__xaqu_setters_setdomainname",
+          "__xaqu_setters_syslog_clear",
+          "__xaqu_setters_syslog_read_clear",
+          "__xaqu_setters_restart_with_word",
+          "__xaqu_setters_clock_settime",
+          "__xaqu_setters_settimeofday",
+          "__xaqu_setters_sysrq_trigger",
+          "__xaqu_setters_sysctl_hostname",
+          "__xaqu_setters_sysctl_domainname",
+          "__xaqu_setters_sysctl_memfd_noexec",
+          "__xaqu_setters_driver_bind",
+          "__xaqu_setters_cpu_online"
         ],
         "calls": [
           "fs/memfd_check.rs",
@@ -780,24 +780,24 @@
           "syscall/time.rs"
         ],
         "lint_expect": "unused_crate_dependencies",
-        "symbol": "ferrix_kernel_settings",
+        "symbol": "xaqu_kernel_settings",
         "absent_symbols": [
-          "<ferrix_kernel_load::syscall::system::UtsNamespace>::set_hostname",
-          "<ferrix_kernel_load::syscall::system::UtsNamespace>::set_domainname",
-          "ferrix_kernel_load::fs::timerfd::clock_was_set"
+          "<xaqu_kernel_load::syscall::system::UtsNamespace>::set_hostname",
+          "<xaqu_kernel_load::syscall::system::UtsNamespace>::set_domainname",
+          "xaqu_kernel_load::fs::timerfd::clock_was_set"
         ]
       }
     },
     "hooks": [
       {
-        "name": "ferrix_fast_write_read",
-        "cfg": "ferrix_fast_ipc",
+        "name": "xaqu_fast_write_read",
+        "cfg": "xaqu_fast_ipc",
         "declared_in": "trap.rs",
         "forwards_to": "syscall::native::fast_write_read",
         "why": "the x86-64 entry's fast path for channel_write_read, in a kernel built with ipc_fastpath=on alone (T1)"
       },
       {
-        "name": "ferrix_filter_quiet",
+        "name": "xaqu_filter_quiet",
         "declared_in": "trap.rs",
         "forwards_to": "filter_quiet_of_personality",
         "why": "T2's quiet predicate, asked by trap::filter_quiet only for a filter registered with it: main.rs's filter_quiet_of_personality, which is syscall::seccomp::quiet with linux_abi=on and false with off, where no filter is registered (LINUX-ABI-SEPARATION.md 11.11)"
@@ -861,98 +861,98 @@
       "and any other package naming it. The core's build_flag_word! is expanded in",
       "each crate and the binary requires the four words equal at compile time (K4)."
     ],
-    "ferrix-kernel": {
+    "xaqu-kernel": {
       "path": "src/kernel",
       "root": "main.rs",
       "rings": []
     },
-    "ferrix-kernel-core": {
+    "xaqu-kernel-core": {
       "path": "src/kernel/core",
       "root": "kernel_core.rs",
       "rings": [
         "core"
       ],
       "unclassified_deps": {
-        "ferrix-acpi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-audit": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-bootinfo": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-cgroupfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-description": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-fbtext": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-fdt": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-frame": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-heap": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-kmem": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-linux-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-native-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-objects": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-paging": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-pci": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-qr": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-vdso": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-vfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-vma": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement"
+        "xaqu-acpi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-audit": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-bootinfo": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-cgroupfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-description": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-fbtext": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-fdt": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-frame": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-heap": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-kmem": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-linux-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-native-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-objects": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-paging": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-pci": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-qr": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-vdso": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-vfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-vma": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement"
       }
     },
-    "ferrix-kernel-item": {
+    "xaqu-kernel-item": {
       "path": "src/kernel/item",
       "root": "kernel_item.rs",
       "rings": [
         "item"
       ],
       "unclassified_deps": {
-        "ferrix-audit": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-blkring": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-bootinfo": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-crng": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-devmgr-proto": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-fdt": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-linux-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-native-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-objects": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-paging": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-pci": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-vfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-virtio": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
-        "ferrix-vma": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement"
+        "xaqu-audit": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-blkring": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-bootinfo": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-crng": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-devmgr-proto": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-fdt": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-linux-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-native-abi": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-objects": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-paging": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-pci": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-vfs": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-virtio": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement",
+        "xaqu-vma": "F-76 (ledger line 1585): a first-party library this crate's files name and the manifest does not classify; open debt, not an endorsement"
       }
     },
-    "ferrix-kernel-load": {
+    "xaqu-kernel-load": {
       "path": "src/kernel/load",
       "root": "kernel_load.rs",
       "rings": [
         "load"
       ]
     },
-    "ferrix-kernel-settings": {
+    "xaqu-kernel-settings": {
       "path": "src/kernel/extensions/settings",
       "root": "src/kernel/extensions/settings/src/lib.rs",
       "rings": [
         "load"
       ]
     },
-    "ferrix-kernel-board-stm32mp1": {
+    "xaqu-kernel-board-stm32mp1": {
       "path": "src/kernel/extensions/board/stm32mp1",
       "root": "src/kernel/extensions/board/stm32mp1/src/lib.rs",
       "rings": [
         "load"
       ]
     },
-    "ferrix-kernel-board-gs201-usb": {
+    "xaqu-kernel-board-gs201-usb": {
       "path": "src/kernel/extensions/board/gs201-usb",
       "root": "src/kernel/extensions/board/gs201-usb/src/lib.rs",
       "rings": [
         "load"
       ]
     },
-    "ferrix-kernel-logctl": {
+    "xaqu-kernel-logctl": {
       "path": "src/kernel/extensions/device/logctl",
       "root": "src/kernel/extensions/device/logctl/src/lib.rs",
       "rings": [
         "load"
       ]
     },
-    "ferrix-kernel-net-ring": {
+    "xaqu-kernel-net-ring": {
       "path": "src/kernel/extensions/device/net-ring",
       "root": "src/kernel/extensions/device/net-ring/src/lib.rs",
       "rings": [
@@ -973,218 +973,218 @@
       {
         "file": "arch/aarch64/trap/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/armv7a/switch/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/armv7a/trap/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/stage_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/x86_64/paranoid/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/x86_64/switch/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "arch/x86_64/framebuffer/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-item"
+        "crate": "xaqu-kernel-item"
       },
       {
         "file": "arch/x86_64/trap/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "device/config_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "iommu/blocks_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "iommu/domain_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/alloc_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/blocks_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/device_copy_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/domain_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/edge_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/level_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/exception_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/fast_path_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/format_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/pager_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/pin/check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/quota_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/sender_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/space_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/authority_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/sealing_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/grant_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/ticket_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/timer_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "object/write_read_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "service_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "stages_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel"
+        "crate": "xaqu-kernel"
       },
       {
         "file": "syscall/build_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "syscall/native_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "syscall/program_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "syscall/unmap_check.rs",
         "file_ring": "item",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "user/address_wait_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "user/alloc_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "user/madvise_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       },
       {
         "file": "user/rmap_check.rs",
         "file_ring": "core",
-        "crate": "ferrix-kernel-load"
+        "crate": "xaqu-kernel-load"
       }
     ]
   },
   "loader_callers": {
     "//": [
-      "K15 (docs/microkernel/K15.md section 5), held by check-item-boundary.py: the product files that may call ferrix-elf's parser, and first_image::load, in the kernel. Check files are outside it."
+      "K15 (docs/microkernel/K15.md section 5), held by check-item-boundary.py: the product files that may call xaqu-elf's parser, and first_image::load, in the kernel. Check files are outside it."
     ],
     "elf_parse": [
       "discovery/first_image.rs",
@@ -1238,7 +1238,7 @@
     "arch/x86_64/vdso.rs": "the vDSO's image: its code is a program's, never run in linuxd"
   },
   "lift_cfg_sites": {
-    "//": "ferrix_load_built sites in a load file: a ceiling, lowered as they go (ledger 5714 (9)).",
+    "//": "xaqu_load_built sites in a load file: a ceiling, lowered as they go (ledger 5714 (9)).",
     "syscall/credentials.rs": 2,
     "syscall/linux.rs": 3,
     "syscall/userns.rs": 1,
@@ -1275,12 +1275,12 @@
     "fs/btrfs_write_check.rs": "test-btrfs reads its result; no id gains evidence from it"
   },
   "lift_packages": [
-    "ferrix-lift-core",
-    "ferrix-lift-item",
-    "ferrix-lift-load",
-    "ferrix-lift-settings",
-    "ferrix-lift-logctl",
-    "ferrix-lift-net-ring"
+    "xaqu-lift-core",
+    "xaqu-lift-item",
+    "xaqu-lift-load",
+    "xaqu-lift-settings",
+    "xaqu-lift-logctl",
+    "xaqu-lift-net-ring"
   ],
   "lift_asm_exceptions": {
     "//": "Reused files that hold asm, with why it never runs in linuxd.",

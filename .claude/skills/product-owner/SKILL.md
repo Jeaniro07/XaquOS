@@ -1,6 +1,6 @@
 ---
 name: product-owner
-description: The product owner's role in the Ferrix fleet. Load it when the customer gives this session the seat ("you are the po now", "you are the product owner"), and before coordinating agents that land work on `main` -- spawning landing subagents, landing a PASSED batch stack, holding the landing lock, pushing `main`. It covers what the product owner decides and does not, taking the seat, the checks each round, briefing agents, landing a batch, a red `main`, build and test time, and the records it keeps.
+description: The product owner's role in the Xaqu fleet. Load it when the customer gives this session the seat ("you are the po now", "you are the product owner"), and before coordinating agents that land work on `main` -- spawning landing subagents, landing a PASSED batch stack, holding the landing lock, pushing `main`. It covers what the product owner decides and does not, taking the seat, the checks each round, briefing agents, landing a batch, a red `main`, build and test time, and the records it keeps.
 ---
 
 # The product owner
@@ -48,12 +48,12 @@ table are in `docs/BACKLOG.md`. This skill does not repeat them.
 
 1. Read `docs/BACKLOG.md`, `docs/roadmap/where-it-stands.md`, and the
    previous product owner's handover. The handover is on the gate host as
-   `~/.local/share/ferrix/po-<date>/HANDOVER.md`, or in the previous PO's
+   `~/.local/share/xaqu/po-<date>/HANDOVER.md`, or in the previous PO's
    wind-down section on `main`. Also read the end of the fleet's landing log,
-   `~/.local/share/ferrix/fleet/log`.
+   `~/.local/share/xaqu/fleet/log`.
 2. For every row the previous product owner left in flight, check `main`
    to see whether it landed. A row reported as "landed" may not have.
-3. Run `ListAgents`, introduce yourself to every Ferrix session, and ask
+3. Run `ListAgents`, introduce yourself to every Xaqu session, and ask
    each one the area the customer gave it. Don't assume a map: on
    2026-09-13 all nine of a new PO's briefs went to the wrong areas.
 4. Write the roster into the owners table in your first landing.
@@ -105,7 +105,7 @@ stopped all of them within twenty minutes, mid-gate. Brief each agent:
 * Its own worktree, made by hand (`git worktree add -b <branch>
   .claude/worktrees/<name> develop`), and its own `CARGO_TARGET_DIR` on the gate
   host. Two trees never share one. Gates and negative controls go through
-  `~/.local/share/ferrix/fleet/gate.sh` (`run`, `control --expect`,
+  `~/.local/share/xaqu/fleet/gate.sh` (`run`, `control --expect`,
   `status`), whose slots keep warm target dirs (`docs/TEST-TIME.md`, Phase 3).
 * Gates and boots in the foreground, one architecture per call. A subagent
   is not woken by its own background task.
@@ -119,7 +119,7 @@ stopped all of them within twenty minutes, mid-gate. Brief each agent:
   *Batching full runs*) instead of running the row alone, and waits with
   `batch.sh wait` in the foreground.
 * Agents don't push. The product owner pushes after each landing.
-* Ferrix is "Ferrix, a Rust operating system", never "a hobby OS", including
+* Xaqu is "Xaqu, a Rust operating system", never "a hobby OS", including
   in the context line of an agent's prompt (customer, 2026-09-28).
 * It reports only when something is red (a failed row, a control that did
   not fire) or when its branch is ready to land, never once per verdict.
@@ -186,7 +186,7 @@ everything else that session owns:
    batch finds its failing entry. Keep the logs; a failure that does not
    repeat is a flake with a row of its own, not a culprit.
 2. **Find the session.** The fleet's landing log
-   (`~/.local/share/ferrix/fleet/log`) names who held the lock when that
+   (`~/.local/share/xaqu/fleet/log`) names who held the lock when that
    commit landed (`TAKEN by <session>`). Session names change on restart,
    so match the branch and the commit to the transcript before writing to
    anyone; `ListAgents` only when the log and the transcripts don't say.
@@ -284,6 +284,6 @@ or a gate goes to that table's owner as a row.
 * At a wind-down, write a handover the next product owner can start from:
   `main`'s hash, the lock's state, each branch in flight with its worktree,
   what passed and its next step, and what waits on the customer. Put it on
-  the gate host under `~/.local/share/ferrix/po-<date>/HANDOVER.md`, and put
+  the gate host under `~/.local/share/xaqu/po-<date>/HANDOVER.md`, and put
   the parts that outlive the session in `docs/BACKLOG.md` and
   `docs/roadmap/where-it-stands.md`.

@@ -58,7 +58,7 @@
 //! # Completions go back in order
 //!
 //! The core takes a completion only for the oldest submission in flight
-//! (`ferrix_sndctl::pcm`). QEMU completes a stream's buffers in the order it
+//! (`xaqu_sndctl::pcm`). QEMU completes a stream's buffers in the order it
 //! took them, but a device need not, so a completion out of order is held
 //! until those before it are done, and ELAPSED goes out oldest first.
 //!
@@ -74,7 +74,7 @@
 //!
 //! # Trust
 //!
-//! The device's word is checked by `ferrix_virtio::snd` -- a block with no
+//! The device's word is checked by `xaqu_virtio::snd` -- a block with no
 //! streams or too many, a response that is short or not OK, stream
 //! information no device could give -- and by [`SplitQueue`] for the rings.
 //! A transmit completion that wrote anything but its status, a completion of
@@ -92,7 +92,7 @@
 //!
 //! # DMA memory is freed only after a reset
 //!
-//! As in `ferrix-virtio-input`: the rings and the scratch memory are held in
+//! As in `xaqu-virtio-input`: the rings and the scratch memory are held in
 //! [`ManuallyDrop`], and [`Driver::shutdown`] hands them back as
 //! [`Teardown::Released`] only if the reset finished.
 
@@ -103,19 +103,19 @@
 use core::fmt;
 use core::mem::ManuallyDrop;
 
-use ferrix_sndctl::message::{
+use xaqu_sndctl::message::{
     Elapsed, Hello, MAX_PUBLISHED, MAX_STREAMS, Message, Published, Ready, Refusal, Submit,
 };
-use ferrix_sndctl::pcm::MAX_IN_FLIGHT;
-use ferrix_virtio::pci::{
+use xaqu_sndctl::pcm::MAX_IN_FLIGHT;
+use xaqu_virtio::pci::{
     self, CommonConfig, DEVICE_STATUS, QueueAddresses, STATUS_DEVICE_NEEDS_RESET, STATUS_FAILED,
     TransportError,
 };
-use ferrix_virtio::snd::{
+use xaqu_virtio::snd::{
     self, DIRECTION_OUTPUT, DeviceConfig, PCM_INFO_BYTES, PcmCommand, PcmInfo, PcmStatus,
     RESPONSE_BYTES, STATUS_BYTES, SetParams, SndError, XFER_BYTES,
 };
-use ferrix_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
+use xaqu_virtio::{Buffer, Layout, PAGE_SIZE, QueueError, QueueMemory, SplitQueue};
 
 pub mod format;
 
@@ -296,7 +296,7 @@ pub enum DeviceError {
     NeedsReset,
     /// The rings say something impossible.
     Queue(QueueError),
-    /// A response or status that `ferrix_virtio::snd` refuses.
+    /// A response or status that `xaqu_virtio::snd` refuses.
     Protocol(SndError),
     /// A control request answered for a status other than OK: the request's
     /// code and the status.
@@ -1194,7 +1194,7 @@ where
     /// [`ControlError::Device`] for a device that broke the protocol.
     pub fn on_ready(&mut self, ready: &Ready, buffers: &[&[u64]]) -> Result<(), ControlError> {
         if self.phase != Phase::Introduced {
-            return Err(ControlError::Unexpected(ferrix_sndctl::message::READY));
+            return Err(ControlError::Unexpected(xaqu_sndctl::message::READY));
         }
         let count = ready.published as usize;
         if count > MAX_PUBLISHED || count != buffers.len() {
@@ -1398,7 +1398,7 @@ where
             return Err(ControlError::Refused(Refusing::Range));
         };
         if playback.halting {
-            return Err(ControlError::Unexpected(ferrix_sndctl::message::HALT));
+            return Err(ControlError::Unexpected(xaqu_sndctl::message::HALT));
         }
         if let Some(Some(playback)) = self.streams.get_mut(index) {
             playback.halting = true;

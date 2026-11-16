@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-btrfs-write"
+name = "xaqu-btrfs-write"
 description = "btrfs write path: copy-on-write trees, extent allocation and transaction commit"
 version = "0.1.0"
 edition = "2024"
@@ -8,13 +8,13 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-btrfs.workspace = true
-ferrix-fallible.workspace = true
+xaqu-btrfs.workspace = true
+xaqu-fallible.workspace = true
 
 # Test-only: the size classes the kernel's reserve holds, which every map
 # node this crate makes must fit (`tests/oom.rs`).
 [dev-dependencies]
-ferrix-heap.workspace = true
+xaqu-heap.workspace = true
 
 [lints]
 workspace = true

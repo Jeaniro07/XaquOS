@@ -1,9 +1,9 @@
 # The init: `/sbin/init`, `/sbin/getty` and the getty generator
 # (docs/INIT.md §3).
 #
-# A workspace of its own, not a member of Ferrix's, for the reason zinc and the
+# A workspace of its own, not a member of Xaqu's, for the reason zinc and the
 # compositor are: these are Linux user programs built with std, speaking only
-# the Linux ABI, and the Ferrix workspace's dependency policy is written for a
+# the Linux ABI, and the Xaqu workspace's dependency policy is written for a
 # kernel. The manager itself is `src/lib/init/svc`, a `no_std` crate of that workspace,
 # which is pure and host-tested there; what is here is the event loop and the
 # backends that turn its actions into system calls.
@@ -14,7 +14,7 @@ members = ["dirclient", "drvupdate", "getty", "init", "svc"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false
@@ -22,7 +22,7 @@ publish = false
 # ---------------------------------------------------------------------------
 # Lints
 #
-# The Ferrix discipline. A panic in pid 1 ends the machine, so the ways of
+# The Xaqu discipline. A panic in pid 1 ends the machine, so the ways of
 # reaching one are denied and every failing call is a line on the console and
 # a unit that fails, never an abort.
 # ---------------------------------------------------------------------------

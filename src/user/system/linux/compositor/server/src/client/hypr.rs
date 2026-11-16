@@ -13,7 +13,7 @@
 //!
 //! `hyprland-input-capture-v1`, whose whole conversation is an
 //! `libei` socket the compositor hands over, and there is no `libei` on
-//! Ferrix. Offering the global and then never sending the descriptor would
+//! Xaqu. Offering the global and then never sending the descriptor would
 //! leave a client waiting for ever, which is worse than not offering it.
 //! `hyprland-ctm-control-v1` is left out for a different reason, which
 //! `tools/common/gen/gen-wayland-protocol.py` gives: its `blocked` event has a

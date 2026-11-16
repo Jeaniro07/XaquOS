@@ -11,7 +11,7 @@
 //!    acknowledgments of things never sent, resets in states that must ignore
 //!    them.
 //! 2. **What comes out is writable.** Every header the machine produces is
-//!    emitted with `ferrix-netwire` and parsed back, so a header it builds that
+//!    emitted with `xaqu-netwire` and parsed back, so a header it builds that
 //!    the wire format refuses is a crash here rather than a packet nobody can
 //!    read.
 //! 3. **Sequence numbers never go backwards past what was acknowledged.**
@@ -22,11 +22,11 @@
 
 #![no_main]
 
-use ferrix_nettcp::conn::{Config, Connection, Request};
-use ferrix_nettcp::seq::SeqNumber;
-use ferrix_nettcp::state::State;
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::tcp::{Flags, Header, Options, Segment};
+use xaqu_nettcp::conn::{Config, Connection, Request};
+use xaqu_nettcp::seq::SeqNumber;
+use xaqu_nettcp::state::State;
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::tcp::{Flags, Header, Options, Segment};
 use libfuzzer_sys::fuzz_target;
 
 /// The addresses the checksums are taken over. Fixed: the fuzzer's bytes are

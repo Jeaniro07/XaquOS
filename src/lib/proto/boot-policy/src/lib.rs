@@ -17,9 +17,9 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::arithmetic_side_effects)]
 
-use ferrix_sigverify::lms::HSS_PUBLIC_KEY_LEN;
-use ferrix_sigverify::{Anchor, Expect, Kind};
-use ferrix_slots::slot::{HEADER_LEN, MANIFEST_LEN, SlotError, SlotHeader, VERSION_1, VERSION_2};
+use xaqu_sigverify::lms::HSS_PUBLIC_KEY_LEN;
+use xaqu_sigverify::{Anchor, Expect, Kind};
+use xaqu_slots::slot::{HEADER_LEN, MANIFEST_LEN, SlotError, SlotHeader, VERSION_1, VERSION_2};
 
 #[cfg(test)]
 mod tests;
@@ -86,7 +86,7 @@ pub enum Refusal {
     Unsigned,
     /// A version-2 slot whose manifest is refused, or does not cover this
     /// header.
-    Manifest(ferrix_sigverify::Refusal),
+    Manifest(xaqu_sigverify::Refusal),
 }
 
 /// The trust policy a block holds.
@@ -297,8 +297,8 @@ pub fn decide(
         VERSION_2 => {
             let block = manifest
                 .filter(|m| m.len() == MANIFEST_LEN)
-                .ok_or(Refusal::Manifest(ferrix_sigverify::Refusal::Malformed(
-                    ferrix_sigverify::Field::Block,
+                .ok_or(Refusal::Manifest(xaqu_sigverify::Refusal::Malformed(
+                    xaqu_sigverify::Field::Block,
                 )))?;
             let mut families = [0u32; MAX_FAMILIES];
             let n = accepted(build, family, &mut families);
@@ -311,7 +311,7 @@ pub fn decide(
                 subject: None,
                 floor,
             };
-            let verified = ferrix_sigverify::verify(block, &expect, policy.anchors(), &[])
+            let verified = xaqu_sigverify::verify(block, &expect, policy.anchors(), &[])
                 .map_err(Refusal::Manifest)?;
             // The payload is header bytes 0..4064, which the seal hashes.
             verified

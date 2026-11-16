@@ -1,11 +1,11 @@
-# The game path: where a fullscreen game can be faster on Ferrix than on Linux
+# The game path: where a fullscreen game can be faster on Xaqu than on Linux
 
 Version 1, a draft written on 2026-10-10 for the customer, who decides §10.
 The customer decided question 1 of §10 the same day: this is a roadmap
 stage, [stage 24](roadmap/stage-24-game-path.md). Questions 2 to 10 are
 open.
 The customer asked that day for "an agent that designs the 'faster than
-Linux' path": where and how Ferrix can beat a stock Linux desktop for a
+Linux' path": where and how Xaqu can beat a stock Linux desktop for a
 fullscreen game on the same hardware. This document is that design and its
 build plan. **Nothing in it is built, measured anew or landed**: every figure
 below was measured by another session and is quoted with its source, or is
@@ -15,7 +15,7 @@ It stands beside three pieces of work it does not repeat:
 
 * [`docs/NVIDIA.md`](NVIDIA.md), the driver (`nvrm`) and stage 21;
 * the request from NVIDIA's libraries into `nvrm`, being cut on branch
-  `nv-trip` (notes `~/.local/share/ferrix/steam-race/trip.md` on nazuna);
+  `nv-trip` (notes `~/.local/share/xaqu/steam-race/trip.md` on nazuna);
 * yserver's present path and the dmabuf hand-over from an X client to
   hyprix (branch `nv-present`, yserver's `present-pace`; notes `present.md`
   and `zerocopy.md` in the same directory).
@@ -31,16 +31,16 @@ none.
 
 **The short answer.** A game's frame rate when nothing holds it back is
 decided by NVIDIA's closed userspace and the card, which are the same
-bytes on both systems. There a tie is the ceiling, and Ferrix is 8% under
+bytes on both systems. There a tie is the ceiling, and Xaqu is 8% under
 it today. What a system that owns the kernel, the compositor, the X server
 and the driver's glue *can* win is what happens around the frame:
 
-1. **how long an input takes to change the picture**, because Ferrix can
+1. **how long an input takes to change the picture**, because Xaqu can
    time the game's frame, the X server's hand-over and the flip against one
    clock, where Linux has four programs each guessing at the next one's
    timing with a safety margin of its own;
 2. **how even the frames are, above all while the machine does something
-   else**, because Ferrix owns the scheduler and can give a game's threads
+   else**, because Xaqu owns the scheduler and can give a game's threads
    and the present path processors that nothing else may run on, as a
    guarantee with a check, where a Linux desktop offers heuristics;
 3. **that this is how the system behaves as shipped**, where on Linux the
@@ -56,7 +56,7 @@ often the largest term.
 
 * **stock**: a distribution's desktop as installed. The baseline guest is
   Debian 13, kernel 6.12, NVIDIA 580.173.02, sway 1.10.1 with Xwayland
-  (`~/.local/share/ferrix/linux-baseline/README.md`). The customer's words
+  (`~/.local/share/xaqu/linux-baseline/README.md`). The customer's words
   were "a stock Linux desktop"; this is the comparison the plan must win.
 * **tuned**: the best a person can configure, from published measurements
   (§2.2): direct scan-out, tearing or VRR, a latency tool, a compositor
@@ -71,7 +71,7 @@ Measured by other sessions on 2026-10-10 on the RTX 3060 passed into a KVM
 guest of the same shape for both systems (8 processors, 16 GiB), Teeworlds
 0.7.5 at 1920x1080 on NVIDIA's GL, unless a row says otherwise.
 
-| What | Linux (stock guest) | Ferrix | Source |
+| What | Linux (stock guest) | Xaqu | Source |
 |---|---|---|---|
 | Frames a second, vsync off | 2,400 (2,363–2,426) | about 2,200 | `linux-baseline/README.md`; `present.md`, 22:30 table |
 | One frame, vsync off | 417 µs | 455 µs, with about one driver request in it | the coordinator's figures for this design |
@@ -157,7 +157,7 @@ guests of §2.1 with their processors pinned to host cores of their own
 tree. *c* is the time the game needs for one frame, swap to swap, with
 nothing holding it. "Refresh" is 16.7 ms at 60 Hz.
 
-| # | Metric | Ferrix today | Stock Linux | Tuned Linux | Target for Ferrix |
+| # | Metric | Xaqu today | Stock Linux | Tuned Linux | Target for Xaqu |
 |---|---|---|---|---|---|
 | M1 | **Input to scan-out, vsync on**: from the injected motion to the start of the scan-out that shows it; median and 99th percentile | not measured; about 40 to 60 ms by summing §3.1's stages (an estimate) | not measured; expected 1.5 to 2.5 refreshes (25 to 42 ms) | half a refresh + *c* + its margins: about 12 to 14 ms for a light game with a just-in-time tool, when the game supports one | median ≤ half a refresh + *c* + 2 ms (11 ms at *c* = 1 ms), 99th ≤ one refresh + *c* + 2 ms, **for any game, with no support from it**; and at least one refresh under stock Linux on the same rig |
 | M2 | **Input to scan-out, tearing**: the same with vsync off and tearing allowed | not possible (no tearing flip exists) | not measured | 4.2 to 4.9 ms click to photon at 500 Hz [S]; on a 60 Hz panel bounded by *c* and the scan position | median ≤ *c* + 1.5 ms to the flip; equal to tuned Linux within the rig's error. A tie is the ceiling |
@@ -176,7 +176,7 @@ for there.
 ### 2.4 How each is measured, the same way on both systems
 
 Nothing may be claimed that was measured with one tool on Linux and
-another on Ferrix. Every tool below is one binary that runs on both: an X
+another on Xaqu. Every tool below is one binary that runs on both: an X
 client on glibc, or a Wayland client for a protocol sway and hyprix both
 serve.
 
@@ -193,7 +193,7 @@ serve.
   kernel. A summariser gives the median, the 99th and 99.9th percentiles,
   misses a minute and the worst frame.
 * **Input to scan-out (M1, M2).** Two programs. An injector: the existing
-  `vptr` (`~/.local/share/ferrix/yserver-present/vptr`, a
+  `vptr` (`~/.local/share/xaqu/yserver-present/vptr`, a
   `zwlr_virtual_pointer_v1` client; sway serves that protocol too), which
   gains a log of each motion's send time. A probe: a small X client that
   takes XInput2 raw motion as a game does, and on each event draws the
@@ -218,7 +218,7 @@ serve.
 * **Launch (M6).** The preload library's constructor time against the
   first swap's return, after a boot (cold) and again (warm).
 * **Processors per frame (M7).** `cpusnap.sh`, which exists on both sides
-  (`linux-baseline/ferrix-side`, `linux-side`).
+  (`linux-baseline/xaqu-side`, `linux-side`).
 * **A timed sleep and a wake-up (M5, M9).** A cyclictest-shaped program:
   sleep to an absolute time, record the overshoot, as stage 14's exit
   describes.
@@ -245,7 +245,7 @@ Every figure in §2.1 is from a guest. Three consequences:
 * **Smoothness in a guest is the host's to give.** The 100 to 250 ms
   frames ended when the guest's processors got host cores of their own.
   The rig's guests are therefore both defined with pinned processors and
-  an invariant TSC (`softgl-gap.md`: without it Ferrix read its clock at
+  an invariant TSC (`softgl-gap.md`: without it Xaqu read its clock at
   22 µs a read), and M3 to M5 are read as *comparisons between two guests
   on one host*, not as what either system does on a machine.
 * **What a guest can show:** every comparison of software paths (M1, M2,
@@ -256,7 +256,7 @@ Every figure in §2.1 is from a guest. Three consequences:
 
 ## 3. The path today, hop by hop
 
-### 3.1 Ferrix
+### 3.1 Xaqu
 
 Verified against the tree and tonight's notes, except the first row's
 figures, which nobody has measured.
@@ -318,7 +318,7 @@ next), which only a latency tool inside the game or its translation layer
 removes, and the margins each program keeps because it does not know the
 others' timing.
 
-### 3.3 Where Ferrix can be ahead, and where only level
+### 3.3 Where Xaqu can be ahead, and where only level
 
 * **Level at best:** the copies (Linux has none), the flip itself, tearing,
   VRR, the hardware cursor. These are §4.1 to §4.4 and must be built
@@ -329,7 +329,7 @@ others' timing.
   because the threads that keep them have bounded wake-ups on processors
   of their own (§5) and one clock (§4.1); and the same under load.
 * **Behind, and staying so for now:** processes on the path. A game's
-  frame on Ferrix passes the X server, the compositor, the kernel and
+  frame on Xaqu passes the X server, the compositor, the kernel and
   `nvrm`; on Linux the driver is in the kernel. One more wake-up each way.
   §6.2 says why that costs microseconds and not frames once §5 bounds the
   wake-ups.
@@ -486,7 +486,7 @@ conservative:
   because a game that samples its input elsewhere in its loop gains
   nothing.
 
-**Why this is Ferrix's to win.** Reflex and its kin need the game or the
+**Why this is Xaqu's to win.** Reflex and its kin need the game or the
 translation layer to call them; LatencyFleX says of itself that it does
 nothing with vsync. KWin does the same trick only for its *own* rendering.
 A compositor on Linux could hold a client's frame callback this way and
@@ -498,7 +498,7 @@ the margin can be the path's real cost plus that bound.
 
 **For a game that has a latency tool** (a DirectX game under DXVK with
 Reflex, §7.2) the tool does the same from inside and knows the game's
-simulation better. Then the hold stays off, and what Ferrix adds is the
+simulation better. Then the hold stays off, and what Xaqu adds is the
 tight clock under it.
 
 **Rejected: making the compositor's frame callback earlier or the game's
@@ -579,7 +579,7 @@ NVIDIA's `nvkms-kapi.h` for 580.173.02.
 
 ## 5. A game session the kernel knows about
 
-### 5.1 What Ferrix has
+### 5.1 What Xaqu has
 
 Verified in the tree:
 
@@ -691,7 +691,7 @@ much of M4 a heuristic already wins and what the domain must add.
 
 ### 5.5 How this differs from Linux
 
-| | Linux | Ferrix's game session |
+| | Linux | Xaqu's game session |
 |---|---|---|
 | Real-time priority | `SCHED_FIFO` to whoever has the capability or asks rtkit; a looping thread is stopped only by the global 95% throttle | only the path's threads, each under its own budget; never the game |
 | Processors set aside | `isolcpus` and `nohz_full` at boot; cpuset partitions at run time, which no desktop sets up; kernel threads, timers and interrupts need separate care | made and dissolved per session by one service, with interrupts and timers part of the same switch |
@@ -766,7 +766,7 @@ what a processor that needs no page-table isolation gives it.
 **What a game calls at a high rate** (from knowledge of game loops and of
 tonight's notes, not from a trace; stage 23's E0.5 will count it for one
 game): `clock_gettime`, which is already the vDSO at 20 ns; futex waits
-and wakes between the engine's threads, where Ferrix's round trip is
+and wakes between the engine's threads, where Xaqu's round trip is
 ahead (6.7 against 12.7 µs); one request to the driver a frame at an
 uncapped rate (§6.2); `poll`, `recvmsg` and `writev` on the X socket, a
 few a frame; `nanosleep` from a frame limiter. Some thousands of calls a
@@ -818,7 +818,7 @@ round trip's work, which owns it. This plan takes only the measurement
 450 ns, through four switches and a new thread per request (`trip.md`).
 
 * **Expected gain for a game:** at 2,200 frames a second, most of the 38 µs
-  a frame that Ferrix is behind (M8). At 60 frames a second, one request a
+  a frame that Xaqu is behind (M8). At 60 frames a second, one request a
   frame is 6 ms a second, nothing; what matters there is that a request's
   time has no long tail, because the flip and the game's swap both pass
   through `nvrm`.
@@ -845,7 +845,7 @@ second costs 0.82 processors in the server, 0.17 in hyprix and 0.17 in
 * **For everything composited** (a windowed game, the desktop, a game
   under a notification): the round trip alone is most of a refresh, which
   makes §4.6 impossible and costs a refresh of latency.
-* **What a native path would change.** A render process of Ferrix's own
+* **What a native path would change.** A render process of Xaqu's own
   on glibc, speaking hyprix's own renderer interface over shared memory
   to NVIDIA's Vulkan: no command-stream translation, no per-frame fence
   made and exported, client buffers imported as images, the result
@@ -873,19 +873,19 @@ relayed], and no controlled comparison with the older futex-based way
 (`futex_waitv`) was found. Stage 23 has "fsync or ntsync, if measurement
 asks" as E3.5.
 
-**Could Ferrix offer them natively and cheaper?**
+**Could Xaqu offer them natively and cheaper?**
 
-* *Natively, yes, and the shape fits.* Ferrix's native ABI already has
+* *Natively, yes, and the shape fits.* Xaqu's native ABI already has
   kernel objects, handles and waits on them (stage 9). NT's three objects
   and their two waits are a small, closed set with exact semantics.
 * *But the interface must be Linux's.* The game needs a patched Proton
-  for its anti-cheat (stage 23), and a Wine that speaks a Ferrix-only
+  for its anti-cheat (stage 23), and a Wine that speaks a Xaqu-only
   call is a Wine nobody else builds. So the plan is `/dev/ntsync` with
   Linux's ioctls, answered by the kernel's Linux personality (the load
   ring), with the objects implemented once underneath.
 * *Cheaper: only in part.* An uncontended operation is one system call,
-  where Ferrix is 100 to 300 ns behind Linux. A contended one is a wake
-  and a switch, where Ferrix's futex round trip is ahead (6.7 against
+  where Xaqu is 100 to 300 ns behind Linux. A contended one is a wake
+  and a switch, where Xaqu's futex round trip is ahead (6.7 against
   12.7 µs in the guest), and on the game's processors §5 bounds it. Games
   hand work between threads through these objects every frame, so the
   contended case is the one a frame feels. **Expected: level on
@@ -893,12 +893,12 @@ asks" as E3.5.
   it.
 * A risk the study recorded: ntsync was named in a February 2026
   anti-cheat failure of this very game under one Proton build
-  (`~/.local/share/ferrix/endfield/STUDY.md`).
+  (`~/.local/share/xaqu/endfield/STUDY.md`).
 
 ### 7.2 Shader compilation, and the latency tool
 
 * **Stutter from compiling shaders** is NVIDIA's compiler and DXVK's
-  threads inside the game's process, with caches on disk. Ferrix cannot
+  threads inside the game's process, with caches on disk. Xaqu cannot
   make it faster. It can keep it from costing frames: DXVK lowers its
   compiler threads' priority, so per-thread niceness must be honoured
   (`setpriority` is in the table; whether it reaches a thread's weight
@@ -908,7 +908,7 @@ asks" as E3.5.
 * **Reflex.** A DirectX game that supports NVIDIA Reflex reaches it on
   Linux through DXVK and dxvk-nvapi over `VK_NV_low_latency2` in NVIDIA's
   own driver [2]. That is closed userspace talking to RM: it should work
-  on Ferrix unchanged, and it has not been tried. If it does, such a game
+  on Xaqu unchanged, and it has not been tried. If it does, such a game
   gets its just-in-time start from inside, and §4.5's hold stays off for
   it. W2 tries it.
 
@@ -932,7 +932,7 @@ asks" as E3.5.
   (the study). Both are reasons to build P10 after the X path works and
   to compare the two on the rig, not to choose now.
 
-### 7.4 Where Ferrix could be better for them
+### 7.4 Where Xaqu could be better for them
 
 The same three places as for any game, and one more: Wine's input and its
 waits pass through *more* processes than a native game's (wineserver
@@ -953,7 +953,7 @@ the row says so and gives no points.
 | # | Landing | Points | Proved by | Needs |
 |---|---|---|---|---|
 | R1 | The frame recorder: per-swap times and Present completions in the preload library, the summariser, both brought into the tree under `tools/common/` with the baseline's scripts | 5 | the same binary's record on both guests; negative control: a 50 ms sleep injected every ten seconds is counted exactly, as three missed refreshes each (at 60 Hz; at hyprix's 75 Hz 50 ms is 3.75 refreshes, three or four by the frame's own work) | nothing; no card. Built 2026-10-14 (§12) |
-| R2 | The latency probe and the injector's log: input to scan-out on both systems | 5 | the probe on both; control: a 16.7 ms delay added in the probe moves the median by one refresh; a gate without the card (`test-xwindow`'s boot, counting *frames* from injection to the frame that shows it) | nothing; no card. **Built 2026-10-14.** The probe is `xlatency`, a static X client in the compositor's workspace speaking X11 itself (raw motion on the root, one frame in flight, `PresentPixmap` for the refresh after the last completion, each frame's colour the count of events it carries); the injector is `vptr` there too, logging each motion's `CLOCK_MONOTONIC` send time; `xlatency summarize` pairs the two. Linux: `tools/common/test/latency-sway.sh`, headless sway 1.10 with Xwayland at 60 Hz on nazuna (measured refresh 16.3 to 16.9 ms), 211 motions paired one to one: send to scan-out median 24.3 ms, arrival to scan-out 23.2 ms, 2 refreshes; with `--delay-us 16700` 40.9 and 40.8 ms, 3 refreshes. Ferrix: `cargo xtask test-xlatency`, `test-xwindow`'s boot, 40 QMP tablet motions each timed on the host to the probe's line for its frame, then `vptr` with the probe in the guest; on R1's yserver clock (2966c377; hyprix's virtual screen at 75 Hz, 13.4 to 14.7 ms measured while drawing): host-timed median 23.9 ms, arrival to scan-out 20.6 ms, 2 refreshes, in-guest send to scan-out 23.2 ms; with the delay 44.1, 37.3 and 38.0 ms, 3 refreshes. On the clock kept to one refresh (yserver d2bf56e2, which measures 13.334 ms; gates `yc-xlat1` and `yc-xlat2`): host-timed medians 21.8 and 22.5 ms, arrival to scan-out 20.4 and 20.3 ms, 2 refreshes, in-guest send to scan-out 19.5 and 19.2 ms. The delay moves each median by one refresh on both, in the probe's own count. The 99th percentiles (up to 400 ms) were taken with nazuna's load at 30 to 60 and are the host's, not the systems'. The pinned yserver (1a8752e8) panics on the first `PresentPixmap` (`get_semaphore_fd_khr` on lavapipe), which R1's yserver fixes: the gate passes from that pin on |
+| R2 | The latency probe and the injector's log: input to scan-out on both systems | 5 | the probe on both; control: a 16.7 ms delay added in the probe moves the median by one refresh; a gate without the card (`test-xwindow`'s boot, counting *frames* from injection to the frame that shows it) | nothing; no card. **Built 2026-10-14.** The probe is `xlatency`, a static X client in the compositor's workspace speaking X11 itself (raw motion on the root, one frame in flight, `PresentPixmap` for the refresh after the last completion, each frame's colour the count of events it carries); the injector is `vptr` there too, logging each motion's `CLOCK_MONOTONIC` send time; `xlatency summarize` pairs the two. Linux: `tools/common/test/latency-sway.sh`, headless sway 1.10 with Xwayland at 60 Hz on nazuna (measured refresh 16.3 to 16.9 ms), 211 motions paired one to one: send to scan-out median 24.3 ms, arrival to scan-out 23.2 ms, 2 refreshes; with `--delay-us 16700` 40.9 and 40.8 ms, 3 refreshes. Xaqu: `cargo xtask test-xlatency`, `test-xwindow`'s boot, 40 QMP tablet motions each timed on the host to the probe's line for its frame, then `vptr` with the probe in the guest; on R1's yserver clock (2966c377; hyprix's virtual screen at 75 Hz, 13.4 to 14.7 ms measured while drawing): host-timed median 23.9 ms, arrival to scan-out 20.6 ms, 2 refreshes, in-guest send to scan-out 23.2 ms; with the delay 44.1, 37.3 and 38.0 ms, 3 refreshes. On the clock kept to one refresh (yserver d2bf56e2, which measures 13.334 ms; gates `yc-xlat1` and `yc-xlat2`): host-timed medians 21.8 and 22.5 ms, arrival to scan-out 20.4 and 20.3 ms, 2 refreshes, in-guest send to scan-out 19.5 and 19.2 ms. The delay moves each median by one refresh on both, in the probe's own count. The 99th percentiles (up to 400 ms) were taken with nazuna's load at 30 to 60 and are the host's, not the systems'. The pinned yserver (1a8752e8) panics on the first `PresentPixmap` (`get_semaphore_fd_khr` on lavapipe), which R1's yserver fixes: the gate passes from that pin on |
 | R3 | The load script, the launch timer, the sleep and wake-up program, and both guests defined with pinned processors and an invariant TSC | 3 | the load holds every processor at 100% on both; the clock line says TSC. **Built 2026-10-14**: §12 | nothing |
 | R4 | The baseline: M1 to M9 on both guests as they are, the system-call breakdown of §6.1, and the record written into §12 | 3 | the table, with its logs | the card (the product owner's word); the Linux guest; `nv-present` or its successor on the card |
 | R5 | The software measure checked against light, once | 3, or 5 with a built device | the two agree within the device's error on both systems | question 6 of §10 |
@@ -1017,21 +1017,21 @@ that need no card.
 * **The display.** A television's processing can exceed everything in
   this document. It is the same for both systems and is not in any
   target; "game mode" on the set is the customer's to switch on.
-* **The system call.** Ferrix will stay several times dearer per call
+* **The system call.** Xaqu will stay several times dearer per call
   than Linux on processors that need no page-table isolation, and this
   plan does not try to change it.
 * **The driver in ring 3.** One more switch each way than Linux, for as
   long as `nvrm` is a process, which is the design.
-* **Launch time.** Nothing structural favours Ferrix: process start,
+* **Launch time.** Nothing structural favours Xaqu: process start,
   dynamic loading, the driver's start-up requests (hundreds, each through
   `nvrm`) and disk reads are all places where Linux is at least level.
   Parity is the target.
 * **Breadth.** Linux's twenty years show in what this plan does not
   touch: every card and every monitor's quirks, HDR, multiple monitors
   with different rates, gamepads and wheels and their force feedback
-  (Ferrix's input core has no `EV_FF`), per-game fixes in Proton and
+  (Xaqu's input core has no `EV_FF`), per-game fixes in Proton and
   Mesa, hardware video overlays, power management. On one card, one
-  display and one game Ferrix can be ahead; across the field it will not
+  display and one game Xaqu can be ahead; across the field it will not
   be for a long time.
 
 **Risks.**
@@ -1145,7 +1145,7 @@ NVKMS scans out a client-allocated block-linear image; that a game
 samples its input right after its swap returns; the estimate of 40 to
 60 ms in §3.1 and every "expected" in §2.3; Linux's 50 µs timer slack;
 what desktops ship of PREEMPT_RT and cpuset partitions; the list of calls
-a game makes; that Reflex's path works on Ferrix unchanged; S2's shape
+a game makes; that Reflex's path works on Xaqu unchanged; S2's shape
 and cost.
 
 **Looked for and not found:** an instrumented click-to-photon figure at
@@ -1193,7 +1193,7 @@ the next refresh, Xwayland one refresh early (its copies complete a frame
 after they run), so it asks again for now + 2. `cargo xtask frames` builds
 both with the host's `cc` and nothing else (reproducibly: the same SHA-256
 each time) and summarises a record; `cargo xtask test-frames` is the gate
-on Ferrix; `linux-side/measure-frames.sh` runs the same binaries on the
+on Xaqu; `linux-side/measure-frames.sh` runs the same binaries on the
 Linux guest.
 
 Missed refreshes are counted two ways. By msc, as §2.4 defines them. By
@@ -1205,13 +1205,13 @@ frame events while a presentation waits and stands still while none does
 (`xwl_present_msc_bump`, Xwayland 24.1), so a program that stalls misses
 no msc there. Measured, not argued: on the Linux guest the three 50 ms
 stalls were 0, 0 and 0 by msc and 3, 3 and 3 by time. By msc §2.4's
-definition undercounts on exactly the system Ferrix is compared with; M3
+definition undercounts on exactly the system Xaqu is compared with; M3
 and M4 should be read by time on both, with msc as the cross-check where
 the server's msc is a clock (Xorg, Xvfb, yserver).
 
 The records, libframerec.so `c28129b3…` and framegl `68c9f69c…` on both:
 
-| | Ferrix (`test-frames`, KVM, llvmpipe through yserver on hyprix; gate `r1-frames-clock3`) | Linux guest (Debian 13, Xwayland of a headless sway at 60 Hz, llvmpipe; no card) |
+| | Xaqu (`test-frames`, KVM, llvmpipe through yserver on hyprix; gate `r1-frames-clock3`) | Linux guest (Debian 13, Xwayland of a headless sway at 60 Hz, llvmpipe; no card) |
 |---|---|---|
 | Plain, 30 s: swaps | 1,909 | 1,844 |
 | Frame time, median / 99th / 99.9th / worst | 15.68 / 17.13 / 18.29 / 18.70 ms | 16.22 / 19.26 / 24.90 / 25.44 ms |
@@ -1219,7 +1219,7 @@ The records, libframerec.so `c28129b3…` and framegl `68c9f69c…` on both:
 | Missed refreshes, by msc / by time | 0 / 0 | 0 / 2 |
 | 50 ms stalls, missed by msc / by time | 3/3, 3/3, 3/3 at 13.342 ms | 0/3, 0/3, 0/3 at 16.322 ms |
 
-Two earlier runs on Ferrix of the same binaries are kept for what they
+Two earlier runs on Xaqu of the same binaries are kept for what they
 show of yserver's clock: one outside the pool (stalls 4/4, 3/3, 4/4 at
 13.376 ms; the plain run's refresh 15.297 ms with 41 misses by msc and 18
 by time), and `r1-frames-clock2` (stalls 4/3, 3/3, 3/3 at 13.979 ms),
@@ -1281,7 +1281,7 @@ the preload library `RIG_LAUNCH_FD` and takes back one line, `ctor <ns>
 swap <ns>`: the interface R1's library is to implement). `load.sh` is the
 load, `load-crate.rs` the crate it compiles as an rlib with the rustc
 volume's compiler on both systems, `measure.sh` the check inside a guest.
-`linux-3060.xml` is the Linux guest, and `nvidia.rs` writes ferrix-3060
+`linux-3060.xml` is the Linux guest, and `nvidia.rs` writes xaqu-3060
 with the same processor, topology (four cores of the second CCD, both
 threads: host processors 6 to 9 and 18 to 21, QEMU on 10, 11, 22, 23) and
 invtsc; a test holds the two equal. Neither domain is redefined in
@@ -1289,7 +1289,7 @@ libvirt: the card's guests need the customer.
 
 Measured without the card, on nazuna under the gate pool's load:
 
-| | Ferrix (`test-game-rig`, KVM, 4 processors, 8 GiB) | Linux guest (`linux-guest.sh`, KVM pinned, 8 processors, 16 GiB) |
+| | Xaqu (`test-game-rig`, KVM, 4 processors, 8 GiB) | Linux guest (`linux-guest.sh`, KVM pinned, 8 processors, 16 GiB) |
 |---|---|---|
 | Clock line | `TSC, calibrated against the HPET at 4400.017 MHz` | `tsc` |
 | Without invtsc (control) | `TSC, vouched for and rated by KVM's paravirtual clock`, the gate fails | `kvm-clock` |
@@ -1301,16 +1301,16 @@ Measured without the card, on nazuna under the gate pool's load:
 | Launch timer, a stand-in swapping 100 ms after its constructor | +1.8 and +101.8 ms; +2.0 and +102.0 ms | +0.3 and +100.4 ms |
 
 The overshoot is printed, not judged: its bound is G2's. Linux's median is
-its 50 µs timer slack; Ferrix has none. Both guests' tails under the load
+its 50 µs timer slack; Xaqu has none. Both guests' tails under the load
 reach 70 to 137 ms at the 99.99th percentile, so they are the
 host's: the pinned host processors are not isolated, and the gate pool's
 boots ran on them. Tails are compared only once the host keeps those
 processors for the guest (`isolcpus` or a cgroup partition, the customer's
 host). Two findings of the rig's own: a cold compiler started together with the writer and the holder made
-no build in 50 s on Ferrix (`/proc/meminfo` counts no page cache, and the
+no build in 50 s on Xaqu (`/proc/meminfo` counts no page cache, and the
 holder takes what is free), so `load.sh` builds once alone first; and the
-load runs as root on Ferrix's gate, whose initramfs has no ordinary user,
-and as the image's user `ferrix` on Linux.
+load runs as root on Xaqu's gate, whose initramfs has no ordinary user,
+and as the image's user `xaqu` on Linux.
 
 2026-10-14: R1 and R3 meet at the launch timer. `framerec.c` implements
 the protocol `rig launch` defines: with `RIG_LAUNCH_FD` naming an open
@@ -1318,7 +1318,7 @@ pipe it takes `CLOCK_MONOTONIC` in a constructor and when the first swap
 returns, writes `ctor <ns> swap <ns>` and closes the pipe; without it, or
 when the number is no pipe, it writes nothing (the library still asks only
 for `GLIBC_2.2.5`). `test-frames` starts each framegl run with `rig
-launch`, so M6 on Ferrix is framegl under the real recorder, through
+launch`, so M6 on Xaqu is framegl under the real recorder, through
 yserver on hyprix, with llvmpipe, from yserver's volume: cold is the first
 run after the boot, warm the second. Gate `rf-frames` (KVM, commit
 `7fa46130`):
@@ -1336,7 +1336,7 @@ printed no `launch:` line with a first swap. `test-game-rig` keeps its
 stand-in (+1.7 and +101.8 ms, `rf-rig`): its boot is the console's, with
 no X server and no Mesa on the rustc volume. `measure.sh` times a real
 program where a guest names one in `RIG_GAME`; the Linux guest's M6 is not
-taken yet, and with it whether Ferrix is within §2.3's 10%.
+taken yet, and with it whether Xaqu is within §2.3's 10%.
 
 2026-10-15: I1 is built. hyprix reads its devices on a thread of its own and
 writes a locked pointer's motion from there (§4.7's second point), each

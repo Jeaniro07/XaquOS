@@ -17,20 +17,20 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     AT_BASE, AT_CLKTCK, AT_EGID, AT_EMPTY_PATH, AT_ENTRY, AT_EUID, AT_FDCWD, AT_GID, AT_HWCAP,
     AT_HWCAP2, AT_PAGESZ, AT_PHDR, AT_PHENT, AT_PHNUM, AT_SECURE, AT_SYMLINK_NOFOLLOW,
     AT_SYSINFO_EHDR, AT_UID,
 };
-use ferrix_ustack::{Spec, Width};
-use ferrix_vfs::access::MAY_EXEC;
-use ferrix_vfs::writers::{DenyWrite, deny_write_access};
-use ferrix_vfs::{Access, Context, FileType, OpenFile, OpenFlags};
+use xaqu_ustack::{Spec, Width};
+use xaqu_vfs::access::MAY_EXEC;
+use xaqu_vfs::writers::{DenyWrite, deny_write_access};
+use xaqu_vfs::{Access, Context, FileType, OpenFile, OpenFlags};
 
 use crate::fs::SetIds;
-use ferrix_vma::VmaFlags;
+use xaqu_vma::VmaFlags;
 
 use crate::arch;
 use crate::fallible::AllocError;
@@ -97,8 +97,8 @@ pub enum ExecError {
 }
 
 const _: () = assert!(
-    STACK_SIZE == ferrix_native_abi::types::NATIVE_STACK_SIZE
-        && STACK_GUARD == ferrix_native_abi::types::NATIVE_STACK_GUARD,
+    STACK_SIZE == xaqu_native_abi::types::NATIVE_STACK_SIZE
+        && STACK_GUARD == xaqu_native_abi::types::NATIVE_STACK_GUARD,
     "the loader library places a native process's stack by these constants"
 );
 
@@ -109,7 +109,7 @@ const _: () = assert!(
 /// unmapped deliberately — a program that walks off the end of its stack
 /// should fault rather than wrap to zero.
 const fn stack_top(abi: Abi) -> u64 {
-    (load::user_end(abi) - PAGE_SIZE) & !(ferrix_ustack::STACK_ALIGN - 1)
+    (load::user_end(abi) - PAGE_SIZE) & !(xaqu_ustack::STACK_ALIGN - 1)
 }
 
 /// How far below the stack's top the vDSO ends: 128 MiB, Linux's least gap
@@ -232,7 +232,7 @@ pub(crate) fn load(
     image: &[u8],
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<Arc<Process>, ExecError> {
     let name = args.first().copied().unwrap_or(b"");
     let program = Executable {
@@ -370,7 +370,7 @@ pub(crate) fn load_executable(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<Arc<Process>, ExecError> {
     load_as(Process::new, program, args, env, random)
 }
@@ -382,7 +382,7 @@ fn load_as(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<Arc<Process>, ExecError> {
     let space = AddressSpace::new().map_err(ExecError::Space)?;
     let process =
@@ -487,7 +487,7 @@ fn populate(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<Startup, ExecError> {
     let image = load_into(space, program.image, program.interpreter)?;
     let loaded = &image.loaded;
@@ -568,7 +568,7 @@ fn populate(
         platform: arch::user_platform(loaded.abi),
         width: width(loaded.abi),
     };
-    let startup = ferrix_ustack::build(&spec, top, &mut scratch).map_err(|_| ExecError::Startup)?;
+    let startup = xaqu_ustack::build(&spec, top, &mut scratch).map_err(|_| ExecError::Startup)?;
     uaccess::copy_to_user(space, base, &scratch).map_err(|_| ExecError::Startup)?;
 
     // The file, where there is one, is what `/proc/<pid>/exe` leads to: for a
@@ -606,7 +606,7 @@ pub fn run(
     image: &[u8],
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<i32, ExecError> {
     let name = args.first().copied().unwrap_or(b"");
     let program = Executable {
@@ -633,7 +633,7 @@ pub(crate) fn run_with_linker(
     linker: Source<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<i32, ExecError> {
     let name = args.first().copied().unwrap_or(b"");
     let program = Executable {
@@ -655,7 +655,7 @@ pub(crate) fn run_executable(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<i32, ExecError> {
     run_as(Process::new, program, args, env, random)
 }
@@ -682,7 +682,7 @@ pub(crate) fn run_init(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
     bootstrap: Option<Transfer>,
 ) -> Result<i32, ExecError> {
     for _ in 0..INIT_PID_WAITS {
@@ -731,7 +731,7 @@ fn run_as(
     program: Executable<'_>,
     args: &[&[u8]],
     env: &[&[u8]],
-    random: [u8; ferrix_ustack::RANDOM_BYTES],
+    random: [u8; xaqu_ustack::RANDOM_BYTES],
 ) -> Result<i32, ExecError> {
     let process = load_as(make, program, args, env, random)?;
     let _task = process::start(&process).map_err(ExecError::Start)?;
@@ -966,7 +966,7 @@ fn execve_at(
 }
 
 /// Deny writes on the file `image` was opened from for as long as the answer
-/// is held: `ETXTBSY` for a file open for writing (`ferrix_vfs::writers`).
+/// is held: `ETXTBSY` for a file open for writing (`xaqu_vfs::writers`).
 ///
 /// `execve` denies each file it opens to run while it holds it, as Linux's
 /// `do_open_execat` does. The program's own denial is the process's from the
@@ -980,7 +980,7 @@ fn deny_writes(image: &ProgramFile) -> Result<Option<DenyWrite>, Errno> {
 /// [`crate::fs::open_program`], and [`deny_writes`] on what it opened.
 fn open_running(
     ctx: &Context,
-    start: Option<&ferrix_vfs::Location>,
+    start: Option<&xaqu_vfs::Location>,
     path: &[u8],
 ) -> Result<(ProgramFile, Vec<u8>, SetIds, Option<DenyWrite>), Errno> {
     let (image, exe, set_ids) = crate::fs::open_program(ctx, start, path)?;
@@ -1096,7 +1096,7 @@ fn read_strings(
             return Ok(strings);
         }
         let mut string = Vec::new();
-        uaccess::copy_cstr_from_user(space, pointer, ferrix_ustack::MAX_ARG_STRLEN, &mut string)
+        uaccess::copy_cstr_from_user(space, pointer, xaqu_ustack::MAX_ARG_STRLEN, &mut string)
             .map_err(|_| Errno::EFAULT)?;
         // The string, its terminator and its pointer, which is what it costs
         // on the new program's stack.
@@ -1108,7 +1108,7 @@ fn read_strings(
 }
 
 /// The interpreter and its one optional argument from a `#!` line: what
-/// `execve` runs a script with, and what init does when `ferrix.init=` names
+/// `execve` runs a script with, and what init does when `xaqu.init=` names
 /// one.
 pub(crate) fn interpreter_line(image: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), Errno> {
     let line = image.get(2..).ok_or(Errno::ENOEXEC)?;
@@ -1134,8 +1134,8 @@ pub(crate) fn interpreter_line(image: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>
 
 /// Sixteen bytes for `AT_RANDOM`, from the kernel's generator, which is
 /// what a C library seeds its stack protector and pointer guard from.
-pub(crate) fn random_bytes() -> [u8; ferrix_ustack::RANDOM_BYTES] {
-    let mut bytes = [0_u8; ferrix_ustack::RANDOM_BYTES];
+pub(crate) fn random_bytes() -> [u8; xaqu_ustack::RANDOM_BYTES] {
+    let mut bytes = [0_u8; xaqu_ustack::RANDOM_BYTES];
     crate::random::fill(&mut bytes);
     bytes
 }

@@ -4,7 +4,7 @@
 //! may appear in a name, and a filesystem that decoded names as UTF-8 would
 //! refuse files a program had every right to create. Nothing here decodes.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::Result;
 

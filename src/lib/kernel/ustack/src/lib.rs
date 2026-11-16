@@ -45,8 +45,8 @@
 //! # Example
 //!
 //! ```
-//! use ferrix_ustack::{Spec, Width, build};
-//! use ferrix_linux_abi::types::{AT_ENTRY, AT_PAGESZ};
+//! use xaqu_ustack::{Spec, Width, build};
+//! use xaqu_linux_abi::types::{AT_ENTRY, AT_PAGESZ};
 //!
 //! let mut page = [0_u8; 4096];
 //! let spec = Spec {
@@ -68,7 +68,7 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-use ferrix_linux_abi::types::{AT_EXECFN, AT_NULL, AT_PLATFORM, AT_RANDOM};
+use xaqu_linux_abi::types::{AT_EXECFN, AT_NULL, AT_PLATFORM, AT_RANDOM};
 
 /// The number of random bytes `AT_RANDOM` points at.
 ///
@@ -84,7 +84,7 @@ const RANDOM_BYTES_U64: u64 = 16;
 /// The alignment the stack pointer must have when the program's first
 /// instruction runs.
 ///
-/// Sixteen on every architecture Ferrix targets. ARM's own EABI would settle
+/// Sixteen on every architecture Xaqu targets. ARM's own EABI would settle
 /// for eight, but Linux's `STACK_ROUND` rounds to sixteen on all of them and a
 /// program entitled to assume what Linux does is a program that assumes this.
 pub const STACK_ALIGN: u64 = 16;
@@ -98,7 +98,7 @@ pub const MAX_ARG_STRLEN: usize = 32 * 4096;
 /// The width of a user pointer on the architecture the image is built for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Width {
-    /// 32-bit, which for Ferrix means ARMv7-A.
+    /// 32-bit, which for Xaqu means ARMv7-A.
     Bits32,
     /// 64-bit: x86-64 and AArch64.
     Bits64,

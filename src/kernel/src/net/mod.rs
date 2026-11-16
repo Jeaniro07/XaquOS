@@ -36,7 +36,7 @@
 //! them overflows a `u32` in four seconds. The kernel counts in nanoseconds.
 //! The conversion is [`now`], and it is the only place the two meet.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 pub mod device;
 pub(crate) mod ifreq;
@@ -53,8 +53,8 @@ pub(crate) use namespace::{NetNamespace, acting};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_net::stack::{Millis, Outgoing};
-use ferrix_net::{Interface, Stack};
+use xaqu_net::stack::{Millis, Outgoing};
+use xaqu_net::{Interface, Stack};
 
 use crate::object::port::Port;
 use crate::sched::WaitQueue;
@@ -317,7 +317,7 @@ impl NetCore {
 
     /// Keep an interface whose driver has gone for the next one: its carrier
     /// down, no ring told of its frames and none left waiting for it, but its
-    /// index, addresses and routes as they were (`ferrix_kernel_net_ring::interfaces::net_ring`).
+    /// index, addresses and routes as they were (`xaqu_kernel_net_ring::interfaces::net_ring`).
     pub fn park_interface(&self, index: u32) {
         self.set_carrier(index, false);
         self.transmit_wakers
@@ -358,10 +358,10 @@ impl NetCore {
             if let Some(interface) = stack.interface_mut(index) {
                 if up {
                     interface.flags |=
-                        ferrix_net::iface::IFF_RUNNING | ferrix_net::iface::IFF_LOWER_UP;
+                        xaqu_net::iface::IFF_RUNNING | xaqu_net::iface::IFF_LOWER_UP;
                 } else {
                     interface.flags &=
-                        !(ferrix_net::iface::IFF_RUNNING | ferrix_net::iface::IFF_LOWER_UP);
+                        !(xaqu_net::iface::IFF_RUNNING | xaqu_net::iface::IFF_LOWER_UP);
                 }
             }
         });
@@ -374,7 +374,7 @@ impl NetCore {
 
     /// The same queue as a source a wait can hold, which keeps it alive for
     /// as long as it waits: a namespace can end under a waiter.
-    pub(crate) fn progress_source(&self) -> ferrix_vfs::WakeSource {
+    pub(crate) fn progress_source(&self) -> xaqu_vfs::WakeSource {
         crate::fs::wake::shared(&self.progress)
     }
 
@@ -398,7 +398,7 @@ const MAX_PENDING: usize = 512;
 /// If the scheduler cannot take another task.
 pub fn start() -> Result<(), &'static str> {
     let _ = core();
-    let _ = crate::sched::spawn("net core", run, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let _ = crate::sched::spawn("net core", run, 0, xaqu_sched::NICE_0_WEIGHT)?;
     Ok(())
 }
 

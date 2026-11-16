@@ -1,4 +1,4 @@
-//! Placing Ferrix and building the address space it starts in.
+//! Placing Xaqu and building the address space it starts in.
 //!
 //! The same job as `src/boot/common/uefi/src/load.rs`, on the same libraries -- the ELF
 //! parser, the page table mapper and the layout `src/lib/proto/bootinfo` defines -- with
@@ -14,14 +14,14 @@
 
 use core::ptr;
 
-use ferrix_bootinfo::{
+use xaqu_bootinfo::{
     Arch, BOOT_STACK_SIZE, BOOTINFO_MAGIC, BOOTINFO_VERSION, BootInfo, FIRMWARE_SEED, Framebuffer,
     KERNEL_VIRT_BASE, MemKind, MemRegion, PAGE_SIZE, PHYSMAP_ALIGN, PHYSMAP_BASE, PHYSMAP_END,
     allocator_owns, direct_map_runs, physmap_origin, read_only_span, split_run,
 };
-use ferrix_elf::{Class, EM_AARCH64, Elf, FixupKind, PF_W, PF_X, Segment};
-use ferrix_paging::aarch64::{AArch64, MAIR_EL1};
-use ferrix_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
+use xaqu_elf::{Class, EM_AARCH64, Elf, FixupKind, PF_W, PF_X, Segment};
+use xaqu_paging::aarch64::{AArch64, MAIR_EL1};
+use xaqu_paging::{MapFlags, Mapper, PhysAddr, PhysMem, VirtAddr};
 
 use crate::entry::{self, Handoff};
 use crate::kaslr;
@@ -144,7 +144,7 @@ fn take_copy(memory: &mut Memory, bytes: &[u8], kind: MemKind) -> Result<Taken, 
 /// Parse and vet the kernel, as `src/boot/common/uefi/` does.
 fn parse_kernel(bytes: &[u8]) -> Result<Elf<'_>, &'static str> {
     if bytes.is_empty() {
-        return Err("this loader was built without a kernel: set FERRIX_PIXEL7_KERNEL");
+        return Err("this loader was built without a kernel: set XAQU_PIXEL7_KERNEL");
     }
     let elf = Elf::parse(bytes).map_err(|_| "the kernel is not a valid ELF image")?;
     if elf.class() != Class::Elf64 {
@@ -461,7 +461,7 @@ fn write_boot_info(
     unsafe { ptr::write_volatile(info.base as *mut BootInfo, boot_info) };
 }
 
-/// Place Ferrix, describe the machine to it, and jump.
+/// Place Xaqu, describe the machine to it, and jump.
 pub(crate) fn boot(memory: &mut Memory, carried: Carried<'_>) -> Result<(), &'static str> {
     let elf = parse_kernel(payload::kernel())?;
     let image = place_kernel(memory, &elf)?;
@@ -553,7 +553,7 @@ pub(crate) fn boot(memory: &mut Memory, carried: Carried<'_>) -> Result<(), &'st
         entry::invalidate_dcache(taken.base, taken.len);
     }
     let entry_point = elf.entry() + choice.slide();
-    say!("entering Ferrix at {:#x}", entry_point);
+    say!("entering Xaqu at {:#x}", entry_point);
     // SAFETY: at EL1 with the MMU off since the entry sequence; the identity
     // tree maps this loader's image, which this code is in; every range the
     // kernel is handed was invalidated just above, after its last write.

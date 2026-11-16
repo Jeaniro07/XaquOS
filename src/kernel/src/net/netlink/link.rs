@@ -10,12 +10,12 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::netlink::{
     IFLA_IFNAME, IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, IFLA_NET_NS_FD, IFLA_NET_NS_PID,
     IfInfoMsg, NLM_F_ACK, NLM_F_CREATE, RTM_DELLINK, RTM_NEWLINK, RTM_SETLINK, VETH_INFO_PEER,
 };
-use ferrix_netlink::{Attributes, Message, Writer};
+use xaqu_netlink::{Attributes, Message, Writer};
 
 use crate::net::{NetNamespace, namespace, veth};
 use crate::syscall::process::Process;
@@ -172,7 +172,7 @@ fn create(
         .find(IFLA_INFO_DATA)
         .and_then(|data| Attributes::new(data.as_bytes()).find(VETH_INFO_PEER))
         .map_or(&[][..], |peer| peer.as_bytes());
-    let body_end = ferrix_linux_abi::netlink::nlmsg_align(IfInfoMsg::SIZE);
+    let body_end = xaqu_linux_abi::netlink::nlmsg_align(IfInfoMsg::SIZE);
     if !block.is_empty() && block.len() < IfInfoMsg::SIZE {
         return Err(Errno::EINVAL);
     }

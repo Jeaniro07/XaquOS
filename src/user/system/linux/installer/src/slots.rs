@@ -1,18 +1,18 @@
-//! `ferrix-install --slots`: the A/B layout of `docs/AB-BOOT.md`
-//! (`docs/DEV-ON-FERRIX.md` §4.4, D8).
+//! `xaqu-install --slots`: the A/B layout of `docs/AB-BOOT.md`
+//! (`docs/DEV-ON-XAQU.md` §4.4, D8).
 //!
 //! On a disk with no partition table and nothing recognisable on it, it
 //! writes the layout the customer's SN720 was given on 2026-10-11, in this
 //! order: an optional swap partition (`--swap-mib`, none by default), the
-//! EFI system partition `ferrix-esp` (`--esp-mib`, 512), the boot control
-//! partition `ferrix-bootctl` (1 MiB), the slots `ferrix-slot-a` and
-//! `ferrix-slot-b` (`--slot-mib`, 4096 each), and the root `ferrix-root`, the
+//! EFI system partition `xaqu-esp` (`--esp-mib`, 512), the boot control
+//! partition `xaqu-bootctl` (1 MiB), the slots `xaqu-slot-a` and
+//! `xaqu-slot-b` (`--slot-mib`, 4096 each), and the root `xaqu-root`, the
 //! rest.
 //!
 //! On a disk that already has the layout -- one boot control partition and
 //! two system slots, by type -- it writes no partition table and touches no
-//! partition but Ferrix's own: the ESP named `ferrix-esp`, the control
-//! partition, the two slots, and the root named `ferrix-root`. Any other
+//! partition but Xaqu's own: the ESP named `xaqu-esp`, the control
+//! partition, the two slots, and the root named `xaqu-root`. Any other
 //! disk with a table is refused: this mode erases nothing it did not make,
 //! since a disk shared with another system (the SN720's first partition is
 //! the host's live swap) must keep the rest.
@@ -21,28 +21,28 @@
 //!
 //! * the ESP: a byte copy of the live volume (the loader, and the kernel,
 //!   initramfs and command line as the loader's rescue path, §4 step 7),
-//!   with `ferrix.root=btrfs`;
+//!   with `xaqu.root=btrfs`;
 //! * slot A: the live system's kernel, initramfs and command line, with
-//!   `ferrix.root=btrfs`, verified after writing as the loader verifies it;
+//!   `xaqu.root=btrfs`, verified after writing as the loader verifies it;
 //! * slot B: its header zeroed, so it holds nothing that verifies;
 //! * the control record: both copies zeroed, then the first record, A good;
-//! * the root: the empty `ferrix-root` volume, as the whole-disk install does.
+//! * the root: the empty `xaqu-root` volume, as the whole-disk install does.
 
 use std::fs::File;
 
-use ferrix_install::disk::{self, SECTOR};
-use ferrix_install::layout::{
+use xaqu_install::disk::{self, SECTOR};
+use xaqu_install::layout::{
     self, AbDisk, CONTROL_NAME, CONTROL_TYPE, ESP_NAME, LINUX_SWAP, Part, ROOT_NAME, SLOT_NAMES,
     SLOT_TYPE,
 };
-use ferrix_install::record::Blocks;
-use ferrix_install::{record, slotio};
-use ferrix_partition::{
+use xaqu_install::record::Blocks;
+use xaqu_install::{record, slotio};
+use xaqu_partition::{
     ESP, LINUX_FILESYSTEM, Partition, parse_entries, parse_header, usable, write_table,
 };
-use ferrix_slots::Slot;
-use ferrix_slots::record::{COPY_OFFSETS, Record};
-use ferrix_slots::slot::HEADER_LEN;
+use xaqu_slots::Slot;
+use xaqu_slots::record::{COPY_OFFSETS, Record};
+use xaqu_slots::slot::HEADER_LEN;
 
 use super::{
     ALIGN, Asked, INSTALLED_ROOT, LIVE_ROOT, ROOT_BYTES, WIPE, confirm, copy_esp,
@@ -98,7 +98,7 @@ pub fn install(
             Some(ab) => (ab, None),
             None => {
                 return Err(format!(
-                    "{target} has a partition table without Ferrix's A/B layout; --slots erases \
+                    "{target} has a partition table without Xaqu's A/B layout; --slots erases \
                      nothing it did not make (use a blank disk, or one with the layout)"
                 ));
             }
@@ -162,7 +162,7 @@ pub fn install(
     }
 
     println!(
-        "ferrix-install: {target} ({} MiB) {}: {} ESP {} MiB, control {}, slot a {} and b {} \
+        "xaqu-install: {target} ({} MiB) {}: {} ESP {} MiB, control {}, slot a {} and b {} \
          ({} MiB each), root {} MiB; nothing else is written",
         size >> 20,
         if table.is_some() {
@@ -197,7 +197,7 @@ pub fn install(
     })?;
     let slot_a = &ab.slots[0];
     println!(
-        "ferrix-install: writing slot a ({}): kernel {} KiB, initramfs {} KiB, `{}`",
+        "xaqu-install: writing slot a ({}): kernel {} KiB, initramfs {} KiB, `{}`",
         slot_a.node,
         image.kernel.len() >> 10,
         image.initrd.len() >> 10,
@@ -210,14 +210,14 @@ pub fn install(
         slot_a.bytes(),
         &image,
         1,
-        "ferrix installed",
+        "xaqu installed",
     )?;
     let back = slotio::verify(&mut whole, base, slot_a.bytes())
         .map_err(|why| format!("slot a does not verify after writing: {why}"))?;
     if back != written {
         return Err("slot a verifies but is not what was written".into());
     }
-    println!("ferrix-install: slot a verified");
+    println!("xaqu-install: slot a verified");
     step("emptying slot b", || {
         write_at(
             &mut whole,
@@ -240,7 +240,7 @@ pub fn install(
     let blank = record::read(&mut blocks, &part)?;
     let first = record::write(&mut blocks, &part, &blank, Some(Record::initial(Slot::A)))?;
     println!(
-        "ferrix-install: the control record says slot a is good (record {})",
+        "xaqu-install: the control record says slot a is good (record {})",
         first.sequence
     );
     step("making the root volume", || {
@@ -254,15 +254,15 @@ pub fn install(
         })?;
     }
     step("flushing", || whole.sync_all())?;
-    println!("ferrix-install: done. Remove the live disk and start the machine from {target}.");
+    println!("xaqu-install: done. Remove the live disk and start the machine from {target}.");
     Ok(())
 }
 
 /// Refuse to write `part` of the whole disk `whole` unless it is of a
-/// Ferrix type and holds nothing another system would miss.
+/// Xaqu type and holds nothing another system would miss.
 fn check_at(whole: &mut File, part: &Part) -> Result<(), String> {
     if part.entry.type_guid != SLOT_TYPE && part.entry.type_guid != CONTROL_TYPE {
-        return Err(format!("{} is not of a Ferrix type", part.node));
+        return Err(format!("{} is not of a Xaqu type", part.node));
     }
     let mut head = vec![0_u8; layout::HEAD_BYTES];
     disk::read_at(whole, part.entry.first * SECTOR, &mut head).map_err(|e| e.to_string())?;
@@ -272,8 +272,8 @@ fn check_at(whole: &mut File, part: &Part) -> Result<(), String> {
     }
 }
 
-/// The live command line with `/` on the disk: `ferrix.root=tmpfs` made
-/// `ferrix.root=btrfs`, added when there is no `ferrix.root=` at all.
+/// The live command line with `/` on the disk: `xaqu.root=tmpfs` made
+/// `xaqu.root=btrfs`, added when there is no `xaqu.root=` at all.
 fn installed_words(cmdline: &[u8]) -> Vec<u8> {
     let live = String::from_utf8_lossy(LIVE_ROOT).into_owned();
     let installed = String::from_utf8_lossy(INSTALLED_ROOT).into_owned();
@@ -287,7 +287,7 @@ fn installed_words(cmdline: &[u8]) -> Vec<u8> {
             }
         })
         .collect();
-    if !words.iter().any(|w| w.starts_with("ferrix.root=")) {
+    if !words.iter().any(|w| w.starts_with("xaqu.root=")) {
         words.push(installed);
     }
     words.join(" ").into_bytes()

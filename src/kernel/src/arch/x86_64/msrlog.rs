@@ -1,4 +1,4 @@
-//! `ferrix.msrlog`: a read-only log of the power-limit, limit-reason,
+//! `xaqu.msrlog`: a read-only log of the power-limit, limit-reason,
 //! performance and thermal MSRs, for finding out why a processor's
 //! graphics runs below the clock asked of it (the N150's GT held at 450 MHz
 //! under "pl4"). Ring 3 cannot read an MSR, so the kernel prints them.
@@ -6,7 +6,7 @@
 //! Off unless the boot word is given (`L.x86_64.187`): without it nothing
 //! here reads a register, starts a task or prints a line. With it, a task
 //! pinned to the boot processor reads the registers once after the scheduler
-//! starts and again every `ferrix.msrlog.period` seconds (5 by default, 0 for
+//! starts and again every `xaqu.msrlog.period` seconds (5 by default, 0 for
 //! once), each through [`cpu::read_msr_checked`] so a register this
 //! processor does not implement prints `absent (#GP)` instead of stopping
 //! the kernel (`L.x86_64.188`). It writes no register. Every line starts
@@ -17,18 +17,18 @@ pub(super) mod decode;
 
 use core::arch::x86_64::__cpuid;
 
-use ferrix_bootinfo::BootView;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_bootinfo::BootView;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use super::cpu;
 use crate::console::println;
 use decode::{Limit, Reasons, Units};
 
 /// The boot word that turns the log on (`L.x86_64.187`).
-const FLAG: &str = "ferrix.msrlog";
+const FLAG: &str = "xaqu.msrlog";
 /// Seconds between reads; 0 reads once. Without it, [`DEFAULT_PERIOD`].
-const PERIOD_OPTION: &str = "ferrix.msrlog.period";
-/// Seconds between reads where `ferrix.msrlog.period` names none, or names
+const PERIOD_OPTION: &str = "xaqu.msrlog.period";
+/// Seconds between reads where `xaqu.msrlog.period` names none, or names
 /// one that is not understood.
 pub(super) const DEFAULT_PERIOD: u64 = 5;
 /// The longest period understood, an hour.
@@ -57,7 +57,7 @@ const TEMPERATURE_TARGET: u32 = 0x1a2;
 /// `IA32_PACKAGE_THERM_STATUS`.
 const PACKAGE_THERM_STATUS: u32 = 0x1b1;
 
-/// What `ferrix.msrlog.period` chose: seconds between reads, 0 for once,
+/// What `xaqu.msrlog.period` chose: seconds between reads, 0 for once,
 /// or `None` for a value not understood (said, and the default taken).
 pub(super) fn choose_period(value: Option<&str>) -> Option<u64> {
     let Some(value) = value else {
@@ -82,7 +82,7 @@ fn intel() -> bool {
         .eq(b"GenuineIntel".iter().copied())
 }
 
-/// Start the log if `ferrix.msrlog` is on the command line; otherwise do
+/// Start the log if `xaqu.msrlog` is on the command line; otherwise do
 /// nothing at all. Called once from `kmain`, on the boot processor, after
 /// the scheduler has started.
 pub(crate) fn start(view: &BootView<'_>) {

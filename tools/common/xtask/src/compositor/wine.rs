@@ -42,7 +42,7 @@ const TITLE: &str = "Untitled - Notepad";
 const WINDOW: &str = "wine: window";
 
 /// The title the 32-bit program gives its window.
-const WOW64_TITLE: &str = "Ferrix WoW64";
+const WOW64_TITLE: &str = "Xaqu WoW64";
 
 /// The colour the script asks the 32-bit program to paint its window in,
 /// as [`SCRIPT`] passes it (`20c060`).
@@ -90,7 +90,7 @@ const WHITE_PERCENT: usize = 70;
 
 /// The line typed into notepad, and the QEMU keys that type it. No `y` or
 /// `z`, which a German layout swaps.
-const LINE: &str = "hello ferrix";
+const LINE: &str = "hello xaqu";
 /// See [`LINE`].
 const LINE_KEYS: &[&str] = &["h", "e", "l", "l", "o", "spc", "f", "e", "r", "r", "i", "x"];
 /// The first word of [`LINE`], which the double click selects.
@@ -129,7 +129,7 @@ sed 's/^/wine: cmd: /' /tmp/wine/ver.txt
 xdpyinfo | grep -E "dimensions|resolution" | sed 's/^/wine: x: /'
 /usr/lib/wine/wine64 /etc/window32.exe 20c060 20 > /tmp/wine/window32.log 2>&1 &
 waited=0
-until xwininfo -name "Ferrix WoW64" 2>/dev/null | grep -q IsViewable || [ $waited -ge 60 ]; do
+until xwininfo -name "Xaqu WoW64" 2>/dev/null | grep -q IsViewable || [ $waited -ge 60 ]; do
     sleep 1
     waited=$((waited + 1))
 done
@@ -514,7 +514,7 @@ pub(crate) fn test_wine_window(args: &Args, volume: PathBuf) -> Result<()> {
     args.gl = false;
     args.data_image = Some(volume);
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-wine needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-wine needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let carried = Carried {

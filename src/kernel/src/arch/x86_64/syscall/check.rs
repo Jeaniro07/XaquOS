@@ -96,7 +96,7 @@ pub fn drive_system_call(
     args: [u64; 6],
     ip: u64,
 ) -> Option<isize> {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     let saved = <super::super::Irq as IrqControl>::disable();
     let result = match abi {
@@ -119,7 +119,7 @@ pub fn drive_system_call(
                 rcx: ip,
                 user_rsp: 0x7fff_e000,
             };
-            super::ferrix_syscall_entry(&mut frame);
+            super::xaqu_syscall_entry(&mut frame);
             // The checking task never left the kernel, whatever the entry's
             // way out said (`sched::vtime`).
             crate::sched::vtime::entered();
@@ -169,7 +169,7 @@ pub fn drive_system_call(
 /// For the `channel_write_read` check (`object::write_read_check`), run on a
 /// thread of a check's process, as [`drive_system_call`] is run.
 pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
 
     let mut frame = SyscallFrame {
         r15: 0,
@@ -190,7 +190,7 @@ pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
         user_rsp: 0x7fff_e000,
     };
     let saved = <super::super::Irq as IrqControl>::disable();
-    super::ferrix_syscall_entry(&mut frame);
+    super::xaqu_syscall_entry(&mut frame);
     // The checking task never left the kernel, whatever the entry's way out
     // said (`sched::vtime`).
     crate::sched::vtime::entered();
@@ -216,8 +216,8 @@ pub fn drive_native_words(number: usize, args: [u64; 6]) -> (isize, [u64; 3]) {
 /// calls not decoded as itself.
 /// Verifies: `L.x86_64.140`
 pub fn run_decode() -> Result<(), &'static str> {
-    use ferrix_linux_abi::nr::{Syscall, x86_64};
-    use ferrix_native_abi::nr::{FIRST, LAST};
+    use xaqu_linux_abi::nr::{Syscall, x86_64};
+    use xaqu_native_abi::nr::{FIRST, LAST};
 
     use super::{Early, early};
 

@@ -1,5 +1,5 @@
 name: Something broke
-description: Ferrix did not boot, a program failed, or a gate went red
+description: Xaqu did not boot, a program failed, or a gate went red
 labels: [bug]
 body:
   - type: textarea
@@ -38,5 +38,5 @@ body:
     id: log
     attributes:
       label: Serial log
-      description: The last hundred lines are usually enough. The line with `FERRIX-BOOT-OK` or the panic matters most.
+      description: The last hundred lines are usually enough. The line with `XAQU-BOOT-OK` or the panic matters most.
       render: text

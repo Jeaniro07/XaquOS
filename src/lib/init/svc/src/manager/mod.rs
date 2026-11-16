@@ -62,7 +62,7 @@ impl Probe for NoProbe {
 /// How the manager was started.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Options {
-    /// `ferrix.target=` on the kernel command line: the target to boot
+    /// `xaqu.target=` on the kernel command line: the target to boot
     /// instead of `default.target`.
     pub target: Option<String>,
 }

@@ -3,7 +3,7 @@
 //! `hyprix::run` serves a socket in this process, headless, writing each
 //! frame it composes as a PPM; a client built on the toolkit connects to it
 //! from a thread, does what a desktop client does, and the frame is looked
-//! at. Nothing is mocked: the server is the one Ferrix boots.
+//! at. Nothing is mocked: the server is the one Xaqu boots.
 
 #![expect(
     clippy::expect_used,

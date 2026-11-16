@@ -1,12 +1,12 @@
 //! `wallpaper = <output>, <field>, <field>…`: what is behind the windows,
-//! a Ferrix keyword (`docs/RUNTIME-SETTINGS.md` §3.3) the compositor
+//! a Xaqu keyword (`docs/RUNTIME-SETTINGS.md` §3.3) the compositor
 //! carries out by starting the wallpaper client with the lines in force.
 //!
 //! Each field is a word and its value, the value being everything after
 //! the first space, so a path may hold spaces (but not a comma):
 //!
 //! ```text
-//! wallpaper = , picture /usr/share/ferrix/wallpapers/ferrix.png, fit fill, colour 1d2027
+//! wallpaper = , picture /usr/share/xaqu/wallpapers/xaqu.png, fit fill, colour 1d2027
 //! wallpaper = DP-1, slideshow ~/Pictures/Wallpapers, every 1800, shuffle 1
 //! wallpaper = HDMI-A-1, colour rgb(203040)
 //! wallpaper = , gradient 110deg a9c6f5 e8d5f2 55% f6e3c9, colour e8e8ed
@@ -115,7 +115,7 @@ pub struct Wallpaper {
     pub pause_battery: bool,
 }
 
-/// The colour a wallpaper has when its line names none: Ferrix's dark.
+/// The colour a wallpaper has when its line names none: Xaqu's dark.
 pub const WALLPAPER_COLOUR: u32 = 0xff1d_2027;
 
 /// The seconds a slideshow shows each picture when its line names none.

@@ -1,6 +1,6 @@
 //! The reassembly list's bounds.
 
-use ferrix_kmem::testing::Job;
+use xaqu_kmem::testing::Job;
 
 use crate::ring::{MAX_RUNS, RUN_COST, Reassembly};
 use crate::seq::SeqNumber;

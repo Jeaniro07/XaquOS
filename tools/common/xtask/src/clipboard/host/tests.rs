@@ -9,8 +9,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Sender};
 use std::time::{Duration, Instant};
 
-use ferrix_vdagent::chunk::Reassembler;
-use ferrix_vdagent::message::{ClipboardType, Message, Selection, Shape, Types};
+use xaqu_vdagent::chunk::Reassembler;
+use xaqu_vdagent::message::{ClipboardType, Message, Selection, Shape, Types};
 
 use super::{HostClipboard, Session};
 use crate::clipboard::{HOST_CAPS, send};

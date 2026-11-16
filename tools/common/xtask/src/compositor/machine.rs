@@ -28,10 +28,10 @@ exec-once = /bin/pattern checkerboard one
 exec-once = /bin/pattern gradient two --after one
 ";
 
-/// What the kernel says when it read `ferrix.checks=skip`
+/// What the kernel says when it read `xaqu.checks=skip`
 /// (`src/kernel/src/checks.rs`).
 const CHECKS_SKIPPED: &str =
-    "checks   ferrix.checks=skip: stages 2 to 12 are brought up and not checked";
+    "checks   xaqu.checks=skip: stages 2 to 12 are brought up and not checked";
 
 /// A line only a boot that ran stage 5's checks prints.
 const STAGE5_CHECKED: &str = "  stage 5  ";

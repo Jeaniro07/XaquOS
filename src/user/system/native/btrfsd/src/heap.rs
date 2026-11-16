@@ -9,9 +9,9 @@ use core::alloc::{GlobalAlloc, Layout};
 use core::cell::UnsafeCell;
 use core::ptr;
 
-use ferrix_rt::Kernel;
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::vmo;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::vmo;
 
 /// The smallest class.
 const SMALLEST: usize = 16;

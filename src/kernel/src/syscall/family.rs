@@ -36,10 +36,10 @@ use alloc::sync::Arc;
 
 use alloc::vec;
 
-use ferrix_bootinfo::{Arch, PAGE_SIZE, is_user_address};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{CLONE_SYSVSEM, SIGCHLD};
+use xaqu_bootinfo::{Arch, PAGE_SIZE, is_user_address};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{CLONE_SYSVSEM, SIGCHLD};
 
 use crate::arch;
 use crate::fs::cgroupfs;
@@ -127,7 +127,7 @@ const P_PGID: u32 = 2;
 /// `waitid`'s `idtype`: the child a pidfd names.
 const P_PIDFD: u32 = 3;
 /// `pidfd_open`'s one flag, `O_NONBLOCK` under another name.
-const PIDFD_NONBLOCK: u32 = ferrix_linux_abi::types::O_NONBLOCK;
+const PIDFD_NONBLOCK: u32 = xaqu_linux_abi::types::O_NONBLOCK;
 
 use crate::syscall::kill::{CLD_CONTINUED, CLD_EXITED, CLD_KILLED, CLD_STOPPED};
 
@@ -1014,7 +1014,7 @@ pub(crate) fn sys_waitid(
             let (code, status) = match (change, child.ended_by_signal()) {
                 (Change::Stopped(_, signal), _) => (CLD_STOPPED, *signal as i32),
                 (Change::Continued(_), _) => {
-                    (CLD_CONTINUED, ferrix_linux_abi::types::SIGCONT as i32)
+                    (CLD_CONTINUED, xaqu_linux_abi::types::SIGCONT as i32)
                 }
                 (Change::Ended(_), Some(signal)) => (CLD_KILLED, signal as i32),
                 (Change::Ended(_), None) => (CLD_EXITED, child.exit_status().unwrap_or(0) & 0xFF),

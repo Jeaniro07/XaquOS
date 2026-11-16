@@ -3,7 +3,7 @@
 #
 # virgl carries a shader as TGSI assembly text, and the compositor has no
 # GLSL compiler to make it with: Mesa is the compiler, and there is no Mesa
-# on Ferrix. So the shaders are written in GLSL, compiled *here*, on a Linux
+# on Xaqu. So the shaders are written in GLSL, compiled *here*, on a Linux
 # host, by Mesa's own virgl driver -- run against virglrenderer's test server
 # in place of a guest's virtio-gpu -- and the TGSI text that driver sends is
 # what is committed. It is the text a Linux guest's Mesa would have sent for

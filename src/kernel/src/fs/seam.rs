@@ -13,7 +13,7 @@
 //!   makes its pages up);
 //! * block-ring submissions and completions, the crossings themselves.
 //!
-//! `/proc/ferrix-seam` shows them as one line, which `cargo xtask test-vfs`
+//! `/proc/xaqu-seam` shows them as one line, which `cargo xtask test-vfs`
 //! prints at its end. Relaxed atomics: each is a count, read once at the end,
 //! and nothing orders against it.
 
@@ -91,7 +91,7 @@ pub(crate) fn completed() {
     let _ = COMPLETED.fetch_add(1, Ordering::Relaxed);
 }
 
-/// `/proc/ferrix-seam`: the counters as one line, labelled.
+/// `/proc/xaqu-seam`: the counters as one line, labelled.
 pub(crate) fn render() -> Vec<u8> {
     let mut line = alloc::string::String::new();
     let _ = writeln!(

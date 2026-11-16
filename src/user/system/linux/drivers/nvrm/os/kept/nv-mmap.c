@@ -22,20 +22,20 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/nv-mmap.c at 580.173.02, under the MIT licence above:
  * the five calls RM makes of it, the mmap lock and the revocation state.
  * The rest of nv-mmap.c -- the mmap and fault handlers -- is the
  * forwarding core's at N1e, and the revocation itself is the message that
  * makes the kernel unmap every client mapping of a file (§4.4). Changes:
- * the semaphore is ferrix-nvos's; the per-file unmap_mapping_range waits
+ * the semaphore is xaqu-nvos's; the per-file unmap_mapping_range waits
  * for that message, and is said here when it is skipped.
  */
 
 #define  __NO_VERSION__
 
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 static void
 nv_revoke_gpu_mappings_locked(
@@ -107,7 +107,7 @@ void NV_API_CALL nv_set_safe_to_mmap_locked(
     // Caller must hold nvl->mmap_lock
 
     /*
-     * Ferrix: NVIDIA's also notes that a fault must wake the GPU when this
+     * Xaqu: NVIDIA's also notes that a fault must wake the GPU when this
      * goes from true to false; faults are N1e's.
      */
     nvl->safe_to_mmap = safe_to_mmap;

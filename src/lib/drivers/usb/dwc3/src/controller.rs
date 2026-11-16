@@ -7,7 +7,7 @@
 //! this driver to take it over: a DWC3 (`GSNPSID`), in device mode
 //! (`GSTS`), with the run bit clear and halted (`DCTL`, `DSTS`) -- which is
 //! how the phone's ABL leaves it after fastboot, with its own event buffer
-//! still programmed at memory that is now Ferrix's. Anything else is
+//! still programmed at memory that is now Xaqu's. Anything else is
 //! refused untouched: another agent may be driving it.
 //!
 //! Then, in the order Linux's `dwc3_core_init` and `__dwc3_gadget_start`
@@ -41,7 +41,7 @@
 //! and Start Transfer's resource index in bits 16-22, which End Transfer
 //! must be given back. The wait is bounded.
 
-use ferrix_usb_device::{Function, Speed};
+use xaqu_usb_device::{Function, Speed};
 
 use crate::endpoint::Endpoint;
 use crate::ep0::Ep0;

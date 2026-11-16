@@ -2,8 +2,8 @@ use crate::audit;
 use crate::sched;
 use crate::sched::ServiceRefusal;
 use crate::sync::SchedParker;
-use ferrix_sync::Once;
-use ferrix_sync::SleepLock;
+use xaqu_sync::Once;
+use xaqu_sync::SleepLock;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Door {
     Root,

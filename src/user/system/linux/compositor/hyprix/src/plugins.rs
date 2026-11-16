@@ -6,7 +6,7 @@
 //! Hyprland's plugins are C++ shared objects it `dlopen`s into itself: a
 //! plugin calls `HyprlandAPI::addDispatcher`, registers callbacks and hooks
 //! the compositor's own functions. None of that is possible here and not
-//! only because the language is different: Ferrix's programs are statically
+//! only because the language is different: Xaqu's programs are statically
 //! linked and there is no dynamic loader to `dlopen` with, so a plugin that
 //! is a shared object is a plugin that cannot be loaded on the operating
 //! system this compositor is for. `docs/ROADMAP.md` stage 19 records the

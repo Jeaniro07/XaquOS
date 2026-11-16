@@ -18,7 +18,7 @@ fn two_partitions() -> Vec<Partition> {
             Guid::random([2; 16]),
             2048 * 17,
             SECTORS - 2048,
-            "ferrix-root",
+            "xaqu-root",
         ),
     ]
 }
@@ -129,7 +129,7 @@ fn sgdisk_agrees_where_the_host_has_it() {
     let writes =
         write_table(SECTORS, 512, Guid::random([9; 16]), &two_partitions()).expect("a table");
     let path =
-        std::env::temp_dir().join(std::format!("ferrix-partition-{}.img", std::process::id()));
+        std::env::temp_dir().join(std::format!("xaqu-partition-{}.img", std::process::id()));
     std::fs::write(&path, disk_with(&writes)).expect("the image");
     let verify = Command::new("sgdisk")
         .arg("-v")
@@ -149,5 +149,5 @@ fn sgdisk_agrees_where_the_host_has_it() {
         printed.contains("EF00") && printed.contains("8300"),
         "{printed}"
     );
-    assert!(printed.contains("ferrix-root"), "{printed}");
+    assert!(printed.contains("xaqu-root"), "{printed}");
 }

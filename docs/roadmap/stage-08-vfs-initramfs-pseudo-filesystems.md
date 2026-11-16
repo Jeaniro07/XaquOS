@@ -29,7 +29,7 @@ the code that should meet a fuzzer before it meets ring 0.
   across a call into its inode, because stage 11's btrfs waits on the disk
   there; the offset is held across the read, write or listing it positions,
   as Linux's `f_pos_lock` is since 3.14, because it is a lock that sleeps
-  (`ferrix_sync::SleepLock`, lent a wait queue by the kernel through the
+  (`xaqu_sync::SleepLock`, lent a wait queue by the kernel through the
   mount the file was opened on), so two reads racing on one description get
   consecutive bytes. A stream, `pread` and `pwrite` never take it.
 * **tmpfs**, whose file contents are not a byte vector but a page store the
@@ -53,7 +53,7 @@ listing reports resolves to the inode the listing gave, the property a stale
 cache entry breaks — and a Miri step.
 
 **Done — the root, built at boot from what the loader hands over.** The
-loader reads `FERRIX/INITRD.IMG` into memory nothing reclaims; it is optional,
+loader reads `XAQU/INITRD.IMG` into memory nothing reclaims; it is optional,
 so a card flashed without one boots as it did. xtask writes the archive itself,
 the same bytes on every build. The kernel unpacks it into a tmpfs root through
 the same VFS calls a program makes, and mounts a second tmpfs on `/tmp`. File

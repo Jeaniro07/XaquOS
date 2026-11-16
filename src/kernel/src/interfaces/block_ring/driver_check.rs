@@ -23,7 +23,7 @@
 //! that exits before publishing fails the check with its exit status printed,
 //! which names the step it stopped at.
 //!
-//! A boot that skips its self-checks (`ferrix.checks=skip`) still starts
+//! A boot that skips its self-checks (`xaqu.checks=skip`) still starts
 //! every driver and waits for every disk, since what mounts next needs them,
 //! but reads nothing back: its first disk is whatever the machine was given,
 //! a desktop's volume say, and not the test disk.
@@ -35,14 +35,14 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_blkring::control::Message;
-use ferrix_blkring::identity::DiskName;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vma::VmaFlags;
+use xaqu_blkring::control::Message;
+use xaqu_blkring::identity::DiskName;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vma::VmaFlags;
 
 use super::{VIRTIO_BLK_MAJOR, start_for};
 use crate::checks;
@@ -92,7 +92,7 @@ const PATIENCE_NANOS: u64 = 10_000_000_000;
 
 /// The test disk's layout, as `tools/common/xtask/src/test_disk.rs` fixes it.
 const SECTOR_SIZE: usize = 512;
-const MAGIC: &[u8; 9] = b"FERRIXBLK";
+const MAGIC: &[u8; 9] = b"XAQU-BLKS";
 const VERSION: u8 = 1;
 const FILL_MULTIPLIER: u64 = 0x9e37_79b9_7f4a_7c15;
 
@@ -370,7 +370,7 @@ fn published(side: &Side, child: Handle, rdev: u64) -> Result<Arc<dyn BlockDevic
 /// The disk `devmgr`'s driver published, or why not within the patience.
 fn published_by_devmgr(
     rdev: u64,
-    location: Option<ferrix_blkring::Location>,
+    location: Option<xaqu_blkring::Location>,
 ) -> Result<Arc<dyn BlockDevice>, &'static str> {
     let deadline = timer::now_nanos().saturating_add(PATIENCE_NANOS);
     loop {
@@ -380,7 +380,7 @@ fn published_by_devmgr(
         // A driver that died is named, with how it died, rather than left to
         // look like a disk that never came.
         if let Some((status, signal)) = location.and_then(crate::discovery::devmgr::driver_ending) {
-            let raw = location.map_or(0, ferrix_blkring::Location::raw);
+            let raw = location.map_or(0, xaqu_blkring::Location::raw);
             match signal {
                 Some(signal) => crate::console::println!(
                     "  driver   the blk driver of {raw:#010x} was ended by signal {signal} \

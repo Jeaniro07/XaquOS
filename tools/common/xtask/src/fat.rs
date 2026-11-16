@@ -103,7 +103,7 @@ impl Fat32 {
         fs.set_fat(1, END_OF_CHAIN);
         fs.set_fat(ROOT_CLUSTER, END_OF_CHAIN);
 
-        fs.add_volume_label(ROOT_CLUSTER, "FERRIX")?;
+        fs.add_volume_label(ROOT_CLUSTER, "XAQU")?;
         Ok(fs)
     }
 
@@ -244,7 +244,7 @@ impl Fat32 {
                     _ => {}
                 }
                 // The volume label is an entry whose name field is the label,
-                // and `FERRIX` as a label is byte-identical to `FERRIX` as a
+                // and `XAQU` as a label is byte-identical to `XAQU` as a
                 // directory name. Matching it returns first-cluster 0, which is
                 // not a cluster at all. Skipping label and long-name entries is
                 // what every real FAT reader does, and for this reason.
@@ -341,7 +341,7 @@ impl Fat32 {
         // UEFI, which reads the filesystem rather than executing sector 0 — but
         // firmware checks the first byte is a plausible jump.
         sector[0..3].copy_from_slice(&[0xEB, 0x58, 0x90]);
-        sector[3..11].copy_from_slice(b"FERRIX  ");
+        sector[3..11].copy_from_slice(b"XAQU  ");
 
         sector[11..13].copy_from_slice(&(SECTOR as u16).to_le_bytes());
         sector[13] = self.sectors_per_cluster as u8;
@@ -360,7 +360,7 @@ impl Fat32 {
         sector[64] = 0x80; // drive number
         sector[66] = 0x29; // extended boot signature
         sector[67..71].copy_from_slice(&0xFE22_1000u32.to_le_bytes()); // volume id
-        sector[71..82].copy_from_slice(b"FERRIX     ");
+        sector[71..82].copy_from_slice(b"XAQU     ");
         sector[82..90].copy_from_slice(b"FAT32   ");
         sector[510] = 0x55;
         sector[511] = 0xAA;
@@ -484,7 +484,7 @@ fn directory_entry(name: &[u8; 11], attr: u8, first_cluster: u32, size: u32) -> 
 
 /// Where an image's own command-line options go, and `flash` puts them on a
 /// card: the loader reads the file after `CMDLINE.TXT`.
-pub(crate) const DEFAULTS_PATH: &str = "FERRIX/DEFAULTS.TXT";
+pub(crate) const DEFAULTS_PATH: &str = "XAQU/DEFAULTS.TXT";
 
 /// Whether this run's images carry the stripped kernel, and the initramfs's
 /// programs stripped: `--strip-kernel`.
@@ -550,7 +550,7 @@ pub(crate) fn write_image_with(
     write_image_carrying(arch, loader, kernel, initramfs, cmdline, None)
 }
 
-/// [`write_image_with`], and the image's own options in `FERRIX/DEFAULTS.TXT`
+/// [`write_image_with`], and the image's own options in `XAQU/DEFAULTS.TXT`
 /// when there are any: the file `flash` writes beside a card owner's
 /// `CMDLINE.TXT`, which the loader appends after it (`src/boot/common/uefi/src/main.rs`).
 ///
@@ -573,16 +573,16 @@ pub(crate) fn write_image_carrying(
         &format!("EFI/BOOT/{}", arch.removable_boot_name()),
         &loader_bytes,
     )?;
-    fs.add_file("FERRIX/KERNEL.ELF", &kernel_bytes)?;
+    fs.add_file("XAQU/KERNEL.ELF", &kernel_bytes)?;
     // Beside the kernel, where the loader looks for it. Every image carries
     // one, because stage 8's self-check reads its files back through the VFS.
-    fs.add_file("FERRIX/INITRD.IMG", initramfs)?;
+    fs.add_file("XAQU/INITRD.IMG", initramfs)?;
     std::fs::create_dir_all(paths::build_dir(arch))?;
     crate::initramfs::keep_image_manifest(arch, initramfs)?;
     // A kernel command line, when the caller has one: the loader reads it
     // from beside the kernel and hands it over in the boot info.
     if let Some(cmdline) = cmdline {
-        fs.add_file("FERRIX/CMDLINE.TXT", cmdline.as_bytes())?;
+        fs.add_file("XAQU/CMDLINE.TXT", cmdline.as_bytes())?;
     }
     if let Some(defaults) = defaults {
         fs.add_file(DEFAULTS_PATH, defaults.as_bytes())?;
@@ -611,9 +611,9 @@ pub(crate) fn write_image_carrying(
             initramfs,
             words.join(" ").as_bytes(),
         )?;
-        fs.add_file("FERRIX/RESCUE.SLT", &slot)?;
+        fs.add_file("XAQU/RESCUE.SLT", &slot)?;
     }
-    let image = directory.join("ferrix.img");
+    let image = directory.join("xaqu.img");
     // Only the blocks that differ from the image already there: kilobytes
     // after an edit, where the whole 512 MiB took 22-65 s to write on a busy
     // disk (`crate::image_file`).
@@ -654,9 +654,9 @@ pub(crate) fn write_live_volume(
         &format!("EFI/BOOT/{}", arch.removable_boot_name()),
         loader_bytes,
     )?;
-    fs.add_file("FERRIX/KERNEL.ELF", kernel_bytes)?;
-    fs.add_file("FERRIX/INITRD.IMG", carried)?;
-    fs.add_file("FERRIX/CMDLINE.TXT", cmdline.as_bytes())?;
+    fs.add_file("XAQU/KERNEL.ELF", kernel_bytes)?;
+    fs.add_file("XAQU/INITRD.IMG", carried)?;
+    fs.add_file("XAQU/CMDLINE.TXT", cmdline.as_bytes())?;
     if let Some(defaults) = defaults {
         fs.add_file(DEFAULTS_PATH, defaults.as_bytes())?;
     }

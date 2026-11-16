@@ -131,19 +131,19 @@ jobs:
       - name: Fetch the shell trees
         run: |
           eval "$(tools/common/fetch/fetch-shell-trees.sh "$RUNNER_TEMP/shell")"
-          echo "FERRIX_OMZ=$FERRIX_OMZ" >> "$GITHUB_ENV"
-          echo "FERRIX_ZSH_FUNCTIONS=$FERRIX_ZSH_FUNCTIONS" >> "$GITHUB_ENV"
-          echo "FERRIX_SHELL_TREES=$RUNNER_TEMP/shell" >> "$GITHUB_ENV"
+          echo "XAQU_OMZ=$XAQU_OMZ" >> "$GITHUB_ENV"
+          echo "XAQU_ZSH_FUNCTIONS=$XAQU_ZSH_FUNCTIONS" >> "$GITHUB_ENV"
+          echo "XAQU_SHELL_TREES=$RUNNER_TEMP/shell" >> "$GITHUB_ENV"
 
       - name: Fetch Chromium's volume
         if: matrix.edition == 'full'
         env:
-          FERRIX_CHROMIUM_VOLUME: ${{ runner.temp }}/chromium
+          XAQU_CHROMIUM_VOLUME: ${{ runner.temp }}/chromium
         run: tools/common/fetch/fetch-chromium-arm64.sh
 
       - name: Build the desktop
         env:
-          FERRIX_CHROMIUM_VOLUME: ${{ runner.temp }}/chromium
+          XAQU_CHROMIUM_VOLUME: ${{ runner.temp }}/chromium
           CARGO_TARGET_DIR: ${{ github.workspace }}/target
         run: sh tools/vendor/google/pixel7/build-desktop.sh "$RUNNER_TEMP/desktop" ${{ matrix.edition == 'full' && '--chrome' || '' }}
 
@@ -158,10 +158,10 @@ jobs:
           # The edition's licence inventory, read off its own initramfs; it
           # fails the job as the desktop's does. Its busybox's source, and the
           # Chromium volume's package list, are in the sources asset.
-          python3 tools/common/release/licences.py --initrd "$RUNNER_TEMP/desktop/stage/FERRIX/INITRD.IMG" \
+          python3 tools/common/release/licences.py --initrd "$RUNNER_TEMP/desktop/stage/XAQU/INITRD.IMG" \
             --out "$RUNNER_TEMP/licences" --tag "$TAG" --title "Pixel 7 desktop, $EDITION edition"
           cp "$RUNNER_TEMP/licences/THIRD-PARTY-LICENSES.md" \
-            "$RUNNER_TEMP/assets/ferrix-pixel7-$EDITION-THIRD-PARTY-LICENSES.md"
+            "$RUNNER_TEMP/assets/xaqu-pixel7-$EDITION-THIRD-PARTY-LICENSES.md"
           ls -l "$RUNNER_TEMP"/assets
 
       - name: Attach it to the release
@@ -245,14 +245,14 @@ jobs:
       - name: Gather the assets
         run: |
           mkdir -p "$RUNNER_TEMP/assets"
-          cp "$RUNNER_TEMP/desktop/ferrix-x86_64-desktop.zip" \
-            "$RUNNER_TEMP/desktop/ferrix-x86_64-desktop.zip.sha256" \
-            "$RUNNER_TEMP/desktop/ferrix-$TAG-THIRD-PARTY-LICENSES.md" \
-            "$RUNNER_TEMP/sources/ferrix-$TAG-sources.tar.gz" \
+          cp "$RUNNER_TEMP/desktop/xaqu-x86_64-desktop.zip" \
+            "$RUNNER_TEMP/desktop/xaqu-x86_64-desktop.zip.sha256" \
+            "$RUNNER_TEMP/desktop/xaqu-$TAG-THIRD-PARTY-LICENSES.md" \
+            "$RUNNER_TEMP/sources/xaqu-$TAG-sources.tar.gz" \
             "$RUNNER_TEMP/assets/"
           # The desktop's wallpaper, the one the image shows, at three
           # sizes (docs/brand/wallpaper/; our own artwork, MIT).
-          cp docs/brand/wallpaper/ferrix-wallpaper-*.png "$RUNNER_TEMP/assets/"
+          cp docs/brand/wallpaper/xaqu-wallpaper-*.png "$RUNNER_TEMP/assets/"
           ls -l "$RUNNER_TEMP"/assets
 
       - name: Attach it to the release
@@ -271,7 +271,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # The live ISO (docs/TRY-FERRIX.md): the release desktop as a live session
+  # The live ISO (docs/TRY-XAQU.md): the release desktop as a live session
   # with the installer, in a hybrid ISO that boots as a CD and as a USB
   # stick, `cargo xtask iso` writes; its licence inventory, which the build
   # itself refuses an unaccounted part of the image in; and SHA256SUMS over
@@ -314,9 +314,9 @@ jobs:
       - name: Fetch the shell trees
         run: |
           eval "$(tools/common/fetch/fetch-shell-trees.sh "$RUNNER_TEMP/shell")"
-          echo "FERRIX_OMZ=$FERRIX_OMZ" >> "$GITHUB_ENV"
-          echo "FERRIX_ZSH_FUNCTIONS=$FERRIX_ZSH_FUNCTIONS" >> "$GITHUB_ENV"
-          echo "FERRIX_SHELL_TREES=$RUNNER_TEMP/shell" >> "$GITHUB_ENV"
+          echo "XAQU_OMZ=$XAQU_OMZ" >> "$GITHUB_ENV"
+          echo "XAQU_ZSH_FUNCTIONS=$XAQU_ZSH_FUNCTIONS" >> "$GITHUB_ENV"
+          echo "XAQU_SHELL_TREES=$RUNNER_TEMP/shell" >> "$GITHUB_ENV"
 
       - name: Build the ISO
         env:
@@ -326,10 +326,10 @@ jobs:
       - name: Gather the assets
         run: |
           mkdir -p "$RUNNER_TEMP/iso"
-          cp build/x86_64/ferrix-live.iso "$RUNNER_TEMP/iso/ferrix-$TAG-x86_64.iso"
-          cp build/x86_64/ferrix-live-THIRD-PARTY-LICENSES.md \
-            "$RUNNER_TEMP/iso/ferrix-$TAG-x86_64-iso-THIRD-PARTY-LICENSES.md"
-          (cd "$RUNNER_TEMP/iso" && sha256sum ferrix-*.iso ferrix-*-iso-THIRD-PARTY-LICENSES.md > SHA256SUMS)
+          cp build/x86_64/xaqu-live.iso "$RUNNER_TEMP/iso/xaqu-$TAG-x86_64.iso"
+          cp build/x86_64/xaqu-live-THIRD-PARTY-LICENSES.md \
+            "$RUNNER_TEMP/iso/xaqu-$TAG-x86_64-iso-THIRD-PARTY-LICENSES.md"
+          (cd "$RUNNER_TEMP/iso" && sha256sum xaqu-*.iso xaqu-*-iso-THIRD-PARTY-LICENSES.md > SHA256SUMS)
           cat "$RUNNER_TEMP/iso/SHA256SUMS"
 
       - name: Attach it to the release

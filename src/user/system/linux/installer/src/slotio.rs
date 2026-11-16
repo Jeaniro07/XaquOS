@@ -2,12 +2,12 @@
 //! kernel, initramfs and command line from an image, writing them into a
 //! slot partition, and verifying a slot the way the loader does.
 //!
-//! The format is `ferrix-slots`'; this is its file I/O.
+//! The format is `xaqu-slots`'; this is its file I/O.
 
 use std::fs::File;
 use std::path::Path;
 
-use ferrix_slots::slot::{HEADER_LEN, MAGIC, MAX_CMDLINE, SlotHeader, VERSION_1};
+use xaqu_slots::slot::{HEADER_LEN, MAGIC, MAX_CMDLINE, SlotHeader, VERSION_1};
 
 use crate::disk;
 use crate::fat::Fat;
@@ -39,8 +39,8 @@ impl Image {
 /// Load an image from `path`, which is one of:
 ///
 /// * a slot image (`cargo xtask slot-image`), verified as the loader would;
-/// * a FAT32 volume as `xtask` writes it (`build/<arch>/ferrix.img`), whose
-///   `FERRIX/KERNEL.ELF`, `INITRD.IMG`, `CMDLINE.TXT` and `DEFAULTS.TXT`
+/// * a FAT32 volume as `xtask` writes it (`build/<arch>/xaqu.img`), whose
+///   `XAQU/KERNEL.ELF`, `INITRD.IMG`, `CMDLINE.TXT` and `DEFAULTS.TXT`
 ///   are taken, the command line being the two files' words in that order,
 ///   as the loader joins them;
 /// * a directory holding those files.
@@ -96,11 +96,11 @@ pub fn load(path: &str) -> Result<Image, String> {
             from: format!("the slot image {path} ({})", header.label_text()),
         });
     }
-    if head.get(3..11) == Some(b"FERRIX  ") && head.get(82..90) == Some(b"FAT32   ") {
+    if head.get(3..11) == Some(b"XAQU  ") && head.get(82..90) == Some(b"FAT32   ") {
         let fat = Fat::read(&mut file, 0).map_err(on)?;
         let mut take = |name: &[u8; 11]| -> Result<Option<Vec<u8>>, String> {
             match fat
-                .open_path(&mut file, &[b"FERRIX     ", name])
+                .open_path(&mut file, &[b"XAQU     ", name])
                 .map_err(on)?
             {
                 Some(entry) => fat.read_file(&mut file, &entry).map(Some).map_err(on),
@@ -108,7 +108,7 @@ pub fn load(path: &str) -> Result<Image, String> {
             }
         };
         let kernel =
-            take(b"KERNEL  ELF")?.ok_or_else(|| format!("{path} has no FERRIX/KERNEL.ELF"))?;
+            take(b"KERNEL  ELF")?.ok_or_else(|| format!("{path} has no XAQU/KERNEL.ELF"))?;
         let initrd = take(b"INITRD  IMG")?.unwrap_or_default();
         let cmdline = join(take(b"CMDLINE TXT")?, take(b"DEFAULTSTXT")?);
         return checked(Image {

@@ -36,8 +36,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 
 use crate::fallible;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     CLOCK_MONOTONIC, CLOCK_REALTIME, FUTEX_32, FUTEX_CLOCK_REALTIME, FUTEX_CMP_REQUEUE,
     FUTEX_PRIVATE_FLAG, FUTEX_REQUEUE, FUTEX_WAIT, FUTEX_WAIT_BITSET, FUTEX_WAITV_MAX,
     FUTEX_WAITV_SIZE, FUTEX_WAKE, FUTEX_WAKE_BITSET, FUTEX2_PRIVATE,
@@ -120,7 +120,7 @@ pub(crate) fn sys_futex(
             // counter plus its offset, as `clock_nanosleep` turns one. Read
             // as a counter deadline, a real-time one lay decades ahead, and
             // glibc's `pthread_cond_timedwait`, `sem_timedwait` and
-            // `pthread_mutex_timedlock` never timed out (ferrix-ea,
+            // `pthread_mutex_timedlock` never timed out (xaqu-ea,
             // 2026-09-26).
             let deadline = if timeout == 0 {
                 None
@@ -437,7 +437,7 @@ pub(crate) fn bucket_of(process: &Process, address: u64) -> usize {
 
 /// The negative controls' and the stale-entry check's hooks, over the core's
 /// sabotage hooks: compiled only into a kernel with its self-checks.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 pub(crate) mod sabotage {
     use super::{Errno, Key, Process, address_wait, either_key, key};
 

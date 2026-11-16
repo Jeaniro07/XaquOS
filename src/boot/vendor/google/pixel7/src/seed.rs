@@ -16,7 +16,7 @@
 
 use core::ptr;
 
-use ferrix_fdt::Fdt;
+use xaqu_fdt::Fdt;
 
 /// The properties that hold random bytes, in `/chosen`.
 const PROPERTIES: [&str; 2] = ["rng-seed", "kaslr-seed"];

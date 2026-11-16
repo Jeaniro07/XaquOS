@@ -1,11 +1,11 @@
 //! The Intel Xe-LP GPU's driver process (the N150's Alder Lake-N): a ring-3
-//! program over `ferrix-intel-xelp`, which translates Linux's i915
+//! program over `xaqu-intel-xelp`, which translates Linux's i915
 //! (`docs/INTEL-GPU.md` §3.6). M1, "the device answers", then M2, "a GPU
 //! command executes":
 //!
 //! 1. START, as an engine's: the device alone. devmgr does not wait for
-//!    it. It is started only under `ferrix.intelgpu`, without
-//!    `ferrix.efifb`; otherwise the kernel has yielded the function and the
+//!    it. It is started only under `xaqu.intelgpu`, without
+//!    `xaqu.efifb`; otherwise the kernel has yielded the function and the
 //!    first mapping is refused, which the driver says and stops on.
 //! 2. BAR 0 mapped uncached, whole: the registers in its lower 8 MiB and
 //!    the GGTT's entries in its upper 8 MiB (`gen6_gttadr_offset`).
@@ -29,8 +29,8 @@
 //!
 //! 8. Unless the `WOPCM` is locked: forcewake of the domains M1 does not
 //!    hold, then M2's checks ([`m2`]: the commands, the blits, a hang) only
-//!    under `ferrix.intelgpu.m2`.
-//! 9. M3: the GT brought up under `ferrix-intel-xelp`'s back end on the
+//!    under `xaqu.intelgpu.m2`.
+//! 9. M3: the GT brought up under `xaqu-intel-xelp`'s back end on the
 //!    real platform ([`platform`]: BAR 0, page tables in a pinned pool, the
 //!    driver's objects as pinned VMOs in its own GGTT window, the client's
 //!    objects pinned at their first bind), and the render node published
@@ -40,7 +40,7 @@
 //! 10. `card0` ([`display`]): where K4 lent the firmware framebuffer to
 //!     00:02.0, the lit plane served as a copying display card, each flushed
 //!     rectangle copied into its write-combining window, so a compositor runs
-//!     under `ferrix.intelgpu`. Served beside the render node, or alone when
+//!     under `xaqu.intelgpu`. Served beside the render node, or alone when
 //!     the kernel refuses that.
 //!
 //! M1 writes nothing to the GPU but the forcewake requests. After the
@@ -52,7 +52,7 @@
 //!
 //! Every step is said before it is taken, and the kernel command line can
 //! stop the driver before any of them or have it say every register access
-//! first ([`steps`]): booting under `ferrix.intelgpu` hung the N150 box with
+//! first ([`steps`]): booting under `xaqu.intelgpu` hung the N150 box with
 //! nothing kept, and these find where.
 
 #![no_std]
@@ -60,24 +60,24 @@
 
 use core::fmt::{self, Write as _};
 use core::ptr;
-use ferrix_rt::log::Level;
+use xaqu_rt::log::Level;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES};
-use ferrix_intel_xelp::device_info::{self, DeviceInfo as Platform, engine};
-use ferrix_intel_xelp::engine::ENGINES;
-use ferrix_intel_xelp::generated::intel_gt_regs::GEN11_GT_VEBOX_VDBOX_DISABLE;
-use ferrix_intel_xelp::io::{Clock, Mmio};
-use ferrix_intel_xelp::{clock, gtt, plane, rps, sseu, uc, uncore};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{ApertureInfo, IoMappingSpec};
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::{Device, IoMapping};
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES};
+use xaqu_intel_xelp::device_info::{self, DeviceInfo as Platform, engine};
+use xaqu_intel_xelp::engine::ENGINES;
+use xaqu_intel_xelp::generated::intel_gt_regs::GEN11_GT_VEBOX_VDBOX_DISABLE;
+use xaqu_intel_xelp::io::{Clock, Mmio};
+use xaqu_intel_xelp::{clock, gtt, plane, rps, sseu, uc, uncore};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{ApertureInfo, IoMappingSpec};
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::{Device, IoMapping};
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::{Bootstrap, Kernel};
 
-use ferrix_process_builder as _;
+use xaqu_process_builder as _;
 
 mod arch;
 mod display;
@@ -88,7 +88,7 @@ mod steps;
 
 use steps::{At, Steps};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// BAR 0's size on Gen8+ (`gen6_gttmmadr_size`).
 const GTTMMADR_BYTES: u64 = 16 << 20;
@@ -102,8 +102,8 @@ pub(crate) enum Step {
     Start = 1,
     /// The device is not one this driver drives.
     Identity = 2,
-    /// BAR 0 could not be found or mapped: under `ferrix.efifb`, or without
-    /// `ferrix.intelgpu`, the kernel yields the function.
+    /// BAR 0 could not be found or mapped: under `xaqu.efifb`, or without
+    /// `xaqu.intelgpu`, the kernel yields the function.
     Registers = 3,
     /// A forcewake request was never acknowledged.
     Forcewake = 4,
@@ -121,7 +121,7 @@ pub(crate) enum Step {
     /// M2: a request on a context banned after a hang (refused, as i915
     /// refuses it with `EIO`).
     Banned = 10,
-    /// Stopped before a step, as `ferrix.intelgpu.stop` asked. Never an
+    /// Stopped before a step, as `xaqu.intelgpu.stop` asked. Never an
     /// exit status: the driver stays.
     Stopped = 11,
     /// M3: the back end did not bring the GT up (said).
@@ -148,7 +148,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(never) => match never {},
         Err(step) => {
-            ferrix_rt::err!("intel: stopped at {step:?}");
+            xaqu_rt::err!("intel: stopped at {step:?}");
             step as i32
         }
     }
@@ -160,9 +160,9 @@ fn main(bootstrap: Bootstrap) -> i32 {
 
 /// A line of the driver's log at `level`: a record of its own on
 /// `/dev/kmsg`, which lode stores with the level as stated
-/// (`ferrix_rt::log`).
+/// (`xaqu_rt::log`).
 pub(crate) fn say(level: Level, arguments: fmt::Arguments<'_>) {
-    ferrix_rt::log::line(level, arguments);
+    xaqu_rt::log::line(level, arguments);
 }
 
 /// One line, formatted before it is said.
@@ -207,7 +207,7 @@ pub(crate) struct Bar0 {
     _mapping: IoMapping<Kernel>,
     base: usize,
     /// Say every register access, and every GGTT entry written, before it
-    /// is made (`ferrix.intelgpu.trace`). The GGTT walk's reads are not
+    /// is made (`xaqu.intelgpu.trace`). The GGTT walk's reads are not
     /// said one by one: its step is.
     trace: bool,
 }
@@ -243,7 +243,7 @@ impl Bar0 {
         }
         let address = self.base + offset as usize;
         if self.trace {
-            ferrix_rt::debug!("intel: about to write GGTT entry {index:#x} <- {pte:#018x}");
+            xaqu_rt::debug!("intel: about to write GGTT entry {index:#x} <- {pte:#018x}");
         }
         // SAFETY: inside BAR 0's GGTT half, which the kernel mapped for this
         // process and `self` keeps, eight-byte aligned; device memory.
@@ -271,7 +271,7 @@ impl Mmio for Bar0 {
             return 0;
         };
         if self.trace {
-            ferrix_rt::debug!("intel: about to read {offset:#x}");
+            xaqu_rt::debug!("intel: about to read {offset:#x}");
         }
         // SAFETY: inside BAR 0's register half, mapped for this process and
         // kept by `self`, aligned.
@@ -286,7 +286,7 @@ impl Mmio for Bar0 {
             return;
         };
         if self.trace {
-            ferrix_rt::debug!("intel: about to write {offset:#x} <- {value:#010x}");
+            xaqu_rt::debug!("intel: about to write {offset:#x} <- {value:#010x}");
         }
         // SAFETY: as for `read32`, and the mapping is writable.
         unsafe { device_write(address as *mut u32, value) }
@@ -323,13 +323,13 @@ pub(crate) struct Time {
 
 impl Clock for Time {
     fn now_us(&mut self) -> u64 {
-        let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+        let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
         steps::reset_if_due(now);
         now / 1_000
     }
 
     fn delay_us(&mut self, us: u32) {
-        let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+        let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
         steps::reset_if_due(now);
         let until = now.saturating_add(u64::from(us) * 1_000);
         let _ = self.idle.wait(Deadline::At(until));
@@ -372,14 +372,14 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let device = started(boot)?;
     let info = device.info().map_err(|_| Step::Identity)?;
     let Some(platform) = device_info::lookup(info.vendor_id, info.device_id) else {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: {:04x}:{:04x} is not a device this driver drives",
             info.vendor_id,
             info.device_id
         );
         return Err(Step::Identity);
     };
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: {:#010x} {:04x}:{:04x} class {:06x}, ADL-N (adl_p_info, subplatform N), apertures {} vectors {}",
         info.location,
         info.vendor_id,
@@ -390,7 +390,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     );
     for index in 0..info.apertures as usize {
         if let Ok(aperture) = device.aperture(index) {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "intel: aperture {index}: bar {} at {:#x}, {:#x} bytes, flags {:#x}",
                 aperture.bar,
                 aperture.phys,
@@ -413,7 +413,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
             // plane is lit is not known yet at most steps, and after a
             // restart the death's quiesce already turned bus mastering off,
             // so the line says neither. Staying sends no HELLO either way.
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "intel: stopped at {step:?}; the driver stays and sends no HELLO, so devmgr does not quiesce 00:02.0 under any plane the firmware lit"
             );
         }
@@ -426,7 +426,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
         }
     };
     if done.locked {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "intel: the WOPCM is locked: no M2 and no render node; the driver now waits and touches nothing"
         );
         return stay(&time);
@@ -445,7 +445,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
 /// before this driver's bring-up worked (`XelpBackend::new`; one that did
 /// not refuses the bring-up, so only `done` and `no reset domain` reach
 /// here).
-fn say_inherited(inherited: &[Option<ferrix_intel_xelp::backend::Inherited>]) {
+fn say_inherited(inherited: &[Option<xaqu_intel_xelp::backend::Inherited>]) {
     for (info, found) in ENGINES.iter().zip(inherited) {
         if let Some(found) = found {
             let name = match info.id {
@@ -455,7 +455,7 @@ fn say_inherited(inherited: &[Option<ferrix_intel_xelp::backend::Inherited>]) {
                 engine::VCS2 => "vcs2",
                 _ => "vecs0",
             };
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: {name} was a previous driver's (status page {:#x}); reset alone before bring-up: {}",
                 found.hws_pga,
                 match found.report {
@@ -479,18 +479,18 @@ fn take_forcewake(bar: &mut Bar0, time: &mut Time, platform: &Platform) -> Resul
     // stays set stops the driver before it touches the GT or sends a HELLO.
     match uncore::fw_domains_sanitize(bar, time, &domains) {
         Ok(0) => {}
-        Ok(held) => ferrix_rt::warn!(
+        Ok(held) => xaqu_rt::warn!(
             "intel: forcewake {held:#x} was held by a previous driver; released (requests cleared, acks clear)"
         ),
         Err(error) => {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "intel: forcewake a previous holder left could not be released: {error:?}"
             );
             return Err(Step::Forcewake);
         }
     }
     if let Err(error) = uncore::fw_domains_get(bar, time, &domains, wanted) {
-        ferrix_rt::err!("intel: forcewake failed: {error:?}");
+        xaqu_rt::err!("intel: forcewake failed: {error:?}");
         return Err(Step::Forcewake);
     }
     Ok(())
@@ -505,7 +505,7 @@ struct M1Done {
 }
 
 /// M3's driver: every forcewake domain for the bring-up, M2's checks if
-/// `ferrix.intelgpu.m2` asks, then the GT under `ferrix-intel-xelp`'s back
+/// `xaqu.intelgpu.m2` asks, then the GT under `xaqu-intel-xelp`'s back
 /// end on the real platform, and the render node served through
 /// [`serve`] until the kernel takes it back.
 fn serve_gpu(
@@ -515,8 +515,8 @@ fn serve_gpu(
     done: M1Done,
     steps: &Steps,
 ) -> Result<core::convert::Infallible, Step> {
-    use ferrix_intel_xelp::backend::XelpBackend;
-    use ferrix_intel_xelp::frontend::Frontend;
+    use xaqu_intel_xelp::backend::XelpBackend;
+    use xaqu_intel_xelp::frontend::Frontend;
     let M1Done {
         mut bar, firmware, ..
     } = done;
@@ -540,7 +540,7 @@ fn serve_gpu(
     let others = match uncore::fw_domains_get(&mut bar, &mut time, &all, rest) {
         Ok(()) => true,
         Err(error) => {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "intel: forcewake of the media domains failed ({error:?}); render and GT only"
             );
             false
@@ -549,7 +549,7 @@ fn serve_gpu(
     if steps.selftest {
         match m2::run(&mut bar, device, &mut time, firmware, steps) {
             Err(Step::Stopped) => return Err(Step::Stopped),
-            Err(step) => ferrix_rt::err!("intel: M2 stopped at {step:?}"),
+            Err(step) => xaqu_rt::err!("intel: M2 stopped at {step:?}"),
             Ok(()) => {}
         }
     }
@@ -565,7 +565,7 @@ fn serve_gpu(
         .max(firmware.last_present.map_or(0, |l| l + 1))
         * 4096)
         .max(SERVE_GGTT_FLOOR);
-    let ggtt = ferrix_intel_xelp::ggtt_space::GgttSpace::new(start, firmware.total);
+    let ggtt = xaqu_intel_xelp::ggtt_space::GgttSpace::new(start, firmware.total);
     let identity = identity(device, device_id, firmware.total);
     let (fused, count) = fused_engines(firmware.engine_mask);
     let real = platform::Real::new(
@@ -586,20 +586,20 @@ fn serve_gpu(
         identity,
     )
     .map_err(|error| {
-        if error == ferrix_intel_xelp::backend::Error::Inherited {
-            ferrix_rt::err!(
+        if error == xaqu_intel_xelp::backend::Error::Inherited {
+            xaqu_rt::err!(
                 "intel: an engine a dead driver left running could not be reset: no render node and no card, and the driver exits so the kernel keeps the dead driver's pins"
             );
             return Step::Inherited;
         }
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "intel: the back end did not come up: {error:?}"
         );
         Step::Backend
     })?;
     say_inherited(backend.inherited());
     let facts = *backend.facts();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: back end up in {} ms: GGTT window {start:#x}, {} engines, {} EUs, {} MiB of system memory",
         time.now_us().saturating_sub(started) / 1_000,
         facts.engines.len(),
@@ -614,8 +614,8 @@ fn serve_gpu(
     let mut frontend = Frontend::new(backend);
     frontend.set_trace(steps.uapitrace);
     if steps.uapitrace {
-        ferrix_rt::notice!(
-            "intel: uapitrace: held waits, their answers, failed ioctls, and a wait unanswered for 2 s (ferrix.intelgpu.uapitrace)"
+        xaqu_rt::notice!(
+            "intel: uapitrace: held waits, their answers, failed ioctls, and a wait unanswered for 2 s (xaqu.intelgpu.uapitrace)"
         );
     }
     let stat = steps.ioctlstat;
@@ -628,19 +628,19 @@ fn serve_gpu(
 fn bind_interrupt(
     device: &Device<Kernel>,
     port: &Port<Kernel>,
-) -> Option<ferrix_rt::native::device::Interrupt<Kernel>> {
+) -> Option<xaqu_rt::native::device::Interrupt<Kernel>> {
     match device.interrupt(0) {
         Ok(interrupt) => match interrupt.bind(port, serve::KEY_INTERRUPT) {
             Ok(()) => Some(interrupt),
             Err(error) => {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "intel: the interrupt could not be bound ({error:?}); polling only"
                 );
                 None
             }
         },
         Err(error) => {
-            ferrix_rt::warn!("intel: no interrupt ({error:?}); polling only");
+            xaqu_rt::warn!("intel: no interrupt ({error:?}); polling only");
             None
         }
     }
@@ -651,8 +651,8 @@ fn identity(
     device: &Device<Kernel>,
     device_id: u16,
     ggtt_bytes: u64,
-) -> ferrix_intel_xelp::backend::Identity {
-    ferrix_intel_xelp::backend::Identity {
+) -> xaqu_intel_xelp::backend::Identity {
+    xaqu_intel_xelp::backend::Identity {
         device_id,
         revision: device.config_read(0x08, 1).map_or(0, |value| value as u8),
         ggtt_bytes,
@@ -661,7 +661,7 @@ fn identity(
 }
 
 /// The engines the media fuses leave, in id order, and how many.
-fn fused_engines(mask: u32) -> ([ferrix_intel_xelp::engine::EngineInfo; 5], usize) {
+fn fused_engines(mask: u32) -> ([xaqu_intel_xelp::engine::EngineInfo; 5], usize) {
     let mut fused = [ENGINES[0]; 5];
     let mut count = 0;
     for e in ENGINES.iter().filter(|e| mask & engine::bit(e.id) != 0) {
@@ -674,7 +674,7 @@ fn fused_engines(mask: u32) -> ([ferrix_intel_xelp::engine::EngineInfo; 5], usiz
 }
 
 /// The lowest GGTT offset the serving back end binds at: past BAR 2's
-/// aperture and M2's window, which `ferrix.intelgpu.m2` fills first.
+/// aperture and M2's window, which `xaqu.intelgpu.m2` fills first.
 const SERVE_GGTT_FLOOR: u64 = 1 << 30;
 
 /// System memory to report when `/proc/meminfo` cannot be read: the box's.
@@ -694,7 +694,7 @@ fn m1(
         format_args!("map BAR 0, 16 MiB uncached (the kernel's io_mapping; no device access)"),
     )?;
     let Some(aperture) = bar0(device, apertures) else {
-        ferrix_rt::err!("intel: no whole 16 MiB BAR 0 to map");
+        xaqu_rt::err!("intel: no whole 16 MiB BAR 0 to map");
         return Err(Step::Registers);
     };
     let mapping = device
@@ -703,8 +703,8 @@ fn m1(
             len: GTTMMADR_BYTES,
         })
         .map_err(|error| {
-            ferrix_rt::err!(
-                "intel: BAR 0 refused ({error:?}): the kernel lends 00:02.0 only under ferrix.intelgpu without ferrix.efifb"
+            xaqu_rt::err!(
+                "intel: BAR 0 refused ({error:?}): the kernel lends 00:02.0 only under xaqu.intelgpu without xaqu.efifb"
             );
             Step::Registers
         })?;
@@ -730,7 +730,7 @@ fn m1(
     )?;
     let started = time.now_us();
     take_forcewake(&mut bar, time, platform)?;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: forcewake render and GT acknowledged in {} us",
         time.now_us().saturating_sub(started)
     );
@@ -740,7 +740,7 @@ fn m1(
         format_args!("read GUC_WOPCM_SIZE 0xc050, DMA_GUC_WOPCM_OFFSET 0xc340 (GT domain)"),
     )?;
     let locked = uc::uc_is_wopcm_locked(&mut bar);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: WOPCM {}",
         if locked {
             "locked: GuC ran since the last reset; execlists need an FLR first (i915's __uc_check_hw)"
@@ -751,7 +751,7 @@ fn m1(
 
     let (subslice_mask, engine_mask) = say_gt(&mut bar, platform, steps)?;
     let (scanned, last_present, total, plane) = say_plane_and_ggtt(&mut bar, device, time, steps)?;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: M1: the device answers ({} ms)",
         time.now_us().saturating_sub(run_started) / 1_000
     );
@@ -777,7 +777,7 @@ fn say_config(device: &Device<Kernel>) {
         .map_or(0, |value| value as u16);
     let bsm = device.config_read(gtt::INTEL_BSM, 4).unwrap_or(0);
     let gms = (gmch >> gtt::BDW_GMCH_GMS_SHIFT) & gtt::BDW_GMCH_GMS_MASK;
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: GMCH_CTRL {gmch:#06x}: GGTT {} MiB of entries for {} GiB; stolen base {:#x}, GMS {gms:#x}",
         gtt::gen8_get_total_gtt_size(gmch) >> 20,
         gtt::ggtt_total(gmch) >> 30,
@@ -796,7 +796,7 @@ fn say_gt(bar: &mut Bar0, platform: &Platform, steps: &Steps) -> Result<(u8, u32
     )?;
     let fuses = sseu::Fuses::read(bar);
     let info = sseu::gen12_sseu_info_init(fuses);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: slices {:#x} (enable {:#x}), dual-subslices {:#x}, EUs {:#06x} per DSS, {} EUs",
         info.slice_mask,
         info.slice_enable,
@@ -810,7 +810,7 @@ fn say_gt(bar: &mut Bar0, platform: &Platform, steps: &Steps) -> Result<(u8, u32
     for e in ENGINES.iter().filter(|e| mask & engine::bit(e.id) != 0) {
         let _ = write!(line, " {}", e.name);
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: engines (media fuse {media:#010x}):{}",
         core::str::from_utf8(line.as_bytes()).unwrap_or("?")
     );
@@ -829,7 +829,7 @@ fn say_gt(bar: &mut Bar0, platform: &Platform, steps: &Steps) -> Result<(u8, u32
         bar.read32(rps::GEN6_RP_STATE_CAP.offset()),
         bar.read32(rps::GEN10_FREQ_INFO_REC.offset()),
     );
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: CS timestamp {cs} Hz; RP0 {} MHz, RP1 {} MHz, RPn {} MHz",
         rps::intel_gpu_freq(caps.rp0_freq),
         rps::intel_gpu_freq(caps.rp1_freq),
@@ -876,14 +876,14 @@ fn say_plane_and_ggtt(
         let (width, height) = lit.dimensions();
         let first = u64::from(lit.ggtt_offset()) / gtt::GTT_PAGE_SIZE;
         let pte = bar.ggtt_entry(first).unwrap_or(0);
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: pipe A plane 1 lit, {width}x{height}, stride {:#x}, at GGTT {:#x}: entry {pte:#018x} (page {:#x})",
             lit.stride,
             lit.ggtt_offset(),
             gtt::gen8_ggtt_pte_decode(pte).unwrap_or(0),
         );
     } else {
-        ferrix_rt::info!("intel: pipe A plane 1 not lit (ctl {:#010x})", lit.ctl);
+        xaqu_rt::info!("intel: pipe A plane 1 not lit (ctl {:#010x})", lit.ctl);
     }
     steps.before(
         At::GgttWalk,
@@ -913,7 +913,7 @@ fn say_plane_and_ggtt(
             break;
         }
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: GGTT {entries} entries, {scanned} read in {} us to {why}: {present} present (first {:#x}, last {last_present:#x}); none written",
         time.now_us().saturating_sub(started),
         first_present.unwrap_or(0)
@@ -922,7 +922,7 @@ fn say_plane_and_ggtt(
     // is lit (its power well on), to name the connector as Linux would.
     let output = lit.enabled().then(|| plane::read_output(bar));
     if let Some(output) = output {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: pipe A out through TRANS_DDI_FUNC_CTL_A {:#010x}, PP_STATUS {:#010x}: DRM connector type {}",
             output.ddi_func_ctl,
             output.pp_status,
@@ -953,8 +953,8 @@ fn stay(time: &Time) -> Result<core::convert::Infallible, Step> {
     loop {
         let deadline = steps::reset_at_nanos().map_or(Deadline::Never, Deadline::At);
         match time.idle.wait(deadline) {
-            Err(ferrix_rt::native::error::Error::TimedOut) => {
-                steps::reset_if_due(ferrix_rt::linux::monotonic_nanos().unwrap_or(0));
+            Err(xaqu_rt::native::error::Error::TimedOut) => {
+                steps::reset_if_due(xaqu_rt::linux::monotonic_nanos().unwrap_or(0));
             }
             Err(_) => return Err(Step::Port),
             Ok(_) => {}
@@ -964,24 +964,24 @@ fn stay(time: &Time) -> Result<core::convert::Infallible, Step> {
 
 /// What the driver serves under once the bring-up's hold of every domain
 /// is gone: forcewake per access (or render and GT held, under
-/// `ferrix.intelgpu.fwhold`), the frequency checkpoint if asked, and the
+/// `xaqu.intelgpu.fwhold`), the frequency checkpoint if asked, and the
 /// per-second log if asked.
 fn serving_power(
-    backend: &mut ferrix_intel_xelp::backend::XelpBackend<platform::Real<'_>>,
+    backend: &mut xaqu_intel_xelp::backend::XelpBackend<platform::Real<'_>>,
     steps: &Steps,
     all: uncore::FwDomains,
 ) {
     if steps.fwhold {
-        ferrix_rt::notice!(
-            "intel: forcewake: render and GT held for the driver's life (ferrix.intelgpu.fwhold), so the GT never enters RC6"
+        xaqu_rt::notice!(
+            "intel: forcewake: render and GT held for the driver's life (xaqu.intelgpu.fwhold), so the GT never enters RC6"
         );
     } else {
         backend.platform().forcewake_per_access(
             all,
             uncore::FORCEWAKE_RENDER | uncore::FORCEWAKE_GT,
-            ferrix_rt::linux::monotonic_nanos().unwrap_or(0),
+            xaqu_rt::linux::monotonic_nanos().unwrap_or(0),
         );
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: forcewake per access from here, each domain released 1 ms after its last use, so the GT can enter RC6"
         );
     }
@@ -989,33 +989,33 @@ fn serving_power(
         freqtest(backend, steps);
     }
     if steps.freqlog {
-        backend.set_freqlog(true, ferrix_rt::linux::monotonic_nanos().unwrap_or(0));
-        ferrix_rt::notice!(
-            "intel: freqlog: one line a second while serving (ferrix.intelgpu.freqlog)"
+        backend.set_freqlog(true, xaqu_rt::linux::monotonic_nanos().unwrap_or(0));
+        xaqu_rt::notice!(
+            "intel: freqlog: one line a second while serving (xaqu.intelgpu.freqlog)"
         );
     }
 }
 
-/// RPS and RC6 by the host (`ferrix_intel_xelp::power`), under the
+/// RPS and RC6 by the host (`xaqu_intel_xelp::power`), under the
 /// bring-up's forcewake of every domain as `intel_gt_resume` runs them: RPS
 /// on with its first request at RP1 on i915's up/down policy, or pinned at
-/// `ferrix.intelgpu.freq=MHz`; the PCU's ring frequency table
+/// `xaqu.intelgpu.freq=MHz`; the PCU's ring frequency table
 /// (`intel_llc_enable`), read before and after under
-/// `ferrix.intelgpu.freqtest`; RC6 enabled.
-fn power<P: ferrix_intel_xelp::backend::Platform>(
-    backend: &mut ferrix_intel_xelp::backend::XelpBackend<P>,
+/// `xaqu.intelgpu.freqtest`; RC6 enabled.
+fn power<P: xaqu_intel_xelp::backend::Platform>(
+    backend: &mut xaqu_intel_xelp::backend::XelpBackend<P>,
     steps: &Steps,
 ) {
-    use ferrix_intel_xelp::rps::intel_gpu_freq;
+    use xaqu_intel_xelp::rps::intel_gpu_freq;
     let rps = backend.power_up(steps.freq_mhz, true);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: RPS on: RP0 {} MHz, RP1 {} MHz, RPn {} MHz; request {} MHz{}; RC6 enabled",
         intel_gpu_freq(rps.caps.rp0_freq),
         intel_gpu_freq(rps.caps.rp1_freq),
         intel_gpu_freq(rps.caps.min_freq),
         intel_gpu_freq(rps.cur),
         if steps.freq_mhz.is_some() {
-            " (pinned: ferrix.intelgpu.freq)"
+            " (pinned: xaqu.intelgpu.freq)"
         } else {
             " (RP1, then i915's up/down policy)"
         }
@@ -1042,20 +1042,20 @@ fn power<P: ferrix_intel_xelp::backend::Platform>(
 }
 
 /// The PCU's ring frequency table, one line.
-fn ring_table<P: ferrix_intel_xelp::backend::Platform>(
-    backend: &mut ferrix_intel_xelp::backend::XelpBackend<P>,
+fn ring_table<P: xaqu_intel_xelp::backend::Platform>(
+    backend: &mut xaqu_intel_xelp::backend::XelpBackend<P>,
     when: &str,
 ) {
-    let mut rows = [ferrix_intel_xelp::pcode::RingRow::default(); 32];
+    let mut rows = [xaqu_intel_xelp::pcode::RingRow::default(); 32];
     let n = backend.ring_freq_table(&mut rows);
-    ferrix_rt::debug!(
+    xaqu_rt::debug!(
         "intel: freqtest ring table {when}: {}",
         RingRows(rows.get(..n).unwrap_or_default())
     );
 }
 
 /// The ring table's rows as `GT MHz:ring MHz/IA MHz`.
-struct RingRows<'a>(&'a [ferrix_intel_xelp::pcode::RingRow]);
+struct RingRows<'a>(&'a [xaqu_intel_xelp::pcode::RingRow]);
 
 impl fmt::Display for RingRows<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1073,7 +1073,7 @@ impl fmt::Display for RingRows<'_> {
 }
 
 /// A mailbox refusal, if any.
-struct Refusal(Option<ferrix_intel_xelp::pcode::PcodeError>);
+struct Refusal(Option<xaqu_intel_xelp::pcode::PcodeError>);
 
 impl fmt::Display for Refusal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1116,18 +1116,18 @@ fn limit_names(bits: u32, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     Ok(())
 }
 
-/// The box's frequency checkpoint (`ferrix.intelgpu.freqtest`), with
+/// The box's frequency checkpoint (`xaqu.intelgpu.freqtest`), with
 /// forcewake per access as the driver then serves: what may hold the GT
 /// low; RP1, then RP0, each pinned and sampled idle and then under the
 /// driver's own load (a spinner on RCS0); then the policy under that load,
 /// and idle after it, where it parks. Each sample says the request, the
 /// actual frequency, the PCU's limit reasons, RCS0's busy share, RC6's
 /// share and the package's power since the last sample.
-fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
-    backend: &mut ferrix_intel_xelp::backend::XelpBackend<P>,
+fn freqtest<P: xaqu_intel_xelp::backend::Platform>(
+    backend: &mut xaqu_intel_xelp::backend::XelpBackend<P>,
     steps: &Steps,
 ) {
-    use ferrix_intel_xelp::rps::intel_gpu_freq;
+    use xaqu_intel_xelp::rps::intel_gpu_freq;
     let Some(rps) = backend.rps() else {
         return;
     };
@@ -1135,7 +1135,7 @@ fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
         return;
     };
     let limits = backend.limits();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: freqtest limits: RP_STATE_CAP {:#010x}, RP_STATE_LIMITS {:#010x}, PL1 {}.{:03} W {} (RAPL_LIMIT {:#010x}), TDP {}.{:03} W, package {} C; RPNSWREQ {:#010x}, RP_INTERRUPT_LIMITS {:#010x}, RP_CONTROL {:#010x}",
         limits.state_cap,
         limits.state_limits,
@@ -1163,7 +1163,7 @@ fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
                 pin.is_some(),
             )
             .unwrap_or(0);
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "intel: freqtest {name}: asked {asked} MHz{}",
             if pin.is_some() {
                 ", pinned"
@@ -1178,12 +1178,12 @@ fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
             Ok(load) => {
                 probe.samples(backend, name, "busy", 5, 100);
                 if !backend.load_end(load, 100_000) {
-                    ferrix_rt::warn!(
+                    xaqu_rt::warn!(
                         "intel: freqtest {name}: the load did not end; the hang watch resets it"
                     );
                 }
             }
-            Err(error) => ferrix_rt::warn!("intel: freqtest {name}: no load ({error:?})"),
+            Err(error) => xaqu_rt::warn!("intel: freqtest {name}: no load ({error:?})"),
         }
     }
     probe.samples(backend, "policy", "idle", 5, 100);
@@ -1191,7 +1191,7 @@ fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
         Some(mhz) => backend.set_frequency_mhz(mhz, true).unwrap_or(0),
         None => backend.rps().map_or(0, |rps| intel_gpu_freq(rps.last)),
     };
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "intel: freqtest done; the request is {back} MHz{}",
         if steps.freq_mhz.is_some() {
             ", pinned again"
@@ -1205,17 +1205,17 @@ fn freqtest<P: ferrix_intel_xelp::backend::Platform>(
 /// would (at its deadlines, at least every millisecond), a line a sample.
 struct Probe {
     idle: Port<Kernel>,
-    last: ferrix_intel_xelp::power::Sample,
+    last: xaqu_intel_xelp::power::Sample,
     at: u64,
     busy: u64,
 }
 
 impl Probe {
-    fn new<P: ferrix_intel_xelp::backend::Platform>(
-        backend: &mut ferrix_intel_xelp::backend::XelpBackend<P>,
+    fn new<P: xaqu_intel_xelp::backend::Platform>(
+        backend: &mut xaqu_intel_xelp::backend::XelpBackend<P>,
         idle: Port<Kernel>,
     ) -> Self {
-        let at = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+        let at = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
         Probe {
             idle,
             last: backend.frequency_sample().unwrap_or_default(),
@@ -1225,9 +1225,9 @@ impl Probe {
     }
 
     /// `count` samples `every_ms` apart, each said as `name` `phase`.
-    fn samples<P: ferrix_intel_xelp::backend::Platform>(
+    fn samples<P: xaqu_intel_xelp::backend::Platform>(
         &mut self,
-        backend: &mut ferrix_intel_xelp::backend::XelpBackend<P>,
+        backend: &mut xaqu_intel_xelp::backend::XelpBackend<P>,
         name: &str,
         phase: &str,
         count: u32,
@@ -1236,7 +1236,7 @@ impl Probe {
         for n in 0..count {
             let end = self.at.saturating_add(every_ms * 1_000_000);
             loop {
-                let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+                let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
                 steps::reset_if_due(now);
                 if now >= end {
                     break;
@@ -1247,22 +1247,22 @@ impl Probe {
                     .min(now.saturating_add(1_000_000))
                     .max(now);
                 let _ = self.idle.wait(Deadline::At(until));
-                backend.service(ferrix_rt::linux::monotonic_nanos().unwrap_or(0), false);
+                backend.service(xaqu_rt::linux::monotonic_nanos().unwrap_or(0), false);
             }
-            let now = ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+            let now = xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
             let Some(sample) = backend.frequency_sample() else {
                 return;
             };
             let rps = backend.rps();
             let elapsed = now.saturating_sub(self.at);
-            let (milliwatts, rc6) = ferrix_intel_xelp::power::between(&self.last, &sample, elapsed);
+            let (milliwatts, rc6) = xaqu_intel_xelp::power::between(&self.last, &sample, elapsed);
             let busy = backend.busy_totals(now)[0];
             let share = busy
                 .saturating_sub(self.busy)
                 .saturating_mul(100)
                 .checked_div(elapsed)
                 .unwrap_or(0);
-            ferrix_rt::debug!(
+            xaqu_rt::debug!(
                 "intel: freqtest {name} {phase}: asked {} MHz{}, sample {n}: CAGF {} MHz, RPSTAT1 {:#010x}, limits {:#010x} {}, RCS0 busy {share} %, PM up {}/{}, RC6 {}.{} %, package {}.{:03} W",
                 sample.requested_mhz,
                 if rps.is_some_and(|rps| !rps.active) {
@@ -1291,12 +1291,12 @@ impl Probe {
 /// `card0` over the lit plane where K4 lent it ([`display`]), then the
 /// render node, both served on `port`. A refused render node (K3, while
 /// 00:02.0's DMA is untranslated) leaves `card0` served alone.
-fn serve_nodes<B: ferrix_intel_xelp::frontend::Backend>(
+fn serve_nodes<B: xaqu_intel_xelp::frontend::Backend>(
     device: &Device<Kernel>,
     location: u32,
     plane: Option<m2::ScreenPlane>,
     port: &Port<Kernel>,
-    frontend: &mut ferrix_intel_xelp::frontend::Frontend<B>,
+    frontend: &mut xaqu_intel_xelp::frontend::Frontend<B>,
     ioctlstat: bool,
 ) -> Result<core::convert::Infallible, Step>
 where
@@ -1334,7 +1334,7 @@ where
     let mut host = match published {
         Ok(host) => host,
         Err(stopped) => {
-            ferrix_rt::warn!("intel: no render node ({stopped:?}); card0 alone is served");
+            xaqu_rt::warn!("intel: no render node ({stopped:?}); card0 alone is served");
             loop {
                 match port.wait(Deadline::Never) {
                     Ok(packet) => on_display(Some(packet.key), port, None),
@@ -1349,7 +1349,7 @@ where
     match serve::serve(&mut host, port, frontend, &mut on_display) {
         Ok(never) => match never {},
         Err(stopped) => {
-            ferrix_rt::err!("intel: serving stopped: {stopped:?}");
+            xaqu_rt::err!("intel: serving stopped: {stopped:?}");
             Err(Step::Serve)
         }
     }

@@ -3,7 +3,7 @@
 //!
 //! `src/user/system/linux/ferrousli/tools/uutils/build.sh` builds it, or `build-windows.sh` beside
 //! it on Windows, and installs it as `x86_64/bin/coreutils` under
-//! `~/.local/share/ferrix/uutils/ferrousli` (or `$FERRIX_UUTILS`).
+//! `~/.local/share/xaqu/uutils/ferrousli` (or `$XAQU_UUTILS`).
 //!
 //! It is Rust, so unlike busybox it brings its own `std`, and `std` for the
 //! musl target brings its own unwinder; ferrousli answers everything below
@@ -31,19 +31,19 @@ pub(crate) const TASKS: &[Task] = &[Task {
 }];
 
 /// The environment variable naming the install directory, and its default.
-const VAR: &str = "FERRIX_UUTILS";
+const VAR: &str = "XAQU_UUTILS";
 /// The default install directory under the home directory.
-const HOME_SEGMENTS: &[&str] = &[".local", "share", "ferrix", "uutils", "ferrousli"];
+const HOME_SEGMENTS: &[&str] = &[".local", "share", "xaqu", "uutils", "ferrousli"];
 
 /// Run by `bash -c` in `src/user/system/linux/ferrousli/`, with `$1` the build script in
 /// `tools/uutils/` and `$2` the directory to install into.
 ///
-/// `$out` is the script's own: `$FERRIX_UUTILS`, with its default. Normally it
+/// `$out` is the script's own: `$XAQU_UUTILS`, with its default. Normally it
 /// is the install directory itself, and the copy is skipped. Both lists are
 /// removed first, so a list read after a failure is this run's.
 const SCRIPT: &str = r#"set -uo pipefail
 root=$2
-out=${FERRIX_UUTILS:-$HOME/.local/share/ferrix/uutils/ferrousli}
+out=${XAQU_UUTILS:-$HOME/.local/share/xaqu/uutils/ferrousli}
 mkdir -p "$root/x86_64/bin" || exit 1
 rm -f "$out/undefined-symbols.txt" "$root/undefined-symbols.txt"
 if ! bash "tools/uutils/$1"; then
@@ -54,7 +54,7 @@ if ! bash "tools/uutils/$1"; then
 fi
 # Normally $out is the install directory itself and the scripts have already
 # put the programs where they are read from; the copy is for a caller whose
-# $FERRIX_UUTILS is somewhere else.
+# $XAQU_UUTILS is somewhere else.
 if ! [ "$out" -ef "$root" ]; then
     cp -a "$out/x86_64/bin/." "$root/x86_64/bin/" || exit 1
 fi
@@ -226,7 +226,7 @@ pub(crate) fn carried(arch: Arch) -> Result<Vec<(&'static str, Vec<u8>)>> {
     Ok(carried)
 }
 
-/// The Linux build, through [`crate::builds::Build`]: a build `FERRIX_BUILDS`
+/// The Linux build, through [`crate::builds::Build`]: a build `XAQU_BUILDS`
 /// may record or replay, reading the archives `build.sh` would otherwise
 /// download from `root/src`, and making every program of the family.
 fn build_here(arch: Arch, root: &Path) -> Result<PathBuf> {

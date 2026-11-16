@@ -29,7 +29,7 @@ const DIRECT: u64 = 1 << 62;
 /// Whether the image has direct switches.
 const ASK_DOMAIN_DIRECT: u8 = 50;
 /// `JOB_SPECULATION_DOMAIN`.
-const MARKED: u64 = ferrix_native_abi::types::JOB_SPECULATION_DOMAIN;
+const MARKED: u64 = xaqu_native_abi::types::JOB_SPECULATION_DOMAIN;
 /// Round trips a case runs: two switches each.
 const ROUNDS: u64 = 64;
 /// Tenths of a millisecond a case waits for its programs, which then fails in a sentence.
@@ -60,7 +60,7 @@ fn pinned(case: i32) -> Result<(), i32> {
         job: 0,
         space: 0,
         region_space: 0,
-        start_answers: ferrix_linux_abi::errno::Errno::ENOSYS,
+        start_answers: xaqu_linux_abi::errno::Errno::ENOSYS,
     };
     let me = sys(nr::THREAD_SELF, [0; 6]).map_err(|_| case)?;
     ask(&given, ASK_PIN, 0, Some(me)).map_err(|_| case)?;
@@ -204,7 +204,7 @@ fn pair(given: &Given, first: u64, second: u64, word: u64, case: i32) -> Result<
             nr::OBJECT_WAIT_ONE,
             [
                 process,
-                u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+                u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
                 0,
                 (&raw mut observed).addr() as u64,
                 0,

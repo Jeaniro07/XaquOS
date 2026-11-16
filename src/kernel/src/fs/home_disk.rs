@@ -18,17 +18,17 @@
 
 use alloc::sync::Arc;
 
-use ferrix_sync::Once;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileSystem};
+use xaqu_sync::Once;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileSystem};
 
 use crate::console::println;
 use crate::fs;
 use crate::fs::root_disk;
 use crate::interfaces::block_ring::VIRTIO_BLK_MAJOR;
 
-/// The label the home volume carries: `mkfs.btrfs -L ferrix-home`.
-const LABEL: &[u8] = b"ferrix-home";
+/// The label the home volume carries: `mkfs.btrfs -L xaqu-home`.
+const LABEL: &[u8] = b"xaqu-home";
 
 /// Where it is mounted, in the `/` processes see.
 const MOUNT_POINT: &[u8] = b"/home";

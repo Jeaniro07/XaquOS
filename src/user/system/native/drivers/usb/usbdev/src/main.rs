@@ -2,8 +2,8 @@
 //! USB serial port (CDC-ACM) on the phone's USB-C port, through its DWC3
 //! (`docs/vendor/google/pixel7/USB-HANDOVER.md`).
 //!
-//! Everything that knows anything about USB is `ferrix-dwc3` and
-//! `ferrix-usb-device`, tested on the host against a model of the
+//! Everything that knows anything about USB is `xaqu-dwc3` and
+//! `xaqu-usb-device`, tested on the host against a model of the
 //! controller. This program is the handles they were written to be wrapped
 //! in, as `usbhid` is for the DK board's host:
 //!
@@ -21,7 +21,7 @@
 //!    changes DTR without anything for the loop to wait on.
 //! 4. The port carries the kernel's log: every byte the console has sent,
 //!    the boot's lines and pid 1's output alike, read over a log control
-//!    channel (`ferrix-logctl`) that only this controller's node may open.
+//!    channel (`xaqu-logctl`) that only this controller's node may open.
 //!    It is read only while a program on the host has the port open (DTR),
 //!    and the next READ goes only once the last DATA is all in the
 //!    controller's ring, so a host that is slow or absent holds the log
@@ -45,27 +45,27 @@ use core::fmt::{self, Write as _};
 use core::ptr;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES, Start};
-use ferrix_dwc3::layout::AREA_BYTES;
-use ferrix_dwc3::usb_device::acm::{ADB_OUT, DATA_IN, DATA_OUT, SerialPort};
-use ferrix_dwc3::{Clock, Controller, Dma, Error as UsbError, Parts, Registers};
-use ferrix_logctl::message::{MAX_BYTES, MAX_DATA, Message as LogMessage};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL, TREE_GS201_DWC3};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES, Start};
+use xaqu_dwc3::layout::AREA_BYTES;
+use xaqu_dwc3::usb_device::acm::{ADB_OUT, DATA_IN, DATA_OUT, SerialPort};
+use xaqu_dwc3::{Clock, Controller, Dma, Error as UsbError, Parts, Registers};
+use xaqu_logctl::message::{MAX_BYTES, MAX_DATA, Message as LogMessage};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL, TREE_GS201_DWC3};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
 mod adb;
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -85,13 +85,13 @@ const ADB_TICK_NANOS: u64 = 2_000_000;
 
 /// The line that asks for a restart, as the monitor's button sends it. Only
 /// a whole line equal to it counts, so bytes typed by accident do nothing.
-const REBOOT: &[u8] = b"ferrix-usbdev: reboot";
+const REBOOT: &[u8] = b"xaqu-usbdev: reboot";
 
 /// The longest line of the host's input kept while waiting for a newline.
 const TYPED_BYTES: usize = 64;
 
 /// The serial number the port reports.
-const SERIAL: &str = "ferrix-pixel7";
+const SERIAL: &str = "xaqu-pixel7";
 
 /// Where a run stopped, as the exit status.
 #[derive(Clone, Copy, Debug)]
@@ -122,7 +122,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(()) => 0,
         Err(step) => {
-            ferrix_rt::err!("usbdev: stopped at {step:?}");
+            xaqu_rt::err!("usbdev: stopped at {step:?}");
             step as i32
         }
     }
@@ -223,12 +223,12 @@ fn defer_write(offset: u32, value: u32) {
                 Ordering::Relaxed,
             );
             when.store(
-                ferrix_rt::linux::monotonic_nanos().unwrap_or(0),
+                xaqu_rt::linux::monotonic_nanos().unwrap_or(0),
                 Ordering::Relaxed,
             );
             DEFERRED_LEN.store(at + 1, Ordering::Relaxed);
         }
-        _ => ferrix_rt::debug!("usbdev: write {offset:#06x} = {value:#010x}"),
+        _ => xaqu_rt::debug!("usbdev: write {offset:#06x} = {value:#010x}"),
     }
 }
 
@@ -239,7 +239,7 @@ fn say_deferred() {
         let packed = write.load(Ordering::Relaxed);
         let (offset, value) = (packed >> 32, packed & 0xFFFF_FFFF);
         let ms = when.load(Ordering::Relaxed) / 1_000_000;
-        ferrix_rt::debug!("usbdev: write {offset:#06x} = {value:#010x} (at {ms} ms)");
+        xaqu_rt::debug!("usbdev: write {offset:#06x} = {value:#010x} (at {ms} ms)");
     }
 }
 
@@ -263,7 +263,7 @@ impl Registers for Window {
         // offset inside it and aligned, read volatile.
         let value = unsafe { ptr::read_volatile(self.address(offset) as *const u32) };
         if !self.wrote {
-            ferrix_rt::debug!("usbdev: read  {offset:#06x} = {value:#010x}");
+            xaqu_rt::debug!("usbdev: read  {offset:#06x} = {value:#010x}");
         }
         value
     }
@@ -276,7 +276,7 @@ impl Registers for Window {
             !was
         });
         if !RUNNING.load(Ordering::Relaxed) {
-            ferrix_rt::debug!("usbdev: write {offset:#06x} = {value:#010x}");
+            xaqu_rt::debug!("usbdev: write {offset:#06x} = {value:#010x}");
         } else if first {
             defer_write(offset, value);
         }
@@ -363,11 +363,11 @@ impl Dma for Area {
         // Uncached: only the order is owed. The controller is outside the
         // processors' shareability domain, which `dmb ish` orders only
         // within.
-        ferrix_rt::device_barrier();
+        xaqu_rt::device_barrier();
     }
 
     fn invalidate(&mut self, _offset: usize, _len: usize) {
-        ferrix_rt::device_barrier();
+        xaqu_rt::device_barrier();
     }
 
     fn device_address(&self, offset: usize) -> Option<u64> {
@@ -383,7 +383,7 @@ struct Time {
 
 impl Clock for Time {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn sleep_nanos(&mut self, nanos: u64) {
@@ -470,8 +470,8 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     // an empty packet after one of whole packets would arrive where it reads
     // the next header (run adbusb3's pull broke on it). The serial port keeps
     // them: its host reads what comes, and an empty packet ends a transfer.
-    usb.set_zero_length_packets(ferrix_dwc3::usb_device::acm::ADB_IN, false);
-    ferrix_rt::info!("usbdev: DWC3 running, waiting for a host");
+    usb.set_zero_length_packets(xaqu_dwc3::usb_device::acm::ADB_IN, false);
+    xaqu_rt::info!("usbdev: DWC3 running, waiting for a host");
     let log = open_log(&device, &port);
     let mut driver = Driver {
         usb,
@@ -500,7 +500,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
 /// Say why the controller would not start, and keep its memory if it may
 /// still be writing it.
 fn refused(error: UsbError, parts: Parts<Window, Area, Time>) -> Step {
-    ferrix_rt::err!("usbdev: the controller would not start: {error:?}");
+    xaqu_rt::err!("usbdev: the controller would not start: {error:?}");
     match error {
         // Nothing was written: the controller is as it was.
         UsbError::Memory | UsbError::NotDwc3(_) | UsbError::Refused { .. } => {
@@ -522,7 +522,7 @@ fn open_log(device: &Device<Kernel>, port: &Port<Kernel>) -> Option<Channel<Kern
     let log = match device.log_control() {
         Ok(log) => log,
         Err(error) => {
-            ferrix_rt::warn!("usbdev: no kernel log to send: {error:?}");
+            xaqu_rt::warn!("usbdev: no kernel log to send: {error:?}");
             return None;
         }
     };
@@ -573,7 +573,7 @@ impl Driver {
                     match serviced {
                         Ok(notice) => self.act(notice)?,
                         Err(error) => {
-                            ferrix_rt::err!("usbdev: {error:?}");
+                            xaqu_rt::err!("usbdev: {error:?}");
                             return Err(Step::Faulted);
                         }
                     }
@@ -590,12 +590,12 @@ impl Driver {
     }
 
     /// Act on what an interrupt found.
-    fn act(&mut self, notice: ferrix_dwc3::Notice) -> Result<(), Step> {
+    fn act(&mut self, notice: xaqu_dwc3::Notice) -> Result<(), Step> {
         if let Some(speed) = notice.connected {
-            ferrix_rt::info!("usbdev: connected at {speed:?} speed");
+            xaqu_rt::info!("usbdev: connected at {speed:?} speed");
         }
         if notice.configuration {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "usbdev: {}",
                 if self.serial.is_configured() {
                     "configured: the host sees a serial port"
@@ -605,7 +605,7 @@ impl Driver {
             );
         }
         if notice.disconnected {
-            ferrix_rt::info!("usbdev: the host went away");
+            xaqu_rt::info!("usbdev: the host went away");
         }
         if notice.reset || notice.disconnected {
             self.adb.reset();
@@ -627,10 +627,10 @@ impl Driver {
                 .read(DATA_OUT, &mut bytes)
                 .map_err(|_| Step::Faulted)?;
             if self.typed(bytes.get(..count).unwrap_or_default()) {
-                ferrix_rt::notice!("usbdev: the host asked for a restart");
+                xaqu_rt::notice!("usbdev: the host asked for a restart");
                 // Returns only if the kernel refused: the port stays up.
-                if let Err(error) = ferrix_rt::linux::reboot_restart() {
-                    ferrix_rt::err!("usbdev: the restart was refused: {error:?}");
+                if let Err(error) = xaqu_rt::linux::reboot_restart() {
+                    xaqu_rt::err!("usbdev: the restart was refused: {error:?}");
                 }
             }
         }
@@ -761,7 +761,7 @@ impl Driver {
     /// Stop reading the log, saying why; the port stays up.
     fn lose_log(&mut self, why: &str) {
         if self.log.take().is_some() {
-            ferrix_rt::warn!("usbdev: {why}; the port carries no more of the log");
+            xaqu_rt::warn!("usbdev: {why}; the port carries no more of the log");
         }
         self.reading = false;
     }

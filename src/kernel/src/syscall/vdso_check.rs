@@ -13,9 +13,9 @@
 //! clock is the HPET, it is the code falling back to the system call, which
 //! is the other half.
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Class;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Class;
+use xaqu_vma::VmaFlags;
 
 use crate::syscall::uaccess;
 use crate::syscall::{exec, image, time, vdso};
@@ -30,14 +30,14 @@ const SLOTS: [(&str, &str, usize); 3] = [
     (
         "__vdso_clock_gettime",
         "clock_gettime",
-        ferrix_vdso::CODE_AT,
+        xaqu_vdso::CODE_AT,
     ),
     (
         "__vdso_gettimeofday",
         "gettimeofday",
-        ferrix_vdso::CODE_AT + 128,
+        xaqu_vdso::CODE_AT + 128,
     ),
-    ("__vdso_time", "time", ferrix_vdso::CODE_AT + 256),
+    ("__vdso_time", "time", xaqu_vdso::CODE_AT + 256),
 ];
 
 /// What the check found: which way the vDSO answers the clock.
@@ -88,9 +88,9 @@ fn check_the_trampoline(image: &[u8]) -> Result<(), &'static str> {
         .iter()
         .find(|function| function.name == vdso::SIGRETURN)
         .ok_or("the vDSO has no signal return trampoline")?;
-    let slot = ferrix_vdso::CODE_AT + function.offset;
-    let at = ferrix_vdso::lookup(image, vdso::SIGRETURN, Some(ferrix_vdso::VERSION));
-    let hashed = ferrix_vdso::lookup_hashed(image, vdso::SIGRETURN, Some(ferrix_vdso::VERSION));
+    let slot = xaqu_vdso::CODE_AT + function.offset;
+    let at = xaqu_vdso::lookup(image, vdso::SIGRETURN, Some(xaqu_vdso::VERSION));
+    let hashed = xaqu_vdso::lookup_hashed(image, vdso::SIGRETURN, Some(xaqu_vdso::VERSION));
     if at != Some(slot) || hashed != Some(slot) {
         return Err("the vDSO's image does not export its signal return trampoline where it is");
     }
@@ -105,8 +105,8 @@ fn check_the_trampoline(image: &[u8]) -> Result<(), &'static str> {
 /// Every function at `LINUX_2.6`, under its alias too, found by both
 /// lookups at the slot the program calls it at.
 fn check_the_image(image: &[u8]) -> Result<(), &'static str> {
-    let at = |name| ferrix_vdso::lookup(image, name, Some(ferrix_vdso::VERSION));
-    let hashed = |name| ferrix_vdso::lookup_hashed(image, name, Some(ferrix_vdso::VERSION));
+    let at = |name| xaqu_vdso::lookup(image, name, Some(xaqu_vdso::VERSION));
+    let hashed = |name| xaqu_vdso::lookup_hashed(image, name, Some(xaqu_vdso::VERSION));
     for (name, alias, slot) in SLOTS {
         if at(name) != Some(slot) || at(alias) != Some(slot) || hashed(name) != Some(slot) {
             return Err("the vDSO's image does not export each function where its code puts it");
@@ -120,9 +120,9 @@ fn check_the_image(image: &[u8]) -> Result<(), &'static str> {
 fn check_the_data_page() -> Result<Answered, &'static str> {
     let [mode, hz, offset] = vdso::data().ok_or("the vDSO's data page could not be read")?;
     let (want, answered) = if crate::arch::vdso_can_read_counter() {
-        (ferrix_vdso::MODE_TSC, "reading the counter itself")
+        (xaqu_vdso::MODE_TSC, "reading the counter itself")
     } else {
-        (ferrix_vdso::MODE_SYSCALL, "making the system call")
+        (xaqu_vdso::MODE_SYSCALL, "making the system call")
     };
     if mode != want {
         return Err("the vDSO's data page does not say which counter the kernel reads");
@@ -253,7 +253,7 @@ fn check_a_program_reads_the_clock_through_it() -> Result<(), &'static str> {
         image::Shape::Good,
         crate::arch::USER_VDSO_PROGRAM,
     );
-    let status = exec::run(&file, &[b"/vdso"], &[], [0x5a; ferrix_ustack::RANDOM_BYTES])
+    let status = exec::run(&file, &[b"/vdso"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
         .map_err(|_| "a program that reads the clock through the vDSO could not be started")?;
     match status {
         PROGRAM_STATUS => Ok(()),

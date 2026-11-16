@@ -722,7 +722,7 @@ pub extern "C" fn os_schedule() -> NvStatus {
 }
 
 /// `os_get_max_user_va`: the top of x86-64's 47-bit user half, Linux's
-/// `TASK_SIZE`, which Ferrix's user half matches.
+/// `TASK_SIZE`, which Xaqu's user half matches.
 #[unsafe(no_mangle)]
 pub extern "C" fn os_get_max_user_va() -> u64 {
     0x7fff_ffff_f000
@@ -764,7 +764,7 @@ pub struct VersionInfo {
     date: *const c_char,
 }
 
-/// `os_get_version_info`: Ferrix, which RM only reports.
+/// `os_get_version_info`: Xaqu, which RM only reports.
 ///
 /// # Safety
 ///
@@ -777,7 +777,7 @@ pub unsafe extern "C" fn os_get_version_info(info: *mut VersionInfo) -> NvStatus
             major: 0,
             minor: 1,
             build: 0,
-            version: c"Ferrix".as_ptr(),
+            version: c"Xaqu".as_ptr(),
             date: c"nvrm".as_ptr(),
         });
     }
@@ -796,7 +796,7 @@ pub unsafe extern "C" fn os_get_is_openrm(open: *mut NvBool) -> NvStatus {
     status::OK
 }
 
-/// `os_pat_supported`: Ferrix programs the PAT on x86-64 (N0c).
+/// `os_pat_supported`: Xaqu programs the PAT on x86-64 (N0c).
 #[unsafe(no_mangle)]
 pub extern "C" fn os_pat_supported() -> NvBool {
     status::TRUE
@@ -960,7 +960,7 @@ pub extern "C" fn os_flush_cpu_write_combine_buffer() {
 }
 
 /// `os_disable_console_access`: Linux takes the console lock while RM
-/// touches the VGA console; Ferrix's console is not the GPU's.
+/// touches the VGA console; Xaqu's console is not the GPU's.
 #[unsafe(no_mangle)]
 pub extern "C" fn os_disable_console_access() {}
 

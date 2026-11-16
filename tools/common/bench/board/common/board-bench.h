@@ -1,6 +1,6 @@
 /* board-bench.h: how every kernel on the DK1 is timed (docs/BOARD-BENCH.md).
  *
- * One header for the Linux and seL4 benches, and the contract Ferrix's
+ * One header for the Linux and seL4 benches, and the contract Xaqu's
  * ipc-bench follows in Rust, so all three kernels are timed alike:
  *
  *  - Each sample reads the cycle counter (PMCCNTR), then the

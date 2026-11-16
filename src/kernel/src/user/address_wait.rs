@@ -96,8 +96,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_kmem::Charge;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_kmem::Charge;
 
 use crate::fallible;
 use crate::sched::{self, Task, WaitQueue};
@@ -489,9 +489,9 @@ fn sleep(sleeper: &Sleeper, interrupted: &dyn Fn() -> bool, deadline: u64) {
 
 /// What a waiter on `words` words costs its job.
 fn cost(words: usize) -> usize {
-    ferrix_kmem::arc_footprint::<Sleeper>()
-        .saturating_add(ferrix_kmem::buffer_footprint::<AtomicUsize>(words))
-        .saturating_add(ferrix_kmem::buffer_footprint::<Entry>(words))
+    xaqu_kmem::arc_footprint::<Sleeper>()
+        .saturating_add(xaqu_kmem::buffer_footprint::<AtomicUsize>(words))
+        .saturating_add(xaqu_kmem::buffer_footprint::<Entry>(words))
 }
 
 /// A sleeper for a wait on `words` by the running task, charged to `payer`'s
@@ -972,7 +972,7 @@ pub fn bucket_of(key: &Key) -> usize {
 // CHECKS-ONLY: user/address_wait_check.rs
 /// The entries and room of bucket `index`: for the self-check of the bound on
 /// a bucket's uncharged room, which only a kernel with its checks runs.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub fn bucket_room(index: usize) -> (usize, usize) {
     let table = bucket_lock(index).lock();
@@ -983,7 +983,7 @@ pub fn bucket_room(index: usize) -> (usize, usize) {
 /// module's rules on purpose, so that a check can show it catches the break.
 /// Compiled only into a kernel with its self-checks, and seen only by them
 /// (K5's review, condition 4).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 pub mod sabotage {
     use super::{Arc, AtomicUsize, Charge, Entry, Key, MATCH_ANY, Sleeper};
     use super::{bucket_lock, fallible, leave, rouse};
@@ -1079,7 +1079,7 @@ pub mod sabotage {
 }
 
 /// Whether `sleeper`'s entry for `slot` is on the table.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn waiters_of(sleeper: &Arc<Sleeper>, slot: usize) -> bool {
     let Some(recorded) = sleeper.bucket_of(slot) else {
         return false;

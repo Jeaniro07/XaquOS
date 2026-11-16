@@ -28,7 +28,7 @@
 //! daemon checks that what it was handed as `/dev/null` is 1:3 before writing
 //! to it. A node with the right name and the wrong number is a wrong answer.
 //!
-//! One number is Ferrix's own: `ferrix-crashes`, 1:13, root's alone (0400),
+//! One number is Xaqu's own: `xaqu-crashes`, 1:13, root's alone (0400),
 //! the crash hold's reader (`fs::crashes`). Linux leaves 1:13 unassigned;
 //! should it assign it, the node moves.
 //!
@@ -126,15 +126,15 @@
 //!   `lseek` but take `pread64` as a `read`, as Linux's do on this host:
 //!   what their open files answer, and why, is in `crate::interfaces::display::drm`.
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod check;
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{
     DirEntry, Errno, FIRST_CURSOR, FileSystem, FileType, Inode, Metadata, OpenFile, Result,
     Timespec,
 };
@@ -170,12 +170,12 @@ enum Behaviour {
     /// `/dev/kmsg`: every open reads the kernel log from its own place
     /// (`fs::kmsg`), so the node, like `ptmx`, is never the object.
     Kmsg,
-    /// `/dev/ferrix-crashes`: an open arms the crash hold (`fs::crashes`),
+    /// `/dev/xaqu-crashes`: an open arms the crash hold (`fs::crashes`),
     /// so the node, like `kmsg`, is never the object.
     Crashes,
     /// `/dev/watchdog`: an open arms the watchdog (`fs::watchdog`), so
     /// the node is never the object. Listed and found only under
-    /// `ferrix.watchdog=on` (`docs/POSTMORTEM.md` §6.11).
+    /// `xaqu.watchdog=on` (`docs/POSTMORTEM.md` §6.11).
     Watchdog,
 }
 
@@ -260,7 +260,7 @@ static DEVICES: [Device; 11] = [
         behaviour: Behaviour::Kmsg,
     },
     Device {
-        name: b"ferrix-crashes",
+        name: b"xaqu-crashes",
         major: 1,
         minor: fs::crashes::MINOR,
         permissions: 0o400,
@@ -1099,7 +1099,7 @@ impl Inode for Node {
             let file: Arc<dyn Inode> = fs::watchdog::WatchdogFile::open()?;
             return Ok(Some(file));
         }
-        // An open of `/dev/ferrix-crashes` is the armed reader itself.
+        // An open of `/dev/xaqu-crashes` is the armed reader itself.
         if self
             .device()
             .is_some_and(|device| device.behaviour == Behaviour::Crashes)
@@ -1759,7 +1759,7 @@ fn emit_links(cursor: u64, emit: &mut dyn FnMut(DirEntry<'_>) -> bool) -> bool {
 /// The chardev node `name` is in `/dev`, if a driver serves it
 /// (`docs/NVIDIA.md` §4.4).
 fn chardev_node(name: &[u8], made: Timespec) -> Option<Arc<dyn Inode>> {
-    let minor = ferrix_chardevctl::node::minor_of(name)?;
+    let minor = xaqu_chardevctl::node::minor_of(name)?;
     let _served = crate::interfaces::chardev::published(minor)?;
     Some(Arc::new(Node {
         place: Place::Chardev(minor),
@@ -1779,7 +1779,7 @@ fn emit_chardevs(cursor: u64, emit: &mut dyn FnMut(DirEntry<'_>) -> bool) {
         if at < cursor {
             continue;
         }
-        let Some(name) = ferrix_chardevctl::node::name(minor) else {
+        let Some(name) = xaqu_chardevctl::node::name(minor) else {
             continue;
         };
         let entry = DirEntry {

@@ -5,7 +5,7 @@
 Description=The settings writer's socket
 
 [Socket]
-ListenSequentialPacket=/run/ferrix/settings
+ListenSequentialPacket=/run/xaqu/settings
 SocketMode=0666
 
 [Install]

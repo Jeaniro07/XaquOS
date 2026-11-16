@@ -4,7 +4,7 @@
 //! crate, so that boundary itself says it names no load
 //! (`docs/microkernel/B5.md`, class A).
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 use crate::arch;
 use crate::trap::{self, Abi, MAX_ERRNO, Outcome, SyscallArgs, SyscallFilter, Verdict};

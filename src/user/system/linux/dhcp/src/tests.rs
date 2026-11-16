@@ -13,12 +13,12 @@
 use std::net::Ipv4Addr;
 use std::time::Duration;
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     IFA_BROADCAST, IFA_LOCAL, IFLA_ADDRESS, IFLA_IFNAME, IfAddrMsg, IfInfoMsg, NLM_F_ACK,
     NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR, NlMsgErr, NlMsgHdr, RTA_GATEWAY, RTA_OIF, RTM_NEWADDR,
     RTM_NEWLINK, RTM_NEWROUTE, RtMsg,
 };
-use ferrix_netlink::{Address, Attr, Messages, Value, Writer};
+use xaqu_netlink::{Address, Attr, Messages, Value, Writer};
 
 use crate::args::{self, Args};
 use crate::client::{Action, Client, Config, Destination, lease_of};
@@ -235,11 +235,11 @@ fn a_domain_is_kept_only_when_it_is_a_name() {
         1,
         MAC,
         GUEST,
-        &[(option::DOMAIN, b"ferrix.test\0")],
+        &[(option::DOMAIN, b"xaqu.test\0")],
     );
     assert_eq!(
         Reply::parse(&named).unwrap().domain.as_deref(),
-        Some("ferrix.test")
+        Some("xaqu.test")
     );
     // A line break would write a second line into resolv.conf.
     let hostile = reply_bytes(
@@ -301,7 +301,7 @@ fn somebody_elses_traffic_and_a_damaged_packet_are_not_read() {
     let mut tcp = reply;
     tcp[9] = 6;
     tcp[10..12].copy_from_slice(&[0, 0]);
-    let sum = ferrix_netwire::checksum::checksum(&tcp[..20]);
+    let sum = xaqu_netwire::checksum::checksum(&tcp[..20]);
     tcp[10..12].copy_from_slice(&sum.to_be_bytes());
     assert_eq!(frame::unwrap(&tcp), None);
 }
@@ -590,12 +590,12 @@ fn masks_prefixes_and_broadcast_addresses() {
 #[test]
 fn resolv_conf_names_the_servers_and_the_domain() {
     let mut reply = gateway(kind::ACK, 1, 3600);
-    reply.domain = Some("ferrix.test".to_owned());
+    reply.domain = Some("xaqu.test".to_owned());
     reply.dns.push(Ipv4Addr::new(1, 1, 1, 1));
     let lease: Lease = lease_of(&reply, SERVER);
     assert_eq!(
         lease.resolv_conf().unwrap(),
-        "# Written by dhcpc from its lease.\nsearch ferrix.test\nnameserver 10.0.2.3\nnameserver 1.1.1.1\n"
+        "# Written by dhcpc from its lease.\nsearch xaqu.test\nnameserver 10.0.2.3\nnameserver 1.1.1.1\n"
     );
     reply.dns.clear();
     assert_eq!(lease_of(&reply, SERVER).resolv_conf(), None);

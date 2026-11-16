@@ -1,7 +1,7 @@
 //! What the front end asks of the GPU: the interface agreed with M2's back
 //! end on 2026-10-18 (see the module above for what it may rely on).
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::RequestId;
 use crate::sseu::SseuInfo;

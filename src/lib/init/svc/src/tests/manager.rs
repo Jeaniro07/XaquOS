@@ -812,11 +812,11 @@ fn the_directory_routes_an_open_and_starts_its_provider() {
     let mut rig = Rig::new(&[
         (
             "clip.service",
-            "[Service]\nType=native\nExecStart=/sbin/vdagent\nOffers=ferrix.clipboard\n",
+            "[Service]\nType=native\nExecStart=/sbin/vdagent\nOffers=xaqu.clipboard\n",
         ),
         (
             "hyprix.service",
-            "[Service]\nExecStart=/bin/hyprix\nUses=ferrix.clipboard\n",
+            "[Service]\nExecStart=/bin/hyprix\nUses=xaqu.clipboard\n",
         ),
         ("rogue.service", "[Service]\nExecStart=/bin/rogue\n"),
     ]);
@@ -825,7 +825,7 @@ fn the_directory_routes_an_open_and_starts_its_provider() {
     let hyprix = rig.id("hyprix.service");
     let open = rig.step(Event::Open {
         from: hyprix,
-        name: Name(String::from("ferrix.clipboard")),
+        name: Name(String::from("xaqu.clipboard")),
         end: Token(7),
     });
     assert_eq!(
@@ -846,19 +846,19 @@ fn the_directory_routes_an_open_and_starts_its_provider() {
     });
     assert!(ready.contains(&Action::Route {
         to: clip,
-        name: Name(String::from("ferrix.clipboard")),
+        name: Name(String::from("xaqu.clipboard")),
         end: Token(7),
     }));
     let _ = start(&mut rig, "rogue.service");
     let rogue = rig.id("rogue.service");
     let refused = rig.step(Event::Open {
         from: rogue,
-        name: Name(String::from("ferrix.clipboard")),
+        name: Name(String::from("xaqu.clipboard")),
         end: Token(8),
     });
     assert!(refused.contains(&Action::Refuse {
         to: rogue,
-        name: Name(String::from("ferrix.clipboard")),
+        name: Name(String::from("xaqu.clipboard")),
         end: Token(8),
     }));
 }
@@ -949,7 +949,7 @@ fn a_units_warnings_are_logged_as_it_loads() {
     let lines = Rig::lines(&rig.boot());
     let warned: Vec<&String> = lines
         .iter()
-        .filter(|line| line.starts_with("/lib/ferrix/units/a.service:"))
+        .filter(|line| line.starts_with("/lib/xaqu/units/a.service:"))
         .collect();
     assert_eq!(warned.len(), 2, "{lines:?}");
     assert!(

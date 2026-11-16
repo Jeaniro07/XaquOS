@@ -23,7 +23,7 @@
 //!
 //! # After the hello: devmgr's starter, and where `/` is
 //!
-//! Under `ferrix.devmgr=init` (`docs/INIT.md` §7.3, L12) two more messages
+//! Under `xaqu.devmgr=init` (`docs/INIT.md` §7.3, L12) two more messages
 //! follow on the same channel, each eight bytes in the header's shape, a
 //! magic and a little-endian `u32`:
 //!

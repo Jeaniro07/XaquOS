@@ -13,7 +13,7 @@
 //!    carries `testseconds`, and `devmgr` is built with its table row for
 //!    the compatible; the tree is the edited one, given back with `-dtb` on
 //!    the device-tree path (`acpi=off`). The boot carries
-//!    `ferrix.unisolated`, the unclaimed word, which is what admits an
+//!    `xaqu.unisolated`, the unclaimed word, which is what admits an
 //!    untranslated generic node on AArch64 (G4 (c); D6 is the customer's
 //!    open question, so no exemption entry is used).
 //! 4. **The kernel the image carries is the kernel built**: its bytes, as
@@ -54,7 +54,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
 }];
 
 /// The made-up compatible the PL031's node is given.
-const COMPATIBLE: &str = "ferrix,test-seconds";
+const COMPATIBLE: &str = "xaqu,test-seconds";
 /// The node QEMU `virt` writes for its PL031, and its path.
 const NODE: &str = "pl031@9010000";
 /// A phandle no node of QEMU's tree has: the second boot's clock.
@@ -70,14 +70,14 @@ const CHANGE_ONE_KERNEL_BYTE: bool = false;
 const BREAK_THE_CLOCK: bool = true;
 
 /// The boot's last line.
-const BOOTED: &str = "FERRIX-BOOT-OK";
+const BOOTED: &str = "XAQU-BOOT-OK";
 /// How long a boot reads on after [`BOOTED`] for the lines it needs.
 const PATIENCE: Duration = Duration::from_secs(20);
 
 /// The lines the serving boot must show, in this order.
 const SERVED: [&str; 6] = [
     " device-tree nodes published by compatible ",
-    "devmgr   testseconds /pl031@9010000: matched by compatible ferrix,test-seconds",
+    "devmgr   testseconds /pl031@9010000: matched by compatible xaqu,test-seconds",
     "testseconds: /pl031@9010000 reads as a PL031 through its own aperture",
     "testseconds: the counter moved from ",
     "testseconds: the match interrupt came after ",
@@ -241,7 +241,7 @@ fn test_image(arch: Arch, args: &Args, kernel: &cargo::Kernel) -> Result<(PathBu
     let path = cargo::build_native_with(
         arch,
         args.release,
-        "ferrix-devmgr",
+        "xaqu-devmgr",
         "devmgr",
         &target,
         &[native::TEST_DEVMGR],
@@ -259,7 +259,7 @@ fn test_image(arch: Arch, args: &Args, kernel: &cargo::Kernel) -> Result<(PathBu
         if let Some(last) = bytes.last_mut() {
             *last ^= 0xFF;
         }
-        let changed = target.join("ferrix-kernel.changed");
+        let changed = target.join("xaqu-kernel.changed");
         std::fs::write(&changed, bytes)?;
         cargo::Kernel::plain(changed)
     } else {
@@ -341,7 +341,7 @@ fn test_driver_model(args: &Args) -> Result<()> {
         let recorded = sha256::hex(&std::fs::read(&kernel.elf)?);
         println!("  {arch}: kernel built once, sha256 {recorded} recorded");
         let mut args = args.clone();
-        args.kernel_options.push("ferrix.unisolated".to_owned());
+        args.kernel_options.push("xaqu.unisolated".to_owned());
         // 3. The image, around that kernel.
         let (image, carried) = test_image(arch, &args, &kernel)?;
         // 4. The kernel the image carries is the one built.
@@ -378,7 +378,7 @@ mod tests {
     #[test]
     fn the_edit_renames_the_node_and_breaks_only_the_asked_for_clock() {
         let served = edit(TREE, false).unwrap();
-        assert!(served.contains("compatible = \"ferrix,test-seconds\";"));
+        assert!(served.contains("compatible = \"xaqu,test-seconds\";"));
         assert!(!served.contains("arm,pl031"));
         assert!(served.contains("clocks = <0x8000>;"));
         let broken = edit(TREE, true).unwrap();

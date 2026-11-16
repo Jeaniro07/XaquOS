@@ -51,8 +51,8 @@
 //! [`ReadError::Empty`] tells the glue to wait until
 //! [`Queue::poll`] changes, then read again.
 
-use ferrix_linux_abi::input::{EV_SYN, Event, SYN_DROPPED};
-use ferrix_linux_abi::socket::Width;
+use xaqu_linux_abi::input::{EV_SYN, Event, SYN_DROPPED};
+use xaqu_linux_abi::socket::Width;
 
 use crate::message::RawEvent;
 use crate::session::Report;
@@ -95,7 +95,7 @@ impl Clock {
     /// The clock a `CLOCK_*` id names, if evdev takes it; `EINVAL` otherwise.
     #[must_use]
     pub const fn from_id(id: i32) -> Option<Self> {
-        use ferrix_linux_abi::input::{CLOCK_BOOTTIME, CLOCK_MONOTONIC, CLOCK_REALTIME};
+        use xaqu_linux_abi::input::{CLOCK_BOOTTIME, CLOCK_MONOTONIC, CLOCK_REALTIME};
         Some(match id {
             CLOCK_REALTIME => Self::Realtime,
             CLOCK_MONOTONIC => Self::Monotonic,

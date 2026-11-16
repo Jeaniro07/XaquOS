@@ -1,12 +1,12 @@
-use ferrix_bootinfo::BootView;
-use ferrix_bootinfo::MemKind;
-use ferrix_bootinfo::MemRegion;
-use ferrix_bootinfo::SMBIOS_ENTRY_BYTES;
-use ferrix_smbios::Error;
-use ferrix_smbios::Smbios;
-use ferrix_smbios::TABLE_MAX;
-use ferrix_smbios::Value;
-use ferrix_sync::Once;
+use xaqu_bootinfo::BootView;
+use xaqu_bootinfo::MemKind;
+use xaqu_bootinfo::MemRegion;
+use xaqu_bootinfo::SMBIOS_ENTRY_BYTES;
+use xaqu_smbios::Error;
+use xaqu_smbios::Smbios;
+use xaqu_smbios::TABLE_MAX;
+use xaqu_smbios::Value;
+use xaqu_sync::Once;
 pub fn tables() -> Option<Smbios<'static>> {
     None
 }

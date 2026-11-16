@@ -1,5 +1,5 @@
 //! `test-gnome-apps`: GTK 4 and libadwaita apps from Debian 13 as clients of
-//! hyprix, in a session of the user `ferrix` (`docs/GNOME.md`, stage G1).
+//! hyprix, in a session of the user `xaqu` (`docs/GNOME.md`, stage G1).
 //!
 //! # The volume
 //!
@@ -16,8 +16,8 @@
 //! # The session
 //!
 //! As `run-compositor --everything` runs it: `sessiond` starts hyprix as
-//! `ferrix`, and with it -- in the same scope, under the same rules -- the
-//! volume's `dbus-daemon` as the session's bus, with Ferrix's own
+//! `xaqu`, and with it -- in the same scope, under the same rules -- the
+//! volume's `dbus-daemon` as the session's bus, with Xaqu's own
 //! configuration ([`crate::session::SESSION_BUS_CONF`]). No system bus is
 //! started. The card is the plain one, as `test-claude-desktop`'s: QEMU
 //! cannot take a screendump of a virgl card's scanout, and the window is
@@ -27,19 +27,19 @@
 //!
 //! # What is required
 //!
-//! hyprix's `exec-once` starts `adwaita-1-demo` and a probe of `ferrix`'s
+//! hyprix's `exec-once` starts `adwaita-1-demo` and a probe of `xaqu`'s
 //! ([`PROBE`]). Once the app's window is listed, the probe says what runs
 //! and as whom, and the gate requires:
 //!
 //! * `/data`'s line in `/proc/mounts` with `nosuid` and `nodev`;
 //! * `sessiond` saying it read the bus's address,
-//!   `unix:path=/run/user/1000/bus`, and the socket being `ferrix`'s there;
-//! * `dbus-daemon` running as `ferrix` on that address and no
+//!   `unix:path=/run/user/1000/bus`, and the socket being `xaqu`'s there;
+//! * `dbus-daemon` running as `xaqu` on that address and no
 //!   `--system` one, and no system bus socket;
 //! * the volume's files root's: its `dbus-daemon` `0 0 755`, and a write to
-//!   it by `ferrix` refused;
-//! * the app running as `ferrix`, connected to the bus -- a connection the
-//!   bus says is `ferrix`'s and the app's pid -- and its window -- class
+//!   it by `xaqu` refused;
+//! * the app running as `xaqu`, connected to the bus -- a connection the
+//!   bus says is `xaqu`'s and the app's pid -- and its window -- class
 //!   `org.gnome.Adwaita1.Demo` -- drawn: [`DRAWN_COLOURS`] colours or more
 //!   in it on the screen;
 //! * then the probe kills the compositor, as a crashed one would end, and a
@@ -72,7 +72,7 @@ const SOCKET: &str = "/run/user/1000/bus";
 /// What every line the probe and the watcher print starts with.
 const SAID: &str = "gnome-gate: ";
 
-/// The probe, as `ferrix`: waits for the app's window, says what runs and
+/// The probe, as `xaqu`: waits for the app's window, says what runs and
 /// as whom, holds still for the screen, then kills the compositor.
 const PROBE: &str = r#"#!/bin/sh
 # `cargo xtask test-gnome-apps` (docs/GNOME.md, G1), as the session's user.
@@ -108,9 +108,9 @@ say "bus socket: $(stat -c '%u %F' $XDG_RUNTIME_DIR/bus 2>&1) at $XDG_RUNTIME_DI
 say "system bus socket: $(ls /run/dbus/system_bus_socket 2>&1)"
 say "daemon file: $(stat -c '%u %g %a' /data/usr/bin/dbus-daemon)"
 if ( : >> /data/usr/bin/dbus-daemon ) 2>/dev/null; then
-    say "write by ferrix: allowed"
+    say "write by xaqu: allowed"
 else
-    say "write by ferrix: refused"
+    say "write by xaqu: refused"
 fi
 names=$(/data/usr/bin/dbus-send --session --print-reply --dest=org.freedesktop.DBus / \
     org.freedesktop.DBus.ListNames 2>&1 | grep -o '"[^"]*"' | tr '\n' ' ')
@@ -166,7 +166,7 @@ const AFTER_UNIT: &str = "# `cargo xtask test-gnome-apps`'s watcher of the sessi
      StandardError=console\n";
 
 /// fontconfig's file for the volume's fonts, which the volume's own
-/// `fonts.conf` names by paths Ferrix's root does not have.
+/// `fonts.conf` names by paths Xaqu's root does not have.
 const FONTS: &str = r#"<?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
 <fontconfig>
@@ -191,10 +191,10 @@ const MEMORY: u32 = 4096;
 /// How long from the compositor's marker to the watcher's last line.
 const PATIENCE: Duration = Duration::from_secs(480);
 
-/// Where the fetch script writes, unless `FERRIX_GNOME_APPS_VOLUME` names
+/// Where the fetch script writes, unless `XAQU_GNOME_APPS_VOLUME` names
 /// another directory.
 fn directory() -> Result<PathBuf> {
-    match std::env::var_os("FERRIX_GNOME_APPS_VOLUME") {
+    match std::env::var_os("XAQU_GNOME_APPS_VOLUME") {
         Some(directory) => Ok(PathBuf::from(directory)),
         None => paths::volume_directory("gnome-apps"),
     }
@@ -256,14 +256,14 @@ fn files() -> Vec<File> {
         text(AFTER_PATH, 0o755, AFTER),
         text(FONTS_PATH, 0o644, FONTS),
         text(
-            "etc/ferrix/units/gnome-gate-after.service",
+            "etc/xaqu/units/gnome-gate-after.service",
             0o644,
             AFTER_UNIT,
         ),
         File {
-            path: "etc/ferrix/units/graphical.target.wants/gnome-gate-after.service".to_owned(),
+            path: "etc/xaqu/units/graphical.target.wants/gnome-gate-after.service".to_owned(),
             mode: 0o777,
-            content: Content::Link("/etc/ferrix/units/gnome-gate-after.service".to_owned()),
+            content: Content::Link("/etc/xaqu/units/gnome-gate-after.service".to_owned()),
         },
     ]
 }
@@ -322,7 +322,7 @@ pub(crate) fn test_gnome_apps(args: &Args) -> Result<()> {
     std::fs::create_dir_all(&shots)
         .map_err(|error| Error::new(format!("making {}: {error}", shots.display())))?;
     println!(
-        "  {arch}: Debian's adwaita-1-demo on hyprix as ferrix, from {}, with sessiond's \
+        "  {arch}: Debian's adwaita-1-demo on hyprix as xaqu, from {}, with sessiond's \
          session bus; the screen in {}",
         args.data_image
             .as_deref()
@@ -418,7 +418,7 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
     for line in &daemons {
         if !line.contains("uid 1000:") || !line.contains(&format!("--address=unix:path={SOCKET}")) {
             return Some(format!(
-                "a dbus-daemon not ferrix's session bus: `{}`",
+                "a dbus-daemon not xaqu's session bus: `{}`",
                 line.trim()
             ));
         }
@@ -429,7 +429,7 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
     let app = said(lines, "process adwaita-1-demo uid ");
     let Some(pid) = app.and_then(|said| said.strip_prefix("1000 pid ")) else {
         return Some(format!(
-            "adwaita-1-demo is not ferrix's: uid {}",
+            "adwaita-1-demo is not xaqu's: uid {}",
             app.unwrap_or("none")
         ));
     };
@@ -437,13 +437,13 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
         Some(socket) if socket.starts_with("1000 socket at ") && socket.ends_with(SOCKET) => {}
         other => {
             return Some(format!(
-                "the bus socket is not ferrix's at {SOCKET}: {}",
+                "the bus socket is not xaqu's at {SOCKET}: {}",
                 other.unwrap_or("not said")
             ));
         }
     }
     // The volume's files root's (the consultant's A1, ledger 3137): the
-    // daemon root's and `ferrix` refused a write to it.
+    // daemon root's and `xaqu` refused a write to it.
     match said(lines, "daemon file: ") {
         Some("0 0 755") => {}
         other => {
@@ -453,8 +453,8 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
             ));
         }
     }
-    if said(lines, "write by ferrix: ") != Some("refused") {
-        return Some("ferrix could write the volume's dbus-daemon".to_owned());
+    if said(lines, "write by xaqu: ") != Some("refused") {
+        return Some("xaqu could write the volume's dbus-daemon".to_owned());
     }
     match said(lines, "system bus socket: ") {
         Some(answer) if answer.contains("No such file") => {}
@@ -465,7 +465,7 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
             ));
         }
     }
-    // The app on the bus: a connection the bus itself says is ferrix's
+    // The app on the bus: a connection the bus itself says is xaqu's
     // and the app's process (`GetConnectionUnixUser` and `...ProcessID`).
     // The demo is a non-unique application, so it owns no name of its own.
     let connected = lines.iter().any(|line| {
@@ -474,7 +474,7 @@ fn wrong_before_end(lines: &[String]) -> Option<String> {
     });
     if !connected {
         return Some(format!(
-            "no connection on the session bus is ferrix's adwaita-1-demo (pid {pid})"
+            "no connection on the session bus is xaqu's adwaita-1-demo (pid {pid})"
         ));
     }
     None
@@ -497,7 +497,7 @@ fn watch(arch: Arch, watching: &mut Watching<'_>, qmp: &mut Qmp, shots: &Path) -
         lines.iter().any(|line| {
             line.contains(&format!("{SAID}ready for the screen"))
                 || line.contains(&format!("{SAID}no window"))
-                || line.contains("FERRIX-PANIC")
+                || line.contains("XAQU-PANIC")
         })
     })?;
     let lines: Vec<String> = watching
@@ -549,8 +549,8 @@ fn watch(arch: Arch, watching: &mut Watching<'_>, qmp: &mut Qmp, shots: &Path) -
         ));
     }
     println!(
-        "  {arch}: /data nosuid,nodev; ferrix's session bus at {SOCKET}, no system bus; \
-         adwaita-1-demo ferrix's and on the bus, its window drawn ({drawn} colours); \
+        "  {arch}: /data nosuid,nodev; xaqu's session bus at {SOCKET}, no system bus; \
+         adwaita-1-demo xaqu's and on the bus, its window drawn ({drawn} colours); \
          the screen is {}",
         dump.display()
     );
@@ -626,12 +626,12 @@ mod tests {
   3.0 | data-nosuid: btrfs /data btrfs rw,nosuid,nodev 0 0
   4.0 | sessiond: the session's bus is up: unix:path=/run/user/1000/bus,guid=ab
   9.0 | gnome-gate: window 960,20 940,1040 org.gnome.Adwaita1.Demo Adwaita Demo
-  9.0 | gnome-gate: process dbus-daemon uid 1000: /data/usr/bin/dbus-daemon --config-file=/etc/ferrix/session-bus.conf --nofork --nopidfile --address=unix:path=/run/user/1000/bus --print-address=3
+  9.0 | gnome-gate: process dbus-daemon uid 1000: /data/usr/bin/dbus-daemon --config-file=/etc/xaqu/session-bus.conf --nofork --nopidfile --address=unix:path=/run/user/1000/bus --print-address=3
   9.0 | gnome-gate: process adwaita-1-demo uid 1000 pid 45
   9.0 | gnome-gate: bus socket: 1000 socket at /run/user/1000/bus
   9.0 | gnome-gate: system bus socket: ls: /run/dbus/system_bus_socket: No such file or directory
   9.0 | gnome-gate: daemon file: 0 0 755
-  9.0 | gnome-gate: write by ferrix: refused
+  9.0 | gnome-gate: write by xaqu: refused
   9.0 | gnome-gate: bus names: \"org.freedesktop.DBus\" \":1.0\" \":1.1\"
   9.0 | gnome-gate: bus connection :1.0 uid 1000 pid 45
   9.0 | gnome-gate: bus connection :1.1 uid  pid
@@ -659,7 +659,7 @@ mod tests {
             ),
             ("bus socket: 1000 socket", "bus socket: 0 socket"),
             ("daemon file: 0 0 755", "daemon file: 1000 1000 755"),
-            ("write by ferrix: refused", "write by ferrix: allowed"),
+            ("write by xaqu: refused", "write by xaqu: allowed"),
             (
                 "ls: /run/dbus/system_bus_socket: No such file or directory",
                 "/run/dbus/system_bus_socket",

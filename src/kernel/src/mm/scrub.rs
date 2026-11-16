@@ -5,8 +5,8 @@
 
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_frame::Frame;
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_frame::Frame;
 
 use super::{RETIRED_COUNT, Retired, holds_retired, keep_retired, retire_frame, with_frames};
 use crate::sync::SpinLock;
@@ -23,7 +23,7 @@ pub(crate) const RETIRED_SHARE: usize = 192;
 const SUSPECTS: usize = 64;
 
 /// What the firmware says the memory does about errors, as SMBIOS type 16
-/// reads (`ferrix_smbios::Correction`, mapped by the caller).
+/// reads (`xaqu_smbios::Correction`, mapped by the caller).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Memory {
     /// Every system memory array says None.
@@ -62,7 +62,7 @@ pub enum Standing {
 }
 
 impl Standing {
-    /// The reason on the boot line and in `/proc/ferrix-scrub`.
+    /// The reason on the boot line and in `/proc/xaqu-scrub`.
     pub const fn reason(self) -> &'static str {
         match self {
             Standing::Undecided => "not decided",
@@ -103,21 +103,21 @@ static STANDING: AtomicU8 = AtomicU8::new(Standing::Undecided as u8);
 
 /// The boot option the gate passes to run the scrubber under QEMU, whose
 /// type 16 says multi-bit ECC (`docs/RAM-SCRUBBER.md` §3.3).
-#[cfg(ferrix_checks = "on")]
-const TEST_OPTION: &str = "ferrix.scrub";
+#[cfg(xaqu_checks = "on")]
+const TEST_OPTION: &str = "xaqu.scrub";
 
 /// Whether the gate's override was asked for. It is compiled into every
 /// build with the checks on, certified profiles included, so what keeps it
 /// off bare metal is [`decide`]'s test: it is honoured only where a
 /// hypervisor is positively seen (ledger 5057 (2), 5140 (1)); the option is
 /// test-only, refused in a certified profile's command line (`AoU-38`).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 fn override_asked(view: &BootView<'_>) -> bool {
     view.option(TEST_OPTION) == Some("test")
 }
 
 /// A build without the checks has no override.
-#[cfg(not(ferrix_checks = "on"))]
+#[cfg(not(xaqu_checks = "on"))]
 fn override_asked(_view: &BootView<'_>) -> bool {
     false
 }
@@ -200,7 +200,7 @@ pub struct Batch {
 static BUSY: AtomicBool = AtomicBool::new(false);
 /// The next frame to look at.
 static CURSOR: AtomicU64 = AtomicU64::new(0);
-/// The counts `/proc/ferrix-scrub` shows.
+/// The counts `/proc/xaqu-scrub` shows.
 static TESTED: AtomicU64 = AtomicU64::new(0);
 static SWEEP_TESTED: AtomicU64 = AtomicU64::new(0);
 static SUSPECTED: AtomicU64 = AtomicU64::new(0);
@@ -532,7 +532,7 @@ pub(crate) fn aim(frame: Frame) {
     CURSOR.store(frame.saturating_sub(base), Ordering::Relaxed);
 }
 
-/// `/proc/ferrix-scrub`'s text (`L.mm.107`): frames managed and tested, the
+/// `/proc/xaqu-scrub`'s text (`L.mm.107`): frames managed and tested, the
 /// judgements, the sweeps, and the standing. No addresses.
 pub fn render(out: &mut impl core::fmt::Write) -> core::fmt::Result {
     writeln!(out, "standing {}", standing().reason())?;

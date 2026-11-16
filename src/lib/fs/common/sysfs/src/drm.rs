@@ -35,7 +35,7 @@ pub const CONNECTOR_DSI: u32 = 16;
 pub const CONNECTOR_USB: u32 = 20;
 
 /// A connector type's name, as `drm_connector_enum_list` spells it, for the
-/// types Ferrix's cards have.
+/// types Xaqu's cards have.
 #[must_use]
 pub const fn connector_type_name(kind: u32) -> &'static str {
     match kind {

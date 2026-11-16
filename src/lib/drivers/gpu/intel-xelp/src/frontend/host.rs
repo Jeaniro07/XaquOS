@@ -4,8 +4,8 @@
 
 use core::fmt;
 
-use ferrix_linux_abi::errno::Errno;
-pub use ferrix_linux_abi::kmsg::Level;
+use xaqu_linux_abi::errno::Errno;
+pub use xaqu_linux_abi::kmsg::Level;
 
 /// What a dmabuf install answered.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -111,7 +111,7 @@ pub trait Host<M> {
 
     /// Whether the program waiting in `request` may raise its priority above
     /// the default (`CAP_SYS_NICE`) or is the administrator (`CAP_SYS_ADMIN`):
-    /// Ferrix has no capabilities, so the host answers for root.
+    /// Xaqu has no capabilities, so the host answers for root.
     fn privileged(&self, request: u64) -> bool;
 
     /// A line of the driver's log at `level` (refusals a program sees as a

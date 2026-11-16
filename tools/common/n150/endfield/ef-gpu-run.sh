@@ -22,10 +22,10 @@
 # Env: EF_RES (1280x800; "keep" leaves the game's settings alone), EF_WAIT
 # (1200), EF_EVERY (15), EF_FULLSCREEN (1), and EF_VK, EF_GAME_DXVK,
 # EF_HUD, EF_PROTON_LOG for the player (ef-player-anv.sh). Output goes to
-# stdout and to /home/ferrix/plog/gpu-report.txt.
+# stdout and to /home/xaqu/plog/gpu-report.txt.
 bb=/bin/busybox
-plog=/home/ferrix/plog
-pfx=/home/ferrix/cd-dwp/pfx
+plog=/home/xaqu/plog
+pfx=/home/xaqu/cd-dwp/pfx
 out=$plog/gpu-report.txt
 dxlog=$plog/dxvk
 game=Endfield.exe
@@ -107,8 +107,8 @@ report() {
     for name in Launcher.exe Games.exe $game; do
         say "$name: $(pids_of $name | $bb tr '\n' ' ')"
     done
-    say "DXVK config ($(ls /tmp/ferrix-run/ef-dxvk.conf 2>/dev/null)):"
-    [ -r /tmp/ferrix-run/ef-dxvk.conf ] && while read -r l; do say "    $l"; done < /tmp/ferrix-run/ef-dxvk.conf
+    say "DXVK config ($(ls /tmp/xaqu-run/ef-dxvk.conf 2>/dev/null)):"
+    [ -r /tmp/xaqu-run/ef-dxvk.conf ] && while read -r l; do say "    $l"; done < /tmp/xaqu-run/ef-dxvk.conf
     for f in $dxlog/*.log; do
         # The device lines are in the dxgi log (d3d11 and d3d9 log their own).
         $bb grep -q 'Found device: ' "$f" 2>/dev/null || continue
@@ -155,8 +155,8 @@ start)
     if [ "$res" != keep ]; then
         if [ -r /data/ef-settings.sh ]; then
             w=${res%x*} h=${res#*x}
-            su ferrix -c "WINEPREFIX=$pfx PROTON=/data/dwproton OUT=$plog/settings-before /bin/busybox sh /data/ef-settings.sh dump" > $plog/settings-before.txt 2>&1
-            su ferrix -c "WINEPREFIX=$pfx PROTON=/data/dwproton /bin/busybox sh /data/ef-settings.sh set $w $h" 2>&1 | while read -r l; do say "settings: $l"; done
+            su xaqu -c "WINEPREFIX=$pfx PROTON=/data/dwproton OUT=$plog/settings-before /bin/busybox sh /data/ef-settings.sh dump" > $plog/settings-before.txt 2>&1
+            su xaqu -c "WINEPREFIX=$pfx PROTON=/data/dwproton /bin/busybox sh /data/ef-settings.sh set $w $h" 2>&1 | while read -r l; do say "settings: $l"; done
         else
             say "settings: no /data/ef-settings.sh, the game's own"
         fi
@@ -174,7 +174,7 @@ report) report ;;
 stop)
     /data/ef-fullscreen.sh stop
     if [ "${2:-}" = all ]; then
-        su ferrix -c "WINEPREFIX=$pfx /data/dwproton/files/bin/wineserver -k"
+        su xaqu -c "WINEPREFIX=$pfx /data/dwproton/files/bin/wineserver -k"
         echo "ef-gpu-run.sh: wineserver -k sent"
         # Started from Steam (/data/steam-ef/40-play.sh) the game runs under
         # Steam's reaper and Proton's own wineserver, which the -k above does

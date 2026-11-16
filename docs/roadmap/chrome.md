@@ -1,4 +1,4 @@
-# Chrome — a browser on Ferrix  ·  *headless and in a window, 2026-09-24; the DK1 ≈ 45–55 points*
+# Chrome — a browser on Xaqu  ·  *headless and in a window, 2026-09-24; the DK1 ≈ 45–55 points*
 
 Placed after sysfs without a number of its own. A browser was on no stage
 until the customer asked, on 2026-09-18, what one would take, and on
@@ -11,7 +11,7 @@ for Testing 154.0.8037.57 on Debian 13's glibc, from a btrfs volume
 for that glibc is the other route, and since 2026-09-24 ferrousli answers
 every glibc name Chrome and its libraries import.
 
-**Exit:** Chrome renders a page on Ferrix, headless and in a window on the
+**Exit:** Chrome renders a page on Xaqu, headless and in a window on the
 compositor. Met on x86-64 (2026-09-24): `cargo xtask test-chrome` runs
 `chrome-headless-shell` three ways -- `--version`, `--dump-dom` of a page
 whose script only V8 could have run, and `--screenshot` -- and
@@ -67,7 +67,7 @@ page on the screen from a fresh btrfs root (`docs/CHROME.md` §9).
 **Done (2026-09-26): what Chrome looks like and what it says it is.** Its
 text was all foot's monospace, because the desktop's fontconfig had no
 `conf.d`. It is now Inter and Liberation, carried from the tree's `assets/fonts/`
-and drawn with slight hinting. The user agent says Ferrix, through
+and drawn with slight hinting. The user agent says Xaqu, through
 `--user-agent`. Chrome for Testing's bar
 is gone. The compositor now splits an `exec` line as the shell would for
 its quoting (`docs/CHROME.md` §9).
@@ -116,7 +116,7 @@ to 5.2 MB/s, and a Wikipedia article in 0.21 s instead of about 0.5
   run Chrome, and the compiler in the desktop's terminals, on ferrousli by
   default since 2026-09-27; `--interpreter glibc` for the volume's own.)
 * Why the GPU process's fallback path stops at the sandbox's
-  `proc_util.cc:115` with `ENOENT` on Ferrix (`docs/CHROME.md` §8, item 8).
+  `proc_util.cc:115` with `ENOENT` on Xaqu (`docs/CHROME.md` §8, item 8).
 * The GPU: Chrome draws in software, except on NVIDIA's RTX 3060, where
   WebGL renders on the card through ANGLE on NVIDIA's Vulkan since
   2026-10-05 (stage 21; the compositing is still software, and the dmabufs

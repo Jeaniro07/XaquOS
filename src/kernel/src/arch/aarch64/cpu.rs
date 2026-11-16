@@ -190,7 +190,7 @@ pub(crate) unsafe fn write_vbar(table: u64) {
 
 /// Unmask `IRQ` on this CPU, leaving `FIQ`, `SError` and debug masked.
 ///
-/// Only `IRQ`: Ferrix routes nothing to `FIQ` — it is conventionally reserved
+/// Only `IRQ`: Xaqu routes nothing to `FIQ` — it is conventionally reserved
 /// for a secure world the kernel does not own — and an `SError` is an
 /// asynchronous abort that stays masked until there is something that could
 /// act on one.
@@ -221,7 +221,7 @@ pub(crate) fn read_daif() -> u64 {
 ///
 /// (SYSREG) `daif` must be a value a previous [`read_daif`] returned. Writing an
 /// arbitrary value unmasks exceptions the caller may not be ready for — an
-/// `SError` in particular, which Ferrix keeps masked until there is something
+/// `SError` in particular, which Xaqu keeps masked until there is something
 /// that could act on one.
 pub(crate) unsafe fn write_daif(daif: u64) {
     // SAFETY: (SYSREG) the caller guarantees the value came from `read_daif`.

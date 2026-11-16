@@ -16,7 +16,7 @@
 //!    on: Settings says it wrote the file, and a second process
 //!    (`settings --list`) reads the switch back as on from the file.
 //! 3. Game Probe started from the launcher has the mark: it prints
-//!    `FERRIX_GAME_MODE=1` and its own ID, and reads its ID out of the file
+//!    `XAQU_GAME_MODE=1` and its own ID, and reads its ID out of the file
 //!    with the shell's own `read`.
 //! 4. Return in Settings again turns the switch off, and Game Probe started
 //!    from the launcher again has no mark and finds the file without its
@@ -63,25 +63,25 @@ Name=Game Probe
 GenericName=Game Mode Probe
 Comment=Says how it was started
 Exec=/bin/zinc /bin/game-probe
-Icon=ferrix-pattern
+Icon=xaqu-pattern
 Terminal=false
 ";
 
 /// The probe: what it was started with, then each line of the user's file
 /// that is an ID, then that it is done. `HOME` is `/` on this desktop.
 const PROBE: &str = "\
-echo \"game-probe: FERRIX_GAME_MODE=${FERRIX_GAME_MODE} FERRIX_GAME_MODE_APP=${FERRIX_GAME_MODE_APP} .\"
+echo \"game-probe: XAQU_GAME_MODE=${XAQU_GAME_MODE} XAQU_GAME_MODE_APP=${XAQU_GAME_MODE_APP} .\"
 while read -r line; do
   case \"$line\" in
     \\#*|\"\") ;;
     *) echo \"game-probe: the file has $line\" ;;
   esac
-done < /.config/ferrix/game-mode.conf
+done < /.config/xaqu/game-mode.conf
 echo \"game-probe: done\"
 ";
 
 /// The user's file, as Settings names it when it writes.
-const FILE: &str = "/.config/ferrix/game-mode.conf";
+const FILE: &str = "/.config/xaqu/game-mode.conf";
 
 /// The fonts Settings draws with: the brand's Inter, as an image a person
 /// runs carries it.
@@ -112,7 +112,7 @@ fn carried(arch: Arch) -> Result<Carried> {
         let bytes = std::fs::read(&path)
             .map_err(|error| Error::new(format!("{}: {error}", path.display())))?;
         ports.push(File {
-            path: format!("usr/share/ferrix/fonts/{font}"),
+            path: format!("usr/share/xaqu/fonts/{font}"),
             mode: 0o644,
             content: Content::Bytes(bytes),
         });
@@ -158,7 +158,7 @@ pub(super) fn test_settings(arch: Arch, programs: &Programs, args: &Args) -> Res
     judge(arch, &said)?;
     println!(
         "  {arch}: Settings listed the image's applications, a switch turned in it was written \
-         to {FILE}, the launcher started the application with FERRIX_GAME_MODE=1 while the \
+         to {FILE}, the launcher started the application with XAQU_GAME_MODE=1 while the \
          switch was on and without it once it was off"
     );
     Ok(())
@@ -367,7 +367,7 @@ fn judge(arch: Arch, said: &[String]) -> Result<()> {
     // The probe ran twice, in this order: marked, then not.
     let started: Vec<&str> = said
         .iter()
-        .filter(|line| line.contains("game-probe: FERRIX_GAME_MODE="))
+        .filter(|line| line.contains("game-probe: XAQU_GAME_MODE="))
         .map(|line| super::boot::said_on_its_own(line))
         .collect();
     let (Some(first), Some(second), 2) = (started.first(), started.get(1), started.len()) else {
@@ -376,12 +376,12 @@ fn judge(arch: Arch, said: &[String]) -> Result<()> {
             started.len()
         ));
     };
-    if !first.contains("FERRIX_GAME_MODE=1 FERRIX_GAME_MODE_APP=probe.desktop .") {
+    if !first.contains("XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop .") {
         return refuse(format!(
             "with its switch on, Game Probe was not started in game mode by the launcher: `{first}`"
         ));
     }
-    if !second.contains("FERRIX_GAME_MODE= FERRIX_GAME_MODE_APP= .") {
+    if !second.contains("XAQU_GAME_MODE= XAQU_GAME_MODE_APP= .") {
         return refuse(format!(
             "with its switch off again, Game Probe was still started with a mark: `{second}`"
         ));
@@ -389,7 +389,7 @@ fn judge(arch: Arch, said: &[String]) -> Result<()> {
     // The launcher said so itself, once: for the start that was marked.
     let marked = count(
         said,
-        "game mode: probe.desktop is started with FERRIX_GAME_MODE=1",
+        "game mode: probe.desktop is started with XAQU_GAME_MODE=1",
     );
     if marked != 1 {
         return refuse(format!(
@@ -422,22 +422,22 @@ mod tests {
     /// A transcript of a boot that passed, as the guest prints one.
     fn passed() -> Vec<String> {
         [
-            "settings: 5 applications listed, 0 in game mode (/.config/ferrix/game-mode.conf)",
+            "settings: 5 applications listed, 0 in game mode (/.config/xaqu/game-mode.conf)",
             "settings: the window is up, 1264x704, on Game mode",
             "vkbd: typed p r o b e",
-            "settings: game mode on for probe.desktop; wrote /.config/ferrix/game-mode.conf",
+            "settings: game mode on for probe.desktop; wrote /.config/xaqu/game-mode.conf",
             "on probe.desktop Game Probe",
             "off settings.desktop Settings",
             "off terminal.desktop Terminal",
             " info: fuzzel: 5 entries, window 400x300 on layer Overlay, namespace launcher",
             " info: executing probe.desktop: \"/bin/zinc /bin/game-probe\"",
-            " info: game mode: probe.desktop is started with FERRIX_GAME_MODE=1",
-            "game-probe: FERRIX_GAME_MODE=1 FERRIX_GAME_MODE_APP=probe.desktop .",
+            " info: game mode: probe.desktop is started with XAQU_GAME_MODE=1",
+            "game-probe: XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop .",
             "game-probe: the file has probe.desktop",
             "game-probe: done",
-            "settings: game mode off for probe.desktop; wrote /.config/ferrix/game-mode.conf",
+            "settings: game mode off for probe.desktop; wrote /.config/xaqu/game-mode.conf",
             " info: executing probe.desktop: \"/bin/zinc /bin/game-probe\"",
-            "game-probe: FERRIX_GAME_MODE= FERRIX_GAME_MODE_APP= .",
+            "game-probe: XAQU_GAME_MODE= XAQU_GAME_MODE_APP= .",
             "game-probe: done",
         ]
         .into_iter()
@@ -476,8 +476,8 @@ mod tests {
         // The negative control's transcript: the switch is on, the file has
         // the ID, and the program was started without the mark.
         let unmarked = with(
-            "FERRIX_GAME_MODE=1 FERRIX_GAME_MODE_APP=probe.desktop",
-            |_| Some("game-probe: FERRIX_GAME_MODE= FERRIX_GAME_MODE_APP= .".to_owned()),
+            "XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop",
+            |_| Some("game-probe: XAQU_GAME_MODE= XAQU_GAME_MODE_APP= .".to_owned()),
         );
         assert!(
             refusal(&unmarked).contains("was not started in game mode by the launcher"),
@@ -488,8 +488,8 @@ mod tests {
 
     #[test]
     fn a_mark_that_outlives_its_switch_fails() {
-        let kept = with("game-probe: FERRIX_GAME_MODE= ", |_| {
-            Some("game-probe: FERRIX_GAME_MODE=1 FERRIX_GAME_MODE_APP=probe.desktop .".to_owned())
+        let kept = with("game-probe: XAQU_GAME_MODE= ", |_| {
+            Some("game-probe: XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop .".to_owned())
         });
         assert!(
             refusal(&kept).contains("still started with a mark"),
@@ -542,8 +542,8 @@ mod tests {
     fn the_boots_own_files_are_what_they_say() {
         assert!(PROBE_ENTRY.starts_with("[Desktop Entry]\n"));
         assert!(PROBE_ENTRY.contains("Exec=/bin/zinc /bin/game-probe\n"));
-        assert!(PROBE.contains("FERRIX_GAME_MODE=${FERRIX_GAME_MODE} "));
-        assert!(PROBE.contains("/.config/ferrix/game-mode.conf"));
+        assert!(PROBE.contains("XAQU_GAME_MODE=${XAQU_GAME_MODE} "));
+        assert!(PROBE.contains("/.config/xaqu/game-mode.conf"));
         for key in ["F1", "F2", "F3", "F4"] {
             assert!(CONFIG.contains(&format!("bind = , {key}, exec, ")), "{key}");
         }

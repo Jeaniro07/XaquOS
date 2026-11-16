@@ -9,7 +9,7 @@
 //! new version's file, and `LOCATION` the device's PCI address as `devmgr`
 //! prints it (`00:02.0`); without it every device the driver drives is
 //! updated, one at a time. The image goes to `drvupdated` over the abstract
-//! socket `ferrix.devmgr.update`, which takes it from root alone; `devmgr`
+//! socket `xaqu.devmgr.update`, which takes it from root alone; `devmgr`
 //! answers, and this prints the answer.
 //!
 //! The server is checked too: an abstract name belongs to whoever binds it
@@ -27,7 +27,7 @@ use std::os::unix::net::{SocketAddr, UnixStream};
 use std::process::ExitCode;
 use std::{fs, ptr};
 
-use ferrix_drvupdate_proto::{ANSWER_BYTES, ANY, Answer, Outcome, Request, SOCKET_NAME};
+use xaqu_drvupdate_proto::{ANSWER_BYTES, ANY, Answer, Outcome, Request, SOCKET_NAME};
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();

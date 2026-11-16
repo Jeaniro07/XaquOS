@@ -1,7 +1,7 @@
 //! The STM32MP15 DK board's HDMI driver process: a ring-3 program that
 //! serves one card to the kernel's display core (`docs/DISPLAY.md` §6).
 //!
-//! Everything that decides a register value is `ferrix-stm32-display`,
+//! Everything that decides a register value is `xaqu-stm32-display`,
 //! tested on the host. This program is the handles it was written to be
 //! wrapped in:
 //!
@@ -14,7 +14,7 @@
 //!    on standard error, which is the console, what the monitor is, its EDID
 //!    in hex, and each mode with its pixel clock and whether the board can
 //!    make it; the largest the board can run is the one it runs
-//!    (`ferrix_stm32_display::choice`), 720p60 when nothing larger is. The
+//!    (`xaqu_stm32_display::choice`), 720p60 when nothing larger is. The
 //!    kernel sets the pixel clock for it (`device_clock`), the LTDC starts
 //!    it with its layer off, the bridge is told the mode and its TMDS output
 //!    turned on. HELLO then offers the one scanout at that size with every
@@ -48,36 +48,36 @@
 use core::fmt::{self, Write as _};
 use core::ptr;
 
-use ferrix_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
-use ferrix_displayctl::message::{
+use xaqu_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
+use xaqu_displayctl::message::{
     Attach, CURSOR_SIZE, Hello, MAX_BUFFER_PAGES as MAX_PAGES, MAX_BYTES, MAX_REFRESH_MHZ,
     MAX_SCANOUTS, MAX_TIMINGS, Message, PORT_RIGHTS, Rect, ScanoutMode, Status, Timing, Timings,
     VERSION,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL, PACKET_USER, TREE_STM32_HDMI,
 };
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_stm32_display::choice::{self, Candidate, How, Runnable, Verdict};
-use ferrix_stm32_display::edid::{Offer, Source, Unusable};
-use ferrix_stm32_display::i2c::{I2c, TIMING_100KHZ_AT_64MHZ};
-use ferrix_stm32_display::ltdc::{CursorImage, Frame, Ltdc};
-use ferrix_stm32_display::mode::Mode;
-use ferrix_stm32_display::sii9022::{self, Bridge};
-use ferrix_stm32_display::{Budget, Registers, edid};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_stm32_display::choice::{self, Candidate, How, Runnable, Verdict};
+use xaqu_stm32_display::edid::{Offer, Source, Unusable};
+use xaqu_stm32_display::i2c::{I2c, TIMING_100KHZ_AT_64MHZ};
+use xaqu_stm32_display::ltdc::{CursorImage, Frame, Ltdc};
+use xaqu_stm32_display::mode::Mode;
+use xaqu_stm32_display::sii9022::{self, Bridge};
+use xaqu_stm32_display::{Budget, Registers, edid};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page.
 const PAGE: usize = 4096;
@@ -299,7 +299,7 @@ fn monitor(bridge: &mut Bridge<I2c<Window>>, device: &Device<Kernel>) -> (bool, 
     let mut base = [0_u8; edid::BLOCK_BYTES];
     let mut extension = [0_u8; edid::BLOCK_BYTES];
     if bridge.read_edid(0, &mut base).is_err() || !edid::is_base(&base) {
-        ferrix_rt::warn!("ltdc: the monitor gave no EDID; DVI at 1280x720, 60 Hz");
+        xaqu_rt::warn!("ltdc: the monitor gave no EDID; DVI at 1280x720, 60 Hz");
         return (false, None);
     }
     let extensions = edid::extensions(&base);
@@ -320,7 +320,7 @@ fn monitor(bridge: &mut Bridge<I2c<Window>>, device: &Device<Kernel>) -> (bool, 
         tell_offer(offer, &mut round);
     }
     if offers.dropped() > 0 {
-        ferrix_rt::notice!("ltdc: {} more offered modes not read", offers.dropped());
+        xaqu_rt::notice!("ltdc: {} more offered modes not read", offers.dropped());
     }
     let runnable = choice::runnable(
         &offers,
@@ -329,7 +329,7 @@ fn monitor(bridge: &mut Bridge<I2c<Window>>, device: &Device<Kernel>) -> (bool, 
         round,
     );
     for candidate in runnable.as_slice() {
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "ltdc: can run {}{}",
             Described(&candidate.mode),
             match candidate.how {
@@ -355,7 +355,7 @@ fn first_mode(device: &Device<Kernel>, runnable: &mut Option<Runnable>) -> Mode 
     if set_clock(device, &chosen.mode) {
         return chosen.mode;
     }
-    ferrix_rt::warn!(
+    xaqu_rt::warn!(
         "ltdc: the kernel would not set the pixel clock for {}; 720p60 instead",
         Described(&chosen.mode)
     );
@@ -497,7 +497,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     let mut bridge = bridge(I2c::new(i2c_window, TIMING_100KHZ_AT_64MHZ))?;
     let (hdmi, mut runnable) = monitor(&mut bridge, &device);
     let mode = first_mode(&device, &mut runnable);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "ltdc: running {}, {}",
         Described(&mode),
         if hdmi { "HDMI" } else { "DVI" }
@@ -510,7 +510,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
 
     let cursor = ltdc.has_cursor_layer();
     if cursor {
-        ferrix_rt::info!("ltdc: a {CURSOR_SIZE}x{CURSOR_SIZE} cursor plane on the second layer");
+        xaqu_rt::info!("ltdc: a {CURSOR_SIZE}x{CURSOR_SIZE} cursor plane on the second layer");
     }
     match introduce(
         &control,
@@ -841,7 +841,7 @@ impl Serving {
         let mode = if set_clock(&self.device, &wanted.mode) {
             wanted.mode
         } else {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "ltdc: the kernel would not set the pixel clock for {}; staying at {}",
                 Described(&wanted.mode),
                 Described(&running)
@@ -857,7 +857,7 @@ impl Serving {
         // the same place, clipped to the new screen.
         self.place_pointer();
         self.bridge.enable().map_err(|_| Step::BridgeBus)?;
-        ferrix_rt::info!("ltdc: now running {}", Described(&mode));
+        xaqu_rt::info!("ltdc: now running {}", Described(&mode));
         Ok(())
     }
 
@@ -1059,7 +1059,7 @@ fn tell_edid(
     let (name, len) = edid::name(base).unwrap_or(([b'?'; 13], 1));
     let name = core::str::from_utf8(name.get(..len).unwrap_or(&[])).unwrap_or("?");
     let [version, revision] = [18, 19].map(|at| base.get(at).copied().unwrap_or(0));
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "ltdc: monitor {name}, EDID {version}.{revision}, {extensions} extension block{}, {}",
         if extensions == 1 { "" } else { "s" },
         if hdmi { "HDMI" } else { "DVI" }
@@ -1070,7 +1070,7 @@ fn tell_edid(
             for byte in bytes {
                 let _ = write!(hex, "{byte:02x}");
             }
-            ferrix_rt::debug!(
+            xaqu_rt::debug!(
                 "ltdc: edid {:03x} {}",
                 number * edid::BLOCK_BYTES + row * 32,
                 hex.as_str()
@@ -1078,7 +1078,7 @@ fn tell_edid(
         }
     }
     match edid::range_limits(base) {
-        Some(limits) => ferrix_rt::info!(
+        Some(limits) => xaqu_rt::info!(
             "ltdc: range limits {}-{} Hz, {}-{} kHz, {}; takes timings it does not list: {}",
             limits.vertical_hz.0,
             limits.vertical_hz.1,
@@ -1087,7 +1087,7 @@ fn tell_edid(
             Mhz(limits.max_clock_khz),
             if edid::continuous(base) { "yes" } else { "no" }
         ),
-        None => ferrix_rt::info!("ltdc: no range limits"),
+        None => xaqu_rt::info!("ltdc: no range limits"),
     }
 }
 
@@ -1113,36 +1113,36 @@ fn tell_offer(offer: &Offer, round: &mut impl FnMut(u32) -> Option<u32>) {
             };
             if let Source::Standard(code) = offer.source {
                 let (w, h, hz) = edid::standard_size(code);
-                ferrix_rt::info!("ltdc: offered {source} {w}x{h} at {hz} Hz: {why}");
+                xaqu_rt::info!("ltdc: offered {source} {w}x{h} at {hz} Hz: {why}");
             } else {
-                ferrix_rt::info!("ltdc: offered {source}: {why}");
+                xaqu_rt::info!("ltdc: offered {source}: {why}");
             }
             return;
         }
     };
     let described = Described(&mode);
     match choice::verdict(&mode, round) {
-        Verdict::Runs { clock_khz } => ferrix_rt::info!(
+        Verdict::Runs { clock_khz } => xaqu_rt::info!(
             "ltdc: offered {source} {described}: runs, at {}",
             Mhz(clock_khz)
         ),
-        Verdict::TooFast => ferrix_rt::info!(
+        Verdict::TooFast => xaqu_rt::info!(
             "ltdc: offered {source} {described}: over the LTDC's {}",
             Mhz(choice::MAX_PIXEL_KHZ)
         ),
-        Verdict::TooSlow => ferrix_rt::info!(
+        Verdict::TooSlow => xaqu_rt::info!(
             "ltdc: offered {source} {described}: under the bridge's {}",
             Mhz(choice::MIN_PIXEL_KHZ)
         ),
-        Verdict::Clock { nearest_khz } => ferrix_rt::info!(
+        Verdict::Clock { nearest_khz } => xaqu_rt::info!(
             "ltdc: offered {source} {described}: the nearest clock is {}",
             Mhz(nearest_khz)
         ),
         Verdict::NoClock => {
-            ferrix_rt::info!("ltdc: offered {source} {described}: the kernel sets no clock");
+            xaqu_rt::info!("ltdc: offered {source} {described}: the kernel sets no clock");
         }
         Verdict::Counters => {
-            ferrix_rt::info!("ltdc: offered {source} {described}: too large for the LTDC");
+            xaqu_rt::info!("ltdc: offered {source} {described}: too large for the LTDC");
         }
     }
 }

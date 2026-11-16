@@ -36,9 +36,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kernel_roots  # noqa: E402  (every kernel source root, CRATE-SPLIT.md S0)
 
 ROOTS = {
-    "ferrix_kernel_core": "kernel_core.rs",
-    "ferrix_kernel_item": "kernel_item.rs",
-    "ferrix_kernel": "main.rs",
+    "xaqu_kernel_core": "kernel_core.rs",
+    "xaqu_kernel_item": "kernel_item.rs",
+    "xaqu_kernel": "main.rs",
 }
 
 # Section 2's list: files that must not be read for ring 0 under this shape.
@@ -53,7 +53,7 @@ LEFT = (
     f"{kernel_roots.parts_place()}/board/stm32mp1/src/platform/st/stm32mp1.rs",
     f"{kernel_roots.parts_place()}/board/gs201-usb/src/platform/google/gs201/usb.rs",
     # The log's control channel, a part since S3, built only where
-    # ferrix_load_built is ring0 or lift (ledger 7630 S3.1).
+    # xaqu_load_built is ring0 or lift (ledger 7630 S3.1).
     f"{kernel_roots.parts_place()}/device/logctl/src/interfaces/logctl/mod.rs",
     f"{kernel_roots.parts_place()}/device/logctl/src/interfaces/logctl/check.rs",
     # A network driver's ring, a part since S4, built where logctl is.
@@ -62,9 +62,9 @@ LEFT = (
 )
 
 # Crates no ring-0 crate of this shape may link.
-LEFT_CRATES = ("ferrix_kernel_load", "ferrix_kernel_settings", "ferrix_kernel_board_stm32mp1",
-               "ferrix_kernel_board_gs201_usb", "ferrix_kernel_logctl",
-               "ferrix_kernel_net_ring", "ferrix_fbtext", "ferrix_qr")
+LEFT_CRATES = ("xaqu_kernel_load", "xaqu_kernel_settings", "xaqu_kernel_board_stm32mp1",
+               "xaqu_kernel_board_gs201_usb", "xaqu_kernel_logctl",
+               "xaqu_kernel_net_ring", "xaqu_fbtext", "xaqu_qr")
 
 # Symbols that must not be in this shape's kernel: normal mode's FS record does not move while
 # K1's fast path has the mark up (ledger 6464 Z2, 6981).
@@ -122,10 +122,10 @@ def ring_of(manifest: dict, relative: str) -> str | None:
 # What this shape rules out, by the attribute's text: a report's figure, by a brace walk, and no
 # evidence; the shape is judged above, by rustc's list and the symbols.
 OUT_OF_THIS_SHAPE = (
-    '#[cfg(not(ferrix_personality = "user"))]',
-    '#[cfg(not(ferrix_shape = "micro"))]',
-    '#[cfg(ferrix_load_built = "ring0")]',
-    '#[cfg(ferrix_personality = "kernel")]',
+    '#[cfg(not(xaqu_personality = "user"))]',
+    '#[cfg(not(xaqu_shape = "micro"))]',
+    '#[cfg(xaqu_load_built = "ring0")]',
+    '#[cfg(xaqu_personality = "kernel")]',
 )
 
 
@@ -390,7 +390,7 @@ def budget(directory: str, name: str, arch: str, tree: str) -> int:
         plan = json.load(handle)
     say = f"ring0-budget: {name} {arch} {plan['profile']}"
     problems = [f"{say}: {problem}" for problem in budget_problems(plan, tree)]
-    kernel = os.path.join(directory, "ferrix-kernel")
+    kernel = os.path.join(directory, "xaqu-kernel")
     if not os.path.exists(kernel):
         print(f"{say}: no kernel at {kernel}: the budget fails closed")
         return 1
@@ -584,7 +584,7 @@ def main() -> int:
             product += lines
             built += lines - lines_cfgd_out(path)
             by_top[relative.split("/")[0]] += lines
-    kernel = os.path.join(args.directory, "ferrix-kernel")
+    kernel = os.path.join(args.directory, "xaqu-kernel")
     if os.path.exists(kernel):
         names = subprocess.run(
             ["nm", "--demangle=rust", kernel], capture_output=True, text=True, check=False

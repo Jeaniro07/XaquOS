@@ -42,17 +42,17 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{APERTURE_BAR_64, APERTURE_INFO_BYTES, ApertureInfo};
-use ferrix_pci::ConfigSpace as _;
-use ferrix_pci::capability::{ID_MSI, ID_MSIX, ID_PCI_EXPRESS, ID_VENDOR};
-use ferrix_pci::header::{BAR0, COMMAND, COMMAND_BUS_MASTER, COMMAND_INTERRUPT_DISABLE};
-use ferrix_pci::virtio;
-use ferrix_sched::{CpuSet, NICE_0_WEIGHT};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{APERTURE_BAR_64, APERTURE_INFO_BYTES, ApertureInfo};
+use xaqu_pci::ConfigSpace as _;
+use xaqu_pci::capability::{ID_MSI, ID_MSIX, ID_PCI_EXPRESS, ID_VENDOR};
+use xaqu_pci::header::{BAR0, COMMAND, COMMAND_BUS_MASTER, COMMAND_INTERRUPT_DISABLE};
+use xaqu_pci::virtio;
+use xaqu_sched::{CpuSet, NICE_0_WEIGHT};
 
 use super::{ConfigWrites, DeviceNode, Location, Register, devices};
 use crate::mmio::Mmio;
@@ -128,7 +128,7 @@ pub struct Report {
     /// read.
     pub yielded: usize,
     /// W8: calls on the firmware framebuffer's node and its holders that
-    /// answered as `ferrix.efifb` requires.
+    /// answered as `xaqu.efifb` requires.
     pub lent: usize,
     /// W4 and W5: writes refused whole and read back unchanged.
     pub refused: usize,
@@ -186,7 +186,7 @@ const SPEC: u64 = SCRATCH + 0x200;
 /// Where W8 has `device_info` write.
 const INFO: u64 = SCRATCH + 0x300;
 
-/// W8, under `ferrix.efifb`: the firmware framebuffer's node, read through
+/// W8, under `xaqu.efifb`: the firmware framebuffer's node, read through
 /// the calls a driver makes. `device_info` names it `TREE_FIRMWARE_FB` with
 /// one aperture, no vector and the mode it was minted with; `vmo_pin`,
 /// plain and contiguous, and `device_set_limit` answer `WRONG_TYPE`; and an
@@ -195,7 +195,7 @@ const INFO: u64 = SCRATCH + 0x300;
 ///
 /// Verifies: L.device.39, L.device.40, L.device.42
 fn lent(side: &Side, report: &mut Report) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::{
+    use xaqu_native_abi::types::{
         DEVICE_INFO_BYTES, DEVICE_LIMIT_PIN_PAGES, DEVICE_TREE_BLOCKS, PIN_CONTIGUOUS,
         TREE_FIRMWARE_FB,
     };
@@ -455,7 +455,7 @@ fn reads(side: &Side, report: &mut Report) -> Result<(), &'static str> {
         };
         let device = handle(side, node)?;
         // The function holding a firmware framebuffer lent to its own node
-        // (`ferrix.efifb`) is driven by nobody: its configuration answers
+        // (`xaqu.efifb`) is driven by nobody: its configuration answers
         // no read, which is what `MANAGE` on it gives.
         if node.yielded() {
             if read(side, device, 0x00, 4) != Err(status::BAD_STATE) {

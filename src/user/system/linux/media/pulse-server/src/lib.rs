@@ -708,9 +708,9 @@ impl Server {
     fn server_info(&self) -> ServerInfo {
         ServerInfo {
             server_name: Some(c"pulseaudio".to_owned()),
-            server_version: Some(c"17.0.0 (pulsed on Ferrix)".to_owned()),
-            user_name: Some(c"ferrix".to_owned()),
-            host_name: Some(c"ferrix".to_owned()),
+            server_version: Some(c"17.0.0 (pulsed on Xaqu)".to_owned()),
+            user_name: Some(c"xaqu".to_owned()),
+            host_name: Some(c"xaqu".to_owned()),
             sample_spec: self.card.spec,
             cookie: self.cookie,
             default_sink_name: Some(self.card.name.clone()),

@@ -9,7 +9,7 @@ use core::ffi::c_void;
 use core::fmt;
 use core::ptr;
 
-use ferrix_bootinfo::PAGE_SIZE;
+use xaqu_bootinfo::PAGE_SIZE;
 
 use crate::uefi::protocols::{
     BLOCK_IO_GUID, BlockIo, DEVICE_PATH_GUID, FILE_MODE_CREATE, FILE_MODE_READ, FILE_MODE_WRITE,
@@ -29,9 +29,9 @@ const BY_PROTOCOL: u32 = 2;
 /// be drawn on and the allocator will not own; one a panic can be drawn on;
 /// one the allocator will not own; the rest. Ties go to the output firmware
 /// listed first.
-fn rank(framebuffer: &ferrix_bootinfo::Framebuffer) -> u8 {
+fn rank(framebuffer: &xaqu_bootinfo::Framebuffer) -> u8 {
     let drawable =
-        framebuffer.is_present() && framebuffer.format != ferrix_bootinfo::PixelFormat::Unknown;
+        framebuffer.is_present() && framebuffer.format != xaqu_bootinfo::PixelFormat::Unknown;
     match (drawable, framebuffer.is_reclaimable()) {
         (true, false) => 3,
         (true, true) => 2,
@@ -41,7 +41,7 @@ fn rank(framebuffer: &ferrix_bootinfo::Framebuffer) -> u8 {
 }
 
 /// The linear framebuffer behind a graphics output, if it has one.
-fn describe_output(graphics: *mut GraphicsOutput) -> Option<ferrix_bootinfo::Framebuffer> {
+fn describe_output(graphics: *mut GraphicsOutput) -> Option<xaqu_bootinfo::Framebuffer> {
     // SAFETY: firmware returned a live `GraphicsOutput`.
     let output = unsafe { &*graphics };
     if output.mode.is_null() {
@@ -62,17 +62,17 @@ fn describe_output(graphics: *mut GraphicsOutput) -> Option<ferrix_bootinfo::Fra
     const RGBX_MASKS: [u32; 3] = [0x0000_00ff, 0x0000_ff00, 0x00ff_0000];
     let [red, green, blue, reserved] = info.pixel_information;
     let format = match info.pixel_format {
-        GraphicsPixelFormat::BLUE_GREEN_RED_RESERVED => ferrix_bootinfo::PixelFormat::Bgrx8888,
-        GraphicsPixelFormat::RED_GREEN_BLUE_RESERVED => ferrix_bootinfo::PixelFormat::Rgbx8888,
+        GraphicsPixelFormat::BLUE_GREEN_RED_RESERVED => xaqu_bootinfo::PixelFormat::Bgrx8888,
+        GraphicsPixelFormat::RED_GREEN_BLUE_RESERVED => xaqu_bootinfo::PixelFormat::Rgbx8888,
         GraphicsPixelFormat::BIT_MASK if [red, green, blue] == BGRX_MASKS => {
-            ferrix_bootinfo::PixelFormat::Bgrx8888
+            xaqu_bootinfo::PixelFormat::Bgrx8888
         }
         GraphicsPixelFormat::BIT_MASK if [red, green, blue] == RGBX_MASKS => {
-            ferrix_bootinfo::PixelFormat::Rgbx8888
+            xaqu_bootinfo::PixelFormat::Rgbx8888
         }
         // Any other bit-mask or a blt-only mode is a framebuffer the kernel
         // cannot treat as an array of pixels, so report it as no framebuffer.
-        _ => ferrix_bootinfo::PixelFormat::Unknown,
+        _ => xaqu_bootinfo::PixelFormat::Unknown,
     };
     crate::console::println!(
         "  graphics mode {} of {}: pixel format {} (masks r {red:#x} g {green:#x} b {blue:#x} x {reserved:#x}), {} pixels a line: {}",
@@ -81,12 +81,12 @@ fn describe_output(graphics: *mut GraphicsOutput) -> Option<ferrix_bootinfo::Fra
         info.pixel_format.0,
         info.pixels_per_scan_line,
         match format {
-            ferrix_bootinfo::PixelFormat::Unknown => "not drawable",
+            xaqu_bootinfo::PixelFormat::Unknown => "not drawable",
             _ => "drawable",
         }
     );
 
-    Some(ferrix_bootinfo::Framebuffer {
+    Some(xaqu_bootinfo::Framebuffer {
         phys: mode.framebuffer_base,
         size: mode.framebuffer_size as u64,
         width: info.horizontal_resolution,
@@ -196,7 +196,7 @@ pub(crate) struct Services {
     /// One past the highest physical address an allocation may reach, or
     /// `u64::MAX` for anywhere; see [`Services::allocate_below`].
     ceiling: Cell<u64>,
-    /// The allocations of a Ferrix memory type, which firmware was asked for
+    /// The allocations of a Xaqu memory type, which firmware was asked for
     /// as loader data ([`Services::firmware_kind`]).
     tags: RefCell<Tags>,
 }
@@ -208,7 +208,7 @@ pub(crate) struct Tag {
     pub(crate) base: u64,
     /// Length in bytes, whole pages.
     pub(crate) len: u64,
-    /// The Ferrix type it is, for the kernel's map.
+    /// The Xaqu type it is, for the kernel's map.
     pub(crate) kind: MemoryType,
 }
 
@@ -407,7 +407,7 @@ impl Services {
     /// memory of an OS-defined type (`0x8000_0000` and up) existed, which the
     /// specification allows and OVMF accepts. So firmware only ever sees
     /// loader data, and the kernel's map gets the loader's types from
-    /// [`Services::tags`] (`ferrix_bootinfo::retag`).
+    /// [`Services::tags`] (`xaqu_bootinfo::retag`).
     const fn firmware_kind(kind: MemoryType) -> MemoryType {
         if kind.0 >= 0x8000_0000 {
             MemoryType::LOADER_DATA
@@ -621,7 +621,7 @@ impl Services {
     /// Make `path` on the loader's own volume hold exactly `parts`, one after
     /// the other: delete it if it is there, create it, write, close. Only the
     /// previous kernel's log calls this (`pstore.rs`), for its own files under
-    /// `FERRIX/` (`docs/POSTMORTEM.md` §3.5); on a volume firmware will not
+    /// `XAQU/` (`docs/POSTMORTEM.md` §3.5); on a volume firmware will not
     /// write, as a netboot's, it is an error the caller says and goes on.
     pub(crate) fn replace_file(&self, path: &str, parts: &[&[u8]]) -> Result<()> {
         let root = self.open_volume()?;
@@ -852,7 +852,7 @@ impl Services {
     /// data, which the kernel's frame allocator hands out again, beside
     /// `ramfb`'s, which is reserved. [`rank`] prefers one a panic can be drawn
     /// on and whose framebuffer the allocator will not own;
-    /// [`ferrix_bootinfo::allocator_owns`] decides the second over `map`, and
+    /// [`xaqu_bootinfo::allocator_owns`] decides the second over `map`, and
     /// the choice's `reclaimable` says what it found.
     ///
     /// A machine with no graphics output is not an error: the serial console is
@@ -860,7 +860,7 @@ impl Services {
     pub(crate) fn framebuffer(
         &self,
         map: &MemoryMap,
-    ) -> (Option<ferrix_bootinfo::Framebuffer>, usize) {
+    ) -> (Option<xaqu_bootinfo::Framebuffer>, usize) {
         let mut count = 0usize;
         let mut handles: *mut Handle = ptr::null_mut();
         // SAFETY: all out-parameters are live locals; the GUID is a constant.
@@ -877,7 +877,7 @@ impl Services {
             return (None, 0);
         }
 
-        let mut chosen: Option<ferrix_bootinfo::Framebuffer> = None;
+        let mut chosen: Option<xaqu_bootinfo::Framebuffer> = None;
         let mut outputs = 0;
         for index in 0..count {
             // SAFETY: `index` is below the count firmware wrote with the
@@ -894,7 +894,7 @@ impl Services {
                 continue;
             };
             outputs += 1;
-            let owned = ferrix_bootinfo::allocator_owns(
+            let owned = xaqu_bootinfo::allocator_owns(
                 map.entries()
                     .map(|descriptor| crate::load::describe(&descriptor)),
                 candidate.phys,
@@ -934,7 +934,7 @@ impl Services {
             // is UTC less the zone.
             time.time_zone.checked_neg()?
         };
-        ferrix_bootinfo::unix_nanos(
+        xaqu_bootinfo::unix_nanos(
             time.year,
             time.month,
             time.day,
@@ -1106,16 +1106,16 @@ impl Disk {
     fn bounce(
         &self,
         len: usize,
-    ) -> core::result::Result<*mut u8, ferrix_slots::record::DeviceError> {
+    ) -> core::result::Result<*mut u8, xaqu_slots::record::DeviceError> {
         if len == self.block_size as usize {
             Ok(self.buffer.address as *mut u8)
         } else {
-            Err(ferrix_slots::record::DeviceError)
+            Err(xaqu_slots::record::DeviceError)
         }
     }
 }
 
-impl ferrix_slots::record::ControlDisk for Disk {
+impl xaqu_slots::record::ControlDisk for Disk {
     fn block_size(&self) -> u32 {
         self.block_size
     }
@@ -1124,7 +1124,7 @@ impl ferrix_slots::record::ControlDisk for Disk {
         &mut self,
         lba: u64,
         bytes: &[u8],
-    ) -> core::result::Result<(), ferrix_slots::record::DeviceError> {
+    ) -> core::result::Result<(), xaqu_slots::record::DeviceError> {
         let bounce = self.bounce(bytes.len())?;
         // SAFETY: the bounce buffer is the loader's own allocation of at
         // least one block, and `bytes` is one block that cannot overlap it.
@@ -1137,30 +1137,30 @@ impl ferrix_slots::record::ControlDisk for Disk {
         status
             .is_success()
             .then_some(())
-            .ok_or(ferrix_slots::record::DeviceError)
+            .ok_or(xaqu_slots::record::DeviceError)
     }
 
-    fn flush(&mut self) -> core::result::Result<(), ferrix_slots::record::DeviceError> {
+    fn flush(&mut self) -> core::result::Result<(), xaqu_slots::record::DeviceError> {
         // SAFETY: `block_io` is firmware's live protocol for this disk.
         let status = unsafe { (self.io().flush_blocks)(self.block_io) };
         status
             .is_success()
             .then_some(())
-            .ok_or(ferrix_slots::record::DeviceError)
+            .ok_or(xaqu_slots::record::DeviceError)
     }
 
     fn read_block(
         &mut self,
         lba: u64,
         bytes: &mut [u8],
-    ) -> core::result::Result<(), ferrix_slots::record::DeviceError> {
+    ) -> core::result::Result<(), xaqu_slots::record::DeviceError> {
         let bounce = self.bounce(bytes.len())?;
         // SAFETY: as `write_block`.
         let status = unsafe {
             (self.io().read_blocks)(self.block_io, self.media_id, lba, bytes.len(), bounce)
         };
         if !status.is_success() {
-            return Err(ferrix_slots::record::DeviceError);
+            return Err(xaqu_slots::record::DeviceError);
         }
         // SAFETY: firmware filled one block of the bounce buffer, and `bytes`
         // is one block that cannot overlap it.

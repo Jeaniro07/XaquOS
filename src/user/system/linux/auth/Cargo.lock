@@ -6,78 +6,78 @@ version = 4
 name = "authctl"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-client",
- "ferrix-auth-proto",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
 name = "authd"
 version = "0.1.0"
 dependencies = [
- "ferrix-argon2",
- "ferrix-auth-client",
- "ferrix-auth-proto",
- "ferrix-native",
- "ferrix-native-abi",
- "ferrix-svc",
+ "xaqu-argon2",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-svc",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-argon2"
+name = "xaqu-argon2"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-auth-account"
+name = "xaqu-auth-account"
 version = "0.1.0"
 dependencies = [
  "libc",
 ]
 
 [[package]]
-name = "ferrix-auth-client"
+name = "xaqu-auth-client"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-proto",
+ "xaqu-auth-proto",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-native"
+name = "xaqu-native"
 version = "0.3.0"
 dependencies = [
- "ferrix-linux-abi",
- "ferrix-native-abi",
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
 ]
 
 [[package]]
-name = "ferrix-native-abi"
+name = "xaqu-native-abi"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
-name = "ferrix-restart"
+name = "xaqu-restart"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-svc"
+name = "xaqu-svc"
 version = "0.1.0"
 dependencies = [
- "ferrix-restart",
+ "xaqu-restart",
 ]
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
@@ -90,9 +90,9 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 name = "login"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-account",
- "ferrix-auth-client",
- "ferrix-svc-proto",
+ "xaqu-auth-account",
+ "xaqu-auth-client",
+ "xaqu-svc-proto",
  "libc",
 ]
 
@@ -100,15 +100,15 @@ dependencies = [
 name = "passwd"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-client",
- "ferrix-auth-proto",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
 name = "su"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-account",
- "ferrix-auth-client",
+ "xaqu-auth-account",
+ "xaqu-auth-client",
  "libc",
 ]

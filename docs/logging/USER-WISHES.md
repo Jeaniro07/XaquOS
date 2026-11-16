@@ -66,7 +66,7 @@ Collected 2026-10-23, read-only (nothing was posted anywhere).
 6. **Every entry attributed correctly, including a dying process's last
    words.** journald loses the unit of messages from a process that has
    already exited (#2913, r=31, c=38, open since 2016) — the messages that
-   explain a crash. Also tell stdout from stderr (#5019, r=42, open). Ferrix
+   explain a crash. Also tell stdout from stderr (#5019, r=42, open). Xaqu
    can attach the sender's identity in the kernel at send time, so this is
    cheap for us and impossible for journald.
 7. **Output people can use without flags**: no truncation, a year and a
@@ -637,7 +637,7 @@ the ones you cannot see).
 **What we should do.** Start the RAM tier before any service, hand it over
 to disk when the store mounts, keep the kernel ring buffer's timestamps
 aligned with ours, and flush to disk (or hand back to RAM) cleanly around
-shutdown so the store never pins a filesystem. Ferrix's kernel log can
+shutdown so the store never pins a filesystem. Xaqu's kernel log can
 feed the manager directly with its boot-relative times.
 
 ### 17. Structured logging from applications
@@ -803,7 +803,7 @@ recommended as the retention workaround (theme 5); #2913 and #30886 matter
 for containers too. Docker and Podman offer a journald log driver; no
 large body of complaints about it was found.
 
-**What we should do.** Make the namespace (container, cgroup, Ferrix
+**What we should do.** Make the namespace (container, cgroup, Xaqu
 namespace) an ordinary indexed field and a scope for access rules and
 quotas, rather than a separate daemon per namespace — which keeps global
 ordering, the cost LWN notes for systemd's design.

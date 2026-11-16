@@ -16,7 +16,7 @@
 use std::fs;
 use std::path::Path;
 
-use ferrix_svc::source::{Entry, Layer, Source};
+use xaqu_svc::source::{Entry, Layer, Source};
 
 /// Every unit in the three directories, with a line for each entry that is
 /// not one: a stray file, or one that cannot be read.

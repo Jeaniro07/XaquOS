@@ -1,6 +1,6 @@
 [package]
 name = "hyprix"
-description = "The compositor: a Hyprland-shaped Wayland compositor for Ferrix"
+description = "The compositor: a Hyprland-shaped Wayland compositor for Xaqu"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -40,14 +40,14 @@ compositor-server = { path = "../server" }
 compositor-socket = { path = "../socket" }
 compositor-wire = { path = "../wire" }
 # The screenshot provider protocol to lode (docs/LOGGING.md §19).
-ferrix-lode-capture = { path = "../../../../../lib/proto/lode-capture" }
+xaqu-lode-capture = { path = "../../../../../lib/proto/lode-capture" }
 # The evdev numbers the devices report.
-ferrix-linux-abi = { path = "../../../../../lib/proto/linux-abi" }
+xaqu-linux-abi = { path = "../../../../../lib/proto/linux-abi" }
 # The bitmap face `debug:overlay` writes its numbers in.
-ferrix-fbtext = { path = "../../../../../lib/kernel/fbtext" }
+xaqu-fbtext = { path = "../../../../../lib/kernel/fbtext" }
 # The init's control records: each program started is put in a scope of
 # its own (docs/INIT.md §5.6).
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 # Declarations only: `mmap` of a client's pool, and `pause`.
 libc = "0.2.189"
 
@@ -70,7 +70,7 @@ compositor-lock = { path = "../lock" }
 # window and says so, which `src/user/system/linux/compositor/pattern` does not do.
 compositor-shm = { path = "../shm" }
 # lode's screenshot protocol, for the crash-screenshot test.
-ferrix-lode-capture = { path = "../../../../../lib/proto/lode-capture" }
+xaqu-lode-capture = { path = "../../../../../lib/proto/lode-capture" }
 # A toolkit client with its own menus, for the appmenu tests.
 compositor-toolkit = { path = "../toolkit" }
 

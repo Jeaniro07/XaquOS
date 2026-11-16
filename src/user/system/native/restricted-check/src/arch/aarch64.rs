@@ -2,7 +2,7 @@
 
 use core::arch::{asm, global_asm};
 
-use ferrix_native_abi::restricted::Context;
+use xaqu_native_abi::restricted::Context;
 
 /// `ESR_EL1.EC` of `brk`.
 pub(crate) const VECTOR_BREAKPOINT: u64 = 0x3C;
@@ -238,7 +238,7 @@ pub(crate) fn forged(good: &Context, case: usize) -> Option<Context> {
     let mut bad = *good;
     match case {
         0 => bad.pc = 0xFFFF_8000_0000_0000,
-        1 => bad.pc = ferrix_native_abi::restricted::SHARED_BASE,
+        1 => bad.pc = xaqu_native_abi::restricted::SHARED_BASE,
         2 => bad.sp = 0xFFFF_8000_0000_0000,
         // EL1h, the interrupt masks, the single step and illegal state, DIT,
         // PAN, SSBS and a branch type.

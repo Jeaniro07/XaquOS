@@ -6,8 +6,8 @@
 //! `devmgr` tells programs instead, with no new kernel interface: `devmgr`
 //! starts it after REPORT, as it starts `drvupdated`, with a channel whose
 //! other end it keeps, and writes each event to that channel
-//! (`ferrix_devmgr_events_proto::Event`). The helper listens on the
-//! abstract `AF_UNIX` name `ferrix.devmgr.events` and writes each event as
+//! (`xaqu_devmgr_events_proto::Event`). The helper listens on the
+//! abstract `AF_UNIX` name `xaqu.devmgr.events` and writes each event as
 //! one line to every connected reader, a reader that connects late getting
 //! the last [`KEPT`] first. Readers only read: anything they send is never
 //! read. Any uid may read, since a line says no more than the kernel's log
@@ -25,13 +25,13 @@
 #![no_std]
 #![no_main]
 
-use ferrix_devmgr_events_proto::{EVENT_BYTES, Event, LINE_BYTES, SOCKET_NAME};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::{Deadline, Error, Handle, Object, Signals};
-use ferrix_rt::{Bootstrap, Kernel, linux};
+use xaqu_devmgr_events_proto::{EVENT_BYTES, Event, LINE_BYTES, SOCKET_NAME};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::{Deadline, Error, Handle, Object, Signals};
+use xaqu_rt::{Bootstrap, Kernel, linux};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Where the helper gave up, as its exit status.
 #[repr(i32)]

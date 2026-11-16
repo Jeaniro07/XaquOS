@@ -19,7 +19,7 @@ const VALID: u64 = 1 << 0;
 /// part of the page encoding and must be set.
 const TABLE_OR_PAGE: u64 = 1 << 1;
 
-/// Access flag. Hardware faults on a descriptor without it, and Ferrix does not
+/// Access flag. Hardware faults on a descriptor without it, and Xaqu does not
 /// use access-flag faults for aging, so every mapping sets it.
 const ACCESS_FLAG: u64 = 1 << 10;
 /// Not global: the translation is tagged with an ASID and does not survive an

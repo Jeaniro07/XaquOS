@@ -3,13 +3,13 @@
 //! (`docs/CORE-QUARANTINE.md` §4, the customer's choice of 2026-10-30). The
 //! change itself is `smp::service`'s, the same function lode's door ends in.
 
-use ferrix_kernel_load::audit;
-use ferrix_kernel_load::object::process::Host;
-use ferrix_kernel_load::sched::ServiceRefusal;
-use ferrix_kernel_load::smp::service::{self, Door, Refusal};
-use ferrix_kernel_load::syscall::process::Process;
-use ferrix_kernel_load::syscall::userns::{self, CAP_SYS_ADMIN};
-use ferrix_linux_abi::errno::Errno;
+use xaqu_kernel_load::audit;
+use xaqu_kernel_load::object::process::Host;
+use xaqu_kernel_load::sched::ServiceRefusal;
+use xaqu_kernel_load::smp::service::{self, Door, Refusal};
+use xaqu_kernel_load::syscall::process::Process;
+use xaqu_kernel_load::syscall::userns::{self, CAP_SYS_ADMIN};
+use xaqu_linux_abi::errno::Errno;
 
 /// A write of `data` to processor `cpu`'s `online` by `process`: `0` takes
 /// it out of service, `1` brings it back, each with white space around it

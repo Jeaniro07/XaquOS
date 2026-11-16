@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record Ferrix's demo video: boot the desktop, drive it, cut, label.
+"""Record Xaqu's demo video: boot the desktop, drive it, cut, label.
 
     record-demo.py record OUT --tree TREE [--vnc HOST:PORT] [--ssh PORT] -- XTASK...
     record-demo.py edit OUT [--keep NAME=HEAD,TAIL]... [--loop START LENGTH]
@@ -61,7 +61,7 @@ URL = "https://en.wikipedia.org/wiki/Rust_(programming_language)"
 # would end the rustc wait before this take's compiler has run.
 SETUP = ("ps -o pid,args | grep -e '/[s]team/' -e '[u]buntu12_32' -e '[s]teamwebhelper'"
          " | while read pid rest; do kill -9 $pid; done;"
-         " rm -f /home/ferrix/hello /home/ferrix/hello.rs; true")
+         " rm -f /home/xaqu/hello /home/xaqu/hello.rs; true")
 
 # What the video shows, in order. `cut NAME` to `uncut` is a span the
 # editor may shorten; `wait` blocks until the guest says the thing is so.
@@ -82,7 +82,7 @@ SCENE = [
     # would echo them through the tty, whose echo ends a line without a
     # carriage return (2026-10-18), so the code would step to the right.
     ("type", "echo 'fn main() {\n", 0.07),
-    ("type", '    println!("Hello from rustc on Ferrix!");\n', 0.06),
+    ("type", '    println!("Hello from rustc on Xaqu!");\n', 0.06),
     ("type", "}' > hello.rs\n", 0.07),
     ("sleep", 1),
     ("type", "rustc hello.rs && ./hello\n", 0.08),
@@ -312,10 +312,10 @@ class Driver:
 class Guest:
     """What the driver asks the guest over ssh to know when to go on."""
 
-    HYPR = "HYPRLAND_INSTANCE_SIGNATURE=ferrix XDG_RUNTIME_DIR=/run/user/1000 hyprctl -j"
+    HYPR = "HYPRLAND_INSTANCE_SIGNATURE=xaqu XDG_RUNTIME_DIR=/run/user/1000 hyprctl -j"
 
     def __init__(self, port):
-        key = Path.home() / ".local/share/ferrix/ssh/id_ed25519"
+        key = Path.home() / ".local/share/xaqu/ssh/id_ed25519"
         self.ssh = ["ssh", "-q", "-i", str(key), "-p", str(port),
                     "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
                     "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", "root@127.0.0.1"]
@@ -352,7 +352,7 @@ class Guest:
             return self.window("chromium") is not None and self.window("term") is not None
         if what == "hello":
             # rustc runs under glibc's loader, so its name is the loader's.
-            return "done" in self.run("test -x /home/ferrix/hello && "
+            return "done" in self.run("test -x /home/xaqu/hello && "
                                       "! ps -o args | grep -q '[r]ustc hello' && echo done")
         if what == "page":
             w = self.window("chromium")
@@ -517,7 +517,7 @@ def main():
     r.add_argument("xtask", nargs="+")
     e = sub.add_parser("edit")
     e.add_argument("out")
-    e.add_argument("--label", default="FERRIX · x86-64 · QEMU/KVM on Linux")
+    e.add_argument("--label", default="XAQU · x86-64 · QEMU/KVM on Linux")
     e.add_argument("--font", default=str(Path(__file__).resolve().parents[3]
                                          / "assets/fonts/inter/InterVariable.ttf"))
     e.add_argument("--keep", action="append", default=[],

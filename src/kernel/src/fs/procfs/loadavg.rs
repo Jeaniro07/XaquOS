@@ -1,5 +1,5 @@
 //! The load average's state: `/proc/loadavg`, and the `loads` of `sysinfo`
-//! that `getloadavg` reads. The arithmetic is `ferrix_procfs::loadavg`'s,
+//! that `getloadavg` reads. The arithmetic is `xaqu_procfs::loadavg`'s,
 //! Linux's own.
 //!
 //! The count folded in is the run queues' runnable tasks, each running one
@@ -17,7 +17,7 @@
 //! one that reads once after an hour's quiet sees that moment's load carried
 //! back over the hour.
 
-use ferrix_procfs::loadavg::Averages;
+use xaqu_procfs::loadavg::Averages;
 
 use crate::sched;
 use crate::sync::SpinLock;
@@ -26,7 +26,7 @@ use crate::syscall::time;
 static AVERAGES: SpinLock<Averages> = SpinLock::new(Averages::START);
 
 /// The runnable tasks now, and the one, five and fifteen minute averages
-/// with every fold due by now made, in `ferrix_procfs::loadavg`'s fixed
+/// with every fold due by now made, in `xaqu_procfs::loadavg`'s fixed
 /// point.
 pub(crate) fn now() -> (u64, [u64; 3]) {
     let running = sched::cpu_times()

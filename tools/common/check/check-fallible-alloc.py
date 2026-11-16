@@ -85,7 +85,7 @@ The item's library crates
 -------------------------
 
 Since 2026-10-02 the item includes two crates outside the kernel,
-`ferrix-btrfs` and `ferrix-btrfs-write` (`crates` in the manifest), and their
+`xaqu-btrfs` and `xaqu-btrfs-write` (`crates` in the manifest), and their
 product files are scanned with the same patterns and markers -- every file
 their module trees reach except through `#[cfg(test)] mod`, whose code is host
 tests. A crate cannot reach `src/kernel/src/fallible.rs`, so what counts as
@@ -94,7 +94,7 @@ fallible there is:
   * the standard library's own fallible forms, `try_reserve` and
     `try_reserve_exact` on `Vec`, `VecDeque` and `String`, which the patterns
     do not match;
-  * the `ferrix-fallible` crate's functions (`try_box`, `try_push`,
+  * the `xaqu-fallible` crate's functions (`try_box`, `try_push`,
     `try_with_capacity`, `try_collect` and the rest): the code the kernel's
     own toolkit is built on, and allowlisted for item crates in the manifest
     (`crates.infrastructure_allowlist`), so they do not match either;
@@ -640,7 +640,7 @@ def main() -> int:
         print(
             "fallible-alloc: infallible allocation added to an item crate, or a crate\n"
             "  not in the baseline. A crate cannot use src/kernel/src/fallible.rs:\n"
-            "  use try_reserve or ferrix-fallible, or argue the site with NOALLOC:\n"
+            "  use try_reserve or xaqu-fallible, or argue the site with NOALLOC:\n"
             "  (see this script's docstring, \"The item's library crates\"):",
             file=sys.stderr,
         )

@@ -25,7 +25,7 @@
 //! A layout this compositor does not ship is not a layout it can make up.
 //! libxkbcommon compiles a keymap out of the XKB data files, which are tens
 //! of megabytes of a desktop distribution and are not on a machine running
-//! Ferrix; so the keymaps are generated on a host that has them, committed,
+//! Xaqu; so the keymaps are generated on a host that has them, committed,
 //! and shipped. [`layout`] says which one it gave, and a caller that asked
 //! for one that is not here is told so rather than quietly typing English on
 //! a German keyboard.

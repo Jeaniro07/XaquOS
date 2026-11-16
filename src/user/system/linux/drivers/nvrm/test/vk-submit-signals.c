@@ -4,7 +4,7 @@
  * SA_RESTART). A second thread tgkills the submitting one every 30 us for
  * 30 s while it records nothing new: it submits a clear and a copy and
  * waits for the fence, over and over. Every fence must signal within 3 s
- * and every call succeed. On Ferrix a signal used to abandon an
+ * and every call succeed. On Xaqu a signal used to abandon an
  * EXECBUFFER2 the driver was running, its later copies refused part-way
  * ("uapi refused EXECBUFFER2 EFAULT"), and Endfield's present thread waited
  * for a timeline point that was never made (test-intel-uapi judges both).

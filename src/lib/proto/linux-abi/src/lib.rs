@@ -1,6 +1,6 @@
 //! The Linux system call ABI: numbers, `errno` values and structure layouts.
 //!
-//! Ferrix's native system call interface *is* the Linux one, because the
+//! Xaqu's native system call interface *is* the Linux one, because the
 //! programs it is meant to run — static-musl binaries, ultimately `rustc` —
 //! were linked against that interface and cannot be asked to change. This
 //! crate is the single written-down copy of it. It is constants, `repr(C)`

@@ -1,7 +1,7 @@
 //! The choices a modeset makes and the pixels it draws, apart from the card,
 //! so the host can test them.
 
-use ferrix_linux_abi::drm::{self, ModeInfo};
+use xaqu_linux_abi::drm::{self, ModeInfo};
 
 /// The colour the screen is filled with, as `XRGB8888`: a dark slate, so a
 /// screen that is merely black is not mistaken for success.
@@ -181,7 +181,7 @@ pub fn connector_type_name(kind: u32) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use ferrix_linux_abi::drm::{Field, ModeInfo};
+    use xaqu_linux_abi::drm::{Field, ModeInfo};
 
     use super::*;
 
@@ -267,7 +267,7 @@ mod tests {
     }
 
     /// The names are libdrm's, which is where every compositor's monitor
-    /// names come from. Virtual is virtio-gpu's, and so Ferrix's.
+    /// names come from. Virtual is virtio-gpu's, and so Xaqu's.
     #[test]
     fn a_connector_is_named_as_libdrm_names_it() {
         assert_eq!(connector_type_name(15), "Virtual");

@@ -6,28 +6,28 @@ of the surface: memory (`mmap`, `mprotect`, `brk`), files, process
 `sigaltstack` and `rt_sigreturn`, time, and identity.
 
 **Exit:** a static musl `busybox sh` starts, runs a script, and exits — the
-first time somebody else's binary runs on Ferrix.
+first time somebody else's binary runs on Xaqu.
 
 **The image's shell is zinc since 2026-09-18** (`docs/UUTILS.md` S4), and
 `cargo xtask test-shell` runs zinc when no `--init` names another. That does
 not retire this criterion, and it is why `--init` was kept rather than
 removed: the point of the exit was *somebody else's* binary, and a shell
 written against this kernel proves less about the ABI than one that has never
-heard of Ferrix. Both are run. The busybox row below is the criterion; the
+heard of Xaqu. Both are run. The busybox row below is the criterion; the
 zinc row is the userland.
 
 **Exit criterion met on all three architectures, with the script given to
 `sh -c`.** `cargo xtask test-shell` builds the kernel with a static busybox
 and a script, boots it, and requires the script's lines in order and its exit
 status. Run against Alpine's `busybox-static` 1.37.0 — built by people who have
-never heard of Ferrix — for x86-64, AArch64 and ARMv7-A:
+never heard of Xaqu — for x86-64, AArch64 and ARMv7-A:
 
     cargo xtask test-shell --arch all --init PATH/{arch}/busybox
 
       init     857 KiB program built in, starting `sh -c` with a built-in script
     script: started
     script: the sum is 15
-    script: hello, ferrix
+    script: hello, xaqu
     script: test agrees
     script: case matched
     script: 3 positional parameters
@@ -106,8 +106,8 @@ program would have:
   the highest mapping and the highest mapping is the stack. The first `mmap`
   then landed in the page deliberately left unmapped above the stack.
 * `uname` reported `sysname` as `Linux`, because the programs that ask are
-  choosing a code path. On 2026-09-13 the project's owner chose `Ferrix`
-  instead: `Ferrix ferrix 6.1.0-ferrix`, with the release still a Linux
+  choosing a code path. On 2026-09-13 the project's owner chose `Xaqu`
+  instead: `Xaqu xaqu 6.1.0-xaqu`, with the release still a Linux
   version. A build that maps `uname -s` to a target is told which to use.
 * ARMv7-A entered a Thumb-2 program in ARM state. An odd entry point is Thumb
   by the interworking convention, and Alpine's busybox enters at `0x1d1f9`.
@@ -231,7 +231,7 @@ how every wake was keyed before, has been shown to find nobody:
 
       futex    a changed word got EAGAIN and a timed wait ETIMEDOUT; a wake, a requeue and a wake from a fork child on a MAP_SHARED word roused 5 waiters, and a wake that roused nobody and one keyed by the waker's own space were caught
 
-**inotify and pidfds, and real-time futex deadlines (ferrix-e4,
+**inotify and pidfds, and real-time futex deadlines (xaqu-e4,
 2026-09-27).** A black-box pass found `inotify_init`, `inotify_init1` and
 `pidfd_open` answering `ENOSYS`. inotify (`src/kernel/src/fs/inotify.rs`) has
 its four calls on all three architectures, a watch naming a node by device
@@ -241,7 +241,7 @@ flags, merged repeats, `IN_Q_OVERFLOW`, poll, epoll and `FIONREAD`; nothing
 it adds to a call costs anything until a watch exists. A pidfd
 (`src/kernel/src/fs/pidfd.rs`) is readable once its process has ended, and
 takes `pidfd_send_signal` and `waitid(P_PIDFD)`. A 59-check program run
-first on the host's Linux passes on Ferrix. Left: a `siginfo_t` for
+first on the host's Linux passes on Xaqu. Left: a `siginfo_t` for
 `pidfd_send_signal`, `CLONE_PIDFD`, `IN_UNMOUNT`, the per-user limits and
 devfs's own nodes, which it makes without a call and so without
 `IN_CREATE`. `io_uring_setup` stays `ENOSYS`: nothing on the roadmap uses
@@ -292,7 +292,7 @@ effective id is not the real one. The `set*id` calls, `setgroups` and `capget`
 follow `kernel/sys.c` and `kernel/groups.c`, an effective uid of 0 standing in
 for the capabilities, so busybox's `su` reaches a user.
 
-**The ids are enforced**, which is what makes Ferrix multi-user rather than a
+**The ids are enforced**, which is what makes Xaqu multi-user rather than a
 machine with ids written on it. `src/lib/fs/common/vfs`'s `access` holds the rules as pure
 functions -- `generic_permission`, `may_create`, `may_delete` with the sticky
 bit, `setattr_prepare`'s chown and chmod rules, `inode_init_owner` -- and the
@@ -307,7 +307,7 @@ forbade it. The calls that change the machine -- `sethostname`, `reboot`,
 that reach another user's processes -- `kill`, `setpriority`, `prlimit64`,
 `sched_setaffinity` -- refuse anyone but root, each with the error Linux
 gives. `cargo xtask test-vfs` proves it from the user's side: the image
-carries a `ferrix` user with a home of its own, `su` becomes it, and every
+carries a `xaqu` user with a home of its own, `su` becomes it, and every
 refusal above is required of the kernel, with root still able to read the
 file it was refused.
 

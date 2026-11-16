@@ -6,7 +6,7 @@
 //! then are its `VM` and `ENGINES` fixed. Its hardware contexts are made by
 //! the back end at its first request on each engine.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use super::backend::{Engine, VmId};
 use super::drm::{Call, default_context, put, unserved};

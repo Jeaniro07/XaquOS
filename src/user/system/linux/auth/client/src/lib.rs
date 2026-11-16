@@ -2,7 +2,7 @@
 //! that authenticates someone shares.
 //!
 //! [`Connection`] is one `SOCK_SEQPACKET` connection to
-//! [`ferrix_auth_proto::SOCKET`], which carries one conversation.
+//! [`xaqu_auth_proto::SOCKET`], which carries one conversation.
 //! [`converse`] runs it: it sends BEGIN, asks a [`Person`] each PROMPT and
 //! shows them each INFO and ERROR, and returns the [`Verdict`]. A client
 //! never sees a hash and never decides anything itself; it carries a secret
@@ -18,7 +18,7 @@ use std::io::{self, Write as _};
 use std::os::fd::{AsRawFd as _, FromRawFd as _, OwnedFd, RawFd};
 use std::path::Path;
 
-use ferrix_auth_proto::{MAX_RECORD, Record, Response, SOCKET, Secret};
+use xaqu_auth_proto::{MAX_RECORD, Record, Response, SOCKET, Secret};
 
 /// One connection to `authd`.
 #[derive(Debug)]
@@ -52,7 +52,7 @@ pub enum Verdict {
 pub struct State {
     /// Whether any credential is set.
     pub credential: bool,
-    /// The methods it has, as `ferrix_auth_proto::method` bits.
+    /// The methods it has, as `xaqu_auth_proto::method` bits.
     pub methods: u32,
     /// How long it is throttled for.
     pub throttled_ms: u64,
@@ -327,7 +327,7 @@ impl Terminal {
 
     /// The person at the terminal that is this program's standard input, and
     /// nowhere else: a secret is never read from a pipe or a file, and with
-    /// no terminal the answer is none. `/dev/tty` is not opened: on Ferrix it
+    /// no terminal the answer is none. `/dev/tty` is not opened: on Xaqu it
     /// is the console whatever the caller's controlling terminal, so a
     /// program in a pty would ask on the wrong screen.
     #[must_use]
@@ -438,7 +438,7 @@ fn read_from_terminal(file: &std::fs::File, visible: bool, prompt: &str) -> Opti
 /// One line, its newline taken off, as a secret; `None` at end of input.
 /// The line's buffer is zeroed after.
 fn read_line(reader: &mut dyn io::BufRead) -> Option<Secret> {
-    let mut line = Vec::with_capacity(ferrix_auth_proto::MAX_SECRET + 2);
+    let mut line = Vec::with_capacity(xaqu_auth_proto::MAX_SECRET + 2);
     let read = reader.read_until(b'\n', &mut line).ok()?;
     let secret = (read > 0).then(|| {
         let text = line.strip_suffix(b"\n").unwrap_or(&line);

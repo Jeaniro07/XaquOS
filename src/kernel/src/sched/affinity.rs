@@ -49,8 +49,8 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_sched::{CpuSet, MAX_CPUS};
-use ferrix_sync::IrqControl;
+use xaqu_sched::{CpuSet, MAX_CPUS};
+use xaqu_sync::IrqControl;
 
 use super::queue::CpuQueue;
 use super::task::{RUNNABLE, Task};
@@ -67,7 +67,7 @@ pub enum AffinityRefusal {
     /// (A1), Linux's `cpu_active_mask`).
     Empty,
     /// A reservation holds its processor (ledger 7088 E.3).
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     Reserved,
 }
 
@@ -120,7 +120,7 @@ pub fn effective_mask(task: &Task) -> CpuSet {
 /// (L.sched.96); [`AffinityRefusal::Empty`] when nothing is left.
 pub fn set_affinity(task: &Arc<Task>, asked: &CpuSet) -> Result<CpuSet, AffinityRefusal> {
     // A reservation holds its processor (ledger 7088 E.3).
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     if super::reserve::holds(task) {
         return Err(AffinityRefusal::Reserved);
     }

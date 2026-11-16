@@ -23,7 +23,7 @@ fn monitor(id: MonitorId, x: i64, y: i64, width: i64, height: i64) -> Monitor {
     Monitor {
         scale: 1.0,
         transform: Default::default(),
-        // What a virtio-gpu connector is called, which is what Ferrix's
+        // What a virtio-gpu connector is called, which is what Xaqu's
         // monitors are named after.
         name: format!("Virtual-{}", id.0),
         id,

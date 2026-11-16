@@ -1,5 +1,5 @@
 //! `test-compositor --boot appmenu`: Files sets its own menus over
-//! `ferrix_appmenu_v1`, the bar shows them, a press drops File and picking
+//! `xaqu_appmenu_v1`, the bar shows them, a press drops File and picking
 //! New Tab reaches Files.
 //!
 //! A script in the guest starts shelf once hyprix answers. The menu bar

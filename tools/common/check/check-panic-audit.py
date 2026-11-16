@@ -26,7 +26,7 @@ and why it needs an attribute at all.
      with nobody the wiser.
 
 The scope is every production crate, so the item's library crates
-(`ferrix-btrfs`, `ferrix-btrfs-write`; `crates` in
+(`xaqu-btrfs`, `xaqu-btrfs-write`; `crates` in
 `tools/common/data/certification-item.json`) were under both rules before they
 joined the item. What joining adds is a count of their product files'
 exemptions, printed apart, so the item's own number is visible in a diff.

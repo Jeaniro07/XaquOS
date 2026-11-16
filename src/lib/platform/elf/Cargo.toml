@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-elf"
-description = "Bounds-checked ELF64 reader for the Ferrix loader and kernel"
+name = "xaqu-elf"
+description = "Bounds-checked ELF64 reader for the Xaqu loader and kernel"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

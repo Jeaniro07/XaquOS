@@ -13,9 +13,9 @@ A boundary that lives only in a document is a boundary that has already moved.
 
 ---
 
-## 1. Why the item is not Ferrix
+## 1. Why the item is not Xaqu
 
-Ferrix's acceptance test is that it hosts `rustc`, and since 2026-09-23 that it
+Xaqu's acceptance test is that it hosts `rustc`, and since 2026-09-23 that it
 builds itself. That goal is why the system is worth anything, and it is also
 exactly why the whole of it cannot carry an assurance rating. A certified item
 must be a frozen, analysable configuration with every line traced to a
@@ -28,7 +28,7 @@ certificate over the whole kernel are mutually exclusive. The way out is not to
 abandon either one: it is to notice that the architecture already contains the
 seam a certificate needs, and to say where it is.
 
-**The item is therefore a subset of the kernel, and the rest of Ferrix is
+**The item is therefore a subset of the kernel, and the rest of Xaqu is
 uncertified load running on top of it.** This is the same shape as every
 certified separation kernel, and the same shape 62304 §4.3(c) has in mind when
 it permits software items of different classes in one system.
@@ -51,11 +51,11 @@ that its module tree does not reach.
 
 | Library crate | Ring | Product lines | Host-test lines |
 |---|---|---:|---:|
-| `ferrix-btrfs` (`src/lib/fs/btrfs/format`), the reader | `item` | 8,272 | 6,031 |
-| `ferrix-btrfs-write` (`src/lib/fs/btrfs/write`), the write path | `item` | 6,019 | 2,247 |
-| `ferrix-btrfs-vfs` (`src/lib/fs/btrfs/vfs`), the VFS glue | `load` | 2,185 | 1,822 |
-| `ferrix-sha256` (`src/lib/crypto/sha256`), product signing's hash (added 2026-10-24, measured then) | `item` | 237 | 172 |
-| `ferrix-sigverify` (`src/lib/crypto/sigverify`), product signing's verifier (added 2026-10-24, measured then; the RFC and ACVP vectors are host-test lines) | `item` | 995 | 1,340 |
+| `xaqu-btrfs` (`src/lib/fs/btrfs/format`), the reader | `item` | 8,272 | 6,031 |
+| `xaqu-btrfs-write` (`src/lib/fs/btrfs/write`), the write path | `item` | 6,019 | 2,247 |
+| `xaqu-btrfs-vfs` (`src/lib/fs/btrfs/vfs`), the VFS glue | `load` | 2,185 | 1,822 |
+| `xaqu-sha256` (`src/lib/crypto/sha256`), product signing's hash (added 2026-10-24, measured then) | `item` | 237 | 172 |
+| `xaqu-sigverify` (`src/lib/crypto/sigverify`), product signing's verifier (added 2026-10-24, measured then; the RFC and ACVP vectors are host-test lines) | `item` | 995 | 1,340 |
 
 **The certified item is `core` + `item` and the item's crates: 79,079 lines of
 product code** -- 64,788 in the kernel and 14,291 in the two btrfs crates --
@@ -95,10 +95,10 @@ the SoC code in `platform/` and the Arm peripherals in `arch/arm_common/`.)
 **Four crates** (`docs/KERNEL-CRATES.md`, step S3, built on 2026-10-15 and
 redone on 2026-10-23; the certification consultant's ledger lines 1477,
 1531, 1585, 1630, 1777, 1795, 3282, 3294 and 3331). The
-kernel is built as four Cargo packages along the rings: `ferrix-kernel-core`
-holds every `core` file, `ferrix-kernel-item` every `item` file but
-`main.rs`, `ferrix-kernel-load` every `load` file, and the binary,
-`ferrix-kernel`, holds `main.rs` alone, with `stages_check.rs`. Every file
+kernel is built as four Cargo packages along the rings: `xaqu-kernel-core`
+holds every `core` file, `xaqu-kernel-item` every `item` file but
+`main.rs`, `xaqu-kernel-load` every `load` file, and the binary,
+`xaqu-kernel`, holds `main.rs` alone, with `stages_check.rs`. Every file
 stays where it is and keeps its ring; `kernel_crates` in the manifest says
 which crate holds which ring, and `check-item-boundary.py` fails a file
 reached by no crate or by two, or built by a crate that does not hold its
@@ -200,9 +200,9 @@ register, in bring-up order, with a boot check that it did.
 Pid 1's inputs cross the same way (2026-10-04). The program init starts
 when nothing is named, the script for its `sh -c` and the list of commands
 were compiled into the kernel until then; an image carries them in its
-initramfs under `.ferrix/init/` instead, so that one kernel serves every
-test. The load reads the archive -- `fs::init`, over `ferrix-vfs`'s
-`initramfs::init_entries`, which also keeps `ferrix-vfs`'s unpacker from
+initramfs under `.xaqu/init/` instead, so that one kernel serves every
+test. The load reads the archive -- `fs::init`, over `xaqu-vfs`'s
+`initramfs::init_entries`, which also keeps `xaqu-vfs`'s unpacker from
 creating any of it in either root -- and hands each entry to
 `init::set_inputs`, an interface `init.rs` defines and accepts once. `init.rs`
 judges the entries itself (its refusals are `L.init.3`) and names no
@@ -215,7 +215,7 @@ puts it in the `item` ring as bring-up, and nothing about that is changed
 here. But it is also where the load is put together with the item. Since
 the kernel split it no longer declares the kernel's modules -- each crate's
 root does, beside it -- and reaches all of them through
-`ferrix_kernel_load`, which re-exports the crates below it; its calls into
+`xaqu_kernel_load`, which re-exports the crates below it; its calls into
 the load are the same calls, and the gate reads them the same way. Since
 2026-09-26 the gate reads its calls into the load -- 28 modules on
 2026-10-05 -- and records them under `composition_root` in the manifest
@@ -279,14 +279,14 @@ both in `item`:
 
 | Crate | Below it | Above it |
 |---|---|---|
-| `ferrix-btrfs`, the reader | the `Device` trait (`ferrix_btrfs::volume::Device`): sector reads, answered by the kernel's block layer through `Disk` in `src/kernel/src/fs/btrfs.rs`; and memory its caller lends, `ExtentBuffers` and `ChunkStorage` -- the crate allocates little of its own | `Volume`, and the format types it hands out: superblock, chunk map, keys, items, the readers of `fs` and `compress` |
-| `ferrix-btrfs-write`, the write path | the `WriteDevice` trait (`ferrix_btrfs_write::WriteDevice`, a `Device` that also writes and flushes), implemented by the same `Disk`; and `ferrix-btrfs` | `WriteVolume`: its transactions and its inode, directory and extent operations |
+| `xaqu-btrfs`, the reader | the `Device` trait (`xaqu_btrfs::volume::Device`): sector reads, answered by the kernel's block layer through `Disk` in `src/kernel/src/fs/btrfs.rs`; and memory its caller lends, `ExtentBuffers` and `ChunkStorage` -- the crate allocates little of its own | `Volume`, and the format types it hands out: superblock, chunk map, keys, items, the readers of `fs` and `compress` |
+| `xaqu-btrfs-write`, the write path | the `WriteDevice` trait (`xaqu_btrfs_write::WriteDevice`, a `Device` that also writes and flushes), implemented by the same `Disk`; and `xaqu-btrfs` | `WriteVolume`: its transactions and its inode, directory and extent operations |
 
-**What stays load, and why.** `ferrix-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`
+**What stays load, and why.** `xaqu-btrfs-vfs` and `src/kernel/src/fs/btrfs*.rs`
 are not in the item. The first implements the VFS's `FileSystem` and `Inode`
 over `Volume` and `WriteVolume`; the second mounts it, implements `Device` and
 `WriteDevice` over the block core, and runs the boot checks. Both are written
-against the VFS (`ferrix-vfs`, `src/kernel/src/fs/`), which is load, so neither
+against the VFS (`xaqu-vfs`, `src/kernel/src/fs/`), which is load, so neither
 can be item without the VFS coming with it. **The interface between btrfs and
 the VFS is therefore the two crates' public API**: `Volume` and `WriteVolume`
 and the types they take and return, called from the load, and `Device` and
@@ -296,7 +296,7 @@ a `Device` returns, and what a `WriteVolume` writes back: that a corrupt or
 hostile volume gives an error and never stops the machine. What holds is that
 every field is read through a checked slice access, in crates that are
 `#![forbid(unsafe_code)]` and deny indexing and explicit panics
-(`ferrix-btrfs`'s *Totality*), and since 2026-10-02 that no allocation in
+(`xaqu-btrfs`'s *Totality*), and since 2026-10-02 that no allocation in
 either can stop it: the write path's allocations report failure, and an
 allocation sized from the disk that exhausts the heap fails the mount or
 aborts the transaction with `ENOMEM` (`H.STORE.7`; what that costs other
@@ -318,10 +318,10 @@ same lock, whatever the glue answered.
 The boundary gate holds the crates at their manifests: an item crate may
 depend only on item and core crates or on an allowlisted piece of `no_std`
 infrastructure the core already links (`crates.infrastructure_allowlist`:
-`ferrix-fallible` and `ferrix-sync`, each with its reason; an allowlisted
+`xaqu-fallible` and `xaqu-sync`, each with its reason; an allowlisted
 crate's own dependencies are held to the same rule once an item crate
-depends on it, which `ferrix-btrfs-write` does on both since the allocation
-conversion). `ferrix-btrfs-write` on `ferrix-btrfs` passes; a load
+depends on it, which `xaqu-btrfs-write` does on both since the allocation
+conversion). `xaqu-btrfs-write` on `xaqu-btrfs` passes; a load
 crate as a dependency fails, which a negative control showed when the rule was
 written. A kernel file naming one of the crates is an edge to the `item` ring
 like a `crate::` path, so the core cannot name btrfs. The item-scoped gates --
@@ -336,35 +336,35 @@ re-recorded them. Neither crate has an `unsafe` site or a panic
 exemption.
 
 The DMA and interrupt decisions the item makes about PCI rest on three more
-crates the manifest does not classify, `ferrix-pci`, `ferrix-acpi` and
-`ferrix-paging`: the DMAR's scopes are parsed by `ferrix_acpi::dmar`, and
+crates the manifest does not classify, `xaqu-pci`, `xaqu-acpi` and
+`xaqu-paging`: the DMAR's scopes are parsed by `xaqu_acpi::dmar`, and
 since 2026-10-02 whether a function is its own requester -- the rule that
 decides whether it gets an IOMMU domain (`L.iommu.45`) -- and which of an MSI
-capability's registers mask it (`L.device.23`) are `ferrix_pci::topology` and
-`ferrix_pci::msi`, and since NVIDIA's N0d which bytes of its configuration
-space a driver may write (`L.device.26`) is `ferrix_pci::window`. Also since
+capability's registers mask it (`L.device.23`) are `xaqu_pci::topology` and
+`xaqu_pci::msi`, and since NVIDIA's N0d which bytes of its configuration
+space a driver may write (`L.device.26`) is `xaqu_pci::window`. Also since
 2026-10-02 (F-58), which VT-d table writes are
 cleaned to memory before a unit that does not snoop is told of them is
-`ferrix_paging::coherence`: `Unpublished`, the record of writes not yet
+`xaqu_paging::coherence`: `Unpublished`, the record of writes not yet
 cleaned, and `Walked`, the `unsafe impl PhysMem` that puts the mapper's own
 writes and fresh tables through it (`L.iommu.56`, `L.iommu.57`). And since
 NVIDIA's N0g, the descriptors of the VT-d invalidation queue every
 invalidation goes through, and the queue registers' encodings, are
-`ferrix_paging::vtd::queue` (`L.iommu.47`, `L.iommu.48`); and the
+`xaqu_paging::vtd::queue` (`L.iommu.47`, `L.iommu.48`); and the
 interrupt remapping entries, the remappable messages and I/O APIC entries
 that name them, the fault reasons and the isolation rule are
-`ferrix_paging::vtd::remap` (`L.iommu.50`, `L.iommu.53` to `L.iommu.55`,
+`xaqu_paging::vtd::remap` (`L.iommu.50`, `L.iommu.53` to `L.iommu.55`,
 `L.x86_64.129`, `L.x86_64.130`, `L.x86_64.132`), with the I/O APIC's source
-ID matched by its identifier in `ferrix_acpi::dmar` (`L.x86_64.130`). And
+ID matched by its identifier in `xaqu_acpi::dmar` (`L.x86_64.130`). And
 since branch vtd-n150 (the consultant's OK IF, ledger 2026-10-17 line
 2122), which VT-d units are driven and how -- the version, the walk, the
 guest width, the window, the fault records' order, the drain bits, the
-protected regions -- is `ferrix_paging::vtd::unit` (`L.iommu.59`,
+protected regions -- is `xaqu_paging::vtd::unit` (`L.iommu.59`,
 `L.iommu.60`, `L.iommu.64` to `L.iommu.66`, `L.iommu.68`, `L.iommu.71`),
-the four-level walk is `ferrix_paging::vtd::VtdFourLevel` (`L.iommu.61`),
-the catch-all and the RMRR hold are `ferrix_acpi::dmar::Dmar::catch_all`
+the four-level walk is `xaqu_paging::vtd::VtdFourLevel` (`L.iommu.61`),
+the catch-all and the RMRR hold are `xaqu_acpi::dmar::Dmar::catch_all`
 and `rmrr_hold` (`L.iommu.62`, `L.iommu.67`), and the placement decision
-the report and the domains both ask is `ferrix_pci::topology::place`
+the report and the domains both ask is `xaqu_pci::topology::place`
 (`L.iommu.62`, `L.iommu.63`). Their host tests trace to those requirements,
 but the item-scoped gates do not read
 them; `docs/BACKLOG.md` has the row that classifies them.
@@ -375,13 +375,13 @@ all, which this change makes visible rather than causes; classifying them
 `core` is the natural next step (F-56; `docs/BACKLOG.md`). And they are not
 the only ones: since the kernel split gave the core and the item manifests
 of their own, they are seen to link 25 more first-party libraries that no
-ring classifies -- `ferrix-acpi`, `ferrix-audit`, `ferrix-blkring`,
-`ferrix-bootinfo`, `ferrix-cgroupfs`, `ferrix-crng`, `ferrix-description`,
-`ferrix-devmgr-proto`, `ferrix-elf`, `ferrix-fbtext`, `ferrix-fdt`,
-`ferrix-frame`, `ferrix-heap`, `ferrix-kmem`, `ferrix-linux-abi`,
-`ferrix-native-abi`, `ferrix-objects`, `ferrix-paging`, `ferrix-pci`,
-`ferrix-qr`, `ferrix-sched`, `ferrix-vdso`, `ferrix-vfs`, `ferrix-virtio`
-and `ferrix-vma` -- which no item-scoped gate reads, two of them filesystem
+ring classifies -- `xaqu-acpi`, `xaqu-audit`, `xaqu-blkring`,
+`xaqu-bootinfo`, `xaqu-cgroupfs`, `xaqu-crng`, `xaqu-description`,
+`xaqu-devmgr-proto`, `xaqu-elf`, `xaqu-fbtext`, `xaqu-fdt`,
+`xaqu-frame`, `xaqu-heap`, `xaqu-kmem`, `xaqu-linux-abi`,
+`xaqu-native-abi`, `xaqu-objects`, `xaqu-paging`, `xaqu-pci`,
+`xaqu-qr`, `xaqu-sched`, `xaqu-vdso`, `xaqu-vfs`, `xaqu-virtio`
+and `xaqu-vma` -- which no item-scoped gate reads, two of them filesystem
 crates the core names (F-76). The kernel crates list them under
 `unclassified_deps`, F-76's debt register and not an endorsement: the gate
 fails one more without a ledger line, and an entry no longer needed.
@@ -391,12 +391,12 @@ the traceability matrix reaches them since the same landing (`L.btrfs.*` and
 `H.STORE.*`, traced to the crates' host tests), with the requirements no test
 verifies yet in its baseline.
 
-### ferrix-sigverify and ferrix-sha256 — product signing's verifier, two crates in the item
+### xaqu-sigverify and xaqu-sha256 — product signing's verifier, two crates in the item
 
 `docs/SIGNING.md` is the design (the consultant's OK IF at ledger lines 3667
-and 3738). `ferrix-sigverify` (`src/lib/crypto/sigverify`) verifies the
+and 3738). `xaqu-sigverify` (`src/lib/crypto/sigverify`) verifies the
 signed manifest of slot images, configuration packages and driver images
-and the LMS/HSS signature over it; `ferrix-sha256` (`src/lib/crypto/sha256`)
+and the LMS/HSS signature over it; `xaqu-sha256` (`src/lib/crypto/sha256`)
 is the one hash beneath it. The manifest puts both in `item`, at the item
 ring's level, and no profile links either into ring 0: their users are the
 UEFI loader, init's configuration verifier and devmgr (SIGNING.md §5.2),
@@ -407,19 +407,19 @@ traceability report, and their coverage is measured under their host tests
 
 | Crate | Below | Above |
 |---|---|---|
-| `ferrix-sha256` | byte slices its caller lends; no trait, no allocation, no dependency | `Sha256`, `digest`, `finish_192`, `digest_192`, called by `ferrix-sigverify` |
-| `ferrix-sigverify` | `ferrix-sha256`, and the block, anchors and revoked trees its caller lends | `manifest::verify`, `Verified::check_payload`, `Verified::revoked`, `lms::hss_verify` |
+| `xaqu-sha256` | byte slices its caller lends; no trait, no allocation, no dependency | `Sha256`, `digest`, `finish_192`, `digest_192`, called by `xaqu-sigverify` |
+| `xaqu-sigverify` | `xaqu-sha256`, and the block, anchors and revoked trees its caller lends | `manifest::verify`, `Verified::check_payload`, `Verified::revoked`, `lms::hss_verify` |
 
-### ferrix-smbios — the firmware's SMBIOS tables, one crate in the item
+### xaqu-smbios — the firmware's SMBIOS tables, one crate in the item
 
 Since 2026-10-15 (`docs/DMI.md`; consultant ledger line 1339) the loader
 copies firmware's SMBIOS entry point and structure table and the kernel
-checks the copy once at boot. Both parse it with `ferrix-smbios`
+checks the copy once at boot. Both parse it with `xaqu-smbios`
 (`src/lib/platform/smbios`), which the manifest puts in `item`:
 
 | Crate | Below it | Above it |
 |---|---|---|
-| `ferrix-smbios` | byte slices its caller lends; no trait, no allocation, no dependency | the entry point parse, the table walk and the identity decode, called by `src/boot/common/uefi` and `src/kernel/src/discovery/smbios.rs` |
+| `xaqu-smbios` | byte slices its caller lends; no trait, no allocation, no dependency | the entry point parse, the table walk and the identity decode, called by `src/boot/common/uefi` and `src/kernel/src/discovery/smbios.rs` |
 
 It is `forbid(unsafe_code)`, `no_std` without `alloc`, and denies
 `arithmetic_side_effects` as well as the workspace's panic lints, so every
@@ -429,13 +429,13 @@ function is total over any bytes firmware wrote. What it hands sysfs, the
 refusal to anyone but root are a claim about the configuration, not the
 item (VULNERABILITY-ANALYSIS.md, T.IDENTIFY).
 
-### ferrix-elf — one parser, in the core, and the one loader in the item
+### xaqu-elf — one parser, in the core, and the one loader in the item
 
 K15 (`docs/microkernel/K15.md`) takes the native ELF loader out of the kernel: a process
 `process_make` made is empty, and its creator maps it, with the library
-`ferrix-process-builder`, which is in no ring. What is left is `discovery/first_image.rs`
+`xaqu-process-builder`, which is in no ring. What is left is `discovery/first_image.rs`
 (item), for the processes the kernel starts itself, on the same bounds-checked,
-fuzzed, `forbid(unsafe_code)` parser. `ferrix-elf` is classed in the core since the core's
+fuzzed, `forbid(unsafe_code)` parser. `xaqu-elf` is classed in the core since the core's
 `image_abi` names its `Class` and the item and the Linux loader call it, closing F-76 for
 this crate (the ring is the customer's to overrule: ledger 5726, 4923). Its `symbols.rs`
 and `fixups.rs` are the boot loaders' and xtask's: no kernel file names them, and they
@@ -444,7 +444,7 @@ code; `check-item-boundary.py`'s loader rule holds who may call the parser.
 
 ### `load` — everything it runs and does not vouch for
 
-The VFS, btrfs's glue into it (`ferrix-btrfs-vfs` and the kernel's
+The VFS, btrfs's glue into it (`xaqu-btrfs-vfs` and the kernel's
 `fs/btrfs*.rs`), procfs, sysfs, cgroupfs and tmpfs; the network stack; the
 Linux personality's syscall surface; the display, render, input and ring
 drivers' kernel halves; STM32MP1 board support.
@@ -455,7 +455,7 @@ before any waiter is told (F-91, ledger 2962). `H.QUOTA.6` and `H.QUOTA.12`
 (the scoped kill and reclaim) assume it, and stage 13's OOM check is its
 evidence; SAFETY-MANUAL AoU-5 names it.
 
-This is not a list of code that matters less — it is most of what makes Ferrix
+This is not a list of code that matters less — it is most of what makes Xaqu
 useful. It is excluded because a defect in it is bounded by the item's own
 enforcement, and because a claim over 103,397 lines is one nobody can afford to
 substantiate.
@@ -482,7 +482,7 @@ The same nesting is what makes the ratings honestly *ordered*. `core` at
 (INTEGRITY-178B, ~10k SLOC, is the benchmark and is still nearly five times
 smaller).
 It is not there yet. Saying which ring carries which target keeps that gap
-visible instead of letting "Ferrix is certified" absorb it.
+visible instead of letting "Xaqu is certified" absorb it.
 
 ---
 
@@ -544,17 +544,17 @@ A certificate attaches to a configuration, not to a repository.
 
 | | |
 |---|---|
-| Architectures | x86-64, AArch64. **ARMv7-A is outside the claim** (the customer's G4, 2026-10-24, ledger 3906): no IOMMU is driven there, so no bus master's DMA is translated, and every ARMv7-A image boots with `ferrix.unisolated`; its rows are development rows, not claim evidence, and the DK1 a development board. It returns to the claim when an SMMU is driven on ARMv7-A and its rows boot without the word. On AArch64 a bus master needs its DMA translated alone (G4 (c)), its interrupts' residual as VULNERABILITY-ANALYSIS V-03 states it, until GICv3 ITS rows exist; then the full rule applies there too |
+| Architectures | x86-64, AArch64. **ARMv7-A is outside the claim** (the customer's G4, 2026-10-24, ledger 3906): no IOMMU is driven there, so no bus master's DMA is translated, and every ARMv7-A image boots with `xaqu.unisolated`; its rows are development rows, not claim evidence, and the DK1 a development board. It returns to the claim when an SMMU is driven on ARMv7-A and its rows boot without the word. On AArch64 a bus master needs its DMA translated alone (G4 (c)), its interrupts' residual as VULNERABILITY-ANALYSIS V-03 states it, until GICv3 ITS rows exist; then the full rule applies there too |
 | Profile | release |
 | Toolchain | rustc 1.99.1, pinned exactly in `rust-toolchain.toml` (1.97.1 until 2026-11-06) |
 | Unstable features | none in `src/kernel/` or `src/boot/common/uefi/` |
 | Cargo features | 7 in the workspace, **0** in `src/kernel/` or `src/boot/common/uefi/` |
-| Where the loader boots from | the ESP's `FERRIX/` files, or on a disk with A/B system slots the slot its boot control record selects, verified, with the ESP's files as the rescue path (`docs/AB-BOOT.md`; SECURITY-TARGET A.FIRMWARE, SAFETY-MANUAL AoU-29). The loader has **no Cargo feature and no `cfg`** of its own; the A/B gate's negative controls are source sabotages run by `fleet/gate.sh control`. A netboot (the loader and its files from iPXE's read-only file system, `docs/NETBOOT.md`), where the loader sends its boot log to the server, is a development path, not the reference configuration |
+| Where the loader boots from | the ESP's `XAQU/` files, or on a disk with A/B system slots the slot its boot control record selects, verified, with the ESP's files as the rescue path (`docs/AB-BOOT.md`; SECURITY-TARGET A.FIRMWARE, SAFETY-MANUAL AoU-29). The loader has **no Cargo feature and no `cfg`** of its own; the A/B gate's negative controls are source sabotages run by `fleet/gate.sh control`. A netboot (the loader and its files from iPXE's read-only file system, `docs/NETBOOT.md`), where the loader sends its boot log to the server, is a development path, not the reference configuration |
 | The event log | whether the boot disk carries an event-log partition (`docs/POSTMORTEM.md` §4): **absent** in the reference configuration's images and gates but test-postmortem's; present on the N150 box (LBA 40-2047). Present, the loader appends a previous boot's panic record to it before it renews the pstore region, writing nothing but that partition's blocks (SECURITY-TARGET A.FIRMWARE); absent, PM3's behaviour. It changes no work of the item: the kernel neither reads nor writes it |
-| Kernel profile | **`present`** (`tools/common/data/profiles/present.toml`, `docs/BUILD-FLAGS.md` BF1): every build flag set, each `cfg(ferrix_<flag> = "<value>")` read in the kernel crate alone, printed on the kernel's `build` boot line and compared with the profile by the gate; `mitigations=on`, `checks=on`. A build changed by `--set` (`--mitigations off` among them) is ad hoc and carries no claim |
-| Boot options that change the item's work | **eight**: `ferrix.devmgr=kernel\|init`, the reference `kernel`, the default; `ferrix.pstore=on\|off`, the reference `on`, the default (the kernel log kept across a reset, with the stop word that says how the boot ended, `docs/POSTMORTEM.md` §3 and §5, and kept by the next boot's loader as the ESP's `FERRIX/LASTKERNEL.TXT`, VULNERABILITY-ANALYSIS V-17; any other value is said and taken as `off`); and `ferrix.efifb`, which lends the firmware framebuffer to a ring-3 driver on x86-64, the reference **off**, the default (SAFETY-MANUAL AoU-31); and `ferrix.panic=halt\|reset`, the reference `halt`, the default (any other value is said and taken as `halt`; `reset`, a stop-gap for the N150 box set by no loader, resets the machine 10 s after a panic's report and is outside the reference configuration, H.FAIL.5, SAFETY-MANUAL AoU-32); and `ferrix.vtd=on\|off`, the reference `on`, the default (any other value is driven as `on`; `off` leaves every VT-d unit alone, so no DMA is translated and no interrupt remapped, and is outside the reference configuration, for recovery only, L.iommu.71, SAFETY-MANUAL AoU-8); and `ferrix.amdvi=on\|off`, the same for AMD-Vi units (L.iommu.98); and `ferrix.unisolated`, a bare word, the reference **absent**, the default: with it devmgr starts the drivers of devices whose DMA is not translated or whose interrupts are not isolated, each with an `UNISOLATED` line, and the kernel says it at stage 10 and records it in the audit configuration (`Config::Unisolated`); without it every bus master gets a driver only with both (on AArch64, translation alone: the customer's G4, below), and no certified profile may permit it (`claimless` in the registry; L.device.57-59, `docs/DMA-GATE.md`, SAFETY-MANUAL AoU-8). And `ferrix.watchdog=on`, the reference **absent**, the default: with it the kernel serves `/dev/watchdog`, a deadline a privileged program arms and feeds, reported under FX-9008 when no feed comes while the kernel runs (H.FAIL.14, `docs/POSTMORTEM.md` §6.11); a kernel that stops is not detected, a reset follows only under `ferrix.panic=reset`, any other value is said and taken as off, and it is outside the reference configuration (SAFETY-MANUAL AoU-48). Every option the kernel or the loader reads is declared in `build-flags.toml`'s registry, and `present` permits: `ferrix.checks=run`, `ferrix.root`, `ferrix.init`, `ferrix.onexit`, `ferrix.fbcon`, `ferrix.fbcon.small`, `ferrix.pstore=on`, `ferrix.apic`, `ferrix.epp` (its four names), `ferrix.panic=halt`, `console`, `drm.edid_firmware`, `ferrix.devmgr=kernel`, `ferrix.vtd=on`, `ferrix.amdvi=on`: 15 of the 36 declared; `desktop` permits 23, `fast` and `max` 8 each. `ferrix.epp` (x86-64, L.x86_64.182; the reference is no option, performance) does not change the item's work: it is the processor's own clock choice, within power and thermal limits the platform's firmware keeps (SAFETY-MANUAL AoU-33), and no claim of the item rests on the clock (MEMORY-AND-TIMING, "The time figures below make no claim about the processor clock"). A build with `ipc_fastpath=on`, outside `present`, also counts the fast path's time in the kernel as user time (L.sched.81, SAFETY-MANUAL AoU-34) |
+| Kernel profile | **`present`** (`tools/common/data/profiles/present.toml`, `docs/BUILD-FLAGS.md` BF1): every build flag set, each `cfg(xaqu_<flag> = "<value>")` read in the kernel crate alone, printed on the kernel's `build` boot line and compared with the profile by the gate; `mitigations=on`, `checks=on`. A build changed by `--set` (`--mitigations off` among them) is ad hoc and carries no claim |
+| Boot options that change the item's work | **eight**: `xaqu.devmgr=kernel\|init`, the reference `kernel`, the default; `xaqu.pstore=on\|off`, the reference `on`, the default (the kernel log kept across a reset, with the stop word that says how the boot ended, `docs/POSTMORTEM.md` §3 and §5, and kept by the next boot's loader as the ESP's `XAQU/LASTKERNEL.TXT`, VULNERABILITY-ANALYSIS V-17; any other value is said and taken as `off`); and `xaqu.efifb`, which lends the firmware framebuffer to a ring-3 driver on x86-64, the reference **off**, the default (SAFETY-MANUAL AoU-31); and `xaqu.panic=halt\|reset`, the reference `halt`, the default (any other value is said and taken as `halt`; `reset`, a stop-gap for the N150 box set by no loader, resets the machine 10 s after a panic's report and is outside the reference configuration, H.FAIL.5, SAFETY-MANUAL AoU-32); and `xaqu.vtd=on\|off`, the reference `on`, the default (any other value is driven as `on`; `off` leaves every VT-d unit alone, so no DMA is translated and no interrupt remapped, and is outside the reference configuration, for recovery only, L.iommu.71, SAFETY-MANUAL AoU-8); and `xaqu.amdvi=on\|off`, the same for AMD-Vi units (L.iommu.98); and `xaqu.unisolated`, a bare word, the reference **absent**, the default: with it devmgr starts the drivers of devices whose DMA is not translated or whose interrupts are not isolated, each with an `UNISOLATED` line, and the kernel says it at stage 10 and records it in the audit configuration (`Config::Unisolated`); without it every bus master gets a driver only with both (on AArch64, translation alone: the customer's G4, below), and no certified profile may permit it (`claimless` in the registry; L.device.57-59, `docs/DMA-GATE.md`, SAFETY-MANUAL AoU-8). And `xaqu.watchdog=on`, the reference **absent**, the default: with it the kernel serves `/dev/watchdog`, a deadline a privileged program arms and feeds, reported under FX-9008 when no feed comes while the kernel runs (H.FAIL.14, `docs/POSTMORTEM.md` §6.11); a kernel that stops is not detected, a reset follows only under `xaqu.panic=reset`, any other value is said and taken as off, and it is outside the reference configuration (SAFETY-MANUAL AoU-48). Every option the kernel or the loader reads is declared in `build-flags.toml`'s registry, and `present` permits: `xaqu.checks=run`, `xaqu.root`, `xaqu.init`, `xaqu.onexit`, `xaqu.fbcon`, `xaqu.fbcon.small`, `xaqu.pstore=on`, `xaqu.apic`, `xaqu.epp` (its four names), `xaqu.panic=halt`, `console`, `drm.edid_firmware`, `xaqu.devmgr=kernel`, `xaqu.vtd=on`, `xaqu.amdvi=on`: 15 of the 36 declared; `desktop` permits 23, `fast` and `max` 8 each. `xaqu.epp` (x86-64, L.x86_64.182; the reference is no option, performance) does not change the item's work: it is the processor's own clock choice, within power and thermal limits the platform's firmware keeps (SAFETY-MANUAL AoU-33), and no claim of the item rests on the clock (MEMORY-AND-TIMING, "The time figures below make no claim about the processor clock"). A build with `ipc_fastpath=on`, outside `present`, also counts the fast path's time in the kernel as user time (L.sched.81, SAFETY-MANUAL AoU-34) |
 | Driver updates at run time | **absent**: no reference image carries `drvupdated` (`docs/DEVMGR.md` §4.1); only `cargo xtask test-restart --update`'s images do, xtask refuses it in any other, and no claim is made of them (SAFETY-MANUAL AoU-26) |
-| Test platform | QEMU; on x86-64 the patched 10.2.1 `(ferrix-cfi)`, whose VT-d blocks compatibility-format interrupts, with `intel-iommu,intremap=on,eim=off,aw-bits=39` (three-level tables: every standing row) and, for `--vtd-aw48`'s row, `aw-bits=48` (four-level tables, the N150's only walk; QEMU 10.2's default is 48, which offers both, so the standing rows ask for 39), and, under KVM, the split interrupt controller ([TOOLS.md](TOOLS.md)) |
+| Test platform | QEMU; on x86-64 the patched 10.2.1 `(xaqu-cfi)`, whose VT-d blocks compatibility-format interrupts, with `intel-iommu,intremap=on,eim=off,aw-bits=39` (three-level tables: every standing row) and, for `--vtd-aw48`'s row, `aw-bits=48` (four-level tables, the N150's only walk; QEMU 10.2's default is 48, which offers both, so the standing rows ask for 39), and, under KVM, the split interrupt controller ([TOOLS.md](TOOLS.md)) |
 | Kernel link (`on`) | a static PIE on x86-64 (PIC code model, every x86-64 crate) and AArch64 (static code model, `-pie -z notext`); on ARMv7-A a fixed-address link that keeps its relocations (`--emit-relocs`). The loader moves it each boot (KASLR). `off`: the static fixed-address image |
 | External crates | 21, listed in [SOUP.md](SOUP.md) |
 | Assembly | 500 lines across 22 allow-listed sites outside the Pixel 7 loader, ~99.76% Rust (`check-asm-budget.py`) |
@@ -567,7 +567,7 @@ settings, which is most of why this item is analysable at all.
 
 The build flag that matters most here is `mitigations`, the side-channel
 defences and KASLR ([SPECULATION.md](SPECULATION.md)). `mitigations=off`
-builds with `cfg(ferrix_mitigations = "off")` and the static relocation
+builds with `cfg(xaqu_mitigations = "off")` and the static relocation
 model, set only by `xtask`, compiles the kernel's speed-trade defences out (Zenbleed's
 and GDS's covers stay, no speed trade, DF6) and links the kernel at its fixed address; it exists to measure what they cost and for
 owners who have decided they need none. It is not a Cargo feature, it is an
@@ -616,7 +616,7 @@ is made (FX-1009), and so is the re-root (FX-1202). No claim is made of
 `init` (SAFETY-MANUAL AoU-8, AoU-13); the boots that carry the evidence keep
 `kernel`.
 
-The second option, `ferrix.efifb`, is the screen of a PC whose GPU has no
+The second option, `xaqu.efifb`, is the screen of a PC whose GPU has no
 driver (`docs/DISPLAY.md` §8). On x86-64 it has stage 10 publish one more
 node, whose one aperture is the boot framebuffer's visible lines -- the one
 exemption from the ranges every aperture is withheld from (L.device.38) --

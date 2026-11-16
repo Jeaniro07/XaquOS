@@ -1,6 +1,6 @@
 //! A device call that never returns gives no error: every process using the store
 //! would wait for ever. This thread gives it a deadline.
-use ferrix_vtier::store::{Backend, Health};
+use xaqu_vtier::store::{Backend, Health};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -27,7 +27,7 @@ impl<B> Watched<B> {
     fn during<T>(&mut self, call: impl FnOnce(&mut B) -> T) -> T {
         self.started.store(now(), Ordering::Relaxed);
         #[cfg(feature = "fault-inject")]
-        while ferrix_vtier::inject::stall_now() {
+        while xaqu_vtier::inject::stall_now() {
             std::thread::sleep(Duration::from_secs(1));
         }
         let result = call(&mut self.inner);

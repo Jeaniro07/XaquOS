@@ -2,7 +2,7 @@
 //! them.
 //!
 //! None of these touch the wire. A datagram socket is a queue and an address;
-//! a stream socket is a [`ferrix_nettcp::Connection`] and two addresses; a
+//! a stream socket is a [`xaqu_nettcp::Connection`] and two addresses; a
 //! listener is a queue of connections that have finished their handshake. The
 //! stack moves bytes between them and the interfaces.
 
@@ -10,8 +10,8 @@ use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, buffer_footprint, reserve_deque};
-use ferrix_nettcp::Connection;
+use xaqu_kmem::{Charge, buffer_footprint, reserve_deque};
+use xaqu_nettcp::Connection;
 
 use crate::addr::{Endpoint, IpAddress};
 
@@ -387,7 +387,7 @@ impl StreamSocket {
         Readiness {
             readable: self.connection.is_readable(),
             writable: self.connection.is_writable(),
-            hangup: !state.can_receive() && state != ferrix_nettcp::State::SynSent,
+            hangup: !state.can_receive() && state != xaqu_nettcp::State::SynSent,
             error: self.error.is_some() || self.connection.failure().is_some(),
         }
     }

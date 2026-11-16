@@ -1,6 +1,6 @@
 /*
  * dual-socket.exe: the socket calls a Unity IL2CPP (Mono class library)
- * game makes to reach its game server, in Wine on Ferrix.
+ * game makes to reach its game server, in Wine on Xaqu.
  *
  * .NET's `TcpClient` makes a dual-mode IPv6 socket when it can: AF_INET6
  * with IPV6_V6ONLY off, connected to an IPv4 server by its IPv4-mapped

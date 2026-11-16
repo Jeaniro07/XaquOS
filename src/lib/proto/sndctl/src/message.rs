@@ -40,7 +40,7 @@
 
 use ::core::fmt;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 /// The protocol version this crate speaks.
 pub const VERSION: u16 = 1;

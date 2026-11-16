@@ -1,5 +1,5 @@
 //! `test-chrome-window` and `test-chrome-audio`: Google's Chrome in a window
-//! on the compositor, on Ferrix, drawing a page and playing its sound.
+//! on the compositor, on Xaqu, drawing a page and playing its sound.
 //!
 //! The libc Chrome runs on is chosen here too, because `run-compositor
 //! --chrome` chooses it the same way and the two must not drift.
@@ -21,7 +21,7 @@ use crate::{Error, Result};
 /// screen counts. No spaces, because the compositor splits `exec-once` at
 /// them.
 pub(super) const CHROME_WINDOW_PAGE: &str =
-    "data:text/html,<body%20style=background:%23fc0><h1>Hello%20from%20Chrome%20on%20Ferrix</h1>";
+    "data:text/html,<body%20style=background:%23fc0><h1>Hello%20from%20Chrome%20on%20Xaqu</h1>";
 
 /// That page's background, `#fc0`, as the screen has it.
 const CHROME_YELLOW: [u8; 3] = [0xff, 0xcc, 0x00];
@@ -99,7 +99,7 @@ fn yellow_pixels(screen: &Image) -> usize {
 }
 
 /// `test-chrome-window`: Google's Chrome in a window on the compositor, on
-/// Ferrix.
+/// Xaqu.
 ///
 /// The full browser from the volume `tools/common/fetch/fetch-chrome.sh` makes -- the
 /// same version `test-chrome` runs headless -- started by the compositor's
@@ -213,7 +213,7 @@ const CHROME_TONE_HZ: f64 = 440.0;
 const CHROME_TONE_FRAMES: usize = 48_000;
 
 /// `test-chrome-audio`: Google's Chrome in a window on the compositor, on
-/// Ferrix, playing a page's `AudioContext` through `/dev/snd`.
+/// Xaqu, playing a page's `AudioContext` through `/dev/snd`.
 ///
 /// The window of `test-chrome-window`, on a page that plays 440 Hz as it
 /// loads, with a virtio-snd card whose far end is QEMU's `wav` backend
@@ -417,7 +417,7 @@ fn judge_chrome_window(
             .join("\n")
     };
     let fail = |why: String| Err(Error::new(format!("{arch}: {why}\n{}", transcript())));
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return fail(format!(
             "the kernel stopped while Chrome ran: {}",
             line.trim()

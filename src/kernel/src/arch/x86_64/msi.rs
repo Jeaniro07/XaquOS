@@ -18,7 +18,7 @@
 
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_pci::msix::local_apic_message;
+use xaqu_pci::msix::local_apic_message;
 
 use super::{apic, trap};
 use crate::iommu::remapping::{self, Remapper, Route};

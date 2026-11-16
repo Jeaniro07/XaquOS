@@ -14,7 +14,7 @@
 //! with the frame [`expected`] draws on the host.
 //!
 //! That first boot presents nothing: it holds DXVK, lavapipe and the
-//! threads and memory they ask of Ferrix. A second boot,
+//! threads and memory they ask of Xaqu. A second boot,
 //! `crate::compositor::dxvk`, has the program present through a swap chain
 //! in a window of hyprix's, by way of Wine's Vulkan surface on yserver's
 //! X11, as a game's frames go, and looks for them on the screen.
@@ -152,7 +152,7 @@ pub(crate) fn pinned() -> &'static str {
 /// A file is missing, or the directory holds another release or a program
 /// built from another source.
 fn directory() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_DXVK_DIR") {
+    let directory = match std::env::var_os("XAQU_DXVK_DIR") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("dxvk")?,
     };
@@ -385,7 +385,7 @@ pub(crate) fn test_dxvk(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running Direct3D 11 through DXVK on lavapipe on Ferrix with {} MiB \
+        "  {arch}: running Direct3D 11 through DXVK on lavapipe on Xaqu with {} MiB \
          (timeout {}s)",
         args.memory, args.timeout
     );
@@ -421,7 +421,7 @@ pub(crate) fn test_dxvk(args: &Args) -> Result<()> {
     }
     judge(&lines, FRAMES).map_err(|error| Error::new(format!("{arch}: offscreen: {error}")))?;
     println!(
-        "  {arch}: DXVK {} drew d3d11-triangle's frame on lavapipe in Wine on Ferrix, as xtask \
+        "  {arch}: DXVK {} drew d3d11-triangle's frame on lavapipe in Wine on Xaqu, as xtask \
          draws it",
         pinned()
     );

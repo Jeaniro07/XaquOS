@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lift-logctl"
+name = "xaqu-lift-logctl"
 description = "The kernel log's control channel's one source built for linuxd"
 version.workspace = true
 edition.workspace = true
@@ -9,17 +9,17 @@ publish.workspace = true
 build = "../../../../build.rs"
 
 [lib]
-name = "ferrix_kernel_logctl"
+name = "xaqu_kernel_logctl"
 path = "../src/lib.rs"
 
 [dependencies]
-ferrix-kernel-core = { package = "ferrix-lift-core", path = "../../../../lift/core" }
-ferrix-kernel-item = { package = "ferrix-lift-item", path = "../../../../lift/item" }
-ferrix-blkring.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-logctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-sched.workspace = true
+xaqu-kernel-core = { package = "xaqu-lift-core", path = "../../../../lift/core" }
+xaqu-kernel-item = { package = "xaqu-lift-item", path = "../../../../lift/item" }
+xaqu-blkring.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-logctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-sched.workspace = true
 
 [lints]
 workspace = true

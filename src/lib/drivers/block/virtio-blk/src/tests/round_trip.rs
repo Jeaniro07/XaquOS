@@ -3,11 +3,11 @@
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::blk::{
+use xaqu_virtio::blk::{
     FEATURE_BLK_SIZE, FEATURE_CONFIG_WCE, FEATURE_DISCARD, FEATURE_FLUSH, FEATURE_MQ, FEATURE_RO,
     FEATURE_SEG_MAX, FEATURE_SIZE_MAX, FEATURE_WRITE_ZEROES,
 };
-use ferrix_virtio::pci::{FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, STATUS_FAILED};
+use xaqu_virtio::pci::{FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1, STATUS_FAILED};
 
 use super::fake::{PAGE, Rig, Setup};
 use crate::{

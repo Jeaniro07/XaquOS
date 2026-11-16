@@ -2,7 +2,7 @@
 # zero-copy-soak.sh DIR [SECONDS]: on the N150, as root, with the desktop and
 # yserver up. Runs tools/common/test/d3d11-triangle.c's program (DIR holds
 # d3d11-triangle.exe, d3d11.dll and dxgi.dll as fetch-dxvk.sh makes them) in
-# a Proton prefix (ZC_PREFIX, default Endfield's, /home/ferrix/cd-dwp/pfx,
+# a Proton prefix (ZC_PREFIX, default Endfield's, /home/xaqu/cd-dwp/pfx,
 # which must not be in use: a fresh prefix made by Proton's wine alone does
 # not start the program), DXVK on anv, presenting through yserver's
 # zero-copy path, for SECONDS (default 120). Half way it maximizes the
@@ -25,9 +25,9 @@
 set -u
 dir=${1:?usage: zero-copy-soak.sh DIR [SECONDS]}
 seconds=${2:-120}
-prefix=${ZC_PREFIX:-/home/ferrix/cd-dwp/pfx}
+prefix=${ZC_PREFIX:-/home/xaqu/cd-dwp/pfx}
 bb=/bin/busybox
-hyprctl() { env XDG_RUNTIME_DIR=/run/user/1000 HYPRLAND_INSTANCE_SIGNATURE=ferrix /bin/hyprctl "$@"; }
+hyprctl() { env XDG_RUNTIME_DIR=/run/user/1000 HYPRLAND_INSTANCE_SIGNATURE=xaqu /bin/hyprctl "$@"; }
 for file in d3d11-triangle.exe d3d11.dll dxgi.dll; do
     [ -f "$dir/$file" ] || { echo "zero-copy-soak: FAILED: no $dir/$file"; exit 1; }
 done
@@ -39,7 +39,7 @@ out=$dir/soak.out
 $bb chown -R 1000:1000 "$dir"
 cat > "$dir/run.sh" <<EOF
 #!/bin/busybox sh
-export HOME=/home/ferrix USER=ferrix DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/ferrix-run
+export HOME=/home/xaqu USER=xaqu DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/xaqu-run
 export WINEPREFIX=$prefix PATH=/data/dwproton/files/bin:/usr/bin:/bin
 export WINEDEBUG=-all VK_ICD_FILENAMES=/data/usr/share/vulkan/icd.d/intel_icd.json
 export DXVK_LOG_LEVEL=warn DXVK_LOG_PATH=none WINEDLLOVERRIDES="d3d11,dxgi=n"
@@ -53,7 +53,7 @@ $bb chmod 755 "$dir/run.sh"
 $bb chown 1000:1000 "$dir/run.sh"
 : > "$out"
 $bb chown 1000:1000 "$out"
-su ferrix -c "$bb setsid $dir/run.sh > $out 2>&1 < /dev/null &"
+su xaqu -c "$bb setsid $dir/run.sh > $out 2>&1 < /dev/null &"
 
 # The program's first present, after the prefix is made (a minute or two
 # the first time).

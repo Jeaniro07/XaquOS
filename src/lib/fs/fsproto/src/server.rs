@@ -11,8 +11,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_vfs::{FileSystem, FileType, Inode, NewNode};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_vfs::{FileSystem, FileType, Inode, NewNode};
 
 use crate::wire::{
     Answer, FIRST_NODE, MAX_NODES, Op, Request, SET_ATTR_BYTES, SLOT_BYTES, decode_set_attr,
@@ -206,7 +206,7 @@ impl Volume {
                 named(request)?;
                 let kind = FileType::from_mode(request.c).ok_or(Errno::EINVAL)?;
                 let target_len = request.d as usize;
-                if target_len > ferrix_vfs::path::PATH_MAX {
+                if target_len > xaqu_vfs::path::PATH_MAX {
                     return Err(Errno::ENAMETOOLONG);
                 }
                 let mut link = Vec::new();

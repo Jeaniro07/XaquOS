@@ -31,11 +31,11 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_elf::Class;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::socket::Ucred;
-use ferrix_linux_abi::types::{MNT_DETACH, SIGKILL, SIGSTOP, SIGTERM, SIGUSR1, SIGUSR2};
-use ferrix_vfs::{Errno, OpenFlags};
+use xaqu_elf::Class;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::socket::Ucred;
+use xaqu_linux_abi::types::{MNT_DETACH, SIGKILL, SIGSTOP, SIGTERM, SIGUSR1, SIGUSR2};
+use xaqu_vfs::{Errno, OpenFlags};
 
 use crate::arch;
 use crate::fs;
@@ -778,7 +778,7 @@ fn in_cgroup(
         mount_check::open(
             &mut page,
             path.as_bytes(),
-            ferrix_linux_abi::types::O_WRONLY,
+            xaqu_linux_abi::types::O_WRONLY,
             0,
         )
     })??

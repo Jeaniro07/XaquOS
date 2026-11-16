@@ -305,7 +305,7 @@ impl Bare {
         let observers = self.core.exit().close();
         self.core.exited().wake_all();
         for observer in observers {
-            observer.fire(ferrix_native_abi::signals::Signals::TERMINATED);
+            observer.fire(xaqu_native_abi::signals::Signals::TERMINATED);
         }
         if let Some(region) = self.core.region() {
             region.leave();

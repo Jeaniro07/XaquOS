@@ -34,7 +34,7 @@ pub fn bin_of(record: &Record) -> String {
         }
     }
     let who = record
-        .get_str("FERRIX_SUBSYSTEM")
+        .get_str("XAQU_SUBSYSTEM")
         .or_else(|| record.get_str("SYSLOG_IDENTIFIER"))
         .unwrap_or("?");
     let said: String = String::from_utf8_lossy(record.message())

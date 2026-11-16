@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-fuzz"
+name = "xaqu-fuzz"
 version = "0.0.0"
 edition = "2024"
 publish = false
@@ -14,48 +14,48 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-ferrix-lz4 = { path = "../../lib/kernel/lz4" }
-ferrix-acpi = { path = "../../lib/platform/acpi" }
-ferrix-cpio = { path = "../../lib/fs/common/cpio" }
-ferrix-partition-desc = { path = "../../lib/proto/partition-desc" }
-ferrix-fat = { path = "../../lib/fs/common/fat" }
-ferrix-argon2 = { path = "../../lib/crypto/argon2" }
-ferrix-auth-proto = { path = "../../lib/proto/auth-proto" }
-ferrix-elf = { path = "../../lib/platform/elf" }
-ferrix-fsproto = { path = "../../lib/fs/fsproto" }
-ferrix-netswitch = { path = "../../lib/proto/netswitch" }
-ferrix-fdt = { path = "../../lib/platform/fdt" }
-ferrix-frame = { path = "../../lib/kernel/frame" }
-ferrix-ustack = { path = "../../lib/kernel/ustack" }
-ferrix-linux-abi = { path = "../../lib/proto/linux-abi" }
-ferrix-native-abi = { path = "../../lib/proto/native-abi" }
-ferrix-objects = { path = "../../lib/kernel/objects" }
-ferrix-sync = { path = "../../lib/kernel/sync" }
-ferrix-vfs = { path = "../../lib/fs/common/vfs" }
-ferrix-pci = { path = "../../lib/platform/pci" }
-ferrix-btrfs = { path = "../../lib/fs/btrfs/format" }
-ferrix-block = { path = "../../lib/fs/common/block", features = ["model"] }
-ferrix-blkring = { path = "../../lib/proto/blkring" }
-ferrix-virtio = { path = "../../lib/drivers/virtio" }
-ferrix-display-modes = { path = "../../lib/drivers/display/modes" }
-ferrix-displayctl = { path = "../../lib/proto/displayctl" }
-ferrix-renderctl = { path = "../../lib/proto/renderctl" }
-ferrix-inputctl = { path = "../../lib/proto/inputctl" }
-ferrix-sndctl = { path = "../../lib/proto/sndctl" }
-ferrix-virtio-blk = { path = "../../lib/drivers/block/virtio-blk" }
-ferrix-virtio-net = { path = "../../lib/drivers/net/virtio-net" }
-ferrix-virtio-gpu = { path = "../../lib/drivers/display/virtio-gpu" }
-ferrix-virtio-input = { path = "../../lib/drivers/input/virtio-input" }
-ferrix-netwire = { path = "../../lib/network/netwire" }
-ferrix-nettcp = { path = "../../lib/network/nettcp" }
-ferrix-net = { path = "../../lib/network/net" }
-ferrix-netlink = { path = "../../lib/network/netlink" }
-ferrix-cgroupfs = { path = "../../lib/fs/common/cgroupfs" }
-ferrix-seccomp = { path = "../../lib/kernel/seccomp" }
-ferrix-sysfs = { path = "../../lib/fs/common/sysfs" }
-ferrix-svc = { path = "../../lib/init/svc" }
-ferrix-svc-proto = { path = "../../lib/init/svc-proto" }
-ferrix-sigverify = { path = "../../lib/crypto/sigverify" }
+xaqu-lz4 = { path = "../../lib/kernel/lz4" }
+xaqu-acpi = { path = "../../lib/platform/acpi" }
+xaqu-cpio = { path = "../../lib/fs/common/cpio" }
+xaqu-partition-desc = { path = "../../lib/proto/partition-desc" }
+xaqu-fat = { path = "../../lib/fs/common/fat" }
+xaqu-argon2 = { path = "../../lib/crypto/argon2" }
+xaqu-auth-proto = { path = "../../lib/proto/auth-proto" }
+xaqu-elf = { path = "../../lib/platform/elf" }
+xaqu-fsproto = { path = "../../lib/fs/fsproto" }
+xaqu-netswitch = { path = "../../lib/proto/netswitch" }
+xaqu-fdt = { path = "../../lib/platform/fdt" }
+xaqu-frame = { path = "../../lib/kernel/frame" }
+xaqu-ustack = { path = "../../lib/kernel/ustack" }
+xaqu-linux-abi = { path = "../../lib/proto/linux-abi" }
+xaqu-native-abi = { path = "../../lib/proto/native-abi" }
+xaqu-objects = { path = "../../lib/kernel/objects" }
+xaqu-sync = { path = "../../lib/kernel/sync" }
+xaqu-vfs = { path = "../../lib/fs/common/vfs" }
+xaqu-pci = { path = "../../lib/platform/pci" }
+xaqu-btrfs = { path = "../../lib/fs/btrfs/format" }
+xaqu-block = { path = "../../lib/fs/common/block", features = ["model"] }
+xaqu-blkring = { path = "../../lib/proto/blkring" }
+xaqu-virtio = { path = "../../lib/drivers/virtio" }
+xaqu-display-modes = { path = "../../lib/drivers/display/modes" }
+xaqu-displayctl = { path = "../../lib/proto/displayctl" }
+xaqu-renderctl = { path = "../../lib/proto/renderctl" }
+xaqu-inputctl = { path = "../../lib/proto/inputctl" }
+xaqu-sndctl = { path = "../../lib/proto/sndctl" }
+xaqu-virtio-blk = { path = "../../lib/drivers/block/virtio-blk" }
+xaqu-virtio-net = { path = "../../lib/drivers/net/virtio-net" }
+xaqu-virtio-gpu = { path = "../../lib/drivers/display/virtio-gpu" }
+xaqu-virtio-input = { path = "../../lib/drivers/input/virtio-input" }
+xaqu-netwire = { path = "../../lib/network/netwire" }
+xaqu-nettcp = { path = "../../lib/network/nettcp" }
+xaqu-net = { path = "../../lib/network/net" }
+xaqu-netlink = { path = "../../lib/network/netlink" }
+xaqu-cgroupfs = { path = "../../lib/fs/common/cgroupfs" }
+xaqu-seccomp = { path = "../../lib/kernel/seccomp" }
+xaqu-sysfs = { path = "../../lib/fs/common/sysfs" }
+xaqu-svc = { path = "../../lib/init/svc" }
+xaqu-svc-proto = { path = "../../lib/init/svc-proto" }
+xaqu-sigverify = { path = "../../lib/crypto/sigverify" }
 compositor-config = { path = "../../user/system/linux/compositor/config" }
 compositor-wire = { path = "../../user/system/linux/compositor/wire" }
 

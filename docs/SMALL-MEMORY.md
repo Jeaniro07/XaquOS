@@ -1,6 +1,6 @@
-# Ferrix on a small machine
+# Xaqu on a small machine
 
-How small a machine Ferrix can run on, what stands in the way today, and the
+How small a machine Xaqu can run on, what stands in the way today, and the
 plan to fit it into 8 to 16 MiB. The target that started this is a Sipeed Tang
 Nano 20K running a RISC-V core: a GW2AR-18 FPGA with 8 MiB of SDRAM. A trimmed
 Rocket RV64IMAC fits that FPGA, at 73% of its logic and 47 MHz. The RAM is what
@@ -18,7 +18,7 @@ Measured from the release kernel's symbols (`nm -S`, grouped by crate), on
 | What | Size | Notes |
 |---|---|---|
 | Kernel text, rodata, data and bss | 5.7 MiB | aarch64: 5.2 MiB. An image built with `--init` adds the program: busybox is 0.9 MiB |
-| of which self-checks | 1.44 MiB (21%) | `ferrix.checks=skip` skips running them, but every one is compiled in |
+| of which self-checks | 1.44 MiB (21%) | `xaqu.checks=skip` skips running them, but every one is compiled in |
 | of which `syscall` and `fs` | 0.97, 0.80 MiB | The core; they stay |
 | of which display and render, audio, input | 256, 83, 57 KiB | Not on a small board |
 | of which network (kernel and crates) | about 370 KiB | Optional |
@@ -48,7 +48,7 @@ self-checks on.
 | aarch64 | 128 MiB | 73 of 105 MiB | 64 and below: EDK2 refuses to start (`ASSERT [MemoryInit]`, it needs 128 MiB) |
 | x86_64 | 128 MiB | 75 of 107 MiB | 64 and 48: the loader, allocating a file. 32 and below: OVMF page-faults in its own start-up, before the loader |
 
-Under QEMU the firmware sets the floor, as much as Ferrix does. The loader's
+Under QEMU the firmware sets the floor, as much as Xaqu does. The loader's
 share is its peak: it holds the kernel file, the placed kernel and the
 initramfs at once, and frees none of them before the kernel starts.
 CI's boot job keeps a 128 MiB row on each architecture (`Boot in 128 MiB`), so

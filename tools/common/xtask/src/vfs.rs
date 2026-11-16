@@ -201,7 +201,7 @@ pub(crate) const APPLETS: &[Command] = &[
     Command {
         argv: &["sysctl", "kernel.ostype"],
         status: 0,
-        expect: Expect::Lines(&["kernel.ostype = Ferrix"]),
+        expect: Expect::Lines(&["kernel.ostype = Xaqu"]),
     },
     Command {
         argv: &["sysctl", "kernel.pid_max"],
@@ -299,7 +299,7 @@ pub(crate) const APPLETS: &[Command] = &[
         expect: PERMISSIONS_UNDER_UUTILS,
     },
     // Delegation (stage 13, `docs/CGROUPS.md` §3.1): a cgroup subtree
-    // `chown`ed to the user `ferrix`, who moves its own shell within it and
+    // `chown`ed to the user `xaqu`, who moves its own shell within it and
     // is refused moving it out.
     Command {
         argv: &["sh", "-c", DELEGATION_SCRIPT],
@@ -401,7 +401,7 @@ pub(crate) const APPLETS: &[Command] = &[
             "removed",
         ]),
     },
-    // `ETXTBSY` (`ferrix_vfs::writers`): a running program's file refuses
+    // `ETXTBSY` (`xaqu_vfs::writers`): a running program's file refuses
     // a write and a truncation and stays whole, and a file open for writing
     // does not run; each is allowed again once the program ended or the file
     // was closed, which is the row's own negative control.
@@ -418,7 +418,7 @@ pub(crate) const APPLETS: &[Command] = &[
         ]),
     },
     // The kernel log as records (`fs::kmsg`, `syscall::system::sys_syslog`)
-    // and Ferrix's own `dmesg` over them (`src/user/system/linux/dmesg`):
+    // and Xaqu's own `dmesg` over them (`src/user/system/linux/dmesg`):
     // a line written to `/dev/kmsg` comes back stamped, at its priority,
     // through both readers and busybox's applet, and `-w` follows the log.
     Command {
@@ -444,7 +444,7 @@ pub(crate) const APPLETS: &[Command] = &[
     // `mount -t proc` and `mount -t devtmpfs` go here once mount takes them.
 ];
 
-/// `/bin/dmesg` is Ferrix's own; a line written to `/dev/kmsg` at
+/// `/bin/dmesg` is Xaqu's own; a line written to `/dev/kmsg` at
 /// `user.notice` is read back through `/dev/kmsg` itself in Linux's record
 /// format, and through `dmesg` with its time in brackets, decoded, raw,
 /// left out by `-k`, kept by `-l notice`, on the wall clock with `-T`,
@@ -572,7 +572,7 @@ mknod /tmp/dd-null c 1 3 || exit 3
 exit 10";
 
 /// Root makes a private file, a closed directory and a script nobody may
-/// execute; `su` becomes the image's user `ferrix`, uid 1000, which is
+/// execute; `su` becomes the image's user `xaqu`, uid 1000, which is
 /// refused each of them with the error Linux gives -- `EACCES` for a mode,
 /// `EPERM` for the sticky bit and for `chmod` of another's file -- and owns
 /// the file it makes. Its own `/proc/self` belongs to it, so it may list its
@@ -597,7 +597,7 @@ setpriv -d 2>/dev/null | grep no_new_privs
 /tmp/dac-suid/zinc -f -c 'echo no-new-privs set-user-id gives uid $UID euid $EUID'
 exit 0
 EOF
-su ferrix -c 'id
+su xaqu -c 'id
 cat /tmp/dac-private
 echo mine > /tmp/dac-mine && stat -c "owned by %u %g" /tmp/dac-mine
 rm -f /tmp/dac-private
@@ -612,7 +612,7 @@ setpriv --nnp sh /tmp/dac-suid/nnp
 hostname dac-evil
 kill -0 1
 mknod /tmp/dac-null c 1 3'
-su - ferrix -c 'echo "login shell $0 in $PWD as $EUID"'
+su - xaqu -c 'echo "login shell $0 in $PWD as $EUID"'
 echo "root still reads: $(cat /tmp/dac-private)"
 exit 9
 "#;
@@ -623,7 +623,7 @@ const PERMISSIONS: &[&str] = &["sh", "-c", PERMISSIONS_SCRIPT];
 /// What [`PERMISSIONS_SCRIPT`] prints where `/bin` names uutils' utilities:
 /// `cat`, `rm`, `chmod`, `ls`, `hostname` and `mknod` are uutils/coreutils'.
 const PERMISSIONS_UNDER_UUTILS: Expect = Expect::Shaped(&[
-    "uid=1000(ferrix) gid=1000(ferrix)*",
+    "uid=1000(xaqu) gid=1000(xaqu)*",
     "cat: /tmp/dac-private: Permission denied",
     "owned by 1000 1000",
     // The errno differs from the one busybox reports here, not only the
@@ -648,7 +648,7 @@ const PERMISSIONS_UNDER_UUTILS: Expect = Expect::Shaped(&[
     "hostname: failed to set hostname: Permission denied",
     "*kill 1 failed: operation not permitted",
     "mknod: Operation not permitted (os error 1)",
-    "login shell *zsh in /home/ferrix as 1000",
+    "login shell *zsh in /home/xaqu as 1000",
     "root still reads: secret",
 ]);
 
@@ -657,7 +657,7 @@ const PERMISSIONS_UNDER_UUTILS: Expect = Expect::Shaped(&[
 /// same ones, in busybox's words, which name the file every time and give
 /// `rm` of another's file in the sticky `/tmp` the `EPERM` the kernel returns.
 const PERMISSIONS_UNDER_BUSYBOX: Expect = Expect::Shaped(&[
-    "uid=1000(ferrix) gid=1000(ferrix)*",
+    "uid=1000(xaqu) gid=1000(xaqu)*",
     "cat: can't open '/tmp/dac-private': Permission denied",
     "owned by 1000 1000",
     "rm: can't remove '/tmp/dac-private': Operation not permitted",
@@ -673,7 +673,7 @@ const PERMISSIONS_UNDER_BUSYBOX: Expect = Expect::Shaped(&[
     "hostname: sethostname: Operation not permitted",
     "*kill 1 failed: operation not permitted",
     "mknod: /tmp/dac-null: Operation not permitted",
-    "login shell *zsh in /home/ferrix as 1000",
+    "login shell *zsh in /home/xaqu as 1000",
     "root still reads: secret",
 ]);
 
@@ -682,7 +682,7 @@ const PERMISSIONS_UNDER_BUSYBOX: Expect = Expect::Shaped(&[
 /// files the delegate writes. It also hands over `other`'s `cgroup.procs`,
 /// so that the one thing standing between the delegate and a move there is
 /// the common ancestor's `cgroup.procs`, which is root's. Root moves its own
-/// shell into `deleg`, and `su` becomes `ferrix` there: the user makes
+/// shell into `deleg`, and `su` becomes `xaqu` there: the user makes
 /// `work`, whose files are its own, moves its shell in and reads that from
 /// `/proc/self/cgroup`, and is refused moving it to `other` and to the root.
 /// Each refusal is judged by its status, not its message, which differs
@@ -692,7 +692,7 @@ mkdir /tmp/cg/deleg /tmp/cg/other || exit 2
 chown 1000:1000 /tmp/cg/deleg /tmp/cg/deleg/cgroup.procs /tmp/cg/deleg/cgroup.threads /tmp/cg/deleg/cgroup.subtree_control /tmp/cg/other/cgroup.procs || exit 3
 stat -c "delegated to %u" /tmp/cg/deleg/cgroup.procs
 echo $$ > /tmp/cg/deleg/cgroup.procs || exit 4
-su ferrix -c 'mkdir /tmp/cg/deleg/work && stat -c "made by %u" /tmp/cg/deleg/work/cgroup.procs
+su xaqu -c 'mkdir /tmp/cg/deleg/work && stat -c "made by %u" /tmp/cg/deleg/work/cgroup.procs
 echo $$ > /tmp/cg/deleg/work/cgroup.procs && echo "moved itself in"
 cat /proc/self/cgroup
 { echo $$ > /tmp/cg/other/cgroup.procs; } 2>/dev/null && echo "moved out of the subtree" || echo "move out of the subtree refused"
@@ -1342,7 +1342,7 @@ pub(crate) const SHELL: &[Command] = &[
 /// uutils/coreutils, run from the same boot as the applets above and reported
 /// apart from them, on the one architecture the image carries it on.
 ///
-/// This is the first time these utilities run on Ferrix at all: until now they
+/// This is the first time these utilities run on Xaqu at all: until now they
 /// had only been built and run on a Linux host. What each row is for:
 ///
 /// * the multicall binary called by its own name, which picks the utility from
@@ -1370,7 +1370,7 @@ pub(crate) const UTILITIES: &[Command] = &[
     Command {
         argv: &["sh", "-c", "uname -sm; exit 4"],
         status: 4,
-        expect: Expect::Lines(&["Ferrix x86_64"]),
+        expect: Expect::Lines(&["Xaqu x86_64"]),
     },
     Command {
         argv: &["sh", "-c", "wc -c < /mnt/big.txt; exit 5"],
@@ -1507,7 +1507,7 @@ pub(crate) fn utilities(utilities: Utilities) -> &'static [Command] {
 /// kernel's counters from boot (`src/kernel/src/fs/seam.rs`), for the second
 /// "seam measured" row of `docs/BACKLOG.md` (`docs/OPAQUE-KERNEL.md`, S0).
 pub(crate) const SEAM: &[Command] = &[Command {
-    argv: &["cat", "/proc/ferrix-seam"],
+    argv: &["cat", "/proc/xaqu-seam"],
     status: 0,
     expect: Expect::Shaped(&[
         "seam syscalls # served # filled # from-disk # submitted # completed #",

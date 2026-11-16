@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 
 struct nv_cap
 {

@@ -48,12 +48,12 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_native_abi::exception::{
+use xaqu_native_abi::exception::{
     FLAG_EXECUTE, FLAG_PC_AT_TRAP, FLAG_PRESENT, FLAG_WRITE, KIND_BREAKPOINT, KIND_BUS,
     KIND_ILLEGAL, KIND_OTHER, KIND_PAGE_FAULT, REPORT_BYTES, Registers, Report,
 };
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::types::EXCEPTION_TIMEOUT_MAX_MS;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::types::EXCEPTION_TIMEOUT_MAX_MS;
 
 use crate::arch;
 use crate::audit;
@@ -305,7 +305,7 @@ pub(crate) struct ExceptionCore {
     waiters: WaitQueue,
     /// The kernel heap it and its report take, charged to the faulting
     /// process's job.
-    _charge: ferrix_kmem::Charge,
+    _charge: xaqu_kmem::Charge,
     /// The faulting process's job's criticality level: this handle writes a
     /// thread's registers (`docs/microkernel/K17.md`).
     level: u8,
@@ -662,7 +662,7 @@ fn ask(end: &Endpoint, report: &Report, context: arch::UserContext, deadline: u6
 /// The exception, its report's bytes and the message's one handle: all
 /// allocated before anything is written.
 fn make(report: &Report, context: arch::UserContext) -> Result<Made, AllocError> {
-    let charge = ferrix_kmem::Charge::bytes(size_of::<ExceptionCore>() + REPORT_BYTES)
+    let charge = xaqu_kmem::Charge::bytes(size_of::<ExceptionCore>() + REPORT_BYTES)
         .map_err(|_| AllocError)?;
     let core = fallible::try_arc(ExceptionCore {
         held: SpinLock::new(Held {
@@ -676,7 +676,7 @@ fn make(report: &Report, context: arch::UserContext) -> Result<Made, AllocError>
             task.core_process().map(|process| process.exit().level())
         })
         .flatten()
-        .unwrap_or(ferrix_native_abi::types::JOB_LEVEL_TOP),
+        .unwrap_or(xaqu_native_abi::types::JOB_LEVEL_TOP),
     })?;
     let exception = fallible::try_arc(Exception {
         core: Arc::clone(&core),
@@ -795,19 +795,19 @@ fn audit_context(process: &Process, before: u64, after: u64, level: u32) {
 
 // CHECKS-ONLY: object/exception_check.rs; home: in crate
 /// The address a report forced through [`force_poison`] names.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub const POISON_ADDRESS: u64 = 0x7_0000;
 
 /// What the next user fault is taken as: 0 for what it is. The seam a boot check
 /// reaches the machine check's two supervisor rules by, with no machine check to
 /// take (ledger 5840, M2).
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 static NEXT_POISON: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
 
 // CHECKS-ONLY: object/exception_check.rs
 /// Take the next user fault on any processor as `poison`.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 #[doc(hidden)]
 pub fn force_poison(poison: crate::trap::Poison) {
     use crate::trap::Poison;
@@ -820,7 +820,7 @@ pub fn force_poison(poison: crate::trap::Poison) {
 }
 
 /// What the next user fault is taken as, once.
-#[cfg(ferrix_checks = "on")]
+#[cfg(xaqu_checks = "on")]
 pub(crate) fn take_poison() -> Option<crate::trap::Poison> {
     use crate::trap::Poison;
     match NEXT_POISON.swap(0, Ordering::SeqCst) {

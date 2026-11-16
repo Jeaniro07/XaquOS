@@ -16,8 +16,8 @@ use std::fs::{self, File};
 use std::io::{self, Read as _};
 use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 
-use ferrix_svc::event::{Event, Pid, UnitId};
-use ferrix_svc_proto::notify::{self, Lines, Notice};
+use xaqu_svc::event::{Event, Pid, UnitId};
+use xaqu_svc_proto::notify::{self, Lines, Notice};
 
 /// One notify pipe.
 #[derive(Debug)]

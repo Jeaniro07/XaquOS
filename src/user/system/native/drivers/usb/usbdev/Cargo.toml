@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-usbdev"
-description = "The Pixel 7's USB device driver process: a CDC-ACM serial port on the phone's USB-C port, through its DWC3, on ferrix-rt"
+name = "xaqu-usbdev"
+description = "The Pixel 7's USB device driver process: a CDC-ACM serial port on the phone's USB-C port, through its DWC3, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,12 +14,12 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-dwc3.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-logctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-dwc3.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-logctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

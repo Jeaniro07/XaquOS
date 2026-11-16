@@ -143,10 +143,10 @@ impl Relay {
 mod tests {
     use super::*;
 
-    const FERRIX: u32 = 1000;
+    const XAQU: u32 = 1000;
 
     fn ready() -> Relay {
-        let mut relay = Relay::new(FERRIX);
+        let mut relay = Relay::new(XAQU);
         assert_eq!(relay.seat_ready(), [Act::Tell(ToCompositor::Grants(true))]);
         relay
     }
@@ -157,12 +157,12 @@ mod tests {
         assert_eq!(
             relay.compositor_said("locked 1"),
             [Act::Arm {
-                uid: FERRIX,
+                uid: XAQU,
                 epoch: 1
             }]
         );
-        assert_eq!(relay.grant(FERRIX, 1), [Act::Tell(ToCompositor::Grant(1))]);
-        assert_eq!(relay.grant(FERRIX, 1), [], "a grant passed twice");
+        assert_eq!(relay.grant(XAQU, 1), [Act::Tell(ToCompositor::Grant(1))]);
+        assert_eq!(relay.grant(XAQU, 1), [], "a grant passed twice");
         assert_eq!(relay.compositor_said("unlocked 1"), []);
     }
 
@@ -171,9 +171,9 @@ mod tests {
         let mut relay = ready();
         let _ = relay.compositor_said("locked 3");
         assert_eq!(relay.grant(1001, 3), []);
-        assert_eq!(relay.grant(FERRIX, 2), []);
-        assert_eq!(relay.grant(FERRIX, 4), []);
-        assert_eq!(relay.grant(FERRIX, 3), [Act::Tell(ToCompositor::Grant(3))]);
+        assert_eq!(relay.grant(XAQU, 2), []);
+        assert_eq!(relay.grant(XAQU, 4), []);
+        assert_eq!(relay.grant(XAQU, 3), [Act::Tell(ToCompositor::Grant(3))]);
     }
 
     #[test]
@@ -185,12 +185,12 @@ mod tests {
             [
                 Act::Disarm(1),
                 Act::Arm {
-                    uid: FERRIX,
+                    uid: XAQU,
                     epoch: 2
                 }
             ]
         );
-        assert_eq!(relay.grant(FERRIX, 1), []);
+        assert_eq!(relay.grant(XAQU, 1), []);
     }
 
     #[test]
@@ -228,19 +228,19 @@ mod tests {
         let _ = relay.compositor_said("locked 2");
         assert_eq!(relay.compositor_said("unlocked 1"), []);
         assert_eq!(relay.compositor_said("unlocked 2"), [Act::Disarm(2)]);
-        assert_eq!(relay.grant(FERRIX, 2), [], "a grant after the unlock");
+        assert_eq!(relay.grant(XAQU, 2), [], "a grant after the unlock");
     }
 
     #[test]
     fn a_lock_taken_before_the_seat_is_up_is_armed_when_it_comes() {
-        let mut relay = Relay::new(FERRIX);
+        let mut relay = Relay::new(XAQU);
         assert_eq!(relay.compositor_said("locked 1"), []);
         assert_eq!(
             relay.seat_ready(),
             [
                 Act::Tell(ToCompositor::Grants(true)),
                 Act::Arm {
-                    uid: FERRIX,
+                    uid: XAQU,
                     epoch: 1
                 }
             ]
@@ -252,7 +252,7 @@ mod tests {
         let mut relay = ready();
         let _ = relay.compositor_said("locked 1");
         assert_eq!(relay.compositor_gone(), [Act::Disarm(1)]);
-        assert_eq!(relay.grant(FERRIX, 1), []);
+        assert_eq!(relay.grant(XAQU, 1), []);
         assert_eq!(relay.seat_gone(), [Act::Tell(ToCompositor::Grants(false))]);
         assert_eq!(relay.seat_gone(), [], "said once");
     }

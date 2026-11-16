@@ -1,4 +1,4 @@
-# The N150's Intel GPU: a render driver so Mesa's anv and iris run on Ferrix
+# The N150's Intel GPU: a render driver so Mesa's anv and iris run on Xaqu
 
 Version 3, 2026-10-18: the consultant's design review folded in (§4.4, §5.1).
 Version 2, 2026-10-18: version 1 plus the customer's D1 and D2 and §3.6.
@@ -7,7 +7,7 @@ Version 1, 2026-10-18, a design with no code. Asked for by the customer on
 lavapipe today. That keeps its four cores busy (load about 10) and may be
 what breaks Endfield's Qt user interface. On Linux the same box uses
 Intel's i915 driver with Mesa's anv (Vulkan) and iris (GL). This document
-decides how Ferrix gets the same, and sizes the work. `docs/N150.md` §7 had
+decides how Xaqu gets the same, and sizes the work. `docs/N150.md` §7 had
 deferred it as "i915/xe uAPI for Mesa ANV, ~150-250 points render-only,
 first guess". This design replaces that guess.
 
@@ -34,9 +34,9 @@ of §5 are inside the item and go to the consultant one by one.
 
 | What | Value | From |
 |---|---|---|
-| Function | `00:02.0`, `8086:46d4`, "Alder Lake-N [Intel Graphics]", class 0300 | the box's `lspci -nn`, 2026-10-16 (`~/.local/share/ferrix/n150-linux/box-2026-10-16/lspci.txt`) |
+| Function | `00:02.0`, `8086:46d4`, "Alder Lake-N [Intel Graphics]", class 0300 | the box's `lspci -nn`, 2026-10-16 (`~/.local/share/xaqu/n150-linux/box-2026-10-16/lspci.txt`) |
 | BAR0 (GTTMMADR) | 16 MiB at `0x6000000000`, 64-bit, non-prefetchable: registers in the lower half, the GGTT's page table entries in the upper 8 MiB | same, `lspci-vvv.txt`; i915 `gt/intel_ggtt.c` |
-| BAR2 (GMADR) | 256 MiB at `0x4000000000`, prefetchable: the aperture through the GGTT. **The firmware's framebuffer, which `ferrix.efifb` lends to hyprix, is in it** | same; `docs/N150.md` §1 |
+| BAR2 (GMADR) | 256 MiB at `0x4000000000`, prefetchable: the aperture through the GGTT. **The firmware's framebuffer, which `xaqu.efifb` lends to hyprix, is in it** | same; `docs/N150.md` §1 |
 | Interrupts | one MSI, maskable, **32-bit address**, no MSI-X | `lspci-vvv.txt` (`MSI: Count=1/1 Maskable+ 64bit-`) |
 | IOMMU | behind `dmar0` (0xfed90000, VER 4.0), the unit that serves only the iGPU. An RMRR covers `0x7c000000-0x803fffff` (stolen memory and the GGTT's backing) | `vtd-design.md` §1, §3.9 |
 | GT | Xe-LP, Gen12.0 (IP 12.0), 24 EUs. One render engine (RCS0), one copy engine (BCS0), video engines. No compute engine, no local memory, LLC shared with the cores | Intel's specification; i915 `i915_pci.c` |
@@ -58,7 +58,7 @@ Mesa chooses its back end from the name that `DRM_IOCTL_VERSION` returns:
 `"i915"` gives `INTEL_KMD_TYPE_I915` and `"xe"` gives `INTEL_KMD_TYPE_XE`
 (`src/intel/dev/intel_kmd.c:44-47`). anv and iris each carry both back ends
 (`src/intel/vulkan/{i915,xe}/`, `src/gallium/drivers/iris/{i915,xe}/`). So
-Ferrix's driver picks the uAPI, and Mesa follows it. (Checked in Mesa
+Xaqu's driver picks the uAPI, and Mesa follows it. (Checked in Mesa
 26.1.0-devel, `~/aosp17/external/mesa3d`. Debian's 25.0.7 has the same
 split.)
 
@@ -129,7 +129,7 @@ probe (Appendix A). They are not written from memory.
 `DMA_BUF_IOCTL_EXPORT_SYNC_FILE` `0xc0086202` and `IMPORT_SYNC_FILE`
 `0x40086203`. **anv refuses the device without the export**
 (`i915_gem_supports_dma_buf_sync_file`, `common/i915/intel_gem.c:317`, the
-"kernel missing dma-buf sync file import/export" error). Ferrix's dmabuf
+"kernel missing dma-buf sync file import/export" error). Xaqu's dmabuf
 today answers `ENOTTY` to every ioctl except `DMA_BUF_IOCTL_SYNC`
 (`docs/NVIDIA.md` §4.4, N3b), so this is on M3's path.
 
@@ -146,7 +146,7 @@ against the struct layouts that a probe prints, as
   out of stolen memory through GGTT entries the firmware wrote. The driver
   never touches the display registers, the DMC, the power wells of the
   display, or the GGTT entries behind the lit plane (§3.3). The screen stays
-  the firmware's mode, as with `ferrix.efifb` today (§4.3).
+  the firmware's mode, as with `xaqu.efifb` today (§4.3).
 * **GuC, HuC, GSC.** No firmware is loaded (§3.2).
 * **Video, compute, OA, PXP.** Not exposed. VDBOX and VEBOX are left in
   reset and their power gates on.
@@ -170,7 +170,7 @@ Execlists, because:
   render-only driver needs the core: ELSQ, CSB, preemption off at first).
   Genode's driver submits through `GEN12_EXECLIST_SQ_CONTENTS` on Alder Lake
   (§3.3). M0 shows it on this box under Linux with `i915.enable_guc=0`
-  before any Ferrix code is written.
+  before any Xaqu code is written.
 * **Less hidden state.** A hang under execlists is in registers the driver
   can read. A hang under GuC is a firmware log.
 
@@ -203,14 +203,14 @@ later slice behind the same front end.
 | **Workarounds** | Gen12 and ADL-P's GT, context, engine and whitelist lists: about 50 entries (`gen12_ctx_workarounds_init` 17 `Wa_` lines, plus the GT, engine and `tgl_whitelist_build` lists that cover ADL-P). Each is applied and read back. The whitelist (`RING_FORCE_TO_NONPRIV`) is what user batches may write, and anv relies on it | `gt/intel_workarounds.c` (3,129 lines in all) |
 | **Rings and LRC** | One ring and one context image per context per engine. The image's register state comes from the Gen12 offsets table, and its PDPs point at the context's VM. The **default image** is recorded as i915 records it: the first context is run, then its saved image is copied for every new one (`intel_gt.c:603`). Gen12 needs no golden render-state batch (`intel_renderstate.c` stops at Gen9) | `gt/intel_lrc.c` (1,978 lines), `gt/gen8_engine_cs.c` (flushes; on Gen12 including the **AUX-table invalidation** anv's compression needs, `gen12_get_aux_inv_reg`) |
 | **Submission** | Execlist submit queue, context status buffer, the per-context seqno in the hardware status page. A user interrupt on each batch's end | `gt/intel_execlists_submission.c` |
-| **Interrupts** | Gen11+ layout: `GEN11_GFX_MSTR_IRQ` `0x190010`, `GEN11_GT_INTR_DW(x)` `0x190018`, then the identity registers (`GEN11_IIR_REG_SELECTOR` `0x190070`, `GEN11_INTR_IDENTITY_REG` `0x190060`). One MSI. **MSI never arrived on this box under Ferrix so far** (`docs/N150.md` §13; the cause is in the drivers, `vtd-design.md` §0), so the driver also polls the status page at a bounded rate until a first interrupt is seen, as `usbhid` does | `gt/intel_gt_irq.c`, `i915_irq.c` (`gen11_irq_handler`) |
+| **Interrupts** | Gen11+ layout: `GEN11_GFX_MSTR_IRQ` `0x190010`, `GEN11_GT_INTR_DW(x)` `0x190018`, then the identity registers (`GEN11_IIR_REG_SELECTOR` `0x190070`, `GEN11_INTR_IDENTITY_REG` `0x190060`). One MSI. **MSI never arrived on this box under Xaqu so far** (`docs/N150.md` §13; the cause is in the drivers, `vtd-design.md` §0), so the driver also polls the status page at a bounded rate until a first interrupt is seen, as `usbhid` does | `gt/intel_gt_irq.c`, `i915_irq.c` (`gen11_irq_handler`) |
 | **Hang and reset** | A per-engine heartbeat. On a hang the engine is reset (`GEN11_GRDOM` domains, not a full-GT or function-level reset, §4.3), the guilty context is banned, and its fences complete with an error. Never an FLR while the firmware's plane is the screen | `gt/intel_reset.c` |
 | **Power** | RC6 and RPS by host requests. RC6 needs no DMC (DMC is the display's) | `gt/intel_rc6.c`, `gt/intel_rps.c` |
 
 Linux's sizes, to calibrate: i915 without display, GVT, selftests, PXP and
 perf is 142,421 lines of C. Its display alone is 198,986. xe without
 display and tests is 123,363. The pieces above come to roughly 15,000 lines
-of i915's code, and a Rust driver that leaves out what Ferrix does not need
+of i915's code, and a Rust driver that leaves out what Xaqu does not need
 (shmem backing, the shrinker, relocations, the command parser, GVT, PMU,
 sysfs, debugfs) should come to about 12,000 to 18,000 lines, the uAPI front
 end included.
@@ -233,7 +233,7 @@ this worse than NVIDIA's port, which worked:
    the shrinker, RCU, `ww_mutex`, `dma_resv`, and runtime PM. FreeBSD's
    linuxkpi, which hosts it, has grown over a decade.
 2. **Faults a ring-3 driver cannot serve.** i915's `mmap_offset` fills
-   pages from a fault handler. In Ferrix no page fault is served by a
+   pages from a fault handler. In Xaqu no page fault is served by a
    ring-3 driver (`interfaces/chardev/mod.rs`, N5: the fault windows of
    `docs/NVIDIA.md` §11.4 are not built). A port would need them, which is
    a large item change.
@@ -243,7 +243,7 @@ this worse than NVIDIA's port, which worked:
 
 A port's size: the compatibility layer, plus the DRM core pieces (GEM,
 syncobj, prime, dma-fence, dma-resv, `drm_mm`), plus bring-up. **200 to
-300 points**, most of them in code that is neither Ferrix's nor the
+300 points**, most of them in code that is neither Xaqu's nor the
 driver's.
 
 **A new driver** does the twelve pieces of §3.4 and the front end of §2.1.
@@ -261,13 +261,13 @@ means mirroring its structure, its init sequence, its register definitions,
 its workaround lists, its PAT and MOCS tables, its LRC layout and its
 execlist submission. Each is translated file by file, with the source cited
 for every function. Nothing that i915 already gets right is redesigned.
-What Ferrix changes is only the layer underneath i915: how memory, MMIO,
+What Xaqu changes is only the layer underneath i915: how memory, MMIO,
 interrupts and requests reach the driver.
 
 **The license.** Every i915 file this driver translates is MIT, by SPDX tag
 (`gt/*`, `gem/*`, `i915_query.c`) or by the full MIT text (`intel_uncore.c`,
 `i915_reg.h`, `uapi/drm/i915_drm.h`). This was checked file by file in the
-v7.0 tree, and the only GPL headers are in selftests. Ferrix is MIT too.
+v7.0 tree, and the only GPL headers are in selftests. Xaqu is MIT too.
 The terms are the MIT notice's:
 
 * each translated Rust file starts with the i915 file's copyright lines
@@ -337,7 +337,7 @@ Kept differences, the only redesigns: memory is VMOs and pins rather than
 requests come from the chardev core; and waits are deferred replies rather
 than sleeping threads (§4.1).
 
-## 4. Where it lives in Ferrix
+## 4. Where it lives in Xaqu
 
 ### 4.1 The driver
 
@@ -351,7 +351,7 @@ than sleeping threads (§4.1).
   GC400's front-end model (`docs/GPU.md` §6.3), runs execlist traces
   through it.
 * `src/user/system/native/drivers/gpu/intel`: the process. It is a
-  **native** program on `ferrix-rt` with one event loop on a port:
+  **native** program on `xaqu-rt` with one event loop on a port:
   chardev requests, the interrupt packet, and deadlines through
   `port_wait`'s deadline. It does not need `nvrm`'s Linux personality,
   because nothing in it sleeps inside foreign code. A request that must
@@ -361,7 +361,7 @@ than sleeping threads (§4.1).
   is keyed by request id).
 * **devmgr**: a match for `8086:46d4` (the ADL-N ids, `INTEL_ADLN_IDS`)
   with class 03 to the `Gpu` kind, under a kernel option of its own
-  (`ferrix.intelgpu`) at first. The kind brings the pin budget of N0f, set
+  (`xaqu.intelgpu`) at first. The kind brings the pin budget of N0f, set
   much larger for an integrated GPU that has no memory of its own (§8, R5),
   and the isolated-interrupts mark (§4.4).
 
@@ -370,7 +370,7 @@ than sleeping threads (§4.1).
 The driver asks for a chardev control and lists only `RENDER_MINOR`. It
 then serves `/dev/dri/renderD<N>`, numbered by the kernel, every request
 forwarded undecoded as `nvrm`'s are (`interfaces/chardev`,
-`ferrix_chardevctl::node`). The core today names major 195's minors after
+`xaqu_chardevctl::node`). The core today names major 195's minors after
 NVIDIA's nodes, and a HELLO needs only to be non-empty, so a render-only
 HELLO fits as built. That is checked in code under K3 before it is relied
 on. libdrm finds the PCI identity through `/sys/dev/char/226:<N>/device`
@@ -385,11 +385,11 @@ them.
 
 ### 4.3 The screen
 
-`ferrix.efifb` **yields** the function that holds the framebuffer: every
+`xaqu.efifb` **yields** the function that holds the framebuffer: every
 call needing `MANAGE` on `00:02.0` answers `BAD_STATE`, and devmgr cannot
 start a driver for it (`docs/DISPLAY.md` §8, step 4). That rule is right,
 since a driver could reset or remap the memory under the screen, and this
-design keeps its intent. Under `ferrix.intelgpu`:
+design keeps its intent. Under `xaqu.intelgpu`:
 
 * the framebuffer is not lent to efifb; the Intel driver holds the
   function;
@@ -415,7 +415,7 @@ lit, which is when its power well is on (the consultant's lesser point 3,
 ledger 3117); nothing reads the monitor's EDID yet (GMBUS or DP AUX).
 
 Before K4 lands, M1 to M3 run with neither option. The boot console stays
-the screen's (`ferrix.fbcon`), the driver touches no GGTT entry it did not
+the screen's (`xaqu.fbcon`), the driver touches no GGTT entry it did not
 allocate, and the box is reached over ssh (`fx.sh`).
 
 ### 4.4 Isolation and DMA
@@ -439,12 +439,12 @@ allocate, and the box is reached over ssh (`fx.sh`).
     included) for that function, so no `renderD<N>` exists before K2. This
     is a chardev check with a negative control (with the refusal removed,
     the check fires);
-  * (b) M1 and M2 run only under `ferrix.intelgpu`, which is off by default
+  * (b) M1 and M2 run only under `xaqu.intelgpu`, which is off by default
     and refused in a release image's default command line. DEGRADED is
     announced at boot as today, and the boot line names `00:02.0` as
     untranslated DMA;
   * (c) `VULNERABILITY-ANALYSIS.md` V-03 states that under
-    `ferrix.intelgpu` without K2, a ring-3 driver with `MANAGE` on
+    `xaqu.intelgpu` without K2, a ring-3 driver with `MANAGE` on
     `00:02.0` can DMA anywhere. The driver is trusted like the kernel in
     that mode, and no isolation claim covers the box;
   * (d) "the driver's own command streams only" is a property of the
@@ -459,7 +459,7 @@ allocate, and the box is reached over ssh (`fx.sh`).
   region, nothing else -- shown on QEMU for the kernel's tables only, the
   box run owed (BACKLOG P1, intel-k2; ledger 2392 (5)) -- and counts as
   translated, so (a) lets the chardev core accept its
-  client minors under `ferrix.intelgpu`. The framebuffer the display
+  client minors under `xaqu.intelgpu`. The framebuffer the display
   engine scans out, and the GGTT entries that map it, are in the RMRR
   (K4 condition (5)); CPU access through BAR 2 is not DMA. A pin over the
   RMRR is refused and no unpin takes an RMRR page out; the domain is never
@@ -496,8 +496,8 @@ allocate, and the box is reached over ssh (`fx.sh`).
 |---|---|---|---|
 | K1 | `vtd-n150` on the box (designed, reviewed OK IF; on `main` since 2026-10-17, 16e113583) | core | not counted: its own row |
 | K2 | `dmar0` translating: an RMRR identity domain for `00:02.0`, refused when it overlaps usable RAM, never detached; the driver's pins added to it (`vtd-design.md` §3.9(b)) | core | 5 |
-| K3 | A render-only chardev driver: devmgr's `Gpu` kind for Intel, the ADL-N match under `ferrix.intelgpu`, a HELLO of `RENDER_MINOR` alone, the budget sized for an iGPU | load (chardev), devmgr outside | 3 |
-| K4 | The screen's hand-over: under `ferrix.intelgpu`, the function is not yielded, the Intel node may be a copying card (`display::check`'s rule), and the lent range's GGTT entries and the panic screen's hold are argued | load (display) and item (device yield) | 5 |
+| K3 | A render-only chardev driver: devmgr's `Gpu` kind for Intel, the ADL-N match under `xaqu.intelgpu`, a HELLO of `RENDER_MINOR` alone, the budget sized for an iGPU | load (chardev), devmgr outside | 3 |
+| K4 | The screen's hand-over: under `xaqu.intelgpu`, the function is not yielded, the Intel node may be a copying card (`display::check`'s rule), and the lent range's GGTT entries and the panic screen's hold are argued | load (display) and item (device yield) | 5 |
 | K5 | `DMA_BUF_IOCTL_EXPORT_SYNC_FILE` and `IMPORT_SYNC_FILE` on chardev dmabufs: one fence slot per dmabuf that the serving driver sets with a sync file of its own, and an export that hands out a `sync_file` | load (chardev dmabuf, sync) | 5 |
 | K6 | Write-combining VMO mappings for a chardev mmap reply (`MAP_VMO` with `MAP_WRITE_COMBINING`, refused today) | item (user memory types) | 2 |
 | K7 | Client-page pins for `I915_GEM_USERPTR` (`request_pin`, not built; designed in `docs/NVIDIA.md` §4.3) | load | 3, only if a gate needs it |
@@ -557,7 +557,7 @@ verdicts, with their conditions, are binding on the code that follows:
   3. `display::check`'s copying-card rule widens to that node alone, by
      identity, with a control.
   4. This document and `DISPLAY.md` state that the panic screen's
-     visibility under `ferrix.intelgpu` depends on the driver keeping the
+     visibility under `xaqu.intelgpu` depends on the driver keeping the
      lit plane's GGTT entries, so the kernel does not claim it. The
      kernel's write-combining hold on the framebuffer pages is unchanged.
   5. Under K2 the framebuffer's pages are inside the RMRR identity domain,
@@ -613,7 +613,7 @@ verdicts, with their conditions, are binding on the code that follows:
 
 **The order of work** (the coordinator, 2026-10-18): the `intel-xelp` lib
 crate and its host tests now; then the reservation landing; then K3, which
-M1 needs under `ferrix.intelgpu`; then M0 and M1 on the box.
+M1 needs under `xaqu.intelgpu`; then M0 and M1 on the box.
 
 ## 6. What can be tested without the hardware
 
@@ -681,7 +681,7 @@ M1 and M2, without the box.
    slice of about 10 points (firmware load through the GGTT, CT, ADS).
 2. **VT-d on the box** (K1, K2). Translation for `00:02.0` is the item's
    hardest change here. If the RMRR identity domain breaks the firmware's
-   scan-out, the box's screen goes dark. `ferrix.vtd=off` (`vtd-design.md`
+   scan-out, the box's screen goes dark. `xaqu.vtd=off` (`vtd-design.md`
    §3.10) is the way back.
 3. **MSI on the box** has never arrived for any driver (`docs/N150.md`
    §13). The driver polls, at a bounded rate, until it does. Frames still
@@ -807,18 +807,18 @@ and the watcher made one window full-screen and then left it. Every DXVK
 process holds `renderD128` open in the split, because anv enumerates its
 device in each; only the game draws on it.
 
-**The box hangs under `ferrix.intelgpu` (2026-10-19, branch `igpu-hang`).**
-Booting the box with `ferrix.intelgpu` hard-hung it twice, with no panic and
+**The box hangs under `xaqu.intelgpu` (2026-10-19, branch `igpu-hang`).**
+Booting the box with `xaqu.intelgpu` hard-hung it twice, with no panic and
 no timed reset, and the RAM log was lost to the power cycle: on 2026-10-18 on
 the box's own older M1, and on 2026-10-19 on checkpoint 1 of `ef8325d2f`. The
 driver now says each step before it takes it (`intel: step N (Name): what`,
 numbered in `drivers/gpu/intel/src/steps.rs`, 1 to 9 M1 and 10 to 22 M2), and
 two command-line words, read from `/proc/cmdline`, find the step on the box:
-`ferrix.intelgpu.stop=N` stops before step N and stays (`stop=1` starts the
+`xaqu.intelgpu.stop=N` stops before step N and stays (`stop=1` starts the
 driver and touches nothing, which splits the kernel's part from the
-driver's), and `ferrix.intelgpu.trace` says every register access and every
+driver's), and `xaqu.intelgpu.trace` says every register access and every
 GGTT entry written before it is made. The kernel draws a program's console
-lines under `ferrix.fbcon` before the write returns, with the
+lines under `xaqu.fbcon` before the write returns, with the
 write-combining buffers drained, so a photograph of a hung box shows the last
 access asked for. Three changes found by reading, each to do as i915 does:
 the `WOPCM` registers (GT domain) are read under forcewake, not before it;
@@ -831,16 +831,16 @@ The reset is `/etc/reset-after.sh` exiting, so it needs the scheduler, the
 root's disk driver for the commit before the reset (`power::finish`), and
 init itself. One processor stalled on an unanswered read stops only itself
 until another waits on it; a TLB shootdown then panics with FX-0001 within
-ten seconds, and `ferrix.panic=reset` resets ten seconds later, with no lock
+ten seconds, and `xaqu.panic=reset` resets ten seconds later, with no lock
 taken (`panic/reset.rs`). That no reset came at all means more than one
 processor stopped, no shootdown came, or the reset's own port writes could
 not leave the processor. The box runs are a `docs/BACKLOG.md` row.
 
 2026-10-20: the first cause is confirmed on the box. `/etc/reset-after.sh`
 exists only on the drive (`/sysroot/etc/reset-after.sh`), not in the tmpfs
-root main's image boots, so `ferrix.init=` fell back to `/sbin/init`: the
-desktop, without a card under `ferrix.intelgpu`, so no network and no reset.
-The driver now also takes `ferrix.intelgpu.reset=S`: S seconds after boot,
+root main's image boots, so `xaqu.init=` fell back to `/sbin/init`: the
+desktop, without a card under `xaqu.intelgpu`, so no network and no reset.
+The driver now also takes `xaqu.intelgpu.reset=S`: S seconds after boot,
 whatever step it is in, it says so and calls `reboot(2)` `RESTART`, which
 commits the disks first, as usbdev's restart does. The words are parsed in
 `intel-xelp`'s `options`, host-tested. One gap stays in the kernel:
@@ -849,11 +849,11 @@ before `arch::reset`, as `power::finish` and the panic path do, so the
 newest lines of a log it leaves may be lost to the warm reset.
 
 **M2 on the box, and M3's driver wired (2026-10-20, branch `xelp-serve`).**
-The box ran main 976e7d9ef under `ferrix.intelgpu`: M1 ("the device
+The box ran main 976e7d9ef under `xaqu.intelgpu`: M1 ("the device
 answers", 1,397 ms), then M2's bring-up (PAT read [3,1,2,0,3,3,3,3], GT
 workarounds and MOCS none lost, RCS0 and BCS0 resumed with ESR 0 and
 RING_EMR 0xfffffffe, a PPGTT walked back), then the first GPU commands on
-Ferrix: both default images, the context workarounds read back by SRM,
+Xaqu: both default images, the context workarounds read back by SRM,
 `MI_STORE_DWORD_IMM` "as written" and the 8 KiB `XY_FAST_COPY_BLT` exact by
 hash. Every completion came by the 1 ms poll, none by the MSI. Two faults,
 both fixed: forcewake of every domain asked again for the render and GT
@@ -864,7 +864,7 @@ wrote the scratch page. The driver now goes on from M1 to M3: the GT under
 `intel-xelp`'s `backend::XelpBackend` on the real platform (`platform.rs`),
 and the render node served through `serve.rs` with the MSI on
 `serve::KEY_INTERRUPT`; M2's checks run first only under
-`ferrix.intelgpu.m2`. The box checkpoint is
+`xaqu.intelgpu.m2`. The box checkpoint is
 `tools/common/n150/intel-m3-checkpoint.sh`, which needs K2 (and K4 for the
 box's sshd).
 
@@ -875,12 +875,12 @@ box's sshd).
 evaluation intervals and thresholds (95 % up, 85 % down) with
 `GEN6_RP_CONTROL`, the first request at RP1, and `gen11_rc6_enable` with the
 enable in `GEN6_RC_CONTROL`. The driver reads three more words:
-`ferrix.intelgpu.freq=MHz` pins the request (clamped to RPn..RP0),
-`ferrix.intelgpu.freqlog` says each second the request, the actual
+`xaqu.intelgpu.freq=MHz` pins the request (clamped to RPn..RP0),
+`xaqu.intelgpu.freqlog` says each second the request, the actual
 frequency (`GEN12_RPSTAT1`'s CAGF), the RC6 share and the package's power
 from the MCHBAR mirror of RAPL (`PCU_PACKAGE_ENERGY_STATUS`, unverified on
 this part until the box shows it moving; the GT's own RAPL plane has no
-MCHBAR mirror i915 reads), and `ferrix.intelgpu.freqtest` holds RP1, then
+MCHBAR mirror i915 reads), and `xaqu.intelgpu.freqtest` holds RP1, then
 RP0, sampling each, then goes back. The box checkpoint is `intelgpu-m2.sh
 BOX freq NAME`.
 
@@ -910,7 +910,7 @@ checkpoint now tells them apart: the PCU holding an idle GT low (its
 requests are written "until it determines the GPU is awake",
 `intel_rps_park`), a power or thermal limit (the N150's PL1 is 6 W), or
 the PCU's ring frequency table, which i915 writes on every LLC part
-(`intel_llc_enable` right after `intel_rps_enable`) and Ferrix did not.
+(`intel_llc_enable` right after `intel_rps_enable`) and Xaqu did not.
 What changed:
 
 * **The ring frequency table** (`intel-xelp`'s new `pcode`:
@@ -926,7 +926,7 @@ What changed:
   interval 1 ms after a step and doubling to 20 ms. Idle for 20 ms (one
   longest interval; i915 parks when the GT's last wakeref goes), RPS parks
   at RPn and the next request unparks it at the last request less a step.
-  `ferrix.intelgpu.freq=MHz` pins the request, no policy and no park. Not
+  `xaqu.intelgpu.freq=MHz` pins the request, no policy and no park. Not
   here: the client boost to RP0 when a program waits (`intel_rps_boost`),
   which the front end would have to ask for. (The media forcewake i915
   takes around the park's write is no request on Gen12, where no domain is
@@ -938,7 +938,7 @@ What changed:
   hands render and GT over to a table-driven wake before each register
   access that needs a domain (a shadowed write needs none), released a
   millisecond after its last use, so the GT can enter RC6 while the driver
-  does not touch it. `ferrix.intelgpu.fwhold` keeps the old hold, for a
+  does not touch it. `xaqu.intelgpu.fwhold` keeps the old hold, for a
   box where this misbehaves.
 * **The checkpoint samples under load.** `freqtest` runs after the hand-over:
   a line of what may hold the GT low (`GEN6_RP_STATE_CAP` and `_LIMITS`,
@@ -971,7 +971,7 @@ froze after its first frame. Its main thread spun at full speed, 40 % of
 it in the kernel, while DXVK's submit and queue threads, wineserver and
 this driver were idle. That is a DXVK resource wait yielding while its
 submit thread sleeps in a fence or timeline wait the front end holds. No
-present wait is involved. `ferrix.intelgpu.uapitrace` finds that call
+present wait is involved. `xaqu.intelgpu.uapitrace` finds that call
 without `trace`'s every register access. It says each wait the front
 end holds and its answer, each ioctl that fails (a poll's `ETIME`
 aside: a success says nothing, so a frame's ioctls do not flood the
@@ -1014,7 +1014,7 @@ display engine does not snoop the CPU's caches. The unit tests
 hold both sides.
 
 **`card0` from the Intel driver (2026-10-20, branch `xelp-card`).** On the
-box, M3 passed under `ferrix.efifb ferrix.intelgpu` on main 05b8105c8: the
+box, M3 passed under `xaqu.efifb xaqu.intelgpu` on main 05b8105c8: the
 back end up in 2 ms, `renderD128` published, anv naming "Intel(R) Graphics
 (ADL-N)" with Mesa's driver id, iris GL 4.6 and GLES 3.2, and off-screen
 `peglgears` at 11,088 fps on iris against llvmpipe's 1,382, with no unserved
@@ -1072,7 +1072,7 @@ next. The box check is `tools/common/n150/intel-card-checkpoint.sh`.
 * **`cargo xtask test-intel-uapi`** boots `intel-fake`
   (`drivers/gpu/intel-fake`) as `intel`, on a QEMU `pci-testdev` that answers
   as 8086:46d4, class 030000, at 00:02.0 (QEMU patch 0006), under
-  `ferrix.intelgpu` with VT-d translating. The volume is
+  `xaqu.intelgpu` with VT-d translating. The volume is
   `fetch-intel-uapi.sh`'s: Debian 13's Mesa 25.0.7 with anv and iris kept.
   In its first passing run the kernel published `renderD128` (K3).
   `vulkaninfo --summary` named "Intel(R) Graphics (ADL-N)" with
@@ -1088,8 +1088,8 @@ next. The box check is `tools/common/n150/intel-card-checkpoint.sh`.
   M4's business, through the WSI.
 * **The box checkpoint** is `tools/common/n150/intel-checkpoint.sh
   [BOX]`. It runs anv's `vulkaninfo` and iris's `eglinfo` on the box's
-  running Ferrix, from the same Mesa copied to `/tmp`, and keeps the output in
-  `~/.local/share/ferrix/n150-linux/evidence/`. Until K2 translates 00:02.0
+  running Xaqu, from the same Mesa copied to `/tmp`, and keeps the output in
+  `~/.local/share/xaqu/n150-linux/evidence/`. Until K2 translates 00:02.0
   and M2's `intel` serves the node, it records the kernel's refusal.
 * **Left for M3's exit**: M2's back end behind `serve.rs`, K2, and a box run.
 
@@ -1101,7 +1101,7 @@ started on branch `intel-xelp`. Its tables are generated from i915 files
 vendored under the crate's `i915/` by `tools/common/gen/gen-intel-xelp.py`.
 
 **M0 is done (2026-10-18, on the box's inspection Linux, Linux 7.0.0-29 and
-Mesa 26.0.8; raw output in `~/.local/share/ferrix/n150-linux/intelgpu-m0/results/`).**
+Mesa 26.0.8; raw output in `~/.local/share/xaqu/n150-linux/intelgpu-m0/results/`).**
 
 * **Default i915 on ADL-N is GuC.** GuC 70.49.4 (`tgl_guc_70.bin`), HuC 7.9.3
   authenticated, "GUC: submission enabled", SLPC and RC by GuC. Linux drives
@@ -1115,7 +1115,7 @@ Mesa 26.0.8; raw output in `~/.local/share/ferrix/n150-linux/intelgpu-m0/results
   "Enabling uc failed (-5)", the GT wedged), and a PCI FLR clears it. So
   the driver checks `uc_is_wopcm_locked` first ([`uc`](../src/lib/drivers/gpu/intel-xelp/src/uc.rs)).
   On a warm boot after an OS that ran GuC (the inspection Linux does), it
-  needs an FLR. That is fine for M1 to M3, which run without `ferrix.efifb`.
+  needs an FLR. That is fine for M1 to M3, which run without `xaqu.efifb`.
   Under K4, where the kernel refuses FLR while the plane is the screen, a
   locked WOPCM means the driver must say so and stop, and the screen stays
   the firmware's. The consultant's K4 (2) is to be read with this case in
@@ -1135,9 +1135,9 @@ from a recorded default image (`submission`, `lrc_init_state`), the context
 workarounds read back by SRM, and one engine's reset with the hung context
 skipped, banned and replayed (`reset`, `intel_reset.c`). They run on a model
 of the engine's execlist port in host tests (51). The driver goes on from
-M1's lines to M2 under `ferrix.intelgpu`, in four checkpoints the box runs
+M1's lines to M2 under `xaqu.intelgpu`, in four checkpoints the box runs
 one at a time (`m2::CHECKPOINT`, built by
-`~/.local/share/ferrix/n150-linux/intelgpu-m2-build.sh` and run by
+`~/.local/share/xaqu/n150-linux/intelgpu-m2-build.sh` and run by
 `intelgpu-m2.sh BOX_ADDR cpN`, which prints what each proves): 1 the PAT,
 MOCS, workarounds, engines and a PPGTT read back; 2 the default images and
 `MI_STORE_DWORD_IMM`; 3 the blits (one onto the lit plane, hashed, left on
@@ -1145,11 +1145,11 @@ the screen for a photograph) and a PPGTT batch; 4 a hung batch reset and
 banned. Every completion is counted as seen by interrupt or by the 1 ms poll.
 
 **The kernel items (intel-gpu-kernel).** K3 landed in caf25c0d5 (ledger
-2356): `ferrix.intelgpu`, the render-only HELLO, the refusal of every node
+2356): `xaqu.intelgpu`, the render-only HELLO, the refusal of every node
 while 00:02.0's DMA is untranslated, and the iGPU's own pin budget. Its box
 evidence is a `docs/BACKLOG.md` row, owed with M1. K5 is on branch
 `intel-k5` and awaits the consultant (its request is
-`~/.local/share/ferrix/n150-linux/intel-gpu-k5-review-request.md`). It adds
+`~/.local/share/xaqu/n150-linux/intel-gpu-k5-review-request.md`). It adds
 one fence slot per dmabuf, set only by its own driver with
 `chardev_dmabuf_fence` (0x1065). `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`
 snapshots the slot. `IMPORT_SYNC_FILE` reaches the driver as
@@ -1166,7 +1166,7 @@ anonymous VMO write-combining for every user mapping of it from then on.
 This works only on x86-64, only before anything maps the VMO, and only for
 a VMO the driver never copies with `vmo_read`/`vmo_write` (both are
 `BAD_STATE` for it). Elsewhere the program's mmap is `EIO` (L.user.132-133).
-K4 is on branch `intel-k4`. Under `ferrix.efifb ferrix.intelgpu` the
+K4 is on branch `intel-k4`. Under `xaqu.efifb xaqu.intelgpu` the
 framebuffer is lent to 00:02.0's own node: an aperture of the visible
 lines, which the driver maps with `io_mapping_map_combining`. The function
 is not yielded, the driver may be given a copying card, and every
@@ -1187,8 +1187,8 @@ is built. Nothing has run on the box: it was held by `fxvalidate`, and the
 inspection Linux of 2026-10-16 had no `i915.ko` loaded (simpledrm only),
 so its dmesg holds no GPU facts beyond `lspci`. The design goes to the
 certification consultant for a design review of K2 to K7
-(`~/.local/share/ferrix/n150-linux/intel-gpu-review-request.md`). The
-references are fetched to `~/.local/share/ferrix/intel-gpu-ref/linux` (the
+(`~/.local/share/xaqu/n150-linux/intel-gpu-review-request.md`). The
+references are fetched to `~/.local/share/xaqu/intel-gpu-ref/linux` (the
 v7.0 tag, sparse: `drivers/gpu/drm/{i915,xe}`, `include/uapi/drm`,
 `include/drm/intel`, 37 MB). Mesa 26.1.0-devel is in
 `~/aosp17/external/mesa3d`.
@@ -1238,7 +1238,7 @@ nothing after it. Each piece:
   came, which on the box held Endfield's GPU memory (up to `2B`, half the
   RAM above the watermark, `object::pin`) while the game's own mappings
   held the same frames; and every console line is drawn under
-  `ferrix.fbcon` before its write returns (§10), so a client that logs each
+  `xaqu.fbcon` before its write returns (§10), so a client that logs each
   failed call (DXVK does) slows every writer. The box run in §11.3 measures
   which it was.
 * **The hardware.** With no driver, 00:02.0's bus mastering stays off
@@ -1318,7 +1318,7 @@ to recreate their device (DXVK and browsers are) do.
 
 ### 11.3 The box run
 
-Under `ferrix.intelgpu` with K2 taken (dmar0's line says it translates)
+Under `xaqu.intelgpu` with K2 taken (dmar0's line says it translates)
 and the fallback (§11.2), Endfield running:
 
 ```
@@ -1426,7 +1426,7 @@ code that drives the hardware, so no client ever loses its connection.
   process holding its device handle. It holds the chardev control
   (`renderD128`), the display control (`card0`, the copying card of §10 and
   its write-combining window), the MSI and every pin, and runs
-  `ferrix-intel-xelp`'s front end -- the uAPI and every client's handles,
+  `xaqu-intel-xelp`'s front end -- the uAPI and every client's handles,
   objects, VMs, contexts, syncobjs, sync files and dmabufs -- over a back
   end that is a **journal** (§12.4), not a GPU. It touches no GT register.
 * **`intel-gt`, the worker**, is the GT back end of today's `intel`
@@ -1494,7 +1494,7 @@ sends it on, so the front end never waits on a process that may be dead:
 | `timestamp` | the last read and when, extrapolated while no worker answers | `TIMESTAMP` |
 | `service`, `next_deadline` | the keeper's wake for pings and restarts | `SERVICE` on each forwarded interrupt |
 
-One fixed-size message per call, in a new module `ferrix-intel-xelp::remote`,
+One fixed-size message per call, in a new module `xaqu-intel-xelp::remote`,
 host-tested: round-trips; a journal that replays a dead worker's state into
 a fresh model GT (`model.rs`) and compares the GPU's view (page tables,
 images, completions) with a run that never died; completions counted once
@@ -1668,7 +1668,7 @@ added: 0, removed: 0** (§12.7 holds; no file under `src/kernel` changed).
 
 Built:
 
-* **`remote`** (`ferrix-intel-xelp::remote`): the records (`wire`, one
+* **`remote`** (`xaqu-intel-xelp::remote`): the records (`wire`, one
   96-byte record per call, up to 128 to a channel message, a bind's
   address VMO beside it), the keeper's journal and back end (`keeper`),
   and the worker's side (`worker`). The keeper gives up after eight
@@ -1769,7 +1769,7 @@ from about 21 rendered).
 
 ### 13.1 The counter
 
-`ferrix.intelgpu.ioctlstat` turns on `serve::IoctlStats`. It is a driver
+`xaqu.intelgpu.ioctlstat` turns on `serve::IoctlStats`. It is a driver
 word, ring 3 only, and adds no kernel lines. Every 10 s the driver logs:
 
 * one line with the totals: ioctls a second, the driver's time inside them
@@ -1813,7 +1813,7 @@ game. The morning image (ca955ad6a plus the counter) gave the same picture:
 
 ### 13.3 One call, end to end
 
-The box tools' `tk/ioctl/rt.py` (`~/.local/share/ferrix/n150-linux/box`) runs Python's `fcntl.ioctl` in a loop and takes
+The box tools' `tk/ioctl/rt.py` (`~/.local/share/xaqu/n150-linux/box`) runs Python's `fcntl.ioctl` in a loop and takes
 the best of 5 runs of 20,000 calls. It compares `DRM_IOCTL_GET_CAP` on
 renderD128, which is forwarded to the driver, with `FIONREAD` on a socket,
 which the kernel answers. The caller's time is a perf_counter mean per
@@ -1868,11 +1868,11 @@ about i915's settle, because i915 has none per ioctl.
 
 ### 14.1 Why
 
-Measured on the N150 with one Vulkan probe (`~/.local/share/ferrix/gpu-probe`,
+Measured on the N150 with one Vulkan probe (`~/.local/share/xaqu/gpu-probe`,
 compute shaders over 256 MiB buffers, GPU timestamps, 1000 MHz) and the same
 Mesa 25.0.7 anv under both kernels:
 
-| test | Linux i915, shmem THP | Linux i915, THP denied | Ferrix |
+| test | Linux i915, shmem THP | Linux i915, THP denied | Xaqu |
 |---|---|---|---|
 | FMA GFLOPS | 340 | - | 340 |
 | shader read GB/s | 20.7 | 18.2 | 17.7 |
@@ -1881,7 +1881,7 @@ Mesa 25.0.7 anv under both kernels:
 ALU is equal; the gap is in memory reach. i915 on Gen12 backs a large
 object from shmem with transparent huge pages and maps it with 2 MiB PDEs
 (`gen8_ppgtt_insert_huge`), or with 64 KiB pages (`GEN8_PDE_IPS_64K`) where
-the backing is 64 KiB-contiguous but not 2 MiB. Ferrix maps every page with
+the backing is 64 KiB-contiguous but not 2 MiB. Xaqu maps every page with
 a 4 KiB PTE (`ppgtt.rs`: "64 KiB and 2 MiB pages left out"), so the GPU's
 TLB covers 1/512 of what it covers on Linux. anv already asks for the
 layout: every BO of 1 MiB or more gets a 2 MiB-aligned GPU address on ICL+
@@ -2026,7 +2026,7 @@ half the range, and a file's object.
 ### 14.6 Where it stands
 
 The consultant's design verdict: **OK IF (1)-(9)**, ledger line 5088
-(`~/.local/share/ferrix/cert-consultant/reviews.md`, 2026-10-30). The
+(`~/.local/share/xaqu/cert-consultant/reviews.md`, 2026-10-30). The
 2 MiB/64 KiB tree rules of §14.2 are the driver's property, outside the
 item, and never cited as evidence (C1). The box probe's figure is product
 evidence only (`docs/BACKLOG.md`).
@@ -2086,7 +2086,7 @@ addresses alone: nothing is asked of the driver or promised to it
 (`PIN_BLOCKS` is best effort, SAFETY-MANUAL), and a block maps only pages
 that are all in that pin. 1 GiB entries are not used.
 
-* **The unit's bit (consultant note 3).** `ferrix_paging::vtd::unit::accept`
+* **The unit's bit (consultant note 3).** `xaqu_paging::vtd::unit::accept`
   reads `CAP.SLLPS` bit 34 into `Accepted::blocks`; `Unit` keeps it, and
   `map_all` is handed it: `false` maps every page at 4 KiB, which is
   today's code path exactly. The arm without the bit is checked twice:
@@ -2130,7 +2130,7 @@ that are all in that pin. 1 GiB entries are not used.
 * **Certification.** An item change in `iommu.rs` (`map_all`,
   `unpin_waiting`, the predicate), `iommu/vtd.rs` (`Unit::map_run`,
   `Unit::unmap_run`, the kept bit), `mm.rs` (`map_io_run`,
-  `unmap_io_run`) and `ferrix_paging::vtd::unit::accept` (the cap bit),
+  `unmap_io_run`) and `xaqu_paging::vtd::unit::accept` (the cap bit),
   plus a new stage 10 check file `iommu/blocks_check.rs`. Requirements
   reserved first, `L.iommu.105-109`:
   * 105: `accept` reports 2 MiB entries exactly where `CAP.SLLPS` bit 34 is

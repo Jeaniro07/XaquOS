@@ -23,14 +23,14 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::sync::SpinLock;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::types::{AT_FDCWD, SIGSTOP};
-use ferrix_procfs::kstat::{self, Parsed};
-use ferrix_procfs::maps;
-use ferrix_procfs::status::State;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Context, Errno, FileType, Namespace, OpenFile, OpenFlags, Whence};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::types::{AT_FDCWD, SIGSTOP};
+use xaqu_procfs::kstat::{self, Parsed};
+use xaqu_procfs::maps;
+use xaqu_procfs::status::State;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Context, Errno, FileType, Namespace, OpenFile, OpenFlags, Whence};
+use xaqu_vma::VmaFlags;
 
 use crate::fs;
 use crate::fs::socket::SocketType;
@@ -354,8 +354,8 @@ fn check_cpuinfo(ns: &Namespace) -> Result<(), &'static str> {
         return Err("/proc/cpuinfo does not have one block per online processor");
     }
     let wanted: &[&str] = match crate::arch::ARCH {
-        ferrix_bootinfo::Arch::X86_64 => &["model name\t: ", "flags\t\t: fpu "],
-        ferrix_bootinfo::Arch::AArch64 | ferrix_bootinfo::Arch::Armv7a => {
+        xaqu_bootinfo::Arch::X86_64 => &["model name\t: ", "flags\t\t: fpu "],
+        xaqu_bootinfo::Arch::AArch64 | xaqu_bootinfo::Arch::Armv7a => {
             &["Features\t:", "CPU architecture: "]
         }
     };
@@ -1278,7 +1278,7 @@ fn check_sysctl(
     let ostype = ns
         .open(ctx, None, b"/proc/sys/kernel/ostype", &write_only, 0)
         .map_err(|_| "/proc/sys/kernel/ostype did not open for writing")?;
-    if ostype.write(b"Ferrix\n") != Err(Errno::EACCES) {
+    if ostype.write(b"Xaqu\n") != Err(Errno::EACCES) {
         return Err("a read-only /proc/sys value did not refuse a write with EACCES");
     }
     let truncating = OpenFlags {
@@ -1566,7 +1566,7 @@ fn check_object_link(
     link: &[u8],
     kind: FileType,
     name: &[u8],
-    described: &ferrix_vfs::Stat,
+    described: &xaqu_vfs::Stat,
 ) -> Result<(), &'static str> {
     let followed = ns
         .resolve(ctx, None, link, true)

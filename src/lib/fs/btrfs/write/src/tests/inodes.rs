@@ -4,7 +4,7 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
-use ferrix_btrfs::items::{
+use xaqu_btrfs::items::{
     CSUM_TREE_OBJECTID, DIR_INDEX_KEY, DIR_ITEM_KEY, DirItemIter, EXTENT_CSUM_KEY, EXTENT_DATA_KEY,
     ExtentData, ExtentDataBody, FS_TREE_OBJECTID, INODE_EXTREF_KEY, INODE_ITEM_KEY,
     INODE_NODATASUM, INODE_REF_KEY, InodeExtrefIter, InodeItem, InodeRefIter, name_hash,
@@ -33,7 +33,7 @@ struct Survey {
 }
 
 /// Count the records of a back-reference item, failing on a bad one.
-fn records<T>(iter: impl Iterator<Item = Result<T, ferrix_btrfs::BtrfsError>>) -> u32 {
+fn records<T>(iter: impl Iterator<Item = Result<T, xaqu_btrfs::BtrfsError>>) -> u32 {
     iter.fold(0, |n, record| {
         let _ = record.unwrap();
         n + 1
@@ -44,7 +44,7 @@ fn records<T>(iter: impl Iterator<Item = Result<T, ferrix_btrfs::BtrfsError>>) -
 fn survey_extent(
     found: &mut Found,
     need_sums: &mut RangeSet,
-    key: &ferrix_btrfs::tree::BtrfsKey,
+    key: &xaqu_btrfs::tree::BtrfsKey,
     payload: &[u8],
     sectorsize: u32,
 ) {

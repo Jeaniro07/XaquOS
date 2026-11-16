@@ -10,8 +10,8 @@ publish.workspace = true
 [dependencies]
 # Declarations only: getuid, setresuid and the like.
 libc = "0.2.189"
-ferrix-auth-account = { path = "../account" }
-ferrix-auth-client = { path = "../client" }
+xaqu-auth-account = { path = "../account" }
+xaqu-auth-client = { path = "../client" }
 
 [lints]
 workspace = true

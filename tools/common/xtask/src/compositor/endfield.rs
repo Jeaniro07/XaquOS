@@ -81,7 +81,7 @@ impl Wine {
         }
     }
 
-    /// The directory under `~/.local/share/ferrix` its volume is in.
+    /// The directory under `~/.local/share/xaqu` its volume is in.
     fn directory(self) -> &'static str {
         match self {
             Wine::Debian => "endfield-launcher",
@@ -258,7 +258,7 @@ fn script(wine: Wine, gryphlink: bool) -> String {
 /// `get_main_bg_image`, 2026-10-15).
 pub(crate) const VIDEO_HOST: &str = "gl-utils-public.hg-cdn.com";
 
-/// What `FERRIX_ENDFIELD_NO_VIDEO=1` adds before the launcher starts: the
+/// What `XAQU_ENDFIELD_NO_VIDEO=1` adds before the launcher starts: the
 /// video's host resolves nowhere, in the guest's hosts file and in the
 /// prefix's, which Chromium reads on Windows. The web view's `<video>`
 /// then fails, and the launcher's page drops it and shows its own still
@@ -273,10 +273,10 @@ const NO_VIDEO: &str = "echo \"0.0.0.0 @HOST@\" >> /etc/hosts\n\
 /// or `gryphlink` starts it, after the prefix is made.
 const LAUNCH_PLACES: [&str; 2] = ["ln -s /data/GRYPHLINK ", "/data/usr/bin/gryphlink 2>&1"];
 
-/// Whether `FERRIX_ENDFIELD_NO_VIDEO=1` asks for the launcher without its
+/// Whether `XAQU_ENDFIELD_NO_VIDEO=1` asks for the launcher without its
 /// background video, as a long download or extraction wants.
 fn no_video() -> bool {
-    std::env::var("FERRIX_ENDFIELD_NO_VIDEO").as_deref() == Ok("1")
+    std::env::var("XAQU_ENDFIELD_NO_VIDEO").as_deref() == Ok("1")
 }
 
 /// [`script`], with the background video blocked or not.
@@ -302,10 +302,10 @@ fn script_with(wine: Wine, gryphlink: bool, no_video: bool) -> String {
 const FSYNC_PLACE: &str = "@FSYNC@";
 
 /// `WINEFSYNC` for the launcher: `1`, as Proton's own script sets it, or `0`
-/// when `FERRIX_WINEFSYNC=0` asks for wineserver's synchronisation alone, to
+/// when `XAQU_WINEFSYNC=0` asks for wineserver's synchronisation alone, to
 /// compare the two (docs/WINE.md §11).
 fn fsync() -> &'static str {
-    match std::env::var("FERRIX_WINEFSYNC").as_deref() {
+    match std::env::var("XAQU_WINEFSYNC").as_deref() {
         Ok("0") => "0",
         _ => "1",
     }
@@ -334,14 +334,14 @@ pub(crate) fn proton_pinned() -> &'static str {
 /// It has not been made, or was made with another launcher or another
 /// yserver than the ones the scripts pin.
 pub(crate) fn volume(wine: Wine) -> Result<PathBuf> {
-    let directory = match std::env::var_os("FERRIX_ENDFIELD_VOLUME") {
+    let directory = match std::env::var_os("XAQU_ENDFIELD_VOLUME") {
         Some(directory) => PathBuf::from(directory),
         None => paths::volume_directory(wine.directory())?,
     };
     let image = directory.join("endfield.img");
     let fetch = match wine {
         Wine::Debian => "tools/common/fetch/fetch-endfield-launcher.sh",
-        Wine::Proton => "FERRIX_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh",
+        Wine::Proton => "XAQU_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh",
     };
     let again = format!("{fetch} makes it again");
     if !image.is_file() {
@@ -398,7 +398,7 @@ const ENTRY_PATH: &str = "usr/share/applications/gryphlink.desktop";
 /// fuzzel's entry for GRYPHLINK, with Steam's games icon.
 const ENTRY: &str = "[Desktop Entry]\nType=Application\nName=GRYPHLINK\n\
      GenericName=Game Launcher\nComment=Arknights: Endfield's launcher, in GE-Proton's Wine\n\
-     Exec=/bin/gryphlink\nIcon=ferrix-games\nTerminal=false\nKeywords=endfield;arknights;gryphline;wine;proton;\n\
+     Exec=/bin/gryphlink\nIcon=xaqu-games\nTerminal=false\nKeywords=endfield;arknights;gryphline;wine;proton;\n\
      Categories=Game;\n";
 
 /// What `run-compositor --everything` adds to the archive for GRYPHLINK,
@@ -605,7 +605,7 @@ pub(crate) fn test_endfield_launcher(args: &Args, wine: Wine) -> Result<()> {
     };
     let (args, gryphlink) = boot_args(args, wine)?;
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-endfield-launcher needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-endfield-launcher needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let programs = Programs::build(arch)?;
     let carried = Carried {
@@ -737,7 +737,7 @@ fn judge_click(arch: Arch, said: &[String], clicked: Option<(usize, usize)>) -> 
 const NO_DISPATCH: &str = "could not enable syscall user dispatch";
 
 /// Whether a line says the kernel refused Syscall User Dispatch: an
-/// expected absence since Ferrix has it.
+/// expected absence since Xaqu has it.
 fn dispatch_refused(lines: &[String]) -> bool {
     lines.iter().any(|line| line.contains(NO_DISPATCH))
 }
@@ -937,7 +937,7 @@ mod tests {
         }
     }
 
-    /// `FERRIX_ENDFIELD_NO_VIDEO=1` blocks the video's host before the
+    /// `XAQU_ENDFIELD_NO_VIDEO=1` blocks the video's host before the
     /// launcher starts, in both starts, and nothing is blocked without it.
     #[test]
     fn no_video_blocks_the_video_host_before_the_launcher_starts() {

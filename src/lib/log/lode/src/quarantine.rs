@@ -4,7 +4,7 @@
 //! what it is asked through the processor service token; every choice is
 //! here, in ring 3.
 //!
-//! `/etc/ferrix/lode.d/quarantine.conf`:
+//! `/etc/xaqu/lode.d/quarantine.conf`:
 //!
 //! ```text
 //! action = quarantine      # quarantine, warn, or off

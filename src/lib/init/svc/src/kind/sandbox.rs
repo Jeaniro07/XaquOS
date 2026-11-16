@@ -33,7 +33,7 @@ pub enum ProtectSystem {
     /// `no`: nothing.
     #[default]
     No,
-    /// `yes`: `/usr`, `/boot` and `/efi` (and Ferrix's `/bin`, `/sbin`,
+    /// `yes`: `/usr`, `/boot` and `/efi` (and Xaqu's `/bin`, `/sbin`,
     /// `/lib` and `/lib64`, §4.5).
     Yes,
     /// `full`: as `yes`, and `/etc`.
@@ -116,7 +116,7 @@ impl Sandbox {
 }
 
 /// The architecture names systemd knows (`ConditionArchitecture=`'s, and
-/// `native`). Only those of Ferrix's ABIs change a filter here.
+/// `native`). Only those of Xaqu's ABIs change a filter here.
 const ARCHITECTURES: [&str; 27] = [
     "native",
     "x86",
@@ -210,7 +210,7 @@ pub(crate) const KEYS: [(&str, Setter<Sandbox>); 7] = [
     }),
 ];
 
-/// The sandboxing keys of systemd's that Ferrix has not built. They warn by
+/// The sandboxing keys of systemd's that Xaqu has not built. They warn by
 /// name and the service runs without them, as §4.4 has it: a unit that
 /// loads on systemd loads here.
 pub(crate) const NOT_BUILT: [&str; 11] = [

@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn a_coverage_trace_gets_its_boots_slide_beside_it() {
-        let directory = std::env::temp_dir().join(format!("ferrix-kaslr-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("xaqu-kaslr-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let trace = directory.join("boot.drcov");
         let plugin = format!("/q/libdrcov.so,filename={}", trace.display());

@@ -10,7 +10,7 @@
 //!
 //! `docs/CLIPBOARD.md` §5 is why this exists. It is deliberately not a libc:
 //! a call is added here when a program in this tree needs it, with the
-//! numbers taken from `ferrix_linux_abi::nr`, which pins them against the
+//! numbers taken from `xaqu_linux_abi::nr`, which pins them against the
 //! kernel's own tables rather than remembering them.
 //!
 //! An app (`docs/APPS.md`) does not add calls here: it changes nothing
@@ -22,7 +22,7 @@
 //! Every call returns `Result<usize, Errno>`: the kernel leaves `-errno` in
 //! `-4095..=-1`, exactly as Linux does, and [`decode`] separates the two.
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 pub use crate::arch::numbers;
 use crate::arch::{self, nr};
@@ -63,7 +63,7 @@ pub const O_NONBLOCK: usize = 0o4000;
 
 /// `CLOCK_MONOTONIC`, the clock a native [`Deadline`] is measured against.
 ///
-/// [`Deadline`]: ferrix_native::handle::Deadline
+/// [`Deadline`]: xaqu_native::handle::Deadline
 pub const CLOCK_MONOTONIC: usize = 1;
 
 /// `SOL_SOCKET`, the level of the options every socket has.
@@ -199,7 +199,7 @@ pub fn peer_uid(fd: usize) -> Result<u32, Errno> {
 /// Whatever the kernel answers.
 pub fn receive_timeout(fd: usize, seconds: usize) -> Result<usize, Errno> {
     // `struct timeval`: seconds and microseconds, each the width of `long`,
-    // which is `usize`'s on every architecture Ferrix runs.
+    // which is `usize`'s on every architecture Xaqu runs.
     let timeval = [seconds, 0_usize];
     let at = timeval.as_ptr().addr();
     let len = size_of_val(&timeval);
@@ -322,7 +322,7 @@ pub fn unlink(path: &[u8]) -> Result<usize, Errno> {
 pub fn monotonic_nanos() -> Result<u64, Errno> {
     // Natively first: a kernel with no Linux layer has only this one, and the
     // hybrid answers it ENOSYS, which is what falls through.
-    if let Ok(nanos) = ferrix_native::lift_calls::clock_read(crate::Kernel, 0) {
+    if let Ok(nanos) = xaqu_native::lift_calls::clock_read(crate::Kernel, 0) {
         return Ok(nanos);
     }
     let mut nanos = 0_u64;
@@ -330,7 +330,7 @@ pub fn monotonic_nanos() -> Result<u64, Errno> {
         Ok(_) => Ok(nanos),
         // A native process in a kernel with no Linux ABI asks the native clock.
         Err(Errno::ENOSYS) => {
-            ferrix_native::lift_calls::clock_read(crate::Kernel, 0).map_err(|_| Errno::ENOSYS)
+            xaqu_native::lift_calls::clock_read(crate::Kernel, 0).map_err(|_| Errno::ENOSYS)
         }
         Err(why) => Err(why),
     }

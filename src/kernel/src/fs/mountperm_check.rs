@@ -31,12 +31,12 @@
 
 use alloc::format;
 
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     AT_FDCWD, MNT_DETACH, MS_BIND, MS_NODEV, MS_NOSUID, MS_RDONLY, MS_REC, MS_REMOUNT, O_CREAT,
     O_RDONLY,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::fs::mount_check::{Page, Report as Counts, Tally, by_number, page_for};
 use crate::fs::namespace_check::{mount, pivot_root, read_file, unmount, unshare};

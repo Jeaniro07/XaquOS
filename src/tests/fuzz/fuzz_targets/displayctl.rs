@@ -28,14 +28,14 @@
 
 use std::collections::BTreeSet;
 
-use ferrix_displayctl::edid::preferred_refresh_mhz;
-use ferrix_displayctl::message::{
+use xaqu_displayctl::edid::preferred_refresh_mhz;
+use xaqu_displayctl::message::{
     Attach, FORMAT, Hello, MAX_REFRESH_MHZ, MAX_SCANOUTS, Message, PAGE_SIZE, Rect, ScanoutMode,
     Status, Timings, VERSION,
 };
-use ferrix_displayctl::message::{Listed, MAX_LISTED_MODES, MODES_A_PAGE, ModePage};
-use ferrix_display_modes::{ModeList, edid_modes, synthetic};
-use ferrix_displayctl::session::{Event, Session, list_hash};
+use xaqu_displayctl::message::{Listed, MAX_LISTED_MODES, MODES_A_PAGE, ModePage};
+use xaqu_display_modes::{ModeList, edid_modes, synthetic};
+use xaqu_displayctl::session::{Event, Session, list_hash};
 use libfuzzer_sys::fuzz_target;
 
 const CARD: u64 = 64 * PAGE_SIZE;

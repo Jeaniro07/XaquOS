@@ -167,7 +167,7 @@ fn test_pagecache(args: &Args, mode: Mode) -> Result<()> {
     let loader = crate::cargo::build_loader(arch, args.release)?;
     let kernel =
         crate::cargo::build_kernel_with_init(arch, args.release, &program, crate::shell::SCRIPT)?;
-    let movs = symbol(&kernel.elf, "ferrix_copy_mc_movs")?;
+    let movs = symbol(&kernel.elf, "xaqu_copy_mc_movs")?;
     let natives = crate::native::build(arch, args.release)?;
     let archive = crate::initramfs::build(None, &natives, None, &[])?;
     let image = crate::fat::write_image_with(
@@ -175,7 +175,7 @@ fn test_pagecache(args: &Args, mode: Mode) -> Result<()> {
         &loader,
         &kernel,
         &archive,
-        Some("ferrix.mce.poll=1 nokaslr\n"),
+        Some("xaqu.mce.poll=1 nokaslr\n"),
     )?;
     let port = free_port()?;
     let mut qemu_args = args.clone();

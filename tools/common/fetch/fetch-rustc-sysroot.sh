@@ -2,7 +2,7 @@
 # Fetch the upstream Rust compiler, Cargo and the Debian userland they need,
 # and put them on a btrfs volume: the disk stage 16's exit compiles on
 # (docs/ROADMAP.md, `cargo xtask test-rustc`), and the toolchain stage 20's
-# `cargo xtask test-selfhost` builds Ferrix with.
+# `cargo xtask test-selfhost` builds Xaqu with.
 #
 # Nothing here is built. rustc and Cargo are the rust-lang.org releases, both
 # dynamically linked against glibc; rustc's LLVM is a shared library of its
@@ -10,14 +10,14 @@
 # `collect2`, which runs the `ld.lld` rustc points it at, which runs
 # `rust-lld`. Every one of those is somebody else's glibc binary, and the
 # glibc is Debian 13's, the same one tools/common/fetch/fetch-debian-busybox.sh pins.
-# Beside the host's standard library are the ones Ferrix's own images are
+# Beside the host's standard library are the ones Xaqu's own images are
 # built against: the kernels' and native programs' freestanding targets, the
 # loaders' UEFI targets (and the ARMv7-A loader's musl one, used for its
 # position-independent `core`), and the two musl targets zinc is built for.
 #
 # The volume holds a Debian-shaped tree at its root -- `usr/bin`,
 # `usr/lib/x86_64-linux-gnu`, `usr/lib64`, `usr/lib/gcc`, `usr/libexec` --
-# and the toolchain under `rust/`. Ferrix mounts it at `/data`, and its images
+# and the toolchain under `rust/`. Xaqu mounts it at `/data`, and its images
 # link the directories glibc's and gcc's own paths name into it.
 #
 # Every download is pinned by the SHA-256 its own index gave: Debian's
@@ -27,14 +27,14 @@
 # (the `xz_hash` of each component).
 # With them come rustfmt, clippy, rust-analyzer and the standard library's
 # source, of the same release: what `cargo xtask check` and an editor run
-# when the tree is worked on from within Ferrix (docs/DEV-ON-FERRIX.md).
+# when the tree is worked on from within Xaqu (docs/DEV-ON-XAQU.md).
 # And an editor that speaks to that language server: helix's own release
 # for the host's architecture, its program and its runtime (grammars,
 # queries, themes) under `helix/`, where the program finds the runtime
 # beside itself; images link `/bin/hx` to it. It is pinned by the SHA-256
 # of the release's tarball as downloaded on 2026-10-11, since the project
 # publishes none.
-# Beside the compiler is what stage 20's builds of Ferrix's C programs run:
+# Beside the compiler is what stage 20's builds of Xaqu's C programs run:
 # busybox, uutils and the ports against ferrousli are compiled by gcc and
 # g++ 15 (`cc1` and `cc1plus`) and assembled and archived by binutils,
 # driven by make, cmake, ninja, bash and dash, over GNU coreutils, sed, grep,
@@ -46,9 +46,9 @@
 # Packages file by their Depends; nothing that runs only at installation
 # (debconf, dpkg, PAM) is taken.
 #
-# Writes $FERRIX_RUSTC_SYSROOT/rustc.img (default
-# ~/.local/share/ferrix/rustc/rustc.img, or ~/.local/share/ferrix/rustc-arm64/
-# with FERRIX_SYSROOT_ARCH=arm64, which takes the same packages for a Ferrix
+# Writes $XAQU_RUSTC_SYSROOT/rustc.img (default
+# ~/.local/share/xaqu/rustc/rustc.img, or ~/.local/share/xaqu/rustc-arm64/
+# with XAQU_SYSROOT_ARCH=arm64, which takes the same packages for a Xaqu
 # that compiles on AArch64 from rustc-sysroot-arm64.sh beside this script). Needs curl, sha256sum, dpkg-deb, tar
 # and mkfs.btrfs; no root, since mkfs.btrfs --rootdir writes an image file.
 #
@@ -59,15 +59,15 @@ set -euo pipefail
 debian=${DEBIAN_MIRROR:-https://snapshot.debian.org/archive/debian/20260923T000000Z}
 helix_releases=${HELIX_RELEASES:-https://github.com/helix-editor/helix/releases/download}
 rust=${RUST_DIST_SERVER:-https://static.rust-lang.org}
-arch=${FERRIX_SYSROOT_ARCH:-amd64}
+arch=${XAQU_SYSROOT_ARCH:-amd64}
 case "$arch" in
     amd64) gnu=x86_64-linux-gnu triple=x86_64-unknown-linux-gnu loader=usr/lib64/ld-linux-x86-64.so.2
         helix="25.07.1/helix-25.07.1-x86_64-linux.tar.xz 3f08e63ecd388fff657ad39722f88bb03dcf326f1f2da2700d99e1dc40ab2e8b"
-        out=${FERRIX_RUSTC_SYSROOT:-$HOME/.local/share/ferrix/rustc} ;;
+        out=${XAQU_RUSTC_SYSROOT:-$HOME/.local/share/xaqu/rustc} ;;
     arm64) gnu=aarch64-linux-gnu triple=aarch64-unknown-linux-gnu loader=usr/lib/ld-linux-aarch64.so.1
         helix="25.07.1/helix-25.07.1-aarch64-linux.tar.xz ce23fa8d395e633e3e54c052012f11965d91d8d5c2bfa659685f50430b4f8175"
-        out=${FERRIX_RUSTC_SYSROOT:-$HOME/.local/share/ferrix/rustc-arm64} ;;
-    *) echo "fetch-rustc-sysroot: FERRIX_SYSROOT_ARCH is amd64 or arm64, not $arch" >&2; exit 1 ;;
+        out=${XAQU_RUSTC_SYSROOT:-$HOME/.local/share/xaqu/rustc-arm64} ;;
+    *) echo "fetch-rustc-sysroot: XAQU_SYSROOT_ARCH is amd64 or arm64, not $arch" >&2; exit 1 ;;
 esac
 
 # Pool path and SHA-256 of each Debian 13 (trixie) package.
@@ -260,8 +260,8 @@ components=(
     "dist/2026-10-15/rust-std-1.99.1-x86_64-unknown-linux-musl.tar.xz 1dd241eaeb19ff3b5180461c77bdee93d6cafc669eda9de834e7c06b0ec3ca95"
     "dist/2026-10-15/rust-std-1.99.1-aarch64-unknown-linux-musl.tar.xz 2f3eb0d0610e2b7f6b2121d106e2490ac648decfa0c09b30873bdfc60de6c1ab"
     "dist/2026-10-15/cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz 53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a"
-    # What working on the tree from within Ferrix needs beside the compiler
-    # (docs/DEV-ON-FERRIX.md): `cargo xtask check` starts with `cargo fmt`
+    # What working on the tree from within Xaqu needs beside the compiler
+    # (docs/DEV-ON-XAQU.md): `cargo xtask check` starts with `cargo fmt`
     # and runs clippy, and an editor's language server reads the standard
     # library's source.
     "dist/2026-10-15/rustfmt-1.99.1-x86_64-unknown-linux-gnu.tar.xz e3b36c4c7ec3486c059d8067ff48787676612007123aad7a4e8ec12c48ee9ba2"

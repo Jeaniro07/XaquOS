@@ -53,7 +53,7 @@
 //! queued.
 //!
 //! ```
-//! use ferrix_sched::{Config, EntityState, NICE_0_WEIGHT, RunQueue, Slot};
+//! use xaqu_sched::{Config, EntityState, NICE_0_WEIGHT, RunQueue, Slot};
 //!
 //! let mut queue: RunQueue<&str> = RunQueue::new(Config { slice_ns: 3_000_000 }).unwrap();
 //! let state = EntityState::new(NICE_0_WEIGHT);
@@ -342,7 +342,7 @@ pub const MIN_REQUEST_NS: u64 = 100_000;
 /// The cap is what keeps every bound the queue states in its own slice: the
 /// lag limit, the placement lag and the decision's interval are measured
 /// with `slice_ns`, never with this, so no request widens them. Linux grants
-/// up to 100 ms and widens its lag limit with it; Ferrix grants less to
+/// up to 100 ms and widens its lag limit with it; Xaqu grants less to
 /// leave H.SCHED.2 as it is (`docs/GAME-MODE-SCHED.md` §2.2, ledger 5156).
 #[must_use]
 pub const fn effective_request(request_ns: u64, slice_ns: u64) -> u64 {

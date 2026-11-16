@@ -1,7 +1,7 @@
-//! Text for Ferrix's desktop clients.
+//! Text for Xaqu's desktop clients.
 //!
 //! waybar and hyprlock draw with Pango, fuzzel with fcft; all three find a
-//! face with fontconfig. None of those is on Ferrix, and all three are C.
+//! face with fontconfig. None of those is on Xaqu, and all three are C.
 //! This crate is the part of them the user's files reach:
 //!
 //! * **Finding a face** ([`Fonts`], [`FontDescription`]). A family name, a

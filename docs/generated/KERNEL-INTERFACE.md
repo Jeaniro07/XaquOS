@@ -17,7 +17,7 @@ checks above is `pub` for raised checks (F3).
 
 3035 declarations in the core's files, 215 in the item's; 246 checks-only.
 
-## ferrix-kernel-core
+## xaqu-kernel-core
 
 ### `crate root`
 
@@ -829,8 +829,8 @@ checks above is `pub` for raised checks (F3).
 | `set_vfp_record` | fn | load (checks) | checks-only |
 | `turn_on` | fn | load (checks) | checks-only |
 | `vfp_on` | fn | load (checks) | checks-only |
-| `ferrix_user_fpu_restore` | foreign fn | load (checks) | checks-only |
-| `ferrix_user_fpu_save` | foreign fn | load (checks) | checks-only |
+| `xaqu_user_fpu_restore` | foreign fn | load (checks) | checks-only |
+| `xaqu_user_fpu_save` | foreign fn | load (checks) | checks-only |
 | `UserState` | struct | load |  |
 | `UserState::capture` | method | load |  |
 | `UserState::fp` | method | load (checks) | checks-only |
@@ -3844,7 +3844,7 @@ checks above is `pub` for raised checks (F3).
 | `timeout` | fn | load |  |
 | `Busy` | struct | item, load |  |
 
-## ferrix-kernel-item
+## xaqu-kernel-item
 
 ### `crate root`
 

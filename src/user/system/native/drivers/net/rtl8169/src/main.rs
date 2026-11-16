@@ -3,9 +3,9 @@
 //! gigabit adapter -- nazuna's onboard port among them.
 //!
 //! It is `drivers/net/yt6801`'s program with another chip under it.
-//! `ferrix-rtl8169` drives the chip (its indirect buses, its bring-up, its
-//! PHY, its two descriptor rings), `ferrix-netring` speaks the ring and
-//! `ferrix-netserve` joins them; all three are tested on the host. This
+//! `xaqu-rtl8169` drives the chip (its indirect buses, its bring-up, its
+//! PHY, its two descriptor rings), `xaqu-netring` speaks the ring and
+//! `xaqu-netserve` joins them; all three are tested on the host. This
 //! program is the handles they were written to be wrapped in:
 //!
 //! 1. START (`docs/NET-RING.md` §7) brings the device handle and the
@@ -39,31 +39,31 @@
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{ApertureInfo, IoMappingSpec};
-use ferrix_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
-use ferrix_netring::driver::DriverSide;
-use ferrix_netring::layout::VERSION;
-use ferrix_netring::{Message, RingMemory, Wait};
-use ferrix_netserve::{Nic, Serve};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_rtl8169::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{ApertureInfo, IoMappingSpec};
+use xaqu_netring::control::{HELLO_RIGHTS, Hello, Interface, InterfaceFlags, MAX_MESSAGE};
+use xaqu_netring::driver::DriverSide;
+use xaqu_netring::layout::VERSION;
+use xaqu_netring::{Message, RingMemory, Wait};
+use xaqu_netserve::{Nic, Serve};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_rtl8169::{
     Clock, DEVICE, Driver, Event as ChipEvent, Frame as ChipFrame, Link, MIN_FRAME, Memory,
     Options, Pages, Parts, REGISTER_BAR, REGISTER_BYTES, Registers, SubmitError as ChipSubmitError,
     Teardown, VENDOR,
 };
-use ferrix_virtio_net::{DeviceError, Event, Frame, SubmitError};
+use xaqu_virtio_net::{DeviceError, Event, Frame, SubmitError};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -340,7 +340,7 @@ impl RingMemory for Ring {
         fence(Ordering::SeqCst);
     }
     // The indices the kernel moves while this side reads them are one
-    // access each where aligned (`ferrix-netring`'s `RingMemory`): composed
+    // access each where aligned (`xaqu-netring`'s `RingMemory`): composed
     // from bytes, a tail stepping from 0x00ff to 0x0100 could read 0x01ff.
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -379,7 +379,7 @@ impl RingMemory for Data {
         fence(Ordering::SeqCst);
     }
     // The indices the kernel moves while this side reads them are one
-    // access each where aligned (`ferrix-netring`'s `RingMemory`): composed
+    // access each where aligned (`xaqu-netring`'s `RingMemory`): composed
     // from bytes, a tail stepping from 0x00ff to 0x0100 could read 0x01ff.
 
     fn read_u16(&self, offset: usize) -> u16 {
@@ -504,7 +504,7 @@ impl Registers for Window {
 
 // Each register access is one plain load or store, never inlined: inlined
 // into a loop the address step can fold into the access as a writeback,
-// which KVM's MMIO emulation refuses (`ferrix-driver`'s `mmio.rs`). The
+// which KVM's MMIO emulation refuses (`xaqu-driver`'s `mmio.rs`). The
 // chip's registers are little-endian, as every processor this runs on is.
 
 /// Read a byte register.
@@ -580,7 +580,7 @@ struct Monotonic {
 
 impl Clock for Monotonic {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn pause(&mut self, nanos: u64) {
@@ -674,7 +674,7 @@ impl Nic for Adapter {
             .card
             .drain_receiving(chip.get_mut(..room).unwrap_or_default(), receive_room)
             .map_err(|_| DeviceError::NeedsReset)?;
-        if drained.status & ferrix_rtl8169::regs::INT_LINK_CHANGE != 0 {
+        if drained.status & xaqu_rtl8169::regs::INT_LINK_CHANGE != 0 {
             self.link_changed = true;
         }
         for (slot, event) in out.iter_mut().zip(chip.iter().take(drained.events)) {
@@ -761,11 +761,11 @@ fn vectors(
     }
     let bound_count = bound.iter().flatten().count();
     if bound_count == 0 {
-        ferrix_rt::warn!(
+        xaqu_rt::warn!(
             "rtl8169  no interrupt vector could be bound ({count} offered): polling every 1 to 8 ms"
         );
     } else {
-        ferrix_rt::info!("rtl8169  {bound_count} of {count} vectors bound");
+        xaqu_rt::info!("rtl8169  {bound_count} of {count} vectors bound");
     }
     bound
 }
@@ -799,7 +799,7 @@ fn bring_up(device: &Device<Kernel>, regs: Window, location: u32) -> Result<Adap
     let card = match Driver::init(parts, options) {
         Ok(card) => card,
         Err(failed) => {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "rtl8169  the chip did not come up: {} (reset after: {})",
                 failed.error,
                 failed.reset
@@ -811,7 +811,7 @@ fn bring_up(device: &Device<Kernel>, regs: Window, location: u32) -> Result<Adap
         }
     };
     let info = *card.info();
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "rtl8169  {:?} XID {:#05x}, PHY {:#010x}, address {:02x?} from {:?}",
         info.chip,
         info.xid,
@@ -964,21 +964,21 @@ fn poll_link(
     match adapter.card.poll_link() {
         Ok(Some(link)) => {
             let up = matches!(link, Link::Up { .. });
-            ferrix_rt::info!("rtl8169  link {link:?}");
-            ferrix_rt::info!("rtl8169  {:x?}", adapter.card.snapshot());
+            xaqu_rt::info!("rtl8169  link {link:?}");
+            xaqu_rt::info!("rtl8169  {:x?}", adapter.card.snapshot());
             say_link(control, up);
             Ok(())
         }
         Ok(None) => Ok(()),
-        Err(ferrix_rtl8169::Error::Timeout(_)) => {
+        Err(xaqu_rtl8169::Error::Timeout(_)) => {
             *misses += 1;
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "rtl8169  the PHY did not answer a link poll ({misses} so far); asking again"
             );
             Ok(())
         }
         Err(error) => {
-            ferrix_rt::err!("rtl8169  the link poll failed: {error}");
+            xaqu_rt::err!("rtl8169  the link poll failed: {error}");
             Err(Step::Serve)
         }
     }
@@ -992,7 +992,7 @@ fn serve(
     control: &Channel<Kernel>,
 ) -> Result<(), Step> {
     let mut serve = Serve::new();
-    let now = || ferrix_rt::linux::monotonic_nanos().unwrap_or(0);
+    let now = || xaqu_rt::linux::monotonic_nanos().unwrap_or(0);
     let mut interrupted = false;
     // Whether this turn follows a wait that ended at its deadline.
     let mut polled = false;
@@ -1006,7 +1006,7 @@ fn serve(
     let mut next_link = 0;
     // Link polls the PHY did not answer in time.
     let mut link_misses: u64 = 0;
-    let mut poll_every = ferrix_rtl8169::POLL_NANOS;
+    let mut poll_every = xaqu_rtl8169::POLL_NANOS;
     control
         .wait_async(
             &ring.port,
@@ -1024,7 +1024,7 @@ fn serve(
         let turn = serve
             .turn(&mut ring.ring, &mut ring.data, &mut ring.side, adapter)
             .map_err(|fault| {
-                ferrix_rt::err!("rtl8169  the serve loop stopped: {fault} ({fault:?})");
+                xaqu_rt::err!("rtl8169  the serve loop stopped: {fault} ({fault:?})");
                 Step::Serve
             })?;
         stats.turn(&turn, polled);
@@ -1045,7 +1045,7 @@ fn serve(
             if misses >= MISSES_TO_POLL {
                 interrupted = false;
                 unreliable = true;
-                ferrix_rt::notice!(
+                xaqu_rt::notice!(
                     "rtl8169  frames no interrupt announced: polling every 1 to 8 ms from now on"
                 );
             }
@@ -1054,7 +1054,7 @@ fn serve(
         let at = now();
         if at.saturating_sub(stats.since) >= STATS_NANOS {
             stats.say(at, adapter.seen(&serve), interrupted);
-            ferrix_rt::debug!("rtl8169  {:x?}", adapter.card.snapshot());
+            xaqu_rt::debug!("rtl8169  {:x?}", adapter.card.snapshot());
         }
         if let Some(bell) = ring.side.publish(&mut ring.ring) {
             let _ = ring
@@ -1070,7 +1070,7 @@ fn serve(
         let wait = serve
             .before_sleep(&mut ring.ring, &mut ring.side)
             .map_err(|fault| {
-                ferrix_rt::err!("rtl8169  the ring refused a sleep: {fault}");
+                xaqu_rt::err!("rtl8169  the ring refused a sleep: {fault}");
                 Step::Serve
             })?;
         if wait != Wait::Sleep {
@@ -1096,7 +1096,7 @@ fn serve(
                 stats.interrupts += 1;
                 if !interrupted && !unreliable {
                     interrupted = true;
-                    ferrix_rt::info!("rtl8169  first interrupt: polling every 250 ms now");
+                    xaqu_rt::info!("rtl8169  first interrupt: polling every 250 ms now");
                 }
                 // The drain in the next turn takes what it raised; every
                 // vector is re-armed, whichever rang.
@@ -1116,10 +1116,10 @@ fn serve(
 /// The look's next wait while interrupts are not trusted (p2-138): backed
 /// off only after a look that found nothing to do, and back to the fast look
 /// on anything moved, whatever woke the turn.
-fn next_look(every: u64, turn: &ferrix_netserve::Turn, polled: bool) -> u64 {
+fn next_look(every: u64, turn: &xaqu_netserve::Turn, polled: bool) -> u64 {
     let moved = turn.sent > 0 || turn.received > 0 || turn.dropped > 0;
     if moved || polled {
-        ferrix_rtl8169::next_poll_nanos(every, moved)
+        xaqu_rtl8169::next_poll_nanos(every, moved)
     } else {
         every
     }
@@ -1185,7 +1185,7 @@ impl Stats {
     }
 
     /// Count `turn`, which followed a deadline if `polled`.
-    fn turn(&mut self, turn: &ferrix_netserve::Turn, polled: bool) {
+    fn turn(&mut self, turn: &xaqu_netserve::Turn, polled: bool) {
         self.received += u64::from(turn.received);
         self.sent += u64::from(turn.sent);
         if polled {
@@ -1207,7 +1207,7 @@ impl Stats {
         if self.interrupts + self.received + self.sent > 0 {
             let per_second = |count: u64| count.saturating_mul(1_000_000_000) / elapsed;
             let per_interrupt_tenths = self.received.saturating_mul(10) / self.interrupts.max(1);
-            ferrix_rt::debug!(
+            xaqu_rt::debug!(
                 "rtl8169  {} ms: {} interrupts ({}/s), {} frames in ({}/s), {} out, {}.{} in per \
                  interrupt; {} of {} looks found frames; doorbell rung again {} times; out of \
                  receive descriptors {} times, {} dropped with no slot, {} bad; {}",
@@ -1258,7 +1258,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     if info.vendor_id != VENDOR || info.device_id != DEVICE {
         return Err(Step::Identity);
     }
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "rtl8169  {:#010x} {:04x}:{:04x} apertures {} vectors {} msix_table_size {}",
         info.location,
         info.vendor_id,
@@ -1269,7 +1269,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     );
     for index in 0..info.apertures as usize {
         if let Ok(aperture) = device.aperture(index) {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "rtl8169  aperture {index}: bar {} offset {:#x} len {:#x}",
                 aperture.bar,
                 aperture.offset,
@@ -1279,7 +1279,7 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
     }
     say_link_power(&device);
     let regs = Window::map(&device, info.apertures).inspect_err(|_| {
-        ferrix_rt::err!("rtl8169  BAR 2's registers are not granted");
+        xaqu_rt::err!("rtl8169  BAR 2's registers are not granted");
     })?;
     let port = port::create(Kernel).map_err(|_| Step::Ring)?;
     let vectors = vectors(&device, info.vectors, &port);
@@ -1295,8 +1295,8 @@ fn run(boot: &Channel<Kernel>) -> Result<(), Step> {
 ///
 /// Linux turns the link's ASPM L1 off on this family unless the board
 /// vendor flagged it safe, because with it on these chips have stopped
-/// moving frames; a Ferrix driver may not write Link Control, so the chip's
-/// own ASPM is turned off instead (`ferrix-rtl8169`'s `chip`). The line
+/// moving frames; a Xaqu driver may not write Link Control, so the chip's
+/// own ASPM is turned off instead (`xaqu-rtl8169`'s `chip`). The line
 /// shows what firmware left, so a run that stalls can be told apart.
 fn say_link_power(device: &Device<Kernel>) {
     /// The capability list's start, and the IDs looked for in it.
@@ -1326,7 +1326,7 @@ fn say_link_power(device: &Device<Kernel>) {
     let control = msix.and_then(|cap| read(cap + 0x02, 2));
     match link {
         Some(link) => {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "rtl8169  link control {link:#06x}: ASPM L0s {} L1 {}, CLKREQ {}; MSI-X control {}",
                 if link & 0b01 != 0 { "on" } else { "off" },
                 if link & 0b10 != 0 { "on" } else { "off" },
@@ -1335,7 +1335,7 @@ fn say_link_power(device: &Device<Kernel>) {
             );
         }
         None => {
-            ferrix_rt::warn!("rtl8169  link control unreadable");
+            xaqu_rt::warn!("rtl8169  link control unreadable");
         }
     }
 }

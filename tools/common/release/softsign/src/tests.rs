@@ -1,5 +1,5 @@
 //! Tests of the soft signer: RFC 9858 A.4's one-time signature reproduced
-//! from its seed, every signature verified by `ferrix-sigverify`, and the
+//! from its seed, every signature verified by `xaqu-sigverify`, and the
 //! state rule of `docs/SIGNING.md` §6.4 (D1, D2, D3, D5).
 
 #![expect(
@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_sigverify::lms as verifier;
+use xaqu_sigverify::lms as verifier;
 
 use crate::lms::{Key, LMS_SHA256_M24_H10, LMS_SHA256_M24_H20};
 use crate::manifest::{BODY_LEN, Body, sign};
@@ -37,7 +37,7 @@ fn unhex(parts: &[&str]) -> Vec<u8> {
 fn scratch() -> PathBuf {
     static N: AtomicU32 = AtomicU32::new(0);
     let dir = std::env::temp_dir().join(format!(
-        "ferrix-softsign-test-{}-{}",
+        "xaqu-softsign-test-{}-{}",
         std::process::id(),
         N.fetch_add(1, Ordering::Relaxed)
     ));
@@ -65,7 +65,7 @@ fn rfc_9858_a4_one_time_signature_is_reproduced_from_its_seed() {
     assert_eq!(&ours[..ots_end - 4], &theirs[4..ots_end]);
 }
 
-/// A key's every signature verifies under `ferrix-sigverify`, its public
+/// A key's every signature verifies under `xaqu-sigverify`, its public
 /// key is an HSS key with `L = 1`, and the remaining count falls by one
 /// each time.
 #[test]
@@ -93,7 +93,7 @@ fn every_signature_verifies_and_the_count_falls() {
     }
 }
 
-/// The manifest it writes is the block `ferrix-sigverify` reads (D3).
+/// The manifest it writes is the block `xaqu-sigverify` reads (D3).
 #[test]
 fn a_signed_manifest_verifies() {
     let mut token = SoftToken::open(&scratch(), Vec::new()).unwrap();
@@ -117,13 +117,13 @@ fn a_signed_manifest_verifies() {
     let block = sign(&mut token, &key, &body).unwrap();
     assert_eq!(block.len(), 4096);
     assert_eq!(&block[..BODY_LEN], &body.encode());
-    let anchors = [ferrix_sigverify::Anchor {
-        kind: ferrix_sigverify::Kind::Config,
+    let anchors = [xaqu_sigverify::Anchor {
+        kind: xaqu_sigverify::Kind::Config,
         id: 0x8001,
         public_key: public,
     }];
-    let expect = ferrix_sigverify::Expect {
-        kind: ferrix_sigverify::Kind::Config,
+    let expect = xaqu_sigverify::Expect {
+        kind: xaqu_sigverify::Kind::Config,
         target: None,
         profile: 2,
         arch: 2,
@@ -131,7 +131,7 @@ fn a_signed_manifest_verifies() {
         subject: Some(&[0; 32]),
         floor: 3,
     };
-    let v = ferrix_sigverify::verify(&block, &expect, &anchors, &[]).unwrap();
+    let v = xaqu_sigverify::verify(&block, &expect, &anchors, &[]).unwrap();
     assert_eq!(v.security_version, 3);
 }
 

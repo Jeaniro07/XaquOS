@@ -11,19 +11,19 @@ use core::arch::global_asm;
 // at the next byte to load and `rcx` the count left; the direction flag is
 // clear on entry to any function, as the ABI requires. A finished copy
 // answers `(0, 0)` in `rax:rdx`; the machine check's fixup resumes at
-// `ferrix_copy_mc_out` with the page it found in `rdx` and `rcx` as left.
+// `xaqu_copy_mc_out` with the page it found in `rdx` and `rcx` as left.
 global_asm!(
-    ".pushsection .text.ferrix_copy_mc, \"ax\", @progbits",
-    ".global ferrix_copy_mc",
-    ".global ferrix_copy_mc_movs",
-    ".global ferrix_copy_mc_out",
+    ".pushsection .text.xaqu_copy_mc, \"ax\", @progbits",
+    ".global xaqu_copy_mc",
+    ".global xaqu_copy_mc_movs",
+    ".global xaqu_copy_mc_out",
     ".p2align 4",
-    "ferrix_copy_mc:",
+    "xaqu_copy_mc:",
     "    mov rcx, rdx",
-    "ferrix_copy_mc_movs:",
+    "xaqu_copy_mc_movs:",
     "    rep movsb",
     "    xor edx, edx",
-    "ferrix_copy_mc_out:",
+    "xaqu_copy_mc_out:",
     "    mov rax, rcx",
     "    ret",
     ".popsection",
@@ -52,19 +52,19 @@ impl Copied {
 }
 
 unsafe extern "C" {
-    fn ferrix_copy_mc(dst: *mut u8, src: *const u8, len: usize) -> Copied;
-    static ferrix_copy_mc_movs: u8;
-    static ferrix_copy_mc_out: u8;
+    fn xaqu_copy_mc(dst: *mut u8, src: *const u8, len: usize) -> Copied;
+    static xaqu_copy_mc_movs: u8;
+    static xaqu_copy_mc_out: u8;
 }
 
 /// The relocated address of the copy's `rep movsb`.
 pub(super) fn movs_address() -> u64 {
-    core::ptr::addr_of!(ferrix_copy_mc_movs) as u64
+    core::ptr::addr_of!(xaqu_copy_mc_movs) as u64
 }
 
 /// The relocated address of the copy's exit.
 pub(super) fn out_address() -> u64 {
-    core::ptr::addr_of!(ferrix_copy_mc_out) as u64
+    core::ptr::addr_of!(xaqu_copy_mc_out) as u64
 }
 
 /// Copy `out.len()` bytes from the kernel address `source` into `out`.
@@ -77,5 +77,5 @@ pub(crate) unsafe fn copy_mc(out: &mut [u8], source: u64) -> Copied {
     // SAFETY: (USER-COPY) the caller's range is readable and live; `out` is
     // writable for its length; the routine writes nothing else, reads only
     // that range and holds no state of its own (`L.x86_64.244`).
-    unsafe { ferrix_copy_mc(out.as_mut_ptr(), source as *const u8, out.len()) }
+    unsafe { xaqu_copy_mc(out.as_mut_ptr(), source as *const u8, out.len()) }
 }

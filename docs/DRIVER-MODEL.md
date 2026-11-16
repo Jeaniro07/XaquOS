@@ -3,7 +3,7 @@
 **Status: design, 2026-10-25; step 1 built 2026-10-26 (§12).** The customer's rule
 (2026-10-25): *writing a driver must never need a change to the kernel;
 otherwise it is not a microkernel.* This document says what that takes,
-where Ferrix breaks the rule today, and the interface that closes each gap.
+where Xaqu breaks the rule today, and the interface that closes each gap.
 It extends `MICROKERNEL.md` §3 K8 (devmgr decides which driver gets a PCI
 function) to every bus and every shared platform resource, and it builds on
 `CHARDEV.md` (ledger 4352) and `USB-SERIAL.md` §5 (ledger 4317).
@@ -26,7 +26,7 @@ rule holds when every one of these can be added as a ring-3 program and an
 entry in devmgr's image-time policy, with **no line changed under
 `src/kernel/` and no kernel rebuild**:
 
-1. a driver for a device on any bus Ferrix already enumerates (PCI, the
+1. a driver for a device on any bus Xaqu already enumerates (PCI, the
    device tree, ACPI, USB, and buses that ring-3 drivers own: I2C, SPI,
    SDIO, MDIO, 1-Wire);
 2. a driver for a new **class** of device (a sensor, CAN, a JTAG cable, a
@@ -49,13 +49,13 @@ boots it on an unchanged kernel image, and requires it to serve. **(D1)**
 carries per-board data, is byte-identical by sha256 from one build. Only
 the initramfs, devmgr's table and the DTB may differ.
 
-## 2. Where Ferrix breaks the rule today
+## 2. Where Xaqu breaks the rule today
 
 Measured on develop 455acdee6:
 
 | Gap | Where | Effect |
 |---|---|---|
-| G1. Device-tree peripherals are published only for bindings the kernel knows: 7 fixed `TREE_*` numbers | `ferrix_native_abi::types` (`TREE_STM32_HDMI` ... `TREE_X86_POWER`), `discovery/board.rs` (core), `platform/st/stm32mp1/*.rs` (load) | A DK1 I2C, SPI, GPIO, ADC, CAN or timer driver needs a new binding and new kernel board code |
+| G1. Device-tree peripherals are published only for bindings the kernel knows: 7 fixed `TREE_*` numbers | `xaqu_native_abi::types` (`TREE_STM32_HDMI` ... `TREE_X86_POWER`), `discovery/board.rs` (core), `platform/st/stm32mp1/*.rs` (load) | A DK1 I2C, SPI, GPIO, ADC, CAN or timer driver needs a new binding and new kernel board code |
 | G2. Each peripheral is clocked, reset and pin-muxed by kernel board code (`BoardBinding::prepare`), with one clock knob (`BoardBinding::clock`) | `platform/st/stm32mp1.rs` (`RCC_COMPATIBLE`, `PINCTRL_COMPATIBLE`), `stm32mp1/{sdmmc,usb,gpu}.rs` | Device knowledge per SoC and per peripheral in ring 0, exactly what "keep the kernel slim" forbids |
 | G3. A new class needs a kernel core | `interfaces/{input,block_ring,net_ring,display,render,audio,chardev}` | Closed by `CHARDEV.md` (steps 1-3) and K1-K6/K4' for ttys, once built |
 | G4. A device a ring-3 driver finds (USB, I2C child) cannot be handed to another driver | devmgr starts drivers only for kernel nodes | Closed for USB by R2 (landed 23158676a); not yet general |
@@ -162,7 +162,7 @@ serves one **resource protocol** per kind, on channels:
 | mailbox | send, receive |
 
 These are ring-3 message protocols in a crate of their own
-(`ferrix-platformctl`), versioned like `chardevctl`. The kernel neither
+(`xaqu-platformctl`), versioned like `chardevctl`. The kernel neither
 carries nor reads them. **(D11)** The dma kind passes VMOs, and the
 provider pins them for its own device. No cross-domain pin is added.
 
@@ -387,7 +387,7 @@ The original list:
 1. **Generic device-tree nodes beside the bindings** (§3). Both paths exist
    until each `TREE_*` driver has moved to matching by `compatible`. Core
    files: `discovery/{board,tree,finder,description}.rs`, `device.rs`.
-2. **Providers and wiring** (§4.1, §4.2): `ferrix-platformctl`, devmgr's
+2. **Providers and wiring** (§4.1, §4.2): `xaqu-platformctl`, devmgr's
    reference graph, and a ring-3 `stm32-rcc`, `stm32-pinctrl` (with EXTI)
    and `stm32-pwr`. Then each STM32 board `prepare` is deleted as its
    driver moves: LTDC/HDMI, USB host, GPU, SDMMC. `platform/st/stm32mp1/**`
@@ -409,7 +409,7 @@ provider's otherwise.
 
 ## 10. Compared with Linux and other microkernels
 
-| | Linux | Zircon (Fuchsia) | seL4 + CAmkES | Ferrix (this design) |
+| | Linux | Zircon (Fuchsia) | seL4 + CAmkES | Xaqu (this design) |
 |---|---|---|---|---|
 | New driver needs a kernel change | yes (in-tree module, or out-of-tree against an unstable API) | no | no (but static system build) | no |
 | Clocks, resets, pinctrl | in kernel (CCF, pinctrl) | ring-3 drivers (platform bus) | per-system components | ring-3 providers, wired by devmgr |
@@ -422,7 +422,7 @@ provider's otherwise.
 1. **Is "kernel-owned by use" acceptable?** Yes, under D3-D10. On the
    STM32MP1 it is acceptable under `T.DMA` because armv7a is outside the
    claim (DMA gate G4 (a)), and every armv7a image carries
-   `ferrix.unisolated`. It widens what that unclaimed configuration
+   `xaqu.unisolated`. It widens what that unclaimed configuration
    exposes, which D22 states. The end condition, an SMMU driven, is
    unchanged.
 2. **Does the virtual interrupt need a new object?** No: the interrupt
@@ -448,7 +448,7 @@ provider's otherwise.
   `TREE_*` bindings, every enabled node with a `compatible` on
   memory-mapped buses that is not kernel-owned and whose registers no
   earlier node holds (D10, L.device.65). The kernel copies its identity into
-  a record (`ferrix_fdt::identity`): compatible list, path, references as
+  a record (`xaqu_fdt::identity`): compatible list, path, references as
   (provider node, target node, phandle, uninterpreted cells), its own
   `*-names`, its subtree, and flags (L.discovery.9). `device_info` names it
   `DEVICE_TREE_GENERIC`, with the record's flags and length; because
@@ -466,37 +466,37 @@ provider's otherwise.
   the seal.
 * **KERNEL_DEPENDS** (D4, L.discovery.11) is closed transitively; devmgr
   refuses a driver for a flagged node inside the claim and admits it on
-  ARMv7-A or under `ferrix.unisolated`.
+  ARMv7-A or under `xaqu.unisolated`.
 * **DMA fails closed** (D5, L.device.63); **whole pages** (D7, L.device.60
   and .61); **SPIs only** through `claim_line` (D8, L.device.62); **bounds**
-  (D9, L.discovery.12) host-tested in `ferrix-fdt` and fuzzed by
+  (D9, L.discovery.12) host-tested in `xaqu-fdt` and fuzzed by
   `fdt_generic`. The walks hold no lock; the registration's lock is held
   only to push or copy a claim. D6 is not built: it is the customer's
   question.
 * **devmgr** matches generic nodes by `compatible` from its image-time
   table and checks the driver's requirement table
-  (`ferrix_devmgr_proto::requirements`, section `.ferrix.requirements` of
+  (`xaqu_devmgr_proto::requirements`, section `.xaqu.requirements` of
   the image) before starting it, naming the reference a node lacks (D13).
 * **`cargo xtask test-driver-model`** (§8, D1, D20): QEMU `virt`'s PL031
-  under `ferrix,test-seconds`, on one kernel ELF hashed before the test
+  under `xaqu,test-seconds`, on one kernel ELF hashed before the test
   exists, admitted by the unclaimed word; `testseconds` reads its
   identification, counter and match interrupt; with its clock's provider
   gone devmgr refuses it and names `apb_pclk`.
-* **`ferrix-driver`'s driver model** (the approved design page): `Driver`,
+* **`xaqu-driver`'s driver model** (the approved design page): `Driver`,
   `BindContext`, `#[derive(Resources)]` with its embedded requirement
   table, `#[derive(PinStates)]`, `register_map!`/`bitfields!` with
   `ReadWrite`/`ReadOnly`/`WriteOnly` and `OffsetByOne`, and `run::<D>()`,
   with `testseconds` ported onto it and the page's SPI and LM75 examples
-  kept compiling (`ferrix-driver-model-examples`). The register types are
+  kept compiling (`xaqu-driver-model-examples`). The register types are
   the crate's own, not `tock-registers`: the page's names and encodings are
-  its own. The old `ferrix_driver::Driver` trait of the virtio, NVMe, AHCI
+  its own. The old `xaqu_driver::Driver` trait of the virtio, NVMe, AHCI
   and SDMMC drivers is now `Probe`. Stubs, each answering `ENOSYS`: the
-  clock, reset and regulator clients (`ferrix-platform`, step 2), pin states
+  clock, reset and regulator clients (`xaqu-platform`, step 2), pin states
   (step 2), child devices and `I2cDevice` (step 4), and the character-device
   class (devmgr gives a generic node's driver no grant yet). A fixed
   configuration is built in a `const` item, where a field value out of range
   (`.frame_size(40)`) fails the build, shown by a `compile_fail` doctest in
-  `ferrix-registers`; a value known only at run time goes through the
+  `xaqu-registers`; a value known only at run time goes through the
   generated fallible setter (`try_frame_size`), which answers `OutOfRange`.
 * **The consultant's verdict on d68c9017d** (ledger 4541): OK IF (1)-(12).
   Met on this branch: the console claimed as every window early boot

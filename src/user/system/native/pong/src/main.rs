@@ -11,13 +11,13 @@
 #![no_std]
 #![no_main]
 
-use ferrix_native_abi::directory::{Kind, MAX_MESSAGE, Message};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::{Deadline, Error, Object, Signals};
-use ferrix_rt::native::{Handle, OwnedHandle};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_native_abi::directory::{Kind, MAX_MESSAGE, Message};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::{Deadline, Error, Object, Signals};
+use xaqu_rt::native::{Handle, OwnedHandle};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// How a run ended, as its exit status.
 #[derive(Debug, Clone, Copy)]

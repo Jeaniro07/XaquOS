@@ -2,7 +2,7 @@
 
 Version 1. Written by the GUI session (os-e5) for iteration 1 of the
 compositor's path, the customer's order of 2026-09-16: *a blank screen on
-Ferrix in QEMU*, pulled forward from stage 17. Approved by the product owner
+Xaqu in QEMU*, pulled forward from stage 17. Approved by the product owner
 (os-f6) on 2026-09-16, with the decisions in §5. Implemented: L5 and L6 landed
 together as one reviewed stack (os-02), since L5 alone would have been dead
 code or the kernel drawing; `cargo xtask test-display` passes on x86-64 and
@@ -199,7 +199,7 @@ others.
   EDID and reads the refresh its preferred timing makes: the base block's
   first detailed timing, or a DisplayID extension's first type I timing
   where QEMU put it there for a clock a descriptor cannot hold
-  (`ferrix_displayctl::edid::preferred_refresh_mhz`). QEMU makes that timing
+  (`xaqu_displayctl::edid::preferred_refresh_mhz`). QEMU makes that timing
   at the refresh of the host monitor its GTK window is on, and at 75 Hz
   where no window says, as under VNC. A refusal, or an EDID that is short,
   corrupt or interlaced, is a refresh of 0, never a reason to stop.
@@ -259,7 +259,7 @@ source is committed this time.
 | `MODE_PAGE_FLIP` | `SCANOUT` if the buffer changed, then `FLUSH`; `DRM_MODE_PAGE_FLIP_EVENT` queues a `drm_event_vblank` when `FLIPPED` arrives |
 | `MODE_DIRTYFB` | `FLUSH` of the clip rectangles |
 | `MODE_CURSOR`, `MODE_CURSOR2` | the head's cursor plane, as Linux's `drm_mode_cursor_universal` sets it: `MOVE` is a `MOVE` to the image's top-left corner and waits for nothing; `BO` is a `CURSOR` of a 64 × 64 dumb buffer, or none for handle 0, with `CURSOR2`'s hotspot (`CURSOR` has none), and returns at `FLIPPED`; both flags set the place first. Another size `EINVAL`, a handle this open has not got `ENOENT`, a card with no cursor plane `ENXIO`, as Linux answers for a CRTC with none; the image is shown until the next one, and a card may read it from the buffer itself (the DK1's LTDC does), so a program draws each image into a buffer the card is not showing |
-| `read()` | `drm_event_vblank` records, as many as fit; 0 when one is queued that does not fit, which stays; blocks while none are queued, `EAGAIN` under `O_NONBLOCK`, whatever the count. Since 2026-09-26 a connector change comes first, as Ferrix's own eight-byte event `0x8000_0000` (`EVENT_FERRIX_CONNECTORS`), once however many `MODES` there were since the last: Linux leaves types from `0x8000_0000` to drivers, and libdrm steps over one it does not know. Linux says a connector changed with a udev uevent, which Ferrix does not send |
+| `read()` | `drm_event_vblank` records, as many as fit; 0 when one is queued that does not fit, which stays; blocks while none are queued, `EAGAIN` under `O_NONBLOCK`, whatever the count. Since 2026-09-26 a connector change comes first, as Xaqu's own eight-byte event `0x8000_0000` (`EVENT_XAQU_CONNECTORS`), once however many `MODES` there were since the last: Linux leaves types from `0x8000_0000` to drivers, and libdrm steps over one it does not know. Linux says a connector changed with a udev uevent, which Xaqu does not send |
 | `MODE_GETPLANERESOURCES` | E4: one primary plane a head to an open that set `UNIVERSAL_PLANES`; no plane to one that did not |
 | `MODE_GETPLANE` | E4: format `XRGB8888`, `possible_crtcs` the bit of its head's CRTC, and the CRTC and framebuffer `SETCRTC` or `PAGE_FLIP` last showed on that head, 0 and 0 while nothing is; the formats are copied only into an array with room for all of them; another id `ENOENT` |
 | `MODE_OBJ_GETPROPERTIES` | E4: the plane has `type` (property 5) at `Primary` (1); the CRTC and the connector have none; the encoder, a framebuffer and the property have no property list, `EINVAL`; an id of another type than the one asked for, or no object, `ENOENT` |
@@ -381,7 +381,7 @@ took it for fonts without antialiasing. The desktop now follows the window.
 QEMU tells the card the window's size whenever it changes, and a VNC
 viewer's resize request (`SetDesktopSize`) does the same. The driver sends
 `MODES`, the card lists the new size as its preferred mode and makes its
-open readable with `EVENT_FERRIX_CONNECTORS`, and hyprix, on a monitor
+open readable with `EVENT_XAQU_CONNECTORS`, and hyprix, on a monitor
 whose `monitor =` line says `preferred`, sets the new mode: the buffers,
 canvas, backdrop and GPU target made again, the GPU's frame adopted again,
 the monitor moved in the layout, the pointer's bounds and every client's
@@ -498,7 +498,7 @@ from `BootInfo`. What changes is what a person sees:
   allocator will not own (`ramfb`'s reserved pages, the VGA BAR) over one it
   will (`VirtioGpuDxe`'s), and its boot line says which it took. It writes
   `BootInfo.framebuffer.reclaimable` (BootInfo version 4) from the final
-  memory map with `ferrix_bootinfo::allocator_owns`. That one field has two
+  memory map with `xaqu_bootinfo::allocator_owns`. That one field has two
   readers: the panic screen draws only when it is 0, and the display core
   refuses to publish `card0` over a framebuffer where it is 1. Nothing is
   reserved to protect a picture nobody would see.
@@ -547,12 +547,12 @@ from `BootInfo`. What changes is what a person sees:
   configuration instead of the small one it writes; zinc is carried at
   `/bin/zinc`, so `SUPER+RETURN` opens a shell on a pseudoterminal.
 * **A watched desktop has a wallpaper, and a run never goes looking for
-  one (2026-09-18).** Ferrix has no JPEG or video decoder, so a picture is
+  one (2026-09-18).** Xaqu has no JPEG or video decoder, so a picture is
   converted where one can be and kept: `cargo xtask wallpapers --from
   <directory>`, or `--from <host>:<directory>` to have that host's `ffmpeg`
   do it over `ssh`, writes raw `XRGB8888` pictures cut for a 1920x1080
   screen (`--size` for another; the first frame, for a video) into
-  `~/.local/share/ferrix/wallpapers`, or `$FERRIX_WALLPAPERS`.
+  `~/.local/share/xaqu/wallpapers`, or `$XAQU_WALLPAPERS`.
   `run-compositor` reads that directory and nothing else -- it names no
   host and opens no connection, so it is the same run offline -- carries one
   picture at `/etc/wallpaper.fxwall`, another each run or `--wallpaper
@@ -567,7 +567,7 @@ from `BootInfo`. What changes is what a person sees:
 * **A wallpaper that moves, which is what `mpvpaper` is for (2026-09-18).**
   Hyprland has no video wallpaper of its own: its wiki sends a person to
   `mpvpaper`, started from `exec-once`, which puts mpv on the same
-  `background` layer surface `hyprpaper` and `swaybg` use. Ferrix cannot put
+  `background` layer surface `hyprpaper` and `swaybg` use. Xaqu cannot put
   mpv there, so the decoding moves to the side of the conversion that has a
   decoder. An `mp4`, `webm`, `mkv` or `gif` in the pictures directory is
   transcoded by `ffmpeg` to 8-bit 4:2:0 AV1 in IVF, and `run-compositor`
@@ -589,7 +589,7 @@ from `BootInfo`. What changes is what a person sees:
   compositor option: Hyprland has none for a wallpaper, this machine's
   `hyprland.conf` delegates to `booru-wallpaper daemon` and that daemon's own
   commented `config.toml`, and `tools/common/xtask/src/wallpaper/config.rs` is the same
-  file for the same job at `~/.config/ferrix/wallpaper.toml`. It could not be
+  file for the same job at `~/.config/xaqu/wallpaper.toml`. It could not be
   a compositor option anyway: every setting in it is spent by `ffmpeg` on the
   host when the image is built, and the guest has no encoder to change its
   mind with. `src/user/system/linux/compositor/config`'s table stays exactly Hyprland 0.56's, which
@@ -634,7 +634,7 @@ from `BootInfo`. What changes is what a person sees:
 * **What it costs, measured (2026-09-18), and the honest answer.** About one
   frame a second in `run-compositor` on this Windows machine — and **that is
   not the video path**. The guest runs under `tcg`: WHPX is compiled into
-  this QEMU and initialises, but Ferrix panics under it at stage 3 ("the
+  this QEMU and initialises, but Xaqu panics under it at stage 3 ("the
   timer and the counter disagree about how long a second is"), which is the
   same fragility `tools/common/xtask/src/qemu.rs` records as the reason `tcg` is the
   default. Under full emulation the compositor is 1.1 to 2.1 seconds a
@@ -927,7 +927,7 @@ reload at the next vertical blanking, and no frame is drawn.
   column or row on the screen, the layer's start address moved on by the
   pixels cut off and its window narrower; across the right or bottom edge
   the window is only narrower. Wholly off the screen, or hidden (buffer
-  0), the layer is off. `ferrix_stm32_display::ltdc::Clip` is host-tested
+  0), the layer is off. `xaqu_stm32_display::ltdc::Clip` is host-tested
   at each edge and corner.
 * A mode switch stops the LTDC, which takes both layers off; the pointer
   is put back where it was, clipped to the new screen, when the
@@ -944,7 +944,7 @@ for: a move written in the very instant a reload happens may land half
 in this frame and half in the next, which is one frame of a pointer one
 step off.
 
-**What ran on the board (2026-09-23).** At `FERRIX-BOOT-OK stages 1-12` the
+**What ran on the board (2026-09-23).** At `XAQU-BOOT-OK stages 1-12` the
 node was published, `devmgr   1 devices, 6 drivers, 1 started, 0 failed`,
 `display  card0 scanout 0: 1280x720`. `src/user/system/linux/compositor/blank` as init printed
 `compositor: scanout 1280x720 1280x720 colour 0x1e1e2e plane 4 Primary` and
@@ -1035,7 +1035,7 @@ or why not, and the connector keeps no EDID. A card is never refused over
 it. Two things are not Linux's: the six built-in EDIDs
 (`edid/1024x768.bin` and the rest, which later Linux kernels removed
 too; 6.1 still has them), and the search path, which is `/lib/firmware`
-alone. And the option is the first of its key on the command line, as every Ferrix option is (`CMDLINE.TXT` before
+alone. And the option is the first of its key on the command line, as every Xaqu option is (`CMDLINE.TXT` before
 the image's `DEFAULTS.TXT`), where a Linux module parameter's last wins.
 
 **The uAPI.** A connector given an EDID has one property, `EDID` (id 66,
@@ -1052,7 +1052,7 @@ declines, so a virtual connector without one listing nothing is Linux's
 answer.
 
 **Identity, not modes.** Linux's `virtio_gpu_conn_get_modes` would take
-the EDID's modes and none of its own. Ferrix takes the monitor's name for
+the EDID's modes and none of its own. Xaqu takes the monitor's name for
 itself and nothing else: the connector keeps the device's preferred mode
 and the standard sizes (§2.3), and `mm_width` and `mm_height` stay 0. That
 is what `run-compositor` needs. The R27qe prefers 2560x1440, while the
@@ -1078,7 +1078,7 @@ into `Lenovo Group Limited`. Neither file is ever committed: both are read
 from the machine the image is built on. On a host without `pnp.ids` the
 make is the code and the description `LEN R27qe Gen2 UTP03KBB`, which the
 user's `desc:Lenovo…` line does not match; xtask says so. A monitor found
-is also saved, with the registry, under `~/.local/share/ferrix/edid/`, and
+is also saved, with the registry, under `~/.local/share/xaqu/edid/`, and
 a host where it is asleep or was never plugged in takes it from there; a
 copy of that directory is how a Windows machine gets it. On a host with
 neither xtask says `edid: no monitor of this machine describes itself
@@ -1121,7 +1121,7 @@ the property and blob answers); `xtask` (3: finding a monitor among
 connector directories, describing one, what an image carries);
 `src/user/system/linux/compositor/config` (rule precedence) and `hyprix` (the pointer over a
 screen at `2560x0`). `test-compositor --boot edid` boots with the host's
-monitor, or on a host without it a stand-in EDID xtask makes (`FRX Ferrix
+monitor, or on a host without it a stand-in EDID xtask makes (`FRX Xaqu
 Test EDID0001`), and requires the kernel's line, `hyprctl monitors` saying
 `description: Lenovo Group Limited R27qe Gen2 UTP03KBB` and `at 2560x0`,
 and the pointer boot's two pictures at that place.
@@ -1132,12 +1132,12 @@ description unless the command line names a file (`docs/BACKLOG.md`).
 The EDID's physical size in `GETCONNECTOR`'s `mm_width` and `mm_height`.
 QEMU's own EDID (`VIRTIO_GPU_F_EDID`, `GET_EDID`) when nothing is named.
 
-## 8. The firmware's framebuffer as a card: `ferrix.efifb` (H6, 2026-10-15)
+## 8. The firmware's framebuffer as a card: `xaqu.efifb` (H6, 2026-10-15)
 
 A PC whose GPU has no driver -- the N150 box's Intel graphics today
 (`docs/INSTALLER.md` §6, H6) -- still has the screen its firmware lit: the
 GOP framebuffer the loader hands over in `BootInfo`, at the mode the
-firmware chose. Under `ferrix.efifb` on the kernel's command line, hyprix
+firmware chose. Under `xaqu.efifb` on the kernel's command line, hyprix
 draws there. It is how a Linux live image starts before its GPU driver
 loads (`simplefb`/`efifb`), and it is all there is: no mode setting, no
 vertical blanking, no GPU.
@@ -1146,7 +1146,7 @@ vertical blanking, no GPU.
 
 1. **Kernel, discovery.** `discovery::firmware`, the last finder stage 10
    runs, makes one node of a kind of its own, `TREE_FIRMWARE_FB`
-   (`ferrix_native_abi::types`), when the option is on, the machine is
+   (`xaqu_native_abi::types`), when the option is on, the machine is
    x86-64, and the framebuffer is usable: outside the allocator's memory
    (§2.4's `reclaimable` 0), four bytes a pixel, its first pixel on a page,
    and a size that holds its lines. That size is compared with the visible
@@ -1157,7 +1157,7 @@ vertical blanking, no GPU.
    the mode in fields a tree node leaves zero: width, height, the stride in
    pixels and the layout (`FRAMEBUFFER_BGRX` or `FRAMEBUFFER_RGBX`). The
    boot line is `display  firmware framebuffer WxH lent to a driver
-   (ferrix.efifb)`, or `... not lent (ferrix.efifb): <why>`.
+   (xaqu.efifb)`, or `... not lent (xaqu.efifb): <why>`.
 2. **Kernel, the one exemption.** The boot framebuffer stays in the ranges
    stage 10 withholds from every aperture (`device::Reserved`), withheld as
    firmware's size in whole pages (`device::framebuffer_span`), so the
@@ -1218,13 +1218,13 @@ OVMF's `QemuVideoDxe` hands out as its GOP at the EDID's preferred size --
 the closest thing QEMU has to a PC's integrated GPU BAR. (`ramfb` was
 rejected: its framebuffer is RAM firmware reserved, which the memory map
 holds and stage 10 never lends; `bochs-display` would do as well as `VGA`
-but q35 already brings `VGA`.) The command line says `ferrix.efifb`; two
+but q35 already brings `VGA`.) The command line says `xaqu.efifb`; two
 pattern clients are tiled, and the VGA's screendump (QMP `screendump
 device=firmware`) must equal the renderer's blessed `dwindle-two-clients`
 picture in every one of its 786,432 pixels. The guest must also have said
 the kernel's lent line, `efifb: 1024x768 firmware framebuffer`, and `card0
 copies frames`, and `config   1 function(s) holding the lent firmware
-framebuffer answered no read`. The command line also says `ferrix.fbcon`, so
+framebuffer answered no read`. The command line also says `xaqu.fbcon`, so
 the boot console draws on the framebuffer until the node is made: a console
 line drawn after that would be in the judged picture. The boot runs the
 kernel's self-checks wherever it falls in a full `test-compositor` run
@@ -1256,14 +1256,14 @@ design verdict is ledger line 772 (H1-H11), its reviews of this branch lines
 1207 and 1260; SAFETY-MANUAL AoU-31 says no claim is made of a boot that gives the
 option.
 
-**Write-combining (H6's follow-up, branch h6-wc, 2026-10-15).** Under `ferrix.efifb` on
+**Write-combining (H6's follow-up, branch h6-wc, 2026-10-15).** Under `xaqu.efifb` on
 x86-64 the lent window is write-combining (WC) everywhere it is mapped --
 in the kernel's panic window and in `efifb` -- so a frame's stores leave the
 processor in bursts instead of one uncached store a pixel.
 
 * *The page attribute table.* Each processor writes `IA32_PAT` (MSR
   `0x277`; Linux `msr-index.h` `MSR_IA32_CR_PAT`, QEMU `MSR_PAT`) at its
-  bring-up with `ferrix_paging::X86_PAT` = `0x0007_0406_0007_0106`
+  bring-up with `xaqu_paging::X86_PAT` = `0x0007_0406_0007_0106`
   (`cpu::program_pat`), and reads it back; `PAT_PROGRAMMED` counts the
   ones that did, and stage 9 stops the boot unless every processor did.
   A byte per entry: entry 0 `0x06` write-back, entry 1 `0x01`
@@ -1283,8 +1283,8 @@ processor in bursts instead of one uncached store a pixel.
   as Linux `msr-index.h` and QEMU's `cpu.h` number them, only when
   `CPUID.1:EDX` bit 12 says they exist), resolves the type with the SDM's
   precedence in a pure function with host tests
-  (`ferrix_paging::mtrr::range_type`), and says the framebuffer's MTRR
-  type, or `unknown`, beside the lent line, which only `ferrix.efifb`
+  (`xaqu_paging::mtrr::range_type`), and says the framebuffer's MTRR
+  type, or `unknown`, beside the lent line, which only `xaqu.efifb`
   prints. Expected on OVMF:
   uncacheable (OVMF makes the 32-bit PCI hole, where QEMU's VGA BAR 0
   lies, uncacheable over a write-back default); the line is the record,
@@ -1308,7 +1308,7 @@ processor in bursts instead of one uncached store a pixel.
   it to WC with `mm::protect_kernel` and a shootdown; it changes type no
   more.)
 * *From the first map (branch fbcon-wc-early, 2026-10-17; consultant
-  ledger line 1994).* With `ferrix.fbcon` the N150 spent 0.1 to 0.26 s a
+  ledger line 1994).* With `xaqu.fbcon` the N150 spent 0.1 to 0.26 s a
   kernel line, some 10 to 13 s of a 28 s boot, drawing on the window
   uncached until the lend above made it WC; a line then cost about 1 ms.
   So on every x86-64 boot with a framebuffer, lent or not, the window is
@@ -1342,7 +1342,7 @@ processor in bursts instead of one uncached store a pixel.
   Controls `fbwc-ctl-*`: the trampoline's write removed, the window
   mapped device, the table programmed after the map, the read-back
   answering true. Still to show on the N150 (`docs/BACKLOG.md`): the line
-  times with `ferrix.fbcon`, the flush's cost, and photographs of efifb's
+  times with `xaqu.fbcon`, the flush's cost, and photographs of efifb's
   first frame and a forced panic with no console pixel on either.
 * *Flush ordering.* WC stores are weakly ordered and may sit in a
   processor's fill buffers. `efifb` ends every copy (SCANOUT, FLUSH) with
@@ -1390,7 +1390,7 @@ processor in bursts instead of one uncached store a pixel.
   `io_mapping_map_combining` maps the window). Certification consultant:
   ledger line 1303.
 * *Still to show on the N150* (`docs/BACKLOG.md`): the figure, a panic
-  drawn visibly under `ferrix.efifb` (the drain no emulator can show), and
+  drawn visibly under `xaqu.efifb` (the drain no emulator can show), and
   the MTRR line.
 * *Arm.* Unchanged: not honoured there.
 
@@ -1404,11 +1404,11 @@ processor in bursts instead of one uncached store a pixel.
 * **The panic picture.** A panic is still drawn by the kernel on the same
   pages, over the last frame efifb copied; nothing restores it.
 * **Real hardware.** Not yet run on the N150; netbooting it with
-  `--kernel-option ferrix.efifb` is the first try (`docs/NETBOOT.md` §6).
+  `--kernel-option xaqu.efifb` is the first try (`docs/NETBOOT.md` §6).
 
 ### 8.1 The Intel GPU lent the screen (K4, `docs/INTEL-GPU.md` §4.3)
 
-Under `ferrix.efifb` and `ferrix.intelgpu` together, when the function
+Under `xaqu.efifb` and `xaqu.intelgpu` together, when the function
 holding the framebuffer is the Intel integrated GPU, the framebuffer is
 lent to that function's own node instead of a node of its own. The rule is
 keyed to the command line and to what enumeration read: vendor 8086,
@@ -1423,7 +1423,7 @@ lent framebuffer it takes no configuration write at all, and the kernel has
 no reset call, so nothing resets the function under the screen
 (`L.device.47`).
 
-**What the kernel does not claim.** Under `ferrix.intelgpu`, the panic
+**What the kernel does not claim.** Under `xaqu.intelgpu`, the panic
 screen still writes the framebuffer's pages through the kernel's window.
 Whether those pixels are seen depends on the Intel driver keeping the lit
 plane, and the GGTT entries behind it, as firmware set them. The kernel
@@ -1504,7 +1504,7 @@ drew into its frame would keep every frame with a pointer shown from
 being a client's buffer shown directly. It blends the pointer into the
 plane itself after each copy, the processor's or the blitter's
 (`display.rs` `repaint`, the arithmetic in
-`ferrix_display_modes::pointer`): what is under the image's last place is
+`xaqu_display_modes::pointer`): what is under the image's last place is
 copied again from the buffer shown, then the 64 × 64 premultiplied image
 is blended over the buffer's pixels at its new place, scaled with the
 picture in a scaled mode. CURSOR waits for the blit in flight and is
@@ -1564,7 +1564,7 @@ through XWayland.
 
 **The test.** `cargo xtask test-compositor --boot direct-scanout`, x86-64:
 the firmware-screen machine (efifb's copying card) with the Intel stand-in
-(`intel_uapi::STANDIN`) driven by `intel-fake` under `ferrix.intelgpu`. One
+(`intel_uapi::STANDIN`) driven by `intel-fake` under `xaqu.intelgpu`. One
 `pattern checkerboard --dmabuf --busy` makes GEM buffers on the i915 render
 node by hand (`pattern/src/i915.rs`), fills them, exports them and draws
 every frame, fullscreen by a window rule. The boot requires hyprix's
@@ -1616,7 +1616,7 @@ a `monitor = , 1280x720@60, auto, 1` line found no such mode and stayed at
   It parses no EDID and makes no timing for it: the customer, 2026-10-22,
   "keep the kernel slim, we need that for certifications". Making the list
   is the ring-3 drivers' alone (`src/lib/drivers/display/modes`,
-  `ferrix-display-modes`, which the kernel does not link).
+  `xaqu-display-modes`, which the kernel does not link).
 * **hyprix changes modes while it runs**: on `hyprctl reload` when a
   `monitor =` line now asks for another mode, on `hyprctl keyword monitor`,
   and lists `availableModes` in `hyprctl monitors`, as Hyprland does.
@@ -1688,7 +1688,7 @@ SET_MODE   core -> driver, 40 bytes, not answered
   panel fitter shows a smaller mode on an eDP panel and as Windows' "GPU
   scaling" does. To DRM such a mode is a mode like any other; its timing is
   the running one's refresh over the smaller size. Each scaled pixel takes
-  the nearest source pixel (`ferrix_displayctl::scale`, host-tested), so an
+  the nearest source pixel (`xaqu_displayctl::scale`, host-tested), so an
   integer ratio (960x540 on 1920x1080) is exact.
 
 ### 9.3 The core (`src/kernel/src/interfaces/display`)
@@ -1696,7 +1696,7 @@ SET_MODE   core -> driver, 40 bytes, not answered
 What the kernel does with a list, and nothing more: it holds it, finds the
 entry a request names, and sends that entry back.
 
-* **The pages.** `ferrix_displayctl::session` (pure, host-tested, fuzzed)
+* **The pages.** `xaqu_displayctl::session` (pure, host-tested, fuzzed)
   checks every page as §9.2 says -- a scanout the card has, a total of 1 to
   64, 1 to 24 entries each a mode at a refresh no faster than 1 kHz, a first
   page at 0 (which discards a list half sent) and each later one where the
@@ -1720,9 +1720,9 @@ entry a request names, and sends that entry back.
   DK1's LTDC, head 0) or the one size its driver prefers. The made-up
   virtual list the kernel had (`STANDARD_SIZES`, `OFFERED_REFRESHES_HZ`,
   §2.3) is gone: virtio-gpu lists those sizes itself. A finished list counts
-  as a connector change (`EVENT_FERRIX_CONNECTORS`).
+  as a connector change (`EVENT_XAQU_CONNECTORS`).
 * **`SETCRTC`** on a head with a list takes the entry
-  `ferrix_displayctl::listed::listed_match` finds -- one equal to the request
+  `xaqu_displayctl::listed::listed_match` finds -- one equal to the request
   in size, clock, totals, sync spans and polarity, else the first of its
   size whose rounded refresh is the request's `vrefresh` -- and is `EINVAL`
   for none, as Linux's `mode_valid` refuses. The listed entry, never the
@@ -1762,10 +1762,10 @@ comments. Each change and why:
 | `interfaces/display/check.rs` | 162 / 0 | The stage 10 self-check the consultant required (condition 6) |
 | `panic/catalog.rs`, `stages_check.rs` | 33 / 0 | FX-1015 and the check's line |
 
-`ferrix-displayctl`, which the kernel links, gains the two messages and
+`xaqu-displayctl`, which the kernel links, gains the two messages and
 their strict decoding (`message.rs`, 206 added), the session's page checks
 (`session.rs`, 223) and `listed.rs` (54), each with host tests; the EDID
-parser, CVT and the tables went to `ferrix-display-modes`, which only the
+parser, CVT and the tables went to `xaqu-display-modes`, which only the
 drivers link.
 
 ### 9.4 The drivers
@@ -1835,8 +1835,8 @@ itself at another mode gets it from the person's `monitor =` line.
 
 ### 9.7 How it is checked
 
-* Host tests: `ferrix-displayctl` (the messages, the session's pages and
-  `SET_MODE`, `listed_match`), `ferrix-display-modes` (QEMU's generated
+* Host tests: `xaqu-displayctl` (the messages, the session's pages and
+  `SET_MODE`, `listed_match`), `xaqu-display-modes` (QEMU's generated
   EDIDs at 1920x1080@75 and 5120x2160@60 mode by mode, CVT against VESA's
   own timings, the list, its sort and pages, the scaling arithmetic), the
   Intel output decode, nvos's pages, hyprix's `pick_mode`, the IPC's

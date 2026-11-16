@@ -40,10 +40,10 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::{Class, PF_R, PF_W};
-use ferrix_vfs::tmpfs::{PageSource, Pages, Storage};
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, OpenFile, OpenFlags};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::{Class, PF_R, PF_W};
+use xaqu_vfs::tmpfs::{PageSource, Pages, Storage};
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, OpenFile, OpenFlags};
 
 use crate::arch;
 use crate::fs::pages::VmoStorage;
@@ -60,9 +60,9 @@ use crate::syscall::thread::Thread;
 use crate::syscall::uaccess;
 use crate::syscall::{SyscallArgs, native};
 use crate::user::space::{Access, AddressSpace};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
 
 /// The name the counted program goes by: an empty file under `/tmp`, whose
 /// contents the check supplies through the open file.
@@ -245,7 +245,7 @@ fn load_and_run(
         },
         &[PATH],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "a 72 MiB program in a file could not be loaded")?;
     let loaded = read();
@@ -426,7 +426,7 @@ fn fork_and_exec_self() -> Result<i32, &'static str> {
         },
         &[SELF_PATH],
         &[],
-        [0x5a; ferrix_ustack::RANDOM_BYTES],
+        [0x5a; xaqu_ustack::RANDOM_BYTES],
     )
     .map_err(|_| "the sparse 72 MiB program could not be loaded")?;
     drop(program);
@@ -618,7 +618,7 @@ struct ProgramSource {
 }
 
 impl PageSource for ProgramSource {
-    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> ferrix_vfs::Result<usize> {
+    fn fill_range(&self, first: u64, pages: &mut [&mut [u8]]) -> xaqu_vfs::Result<usize> {
         let _ = self.pages.fetch_add(pages.len() as u64, Ordering::Relaxed);
         for (index, page) in (first..).zip(pages.iter_mut()) {
             let start = index * PAGE_SIZE;
@@ -671,7 +671,7 @@ impl Inode for ProgramInode {
         self
     }
 
-    fn read_at(&self, offset: u64, buf: &mut [u8]) -> ferrix_vfs::Result<usize> {
+    fn read_at(&self, offset: u64, buf: &mut [u8]) -> xaqu_vfs::Result<usize> {
         let left = FILE_LEN.saturating_sub(offset);
         let len = usize::try_from(left).unwrap_or(usize::MAX).min(buf.len());
         let slot = buf.get_mut(..len).ok_or(Errno::EIO)?;

@@ -4,7 +4,7 @@
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Seek, SeekFrom, Write};
 
-use ferrix_partition::{Header, Partition, parse_entries, parse_header};
+use xaqu_partition::{Header, Partition, parse_entries, parse_header};
 
 /// Bytes in a sector: virtio's and the SN720's unit.
 pub const SECTOR: u64 = 512;
@@ -12,7 +12,7 @@ pub const SECTOR: u64 = 512;
 pub const CHUNK: usize = 1 << 20;
 
 /// A disk's table: its header and its used entries, each with its index,
-/// and the bytes they were read from, for `ferrix-slots`' own reading.
+/// and the bytes they were read from, for `xaqu-slots`' own reading.
 pub struct Table {
     pub header: Header,
     pub entries: Vec<(u32, Partition)>,
@@ -88,7 +88,7 @@ pub fn partition_node(disk: &str, number: u32) -> String {
     }
 }
 
-/// The whole disks a running Ferrix may have: virtio's and NVMe's.
+/// The whole disks a running Xaqu may have: virtio's and NVMe's.
 #[must_use]
 pub fn whole_disks() -> Vec<String> {
     let mut found = Vec::new();

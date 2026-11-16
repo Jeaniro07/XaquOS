@@ -20,7 +20,7 @@
 
 #![no_main]
 
-use ferrix_frame::{Frame, FrameError, Frames, MAX_ORDER, PageEntry, Released, State};
+use xaqu_frame::{Frame, FrameError, Frames, MAX_ORDER, PageEntry, Released, State};
 use libfuzzer_sys::fuzz_target;
 
 /// Frames in the arena. Small enough that exhaustion is reached often, which is

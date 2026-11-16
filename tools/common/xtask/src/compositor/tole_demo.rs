@@ -1,7 +1,7 @@
 //! `test-compositor --boot tole-demo`: one of tole's demos
 //! (`src/user/system/linux/tole/examples`, `docs/UI-FRAMEWORK.md`) in a
 //! window of its own under hyprix, as the desktop comes up -- tole's
-//! Wayland host on Ferrix with nothing of an app's around it.
+//! Wayland host on Xaqu with nothing of an app's around it.
 //!
 //! Required: the demo says it is up, and QEMU's screen shows it drawn --
 //! the controls demo's ground (`Theme.bg2`, `#fafaf8`) over a large part of
@@ -12,7 +12,7 @@
 //! list opened, taking the keys, and closed by Escape, giving them back.
 //! The demo says where the keys are after each change.
 //!
-//! The demos are a static program, as every Ferrix client is, and are
+//! The demos are a static program, as every Xaqu client is, and are
 //! asked to draw on the GPU (`TOLE_RENDERER=gpu`): a static program
 //! cannot load Vulkan, so the boot also requires that it said so and drew
 //! on the CPU -- the fallback a program without a GPU takes.
@@ -198,7 +198,7 @@ pub(super) fn gpu_volume(arch: Arch) -> Option<PathBuf> {
     }
     // Only the volume's glibc and Mesa are used, which every yserver
     // volume holds, so it need not hold the yserver commit pinned.
-    let directory = match std::env::var_os("FERRIX_YSERVER_VOLUME") {
+    let directory = match std::env::var_os("XAQU_YSERVER_VOLUME") {
         Some(directory) => Ok(PathBuf::from(directory)),
         None => paths::volume_directory("yserver"),
     };

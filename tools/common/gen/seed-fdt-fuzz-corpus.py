@@ -34,7 +34,7 @@ GICV2_VIRT = """/dts-v1/;
     #address-cells = <2>;
     #size-cells = <2>;
     compatible = "linux,dummy-virt";
-    model = "ferrix seed: gicv2 virt";
+    model = "xaqu seed: gicv2 virt";
     interrupt-parent = <&gic>;
 
     chosen {
@@ -140,7 +140,7 @@ GICV3_AARCH64 = """/dts-v1/;
 / {
     #address-cells = <2>;
     #size-cells = <2>;
-    model = "ferrix seed: gicv3 aarch64";
+    model = "xaqu seed: gicv3 aarch64";
 
     chosen {
         stdout-path = "serial0:115200n8";
@@ -220,7 +220,7 @@ ODD_CELLS = """/dts-v1/;
 / {
     #address-cells = <3>;
     #size-cells = <0>;
-    compatible = "", "ferrix,odd", "";
+    compatible = "", "xaqu,odd", "";
     wide@1 {
         reg = <0x1 0x2 0x3>, <0x0 0x0 0x4>;
         #address-cells = <5>;

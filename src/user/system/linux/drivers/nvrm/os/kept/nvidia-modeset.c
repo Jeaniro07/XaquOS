@@ -22,17 +22,17 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.6) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.6) from NVIDIA's
  * kernel-open/nvidia-modeset/nvidia-modeset-linux.c at 580.173.02, under
  * the MIT licence above: the OS layer NVKMS, NVIDIA's display driver
  * (nv-modeset-kernel.o), runs on. NVKMS is linked into nvrm's core beside
  * RM, so this is the whole of nvidia-modeset.ko that nvrm keeps.
  *
  * Changes:
- *  - locks, timers and the kthread queue are ferrix-nvos's: a semaphore,
+ *  - locks, timers and the kthread queue are xaqu-nvos's: a semaphore,
  *    nvos_timer (whose thread stands in for the timer soft-IRQ) and a work
  *    queue;
- *  - there is no suspend on Ferrix, so the PM lock and the deferred-close
+ *  - there is no suspend on Xaqu, so the PM lock and the deferred-close
  *    queue that only a held PM lock needs are left out;
  *  - only kernel-space clients (KAPI) are served: /dev/nvidia-modeset, its
  *    poll and its per-open lookup by fd, procfs, the config file, backlight
@@ -43,7 +43,7 @@
  *    nvkms_exit cancels is not kept.
  */
 
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "nv-modeset-interface.h"
 #include "nvidia-modeset-os-interface.h"
 #include "nvkms.h"
@@ -137,7 +137,7 @@ NvBool nvkms_kernel_supports_syncpts(void)
     return NV_FALSE;
 }
 
-/* Ferrix: no Tegra host1x, as on a Linux without it (NVKMS_SYNCPT_STUBS_NEEDED). */
+/* Xaqu: no Tegra host1x, as on a Linux without it (NVKMS_SYNCPT_STUBS_NEEDED). */
 NvBool nvkms_syncpt_op(
     enum NvKmsSyncPtOp op,
     NvKmsSyncPtOpParams *params)
@@ -162,7 +162,7 @@ static void nvkms_queue_work(void (*run)(void *), void *argument)
 {
     NvBool ret = nvos_work_queue_schedule(nvkms_kthread_q, run, argument);
     /*
-     * Ferrix: nvos_work_queue_schedule fails only when it cannot allocate
+     * Xaqu: nvos_work_queue_schedule fails only when it cannot allocate
      * the item; Linux's fails only for an item already queued.
      */
     if (!ret) {
@@ -223,7 +223,7 @@ char* nvkms_strncpy(char *dest, const char *src, size_t n)
     return strncpy(dest, src, n);
 }
 
-/* Ferrix: RM's own delay, which sleeps for waits longer than a tick. */
+/* Xaqu: RM's own delay, which sleeps for waits longer than a tick. */
 void nvkms_usleep(NvU64 usec)
 {
     while (usec > 0) {
@@ -239,7 +239,7 @@ NvU64 nvkms_get_usec(void)
 }
 
 /*
- * Ferrix: for user-space clients only, which nvrm does not serve yet;
+ * Xaqu: for user-space clients only, which nvrm does not serve yet;
  * RM's copy, through the client the calling thread serves.
  */
 int nvkms_copyin(void *kptr, NvU64 uaddr, size_t n)
@@ -304,7 +304,7 @@ void nvkms_log(const int level, const char *gpuPrefix, const char *msg)
 }
 
 /*************************************************************************
- * Per-open state. Ferrix: kernel-space (KAPI) opens only.
+ * Per-open state. Xaqu: kernel-space (KAPI) opens only.
  *************************************************************************/
 
 struct nvkms_per_open {
@@ -330,7 +330,7 @@ nvkms_event_queue_changed(nvkms_per_open_handle_t *pOpenKernel,
 
     switch (popen->type) {
         case NVKMS_CLIENT_USER_SPACE:
-            /* Ferrix: no user-space opens to wake. */
+            /* Xaqu: no user-space opens to wake. */
             break;
         case NVKMS_CLIENT_KERNEL_SPACE:
             if (eventsAvailable) {
@@ -470,7 +470,7 @@ void* nvkms_dec_ref(struct nvkms_ref_ptr *ref_ptr)
  * Core NVKMS needs to be able to schedule work to execute in the
  * future, within process context.
  *
- * Ferrix: an nvos_timer fires on the timer thread, in place of Linux's
+ * Xaqu: an nvos_timer fires on the timer thread, in place of Linux's
  * timer_list soft-IRQ, and from there queues nvkms_kthread_q_callback(),
  * which runs on the kthread queue.
  *************************************************************************/
@@ -603,7 +603,7 @@ void nvkms_free_timer(nvkms_timer_handle_t *handle)
     timer->cancel = NV_TRUE;
 }
 
-/* Ferrix: no user-space opens, so no fd is ever one of NVIDIA's files here. */
+/* Xaqu: no user-space opens, so no fd is ever one of NVIDIA's files here. */
 NvBool nvkms_fd_is_nvidia_chardev(int fd)
 {
     return NV_FALSE;
@@ -653,7 +653,7 @@ NvBool nvkms_allow_write_combining(void)
     return __rm_ops.system_info.allow_write_combining;
 }
 
-/* Ferrix: no backlight class; NVKMS treats NULL as no backlight device. */
+/* Xaqu: no backlight class; NVKMS treats NULL as no backlight device. */
 struct nvkms_backlight_device*
 nvkms_register_backlight(NvU32 gpu_id, NvU32 display_id, void *drv_priv,
                          NvU32 current_brightness)
@@ -742,7 +742,7 @@ NvBool nvkms_ioctl_from_kapi_try_pmlock
     NvU32 cmd, void *params_address, const size_t param_size
 )
 {
-    /* Ferrix: no suspend, so the PM lock is never held against this. */
+    /* Xaqu: no suspend, so the PM lock is never held against this. */
     return nvkms_ioctl_common(popen, cmd,
                               (NvU64)(NvUPtr)params_address, param_size);
 }

@@ -25,10 +25,10 @@ use std::os::fd::FromRawFd;
 use std::os::unix::net::UnixDatagram;
 
 /// Where `sessiond` listens for `settingsd`.
-pub const SOCKET: &str = "/run/ferrix/prompt";
+pub const SOCKET: &str = "/run/xaqu/prompt";
 
 /// The variable naming the prompt channel's descriptor in the compositor.
-pub const PROMPT_FD_VARIABLE: &str = "FERRIX_PROMPT_FD";
+pub const PROMPT_FD_VARIABLE: &str = "XAQU_PROMPT_FD";
 
 /// The descriptor `sessiond` gives the prompt channel in the compositor.
 pub const PROMPT_FD: i32 = 5;
@@ -511,8 +511,8 @@ mod tests {
                 area: "hostname".to_owned(),
                 program: "/bin/settings".to_owned(),
                 parent: "/bin/hyprix".to_owned(),
-                account: "ferrix".to_owned(),
-                what: "would call the computer box; it is called ferrix".to_owned(),
+                account: "xaqu".to_owned(),
+                what: "would call the computer box; it is called xaqu".to_owned(),
             },
             ToSeat::Question {
                 id: 7,
@@ -526,7 +526,7 @@ mod tests {
             ToSeat::Confirm { id: 7 },
             ToSeat::Close {
                 id: u64::MAX,
-                text: "the computer is called box (was ferrix)".to_owned(),
+                text: "the computer is called box (was xaqu)".to_owned(),
             },
         ]
     }

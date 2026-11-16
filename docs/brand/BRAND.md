@@ -1,4 +1,4 @@
-# Ferrix brand
+# Xaqu brand
 
 The shareable logo, colours and reusable copy are collected in the
 [press and brand kit](../marketing/README.md).
@@ -10,7 +10,7 @@ The logo comes in two versions:
 - **The mark** (`logo-mark.svg`) is the short version: an F whose leg runs out
   into an X, with a rust slash for the X's other stroke and a small chip under
   the middle bar. It reads as "FX" and stays legible down to a 16 px favicon.
-- **The full logo** (`logo-full.svg`) is the mark with the word "Ferrix" set
+- **The full logo** (`logo-full.svg`) is the mark with the word "Xaqu" set
   under it, the dot of the i in rust. Use it where the name is not already
   next to it.
 
@@ -28,8 +28,8 @@ mark in ASCII.
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-512.png` | the mark on a dark rounded tile, for icons |
 | `banner-dark.png`, `banner-light.png` | the README header, chosen by the reader's theme |
 | `social-preview.png` | 1280×640: GitHub's social preview, and the website's `og:image` |
-| `wallpaper/ferrix-wallpaper-{1920x1080,2560x1440,3840x2160}.png` | the desktop's wallpaper: a dark blue-grey gradient with a soft light right of centre and the mark at 55% opacity; every desktop image shows it and every release attaches it (`gen-brand-images.py wallpaper`) |
-| `screenshots/` | real captures of Ferrix, each described in `screenshots/CAPTIONS.md` |
+| `wallpaper/xaqu-wallpaper-{1920x1080,2560x1440,3840x2160}.png` | the desktop's wallpaper: a dark blue-grey gradient with a soft light right of centre and the mark at 55% opacity; every desktop image shows it and every release attaches it (`gen-brand-images.py wallpaper`) |
+| `screenshots/` | real captures of Xaqu, each described in `screenshots/CAPTIONS.md` |
 
 Change the copy and the logo in the generator's sources, not in an image
 editor. Its banners and social preview are drawn with the tree's own fonts.
@@ -60,8 +60,8 @@ JetBrains Mono on the web for code and terminal output.
 - **Claims come with their proof.** Put a screenshot, command or test close to
   each technical claim. Write "runs `rustc`", not "supports Rust development".
 - **Lead with how it is built.** Say plainly and early that a fleet of
-  Claude Code sessions writes Ferrix and a person, the customer, decides
-  what they build (the customer, 2026-10-23). Then say what Ferrix does.
+  Claude Code sessions writes Xaqu and a person, the customer, decides
+  what they build (the customer, 2026-10-23). Then say what Xaqu does.
 - **Show the evidence.** Name a working program, a test or a screenshot instead
   of using adjectives such as "massive" or "incredible".
 - **Honest about limits.** It is not a daily driver. Say so before someone asks.
@@ -70,17 +70,17 @@ JetBrains Mono on the web for code and terminal output.
 
 Website hero:
 
-* Eyebrow: *Ferrix · an operating system written by Claude Code agents*
+* Eyebrow: *Xaqu · an operating system written by Claude Code agents*
 * Headline: *Linux apps without Linux.*
 
 The README banner uses the same headline. Explain it nearby: tested Linux
-programs run unchanged on Ferrix's own Rust kernel. Name working programs as
+programs run unchanged on Xaqu's own Rust kernel. Name working programs as
 evidence, and say that drivers run in separate, restartable processes. The
 lede names the Claude Code sessions and the customer first, and the
-working process gets its own section near the top. Never call Ferrix a
+working process gets its own section near the top. Never call Xaqu a
 hobby OS. Certification is an aim: nothing is certified, and the
 consultant's review is internal, not independent. Never imply that every
-Linux program works or that Ferrix is ready for daily use.
+Linux program works or that Xaqu is ready for daily use.
 
 Avoid "self-hosting" on its own: stage 20 (full self-hosting) is still in
 progress. "Builds its own image" is what the gate proves.

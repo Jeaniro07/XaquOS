@@ -6,7 +6,7 @@
 //!   default), sparse: a GUID partition table whose first partition is an
 //!   EFI system partition holding the image `build` makes (or `--image`),
 //!   with the loader at the firmware's fallback path, and whose second is
-//!   the rest of the disk, a btrfs volume labelled `ferrix-root` made here by
+//!   the rest of the disk, a btrfs volume labelled `xaqu-root` made here by
 //!   btrfs-progs at the partition's full size, with a program tree
 //!   (`--tree`, by default the Proton launcher volume's) at `/data`. The
 //!   kernel finds the root by its label on any partition and installs the
@@ -29,7 +29,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use ferrix_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition, usable, write_table};
+use xaqu_partition::{ESP, Guid, LINUX_FILESYSTEM, Partition, usable, write_table};
 
 use crate::args::Args;
 use crate::paths::{self, Arch};
@@ -97,21 +97,21 @@ const MIB_SECTORS: u64 = (1 << 20) / SECTOR;
 /// `blockdev --getsize64` on the box.
 const DEFAULT_DISK_BYTES: u64 = 1_000_215_216 * SECTOR;
 /// The label the kernel finds its root by (`src/kernel/src/fs/root_disk.rs`).
-const ROOT_LABEL: &str = "ferrix-root";
+const ROOT_LABEL: &str = "xaqu-root";
 /// The features asked of `mkfs.btrfs`, named so the log and the doc can say
-/// them: btrfs-progs 6.x's defaults, which every volume Ferrix has mounted
+/// them: btrfs-progs 6.x's defaults, which every volume Xaqu has mounted
 /// writable was made with.
 const MKFS_FEATURES: &str = "no-holes,free-space-tree";
 /// The partitions' names.
-const ESP_NAME: &str = "ferrix-esp";
-const ROOT_NAME: &str = "ferrix-root";
+const ESP_NAME: &str = "xaqu-esp";
+const ROOT_NAME: &str = "xaqu-root";
 
 /// `test-n150`'s disk: small, sparse, and the same layout.
 const TEST_DISK_BYTES: u64 = 4 << 30;
 /// Where the fixture's marker is, under the tree (so at `/data/` on the box).
 const MARKER_FILE: &str = "n150/marker";
 /// What the marker holds.
-const MARKER_TEXT: &str = "ferrix-n150-fixture";
+const MARKER_TEXT: &str = "xaqu-n150-fixture";
 /// `test-n150`'s negative control (c): when true, the disk is written
 /// again before the second power cycle, which must then find nothing kept.
 const REWRITE_BEFORE_SECOND_BOOT: bool = false;
@@ -203,7 +203,7 @@ fn launcher_tree(args: &Args) -> Result<PathBuf> {
     if !tree.is_dir() {
         return Err(Error::new(format!(
             "n150: no tree at {}: `tools/common/fetch/fetch-proton.sh`, then \
-             `FERRIX_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh` make it \
+             `XAQU_ENDFIELD_WINE=proton tools/common/fetch/fetch-endfield-launcher.sh` make it \
              (docs/WINE.md §10), or name one with --tree",
             tree.display()
         )));
@@ -602,7 +602,7 @@ fn test(args: &Args, sata: bool) -> Result<()> {
     check_second(&boot()?)?;
     println!("  {arch}: after a power cycle, what the first boot wrote was there");
 
-    // The root partition, as btrfs-progs sees it after two boots of Ferrix.
+    // The root partition, as btrfs-progs sees it after two boots of Xaqu.
     let copy = sibling(&disk, "root-after");
     let (at, len) = layout.root_bytes();
     {
@@ -642,7 +642,7 @@ const DESKTOP_TEST_DISK_BYTES: u64 = 16 << 30;
 const IN_THE_WAY: &[(&str, &[u8])] = &[("bin/gryphlink/in-the-way", b"left by a user\n")];
 /// The line the install says for [`IN_THE_WAY`].
 const SET_ASIDE_LINE: &str = "/bin/gryphlink was a directory with files where the system has a link \
-                              or a file; kept as /bin/gryphlink.ferrix-old";
+                              or a file; kept as /bin/gryphlink.xaqu-old";
 /// Megabytes of guest RAM for the desktop boot, unless `--memory` says.
 const DESKTOP_MEMORY: u32 = 4096;
 /// Distinct colours the screen must show: a desktop, not a cleared screen.
@@ -655,7 +655,7 @@ const DESKTOP_COLOURS: usize = 8;
 /// the box will have), a network, and a USB keyboard and mouse on an xHCI
 /// controller. Required: `/` on the root partition
 /// with the system installed, the firmware framebuffer lent to efifb,
-/// hyprix on it with a keyboard in its seat, as the user `ferrix`'s session
+/// hyprix on it with a keyboard in its seat, as the user `xaqu`'s session
 /// (`sessiond`), [`crate::compositor::n150_box`]'s script reporting the
 /// video host blocked, the launcher on `/data`, a lease, the default route
 /// and yserver up; [`IN_THE_WAY`] moved aside; and a screendump of the VGA
@@ -768,13 +768,13 @@ pub(crate) fn check_desktop(lines: &[String]) -> Result<()> {
             ),
             (
                 "lent to a driver",
-                "the kernel did not lend the firmware framebuffer (ferrix.efifb)",
+                "the kernel did not lend the firmware framebuffer (xaqu.efifb)",
             ),
             ("efifb: ", "efifb did not start on the firmware framebuffer"),
             ("hyprix: card0", "hyprix found no card to draw on"),
             (
-                "sessiond: seat0's session for ferrix (uid 1000)",
-                "the desktop is not the user ferrix's session",
+                "sessiond: seat0's session for xaqu (uid 1000)",
+                "the desktop is not the user xaqu's session",
             ),
             (
                 "n150-desktop: the launcher's video host",
@@ -861,7 +861,7 @@ fn on_root_partition(lines: &[String]) -> Result<()> {
 pub(crate) fn check_first(lines: &[String], sata: bool) -> Result<()> {
     let up = if sata {
         (
-            "serial ferrix-n150:",
+            "serial xaqu-n150:",
             "the AHCI driver did not bring the drive up",
         )
     } else {
@@ -877,7 +877,7 @@ pub(crate) fn check_first(lines: &[String], sata: bool) -> Result<()> {
                 "the first boot did not install the system on the root",
             ),
             (
-                "n150: marker ferrix-n150-fixture",
+                "n150: marker xaqu-n150-fixture",
                 "the tree's marker was not read from /data",
             ),
             (

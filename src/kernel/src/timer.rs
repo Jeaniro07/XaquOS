@@ -13,7 +13,7 @@
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_sync::IrqControl;
+use xaqu_sync::IrqControl;
 
 use crate::arch;
 use crate::irq::{self, IrqError};
@@ -333,10 +333,10 @@ pub(crate) fn counter_ticks_to_nanos(ticks: u64) -> u64 {
     ticks_to_nanos(ticks, arch::counter_hz())
 }
 
-/// `ticks` of a `hz` counter in nanoseconds: `ferrix_vdso::counter_nanos`,
+/// `ticks` of a `hz` counter in nanoseconds: `xaqu_vdso::counter_nanos`,
 /// whose host tests hold it to the 128-bit formula.
 fn ticks_to_nanos(ticks: u64, hz: u64) -> u64 {
-    ferrix_vdso::counter_nanos(ticks, hz)
+    xaqu_vdso::counter_nanos(ticks, hz)
 }
 
 /// How fast the free-running counter counts.

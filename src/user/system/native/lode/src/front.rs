@@ -21,9 +21,9 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::ingest::Now;
-use ferrix_lode_core::protocols::{self, StreamHeader};
-use ferrix_lode_core::record::Record;
+use xaqu_lode_core::ingest::Now;
+use xaqu_lode_core::protocols::{self, StreamHeader};
+use xaqu_lode_core::record::Record;
 
 use crate::sys;
 

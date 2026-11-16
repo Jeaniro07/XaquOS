@@ -50,7 +50,7 @@ use core::fmt;
 use core::ptr::NonNull;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_sync::Once;
+use xaqu_sync::Once;
 
 mod chunks;
 

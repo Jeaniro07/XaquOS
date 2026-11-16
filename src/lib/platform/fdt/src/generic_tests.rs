@@ -61,7 +61,7 @@ fn tree() -> Vec<u8> {
         .strings("clock-names", &["uartclk", "apb_pclk"])
         .end();
     w.begin("seconds@9010000")
-        .strings("compatible", &["ferrix,test-seconds", "arm,primecell"])
+        .strings("compatible", &["xaqu,test-seconds", "arm,primecell"])
         .cells("reg", &[0, 0x901_0000, 0, 0x1000])
         .cells("interrupts", &[0, 2, 4])
         .cells("clocks", &[2])
@@ -323,8 +323,8 @@ fn an_identity_record_reads_back_what_the_tree_said() {
     assert_eq!(record.node(), node.id());
     assert_eq!(record.path(), "/seconds@9010000");
     let compatible: Vec<&str> = record.compatible().collect();
-    assert_eq!(compatible, ["ferrix,test-seconds", "arm,primecell"]);
-    assert!(record.is_compatible("ferrix,test-seconds"));
+    assert_eq!(compatible, ["xaqu,test-seconds", "arm,primecell"]);
+    assert!(record.is_compatible("xaqu,test-seconds"));
     let clock_names: Vec<&str> = record.names("clock-names").collect();
     assert_eq!(clock_names, ["apb_pclk"]);
     let pinctrl_names: Vec<&str> = record.names("pinctrl-names").collect();

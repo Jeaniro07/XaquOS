@@ -8,13 +8,13 @@
 # says.
 #
 # It runs each read-only command twice: once through Hyprland's `hyprctl` and
-# once through `src/user/system/linux/compositor/ctl`, the one Ferrix's image carries. The test
+# once through `src/user/system/linux/compositor/ctl`, the one Xaqu's image carries. The test
 # requires the two answers to be the same, which is the whole claim
 # `src/user/system/linux/compositor/ctl` makes -- that a script written for `hyprctl` works when the
 # program it calls is ours.
 #
 # Needs a Linux host with `hyprctl` on the PATH; it is a development-host
-# check and not on Ferrix's image, so the script says so and stops if it is
+# check and not on Xaqu's image, so the script says so and stops if it is
 # missing rather than failing.
 #
 # Writes hyprctl.txt beside this script.
@@ -31,7 +31,7 @@ fi
 work="$(mktemp -d)"
 trap 'rm -rf "$work" || true' EXIT
 export XDG_RUNTIME_DIR="$work/runtime"
-export HYPRLAND_INSTANCE_SIGNATURE=ferrix-probe
+export HYPRLAND_INSTANCE_SIGNATURE=xaqu-probe
 mkdir -p "$XDG_RUNTIME_DIR"
 
 built="$(cd "$root" && cargo build --quiet -p compositor-pattern -p compositor-ctl -p hyprix \

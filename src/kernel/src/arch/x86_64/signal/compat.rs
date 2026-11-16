@@ -2,7 +2,7 @@
 //! `SA_SIGINFO` and `sigframe_ia32` for one without, as Linux's
 //! `ia32_setup_rt_frame` and `ia32_setup_frame` build them, and their way back
 //! through `rt_sigreturn` and `sigreturn` (`docs/I386.md` I2b). The layouts are
-//! `ferrix_linux_abi::sigframe32`'s.
+//! `xaqu_linux_abi::sigframe32`'s.
 //!
 //! # Where everything goes
 //!
@@ -21,11 +21,11 @@
 //! `SA_RESTORER` is refused, as for a 64-bit one: there is no 32-bit vDSO
 //! holding Linux's default restorer, and both libcs always give one.
 
-use ferrix_linux_abi::sigframe32::{
+use xaqu_linux_abi::sigframe32::{
     self, FPSTATE_MAGIC, FPSTATE_SIZE, FPSTATE_STATUS, FXSAVE_AT, RETCODE, RT_RETCODE,
     SIGINFO_SIZE, frame, rt_frame, sigcontext, stack, ucontext,
 };
-use ferrix_linux_abi::types::SA_SIGINFO;
+use xaqu_linux_abi::types::SA_SIGINFO;
 
 use super::super::{cpu, gdt, switch};
 use super::{

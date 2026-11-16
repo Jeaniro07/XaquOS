@@ -2,17 +2,17 @@
 
 Where everything in this repository lives, and where a new thing goes. The
 top level has four directories: the source of everything that runs on
-Ferrix and the tests around it, the host tools that build and drive it, the
+Xaqu and the tests around it, the host tools that build and drive it, the
 documents, and the data files the image ships.
 
 ```
-src/         everything that runs on Ferrix, and its tests
+src/         everything that runs on Xaqu, and its tests
   boot/        loaders: what runs before the kernel
   kernel/      the kernel
   lib/         host-testable logic, grouped by layer
   user/        programs that run in ring 3
-    system/      first party: what Ferrix needs to be useful
-      native/      on Ferrix's own ABI: runtime, devmgr, drivers
+    system/      first party: what Xaqu needs to be useful
+      native/      on Xaqu's own ABI: runtime, devmgr, drivers
       linux/       on the Linux ABI, each its own cargo workspace
     apps/        optional programs, each a folder of its own that xtask finds
   tests/       test programs and fuzzing that live outside any one crate
@@ -40,7 +40,7 @@ built by xtask from inside its directory.
 
 | Path | What |
 |---|---|
-| `src/boot/common/uefi/` | The UEFI loader (`ferrix-boot`) for x86-64, AArch64 and ARMv7-A. Reads the kernel, builds the address space, leaves firmware. |
+| `src/boot/common/uefi/` | The UEFI loader (`xaqu-boot`) for x86-64, AArch64 and ARMv7-A. Reads the kernel, builds the address space, leaves firmware. |
 | `src/boot/vendor/google/pixel7/` | The second-stage loader the Pixel 7's Android bootloader starts, and `mkbootimg.py`. |
 
 Only `src/boot/*` and `src/kernel/` are freestanding;
@@ -49,8 +49,8 @@ Only `src/boot/*` and `src/kernel/` are freestanding;
 ## `src/kernel/`
 
 The kernel, as four crates along the certified item's rings
-(`docs/KERNEL-CRATES.md`): `ferrix-kernel-core`, `ferrix-kernel-item` and
-`ferrix-kernel-load`, whose manifests are in `core/`, `item/` and `load/` and
+(`docs/KERNEL-CRATES.md`): `xaqu-kernel-core`, `xaqu-kernel-item` and
+`xaqu-kernel-load`, whose manifests are in `core/`, `item/` and `load/` and
 whose roots are `src/kernel_core.rs`, `src/kernel_item.rs` and
 `src/kernel_load.rs`, beside the binary's `src/main.rs`; every file is in
 `src/` whichever crate builds it. Its source paths are load-bearing: the certification
@@ -67,7 +67,7 @@ ring in `tools/common/data/certification-item.json`.
 | `src/kernel/src/discovery/` | Finding what the machine has and handing it to ring 3: `acpi` and `fdt` reach the firmware's description of the machine, `pci` walks the buses it describes, and `devmgr` starts `devmgr` with what was found. The parsers are the host-testable crates in `src/lib/platform/`; what the kernel does for a running driver (device nodes, IOMMU domains, interrupts) stays outside |
 | `src/kernel/src/interfaces/` | The kernel's end of each ring-3 driver's protocol, not a driver: `block_ring`, `display`, `render`, `input`, `audio` (and `logctl` and `net_ring`, parts since S3 and S4). Each checks its channel against the protocol crate in `src/lib/proto/` and publishes what the driver serves (a disk, a card, an event node). The drivers themselves are processes under `src/user/system/native/drivers/` |
 | `src/kernel/src/` otherwise | Everything the architecture does not change: memory, scheduling, objects, system calls, filesystems |
-| `src/kernel/extensions/<group>/<name>/` | The optional parts (`docs/microkernel/CRATE-SPLIT.md`): each a crate with its own `Cargo.toml`, `src/lib.rs` and its files under `src/` at the module path they had in `src/kernel/src`, its lift twin (if linuxd builds it) in `lift/`. A part that is its own group sits at `<name>/`: `settings/` (`ferrix-kernel-settings`, S1); `board/stm32mp1/` and `board/gs201-usb/` (`ferrix-kernel-board-*`, S2) hold the board glue, `device/logctl/` (`ferrix-kernel-logctl`, S3) the log's control channel, `device/net-ring/` (`ferrix-kernel-net-ring`, S4, the first part on the load) a network driver's ring. Each part's `src/` is a root in `kernel_source_roots`, its files in the `load` ring by one line |
+| `src/kernel/extensions/<group>/<name>/` | The optional parts (`docs/microkernel/CRATE-SPLIT.md`): each a crate with its own `Cargo.toml`, `src/lib.rs` and its files under `src/` at the module path they had in `src/kernel/src`, its lift twin (if linuxd builds it) in `lift/`. A part that is its own group sits at `<name>/`: `settings/` (`xaqu-kernel-settings`, S1); `board/stm32mp1/` and `board/gs201-usb/` (`xaqu-kernel-board-*`, S2) hold the board glue, `device/logctl/` (`xaqu-kernel-logctl`, S3) the log's control channel, `device/net-ring/` (`xaqu-kernel-net-ring`, S4, the first part on the load) a network driver's ring. Each part's `src/` is a root in `kernel_source_roots`, its files in the `load` ring by one line |
 
 `#[cfg(target_arch)]` appears only under `src/kernel/src/arch/`
 (`tools/common/check/check-crate-layering.sh`, rule 4). So a driver that only one
@@ -91,7 +91,7 @@ kernel or a loader. Each crate sits in exactly one group:
 | `src/lib/network/` | The network stack | `net` `netwire` `nettcp` `netlink` |
 | `src/lib/drivers/` | Device logic over an abstract transport, and the serve loops ring-3 drivers run, grouped by function (see below) | `virtio` and one directory per function |
 | `src/lib/init/` | The service manager's pure core, the restart policy it shares with `devmgr`, and its wire formats | `svc` `restart` `svc-proto` |
-| `src/lib/log/` | The log manager's pure core: records, the segment format, the kernel log's records read, the filter language, the output formats (`docs/LOGGING.md`). The program is `src/user/system/native/lode` | `lode` (`ferrix-lode-core`) |
+| `src/lib/log/` | The log manager's pure core: records, the segment format, the kernel log's records read, the filter language, the output formats (`docs/LOGGING.md`). The program is `src/user/system/native/lode` | `lode` (`xaqu-lode-core`) |
 | `src/lib/crypto/` | Cryptography user space checks secrets with: the password hash `authd` stores credentials under (`docs/AUTH.md` §5.1). The kernel's random number generator is not here but in `src/lib/kernel/` | `argon2` |
 
 **Drivers by function.** A driver is two crates: its logic in
@@ -118,12 +118,12 @@ every virtio driver shares.
 **Filesystems by format.** Each on-disk filesystem has a directory of its
 own under `src/lib/fs/`, holding one crate per part, so a filesystem added
 later (ext4, NTFS) sits beside btrfs with the same parts. What is not one
-format's is in `common/`. The crates keep their names (`ferrix-btrfs`,
-`ferrix-vfs`, ...); only the directories group them.
+format's is in `common/`. The crates keep their names (`xaqu-btrfs`,
+`xaqu-vfs`, ...); only the directories group them.
 
 | Directory | Crates |
 |---|---|
-| `btrfs/` | `format` (the on-disk format and the read path, `ferrix-btrfs`, and the test images in its `testdata/`), `write` (`ferrix-btrfs-write`), `vfs` (`ferrix-btrfs-vfs`, mounted into the VFS), `mkfs` (`ferrix-btrfs-mkfs`) |
+| `btrfs/` | `format` (the on-disk format and the read path, `xaqu-btrfs`, and the test images in its `testdata/`), `write` (`xaqu-btrfs-write`), `vfs` (`xaqu-btrfs-vfs`, mounted into the VFS), `mkfs` (`xaqu-btrfs-mkfs`) |
 | `common/` | `vfs`, `block` (the block core), `partition`, `cpio`, and the text of the pseudo-filesystems: `procfs`, `sysfs`, `cgroupfs` |
 
 **Choosing a group for a new lib.** Ask what the crate *is*, not who uses it
@@ -135,14 +135,14 @@ Add the crate to the root `Cargo.toml`'s `members` and
 
 ## `src/user/system/native/`
 
-Programs that run in ring 3 on Ferrix's native ABI, built into the
+Programs that run in ring 3 on Xaqu's native ABI, built into the
 initramfs by xtask:
 
 | Path | What |
 |---|---|
 | `src/user/system/native/rt/` | The runtime every native program links: entry, the system-call instruction, exit, panic. |
-| `src/user/system/native/driver/` | `ferrix-driver`, what every driver process shares: START, register blocks, DMA memory freed only after a reset, a bus's transport (`virtio`), and the protocol a subsystem speaks to its kernel interface (`input`, `block`). A driver implements its subsystem's trait and nothing else. virtio-input and virtio-blk are on it; the other drivers move as they are touched. Its driver model (`model`, `registers`, `class`, `bus`; `docs/DRIVER-MODEL.md`) is what a generic device-tree node's driver is written against: `Driver`, `#[derive(Resources)]` with its embedded requirement table, `register_map!`, `bitfields!`, `run::<D>()`; the derives and macros are `src/lib/drivers/model-derive` (`ferrix-driver-derive`), and the register types, host-tested, `src/lib/drivers/registers` (`ferrix-registers`). |
-| `src/user/system/native/platform/` | `ferrix-platform`: the clients of the shared platform resources providers serve -- clocks, resets, regulators (`docs/DRIVER-MODEL.md` §4.1) -- resolved from a node's references; their operations wait for step 2's providers. |
+| `src/user/system/native/driver/` | `xaqu-driver`, what every driver process shares: START, register blocks, DMA memory freed only after a reset, a bus's transport (`virtio`), and the protocol a subsystem speaks to its kernel interface (`input`, `block`). A driver implements its subsystem's trait and nothing else. virtio-input and virtio-blk are on it; the other drivers move as they are touched. Its driver model (`model`, `registers`, `class`, `bus`; `docs/DRIVER-MODEL.md`) is what a generic device-tree node's driver is written against: `Driver`, `#[derive(Resources)]` with its embedded requirement table, `register_map!`, `bitfields!`, `run::<D>()`; the derives and macros are `src/lib/drivers/model-derive` (`xaqu-driver-derive`), and the register types, host-tested, `src/lib/drivers/registers` (`xaqu-registers`). |
+| `src/user/system/native/platform/` | `xaqu-platform`: the clients of the shared platform resources providers serve -- clocks, resets, regulators (`docs/DRIVER-MODEL.md` §4.1) -- resolved from a node's references; their operations wait for step 2's providers. |
 | `src/user/system/native/devmgr/` | Matches devices to drivers and starts each in a job of its own. |
 | `src/user/system/native/drvupdated/` | Takes a new driver image from root over an abstract socket and hands it to `devmgr` (`docs/DEVMGR.md` §4.1). Only the images `test-restart --update` boots carry it. |
 | `src/user/system/native/drivers/<function>/<name>/` | One process per driver, grouped by function as in the table above. The logic lives in `src/lib/drivers/`; the program is the thin shell around it. |
@@ -153,7 +153,7 @@ initramfs by xtask:
 
 ## `src/user/system/linux/`
 
-Programs that run on Ferrix's Linux ABI. Each is a separate cargo workspace
+Programs that run on Xaqu's Linux ABI. Each is a separate cargo workspace
 with its own `Cargo.lock` and lints, built by xtask from inside its
 directory:
 
@@ -161,22 +161,22 @@ directory:
 |---|---|
 | `src/user/system/linux/compositor/` | hyprix, the terminal and every Wayland piece. |
 | `src/user/system/linux/init/` | `/sbin/init`, getty and the unit files. |
-| `src/user/system/linux/installer/` | `/sbin/ferrix-install`, which puts the live system on a disk (`docs/INSTALLER.md`), and `/sbin/bootctl`, which writes the idle system slot and arms a trial boot (`docs/AB-BOOT.md`); a library of what both share: GPT reading, the A/B layout, the control record's and a slot's file I/O over `ferrix-slots`. |
-| `src/user/system/linux/dhcp/` | `/bin/dhcpc`, the DHCPv4 client: a lease over an `AF_PACKET` socket, applied itself over rtnetlink (address, default route, `/etc/resolv.conf`), renewed at T1 and rebound at T2. In place of busybox's `udhcpc` and its lease script; `udhcpc`'s command line as far as Ferrix's callers use it. |
+| `src/user/system/linux/installer/` | `/sbin/xaqu-install`, which puts the live system on a disk (`docs/INSTALLER.md`), and `/sbin/bootctl`, which writes the idle system slot and arms a trial boot (`docs/AB-BOOT.md`); a library of what both share: GPT reading, the A/B layout, the control record's and a slot's file I/O over `xaqu-slots`. |
+| `src/user/system/linux/dhcp/` | `/bin/dhcpc`, the DHCPv4 client: a lease over an `AF_PACKET` socket, applied itself over rtnetlink (address, default route, `/etc/resolv.conf`), renewed at T1 and rebound at T2. In place of busybox's `udhcpc` and its lease script; `udhcpc`'s command line as far as Xaqu's callers use it. |
 | `src/user/system/linux/settingsd/` | `/sbin/settingsd`, the settings writer: the root helper that makes the typed system-wide changes a Settings app asks for once `authd` allows them (`docs/SETTINGS-WRITER.md`); `/bin/settingsctl`; the records they speak (`proto`) and the client crate the Settings app reaches by path (`client`). |
 | `src/user/system/linux/dmesg/` | `/bin/dmesg`, the kernel log as util-linux's `dmesg` shows it -- `[    1.234567] text`, `-T`, `-x`, `-l`, `-f`, `-k`, `-u`, `-w`, `-H`, `-c`, `-C` -- from `/dev/kmsg`, or `syslog(2)` where there is none. In place of busybox's applet. |
 | `src/user/system/linux/pkg/` | `/bin/pkg`, the package manager: lists, installs and removes the apps' packages (`docs/APPS.md` §7). |
-| `src/user/system/linux/tole/` | tole, the UI framework (`docs/UI-FRAMEWORK.md`): its runtime and its markup compiler, a workspace reaching the compositor's `text` and `toolkit` by path. Its own repository, ferrix-os/tole, checked out here at its pin (`components.toml`); apps that draw with it reach it by path. |
+| `src/user/system/linux/tole/` | tole, the UI framework (`docs/UI-FRAMEWORK.md`): its runtime and its markup compiler, a workspace reaching the compositor's `text` and `toolkit` by path. Its own repository, xaqu-os/tole, checked out here at its pin (`components.toml`); apps that draw with it reach it by path. |
 | `src/user/system/linux/hyprix-gpu/` | `hyprix-gpu`, the compositor's frames drawn by Vulkan in a glibc process of its own, which hyprix hands each frame's display list (`docs/GPU-COMPOSITOR.md`): the GPU painter's shapes (`compositor/render`'s `gpu::Renderer`) on the device tole picks. A workspace of its own, built for `x86_64-unknown-linux-gnu`. |
-| `src/user/system/linux/zinc/` | The zsh-compatible shell. Its own repository, ferrix-os/zinc, checked out here at its pin (`components.toml`). |
-| `src/user/system/linux/media/` | The resampler and the playback through `/dev/snd` that the sound server and the `badapple` app share (`docs/MEDIA.md`), and the PulseAudio-protocol server and its client (`docs/AUDIO.md`, U2). ferrix-90's since 2026-09-27. Bad Apple!!'s player and its video format are the `badapple` app since 2026-10-01. |
-| `src/user/system/linux/ferrousli/` | The C library written in Rust, its dynamic linker, and the toolkit programs are ported against it with (`tools/ports/`), with the libraries they link; the ported programs themselves are apps (`src/user/apps/` below). Its own repository, ferrix-os/ferrousli, checked out here at its pin (`components.toml`). |
-| `src/user/system/linux/drivers/nvrm/` | NVIDIA's driver host (`docs/NVIDIA.md`). `src/` is `nvrm` itself, so far N1b's skeleton: a static ferrousli program, in C, that devmgr starts as its `Gpu` kind's driver, with a native entry (`src/start.c`) that builds the stack ferrousli starts from, and the native calls it makes (`src/native.h`). `test/hold.c` is the init `cargo xtask test-nvrm` boots beside it. `uvm-kpi/` is the Linux-compatible headers and runtime, in C, that NVIDIA's `nvidia-uvm` is built against from a fetched tree, and `uvm-selftest`, which runs UVM's own tests on it with no GPU (§11.3, C0a). Both are C and a Makefile, not a cargo workspace; `cargo xtask test-nvrm` and `test-uvm` build them against ferrousli and boot them on Ferrix. |
+| `src/user/system/linux/zinc/` | The zsh-compatible shell. Its own repository, xaqu-os/zinc, checked out here at its pin (`components.toml`). |
+| `src/user/system/linux/media/` | The resampler and the playback through `/dev/snd` that the sound server and the `badapple` app share (`docs/MEDIA.md`), and the PulseAudio-protocol server and its client (`docs/AUDIO.md`, U2). xaqu-90's since 2026-09-27. Bad Apple!!'s player and its video format are the `badapple` app since 2026-10-01. |
+| `src/user/system/linux/ferrousli/` | The C library written in Rust, its dynamic linker, and the toolkit programs are ported against it with (`tools/ports/`), with the libraries they link; the ported programs themselves are apps (`src/user/apps/` below). Its own repository, xaqu-os/ferrousli, checked out here at its pin (`components.toml`). |
+| `src/user/system/linux/drivers/nvrm/` | NVIDIA's driver host (`docs/NVIDIA.md`). `src/` is `nvrm` itself, so far N1b's skeleton: a static ferrousli program, in C, that devmgr starts as its `Gpu` kind's driver, with a native entry (`src/start.c`) that builds the stack ferrousli starts from, and the native calls it makes (`src/native.h`). `test/hold.c` is the init `cargo xtask test-nvrm` boots beside it. `uvm-kpi/` is the Linux-compatible headers and runtime, in C, that NVIDIA's `nvidia-uvm` is built against from a fetched tree, and `uvm-selftest`, which runs UVM's own tests on it with no GPU (§11.3, C0a). Both are C and a Makefile, not a cargo workspace; `cargo xtask test-nvrm` and `test-uvm` build them against ferrousli and boot them on Xaqu. |
 
 ## `src/user/apps/`
 
 Optional programs, native or Linux, one folder each: its `app.toml`, a
-cargo workspace of its own and its README. The directory is the ferrix-os/apps
+cargo workspace of its own and its README. The directory is the xaqu-os/apps
 repository, checked out here at its pin (`components.toml`). xtask finds every
 folder here and builds, gates, packages and installs it by what its `app.toml` says, so an
 app is added by adding its folder and nothing else. No file outside a folder
@@ -190,7 +190,7 @@ app: `cargo xtask apps` lists them. `docs/APPS.md` is the design.
 | `src/tests/fuzz/` | `cargo fuzz` targets over `src/lib/`, and their committed corpus. |
 | `src/tests/loom/` | `loom` models of the orderings the kernel's lock-free looks rest on (`docs/OPAQUE-KERNEL.md` §9.8), each with a control that must fail; `cargo xtask loom`, and a step of `check`. loom is a dev-dependency here only (the customer's decision, 2026-10-03). |
 | `src/tests/threads/` | Stage 7's threads exit test: a static musl program using `std::thread`. |
-| `src/tests/sem/`, `src/tests/shm/`, `src/tests/procfs/`, `src/tests/container/` | Static programs `test-sem`, `test-shm`, `test-procfs` and `test-container` run inside Ferrix. |
+| `src/tests/sem/`, `src/tests/shm/`, `src/tests/procfs/`, `src/tests/container/` | Static programs `test-sem`, `test-shm`, `test-procfs` and `test-container` run inside Xaqu. |
 
 A crate's own tests and test data stay beside it (`src/lib/fs/btrfs/format/testdata/`,
 `src/user/system/linux/compositor/render/tests/data/`). `src/tests/` is for programs
@@ -200,8 +200,8 @@ that exercise the system from outside any one crate.
 
 | Path | What |
 |---|---|
-| `assets/fonts/` | Inter, Liberation and Noto Sans CJK, with their licences, and `fonts.conf`. xtask puts them into the image under `/usr/share/ferrix/fonts`. |
-| `assets/start/` | The page Chrome opens on a desktop. xtask fills in the boot's keys and facts and puts it under `/usr/share/ferrix/start`. |
+| `assets/fonts/` | Inter, Liberation and Noto Sans CJK, with their licences, and `fonts.conf`. xtask puts them into the image under `/usr/share/xaqu/fonts`. |
+| `assets/start/` | The page Chrome opens on a desktop. xtask fills in the boot's keys and facts and puts it under `/usr/share/xaqu/start`. |
 
 ## `tools/`
 
@@ -214,26 +214,26 @@ Everything that runs on the host. A script is a tool; there is no separate
 | `tools/common/check/` | The quality gates `cargo xtask check` and CI run: layering, assembly budget, unsafe and panic audits, the certification item boundary, complexity, commit authors; `check-supply-chain.py` lists what a reviewer of an outside pull request reads twice (`docs/REPO-FLOW.md`). `rustlex.py` is their shared Rust lexer. |
 | `tools/common/gen/` | Generators and their `--check` modes: brand images and release notes, the architecture document (with its `sysml/` reader), the panic catalogue, fonts, Wayland protocol tables, XKB tables, SOUP, coverage justification, fuzz corpus seeds, `/proc/cpuinfo`'s feature names from Linux's tables; `record-demo.py` records and cuts the demo video, and `install-shots.py` labels the install guide's captures (`docs/brand/screenshots/CAPTIONS.md`). |
 | `tools/common/fetch/` | Fetch pinned downloads: the rustc sysroot, busybox, Chrome, Bad Apple!!, Steam's volumes, NVIDIA's driver, iPXE for the netboot stick (`docs/NETBOOT.md`), the shell trees a release image carries (`fetch-shell-trees.sh`). |
-| `tools/common/debug/` | Post-mortem tools run on the host after a failed boot: `ferrix-postmortem.sh` reads a Ferrix disk read-only and prints the loader's and the kernel's logs, the A/B record and `/var/log` (`docs/POSTMORTEM.md`). |
+| `tools/common/debug/` | Post-mortem tools run on the host after a failed boot: `xaqu-postmortem.sh` reads a Xaqu disk read-only and prints the loader's and the kernel's logs, the A/B record and `/var/log` (`docs/POSTMORTEM.md`). |
 | `tools/common/test/` | Test drivers run by hand: the self-host matrix, the host `btrfs check` oracle. |
-| `tools/common/bench/` | Benches for kernels other than Ferrix: `board/` holds Linux's and seL4's sides of the DK1 comparison and the timing contract all three follow (`docs/BOARD-BENCH.md`). |
-| `tools/common/game/` | Stage 24's rig (`docs/GAME-PATH.md` §2.4), the same on Ferrix and on the Linux baseline guest. R1: the frame recorder `framerec.c`, an `LD_PRELOAD` library, and its paced test client `framegl.c`, which `cargo xtask frames` builds and summarises and `test-frames` gates; and the baseline's measuring scripts, `ferrix-side/` and `linux-side/`. R3: `rig.c`, one static program for the load's writer and holder, the timed sleep's overshoot, processors' busy shares and the launch timer; `load.sh`, the background load, and `load-crate.rs`, the crate it compiles; `measure.sh`, R3's check inside either guest; `linux-guest.sh`, which runs it in the Linux guest without the card; `linux-3060.xml`, the Linux guest's domain. `cargo xtask test-game-rig` runs it on Ferrix. `thread-times.sh`, a per-thread sample of a running program's user and kernel time and switches from `/proc`, the same on both (`docs/THREAD-TIMES.md`). |
+| `tools/common/bench/` | Benches for kernels other than Xaqu: `board/` holds Linux's and seL4's sides of the DK1 comparison and the timing contract all three follow (`docs/BOARD-BENCH.md`). |
+| `tools/common/game/` | Stage 24's rig (`docs/GAME-PATH.md` §2.4), the same on Xaqu and on the Linux baseline guest. R1: the frame recorder `framerec.c`, an `LD_PRELOAD` library, and its paced test client `framegl.c`, which `cargo xtask frames` builds and summarises and `test-frames` gates; and the baseline's measuring scripts, `xaqu-side/` and `linux-side/`. R3: `rig.c`, one static program for the load's writer and holder, the timed sleep's overshoot, processors' busy shares and the launch timer; `load.sh`, the background load, and `load-crate.rs`, the crate it compiles; `measure.sh`, R3's check inside either guest; `linux-guest.sh`, which runs it in the Linux guest without the card; `linux-3060.xml`, the Linux guest's domain. `cargo xtask test-game-rig` runs it on Xaqu. `thread-times.sh`, a per-thread sample of a running program's user and kernel time and switches from `/proc`, the same on both (`docs/THREAD-TIMES.md`). |
 | `tools/common/steam/` | What `cargo xtask run-steam`, `test-steam-window` and `test-steam-store` carry into the guest: the scripts that start and watch Steam, its stand-ins, and in `workarounds/` the C shims for kernel gaps, each headed with its gap and the owner of the real fix (`docs/STEAM.md`). |
 | `tools/common/n150/` | The N150 box (`docs/N150.md`): `esp-files.sh` builds the box's ESP files from a commit; `intel-checkpoint.sh` runs Mesa's anv and iris on the running box and keeps their output (`docs/INTEL-GPU.md` §10); `card/` holds the bring-up's boot-card and live-session scripts (§13.1), machine-specific and headed so. |
 | `tools/common/data/` | The allow-lists, baselines and registers the checks read; `release-licences.toml`, the licences a release may ship and what each file of its image is. |
 | `tools/common/release/` | One-off GitHub repository settings, run by the owner (`github-setup.sh`, and `github-flow-setup.sh` for the develop/main rulesets of `docs/REPO-FLOW.md`); the flow's two status writers, `flow-lane.py` (a pull request's lane) and `cert-verdict.py` (the certification verdict); and what a release carries (`docs/LICENSES.md`): `package-desktop.py` packs `cargo xtask release-image`'s x86-64 desktop with `desktop/`'s run scripts and README into the zip the release workflow attaches; `licences.py` writes an image's licence inventory and refuses what it cannot name; `package-sources.py` packs the corresponding sources; `pinned.py` reads the build scripts' pinned downloads and `cpio.py` an initramfs, for both. |
-| `tools/vendor/google/pixel7/` | The Pixel 7 launcher app (`android/`), its host helper and the desktop monitor (`monitor/`). Its own repository, ferrix-os/pixel7, checked out here at its pin (`components.toml`). |
+| `tools/vendor/google/pixel7/` | The Pixel 7 launcher app (`android/`), its host helper and the desktop monitor (`monitor/`). Its own repository, xaqu-os/pixel7, checked out here at its pin (`components.toml`). |
 
 ## `docs/`
 
 | Path | What |
 |---|---|
-| `docs/*.md` | Design documents, one per subsystem, `GUIDE.md`, the technical guide, and `INSTALL.md`, the pictured guide to trying Ferrix from a release (its pictures in `docs/brand/screenshots/install/`). |
+| `docs/*.md` | Design documents, one per subsystem, `GUIDE.md`, the technical guide, and `INSTALL.md`, the pictured guide to trying Xaqu from a release (its pictures in `docs/brand/screenshots/install/`). |
 | `docs/roadmap/`, `docs/sysml/`, `docs/certification/`, `docs/generated/` | The roadmap, the SysML model, the certification evidence, and what is generated from them. |
 | `docs/vendor/<vendor>/<device>/` | Notes on one board or phone. |
 | `docs/repo-flow/` | The branch maps `docs/REPO-FLOW.md`'s clean-ups write, one TSV per sweep. |
 | `docs/brand/`, `docs/marketing/` | The brand kit and the press copy. |
-| `docs/website/` | The public website at https://ferrix-os.github.io/. Its own repository, ferrix-os/ferrix-os.github.io, which deploys it, checked out here at its pin (`components.toml`). |
+| `docs/website/` | The public website at https://xaqu-os.github.io/. Its own repository, xaqu-os/xaqu-os.github.io, which deploys it, checked out here at its pin (`components.toml`). |
 
 ## Not in the repository
 
@@ -242,7 +242,7 @@ Everything that runs on the host. A script is a tool; there is no separate
 | `build/<arch>/` | Images, initramfs and serial logs from xtask. Git-ignored. A running VM may hold these open. |
 | `target/`, `*/target/` | Cargo output. Git-ignored. Worktrees each use their own `CARGO_TARGET_DIR`. |
 | `.claude/worktrees/` | Worktrees of the sessions working on this repository. Git-ignored. Remove a worktree with `git worktree remove` once its branch is on `main`. |
-| `~/.local/share/ferrix/` | Downloaded reference sources, busybox builds, firmware, per-stream target directories and logs. |
+| `~/.local/share/xaqu/` | Downloaded reference sources, busybox builds, firmware, per-stream target directories and logs. |
 
 Scratch files belong in `$TMPDIR` or a session's scratch directory, never at
 the top of a checkout: a file there is either committed by the next `git add

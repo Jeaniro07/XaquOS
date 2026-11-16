@@ -15,8 +15,8 @@
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_acpi::Acpi;
-use ferrix_fdt::{Fdt, TimerInterrupt};
+use xaqu_acpi::Acpi;
+use xaqu_fdt::{Fdt, TimerInterrupt};
 
 use super::cpu;
 use crate::discovery::acpi::DirectMap;

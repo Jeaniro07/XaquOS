@@ -577,7 +577,7 @@ const EPHY_8168H: [(u8, u16, u16); 6] = [
 /// given; the configuration registers are unlocked throughout.
 ///
 /// Two things Linux does here are not done, because both are writes to
-/// the function's configuration space, which a Ferrix driver may not make:
+/// the function's configuration space, which a Xaqu driver may not make:
 /// the ASPM entry latency at offset 0x70F, and the PCIe maximum read
 /// request. Firmware's values stand.
 ///

@@ -1,7 +1,7 @@
 //! Product signing's build-time refusals (`docs/SIGNING.md` §5.2, §6.4).
 //!
 //! * No kernel holds the verifier: the kernel never links
-//!   `ferrix-sigverify` (or the soft signer), and [`refuse_verifier_in_kernel`]
+//!   `xaqu-sigverify` (or the soft signer), and [`refuse_verifier_in_kernel`]
 //!   holds that on every kernel xtask builds, by the crates' names and source
 //!   paths, which any symbol or panic location of theirs carries.
 //! * No claimed profile's image holds a development key: the soft signer's
@@ -26,8 +26,8 @@ const ANCHORS: &str = "tools/common/data/signing-anchors.toml";
 /// names, as symbols carry them, and their source directories, as panic
 /// locations and debug information carry them.
 const NOT_IN_A_KERNEL: &[&str] = &[
-    "ferrix_sigverify",
-    "ferrix_softsign",
+    "xaqu_sigverify",
+    "xaqu_softsign",
     "crypto/sigverify",
     "release/softsign",
 ];
@@ -140,11 +140,11 @@ const FAMILIES: &str = "tools/common/data/hardware-families.toml";
 
 /// The build inputs every build of the UEFI loader is given
 /// (`docs/SIGNING.md` §10.6; its `build.rs` refuses a build without them):
-/// `FERRIX_ANCHORS`, the trust-policy block, and `FERRIX_SLOT_BUILD`, what
+/// `XAQU_ANCHORS`, the trust-policy block, and `XAQU_SLOT_BUILD`, what
 /// the build is. A development image (profile `none`) takes
 /// `development-off` and every family; an image of a profile takes
 /// `release-<its slot_signing>` and its `slot_families`. And
-/// `FERRIX_BAD_FRAMES`, the image key `bad_frames` of the resolved base
+/// `XAQU_BAD_FRAMES`, the image key `bad_frames` of the resolved base
 /// profile, so an ad-hoc build keeps its base profile's value, as its image
 /// manifest does (`docs/MACHINE-CHECK-RESTART.md` §10.2, ledger 5579 (2)).
 ///
@@ -154,7 +154,7 @@ const FAMILIES: &str = "tools/common/data/hardware-families.toml";
 pub(crate) fn loader_env() -> Result<Vec<(&'static str, String)>> {
     let run = crate::flags::this_run()?;
     let mut env = loader_env_for(&run.profile, &run.level)?;
-    env.push(("FERRIX_BAD_FRAMES", bad_frames_of(&run.base)?));
+    env.push(("XAQU_BAD_FRAMES", bad_frames_of(&run.base)?));
     Ok(env)
 }
 
@@ -263,9 +263,9 @@ fn loader_env_for(name: &str, level: &str) -> Result<Vec<(&'static str, String)>
     let claimed = u8::from(level != "none");
     let table = gate_table().unwrap_or(table);
     Ok(vec![
-        ("FERRIX_ANCHORS", table),
+        ("XAQU_ANCHORS", table),
         (
-            "FERRIX_SLOT_BUILD",
+            "XAQU_SLOT_BUILD",
             format!(
                 "profile={profile_byte} claimed={claimed} families={}",
                 ids.join(",")
@@ -296,7 +296,7 @@ fn expected_table() -> Result<String> {
     }
     Ok(loader_env()?
         .into_iter()
-        .find(|(key, _)| *key == "FERRIX_ANCHORS")
+        .find(|(key, _)| *key == "XAQU_ANCHORS")
         .map(|(_, table)| table)
         .unwrap_or_default())
 }
@@ -626,13 +626,13 @@ pub(crate) const TASKS: &[crate::task::Task] = &[crate::task::Task {
     name: "verify-signed-slot",
     help_at: 22,
     help: &[
-        "verify-signed-slot  Decide build/<arch>/ferrix-slot.img as the signing gate's loader would (docs/SIGNING.md §6.5)",
+        "verify-signed-slot  Decide build/<arch>/xaqu-slot.img as the signing gate's loader would (docs/SIGNING.md §6.5)",
     ],
     run: |_, args| verify_signed_slot(args),
 }];
 
 /// `cargo xtask verify-signed-slot`: the slot image `signed-slot-image`
-/// wrote and the signer signed, decided by `ferrix-boot-policy` as a loader
+/// wrote and the signer signed, decided by `xaqu-boot-policy` as a loader
 /// of this run's profile with the gate's `development-required` block, and
 /// its blobs matched. CI's signing job runs it after it signs
 /// (`docs/SIGNING.md` §6.5), so a signature that would not verify fails the
@@ -646,7 +646,7 @@ fn verify_signed_slot(args: &crate::args::Args) -> Result<()> {
     let env = loader_env_for(&run.profile, &run.level)?;
     let build = env
         .iter()
-        .find(|(key, _)| *key == "FERRIX_SLOT_BUILD")
+        .find(|(key, _)| *key == "XAQU_SLOT_BUILD")
         .map(|(_, line)| line.clone())
         .unwrap_or_default();
     let field = |name: &str| {
@@ -675,18 +675,18 @@ fn verify_signed_slot(args: &crate::args::Args) -> Result<()> {
         .join("development-required.bin");
     let block = std::fs::read(&block_path)
         .map_err(|error| Error::new(format!("{}: {error}", block_path.display())))?;
-    let image_path = crate::paths::build_dir(arch).join("ferrix-slot.img");
+    let image_path = crate::paths::build_dir(arch).join("xaqu-slot.img");
     let image = std::fs::read(&image_path)
         .map_err(|error| Error::new(format!("{}: {error}", image_path.display())))?;
-    let start = ferrix_boot_policy::decide(
+    let start = xaqu_boot_policy::decide(
         &block,
-        &ferrix_boot_policy::Build {
+        &xaqu_boot_policy::Build {
             profile,
             arch: arch_byte,
             claimed,
             families: &families,
         },
-        ferrix_boot_policy::generic_family(arch_byte),
+        xaqu_boot_policy::generic_family(arch_byte),
         0,
         image.get(..4096).unwrap_or_default(),
         image.get(4096..8192),
@@ -728,7 +728,7 @@ mod tests {
     fn a_kernel_holding_the_verifier_is_refused() {
         let mut elf = vec![0u8; 4096];
         assert!(refuse_verifier_in_kernel("k", &elf).is_ok());
-        elf.extend_from_slice(b"_ZN16ferrix_sigverify8manifest6verify17h0123456789abcdefE");
+        elf.extend_from_slice(b"_ZN16xaqu_sigverify8manifest6verify17h0123456789abcdefE");
         assert!(refuse_verifier_in_kernel("k", &elf).is_err());
         let mut elf = vec![0u8; 64];
         elf.extend_from_slice(b"src/lib/crypto/sigverify/src/lms.rs");
@@ -759,9 +759,9 @@ mod tests {
         assert_eq!(
             env("present", "present"),
             vec![
-                ("FERRIX_ANCHORS", "release-off".to_owned()),
+                ("XAQU_ANCHORS", "release-off".to_owned()),
                 (
-                    "FERRIX_SLOT_BUILD",
+                    "XAQU_SLOT_BUILD",
                     "profile=3 claimed=1 families=257,513,769".to_owned()
                 ),
             ]
@@ -769,9 +769,9 @@ mod tests {
         assert_eq!(
             env("fast", "sc2"),
             vec![
-                ("FERRIX_ANCHORS", "release-required".to_owned()),
+                ("XAQU_ANCHORS", "release-required".to_owned()),
                 (
-                    "FERRIX_SLOT_BUILD",
+                    "XAQU_SLOT_BUILD",
                     "profile=2 claimed=1 families=513,257".to_owned()
                 ),
             ]
@@ -779,9 +779,9 @@ mod tests {
         assert_eq!(
             env("max", "sc4"),
             vec![
-                ("FERRIX_ANCHORS", "release-off".to_owned()),
+                ("XAQU_ANCHORS", "release-off".to_owned()),
                 (
-                    "FERRIX_SLOT_BUILD",
+                    "XAQU_SLOT_BUILD",
                     "profile=1 claimed=1 families=".to_owned()
                 ),
             ]
@@ -789,9 +789,9 @@ mod tests {
         assert_eq!(
             env("desktop", "none"),
             vec![
-                ("FERRIX_ANCHORS", "release-off".to_owned()),
+                ("XAQU_ANCHORS", "release-off".to_owned()),
                 (
-                    "FERRIX_SLOT_BUILD",
+                    "XAQU_SLOT_BUILD",
                     "profile=4 claimed=0 families=257,258,513,769,770".to_owned()
                 ),
             ]
@@ -801,7 +801,7 @@ mod tests {
         let development = env("none", "none");
         assert_eq!(
             development[0],
-            ("FERRIX_ANCHORS", "development-off".to_owned())
+            ("XAQU_ANCHORS", "development-off".to_owned())
         );
         assert!(
             development[1]
@@ -815,9 +815,9 @@ mod tests {
         assert_eq!(
             held,
             vec![
-                ("FERRIX_ANCHORS", "development-required".to_owned()),
+                ("XAQU_ANCHORS", "development-required".to_owned()),
                 (
-                    "FERRIX_SLOT_BUILD",
+                    "XAQU_SLOT_BUILD",
                     "profile=2 claimed=0 families=513,257".to_owned()
                 ),
             ]

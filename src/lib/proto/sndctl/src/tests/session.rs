@@ -3,9 +3,9 @@
 use super::message::qemu_hello;
 use super::std::vec::Vec;
 
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::sound::{HwParams, Interval, Mask};
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::sound::{HwParams, Interval, Mask};
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::{
     DIRECTION_CAPTURE, DIRECTION_PLAYBACK, Elapsed, Message, Offer, PORT_RIGHTS, Refusal,

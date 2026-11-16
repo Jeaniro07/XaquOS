@@ -20,20 +20,20 @@ use std::ffi::CStr;
 use std::io;
 use std::os::fd::{FromRawFd, IntoRawFd, OwnedFd};
 
-use ferrix_linux_abi::drm::{self, GemClose, GetCap, PrimeHandle, Version};
-use ferrix_linux_abi::socket::Width;
-use ferrix_linux_abi::virtgpu::{
+use xaqu_linux_abi::drm::{self, GemClose, GetCap, PrimeHandle, Version};
+use xaqu_linux_abi::socket::Width;
+use xaqu_linux_abi::virtgpu::{
     self, ContextInit, ContextSetParam, ExecBuffer, Field, GetCaps, GetParam, Layout, Map,
     ResourceCreateBlob, ResourceInfo, TransferFromHost, TransferToHost, Wait,
 };
-pub use ferrix_linux_abi::virtgpu::{Box3d, ResourceCreate};
+pub use xaqu_linux_abi::virtgpu::{Box3d, ResourceCreate};
 
 /// What the display test reads this program's render line by. Deliberately
 /// not the compositor's own prefix: that one is what the boot is watched
 /// for, and a second line carrying it would be taken for the scanout's.
 const MARKER: &str = "render:";
 
-/// The first render node. Linux numbers them from 128, and so does Ferrix.
+/// The first render node. Linux numbers them from 128, and so does Xaqu.
 const NODE: &CStr = c"/dev/dri/renderD128";
 
 /// The longest driver name read back from `DRM_IOCTL_VERSION`.

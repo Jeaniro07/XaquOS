@@ -3,7 +3,7 @@
 //! memory.
 //!
 //! `src/user/system/native/drivers/usb/usbdev` is to run this in a ring-3 process under devmgr, as
-//! `src/user/system/native/drivers/usb/usbhid` runs `ferrix-usb-host` for the DK boards
+//! `src/user/system/native/drivers/usb/usbhid` runs `xaqu-usb-host` for the DK boards
 //! (`docs/vendor/google/pixel7/USB-HANDOVER.md`, phase 3). The process holds an
 //! `IoMapping` of the controller's 64 KiB window at `0x1121_0000`, its
 //! interrupt (SPI 379), and pinned memory for what the controller reads
@@ -19,7 +19,7 @@
 //! * [`trb`]: the transfer request blocks the controller walks;
 //! * [`layout`]: where each of those lives in the DMA area;
 //! * endpoint 0's three-stage control transfers, answered by a
-//!   [`ferrix_usb_device::Function`], and the bulk and interrupt
+//!   [`xaqu_usb_device::Function`], and the bulk and interrupt
 //!   endpoints' data, in two private modules.
 //!
 //! The register offsets, bits and command codes are the ones Linux's
@@ -30,9 +30,9 @@
 //! # The function
 //!
 //! The controller carries one function, and knows it only as a
-//! [`Function`](ferrix_usb_device::Function): what to answer a SETUP with,
+//! [`Function`](xaqu_usb_device::Function): what to answer a SETUP with,
 //! what an OUT data stage was worth, which endpoints a configuration
-//! enables. That is a trait of `ferrix-usb-device`'s, and this crate
+//! enables. That is a trait of `xaqu-usb-device`'s, and this crate
 //! depends on that crate for it and for nothing else, so the controller
 //! can carry the CDC-ACM port the phone needs today and another function
 //! later without either knowing the other. The function is passed to each
@@ -82,7 +82,7 @@ extern crate std;
 mod tests;
 
 pub use controller::{Controller, Notice};
-pub use ferrix_usb_device as usb_device;
+pub use xaqu_usb_device as usb_device;
 
 /// A window of 32-bit device registers, by byte offset from the core's
 /// base: the globals at `0xC100`, the device registers at `0xC700`, the

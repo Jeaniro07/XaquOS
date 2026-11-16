@@ -29,7 +29,7 @@
 //! resulting [`BootView`], whose accessors are safe.
 //!
 //! ```
-//! # use ferrix_bootinfo::{BootInfo, BootInfoError};
+//! # use xaqu_bootinfo::{BootInfo, BootInfoError};
 //! # fn example(raw: *const BootInfo) -> Result<(), BootInfoError> {
 //! // SAFETY: in the kernel this pointer is the one argument the loader passed.
 //! let view = unsafe { (*raw).validate() }?;
@@ -52,7 +52,7 @@ pub use kaslr::{
     SOURCE_SMCCC_TRNG, Slots,
 };
 
-/// Magic number identifying a [`BootInfo`], ASCII `FERRIXBI`.
+/// Magic number identifying a [`BootInfo`], ASCII `XAQUBI`.
 ///
 /// Checked by the kernel before it touches anything else in the structure.
 pub const BOOTINFO_MAGIC: u64 = 0x4645_5252_4958_4249;
@@ -2615,8 +2615,8 @@ mod tests {
     #[test]
     fn a_command_line_file_loses_its_surrounding_whitespace() {
         assert_eq!(
-            command_line_from_file(b"ferrix.onexit=reset\r\n", 64),
-            Ok("ferrix.onexit=reset"),
+            command_line_from_file(b"xaqu.onexit=reset\r\n", 64),
+            Ok("xaqu.onexit=reset"),
             "an editor's CRLF is not part of the option"
         );
         assert_eq!(command_line_from_file(b"  a=1 b=2 \n\n", 64), Ok("a=1 b=2"));
@@ -2627,8 +2627,8 @@ mod tests {
         );
         assert_eq!(
             option_in(
-                command_line_from_file(b"x ferrix.onexit=reset\n", 64).unwrap(),
-                "ferrix.onexit"
+                command_line_from_file(b"x xaqu.onexit=reset\n", 64).unwrap(),
+                "xaqu.onexit"
             ),
             Some("reset")
         );
@@ -2636,7 +2636,7 @@ mod tests {
 
     #[test]
     fn a_command_line_file_that_is_not_utf8_or_too_long_is_refused() {
-        assert!(command_line_from_file(b"ferrix.onexit=\xff\n", 64).is_err());
+        assert!(command_line_from_file(b"xaqu.onexit=\xff\n", 64).is_err());
         assert_eq!(
             command_line_from_file(b"abcd\n", 4),
             Ok("abcd"),

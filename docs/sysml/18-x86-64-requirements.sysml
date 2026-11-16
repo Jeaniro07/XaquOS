@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 18: the low-level requirements of the x86-64
+ * Xaqu — SysML v2 model, part 18: the low-level requirements of the x86-64
  * architecture, the trap path and the system call entry.
  *
  * What each unit of src/kernel/src/arch/x86_64/, src/kernel/src/trap.rs and
@@ -32,8 +32,8 @@
  * Ids are `L.x86_64.<n>`, `L.trap.<n>` and `L.syscall.<n>`, numbered through
  * each; the package gives the part.
  */
-package FerrixX8664Requirements {
-    private import FerrixItemRequirements::*;
+package XaquX8664Requirements {
+    private import XaquItemRequirements::*;
 
     package Descriptors {
         doc /* src/kernel/src/arch/x86_64/gdt.rs: each processor's descriptor tables, its
@@ -102,7 +102,7 @@ package FerrixX8664Requirements {
                 interrupt-stack or table allocation, and secondary_start shall end
                 the boot in the catalogued SECONDARY_GDT report.";
             attribute :>> criterion = "A secondary start whose stack allocation
-                fails ends in the SECONDARY_GDT report, and no FERRIX-BOOT-OK.";
+                fails ends in the SECONDARY_GDT report, and no XAQU-BOOT-OK.";
             attribute :>> parent = "H.FAIL.1";
             attribute :>> unit = ("arch::x86_64::gdt::init_secondary",
                 "arch::x86_64::smp::secondary_start");
@@ -230,8 +230,8 @@ package FerrixX8664Requirements {
             attribute :>> parent = "H.SCHED.8";
             attribute :>> unit = ("arch::x86_64::switch::save_user_state",
                 "arch::x86_64::switch::restore_user_state",
-                "arch::x86_64::switch::ferrix_fpu_save",
-                "arch::x86_64::switch::ferrix_fpu_restore");
+                "arch::x86_64::switch::xaqu_fpu_save",
+                "arch::x86_64::switch::xaqu_fpu_restore");
         }
         requirement <'L.x86_64.11'> forkChildInheritsUserState : ItemLowLevel {
             attribute :>> statement = "UserState::capture shall copy the calling
@@ -262,7 +262,7 @@ package FerrixX8664Requirements {
                 "arch::x86_64::switch::UserState::new");
         }
         requirement <'L.x86_64.152'> theEntryMarksTheThreeBlockingCalls : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry shall raise the running
+            attribute :>> statement = "xaqu_syscall_entry shall raise the running
                 task's vectors_dead mark before it serves channel_write_read,
                 object_wait_one or port_wait, and lower it as the call returns,
                 before the way out; no other number shall raise it.";
@@ -272,7 +272,7 @@ package FerrixX8664Requirements {
                 across a nanosleep after it, and with the lowering removed it reads
                 them reset and the check fails by name.";
             attribute :>> parent = "H.SCHED.12";
-            attribute :>> unit = ("arch::x86_64::syscall::ferrix_syscall_entry",
+            attribute :>> unit = ("arch::x86_64::syscall::xaqu_syscall_entry",
                 "arch::x86_64::syscall::vectors_die_in",
                 "arch::x86_64::syscall::mark_vectors_dead");
         }
@@ -416,7 +416,7 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.159'> theFastPathIsEnteredFromSyscallOnly : ItemLowLevel {
             attribute :>> statement = "In a kernel built with ipc_fastpath=on for
-                x86-64, ferrix_syscall_entry shall call the fast path for 0x1013 and
+                x86-64, xaqu_syscall_entry shall call the fast path for 0x1013 and
                 for no other number, before the filter and with interrupts masked,
                 after every entry measure the stub makes, raising the vector mark
                 first and lowering it on a decline; in a kernel built with
@@ -604,7 +604,7 @@ package FerrixX8664Requirements {
              * decide GS for themselves. */
 
         requirement <'L.x86_64.24'> kernelNmiSurvived : ItemLowLevel {
-            attribute :>> statement = "ferrix_paranoid_entry shall count an NMI
+            attribute :>> statement = "xaqu_paranoid_entry shall count an NMI
                 taken in the kernel or in a program and return from it, with
                 note_gs finding its GS naming a processor's record whatever GS
                 base the program holds, and send and issue shall deliver the NMI
@@ -617,7 +617,7 @@ package FerrixX8664Requirements {
                 foreign GS, and the program exits with its status (the second
                 `debug` line).";
             attribute :>> parent = "H.TRAP.6";
-            attribute :>> unit = ("arch::x86_64::paranoid::ferrix_paranoid_entry",
+            attribute :>> unit = ("arch::x86_64::paranoid::xaqu_paranoid_entry",
                 "arch::x86_64::paranoid::note_gs",
                 "arch::x86_64::apic::id",
                 "arch::x86_64::apic::send_nmi_to");
@@ -635,7 +635,7 @@ package FerrixX8664Requirements {
                 upper half the entry's sign test then reads (the second `debug`
                 line).";
             attribute :>> parent = "H.TRAP.6";
-            attribute :>> unit = ("arch::x86_64::paranoid::ferrix_paranoid_entry",
+            attribute :>> unit = ("arch::x86_64::paranoid::xaqu_paranoid_entry",
                 "arch::x86_64::paranoid::debug",
                 "arch::x86_64::paranoid::take_debug_status",
                 "arch::x86_64::paranoid::note_gs");
@@ -650,20 +650,20 @@ package FerrixX8664Requirements {
             attribute :>> parent = "H.TRAP.6";
             attribute :>> unit = ("arch::x86_64::paranoid::take_debug_status",
                 "arch::x86_64::paranoid::debug",
-                "arch::x86_64::paranoid::ferrix_paranoid_entry",
+                "arch::x86_64::paranoid::xaqu_paranoid_entry",
                 "arch::x86_64::cpu::read_dr6",
                 "arch::x86_64::cpu::write_dr6");
         }
         requirement <'L.x86_64.27'> paranoidUnexpectedIsFatal : ItemLowLevel {
-            attribute :>> statement = "ferrix_paranoid_entry shall end in its
+            attribute :>> statement = "xaqu_paranoid_entry shall end in its
                 catalogued report a second exception on one IST stack, a machine
                 check and any other vector, and debug shall end in its report a
                 kernel #DB that no breakpoint raised.";
             attribute :>> criterion = "Each of a provoked nested IST entry, a kernel
                 single-step #DB and an injected #MC ends in its catalogued report,
-                and no FERRIX-BOOT-OK.";
+                and no XAQU-BOOT-OK.";
             attribute :>> parent = "H.FAIL.1";
-            attribute :>> unit = ("arch::x86_64::paranoid::ferrix_paranoid_entry",
+            attribute :>> unit = ("arch::x86_64::paranoid::xaqu_paranoid_entry",
                 "arch::x86_64::paranoid::debug");
         }
     }
@@ -834,9 +834,9 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.182'> hardwarePStatePreferenceChosenByOption : ItemLowLevel {
             attribute :>> statement = "The x86-64 kernel shall read the boot option
-                ferrix.epp, on the boot processor, from the loader's command
-                line, with option_in's grammar (the first ferrix.epp= word; a bare
-                ferrix.epp is no option), and choose the energy and performance
+                xaqu.epp, on the boot processor, from the loader's command
+                line, with option_in's grammar (the first xaqu.epp= word; a bare
+                xaqu.epp is no option), and choose the energy and performance
                 preference: 0 where there is no option and for performance, 0x80
                 for balance_performance, 0xc0 for balance_power, 0xff for power,
                 the number for one to three ASCII decimal digits whose value is 0
@@ -847,12 +847,12 @@ package FerrixX8664Requirements {
                 option, the four names, 0, 00, 007, 128 and 255 choose their
                 values; 256, 999, 1000, 0255, -1, +1, 0x80, the empty value,
                 Performance, a trailing or leading space and default are refused
-                and give 0. It then reads ferrix.epp from the command line again
+                and give 0. It then reads xaqu.epp from the command line again
                 and requires the preference in force to be the chooser's answer
                 for it. Any other answer panics the boot. Negative controls: the
                 default made 0x80, the number arm wrapping 256 to a byte, and the
-                read in kmain removed on a boot with ferrix.epp=power, each panic
-                in stage 3. Boots with ferrix.epp=power and ferrix.epp=bogus print
+                read in kmain removed on a boot with xaqu.epp=power, each panic
+                in stage 3. Boots with xaqu.epp=power and xaqu.epp=bogus print
                 the cpu line for each.";
             attribute :>> parent = "H.BOOT.5";
             attribute :>> unit = ("arch::x86_64::cpu::choose_preference",
@@ -864,12 +864,12 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.187'> msrLogOnlyWhenAsked : ItemLowLevel {
             attribute :>> statement = "The x86-64 kernel shall read the power-limit,
-                limit-reason, performance and thermal MSRs of ferrix.msrlog (0x606,
+                limit-reason, performance and thermal MSRs of xaqu.msrlog (0x606,
                 0x610, 0x614, 0x601, 0x65c, 0x64f, 0x6b0, 0x198, 0x1a2, 0x19c,
-                0x1b1) only when the bare word ferrix.msrlog is on the loader's
+                0x1b1) only when the bare word xaqu.msrlog is on the loader's
                 command line: then from one task pinned to the boot processor,
                 started after the scheduler, once and again every
-                ferrix.msrlog.period seconds (0 to 3600 of one to four ASCII
+                xaqu.msrlog.period seconds (0 to 3600 of one to four ASCII
                 digits, 0 for once; 5 without the option or for any other value,
                 which a line says), each read through the checked read of
                 L.x86_64.188, printing each raw value or absent and the decoded
@@ -879,7 +879,7 @@ package FerrixX8664Requirements {
                 no option, 0, 1, 0005 and 3600 choose their seconds; the empty
                 value, 3601, 10000, -1, +1, 0x5, a leading space and 5s are
                 refused. The gate's check row finds no wrmsr in msrlog.rs or its
-                modules. A KVM boot with ferrix.msrlog and ferrix.msrlog.period=2
+                modules. A KVM boot with xaqu.msrlog and xaqu.msrlog.period=2
                 prints msr: rounds 2 s apart with present and absent registers;
                 the boots without the word print no msr: line.";
             attribute :>> parent = "H.BOOT.5";
@@ -912,14 +912,14 @@ package FerrixX8664Requirements {
                 pointer removed, the x86_64:kvm boot stops in stage 3 with a
                 general protection fault.";
             attribute :>> parent = "H.BOOT.5";
-            attribute :>> unit = ("arch::x86_64::cpu::ferrix_rdmsr_checked",
+            attribute :>> unit = ("arch::x86_64::cpu::xaqu_rdmsr_checked",
                 "arch::x86_64::cpu::read_msr_checked",
                 "arch::x86_64::cpu::checked_read_resume",
                 "arch::x86_64::cpu::checked_reads_refused",
-                "arch::x86_64::trap::ferrix_trap_entry");
+                "arch::x86_64::trap::xaqu_trap_entry");
         }
         requirement <'L.x86_64.189'> msrLogDecodesIntelLayouts : ItemLowLevel {
-            attribute :>> statement = "ferrix.msrlog's decoder shall take, from raw
+            attribute :>> statement = "xaqu.msrlog's decoder shall take, from raw
                 values: the RAPL power, energy and time units (0x606 bits 3:0,
                 12:8, 19:16); PL1 and PL2 of 0x610 (15-bit power, enable, clamp,
                 7-bit window, from bits 0 and 32; lock bit 63) and of 0x65c (17-bit
@@ -971,11 +971,11 @@ package FerrixX8664Requirements {
                 the x86_64:kvm boot stops in stage 3 with a general protection
                 fault.";
             attribute :>> parent = "H.BOOT.5";
-            attribute :>> unit = ("arch::x86_64::cpu::ferrix_wrmsr_checked",
+            attribute :>> unit = ("arch::x86_64::cpu::xaqu_wrmsr_checked",
                 "arch::x86_64::cpu::write_msr_checked",
                 "arch::x86_64::cpu::checked_write_resume",
                 "arch::x86_64::cpu::checked_writes_refused",
-                "arch::x86_64::trap::ferrix_trap_entry");
+                "arch::x86_64::trap::xaqu_trap_entry");
         }
         requirement <'L.x86_64.194'> powerModelGateAndOnePackage : ItemLowLevel {
             attribute :>> statement = "logic::row shall name a row of the power core's model table only
@@ -1203,7 +1203,7 @@ package FerrixX8664Requirements {
             attribute :>> scope = "personality=kernel";
         }
         requirement <'L.x86_64.207'> powerFakeIsTestOnly : ItemLowLevel {
-            attribute :>> statement = "Under ferrix.powerctl.fake alone the power node shall stand on
+            attribute :>> statement = "Under xaqu.powerctl.fake alone the power node shall stand on
                 fake_check's register file on any x86-64 processor: the backend
                 chosen once at the probe, no file under powerctl/ reaching an MSR,
                 and every kernel power line saying (fake); the word shall be
@@ -1296,7 +1296,7 @@ package FerrixX8664Requirements {
                 plan shall set IA32_SPEC_CTRL bit 10 (BHI_DIS_S) where CPUID.(7,2)
                 EDX bit 4 (BHI_CTRL) and IA32_SPEC_CTRL are offered, read back with
                 the register's other bits on every processor; and otherwise run
-                ferrix_clear_bhb, Linux 6.18.54's clear_bhb_loop with 5 calls of 5
+                xaqu_clear_bhb, Linux 6.18.54's clear_bhb_loop with 5 calls of 5
                 taken jumps, on every entry from ring 3 before any indirect branch:
                 SYSCALL through an LSTAR pointed at the entry that calls it, read
                 back on every processor; a trap or interrupt from ring 3 behind a
@@ -1308,7 +1308,7 @@ package FerrixX8664Requirements {
                 without and with BHI_CTRL (the same two), an Intel guest hiding
                 enhanced IBRS (the loop), a Skylake without it on bare metal (none),
                 a Zen 5 bare and as a guest (none) -- or the boot panics (FX-0307).
-                Every hardened boot runs ferrix_clear_bhb once and finds LSTAR naming
+                Every hardened boot runs xaqu_clear_bhb once and finds LSTAR naming
                 the entry the plan chose. Negative control: the plan's loop arm
                 removed panics. A boot on an Intel model under TCG (Snowridge, no
                 IA32_ARCH_CAPABILITIES) plans the loop and passes every stage with
@@ -1862,7 +1862,7 @@ package FerrixX8664Requirements {
             attribute :>> parent = "H.TRAP.6";
             attribute :>> unit = ("arch::x86_64::syscall::init",
                 "arch::x86_64::syscall::stub_address",
-                "arch::x86_64::syscall::ferrix_syscall_entry");
+                "arch::x86_64::syscall::xaqu_syscall_entry");
         }
         requirement <'L.x86_64.53'> programGsBaseNotPerCpu : ItemLowLevel {
             attribute :>> statement = "syscall::init shall park zero in
@@ -1888,22 +1888,22 @@ package FerrixX8664Requirements {
             attribute :>> unit = "arch::x86_64::syscall::cstar_stub_address";
         }
         requirement <'L.x86_64.55'> syscallFirstFourArguments : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry shall dispatch a SYSCALL
+            attribute :>> statement = "xaqu_syscall_entry shall dispatch a SYSCALL
                 with its number from RAX and its first four arguments from RDI, RSI,
                 RDX and R10, and return the result in RAX.";
             attribute :>> criterion = "The 64-bit signal program's rt_sigaction and
                 rt_sigprocmask, whose set size 8 is in R10 and is refused EINVAL
                 otherwise, each answer 0, and the program exits 77, not 99.";
             attribute :>> parent = "H.TRAP.10";
-            attribute :>> unit = "arch::x86_64::syscall::ferrix_syscall_entry";
+            attribute :>> unit = "arch::x86_64::syscall::xaqu_syscall_entry";
         }
         requirement <'L.x86_64.56'> syscallFifthSixthArguments : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry shall pass R8 and R9 as
+            attribute :>> statement = "xaqu_syscall_entry shall pass R8 and R9 as
                 a SYSCALL's fifth and sixth arguments.";
             attribute :>> criterion = "A program maps a memfd with its descriptor in
                 R8 and a non-zero page offset in R9 and reads that page's marker.";
             attribute :>> parent = "H.TRAP.10";
-            attribute :>> unit = "arch::x86_64::syscall::ferrix_syscall_entry";
+            attribute :>> unit = "arch::x86_64::syscall::xaqu_syscall_entry";
         }
         requirement <'L.x86_64.57'> syscallFlagMask : ItemLowLevel {
             attribute :>> statement = "syscall::init shall set IA32_FMASK so that
@@ -2107,13 +2107,13 @@ package FerrixX8664Requirements {
                 "arch::x86_64::syscall::enter_user");
         }
         requirement <'L.x86_64.69'> nativeExecveEntry : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry shall, when a SYSCALL's
+            attribute :>> statement = "xaqu_syscall_entry shall, when a SYSCALL's
                 outcome is to enter a new native image, leave through SYSRET at its
                 entry point on its stack.";
             attribute :>> criterion = "A program's execve of the user test program
                 ends with that program's status, 42 (the `execve` line).";
             attribute :>> parent = "H.TRAP.10";
-            attribute :>> unit = ("arch::x86_64::syscall::ferrix_syscall_entry",
+            attribute :>> unit = ("arch::x86_64::syscall::xaqu_syscall_entry",
                 "arch::x86_64::syscall::enter_program");
         }
         requirement <'L.x86_64.70'> freshEntryClearsRegisters : ItemLowLevel {
@@ -2136,7 +2136,7 @@ package FerrixX8664Requirements {
             attribute :>> unit = "arch::x86_64::syscall::enter_compat_after_execve";
         }
         requirement <'L.x86_64.124'> theFilterIsAskedBeforeAnyAnswerOfTheEntrys : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry and system_call shall ask
+            attribute :>> statement = "xaqu_syscall_entry and system_call shall ask
                 the registered filter about a call before arch_prctl, sigreturn and
                 rt_sigreturn are answered and before the dispatcher is, with the
                 number's low 32 bits, the instruction after the call, and the token
@@ -2161,7 +2161,7 @@ package FerrixX8664Requirements {
             attribute :>> unit = "arch::x86_64::syscall_rollback_value";
         }
         requirement <'L.x86_64.140'> theEntrySortsANumberOnce : ItemLowLevel {
-            attribute :>> statement = "ferrix_syscall_entry shall test a number
+            attribute :>> statement = "xaqu_syscall_entry shall test a number
                 against the native range before any Linux table, pass a native
                 number on to the dispatcher without decoding it against x86-64's
                 table, and answer arch_prctl and rt_sigreturn from one decode of a
@@ -2173,7 +2173,7 @@ package FerrixX8664Requirements {
                 test removed the line fails.";
             attribute :>> parent = ("H.TRAP.3", "H.TRAP.12");
             attribute :>> unit = ("arch::x86_64::syscall::early",
-                "arch::x86_64::syscall::ferrix_syscall_entry");
+                "arch::x86_64::syscall::xaqu_syscall_entry");
         }
     }
 
@@ -2260,7 +2260,7 @@ package FerrixX8664Requirements {
             attribute :>> unit = ("arch::x86_64::init_traps",
                 "arch::x86_64::trap::init",
                 "arch::x86_64::trap::load_on_this_cpu",
-                "arch::x86_64::trap::ferrix_trap_entry",
+                "arch::x86_64::trap::xaqu_trap_entry",
                 "arch::x86_64::trap::classify",
                 "arch::x86_64::trap::fault_signal",
                 "arch::x86_64::cpu::read_cr0");
@@ -2429,14 +2429,14 @@ package FerrixX8664Requirements {
             attribute :>> unit = "arch::x86_64::trap::init";
         }
         requirement <'L.x86_64.82'> userBreakpointsAndRareFaults : ItemLowLevel {
-            attribute :>> statement = "fault_signal and ferrix_trap_entry shall end
+            attribute :>> statement = "fault_signal and xaqu_trap_entry shall end
                 a program's int3 and a trap-flag single step with SIGTRAP, clearing
                 DR6, and an alignment check with SIGBUS.";
             attribute :>> criterion = "A program's int3 and its single step each end
                 it with SIGTRAP, and an #AC with SIGBUS.";
             attribute :>> parent = "H.TRAP.4";
             attribute :>> unit = ("arch::x86_64::trap::fault_signal",
-                "arch::x86_64::trap::ferrix_trap_entry");
+                "arch::x86_64::trap::xaqu_trap_entry");
         }
         requirement <'L.x86_64.83'> doubleFaultHasItsOwnStack : ItemLowLevel {
             attribute :>> statement = "trap::init shall give the double fault and
@@ -2461,7 +2461,7 @@ package FerrixX8664Requirements {
                 vector, faulting address and saved registers -- with its catalogue
                 entry, and stop.";
             attribute :>> criterion = "A boot that faults in the kernel on purpose
-                ends with `FERRIX-PANIC page fault at` its address, the vector, CR2
+                ends with `XAQU-PANIC page fault at` its address, the vector, CR2
                 and register lines, and the catalogue entry.";
             attribute :>> parent = "H.FAIL.1";
             attribute :>> unit = ("trap::report",
@@ -2601,7 +2601,7 @@ package FerrixX8664Requirements {
         requirement <'L.x86_64.97'> theConsoleCarriesTheBoot : ItemLowLevel {
             attribute :>> statement = "init_console shall bring up the 16550 so that
                 the kernel's lines reach the serial port.";
-            attribute :>> criterion = "cargo xtask test-boot reads FERRIX-BOOT-OK
+            attribute :>> criterion = "cargo xtask test-boot reads XAQU-BOOT-OK
                 from the x86-64 guest's serial output.";
             attribute :>> parent = "H.BOOT.2";
             attribute :>> unit = ("arch::x86_64::init_console",
@@ -2617,8 +2617,8 @@ package FerrixX8664Requirements {
             attribute :>> statement = "shutdown shall announce the power-off,
                 drain the console and power the machine off, and shall say so
                 where the power-off write returned.";
-            attribute :>> criterion = "After init exits, FERRIX-POWER-OFF is printed
-                with no FERRIX-POWER-OFF-FAILED after it, QEMU exits by itself with
+            attribute :>> criterion = "After init exits, XAQU-POWER-OFF is printed
+                with no XAQU-POWER-OFF-FAILED after it, QEMU exits by itself with
                 status 33, and init's exit line is in the log (F-46).";
             attribute :>> parent = "H.BOOT.6";
             attribute :>> unit = ("arch::x86_64::shutdown",
@@ -2631,7 +2631,7 @@ package FerrixX8664Requirements {
         requirement <'L.x86_64.212'> theSoftOffIsRecordedWhole : ItemLowLevel {
             doc /* ACPI 6.5 7.4.2 and 16.1.7; the consultant's OK IF, ledger
                 line 4704, conditions 3 and 4. The AML is matched, not run:
-                ferrix_acpi::sleep::s5_sleep_types. */
+                xaqu_acpi::sleep::s5_sleep_types. */
             attribute :>> statement = "At interrupt bring-up the kernel shall
                 record what entering S5 needs -- the FADT's PM1a and PM1b
                 control ports, SLP_TYPa and SLP_TYPb
@@ -2642,7 +2642,7 @@ package FerrixX8664Requirements {
                 single constant _S5 package. SMI_CMD and ACPI_ENABLE are
                 recorded with them, an SMI_CMD past 16 bits as none (no
                 handoff).";
-            attribute :>> criterion = "ferrix-acpi's host tests: q35's and a
+            attribute :>> criterion = "xaqu-acpi's host tests: q35's and a
                 firmware's _S5 bytes read, every constant encoding and PkgLength
                 size, every truncation and arbitrary bytes no answer and no
                 panic, a method, a string and disagreeing packages no answer,
@@ -2665,7 +2665,7 @@ package FerrixX8664Requirements {
                 halt.";
             attribute :>> criterion = "cargo xtask test-iso: the live session's
                 person types poweroff on a QEMU line with no isa-debug-exit,
-                FERRIX-POWER-OFF is printed with no FERRIX-POWER-OFF-FAILED
+                XAQU-POWER-OFF is printed with no XAQU-POWER-OFF-FAILED
                 after it, and QEMU exits by itself with status 0; test-boot
                 x86_64 still exits 33 (L.x86_64.98).";
             attribute :>> parent = "H.BOOT.6";
@@ -2788,7 +2788,7 @@ package FerrixX8664Requirements {
                 that processor. It shall record, with the count, the vendor's rules
                 and CPUID 8000_0007h's OverflowRecov, SUCCOR and SMCA bits
                 (L.x86_64.233).";
-            attribute :>> criterion = "Every gate boot's /proc/ferrix-mce reads
+            attribute :>> criterion = "Every gate boot's /proc/xaqu-mce reads
                 a non-zero bank count for every processor (test-mce-corrected
                 under KVM and TCG), and the mce: line names the count; a
                 processor without a record stops on a machine check
@@ -2826,7 +2826,7 @@ package FerrixX8664Requirements {
         requirement <'L.x86_64.223'> pollLogsAndClearsCorrected : ItemLowLevel {
             attribute :>> statement = "One kernel task pinned to each processor
                 with a bring-up record shall, after its CMCI claim (L.x86_64.249),
-                once at once, then every ferrix.mce.poll seconds (1 to 3600 by
+                once at once, then every xaqu.mce.poll seconds (1 to 3600 by
                 msrlog's chooser; 5 otherwise, said) and at once when the
                 processor's CMCI wakes it (L.x86_64.250), print each bank's
                 corrected or uncorrected-no-action record as one mce: line with
@@ -2946,7 +2946,7 @@ package FerrixX8664Requirements {
             attribute :>> criterion = "test-mce-srar under KVM and TCG: the victim's
                 handler prints code=4, its own page's address, lsb=12 and err=0
                 (no physical address in its context), the frame is listed in
-                /proc/ferrix-mce-retired and a second program runs;
+                /proc/xaqu-mce-retired and a second program runs;
                 test-mce-kill, the same with RIPV clear: the victim is killed by
                 signal 7, its handler does not run, a second program runs. Negative controls: the classifier calling the record fatal,
                 and vector 18 not moved to the task stack, each stop the boot. test-mce-driver and its kill and
@@ -2955,7 +2955,7 @@ package FerrixX8664Requirements {
             attribute :>> unit = ("arch::x86_64::mce::from_user",
                 "arch::x86_64::mce::marked",
                 "arch::x86_64::mce::signal_for",
-                "arch::x86_64::trap::ferrix_trap_entry",
+                "arch::x86_64::trap::xaqu_trap_entry",
                 "trap::user_fault",
                 "trap::user_fault_ending",
                 "user::space::AddressSpace::find_frame",
@@ -2971,10 +2971,10 @@ package FerrixX8664Requirements {
                 test-mce under KVM and TCG.";
             attribute :>> parent = "H.FAIL.1";
             attribute :>> unit = ("arch::x86_64::mce::on_kernel_stack",
-                "arch::x86_64::paranoid::ferrix_paranoid_entry");
+                "arch::x86_64::paranoid::xaqu_paranoid_entry");
         }
         requirement <'L.x86_64.230'> machineCheckCountsInProc : ItemLowLevel {
-            attribute :>> statement = "/proc/ferrix-mce, mode 0444, shall give
+            attribute :>> statement = "/proc/xaqu-mce, mode 0444, shall give
                 whether recovery is on and, for every processor, its bank count
                 and its counts of machine checks taken, recovered, spurious,
                 corrected and uncorrected-no-action records, records left from
@@ -2989,11 +2989,11 @@ package FerrixX8664Requirements {
                 "arch::x86_64::render_machine_check");
         }
         requirement <'L.x86_64.231'> recoveryOffStopsEveryCheck : ItemLowLevel {
-            attribute :>> statement = "With ferrix.mce.recover=off on the
+            attribute :>> statement = "With xaqu.mce.recover=off on the
                 command line, read when the poll starts, every machine check shall
-                stop as FX-9005, as before recovery existed, and /proc/ferrix-mce
+                stop as FX-9005, as before recovery existed, and /proc/xaqu-mce
                 shall say recover off.";
-            attribute :>> criterion = "test-mce-srar with ferrix.mce.recover=off:
+            attribute :>> criterion = "test-mce-srar with xaqu.mce.recover=off:
                 the injection stops the boot as FX-9005.";
             attribute :>> parent = "H.FAIL.8";
             attribute :>> unit = ("arch::x86_64::mce::start",
@@ -3194,20 +3194,20 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.244'> copyMcIsOneRepMovsb : ItemLowLevel {
             attribute :>> statement = "copy_mc shall copy len bytes from the source to the
-                destination with one rep movsb at ferrix_copy_mc_movs, touching
+                destination with one rep movsb at xaqu_copy_mc_movs, touching
                 no other memory and calling nothing, and answer left 0 and page
-                0; resumed at ferrix_copy_mc_out it shall answer rcx as left
+                0; resumed at xaqu_copy_mc_out it shall answer rcx as left
                 and rdx as page.";
             attribute :>> criterion = "mce/check.rs's copies: lengths 0 to 9000 at every source and
                 destination alignment 0 to 7 copied exactly with the bytes
                 around untouched and (0, 0) answered; xtask's pinned
-                disassembly of ferrix_copy_mc_movs to ferrix_copy_mc_out.";
+                disassembly of xaqu_copy_mc_movs to xaqu_copy_mc_out.";
             attribute :>> parent = "H.FAIL.10";
             attribute :>> unit = ("arch::x86_64::copy_mc::copy_mc", "arch::x86_64::copy_mc::Copied::poisoned", "arch::x86_64::copy_mc::movs_address", "arch::x86_64::copy_mc::out_address");
         }
         requirement <'L.x86_64.245'> aCopysConsumptionRecoversOnlyWhenSafe : ItemLowLevel {
             attribute :>> statement = "A ring-0 machine check shall be in the copy's context only
-                with rip at the relocated ferrix_copy_mc_movs and rcx above 0,
+                with rip at the relocated xaqu_copy_mc_movs and rcx above 0,
                 and shall recover there only for an Intel action-required data
                 load (MCA code 0x0134 under mask 0xefff) with EIPV, RIPV and a
                 usable address, or an AMD consumption with EIPV, RIPV, a usable
@@ -3227,13 +3227,13 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.246'> theCopyIsSentToItsExit : ItemLowLevel {
             attribute :>> statement = "On a copy's recovery the ring-0 handler shall move the frame's
-                rip to ferrix_copy_mc_out, write the page with bit 0 set into
+                rip to xaqu_copy_mc_out, write the page with bit 0 set into
                 its rdx and leave its rcx, clear that bank, defer the
                 action-optional ones, count the check recovered and as a copy,
                 and clear MCG_STATUS last, with no lock, allocation or print.";
             attribute :>> criterion = "mce/check.rs's copies: the fixup on a frame the check builds;
                 test-mce-copy under KVM with AMD's records: the copy returns,
-                the call fails, /proc/ferrix-mce counts copies 1 on the
+                the call fails, /proc/xaqu-mce counts copies 1 on the
                 consumer. Control: the rip write
                 removed.";
             attribute :>> parent = "H.FAIL.10";
@@ -3272,7 +3272,7 @@ package FerrixX8664Requirements {
             doc /* docs/MACHINE-CHECK-CMCI.md §3.1 (customer, 2026-10-30, item 4; consultant OK IF ledger 5348). */
             attribute :>> statement = "A processor taking Intel's rules whose MCG_CAP has CMCI_P
                 and whose local APIC names at least seven LVT entries shall, in
-                its poll task before its first round and with ferrix.mce.cmci not
+                its poll task before its first round and with xaqu.mce.cmci not
                 off, claim each bank whose MCi_CTL2 it can read with CMCI_EN clear
                 by setting CMCI_EN and threshold 1 and reading it back, under one
                 lock across processors, and count as claimed only a bank whose
@@ -3332,7 +3332,7 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.252'> cmciOffClaimsNothing : ItemLowLevel {
             doc /* docs/MACHINE-CHECK-CMCI.md §3.6. */
-            attribute :>> statement = "With ferrix.mce.cmci=off no bank shall be claimed and every
+            attribute :>> statement = "With xaqu.mce.cmci=off no bank shall be claimed and every
                 LVT CMCI entry left masked, said; any other value shall leave CMCI
                 on, said.";
             attribute :>> criterion = "test-mce-cmci-off under TCG with patch 0008: the option
@@ -3371,7 +3371,7 @@ package FerrixX8664Requirements {
         requirement <'L.x86_64.99'> theMachineResets : ItemLowLevel {
             attribute :>> statement = "reset shall restart the machine from firmware
                 after the console has drained.";
-            attribute :>> criterion = "Under ferrix.onexit=reset the kernel says it
+            attribute :>> criterion = "Under xaqu.onexit=reset the kernel says it
                 is resetting and the loader's banner is printed again after it.";
             attribute :>> parent = "H.BOOT.7";
             attribute :>> unit = ("arch::x86_64::reset",
@@ -3439,7 +3439,7 @@ package FerrixX8664Requirements {
             attribute :>> statement = "frame_pointer shall answer the calling
                 function's frame record, from which a failure report's backtrace
                 walks.";
-            attribute :>> criterion = "The ferrix.onexit=panic report carries at
+            attribute :>> criterion = "The xaqu.onexit=panic report carries at
                 least 1 `trace #0` line that xtask's symbolizer resolves to a kernel
                 function.";
             attribute :>> parent = "H.FAIL.1";
@@ -3979,7 +3979,7 @@ package FerrixX8664Requirements {
                 secondary_start, shall read its own IA32_APIC_BASE before it uses
                 its local APIC. The boot processor shall choose x2APIC mode where
                 the platform locks legacy xAPIC (IA32_XAPIC_DISABLE_STATUS),
-                firmware left x2APIC on, or ferrix.apic=x2apic asks and CPUID
+                firmware left x2APIC on, or xaqu.apic=x2apic asks and CPUID
                 offers it, and xAPIC mode otherwise; every processor shall run in
                 that mode, every local APIC register access going through one
                 accessor that picks the MSR or the MMIO window. In xAPIC mode one
@@ -3990,7 +3990,7 @@ package FerrixX8664Requirements {
                 every processor looks, that one is switched to xAPIC and comes up,
                 and stage 4's apic line counts them; with secondary_start's look
                 removed that processor never comes up and stage 4 fails. With
-                ferrix.apic=x2apic every processor says it runs in x2APIC mode and
+                xaqu.apic=x2apic every processor says it runs in x2APIC mode and
                 the boot passes; with the x2APIC end-of-interrupt write removed it
                 never reaches stage 3's line.";
             attribute :>> parent = ("H.IRQ.1", "H.FAIL.1");
@@ -4002,7 +4002,7 @@ package FerrixX8664Requirements {
         }
         requirement <'L.x86_64.132'> oneDestinationEncoder : ItemLowLevel {
             attribute :>> statement = "An interrupt remapping entry's destination
-                shall be built only by ferrix_paging::vtd::remap::destination, in
+                shall be built only by xaqu_paging::vtd::remap::destination, in
                 xAPIC format (the APIC ID in bits 15:8), and an APIC ID above 255
                 shall be refused rather than truncated; the x2APIC work must set
                 EIME and widen it.";
@@ -4156,7 +4156,7 @@ package FerrixX8664Requirements {
                 "arch::x86_64::restricted::fast_exit_here",
                 "arch::x86_64::restricted::flip_to",
                 "arch::x86_64::restricted::copy_kept",
-                "arch::x86_64::syscall::ferrix_syscall_fast",
+                "arch::x86_64::syscall::xaqu_syscall_fast",
                 "arch::x86_64::pcid::tagged_install");
         }
         requirement <'L.x86_64.275'> theBasesAreWrittenAsTheModeAsks : ItemLowLevel {

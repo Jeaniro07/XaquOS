@@ -1,4 +1,4 @@
-//! The Ferrix native system call ABI: the half of the interface that is ours.
+//! The Xaqu native system call ABI: the half of the interface that is ours.
 //!
 //! `docs/ARCHITECTURE.md` §2 fixes two ABIs side by side. The Linux one is a
 //! compatibility obligation and `src/lib/proto/linux-abi` writes it down. This crate is

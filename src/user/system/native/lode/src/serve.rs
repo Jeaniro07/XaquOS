@@ -9,8 +9,8 @@
 //! long as init keeps its channel open.
 //!
 //! Every record read passes the rules, the folding and the limiter
-//! ([`ferrix_lode_core::limit`]) and goes to its retention class's segment
-//! ([`ferrix_lode_core::retention`]): one `write` a class a wakeup, so a
+//! ([`xaqu_lode_core::limit`]) and goes to its retention class's segment
+//! ([`xaqu_lode_core::retention`]): one `write` a class a wakeup, so a
 //! crash of lode loses nothing it had stored; `fdatasync` follows every
 //! [`SYNC_US`], and at once after a record of priority crit or more urgent.
 //! A restart reads the kernel log from its oldest record and skips what was
@@ -20,21 +20,21 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::alert::{self, Alert, Alerts};
-use ferrix_lode_core::compress::{self, Compressor};
-use ferrix_lode_core::events::Events;
-use ferrix_lode_core::ingest::{self, KernelSequence, Now, Taken};
-use ferrix_lode_core::limit::{self, Limiter, Rule};
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::retention::{self, Class, DAY_US, Kept};
-use ferrix_lode_core::segment::{self, Header};
-use ferrix_lode_core::time::Zone;
-use ferrix_lode_core::{access, units};
-use ferrix_lode_core::{console, kmsg};
-use ferrix_native_abi::directory::{MAX_MESSAGE, Message};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::{Deadline, Object, Signals};
+use xaqu_lode_core::alert::{self, Alert, Alerts};
+use xaqu_lode_core::compress::{self, Compressor};
+use xaqu_lode_core::events::Events;
+use xaqu_lode_core::ingest::{self, KernelSequence, Now, Taken};
+use xaqu_lode_core::limit::{self, Limiter, Rule};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::retention::{self, Class, DAY_US, Kept};
+use xaqu_lode_core::segment::{self, Header};
+use xaqu_lode_core::time::Zone;
+use xaqu_lode_core::{access, units};
+use xaqu_lode_core::{console, kmsg};
+use xaqu_native_abi::directory::{MAX_MESSAGE, Message};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::{Deadline, Object, Signals};
 
 use crate::alerting::Alerting;
 use crate::capture::Capture;
@@ -55,7 +55,7 @@ const RUN: &[u8] = b"/run/lode";
 /// The boot's id, which a restarted lode takes up.
 const BOOT_ID: &[u8] = b"/run/lode/boot_id";
 /// Rules and retention classes.
-pub(crate) const CONFIG: &[u8] = b"/etc/ferrix/lode.d";
+pub(crate) const CONFIG: &[u8] = b"/etc/xaqu/lode.d";
 /// How long a write may wait for `fdatasync`, in microseconds.
 pub(crate) const SYNC_US: u64 = 5_000_000;
 /// The size a segment is sealed at, and the next begun.
@@ -98,7 +98,7 @@ struct Writer {
 }
 
 /// A segment being written, and whose: a class's, the system's or a
-/// user's (`ferrix_lode_core::access`).
+/// user's (`xaqu_lode_core::access`).
 struct Slot {
     /// The class, by its index.
     class: usize,
@@ -187,7 +187,7 @@ pub(crate) fn run(channel: &Channel<Kernel>) -> Result<(), Step> {
         blob_quota,
         quarantine,
     } = configuration(&mut said, now);
-    let tombstones = ferrix_lode_core::tombstone::Tombstones::new(u64::from(
+    let tombstones = xaqu_lode_core::tombstone::Tombstones::new(u64::from(
         events.count("tombstone").unwrap_or(5),
     ));
     let mut store = Store::new(persistent.map(|dir| dir.fd), volatile.fd, classes, boot_id);
@@ -289,7 +289,7 @@ struct Service {
     /// When it was last swept, monotonic microseconds.
     blobs_swept: u64,
     /// This boot's tombstones.
-    tombstones: ferrix_lode_core::tombstone::Tombstones,
+    tombstones: xaqu_lode_core::tombstone::Tombstones,
     /// The pstore import's tries: how many, and the next's monotonic time;
     /// `None` once it is done.
     pstore: Option<(u32, u64)>,
@@ -303,7 +303,7 @@ struct Service {
     quarantine: crate::quarantine::Quarantine,
 }
 
-/// What `/etc/ferrix/lode.d` says.
+/// What `/etc/xaqu/lode.d` says.
 struct Configuration {
     /// The limiter's rules.
     rules: Vec<Rule>,
@@ -316,7 +316,7 @@ struct Configuration {
     /// The blob container's quota.
     blob_quota: u64,
     /// Core quarantine's policy (`quarantine.conf`).
-    quarantine: ferrix_lode_core::quarantine::Config,
+    quarantine: xaqu_lode_core::quarantine::Config,
 }
 
 /// The rules, the retention classes, the alerts and the events, with a
@@ -327,7 +327,7 @@ fn configuration(said: &mut Vec<Record>, now: Now) -> Configuration {
     let mut classes = retention::defaults();
     let mut events = Events::default();
     let mut blob_quota = retention::BLOB_QUOTA;
-    let mut quarantine = ferrix_lode_core::quarantine::Config::DEFAULT;
+    let mut quarantine = xaqu_lode_core::quarantine::Config::DEFAULT;
     let Ok(dir) = Dir::open(CONFIG) else {
         return Configuration {
             rules,
@@ -358,16 +358,16 @@ fn configuration(said: &mut Vec<Record>, now: Now) -> Configuration {
             blob_quota = retention::blob_quota(&text);
             retention::parse(&text).map(|read| classes = read).err()
         } else if name == b"events.conf" {
-            events.apply(&text, "/etc/ferrix/lode.d/events.conf").err()
+            events.apply(&text, "/etc/xaqu/lode.d/events.conf").err()
         } else if name == b"quarantine.conf" {
             // Never quarantine on a file not read: warn instead, said once.
-            match ferrix_lode_core::quarantine::Config::parse(&text) {
+            match xaqu_lode_core::quarantine::Config::parse(&text) {
                 Ok(read) => quarantine = read,
                 Err(why) => {
-                    quarantine = ferrix_lode_core::quarantine::Config::UNREAD;
+                    quarantine = xaqu_lode_core::quarantine::Config::UNREAD;
                     said.push(ingest::own(
                         3,
-                        ferrix_lode_core::quarantine::MESSAGE_ID_QUARANTINE,
+                        xaqu_lode_core::quarantine::MESSAGE_ID_QUARANTINE,
                         &alloc::format!(
                             "{}/quarantine.conf: {why}; cores are only warned about",
                             String::from_utf8_lossy(CONFIG)
@@ -425,7 +425,7 @@ impl Service {
             self.front.serve(now, &mut heard);
             for mut record in heard {
                 self.seat.stamp(&mut record);
-                if record.get("FERRIX_ECHOED").is_some() {
+                if record.get("XAQU_ECHOED").is_some() {
                     let mut out = Vec::new();
                     self.echoes.echoed(record, now.monotonic_us, &mut out);
                     self.admit_all(out, now, &mut batch);
@@ -545,7 +545,7 @@ impl Service {
         // What the collector read of a held crash: its parts made blobs,
         // for the record and for the crash's tombstone. Root's alone, by
         // the sender's credentials.
-        if record.get_str("FERRIX_EVENT") == Some("crash-collected")
+        if record.get_str("XAQU_EVENT") == Some("crash-collected")
             && record.get_str("_UID") == Some("0")
         {
             self.collected(&mut record);
@@ -593,7 +593,7 @@ impl Service {
                 (
                     index,
                     text.chars().take(160).collect(),
-                    ferrix_lode_core::capture::bin_of(record),
+                    xaqu_lode_core::capture::bin_of(record),
                 )
             })
             .collect();
@@ -686,7 +686,7 @@ impl Service {
     }
 
     /// The pstore import (`docs/LOGGING.md` §5): the loader's
-    /// `FERRIX/LASTKERNEL.TXT`, its lines lode did not store imported as the
+    /// `XAQU/LASTKERNEL.TXT`, its lines lode did not store imported as the
     /// end of the boot whose kernel named that pstore boot, from the copy
     /// `lode pstore-fetch` (root's) leaves. Looked for every 5 s for 2 min,
     /// as the fetch waits for the disk; once a copy is read, or the time is
@@ -712,7 +712,7 @@ impl Service {
         let record = match self.import_kept(&bytes, now) {
             Ok(Some(record)) => record,
             Ok(None) => return,
-            Err(why) => ferrix_lode_core::lastkernel::not_imported(&why, now),
+            Err(why) => xaqu_lode_core::lastkernel::not_imported(&why, now),
         };
         self.say_pstore(record, now);
     }
@@ -725,7 +725,7 @@ impl Service {
     /// Import the file's `bytes`: the record that says what was imported,
     /// `None` when it was imported already, or why it was not.
     fn import_kept(&mut self, bytes: &[u8], now: Now) -> Result<Option<Record>, String> {
-        use ferrix_lode_core::lastkernel;
+        use xaqu_lode_core::lastkernel;
         let kept = lastkernel::parse(bytes)
             .ok_or_else(|| String::from("it does not begin with the loader's report"))?;
         let mut dirs = alloc::vec![Dir {
@@ -800,7 +800,7 @@ impl Service {
                             .map(|scanned| scanned.records)
                             .unwrap_or_default()
                             .iter()
-                            .flat_map(|found| ferrix_lode_core::blob::references(&found.record))
+                            .flat_map(|found| xaqu_lode_core::blob::references(&found.record))
                             .map(|(_, reference)| reference.id),
                     );
                 }
@@ -830,7 +830,7 @@ impl Service {
             return;
         }
         for record in batch.iter_mut() {
-            let names: Vec<String> = ferrix_lode_core::blob::references(record)
+            let names: Vec<String> = xaqu_lode_core::blob::references(record)
                 .into_iter()
                 .filter(|(_, reference)| failed.contains(&reference.id))
                 .map(|(name, _)| name)
@@ -930,7 +930,7 @@ impl Service {
                 .unwrap_or_default();
             let skip = records.len().saturating_sub(256);
             for (at, record) in records.iter().enumerate() {
-                if ferrix_lode_core::tombstone::is_tombstone(record) {
+                if xaqu_lode_core::tombstone::is_tombstone(record) {
                     self.tombstones.restore(record);
                 } else if index >= newest
                     && at >= skip
@@ -1105,7 +1105,7 @@ fn with_program(mut record: Record, known: Option<console::Identity>) -> Record 
 
 /// What the boot record says of the boot (`docs/LOGGING.md` §18 "The boot
 /// record"): the kernel's command line, a deploy's nonce on it
-/// (`n150.deploy=`), and the image's commit from `/etc/ferrix/image`.
+/// (`n150.deploy=`), and the image's commit from `/etc/xaqu/image`.
 fn boot_facts(record: &mut Record) {
     if let Some(line) = sys::read_small(b"/proc/cmdline") {
         let line = line.strip_suffix(b"\n").unwrap_or(&line);
@@ -1116,7 +1116,7 @@ fn boot_facts(record: &mut Record) {
             }
         }
     }
-    if let Some(image) = sys::read_small(b"/etc/ferrix/image") {
+    if let Some(image) = sys::read_small(b"/etc/xaqu/image") {
         for line in image.split(|&byte| byte == b'\n') {
             if let Some(commit) = line.strip_prefix(b"commit=") {
                 record.push("BOOT_IMAGE", commit);
@@ -1956,7 +1956,7 @@ fn take_into(found: &mut BootTail, record: &Record) {
     };
     let message = String::from_utf8_lossy(record.message()).into_owned();
     if found.said.is_none() {
-        found.said = ferrix_lode_core::lastkernel::mirrored_boot(&message);
+        found.said = xaqu_lode_core::lastkernel::mirrored_boot(&message);
     }
     found.tail.push((seq, message));
     if found.tail.len() > 16 {

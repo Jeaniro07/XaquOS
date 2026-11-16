@@ -11,9 +11,9 @@
 //! [`port_queue_rung`] turn that into [`Rung::Full`], so neither side's glue
 //! treats it as an error.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{PACKET_USER, PortPacket};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{PACKET_USER, PortPacket};
 
 /// The port key of the kernel's bell on the driver's port: new submissions.
 ///

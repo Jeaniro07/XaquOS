@@ -36,7 +36,7 @@ fn a_real_bus_takes_us_and_a_call_reaches_us() {
     let uid = unsafe { libc_getuid() };
     let mut bus = Connection::open(&path, uid).expect("authenticated and said Hello");
     assert!(bus.unique.starts_with(':'), "a unique name: {}", bus.unique);
-    assert!(bus.request_name("org.ferrix.Test").expect("RequestName"));
+    assert!(bus.request_name("org.xaqu.Test").expect("RequestName"));
 
     let caller = std::thread::spawn({
         let address = address.trim().to_owned();
@@ -45,9 +45,9 @@ fn a_real_bus_takes_us_and_a_call_reaches_us() {
                 .args([
                     &format!("--bus={address}"),
                     "--print-reply",
-                    "--dest=org.ferrix.Test",
-                    "/org/ferrix/Test",
-                    "org.ferrix.Test.Echo",
+                    "--dest=org.xaqu.Test",
+                    "/org/xaqu/Test",
+                    "org.xaqu.Test.Echo",
                     "string:hello",
                 ])
                 .output()
@@ -56,7 +56,7 @@ fn a_real_bus_takes_us_and_a_call_reaches_us() {
     });
     let call = loop {
         let message = bus.receive().expect("a message");
-        if message.is_call("org.ferrix.Test", "Echo") {
+        if message.is_call("org.xaqu.Test", "Echo") {
             break message;
         }
     };

@@ -8,7 +8,7 @@
 # directory and builds `bin-x86_64-efi/snp.efi` there with the stick's
 # script embedded, so nothing is ever built in this directory.
 #
-# Writes $FERRIX_NETBOOT_DIR (default ~/.local/share/ferrix/netboot):
+# Writes $XAQU_NETBOOT_DIR (default ~/.local/share/xaqu/netboot):
 # pool/ipxe-2.0.0.tar.gz.
 # Needs curl and sha256sum; no root. Building it later needs make, gcc and
 # perl.
@@ -21,7 +21,7 @@ IPXE_VERSION=2.0.0
 IPXE_SHA256=9ed6d029be901a0ccc87cb2e5f9c774620f30f84ebdd507c6dd3e1e6229b7bd5
 url=https://github.com/ipxe/ipxe/archive/refs/tags/v$IPXE_VERSION.tar.gz
 
-out=${FERRIX_NETBOOT_DIR:-$HOME/.local/share/ferrix/netboot}
+out=${XAQU_NETBOOT_DIR:-$HOME/.local/share/xaqu/netboot}
 
 for tool in curl sha256sum; do
     command -v "$tool" > /dev/null || { echo "fetch-ipxe: $tool is not installed" >&2; exit 1; }

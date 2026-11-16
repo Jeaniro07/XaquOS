@@ -9,7 +9,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_linux_abi::types::{
+use xaqu_linux_abi::types::{
     AT_BASE, AT_ENTRY, AT_EXECFN, AT_NULL, AT_PAGESZ, AT_PHDR, AT_PHNUM, AT_PLATFORM, AT_RANDOM,
     AT_SECURE,
 };

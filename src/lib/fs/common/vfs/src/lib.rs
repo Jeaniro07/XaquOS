@@ -56,8 +56,8 @@
 //!   filesystem's `rename`. This is the one exception: the walks call
 //!   `lookup`, so a filesystem whose lookups sleep sleeps holding it during
 //!   a rename. It is therefore the one lock here that is not a spin lock, a
-//!   [`ferrix_sync::SleepLock`]: the kernel lends it a wait queue through
-//!   the [`ferrix_sync::Parker`] a [`Namespace`] is built with, so a walk
+//!   [`xaqu_sync::SleepLock`]: the kernel lends it a wait queue through
+//!   the [`xaqu_sync::Parker`] a [`Namespace`] is built with, so a walk
 //!   that waits for a disk sleeps and so does whoever is queued for the
 //!   lock. On the host the parker spins.
 //!
@@ -66,7 +66,7 @@
 //!
 //! **A spin lock's holder stays on its processor.** Every spin lock here,
 //! a tmpfs inode's included since 2026-10-10, is the crate's `SpinLock`, a
-//! `ferrix_sync::PreemptSpinLock` over [`ferrix_sync::HookedPreempt`]: the
+//! `xaqu_sync::PreemptSpinLock` over [`xaqu_sync::HookedPreempt`]: the
 //! kernel installs its preemption count behind it at boot, so neither a
 //! holder nor a task waiting for its ticket is switched out. A plain ticket
 //! lock let both happen, and every walk through a busy dentry queued behind
@@ -101,15 +101,15 @@ mod tests;
 
 /// This crate's spin lock: its holder is kept on its processor (see the
 /// crate documentation).
-pub(crate) type SpinLock<T> = ferrix_sync::PreemptSpinLock<T, ferrix_sync::HookedPreempt>;
+pub(crate) type SpinLock<T> = xaqu_sync::PreemptSpinLock<T, xaqu_sync::HookedPreempt>;
 
 /// The guard of this crate's [`SpinLock`].
 pub(crate) type SpinLockGuard<'a, T> =
-    ferrix_sync::PreemptSpinLockGuard<'a, T, ferrix_sync::HookedPreempt>;
+    xaqu_sync::PreemptSpinLockGuard<'a, T, xaqu_sync::HookedPreempt>;
 
 pub use access::Access;
 pub use dentry::Dentry;
-pub use ferrix_linux_abi::errno::Errno;
+pub use xaqu_linux_abi::errno::Errno;
 pub use file::{OpenFile, OpenFlags, Whence};
 pub use namespace::{
     Context, DEFAULT_CACHE, Location, MOUNT_MAX, Mount, MountFlags, Namespace, RenameMode, Stat,
@@ -125,7 +125,7 @@ pub use walk::Resolve;
 pub type Result<T> = core::result::Result<T, Errno>;
 
 /// Charge the running task's job `bytes` of kernel heap for something a
-/// program made here (`ferrix_kmem`, certification finding F-37): `ENOMEM`
+/// program made here (`xaqu_kmem`, certification finding F-37): `ENOMEM`
 /// past its memory limit, as Linux answers a refused kernel-memory charge.
 ///
 /// # Errors
@@ -135,9 +135,9 @@ pub type Result<T> = core::result::Result<T, Errno>;
 /// what a name kept in a dentry or a walk is made with, where an empty heap
 /// must be an answer and not a stop.
 pub(crate) fn boxed_name(bytes: &[u8]) -> Result<alloc::boxed::Box<[u8]>> {
-    ferrix_fallible::try_boxed_slice(bytes).map_err(|_| Errno::ENOMEM)
+    xaqu_fallible::try_boxed_slice(bytes).map_err(|_| Errno::ENOMEM)
 }
 
-pub(crate) fn charge(bytes: usize) -> Result<ferrix_kmem::Charge> {
-    ferrix_kmem::Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)
+pub(crate) fn charge(bytes: usize) -> Result<xaqu_kmem::Charge> {
+    xaqu_kmem::Charge::bytes(bytes).map_err(|_| Errno::ENOMEM)
 }

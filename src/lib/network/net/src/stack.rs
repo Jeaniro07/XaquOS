@@ -16,8 +16,8 @@
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::vec::Vec;
 
-use ferrix_kmem::{Charge, boxed_footprint};
-use ferrix_nettcp::Connection;
+use xaqu_kmem::{Charge, boxed_footprint};
+use xaqu_nettcp::Connection;
 
 use crate::addr::{Endpoint, IpAddress, Ipv4, Ipv6};
 use crate::iface::{Address, Interface, Medium};
@@ -50,7 +50,7 @@ pub struct Config {
     /// How many bytes of payload a datagram socket holds by default.
     pub datagram_capacity: usize,
     /// What a TCP connection is built with.
-    pub tcp: ferrix_nettcp::Config,
+    pub tcp: xaqu_nettcp::Config,
     /// The hop limit outgoing packets carry.
     pub hop_limit: u8,
 }
@@ -59,7 +59,7 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             datagram_capacity: 212_992,
-            tcp: ferrix_nettcp::Config::default(),
+            tcp: xaqu_nettcp::Config::default(),
             hop_limit: 64,
         }
     }
@@ -485,7 +485,7 @@ impl Stack {
             ready: VecDeque::new(),
             pending: Vec::new(),
             options: crate::socket::Options::default(),
-            owner: ferrix_kmem::current(),
+            owner: xaqu_kmem::current(),
         }))
     }
 
@@ -805,9 +805,9 @@ impl Stack {
             Socket::Raw(raw) => raw.datagram.take_error(),
             Socket::Stream(stream) => stream.error.take().or_else(|| {
                 stream.connection.failure().map(|failure| match failure {
-                    ferrix_nettcp::Failure::Refused => Error::Refused,
-                    ferrix_nettcp::Failure::TimedOut => Error::TimedOut,
-                    ferrix_nettcp::Failure::Reset | ferrix_nettcp::Failure::Protocol => {
+                    xaqu_nettcp::Failure::Refused => Error::Refused,
+                    xaqu_nettcp::Failure::TimedOut => Error::TimedOut,
+                    xaqu_nettcp::Failure::Reset | xaqu_nettcp::Failure::Protocol => {
                         Error::Reset
                     }
                 })
@@ -892,7 +892,7 @@ impl Stack {
             },
             port,
         );
-        let iss = ferrix_nettcp::SeqNumber(self.random.next_u32());
+        let iss = xaqu_nettcp::SeqNumber(self.random.next_u32());
         let options = self
             .sockets
             .get(&id.0)

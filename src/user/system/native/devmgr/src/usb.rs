@@ -1,5 +1,5 @@
 //! Class drivers for the USB interfaces a bus host's driver exports
-//! (`ferrix-usbif`, `docs/USB-SERIAL.md` §6.1).
+//! (`xaqu-usbif`, `docs/USB-SERIAL.md` §6.1).
 //!
 //! The kernel knows nothing of USB: what it publishes is the host
 //! controller, and its driver, `usbhid`, finds the devices. An interface
@@ -14,7 +14,7 @@
 //! by `usbhid`, whose end of the interface channel closes, so it attaches
 //! the interface again. That second ATTACH, under the same key, is where
 //! the driver is started again, under the same number, as the device's
-//! [`ferrix_restart::Policy`] decides -- the restart policy every driver
+//! [`xaqu_restart::Policy`] decides -- the restart policy every driver
 //! kind that is started again has, with the same budget. One whose budget
 //! is spent keeps its channel here unanswered, so `usbhid` does not attach
 //! it again and again.
@@ -25,18 +25,18 @@
 
 use core::time::Duration;
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_process_builder::build;
-use ferrix_restart::{Decision, Ended, Policy, Restart};
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::pending::Process;
-use ferrix_rt::native::port::Port;
-use ferrix_usbif::{Identity, MAX_BYTES, Message};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_process_builder::build;
+use xaqu_restart::{Decision, Ended, Policy, Restart};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::pending::Process;
+use xaqu_rt::native::port::Port;
+use xaqu_usbif::{Identity, MAX_BYTES, Message};
 
 use crate::{Drivers, MAX_RESTARTS, exit_of, image_index};
 
@@ -178,7 +178,7 @@ impl Children {
         port: &Port<Kernel>,
     ) {
         let Some(at) = self.entry_for(host, generation, key, &identity, drivers) else {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "devmgr   usb {:04x}:{:04x} interface {}: no slot left; not started",
                 identity.vendor,
                 identity.product,
@@ -190,7 +190,7 @@ impl Children {
             return;
         };
         let Some(driver) = child.driver else {
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "devmgr   usb {:04x}:{:04x} interface {} class {:02x}: no driver takes it",
                 identity.vendor,
                 identity.product,
@@ -205,7 +205,7 @@ impl Children {
         // budget, once it is seen.
         if let Some(process) = child.process.take() {
             if !child.dead {
-                let until = ferrix_rt::linux::monotonic_nanos()
+                let until = xaqu_rt::linux::monotonic_nanos()
                     .unwrap_or(0)
                     .saturating_add(ENDED_PATIENCE);
                 let _ = process.wait_one(Signals::TERMINATED, Deadline::At(until));
@@ -215,7 +215,7 @@ impl Children {
             }
             let exit = exit_of(&process);
             if child.policy.decide(Ended::of(exit), None) != Decision::Now {
-                ferrix_rt::warn!(
+                xaqu_rt::warn!(
                     "devmgr   {name} for usb {:04x}:{:04x} interface {} (serial {}) died with status {}; its budget is spent and it stays unstarted",
                     identity.vendor,
                     identity.product,
@@ -226,7 +226,7 @@ impl Children {
                 child.parked = Some(interface);
                 return;
             }
-            ferrix_rt::notice!(
+            xaqu_rt::notice!(
                 "devmgr   {name} for usb {:04x}:{:04x} interface {} (serial {}) died with status {}; started again ({} of {MAX_RESTARTS})",
                 identity.vendor,
                 identity.product,
@@ -240,7 +240,7 @@ impl Children {
         let watch = KEY_CHILD | (u64::from(child.starts) << 8) | at as u64;
         match start(drivers, driver, name, child.number, interface, port, watch) {
             Ok((job, process, bootstrap)) => {
-                ferrix_rt::info!(
+                xaqu_rt::info!(
                     "devmgr   {name} for usb {:04x}:{:04x} interface {}: started (serial {})",
                     identity.vendor,
                     identity.product,
@@ -252,7 +252,7 @@ impl Children {
                 child.bootstrap = Some(bootstrap);
                 child.dead = false;
             }
-            Err(()) => ferrix_rt::warn!(
+            Err(()) => xaqu_rt::warn!(
                 "devmgr   {name} for usb {:04x}:{:04x} interface {}: could not be started",
                 identity.vendor,
                 identity.product,
@@ -286,7 +286,7 @@ impl Children {
         if status == 0 {
             // Its interface went: the device, or the host. The number is
             // free for the next device.
-            ferrix_rt::info!(
+            xaqu_rt::info!(
                 "devmgr   {name} for usb {:04x}:{:04x} interface {} (serial {}) ended: its device went",
                 child.identity.vendor,
                 child.identity.product,
@@ -297,7 +297,7 @@ impl Children {
                 *slot = None;
             }
         } else {
-            ferrix_rt::warn!(
+            xaqu_rt::warn!(
                 "devmgr   {name} for usb {:04x}:{:04x} interface {} (serial {}) died with status {status}",
                 child.identity.vendor,
                 child.identity.product,
@@ -409,7 +409,7 @@ fn start(
         .and_then(Option::as_ref)
         .ok_or(())?;
     let job = drivers.job.create_sealed_child().map_err(|_| ())?;
-    let built = build(&job, image, name, ferrix_rt::ELF_MACHINE).map_err(|_| ())?;
+    let built = build(&job, image, name, xaqu_rt::ELF_MACHINE).map_err(|_| ())?;
     let (near, far) = channel::create(Kernel).map_err(|_| ())?;
     near.write_with(
         Message::Bind { number }.encode().as_bytes(),

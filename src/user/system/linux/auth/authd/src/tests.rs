@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use ferrix_auth_proto::{Record, Response, method};
+use xaqu_auth_proto::{Record, Response, method};
 
 use crate::engine::{Armed, Conversation, Engine, FAILED, Out, Peer, Reply};
 use crate::password::{FLOOR, Hasher};
@@ -13,7 +13,7 @@ use crate::paths::Paths;
 use crate::store::{Credential, Store};
 
 const ROOT: Peer = Peer { pid: 1, uid: 0 };
-const FERRIX: Peer = Peer { pid: 2, uid: 1000 };
+const XAQU: Peer = Peer { pid: 2, uid: 1000 };
 const OTHER: Peer = Peer { pid: 3, uid: 1001 };
 
 /// A root under the temporary directory, with accounts and policies.
@@ -29,12 +29,12 @@ impl Machine {
         let _ = std::fs::remove_dir_all(&root);
         write(
             &root.join("etc/passwd"),
-            "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/sh\nother:x:1001:1001::/:/bin/sh\nauth:x:90:90::/:/sbin/nologin\n",
+            "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/sh\nother:x:1001:1001::/:/bin/sh\nauth:x:90:90::/:/sbin/nologin\n",
         );
-        let services = root.join("lib/ferrix/auth/services");
+        let services = root.join("lib/xaqu/auth/services");
         write(
             &root.join("etc/group"),
-            "root:x:0:\nwheel:x:10:ferrix\nferrix:x:1000:\nother:x:1001:\n",
+            "root:x:0:\nwheel:x:10:xaqu\nxaqu:x:1000:\nother:x:1001:\n",
         );
         for service in [
             "hyprlock",
@@ -69,7 +69,7 @@ impl Machine {
     /// Give `account` (uid `uid`) the password `password`.
     fn set(&self, account: &str, uid: u32, password: &str) {
         let mut hasher = Hasher::fixed(FLOOR);
-        let secret = ferrix_auth_proto::Secret::from_bytes(password.as_bytes()).unwrap();
+        let secret = xaqu_auth_proto::Secret::from_bytes(password.as_bytes()).unwrap();
         let hash = hasher.make(&secret, &mut |_| {}).unwrap();
         Store::new(Paths::under(&self.root))
             .set_credential(&Credential {
@@ -132,7 +132,7 @@ impl Machine {
     }
 
     fn audit(&self) -> String {
-        std::fs::read_to_string(self.root.join("var/log/ferrix/auth.log")).unwrap_or_default()
+        std::fs::read_to_string(self.root.join("var/log/xaqu/auth.log")).unwrap_or_default()
     }
 }
 
@@ -177,8 +177,8 @@ fn unavailable(text: &str) -> Out {
 #[test]
 fn the_right_password_is_accepted_and_a_wrong_one_fails_after_the_delay() {
     let mut m = Machine::new("right-wrong");
-    m.set("ferrix", 1000, "correct horse");
-    let outs = m.converse(FERRIX, "hyprlock", "", &["correct horse"]);
+    m.set("xaqu", 1000, "correct horse");
+    let outs = m.converse(XAQU, "hyprlock", "", &["correct horse"]);
     assert_eq!(
         outs.first().map(|out| &out.reply),
         Some(&Reply::Prompt {
@@ -186,13 +186,13 @@ fn the_right_password_is_accepted_and_a_wrong_one_fails_after_the_delay() {
             text: "Password: ".to_owned()
         })
     );
-    assert_eq!(outs.last(), Some(&accepted("ferrix", 1000)));
+    assert_eq!(outs.last(), Some(&accepted("xaqu", 1000)));
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["correct hors"]),
+        m.verdict(XAQU, "hyprlock", "", &["correct hors"]),
         failed(0)
     );
     let log = m.audit();
-    assert!(log.contains("service=hyprlock account=ferrix peer-pid=2 peer-uid=1000 method=password result=accepted"), "{log}");
+    assert!(log.contains("service=hyprlock account=xaqu peer-pid=2 peer-uid=1000 method=password result=accepted"), "{log}");
     assert!(log.contains("result=failed why=failures:1"), "{log}");
     assert!(
         !log.contains("correct"),
@@ -204,20 +204,20 @@ fn the_right_password_is_accepted_and_a_wrong_one_fails_after_the_delay() {
 fn no_credential_is_unavailable_never_an_empty_password() {
     let mut m = Machine::new("none");
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &[]),
-        unavailable("no password is set for ferrix")
+        m.verdict(XAQU, "hyprlock", "", &[]),
+        unavailable("no password is set for xaqu")
     );
     assert_eq!(
-        m.one(FERRIX, &Record::Status { account: "" }),
+        m.one(XAQU, &Record::Status { account: "" }),
         Reply::State {
             credential: false,
             methods: 0,
             throttled_ms: 0
         }
     );
-    m.set("ferrix", 1000, "x");
+    m.set("xaqu", 1000, "x");
     assert_eq!(
-        m.one(FERRIX, &Record::Status { account: "" }),
+        m.one(XAQU, &Record::Status { account: "" }),
         Reply::State {
             credential: true,
             methods: method::PASSWORD,
@@ -229,32 +229,32 @@ fn no_credential_is_unavailable_never_an_empty_password() {
 #[test]
 fn only_root_names_another_account_and_never_skips_the_password() {
     let mut m = Machine::new("naming");
-    m.set("ferrix", 1000, "correct horse");
+    m.set("xaqu", 1000, "correct horse");
     assert_eq!(
-        m.verdict(OTHER, "gate", "ferrix", &[]),
+        m.verdict(OTHER, "gate", "xaqu", &[]),
         unavailable("only root may name another account")
     );
     assert_eq!(
-        m.verdict(OTHER, "hyprlock", "ferrix", &[]),
+        m.verdict(OTHER, "hyprlock", "xaqu", &[]),
         unavailable("this service checks only the caller's own account")
     );
     assert_eq!(
-        m.one(OTHER, &Record::Status { account: "ferrix" }),
+        m.one(OTHER, &Record::Status { account: "xaqu" }),
         Reply::Unavailable("only root may name another account".to_owned())
     );
-    // Root names ferrix, and is still asked for ferrix's password.
-    assert_eq!(m.verdict(ROOT, "gate", "ferrix", &["wrong"]), failed(0));
+    // Root names xaqu, and is still asked for xaqu's password.
+    assert_eq!(m.verdict(ROOT, "gate", "xaqu", &["wrong"]), failed(0));
     assert_eq!(
-        m.verdict(ROOT, "gate", "ferrix", &["correct horse"]),
-        accepted("ferrix", 1000)
+        m.verdict(ROOT, "gate", "xaqu", &["correct horse"]),
+        accepted("xaqu", 1000)
     );
     // login is root's alone.
     assert_eq!(
-        m.verdict(FERRIX, "login", "", &[]),
+        m.verdict(XAQU, "login", "", &[]),
         unavailable("only root may use the login service")
     );
     assert_eq!(
-        m.verdict(FERRIX, "nosuch", "", &[]),
+        m.verdict(XAQU, "nosuch", "", &[]),
         unavailable("there is no nosuch service")
     );
 }
@@ -262,10 +262,10 @@ fn only_root_names_another_account_and_never_skips_the_password() {
 #[test]
 fn an_unknown_account_answers_as_a_real_one_does_over_six_failures() {
     let mut m = Machine::new("unknown");
-    m.set("ferrix", 1000, "correct horse");
+    m.set("xaqu", 1000, "correct horse");
     let start = m.now_ms;
     let real: Vec<Vec<Out>> = (0..6)
-        .map(|_| m.converse(ROOT, "gate", "ferrix", &["guess"]))
+        .map(|_| m.converse(ROOT, "gate", "xaqu", &["guess"]))
         .collect();
     m.now_ms = start;
     let unknown: Vec<Vec<Out>> = (0..6)
@@ -280,7 +280,7 @@ fn an_unknown_account_answers_as_a_real_one_does_over_six_failures() {
         "six in a row reach the throttle: {real:?}"
     );
     assert!(
-        !m.root.join("var/lib/ferrix/auth/state/nobody").exists(),
+        !m.root.join("var/lib/xaqu/auth/state/nobody").exists(),
         "an unknown account leaves no file behind"
     );
 }
@@ -288,10 +288,10 @@ fn an_unknown_account_answers_as_a_real_one_does_over_six_failures() {
 #[test]
 fn the_fourth_failure_throttles_and_the_throttle_is_kept_in_the_store() {
     let mut m = Machine::new("throttle");
-    m.set("ferrix", 1000, "correct horse");
+    m.set("xaqu", 1000, "correct horse");
     for (attempt, wait_ms) in [(1, 0), (2, 0), (3, 0), (4, 2000)] {
         assert_eq!(
-            m.verdict(ROOT, "gate", "ferrix", &["wrong"]),
+            m.verdict(ROOT, "gate", "xaqu", &["wrong"]),
             failed(wait_ms),
             "attempt {attempt}"
         );
@@ -300,7 +300,7 @@ fn the_fourth_failure_throttles_and_the_throttle_is_kept_in_the_store() {
     // throttle runs two more from then. Inside them, an attempt is refused
     // unlooked-at, with the right password too, and with no prompt.
     m.now_ms += 500;
-    let outs = m.converse(ROOT, "gate", "ferrix", &[]);
+    let outs = m.converse(ROOT, "gate", "xaqu", &[]);
     assert_eq!(
         outs,
         vec![Out {
@@ -315,7 +315,7 @@ fn the_fourth_failure_throttles_and_the_throttle_is_kept_in_the_store() {
     let paths = Paths::under(&m.root);
     m.engine = Engine::new(paths, Hasher::fixed(FLOOR), [9; 32]);
     assert!(matches!(
-        m.one(ROOT, &Record::Status { account: "ferrix" }),
+        m.one(ROOT, &Record::Status { account: "xaqu" }),
         Reply::State {
             throttled_ms: 1500,
             ..
@@ -324,17 +324,17 @@ fn the_fourth_failure_throttles_and_the_throttle_is_kept_in_the_store() {
     // Once it has passed, the right password opens and resets the count.
     m.now_ms += 1500;
     assert_eq!(
-        m.verdict(ROOT, "gate", "ferrix", &["correct horse"]),
-        accepted("ferrix", 1000)
+        m.verdict(ROOT, "gate", "xaqu", &["correct horse"]),
+        accepted("xaqu", 1000)
     );
-    assert_eq!(m.verdict(ROOT, "gate", "ferrix", &["wrong"]), failed(0));
+    assert_eq!(m.verdict(ROOT, "gate", "xaqu", &["wrong"]), failed(0));
     // Only root resets a throttle.
     assert!(matches!(
-        m.one(FERRIX, &Record::Reset { account: "ferrix" }),
+        m.one(XAQU, &Record::Reset { account: "xaqu" }),
         Reply::Unavailable(_)
     ));
     assert!(matches!(
-        m.one(ROOT, &Record::Reset { account: "ferrix" }),
+        m.one(ROOT, &Record::Reset { account: "xaqu" }),
         Reply::State {
             throttled_ms: 0,
             ..
@@ -345,25 +345,25 @@ fn the_fourth_failure_throttles_and_the_throttle_is_kept_in_the_store() {
 #[test]
 fn passwd_asks_for_the_current_password_unless_root_asks() {
     let mut m = Machine::new("passwd");
-    m.set("ferrix", 1000, "old one");
-    let outs = m.converse(FERRIX, "passwd", "", &["old one", "new one", "new one"]);
+    m.set("xaqu", 1000, "old one");
+    let outs = m.converse(XAQU, "passwd", "", &["old one", "new one", "new one"]);
     let prompts: Vec<&Reply> = outs.iter().map(|out| &out.reply).collect();
     assert_eq!(prompts.len(), 4, "{prompts:?}");
-    assert_eq!(outs.last(), Some(&accepted("ferrix", 1000)));
+    assert_eq!(outs.last(), Some(&accepted("xaqu", 1000)));
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["new one"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["new one"]),
+        accepted("xaqu", 1000)
     );
-    assert_eq!(m.verdict(FERRIX, "hyprlock", "", &["old one"]), failed(0));
+    assert_eq!(m.verdict(XAQU, "hyprlock", "", &["old one"]), failed(0));
     // A wrong current password changes nothing.
-    assert_eq!(m.verdict(FERRIX, "passwd", "", &["nope"]), failed(0));
+    assert_eq!(m.verdict(XAQU, "passwd", "", &["nope"]), failed(0));
     // Mismatched and empty new passwords are refused.
     assert!(matches!(
-        m.verdict(FERRIX, "passwd", "", &["new one", "a", "b"]).reply,
+        m.verdict(XAQU, "passwd", "", &["new one", "a", "b"]).reply,
         Reply::Failed { ref text, .. } if text == "the passwords did not match"
     ));
     assert!(matches!(
-        m.verdict(FERRIX, "passwd", "", &["new one", ""]).reply,
+        m.verdict(XAQU, "passwd", "", &["new one", ""]).reply,
         Reply::Failed { ref text, .. } if text == "a password may not be empty"
     ));
     // Root sets another account's first password with no current one.
@@ -372,7 +372,7 @@ fn passwd_asks_for_the_current_password_unless_root_asks() {
     assert_eq!(outs.last(), Some(&accepted("other", 1001)));
     // Nobody else may.
     assert_eq!(
-        m.verdict(FERRIX, "passwd", "other", &[]),
+        m.verdict(XAQU, "passwd", "other", &[]),
         unavailable("only root may name another account")
     );
     assert!(m.audit().contains(
@@ -384,33 +384,33 @@ fn passwd_asks_for_the_current_password_unless_root_asks() {
 fn a_seed_is_imported_once_and_a_changed_password_survives_it() {
     let mut m = Machine::new("seed");
     let mut hasher = Hasher::fixed(FLOOR);
-    let secret = ferrix_auth_proto::Secret::from_bytes(b"seeded").unwrap();
+    let secret = xaqu_auth_proto::Secret::from_bytes(b"seeded").unwrap();
     let hash = hasher.make(&secret, &mut |_| {}).unwrap();
     write(
-        &m.root.join("lib/ferrix/auth/seed/ferrix"),
+        &m.root.join("lib/xaqu/auth/seed/xaqu"),
         &format!("{hash}\n"),
     );
     write(
-        &m.root.join("lib/ferrix/auth/seed/ghost"),
+        &m.root.join("lib/xaqu/auth/seed/ghost"),
         &format!("{hash}\n"),
     );
     m.engine.import_seeds(m.now_ms);
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["seeded"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["seeded"]),
+        accepted("xaqu", 1000)
     );
     assert!(
-        !m.root.join("var/lib/ferrix/auth/users/ghost").exists(),
+        !m.root.join("var/lib/xaqu/auth/users/ghost").exists(),
         "no account, no import"
     );
     assert_eq!(
-        m.verdict(FERRIX, "passwd", "", &["seeded", "mine", "mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "passwd", "", &["seeded", "mine", "mine"]),
+        accepted("xaqu", 1000)
     );
     m.engine.import_seeds(m.now_ms);
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["mine"]),
+        accepted("xaqu", 1000)
     );
 }
 
@@ -418,32 +418,32 @@ fn a_seed_is_imported_once_and_a_changed_password_survives_it() {
 fn a_sha512_crypt_seed_is_rehashed_as_argon2id_at_its_first_success() {
     let mut m = Machine::new("rehash");
     write(
-        &m.root.join("lib/ferrix/auth/seed/ferrix"),
+        &m.root.join("lib/xaqu/auth/seed/xaqu"),
         "$6$saltstring$svn8UoSVapNtMuq1ukKS4tPQd8iKwSMHWjl/O817G3uBnIFNjnQJuesI68u4OTLiBFdcbYEdFCoEOfaS35inz1\n",
     );
     m.engine.import_seeds(m.now_ms);
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["Hello world!"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["Hello world!"]),
+        accepted("xaqu", 1000)
     );
-    let record = std::fs::read_to_string(m.root.join("var/lib/ferrix/auth/users/ferrix")).unwrap();
+    let record = std::fs::read_to_string(m.root.join("var/lib/xaqu/auth/users/xaqu")).unwrap();
     assert!(record.contains("password $argon2id$v=19$"), "{record}");
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["Hello world!"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["Hello world!"]),
+        accepted("xaqu", 1000)
     );
 }
 
-/// The lock `sessiond` armed for ferrix's session, as [`Armed`].
+/// The lock `sessiond` armed for xaqu's session, as [`Armed`].
 const LOCK: Armed = Armed {
     uid: 1000,
     epoch: 5,
 };
 
-/// A machine where ferrix's password is `mine` and ferrix's lock 5 is up.
+/// A machine where xaqu's password is `mine` and xaqu's lock 5 is up.
 fn armed(name: &str) -> Machine {
     let mut m = Machine::new(name);
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     m.engine.arm(LOCK.uid, LOCK.epoch);
     m
 }
@@ -452,16 +452,16 @@ fn armed(name: &str) -> Machine {
 fn hyprlocks_acceptance_grants_the_armed_lock_once() {
     let mut m = armed("grant");
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["mine"]),
+        accepted("xaqu", 1000)
     );
     assert_eq!(m.engine.take_grants(), [LOCK]);
     assert!(m.audit().contains("result=granted"));
     assert!(m.audit().contains("seat-epoch=5"));
     // Used up: a second acceptance grants nothing until the next lock.
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &["mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "hyprlock", "", &["mine"]),
+        accepted("xaqu", 1000)
     );
     assert_eq!(m.engine.take_grants(), []);
 }
@@ -469,7 +469,7 @@ fn hyprlocks_acceptance_grants_the_armed_lock_once() {
 #[test]
 fn a_wrong_password_grants_nothing() {
     let mut m = armed("grant-wrong");
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["yours"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["yours"]);
     assert_eq!(m.engine.take_grants(), []);
 }
 
@@ -485,16 +485,16 @@ fn only_the_armed_uid_is_granted() {
     assert_eq!(
         m.engine.take_grants(),
         [],
-        "another user's password opened ferrix's lock"
+        "another user's password opened xaqu's lock"
     );
 }
 
 #[test]
 fn nothing_armed_means_nothing_granted() {
     let mut m = Machine::new("grant-unarmed");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     // Accepted before any lock was armed: no grant is kept for a later one.
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["mine"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["mine"]);
     m.engine.arm(LOCK.uid, LOCK.epoch);
     assert_eq!(m.engine.take_grants(), []);
 }
@@ -503,8 +503,8 @@ fn nothing_armed_means_nothing_granted() {
 fn a_service_without_grant_seat_grants_nothing() {
     let mut m = armed("grant-service");
     assert_eq!(
-        m.verdict(FERRIX, "gate", "", &["mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "gate", "", &["mine"]),
+        accepted("xaqu", 1000)
     );
     assert_eq!(m.engine.take_grants(), []);
 }
@@ -515,7 +515,7 @@ fn a_new_arm_replaces_the_old_and_disarm_names_its_own() {
     m.engine.arm(1000, 6);
     // A disarm for the lock before does not touch this one.
     m.engine.disarm(5);
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["mine"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["mine"]);
     assert_eq!(
         m.engine.take_grants(),
         [Armed {
@@ -525,7 +525,7 @@ fn a_new_arm_replaces_the_old_and_disarm_names_its_own() {
     );
     m.engine.arm(1000, 7);
     m.engine.disarm(7);
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["mine"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["mine"]);
     assert_eq!(m.engine.take_grants(), []);
 }
 
@@ -533,7 +533,7 @@ fn a_new_arm_replaces_the_old_and_disarm_names_its_own() {
 fn the_seat_going_drops_what_was_armed_and_granted() {
     let mut m = armed("grant-gone");
     m.engine.seat_gone();
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["mine"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["mine"]);
     assert_eq!(m.engine.take_grants(), []);
 }
 
@@ -542,7 +542,7 @@ fn the_seat_going_drops_what_was_armed_and_granted() {
 #[test]
 fn arm_from_the_socket_arms_nothing() {
     let mut m = Machine::new("grant-socket");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     for record in [
         Record::Arm {
             uid: 1000,
@@ -556,7 +556,7 @@ fn arm_from_the_socket_arms_nothing() {
     ] {
         assert!(matches!(m.one(ROOT, &record), Reply::Unavailable(_)));
     }
-    let _ = m.verdict(FERRIX, "hyprlock", "", &["mine"]);
+    let _ = m.verdict(XAQU, "hyprlock", "", &["mine"]);
     assert_eq!(m.engine.take_grants(), []);
 }
 
@@ -564,7 +564,7 @@ fn arm_from_the_socket_arms_nothing() {
 fn unlock_seat_is_roots_audited_grant() {
     let mut m = Machine::new("unlock-seat");
     assert_eq!(
-        m.one(FERRIX, &Record::UnlockSeat),
+        m.one(XAQU, &Record::UnlockSeat),
         Reply::Unavailable("only root may let the seat's lock go".to_owned())
     );
     assert!(
@@ -572,7 +572,7 @@ fn unlock_seat_is_roots_audited_grant() {
     );
     m.engine.arm(LOCK.uid, LOCK.epoch);
     assert_eq!(
-        m.one(FERRIX, &Record::UnlockSeat),
+        m.one(XAQU, &Record::UnlockSeat),
         Reply::Unavailable("only root may let the seat's lock go".to_owned())
     );
     assert_eq!(m.engine.take_grants(), [], "a user's unlock-seat granted");
@@ -587,7 +587,7 @@ fn unlock_seat_is_roots_audited_grant() {
 #[test]
 fn records_out_of_turn_end_the_conversation() {
     let mut m = Machine::new("turns");
-    let mut conversation = Conversation::new(FERRIX);
+    let mut conversation = Conversation::new(XAQU);
     let outs = m.engine.handle(
         &mut conversation,
         &Record::Respond(Response(b"x")),
@@ -627,22 +627,22 @@ const GETTY: Peer = Peer { pid: 7, uid: 0 };
 #[test]
 fn login_on_the_console_offers_a_first_password_and_lets_them_in() {
     let mut m = at_console("first-password", true);
-    let outs = m.converse(GETTY, "login", "ferrix", &["chosen", "chosen"]);
+    let outs = m.converse(GETTY, "login", "xaqu", &["chosen", "chosen"]);
     assert!(
         outs.iter()
             .any(|out| out.reply
-                == Reply::Info("ferrix has no password. Choose one now:".to_owned())),
+                == Reply::Info("xaqu has no password. Choose one now:".to_owned())),
         "{outs:?}"
     );
-    assert_eq!(outs.last().cloned(), Some(accepted("ferrix", 1000)));
+    assert_eq!(outs.last().cloned(), Some(accepted("xaqu", 1000)));
     assert!(m.audit().contains("result=first-password"));
     // The password is the account's now: it is asked for, and taken.
     assert_eq!(
-        m.verdict(GETTY, "login", "ferrix", &["chosen"]),
-        accepted("ferrix", 1000)
+        m.verdict(GETTY, "login", "xaqu", &["chosen"]),
+        accepted("xaqu", 1000)
     );
     assert!(matches!(
-        m.verdict(GETTY, "login", "ferrix", &["guess"]).reply,
+        m.verdict(GETTY, "login", "xaqu", &["guess"]).reply,
         Reply::Failed { .. }
     ));
 }
@@ -651,17 +651,17 @@ fn login_on_the_console_offers_a_first_password_and_lets_them_in() {
 fn a_first_password_is_typed_twice_and_never_empty() {
     let mut m = at_console("first-password-twice", true);
     assert!(matches!(
-        m.verdict(GETTY, "login", "ferrix", &["one", "two"]).reply,
+        m.verdict(GETTY, "login", "xaqu", &["one", "two"]).reply,
         Reply::Failed { ref text, .. } if text.contains("did not match")
     ));
     assert!(matches!(
-        m.verdict(GETTY, "login", "ferrix", &[""]).reply,
+        m.verdict(GETTY, "login", "xaqu", &[""]).reply,
         Reply::Failed { ref text, .. } if text.contains("empty")
     ));
     // Neither was kept: the offer stands.
     assert_eq!(
-        m.verdict(GETTY, "login", "ferrix", &["chosen", "chosen"]),
-        accepted("ferrix", 1000)
+        m.verdict(GETTY, "login", "xaqu", &["chosen", "chosen"]),
+        accepted("xaqu", 1000)
     );
 }
 
@@ -669,8 +669,8 @@ fn a_first_password_is_typed_twice_and_never_empty() {
 fn off_the_console_no_password_is_still_no_password() {
     let mut m = at_console("first-password-pty", false);
     assert_eq!(
-        m.verdict(GETTY, "login", "ferrix", &[]).reply,
-        Reply::Unavailable("no password is set for ferrix".to_owned())
+        m.verdict(GETTY, "login", "xaqu", &[]).reply,
+        Reply::Unavailable("no password is set for xaqu".to_owned())
     );
     assert!(m.audit().contains("why=no-credential,tty_nr=0"));
 }
@@ -682,7 +682,7 @@ fn root_and_the_systems_accounts_get_no_first_password() {
     let mut m = at_console("first-password-who", true);
     std::fs::write(
         m.root.join("etc/passwd"),
-        "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/sh\n\
+        "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/sh\n\
          auth:x:90:90::/:/sbin/nologin\nshut:x:1002:1002::/:/sbin/nologin\n",
     )
     .unwrap();
@@ -695,8 +695,8 @@ fn root_and_the_systems_accounts_get_no_first_password() {
     }
     assert!(m.audit().contains("not-a-persons-account"));
     assert_eq!(
-        m.verdict(GETTY, "login", "ferrix", &["chosen", "chosen"]),
-        accepted("ferrix", 1000)
+        m.verdict(GETTY, "login", "xaqu", &["chosen", "chosen"]),
+        accepted("xaqu", 1000)
     );
 }
 
@@ -705,18 +705,18 @@ fn only_a_first_password_service_and_only_root_get_the_offer() {
     let mut m = at_console("first-password-service", true);
     // `gate` is `Account=any` with no `FirstPassword=`.
     assert_eq!(
-        m.verdict(GETTY, "gate", "ferrix", &[]).reply,
-        Reply::Unavailable("no password is set for ferrix".to_owned())
+        m.verdict(GETTY, "gate", "xaqu", &[]).reply,
+        Reply::Unavailable("no password is set for xaqu".to_owned())
     );
     // A user at the console cannot use `login` at all (`Callers=root`), and
     // hyprlock, whose caller is the user, is never offered one.
     assert!(matches!(
-        m.verdict(FERRIX, "login", "ferrix", &[]).reply,
+        m.verdict(XAQU, "login", "xaqu", &[]).reply,
         Reply::Unavailable(_)
     ));
     assert_eq!(
-        m.verdict(FERRIX, "hyprlock", "", &[]).reply,
-        Reply::Unavailable("no password is set for ferrix".to_owned())
+        m.verdict(XAQU, "hyprlock", "", &[]).reply,
+        Reply::Unavailable("no password is set for xaqu".to_owned())
     );
 }
 
@@ -725,14 +725,14 @@ fn only_a_first_password_service_and_only_root_get_the_offer() {
 #[test]
 fn su_takes_a_wheel_members_own_password() {
     let mut m = Machine::new("su");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     m.set("other", 1001, "theirs");
     assert_eq!(
-        m.verdict(FERRIX, "su", "", &["mine"]),
-        accepted("ferrix", 1000)
+        m.verdict(XAQU, "su", "", &["mine"]),
+        accepted("xaqu", 1000)
     );
     assert!(matches!(
-        m.verdict(FERRIX, "su", "", &["guess"]).reply,
+        m.verdict(XAQU, "su", "", &["guess"]).reply,
         Reply::Failed { .. }
     ));
     // Not in wheel: refused before any prompt.
@@ -750,7 +750,7 @@ fn su_takes_a_wheel_members_own_password() {
     assert!(m.audit().contains("why=not-in-group"));
     // Only the caller's own account: naming another is refused.
     assert!(matches!(
-        m.verdict(OTHER, "su", "ferrix", &[]).reply,
+        m.verdict(OTHER, "su", "xaqu", &[]).reply,
         Reply::Unavailable(_)
     ));
 }
@@ -759,7 +759,7 @@ fn su_takes_a_wheel_members_own_password() {
 fn without_password(m: &Machine, service: &str) {
     write(
         &m.root
-            .join(format!("etc/ferrix/auth/services/{service}.d/10-none.conf")),
+            .join(format!("etc/xaqu/auth/services/{service}.d/10-none.conf")),
         "[Service]\nMethods=none\n",
     );
 }
@@ -776,13 +776,13 @@ fn prompted(outs: &[Out]) -> bool {
 #[test]
 fn a_settings_service_asks_a_wheel_member_named_by_root() {
     let mut m = Machine::new("settings");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     m.set("other", 1001, "theirs");
-    let outs = m.converse(ROOT, "settings.hostname", "ferrix", &["mine"]);
+    let outs = m.converse(ROOT, "settings.hostname", "xaqu", &["mine"]);
     assert!(prompted(&outs));
-    assert_eq!(outs.last(), Some(&accepted("ferrix", 1000)));
+    assert_eq!(outs.last(), Some(&accepted("xaqu", 1000)));
     assert!(matches!(
-        m.verdict(ROOT, "settings.hostname", "ferrix", &["guess"])
+        m.verdict(ROOT, "settings.hostname", "xaqu", &["guess"])
             .reply,
         Reply::Failed { .. }
     ));
@@ -792,7 +792,7 @@ fn a_settings_service_asks_a_wheel_member_named_by_root() {
         outs.last().map(|out| out.reply.clone()),
         Some(Reply::Unavailable("other is not in wheel".to_owned()))
     );
-    let outs = m.converse(FERRIX, "settings.hostname", "", &[]);
+    let outs = m.converse(XAQU, "settings.hostname", "", &[]);
     assert!(!prompted(&outs));
     assert_eq!(
         outs.last().map(|out| out.reply.clone()),
@@ -810,12 +810,12 @@ fn a_settings_service_asks_a_wheel_member_named_by_root() {
 fn methods_none_accepts_a_member_where_the_prompt_would_be_and_nowhere_earlier() {
     let mut m = Machine::new("settings-none");
     without_password(&m, "settings.hostname");
-    m.set("ferrix", 1000, "mine");
-    let outs = m.converse(ROOT, "settings.hostname", "ferrix", &[]);
-    assert_eq!(outs, vec![accepted("ferrix", 1000)]);
+    m.set("xaqu", 1000, "mine");
+    let outs = m.converse(ROOT, "settings.hostname", "xaqu", &[]);
+    assert_eq!(outs, vec![accepted("xaqu", 1000)]);
     assert!(
         m.audit()
-            .contains("service=settings.hostname account=ferrix peer-pid=1 peer-uid=0 method=none result=accepted"),
+            .contains("service=settings.hostname account=xaqu peer-pid=1 peer-uid=0 method=none result=accepted"),
         "{}",
         m.audit()
     );
@@ -829,7 +829,7 @@ fn methods_none_accepts_a_member_where_the_prompt_would_be_and_nowhere_earlier()
     // Locked: refused.
     Store::new(Paths::under(&m.root))
         .set_credential(&Credential {
-            account: "ferrix".to_owned(),
+            account: "xaqu".to_owned(),
             uid: 1000,
             password: None,
             locked: Some("by-the-test".to_owned()),
@@ -837,15 +837,15 @@ fn methods_none_accepts_a_member_where_the_prompt_would_be_and_nowhere_earlier()
         })
         .unwrap();
     assert!(matches!(
-        m.verdict(ROOT, "settings.hostname", "ferrix", &[]).reply,
+        m.verdict(ROOT, "settings.hostname", "xaqu", &[]).reply,
         Reply::Unavailable(_)
     ));
     // No credential at all: refused, never "no password needed".
     let mut fresh = Machine::new("settings-none-fresh");
     without_password(&fresh, "settings.hostname");
     assert_eq!(
-        fresh.verdict(ROOT, "settings.hostname", "ferrix", &[]),
-        unavailable("no password is set for ferrix")
+        fresh.verdict(ROOT, "settings.hostname", "xaqu", &[]),
+        unavailable("no password is set for xaqu")
     );
     // An unknown account: refused, it is in no group.
     assert!(matches!(
@@ -862,20 +862,20 @@ fn methods_none_accepts_a_member_where_the_prompt_would_be_and_nowhere_earlier()
 #[test]
 fn methods_none_never_loosens_what_is_not_a_settings_service() {
     let mut m = Machine::new("none-elsewhere");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     write(
-        &m.root.join("etc/ferrix/auth/services/mechanism"),
+        &m.root.join("etc/xaqu/auth/services/mechanism"),
         "[Service]\nAccount=any\nCallers=root\nTargetGroup=wheel\n",
     );
     for service in ["hyprlock", "su", "passwd", "mechanism", "gate"] {
         without_password(&m, service);
     }
     for (peer, service, account) in [
-        (FERRIX, "hyprlock", ""),
-        (FERRIX, "su", ""),
-        (FERRIX, "passwd", ""),
-        (ROOT, "mechanism", "ferrix"),
-        (ROOT, "gate", "ferrix"),
+        (XAQU, "hyprlock", ""),
+        (XAQU, "su", ""),
+        (XAQU, "passwd", ""),
+        (ROOT, "mechanism", "xaqu"),
+        (ROOT, "gate", "xaqu"),
     ] {
         let mut conversation = Conversation::new(peer);
         let outs = m.engine.handle(
@@ -896,16 +896,16 @@ fn methods_none_never_loosens_what_is_not_a_settings_service() {
 #[test]
 fn settings_failures_share_the_accounts_throttle() {
     let mut m = Machine::new("settings-throttle");
-    m.set("ferrix", 1000, "mine");
+    m.set("xaqu", 1000, "mine");
     for _ in 0..4 {
         assert!(matches!(
-            m.verdict(ROOT, "settings.hostname", "ferrix", &["guess"])
+            m.verdict(ROOT, "settings.hostname", "xaqu", &["guess"])
                 .reply,
             Reply::Failed { .. }
         ));
     }
     m.now_ms += 500;
-    let outs = m.converse(FERRIX, "su", "", &[]);
+    let outs = m.converse(XAQU, "su", "", &[]);
     assert!(!prompted(&outs), "{outs:?}");
     assert!(matches!(
         outs.last().map(|out| &out.reply),

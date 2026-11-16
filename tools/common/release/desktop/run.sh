@@ -1,5 +1,5 @@
 #!/bin/sh
-# Boot Ferrix's x86-64 desktop in QEMU, from the release archive this script
+# Boot Xaqu's x86-64 desktop in QEMU, from the release archive this script
 # came in. Nothing but QEMU is needed: no Rust, no build.
 #
 #     sh run.sh                  a window, with the hypervisor if there is one
@@ -22,7 +22,7 @@
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
-image=$here/ferrix-x86_64.img
+image=$here/xaqu-x86_64.img
 qemu=${QEMU_SYSTEM:-qemu-system-x86_64}
 memory=2048
 smp=4
@@ -114,7 +114,7 @@ esac
 
 # UEFI firmware: OVMF, which QEMU or the distribution installs. Each code
 # file with the variable store that goes with it; never a Secure Boot
-# build, which would refuse Ferrix's unsigned loader.
+# build, which would refuse Xaqu's unsigned loader.
 pairs="edk2-x86_64-code.fd:edk2-i386-vars.fd
 OVMF_CODE_4M.fd:OVMF_VARS_4M.fd
 OVMF_CODE.4m.fd:OVMF_VARS.4m.fd
@@ -159,7 +159,7 @@ echo "run.sh: $("$qemu" --version | head -n 1), under $accel, firmware $code"
 
 # A fresh variable store for every boot, as xtask makes one: a store an
 # earlier boot left can hold boot entries that send firmware elsewhere.
-vars=$(mktemp "${TMPDIR:-/tmp}/ferrix-vars.XXXXXX")
+vars=$(mktemp "${TMPDIR:-/tmp}/xaqu-vars.XXXXXX")
 trap 'rm -f "$vars"' EXIT INT TERM
 if [ -n "$vars_template" ]; then
     cat "$vars_template" > "$vars"
@@ -194,8 +194,8 @@ flags=disable-legacy=on,iommu_platform=on
     -vga none \
     -drive "format=raw,file=$image,if=none,id=disk" \
     -device ide-hd,drive=disk,bus=ide.0,bootindex=0 \
-    -device pcie-root-port,id=ferrix.port0,chassis=1,slot=1 \
-    -device "virtio-rng-pci,$flags,bus=ferrix.port0" \
+    -device pcie-root-port,id=xaqu.port0,chassis=1,slot=1 \
+    -device "virtio-rng-pci,$flags,bus=xaqu.port0" \
     -device "virtio-gpu-pci,id=gpu0,addr=0x10,$flags,ioeventfd=on,edid=on,xres=$width,yres=$height" \
     -device "virtio-keyboard-pci,$flags" \
     -device "virtio-tablet-pci,$flags" \

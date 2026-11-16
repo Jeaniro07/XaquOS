@@ -1,4 +1,4 @@
-//! Host-side driver for building, imaging and booting Ferrix.
+//! Host-side driver for building, imaging and booting Xaqu.
 //!
 //! ```text
 //! cargo xtask build     --arch x86_64 [--release] [--init PATH/{arch}/busybox] [--init-path /sbin/init]
@@ -42,7 +42,7 @@
 //! watches the serial port, and fails if the kernel does not report success —
 //! which is the only test in this repository that can tell us the thing runs.
 //!
-//! `build` and `run` given a static busybox — `--init`, or the `FERRIX_INIT`
+//! `build` and `run` given a static busybox — `--init`, or the `XAQU_INIT`
 //! variable — build it into the kernel, which starts `sh -i` on the console,
 //! and put it in the initramfs at `/bin/busybox` with every applet linked
 //! beside it, so that the shell finds `ls` on its `PATH=/bin`.
@@ -91,7 +91,7 @@ mod components;
 mod clipboard;
 // test-clipboard's codec, which nothing else here speaks.
 #[cfg(not(unix))]
-use ferrix_vdagent as _;
+use xaqu_vdagent as _;
 /// Elsewhere, test-clipboard only says where it runs.
 #[cfg(not(unix))]
 mod clipboard {
@@ -311,7 +311,7 @@ OPTIONS:
                                          with the profile and the --sets, and passes it as an
                                          ad-hoc run that carries no claim
     --mitigations <on|off>              --set mitigations=on|off by its older name. off builds
-                                         with ferrix_mitigations=\"off\" and the static relocation
+                                         with xaqu_mitigations=\"off\" and the static relocation
                                          model into target/mitigations-off: no index clamps in
                                          the kernel, no speculation controls, no barriers
                                          (docs/certification/SPECULATION.md)
@@ -349,14 +349,14 @@ OPTIONS:
                                          from one volume made of the rustc and Chrome ones, with
                                          claude too once fetch-claude-code.sh has run; on Xaqu,
                                          its keys, dock and sidebars; under --theme none or
-                                         ferrix-light, this machine's ~/.config/hypr/hyprland.conf
+                                         xaqu-light, this machine's ~/.config/hypr/hyprland.conf
                                          with its dotfiles unless --config or --no-dotfiles says
                                          otherwise
     --steam-preinstall                   run-compositor --everything, test-steam-game: merge the Steam
                                          library fetch-steam-preinstall.sh installed on the host
                                          (Teeworlds, the Steam Linux Runtime) into /data/steam, so
                                          Steam finds them installed and does not download them
-    --session                            flash --compositor: the desktop runs as the user ferrix,
+    --session                            flash --compositor: the desktop runs as the user xaqu,
                                          started by sessiond, as --everything's does; --config's
                                          dotfiles seed the home disk once and edits there are kept,
                                          and the board's screen beats the config's monitor lines
@@ -370,14 +370,14 @@ OPTIONS:
                                          e.g. 2222:22 for sshdt; repeatable; turns --net on
     --ssh <PORT>                         run-compositor: start sshdt in the guest, reached at
                                          127.0.0.1:PORT; the keys in ~/.ssh may log in, and so may
-                                         ~/.local/share/ferrix/ssh/id_ed25519, which the boot prints
+                                         ~/.local/share/xaqu/ssh/id_ed25519, which the boot prints
     --ssh-key <FILE|KEY>                 another public key that may log in, as a file or written
                                          out; repeatable; for a client whose key is in neither place
     --display                            run, test-boot: a virtio-gpu device; run: and a window showing it
     --gl                                 that virtio-gpu is the 3D card, `virtio-gpu-gl-pci`, with the
                                          host's GPU behind it through virglrenderer; turns --display on.
                                          A QEMU built without it says so and the 2D card is used
-                                         [FERRIX_QEMU names a QEMU that is not the one on PATH: a
+                                         [XAQU_QEMU names a QEMU that is not the one on PATH: a
                                          directory of its binaries, or one binary; without it, the
                                          first QEMU on PATH that has the 3D card]
     --venus                              the 3D card offers Venus -- Vulkan on the host's GPU -- with
@@ -410,7 +410,7 @@ OPTIONS:
                                          families they name, resolved here with fc-match, to
                                          /usr/share/fonts/host (tools/common/xtask/src/dotfiles.rs);
                                          remote-desktop: the file of answers to read instead of
-                                         the ones searched [or $FERRIX_REMOTE]
+                                         the ones searched [or $XAQU_REMOTE]
     --host <DESTINATION>                 remote-desktop: the machine to boot on, as `ssh` names
                                          one, over what the config file said. No host is a
                                          default anywhere in xtask; this and that file are the
@@ -446,7 +446,7 @@ OPTIONS:
     --wallpaper <NAME>                   run-compositor: which kept wallpaper to show, by part of its
                                          name, or `none`; one of them, another each run, otherwise
     --theme <NAME>                       run-compositor, flash --compositor, release-image: the
-                                         desktop's look, `xaqu`, `ferrix-light` or `none` [default:
+                                         desktop's look, `xaqu`, `xaqu-light` or `none` [default:
                                          xaqu]; under a configuration of its own, its look alone
     --edid <DESCRIPTION>                 run-compositor: give the screen the EDID of this machine's
                                          monitor whose description starts so, as Linux's
@@ -464,7 +464,7 @@ OPTIONS:
     --server <HOST[:PORT]>               netboot-stick: where the machine finds `netboot` [port 8086]
     --image <FAT>                        n150-install: the image volume for the ESP [default: build's]
     --tree <DIR>                         n150-install: the tree at /data [default: the Proton
-                                         launcher volume's, ~/.local/share/ferrix/endfield-launcher-proton/tree]
+                                         launcher volume's, ~/.local/share/xaqu/endfield-launcher-proton/tree]
     --disk <IMG>                         n150-install: where to write [default: build/x86_64/n150-disk.img]
     --disk-bytes <N>                     n150-install: the box's disk size [default: 512110190592]
     --scale <N>                         run-compositor, flash --compositor: the monitor's scale, 1 by default
@@ -474,12 +474,12 @@ OPTIONS:
     --seconds <N>                        wallpapers: seconds of it kept, after which it begins again
     --video-size <W>x<H>                 wallpapers: how large its frames are kept
                                          These three, and which wallpaper to show, are also
-                                         ~/.config/ferrix/wallpaper.toml, which a flag here beats
+                                         ~/.config/xaqu/wallpaper.toml, which a flag here beats
     --fast                               check: skip the cross-target clippy passes
     --ferrousli                          check: also ferrousli's fmt, clippy and tests, debug and release
     --zinc                               check: also zinc's fmt, clippy, tests and pty completion test
-    --statd                              build, run, test-boot: --app statd, the stat service at /sbin/ferrix-statd
-    --installer                          build, run: carry /sbin/ferrix-install and its root volume (the live image)
+    --statd                              build, run, test-boot: --app statd, the stat service at /sbin/xaqu-statd
+    --installer                          build, run: carry /sbin/xaqu-install and its root volume (the live image)
     --adbd                               build, run: carry adbd at /bin/adbd, started by nobody (docs/ADB.md)
     --app <NAME>                         run, run-compositor: also carry an app that is not in images by default;
                                          give it once for each app
@@ -496,14 +496,14 @@ OPTIONS:
                                          Steam sign-in or a Chrome extension is there at the next boot;
                                          with --reset-flash, start /data over as well
     --btrfs-root                         test-chrome-window: / on a btrfs root disk made fresh for the run
-    --reset                              test-boot: ferrix.onexit=reset in CMDLINE.TXT, and require a reset;
+    --reset                              test-boot: xaqu.onexit=reset in CMDLINE.TXT, and require a reset;
                                          build, run: put that CMDLINE.TXT in the image
     --to <MOUNT>                         flash: the card's mounted boot partition
     --alternate <REF>                    bench-ipc: build REF in a tree of its own and time the two
                                          turn about, --rounds times (3)
     --against-sel4, --against-redox      bench-ipc: alternate with the seL4 or Redox image
     --record                             bench-ipc: file the result under docs/hotpaths/results/
-                                         (docs/HOTPATHS.md; the log's path from FERRIX_HOTPATH_LOG)
+                                         (docs/HOTPATHS.md; the log's path from XAQU_HOTPATH_LOG)
     --board-log <FILE>                   bench-ipc: read a board's serial log of one boot that ran
                                          /sbin/ipc-bench instead of booting QEMU; once per boot
     --board <NAME>                       bench-ipc --board-log: the board, which --record files under
@@ -514,13 +514,13 @@ OPTIONS:
     --stage <DIR>                        flash: write the card's files into DIR instead, to copy by hand
     --compositor                         flash, deploy: the desktop run-compositor boots, not the self-checks
     --port <DEVICE>                      watch-serial: e.g. /dev/ttyACM0
-    --init <PATH|ferrousli>              The busybox; {arch} is replaced. build, run, flash, deploy: [or FERRIX_INIT]
+    --init <PATH|ferrousli>              The busybox; {arch} is replaced. build, run, flash, deploy: [or XAQU_INIT]
                                          start `sh -i`, with the applets linked in /bin.
                                          `ferrousli`: the x86_64 busybox built against ferrousli, rebuilt when stale
-    --init-path <PATH>                   build, run, test-boot: ferrix.init=PATH in CMDLINE.TXT, so the
+    --init-path <PATH>                   build, run, test-boot: xaqu.init=PATH in CMDLINE.TXT, so the
                                          kernel starts pid 1 from that file in the image, and the
                                          program built in only if it will not start
-    --kernel-option <WORD>               build, run, test-boot: add WORD to CMDLINE.TXT, e.g. ferrix.fbcon;
+    --kernel-option <WORD>               build, run, test-boot: add WORD to CMDLINE.TXT, e.g. xaqu.fbcon;
                                          give it once for each word
     --interpreter <PATH|ferrousli>       test-shell: a dynamic linker, carried at --init's PT_INTERP path; {arch} is replaced;
                                          test-chrome, test-chrome-window, test-rustc, run-compositor --chrome: at the program's;
@@ -700,7 +700,7 @@ const MAIN_TASKS: &[Task] = &[
         help_at: 210,
         help: &[
             "test-shell    Boot with a static busybox built in and require its script's output; again with it",
-            "              started from a file by ferrix.init=; under busybox, require reboot(2) to commit /data",
+            "              started from a file by xaqu.init=; under busybox, require reboot(2) to commit /data",
         ],
         run: |_, args| test_shell(args),
     },
@@ -962,7 +962,7 @@ fn test_shell(args: &Args) -> Result<()> {
         let image = fat::write_image_with(arch, &loader, &kernel, &initramfs, None)?;
         qemu::test_shell(arch, &image, &kernel, args)?;
         // The same shell and script again, started from files by
-        // `ferrix.init=`; and under busybox, `reboot(2)`'s commit.
+        // `xaqu.init=`; and under busybox, `reboot(2)`'s commit.
         let parts = init_file::Parts {
             arch,
             loader: &loader,
@@ -1089,9 +1089,9 @@ fn test_net(args: &Args) -> Result<()> {
     }
 }
 
-/// The command line an image carries: `ferrix.onexit=reset` under `--reset`, so
+/// The command line an image carries: `xaqu.onexit=reset` under `--reset`, so
 /// the machine resets when boot ends and `test-boot` can require that it did,
-/// `ferrix.init=<PATH>` under `--init-path`, so pid 1 is started from
+/// `xaqu.init=<PATH>` under `--init-path`, so pid 1 is started from
 /// that file in the image, `nokaslr` under `--gdb`, so that the kernel runs
 /// where the ELF a debugger reads its symbols from says it does, and each
 /// `--kernel-option` after those.
@@ -1110,21 +1110,21 @@ pub(crate) fn image_cmdline(args: &Args) -> Option<String> {
     (!options.is_empty()).then(|| format!("{}\n", options.join(" ")))
 }
 
-/// The word every ARMv7-A image carries: `ferrix.unisolated`. ARMv7-A
+/// The word every ARMv7-A image carries: `xaqu.unisolated`. ARMv7-A
 /// drives no IOMMU, so devmgr would start none of its drivers without it
 /// (`docs/DMA-GATE.md`); the customer took ARMv7-A out of the claim
 /// (2026-10-24, G4 "(a), take it off"), and its rows are development rows,
 /// whose boots carry the word and no claim.
-pub(crate) const ARMV7A_DEVELOPMENT_WORD: &str = "ferrix.unisolated";
+pub(crate) const ARMV7A_DEVELOPMENT_WORD: &str = "xaqu.unisolated";
 
 /// [`image_cmdline`] for an image of `arch`: on ARMv7-A with
 /// [`ARMV7A_DEVELOPMENT_WORD`] after it, and on AArch64 too when
-/// `FERRIX_ARM_MACHINE` asks for `acpi=off`: the device-tree path brings no
+/// `XAQU_ARM_MACHINE` asks for `acpi=off`: the device-tree path brings no
 /// SMMU up, so no device's DMA is translated there (`qemu.rs`'s
 /// `fault_problem`), and it is the Pixel 7's path, a development one.
 pub(crate) fn arch_cmdline(arch: Arch, args: &Args) -> Option<String> {
     let line = image_cmdline(args);
-    let without_acpi = std::env::var("FERRIX_ARM_MACHINE").is_ok_and(|m| m.contains("acpi=off"));
+    let without_acpi = std::env::var("XAQU_ARM_MACHINE").is_ok_and(|m| m.contains("acpi=off"));
     if arch != Arch::Armv7a && !(arch == Arch::AArch64 && without_acpi) {
         return line;
     }
@@ -1140,7 +1140,7 @@ pub(crate) fn arch_cmdline(arch: Arch, args: &Args) -> Option<String> {
 /// report's backtrace is resolved against: the image holds the same kernel
 /// with nothing to look a symbol up in.
 ///
-/// Given a program — `--init`, or `FERRIX_INIT` when that is absent — the
+/// Given a program — `--init`, or `XAQU_INIT` when that is absent — the
 /// kernel is built with it to start `sh -i`, and the initramfs carries it at
 /// `/bin/busybox` with a link beside it for every applet, so that the shell's
 /// `PATH=/bin` finds `ls` where a person types it; uutils/coreutils rides
@@ -1199,7 +1199,7 @@ pub(crate) fn build_image(arch: Arch, args: &Args) -> Result<(PathBuf, PathBuf)>
 
 /// The image `run` boots when no program is named: a kernel with nothing in
 /// it, and an initramfs with `/sbin/init`, its units, zinc for the getty,
-/// and the utilities and ports a shell wants, with `ferrix.init=/sbin/init`
+/// and the utilities and ports a shell wants, with `xaqu.init=/sbin/init`
 /// on the command line.
 fn build_init_image(arch: Arch, args: &Args) -> Result<(PathBuf, PathBuf)> {
     let natives = native::build(arch, args.release)?;
@@ -1274,10 +1274,10 @@ pub(crate) fn build_board_files(arch: Arch, args: &Args) -> Result<flash::BoardF
     })
 }
 
-/// A board card's `FERRIX/DEFAULTS.TXT`: on ARMv7-A (the DK1)
+/// A board card's `XAQU/DEFAULTS.TXT`: on ARMv7-A (the DK1)
 /// [`ARMV7A_DEVELOPMENT_WORD`], as every ARMv7-A image carries it.
 fn board_defaults(arch: Arch) -> Option<&'static str> {
-    (arch == Arch::Armv7a).then_some("ferrix.unisolated\n")
+    (arch == Arch::Armv7a).then_some("xaqu.unisolated\n")
 }
 
 /// The program `init` names for `arch`, with `{arch}` replaced by its name,
@@ -1304,15 +1304,15 @@ pub(crate) fn program_for(init: &str, arch: Arch) -> Result<PathBuf> {
 }
 
 /// The program `build`, `run` and `test-boot` were given, if any: `--init`,
-/// or else a non-empty `FERRIX_INIT`, the variable that has always chosen the
+/// or else a non-empty `XAQU_INIT`, the variable that has always chosen the
 /// shell those commands embed.
 pub(crate) fn optional_program(arch: Arch, args: &Args) -> Result<Option<PathBuf>> {
-    let init = match (&args.init, std::env::var("FERRIX_INIT")) {
+    let init = match (&args.init, std::env::var("XAQU_INIT")) {
         (Some(init), _) => init.clone(),
         (None, Ok(init)) if !init.is_empty() => init,
         (None, Ok(_) | Err(std::env::VarError::NotPresent)) => return Ok(None),
         (None, Err(std::env::VarError::NotUnicode(_))) => {
-            return Err(Error::new("FERRIX_INIT is not valid UTF-8"));
+            return Err(Error::new("XAQU_INIT is not valid UTF-8"));
         }
     };
     program_for(&init, arch).map(Some)

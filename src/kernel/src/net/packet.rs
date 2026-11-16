@@ -4,7 +4,7 @@
 //! The socket lives in the stack, as an internet socket does, and is named by
 //! a [`SocketId`]; what is here is the shell: `sockaddr_ll` both ways, the
 //! waiting a blocking receive does, and the options a program sets. See
-//! `ferrix_net::packet` for what the socket itself does and does not do yet.
+//! `xaqu_net::packet` for what the socket itself does and does not do yet.
 
 use alloc::sync::Arc;
 use alloc::vec;
@@ -12,16 +12,16 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::socket::{
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::socket::{
     AF_PACKET, MSG_DONTWAIT, MSG_PEEK, SO_DOMAIN, SO_ERROR, SO_PROTOCOL, SO_RCVBUF,
     SO_RCVTIMEO_NEW, SO_RCVTIMEO_OLD, SO_SNDBUF, SO_SNDTIMEO_NEW, SO_SNDTIMEO_OLD, SO_TYPE,
     SOCK_DGRAM, SOCK_RAW, SOCKADDR_LL_ADDR_OFFSET, SOCKADDR_LL_SIZE, SOCKET_BUFFER_DEFAULT,
     SOL_SOCKET, Width,
 };
-use ferrix_net::SocketId;
-use ferrix_net::packet::{LinkAddress, PacketKind};
-use ferrix_vfs::{Inode, Metadata, OpenFile, Readiness};
+use xaqu_net::SocketId;
+use xaqu_net::packet::{LinkAddress, PacketKind};
+use xaqu_vfs::{Inode, Metadata, OpenFile, Readiness};
 
 use crate::fs;
 use crate::net::NetNamespace;
@@ -140,7 +140,7 @@ impl PacketSocket {
             .core()
             .with(|stack, _| stack.bind_packet(self.id, u16::from_be(protocol), interface))
             .map_err(|error| match error {
-                ferrix_net::Error::NoDevice => Errno::ENODEV,
+                xaqu_net::Error::NoDevice => Errno::ENODEV,
                 other => errno(other),
             })
     }
@@ -223,8 +223,8 @@ impl PacketSocket {
                         Some(name),
                     ));
                 }
-                Err(ferrix_net::Error::WouldBlock) if nonblock => return Err(Errno::EAGAIN),
-                Err(ferrix_net::Error::WouldBlock) => {}
+                Err(xaqu_net::Error::WouldBlock) if nonblock => return Err(Errno::EAGAIN),
+                Err(xaqu_net::Error::WouldBlock) => {}
                 Err(other) => return Err(errno(other)),
             }
             fs::socket::wait_on(
@@ -247,7 +247,7 @@ impl PacketSocket {
             let hardware = socket
                 .interface
                 .and_then(|index| stack.interface(index))
-                .filter(|link| matches!(link.medium, ferrix_net::Medium::Ethernet))
+                .filter(|link| matches!(link.medium, xaqu_net::Medium::Ethernet))
                 .map(|link| link.hardware);
             (socket.protocol, bound, hardware)
         });
@@ -318,8 +318,8 @@ impl PacketSocket {
                     .unwrap_or(0)
                     .saturating_mul(2)
                     .clamp(
-                        ferrix_linux_abi::socket::SOCKET_BUFFER_MIN,
-                        ferrix_linux_abi::socket::SOCKET_BUFFER_MAX,
+                        xaqu_linux_abi::socket::SOCKET_BUFFER_MIN,
+                        xaqu_linux_abi::socket::SOCKET_BUFFER_MAX,
                     );
                 let mut options = self.options.lock();
                 if name == SO_SNDBUF {
@@ -347,7 +347,7 @@ impl PacketSocket {
         request: u32,
         arg: u64,
     ) -> Result<usize, Errno> {
-        if request != ferrix_linux_abi::socket::SIOCINQ {
+        if request != xaqu_linux_abi::socket::SIOCINQ {
             return Err(Errno::ENOTTY);
         }
         let waiting = self.ns.core().with(|stack, _| {
@@ -388,7 +388,7 @@ impl Inode for PacketSocket {
         Some(self.ns.core().progress().wakes())
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(self.ns.core().progress_source());
         true
     }
@@ -398,12 +398,12 @@ impl Inode for PacketSocket {
         true
     }
 
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.recv(buf, 0, nonblock)
             .map(|(received, _from)| received.bytes)
     }
 
-    fn write_stream(&self, data: &[u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         self.send(data, None)
     }
 }
@@ -418,10 +418,10 @@ pub fn of(file: &OpenFile) -> Option<Arc<PacketSocket>> {
 
 /// Which errno a packet socket's failure is, as `packet_snd` and
 /// `packet_do_bind` answer them.
-const fn errno(error: ferrix_net::Error) -> Errno {
+const fn errno(error: xaqu_net::Error) -> Errno {
     match error {
-        ferrix_net::Error::NoDevice => Errno::ENXIO,
-        ferrix_net::Error::NetworkDown => Errno::ENETDOWN,
+        xaqu_net::Error::NoDevice => Errno::ENXIO,
+        xaqu_net::Error::NetworkDown => Errno::ENETDOWN,
         other => crate::net::socket::errno(other),
     }
 }

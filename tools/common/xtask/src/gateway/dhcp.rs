@@ -19,9 +19,9 @@
 //! which is two more commands to remember and one more place for the numbers
 //! to be wrong.
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::ipv4;
-use ferrix_netwire::udp as wire;
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::ipv4;
+use xaqu_netwire::udp as wire;
 
 use super::{BROADCAST_IP, Core, DNS_IP, GATEWAY_IP, GUEST_IP, MTU, NETMASK, Result, bump, put};
 
@@ -105,7 +105,7 @@ struct Request {
     /// The flags field, echoed so the broadcast bit is preserved.
     flags: u16,
     /// The client's hardware address.
-    mac: ferrix_netwire::ethernet::Mac,
+    mac: xaqu_netwire::ethernet::Mac,
     /// What the client is asking for.
     kind: u8,
     /// The address it wants, from option 50 or from `ciaddr`.
@@ -206,7 +206,7 @@ impl Core {
             ipv4::protocol::UDP,
             GATEWAY_IP,
             LIMITED_BROADCAST,
-            datagram.get(..len).ok_or(ferrix_netwire::Error::NoSpace)?,
+            datagram.get(..len).ok_or(xaqu_netwire::Error::NoSpace)?,
         )
     }
 }

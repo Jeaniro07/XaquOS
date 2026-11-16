@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-bootinfo"
-description = "The hand-off ABI between the Ferrix UEFI loader and the Ferrix kernel"
+name = "xaqu-bootinfo"
+description = "The hand-off ABI between the Xaqu UEFI loader and the Xaqu kernel"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

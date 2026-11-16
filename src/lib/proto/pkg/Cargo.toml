@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-pkg"
+name = "xaqu-pkg"
 description = "Packages: an app's manifest, the record an installed package leaves, and the plan that installs a set of them (docs/APPS.md)"
 version = "0.1.0"
 edition = "2024"
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-argon2.workspace = true
+xaqu-argon2.workspace = true
 
 [lints]
 workspace = true

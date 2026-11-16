@@ -16,13 +16,13 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{
     self, CHANNEL_MAX_HANDLES, JOB_CPU_WEIGHT, JOB_MEMORY, JOB_OBJECTS, JOB_TASKS, UNLIMITED,
 };
 
@@ -585,9 +585,9 @@ fn a_bootstrap_without_transfer_is_refused(
         .with_handles(|table| table.insert(Object::Job(job), Rights::JOB))
         .map_err(|_| "no room for a child's job")?;
     let class = if size_of::<usize>() == 8 {
-        ferrix_elf::Class::Elf64
+        xaqu_elf::Class::Elf64
     } else {
-        ferrix_elf::Class::Elf32
+        xaqu_elf::Class::Elf32
     };
     let file = image::build_with(
         class,
@@ -602,7 +602,7 @@ fn a_bootstrap_without_transfer_is_refused(
         .map_anonymous(
             IMAGE_AT,
             len.div_ceil(PAGE_SIZE) * PAGE_SIZE,
-            ferrix_vma::VmaFlags::READ_WRITE,
+            xaqu_vma::VmaFlags::READ_WRITE,
         )
         .map_err(|_| "no room for a child's image")?;
     side.put(IMAGE_AT, &file)?;
@@ -994,9 +994,9 @@ fn the_audit_record_is_read_by_its_handle_alone(
         return Err("audit_read on the audit record's handle was refused");
     }
     let (copied, next, lost, id) = answered(side)?;
-    let first = side.get(AUDIT_RECORDS, ferrix_audit::RECORD_BYTES)?;
-    let first = <[u8; ferrix_audit::RECORD_BYTES]>::try_from(first.as_slice())
-        .map(|bytes| ferrix_audit::Record::from_bytes(&bytes))
+    let first = side.get(AUDIT_RECORDS, xaqu_audit::RECORD_BYTES)?;
+    let first = <[u8; xaqu_audit::RECORD_BYTES]>::try_from(first.as_slice())
+        .map(|bytes| xaqu_audit::Record::from_bytes(&bytes))
         .map_err(|_| "a short read")?;
     let started = first
         .start_fields()
@@ -1008,14 +1008,14 @@ fn the_audit_record_is_read_by_its_handle_alone(
     }
     // A count of zero: nothing copied, the cursor where it was, the buffer
     // as it was left.
-    side.put(AUDIT_RECORDS, &[0xA5; ferrix_audit::RECORD_BYTES])?;
+    side.put(AUDIT_RECORDS, &[0xA5; xaqu_audit::RECORD_BYTES])?;
     stage_answer(side, 5)?;
     if read(reader, types::AUDIT_HIGH, 0) != Ok(0) {
         return Err("audit_read of no records was refused");
     }
     let (copied, next, _, _) = answered(side)?;
     let untouched = side
-        .get(AUDIT_RECORDS, ferrix_audit::RECORD_BYTES)?
+        .get(AUDIT_RECORDS, xaqu_audit::RECORD_BYTES)?
         .iter()
         .all(|&byte| byte == 0xA5);
     if copied != 0 || next != 5 || !untouched {
@@ -1159,7 +1159,7 @@ fn processor_one_out_and_back(
     report: &mut Report,
     token: Handle,
 ) -> Result<(), &'static str> {
-    use ferrix_audit::{CPU_SERVICE, Outcome, cpu_service, target};
+    use xaqu_audit::{CPU_SERVICE, Outcome, cpu_service, target};
 
     let in_service = |cpu: usize| {
         crate::smp::topology()
@@ -1192,16 +1192,16 @@ fn processor_one_out_and_back(
             return Err("cpu_service did not bring processor 1 back into service");
         }
     }
-    let mut records = [ferrix_audit::Record::EMPTY; 16];
+    let mut records = [xaqu_audit::Record::EMPTY; 16];
     let read = crate::audit::read(crate::audit::Which::High, mark, &mut records);
-    let kept: Vec<&ferrix_audit::Record> = records
+    let kept: Vec<&xaqu_audit::Record> = records
         .get(..read.copied)
         .unwrap_or_default()
         .iter()
         .filter(|record| record.is(CPU_SERVICE))
         .collect();
     let lode = cpu_service::LODE;
-    let shaped = |record: &ferrix_audit::Record, outcome: Outcome, status: i16, cpu, way| {
+    let shaped = |record: &xaqu_audit::Record, outcome: Outcome, status: i16, cpu, way| {
         record.outcome == outcome as u16
             && record.status == status
             && record.target_kind == target::CPU
@@ -1368,7 +1368,7 @@ fn memory_is_scrubbed_through_its_token_alone(
 /// Verifies: L.object.221
 /// Verifies: L.object.224
 fn a_reservation_needs_reserve(side: &Side, report: &mut Report) -> Result<(), &'static str> {
-    use ferrix_native_abi::types::JOB_RESERVE;
+    use xaqu_native_abi::types::JOB_RESERVE;
     if Rights::JOB.contains(Rights::RESERVE) {
         return Err("a new job's handle carries RESERVE");
     }

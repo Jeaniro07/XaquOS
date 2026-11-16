@@ -21,14 +21,14 @@
 //!
 //! ```
 //! # use core::fmt::Write;
-//! # use ferrix_fbtext::{PixelOrder, Rect, Rgb, Surface, TextArea};
+//! # use xaqu_fbtext::{PixelOrder, Rect, Rgb, Surface, TextArea};
 //! let mut pixels = [0u8; 320 * 200 * 4];
 //! let mut surface = Surface::new(&mut pixels, 320, 200, 320, PixelOrder::Bgrx).unwrap();
 //! surface.fill(Rgb::new(0, 0, 0xAA));
 //!
 //! let region = Rect { x: 8, y: 8, width: 304, height: 184 };
 //! let mut text = TextArea::new(&mut surface, region, 1, Rgb::WHITE, None);
-//! writeln!(text, "FERRIX-PANIC something went wrong").unwrap();
+//! writeln!(text, "XAQU-PANIC something went wrong").unwrap();
 //! ```
 
 #![no_std]

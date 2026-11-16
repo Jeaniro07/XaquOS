@@ -4,10 +4,10 @@
 //! matching of drivers to devices is not a setting and stays (ledger 3558
 //! (8)).
 
-use ferrix_kernel_load::discovery::devmgr::{self, Bus, Request};
-use ferrix_kernel_load::fs::sysfs;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sysfs::name;
+use xaqu_kernel_load::discovery::devmgr::{self, Bus, Request};
+use xaqu_kernel_load::fs::sysfs;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sysfs::name;
 
 /// A write of `data` to `driver`'s `bind`, or with `unbind` its `unbind`,
 /// on `bus`: a request to `devmgr`.
@@ -18,7 +18,7 @@ use ferrix_sysfs::name;
 pub fn driver_bind(bus: Bus, driver: u16, unbind: bool, data: &[u8]) -> Result<usize, Errno> {
     // A row's kill of a driver, which is no Linux process here (ledger 6268, L9):
     // only in a row's image. By location; devmgr holds the handle.
-    #[cfg(ferrix_row_driver_kill)]
+    #[cfg(xaqu_row_driver_kill)]
     if unbind && let Some(named) = data.strip_prefix(b"kill:") {
         let named = name::written(named).ok_or(Errno::ENODEV)?;
         let device = sysfs::device_named(bus, named).ok_or(Errno::ENODEV)?;

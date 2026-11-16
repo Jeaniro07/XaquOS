@@ -10,26 +10,26 @@
 
 use core::cell::OnceCell;
 use core::fmt;
-use ferrix_rt::log::Level;
+use xaqu_rt::log::Level;
 
-use ferrix_intel_xelp::remote::wire::{
+use xaqu_intel_xelp::remote::wire::{
     BATCH_HANDLES, BATCH_RECORDS, Batch, Call, Event, RECORD_BYTES, records,
 };
-use ferrix_intel_xelp::remote::{GiveUp, KeeperLink};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{self, Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::job::Job;
-use ferrix_rt::native::pending::{Process, Protection};
-use ferrix_rt::native::pin::{DeviceAddress, Pin, PinAccess};
-use ferrix_rt::native::port::Port;
-use ferrix_rt::native::vmo::{self, Vmo};
+use xaqu_intel_xelp::remote::{GiveUp, KeeperLink};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{self, Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::job::Job;
+use xaqu_rt::native::pending::{Process, Protection};
+use xaqu_rt::native::pin::{DeviceAddress, Pin, PinAccess};
+use xaqu_rt::native::port::Port;
+use xaqu_rt::native::vmo::{self, Vmo};
 
 use crate::serve::{AsVmo, KEY_BACKEND, KEY_INTERRUPT, say};
 
@@ -96,7 +96,7 @@ fn deliver(bytes: &[u8], sink: &mut dyn FnMut(Event)) -> bool {
         match Event::decode(record) {
             Ok(event) => sink(event),
             Err(error) => {
-                ferrix_rt::warn!("intel: the GT's worker sent a record nobody wrote ({error:?})");
+                xaqu_rt::warn!("intel: the GT's worker sent a record nobody wrote ({error:?})");
                 return false;
             }
         }
@@ -174,7 +174,7 @@ impl<'a> Link<'a> {
         let until = self.now_ns().saturating_add(EMPTY_NS);
         let emptied = old.job.wait_one(Signals::EMPTY, Deadline::At(until));
         if emptied.is_err() {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "intel: a dead worker's job did not empty in {} s; no worker is started beside it",
                 EMPTY_NS / 1_000_000_000
             );
@@ -201,7 +201,7 @@ impl<'a> Link<'a> {
         let out =
             unsafe { core::slice::from_raw_parts_mut(map as *mut DeviceAddress, memory.pages) };
         let got = pin.addresses(out);
-        let _ = ferrix_rt::linux::munmap(map, len);
+        let _ = xaqu_rt::linux::munmap(map, len);
         if !got.map_err(|_| Errno::ENOMEM)?.is_complete() {
             return Err(Errno::ENOMEM);
         }
@@ -228,9 +228,9 @@ impl<'a> Link<'a> {
                     return true;
                 }
                 Err(Error::ShouldWait) => {
-                    let until = ferrix_rt::linux::monotonic_nanos()
+                    let until = xaqu_rt::linux::monotonic_nanos()
                         .unwrap_or(0)
-                        .saturating_add(ferrix_intel_xelp::remote::keeper::TDR_NS);
+                        .saturating_add(xaqu_intel_xelp::remote::keeper::TDR_NS);
                     let _ = worker.channel.wait_one(
                         Signals::WRITABLE | Signals::PEER_CLOSED,
                         Deadline::At(until),
@@ -345,7 +345,7 @@ impl KeeperLink for Link<'_> {
             return false;
         };
         let Ok(built) =
-            ferrix_process_builder::build(&job, &self.image, WORKER, ferrix_rt::ELF_MACHINE)
+            xaqu_process_builder::build(&job, &self.image, WORKER, xaqu_rt::ELF_MACHINE)
         else {
             return false;
         };
@@ -394,7 +394,7 @@ impl KeeperLink for Link<'_> {
     }
 
     fn now_ns(&mut self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn say(&mut self, level: Level, line: fmt::Arguments<'_>) {
@@ -402,10 +402,10 @@ impl KeeperLink for Link<'_> {
     }
 
     fn gave_up(&mut self, why: GiveUp) {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "intel: the keeper gives up on its workers ({why:?}): it exits, and every program's device is lost as when the driver dies (docs/INTEL-GPU.md §11)"
         );
         let _ = self.end_worker();
-        ferrix_rt::exit(crate::Step::Worker as i32);
+        xaqu_rt::exit(crate::Step::Worker as i32);
     }
 }

@@ -22,9 +22,9 @@
 
 use std::collections::BTreeSet;
 
-use ferrix_svc::event::{Action, ClientId, Event, Exit, Pid, Request, UnitId};
-use ferrix_svc::source::{Entry, Layer, Source};
-use ferrix_svc::{Instant, Manager, NoProbe, Options};
+use xaqu_svc::event::{Action, ClientId, Event, Exit, Pid, Request, UnitId};
+use xaqu_svc::source::{Entry, Layer, Source};
+use xaqu_svc::{Instant, Manager, NoProbe, Options};
 use libfuzzer_sys::fuzz_target;
 
 /// The unit set every run starts from, beside the fuzzed service.

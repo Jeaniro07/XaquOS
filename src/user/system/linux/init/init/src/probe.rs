@@ -2,7 +2,7 @@
 //! machine and so are the backend's.
 //!
 //! The manager asks whether a test passed and applies `!` and `|` itself.
-//! A test Ferrix has nothing to answer with -- a virtualisation it does not
+//! A test Xaqu has nothing to answer with -- a virtualisation it does not
 //! detect, a host name it does not have -- fails, so a plain condition skips
 //! its unit and a negated one holds.
 
@@ -10,8 +10,8 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::Path;
 
-use ferrix_svc::Probe;
-use ferrix_svc::unit::{Condition, Test};
+use xaqu_svc::Probe;
+use xaqu_svc::unit::{Condition, Test};
 
 /// The machine, as the conditions see it.
 #[derive(Debug)]

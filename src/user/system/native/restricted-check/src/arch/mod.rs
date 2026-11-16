@@ -12,11 +12,11 @@ pub(crate) use aarch64::*;
 /// ARMv7-A has no restricted mode (`docs/microkernel/K1.md` §8): the check starts this
 /// program there, and it has nothing to run.
 #[cfg(target_arch = "arm")]
-pub(crate) fn run(_bootstrap: ferrix_rt::Bootstrap) -> i32 {
+pub(crate) fn run(_bootstrap: xaqu_rt::Bootstrap) -> i32 {
     0
 }
 #[cfg(target_arch = "arm")]
-use {ferrix_linux_abi as _, ferrix_native_abi as _};
+use {xaqu_linux_abi as _, xaqu_native_abi as _};
 #[cfg(not(target_arch = "arm"))]
 #[path = "../cases.rs"]
 mod cases;

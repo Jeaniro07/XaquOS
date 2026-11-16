@@ -49,19 +49,19 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use ferrix_blkring::identity::Location;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
-use ferrix_renderctl::message::{
+use xaqu_blkring::identity::Location;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_renderctl::message::{
     BACKING_RIGHTS, Direction, MAX_BYTES, MakeBlob, Message, NO_WINDOW, Ready, Refusal, Status,
     Transfer as Move, VERSION, WORK_VMO_RIGHTS, Work, features, flags,
 };
-use ferrix_renderctl::session::{Event, RequestError, Session};
+use xaqu_renderctl::session::{Event, RequestError, Session};
 
 use crate::claim::StillServed;
 use crate::claim::{Claims, Numbers};
@@ -135,7 +135,7 @@ const FIRST_OBJECT: u32 = 1 << 30;
 /// How many descriptions the work VMO holds at once: one per object the
 /// session will track, so a description slot is never what refuses a request
 /// the session itself would have taken.
-const DESCRIBE_SLOTS: usize = ferrix_renderctl::session::MAX_OBJECTS;
+const DESCRIBE_SLOTS: usize = xaqu_renderctl::session::MAX_OBJECTS;
 
 /// The bytes at the base of the work VMO that the description slots own.
 /// Command buffers come after them.
@@ -539,7 +539,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_blkring::control::CONTROL_RIGHTS,
+        xaqu_blkring::control::CONTROL_RIGHTS,
         |node| {
             create(node).map_err(|why| match why {
                 CreateError::InUse => status::ALREADY_BOUND,
@@ -563,7 +563,7 @@ pub(crate) fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, CreateErro
         device: Arc::clone(node),
         location: crate::interfaces::block_ring::location_of(node),
     });
-    if sched::spawn("render", run, id, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("render", run, id, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = take_start(id);
         CLAIMS.release(node);
         return Err(CreateError::NoMemory);
@@ -877,8 +877,8 @@ impl Renderer {
     /// Its size is zero: unlike a card, whose one VMO is what
     /// `MODE_MAP_DUMB`'s offsets are into, each object here has a backing of
     /// its own and the node's offsets name an object, not a place in a file.
-    pub(crate) fn metadata(&self) -> ferrix_vfs::Metadata {
-        use ferrix_vfs::{FileType, Metadata, Timespec};
+    pub(crate) fn metadata(&self) -> xaqu_vfs::Metadata {
+        use xaqu_vfs::{FileType, Metadata, Timespec};
         Metadata {
             ino: (1u64 << 41) + u64::from(self.index),
             kind: FileType::CharDevice,
@@ -888,7 +888,7 @@ impl Renderer {
             uid: 0,
             gid: 0,
             size: 0,
-            rdev: ferrix_vfs::initramfs::makedev(crate::interfaces::display::DRM_MAJOR, self.index),
+            rdev: xaqu_vfs::initramfs::makedev(crate::interfaces::display::DRM_MAJOR, self.index),
             blocks: 0,
             block_size: 4096,
             atime: Timespec::default(),
@@ -973,7 +973,7 @@ impl Renderer {
             // The session refuses an id it holds, so the next one it does
             // not is found by asking: there are few contexts and the ids
             // are dense.
-            for _ in 0..=ferrix_renderctl::session::MAX_CONTEXTS {
+            for _ in 0..=xaqu_renderctl::session::MAX_CONTEXTS {
                 let context = state.next_context;
                 state.next_context = state.next_context.checked_add(1).unwrap_or(1);
                 match state.session.make_context(context, capset) {
@@ -1338,7 +1338,7 @@ impl Renderer {
 
     /// Run a command buffer of `len` bytes in `context`: send it, and return
     /// the fence the driver will answer. On a `ring` other than
-    /// [`ferrix_renderctl::message::NO_RING`], the answer comes when the work
+    /// [`xaqu_renderctl::message::NO_RING`], the answer comes when the work
     /// has finished, which is what [`Renderer::fence_done`] then says.
     ///
     /// The bytes are the renderer's own language and go into a slot of the

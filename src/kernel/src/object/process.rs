@@ -59,8 +59,8 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicI32, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals as ObjectSignals;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals as ObjectSignals;
 
 use crate::fallible::{self, AllocError};
 use crate::object::exception::Supervisor;
@@ -76,7 +76,7 @@ use crate::user::space::AddressSpace;
 #[derive(Debug)]
 pub struct Process {
     /// What it may still write to the debug log this second (BA.6).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     debug_budget: DebugBudget,
     /// What it can see.
     space: Arc<AddressSpace>,
@@ -277,14 +277,14 @@ const LEFT: u64 = u64::MAX;
 
 /// A holder's rate on the debug log (`docs/microkernel/BOOT-AUTHORITY.md` §3, BA.6): so
 /// many bytes a second, per process, so that no holder can starve another's lines.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 #[derive(Debug)]
 struct DebugBudget {
     second: AtomicU64,
     used: AtomicU64,
 }
 
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 impl DebugBudget {
     /// Bytes a second, more than a serial line takes.
     const BYTES_A_SECOND: u64 = 1024 * 1024;
@@ -300,7 +300,7 @@ impl DebugBudget {
 impl Process {
     /// Whether this process may write `bytes` more to the debug log this second.
     /// Racing writers of one process can pass it by a call's bound, no more.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     pub fn debug_budget_takes(&self, bytes: u64) -> bool {
         use core::sync::atomic::Ordering::Relaxed;
         let now = crate::timer::now_nanos() / 1_000_000_000;
@@ -339,7 +339,7 @@ impl Process {
         space.claim_domain(domain);
         let frozen = job.freezing();
         Ok(Process {
-            #[cfg(ferrix_personality = "user")]
+            #[cfg(xaqu_personality = "user")]
             debug_budget: DebugBudget::new(),
             space,
             pid,
@@ -705,7 +705,7 @@ impl Process {
         // Outside the lock: it may be the last reference to that job.
         drop(left);
         // Its slot is what a thread's straight answer compared.
-        #[cfg(ferrix_restricted_window = "on")]
+        #[cfg(xaqu_restricted_window = "on")]
         self.drop_arms();
         // Its speculation domain (`docs/OPAQUE-KERNEL.md` §9.2): a process
         // being made is born in the job it was made for, its space with it;
@@ -798,7 +798,7 @@ impl Process {
     /// which ends a program at its next interrupt or, as `fast::quiet` reads the word, its next
     /// trip before any stub opens. No bit of `linuxd`'s own word is set, as its way out then has
     /// nothing else to do.
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     pub fn drop_arms(&self) {
         self.post_to_tasks(0, None);
     }
@@ -1033,7 +1033,7 @@ impl Exit {
     fn new() -> Exit {
         Exit {
             id: next_id(),
-            level: core::sync::atomic::AtomicU8::new(ferrix_native_abi::types::JOB_LEVEL_TOP),
+            level: core::sync::atomic::AtomicU8::new(xaqu_native_abi::types::JOB_LEVEL_TOP),
             status: AtomicI32::new(0),
             ended_by: AtomicU32::new(0),
             terminated: AtomicBool::new(false),

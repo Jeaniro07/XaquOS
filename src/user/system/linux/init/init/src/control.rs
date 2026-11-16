@@ -1,4 +1,4 @@
-//! The control socket (§10): `/run/ferrix/control`, where `svc` asks.
+//! The control socket (§10): `/run/xaqu/control`, where `svc` asks.
 //!
 //! A stream socket anyone may connect to. `SO_PEERCRED` says who connected:
 //! anyone may read (`status`, `list`, `log`); only root may change state,
@@ -16,7 +16,7 @@ use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::fs::PermissionsExt as _;
 use std::os::unix::net::{UnixListener, UnixStream};
 
-use ferrix_svc_proto::control::{Answer, Call, Framer, SOCKET};
+use xaqu_svc_proto::control::{Answer, Call, Framer, SOCKET};
 
 use crate::sys;
 

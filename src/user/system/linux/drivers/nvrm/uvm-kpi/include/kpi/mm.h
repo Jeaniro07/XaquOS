@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-#ifndef FERRIX_KPI_MM_H
-#define FERRIX_KPI_MM_H
+#ifndef XAQU_KPI_MM_H
+#define XAQU_KPI_MM_H
 
 /* ---- Allocation flags. Only __GFP_ZERO and the no-wait bits change what
  *      kpi does; the rest are accepted and ignored. ---- */

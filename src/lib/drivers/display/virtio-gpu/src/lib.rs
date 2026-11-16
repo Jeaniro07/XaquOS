@@ -51,7 +51,7 @@
 //!
 //! # DMA memory is freed only after a reset
 //!
-//! As in `ferrix-virtio-blk`: the rings and the command area are held in
+//! As in `xaqu-virtio-blk`: the rings and the command area are held in
 //! [`ManuallyDrop`], [`Driver::shutdown`] resets the device and hands them
 //! back as [`Teardown::Released`] only if the reset finished.
 //!
@@ -70,14 +70,14 @@
 use core::fmt;
 use core::mem::ManuallyDrop;
 
-use ferrix_virtio::gpu::{
+use xaqu_virtio::gpu::{
     self, Command, Config, DeviceConfig, DeviceError as Refusal, GpuError, PAGE_SIZE, Response,
 };
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     self, CommonConfig, DEVICE_STATUS, QueueAddresses, STATUS_DEVICE_NEEDS_RESET, STATUS_FAILED,
     TransportError,
 };
-use ferrix_virtio::{Buffer, Layout, QueueError, QueueMemory, SplitQueue};
+use xaqu_virtio::{Buffer, Layout, QueueError, QueueMemory, SplitQueue};
 
 pub mod pipeline;
 
@@ -163,7 +163,7 @@ pub const CURSOR_SLOTS: usize = 16;
 const CURSOR_SLOT_BYTES: usize = 64;
 
 /// The device's registers, as the process that drives it reaches them. The
-/// same shape as `ferrix-virtio-blk`'s.
+/// same shape as `xaqu-virtio-blk`'s.
 pub trait Transport: CommonConfig + DeviceConfig {
     /// Ring the doorbell for `queue`, whose `queue_notify_off` is
     /// `notify_off`.
@@ -1146,7 +1146,7 @@ where
     /// [`Driver::take_done`] last handed back -- into `out`, and say how
     /// many bytes it is: 0 for a refusal or an answer that is not an
     /// EDID's. The bytes are the device's, read and never trusted; the
-    /// mode list made of them checks them (`ferrix_displayctl::edid::modes`).
+    /// mode list made of them checks them (`xaqu_displayctl::edid::modes`).
     #[must_use]
     pub fn edid_bytes(&self, answer: &Result<Response, Refusal>, out: &mut [u8]) -> usize {
         let Ok(Response::Edid { len }) = *answer else {
@@ -1162,7 +1162,7 @@ where
     /// How many frames a second the display behind a `GET_EDID` shows, in
     /// millihertz, from `answer` -- the outcome [`Driver::take_done`] last
     /// handed back -- and the EDID it left in the response: what its
-    /// preferred timing says (`ferrix_displayctl::edid::preferred_refresh_mhz`).
+    /// preferred timing says (`xaqu_displayctl::edid::preferred_refresh_mhz`).
     ///
     /// 0 for a refusal, for an answer that is not an EDID's, and for an EDID
     /// that does not say: a refresh nobody knows is not a reason to stop
@@ -1177,7 +1177,7 @@ where
             return 0;
         };
         self.read_response(gpu::EDID_AT, bytes);
-        ferrix_displayctl::edid::preferred_refresh_mhz(bytes)
+        xaqu_displayctl::edid::preferred_refresh_mhz(bytes)
     }
 
     /// Show `resource_id` -- a resource [`gpu::CURSOR_SIZE`] pixels square,

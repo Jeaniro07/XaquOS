@@ -3,7 +3,7 @@
 //!
 //! The card the DK1 boots from holds its firmware: TF-A twice (`fsbl1`,
 //! `fsbl2`), OP-TEE and U-Boot with U-Boot's saved environment (`fip`), and
-//! Ferrix's loader and kernel (`bootfs`) -- `docs/vendor/st/stm32mp157-dk.md`
+//! Xaqu's loader and kernel (`bootfs`) -- `docs/vendor/st/stm32mp157-dk.md`
 //! step 1. A driver that wrote any of those could leave the board unable to
 //! boot, so this driver writes only where the card's owner said it may: in
 //! a partition whose GPT name begins [`PREFIX`]. Every other block -- the
@@ -11,17 +11,17 @@
 //! partition covers -- is read-only, and a card whose table does not check
 //! is read-only whole.
 //!
-//! The table is read the way `ferrix-partition` reads it for the kernel --
+//! The table is read the way `xaqu-partition` reads it for the kernel --
 //! signature, header CRC, the entry array's CRC, every partition inside the
 //! usable range -- but a sector at a time and with no allocation, since a
-//! driver process has no heap. A `ferrix-` partition that overlaps any other
+//! driver process has no heap. A `xaqu-` partition that overlaps any other
 //! partition makes the table refused, so no name can open another
 //! partition's blocks to writes.
 
 use crate::BLOCK_BYTES;
 
 /// The name a partition's must begin with to be written.
-pub const PREFIX: &str = "ferrix-";
+pub const PREFIX: &str = "xaqu-";
 
 /// The most writable partitions kept; more are refused.
 pub const MOST_WRITABLE: usize = 8;

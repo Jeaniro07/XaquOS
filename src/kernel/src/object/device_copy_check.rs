@@ -19,11 +19,11 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::O_NONBLOCK;
-use ferrix_native_abi::nr;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::O_NONBLOCK;
+use xaqu_native_abi::nr;
+use xaqu_vma::VmaFlags;
 
 use crate::device;
 use crate::mm;

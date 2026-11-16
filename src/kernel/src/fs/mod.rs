@@ -11,7 +11,7 @@
 //!
 //! A tmpfs, with the initramfs unpacked into it. That is Linux's answer to the
 //! cycle `docs/ARCHITECTURE.md` §7 describes — the root filesystem needs a
-//! block driver that lives on the root filesystem — and it is Ferrix's for
+//! block driver that lives on the root filesystem — and it is Xaqu's for
 //! the same reason. `/tmp` is a tmpfs of its own on top, so that what a
 //! program writes there is one mount that can later be bounded or discarded
 //! without touching what the archive put in place.
@@ -25,17 +25,17 @@
 //! decide what to do about a filesystem that does not exist.
 
 pub(crate) mod anon;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod bind_check;
 pub(crate) mod blkio;
 pub(crate) mod block;
-#[cfg(not(ferrix_fs = "server"))]
+#[cfg(not(xaqu_fs = "server"))]
 pub(crate) mod btrfs;
-#[cfg(ferrix_fs = "server")]
+#[cfg(xaqu_fs = "server")]
 pub(crate) mod served;
-#[cfg(ferrix_fs = "server")]
+#[cfg(xaqu_fs = "server")]
 pub(crate) use served as btrfs;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod btrfs_check;
 pub mod btrfs_powerfail;
 pub mod btrfs_write_check;
@@ -47,14 +47,14 @@ pub mod cgroupfs;
 /// # Errors
 ///
 /// As the core's registration.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub fn start_block_side(files: u32) -> Result<(), Full> {
-    #[cfg(ferrix_fs = "server")]
+    #[cfg(xaqu_fs = "server")]
     {
         btrfs::start(files);
         Ok(())
     }
-    #[cfg(not(ferrix_fs = "server"))]
+    #[cfg(not(xaqu_fs = "server"))]
     {
         let _ = files;
         crate::interfaces::block_ring::install()
@@ -62,12 +62,12 @@ pub fn start_block_side(files: u32) -> Result<(), Full> {
 }
 
 /// Every disk the block side has said is up by now is known here.
-#[cfg(ferrix_load_built = "lift")]
+#[cfg(xaqu_load_built = "lift")]
 pub fn settle_block_side() {
-    #[cfg(ferrix_fs = "server")]
+    #[cfg(xaqu_fs = "server")]
     btrfs::settle();
 }
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 pub(crate) mod console;
 pub(crate) mod crashes;
@@ -75,65 +75,65 @@ pub mod data_disk;
 pub(crate) mod devfs;
 pub(crate) mod disk_file;
 pub(crate) mod epoll;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod epoll_check;
 pub(crate) mod eventfd;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod eventfd_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod exec_check;
 pub mod home_disk;
 pub(crate) mod inotify;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod kmem_check;
 pub(crate) mod kmsg;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod memfd_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod mmap_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod mount_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod mountperm_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod namespace_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod netns_check;
 pub(crate) mod nsfs;
 mod pages;
 pub(crate) mod partitions;
 pub(crate) mod pidfd;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod pidns_check;
 pub(crate) mod pipe;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod pipe_check;
 pub(crate) mod portfd;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod procaccess_check;
 pub mod procfs;
 pub(crate) mod pty;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub(crate) mod pty_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod release_check;
 pub mod root_disk;
 pub(crate) mod seam;
 pub(crate) mod signalfd;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod signalfd_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod smallns_check;
 pub(crate) mod socket;
 pub(crate) mod sockname;
 pub mod sysfs;
 pub(crate) mod terminal;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod timens_check;
 pub mod timerfd;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod timerfd_check;
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod userns_check;
 pub(crate) mod wake;
 pub(crate) mod watchdog;
@@ -143,12 +143,12 @@ use alloc::vec::Vec;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use ferrix_bootinfo::BootView;
-use ferrix_sync::Once;
-use ferrix_vfs::access::MAY_EXEC;
-use ferrix_vfs::initramfs::{self, Removed, UnpackError, Unpacked, makedev};
-use ferrix_vfs::tmpfs::Tmpfs;
-use ferrix_vfs::{
+use xaqu_bootinfo::BootView;
+use xaqu_sync::Once;
+use xaqu_vfs::access::MAY_EXEC;
+use xaqu_vfs::initramfs::{self, Removed, UnpackError, Unpacked, makedev};
+use xaqu_vfs::tmpfs::Tmpfs;
+use xaqu_vfs::{
     Clock, Context, Errno, FileType, Location, Namespace, OpenFile, OpenFlags, SetAttributes,
     Timespec,
 };
@@ -233,7 +233,7 @@ fn read_from_root(path: &[u8]) -> Result<vmap::Buffer, Errno> {
 }
 
 /// The next anonymous device minor, for filesystems with no device behind
-/// them. Linux gives these major 0; so does Ferrix.
+/// them. Linux gives these major 0; so does Xaqu.
 static NEXT_ANONYMOUS: AtomicU32 = AtomicU32::new(1);
 
 /// Nanoseconds in a second.
@@ -318,11 +318,11 @@ pub(crate) fn spared(name: &[u8]) -> bool {
 /// allocator (`L.mm.99`), and after a switch to a root disk the tmpfs's
 /// copy of it, the archive's names removed but for the mount points, the
 /// directories above them and [`spared`] (`L.user.173`). A root in memory --
-/// no root disk, `ferrix.root=tmpfs`, the live ISO, every test boot -- keeps
+/// no root disk, `xaqu.root=tmpfs`, the live ISO, every test boot -- keeps
 /// its tmpfs: it is `/`, and the checks' fixtures are in it.
 ///
 /// Once a boot: a second call does nothing and answers `None`. Called on
-/// the kernel path after the boot's checks, and under `ferrix.devmgr=init`
+/// the kernel path after the boot's checks, and under `xaqu.devmgr=init`
 /// from the root's switch task on every way out of it; pid 1's inputs were
 /// copied out of the archive when they were taken (`init::set_inputs`).
 pub fn release() -> Option<Released> {
@@ -404,7 +404,7 @@ pub(crate) fn anonymous_device() -> u64 {
 /// counter alone once, and kept doing so after the real-time clock learned
 /// firmware's time: every new file was dated 1970, older than any file a
 /// tar archive unpacked, and automake's "newly created file is older than
-/// distributed files" stopped curl's `configure` on Ferrix.
+/// distributed files" stopped curl's `configure` on Xaqu.
 pub(crate) fn clock() -> Arc<dyn Clock> {
     Arc::new(RealtimeClock)
 }
@@ -477,7 +477,7 @@ pub(crate) fn read_file(
 
 /// Read a whole regular file `name` beneath the directory `dir`, following
 /// no symbolic link on the way from `dir` to it: `openat2`'s
-/// `RESOLVE_NO_SYMLINKS`, which Ferrix has no call for.
+/// `RESOLVE_NO_SYMLINKS`, which Xaqu has no call for.
 ///
 /// The read for any name a user or a command line had a hand in: anything
 /// the kernel reads whole from a name it did not choose itself should read
@@ -486,7 +486,7 @@ pub(crate) fn read_file(
 ///
 /// What the display core reads `drm.edid_firmware`'s file with. The name has
 /// already been refused if it is absolute or climbs through `..`
-/// (`ferrix_displayctl::edid::confined`), so a walk one component at a time
+/// (`xaqu_displayctl::edid::confined`), so a walk one component at a time
 /// that never follows a link cannot leave `dir`: a link planted under
 /// `/lib/firmware` that leads to `/etc/shadow` is `ELOOP`, and what every
 /// program that opens the card can read stays a file that is there. `dir`
@@ -596,7 +596,7 @@ impl SetIds {
 ///
 /// The set-group-id bit counts only where the group may execute; without that
 /// it means mandatory locking, which is not a privilege to take on.
-pub(crate) fn set_ids_of(metadata: &ferrix_vfs::Metadata) -> SetIds {
+pub(crate) fn set_ids_of(metadata: &xaqu_vfs::Metadata) -> SetIds {
     SetIds {
         uid: (metadata.permissions & 0o4000 != 0).then_some(metadata.uid),
         gid: (metadata.permissions & 0o2010 == 0o2010).then_some(metadata.gid),
@@ -605,7 +605,7 @@ pub(crate) fn set_ids_of(metadata: &ferrix_vfs::Metadata) -> SetIds {
 
 /// [`set_ids_of`] for the file at `at`: nothing on a `nosuid` mount, as
 /// Linux's `mnt_may_suid` has it.
-pub(crate) fn set_ids_on(at: &Location, metadata: &ferrix_vfs::Metadata) -> SetIds {
+pub(crate) fn set_ids_on(at: &Location, metadata: &xaqu_vfs::Metadata) -> SetIds {
     if at.mount.no_set_id() {
         SetIds::NONE
     } else {
@@ -696,7 +696,7 @@ impl fmt::Display for InitError {
                 write!(f, "{at} could not be mounted: errno {}", errno.0)
             }
             InitError::InputsUnpacked => {
-                f.write_str("pid 1's inputs were unpacked into the root: /.ferrix exists")
+                f.write_str("pid 1's inputs were unpacked into the root: /.xaqu exists")
             }
         }
     }
@@ -740,7 +740,7 @@ pub fn init(view: &BootView<'_>) -> Result<Report, InitError> {
         report.unpacked = Some(unpacked.map_err(InitError::Unpack)?);
         // AoU-24, checked on every boot: the unpacker left pid 1's inputs in
         // the archive. Fails closed: a root with a copy beside them is no root.
-        if ns.resolve(&ctx, None, b"/.ferrix", false).is_ok() {
+        if ns.resolve(&ctx, None, b"/.xaqu", false).is_ok() {
             return Err(InitError::InputsUnpacked);
         }
     } else {

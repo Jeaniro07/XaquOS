@@ -365,7 +365,7 @@ impl Desk {
     /// its configuration.
     fn new(name: &str, lines: &str) -> Self {
         let work = workspace(name);
-        let instance = work.join("runtime").join("hypr").join("ferrix-test");
+        let instance = work.join("runtime").join("hypr").join("xaqu-test");
         std::fs::create_dir_all(&instance).expect("an instance directory");
         let config = undithered(&work);
         if !lines.is_empty() {
@@ -550,7 +550,7 @@ fn image(path: &Path) -> Vec<u8> {
             .expect("in range");
         u32::from_le_bytes(slice)
     };
-    assert_eq!(bytes.get(..16), Some(&b"ferrix-xrgb-rle\n"[..]));
+    assert_eq!(bytes.get(..16), Some(&b"xaqu-xrgb-rle\n"[..]));
     let (width, height) = (word(16), word(20));
     assert_eq!((width, height), (WIDTH, HEIGHT));
 
@@ -900,7 +900,7 @@ fn ours(command: &str) -> &'static str {
 /// one answer.
 ///
 /// That is the whole claim `src/user/system/linux/compositor/ctl` makes: a script written for
-/// `hyprctl` works when the program it calls is ours, which is what Ferrix's
+/// `hyprctl` works when the program it calls is ours, which is what Xaqu's
 /// image carries because Hyprland's is not on it. The two ran against one
 /// compositor in one session, so even the window addresses are comparable.
 #[test]
@@ -1764,7 +1764,7 @@ fn animations_can_be_turned_off() {
 //
 // A plugin is a program the compositor starts, which connects to the control
 // socket, says what it is, and adds a dispatcher. `src/user/system/linux/compositor/plug` is the
-// one Ferrix carries; this speaks the same protocol from a thread, which is
+// one Xaqu carries; this speaks the same protocol from a thread, which is
 // what lets a host test press the dispatcher and look at the frame.
 // ---------------------------------------------------------------------------
 
@@ -1796,7 +1796,7 @@ fn with_a_plugin(name: &str) -> (Vec<u8>, String, String) {
                 .expect("the plugin writes");
             writing.flush().expect("the plugin flushes");
         };
-        say("[[PLUGIN]]swap,ferrix,1.0,swaps the focused window with its neighbour\n");
+        say("[[PLUGIN]]swap,xaqu,1.0,swaps the focused window with its neighbour\n");
         say("handle swapthem\n");
 
         // `hyprctl plugin list` sees it once the compositor has read the
@@ -1869,7 +1869,7 @@ fn a_plugin_adds_a_dispatcher_and_the_compositor_hands_it_over() {
     assert!(!report.contains("a client panicked"), "{report}");
 
     // `hyprctl plugin list` names it, in Hyprland's own shape.
-    assert!(listed.contains("Plugin swap by ferrix:"), "{listed}");
+    assert!(listed.contains("Plugin swap by xaqu:"), "{listed}");
     assert!(listed.contains("Dispatchers: swapthem"), "{listed}");
 
     // The compositor handed the dispatcher over rather than refusing it.
@@ -3275,7 +3275,7 @@ fn an_event_socket_too_long_for_sun_path_is_refused_as_the_request_socket_is() {
 /// lode's acceptance, and answers a capture with its whole screen, in QOI.
 #[test]
 fn answers_lode_with_the_screen() {
-    use ferrix_lode_capture::{FORMAT_QOI, Message, qoi};
+    use xaqu_lode_capture::{FORMAT_QOI, Message, qoi};
     use std::io::{Read as _, Write as _};
     use std::os::unix::net::UnixListener;
 
@@ -4256,14 +4256,14 @@ fn menu_tree() -> compositor_appmenu::Tree {
     }
 }
 
-/// A mapped toolkit toplevel and its `ferrix_appmenu_v1`, built from `tree`.
+/// A mapped toolkit toplevel and its `xaqu_appmenu_v1`, built from `tree`.
 fn menued(
     socket: &Path,
     tree: &compositor_appmenu::Tree,
 ) -> (compositor_toolkit::Client, ObjectId) {
     use compositor_appmenu::Step;
     use compositor_toolkit::protocol::appmenu::{
-        self as appmenu, ferrix_appmenu_manager_v1 as manager, ferrix_appmenu_v1 as menu,
+        self as appmenu, xaqu_appmenu_manager_v1 as manager, xaqu_appmenu_v1 as menu,
     };
     use compositor_toolkit::{Client, Event, ToplevelOptions, Value};
     let mut client = Client::connect_to(socket).expect("a client");
@@ -4293,9 +4293,9 @@ fn menued(
     });
     let toplevel = client.toplevel_object(surface).expect("its xdg_toplevel");
     let (bound, _) = client
-        .bind(&appmenu::FERRIX_APPMENU_MANAGER_V1, 1, None)
+        .bind(&appmenu::XAQU_APPMENU_MANAGER_V1, 1, None)
         .expect("the global");
-    let made = client.new_object(&appmenu::FERRIX_APPMENU_V1, 1);
+    let made = client.new_object(&appmenu::XAQU_APPMENU_V1, 1);
     client
         .request(
             bound,
@@ -4334,7 +4334,7 @@ fn menued(
 /// back to the client as `activated`, while one of an id it has not is not.
 #[test]
 fn a_client_menu_reaches_the_bar_and_a_pick_comes_back() {
-    use compositor_toolkit::protocol::appmenu::ferrix_appmenu_v1 as menu;
+    use compositor_toolkit::protocol::appmenu::xaqu_appmenu_v1 as menu;
     use compositor_toolkit::{Event, Value};
     let desk = Desk::new("appmenu", "");
     let read = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
@@ -4406,7 +4406,7 @@ fn a_client_menu_reaches_the_bar_and_a_pick_comes_back() {
 #[test]
 fn a_surface_is_not_a_toplevel_and_too_many_menus_are_refused() {
     use compositor_toolkit::protocol::appmenu::{
-        self as appmenu, ferrix_appmenu_manager_v1 as manager,
+        self as appmenu, xaqu_appmenu_manager_v1 as manager,
     };
     use compositor_toolkit::{Client, ToplevelOptions, Value};
     let desk = Desk::new("appmenu-refused", "");
@@ -4418,9 +4418,9 @@ fn a_surface_is_not_a_toplevel_and_too_many_menus_are_refused() {
             .expect("a toplevel");
         let wl_surface = other.surface_object(surface).expect("its wl_surface");
         let (bound, _) = other
-            .bind(&appmenu::FERRIX_APPMENU_MANAGER_V1, 1, None)
+            .bind(&appmenu::XAQU_APPMENU_MANAGER_V1, 1, None)
             .expect("the global");
-        let made = other.new_object(&appmenu::FERRIX_APPMENU_V1, 1);
+        let made = other.new_object(&appmenu::XAQU_APPMENU_V1, 1);
         let _ = other.request(
             bound,
             manager::request::GET_MENU,

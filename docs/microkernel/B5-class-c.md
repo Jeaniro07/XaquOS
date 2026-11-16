@@ -31,8 +31,8 @@ compiled into a `personality=user` image, or whose parent or child is unscoped (
 | H.DMA.10 | a security rule whose children L.device.44-48 are core and stay: the publishing half scoped with L.object.192, the rest verified from a core check (class A) |
 | L.syscall.20, 23 | `end_record`, `has_end`, `sched::work::post`, `notify` have core callers: the kernel half is class B on `Bare`, the personality half scoped |
 | L.syscall.21, 22 | `post_to_tasks`, `post_own`: the same split, unless a build shows they compile out |
-| L.x86_64.69 | restated to `enter_program`'s path: `ferrix_syscall_entry` stays |
-| L.btrfs.120, 121, L.user.175 | `ferrix_btrfs_write` is linked by `btrfsd`, so these apply in `fast` and `max`: L.btrfs.121 and the crate half of L.btrfs.120 take host tests or a `btrfsd` row; the kernel's reclaim half and `/proc/meminfo`'s are scoped |
+| L.x86_64.69 | restated to `enter_program`'s path: `xaqu_syscall_entry` stays |
+| L.btrfs.120, 121, L.user.175 | `xaqu_btrfs_write` is linked by `btrfsd`, so these apply in `fast` and `max`: L.btrfs.121 and the crate half of L.btrfs.120 take host tests or a `btrfsd` row; the kernel's reclaim half and `/proc/meminfo`'s are scoped |
 
 ## Where it stands
 

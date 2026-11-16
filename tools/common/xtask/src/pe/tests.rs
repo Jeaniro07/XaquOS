@@ -7,7 +7,7 @@
 //! the output is read back by a reader written from the PE specification rather
 //! than from the converter, and every assertion is about bytes.
 
-use ferrix_elf::{
+use xaqu_elf::{
     DT_NULL, DT_REL, DT_RELA, DT_RELASZ, DT_RELENT, DT_RELSZ, ET_DYN, ET_EXEC, PF_R, PF_W, PF_X,
     PT_DYNAMIC, PT_LOAD, R_ARM_RELATIVE, Relocation,
 };
@@ -139,7 +139,7 @@ impl Pie {
     /// The file.
     fn build(&self) -> Vec<u8> {
         let mut bytes = self.bytes.clone();
-        bytes[0..4].copy_from_slice(&ferrix_elf::ELF_MAGIC);
+        bytes[0..4].copy_from_slice(&xaqu_elf::ELF_MAGIC);
         bytes[4] = 1; // ELFCLASS32
         bytes[5] = 1; // ELFDATA2LSB
         bytes[6] = 1; // EI_VERSION
@@ -509,12 +509,12 @@ fn refusal(pie: &Pie) -> String {
 #[test]
 fn refuses_an_image_that_is_not_32_bit_arm() {
     let mut pie = Pie::loader_shaped();
-    pie.machine = ferrix_elf::EM_AARCH64;
+    pie.machine = xaqu_elf::EM_AARCH64;
     assert!(refusal(&pie).contains("32-bit Arm"));
 
     // And a 64-bit image, however well formed.
     let mut elf64 = vec![0u8; 64];
-    elf64[0..4].copy_from_slice(&ferrix_elf::ELF_MAGIC);
+    elf64[0..4].copy_from_slice(&xaqu_elf::ELF_MAGIC);
     elf64[4] = 2;
     elf64[5] = 1;
     elf64[16..18].copy_from_slice(&ET_DYN.to_le_bytes());

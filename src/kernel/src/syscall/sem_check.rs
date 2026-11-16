@@ -13,7 +13,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
 use crate::object::job::Job;
 use crate::object::quota::Resource;
@@ -288,7 +288,7 @@ fn start_waiter_late(
         group: job.quota_index(),
         undo: Arc::new(UndoList::new()),
     });
-    let task = sched::spawn("sem-waiter", waiter, 0, ferrix_sched::NICE_0_WEIGHT)?;
+    let task = sched::spawn("sem-waiter", waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
     if late != 0 {
         sched::sleep_for(late);
     }

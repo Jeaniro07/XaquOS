@@ -1,4 +1,4 @@
-//! The Ferrix kernel.
+//! The Xaqu kernel.
 //!
 //! Entered from the UEFI loader with the MMU on, three mappings in place and
 //! nothing else: no interrupt vectors, no allocator, no other CPU running. What
@@ -18,7 +18,7 @@
 // dependencies, unused here, and are not linked into the image (ledger 3220
 // (14) a). Never in a build with `linux_abi=on`, which every profile sets.
 #![cfg_attr(
-    ferrix_load_built = "none",
+    xaqu_load_built = "none",
     allow(
         dead_code,
         unused_imports,
@@ -29,24 +29,24 @@
     )
 )]
 // A `runtime_settings = "fixed"` build names the removable crate
-// `ferrix-kernel-settings` nowhere, so that rustc never loads it and none of
+// `xaqu-kernel-settings` nowhere, so that rustc never loads it and none of
 // it is linked (docs/KERNEL-CRATES.md §6; ledger 3558 (10), 3623 (R1), (R3)):
 // its manifest lists it in every build, and only this attribute's build
 // leaves it unused. A `live` build keeps the lint.
 #![cfg_attr(
-    ferrix_runtime_settings = "fixed",
+    xaqu_runtime_settings = "fixed",
     expect(
         unused_crate_dependencies,
-        reason = "runtime_settings=fixed leaves ferrix-kernel-settings out of the link"
+        reason = "runtime_settings=fixed leaves xaqu-kernel-settings out of the link"
     )
 )]
 
 extern crate alloc;
 
-use ferrix_kernel_load::*;
+use xaqu_kernel_load::*;
 // Named, not only reached through the glob above, so that each crate's word
 // is named by the binary (`kernel-interface.py`).
-use ferrix_kernel_load::{CORE_FLAG_WORD, ITEM_FLAG_WORD, LOAD_FLAG_WORD};
+use xaqu_kernel_load::{CORE_FLAG_WORD, ITEM_FLAG_WORD, LOAD_FLAG_WORD};
 
 // The four crates compiled with one set of build flags (ledger line 3282,
 // (K4)): the build line is the item's `cfg`s, and the binary's, the core's
@@ -55,38 +55,38 @@ use ferrix_kernel_load::{CORE_FLAG_WORD, ITEM_FLAG_WORD, LOAD_FLAG_WORD};
 const BINARY_FLAG_WORD: u64 = flag_word(&build_flag_word!());
 const _: () = assert!(
     CORE_FLAG_WORD == BINARY_FLAG_WORD,
-    "ferrix-kernel-core was compiled with other build flags than the binary"
+    "xaqu-kernel-core was compiled with other build flags than the binary"
 );
 const _: () = assert!(
     ITEM_FLAG_WORD == BINARY_FLAG_WORD,
-    "ferrix-kernel-item was compiled with other build flags than the binary"
+    "xaqu-kernel-item was compiled with other build flags than the binary"
 );
 const _: () = assert!(
     LOAD_FLAG_WORD == BINARY_FLAG_WORD,
-    "ferrix-kernel-load was compiled with other build flags than the binary"
+    "xaqu-kernel-load was compiled with other build flags than the binary"
 );
-#[cfg(ferrix_runtime_settings = "live")]
+#[cfg(xaqu_runtime_settings = "live")]
 const _: () = assert!(
-    ferrix_kernel_settings::SETTINGS_FLAG_WORD == BINARY_FLAG_WORD,
-    "ferrix-kernel-settings was compiled with other build flags than the binary"
+    xaqu_kernel_settings::SETTINGS_FLAG_WORD == BINARY_FLAG_WORD,
+    "xaqu-kernel-settings was compiled with other build flags than the binary"
 );
 
 // The run-time setting entries' binding (docs/KERNEL-CRATES.md §6.3; ledger
 // 3558 (9), 3623, 3934): the removable crate's `Live` in a `live` build, the
 // load's `Absent` in a `fixed` one, recorded in certification-item.json's
 // `composition_root.removable`. Each invocation defines the load's
-// `__ferrix_setters_*` symbols as calls into its type, so a build binds
+// `__xaqu_setters_*` symbols as calls into its type, so a build binds
 // exactly one or does not link. These, the flag word's assert above and
 // `register_load`'s word that root's way back is there (core quarantine's token,
 // ledger 4932 (B3)), are the only places the tree names
-// `ferrix_runtime_settings` outside the flag lists, and the only ones that
+// `xaqu_runtime_settings` outside the flag lists, and the only ones that
 // name the crate.
-#[cfg(all(ferrix_load_built = "ring0", ferrix_runtime_settings = "live"))]
-ferrix_kernel_load::bind_setters!(ferrix_kernel_settings::Live);
-#[cfg(all(ferrix_load_built = "ring0", ferrix_runtime_settings = "fixed"))]
-ferrix_kernel_load::bind_setters!(setters::Absent);
+#[cfg(all(xaqu_load_built = "ring0", xaqu_runtime_settings = "live"))]
+xaqu_kernel_load::bind_setters!(xaqu_kernel_settings::Live);
+#[cfg(all(xaqu_load_built = "ring0", xaqu_runtime_settings = "fixed"))]
+xaqu_kernel_load::bind_setters!(setters::Absent);
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 pub mod stages_check;
 
 // What belongs to one system on chip rather than to an architecture: the
@@ -95,30 +95,30 @@ pub mod stages_check;
 // chip's `compatible`. The gs201 is the Pixel 7's Tensor G2; its watchdogs
 // are serviced from `arch::aarch64` alone.
 
-use ferrix_bootinfo::{BootInfo, BootView, KASLR_FIXED_IMAGE, KASLR_MOVED, MemKind, PAGE_SIZE};
-use ferrix_paging::MapError;
+use xaqu_bootinfo::{BootInfo, BootView, KASLR_FIXED_IMAGE, KASLR_MOVED, MemKind, PAGE_SIZE};
+use xaqu_paging::MapError;
 
 use console::{println, println_unlogged};
 use discovery::finder::Finder;
 use discovery::{board, devmgr, fdt, firmware, pci, tree};
 use early::EarlyMemory;
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 use interfaces::{audio, block_ring, chardev, display, input, render};
 use panic::{catalog, fatal};
 
 /// What the boot test waits for. Changing it means changing
 /// `tools/common/xtask/src/qemu.rs`, and the two are checked against each other there.
-const SUCCESS_MARKER: &str = "FERRIX-BOOT-OK";
+const SUCCESS_MARKER: &str = "XAQU-BOOT-OK";
 
 /// What a boot that skipped its self-checks prints where the success marker
 /// would be (`checks` says why it is another word). Checked against
 /// `tools/common/xtask/src/qemu.rs` beside the success marker.
-const UNCHECKED_MARKER: &str = "FERRIX-BOOT-UNCHECKED";
+const UNCHECKED_MARKER: &str = "XAQU-BOOT-UNCHECKED";
 
 /// The kernel's entry point.
 ///
 /// The loader calls this with the boot info pointer as its only argument; the
-/// signature is [`ferrix_bootinfo::KernelEntry`], declared in the crate both
+/// signature is [`xaqu_bootinfo::KernelEntry`], declared in the crate both
 /// sides share so that a mismatch is a type error rather than a triple fault.
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
@@ -158,7 +158,7 @@ extern "C" fn _start(boot_info: *const BootInfo) -> ! {
 /// nothing more (`docs/SECCOMP.md` §3.3), with the one question the fast
 /// path asks of it before running ahead of it: whether the filter would look
 /// at a call at all (`docs/OPAQUE-KERNEL.md` §9.7, T2).
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 fn register_system_calls() {
     trap::set_syscall_entry(syscall::dispatch_with::<syscall::linux::Linux>);
     trap::set_quiet_syscall_filter(syscall::seccomp::check);
@@ -168,7 +168,7 @@ fn register_system_calls() {
 /// §11.11): the native range is answered as always, every Linux number is
 /// `ENOSYS`, and no program filter is registered, so the core's
 /// [`trap::filter_quiet`] reads none and asks nothing.
-#[cfg(ferrix_load_built = "none")]
+#[cfg(xaqu_load_built = "none")]
 fn register_system_calls() {
     trap::set_syscall_entry(syscall::dispatch_with::<NoLinux>);
 }
@@ -176,22 +176,22 @@ fn register_system_calls() {
 // The Linux ABI's number and error types name `NoLinux`'s call below; with
 // the Linux ABI on, the binary names the crate nowhere else, its users
 // being the item's and the load's.
-#[cfg(ferrix_load_built = "ring0")]
-use ferrix_linux_abi as _;
+#[cfg(xaqu_load_built = "ring0")]
+use xaqu_linux_abi as _;
 
 /// The personality a kernel without the Linux ABI composes: it answers no
 /// Linux call.
-#[cfg(ferrix_load_built = "none")]
+#[cfg(xaqu_load_built = "none")]
 struct NoLinux;
 
-#[cfg(ferrix_load_built = "none")]
+#[cfg(xaqu_load_built = "none")]
 impl syscall::Personality for NoLinux {
     fn answer(
-        _call: ferrix_linux_abi::nr::Syscall,
+        _call: xaqu_linux_abi::nr::Syscall,
         _args: &trap::SyscallArgs,
         _regs: Option<&arch::UserRegs>,
     ) -> trap::Outcome {
-        trap::Outcome::Return(ferrix_linux_abi::errno::Errno::ENOSYS.as_return_value())
+        trap::Outcome::Return(xaqu_linux_abi::errno::Errno::ENOSYS.as_return_value())
     }
 }
 
@@ -199,33 +199,33 @@ impl syscall::Personality for NoLinux {
 /// quiet predicate, called directly (`trap::filter_quiet`, which decides
 /// whether to ask).
 #[unsafe(no_mangle)]
-fn ferrix_filter_quiet() -> bool {
+fn xaqu_filter_quiet() -> bool {
     filter_quiet_of_personality()
 }
 
-/// The predicate [`ferrix_filter_quiet`] forwards to: the Linux personality's
+/// The predicate [`xaqu_filter_quiet`] forwards to: the Linux personality's
 /// seccomp filter's.
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 use syscall::seccomp::quiet as filter_quiet_of_personality;
 
 /// Without the Linux ABI no filter is registered, so [`trap::filter_quiet`]
 /// never asks this (`docs/LINUX-ABI-SEPARATION.md` §11.11).
-#[cfg(ferrix_load_built = "none")]
+#[cfg(xaqu_load_built = "none")]
 const fn filter_quiet_of_personality() -> bool {
     false
 }
 
 // Each hook is the type `trap` declares it with: see the `const _`s there.
-const _: trap::FilterQuiet = ferrix_filter_quiet;
-#[cfg(ferrix_fast_ipc)]
-const _: trap::FastWriteRead = ferrix_fast_write_read;
+const _: trap::FilterQuiet = xaqu_filter_quiet;
+#[cfg(xaqu_fast_ipc)]
+const _: trap::FastWriteRead = xaqu_fast_write_read;
 
 /// The core's fast-path hook, bound when the kernel is linked: the item's
 /// `channel_write_read` fast path, called directly from x86-64's entry in a
 /// build with it (`ipc_fastpath=on`).
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 #[unsafe(no_mangle)]
-fn ferrix_fast_write_read(a: &[u64; 6]) -> trap::Fast {
+fn xaqu_fast_write_read(a: &[u64; 6]) -> trap::Fast {
     syscall::native::fast_write_read(a)
 }
 
@@ -236,7 +236,7 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     checks::init(view);
     // The options the architecture's bring-up takes before its traps: on
     // x86-64 the preference every processor's HWP request asks for
-    // (`ferrix.epp`), chosen before the first processor asks.
+    // (`xaqu.epp`), chosen before the first processor asks.
     arch::read_boot_options(view);
 
     // Before anything else, and before anything can fault: until this runs the
@@ -250,7 +250,7 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // personality's, and the core holds only a pointer to it
     // (`crate::trap::ReturnPath`). Registered here because the first user
     // program is a boot check below, not init.
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     syscall::deliver::install();
     register_system_calls();
     println!("  traps    vectors installed");
@@ -275,7 +275,7 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // are all check are gated here, in the order they run; the steps that do
     // both gate their own checks inside.
     if checks::run() {
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_allocators_and_traps(&stats, view);
     }
 
@@ -322,19 +322,19 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // takes and gives back are mappings the sweep below has to see settled.
     start_scheduler(cpus);
     console::screen::milestone(9);
-    // `ferrix.msrlog`, x86-64 only and off without the word: a task on this
+    // `xaqu.msrlog`, x86-64 only and off without the word: a task on this
     // processor that reads the power-limit MSRs, once every processor is up
     // and there is a scheduler to sleep in (`L.x86_64.187`).
     arch::start_msr_log(view);
     // The machine-check log's poll, a task on each processor with banks, and
-    // `ferrix.mce.recover` (`docs/MACHINE-CHECK.md` §3.2). x86-64 only.
+    // `xaqu.mce.recover` (`docs/MACHINE-CHECK.md` §3.2). x86-64 only.
     arch::start_machine_check_log(view);
 
     // The console's transmit side, as a program's output goes out: from a
     // task, which the scheduler just made this, into the ring the port's
     // interrupt empties. Early, because every line after this one is sent
     // the way it checks.
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     stages_check::check_console_output();
 
     // Stage 6, so far the memory objects a process is built from and the
@@ -343,22 +343,22 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // and requires the count to return to where it started, which is a
     // measurement the reclaim below would otherwise move under it.
     if checks::run() {
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_user_memory();
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_dirty();
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         check_user_shape();
     }
 
     // Stage 8's root filesystem. Before stage 7's checks, which open files,
     // and after stage 6's, because file contents are VMO pages and the
     // frames they take have to come back.
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     check_filesystems(view);
 
     if checks::run() {
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_programs();
     }
 
@@ -385,9 +385,9 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // the scheduler, and init may open it.
     watchdog::start(view);
     iommu::report(view, device::devices());
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     iommu::domain_check::check_iommu();
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     iommu::domain_check::check_rmrr_identity(view.regions());
 
     // Stage 9's device objects, on the nodes just published: an I/O mapping of
@@ -395,10 +395,10 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     // child, and an interrupt held from delivery to acknowledgement. After
     // `check_devices`, because before it there are no nodes to mint from.
     if checks::run() {
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_device_objects();
     }
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     check_block_ring();
 
     // The rest of stage 2, deliberately last. Each of these needs something a
@@ -415,11 +415,11 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
     say_booted();
 
     // After the marker, on purpose: see `init`. Returns at once when nothing
-    // was named by `ferrix.init=` or built in, and the image has no
+    // was named by `xaqu.init=` or built in, and the image has no
     // /sbin/init.
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     first_processes(view);
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     init::run();
     power::finish()
 }
@@ -427,7 +427,7 @@ fn kmain(view: &BootView<'_>, memory: &mut EarlyMemory) -> ! {
 /// Stage 3's timer check, when the checks run, and then the realtime clock
 /// and the random generator, which are bring-up and started either way --
 /// without the check, from a counter nobody has measured this boot.
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 fn check_timer_and_start_clocks(view: &BootView<'_>) {
     if !checks::run() {
         report_clock_and_random(view);
@@ -455,9 +455,9 @@ fn check_timer_and_start_clocks(view: &BootView<'_>) {
 /// Without the Linux ABI, stage 3's measured timer check and its waits are
 /// not built (they are `stages_check`'s, which runs Linux programs:
 /// LINUX-ABI-SEPARATION.md §11.11), so the clock and the random generator
-/// start from a counter nobody measured, as with `ferrix.checks=skip`, and
+/// start from a counter nobody measured, as with `xaqu.checks=skip`, and
 /// the machine's own check runs when the checks do.
-#[cfg(ferrix_load_built = "none")]
+#[cfg(xaqu_load_built = "none")]
 fn check_timer_and_start_clocks(view: &BootView<'_>) {
     if checks::run()
         && let Err(problem) = arch::check_machine()
@@ -509,11 +509,11 @@ fn require_hooks_disarmed() {
 /// The root is final on the kernel path once the boot's checks, the last of
 /// which read the tmpfs, are done: the initramfs's pages go back, and after a
 /// switch the tmpfs's copy of the system with them (`docs/RAM-RELEASE.md`
-/// §2). Under `ferrix.devmgr=init` the root's switch task does it, after the
+/// §2). Under `xaqu.devmgr=init` the root's switch task does it, after the
 /// install it waits for. Without the Linux ABI there is no root to build, and
 /// the archive stays where the loader put it.
 fn release_boot_copies() {
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     if !devmgr::by_init() {
         fs::release_boot_copies();
     }
@@ -547,24 +547,24 @@ fn say_booted() {
     // Without the Linux ABI the checks that run a Linux program are not
     // built (LINUX-ABI-SEPARATION.md §11.11), so such a kernel never says its
     // stages were checked.
-    let checked = checks::run() && cfg!(ferrix_load_built = "ring0");
+    let checked = checks::run() && cfg!(xaqu_load_built = "ring0");
     if checked {
         // After every check that counts what was given back, since it loses
         // memory on purpose.
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_a_give_up();
         // Last before the marker, so every driver the boot starts has run: a
         // DMA fault its unit recorded and nothing provoked fails the boot
         // here rather than sitting unread in the unit's record.
         // After the reclaim, which must have given an RMRR's frames to
         // nobody (`L.iommu.75`).
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         iommu::domain_check::check_rmrr_frames();
         let dma_faults_read = iommu::check_dma_faults();
         // And after it, since reading the faults is what records them.
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         stages_check::check_audit_booted(dma_faults_read);
-        #[cfg(ferrix_load_built = "none")]
+        #[cfg(xaqu_load_built = "none")]
         let _ = dma_faults_read;
         let (handed_over, finished) = sched::last_drops();
         println!(
@@ -575,12 +575,12 @@ fn say_booted() {
         // The faults nothing else reads in a boot without checks: one line,
         // never fatal (`L.iommu.72`).
         iommu::report_unchecked_faults();
-        if cfg!(ferrix_personality = "user") {
+        if cfg!(xaqu_personality = "user") {
             println!(
                 "{UNCHECKED_MARKER} stages 1-12 brought up, the self-checks that run a Linux \
                  program not built: personality=user, whose Linux layer is linuxd"
             );
-        } else if cfg!(ferrix_load_built = "none") {
+        } else if cfg!(xaqu_load_built = "none") {
             println!(
                 "{UNCHECKED_MARKER} stages 1-12 brought up, the self-checks that run a Linux \
                  program not built: linux_abi=off"
@@ -588,13 +588,13 @@ fn say_booted() {
         } else {
             println!(
                 "{UNCHECKED_MARKER} stages 1-12 brought up, the self-checks of 2 to 12 skipped \
-                 as ferrix.checks=skip asks"
+                 as xaqu.checks=skip asks"
             );
         }
     }
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 8: build the root from the initramfs, and require it to be what the
 /// build wrote and to store what it is given.
 ///
@@ -704,7 +704,7 @@ fn check_filesystems(view: &BootView<'_>) {
     );
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// What unpacking the initramfs made, and `verified`: whether the check that
 /// it came through intact passed, or that it did not run.
 fn report_initrd(built: &fs::Report, verified: &str) {
@@ -723,7 +723,7 @@ fn report_initrd(built: &fs::Report, verified: &str) {
     }
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 10: the block ring's control plane, driven from a process that is
 /// given a device, up to a published disk and back.
 ///
@@ -785,7 +785,7 @@ fn check_block_ring() {
     }
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// The net core, over the loopback: a socket call reaches the stack, the
 /// stack builds a packet, and the packet comes back up the input path.
 ///
@@ -824,7 +824,7 @@ fn check_net() {
     stages_check::check_netlink();
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 10's exit, the half that is a driver: `/sbin/blk`, started from
 /// here the way `devmgr` will start it, serves the test disk through the
 /// block ring with the IOMMU on, and sectors read through the registry come
@@ -866,7 +866,7 @@ fn check_driver(started_by_devmgr: bool) {
     check_btrfs_write();
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 10: `devmgr`, started from the initramfs with every device and
 /// every driver image, and its REPORT (`docs/DEVMGR.md`). Answers whether it
 /// started the block drivers, so the driver check reads through them rather
@@ -894,7 +894,7 @@ fn check_devmgr() -> bool {
     report.started > 0
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 12's exit, the guest's half: a blank btrfs volume on the third disk,
 /// mounted writable, written, unmounted and mounted again, and read back —
 /// so every byte compared comes off the disk rather than out of a cache.
@@ -999,13 +999,13 @@ fn publish_devices(view: &BootView<'_>) -> (device::Report, device::Reserved) {
     let mut tree = tree::VirtioMmio::new(view);
     let mut boards = board::Boards::new(view);
     // Last, so that the framebuffer it lends never takes an aperture from a
-    // device: it adds a node only under `ferrix.efifb`.
-    #[cfg(not(ferrix_personality = "user"))]
+    // device: it adds a node only under `xaqu.efifb`.
+    #[cfg(not(xaqu_personality = "user"))]
     let mut framebuffer = firmware::FirmwareFramebuffer::new(view);
-    // The power node, only under `ferrix.powerctl` on a processor the power
+    // The power node, only under `xaqu.powerctl` on a processor the power
     // core's table names (`L.device.51`): no aperture, so its place is
     // immaterial.
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     let mut power = discovery::powerctl::Power::new(view);
     // Before publishing, which yields the Intel integrated GPU unless the
     // command line lets it be driven (`L.device.44`).
@@ -1013,7 +1013,7 @@ fn publish_devices(view: &BootView<'_>) -> (device::Report, device::Reserved) {
         device::allow_intel_gpu();
     }
     let reserved = device::Reserved::of(view, &[pci.reads(), tree.reads(), boards.reads()]);
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     let mut finders: [&mut dyn Finder; 5] = [
         &mut pci,
         &mut tree,
@@ -1021,7 +1021,7 @@ fn publish_devices(view: &BootView<'_>) -> (device::Report, device::Reserved) {
         &mut framebuffer,
         &mut power,
     ];
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     let mut finders: [&mut dyn Finder; 3] = [&mut pci, &mut tree, &mut boards];
     let report = match device::publish::<Discovery>(&mut finders, &reserved) {
         Ok(report) => report,
@@ -1114,7 +1114,7 @@ fn check_devices(view: &BootView<'_>) {
                 "stage 10 self-check failed: {problem}"
             ),
         }
-        #[cfg(ferrix_load_built = "ring0")]
+        #[cfg(xaqu_load_built = "ring0")]
         check_config_window();
     }
     // The native calls' answers on these nodes, before anything serves them
@@ -1122,7 +1122,7 @@ fn check_devices(view: &BootView<'_>) {
     syscall::rehome_check::stage_on_devices();
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Stage 10's checks of a driver's configuration window and of
 /// `device_aperture` (`docs/NVIDIA.md` §12.1, W1 to W7).
 ///
@@ -1149,7 +1149,7 @@ fn check_config_window() {
     if report.yielded != 0 || report.lent != 0 {
         println!(
             "  config   {} function(s) holding the lent firmware framebuffer answered no read; \
-             {} calls on its node and holders answered as ferrix.efifb requires",
+             {} calls on its node and holders answered as xaqu.efifb requires",
             report.yielded, report.lent
         );
     }
@@ -1188,11 +1188,11 @@ fn report_processors(cpus: &smp::Topology) {
         cpus.boot_id(),
     );
     arch::report_speculation();
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     arch::window_report();
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// The timer's skipped arm (`stages_check::check_a_skipped_arm`), on the
 /// boot processor with its record and before any other processor runs.
 fn check_the_skipped_arm() {
@@ -1230,7 +1230,7 @@ fn bring_up_processors(view: &BootView<'_>) -> &'static smp::Topology {
 
     // The timer's skipped arm, which needs this processor's record and no
     // other processor arming a timer: here, between the two.
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     check_the_skipped_arm();
 
     // Then the rest of them. Each is started, waited for, and required to
@@ -1351,9 +1351,9 @@ fn start_scheduler(cpus: &'static smp::Topology) {
     println!(
         "  load     busy processor {} of {}, idle {} of {}",
         report.load_high,
-        ferrix_sched::LOAD_SCALE,
+        xaqu_sched::LOAD_SCALE,
         report.load_low,
-        ferrix_sched::LOAD_SCALE,
+        xaqu_sched::LOAD_SCALE,
     );
     println!(
         "  balance  {} tasks moved between processors that never went idle",
@@ -1496,7 +1496,7 @@ fn finish_memory(view: &BootView<'_>) -> Result<(), &'static str> {
     Ok(())
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Report the clocks interrupt bring-up measured, then read what the end of
 /// boot is to do: `power::init` says so on the console, and says it after the
 /// clocks, as it always has.
@@ -1518,7 +1518,7 @@ fn report_stage3(measured: u64, view: &BootView<'_>) {
 /// read the counter the timer check has just proved.
 fn report_clock_and_random(view: &BootView<'_>) {
     let info = view.raw();
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     match syscall::time::set_boot_time(info) {
         Some(seconds) => {
             println!("  clock    {seconds} seconds since the epoch, from firmware's clock");
@@ -1527,7 +1527,7 @@ fn report_clock_and_random(view: &BootView<'_>) {
     }
     // The wall clock is the Linux ABI's (`syscall::time`); the native ABI
     // has none yet (LINUX-ABI-SEPARATION.md §7 row 6).
-    #[cfg(ferrix_load_built = "none")]
+    #[cfg(xaqu_load_built = "none")]
     println!(
         "  clock    not kept: the wall clock is the Linux ABI's, which this kernel is built without"
     );
@@ -1544,7 +1544,7 @@ fn report_clock_and_random(view: &BootView<'_>) {
         println!(
             "  random   NOT SEEDED: {} of {} bits, from {firmware} bytes from firmware, {trng_bytes} from its TRNG and {} words from the CPU, and timer jitter; keys made on this boot are guessable",
             seeding.credited,
-            ferrix_crng::SEEDED_BITS,
+            xaqu_crng::SEEDED_BITS,
             seeding.cpu_words
         );
     }
@@ -1636,7 +1636,7 @@ fn start_audit(view: &BootView<'_>) {
     }
 }
 
-#[cfg(ferrix_load_built = "ring0")]
+#[cfg(xaqu_load_built = "ring0")]
 /// Register the load ring's side of every interface the certified item
 /// reaches it through, and check that each was registered.
 ///
@@ -1648,27 +1648,27 @@ fn start_audit(view: &BootView<'_>) {
 /// told to register, explicitly and in order, rather than by a link-time
 /// table whose order nobody can read.
 ///
-/// The check is not gated by `ferrix.checks`: it costs nothing, and a boot
+/// The check is not gated by `xaqu.checks`: it costs nothing, and a boot
 /// that lost a registration would power off without committing its disks,
 /// which is not something to find out by losing them.
 fn register_load(view: &BootView<'_>) {
     // Root's way back from core quarantine is the settings crate's
     // `cpuN/online`: only a build that has it gives lode the way out.
-    #[cfg(ferrix_runtime_settings = "live")]
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(xaqu_runtime_settings = "live")]
+    #[cfg(not(xaqu_shape = "micro"))]
     init::root_can_return();
     let registered = syscall::launch::install()
         .and_then(|()| fs::install())
-        .and_then(|()| ferrix_kernel_board_stm32mp1::platform::st::stm32mp1::install(view))
-        .and_then(|()| ferrix_kernel_board_gs201_usb::platform::google::gs201::usb::install())
+        .and_then(|()| xaqu_kernel_board_stm32mp1::platform::st::stm32mp1::install(view))
+        .and_then(|()| xaqu_kernel_board_gs201_usb::platform::google::gs201::usb::install())
         .and_then(|()| block_ring::install())
-        .and_then(|()| ferrix_kernel_net_ring::interfaces::net_ring::install())
+        .and_then(|()| xaqu_kernel_net_ring::interfaces::net_ring::install())
         .and_then(|()| display::install())
         .and_then(|()| render::install())
         .and_then(|()| input::install())
         .and_then(|()| audio::install())
         .and_then(|()| chardev::install())
-        .and_then(|()| ferrix_kernel_logctl::interfaces::logctl::install());
+        .and_then(|()| xaqu_kernel_logctl::interfaces::logctl::install());
     if let Err(hooks::Full) = registered {
         fatal!(
             catalog::LOAD_REGISTRATION,
@@ -1722,10 +1722,10 @@ fn register_load(view: &BootView<'_>) {
 /// No filesystem flush, init launcher, `devmgr` reader or native process
 /// maker exists to be registered, and the native calls the load would have
 /// served stay unserved (LINUX-ABI-SEPARATION.md §7 rows 2 and 5, §11.11).
-#[cfg(all(ferrix_load_built = "none", not(ferrix_personality = "user")))]
+#[cfg(all(xaqu_load_built = "none", not(xaqu_personality = "user")))]
 fn register_load(view: &BootView<'_>) {
-    let registered = ferrix_kernel_board_stm32mp1::platform::st::stm32mp1::install(view)
-        .and_then(|()| ferrix_kernel_board_gs201_usb::platform::google::gs201::usb::install());
+    let registered = xaqu_kernel_board_stm32mp1::platform::st::stm32mp1::install(view)
+        .and_then(|()| xaqu_kernel_board_gs201_usb::platform::google::gs201::usb::install());
     if let Err(hooks::Full) = registered {
         fatal!(
             catalog::LOAD_REGISTRATION,
@@ -1755,7 +1755,7 @@ fn register_load(view: &BootView<'_>) {
 /// above the item is in this kernel to register, and the board glue that stays
 /// in ring 0 until M6 is built for the boards that have it
 /// (docs/microkernel/M5-LIFT.md §2).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn register_load(_view: &BootView<'_>) {
     println!("  hooks    the load is in user space: nothing registered above the item");
 }
@@ -1769,14 +1769,14 @@ fn report_clocks_and_power(view: &BootView<'_>, clocks: &irq::Report) {
     syscall::rehome_check::stage_shrinker();
     register_load(view);
     power::init(view);
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     fs::btrfs_powerfail::init(view);
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     fs::root_disk::init(view);
-    #[cfg(not(ferrix_shape = "micro"))]
+    #[cfg(not(xaqu_shape = "micro"))]
     init::read_option(view);
     devmgr::read_option(view);
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     fs::procfs::remember_command_line(view.cmdline());
 }
 
@@ -1990,7 +1990,7 @@ fn decide_scrubber(view: &BootView<'_>) {
 /// What the SMBIOS memory arrays the hand-off kept say about error
 /// correction, as the scrubber's decision and its stage 2 check read it.
 fn scrub_memory() -> mm::scrub::Memory {
-    use ferrix_smbios::Correction;
+    use xaqu_smbios::Correction;
     match discovery::smbios::tables().map(|tables| tables.memory_correction()) {
         Some(Correction::None) => mm::scrub::Memory::None,
         Some(Correction::Corrects(_)) => mm::scrub::Memory::Corrects,
@@ -2004,7 +2004,7 @@ fn scrub_memory() -> mm::scrub::Memory {
 /// size, and the vendor and product only -- never a serial, a UUID or a byte
 /// of the table (`docs/DMI.md` §4).
 fn report_smbios(view: &BootView<'_>) {
-    use ferrix_smbios::Field;
+    use xaqu_smbios::Field;
     match discovery::smbios::open(view) {
         Ok(tables) => {
             let version = tables.point().version;
@@ -2049,7 +2049,7 @@ fn self_check(view: &BootView<'_>, memory: &mut EarlyMemory) -> Result<(), &'sta
         return Err("the memory map reports no usable RAM");
     }
 
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     stages_check::check_loader_allocations(view)?;
 
     // Every read-only mapping the loader made, the kernel's text and rodata
@@ -2058,12 +2058,12 @@ fn self_check(view: &BootView<'_>, memory: &mut EarlyMemory) -> Result<(), &'sta
         return Err("the kernel can write through a read-only mapping: CR0.WP is clear");
     }
 
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     stages_check::check_layout(view)?;
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     stages_check::check_direct_map(view, memory)?;
     check_early_mapper(view, memory)?;
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     stages_check::check_no_early_window_wraps(memory)?;
     Ok(())
 }
@@ -2092,7 +2092,7 @@ fn report_layout(view: &BootView<'_>) {
 
 /// How many bytes of a framebuffer hold visible lines: `stride` pixels of four
 /// bytes on each of `height` lines, and never more than firmware said it has.
-fn framebuffer_bytes(framebuffer: &ferrix_bootinfo::Framebuffer) -> u64 {
+fn framebuffer_bytes(framebuffer: &xaqu_bootinfo::Framebuffer) -> u64 {
     let pixels = u64::from(framebuffer.stride).saturating_mul(u64::from(framebuffer.height));
     pixels.saturating_mul(4).min(framebuffer.size)
 }
@@ -2139,7 +2139,7 @@ fn check_early_mapper(view: &BootView<'_>, memory: &mut EarlyMemory) -> Result<(
     // boot console is on the screen before anything else runs; checked here
     // with the rest of the early mapper.
     let framebuffer = info.framebuffer;
-    if cfg!(not(ferrix_personality = "user"))
+    if cfg!(not(xaqu_personality = "user"))
         && framebuffer.is_present()
         && !framebuffer.is_reclaimable()
         && memory.translate(vmap::FRAMEBUFFER_WINDOW) != Some(framebuffer.phys)
@@ -2160,7 +2160,7 @@ fn verify_hand_off(view: &BootView<'_>, memory: &mut EarlyMemory) {
     let framebuffer = map_boot_framebuffer(view, memory);
     console::screen::milestone(0);
     println!();
-    println!("Ferrix {} on {}", env!("CARGO_PKG_VERSION"), arch::NAME);
+    println!("Xaqu {} on {}", env!("CARGO_PKG_VERSION"), arch::NAME);
     // What this kernel was built as, from its own `cfg`s, before anything
     // else it says (`docs/BUILD-FLAGS.md`, rule 6).
     build_flags::report();
@@ -2182,7 +2182,7 @@ fn verify_hand_off(view: &BootView<'_>, memory: &mut EarlyMemory) {
 }
 
 /// Map the framebuffer firmware left, record it for the panic screen, and
-/// start the boot console on it under `ferrix.fbcon`: the first thing `kmain`
+/// start the boot console on it under `xaqu.fbcon`: the first thing `kmain`
 /// does, so a machine with no serial port shows how far boot got from its
 /// very first line on.
 ///
@@ -2195,15 +2195,15 @@ fn map_boot_framebuffer(view: &BootView<'_>, memory: &mut EarlyMemory) -> Result
     // write-combining from its first map only under the kernel's table.
     arch::program_memory_types();
     let framebuffer = view.raw().framebuffer;
-    #[cfg(ferrix_load_built = "ring0")]
+    #[cfg(xaqu_load_built = "ring0")]
     display::note_boot_framebuffer(framebuffer.is_present(), framebuffer.is_reclaimable());
     if !framebuffer.is_present() || framebuffer.is_reclaimable() {
         return Ok(());
     }
     // No window on it in a kernel whose screen is a program's (M6).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     return Ok(());
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     {
         let at = vmap::FRAMEBUFFER_WINDOW;
         let len = framebuffer_bytes(&framebuffer).min(vmap::FRAMEBUFFER_WINDOW_SIZE);
@@ -2223,13 +2223,13 @@ fn map_boot_framebuffer(view: &BootView<'_>, memory: &mut EarlyMemory) -> Result
 }
 
 /// A user kernel's own boot checks, which no program runs.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn check_user_shape() {
     match user::space::window_check::run() {
         Ok(cases) => println!("  window   an unmap's {cases} decisions held"),
         Err(why) => fatal!(catalog::WINDOW_UNMAP, "window self-check failed: {why}"),
     }
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     match sched::reserve_check::run() {
         Ok(()) => println!("  edf      a budget's rules held, an unschedulable set refused"),
         Err(why) => fatal!(catalog::SCHEDULE_EDF, "edf self-check failed: {why}"),
@@ -2237,9 +2237,9 @@ fn check_user_shape() {
 }
 
 /// The kernel's first processes, handing in the seal's check: product code names no check.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn first_processes(view: &BootView<'_>) {
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     boot_authority::set_seal_check(mm::seal_check::check);
     boot_authority::set_region_check(syscall::region_check::check);
     boot_authority::run(view);

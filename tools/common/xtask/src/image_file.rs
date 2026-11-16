@@ -110,7 +110,7 @@ mod tests {
     /// A file of its own under the system's temporary directory.
     fn scratch(name: &str) -> std::path::PathBuf {
         let path =
-            std::env::temp_dir().join(format!("ferrix-image-file-{}-{name}", std::process::id()));
+            std::env::temp_dir().join(format!("xaqu-image-file-{}-{name}", std::process::id()));
         let _ = std::fs::remove_file(&path);
         path
     }

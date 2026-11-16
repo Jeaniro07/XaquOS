@@ -7,7 +7,7 @@
 # changes it; the file's first line carries it.
 #
 # The bytes are the same on every little-endian machine, which is every
-# architecture Ferrix builds for, so one file is enough: unlike the evdev
+# architecture Xaqu builds for, so one file is enough: unlike the evdev
 # probe there is no second width to take. Wayland's words are the machine's
 # own byte order and this file is a little-endian machine's.
 set -euo pipefail

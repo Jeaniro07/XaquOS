@@ -1,9 +1,9 @@
 //! `testseconds`: the driver `cargo xtask test-driver-model` serves a
 //! device with that the kernel has never named (`docs/DRIVER-MODEL.md` §8,
-//! D1, D20), written against `ferrix-driver`'s driver model.
+//! D1, D20), written against `xaqu-driver`'s driver model.
 //!
 //! The device is QEMU `virt`'s PL031 real-time clock, its node given the
-//! made-up compatible `ferrix,test-seconds` in an edited tree. The kernel
+//! made-up compatible `xaqu,test-seconds` in an edited tree. The kernel
 //! publishes it as a generic node; devmgr matches it by that compatible,
 //! holds the node to the requirement table `#[derive(Resources)]` embeds in
 //! this image and starts it. [`run`] resolves its resources, and
@@ -21,13 +21,13 @@
 #![no_std]
 #![no_main]
 
-use ferrix_driver::{
+use xaqu_driver::{
     BindContext, Driver, Errno, Event, Flow, Interrupt, ReadOnly, ReadWrite, Registers, Resources,
     Result, WriteOnly, bitfields, register_map, run,
 };
-use ferrix_platform::ClockClient;
+use xaqu_platform::ClockClient;
 
-ferrix_driver::entry!();
+xaqu_driver::entry!();
 
 // The counter's registers. The PL031 technical reference manual's names
 // are in the comments.
@@ -87,7 +87,7 @@ const SECOND: u64 = 1_000_000_000;
 const PATIENCE: u64 = 6 * SECOND;
 
 fn now() -> u64 {
-    ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+    xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
 }
 
 impl SecondsCounter {
@@ -115,10 +115,10 @@ impl Driver for SecondsCounter {
         let registers = resources.registers;
         let identification = SecondsCounter::identification(&registers);
         if identification != PL031 {
-            ferrix_rt::err!("testseconds: {path} does not read as a PL031: {identification:x?}");
+            xaqu_rt::err!("testseconds: {path} does not read as a PL031: {identification:x?}");
             return Err(Errno::ENODEV);
         }
-        ferrix_rt::info!("testseconds: {path} reads as a PL031 through its own aperture");
+        xaqu_rt::info!("testseconds: {path} reads as a PL031 through its own aperture");
 
         let first = registers.count.read();
         let deadline = now().saturating_add(3 * SECOND);
@@ -132,7 +132,7 @@ impl Driver for SecondsCounter {
             }
             core::hint::spin_loop();
         };
-        ferrix_rt::info!("testseconds: the counter moved from {first} to {moved}");
+        xaqu_rt::info!("testseconds: the counter moved from {first} to {moved}");
 
         let interrupt = resources.interrupt;
         registers
@@ -153,11 +153,11 @@ impl Driver for SecondsCounter {
         if !raised {
             return Err(Errno::EIO);
         }
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "testseconds: the match interrupt came after {} ms and was cleared",
             now().saturating_sub(asked) / 1_000_000
         );
-        ferrix_rt::info!("testseconds: {path} served by a driver the kernel never named");
+        xaqu_rt::info!("testseconds: {path} served by a driver the kernel never named");
         Ok(SecondsCounter {
             registers,
             _interrupt: interrupt,

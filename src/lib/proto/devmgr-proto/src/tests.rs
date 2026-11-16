@@ -120,7 +120,7 @@ fn devices_carries_max_drivers_with_room_for_a_device() {
     let view = DevicesView::decode(&bytes[..len]).expect("and decode");
     assert_eq!(view.drivers as usize, MAX_DRIVERS);
     assert!(
-        message.handles() <= ferrix_native_abi::types::CHANNEL_MAX_HANDLES,
+        message.handles() <= xaqu_native_abi::types::CHANNEL_MAX_HANDLES,
         "the job, one device and every image in one channel message"
     );
 }

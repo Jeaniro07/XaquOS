@@ -4,7 +4,7 @@
 //! The kernel log (`console::log`) keeps every byte the console sends. On a
 //! Pixel 7 booted natively the console is a record in RAM that Android reads
 //! back after the run; the phone's USB serial port, driven from ring 3 by
-//! `usbdev`, is how the boot's lines and `ferrix-statd`'s output reach the
+//! `usbdev`, is how the boot's lines and `xaqu-statd`'s output reach the
 //! host while it runs (`docs/vendor/google/pixel7/USB-HANDOVER.md`, phase 4). So the driver
 //! asks for the log with `log_control_create` on its device, and this module
 //! answers its READs with DATA from the log, `src/lib/proto/logctl`'s protocol.
@@ -37,13 +37,13 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_logctl::message::{DATA_HEADER_BYTES, MAX_BYTES, Message, REFUSED_BYTES, Refusal};
-use ferrix_logctl::session::Session;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_logctl::message::{DATA_HEADER_BYTES, MAX_BYTES, Message, REFUSED_BYTES, Refusal};
+use xaqu_logctl::session::Session;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
 
 use crate::console::log;
 use crate::hooks::Full;
@@ -55,7 +55,7 @@ use crate::sync::SpinLock;
 use crate::syscall::native;
 use crate::timer;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 /// How often a READ waiting for the log looks at it again: often enough that
@@ -102,7 +102,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_blkring::control::CONTROL_RIGHTS,
+        xaqu_blkring::control::CONTROL_RIGHTS,
         |node| {
             if !node.reads_log() {
                 return Err(status::ACCESS_DENIED);
@@ -128,7 +128,7 @@ pub(crate) fn claim() -> Result<Arc<Endpoint>, CreateError> {
         return Err(CreateError::InUse);
     }
     *STARTING.lock() = Some(kernel_end);
-    if sched::spawn("logctl", run, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("logctl", run, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = STARTING.lock().take();
         CLAIMED.store(false, Ordering::Release);
         return Err(CreateError::NoMemory);
@@ -255,7 +255,7 @@ impl Reader {
             return Answer::Nothing;
         };
         data.truncate(DATA_HEADER_BYTES.saturating_add(read.copied));
-        if ferrix_logctl::message::data_header(&mut data, lost, read.copied).is_err() {
+        if xaqu_logctl::message::data_header(&mut data, lost, read.copied).is_err() {
             return Answer::Failed;
         }
         match control.write(Sender::KERNEL, data, 0, || {

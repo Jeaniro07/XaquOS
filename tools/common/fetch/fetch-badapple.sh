@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Fetch Bad Apple!!'s shadow-art video, which `cargo xtask test-badapple`
-# plays on Ferrix.
+# plays on Xaqu.
 #
 # The video is ZUN's song as Alstroemeria Records arranged it, with Anira's
-# shadow-art PV, and none of it is Ferrix's: it is not in the repository and
+# shadow-art PV, and none of it is Xaqu's: it is not in the repository and
 # never goes into it. This downloads the original upload (niconico
 # sm8628149, 2009, 512x384 H.264 at 30 fps with AAC-LC stereo at 44.1 kHz)
 # as archive.org keeps it, and checks it against the SHA-256 xtask checks
 # too. xtask converts it, the first time it needs to, into the `.bav` video
 # and the song file the player reads, beside it.
 #
-# Writes $FERRIX_BADAPPLE/sm8628149.mp4 (default
-# ~/.local/share/ferrix/badapple). Needs curl and sha256sum; the conversion
+# Writes $XAQU_BADAPPLE/sm8628149.mp4 (default
+# ~/.local/share/xaqu/badapple). Needs curl and sha256sum; the conversion
 # needs ffmpeg.
 #
 # Usage: tools/common/fetch/fetch-badapple.sh
@@ -19,7 +19,7 @@
 set -euo pipefail
 
 archive=${ARCHIVE_ORG:-https://archive.org/download}
-out=${FERRIX_BADAPPLE:-$HOME/.local/share/ferrix/badapple}
+out=${XAQU_BADAPPLE:-$HOME/.local/share/xaqu/badapple}
 
 # The archive.org item and file, and the SHA-256 of that file as downloaded
 # on 2026-09-26 (archive.org's own listing gives its SHA-1,

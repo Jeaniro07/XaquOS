@@ -15,14 +15,14 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::net::{Config, HEADER_LEN, MAC_LEN};
-use ferrix_virtio::pci::{
+use xaqu_virtio::net::{Config, HEADER_LEN, MAC_LEN};
+use xaqu_virtio::pci::{
     CONFIG_GENERATION, CommonConfig, DEVICE_FEATURE, DEVICE_FEATURE_SELECT, DEVICE_STATUS,
     DRIVER_FEATURE, DRIVER_FEATURE_SELECT, FEATURE_VERSION_1, NO_VECTOR, NUM_QUEUES, QUEUE_DESC,
     QUEUE_DEVICE, QUEUE_DRIVER, QUEUE_ENABLE, QUEUE_MSIX_VECTOR, QUEUE_NOTIFY_OFF, QUEUE_SELECT,
     QUEUE_SIZE, STATUS_DEVICE_NEEDS_RESET, STATUS_DRIVER_OK, STATUS_FAILED, STATUS_FEATURES_OK,
 };
-use ferrix_virtio::{Descriptor, DeviceConfig, Layout, PAGE_SIZE, QueueMemory, SplitQueueDevice};
+use xaqu_virtio::{Descriptor, DeviceConfig, Layout, PAGE_SIZE, QueueMemory, SplitQueueDevice};
 
 use crate::{
     DevicePages, Driver, Event, ISR_QUEUE, InitFailure, Options, Parts, RECEIVE_QUEUE, RequestArea,
@@ -904,11 +904,11 @@ pub(super) const MAC: [u8; MAC_LEN] = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
 impl Setup {
     /// A device QEMU would present, less the features nobody here uses.
     pub(super) fn new() -> Self {
-        use ferrix_virtio::net::{
+        use xaqu_virtio::net::{
             FEATURE_CSUM, FEATURE_CTRL_VQ, FEATURE_GUEST_CSUM, FEATURE_HOST_TSO4, FEATURE_MAC,
             FEATURE_MRG_RXBUF, FEATURE_MTU, FEATURE_STATUS, STATUS_LINK_UP,
         };
-        use ferrix_virtio::pci::FEATURE_ACCESS_PLATFORM;
+        use xaqu_virtio::pci::FEATURE_ACCESS_PLATFORM;
         Setup {
             config: Config {
                 mac: Some(MAC),

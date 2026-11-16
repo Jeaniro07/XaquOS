@@ -10,24 +10,24 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_bootinfo::{Arch, PAGE_SIZE};
-use ferrix_fallible::Chunks;
-use ferrix_kmem::Charge;
-use ferrix_net::IpAddress;
-use ferrix_procfs::filesystems::{self, Filesystem};
-use ferrix_procfs::kstat::{self, CpuTimes, Kstat};
-use ferrix_procfs::loadavg::{self as loadavg_text, Loadavg};
-use ferrix_procfs::maps::{self, Mapping, Width};
-use ferrix_procfs::meminfo::{self, Meminfo};
-use ferrix_procfs::mounts::{self, Mount, MountInfo};
-use ferrix_procfs::net as procfs_net;
-use ferrix_procfs::partitions::{self, Partition};
-use ferrix_procfs::stat::{self, Stat};
-use ferrix_procfs::status::{self, SignalMasks, State, Status};
-use ferrix_procfs::swaps;
-use ferrix_procfs::sysctl;
-use ferrix_vfs::fd::MAX_LIMIT;
-use ferrix_vfs::{Errno, Location, MountFlags, Namespace, OpenFile, Result};
+use xaqu_bootinfo::{Arch, PAGE_SIZE};
+use xaqu_fallible::Chunks;
+use xaqu_kmem::Charge;
+use xaqu_net::IpAddress;
+use xaqu_procfs::filesystems::{self, Filesystem};
+use xaqu_procfs::kstat::{self, CpuTimes, Kstat};
+use xaqu_procfs::loadavg::{self as loadavg_text, Loadavg};
+use xaqu_procfs::maps::{self, Mapping, Width};
+use xaqu_procfs::meminfo::{self, Meminfo};
+use xaqu_procfs::mounts::{self, Mount, MountInfo};
+use xaqu_procfs::net as procfs_net;
+use xaqu_procfs::partitions::{self, Partition};
+use xaqu_procfs::stat::{self, Stat};
+use xaqu_procfs::status::{self, SignalMasks, State, Status};
+use xaqu_procfs::swaps;
+use xaqu_procfs::sysctl;
+use xaqu_vfs::fd::MAX_LIMIT;
+use xaqu_vfs::{Errno, Location, MountFlags, Namespace, OpenFile, Result};
 
 use super::{JobMeter, Kernel, ThreadOf};
 use crate::arch;
@@ -95,7 +95,7 @@ pub(super) fn self_link_in(ns: Option<&Arc<PidNamespace>>) -> Result<Vec<u8>> {
 
 /// `/proc/cpuinfo`: a block per online processor, as Linux writes it.
 ///
-/// The arranging is `ferrix_procfs::cpuinfo`'s; here is what it is given.
+/// The arranging is `xaqu_procfs::cpuinfo`'s; here is what it is given.
 /// On x86-64, `CPUID` on the reading processor, which it decodes as Linux
 /// does, and what the kernel enabled of what `CPUID` offers. On the Arm
 /// pair, each processor's `MIDR` and the `AT_HWCAP` words programs get.
@@ -111,7 +111,7 @@ pub(super) fn self_link_in(ns: Option<&Arc<PidNamespace>>) -> Result<Vec<u8>> {
 /// and both lines are left out rather than wrong. On Arm, `BogoMIPS` is the
 /// generic timer's rate, as on Linux.
 pub(super) fn cpuinfo(_: &Kernel) -> Result<Vec<u8>> {
-    use ferrix_procfs::cpuinfo::{arm, x86};
+    use xaqu_procfs::cpuinfo::{arm, x86};
     let mut out = Vec::new();
     let Some(topology) = smp::topology() else {
         return Ok(out);
@@ -262,7 +262,7 @@ pub(super) fn meminfo(_: &Kernel) -> Result<Vec<u8>> {
 ///
 /// The source is the filesystem's own name, which is what Linux shows for a
 /// filesystem with no device. The options are the mount's own flags, each of
-/// which the kernel enforces (`ferrix_vfs::MountFlags`), and `ro` for a
+/// which the kernel enforces (`xaqu_vfs::MountFlags`), and `ro` for a
 /// filesystem that takes no writes whatever the mount says.
 pub(super) fn mounts(_: &Kernel) -> Result<Vec<u8>> {
     match process::current() {
@@ -422,7 +422,7 @@ fn mounts_from(ns: &Namespace, root: &Location) -> Result<Vec<u8>> {
 /// A mount's flags as `/proc/mounts` shows them: its own, and read-only too
 /// when its filesystem takes no writes, as Linux's `show_vfsmnt` prints
 /// `ro` for either.
-fn shown_flags(mount: &ferrix_vfs::Mount) -> MountFlags {
+fn shown_flags(mount: &xaqu_vfs::Mount) -> MountFlags {
     if mount.filesystem_read_only() {
         mount.flags().union(MountFlags::READ_ONLY)
     } else {
@@ -613,7 +613,7 @@ fn cpu_times(user: u64, idle: u64) -> CpuTimes {
 }
 
 /// `/proc/cmdline`: the command line the kernel was started with, and a
-/// newline, as Linux writes it. What a program reads its own `ferrix.*`
+/// newline, as Linux writes it. What a program reads its own `xaqu.*`
 /// settings from, the stat service's among them.
 pub(super) fn cmdline_file(_: &Kernel) -> Result<Vec<u8>> {
     let line = super::command_line();
@@ -627,7 +627,7 @@ pub(super) fn cmdline_file(_: &Kernel) -> Result<Vec<u8>> {
 /// `/proc/version`: the release and version `uname` reports, in the sentence
 /// Linux writes them in, with the compiler it names being the one that built
 /// this kernel.
-/// `/proc/ferrix-mce`: the machine check's counts per processor
+/// `/proc/xaqu-mce`: the machine check's counts per processor
 /// (`L.x86_64.230`). Not Linux's; empty where there is no machine check.
 pub(super) fn machine_check(_: &Kernel) -> Result<Vec<u8>> {
     struct Sink(Vec<u8>);
@@ -642,7 +642,7 @@ pub(super) fn machine_check(_: &Kernel) -> Result<Vec<u8>> {
     Ok(out.0)
 }
 
-/// `/proc/ferrix-scrub`: the RAM scrubber's counts and its standing
+/// `/proc/xaqu-scrub`: the RAM scrubber's counts and its standing
 /// (`docs/RAM-SCRUBBER.md` §3.4). No addresses. Not Linux's.
 pub(super) fn scrub(_: &Kernel) -> Result<Vec<u8>> {
     let mut out = alloc::string::String::new();
@@ -650,7 +650,7 @@ pub(super) fn scrub(_: &Kernel) -> Result<Vec<u8>> {
     Ok(out.into_bytes())
 }
 
-/// `/proc/ferrix-service`: each processor's service (`docs/CORE-QUARANTINE.md`
+/// `/proc/xaqu-service`: each processor's service (`docs/CORE-QUARANTINE.md`
 /// §3) -- in or out, the tasks it drained while parked (expected 0) and the
 /// blocked tasks moved off it at their wake -- and the longest one move
 /// held its two queue locks. Not Linux's.
@@ -695,12 +695,12 @@ pub(super) fn interrupts(_: &Kernel) -> Result<Vec<u8>> {
         for count in counts {
             let _ = write!(out, " {count:>10}");
         }
-        out.push_str("  ferrix\n");
+        out.push_str("  xaqu\n");
     }
     Ok(out.into_bytes())
 }
 
-/// `/proc/ferrix-mce-retired`: the frames retired for a hardware error, one
+/// `/proc/xaqu-mce-retired`: the frames retired for a hardware error, one
 /// physical address a line (`L.mm.91`). Root's alone: an address is a fact
 /// about the machine's memory a program has no use for.
 pub(super) fn retired_frames(_: &Kernel) -> Result<Vec<u8>> {
@@ -713,7 +713,7 @@ pub(super) fn retired_frames(_: &Kernel) -> Result<Vec<u8>> {
     Ok(out)
 }
 
-/// `/proc/ferrix-seam`: what crosses the seam (`fs::seam`). Not Linux's.
+/// `/proc/xaqu-seam`: what crosses the seam (`fs::seam`). Not Linux's.
 pub(super) fn seam(_: &Kernel) -> Result<Vec<u8>> {
     Ok(fs::seam::render())
 }
@@ -722,7 +722,7 @@ pub(super) fn version(_: &Kernel) -> Result<Vec<u8>> {
     let mut out = Vec::new();
     put(
         &mut out,
-        format_args!("Linux version {RELEASE} (ferrix@ferrix) (rustc) {VERSION}\n"),
+        format_args!("Linux version {RELEASE} (xaqu@xaqu) (rustc) {VERSION}\n"),
     );
     Ok(out)
 }
@@ -772,7 +772,7 @@ pub(super) fn swaps(_: &Kernel) -> Result<Vec<u8>> {
             .iter()
             .map(|area| swaps::longest_row(area.path.len()))
             .sum::<usize>();
-    ferrix_kmem::reserve(&mut out, needed, &mut charge).map_err(|_| Errno::ENOMEM)?;
+    xaqu_kmem::reserve(&mut out, needed, &mut charge).map_err(|_| Errno::ENOMEM)?;
     swaps::render(&mut out, &areas).map_err(|_| Errno::ENOMEM)?;
     Ok(out)
 }
@@ -940,10 +940,10 @@ pub(super) fn file_max(_: &Kernel) -> Result<Vec<u8>> {
 
 /// `/proc/sys/fs/mount-max`: the most mounts one namespace holds, its root
 /// included, past which a mount, a bind or a copy is `ENOSPC`
-/// (`ferrix_vfs::MOUNT_MAX`, Linux's default). Read-only here: a limit to
+/// (`xaqu_vfs::MOUNT_MAX`, Linux's default). Read-only here: a limit to
 /// print, not one to raise.
 pub(super) fn mount_max(_: &Kernel) -> Result<Vec<u8>> {
-    Ok(number(ferrix_vfs::MOUNT_MAX as u64))
+    Ok(number(xaqu_vfs::MOUNT_MAX as u64))
 }
 
 // -- A process ----------------------------------------------------------------
@@ -1239,7 +1239,7 @@ pub(super) fn maps(process: &Process) -> Result<Chunks<JobMeter>> {
         };
         line.clear();
         let longest = maps::longest_line(name.map_or(0, <[u8]>::len));
-        ferrix_kmem::reserve(&mut line, longest, &mut line_charge).map_err(|_| Errno::ENOMEM)?;
+        xaqu_kmem::reserve(&mut line, longest, &mut line_charge).map_err(|_| Errno::ENOMEM)?;
         maps::render(&mut line, &mapping, Width::native()).map_err(|_| Errno::ENOMEM)?;
         out.try_extend_from_slice(&line)
             .map_err(|_| Errno::ENOMEM)?;
@@ -1309,7 +1309,7 @@ impl Memory {
 ///   exited, was killed, or was killed while stopped; and for a leader that
 ///   has ended while other threads of its process run.
 /// * `T` while it is stopped by a signal, whatever its threads were doing.
-/// * `t` while a fault of it is held for `/dev/ferrix-crashes`.
+/// * `t` while a fault of it is held for `/dev/xaqu-crashes`.
 /// * `D` while the thread waits in `vfork` for its child to let go.
 /// * `R` for a thread that is running or waiting its turn, and `S` for one
 ///   waiting for something.
@@ -1914,19 +1914,19 @@ pub(super) fn net_udp6(_: &Kernel) -> Result<Vec<u8>> {
 /// owns it; both are looked up after the net core is let go.
 fn inet_sockets(stream: bool, six: bool) -> Vec<procfs_net::Socket> {
     let reader = crate::net::acting();
-    let mut rows: Vec<(ferrix_net::SocketId, procfs_net::Socket)> =
+    let mut rows: Vec<(xaqu_net::SocketId, procfs_net::Socket)> =
         reader.core().with(|stack, _| {
             stack
                 .sockets()
                 .filter(|(_, socket)| {
                     let is_stream = matches!(
                         socket,
-                        ferrix_net::Socket::Stream(_) | ferrix_net::Socket::Listen(_)
+                        xaqu_net::Socket::Stream(_) | xaqu_net::Socket::Listen(_)
                     );
-                    let is_six = matches!(socket.family(), ferrix_net::Family::V6);
+                    let is_six = matches!(socket.family(), xaqu_net::Family::V6);
                     // A raw socket is neither TCP's nor UDP's: Linux lists it in
                     // `/proc/net/raw`, which this file tree does not have yet.
-                    let is_raw = matches!(socket, ferrix_net::Socket::Raw(_));
+                    let is_raw = matches!(socket, xaqu_net::Socket::Raw(_));
                     !is_raw && is_stream == stream && is_six == six
                 })
                 .enumerate()
@@ -1943,13 +1943,13 @@ fn inet_sockets(stream: bool, six: bool) -> Vec<procfs_net::Socket> {
 }
 
 /// One socket as a row.
-fn socket_row(slot: usize, socket: &ferrix_net::Socket) -> procfs_net::Socket {
-    let remote = socket.remote().unwrap_or(ferrix_net::Endpoint::new(
+fn socket_row(slot: usize, socket: &xaqu_net::Socket) -> procfs_net::Socket {
+    let remote = socket.remote().unwrap_or(xaqu_net::Endpoint::new(
         socket.local().address.unspecified(),
         0,
     ));
     let (state, transmit, receive) = match socket {
-        ferrix_net::Socket::Stream(stream) => (
+        xaqu_net::Socket::Stream(stream) => (
             stream.connection.state().procfs_code(),
             stream.connection.send_queued() as u32,
             stream.connection.receive_queued() as u32,
@@ -1957,12 +1957,12 @@ fn socket_row(slot: usize, socket: &ferrix_net::Socket) -> procfs_net::Socket {
         // Linux reports a listening TCP socket as `TCP_LISTEN` and an
         // unconnected UDP one as `TCP_CLOSE`, which is 7 -- the same number a
         // closed stream has.
-        ferrix_net::Socket::Listen(listener) if listener.backlog > 0 => (10, 0, 0),
-        ferrix_net::Socket::Listen(_) => (7, 0, 0),
-        ferrix_net::Socket::Udp(datagram) | ferrix_net::Socket::Icmp(datagram) => {
+        xaqu_net::Socket::Listen(listener) if listener.backlog > 0 => (10, 0, 0),
+        xaqu_net::Socket::Listen(_) => (7, 0, 0),
+        xaqu_net::Socket::Udp(datagram) | xaqu_net::Socket::Icmp(datagram) => {
             (7, 0, datagram.queued() as u32)
         }
-        ferrix_net::Socket::Raw(raw) => (7, 0, raw.datagram.queued() as u32),
+        xaqu_net::Socket::Raw(raw) => (7, 0, raw.datagram.queued() as u32),
     };
     procfs_net::Socket {
         slot,
@@ -1977,7 +1977,7 @@ fn socket_row(slot: usize, socket: &ferrix_net::Socket) -> procfs_net::Socket {
 }
 
 /// An endpoint as the file spells it.
-fn endpoint_row(endpoint: ferrix_net::Endpoint) -> procfs_net::Endpoint {
+fn endpoint_row(endpoint: xaqu_net::Endpoint) -> procfs_net::Endpoint {
     match endpoint.address {
         IpAddress::V4(address) => procfs_net::Endpoint::V4(address.octets(), endpoint.port),
         IpAddress::V6(address) => procfs_net::Endpoint::V6(address.octets(), endpoint.port),
@@ -2024,7 +2024,7 @@ pub(super) fn net_arp(_: &Kernel) -> Result<Vec<u8>> {
 
 /// Whether a driver serves NVIDIA's nodes through the chardev core.
 fn nvidia_served() -> Result<()> {
-    if crate::interfaces::chardev::published(ferrix_chardevctl::node::CONTROL_MINOR).is_some() {
+    if crate::interfaces::chardev::published(xaqu_chardevctl::node::CONTROL_MINOR).is_some() {
         Ok(())
     } else {
         Err(Errno::ENOENT)
@@ -2084,8 +2084,8 @@ pub(super) fn nvidia_version(_: &Kernel) -> Result<Vec<u8>> {
     nvidia_served()?;
     let mut out = Vec::new();
     out.extend_from_slice(
-        b"NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  580.173.02  Release Build  (ferrix nvrm)\n\
-GCC version:  (Ferrix: nvrm runs RM in ring 3)\n",
+        b"NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  580.173.02  Release Build  (xaqu nvrm)\n\
+GCC version:  (Xaqu: nvrm runs RM in ring 3)\n",
     );
     Ok(out)
 }

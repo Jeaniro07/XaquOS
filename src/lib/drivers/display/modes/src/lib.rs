@@ -26,7 +26,7 @@
 //!
 //! Drivers' alone: the kernel never parses an EDID or makes a timing for a
 //! mode list (the customer, 2026-10-22: "keep the kernel slim"); it carries
-//! the list a driver sends (`ferrix_displayctl`) and passes a chosen entry
+//! the list a driver sends (`xaqu_displayctl`) and passes a chosen entry
 //! back. Nothing here allocates: a list is a fixed array, and the native
 //! drivers have no allocator.
 
@@ -41,7 +41,7 @@ pub mod scale;
 mod tests;
 
 use crate::edid_tables::{CTA, DMT, ESTABLISHED, ESTABLISHED3};
-use ferrix_displayctl::message::{
+use xaqu_displayctl::message::{
     Listed, MAX_DIMENSION, MAX_LISTED_MODES, MAX_REFRESH_MHZ, MODES_A_PAGE, Message, ModePage,
     Timing,
 };

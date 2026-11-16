@@ -171,7 +171,7 @@ pub(crate) fn home_copy(arch: Arch, name: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// The packed home fixture: an empty volume labelled `ferrix-home`, which
+/// The packed home fixture: an empty volume labelled `xaqu-home`, which
 /// the kernel mounts at `/home`.
 const HOME: &[u8] = include_bytes!("../../../../src/lib/fs/btrfs/format/testdata/home.img.packed");
 

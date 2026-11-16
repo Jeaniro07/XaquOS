@@ -21,9 +21,9 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vfs::tmpfs::Storage;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vfs::tmpfs::Storage;
+use xaqu_vma::VmaFlags;
 
 use super::{MOUNT_POINT, crc32c, make, pattern, read_pattern, write_at, write_file};
 use crate::fs;

@@ -16,7 +16,7 @@
 
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{Framebuffer, PixelFormat};
+use xaqu_bootinfo::{Framebuffer, PixelFormat};
 
 /// Physical address of the framebuffer, or 0 when there is none to paint.
 static PHYS: AtomicU64 = AtomicU64::new(0);

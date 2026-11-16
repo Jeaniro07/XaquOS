@@ -14,8 +14,8 @@ use crate::args::Args;
 use crate::paths::Arch;
 use crate::{Error, Result};
 
-/// The desktop's own clients, written for Ferrix from waybar, fuzzel and
-/// hyprlock (`docs/DESKTOP-CLIENTS.md`) and apps in ferrix-os/apps since
+/// The desktop's own clients, written for Xaqu from waybar, fuzzel and
+/// hyprlock (`docs/DESKTOP-CLIENTS.md`) and apps in xaqu-os/apps since
 /// 2026-10-04, as `(app, binary)`: each is built from the app's folder and
 /// carried as `/bin/<binary>` on every desktop a person uses
 /// (`run-compositor`, `flash --compositor`), so the user's own `exec-once =
@@ -44,7 +44,7 @@ pub(super) const MOVIE_PATH: &str = "etc/wallpaper.ivf";
 
 /// Where the shipped wallpaper goes, which `/bin/wallpaper` shows: where a
 /// Linux distribution keeps its backgrounds.
-pub(super) const BRAND_PATH: &str = "usr/share/backgrounds/ferrix/ferrix-wallpaper.png";
+pub(super) const BRAND_PATH: &str = "usr/share/backgrounds/xaqu/xaqu-wallpaper.png";
 
 /// A desktop a person uses, from `config`: the layout and network lines,
 /// the ssh server when asked for, the screen's size as a `monitor =` line,
@@ -138,13 +138,13 @@ pub(super) fn desktop_auth(arch: Arch, args: &Args) -> Result<Vec<crate::ports::
         (
             "etc/passwd",
             format!(
-                "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\n{}",
+                "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n{}",
                 crate::auth::PASSWD_LINE
             ),
         ),
         (
             "etc/group",
-            format!("root:x:0:\nferrix:x:1000:\n{}", crate::auth::GROUP_LINE),
+            format!("root:x:0:\nxaqu:x:1000:\n{}", crate::auth::GROUP_LINE),
         ),
     ] {
         files.push(crate::ports::File {
@@ -282,7 +282,7 @@ pub(super) fn desktop(
         Backdrop::Any => crate::wallpaper::file(args, size)?,
         Backdrop::Board(screen) => crate::wallpaper::for_board(args, screen)?,
     };
-    // Xaqu has a wallpaper of its own, Ferrix's too: it stands where the
+    // Xaqu has a wallpaper of its own, Xaqu's too: it stands where the
     // shipped one would have been chosen, and a kept one still wins.
     let chosen = chosen.filter(|chosen| {
         !(matches!(chosen, crate::wallpaper::Chosen::Brand(_))
@@ -553,14 +553,14 @@ const NVIDIA_WATCH_PATH: &str = "steam/nvidia-watch.sh";
 /// windows hyprix lists, with their monitors, and Steam's log, to the
 /// console the run's serial log follows.
 const NVIDIA_WATCH: &str = r#"if [ "$1" = teeworlds ]; then
-    # FERRIX_NVIDIA_TEEWORLDS's bundle, when the volume has it: a match on
+    # XAQU_NVIDIA_TEEWORLDS's bundle, when the volume has it: a match on
     # dm1, the client fullscreen on yserver's :0, on Mesa's GL.
     [ -f /data/tw/tw.sh ] || exit 0
     while [ ! -S /tmp/.X11-unix/X0 ]; do sleep 1; done
     sleep 5
     rm -rf /tmp/tw && cp -r /data/tw /tmp/tw
     export __GLX_VENDOR_LIBRARY_NAME=mesa
-    (cd /tmp/tw/tw && LD_LIBRARY_PATH=/tmp/tw/lib:/usr/lib/x86_64-linux-gnu HOME=/home/ferrix \
+    (cd /tmp/tw/tw && LD_LIBRARY_PATH=/tmp/tw/lib:/usr/lib/x86_64-linux-gnu HOME=/home/xaqu \
         ./teeworlds_srv "sv_map dm1" 2>&1 | sed 's/^/nvdesk: tw-srv: /' | head -n 40) &
     sleep 3
     echo "nvdesk: teeworlds: starting the client"

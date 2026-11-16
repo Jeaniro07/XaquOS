@@ -20,12 +20,12 @@ use crate::{Error, Result};
 /// loader that breaks it fails the build rather than the boot.
 pub(crate) fn build_loader(arch: Arch, release: bool) -> Result<PathBuf> {
     let name = if arch.loader_is_elf() {
-        "ferrix-boot"
+        "xaqu-boot"
     } else {
-        "ferrix-boot.efi"
+        "xaqu-boot.efi"
     };
     let made = output(arch.loader_target(), release, name);
-    let mut loader = build("ferrix-boot", arch.loader_target(), release)?;
+    let mut loader = build("xaqu-boot", arch.loader_target(), release)?;
     for (key, value) in crate::signing::loader_env()? {
         loader = loader.env(key, value);
     }
@@ -106,8 +106,8 @@ fn full_debug_config(profile: &str, full: bool) -> Option<&'static str> {
 /// and value for `--check-cfg`.
 pub(crate) fn flag_environment(resolved: &crate::flags::Resolved) -> [(&'static str, String); 2] {
     [
-        ("FERRIX_BUILD_FLAGS", resolved.cfg_words()),
-        ("FERRIX_FLAG_VALUES", resolved.declared_words()),
+        ("XAQU_BUILD_FLAGS", resolved.cfg_words()),
+        ("XAQU_FLAG_VALUES", resolved.declared_words()),
     ]
 }
 
@@ -118,13 +118,13 @@ fn kernel_profile(release: bool) -> &'static str {
     profile_for(
         release,
         ITERATE.load(Ordering::Relaxed),
-        std::env::var_os("FERRIX_QEMU_PLUGIN").is_some(),
+        std::env::var_os("XAQU_QEMU_PLUGIN").is_some(),
     )
 }
 
 /// [`kernel_profile`], from what it reads.
 ///
-/// `traced`: `FERRIX_QEMU_PLUGIN` is set, which `cargo xtask coverage` sets
+/// `traced`: `XAQU_QEMU_PLUGIN` is set, which `cargo xtask coverage` sets
 /// for every gate it runs. The dev profile builds without LTO, for a fast
 /// edit; the `coverage` profile is the dev profile with rustc's crate-local
 /// thin LTO kept, the code every debug coverage figure was measured on
@@ -168,10 +168,10 @@ pub(crate) fn kernel_elf(arch: Arch, release: bool) -> PathBuf {
     paths::target_dir()
         .join(arch.kernel_target())
         .join(kernel_profile(release))
-        .join("ferrix-kernel")
+        .join("xaqu-kernel")
 }
 
-/// `cargo build -p ferrix-kernel` for `arch`, with the setting
+/// `cargo build -p xaqu-kernel` for `arch`, with the setting
 /// [`set_kernel_build`] chose, and where the ELF it makes will be.
 fn kernel(arch: Arch, release: bool) -> Result<(Build, PathBuf)> {
     let target = arch.kernel_target();
@@ -181,15 +181,15 @@ fn kernel(arch: Arch, release: bool) -> Result<(Build, PathBuf)> {
     let mut build = match profile {
         "iterate" => {
             println!("  with --iterate: thin LTO, not the release kernel a gate builds");
-            build("ferrix-kernel", target, false)?.args(["--profile", "iterate"])
+            build("xaqu-kernel", target, false)?.args(["--profile", "iterate"])
         }
         "coverage" => {
             println!(
                 "  traced: the coverage profile, with the crate-local ThinLTO of the measured build"
             );
-            build("ferrix-kernel", target, false)?.args(["--profile", "coverage"])
+            build("xaqu-kernel", target, false)?.args(["--profile", "coverage"])
         }
-        _ => build("ferrix-kernel", target, release)?,
+        _ => build("xaqu-kernel", target, release)?,
     };
     if let Some(config) = full_debug_config(profile, FULL_DEBUG.load(Ordering::Relaxed)) {
         println!("  with --gdb: the full DWARF");
@@ -216,12 +216,12 @@ fn kernel(arch: Arch, release: bool) -> Result<(Build, PathBuf)> {
         let made = paths::target_dir()
             .join(target)
             .join(profile)
-            .join("ferrix-kernel");
+            .join("xaqu-kernel");
         return Ok((build, made));
     }
     println!("  with --mitigations off: no side-channel defences");
     let directory = mitigations_off_target_dir();
-    let made = directory.join(target).join(profile).join("ferrix-kernel");
+    let made = directory.join(target).join(profile).join("xaqu-kernel");
     let build = build
         .args(["--config", &mitigations_off_config(target)])
         .args([std::ffi::OsStr::new("--target-dir"), directory.as_os_str()]);
@@ -229,7 +229,7 @@ fn kernel(arch: Arch, release: bool) -> Result<(Build, PathBuf)> {
 }
 
 /// A built kernel, and what the initramfs of an image of it must carry for
-/// pid 1 under `.ferrix/init/` (`src/kernel/src/init.rs`): a program, a
+/// pid 1 under `.xaqu/init/` (`src/kernel/src/init.rs`): a program, a
 /// script for its `sh -c`, or a list of commands. Until 2026-10-04 these were
 /// compiled into the kernel, so that each test's init was a kernel of its
 /// own; now one kernel serves every test, and an image is written from both
@@ -258,7 +258,7 @@ impl Kernel {
         }
     }
 
-    /// What pid 1's inputs are, by name under `.ferrix/init/`.
+    /// What pid 1's inputs are, by name under `.xaqu/init/`.
     fn inputs(&self) -> Result<Vec<(&'static str, Vec<u8>)>> {
         let read = |path: &Path| {
             std::fs::read(path)
@@ -305,7 +305,7 @@ impl std::ops::Deref for Kernel {
     }
 }
 
-/// Whether `archive` carries each of `inputs` under `.ferrix/init/`, byte
+/// Whether `archive` carries each of `inputs` under `.xaqu/init/`, byte
 /// for byte.
 fn carries(archive: &[u8], inputs: &[(&'static str, Vec<u8>)]) -> Result<()> {
     let carried = crate::initramfs::init_inputs(archive)?;
@@ -343,11 +343,11 @@ pub(crate) fn build_kernel(arch: Arch, release: bool) -> Result<Kernel> {
 /// `build --arch all --release`'s 443 s (`docs/TEST-TIME.md`, B1). Each
 /// call names one package, so no feature is unified across packages that
 /// are built apart below (the drivers enable different features of
-/// `ferrix-driver`), and what each target gets is what its own call would
+/// `xaqu-driver`), and what each target gets is what its own call would
 /// have built: the calls that follow find it fresh and make the images from
 /// the same files.
 ///
-/// Skipped while `FERRIX_BUILDS` records or replays, whose plan is the
+/// Skipped while `XAQU_BUILDS` records or replays, whose plan is the
 /// per-architecture builds alone.
 ///
 /// # Errors
@@ -362,7 +362,7 @@ pub(crate) fn build_ahead(arches: &[Arch], release: bool) -> Result<()> {
     let loaders: Vec<&str> = arches.iter().map(|arch| arch.loader_target()).collect();
 
     let flags = crate::flags::this_run()?;
-    let mut kernel = ahead("ferrix-kernel", &kernels);
+    let mut kernel = ahead("xaqu-kernel", &kernels);
     let _ = kernel.envs(flag_environment(flags));
     match kernel_profile(release) {
         "iterate" => {
@@ -388,10 +388,10 @@ pub(crate) fn build_ahead(arches: &[Arch], release: bool) -> Result<()> {
     }
     run(
         kernel,
-        "cargo build -p ferrix-kernel, every architecture at once",
+        "cargo build -p xaqu-kernel, every architecture at once",
     )?;
 
-    let packages = std::iter::once("ferrix-boot")
+    let packages = std::iter::once("xaqu-boot")
         .map(|package| (package, &loaders))
         .chain(
             crate::native::PROGRAMS
@@ -401,7 +401,7 @@ pub(crate) fn build_ahead(arches: &[Arch], release: bool) -> Result<()> {
     let loader_env = crate::signing::loader_env()?;
     for (package, targets) in packages {
         let mut command = ahead(package, targets);
-        if package == "ferrix-boot" {
+        if package == "xaqu-boot" {
             let _ = command.envs(loader_env.iter().map(|(key, value)| (*key, value)));
         }
         if release {
@@ -456,7 +456,7 @@ pub(crate) fn build_native(
         }
     }
     // The settings writer's part in lode (ledger 3623 (R18)).
-    if package == "ferrix-lode" && crate::flags::this_image()?.1 == "absent" {
+    if package == "xaqu-lode" && crate::flags::this_image()?.1 == "absent" {
         build = build.args(["--no-default-features"]);
     }
     build.output(&path).run()?;
@@ -467,7 +467,7 @@ pub(crate) fn build_native(
 /// compiles the targets side by side, as [`build_ahead`] does: the ELFs,
 /// by architecture. One package and the same features for each target, so
 /// each is what its own call would have built. Not a [`Build`]: for the
-/// tests, which `FERRIX_BUILDS` never records.
+/// tests, which `XAQU_BUILDS` never records.
 #[cfg(test)]
 pub(crate) fn build_native_every_arch(
     release: bool,
@@ -524,7 +524,7 @@ pub(crate) fn build_native_with(
     artifact(path)
 }
 
-/// [`build_native`], with `FERRIX_DRIVER_VERSION` set to `version`: a
+/// [`build_native`], with `XAQU_DRIVER_VERSION` set to `version`: a
 /// driver that says that version once at its start, for
 /// `cargo xtask test-restart --update` to tell from the initramfs's
 /// (`docs/DEVMGR.md` §4.1).
@@ -543,7 +543,7 @@ pub(crate) fn build_native_version(
         .join(binary);
     build(package, arch.kernel_target(), release)?
         .env("CARGO_TARGET_DIR", target_dir)
-        .env("FERRIX_DRIVER_VERSION", version)
+        .env("XAQU_DRIVER_VERSION", version)
         .output(&path)
         .run()?;
     artifact(path)
@@ -553,7 +553,7 @@ pub(crate) fn build_native_version(
 /// `sh -c`: both go in the image's initramfs, not in the kernel ([`Kernel`]).
 ///
 /// Taken from the arguments rather than this process's environment, so the
-/// command a person typed is the whole of what was built: a `FERRIX_INIT` left
+/// command a person typed is the whole of what was built: a `XAQU_INIT` left
 /// exported in the shell cannot quietly substitute a different program.
 pub(crate) fn build_kernel_with_init(
     arch: Arch,
@@ -596,7 +596,7 @@ pub(crate) fn build_kernel_with_commands(
 }
 
 /// `cargo build -p <package> --target <target>`, for the caller to add to
-/// and run: a [`Build`], which `FERRIX_BUILDS` may record or replay.
+/// and run: a [`Build`], which `XAQU_BUILDS` may record or replay.
 fn build(package: &str, target: &str, release: bool) -> Result<Build> {
     refuse_inherited_rustflags()?;
     println!("  building {package} for {target}");
@@ -717,7 +717,7 @@ mod tests {
 
     fn kernel_with(program: Option<&[u8]>, script: &str) -> (Kernel, tempfile_dir::Dir) {
         let dir = tempfile_dir::Dir::new();
-        let mut kernel = Kernel::plain(dir.path().join("ferrix-kernel"));
+        let mut kernel = Kernel::plain(dir.path().join("xaqu-kernel"));
         if let Some(bytes) = program {
             let path = dir.path().join("program");
             std::fs::write(&path, bytes).unwrap();
@@ -796,7 +796,7 @@ mod tests {
 
     #[test]
     fn an_archive_that_carries_the_inputs_directory_already_is_refused() {
-        let base = crate::initramfs::plain(&[".ferrix"], &[]).unwrap();
+        let base = crate::initramfs::plain(&[".xaqu"], &[]).unwrap();
         assert!(crate::initramfs::with_init_inputs(&base, &[("script", b"x")]).is_err());
     }
 }

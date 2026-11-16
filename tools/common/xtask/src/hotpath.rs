@@ -31,7 +31,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
 }];
 
 /// What the fingerprint's text says it is, so a later layout is a new name.
-pub(crate) const FINGERPRINT_SCHEMA: &str = "ferrix-hw-fingerprint/1";
+pub(crate) const FINGERPRINT_SCHEMA: &str = "xaqu-hw-fingerprint/1";
 
 /// How many hex digits of a hash name a directory.
 pub(crate) const SHORT: usize = 12;
@@ -137,7 +137,7 @@ pub(crate) fn hw_fingerprint(args: &Args) -> Result<()> {
 
 /// What a hot path's data file says it is.
 #[cfg(test)]
-const PATH_SCHEMA: &str = "ferrix-hotpath/1";
+const PATH_SCHEMA: &str = "xaqu-hotpath/1";
 
 /// Check every hot path's data file, `docs/hotpaths/<id>.json`, from the
 /// unit test that holds the tree's own to it: it parses, names its schema

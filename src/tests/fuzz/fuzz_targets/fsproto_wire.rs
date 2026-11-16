@@ -6,7 +6,7 @@
 
 #![no_main]
 
-use ferrix_fsproto::wire::{Answer, DiskUp, REQUEST_MAX, Request, decode_dirent, name_is_good};
+use xaqu_fsproto::wire::{Answer, DiskUp, REQUEST_MAX, Request, decode_dirent, name_is_good};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {

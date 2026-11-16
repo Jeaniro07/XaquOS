@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-usb-host"
+name = "xaqu-usb-host"
 description = "A USB host as logic over registers and DMA memory: EHCI and xHCI, hubs, HID keyboards and mice, bulk-only disks, and interfaces exported to class drivers of their own"
 version = "0.1.0"
 edition = "2024"
@@ -8,13 +8,13 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-inputctl = { workspace = true }
-ferrix-linux-abi = { workspace = true }
-ferrix-usbif = { workspace = true }
+xaqu-inputctl = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-usbif = { workspace = true }
 
 [dev-dependencies]
-ferrix-native-abi = { workspace = true }
-ferrix-usb-serial = { workspace = true }
+xaqu-native-abi = { workspace = true }
+xaqu-usb-serial = { workspace = true }
 
 [lints]
 workspace = true

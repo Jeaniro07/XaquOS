@@ -112,7 +112,7 @@ pub(crate) const TASKS: &[Task] = &[
         help_at: 600,
         help: &[
             "test-uvm      Build NVIDIA's UVM against uvm-kpi and ferrousli from the tree tools/common/fetch/fetch-nvidia.sh fetches",
-            "              (or FERRIX_NVIDIA_SRC's), boot it as init, and require its 15 GPU-free self-tests to pass; then a krealloc",
+            "              (or XAQU_NVIDIA_SRC's), boot it as init, and require its 15 GPU-free self-tests to pass; then a krealloc",
             "              control that must fail one (x86_64)",
         ],
         run,
@@ -134,7 +134,7 @@ pub(crate) const TASKS: &[Task] = &[
         help: &[
             "test-nvrm-link",
             "              Build nvrm-link-test and its core from fetch-nvidia.sh's objects, run RM's no-GPU path (init,",
-            "              root client, NV01_DEVICE_0 refused) on the host and on Ferrix from a volume, and each control",
+            "              root client, NV01_DEVICE_0 refused) on the host and on Xaqu from a volume, and each control",
             "              the core's loader must refuse (x86_64)",
         ],
         run,
@@ -207,7 +207,7 @@ pub(crate) fn build_test(
     if let Some(feature) = feature {
         build = build.args(["--features", feature]);
     }
-    // Ferrix's own `.cargo/config.toml` uses this triple for the ARMv7-A
+    // Xaqu's own `.cargo/config.toml` uses this triple for the ARMv7-A
     // loader, with its linker script, and cargo merges a parent directory's
     // flags for a target into `src/tests/<name>/`'s. The variable replaces every
     // configured flag, so the program is linked as the other two are.

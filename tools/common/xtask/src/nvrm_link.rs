@@ -1,5 +1,5 @@
 //! `test-nvrm-link`: NVIDIA's resource manager loaded and run with no GPU,
-//! on the host and on Ferrix, and every refusal of its loader shown
+//! on the host and on Xaqu, and every refusal of its loader shown
 //! (`docs/NVIDIA.md` §4.1 "The core", §7 N1c).
 //!
 //! `nvrm-link-test` is nvrm's objects with a main of its own
@@ -26,7 +26,7 @@
 //! | base taken | a page mapped at the base first, `--control-taken` | `MAP_FIXED_NOREPLACE` |
 //!
 //! Every case runs on the host first, where it is quick, and then on
-//! Ferrix: the programs and cores go on a btrfs volume, which the kernel
+//! Xaqu: the programs and cores go on a btrfs volume, which the kernel
 //! mounts at `/data`, and a shell runs each case there and says its status.
 
 use std::path::{Path, PathBuf};
@@ -325,7 +325,7 @@ fn on_host(directory: &Path, files: &[(String, PathBuf)]) -> Result<()> {
     Ok(())
 }
 
-/// The shell script that runs every case on Ferrix: each program with its
+/// The shell script that runs every case on Xaqu: each program with its
 /// argument, its lines prefixed with the case, then its status.
 fn script() -> String {
     let mut script =
@@ -357,8 +357,8 @@ fn script() -> String {
 /// What the script exits with once every case has run.
 const STATUS: i32 = 17;
 
-/// Run every case on Ferrix, from a volume holding `files`.
-fn on_ferrix(arch: Arch, files: &[(String, PathBuf)], args: &Args) -> Result<()> {
+/// Run every case on Xaqu, from a volume holding `files`.
+fn on_xaqu(arch: Arch, files: &[(String, PathBuf)], args: &Args) -> Result<()> {
     let image_path = paths::build_dir(arch).join("nvrm-link-volume.img");
     let inside: Vec<(&str, PathBuf)> = files
         .iter()
@@ -382,7 +382,7 @@ fn on_ferrix(arch: Arch, files: &[(String, PathBuf)], args: &Args) -> Result<()>
     let archive = initramfs::build(Some(&busybox), &natives, Some(&bytes), &[])?;
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
     println!(
-        "  {arch}: running the cases on Ferrix from a volume (timeout {}s)",
+        "  {arch}: running the cases on Xaqu from a volume (timeout {}s)",
         args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -433,7 +433,7 @@ pub(crate) fn test_nvrm_link(args: &Args) -> Result<()> {
     let directory = paths::target_dir().join("nvrm-link-controls");
     let files = stage(&programs, &directory)?;
     on_host(&directory, &files)?;
-    on_ferrix(Arch::X86_64, &files, args)
+    on_xaqu(Arch::X86_64, &files, args)
 }
 
 #[cfg(test)]

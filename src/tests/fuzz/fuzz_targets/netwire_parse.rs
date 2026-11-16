@@ -1,6 +1,6 @@
 //! Fuzz the wire formats the net core will read from a stranger's packet.
 //!
-//! Every parser in `ferrix-netwire` runs on the same input, because a packet
+//! Every parser in `xaqu-netwire` runs on the same input, because a packet
 //! reaches each of them as bytes nobody in this tree chose.
 //!
 //! # The properties
@@ -19,9 +19,9 @@
 
 #![no_main]
 
-use ferrix_netwire::checksum::{Checksum, Pseudo, checksum};
-use ferrix_netwire::ndp::Ndp;
-use ferrix_netwire::{arp, ethernet, icmpv4, icmpv6, ipv4, ipv6, tcp, udp};
+use xaqu_netwire::checksum::{Checksum, Pseudo, checksum};
+use xaqu_netwire::ndp::Ndp;
+use xaqu_netwire::{arp, ethernet, icmpv4, icmpv6, ipv4, ipv6, tcp, udp};
 use libfuzzer_sys::fuzz_target;
 
 /// Addresses for the transport checksums, taken from the start of the input so

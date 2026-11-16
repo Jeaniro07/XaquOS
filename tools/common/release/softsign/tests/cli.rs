@@ -8,14 +8,14 @@
 
 use std::process::Command;
 
-use ferrix_sha256 as _;
-use ferrix_sigverify as _;
-use ferrix_softsign as _;
+use xaqu_sha256 as _;
+use xaqu_sigverify as _;
+use xaqu_softsign as _;
 
 fn signer(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_ferrix-softsign"))
+    Command::new(env!("CARGO_BIN_EXE_xaqu-softsign"))
         .args(args)
-        .env_remove("FERRIX_CI_SIGNING_KEY")
+        .env_remove("XAQU_CI_SIGNING_KEY")
         .output()
         .unwrap()
 }
@@ -65,7 +65,7 @@ fn ci_sign_parses_the_workflows_flags_and_wants_the_key() {
         "--security-version",
         "1",
         "--label",
-        "ferrix ci 3",
+        "xaqu ci 3",
         "--payload",
         "/dev/null",
         "--out",
@@ -73,5 +73,5 @@ fn ci_sign_parses_the_workflows_flags_and_wants_the_key() {
     ]);
     assert!(!out.status.success());
     let said = String::from_utf8_lossy(&out.stderr);
-    assert!(said.contains("FERRIX_CI_SIGNING_KEY is not set"), "{said}");
+    assert!(said.contains("XAQU_CI_SIGNING_KEY is not set"), "{said}");
 }

@@ -79,7 +79,7 @@
 #include "vicinae-hotkey-client-protocol.h"
 #include "ext-image-capture-source-client-protocol.h"
 #include "ext-image-copy-capture-client-protocol.h"
-#include "ferrix-appmenu-v1-client-protocol.h"
+#include "xaqu-appmenu-v1-client-protocol.h"
 #include "linux-dmabuf-client-protocol.h"
 
 static void print_messages(const struct wl_interface *interface,
@@ -322,9 +322,9 @@ int main(void)
 		&ext_image_copy_capture_session_v1_interface,
 		&ext_image_copy_capture_frame_v1_interface,
 		&ext_image_copy_capture_cursor_session_v1_interface,
-		/* ferrix-appmenu-v1.xml */
-		&ferrix_appmenu_manager_v1_interface,
-		&ferrix_appmenu_v1_interface,
+		/* xaqu-appmenu-v1.xml */
+		&xaqu_appmenu_manager_v1_interface,
+		&xaqu_appmenu_v1_interface,
 		/* linux-dmabuf-v1.xml */
 		&zwp_linux_dmabuf_v1_interface,
 		&zwp_linux_buffer_params_v1_interface,

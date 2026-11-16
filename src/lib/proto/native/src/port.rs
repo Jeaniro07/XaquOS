@@ -1,7 +1,7 @@
 //! Ports: the event queue one thread waits on for many sources.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::types::{PACKET_USER, PORT_FD_CLOEXEC, PortPacket};
+use xaqu_native_abi::nr;
+use xaqu_native_abi::types::{PACKET_USER, PORT_FD_CLOEXEC, PortPacket};
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode, decode_handle, decode_unit};

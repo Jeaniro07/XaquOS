@@ -2,7 +2,7 @@
 //!
 //! A kernel thread: a stack, a saved stack pointer, and the bookkeeping that
 //! says where it is. Everything about *choosing* between tasks is
-//! `ferrix_sched`'s; everything here is what the choice is made about.
+//! `xaqu_sched`'s; everything here is what the choice is made about.
 //!
 //! # Where the saved stack pointer lives
 //!
@@ -22,8 +22,8 @@ use core::sync::atomic::{
     AtomicBool, AtomicI64, AtomicPtr, AtomicU8, AtomicU32, AtomicU64, Ordering,
 };
 
-use ferrix_sched::{CpuSet, EntityState, Node, Slot, WORDS};
-use ferrix_sync::IrqControl;
+use xaqu_sched::{CpuSet, EntityState, Node, Slot, WORDS};
+use xaqu_sync::IrqControl;
 
 use super::queue::Due;
 use crate::arch;
@@ -77,13 +77,13 @@ pub(crate) const BLOCKED: u8 = 1;
 /// Dead: it has returned or exited, and its stack is waiting to be freed.
 pub(crate) const DEAD: u8 = 2;
 
-/// A waker's record of its wakees, for `ferrix_sched::wake_wide`
+/// A waker's record of its wakees, for `xaqu_sched::wake_wide`
 /// (L.sched.91): written only by the task itself while it runs.
 #[derive(Debug)]
 struct Wakees {
     /// The last task it woke from a call, by id.
     last: AtomicU64,
-    /// How often it changed wakee, halved once a second (`ferrix_sched::flip`).
+    /// How often it changed wakee, halved once a second (`xaqu_sched::flip`).
     flips: AtomicU32,
     /// When `flips` was last halved, in nanoseconds.
     halved_at: AtomicU64,
@@ -369,10 +369,10 @@ pub struct Task {
     run_slot: SlotCell<Arc<Task>>,
     /// The processor holding its reservation, past the last one for none, and the mask it
     /// had before (ledger 7088 E.3).
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     pub(crate) reserved_on: core::sync::atomic::AtomicUsize,
     /// See `reserved_on`.
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     pub(crate) mask_before: crate::sync::SpinLock<Option<CpuSet>>,
     /// The node a processor's sleeper set, or the reaper's list, holds it
     /// in, while neither does. As `run_slot`, for sleeping and for dying.
@@ -800,9 +800,9 @@ impl Task {
             let _ = count.fetch_add(1, Ordering::AcqRel);
         }
         Ok(Task {
-            #[cfg(ferrix_schedule = "edf")]
+            #[cfg(xaqu_schedule = "edf")]
             reserved_on: core::sync::atomic::AtomicUsize::new(usize::MAX),
-            #[cfg(ferrix_schedule = "edf")]
+            #[cfg(xaqu_schedule = "edf")]
             mask_before: crate::sync::SpinLock::new(None),
             id,
             name,
@@ -867,9 +867,9 @@ impl Task {
     ) -> Result<Task, AllocError> {
         let (run_slot, sleep_slot) = slots()?;
         Ok(Task {
-            #[cfg(ferrix_schedule = "edf")]
+            #[cfg(xaqu_schedule = "edf")]
             reserved_on: core::sync::atomic::AtomicUsize::new(usize::MAX),
-            #[cfg(ferrix_schedule = "edf")]
+            #[cfg(xaqu_schedule = "edf")]
             mask_before: crate::sync::SpinLock::new(None),
             id,
             name,
@@ -967,7 +967,7 @@ impl Task {
     /// already zero: the fast path's commit, under its home's run-queue lock
     /// while it is asleep there. The lock's hand-over at the switch to it is
     /// what orders these stores before its own reads.
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub(crate) fn fill_reply(&self, len: usize, words: [u64; 3]) {
         for (cell, word) in self.reply.iter().skip(1).zip(words) {
             cell.store(word, Ordering::Relaxed);
@@ -1062,7 +1062,7 @@ impl Task {
     /// The direct switch's, under the run-queue lock every waker of either
     /// task takes, for the peer asleep (`BLOCKED`) and the caller running
     /// (`RUNNABLE`).
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub(crate) fn set_state_from(&self, before: u8, state: u8) {
         self.store_state(state);
         if before != RUNNABLE && state == RUNNABLE {
@@ -1075,7 +1075,7 @@ impl Task {
     /// The state's store of [`Task::set_state_from`] alone, for the direct
     /// switch's fold, which makes the job's load itself
     /// (`docs/OPAQUE-KERNEL.md` §9.11, J1). The same conditions.
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub(crate) fn store_state(&self, state: u8) {
         self.state.store(state, Ordering::Release);
     }
@@ -1321,7 +1321,7 @@ impl Task {
     /// Whether it holds its sleep slot: no sleeper set or reaper's list
     /// holds it. The direct switch's half of [`Task::holds_slots`]; its run
     /// slot is held exactly while it is not queued, which it asserts.
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     pub(crate) fn holds_sleep_slot(&self) -> bool {
         self.sleep_slot.holds()
     }
@@ -1356,7 +1356,7 @@ impl Task {
         if changed {
             self.wakees.last.store(wakee, Ordering::Relaxed);
         }
-        let (flips, halved_at) = ferrix_sched::flip(
+        let (flips, halved_at) = xaqu_sched::flip(
             flips,
             self.wakees.halved_at.load(Ordering::Relaxed),
             now(),
@@ -1378,7 +1378,7 @@ impl Task {
         if at == 0 || window >= BUSY_WINDOW_NS {
             if at != 0 {
                 let since = ran.saturating_sub(self.wakees.sampled_ran.load(Ordering::Relaxed));
-                let share = ferrix_sched::utilisation(since, window).unwrap_or(UNMEASURED);
+                let share = xaqu_sched::utilisation(since, window).unwrap_or(UNMEASURED);
                 self.wakees.busy.store(share, Ordering::Relaxed);
             }
             self.wakees.sampled_at.store(now.max(1), Ordering::Relaxed);

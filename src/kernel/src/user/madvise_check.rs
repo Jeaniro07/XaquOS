@@ -25,15 +25,15 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::nr::Syscall;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::nr::Syscall;
+use xaqu_linux_abi::types::{
     MADV_COLD, MADV_DODUMP, MADV_DOFORK, MADV_DONTDUMP, MADV_DONTFORK, MADV_DONTNEED, MADV_FREE,
     MADV_HUGEPAGE, MADV_MERGEABLE, MADV_NOHUGEPAGE, MADV_NORMAL, MADV_PAGEOUT, MADV_RANDOM,
     MADV_REMOVE, MADV_SEQUENTIAL, MADV_WILLNEED, MADV_WIPEONFORK, MAP_ANONYMOUS, MAP_PRIVATE,
     MAP_SHARED, PROT_READ, PROT_WRITE,
 };
-use ferrix_vfs::Errno;
+use xaqu_vfs::Errno;
 
 use crate::mm;
 use crate::syscall::check as syscall_check;
@@ -332,7 +332,7 @@ fn check_a_private_file_mapping(
 fn check_a_shared_file_mapping(
     process: &Process,
     shared: u64,
-    file: &ferrix_vfs::OpenFile,
+    file: &xaqu_vfs::OpenFile,
     counts: &mut Counts,
 ) -> Result<(), &'static str> {
     let space = process.space();

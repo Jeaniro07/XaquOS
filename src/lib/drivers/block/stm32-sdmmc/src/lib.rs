@@ -1,7 +1,7 @@
 //! An STM32MP15's SDMMC controller and the SD card behind it, as logic over
 //! registers: the card's bring-up, block reads and writes through the
 //! controller's FIFO, and the rule that keeps writes inside the card's own
-//! `ferrix-` partitions.
+//! `xaqu-` partitions.
 //!
 //! `src/user/system/native/drivers/block/stm32-sdmmc` runs this in a ring-3
 //! process under devmgr and serves the card over the block ring

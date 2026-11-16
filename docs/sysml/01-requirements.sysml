@@ -1,15 +1,15 @@
 /*
- * Ferrix — SysML v2 model, part 1: requirements.
+ * Xaqu — SysML v2 model, part 1: requirements.
  *
  * docs/ARCHITECTURE.md §0 read as a specification, plus the design rules the
  * rest of the model has to satisfy and the promises it deliberately does not
  * make. Ids in angle brackets are stable; the roadmap and assurance packages
  * cite them.
  */
-package FerrixRequirements {
+package XaquRequirements {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
-    private import FerrixStructure::Ferrix;
+    private import XaquLifecycle::*;
+    private import XaquStructure::Xaqu;
 
     // -----------------------------------------------------------------------
     // The goal
@@ -20,12 +20,12 @@ package FerrixRequirements {
              * load-bearing: it is why the system is shaped the way it is, and
              * why toy-OS shortcuts are ruled out at the start rather than
              * discovered to be dead ends at the end. */
-        subject os : Ferrix;
+        subject os : Xaqu;
     }
 
     requirement <'G'> hostsRustc : GoalRequirement {
         doc /* The acceptance test: a statically linked musl `rustc` compiles
-             * `hello.rs` on Ferrix, the binary it produced runs, and CI proves
+             * `hello.rs` on Xaqu, the binary it produced runs, and CI proves
              * both. Not "has a shell", not "draws a window". Hosting a compiler
              * is the hardest thing a general-purpose OS is routinely asked to
              * do and the only goal that forces every subsystem to be real. */
@@ -73,7 +73,7 @@ package FerrixRequirements {
     }
 
     requirement <'G+'> selfHosting : GoalRequirement {
-        doc /* Stage 20: build Ferrix on Ferrix. The image the Ferrix-hosted
+        doc /* Stage 20: build Xaqu on Xaqu. The image the Xaqu-hosted
              * compiler produces boots and passes every boot test. */
     }
     dependency from selfHosting to hostsRustc;
@@ -88,7 +88,7 @@ package FerrixRequirements {
              * script or a build failure rather than a review. */
 
         requirement def DesignRule {
-            subject os : Ferrix;
+            subject os : Xaqu;
         }
 
         requirement <'P.1'> linuxIsTheNativeAbi : DesignRule {

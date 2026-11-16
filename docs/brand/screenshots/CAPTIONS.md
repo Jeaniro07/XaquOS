@@ -1,15 +1,15 @@
-# Ferrix screenshots
+# Xaqu screenshots
 
 ## v0.3.0's live ISO, 2026-11-08
 
 Taken from the release workflow's dry run of 182712930 (run 42424988530,
-`ferrix-dry-run-x86_64.iso`, the commit v0.3.0's code is), booted with Try
-Ferrix's QEMU command line under KVM on nazuna (Ryzen 9 9900X, QEMU 10.2.1,
+`xaqu-dry-run-x86_64.iso`, the commit v0.3.0's code is), booted with Try
+Xaqu's QEMU command line under KVM on nazuna (Ryzen 9 9900X, QEMU 10.2.1,
 4 processors, 4 GiB), the screen taken by QEMU's `screendump` and the
 keys and pointer sent over QMP. Nothing was edited.
 
-**desktop-0.3.0.png** (1920x1080): Try Ferrix, then `ferrofetch` (OS
-Ferrix 0.3.0) snapped left and `btop` right; `memscru` in btop's list is
+**desktop-0.3.0.png** (1920x1080): Try Xaqu, then `ferrofetch` (OS
+Xaqu 0.3.0) snapped left and `btop` right; `memscru` in btop's list is
 the RAM scrubber, which stands down in a virtual machine.
 
 **suspend.png** (1920x1080): a third terminal running `date +%T` once a
@@ -24,7 +24,7 @@ for this one.
 error (`MCi_STATUS` 0x9c0000000000009f, bank 1) injected on processor 2
 with QEMU's `mce` monitor command, as `test-mce-corrected` does; the
 kernel logged `mce: cpu 2 bank 1 corrected ... total=1` on the serial
-console within its 5 s poll, and `/proc/ferrix-mce` counts it. The
+console within its 5 s poll, and `/proc/xaqu-mce` counts it. The
 scrubber's line and the resident set split by kind follow.
 
 ## The Xaqu hero and the live ISO, 2026-10-28
@@ -32,7 +32,7 @@ scrubber's line and the resident set split by kind follow.
 **hero-n150.png** (1920x1080) replaces the 2026-10-23 hero below. It was
 captured from hyprix's own output on the Intel N150 mini PC, which was
 running image `main-7a0a357d3`. On screen: Arknights: Endfield from Steam
-through Proton in a 1280x720 window, at The Hub, drawn by Ferrix's ring-3
+through Proton in a 1280x720 window, at The Hub, drawn by Xaqu's ring-3
 Intel GPU driver. Beside it, `btop` shows the process list (Endfield.exe,
 wineserver, steamwebhelper, hyprix, intel, xaqu-shell), and a zinc terminal
 shows `ferrofetch`. Xaqu's dock runs along the bottom. That image had no
@@ -48,14 +48,14 @@ installer's welcome page, then the summary page before Install. The user
 
 ## The N150 hero, 2026-10-23
 
-**hero-n150.png** (1920x1080): Ferrix's desktop on the Intel N150 mini PC
+**hero-n150.png** (1920x1080): Xaqu's desktop on the Intel N150 mini PC
 (4 Gracemont cores, Intel UHD iGPU, 16 GB), captured from the compositor on
 2026-10-23 with the box running image `main-628202493`. On screen:
 Arknights: Endfield from Steam through Proton, windowed at 1280x720 (graphics
-"Very Low", render scale 60 %, 30 fps cap), drawn by Ferrix's own ring-3
+"Very Low", render scale 60 %, 30 fps cap), drawn by Xaqu's own ring-3
 Intel GPU driver; `ferrofetch` and `btop` in two `term` windows; waybar. The
 desktop configuration is the customer's own Hyprland and waybar setup carried
-onto the box (host-only daemons removed). The wallpaper is Ferrix's brand
+onto the box (host-only daemons removed). The wallpaper is Xaqu's brand
 wallpaper (the mark moved to the upper right for this shot), drawn by swaybg
 1.2.1 built without gdk-pixbuf and patched to keep its shm pool and buffer:
 hyprix loses a buffer whose pool the client destroys right after creating it
@@ -65,29 +65,29 @@ blurred. Steam's never-drawn helper windows were left on another workspace.
 ## The install guide, 2026-10-19
 
 The pictures in `install/` are [INSTALL.md](../../INSTALL.md)'s. Six of them come
-from one zip, `ferrix-x86_64-desktop.zip` (51,740,712 bytes, SHA-256
+from one zip, `xaqu-x86_64-desktop.zip` (51,740,712 bytes, SHA-256
 `8b67191e7e2593515d56dbb8c3d8ccd2aa16f8c99b6fde1940cff4f09fdf03ae`), built on nazuna
 with `tools/common/release/package-desktop.py /tmp/ig/out` from `main` 8cb1dc24a plus
-the release-image commit, rebased onto it. The three `ferrix-windows-*.png` were
+the release-image commit, rebased onto it. The three `xaqu-windows-*.png` were
 retaken the same evening from the zip the same script built at f8cf097ac, once the
 release-image branch carried its licence commit (52,035,922 bytes, SHA-256
 `683a314f27b6903140a99c67bdbccabc92c7bbe6af3e1aaab5ede0d9fb31336f`): the first take's QEMU
 menus were German, the host's language. No release was published yet, so nothing was
 downloaded from GitHub: the zip was copied to each host and unpacked there. Each image
 carries a band naming its system, written by `tools/common/gen/install-shots.py`: green
-FERRIX for the guest's screen, red LINUX HOST and blue WINDOWS HOST for the hosts' own
+XAQU for the guest's screen, red LINUX HOST and blue WINDOWS HOST for the hosts' own
 windows. Apart from that band and the one crop named below, nothing was edited.
 
 **Windows 11** (this PC, Ryzen 9 5900X): QEMU 11.1.0 as winget installs it, in
 `C:\Program Files\qemu`, under WHPX, so `run.ps1` gave the guest one processor. The zip
-was in `C:\Users\Sebastian\Downloads\ferrix-guide`. A classic console window
+was in `C:\Users\Sebastian\Downloads\xaqu-guide`. A classic console window
 (`conhost.exe`) was opened there running `powershell.exe -NoExit -Command
-"Expand-Archive ferrix-x86_64-desktop.zip .; powershell -ExecutionPolicy Bypass -File
-ferrix-x86_64-desktop\run.ps1"`, so the commands themselves are not on screen, only what
+"Expand-Archive xaqu-x86_64-desktop.zip .; powershell -ExecutionPolicy Bypass -File
+xaqu-x86_64-desktop\run.ps1"`, so the commands themselves are not on screen, only what
 they printed. Every window was captured by its handle with `PrintWindow` (DPI-aware),
 not from the screen. Keys reached QEMU's window as posted `WM_KEYDOWN`/`WM_KEYUP`
 messages, and the window was made bigger with `SetWindowPos`, as a reader drags it.
-QEMU's GTK menus follow gettext's language, so for the retaken `ferrix-windows-*.png`
+QEMU's GTK menus follow gettext's language, so for the retaken `xaqu-windows-*.png`
 the capture script set `LANGUAGE=en`, `LANG=en_US.UTF-8` and `LC_ALL=en_US.UTF-8` in
 its own environment before starting the console, which the console, `run.ps1` and QEMU
 inherited; the menu then read "Machine" and "View". `run.ps1` is unchanged: a reader's
@@ -100,12 +100,12 @@ QEMU shows its menus in the reader's language.
   started (`Expand-Archive` took most of that): `run.ps1`'s two lines, then QEMU's
   CPUID warnings and "Ignoring request for interrupt vector 0", none of which stopped
   the boot.
-- **ferrix-windows-booting.png**: QEMU's window 2 s after it opened: TianoCore and the
-  Ferrix loader's lines.
-- **ferrix-windows-desktop-640.png**: the same window at 4 s, with the desktop. QEMU's
+- **xaqu-windows-booting.png**: QEMU's window 2 s after it opened: TianoCore and the
+  Xaqu loader's lines.
+- **xaqu-windows-desktop-640.png**: the same window at 4 s, with the desktop. QEMU's
   GTK window opens at 640x480 and the guest's screen takes that size
   (`docs/backlog/p2.md` has the row).
-- **ferrix-windows-ferrofetch.png**: after the window was set to 1296x908; the console
+- **xaqu-windows-ferrofetch.png**: after the window was set to 1296x908; the console
   logged `hyprix: Virtual-1 is 1274x819 now, as its monitor prefers (was 640x480)`.
   Then `ferrofetch` and Enter, posted to the window. `CPU: x86_64 (1)` is WHPX's one
   processor.
@@ -114,19 +114,19 @@ QEMU shows its menus in the reader's language.
 steps ran in a detached tmux pane of 100x30 cells, started as `env -i HOME=$HOME
 TERM=xterm-256color PATH=/usr/bin:/bin PS1='$ ' bash --norc --noprofile` in a fresh
 directory holding the zip, and typed with `tmux send-keys`: `unzip
-ferrix-x86_64-desktop.zip`, then `sh ferrix-x86_64-desktop/run.sh`, and at the end
+xaqu-x86_64-desktop.zip`, then `sh xaqu-x86_64-desktop/run.sh`, and at the end
 `C-a x`. The host has no display server (and none may be started on it), so `run.sh`
 put the screen on VNC at 127.0.0.1:5905 by itself. The guest's screen was grabbed over
-VNC by a small RFB client, a copy of nazuna's `~/.local/share/ferrix/cs-grab.py` that
+VNC by a small RFB client, a copy of nazuna's `~/.local/share/xaqu/cs-grab.py` that
 holds Shift for shifted characters, which also typed into it.
 
 - **linux-host-run-sh.png**: `tmux capture-pane -p` half a second after `run.sh`
   started, before the firmware clears the terminal, drawn by `install-shots.py
   terminal` in Liberation Mono. The lines are the pane's, wrapped where the pane
   wrapped them.
-- **ferrix-linux-desktop.png**: the desktop 6 s after the serial log's `hyprix: card0`
+- **xaqu-linux-desktop.png**: the desktop 6 s after the serial log's `hyprix: card0`
   line, which came 3.6 s after QEMU started.
-- **ferrix-linux-curl.png**: `clear`, then `curl -sI https://example.com`, over QEMU's
+- **xaqu-linux-curl.png**: `clear`, then `curl -sI https://example.com`, over QEMU's
   user-mode network.
 - **linux-host-quit.png**: the pane 3 s after `C-a x`, ending in `QEMU: Terminated`.
 
@@ -145,15 +145,15 @@ Failures met while taking them, kept in the guide:
   CD-ROM (`docs/BACKLOG.md`, the row of 2026-10-19).
 
 Logs, timelines and the unlabelled captures are on nazuna under
-`~/.local/share/ferrix/logs/install-guide/`.
+`~/.local/share/xaqu/logs/install-guide/`.
 
 ## The demo video, 2026-10-18
 
 `demo.mp4` (70 s, 1280x720, H.264, 20 fps, no sound) and `demo-loop.gif` (15 s of it,
-960x540, 12 fps) come from one boot of Ferrix at main 1838944ae: x86_64 under QEMU
+960x540, 12 fps) come from one boot of Xaqu at main 1838944ae: x86_64 under QEMU
 with KVM on a Linux host, 4 vCPUs, `run-compositor --everything` (the 3D card with
 virgl, Chrome, and `rustc` and `cargo` on the data disk), served over VNC at
-1920x1080. Every frame carries the label "FERRIX · x86-64 · QEMU/KVM on Linux".
+1920x1080. Every frame carries the label "XAQU · x86-64 · QEMU/KVM on Linux".
 
 Nothing was cut and nothing was sped up: the video is the recording from the moment
 QEMU's screen answered to the end of the script, in real time. The recorder can cut
@@ -165,13 +165,13 @@ own driver put the pointer.
 
 What it shows, by the video's clock:
 
-- 0-3 s: the firmware (TianoCore) and Ferrix's loader printing its command line, then
+- 0-3 s: the firmware (TianoCore) and Xaqu's loader printing its command line, then
   QEMU's "Display output is not active" while the kernel takes the display over.
 - About 6 s: hyprix, the compositor, with the terminal the desktop starts; about 12 s:
-  Chrome joins it with Ferrix's start page.
-- 19-41 s: in that terminal, `uname -sm` (`Ferrix x86_64`), `rustc --version`
+  Chrome joins it with Xaqu's start page.
+- 19-41 s: in that terminal, `uname -sm` (`Xaqu x86_64`), `rustc --version`
   (1.97.1), a three-line `hello.rs` typed into zinc as one quoted `echo`, then
-  `rustc hello.rs && ./hello`, which prints "Hello from rustc on Ferrix!" about a
+  `rustc hello.rs && ./hello`, which prints "Hello from rustc on Xaqu!" about a
   second after Enter.
 - 45-53 s: a click on Chrome's tab strip, Ctrl+L, and
   `https://en.wikipedia.org/wiki/Rust_(programming_language)`, fetched over the
@@ -192,7 +192,7 @@ On the host, from a worktree at that commit (`<empty>` is an empty directory, so
 `ember` background shows; the recorder's `--vnc` and `--ssh` match xtask's):
 
 ```
-FERRIX_WALLPAPERS=<empty> CARGO_TARGET_DIR=<target> \
+XAQU_WALLPAPERS=<empty> CARGO_TARGET_DIR=<target> \
   tools/common/gen/record-demo.py record <out> --tree . --vnc 127.0.0.1:5991 --ssh 2391 -- \
     run-compositor --arch x86_64 --everything --accel kvm \
     --vnc 127.0.0.1:91 --ssh 2391 --layout us
@@ -212,7 +212,7 @@ editor instead.
 
 ## The screenshots, 2026-10-03
 
-The desktop images come from one boot of Ferrix at main 0345f6adf. The guest is
+The desktop images come from one boot of Xaqu at main 0345f6adf. The guest is
 x86_64 under QEMU with KVM, 4 vCPUs and 4 GiB of RAM, on a virtio-gpu 3D card (virgl,
 and Venus for Vulkan). The screen is 1920x1080 and was captured over VNC. Nothing was
 edited after capture. The background is `ember`, the picture xtask draws when no
@@ -227,29 +227,29 @@ Two images do not come from that boot: `website.png` and `steam-yserver.png`, be
 
 ### Captions
 
-- **desktop-hero.png**: The hyprix Wayland compositor on Ferrix (x86_64, KVM) with three
+- **desktop-hero.png**: The hyprix Wayland compositor on Xaqu (x86_64, KVM) with three
   tiled windows: btop after two minutes of Chrome loading pages, zinc with its oh-my-zsh
   prompt in a git repository after `uname -a`, `git log` and
   `svc status hyprix.service`, and Chrome showing rust-lang.org over the guest's
   network.
-- **desktop-chrome.png**: Chrome (Chrome for Testing) on Ferrix's hyprix compositor,
-  showing the Wikipedia article on Rust. Chrome runs on ferrousli, Ferrix's own libc, and
+- **desktop-chrome.png**: Chrome (Chrome for Testing) on Xaqu's hyprix compositor,
+  showing the Wikipedia article on Rust. Chrome runs on ferrousli, Xaqu's own libc, and
   renders in software. x86_64, KVM.
-- **terminal-omz.png**: zinc, Ferrix's zsh-compatible shell, running oh-my-zsh's
+- **terminal-omz.png**: zinc, Xaqu's zsh-compatible shell, running oh-my-zsh's
   agnoster prompt in hyprix's terminal, in a clean git repository. The output shows
   `uname`, the ring-3 driver processes (devmgr, input, blk, net, gpu), the services `svc`
   runs, a tmpfs root beside a btrfs volume, `git status`, and `curl` fetching
   rust-lang.org over HTTPS. x86_64, KVM.
-- **btop.png**: btop, built against ferrousli, monitoring a live Ferrix system after two
+- **btop.png**: btop, built against ferrousli, monitoring a live Xaqu system after two
   minutes of Chrome loading pages: the CPU and eth0 history, Chrome's processes, the
   compositor, the user-space drivers, memory and disks. x86_64, KVM.
 - **vkgears.png**: vkgears, built against ferrousli, drawing its gears with Vulkan
   through virtio-gpu's Venus on the host's GPU. x86_64, KVM.
-- **website.png**: https://ferrix-os.github.io/, Ferrix's website, as headless Chrome on
+- **website.png**: https://xaqu-os.github.io/, Xaqu's website, as headless Chrome on
   the host draws it at 1440x900 (`google-chrome --headless=new --window-size=1440,900
   --screenshot`), 2026-10-04, after the site took the FX logo.
-- **steam-yserver.png**: Steam's store on Ferrix, its X11 client drawn through yserver
-  (ferrix-os/yserver) and the rootless Wayland backend. Captured 2026-10-02 during the
+- **steam-yserver.png**: Steam's store on Xaqu, its X11 client drawn through yserver
+  (xaqu-os/yserver) and the rootless Wayland backend. Captured 2026-10-02 during the
   Steam performance work, on a test account, not from the boot above.
 
 ### Commands
@@ -259,7 +259,7 @@ shows):
 
 ```
 git worktree add --detach .claude/worktrees/shots-2026-10-03 main   # 0345f6adf
-FERRIX_WALLPAPERS=<empty> CARGO_TARGET_DIR=<target> \
+XAQU_WALLPAPERS=<empty> CARGO_TARGET_DIR=<target> \
   cargo xtask run-compositor --arch x86_64 --chrome --release --tmpfs-root --accel kvm \
     --vnc 127.0.0.1:83 --ssh 2383 --layout us --venus
 ```
@@ -267,12 +267,12 @@ FERRIX_WALLPAPERS=<empty> CARGO_TARGET_DIR=<target> \
 `--layout us` makes the guest read US keys, so the VNC driver's keysyms type correctly.
 `--venus` gives the guest Vulkan through virtio-gpu's Venus, for vkgears.
 
-The git repository, over ssh (`ssh -i ~/.local/share/ferrix/ssh/id_ed25519 -p 2383
+The git repository, over ssh (`ssh -i ~/.local/share/xaqu/ssh/id_ed25519 -p 2383
 root@127.0.0.1`):
 
 ```
 mkdir -p /src/hello/src && cd /src/hello
-# a Cargo.toml and a src/main.rs that prints "Hello from Ferrix"
+# a Cargo.toml and a src/main.rs that prints "Hello from Xaqu"
 git init -q -b main && git add . && git commit -q -m "Say hello"
 ```
 
@@ -307,4 +307,4 @@ moved with `hyprctl` over ssh, which acts on the focused window.
 A `foot.png` was in this set until it turned out, the same day, to show hyprix's own
 terminal: desktops linked `/bin/foot` to `/bin/term` over the foot app until main
 2f067e40f, so starting foot started term. It is gone; each app's own screenshot is in
-its folder in ferrix-os/apps.
+its folder in xaqu-os/apps.

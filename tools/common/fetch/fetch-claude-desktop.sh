@@ -6,8 +6,8 @@
 #
 # Nothing here is built, and nothing of the package runs. `claude-desktop` is
 # Anthropic's own Linux build, a 229 MB glibc Electron program, from
-# Anthropic's apt repository. Its package is proprietary: Ferrix carries none
-# of it -- no image, no repository and no package Ferrix publishes holds it --
+# Anthropic's apt repository. Its package is proprietary: Xaqu carries none
+# of it -- no image, no repository and no package Xaqu publishes holds it --
 # and this script fetches it on the machine it runs on, as
 # fetch-claude-code.sh fetches Claude Code. Only the package's files are
 # unpacked (`dpkg-deb -x`): its maintainer scripts, which would register
@@ -21,7 +21,7 @@
 #      the signed `InRelease` lists;
 #   4. the `.deb`, whose SHA-256 must be the one that `Packages` lists for the
 #      pinned version -- and the pinned SHA-256 below as well, so a release
-#      Anthropic signs later changes nothing here until Ferrix pins it.
+#      Anthropic signs later changes nothing here until Xaqu pins it.
 #
 # Beside the app: GTK 3, which the program links, PipeWire's client library,
 # which its native binding links, and what those two need that the volumes
@@ -36,12 +36,12 @@
 # for in it and in the trees of the volumes it is merged onto
 # ($CLAUDE_DESKTOP_BASE_TREES, colon-separated; by default those volumes'
 # trees at their default places), so a dependency this list lacks fails here
-# rather than on Ferrix. The one exception is Cowork's `virtiofsd`, whose
+# rather than on Xaqu. The one exception is Cowork's `virtiofsd`, whose
 # libcap-ng and libseccomp are not fetched: Cowork needs a hypervisor in
-# Ferrix and is not planned.
+# Xaqu and is not planned.
 #
-# Writes $FERRIX_CLAUDE_DESKTOP_VOLUME/tree and, once the tree is whole,
-# claude-desktop.stamp beside it (default ~/.local/share/ferrix/claude-desktop).
+# Writes $XAQU_CLAUDE_DESKTOP_VOLUME/tree and, once the tree is whole,
+# claude-desktop.stamp beside it (default ~/.local/share/xaqu/claude-desktop).
 # No image: the tree is only ever merged into the --everything volume. Needs
 # curl, sha256sum, gpg, gpgv, dpkg-deb, readelf and glib-compile-schemas;
 # no root.
@@ -53,8 +53,8 @@ set -euo pipefail
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 repository=${CLAUDE_DESKTOP_APT:-https://downloads.claude.ai/claude-desktop/apt/stable}
 key_url=${CLAUDE_DESKTOP_KEY:-https://downloads.claude.ai/claude-desktop/key.asc}
-data=${XDG_DATA_HOME:-$HOME/.local/share}/ferrix
-out=${FERRIX_CLAUDE_DESKTOP_VOLUME:-$data/claude-desktop}
+data=${XDG_DATA_HOME:-$HOME/.local/share}/xaqu
+out=${XAQU_CLAUDE_DESKTOP_VOLUME:-$data/claude-desktop}
 base=${CLAUDE_DESKTOP_BASE_TREES:-$data/rustc/tree:$data/chrome/tree:$data/steamcmd/tree:$data/claude-code/tree:$data/steam-window/tree:$data/endfield-launcher-proton/tree}
 
 # "Anthropic Claude Code Release Signing", the key Anthropic's Linux page

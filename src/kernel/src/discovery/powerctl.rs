@@ -1,14 +1,14 @@
 //! Stage 10's power node (`docs/POWERCTL.md` §4.1, `L.device.51`): one
 //! node, `TREE_X86_POWER`, when the architecture's power core says the
-//! machine has one -- only under `ferrix.powerctl` on a processor its model
-//! table names, or under the test-only `ferrix.powerctl.fake` -- and
+//! machine has one -- only under `xaqu.powerctl` on a processor its model
+//! table names, or under the test-only `xaqu.powerctl.fake` -- and
 //! nothing at all otherwise. A refusal is the core's one line and no node,
 //! never a failed finder: the boot goes on.
 
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_bootinfo::BootView;
+use xaqu_bootinfo::BootView;
 
 use crate::device::DeviceNode;
 use crate::discovery::finder::{Context, Failed, Finder, OutOfMemory};

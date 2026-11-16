@@ -17,7 +17,7 @@
 //! Every register value an HDMI mode on a combo PHY port needs, worked out
 //! from the mode and nothing else, in the order i915's `hsw_crtc_enable`
 //! writes them -- and written by nobody yet. The driver prints the plan
-//! under `ferrix.intelgpu.modeset=dry`, and the values are compared with a
+//! under `xaqu.intelgpu.modeset=dry`, and the values are compared with a
 //! dump of the same registers while Linux drives the same monitor on the
 //! same port (the ground truth) before any of them is written (h2).
 //!

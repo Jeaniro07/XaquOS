@@ -79,7 +79,7 @@ const ANIMATED_MOVING: Moving<'static> = Moving {
 /// host's load average near 11: a bound the 64-bit machines keep a margin
 /// under would fail it on load alone.
 ///
-/// Ten times that under a TCG plugin (`FERRIX_QEMU_PLUGIN`), which slows the
+/// Ten times that under a TCG plugin (`XAQU_QEMU_PLUGIN`), which slows the
 /// guest again: the coverage plugin takes one process-wide lock for every
 /// translated block it runs, and x86-64's slowest frame under it came to
 /// 8.4, 10.0 and 19.1 s in three runs on 2026-09-26, where plain `tcg` stays
@@ -90,7 +90,7 @@ fn frame_bound(arch: Arch) -> u128 {
         Arch::Armv7a => 10_000_000,
         Arch::X86_64 | Arch::AArch64 => 5_000_000,
     };
-    if std::env::var_os("FERRIX_QEMU_PLUGIN").is_some() {
+    if std::env::var_os("XAQU_QEMU_PLUGIN").is_some() {
         bound * 10
     } else {
         bound
@@ -445,7 +445,7 @@ fn judge_gpu(arch: Arch, said: &[String], said_too: &[&str]) -> Result<()> {
             .collect::<Vec<_>>()
             .join("\n    ")
     };
-    if let Some(line) = said.iter().find(|line| line.contains("FERRIX-PANIC")) {
+    if let Some(line) = said.iter().find(|line| line.contains("XAQU-PANIC")) {
         return Err(Error::new(format!(
             "{arch}: the kernel stopped while the compositor ran: {}",
             line.trim()

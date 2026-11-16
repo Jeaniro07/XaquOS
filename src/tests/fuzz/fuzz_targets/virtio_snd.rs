@@ -24,7 +24,7 @@
 
 #![no_main]
 
-use ferrix_virtio::snd::{
+use xaqu_virtio::snd::{
     Config, EVENT_BYTES, Event, FORMATS_DEFINED, MAX_STREAMS, PcmInfo, PcmStatus, RATES_DEFINED,
     STATUS_OK, pcm_info_response_bytes,
 };

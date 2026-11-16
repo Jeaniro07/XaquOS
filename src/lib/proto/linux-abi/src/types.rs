@@ -17,7 +17,7 @@
 
 /// A time in seconds and nanoseconds, `struct timespec`.
 ///
-/// Both fields are 64-bit on every target Ferrix supports, so there is no
+/// Both fields are 64-bit on every target Xaqu supports, so there is no
 /// 2038 problem and no compat variant to carry.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[repr(C)]
@@ -684,7 +684,7 @@ pub const DT_SOCK: u8 = 12;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct Utsname {
-    /// Operating system name, which Ferrix reports as `Ferrix`. Build systems
+    /// Operating system name, which Xaqu reports as `Xaqu`. Build systems
     /// that map it to a target have to be told which one to use.
     pub sysname: [u8; 65],
     /// Host name.
@@ -1825,7 +1825,7 @@ pub const TFD_TIMER_ABSTIME: u32 = 1 << 0;
 pub const TFD_TIMER_CANCEL_ON_SET: u32 = 1 << 1;
 
 /// `splice`: move pages rather than copy them, a hint Linux has ignored since
-/// 2.6.21 and Ferrix ignores too.
+/// 2.6.21 and Xaqu ignores too.
 pub const SPLICE_F_MOVE: u32 = 0x0001;
 /// `splice`: do not wait on the pipe.
 pub const SPLICE_F_NONBLOCK: u32 = 0x0002;

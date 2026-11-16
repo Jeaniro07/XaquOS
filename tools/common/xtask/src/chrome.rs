@@ -1,4 +1,4 @@
-//! `test-chrome`: Google's headless Chrome on Ferrix, rendering a page.
+//! `test-chrome`: Google's headless Chrome on Xaqu, rendering a page.
 //!
 //! The browser is Chrome for Testing's prebuilt `chrome-headless-shell`, not
 //! one built here: a 198 MB position-independent glibc program that loads
@@ -19,18 +19,18 @@
 //!
 //! # `--no-sandbox`, and the zygote
 //!
-//! `--no-sandbox` because the sandbox is namespaces and seccomp, which Ferrix
+//! `--no-sandbox` because the sandbox is namespaces and seccomp, which Xaqu
 //! has neither of: `clone` refuses `CLONE_NEW*` rather than pretend
 //! (`docs/CHROME.md` §2.4). The zygote, the process Chrome forks its
 //! renderers from instead of starting each afresh, runs as it does on Linux
 //! since 2026-09-26. Until then it reported that it could not fork, and the
 //! tests ran with `--no-zygote`: it learns each child's pid from the
 //! credentials the child's first message carries (`SCM_CREDENTIALS`, on a
-//! socket whose reader set `SO_PASSCRED`), and Ferrix passed none.
+//! socket whose reader set `SO_PASSCRED`), and Xaqu passed none.
 //!
 //! # Where Chrome lives
 //!
-//! The volume carries no `ferrix-root` label, so the kernel mounts it at
+//! The volume carries no `xaqu-root` label, so the kernel mounts it at
 //! `/data`, as test-rustc's is, attached under QEMU's `snapshot=on` so a run
 //! never changes it. glibc names its paths absolutely, so the initramfs
 //! carries a symbolic link for each into `/data` ([`LINKS`]).
@@ -99,7 +99,7 @@ const COMPUTED: &str = "computed 42";
 
 /// The page Chrome takes a picture of.
 const PICTURE: &str =
-    "data:text/html,<body style=background:%23fc0><h1>Hello from Chrome on Ferrix</h1>";
+    "data:text/html,<body style=background:%23fc0><h1>Hello from Chrome on Xaqu</h1>";
 
 /// The script the shell runs. The version first, so a failure says whether
 /// Chrome loaded at all or only a later step failed.
@@ -209,9 +209,9 @@ exit 16
 "#;
 
 /// Where `tools/common/fetch/fetch-chromium-arm64.sh` writes, unless
-/// `FERRIX_CHROMIUM_VOLUME` names another directory.
+/// `XAQU_CHROMIUM_VOLUME` names another directory.
 pub(crate) fn arm64_volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_CHROMIUM_VOLUME") {
+    let directory = match std::env::var_os("XAQU_CHROMIUM_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("chromium-arm64")?,
     };
@@ -226,9 +226,9 @@ pub(crate) fn arm64_volume() -> Result<std::path::PathBuf> {
 }
 
 /// Where `tools/common/fetch/fetch-chromium-armhf.sh` writes, unless
-/// `FERRIX_CHROMIUM_ARMHF_VOLUME` names another directory.
+/// `XAQU_CHROMIUM_ARMHF_VOLUME` names another directory.
 pub(crate) fn armhf_volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_CHROMIUM_ARMHF_VOLUME") {
+    let directory = match std::env::var_os("XAQU_CHROMIUM_ARMHF_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("chromium-armhf")?,
     };
@@ -315,28 +315,28 @@ pub(crate) const MEMORY: u32 = 4096;
 const TIMEOUT: u64 = 1800;
 
 /// What the browser in a window says it is: Chrome's own user agent, reduced
-/// as Chrome reduces it, with Ferrix in the platform, which says it is not
+/// as Chrome reduces it, with Xaqu in the platform, which says it is not
 /// Linux in words a site that looks for `Linux x86_64` still finds.
 ///
-/// `(Ferrix x86_64)` alone had Google's search answer with its page for a
+/// `(Xaqu x86_64)` alone had Google's search answer with its page for a
 /// browser it no longer supports, every time: a site that knows the
-/// platforms it serves does not know Ferrix. With the words `Linux x86_64`
+/// platforms it serves does not know Xaqu. With the words `Linux x86_64`
 /// in it, as Ubuntu's Firefox said `X11; Ubuntu; Linux x86_64` for years,
 /// the same search is answered as Chrome's own user agent is.
-pub(crate) const USER_AGENT: &str = "Mozilla/5.0 (X11; Ferrix; not Linux x86_64) \
+pub(crate) const USER_AGENT: &str = "Mozilla/5.0 (X11; Xaqu; not Linux x86_64) \
      AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
 /// `--user-agent` changes the user agent and the `User-Agent` header, and
 /// nothing else. `navigator.platform` stays `Linux x86_64`, and the client
 /// hints -- `navigator.userAgentData` and the `Sec-CH-UA-Platform` header --
 /// stay `Linux`. Those are constants in Chrome's build, whatever `uname`
-/// says, and no switch reaches them: saying Ferrix there takes a Chromium
+/// says, and no switch reaches them: saying Xaqu there takes a Chromium
 /// built from source.
 /// Where the image carries the tree's `assets/fonts/`: Inter, Liberation, Noto
 /// Sans CJK and the fontconfig file that adds them to the system's, which
 /// `FONTCONFIG_FILE` names ([`WINDOW_ENV`]). `assets/fonts/README.md` says what
 /// each face is for and where it came from.
-const FONTS: &str = "usr/share/ferrix/fonts";
+const FONTS: &str = "usr/share/xaqu/fonts";
 
 /// `assets/fonts/`'s files, by their path under it.
 const FONT_FILES: &[(&str, &[u8])] = &[
@@ -444,7 +444,7 @@ const POLICIES: &str = "etc/opt/chrome_for_testing/policies/managed";
 /// Chrome is the one it has always judged.
 pub(crate) fn desktop_policy() -> crate::ports::File {
     crate::ports::File {
-        path: format!("{POLICIES}/ferrix.json"),
+        path: format!("{POLICIES}/xaqu.json"),
         mode: 0o644,
         content: crate::ports::Content::Bytes(
             br#"{ "BrowserSignin": 0, "SyncDisabled": true, "DefaultBrowserSettingEnabled": false }
@@ -466,7 +466,7 @@ pub(crate) fn desktop_policy() -> crate::ports::File {
 /// that, it was devfs's bare directory there, and Chrome stopped at once.
 /// `--no-sandbox` for the reason at the top of this file. `--disable-infobars`
 /// takes away the bar Chrome for Testing shows under the toolbar, saying it
-/// is for automated testing only. [`USER_AGENT`] says Ferrix where Chrome
+/// is for automated testing only. [`USER_AGENT`] says Xaqu where Chrome
 /// says Linux.
 ///
 /// Sound goes through `pulsed` where the image carries it and the volume has
@@ -545,7 +545,7 @@ pub(crate) fn window_command_on(arch: Arch, page: &str, profile: &str, nvidia: b
 /// ([`OPENER_CLAUDE`], `docs/CLAUDE-CODE.md` §7): a `claude:` link, which
 /// claude.ai's "open in the app", an MCP server's sign-in and the app's own
 /// actions send, and its MCP bundles and skills, by their extensions, since
-/// Ferrix has no MIME database to know them by. A second start of the app
+/// Xaqu has no MIME database to know them by. A second start of the app
 /// hands the link to the first.
 pub(crate) fn opener(arch: Arch, profile: &str, nvidia: bool) -> crate::ports::File {
     let command = window_command_on(arch, r#""$@""#, profile, nvidia);
@@ -603,13 +603,13 @@ pub(crate) fn volume_for(arch: Arch) -> Result<std::path::PathBuf> {
 /// which includes the system's. The compositor gives these to every program
 /// it starts, so foot draws with the same fonts file.
 pub(crate) const WINDOW_ENV: &str = "env = HOME,/dev/shm\nenv = XDG_RUNTIME_DIR,/tmp\n\
-     env = FONTCONFIG_FILE,/usr/share/ferrix/fonts/fonts.conf\n";
+     env = FONTCONFIG_FILE,/usr/share/xaqu/fonts/fonts.conf\n";
 
 /// [`WINDOW_ENV`] on a desktop with other clients: all but the home, which
 /// [`WINDOW_HOME`] gives Chrome alone. As an `env =` line it moved every
 /// program's home, and the user's waybar found no `~/.config/waybar`.
 pub(crate) const DESKTOP_ENV: &str = "env = XDG_RUNTIME_DIR,/tmp\n\
-     env = FONTCONFIG_FILE,/usr/share/ferrix/fonts/fonts.conf\n";
+     env = FONTCONFIG_FILE,/usr/share/xaqu/fonts/fonts.conf\n";
 
 /// Chrome's home on such a desktop, as words before its command.
 pub(crate) const WINDOW_HOME: &str = "HOME=/dev/shm";
@@ -646,7 +646,7 @@ pub(crate) fn pulse_volume() -> Result<std::path::PathBuf> {
     }
 }
 
-/// The volume's directory under `~/.local/share/ferrix`, by version: a
+/// The volume's directory under `~/.local/share/xaqu`, by version: a
 /// volume with new contents gets a directory of its own, so every machine
 /// keeps the one it had until the commit that names the new one lands. 2
 /// added GTK 3 (2026-10-25), 3 its file chooser's schemas, SVG and
@@ -654,10 +654,10 @@ pub(crate) fn pulse_volume() -> Result<std::path::PathBuf> {
 /// gtk3-open; the earlier ones are left where they are.
 pub(crate) const VOLUME: &str = "chrome-4";
 
-/// Where `tools/common/fetch/fetch-chrome.sh` writes, unless `FERRIX_CHROME_VOLUME`
+/// Where `tools/common/fetch/fetch-chrome.sh` writes, unless `XAQU_CHROME_VOLUME`
 /// names another directory.
 pub(crate) fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_CHROME_VOLUME") {
+    let directory = match std::env::var_os("XAQU_CHROME_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory(VOLUME)?,
     };
@@ -765,7 +765,7 @@ pub(crate) fn test_chrome(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running Chrome on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running Chrome on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -812,7 +812,7 @@ fn test_chromium(arch: Arch, args: &Args) -> Result<()> {
     let archive = initramfs::build(None, &natives, Some(&bytes), &links)?;
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
     println!(
-        "  {arch}: running Chromium on Ferrix with {} MiB (timeout {}s)",
+        "  {arch}: running Chromium on Xaqu with {} MiB (timeout {}s)",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -843,7 +843,7 @@ fn judge(arch: Arch, version: &str, lines: &[String]) -> Result<()> {
         Some(status) if status == STATUS.to_string() && loaded && computed && drew => {
             println!(
                 "  {arch}: {version} loaded, ran a page's script and drew a screenshot \
-                 on Ferrix"
+                 on Xaqu"
             );
             Ok(())
         }
@@ -879,7 +879,7 @@ mod tests {
         assert!(script.contains("\"computed \"+6*7"));
         // The source must not already hold what the DOM is required to.
         assert!(!script.contains(COMPUTED));
-        assert!(script.contains("Hello from Chrome on Ferrix"));
+        assert!(script.contains("Hello from Chrome on Xaqu"));
         assert!(!script.contains("'PAGE'") && !script.contains("'PICTURE'"));
     }
 
@@ -889,8 +889,8 @@ mod tests {
         let quoted: Vec<&str> = command.split('\'').collect();
         assert_eq!(quoted.len(), 3, "{command}");
         assert_eq!(quoted[1], format!("--user-agent={USER_AGENT}"));
-        // Ferrix by name, and the words a site looking for Linux looks for.
-        assert!(USER_AGENT.contains("(X11; Ferrix; not Linux x86_64)"));
+        // Xaqu by name, and the words a site looking for Linux looks for.
+        assert!(USER_AGENT.contains("(X11; Xaqu; not Linux x86_64)"));
     }
 
     /// The opener hands Chrome the address as one word, `&`s and all, with
@@ -938,7 +938,7 @@ mod tests {
         let script = String::from_utf8(bytes)
             .expect("UTF-8")
             .replace("/data/chrome-window/chrome", "printf 'chrome %s\\n'");
-        let app = std::env::temp_dir().join(format!("ferrix-opener-app-{}", std::process::id()));
+        let app = std::env::temp_dir().join(format!("xaqu-opener-app-{}", std::process::id()));
         std::fs::write(&app, "#!/bin/sh\nprintf 'app %s\\n' \"$@\"\n").expect("the app's stand-in");
         let run = |script: &str, what: &str| {
             let output = std::process::Command::new("sh")

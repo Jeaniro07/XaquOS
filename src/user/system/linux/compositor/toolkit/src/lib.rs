@@ -1,4 +1,4 @@
-//! The Wayland client runtime Ferrix's desktop clients share.
+//! The Wayland client runtime Xaqu's desktop clients share.
 //!
 //! the term app, `src/user/system/linux/compositor/lock` and `src/user/system/linux/compositor/pattern` each speak
 //! Wayland by hand over `src/user/system/linux/compositor/wire`: fixed object ids, a registry read

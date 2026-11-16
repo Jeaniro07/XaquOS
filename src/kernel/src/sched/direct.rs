@@ -33,8 +33,8 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_sched::JobPlan;
-use ferrix_sync::{IrqControl, SpinLock};
+use xaqu_sched::JobPlan;
+use xaqu_sync::{IrqControl, SpinLock};
 
 use super::queue::CpuQueue;
 use super::task::{BLOCKED, RUNNABLE, Task};
@@ -196,7 +196,7 @@ pub(crate) fn begin(caller: &Task, peer: &Task) -> Result<Direct, Count> {
     }
     // Reservations take the long way: this one way in never passes over one, and neither
     // end's budget is charged on a path that does not charge it (ledger 7088 E.5).
-    #[cfg(ferrix_schedule = "edf")]
+    #[cfg(xaqu_schedule = "edf")]
     if queue.fair.runs_reserved()
         || queue.fair.any_ready()
         || queue.fair.is_reserved(caller.id)
@@ -279,7 +279,7 @@ impl Direct {
         // `set_state_from` adds it.
         peer.store_state(RUNNABLE);
         let joined = peer.join_word();
-        let plan = ferrix_sched::plan_job_fold(joined, caller.group_word(), quota::NONE);
+        let plan = xaqu_sched::plan_job_fold(joined, caller.group_word(), quota::NONE);
         match (plan, joined) {
             (JobPlan::Separate, Some((job, weight))) => {
                 quota::adjust(job, i64::from(weight));

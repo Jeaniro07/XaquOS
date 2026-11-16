@@ -30,14 +30,14 @@
 //! data is *exported*: [`Bus::next_export_change`] hands it on, and its
 //! class driver, in a process of its own, reaches it through the
 //! `Bus::export_*` calls the host process makes on its behalf
-//! (`ferrix-usbif`). A control request goes only if
-//! [`ferrix_usbif::allowed`] lets it, a stream opens only on one of the
+//! (`xaqu-usbif`). A control request goes only if
+//! [`xaqu_usbif::allowed`] lets it, a stream opens only on one of the
 //! interface's own bulk endpoints, and whatever a driver opened is closed
 //! when it goes ([`Bus::export_release`]) or the device does.
 
-use ferrix_inputctl::message::{Hello, RawEvent, Text};
+use xaqu_inputctl::message::{Hello, RawEvent, Text};
 
-use ferrix_usbif::{self as usbif, MAX_ENDPOINTS};
+use xaqu_usbif::{self as usbif, MAX_ENDPOINTS};
 
 use crate::ehci;
 use crate::hid::{BOOT_KEYBOARD, BOOT_MOUSE, EventBuf, Identity, Interpreter, Kind};
@@ -349,7 +349,7 @@ impl Export {
 pub enum ExportError {
     /// The interface is gone, or never was.
     Gone,
-    /// [`ferrix_usbif::allowed`] refused it, or the endpoint is not one of
+    /// [`xaqu_usbif::allowed`] refused it, or the endpoint is not one of
     /// the interface's bulk endpoints.
     Refused,
     /// The endpoint is open already, or not open.
@@ -708,7 +708,7 @@ impl<H: Host> Bus<H> {
     ///
     /// # Errors
     ///
-    /// [`ExportError::Refused`] for a request [`ferrix_usbif::allowed`]
+    /// [`ExportError::Refused`] for a request [`xaqu_usbif::allowed`]
     /// does not let through or a data stage longer than `data`; the
     /// transfer's failure.
     pub fn export_control(

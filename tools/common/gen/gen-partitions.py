@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write `.ferrix/partitions` from a TOML (docs/microkernel/BOOT-AUTHORITY.md §5).
+"""Write `.xaqu/partitions` from a TOML (docs/microkernel/BOOT-AUTHORITY.md §5).
 
 Uncertified: `tools/common/check/check-partitions.py`, separate code, judges the
 bytes this writes. Usage: gen-partitions.py TOML ROOT OUT, ROOT being where the

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 description = "What authd and its clients say to each other (docs/AUTH.md §3.3)"
 version = "0.1.0"
 edition = "2024"

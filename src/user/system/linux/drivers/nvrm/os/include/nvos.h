@@ -1,9 +1,9 @@
 /*
- * nvos.h: the C view of ferrix-nvos (os/nvos/), the Rust half of nvrm's OS
+ * nvos.h: the C view of xaqu-nvos (os/nvos/), the Rust half of nvrm's OS
  * layer (docs/NVIDIA.md §4.2).
  *
  * RM's own os_* calls are declared by NVIDIA's os-interface.h. This header
- * declares what ferrix-nvos gives NVIDIA's kept C and Ferrix's C glue to be
+ * declares what xaqu-nvos gives NVIDIA's kept C and Xaqu's C glue to be
  * rebuilt on: locks they can embed, timers, work queues, pinned pages, the
  * device, client requests and lines on the console. Each lock type is the
  * Rust type's words, laid out the same; zero is a free mutex, a free
@@ -121,7 +121,7 @@ struct nvos_request {
 #define NVOS_IMPORT_OWN       1
 #define NVOS_IMPORT_SIGNALLED 2
 #define NVOS_IMPORT_FOREIGN   3
-/* ferrix_chardevctl::message's MAP_* reply kinds. */
+/* xaqu_chardevctl::message's MAP_* reply kinds. */
 #define NVOS_MAP_VMO               1
 #define NVOS_MAP_APERTURE          2
 #define NVOS_MAP_WRITE_COMBINING   (1 << 8)
@@ -193,7 +193,7 @@ struct nvos_display_event {
 #define NVOS_DISPLAY_STOP     7
 #define NVOS_DISPLAY_CLOSED   8
 #define NVOS_DISPLAY_MODE     9
-/* ferrix_displayctl::message::Status. */
+/* xaqu_displayctl::message::Status. */
 #define NVOS_DISPLAY_OK       0
 #define NVOS_DISPLAY_INVALID  4
 NV_STATUS nvos_display_start(const struct nvos_display_hello *hello);

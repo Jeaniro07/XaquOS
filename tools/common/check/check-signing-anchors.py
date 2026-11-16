@@ -64,7 +64,7 @@ DEVELOPMENT_MIN = 0x8000
 CI_MIN = 0x9000
 # The one workflow that holds a CI key, the secret's name and its environment.
 CI_WORKFLOW = ".github/workflows/signing-ci.yml"
-CI_SECRET = "FERRIX_CI_SIGNING_KEY"
+CI_SECRET = "XAQU_CI_SIGNING_KEY"
 CI_ENVIRONMENT = "signing-ci"
 # How long a CI key lives: strictly less than the signature logs' artifacts
 # are kept (90 days), so the audit covers every log since the key was made
@@ -241,8 +241,8 @@ def family_problems(data: dict) -> list[str]:
     return out
 
 
-SIGNER = "ferrix-softsign"
-VERIFIER = {"ferrix-sigverify", "ferrix-softsign"}
+SIGNER = "xaqu-softsign"
+VERIFIER = {"xaqu-sigverify", "xaqu-softsign"}
 DEP_TABLES = ("dependencies", "build-dependencies")
 
 
@@ -407,16 +407,16 @@ def self_test() -> int:
         print("signing-anchors: self-test: the real family registry is refused", file=sys.stderr)
         return 1
     planted = {
-        "src/user/system/native/devmgr/Cargo.toml": {"dependencies": {"ferrix-softsign": {"path": "x"}}},
-        "src/lib/crypto/sigverify/Cargo.toml": {"dev-dependencies": {"ferrix-softsign": {"path": "x"}}},
+        "src/user/system/native/devmgr/Cargo.toml": {"dependencies": {"xaqu-softsign": {"path": "x"}}},
+        "src/lib/crypto/sigverify/Cargo.toml": {"dev-dependencies": {"xaqu-softsign": {"path": "x"}}},
     }
     if len(dependency_problems(planted)) != 1:
         print("signing-anchors: self-test: a planted signer dependency was NOT refused", file=sys.stderr)
         return 1
-    names = {"k": "ferrix-kernel-load", "lib": "ferrix-something", "v": "ferrix-sigverify", "s": "ferrix-sha256"}
+    names = {"k": "xaqu-kernel-load", "lib": "xaqu-something", "v": "xaqu-sigverify", "s": "xaqu-sha256"}
     indirect = {"k": ["lib"], "lib": ["s", "v"]}
     found = closure_problems(indirect, ["k"], names)
-    if found != ["a kernel package reaches ferrix-sigverify: ferrix-kernel-load -> ferrix-something -> ferrix-sigverify"]:
+    if found != ["a kernel package reaches xaqu-sigverify: xaqu-kernel-load -> xaqu-something -> xaqu-sigverify"]:
         print(f"signing-anchors: self-test: an indirect kernel path to the verifier was NOT refused ({found})", file=sys.stderr)
         return 1
     if closure_problems({"k": ["lib"], "lib": ["s"]}, ["k"], names):
@@ -456,7 +456,7 @@ def self_test() -> int:
         "a matrix": {CI_WORKFLOW: good.replace("    runs-on: ubuntu-latest\n", "    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        n: [1, 2]\n", 1)},
         "a second job in the environment": {CI_WORKFLOW: good + f"  again:\n    runs-on: ubuntu-latest\n    environment: {CI_ENVIRONMENT}\n    steps: []\n"},
         "the key in a job's env": {CI_WORKFLOW: good.replace("    environment: signing-ci\n", f"    environment: signing-ci\n    env:\n      X: ${{{{ secrets.{CI_SECRET} }}}}\n")},
-        "set -x": {CI_WORKFLOW: good.replace("        run: |\n          target/release/ferrix-softsign ci-sign", "        run: |\n          set -x\n          target/release/ferrix-softsign ci-sign")},
+        "set -x": {CI_WORKFLOW: good.replace("        run: |\n          target/release/xaqu-softsign ci-sign", "        run: |\n          set -x\n          target/release/xaqu-softsign ci-sign")},
         "pull_request_target after push": {CI_WORKFLOW: good.replace("    branches: [develop, main]\n", "    branches: [develop, main]\n  pull_request_target:\n")},
         "tags after branches": {CI_WORKFLOW: good.replace("    branches: [develop, main]\n", "    branches: [develop, main]\n    tags: ['*']\n")},
         "a second top-level on": {CI_WORKFLOW: good + "\n'on':\n  pull_request:\n"},

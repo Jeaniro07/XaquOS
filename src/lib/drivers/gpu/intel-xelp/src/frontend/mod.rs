@@ -89,9 +89,9 @@ pub use backend::{
 };
 pub use host::{Host, Installed};
 
-use ferrix_linux_abi::errno::Errno;
+use xaqu_linux_abi::errno::Errno;
 
-/// `ETIME`, which `ferrix_linux_abi` does not name.
+/// `ETIME`, which `xaqu_linux_abi` does not name.
 pub const ETIME: Errno = Errno(62);
 
 /// A request's id: one per execbuffer, from 1, never reused.
@@ -146,7 +146,7 @@ impl<B: Backend> Frontend<B> {
 
     /// Say each held wait, its answer, each failed ioctl, and a wait held
     /// unanswered for [`fence::STUCK_NS`] with its fences
-    /// (`ferrix.intelgpu.uapitrace`): what a box run reads to find a call
+    /// (`xaqu.intelgpu.uapitrace`): what a box run reads to find a call
     /// that never completes.
     pub fn set_trace(&mut self, on: bool) {
         self.state.trace = on;

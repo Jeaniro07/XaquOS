@@ -45,7 +45,7 @@ pub(crate) const TASKS: &[Task] = &[Task {
 /// design's (§8.3).
 const SLOW_BUDGET: f64 = 40.0;
 
-/// What the row holds the slow load to until Ferrix's btrfs makes an
+/// What the row holds the slow load to until Xaqu's btrfs makes an
 /// `fdatasync` cheaper: each costs about 40 KiB at the volume whatever was
 /// written (a minute with no load writes 60 KiB; with the load, 536 KiB for
 /// 12 KiB of messages), which lode cannot change but by syncing less often.
@@ -187,14 +187,14 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
         },
         crate::lode::enabled(),
         crate::lode::crashd_enabled(),
-        link("etc/ferrix/units/getty@.service", "/dev/null"),
+        link("etc/xaqu/units/getty@.service", "/dev/null"),
         link("var/log/journal", "/data/journal"),
-        bytes("etc/ferrix/lode.d/budget.rules", 0o644, RULES),
+        bytes("etc/xaqu/lode.d/budget.rules", 0o644, RULES),
         bytes("lib/lode-budget.sh", 0o755, SCRIPT),
-        bytes("etc/ferrix/units/lode-budget.service", 0o644, UNIT),
+        bytes("etc/xaqu/units/lode-budget.service", 0o644, UNIT),
         link(
-            "etc/ferrix/units/multi-user.target.wants/lode-budget.service",
-            "/etc/ferrix/units/lode-budget.service",
+            "etc/xaqu/units/multi-user.target.wants/lode-budget.service",
+            "/etc/xaqu/units/lode-budget.service",
         ),
     ]);
     println!("  {arch}: building an image whose lode keeps its store on a btrfs volume");

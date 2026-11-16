@@ -4,9 +4,9 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_elf::{PF_R, PF_W, PF_X, PT_INTERP, PT_LOAD};
-use ferrix_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_elf::{PF_R, PF_W, PF_X, PT_INTERP, PT_LOAD};
+use xaqu_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
 
 use super::first_image::{self, Refused};
 use crate::mm;
@@ -258,7 +258,7 @@ pub fn load_for_check(
 
 // CHECKS-ONLY: syscall/build_check.rs
 /// What the kernel hands `devmgr` an image with.
-pub const fn handed_image_rights() -> ferrix_native_abi::rights::Rights {
+pub const fn handed_image_rights() -> xaqu_native_abi::rights::Rights {
     super::devmgr::image_rights()
 }
 

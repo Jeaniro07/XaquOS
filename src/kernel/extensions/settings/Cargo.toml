@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-kernel-settings"
-description = "The Ferrix kernel's run-time setting entries: a removable load-ring crate a runtime_settings=fixed build leaves out"
+name = "xaqu-kernel-settings"
+description = "The Xaqu kernel's run-time setting entries: a removable load-ring crate a runtime_settings=fixed build leaves out"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,14 +17,14 @@ build = "../../build.rs"
 path = "src/lib.rs"
 
 [dependencies]
-ferrix-audit.workspace = true
-ferrix-bootinfo.workspace = true
-ferrix-kernel-core.workspace = true
-ferrix-kernel-load.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-procfs.workspace = true
-ferrix-sysfs.workspace = true
-ferrix-vfs.workspace = true
+xaqu-audit.workspace = true
+xaqu-bootinfo.workspace = true
+xaqu-kernel-core.workspace = true
+xaqu-kernel-load.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-procfs.workspace = true
+xaqu-sysfs.workspace = true
+xaqu-vfs.workspace = true
 
 [lints]
 workspace = true

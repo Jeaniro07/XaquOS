@@ -7,7 +7,7 @@
 # The licences themselves are never written here for a package that says
 # its own: an app's is its app.toml `license`, a crate's its Cargo.toml's.
 # This file holds only what has no such field -- busybox, ferrousli's ports,
-# the shell trees, the data files Ferrix writes into its image -- and the
+# the shell trees, the data files Xaqu writes into its image -- and the
 # lists a licence is checked against.
 
 # Licences a shipped component may carry with no source owed beyond what the
@@ -103,7 +103,7 @@ paths = ["usr/share/zsh/functions/**"]
 licence = "OFL-1.1"
 upstream = "https://github.com/rsms/inter"
 note = "Inter 4.1, fontconfig's sans-serif on an image with Chrome"
-paths = ["usr/share/ferrix/fonts/inter/*", "usr/share/fonts/inter/*"]
+paths = ["usr/share/xaqu/fonts/inter/*", "usr/share/fonts/inter/*"]
 
 [components.tzdata]
 licence = "LicenseRef-Public-Domain"
@@ -121,49 +121,49 @@ paths = ["usr/share/fonts/phosphor/*"]
 licence = "OFL-1.1"
 upstream = "https://github.com/liberationfonts/liberation-fonts"
 note = "Liberation Sans, Serif and Mono 2.1.5, for pages that name Arial, Times New Roman or Courier New"
-paths = ["usr/share/ferrix/fonts/liberation/*"]
+paths = ["usr/share/xaqu/fonts/liberation/*"]
 
 [components.noto-cjk]
 licence = "OFL-1.1"
 upstream = "https://github.com/notofonts/noto-cjk"
 note = "Noto Sans CJK 2.004, the fallback for Chinese, Japanese and Korean"
-paths = ["usr/share/ferrix/fonts/noto-cjk/*"]
+paths = ["usr/share/xaqu/fonts/noto-cjk/*"]
 
 [components.zinc]
 licence = "MIT"
-upstream = "https://github.com/ferrix-os/zinc"
+upstream = "https://github.com/xaqu-os/zinc"
 paths = ["bin/zinc"]
 
-# Ferrix's own files in the image: its programs, drivers and services, and
+# Xaqu's own files in the image: its programs, drivers and services, and
 # what xtask writes into the image (configuration, units, accounts, the
-# desktop's entries and icons, Ferrix's own wallpapers -- the shipped one
+# desktop's entries and icons, Xaqu's own wallpapers -- the shipped one
 # from docs/brand/wallpaper/ and `ember` --, the zshrc
 # that sources oh-my-zsh). MIT, as the repository is.
-[components.ferrix]
+[components.xaqu]
 licence = "MIT"
-upstream = "https://github.com/ferrix-os/ferrix"
+upstream = "https://github.com/xaqu-os/xaqu"
 paths = [
     "sbin/*",
     "lib/drivers/*",
-    "lib/ferrix/**",
+    "lib/xaqu/**",
     "etc/**",
     "usr/share/udhcpc/default.script",
     "usr/share/applications/*",
-    "usr/share/backgrounds/ferrix/*",
+    "usr/share/backgrounds/xaqu/*",
     # Xaqu's own (docs/DESKTOP.md §6): hyprix's themes; its wallpaper is a
     # gradient line in them, no file.
     "usr/share/hyprix/themes/*",
     # What xtask writes beside Chrome (chrome.rs, start_page.rs): the
     # fontconfig file naming the fonts below, the xdg-open that opens a
     # link in Chrome, and Chrome's start page.
-    "usr/share/ferrix/fonts/fonts.conf",
+    "usr/share/xaqu/fonts/fonts.conf",
     "bin/xdg-open",
-    "usr/share/ferrix/start/*",
+    "usr/share/xaqu/start/*",
     "usr/share/icons/hicolor/index.theme",
-    "usr/share/icons/hicolor/scalable/apps/ferrix-*.svg",
+    "usr/share/icons/hicolor/scalable/apps/xaqu-*.svg",
     # Nocturne for GTK (hyprix's themes/gtk), on a Xaqu desktop.
     "usr/share/themes/Nocturne/**",
-    ".ferrix/**",
+    ".xaqu/**",
     "bin/hyprix",
     "bin/hyprctl",
     "bin/pattern",
@@ -192,7 +192,7 @@ paths = [
     "bin/lode-upload",
 ]
 
-# Third-party material inside Ferrix's own sources, built into its programs.
+# Third-party material inside Xaqu's own sources, built into its programs.
 [[embedded]]
 what = "Spleen 8x16, the kernel's panic-screen font"
 licence = "BSD-2-Clause"

@@ -5,12 +5,12 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr::{self, NativeCall};
-use ferrix_native_abi::restricted::{HANDLE_KEEP, SHARED_BASE, VECTORS_BYTES};
-use ferrix_native_abi::rights::{Requested, Rights};
-use ferrix_native_abi::status;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr::{self, NativeCall};
+use xaqu_native_abi::restricted::{HANDLE_KEEP, SHARED_BASE, VECTORS_BYTES};
+use xaqu_native_abi::rights::{Requested, Rights};
+use xaqu_native_abi::status;
 
 use super::{copy_in, fault, insert_new, job_in, record_level, returned, table_error};
 use crate::arch;
@@ -263,7 +263,7 @@ const fn handle(value: u64) -> Handle {
 /// half, as a loader checks an image's (`sysretq` raises `#GP` in ring 0 on a bad
 /// `RCX`).
 fn entry_is_good(in_region: bool, entry: u64, stack: u64) -> bool {
-    let end = ferrix_bootinfo::USER_VIRT_END;
+    let end = xaqu_bootinfo::USER_VIRT_END;
     let floor = if in_region { SHARED_BASE } else { 0 };
     (floor..end).contains(&entry) && stack > floor && stack <= end
 }
@@ -502,7 +502,7 @@ fn vectors_write(process: &Process, at: u64, length: u64) -> Result<usize, Errno
 fn copy_window(process: &Process, start: u64, end: u64, landing: u64) -> Result<usize, Errno> {
     supported()?;
     let region = process.region().ok_or(status::BAD_STATE)?;
-    let end_of_region = ferrix_bootinfo::USER_VIRT_END;
+    let end_of_region = xaqu_bootinfo::USER_VIRT_END;
     let inside = |address: u64| (SHARED_BASE..end_of_region).contains(&address);
     // The landing is an address `IRETQ` will load: `USER_VIRT_END` itself is not
     // canonical, and would stop the kernel at the next fault in the window.

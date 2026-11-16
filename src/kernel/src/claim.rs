@@ -24,7 +24,7 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_native_abi::signals::Signals;
+use xaqu_native_abi::signals::Signals;
 
 use crate::device::DeviceNode;
 use crate::object::channel::Endpoint;
@@ -94,7 +94,7 @@ impl Claims {
     /// on how the node was found. Sharing
     /// opens no DMA path (T.DMA): an input control channel carries no memory
     /// -- HELLO hands over only the driver's port and READY only the core's
-    /// (`ferrix-inputctl`), so no VMO, pin or IOMMU mapping passes through
+    /// (`xaqu-inputctl`), so no VMO, pin or IOMMU mapping passes through
     /// it -- and every channel is made by the holder of the node's `MANAGE`
     /// handle (`native::control_channel`), which `devmgr` gives one driver,
     /// so the host controller's DMA stays that driver's own domain however

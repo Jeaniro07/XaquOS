@@ -10,15 +10,15 @@
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let script = std::env::var("DEP_FERRIX_RT_LINKER_SCRIPT")?;
+    let script = std::env::var("DEP_XAQU_RT_LINKER_SCRIPT")?;
     println!("cargo::rustc-link-arg-bins=-T{script}");
     println!("cargo::rerun-if-changed={script}");
-    println!("cargo::rerun-if-env-changed=DEP_FERRIX_RT_LINKER_SCRIPT");
+    println!("cargo::rerun-if-env-changed=DEP_XAQU_RT_LINKER_SCRIPT");
     // A row's image alone (ledger 6268, L9).
-    println!("cargo::rustc-check-cfg=cfg(ferrix_row_driver_kill)");
-    println!("cargo::rerun-if-env-changed=FERRIX_ROW_DRIVER_KILL");
-    if std::env::var_os("FERRIX_ROW_DRIVER_KILL").is_some() {
-        println!("cargo::rustc-cfg=ferrix_row_driver_kill");
+    println!("cargo::rustc-check-cfg=cfg(xaqu_row_driver_kill)");
+    println!("cargo::rerun-if-env-changed=XAQU_ROW_DRIVER_KILL");
+    if std::env::var_os("XAQU_ROW_DRIVER_KILL").is_some() {
+        println!("cargo::rustc-cfg=xaqu_row_driver_kill");
     }
     Ok(())
 }

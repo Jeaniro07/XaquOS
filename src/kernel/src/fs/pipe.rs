@@ -56,13 +56,13 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_sync::Once;
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_sync::Once;
 
 use crate::sync::SpinLock;
-use ferrix_vfs::path::NAME_MAX;
-use ferrix_vfs::pipe::{PIPE_CAPACITY, PIPEFS_MAGIC, PipeBuffer, ReadOutcome, WriteOutcome};
-use ferrix_vfs::{
+use xaqu_vfs::path::NAME_MAX;
+use xaqu_vfs::pipe::{PIPE_CAPACITY, PIPEFS_MAGIC, PipeBuffer, ReadOutcome, WriteOutcome};
+use xaqu_vfs::{
     Errno, FileSystem, FileType, Inode, Location, Metadata, OpenFile, OpenFlags, Readiness, StatFs,
     Timespec,
 };
@@ -109,7 +109,7 @@ impl fmt::Debug for Pipe {
 impl Pipe {
     /// An empty pipe with no ends, charged to the running task's job: a
     /// packet pipe when `packets`, as `pipe2(O_DIRECT)` makes one (see
-    /// `ferrix_vfs::pipe`), and a byte stream otherwise.
+    /// `xaqu_vfs::pipe`), and a byte stream otherwise.
     ///
     /// # Errors
     ///
@@ -151,7 +151,7 @@ fn killed(caller: Option<&Arc<Process>>) -> bool {
 
 /// A count so far, or `errno` if nothing was done: a transfer that stopped
 /// part-way reports what it managed, as `read` and `write` must.
-fn partial(done: usize, errno: Errno) -> ferrix_vfs::Result<usize> {
+fn partial(done: usize, errno: Errno) -> xaqu_vfs::Result<usize> {
     if done > 0 { Ok(done) } else { Err(errno) }
 }
 
@@ -249,7 +249,7 @@ impl End {
     ///
     /// A waker added later belongs in this list, with its order, or the wait
     /// it misses never ends: there is no recheck to find it.
-    fn wait_to_read(&self) -> ferrix_vfs::Result<()> {
+    fn wait_to_read(&self) -> xaqu_vfs::Result<()> {
         let caller = process::current();
         let _ = self.pipe.readable.wait_trusting(|| {
             let ready = self.pipe.buffer.lock().can_read();
@@ -268,7 +268,7 @@ impl End {
     /// its queue as [`End::wait_to_read`] does, by the same list of wakers
     /// read for `writable`: room made, an end opened or closed, and the
     /// caller's signals, kills, stops and freezes.
-    fn wait_to_write(&self, len: usize) -> ferrix_vfs::Result<()> {
+    fn wait_to_write(&self, len: usize) -> xaqu_vfs::Result<()> {
         let caller = process::current();
         let _ = self.pipe.writable.wait_trusting(|| {
             let ready = self.pipe.buffer.lock().can_write(len);
@@ -312,7 +312,7 @@ impl Inode for End {
         true
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(&self.pipe.readable));
         visit(fs::wake::shared(&self.pipe.writable));
         true
@@ -346,7 +346,7 @@ impl Inode for End {
         }
     }
 
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         loop {
             // Bound first, so the guard is gone before anything below waits.
             let outcome = self.pipe.buffer.lock().read(buf);
@@ -382,7 +382,7 @@ impl Inode for End {
     /// `nonblock`: then as much as fits now, or `EAGAIN` for none. A write
     /// with no reader left is `EPIPE`, or the count queued before the reader
     /// went.
-    fn write_stream(&self, data: &[u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, data: &[u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         // An empty write succeeds without looking for a reader, as on Linux.
         if data.is_empty() {
             return Ok(0);
@@ -401,7 +401,7 @@ impl Inode for End {
                 WriteOutcome::Broken => {
                     // `SIGPIPE` to the writer as well, as Linux sends it; a
                     // writer that survives it still gets `EPIPE`.
-                    crate::syscall::kill::send_to_current(ferrix_linux_abi::types::SIGPIPE);
+                    crate::syscall::kill::send_to_current(xaqu_linux_abi::types::SIGPIPE);
                     Errno::EPIPE
                 }
                 WriteOutcome::NoMemory => Errno::ENOMEM,
@@ -759,7 +759,7 @@ pub(crate) fn room(file: &OpenFile, nonblock: bool) -> Result<usize, Errno> {
             (buffer.readers(), buffer.room())
         };
         if readers == 0 {
-            crate::syscall::kill::send_to_current(ferrix_linux_abi::types::SIGPIPE);
+            crate::syscall::kill::send_to_current(xaqu_linux_abi::types::SIGPIPE);
             return Err(Errno::EPIPE);
         }
         if room > 0 {
@@ -804,7 +804,7 @@ pub(crate) fn splice_pipes(
             Joined::EndOfFile => return Ok(0),
             Joined::NoMemory => Errno::ENOMEM,
             Joined::Broken => {
-                crate::syscall::kill::send_to_current(ferrix_linux_abi::types::SIGPIPE);
+                crate::syscall::kill::send_to_current(xaqu_linux_abi::types::SIGPIPE);
                 Errno::EPIPE
             }
             Joined::Empty | Joined::Full if nonblock => Errno::EAGAIN,

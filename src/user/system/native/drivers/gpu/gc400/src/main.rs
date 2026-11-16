@@ -3,7 +3,7 @@
 //! through its front end to an interrupt (`docs/GPU.md` §6.3, G2).
 //!
 //! Everything that decides a register value or a command word is
-//! `ferrix-gc400`, tested on the host against models of the core. This
+//! `xaqu-gc400`, tested on the host against models of the core. This
 //! program is the handles it was written to be wrapped in:
 //!
 //! 1. START, as an engine's: only the device, whose common window is the
@@ -33,26 +33,26 @@
 
 use core::ptr;
 
-use ferrix_blkring::control::{Message as StartMessage, START_BYTES, Start};
-use ferrix_gc400::bringup::{self, Addressing, Stuck};
-use ferrix_gc400::identity::Identity;
-use ferrix_gc400::regs::{common, fe, hi};
-use ferrix_gc400::ring::{CommandMemory, Ring};
-use ferrix_gc400::{Clock, MILLISECOND, Registers, stream};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, TREE_STM32_GPU};
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
+use xaqu_blkring::control::{Message as StartMessage, START_BYTES, Start};
+use xaqu_gc400::bringup::{self, Addressing, Stuck};
+use xaqu_gc400::identity::Identity;
+use xaqu_gc400::regs::{common, fe, hi};
+use xaqu_gc400::ring::{CommandMemory, Ring};
+use xaqu_gc400::{Clock, MILLISECOND, Registers, stream};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{IoMappingSpec, PACKET_INTERRUPT, TREE_STM32_GPU};
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -103,7 +103,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
     match run(&boot) {
         Ok(never) => match never {},
         Err(step) => {
-            ferrix_rt::err!("gc400: stopped at {step:?}");
+            xaqu_rt::err!("gc400: stopped at {step:?}");
             step as i32
         }
     }
@@ -208,7 +208,7 @@ impl CommandMemory for Page {
     fn barrier(&self) {
         // The core is outside the processors' shareability domain, which
         // `dmb ish` orders only within.
-        ferrix_rt::device_barrier();
+        xaqu_rt::device_barrier();
     }
 }
 
@@ -219,7 +219,7 @@ struct Time {
 
 impl Clock for Time {
     fn now_nanos(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 
     fn sleep_nanos(&mut self, nanos: u64) {
@@ -288,10 +288,10 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
 
     // Who it is, before anything is written.
     let identity = Identity::read(&registers);
-    ferrix_rt::info!("gc400: {identity}");
+    xaqu_rt::info!("gc400: {identity}");
     let features = identity.features();
     let addressing = Addressing::of(&features);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "gc400: {}, {} pipe, memory controller {}, addressing {addressing}",
         if identity.known().is_some() {
             "features from etnaviv's database for this core"
@@ -305,14 +305,14 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let attempts = match bringup::reset(&mut registers, &mut clock, &identity) {
         Ok(attempts) => attempts,
         Err(failed) => {
-            ferrix_rt::err!("gc400: the core did not reset {failed}");
+            xaqu_rt::err!("gc400: the core did not reset {failed}");
             return Err(Step::Reset);
         }
     };
     bringup::init(&mut registers);
     addressing.program(&mut registers);
     let stale = registers.read32(hi::INTR_ACKNOWLEDGE);
-    ferrix_rt::info!(
+    xaqu_rt::info!(
         "gc400: reset in {attempts} attempt(s), clock control {:#010x}, idle {:#010x}, stale interrupts {stale:#010x}",
         registers.read32(hi::CLOCK_CONTROL),
         registers.read32(hi::IDLE_STATE),
@@ -321,7 +321,7 @@ fn run(boot: &Channel<Kernel>) -> Result<core::convert::Infallible, Step> {
     let page = Page::new(&device)?;
     let physical = page.physical;
     let Some(gpu) = addressing.gpu_address(physical) else {
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "gc400: the command page at {physical:#x} is outside what {addressing} reaches"
         );
         return Err(Step::Addressing);
@@ -353,7 +353,7 @@ impl Running {
         bringup::start_front_end(&mut self.registers, address, prefetch);
         self.clock.sleep_nanos(MILLISECOND);
         let debug = self.registers.read32(fe::DMA_DEBUG_STATE);
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "gc400: command page at {physical:#x} (GPU {gpu:#010x}); front end started there, now at {:#010x} ({})",
             self.registers.read32(fe::DMA_ADDRESS),
             fe::command_state(debug),
@@ -369,7 +369,7 @@ impl Running {
             };
             let queued = self.clock.now_nanos();
             if self.ring.queue_event(before, event).is_err() {
-                ferrix_rt::warn!("gc400: no room in the ring for event {event}");
+                xaqu_rt::warn!("gc400: no room in the ring for event {event}");
                 return;
             }
             if !self.await_event(event, queued) {
@@ -382,12 +382,12 @@ impl Running {
         while self.registers.read32(hi::IDLE_STATE) & hi::IDLE_STATE_FE == 0 {
             if self.clock.now_nanos() >= until {
                 let stuck = Stuck::read(&self.registers);
-                ferrix_rt::err!("gc400: the front end did not reach its END: {stuck}");
+                xaqu_rt::err!("gc400: the front end did not reach its END: {stuck}");
                 return;
             }
             self.clock.sleep_nanos(MILLISECOND);
         }
-        ferrix_rt::info!(
+        xaqu_rt::info!(
             "gc400: front end ended at {:#010x}, idle {:#010x}: command buffer ran, events {} and {} by interrupt",
             self.registers.read32(fe::DMA_ADDRESS),
             self.registers.read32(hi::IDLE_STATE),
@@ -411,14 +411,14 @@ impl Running {
                     let pending = self.registers.read32(hi::INTR_ACKNOWLEDGE);
                     let _ = self.interrupt.ack();
                     let micros = self.clock.now_nanos().saturating_sub(queued) / 1_000;
-                    ferrix_rt::debug!(
+                    xaqu_rt::debug!(
                         "gc400: event {event}: interrupt with {pending:#010x} after {micros} us"
                     );
                     let faults =
                         hi::INTR_ACKNOWLEDGE_AXI_BUS_ERROR | hi::INTR_ACKNOWLEDGE_MMU_EXCEPTION;
                     if pending & faults != 0 {
                         let stuck = Stuck::read(&self.registers);
-                        ferrix_rt::err!("gc400: the core faulted: {stuck}");
+                        xaqu_rt::err!("gc400: the core faulted: {stuck}");
                         return false;
                     }
                     if pending & bit != 0 {
@@ -428,14 +428,14 @@ impl Running {
                 Ok(_) => {}
                 Err(Error::TimedOut) => {
                     let stuck = Stuck::read(&self.registers);
-                    ferrix_rt::err!(
+                    xaqu_rt::err!(
                         "gc400: event {event} did not arrive in {} ms: {stuck}",
                         EVENT_PATIENCE / MILLISECOND
                     );
                     return false;
                 }
                 Err(_) => {
-                    ferrix_rt::err!("gc400: the wait for event {event} failed");
+                    xaqu_rt::err!("gc400: the wait for event {event} failed");
                     return false;
                 }
             }
@@ -449,7 +449,7 @@ impl Running {
                 Ok(packet) if packet.kind == PACKET_INTERRUPT && packet.key == KEY_INTERRUPT => {
                     let pending = self.registers.read32(hi::INTR_ACKNOWLEDGE);
                     let _ = self.interrupt.ack();
-                    ferrix_rt::warn!("gc400: an interrupt nothing waited for: {pending:#010x}");
+                    xaqu_rt::warn!("gc400: an interrupt nothing waited for: {pending:#010x}");
                 }
                 Ok(_) => {}
                 Err(_) => return Err(Step::Events),

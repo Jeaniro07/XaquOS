@@ -1,7 +1,7 @@
 //! ferrousli's busybox: built by `src/user/system/linux/ferrousli/tools/busybox/build.sh`, or on
 //! Windows by `build-windows.sh` beside it, and installed as
-//! `<arch>/bin/busybox.static` under `~/.local/share/ferrix/busybox/ferrousli`
-//! (or `$FERRIX_BUSYBOX`), where `--init ferrousli` finds it.
+//! `<arch>/bin/busybox.static` under `~/.local/share/xaqu/busybox/ferrousli`
+//! (or `$XAQU_BUSYBOX`), where `--init ferrousli` finds it.
 //!
 //! `build.sh` compiles x86-64's with the host's `cc` against the host's kernel
 //! UAPI headers, and AArch64's and ARMv7-A's with gcc for the target against
@@ -29,9 +29,9 @@ pub(crate) const TASKS: &[Task] = &[Task {
 pub(crate) const INIT_NAME: &str = "ferrousli";
 
 /// The environment variable naming the install directory, and its default.
-const VAR: &str = "FERRIX_BUSYBOX";
+const VAR: &str = "XAQU_BUSYBOX";
 /// The default install directory under the home directory.
-const HOME_SEGMENTS: &[&str] = &[".local", "share", "ferrix", "busybox", "ferrousli"];
+const HOME_SEGMENTS: &[&str] = &[".local", "share", "xaqu", "busybox", "ferrousli"];
 
 /// The directory ferrousli's busybox is installed under.
 fn root() -> Result<PathBuf> {
@@ -42,13 +42,13 @@ fn root() -> Result<PathBuf> {
 /// `tools/busybox/`, `$2` the directory to install into and `$3` the
 /// architecture.
 ///
-/// `$out` is the scripts' own: `$FERRIX_BUSYBOX`, with their default. Normally
+/// `$out` is the scripts' own: `$XAQU_BUSYBOX`, with their default. Normally
 /// it is the install directory itself, and the copy is skipped. Both lists are
 /// removed first, so a list read after a failure is this run's.
 const SCRIPT: &str = r#"set -uo pipefail
 root=$2
 arch=$3
-out=${FERRIX_BUSYBOX:-$HOME/.local/share/ferrix/busybox/ferrousli}
+out=${XAQU_BUSYBOX:-$HOME/.local/share/xaqu/busybox/ferrousli}
 mkdir -p "$root/$arch/bin" || exit 1
 rm -f "$out/undefined-symbols.txt" "$root/undefined-symbols.txt"
 if ! bash "tools/busybox/$1" --arch "$arch"; then
@@ -186,7 +186,7 @@ fn build_locked(arch: Arch, root: &Path) -> Result<PathBuf> {
     Ok(program)
 }
 
-/// The Linux build, through [`crate::builds::Build`]: a build `FERRIX_BUILDS`
+/// The Linux build, through [`crate::builds::Build`]: a build `XAQU_BUILDS`
 /// may record or replay, reading the sources `build.sh` would otherwise
 /// download from `root/src`.
 fn build_here(arch: Arch, root: &Path) -> Result<PathBuf> {

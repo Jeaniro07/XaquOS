@@ -64,21 +64,21 @@ fatal!(catalog::STAGE3_TIMER, "stage 3 self-check failed: {problem}")
 report:
 
 ```text
-FERRIX-PANIC stage 2 self-check failed: the heap lost an allocation
+XAQU-PANIC stage 2 self-check failed: the heap lost an allocation
   at        src/kernel/src/main.rs:742:5
   on        the boot processor, before any other was started
   stopped   this processor halts here; nothing will recover it
   trace     #0  0xffffffff80002428  __rustc::rust_begin_unwind+0x1b4
   trace     #1  0xffffffff800074fc  core::panicking::panic_fmt+0x28
-  trace     #2  0xffffffff80002e54  ferrix_kernel_core::mm::check::memory_check+0x20
-  trace     #3  0xffffffff80003268  ferrix_kernel::kmain+0x414
+  trace     #2  0xffffffff80002e54  xaqu_kernel_core::mm::check::memory_check+0x20
+  trace     #3  0xffffffff80003268  xaqu_kernel::kmain+0x414
   trace     #4  0xffffffff800000fc  _start+0xfc
 ```
 
 A frame's name starts with the crate that holds the function: since the
-kernel split (`docs/KERNEL-CRATES.md`) `ferrix_kernel_core::`,
-`ferrix_kernel_item::` or `ferrix_kernel_load::` by the function's ring, and
-`ferrix_kernel::` for the binary's `main.rs`.
+kernel split (`docs/KERNEL-CRATES.md`) `xaqu_kernel_core::`,
+`xaqu_kernel_item::` or `xaqu_kernel_load::` by the function's ring, and
+`xaqu_kernel::` for the binary's `main.rs`.
 
 The marker and the message share the first line, because that is the line the
 boot test judges on. What follows is context, which `xtask` keeps reading for a
@@ -139,7 +139,7 @@ through an independent decoder.
 All of it can be reached on purpose, as on Linux: `echo c > /proc/sysrq-trigger`
 from the shell panics the kernel through `fatal!` with FX-0850, whose
 explanation says nothing is wrong. Linux looks only at the first byte written
-there, and so does Ferrix; any other byte is accepted and ignored.
+there, and so does Xaqu; any other byte is accepted and ignored.
 
 ## Overflow checks are on in release
 
@@ -195,7 +195,7 @@ blanket skip of the crate, and only with its reason beside it: that it cannot
 run under Miri at all, or that it would break a budget the job names, with
 what stays reached stated where the budget is.
 
-`ferrix-btrfs` is the crate this has happened to. Its part of CI's job has a
+`xaqu-btrfs` is the crate this has happened to. Its part of CI's job has a
 budget of 15 minutes of real time, read off the run. Every other figure for it
 is on one clock, libtest's `finished in`, which under Miri's isolation is
 Miri's virtual clock and not time: it counts the work interpreted and reads

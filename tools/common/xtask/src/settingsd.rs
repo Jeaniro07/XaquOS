@@ -7,7 +7,7 @@
 //! authd's is: static programs against the target's own musl, linked by
 //! rust-lld. [`carried`] returns what an image carries for it:
 //! `/sbin/settingsd`, `/bin/settingsctl`, and `settings.socket` and
-//! `settings.service` in `/lib/ferrix/units` with the socket wanted by
+//! `settings.service` in `/lib/xaqu/units` with the socket wanted by
 //! `sockets.target`. Its `authd` policies (`settings.*`) are authd's, in
 //! `src/user/system/linux/auth/services`, and come with authd. Only an image
 //! that carries init and authd can use it: the desktop's.
@@ -15,7 +15,7 @@
 //! # The test
 //!
 //! One boot of init with authd and settingsd, typed at the console the
-//! getty gives, as `test-auth` is. Three accounts: root, `ferrix` (uid
+//! getty gives, as `test-auth` is. Three accounts: root, `xaqu` (uid
 //! 1000, in wheel) and `guest` (uid 1001, not), both with seeded passwords.
 //! Each line below has a sentence of its own when it fails, and the
 //! certification consultant's controls (ledger line 3482, condition 4) are
@@ -25,8 +25,8 @@
 //! |---|---|
 //! | init set the running name from the image's `/etc/hostname` at boot (B2) | B2-N: init's `hostname::apply` call removed |
 //! | guest, with its own right password, is refused both requests, and nothing changes | N1: settingsd treats every peer as root |
-//! | ferrix with a wrong password is refused, and nothing changes | N2: settingsd takes a FAILED as ACCEPTED |
-//! | ferrix with its password renames the machine (`/etc/hostname` and `hostname`) and enables `sshd.service` (its link) | |
+//! | xaqu with a wrong password is refused, and nothing changes | N2: settingsd takes a FAILED as ACCEPTED |
+//! | xaqu with its password renames the machine (`/etc/hostname` and `hostname`) and enables `sshd.service` (its link) | |
 //! | a unit not on the list, sent as given, is refused by settingsd itself | N3: the unit list is skipped |
 //! | a dry run as guest says what would change and changes nothing | |
 //! | `Methods=none` in a drop-in for `settings.hostname`, relayed to the console, makes nothing (needs the seat), and still refuses guest | T6: the needs-seat refusal removed |
@@ -62,7 +62,7 @@ const DIR: &str = "src/user/system/linux/settingsd";
 const UNITS: &str = "src/user/system/linux/settingsd/units";
 
 /// The passwords the gate seeds.
-const FERRIX_PASSWORD: &str = "ferrix own settings horse";
+const XAQU_PASSWORD: &str = "xaqu own settings horse";
 const GUEST_PASSWORD: &str = "guest own settings battery";
 const WRONG_PASSWORD: &str = "not the right one";
 
@@ -104,7 +104,7 @@ pub(crate) fn writer() -> Result<bool> {
 /// The word the trusted prompt's code carries in hyprix and sessiond
 /// (`compositor_seat::prompt::PROMPT_FD_VARIABLE`): there exactly when the
 /// settings writer is (§12.8).
-pub(crate) const PROMPT_MARK: &[u8] = b"FERRIX_PROMPT_FD";
+pub(crate) const PROMPT_MARK: &[u8] = b"XAQU_PROMPT_FD";
 
 /// Refuse a compositor program whose trusted prompt disagrees with the
 /// image's settings writer, either way (ledger 3636 (10)).
@@ -205,16 +205,16 @@ pub(crate) fn carried(arch: Arch) -> Result<Vec<File>> {
     let mut files = vec![
         file("sbin/settingsd", 0o755, read(&built.settingsd)?),
         file("bin/settingsctl", 0o755, read(&built.settingsctl)?),
-        file("lib/ferrix/settings/apps", 0o644, APPS.as_bytes().to_vec()),
+        file("lib/xaqu/settings/apps", 0o644, APPS.as_bytes().to_vec()),
     ];
     for name in ["settings.socket", "settings.service"] {
         let bytes = read(&paths::workspace_root().join(UNITS).join(name))?;
-        files.push(file(&format!("lib/ferrix/units/{name}"), 0o644, bytes));
+        files.push(file(&format!("lib/xaqu/units/{name}"), 0o644, bytes));
     }
     files.push(File {
-        path: "lib/ferrix/units/sockets.target.wants/settings.socket".to_owned(),
+        path: "lib/xaqu/units/sockets.target.wants/settings.socket".to_owned(),
         mode: 0o777,
-        content: Content::Link("/lib/ferrix/units/settings.socket".to_owned()),
+        content: Content::Link("/lib/xaqu/units/settings.socket".to_owned()),
     });
     Ok(files)
 }
@@ -240,16 +240,16 @@ fn test_files(shell: &[u8], busybox: Vec<u8>) -> Result<Vec<File>> {
         content: Content::Bytes(text.as_bytes().to_vec()),
     };
     let mut files = vec![
-        crate::auth::seed("ferrix", FERRIX_PASSWORD)?,
+        crate::auth::seed("xaqu", XAQU_PASSWORD)?,
         crate::auth::seed("guest", GUEST_PASSWORD)?,
-        bytes("lib/ferrix/units/sshd.service", 0o644, SSHD_UNIT),
+        bytes("lib/xaqu/units/sshd.service", 0o644, SSHD_UNIT),
         bytes(
-            "etc/ferrix/auth/services/gate-mechanism",
+            "etc/xaqu/auth/services/gate-mechanism",
             0o644,
             MECHANISM_POLICY,
         ),
         bytes(
-            "etc/ferrix/auth/services/gate-mechanism.d/10-none.conf",
+            "etc/xaqu/auth/services/gate-mechanism.d/10-none.conf",
             0o644,
             NO_PASSWORD,
         ),
@@ -257,7 +257,7 @@ fn test_files(shell: &[u8], busybox: Vec<u8>) -> Result<Vec<File>> {
             "etc/passwd",
             0o644,
             &format!(
-                "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/:/bin/sh\n\
+                "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/:/bin/sh\n\
                  guest:x:1001:1001:guest:/:/bin/sh\n{}",
                 crate::auth::PASSWD_LINE
             ),
@@ -266,7 +266,7 @@ fn test_files(shell: &[u8], busybox: Vec<u8>) -> Result<Vec<File>> {
             "etc/group",
             0o644,
             &format!(
-                "root:x:0:\nferrix:x:1000:\nguest:x:1001:\n{}",
+                "root:x:0:\nxaqu:x:1000:\nguest:x:1001:\n{}",
                 crate::auth::GROUP_LINE
             ),
         ),
@@ -293,7 +293,7 @@ fn test_files(shell: &[u8], busybox: Vec<u8>) -> Result<Vec<File>> {
         mode: 0o755,
         content: Content::Bytes(busybox),
     });
-    // busybox's `su` in place of Ferrix's: root becomes a user without a
+    // busybox's `su` in place of Xaqu's: root becomes a user without a
     // password, so each request is asked as that user.
     for applet in [
         "su", "cat", "cp", "grep", "hostname", "ls", "mkdir", "pidof", "printf", "readlink",
@@ -357,7 +357,7 @@ fn test_arch(arch: Arch, args: &Args) -> Result<()> {
     println!(
         "  {arch}: settingsd refused guest outside wheel and a wrong password, renamed the \
          machine, set the time zone, and started and stopped sshd.service for \
-         ferrix, refused a unit, a zone and a program not on its \
+         xaqu, refused a unit, a zone and a program not on its \
          lists, changed nothing on a dry run, made nothing on a Methods=none relay, and \
          logged every request and no password"
     );
@@ -441,8 +441,8 @@ fn as_user(user: &str, password: Option<&str>, arguments: &str) -> String {
     }
 }
 
-const SSHD_LINK: &str = "/etc/ferrix/units/multi-user.target.wants/sshd.service";
-const AUTH_LINK: &str = "/etc/ferrix/units/sockets.target.wants/auth.socket";
+const SSHD_LINK: &str = "/etc/xaqu/units/multi-user.target.wants/sshd.service";
+const AUTH_LINK: &str = "/etc/xaqu/units/sockets.target.wants/auth.socket";
 
 fn session(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let deadline = Instant::now() + PATIENCE * 2;
@@ -477,7 +477,7 @@ fn session(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
 }
 
 /// The name the image's `/etc/hostname` holds, which init sets at boot (B2),
-/// and which is not the kernel's own default, `ferrix`.
+/// and which is not the kernel's own default, `xaqu`.
 const BOOT_NAME: &str = "settings-gate";
 
 /// `/etc/hostname` and the running name once init has set it.
@@ -527,11 +527,11 @@ fn outsider(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     Ok(())
 }
 
-/// ferrix with a wrong password: refused, nothing changes (N2).
+/// xaqu with a wrong password: refused, nothing changes (N2).
 fn wrong_password(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let wrong = run(
         at,
-        &as_user("ferrix", Some(WRONG_PASSWORD), "set-hostname wrong"),
+        &as_user("xaqu", Some(WRONG_PASSWORD), "set-hostname wrong"),
         "w1",
     )?;
     let names = names(at, "w2")?;
@@ -539,18 +539,18 @@ fn wrong_password(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
         .is_some_and(|line| line.starts_with("settingsctl: refused: authentication-failed: "));
     if !refused || names.as_deref() != Some(BOOTED_NAMES) {
         failures.push(format!(
-            "ferrix's wrong password was not refused: {wrong:?} names {names:?}"
+            "xaqu's wrong password was not refused: {wrong:?} names {names:?}"
         ));
     }
     Ok(())
 }
 
-/// ferrix with its password: the machine is renamed and sshd.service is
+/// xaqu with its password: the machine is renamed and sshd.service is
 /// enabled.
 fn administrator(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let named = run(
         at,
-        &as_user("ferrix", Some(FERRIX_PASSWORD), "set-hostname box"),
+        &as_user("xaqu", Some(XAQU_PASSWORD), "set-hostname box"),
         "a1",
     )?;
     let names = names(at, "a2")?;
@@ -559,14 +559,14 @@ fn administrator(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()
         || names.as_deref() != Some("box box")
     {
         failures.push(format!(
-            "ferrix with its password did not rename the machine: {named:?} names {names:?}"
+            "xaqu with its password did not rename the machine: {named:?} names {names:?}"
         ));
     }
     let switched = run(
         at,
         &as_user(
-            "ferrix",
-            Some(FERRIX_PASSWORD),
+            "xaqu",
+            Some(XAQU_PASSWORD),
             "service-enable-persistent sshd.service on",
         ),
         "a3",
@@ -577,13 +577,13 @@ fn administrator(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()
         || !link
     {
         failures.push(format!(
-            "ferrix with its password did not enable sshd.service: {switched:?} link {link}"
+            "xaqu with its password did not enable sshd.service: {switched:?} link {link}"
         ));
     }
     Ok(())
 }
 
-/// B3's time zone: ferrix sets it with its password, guest is refused, and
+/// B3's time zone: xaqu sets it with its password, guest is refused, and
 /// a zone that is a path or is not there is refused. (`set-time`, B3's
 /// other half, is parked: ledger 3636 (19).)
 fn clock_and_zone(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
@@ -602,8 +602,8 @@ fn clock_and_zone(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
     let zone = run(
         at,
         &as_user(
-            "ferrix",
-            Some(FERRIX_PASSWORD),
+            "xaqu",
+            Some(XAQU_PASSWORD),
             "set-timezone Europe/Berlin",
         ),
         "z1",
@@ -625,8 +625,8 @@ fn clock_and_zone(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
         let other = run(
             at,
             &as_user(
-                "ferrix",
-                Some(FERRIX_PASSWORD),
+                "xaqu",
+                Some(XAQU_PASSWORD),
                 &format!("--as-given set-timezone {bad}"),
             ),
             marker,
@@ -655,8 +655,8 @@ fn now_switch(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let on = run(
         at,
         &as_user(
-            "ferrix",
-            Some(FERRIX_PASSWORD),
+            "xaqu",
+            Some(XAQU_PASSWORD),
             "service-enable-persistent sshd.service on now",
         ),
         "s1",
@@ -665,8 +665,8 @@ fn now_switch(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
     let off = run(
         at,
         &as_user(
-            "ferrix",
-            Some(FERRIX_PASSWORD),
+            "xaqu",
+            Some(XAQU_PASSWORD),
             "service-enable-persistent sshd.service off now",
         ),
         "s3",
@@ -695,8 +695,8 @@ fn off_the_list(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()>
     let other = run(
         at,
         &as_user(
-            "ferrix",
-            Some(FERRIX_PASSWORD),
+            "xaqu",
+            Some(XAQU_PASSWORD),
             "--as-given service-enable-persistent auth.socket on",
         ),
         "l1",
@@ -718,7 +718,7 @@ fn unlisted_program(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result
     let _ = run(at, "cp /bin/settingsctl /tmp/unlisted", "u0")?;
     let other = run(
         at,
-        &format!("su ferrix -c \"echo '{FERRIX_PASSWORD}' | /tmp/unlisted set-hostname unlisted\""),
+        &format!("su xaqu -c \"echo '{XAQU_PASSWORD}' | /tmp/unlisted set-hostname unlisted\""),
         "u1",
     )?;
     let names = names(at, "u2")?;
@@ -760,13 +760,13 @@ fn no_password(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> 
     let _ = run(
         at,
         &format!(
-            "mkdir -p /etc/ferrix/auth/services/settings.hostname.d && printf '{}' > \
-             /etc/ferrix/auth/services/settings.hostname.d/10-none.conf",
+            "mkdir -p /etc/xaqu/auth/services/settings.hostname.d && printf '{}' > \
+             /etc/xaqu/auth/services/settings.hostname.d/10-none.conf",
             NO_PASSWORD.replace('\n', "\\n")
         ),
         "n1",
     )?;
-    let named = run(at, &as_user("ferrix", None, "set-hostname nopass"), "n2")?;
+    let named = run(at, &as_user("xaqu", None, "set-hostname nopass"), "n2")?;
     let refused = run(at, &as_user("guest", None, "set-hostname nopass2"), "n3")?;
     let names = names(at, "n4")?;
     let needs_seat = answer(&named, "settingsctl: ").is_some_and(|line| {
@@ -786,7 +786,7 @@ fn no_password(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> 
     }
     let other = run(
         at,
-        "echo 'not it' | authctl try gate-mechanism ferrix",
+        "echo 'not it' | authctl try gate-mechanism xaqu",
         "n5",
     )?;
     let asked = answer(&other, "authctl: ").is_some_and(|line| line.starts_with("authctl: failed"));
@@ -804,9 +804,9 @@ fn audit(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
         at,
         &format!(
             "echo \"$m-refused $(svc log settings.service -n 200 | grep -c 'account=guest auth=- result=not-permitted') \
-             au-password $(svc log settings.service -n 200 | grep -c 'account=ferrix auth=password result=done') \
-             au-none $(svc log settings.service -n 200 | grep -c 'account=ferrix auth=none result=needs-seat') \
-             au-secret $(svc log settings.service -n 200 | grep -c -e '{FERRIX_PASSWORD}' -e '{GUEST_PASSWORD}')\""
+             au-password $(svc log settings.service -n 200 | grep -c 'account=xaqu auth=password result=done') \
+             au-none $(svc log settings.service -n 200 | grep -c 'account=xaqu auth=none result=needs-seat') \
+             au-secret $(svc log settings.service -n 200 | grep -c -e '{XAQU_PASSWORD}' -e '{GUEST_PASSWORD}')\""
         ),
         "au",
     )?;
@@ -833,7 +833,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let with = dir.join("with");
         let without = dir.join("without");
-        std::fs::write(&with, b"\x7fELF..FERRIX_PROMPT_FD..").unwrap();
+        std::fs::write(&with, b"\x7fELF..XAQU_PROMPT_FD..").unwrap();
         std::fs::write(&without, b"\x7fELF..nothing..").unwrap();
         assert!(super::check_prompt(&with, true).is_ok());
         assert!(super::check_prompt(&without, false).is_ok());
@@ -844,12 +844,12 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    use super::{FERRIX_PASSWORD, GUEST_PASSWORD, NO_PASSWORD, WRONG_PASSWORD, as_user};
+    use super::{XAQU_PASSWORD, GUEST_PASSWORD, NO_PASSWORD, WRONG_PASSWORD, as_user};
 
     /// Each password is typed inside single quotes inside double ones.
     #[test]
     fn the_gate_passwords_quote_in_a_shell() {
-        for password in [FERRIX_PASSWORD, GUEST_PASSWORD, WRONG_PASSWORD] {
+        for password in [XAQU_PASSWORD, GUEST_PASSWORD, WRONG_PASSWORD] {
             assert!(
                 !password.contains(['\'', '"', '\\', '$', '`']),
                 "{password:?}"

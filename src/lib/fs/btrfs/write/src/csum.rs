@@ -11,8 +11,8 @@
 //! the tree has no checksum for. So the sums of an extent must go exactly
 //! when its last reference does.
 
-use ferrix_btrfs::items::{CSUM_TREE_OBJECTID, EXTENT_CSUM_KEY, EXTENT_CSUM_OBJECTID};
-use ferrix_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE};
+use xaqu_btrfs::items::{CSUM_TREE_OBJECTID, EXTENT_CSUM_KEY, EXTENT_CSUM_OBJECTID};
+use xaqu_btrfs::tree::{BtrfsKey, HEADER_SIZE, ITEM_SIZE};
 
 use crate::{Error, Result, WriteDevice, WriteVolume, fallible};
 

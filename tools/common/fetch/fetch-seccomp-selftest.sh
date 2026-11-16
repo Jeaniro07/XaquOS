@@ -15,10 +15,10 @@
 # build adds: prelude.h (musl's answers to the test's glibc and <linux/prctl.h>
 # assumptions), sys/capability.h (the four libcap calls the test makes, over
 # capget and capset, since no libcap is linked), and init.c, which includes
-# the test with no arguments, since Ferrix starts a built-in init as `sh -c`.
+# the test with no arguments, since Xaqu starts a built-in init as `sh -c`.
 #
-# Writes $FERRIX_SECCOMP_SELFTEST/<arch>/seccomp_bpf (default
-# ~/.local/share/ferrix/seccomp-selftest), where test-seccomp-selftest looks.
+# Writes $XAQU_SECCOMP_SELFTEST/<arch>/seccomp_bpf (default
+# ~/.local/share/xaqu/seccomp-selftest), where test-seccomp-selftest looks.
 #
 # Needs curl, sha256sum and python3 with venv.
 #
@@ -30,7 +30,7 @@ tag=v6.12
 base=https://raw.githubusercontent.com/torvalds/linux/$tag/tools/testing/selftests
 here=$(cd "$(dirname "$0")/../../.." && pwd)
 shim=$here/tools/common/data/seccomp-selftest
-out=${FERRIX_SECCOMP_SELFTEST:-$HOME/.local/share/ferrix/seccomp-selftest}
+out=${XAQU_SECCOMP_SELFTEST:-$HOME/.local/share/xaqu/seccomp-selftest}
 
 files=(
     "seccomp/seccomp_bpf.c 88d96b85f5d920904d74a9f0ca9846460cc6b9f650f56d30dfb6cf483fa694d3"

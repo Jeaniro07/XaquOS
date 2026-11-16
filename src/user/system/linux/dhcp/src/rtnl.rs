@@ -1,6 +1,6 @@
 //! The rtnetlink requests that apply a lease, and the walk of what comes
 //! back: what `ip link set up`, `ip addr add` and `ip route add default`
-//! send, written by `ferrix-netlink`, the crate the kernel answers them
+//! send, written by `xaqu-netlink`, the crate the kernel answers them
 //! with.
 //!
 //! Every function here builds bytes or reads them; the socket is the
@@ -9,15 +9,15 @@
 
 use std::net::Ipv4Addr;
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     IFA_ADDRESS, IFA_BROADCAST, IFA_LOCAL, IFF_UP, IFLA_ADDRESS, IFLA_IFNAME, IfAddrMsg, IfInfoMsg,
     NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP, NLM_F_EXCL, NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR,
     NlMsgErr, NlMsgHdr, RT_SCOPE_UNIVERSE, RT_TABLE_MAIN, RTA_GATEWAY, RTA_OIF, RTM_DELADDR,
     RTM_DELROUTE, RTM_GETADDR, RTM_GETLINK, RTM_NEWADDR, RTM_NEWLINK, RTM_NEWROUTE, RTN_UNICAST,
     RtMsg,
 };
-use ferrix_linux_abi::socket::{AF_INET, AF_UNSPEC};
-use ferrix_netlink::{Address, Attr, Messages, Value, Writer};
+use xaqu_linux_abi::socket::{AF_INET, AF_UNSPEC};
+use xaqu_netlink::{Address, Attr, Messages, Value, Writer};
 
 /// `RTPROT_DHCP`: the routes this client adds say who added them, as
 /// `dhcpcd`'s do.
@@ -254,7 +254,7 @@ const fn libc_eproto() -> i32 {
 #[must_use]
 pub fn link_of(payload: &[u8]) -> Option<Link> {
     let body = IfInfoMsg::from_bytes(payload)?;
-    let message = ferrix_netlink::Message {
+    let message = xaqu_netlink::Message {
         header: NlMsgHdr {
             len: 0,
             kind: RTM_NEWLINK,
@@ -283,7 +283,7 @@ pub fn address_of(payload: &[u8]) -> Option<Assigned> {
     if body.family != inet() {
         return None;
     }
-    let message = ferrix_netlink::Message {
+    let message = xaqu_netlink::Message {
         header: NlMsgHdr {
             len: 0,
             kind: RTM_NEWADDR,

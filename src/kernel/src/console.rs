@@ -25,7 +25,7 @@
 //! The lock is also the one way the console can make a failure *worse*: a CPU
 //! that faults while holding it — in the middle of formatting, say — would
 //! report the fault by printing, wait for its own lock, and turn a
-//! `FERRIX-PANIC` line into a boot test that times out saying nothing. So once
+//! `XAQU-PANIC` line into a boot test that times out saying nothing. So once
 //! [`begin_panic`] has been called, a writer waits a bounded time for the lock
 //! and then writes without it. A panic report interleaved with another CPU's
 //! line is legible; one that never appears is not.
@@ -44,13 +44,13 @@ pub mod log;
 pub mod log_check;
 pub mod output;
 pub mod pstore;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub mod screen;
 /// The console's screen in a `personality=user` kernel: none
 /// (`docs/microkernel/M6.md` §2). Serial only; the screen is a program's.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub mod screen {
-    use ferrix_bootinfo::BootView;
+    use xaqu_bootinfo::BootView;
 
     /// Nothing to start.
     pub fn start(_view: &BootView<'_>) {}
@@ -74,7 +74,7 @@ use core::fmt::{self, Write};
 use core::hint::spin_loop;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 
-use ferrix_sync::IrqSpinLock;
+use xaqu_sync::IrqSpinLock;
 
 use self::output::Transmit;
 
@@ -103,7 +103,7 @@ const PANIC_SPINS: u32 = 10_000_000;
 /// the lock: whoever holds it is not going to release it, and a report of a
 /// few hundred writes that each waited the whole bound again would spend
 /// minutes before its reset (2026-11-08, the N150 box, whose
-/// `ferrix.panic=reset` never came).
+/// `xaqu.panic=reset` never came).
 static PORT_ABANDONED: AtomicBool = AtomicBool::new(false);
 
 /// Wait a bounded time for the port's lock during a failure report, and
@@ -225,7 +225,7 @@ impl<'port> Writer<'port> {
             if self.remembered {
                 remember(byte);
             }
-            // Under `ferrix.fbcon` a program's output is drawn too: on a
+            // Under `xaqu.fbcon` a program's output is drawn too: on a
             // machine whose screen is its only output (the N150 box) a
             // driver's own lines and devmgr's word on a driver that failed
             // are the ones that say why.
@@ -322,7 +322,7 @@ enum Kind {
 
 impl Kind {
     /// Whether the bytes are kept in [`RECENT`]. Every kind is drawn on the
-    /// screen under `ferrix.fbcon`.
+    /// screen under `xaqu.fbcon`.
     const fn remembered(self) -> bool {
         matches!(self, Kind::Line | Kind::Unlogged | Kind::Record(_))
     }
@@ -457,7 +457,7 @@ pub(crate) fn drain() {
 /// outside the core: every `arch::shutdown` calls this itself, and the core
 /// may not depend upward on the item (`docs/certification/ITEM.md`).
 pub(crate) fn announce_power_off() {
-    println!("FERRIX-POWER-OFF");
+    println!("XAQU-POWER-OFF");
 }
 
 /// How long a power-off write is given to take hold before the kernel says it
@@ -477,7 +477,7 @@ pub(crate) fn announce_power_off_failed() {
             spin_loop();
         }
     }
-    println!("FERRIX-POWER-OFF-FAILED");
+    println!("XAQU-POWER-OFF-FAILED");
     drain();
 }
 
@@ -490,7 +490,7 @@ pub(crate) fn announce_power_off_failed() {
 ///
 /// The newline translation is kept, and it is standing in for something: a
 /// terminal line discipline's `ONLCR`, which is what turns a bare `\n` into
-/// CRLF on a real Linux tty. Ferrix has no tty layer yet, and without the
+/// CRLF on a real Linux tty. Xaqu has no tty layer yet, and without the
 /// translation every program's output would climb the screen in a staircase.
 /// When stage 15 brings ttys, this moves there and this function stops
 /// translating.

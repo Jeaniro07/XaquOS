@@ -1,7 +1,7 @@
 //! `eventfd2` and `eventfd`: the calls around [`crate::fs::eventfd`].
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{EFD_CLOEXEC, EFD_NONBLOCK, EFD_SEMAPHORE};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{EFD_CLOEXEC, EFD_NONBLOCK, EFD_SEMAPHORE};
 
 use crate::fs::eventfd;
 use crate::syscall::process::Process;

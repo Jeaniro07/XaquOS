@@ -8,7 +8,7 @@
  *
  * Prototypes are libspdm's (src/nvidia/src/libraries/libspdm, BSD-3-Clause,
  * included from the fetched tree, not copied) and NVIDIA's
- * nvspdm_cryptlib_extensions.h; the bodies are Ferrix's. Generated once
+ * nvspdm_cryptlib_extensions.h; the bodies are Xaqu's. Generated once
  * from those headers and kept by hand.
  *
  * SPDX-License-Identifier: MIT

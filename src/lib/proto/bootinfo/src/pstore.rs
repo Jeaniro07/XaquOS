@@ -204,7 +204,7 @@ pub enum Stop {
     PowerOff = 3,
     /// `reboot(2)`'s HALT.
     Halt = 4,
-    /// Init exited, and `ferrix.onexit=reset` asks for a reset.
+    /// Init exited, and `xaqu.onexit=reset` asks for a reset.
     ExitReset = 5,
     /// Init exited, and the default powers off.
     ExitPowerOff = 6,
@@ -263,7 +263,7 @@ impl Stop {
             Stop::Restart => "a restart a program asked for (reboot(2))",
             Stop::PowerOff => "a power-off a program asked for (reboot(2))",
             Stop::Halt => "a halt a program asked for (reboot(2))",
-            Stop::ExitReset => "a reset after init exited (ferrix.onexit=reset)",
+            Stop::ExitReset => "a reset after init exited (xaqu.onexit=reset)",
             Stop::ExitPowerOff => "a power-off after init exited",
             Stop::MachineCheck => "a machine check",
         }
@@ -688,7 +688,7 @@ impl<'a> Text<'a> {
     }
 
     /// The bytes from `start` to `end`, at most `most` of them, each as
-    /// [`shown`] prints it, into `out`, with every `FERRIX-` made `FERRIX_`
+    /// [`shown`] prints it, into `out`, with every `XAQU-` made `XAQU_`
     /// ([`defuse`]); how many were written.
     pub fn shown_into(&self, (start, end): (usize, usize), most: usize, out: &mut [u8]) -> usize {
         let mut count = 0;
@@ -704,12 +704,12 @@ impl<'a> Text<'a> {
     }
 }
 
-/// Make every `FERRIX-` in `line` read `FERRIX_`: the previous kernel's
+/// Make every `XAQU-` in `line` read `XAQU_`: the previous kernel's
 /// words quoted in this boot's log must never read as one of this boot's
-/// markers (`FERRIX-PANIC`, `FERRIX-BOOT-OK`), which whatever reads the log
+/// markers (`XAQU-PANIC`, `XAQU-BOOT-OK`), which whatever reads the log
 /// looks for anywhere in a line.
 pub fn defuse(line: &mut [u8]) {
-    const MARK: &[u8] = b"FERRIX-";
+    const MARK: &[u8] = b"XAQU-";
     let mut at: usize = 0;
     while let Some(window) = line.get(at..at.saturating_add(MARK.len())) {
         if window == MARK
@@ -721,7 +721,7 @@ pub fn defuse(line: &mut [u8]) {
     }
 }
 
-/// What the command line asks of the region, `ferrix.pstore=`: on with no
+/// What the command line asks of the region, `xaqu.pstore=`: on with no
 /// option or exactly `on`, off with exactly `off`, and anything else is not
 /// understood and taken as off, since a misspelt switch should not keep a
 /// log nobody asked for.
@@ -736,7 +736,7 @@ pub enum Switch<'a> {
 }
 
 /// The option [`switch`] reads.
-pub const OPTION: &str = "ferrix.pstore";
+pub const OPTION: &str = "xaqu.pstore";
 
 /// Read [`OPTION`] from `cmdline`.
 #[must_use]

@@ -29,8 +29,8 @@ use alloc::format;
 use alloc::vec::Vec;
 use core::hint::black_box;
 
-use ferrix_fdt::{FDT_BEGIN_NODE, FDT_END, FDT_END_NODE, FDT_MAGIC, FDT_PROP, Fdt, HEADER_SIZE};
-use ferrix_linux_abi::types::{SIGBUS, SIGILL, SIGSEGV, SIGTRAP};
+use xaqu_fdt::{FDT_BEGIN_NODE, FDT_END, FDT_END_NODE, FDT_MAGIC, FDT_PROP, Fdt, HEADER_SIZE};
+use xaqu_linux_abi::types::{SIGBUS, SIGILL, SIGSEGV, SIGTRAP};
 
 use super::trap::{TrapFrame, UserRegs, classify, fault_signal};
 use crate::arch::arm_common::gicv2;

@@ -12,8 +12,8 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_vma::VmaFlags;
 
 use crate::object::job::{Job, KILLED_STATUS};
 use crate::object::oom;
@@ -386,7 +386,7 @@ fn check_the_processor(tree: &Arc<Job>) -> Result<u64, &'static str> {
 /// A job's weight as its parent's load counts it: `cpu.weight` 100 is one
 /// task at nice 0.
 fn scaled(weight: u32) -> i64 {
-    i64::from(weight) * i64::from(ferrix_sched::NICE_0_WEIGHT) / i64::from(DEFAULT_WEIGHT)
+    i64::from(weight) * i64::from(xaqu_sched::NICE_0_WEIGHT) / i64::from(DEFAULT_WEIGHT)
 }
 
 /// `cpu.weight` is clamped to 1 to 10,000, and setting a busy job's weight
@@ -673,7 +673,7 @@ fn check_the_machine_wide_kill(tree: &Arc<Job>) -> Result<(), &'static str> {
 ///
 /// Verifies: L.object.180
 fn check_a_move_settles_the_pending_charge(tree: &Arc<Job>) -> Result<(), &'static str> {
-    use ferrix_sync::IrqControl;
+    use xaqu_sync::IrqControl;
     let slots = quota::live_slots();
     let job = tree.new_child().map_err(|_| "a job refused a child")?;
     let index = job.quota_index();
@@ -765,11 +765,11 @@ fn check_no_machine_kill_yet(
 struct ReadAgain;
 
 impl crate::user::vmo::Filler for ReadAgain {
-    fn fill(&self, _: &crate::user::vmo::Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill(&self, _: &crate::user::vmo::Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 
-    fn fill_one(&self, _: &crate::user::vmo::Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill_one(&self, _: &crate::user::vmo::Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 

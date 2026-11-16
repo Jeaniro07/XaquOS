@@ -6,15 +6,15 @@ use alloc::collections::BTreeMap;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::chunk::ChunkMapEntry;
-use ferrix_btrfs::compress::MAX_UNCOMPRESSED;
-use ferrix_btrfs::compress::zstd::Workspace;
-use ferrix_btrfs::fs::{ReadBuffers, Target};
-use ferrix_btrfs::items::{
+use xaqu_btrfs::chunk::ChunkMapEntry;
+use xaqu_btrfs::compress::MAX_UNCOMPRESSED;
+use xaqu_btrfs::compress::zstd::Workspace;
+use xaqu_btrfs::fs::{ReadBuffers, Target};
+use xaqu_btrfs::items::{
     FS_TREE_OBJECTID, S_IFCHR, S_IFDIR, S_IFIFO, S_IFLNK, S_IFREG, Timespec,
 };
-use ferrix_btrfs::tree::BtrfsKey;
-use ferrix_btrfs::volume::Volume;
+use xaqu_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::volume::Volume;
 
 use super::{BLANK, MemDevice, POPULATED, Rng, check};
 use crate::{NewInode, WriteVolume};
@@ -73,7 +73,7 @@ enum Expect {
     Gone,
 }
 
-/// Read `path` back through `ferrix-btrfs`, which knows nothing of this
+/// Read `path` back through `xaqu-btrfs`, which knows nothing of this
 /// crate, and compare with what the scenario says it should be.
 fn read_back(device: &MemDevice, expected: &BTreeMap<&'static str, Expect>) {
     let mut device = device.clone();

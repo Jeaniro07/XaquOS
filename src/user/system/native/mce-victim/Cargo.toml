@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-mce-victim"
+name = "xaqu-mce-victim"
 description = "A test driver whose page a gate poisons: a ring-3 driver that consumes poison ends alone and is started again (test-mce-driver)"
 version.workspace = true
 edition.workspace = true
@@ -14,10 +14,10 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-chardevctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-chardevctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

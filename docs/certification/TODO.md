@@ -56,9 +56,9 @@ with the text below, and delete this list.
 
 | Kind | Architectures | Was | Is now | Reason, verbatim |
 |---|---|---|---|---|
-| failure-path | x86_64, aarch64, armv7a | `main.rs:718`, `check_pci`'s `Err(problem) => fatal!(` | `main.rs:724-725`, `check_devices`' `Err(device::Stopped::Finder { name: "pci", why })` arm | The failure arm in `check_pci`: it runs only when the bring-up or self-check it follows has reported a property broken, and it stops the machine with the catalogue's `STAGE10_PCI` and FERRIX-PANIC. A passing boot is by definition one that never takes it; making it run means breaking what that step proves. |
+| failure-path | x86_64, aarch64, armv7a | `main.rs:718`, `check_pci`'s `Err(problem) => fatal!(` | `main.rs:724-725`, `check_devices`' `Err(device::Stopped::Finder { name: "pci", why })` arm | The failure arm in `check_pci`: it runs only when the bring-up or self-check it follows has reported a property broken, and it stops the machine with the catalogue's `STAGE10_PCI` and XAQU-PANIC. A passing boot is by definition one that never takes it; making it run means breaking what that step proves. |
 | failure-path | x86_64, aarch64, armv7a | the same, reached through the walk | `discovery/pci.rs:544`, `self.failure = Some(failure);` in `pci::Enumeration::find` | As above: the PCI walk's failure, which `check_devices` halts on under `STAGE10_PCI`. |
-| failure-path | x86_64, aarch64, armv7a | `main.rs:790`, `check_devices`' `Err(problem) => fatal!(` | `main.rs:735-736`, `check_devices`' `Err(device::Stopped::Node(problem)) => fatal!(` | The failure arm in `check_devices`: it runs only when the bring-up or self-check it follows has reported a property broken, and it stops the machine with the catalogue's `STAGE10_DEVICES` and FERRIX-PANIC. A passing boot is by definition one that never takes it; making it run means breaking what that step proves. |
+| failure-path | x86_64, aarch64, armv7a | `main.rs:790`, `check_devices`' `Err(problem) => fatal!(` | `main.rs:735-736`, `check_devices`' `Err(device::Stopped::Node(problem)) => fatal!(` | The failure arm in `check_devices`: it runs only when the bring-up or self-check it follows has reported a property broken, and it stops the machine with the catalogue's `STAGE10_DEVICES` and XAQU-PANIC. A passing boot is by definition one that never takes it; making it run means breaking what that step proves. |
 | absent-hardware | armv7a | `main.rs:763`, `if completed.before_fault {` | `discovery/pci.rs:598`, the same line in `pci::Enumeration::report` | When the device completed the out-of-domain write the unit faulted: the probe runs only through a translated domain, which ARMv7-A, leaving virt's SMMUv3 alone, never gives. |
 
 Line numbers are the tree's at the landing; the re-measure's report is what
@@ -97,7 +97,7 @@ The certification consultant (os-ad, then os-bd after a restart) reviewed
 every change to the item on 2026-10-01 before it landed, and audited `main`
 back to the N3 review for changes that had skipped review. Each verdict and
 condition is in the ledger on the gate host,
-`~/.local/share/ferrix/cert-consultant/reviews.md`, whose `HANDOVER.md`
+`~/.local/share/xaqu/cert-consultant/reviews.md`, whose `HANDOVER.md`
 lists the open queue. On `main` they are recorded here:
 - `docs/NAMESPACES.md` §12, for N4, smallns and the native-child rule;
 - `docs/SECCOMP.md` §12, for S1 and S2;
@@ -254,9 +254,9 @@ core's product code names nothing above it.
 One command runs the suite on an architecture and fails below its floor:
 
 ```
-FERRIX_DRCOV=/home/johndoe/Documents/qemu/qemu/build/contrib/plugins/libdrcov.so \
+XAQU_DRCOV=/home/johndoe/Documents/qemu/qemu/build/contrib/plugins/libdrcov.so \
   cargo xtask coverage --arch x86_64 \
-    --init "$HOME/.local/share/ferrix/busybox/{arch}/bin/busybox.static"
+    --init "$HOME/.local/share/xaqu/busybox/{arch}/bin/busybox.static"
 ```
 
 It prints the `coverage-report.py` command it ran; add `--json` and
@@ -303,7 +303,7 @@ statement or put down to absent hardware. **The Arm pair again on
 the trap check's read past a file's end, the TRNG against scripted
 firmware, and arguments for the 16550 and `ramoops` consoles); init's start
 of `devmgr` (L12) put 78 and 82 of `devmgr.rs` on it, which a boot under
-`ferrix.devmgr=init` in the suite would take. Next by size: that, then
+`xaqu.devmgr=init` in the suite would take. Next by size: that, then
 `syscall/native.rs` (24, 7, 9) and `object/` (17 each).
 
 ### 2.4 Make coverage a ratchet
@@ -462,7 +462,7 @@ pairs, descriptors in flight, epoll registrations, eventfds, regions of one
 mapping, record locks -- was refused one more of each, a sibling made one,
 and every byte came back. Read `test-vfs` command 21, and `memory.stat` in
 any cgroup. Then look for heap the load keeps past a call that carries no
-`ferrix_kmem::Charge`: grep the load ring and its libraries for `Arc::new`,
+`xaqu_kmem::Charge`: grep the load ring and its libraries for `Arc::new`,
 `Box::new`, `push`, `push_back`, `insert` and `extend` on a structure that
 outlives the call, and check each is inside something charged, or is one of
 the argued kinds FINDINGS.md F-37 lists. As negative controls (scratch), each
@@ -476,7 +476,7 @@ their heap still charged to their job"*, on pipes).
 
 ### 4.7 btrfs in the item
 **Decided 2026-10-02** (the customer): the btrfs reader and write path,
-`ferrix-btrfs` and `ferrix-btrfs-write`, are in the item; `ferrix-btrfs-vfs`
+`xaqu-btrfs` and `xaqu-btrfs-write`, are in the item; `xaqu-btrfs-vfs`
 and `src/kernel/src/fs/btrfs*.rs` stay load. Written so far: `H.STORE.1` to
 `H.STORE.8` (part 13), `L.btrfs.1` to `L.btrfs.107` (part 24), ASR-9, FM-11,
 AoU-15 and AoU-16 (SAFETY-MANUAL.md), O.MEDIA, T.MEDIA, A.STORAGE,
@@ -499,7 +499,7 @@ is left, each with how to know it is done:
 2. **The item-scoped gates read the crates** (the branch
    `btrfs-cert-boundary`): the boundary, unsafe, panic, complexity and
    fallible-allocation gates. `check-traceability.py` resolves a
-   `ferrix_btrfs::` unit through that branch's `item_crate_product_files`
+   `xaqu_btrfs::` unit through that branch's `item_crate_product_files`
    (branch `btrfs-cert-docs`), so part 24's units resolve only once both
    are on `main`. Done when `cargo xtask check` passes there and
    TRACEABILITY.md lists the crates' functions among the item's. Then
@@ -527,7 +527,7 @@ is left, each with how to know it is done:
    opened, and the refusal named.
 7. **Miri over `src/lib/fs/btrfs/format`** in CI. Done 2026-11-02, its set
    and this text corrected 2026-11-03: part 4 of CI's Miri job runs
-   `ferrix-btrfs`, against a budget of 15 minutes of real time. The crate
+   `xaqu-btrfs`, against a budget of 15 minutes of real time. The crate
    forbids `unsafe` and has no runtime dependencies, so an out-of-bounds
    index panics under plain `cargo test` too; what Miri adds is a check of
    the `unsafe` in `core` and `alloc` under the crate's calls, and of the

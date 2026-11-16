@@ -4,7 +4,7 @@
 Nothing in it is built.** The customer's complaint: on every other desktop
 OS a game cannot be stopped at some point and picked up later from exactly
 that point. Every handle it holds (GPU contexts, files, sockets, windows,
-audio) is dropped. The question is whether Ferrix can freeze one
+audio) is dropped. The question is whether Xaqu can freeze one
 application with all its state and resume it later: within one boot, from
 disk, across a reboot, and on another machine.
 
@@ -172,7 +172,7 @@ not in memory, so drivers must re-initialise hardware after a restart, and
 anything off the machine (a network peer) sees the gap. Shapiro later called
 the kernel persistence mechanism complicated and rethought it
 ([l4-hurd, 2005](https://lists.gnu.org/archive/html/l4-hurd/2005-10/msg00865.html)).
-It is the closest model to Ferrix's native ABI: Ferrix's handles are
+It is the closest model to Xaqu's native ABI: Xaqu's handles are
 capabilities, and §2.4 makes use of that.
 
 ### 1.6 Consoles and handhelds
@@ -212,18 +212,18 @@ Surviving a reboot was done by one vendor, by making the title's boundary
 small and owned (a VM), and by making titles responsible for the network.
 Nobody restores a server-side session; nobody can.
 
-### 1.7 What Ferrix takes from each
+### 1.7 What Xaqu takes from each
 
-| From | Ferrix takes |
+| From | Xaqu takes |
 |---|---|
-| CRIU | freeze, then dump from outside; restore with the same pids (`clone3` `set_tid`, which Ferrix has, `syscall/family.rs`) in a pid namespace, and a time namespace for monotonic time |
+| CRIU | freeze, then dump from outside; restore with the same pids (`clone3` `set_tid`, which Xaqu has, `syscall/family.rs`) in a pid namespace, and a time namespace for monotonic time |
 | cuda-checkpoint | drain the GPU first; restore objects at the same GPU virtual addresses |
 | DMTCP | every boundary gets a *sever and remake* handler |
 | Sprite, MOSIX | keep residual dependencies out: none may outlive S3 |
 | EROS | handles are data; the kernel can re-issue them at the same numbers |
 | Xbox | make the suspend unit's boundary small, owned and versioned; let the title handle the network |
 
-What Ferrix has that none of them had: it owns the kernel, the GPU driver,
+What Xaqu has that none of them had: it owns the kernel, the GPU driver,
 the compositor, the X server, the sound server and the filesystem. Every
 boundary in a Linux desktop that CRIU stops at is code in this tree.
 
@@ -242,7 +242,7 @@ its shell.
 
 "Freeze" is S1, "disk" is S2 and S3 (S2 keeps the kernel objects, §3.2),
 "rebuild" is what must be recreated or renegotiated on resume. ★ marks what
-Ferrix can do because it owns the stack and Linux with CRIU cannot.
+Xaqu can do because it owns the stack and Linux with CRIU cannot.
 
 ### 2.1 Memory
 
@@ -254,7 +254,7 @@ Ferrix can do because it owns the stack and Linux with CRIU cannot.
 | GPU objects (GEM) | VMOs **the Intel driver owns**, mapped into the client (`MapReply::Vmo`, INTEL-GPU §4.2), pinned in its IOMMU domain | stays, pinned | ★ the driver saves them (§2.5); the iGPU has no VRAM, so they are system RAM | recreated by the driver and mapped at the same address |
 | Pins and quota | `object::pin`, the job's memory charge | stays | not saved | charged again |
 
-Ferrix has **no swap**, so today a frozen game keeps every page resident
+Xaqu has **no swap**, so today a frozen game keeps every page resident
 (`memory.reclaim` exists but takes only page cache, `user/cache.rs:449`).
 
 ### 2.2 Threads, registers, signals, futexes
@@ -270,7 +270,7 @@ Ferrix has **no swap**, so today a frozen game keeps every page resident
 | Credentials, namespaces, rlimits, umask, cwd | `syscall/process.rs` | stays | saved | set again, never raised (§3.3) |
 
 The freeze's restart rule is the largest single simplification here. CRIU
-must cope with threads stopped inside the kernel; a frozen Ferrix process
+must cope with threads stopped inside the kernel; a frozen Xaqu process
 has none, so a checkpoint is registers, memory and object tables, and no
 kernel wait state at all. A thread interrupted inside the vDSO is the one
 exception (its program counter is in the vDSO's page): §3.3 keeps the vDSO
@@ -280,13 +280,13 @@ where it was.
 
 | State | Where | Freeze | Disk | Rebuild |
 |---|---|---|---|---|
-| btrfs files: game data, the Wine prefix, saves | `fs/btrfs.rs`, page cache | stays | path, inode, offset, flags | ★ opened again; Ferrix owns btrfs, so the checkpoint can **reflink every open file into the image** and restore the file as it was, which CRIU cannot (it checks mtime and size and refuses). Reflink is not built (no `FICLONE` in the tree); stage C's snapshots are the alternative |
+| btrfs files: game data, the Wine prefix, saves | `fs/btrfs.rs`, page cache | stays | path, inode, offset, flags | ★ opened again; Xaqu owns btrfs, so the checkpoint can **reflink every open file into the image** and restore the file as it was, which CRIU cannot (it checks mtime and size and refuses). Reflink is not built (no `FICLONE` in the tree); stage C's snapshots are the alternative |
 | Unlinked open files, tmpfs files, memfds, `/dev/shm` | `fs/pages.rs`, tmpfs | stays | contents saved | made again with the contents |
 | Pipes, FIFOs, ptys inside the unit | `fs/pipe.rs`, `fs/pty.rs` | stays, buffers kept | buffers and both ends | made again, buffers refilled |
 | Unix sockets inside the unit (game to wineserver) | `fs/socket.rs`, `SCM_RIGHTS` included | stays | both ends, queued data and queued descriptors | made again as a pair |
 | Unix sockets to outside (hyprix, yserver, pulsed, Steam, D-Bus) | `fs/socket.rs` | stays; the peer sees a silent client (§2.6) | **a boundary**: the peer must save its half, or the connection is severed | §2.6 and §2.7 |
 | eventfd, timerfd, signalfd, epoll, inotify, pidfd | `fs/eventfd.rs`, `timerfd.rs`, `signalfd.rs`, `epoll.rs`, `inotify.rs`, `pidfd.rs` | stays; a timerfd keeps counting | counters, timers (remaining time on the monotonic clock), interest lists, watches as paths | made again; epoll's ready list rebuilt by polling once |
-| TCP and UDP sockets | the kernel's net core (`net/`, logic in `src/lib/network/net`) | stays; ★ the kernel's stack keeps the connection alive, answering zero-window probes, for as long as the *peer's application* waits | ★ the stack is Ferrix's, so the connection's state (sequence numbers, windows, buffers) can be saved without a repair mode | after a short gap restored as it was; after a long one or a reboot the peer has given up, so the socket is restored **reset** and the program sees `ECONNRESET` at its next call |
+| TCP and UDP sockets | the kernel's net core (`net/`, logic in `src/lib/network/net`) | stays; ★ the kernel's stack keeps the connection alive, answering zero-window probes, for as long as the *peer's application* waits | ★ the stack is Xaqu's, so the connection's state (sequence numbers, windows, buffers) can be saved without a repair mode | after a short gap restored as it was; after a long one or a reboot the peer has given up, so the socket is restored **reset** and the program sees `ECONNRESET` at its next call |
 | The render node and card nodes | the chardev core (`interfaces/chardev`), served by the driver | a held request is interrupted (`ERESTARTSYS`) and made again at thaw | §2.5 | §2.5 |
 
 ### 2.4 Native kernel objects and handles
@@ -405,11 +405,11 @@ yet; with the server inside the unit it no longer matters.
 | A sound stream | pulsed, ring 3 (`media/pulsed`); the game is a PulseAudio client over a Unix socket and a memfd | pulsed sees the stream underrun. ★ It is told the client is parked and corks the stream rather than playing silence | pulsed's half is a few dozen bytes (format, volume, buffer attributes): it saves it and accepts the restored socket. Otherwise the stream is severed and libpulse reports the server gone, which not every program handles |
 | Input devices | evdev nodes held by hyprix; the game gets input through Wayland or X | nothing: the game never holds a device | nothing to save; a controller unplugged meanwhile arrives as an unplug |
 | A raw input device the game opened itself (a controller through `hidraw`) | the driver | stays | severed: the device may be gone; the game sees a disconnect |
-| Network connections to a game server | the kernel's stack (§2.3); the *server's* half is not ours | for seconds: nothing. After the server's heartbeat timeout (tens of seconds is typical, a guess): **the server drops the session** whatever Ferrix does | the session is gone; the game sees a reset and must reconnect |
+| Network connections to a game server | the kernel's stack (§2.3); the *server's* half is not ours | for seconds: nothing. After the server's heartbeat timeout (tens of seconds is typical, a guess): **the server drops the session** whatever Xaqu does | the session is gone; the game sees a reset and must reconnect |
 | wineserver | a process of the prefix, beside the game; holds every NT object (handles, events, mutexes, windows' Wine side) | ★ inside the unit, frozen with the game | inside the unit, saved with it: wineserver is just another process |
 | fsync / ntsync waits | futexes (Proton's fsync), `docs/WINE.md` | futex waits are restarted (§2.2) | nothing to save |
 | The Steam client | outside the unit; the game reaches it through `steamclient.so` over shared memory and sockets | Steam waits for a silent client | **a boundary**: Steam restarted after a reboot does not know the restored connection. Either Steam and the game are suspended together (§3.3) or the Steam API calls fail until the game restarts its Steam connection, which few games do |
-| ACE anti-cheat | inside the game's processes under Wine (no kernel driver on Ferrix) | a stall, which a laptop's sleep also causes on Windows | unknown: it may check the time gap, the tick count, or tokens with its server. A restore is byte-for-byte the same memory, so integrity checks pass; a server-side token has expired |
+| ACE anti-cheat | inside the game's processes under Wine (no kernel driver on Xaqu) | a stall, which a laptop's sleep also causes on Windows | unknown: it may check the time gap, the tick count, or tokens with its server. A restore is byte-for-byte the same memory, so integrity checks pass; a server-side token has expired |
 
 ### 2.8 Time and the CPU
 
@@ -418,7 +418,7 @@ yet; with the server inside the unit it no longer matters.
 * **`CLOCK_MONOTONIC`** runs on through an S1 freeze; the game sees one
   long frame, as after sleep on Windows, and every engine clamps its delta.
   **Across a reboot it would go backwards** (a new boot starts near zero),
-  which programs do not survive. ★ Ferrix has time namespaces with per
+  which programs do not survive. ★ Xaqu has time namespaces with per
   namespace offsets for the monotonic and boot-time clocks
   (`syscall/timens.rs`): the restored unit gets a time namespace whose
   offset makes its monotonic clock continue from the checkpoint, as CRIU
@@ -435,7 +435,7 @@ yet; with the server inside the unit it no longer matters.
   Restored on a CPU that lacks one, it dies on the first such instruction.
   Same machine: no issue. Another machine: ★ launch suspendable programs
   with **CPUID faulting** (Intel's per-thread CPUID trap, Linux's
-  `ARCH_SET_CPUID`, not in Ferrix yet) reporting a baseline both machines
+  `ARCH_SET_CPUID`, not in Xaqu yet) reporting a baseline both machines
   have.
 
 ### 2.9 What follows from the inventory
@@ -445,16 +445,16 @@ Sort the state by where its other half is:
 1. **Inside the process or the kernel, owned by the unit:** memory,
    threads, signals, the descriptors and handles whose both ends are in the
    unit. The kernel can freeze, page out, dump and rebuild all of it. CRIU
-   shows it can be done, and Ferrix's freeze makes it simpler (no kernel
+   shows it can be done, and Xaqu's freeze makes it simpler (no kernel
    wait state, §2.2).
-2. **In a peer on this machine that Ferrix owns:** the GPU driver, hyprix,
+2. **In a peer on this machine that Xaqu owns:** the GPU driver, hyprix,
    yserver, pulsed, and the filesystem. Each needs a *park* (S1), an
    *evict* (S2) or a *save and restore one client* (S3) operation. This is
-   where Ferrix can do what Linux cannot, because each peer is code in this
+   where Xaqu can do what Linux cannot, because each peer is code in this
    tree. A peer that cannot do it can be pulled *inside* the unit instead
    (yserver, wineserver), as the Xbox puts the game's whole OS inside its
    VM.
-3. **In a peer Ferrix does not own:** the game server, NVIDIA's RM, Steam's
+3. **In a peer Xaqu does not own:** the game server, NVIDIA's RM, Steam's
    protocol, the anti-cheat's server. Nobody can save these. The best any
    system does is sever them cleanly and let the program reconnect. That is
    the limit of S3 for an online game, and it is the same limit as the
@@ -521,7 +521,7 @@ unless a native freeze is added: that is a change to `object/process.rs`
    buffer intact.
 2. Freeze it, `kill -9` the Intel driver, let devmgr restart it, thaw.
    Today: `VK_ERROR_DEVICE_LOST` at thaw (§11). With the keeper's step 2:
-   `survived`. This is the one-line demonstration of what Ferrix's stack
+   `survived`. This is the one-line demonstration of what Xaqu's stack
    gives that Linux cannot: an application frozen across a crash of its
    GPU driver and thawed with its GPU state intact.
 3. Under `test-compositor`, freeze a focused Wayland client and move the
@@ -564,8 +564,8 @@ What landed:
 | The frozen program's connections parked: no frame callbacks (kept for the thaw), no input, the window at half opacity | `state.rs` (`Slot::park`, `frames_done`), `deliver.rs` (`awake`) |
 | The session's scope delegated to its user | `sessiond/src/scope.rs`, `docs/AUTH.md` §6.4 |
 | At the resume, the processes moved back to the cgroup above and `suspend-<pid>` removed (2026-10-31) | `suspend.rs` (`release`) |
-| SUPER+Z suspends the focused program, SUPER+SHIFT+Z resumes every one suspended, in both shipped themes (2026-10-31) | `themes/ferrix-light.conf`, `themes/xaqu-keys.conf` |
-| `test-compositor --boot suspend`: as `ferrix`, a counter in the session's scope is frozen in `suspend-<pid>` for five seconds; not a tick while frozen, and the first tick after is the next number; after the resume it is back in the scope and `suspend-<pid>` is gone. Then the pattern's window is suspended and resumed and is still a client | `xtask/src/compositor/hyprlock.rs` |
+| SUPER+Z suspends the focused program, SUPER+SHIFT+Z resumes every one suspended, in both shipped themes (2026-10-31) | `themes/xaqu-light.conf`, `themes/xaqu-keys.conf` |
+| `test-compositor --boot suspend`: as `xaqu`, a counter in the session's scope is frozen in `suspend-<pid>` for five seconds; not a tick while frozen, and the first tick after is the next number; after the resume it is back in the scope and `suspend-<pid>` is gone. Then the pattern's window is suspended and resumed and is still a client | `xtask/src/compositor/hyprlock.rs` |
 
 No kernel line, no init change, no certified-item file. Left for S1: the
 keeper's step 2 (INTEL-GPU §12.8), so that a game frozen across a GPU
@@ -579,7 +579,7 @@ over ssh and ran in `system.slice/sshd.service`, so before the test the
 root shell moved Steam's processes into `session-1.scope`, where a
 program started from the desktop is. Each round ran
 `hyprctl dispatch suspend pid:5743` (Steam's `reaper` for the game) as
-`ferrix`, held, then `resume pid:5743`.
+`xaqu`, held, then `resume pid:5743`.
 
 | Hold | What hyprix did | The game during the hold | After the resume |
 |---|---|---|---|
@@ -593,7 +593,7 @@ What this shows:
   takes no CPU at all, and thaws where it stopped, GPU and swapchain
   included (one boot, no driver restart).
 * Endfield's own server keeps a silent session at least 2 minutes and
-  less than 10. That is the server's limit (§2.7), not Ferrix's; the
+  less than 10. That is the server's limit (§2.7), not Xaqu's; the
   client noticed it on its own at the thaw and said so. A shorter hold
   than 10 minutes would find the exact limit.
 * The window is yserver's, so hyprix reported `(0 windows)` and did not
@@ -604,7 +604,7 @@ What this shows:
   minutes, then complete after one key press, and a click on its Confirm
   did nothing in the minute watched. Whether that is the game or input
   through yserver after a thaw was not followed up.
-* On Ferrix, a log file Unity and the SDK append to keeps its old mtime
+* On Xaqu, a log file Unity and the SDK append to keeps its old mtime
   (`u8sdk_pc.log` said 20:32 holding lines from 22:16, box clock).
 
 ### 3.2 S2: page the frozen application out to disk, same boot
@@ -748,7 +748,7 @@ only because its guest OS is separate from the host's.
   unknown and cannot be tested safely on an account the customer cares
   about. A further rule, by policy: the image of an **online** game is
   consumed when it is resumed, so a save state can never be loaded twice.
-  Ferrix should not become a tool for undoing a turn in an online game.
+  Xaqu should not become a tool for undoing a turn in an online game.
   Offline programs may keep an image and restore it again, an emulator's
   save state.
 * **Time jumps.** Hidden from the monotonic clock; the wall clock jumps.
@@ -799,11 +799,11 @@ a fresh pid and time namespace, and it goes on counting from where it was,
 its pid and its monotonic clock unchanged. A second PoC, native: a program
 holding a VMO and a channel to a second program in the same job, both
 restored, the handles at the same numbers and the channel's queued message
-still there. That is EROS's idea, shown on Ferrix's handles.
+still there. That is EROS's idea, shown on Xaqu's handles.
 
 ### 3.4 S4: onto another machine
 
-**What it is.** S3's image restored on a second Ferrix machine.
+**What it is.** S3's image restored on a second Xaqu machine.
 
 **What it adds.**
 
@@ -833,7 +833,7 @@ QEMU guest with a different CPU model, the baseline enforced.
 | S1 | Pause any Linux app, the game included, and come back to it within the boot; survives a GPU driver restart once the keeper's step 2 lands | none | 9 + the keeper's 37 | no |
 | S2 | S1, and the paused app gives its RAM back | core: swap for frozen jobs | 33 | yes, design first |
 | S3 | Resume after a reboot, from exactly that point, offline programs fully, online ones up to their reconnect | item and core: dump and restore | ~130 | yes, the largest review |
-| S4 | Move it to another Ferrix machine | core: CPUID trap | ~15 | yes |
+| S4 | Move it to another Xaqu machine | core: CPUID trap | ~15 | yes |
 
 **S1 first.** It is ring 3, about two weeks, needs no review, and its proof
 of concept costs an afternoon on QEMU. It also forces the decision every
@@ -850,7 +850,7 @@ an online game should be promised (§4).
 1. **Whether to build S1 now.** About 9 points of ring-3 work, no kernel
    change, no review.
 2. **Whether S2's swap is wanted**, in the core ring with a design review
-   first. Ferrix has no swap today at all; this would be its first.
+   first. Xaqu has no swap today at all; this would be its first.
 3. **Steam and the game for S3:** suspend the game alone, its Steam API
    connection severed at restore, or Steam and the game together.
 4. **Online games:** S1 only (a pause measured in minutes), or S3 too with

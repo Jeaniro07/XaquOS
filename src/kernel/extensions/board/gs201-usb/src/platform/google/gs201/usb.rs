@@ -23,9 +23,9 @@
 
 use alloc::format;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_fdt::{Fdt, Node};
-use ferrix_native_abi::types::TREE_GS201_DWC3;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_fdt::{Fdt, Node};
+use xaqu_native_abi::types::TREE_GS201_DWC3;
 
 use crate::device::DmaShape;
 use crate::discovery::board::{self, BoardBinding, BoardDevice};

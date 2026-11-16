@@ -3,8 +3,8 @@
 tests (finding F-56's gap, for the crates this lists).
 
 `coverage-report.py` and `decision-coverage.py` measure the kernel's boots.
-A crate the item holds that no kernel links -- `ferrix-sigverify` and
-`ferrix-sha256`, product signing's verifier (docs/SIGNING.md §8.5) -- is
+A crate the item holds that no kernel links -- `xaqu-sigverify` and
+`xaqu-sha256`, product signing's verifier (docs/SIGNING.md §8.5) -- is
 proved by its host tests, so its coverage is measured there:
 
     python3 tools/common/gen/host-coverage.py            # measure, write
@@ -54,10 +54,10 @@ import tempfile
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 EVIDENCE = ROOT / "docs/certification/host-coverage.json"
 CRATES = {
-    "ferrix-boot-policy": "src/lib/proto/boot-policy",
-    "ferrix-sha256": "src/lib/crypto/sha256",
-    "ferrix-sigverify": "src/lib/crypto/sigverify",
-    "ferrix-slots": "src/lib/proto/slots",
+    "xaqu-boot-policy": "src/lib/proto/boot-policy",
+    "xaqu-sha256": "src/lib/crypto/sha256",
+    "xaqu-sigverify": "src/lib/crypto/sigverify",
+    "xaqu-slots": "src/lib/proto/slots",
 }
 TEST_FILES = {"tests.rs", "vectors.rs"}
 TOOLCHAIN = "nightly"
@@ -279,7 +279,7 @@ def main() -> int:
     old = load()
     evidence = {
         "//": [
-            "Statement and branch coverage of ferrix-sha256 and ferrix-sigverify under their",
+            "Statement and branch coverage of xaqu-sha256 and xaqu-sigverify under their",
             "host tests, written by tools/common/gen/host-coverage.py (its docstring says how",
             "and its limits). `argued` holds each unreached line or branch outcome with why;",
             "the gate (--check) fails a stale file or an unargued gap.",

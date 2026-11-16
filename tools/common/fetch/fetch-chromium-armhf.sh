@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetch Debian's Chromium for armhf and every library it loads, and put them
-# on a btrfs volume: the disk Chromium runs from on an ARMv7-A Ferrix -- the
+# on a btrfs volume: the disk Chromium runs from on an ARMv7-A Xaqu -- the
 # STM32MP157D-DK1 above all (docs/CHROME.md §10).
 #
 # The armhf twin of tools/common/fetch/fetch-chromium-arm64.sh, made the same
@@ -20,20 +20,20 @@
 # `--disable-gpu`). 124 packages, 335 MiB installed as Debian counts it.
 # Every download is pinned by the SHA-256 its index gave. After unpacking,
 # every library each ELF file on the volume needs is looked for on it, so a
-# library the closure left out fails here rather than on Ferrix.
+# library the closure left out fails here rather than on Xaqu.
 #
 # The volume is a Debian-shaped tree at its root -- `usr/lib`,
 # `usr/lib/arm-linux-gnueabihf`, Chromium in `usr/lib/chromium` -- which
-# Ferrix mounts at `/data`; the image links the directories glibc names into
+# Xaqu mounts at `/data`; the image links the directories glibc names into
 # it.
 #
 # Room: the arm64 volume leaves 512 MiB free for Chromium's profile. This one
-# leaves $FERRIX_CHROMIUM_ROOM MiB (default 64), because on the DK1 a volume
+# leaves $XAQU_CHROMIUM_ROOM MiB (default 64), because on the DK1 a volume
 # is held in RAM until the board reads its SD card at run time, and the
 # profile goes to tmpfs (`--user-data-dir` in /dev/shm) either way.
 #
-# Writes $FERRIX_CHROMIUM_VOLUME/chromium.img (default
-# ~/.local/share/ferrix/chromium-armhf/chromium.img). Needs curl, sha256sum,
+# Writes $XAQU_CHROMIUM_VOLUME/chromium.img (default
+# ~/.local/share/xaqu/chromium-armhf/chromium.img). Needs curl, sha256sum,
 # dpkg-deb, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-chromium-armhf.sh
@@ -42,16 +42,16 @@ set -euo pipefail
 
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
-out=${FERRIX_CHROMIUM_VOLUME:-$HOME/.local/share/ferrix/chromium-armhf}
+out=${XAQU_CHROMIUM_VOLUME:-$HOME/.local/share/xaqu/chromium-armhf}
 # Where a pinned Debian file comes from once the mirror has dropped it, as
 # trixie-security drops Chromium's update when the next one comes:
 # snapshot.debian.org's archive as it was the day the closure was resolved.
 # The SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_times=(20261007T235959Z)
-# The downloads, kept between runs; FERRIX_CHROMIUM_POOL names another
+# The downloads, kept between runs; XAQU_CHROMIUM_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_CHROMIUM_POOL:-$out/pool}
+pool=${XAQU_CHROMIUM_POOL:-$out/pool}
 
 # `<archive> <pool path> <sha256>`: main and updates come from $debian,
 # security from $security.
@@ -263,7 +263,7 @@ done < <(find "$tree/usr/lib/chromium" "$lib" -maxdepth 1 -type f -print0)
 
 # Room for what Chromium writes beside itself, and a size that does not
 # depend on how mkfs rounds: small, for the reason at the top.
-size=$(( $(du -sm "$tree" | cut -f1) + ${FERRIX_CHROMIUM_ROOM:-64} ))
+size=$(( $(du -sm "$tree" | cut -f1) + ${XAQU_CHROMIUM_ROOM:-64} ))
 image="$out/chromium.img"
 rm -f "$image"
 truncate -s "${size}M" "$image"

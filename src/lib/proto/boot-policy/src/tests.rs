@@ -10,18 +10,18 @@ use std::sync::OnceLock;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_sigverify::lms::{self, HSS_PUBLIC_KEY_LEN};
-use ferrix_sigverify::{Anchor, Field, Kind};
-use ferrix_slots::slot::{HEADER_LEN, SlotError, SlotHeader, VERSION_1, VERSION_2};
-use ferrix_softsign::manifest::{Body, assemble};
-use ferrix_softsign::token::{CKA_VALUE, CKM_HSS, ObjectHandle, SoftToken, Token};
+use xaqu_sigverify::lms::{self, HSS_PUBLIC_KEY_LEN};
+use xaqu_sigverify::{Anchor, Field, Kind};
+use xaqu_slots::slot::{HEADER_LEN, SlotError, SlotHeader, VERSION_1, VERSION_2};
+use xaqu_softsign::manifest::{Body, assemble};
+use xaqu_softsign::token::{CKA_VALUE, CKM_HSS, ObjectHandle, SoftToken, Token};
 
 use crate::{
     BLOCK_LEN, BlockField, Build, ENTRIES_AT, ENTRY_LEN, MAX_ANCHORS, Mode, Refusal, Rescue,
     Signed, decide, encode_block, generic_family, parse_block, rescue,
 };
 
-type Sig = ferrix_sigverify::Refusal;
+type Sig = xaqu_sigverify::Refusal;
 
 /// A development token and two H10 keys, made once per test run.
 struct Keys {
@@ -34,7 +34,7 @@ fn keys() -> &'static Keys {
     static KEYS: OnceLock<Keys> = OnceLock::new();
     KEYS.get_or_init(|| {
         let dir = std::env::temp_dir().join(std::format!(
-            "ferrix-boot-policy-test-{}",
+            "xaqu-boot-policy-test-{}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&dir);
@@ -155,7 +155,7 @@ fn body() -> Body {
         arch: X86,
         family: PC,
         release: 1,
-        label: *b"ferrix policy test 000000000000\0",
+        label: *b"xaqu policy test 000000000000\0",
         payload_len: 4064,
         ..Body::default()
     }

@@ -1,20 +1,20 @@
 //! Exported interfaces, and FTDI serial adapters and the USB-Blaster as
-//! their class drivers drive them: `ferrix-usb-serial`'s logic reaching a
+//! their class drivers drive them: `xaqu-usb-serial`'s logic reaching a
 //! model chip through the bus's export calls, as `usbserial` reaches a
 //! real one through `usbhid`'s.
 
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_usb_serial::blaster::{self, Jtag, MAX_TAPS};
-use ferrix_usb_serial::ftdi::{
+use xaqu_usb_serial::blaster::{self, Jtag, MAX_TAPS};
+use xaqu_usb_serial::ftdi::{
     self, Chip, Flow, LINE_BREAK, LINE_OVERRUN, LINE_PARITY, Line, PRODUCT_FT232, PRODUCT_FT232H,
     PRODUCT_USB_BLASTER, Parity, Role, VENDOR_ALTERA, VENDOR_FTDI,
 };
-use ferrix_usb_serial::port::{
+use xaqu_usb_serial::port::{
     self, Cable as Link, FLAG_BREAK, FLAG_NORMAL, FLAG_OVERRUN, FLAG_PARITY, Identity, Serial,
 };
-use ferrix_usb_serial::{CHUNK_BYTES, Setup, Usb};
+use xaqu_usb_serial::{CHUNK_BYTES, Setup, Usb};
 
 use super::model::ftdi::{Cable, Serial as Far, Tap, chip};
 use super::model::xhci::{Memory, Regs, Shared, Time, Xhci};
@@ -143,7 +143,7 @@ fn driver<'a>(model: &Shared, bus: &'a mut TestBus) -> Driver<'a> {
     }
 }
 
-/// Bind `ferrix-usb-serial` to exported interface 0, as `usbserial` does
+/// Bind `xaqu-usb-serial` to exported interface 0, as `usbserial` does
 /// at its start: both streams opened, the chip set up.
 fn bind(model: &Shared, bus: &mut TestBus) -> Serial {
     bus.export_open(0, IN).expect("IN opens");
@@ -827,8 +827,8 @@ fn an_ft232h_s_mpsse_loopback_brings_the_pattern_back_and_the_uart_too() {
     let before = vendor_requests(&model, device).len();
     let pattern: Vec<u8> = (0..4096_u32).map(|at| (at * 37 % 251) as u8).collect();
     let outcome =
-        ferrix_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern);
-    assert_eq!(outcome, Ok(ferrix_usb_serial::mpsse::Outcome::Equal));
+        xaqu_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern);
+    assert_eq!(outcome, Ok(xaqu_usb_serial::mpsse::Outcome::Equal));
     let requests = &vendor_requests(&model, device)[before..];
     // MPSSE in, and the chip's own mode again after, and the line it had.
     assert!(requests.contains(&(0x0B, 0x0200, 1)), "{requests:?}");
@@ -855,8 +855,8 @@ fn a_loopback_that_does_not_loop_says_where_it_differs() {
     model.borrow_mut().serials[0].mpsse = Some(broken);
     let pattern = [0x55_u8; 64];
     assert_eq!(
-        ferrix_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
-        Ok(ferrix_usb_serial::mpsse::Outcome::Differs(0))
+        xaqu_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
+        Ok(xaqu_usb_serial::mpsse::Outcome::Differs(0))
     );
     // A chip with no engine answers no synchronisation.
     let (model, mut bus, _) = board(
@@ -866,7 +866,7 @@ fn a_loopback_that_does_not_loop_says_where_it_differs() {
     );
     let mut serial = bind(&model, &mut bus);
     assert_eq!(
-        ferrix_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
+        xaqu_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
         Err(port::Error::Timeout)
     );
     // And a B-family chip has no engine to run it on.
@@ -877,7 +877,7 @@ fn a_loopback_that_does_not_loop_says_where_it_differs() {
     );
     let mut serial = bind(&model, &mut bus);
     assert_eq!(
-        ferrix_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
+        xaqu_usb_serial::mpsse::loopback(&mut driver(&model, &mut bus), &mut serial, &pattern),
         Err(port::Error::Unknown)
     );
 }

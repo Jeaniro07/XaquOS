@@ -1,6 +1,6 @@
 //! System call numbers, and the translation from a number to a call.
 //!
-//! There is no single Linux system call table. Ferrix's three architectures
+//! There is no single Linux system call table. Xaqu's three architectures
 //! use three of them: x86-64 kept the numbering it grew
 //! (`arch/x86/entry/syscalls/syscall_64.tbl`), every architecture added after
 //! 2011 -- AArch64 included -- uses the generic table in
@@ -1075,7 +1075,7 @@ pub mod aarch64 {
 ///
 /// # Why so many names end in `64`
 ///
-/// This is the only 32-bit architecture Ferrix targets, and the difference is
+/// This is the only 32-bit architecture Xaqu targets, and the difference is
 /// not cosmetic. A register cannot carry a file offset, a file size or a
 /// `time_t`, so the calls that pass one exist twice: an original that has
 /// outgrown its arguments, and a replacement that splits them across two

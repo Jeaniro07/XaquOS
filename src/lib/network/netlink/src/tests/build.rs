@@ -1,7 +1,7 @@
 //! Building messages into a caller's buffer: the lengths, the padding, and
 //! the refusal when there is no room.
 
-use ferrix_linux_abi::netlink::{
+use xaqu_linux_abi::netlink::{
     IFLA_ADDRESS, IFLA_IFNAME, IFLA_MTU, NLM_F_MULTI, NLMSG_DONE, NLMSG_ERROR, NlMsgErr, NlMsgHdr,
     RTM_GETLINK, RTM_NEWLINK, nlmsg_align,
 };

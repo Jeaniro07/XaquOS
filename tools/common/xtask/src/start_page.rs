@@ -2,7 +2,7 @@
 //! [`PATH`] and opened as [`URL`] by `run-compositor --chrome` and
 //! `flash --compositor --chrome`.
 //!
-//! It is where somebody who has just been handed a Ferrix desktop finds their
+//! It is where somebody who has just been handed a Xaqu desktop finds their
 //! way: one box that searches the web, opens an address, or opens a path in
 //! the guest's own tree; tiles for the places in that tree worth a look,
 //! which Chrome lists as it lists any directory; the keys the desktop binds;
@@ -26,14 +26,14 @@ use crate::{Error, Result};
 const SOURCE: &str = "assets/start/index.html";
 
 /// Where it goes in the image.
-const PATH: &str = "usr/share/ferrix/start/index.html";
+const PATH: &str = "usr/share/xaqu/start/index.html";
 
 /// What Chrome is started on. No spaces, because the compositor splits
 /// `exec-once` at them.
-pub(crate) const URL: &str = "file:///usr/share/ferrix/start/index.html";
+pub(crate) const URL: &str = "file:///usr/share/xaqu/start/index.html";
 
 /// The element whose `{}` the boot's facts replace.
-const SLOT: &str = r#"<script id="ferrix" type="application/json">{}</script>"#;
+const SLOT: &str = r#"<script id="xaqu" type="application/json">{}</script>"#;
 
 /// With `--chrome`, the page into `ports`, for a desktop of `arch` whose
 /// configuration is `config`, at `config_path` in the image.
@@ -453,7 +453,7 @@ bind = SUPER, Q, killactive
         let filled = fill(&page, &facts).unwrap();
         assert_eq!(
             filled,
-            "<p><script id=\"ferrix\" type=\"application/json\">{\"arch\":\"x86_64\",\
+            "<p><script id=\"xaqu\" type=\"application/json\">{\"arch\":\"x86_64\",\
              \"commit\":\"e1c62a83\",\"libc\":\"ferrousli\",\"config\":\"/etc/hyprland.conf\",\
              \"binds\":[{\"keys\":[\"Super\",\"X\"],\"does\":\"say \\\"\\u003c/script\\u003e\\\"\",\
              \"command\":\"echo \\\\\"}]}</script></p>"

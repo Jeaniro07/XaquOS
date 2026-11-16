@@ -1,7 +1,7 @@
 //! The Android Debug Bridge's wire protocol, the device's half: what
 //! `src/user/system/linux/adbd` reads from and writes to the host's `adb`.
 //!
-//! `docs/ADB.md` is why Ferrix speaks adb and how much of it. The authority
+//! `docs/ADB.md` is why Xaqu speaks adb and how much of it. The authority
 //! is AOSP's `packages/modules/adb`: `protocol.txt` for [`message`] and
 //! `SYNC.TXT` for [`sync`]. Every constant here was checked against the host's
 //! `adb` 37 on example, which is the test that matters.

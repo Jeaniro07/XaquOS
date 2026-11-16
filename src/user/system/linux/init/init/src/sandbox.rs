@@ -12,7 +12,7 @@
 //! `PR_SET_NO_NEW_PRIVS` for `NoNewPrivileges=`, and then [`confine`]: the
 //! seccomp filter of `SystemCallFilter=`, `SystemCallErrorNumber=` and
 //! `SystemCallArchitectures=`, compiled in the parent by
-//! `ferrix_svc::filter`, so that it sees nothing of init's but `execve`.
+//! `xaqu_svc::filter`, so that it sees nothing of init's but `execve`.
 //!
 //! Everything that needs a decision or an allocation is in [`plan`], in the
 //! parent, where a failure is the unit's `SpawnFailed` with a line saying
@@ -22,15 +22,15 @@ use std::ffi::CString;
 use std::fs;
 use std::io;
 
-use ferrix_svc::filter::{self, Abi};
-use ferrix_svc::kind::{ProtectSystem, Sandbox};
+use xaqu_svc::filter::{self, Abi};
+use xaqu_svc::kind::{ProtectSystem, Sandbox};
 
 use crate::spawn::Unprepared;
 use crate::sys;
 
 /// What `ProtectSystem=yes` makes read-only: systemd's `/usr`, `/boot` and
 /// `/efi`, and the directories a merged `/usr` would have put under `/usr`,
-/// which Ferrix's images keep at the top (§4.5).
+/// which Xaqu's images keep at the top (§4.5).
 const SYSTEM: [&str; 7] = ["/usr", "/boot", "/efi", "/bin", "/sbin", "/lib", "/lib64"];
 
 /// What `ProtectSystem=strict` leaves writable: the API filesystems.
@@ -312,7 +312,7 @@ pub(crate) fn enter(plan: &Plan) -> io::Result<()> {
             libc::MS_NOSUID | libc::MS_NODEV,
             Some(c"mode=1777"),
         )?;
-        // The options string is not read by every kernel's tmpfs (Ferrix's
+        // The options string is not read by every kernel's tmpfs (Xaqu's
         // reads none), so the mode is set as well.
         sys::change_mode(place, 0o1777)?;
     }
@@ -444,7 +444,7 @@ mod tests {
     #[test]
     fn a_filter_is_compiled_and_implies_no_new_privs_without_privilege() {
         let filter = Sandbox {
-            system_call_filter: Some(ferrix_svc::kind::SystemCallFilter::default()),
+            system_call_filter: Some(xaqu_svc::kind::SystemCallFilter::default()),
             ..Sandbox::default()
         };
         let as_root = plan(&filter, false, false)

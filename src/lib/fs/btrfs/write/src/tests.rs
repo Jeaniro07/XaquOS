@@ -1,6 +1,6 @@
 //! Tests of the write path against volumes real `mkfs.btrfs` made.
 //!
-//! Two oracles. The first is `ferrix-btrfs`, the reader stage 11 checked
+//! Two oracles. The first is `xaqu-btrfs`, the reader stage 11 checked
 //! against btrfs itself: whatever this crate writes must open and read back
 //! there. The second is [`check`], which recomputes from the trees everything
 //! a commit must have kept consistent — each tree block's extent item and
@@ -16,11 +16,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::chunk::ChunkMapEntry;
-use ferrix_btrfs::items::{EXTENT_DATA_KEY, EXTENT_TREE_OBJECTID, ExtentData, FS_TREE_OBJECTID};
-use ferrix_btrfs::tree::BtrfsKey;
-use ferrix_btrfs::volume::{Device, ReadKind, Volume};
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::chunk::ChunkMapEntry;
+use xaqu_btrfs::items::{EXTENT_DATA_KEY, EXTENT_TREE_OBJECTID, ExtentData, FS_TREE_OBJECTID};
+use xaqu_btrfs::tree::BtrfsKey;
+use xaqu_btrfs::volume::{Device, ReadKind, Volume};
 
 use super::*;
 use crate::chunks::STRIPE_LEN;
@@ -624,7 +624,7 @@ fn no_tree_block_is_allocated_over_a_superblock_mirror() {
 /// superblock mirror at 64 MiB, committed. Returns the device and that
 /// chunk's logical address of the mirror.
 pub(crate) fn grown_over_the_mirror() -> (MemDevice, u64) {
-    let mirror = ferrix_btrfs::superblock::SUPERBLOCK_OFFSETS[1];
+    let mirror = xaqu_btrfs::superblock::SUPERBLOCK_OFFSETS[1];
     let mut volume = WriteVolume::open(MemDevice::new(POPULATED)).unwrap();
     let covering = |volume: &WriteVolume<MemDevice>| {
         volume.chunks.iter().find_map(|chunk| {
@@ -681,7 +681,7 @@ fn a_crash_before_the_superblock_leaves_the_last_commit() {
     let mut crashed = base.clone();
     for op in &volume.device.log {
         if let Op::Write(at, data) = op
-            && !ferrix_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)
+            && !xaqu_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)
         {
             crashed.store(*at, data);
         }
@@ -710,7 +710,7 @@ fn the_commit_flushes_before_the_superblock() {
     let primary = log
         .iter()
         .position(
-            |op| matches!(op, Op::Write(at, _) if *at == ferrix_btrfs::superblock::PRIMARY_OFFSET),
+            |op| matches!(op, Op::Write(at, _) if *at == xaqu_btrfs::superblock::PRIMARY_OFFSET),
         )
         .unwrap();
     assert!(
@@ -721,12 +721,12 @@ fn the_commit_flushes_before_the_superblock() {
         matches!(log[primary + 1], Op::Flush),
         "and the primary is made durable before the mirror"
     );
-    let nodes_after = log[primary..].iter().any(|op| matches!(op, Op::Write(at, _) if !ferrix_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)));
+    let nodes_after = log[primary..].iter().any(|op| matches!(op, Op::Write(at, _) if !xaqu_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)));
     assert!(!nodes_after, "no node is written after the superblock");
     let mirrors: Vec<usize> = log
         .iter()
         .enumerate()
-        .filter(|(_, op)| matches!(op, Op::Write(at, _) if *at != ferrix_btrfs::superblock::PRIMARY_OFFSET && ferrix_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)))
+        .filter(|(_, op)| matches!(op, Op::Write(at, _) if *at != xaqu_btrfs::superblock::PRIMARY_OFFSET && xaqu_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at)))
         .map(|(index, _)| index)
         .collect();
     assert!(
@@ -739,12 +739,12 @@ fn the_commit_flushes_before_the_superblock() {
     );
 }
 
-/// Write the images the other tests produce to `FERRIX_BTRFS_OUT` for host
+/// Write the images the other tests produce to `XAQU_BTRFS_OUT` for host
 /// `btrfs check`; see `tools/common/test/btrfs-check-writer.sh`.
 #[test]
 #[ignore = "writes images for host btrfs check; run by tools/common/test/btrfs-check-writer.sh"]
 fn btrfs_check_images() {
-    let out = std::env::var("FERRIX_BTRFS_OUT").expect("FERRIX_BTRFS_OUT names a directory");
+    let out = std::env::var("XAQU_BTRFS_OUT").expect("XAQU_BTRFS_OUT names a directory");
     for (name, device) in fsops::images() {
         std::fs::write(std::format!("{out}/{name}.img"), device.image()).unwrap();
     }
@@ -758,7 +758,7 @@ fn btrfs_check_images() {
 /// Verifies: L.btrfs.104
 #[test]
 fn has_free_answers_what_the_free_bytes_answer() {
-    use ferrix_btrfs::chunk::{BLOCK_GROUP_DATA, BLOCK_GROUP_METADATA, BLOCK_GROUP_SYSTEM};
+    use xaqu_btrfs::chunk::{BLOCK_GROUP_DATA, BLOCK_GROUP_METADATA, BLOCK_GROUP_SYSTEM};
 
     // A group's start, its flags, and its free runs as (offset, length)
     // inside it.

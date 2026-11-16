@@ -50,7 +50,7 @@ use crate::{Corruption, RingMemory};
 /// Room for one outstanding submission, in storage the caller provides.
 ///
 /// ```
-/// # use ferrix_blkring::Slot;
+/// # use xaqu_blkring::Slot;
 /// let mut storage = [Slot::EMPTY; 64];
 /// # let _ = &mut storage;
 /// ```

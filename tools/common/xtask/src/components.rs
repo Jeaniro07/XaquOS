@@ -15,7 +15,7 @@
 //! Every command checks first that each pinned component is there, and
 //! clones the missing ones ([`ensure`]), so a fresh clone or worktree builds
 //! with no extra step. The clone borrows its objects from a mirror under
-//! `~/.local/share/ferrix/components` (or `$FERRIX_COMPONENTS`), which makes
+//! `~/.local/share/xaqu/components` (or `$XAQU_COMPONENTS`), which makes
 //! a checkout in a new worktree a matter of seconds; on Windows the objects
 //! are then copied in, so that git in WSL can read the checkout too. A
 //! checkout that is clean and behind its pin is moved to it; one with work
@@ -550,11 +550,11 @@ fn own_objects(component: &Component) -> Result<()> {
 /// The bare mirror a component's clones borrow from, made or brought up to
 /// date with the pin.
 fn mirror(component: &Component) -> Result<PathBuf> {
-    let root = match std::env::var_os("FERRIX_COMPONENTS") {
+    let root = match std::env::var_os("XAQU_COMPONENTS") {
         Some(dir) => PathBuf::from(dir),
         None => std::env::home_dir()
             .ok_or_else(|| Error::new("no home directory for the components' mirrors"))?
-            .join(".local/share/ferrix/components"),
+            .join(".local/share/xaqu/components"),
     };
     mirror_in(&root, component)
 }

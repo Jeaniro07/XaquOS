@@ -24,7 +24,7 @@
 //! straight into memory this process reads, and an upload is written here
 //! and read there. This asks for version 2 and keeps version 0 for a server
 //! that answers less, for a texture whose memory it cannot trust (below),
-//! and for `FERRIX_VTEST_PROTOCOL=0`, which is how the two are measured
+//! and for `XAQU_VTEST_PROTOCOL=0`, which is how the two are measured
 //! against each other.
 //!
 //! # Trusting the server's memory
@@ -57,7 +57,7 @@ const SERVER: &str = "virgl_test_server";
 
 /// Set to `0` to keep to protocol version 0, which is how the shared
 /// memory's gain is measured.
-const PROTOCOL_ENV: &str = "FERRIX_VTEST_PROTOCOL";
+const PROTOCOL_ENV: &str = "XAQU_VTEST_PROTOCOL";
 
 /// `VCMD_*`, from virglrenderer 1.2.0's `vtest_protocol.h`.
 const RESOURCE_CREATE: u32 = 2;
@@ -73,22 +73,22 @@ const TRANSFER_GET2: u32 = 13;
 const TRANSFER_PUT2: u32 = 14;
 const GET_PARAM: u32 = 15;
 
-/// Ferrix's own command, in the server tools/common/fetch/fetch-virgl-server.sh
+/// Xaqu's own command, in the server tools/common/fetch/fetch-virgl-server.sh
 /// builds (its patch's `vtest_protocol.h`): a texture whose storage is a
 /// dmabuf passed with it. A stock server ends the connection on a command
-/// it does not know, so it is sent only after [`PARAM_FERRIX_IMPORT_FD`]
+/// it does not know, so it is sent only after [`PARAM_XAQU_IMPORT_FD`]
 /// said it may be.
-const FERRIX_RESOURCE_IMPORT_FD: u32 = 64;
+const XAQU_RESOURCE_IMPORT_FD: u32 = 64;
 /// The `VCMD_GET_PARAM` a patched server answers valid; a stock one answers
 /// any parameter it does not know "not valid". Its value is the import's
-/// version: 1 the import alone, 2 with [`FERRIX_DMABUF_MODIFIERS`].
-const PARAM_FERRIX_IMPORT_FD: u32 = 0x4658_0001;
-/// Ferrix's own command (the second patch): the modifiers the server's EGL
+/// version: 1 the import alone, 2 with [`XAQU_DMABUF_MODIFIERS`].
+const PARAM_XAQU_IMPORT_FD: u32 = 0x4658_0001;
+/// Xaqu's own command (the second patch): the modifiers the server's EGL
 /// imports a format with, sent only to a server whose
-/// [`PARAM_FERRIX_IMPORT_FD`] is 2 or more.
-const FERRIX_DMABUF_MODIFIERS: u32 = 65;
+/// [`PARAM_XAQU_IMPORT_FD`] is 2 or more.
+const XAQU_DMABUF_MODIFIERS: u32 = 65;
 /// The most modifiers one answer carries
-/// (`VCMD_FERRIX_DMABUF_MODIFIERS_MAX`); an answer saying more is not one.
+/// (`VCMD_XAQU_DMABUF_MODIFIERS_MAX`); an answer saying more is not one.
 const DMABUF_MODIFIERS_MAX: u32 = 64;
 
 /// A modifier the server's EGL says it imports a format with.
@@ -494,7 +494,7 @@ pub struct Vtest {
     unread: HashSet<u32>,
     /// Where a frame's buffers come from, if anywhere.
     scanouts: Option<Box<dyn ScanoutSource>>,
-    /// The version of the server's [`FERRIX_RESOURCE_IMPORT_FD`], once asked:
+    /// The version of the server's [`XAQU_RESOURCE_IMPORT_FD`], once asked:
     /// 0 for a server without it.
     import_version: Option<u32>,
     /// The textures whose storage is a [`Scanout`], with it.
@@ -519,7 +519,7 @@ impl Drop for Vtest {
 impl Vtest {
     /// Start a server of this program's own and connect to it, in the
     /// protocol the environment asks for (version 2 unless
-    /// `FERRIX_VTEST_PROTOCOL=0`).
+    /// `XAQU_VTEST_PROTOCOL=0`).
     ///
     /// `None` when the host has no `virgl_test_server`, or no GL for it to
     /// stand on: a test that cannot run is skipped and says so, because the
@@ -543,7 +543,7 @@ impl Vtest {
     }
 
     /// [`Vtest::start_with`], with the server at `program` rather than the
-    /// one on `PATH`: how a test runs Ferrix's patched build beside the
+    /// one on `PATH`: how a test runs Xaqu's patched build beside the
     /// host's stock one.
     ///
     /// # Errors
@@ -554,7 +554,7 @@ impl Vtest {
         name: &str,
         version: u32,
     ) -> io::Result<Option<Self>> {
-        let Some(node) = std::env::var_os("FERRIX_VTEST_RENDERNODE") else {
+        let Some(node) = std::env::var_os("XAQU_VTEST_RENDERNODE") else {
             return Self::start_on(program, name, version);
         };
         // A pin that selects nothing must not read as a test skipped for want of a
@@ -576,7 +576,7 @@ impl Vtest {
         )]
         if !matches!(started, Ok(Some(_))) {
             panic!(
-                "FERRIX_VTEST_RENDERNODE={}: no vtest server on the pinned GPU",
+                "XAQU_VTEST_RENDERNODE={}: no vtest server on the pinned GPU",
                 node.display()
             );
         }
@@ -586,13 +586,13 @@ impl Vtest {
     /// [`Vtest::start_program`], without its look at the pin.
     fn start_on(program: &std::path::Path, name: &str, version: u32) -> io::Result<Option<Self>> {
         let socket =
-            std::env::temp_dir().join(format!("ferrix-vtest-{}-{name}.sock", std::process::id()));
+            std::env::temp_dir().join(format!("xaqu-vtest-{}-{name}.sock", std::process::id()));
         let _ = std::fs::remove_file(&socket);
-        // On one render node when `FERRIX_VTEST_RENDERNODE` names it: surfaceless EGL
+        // On one render node when `XAQU_VTEST_RENDERNODE` names it: surfaceless EGL
         // takes the driver's first device, whichever that is on this host.
         let mut server = Command::new(program);
         let _ = server.arg("--no-fork");
-        let _ = match std::env::var_os("FERRIX_VTEST_RENDERNODE") {
+        let _ = match std::env::var_os("XAQU_VTEST_RENDERNODE") {
             Some(node) => server.arg("--rendernode").arg(node),
             None => server.arg("--use-egl-surfaceless"),
         };
@@ -731,7 +731,7 @@ impl Vtest {
         self.imported.len()
     }
 
-    /// Whether the server takes dmabufs (Ferrix's patched server): asked
+    /// Whether the server takes dmabufs (Xaqu's patched server): asked
     /// once with `VCMD_GET_PARAM`, which a stock server answers "not valid"
     /// and keeps the connection.
     ///
@@ -748,7 +748,7 @@ impl Vtest {
             return Ok(known);
         }
         self.header(1, GET_PARAM)?;
-        self.words(&[PARAM_FERRIX_IMPORT_FD])?;
+        self.words(&[PARAM_XAQU_IMPORT_FD])?;
         let [len, command, valid, value] = self.reply_words::<4>()?;
         if len != 2 || command != GET_PARAM {
             return Err(io::Error::other("the server's parameter answer is not one"));
@@ -772,10 +772,10 @@ impl Vtest {
         if self.import_version()? < 2 {
             return Ok(Vec::new());
         }
-        self.header(1, FERRIX_DMABUF_MODIFIERS)?;
+        self.header(1, XAQU_DMABUF_MODIFIERS)?;
         self.words(&[fourcc])?;
         let [len, command, count] = self.reply_words::<3>()?;
-        if command != FERRIX_DMABUF_MODIFIERS
+        if command != XAQU_DMABUF_MODIFIERS
             || count > DMABUF_MODIFIERS_MAX
             || len != 1 + 3 * count
         {
@@ -856,7 +856,7 @@ impl Vtest {
         };
         let resource = self.next;
         self.next += 1;
-        self.header(10, FERRIX_RESOURCE_IMPORT_FD)?;
+        self.header(10, XAQU_RESOURCE_IMPORT_FD)?;
         #[expect(clippy::cast_possible_truncation, reason = "the modifier's two halves")]
         self.words(&[
             resource,
@@ -872,7 +872,7 @@ impl Vtest {
         ])?;
         send_fd(self.stream.as_raw_fd(), fd)?;
         let [len, command] = self.reply_words::<2>()?;
-        if command != FERRIX_RESOURCE_IMPORT_FD || !(1..=2).contains(&len) {
+        if command != XAQU_RESOURCE_IMPORT_FD || !(1..=2).contains(&len) {
             return Err(io::Error::other("the server's import answer is not one"));
         }
         let mut status = [0_u32; 2];
@@ -1324,7 +1324,7 @@ const fn four_bytes(format: u32) -> bool {
 }
 
 /// The most one write or read on the socket moves: a 1080p frame through
-/// the socket (protocol 0) is 8 MB, and Ferrix answered such a transfer with
+/// the socket (protocol 0) is 8 MB, and Xaqu answered such a transfer with
 /// `ENOMEM` on the RTX 3060 (N3c), so the bytes go in pieces and an error
 /// says how many were asked for.
 const PIECE: usize = 256 << 10;
@@ -1458,7 +1458,7 @@ impl Device for Vtest {
     }
 
     /// A client's buffer as a texture of the server's EGL, where the server
-    /// is Ferrix's patched one; `None` from a stock server, whose answer is
+    /// is Xaqu's patched one; `None` from a stock server, whose answer is
     /// the upload. Its alpha is the view's to read or not, so one format
     /// does for both of a client's.
     fn import(

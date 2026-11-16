@@ -1,5 +1,5 @@
-//! The interface `usbhid` exported, as `ferrix-usb-serial`'s [`Usb`]: the
-//! client half of `ferrix-usbif`.
+//! The interface `usbhid` exported, as `xaqu-usb-serial`'s [`Usb`]: the
+//! client half of `xaqu-usbif`.
 //!
 //! A control request is written, and its DONE waited for; whatever else
 //! comes meanwhile -- IN chunks, SENT, EMPTY, LOST -- is taken as it comes,
@@ -7,15 +7,15 @@
 //! SEND each, each free again at its SENT; IN chunks are kept, by slot, in
 //! the order they came, and each slot given back (FREE) once read.
 
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::signals::Signals;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::vmo::Vmo;
-use ferrix_usb_serial::{CHUNK_BYTES, Setup, Usb};
-use ferrix_usbif::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::signals::Signals;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::vmo::Vmo;
+use xaqu_usb_serial::{CHUNK_BYTES, Setup, Usb};
+use xaqu_usbif::{
     CONTROL_AT, CONTROL_BYTES, IN_AT, IN_SLOT_BYTES, IN_SLOTS, MAX_BYTES, Message, OUT_AT,
     OUT_SLOT_BYTES, OUT_SLOTS, Status,
 };
@@ -133,7 +133,7 @@ impl Link {
                     }
                 }
                 if status != Status::Ok {
-                    ferrix_rt::warn!("usbserial: a write was dropped: {status:?}");
+                    xaqu_rt::warn!("usbserial: a write was dropped: {status:?}");
                 }
             }
             Message::Empty { .. } => {
@@ -149,7 +149,7 @@ impl Link {
     }
 
     fn wait(&self, nanos: u64) {
-        let until = ferrix_rt::linux::monotonic_nanos()
+        let until = xaqu_rt::linux::monotonic_nanos()
             .unwrap_or(0)
             .saturating_add(nanos);
         let _ = self.channel.wait_one(
@@ -173,7 +173,7 @@ impl Link {
             self.gone = true;
             return Err(LinkError::Gone);
         }
-        let until = ferrix_rt::linux::monotonic_nanos()
+        let until = xaqu_rt::linux::monotonic_nanos()
             .unwrap_or(0)
             .saturating_add(CONTROL_PATIENCE);
         loop {
@@ -191,7 +191,7 @@ impl Link {
             if self.gone {
                 return Err(LinkError::Gone);
             }
-            if ferrix_rt::linux::monotonic_nanos().unwrap_or(0) >= until {
+            if xaqu_rt::linux::monotonic_nanos().unwrap_or(0) >= until {
                 return Err(LinkError::Timeout);
             }
             self.wait(CONTROL_PATIENCE / 20);
@@ -317,6 +317,6 @@ impl Usb for Link {
     }
 
     fn now(&self) -> u64 {
-        ferrix_rt::linux::monotonic_nanos().unwrap_or(0)
+        xaqu_rt::linux::monotonic_nanos().unwrap_or(0)
     }
 }

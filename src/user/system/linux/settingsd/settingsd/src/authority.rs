@@ -6,9 +6,9 @@
 //! The duties of a root client that sees a password, as `login` and `su`
 //! have them (the certification consultant's ledger line 3482, condition 2):
 //! the listener at `authd`'s socket is checked before a byte is sent (U1,
-//! [`ferrix_auth_client::talks_to_authd`]); the verdict must name the peer's
+//! [`xaqu_auth_client::talks_to_authd`]); the verdict must name the peer's
 //! uid and account (U3, [`decide`]); the secret is held in a
-//! [`ferrix_auth_proto::Secret`], which zeroes itself, and the packet it
+//! [`xaqu_auth_proto::Secret`], which zeroes itself, and the packet it
 //! came in is zeroed after; no secret reaches a log, an audit line or a
 //! refusal's text.
 
@@ -16,9 +16,9 @@ use std::os::fd::RawFd;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use ferrix_auth_client::{Connection, Person, Verdict, converse, talks_to_authd};
-use ferrix_auth_proto::Secret;
-use ferrix_settings_proto::{MAX_RECORD, Refusal, RefusalKind, ToClient, ToServer};
+use xaqu_auth_client::{Connection, Person, Verdict, converse, talks_to_authd};
+use xaqu_auth_proto::Secret;
+use xaqu_settings_proto::{MAX_RECORD, Refusal, RefusalKind, ToClient, ToServer};
 
 use crate::wire;
 

@@ -15,7 +15,7 @@
   },
   "configuration_hash": "1ef84bac97fa5e4f398cbaf4e44c8096f55ddd952652716975d6da4827104c64",
   "cpu_hash": "2291b09857f1b58dde3edb099203527542da83284d33e3809c718f6c8c2f493c",
-  "ferrix": {
+  "xaqu": {
     "commit": "6d4a8f019e4af70ada2f8ab3d900400db236b6c8",
     "dirty": false
   },
@@ -170,7 +170,7 @@
         "vmscape": "Mitigation: IBPB on VMEXIT"
       }
     },
-    "schema": "ferrix-hw-fingerprint/1",
+    "schema": "xaqu-hw-fingerprint/1",
     "vm": {
       "accel": "kvm",
       "arch": "x86_64",
@@ -225,7 +225,7 @@
       "cpu_model": "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand,+rdseed,+ssse3,+sse4.1,+sse4.2,+popcnt,+cx16,+movbe,+xsave,+xsaveopt,+avx,+avx2,+f16c,+fma,+bmi1,+bmi2,+abm,+pclmulqdq,+aes,+x2apic,+spec-ctrl,+stibp,+ssbd,+arch-capabilities,+auto-ibrs,+invtsc,+eraps,+xgetbv1",
       "probe": "qom-get",
       "qemu": "10.2.1",
-      "qemu_package": "ferrix-cfi"
+      "qemu_package": "xaqu-cfi"
     }
   },
   "host_hash": "8f71a3ca9c7fe85216ffdbd1e2de79d39fabaaf984f67528c2cde7b26896264b",
@@ -238,11 +238,11 @@
     "cpu speculation defences: clamped indices, SWAPGS fence, entry registers cleared, AutoIBRS, STIBP, SSBD, predictor barrier on switch, RSB fill on switch, ERAPS empties the RSB on switch",
     "cpu speculation exposure: Spectre v2 into ring 0 covered; between programs covered; store bypass covered; Meltdown not affected (AMD)"
   ],
-  "log": "~/.local/share/ferrix/logs/os07-hold/abab-vs-f69.log.hotpath",
+  "log": "~/.local/share/xaqu/logs/os07-hold/abab-vs-f69.log.hotpath",
   "path": "ipc-round-trip",
   "reference": {
     "commit": "d884add5890f40b0634d29fdad5bc99f17ed23db",
-    "kind": "ferrix tree",
+    "kind": "xaqu tree",
     "ref": "d884add58",
     "runs": [
       {
@@ -619,7 +619,7 @@
       }
     }
   ],
-  "schema": "ferrix-hotpath-result/1",
+  "schema": "xaqu-hotpath-result/1",
   "summary": {
     "p50_ns_median": 1368,
     "ratio_milli": {

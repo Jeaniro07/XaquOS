@@ -21,9 +21,9 @@
 
 use std::time::{Duration, Instant};
 
-use ferrix_argon2::phc::Encoded;
-use ferrix_argon2::{Block, Inputs, Params, hash};
-use ferrix_auth_proto::Secret;
+use xaqu_argon2::phc::Encoded;
+use xaqu_argon2::{Block, Inputs, Params, hash};
+use xaqu_auth_proto::Secret;
 
 use crate::sha_crypt;
 

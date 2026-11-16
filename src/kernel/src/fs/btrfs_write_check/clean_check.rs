@@ -19,10 +19,10 @@ use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_btrfs::crc32c::crc32c_update;
-use ferrix_btrfs_vfs::rw::RwBtrfs;
-use ferrix_vfs::OpenFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_btrfs::crc32c::crc32c_update;
+use xaqu_btrfs_vfs::rw::RwBtrfs;
+use xaqu_vfs::OpenFlags;
 
 use super::{MOUNT_POINT, make};
 use crate::fs;

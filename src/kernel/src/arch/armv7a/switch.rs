@@ -27,11 +27,11 @@ global_asm!(
 .arm
 .section .text
 
-// void ferrix_switch(u32 *save, u32 next)
+// void xaqu_switch(u32 *save, u32 next)
 //   r0 = where to write this context's stack pointer
 //   r1 = the stack pointer to resume
-.globl ferrix_switch
-ferrix_switch:
+.globl xaqu_switch
+xaqu_switch:
     push {{r4-r11, lr}}
     sub  sp, sp, #4
     str  sp, [r0]
@@ -41,8 +41,8 @@ ferrix_switch:
 
 // Where a task starts the first time it is switched to: `prepare_stack` left
 // its entry point in r4 and its argument in r5.
-.globl ferrix_task_entry
-ferrix_task_entry:
+.globl xaqu_task_entry
+xaqu_task_entry:
     mov r0, r5
     blx r4
     udf #0
@@ -51,9 +51,9 @@ ferrix_task_entry:
 
 unsafe extern "C" {
     /// Save this context and resume another. Declared here; defined above.
-    fn ferrix_switch(save: *mut u32, next: u32);
+    fn xaqu_switch(save: *mut u32, next: u32);
     /// The first instruction a new task runs.
-    fn ferrix_task_entry();
+    fn xaqu_task_entry();
 }
 
 /// Stop running on this stack and continue on `next`, writing this context's
@@ -74,7 +74,7 @@ pub(crate) unsafe fn switch_to(save: *mut u64, next: u64) {
     // a `u64` the kernel keeps for every architecture; on this one only its
     // low half is used, and the assembly writes exactly that half — so the
     // pointer is cast rather than the value, and the high half stays zero.
-    unsafe { ferrix_switch(save.cast::<u32>(), next as u32) };
+    unsafe { xaqu_switch(save.cast::<u32>(), next as u32) };
 }
 
 /// Lay out a stack so that switching to it calls `entry(argument)`.
@@ -104,7 +104,7 @@ pub(crate) unsafe fn prepare_stack(
         0,                                              // r9
         0,                                              // r10
         0,                                              // r11
-        ferrix_task_entry as *const () as usize as u32, // lr, popped into pc
+        xaqu_task_entry as *const () as usize as u32, // lr, popped into pc
     ];
 
     let stack_pointer = (top as u32) - FRAME_BYTES;
@@ -310,7 +310,7 @@ impl UserState {
         state.user_rw = super::cpu::read_tpidrurw();
         // SAFETY: (CONTEXT) `user_sp` and `user_lr` are two adjacent `u32`s in
         // a `repr(C)` structure, the two words the assembly writes.
-        unsafe { ferrix_user_banked_save(core::ptr::from_mut(&mut state.user_sp)) };
+        unsafe { xaqu_user_banked_save(core::ptr::from_mut(&mut state.user_sp)) };
         state.thread_pointer = super::cpu::read_tpidruro();
         let count = super::cpu::user_fpu_doubles();
         if count != 0 {
@@ -385,7 +385,7 @@ pub(super) fn user_banked() -> (u32, u32) {
     let mut words = [0_u32; 2];
     // SAFETY: (CONTEXT) two writable words; reading USR's banked registers through System
     // mode changes nothing.
-    unsafe { ferrix_user_banked_save(words.as_mut_ptr()) };
+    unsafe { xaqu_user_banked_save(words.as_mut_ptr()) };
     let [sp, lr] = words;
     (sp, lr)
 }
@@ -396,7 +396,7 @@ pub(super) fn set_user_banked(sp: u32, lr: u32) {
     let words = [sp, lr];
     // SAFETY: (CONTEXT) two readable words; loading USR's banked registers cannot affect
     // the kernel, which runs in SVC mode.
-    unsafe { ferrix_user_banked_restore(words.as_ptr()) };
+    unsafe { xaqu_user_banked_restore(words.as_ptr()) };
 }
 
 /// The VFP half of [`UserState::capture`], with interrupts masked: the
@@ -415,7 +415,7 @@ fn capture_vfp(state: &mut UserState, count: u8) {
             // SAFETY: (CONTEXT) `EN` is set and the registers are the running
             // task's own (I1, I3); `state` is a live local whose layout is
             // asserted above.
-            unsafe { ferrix_user_fpu_save(core::ptr::from_mut(state), u32::from(count == 32)) };
+            unsafe { xaqu_user_fpu_save(core::ptr::from_mut(state), u32::from(count == 32)) };
             state.vfp = true;
         }
         Some((vfp, (fpscr, doubles))) => {
@@ -455,7 +455,7 @@ pub(super) unsafe fn load_user_fp(fpscr: u32, doubles: [u64; 32]) {
             // task's own (I1); `loaded` is a live local whose layout is
             // asserted above.
             unsafe {
-                ferrix_user_fpu_restore(core::ptr::from_ref(&loaded), u32::from(count == 32));
+                xaqu_user_fpu_restore(core::ptr::from_ref(&loaded), u32::from(count == 32));
             }
         } else {
             own.set_fp(fpscr, doubles);
@@ -489,8 +489,8 @@ pub const FPEXC_EN: u32 = 1 << 30;
 /// What each processor's `FPEXC.EN` was last written to (§9.15, D2), by
 /// logical number. Exact, because only the kernel writes `FPEXC`: no program
 /// can name it (S2), unlike `TPIDRURW`, so this is not condition 8's case.
-static VFP_ON: [AtomicBool; ferrix_sched::MAX_CPUS] =
-    [const { AtomicBool::new(false) }; ferrix_sched::MAX_CPUS];
+static VFP_ON: [AtomicBool; xaqu_sched::MAX_CPUS] =
+    [const { AtomicBool::new(false) }; xaqu_sched::MAX_CPUS];
 
 /// This processor's record, once its per-CPU register is installed.
 fn vfp_record() -> Option<&'static AtomicBool> {
@@ -527,7 +527,7 @@ pub fn fpexc() -> u32 {
     }
     // SAFETY: (SYSREG) a VFP exists, so `CPACR` granted cp10 and cp11, and a
     // PL1 read of `FPEXC` is permitted whatever `EN` is.
-    unsafe { ferrix_fpu_exc() }
+    unsafe { xaqu_fpu_exc() }
 }
 
 /// What a scrub loads: no `FPSCR` and every double zero, in read-only data.
@@ -542,7 +542,7 @@ static ZERO_STATE: UserState = UserState::new();
 #[doc(hidden)]
 pub unsafe fn turn_on() {
     // SAFETY: (SYSREG) the caller's guarantee.
-    unsafe { ferrix_fpu_enable() };
+    unsafe { xaqu_fpu_enable() };
     set_vfp_record(true);
 }
 
@@ -558,9 +558,9 @@ pub unsafe fn turn_on() {
 #[doc(hidden)]
 pub unsafe fn scrub_off(count: u8) {
     // SAFETY: (SYSREG) `EN` is set; the source is the read-only zero state.
-    unsafe { ferrix_user_fpu_restore(&raw const ZERO_STATE, u32::from(count == 32)) };
+    unsafe { xaqu_user_fpu_restore(&raw const ZERO_STATE, u32::from(count == 32)) };
     // SAFETY: (SYSREG) the caller's guarantee.
-    unsafe { ferrix_fpu_disable() };
+    unsafe { xaqu_fpu_disable() };
     set_vfp_record(false);
 }
 
@@ -580,21 +580,21 @@ pub unsafe fn scrub_off(count: u8) {
 #[doc(hidden)]
 pub unsafe fn bring_up_vfp() -> (u32, u32) {
     // SAFETY: (SYSREG) the caller's guarantee.
-    unsafe { ferrix_fpu_enable() };
+    unsafe { xaqu_fpu_enable() };
     // SAFETY: (SYSREG) as above; reads of identification registers.
-    let features = (unsafe { ferrix_fpu_features() }, {
+    let features = (unsafe { xaqu_fpu_features() }, {
         // SAFETY: (SYSREG) as above.
-        unsafe { ferrix_fpu_features1() }
+        unsafe { xaqu_fpu_features1() }
     });
     if features.0 & 0xF == 2 {
         // SAFETY: (SYSREG) `EN` was just set, and the core has 32 doubles.
-        unsafe { ferrix_user_fpu_restore(&raw const ZERO_STATE, 1) };
+        unsafe { xaqu_user_fpu_restore(&raw const ZERO_STATE, 1) };
     } else if features.0 & 0xF == 1 {
         // SAFETY: (SYSREG) as above, 16 doubles.
-        unsafe { ferrix_user_fpu_restore(&raw const ZERO_STATE, 0) };
+        unsafe { xaqu_user_fpu_restore(&raw const ZERO_STATE, 0) };
     }
     // SAFETY: (SYSREG) as above.
-    unsafe { ferrix_fpu_disable() };
+    unsafe { xaqu_fpu_disable() };
     features
 }
 
@@ -611,7 +611,7 @@ unsafe fn load_own(state: &mut UserState, count: u8) {
         // `FPSCR` is one the processor held when the task blocked, and the
         // zeros are 256 bytes of read-only data.
         unsafe {
-            ferrix_user_fpu_reset(
+            xaqu_user_fpu_reset(
                 core::ptr::from_ref(state),
                 u32::from(count == 32),
                 ZERO_DOUBLES.as_ptr(),
@@ -621,7 +621,7 @@ unsafe fn load_own(state: &mut UserState, count: u8) {
     } else {
         // SAFETY: (CONTEXT) as above; loading user registers cannot affect
         // the kernel, which uses none of them.
-        unsafe { ferrix_user_fpu_restore(core::ptr::from_ref(state), u32::from(count == 32)) };
+        unsafe { xaqu_user_fpu_restore(core::ptr::from_ref(state), u32::from(count == 32)) };
     }
     state.vfp_moves = state.vfp_moves.wrapping_add(1);
 }
@@ -680,11 +680,11 @@ global_asm!(
 .fpu vfpv3
 .section .text
 
-// void ferrix_user_banked_save(u32 *out): out[0] = USR sp, out[1] = USR lr.
+// void xaqu_user_banked_save(u32 *out): out[0] = USR sp, out[1] = USR lr.
 // System mode shares USR's banked registers, so they are read from there, with
 // the mode put back before returning through SVC's own lr.
-.globl ferrix_user_banked_save
-ferrix_user_banked_save:
+.globl xaqu_user_banked_save
+xaqu_user_banked_save:
     mrs    r3, cpsr
     cps    #0x1f
     str    sp, [r0]
@@ -692,9 +692,9 @@ ferrix_user_banked_save:
     msr    cpsr_c, r3
     bx     lr
 
-// void ferrix_user_banked_restore(const u32 *from)
-.globl ferrix_user_banked_restore
-ferrix_user_banked_restore:
+// void xaqu_user_banked_restore(const u32 *from)
+.globl xaqu_user_banked_restore
+xaqu_user_banked_restore:
     mrs    r3, cpsr
     cps    #0x1f
     ldr    sp, [r0]
@@ -702,44 +702,44 @@ ferrix_user_banked_restore:
     msr    cpsr_c, r3
     bx     lr
 
-// void ferrix_fpu_enable(void): FPEXC.EN, synchronised for the kernel's own
+// void xaqu_fpu_enable(void): FPEXC.EN, synchronised for the kernel's own
 // VFP instructions after it (9.15)
-.globl ferrix_fpu_enable
-ferrix_fpu_enable:
+.globl xaqu_fpu_enable
+xaqu_fpu_enable:
     mov    r0, #0x40000000
     vmsr   fpexc, r0
     isb
     bx     lr
 
-// void ferrix_fpu_disable(void): FPEXC.EN clear; the exception return that
+// void xaqu_fpu_disable(void): FPEXC.EN clear; the exception return that
 // follows synchronises it (9.15)
-.globl ferrix_fpu_disable
-ferrix_fpu_disable:
+.globl xaqu_fpu_disable
+xaqu_fpu_disable:
     mov    r0, #0
     vmsr   fpexc, r0
     bx     lr
 
-// u32 ferrix_fpu_exc(void): FPEXC, which PL1 reads whatever EN is (9.15)
-.globl ferrix_fpu_exc
-ferrix_fpu_exc:
+// u32 xaqu_fpu_exc(void): FPEXC, which PL1 reads whatever EN is (9.15)
+.globl xaqu_fpu_exc
+xaqu_fpu_exc:
     vmrs   r0, fpexc
     bx     lr
 
-// u32 ferrix_fpu_features(void): MVFR0
-.globl ferrix_fpu_features
-ferrix_fpu_features:
+// u32 xaqu_fpu_features(void): MVFR0
+.globl xaqu_fpu_features
+xaqu_fpu_features:
     vmrs   r0, mvfr0
     bx     lr
 
-// u32 ferrix_fpu_features1(void): MVFR1
-.globl ferrix_fpu_features1
-ferrix_fpu_features1:
+// u32 xaqu_fpu_features1(void): MVFR1
+.globl xaqu_fpu_features1
+xaqu_fpu_features1:
     vmrs   r0, mvfr1
     bx     lr
 
-// void ferrix_user_fpu_save(UserState *state, u32 all_32)
-.globl ferrix_user_fpu_save
-ferrix_user_fpu_save:
+// void xaqu_user_fpu_save(UserState *state, u32 all_32)
+.globl xaqu_user_fpu_save
+xaqu_user_fpu_save:
     vmrs   r2, fpscr
     str    r2, [r0, #4]
     add    r3, r0, #8
@@ -749,20 +749,20 @@ ferrix_user_fpu_save:
     vstmia r3!, {{d16-d31}}
 1:  bx     lr
 
-// void ferrix_user_fpu_keep(UserState *state): FPSCR and d8-d15 alone, what
+// void xaqu_user_fpu_keep(UserState *state): FPSCR and d8-d15 alone, what
 // a blocking native call keeps (3a's port).
-.globl ferrix_user_fpu_keep
-ferrix_user_fpu_keep:
+.globl xaqu_user_fpu_keep
+xaqu_user_fpu_keep:
     vmrs   r2, fpscr
     str    r2, [r0, #4]
     add    r3, r0, #72
     vstmia r3, {{d8-d15}}
     bx     lr
 
-// void ferrix_user_fpu_reset(const UserState *state, u32 all_32, const u64 *zeros):
+// void xaqu_user_fpu_reset(const UserState *state, u32 all_32, const u64 *zeros):
 // the task's own FPSCR and d8-d15, zero in every other register.
-.globl ferrix_user_fpu_reset
-ferrix_user_fpu_reset:
+.globl xaqu_user_fpu_reset
+xaqu_user_fpu_reset:
     ldr    r3, [r0, #4]
     vmsr   fpscr, r3
     vldmia r2, {{d0-d7}}
@@ -772,9 +772,9 @@ ferrix_user_fpu_reset:
     vldmiane r2, {{d16-d31}}
     bx     lr
 
-// void ferrix_user_fpu_restore(const UserState *state, u32 all_32)
-.globl ferrix_user_fpu_restore
-ferrix_user_fpu_restore:
+// void xaqu_user_fpu_restore(const UserState *state, u32 all_32)
+.globl xaqu_user_fpu_restore
+xaqu_user_fpu_restore:
     ldr    r2, [r0, #4]
     vmsr   fpscr, r2
     add    r3, r0, #8
@@ -788,30 +788,30 @@ ferrix_user_fpu_restore:
 
 unsafe extern "C" {
     /// Store USR mode's banked stack pointer and link register at `out`.
-    fn ferrix_user_banked_save(out: *mut u32);
+    fn xaqu_user_banked_save(out: *mut u32);
     /// Load USR mode's banked stack pointer and link register from `from`.
-    fn ferrix_user_banked_restore(from: *const u32);
+    fn xaqu_user_banked_restore(from: *const u32);
     /// Set `FPEXC.EN`, with an `isb`.
-    fn ferrix_fpu_enable();
+    fn xaqu_fpu_enable();
     /// Clear `FPEXC.EN`.
-    fn ferrix_fpu_disable();
+    fn xaqu_fpu_disable();
     /// Read `FPEXC`.
-    fn ferrix_fpu_exc() -> u32;
+    fn xaqu_fpu_exc() -> u32;
     /// Read `MVFR0`.
-    fn ferrix_fpu_features() -> u32;
+    fn xaqu_fpu_features() -> u32;
     /// Read `MVFR1`.
-    fn ferrix_fpu_features1() -> u32;
+    fn xaqu_fpu_features1() -> u32;
     /// Store this processor's floating-point registers into `state`.
     #[doc(hidden)]
-    pub fn ferrix_user_fpu_save(state: *mut UserState, all_32: u32);
+    pub fn xaqu_user_fpu_save(state: *mut UserState, all_32: u32);
     /// Load `state`'s floating-point registers onto this processor.
     #[doc(hidden)]
-    pub fn ferrix_user_fpu_restore(state: *const UserState, all_32: u32);
+    pub fn xaqu_user_fpu_restore(state: *const UserState, all_32: u32);
     /// Store `FPSCR` and `d8`-`d15` alone into `state`.
-    fn ferrix_user_fpu_keep(state: *mut UserState);
+    fn xaqu_user_fpu_keep(state: *mut UserState);
     /// Load `state`'s `FPSCR` and `d8`-`d15`, and `zeros` into every other
     /// VFP register.
-    fn ferrix_user_fpu_reset(state: *const UserState, all_32: u32, zeros: *const u64);
+    fn xaqu_user_fpu_reset(state: *const UserState, all_32: u32, zeros: *const u64);
 }
 
 #[allow(
@@ -842,7 +842,7 @@ pub(crate) unsafe fn save_user_state(state: &mut UserState, blocked: bool) {
     state.user_rw = super::cpu::read_tpidrurw();
     // SAFETY: (CONTEXT) `user_sp` and `user_lr` are two adjacent `u32`s in a `repr(C)`
     // structure, which is the two words the assembly writes.
-    unsafe { ferrix_user_banked_save(core::ptr::from_mut(&mut state.user_sp)) };
+    unsafe { xaqu_user_banked_save(core::ptr::from_mut(&mut state.user_sp)) };
     let doubles = super::cpu::user_fpu_doubles();
     if doubles == 0 || !state.vfp {
         return;
@@ -852,11 +852,11 @@ pub(crate) unsafe fn save_user_state(state: &mut UserState, blocked: bool) {
         // bit (I1), and `state` is a live, exclusively borrowed `UserState`
         // whose `d8` is at the offset asserted above; these are the outgoing
         // task's registers.
-        unsafe { ferrix_user_fpu_keep(core::ptr::from_mut(state)) };
+        unsafe { xaqu_user_fpu_keep(core::ptr::from_mut(state)) };
         state.mark_unsaved();
     } else {
         // SAFETY: (CONTEXT) as above, with the layout asserted above.
-        unsafe { ferrix_user_fpu_save(core::ptr::from_mut(state), u32::from(doubles == 32)) };
+        unsafe { xaqu_user_fpu_save(core::ptr::from_mut(state), u32::from(doubles == 32)) };
     }
     state.vfp_moves = state.vfp_moves.wrapping_add(1);
 }
@@ -886,7 +886,7 @@ pub(crate) unsafe fn restore_user_state(state: &mut UserState, entry_stack: u64)
     super::cpu::write_tpidruro(state.thread_pointer);
     super::cpu::write_tpidrurw(state.user_rw);
     // SAFETY: (CONTEXT) as in `save_user_state`, read rather than written.
-    unsafe { ferrix_user_banked_restore(core::ptr::from_ref(&state.user_sp)) };
+    unsafe { xaqu_user_banked_restore(core::ptr::from_ref(&state.user_sp)) };
     let doubles = super::cpu::user_fpu_doubles();
     if doubles == 0 {
         return;
@@ -912,7 +912,7 @@ pub(crate) fn set_user_stack(stack: u32) {
     let words = [stack, 0];
     // SAFETY: (CONTEXT) two readable words; loading USR's banked registers cannot affect
     // the kernel, which runs in SVC mode.
-    unsafe { ferrix_user_banked_restore(words.as_ptr()) };
+    unsafe { xaqu_user_banked_restore(words.as_ptr()) };
 }
 
 /// Put this processor's user state back to a program's starting state, as

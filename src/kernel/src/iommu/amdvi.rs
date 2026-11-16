@@ -6,7 +6,7 @@
 //! Specification, #48882, and checked against QEMU 10.2's
 //! `hw/i386/amd_iommu.c`, which the AMD-Vi boot row runs, and Linux's
 //! `drivers/iommu/amd`. The encodings and the decisions that need no
-//! hardware are `ferrix_paging::amdvi`'s, host-tested there.
+//! hardware are `xaqu_paging::amdvi`'s, host-tested there.
 //!
 //! # The device table, blocked
 //!
@@ -17,7 +17,7 @@
 //! half is `IV` set with `IntCtl` abort, so nothing passes unremapped. An
 //! attach writes the DMA half, a function's first vector the interrupt
 //! half, each under `tables` and neither touching the other's words
-//! (`ferrix_paging::amdvi::table`).
+//! (`xaqu_paging::amdvi::table`).
 //!
 //! # Commands, waited for by sequence
 //!
@@ -44,17 +44,17 @@
 use alloc::collections::{BTreeMap, BTreeSet};
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-use ferrix_acpi::ivrs::{Entry as IvhdEntry, Ivhd};
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::amdvi::AmdV1;
-use ferrix_paging::amdvi::command::{self, Command, Completion};
-use ferrix_paging::amdvi::event::{self, Event};
-use ferrix_paging::amdvi::table;
-use ferrix_paging::amdvi::unit::{self as policy, Accepted};
-use ferrix_paging::coherence::Unpublished;
-use ferrix_paging::{MapError, MapFlags};
-use ferrix_pci::Address;
-use ferrix_sync::IrqSpinLock;
+use xaqu_acpi::ivrs::{Entry as IvhdEntry, Ivhd};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::amdvi::AmdV1;
+use xaqu_paging::amdvi::command::{self, Command, Completion};
+use xaqu_paging::amdvi::event::{self, Event};
+use xaqu_paging::amdvi::table;
+use xaqu_paging::amdvi::unit::{self as policy, Accepted};
+use xaqu_paging::coherence::Unpublished;
+use xaqu_paging::{MapError, MapFlags};
+use xaqu_pci::Address;
+use xaqu_sync::IrqSpinLock;
 
 use super::gate::{self, Gate};
 use super::{Cause, Fault, Wait};
@@ -188,7 +188,7 @@ impl Attached {
 
 impl Unit {
     /// Map the unit `ivhd` describes, decide whether the kernel drives it
-    /// (`ferrix_paging::amdvi::unit::accept`), stop it if firmware left it
+    /// (`xaqu_paging::amdvi::unit::accept`), stop it if firmware left it
     /// on, and make its tables: the device table with every entry blocked,
     /// the command buffer, the event log and the completion word. Nothing
     /// is enabled yet. With `held`, an IVMD holds the unit to remapping
@@ -382,7 +382,7 @@ impl Unit {
     pub(crate) fn attach_identity(
         &self,
         function: Address,
-        regions: &[ferrix_paging::vtd::rmrr::Identity],
+        regions: &[xaqu_paging::vtd::rmrr::Identity],
         flags: MapFlags,
     ) -> Result<Attached, &'static str> {
         if self.enabled() && !crate::boot_checks::run() {

@@ -3,7 +3,7 @@
 use alloc::vec::Vec;
 use core::fmt;
 
-use ferrix_netwire::ethernet::Mac;
+use xaqu_netwire::ethernet::Mac;
 
 use crate::addr::{IpAddress, IpCidr, Ipv4, Ipv6};
 

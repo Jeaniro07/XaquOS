@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-sndctl"
+name = "xaqu-sndctl"
 description = "The sound control protocol between the kernel's audio core and a ring-3 sound driver, and a PCM stream's state as ALSA keeps it"
 version = "0.1.0"
 edition = "2024"
@@ -8,8 +8,8 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
-ferrix-native-abi = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-native-abi = { workspace = true }
 
 [lints]
 workspace = true

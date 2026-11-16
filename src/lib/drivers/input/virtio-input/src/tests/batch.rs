@@ -7,9 +7,9 @@
 
 use std::vec::Vec;
 
-use ferrix_inputctl::message::{MAX_EVENTS, RawEvent};
-use ferrix_inputctl::session::MAX_REPORT;
-use ferrix_linux_abi::input::{EV_KEY, EV_REL, EV_SYN, KEY_A, KEY_ESC, REL_X, REL_Y, SYN_REPORT};
+use xaqu_inputctl::message::{MAX_EVENTS, RawEvent};
+use xaqu_inputctl::session::MAX_REPORT;
+use xaqu_linux_abi::input::{EV_KEY, EV_REL, EV_SYN, KEY_A, KEY_ESC, REL_X, REL_Y, SYN_REPORT};
 
 use crate::batch::{Batch, CAPACITY, PUSH_ROOM, REPORT_EVENTS};
 

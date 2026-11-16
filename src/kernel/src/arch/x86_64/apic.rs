@@ -20,8 +20,8 @@ use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 pub(super) mod check;
 
-use ferrix_acpi::{Acpi, IsaInterrupt, Madt, MadtEntry};
-use ferrix_sync::IrqControl;
+use xaqu_acpi::{Acpi, IsaInterrupt, Madt, MadtEntry};
+use xaqu_sync::IrqControl;
 
 use super::clock;
 use super::trap::IRQ_BASE;
@@ -184,7 +184,7 @@ pub(crate) fn x2apic() -> bool {
 /// mode wherever the processor has it, `xapic` to stay in xAPIC mode unless
 /// the platform locks x2APIC. Without it, x2APIC mode is taken only where
 /// firmware locked it or left it on.
-pub(crate) const OPTION: &str = "ferrix.apic";
+pub(crate) const OPTION: &str = "xaqu.apic";
 
 /// Why the boot processor chose x2APIC mode, for its line.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -193,7 +193,7 @@ enum Why {
     Locked,
     /// Firmware handed over the boot processor in x2APIC mode.
     LeftOn,
-    /// `ferrix.apic=x2apic`.
+    /// `xaqu.apic=x2apic`.
     Asked,
 }
 
@@ -394,7 +394,7 @@ pub(crate) unsafe fn init(
         match why {
             Some(Why::Locked) => "x2APIC mode (firmware locked it)",
             Some(Why::LeftOn) => "x2APIC mode (firmware left it on)",
-            Some(Why::Asked) => "x2APIC mode (ferrix.apic=x2apic asked for it)",
+            Some(Why::Asked) => "x2APIC mode (xaqu.apic=x2apic asked for it)",
             None => "xAPIC mode",
         }
     );

@@ -31,13 +31,13 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_frame::{Frame, MAX_ORDER};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{PIN_BLOCK_ORDER_SHIFT, PIN_BLOCKS, PIN_CONTIGUOUS};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_frame::{Frame, MAX_ORDER};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{PIN_BLOCK_ORDER_SHIFT, PIN_BLOCKS, PIN_CONTIGUOUS};
 
 use crate::device::DeviceNode;
 use crate::mm;
@@ -91,7 +91,7 @@ fn pin(
     vmo: Handle,
     pages: u64,
     options: u64,
-) -> Result<usize, ferrix_linux_abi::errno::Errno> {
+) -> Result<usize, xaqu_linux_abi::errno::Errno> {
     side.call(
         nr::VMO_PIN,
         &[reg(device), reg(vmo), 0, pages * PAGE_SIZE, options],
@@ -341,11 +341,11 @@ fn check_the_failure_rule(side: &Side, device: Handle) -> Result<u32, &'static s
 struct Nothing;
 
 impl Filler for Nothing {
-    fn fill(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 
-    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 }
@@ -368,11 +368,11 @@ fn check_a_file_is_not_committed() -> Result<(), &'static str> {
 struct ReadAgain;
 
 impl Filler for ReadAgain {
-    fn fill(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 
-    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), ferrix_vfs::Errno> {
+    fn fill_one(&self, _: &Vmo, _: u64) -> Result<(), xaqu_vfs::Errno> {
         Ok(())
     }
 

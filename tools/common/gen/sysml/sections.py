@@ -46,12 +46,12 @@ from .model import MATURITIES, MATURITY_LABEL, Element, Model, humanise
 # section of their own, above, because their shape carries meaning a generic
 # dump would lose.
 SUBSYSTEM_PACKAGES = (
-    ("FerrixMemory", "Memory"),
-    ("FerrixScheduling", "Processors, time and scheduling"),
-    ("FerrixObjects", "Kernel objects and the two ABIs"),
-    ("FerrixIsolation", "Isolation"),
-    ("FerrixDrivers", "Devices and drivers"),
-    ("FerrixStorage", "Storage"),
+    ("XaquMemory", "Memory"),
+    ("XaquScheduling", "Processors, time and scheduling"),
+    ("XaquObjects", "Kernel objects and the two ABIs"),
+    ("XaquIsolation", "Isolation"),
+    ("XaquDrivers", "Devices and drivers"),
+    ("XaquStorage", "Storage"),
 )
 
 
@@ -273,13 +273,13 @@ def _files_and_roots(model: Model):
 
 
 def _synopsis_body(synopsis: str) -> str:
-    """Drop the `Ferrix — SysML v2 model, part N: x.` title line."""
+    """Drop the `Xaqu — SysML v2 model, part N: x.` title line."""
     parts = synopsis.split("\n\n")
     return parts[1] if len(parts) > 1 else synopsis
 
 
 def section_requirements(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixRequirements")
+    package = model.package("XaquRequirements")
     if package is None:
         return
     doc.add(Heading(1, "Requirements"))
@@ -302,7 +302,7 @@ def section_requirements(model: Model, doc: Doc) -> None:
     if extra is not None:
         doc.add(Note([c("G+"), t(" — "), *prose(extra.doc)], label=humanise(extra.name)))
 
-    principles = model.find("FerrixRequirements::Principles")
+    principles = model.find("XaquRequirements::Principles")
     if principles is not None:
         doc.add(Heading(2, "Design rules"))
         paragraphs(doc, principles.doc)
@@ -317,7 +317,7 @@ def section_requirements(model: Model, doc: Doc) -> None:
             )
         )
 
-    non_promises = model.find("FerrixRequirements::NonPromises")
+    non_promises = model.find("XaquRequirements::NonPromises")
     if non_promises is not None:
         doc.add(Heading(2, "Promises deliberately not made"))
         doc.add(
@@ -339,7 +339,7 @@ def section_item_requirements(model: Model, doc: Doc) -> None:
     architecture document states what the item promises beside how it is
     built.
     """
-    package = model.package("FerrixItemRequirements")
+    package = model.package("XaquItemRequirements")
     if package is None:
         return
     areas = [child for child in package.children if child.kind == "package"]
@@ -371,18 +371,18 @@ def section_item_requirements(model: Model, doc: Doc) -> None:
 
 
 def section_structure(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixStructure")
+    package = model.package("XaquStructure")
     if package is None:
         return
     doc.add(Heading(1, "Structure"))
 
-    system = package.child("Ferrix")
+    system = package.child("Xaqu")
     if system is not None:
         paragraphs(doc, system.doc)
         doc.add(Tree(_part_tree(system, model, 0, 3)))
     place(
         doc,
-        diagrams.connections(model, "FerrixStructure::Deployment", "FerrixStructure::Ferrix"),
+        diagrams.connections(model, "XaquStructure::Deployment", "XaquStructure::Xaqu"),
     )
 
     machine = package.child("Machine")
@@ -473,7 +473,7 @@ def _feature_table(element: Element) -> Table:
 
 
 def section_architectures(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixStructure")
+    package = model.package("XaquStructure")
     if package is None:
         return
     facade = package.child("ArchFacade")
@@ -483,7 +483,7 @@ def section_architectures(model: Model, doc: Doc) -> None:
 
     doc.add(Heading(1, "The architecture facade"))
     paragraphs(doc, facade.doc)
-    place(doc, *diagrams.generalisations(model, "FerrixStructure"))
+    place(doc, *diagrams.generalisations(model, "XaquStructure"))
 
     variants = []
     if layer is not None:
@@ -565,7 +565,7 @@ def section_architectures(model: Model, doc: Doc) -> None:
 
 
 def section_boot(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixBoot")
+    package = model.package("XaquBoot")
     if package is None:
         return
     doc.add(Heading(1, "Boot"))
@@ -670,8 +670,8 @@ def section_boot(model: Model, doc: Doc) -> None:
         paragraphs(doc, dispatch.doc)
         place(
             doc,
-            diagrams.flow(model, "FerrixBoot::Dispatch"),
-            diagrams.flow(model, "FerrixBoot::HandlePageFault"),
+            diagrams.flow(model, "XaquBoot::Dispatch"),
+            diagrams.flow(model, "XaquBoot::HandlePageFault"),
         )
         kinds = package.child("TrapKind")
         if kinds is not None:
@@ -806,7 +806,7 @@ def _package_synopsis(model: Model, package: Element) -> str:
 
 
 def section_workspace(model: Model, doc: Doc) -> None:
-    workspace = model.find("FerrixStructure::Workspace")
+    workspace = model.find("XaquStructure::Workspace")
     if workspace is None:
         return
     doc.add(Heading(1, "The workspace"))
@@ -850,7 +850,7 @@ def section_workspace(model: Model, doc: Doc) -> None:
             doc,
             diagrams.dependencies(
                 model,
-                "FerrixStructure::Workspace",
+                "XaquStructure::Workspace",
                 title="The crate graph",
                 name="crate-dependencies",
                 sublabel_attribute="path",
@@ -878,7 +878,7 @@ def section_workspace(model: Model, doc: Doc) -> None:
 
 
 def section_roadmap(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixRoadmap")
+    package = model.package("XaquRoadmap")
     if package is None:
         return
     doc.add(Heading(1, "Roadmap"))
@@ -949,7 +949,7 @@ def section_roadmap(model: Model, doc: Doc) -> None:
     ordering = [
         relation
         for relation in model.relations_of("dependency")
-        if relation.origin.endswith("FerrixRoadmap")
+        if relation.origin.endswith("XaquRoadmap")
     ]
     if ordering:
         doc.add(Heading(2, "Ordering"))
@@ -970,7 +970,7 @@ def section_roadmap(model: Model, doc: Doc) -> None:
 
 
 def section_assurance(model: Model, doc: Doc) -> None:
-    package = model.package("FerrixAssurance")
+    package = model.package("XaquAssurance")
     if package is None:
         return
     doc.add(Heading(1, "Assurance"))
@@ -989,7 +989,7 @@ def section_assurance(model: Model, doc: Doc) -> None:
                 "Each gate, and the design rule it exists to enforce. A rule with no gate "
                 "into it is a rule enforced by review."
             ),
-            origin_prefix="FerrixAssurance",
+            origin_prefix="XaquAssurance",
             source_kind="test",
             target_kind="requirement",
         ),
@@ -1083,12 +1083,12 @@ def section_assurance(model: Model, doc: Doc) -> None:
 
     boot_tests = [
         child
-        for child in model.package("FerrixRoadmap").children
+        for child in model.package("XaquRoadmap").children
         if child.kind == "verification" and child.typed_by == "BootTest"
-    ] if model.package("FerrixRoadmap") else []
+    ] if model.package("XaquRoadmap") else []
     if boot_tests:
         doc.add(Heading(2, "The boot tests"))
-        definition = model.find("FerrixRoadmap::BootTest")
+        definition = model.find("XaquRoadmap::BootTest")
         if definition is not None:
             paragraphs(doc, definition.doc)
         verified_by = {}
@@ -1139,7 +1139,7 @@ def section_traceability(model: Model, doc: Doc) -> None:
                 "Each verification case, and every stage whose exit criterion it "
                 "demonstrates on a boot."
             ),
-            origin_prefix="FerrixRoadmap",
+            origin_prefix="XaquRoadmap",
             source_kind="test",
         ),
     )
@@ -1178,7 +1178,7 @@ def section_traceability(model: Model, doc: Doc) -> None:
         for element in model.walk()
         if element.kind == "requirement"
         and element.short_name
-        and element.package != "FerrixItemRequirements"
+        and element.package != "XaquItemRequirements"
     ]
     # Three different edges trace a requirement to something. A stage names
     # the parts that satisfy it; a future stage is allocated to the parts that
@@ -1360,7 +1360,7 @@ SECTIONS = (
 
 def build(model: Model, banner: str = "") -> Doc:
     doc = Doc(
-        title="Ferrix — architecture, from the model",
+        title="Xaqu — architecture, from the model",
         subtitle=(
             "Generated from docs/sysml/. Every element carries the maturity keyword "
             "the model gives it."

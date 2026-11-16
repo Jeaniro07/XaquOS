@@ -1,12 +1,12 @@
 # The Pixel 7 loader
 
-A second stage that starts Ferrix on a Pixel 7 (`panther`, Tensor G2 /
+A second stage that starts Xaqu on a Pixel 7 (`panther`, Tensor G2 /
 gs201). The phone's own bootloader, ABL, is signed and stays; with the
 bootloader unlocked it will boot an Android boot image whose kernel is this
-program, which is to do for Ferrix what `src/boot/common/uefi/` does under UEFI.
+program, which is to do for Xaqu what `src/boot/common/uefi/` does under UEFI.
 
-**Where it stands (2026-09-25):** Ferrix boots on the phone to
-`FERRIX-BOOT-OK stages 1-12`, on one core. Branch `pixel7/stage3` gave the
+**Where it stands (2026-09-25):** Xaqu boots on the phone to
+`XAQU-BOOT-OK stages 1-12`, on one core. Branch `pixel7/stage3` gave the
 AArch64 kernel the device-tree path and a GICv3 driver, which is what stopped
 it at stage 3 before. The loader passes `nosmp` until secondaries can start at
 EL2; the phone has no clock the kernel reads and no entropy it seeds from.
@@ -18,11 +18,11 @@ screen has been seen on the phone.
 
 ```
 cargo xtask flash --arch aarch64 --release --stage <dir>     # KERNEL.ELF, INITRD.IMG
-K=<dir>/FERRIX/KERNEL.ELF I=<dir>/FERRIX/INITRD.IMG
-FERRIX_PIXEL7_KERNEL=$K FERRIX_PIXEL7_KERNEL_DIGEST=$(sha256sum "$K" | cut -d' ' -f1) \
-FERRIX_PIXEL7_INITRD=$I FERRIX_PIXEL7_INITRD_DIGEST=$(sha256sum "$I" | cut -d' ' -f1) \
-    cargo build -p ferrix-boot-pixel7 --target aarch64-unknown-none-softfloat --release
-llvm-objcopy -O binary target/aarch64-unknown-none-softfloat/release/ferrix-boot-pixel7 Image
+K=<dir>/XAQU/KERNEL.ELF I=<dir>/XAQU/INITRD.IMG
+XAQU_PIXEL7_KERNEL=$K XAQU_PIXEL7_KERNEL_DIGEST=$(sha256sum "$K" | cut -d' ' -f1) \
+XAQU_PIXEL7_INITRD=$I XAQU_PIXEL7_INITRD_DIGEST=$(sha256sum "$I" | cut -d' ' -f1) \
+    cargo build -p xaqu-boot-pixel7 --target aarch64-unknown-none-softfloat --release
+llvm-objcopy -O binary target/aarch64-unknown-none-softfloat/release/xaqu-boot-pixel7 Image
 python3 src/boot/vendor/google/pixel7/mkbootimg.py Image boot.img
 avbtool add_hash_footer --image boot.img --partition_size 67108864 \
         --partition_name boot --algorithm NONE
@@ -59,7 +59,7 @@ PL011 it would look for on QEMU. The record is in the `ramoops` region
 next Android boot shows it, after ABL's own log, in
 `/sys/fs/pstore/console-ramoops-0` (root needed). ABL overwrites the record's
 header on an ordinary reset, so what survives is the text, found by searching
-for `ferrix-pixel7`. `fastboot oem dmesg` prints ABL's log of the current
+for `xaqu-pixel7`. `fastboot oem dmesg` prints ABL's log of the current
 session, including why the phone last reset.
 
 ## What the probe established
@@ -76,7 +76,7 @@ session, including why the phone last reset.
 | Panel | DSI **command mode**, TE-triggered; ABL masks the trigger before hand-off, so a framebuffer write shows only once `TRIG_CON` is unmasked |
 | Display | DECON0 running; window 5 from DPP0; framebuffer 1080 x 2400 at `0xfac00000`, bytes B, G, R, unused (measured); display SysMMU reads as off |
 
-## What Ferrix needs before it can run here
+## What Xaqu needs before it can run here
 
 The AArch64 kernel is written for QEMU's `virt` machine. On this phone it
 would need, besides this loader building a `BootInfo`:

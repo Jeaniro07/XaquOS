@@ -18,7 +18,7 @@
 //! Two backends. `--headless` draws into memory and can write each frame out,
 //! which is how the compositor is tested on any machine and how its pixels
 //! are compared without a display. `/dev/dri/card0` is the real one on
-//! Ferrix, through the same legacy mode-setting `src/user/system/linux/compositor/blank` proved.
+//! Xaqu, through the same legacy mode-setting `src/user/system/linux/compositor/blank` proved.
 
 pub mod act;
 pub mod animate;

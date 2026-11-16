@@ -2,7 +2,7 @@
 # Stage 24's input-to-scan-out probe on Linux (docs/GAME-PATH.md §2.4, R2):
 # a headless sway at 1920x1080 and 60 Hz with Xwayland, xlatency as its X
 # client, vptr injecting relative motion through zwlr_virtual_pointer_v1 as
-# the same programs do on Ferrix, then `xlatency summarize` on the two logs.
+# the same programs do on Xaqu, then `xlatency summarize` on the two logs.
 #
 #   latency-sway.sh OUTDIR [DELAY_US] [SECONDS]
 #

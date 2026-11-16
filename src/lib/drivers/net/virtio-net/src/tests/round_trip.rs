@@ -3,11 +3,11 @@
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::net::{
+use xaqu_virtio::net::{
     FEATURE_CSUM, FEATURE_CTRL_VQ, FEATURE_GUEST_CSUM, FEATURE_HOST_TSO4, FEATURE_MAC,
     FEATURE_MRG_RXBUF, FEATURE_MTU, FEATURE_STATUS, HEADER_LEN, Header,
 };
-use ferrix_virtio::pci::{FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1};
+use xaqu_virtio::pci::{FEATURE_ACCESS_PLATFORM, FEATURE_VERSION_1};
 
 use super::fake::{MAC, PAGE, Rig, Setup};
 use crate::{Event, Frame, RECEIVE_QUEUE, ReleaseError, SubmitError, TRANSMIT_QUEUE};

@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-gpu"
-description = "The virtio-gpu driver process: the display control channel's driver end over a virtio-gpu PCI device, on ferrix-rt"
+name = "xaqu-gpu"
+description = "The virtio-gpu driver process: the display control channel's driver end over a virtio-gpu PCI device, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,14 +14,14 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-display-modes.workspace = true
-ferrix-displayctl.workspace = true
-ferrix-renderctl.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio.workspace = true
-ferrix-virtio-gpu.workspace = true
+xaqu-blkring.workspace = true
+xaqu-display-modes.workspace = true
+xaqu-displayctl.workspace = true
+xaqu-renderctl.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio.workspace = true
+xaqu-virtio-gpu.workspace = true
 
 [lints]
 workspace = true

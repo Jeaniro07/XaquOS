@@ -130,16 +130,16 @@ mod tests {
         super::parse(
             line,
             &Words {
-                stop: b"ferrix.intelgpu.stop=",
-                trace: b"ferrix.intelgpu.trace",
-                reset: b"ferrix.intelgpu.reset=",
-                selftest: b"ferrix.intelgpu.m2",
-                freq: b"ferrix.intelgpu.freq=",
-                freqlog: b"ferrix.intelgpu.freqlog",
-                freqtest: b"ferrix.intelgpu.freqtest",
-                uapitrace: b"ferrix.intelgpu.uapitrace",
-                fwhold: b"ferrix.intelgpu.fwhold",
-                ioctlstat: b"ferrix.intelgpu.ioctlstat",
+                stop: b"xaqu.intelgpu.stop=",
+                trace: b"xaqu.intelgpu.trace",
+                reset: b"xaqu.intelgpu.reset=",
+                selftest: b"xaqu.intelgpu.m2",
+                freq: b"xaqu.intelgpu.freq=",
+                freqlog: b"xaqu.intelgpu.freqlog",
+                freqtest: b"xaqu.intelgpu.freqtest",
+                uapitrace: b"xaqu.intelgpu.uapitrace",
+                fwhold: b"xaqu.intelgpu.fwhold",
+                ioctlstat: b"xaqu.intelgpu.ioctlstat",
             },
         )
     }
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn nothing_asked() {
         assert_eq!(
-            parse(b"ferrix.intelgpu ferrix.fbcon ferrix.intelgpu.stopx=3\n"),
+            parse(b"xaqu.intelgpu xaqu.fbcon xaqu.intelgpu.stopx=3\n"),
             Options::default()
         );
     }
@@ -155,8 +155,8 @@ mod tests {
     #[test]
     fn every_word() {
         let options = parse(
-            b"ferrix.init=/etc/reset-after.sh ferrix.intelgpu ferrix.intelgpu.trace \
-              ferrix.intelgpu.stop=9 ferrix.intelgpu.reset=60 ferrix.intelgpu.m2\n",
+            b"xaqu.init=/etc/reset-after.sh xaqu.intelgpu xaqu.intelgpu.trace \
+              xaqu.intelgpu.stop=9 xaqu.intelgpu.reset=60 xaqu.intelgpu.m2\n",
         );
         assert_eq!(
             options,
@@ -174,43 +174,43 @@ mod tests {
     #[test]
     fn frequency_words() {
         let options =
-            parse(b"ferrix.intelgpu.freq=650 ferrix.intelgpu.freqlog ferrix.intelgpu.freqtest");
+            parse(b"xaqu.intelgpu.freq=650 xaqu.intelgpu.freqlog xaqu.intelgpu.freqtest");
         assert_eq!(options.freq_mhz, Some(650));
         assert!(options.freqlog && options.freqtest);
         assert!(!options.uapitrace && !options.trace);
-        let options = parse(b"ferrix.intelgpu.uapitrace");
+        let options = parse(b"xaqu.intelgpu.uapitrace");
         assert!(options.uapitrace && !options.trace, "{options:?}");
-        assert_eq!(parse(b"ferrix.intelgpu.freq=x").freq_mhz, None);
-        assert_eq!(parse(b"ferrix.intelgpu.freq=0").freq_mhz, None);
-        assert_eq!(parse(b"ferrix.intelgpu.freqlog").freq_mhz, None);
-        assert!(parse(b"ferrix.intelgpu.fwhold").fwhold);
-        assert!(!parse(b"ferrix.intelgpu.fwholdx").fwhold);
-        assert!(parse(b"ferrix.intelgpu.ioctlstat").ioctlstat);
-        assert!(!parse(b"ferrix.intelgpu.fwhold").ioctlstat);
+        assert_eq!(parse(b"xaqu.intelgpu.freq=x").freq_mhz, None);
+        assert_eq!(parse(b"xaqu.intelgpu.freq=0").freq_mhz, None);
+        assert_eq!(parse(b"xaqu.intelgpu.freqlog").freq_mhz, None);
+        assert!(parse(b"xaqu.intelgpu.fwhold").fwhold);
+        assert!(!parse(b"xaqu.intelgpu.fwholdx").fwhold);
+        assert!(parse(b"xaqu.intelgpu.ioctlstat").ioctlstat);
+        assert!(!parse(b"xaqu.intelgpu.fwhold").ioctlstat);
     }
 
     #[test]
     fn a_misspelt_stop_touches_nothing() {
-        assert_eq!(parse(b"ferrix.intelgpu.stop=x").stop, Some(1));
-        assert_eq!(parse(b"ferrix.intelgpu.stop=0").stop, Some(1));
-        assert_eq!(parse(b"ferrix.intelgpu.stop=").stop, Some(1));
+        assert_eq!(parse(b"xaqu.intelgpu.stop=x").stop, Some(1));
+        assert_eq!(parse(b"xaqu.intelgpu.stop=0").stop, Some(1));
+        assert_eq!(parse(b"xaqu.intelgpu.stop=").stop, Some(1));
     }
 
     #[test]
     fn a_misspelt_reset_restarts_nothing() {
         for line in [
-            &b"ferrix.intelgpu.reset=0"[..],
-            b"ferrix.intelgpu.reset=3601",
-            b"ferrix.intelgpu.reset=6O",
-            b"ferrix.intelgpu.reset=",
-            b"ferrix.intelgpu.reset=99999",
+            &b"xaqu.intelgpu.reset=0"[..],
+            b"xaqu.intelgpu.reset=3601",
+            b"xaqu.intelgpu.reset=6O",
+            b"xaqu.intelgpu.reset=",
+            b"xaqu.intelgpu.reset=99999",
         ] {
             let options = parse(line);
             assert_eq!(options.reset_seconds, None, "{line:?}");
             assert!(options.reset_refused, "{line:?}");
         }
         assert_eq!(
-            parse(b"ferrix.intelgpu.reset=3600").reset_seconds,
+            parse(b"xaqu.intelgpu.reset=3600").reset_seconds,
             Some(3600)
         );
     }

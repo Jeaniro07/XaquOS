@@ -26,7 +26,7 @@ use alloc::collections::BTreeMap;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_btrfs::items::{S_IFREG, Timespec};
+use xaqu_btrfs::items::{S_IFREG, Timespec};
 
 use super::{BLANK, MemDevice, Op, Rng, check};
 use crate::{NewInode, WriteVolume};
@@ -226,7 +226,7 @@ fn power_fail(seed: u64, steps: usize, cuts: usize) {
                 .iter()
                 .enumerate()
                 .filter(|(_, op)| {
-                    matches!(op, Op::Write(at, _) if ferrix_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at))
+                    matches!(op, Op::Write(at, _) if xaqu_btrfs::superblock::SUPERBLOCK_OFFSETS.contains(at))
                 })
                 .map(|(index, _)| index)
                 .collect();

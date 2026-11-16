@@ -10,7 +10,7 @@
 //! `devmgr` whenever a ring on a device accepts a HELLO, and DIED from it,
 //! which a task of the kernel's prints.
 //!
-//! Under `ferrix.devmgr=init` the files the first start read are kept, and
+//! Under `xaqu.devmgr=init` the files the first start read are kept, and
 //! every later start pid 1 asks for is made from those copies, never from a
 //! path: by then `/` may be on a disk whose driver died with the last
 //! `devmgr`, and the tmpfs the files came from given back (`KEPT`,
@@ -29,22 +29,22 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, Ordering};
 
-use ferrix_blkring::Location;
-use ferrix_blkring::control::DEVICE_RIGHTS;
-use ferrix_bootinfo::{BootView, PAGE_SIZE, option_in};
-use ferrix_devmgr_proto::{
+use xaqu_blkring::Location;
+use xaqu_blkring::control::DEVICE_RIGHTS;
+use xaqu_bootinfo::{BootView, PAGE_SIZE, option_in};
+use xaqu_devmgr_proto::{
     ANSWER_BUSY, ANSWER_DONE, ANSWER_FAILED, ANSWER_NO_DEVICE, BUS_PCI, BUS_PLATFORM,
     DEVICES_MAX_BYTES, Devices, Message, NAME_BYTES, SHORT_BYTES,
 };
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
-use ferrix_sync::Once;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES};
+use xaqu_sync::Once;
 
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 use super::first_image;
 use crate::fallible::{self, AllocError};
 use crate::first_rows::{DEVMGR, Held};
@@ -67,7 +67,7 @@ const MANIFEST: &[u8] = b"/lib/drivers/MANIFEST";
 const NAME: &[u8] = b"devmgr";
 
 // `write_devices` encodes DEVICES into a stack array of this size, set by
-// `ferrix-devmgr-proto`'s constants: a growth past it is a change here too
+// `xaqu-devmgr-proto`'s constants: a growth past it is a change here too
 // (docs/certification/MEMORY-AND-TIMING.md section 1.1, F-82).
 const _: () = assert!(
     DEVICES_MAX_BYTES <= 1048,
@@ -472,7 +472,7 @@ pub fn start() -> Result<Option<Report>, &'static str> {
     start_program(&process, at, devmgr_end, &kernel_end)?;
 
     let (started, failed) = report(&kernel_end)?;
-    if sched::spawn("devmgr listener", listen, 0, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("devmgr listener", listen, 0, xaqu_sched::NICE_0_WEIGHT).is_err() {
         return Err("no task to hear devmgr on");
     }
     Ok(Some(Report {
@@ -484,7 +484,7 @@ pub fn start() -> Result<Option<Report>, &'static str> {
 }
 
 /// What `linuxd` is handed of `devmgr` (`docs/microkernel/BOOT-AUTHORITY.md`).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 #[derive(Debug)]
 pub(crate) struct Detached {
     /// What was the kernel's end: REPORT, PUBLISHED, BIND and the rest.
@@ -504,7 +504,7 @@ pub(crate) struct Detached {
 /// # Errors
 ///
 /// What did not happen, as a sentence.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub(crate) fn start_detached(
     block_cores: Option<Arc<Endpoint>>,
     further_net_cores: Vec<Arc<Endpoint>>,
@@ -566,7 +566,7 @@ pub(crate) fn start_detached(
 /// DMA turned off. A dead driver's pins stay quarantined: no next HELLO is coming, so
 /// they stay for the boot, each device's quarantine bounded by its budget. No device
 /// of a safety partition's is among these. `linuxd` then finds its cores' channel closed.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn watch_detached(process: Arc<dyn Host>, job: Arc<Job>) -> Result<(), &'static str> {
     type Watched = (Arc<dyn Host>, Arc<Job>);
     static WATCHED: SpinLock<Option<Watched>> = SpinLock::new(None);
@@ -596,7 +596,7 @@ fn watch_detached(process: Arc<dyn Host>, job: Arc<Job>) -> Result<(), &'static 
             core.exit_status(),
         );
     }
-    sched::spawn("devmgr watch", watch, 0, ferrix_sched::NICE_0_WEIGHT)
+    sched::spawn("devmgr watch", watch, 0, xaqu_sched::NICE_0_WEIGHT)
         .map(|_| ())
         .map_err(|_| "no task to watch devmgr on")
 }
@@ -637,7 +637,7 @@ impl Files {
 /// driver manager. After the root's switch the tmpfs those files were read
 /// from is given back (`fs::release`), and the root disk's own driver dies
 /// with a `devmgr`'s job, so no later start could read them from either
-/// (`docs/RAM-RELEASE.md` §2). Only under `ferrix.devmgr=init`: on the
+/// (`docs/RAM-RELEASE.md` §2). Only under `xaqu.devmgr=init`: on the
 /// kernel path nothing starts a second `devmgr`.
 ///
 /// The images are VMOs the kernel wrote once and hands with `READ` and
@@ -647,7 +647,7 @@ static KEPT: SpinLock<Option<Arc<Set>>> = SpinLock::new(None);
 
 /// Read `devmgr`, the manifest and every driver it names through the
 /// registered reader -- or, after the first start under
-/// `ferrix.devmgr=init`, take the [`KEPT`] set -- and note the names for
+/// `xaqu.devmgr=init`, take the [`KEPT`] set -- and note the names for
 /// sysfs. `Ok(None)` without `/sbin/devmgr`.
 fn read_files() -> Result<Option<Files>, &'static str> {
     let kept = KEPT.lock().clone();
@@ -767,7 +767,7 @@ fn pages_of(bytes: &[u8]) -> u64 {
 
 /// A safety partition's devices never reach devmgr: the filter is the
 /// kernel's (`docs/microkernel/BOOT-AUTHORITY.md` §2).
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn devices_given() -> Result<Vec<Arc<device::DeviceNode>>, &'static str> {
     let mut kept = fallible::try_with_capacity(device::devices().len())
         .map_err(|_| "no memory for the devices' list")?;
@@ -815,11 +815,11 @@ fn write_devices(
         let bindings = BINDINGS.lock();
         fallible::try_to_vec(&bindings.names).map_err(|_| "no memory for the drivers' names")?
     };
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     let kept = devices_given()?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     let nodes = kept.as_slice();
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     let nodes = device::devices();
     // As many DEVICES messages as the handles need: the first with the job
     // and the images, the rest with devices only. ARMv7-A publishes 36
@@ -832,7 +832,7 @@ fn write_devices(
         // The job and the images; under `personality=user` the debug log and
         // the cores' channel too.
         let extra = if first {
-            1 + names.len() + 2 * usize::from(cfg!(ferrix_personality = "user"))
+            1 + names.len() + 2 * usize::from(cfg!(xaqu_personality = "user"))
         } else {
             0
         };
@@ -845,7 +845,7 @@ fn write_devices(
             names: if first { &names } else { &[] },
             unisolated_allowed: unisolated_allowed(),
             explicit_bind: device::EXPLICIT_BIND,
-            debug_log: cfg!(ferrix_personality = "user"),
+            debug_log: cfg!(xaqu_personality = "user"),
             cores: cores.is_some() && first,
             block_cores: block_cores.is_some() && first,
             net_cores: net_cores.is_some() && first,
@@ -871,7 +871,7 @@ fn write_devices(
                 );
             }
         }
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         if first {
             let _ = fallible::push_within(
                 &mut transfers,
@@ -896,7 +896,7 @@ fn write_devices(
                 (Object::Channel(net), const { DEVMGR.of(Held::Channel) }),
             );
         }
-        #[cfg(ferrix_personality = "user")]
+        #[cfg(xaqu_personality = "user")]
         DEVMGR.judge(transfers.iter().map(|(object, rights)| (object, *rights)))?;
         let handles = transfers.len();
         let body = fallible::try_to_vec(bytes.get(..len).unwrap_or(&[]))
@@ -925,11 +925,11 @@ pub(crate) const fn image_rights() -> Rights {
 fn load(image: &[u8]) -> Result<(Arc<dyn Host>, EntryPoint), &'static str> {
     let processes = native::processes().ok_or("nothing is registered to start devmgr with")?;
     let process = (processes.make)(None, NAME).map_err(|_| "no memory for devmgr's process")?;
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     let loaded = vmo_of(image).and_then(|sealed| {
         crate::boot_authority::load_sealed(process.core().own_space(), &sealed, image.len())
     });
-    #[cfg(not(ferrix_personality = "user"))]
+    #[cfg(not(xaqu_personality = "user"))]
     let loaded = first_image::load(process.core().own_space(), image)
         .map_err(|_| "/sbin/devmgr does not load");
     match loaded {
@@ -975,16 +975,16 @@ fn start_program(
 /// §7.3, L12): `init`. Without it, or with `kernel`, the kernel starts it at
 /// bring-up, as [`start`] does -- the certified configuration
 /// (`docs/certification/ITEM.md` §5).
-const OPTION: &str = "ferrix.devmgr";
+const OPTION: &str = "xaqu.devmgr";
 
-/// Whether the command line said `ferrix.devmgr=init`.
+/// Whether the command line said `xaqu.devmgr=init`.
 static BY_INIT: AtomicBool = AtomicBool::new(false);
 
 /// The command-line word that lets `devmgr` start a bus master whose DMA
 /// is not translated or whose interrupts are not isolated
 /// (`docs/DMA-GATE.md`, `L.device.58`): the bare word only; no certified
 /// profile permits it, so a boot with it carries no claim.
-const UNISOLATED_OPTION: &str = "ferrix.unisolated";
+const UNISOLATED_OPTION: &str = "xaqu.unisolated";
 
 /// Whether the command line carries [`UNISOLATED_OPTION`] as a bare word.
 static UNISOLATED: AtomicBool = AtomicBool::new(false);
@@ -1014,21 +1014,21 @@ pub fn read_option(view: &BootView<'_>) {
 /// Read [`UNISOLATED_OPTION`]: the bare word turns it on, said on its line
 /// and recorded in the audit configuration (`Config::Unisolated`) at
 /// bring-up; a word with a value is said and ignored (ledger 3906 (2), (4)).
-fn read_unisolated(view: &BootView<'_>, tree: Option<&ferrix_fdt::Fdt<'_>>) {
-    let bootargs = tree.and_then(ferrix_fdt::Fdt::bootargs);
+fn read_unisolated(view: &BootView<'_>, tree: Option<&xaqu_fdt::Fdt<'_>>) {
+    let bootargs = tree.and_then(xaqu_fdt::Fdt::bootargs);
     let bare = view.flag(UNISOLATED_OPTION)
-        || bootargs.is_some_and(|args| ferrix_bootinfo::flag_in(args, UNISOLATED_OPTION));
+        || bootargs.is_some_and(|args| xaqu_bootinfo::flag_in(args, UNISOLATED_OPTION));
     let valued = view.option(UNISOLATED_OPTION).is_some()
         || bootargs.is_some_and(|args| option_in(args, UNISOLATED_OPTION).is_some());
     // The bare word alone; a value, beside it or not, gives no opt-out
     // (ledger 3906 (2), 4153 (2)).
-    match ferrix_devmgr_proto::admission::opt_out(bare, valued) {
-        ferrix_devmgr_proto::admission::OptOut::Absent => {}
-        ferrix_devmgr_proto::admission::OptOut::Ignored => crate::console::println!(
+    match xaqu_devmgr_proto::admission::opt_out(bare, valued) {
+        xaqu_devmgr_proto::admission::OptOut::Absent => {}
+        xaqu_devmgr_proto::admission::OptOut::Ignored => crate::console::println!(
             "  devmgr   {UNISOLATED_OPTION} takes no value: ignored, and every bus master \
              still needs its DMA translated and its interrupts isolated"
         ),
-        ferrix_devmgr_proto::admission::OptOut::On => {
+        xaqu_devmgr_proto::admission::OptOut::On => {
             UNISOLATED.store(true, Ordering::Relaxed);
             crate::console::println!(
                 "  devmgr   {UNISOLATED_OPTION}: devmgr may start drivers of devices whose DMA \
@@ -1039,7 +1039,7 @@ fn read_unisolated(view: &BootView<'_>, tree: Option<&ferrix_fdt::Fdt<'_>>) {
     }
 }
 
-/// Whether the command line carries `ferrix.unisolated`, for the audit
+/// Whether the command line carries `xaqu.unisolated`, for the audit
 /// configuration and DEVICES' flags.
 pub fn unisolated_allowed() -> bool {
     UNISOLATED.load(Ordering::Relaxed)
@@ -1063,7 +1063,7 @@ pub fn make_drivers_job() -> Result<(), &'static str> {
     Ok(())
 }
 
-/// `drivers.slice` under `ferrix.devmgr=init`, held for the life of the
+/// `drivers.slice` under `xaqu.devmgr=init`, held for the life of the
 /// machine: a job's parent holds it only weakly, and on the kernel path it is
 /// `devmgr` that holds it.
 static DRIVERS_KEPT: SpinLock<Option<Arc<Job>>> = SpinLock::new(None);
@@ -1072,7 +1072,7 @@ static DRIVERS_KEPT: SpinLock<Option<Arc<Job>>> = SpinLock::new(None);
 static STARTER_GIVEN: AtomicBool = AtomicBool::new(false);
 
 /// The starter, for pid 1's bootstrap channel: once, and only under
-/// `ferrix.devmgr=init`. `None` otherwise.
+/// `xaqu.devmgr=init`. `None` otherwise.
 pub(crate) fn starter() -> Option<Object> {
     if !by_init() || STARTER_GIVEN.swap(true, Ordering::AcqRel) {
         return None;
@@ -1210,7 +1210,7 @@ fn start_in(job: Arc<Job>) -> Result<Started, Errno> {
         "devmgr listener",
         report_then_listen,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
     );
     if heard.is_err() {
         crate::console::println!("  devmgr   no task to hear devmgr on");
@@ -1247,7 +1247,7 @@ fn handed_only_to_devmgr(
     }
     let args = crate::trap::SyscallArgs {
         abi: crate::trap::Abi::Native,
-        number: ferrix_native_abi::nr::PROCESS_START,
+        number: xaqu_native_abi::nr::PROCESS_START,
         args: [handle as u64, 0, 0, 0, 0, 0],
         ip: 0,
     };
@@ -1409,7 +1409,7 @@ const DRIVERS_JOB: &str = "drivers.slice";
 ///
 /// When there was no memory for any job at all.
 /// What the drivers' job has for its kernel objects, until a description says (K16 §4).
-#[cfg(ferrix_kernel_memory = "retyped")]
+#[cfg(xaqu_kernel_memory = "retyped")]
 const DRIVERS_RESERVATION: u64 = 64 << 20;
 
 fn drivers_job() -> Result<Arc<Job>, &'static str> {
@@ -1420,10 +1420,10 @@ fn drivers_job() -> Result<Arc<Job>, &'static str> {
         .or_else(|_| Job::new_root_as(true))
         .map_err(|_| "no memory for the drivers' job")?;
     // K14 holds of drivers where the kernel's first processes are measured (BA.4).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     job.make_measured();
     // K16 §4: the drivers' kernel objects are theirs (`docs/microkernel/K16.md`).
-    #[cfg(ferrix_kernel_memory = "retyped")]
+    #[cfg(xaqu_kernel_memory = "retyped")]
     job.set_reservation(DRIVERS_RESERVATION)
         .map_err(|_| "no reservation for the drivers' job")?;
     Ok(job)
@@ -1467,7 +1467,7 @@ pub(crate) fn vmo_of(bytes: &[u8]) -> Result<Arc<Vmo>, &'static str> {
             .map_err(|_| "a driver's image did not fit its VMO")?;
     }
     // Sealed by the kernel, its handles having no WRITE to seal with (K14.12).
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     let _ = vmo
         .seal()
         .map_err(|_| "a driver's image could not be sealed")?;

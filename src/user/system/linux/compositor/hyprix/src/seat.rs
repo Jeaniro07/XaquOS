@@ -5,7 +5,7 @@
 //! numbering by the layer below -- and gives back [`Action`]s: run this
 //! dispatcher, send this key to the focused window, the pointer is now here.
 //! So every rule about what a keybind matches and what a modifier does is
-//! host-tested, and running it on Ferrix tests the devices rather than the
+//! host-tested, and running it on Xaqu tests the devices rather than the
 //! rules.
 //!
 //! # What a bind matches

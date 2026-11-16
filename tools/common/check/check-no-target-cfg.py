@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Refuse `cfg(target_...)` in the product files of the host-measured item
-crates, `ferrix-sigverify` and `ferrix-sha256` (docs/SIGNING.md §8.5; the
+crates, `xaqu-sigverify` and `xaqu-sha256` (docs/SIGNING.md §8.5; the
 consultant's S1-c, ledger lines 3738 and 3803 (4)).
 
 Their tests and their coverage run on the host, and stand for the code the

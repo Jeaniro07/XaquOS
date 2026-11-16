@@ -1,10 +1,10 @@
 //! The pipeline, step by step: each request's commands in order, each failure
 //! undone as far as is safe, and reports it was not waiting for refused.
 
-use ferrix_displayctl::message::{
+use xaqu_displayctl::message::{
     Attach, AttachObject, FORMAT, Message, PAGE_SIZE, Rect as CtlRect, Status,
 };
-use ferrix_virtio::gpu::{Command, DeviceError as Refusal, Format, MemEntry, Rect, Response};
+use xaqu_virtio::gpu::{Command, DeviceError as Refusal, Format, MemEntry, Rect, Response};
 
 use crate::pipeline::{Pipeline, PipelineError, QUEUE_DEPTH, Request, Step, TransferOffset};
 

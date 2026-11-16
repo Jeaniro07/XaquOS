@@ -260,7 +260,7 @@ impl WaitQueue {
     }
 }
 
-impl ferrix_sync::Parking for WaitQueue {
+impl xaqu_sync::Parking for WaitQueue {
     fn park_until(&self, ready: &mut dyn FnMut() -> bool) {
         let _ = self.wait_until_deadline(ready, u64::MAX);
     }

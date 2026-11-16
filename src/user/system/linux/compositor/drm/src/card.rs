@@ -4,13 +4,13 @@ use std::ffi::CStr;
 use std::io;
 use std::os::fd::{AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd};
 
-use ferrix_linux_abi::drm::{
+use xaqu_linux_abi::drm::{
     self, CardRes, ClipRect, CreateDumb, Crtc, CrtcPageFlip, DestroyDumb, FbCmd2, FbDirtyCmd,
     Field, GetBlob, GetCap, GetConnector, GetEncoder, GetPlane, GetPlaneRes, GetProperty, Layout,
     MapDumb, ModeCursor2, ModeInfo, ObjGetProperties, PrimeHandle, PropertyEnum, SetClientCap,
     Version,
 };
-use ferrix_linux_abi::socket::Width;
+use xaqu_linux_abi::socket::Width;
 
 use crate::modeset;
 
@@ -98,7 +98,7 @@ impl Card {
 
     /// What the card has to say, read off its descriptor until nothing is
     /// left: whether its driver has gone, and whether its connectors changed
-    /// -- Ferrix's own `EVENT_FERRIX_CONNECTORS`, which a virtio-gpu whose
+    /// -- Xaqu's own `EVENT_XAQU_CONNECTORS`, which a virtio-gpu whose
     /// host window was resized sends. Page-flip events are read and dropped,
     /// as [`Card::gone`] says. Never blocks.
     #[must_use]
@@ -544,7 +544,7 @@ pub struct News {
 pub(crate) fn connectors_changed(mut events: &[u8]) -> bool {
     let mut changed = false;
     while let (Some(kind), Some(length)) = (word(events, 0), word(events, 4)) {
-        changed |= kind == drm::EVENT_FERRIX_CONNECTORS;
+        changed |= kind == drm::EVENT_XAQU_CONNECTORS;
         let Some(rest) = usize::try_from(length)
             .ok()
             .filter(|&length| length >= 8)
@@ -1113,7 +1113,7 @@ impl Card {
 
     /// A second descriptor on this card, for a thread of the compositor's
     /// own to make its [`Card::dirty`] and [`Card::page_flip`] calls on: on
-    /// Ferrix each waits until the driver has shown the frame -- a
+    /// Xaqu each waits until the driver has shown the frame -- a
     /// virtio-gpu's host, the Intel driver's next vertical blank -- which a
     /// compositor's loop should not. The copy shares the open file, so it
     /// is master when the card is.
@@ -1264,7 +1264,7 @@ impl Flusher {
     }
 
     /// [`Card::page_flip`] to the framebuffer `framebuffer` on the CRTC
-    /// `crtc`: what a compositor's flipping thread makes, since on Ferrix
+    /// `crtc`: what a compositor's flipping thread makes, since on Xaqu
     /// the call returns once the driver has shown the frame.
     ///
     /// # Errors

@@ -1,6 +1,6 @@
 # seccomp-bpf: the second half of Chromium's sandbox
 
-Steam's browser helper, `steamwebhelper` (Chromium, as CEF), runs on Ferrix
+Steam's browser helper, `steamwebhelper` (Chromium, as CEF), runs on Xaqu
 with `-no-cef-sandbox` (`docs/STEAM.md` §3). Chromium's Linux sandbox has
 two layers: a namespace layer (user and pid namespaces, with network ones
 if it can get them, and a `chroot` into a directory that no longer exists),
@@ -15,7 +15,7 @@ Status: **design, for review** by the certification consultant (os-9f) and
 the namespaces stream (os-98). Written 2026-09-30 on `main` at 813d1ea8. No
 code yet.
 
-**In one paragraph.** Six landings, S1 to S6, **20 points**, give Ferrix
+**In one paragraph.** Six landings, S1 to S6, **20 points**, give Xaqu
 Linux's seccomp-bpf:
 * a classic-BPF verifier and interpreter in `src/lib/`;
 * a filter check registered into the core's system call entry, run
@@ -40,7 +40,7 @@ R1).
 On 2026-09-30, `strace -f -v` of Google Chrome 151.0.7922.137,
 `--headless=new --disable-gpu --dump-dom about:blank`, on nazuna (Linux
 7.0, `CONFIG_SECCOMP_FILTER=y`). The traces are
-`~/.local/share/ferrix/seccomp-design-ref/chrome.strace` and
+`~/.local/share/xaqu/seccomp-design-ref/chrome.strace` and
 `chrome-v.strace`. Nine processes sandboxed themselves: two of type
 `zygote` and seven forked from them. Each did the same thing, in the
 same order:
@@ -153,7 +153,7 @@ Chromium's source makes two of these hard requirements:
   Without a namespace layer the only other layer is the set-uid
   `chrome-sandbox`. Without that, `zygote_host_impl_linux.cc` says
   `No usable sandbox!`, which is exactly what the Steam spike saw
-  (`~/.local/share/ferrix/steam-ref/SPIKE.md`).
+  (`~/.local/share/xaqu/steam-ref/SPIKE.md`).
 * **The browser checks the zygote's pid is above 1**, as it arrives in
   `SCM_CREDENTIALS`. So credentials passing between pid namespaces must
   translate the pid.
@@ -162,7 +162,7 @@ A network namespace is optional for running: Chromium drops the flag.
 It is required for chrome://sandbox to say "adequately sandboxed".
 
 **Measured: what Chrome does on a kernel that refuses them**
-(2026-09-30, nazuna, Chrome 151). This is what Ferrix does today and
+(2026-09-30, nazuna, Chrome 151). This is what Xaqu does today and
 after NAMESPACES' N4:
 * `clone` and `unshare` with `CLONE_NEWPID` or `CLONE_NEWNET` are
   refused `EINVAL`, as `docs/NAMESPACES.md` §1.5 keeps them.
@@ -182,21 +182,21 @@ after NAMESPACES' N4:
 
 **The runs.** Each is `--headless=new --disable-gpu` under
 `strace -f -e trace=clone,clone3,unshare,seccomp,chroot`. The files are in
-`~/.local/share/ferrix/seccomp-design-ref/nsx/` (`nsdeny.c`, `nshide.c`,
+`~/.local/share/xaqu/seccomp-design-ref/nsx/` (`nsdeny.c`, `nshide.c`,
 `seccomp-design-nsx.sh`, one `.strace` and `.err` per run).
 
 | Run | Refused `EINVAL` | Hidden in `/proc/self/ns` | What Chrome did | Sandboxed? |
 |---|---|---|---|---|
 | v0, control | nothing | nothing | zygote `clone(NEWUSER\|NEWPID\|NEWNET)`, 8 renderers `clone(NEWPID)`, `chroot`, 8 filters of 600+ instructions | yes |
 | v1 | `NEWPID`, `NEWNET` | nothing | the zygote's `clone(NEWUSER\|NEWPID\|NEWNET)` = `EINVAL`; the browser dies at once of `SIGTRAP` (Chromium's immediate-crash `CHECK`), exit 133 | no: dead |
-| v2 (Ferrix today, and after N4) | `NEWPID`, `NEWNET` | `pid`, `net` | flags dropped: the zygote started with `clone(NEWUSER)` alone; the browser stops at `FATAL:zygote_host_impl_linux.cc:221 Check failed`, waiting for the zygote's boot message, exit 134. No filter was installed and there was no `chroot`. | no: dead |
+| v2 (Xaqu today, and after N4) | `NEWPID`, `NEWNET` | `pid`, `net` | flags dropped: the zygote started with `clone(NEWUSER)` alone; the browser stops at `FATAL:zygote_host_impl_linux.cc:221 Check failed`, waiting for the zygote's boot message, exit 134. No filter was installed and there was no `chroot`. | no: dead |
 | v4 | `NEWPID` | `pid` | the same as v2, with `clone(NEWUSER\|NEWNET)` | no: dead |
 | v3 | `NEWNET` | `net` | flags dropped: zygote `clone(NEWUSER\|NEWPID)`, renderers `clone(NEWPID)`, `chroot`, 8 filters, the page loaded, exit 0 | **yes**, without a network namespace |
 
 **Neither run fell back to the set-uid sandbox.** That fallback is taken
 only when the user namespace probe fails, and here it passed. It never
 said "No usable sandbox" either: it chose the namespace layer and died in
-it. On Ferrix after N4 the probe passes too, so the set-uid path is not a
+it. On Xaqu after N4 the probe passes too, so the set-uid path is not a
 way out. Before N4 the probe fails, and the set-uid path would need a
 root-owned set-uid `chrome-sandbox` beside the browser. The Steam spike
 found none, and got "No usable sandbox!".
@@ -309,12 +309,12 @@ and Linux's `kernel/seccomp.c` and `net/core/filter.c` at 551c722f
 | `GET_ACTION_AVAIL`: 0 for the seven built actions, `EOPNOTSUPP` for `USER_NOTIF` | `bpf(2)`, extended BPF, `SO_ATTACH_FILTER`: `ENOSYS` / `ENOPROTOOPT` as today |
 | `SET_MODE_STRICT`, `PR_GET_SECCOMP` | Linux's per-filter action cache (§3.11) |
 | `NoNewPrivs`, `Seccomp`, `Seccomp_filters` in `/proc/<pid>/status` | |
-| four ABIs: x86-64, i386 on x86-64, AArch64, ARMv7-A EABI with its private range from `0xf0000` | x32: Ferrix has none, and a number with bit 30 set is `ENOSYS` |
+| four ABIs: x86-64, i386 on x86-64, AArch64, ARMv7-A EABI with its private range from `0xf0000` | x32: Xaqu has none, and a number with bit 30 set is `ENOSYS` |
 | `PR_GET_SPECULATION_CTRL`/`PR_SET_SPECULATION_CTRL` answering "force-disabled" (§3.9) | |
 
 ---
 
-## 2. Ferrix today
+## 2. Xaqu today
 
 Read on 813d1ea8. Paths are under `src/kernel/src/` unless given.
 
@@ -350,7 +350,7 @@ Read on 813d1ea8. Paths are under `src/kernel/src/` unless given.
 
   **A hook in the dispatcher would not see these** (§3.3).
 * **Numbers are the full register.** x86-64 reads `rax` as a `usize`
-  (`syscall.rs:488`); Linux reads its low 32 bits. On Ferrix a number with
+  (`syscall.rs:488`); Linux reads its low 32 bits. On Xaqu a number with
   upper bits set is in no table and is `ENOSYS`.
 * **Other entries on x86-64.** A `SYSCALL` from 32-bit code is `ENOSYS`
   (`syscall.rs:323`), and `SYSENTER` faults (`IA32_SYSENTER_CS` is 0).
@@ -535,7 +535,7 @@ Three rules follow, and each has a check (§8).
   kernel's part is to tell the truth, and the truth is the entry.
 * **SR2. The number a filter sees and the number dispatched are the same
   number.** The filter sees the low 32 bits as an `int`, as on Linux.
-  Ferrix dispatches on the whole register, so a number with upper bits set
+  Xaqu dispatches on the whole register, so a number with upper bits set
   is in no table and is `ENOSYS` whatever the filter said. A number is
   either dispatched as the value the filter judged, or not at all. The
   native range (`0x1000` to `0x1FFF`) goes through the filter like any
@@ -642,7 +642,7 @@ process, whatever its filter says, is question Q2.
 
 **Per thread, shared.** Linux keeps the filter pointer per thread
 (`task_struct.seccomp`). Threads of one process can have different
-filters, and `TSYNC` exists to make them equal. Ferrix does the same, on
+filters, and `TSYNC` exists to make them equal. Xaqu does the same, on
 `Thread`:
 
 ```
@@ -773,11 +773,11 @@ ALLOW`. An action value the kernel does not know counts as `KILL_PROCESS`.
 | `TRACE\|d` | no tracer can exist, so `-ENOSYS`, as Linux answers when no tracer asked for `PTRACE_O_TRACESECCOMP` | the return register holds it |
 | `USER_NOTIF` | no listener can exist, so `-ENOSYS`, as Linux answers | the return register holds it |
 | `KILL_THREAD` | the calling thread ends as if killed by `SIGSYS`. If it is the process's last live thread, the whole process is killed by `SIGSYS` with its core flag, as Linux does. | none: nothing returns to user mode |
-| `KILL_PROCESS`, or unknown | the process is killed by `SIGSYS`, dumping core as far as Ferrix dumps (Linux's `HANDLER_EXIT`). No handler runs. | none |
+| `KILL_PROCESS`, or unknown | the process is killed by `SIGSYS`, dumping core as far as Xaqu dumps (Linux's `HANDLER_EXIT`). No handler runs. | none |
 
 **Filter-wide logging.** With `SECCOMP_FILTER_FLAG_LOG`, every action but
 `ALLOW` that a filter returns is logged as `LOG` is. Linux logs through
-its audit subsystem. Ferrix's `audit.rs` records the item's decisions, and
+its audit subsystem. Xaqu's `audit.rs` records the item's decisions, and
 a filter's decision is the personality's, so it goes to the kernel log
 (question Q4).
 
@@ -796,7 +796,7 @@ and never lets the thread reach user mode again.**
 entry's own numbers (i386's `sigreturn` 119, x86-64's `rt_sigreturn` 15,
 since x86-64 has no plain `sigreturn`). Anything else is `KILL_THREAD`,
 which Linux logs and does with `SIGKILL`. That makes it a filter of
-Ferrix's own, built by the same crate from a fixed table, with a host test
+Xaqu's own, built by the same crate from a fixed table, with a host test
 per ABI.
 
 ### 3.6 `TRAP`: the signal Chromium lives on
@@ -966,7 +966,7 @@ step 5 (the lock rule of NAMESPACES §6).
   number 0, a value filters must not special-case.
 * **`ERRNO` and `TRAP` never produce a restart code.** An errno a filter
   chose is returned as is, even `EINTR`. A filter could ask for errno 512,
-  `ERESTARTSYS`. That value is internal to Ferrix and must never reach
+  `ERESTARTSYS`. That value is internal to Xaqu and must never reach
   `mark_restart`. The hook's `-e` is written straight into the return
   register and never passes `linux::dispatch`'s restart handling.
   **Rule SR7**, with a check.
@@ -986,7 +986,7 @@ speculative-store-bypass and indirect-branch mitigations for the thread
 (`arch_seccomp_spec_mitigate`). Chromium asks it not to, and then disables
 indirect-branch speculation itself through `PR_SET_SPECULATION_CTRL`.
 
-On Ferrix these mitigations are always on for every program
+On Xaqu these mitigations are always on for every program
 (`docs/certification/SPECULATION.md`: "the item cannot know which of its
 programs run a JIT or a sandbox"). So:
 * **`SPEC_ALLOW`** is accepted and turns nothing off, and no filter or
@@ -1008,7 +1008,7 @@ order:**
 * `Seccomp:\t0|1|2`
 * `Seccomp_filters:\tN`, the chain's length
 
-They come from `ferrix_procfs::status::render` with fields filled by
+They come from `xaqu_procfs::status::render` with fields filled by
 `fs/procfs/render.rs`. For a thread's `status`, they are that thread's.
 
 **Left out, each answered as a Linux without it answers:**
@@ -1017,7 +1017,7 @@ They come from `ferrix_procfs::status::render` with fields filled by
   systemd do not. It adds a kernel object that blocks a thread on another
   process's answer, a class that has had its own races upstream. **Not
   offered**, so `GET_ACTION_AVAIL` says `EOPNOTSUPP` and libseccomp knows.
-* **ptrace and `TRACE`**. Ferrix has no ptrace. When it does, `TRACE`
+* **ptrace and `TRACE`**. Xaqu has no ptrace. When it does, `TRACE`
   gains Linux's stop, with the recheck after the tracer and the "number
   -1 skips" rule. That is Linux's fix for CVE-2019-2054, a tracer changing
   the number after the filter ran. It also gains
@@ -1152,7 +1152,7 @@ kernel stack or in its own thread object, and is exactly what the entry's
 dispatch, which the same entry runs with interrupts open a few instructions
 later and which may block, already relies on across a preemption:
 * **x86-64 `SYSCALL`.** `SFMASK` cleared `IF` on entry, the stub swapped `GS` and
-  switched to the task's kernel stack, and `ferrix_syscall_entry` was handed a
+  switched to the task's kernel stack, and `xaqu_syscall_entry` was handed a
   `SyscallFrame` on that stack, with the user registers saved in it. The hook
   runs before `answer_here` and the dispatcher, which enable interrupts
   themselves for the call. A preemption mid-walk saves and restores the task's
@@ -1279,7 +1279,7 @@ Then two runs of real programs:
   polls `tgkill` instead, §12). The tests that wait on `ptrace` take the
   harness's 30 seconds each, so a run takes about fifteen minutes under TCG.
 
-  The first run found one difference that was Ferrix's: `TSYNC_ESRCH`
+  The first run found one difference that was Xaqu's: `TSYNC_ESRCH`
   without `TSYNC` was `EINVAL`, where Linux accepts it and it changes
   nothing. Fixed the same day, in `set_filter`, the boot probes and
   `test-seccomp`.
@@ -1313,10 +1313,10 @@ comes before `land.sh take`.
 | S3 | Filters: `seccomp(2)` in the four tables, `prctl`'s options, no-new-privs moved to `Process` and inherited, per-thread chains and their inheritance (including native children), iterative release, `ALLOW`, `ERRNO`, `KILL_THREAD`, `KILL_PROCESS`, `LOG`, strict mode, `GET_ACTION_AVAIL`, `GET_NOTIF_SIZES`, the `status` lines, F-37 | SR4 to SR8, SR11, SR12 | §8.1's S3 lines | **stage 13's exit clause "a seccomp filter that blocks a syscall"**; bubblewrap's `--seccomp`; Flatpak's and systemd's filters; init's L13 `SystemCallFilter=`; chrome://sandbox's "Seccomp-BPF sandbox" row turns Yes (the probe passes) | 6 |
 | S4 | `TRAP`: `Origin::Sys` with the per-ABI layouts, the rollback, forced `SIGSYS`; `TRACE` and `USER_NOTIF` as `ENOSYS`; `SPEC_ALLOW` and `PR_*_SPECULATION_CTRL` | SR9, SR13, SR14 | §8.1's S4 lines | Chromium's renderer policies can run (they are made of `TRAP`s) | 4 |
 | S5 | `TSYNC`, `TSYNC_ESRCH` (§3.7) | SR10 | §8.1's S5 line; `test-threads --arch all` | chrome://sandbox's TSYNC row; Chromium's multi-threaded start; libseccomp's `seccomp_attr_set(SCMP_FLTATR_CTL_TSYNC)` | 3 |
-| S6 | `cargo xtask test-seccomp` (§8.2): the guest program on four ABIs, and Linux's `seccomp_bpf` selftest with its skip list, built on nazuna | the oracle | `test-seccomp --arch all` | confidence: Linux's own tests pass on Ferrix | 4 |
+| S6 | `cargo xtask test-seccomp` (§8.2): the guest program on four ABIs, and Linux's `seccomp_bpf` selftest with its skip list, built on nazuna | the oracle | `test-seccomp --arch all` | confidence: Linux's own tests pass on Xaqu | 4 |
 | NP-pid | *The namespaces stream's, not this document's.* Pid namespaces as Chromium's zygote uses them (§1.2): `CLONE_NEWPID` from `clone` and `unshare` under a user namespace, nested, `/proc/self/ns/pid`, the new namespace's pid 1 reaping its orphans, pids translated in `SCM_CREDENTIALS`, `getpid` and procfs as seen from inside | -- | the namespaces stream's | **required**: without it Chrome with its sandbox does not start (§1.2, run v2) | unsized; os-98's first guess is more than N4's 8 |
 | NP-net | *The namespaces stream's, optional.* An empty network namespace, with loopback alone | -- | the namespaces stream's | only chrome://sandbox's "adequately sandboxed" verdict: Chrome runs sandboxed without it (§1.2, run v3) | unsized; small if an empty one with loopback suffices, larger otherwise |
-| S7 | Chrome sandboxed: `test-chrome-window` without `--no-sandbox`, with S3 to S5, N4 and NP-pid | -- | `test-chrome-window`; a renderer's `Seccomp: 2`; chrome://sandbox read in a windowed run | Chromium's sandbox on Ferrix | 3, plus what it finds |
+| S7 | Chrome sandboxed: `test-chrome-window` without `--no-sandbox`, with S3 to S5, N4 and NP-pid | -- | `test-chrome-window`; a renderer's `Seccomp: 2`; chrome://sandbox read in a windowed run | Chromium's sandbox on Xaqu | 3, plus what it finds |
 | S8 | `steamwebhelper` without `-no-cef-sandbox`: `docs/STEAM.md` §3's row closed, inside pressure-vessel once N7 has it | -- | `test-steam-bootstrap --arch x86_64` | **the customer's end point for the helper's sandbox** | 2, plus what it finds |
 
 **Totals:**
@@ -1419,7 +1419,7 @@ that the pid half is built while seccomp is.
   `audit.rs`. Agree? P.ACCOUNTABILITY lists "a call refused", and a
   reviewer may read that wider.
 * **Q5. No-new-privs on `fork`.** S3 changes `fork` to copy no-new-privs,
-  which Linux does and Ferrix never did. It is safe in the direction it
+  which Linux does and Xaqu never did. It is safe in the direction it
   moves: a child can only gain the restriction. Should it land ahead of
   S3, alone, as a fix?
 
@@ -1461,7 +1461,7 @@ that the pid half is built while seccomp is.
   root, as Linux does?
 * **R5. `CLONE_NEWUSER` errors.** Chromium `PCHECK`s the errno of a
   refused `CLONE_NEWUSER`: `EPERM`, `EUSERS`, `EINVAL` or `ENOSPC`, and
-  never `ENOSYS`. Ferrix answers `EINVAL` today. Every refusal N4 adds
+  never `ENOSYS`. Xaqu answers `EINVAL` today. Every refusal N4 adds
   must stay in that set.
 
 **For whoever takes S6 (not blocking):**
@@ -1540,7 +1540,7 @@ answer the real kernel gave each of the calls 0 to 449 (`chrome-<n>.verdicts`,
 made by `tests/oracle.c` on nazuna); and the fuzz target
 `seccomp_verify_run`, which holds the same two checkers to each other on any
 bytes, and a verified program's run to its length and to the data. The one difference from the real kernel: x86-64 `uretprobe` (335) and
-`uprobe` (336) pass through Linux's seccomp unfiltered, and Ferrix, with no
+`uprobe` (336) pass through Linux's seccomp unfiltered, and Xaqu, with no
 probes, lets a filter judge them like any number it does not know (stricter).
 Nine of
 Chrome's processes installed three distinct programs, of 657, 661 and 662
@@ -1670,12 +1670,12 @@ earlier log older than the final tree, so the landing was conditional on
 on the landing's own commit, each log recording it. That is met: the
 `s2f-check`, `s2f-x86`, `s2f-a64`, `s2f-arm` and `s2f-thr` logs on nazuna
 start `gate commit: bc9aaa38` and end with exit 0 (the three boots
-`FERRIX-BOOT-OK stages 1-12`); the rebase onto the `main` of 2026-10-01 18:40
+`XAQU-BOOT-OK stages 1-12`); the rebase onto the `main` of 2026-10-01 18:40
 touched no kernel, library or boot file, so the gate stands.
 
 **Gates run before that** (`stage13-s2`, side ref `os7s/s2`, nazuna):
 `cargo xtask check` exit 0; `test-boot` on x86-64, AArch64 and ARMv7-A at
-`--smp 2` each `FERRIX-BOOT-OK stages 1-12`; `test-threads --arch all` and
+`--smp 2` each `XAQU-BOOT-OK stages 1-12`; `test-threads --arch all` and
 `test-init --arch all` the same; `test-shell --arch all` as the landing
 message says. Negative controls, each a throwaway branch with one sabotage and
 a `NEGATIVE CONTROL` line in the boot log, each stopping the boot with the
@@ -2083,7 +2083,7 @@ expected-failure list (§8.2, §10 risk 5) followed on 2026-10-26 as
 Linux's `prctl(PR_SET_SYSCALL_USER_DISPATCH)`, for Proton's Wine
 (stage 23, E5.3). The design and its review are in the certification
 consultant's ledger, line 2323 (OK IF (1) to (12)); the design document
-is `~/.local/share/ferrix/n150-linux/sud-design.md` on the gate host.
+is `~/.local/share/xaqu/n150-linux/sud-design.md` on the gate host.
 Code: `src/kernel/src/syscall/seccomp/user_dispatch.rs` (load ring), its
 boot check `user_dispatch_check.rs`, and the guest program `src/tests/sud`
 (`cargo xtask test-sud`).
@@ -2096,7 +2096,7 @@ code. GE-Proton asks the kernel to hand such calls back: it names its libc
 as a range whose calls always run, and keeps one byte in its memory, the
 selector, that says whether calls from anywhere else run (ALLOW, 0) or come
 back to it as a `SIGSYS` (BLOCK, 1). Its handler then performs the Windows
-call. Without it, a direct NT call reaches Ferrix as an unrelated Linux or
+call. Without it, a direct NT call reaches Xaqu as an unrelated Linux or
 native call.
 
 ### 13.2 Where it sits
@@ -2116,7 +2116,7 @@ and the IPC fast path declines for a dispatching thread.
 
 The settings are per thread and never copied: every new thread, fork,
 vfork and native child starts with them off, and `execve` clears them for
-the calling thread. Only the thread writes its own (Ferrix has no ptrace).
+the calling thread. Only the thread writes its own (Xaqu has no ptrace).
 It is offered on x86-64 only, as Linux 6.18 and 7.0 offer it only with
 `GENERIC_ENTRY`; on AArch64 and ARMv7-A every mode is `EINVAL`.
 
@@ -2146,7 +2146,7 @@ instruction is at `ip`:
 
 A thread a filter has marked `Dead` gets its end, never a dispatch
 (condition 7). No vDSO pad is exempt, where Linux exempts its 32-bit vDSO's
-sigreturn pads (`arch_syscall_is_vdso_sigreturn`). Ferrix's x86-64 vDSO
+sigreturn pads (`arch_syscall_is_vdso_sigreturn`). Xaqu's x86-64 vDSO
 holds no way back from a handler, and it has no 32-bit vDSO: an i386
 handler installed without `SA_RESTORER` is refused
 (`arch/x86_64/signal/compat.rs`), so every i386 handler returns through the
@@ -2257,11 +2257,11 @@ off, `BUILT` false) is the before: the probe's direct call answered
 not enable dispatch, so the control fired. `sudE-wine` is the after:
 `DIRECT-SYSCALL PASS`. The same probe passes on nazuna's Linux under
 GE-Proton 11-7 first; the script, the program and its output are in
-`~/.local/share/ferrix/logs/sud-pe-linux/`.
+`~/.local/share/xaqu/logs/sud-pe-linux/`.
 
 Condition (5): 4,656 against 4,657 instructions per IPC round trip
 before and after the watched mask, 4,112 against 4,107 cycles (logs in
-`~/.local/share/ferrix/logs/sud-ipc/`), so no timed bench was owed.
+`~/.local/share/xaqu/logs/sud-ipc/`), so no timed bench was owed.
 
 The deviations from the design, each accepted at line 2340: the module
 is `syscall/seccomp/user_dispatch.rs`; `BUILT` is `arch::ARCH` matched

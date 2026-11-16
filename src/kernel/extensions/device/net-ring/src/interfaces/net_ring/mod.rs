@@ -1,6 +1,6 @@
 //! The kernel's end of a net ring.
 //!
-//! `docs/NET-RING.md` is the protocol and `ferrix-netring` checks every word
+//! `docs/NET-RING.md` is the protocol and `xaqu-netring` checks every word
 //! of it. This is the glue that crate leaves to the kernel (its §8). A process
 //! holding a device with `MANAGE` asks for a ring with `NET_RING_CREATE` and
 //! hands the channel end it gets to a network driver. One kernel task per ring
@@ -42,17 +42,17 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use ferrix_blkring::identity::Location;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, PACKET_SIGNAL};
-use ferrix_net::iface::{IFF_BROADCAST, IFF_MULTICAST, IFF_UP, Interface as NetInterface};
-use ferrix_netring::control::{HELLO_RIGHTS, MAX_MESSAGE, READY_RIGHTS};
-use ferrix_netring::kernel::{Completed, KernelSide, SubmitError};
-use ferrix_netring::{Hello, Message, Op, Refusal, RingMemory, Status, Wait};
+use xaqu_blkring::identity::Location;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, PACKET_SIGNAL};
+use xaqu_net::iface::{IFF_BROADCAST, IFF_MULTICAST, IFF_UP, Interface as NetInterface};
+use xaqu_netring::control::{HELLO_RIGHTS, MAX_MESSAGE, READY_RIGHTS};
+use xaqu_netring::kernel::{Completed, KernelSide, SubmitError};
+use xaqu_netring::{Hello, Message, Op, Refusal, RingMemory, Status, Wait};
 
 use crate::claim::{Claims, StillServed};
 use crate::device::DeviceNode;
@@ -69,7 +69,7 @@ use crate::syscall::native;
 use crate::timer;
 use crate::user::vmo::{Held, Vmo};
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 
 /// How long a ring waits for its driver's HELLO.
@@ -183,7 +183,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_netring::control::CONTROL_RIGHTS,
+        xaqu_netring::control::CONTROL_RIGHTS,
         |node| {
             create(node)
                 .map(|(_, driver_end)| driver_end)
@@ -213,7 +213,7 @@ pub(crate) fn create(node: &Arc<DeviceNode>) -> Result<(usize, Arc<Endpoint>), C
         device: Arc::clone(node),
         location: crate::interfaces::block_ring::location_of(node),
     });
-    match sched::spawn("net ring", run, id, ferrix_sched::NICE_0_WEIGHT) {
+    match sched::spawn("net ring", run, id, xaqu_sched::NICE_0_WEIGHT) {
         Ok(task) => {
             let mut tasks = TASKS.lock();
             tasks.retain(|(_, task)| !task.is_dead());
@@ -408,8 +408,8 @@ fn take_up(start: &Start, message: &ChannelMessage) -> Result<Serving, Refusal> 
     let side =
         KernelSide::attach(&ring_memory, ring_bytes(&accepted), data_bytes).map_err(|error| {
             match error {
-                ferrix_netring::AttachError::Header(_) => Refusal::RingTooSmall,
-                ferrix_netring::AttachError::DataTooSmall => Refusal::DataTooSmall,
+                xaqu_netring::AttachError::Header(_) => Refusal::RingTooSmall,
+                xaqu_netring::AttachError::DataTooSmall => Refusal::DataTooSmall,
             }
         })?;
 
@@ -499,7 +499,7 @@ fn add_or_take_up(start: &Start, hello: &Hello) -> Result<u32, Refusal> {
         | if flags.broadcast { IFF_BROADCAST } else { 0 }
         | if flags.multicast { IFF_MULTICAST } else { 0 };
     let key = net::device::new_key();
-    interface.backing = ferrix_net::iface::Backing::Device(key);
+    interface.backing = xaqu_net::iface::Backing::Device(key);
     let index = core.add_interface(interface);
     net::device::place(key, net::first(), index);
     net::device::serve_from(key, start.device.index());
@@ -630,7 +630,7 @@ impl RingMemory for Pages {
     // the indices and want-bell flags are `u32`s the driver reads and writes
     // while the kernel does, and a `comp_tail` read torn across the driver's
     // store is a ring run ahead or backwards, corruption, a ring ended under
-    // a live driver (`ferrix-netring`'s `RingMemory`, and the block ring's
+    // a live driver (`xaqu-netring`'s `RingMemory`, and the block ring's
     // `Pages`, which has kept this rule since F-45). Every shared field is
     // naturally aligned in a page-aligned VMO; an offset that is not falls
     // back to bytes, which only a hostile layout reaches.

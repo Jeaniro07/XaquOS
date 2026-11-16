@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-objects"
+name = "xaqu-objects"
 description = "The bookkeeping behind the native ABI's kernel objects: handle tables and message queues"
 version = "0.1.0"
 edition = "2024"
@@ -8,9 +8,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-fallible = { workspace = true }
-ferrix-native-abi = { workspace = true }
-ferrix-sync = { workspace = true }
+xaqu-fallible = { workspace = true }
+xaqu-native-abi = { workspace = true }
+xaqu-sync = { workspace = true }
 
 [lints]
 workspace = true

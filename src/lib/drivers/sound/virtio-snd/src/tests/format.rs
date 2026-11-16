@@ -1,7 +1,7 @@
 //! The translation into the core's terms, held to both tables.
 
-use ferrix_sndctl::message::RATES_HZ;
-use ferrix_virtio::snd;
+use xaqu_sndctl::message::RATES_HZ;
+use xaqu_virtio::snd;
 
 use crate::format::{FORMATS, to_virtio};
 

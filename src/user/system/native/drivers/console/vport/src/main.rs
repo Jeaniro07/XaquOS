@@ -1,7 +1,7 @@
 //! The virtio-console port driver: a named virtio-serial port on one end, a
 //! Unix socket on the other, and nothing in between that understands either.
 //!
-//! `ferrix-virtio-console` is the device: the order of the bring-up, the
+//! `xaqu-virtio-console` is the device: the order of the bring-up, the
 //! control conversation, and which buffer goes where. It is tested on the
 //! host against a real virtqueue and knows nothing of handles. This program
 //! is the handles that library was written to be wrapped in, and a socket.
@@ -34,28 +34,28 @@
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::types::IoMappingSpec;
-use ferrix_rt::linux;
-use ferrix_rt::native::channel::Channel;
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio::pci::{CommonConfig, NO_VECTOR};
-use ferrix_virtio::{DeviceConfig, QueueMemory};
-use ferrix_virtio_console::{
+use xaqu_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::types::IoMappingSpec;
+use xaqu_rt::linux;
+use xaqu_rt::native::channel::Channel;
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio::pci::{CommonConfig, NO_VECTOR};
+use xaqu_virtio::{DeviceConfig, QueueMemory};
+use xaqu_virtio_console::{
     AREA_BYTES, Area, CHUNK, CONTROL_AREA_BYTES, ConsoleError, DevicePages, Driver, Event, Options,
     Parts, RING_BYTES, Transport,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -77,7 +77,7 @@ const MAX_PAGES: usize = if PORT_PAGES > CONTROL_PAGES {
 /// (`docs/CLIPBOARD.md` §3.1).
 const VIRTIO_CONSOLE_IDS: [u16; 2] = [0x1043, 0x1003];
 
-/// The abstract name the agent connects to, `\0ferrix.vport`.
+/// The abstract name the agent connects to, `\0xaqu.vport`.
 ///
 /// Not a path: `devmgr` starts this driver before pid 1 moves onto the root
 /// volume (`docs/INIT.md` §7.3), and a socket bound under the initramfs's
@@ -85,7 +85,7 @@ const VIRTIO_CONSOLE_IDS: [u16; 2] = [0x1043, 0x1003];
 /// abstract name is in no directory, so the switch cannot hide it. It is
 /// per network namespace, as on Linux, so a unit given a network of its own
 /// would not see it; the agent is not run that way.
-const SOCKET_NAME: &[u8] = b"ferrix.vport";
+const SOCKET_NAME: &[u8] = b"xaqu.vport";
 
 /// The only uid the port answers. An abstract name has no file mode to keep
 /// others out, so the peer's credentials do what a root-owned socket's mode
@@ -333,7 +333,7 @@ impl Block {
     }
 }
 
-/// The device as `ferrix-virtio-console` drives it.
+/// The device as `xaqu-virtio-console` drives it.
 struct Registers {
     common: Block,
     notify: Block,
@@ -540,7 +540,7 @@ struct Started {
 fn started(boot: &Channel<Kernel>) -> Result<Started, Step> {
     let _signalled = boot
         .wait_one(
-            ferrix_native_abi::signals::Signals::READABLE,
+            xaqu_native_abi::signals::Signals::READABLE,
             Deadline::Never,
         )
         .map_err(|_| Step::Start)?;

@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-intel-driver"
-description = "The Intel Xe-LP GPU's driver process (the N150's ADL-N): forcewake, the GT's identity and the GGTT read, then execlist submission (M2) and the i915 render node over the GT (M3), on ferrix-rt"
+name = "xaqu-intel-driver"
+description = "The Intel Xe-LP GPU's driver process (the N150's ADL-N): forcewake, the GT's identity and the GGTT read, then execlist submission (M2) and the i915 render node over the GT (M3), on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -20,15 +20,15 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-chardevctl.workspace = true
-ferrix-display-modes.workspace = true
-ferrix-displayctl.workspace = true
-ferrix-intel-xelp.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-process-builder.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-chardevctl.workspace = true
+xaqu-display-modes.workspace = true
+xaqu-displayctl.workspace = true
+xaqu-intel-xelp.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-process-builder.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

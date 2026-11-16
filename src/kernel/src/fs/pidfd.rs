@@ -15,8 +15,8 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::fmt;
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_vfs::{Errno, Inode, Metadata, OpenFile, Readiness};
 
 use crate::fs;
 use crate::syscall::process::Process;
@@ -97,7 +97,7 @@ impl Inode for PidFd {
 
     /// The process's pidfd queue, which [`create`] made: woken as it is
     /// released.
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         match self.process.pidfd_queue() {
             Some(queue) => {
                 visit(fs::wake::shared(&queue));
@@ -112,12 +112,12 @@ impl Inode for PidFd {
     }
 
     /// A pidfd holds nothing to read.
-    fn read_stream(&self, _buf: &mut [u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, _buf: &mut [u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         Err(Errno::EINVAL)
     }
 
     /// Nor anything to write.
-    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         Err(Errno::EINVAL)
     }
 }

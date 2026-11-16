@@ -31,7 +31,7 @@
 //! the next packet is asked for; until then the host's packets are
 //! refused with NAK, which is the flow control.
 
-use ferrix_usb_device::{EndpointInfo, Function, TransferKind};
+use xaqu_usb_device::{EndpointInfo, Function, TransferKind};
 
 use crate::controller::{Controller, Notice};
 use crate::layout::{

@@ -5,8 +5,8 @@
 # unless one of them is full-screen already, the newest is focused and made
 # full-screen (2026-10-18; 2026-10-21: one instance, by address, the focus
 # checked first, titles from EF_FS_TITLES, a log).
-# hyprix's socket: /run/user/1000 since the desktop is ferrix's session
-# (sessiond), /tmp before. Runs as root or as ferrix.
+# hyprix's socket: /run/user/1000 since the desktop is xaqu's session
+# (sessiond), /tmp before. Runs as root or as xaqu.
 #   ef-fullscreen.sh          the loop (ef-gpu-run.sh starts it)
 #   ef-fullscreen.sh once     one pass, then exit
 #   ef-fullscreen.sh stop     end a running loop

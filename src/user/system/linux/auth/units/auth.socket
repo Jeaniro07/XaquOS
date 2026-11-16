@@ -5,7 +5,7 @@
 Description=The authentication service's socket
 
 [Socket]
-ListenSequentialPacket=/run/ferrix/auth
+ListenSequentialPacket=/run/xaqu/auth
 SocketMode=0666
 
 [Install]

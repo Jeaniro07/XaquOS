@@ -7,9 +7,9 @@
 //! executable mapping needs `EXECUTE` on the space handle and on the VMO
 //! handle, which only [`Vmo::executable`] gives.
 
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::types::{MAP_EXECUTE, MAP_NO_PAGER, MAP_NONE, MAP_READ, MAP_WRITE};
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::types::{MAP_EXECUTE, MAP_NO_PAGER, MAP_NONE, MAP_READ, MAP_WRITE};
 
 use crate::call::{Call, Syscall};
 use crate::error::{Error, decode, decode_handle, decode_unit};

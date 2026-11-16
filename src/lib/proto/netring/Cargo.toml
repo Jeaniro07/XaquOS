@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-netring"
+name = "xaqu-netring"
 description = "The net ring: the memory the kernel shares with a ring-3 network driver, and the rules each side keeps over it"
 version = "0.1.0"
 edition = "2024"
@@ -8,8 +8,8 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
-ferrix-native-abi = { workspace = true }
+xaqu-linux-abi = { workspace = true }
+xaqu-native-abi = { workspace = true }
 
 [lints]
 workspace = true

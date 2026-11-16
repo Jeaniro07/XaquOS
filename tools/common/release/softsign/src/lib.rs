@@ -1,4 +1,4 @@
-//! `ferrix-softsign`: the development soft signer (`docs/SIGNING.md` §6.4).
+//! `xaqu-softsign`: the development soft signer (`docs/SIGNING.md` §6.4).
 //!
 //! LMS keys in files, behind the PKCS #11 3.1 HSS subset the product path
 //! drives an HSM through ([`token::Token`]), so that the tooling is the same

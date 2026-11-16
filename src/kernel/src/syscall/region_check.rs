@@ -11,13 +11,13 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_elf::Elf;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::{Rights, SAME_RIGHTS};
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{MAP_EXECUTE, MAP_READ, MAP_WRITE};
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_elf::Elf;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::{Rights, SAME_RIGHTS};
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{MAP_EXECUTE, MAP_READ, MAP_WRITE};
 
 use crate::discovery;
 use crate::object::Object;
@@ -53,7 +53,7 @@ const CHUNK_AT: u64 = BUFFER_AT + 0x1000;
 /// One `space_write`.
 const CHUNK_BYTES: usize = 0x1_0000;
 /// The program's stack in the region: under its image.
-const STACK_TOP: u64 = ferrix_native_abi::restricted::SHARED_BASE + 0x40_0000;
+const STACK_TOP: u64 = xaqu_native_abi::restricted::SHARED_BASE + 0x40_0000;
 /// How long the stack is.
 const STACK_BYTES: u64 = 0x10_0000;
 /// How long the check waits for the program: long, since a control's case
@@ -101,19 +101,19 @@ const ASK_WINDOW_WENT: u8 = 19;
 /// Read the window's pages by software, from here, many times.
 const ASK_WINDOW_READERS: u8 = 20;
 /// Whether this build has K1's fast path: `restricted-check`'s cases of it (ledger 7216).
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_FAST_BUILT: u8 = 40;
 /// Read the asking thread's counts of fast trips.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_FAST_START: u8 = 41;
 /// Whether count `word >> 56` of the asking thread moved by the rest of the word.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_FAST_MOVED: u8 = 42;
 /// Set the asking thread's normal mode's `FS` base in its record: the word.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_NORMAL_FS: u8 = 43;
 /// Set its `GS` base.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_NORMAL_GS: u8 = 44;
 
 /// What the check measured, for the boot log.
@@ -143,7 +143,7 @@ pub fn check() {
     if !crate::checks::run() {
         return;
     }
-    #[cfg(ferrix_personality = "user")]
+    #[cfg(xaqu_personality = "user")]
     match the_old_calls_are_gone() {
         Ok(()) => crate::println!(
             "  regions  process_create and process_start answer ENOSYS: no image is parsed in ring 0"
@@ -159,7 +159,7 @@ pub fn check() {
     }
     let free = crate::mm::free_frames();
     let ran = run();
-    if cfg!(ferrix_personality = "user") {
+    if cfg!(xaqu_personality = "user") {
         // What it leaves in a kernel about to seal: said in frames (ledger 7216 H.4).
         let _ = crate::sched::wait_until_reaper_quiet(1_000_000_000);
         crate::println!(
@@ -176,12 +176,12 @@ pub fn check() {
             report.leaves,
             report.barriers,
             report.exits,
-            if cfg!(ferrix_partition_speculation = "partition") {
+            if cfg!(xaqu_partition_speculation = "partition") {
                 "partition"
             } else {
                 "exit"
             },
-            if cfg!(ferrix_partition_speculation = "partition") {
+            if cfg!(xaqu_partition_speculation = "partition") {
                 " (none at an exit, by `partition`)"
             } else if report.issued {
                 ""
@@ -202,14 +202,14 @@ pub fn check() {
 /// before any argument is read, and the process ends before `check` goes on.
 ///
 /// Verifies: L.object.295
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 fn the_old_calls_are_gone() -> Result<(), &'static str> {
     let side = Side::new()?;
     let answers = [nr::PROCESS_CREATE, nr::PROCESS_START].map(|number| side.call(number, &[0; 4]));
     side.end(crate::object::job::KILLED_STATUS);
     if answers
         .iter()
-        .any(|answer| *answer != Err(ferrix_linux_abi::errno::Errno::ENOSYS))
+        .any(|answer| *answer != Err(xaqu_linux_abi::errno::Errno::ENOSYS))
     {
         return Err("build self-check failed: a call that parsed an image still answers");
     }
@@ -217,10 +217,10 @@ fn the_old_calls_are_gone() -> Result<(), &'static str> {
 }
 
 /// The window's slot's first address, as the case aims at it (`mm::WINDOW_ROOT_SLOT`).
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 const WINDOW_AT: u64 = 255 << 39;
 /// Reads of it a round, each short of a stub's run, so that some fall inside one.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 const READS_A_ROUND: u32 = 2_000;
 
 /// A handle as a register.
@@ -252,7 +252,7 @@ fn run() -> Result<Report, &'static str> {
     let side = Side::new()?;
     let _ = side
         .space()
-        .map_anonymous(BUFFER_AT, BUFFER_BYTES, ferrix_vma::VmaFlags::READ_WRITE)
+        .map_anonymous(BUFFER_AT, BUFFER_BYTES, xaqu_vma::VmaFlags::READ_WRITE)
         .map_err(|_| "no room for the check's buffers")?;
 
     // As the partition manager will: a job, a region, a process of it.
@@ -281,7 +281,7 @@ fn run() -> Result<Report, &'static str> {
     if side.call(nr::SPACE_CLONE, &[reg(region_space)]).is_ok() {
         return Err("space_clone of a region's space was not refused");
     }
-    if restricted.ceiling() != ferrix_native_abi::restricted::SHARED_BASE {
+    if restricted.ceiling() != xaqu_native_abi::restricted::SHARED_BASE {
         return Err("a restricted space's ceiling is not the region's floor");
     }
 
@@ -312,7 +312,7 @@ fn run() -> Result<Report, &'static str> {
     // Its one byte: whether this kernel compiled `PROCESS_START` out (K15 §2.2).
     side.put(
         MESSAGE_AT,
-        &[if cfg!(ferrix_personality = "user") {
+        &[if cfg!(xaqu_personality = "user") {
             0x52
         } else {
             0
@@ -342,7 +342,7 @@ fn run() -> Result<Report, &'static str> {
         .map_err(|_| "process_status failed")?;
     let state = side.get_u32(STATUS_AT)?;
     let status = side.get_u32(STATUS_AT + 4)?;
-    if state != ferrix_native_abi::types::PROCESS_EXITED || status != 0 {
+    if state != xaqu_native_abi::types::PROCESS_EXITED || status != 0 {
         crate::console::println!(
             "  regions  restricted-check ended in state {state}: case {status} did not hold"
         );
@@ -607,13 +607,13 @@ fn pin(side: &Side, word: u64) -> Result<bool, &'static str> {
     };
     // Every processor again for `ANY_PROCESSOR`, which a thread pinned for a case asks.
     let mask = if word == ANY_PROCESSOR {
-        let mut all = ferrix_sched::CpuSet::of(0);
+        let mut all = xaqu_sched::CpuSet::of(0);
         for cpu in 1..crate::smp::count() {
             let _ = all.insert(cpu);
         }
         all
     } else {
-        ferrix_sched::CpuSet::of(usize::try_from(word).unwrap_or(0) % crate::smp::count())
+        xaqu_sched::CpuSet::of(usize::try_from(word).unwrap_or(0) % crate::smp::count())
     };
     let _ = crate::sched::set_affinity(&task, &mask);
     if let Ok((gone, _)) = side.with_handles(|table| table.remove(handle)) {
@@ -692,7 +692,7 @@ fn window_asked(
 }
 
 /// A reader of the slot with no bit up, many times: refused each time.
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 #[allow(
     clippy::disallowed_methods,
     reason = "this check is what the method is for"
@@ -702,38 +702,38 @@ fn window_readers_refused(restricted: &Arc<AddressSpace>) -> bool {
 }
 
 /// No window, nothing to read.
-#[cfg(not(ferrix_restricted_window = "on"))]
+#[cfg(not(xaqu_restricted_window = "on"))]
 const fn window_readers_refused(_restricted: &Arc<AddressSpace>) -> bool {
     true
 }
 
 /// Whether the image's rule is `partition`: the case of a switch between speculation
 /// domains (ledger 7216 T.1).
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const ASK_DOMAIN_BUILT: u8 = 47;
 /// Keep this thread off processor 0, and read processor 0's counts.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const ASK_DOMAIN_START: u8 = 48;
 /// Whether processor 0's counts say the word's crossings between domains happened, each
 /// with its barrier. The word's top bit: inside one domain, none, and the refill.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const ASK_DOMAIN_END: u8 = 49;
 /// The top bit of [`ASK_DOMAIN_END`]'s word.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const DOMAIN_WITHIN: u64 = 1 << 63;
 /// Its next bit: the trips were to go direct.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const DOMAIN_DIRECT: u64 = 1 << 62;
 /// Whether the image has direct switches, for the same two cases.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 const ASK_DOMAIN_DIRECT: u8 = 50;
 
 /// Processor 0's decisions, invalidations and refills, and the direct switches.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 fn domain_counts() -> [u64; 4] {
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     let direct = crate::sched::direct::counts()[0];
-    #[cfg(not(ferrix_fast_ipc))]
+    #[cfg(not(xaqu_fast_ipc))]
     let direct = 0;
     [
         crate::arch::barrier_decisions_on(0),
@@ -744,7 +744,7 @@ fn domain_counts() -> [u64; 4] {
 }
 
 /// What [`ASK_DOMAIN_END`] asks, on the line whichever way it goes.
-#[cfg(ferrix_partition_speculation = "partition")]
+#[cfg(xaqu_partition_speculation = "partition")]
 fn domain_end(started: [u64; 4], word: u64) -> bool {
     let now = domain_counts();
     let [decided, issued, refilled, direct] = {
@@ -789,41 +789,41 @@ fn domain_end(started: [u64; 4], word: u64) -> bool {
 }
 
 /// Whether the image has reservations and direct switches: case 197 (ledger 7088, 7134 (d)).
-#[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+#[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
 const ASK_EDF_BUILT: u8 = 51;
 /// Read the count of direct switches, and each way it declined at T12.
-#[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+#[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
 const ASK_EDF_START: u8 = 52;
 /// Whether it moved by the word.
-#[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+#[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
 const ASK_EDF_MOVED: u8 = 53;
 /// Whether it did not move, and T12 did by the word.
-#[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+#[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
 const ASK_EDF_DECLINED: u8 = 54;
 
 /// Read the count of direct switches, where the image has them.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_DIRECT_START: u8 = 45;
 /// Whether it moved by the word; yes in an image without them, where the case's call
 /// goes the general way.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 const ASK_DIRECT_MOVED: u8 = 46;
 
 /// `sched::direct`'s trips, as far as this image has them.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 fn direct_trips() -> Option<u64> {
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     {
         Some(crate::sched::direct::counts()[0])
     }
-    #[cfg(not(ferrix_fast_ipc))]
+    #[cfg(not(xaqu_fast_ipc))]
     {
         None
     }
 }
 
 /// The task of the thread whose handle came with the ask, the handle gone.
-#[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+#[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
 fn asking_task(side: &Side) -> Result<Option<Arc<crate::sched::Task>>, &'static str> {
     let handle = Handle(side.get_u32(HANDLES_AT)?);
     let task = side.with_handles(|table| match table.get(handle) {
@@ -838,7 +838,7 @@ fn asking_task(side: &Side) -> Result<Option<Arc<crate::sched::Task>>, &'static 
 
 /// [`ASK_COUNT_END`]: the barriers since [`ASK_COUNT_START`] against the word's exits.
 #[cfg_attr(
-    not(all(ferrix_fast_restricted, ferrix_checks = "on")),
+    not(all(xaqu_fast_restricted, xaqu_checks = "on")),
     allow(unused_variables, reason = "its use is under the same cfg")
 )]
 fn count_end(started: (u64, u64), refills_started: u64, word: u64, report: &mut Report) -> bool {
@@ -856,7 +856,7 @@ fn count_end(started: (u64, u64), refills_started: u64, word: u64, report: &mut 
     let held =
         report.barriers == decided_here && report.issued == crate::trap::exit_barrier_offered();
     // Where the root write empties nothing, each of them refilled (6747 (1d)).
-    #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+    #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
     let held = held && {
         let (refills, emptied) = crate::arch::fast_check::exit_refills();
         let refills = refills - refills_started;
@@ -887,24 +887,24 @@ fn count_end(started: (u64, u64), refills_started: u64, word: u64, report: &mut 
 #[derive(Default)]
 struct FeatureCounts {
     /// [`ASK_EDF_START`]'s.
-    #[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+    #[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
     edf_started: [u64; 2],
     /// [`ASK_DOMAIN_START`]'s.
-    #[cfg(ferrix_partition_speculation = "partition")]
+    #[cfg(xaqu_partition_speculation = "partition")]
     domain_started: [u64; 4],
     /// [`ASK_FAST_START`]'s.
-    #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+    #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
     fast_started: [u64; 3],
     /// [`ASK_DIRECT_START`]'s.
-    #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+    #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
     direct_started: u64,
 }
 
 /// The asks only some builds answer: no on any other, as an unknown ask (ledger 7216, 7249).
 #[cfg_attr(
     not(any(
-        ferrix_partition_speculation = "partition",
-        all(ferrix_schedule = "edf", ferrix_fast_ipc)
+        xaqu_partition_speculation = "partition",
+        all(xaqu_schedule = "edf", xaqu_fast_ipc)
     )),
     allow(
         unused_variables,
@@ -920,17 +920,17 @@ fn feature_ask(
     counts_from: &mut FeatureCounts,
 ) -> Result<bool, &'static str> {
     Ok(match what {
-            #[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+            #[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
             ASK_EDF_BUILT => true,
-            #[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+            #[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
             ASK_EDF_START => {
                 let counts = crate::sched::direct::counts();
                 counts_from.edf_started = [counts[0], counts[13]];
                 true
             }
-            #[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+            #[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
             ASK_EDF_MOVED => crate::sched::direct::counts()[0] - counts_from.edf_started[0] >= word,
-            #[cfg(all(ferrix_schedule = "edf", ferrix_fast_ipc))]
+            #[cfg(all(xaqu_schedule = "edf", xaqu_fast_ipc))]
             ASK_EDF_DECLINED => {
                 let counts = crate::sched::direct::counts();
                 let (trips, declined) = (counts[0] - counts_from.edf_started[0], counts[13] - counts_from.edf_started[1]);
@@ -939,12 +939,12 @@ fn feature_ask(
                 );
                 trips == 0 && declined >= word
             }
-            #[cfg(ferrix_partition_speculation = "partition")]
+            #[cfg(xaqu_partition_speculation = "partition")]
             ASK_DOMAIN_BUILT => true,
-            #[cfg(ferrix_partition_speculation = "partition")]
+            #[cfg(xaqu_partition_speculation = "partition")]
             ASK_DOMAIN_START => {
                 if let Some(me) = crate::sched::current() {
-                    let mut away = ferrix_sched::CpuSet::of(1 % crate::smp::count());
+                    let mut away = xaqu_sched::CpuSet::of(1 % crate::smp::count());
                     let _ = away.insert(crate::smp::count() - 1);
                     let _ = crate::sched::set_affinity(&me, &away);
                     crate::sched::yield_now();
@@ -952,10 +952,10 @@ fn feature_ask(
                 counts_from.domain_started = domain_counts();
                 true
             }
-            #[cfg(ferrix_partition_speculation = "partition")]
+            #[cfg(xaqu_partition_speculation = "partition")]
             ASK_DOMAIN_END => {
                 if let Some(me) = crate::sched::current() {
-                    let mut all = ferrix_sched::CpuSet::of(0);
+                    let mut all = xaqu_sched::CpuSet::of(0);
                     for cpu in 1..crate::smp::count() {
                         let _ = all.insert(cpu);
                     }
@@ -963,21 +963,21 @@ fn feature_ask(
                 }
                 domain_end(counts_from.domain_started, word)
             }
-            #[cfg(ferrix_partition_speculation = "partition")]
-            ASK_DOMAIN_DIRECT => cfg!(ferrix_fast_ipc),
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(xaqu_partition_speculation = "partition")]
+            ASK_DOMAIN_DIRECT => cfg!(xaqu_fast_ipc),
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_FAST_BUILT => true,
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_FAST_START => match asking_task(side)? {
                 Some(task) => {
                     counts_from.fast_started = crate::arch::fast_check::restricted_fast_counts(&task);
                     // The fast path reads per-processor tables of this size by a logical
                     // number with no bound check (ledger 6747 (3c)).
-                    crate::smp::count() <= ferrix_sched::MAX_CPUS
+                    crate::smp::count() <= xaqu_sched::MAX_CPUS
                 }
                 None => false,
             },
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_FAST_MOVED => asking_task(side)?.is_some_and(|task| {
                 let counts = crate::arch::fast_check::restricted_fast_counts(&task);
                 let which = usize::from((word >> 56) as u8);
@@ -994,19 +994,19 @@ fn feature_ask(
                 }
                 held
             }),
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_DIRECT_START => {
                 counts_from.direct_started = direct_trips().unwrap_or(0);
                 true
             }
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_DIRECT_MOVED => direct_trips().is_none_or(|trips| trips - counts_from.direct_started >= word),
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_NORMAL_FS => asking_task(side)?.is_some_and(|task| {
                 crate::arch::fast_check::restricted_set_normal_bases_for_check(&task, Some(word), None);
                 true
             }),
-            #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+            #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
             ASK_NORMAL_GS => asking_task(side)?.is_some_and(|task| {
                 crate::arch::fast_check::restricted_set_normal_bases_for_check(&task, None, Some(word));
                 true
@@ -1028,7 +1028,7 @@ fn serve(
     let mut row_scale = (0, 1);
     let mut window = WindowAsks::default();
     let mut features = FeatureCounts::default();
-    #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+    #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
     let mut refills_started = 0_u64;
     loop {
         let readable = Signals(Signals::READABLE.0 | Signals::PEER_CLOSED.0);
@@ -1061,14 +1061,14 @@ fn serve(
             }
             ASK_COUNT_START => {
                 started = crate::trap::restricted_barriers();
-                #[cfg(all(ferrix_fast_restricted, ferrix_checks = "on"))]
+                #[cfg(all(xaqu_fast_restricted, xaqu_checks = "on"))]
                 {
                     refills_started = crate::arch::fast_check::exit_refills().0;
                 }
                 true
             }
             ASK_COUNT_END => {
-                #[cfg(not(all(ferrix_fast_restricted, ferrix_checks = "on")))]
+                #[cfg(not(all(xaqu_fast_restricted, xaqu_checks = "on")))]
                 let refills_started = 0;
                 count_end(started, refills_started, word, report)
             }

@@ -29,7 +29,7 @@
 
 extern crate alloc;
 
-use ferrix_sched::{Config, EntityState, EntityView, Left, Refused, RunQueue, SchedError, Slot};
+use xaqu_sched::{Config, EntityState, EntityView, Left, Refused, RunQueue, SchedError, Slot};
 
 /// The most reservations on one processor: what bounds a pick's scan.
 pub const MOST: usize = 32;

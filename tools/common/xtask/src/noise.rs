@@ -32,7 +32,7 @@
 //!
 //! It is QEMU's bug, not the guest's — it is reached before the compositor
 //! starts, while the loader is still drawing — and it is unfixed upstream as
-//! of v11.1.2. Nothing Ferrix can do from inside the guest avoids it, short of
+//! of v11.1.2. Nothing Xaqu can do from inside the guest avoids it, short of
 //! never resetting the card. The QEMU `tools/common/fetch/fetch-qemu-linux.sh`
 //! builds carries the fix (`tools/common/data/qemu/0003-*.patch`, see
 //! `docs/GPU.md` §3.12), so a count here means a QEMU without it. The line is

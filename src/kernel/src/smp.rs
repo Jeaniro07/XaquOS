@@ -29,9 +29,9 @@ use alloc::vec::Vec;
 use core::hint::spin_loop;
 use core::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering};
 
-use ferrix_bootinfo::{BootView, PAGE_SIZE};
-use ferrix_sched::{CpuSet, MAX_CPUS};
-use ferrix_sync::{IrqControl, Once};
+use xaqu_bootinfo::{BootView, PAGE_SIZE};
+use xaqu_sched::{CpuSet, MAX_CPUS};
+use xaqu_sync::{IrqControl, Once};
 
 use crate::sync::SpinLock;
 
@@ -144,11 +144,11 @@ pub struct PerCpu {
     /// every switch and flip.
     task_kind: AtomicU8,
     /// Both Arm architectures: the top of this processor's emergency stack,
-    /// what `ferrix_stack_hit` moves to when a kernel stack has overflowed,
+    /// what `xaqu_stack_hit` moves to when a kernel stack has overflowed,
     /// and which it zeroes as it takes it. x86-64's `IST` is the same idea in
     /// hardware, and it leaves this zero. Read from assembly.
     pub(crate) emergency_stack: AtomicU64,
-    /// Both Arm architectures: the stack pointer `ferrix_stack_hit` found
+    /// Both Arm architectures: the stack pointer `xaqu_stack_hit` found
     /// unmapped, for the report. Written from assembly, once.
     pub(crate) overflow_sp: AtomicU64,
     /// Development builds: the `IrqSpinLock` guards this processor holds,
@@ -193,7 +193,7 @@ impl PerCpu {
 /// writes there; a reader on another processor that races the carry from the
 /// low half into the high one can read a number off by the carry, so the
 /// count is exact for a reader that reads after the counting it wants, as
-/// `/proc/ferrix-seam` and the boot check do.
+/// `/proc/xaqu-seam` and the boot check do.
 #[derive(Debug)]
 pub struct OwnCount {
     /// The count.
@@ -1395,7 +1395,7 @@ impl CpuMask {
     }
 
     /// Whether no processor but `cpu` is in the set, read in the order `join` writes.
-    #[cfg(ferrix_restricted_window = "on")]
+    #[cfg(xaqu_restricted_window = "on")]
     #[inline(always)]
     pub(crate) fn only(&self, cpu: usize) -> bool {
         let mut alone = true;

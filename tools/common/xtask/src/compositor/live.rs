@@ -1,35 +1,35 @@
-//! The live ISO (`docs/INSTALLER.md` §3, `docs/TRY-FERRIX.md`): `cargo
+//! The live ISO (`docs/INSTALLER.md` §3, `docs/TRY-XAQU.md`): `cargo
 //! xtask iso` and its gate, `test-iso`.
 //!
 //! The medium is the release desktop -- Xaqu on hyprix, the apps a person's
 //! image carries, the release profile with the kernel stripped -- with four
 //! differences:
 //!
-//! * `/` stays in memory (`ferrix.root=tmpfs`), so booting it never mounts
-//!   or installs onto a disk the machine has, and `ferrix.live` says the
+//! * `/` stays in memory (`xaqu.root=tmpfs`), so booting it never mounts
+//!   or installs onto a disk the machine has, and `xaqu.live` says the
 //!   session is a live one;
-//! * the session is uid 1000's, `ferrix`, with no password, logged in at
+//! * the session is uid 1000's, `xaqu`, with no password, logged in at
 //!   once as Ubuntu's live session is (§10 decision 2): `sessiond --user
 //!   1000`, so the installed system, whose first boot renames that account
 //!   to the person's, starts its session the same way;
-//! * the installer is in it: `/sbin/ferrix-install`, its daemon
-//!   `ferrix-installd.service` (only under `ferrix.live`), the first-boot
-//!   `ferrix-setup.service` (which does nothing on the live session), and
+//! * the installer is in it: `/sbin/xaqu-install`, its daemon
+//!   `xaqu-installd.service` (only under `xaqu.live`), the first-boot
+//!   `xaqu-setup.service` (which does nothing on the live session), and
 //!   the graphical installer, which the session starts at login;
-//! * the volume carries `FERRIX/SETUP.TXT`, a placeholder the installer
+//! * the volume carries `XAQU/SETUP.TXT`, a placeholder the installer
 //!   fills in on the installed disk's copy, `README.TXT`, and the licence
 //!   inventory `LICENSES.MD`.
 //!
 //! The volume goes into a hybrid ISO (`crate::iso`): El Torito for a CD and
-//! a GUID partition table for a disk, the partition named `FERRIX-LIVE` as
-//! `cargo xtask live`'s medium's is, so `ferrix-install` finds it the same
-//! way when the medium is a disk Ferrix drives.
+//! a GUID partition table for a disk, the partition named `XAQU-LIVE` as
+//! `cargo xtask live`'s medium's is, so `xaqu-install` finds it the same
+//! way when the medium is a disk Xaqu drives.
 //!
 //! `test-iso` boots the ISO under OVMF twice, as a CD on q35's AHCI port and
 //! as a USB stick on an xHCI controller, and requires the live desktop:
 //! hyprix's card, the session started as uid 1000 by `sessiond`, the
 //! installer's daemon listening, the graphical installer's window, a
-//! screen that is not one colour, and a first click on "Install Ferrix",
+//! screen that is not one colour, and a first click on "Install Xaqu",
 //! where the screen shows it, that moves the installer on to its next page.
 
 use std::path::{Path, PathBuf};
@@ -46,18 +46,18 @@ use crate::qemu::Watching;
 use crate::{Error, Result};
 
 /// The ISO, in the architecture's build directory.
-pub(crate) const ISO: &str = "ferrix-live.iso";
+pub(crate) const ISO: &str = "xaqu-live.iso";
 
 /// The licence notice the ISO carries, beside it in the build directory.
-pub(crate) const NOTICE: &str = "ferrix-live-THIRD-PARTY-LICENSES.md";
+pub(crate) const NOTICE: &str = "xaqu-live-THIRD-PARTY-LICENSES.md";
 
 /// The volume identifier, which a file manager shows for the CD.
-const LABEL: &str = "FERRIX_LIVE";
+const LABEL: &str = "XAQU_LIVE";
 
 /// What the live session adds to the desktop's configuration.
 const LIVE_LINES: &str = "# The live session (cargo xtask iso): the installer opens at login, and only\n\
-# on a live session -- it exits at once where the command line lacks ferrix.live.\n\
-exec-once = /bin/ferrix-installer --autostart\n";
+# on a live session -- it exits at once where the command line lacks xaqu.live.\n\
+exec-once = /bin/xaqu-installer --autostart\n";
 
 /// The line of the desktop's configuration that opens a terminal at login,
 /// which the live session leaves out ([`live_config`]).
@@ -70,7 +70,7 @@ const BOOT_TERMINAL: &str = "exec-once = /bin/term /bin/zinc";
 /// terminal started beside it, which of the two mapped last -- and so lay
 /// on top, focused -- was a race the boot's timing decided: on about one
 /// boot in seven (2026-10-28, v0.2.0's candidate aa86f862d) the terminal
-/// covered the installer's buttons, and a click on "Install Ferrix" went to
+/// covered the installer's buttons, and a click on "Install Xaqu" went to
 /// it. A terminal stays a key (SUPER RETURN) or the dock's button away.
 fn live_config() -> String {
     let desktop: String = super::run::RUN_CONFIG
@@ -83,45 +83,45 @@ fn live_config() -> String {
 
 /// The live session's words after the image's own command line.
 ///
-/// `ferrix.efifb` lends the firmware's framebuffer to `efifb` where it is
-/// a GPU's memory, so a PC whose GPU Ferrix does not drive -- nearly every
+/// `xaqu.efifb` lends the firmware's framebuffer to `efifb` where it is
+/// a GPU's memory, so a PC whose GPU Xaqu does not drive -- nearly every
 /// PC, and the display adapters of `VirtualBox` and `VMware` -- shows the desktop at the
 /// firmware's mode instead of the loader's last screen; where firmware's
 /// framebuffer is RAM, as virtio-gpu's in QEMU, it is not lent and nothing
-/// changes (`docs/DISPLAY.md` §8). `ferrix.fbcon` draws the boot log on that
+/// changes (`docs/DISPLAY.md` §8). `xaqu.fbcon` draws the boot log on that
 /// screen until then, which is the only log a person at a PC sees.
 ///
-/// `ferrix.unisolated` lets the live session drive a machine with no IOMMU
+/// `xaqu.unisolated` lets the live session drive a machine with no IOMMU
 /// -- the defaults of `VirtualBox` and `VMware`, a PC with VT-d or AMD-Vi
 /// off -- whose drivers are then trusted with all of memory, as on Linux;
 /// where an IOMMU isolates a device it changes nothing (the customer,
 /// 2026-10-28). The installed system never keeps it: the installer blanks
-/// it with `ferrix.live` and keeps the rest. None of these is a
+/// it with `xaqu.live` and keeps the rest. None of these is a
 /// configuration a claim is made of.
 const LIVE_WORDS: &str =
-    "ferrix.root=tmpfs ferrix.live ferrix.unisolated ferrix.efifb ferrix.fbcon";
+    "xaqu.root=tmpfs xaqu.live xaqu.unisolated xaqu.efifb xaqu.fbcon";
 
-/// What the kernel says at stage 10 when `ferrix.unisolated` is on.
-const UNISOLATED_SAID: &str = "ferrix.unisolated: devmgr may start drivers";
+/// What the kernel says at stage 10 when `xaqu.unisolated` is on.
+const UNISOLATED_SAID: &str = "xaqu.unisolated: devmgr may start drivers";
 
 /// The units the installer brings, as `(name, text)`; each is wanted by
 /// `graphical.target`.
 const UNITS: [(&str, &str); 2] = [
     (
-        "ferrix-installd",
+        "xaqu-installd",
         "# The live session's installer daemon (docs/INSTALLER.md); it exits at once\n\
-         # unless the command line says ferrix.live.\n\
+         # unless the command line says xaqu.live.\n\
          [Unit]\n\
          Description=The installer's daemon\n\
          \n\
          [Service]\n\
          Type=simple\n\
-         ExecStart=/sbin/ferrix-install --serve\n\
+         ExecStart=/sbin/xaqu-install --serve\n\
          StandardOutput=console\n\
          StandardError=console\n",
     ),
     (
-        "ferrix-setup",
+        "xaqu-setup",
         "# The installer's answers applied at every boot, before the session\n\
          # (docs/INSTALLER.md); nothing to do on the live session.\n\
          [Unit]\n\
@@ -130,7 +130,7 @@ const UNITS: [(&str, &str); 2] = [
          \n\
          [Service]\n\
          Type=oneshot\n\
-         ExecStart=/sbin/ferrix-install --apply\n\
+         ExecStart=/sbin/xaqu-install --apply\n\
          StandardOutput=console\n\
          StandardError=console\n",
     ),
@@ -210,7 +210,7 @@ input-field {
 /// seat's channel is ended by the compositor at once, and at a session's
 /// start that is a race the lock must not lose.
 const LOGIN_LOCK: &str = "#!/bin/sh
-# The installed system's login (cargo xtask iso, ferrix-install --apply):
+# The installed system's login (cargo xtask iso, xaqu-install --apply):
 # the session starts locked, and only the person's password opens it.
 while :; do
     /bin/hyprlock 2>&1 | /bin/busybox tee /tmp/login-lock.log
@@ -221,7 +221,7 @@ while :; do
 done
 ";
 
-/// The setup file's placeholder, as `ferrix-install` expects it.
+/// The setup file's placeholder, as `xaqu-install` expects it.
 const SETUP_BYTES: usize = 4096;
 
 /// What `iso` made.
@@ -287,13 +287,13 @@ pub(crate) fn build(args: &Args) -> Result<Built> {
     refuse_host_programs(&carried)?;
     let licences = notice(&build, &carried)?;
     let readme = README.replace('\n', "\r\n").into_bytes();
-    let volume = build.join("ferrix-live.esp");
+    let volume = build.join("xaqu-live.esp");
     crate::fat::write_live_volume(
         arch,
         (&loader_bytes, &kernel_bytes, &carried),
         (&cmdline, Some(super::run::DESKTOP_DEFAULTS)),
         &[
-            ("FERRIX/SETUP.TXT", vec![b'\n'; SETUP_BYTES]),
+            ("XAQU/SETUP.TXT", vec![b'\n'; SETUP_BYTES]),
             ("README.TXT", readme.clone()),
             ("LICENSES.MD", licences.clone()),
         ],
@@ -335,11 +335,11 @@ pub(crate) fn build(args: &Args) -> Result<Built> {
 /// packer takes them (`tools/common/release/package-desktop.py`): an image
 /// that leaves this machine carries the pinned trees, not whatever this
 /// machine has, and the licence inventory reads their tarballs. Unless the
-/// caller named them (`FERRIX_SHELL_TREES`, as the release workflow does),
+/// caller named them (`XAQU_SHELL_TREES`, as the release workflow does),
 /// `tools/common/fetch/fetch-shell-trees.sh` fetches them into
 /// the target directory's `live-iso-shell`, checked against the pins.
 fn pinned_shell_trees() -> Result<()> {
-    if std::env::var_os("FERRIX_SHELL_TREES").is_some() {
+    if std::env::var_os("XAQU_SHELL_TREES").is_some() {
         return Ok(());
     }
     // In this tree's target directory: two trees building at once must not
@@ -359,9 +359,9 @@ fn pinned_shell_trees() -> Result<()> {
         )));
     }
     for (name, value) in [
-        ("FERRIX_OMZ", dir.join("oh-my-zsh")),
-        ("FERRIX_ZSH_FUNCTIONS", dir.join("zsh-functions")),
-        ("FERRIX_SHELL_TREES", dir.clone()),
+        ("XAQU_OMZ", dir.join("oh-my-zsh")),
+        ("XAQU_ZSH_FUNCTIONS", dir.join("zsh-functions")),
+        ("XAQU_SHELL_TREES", dir.clone()),
     ] {
         // SAFETY: set before any thread of this process reads the
         // environment in parallel; xtask's builds run as child processes.
@@ -375,7 +375,7 @@ fn pinned_shell_trees() -> Result<()> {
 /// licences.py's inventory and the time zones' release, written beside
 /// the ISO for the release's asset too.
 fn notice(build: &Path, carried: &[u8]) -> Result<Vec<u8>> {
-    let initrd = build.join("ferrix-live.initrd");
+    let initrd = build.join("xaqu-live.initrd");
     std::fs::write(&initrd, carried)
         .map_err(|error| Error::new(format!("writing {}: {error}", initrd.display())))?;
     let mut licences = licences(&initrd, &build.join("live-licences"))?;
@@ -395,10 +395,10 @@ fn notice(build: &Path, carried: &[u8]) -> Result<Vec<u8>> {
 }
 
 /// What the volume's and the ISO's `README.TXT` says.
-const README: &str = "Ferrix live medium
+const README: &str = "Xaqu live medium
 ==================
 
-Ferrix is an operating system with its own Rust microkernel that runs
+Xaqu is an operating system with its own Rust microkernel that runs
 ordinary Linux programs. This medium starts its desktop, Xaqu, from memory:
 nothing on the machine's disks is touched unless you install.
 
@@ -407,9 +407,9 @@ Secure Boot off to start it. Write it to a USB stick (dd, Rufus in DD mode,
 balenaEtcher) or attach it to a virtual machine as a CD or a disk.
 
 What works, what does not, and how to start it in QEMU:
-https://github.com/ferrix-os/ferrix/blob/develop/docs/TRY-FERRIX.md
+https://github.com/xaqu-os/xaqu/blob/develop/docs/TRY-XAQU.md
 
-Ferrix is MIT licensed (LICENSE.TXT). The programs it carries from others,
+Xaqu is MIT licensed (LICENSE.TXT). The programs it carries from others,
 their licences and the licences' texts are in THIRD_PARTY_LICENSES.MD here
 and LICENSES.MD on the EFI system partition.
 ";
@@ -425,7 +425,7 @@ fn licences(initrd: &Path, out: &Path) -> Result<Vec<u8>> {
         .arg(initrd)
         .arg("--out")
         .arg(out)
-        .args(["--tag", "live", "--title", "Ferrix live ISO, x86-64"])
+        .args(["--tag", "live", "--title", "Xaqu live ISO, x86-64"])
         .status()
         .map_err(|error| Error::new(format!("running {}: {error}", script.display())))?;
     if !status.success() {
@@ -440,9 +440,9 @@ fn licences(initrd: &Path, out: &Path) -> Result<Vec<u8>> {
 /// The installer, its units and the graphical installer, for the image.
 fn installer_files(arch: Arch) -> Result<Vec<File>> {
     let mut files = crate::installer::files(arch)?
-        .ok_or_else(|| Error::new("ferrix-install is not built for x86_64"))?;
+        .ok_or_else(|| Error::new("xaqu-install is not built for x86_64"))?;
     files.push(File {
-        path: "etc/ferrix/login-lock.sh".to_owned(),
+        path: "etc/xaqu/login-lock.sh".to_owned(),
         mode: 0o755,
         content: Content::Bytes(LOGIN_LOCK.as_bytes().to_vec()),
     });
@@ -454,24 +454,24 @@ fn installer_files(arch: Arch) -> Result<Vec<File>> {
     files.extend(zones()?);
     for (name, text) in UNITS {
         files.push(File {
-            path: format!("etc/ferrix/units/{name}.service"),
+            path: format!("etc/xaqu/units/{name}.service"),
             mode: 0o644,
             content: Content::Bytes(text.as_bytes().to_vec()),
         });
         files.push(File {
-            path: format!("etc/ferrix/units/graphical.target.wants/{name}.service"),
+            path: format!("etc/xaqu/units/graphical.target.wants/{name}.service"),
             mode: 0o777,
-            content: Content::Link(format!("/etc/ferrix/units/{name}.service")),
+            content: Content::Link(format!("/etc/xaqu/units/{name}.service")),
         });
     }
-    // `FERRIX_ISO_WITHOUT_GUI=1` leaves the window out, for working on the
+    // `XAQU_ISO_WITHOUT_GUI=1` leaves the window out, for working on the
     // rest while it is not built; a release never sets it.
-    let without = std::env::var_os("FERRIX_ISO_WITHOUT_GUI").is_some();
+    let without = std::env::var_os("XAQU_ISO_WITHOUT_GUI").is_some();
     if !without {
         files.extend(crate::apps::taken(arch, &["installer"])?);
     } else {
         println!(
-            "  FERRIX_ISO_WITHOUT_GUI: the graphical installer left out; the ISO has the daemon only"
+            "  XAQU_ISO_WITHOUT_GUI: the graphical installer left out; the ISO has the daemon only"
         );
     }
     Ok(files)
@@ -634,11 +634,11 @@ pub(crate) fn test_iso(args: &Args) -> Result<()> {
         for (wanted, problem) in [
             ("sessiond: ", "sessiond never started the session"),
             (
-                "ferrix-installd: listening",
+                "xaqu-installd: listening",
                 "the installer's daemon never listened",
             ),
             (
-                "ferrix-installer: the window is up",
+                "xaqu-installer: the window is up",
                 "the graphical installer never opened its window",
             ),
             (
@@ -647,7 +647,7 @@ pub(crate) fn test_iso(args: &Args) -> Result<()> {
             ),
             (
                 UNISOLATED_SAID,
-                "the live session did not carry ferrix.unisolated",
+                "the live session did not carry xaqu.unisolated",
             ),
         ] {
             if !said.iter().any(|line| line.contains(wanted)) {
@@ -687,7 +687,7 @@ impl Power {
 const SEAT_ALLOWED: &str = "allowed: the seat's";
 
 /// The seat's person turns the machine off or restarts it
-/// (`docs/INIT.md` §10.1): in the live session, as `ferrix`, a terminal
+/// (`docs/INIT.md` §10.1): in the live session, as `xaqu`, a terminal
 /// opened with SUPER RETURN, and `poweroff` or `reboot` typed into it. A
 /// power-off must end QEMU by itself through the kernel's power-off; a
 /// restart must bring the desktop back. Booted from the ISO as a CD.
@@ -818,7 +818,7 @@ fn boot_live(arch: Arch, built: &Built, args: &Args, how: &str) -> Result<Vec<St
         let _ = watching.read_more(Instant::now() + Duration::from_secs(60), |lines| {
             lines
                 .iter()
-                .any(|line| line.contains("ferrix-installer: the window is up"))
+                .any(|line| line.contains("xaqu-installer: the window is up"))
                 && lines.iter().any(|line| line.contains("sessiond: "))
                 && lines.iter().any(|line| line.contains(XAQU_DOCK))
         })?;
@@ -866,7 +866,7 @@ fn boot_live(arch: Arch, built: &Built, args: &Args, how: &str) -> Result<Vec<St
     Ok(said)
 }
 
-/// The installer's "Install Ferrix" button: its fill, the Nocturne accent.
+/// The installer's "Install Xaqu" button: its fill, the Nocturne accent.
 const BUTTON: [u8; 3] = [145, 132, 217];
 
 /// How far a channel may be from [`BUTTON`] and still be the button.
@@ -941,7 +941,7 @@ fn desktop_size(lines: &[String]) -> Option<(usize, usize)> {
     (size.0 > 0).then_some(size)
 }
 
-/// The first click a person makes: on "Install Ferrix", where the screen
+/// The first click a person makes: on "Install Xaqu", where the screen
 /// shows it, after which the installer must show its next page.
 ///
 /// A window that opens under another, or a page that does not follow the
@@ -959,7 +959,7 @@ fn first_click(
     let before = crate::display::parse_ppm(&bytes)?;
     let Some(rect) = button_rect(&before) else {
         return Err(Error::new(format!(
-            "{arch}: booted as {how}, no \"Install Ferrix\" button is to be seen: the installer's \
+            "{arch}: booted as {how}, no \"Install Xaqu\" button is to be seen: the installer's \
              Welcome page is not on top ({})",
             dump.display()
         )));
@@ -1006,14 +1006,14 @@ fn first_click(
         // the most a page that moved on can still show in its place.
         if left_over * 4 < whole {
             println!(
-                "  {arch}: booted as {how}, the first click on \"Install Ferrix\" moved the installer on: {}",
+                "  {arch}: booted as {how}, the first click on \"Install Xaqu\" moved the installer on: {}",
                 after.display()
             );
             return Ok(());
         }
         if Instant::now() >= deadline {
             return Err(Error::new(format!(
-                "{arch}: booted as {how}, a click on \"Install Ferrix\" at {left}..{right}x{top}..{bottom} \
+                "{arch}: booted as {how}, a click on \"Install Xaqu\" at {left}..{right}x{top}..{bottom} \
                  left the Welcome page showing ({} of its {whole} pixels still the button): {}",
                 left_over,
                 after.display()
@@ -1054,8 +1054,8 @@ fn distinct_colours(path: &Path) -> Result<usize> {
 const GATE_USER: &str = "kira";
 /// Their password: lowercase letters, so QMP types it on any layout's
 /// letters the same (the answers say `us`).
-const GATE_PASSWORD: &str = "tryferrixnow";
-/// The gate's guests' memory, in MiB: what Try Ferrix asks for.
+const GATE_PASSWORD: &str = "tryxaqunow";
+/// The gate's guests' memory, in MiB: what Try Xaqu asks for.
 const GATE_MEMORY: u32 = 4096;
 /// The blank target's size: the root's smallest and the ESP, and room.
 const TARGET_BYTES: u64 = 8 << 30;
@@ -1063,7 +1063,7 @@ const TARGET_BYTES: u64 = 8 << 30;
 /// The answers the gate's install runs with, in the unattended partition.
 fn gate_answers(target: &str) -> String {
     format!(
-        "ferrix-answers 1\n\
+        "xaqu-answers 1\n\
          target={target}\n\
          mode=erase\n\
          user={GATE_USER}\n\
@@ -1078,16 +1078,16 @@ fn gate_answers(target: &str) -> String {
     )
 }
 
-/// A small disk whose one GPT partition, `FERRIX-ANSWERS`, holds `text`.
+/// A small disk whose one GPT partition, `XAQU-ANSWERS`, holds `text`.
 fn answers_disk(path: &Path, text: &str) -> Result<()> {
-    use ferrix_partition::{Guid, LINUX_FILESYSTEM, Partition, write_table};
+    use xaqu_partition::{Guid, LINUX_FILESYSTEM, Partition, write_table};
     let sectors = (8_u64 << 20) / 512;
     let partition = Partition::new(
         LINUX_FILESYSTEM,
         Guid([0x42; 16]),
         2048,
         sectors - 2048,
-        "FERRIX-ANSWERS",
+        "XAQU-ANSWERS",
     );
     let table = write_table(sectors, 512, Guid([0x41; 16]), &[partition])
         .map_err(|error| Error::new(format!("the answers disk's table: {error}")))?;
@@ -1107,7 +1107,7 @@ const INSTALLED_SAYS: [(&str, &str); 6] = [
         "the installed disk did not put / on its root partition",
     ),
     (
-        "ferrix-setup: this system is kira's, named kiras-pc",
+        "xaqu-setup: this system is kira's, named kiras-pc",
         "the first boot did not apply the answers",
     ),
     (
@@ -1125,7 +1125,7 @@ const INSTALLED_SAYS: [(&str, &str); 6] = [
     ),
 ];
 
-/// `cargo xtask test-iso-install`: the live ISO, attached as a disk Ferrix
+/// `cargo xtask test-iso-install`: the live ISO, attached as a disk Xaqu
 /// drives, installs onto a blank disk with the unattended answers of
 /// [`gate_answers`] -- the graphical installer's own daemon and engine,
 /// asked by a partition instead of by the window -- and powers off; then
@@ -1225,28 +1225,28 @@ pub(crate) fn test_iso_install(args: &Args) -> Result<()> {
 }
 
 /// The installed system isolates its drivers: the live session's
-/// `ferrix.unisolated` is not on its command line, nor said by its kernel,
+/// `xaqu.unisolated` is not on its command line, nor said by its kernel,
 /// and the command line is the live one made installed.
 fn installed_isolates(arch: Arch, said: &[String]) -> Result<()> {
     let installed_line = said
         .iter()
-        .find(|line| line.contains("cmdline ") && line.contains("(from /FERRIX/CMDLINE.TXT)"))
+        .find(|line| line.contains("cmdline ") && line.contains("(from /XAQU/CMDLINE.TXT)"))
         .ok_or_else(|| {
             Error::new(format!(
                 "{arch}: the installed boot's loader named no command line"
             ))
         })?;
-    if !installed_line.contains("ferrix.root=btrfs")
-        || !installed_line.contains("ferrix.efifb")
+    if !installed_line.contains("xaqu.root=btrfs")
+        || !installed_line.contains("xaqu.efifb")
         || installed_line
             .split_whitespace()
-            .any(|word| word == "ferrix.live")
+            .any(|word| word == "xaqu.live")
     {
         return Err(Error::new(format!(
             "{arch}: the installed command line is not the live one made installed: {installed_line}"
         )));
     }
-    if let Some(line) = said.iter().find(|line| line.contains("ferrix.unisolated")) {
+    if let Some(line) = said.iter().find(|line| line.contains("xaqu.unisolated")) {
         return Err(Error::new(format!(
             "{arch}: the installed system kept a live-only word: {line}"
         )));
@@ -1275,7 +1275,7 @@ fn install_unattended(
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
         let _ = watching.read_more(Instant::now() + Duration::from_secs(900), |lines| {
             lines.iter().any(|line| {
-                line.contains("ferrix-installd: powering off")
+                line.contains("xaqu-installd: powering off")
                     || line.contains("the install failed")
             })
         })?;
@@ -1294,11 +1294,11 @@ fn install_unattended(
             "the daemon never found the answers",
         ),
         (
-            "ferrix-install: the answers are in FERRIX/SETUP.TXT",
+            "xaqu-install: the answers are in XAQU/SETUP.TXT",
             "the answers never reached the ESP",
         ),
         (
-            "ferrix-installd: powering off",
+            "xaqu-installd: powering off",
             "the install did not finish",
         ),
     ] {
@@ -1333,7 +1333,7 @@ mod live_config_tests {
             ),
             (
                 "etc/hyprland.conf",
-                Some(b"exec-once = /bin/ferrix-installer --autostart\n"),
+                Some(b"exec-once = /bin/xaqu-installer --autostart\n"),
             ),
             ("bin/busybox", None),
         ];
@@ -1369,7 +1369,7 @@ mod live_config_tests {
     fn the_live_session_opens_the_installer_and_no_terminal() {
         let config = live_config();
         assert!(config.ends_with(LIVE_LINES));
-        assert!(config.contains("exec-once = /bin/ferrix-installer --autostart\n"));
+        assert!(config.contains("exec-once = /bin/xaqu-installer --autostart\n"));
         assert!(
             !config.lines().any(|line| line.trim() == BOOT_TERMINAL),
             "the live session starts a terminal beside the installer"
@@ -1379,7 +1379,7 @@ mod live_config_tests {
             .map(str::trim)
             .filter(|line| line.starts_with("exec-once") && !line.contains("/bin/vdagent"))
             .collect();
-        assert_eq!(windows, ["exec-once = /bin/ferrix-installer --autostart"]);
+        assert_eq!(windows, ["exec-once = /bin/xaqu-installer --autostart"]);
         // A terminal is still a key away.
         assert!(config.contains("bind = SUPER, RETURN, exec, /bin/term /bin/zinc"));
     }

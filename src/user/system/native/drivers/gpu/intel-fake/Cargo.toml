@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-intel-fake"
+name = "xaqu-intel-fake"
 description = "The Intel driver's render node over a fake back end that completes every batch at once, and the same fake as the keeper's GT worker: for cargo xtask test-intel-uapi and test-restart --boot intel alone, never a product image (docs/INTEL-GPU.md sections 6 and 12; the consultant's C2)"
 version.workspace = true
 edition.workspace = true
@@ -20,12 +20,12 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-chardevctl.workspace = true
-ferrix-intel-xelp.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
+xaqu-blkring.workspace = true
+xaqu-chardevctl.workspace = true
+xaqu-intel-xelp.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
 
 [lints]
 workspace = true

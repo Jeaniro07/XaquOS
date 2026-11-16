@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-fdt"
-description = "Flattened device tree parser for the Ferrix kernel"
+name = "xaqu-fdt"
+description = "Flattened device tree parser for the Xaqu kernel"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"

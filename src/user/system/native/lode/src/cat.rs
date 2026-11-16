@@ -15,7 +15,7 @@
 //!   lode was behind`, at the level of the most severe dropped. The command's
 //!   output keeps being read: it never waits for lode.
 //! * **To standard output** -- the `--echo` copy, and every line while lode
-//!   is not there -- through a console shed (`ferrix_log_shed::Caps::
+//!   is not there -- through a console shed (`xaqu_log_shed::Caps::
 //!   CONSOLE`): whatever reads it is a console a person reads, printed as it
 //!   comes, so a debug flood's lines are shed first and said once a second.
 //!
@@ -25,7 +25,7 @@ use alloc::collections::VecDeque;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_log_shed::{Caps, Said, Shed, UNKNOWN, describe, level_of};
+use xaqu_log_shed::{Caps, Said, Shed, UNKNOWN, describe, level_of};
 
 use crate::cli::{self, complain, usage};
 use crate::sys;
@@ -198,9 +198,9 @@ fn options(words: &[String]) -> Result<Options, i32> {
             },
             "-p" | "--priority" => match words
                 .get(at)
-                .and_then(|value| ferrix_lode_core::record::level(value))
+                .and_then(|value| xaqu_lode_core::record::level(value))
             {
-                Some(value) if value != ferrix_lode_core::record::UNSPECIFIED => {
+                Some(value) if value != xaqu_lode_core::record::UNSPECIFIED => {
                     options.priority = Some(value);
                     at += 1;
                 }

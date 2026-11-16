@@ -6,7 +6,7 @@
 //! IOMMU domain, and none of those can be had in a unit test. So the driver is
 //! written against three traits the process implements over its handles —
 //! [`Transport`], [`DevicePages`] and [`RequestArea`], plus
-//! [`ferrix_virtio::QueueMemory`] for the rings — and this crate is everything
+//! [`xaqu_virtio::QueueMemory`] for the rings — and this crate is everything
 //! that is left: the order of the status protocol, which features to take,
 //! how a request becomes chains and a completion becomes an answer, and what
 //! to do when the device lies. It knows nothing of handles, ports or VMOs.
@@ -16,7 +16,7 @@
 //! [`Transport`] extends [`pci::CommonConfig`], the register block the
 //! kernel's own virtio-rng check drives, so the process implements the same
 //! six accessors over its mapping of the same block and every step of the
-//! status protocol here is one of `ferrix_virtio::pci`'s tested functions.
+//! status protocol here is one of `xaqu_virtio::pci`'s tested functions.
 //! What a driver needs beyond the common configuration is the device-specific
 //! configuration ([`blk::DeviceConfig`]), a doorbell, and a way to acknowledge
 //! an interrupt — reading the ISR byte for a line interrupt, or acknowledging
@@ -62,7 +62,7 @@
 
 #![no_std]
 // Forbidden in the shipped library. The tests implement
-// `ferrix_virtio::QueueMemory`, an unsafe trait, for their fake memory, and a
+// `xaqu_virtio::QueueMemory`, an unsafe trait, for their fake memory, and a
 // forbid cannot be relaxed for one item; there it is denied, and the one
 // implementation is exempted and argued at its site.
 #![cfg_attr(not(test), forbid(unsafe_code))]
@@ -71,17 +71,17 @@
 use core::fmt;
 use core::mem::ManuallyDrop;
 
-use ferrix_virtio::blk::{
+use xaqu_virtio::blk::{
     self, BlkError, Chain, Config, Data, DeviceConfig, HEADER_LEN, Header, Limits, PAGE_SIZE,
     RequestType, SECTOR_SIZE, Segments,
 };
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     self, CONFIG_GENERATION, CommonConfig, DEVICE_STATUS, QueueAddresses,
     STATUS_DEVICE_NEEDS_RESET, STATUS_FAILED, TransportError,
 };
-use ferrix_virtio::{Layout, MAX_QUEUE_SIZE, QueueError, QueueMemory, SplitQueue};
+use xaqu_virtio::{Layout, MAX_QUEUE_SIZE, QueueError, QueueMemory, SplitQueue};
 
-pub use ferrix_virtio::blk::Status;
+pub use xaqu_virtio::blk::Status;
 
 // At the root, so every test module can name `std`.
 #[cfg(test)]
@@ -1314,7 +1314,7 @@ where
     /// if that was the request's last.
     fn finish(
         &mut self,
-        used: ferrix_virtio::Completion,
+        used: xaqu_virtio::Completion,
     ) -> Result<Option<Completion>, DeviceError> {
         let record = self
             .slots

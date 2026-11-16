@@ -38,12 +38,12 @@
 
 use alloc::sync::Arc;
 
-use ferrix_linux_abi::errno::{self, Errno};
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_seccomp::SeccompData;
+use xaqu_linux_abi::errno::{self, Errno};
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_seccomp::SeccompData;
 
 use super::Object;
 use super::channel::{Endpoint, Sender};
@@ -51,12 +51,12 @@ use super::job::KILLED_STATUS;
 use super::process::Host as _;
 use crate::arch;
 use crate::sched::Task;
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 use crate::sched::direct::{self, Count};
 
 /// What stands for `sched::direct`'s counts in an image without the fast path: no
 /// count moves, which is what the cases on `on` ask of it.
-#[cfg(not(ferrix_fast_ipc))]
+#[cfg(not(xaqu_fast_ipc))]
 mod direct {
     /// The counts the cases name.
     #[derive(Clone, Copy)]
@@ -89,7 +89,7 @@ use crate::sync::SpinLock;
 use crate::syscall::check::spawn_in;
 use crate::syscall::process::{self, Process};
 use crate::trap::Verdict;
-#[cfg(not(ferrix_fast_ipc))]
+#[cfg(not(xaqu_fast_ipc))]
 use direct::Count;
 
 /// How long a wake may take: the bound a blocked caller is held to.
@@ -203,7 +203,7 @@ fn check_the_task_names_its_core(task: &Task, process: &Process) -> Result<(), &
 ///
 /// Verifies: `H.SCHED.13`, `H.OBJ.18`, `L.sched.57`, `L.sched.58`
 pub(crate) fn run() -> Result<Report, &'static str> {
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     if !arch::stage_check::reply_writes_four_registers() {
         return Err("the fast path's reply wrote a register beside its four");
     }
@@ -242,7 +242,7 @@ pub(crate) fn run() -> Result<Report, &'static str> {
         return Err("a fast path counter moved on a boot without the fast path");
     }
     // After the counters are judged: its park counts one, on every boot.
-    #[cfg(ferrix_fast_ipc)]
+    #[cfg(xaqu_fast_ipc)]
     check_an_end_before_the_park()?;
     Ok(report)
 }
@@ -501,9 +501,9 @@ fn check_a_spinner_keeps_its_share(on: bool) -> Result<(), &'static str> {
         "fast path spinner",
         spin,
         0,
-        ferrix_sched::NICE_0_WEIGHT,
+        xaqu_sched::NICE_0_WEIGHT,
         cpu,
-        ferrix_sched::CpuSet::of(cpu),
+        xaqu_sched::CpuSet::of(cpu),
     )?;
     let ran_before = spinner.runtime();
     let _ = trips_between(cpu, cpu, TRIPS * 10)?;
@@ -1352,25 +1352,25 @@ fn attempt_the_last_reference(how: LastDrop) -> Result<bool, &'static str> {
 /// Tries [`check_an_end_before_the_park`] makes. A try counts only when the
 /// decision it asked for was still pending just before the park, since an
 /// interrupt in between can make that decision first.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 const PARK_TRIES: u64 = 8;
 
 /// How long the checker waits for a try's reader before calling it lost.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 const PARK_PATIENCE_NANOS: u64 = 2_000_000_000;
 /// The end the try's reader parks on.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 static PARK_END: SpinLock<Option<Arc<Endpoint>>> = SpinLock::new(None);
 
 /// Tries whose reader has finished.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 static PARKS_DONE: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 /// Tries whose decision was still pending just before the reader parked.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 static PARKS_PENDING: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 
 /// Tries whose reader came back from its park any way but `Parked::Woken`.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 static PARKS_ODD: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 
 /// The parked block's last look at `END` is never cut short by a switch
@@ -1392,7 +1392,7 @@ static PARKS_ODD: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64:
 /// checker then wakes it by hand and fails with this case's sentence.
 ///
 /// Verifies: L.sched.72
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn check_an_end_before_the_park() -> Result<(), &'static str> {
     let here = crate::smp::this_cpu().map_or(0, |cpu| cpu.logical);
     PARKS_DONE.store(0, core::sync::atomic::Ordering::Release);
@@ -1406,9 +1406,9 @@ fn check_an_end_before_the_park() -> Result<(), &'static str> {
             "check-park-end",
             park_after_its_end,
             0,
-            ferrix_sched::NICE_0_WEIGHT,
+            xaqu_sched::NICE_0_WEIGHT,
             here,
-            ferrix_sched::CpuSet::of(here),
+            xaqu_sched::CpuSet::of(here),
         )?;
         let deadline = crate::timer::now_nanos().saturating_add(PARK_PATIENCE_NANOS);
         let finished = wait_until(deadline, "", || {
@@ -1451,7 +1451,7 @@ fn check_an_end_before_the_park() -> Result<(), &'static str> {
 /// A try's reader: `END` posted to itself while running, a decision asked
 /// for, then the park on an empty end. `END` stays set, which is harmless:
 /// the reader is a kernel thread and exits next.
-#[cfg(ferrix_fast_ipc)]
+#[cfg(xaqu_fast_ipc)]
 fn park_after_its_end(_argument: usize) {
     let end = PARK_END.lock().clone();
     if let (Some(me), Some(end)) = (crate::sched::current(), end) {
@@ -1531,7 +1531,7 @@ const JOB_LAST_TRIP: [u64; 3] = [0, 0x4a4f_4253, 0];
 
 /// What `me`, running, sees of itself, `other`, waiting, and `jobs`, masked.
 fn job_look(me: &Task, other: &Task, jobs: &[(u32, Option<u32>); 3]) -> JobSeen {
-    let saved = <arch::Irq as ferrix_sync::IrqControl>::disable();
+    let saved = <arch::Irq as xaqu_sync::IrqControl>::disable();
     let mut loads = [(super::quota::NONE, None, 0, 0); 3];
     for (seen, &(job, parent)) in loads.iter_mut().zip(jobs) {
         *seen = (
@@ -1560,7 +1560,7 @@ fn job_look(me: &Task, other: &Task, jobs: &[(u32, Option<u32>); 3]) -> JobSeen 
         charged: super::quota::effective(own.0, base),
         loads,
     };
-    <arch::Irq as ferrix_sync::IrqControl>::restore(saved);
+    <arch::Irq as xaqu_sync::IrqControl>::restore(saved);
     seen
 }
 
@@ -1751,8 +1751,8 @@ fn job_loads_hold(shape: JobShape, seen: &JobSeen) -> Result<(), &'static str> {
 ///
 /// Verifies: `L.sched.64`
 fn check_the_direct_switch_job_loads(on: bool) -> Result<(), &'static str> {
-    let nice_0 = ferrix_sched::NICE_0_WEIGHT;
-    let heavier = ferrix_sched::weight_of_nice(-5).unwrap_or(3121);
+    let nice_0 = xaqu_sched::NICE_0_WEIGHT;
+    let heavier = xaqu_sched::weight_of_nice(-5).unwrap_or(3121);
     for (shape, caller_base, echo_base, folds) in [
         (JobShape::One, nice_0, nice_0, true),
         (JobShape::One, nice_0, heavier, true),
@@ -1794,8 +1794,8 @@ fn check_the_direct_switch_job_loads(on: bool) -> Result<(), &'static str> {
 ///
 /// Verifies: `L.sched.65`
 fn check_the_direct_switch_weights() -> Result<(), &'static str> {
-    let nice_0 = ferrix_sched::NICE_0_WEIGHT;
-    let heavier = ferrix_sched::weight_of_nice(-5).unwrap_or(3121);
+    let nice_0 = xaqu_sched::NICE_0_WEIGHT;
+    let heavier = xaqu_sched::weight_of_nice(-5).unwrap_or(3121);
     let (seen, _) = job_case(JobShape::One, nice_0, heavier)?;
     let (handed, charged) = (seen.handed, seen.charged);
     if seen.own.1 != seen.base || (seen.weight != handed && seen.weight != charged) {

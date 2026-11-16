@@ -116,7 +116,7 @@ pub extern "C" fn os_delay(milliseconds: u32) -> NvStatus {
 #[unsafe(no_mangle)]
 pub extern "C" fn os_get_cpu_frequency() -> u64 {
     // SAFETY: `rdtsc` only reads a counter. Were CR4.TSD set it would
-    // fault rather than misbehave; Linux and Ferrix leave it clear.
+    // fault rather than misbehave; Linux and Xaqu leave it clear.
     let before = unsafe { core::arch::x86_64::_rdtsc() };
     let start = monotonic();
     delay(50_000_000);

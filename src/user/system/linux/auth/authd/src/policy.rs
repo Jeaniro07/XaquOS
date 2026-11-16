@@ -11,8 +11,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use ferrix_svc::Warnings;
-use ferrix_svc::ini::{self, Document};
+use xaqu_svc::Warnings;
+use xaqu_svc::ini::{self, Document};
 
 /// Whose account a service authenticates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -255,7 +255,7 @@ mod tests {
     fn layers(root: &Path) -> Vec<PathBuf> {
         ["lib", "etc", "run"]
             .iter()
-            .map(|top| root.join(top).join("ferrix/auth/services"))
+            .map(|top| root.join(top).join("xaqu/auth/services"))
             .collect()
     }
 
@@ -343,7 +343,7 @@ mod tests {
     fn methods_none_in_a_drop_in_never_loosens_the_shipped_policies() {
         let root = scratch("dropins");
         let shipped = Path::new(env!("CARGO_MANIFEST_DIR")).join("../services");
-        let etc = root.join("etc/ferrix/auth/services");
+        let etc = root.join("etc/xaqu/auth/services");
         let l = [shipped, etc.clone()];
         for service in ["hyprlock", "passwd", "login", "su"] {
             write(

@@ -16,7 +16,7 @@
 //! acknowledgment that could have travelled on a segment carrying data is a
 //! packet that need not have existed.
 
-use ferrix_netwire::tcp::{Flags, Header, Options, SackBlock};
+use xaqu_netwire::tcp::{Flags, Header, Options, SackBlock};
 
 use crate::conn::{
     Connection, DELAYED_ACK, FIN_WAIT_2_TIMEOUT, MAX_RETRANSMITS, MAX_SYN_RETRANSMITS, Progress,

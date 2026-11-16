@@ -39,8 +39,8 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
-use ferrix_kmem::{Charge, arc_footprint};
-use ferrix_vfs::{Errno, FileType, Inode, Location, Metadata, OpenFile, Readiness};
+use xaqu_kmem::{Charge, arc_footprint};
+use xaqu_vfs::{Errno, FileType, Inode, Location, Metadata, OpenFile, Readiness};
 
 use crate::fallible;
 use crate::fs;
@@ -99,9 +99,9 @@ const WATCH_FLAGS: u32 =
     IN_ONLYDIR | IN_DONT_FOLLOW | IN_EXCL_UNLINK | IN_MASK_CREATE | IN_MASK_ADD | IN_ONESHOT;
 
 /// `IN_CLOEXEC`, which is `O_CLOEXEC`.
-pub(crate) const IN_CLOEXEC: u32 = ferrix_linux_abi::types::O_CLOEXEC;
+pub(crate) const IN_CLOEXEC: u32 = xaqu_linux_abi::types::O_CLOEXEC;
 /// `IN_NONBLOCK`, which is `O_NONBLOCK`.
-pub(crate) const IN_NONBLOCK: u32 = ferrix_linux_abi::types::O_NONBLOCK;
+pub(crate) const IN_NONBLOCK: u32 = xaqu_linux_abi::types::O_NONBLOCK;
 
 /// Bytes of a `struct inotify_event` before its name, and what a name is
 /// padded to a multiple of.
@@ -374,7 +374,7 @@ impl State {
 
     /// Move as many whole events as fit into `buf`: `None` while there are
     /// none, `EINVAL` when not even the first fits.
-    fn take(&mut self, buf: &mut [u8]) -> Option<ferrix_vfs::Result<usize>> {
+    fn take(&mut self, buf: &mut [u8]) -> Option<xaqu_vfs::Result<usize>> {
         if self.queue.is_empty() {
             return None;
         }
@@ -410,7 +410,7 @@ impl State {
 
     /// Make room for `bytes` more, charged to the maker's job.
     fn room(&mut self, bytes: usize) -> bool {
-        ferrix_kmem::reserve_deque(&mut self.queue, bytes, &mut self.charge).is_ok()
+        xaqu_kmem::reserve_deque(&mut self.queue, bytes, &mut self.charge).is_ok()
     }
 }
 
@@ -615,7 +615,7 @@ impl Inode for Inotify {
         }
     }
 
-    fn poll_queues(&self, visit: &mut dyn FnMut(ferrix_vfs::WakeSource)) -> bool {
+    fn poll_queues(&self, visit: &mut dyn FnMut(xaqu_vfs::WakeSource)) -> bool {
         visit(fs::wake::shared(&self.readable));
         true
     }
@@ -631,7 +631,7 @@ impl Inode for Inotify {
 
     /// As many whole events as fit; `EINVAL` when not even the first does,
     /// and `EAGAIN` or a wait while there are none.
-    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn read_stream(&self, buf: &mut [u8], nonblock: bool) -> xaqu_vfs::Result<usize> {
         let caller = process::current();
         loop {
             if let Some(read) = self.state.lock().take(buf) {
@@ -653,7 +653,7 @@ impl Inode for Inotify {
     }
 
     /// Nothing may be written to it.
-    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> ferrix_vfs::Result<usize> {
+    fn write_stream(&self, _data: &[u8], _nonblock: bool) -> xaqu_vfs::Result<usize> {
         Err(Errno::EINVAL)
     }
 }

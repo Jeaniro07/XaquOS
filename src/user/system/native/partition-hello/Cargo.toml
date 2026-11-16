@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-partition-hello"
+name = "xaqu-partition-hello"
 description = "A test image of a safety partition: says it is up, then ends. It never ships in a product image."
 version.workspace = true
 edition.workspace = true
@@ -14,8 +14,8 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-rt.workspace = true
-ferrix-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-native-abi.workspace = true
 
 [lints]
 workspace = true

@@ -10,13 +10,13 @@
 use core::cell::Cell;
 use core::marker::PhantomData;
 
-use ferrix_blkring::control::Start;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device as DeviceHandle, Interrupt};
-use ferrix_rt::native::port::Port;
-use ferrix_virtio::DeviceConfig;
-use ferrix_virtio::input::ConfigSelect;
-use ferrix_virtio::pci::{CommonConfig, DEVICE_STATUS, NO_VECTOR};
+use xaqu_blkring::control::Start;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device as DeviceHandle, Interrupt};
+use xaqu_rt::native::port::Port;
+use xaqu_virtio::DeviceConfig;
+use xaqu_virtio::input::ConfigSelect;
+use xaqu_virtio::pci::{CommonConfig, DEVICE_STATUS, NO_VECTOR};
 
 use crate::dma::Dma;
 use crate::mmio;
@@ -225,7 +225,7 @@ impl<K: Kind> ConfigSelect for Device<K> {
 }
 
 #[cfg(feature = "input")]
-impl ferrix_virtio_input::Transport for Device<Input> {
+impl xaqu_virtio_input::Transport for Device<Input> {
     fn notify(&mut self, queue: u16, notify_off: u16) {
         Device::notify(self, queue, notify_off);
     }
@@ -238,7 +238,7 @@ impl ferrix_virtio_input::Transport for Device<Input> {
 }
 
 #[cfg(feature = "block")]
-impl ferrix_virtio_blk::Transport for Device<Block> {
+impl xaqu_virtio_blk::Transport for Device<Block> {
     fn notify(&mut self, queue: u16, notify_off: u16) {
         Device::notify(self, queue, notify_off);
     }

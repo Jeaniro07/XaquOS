@@ -2,7 +2,7 @@
 //!
 //! ABL drives the panel (its "bootloader is unlocked" warning is on screen
 //! before this loader runs), so the display controller, the DSI link and the
-//! panel are up at hand-off. Whether Ferrix can reuse that depends on numbers
+//! panel are up at hand-off. Whether Xaqu can reuse that depends on numbers
 //! only the phone has: whether the controller is still running, in command
 //! mode and on which trigger; which window is on and which DPP fetches it;
 //! where that DPP reads its pixels from, in what format and at what size; and
@@ -21,7 +21,7 @@
 
 use core::ptr;
 
-use ferrix_bootinfo::{Framebuffer, PixelFormat};
+use xaqu_bootinfo::{Framebuffer, PixelFormat};
 
 use crate::log::say;
 

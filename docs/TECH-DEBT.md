@@ -1,6 +1,6 @@
 # Technical debt
 
-Why changes to Ferrix cost more than they used to, how to see where, and
+Why changes to Xaqu cost more than they used to, how to see where, and
 what to pay down first. Written 2026-10-16, after the customer asked why the
 fleet's velocity fell from hundreds of points a day to low double digits.
 Part of the answer was process (the backlog's length, flakes failing whole
@@ -19,7 +19,7 @@ Two kinds:
 * **Recorded debt**, chosen and written down: the ratchet registers in
   `tools/common/data/` (the complexity baseline calls itself "a debt
   register, not an allowance"), the unverified requirements, the
-  consultant's "OK IF" conditions owed, the BACKLOG rows. Ferrix keeps this
+  consultant's "OK IF" conditions owed, the BACKLOG rows. Xaqu keeps this
   kind unusually well.
 * **Structural debt**, which grew without anyone deciding it: files every
   feature must edit, tests that wait on time, generated files that make
@@ -30,7 +30,7 @@ features. They cost what they cost once. Debt is a cost paid *again* on
 every change, and the question to ask of a file is not "is it ugly?" but
 "how much does each change here cost, and how often do we pay it?"
 
-Ferrix has 5 `TODO`/`FIXME` comments in 840,000 lines of Rust: debt here is
+Xaqu has 5 `TODO`/`FIXME` comments in 840,000 lines of Rust: debt here is
 written into the backlog and the registers, not into the code, so a marker
 count finds none of it. It has to be measured from what changes cost.
 
@@ -133,7 +133,7 @@ files on the assembly allow-list.
 ## 5. Paying it down
 
 The certification consultant reviewed the three proposals on 2026-10-17
-(ledger `~/.local/share/ferrix/cert-consultant/reviews.md` lines 1950 and
+(ledger `~/.local/share/xaqu/cert-consultant/reviews.md` lines 1950 and
 1956, which hold the full conditions). In the consultant's order:
 
 1. **xtask commands register themselves** (§4, central registries): OK, no
@@ -165,7 +165,7 @@ The certification consultant reviewed the three proposals on 2026-10-17
    a check the safety manual, security target or timing analysis claims as
    run-time detection stays, as product code. First a classification table
    (DIAGNOSTIC / VERIFICATION / UNCLAIMED) the consultant reviews; the
-   switch is an xtask `--cfg ferrix_checks`, never a Cargo feature; a gate
+   switch is an xtask `--cfg xaqu_checks`, never a Cargo feature; a gate
    that shows product object code identical in both images; the production
    image booted and its coverage published on every gate's architecture.
    Evidence from the test kernel counts for the production one only with

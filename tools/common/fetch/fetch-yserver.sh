@@ -15,8 +15,8 @@
 #
 # The source is the customer's fork of yserver (docs/YSERVER.md §8), pinned
 # by commit: upstream's master as of 2026-10-02 (3875be0b, past 1.6.0) and
-# Ferrix's commits on top. It is built with its
-# `wayland` feature, the rootless backend, which takes Ferrix's own Wayland
+# Xaqu's commits on top. It is built with its
+# `wayland` feature, the rootless backend, which takes Xaqu's own Wayland
 # client runtime from this repository on GitHub at the commit the fork pins. glslc, which compiles
 # yserver's shaders during the build, is Debian's too, unpacked into a
 # second tree with its own loader so the host's glibc does not matter.
@@ -28,13 +28,13 @@
 # archive was that day, so a new machine builds the same volume as one
 # whose pool kept it. After unpacking, every library yserver and the libraries beside it need
 # is looked for on the volume, so a dependency this list lacks fails here
-# rather than on Ferrix.
+# rather than on Xaqu.
 #
-# Writes $FERRIX_YSERVER_VOLUME/yserver.img (default
-# ~/.local/share/ferrix/yserver/yserver.img), and yserver.commit beside it,
+# Writes $XAQU_YSERVER_VOLUME/yserver.img (default
+# ~/.local/share/xaqu/yserver/yserver.img), and yserver.commit beside it,
 # the commit it was built from. Needs git, curl, sha256sum, dpkg-deb,
 # readelf, strip, mkfs.btrfs and rustup's cargo with the toolchain set below
-# (yserver's own, not Ferrix's); no root.
+# (yserver's own, not Xaqu's); no root.
 #
 # Usage: tools/common/fetch/fetch-yserver.sh
 
@@ -48,16 +48,16 @@ security=${DEBIAN_SECURITY_MIRROR:-https://security.debian.org/debian-security}
 # SHA-256 pins are checked either way.
 snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
 snapshot_time=20260927T235959Z
-out=${FERRIX_YSERVER_VOLUME:-$HOME/.local/share/ferrix/yserver}
-# The downloads, kept between runs; FERRIX_YSERVER_POOL names another
+out=${XAQU_YSERVER_VOLUME:-$HOME/.local/share/xaqu/yserver}
+# The downloads, kept between runs; XAQU_YSERVER_POOL names another
 # directory, an empty one to fetch everything as a new machine does.
-pool=${FERRIX_YSERVER_POOL:-$out/pool}
+pool=${XAQU_YSERVER_POOL:-$out/pool}
 
 # The fork, and the commit of it that is built. YSERVER_REPO may name a local
 # clone, for a commit not yet pushed.
-repo=${YSERVER_REPO:-https://github.com/ferrix-os/yserver.git}
+repo=${YSERVER_REPO:-https://github.com/xaqu-os/yserver.git}
 YSERVER_COMMIT=7fff741d7e175fcba2527393e519cb74ed77d8c3
-# The toolchain yserver is built with: pinned apart from the one Ferrix pins
+# The toolchain yserver is built with: pinned apart from the one Xaqu pins
 # in rust-toolchain.toml, because upstream yserver tracks the current stable
 # Rust, while the kernel's pin is a decision of its own.
 toolchain=${YSERVER_TOOLCHAIN:-1.99.1}

@@ -12,7 +12,7 @@
 //!
 //! Linux defaults to cubic and would beat this over a long fat path. Cubic is
 //! also a curve fitted to measurements, tuned by constants with no derivation,
-//! and wrong in ways that only show up at a scale Ferrix has no way to test.
+//! and wrong in ways that only show up at a scale Xaqu has no way to test.
 //! NewReno is arithmetic anyone can check against the RFC, and the interface
 //! here -- `on_ack`, `on_loss`, `window` -- is the one a cubic implementation
 //! would also have.

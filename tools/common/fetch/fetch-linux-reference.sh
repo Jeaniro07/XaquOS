@@ -9,8 +9,8 @@
 # later point release changes nothing here until this script is changed.
 #
 # Each architecture's two files land under
-# `$FERRIX_LINUX_REFERENCE/<arch>/` (default ~/.local/share/ferrix/linux-ref),
-# in Ferrix's architecture names: `vmlinuz`, and `virtio_blk.ko`, decompressed
+# `$XAQU_LINUX_REFERENCE/<arch>/` (default ~/.local/share/xaqu/linux-ref),
+# in Xaqu's architecture names: `vmlinuz`, and `virtio_blk.ko`, decompressed
 # so that busybox's insmod loads it.
 #
 # Needs curl, sha256sum, dpkg-deb and xz. A mirror other than deb.debian.org
@@ -21,10 +21,10 @@
 set -euo pipefail
 
 mirror=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
-out=${FERRIX_LINUX_REFERENCE:-$HOME/.local/share/ferrix/linux-ref}
+out=${XAQU_LINUX_REFERENCE:-$HOME/.local/share/xaqu/linux-ref}
 release=6.12.107+deb13
 
-# Ferrix's arch, Debian's arch, then the package's pool path and SHA-256.
+# Xaqu's arch, Debian's arch, then the package's pool path and SHA-256.
 packages=(
     "x86_64 amd64
      main/l/linux-signed-amd64/linux-image-${release}-cloud-amd64_6.12.107-1_amd64.deb

@@ -1,7 +1,7 @@
 //! Sockets: the numbers `socket`, `setsockopt` and `sendmsg` take, and the
 //! layouts of the structures they pass by pointer.
 //!
-//! Ferrix's first sockets are `AF_UNIX` ones, because that is what the
+//! Xaqu's first sockets are `AF_UNIX` ones, because that is what the
 //! programs it runs reach for before any network exists: a `socketpair` as a
 //! two-way pipe, a daemon's control socket, a descriptor handed from one
 //! process to another in an `SCM_RIGHTS` message. So this module is the part
@@ -13,7 +13,7 @@
 //! `include/uapi/asm-generic/socket.h`, `linux/socket.h` and `linux/un.h`, and
 //! x86-64, AArch64 and ARMv7-A all take the generic socket header unchanged.
 //! The architectures that renumber socket options -- alpha, MIPS, PA-RISC and
-//! SPARC among them -- are not ones Ferrix runs on, so unlike [`crate::nr`]
+//! SPARC among them -- are not ones Xaqu runs on, so unlike [`crate::nr`]
 //! there is nothing per architecture to fold.
 //!
 //! # Why two of the layouts are decoders rather than structures
@@ -26,7 +26,7 @@
 //! over little-endian bytes that take the pointer [`Width`] as an argument --
 //! a value rather than a `cfg`, so the host tests check the 32-bit layout on a
 //! 64-bit machine. Little-endian because all three architectures run that way
-//! under Ferrix. [`Ucred`] and [`Linger`] have no pointer-sized field and are
+//! under Xaqu. [`Ucred`] and [`Linger`] have no pointer-sized field and are
 //! `repr(C)` like the rest of the crate.
 //!
 //! Every decoder answers `None` for a buffer too short to hold what it reads,
@@ -44,11 +44,11 @@ use crate::types::{FIONREAD, O_CLOEXEC, O_NONBLOCK, TIOCOUTQ};
 /// structure is being read.
 ///
 /// `src/lib/kernel/ustack` has a type of the same name for the same fact. This crate
-/// cannot use it: `ferrix-ustack` depends on this crate rather than the other
+/// cannot use it: `xaqu-ustack` depends on this crate rather than the other
 /// way round, and this one has no dependencies by design.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Width {
-    /// 32-bit, which for Ferrix means ARMv7-A.
+    /// 32-bit, which for Xaqu means ARMv7-A.
     Bits32,
     /// 64-bit: x86-64 and AArch64.
     Bits64,
@@ -354,8 +354,8 @@ pub const SOCKET_BUFFER_DEFAULT: usize = 212_992;
 
 /// The smallest buffer `SO_SNDBUF` or `SO_RCVBUF` can make.
 ///
-/// A Ferrix floor of one page, not a Linux number: Linux's `SOCK_MIN_RCVBUF`
-/// is about 2.3 KiB, derived from its buffer bookkeeping, which Ferrix does
+/// A Xaqu floor of one page, not a Linux number: Linux's `SOCK_MIN_RCVBUF`
+/// is about 2.3 KiB, derived from its buffer bookkeeping, which Xaqu does
 /// not have. One page means any write of a page or less can eventually be
 /// accepted whole.
 pub const SOCKET_BUFFER_MIN: usize = 4096;
@@ -858,7 +858,7 @@ impl<'a> UnixAddress<'a> {
     ///
     /// Linux reports a path's length as its `strlen` plus three whether or
     /// not the terminator fits, so a 108-byte path comes back as 111, longer
-    /// than the structure. Ferrix says 110, the bytes that exist; a program
+    /// than the structure. Xaqu says 110, the bytes that exist; a program
     /// comparing the answer against `sizeof(struct sockaddr_un)` to detect
     /// truncation is then not told of a truncation that did not happen.
     #[must_use]

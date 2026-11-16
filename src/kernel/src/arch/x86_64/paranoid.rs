@@ -14,7 +14,7 @@
 //! program's:
 //!
 //! ```text
-//!   ferrix_syscall_stub:  swapgs                 GS program's, RSP program's
+//!   xaqu_syscall_stub:  swapgs                 GS program's, RSP program's
 //!                         movq %rsp, %gs:16      GS kernel's,  RSP program's
 //!                         movq %gs:8, %rsp
 //!   ...
@@ -23,13 +23,13 @@
 //!                         sysretq                GS program's, RSP program's
 //! ```
 //!
-//! and `ferrix_enter_user`, `ferrix_resume_user` and the trap stub's own return
+//! and `xaqu_enter_user`, `xaqu_resume_user` and the trap stub's own return
 //! have the same shape. An NMI or a hardware breakpoint there, decided by `CS`,
 //! runs its handler through a per-CPU pointer the program chose.
 //!
 //! # What the entry does
 //!
-//! `ferrix_paranoid_common` in `trap.rs` builds the ordinary frame on the
+//! `xaqu_paranoid_common` in `trap.rs` builds the ordinary frame on the
 //! vector's own IST stack (`gdt.rs`), then:
 //!
 //! * **`GS` from `GS_BASE`.** It reads the register: a kernel `GS` base is a
@@ -74,7 +74,7 @@
 //!   breakpoint on the entry's own instructions before the clear, or on the IST
 //!   stacks: nothing may arm one there. The boot check (`paranoid/check.rs`)
 //!   is the only code that arms breakpoints; an interface that lets anything
-//!   else must refuse `ferrix_paranoid_stubs` and the stacks, as Linux refuses
+//!   else must refuse `xaqu_paranoid_stubs` and the stacks, as Linux refuses
 //!   `noinstr` text.
 //!   This is Linux's scheme since 5.10, which retired its IST shift for it.
 //! * **An NMI cannot nest.** The processor delivers no NMI after one until the
@@ -142,12 +142,12 @@ pub static USER_NMIS: AtomicU64 = AtomicU64::new(0);
 #[doc(hidden)]
 pub static HOOK_RUNS: AtomicU64 = AtomicU64::new(0);
 
-/// Where `ferrix_paranoid_common` hands over, on the vector's own stack, with
+/// Where `xaqu_paranoid_common` hands over, on the vector's own stack, with
 /// the kernel's `GS` and `DR7` clear.
 ///
 /// `occupants` is the count of exceptions on this stack, this one included.
 #[unsafe(no_mangle)]
-extern "C" fn ferrix_paranoid_entry(frame: &mut TrapFrame, occupants: u64) {
+extern "C" fn xaqu_paranoid_entry(frame: &mut TrapFrame, occupants: u64) {
     if occupants != 1 {
         crate::trap::fatal(
             frame,

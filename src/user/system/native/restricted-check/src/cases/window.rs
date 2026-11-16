@@ -3,7 +3,7 @@
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_rt::restricted::resume_armed;
+use xaqu_rt::restricted::resume_armed;
 
 use super::{
     Context, Given, Reason, Stack, arch, ask, asked, at, continue_, enter, fault_exit, hold, nr,
@@ -56,7 +56,7 @@ fn nap(given: &Given) -> Result<(), i32> {
 /// Enter `context` and keep arming `GETPPID` with its own value, as `linuxd`'s straight run does,
 /// until an exit that is no such call: it and how many such calls did exit. A resume off the
 /// general path arms nothing, so the first stub is the third call at the soonest.
-fn armed_run(context: &Context) -> (ferrix_rt::restricted::Exit, u64) {
+fn armed_run(context: &Context) -> (xaqu_rt::restricted::Exit, u64) {
     let mut exit = enter(context);
     let mut exits = 0;
     while exit.reason == Reason::Syscall as u64 && exit.number == arch::GETPPID {
@@ -236,7 +236,7 @@ fn two_threads(given: &Given) -> Result<(), i32> {
             // what the master root holds while open is no software's (ledger 6998, X1).
             ask(given, ASK_WINDOW_READERS, 0, None).map_err(|_| 178)?;
             // Each way a caller can aim at it.
-            let at_data = u64::from(ferrix_native_abi::types::MAP_READ);
+            let at_data = u64::from(xaqu_native_abi::types::MAP_READ);
             let buffer = (&raw mut held).addr() as u64;
             hold(
                 sys(nr::SPACE_READ, [given.space, DATA, buffer, 8, 0, 0]).is_err(),
@@ -279,7 +279,7 @@ fn two_threads(given: &Given) -> Result<(), i32> {
         nr::OBJECT_WAIT_ONE,
         [
             thread,
-            u64::from(ferrix_native_abi::signals::Signals::TERMINATED.0),
+            u64::from(xaqu_native_abi::signals::Signals::TERMINATED.0),
             0,
             (&raw mut observed).addr() as u64,
             0,

@@ -56,7 +56,7 @@ use std::io;
 use std::path::Path;
 
 use compositor_evecho::{Device, event_nodes};
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_X, ABS_Y, BTN_LEFT, BTN_MISC, BTN_TOUCH, EV_ABS, EV_KEY, EV_LED, EV_REL, EV_SYN, Event,
     INPUT_PROP_DIRECT, KEY_MAX, LED_CAPSL, LED_NUML, REL_HWHEEL, REL_WHEEL, REL_X, REL_Y,
     SYN_REPORT,

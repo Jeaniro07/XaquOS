@@ -42,7 +42,7 @@ address, as a ring-3 consumption would have given it. The frame is retired.
 The kernel goes on.
 
 x86-64 only, Intel and AMD, under the rules that already let a ring-3
-consumption recover (`ferrix.mce.recover` on, `MCG_SER_P` on Intel, SUCCOR
+consumption recover (`xaqu.mce.recover` on, `MCG_SER_P` on Intel, SUCCOR
 on AMD). AArch64 and ARMv7-A have no RAS support in the item and keep their
 behaviour; their copies are unchanged.
 
@@ -52,15 +52,15 @@ behaviour; their copies are unchanged.
 
 `arch::x86_64::copy_mc(dst, src, len) -> Copied` (`global_asm!`, new
 `arch/x86_64/copy_mc.rs`) copies with a single `rep movsb` at a symbol of its
-own, `ferrix_copy_mc_movs`, and answers `Copied { left, page }` in `rax:rdx`
+own, `xaqu_copy_mc_movs`, and answers `Copied { left, page }` in `rax:rdx`
 (a 16-byte return): `left = 0, page = 0` when it finished. The routine is:
-set up `rdi`, `rsi`, `rcx`; `ferrix_copy_mc_movs: rep movsb`; `xor edx, edx`;
-`ferrix_copy_mc_out: mov rax, rcx; ret`.
+set up `rdi`, `rsi`, `rcx`; `xaqu_copy_mc_movs: rep movsb`; `xor edx, edx`;
+`xaqu_copy_mc_out: mov rax, rcx; ret`.
 
 `rep movsb` is interruptible by architecture: on any event between its
 iterations `rcx` holds the bytes not yet copied and `rip` the instruction
 itself, so a machine check taken on one of its loads finds `rip ==
-ferrix_copy_mc_movs` and `rcx` the remainder. It is the instruction Linux's
+xaqu_copy_mc_movs` and `rcx` the remainder. It is the instruction Linux's
 `copy_user` recovers on the same processors (`EX_TYPE_UACCESS`,
 `MCE_IN_KERNEL_COPYIN`), and the one the compiler already emits for the
 copies it replaces (the kernel is built without SSE), so the fast path costs
@@ -76,7 +76,7 @@ AArch64 and ARMv7-A: `arch::copy_mc` is `copy_from_slice` and answers
 ### 3.2 The decision in ring 0
 
 `mce::on_kernel_stack` gains one input: whether the frame's `rip` is
-`ferrix_copy_mc_movs` exactly, the relocated symbol (a comparison, no lock).
+`xaqu_copy_mc_movs` exactly, the relocated symbol (a comparison, no lock).
 The decision's `user: bool` becomes a context, `Ring3`, `Copy` or `Kernel`.
 
 `Recover` needs every one of these, and anything short of it is today's ring-0
@@ -100,13 +100,13 @@ already allow them) (ledger 5216 (1), (2)):
 An Intel bystander, whose `rip` might sit at the movs, has `EIPV` clear and
 stays `Unaffected`.
 
-On `Recover` the handler writes the frame: `rip` to `ferrix_copy_mc_out`
+On `Recover` the handler writes the frame: `rip` to `xaqu_copy_mc_out`
 (which returns `rcx`, the remainder, untouched by the check) and `rdx` to the
 record's page with bit 0 set, so a page 0 still reads as poisoned. Then, as
 from ring 3, it clears that bank, defers the action-optional ones, counts the
 check recovered and at the copy, clears `MCG_STATUS` last and returns. No
 lock, no allocation, no print (`MACHINE-CHECK.md` §3.3's rules for the IST
-path hold). `ferrix.mce.recover=off` stops here as everywhere.
+path hold). `xaqu.mce.recover=off` stops here as everywhere.
 
 ### 3.3 The copy's caller: nothing under a lock
 
@@ -156,7 +156,7 @@ line holding it; any `set_len` is a traced unsafe.
 
 ### 3.4 Counts
 
-`/proc/ferrix-mce` gains `copies` per processor: machine checks recovered at
+`/proc/xaqu-mce` gains `copies` per processor: machine checks recovered at
 the copy (also counted in `recovered`), traced to L.x86_64.246.
 
 ## 4. What it does not do
@@ -186,13 +186,13 @@ To reserve before code, in one docs-only landing (all free on origin/develop):
   the copy past the poison, and stop in every other ring-0 case it stops in
   today.
 * **L.x86_64.244**: `copy_mc` copies `len` bytes with one `rep movsb` at
-  `ferrix_copy_mc_movs` and answers `left` 0 and `page` 0; from
-  `ferrix_copy_mc_out` it answers `rcx` and `rdx`.
+  `xaqu_copy_mc_movs` and answers `left` 0 and `page` 0; from
+  `xaqu_copy_mc_out` it answers `rcx` and `rdx`.
 * **L.x86_64.245**: the decision's `Copy` context, `Recover` exactly under
   §3.2's conditions (the relocated symbol, `rcx > 0`, the page of `rsi`, the
   vendor's rules); everything else as `Kernel`.
 * **L.x86_64.246**: on `Recover` the ring-0 handler moves `rip` to
-  `ferrix_copy_mc_out`, writes the page with bit 0 into `rdx`, clears that
+  `xaqu_copy_mc_out`, writes the page with bit 0 into `rdx`, clears that
   bank, defers the rest, counts `copies` and clears `MCG_STATUS` last, with no
   lock, allocation or print.
 * **L.syscall.25**: `uaccess`'s reads go through `arch::copy_mc`; a poisoned
@@ -214,12 +214,12 @@ To reserve before code, in one docs-only landing (all free on origin/develop):
 * **Stage check** (x86-64, `mce/check.rs`), on a KASLR boot: `copy_mc` over
   lengths 0 to 9000 at every source and destination alignment 0-7 copies
   exactly and answers `(0, 0)`; the recovery applied to a `TrapFrame` the
-  check builds (`rip` the relocated `ferrix_copy_mc_movs`, records it
+  check builds (`rip` the relocated `xaqu_copy_mc_movs`, records it
   supplies; the decision is pure) comes back with `rip ==
-  ferrix_copy_mc_out` and `rdx == page | 1`, and with another page, `rcx` 0
+  xaqu_copy_mc_out` and `rdx == page | 1`, and with another page, `rcx` 0
   or `rip` one byte off, stops; the poison record's set, full and take.
-* **Build evidence**: xtask's disassembly pinned from `ferrix_copy_mc_movs`
-  to `ferrix_copy_mc_out`: the one `rep movsb`, `rcx` untouched between, no
+* **Build evidence**: xtask's disassembly pinned from `xaqu_copy_mc_movs`
+  to `xaqu_copy_mc_out`: the one `rep movsb`, `rcx` untouched between, no
   other memory access, no call. That the paranoid exit really restores `rip`
   and `rdx` from the frame is shown by `test-mce-copy`.
 * **`test-mce-copy`** (x86-64, KVM and TCG, and `--smp 2`; the gate alone
@@ -233,7 +233,7 @@ To reserve before code, in one docs-only landing (all free on origin/develop):
   `rep movsb` in one step -- no stop ever finds it partway -- and reports no
   recovery, so under TCG the gate injects at the first stop in ring 0 and
   requires the stop. xtask
-  stops the machine until a processor's `rip` is `ferrix_copy_mc_movs` and its
+  stops the machine until a processor's `rip` is `xaqu_copy_mc_movs` and its
   `rsi`, translated on that processor (`gva2gpa`), is a page of the victim's
   buffer; otherwise it resumes and retries, the tries bounded and reported.
   It injects an action-required data-load record with `EIPV|RIPV` at that
@@ -249,7 +249,7 @@ To reserve before code, in one docs-only landing (all free on origin/develop):
   (`Unaffected`): nothing is recovered or retired, the copy goes on and the
   kernel with it (`test-mce-copy-bystander`; on AMD the same flags stop, as
   the host rows say); the record at another page than `rsi`'s;
-  `ferrix.mce.recover=off`; AMD with `TCC` set (KVM); `rip` in the kernel
+  `xaqu.mce.recover=off`; AMD with `TCC` set (KVM); `rip` in the kernel
   outside the copy; and `/proc/<pid>/environ` read while the target's page is
   injected -- the read ends short, the frame is retired, no process
   signalled, the kernel goes on.
@@ -263,7 +263,7 @@ To reserve before code, in one docs-only landing (all free on origin/develop):
 
 SAFETY-MANUAL: around "every other machine check halts" the copy exception;
 AoU-36: the system call's copy leaves the residual list, recovered only under
-`ferrix.mce.recover`, x86-64 only; VULNERABILITY-ANALYSIS T.EXHAUST path 8:
+`xaqu.mce.recover`, x86-64 only; VULNERABILITY-ANALYSIS T.EXHAUST path 8:
 the same, and that a program can now survive feeding the kernel a poisoned
 buffer; MEMORY-AND-TIMING: the machine-check path adds one comparison, the
 page test and two frame writes, and the record is acted on at the return to

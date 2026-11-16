@@ -61,7 +61,7 @@ fn main() -> ExitCode {
         target();
     }
     say("mce-copy: started");
-    show("/proc/ferrix-mce");
+    show("/proc/xaqu-mce");
     let code = if cfg!(feature = "environ") {
         environ_mode()
     } else {
@@ -70,8 +70,8 @@ fn main() -> ExitCode {
     if code != ExitCode::SUCCESS {
         return code;
     }
-    show("/proc/ferrix-mce");
-    show("/proc/ferrix-mce-retired");
+    show("/proc/xaqu-mce");
+    show("/proc/xaqu-mce-retired");
     say("mce-copy: done");
     ExitCode::SUCCESS
 }

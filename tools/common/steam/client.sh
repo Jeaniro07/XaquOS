@@ -7,7 +7,7 @@
 # scout's user-namespace check (docs/I386.md, I5b). From the bootstrap the
 # first start downloads and installs the client and exits 42 to be started
 # again, as steam.sh would.
-export PATH=/steam/bin:/bin:/data/usr/bin HOME=/data/home USER=ferrix LANG=C.UTF-8
+export PATH=/steam/bin:/bin:/data/usr/bin HOME=/data/home USER=xaqu LANG=C.UTF-8
 export DISPLAY=:0
 S=/data/steam
 RT=$S/ubuntu12_32/steam-runtime
@@ -78,26 +78,26 @@ link_steamrt() {
 # game no tool is mapped to in the Steam Linux Runtime 1.0 (scout)
 # container, app 1070560, whose pressure-vessel needs bubblewrap in a user
 # namespace as this user (docs/NAMESPACES.md N5 to N7). The compatibility
-# tool ferrix_direct, carried at /steam/compat, runs the game itself
+# tool xaqu_direct, carried at /steam/compat, runs the game itself
 # instead; each app in DIRECT_APPS gets a user mapping to it in config.vdf,
 # which outranks Valve's (priority 250, as the client's own Properties page
 # writes). Before each start: the client writes config.vdf back as it holds
 # it, and it holds the mapping from the start on.
-DIRECT_APPS=${FERRIX_DIRECT_APPS-380840}
+DIRECT_APPS=${XAQU_DIRECT_APPS-380840}
 install_direct() {
-    mkdir -p $S/compatibilitytools.d/ferrix_direct
-    cp /steam/compat/ferrix_direct/* $S/compatibilitytools.d/ferrix_direct/
-    chmod 755 $S/compatibilitytools.d/ferrix_direct/run
+    mkdir -p $S/compatibilitytools.d/xaqu_direct
+    cp /steam/compat/xaqu_direct/* $S/compatibilitytools.d/xaqu_direct/
+    chmod 755 $S/compatibilitytools.d/xaqu_direct/run
     cfg=$S/config/config.vdf
     mkdir -p $S/config
     [ -f $cfg ] || printf '"InstallConfigStore"\n{\n\t"Software"\n\t{\n\t\t"Valve"\n\t\t{\n\t\t\t"Steam"\n\t\t\t{\n\t\t\t}\n\t\t}\n\t}\n}\n' > $cfg
     for app in $DIRECT_APPS; do
-        # Already mapped to ferrix_direct: the app's block names it.
-        awk -v app="\"$app\"" '$1 == app { getline; getline; if ($2 == "\"ferrix_direct\"") found = 1 } END { exit !found }' $cfg && continue
+        # Already mapped to xaqu_direct: the app's block names it.
+        awk -v app="\"$app\"" '$1 == app { getline; getline; if ($2 == "\"xaqu_direct\"") found = 1 } END { exit !found }' $cfg && continue
         awk -v app="$app" '
             function entry(t) {
                 print t "\t\"" app "\""; print t "\t{"
-                print t "\t\t\"name\"\t\t\"ferrix_direct\""; print t "\t\t\"config\"\t\t\"\""
+                print t "\t\t\"name\"\t\t\"xaqu_direct\""; print t "\t\t\"config\"\t\t\"\""
                 print t "\t\t\"priority\"\t\t\"250\""; print t "\t}"
             }
             { line = $0; key = $0; gsub(/^[ \t]+|[ \t]+$/, "", key) }
@@ -117,7 +117,7 @@ install_direct() {
             { if (key ~ /^"[^"]*"$/) { pending = key; gsub(/"/, "", pending) } print line }
             END { if (!done) print "steam-window: no Steam block in config.vdf for " app > "/dev/stderr" }
         ' $cfg > $cfg.new && mv $cfg.new $cfg
-        echo "steam-window: app $app mapped to ferrix_direct"
+        echo "steam-window: app $app mapped to xaqu_direct"
     done
 }
 n=0

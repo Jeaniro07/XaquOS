@@ -2,7 +2,7 @@
 //!
 //! `docs/INPUT.md` §2.4 reads out what a compositor's input backend asks a
 //! `/dev/input/eventN` node for, from the `evdev` crate's own source. This
-//! crate makes exactly those calls, so that Ferrix's evdev nodes are proven
+//! crate makes exactly those calls, so that Xaqu's evdev nodes are proven
 //! against the demand a real backend puts on them rather than against a
 //! convenient subset -- and so that the compositor above has a backend to
 //! use when it grows a seat.
@@ -10,7 +10,7 @@
 //! [`Device`] is the open node; [`event_nodes`] is discovery without udev,
 //! which is §3.4's rule: read the directory, there is nothing else to ask.
 //! The names are [`names`], and they are the part that is host-tested, since
-//! a host has no Ferrix node to open.
+//! a host has no Xaqu node to open.
 //!
 //! Every call here is a Unix one, so the crate builds anywhere `libc` does;
 //! on a machine with no `/dev/input` there is simply nothing to open, which
@@ -38,7 +38,7 @@ pub fn line(node: &str, kind: u16, code: u16, value: i32) -> String {
 
 #[cfg(test)]
 mod tests {
-    use ferrix_linux_abi::input::{ABS_X, BTN_LEFT, EV_ABS, EV_KEY, EV_SYN, KEY_A, SYN_REPORT};
+    use xaqu_linux_abi::input::{ABS_X, BTN_LEFT, EV_ABS, EV_KEY, EV_SYN, KEY_A, SYN_REPORT};
 
     use super::{line, names};
 

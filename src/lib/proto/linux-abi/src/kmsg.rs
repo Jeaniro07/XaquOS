@@ -20,7 +20,7 @@
 /// `LOG_USER`, the facility a program's record is given when it names none.
 pub const LOG_USER: u8 = 1;
 
-/// `LOG_DAEMON`, the facility a system service's record names: what Ferrix's
+/// `LOG_DAEMON`, the facility a system service's record names: what Xaqu's
 /// ring-3 drivers and `devmgr` write theirs at. A program's console output is
 /// always `LOG_USER` at info, so a record of any other facility is one whose
 /// writer stated its level (`docs/LOGGING.md` §4.1).

@@ -5,12 +5,12 @@
 fn main() {
     println!("cargo::rustc-link-arg=--image-base=0x710000000000");
     println!("cargo::rerun-if-changed=build.rs");
-    println!("cargo::rerun-if-env-changed=FERRIX_BUILD_FLAGS");
-    println!("cargo::rustc-check-cfg=cfg(ferrix_runtime_settings, values(\"fixed\", \"live\"))");
-    if let Ok(flags) = std::env::var("FERRIX_BUILD_FLAGS") {
+    println!("cargo::rerun-if-env-changed=XAQU_BUILD_FLAGS");
+    println!("cargo::rustc-check-cfg=cfg(xaqu_runtime_settings, values(\"fixed\", \"live\"))");
+    if let Ok(flags) = std::env::var("XAQU_BUILD_FLAGS") {
         for word in flags.split_whitespace() {
             if let Some(value) = word.strip_prefix("runtime_settings=") {
-                println!("cargo::rustc-cfg=ferrix_runtime_settings=\"{value}\"");
+                println!("cargo::rustc-cfg=xaqu_runtime_settings=\"{value}\"");
             }
         }
     }

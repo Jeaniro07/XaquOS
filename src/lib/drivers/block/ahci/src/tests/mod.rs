@@ -72,7 +72,7 @@ fn init_identifies_the_disk() {
     let id = ahci.identity();
     assert_eq!(id.sectors, 1000);
     assert_eq!(id.sector_size, 512);
-    assert!(id.model.starts_with(b"FERRIX MODEL DISK  "));
+    assert!(id.model.starts_with(b"XAQU MODEL DISK  "));
     assert!(id.serial.starts_with(b"SN-0042 "));
     assert_eq!(id.port, 0);
     let m = model.borrow();

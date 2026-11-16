@@ -36,7 +36,7 @@
 //! — and the caller decides.
 //!
 //! ```
-//! # use ferrix_acpi::{Acpi, AcpiError, MADT_SIGNATURE, Madt, Rsdp, Tables};
+//! # use xaqu_acpi::{Acpi, AcpiError, MADT_SIGNATURE, Madt, Rsdp, Tables};
 //! # fn example<T: Tables>(memory: &T, rsdp_bytes: &[u8]) -> Result<(), AcpiError> {
 //! let rsdp = Rsdp::parse(rsdp_bytes)?;
 //! let acpi = Acpi::from_rsdp(memory, &rsdp)?;

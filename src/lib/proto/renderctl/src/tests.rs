@@ -10,7 +10,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_native_abi::rights::Rights;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::*;
 

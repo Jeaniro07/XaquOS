@@ -6,14 +6,14 @@ extern crate std;
 
 use std::vec::Vec;
 
-use ferrix_linux_abi::input::{
+use xaqu_linux_abi::input::{
     ABS_MT_SLOT, ABS_X, ABS_Y, BTN_LEFT, BUS_VIRTUAL, EV_ABS, EV_FF, EV_KEY, EV_LED, EV_MAX,
     EV_MSC, EV_REL, EV_REP, EV_SND, EV_SW, EV_SYN, Event, KEY_A, KEY_MAX, KEY_RESERVED, LED_CAPSL,
     MSC_SCAN, REL_WHEEL, REL_X, REP_DELAY, REP_PERIOD, SW_MAX, SYN_DROPPED, SYN_MT_REPORT,
     SYN_REPORT,
 };
-use ferrix_linux_abi::socket::Width;
-use ferrix_native_abi::rights::Rights;
+use xaqu_linux_abi::socket::Width;
+use xaqu_native_abi::rights::Rights;
 
 use crate::message::*;
 use crate::queue::*;

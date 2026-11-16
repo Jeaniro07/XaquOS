@@ -9,7 +9,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_netwire::{icmpv4, icmpv6, ipv4, ipv6, tcp, udp};
+use xaqu_netwire::{icmpv4, icmpv6, ipv4, ipv6, tcp, udp};
 
 use crate::addr::{Endpoint, IpAddress, Ipv4, Ipv6};
 use crate::socket::{Datagram, Error, Family, Socket};
@@ -201,7 +201,7 @@ impl Stack {
                     // it; on an open one it is remembered and not acted on,
                     // because a single message must not tear down a working
                     // connection (RFC 1122 section 4.2.3.9).
-                    if stream.connection.state() == ferrix_nettcp::State::SynSent {
+                    if stream.connection.state() == xaqu_nettcp::State::SynSent {
                         stream.connection.abort();
                         stream.error = Some(error);
                     }

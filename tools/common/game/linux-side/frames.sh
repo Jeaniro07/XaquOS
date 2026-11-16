@@ -1,15 +1,15 @@
 #!/bin/bash
 # Linux guest: the frame recorder's test client under sway's Xwayland, with the recorder preloaded
-# (docs/GAME-PATH.md §2.4, R1). What test-frames runs on Ferrix, run here.
+# (docs/GAME-PATH.md §2.4, R1). What test-frames runs on Xaqu, run here.
 #   frames.sh <dir holding libframerec.so and framegl> <label> <seconds> [stall ms]
 # Writes ~/lb/<label>.rec (the record), .fps (swap-fps lines) and .out (framegl's lines), and prints
 # the binaries' SHA-256 and framegl's lines. GL=nvidia draws on NVIDIA's GLX; otherwise Mesa's
-# llvmpipe, as test-frames does on Ferrix. HEADLESS=1 runs it on the Xwayland of a second sway, on
+# llvmpipe, as test-frames does on Xaqu. HEADLESS=1 runs it on the Xwayland of a second sway, on
 # wlroots' headless backend at 60 Hz, instead of the session's: the image without the card shows on
 # virtio-gpu, whose flips complete at once, so its session has no refresh to count.
 set -u
 d=$1 l=$2 secs=$3 stall=${4:-0}
-export HOME=/home/ferrix DISPLAY=${DISPLAY:-:0} XDG_RUNTIME_DIR=/run/user/1000
+export HOME=/home/xaqu DISPLAY=${DISPLAY:-:0} XDG_RUNTIME_DIR=/run/user/1000
 if [ "${HEADLESS:-0}" = 1 ]; then
   hd=$HOME/lb/headless
   rm -rf "$hd"; mkdir -p -m 700 "$hd"

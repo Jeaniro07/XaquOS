@@ -27,8 +27,8 @@ use std::os::unix::process::CommandExt as _;
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
-use ferrix_auth_account as account;
-use ferrix_auth_client::{Connection, Terminal, Verdict, converse};
+use xaqu_auth_account as account;
+use xaqu_auth_client::{Connection, Terminal, Verdict, converse};
 
 /// How many passwords one run of `login` takes.
 const TRIES: usize = 3;

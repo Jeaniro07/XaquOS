@@ -19,7 +19,7 @@
 //! sees inside an `unsafe` block for nothing.
 //!
 //! ```
-//! # use ferrix_cpio::{Archive, CpioError, FileType};
+//! # use xaqu_cpio::{Archive, CpioError, FileType};
 //! # fn example(initramfs: &[u8]) -> Result<(), CpioError> {
 //! let archive = Archive::new(initramfs);
 //!

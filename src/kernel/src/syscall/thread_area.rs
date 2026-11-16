@@ -5,7 +5,7 @@
 //! block and load its selector into `%gs` (`docs/I386.md` §2). The calling
 //! thread has three such descriptors, GDT entries 12 to 14; the rules for
 //! what may go in one, and the encoding each way, are
-//! `ferrix_linux_abi::user_desc`'s, and where the three live while the thread
+//! `xaqu_linux_abi::user_desc`'s, and where the three live while the thread
 //! runs is the architecture's (`arch::set_thread_area`). Only i386's table
 //! maps either call.
 //!
@@ -14,8 +14,8 @@
 //! program before anything is installed, and a number outside the three is
 //! `EINVAL`.
 
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::user_desc::{ANY_ENTRY, TLS_ENTRIES, TLS_FIRST_ENTRY, UserDesc, tls_index};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::user_desc::{ANY_ENTRY, TLS_ENTRIES, TLS_FIRST_ENTRY, UserDesc, tls_index};
 
 use crate::arch;
 use crate::syscall::process::Process;

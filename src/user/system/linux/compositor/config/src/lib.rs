@@ -89,7 +89,7 @@ pub struct Config {
     pub exec_shutdown: Vec<String>,
     /// `env = NAME, value` pairs, in order.
     pub env: Vec<(String, String)>,
-    /// `wallpaper` lines, Ferrix's: at most one for each output, the last
+    /// `wallpaper` lines, Xaqu's: at most one for each output, the last
     /// written, and `off` taking one away ([`Wallpaper`]).
     pub wallpapers: Vec<Wallpaper>,
 }

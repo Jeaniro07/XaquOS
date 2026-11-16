@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-vport"
+name = "xaqu-vport"
 description = "The virtio-console port driver: a named virtio-serial port on one end and a Unix socket on the other, for the clipboard's agent to speak vdagent over"
 version.workspace = true
 edition.workspace = true
@@ -14,12 +14,12 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-linux-abi.workspace = true
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio.workspace = true
-ferrix-virtio-console.workspace = true
+xaqu-blkring.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio.workspace = true
+xaqu-virtio-console.workspace = true
 
 [lints]
 workspace = true

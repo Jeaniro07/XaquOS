@@ -2,7 +2,7 @@
 //! (`crate::watchdog`, `docs/POSTMORTEM.md` §6.11).
 //!
 //! Character device 10:130, root's, mode 0600, present only under
-//! `ferrix.watchdog=on`. The Linux numbers live here, in the load; the core's
+//! `xaqu.watchdog=on`. The Linux numbers live here, in the load; the core's
 //! `watchdog` holds the deadline and knows none of them.
 //! Taken from the S4c branch's file (`s4-lockup`, 2026-10-31), over the
 //! core's interface instead of its `userwatch`.
@@ -22,9 +22,9 @@ use alloc::sync::Arc;
 use core::any::Any;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_linux_abi::errno::Errno as LinuxErrno;
-use ferrix_vfs::initramfs::makedev;
-use ferrix_vfs::{Errno, FileType, Inode, Metadata, Result, Timespec};
+use xaqu_linux_abi::errno::Errno as LinuxErrno;
+use xaqu_vfs::initramfs::makedev;
+use xaqu_vfs::{Errno, FileType, Inode, Metadata, Result, Timespec};
 
 use crate::syscall::process::{self, Process};
 use crate::syscall::{credentials, uaccess};
@@ -35,7 +35,7 @@ pub(crate) const MAJOR: u32 = 10;
 pub(crate) const MINOR: u32 = 130;
 
 /// The requests (`linux/watchdog.h`, magic `'W'`), the same on every
-/// architecture Ferrix runs on.
+/// architecture Xaqu runs on.
 const WDIOC_GETSUPPORT: u32 = 0x8028_5700;
 const WDIOC_GETSTATUS: u32 = 0x8004_5701;
 const WDIOC_GETBOOTSTATUS: u32 = 0x8004_5702;
@@ -55,7 +55,7 @@ const WDIOS_DISABLECARD: u32 = 0x0001;
 const WDIOS_ENABLECARD: u32 = 0x0002;
 
 /// What `WDIOC_GETSUPPORT` names it.
-const IDENTITY: &[u8] = b"Ferrix watchdog";
+const IDENTITY: &[u8] = b"Xaqu watchdog";
 
 /// One open of `/dev/watchdog`.
 #[derive(Debug)]
@@ -74,7 +74,7 @@ impl WatchdogFile {
     ///
     /// # Errors
     ///
-    /// `ENXIO` without `ferrix.watchdog=on`; `EPERM` for an unprivileged
+    /// `ENXIO` without `xaqu.watchdog=on`; `EPERM` for an unprivileged
     /// caller; `EBUSY` while another open holds it; `ENOMEM` for the object,
     /// which leaves it unarmed.
     pub(crate) fn open() -> Result<Arc<WatchdogFile>> {

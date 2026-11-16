@@ -13,9 +13,9 @@ use std::io;
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 use std::path::{Path, PathBuf};
 
-use ferrix_linux_abi::input::{self, CLOCK_MONOTONIC, EV_ABS, EV_CNT, EV_REP, Event, InputId};
-use ferrix_linux_abi::layout::{Field as _, Layout as _};
-use ferrix_linux_abi::socket::Width;
+use xaqu_linux_abi::input::{self, CLOCK_MONOTONIC, EV_ABS, EV_CNT, EV_REP, Event, InputId};
+use xaqu_linux_abi::layout::{Field as _, Layout as _};
+use xaqu_linux_abi::socket::Width;
 
 /// The directory the event nodes are in.
 pub const INPUT_DIR: &str = "/dev/input";
@@ -449,7 +449,7 @@ pub fn event_nodes() -> io::Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
     use super::{bit, bitmap_bytes, bitmap_of};
-    use ferrix_linux_abi::input::{
+    use xaqu_linux_abi::input::{
         ABS_CNT, EV_ABS, EV_CNT, EV_KEY, EV_PWR, EV_REP, EV_SYN, KEY_A, KEY_CNT,
     };
 

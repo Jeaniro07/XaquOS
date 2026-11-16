@@ -1,11 +1,11 @@
-//! btrfs mounted read-write, over `ferrix-btrfs-write`.
+//! btrfs mounted read-write, over `xaqu-btrfs-write`.
 //!
 //! The read-only mount beside this one ([`crate::Btrfs`]) reads a volume that
 //! cannot change, which is what lets it read with no lock held. A writable
 //! mount cannot: every read must see the transaction the writes are going
 //! into — a file created a moment ago is not on the disk yet — and two edits
 //! to one tree cannot run at once. So this mount keeps the whole volume
-//! behind one lock, `ferrix_sync::SleepLock`, whose waiters sleep rather than
+//! behind one lock, `xaqu_sync::SleepLock`, whose waiters sleep rather than
 //! spin, because an operation under it does I/O.
 //!
 //! # What holds what
@@ -171,13 +171,13 @@ use core::any::Any;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_btrfs::BtrfsError;
-use ferrix_btrfs::items::Timespec as BtrfsTime;
-use ferrix_btrfs_write::fs::NewInode;
-use ferrix_btrfs_write::{Error as WriteError, Unsupported, WriteDevice, WriteVolume};
-use ferrix_sync::{Parker, Parking, SleepLock, SleepLockGuard};
-use ferrix_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
-use ferrix_vfs::{
+use xaqu_btrfs::BtrfsError;
+use xaqu_btrfs::items::Timespec as BtrfsTime;
+use xaqu_btrfs_write::fs::NewInode;
+use xaqu_btrfs_write::{Error as WriteError, Unsupported, WriteDevice, WriteVolume};
+use xaqu_sync::{Parker, Parking, SleepLock, SleepLockGuard};
+use xaqu_vfs::tmpfs::{PAGE_SIZE, PageSource, Pages, Storage};
+use xaqu_vfs::{
     Clock, DirEntry, Errno, FIRST_CURSOR, FileSystem, FileType, Inode, Metadata, NewNode, Result,
     SetAttributes, StatFs, Timespec,
 };
@@ -364,7 +364,7 @@ impl<D: WriteHandle> RwBtrfs<D> {
         // The open may have evicted orphans left by a crash; commit that
         // before anything else changes, so a second crash has less to redo.
         shared.with(WriteVolume::commit)?;
-        let root = Node::get(&shared, ferrix_btrfs::items::FIRST_FREE_OBJECTID)?;
+        let root = Node::get(&shared, xaqu_btrfs::items::FIRST_FREE_OBJECTID)?;
         if root.kind != FileType::Directory {
             return Err(Errno::EIO);
         }
@@ -772,7 +772,7 @@ struct Node<D> {
     /// leaves; see "Clean pages may be reclaimed". Taken after `dirty`, never
     /// around it.
     still: Arc<SpinLock<Still>>,
-    /// Who writes it and who runs it: `ferrix_vfs::writers`. One per file
+    /// Who writes it and who runs it: `xaqu_vfs::writers`. One per file
     /// while anyone holds it, because [`Node::get`] hands out the node alive
     /// already before it builds another.
     writers: core::sync::atomic::AtomicIsize,
@@ -878,7 +878,7 @@ impl<D: WriteHandle> Node<D> {
             pages: SpinLock::new(None),
             dirty: Arc::new(SpinLock::new(BTreeSet::new())),
             still: Arc::new(SpinLock::new(Still::default())),
-            writers: ferrix_vfs::writers::new_count(),
+            writers: xaqu_vfs::writers::new_count(),
         });
         let mut nodes = shared.nodes.lock();
         if let Some(alive) = nodes.get(&ino).and_then(Weak::upgrade) {
@@ -1391,7 +1391,7 @@ impl<D: WriteHandle> Inode for Node<D> {
     }
 
     /// A regular file with a name whose page cache holds pages: the dentry
-    /// cache keeps its dentry until reclaim has taken them (`ferrix_vfs`'s
+    /// cache keeps its dentry until reclaim has taken them (`xaqu_vfs`'s
     /// `DEFAULT_CACHE`). A file with no name left is never kept, so that its
     /// last reference goes, and it is deleted, when its last user lets go.
     fn holds_cached_pages(&self) -> bool {
@@ -1663,8 +1663,8 @@ impl<D: WriteHandle> Inode for Node<D> {
                     return Err(WriteError::Exists);
                 }
                 check_replaceable(&mut volume, kind, victim, victim_kind)?;
-                replaces_file = kind == ferrix_btrfs::items::FT_REG_FILE
-                    && victim_kind == ferrix_btrfs::items::FT_REG_FILE
+                replaces_file = kind == xaqu_btrfs::items::FT_REG_FILE
+                    && victim_kind == xaqu_btrfs::items::FT_REG_FILE
                     && victim != moved;
             }
             Ok((moved, replaces_file))
@@ -1795,7 +1795,7 @@ impl<D: WriteHandle> Node<D> {
         let (dir, now) = (self.ino, self.shared.now());
         let gone = self.shared.with(|volume| {
             let (ino, kind) = volume.lookup(dir, name)?.ok_or(WriteError::NotFound)?;
-            let is_dir = kind == ferrix_btrfs::items::FT_DIR;
+            let is_dir = kind == xaqu_btrfs::items::FT_DIR;
             if is_dir != directory {
                 return Err(if directory {
                     WriteError::NotDir
@@ -1828,8 +1828,8 @@ fn check_replaceable<D: WriteDevice>(
     victim: u64,
     victim_kind: u8,
 ) -> core::result::Result<(), WriteError> {
-    let moving_dir = kind == ferrix_btrfs::items::FT_DIR;
-    let victim_dir = victim_kind == ferrix_btrfs::items::FT_DIR;
+    let moving_dir = kind == xaqu_btrfs::items::FT_DIR;
+    let victim_dir = victim_kind == xaqu_btrfs::items::FT_DIR;
     if moving_dir && !victim_dir {
         return Err(WriteError::NotDir);
     }

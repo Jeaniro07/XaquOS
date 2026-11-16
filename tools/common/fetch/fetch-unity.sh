@@ -23,8 +23,8 @@
 # The game's Burst debug information (`*_BurstDebugInformation_DoNotShip`,
 # 80 MB that the release says not to ship) is left out.
 #
-# Writes $FERRIX_UNITY_VOLUME/unity.img (default
-# ~/.local/share/ferrix/unity/unity.img), about 3.3 GB, and beside it
+# Writes $XAQU_UNITY_VOLUME/unity.img (default
+# ~/.local/share/xaqu/unity/unity.img), about 3.3 GB, and beside it
 # yserver.commit, dxvk.version and game.release, what it carries, which
 # test-unity compares with the pins. Needs what fetch-wine.sh needs, and
 # unzip; no root.
@@ -37,9 +37,9 @@ GAME_RELEASE=2021.2.0
 GAME_SHA256=13111680e87084c035be06d5311ff7c2fa7c543f85443930fffb61d8428c9fd4
 url=https://github.com/Unity-Technologies/SpaceshipDemo/releases/download/$GAME_RELEASE/SpaceshipDemo-Release-$GAME_RELEASE-Win64.zip
 
-out=${FERRIX_UNITY_VOLUME:-$HOME/.local/share/ferrix/unity}
-shared=${FERRIX_WINE_VOLUME:-$HOME/.local/share/ferrix/wine}
-dxvk=${FERRIX_DXVK_DIR:-$HOME/.local/share/ferrix/dxvk}
+out=${XAQU_UNITY_VOLUME:-$HOME/.local/share/xaqu/unity}
+shared=${XAQU_WINE_VOLUME:-$HOME/.local/share/xaqu/wine}
+dxvk=${XAQU_DXVK_DIR:-$HOME/.local/share/xaqu/dxvk}
 
 for tool in curl sha256sum unzip mkfs.btrfs; do
     command -v "$tool" > /dev/null || { echo "fetch-unity: $tool is not installed" >&2; exit 1; }
@@ -68,7 +68,7 @@ mkdir -p "$wine/pool"
 if [ -d "$shared/pool" ] && [ "$shared" != "$wine" ]; then
     cp -n "$shared/pool/"*.deb "$wine/pool/" 2> /dev/null || true
 fi
-FERRIX_WINE_VOLUME="$wine" "$here/fetch-wine.sh"
+XAQU_WINE_VOLUME="$wine" "$here/fetch-wine.sh"
 rm -f "$wine/wine.img"
 
 tree="$wine/tree"

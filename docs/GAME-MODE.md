@@ -53,7 +53,7 @@ wait that fires with nothing to do.
 | What | Ring, user | Wakes | In a game session |
 |---|---|---|---|
 | btrfs `disk commit` (`fs/root_disk.rs:93`) | kernel | every 30 s, or after 32 MiB written | keep |
-| `mce` poll, one task per processor | kernel | every 5 s (`ferrix.mce.poll`) | defer: a longer period in game |
+| `mce` poll, one task per processor | kernel | every 5 s (`xaqu.mce.poll`) | defer: a longer period in game |
 | `msrlog`, `powerctl` | kernel | 5 s, 1 s, only with their boot words | off on the box unless asked |
 | interface tasks: display, input, audio, chardev, block ring | kernel | recheck every 50 ms | keep (the game's path); the recheck is a separate fix |
 | `net core`, `net ring`, `render` | kernel | at most 50 ms, 20 ms, 1 s | keep |
@@ -63,18 +63,18 @@ wait that fires with nothing to do.
 | usbdev | native, root | 100 ms, 2 ms with adb | defer |
 | lode | native, root | at least every 250 ms; fsync within 5 s | throttle (§3.3); cannot be frozen by cgroup |
 | lode-upload (box only) | Linux, root | 500 ms idle loop | freeze or stop |
-| lode-crashd | native, root | blocks on `/dev/ferrix-crashes` | keep (costs nothing idle) |
+| lode-crashd | native, root | blocks on `/dev/xaqu-crashes` | keep (costs nothing idle) |
 | sessiond | Linux, root | 200 ms loop | keep: seat and lock relay |
-| hyprix | Linux, ferrix | paced to the refresh; input thread every 100 ms; `frames` line each second | keep; quiet the line |
-| yserver | Linux, ferrix | Present clock at the refresh | keep |
-| xaqu-shell dock and two sidebars | Linux, ferrix | (source outside the tree) | freeze |
-| notifyd, portald | Linux, ferrix | 5 s and 200 ms retries until connected | freeze |
-| wallpaper; `pattern --video` | Linux, ferrix | event-driven; the video decodes continuously | freeze |
-| term | Linux, ferrix | **a 4 ms poll loop** (`apps/term/src/client.rs:360`) | freeze; and a fix of its own |
-| vdagent | Linux, ferrix | 10 ms while its port is connected | freeze |
+| hyprix | Linux, xaqu | paced to the refresh; input thread every 100 ms; `frames` line each second | keep; quiet the line |
+| yserver | Linux, xaqu | Present clock at the refresh | keep |
+| xaqu-shell dock and two sidebars | Linux, xaqu | (source outside the tree) | freeze |
+| notifyd, portald | Linux, xaqu | 5 s and 200 ms retries until connected | freeze |
+| wallpaper; `pattern --video` | Linux, xaqu | event-driven; the video decodes continuously | freeze |
+| term | Linux, xaqu | **a 4 ms poll loop** (`apps/term/src/client.rs:360`) | freeze; and a fix of its own |
+| vdagent | Linux, xaqu | 10 ms while its port is connected | freeze |
 | pulsed | Linux, root | every period / 4 | keep if the game plays sound |
 | authd, settingsd, sshd, dhcpc | Linux, root | request timers; renew at T1 | keep |
-| Steam client, steamwebhelper renderers | Linux, ferrix | outside the tree | freeze the renderers; keep the client |
+| Steam client, steamwebhelper renderers | Linux, xaqu | outside the tree | freeze the renderers; keep the client |
 
 Mechanisms that exist for suspending (`docs/CGROUPS.md` §11, §12):
 
@@ -149,7 +149,7 @@ processor total and in none of the rows):
 | everything else | <1 | | |
 
 * **The machine:** 64,274 switches, 31,255 interrupts and about 119,500
-  Linux system calls a second (`/proc/stat`, `/proc/ferrix-seam`); the four
+  Linux system calls a second (`/proc/stat`, `/proc/xaqu-seam`); the four
   processors 62 to 65% busy.
 * **What freezing could take back:** the user's extras and Steam's
   browser, about 7% of one core in all. The large neighbours of the game are
@@ -256,8 +256,8 @@ touches. "Core" means the item's core ring
 | F3 | **Applied affinity: cores for the game and the path** | `sched_setaffinity` accepted, not applied (`syscall/limits.rs:335`) | A: on four cores, one core for the system and three for the game removes neighbours from the game's cores; the cost is a quarter of the machine for the rest | 5 points in the scheduler, a check and a control | core (`sched/**`), a design review; new ids |
 | F4 | **Interrupts away from the game's cores** (G3) | an MSI is aimed at the processor that allocated it and never moved (`arch/x86_64/msi.rs:52`) | A: small. The box's interrupt rate is mostly the GPU's, which belongs on the path; the NIC's and USB's are low | a retarget call through devmgr, remapping entries rewritten; 5 points | core (`arch/**`, `iommu/**`) |
 | F5 | **Timer slack** | none exists: one-shot timers fire at their deadline (`timer.rs`) | nothing to remove | — | — |
-| F6 | **The wake-up tail**: a woken path thread waits for the next decision instead of running | light-wake p99 223 µs on Ferrix against 20 to 95 µs on Linux 7.0 (M, KVM, `docs/SCHED-WAKE-AFFINE.md` §8) | A: a tail of a quarter of a millisecond on each hop of a five-hop frame path is 1 ms of a 16.7 ms frame in the worst case | the lag design note's DELAY_ZERO equivalent; p2-151 | core, its own review |
-| F7 | **Per-task slice requests** (EEVDF's `sched_runtime`) | one slice per run queue (`ferrix-sched` `Config::slice_ns`), 3 ms | A: a path thread asking for 0.5 ms gets an earlier deadline and preempts on wake (Linux 6.12 [S]) | a field per entity, a check; 5 points | core |
+| F6 | **The wake-up tail**: a woken path thread waits for the next decision instead of running | light-wake p99 223 µs on Xaqu against 20 to 95 µs on Linux 7.0 (M, KVM, `docs/SCHED-WAKE-AFFINE.md` §8) | A: a tail of a quarter of a millisecond on each hop of a five-hop frame path is 1 ms of a 16.7 ms frame in the worst case | the lag design note's DELAY_ZERO equivalent; p2-151 | core, its own review |
+| F7 | **Per-task slice requests** (EEVDF's `sched_runtime`) | one slice per run queue (`xaqu-sched` `Config::slice_ns`), 3 ms | A: a path thread asking for 0.5 ms gets an earlier deadline and preempts on wake (Linux 6.12 [S]) | a field per entity, a check; 5 points | core |
 | F8 | **The card's copy removed**: a plane scans the game's buffer | the card still copies each frame, about 5 ms of a processor (`docs/DISPLAY.md` §8.2) | M: 5 ms a frame, 15% of a core at 30 fps and 30% at 60, plus 0.5 to 1 GB/s of a single DDR4 channel | an Intel display driver (paused, `intel-display-paused`) and tiling agreed with anv | ring 3 and the display core's protocol |
 | F9 | **Memory: no reclaim of the game's pages, `mlock`, huge pages** (G4) | no `memory.min`, no `mlock` call found; `MADV_HUGEPAGE` a hint ignored | A: on 16 GiB with the game at 8.75 GiB, reclaim does not reach the game today; huge pages would cut TLB misses for an 8 GiB heap, a few per cent on Linux games [S], unmeasured here | `mm/**`: 8 points for the floor and `mlock`, more for huge pages | core |
 | F10 | **I/O priority for asset streaming** | `ioprio_set` stored and read back, not acted on (`syscall/attributes.rs`) | A: Endfield's first-sight stalls are CPU, not disk (`endfield-first-sight-stalls`), so little today | a class in the block ring; 3 points | the block ring (item) |
@@ -273,7 +273,7 @@ In the world the GPU is the limit: about 99.9% busy at its fused 1000 MHz
 levers are of three kinds: give the GPU **less to wait for** (bubbles
 between its work), **less to fetch** (bandwidth on one DDR4 channel shared
 with four processors and the display), and **less to do** (the work a frame
-costs). Ferrix writes the GPU driver (`intel-xelp`, ring 3, execlists, no
+costs). Xaqu writes the GPU driver (`intel-xelp`, ring 3, execlists, no
 GuC), the display path and the compositor, so most of these are its own
 code, not Mesa's.
 
@@ -282,7 +282,7 @@ code, not Mesa's.
 | G1 | **Completion seen at once.** A request's end is seen by a poll every 1 ms (4 ms when nothing waits), because no MSI arrived on the box when the driver was written (`backend.rs` `POLL_NS`, `docs/N150.md` §13) | polled | A: a fence seen up to 1 ms late delays the next submit when the game keeps one or two frames in flight; it is a candidate for part of the GPU's ~6% idle a frame, beside the `EXECBUFFER2` `EAGAIN` on a busy binding (`endfield-levers-after-fsr3`). Also 1,000 driver wakes a second while busy | the GT's user interrupt by MSI, once the box delivers it (yt6801 now reports its first interrupt on every boot); a fallback poll stays | ring 3; the interrupt object is the item's, unchanged |
 | G2 | **The idle gaps**: the busy binding that refuses `EXECBUFFER2` with `EAGAIN` | ~6% of a frame idle (M) | up to 6% fps where the GPU is the limit | driver work in the front end | ring 3 |
 | G3 | **Lossless colour compression (CCS)**: Gen12's AUX table, which anv manages and the driver invalidates (`engine_cs.rs` `gen12_get_aux_inv_reg`) | believed on; not shown | ? E5 (§11) shows whether anv compresses here at all (`INTEL_DEBUG=noccs` A/B). On a bandwidth-starved part, render-target compression is among the largest single levers Intel ships | none if it already works; a fix in the driver's flushes if not | ring 3 |
-| G4 | **Large GPU pages**: 2 MiB (or 64 KiB) page-table entries for the game's buffers | 4 KiB only (`ppgtt.rs`: "64 KiB and 2 MiB pages left out") | A: fewer GPU TLB misses on an 8 GiB working set; Linux gets this only where shmem hands i915 huge pages. Ferrix pins every GEM object anyway, so the driver can ask for them in aligned blocks through `vmo_pin`'s `PIN_BLOCKS` (the Intel GPU session; ledger 5088, 5102), which is best effort, promises no block, and on which no driver may rely. M: shader read 17.7 GB/s on Ferrix against 20.7 on Linux, copy 16.4 against 21.7 (below) | the driver's allocator and PPGTT (2M PDEs), and contiguous pinned memory from the kernel's frame allocator; 8 points | ring 3 driver; `PIN_BLOCKS` is in the core ring, reviewed on its own branch, and game mode claims none of it |
+| G4 | **Large GPU pages**: 2 MiB (or 64 KiB) page-table entries for the game's buffers | 4 KiB only (`ppgtt.rs`: "64 KiB and 2 MiB pages left out") | A: fewer GPU TLB misses on an 8 GiB working set; Linux gets this only where shmem hands i915 huge pages. Xaqu pins every GEM object anyway, so the driver can ask for them in aligned blocks through `vmo_pin`'s `PIN_BLOCKS` (the Intel GPU session; ledger 5088, 5102), which is best effort, promises no block, and on which no driver may rely. M: shader read 17.7 GB/s on Xaqu against 20.7 on Linux, copy 16.4 against 21.7 (below) | the driver's allocator and PPGTT (2M PDEs), and contiguous pinned memory from the kernel's frame allocator; 8 points | ring 3 driver; `PIN_BLOCKS` is in the core ring, reviewed on its own branch, and game mode claims none of it |
 | G5 | **No processor copy of the frame**: a display plane scans the game's buffer (F8) | the card copies each frame, ~5 ms of a processor and ~0.5 GB/s at 30 fps | M for the copy; it is also bandwidth the GPU loses | an Intel display driver (paused) | ring 3, the display core |
 | G6 | **Scan out at the game's resolution**: the game renders 1280x720 at 60% scale, the screen runs 1920x1080 | ~0.5 GB/s of scanout reads at 1080p60, plus the copy | A: about half of both at 720p | a mode set per session (needs a display driver; on efifb a reboot with another EDID) | ring 3 |
 | G7 | **The processors' traffic out of the GPU's way** | every neighbour's misses share the channel | A: what F1 frees, in bandwidth as well as cores; judge E1 by fps too | F1 | none |
@@ -301,19 +301,19 @@ code, not Mesa's.
   G9 (less work a frame) and G4 (memory reached faster) weigh more than
   G6.
 * **G4, measured.** The same Vulkan probe and Mesa 25.0.7 on this box under
-  Linux's i915 (execlists, as Ferrix) and under Ferrix: ALU 340 GFLOPS and
+  Linux's i915 (execlists, as Xaqu) and under Xaqu: ALU 340 GFLOPS and
   fill 7.9 GB/s equal; shader read 20.7 GB/s on Linux against 17.7 on
-  Ferrix, shader copy 21.7 against 16.4. With shmem's huge pages denied,
+  Xaqu, shader copy 21.7 against 16.4. With shmem's huge pages denied,
   Linux falls to 18.2 and 19.7, so most of the read gap is the GPU's page
   size. endfield-60fps bounds the fps gain by the memory-bound share of the
   frame at roughly 5 to 15%. This session's run on a fresh boot of
-  main-94d0c9df0 read 19.1 GB/s and copied 18.7: Ferrix's figure moves
+  main-94d0c9df0 read 19.1 GB/s and copied 18.7: Xaqu's figure moves
   with the boot, which a 4 KiB mapping of scattered frames would explain.
 * **G1, G2: no gaps at 720p.** The GPU is 99.9% busy; completion latency
   and the `EAGAIN` refusal show only below 720p, where the GPU idles.
 
 **G4 built and measured, and the cause is elsewhere** (intel-large-pages,
-2026-10-30, `gpb` on the box at `ferrix.intelgpu.freq=1000`, desktop up,
+2026-10-30, `gpb` on the box at `xaqu.intelgpu.freq=1000`, desktop up,
 three runs each; read / copy GB/s):
 
 | Image | Read | Copy | FMA GFLOPS |
@@ -337,7 +337,7 @@ ran 25.15 fps at The Hub with the GPU 99.9% busy; the superpage build read
 18.5 and copied 20.9 (+2.3 and +2.9), but Endfield died after entering the
 world, most likely of the build's own leak (a streaming game runs out of pin
 budget when no block is ever taken down), so **no fps figure exists for
-G11**; and a `ferrix.vtd=off` image did not come up as Ferrix within the
+G11**; and a `xaqu.vtd=off` image did not come up as Xaqu within the
 deploy's limit and fell back to the inspection Linux, so **the IOMMU-off
 figure is not measured** either. A real G11 must take a block down on
 unpin (ledger 5208's notes) before its fps can be measured.
@@ -383,7 +383,7 @@ also hides it.
 
 Linux's game tooling (Feral's `gamemoded`, gamescope, `scx_lavd`,
 cgroups, IRQ affinity) works from outside: each guesses from what it can
-observe what the next program in the chain needs. Ferrix writes the
+observe what the next program in the chain needs. Xaqu writes the
 kernel, the scheduler, the GPU driver, the compositor and the X server,
 and serves Wine's system calls. So it can know what Linux infers.
 
@@ -408,7 +408,7 @@ frame's deadline is. Their gains on games are small and single-run.
 
 ### 5.2 Telling the scheduler which threads are the frame's
 
-Three programs Ferrix writes see the frame being made, each from a
+Three programs Xaqu writes see the frame being made, each from a
 different side:
 
 * **the GPU driver** sees which thread submits the work a frame is (an
@@ -457,7 +457,7 @@ Wine server reply, a fence the GPU driver signals, yserver's answer, a
 futex a job worker holds. Linux's PI futexes give a fair-class waiter
 nothing, and its proxy execution covers kernel mutexes on one run queue.
 
-Ferrix owns every one of these waits:
+Xaqu owns every one of these waits:
 
 * **channels** (the GPU driver's, yserver's and the compositor's
   protocols ride on them, or on sockets the kernel serves): the server
@@ -472,7 +472,7 @@ Ferrix owns every one of these waits:
   of guessed, edge by edge, from the known render thread outward. A thread
   that has woken the render thread in most of the last frames is lent the
   mark while the render thread waits.
-* **Wine's NT sync objects**: if Ferrix serves them (ntsync's interface,
+* **Wine's NT sync objects**: if Xaqu serves them (ntsync's interface,
   or the shared-memory server Proton uses), a mutex's owner is known
   exactly, and the lend is exact. Linux's ntsync knows the owner and does
   not tell its scheduler.
@@ -524,7 +524,7 @@ as each step measures (§9).
 
 The customer asked (2026-10-30) how game developers pushed hardware past
 what it seemed able to do, and what of that applies. Their tricks share one
-premise that a general-purpose OS never has and Ferrix on the box does:
+premise that a general-purpose OS never has and Xaqu on the box does:
 **one known machine, and the whole stack in one hand**. Each row is the
 trick, what it did, and its counterpart here.
 
@@ -533,11 +533,11 @@ trick, what it did, and its counterpart here.
 | H1 | **The consoles' reserved cores** (PS4 and Xbox One, 2013) | the OS kept two of eight cores; the game had six to itself, and both later gave games part of the seventh [S] | three of four cores for the game and its path, one for the system, while a session lasts (F3, §5.5's floor) | A: the 1% lows, as §3.4 | F3 |
 | H2 | **Crash Bandicoot's own virtual memory** (PS1, 1996) | levels of 32 to 40 MB on 2 MB of RAM, paged in 64 KB chunks laid out on the disc in the order the player reaches them, so each arrived before it was needed [S] | **record and replay the game's page-ins**: the first run records which file pages and which anonymous regions the game touches, in order, from launch to the world; the next run's session pre-faults them in that order, in large batches, before the game asks (what Windows' Prefetch does at launch). `MADV_WILLNEED` is a hint ignored today (`syscall/memory.rs`) | A: launch to title is 199 to 213 s on develop kernels with faults a large share of the kernel's time (F11); a batch costs one lock hold where a fault costs one each. Unmeasured | a recorder that lands in the core ring and records one process's page-in order, so it gets its own design review (bounded memory; no new lock or allocation in the fault path; readable only by the session service under a right, and only for the admitted game's job); a ring-3 replayer; acting on `MADV_WILLNEED` is an item change with its own requirement; 8 points |
 | H3 | **Shipping compiled shaders for one GPU** (every console) | no compile at run time: the binaries are built for the one GPU the console has | the N150 is one GPU too: the game's pipeline cache and Mesa's are built once, keyed by the device and driver hash, kept on the volume and **replayed before the session** (Fossilize's replay, which Steam's pre-caching uses), so "Shaders are being compiled" and the first sight of a scene find everything compiled. The hardware-hash key is `docs/HOTPATHS.md`'s | M (§5.7.1): little. Mesa's and the game's caches already hit across launches; in a first-sight stall Mesa's anv is 2 to 4% of the game's processor time, so compiles are not what stalls. Kept as the re-warm step after a driver change (H8, a Mesa update), not built | a replay step in the session's start; 3 points |
-| H4 | **Factor 5's own microcode** (N64, *Rogue Squadron*, 1998) | replaced Nintendo's RSP microcode with its own for its terrain and audio, and ran at 640x480 with the Expansion Pak [S] | the GPU driver's own command streams are Ferrix's: the flushes, invalidations and breadcrumbs it adds around each batch (`engine_cs.rs`, i915's `gen12_emit_flush_rcs` translated) are i915's general case. Emit only what each batch needs: an AUX invalidation only when the AUX table changed, a full pipe flush only before a buffer leaves the GPU | M (§5.7.1): 2.35 batches a frame; the driver's own commands cost RCS0 about 32 µs a request on an idle engine, of which the AUX invalidation and its quiescing flush 5.4 µs: about 13 µs of a 40 ms frame (0.03%). Not trimmed: no gain, and anv invalidates the AUX table itself at each command buffer anyway | driver work; 3 points |
+| H4 | **Factor 5's own microcode** (N64, *Rogue Squadron*, 1998) | replaced Nintendo's RSP microcode with its own for its terrain and audio, and ran at 640x480 with the Expansion Pak [S] | the GPU driver's own command streams are Xaqu's: the flushes, invalidations and breadcrumbs it adds around each batch (`engine_cs.rs`, i915's `gen12_emit_flush_rcs` translated) are i915's general case. Emit only what each batch needs: an AUX invalidation only when the AUX table changed, a full pipe flush only before a buffer leaves the GPU | M (§5.7.1): 2.35 batches a frame; the driver's own commands cost RCS0 about 32 µs a request on an idle engine, of which the AUX invalidation and its quiescing flush 5.4 µs: about 13 µs of a 40 ms frame (0.03%). Not trimmed: no gain, and anv invalidates the AUX table itself at each command buffer anyway | driver work; 3 points |
 | H5 | **The Amiga's copper and blitter** (1985) | the display coprocessor changed registers in step with the beam and the blitter moved memory, neither using the CPU | the card's copy of each frame (G5's 5 ms of a processor) done by the GT's **blitter engine** (BCS0, whose `XY_FAST_COPY_BLT` the driver already runs, M2) into the lit plane, which is reachable through the GGTT; the copy then runs beside the render engine and takes no EU time and no core | M (§5.7.1): **built and kept**. The Intel driver 20.7% of a core → 12.6% at The Hub (the copy was 3.4 ms a frame); the blit takes about 2 ms of BCS0 a frame; fps unchanged (24.6 / 24.9, GPU-bound). The bandwidth stays | a copy path in the driver's card; 5 points; G5 makes it unnecessary when a display driver lands |
 | H6 | **Racing the beam** (Atari 2600, 1977) | the program drew each line just before the beam reached it, with no frame buffer at all | the card's copy run **in raster order just behind the beam**: strips copied as the scanout passes them, so a finished frame reaches the screen within a fraction of a refresh instead of at the next one, without tearing. GAME-PATH §4.5's just-in-time swap is the same idea at the swap | A: up to a refresh (16.7 ms) of latency, no frame-rate change | the card's copy timed against the pipe's scanline counter; 5 points |
 | H7 | **A locked 30 with even pacing** (most console games) | an even 30 fps reads smoother than an uneven 40 | the panel run at a multiple of the game's rate (48 or 50 Hz for 24 or 25 fps), and the game's cap at a divisor of the refresh (`endfield-levers-after-fsr3`, 4) | A: no frame rate; the judder of 2-3-2-3 gone | a mode per session |
-| H8 | **Compiling for the one CPU** (every console title) | the compiler targets the exact processor | Ferrix builds its own Mesa, Wine, DXVK, yserver and hyprix: build them for Gracemont (`x86-64-v3`, AVX2), with LTO and profile-guided optimisation trained on Endfield's own run. CachyOS reports 5 to 20% across its packages for `x86-64-v3` alone [S] | M (§5.7.1): not worth its cost here. Mesa, Proton/Wine and DXVK are not built by Ferrix (Debian's Mesa 25.0.7, a prebuilt Proton), so this is building them from source; and in first-sight stalls Mesa and Wine together are under 10% of the game's processor time (game code 47 to 57%, kernel 33 to 43%): 5 to 20% of that is at most 1 to 2%. Not built | a build variant of the volumes; the images still run on any x86-64-v3 processor; 3 points (more: Mesa, Wine and DXVK built here first) |
+| H8 | **Compiling for the one CPU** (every console title) | the compiler targets the exact processor | Xaqu builds its own Mesa, Wine, DXVK, yserver and hyprix: build them for Gracemont (`x86-64-v3`, AVX2), with LTO and profile-guided optimisation trained on Endfield's own run. CachyOS reports 5 to 20% across its packages for `x86-64-v3` alone [S] | M (§5.7.1): not worth its cost here. Mesa, Proton/Wine and DXVK are not built by Xaqu (Debian's Mesa 25.0.7, a prebuilt Proton), so this is building them from source; and in first-sight stalls Mesa and Wine together are under 10% of the game's processor time (game code 47 to 57%, kernel 33 to 43%): 5 to 20% of that is at most 1 to 2%. Not built | a build variant of the volumes; the images still run on any x86-64-v3 processor; 3 points (more: Mesa, Wine and DXVK built here first) |
 | H9 | **Every coprocessor put to work** (Saturn, PS2's vector units, PS3's SPUs) | nothing idle that could carry part of the frame | the N150's other engines: the blitter (H5), the video enhancement engine (VECS) for scaling a 720p game to the screen in hardware (G6), the CPU's AVX2 (H8) | as G6 and H5 | as those |
 | H10 | **A console's direct command buffers** (libgnm, the Xbox's) | the game writes the GPU's commands straight into its queue; no system call per submit | Mesa writing submits into a ring shared with the driver, which the driver reads (as Xe2's user-mode queues do in hardware), instead of an `EXECBUFFER2` crossing to the ring-3 driver: two address-space switches, with their barriers, per submit | A: tens of microseconds a submit, a few submits a frame: small at 30 fps | a new interface between Mesa and the driver; large |
 | — | **Asynchronous reprojection** (VR's timewarp) | the compositor re-aims the last frame with the newest head pose | not for a flat game: the compositor knows no camera, and the game's own FSR3 frame generation already fills frames | — | — |
@@ -554,11 +554,11 @@ review of them.
 
 Endfield at The Hub, 1280x720, 60% render scale, frame generation off;
 Wine's fps channel, 20 s windows; processor time from `/proc/<pid>/stat`.
-Raw files: `~/.local/share/ferrix/logs/t0h/` on nazuna.
+Raw files: `~/.local/share/xaqu/logs/t0h/` on nazuna.
 
 * **H5, card0's copy on BCS0** (`display/blit.rs` in the Intel driver,
   branch `feature/game-mode-t0h`). One image (main-e4bdec864), the blit on
-  against `ferrix.intelgpu.blit=off`, three windows each:
+  against `xaqu.intelgpu.blit=off`, three windows each:
 
   | | fps | Intel driver | card0's copy |
   |---|---|---|---|
@@ -578,11 +578,11 @@ Raw files: `~/.local/share/ferrix/logs/t0h/` on nazuna.
   no cursor plane). Neither is H5's; both are the compositor's and card0's
   to fix (a fullscreen window above the top layer, as Hyprland does; the
   cursor composited by the card).
-* **H4**: `ferrix.intelgpu.m2` now times, with the engine's timestamp,
+* **H4**: `xaqu.intelgpu.m2` now times, with the engine's timestamp,
   24 copies of each part the driver wraps around a request: on RCS0 the
   invalidation 10.2 µs (4.8 without the AUX table's), the final
   breadcrumb 22.1 µs; on BCS0 4.3 µs a request. With 587 `EXECBUFFER2`
-  in 10 s (`ferrix.intelgpu.ioctlstat`), 2.35 a frame: the whole wrapper is
+  in 10 s (`xaqu.intelgpu.ioctlstat`), 2.35 a frame: the whole wrapper is
   about 75 µs of a 40 ms frame and the AUX part 13 µs. Trimmed nothing.
 * **H3 and H8**: a never-land kernel sampler (user samples by 1 MiB
   region, attributed through `/proc/<pid>/maps`) over the warm-up, the
@@ -608,7 +608,7 @@ never from hyprix's counter (`game-fps-not-hyprix-frames`). For game mode
 the figure that matters most is not the average: it is the **1% and 0.1%
 lows and the frame-time spread**, taken from the game's own swaps (R1's
 frame recorder, GAME-PATH §12) on the same scene, A/B, three rounds each.
-Neither lavd nor anyone else has published those, so Ferrix measuring them
+Neither lavd nor anyone else has published those, so Xaqu measuring them
 from its own present timestamps is itself something to claim.
 
 ## 7. The protections the customer agreed to trade (layer C)
@@ -694,7 +694,7 @@ in `present`, `max` or `fast`.
 It is also not a switch inside a game: a device with live mappings cannot
 change domain. "Off for a session" means devmgr restarts the GPU driver in
 a pass-through domain before the game starts and again after it ends, so
-in practice per launch or per boot (`ferrix.vtd=off`, `iommu.rs`, today
+in practice per launch or per boot (`xaqu.vtd=off`, `iommu.rs`, today
 leaves every unit alone).
 
 **Recommended: do not build the IOMMU-off trade (T4i) for the N150.**
@@ -702,7 +702,7 @@ G11 landed and keeps the isolation: the probe reached Linux's bandwidth
 (21.2 / 21.0 GB/s), and Endfield's fps did not move (27.1 against 27.8,
 §4.1). With the bandwidth gap closed and the frame rate unmoved, turning
 the IOMMU off has nothing measured left to buy. If a later game or GPU
-shows a gap G11 leaves, the figure from a `ferrix.vtd=off` boot that comes
+shows a gap G11 leaves, the figure from a `xaqu.vtd=off` boot that comes
 up (the first did not) decides a `desktop`-only trade, which the consultant
 reviews as a change to the DMA gate.
 
@@ -714,7 +714,7 @@ Two lists, as SETTINGS.md §7.3 drew them, extended to the tiers:
 
 | | The user's list (built) | The administrator's list (proposed) |
 |---|---|---|
-| File | `~/.config/ferrix/game-mode.conf` | `/etc/ferrix/game-mode.conf`, root's, `0644` |
+| File | `~/.config/xaqu/game-mode.conf` | `/etc/xaqu/game-mode.conf`, root's, `0644` |
 | Written by | the user, Settings | `settingsd`, on an `authd` grant to a `wheel` member with their password (`docs/SETTINGS-WRITER.md`) |
 | Unlocks | layer A for the user's own programs: freezing their scopes, quieting their bar; nothing that costs the system | layer A's system part (lode, the deferred kernel polls), layer B's marks and cores, layer C's trades |
 
@@ -735,7 +735,7 @@ The **session service** of GAME-PATH §5.4 does it all; nothing else
 writes a cgroup file, a mark or a trade. It is root, started by init,
 restarted by init, and holds the right the kernel's marks need.
 
-* **Start.** The launcher's mark (`FERRIX_GAME_MODE_APP`) says which
+* **Start.** The launcher's mark (`XAQU_GAME_MODE_APP`) says which
   application was started; hyprix tells the service when that
   application's window is fullscreen and focused (an X game's window is
   yserver's; hyprix maps it to the client's pid). The service checks both
@@ -794,7 +794,7 @@ By gain against cost and risk. Points are this design's estimates.
 | **T0h** | The fixed-hardware tricks of §5.7 that are cheap: H3 pipeline caches replayed before play, H5 the card's copy on the blitter, H8 the volumes built for Gracemont with PGO, H4 the driver's per-batch commands trimmed | warm-up and first-sight stalls, ~5 ms of a processor a frame, the processor-side work | ~14 points | ring 3 | now, beside T0g |
 | **T1** | Layer A: the session service; freeze the user's scopes; throttle lode and lode-upload; defer the polls; quiet the log lines; the user's list honoured, the administrator's list for the system part | M: no fps at 720p on the bare box; ~7% of a core freed; a gain where the processors co-limit or the desktop runs more | ~13 points (service 8, lode settings 3, hyprix's request 2) | none | when a game on the box co-limits on the processors, or as the frame for T2 |
 | **T2** | Layer B, the cheap half: H2's recorded page-ins replayed, applied affinity (F3), per-task slices (F7), the mark given by the service from hyprix's and the driver's knowledge (§5.2, steps 1 and 2), the wake-up tail (F6) | A: evenness on four cores; E2 and E3 bound it | ~25 points, core ring, design review, ids | core | after T1, on E2/E3 |
-| **T3** | Layer B, the deep half: lends through channels and futexes (§5.3), aimed wake-ups on the path (§5.4), idle-gap class (§5.5), deadlines from the frame (§5.2 step 3, = GAME-PATH G1/G2) | where Ferrix beats any Linux; unmeasured | ~50 points and stage 14's question | core | after T2 measures, and GAME-PATH question 3 |
+| **T3** | Layer B, the deep half: lends through channels and futexes (§5.3), aimed wake-ups on the path (§5.4), idle-gap class (§5.5), deadlines from the frame (§5.2 step 3, = GAME-PATH G1/G2) | where Xaqu beats any Linux; unmeasured | ~50 points and stage 14's question | core | after T2 measures, and GAME-PATH question 3 |
 | **T4i** | Layer C's DMA trade: the iGPU's IOMMU off per launch through DMA-GATE's opt-out, `desktop` only (§7.4) | nothing measured: G11 closed the bandwidth gap and fps did not move (§4.1) | devmgr's restart in a pass-through domain; the consultant | core and devmgr policy | not recommended for the N150 (§7.4) |
 | **T4** | Layer C: the program barrier and SSBD per application, `desktop` only | M: ~1% of one core on the N150, no frame at 720p (§7.2) | ~20 points, F-64 first, SPECULATION's desktop section | core, level `none` | not for the N150; only on a machine where the same measurement shows more |
 | — | Not offered: the entry defences per application; `mitigations=off` at run time | — | — | — | never as a run-time trade (BUILD-FLAGS §3.1) |
@@ -846,7 +846,7 @@ measurements; **T4 not for the N150**.
   endfield-60fps with the customer's OK: the whole-system snapshot (§2.3),
   E1 and E2 and the bar closed (§3.4), the GPU probe frozen and not (§3.4),
   and E4's instruction costs under the inspection Linux (§7.2). Raw files:
-  `~/.local/share/ferrix/logs/game-mode/` on nazuna (`m-*.txt` per window,
+  `~/.local/share/xaqu/logs/game-mode/` on nazuna (`m-*.txt` per window,
   `snap-*.txt`, `gm-*.sh`, `specbench.c`, `ssbd.c`).
 * By endfield-60fps the same day: the scene and method, the render-scale
   slope, the GPU probe against Linux's i915 (§4.1), the settings ceiling
@@ -861,7 +861,7 @@ E2, which used Wine's per-second counter and one window each; E3 (the polls defe
 CCS check (`INTEL_DEBUG=noccs` needs Steam restarted with it in the
 environment), the scanout at 720p (an EDID change and a reboot), the frame
 recorder's 1% lows (Wine's per-second lines are what both sessions used),
-and the barriers' cost measured inside Ferrix rather than by the same
+and the barriers' cost measured inside Xaqu rather than by the same
 instructions under Linux.
 
 ### 11.2 The experiments as planned
@@ -872,7 +872,7 @@ Each A/B on the same scene and image, Wine's fps, alternating:
   portald, term, wallpaper) and lode-upload; then also Steam's renderers.
 * **E2**: renice the background +19 and the game, wineserver, yserver and
   hyprix −10.
-* **E3**: defer the polls: `ferrix.mce.poll` long, `freqlog` off, yt6801's
+* **E3**: defer the polls: `xaqu.mce.poll` long, `freqlog` off, yt6801's
   link poll at 2 s.
 * **E5**: GPU levers: the render-scale slope (60% against 100%);
   `INTEL_DEBUG=noccs` against the default (G3); whether the GT's user
@@ -900,7 +900,7 @@ anecdotes and are quoted as such.
 The certification consultant reviewed this document as a design on
 2026-10-30, before it landed. It is an internal review, not independent
 verification (F-27, F-29). Ledger line 5115 of
-`~/.local/share/ferrix/cert-consultant/reviews.md` on the gate host:
+`~/.local/share/xaqu/cert-consultant/reviews.md` on the gate host:
 
 > VERDICT: OK IF (1)-(12), for GAME-MODE.md and the three pointers to land
 > on develop as a design; NO CODE of layer B, C, H2 or any core item below

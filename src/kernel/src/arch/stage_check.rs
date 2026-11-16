@@ -26,7 +26,7 @@ pub use super::aarch64::trap::check::{drive_native_words, drive_system_call};
 #[cfg(target_arch = "arm")]
 pub use super::armv7a::trap::check::{drive_native_words, drive_system_call};
 #[cfg(target_arch = "x86_64")]
-pub use ferrix_kernel_core::arch::x86_64::syscall::check::{drive_native_words, drive_system_call};
+pub use xaqu_kernel_core::arch::x86_64::syscall::check::{drive_native_words, drive_system_call};
 
 // What the switch gives a program back, checked in user mode: x86-64's
 // vector-state contract and its FS base kept in the task (docs/OPAQUE-KERNEL.md
@@ -50,7 +50,7 @@ pub const fn check_switch_state() -> Result<(), &'static str> {
 // device objects check): x86-64's, raised to the item crate with the kernel
 // split; moved here from `arch/mod.rs` with it.
 #[cfg(target_arch = "x86_64")]
-pub use ferrix_kernel_item::arch::x86_64::framebuffer::check::check_framebuffer_window;
+pub use xaqu_kernel_item::arch::x86_64::framebuffer::check::check_framebuffer_window;
 
 /// Nothing to read back: the Arm kernels' framebuffer mapping is their
 /// constant, unchanged.
@@ -64,5 +64,5 @@ pub const fn check_framebuffer_window() -> Result<(), &'static str> {
 }
 
 /// Whether a reply of words writes its four registers alone (`L.x86_64.160`).
-#[cfg(ferrix_fast_ipc)]
-pub use ferrix_kernel_core::arch::x86_64::syscall::reply_writes_four_registers;
+#[cfg(xaqu_fast_ipc)]
+pub use xaqu_kernel_core::arch::x86_64::syscall::reply_writes_four_registers;

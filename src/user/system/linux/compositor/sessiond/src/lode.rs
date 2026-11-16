@@ -3,9 +3,9 @@
 //!
 //! `sessiond` owns seat0, so it is the one to say when seat0's session
 //! begins and ends. It draws the session's token, a random 16 bytes, hands
-//! it to the compositor beside the card (`FERRIX_SESSION_TOKEN`), and writes
+//! it to the compositor beside the card (`XAQU_SESSION_TOKEN`), and writes
 //! one line to lode's root-only socket when the session's scope exists and
-//! one when it is gone ([`ferrix_lode_core::session`]). lode stamps the
+//! one when it is gone ([`xaqu_lode_core::session`]). lode stamps the
 //! session's id on its lines, and later trusts a screenshot provider only
 //! if it holds this token and is this pid.
 //!
@@ -16,13 +16,13 @@ use std::io::{Read as _, Write as _};
 use std::os::unix::net::UnixStream;
 use std::time::Duration;
 
-use ferrix_lode_core::session::{self, Session};
+use xaqu_lode_core::session::{self, Session};
 
 /// lode's socket for the seat's owner.
 const SOCKET: &str = "/run/lode/seat";
 
 /// The variable the compositor finds the token in.
-pub(crate) const TOKEN_VARIABLE: &str = "FERRIX_SESSION_TOKEN";
+pub(crate) const TOKEN_VARIABLE: &str = "XAQU_SESSION_TOKEN";
 
 /// How long a write to lode may take.
 const PATIENCE: Duration = Duration::from_millis(500);

@@ -9,7 +9,7 @@
 //!
 //! The decision is generic over what an opened description is, so that it can
 //! be tested here without firmware: the kernel instantiates it with its own
-//! `acpi::Firmware` and `ferrix_fdt::Fdt`.
+//! `acpi::Firmware` and `xaqu_fdt::Fdt`.
 
 #![no_std]
 #![forbid(unsafe_code)]

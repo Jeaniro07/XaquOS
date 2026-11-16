@@ -11,7 +11,7 @@
 //! Because the point is somebody else's binary. A shell written against this
 //! kernel would work by construction and prove nothing about the ABI; a static
 //! `busybox` was linked against Linux by people who have never heard of
-//! Ferrix, and every system call it makes is one this kernel either answers
+//! Xaqu, and every system call it makes is one this kernel either answers
 //! the way Linux does or gets wrong in a way the shell will show.
 //!
 //! # A list of commands, for stage 8's exit
@@ -34,7 +34,7 @@
 //!
 //! # A program named on the command line
 //!
-//! `ferrix.init=<path>` starts pid 1 from that file instead, in the `/` the
+//! `xaqu.init=<path>` starts pid 1 from that file instead, in the `/` the
 //! kernel switched to, as Linux's `init=` does (`docs/INIT.md` §8.1). It is
 //! how a real init starts, and how an image that is not a gate boots without
 //! a program built into its kernel. The file may be a `#!` script, which runs
@@ -75,14 +75,14 @@ use core::convert::Infallible;
 use core::fmt;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use ferrix_bootinfo::{BootView, option_in};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::bootstrap::{
+use xaqu_bootinfo::{BootView, option_in};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::bootstrap::{
     AUDIT_MAGIC, CPU_SERVICE_MAGIC, DEVMGR_STARTER_MAGIC, MEMORY_SCRUB_MAGIC, ROOT_IN_MEMORY,
     ROOT_MAGIC, ROOT_SWITCHED, after_hello, init_hello,
 };
-use ferrix_native_abi::rights::Rights;
-use ferrix_sync::Once;
+use xaqu_native_abi::rights::Rights;
+use xaqu_sync::Once;
 
 use crate::console::println;
 use crate::fallible;
@@ -208,7 +208,7 @@ fn next_bootstrap() -> Option<Transfer> {
         println!("  init     no memory for a bootstrap channel; starting the program without one");
         return None;
     };
-    // Under `ferrix.devmgr=init`, the first program -- pid 1 -- is also given
+    // Under `xaqu.devmgr=init`, the first program -- pid 1 -- is also given
     // devmgr's starter, after the hello, with MANAGE alone (`docs/INIT.md`
     // §7.3). Given once: a later program of a command list gets none.
     if let Some(starter) = crate::discovery::devmgr::starter() {
@@ -384,7 +384,7 @@ static AUDIT_GIVEN: AtomicBool = AtomicBool::new(false);
 pub const AUDIT_RIGHTS: Rights = Rights::READ;
 
 /// Tell pid 1 where `/` is, on its bootstrap channel: the root volume, with
-/// pid 1 moved onto it, or still the tmpfs (`ferrix.devmgr=init`, L12). Said
+/// pid 1 moved onto it, or still the tmpfs (`xaqu.devmgr=init`, L12). Said
 /// once, by `fs::root_disk`, once it knows.
 pub fn notify_root(switched: bool) {
     crate::audit::record(
@@ -419,15 +419,15 @@ pub fn notify_root(switched: bool) {
 }
 
 /// The command-line option naming the file pid 1 is started from.
-const OPTION: &str = "ferrix.init";
+const OPTION: &str = "xaqu.init";
 
 /// The file started when nothing is named and nothing is built in.
 const DEFAULT_INIT: &[u8] = b"/sbin/init";
 
-/// What `ferrix.init=` named, read once, early.
+/// What `xaqu.init=` named, read once, early.
 static NAMED: Once<Vec<u8>> = Once::new();
 
-/// Read `ferrix.init` from the loader's command line or, on a machine
+/// Read `xaqu.init` from the loader's command line or, on a machine
 /// described by a device tree, from `/chosen/bootargs`, as `power::init`
 /// reads its option.
 ///
@@ -454,7 +454,7 @@ pub fn read_option(view: &BootView<'_>) {
     }
 }
 
-/// One entry of the boot initramfs beneath `.ferrix`, as the filesystem's
+/// One entry of the boot initramfs beneath `.xaqu`, as the filesystem's
 /// load side hands it over (`crate::fs::init`), which is where the archive
 /// is read: by the item's dependency rules this file names no archive or
 /// filesystem crate.
@@ -502,13 +502,13 @@ static KEPT: Once<[Option<vmap::Buffer>; 3]> = Once::new();
 
 /// The directories the inputs are carried under, which are expected and say
 /// nothing, and the three names an input may have.
-const INPUT_DIRECTORIES: [&[u8]; 2] = [b".ferrix", b".ferrix/init"];
-pub(crate) const PROGRAM_INPUT: &[u8] = b".ferrix/init/program";
-pub(crate) const SCRIPT_INPUT: &[u8] = b".ferrix/init/script";
-pub(crate) const COMMANDS_INPUT: &[u8] = b".ferrix/init/commands";
+const INPUT_DIRECTORIES: [&[u8]; 2] = [b".xaqu", b".xaqu/init"];
+pub(crate) const PROGRAM_INPUT: &[u8] = b".xaqu/init/program";
+pub(crate) const SCRIPT_INPUT: &[u8] = b".xaqu/init/script";
+pub(crate) const COMMANDS_INPUT: &[u8] = b".xaqu/init/commands";
 
 /// Take pid 1's inputs from `entries`, the boot initramfs's entries beneath
-/// `.ferrix` in the archive's order. Called once, by `crate::fs::init`; a
+/// `.xaqu` in the archive's order. Called once, by `crate::fs::init`; a
 /// second call changes nothing and answers `false`.
 ///
 /// An entry that cannot be an input is refused with a line that names it and
@@ -683,7 +683,7 @@ const UNANSWERED_LINES: u32 = 16;
 /// the log is not the place to read it.
 const SHOWN_BYTES: usize = 60;
 
-/// Start the program `ferrix.init=` named, or the shell or the commands built
+/// Start the program `xaqu.init=` named, or the shell or the commands built
 /// in, or `/sbin/init`, and report how each ended.
 ///
 /// Returns when the last program exits, which on an interactive session is
@@ -811,7 +811,7 @@ fn run_built_in(launcher: &Launcher, inputs: Inputs<'static>) {
             b"PATH=/bin",
             b"HOME=/",
             b"TERM=dumb",
-            b"PS1=ferrix# ",
+            b"PS1=xaqu# ",
             b"ENV=/etc/profile",
         ],
         bootstrap: next_bootstrap(),

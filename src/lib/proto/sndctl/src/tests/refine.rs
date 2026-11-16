@@ -7,7 +7,7 @@
 //! `set_*_near` tries the value as a minimum and as a maximum on copies and
 //! keeps whichever the kernel does not refuse.
 
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::sound::{
     ACCESS_MMAP_INTERLEAVED, ACCESS_RW_INTERLEAVED, FORMAT_FLOAT_LE, FORMAT_S16_LE,
     HW_PARAM_ACCESS, HW_PARAM_BUFFER_TIME, HW_PARAM_CHANNELS, HW_PARAM_FIRST_INTERVAL,
     HW_PARAM_FORMAT, HW_PARAM_PERIOD_TIME, HW_PARAM_RATE, HW_PARAM_TICK_TIME, HwParams,

@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-sdmmc"
-description = "The STM32MP15 SD card driver process: the block ring's driver end over SDMMC1 and the card in it, on ferrix-rt"
+name = "xaqu-sdmmc"
+description = "The STM32MP15 SD card driver process: the block ring's driver end over SDMMC1 and the card in it, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,13 +14,13 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-blkring.workspace = true
-ferrix-blkserve.workspace = true
-ferrix-driver = { workspace = true, features = ["block"] }
-ferrix-native-abi.workspace = true
-ferrix-rt.workspace = true
-ferrix-stm32-sdmmc.workspace = true
-ferrix-virtio-blk.workspace = true
+xaqu-blkring.workspace = true
+xaqu-blkserve.workspace = true
+xaqu-driver = { workspace = true, features = ["block"] }
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-stm32-sdmmc.workspace = true
+xaqu-virtio-blk.workspace = true
 
 [lints]
 workspace = true

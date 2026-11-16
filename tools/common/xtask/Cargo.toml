@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "Host-side build, image and QEMU driver for Ferrix"
+description = "Host-side build, image and QEMU driver for Xaqu"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,61 +16,61 @@ publish.workspace = true
 # The one dependency is the tree's own ELF reader, for the ARMv7-A loader's
 # conversion to PE32. It is already fuzzed and host-tested, and the alternative
 # was a second ELF reader here that nothing fuzzes.
-ferrix-elf.workspace = true
+xaqu-elf.workspace = true
 # The tree's own header formats, for the host-side network gateway in
 # `gateway/`. The alternative was a second Ethernet, ARP, IPv4, ICMP, UDP and
 # TCP parser in the build tool, disagreeing with the kernel's about a length
 # field at the worst possible moment; this one is already fuzzed.
-ferrix-netwire.workspace = true
+xaqu-netwire.workspace = true
 # The kernel's own cpio reader: `flash` reads the archive `initramfs.rs` wrote
 # to strip the card's copy of its programs, and the tests read every archive
 # with the code that will unpack it rather than with a second opinion.
-ferrix-cpio.workspace = true
+xaqu-cpio.workspace = true
 # adb's message format, for `test-adb`'s check that a forward reaches the
 # guest: it speaks one CNXN through it with the bytes adbd itself decodes.
-ferrix-adb.workspace = true
+xaqu-adb.workspace = true
 # vdagent's framing and messages, for `test-clipboard`'s host half: it speaks
 # the protocol to the guest's agent with the bytes the agent itself decodes.
-ferrix-vdagent.workspace = true
+xaqu-vdagent.workspace = true
 # The FTDI chips' divisors: `test-ft232h` holds the driver's "on the chip"
 # rates to the arithmetic the driver itself does, not to a second copy.
-ferrix-usb-serial.workspace = true
+xaqu-usb-serial.workspace = true
 # The display protocol's EDID reader and checker: `edid.rs` finds this
 # machine's monitor by what its EDID says, and checks the bytes it carries into
 # an image the way the kernel will check them when `drm.edid_firmware` names
 # the file. A second reader here would be a second opinion on which file the
 # kernel accepts.
-ferrix-displayctl.workspace = true
+xaqu-displayctl.workspace = true
 # The password hash authd stores credentials under: an image's seed
 # (`--auth-seed`, and the gate's) is hashed on the host by the same code
 # that checks it on the guest, so the two cannot disagree about a hash.
-ferrix-argon2.workspace = true
+xaqu-argon2.workspace = true
 # Packages (`docs/APPS.md` §6): an app's manifest, the record its package
-# carries, and the plan that installs a set. The package manager on Ferrix
+# carries, and the plan that installs a set. The package manager on Xaqu
 # will be the same code, so the images this builds and the installs it will
 # make cannot disagree about what a package is.
-ferrix-pkg.workspace = true
+xaqu-pkg.workspace = true
 # GUID partition tables: `live` lays the live medium out with the writer
-# `ferrix-install` partitions a target with and the kernel's reader checks,
+# `xaqu-install` partitions a target with and the kernel's reader checks,
 # so the medium, the installer and the kernel cannot disagree about a table.
-ferrix-partition.workspace = true
-ferrix-fat.workspace = true
-ferrix-boot-policy.workspace = true
-ferrix-slots.workspace = true
-ferrix-eventlog.workspace = true
+xaqu-partition.workspace = true
+xaqu-fat.workspace = true
+xaqu-boot-policy.workspace = true
+xaqu-slots.workspace = true
+xaqu-eventlog.workspace = true
 # The pstore region's format (`docs/POSTMORTEM.md` §3): `test-postmortem`
 # reads the region it saved from the guest with the code the loader and the
 # kernel compile, so the gate and the boot cannot disagree about a header.
-ferrix-bootinfo.workspace = true
+xaqu-bootinfo.workspace = true
 # devmgr's protocol, for the most drivers one DEVICES message names: an
 # image whose `/lib/drivers/MANIFEST` names more is refused when it is built,
 # not at boot with FX-1006.
-ferrix-devmgr-proto.workspace = true
+xaqu-devmgr-proto.workspace = true
 
 [dev-dependencies]
 # The native ABI's numbers, which a host test holds nvrm's C header to
 # (`nvrm/tests.rs`): nvrm names the calls it makes by number, in C.
-ferrix-native-abi.workspace = true
+xaqu-native-abi.workspace = true
 
 [lints]
 workspace = true

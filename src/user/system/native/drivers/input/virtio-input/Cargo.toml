@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-input"
-description = "The virtio-input driver process: the input control channel's driver end over a virtio-input PCI device, on ferrix-rt"
+name = "xaqu-input"
+description = "The virtio-input driver process: the input control channel's driver end over a virtio-input PCI device, on xaqu-rt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,10 +14,10 @@ test = false
 bench = false
 
 [dependencies]
-ferrix-driver = { workspace = true, features = ["input"] }
-ferrix-inputctl.workspace = true
-ferrix-rt.workspace = true
-ferrix-virtio-input.workspace = true
+xaqu-driver = { workspace = true, features = ["input"] }
+xaqu-inputctl.workspace = true
+xaqu-rt.workspace = true
+xaqu-virtio-input.workspace = true
 
 [lints]
 workspace = true

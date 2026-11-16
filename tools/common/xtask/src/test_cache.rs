@@ -4,7 +4,7 @@
 //!
 //! A test binary is a file whose bytes are all of its compiled code: an
 //! edit that does not reach it leaves it byte for byte the same. With
-//! `FERRIX_STEP_CACHE=on`, `check` writes [`FILE`] into the test runs'
+//! `XAQU_STEP_CACHE=on`, `check` writes [`FILE`] into the test runs'
 //! directory before `cargo test` starts: the step cache's shared prelude
 //! (xtask's digest, the host, the origin), and which packages' binaries may
 //! be cached and why the others may not. `test-wait` then keys each
@@ -39,7 +39,7 @@ use crate::{Error, Result, sha256};
 pub(crate) const FILE: &str = "step-cache";
 
 /// Its first line, with the format's version.
-const MAGIC: &str = "ferrix-test-cache 1";
+const MAGIC: &str = "xaqu-test-cache 1";
 
 /// Crates whose purpose is to draw new inputs on each run: a package that
 /// depends on one, in any kind of dependency, is never cached, since every
@@ -64,7 +64,7 @@ pub(crate) const RANDOMIZED: &[&str] = &[
 /// the seed in the key, each with where: never cached (P2.3). Found by
 /// reading the sources of every package the item does not link for
 /// `RandomState`, `getrandom`, `/dev/urandom`, `SystemTime` and `Instant`
-/// on 2026-10-15: none seeds a test from them (ferrix-sync's tests do, and
+/// on 2026-10-15: none seeds a test from them (xaqu-sync's tests do, and
 /// it is the item's).
 const SEEDED: &[(&str, &str)] = &[];
 
@@ -177,7 +177,7 @@ pub(crate) fn workspace_renames(manifest: &str) -> BTreeSet<String> {
 /// The requirement ids the files under `directory` say they verify, or
 /// why they could not all be read: a package carrying item evidence is
 /// never cached, whatever ring its code is in (the consultant's D1 and
-/// condition 1, ledger 1650: ferrix-native's host test verifies
+/// condition 1, ledger 1650: xaqu-native's host test verifies
 /// L.device.24).
 pub(crate) fn verifies(directory: &Path) -> Option<String> {
     let mut ids = BTreeSet::new();

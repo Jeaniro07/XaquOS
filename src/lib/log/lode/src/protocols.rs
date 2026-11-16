@@ -235,7 +235,7 @@ pub struct StreamHeader {
     pub priority: u8,
     /// Whether a line's `<N>` prefix sets its level.
     pub level_prefix: bool,
-    /// The seventh line, journald's "forward to console": on Ferrix, the
+    /// The seventh line, journald's "forward to console": on Xaqu, the
     /// writer says each line also goes to its own standard output, which is
     /// a unit's, so lode keeps one of the two (`crate::units::Echoes`).
     pub echoed: bool,
@@ -303,7 +303,7 @@ pub fn stream_line(
     if header.echoed {
         // Also written to the program's standard output, whose copy comes
         // back as a unit's line (`crate::units::Echoes`).
-        record.push("FERRIX_ECHOED", b"1");
+        record.push("XAQU_ECHOED", b"1");
     }
     record
 }

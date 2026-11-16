@@ -4,11 +4,11 @@
 //! and `test-shell` read that as the end of the log. A board is different. A
 //! powered-off STM32MP157-DK has to be unplugged and plugged in again before it
 //! does anything, and the reset button does not bring it back, so every run on
-//! it used to cost a hand at the board. `ferrix.onexit=reset` on the command
+//! it used to cost a hand at the board. `xaqu.onexit=reset` on the command
 //! line asks for a reset instead, which lands back at the firmware's prompt,
 //! ready for the next image.
 //!
-//! `ferrix.onexit=panic` asks for what Linux does when init exits: a panic,
+//! `xaqu.onexit=panic` asks for what Linux does when init exits: a panic,
 //! here the one the catalog calls `FX-1501`. The disks are committed first,
 //! which Linux does not do, because nothing is gained by losing them
 //! (`docs/INIT.md` §8.3).
@@ -30,10 +30,10 @@
 
 use core::sync::atomic::{AtomicU8, Ordering};
 
-use ferrix_bootinfo::pstore::Stop;
-use ferrix_bootinfo::{BootView, option_in};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_sync::Once;
+use xaqu_bootinfo::pstore::Stop;
+use xaqu_bootinfo::{BootView, option_in};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_sync::Once;
 
 use crate::arch;
 use crate::console::println;
@@ -99,7 +99,7 @@ pub fn request_boot_mode(word: &str) -> Result<&'static str, &'static str> {
 }
 
 /// The command-line option, and the values of it that are honoured.
-const OPTION: &str = "ferrix.onexit";
+const OPTION: &str = "xaqu.onexit";
 const RESET: &str = "reset";
 const PANIC: &str = "panic";
 
@@ -109,7 +109,7 @@ const POWER_OFF: u8 = 0;
 const RESET_ON_EXIT: u8 = 1;
 const PANIC_ON_EXIT: u8 = 2;
 
-/// Read `ferrix.onexit` from the loader's command line or, on a machine
+/// Read `xaqu.onexit` from the loader's command line or, on a machine
 /// described by a device tree, from `/chosen/bootargs`, where U-Boot puts
 /// `bootargs`.
 ///
@@ -166,9 +166,9 @@ pub fn sync_disks() {
 pub fn finish() -> ! {
     sync_disks();
     let action = match ON_EXIT.load(Ordering::Relaxed) {
-        RESET_ON_EXIT => ferrix_audit::power::RESTART,
-        PANIC_ON_EXIT => ferrix_audit::power::PANIC,
-        _ => ferrix_audit::power::OFF,
+        RESET_ON_EXIT => xaqu_audit::power::RESTART,
+        PANIC_ON_EXIT => xaqu_audit::power::PANIC,
+        _ => xaqu_audit::power::OFF,
     };
     crate::audit::power(crate::audit::Subject::KERNEL, action);
     match ON_EXIT.load(Ordering::Relaxed) {

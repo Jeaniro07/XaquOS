@@ -117,7 +117,7 @@ pub(crate) fn watch(kernel: Option<&Path>, args: &Args) -> Result<()> {
                     return Ok(());
                 }
                 // A desktop's card skips the checks on purpose (`flash
-                // --compositor` writes `ferrix.checks=skip` among the image's
+                // --compositor` writes `xaqu.checks=skip` among the image's
                 // defaults), and `deploy --compositor` watching it is waiting
                 // for the desktop, not for a boot test. Anywhere else a boot
                 // that skipped them is not the verdict that was asked for.
@@ -130,8 +130,8 @@ pub(crate) fn watch(kernel: Option<&Path>, args: &Args) -> Result<()> {
                     }
                     return Err(Error::new(format!(
                         "the board skipped its self-checks (`{UNCHECKED_MARKER}`): its command \
-                         line says ferrix.checks=skip, from the card's CMDLINE.TXT or the image's \
-                         DEFAULTS.TXT. Flash without --compositor, or put ferrix.checks=run in \
+                         line says xaqu.checks=skip, from the card's CMDLINE.TXT or the image's \
+                         DEFAULTS.TXT. Flash without --compositor, or put xaqu.checks=run in \
                          CMDLINE.TXT, for a boot test.\n  What arrived is in {}",
                         log_path.display()
                     )));

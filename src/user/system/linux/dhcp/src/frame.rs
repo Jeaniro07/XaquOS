@@ -2,14 +2,14 @@
 //! packet socket reads and writes them: the link header is the kernel's,
 //! and everything from the IP header on is ours.
 //!
-//! The headers are written and read by `ferrix-netwire`, the kernel's own
+//! The headers are written and read by `xaqu-netwire`, the kernel's own
 //! wire formats, so a checksum this client gets wrong is one the stack
 //! would get wrong too, and its tests would say so.
 
 use std::net::Ipv4Addr;
 
-use ferrix_netwire::checksum::Pseudo;
-use ferrix_netwire::{ipv4, udp};
+use xaqu_netwire::checksum::Pseudo;
+use xaqu_netwire::{ipv4, udp};
 
 use crate::message::{CLIENT_PORT, SERVER_PORT};
 
@@ -27,7 +27,7 @@ pub fn wrap(
     source: Ipv4Addr,
     destination: Ipv4Addr,
     message: &[u8],
-) -> Result<Vec<u8>, ferrix_netwire::Error> {
+) -> Result<Vec<u8>, xaqu_netwire::Error> {
     let datagram_len = udp::HEADER_LEN + message.len();
     let mut packet = vec![0_u8; ipv4::MIN_HEADER_LEN + datagram_len];
     let header = ipv4::Header {
@@ -56,7 +56,7 @@ pub fn wrap(
         pseudo,
         packet
             .get_mut(header_len..)
-            .ok_or(ferrix_netwire::Error::NoSpace)?,
+            .ok_or(xaqu_netwire::Error::NoSpace)?,
     )?;
     packet.truncate(header_len + written);
     Ok(packet)

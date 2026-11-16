@@ -46,10 +46,10 @@
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 
-use ferrix_acpi::dmar::{self, Structure};
-use ferrix_paging::vtd::remap::{self, Remap, UnitState};
-use ferrix_pci::Address;
-use ferrix_sync::Once;
+use xaqu_acpi::dmar::{self, Structure};
+use xaqu_paging::vtd::remap::{self, Remap, UnitState};
+use xaqu_pci::Address;
+use xaqu_sync::Once;
 
 use super::{amdvi, vtd};
 use crate::panic::{catalog, fatal};
@@ -101,7 +101,7 @@ pub(crate) enum Form {
     /// VT-d's remappable format: format bit 48 and the handle in 63:49.
     VtdRemappable,
     /// AMD-Vi's: compatibility form, the entry's index in the vector field,
-    /// fixed delivery (`ferrix_paging::amdvi::table::redirection_entry`).
+    /// fixed delivery (`xaqu_paging::amdvi::table::redirection_entry`).
     AmdIndexed,
 }
 
@@ -360,8 +360,8 @@ fn require_no_compatibility_vector() {
 /// The unit would not come up.
 pub(super) fn bring_up_amdvi(
     unit: &amdvi::Unit,
-    table: &ferrix_acpi::ivrs::Ivrs<'_>,
-    ivhd: &ferrix_acpi::ivrs::Ivhd<'_>,
+    table: &xaqu_acpi::ivrs::Ivrs<'_>,
+    ivhd: &xaqu_acpi::ivrs::Ivhd<'_>,
 ) -> Result<UnitState, &'static str> {
     let off = UnitState {
         remapping: false,
@@ -442,7 +442,7 @@ fn prepare_amdvi_console(devid: u16) -> Result<AmdViConsole, &'static str> {
         if masked.level {
             return Err("the console's line is level-triggered");
         }
-        let destination = ferrix_paging::amdvi::table::destination(masked.apic_id)
+        let destination = xaqu_paging::amdvi::table::destination(masked.apic_id)
             .ok_or("a destination above APIC ID 255")?;
         super::check::plant_masked_byte(&line);
         let new = (hooks.vector)().ok_or("no vector left for the console")?;
@@ -596,12 +596,12 @@ pub(crate) fn remap_message(
             Ok((remap::message_address(handle), 0))
         }
         Remapper::AmdVi(unit) => {
-            let destination = ferrix_paging::amdvi::table::destination(apic_id)
+            let destination = xaqu_paging::amdvi::table::destination(apic_id)
                 .ok_or("a destination above APIC ID 255")?;
             unit.remap(requester, handle, vector, destination)?;
             Ok((
-                ferrix_paging::amdvi::table::MESSAGE_ADDRESS,
-                ferrix_paging::amdvi::table::message_data(handle),
+                xaqu_paging::amdvi::table::MESSAGE_ADDRESS,
+                xaqu_paging::amdvi::table::message_data(handle),
             ))
         }
     }
@@ -633,7 +633,7 @@ pub(crate) fn retarget_message(
         Remapper::AmdVi(unit) => unit.retarget(
             requester,
             handle,
-            ferrix_paging::amdvi::table::destination(apic_id)
+            xaqu_paging::amdvi::table::destination(apic_id)
                 .ok_or("a destination above APIC ID 255")?,
         ),
     }

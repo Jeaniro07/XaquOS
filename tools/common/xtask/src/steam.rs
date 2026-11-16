@@ -1,4 +1,4 @@
-//! `test-steam-bootstrap`: the Steam client's bootstrapper on Ferrix, as far
+//! `test-steam-bootstrap`: the Steam client's bootstrapper on Xaqu, as far
 //! as it goes before it needs a display (`docs/I386.md`, I5b).
 //!
 //! Valve's `steam.sh` is what `/usr/bin/steam` runs: a bash script that sets
@@ -25,7 +25,7 @@
 //! # `uname`
 //!
 //! `steam.sh` stops with "Unsupported Operating System" unless `uname` says
-//! `Linux`, and Ferrix's says `Ferrix` (the customer's choice, 2026-09-13).
+//! `Linux`, and Xaqu's says `Xaqu` (the customer's choice, 2026-09-13).
 //! The image puts [`UNAME`] first in `PATH`, which says `Linux` to the two
 //! questions the scripts ask by name and passes every other one to busybox.
 //!
@@ -33,7 +33,7 @@
 //!
 //! * Scout's `steam-runtime-check-requirements` refuses a kernel without
 //!   user namespaces ("Steam now requires user namespaces to be enabled",
-//!   exit 71), which `steam.sh` treats as fatal, and Ferrix has none. The
+//!   exit 71), which `steam.sh` treats as fatal, and Xaqu has none. The
 //!   script runs the check once and prints its verdict, then makes it not
 //!   executable, which `steam.sh` answers with "continuing anyway" -- and
 //!   again whenever it is executable once more, since the client's update
@@ -41,15 +41,15 @@
 //! * System V semaphores are `ENOSYS`, and the client then prints "Thread
 //!   synchronization object is unuseable" and waits forever, before it has
 //!   downloaded anything. The script stops there, and the gate fails saying
-//!   so. Whether Ferrix gets them is the customer's decision
+//!   so. Whether Xaqu gets them is the customer's decision
 //!   (`docs/BACKLOG.md`, *Waiting on the customer*). To see past it,
-//!   `FERRIX_STEAM_PRELOAD` may name an i386 shared object the image carries
+//!   `XAQU_STEAM_PRELOAD` may name an i386 shared object the image carries
 //!   at [`PRELOAD_PATH`] and preloads into every program, and the verdict
 //!   then names it: a diagnostic stand-in, not a pass.
 //!
 //! # Under KVM, and on the internet
 //!
-//! As `test-steamcmd`: the client reads `cpu MHz`, which Ferrix prints only
+//! As `test-steamcmd`: the client reads `cpu MHz`, which Xaqu prints only
 //! when its clock is the TSC, and it downloads from Valve, so the gate is run
 //! on demand and not in the image row.
 
@@ -93,7 +93,7 @@ case "$*" in
 esac
 "#;
 
-/// Where the object `FERRIX_STEAM_PRELOAD` names is carried.
+/// Where the object `XAQU_STEAM_PRELOAD` names is carried.
 const PRELOAD_PATH: &str = "usr/local/lib/steam-preload.so";
 
 /// The script: a lease for `eth0`; scout's requirements check on its own,
@@ -166,9 +166,9 @@ const MEMORY: u32 = 4096;
 const TIMEOUT: u64 = 3600;
 
 /// Where `tools/common/fetch/fetch-steam.sh` writes, unless
-/// `FERRIX_STEAM_VOLUME` names another directory.
+/// `XAQU_STEAM_VOLUME` names another directory.
 fn volume() -> Result<std::path::PathBuf> {
-    let directory = match std::env::var_os("FERRIX_STEAM_VOLUME") {
+    let directory = match std::env::var_os("XAQU_STEAM_VOLUME") {
         Some(directory) => std::path::PathBuf::from(directory),
         None => crate::paths::volume_directory("steam-bootstrap")?,
     };
@@ -201,10 +201,10 @@ fn files(preload: Option<Vec<u8>>) -> Vec<File> {
     files
 }
 
-/// The object `FERRIX_STEAM_PRELOAD` names, read, and its path for the
+/// The object `XAQU_STEAM_PRELOAD` names, read, and its path for the
 /// verdict; `None` when the variable is not set.
 fn preload() -> Result<Option<(String, Vec<u8>)>> {
-    let Some(path) = std::env::var_os("FERRIX_STEAM_PRELOAD") else {
+    let Some(path) = std::env::var_os("XAQU_STEAM_PRELOAD") else {
         return Ok(None);
     };
     let path = std::path::PathBuf::from(path);
@@ -261,7 +261,7 @@ pub(crate) fn test_steam_bootstrap(args: &Args) -> Result<()> {
     let image = fat::write_image_with(arch, &loader, &kernel, &archive, None)?;
 
     println!(
-        "  {arch}: running the Steam bootstrapper on Ferrix with {} MiB (timeout {}s), on the network",
+        "  {arch}: running the Steam bootstrapper on Xaqu with {} MiB (timeout {}s), on the network",
         args.memory, args.timeout
     );
     let lines = qemu::watch_then(arch, &image, &kernel, &args, shell::EXITED, |_| Ok(()))?;
@@ -270,7 +270,7 @@ pub(crate) fn test_steam_bootstrap(args: &Args) -> Result<()> {
 
 /// Whether the script's lines say the client got as far as the display.
 /// With a `stand_in` preloaded, getting there is reported and still fails:
-/// the stand-in is not Ferrix.
+/// the stand-in is not Xaqu.
 fn judge(arch: Arch, lines: &[String], stand_in: Option<&str>) -> Result<()> {
     let after_boot = lines
         .iter()
@@ -295,7 +295,7 @@ fn judge(arch: Arch, lines: &[String], stand_in: Option<&str>) -> Result<()> {
         (Some(status), Some(stand_in)) if status == STATUS.to_string() && asked => {
             Err(Error::new(format!(
                 "{arch}: the Steam client asked for an X display, but only with {stand_in} \
-                 preloaded, which is a stand-in and not Ferrix"
+                 preloaded, which is a stand-in and not Xaqu"
             )))
         }
         (Some("3"), _) => Err(Error::new(format!(
@@ -305,7 +305,7 @@ fn judge(arch: Arch, lines: &[String], stand_in: Option<&str>) -> Result<()> {
             "{arch}: dhcpc got no lease for eth0 from the gateway"
         ))),
         (Some("7"), _) => Err(Error::new(format!(
-            "{arch}: the Steam client stopped at its System V semaphores, which Ferrix answers \
+            "{arch}: the Steam client stopped at its System V semaphores, which Xaqu answers \
              ENOSYS: \"Thread synchronization object is unuseable\", and then it waits forever"
         ))),
         (Some("6"), _) => Err(Error::new(format!(

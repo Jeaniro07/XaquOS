@@ -1,14 +1,14 @@
-Ferrix x86-64 desktop
+Xaqu x86-64 desktop
 =====================
 
-Ferrix is an experimental operating system with its own Rust kernel that
+Xaqu is an experimental operating system with its own Rust kernel that
 runs ordinary Linux programs. This archive boots its Wayland desktop in
 QEMU. You need QEMU and nothing else: no Rust, no build.
 
     Linux, macOS:  sh run.sh
     Windows:       powershell -ExecutionPolicy Bypass -File run.ps1
 
-A QEMU window opens on the desktop, with a terminal running zinc, Ferrix's
+A QEMU window opens on the desktop, with a terminal running zinc, Xaqu's
 zsh-compatible shell. The terminal you started it from shows the serial
 log; Ctrl-A x there quits QEMU. With a hypervisor (KVM, WHPX, HVF) the
 desktop is up a few seconds after the firmware hands over. Without one --
@@ -36,10 +36,10 @@ other options: --vnc for a machine with no display, --memory, --smp,
 On Linux, KVM needs /dev/kvm to be yours (the kvm group). On Windows, turn
 on the "Windows Hypervisor Platform" feature for WHPX; with released QEMU
 the guest then gets one processor, because its WHPX support faults
-Ferrix's ring-3 drivers with more.
+Xaqu's ring-3 drivers with more.
 
 What is not in this archive
-  - Chrome, Steam and the Rust toolchain. Each runs on Ferrix from a volume
+  - Chrome, Steam and the Rust toolchain. Each runs on Xaqu from a volume
     of its own, gigabytes each, which a build from source fetches.
   - A disk that keeps anything: / is in memory, so nothing you do survives
     QEMU exiting.
@@ -47,19 +47,19 @@ What is not in this archive
     terminals and slow for anything big.
   - The keyboard layout is US.
 
-Ferrix is not ready to be anybody's everyday OS: parts of authentication
+Xaqu is not ready to be anybody's everyday OS: parts of authentication
 and process isolation are unfinished. Do not put anything you care about
 in it.
 
 Source, documentation and building it yourself:
-https://github.com/ferrix-os/ferrix
+https://github.com/xaqu-os/xaqu
 Licences
-  Ferrix is MIT licensed (LICENSE in this archive). The image also carries
+  Xaqu is MIT licensed (LICENSE in this archive). The image also carries
   other people's programs under their own licences, among them busybox and
   git (GPL-2.0), alsa-utils (GPL-2.0+) and alsa-lib (LGPL-2.1+), and many
   permissive C libraries and Rust crates. THIRD-PARTY-LICENSES.md in this
   archive lists every part of the image with its licence and the licence's
   text. The source of every GPL and LGPL program in it, exactly as it was
-  built, is the release's ferrix-<tag>-sources.tar.gz asset, beside this
+  built, is the release's xaqu-<tag>-sources.tar.gz asset, beside this
   zip on the same release page. Firmware is not in the archive: the scripts
   use the OVMF your QEMU or distribution installed.

@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 8: devices and userspace drivers.
+ * Xaqu — SysML v2 model, part 8: devices and userspace drivers.
  *
  * docs/ARCHITECTURE.md §7. The kernel enumerates buses because that needs
  * ACPI or a device tree and privileged access; it does not drive devices.
@@ -7,11 +7,11 @@
  * drivers are processes devmgr starts. What it still owes is named on the
  * part that owes it.
  */
-package FerrixDrivers {
+package XaquDrivers {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
-    private import FerrixObjects::*;
-    private import FerrixMemory::Vmo;
+    private import XaquLifecycle::*;
+    private import XaquObjects::*;
+    private import XaquMemory::Vmo;
 
     // -----------------------------------------------------------------------
     // Reaching the machine's description, today
@@ -223,7 +223,7 @@ package FerrixDrivers {
              * on one port. Started by devmgr from /lib/drivers when the image
              * carries it -- only test-restart --update's do (SAFETY-MANUAL
              * AoU-26) -- it takes root's connections on the abstract socket
-             * ferrix.devmgr.update, refuses any other peer and any header past
+             * xaqu.devmgr.update, refuses any other peer and any header past
              * 8 MiB before it makes a VMO, and hands devmgr the request and
              * the image's VMO on a channel. /bin/drvupdate is its client.
              * docs/DEVMGR.md section 4.1. */
@@ -280,7 +280,7 @@ package FerrixDrivers {
              * Since 2026-10-25 a tablet's absolute axes reach the input
              * core as ABS_X, ABS_Y and ABS_WHEEL with the HID field's
              * range (test-usb attaches a usb-tablet and requires two
-             * places); and the boot word ferrix.usbhid.reports, or the
+             * places); and the boot word xaqu.usbhid.reports, or the
              * file /run/usbhid-reports, makes it log each interrupt report
              * of the functions named at debug (docs/XHCI.md section 13). */
     }
@@ -310,7 +310,7 @@ package FerrixDrivers {
              * and writes none of its registers: U-Boot left it running. The
              * driver moves every word through the FIFO with hardware flow
              * control and never turns the internal DMA on, and serves a write
-             * only inside a partition named ferrix-*. Its gates are the
+             * only inside a partition named xaqu-*. Its gates are the
              * library's host tests against a model of the controller and a
              * card, and the boot check of the one tree disk; no emulator has
              * the controller, and it has not run on the board (2026-10-08). */
@@ -331,7 +331,7 @@ package FerrixDrivers {
              * against a model of a controller, and cargo xtask test-nvme on
              * QEMU's emulated one, with / on a drive below a PCIe switch. It
              * has since driven a real WD SN720 through VFIO and installed
-             * Ferrix onto it (the customer's word, 2026-10-21). */
+             * Xaqu onto it (the customer's word, 2026-10-21). */
     }
 
     #inProgress part def AhciDriver :> DriverProcess {
@@ -355,7 +355,7 @@ package FerrixDrivers {
         doc /* src/user/system/native/drivers/net/yt6801 over
              * src/lib/drivers/net/yt6801 and src/lib/drivers/net/dwmac: the
              * Motorcomm YT6801, the N150 box's gigabit port (networking
-             * page), speaking the net ring under ferrix-netserve's loop.
+             * page), speaking the net ring under xaqu-netserve's loop.
              * devmgr starts it on 1F0A:6801. The kernel holds the function's
              * MSI-X off and grants its table page (L.device.35-37). Its
              * gates are the libraries' tests against models of the chip and
@@ -370,7 +370,7 @@ package FerrixDrivers {
         doc /* src/user/system/native/drivers/net/rtl8169 over
              * src/lib/drivers/net/rtl8169: Realtek's RTL8111H (8168H, XID
              * 0x541), nazuna's onboard gigabit port (networking page),
-             * speaking the net ring under ferrix-netserve's loop. devmgr
+             * speaking the net ring under xaqu-netserve's loop. devmgr
              * starts it on 10EC:8168 and the driver refuses any other XID.
              * No kernel change: registers in BAR 2, MSI-X table in BAR 4.
              * Its gates are the library's tests against a model of the chip
@@ -384,7 +384,7 @@ package FerrixDrivers {
         doc /* src/user/system/native/drivers/display/efifb: the firmware's
              * framebuffer as the display core's card0, for a PC whose GPU has
              * no driver (docs/DISPLAY.md section 8). Under the kernel option
-             * ferrix.efifb the last finder lends the framebuffer to a node of
+             * xaqu.efifb the last finder lends the framebuffer to a node of
              * its own, write-combining from its first map, and the driver
              * copies each flushed rectangle onto it; hyprix composites into
              * dumb buffers as on virtio-gpu. Its gate is cargo xtask
@@ -400,7 +400,7 @@ package FerrixDrivers {
              * file. The library is the i915 uAPI front end over a back end,
              * the GT's bring-up, execlists, the PPGTT and the power
              * management a host does, all host-tested; the process serves a
-             * render-only chardev node and is started on ferrix.intelgpu.
+             * render-only chardev node and is started on xaqu.intelgpu.
              * The kernel lends it the screen by identity and maps its
              * buffers write-combining. On the box, M1 (the device answers)
              * and M2 (the first GPU commands) ran on 2026-10-20; M3, the

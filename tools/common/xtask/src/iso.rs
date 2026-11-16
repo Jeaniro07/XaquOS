@@ -14,7 +14,7 @@
 //!                   22     the boot catalog
 //!                   23..   README.TXT and the other files, a block each at least
 //! 1 MiB aligned     ...    the EFI system partition: GPT partition 1, named
-//!                          FERRIX-LIVE, and El Torito's EFI boot image, and the
+//!                          XAQU-LIVE, and El Torito's EFI boot image, and the
 //!                          file EFIBOOT.IMG in the ISO's root, all one extent
 //! last 33           ...    the backup GPT
 //! ```
@@ -25,19 +25,19 @@
 //! count is 0 as reaching to the volume's end, as `xorriso` writes one larger
 //! than 32 MiB. Firmware that boots it as a disk, after `dd` to a USB stick or
 //! attached to a virtual machine as a disk, finds the GUID partition table,
-//! whose one partition is the same bytes. Ferrix itself sees only the second
+//! whose one partition is the same bytes. Xaqu itself sees only the second
 //! view, and only on a disk it drives: the installer finds the live system by
 //! the partition's name, as on the `.img` (`installer.rs`).
 //!
 //! The MBR is the protective one the UEFI specification asks for, a single
-//! `0xEE` record: no legacy BIOS boot, which Ferrix does not have. Every time
+//! `0xEE` record: no legacy BIOS boot, which Xaqu does not have. Every time
 //! and identifier is a constant, so one tree writes one ISO.
 
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
-use ferrix_partition::{ESP, Partition, write_table};
+use xaqu_partition::{ESP, Partition, write_table};
 
 use crate::installer::{LIVE_DISK_GUID, LIVE_NAME, LIVE_PART_GUID, hide};
 use crate::{Error, Result};
@@ -320,7 +320,7 @@ fn primary(label: &str, volume_blocks: u64) -> Vec<u8> {
     let root = record(&[0], ROOT, BLOCK, true);
     set(&mut out, 156, &root);
     set(&mut out, 190, &field("", 128));
-    set(&mut out, 318, &field("FERRIX", 128));
+    set(&mut out, 318, &field("XAQU", 128));
     set(&mut out, 446, &field("", 128));
     set(&mut out, 574, &field("CARGO XTASK ISO", 128));
     set(&mut out, 702, &field("LICENSE.TXT", 37));

@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-vdagent"
+name = "xaqu-vdagent"
 description = "SPICE's vdagent protocol: the chunk framing and the clipboard messages, as bytes"
 version.workspace = true
 edition.workspace = true

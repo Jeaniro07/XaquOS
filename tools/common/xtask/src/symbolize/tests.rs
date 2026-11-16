@@ -13,8 +13,8 @@ fn mangle(segments: &[&str]) -> String {
 #[test]
 fn a_plain_path_loses_its_hash() {
     assert_eq!(
-        demangle(mangle(&["ferrix_kernel", "kmain"]).as_bytes()),
-        "ferrix_kernel::kmain"
+        demangle(mangle(&["xaqu_kernel", "kmain"]).as_bytes()),
+        "xaqu_kernel::kmain"
     );
 }
 
@@ -37,14 +37,14 @@ fn generic_and_reference_escapes_are_decoded() {
 #[test]
 fn a_closure_keeps_its_braces() {
     let name = mangle(&[
-        "ferrix_kernel_core",
+        "xaqu_kernel_core",
         "smp",
         "run_everywhere",
         "$u7b$$u7b$closure$u7d$$u7d$",
     ]);
     assert_eq!(
         demangle(name.as_bytes()),
-        "ferrix_kernel_core::smp::run_everywhere::{{closure}}"
+        "xaqu_kernel_core::smp::run_everywhere::{{closure}}"
     );
 }
 
@@ -76,7 +76,7 @@ fn only_a_trace_line_yields_an_address() {
         trace_address("  trace     no frame pointer chain to follow"),
         None
     );
-    assert_eq!(trace_address("FERRIX-PANIC trace 0x10"), None);
+    assert_eq!(trace_address("XAQU-PANIC trace 0x10"), None);
 }
 
 /// Symbols taken from a build of this kernel (the four crates of
@@ -92,27 +92,27 @@ const V0_NAMES: &[(&str, &str)] = &[
         "core::panicking::panic_fmt",
     ),
     (
-        "_RNvCs6hdX3FSbJSK_13ferrix_kernel5kmain",
-        "ferrix_kernel::kmain",
+        "_RNvCs6hdX3FSbJSK_13xaqu_kernel5kmain",
+        "xaqu_kernel::kmain",
     ),
     (
-        "_RNvNtNtCs11Es365otsQ_18ferrix_kernel_core2mm5check12memory_check",
-        "ferrix_kernel_core::mm::check::memory_check",
+        "_RNvNtNtCs11Es365otsQ_18xaqu_kernel_core2mm5check12memory_check",
+        "xaqu_kernel_core::mm::check::memory_check",
     ),
     (
-        "_RINvNtCs11Es365otsQ_18ferrix_kernel_core9backtrace4walkNCNvNtB4_5panic16report_backtrace0EB4_",
-        "ferrix_kernel_core::backtrace::walk",
+        "_RINvNtCs11Es365otsQ_18xaqu_kernel_core9backtrace4walkNCNvNtB4_5panic16report_backtrace0EB4_",
+        "xaqu_kernel_core::backtrace::walk",
     ),
     (
-        "_RINvMs1_CsbCleW4jqUNW_11ferrix_heapNtB6_4Heap10deallocateNtNtCs11Es365otsQ_18ferrix_kernel_core2mm11KernelPagesEBX_",
-        "ferrix_heap::Heap::deallocate",
+        "_RINvMs1_CsbCleW4jqUNW_11xaqu_heapNtB6_4Heap10deallocateNtNtCs11Es365otsQ_18xaqu_kernel_core2mm11KernelPagesEBX_",
+        "xaqu_heap::Heap::deallocate",
     ),
     (
-        "_RINvMs5_Cs5I2HcVrCRTN_13ferrix_pagingINtB6_6MapperNtNtB6_6x86_646X86_64E9map_rangeNtNtCs11Es365otsQ_18ferrix_kernel_core2mm13KernelPhysMemEB1m_",
-        "ferrix_paging::Mapper::map_range",
+        "_RINvMs5_Cs5I2HcVrCRTN_13xaqu_pagingINtB6_6MapperNtNtB6_6x86_646X86_64E9map_rangeNtNtCs11Es365otsQ_18xaqu_kernel_core2mm13KernelPhysMemEB1m_",
+        "xaqu_paging::Mapper::map_range",
     ),
     (
-        "_RINvNtCs8ROlWsJZPDz_4core3ptr9drop_glueNtNtCs11Es365otsQ_18ferrix_kernel_core4vmap5ArenaEBF_",
+        "_RINvNtCs8ROlWsJZPDz_4core3ptr9drop_glueNtNtCs11Es365otsQ_18xaqu_kernel_core4vmap5ArenaEBF_",
         "core::ptr::drop_glue",
     ),
 ];

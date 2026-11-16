@@ -205,8 +205,8 @@ fn drive(arch: Arch, serial: &str) -> Result<()> {
     if !connected.contains("connected to") {
         return Err(Error::new(format!("adb connect {serial}: {connected}")));
     }
-    let echoed = adb(&["-s", serial, "shell", "echo", "adb-on-ferrix"])?;
-    if echoed.trim() != "adb-on-ferrix" {
+    let echoed = adb(&["-s", serial, "shell", "echo", "adb-on-xaqu"])?;
+    if echoed.trim() != "adb-on-xaqu" {
         return Err(Error::new(format!("adb shell echo gave {echoed:?}")));
     }
     push_and_pull(arch, serial)?;
@@ -239,7 +239,7 @@ fn drive(arch: Arch, serial: &str) -> Result<()> {
 fn cnxn_through(port: u16) -> Result<()> {
     use std::io::{Read, Write};
 
-    use ferrix_adb::message::{self, CNXN, HEADER_BYTES, Header, MAX_PAYLOAD, VERSION};
+    use xaqu_adb::message::{self, CNXN, HEADER_BYTES, Header, MAX_PAYLOAD, VERSION};
 
     let fail = |why: String| Error::new(format!("adb forward tcp:{port}: {why}"));
     let mut socket = std::net::TcpStream::connect_timeout(

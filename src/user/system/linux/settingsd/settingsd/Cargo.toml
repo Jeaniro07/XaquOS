@@ -10,12 +10,12 @@ publish.workspace = true
 [dependencies]
 # The socket, its peer's credentials, sethostname, fsync.
 libc = "0.2.189"
-ferrix-settings-proto = { path = "../proto" }
+xaqu-settings-proto = { path = "../proto" }
 # The conversation settingsd relays: authd's own client and records.
-ferrix-auth-client = { path = "../../auth/client" }
-ferrix-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
+xaqu-auth-client = { path = "../../auth/client" }
+xaqu-auth-proto = { path = "../../../../../lib/proto/auth-proto" }
 # init's control records, for service-enable-persistent.
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 # The trusted prompt's records (docs/SETTINGS-WRITER.md §12.6), which
 # sessiond relays to the compositor.
 compositor-seat = { path = "../../compositor/seat", features = ["settings-prompt"] }

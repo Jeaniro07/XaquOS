@@ -3,61 +3,61 @@
 version = 4
 
 [[package]]
-name = "ferrix-argon2"
+name = "xaqu-argon2"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-btrfs"
+name = "xaqu-btrfs"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-btrfs-mkfs"
+name = "xaqu-btrfs-mkfs"
 version = "0.1.0"
 dependencies = [
- "ferrix-btrfs",
- "ferrix-btrfs-write",
+ "xaqu-btrfs",
+ "xaqu-btrfs-write",
 ]
 
 [[package]]
-name = "ferrix-btrfs-write"
+name = "xaqu-btrfs-write"
 version = "0.1.0"
 dependencies = [
- "ferrix-btrfs",
- "ferrix-fallible",
+ "xaqu-btrfs",
+ "xaqu-fallible",
 ]
 
 [[package]]
-name = "ferrix-fallible"
+name = "xaqu-fallible"
 version = "0.1.0"
 dependencies = [
- "ferrix-sync",
+ "xaqu-sync",
 ]
 
 [[package]]
-name = "ferrix-install"
+name = "xaqu-install"
 version = "0.1.0"
 dependencies = [
- "ferrix-argon2",
- "ferrix-btrfs-mkfs",
- "ferrix-partition",
- "ferrix-slots",
+ "xaqu-argon2",
+ "xaqu-btrfs-mkfs",
+ "xaqu-partition",
+ "xaqu-slots",
 ]
 
 [[package]]
-name = "ferrix-partition"
+name = "xaqu-partition"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-sha256"
+name = "xaqu-sha256"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-slots"
+name = "xaqu-slots"
 version = "0.3.0"
 dependencies = [
- "ferrix-sha256",
+ "xaqu-sha256",
 ]
 
 [[package]]
-name = "ferrix-sync"
+name = "xaqu-sync"
 version = "0.1.0"

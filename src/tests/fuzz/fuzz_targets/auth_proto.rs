@@ -1,5 +1,5 @@
 //! Fuzz authd's wire format (`src/lib/proto/auth-proto`): any packet a local
-//! program sends to `/run/ferrix/auth`.
+//! program sends to `/run/xaqu/auth`.
 //!
 //! Decoding must never panic, and a record that decodes must encode back to
 //! exactly the packet it came from, since the format gives a record one
@@ -7,7 +7,7 @@
 
 #![no_main]
 
-use ferrix_auth_proto::{MAX_RECORD, Record};
+use xaqu_auth_proto::{MAX_RECORD, Record};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

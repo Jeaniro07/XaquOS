@@ -33,7 +33,7 @@
 //! reserve, and no other processor ever reaches it. Sections are short by
 //! construction: one `Arc::new` or one map insert, never anything that waits.
 //!
-//! **Depth.** `ferrix_fallible` bounds what one operation can ask for, and its
+//! **Depth.** `xaqu_fallible` bounds what one operation can ask for, and its
 //! tests measure the pinned standard library against the bounds: `Arc::new`
 //! makes one allocation, of `arc_layout::<T>()`; a `BTreeMap` insert makes at
 //! most `height + 2` allocations, each of a node no larger than
@@ -57,10 +57,10 @@ use core::cell::UnsafeCell;
 use core::marker::PhantomData;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use ferrix_fallible::AllocError;
-use ferrix_heap::{Request, Reserve};
-use ferrix_sched::MAX_CPUS;
-use ferrix_sync::IrqControl;
+use xaqu_fallible::AllocError;
+use xaqu_heap::{Request, Reserve};
+use xaqu_sched::MAX_CPUS;
+use xaqu_sync::IrqControl;
 
 use super::{KernelPages, with_heap};
 use crate::arch;

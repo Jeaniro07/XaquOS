@@ -19,11 +19,11 @@
 
 use core::marker::PhantomData;
 
-use ferrix_blkring::control::{Block as StartBlock, Start};
-use ferrix_native_abi::types::DeviceInfo;
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::{Device as DeviceHandle, Interrupt};
-use ferrix_rt::native::port::Port;
+use xaqu_blkring::control::{Block as StartBlock, Start};
+use xaqu_native_abi::types::DeviceInfo;
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::{Device as DeviceHandle, Interrupt};
+use xaqu_rt::native::port::Port;
 
 use crate::dma::{Dma, Run};
 use crate::mmio;
@@ -70,7 +70,7 @@ impl<F: Function> Bind for Device<F> {
     ) -> Result<Self, Step> {
         let info = handle.info().map_err(|_| Step::Identity)?;
         if info.location != start.location || !F::matches(&info) {
-            ferrix_rt::err!("pci      a driver was started on a function that is not its kind");
+            xaqu_rt::err!("pci      a driver was started on a function that is not its kind");
             return Err(Step::Identity);
         }
         let vector = handle.interrupt(0).and_then(|interrupt| {
@@ -78,7 +78,7 @@ impl<F: Function> Bind for Device<F> {
             Ok(interrupt)
         });
         let Ok(interrupt) = vector else {
-            ferrix_rt::err!(
+            xaqu_rt::err!(
                 "pci      the function's first MSI-X or MSI vector could not be claimed"
             );
             return Err(Step::Events);
@@ -132,11 +132,11 @@ impl<F: Function> Device<F> {
                 },
             );
             if mapped.is_err() {
-                ferrix_rt::err!("pci      the kernel would not map the function's BAR");
+                xaqu_rt::err!("pci      the kernel would not map the function's BAR");
             }
             return mapped;
         }
-        ferrix_rt::err!(
+        xaqu_rt::err!(
             "pci      the function's BAR is not published: its memory decoding is off, \
               or the kernel withheld it"
         );

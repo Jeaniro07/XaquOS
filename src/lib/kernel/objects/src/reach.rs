@@ -76,7 +76,7 @@ pub fn reaches<N>(
                 return answer;
             }
         }
-        if ferrix_fallible::try_push(&mut held, node).is_err() {
+        if xaqu_fallible::try_push(&mut held, node).is_err() {
             return Reach::NoMemory;
         }
     }
@@ -102,8 +102,8 @@ fn admit<N>(
     if seen.len() >= limit {
         return Some(Reach::TooFar);
     }
-    if ferrix_fallible::try_insert(seen, at, id).is_err()
-        || ferrix_fallible::try_push(pending, node).is_err()
+    if xaqu_fallible::try_insert(seen, at, id).is_err()
+        || xaqu_fallible::try_push(pending, node).is_err()
     {
         return Some(Reach::NoMemory);
     }

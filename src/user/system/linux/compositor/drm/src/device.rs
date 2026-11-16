@@ -9,14 +9,14 @@
 //! itself, which the kernel pins for the device for as long as the texture
 //! lives. One that is only drawn into and sampled from -- a blur's pyramid
 //! -- is asked for with a page: `VIRTGPU_RESOURCE_CREATE`'s `size` is how
-//! much backing, not how big the texture is, on Ferrix as on Linux.
+//! much backing, not how big the texture is, on Xaqu as on Linux.
 
 use std::collections::BTreeMap;
 use std::io;
 use std::os::fd::{BorrowedFd, OwnedFd};
 
 use compositor_virgl::{Device, Region, Texture, pipe};
-use ferrix_linux_abi::virtgpu::{Box3d, ResourceCreate};
+use xaqu_linux_abi::virtgpu::{Box3d, ResourceCreate};
 
 use crate::render::{Mapping, Render};
 

@@ -3,7 +3,7 @@
 //! partition before the region is given a fresh header, so that it outlives
 //! the next power cycle.
 //!
-//! Everything decided is `ferrix-eventlog`'s, as host-tested functions: the
+//! Everything decided is `xaqu-eventlog`'s, as host-tested functions: the
 //! partition lookup (exactly one of its type), every block address
 //! (`Geometry::lba`), the record's text, the order of writes, idempotence
 //! and a reset loop's collapse. This file moves blocks between firmware's
@@ -15,12 +15,12 @@
 
 use core::ptr;
 
-use ferrix_bootinfo::pstore::{self, HEADER_BYTES};
-use ferrix_eventlog::{
+use xaqu_bootinfo::pstore::{self, HEADER_BYTES};
+use xaqu_eventlog::{
     self as eventlog, AppendError, BAD_FRAMES_MOST, BadFrames, Current, Durability, Geometry,
     Outcome, RECORD_LEN, Scan, Store,
 };
-use ferrix_slots::gpt::{self, Lookup};
+use xaqu_slots::gpt::{self, Lookup};
 
 use crate::console::println;
 use crate::services::{Allocation, Disk, Services};
@@ -64,7 +64,7 @@ pub(crate) enum Opened {
     /// One, usable.
     Present(Log),
     /// One may be there and cannot be used: a record found must be kept in
-    /// RAM, not renewed (fail closed; `ferrix_eventlog::classify`).
+    /// RAM, not renewed (fail closed; `xaqu_eventlog::classify`).
     Unusable,
 }
 

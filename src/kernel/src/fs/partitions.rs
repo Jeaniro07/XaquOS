@@ -14,8 +14,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_partition::{parse_entries, parse_header};
-use ferrix_vfs::Errno;
+use xaqu_partition::{parse_entries, parse_header};
+use xaqu_vfs::Errno;
 
 use crate::console::println;
 use crate::fs::block::BlockDevice;

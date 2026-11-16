@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-ustack"
+name = "xaqu-ustack"
 description = "The initial process stack image a Linux program starts on"
 version = "0.1.0"
 edition = "2024"
@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ferrix-linux-abi = { workspace = true }
+xaqu-linux-abi = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,33 +1,33 @@
 //! The virtio-blk driver process: a ring-3 program that serves one disk to
 //! the kernel over the block ring.
 //!
-//! Everything that knows anything is a library. `ferrix-virtio-blk` drives
-//! the device, `ferrix-blkring` speaks the ring, and `ferrix-blkserve` joins
-//! the two; all three are tested on the host. `ferrix-driver` is the rest:
+//! Everything that knows anything is a library. `xaqu-virtio-blk` drives
+//! the device, `xaqu-blkring` speaks the ring, and `xaqu-blkserve` joins
+//! the two; all three are tested on the host. `xaqu-driver` is the rest:
 //! START, the virtio transport, pinned memory, and the ring's conversation
 //! with the kernel (`docs/BLOCK-RING.md`). What is here is the one thing only
 //! this driver knows: how the logic crate comes up on a virtio-blk device,
 //! the geometry that makes, and how it goes down.
 //!
-//! The exit status is a `ferrix_driver::Step`, 0 a clean STOP, and from 20 up
-//! the fault that stopped the serve loop (`ferrix_driver::block::fault_status`).
+//! The exit status is a `xaqu_driver::Step`, 0 a clean STOP, and from 20 up
+//! the fault that stopped the serve loop (`xaqu_driver::block::fault_status`).
 
 #![no_std]
 #![no_main]
 
-use ferrix_blkring::control::VMO_RIGHTS;
-use ferrix_blkring::geometry::{Device as Geometry, DeviceFlags};
-use ferrix_blkserve::Disk;
-use ferrix_driver::dma::{Dma, PAGE};
-use ferrix_driver::{Probe, Step, Stopped, Stuck, block, virtio};
-use ferrix_rt::native::handle::OwnedHandle;
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio_blk::{
+use xaqu_blkring::control::VMO_RIGHTS;
+use xaqu_blkring::geometry::{Device as Geometry, DeviceFlags};
+use xaqu_blkserve::Disk;
+use xaqu_driver::dma::{Dma, PAGE};
+use xaqu_driver::{Probe, Step, Stopped, Stuck, block, virtio};
+use xaqu_rt::native::handle::OwnedHandle;
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio_blk::{
     Accepted, Completion, DeviceError, Drained, Options, Parts, Request, Rings, Slot, SubmitError,
     Teardown,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Descriptors in the queue: two requests' worth per ring entry, which
 /// QEMU's 256 and every device's power of two allow.
@@ -53,7 +53,7 @@ fn main(bootstrap: Bootstrap) -> i32 {
 type Device = virtio::Device<virtio::Block>;
 
 /// The device as the loop drives it.
-type Logic = ferrix_virtio_blk::Driver<Device, Dma, Dma, Dma, [Slot; QUEUE_SIZE as usize]>;
+type Logic = xaqu_virtio_blk::Driver<Device, Dma, Dma, Dma, [Slot; QUEUE_SIZE as usize]>;
 
 /// The device logic on the virtio transport and pinned memory, and the
 /// geometry the ring announces.

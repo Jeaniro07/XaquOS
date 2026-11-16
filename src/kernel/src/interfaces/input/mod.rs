@@ -1,7 +1,7 @@
 //! The input core: the kernel's end of an input driver's control channel, and
 //! the `/dev/input/event<N>` nodes it publishes.
 //!
-//! `docs/INPUT.md` §3.1 and §3.2 are the design and `ferrix-inputctl` is
+//! `docs/INPUT.md` §3.1 and §3.2 are the design and `xaqu-inputctl` is
 //! every word of the protocol and of the queues. A process holding a device
 //! with `MANAGE` asks for a control channel with `INPUT_CONTROL_CREATE` and
 //! hands its end to an input driver. One kernel task per device then:
@@ -36,18 +36,18 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use ferrix_blkring::identity::Location;
-use ferrix_inputctl::message::{
+use xaqu_blkring::identity::Location;
+use xaqu_inputctl::message::{
     Events, Hello, MAX_BYTES, MAX_EVENTS, Message, RawEvent, Ready, Refusal,
 };
-use ferrix_inputctl::queue::{Clock, Clocks, Queue, Stamped};
-use ferrix_inputctl::session::{OpenId, Received, Session};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{CHANNEL_MAX_HANDLES, DEVICE_NOT_PCI};
+use xaqu_inputctl::queue::{Clock, Clocks, Queue, Stamped};
+use xaqu_inputctl::session::{OpenId, Received, Session};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{CHANNEL_MAX_HANDLES, DEVICE_NOT_PCI};
 
 use crate::claim::{Claims, Numbers, StillServed};
 use crate::device::DeviceNode;
@@ -121,7 +121,7 @@ pub(crate) struct Open {
     pub(crate) id: OpenId,
     /// Its events. A `Vec` of the size `queue_size` gave: Linux's rule for
     /// this device's declaration, with more packets than Linux keeps
-    /// (`ferrix_inputctl::queue::BUFFER_PACKETS` says why).
+    /// (`xaqu_inputctl::queue::BUFFER_PACKETS` says why).
     pub(crate) queue: SpinLock<Queue<Vec<Stamped>>>,
 }
 
@@ -158,7 +158,7 @@ impl InputDevice {
     ///
     /// A report is stamped once from the monotonic clock, and a read shifts
     /// it into whichever clock the open chose. `CLOCK_BOOTTIME` and
-    /// `CLOCK_MONOTONIC` are the same here: Ferrix does not suspend, so no
+    /// `CLOCK_MONOTONIC` are the same here: Xaqu does not suspend, so no
     /// time passes that the monotonic clock did not count.
     pub(crate) fn clocks() -> Clocks {
         Clocks {
@@ -279,7 +279,7 @@ fn control_create(caller: &dyn Host, registers: &[u64; 6]) -> Result<usize, Errn
     native::control_channel(
         caller,
         device,
-        ferrix_blkring::control::CONTROL_RIGHTS,
+        xaqu_blkring::control::CONTROL_RIGHTS,
         |node| {
             create(node).map_err(|why| match why {
                 CreateError::InUse => status::ALREADY_BOUND,
@@ -321,7 +321,7 @@ pub(crate) fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, CreateErro
         location,
         announce,
     });
-    if sched::spawn("input", run, id, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("input", run, id, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = take_start(id);
         CLAIMS.release_one(node, &kernel_end);
         return Err(CreateError::NoMemory);
@@ -562,24 +562,24 @@ fn describe(session: &Session) -> alloc::string::String {
 
 /// The event types the core publishes, with the names the boot line uses.
 const TYPE_NAMES: [(u16, &str); 7] = [
-    (ferrix_linux_abi::input::EV_KEY, "keys"),
-    (ferrix_linux_abi::input::EV_REL, "relative axes"),
-    (ferrix_linux_abi::input::EV_ABS, "absolute axes"),
-    (ferrix_linux_abi::input::EV_MSC, "misc"),
-    (ferrix_linux_abi::input::EV_SW, "switches"),
-    (ferrix_linux_abi::input::EV_LED, "LEDs"),
-    (ferrix_linux_abi::input::EV_REP, "repeat"),
+    (xaqu_linux_abi::input::EV_KEY, "keys"),
+    (xaqu_linux_abi::input::EV_REL, "relative axes"),
+    (xaqu_linux_abi::input::EV_ABS, "absolute axes"),
+    (xaqu_linux_abi::input::EV_MSC, "misc"),
+    (xaqu_linux_abi::input::EV_SW, "switches"),
+    (xaqu_linux_abi::input::EV_LED, "LEDs"),
+    (xaqu_linux_abi::input::EV_REP, "repeat"),
 ];
 
 /// What the core left out of a device's declaration, for the boot line.
-fn left_out_names(left_out: &ferrix_inputctl::session::LeftOut) -> alloc::string::String {
+fn left_out_names(left_out: &xaqu_inputctl::session::LeftOut) -> alloc::string::String {
     use alloc::string::String;
     use core::fmt::Write;
 
     let mut text = String::new();
     let mut first = true;
     for kind in 0..u16::try_from(left_out.types.len() * 8).unwrap_or(0) {
-        if !ferrix_inputctl::message::bit(&left_out.types, kind) {
+        if !xaqu_inputctl::message::bit(&left_out.types, kind) {
             continue;
         }
         let _ = write!(text, "{}EV_{kind:#04x}", if first { "" } else { ", " });
@@ -655,7 +655,7 @@ fn serve(device: &InputDevice) {
 /// A report under a grab goes to the grabbing open alone, which is what
 /// `EVIOCGRAB` is for: a compositor grabs a device so a key it takes does not
 /// also reach whatever else has the node open.
-fn deliver(device: &InputDevice, reports: &[ferrix_inputctl::session::Report]) {
+fn deliver(device: &InputDevice, reports: &[xaqu_inputctl::session::Report]) {
     let opens: Vec<Arc<Open>> = device.opens.lock().clone();
     for report in reports {
         for open in &opens {

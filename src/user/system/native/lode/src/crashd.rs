@@ -1,6 +1,6 @@
 //! `lode crashd`: the crash collector (`docs/LOGGING.md` §21, tombstones
 //! step 2). Started by init as `lode-crashd.service`, as root, it arms the
-//! kernel's crash hold by holding `/dev/ferrix-crashes` open. For each
+//! kernel's crash hold by holding `/dev/xaqu-crashes` open. For each
 //! process the kernel holds it reads, while the process still exists, every
 //! thread's state, its `status`, its `maps` and its descriptors, sends them
 //! to lode as one record of systemd's native protocol, and lets the process
@@ -14,14 +14,14 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use ferrix_lode_core::tombstone::{Held, parse_held};
+use xaqu_lode_core::tombstone::{Held, parse_held};
 
 use crate::cli::complain;
 use crate::snapshot::{self, Fields};
 use crate::sys;
 
 /// The device the kernel's hold is armed by.
-const DEVICE: &[u8] = b"/dev/ferrix-crashes";
+const DEVICE: &[u8] = b"/dev/xaqu-crashes";
 
 /// `O_RDWR`.
 const O_RDWR: usize = 2;
@@ -109,7 +109,7 @@ pub(crate) fn collect(held: &Held) -> Fields {
             Vec::from(&b"lode-crashd"[..])
         ),
         (
-            String::from("FERRIX_EVENT"),
+            String::from("XAQU_EVENT"),
             Vec::from(&b"crash-collected"[..])
         ),
         (String::from("COLLECTED_PID"), number(held.pid)),

@@ -12,8 +12,8 @@
 //! isolated) asks for a control channel with `chardev_control_create`. Its
 //! end carries no `TRANSFER` and no `DUPLICATE`, so it stays the driver's.
 //! The core's task for the control waits for HELLO, which lists the minors
-//! of major 195 the driver serves; `ferrix_chardevctl::session` judges it,
-//! and the kernel, not the driver, names each node (`ferrix_chardevctl::node`):
+//! of major 195 the driver serves; `xaqu_chardevctl::session` judges it,
+//! and the kernel, not the driver, names each node (`xaqu_chardevctl::node`):
 //! `nvidia<N>`, `nvidia-modeset`, `nvidiactl`, mode 0666, root's. The nodes
 //! are published in `/dev` and READY goes back.
 //!
@@ -75,16 +75,16 @@ use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-use ferrix_chardevctl::message::{self, Message, Op, Request as Wire};
-use ferrix_chardevctl::node::{MAJOR, RENDER_MINOR};
-use ferrix_chardevctl::session::{self, Publication, Refusal};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_chardevctl::message::{self, Message, Op, Request as Wire};
+use xaqu_chardevctl::node::{MAJOR, RENDER_MINOR};
+use xaqu_chardevctl::session::{self, Publication, Refusal};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
 
 use crate::claim::{Claims, StillServed};
 use crate::device::DeviceNode;
@@ -101,7 +101,7 @@ use crate::syscall::uaccess;
 use crate::timer;
 use crate::user::vmo::Vmo;
 
-#[cfg(not(ferrix_load_built = "lift"))]
+#[cfg(not(xaqu_load_built = "lift"))]
 pub mod check;
 pub(crate) mod dmabuf;
 pub(crate) mod file;
@@ -344,7 +344,7 @@ fn create(node: &Arc<DeviceNode>) -> Result<Arc<Endpoint>, Errno> {
         }
         starting.push(control);
     }
-    if sched::spawn("chardev", run, id, ferrix_sched::NICE_0_WEIGHT).is_err() {
+    if sched::spawn("chardev", run, id, xaqu_sched::NICE_0_WEIGHT).is_err() {
         let _ = take_start(id);
         CLAIMS.release(node);
         return Err(status::NO_MEMORY);
@@ -1123,7 +1123,7 @@ fn map_reply(
     a4: u64,
     a5: u64,
 ) -> Option<MapReply> {
-    use ferrix_chardevctl::message::{MAP_APERTURE, MAP_KIND, MAP_VMO, MAP_WRITE_COMBINING};
+    use xaqu_chardevctl::message::{MAP_APERTURE, MAP_KIND, MAP_VMO, MAP_WRITE_COMBINING};
     const PAGE: u64 = 4096;
     const PROT_WRITE: u32 = 2;
     let len = u64::from(request.wire.pages).checked_mul(PAGE)?;
@@ -1170,7 +1170,7 @@ fn map_reply(
                 let aperture_end = info.phys.checked_add(info.len)?;
                 (info.phys <= value && end <= aperture_end).then_some(info)
             })?;
-            let prefetchable = inside.flags & ferrix_native_abi::types::APERTURE_PREFETCHABLE != 0;
+            let prefetchable = inside.flags & xaqu_native_abi::types::APERTURE_PREFETCHABLE != 0;
             (!combining || prefetchable).then_some(MapReply::Aperture {
                 phys: value,
                 combining,

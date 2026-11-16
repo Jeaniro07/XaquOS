@@ -1,14 +1,14 @@
 /*
- * Ferrix — SysML v2 model, part 5: processors, time, and scheduling.
+ * Xaqu — SysML v2 model, part 5: processors, time, and scheduling.
  *
  * Stages 3 to 5 run today: interrupts, a clock, every processor online,
  * IPIs, TLB shootdown, grace periods, fair locks, and tasks scheduled by
  * EEVDF in one Throughput domain. Stage 14's real-time domains are designed
  * here (docs/ARCHITECTURE.md §5) and not yet written.
  */
-package FerrixScheduling {
+package XaquScheduling {
     private import ScalarValues::*;
-    private import FerrixLifecycle::*;
+    private import XaquLifecycle::*;
 
     // -----------------------------------------------------------------------
     // Synchronisation (src/lib/kernel/sync)
@@ -187,7 +187,7 @@ package FerrixScheduling {
         attribute sleepDeadline : Natural[0..1];
         part stack : KernelStack;
         ref part cpu : PerCpu;
-        ref part addressSpace : FerrixMemory::ProcessAddressSpace[0..1] {
+        ref part addressSpace : XaquMemory::ProcessAddressSpace[0..1] {
             @stage { number = 6; }
             doc /* The address space its user half is translated through, absent
                  * for a kernel thread. A reference and not a part: the space
@@ -217,7 +217,7 @@ package FerrixScheduling {
              * to clear when it ends are none of the scheduler's business --
              * so the scheduler asks it one thing, the process it runs in, to
              * count the thread starting and gone. */
-        ref part process : FerrixObjects::Process;
+        ref part process : XaquObjects::Process;
     }
 
     #implemented part def Tasks {

@@ -1,5 +1,5 @@
 /*
- * Ferrix — SysML v2 model, part 20: the low-level requirements of a
+ * Xaqu — SysML v2 model, part 20: the low-level requirements of a
  * device's claim, its node, and its quiesce.
  *
  * What each unit of src/kernel/src/claim.rs and src/kernel/src/device.rs does, and
@@ -33,8 +33,8 @@
  * through each part; `L.quiesce` names the behaviour, whose units are in
  * syscall/native.rs.
  */
-package FerrixDeviceRequirements {
-    private import FerrixItemRequirements::*;
+package XaquDeviceRequirements {
+    private import XaquItemRequirements::*;
 
     package Claims {
         doc /* src/kernel/src/claim.rs: a device claimed through a core's control
@@ -469,7 +469,7 @@ package FerrixDeviceRequirements {
                 capability starting inside a vendor body, or holds more capabilities
                 or vendor bodies than the walk records, shall leave the function
                 nothing writable.";
-            attribute :>> criterion = "ferrix_pci::window's host tests: the header,
+            attribute :>> criterion = "xaqu_pci::window's host tests: the header,
                 MSI, power management, PCI Express, MSI-X, ATS, AER and uncovered
                 bytes are refused and vendor bodies writable; pci_cfg_data is
                 refused and virtio's bar, offset and length writable; a body past
@@ -510,8 +510,8 @@ package FerrixDeviceRequirements {
                 outside both ranges, every truncation, no anchor, an empty table
                 and one of 1 MiB and a byte are each refused with their error.";
             attribute :>> parent = "H.BOOT.4";
-            attribute :>> unit = ("ferrix_smbios::EntryPoint::parse",
-                "ferrix_smbios::EntryPoint::v3", "ferrix_smbios::EntryPoint::v2");
+            attribute :>> unit = ("xaqu_smbios::EntryPoint::parse",
+                "xaqu_smbios::EntryPoint::v3", "xaqu_smbios::EntryPoint::v2");
         }
         requirement <'L.discovery.3'> smbiosWalkBounded : ItemLowLevel {
             attribute :>> statement = "walk shall read no byte outside the table it is
@@ -525,7 +525,7 @@ package FerrixDeviceRequirements {
                 every single-byte change of a good table walks within bounds; a 3.x
                 table stops at type 127 and a 2.x one with a count does not.";
             attribute :>> parent = "H.BOOT.4";
-            attribute :>> unit = ("ferrix_smbios::walk", "ferrix_smbios::Smbios::new");
+            attribute :>> unit = ("xaqu_smbios::walk", "xaqu_smbios::Smbios::new");
         }
         requirement <'L.discovery.4'> smbiosIdentityAsLinux : ItemLowLevel {
             attribute :>> statement = "Smbios shall decode the identity fields of
@@ -540,9 +540,9 @@ package FerrixDeviceRequirements {
                 strings, absent fields, bytes passed through, the modalias and the
                 cut to a page.";
             attribute :>> parent = "H.BOOT.16";
-            attribute :>> unit = ("ferrix_smbios::Smbios::field_text",
-                "ferrix_smbios::Smbios::modalias", "ferrix_smbios::decode",
-                "ferrix_smbios::string");
+            attribute :>> unit = ("xaqu_smbios::Smbios::field_text",
+                "xaqu_smbios::Smbios::modalias", "xaqu_smbios::decode",
+                "xaqu_smbios::string");
         }
         requirement <'L.discovery.5'> smbiosCopyAcceptedOnlyInBounds : ItemLowLevel {
             attribute :>> statement = "discovery::smbios shall read the loader's
@@ -703,7 +703,7 @@ package FerrixDeviceRequirements {
             attribute :>> unit = "syscall::native::device_isolation";
         }
         requirement <'L.device.58'> unisolatedWordForwardedSaidAudited : ItemLowLevel {
-            attribute :>> statement = "The bare boot word ferrix.unisolated shall
+            attribute :>> statement = "The bare boot word xaqu.unisolated shall
                 be said on its own line at bring-up, recorded in the audit
                 configuration as Config::Unisolated 1 before devmgr starts, and
                 forwarded to devmgr in DEVICES' flags; without it, or given a
@@ -739,7 +739,7 @@ package FerrixDeviceRequirements {
         }
         requirement <'L.device.35'> heldOffFunctionGetsItsTablePage : ItemLowLevel {
             attribute :>> statement = "A PCI function in the build's MSI-preferred
-                list (ferrix_pci::msix::MSI_PREFERRED, exactly 1F0A:6801) with both an
+                list (xaqu_pci::msix::MSI_PREFERRED, exactly 1F0A:6801) with both an
                 MSI-X table and an MSI capability, its configuration space placed, no
                 INTx line and its memory decoded shall have its MSI-X held off at
                 stage 10 before its node is built -- Enable written 0 and Function
@@ -789,7 +789,7 @@ package FerrixDeviceRequirements {
         requirement <'L.device.38'> theFirmwareFramebufferLentExactly : ItemLowLevel {
             attribute :>> statement = "The boot framebuffer shall stay in the
                 ranges withheld from every aperture but one, withheld as its size
-                in whole pages: on x86-64 under ferrix.efifb, and only there, at
+                in whole pages: on x86-64 under xaqu.efifb, and only there, at
                 most one node, whose one aperture starts at the framebuffer's
                 first byte and is its visible lines in whole pages, prefetchable,
                 with no vector. None shall be made when the framebuffer is in
@@ -809,7 +809,7 @@ package FerrixDeviceRequirements {
                 framebuffer whose size is exactly its 1,920,000 visible bytes its
                 lines in whole pages (469), refuses it one byte short, and
                 withholds it when another range starts in its last page. A node without the option
-                or off x86-64 fails the boot. Under ferrix.efifb the published
+                or off x86-64 fails the boot. Under xaqu.efifb the published
                 node holds one prefetchable aperture equal to the framebuffer's
                 lines and no vector (test-compositor --boot firmware-screen). With
                 the exemption granted to any aperture, or either clause of
@@ -834,7 +834,7 @@ package FerrixDeviceRequirements {
                 (L.device.43), over the aperture, so that every user mapping of
                 it is held to that type (L.user.109) and only
                 io_mapping_map_combining maps it.";
-            attribute :>> criterion = "Under ferrix.efifb the node's domain is
+            attribute :>> criterion = "Under xaqu.efifb the node's domain is
                 refused and none was made, its DMA is off, a hold of the aperture
                 as device or cached memory is refused while one as
                 write-combining is not, and vmo_pin (plain and PIN_CONTIGUOUS)
@@ -856,7 +856,7 @@ package FerrixDeviceRequirements {
                 device reaches it through device_in, and on such a function each
                 shall answer BAD_STATE, configuration reads and I/O mappings
                 included.";
-            attribute :>> criterion = "Under ferrix.efifb every function whose
+            attribute :>> criterion = "Under xaqu.efifb every function whose
                 BAR ranges, read again from the published nodes, overlap the
                 framebuffer is marked; the VGA function that holds it answers a
                 configuration read and an io_mapping_create BAD_STATE (W2 and W8,
@@ -874,7 +874,7 @@ package FerrixDeviceRequirements {
                 framebuffer, waiting out a draw in flight, before the firmware
                 framebuffer's node exists, so that no kernel draw but a panic's
                 meets a ring-3 driver's on its pages.";
-            attribute :>> criterion = "Under ferrix.efifb ferrix.fbcon the console
+            attribute :>> criterion = "Under xaqu.efifb xaqu.fbcon the console
                 draws the boot until the node is made, and stage 10's check of the
                 published node finds it stopped; hyprix's picture on the
                 framebuffer then holds no console pixel (test-compositor --boot
@@ -889,7 +889,7 @@ package FerrixDeviceRequirements {
                 firmware framebuffer's node as TREE_FIRMWARE_FB with one aperture
                 and no vector, and its width, height, stride and pixel layout, as
                 it was minted, in the fields a tree node leaves zero.";
-            attribute :>> criterion = "Under ferrix.efifb the node's device_info,
+            attribute :>> criterion = "Under xaqu.efifb the node's device_info,
                 read back through the call, names TREE_FIRMWARE_FB, one aperture,
                 no vector and the minted mode (W8, the config line;
                 test-compositor --boot firmware-screen), and efifb starts at the
@@ -899,14 +899,14 @@ package FerrixDeviceRequirements {
             attribute :>> unit = "device::DeviceNode::describe";
         }
         requirement <'L.device.43'> theLentFramebufferWriteCombining : ItemLowLevel {
-            attribute :>> statement = "On x86-64 under ferrix.efifb the firmware
+            attribute :>> statement = "On x86-64 under xaqu.efifb the firmware
                 framebuffer's node shall not be made unless every processor
                 programmed its PAT (L.x86_64.127) and every page of the kernel's
                 panic window over the framebuffer reads back write-combining,
                 writable, not user's and none as device memory (L.x86_64.176),
                 read before the boot console is stopped and the kernel's hold is
                 taken.";
-            attribute :>> criterion = "Under ferrix.efifb stage 10's check of the
+            attribute :>> criterion = "Under xaqu.efifb stage 10's check of the
                 published node reads every page of the kernel's window back
                 write-combining, not device, writable and not user's, as the
                 type the hold keeps; reads this processor's IA32_PAT back as
@@ -930,7 +930,7 @@ package FerrixDeviceRequirements {
 
         requirement <'L.device.44'> theIntelGpuIsDrivenOnlyWhenAsked : ItemLowLevel {
             attribute :>> statement = "Unless the command line says
-                ferrix.intelgpu, the Intel integrated GPU's function shall be
+                xaqu.intelgpu, the Intel integrated GPU's function shall be
                 yielded: every native call that needs MANAGE on it answers
                 BAD_STATE. Under the option, stage 10 shall make its domain and
                 name it, and where its unit does not translate shall say DEGRADED,
@@ -961,9 +961,9 @@ package FerrixDeviceRequirements {
         }
         requirement <'L.device.46'> theScreenGoesToTheIntelGpuByIdentity : ItemLowLevel {
             doc /* K4 of docs/INTEL-GPU.md section 5; the consultant's K4 (1),
-                 * ledger 2026-10-18 line 2352. Under ferrix.efifb the firmware
+                 * ledger 2026-10-18 line 2352. Under xaqu.efifb the firmware
                  * framebuffer is lent to a node of its own and the function
-                 * holding it is yielded (L.device.40). Under ferrix.intelgpu
+                 * holding it is yielded (L.device.40). Under xaqu.intelgpu
                  * as well, when that function is the Intel integrated GPU,
                  * the lend goes to it instead: the same aperture, the same
                  * exemption from the reserved ranges, the same kernel hold of
@@ -974,10 +974,10 @@ package FerrixDeviceRequirements {
                  * keeping the lit plane's GGTT entries, which the kernel does
                  * not claim (DISPLAY.md section 8). */
             attribute :>> statement = "Where the firmware framebuffer is lent
-                at all (under ferrix.efifb, on x86-64, with write-combining
+                at all (under xaqu.efifb, on x86-64, with write-combining
                 ready on every processor; L.device.40, L.device.43), it shall
                 be lent to the Intel integrated GPU's own node, in place of a
-                node of its own, exactly when ferrix.intelgpu was said and the
+                node of its own, exactly when xaqu.intelgpu was said and the
                 Intel GPU, by what enumeration read, holds it in a BAR; it
                 shall then be minted the framebuffer's visible lines in whole
                 pages, the one exemption from the reserved ranges, and no
@@ -1082,10 +1082,10 @@ package FerrixDeviceRequirements {
         }
         requirement <'L.device.51'> powerNodeOnlyWhereTheTableSays : ItemLowLevel {
             attribute :>> statement = "Stage 10 shall publish the power node,
-                binding TREE_X86_POWER, only under ferrix.powerctl on an x86-64
+                binding TREE_X86_POWER, only under xaqu.powerctl on an x86-64
                 processor the power core's model table names, in one package, whose
                 0x601 reads unlocked and not 0 and whose TjMax reads 80 to 110 C, or
-                under the test-only ferrix.powerctl.fake; it shall print one
+                under the test-only xaqu.powerctl.fake; it shall print one
                 refusal line and publish nothing otherwise, and without either word
                 read, publish and print nothing; a refusal shall not stop the
                 boot.";
@@ -1134,7 +1134,7 @@ package FerrixDeviceRequirements {
                 on each of its three paths, so that devmgr and every driver's job
                 beneath it are sealed.";
             attribute :>> criterion = "The sysfs check, once devmgr has reported
-                (or, under ferrix.devmgr=init, before init has started it):
+                (or, under xaqu.devmgr=init, before init has started it):
                 drivers.slice and every job beneath it read as sealed. A boot
                 exercises drivers_job's first path, the named child, only; the
                 second and third, for a name taken or no memory, rest on their
@@ -1213,7 +1213,7 @@ package FerrixDeviceRequirements {
         requirement <'L.device.72'> untranslatedNotBound : ItemLowLevel {
             attribute :>> statement = "A bind whose domain would not translate shall
                 be refused ACCESS_DENIED and the domain not kept, unless the boot
-                carries ferrix.unisolated.";
+                carries xaqu.unisolated.";
             attribute :>> criterion = "object::authority_check on a made-up node,
                 without and with the word; with the test removed it fails.";
             attribute :>> parent = "H.DEV.10";
@@ -1266,7 +1266,7 @@ package FerrixDeviceRequirements {
                 record its compatible list, path, *-names and subtree.
                 Only personality=user publishes real nodes: present and desktop
                 publish none, and every profile's check holds this on made-up trees.";
-            attribute :>> criterion = "ferrix-fdt's host tests: references of
+            attribute :>> criterion = "xaqu-fdt's host tests: references of
                 every kind, a missing and a disabled provider, a pin
                 configuration's controller, the record read back; test-driver-model
                 reads the PL031's path and its apb_pclk reference out of the
@@ -1349,7 +1349,7 @@ package FerrixDeviceRequirements {
                 lock.
                 Only personality=user publishes real nodes: present and desktop
                 publish none, and every profile's check holds this on made-up trees.";
-            attribute :>> criterion = "ferrix-fdt's host tests of each bound, and
+            attribute :>> criterion = "xaqu-fdt's host tests of each bound, and
                 the fdt_generic fuzz target: every node visited once with its
                 depth of ancestors, references within their bound, every record
                 read back within its buffer.";

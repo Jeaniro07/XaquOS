@@ -1,22 +1,22 @@
 //! Finding where the box hangs (2026-10-19). Booting with
-//! `ferrix.intelgpu` hard-hung the N150 box twice, with no panic, no timed
+//! `xaqu.intelgpu` hard-hung the N150 box twice, with no panic, no timed
 //! reset and nobody at the screen, so the RAM log was lost to the power
 //! cycle. Three words on the kernel command line, read from `/proc/cmdline`,
 //! let one boot show where:
 //!
-//! * `ferrix.intelgpu.stop=N` stops the driver before step `N` of [`At`]:
+//! * `xaqu.intelgpu.stop=N` stops the driver before step `N` of [`At`]:
 //!   it says so and stays, touching nothing more (it never exits, since
 //!   devmgr would then quiesce the function under the lit screen). `stop=1`
 //!   starts the driver and touches nothing, which splits a hang in the
 //!   kernel's part from one in the driver's.
-//! * `ferrix.intelgpu.trace` says every register access before it is made:
+//! * `xaqu.intelgpu.trace` says every register access before it is made:
 //!   `intel: about to read 0x...` and `intel: about to write 0x... <- 0x...`,
 //!   GGTT entries written included. The kernel draws a program's console
-//!   lines on the screen under `ferrix.fbcon` before the write returns, with
+//!   lines on the screen under `xaqu.fbcon` before the write returns, with
 //!   the write-combining buffers drained (`console::screen`), so a photograph
 //!   of a hung box shows the last access asked for.
 //!
-//! * `ferrix.intelgpu.reset=S` restarts the machine S seconds after boot
+//! * `xaqu.intelgpu.reset=S` restarts the machine S seconds after boot
 //!   (`reboot(2)`, the disks committed first), whatever step the driver is
 //!   in: a box whose init never resets it, or a driver waiting forever,
 //!   comes back on its own. Only a processor stuck in a register access
@@ -28,10 +28,10 @@
 use core::fmt;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_intel_xelp::options::{self, Options, Words};
+use xaqu_intel_xelp::options::{self, Options, Words};
 
 /// The steps, in the order the driver takes them. The number is what
-/// `ferrix.intelgpu.stop` names; the box's run plan cites them.
+/// `xaqu.intelgpu.stop` names; the box's run plan cites them.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub(crate) enum At {
@@ -91,38 +91,38 @@ pub(crate) struct Steps {
     pub(crate) stop: Option<u32>,
     /// Say every register access before it is made.
     pub(crate) trace: bool,
-    /// Run M2's checks before serving (`ferrix.intelgpu.m2`).
+    /// Run M2's checks before serving (`xaqu.intelgpu.m2`).
     pub(crate) selftest: bool,
-    /// A fixed GT frequency request in MHz (`ferrix.intelgpu.freq=MHz`).
+    /// A fixed GT frequency request in MHz (`xaqu.intelgpu.freq=MHz`).
     pub(crate) freq_mhz: Option<u32>,
-    /// The per-second frequency log (`ferrix.intelgpu.freqlog`).
+    /// The per-second frequency log (`xaqu.intelgpu.freqlog`).
     pub(crate) freqlog: bool,
-    /// The render node's trace (`ferrix.intelgpu.uapitrace`): held waits,
+    /// The render node's trace (`xaqu.intelgpu.uapitrace`): held waits,
     /// their answers, failed ioctls, and a wait unanswered for 2 s named
     /// with its fences, without `trace`'s every register access.
     pub(crate) uapitrace: bool,
-    /// The box's frequency checkpoint (`ferrix.intelgpu.freqtest`).
+    /// The box's frequency checkpoint (`xaqu.intelgpu.freqtest`).
     pub(crate) freqtest: bool,
     /// Hold render and GT forcewake for the driver's life
-    /// (`ferrix.intelgpu.fwhold`), as before forcewake was taken per access.
+    /// (`xaqu.intelgpu.fwhold`), as before forcewake was taken per access.
     pub(crate) fwhold: bool,
     /// The render node's ioctl counts every 10 s
-    /// (`ferrix.intelgpu.ioctlstat`, `serve::IoctlStats`).
+    /// (`xaqu.intelgpu.ioctlstat`, `serve::IoctlStats`).
     pub(crate) ioctlstat: bool,
 }
 
 /// The command-line words, as the kernel's command line says them.
 const WORDS: Words<'static> = Words {
-    stop: b"ferrix.intelgpu.stop=",
-    trace: b"ferrix.intelgpu.trace",
-    reset: b"ferrix.intelgpu.reset=",
-    selftest: b"ferrix.intelgpu.m2",
-    freq: b"ferrix.intelgpu.freq=",
-    freqlog: b"ferrix.intelgpu.freqlog",
-    freqtest: b"ferrix.intelgpu.freqtest",
-    uapitrace: b"ferrix.intelgpu.uapitrace",
-    fwhold: b"ferrix.intelgpu.fwhold",
-    ioctlstat: b"ferrix.intelgpu.ioctlstat",
+    stop: b"xaqu.intelgpu.stop=",
+    trace: b"xaqu.intelgpu.trace",
+    reset: b"xaqu.intelgpu.reset=",
+    selftest: b"xaqu.intelgpu.m2",
+    freq: b"xaqu.intelgpu.freq=",
+    freqlog: b"xaqu.intelgpu.freqlog",
+    freqtest: b"xaqu.intelgpu.freqtest",
+    uapitrace: b"xaqu.intelgpu.uapitrace",
+    fwhold: b"xaqu.intelgpu.fwhold",
+    ioctlstat: b"xaqu.intelgpu.ioctlstat",
 };
 
 /// The driver stopped before a step, as asked.
@@ -130,15 +130,15 @@ const WORDS: Words<'static> = Words {
 pub(crate) struct Stopped;
 
 impl Steps {
-    /// Read `/proc/cmdline` (`ferrix_intel_xelp::options`), and arm the
+    /// Read `/proc/cmdline` (`xaqu_intel_xelp::options`), and arm the
     /// restart it asks for. Unreadable, it is said, and nothing is asked.
     pub(crate) fn from_command_line() -> Steps {
         let mut line = [0_u8; 2048];
         let options = read_cmdline(&mut line).map_or_else(Options::default, |len| {
             options::parse(line.get(..len).unwrap_or_default(), &WORDS)
         });
-        ferrix_rt::info!(
-            "intel: ferrix.intelgpu.stop {}, trace {}, reset {}, m2 {}, freq {}, freqlog {}, freqtest {}, uapitrace {}, fwhold {}, ioctlstat {}",
+        xaqu_rt::info!(
+            "intel: xaqu.intelgpu.stop {}, trace {}, reset {}, m2 {}, freq {}, freqlog {}, freqtest {}, uapitrace {}, fwhold {}, ioctlstat {}",
             Show(options.stop),
             if options.trace { "on" } else { "off" },
             Show(options.reset_seconds),
@@ -151,15 +151,15 @@ impl Steps {
             if options.ioctlstat { "on" } else { "off" },
         );
         if options.reset_refused {
-            ferrix_rt::warn!(
-                "intel: ferrix.intelgpu.reset refused: seconds 1 to {} after boot; no restart",
+            xaqu_rt::warn!(
+                "intel: xaqu.intelgpu.reset refused: seconds 1 to {} after boot; no restart",
                 options::RESET_MAX_SECONDS
             );
         }
         if let Some(seconds) = options.reset_seconds {
             RESET_AT_NANOS.store(u64::from(seconds) * 1_000_000_000, Ordering::Relaxed);
-            ferrix_rt::notice!(
-                "intel: the machine restarts {seconds} s after boot (ferrix.intelgpu.reset), whatever this driver is doing then"
+            xaqu_rt::notice!(
+                "intel: the machine restarts {seconds} s after boot (xaqu.intelgpu.reset), whatever this driver is doing then"
             );
         }
         Steps {
@@ -180,17 +180,17 @@ impl Steps {
     pub(crate) fn before(&self, at: At, what: fmt::Arguments<'_>) -> Result<(), Stopped> {
         let n = at as u32;
         if self.stop.is_some_and(|stop| stop <= n) {
-            ferrix_rt::notice!(
-                "intel: stopped before step {n} ({at:?}) as ferrix.intelgpu.stop asks; the driver now waits and touches nothing"
+            xaqu_rt::notice!(
+                "intel: stopped before step {n} ({at:?}) as xaqu.intelgpu.stop asks; the driver now waits and touches nothing"
             );
             return Err(Stopped);
         }
-        ferrix_rt::info!("intel: step {n} ({at:?}): {what}");
+        xaqu_rt::info!("intel: step {n} ({at:?}): {what}");
         Ok(())
     }
 }
 
-/// When `ferrix.intelgpu.reset` restarts the machine, in nanoseconds after
+/// When `xaqu.intelgpu.reset` restarts the machine, in nanoseconds after
 /// boot on the monotonic clock; 0 for never.
 static RESET_AT_NANOS: AtomicU64 = AtomicU64::new(0);
 
@@ -213,12 +213,12 @@ pub(crate) fn reset_if_due(now: u64) {
         return;
     }
     RESET_AT_NANOS.store(0, Ordering::Relaxed);
-    ferrix_rt::notice!(
-        "intel: restarting the machine, {} s after boot, as ferrix.intelgpu.reset asks",
+    xaqu_rt::notice!(
+        "intel: restarting the machine, {} s after boot, as xaqu.intelgpu.reset asks",
         at / 1_000_000_000
     );
-    if let Err(error) = ferrix_rt::linux::reboot_restart() {
-        ferrix_rt::err!("intel: the restart was refused: {error:?}");
+    if let Err(error) = xaqu_rt::linux::reboot_restart() {
+        xaqu_rt::err!("intel: the restart was refused: {error:?}");
     }
 }
 
@@ -259,12 +259,12 @@ pub(crate) fn system_memory_bytes() -> Option<u64> {
 
 /// A small file, from its start, into `buf` (`path` NUL-terminated): its
 /// length.
-fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, ferrix_linux_abi::errno::Errno> {
-    use ferrix_rt::linux::{self, numbers};
+fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, xaqu_linux_abi::errno::Errno> {
+    use xaqu_rt::linux::{self, numbers};
     const AT_FDCWD: usize = (-100_isize) as usize;
     const O_RDONLY: usize = 0;
     if path.last() != Some(&0) {
-        return Err(ferrix_linux_abi::errno::Errno::EINVAL);
+        return Err(xaqu_linux_abi::errno::Errno::EINVAL);
     }
     // SAFETY: `path` is NUL-terminated and borrowed for the call.
     let fd = unsafe {
@@ -292,7 +292,7 @@ fn read_file(path: &[u8], buf: &mut [u8]) -> Result<usize, ferrix_linux_abi::err
 }
 
 fn unreadable(errno: impl fmt::Debug) {
-    ferrix_rt::warn!(
-        "intel: /proc/cmdline unreadable ({errno:?}): no ferrix.intelgpu.stop, trace or reset"
+    xaqu_rt::warn!(
+        "intel: /proc/cmdline unreadable ({errno:?}): no xaqu.intelgpu.stop, trace or reset"
     );
 }

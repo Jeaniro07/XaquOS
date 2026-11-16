@@ -1,9 +1,9 @@
 //! The virtio-gpu driver process: a ring-3 program that serves one card to
 //! the kernel's display core.
 //!
-//! Everything that knows anything is a library. `ferrix-virtio-gpu` drives
+//! Everything that knows anything is a library. `xaqu-virtio-gpu` drives
 //! the device and turns the core's requests into device commands, and
-//! `ferrix-displayctl` is the conversation with the core; both are tested on
+//! `xaqu-displayctl` is the conversation with the core; both are tested on
 //! the host. This program is the handles those libraries were written to be
 //! wrapped in (`docs/DISPLAY.md` §2.2):
 //!
@@ -32,38 +32,38 @@ use core::mem::ManuallyDrop;
 use core::ptr;
 use core::sync::atomic::{Ordering, fence};
 
-use ferrix_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
-use ferrix_display_modes::{ModeList, add_virtual, edid_modes};
-use ferrix_displayctl::message::{
+use xaqu_blkring::control::{Block as StartBlock, Message as StartMessage, START_BYTES, Start};
+use xaqu_display_modes::{ModeList, add_virtual, edid_modes};
+use xaqu_displayctl::message::{
     Attach, Hello, MAX_BUFFER_PAGES as MAX_PAGES, MAX_BYTES, MAX_DIMENSION, MAX_SCANOUTS, Message,
     PORT_RIGHTS, ScanoutMode, Timings, VERSION,
 };
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::types::{
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{
     IoMappingSpec, PACKET_INTERRUPT, PACKET_SIGNAL, PACKET_USER, PortPacket,
 };
-use ferrix_renderctl::message::{MAX_BYTES as RENDER_MAX_BYTES, Message as RenderMessage};
-use ferrix_rt::native::channel::{Channel, ReadError};
-use ferrix_rt::native::device::{Device, Interrupt, IoMapping};
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::handle::{Deadline, Object, OwnedHandle};
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{Pin, PinAccess, device_address};
-use ferrix_rt::native::port::{self, Port};
-use ferrix_rt::native::vmo::{self, Vmo};
-use ferrix_rt::{Bootstrap, Kernel};
-use ferrix_virtio::QueueMemory;
-use ferrix_virtio::gpu::{self, Command, DeviceConfig, DeviceError as Refusal, MemEntry, Response};
-use ferrix_virtio::pci::{CommonConfig, NO_VECTOR};
-use ferrix_virtio_gpu::pipeline::{Pipeline, Request, Step as Next, TransferOffset};
-use ferrix_virtio_gpu::{
+use xaqu_renderctl::message::{MAX_BYTES as RENDER_MAX_BYTES, Message as RenderMessage};
+use xaqu_rt::native::channel::{Channel, ReadError};
+use xaqu_rt::native::device::{Device, Interrupt, IoMapping};
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::handle::{Deadline, Object, OwnedHandle};
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{Pin, PinAccess, device_address};
+use xaqu_rt::native::port::{self, Port};
+use xaqu_rt::native::vmo::{self, Vmo};
+use xaqu_rt::{Bootstrap, Kernel};
+use xaqu_virtio::QueueMemory;
+use xaqu_virtio::gpu::{self, Command, DeviceConfig, DeviceError as Refusal, MemEntry, Response};
+use xaqu_virtio::pci::{CommonConfig, NO_VECTOR};
+use xaqu_virtio_gpu::pipeline::{Pipeline, Request, Step as Next, TransferOffset};
+use xaqu_virtio_gpu::{
     CAPSET_ROOM, CONTROL_SLOTS, CommandArea, DevicePages, Driver, ISR_CONFIG, ISR_QUEUE, Options,
     Parts, SLOT_AREA_BYTES, SubmitError, Teardown, Transport, WATCH_NANOS,
 };
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// A page, on every architecture this runs on.
 const PAGE: usize = 4096;
@@ -87,7 +87,7 @@ const ENTRY_BYTES: usize = 16;
 /// device sees side by side, so no ATTACH the protocol allows and no
 /// stream the core sends is too large to submit.
 const AREA_PAGES: usize =
-    (SLOT_AREA_BYTES + large_request() + ferrix_virtio_gpu::RESPONSE_BYTES).div_ceil(PAGE);
+    (SLOT_AREA_BYTES + large_request() + xaqu_virtio_gpu::RESPONSE_BYTES).div_ceil(PAGE);
 
 /// The longest request the large place holds: the longer of a whole
 /// backing list and a whole copied stream.
@@ -151,9 +151,9 @@ fn main(bootstrap: Bootstrap) -> i32 {
 /// from the initramfs's (`docs/DEVMGR.md` §4.1). Unset, as in every image
 /// but that gate's second build, this says nothing and compiles to nothing.
 fn say_version() {
-    if let Some(version) = option_env!("FERRIX_DRIVER_VERSION") {
+    if let Some(version) = option_env!("XAQU_DRIVER_VERSION") {
         // One record, so the shell redrawing its prompt cannot split the line.
-        ferrix_rt::info!("gpu: version {version}");
+        xaqu_rt::info!("gpu: version {version}");
         // The version that never serves: the update gate's driver that
         // neither publishes nor exits, so devmgr's deadline is what ends it.
         if version == "silent" {
@@ -449,7 +449,7 @@ impl Block {
     }
 }
 
-/// The device as `ferrix-virtio-gpu` drives it.
+/// The device as `xaqu-virtio-gpu` drives it.
 struct Registers {
     common: Block,
     notify: Block,
@@ -577,7 +577,7 @@ fn render_introduce(
     device: &Device<Kernel>,
     location: u32,
 ) -> Result<Option<RenderSide>, Step> {
-    use ferrix_renderctl::message::{
+    use xaqu_renderctl::message::{
         self as rc, MAX_BYTES as RENDER_MAX_BYTES, Message as RenderMessage,
     };
 
@@ -737,7 +737,7 @@ struct Backing {
 
 /// The most mappable objects pinned at once: as many as the core's session
 /// tracks, so a pin slot is never what refuses an object it would take.
-const MAX_BACKINGS: usize = ferrix_renderctl::session::MAX_OBJECTS;
+const MAX_BACKINGS: usize = xaqu_renderctl::session::MAX_OBJECTS;
 
 /// The most capability sets asked about. virtio-gpu defines a handful.
 const MAX_CAPSETS: u32 = 8;
@@ -862,7 +862,7 @@ fn make_context(
     port: &Port<Kernel>,
     context: u32,
     capset: u32,
-) -> Result<ferrix_renderctl::message::Message, Step> {
+) -> Result<xaqu_renderctl::message::Message, Step> {
     let made = run_command_in(
         driver,
         port,
@@ -872,10 +872,10 @@ fn make_context(
         },
         &Command::CtxCreate {
             capset: u8::try_from(capset).unwrap_or(0),
-            name: "ferrix",
+            name: "xaqu",
         },
     )?;
-    Ok(ferrix_renderctl::message::Message::ContextMade {
+    Ok(xaqu_renderctl::message::Message::ContextMade {
         context,
         status: status_of(made),
     })
@@ -893,7 +893,7 @@ fn attach_object(
     port: &Port<Kernel>,
     object: u32,
     context: u32,
-) -> Result<ferrix_renderctl::message::Message, Step> {
+) -> Result<xaqu_renderctl::message::Message, Step> {
     let attached = run_command_in(
         driver,
         port,
@@ -905,7 +905,7 @@ fn attach_object(
             resource_id: object,
         },
     )?;
-    Ok(ferrix_renderctl::message::Message::ObjectAttached {
+    Ok(xaqu_renderctl::message::Message::ObjectAttached {
         object,
         status: status_of(attached),
     })
@@ -916,7 +916,7 @@ fn drop_context(
     driver: &mut Gpu,
     port: &Port<Kernel>,
     context: u32,
-) -> Result<ferrix_renderctl::message::Message, Step> {
+) -> Result<xaqu_renderctl::message::Message, Step> {
     let gone = run_command_in(
         driver,
         port,
@@ -926,7 +926,7 @@ fn drop_context(
         },
         &Command::CtxDestroy,
     )?;
-    Ok(ferrix_renderctl::message::Message::ContextGone {
+    Ok(xaqu_renderctl::message::Message::ContextGone {
         context,
         status: status_of(gone),
     })
@@ -942,7 +942,7 @@ fn drop_object(
     port: &Port<Kernel>,
     side: &mut RenderSide,
     object: u32,
-) -> Result<ferrix_renderctl::message::Message, Step> {
+) -> Result<xaqu_renderctl::message::Message, Step> {
     // A mapped blob leaves the window first. One the device would not take
     // out stays, and so does its place: the core gives a place back only for
     // an object that went.
@@ -955,7 +955,7 @@ fn drop_object(
             },
         )?;
         if unmapped.is_err() {
-            return Ok(ferrix_renderctl::message::Message::ObjectGone {
+            return Ok(xaqu_renderctl::message::Message::ObjectGone {
                 object,
                 status: status_of(unmapped),
             });
@@ -979,7 +979,7 @@ fn drop_object(
     {
         *slot = None;
     }
-    Ok(ferrix_renderctl::message::Message::ObjectGone {
+    Ok(xaqu_renderctl::message::Message::ObjectGone {
         object,
         status: status_of(gone),
     })
@@ -998,10 +998,10 @@ fn make_object(
     device: &Device<Kernel>,
     scratch: &mut Scratch,
     side: &mut RenderSide,
-    make: &ferrix_renderctl::message::MakeObject,
+    make: &xaqu_renderctl::message::MakeObject,
     backing: Option<Vmo<Kernel>>,
-) -> Result<ferrix_renderctl::message::Message, Step> {
-    use ferrix_renderctl::message::{Message as RenderMessage, Status, flags};
+) -> Result<xaqu_renderctl::message::Message, Step> {
+    use xaqu_renderctl::message::{Message as RenderMessage, Status, flags};
 
     let answer = |status| {
         Ok(RenderMessage::ObjectMade {
@@ -1120,9 +1120,9 @@ fn make_blob(
     driver: &mut Gpu,
     port: &Port<Kernel>,
     side: &mut RenderSide,
-    make: &ferrix_renderctl::message::MakeBlob,
-) -> Result<ferrix_renderctl::message::Message, Step> {
-    use ferrix_renderctl::message::{Message as RenderMessage, NO_WINDOW, Status};
+    make: &xaqu_renderctl::message::MakeBlob,
+) -> Result<xaqu_renderctl::message::Message, Step> {
+    use xaqu_renderctl::message::{Message as RenderMessage, NO_WINDOW, Status};
 
     let answer = |status, map_info| {
         Ok(RenderMessage::BlobMade {
@@ -1197,8 +1197,8 @@ const fn in_context(id: u32) -> gpu::Context {
 
 /// The command that moves bytes between an object's backing and the
 /// device's copy.
-fn transfer_command(transfer: &ferrix_renderctl::message::Transfer) -> Command<'static> {
-    use ferrix_renderctl::message::Direction;
+fn transfer_command(transfer: &xaqu_renderctl::message::Transfer) -> Command<'static> {
+    use xaqu_renderctl::message::Direction;
 
     let region = gpu::Box3d {
         x: transfer.region.x,
@@ -1237,7 +1237,7 @@ fn get_caps(
     capset: u32,
     version: u32,
 ) -> Result<Option<()>, Step> {
-    use ferrix_renderctl::message::{Message as RenderMessage, Status};
+    use xaqu_renderctl::message::{Message as RenderMessage, Status};
 
     let refuse = |status| {
         side.control
@@ -1340,7 +1340,7 @@ struct Shape {
 /// little-endian words, the ones `VIRTGPU_RESOURCE_CREATE` carries and in
 /// its order, which the render node writes and never reads. Anything else
 /// is treated as empty rather than half-read.
-fn described(work: Option<&Vmo<Kernel>>, make: &ferrix_renderctl::message::MakeObject) -> Shape {
+fn described(work: Option<&Vmo<Kernel>>, make: &xaqu_renderctl::message::MakeObject) -> Shape {
     const WORDS: usize = 10;
     let plain = Shape {
         target: PIPE_BUFFER,
@@ -1385,8 +1385,8 @@ fn described(work: Option<&Vmo<Kernel>>, make: &ferrix_renderctl::message::MakeO
 }
 
 /// A device's answer, as the render protocol says it.
-fn status_of(answer: Result<Response, Refusal>) -> ferrix_renderctl::message::Status {
-    use ferrix_renderctl::message::Status;
+fn status_of(answer: Result<Response, Refusal>) -> xaqu_renderctl::message::Status {
+    use xaqu_renderctl::message::Status;
     match answer {
         Ok(_) => Status::Ok,
         Err(Refusal::OutOfMemory) => Status::OutOfMemory,
@@ -1908,7 +1908,7 @@ enum Owed {
 }
 
 impl Owed {
-    const fn reply(self, status: ferrix_renderctl::message::Status) -> RenderMessage {
+    const fn reply(self, status: xaqu_renderctl::message::Status) -> RenderMessage {
         match self {
             Self::Submitted { fence } => RenderMessage::Submitted { fence, status },
             Self::Transferred { object } => RenderMessage::Transferred { object, status },
@@ -2214,7 +2214,7 @@ impl Serving {
 
     /// Post one upload or command stream, tagged with its place in `owed`.
     fn post_render(&mut self, message: RenderMessage, at: usize) -> Result<Posting, Step> {
-        use ferrix_renderctl::message::Status;
+        use xaqu_renderctl::message::Status;
 
         let Some(side) = self.render.as_mut() else {
             return Ok(Posting::Wait);
@@ -2242,7 +2242,7 @@ impl Serving {
                 // On a ring, the stream is fenced there, and the device
                 // answers it only when the host has finished it: that answer
                 // is what a program's fence descriptor waits for.
-                let context = if submit.ring == ferrix_renderctl::message::NO_RING {
+                let context = if submit.ring == xaqu_renderctl::message::NO_RING {
                     in_context(submit.context)
                 } else {
                     gpu::Context {
@@ -2630,7 +2630,7 @@ fn watch(driver: &Gpu) -> Deadline {
     if !driver.is_busy() {
         return Deadline::Never;
     }
-    match ferrix_rt::linux::monotonic_nanos() {
+    match xaqu_rt::linux::monotonic_nanos() {
         Ok(now) => Deadline::At(now.saturating_add(WATCH_NANOS)),
         Err(_) => Deadline::Never,
     }

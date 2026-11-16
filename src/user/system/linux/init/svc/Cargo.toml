@@ -1,6 +1,6 @@
 [package]
 name = "svc"
-description = "/bin/svc: the init's control client, systemctl's verbs over /run/ferrix/control"
+description = "/bin/svc: the init's control client, systemctl's verbs over /run/xaqu/control"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,9 +8,9 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-ferrix-svc-proto = { path = "../../../../../lib/init/svc-proto" }
+xaqu-svc-proto = { path = "../../../../../lib/init/svc-proto" }
 # The audit record's layout, for `svc audit`.
-ferrix-audit = { path = "../../../../../lib/proto/audit" }
+xaqu-audit = { path = "../../../../../lib/proto/audit" }
 
 [lints]
 workspace = true

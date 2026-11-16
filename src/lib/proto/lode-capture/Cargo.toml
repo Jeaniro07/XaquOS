@@ -1,5 +1,5 @@
 [package]
-name = "ferrix-lode-capture"
+name = "xaqu-lode-capture"
 description = "The screenshot provider protocol between lode and a desktop: register, capture, image or declined (docs/LOGGING.md §19)"
 version.workspace = true
 edition.workspace = true

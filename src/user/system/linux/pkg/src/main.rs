@@ -1,4 +1,4 @@
-//! `pkg`: Ferrix's package manager (`docs/APPS.md` §7).
+//! `pkg`: Xaqu's package manager (`docs/APPS.md` §7).
 //!
 //! ```text
 //! pkg [--root DIR] list               the packages installed

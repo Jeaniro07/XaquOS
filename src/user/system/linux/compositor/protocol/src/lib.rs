@@ -109,7 +109,7 @@
 //!   so the compositor can tell a flatpak's clients from the rest.
 //! * **`hotkey`** is `vicinae`'s, a launcher that asks for a key by keysym
 //!   rather than registering a name.
-//! * **`appmenu`** is Ferrix's own `ferrix_appmenu_v1`: an application's
+//! * **`appmenu`** is Xaqu's own `xaqu_appmenu_v1`: an application's
 //!   menus for the menu bar, and the item a person picked from them.
 //!
 //! * **`capture_source`** and **`image_copy`** are screenshots as the
@@ -216,7 +216,7 @@ pub const GLOBALS: &[&Interface] = &[
     &capture_source::EXT_OUTPUT_IMAGE_CAPTURE_SOURCE_MANAGER_V1,
     &capture_source::EXT_FOREIGN_TOPLEVEL_IMAGE_CAPTURE_SOURCE_MANAGER_V1,
     &image_copy::EXT_IMAGE_COPY_CAPTURE_MANAGER_V1,
-    &appmenu::FERRIX_APPMENU_MANAGER_V1,
+    &appmenu::XAQU_APPMENU_MANAGER_V1,
     // Offered only where there is a GPU whose buffers can be imported, and
     // so last: a machine without one announces every other global under the
     // name it always had.

@@ -6,7 +6,7 @@
 //!
 //! * **Erase**: the whole disk, wiped at both ends and given a new GUID
 //!   partition table of two partitions, the EFI system partition and the
-//!   root -- what `ferrix-install /dev/vdY` has always done.
+//!   root -- what `xaqu-install /dev/vdY` has always done.
 //! * **Beside**: a range of the disk's GUID partition table that holds no
 //!   partition, or that one partition the person chose to give up held.
 //!   The new EFI system partition and the root go there, in entries of the
@@ -19,8 +19,8 @@
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 
-use ferrix_install::disk;
-use ferrix_partition::{ESP, LINUX_FILESYSTEM, Partition, crc32, usable, write_table};
+use xaqu_install::disk;
+use xaqu_partition::{ESP, LINUX_FILESYSTEM, Partition, crc32, usable, write_table};
 
 use crate::setup::{self, Answers};
 use crate::{
@@ -32,7 +32,7 @@ use crate::{
 /// to use it.
 pub const ROOT_MIN: u64 = 4 << 30;
 
-/// Where on the target Ferrix goes.
+/// Where on the target Xaqu goes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Space {
     Erase,
@@ -117,7 +117,7 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
     };
     if root_last <= root_first || (root_last - root_first + 1) * SECTOR < root_min {
         return Err(format!(
-            "the space chosen on {} is {} MiB; Ferrix needs {} MiB",
+            "the space chosen on {} is {} MiB; Xaqu needs {} MiB",
             plan.target,
             ((last + 1).saturating_sub(first) * SECTOR) >> 20,
             needed(esp_bytes) >> 20
@@ -135,14 +135,14 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
         random_guid()?,
         root_first,
         root_last,
-        "ferrix-root",
+        "xaqu-root",
     );
     let total = 7;
     let mut step = 0;
     let mut next = |report: &mut dyn FnMut(Event), what: &str| {
         step += 1;
         report(Event::Step(step, total, what.to_owned()));
-        report(Event::Log(format!("ferrix-install: {what}")));
+        report(Event::Log(format!("xaqu-install: {what}")));
     };
 
     next(report, "Checking the disk");
@@ -151,7 +151,7 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
     }
     let hash = match &plan.answers {
         Some(answers) => {
-            report(Event::Log("ferrix-install: hashing the password".into()));
+            report(Event::Log("xaqu-install: hashing the password".into()));
             Some(setup::hash(&answers.password)?)
         }
         None => None,
@@ -173,7 +173,7 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
     next(report, "Setting up the boot files");
     if installed_cmdline(&mut disk, esp_first * SECTOR).map_err(|e| e.to_string())? {
         report(Event::Log(format!(
-            "ferrix-install: FERRIX/CMDLINE.TXT says {} instead of {}",
+            "xaqu-install: XAQU/CMDLINE.TXT says {} instead of {}",
             String::from_utf8_lossy(INSTALLED_ROOT),
             String::from_utf8_lossy(LIVE_ROOT)
         )));
@@ -181,12 +181,12 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
     if let (Some(answers), Some(hash)) = (&plan.answers, &hash) {
         let bytes = answers.file(hash)?;
         let there = fat_in_place::rewrite(&mut disk, esp_first * SECTOR, setup::SETUP, &bytes)
-            .map_err(|e| format!("FERRIX/SETUP.TXT: {e}"))?;
+            .map_err(|e| format!("XAQU/SETUP.TXT: {e}"))?;
         if !there {
-            return Err("the live system carries no FERRIX/SETUP.TXT to fill in".into());
+            return Err("the live system carries no XAQU/SETUP.TXT to fill in".into());
         }
         report(Event::Log(format!(
-            "ferrix-install: the answers are in FERRIX/SETUP.TXT, for {}",
+            "xaqu-install: the answers are in XAQU/SETUP.TXT, for {}",
             answers.user
         )));
     }
@@ -216,7 +216,7 @@ pub fn install(plan: &Plan, live: &str, report: &mut dyn FnMut(Event)) -> Result
     disk.sync_all().map_err(|e| format!("flushing: {e}"))?;
     report(Event::Progress(100));
     report(Event::Log(format!(
-        "ferrix-install: done. Remove the live disk and start the machine from {}.",
+        "xaqu-install: done. Remove the live disk and start the machine from {}.",
         plan.target
     )));
     Ok(())
@@ -379,8 +379,8 @@ fn copy(
 #[cfg(test)]
 mod tests {
     use super::{free_ranges, patched};
-    use ferrix_install::disk::Table;
-    use ferrix_partition::{
+    use xaqu_install::disk::Table;
+    use xaqu_partition::{
         ESP, Guid, LINUX_FILESYSTEM, Partition, parse_entries, parse_header, write_table,
     };
 
@@ -402,11 +402,11 @@ mod tests {
         let mut array = written[2].1.clone();
         // Entry 2 (index 1) emptied, so the third keeps its number 3.
         array[128..256].fill(0);
-        let crc = ferrix_partition::crc32(&array[..128 * 128]);
+        let crc = xaqu_partition::crc32(&array[..128 * 128]);
         let mut header = written[1].1.clone();
         header[88..92].copy_from_slice(&crc.to_le_bytes());
         header[16..20].fill(0);
-        let hcrc = ferrix_partition::crc32(&header[..92]);
+        let hcrc = xaqu_partition::crc32(&header[..92]);
         header[16..20].copy_from_slice(&hcrc.to_le_bytes());
         let parsed = parse_header(&header, sectors).expect("header");
         let entries = parse_entries(&parsed, &array).expect("entries");
@@ -444,7 +444,7 @@ mod tests {
                 Guid([5; 16]),
                 1_255_424,
                 39_999_487,
-                "ferrix-root",
+                "xaqu-root",
             ),
         ];
         let sectors = patched(&table, &added).expect("patched");
@@ -453,7 +453,7 @@ mod tests {
         let entries = parse_entries(&parsed, &sectors[1].1).expect("valid entries");
         let numbers: Vec<(u32, String)> = entries
             .iter()
-            .map(|(index, p)| (index + 1, ferrix_install::disk::name(p)))
+            .map(|(index, p)| (index + 1, xaqu_install::disk::name(p)))
             .collect();
         assert_eq!(
             numbers,
@@ -461,7 +461,7 @@ mod tests {
                 (1, "EFI".to_owned()),
                 (2, "EFI system partition".to_owned()),
                 (3, "other".to_owned()),
-                (4, "ferrix-root".to_owned()),
+                (4, "xaqu-root".to_owned()),
             ]
         );
         // The backup header names the backup array and is valid too.
@@ -469,7 +469,7 @@ mod tests {
         let mut covered = backup[..92].to_vec();
         covered[16..20].fill(0);
         let crc = u32::from_le_bytes(backup[16..20].try_into().expect("four"));
-        assert_eq!(ferrix_partition::crc32(&covered), crc);
+        assert_eq!(xaqu_partition::crc32(&covered), crc);
         assert_eq!(
             u64::from_le_bytes(backup[24..32].try_into().expect("8")),
             sectors[3].0

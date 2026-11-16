@@ -25,18 +25,18 @@
 //! second scanout, a pitch the command cannot express, a buffer neither
 //! pinned nor found, a refused submit -- is copied by the processor as
 //! before, and a blit that hangs turns the blitter off for the boot.
-//! `ferrix.intelgpu.blit=off` keeps every copy on the processor.
+//! `xaqu.intelgpu.blit=off` keeps every copy on the processor.
 
-use ferrix_intel_xelp::commands::{Cs, emit_rect_copy_at};
-use ferrix_intel_xelp::frontend::{
+use xaqu_intel_xelp::commands::{Cs, emit_rect_copy_at};
+use xaqu_intel_xelp::frontend::{
     Backend, Completion, ContextParams, Engine, HwContext, SubmitError, VmId,
 };
-use ferrix_rt::Kernel;
-use ferrix_rt::native::device::Device;
-use ferrix_rt::native::error::Error;
-use ferrix_rt::native::pending::Protection;
-use ferrix_rt::native::pin::{DeviceAddress, Pin, PinAccess, device_address};
-use ferrix_rt::native::vmo::{self, Vmo};
+use xaqu_rt::Kernel;
+use xaqu_rt::native::device::Device;
+use xaqu_rt::native::error::Error;
+use xaqu_rt::native::pending::Protection;
+use xaqu_rt::native::pin::{DeviceAddress, Pin, PinAccess, device_address};
+use xaqu_rt::native::vmo::{self, Vmo};
 
 use crate::m2::ScreenPlane;
 use crate::serve::{AsVmo, Served};
@@ -285,10 +285,10 @@ pub(crate) enum State<'d> {
 }
 
 impl<'d> State<'d> {
-    /// The blitter for `plane`, unless `ferrix.intelgpu.blit=off`.
+    /// The blitter for `plane`, unless `xaqu.intelgpu.blit=off`.
     pub(crate) fn new(plane: ScreenPlane, device: &'d Device<Kernel>) -> State<'d> {
         if blit_off() {
-            ferrix_rt::info!("intel: card0: copies on the processor (ferrix.intelgpu.blit=off)");
+            xaqu_rt::info!("intel: card0: copies on the processor (xaqu.intelgpu.blit=off)");
             return State::Off;
         }
         State::Unmade { plane, device }
@@ -305,7 +305,7 @@ impl<'d> State<'d> {
             };
             match Blitter::make(plane, device, gpu) {
                 Ok(blitter) => {
-                    ferrix_rt::info!(
+                    xaqu_rt::info!(
                         "intel: card0: frames copied by BCS0's XY_FAST_COPY_BLT into the lit {}x{} plane",
                         plane.width,
                         plane.height
@@ -313,7 +313,7 @@ impl<'d> State<'d> {
                     *self = State::On(blitter);
                 }
                 Err(why) => {
-                    ferrix_rt::warn!("intel: card0: no blitter ({why}); copies on the processor");
+                    xaqu_rt::warn!("intel: card0: no blitter ({why}); copies on the processor");
                 }
             }
         }
@@ -332,14 +332,14 @@ impl<'d> State<'d> {
     }
 }
 
-/// `ferrix.intelgpu.blit=off`.
+/// `xaqu.intelgpu.blit=off`.
 fn blit_off() -> bool {
     let mut line = [0_u8; 4096];
     crate::steps::read_cmdline(&mut line).is_some_and(|length| {
         line.get(..length)
             .unwrap_or_default()
             .split(u8::is_ascii_whitespace)
-            .any(|word| word == b"ferrix.intelgpu.blit=off")
+            .any(|word| word == b"xaqu.intelgpu.blit=off")
     })
 }
 
@@ -490,7 +490,7 @@ impl<'d> Blitter<'d> {
             coordinate(area.columns),
             coordinate(area.rows),
         ) else {
-            return Err(SubmitError::Failed(ferrix_linux_abi::errno::Errno::EINVAL));
+            return Err(SubmitError::Failed(xaqu_linux_abi::errno::Errno::EINVAL));
         };
         let mut commands = [0_u32; 10];
         {
@@ -574,6 +574,6 @@ fn bind_pin(pin: &Pin<Kernel>, length: usize, vm: VmId, va: u64, gpu: &mut dyn G
         );
         done += count;
     }
-    let _ = ferrix_rt::linux::munmap(map, list);
+    let _ = xaqu_rt::linux::munmap(map, list);
     bound
 }

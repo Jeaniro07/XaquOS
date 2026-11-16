@@ -15,18 +15,18 @@ use std::rc::Rc;
 use std::vec;
 use std::vec::Vec;
 
-use ferrix_virtio::blk::{
+use xaqu_virtio::blk::{
     Config, DeviceConfig, FEATURE_BLK_SIZE, FEATURE_RO, Header, PAGE_SIZE, RequestType,
     STATUS_IOERR, STATUS_OK, STATUS_UNSUPP,
 };
-use ferrix_virtio::pci::{
+use xaqu_virtio::pci::{
     CONFIG_GENERATION, CONFIG_MSIX_VECTOR, CommonConfig, DEVICE_FEATURE, DEVICE_FEATURE_SELECT,
     DEVICE_STATUS, DRIVER_FEATURE, DRIVER_FEATURE_SELECT, FEATURE_VERSION_1, NO_VECTOR, NUM_QUEUES,
     QUEUE_DESC, QUEUE_DEVICE, QUEUE_DRIVER, QUEUE_ENABLE, QUEUE_MSIX_VECTOR, QUEUE_NOTIFY_OFF,
     QUEUE_SELECT, QUEUE_SIZE, STATUS_DEVICE_NEEDS_RESET, STATUS_DRIVER_OK, STATUS_FAILED,
     STATUS_FEATURES_OK,
 };
-use ferrix_virtio::{Descriptor, Layout, QueueMemory, SplitQueueDevice};
+use xaqu_virtio::{Descriptor, Layout, QueueMemory, SplitQueueDevice};
 
 use crate::{
     Completion, DevicePages, Driver, ISR_QUEUE, InitFailure, Op, Options, Parts, Request,
@@ -996,11 +996,11 @@ pub(super) struct Setup {
 impl Setup {
     /// A disk QEMU would present, less the features nobody here uses.
     pub(super) fn new() -> Self {
-        use ferrix_virtio::blk::{
+        use xaqu_virtio::blk::{
             FEATURE_CONFIG_WCE, FEATURE_DISCARD, FEATURE_FLUSH, FEATURE_MQ, FEATURE_SEG_MAX,
             FEATURE_WRITE_ZEROES,
         };
-        use ferrix_virtio::pci::FEATURE_ACCESS_PLATFORM;
+        use xaqu_virtio::pci::FEATURE_ACCESS_PLATFORM;
         Setup {
             config: Config {
                 capacity: 256,

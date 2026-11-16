@@ -19,8 +19,8 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_elf::{Class, PF_R, PF_W, PF_X, PT_INTERP, PT_LOAD};
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_elf::{Class, PF_R, PF_W, PF_X, PT_INTERP, PT_LOAD};
 
 /// Where the synthetic image is linked. Well above zero and well below
 /// anything the kernel uses, on every architecture including the 32-bit one.

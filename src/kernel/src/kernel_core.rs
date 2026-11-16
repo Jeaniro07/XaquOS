@@ -1,4 +1,4 @@
-//! The Ferrix kernel's core ring: memory, scheduling, traps, objects and the
+//! The Xaqu kernel's core ring: memory, scheduling, traps, objects and the
 //! boot -- what every other part of the kernel rests on, and the part the
 //! certified item's argument is made about first.
 //!
@@ -14,7 +14,7 @@
 // ledger 3257 (3)), and each of the kernel's crates is compiled with its
 // flags. Never in a build with `linux_abi=on`.
 #![cfg_attr(
-    ferrix_load_built = "none",
+    xaqu_load_built = "none",
     allow(
         dead_code,
         unused_imports,
@@ -40,57 +40,57 @@ extern crate alloc;
 macro_rules! build_flag_word {
     () => {
         [
-            cfg!(ferrix_profile = "present"),
-            cfg!(ferrix_profile = "desktop"),
-            cfg!(ferrix_profile = "fast"),
-            cfg!(ferrix_profile = "max"),
-            cfg!(ferrix_profile = "none"),
-            cfg!(ferrix_level = "none"),
-            cfg!(ferrix_level = "present"),
-            cfg!(ferrix_level = "sc2"),
-            cfg!(ferrix_level = "sc4"),
-            cfg!(ferrix_personality = "user"),
-            cfg!(ferrix_personality = "kernel"),
-            cfg!(ferrix_personality = "none"),
-            cfg!(ferrix_fs = "server"),
-            cfg!(ferrix_fs = "kernel"),
-            cfg!(ferrix_fs = "none"),
-            cfg!(ferrix_fs = "lift"),
-            cfg!(ferrix_mitigations = "on"),
-            cfg!(ferrix_mitigations = "off"),
-            cfg!(ferrix_partition_speculation = "exit"),
-            cfg!(ferrix_partition_speculation = "partition"),
-            cfg!(ferrix_partition_speculation = "not_applicable"),
-            cfg!(ferrix_ipc_fastpath = "off"),
-            cfg!(ferrix_ipc_fastpath = "on"),
-            cfg!(ferrix_restricted_fastpath = "off"),
-            cfg!(ferrix_restricted_fastpath = "on"),
-            cfg!(ferrix_restricted_fastpath = "not_applicable"),
-            cfg!(ferrix_kernel_memory = "retyped"),
-            cfg!(ferrix_kernel_memory = "heap"),
-            cfg!(ferrix_schedule = "windows"),
-            cfg!(ferrix_schedule = "edf"),
-            cfg!(ferrix_schedule = "fair"),
-            cfg!(ferrix_checks = "on"),
-            cfg!(ferrix_checks = "off"),
-            cfg!(ferrix_program_barrier = "switch"),
-            cfg!(ferrix_program_barrier = "session"),
-            cfg!(ferrix_ssbd = "always"),
-            cfg!(ferrix_ssbd = "on_request"),
-            cfg!(ferrix_fault_ahead = "off"),
-            cfg!(ferrix_fault_ahead = "on"),
-            cfg!(ferrix_fault_ahead = "not_applicable"),
-            cfg!(ferrix_restricted_window = "off"),
-            cfg!(ferrix_restricted_window = "on"),
-            cfg!(ferrix_restricted_window = "not_applicable"),
-            cfg!(ferrix_smt = "off"),
-            cfg!(ferrix_smt = "stibp"),
-            cfg!(ferrix_runtime_trades = "none"),
-            cfg!(ferrix_runtime_trades = "game_mode"),
-            cfg!(ferrix_linux_abi = "on"),
-            cfg!(ferrix_linux_abi = "off"),
-            cfg!(ferrix_runtime_settings = "fixed"),
-            cfg!(ferrix_runtime_settings = "live"),
+            cfg!(xaqu_profile = "present"),
+            cfg!(xaqu_profile = "desktop"),
+            cfg!(xaqu_profile = "fast"),
+            cfg!(xaqu_profile = "max"),
+            cfg!(xaqu_profile = "none"),
+            cfg!(xaqu_level = "none"),
+            cfg!(xaqu_level = "present"),
+            cfg!(xaqu_level = "sc2"),
+            cfg!(xaqu_level = "sc4"),
+            cfg!(xaqu_personality = "user"),
+            cfg!(xaqu_personality = "kernel"),
+            cfg!(xaqu_personality = "none"),
+            cfg!(xaqu_fs = "server"),
+            cfg!(xaqu_fs = "kernel"),
+            cfg!(xaqu_fs = "none"),
+            cfg!(xaqu_fs = "lift"),
+            cfg!(xaqu_mitigations = "on"),
+            cfg!(xaqu_mitigations = "off"),
+            cfg!(xaqu_partition_speculation = "exit"),
+            cfg!(xaqu_partition_speculation = "partition"),
+            cfg!(xaqu_partition_speculation = "not_applicable"),
+            cfg!(xaqu_ipc_fastpath = "off"),
+            cfg!(xaqu_ipc_fastpath = "on"),
+            cfg!(xaqu_restricted_fastpath = "off"),
+            cfg!(xaqu_restricted_fastpath = "on"),
+            cfg!(xaqu_restricted_fastpath = "not_applicable"),
+            cfg!(xaqu_kernel_memory = "retyped"),
+            cfg!(xaqu_kernel_memory = "heap"),
+            cfg!(xaqu_schedule = "windows"),
+            cfg!(xaqu_schedule = "edf"),
+            cfg!(xaqu_schedule = "fair"),
+            cfg!(xaqu_checks = "on"),
+            cfg!(xaqu_checks = "off"),
+            cfg!(xaqu_program_barrier = "switch"),
+            cfg!(xaqu_program_barrier = "session"),
+            cfg!(xaqu_ssbd = "always"),
+            cfg!(xaqu_ssbd = "on_request"),
+            cfg!(xaqu_fault_ahead = "off"),
+            cfg!(xaqu_fault_ahead = "on"),
+            cfg!(xaqu_fault_ahead = "not_applicable"),
+            cfg!(xaqu_restricted_window = "off"),
+            cfg!(xaqu_restricted_window = "on"),
+            cfg!(xaqu_restricted_window = "not_applicable"),
+            cfg!(xaqu_smt = "off"),
+            cfg!(xaqu_smt = "stibp"),
+            cfg!(xaqu_runtime_trades = "none"),
+            cfg!(xaqu_runtime_trades = "game_mode"),
+            cfg!(xaqu_linux_abi = "on"),
+            cfg!(xaqu_linux_abi = "off"),
+            cfg!(xaqu_runtime_settings = "fixed"),
+            cfg!(xaqu_runtime_settings = "live"),
         ]
     };
 }
@@ -115,8 +115,8 @@ pub const fn flag_word(chosen: &[bool]) -> u64 {
 pub const CORE_FLAG_WORD: u64 = flag_word(&build_flag_word!());
 
 // Only `schedule=edf` names it (sched/queue.rs).
-#[cfg(not(ferrix_schedule = "edf"))]
-use ferrix_sched_edf as _;
+#[cfg(not(xaqu_schedule = "edf"))]
+use xaqu_sched_edf as _;
 pub mod arch;
 pub mod audit;
 pub mod backtrace;
@@ -141,15 +141,15 @@ pub mod timer;
 pub mod trap;
 pub mod user;
 pub mod vmap;
-#[cfg(not(ferrix_personality = "user"))]
+#[cfg(not(xaqu_personality = "user"))]
 pub mod watchdog;
 /// The watchdog in a `personality=user` kernel: none, so ring 0's budget
 /// keeps its figures (`docs/POSTMORTEM.md` §6.11 is the box's kernel's,
 /// `personality=kernel`). What the core's callers reach is here, empty.
-#[cfg(ferrix_personality = "user")]
+#[cfg(xaqu_personality = "user")]
 pub mod watchdog {
     /// Not served, and nothing to start.
-    pub fn start(_view: &ferrix_bootinfo::BootView<'_>) {}
+    pub fn start(_view: &xaqu_bootinfo::BootView<'_>) {}
     /// Nothing to disarm.
     pub fn stop_for_shutdown(_why: &str) {}
 }

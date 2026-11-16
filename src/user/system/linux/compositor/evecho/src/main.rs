@@ -16,7 +16,7 @@ fn main() {
     linux::run();
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/input`;
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/input`;
 /// elsewhere the crate builds so its tables are tested on any host.
 #[cfg(not(target_os = "linux"))]
 fn main() {}
@@ -27,9 +27,9 @@ mod linux {
     use std::path::PathBuf;
 
     use compositor_evecho::{Device, event_nodes, init, line};
-    use ferrix_linux_abi::input::Event;
+    use xaqu_linux_abi::input::Event;
     #[cfg(feature = "negative-control")]
-    use ferrix_linux_abi::input::{EV_KEY, KEY_RESERVED};
+    use xaqu_linux_abi::input::{EV_KEY, KEY_RESERVED};
 
     /// What the test waits for before it sends anything.
     const READY: &str = "evecho: ready";

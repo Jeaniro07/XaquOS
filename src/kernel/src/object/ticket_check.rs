@@ -31,14 +31,14 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types::{MAX_TICKETS, TICKET_ADOPT, TICKET_END, TICKET_ISSUE, TICKET_LEAVE};
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types::{MAX_TICKETS, TICKET_ADOPT, TICKET_END, TICKET_ISSUE, TICKET_LEAVE};
+use xaqu_vma::VmaFlags;
 
 use super::Object;
 use super::channel::Endpoint;
@@ -544,11 +544,11 @@ fn check_adopted_charges(
 /// or a ticket.
 fn largest_object_record() -> usize {
     [
-        ferrix_kmem::arc_footprint::<crate::user::vmo::Vmo>(),
+        xaqu_kmem::arc_footprint::<crate::user::vmo::Vmo>(),
         super::channel::heap_footprint(),
-        ferrix_kmem::arc_footprint::<super::port::Port>(),
-        ferrix_kmem::arc_footprint::<Job>(),
-        ferrix_kmem::arc_footprint::<super::ticket::Ticket>(),
+        xaqu_kmem::arc_footprint::<super::port::Port>(),
+        xaqu_kmem::arc_footprint::<Job>(),
+        xaqu_kmem::arc_footprint::<super::ticket::Ticket>(),
     ]
     .into_iter()
     .max()

@@ -1,15 +1,15 @@
 //! A lode store on a file system: its segments read (the uploader) and
-//! written (the receiver), with `ferrix-lode-core`'s formats.
+//! written (the receiver), with `xaqu-lode-core`'s formats.
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read as _, Write as _};
 use std::path::{Path, PathBuf};
 
-use ferrix_lode_core::blob;
-use ferrix_lode_core::compress;
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::segment::{self, Header};
-use ferrix_lode_core::summary::Summary;
+use xaqu_lode_core::blob;
+use xaqu_lode_core::compress;
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::segment::{self, Header};
+use xaqu_lode_core::summary::Summary;
 
 /// The size a written segment is sealed at, as lode's.
 pub const SEGMENT_MAX: u64 = 16 * 1024 * 1024;
@@ -99,7 +99,7 @@ fn summary_path(path: &Path) -> PathBuf {
 }
 
 /// Every segment in `dirs`, and in each user's directory in them
-/// (`user-<uid>/`, `ferrix_lode_core::access`), by first sequence number.
+/// (`user-<uid>/`, `xaqu_lode_core::access`), by first sequence number.
 #[must_use]
 pub fn segments(dirs: &[PathBuf]) -> Vec<Segment> {
     let mut out = Vec::new();
@@ -111,7 +111,7 @@ pub fn segments(dirs: &[PathBuf]) -> Vec<Segment> {
             let Ok(name) = entry.file_name().into_string() else {
                 continue;
             };
-            if ferrix_lode_core::access::user_of_dir(&name).is_some() {
+            if xaqu_lode_core::access::user_of_dir(&name).is_some() {
                 found_in(&entry.path(), Some(&name), &mut out);
                 continue;
             }
@@ -185,7 +185,7 @@ fn user_dirs(dir: &Path) -> Vec<PathBuf> {
             entry
                 .file_name()
                 .to_str()
-                .is_some_and(|name| ferrix_lode_core::access::user_of_dir(name).is_some())
+                .is_some_and(|name| xaqu_lode_core::access::user_of_dir(name).is_some())
         })
         .map(|entry| entry.path())
         .collect()

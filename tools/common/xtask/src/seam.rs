@@ -1,7 +1,7 @@
 //! `bench-seam`: the in-kernel reference for the seam's first row
 //! (`docs/BACKLOG.md`, "the seam measured, 1"; `docs/OPAQUE-KERNEL.md`, S0).
 //!
-//! Ferrix's boot measures a 4 KiB read of the pattern disk through the block
+//! Xaqu's boot measures a 4 KiB read of the pattern disk through the block
 //! ring and its ring-3 driver, at depths 1 and 32 (`src/kernel/src/interfaces/block_ring/
 //! hop_check.rs`, the `seam` boot line). This boots a stock Linux kernel --
 //! Debian 13's cloud kernel, fetched and pinned by
@@ -12,7 +12,7 @@
 //! request. The kernel's SHA-256 is printed beside the numbers, so that a
 //! number can always be traced to the kernel that produced it.
 //!
-//! The comparison is the difference between the two: what Ferrix pays to put
+//! The comparison is the difference between the two: what Xaqu pays to put
 //! its driver in ring 3, against a kernel that calls its driver.
 
 use std::path::{Path, PathBuf};
@@ -78,14 +78,14 @@ pub(crate) fn bench_seam(args: &Args) -> Result<()> {
     Ok(())
 }
 
-/// `~/.local/share/ferrix`, where the fetch scripts put what they fetch.
+/// `~/.local/share/xaqu`, where the fetch scripts put what they fetch.
 fn share() -> PathBuf {
-    PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/share/ferrix")
+    PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/share/xaqu")
 }
 
 /// Where the fetch script put `arch`'s kernel and module.
 fn reference_dir(arch: Arch) -> PathBuf {
-    std::env::var_os("FERRIX_LINUX_REFERENCE")
+    std::env::var_os("XAQU_LINUX_REFERENCE")
         .map_or_else(|| share().join("linux-ref"), PathBuf::from)
         .join(arch.name())
 }
@@ -136,7 +136,7 @@ fn reference(arch: Arch, args: &Args) -> Result<()> {
         qemu::accelerator(arch, &binary, Some(args.accel.as_deref().unwrap_or("tcg")))?;
     let mut command = machine(arch, args, &binary, &accelerator)?;
     let disk = test_disk::ensure()?;
-    // The pattern disk exactly as Ferrix's boots attach it.
+    // The pattern disk exactly as Xaqu's boots attach it.
     let _ = command.args([
         "-kernel",
         &kernel_path.display().to_string(),
@@ -185,7 +185,7 @@ fn reference(arch: Arch, args: &Args) -> Result<()> {
     }
 }
 
-/// QEMU, with Ferrix's own machine for `arch`: q35 with a VT-d unit, or
+/// QEMU, with Xaqu's own machine for `arch`: q35 with a VT-d unit, or
 /// `virt` with the SMMU v3, and the same CPU, memory and processors.
 fn machine(arch: Arch, args: &Args, binary: &Path, accelerator: &str) -> Result<Command> {
     let mut command = Command::new(binary);
@@ -219,7 +219,7 @@ fn machine(arch: Arch, args: &Args, binary: &Path, accelerator: &str) -> Result<
 }
 
 /// The reference kernel's command line: its console, and on x86-64 the
-/// VT-d unit in use, as Ferrix uses it.
+/// VT-d unit in use, as Xaqu uses it.
 const fn console(arch: Arch) -> &'static str {
     match arch {
         Arch::X86_64 => "console=ttyS0 quiet intel_iommu=on",

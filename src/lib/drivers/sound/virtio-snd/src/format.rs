@@ -1,7 +1,7 @@
 //! What the device offers, in the core's terms: virtio-snd's formats as
 //! ALSA's, its rates as bits over `sndctl`'s table, and HELLO.
 //!
-//! HELLO speaks ALSA's `FORMAT_*` numbers and `ferrix_sndctl::message`'s
+//! HELLO speaks ALSA's `FORMAT_*` numbers and `xaqu_sndctl::message`'s
 //! rate table, not virtio's enums (`docs/AUDIO.md` §3.2), so the driver
 //! translates. A virtio format with no ALSA counterpart here -- the packed
 //! 18-, 20- and 24-bit ones, the codecs, DSD, IEC958 -- is left out of HELLO:
@@ -9,16 +9,16 @@
 //! wants one adds its line. The rate tables are the same fourteen rates in
 //! the same order, which the tests hold them to.
 
-use ferrix_linux_abi::sound::{
+use xaqu_linux_abi::sound::{
     FORMAT_FLOAT_LE, FORMAT_S8, FORMAT_S16_LE, FORMAT_S32_LE, FORMAT_U8, FORMAT_U16_LE,
     FORMAT_U32_LE,
 };
-use ferrix_sndctl::message::{
+use xaqu_sndctl::message::{
     DIRECTION_CAPTURE, DIRECTION_PLAYBACK, Hello, MAX_STREAMS, Offer, RATES_HZ, VERSION,
 };
-use ferrix_virtio::snd::{self, DIRECTION_INPUT, PcmInfo};
+use xaqu_virtio::snd::{self, DIRECTION_INPUT, PcmInfo};
 
-/// `FORMAT_FLOAT64_LE`, which `ferrix-linux-abi` does not name.
+/// `FORMAT_FLOAT64_LE`, which `xaqu-linux-abi` does not name.
 const FORMAT_FLOAT64_LE: u32 = 16;
 
 /// Each virtio format with an ALSA counterpart, and that counterpart.

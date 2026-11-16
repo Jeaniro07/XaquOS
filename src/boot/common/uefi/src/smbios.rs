@@ -3,7 +3,7 @@
 //! Firmware publishes the entry point in its configuration table; the entry
 //! point says where the structure table is. Under boot services both are
 //! identity mapped, so the loader reads them where firmware put them, checks
-//! the entry point with `ferrix_smbios`, and copies it and the table into one
+//! the entry point with `xaqu_smbios`, and copies it and the table into one
 //! allocation the map reports as `MemKind::Smbios`, which the kernel keeps.
 //! The kernel then reads RAM it was handed, not firmware's memory, which the
 //! direct map does not cover.
@@ -13,8 +13,8 @@
 
 use core::ptr;
 
-use ferrix_bootinfo::{PAGE_SIZE, SMBIOS_ENTRY_BYTES};
-use ferrix_smbios::{ENTRY_POINT_MAX, EntryPoint, Error, Kind};
+use xaqu_bootinfo::{PAGE_SIZE, SMBIOS_ENTRY_BYTES};
+use xaqu_smbios::{ENTRY_POINT_MAX, EntryPoint, Error, Kind};
 
 use crate::console::println;
 use crate::services::{Allocation, Services};
@@ -37,7 +37,7 @@ pub(crate) fn copy(services: &Services) -> Option<(Allocation, u64)> {
     None
 }
 
-/// Why `ferrix_smbios` refused an entry point, in a word or two.
+/// Why `xaqu_smbios` refused an entry point, in a word or two.
 const fn reason(error: Error) -> &'static str {
     match error {
         Error::Anchor => "no anchor",
@@ -111,7 +111,7 @@ fn copy_at(services: &Services, address: u64) -> Result<(Allocation, u64), &'sta
 
     let len = SMBIOS_ENTRY_BYTES + table_len;
     let copy = services
-        .allocate("copying the SMBIOS tables", len, MemoryType::FERRIX_SMBIOS)
+        .allocate("copying the SMBIOS tables", len, MemoryType::XAQU_SMBIOS)
         .map_err(|_| "no memory for the copy")?;
     // SAFETY: `own` is at most 32, inside the entry point read above; the copy
     // is a fresh allocation of at least `len` bytes, zeroed, which the entry

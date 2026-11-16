@@ -7,7 +7,7 @@
 //! is what a device window, a non-contiguous buffer and a guard-paged stack
 //! all need and none of which the direct map can express.
 //!
-//! # Why the arena is a `ferrix_vma::AddressSpace`
+//! # Why the arena is a `xaqu_vma::AddressSpace`
 //!
 //! Because it is the same problem. A kernel arena and a process address space
 //! are both a sorted set of non-overlapping ranges reshaped by insert, remove
@@ -44,10 +44,10 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use ferrix_bootinfo::{KERNEL_VMAP_BASE, KERNEL_VMAP_RESERVED, KERNEL_VMAP_SIZE, PAGE_SIZE};
-use ferrix_paging::MapFlags;
-use ferrix_sync::IrqSpinLock;
-use ferrix_vma::{AddressSpace, Backing, PageRange, VmaError, VmaFlags};
+use xaqu_bootinfo::{KERNEL_VMAP_BASE, KERNEL_VMAP_RESERVED, KERNEL_VMAP_SIZE, PAGE_SIZE};
+use xaqu_paging::MapFlags;
+use xaqu_sync::IrqSpinLock;
+use xaqu_vma::{AddressSpace, Backing, PageRange, VmaError, VmaFlags};
 
 use crate::fallible;
 use crate::mm;
@@ -77,7 +77,7 @@ pub(crate) const ARENA_BASE: u64 = KERNEL_VMAP_BASE + KERNEL_VMAP_RESERVED;
 
 /// Where its region ends: the rest of the kernel's dynamic area. The arena
 /// itself ends at or below this, where the loader put its top
-/// ([`ferrix_bootinfo::Kaslr::vmap_end`]), since the search that places
+/// ([`xaqu_bootinfo::Kaslr::vmap_end`]), since the search that places
 /// allocations starts from the top.
 pub(crate) const ARENA_END: u64 = KERNEL_VMAP_BASE + KERNEL_VMAP_SIZE;
 
@@ -99,7 +99,7 @@ pub enum VmapError {
     /// The frame allocator could not supply a page.
     OutOfMemory,
     /// The page tables refused the mapping.
-    MapFailed(ferrix_paging::MapError),
+    MapFailed(xaqu_paging::MapError),
     /// [`free`] was given an address the arena never handed out.
     NotAllocated(u64),
     /// [`map_device`] was asked for a window over the kernel's own image,

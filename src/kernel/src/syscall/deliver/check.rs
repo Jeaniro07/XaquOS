@@ -20,8 +20,8 @@
 
 use core::sync::atomic::{AtomicU32, Ordering};
 
-use ferrix_linux_abi::types::SIG_IGN;
-use ferrix_sync::IrqControl;
+use xaqu_linux_abi::types::SIG_IGN;
+use xaqu_sync::IrqControl;
 
 use crate::arch;
 use crate::syscall::process;

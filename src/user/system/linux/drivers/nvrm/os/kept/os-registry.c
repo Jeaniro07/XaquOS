@@ -22,9 +22,9 @@
  */
 
 /*
- * Kept for Ferrix (docs/NVIDIA.md §4.2) from NVIDIA's
+ * Kept for Xaqu (docs/NVIDIA.md §4.2) from NVIDIA's
  * kernel-open/nvidia/os-registry.c at 580.173.02, under the MIT licence
- * above. Changes: nv-ferrix.h in place of nv-linux.h, and find_pci()
+ * above. Changes: nv-xaqu.h in place of nv-linux.h, and find_pci()
  * declared here, since nv-pci.c is not kept (os/kept/nv.c defines it).
  * The parsers and the registry table are NVIDIA's, unchanged.
  */
@@ -32,7 +32,7 @@
 #define  __NO_VERSION__
 #define NV_DEFINE_REGISTRY_KEY_TABLE
 #include "os-interface.h"
-#include "nv-ferrix.h"
+#include "nv-xaqu.h"
 #include "nv-reg.h"
 #include "nv-gpu-info.h"
 

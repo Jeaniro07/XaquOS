@@ -8,7 +8,7 @@ reason the plan below is a plan rather than a proposal.
 
 ## 1. What busybox is doing here, and why it goes
 
-busybox is the userland Ferrix is measured with. One static binary lands in
+busybox is the userland Xaqu is measured with. One static binary lands in
 the initramfs at `/bin/busybox`, every applet name is a symlink beside it, and
 three gates drive it: `test-shell` runs `sh -c` with a script, `test-vfs` runs
 stage 8's exit programs and a sweep of applets, and `test-net` configures
@@ -141,9 +141,9 @@ duplicate ones**, and every part of the dispatch then works: a symlink named
 `coreutils echo hi` takes the second-argument form, and `env` starts another
 program.
 
-That was on a Linux host. Since S3 it is also true **on Ferrix**: `test-vfs`
+That was on a Linux host. Since S3 it is also true **on Xaqu**: `test-vfs`
 runs the multicall form, the symlink dispatch and a file read there, and
-`uname -sm` prints `Ferrix x86_64`.
+`uname -sm` prints `Xaqu x86_64`.
 
 Two things had to be got right, and neither was `rust_begin_unwind`, which
 does not in fact clash on this triple:
@@ -197,8 +197,8 @@ prediction arriving on schedule: `std` is a much larger consumer than busybox
 was, and what it needs shows up at run time rather than at link time. Both
 are answered since 2026-09-24, through a kernel buffer as `sendfile` is.
 GNU grep forced it: writing to `/dev/null` from a pipe it drains its input
-with `splice` and falls back only on `EINVAL`, so under Ferrix it failed, and
-curl's `configure`, built on Ferrix for stage 20, said there was no grep.
+with `splice` and falls back only on `EINVAL`, so under Xaqu it failed, and
+curl's `configure`, built on Xaqu for stage 20, said there was no grep.
 
 ## 4. Where each part of the userland comes from
 
@@ -243,7 +243,7 @@ ferrousli, each under its own name.
 Fourteen programs. Everything else either moved or was never gated.
 
 **A note on the networking row, because a summary of this document got it
-wrong once.** Ferrix's networking is done and gated: the stack in `src/lib/network/net`,
+wrong once.** Xaqu's networking is done and gated: the stack in `src/lib/network/net`,
 the net ring, netlink, `AF_INET` and `AF_INET6`, raw and packet sockets, DHCP.
 `test-net` passes. What is missing is the seven *commands* above, which
 configure and inspect it. uutils is GNU coreutils, which has never contained a
@@ -272,10 +272,10 @@ its table row in `docs/BACKLOG.md` names.
 |---|---|---|---|
 | S1 | **Done.** ferrousli gained the 17: `posix_spawn` and its eight, `pthread_atfork`, `splice`, `lutimes`, `__res_init`, `gnu_get_libc_version`, three `_chk` functions, the two versioned `termios` names, `dlsym` and the rest of `dlfcn.h`, `_dl_find_object`, and a weak `rust_eh_personality`. `execvpe` and `errno::get` came with `posix_spawn`, and the `.init_array` constructors now get `argc`, `argv` and `envp` as glibc and musl pass them | 8 | `check --ferrousli` passes; uutils links with 0 undefined symbols |
 | S2 | **Done.** `src/user/system/linux/ferrousli/tools/uutils/` (`sources.sh`, `build.sh`, `build-windows.sh`) and `cargo xtask uutils`. What it shares with busybox moved to `tools/common/xtask/src/ferrousli.rs`, which is what stays when S8 deletes `busybox.rs`. The staleness rule is written and unused until S3 calls it | 5 | builds on Linux and on Windows; the Windows-built binary runs on Linux |
-| S3 | **Done.** Every image that carries a program carries `/bin/coreutils`, with each of the 106 utility names linked in `/usr/bin` — not `/bin`, which stays busybox's, so no gate runs a different program than it did. Three `test-vfs` rows, reported as a group of their own, run uutils on Ferrix for the first time | 3 | the three rows pass on Ferrix: the multicall form, the symlink dispatch, and a file read |
+| S3 | **Done.** Every image that carries a program carries `/bin/coreutils`, with each of the 106 utility names linked in `/usr/bin` — not `/bin`, which stays busybox's, so no gate runs a different program than it did. Three `test-vfs` rows, reported as a group of their own, run uutils on Xaqu for the first time | 3 | the three rows pass on Xaqu: the multicall form, the symlink dispatch, and a file read |
 | S4 | **Done, and it did split.** Three commits, each green: init resolves a command's program through `/bin` instead of always running busybox; `/bin/sh` is zinc; the hundred names uutils provides are uutils'. busybox keeps what neither has | 13 → **6** | the whole matrix; `test-vfs` gained a group that says which shell `/bin/sh` is |
 | S5 | *Folded into S4, and nearly free.* One row of eighteen needed re-recording | — | — |
-| S6 | **Done, in half.** findutils and diffutils are built and installed the same way, and six programs ride in the image where one did. procps and util-linux do not build for this target at all, at their release or at their main branch — §6a | 5 → 4 | `test-vfs` runs `find`, `xargs`, `diff` and `cmp` on Ferrix |
+| S6 | **Done, in half.** findutils and diffutils are built and installed the same way, and six programs ride in the image where one did. procps and util-linux do not build for this target at all, at their release or at their main branch — §6a | 5 → 4 | `test-vfs` runs `find`, `xargs`, `diff` and `cmp` on Xaqu |
 | S7 | **Done by another session** (os-12, 2026-09-17): git 2.55.0 over a new `zlib` port and curl's libcurl, without Perl, Python, Tcl, gettext or iconv | 8 → 12 | landed gated by the whole matrix |
 | S8 | busybox deleted: `tools/busybox/`, `tools/common/xtask/src/busybox.rs`, the UAPI headers, ferrousli's three `<linux/*>` pass-throughs, the applet list | 3 | the whole matrix, once §5 is empty |
 
@@ -327,7 +327,7 @@ than now. The backlog has the row.
   ways that are not bugs. Each such row is re-recorded, not deleted, and the
   commit says which program's output it now holds.
 * **One C library, no control.** D3 leaves every utility resting on ferrousli
-  with nothing to compare against. When a utility misbehaves on Ferrix the
+  with nothing to compare against. When a utility misbehaves on Xaqu the
   question "ferrousli or the kernel?" loses the answer busybox's musl and
   glibc builds used to give. The mitigation is that uutils runs on the Linux
   host too, against the host's glibc, which is the comparison that remains.
@@ -349,7 +349,7 @@ something answers the fourteen names in §5. This is what that means.
 
 | Group | Names | What it takes | Points |
 |---|---|---|---|
-| Interfaces and routes | `ip`, `route`, `netstat` | A native Rust program over **netlink, which Ferrix already implements and gates**. `ip` is the only one the image really needs: `route` and `netstat` are `ip route` and `ss` in other clothes, and `test-net` could ask `ip` for what it asks them for | 8 |
+| Interfaces and routes | `ip`, `route`, `netstat` | A native Rust program over **netlink, which Xaqu already implements and gates**. `ip` is the only one the image really needs: `route` and `netstat` are `ip route` and `ss` in other clothes, and `test-net` could ask `ip` for what it asks them for | 8 |
 | Reachability | `ping`, `ping6` | Raw `AF_INET`/`AF_INET6` sockets, which the kernel has and `test-net` already exercises directly | 3 |
 | Address assignment | `udhcpc` | Done (branch `dhcp-client`, 2026-10-19): `dhcpc`, `src/user/system/linux/dhcp`, applies its lease over rtnetlink with no lease script, and every caller runs it. `udhcpc` and `default.script` stay only as `/etc/profile`'s fallback on an image without `dhcpc`, until busybox leaves the image | 5 |
 | Name lookup | `nslookup` | A front end to ferrousli's resolver, which is complete | 2 |
@@ -358,7 +358,7 @@ something answers the fourteen names in §5. This is what that means.
 | Becoming another user | `su` | set-user-id, which the `dac` slices built the kernel side of | 3 |
 
 **28 points before S8 can begin**, and none of it is blocked on the kernel:
-every one of these is a user-space program over an interface Ferrix already
+every one of these is a user-space program over an interface Xaqu already
 has. That is the useful shape of the answer — the hard half is done.
 
 ### 8.2 Then the deletion itself

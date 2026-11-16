@@ -25,12 +25,12 @@ mod request;
 #[cfg(test)]
 mod tests;
 
-pub use ferrix_auth_proto::Secret;
+pub use xaqu_auth_proto::Secret;
 pub use record::{DecodeError, Packet, Refusal, RefusalKind, ToClient, ToServer, Unencodable};
 pub use request::{Area, Invalid, Request, SWITCHABLE_UNITS, valid_hostname, valid_zone};
 
 /// Where `settingsd` listens.
-pub const SOCKET: &str = "/run/ferrix/settings";
+pub const SOCKET: &str = "/run/xaqu/settings";
 
 /// The protocol's version, the first byte of every REQUEST after its kind.
 pub const VERSION: u8 = 1;

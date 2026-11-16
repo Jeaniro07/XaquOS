@@ -16,10 +16,10 @@
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_paging::MapFlags;
-use ferrix_paging::vtd::rmrr::Identity;
-use ferrix_pci::Address;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_paging::MapFlags;
+use xaqu_paging::vtd::rmrr::Identity;
+use xaqu_pci::Address;
 
 use super::{Domain, DomainError, Fault, IdentityDomain};
 use crate::device::{DeviceNode, Location};
@@ -280,7 +280,7 @@ fn take_from(unit: &super::amdvi::Unit) -> Option<Fault> {
 pub fn check_tables(
     failed_kept: usize,
 ) -> Result<Option<alloc::string::String>, alloc::string::String> {
-    use ferrix_paging::amdvi::table;
+    use xaqu_paging::amdvi::table;
 
     let Some(programmed) = super::PROGRAMMED.get() else {
         return Ok(None);

@@ -14,7 +14,7 @@ the compositor sends, and a Rust table of every key's name and its keysyms.
 
 A layout the compositor does not ship is not a layout it can make up:
 libxkbcommon compiles a keymap out of the XKB data files, which are tens of
-megabytes of a desktop distribution and are not on a machine running Ferrix.
+megabytes of a desktop distribution and are not on a machine running Xaqu.
 So the layouts are chosen here, generated on a host that has the data, and
 committed.
 

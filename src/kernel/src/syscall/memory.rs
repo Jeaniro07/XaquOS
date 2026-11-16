@@ -20,9 +20,9 @@
 use alloc::sync::Arc;
 use core::any::Any;
 
-use ferrix_bootinfo::{PAGE_SIZE, USER_VIRT_END};
-use ferrix_linux_abi::errno::Errno;
-use ferrix_linux_abi::types::{
+use xaqu_bootinfo::{PAGE_SIZE, USER_VIRT_END};
+use xaqu_linux_abi::errno::Errno;
+use xaqu_linux_abi::types::{
     F_SEAL_FUTURE_WRITE, F_SEAL_WRITE, MADV_COLD, MADV_DODUMP, MADV_DOFORK, MADV_DONTDUMP,
     MADV_DONTFORK, MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_FREE, MADV_HUGEPAGE, MADV_NOHUGEPAGE,
     MADV_NORMAL, MADV_PAGEOUT, MADV_RANDOM, MADV_REMOVE, MADV_SEQUENTIAL, MADV_WILLNEED,
@@ -30,8 +30,8 @@ use ferrix_linux_abi::types::{
     MREMAP_MAYMOVE, MS_ASYNC, MS_INVALIDATE, MS_SYNC, PROT_EXEC, PROT_GROWSDOWN, PROT_GROWSUP,
     PROT_READ, PROT_SEM, PROT_WRITE,
 };
-use ferrix_vfs::OpenFile;
-use ferrix_vma::VmaFlags;
+use xaqu_vfs::OpenFile;
+use xaqu_vma::VmaFlags;
 
 use crate::syscall::fd;
 use crate::syscall::process::Process;
@@ -152,7 +152,7 @@ pub(crate) fn sys_mmap(process: &Process, request: &MmapRequest) -> Result<usize
     // Linux's answer past its task size, for what is linuxd's above PROGRAM_TOP here.
     // (EEXIST for a no-replace would be as true, and Wine, which goes on past it, then
     // walks 16 TiB of address space 64 KiB at a time.)
-    #[cfg(ferrix_load_built = "lift")]
+    #[cfg(xaqu_load_built = "lift")]
     if flags & (MAP_FIXED | MAP_FIXED_NOREPLACE) != 0
         && addr.saturating_add(len) > crate::user::space::PROGRAM_TOP
     {
@@ -1006,7 +1006,7 @@ pub(crate) fn sys_brk(process: &Process, want: u64) -> Result<usize, Errno> {
 
 /// An address as the return register carries it.
 ///
-/// The cast cannot lose data on any target Ferrix builds for: a user address
+/// The cast cannot lose data on any target Xaqu builds for: a user address
 /// is below `USER_VIRT_END`, which is at most the pointer width.
 fn usize_of(address: u64) -> usize {
     usize::try_from(address).unwrap_or(usize::MAX)

@@ -1,8 +1,8 @@
-/* The libcap calls seccomp_bpf.c makes, over capget and capset: Ferrix's
+/* The libcap calls seccomp_bpf.c makes, over capget and capset: Xaqu's
  * build of Linux's selftest links no libcap. Only the effective set's flags
  * are read and changed, as the test asks. */
-#ifndef FERRIX_SHIM_CAPABILITY_H
-#define FERRIX_SHIM_CAPABILITY_H
+#ifndef XAQU_SHIM_CAPABILITY_H
+#define XAQU_SHIM_CAPABILITY_H
 #include <linux/capability.h>
 #include <stdlib.h>
 #include <unistd.h>

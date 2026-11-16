@@ -12,13 +12,13 @@ use crate::paths::Arch;
 
 /// The system's manufacturer, as `sys_vendor` shows it: with a byte past
 /// ASCII (UTF-8 `é`), which the kernel's boot line must escape.
-pub(crate) const VENDOR: &str = "Ferrix QEMU \u{e9}";
+pub(crate) const VENDOR: &str = "Xaqu QEMU \u{e9}";
 
 /// [`VENDOR`] as the kernel's boot line shows it, escaped.
-const VENDOR_SHOWN: &str = "Ferrix QEMU \\xc3\\xa9";
+const VENDOR_SHOWN: &str = "Xaqu QEMU \\xc3\\xa9";
 
 /// The system's product, as `product_name` shows it.
-pub(crate) const PRODUCT: &str = "Ferrix test machine";
+pub(crate) const PRODUCT: &str = "Xaqu test machine";
 
 /// The system's serial: a marker the log must never hold.
 const SYSTEM_SERIAL: &str = "FXSER-SYS-71c3e9";
@@ -61,7 +61,7 @@ const ACCEPTED: &str = "  smbios   ";
 /// Pinned from the gated boots of 2026-10-15 (d1-boot-kvm-1, d1-boot-a64-1,
 /// d1-boot-a32-1; `docs/DMI.md` §3.4): on every architecture the firmware
 /// xtask boots installs QEMU's table with QEMU's strings -- OVMF its 2.8
-/// 32-bit entry point unless `FERRIX_X86_MACHINE` asks for another, AAVMF and
+/// 32-bit entry point unless `XAQU_X86_MACHINE` asks for another, AAVMF and
 /// U-Boot a 3.0 64-bit one -- so the loader must say it copied that kind,
 /// and the kernel's line must name exactly [`VENDOR`] (escaped) and
 /// [`PRODUCT`]. No line, the loader's included, may hold a serial or the
@@ -86,7 +86,7 @@ pub(crate) fn problem(arch: Arch, lines: &[String]) -> Option<String> {
             "the kernel did not accept the firmware's SMBIOS table: `{said}`"
         ));
     };
-    let kind = entry_point_kind(arch, std::env::var("FERRIX_X86_MACHINE").ok().as_deref());
+    let kind = entry_point_kind(arch, std::env::var("XAQU_X86_MACHINE").ok().as_deref());
     if !lines
         .iter()
         .any(|line| line.contains(LOADER_COPIED) && line.contains(kind))
@@ -110,7 +110,7 @@ pub(crate) fn problem(arch: Arch, lines: &[String]) -> Option<String> {
 
 /// The entry point the firmware xtask boots on `arch` installs, as the
 /// loader's line names it: `(32-bit)` or `(64-bit)`. On x86-64 QEMU's
-/// `smbios-entry-point-type` in `FERRIX_X86_MACHINE` decides; OVMF's
+/// `smbios-entry-point-type` in `XAQU_X86_MACHINE` decides; OVMF's
 /// default under `auto` was the 32-bit one.
 fn entry_point_kind(arch: Arch, x86_machine: Option<&str>) -> &'static str {
     match arch {
@@ -148,20 +148,20 @@ mod tests {
     fn the_named_table_passes() {
         let boot = lines(&[
             "  smbios   3.0 entry point (64-bit), table of 400 bytes copied",
-            "  smbios   3.0, 9 structures in 380 bytes: Ferrix QEMU \\xc3\\xa9 Ferrix test machine",
+            "  smbios   3.0, 9 structures in 380 bytes: Xaqu QEMU \\xc3\\xa9 Xaqu test machine",
         ]);
         assert_eq!(problem(Arch::AArch64, &boot), None);
         assert_eq!(problem(Arch::Armv7a, &boot), None);
         let x86 = lines(&[
             "  smbios   2.8 entry point (32-bit), table of 508 bytes copied",
-            "  smbios   2.8, 10 structures in 508 bytes: Ferrix QEMU \\xc3\\xa9 Ferrix test machine",
+            "  smbios   2.8, 10 structures in 508 bytes: Xaqu QEMU \\xc3\\xa9 Xaqu test machine",
         ]);
         assert_eq!(entry_point_kind(Arch::X86_64, None), "(32-bit)");
         assert_eq!(
             entry_point_kind(Arch::X86_64, Some("smbios-entry-point-type=64")),
             "(64-bit)"
         );
-        if std::env::var_os("FERRIX_X86_MACHINE").is_none() {
+        if std::env::var_os("XAQU_X86_MACHINE").is_none() {
             assert_eq!(problem(Arch::X86_64, &x86), None);
             assert!(
                 problem(Arch::X86_64, &boot).is_some(),
@@ -194,8 +194,8 @@ mod tests {
         for marker in MARKERS {
             let boot = lines(&[
                 "  smbios   3.0 entry point (64-bit), table of 400 bytes copied",
-                "  smbios   3.0, 9 structures in 380 bytes: Ferrix QEMU \\xc3\\xa9 Ferrix test machine",
-                &format!("FERRIX-BOOT-OK {marker}"),
+                "  smbios   3.0, 9 structures in 380 bytes: Xaqu QEMU \\xc3\\xa9 Xaqu test machine",
+                &format!("XAQU-BOOT-OK {marker}"),
             ]);
             assert!(problem(Arch::AArch64, &boot).is_some(), "{marker}");
         }
@@ -205,11 +205,11 @@ mod tests {
     fn an_unescaped_vendor_or_no_loader_line_fails() {
         let raw = lines(&[
             "  smbios   3.0 entry point (64-bit), table of 400 bytes copied",
-            "  smbios   3.0, 9 structures in 380 bytes: Ferrix QEMU \u{e9} Ferrix test machine",
+            "  smbios   3.0, 9 structures in 380 bytes: Xaqu QEMU \u{e9} Xaqu test machine",
         ]);
         assert!(problem(Arch::AArch64, &raw).is_some());
         let no_loader = lines(&[
-            "  smbios   3.0, 9 structures in 380 bytes: Ferrix QEMU \\xc3\\xa9 Ferrix test machine",
+            "  smbios   3.0, 9 structures in 380 bytes: Xaqu QEMU \\xc3\\xa9 Xaqu test machine",
         ]);
         assert!(problem(Arch::AArch64, &no_loader).is_some());
     }

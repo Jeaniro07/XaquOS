@@ -39,25 +39,25 @@ use alloc::sync::{Arc, Weak};
 use core::alloc::Layout;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
-pub use ferrix_fallible::try_format;
-pub use ferrix_fallible::{
+pub use xaqu_fallible::try_format;
+pub use xaqu_fallible::{
     AllocError, push_within, try_collect, try_extend, try_extend_from_slice, try_filled, try_push,
     try_reserve, try_to_vec, try_with_capacity,
 };
-use ferrix_fallible::{btree_node_bound, check};
-pub use ferrix_fallible::{try_boxed_filled, try_boxed_slice};
-pub(crate) use ferrix_fallible::{
+use xaqu_fallible::{btree_node_bound, check};
+pub use xaqu_fallible::{try_boxed_filled, try_boxed_slice};
+pub(crate) use xaqu_fallible::{
     try_boxed_str, try_deque_with_capacity, try_reserve_deque, try_string,
 };
-use ferrix_heap::LARGEST_CLASS;
+use xaqu_heap::LARGEST_CLASS;
 
 pub(crate) use crate::mm::Reserved;
 use crate::sched::TaskId;
 
 /// A boxed value, fallibly.
-pub(crate) use ferrix_fallible::try_box;
+pub(crate) use xaqu_fallible::try_box;
 /// `vec.insert(index, value)`, fallibly: named apart from the map [`insert`].
-pub(crate) use ferrix_fallible::try_insert as try_insert_at;
+pub(crate) use xaqu_fallible::try_insert as try_insert_at;
 
 /// Whether every node of a `BTreeMap<K, V>` fits a heap size class, which is
 /// what the reserve holds.
@@ -98,7 +98,7 @@ pub(crate) fn reserve() -> Result<Reserved, AllocError> {
 ///
 /// [`AllocError`]; `value` is dropped.
 pub fn try_arc<T>(value: T) -> Result<Arc<T>, AllocError> {
-    let _held = section(ferrix_fallible::arc_layout::<T>())?;
+    let _held = section(xaqu_fallible::arc_layout::<T>())?;
     Ok(Arc::new(value))
 }
 
@@ -112,7 +112,7 @@ pub fn try_arc<T>(value: T) -> Result<Arc<T>, AllocError> {
 ///
 /// [`AllocError`]; `make` has not run.
 pub fn try_arc_cyclic<T>(make: impl FnOnce(&Weak<T>) -> T) -> Result<Arc<T>, AllocError> {
-    let _held = section(ferrix_fallible::arc_layout::<T>())?;
+    let _held = section(xaqu_fallible::arc_layout::<T>())?;
     Ok(Arc::new_cyclic(make))
 }
 
@@ -173,7 +173,7 @@ pub(crate) fn insert_into_set_held<T: Ord>(
     set.insert(value)
 }
 
-/// The [`ferrix_fallible::Section`] for library crates, which cannot name
+/// The [`xaqu_fallible::Section`] for library crates, which cannot name
 /// [`reserve`]: one map insert, in a reserved section. `node` is the largest
 /// node the insert can make; one larger than a size class is refused, as
 /// [`insert_held`] refuses it at compile time, because the reserve holds
@@ -182,7 +182,7 @@ fn library_section(node: usize, run: &mut dyn FnMut()) -> Result<(), AllocError>
     if node > LARGEST_CLASS {
         return Err(AllocError);
     }
-    // Not `section`: `ferrix_fallible::in_section` has asked the injection
+    // Not `section`: `xaqu_fallible::in_section` has asked the injection
     // policy already, and asking twice would count one allocation as two.
     let _held = crate::mm::reserve(None)?;
     run();
@@ -190,10 +190,10 @@ fn library_section(node: usize, run: &mut dyn FnMut()) -> Result<(), AllocError>
 }
 
 /// Let library crates' map inserts into the reserve -- the btrfs writer's,
-/// through `ferrix_fallible::in_section`. Once, at boot, before any of them
+/// through `xaqu_fallible::in_section`. Once, at boot, before any of them
 /// can run.
 pub fn install_library_sections() {
-    let _ = ferrix_fallible::set_section(library_section);
+    let _ = xaqu_fallible::set_section(library_section);
 }
 
 // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ static SEEN: AtomicU32 = AtomicU32::new(0);
 /// How many it has been made to fail.
 static FAILED: AtomicU64 = AtomicU64::new(0);
 
-/// The policy `ferrix_fallible` asks: fail every [`PERIOD`]th fallible
+/// The policy `xaqu_fallible` asks: fail every [`PERIOD`]th fallible
 /// allocation the [`TARGET`] task makes, or with [`ONCE`] that one alone.
 fn policy() -> bool {
     let target = TARGET.load(Ordering::Acquire);
@@ -254,14 +254,14 @@ pub fn inject_once(task: TaskId, nth: u32, frames: bool) {
 /// Start failing `task`'s allocations: every `period`th, or with `once` that
 /// one alone; and with `frames`, its frame allocations as well.
 fn arm(task: TaskId, period: u32, once: bool, frames: bool) {
-    let _ = ferrix_fallible::set_injector(policy);
+    let _ = xaqu_fallible::set_injector(policy);
     ONCE.store(once, Ordering::Relaxed);
     FRAMES.store(frames, Ordering::Relaxed);
     PERIOD.store(period.max(1), Ordering::Relaxed);
     SEEN.store(0, Ordering::Relaxed);
     FAILED.store(0, Ordering::Relaxed);
     TARGET.store(task, Ordering::Release);
-    ferrix_fallible::arm(true);
+    xaqu_fallible::arm(true);
 }
 
 /// How many allocations the injection has failed since it was last armed:
@@ -282,7 +282,7 @@ pub(crate) fn injecting_here() -> bool {
 
 /// Stop failing allocations, and say how many were failed.
 pub fn stop_injecting() -> u64 {
-    ferrix_fallible::arm(false);
+    xaqu_fallible::arm(false);
     TARGET.store(0, Ordering::Release);
     FRAMES.store(false, Ordering::Relaxed);
     FAILED.load(Ordering::Relaxed)

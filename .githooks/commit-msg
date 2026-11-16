@@ -3,7 +3,7 @@
 # Reject any Co-authored-by trailer, and any author or committer that is a tool
 # (a name or address matching claude or anthropic).
 #
-# Ferrix records one author per commit. A trailer naming a second is either a
+# Xaqu records one author per commit. A trailer naming a second is either a
 # tool adding itself or a pairing convention this project does not use, and
 # both are easier to refuse now than to rewrite out of published history.
 #
@@ -13,7 +13,7 @@
 
 set -eu
 
-# Refuse a tool as the author or the committer. A Ferrix commit is its owner's:
+# Refuse a tool as the author or the committer. A Xaqu commit is its owner's:
 # twelve commits of 2026-11-02 came from a session whose git identity was
 # Claude <noreply@anthropic.com>, which no trailer check could see.
 for ident in "$(git var GIT_AUTHOR_IDENT)" "$(git var GIT_COMMITTER_IDENT)"; do
@@ -43,7 +43,7 @@ if printf '%s\n' "$subject_and_body" | grep -qiE '^[[:space:]]*co-authored-by[[:
     echo >&2
     printf '  %s\n' "$offending" >&2
     echo >&2
-    echo "Ferrix commits name one author. Remove the trailer and commit again." >&2
+    echo "Xaqu commits name one author. Remove the trailer and commit again." >&2
     exit 1
 fi
 

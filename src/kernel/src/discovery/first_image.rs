@@ -1,27 +1,27 @@
 //! The kernel's one remaining native loader (`docs/microkernel/K15.md` §2.4).
 //!
 //! Every process a program starts is mapped by its creator, with the library
-//! `ferrix-process-builder`; the kernel parses no image a program can name in a
+//! `xaqu-process-builder`; the kernel parses no image a program can name in a
 //! `personality=user` build. The ones it starts itself have no creator: `devmgr`,
 //! and in that build the partition manager and `linuxd` (`docs/MICROKERNEL.md`
 //! §5). This loads those, from bytes read out of the initramfs, which K14 vouches
-//! for. In `present` and `desktop` `ferrix.devmgr=init` still has it parse what
+//! for. In `present` and `desktop` `xaqu.devmgr=init` still has it parse what
 //! pid 1 left at `/sbin/devmgr`, as those shapes always have (§2.4).
 //!
 //! Every page is anonymous and copied: nothing is mapped from a file, which keeps
 //! a driver from faulting on a disk it serves (`docs/DEVMGR.md` §5). No page is
 //! both writable and executable, and a malformed image is refused, never a stop.
 
-use ferrix_bootinfo::PAGE_SIZE;
-#[cfg(not(ferrix_restricted_window = "on"))]
-use ferrix_bootinfo::USER_VIRT_END;
+use xaqu_bootinfo::PAGE_SIZE;
+#[cfg(not(xaqu_restricted_window = "on"))]
+use xaqu_bootinfo::USER_VIRT_END;
 
 /// Below the window's root slot, which no image reaches (`restricted_window`, K11 §2.1).
-#[cfg(ferrix_restricted_window = "on")]
+#[cfg(xaqu_restricted_window = "on")]
 const USER_VIRT_END: u64 = 255 << 39;
-use ferrix_elf::{Class, Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP, Segment};
-use ferrix_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
-use ferrix_vma::VmaFlags;
+use xaqu_elf::{Class, Elf, ElfError, PF_R, PF_W, PF_X, PT_INTERP, Segment};
+use xaqu_native_abi::types::{NATIVE_STACK_GUARD, NATIVE_STACK_SIZE};
+use xaqu_vma::VmaFlags;
 
 use crate::syscall::native::EntryPoint;
 use crate::syscall::uaccess;

@@ -10,7 +10,7 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc::Receiver;
 use std::thread;
 
-use ferrix_adb::sync::{self, Reader};
+use xaqu_adb::sync::{self, Reader};
 
 use crate::{Options, Outgoing};
 
@@ -321,7 +321,7 @@ fn reboot(out: &Outgoing, options: Options) -> io::Result<()> {
     Err(io::Error::last_os_error())
 }
 
-/// `tcp:<port>`: a stream to that port in Ferrix, both ways.
+/// `tcp:<port>`: a stream to that port in Xaqu, both ways.
 fn forward(port: u16, out: &Outgoing, from_host: Receiver<Vec<u8>>) -> io::Result<()> {
     let socket = match TcpStream::connect(("127.0.0.1", port)) {
         Ok(socket) => socket,

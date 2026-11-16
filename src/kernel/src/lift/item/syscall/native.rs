@@ -48,56 +48,56 @@ use crate::user::vmo::Vmo;
 use crate::user::vmo::VmoError;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use ferrix_bootinfo::PAGE_SIZE;
-use ferrix_linux_abi::errno::Errno;
-use ferrix_native_abi::exception as exception_abi;
-use ferrix_native_abi::exception::Words;
-use ferrix_native_abi::handle::Handle;
-use ferrix_native_abi::nr;
-use ferrix_native_abi::nr::NativeCall;
-use ferrix_native_abi::rights::Requested;
-use ferrix_native_abi::rights::Rights;
-use ferrix_native_abi::signals::Signals;
-use ferrix_native_abi::status;
-use ferrix_native_abi::types;
-use ferrix_native_abi::types::ADDRESS_BY_VMO;
-use ferrix_native_abi::types::ADDRESS_COMPARE;
-use ferrix_native_abi::types::ADDRESS_SHARED;
-use ferrix_native_abi::types::ADDRESS_WAIT_ANY_MAX;
-use ferrix_native_abi::types::APERTURE_INFO_BYTES;
-use ferrix_native_abi::types::AddressWord;
-use ferrix_native_abi::types::ApertureInfo;
-use ferrix_native_abi::types::CHANNEL_MAX_BYTES;
-use ferrix_native_abi::types::CHANNEL_MAX_HANDLES;
-use ferrix_native_abi::types::DEVICE_INFO_BYTES;
-use ferrix_native_abi::types::DIRTY_STATE_AWAITING_CLEAN;
-use ferrix_native_abi::types::DIRTY_STATE_DIRTY;
-use ferrix_native_abi::types::DeviceInfo;
-use ferrix_native_abi::types::JOB_SEALED;
-use ferrix_native_abi::types::JOB_SPECULATION_DOMAIN;
-use ferrix_native_abi::types::MAP_EXECUTE;
-use ferrix_native_abi::types::MAP_NO_PAGER;
-use ferrix_native_abi::types::MAP_READ;
-use ferrix_native_abi::types::MAP_WRITE;
-use ferrix_native_abi::types::PAGER_OP_DECOMMIT;
-use ferrix_native_abi::types::PAGER_OP_DETACH;
-use ferrix_native_abi::types::PAGER_OP_DIRTY;
-use ferrix_native_abi::types::PAGER_OP_FAIL;
-use ferrix_native_abi::types::PAGER_OP_WRITEBACK_BEGIN;
-use ferrix_native_abi::types::PAGER_OP_WRITEBACK_END;
-use ferrix_native_abi::types::PAGER_VMO_NO_COPY_WAIT;
-use ferrix_native_abi::types::PAGER_VMO_TRAP_DIRTY;
-use ferrix_native_abi::types::POWER_READ_WORDS;
-use ferrix_native_abi::types::PortPacket;
-use ferrix_native_abi::types::ProcessStatus;
-use ferrix_native_abi::types::ReadActual;
-use ferrix_native_abi::types::ReadAttested;
-use ferrix_native_abi::types::TREE_X86_POWER;
-use ferrix_objects::message::Message;
-use ferrix_objects::reach::Reach;
-use ferrix_objects::table::TableError;
-use ferrix_sync::Once;
-use ferrix_vma::VmaFlags;
+use xaqu_bootinfo::PAGE_SIZE;
+use xaqu_linux_abi::errno::Errno;
+use xaqu_native_abi::exception as exception_abi;
+use xaqu_native_abi::exception::Words;
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::nr::NativeCall;
+use xaqu_native_abi::rights::Requested;
+use xaqu_native_abi::rights::Rights;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::status;
+use xaqu_native_abi::types;
+use xaqu_native_abi::types::ADDRESS_BY_VMO;
+use xaqu_native_abi::types::ADDRESS_COMPARE;
+use xaqu_native_abi::types::ADDRESS_SHARED;
+use xaqu_native_abi::types::ADDRESS_WAIT_ANY_MAX;
+use xaqu_native_abi::types::APERTURE_INFO_BYTES;
+use xaqu_native_abi::types::AddressWord;
+use xaqu_native_abi::types::ApertureInfo;
+use xaqu_native_abi::types::CHANNEL_MAX_BYTES;
+use xaqu_native_abi::types::CHANNEL_MAX_HANDLES;
+use xaqu_native_abi::types::DEVICE_INFO_BYTES;
+use xaqu_native_abi::types::DIRTY_STATE_AWAITING_CLEAN;
+use xaqu_native_abi::types::DIRTY_STATE_DIRTY;
+use xaqu_native_abi::types::DeviceInfo;
+use xaqu_native_abi::types::JOB_SEALED;
+use xaqu_native_abi::types::JOB_SPECULATION_DOMAIN;
+use xaqu_native_abi::types::MAP_EXECUTE;
+use xaqu_native_abi::types::MAP_NO_PAGER;
+use xaqu_native_abi::types::MAP_READ;
+use xaqu_native_abi::types::MAP_WRITE;
+use xaqu_native_abi::types::PAGER_OP_DECOMMIT;
+use xaqu_native_abi::types::PAGER_OP_DETACH;
+use xaqu_native_abi::types::PAGER_OP_DIRTY;
+use xaqu_native_abi::types::PAGER_OP_FAIL;
+use xaqu_native_abi::types::PAGER_OP_WRITEBACK_BEGIN;
+use xaqu_native_abi::types::PAGER_OP_WRITEBACK_END;
+use xaqu_native_abi::types::PAGER_VMO_NO_COPY_WAIT;
+use xaqu_native_abi::types::PAGER_VMO_TRAP_DIRTY;
+use xaqu_native_abi::types::POWER_READ_WORDS;
+use xaqu_native_abi::types::PortPacket;
+use xaqu_native_abi::types::ProcessStatus;
+use xaqu_native_abi::types::ReadActual;
+use xaqu_native_abi::types::ReadAttested;
+use xaqu_native_abi::types::TREE_X86_POWER;
+use xaqu_objects::message::Message;
+use xaqu_objects::reach::Reach;
+use xaqu_objects::table::TableError;
+use xaqu_sync::Once;
+use xaqu_vma::VmaFlags;
 pub type Handler = fn(&dyn Host, &[u64; 6]) -> Result<usize, Errno>;
 /// A core's entry: `crate::cores` calls it when devmgr opens that core.
 pub fn serve(call: NativeCall, handler: Handler) -> Result<(), Full> {
@@ -160,8 +160,8 @@ pub fn insert_new(_process: &Process, object: Object, rights: Rights) -> Result<
     };
     let shared = crate::sys::kernel_job_of(Arc::as_ptr(&job) as usize).ok_or(status::NO_MEMORY)?;
     let own = crate::sys::duplicate_job(shared).map_err(status_of)?;
-    let placed = ferrix_native::region::handle_to_private(
-        ferrix_rt::Kernel,
+    let placed = xaqu_native::region::handle_to_private(
+        xaqu_rt::Kernel,
         Handle(own),
         Requested::Exactly(rights),
     )
@@ -169,7 +169,7 @@ pub fn insert_new(_process: &Process, object: Object, rights: Rights) -> Result<
     Ok(placed.0 as usize)
 }
 /// What the kernel said, for the program: the refusals its own calls can give.
-fn status_of(why: ferrix_native::error::Error) -> Errno {
+fn status_of(why: xaqu_native::error::Error) -> Errno {
     why.errno().unwrap_or(status::BAD_STATE)
 }
 
@@ -181,7 +181,7 @@ pub fn give_bootstrap(_from: &Process, to: &Process, handle: Handle) -> Result<u
         return Err(status::BAD_STATE);
     }
     let target = crate::fill::kernel_process_of(to).ok_or(status::BAD_STATE)?;
-    ferrix_native::lift_calls::bootstrap_move(ferrix_rt::Kernel, Handle(target), handle, false)
+    xaqu_native::lift_calls::bootstrap_move(xaqu_rt::Kernel, Handle(target), handle, false)
         .map(|()| 0)
         .map_err(status_of)
 }
@@ -191,18 +191,18 @@ pub fn control_channel(
     rights: Rights,
     create: impl FnOnce(&Arc<DeviceNode>) -> Result<Arc<Endpoint>, Errno>,
 ) -> Result<usize, Errno> {
-    let node = crate::cores::node_of(device).ok_or(ferrix_native_abi::status::BAD_HANDLE)?;
+    let node = crate::cores::node_of(device).ok_or(xaqu_native_abi::status::BAD_HANDLE)?;
     let driver_end = create(&node)?;
     crate::cores::hand_over(driver_end)
 }
 /// `PORT_FD`: a wait-only duplicate leaves the private table, kept there too
 /// (K11 I6), and a thread mirrors it.
 pub fn port_in(_process: &Process, port: Handle, needed: Rights) -> Result<Arc<Port>, Errno> {
-    let kept = ferrix_native::region::handle_to_shared(
-        ferrix_rt::Kernel,
+    let kept = xaqu_native::region::handle_to_shared(
+        xaqu_rt::Kernel,
         port,
         Requested::Exactly(needed),
-        ferrix_native_abi::restricted::HANDLE_KEEP,
+        xaqu_native_abi::restricted::HANDLE_KEEP,
     )
     .map_err(status_of)?;
     crate::bridge::port_mirror(kept).ok_or(status::NO_MEMORY)

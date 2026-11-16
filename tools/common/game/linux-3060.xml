@@ -1,6 +1,6 @@
 <domain type='kvm'>
   <name>linux-3060</name>
-  <description>Debian 13 + NVIDIA 580.173.02 on the RTX 3060, the game path's Linux guest (docs/GAME-PATH.md §2.1, §2.5). Same shape as ferrix-3060, whose processor, pinning and topology tools/common/xtask/src/nvidia.rs writes and checks against this file. Shares the card with it and with GameLab, win11 and the manjaro VMs: start only when those are shut off.</description>
+  <description>Debian 13 + NVIDIA 580.173.02 on the RTX 3060, the game path's Linux guest (docs/GAME-PATH.md §2.1, §2.5). Same shape as xaqu-3060, whose processor, pinning and topology tools/common/xtask/src/nvidia.rs writes and checks against this file. Shares the card with it and with GameLab, win11 and the manjaro VMs: start only when those are shut off.</description>
   <memory unit='MiB'>16384</memory>
   <vcpu placement='static'>8</vcpu>
   <cputune>
@@ -31,15 +31,15 @@
   <on_reboot>destroy</on_reboot>
   <on_crash>destroy</on_crash>
   <devices>
-    <emulator>/usr/local/lib/ferrix/qemu/bin/qemu-system-x86_64</emulator>
+    <emulator>/usr/local/lib/xaqu/qemu/bin/qemu-system-x86_64</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' discard='unmap'/>
-      <source file='/home/sebastian/ferrix-nvidia-vm/linux-3060.qcow2'/>
+      <source file='/home/sebastian/xaqu-nvidia-vm/linux-3060.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <boot order='1'/>
     </disk>
     <serial type='file'>
-      <source path='/home/sebastian/ferrix-nvidia-vm/linux-3060-serial.log' append='off'/>
+      <source path='/home/sebastian/xaqu-nvidia-vm/linux-3060-serial.log' append='off'/>
       <target port='0'/>
     </serial>
     <rng model='virtio'><backend model='random'>/dev/urandom</backend></rng>

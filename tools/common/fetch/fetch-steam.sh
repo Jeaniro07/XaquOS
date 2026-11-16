@@ -26,7 +26,7 @@
 # * The certificate bundle the client's libcurl reads.
 #
 # Steam's bootstrap goes under `steam/`, and `home/` is the user's home.
-# Ferrix mounts the volume at `/data`, and the test's image links the paths
+# Xaqu mounts the volume at `/data`, and the test's image links the paths
 # glibc names into it.
 #
 # Pinned by SHA-256: Debian's Packages files for trixie on 2026-09-28, and
@@ -34,15 +34,15 @@
 # Packages on 2026-09-28. When Valve replaces it, take the new file's name
 # and hash from https://repo.steampowered.com/steam/dists/stable/steam/binary-amd64/Packages.
 #
-# Writes $FERRIX_STEAM_VOLUME/steam.img (default
-# ~/.local/share/ferrix/steam-bootstrap/steam.img). Needs curl, sha256sum,
+# Writes $XAQU_STEAM_VOLUME/steam.img (default
+# ~/.local/share/xaqu/steam-bootstrap/steam.img). Needs curl, sha256sum,
 # dpkg-deb, tar, xz, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-steam.sh
 
 set -euo pipefail
 
-out=${FERRIX_STEAM_VOLUME:-$HOME/.local/share/ferrix/steam-bootstrap}
+out=${XAQU_STEAM_VOLUME:-$HOME/.local/share/xaqu/steam-bootstrap}
 debian=${DEBIAN_MIRROR:-https://deb.debian.org/debian}
 valve=${STEAM_MIRROR:-https://repo.steampowered.com/steam}
 

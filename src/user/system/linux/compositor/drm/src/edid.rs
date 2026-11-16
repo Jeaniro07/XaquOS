@@ -31,7 +31,7 @@
 //! Hyprland's make comes from `libdisplay-info`, which looks the PNP id up
 //! in `hwdata`'s registry and turns `DEL` into `Dell Inc.`. That registry
 //! is a file on a desktop distribution and is not part of EDID; a machine
-//! running Ferrix has no copy of it. So the make here is the file's when
+//! running Xaqu has no copy of it. So the make here is the file's when
 //! there is one -- [`Edid::describe`] takes the table it is given -- and the
 //! three-letter code when there is not, which is what every tool that has no
 //! registry prints.

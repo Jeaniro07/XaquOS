@@ -1,6 +1,6 @@
 # Write domains: a program changes only its own files
 
-The customer asked on 2026-10-01 how Ferrix could stop encryption malware,
+The customer asked on 2026-10-01 how Xaqu could stop encryption malware,
 and how to make sure a program can only encrypt its own data. This document
 answers that question. The answer is not to detect encryption. It is to take
 away the authority encryption malware needs: the right to change files the
@@ -81,7 +81,7 @@ handed over, or anything a program with the user's whole authority does, such
 as a script run from a terminal. No access-control scheme can stop those,
 because the user granted the authority. §4's undo is the answer there.
 
-## 2. Ferrix today
+## 2. Xaqu today
 
 | What | Where | What it means here |
 |---|---|---|
@@ -109,7 +109,7 @@ What already helps:
   private `/tmp`.
 * **`Location::parent`** (`namespace.rs:332`) walks up across mounts to the
   top of the namespace's tree, which is the walk §3.1 needs.
-* **Several bypass routes do not exist yet.** Ferrix has no `ptrace`, no
+* **Several bypass routes do not exist yet.** Xaqu has no `ptrace`, no
   `process_vm_writev`, no `/proc/<pid>/mem` and no io_uring. §5 says what each
   must check when it arrives.
 
@@ -137,7 +137,7 @@ A `WriteDomain` is a stack of up to 16 layers, as in Landlock.
   `MAKE_CHAR` and `MAKE_BLOCK`;
 * linking or moving into another folder: `REFER`.
 
-Ferrix adds one right of its own, `SET_ATTR`, which covers `chmod`, `chown`
+Xaqu adds one right of its own, `SET_ATTR`, which covers `chmod`, `chown`
 and `utimes`. Landlock does not restrict those, but making a stranger's files
 mode 000 is a smaller version of the same attack. Programs that use the
 Landlock calls get Linux's behaviour exactly, so `SET_ATTR` is only for domains
@@ -247,7 +247,7 @@ Linux.
 
 ### 3.4 Handing over a file: the chooser
 
-`ferrix-chooser` is a user service started by init. It is outside every
+`xaqu-chooser` is a user service started by init. It is outside every
 app's domain, and it `Offers=` the name `file-chooser` in init's directory
 (`docs/INIT.md` §6).
 
@@ -271,7 +271,7 @@ Today any client may bind both virtual-input protocols, so without these
 three, any app could pick files for itself.
 
 **Linux GUI programs** ask for a chooser through xdg-desktop-portal over
-D-Bus, and Ferrix has no D-Bus (`docs/CHROME.md:640`). Until a portal
+D-Bus, and Xaqu has no D-Bus (`docs/CHROME.md:640`). Until a portal
 front-end exists, a Linux program that edits documents needs a named place in
 its manifest. Native apps come first.
 
@@ -302,7 +302,7 @@ calls to create a read-only snapshot, list snapshots and delete one.
   the malware fills the disk, and every earlier version stays.
 * **Restoring** is a reflink copy out of a snapshot.
 
-Until Stage C lands, Ferrix has no undo, and a backup off the machine is the
+Until Stage C lands, Xaqu has no undo, and a backup off the machine is the
 only one.
 
 ## 5. Ways around a domain, and what closes each
@@ -401,7 +401,7 @@ with the certification consultant (§10, Q5). Until then nothing goes into
 |---|---|---|---|
 | W1 | `WriteDomain` in the vfs crate, `may_change` at every site in §3.2, W-R1 to W-R3 and W-R5 to W-R7, host tests | 8 | — |
 | W2 | Landlock in the Linux personality (`landlock_create_ruleset` with the version query, `landlock_add_rule` for `PATH_BENEATH`, `landlock_restrict_self`), W-R4, the boot check and its negative control, `test-landlock` | 5 | W1 |
-| W3 | Launchers: init's write keys in L13, `[package.access]` in `app.toml` and `ferrix-pkg`, the one app launcher, `confine` | 5 | W2 |
+| W3 | Launchers: init's write keys in L13, `[package.access]` in `app.toml` and `xaqu-pkg`, the one app launcher, `confine` | 5 | W2 |
 | W4 | The chooser, and hyprix's three conditions for its window | 8 to 13 | W3 |
 | W5 | btrfs-write Stage C, subvolumes and snapshots (13 to 21), then the snapshot unit and its policy (3) | 16 to 24 | — (the btrfs stream) |
 | W6 | The tripwire | 5 | W5 |
@@ -430,7 +430,7 @@ another.
 * **Q3. Per-file tags.** Tagging each inode with the app that created it
   would make files an app created anywhere its own, and would close §5's
   pre-existing-link gap. It needs attributes kept on disk, and today no
-  Ferrix filesystem keeps any.
+  Xaqu filesystem keeps any.
 * **Q4. The terminal's default.** Whole home, as §3.3 has it, or a narrower
   default with `confine --writes ~` as the way out. This is the customer's
   call.

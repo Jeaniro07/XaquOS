@@ -1,4 +1,4 @@
-//! `test-frames`: stage 24's frame recorder on Ferrix, with its negative
+//! `test-frames`: stage 24's frame recorder on Xaqu, with its negative
 //! control (docs/GAME-PATH.md §2.4 and §8, R1). No card.
 //!
 //! The desktop is `test-xwindow`'s: hyprix, with yserver on `:0` as a
@@ -146,7 +146,7 @@ fn carried(path: &str, mode: u32, from: &Path) -> Result<File> {
 /// the recorder, the client and [`SCRIPT`]; and the recorder's SHA-256.
 fn desktop(arch: Arch, args: &Args) -> Result<(PathBuf, PathBuf, String)> {
     let busybox = gates_busybox(arch).ok_or_else(|| {
-        Error::new("test-frames needs a static busybox: Alpine's busybox-static at ~/.local/share/ferrix/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
+        Error::new("test-frames needs a static busybox: Alpine's busybox-static at ~/.local/share/xaqu/busybox/x86_64/bin/busybox.static, or ferrousli's from `cargo xtask busybox`")
     })?;
     let built = crate::frames::build()?;
     let sha = crate::frames::sha256_of(&built.recorder)?;
