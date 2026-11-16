@@ -554,10 +554,9 @@ pub fn dimmed(state: &State, style: Style) -> Vec<WindowId> {
 /// The window the keys pick after `from` -- or before it, `back` -- among
 /// the grids' tiles, wrapping: the first or the last when nothing is
 /// picked yet.
-fn step(state: &State, from: Option<WindowId>, back: bool) -> Option<WindowId> {
-    let order: Vec<WindowId> = tiles(state)
+fn step(state: &State, from: Option<WindowId>, back: bool, style: Style) -> Option<WindowId> {
+    let order: Vec<WindowId> = pickable(state, style)
         .into_iter()
-        .flat_map(|(_, tiles)| tiles)
         .filter(|tile| !tile.thumbnail)
         .map(|tile| tile.window)
         .collect();
@@ -577,14 +576,26 @@ fn step(state: &State, from: Option<WindowId>, back: bool) -> Option<WindowId> {
 
 /// The tile at `point`, the topmost where two overlap.
 #[must_use]
-pub fn hit(state: &State, point: (i64, i64)) -> Option<Tile> {
+pub fn hit(state: &State, point: (i64, i64), style: Style) -> Option<Tile> {
     let (x, y) = point;
-    tiles(state)
-        .into_iter()
-        .flat_map(|(_, tiles)| tiles)
-        .rfind(|tile| {
-            x >= tile.rect.x && x < tile.rect.right() && y >= tile.rect.y && y < tile.rect.bottom()
-        })
+    pickable(state, style).into_iter().rfind(|tile| {
+        x >= tile.rect.x && x < tile.rect.right() && y >= tile.rect.y && y < tile.rect.bottom()
+    })
+}
+
+/// The tiles the overview picks from, in the style it is drawn: the
+/// grid's tiles, or the cards of Mission Control's spaces.
+fn pickable(state: &State, style: Style) -> Vec<Tile> {
+    match style {
+        Style::Classic => tiles(state)
+            .into_iter()
+            .flat_map(|(_, tiles)| tiles)
+            .collect(),
+        Style::Mission => mission_spaces(state, mission_area(state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .collect(),
+    }
 }
 
 /// `overview toggle|on|off|next|prev|pick`: the last three are the keys'
@@ -593,7 +604,12 @@ pub fn hit(state: &State, point: (i64, i64)) -> Option<Tile> {
 pub fn dispatch_in(argument: &str, overview: &mut Overview, state: &mut State) -> bool {
     match argument.trim() {
         "next" | "prev" if overview.on => {
-            let picked = step(state, overview.hovered, argument.trim() == "prev");
+            let picked = step(
+                state,
+                overview.hovered,
+                argument.trim() == "prev",
+                overview.style,
+            );
             let changed = picked != overview.hovered;
             overview.hovered = picked;
             changed
@@ -619,10 +635,40 @@ pub fn dispatch(argument: &str, overview: &mut Overview) -> bool {
     };
     let changed = overview.on != on;
     overview.on = on;
-    if !on {
+    if on {
+        // The classic grid: Mission Control is the other style, and it
+        // comes up with its own dispatcher.
+        overview.style = Style::Classic;
+    } else {
         overview.hovered = None;
     }
     changed
+}
+
+/// `mission toggle|on|off|pick`: Mission Control, the overview drawn
+/// anew -- a space per workspace, the windows of a space as its cards.
+/// Gives whether anything changed.
+pub fn mission_dispatch(argument: &str, overview: &mut Overview, state: &mut State) -> bool {
+    match argument.trim() {
+        "pick" if overview.on => dispatch_in("pick", overview, state),
+        "off" | "close" => dispatch("off", overview),
+        "on" | "open" => {
+            let changed = dispatch("on", overview);
+            overview.style = Style::Mission;
+            changed
+        }
+        _ => {
+            // `toggle`: Mission Control comes up, or goes away when it is
+            // the one that is up.
+            if overview.on && overview.style == Style::Mission {
+                dispatch("off", overview)
+            } else {
+                let changed = dispatch("on", overview);
+                overview.style = Style::Mission;
+                changed
+            }
+        }
+    }
 }
 
 /// Take the input while the overview is up: the pointer highlights and
@@ -666,7 +712,7 @@ pub fn take_input(
     for action in actions {
         match action {
             Action::Pointer { .. } => {
-                let hovered = hit(state, at)
+                let hovered = hit(state, at, overview.style)
                     .filter(|tile| !tile.thumbnail)
                     .map(|tile| tile.window);
                 if hovered != overview.hovered {
@@ -678,7 +724,11 @@ pub fn take_input(
                 button: BTN_LEFT,
                 pressed: true,
             } => {
-                if let Some(tile) = hit(state, at) {
+                if let Some(tile) = hit(state, at, overview.style) {
+                    // Ponytail: focusing the window brings its workspace
+                    // with it (`layout::State::focus`), so there is no
+                    // workspace to dispatch. Upgrade path: a card that is
+                    // picked without being focused would need one.
                     let _ = state.focus_window(tile.window);
                 }
                 changed |= dispatch("off", overview);
@@ -727,7 +777,10 @@ mod tests {
     use compositor_config::NoSources;
     use compositor_layout::{Monitor, MonitorId, Rect, State, WindowId, WorkspaceId};
 
-    use super::{Overview, dispatch, grid, mission_spaces, space_label, take_input, tiles};
+    use super::{
+        Overview, Style, dispatch, grid, mission_area, mission_dispatch, mission_spaces,
+        space_label, take_input, tiles,
+    };
     use crate::seat::Action;
 
     /// A floating desktop on one 1280x800 monitor with two windows on
@@ -990,9 +1043,90 @@ mod tests {
         assert_eq!(space_label(&state, WorkspaceId(2)), "Desktop 2");
     }
 
-    /// One window is centred at its own size; one too large is scaled down
-    /// keeping its shape.
+    /// A click on a card brings that window up: its workspace is shown and
+    /// it has the focus.
     #[test]
+    fn a_click_on_a_card_goes_to_its_workspace_and_focuses_it() {
+        let mut state = desktop();
+        let mut overview = Overview {
+            on: true,
+            style: Style::Mission,
+            ..Overview::default()
+        };
+        let card = mission_spaces(&state, mission_area(&state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .find(|card| card.workspace == WorkspaceId(2))
+            .expect("a card of workspace 2");
+        #[expect(clippy::cast_precision_loss, reason = "a test's screen")]
+        let at = (
+            (card.rect.x + card.rect.width / 2) as f64,
+            (card.rect.y + card.rect.height / 2) as f64,
+        );
+        let (kept, changed) = take_input(
+            vec![Action::Button {
+                button: 0x110,
+                pressed: true,
+            }],
+            &mut overview,
+            &mut state,
+            at,
+        );
+        assert!(kept.is_empty() && changed);
+        assert!(!overview.on, "Mission Control closes");
+        assert_eq!(state.focused_window(), Some(card.window));
+        assert_eq!(state.active_workspace(MonitorId(1)), Some(WorkspaceId(2)));
+    }
+
+    /// A card of a minimized window brings it back when it is clicked.
+    #[test]
+    fn a_click_on_a_minimized_card_brings_it_back() {
+        let mut state = desktop();
+        let _ = state.focus_window(WindowId(1)).unwrap();
+        let _ = state.minimize(WindowId(1)).unwrap();
+        let mut overview = Overview {
+            on: true,
+            style: Style::Mission,
+            ..Overview::default()
+        };
+        let card = mission_spaces(&state, mission_area(&state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .find(|card| card.window == WindowId(1))
+            .expect("a card of the minimized window");
+        assert!(card.minimized);
+        #[expect(clippy::cast_precision_loss, reason = "a test's screen")]
+        let at = (
+            (card.rect.x + card.rect.width / 2) as f64,
+            (card.rect.y + card.rect.height / 2) as f64,
+        );
+        let (_, changed) = take_input(
+            vec![Action::Button {
+                button: 0x110,
+                pressed: true,
+            }],
+            &mut overview,
+            &mut state,
+            at,
+        );
+        assert!(changed && !overview.on);
+        assert!(!state.is_minimized(WindowId(1)));
+        assert_eq!(state.focused_window(), Some(WindowId(1)));
+    }
+
+    /// The mission dispatcher brings Mission Control up, in its own style,
+    /// and takes it down again.
+    #[test]
+    fn the_mission_dispatcher_turns_the_mission_style_on() {
+        let mut state = desktop();
+        let mut overview = Overview::default();
+        assert!(mission_dispatch("toggle", &mut overview, &mut state));
+        assert!(overview.on);
+        assert_eq!(overview.style, Style::Mission);
+        assert!(mission_dispatch("off", &mut overview, &mut state));
+        assert!(!overview.on);
+    }
+
     fn one_window_is_centred_and_never_enlarged() {
         let area = Rect::new(0, 0, 1000, 600);
         assert_eq!(

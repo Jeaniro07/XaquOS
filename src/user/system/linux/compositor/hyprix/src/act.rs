@@ -220,6 +220,11 @@ pub fn compositor(
             around.overview,
             state,
         )),
+        "mission" => Some(crate::overview::mission_dispatch(
+            argument,
+            around.overview,
+            state,
+        )),
         "switcher" => Some(crate::switcher::dispatch(
             argument,
             (
