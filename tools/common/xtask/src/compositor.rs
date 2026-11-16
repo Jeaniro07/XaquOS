@@ -815,7 +815,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 77] = [
+const BOOTS: [(&str, Boot); 78] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
