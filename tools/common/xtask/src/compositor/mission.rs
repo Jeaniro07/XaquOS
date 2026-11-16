@@ -60,6 +60,8 @@ struct Card {
 #[derive(Debug)]
 struct Judged {
     /// The cards that are drawn.
+    // Ponytail: only the test reads this; the build does not.
+    #[allow(dead_code, reason = "the test reads it")]
     drawn: usize,
     /// The cards in all.
     cards: usize,
@@ -107,7 +109,7 @@ fn mean_colour(screen: &Image, areas: &[(i64, i64, i64, i64)]) -> Option<(f64, f
     for (left, top, width, height) in areas {
         for y in (*top).max(0)..(*top + *height).min(screen.height as i64) {
             for x in (*left).max(0)..(*left + *width).min(screen.width as i64) {
-                let at = ((y as usize * screen.width + x as usize) * 3) as usize;
+                let at = (y as usize * screen.width + x as usize) * 3;
                 let Some(&[r, g, b]) = screen.pixels.get(at..at + 3) else {
                     continue;
                 };
@@ -202,6 +204,10 @@ fn judge(screen: &Image, cards: &[Card]) -> Result<Judged> {
 /// # Errors
 ///
 /// The cards never came, or Escape did not bring the desktop back.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one boot read top to bottom: the cards, the pixels and the escape"
+)]
 pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Result<()> {
     let (mut config, mut carried) = super::xaqu::desktop(arch, args, false)?;
     config.push_str("exec-once = /bin/sh /etc/mission-probe.sh\n");
@@ -256,7 +262,7 @@ pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Resu
                 watching,
             ));
         }
-        let cards = said_cards(&watching.after());
+        let cards = said_cards(watching.after());
         if cards.is_empty() {
             return Err(fail("the mission control showed no cards", watching));
         }

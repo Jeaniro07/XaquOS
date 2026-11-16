@@ -561,10 +561,7 @@ mod tests {
     fn the_workspace_root_is_the_tree_the_run_is_in() {
         let current = std::env::current_dir().expect("a working directory");
         let root = workspace_root();
-        assert!(
-            current.starts_with(&root),
-            "{current:?} is not in {root:?}"
-        );
+        assert!(current.starts_with(&root), "{current:?} is not in {root:?}");
     }
 
     #[test]

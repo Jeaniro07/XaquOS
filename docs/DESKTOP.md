@@ -1127,3 +1127,51 @@ own theme.
 The `mission` boot opens two windows on two workspaces, brings Mission
 Control up and looks for the cards on the screen; Escape brings the
 desktop back.
+
+### 6.11 Hemat
+
+Hemat is the desktop's memory saving: it gives the apps that are not on
+the screen less of the machine, and gives back what they do not need.
+
+Each app has a cgroup of its own, under `/sys/fs/cgroup/hemat/`: one group
+per class of application, not per window, so the windows of one app share
+one group and one state. The tree is Hemat's own rather than a folder
+under the session's cgroup: a cgroup that holds processes may not have
+controllers enabled for its children (`docs/CGROUPS.md` §3.1), and the
+session's cgroup holds the compositor itself. The desktop's boot has no
+init to mount `cgroup2` (`docs/AUTH.md` §1.2), so the compositor mounts
+the tree itself; when the mount is refused, Hemat stays off and the
+desktop is as it was.
+
+Where an app is follows its windows. **Aktif**: one of its windows is on
+the screen -- `cpu.weight` is 100 and `memory.high` is `max`. **Latar**:
+none of them is -- `cpu.weight` is 10, a tenth of what an app on the
+screen has. **Tidur**: it has been in the background for five minutes --
+`memory.reclaim` is written with `1G`, which gives back its clean pages.
+The app wakes when it is shown again.
+
+An app that is making a sound never sleeps. The compositor has no audio
+of its own, so the shell tells it: `xaqu-shell` reads the sound server's
+list of sink inputs every two seconds and sends `dispatch hemat sound
+<name>` or `dispatch hemat quiet <name>` when the list changes. The name
+is the binary's name from the sink input's properties, matched against the
+app's class loosely -- the class and the binary do not always have the
+same name.
+
+Two options turn it off and keep an app awake:
+`general:hemat = 0` turns Hemat off altogether, and
+`general:hemat_never = steam, wine` names the classes that never sleep.
+
+When the memory of the machine runs short, the apps in the background give
+their clean pages back, the one that was seen longest ago first: below a
+tenth of the memory for ten seconds, and at once when less than a
+twentieth is left. The compositor says so through `hyprctl hemat`, which
+answers `{"pressure": true, "apps": [{"name": "foot", "bytes": 12345}]}`,
+and the shell turns that into a banner on the Notices surface: "Memori
+aplikasi habis", with the apps and what they hold. The banner is not
+interactive: closing an app is still the dock's work.
+
+The `multiapp` boot opens two apps, puts one of them behind, waits longer
+than the five minutes, and looks for the sleeping app's group: its weight
+is 10, it holds no more than it did, and the app on the screen has the
+whole processor.
