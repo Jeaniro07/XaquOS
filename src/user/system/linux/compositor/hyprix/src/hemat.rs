@@ -2,11 +2,8 @@
 //!
 //! A desktop running many apps holds the memory of all of them at once,
 //! while most of them are looked at now and then. Hemat is the part of the
-//! desktop that lets the ones in the background have less: each app gets a
-//! cgroup of its own, an app in the background is given less of the
-//! processor, and an app that has been in the background for five minutes
-//! is put to sleep, which is `memory.reclaim` -- the clean pages it holds
-//! are given back.
+//! desktop that gives each app a group of its own, so that the desktop
+//! knows how much of the memory belongs to whom.
 //!
 //! # The tree
 //!
@@ -18,6 +15,13 @@
 //! not mounted yet, because the desktop's boot has no init to mount it
 //! (`docs/AUTH.md` §1.2).
 //!
+//! # Where an app is
+//!
+//! An app is one class of client, as the client named it with
+//! `xdg_toplevel.set_app_id`: two windows of one app share one group, and
+//! two apps never share a group. The group is made when the app's first
+//! window appears, and it goes when the app has no window left.
+//!
 //! # Failing
 //!
 //! Nothing here may take the desktop with it. A mount that is refused, a
@@ -25,6 +29,7 @@
 //! reported in a sentence and left behind, and the app it was for keeps
 //! running as it was (`docs/DESKTOP.md` §7).
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::CString;
 use std::fs;
 use std::io::{self, Write as _};
@@ -41,6 +46,236 @@ pub const CONTROLLERS: [&str; 3] = ["+cpu", "+memory", "+pids"];
 
 /// The controllers the hemat's tree has for its own children.
 pub const TREE_CONTROLLERS: [&str; 2] = ["+cpu", "+memory"];
+
+/// The processor weight of an app.
+pub const WEIGHT_ACTIVE: &str = "100";
+
+/// An app, as the hemat knows it.
+#[derive(Clone, Debug)]
+pub struct App {
+    /// The class it is known by, as its client named it.
+    pub class: String,
+    /// The name of its cgroup, made safe.
+    pub name: String,
+    /// Its number in the hemat's tree.
+    pub number: u32,
+    /// Its cgroup.
+    pub dir: PathBuf,
+    /// The process behind its windows, or 0 where the kernel would not say.
+    pub pid: u32,
+    /// The process already moved into its cgroup.
+    pub moved: u32,
+}
+
+/// A window, as the hemat sees it.
+#[derive(Clone, Debug)]
+pub struct Window {
+    /// The class it is, which is the app it belongs to.
+    pub class: String,
+    /// Its process, or 0 where the kernel would not say.
+    pub pid: u32,
+}
+
+/// One thing to write in a cgroup.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Effect {
+    /// The app it is for.
+    pub class: String,
+    /// The cgroup it is for.
+    pub dir: PathBuf,
+    /// The file to write.
+    pub file: &'static str,
+    /// What to write.
+    pub value: String,
+}
+
+/// The desktop's memory saving.
+#[derive(Debug)]
+pub struct Hemat {
+    /// The apps, by class.
+    pub apps: BTreeMap<String, App>,
+    /// Whether the hemat is on at all.
+    pub enabled: bool,
+    /// The tree the groups are made under.
+    pub root: PathBuf,
+    /// The number the next app is given.
+    next: u32,
+    /// The apps whose writing has failed, so that it is said once.
+    failed: BTreeSet<String>,
+}
+
+impl Default for Hemat {
+    fn default() -> Self {
+        Self::new(true)
+    }
+}
+
+impl Hemat {
+    /// A hemat that is on.
+    #[must_use]
+    pub fn new(enabled: bool) -> Self {
+        Self {
+            apps: BTreeMap::new(),
+            enabled,
+            root: PathBuf::from(CGROUP_ROOT),
+            next: 0,
+            failed: BTreeSet::new(),
+        }
+    }
+
+    /// A hemat whose groups are made under `root`, which is a directory in
+    /// a test and the mount in a desktop.
+    #[must_use]
+    pub fn at(root: PathBuf, enabled: bool) -> Self {
+        Self {
+            root,
+            ..Self::new(enabled)
+        }
+    }
+
+    /// Turn the hemat off: no group is made and no app is watched.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+        self.apps.clear();
+    }
+
+    /// Forget the app of the class `class`, and its group with it.
+    pub fn forget(&mut self, class: &str) {
+        if let Some(app) = self.apps.remove(class) {
+            let _ = remove_app(&app.dir);
+            let _ = self.failed.remove(class);
+        }
+    }
+
+    /// Look at every window there is, and give each app its group.
+    ///
+    /// The writes the change asks for are returned rather than done: a
+    /// test can see what would be written without a cgroup to write it
+    /// in, and the compositor is the one that does them.
+    pub fn sync(&mut self, windows: &[Window]) -> Vec<Effect> {
+        let mut effects = Vec::new();
+        let classes = by_class(windows);
+        self.forget_gone(&classes);
+        for (class, of_class) in &classes {
+            effects.extend(self.sync_class(class, of_class));
+        }
+        effects
+    }
+
+    /// Write what `effects` says, and say once per app what could not be
+    /// written.
+    pub fn apply(&mut self, effects: &[Effect]) -> Vec<String> {
+        let mut said = Vec::new();
+        for effect in effects {
+            if let Err(why) = write(&effect.dir, effect.file, &effect.value)
+                && self.failed.insert(effect.class.clone())
+            {
+                said.push(why);
+            }
+        }
+        said
+    }
+
+    /// Forget the apps that have no window left.
+    fn forget_gone(&mut self, classes: &BTreeMap<String, Vec<&Window>>) {
+        let gone: Vec<String> = self
+            .apps
+            .keys()
+            .filter(|class| !classes.contains_key(class.as_str()))
+            .cloned()
+            .collect();
+        for class in gone {
+            self.forget(&class);
+        }
+    }
+
+    /// Look at the windows of one app.
+    fn sync_class(&mut self, class: &str, windows: &[&Window]) -> Vec<Effect> {
+        let mut effects = Vec::new();
+        let pid = windows
+            .iter()
+            .find_map(|window| (window.pid != 0).then_some(window.pid))
+            .unwrap_or(0);
+        if !self.apps.contains_key(class) {
+            effects.extend(self.make_app(class, pid));
+        }
+        if let Some(app) = self.apps.get_mut(class)
+            && app.pid == 0
+        {
+            app.pid = pid;
+        }
+        effects.extend(self.move_in(class));
+        effects
+    }
+
+    /// Make the group of an app that is new.
+    fn make_app(&mut self, class: &str, pid: u32) -> Vec<Effect> {
+        if !self.enabled || pid == 0 {
+            return Vec::new();
+        }
+        let name = safe(class);
+        self.next += 1;
+        let number = self.next;
+        let dir = self.root.join(TREE).join(format!("app-{name}-{number}"));
+        let mut effects = Vec::new();
+        if fs::create_dir_all(&dir).is_ok() {
+            effects.push(self.effect(class, &dir, "memory.high", "max"));
+            effects.push(self.effect(class, &dir, "cpu.weight", WEIGHT_ACTIVE));
+        }
+        let _ = self.apps.insert(
+            class.to_owned(),
+            App {
+                class: class.to_owned(),
+                name,
+                number,
+                dir,
+                pid,
+                moved: 0,
+            },
+        );
+        effects
+    }
+
+    /// Move the app's process into its group, if it is not there yet.
+    fn move_in(&mut self, class: &str) -> Vec<Effect> {
+        let Some(app) = self.apps.get(class) else {
+            return Vec::new();
+        };
+        if app.pid == 0 || app.moved == app.pid {
+            return Vec::new();
+        }
+        let effect = self.effect(class, &app.dir, "cgroup.procs", &app.pid.to_string());
+        if let Some(app) = self.apps.get_mut(class) {
+            app.moved = app.pid;
+        }
+        vec![effect]
+    }
+
+    /// One write to be done in the app's group.
+    fn effect(&self, class: &str, dir: &Path, file: &'static str, value: &str) -> Effect {
+        Effect {
+            class: class.to_owned(),
+            dir: dir.to_path_buf(),
+            file,
+            value: value.to_owned(),
+        }
+    }
+}
+
+/// The windows of each app, by class.
+fn by_class(windows: &[Window]) -> BTreeMap<String, Vec<&Window>> {
+    let mut classes: BTreeMap<String, Vec<&Window>> = BTreeMap::new();
+    for window in windows {
+        if window.class.is_empty() {
+            continue;
+        }
+        classes
+            .entry(window.class.clone())
+            .or_default()
+            .push(window);
+    }
+    classes
+}
 
 /// The hemat's tree.
 #[must_use]
@@ -120,11 +355,7 @@ pub fn prepare() -> Result<(), String> {
     write(root, "cgroup.subtree_control", &CONTROLLERS.join(" "))?;
     let tree = tree();
     fs::create_dir_all(&tree).map_err(|error| format!("{}: {error}", tree.display()))?;
-    write(
-        &tree,
-        "cgroup.subtree_control",
-        &TREE_CONTROLLERS.join(" "),
-    )?;
+    write(&tree, "cgroup.subtree_control", &TREE_CONTROLLERS.join(" "))?;
     Ok(())
 }
 
@@ -137,7 +368,8 @@ pub fn prepare() -> Result<(), String> {
 fn mount(root: &Path) -> Result<(), String> {
     fs::create_dir_all(root).map_err(|error| format!("{}: {error}", root.display()))?;
     let source = CString::new("cgroup2").map_err(|_| "cgroup2 is not a name".to_owned())?;
-    let target = CString::new(CGROUP_ROOT).map_err(|_| "the mount point is not a name".to_owned())?;
+    let target =
+        CString::new(CGROUP_ROOT).map_err(|_| "the mount point is not a name".to_owned())?;
     // SAFETY: both names are NUL-terminated C strings that live for the
     // call, and the mount takes no data.
     let code = unsafe {
@@ -220,6 +452,36 @@ pub fn remove_app(dir: &Path) -> Result<(), String> {
 mod tests {
     use super::*;
 
+    fn window(class: &str, pid: u32) -> Window {
+        Window {
+            class: class.to_owned(),
+            pid,
+        }
+    }
+
+    /// A number that no other test has, so that the tests do not share
+    /// a directory and pull each other's groups away.
+    fn number() -> u32 {
+        static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// A hemat whose groups are made in a directory of its own.
+    fn hemat(enabled: bool) -> (Hemat, PathBuf) {
+        let root = std::env::temp_dir().join(format!("hemat-{}-{}", std::process::id(), number()));
+        let _ = fs::remove_dir_all(&root);
+        let hemat = Hemat::at(root.clone(), enabled);
+        (hemat, root)
+    }
+
+    /// The value written in a file of an app's group.
+    fn written(effects: &[Effect], file: &str) -> Option<String> {
+        effects
+            .iter()
+            .find(|effect| effect.file == file)
+            .map(|effect| effect.value.clone())
+    }
+
     #[test]
     fn the_hemat_tree_is_a_slice_of_its_own() {
         assert_eq!(tree(), Path::new("/sys/fs/cgroup/hemat"));
@@ -253,11 +515,61 @@ mod tests {
 
     #[test]
     fn an_app_gets_a_group_of_its_own() {
-        let root = std::env::temp_dir().join(format!("hemat-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("hemat-group-{}", number()));
         let _ = fs::remove_dir_all(&root);
         let dir = make_app_in(&root, "foot", 1).expect("the group's made");
         assert_eq!(dir, root.join("hemat").join("app-foot-1"));
         assert!(dir.is_dir());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_app_is_one_class_and_one_group() {
+        let (mut hemat, root) = hemat(true);
+        let _ = hemat.sync(&[
+            window("foot", 100),
+            window("foot", 100),
+            window("zinc", 200),
+        ]);
+        assert_eq!(hemat.apps.len(), 2, "two classes, two apps");
+        assert_eq!(hemat.apps["foot"].dir, root.join("hemat/app-foot-1"));
+        assert_eq!(hemat.apps["zinc"].dir, root.join("hemat/app-zinc-2"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_app_of_a_window_is_the_class_it_named() {
+        let (mut hemat, root) = hemat(true);
+        let _ = hemat.sync(&[window("foot", 100)]);
+        assert_eq!(hemat.apps["foot"].class, "foot");
+        // A client whose process the kernel would not say has no group.
+        let _ = hemat.sync(&[window("foot", 100), window("zinc", 0)]);
+        assert!(!hemat.apps.contains_key("zinc"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_first_window_of_an_app_makes_its_group() {
+        let (mut hemat, root) = hemat(true);
+        let effects = hemat.sync(&[window("foot", 100)]);
+        assert!(root.join("hemat/app-foot-1").is_dir());
+        assert_eq!(written(&effects, "memory.high"), Some("max".to_owned()));
+        assert_eq!(written(&effects, "cpu.weight"), Some("100".to_owned()));
+        // A second window of the same app is the same group.
+        let _ = hemat.sync(&[window("foot", 100), window("foot", 100)]);
+        assert_eq!(hemat.apps.len(), 1);
+        assert!(!root.join("hemat/app-foot-2").exists());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_window_that_went_away_takes_its_group_with_it() {
+        let (mut hemat, root) = hemat(true);
+        let _ = hemat.sync(&[window("foot", 100)]);
+        let dir = hemat.apps["foot"].dir.clone();
+        let _ = hemat.sync(&[]);
+        assert!(!hemat.apps.contains_key("foot"));
+        assert!(!dir.exists(), "the group goes with the app");
         let _ = fs::remove_dir_all(&root);
     }
 }
