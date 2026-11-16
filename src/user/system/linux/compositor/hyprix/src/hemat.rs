@@ -250,10 +250,19 @@ impl Hemat {
     /// dispatcher says them.
     #[must_use]
     pub fn describe(&self) -> Vec<String> {
-        self.apps
+        let mut lines: Vec<String> = self
+            .apps
             .values()
-            .map(|app| format!("{} {} {:?}", app.class, app.name, app.state))
-            .collect()
+            .map(|app| format!("hemat: {} {} {:?}", app.class, app.name, app.state))
+            .collect();
+        lines.push(format!(
+            "hemat: the apps are asleep: {}",
+            self.apps
+                .values()
+                .filter(|app| app.state == State::Tidur)
+                .count()
+        ));
+        lines
     }
 
     /// Forget the apps that have no window left.
@@ -388,6 +397,36 @@ impl Hemat {
             value: value.to_owned(),
         }
     }
+}
+
+/// What the shell says the compositor: `sound <nama>`, `quiet <nama>` or
+/// `state`.
+///
+/// The first two say that an app is making a sound, or is not, which keeps
+/// it from falling asleep; the third says where every app is, for a
+/// diagnosis. The lines are what the compositor should say back.
+#[must_use]
+pub fn dispatch(argument: &str, hemat: &mut Hemat) -> (bool, Vec<String>) {
+    let mut words = argument.split_whitespace();
+    let loud = match words.next() {
+        Some("sound") => true,
+        Some("quiet") => false,
+        Some("state") => return (false, hemat.describe()),
+        _ => {
+            return (
+                false,
+                vec!["hemat: want sound <name>, quiet <name> or state".to_owned()],
+            );
+        }
+    };
+    let Some(name) = words.next() else {
+        return (
+            false,
+            vec!["hemat: want sound <name> or quiet <name>".to_owned()],
+        );
+    };
+    hemat.heard(name, loud);
+    (false, Vec::new())
 }
 
 /// The classes that never sleep, from a list separated by commas.
@@ -808,6 +847,34 @@ mod tests {
         let later = now + Duration::from_secs(600);
         let effects = hemat.refresh(&[window(1, "foot", 100, false)], later);
         assert_eq!(written(&effects, "memory.reclaim"), Some("1G".to_owned()));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_hemat_dispatcher_takes_a_sound() {
+        let (mut hemat, root) = hemat(true, &[]);
+        let now = Instant::now();
+        let _ = hemat.refresh(
+            &[window(1, "foot", 100, true), window(2, "zinc", 200, true)],
+            now,
+        );
+        let (_, said) = dispatch("sound foot", &mut hemat);
+        assert!(said.is_empty(), "a sound is said with no words");
+        assert!(hemat.apps["foot"].loud, "foot is making a sound");
+        assert!(!hemat.apps["zinc"].loud, "zinc is not");
+        let _ = dispatch("quiet foot", &mut hemat);
+        assert!(!hemat.apps["foot"].loud, "foot is quiet again");
+        // Another name does not touch the first one.
+        let _ = dispatch("sound zinc", &mut hemat);
+        assert!(hemat.apps["zinc"].loud);
+        assert!(!hemat.apps["foot"].loud);
+        let (_, said) = dispatch("state", &mut hemat);
+        assert_eq!(said.len(), 3, "every app is named, and the count: {said:?}");
+        assert!(
+            said.last()
+                .is_some_and(|line| line.contains("the apps are asleep: 0")),
+            "the count of the sleeping ones: {said:?}"
+        );
         let _ = fs::remove_dir_all(&root);
     }
 

@@ -652,13 +652,7 @@ pub fn mission_report(state: &State) -> Vec<String> {
     let spaces = mission_spaces(state, mission_area(state));
     let size = state.monitors().next().map_or_else(
         || "0x0".to_owned(),
-        |monitor| {
-            format!(
-                "{}x{}",
-                monitor.rect.width,
-                monitor.rect.height
-            )
-        },
+        |monitor| format!("{}x{}", monitor.rect.width, monitor.rect.height),
     );
     let mut lines = vec![format!(
         "hyprix: the mission control is up, {size}, {} spaces",
@@ -938,7 +932,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             [(WindowId(2), false), (WindowId(1), true)]
         );
-        assert_eq!(super::dimmed(&state, super::Style::Classic), [WindowId(1)]);
+        assert_eq!(super::dimmed(&state, Style::Classic), [WindowId(1)]);
         assert!(
             all[0]
                 .1
@@ -1157,6 +1151,7 @@ mod tests {
         assert!(!overview.on);
     }
 
+    #[test]
     fn one_window_is_centred_and_never_enlarged() {
         let area = Rect::new(0, 0, 1000, 600);
         assert_eq!(

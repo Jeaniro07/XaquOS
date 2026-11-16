@@ -1580,6 +1580,7 @@ impl<'r> Compositor<'r> {
                 drag: &mut self.drag,
                 overview: &mut self.overview,
                 switcher: &mut self.switcher,
+                hemat: &mut self.hemat,
                 pending: &mut pending,
                 quit: &mut self.quit,
                 swallow: &mut self.swallow,
@@ -2053,6 +2054,7 @@ impl<'r> Compositor<'r> {
                 drag: &mut self.drag,
                 overview: &mut self.overview,
                 switcher: &mut self.switcher,
+                hemat: &mut self.hemat,
                 pending: &mut pending,
                 quit: &mut self.quit,
                 swallow: &mut self.swallow,
@@ -2824,6 +2826,9 @@ impl<'r> Compositor<'r> {
     /// Look at the apps once a second: where each one is, and what its
     /// cgroup is told. A write that fails is said once, and the app is
     /// left as it was (`docs/DESKTOP.md` §7).
+    ///
+    /// The memory of the machine is looked at in the same tick: when it is
+    /// short, the apps in the background give their clean pages back.
     fn tick_hemat(&mut self) {
         if !self.hemat.enabled {
             return;

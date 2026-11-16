@@ -89,7 +89,9 @@ fn label(fonts: &mut Fonts, text: &str, room: i64, scale: f64, style: &Style) ->
     if text.is_empty() {
         return None;
     }
-    #[expect(
+    // Ponytail: this clippy does not warn about narrowing a scale; the
+    // allow says so, and does not rot when the lint is gone.
+    #[allow(
         clippy::cast_precision_loss,
         reason = "a screen's scale is a small number"
     )]
