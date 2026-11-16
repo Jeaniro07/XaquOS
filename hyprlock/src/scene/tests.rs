@@ -105,7 +105,7 @@ fn lenovo() -> Screen {
 
 fn context(session: &Session) -> Context {
     Context {
-        user: "ferrix".to_owned(),
+        user: "xaqu".to_owned(),
         now: 1_790_446_050,
         attempts: session.attempts,
         fail: session.fail_text.clone(),

@@ -1,6 +1,6 @@
 //! `cargo run -p compositor-hyprlock --example probe [FILE]`: read a
 //! `hyprlock.conf` (the user's own by default) on the host and say what
-//! hyprlock on Ferrix makes of it -- every diagnostic, every line it cannot
+//! hyprlock on Xaqu makes of it -- every diagnostic, every line it cannot
 //! carry out, and which widgets each of the named screens gets. Nothing is
 //! drawn and nothing is locked.
 

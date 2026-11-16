@@ -33,7 +33,7 @@ fn main() -> ExitCode {
         Ok(Parsed::Version) => {
             let _ = writeln!(
                 std::io::stdout(),
-                "Waybar v{} (Ferrix)",
+                "Waybar v{} (Xaqu)",
                 env!("CARGO_PKG_VERSION")
             );
             return ExitCode::SUCCESS;

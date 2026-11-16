@@ -36,7 +36,7 @@ pub struct Facts {
     pub user: Text<32>,
     /// `uname`'s node name.
     pub host: Text<65>,
-    /// The system and its version: `Ferrix 0.1.0`.
+    /// The system and its version: `Xaqu 0.1.0`.
     pub os: Text<80>,
     /// `uname`'s machine: `x86_64`.
     pub machine: Text<16>,

@@ -130,7 +130,7 @@ pub fn main(backend: Arc<dyn Backend>) -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if arguments.version || !arguments.quiet {
-        say(&format!("Hyprlock version v{VERSION} (Ferrix)"));
+        say(&format!("Hyprlock version v{VERSION} (Xaqu)"));
         if arguments.version {
             return ExitCode::SUCCESS;
         }

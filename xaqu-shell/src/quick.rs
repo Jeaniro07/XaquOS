@@ -1,4 +1,4 @@
-//! The sidebar's quick settings (Ferrix's `docs/DESKTOP.md` §6.1): what the
+//! The sidebar's quick settings (Xaqu's `docs/DESKTOP.md` §6.1): what the
 //! design puts there, each on what this machine has.
 //!
 //! * Focus mode is `decoration:dim_inactive` for the session, as the dock's
@@ -16,7 +16,7 @@
 //!   source (`crate::sound`, the PulseAudio protocol `pulsed` speaks): a
 //!   slider sets the volume, the icon mutes. Without a server, or with no
 //!   source (`pulsed` has none: there is no capture yet), they say so.
-//! * Wi-Fi, Bluetooth and night light say why they are not here: Ferrix
+//! * Wi-Fi, Bluetooth and night light say why they are not here: Xaqu
 //!   has no wireless or Bluetooth stack, and the compositor no gamma.
 
 use std::path::{Path, PathBuf};

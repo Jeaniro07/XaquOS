@@ -1,10 +1,10 @@
 //! What the Logs page asks of the log: lode's filter language
-//! (`docs/LOGGING.md` §6, `ferrix_lode_core::filter`) typed after `where`,
+//! (`docs/LOGGING.md` §6, `xaqu_lode_core::filter`) typed after `where`,
 //! the chips beside it, the facets' ticks and the time window. Facet counts
 //! are taken over what everything but the facets lets through, so ticking
 //! one does not empty the others.
 
-use ferrix_lode_core::filter::{self, Expr};
+use xaqu_lode_core::filter::{self, Expr};
 
 use crate::data::{Entry, Log};
 
@@ -294,14 +294,14 @@ impl Query {
 mod tests {
     use super::{Chip, Query, builtin, parse_saved, saved_list, write_saved};
     use crate::data::Log;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     fn record(seq: u64, id: &str, level: u8, message: &str) -> Record {
         let mut record = Record::new(level, seq * 1_000_000, seq);
         record.seqnum = seq;
         record.push("SYSLOG_IDENTIFIER", id.as_bytes());
         record.push("_TRANSPORT", b"stdout");
-        record.push("FERRIX_PRIORITY_SOURCE", b"stated");
+        record.push("XAQU_PRIORITY_SOURCE", b"stated");
         record.push("MESSAGE", message.as_bytes());
         record
     }

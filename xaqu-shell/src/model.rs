@@ -122,7 +122,7 @@ fn civil(days: i64) -> (i64, i64, i64) {
 }
 
 /// The local zone's offset from UTC in seconds: `TZ` written `UTC+2` or
-/// `UTC-5:30`, else none (Ferrix keeps no zone database).
+/// `UTC-5:30`, else none (Xaqu keeps no zone database).
 #[must_use]
 pub fn offset(tz: Option<&str>) -> i64 {
     let Some(rest) = tz.and_then(|tz| tz.strip_prefix("UTC").or_else(|| tz.strip_prefix("GMT")))

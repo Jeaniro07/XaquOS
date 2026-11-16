@@ -21,7 +21,7 @@ fn fonts() -> tole::Fonts {
 fn state(page: Page) -> State {
     let mut state = State::new(page);
     state.user = "ada".to_owned();
-    state.hostname = "ferrix".to_owned();
+    state.hostname = "xaqu".to_owned();
     state.games.apps = vec![
         App::new("supertuxkart.desktop", "SuperTuxKart", None, None),
         App::new("ioquake3.desktop", "ioquake3", None, None),
@@ -78,7 +78,7 @@ fn the_window_shows_its_groups_the_page_and_who_is_signed_in() {
         "Session",
         "Idle and lock",
         "Game mode",
-        "ada on ferrix",
+        "ada on xaqu",
     ] {
         assert!(says(&mut view, words), "{words} is not shown");
     }

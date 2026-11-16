@@ -1,4 +1,4 @@
-//! The System pages the settings writer backs (Ferrix's
+//! The System pages the settings writer backs (Xaqu's
 //! `docs/SETTINGS-WRITER.md` §4, §12, §13): Name and time and Remote login.
 //!
 //! * **Name and time.** The computer's name (`set-hostname`, kept in
@@ -15,18 +15,18 @@
 //! pages show their values read-only, "Fixed by this build (profile max)",
 //! in place of their buttons (ledger 3558 (14)).
 
-use ferrix_settings_client::Request;
-use ferrix_settings_client::manifest::Manifest;
+use xaqu_settings_client::Request;
+use xaqu_settings_client::manifest::Manifest;
 
 use crate::pages::{Effect, Key, Kind, Line, State};
 
 /// The unit Remote login switches.
 pub const SSHD: &str = "sshd.service";
 
-/// Where an enabled unit's links are, under `/etc/ferrix/units`.
+/// Where an enabled unit's links are, under `/etc/xaqu/units`.
 const WANTS: [&str; 2] = [
-    "/etc/ferrix/units/multi-user.target.wants/sshd.service",
-    "/etc/ferrix/units/graphical.target.wants/sshd.service",
+    "/etc/xaqu/units/multi-user.target.wants/sshd.service",
+    "/etc/xaqu/units/graphical.target.wants/sshd.service",
 ];
 
 /// What the System pages show and what was typed into them.
@@ -249,11 +249,11 @@ impl State {
 mod tests {
     use super::Machine;
     use crate::pages::{Effect, Key, Page, State};
-    use ferrix_settings_client::Request;
+    use xaqu_settings_client::Request;
 
     fn state(fixed: Option<&str>) -> State {
         let mut state = State::new(Page::Computer);
-        state.hostname = "ferrix".to_owned();
+        state.hostname = "xaqu".to_owned();
         state.machine = Machine {
             fixed: fixed.map(str::to_owned),
             zone: "UTC".to_owned(),

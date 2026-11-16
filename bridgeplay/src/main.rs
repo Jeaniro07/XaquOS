@@ -1,4 +1,4 @@
-//! `bridgeplay`: open Steam and Windows programs on Ferrix.
+//! `bridgeplay`: open Steam and Windows programs on Xaqu.
 
 use bridgeplay_core::{
     Cmd, PREFIX_DISK, Plan, STEAM_SCRIPT, WINE_LOADER, mem_available_mib, missing, parse,

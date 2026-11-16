@@ -1,4 +1,4 @@
-//! The theme engine, as the design's `applyTheme` has it (Ferrix's
+//! The theme engine, as the design's `applyTheme` has it (Xaqu's
 //! `docs/DESKTOP.md` §6.1): a theme is a triad of hues -- one of the
 //! design's five, or the wallpaper's own -- drawn dark or light at a
 //! vibrance, and every token of Nocturne follows from it: the 100-900 ramps

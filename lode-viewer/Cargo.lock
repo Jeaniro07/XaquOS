@@ -165,26 +165,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-lode-capture"
+name = "xaqu-lode-capture"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-lode-core"
+name = "xaqu-lode-core"
 version = "0.3.0"
 dependencies = [
- "ferrix-slots",
+ "xaqu-slots",
  "ruzstd",
 ]
 
 [[package]]
-name = "ferrix-sha256"
+name = "xaqu-sha256"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-slots"
+name = "xaqu-slots"
 version = "0.3.0"
 dependencies = [
- "ferrix-sha256",
+ "xaqu-sha256",
 ]
 
 [[package]]
@@ -251,8 +251,8 @@ dependencies = [
  "compositor-image",
  "compositor-text",
  "compositor-toolkit",
- "ferrix-lode-capture",
- "ferrix-lode-core",
+ "xaqu-lode-capture",
+ "xaqu-lode-core",
  "tole",
  "tole-compiler",
 ]

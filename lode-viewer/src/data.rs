@@ -8,12 +8,12 @@
 
 use std::collections::HashMap;
 
-use ferrix_lode_core::ingest::{
+use xaqu_lode_core::ingest::{
     MESSAGE_ID_CRASH, MESSAGE_ID_LOST, MESSAGE_ID_RESTARTED, MESSAGE_ID_STARTED, MESSAGE_ID_TORN,
     guess_level,
 };
-use ferrix_lode_core::limit::{MESSAGE_ID_REPEATED, MESSAGE_ID_RULE, MESSAGE_ID_SUPPRESSED};
-use ferrix_lode_core::record::{LEVEL_SOURCE, Record, UNSPECIFIED};
+use xaqu_lode_core::limit::{MESSAGE_ID_REPEATED, MESSAGE_ID_RULE, MESSAGE_ID_SUPPRESSED};
+use xaqu_lode_core::record::{LEVEL_SOURCE, Record, UNSPECIFIED};
 
 /// How long the limiter's window is when a record does not say: lode's
 /// default (`docs/LOGGING.md` §7.1).
@@ -253,7 +253,7 @@ impl Boot {
     #[must_use]
     pub fn hex(&self) -> String {
         let mut text = String::new();
-        ferrix_lode_core::segment::push_hex(&mut text, &self.id);
+        xaqu_lode_core::segment::push_hex(&mut text, &self.id);
         text
     }
 }
@@ -291,8 +291,8 @@ pub fn source_of(record: &Record) -> String {
         "SYSLOG_IDENTIFIER",
         "UNIT",
         "_SYSTEMD_UNIT",
-        "_FERRIX_DRIVER",
-        "FERRIX_SUBSYSTEM",
+        "_XAQU_DRIVER",
+        "XAQU_SUBSYSTEM",
         "_TRANSPORT",
     ] {
         if let Some(value) = record.get_str(name)
@@ -307,7 +307,7 @@ pub fn source_of(record: &Record) -> String {
 /// The level shown for `record`, and the note when a display rule changed
 /// it: a record the store holds as info or unspecified, whose level nobody
 /// stated or derived, is shown at the level its words say, by lode's own
-/// reading of them (`ferrix_lode_core::ingest::guess_level`). Records from
+/// reading of them (`xaqu_lode_core::ingest::guess_level`). Records from
 /// a lode that reads levels itself already say where theirs came from, and
 /// are shown as stored.
 #[must_use]
@@ -427,7 +427,7 @@ impl Log {
                 .sessions
                 .intern(record.get_str("SESSION_ID").unwrap_or(""));
             let kind = kind_of(&record);
-            let kernel_seq = ferrix_lode_core::ingest::kernel_seq(&record);
+            let kernel_seq = xaqu_lode_core::ingest::kernel_seq(&record);
             fresh.push(Entry {
                 row: Row {
                     level,
@@ -648,7 +648,7 @@ impl Log {
 #[cfg(test)]
 mod tests {
     use super::{Kind, Log, shown_level};
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     fn record(seq: u64, at_s: u64, id: &str, message: &str) -> Record {
         let mut record = Record::new(6, at_s * 1_000_000, at_s * 1_000_000);
@@ -669,7 +669,7 @@ mod tests {
         assert_eq!((level, note), (6, None));
         // A level lode stated is never second-guessed.
         let mut stated = record(1, 1, "hyprix", "could not open card0");
-        stated.push("FERRIX_PRIORITY_SOURCE", b"stated");
+        stated.push("XAQU_PRIORITY_SOURCE", b"stated");
         assert_eq!(shown_level(&stated), (6, None));
     }
 
@@ -697,7 +697,7 @@ mod tests {
         let mut held = record(9, 1, "lode", "Suppressed 6124 message(s)");
         held.push(
             "MESSAGE_ID",
-            ferrix_lode_core::limit::MESSAGE_ID_SUPPRESSED.as_bytes(),
+            xaqu_lode_core::limit::MESSAGE_ID_SUPPRESSED.as_bytes(),
         );
         held.push("N_SUPPRESSED", b"6124");
         assert_eq!(super::kind_of(&held), Kind::Held(6124));

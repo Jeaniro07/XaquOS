@@ -294,7 +294,7 @@ mod tests {
         typed(&mut session, "ix", 0);
         assert_eq!(
             tap(&mut session, 28, "Return", "", 0),
-            Keyed::Submit("ferrix".to_owned())
+            Keyed::Submit("xaqu".to_owned())
         );
         assert_eq!(session.length(), 0);
         assert!(session.checking());

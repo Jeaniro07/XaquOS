@@ -1,6 +1,6 @@
-//! Ferrix's Settings, after the customer's design (`Ferrix Settings`):
+//! Xaqu's Settings, after the customer's design (`Xaqu Settings`):
 //! a sidebar of four groups and thirteen pages, a search over them, and
-//! the page shown, drawn with tole (Ferrix's `docs/UI-FRAMEWORK.md`).
+//! the page shown, drawn with tole (Xaqu's `docs/UI-FRAMEWORK.md`).
 //!
 //! The parts:
 //!
@@ -9,7 +9,7 @@
 //! * [`look`]: the design's colours, dark and light, in seven accents.
 //! * [`ui`]: the markup under `ui/`, compiled by tole, handed the state.
 //! * [`apps`] and [`store`]: game mode's applications and the user's
-//!   game-mode file (Ferrix's `docs/SETTINGS.md`).
+//!   game-mode file (Xaqu's `docs/SETTINGS.md`).
 //! * [`window`]: the Wayland window that joins them.
 //! * [`cli`]: the command line, with `--render` to draw a page headless.
 //!

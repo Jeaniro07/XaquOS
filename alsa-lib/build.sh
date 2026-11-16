@@ -6,7 +6,7 @@
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/include/alsa/*.h
 #   <arch>/lib/libasound.a
 #   <arch>/usr/share/ferrousli/alsa/   alsa.conf and the rest, where this
@@ -16,7 +16,7 @@
 # alsa-lib-1.2.16.1.tar.bz2. alsa-project publishes signatures, not
 # checksums, so the sha256 below is the tarball's own, taken on 2026-09-27
 # after its src/ and include/ were found identical to the v1.2.16.1 tag of
-# the git tree (~/.local/share/ferrix/audio-ref/alsa-lib) but for the
+# the git tree (~/.local/share/xaqu/audio-ref/alsa-lib) but for the
 # Makefile.in files autoreconf makes.
 #
 # Static, so without dlopen: every PCM and control plugin alsa-lib has is

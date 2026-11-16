@@ -4,7 +4,7 @@
     return VK_SUCCESS;
  }
  
-+/* libdrm's drmGetDevices2 learns what a node is from sysfs, which Ferrix did
++/* libdrm's drmGetDevices2 learns what a node is from sysfs, which Xaqu did
 + * not have when this was written. When it finds no devices, the render nodes
 + * are opened by name instead, and the first whose driver is virtio_gpu is
 + * taken, as a platform device: Venus asks nothing of the bus but that it is

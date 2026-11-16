@@ -12,12 +12,12 @@ use std::time::Duration;
 /// The disks the stand-in reports: the live medium, a 32 GiB virtio disk
 /// with no table, a 256 GiB disk with an EFI partition, a Windows NTFS
 /// partition and 100 GiB free, and a 4 GiB stick too small to take
-/// Ferrix.
+/// Xaqu.
 pub const DISKS: &str = "\
 min 8589934592
 live /dev/sda
 disk /dev/sda 15523119104 mbr SanDisk Ultra Fit
-part /dev/sda 1 2048 30318591 15521824768 fat FERRIX_LIVE
+part /dev/sda 1 2048 30318591 15521824768 fat XAQU_LIVE
 disk /dev/vdb 34359738368 none Virtio Block Device
 free /dev/vdb 0 67108863 34359738368
 disk /dev/nvme0n1 274877906944 gpt Samsung SSD 970 EVO Plus

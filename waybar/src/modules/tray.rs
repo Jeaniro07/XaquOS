@@ -1,7 +1,7 @@
 //! `tray`: `StatusNotifierItem` icons (`modules/sni/`), which need D-Bus.
 //!
 //! waybar's tray is a `StatusNotifierWatcher` and host on the session bus,
-//! and each icon is an item a program registered there. Ferrix has no
+//! and each icon is an item a program registered there. Xaqu has no
 //! D-Bus, so no program can register one: the tray has no items, and
 //! waybar hides a tray with no items (`Tray::update`). So this module is
 //! always hidden, and says once why. `icon-size`, `spacing` and the rest
@@ -25,7 +25,7 @@ impl Tray {
         let mut view = common.view("tray", Shape::Box);
         view.visible = false;
         host.diag().warn(
-            "tray: StatusNotifierItem needs a D-Bus session bus, which Ferrix does not have; the tray stays empty and hidden".to_owned(),
+            "tray: StatusNotifierItem needs a D-Bus session bus, which Xaqu does not have; the tray stays empty and hidden".to_owned(),
         );
         Self { common, view }
     }

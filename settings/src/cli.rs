@@ -276,7 +276,7 @@ mod tests {
             "share/applications/term.desktop",
             "[Desktop Entry]\nType=Application\nName=Terminal\nExec=/bin/true\n",
         );
-        let _ = dir.write("home/.config/ferrix/game-mode.conf", "steam.desktop\n");
+        let _ = dir.write("home/.config/xaqu/game-mode.conf", "steam.desktop\n");
         let share = dir.path().join("share").to_string_lossy().into_owned();
         let home = dir.path().join("home").to_string_lossy().into_owned();
         let var = move |name: &str| match name {

@@ -4,7 +4,7 @@
     vkshim.py <vk.xml> <names> <out.c>
 
 A Vulkan program links against a loader, which finds a driver on disk and
-opens it with dlopen. Ferrix's ports are static and ferrousli's dlopen refuses
+opens it with dlopen. Xaqu's ports are static and ferrousli's dlopen refuses
 a library with thread-local storage, which Mesa has, so the Venus driver is
 linked into the program instead (docs/GPU.md 6.1). What stands in for the
 loader is this file's output: one function per Vulkan call the program leaves

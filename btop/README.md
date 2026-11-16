@@ -1,11 +1,11 @@
 # btop
 
-![btop watching Ferrix: the compositor, the terminals and shells, and the user-space drivers (net, gpu, input, blk, snd)](screenshot.png)
+![btop watching Xaqu: the compositor, the terminals and shells, and the user-space drivers (net, gpu, input, blk, snd)](screenshot.png)
 
-*btop watching Ferrix: the compositor, the terminals and shells, and the user-space drivers (net, gpu, input, blk, snd). On Ferrix (x86-64 under KVM) at main 2f067e40f, 2026-10-03; nothing edited after capture.*
+*btop watching Xaqu: the compositor, the terminals and shells, and the user-space drivers (net, gpu, input, blk, snd). On Xaqu (x86-64 under KVM) at main 2f067e40f, 2026-10-03; nothing edited after capture.*
 
 [btop](https://github.com/aristocratos/btop) 1.4.7, the resource monitor,
-as a static x86-64 program against ferrousli, Ferrix's C library, and the
+as a static x86-64 program against ferrousli, Xaqu's C library, and the
 C++ runtime ferrousli's libcxx port builds on it.
 
 An app (`docs/APPS.md`) built by a script rather than cargo: `build.sh

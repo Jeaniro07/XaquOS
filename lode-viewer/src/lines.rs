@@ -6,7 +6,7 @@
 //!   expands into what the record says of them -- the held lines
 //!   themselves were never stored (`docs/LOGGING.md` §7.1).
 //! * A run of lines from one source alike but for their numbers -- lode's
-//!   own test for folding (`ferrix_lode_core::limit::similar`) -- shows its
+//!   own test for folding (`xaqu_lode_core::limit::similar`) -- shows its
 //!   first line and one `⋯ N more like it` line, which expands into them.
 //!   lode folds such runs as it stores them now; a store from before it did,
 //!   or a run the limiter broke, is folded here for reading only.
@@ -16,7 +16,7 @@
 
 use std::collections::HashSet;
 
-use ferrix_lode_core::limit::similar;
+use xaqu_lode_core::limit::similar;
 
 use crate::data::{Entry, Kind, LIMIT_WINDOW_US, Log};
 
@@ -247,7 +247,7 @@ mod tests {
 
     use super::{Line, group, lines};
     use crate::data::Log;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     fn record(seq: u64, id: &str, message: &str) -> Record {
         let mut record = Record::new(6, seq * 1_000_000, seq);
@@ -294,7 +294,7 @@ mod tests {
         let mut held = record(2, "lode", "Suppressed 6124 message(s) from intel-xelp");
         held.push(
             "MESSAGE_ID",
-            ferrix_lode_core::limit::MESSAGE_ID_SUPPRESSED.as_bytes(),
+            xaqu_lode_core::limit::MESSAGE_ID_SUPPRESSED.as_bytes(),
         );
         held.push("N_SUPPRESSED", b"6124");
         held.push("HELD_FIRST_SEQNUM", b"100");
@@ -334,7 +334,7 @@ mod tests {
             );
             folded.push(
                 "MESSAGE_ID",
-                ferrix_lode_core::limit::MESSAGE_ID_REPEATED.as_bytes(),
+                xaqu_lode_core::limit::MESSAGE_ID_REPEATED.as_bytes(),
             );
             folded.push("REPEATED", b"6");
             records.push(folded);

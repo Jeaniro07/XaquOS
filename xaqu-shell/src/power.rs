@@ -1,7 +1,7 @@
 //! The power menu (`xaqu-shell --power`, the dock's power button): an
 //! overlay with Lock, Restart and Shut down (`ui/power.tole`). Restart and
 //! Shut down ask once more, then call the init as the person at the machine
-//! may (`svc reboot`, `svc poweroff`; Ferrix's `docs/INIT.md` §10.1); what
+//! may (`svc reboot`, `svc poweroff`; Xaqu's `docs/INIT.md` §10.1); what
 //! the init refuses is shown in the card. Lock is offered only where the
 //! account can unlock again: not in the live session, whose person has no
 //! password. Started again while it is up, it closes.
@@ -95,10 +95,10 @@ pub fn offers(live: bool) -> Vec<Offer> {
 }
 
 /// Whether the kernel's command line is the live session's
-/// (`ferrix.live`, a word of its own).
+/// (`xaqu.live`, a word of its own).
 #[must_use]
 pub fn is_live(cmdline: &str) -> bool {
-    cmdline.split_whitespace().any(|word| word == "ferrix.live")
+    cmdline.split_whitespace().any(|word| word == "xaqu.live")
 }
 
 /// A refusal as the card says it: the init's "Permission denied" as what
@@ -443,9 +443,9 @@ mod tests {
     #[test]
     fn the_live_session_offers_no_lock() {
         assert!(is_live(
-            "BOOT_IMAGE=/k ferrix.root=tmpfs ferrix.live ferrix.efifb\n"
+            "BOOT_IMAGE=/k xaqu.root=tmpfs xaqu.live xaqu.efifb\n"
         ));
-        assert!(!is_live("ferrix.root=PARTLABEL=root ferrix.lively"));
+        assert!(!is_live("xaqu.root=PARTLABEL=root xaqu.lively"));
         assert_eq!(offers(true), [Offer::Restart, Offer::ShutDown]);
         assert_eq!(
             offers(false),

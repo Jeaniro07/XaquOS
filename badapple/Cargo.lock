@@ -55,7 +55,7 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -139,7 +139,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
@@ -164,7 +164,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 name = "media-pcm"
 version = "0.1.0"
 dependencies = [
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 

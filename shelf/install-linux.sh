@@ -5,7 +5,7 @@
 #   bash src/user/apps/shelf/install-linux.sh        # into ~/.local
 #   PREFIX=/opt/shelf bash .../install-linux.sh       # elsewhere
 #
-# It builds inside the Ferrix checkout it sits in, with the toolchain that
+# It builds inside the Xaqu checkout it sits in, with the toolchain that
 # checkout pins. It needs a Wayland session (GNOME, KDE Plasma, Hyprland,
 # sway): shelf speaks Wayland only.
 set -euo pipefail
@@ -20,8 +20,8 @@ target=${CARGO_TARGET_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/shelf/target}
 (cd "$here" && CARGO_TARGET_DIR=$target cargo build --release)
 
 install -Dm755 "$target/release/shelf" "$prefix/bin/shelf"
-install -Dm644 "$here/share/ferrix-shelf.svg" \
-    "$prefix/share/icons/hicolor/scalable/apps/ferrix-shelf.svg"
+install -Dm644 "$here/share/xaqu-shelf.svg" \
+    "$prefix/share/icons/hicolor/scalable/apps/xaqu-shelf.svg"
 mkdir -p "$prefix/share/applications"
 sed "s|^Exec=.*|Exec=$prefix/bin/shelf %U|" "$here/share/shelf.desktop" \
     > "$prefix/share/applications/shelf.desktop.new"

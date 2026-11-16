@@ -1,5 +1,5 @@
 //! The look: Nocturne's icons, as the vendored Phosphor font's glyphs
-//! (Ferrix's `assets/fonts/phosphor`, MIT). The colours are the markup's
+//! (Xaqu's `assets/fonts/phosphor`, MIT). The colours are the markup's
 //! `Nocturne` singleton (`ui/nocturne.tole`).
 
 /// Phosphor's code point for each icon the shell draws, from the
@@ -88,7 +88,7 @@ pub fn icon(name: &str) -> String {
 
 /// Where the shell finds its faces beside the system's: Phosphor from the
 /// app's own folder (`share/fonts`, installed to
-/// `/usr/share/fonts/xaqu-shell`), and Inter where Ferrix's tree or the
+/// `/usr/share/fonts/xaqu-shell`), and Inter where Xaqu's tree or the
 /// image has it.
 #[must_use]
 pub fn fonts() -> tole::Fonts {

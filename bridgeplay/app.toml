@@ -5,7 +5,7 @@
 [package]
 name = "bridgeplay"
 version = "0.1.0"
-description = "Open Steam and Windows programs on Ferrix, through Wine"
+description = "Open Steam and Windows programs on Xaqu, through Wine"
 license = "MIT"
 abi = "linux"
 arches = ["x86_64"]

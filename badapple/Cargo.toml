@@ -13,7 +13,7 @@ members = ["bav", "player"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-# Matches Ferrix's rust-toolchain.toml, which rustup finds from here.
+# Matches Xaqu's rust-toolchain.toml, which rustup finds from here.
 rust-version = "1.99"
 license = "MIT"
 publish = false

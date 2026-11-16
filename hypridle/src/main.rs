@@ -118,7 +118,7 @@ fn run() -> i32 {
             ),
         );
     }
-    for note in config::ferrix_notes(&loaded) {
+    for note in config::xaqu_notes(&loaded) {
         log.say(Level::Warn, &note);
     }
 

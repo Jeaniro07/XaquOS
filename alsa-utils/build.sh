@@ -7,7 +7,7 @@
 # and copies what app.toml installs into <out>.
 #
 # Needs the alsa-lib app built first, which app.toml's depends sees to.
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/bin/aplay           aplay, and arecord as a link to it
 #   <arch>/bin/speaker-test
 #

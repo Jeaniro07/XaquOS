@@ -1,5 +1,5 @@
 //! The installer daemon's protocol, the client's side: a Unix stream
-//! socket at `/run/ferrix-installer.sock` (`FERRIX_INSTALLER_SOCKET`
+//! socket at `/run/xaqu-installer.sock` (`XAQU_INSTALLER_SOCKET`
 //! names another), one request a connection, answered in lines.
 //!
 //! ```text
@@ -17,12 +17,12 @@ use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 
 /// Where the daemon listens.
-pub const SOCKET: &str = "/run/ferrix-installer.sock";
+pub const SOCKET: &str = "/run/xaqu-installer.sock";
 
-/// The socket to ask: `FERRIX_INSTALLER_SOCKET`, else [`SOCKET`].
+/// The socket to ask: `XAQU_INSTALLER_SOCKET`, else [`SOCKET`].
 #[must_use]
 pub fn socket(var: &dyn Fn(&str) -> Option<String>) -> PathBuf {
-    var("FERRIX_INSTALLER_SOCKET")
+    var("XAQU_INSTALLER_SOCKET")
         .filter(|path| !path.is_empty())
         .map_or_else(|| PathBuf::from(SOCKET), PathBuf::from)
 }
@@ -89,7 +89,7 @@ pub struct Disk {
 /// What `disks` answered.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Disks {
-    /// The smallest space Ferrix installs into.
+    /// The smallest space Xaqu installs into.
     pub min: u64,
     /// The disk the live system runs from, never offered.
     pub live: Option<String>,
@@ -464,7 +464,7 @@ mod tests {
     const ANSWER: &str = "\
 min 8589934592
 live /dev/vda
-disk /dev/vda 2147483648 none Ferrix live
+disk /dev/vda 2147483648 none Xaqu live
 disk /dev/vdb 34359738368 none
 disk /dev/nvme0n1 274877906944 gpt Samsung SSD 970 EVO Plus
 part /dev/nvme0n1 1 2048 1050623 536870912 fat EFI system partition
@@ -520,7 +520,7 @@ ok
             user: "ada".to_owned(),
             fullname: "Ada Lovelace".to_owned(),
             password: "pass word\nmode=erase".to_owned(),
-            hostname: "ferrix".to_owned(),
+            hostname: "xaqu".to_owned(),
             keyboard: "de".to_owned(),
             variant: String::new(),
             timezone: "Europe/Vienna".to_owned(),
@@ -529,7 +529,7 @@ ok
         assert_eq!(
             install.request(),
             "install\ntarget=/dev/nvme0n1\nmode=free\nfirst=318767104\nlast=536868863\n\
-             user=ada\nfullname=Ada Lovelace\npassword=pass word\nhostname=ferrix\n\
+             user=ada\nfullname=Ada Lovelace\npassword=pass word\nhostname=xaqu\n\
              keyboard=de\nvariant=\ntimezone=Europe/Vienna\nlanguage=en\n\n"
         );
         let erase = Install {

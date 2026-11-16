@@ -1,4 +1,4 @@
-//! fuzzel, the application launcher, for Ferrix.
+//! fuzzel, the application launcher, for Xaqu.
 //!
 //! A port of Daniel Eklöf's fuzzel (codeberg.org/dnkl/fuzzel, 1.12): it
 //! reads `~/.config/fuzzel/fuzzel.ini` as fuzzel does, lists the `.desktop`
@@ -12,9 +12,9 @@
 //! Finding the `.desktop` entries and their icons is the desktop's own
 //! `compositor-desktop`, [`desktop`] and [`icon`] here, since the Settings
 //! app lists the same applications; fuzzel's `xdg.c` and `icon.c` are
-//! followed there. So is what Ferrix adds to a start: an application the user
+//! followed there. So is what Xaqu adds to a start: an application the user
 //! switched to game mode in Settings is started with the mark
-//! ([`exec::Launch::mark`], Ferrix's `docs/SETTINGS.md`).
+//! ([`exec::Launch::mark`], Xaqu's `docs/SETTINGS.md`).
 
 /// The applications: fuzzel's `xdg.c`, in the desktop's own crate.
 pub use compositor_desktop::entry as desktop;

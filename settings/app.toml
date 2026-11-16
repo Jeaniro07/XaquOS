@@ -1,5 +1,5 @@
-# settings, an app (docs/APPS.md): Ferrix's Settings, after the customer's
-# design, drawn with tole. Its pages are Ferrix's docs/RUNTIME-SETTINGS.md
+# settings, an app (docs/APPS.md): Xaqu's Settings, after the customer's
+# design, drawn with tole. Its pages are Xaqu's docs/RUNTIME-SETTINGS.md
 # settings; game mode is docs/SETTINGS.md.
 
 [package]
@@ -25,9 +25,9 @@ to = "usr/share/applications/settings.desktop"
 mode = "644"
 
 [[package.files]]
-from = "share/ferrix-settings.svg"
+from = "share/xaqu-settings.svg"
 source = "folder"
-to = "usr/share/icons/hicolor/scalable/apps/ferrix-settings.svg"
+to = "usr/share/icons/hicolor/scalable/apps/xaqu-settings.svg"
 mode = "644"
 
 # The design's faces, Figtree and JetBrains Mono, where Settings and the

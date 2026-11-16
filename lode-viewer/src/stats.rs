@@ -312,13 +312,13 @@ pub fn worst_first(entries: &[Entry], (from, to): (u64, u64)) -> (Vec<usize>, us
 mod tests {
     use super::{bucket_width, buckets, lanes, problems, tiles, top_sources, worst_first};
     use crate::data::Log;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     fn record(seq: u64, at_s: u64, id: &str, level: u8) -> Record {
         let mut record = Record::new(level, at_s * 1_000_000, at_s);
         record.seqnum = seq;
         record.push("SYSLOG_IDENTIFIER", id.as_bytes());
-        record.push("FERRIX_PRIORITY_SOURCE", b"stated");
+        record.push("XAQU_PRIORITY_SOURCE", b"stated");
         record.push("MESSAGE", b"m");
         record
     }

@@ -8,8 +8,8 @@
 
 use std::rc::Rc;
 
-use ferrix_lode_core::record::{Field, Record, UNSPECIFIED};
-use ferrix_lode_core::segment;
+use xaqu_lode_core::record::{Field, Record, UNSPECIFIED};
+use xaqu_lode_core::segment;
 
 /// What a file of lines gave.
 #[derive(Debug, Default)]
@@ -55,7 +55,7 @@ fn record(pairs: Vec<(String, Vec<u8>)>, hosts: &mut Vec<Rc<str>>) -> Option<Rec
     };
     let number = |name: &str| text(name).and_then(|value| value.trim().parse::<u64>().ok());
     let seqnum = number("__SEQNUM")?;
-    let level = match text("FERRIX_LEVEL") {
+    let level = match text("XAQU_LEVEL") {
         Some("unspecified") => UNSPECIFIED,
         Some(value) => value.parse::<u8>().unwrap_or(UNSPECIFIED),
         None => text("PRIORITY")
@@ -90,7 +90,7 @@ fn record(pairs: Vec<(String, Vec<u8>)>, hosts: &mut Vec<Rc<str>>) -> Option<Rec
         if name.starts_with("__")
             || matches!(
                 name.as_str(),
-                "PRIORITY" | "FERRIX_LEVEL" | "_BOOT_ID" | "_HOSTNAME"
+                "PRIORITY" | "XAQU_LEVEL" | "_BOOT_ID" | "_HOSTNAME"
             )
         {
             continue;
@@ -269,16 +269,16 @@ mod tests {
         let text = concat!(
             r#"{"box-log":"nazuna","commit":"abc"}"#,
             "\n",
-            r#"{"__CURSOR":"i=7;b=062359e1029c423c0c0b4c9cf5216a14","__REALTIME_TIMESTAMP":"1792776109770158","__MONOTONIC_TIMESTAMP":"22957520","__SEQNUM":"7","_BOOT_ID":"062359e1029c423c0c0b4c9cf5216a14","FERRIX_LEVEL":"unspecified","_HOSTNAME":"ferrix","MESSAGE":"hello","SYSLOG_IDENTIFIER":"hyprix","_TRANSPORT":"stdout"}"#,
+            r#"{"__CURSOR":"i=7;b=062359e1029c423c0c0b4c9cf5216a14","__REALTIME_TIMESTAMP":"1792776109770158","__MONOTONIC_TIMESTAMP":"22957520","__SEQNUM":"7","_BOOT_ID":"062359e1029c423c0c0b4c9cf5216a14","XAQU_LEVEL":"unspecified","_HOSTNAME":"xaqu","MESSAGE":"hello","SYSLOG_IDENTIFIER":"hyprix","_TRANSPORT":"stdout"}"#,
             "\n",
         );
         let read = read(text);
         assert_eq!(read.skipped, 1);
         let record = &read.records[0];
         assert_eq!(record.seqnum, 7);
-        assert_eq!(record.priority, ferrix_lode_core::record::UNSPECIFIED);
+        assert_eq!(record.priority, xaqu_lode_core::record::UNSPECIFIED);
         assert_eq!(record.realtime_us, 1_792_776_109_770_158);
-        assert_eq!(&*record.host, "ferrix");
+        assert_eq!(&*record.host, "xaqu");
         assert_eq!(record.message(), b"hello");
         assert_eq!(record.boot_id[0], 0x06);
         assert!(record.get("__CURSOR").is_none());

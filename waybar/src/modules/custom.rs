@@ -17,7 +17,7 @@
 //! The module is hidden while it has an `exec` (or `exec-if`) and its last
 //! output was empty or its exit non-zero -- which is how the user's
 //! `custom/ws-N` modules hide a desktop that does not exist, and why every
-//! one of them is hidden on Ferrix, where `hypr-workspaces` is not.
+//! one of them is hidden on Xaqu, where `hypr-workspaces` is not.
 //! Without `exec`, the module shows its `format` with an empty `{text}`: the
 //! launcher's and logout's `" "`.
 //!
@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     fn a_missing_script_hides_the_module() {
-        // What happens on Ferrix to the user's desktop chips: sh answers
+        // What happens on Xaqu to the user's desktop chips: sh answers
         // 127 for a command that is not there.
         let (mut module, mut host) = custom(
             r#"{"exec": "/home/u/.local/bin/hypr-workspaces state 1", "return-type": "json", "interval": "once", "signal": 5}"#,

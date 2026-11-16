@@ -5,8 +5,8 @@ use std::os::fd::{FromRawFd as _, OwnedFd};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use ferrix_auth_client::Connection;
-use ferrix_auth_proto::{MAX_RECORD, Record};
+use xaqu_auth_client::Connection;
+use xaqu_auth_proto::{MAX_RECORD, Record};
 
 use super::{
     Account, Backend, Missing, NO_SERVICE, Next, Prompt, REJECTED, Secret, Service, Verdict,
@@ -204,7 +204,7 @@ fn the_account_is_the_uid_s_line() {
     std::fs::create_dir_all(dir.join("etc")).expect("a test directory");
     std::fs::write(
         dir.join("etc/passwd"),
-        "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:Ferrix User:/home/ferrix:/bin/zsh\n",
+        "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:Xaqu User:/home/xaqu:/bin/zsh\n",
     )
     .expect("a test file");
     let found = (account(&dir, 1000), account(&dir, 0), account(&dir, 7));
@@ -212,8 +212,8 @@ fn the_account_is_the_uid_s_line() {
     assert_eq!(
         found.0,
         Some(Account {
-            name: "ferrix".to_owned(),
-            gecos: "Ferrix User".to_owned(),
+            name: "xaqu".to_owned(),
+            gecos: "Xaqu User".to_owned(),
         })
     );
     assert_eq!(found.1.map(|account| account.name), Some("root".to_owned()));

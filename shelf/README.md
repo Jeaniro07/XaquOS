@@ -1,12 +1,12 @@
 # shelf
 
-Ferrix's file manager, after the customer's "File Explorer v2" design:
+Xaqu's file manager, after the customer's "File Explorer v2" design:
 tabs, one pane or two side by side, a list or a grid with thumbnails,
 folder sizes added up as you look, archives walked into in place, tags,
 Quick access, filter chips, a search in three modes, bulk rename, and a
 trash that GNOME's Files and KDE's Dolphin share. Its window is drawn by
-[tole](https://github.com/ferrix-os/tole), Ferrix's UI framework, on the
-CPU; it runs on Ferrix's desktop and on any Linux Wayland desktop.
+[tole](https://github.com/xaqu-os/tole), Xaqu's UI framework, on the
+CPU; it runs on Xaqu's desktop and on any Linux Wayland desktop.
 
 ![shelf, dark](screenshots/dark.png)
 
@@ -63,7 +63,7 @@ CPU; it runs on Ferrix's desktop and on any Linux Wayland desktop.
 
 ## Running it
 
-On Ferrix it is in every image a person runs (`Files` in the launcher).
+On Xaqu it is in every image a person runs (`Files` in the launcher).
 On a Linux desktop:
 
 ```
@@ -86,7 +86,7 @@ cargo run -- --render screenshots/archive.png --scene archive --light
 
 ## Licence
 
-MIT, as the rest of Ferrix. It links tole (MIT), the compositor's
+MIT, as the rest of Xaqu. It links tole (MIT), the compositor's
 `compositor-image` decoders through tole, `libc` (MIT or Apache-2.0) for
 the disk's size, and `miniz_oxide` (MIT, zlib or Apache-2.0) for zip's
 and gzip's deflate.

@@ -29,7 +29,7 @@ pub const SIZE: (u32, u32) = (900, 640);
 pub(crate) fn say(text: &str) {
     use std::io::Write as _;
     let mut out = std::io::stdout();
-    let _ = writeln!(out, "ferrix-installer: {text}");
+    let _ = writeln!(out, "xaqu-installer: {text}");
     let _ = out.flush();
 }
 
@@ -206,7 +206,7 @@ pub fn run() -> i32 {
     };
     view.show(&state);
     let options = WindowOptions {
-        title: "Install Ferrix".to_owned(),
+        title: "Install Xaqu".to_owned(),
         app_id: APP_ID.to_owned(),
         size: SIZE,
         background: tole::Color::hex(0x0016_1826),
@@ -241,7 +241,7 @@ pub fn run() -> i32 {
                         // Closing mid-install would leave a half-written
                         // disk with no one watching: say so, stay open.
                         state.status =
-                            Some("Ferrix is being installed; wait until it is done.".to_owned());
+                            Some("Xaqu is being installed; wait until it is done.".to_owned());
                     } else {
                         return 0;
                     }
@@ -265,7 +265,7 @@ pub fn run() -> i32 {
         for action in view.actions() {
             changed = true;
             if act(&mut state, action, &mut system) == Outcome::Close {
-                say("try Ferrix: the installer closes");
+                say("try Xaqu: the installer closes");
                 return 0;
             }
         }

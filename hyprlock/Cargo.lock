@@ -77,8 +77,8 @@ dependencies = [
  "compositor-render",
  "compositor-text",
  "compositor-toolkit",
- "ferrix-auth-client",
- "ferrix-auth-proto",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
  "libc",
  "tiny-skia",
 ]
@@ -216,15 +216,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-auth-client"
+name = "xaqu-auth-client"
 version = "0.1.0"
 dependencies = [
- "ferrix-auth-proto",
+ "xaqu-auth-proto",
  "libc",
 ]
 
 [[package]]
-name = "ferrix-auth-proto"
+name = "xaqu-auth-proto"
 version = "0.1.0"
 
 [[package]]

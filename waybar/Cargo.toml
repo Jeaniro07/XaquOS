@@ -7,9 +7,9 @@ rust-version = "1.99"
 license = "MIT"
 publish = false
 
-# An app (Ferrix's docs/APPS.md): a workspace of its own, a static Linux
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
 # program built with std against the target's own musl. It builds inside a
-# Ferrix checkout, where the compositor and its libraries are beside it.
+# Xaqu checkout, where the compositor and its libraries are beside it.
 [workspace]
 
 [lib]
@@ -36,7 +36,7 @@ compositor-text = { path = "../../system/linux/compositor/text" }
 # The stylesheet's url() images: the chips' SVG caps and icons.
 compositor-image = { path = "../../system/linux/compositor/image" }
 # The PulseAudio native protocol's wire format, for the pulseaudio module's
-# volume, mute and description: the crate Ferrix's own sound server is
+# volume, mute and description: the crate Xaqu's own sound server is
 # planned on (docs/AUDIO.md, U2), pure Rust, MIT. Its protocol module is
 # used synchronously; nothing of its async client is.
 pulseaudio = "0.3.1"
@@ -44,7 +44,7 @@ pulseaudio = "0.3.1"
 # reads an interface's address with.
 libc = "0.2.189"
 # The rasteriser the bar's CSS boxes are drawn with: the one version the
-# compositor pins (Ferrix's src/user/system/linux/compositor/render's reasons), so the foundation's glyphs
+# compositor pins (Xaqu's src/user/system/linux/compositor/render's reasons), so the foundation's glyphs
 # and images and this crate's boxes are one tiny-skia.
 tiny-skia = { version = "=0.12.0", default-features = false, features = ["std", "simd"] }
 

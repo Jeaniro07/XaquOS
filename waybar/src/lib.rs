@@ -1,4 +1,4 @@
-//! waybar, in Rust, for Ferrix.
+//! waybar, in Rust, for Xaqu.
 
 pub mod app;
 pub mod bar;

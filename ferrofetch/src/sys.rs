@@ -3,12 +3,12 @@
 //!
 //! An app changes nothing outside its folder (`docs/APPS.md` §4), so the
 //! three calls this program needs beyond `read`, `write` and `close` are
-//! spelt here, through `ferrix_rt::linux::call`, with the running
-//! architecture's numbers from `ferrix_rt::linux::numbers`. The layouts they
+//! spelt here, through `xaqu_rt::linux::call`, with the running
+//! architecture's numbers from `xaqu_rt::linux::numbers`. The layouts they
 //! use are the same on all three architectures: a path, a buffer of
 //! `linux_dirent64` records, and `struct new_utsname`, six 65-byte fields.
 
-use ferrix_rt::linux::{self, numbers};
+use xaqu_rt::linux::{self, numbers};
 
 /// `AT_FDCWD`: start from the current directory, which an absolute path then
 /// ignores.

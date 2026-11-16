@@ -2,14 +2,14 @@
 # Builds foot 1.24.0, a Wayland terminal nobody here wrote, as a static
 # program against ferrousli, with every library it links and a font for it
 # to draw with. It is docs/CHROME.md §6's first milestone: a foreign toolkit
-# client on Ferrix's compositor, proving the client libraries a browser
+# client on Xaqu's compositor, proving the client libraries a browser
 # needs for a fraction of a browser's cost.
 #
 #     build.sh <arch> <out>     # as an app's script is run (docs/APPS.md §3.1)
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/bin/foot, <arch>/bin/footclient
 #   <arch>/etc/fonts/fonts.conf, fontconfig's configuration
 #   <arch>/usr/share/fonts/dejavu/DejaVuSansMono*.ttf, the only font

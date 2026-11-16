@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Install Ferrix
+Name=Install Xaqu
 GenericName=System Installer
-Comment=Install Ferrix on this computer's disk
-Exec=/bin/ferrix-installer
-Icon=ferrix-installer
+Comment=Install Xaqu on this computer's disk
+Exec=/bin/xaqu-installer
+Icon=xaqu-installer
 Terminal=false
 Keywords=install;installer;setup;disk;partition;
 Categories=System;

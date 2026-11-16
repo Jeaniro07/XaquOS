@@ -4,7 +4,7 @@
 //! the table's lines, pages read as the view nears them, the view kept on
 //! the record it showed while pages come and go.
 
-use ferrix_lode_core::record::Record;
+use xaqu_lode_core::record::Record;
 
 use crate::app::App;
 use crate::data::{KnownBoot, Log};
@@ -368,7 +368,7 @@ mod tests {
     use crate::app::{Action, App, Origin, Page};
     use crate::paged::{PAGE, WINDOW_PAGES};
     use crate::store::Store;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     /// A store of one boot of `count` records in segments of 30,000.
     fn store(name: &str, count: u64) -> std::path::PathBuf {

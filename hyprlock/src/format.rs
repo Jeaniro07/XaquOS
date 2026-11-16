@@ -10,7 +10,7 @@
 //!
 //! **The time.** Upstream asks the C++ library for the local zone through
 //! `TZ` or `/etc/localtime`, and falls back to UTC with a warning when
-//! there is none. Ferrix's desktop image has neither, so the clock there is
+//! there is none. Xaqu's desktop image has neither, so the clock there is
 //! UTC; [`Context::utc_offset`] is the seam a zone would plug into.
 
 /// What the variables stand for at the moment of formatting.
@@ -167,7 +167,7 @@ pub fn format(input: &str, context: &Context) -> Formatted {
     for (name, value) in [
         ("$PAMFAIL", &context.pam_fail),
         ("$PAMPROMPT", &context.pam_prompt),
-        // No fingerprint reader: fprintd is a D-Bus service, and Ferrix has
+        // No fingerprint reader: fprintd is a D-Bus service, and Xaqu has
         // no D-Bus.
         ("$FPRINTFAIL", &None),
         ("$FPRINTPROMPT", &None),
@@ -211,8 +211,8 @@ mod tests {
 
     fn context() -> Context {
         Context {
-            user: "ferrix".to_owned(),
-            gecos: "The Ferrix User".to_owned(),
+            user: "xaqu".to_owned(),
+            gecos: "The Xaqu User".to_owned(),
             // 2026-09-26 18:07:30 UTC.
             now: 1_790_446_050,
             pam_fail: Some("Authentication failed".to_owned()),
@@ -244,7 +244,7 @@ mod tests {
         assert_eq!(formatted.text, " date +\"%A, %-d %B\"");
         let forced = format("cmd[update:1000:true] echo $USER", &context());
         assert!(forced.allow_force_update);
-        assert_eq!(forced.text, " echo ferrix");
+        assert_eq!(forced.text, " echo xaqu");
     }
 
     #[test]
@@ -266,7 +266,7 @@ mod tests {
         );
         assert_eq!(
             format("$USER is $DESC<br/>ok", &context()).text,
-            "ferrix is The Ferrix User\nok"
+            "xaqu is The Xaqu User\nok"
         );
     }
 

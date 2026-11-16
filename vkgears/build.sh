@@ -7,11 +7,11 @@
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/bin/vkgears
 #
 # A Vulkan program links against a loader, which opens a driver with dlopen.
-# Ferrix's ports are static, and ferrousli's dlopen refuses a library with
+# Xaqu's ports are static, and ferrousli's dlopen refuses a library with
 # thread-local storage, which Mesa has. So the driver is linked into the
 # program, and vkshim.py writes the loader's part: one function per Vulkan
 # call vkgears makes, resolved through the driver's vk_icdGetInstanceProcAddr.
@@ -40,7 +40,7 @@
 #     when it has none. It now waits for the capability.
 #   * vkgears-xkb.patch: vkgears made its keymap context with XKB's default
 #     include path, and libxkbcommon refuses to make one when that directory
-#     is not there -- Ferrix carries no XKB data -- so the context was null
+#     is not there -- Xaqu carries no XKB data -- so the context was null
 #     and the first keymap crashed on it. The compositor sends a whole keymap,
 #     which needs no include path, so none is asked for.
 #   * vkgears-dispatch.patch: vkgears polled its display without waiting and
@@ -53,9 +53,9 @@
 #     threads. Seen against hyprix, which offers wp_fifo_v1, so Mesa asks for
 #     no frame callbacks whose arrival had been hiding the race.
 #   * venus-open-by-name.patch: Venus finds its render node through libdrm's
-#     drmGetDevices2, which reads sysfs, and Ferrix had none when this port
+#     drmGetDevices2, which reads sysfs, and Xaqu had none when this port
 #     was made. When that finds nothing, the render nodes are opened by name
-#     and the first whose driver is virtio_gpu is taken. Ferrix's /sys may
+#     and the first whose driver is virtio_gpu is taken. Xaqu's /sys may
 #     now be enough for libdrm; the patch can go once a boot shows it is.
 #
 # What is built without, and why:

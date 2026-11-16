@@ -1,6 +1,6 @@
 [package]
 name = "bridgeplay"
-description = "Bridgeplay: opens Steam and Windows programs on Ferrix, through Wine, kept small in memory"
+description = "Bridgeplay: opens Steam and Windows programs on Xaqu, through Wine, kept small in memory"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"

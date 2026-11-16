@@ -91,7 +91,7 @@ export component Shell : Rectangle {
     Text {
         x: 66; y: 12
         height: 40
-        text: "Install Ferrix"
+        text: "Install Xaqu"
         font: Look.sans(17, 600)
         color: Look.text
     }

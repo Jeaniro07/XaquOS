@@ -1,4 +1,4 @@
-//! What backs the settings (Ferrix's `docs/RUNTIME-SETTINGS.md`): the
+//! What backs the settings (Xaqu's `docs/RUNTIME-SETTINGS.md`): the
 //! desktop's own tools, behind one trait so the window's logic is tested
 //! without a desktop.
 //!
@@ -71,7 +71,7 @@ pub trait System {
     /// Write `text` to `path`, whole.
     fn write(&mut self, path: &std::path::Path, text: &str) -> Result<(), String>;
     /// Ask the settings writer for `request`: what was done, or why not.
-    fn change(&mut self, request: &ferrix_settings_client::Request) -> Result<String, String>;
+    fn change(&mut self, request: &xaqu_settings_client::Request) -> Result<String, String>;
 }
 
 /// The person as the settings writer's relay would ask them: never. On a
@@ -81,8 +81,8 @@ pub trait System {
 #[derive(Debug)]
 struct NoPerson;
 
-impl ferrix_settings_client::Person for NoPerson {
-    fn ask(&mut self, _visible: bool, _text: &str) -> Option<ferrix_settings_client::Secret> {
+impl xaqu_settings_client::Person for NoPerson {
+    fn ask(&mut self, _visible: bool, _text: &str) -> Option<xaqu_settings_client::Secret> {
         None
     }
 
@@ -240,8 +240,8 @@ impl System for Desktop {
         std::fs::read_to_string(path).ok()
     }
 
-    fn change(&mut self, request: &ferrix_settings_client::Request) -> Result<String, String> {
-        ferrix_settings_client::Client::new()
+    fn change(&mut self, request: &xaqu_settings_client::Request) -> Result<String, String> {
+        xaqu_settings_client::Client::new()
             .apply(request, &mut NoPerson)
             .map(|outcome| outcome.text)
             .map_err(|refusal| format!("{}: {}", refusal.kind.title(), refusal.text))
@@ -549,7 +549,7 @@ impl System for Fake {
         self.files.get(path).cloned()
     }
 
-    fn change(&mut self, request: &ferrix_settings_client::Request) -> Result<String, String> {
+    fn change(&mut self, request: &xaqu_settings_client::Request) -> Result<String, String> {
         self.calls.push(format!("change {}", request.name()));
         match self.refuse.get(request.name()) {
             Some(why) => Err(why.clone()),

@@ -35,7 +35,7 @@ pub const GRADIENT: [(f32, [u8; 3]); 3] = [
 ];
 
 /// The folder the default card is shown in.
-pub const DEFAULT_FOLDER: &str = "Ferrix";
+pub const DEFAULT_FOLDER: &str = "Xaqu";
 
 /// The gradient's colour `t` of the way along it.
 #[must_use]
@@ -377,11 +377,11 @@ pub fn shown_name(file: &str) -> String {
 }
 
 /// A folder's name as shown: the system's `settings` (the Settings app's
-/// presets) is Ferrix's, the rest as named.
+/// presets) is Xaqu's, the rest as named.
 #[must_use]
 pub fn folder_name(dir: &str) -> String {
     match dir {
-        "settings" => "Ferrix".to_owned(),
+        "settings" => "Xaqu".to_owned(),
         "xaqu" => "Xaqu".to_owned(),
         other => shown_name(other),
     }
@@ -773,7 +773,7 @@ mod tests {
     fn names_read_as_words() {
         assert_eq!(shown_name("pink-dusk.jpg"), "Pink dusk");
         assert_eq!(shown_name("late_night.ivf"), "Late night");
-        assert_eq!(folder_name("settings"), "Ferrix");
+        assert_eq!(folder_name("settings"), "Xaqu");
     }
 
     #[test]
@@ -881,12 +881,12 @@ mod tests {
         assert_eq!(
             names,
             vec![
-                ("Tide", "Ferrix", false),
+                ("Tide", "Xaqu", false),
                 ("Loose", "Mine", false),
                 ("Rain", "Space art", true)
             ]
         );
-        assert_eq!(folders, vec!["Ferrix", "Mine", "Empty", "Space art"]);
+        assert_eq!(folders, vec!["Xaqu", "Mine", "Empty", "Space art"]);
     }
 
     #[test]
@@ -896,7 +896,7 @@ mod tests {
         assert_eq!(own.name, "Default");
         assert_eq!(own.request(), "setting reset wallpaper");
         assert!(own.look.is_some(), "read without a file");
-        let picture = wall("dune", "Ferrix", None);
+        let picture = wall("dune", "Xaqu", None);
         assert!(!picture.is_default());
         assert_eq!(
             picture.request(),

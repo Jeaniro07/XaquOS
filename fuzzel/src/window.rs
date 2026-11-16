@@ -669,7 +669,7 @@ impl Loop {
                         return (1, false);
                     }
                 };
-                // Ferrix's own: the mark of an application the user
+                // Xaqu's own: the mark of an application the user
                 // switched to game mode in Settings.
                 for complaint in plan.mark(chosen, &|name| std::env::var(name).ok()) {
                     self.log.warn(&complaint);

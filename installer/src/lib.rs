@@ -1,5 +1,5 @@
-//! Install Ferrix: the live system's installer, one page at a time with
-//! Back and Next, in the style of Ubuntu's, drawn with tole (Ferrix's
+//! Install Xaqu: the live system's installer, one page at a time with
+//! Back and Next, in the style of Ubuntu's, drawn with tole (Xaqu's
 //! `docs/UI-FRAMEWORK.md`) in Settings' faces and Nocturne's colours.
 //!
 //! The parts:

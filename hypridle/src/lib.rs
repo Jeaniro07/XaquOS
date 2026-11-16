@@ -1,4 +1,4 @@
-//! hypridle, for Ferrix.
+//! hypridle, for Xaqu.
 //!
 //! Upstream hypridle (0.1.8, `/var/cache/hyprland-build/src/hypridle`) reads
 //! `~/.config/hypr/hypridle.conf`, asks the compositor through
@@ -8,10 +8,10 @@
 //! the session is to be locked, and `on_lock_cmd` when the compositor says,
 //! through `hyprland-lock-notify-v1`, that it is.
 //!
-//! This is the same program, reading the same file unchanged. What Ferrix
+//! This is the same program, reading the same file unchanged. What Xaqu
 //! lacks -- D-Bus, logind, a suspend -- is said at start, one line an option
-//! ([`config::ferrix_notes`]), and logind's part in `loginctl lock-session`
-//! is played by a socket of hypridle's own, which Ferrix's `loginctl`
+//! ([`config::xaqu_notes`]), and logind's part in `loginctl lock-session`
+//! is played by a socket of hypridle's own, which Xaqu's `loginctl`
 //! writes to ([`session`]).
 
 /// The file, read through `compositor/hyprlang`.

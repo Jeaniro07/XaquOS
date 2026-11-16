@@ -1,7 +1,7 @@
 //! What the window shows, with no window: the pages and their groups, the
 //! search, the page's rows, and what a press on each does.
 //!
-//! The pages are the customer's design (`Ferrix Settings.dc.html`): four
+//! The pages are the customer's design (`Xaqu Settings.dc.html`): four
 //! groups -- Desktop, Session, System, Advanced -- of thirteen pages. A
 //! page is a list of rows ([`Line`]), each a kind the markup draws
 //! (`ui/shell.tole`'s `RowKind`) and what pressing it does ([`Key`]).
@@ -494,7 +494,7 @@ pub enum Effect {
         reset: Vec<String>,
     },
     /// A change to the system, asked of the settings writer.
-    Change(ferrix_settings_client::Request),
+    Change(xaqu_settings_client::Request),
     /// hypridle's timeouts, in minutes, `None` for never.
     Idle {
         /// Lock after.

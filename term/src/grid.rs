@@ -23,7 +23,7 @@
 //!   are kept, a 256-colour or direct colour as the nearest of those, and the
 //!   rest ignored.
 //!
-//! Text is UTF-8, as everything a shell on Ferrix writes is: a character is
+//! Text is UTF-8, as everything a shell on Xaqu writes is: a character is
 //! the bytes that encode it, and a sequence that is not UTF-8 is drawn as
 //! U+FFFD, once for each place it goes wrong.
 //! * `CSI ? n h|l` -- the private modes, of which the cursor's own

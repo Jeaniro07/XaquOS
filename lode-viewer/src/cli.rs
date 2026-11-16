@@ -37,14 +37,14 @@ usage: lode-viewer [FILE.jsonl ...] [-D DIR ...] [options]
   FILE.jsonl        read a JSONL export (lode -o json, cargo xtask box-log) instead of the store
   -D DIR            read lode's store in DIR (default /var/log/journal and /run/log/journal)
   --machines DIR    each directory in DIR is one machine's store, as lode-receive keeps them;
-                    without a store or a file, ~/.local/share/ferrix/lode-receive (LODE_RECEIVE_DIR)
+                    without a store or a file, ~/.local/share/xaqu/lode-receive (LODE_RECEIVE_DIR)
   --pull [USER@]HOST[:PORT] [--key FILE] [--into ROOT] [--seconds N]
                     follow a machine's lode over ssh into ROOT with no window, as the
                     Machines page does, for N seconds (default 30), and say what came
   --pair NAME --server-name HOST --on [USER@]HOST[:PORT] [--key FILE] [--yes]
                     set a machine up to send its log over TLS to lode-receive here: show
                     what would be done on it, and with --yes do it
-  --no-remotes      do not follow the machines of ~/.config/ferrix/lode/machines.conf
+  --no-remotes      do not follow the machines of ~/.config/xaqu/lode/machines.conf
   --import FILE.jsonl --into DIR
                     write a JSONL export (a box log) into DIR as lode's store, and exit
   --page NAME       open on overview, logs or machines
@@ -362,7 +362,7 @@ pub fn open(options: &Options) -> App {
 }
 
 /// Where lode-receive keeps the machines that send to it:
-/// `LODE_RECEIVE_DIR`, else `~/.local/share/ferrix/lode-receive`.
+/// `LODE_RECEIVE_DIR`, else `~/.local/share/xaqu/lode-receive`.
 #[must_use]
 pub fn receive_root() -> Option<PathBuf> {
     if let Some(dir) = std::env::var_os("LODE_RECEIVE_DIR") {
@@ -373,7 +373,7 @@ pub fn receive_root() -> Option<PathBuf> {
         .or_else(|| {
             std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share"))
         })?;
-    Some(data.join("ferrix/lode-receive"))
+    Some(data.join("xaqu/lode-receive"))
 }
 
 /// The state the options ask for, on a viewer whose records are read.
@@ -410,7 +410,7 @@ fn settle(mut app: App, options: &Options) -> App {
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
     {
-        app.load_saved(home.join("ferrix/lode/viewer-queries.conf"));
+        app.load_saved(home.join("xaqu/lode/viewer-queries.conf"));
     }
     if let Some(mode) = options.mode {
         app.mode = mode;

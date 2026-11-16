@@ -17,7 +17,7 @@ where options are:
                                          Log level
   -b, --bar <id>                         Bar id
 
-Ferrix's own, for a boot's expected picture:
+Xaqu's own, for a boot's expected picture:
   --render <file.ppm>                    Draw the first bar into a picture, with no compositor
   --size <WxH>                           The output --render draws for (default 1024x768)
   --output <name>                        Its name (default Virtual-1)

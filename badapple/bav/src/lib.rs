@@ -4,7 +4,7 @@
 //! almost every pixel is what it was a frame ago. A general video codec
 //! spends its effort on what this video does not have; this format keeps
 //! only what it does. There is no H.264 decoder written in Rust to run on
-//! Ferrix, so the host converts the video once, with ffmpeg and
+//! Xaqu, so the host converts the video once, with ffmpeg and
 //! [`Encoder`], and the player decodes this instead.
 //!
 //! # The file

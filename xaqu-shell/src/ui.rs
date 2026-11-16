@@ -1,4 +1,4 @@
-//! The dock's tree, in tole (Ferrix's `docs/UI-FRAMEWORK.md`): the markup
+//! The dock's tree, in tole (Xaqu's `docs/UI-FRAMEWORK.md`): the markup
 //! under `ui/` draws it; this module hands it the [`State`] after every
 //! change and turns what was pressed back into [`Action`]s.
 

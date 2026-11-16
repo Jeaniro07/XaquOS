@@ -1,8 +1,8 @@
 //! Who is locked out, and the one narrow door a password goes through.
 //!
-//! Upstream hyprlock hands the typed password to PAM. Ferrix has no PAM:
+//! Upstream hyprlock hands the typed password to PAM. Xaqu has no PAM:
 //! it authenticates through `authd` (`docs/AUTH.md`), a service that owns
-//! every credential and answers a conversation on `/run/ferrix/auth`.
+//! every credential and answers a conversation on `/run/xaqu/auth`.
 //! hyprlock knows authentication only through [`Backend`], the
 //! conversation `docs/AUTH.md` §4.4 settles on: [`Backend::ready`] says
 //! before the lock is taken whether there is anything to unlock it with,
@@ -13,7 +13,7 @@
 //! else.
 //!
 //! [`Service`] is `authd`'s client and what `/bin/hyprlock` uses. It asks
-//! for the service `hyprlock` (`/lib/ferrix/auth/services/hyprlock`: the
+//! for the service `hyprlock` (`/lib/xaqu/auth/services/hyprlock`: the
 //! caller's own account, a two-second hold on a refusal) and the account
 //! this process runs as -- root on a phase-1 desktop, whose session is root
 //! (decision 3). hyprlock itself never sees a hash, and adds no delay of its
@@ -23,9 +23,9 @@
 use std::io;
 use std::sync::Mutex;
 
-use ferrix_auth_client::{Answer, Connection};
-pub use ferrix_auth_proto::Secret;
-use ferrix_auth_proto::{MAX_RECORD, Record, Response};
+use xaqu_auth_client::{Answer, Connection};
+pub use xaqu_auth_proto::Secret;
+use xaqu_auth_proto::{MAX_RECORD, Record, Response};
 
 /// Upstream's text for a wrong password.
 pub const REJECTED: &str = "Authentication failed";
@@ -145,7 +145,7 @@ fn unavailable(error: &io::Error) -> Verdict {
 }
 
 impl Service {
-    /// A client for the `authd` at [`ferrix_auth_proto::SOCKET`].
+    /// A client for the `authd` at [`xaqu_auth_proto::SOCKET`].
     #[must_use]
     pub fn new() -> Self {
         Self::with_opener(Box::new(Connection::open))
@@ -222,9 +222,9 @@ impl Backend for Service {
                 )))
             }
             Ok(Answer::Verdict(verdict)) => Err(match verdict {
-                ferrix_auth_client::Verdict::Unavailable(text)
-                | ferrix_auth_client::Verdict::Failed { text, .. } => Verdict::Unavailable(text),
-                ferrix_auth_client::Verdict::Accepted { .. } => {
+                xaqu_auth_client::Verdict::Unavailable(text)
+                | xaqu_auth_client::Verdict::Failed { text, .. } => Verdict::Unavailable(text),
+                xaqu_auth_client::Verdict::Accepted { .. } => {
                     Verdict::Unavailable("authd answered STATUS out of turn".to_owned())
                 }
             }),

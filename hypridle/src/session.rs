@@ -2,11 +2,11 @@
 //!
 //! On Linux, `loginctl lock-session` asks systemd-logind over D-Bus, logind
 //! emits `org.freedesktop.login1.Session.Lock`, and hypridle, which listens
-//! for it, runs `lock_cmd`. Ferrix has neither logind nor D-Bus, so the
+//! for it, runs `lock_cmd`. Xaqu has neither logind nor D-Bus, so the
 //! middle of that chain is one Unix socket, `$XDG_RUNTIME_DIR/hypridle.sock`
 //! (the temporary directory when nothing set the variable, as the
 //! compositor and `hyprctl` fall back to), which hypridle listens on and
-//! Ferrix's own `loginctl` writes to. The request is one line naming the
+//! Xaqu's own `loginctl` writes to. The request is one line naming the
 //! verb, and the answer one line: `ok`, or `error: ` and why.
 //!
 //! What the verbs mean is logind's: `lock-session` and `lock-sessions` both

@@ -13,8 +13,8 @@
 //! `scroll-step` up to `max-volume`, unless `on-scroll-up`/`-down` say
 //! otherwise, as `Pulseaudio::handleScroll` does.
 //!
-//! Ferrix's own sound server is not there yet (`docs/AUDIO.md` §5: the
-//! PulseAudio-protocol server is U2), so on Ferrix the module shows
+//! Xaqu's own sound server is not there yet (`docs/AUDIO.md` §5: the
+//! PulseAudio-protocol server is U2), so on Xaqu the module shows
 //! `vol 0%` exactly as waybar would, says once that no server is there, and
 //! looks again every five seconds, as libpulse's `PA_CONTEXT_NOFAIL` does.
 

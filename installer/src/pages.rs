@@ -68,11 +68,11 @@ impl Page {
         match self {
             Page::Welcome => "",
             Page::Keyboard => "Keyboard layout",
-            Page::Disk => "Where to install Ferrix",
+            Page::Disk => "Where to install Xaqu",
             Page::You => "Who are you?",
             Page::Zone => "Where are you?",
             Page::Summary => "Ready to install",
-            Page::Installing => "Installing Ferrix",
+            Page::Installing => "Installing Xaqu",
             Page::Done => "",
             Page::Failed => "The installation failed",
         }
@@ -84,7 +84,7 @@ impl Page {
         match self {
             Page::Welcome | Page::Done => "",
             Page::Keyboard => "Choose how your keyboard types. The live session follows at once.",
-            Page::Disk => "Choose a disk, then whether Ferrix takes all of it or only part.",
+            Page::Disk => "Choose a disk, then whether Xaqu takes all of it or only part.",
             Page::You => "The account you sign in with, and the computer's name.",
             Page::Zone => "Choose your time zone. The clock follows it.",
             Page::Summary => "Check your choices. Nothing is written until you press Install.",
@@ -142,7 +142,7 @@ pub enum Kind {
     Progress,
     /// A line of the log.
     Log,
-    /// Big buttons: Try Ferrix, Install Ferrix.
+    /// Big buttons: Try Xaqu, Install Xaqu.
     Buttons,
     /// A quiet button: Show details.
     Link,
@@ -296,7 +296,7 @@ pub enum Mode {
     Alongside,
 }
 
-/// A part of a disk Ferrix may go into.
+/// A part of a disk Xaqu may go into.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Region {
     /// Unallocated space.
@@ -392,7 +392,7 @@ pub struct Progress {
 /// What a press asks of the system.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Effect {
-    /// Close the window: Try Ferrix.
+    /// Close the window: Try Xaqu.
     Close,
     /// Make the live session type in this layout and variant.
     Keyboard(String, String),
@@ -465,7 +465,7 @@ impl Default for State {
             fullname: String::new(),
             user: String::new(),
             user_typed: false,
-            hostname: "ferrix".to_owned(),
+            hostname: "xaqu".to_owned(),
             password: String::new(),
             confirm: String::new(),
             you_tried: false,
@@ -479,14 +479,14 @@ impl Default for State {
     }
 }
 
-/// Why `disk` cannot take Ferrix at all, or `None`.
+/// Why `disk` cannot take Xaqu at all, or `None`.
 fn too_small(disk: &Disk, min: u64) -> Option<String> {
-    (disk.bytes < min).then(|| format!("Too small: Ferrix needs at least {}.", protocol::size(min)))
+    (disk.bytes < min).then(|| format!("Too small: Xaqu needs at least {}.", protocol::size(min)))
 }
 
 impl State {
     /// A state with the daemon's disks, the zones, and the first disk
-    /// that can take Ferrix chosen.
+    /// that can take Xaqu chosen.
     pub fn set_disks(&mut self, disks: Result<Disks, String>) {
         self.disks = Some(disks);
         let keep = self.disk.clone().filter(|dev| {
@@ -504,7 +504,7 @@ impl State {
         }
     }
 
-    /// The smallest space Ferrix installs into.
+    /// The smallest space Xaqu installs into.
     fn min(&self) -> u64 {
         match &self.disks {
             Some(Ok(disks)) => disks.min,
@@ -521,7 +521,7 @@ impl State {
         }
     }
 
-    /// Whether `disk` can take Ferrix.
+    /// Whether `disk` can take Xaqu.
     fn usable(&self, disk: &Disk) -> bool {
         too_small(disk, self.min()).is_none()
     }
@@ -533,7 +533,7 @@ impl State {
         self.offered().into_iter().find(|disk| disk.dev == dev)
     }
 
-    /// The regions of the chosen disk Ferrix fits in.
+    /// The regions of the chosen disk Xaqu fits in.
     fn fitting(&self) -> Vec<Region> {
         let min = self.min();
         self.chosen_disk()
@@ -602,7 +602,7 @@ impl State {
         }
     }
 
-    /// Where on the disk Ferrix goes, in words.
+    /// Where on the disk Xaqu goes, in words.
     #[must_use]
     pub fn target_words(&self) -> String {
         if self.chosen_disk().is_none() {
@@ -897,7 +897,7 @@ impl State {
             Page::Summary => self.summary(),
             Page::Installing => self.installing(),
             Page::Done => vec![
-                Line::new(Kind::Hero, Key::None, "Ferrix is installed")
+                Line::new(Kind::Hero, Key::None, "Xaqu is installed")
                     .desc("Remove the installation medium, then restart.")
                     .tag("done"),
                 Line {
@@ -912,7 +912,7 @@ impl State {
 
     fn welcome(&self) -> Vec<Line> {
         vec![
-            Line::new(Kind::Hero, Key::None, "Welcome to Ferrix")
+            Line::new(Kind::Hero, Key::None, "Welcome to Xaqu")
                 .desc("Try it from this medium, or install it on this computer.")
                 .tag("mark"),
             Line::new(Kind::Section, Key::None, "Language"),
@@ -923,9 +923,9 @@ impl State {
                 "More languages come in a later release.",
             ),
             Line {
-                options: vec!["Try Ferrix".to_owned(), "Install Ferrix".to_owned()],
+                options: vec!["Try Xaqu".to_owned(), "Install Xaqu".to_owned()],
                 current: 1,
-                desc: "Try Ferrix changes nothing on this computer.".to_owned(),
+                desc: "Try Xaqu changes nothing on this computer.".to_owned(),
                 ..Line::new(Kind::Buttons, Key::Start, "")
             },
         ]
@@ -994,7 +994,7 @@ impl State {
                 Key::None,
                 "No disk to install on",
             )
-            .desc("This computer has no disk but the one Ferrix is running from. Connect one, then look again.")
+            .desc("This computer has no disk but the one Xaqu is running from. Connect one, then look again.")
             .level(level::WARN));
             rows.push(Line {
                 options: vec!["Look again".to_owned()],
@@ -1043,8 +1043,8 @@ impl State {
             return rows;
         };
         rows.push(Line::new(Kind::Section, Key::None, "How"));
-        let mut erase = Line::new(Kind::Radio, Key::Erase, "Erase disk and install Ferrix")
-            .desc("Ferrix takes the whole disk.")
+        let mut erase = Line::new(Kind::Radio, Key::Erase, "Erase disk and install Xaqu")
+            .desc("Xaqu takes the whole disk.")
             .on(self.mode == Mode::Erase);
         if self.mode == Mode::Erase
             && let Some(erased) = self.erased()
@@ -1079,7 +1079,7 @@ impl State {
                 let on = fits && self.region == Some(region.first());
                 let desc = match (&region, fits) {
                     (_, false) => format!(
-                        "Too small: Ferrix needs at least {}.",
+                        "Too small: Xaqu needs at least {}.",
                         protocol::size(disks.min)
                     ),
                     (Region::Free(_), true) => "Nothing is erased.".to_owned(),
@@ -1127,7 +1127,7 @@ impl State {
             user.note = "You sign in with it; your home folder is named after it.".to_owned();
             user.level = level::PLAIN;
         }
-        let mut host = field(Key::Host, "Computer name", &self.hostname, "ferrix");
+        let mut host = field(Key::Host, "Computer name", &self.hostname, "xaqu");
         host.note = shown(account::hostname_problem(&self.hostname), true);
         host.level = level::DANGER;
         if host.note.is_empty() {
@@ -1218,7 +1218,7 @@ impl State {
             ),
             None => rows.push(
                 Line::new(Kind::Warning, Key::None, "Nothing is erased")
-                    .desc("Ferrix goes into free space. What else is on the disk stays as it is.")
+                    .desc("Xaqu goes into free space. What else is on the disk stays as it is.")
                     .level(level::PLAIN),
             ),
         }
@@ -1414,7 +1414,7 @@ mod tests {
         assert_eq!(install.keyboard, "de");
         assert_eq!(install.variant, "nodeadkeys");
         assert_eq!(install.timezone, "Europe/Vienna");
-        assert_eq!(install.hostname, "ferrix");
+        assert_eq!(install.hostname, "xaqu");
     }
 
     #[test]
@@ -1458,7 +1458,7 @@ mod tests {
     }
 
     #[test]
-    fn try_ferrix_closes() {
+    fn try_xaqu_closes() {
         let mut state = State::default();
         assert_eq!(state.press(&Key::Start, 0), Some(Effect::Close));
     }

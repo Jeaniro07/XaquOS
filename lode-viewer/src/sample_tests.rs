@@ -26,7 +26,7 @@ fn the_sample_is_one_boot_in_time_order_with_its_sources() {
     let log = log();
     assert_eq!(log.boots.len(), 1);
     assert_eq!(log.boots[0].hex(), "062359e1029c423c0c0b4c9cf5216a14");
-    assert_eq!(log.boots[0].host, "ferrix");
+    assert_eq!(log.boots[0].host, "xaqu");
     assert!(
         log.entries
             .windows(2)
@@ -437,14 +437,14 @@ fn levels_log(levels: &[u8]) -> Log {
 }
 
 /// Records of `levels`, numbered on from `from`, a second apart.
-fn levels_records(levels: &[u8], from: usize) -> Vec<ferrix_lode_core::record::Record> {
+fn levels_records(levels: &[u8], from: usize) -> Vec<xaqu_lode_core::record::Record> {
     let mut text = String::new();
     for (n, level) in levels.iter().enumerate() {
         let n = n + from;
         text.push_str(&format!(
             "{{\"__REALTIME_TIMESTAMP\":\"{}\",\"__MONOTONIC_TIMESTAMP\":\"{}\",\"__SEQNUM\":\"{}\",\
              \"_BOOT_ID\":\"062359e1029c423c0c0b4c9cf5216a14\",\"PRIORITY\":\"{level}\",\
-             \"_HOSTNAME\":\"ferrix\",\"MESSAGE\":\"line {n}\",\"SYSLOG_IDENTIFIER\":\"{}\",\
+             \"_HOSTNAME\":\"xaqu\",\"MESSAGE\":\"line {n}\",\"SYSLOG_IDENTIFIER\":\"{}\",\
              \"_TRANSPORT\":\"console\"}}\n",
             1_792_776_100_000_000_u64 + n as u64 * 1_000_000,
             n as u64 * 1_000_000,
@@ -578,7 +578,7 @@ fn jsonl(records: &[&[(&str, &str)]]) -> String {
     for (n, fields) in records.iter().enumerate() {
         text.push_str(&format!(
             "{{\"__REALTIME_TIMESTAMP\":\"{}\",\"__MONOTONIC_TIMESTAMP\":\"{}\",\"__SEQNUM\":\"{}\",\
-             \"_BOOT_ID\":\"062359e1029c423c0c0b4c9cf5216a14\",\"_HOSTNAME\":\"ferrix\",\"_TRANSPORT\":\"kernel\"",
+             \"_BOOT_ID\":\"062359e1029c423c0c0b4c9cf5216a14\",\"_HOSTNAME\":\"xaqu\",\"_TRANSPORT\":\"kernel\"",
             1_792_776_100_000_000_u64 + n as u64 * 1_000_000,
             n as u64 * 1_000_000,
             n + 1,
@@ -620,7 +620,7 @@ fn crash_fixture(dir: &std::path::Path) -> std::path::PathBuf {
     let app = vec![
         ("PRIORITY", "3"),
         ("SYSLOG_IDENTIFIER", "wine"),
-        ("FERRIX_EVENT", "app-error"),
+        ("XAQU_EVENT", "app-error"),
         ("_COMM", "endfield.exe"),
         ("MESSAGE", "SuspendThread loop failed"),
     ];
@@ -646,7 +646,7 @@ fn crash_fixture(dir: &std::path::Path) -> std::path::PathBuf {
             }
         })
         .collect();
-    let qoi = ferrix_lode_capture::qoi::encode(4, 2, 16, &xrgb).expect("encoded");
+    let qoi = xaqu_lode_capture::qoi::encode(4, 2, 16, &xrgb).expect("encoded");
     std::fs::write(dir.join("captures/shot.qoi"), qoi).expect("written");
     let path = dir.join("crashes.jsonl");
     std::fs::write(&path, jsonl(&records)).expect("written");
@@ -887,14 +887,14 @@ fn live_at_the_end_the_newest_row_stays_at_the_tables_foot_as_records_come() {
 
 #[test]
 fn a_tombstone_links_both_ways_its_storm_counts_and_its_screenshot_is_a_blob() {
-    use ferrix_lode_core::blob;
+    use xaqu_lode_core::blob;
     let dir = std::env::temp_dir().join(format!("lode-viewer-tombstones-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(dir.join("blobs")).expect("made");
     // The screenshot, a 4x2 red picture, as lode keeps it: a blob in a
     // pack with no index yet, named by the capture record.
     let xrgb: Vec<u8> = (0..8).flat_map(|_| [0, 0, 255, 0]).collect();
-    let qoi = ferrix_lode_capture::qoi::encode(4, 2, 16, &xrgb).expect("encoded");
+    let qoi = xaqu_lode_capture::qoi::encode(4, 2, 16, &xrgb).expect("encoded");
     let id = blob::id_of(&qoi);
     let mut pack = blob::PACK_MAGIC.to_vec();
     pack.extend(blob::encode_entry(&id, "qoi", &qoi));
@@ -942,7 +942,7 @@ fn a_tombstone_links_both_ways_its_storm_counts_and_its_screenshot_is_a_blob() {
         ("MESSAGE", "tombstone: foot ended by SIGSEGV at foot+0x12ab"),
         (
             "MESSAGE_ID",
-            ferrix_lode_core::tombstone::MESSAGE_ID_TOMBSTONE,
+            xaqu_lode_core::tombstone::MESSAGE_ID_TOMBSTONE,
         ),
         ("TOMBSTONE", "1"),
         ("TOMBSTONE_SIGNATURE", "/bin/foot foot+0x12ab SIGSEGV"),
@@ -955,7 +955,7 @@ fn a_tombstone_links_both_ways_its_storm_counts_and_its_screenshot_is_a_blob() {
         ("PRIORITY", "4"),
         ("SYSLOG_IDENTIFIER", "lode"),
         ("MESSAGE", "foot crashed again, 12 times this boot"),
-        ("MESSAGE_ID", ferrix_lode_core::tombstone::MESSAGE_ID_REPEAT),
+        ("MESSAGE_ID", xaqu_lode_core::tombstone::MESSAGE_ID_REPEAT),
         ("TOMBSTONE_SIGNATURE", "/bin/foot foot+0x12ab SIGSEGV"),
         ("TOMBSTONE_REPEATS", "12"),
         ("TOMBSTONE_FIRST", of.as_str()),

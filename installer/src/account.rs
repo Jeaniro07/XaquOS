@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn computer_names_are_checked() {
-        assert_eq!(hostname_problem("ferrix"), None);
+        assert_eq!(hostname_problem("xaqu"), None);
         assert_eq!(hostname_problem("ada-laptop-2"), None);
         assert!(hostname_problem("").is_some());
         assert!(hostname_problem("Ada").is_some());

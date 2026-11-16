@@ -40,7 +40,7 @@ mod tests {
     #[test]
     fn a_switch_changes_its_own_line_and_keeps_the_others() {
         let dir = TestDir::new("store");
-        let file = dir.path().join("ferrix/game-mode.conf");
+        let file = dir.path().join("xaqu/game-mode.conf");
         // No file, no directory: the first switch makes both.
         let set = switch(&file, "steam.desktop", true).expect("written");
         assert_eq!(set.ids().collect::<Vec<_>>(), vec!["steam.desktop"]);
@@ -68,8 +68,8 @@ mod tests {
     #[test]
     fn a_file_that_cannot_be_written_is_said_and_nothing_changes() {
         let dir = TestDir::new("store-refused");
-        let _ = dir.write("ferrix", "a file where the directory should be");
-        let file = dir.path().join("ferrix/game-mode.conf");
+        let _ = dir.write("xaqu", "a file where the directory should be");
+        let file = dir.path().join("xaqu/game-mode.conf");
         let refused = switch(&file, "steam.desktop", true).expect_err("refused");
         assert!(refused.contains("game-mode.conf cannot be"), "{refused}");
         let refused =

@@ -5,11 +5,11 @@
 #   bash src/user/apps/lode-viewer/install-linux.sh        # into ~/.local
 #   PREFIX=/opt/lode bash .../install-linux.sh              # elsewhere
 #
-# It builds inside the Ferrix checkout it sits in, with the toolchain that
+# It builds inside the Xaqu checkout it sits in, with the toolchain that
 # checkout pins. It needs a Wayland session (GNOME, KDE Plasma, Hyprland,
 # sway): the viewer speaks Wayland only. Started with no arguments, it
 # shows the machines lode-receive keeps under
-# ~/.local/share/ferrix/lode-receive (or LODE_RECEIVE_DIR).
+# ~/.local/share/xaqu/lode-receive (or LODE_RECEIVE_DIR).
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -32,8 +32,8 @@ fi
 mkdir -p "$prefix/share/lode-viewer/fonts"
 install -m644 "$here"/share/fonts/*.ttf "$prefix/share/lode-viewer/fonts/"
 install -Dm644 "$here/LICENSE-ibm-plex" "$prefix/share/licenses/lode-viewer/LICENSE-ibm-plex"
-install -Dm644 "$here/share/ferrix-lode.svg" \
-    "$prefix/share/icons/hicolor/scalable/apps/ferrix-lode.svg"
+install -Dm644 "$here/share/xaqu-lode.svg" \
+    "$prefix/share/icons/hicolor/scalable/apps/xaqu-lode.svg"
 # The image's entry, started from where this installs the program.
 mkdir -p "$prefix/share/applications"
 sed "s|^Exec=.*|Exec=$prefix/bin/lode-viewer|" "$here/share/lode-viewer.desktop" \

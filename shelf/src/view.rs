@@ -13,7 +13,7 @@ use crate::store::tag_color;
 
 tole::include_ui!();
 
-/// The fonts shelf draws with: `SHELF_FONTS` when set, the Ferrix tree's
+/// The fonts shelf draws with: `SHELF_FONTS` when set, the Xaqu tree's
 /// Inter beside the sources (for its screenshots), then the system's.
 #[must_use]
 pub fn fonts() -> tole::Fonts {

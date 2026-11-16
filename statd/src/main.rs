@@ -1,34 +1,34 @@
-//! `ferrix-statd`: Ferrix's stat service.
+//! `xaqu-statd`: Xaqu's stat service.
 //!
-//! A program like any other on Ferrix, reading what Linux's `vmstat` and
+//! A program like any other on Xaqu, reading what Linux's `vmstat` and
 //! `top` read: `/proc/stat`, `/proc/meminfo`, `/proc/uptime` and each
 //! process's `/proc/<pid>/stat`. Every interval it writes one line to its
 //! standard output, which as pid 1 is the console:
 //!
 //! ```text
-//! FERRIX-STAT {"t":12.34,"cpu":[3.1,0.0,...],"mem":{...},"tasks":{...},"top":[...]}
+//! XAQU-STAT {"t":12.34,"cpu":[3.1,0.0,...],"mem":{...},"tasks":{...},"top":[...]}
 //! ```
 //!
 //! The console is a crosvm guest's 16550, or on the phone the `ramoops`
 //! record Android reads back after the run, so `tools/vendor/google/pixel7/monitor` graphs
-//! a guest live and a native boot afterwards. Ferrix's boot console draws only
+//! a guest live and a native boot afterwards. Xaqu's boot console draws only
 //! the kernel's own lines, so the screen is not filled with these.
 //!
-//! Started as pid 1 with `ferrix.init=/sbin/ferrix-statd`, after the boot
+//! Started as pid 1 with `xaqu.init=/sbin/xaqu-statd`, after the boot
 //! checks. It reads its settings from `/proc/cmdline`:
 //!
-//! * `ferrix.statd.interval=<ms>`: between samples, 500 by default, 100 at
+//! * `xaqu.statd.interval=<ms>`: between samples, 500 by default, 100 at
 //!   least.
-//! * `ferrix.statd.seconds=<n>`: how long to run, 0 (the default) for until
+//! * `xaqu.statd.seconds=<n>`: how long to run, 0 (the default) for until
 //!   the machine is stopped. When it ends, pid 1 exits and the kernel powers
 //!   off, which on the phone is the watchdog's reset back to Android.
 //!
 //! Run from a shell, `--interval <ms>` and `--seconds <n>` say the same and
-//! win over the command line's: `ferrix-statd --seconds 1` is one sample
+//! win over the command line's: `xaqu-statd --seconds 1` is one sample
 //! and the end.
 //!
-//! One `FERRIX-STAT-START` line comes first, with what does not change, and
-//! one `FERRIX-STAT-END` line last. Everything is JSON the program writes
+//! One `XAQU-STAT-START` line comes first, with what does not change, and
+//! one `XAQU-STAT-END` line last. Everything is JSON the program writes
 //! itself: it has no dependencies.
 
 use std::collections::HashMap;
@@ -218,11 +218,11 @@ fn main() {
     let cmdline = read("/proc/cmdline");
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let interval_ms: u64 = argument(&arguments, "--interval")
-        .or_else(|| option(&cmdline, "ferrix.statd.interval").and_then(|x| x.parse().ok()))
+        .or_else(|| option(&cmdline, "xaqu.statd.interval").and_then(|x| x.parse().ok()))
         .unwrap_or(500)
         .max(100);
     let seconds: u64 = argument(&arguments, "--seconds")
-        .or_else(|| option(&cmdline, "ferrix.statd.seconds").and_then(|x| x.parse().ok()))
+        .or_else(|| option(&cmdline, "xaqu.statd.seconds").and_then(|x| x.parse().ok()))
         .unwrap_or(0);
     let page_kib = 4;
 
@@ -231,7 +231,7 @@ fn main() {
     let mut then_at = Instant::now();
     let memory = meminfo();
     say(&format!(
-        "FERRIX-STAT-START {{\"version\":1,\"interval_ms\":{interval_ms},\"seconds\":{seconds},\"cpus\":{},\"mem_total_kib\":{},\"pid\":{}}}",
+        "XAQU-STAT-START {{\"version\":1,\"interval_ms\":{interval_ms},\"seconds\":{seconds},\"cpus\":{},\"mem_total_kib\":{},\"pid\":{}}}",
         then.cpus.len(),
         memory.get("MemTotal").copied().unwrap_or(0),
         std::process::id(),
@@ -248,7 +248,7 @@ fn main() {
         let memory = meminfo();
         let kib = |name: &str| memory.get(name).copied().unwrap_or(0);
 
-        let mut line = String::from("FERRIX-STAT {");
+        let mut line = String::from("XAQU-STAT {");
         let _ = write!(line, "\"t\":{:.2}", uptime());
         let _ = write!(line, ",\"all\":{:.1}", load(now.total, then.total));
         line.push_str(",\"cpu\":[");
@@ -332,7 +332,7 @@ fn main() {
         }
     }
     say(&format!(
-        "FERRIX-STAT-END {{\"samples\":{samples},\"seconds\":{:.1}}}",
+        "XAQU-STAT-END {{\"samples\":{samples},\"seconds\":{:.1}}}",
         began.elapsed().as_secs_f64()
     ));
 }

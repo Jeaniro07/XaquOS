@@ -20,11 +20,11 @@ fn rendered(facts: &Facts, options: Options) -> Text<8192> {
 /// The facts of a machine like a QEMU guest's.
 fn guest() -> Facts {
     let mut facts = Facts {
-        user: Text::from("ferrix"),
-        host: Text::from("ferrix"),
-        os: Text::from("Ferrix 0.1.0"),
+        user: Text::from("xaqu"),
+        host: Text::from("xaqu"),
+        os: Text::from("Xaqu 0.1.0"),
         machine: Text::from("x86_64"),
-        kernel: Text::from("Ferrix 6.1.0-ferrix"),
+        kernel: Text::from("Xaqu 6.1.0-xaqu"),
         uptime: Some(3 * 3600 + 25 * 60 + 9),
         processes: Some(42),
         shell: Text::from("zinc"),
@@ -59,10 +59,10 @@ fn the_lines_are_fastfetchs_in_its_order() {
     let out = rendered(&guest(), PLAIN);
     assert_eq!(
         out.as_str(),
-        "ferrix@ferrix\n\
+        "xaqu@xaqu\n\
          -------------\n\
-         OS: Ferrix 0.1.0 x86_64\n\
-         Kernel: Ferrix 6.1.0-ferrix\n\
+         OS: Xaqu 0.1.0 x86_64\n\
+         Kernel: Xaqu 6.1.0-xaqu\n\
          Uptime: 3 hours, 25 mins\n\
          Processes: 42\n\
          Shell: zinc\n\
@@ -77,8 +77,8 @@ fn the_lines_are_fastfetchs_in_its_order() {
 #[test]
 fn a_fact_not_found_has_no_line() {
     let facts = Facts {
-        host: Text::from("ferrix"),
-        os: Text::from("Ferrix 0.1.0"),
+        host: Text::from("xaqu"),
+        os: Text::from("Xaqu 0.1.0"),
         cpu: Some(Cpu {
             count: 2,
             khz: None,
@@ -88,7 +88,7 @@ fn a_fact_not_found_has_no_line() {
     };
     assert_eq!(
         rendered(&facts, PLAIN).as_str(),
-        "ferrix\n------\nOS: Ferrix 0.1.0\nCPU: (2)\n"
+        "xaqu\n------\nOS: Xaqu 0.1.0\nCPU: (2)\n"
     );
 }
 
@@ -141,7 +141,7 @@ fn colour_is_the_brands_and_always_reset() {
     let text = out.as_str();
     // The label in rust, bold; the F in grey and the slash in rust; a reset on
     // every row that coloured anything.
-    assert!(text.contains("\x1b[1m\x1b[38;2;255;122;43mOS\x1b[0m: Ferrix 0.1.0 x86_64"));
+    assert!(text.contains("\x1b[1m\x1b[38;2;255;122;43mOS\x1b[0m: Xaqu 0.1.0 x86_64"));
     assert!(text.contains(
         "\x1b[38;2;203;205;209m#####################/  \x1b[38;2;255;122;43m/######/\x1b[0m"
     ));
@@ -190,9 +190,9 @@ fn status_gives_the_real_uid() {
 
 #[test]
 fn passwd_names_the_uid() {
-    let passwd = "root:x:0:0:root:/:/bin/sh\nferrix:x:1000:1000:ferrix:/home/ferrix:/bin/zsh\n";
+    let passwd = "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n";
     assert_eq!(parse::passwd_name(passwd, 0), Some("root"));
-    assert_eq!(parse::passwd_name(passwd, 1000), Some("ferrix"));
+    assert_eq!(parse::passwd_name(passwd, 1000), Some("xaqu"));
     assert_eq!(parse::passwd_name(passwd, 7), None);
 }
 
@@ -308,7 +308,7 @@ fn the_n150s_line_has_its_model_and_its_top_rate() {
     assert_eq!(cpu.count, 4);
     assert_eq!(cpu.model.as_str(), "Intel N150");
     let facts = |cpu| Facts {
-        host: Text::from("ferrix"),
+        host: Text::from("xaqu"),
         machine: Text::from("x86_64"),
         cpu: Some(cpu),
         ..Facts::default()
@@ -316,13 +316,13 @@ fn the_n150s_line_has_its_model_and_its_top_rate() {
     // Without a top rate, the first `cpu MHz`.
     assert_eq!(
         rendered(&facts(cpu), PLAIN).as_str(),
-        "ferrix\n------\nCPU: Intel N150 (4) @ 1.30 GHz\n"
+        "xaqu\n------\nCPU: Intel N150 (4) @ 1.30 GHz\n"
     );
     // With one, from cpufreq or `CPUID` leaf 0x16, that.
     cpu.max_khz = parse::cpufreq_khz("3600000\n");
     assert_eq!(
         rendered(&facts(cpu), PLAIN).as_str(),
-        "ferrix\n------\nCPU: Intel N150 (4) @ 3.60 GHz\n"
+        "xaqu\n------\nCPU: Intel N150 (4) @ 3.60 GHz\n"
     );
     assert_eq!(parse::cpufreq_khz("0\n"), None);
     assert_eq!(parse::cpufreq_khz("fast"), None);
@@ -396,43 +396,43 @@ fn dirents_walks_getdents64s_records() {
 #[test]
 fn uname_fields_end_at_their_nul() {
     let mut field = [0_u8; 65];
-    field[..6].copy_from_slice(b"Ferrix");
-    assert_eq!(parse::c_str(&field), Some("Ferrix"));
+    field[..6].copy_from_slice(b"Xaqu");
+    assert_eq!(parse::c_str(&field), Some("Xaqu"));
     assert_eq!(parse::c_str(&[0; 65]), None);
     let mut names = [0_u8; parse::UTSNAME];
     for (at, text) in [
-        (0, "Ferrix"),
-        (65, "ferrix"),
-        (130, "6.1.0-ferrix"),
-        (195, "#1 Ferrix 0.1.0"),
+        (0, "Xaqu"),
+        (65, "xaqu"),
+        (130, "6.1.0-xaqu"),
+        (195, "#1 Xaqu 0.1.0"),
         (260, "x86_64"),
     ] {
         names[at..at + text.len()].copy_from_slice(text.as_bytes());
     }
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Sysname),
-        Some("Ferrix")
+        Some("Xaqu")
     );
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Nodename),
-        Some("ferrix")
+        Some("xaqu")
     );
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Release),
-        Some("6.1.0-ferrix")
+        Some("6.1.0-xaqu")
     );
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Version),
-        Some("#1 Ferrix 0.1.0")
+        Some("#1 Xaqu 0.1.0")
     );
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Machine),
         Some("x86_64")
     );
     assert_eq!(parse::uts_field(&names[..100], parse::Uts::Machine), None);
-    assert_eq!(parse::os_version("#1 Ferrix 0.1.0"), "Ferrix 0.1.0");
-    assert_eq!(parse::os_version("Ferrix 0.1.0"), "Ferrix 0.1.0");
-    assert_eq!(parse::os_version("#x Ferrix"), "#x Ferrix");
+    assert_eq!(parse::os_version("#1 Xaqu 0.1.0"), "Xaqu 0.1.0");
+    assert_eq!(parse::os_version("Xaqu 0.1.0"), "Xaqu 0.1.0");
+    assert_eq!(parse::os_version("#x Xaqu"), "#x Xaqu");
 }
 
 #[test]

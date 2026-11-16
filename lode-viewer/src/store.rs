@@ -14,10 +14,10 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use ferrix_lode_core::compress;
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::segment::{self, Header};
-use ferrix_lode_core::summary::Summary;
+use xaqu_lode_core::compress;
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::segment::{self, Header};
+use xaqu_lode_core::summary::Summary;
 
 /// The persistent store.
 pub const PERSISTENT: &str = "/var/log/journal";
@@ -368,7 +368,7 @@ pub fn received(root: &Path) -> Vec<Received> {
 /// The store a machine paired as `name` sends to under `root`: the one
 /// named by its `machine_id` when it has one, else the one whose `machine`
 /// file says `paired=<name>` -- lode-receive names a store by the machine's
-/// id, or by the host name it sends (`host-ferrix/`), never by the paired
+/// id, or by the host name it sends (`host-xaqu/`), never by the paired
 /// name, so this line is what ties a store to the machine's settings. Of
 /// several, the one heard from last.
 #[must_use]
@@ -481,7 +481,7 @@ pub fn import_split(records: &[Record], dir: &Path, most: u64) -> std::io::Resul
             let (these, after) = rest.split_at(usize::try_from(taken).unwrap_or(rest.len()));
             let name = segment::file_name("system", boot, first.seqnum);
             fs::write(dir.join(&name), bytes)?;
-            let summary = ferrix_lode_core::summary::Summary::of(these).encode();
+            let summary = xaqu_lode_core::summary::Summary::of(these).encode();
             fs::write(dir.join(format!("{name}.sum")), summary)?;
             written += 1;
             rest = after;
@@ -547,8 +547,8 @@ fn read_from(path: &Path, offset: usize) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::Store;
-    use ferrix_lode_core::record::Record;
-    use ferrix_lode_core::segment::{self, Header};
+    use xaqu_lode_core::record::Record;
+    use xaqu_lode_core::segment::{self, Header};
 
     /// A segment of `records` as lode writes one.
     fn segment_bytes(boot: [u8; 16], records: &[Record]) -> Vec<u8> {
@@ -624,30 +624,30 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         let records = vec![record(1, "one")];
         // The N150 has no machine id: lode-receive keeps it by its host
-        // name, ferrix; a second box also called ferrix was paired as pi.
+        // name, xaqu; a second box also called xaqu was paired as pi.
         for (dir, said) in [
             (
-                "host-ferrix",
-                "hostname=ferrix\nlast_seen=2026-10-23T20:49:21Z\npaired=n150\n",
+                "host-xaqu",
+                "hostname=xaqu\nlast_seen=2026-10-23T20:49:21Z\npaired=n150\n",
             ),
             (
-                "host-ferrix.lan",
-                "hostname=ferrix\nlast_seen=2026-10-23T20:00:00Z\npaired=pi\n",
+                "host-xaqu.lan",
+                "hostname=xaqu\nlast_seen=2026-10-23T20:00:00Z\npaired=pi\n",
             ),
             (
                 "0a0b0c0d0e0f00112233445566778899",
-                "hostname=ferrix\nlast_seen=2026-10-22T10:00:00Z\npaired=\n",
+                "hostname=xaqu\nlast_seen=2026-10-22T10:00:00Z\npaired=\n",
             ),
         ] {
             super::import(&records, &root.join(dir)).expect("written");
             std::fs::write(root.join(dir).join("machine"), said).expect("written");
         }
         let n150 = super::paired_store(&root, "n150", None).expect("n150's store");
-        assert_eq!(n150.dir, root.join("host-ferrix"));
+        assert_eq!(n150.dir, root.join("host-xaqu"));
         assert_eq!(n150.last_seen.as_deref(), Some("2026-10-23T20:49:21Z"));
         assert_eq!(n150.machine_id(), None);
         let pi = super::paired_store(&root, "pi", None).expect("pi's store");
-        assert_eq!(pi.dir, root.join("host-ferrix.lan"));
+        assert_eq!(pi.dir, root.join("host-xaqu.lan"));
         assert_eq!(super::paired_store(&root, "box", None), None);
         // Once the machine has an id, its store is the id's.
         let by_id = super::paired_store(&root, "n150", Some("0A0B0C0D0E0F00112233445566778899"))
@@ -656,10 +656,10 @@ mod tests {
             by_id.machine_id().as_deref(),
             Some("0a0b0c0d0e0f00112233445566778899")
         );
-        // Two senders called ferrix: the paired name is the label's first word.
+        // Two senders called xaqu: the paired name is the label's first word.
         let names: Vec<String> = super::machines(&root).into_iter().map(|m| m.name).collect();
-        assert!(names.contains(&"n150 · ferrix".to_owned()), "{names:?}");
-        assert!(names.contains(&"pi · ferrix".to_owned()), "{names:?}");
+        assert!(names.contains(&"n150 · xaqu".to_owned()), "{names:?}");
+        assert!(names.contains(&"pi · xaqu".to_owned()), "{names:?}");
         let _ = std::fs::remove_dir_all(&root);
     }
 
@@ -695,8 +695,8 @@ mod tests {
         assert!(status.used > 0);
         // Sealed and compressed, as lode leaves it: read as it was.
         let raw = std::fs::read(&path).expect("read");
-        let packed = ferrix_lode_core::compress::compress(raw).expect("packed");
-        assert!(ferrix_lode_core::compress::is_compressed(&packed));
+        let packed = xaqu_lode_core::compress::compress(raw).expect("packed");
+        assert!(xaqu_lode_core::compress::is_compressed(&packed));
         std::fs::write(&path, packed).expect("written");
         let mut again = Store::at(std::slice::from_ref(&dir));
         let (records, _) = again.load();

@@ -6,8 +6,8 @@
 //! out with "Category has a missing timeout setting", and a file with no
 //! listener at all says "No rules configured" and runs anyway.
 //!
-//! [`ferrix_notes`] is what upstream does not have: one line for each
-//! option this file sets that cannot do on Ferrix what it does on Linux,
+//! [`xaqu_notes`] is what upstream does not have: one line for each
+//! option this file sets that cannot do on Xaqu what it does on Linux,
 //! because there is no D-Bus, no logind and no suspend. The line says what
 //! it does here instead.
 
@@ -85,7 +85,7 @@ pub struct Config {
     /// What was wrong, in hyprlang's and hypridle's wording.
     pub errors: Vec<String>,
     /// Which `general` options the file set, by name, for
-    /// [`ferrix_notes`]: a default is not something the person asked for.
+    /// [`xaqu_notes`]: a default is not something the person asked for.
     pub set: Vec<String>,
 }
 
@@ -307,35 +307,35 @@ fn set_general(general: &mut General, key: &str, value: &str) -> Result<(), Stri
 }
 
 /// One line for each option the file set that does something else on
-/// Ferrix, saying what.
+/// Xaqu, saying what.
 #[must_use]
-pub fn ferrix_notes(config: &Config) -> Vec<String> {
+pub fn xaqu_notes(config: &Config) -> Vec<String> {
     let set = |key: &str| config.set.iter().any(|held| held == key);
     let general = &config.general;
     let mut notes = Vec::new();
     if !general.before_sleep_cmd.is_empty() {
         notes.push(
-            "general:before_sleep_cmd: Ferrix has no suspend and no logind to announce one \
+            "general:before_sleep_cmd: Xaqu has no suspend and no logind to announce one \
              (PrepareForSleep), so it never runs"
                 .to_owned(),
         );
     }
     if !general.after_sleep_cmd.is_empty() {
         notes.push(
-            "general:after_sleep_cmd: Ferrix has no suspend to wake from, so it never runs"
+            "general:after_sleep_cmd: Xaqu has no suspend to wake from, so it never runs"
                 .to_owned(),
         );
     }
     if set("inhibit_sleep") {
         notes.push(
-            "general:inhibit_sleep: Ferrix has no suspend and no logind to delay it, so there \
+            "general:inhibit_sleep: Xaqu has no suspend and no logind to delay it, so there \
              is no sleep to inhibit"
                 .to_owned(),
         );
     }
     if set("ignore_dbus_inhibit") {
         notes.push(format!(
-            "general:ignore_dbus_inhibit = {}: Ferrix has no D-Bus, so no program can ask \
+            "general:ignore_dbus_inhibit = {}: Xaqu has no D-Bus, so no program can ask \
              org.freedesktop.ScreenSaver not to idle; a Wayland idle inhibitor still holds the \
              listeners off{}",
             general.ignore_dbus_inhibit,
@@ -348,7 +348,7 @@ pub fn ferrix_notes(config: &Config) -> Vec<String> {
     }
     if set("ignore_systemd_inhibit") {
         notes.push(format!(
-            "general:ignore_systemd_inhibit = {}: Ferrix has no systemd-logind, so no \
+            "general:ignore_systemd_inhibit = {}: Xaqu has no systemd-logind, so no \
              `systemd-inhibit --what=idle` can hold the listeners off",
             general.ignore_systemd_inhibit
         ));

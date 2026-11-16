@@ -2,16 +2,16 @@
 
 ![ferrofetch in the desktop's terminal](screenshot.png)
 
-*ferrofetch in the desktop's terminal, with the FX mark. On Ferrix (x86-64 under KVM) at main 2e44fda9d, 2026-10-04; nothing edited after capture.*
+*ferrofetch in the desktop's terminal, with the FX mark. On Xaqu (x86-64 under KVM) at main 2e44fda9d, 2026-10-04; nothing edited after capture.*
 
-Ferrix's fastfetch: the Ferrix mark beside a few lines about the machine,
+Xaqu's fastfetch: the Xaqu mark beside a few lines about the machine,
 the shell and the session.
 
 ```
-#####################/  /######/   root@ferrix
+#####################/  /######/   root@xaqu
 ###################/  /######/     -----------
-#####               /######/       OS: Ferrix 0.1.0 x86_64
-#####             /######/         Kernel: Ferrix 6.1.0-ferrix
+#####               /######/       OS: Xaqu 0.1.0 x86_64
+#####             /######/         Kernel: Xaqu 6.1.0-xaqu
 ################\ \####/           Uptime: 8 secs
 ##################\ \/             Processes: 6
 #####       \#######\              Shell: zinc
@@ -37,7 +37,7 @@ finds it by its `app.toml`.
   descriptors.
 
 The shell is the parent process and the terminal the first ancestor past it
-that is not a login step, as fastfetch finds them: Ferrix's `/proc` has no
+that is not a login step, as fastfetch finds them: Xaqu's `/proc` has no
 `environ`, and `$SHELL` names the login shell rather than the running one.
 
 ```

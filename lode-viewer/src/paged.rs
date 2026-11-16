@@ -14,9 +14,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use ferrix_lode_core::compress;
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::segment::{self, Found, Header};
+use xaqu_lode_core::compress;
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::segment::{self, Found, Header};
 
 use crate::store::{Segment, Store};
 
@@ -572,7 +572,7 @@ impl Pager {
 mod tests {
     use super::{PAGE, Pager, WINDOW_PAGES};
     use crate::store::Store;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     /// A store of `boots` boots of `each` records, in segments of at most
     /// `per` records, in a directory of its own.

@@ -1,15 +1,15 @@
 [package]
 name = "shelf"
-description = "shelf, Ferrix's file manager: tabs, two panes, folder sizes, archives, tags and a trash, drawn by tole"
+description = "shelf, Xaqu's file manager: tabs, two panes, folder sizes, archives, tags and a trash, drawn by tole"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"
 license = "MIT"
 publish = false
 
-# An app (Ferrix's docs/APPS.md): a workspace of its own, a static Linux
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
 # program built with std against the target's own musl. It builds inside a
-# Ferrix checkout, where tole and the compositor's libraries are beside it.
+# Xaqu checkout, where tole and the compositor's libraries are beside it.
 [workspace]
 
 [lib]
@@ -25,7 +25,7 @@ bench = false
 [dependencies]
 # The Wayland client the window runs on: the keyboard and the timer.
 compositor-toolkit = { path = "../../system/linux/compositor/toolkit" }
-# tole, Ferrix's UI framework: the window's tree from the markup under
+# tole, Xaqu's UI framework: the window's tree from the markup under
 # `ui/`, its file chooser's kinds, sizes, dates and searches.
 tole = { path = "../../system/linux/tole/tole", features = ["wayland"] }
 # The disk's size and room (statvfs): MIT or Apache-2.0.

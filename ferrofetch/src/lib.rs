@@ -1,6 +1,6 @@
 //! What `ferrofetch` shows, as pure functions of the text it reads.
 //!
-//! `ferrofetch` is Ferrix's fastfetch: the mark beside a few lines about the
+//! `ferrofetch` is Xaqu's fastfetch: the mark beside a few lines about the
 //! machine, the shell and the session, printed once. The program, `main.rs`
 //! beside this, is a native one: it opens the files and asks `uname`, and
 //! nothing else. Everything between the bytes it reads and the bytes it

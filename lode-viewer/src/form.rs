@@ -487,7 +487,7 @@ impl Form {
 }
 
 /// Where a pasted key for machine `name` is kept:
-/// `~/.config/ferrix/lode/keys/<name>`.
+/// `~/.config/xaqu/lode/keys/<name>`.
 #[must_use]
 pub fn key_path(name: &str) -> Option<PathBuf> {
     Some(
@@ -696,11 +696,11 @@ mod tests {
         let home = std::env::temp_dir().join(format!("lode-form-key-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         let path = super::keep_key_at(
-            &home.join("ferrix/lode/keys/n150"),
+            &home.join("xaqu/lode/keys/n150"),
             "-----BEGIN K-----\r\nAAAA\r\n-----END K-----",
         )
         .expect("kept");
-        assert_eq!(path, home.join("ferrix/lode/keys/n150"));
+        assert_eq!(path, home.join("xaqu/lode/keys/n150"));
         let mode = std::fs::metadata(&path)
             .expect("there")
             .permissions()

@@ -1,34 +1,34 @@
-# installer, an app (docs/APPS.md): "Install Ferrix", the live system's
+# installer, an app (docs/APPS.md): "Install Xaqu", the live system's
 # installer, drawn with tole in Settings' faces and Nocturne's colours. It
-# asks the root daemon on /run/ferrix-installer.sock for the disks and to
+# asks the root daemon on /run/xaqu-installer.sock for the disks and to
 # install; it never writes a disk itself.
 
 [package]
 name = "installer"
 version = "0.1.0"
-description = "Install Ferrix: the live system's installer, one page at a time"
+description = "Install Xaqu: the live system's installer, one page at a time"
 license = "MIT AND OFL-1.1"
 abi = "linux"
 arches = ["x86_64", "aarch64", "armv7a"]
 depends = []
 
 [[package.files]]
-from = "ferrix-installer"
-to = "bin/ferrix-installer"
+from = "xaqu-installer"
+to = "bin/xaqu-installer"
 mode = "755"
 
 # Its entry in a launcher and its icon, kept in this folder: fuzzel lists
 # every `.desktop` file in `usr/share/applications`.
 [[package.files]]
-from = "share/install-ferrix.desktop"
+from = "share/install-xaqu.desktop"
 source = "folder"
-to = "usr/share/applications/install-ferrix.desktop"
+to = "usr/share/applications/install-xaqu.desktop"
 mode = "644"
 
 [[package.files]]
-from = "share/ferrix-installer.svg"
+from = "share/xaqu-installer.svg"
 source = "folder"
-to = "usr/share/icons/hicolor/scalable/apps/ferrix-installer.svg"
+to = "usr/share/icons/hicolor/scalable/apps/xaqu-installer.svg"
 mode = "644"
 
 # Settings' faces, Figtree and JetBrains Mono, so the two read as one
@@ -64,11 +64,11 @@ default = false
 host-tests = true
 
 [[smoke]]
-run = "ferrix-installer --version"
-expect = "ferrix-installer 0.1.0"
+run = "xaqu-installer --version"
+expect = "xaqu-installer 0.1.0"
 
-# Not booted live (no `ferrix.live` on the kernel's command line):
+# Not booted live (no `xaqu.live` on the kernel's command line):
 # --autostart leaves at once, with success, and opens no window.
 [[smoke]]
-run = "ferrix-installer --autostart && echo autostart left"
+run = "xaqu-installer --autostart && echo autostart left"
 expect = "autostart left"

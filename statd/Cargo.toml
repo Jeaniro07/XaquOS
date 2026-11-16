@@ -1,6 +1,6 @@
 [package]
-name = "ferrix-statd"
-description = "Ferrix's stat service: the machine's load, memory and tasks, a line at a time on the console"
+name = "xaqu-statd"
+description = "Xaqu's stat service: the machine's load, memory and tasks, a line at a time on the console"
 version = "0.1.0"
 edition = "2024"
 publish = false
@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 [workspace]
 
 [[bin]]
-name = "ferrix-statd"
+name = "xaqu-statd"
 path = "src/main.rs"
 
 [profile.release]

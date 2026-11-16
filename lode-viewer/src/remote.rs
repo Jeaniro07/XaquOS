@@ -1,5 +1,5 @@
 //! Machines the viewer reaches itself: their settings, kept in
-//! `~/.config/ferrix/lode/machines.conf`, and the link that follows one.
+//! `~/.config/xaqu/lode/machines.conf`, and the link that follows one.
 //!
 //! **Live over SSH** works as `cargo xtask box-log` does: `ssh` runs
 //! `lode -f -o json` on the machine, from `--after-cursor` the last record
@@ -33,8 +33,8 @@ use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use ferrix_lode_core::record::Record;
-use ferrix_lode_core::segment::{self, Header};
+use xaqu_lode_core::record::Record;
+use xaqu_lode_core::segment::{self, Header};
 
 /// How a machine's log comes here.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -264,13 +264,13 @@ pub fn follow_command(cursor: Option<&str>) -> String {
     command
 }
 
-/// The machines file's path: `~/.config/ferrix/lode/machines.conf`.
+/// The machines file's path: `~/.config/xaqu/lode/machines.conf`.
 #[must_use]
 pub fn config_path() -> Option<PathBuf> {
     let config = std::env::var_os("XDG_CONFIG_HOME")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))?;
-    Some(config.join("ferrix/lode/machines.conf"))
+    Some(config.join("xaqu/lode/machines.conf"))
 }
 
 /// The machines file read: `[machine NAME]` sections of `key = value`.
@@ -639,7 +639,7 @@ impl StoreWriter {
             let mut record = Record::new(6, 0, 0);
             record.seqnum = seqnum;
             record.boot_id = boot;
-            ferrix_lode_core::cursor::of(&record)
+            xaqu_lode_core::cursor::of(&record)
         })
     }
 
@@ -726,7 +726,7 @@ fn machine_dir(record: &Record, name: &str) -> String {
 
 /// `seconds` since 1970 as RFC 3339, UTC.
 fn rfc3339(seconds: u64) -> String {
-    let civil = ferrix_lode_core::time::Civil::at(seconds * 1_000_000, 0);
+    let civil = xaqu_lode_core::time::Civil::at(seconds * 1_000_000, 0);
     format!(
         "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
         civil.year, civil.month, civil.day, civil.hour, civil.minute, civil.second
@@ -736,7 +736,7 @@ fn rfc3339(seconds: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::{KeySource, Kind, Pairing, Remote, StoreWriter, follow_command, parse, write};
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
     use std::rc::Rc;
 
     fn n150() -> Remote {
@@ -772,7 +772,7 @@ mod tests {
             host: "192.0.2.10".to_owned(),
             user: "root".to_owned(),
             port: 22,
-            key: Some("/home/u/.config/ferrix/lode/keys/n150".to_owned()),
+            key: Some("/home/u/.config/xaqu/lode/keys/n150".to_owned()),
             key_source: KeySource::Pasted,
             server: Some("192.0.2.74".to_owned()),
             pairing: Pairing::Paired,
@@ -789,7 +789,7 @@ mod tests {
         let text = write(&remotes);
         assert_eq!(parse(&text), remotes);
         // The pasted key is named by its file's path: the key is never here.
-        assert!(text.contains("key_from = pasted\nkey = /home/u/.config/ferrix/lode/keys/n150\n"));
+        assert!(text.contains("key_from = pasted\nkey = /home/u/.config/xaqu/lode/keys/n150\n"));
         assert!(text.contains("server = 192.0.2.74\npairing = paired\nca = sha256:14e393f5\n"));
         assert!(!text.contains("BEGIN"));
         // The file the customer's first pairing left: no server, no key
@@ -837,18 +837,18 @@ mod tests {
             let mut record = Record::new(6, seq * 1_000_000, seq);
             record.seqnum = seq;
             record.boot_id = [7; 16];
-            record.host = Rc::from("ferrix");
+            record.host = Rc::from("xaqu");
             record.push("MESSAGE", format!("line {seq}").as_bytes());
             writer.keep(record.clone()).expect("kept");
             // A record sent twice across a reconnection is kept once.
             writer.keep(record).expect("kept");
         }
-        let dir = root.join("host-ferrix");
+        let dir = root.join("host-xaqu");
         let (records, _) = crate::store::Store::at(std::slice::from_ref(&dir)).load();
         assert_eq!(records.len(), 3);
         let machines = crate::store::machines(&root);
         assert_eq!(machines.len(), 1);
-        assert_eq!(machines[0].name, "ferrix");
+        assert_eq!(machines[0].name, "xaqu");
         let again = StoreWriter::new(&root, "n150");
         assert_eq!(
             again.cursor().as_deref(),

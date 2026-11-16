@@ -1,10 +1,10 @@
-//! hyprlock, for Ferrix.
+//! hyprlock, for Xaqu.
 //!
 //! Upstream hyprlock (`hyprwm/hyprlock` 0.9.6) is a lock screen: it takes
 //! the session lock through `ext-session-lock-v1`, draws the widgets its
 //! configuration describes on a surface for every screen, reads a password
 //! and hands it to PAM, and lets the lock go when PAM says yes. This is the
-//! same program for Ferrix, reading the same `hyprlock.conf` unchanged.
+//! same program for Xaqu, reading the same `hyprlock.conf` unchanged.
 //! `docs/DESKTOP-CLIENTS.md` §5 says what of the file works and what cannot.
 //!
 //! Everything here is a pure function of what it is given -- the file, the

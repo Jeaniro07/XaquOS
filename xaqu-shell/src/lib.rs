@@ -1,4 +1,4 @@
-//! Xaqu's shell (Ferrix's `docs/DESKTOP.md` §6): the dock -- the
+//! Xaqu's shell (Xaqu's `docs/DESKTOP.md` §6): the dock -- the
 //! launchers and the programs with windows as tiles, and the stash -- as a
 //! layer-shell surface in the middle of the screen's foot, and the menu bar
 //! across the top, drawn with tole in the Nocturne tokens, kept up to date

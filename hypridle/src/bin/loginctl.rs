@@ -1,8 +1,8 @@
-//! `loginctl lock-session` and `loginctl unlock-session`, for a Ferrix
+//! `loginctl lock-session` and `loginctl unlock-session`, for a Xaqu
 //! without logind.
 //!
 //! systemd's `loginctl` asks logind, and logind tells the session's
-//! listeners -- hypridle among them -- to lock. Ferrix has no logind, so
+//! listeners -- hypridle among them -- to lock. Xaqu has no logind, so
 //! this tells the one listener there is directly, over the socket
 //! `compositor_hypridle::session` describes, and says so when nothing is
 //! listening rather than succeeding at nothing. Every other verb is
@@ -25,7 +25,7 @@ fn main() {
         .map_or("", String::as_str);
     let Some(request) = Request::from_verb(verb) else {
         say(&format!(
-            "loginctl: {}: Ferrix has no logind; only lock-session, unlock-session, \
+            "loginctl: {}: Xaqu has no logind; only lock-session, unlock-session, \
              lock-sessions and unlock-sessions are carried out, by hypridle",
             if verb.is_empty() {
                 "list-sessions"

@@ -9,7 +9,7 @@
 //! the end, here too).
 //!
 //! Every option fuzzel has is parsed and kept, including the ones this
-//! program does not carry out; what those do on Ferrix is the caller's to
+//! program does not carry out; what those do on Xaqu is the caller's to
 //! say (`crate::unsupported`), because the line itself is valid and fuzzel
 //! would take it.
 

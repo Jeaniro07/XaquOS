@@ -1,7 +1,7 @@
 //! The crashes, with no window: every record of a program the kernel
 //! ended (lode's crash records, and the kernel's own `ended by signal`
 //! lines in a store from before lode read them), and every error a program
-//! showed without a crash (`FERRIX_EVENT=app-error`), grouped by program,
+//! showed without a crash (`XAQU_EVENT=app-error`), grouped by program,
 //! where it failed and how, newest first; and the screenshot lode kept of
 //! each, when it kept one (`docs/LOGGING.md` §19).
 //!
@@ -16,8 +16,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use ferrix_lode_core::blob::{self, Reference};
-use ferrix_lode_core::tombstone::MESSAGE_ID_REPEAT;
+use xaqu_lode_core::blob::{self, Reference};
+use xaqu_lode_core::tombstone::MESSAGE_ID_REPEAT;
 
 use crate::data::{Entry, Kind, Log};
 
@@ -91,7 +91,7 @@ fn field(entry: &Entry, name: &str) -> Option<String> {
 pub fn crash_of(index: usize, entry: &Entry) -> Option<Crash> {
     let time = entry.time();
     let seqnum = entry.record.seqnum;
-    if entry.record.get_str("FERRIX_EVENT") == Some("app-error") {
+    if entry.record.get_str("XAQU_EVENT") == Some("app-error") {
         let program = field(entry, "_COMM")
             .or_else(|| field(entry, "SYSLOG_IDENTIFIER"))
             .or_else(|| field(entry, "_EXE").map(|exe| base_name(&exe)))
@@ -132,11 +132,11 @@ pub fn crash_of(index: usize, entry: &Entry) -> Option<Crash> {
             trap: field(entry, "CRASH_TRAP"),
             kind: CrashKind::Signal,
             seqnum,
-            signature: Some(ferrix_lode_core::tombstone::signature(&entry.record)),
+            signature: Some(xaqu_lode_core::tombstone::signature(&entry.record)),
         });
     }
     // The kernel's own line, in a store from before lode read it.
-    let said = ferrix_lode_core::console::crash(entry.record.message())?;
+    let said = xaqu_lode_core::console::crash(entry.record.message())?;
     Some(Crash {
         index,
         time,
@@ -248,7 +248,7 @@ pub fn storm_counts(log: &Log, boot: Option<usize>) -> HashMap<String, u64> {
 /// A record's cursor, as a tombstone names one.
 #[must_use]
 pub fn cursor_of(entry: &Entry) -> String {
-    ferrix_lode_core::tombstone::cursor(entry.record.seqnum, &entry.record.boot_id)
+    xaqu_lode_core::tombstone::cursor(entry.record.seqnum, &entry.record.boot_id)
 }
 
 /// The record `cursor` names, by index into the log.
@@ -415,7 +415,7 @@ pub fn read_screenshot(shot: &Screenshot, dirs: &[PathBuf]) -> Option<(u32, u32,
         Screenshot::Blob(reference) => {
             let (kind, bytes) = read_blob(dirs, &reference.id)?;
             match kind.as_str() {
-                "qoi" => ferrix_lode_capture::qoi::decode(&bytes),
+                "qoi" => xaqu_lode_capture::qoi::decode(&bytes),
                 "png" => {
                     let pixmap = compositor_image::png(&bytes).ok()?;
                     let rgba = pixmap
@@ -433,7 +433,7 @@ pub fn read_screenshot(shot: &Screenshot, dirs: &[PathBuf]) -> Option<(u32, u32,
         }
         Screenshot::File(path) => {
             let bytes = std::fs::read(path).ok()?;
-            ferrix_lode_capture::qoi::decode(&bytes)
+            xaqu_lode_capture::qoi::decode(&bytes)
         }
         Screenshot::None | Screenshot::Dropped(_) => None,
     }

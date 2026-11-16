@@ -23,14 +23,14 @@ to = "etc/ssl/certs/ca-certificates.crt"
 mode = "644"
 
 [[package.files]]
-from = "usr/libexec/ferrix/ssl_server2"
-to = "usr/libexec/ferrix/ssl_server2"
+from = "usr/libexec/xaqu/ssl_server2"
+to = "usr/libexec/xaqu/ssl_server2"
 mode = "755"
 
 [[package.files]]
-from = "usr/share/ferrix/tls-test"
+from = "usr/share/xaqu/tls-test"
 tree = true
-to = "usr/share/ferrix/tls-test"
+to = "usr/share/xaqu/tls-test"
 
 [build]
 kind = "script"

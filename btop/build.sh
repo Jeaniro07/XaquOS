@@ -6,7 +6,7 @@
 #     build.sh <arch> <out>     # as an app's script is run (docs/APPS.md §3.1)
 #
 # Writes <out>/btop, which app.toml installs at /bin/btop. It downloads and
-# builds under $FERRIX_PORTS, as every port does, never in the repository.
+# builds under $XAQU_PORTS, as every port does, never in the repository.
 #
 # Pinned, and refused if its checksum differs: GitHub's archive of the v1.4.7
 # tag, by its sha256 as first downloaded on 2026-09-16; btop publishes no

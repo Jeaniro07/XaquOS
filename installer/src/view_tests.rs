@@ -42,7 +42,7 @@ impl System for Test {
 /// A stand-in on a socket of the test's own.
 fn fake(name: &str, behaviour: Behaviour) -> (Fake, Test) {
     let socket = std::env::temp_dir().join(format!(
-        "ferrix-installer-{name}-{}.sock",
+        "xaqu-installer-{name}-{}.sock",
         std::process::id()
     ));
     let fake = Fake::start(&socket, behaviour).expect("the stand-in starts");
@@ -135,10 +135,10 @@ fn welcome_shows_the_mark_and_the_two_ways() {
     let state = State::default();
     let mut view = view(&state);
     for words in [
-        "Welcome to Ferrix",
+        "Welcome to Xaqu",
         "English",
-        "Try Ferrix",
-        "Install Ferrix",
+        "Try Xaqu",
+        "Install Xaqu",
         "Keyboard",
         "Time zone",
     ] {
@@ -148,7 +148,7 @@ fn welcome_shows_the_mark_and_the_two_ways() {
 }
 
 #[test]
-fn try_ferrix_closes_the_window() {
+fn try_xaqu_closes_the_window() {
     let (_fake, mut test) = fake("try", Behaviour::default());
     let mut state = State::default();
     let row = state
@@ -215,7 +215,7 @@ fn the_disk_page_offers_the_stand_ins_disks_and_warns_of_erasing() {
         "Virtio Block Device",
         "Samsung SSD 970 EVO Plus",
         "Kingston DataTraveler",
-        "Erase disk and install Ferrix",
+        "Erase disk and install Xaqu",
     ] {
         assert!(says(&mut view, words), "{words} is not shown");
     }
@@ -277,7 +277,7 @@ fn no_disk_but_the_live_one_says_so() {
 #[test]
 fn no_daemon_is_said_and_can_be_asked_again() {
     let mut test = Test {
-        socket: std::env::temp_dir().join("ferrix-installer-nobody-here.sock"),
+        socket: std::env::temp_dir().join("xaqu-installer-nobody-here.sock"),
         keyboards: Vec::new(),
         answers: Vec::new(),
         reboots: 0,
@@ -341,7 +341,7 @@ fn an_install_streams_to_done_and_restart_asks_the_daemon() {
     let _ = act(&mut state, Action::Next, &mut test);
     let _ = settle(&mut view, &mut state, &mut test);
     assert_eq!(state.page, Page::Done);
-    assert!(says(&mut view, "Ferrix is installed"));
+    assert!(says(&mut view, "Xaqu is installed"));
     assert!(says(
         &mut view,
         "Remove the installation medium, then restart."
@@ -354,7 +354,7 @@ fn an_install_streams_to_done_and_restart_asks_the_daemon() {
         "last=536868863",
         "user=ada",
         "fullname=Ada Lovelace",
-        "hostname=ferrix",
+        "hostname=xaqu",
         "keyboard=us",
         "variant=",
         "timezone=UTC",

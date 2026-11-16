@@ -6,11 +6,11 @@
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/bin/curl
 #   <arch>/etc/ssl/certs/ca-certificates.crt
-#   <arch>/usr/libexec/ferrix/ssl_server2, Mbed TLS's test server, with its
-#   test certificate, key and CA in <arch>/usr/share/ferrix/tls-test/
+#   <arch>/usr/libexec/xaqu/ssl_server2, Mbed TLS's test server, with its
+#   test certificate, key and CA in <arch>/usr/share/xaqu/tls-test/
 #
 # Pinned, and refused if their checksums differ:
 #   * curl.se's curl-8.22.0.tar.gz, by the sha256 curl.se/info publishes;
@@ -137,10 +137,10 @@ mkdir -p "$prefix/bin" "$prefix/etc/ssl/certs"
 # Stripped: the image carries it, and nothing on the guest reads its symbols.
 install -m 755 -s --strip-program="$STRIP" "$build/src/curl" "$prefix/bin/curl"
 install -m 644 "$src/$CACERT" "$prefix$CA_BUNDLE"
-mkdir -p "$prefix/usr/libexec/ferrix" "$prefix/usr/share/ferrix/tls-test"
-install -m 755 -s --strip-program="$STRIP" "$mbedtls/programs/ssl/ssl_server2" "$prefix/usr/libexec/ferrix/ssl_server2"
+mkdir -p "$prefix/usr/libexec/xaqu" "$prefix/usr/share/xaqu/tls-test"
+install -m 755 -s --strip-program="$STRIP" "$mbedtls/programs/ssl/ssl_server2" "$prefix/usr/libexec/xaqu/ssl_server2"
 for f in server5.crt server5.key test-ca2.crt; do
-    install -m 644 "$mbedtls/framework/data_files/$f" "$prefix/usr/share/ferrix/tls-test/$f"
+    install -m 644 "$mbedtls/framework/data_files/$f" "$prefix/usr/share/xaqu/tls-test/$f"
 done
 file "$prefix/bin/curl"
 run_built "$prefix/bin/curl" --version
@@ -150,4 +150,4 @@ step "the app's files"
 # kept as links.
 rm -rf "$out"
 mkdir -p "$out"
-(cd "$prefix" && cp -a --parents bin/curl etc/ssl/certs/ca-certificates.crt usr/libexec/ferrix/ssl_server2 usr/share/ferrix/tls-test "$out")
+(cd "$prefix" && cp -a --parents bin/curl etc/ssl/certs/ca-certificates.crt usr/libexec/xaqu/ssl_server2 usr/share/xaqu/tls-test "$out")

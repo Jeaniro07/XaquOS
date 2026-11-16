@@ -1,5 +1,5 @@
 //! The window: the tree of [`crate::ui`] in a Wayland toplevel through
-//! tole's window (Ferrix's own client runtime, `compositor-toolkit`),
+//! tole's window (Xaqu's own client runtime, `compositor-toolkit`),
 //! drawn on the CPU, only what changed. The loop follows the store when
 //! Live, keeps the selections (the clipboard and the primary selection,
 //! which GNOME offers through `wl_data_device`), and does what the tree's

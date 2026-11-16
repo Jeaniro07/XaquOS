@@ -5,7 +5,7 @@
 //! (`info`, `warning`, `error`) and, wherever upstream has a message for the
 //! case, upstream's message -- so a person who greps waybar's log for a
 //! warning finds this one's the same way. A line the upstream program has no
-//! words for (something Ferrix cannot do) says so plainly.
+//! words for (something Xaqu cannot do) says so plainly.
 
 use std::collections::BTreeSet;
 

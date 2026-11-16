@@ -144,7 +144,7 @@ pub fn run(config: Config, options: &Options, backend: Arc<dyn Backend>) -> Resu
         // which hyprix enforces from when it took the lock, and a client
         // cannot extend it.
         crate::say(
-            "[WARN] --grace: on Ferrix the grace is hyprix's misc:lock_grace; hyprlock's own is not honoured",
+            "[WARN] --grace: on Xaqu the grace is hyprix's misc:lock_grace; hyprlock's own is not honoured",
         );
     }
     let session = Session::new(

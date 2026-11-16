@@ -8,7 +8,7 @@
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   x86_64/bin/sshdt
 #
 # Pinned, and refused if its checksum differs: crates.io's package of 0.4.2,
@@ -20,7 +20,7 @@
 # a PTY for interactive sessions, exec, SFTP and scp -- and it asks nothing of
 # the system beyond sockets, epoll and a PTY. The alternatives either were a
 # library with no server (russh, sunset) or sandbox themselves with seccomp
-# and Landlock (narrowd), which Ferrix does not have. What it does not do is
+# and Landlock (narrowd), which Xaqu does not have. What it does not do is
 # change user: every session runs as whoever started it.
 #
 # Its one C dependency is aws-lc, under russh's cryptography. It is compiled
@@ -54,7 +54,7 @@ TARGET=x86_64-unknown-linux-musl
 work=$builds/sshdt
 src=$ports/src
 
-# The toolchain Ferrix pins, named outright: the crate is built outside the
+# The toolchain Xaqu pins, named outright: the crate is built outside the
 # repository, where rustup would otherwise pick the machine's default.
 toolchain=$(sed -n 's/^channel *= *"\(.*\)"/\1/p' "$ferrousli/../../../../../rust-toolchain.toml")
 [ -n "$toolchain" ] || fail "no channel in rust-toolchain.toml"
@@ -120,7 +120,7 @@ patch -p1 -d "$build" --quiet < "$here/listen-fds.patch"
 # and cargo judges a path package by times: without this, a build after the
 # patch changed would keep the binary the last patch made.
 find "$build/src" -type f -exec touch {} +
-# The crate's rust-toolchain.toml names an older compiler than Ferrix's; the
+# The crate's rust-toolchain.toml names an older compiler than Xaqu's; the
 # one exported above is the one meant, and the file would override it.
 rm -f "$build/rust-toolchain.toml"
 set +e

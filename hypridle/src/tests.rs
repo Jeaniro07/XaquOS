@@ -70,12 +70,12 @@ fn the_users_shape_reads_with_no_error() {
 }
 
 #[test]
-fn what_ferrix_cannot_do_in_the_users_shape_is_said_once_an_option() {
-    let notes = config::ferrix_notes(&load(LIKE_THE_USERS));
+fn what_xaqu_cannot_do_in_the_users_shape_is_said_once_an_option() {
+    let notes = config::xaqu_notes(&load(LIKE_THE_USERS));
     assert_eq!(notes.len(), 3, "{notes:#?}");
-    assert!(notes[0].starts_with("general:before_sleep_cmd: Ferrix has no suspend"));
-    assert!(notes[1].starts_with("general:after_sleep_cmd: Ferrix has no suspend"));
-    assert!(notes[2].starts_with("general:ignore_dbus_inhibit = false: Ferrix has no D-Bus"));
+    assert!(notes[0].starts_with("general:before_sleep_cmd: Xaqu has no suspend"));
+    assert!(notes[1].starts_with("general:after_sleep_cmd: Xaqu has no suspend"));
+    assert!(notes[2].starts_with("general:ignore_dbus_inhibit = false: Xaqu has no D-Bus"));
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn defaults_are_upstreams() {
     assert_eq!(rule.condition_cmd, "");
     assert_eq!(rule.condition_retry, 0);
     assert!(!config.general.ignore_wayland_inhibit);
-    assert!(config::ferrix_notes(&config).is_empty());
+    assert!(config::xaqu_notes(&config).is_empty());
 }
 
 #[test]

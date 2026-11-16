@@ -9,10 +9,10 @@
 //! directly, not through a shell, with standard input on `/dev/null`, in the
 //! entry's `Path`; fuzzel does not wait for it.
 //!
-//! One thing here is Ferrix's and not fuzzel's: the game-mode mark. An
+//! One thing here is Xaqu's and not fuzzel's: the game-mode mark. An
 //! application the user switched on in Settings is started with
-//! `FERRIX_GAME_MODE=1` in its environment, and any other with that taken
-//! out (`compositor_desktop::game_mode`, Ferrix's `docs/SETTINGS.md`). The
+//! `XAQU_GAME_MODE=1` in its environment, and any other with that taken
+//! out (`compositor_desktop::game_mode`, Xaqu's `docs/SETTINGS.md`). The
 //! launcher is where applications are started from, so it is where the mark
 //! is given; a command typed with nothing selected is no application and
 //! gets none.
@@ -376,7 +376,7 @@ mod tests {
     #[test]
     fn an_application_in_game_mode_is_started_with_the_mark() {
         let dir = crate::testdir::TestDir::new("game-mode");
-        let _ = dir.write(".config/ferrix/game-mode.conf", "game.desktop\n");
+        let _ = dir.write(".config/xaqu/game-mode.conf", "game.desktop\n");
         let home = dir.path().to_string_lossy().into_owned();
         let var = move |name: &str| (name == "HOME").then(|| home.clone());
         let out = dir.path().join("out");
@@ -415,19 +415,19 @@ mod tests {
         let (game, environment) = started(&entry("game.desktop"));
         assert!(game);
         assert!(
-            environment.lines().any(|line| line == "FERRIX_GAME_MODE=1"),
+            environment.lines().any(|line| line == "XAQU_GAME_MODE=1"),
             "{environment}"
         );
         assert!(
             environment
                 .lines()
-                .any(|line| line == "FERRIX_GAME_MODE_APP=game.desktop"),
+                .any(|line| line == "XAQU_GAME_MODE_APP=game.desktop"),
             "{environment}"
         );
         let (game, environment) = started(&entry("other.desktop"));
         assert!(!game);
         assert!(environment.contains("PATH="), "{environment}");
-        assert!(!environment.contains("FERRIX_GAME_MODE"), "{environment}");
+        assert!(!environment.contains("XAQU_GAME_MODE"), "{environment}");
         // What was typed with nothing selected is no application.
         let mut typed = plan(None, "echo hi", None).unwrap_or_else(|_| unreachable_plan());
         assert!(typed.mark(None, &var).is_empty());

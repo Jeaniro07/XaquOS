@@ -1,4 +1,4 @@
-//! The window's tree, in tole (Ferrix's `docs/UI-FRAMEWORK.md`): the
+//! The window's tree, in tole (Xaqu's `docs/UI-FRAMEWORK.md`): the
 //! markup under `ui/` is the header, the page's rows and the foot; this
 //! module hands it the [`State`] after every change and turns what was
 //! pressed back into [`Action`]s.
@@ -328,7 +328,7 @@ fn row(line: &Line) -> PageRow {
     }
 }
 
-/// Ferrix's mark (Ferrix's `docs/brand/logo-mark.svg`), drawn to fill
+/// Xaqu's mark (Xaqu's `docs/brand/logo-mark.svg`), drawn to fill
 /// the canvas it is given, keeping its shape: the F running out into the
 /// X in Nocturne's text, the slash in the brand's rust.
 #[must_use]

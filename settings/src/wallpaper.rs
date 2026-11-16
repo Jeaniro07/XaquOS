@@ -1,6 +1,6 @@
 //! The Wallpaper page: what is behind the windows, on every display or
 //! each its own or one picture across them, as hyprix's `wallpaper`
-//! lines say it (Ferrix's `docs/RUNTIME-SETTINGS.md` §3.3, "The
+//! lines say it (Xaqu's `docs/RUNTIME-SETTINGS.md` §3.3, "The
 //! wallpaper"), kept in `settings.conf` through `hyprctl setting` and
 //! drawn at once by hyprix's wallpaper client.
 //!

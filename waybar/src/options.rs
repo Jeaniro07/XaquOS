@@ -154,16 +154,16 @@ fn own(kind: &str) -> Option<&'static [(&'static str, Support)]> {
         "network" => &[
             ("interface", Done),
             ("family", Partly("IPv4 only: the address is SIOCGIFADDR's")),
-            ("rfkill", Not("Ferrix has no rfkill")),
+            ("rfkill", Not("Xaqu has no rfkill")),
             ("format-ethernet", Done),
-            ("format-wifi", Not("Ferrix has no nl80211: never wifi")),
+            ("format-wifi", Not("Xaqu has no nl80211: never wifi")),
             ("format-linked", Done),
             ("format-disconnected", Done),
-            ("format-disabled", Not("Ferrix has no rfkill")),
+            ("format-disabled", Not("Xaqu has no rfkill")),
             ("tooltip-format-ethernet", Done),
             (
                 "tooltip-format-wifi",
-                Not("Ferrix has no nl80211: never wifi"),
+                Not("Xaqu has no nl80211: never wifi"),
             ),
             ("tooltip-format-linked", Done),
             ("tooltip-format-disconnected", Done),
@@ -264,9 +264,9 @@ pub fn bar(key: &str) -> Support {
 #[must_use]
 pub fn module(kind: &str) -> Option<Support> {
     let support = match kind {
-        "tray" => Not("StatusNotifierItem needs D-Bus, which Ferrix has not: always hidden"),
+        "tray" => Not("StatusNotifierItem needs D-Bus, which Xaqu has not: always hidden"),
         "pulseaudio" => Partly(
-            "the default sink alone; Ferrix's desktop runs pulsed only beside Chrome's sound, \
+            "the default sink alone; Xaqu's desktop runs pulsed only beside Chrome's sound, \
              and with no server the chip shows waybar's starting values",
         ),
         "clock" => Partly("the C locale, one time zone, no calendar"),

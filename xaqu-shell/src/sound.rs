@@ -1,6 +1,6 @@
 //! The quick settings' volume and microphone: the sound server's default
-//! sink and source over the `PulseAudio` native protocol, which Ferrix's
-//! own `pulsed` speaks (Ferrix's `docs/AUDIO.md`, U2) as PulseAudio and
+//! sink and source over the `PulseAudio` native protocol, which Xaqu's
+//! own `pulsed` speaks (Xaqu's `docs/AUDIO.md`, U2) as PulseAudio and
 //! PipeWire do. A connection a question: `AUTH`, `SET_CLIENT_NAME`, then
 //! the lists, or a volume or mute set.
 //!

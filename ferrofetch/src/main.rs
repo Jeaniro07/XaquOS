@@ -1,12 +1,12 @@
-//! `ferrofetch`: Ferrix's fastfetch.
+//! `ferrofetch`: Xaqu's fastfetch.
 //!
 //! The mark beside a few lines about the machine, the shell and the session:
 //!
 //! ```text
-//! #####################/  /######/   ferrix@ferrix
+//! #####################/  /######/   xaqu@xaqu
 //! ###################/  /######/     -------------
-//! #####               /######/       OS: Ferrix 0.1.0 x86_64
-//! #####             /######/         Kernel: Ferrix 6.1.0-ferrix
+//! #####               /######/       OS: Xaqu 0.1.0 x86_64
+//! #####             /######/         Kernel: Xaqu 6.1.0-xaqu
 //! ################\ \####/           Uptime: 3 hours, 25 mins
 //! ##################\ \/             ...
 //! ```
@@ -22,7 +22,7 @@
 //!
 //! The shell is the parent process, and the terminal the first ancestor past
 //! it that is neither a shell nor a login step, as fastfetch finds them: the
-//! environment is not on Ferrix's `/proc`, and `$SHELL` names the login
+//! environment is not on Xaqu's `/proc`, and `$SHELL` names the login
 //! shell, not the one running.
 //!
 //! Exit status 0, 2 for an option it does not take, and 1 when the output
@@ -35,12 +35,12 @@ use core::fmt::{self, Write};
 
 mod sys;
 
-use ferrix_rt::{Bootstrap, linux};
+use xaqu_rt::{Bootstrap, linux};
 use ferrofetch::Text;
 use ferrofetch::parse::{self, Command, Dirents};
 use ferrofetch::render::{self, Display, Facts, MAX_DISPLAYS};
 
-ferrix_rt::entry!(main);
+xaqu_rt::entry!(main);
 
 /// Standard output.
 const STDOUT: usize = 1;
@@ -51,7 +51,7 @@ const STDERR: usize = 2;
 const USAGE: &str = "\
 Usage: ferrofetch [--no-logo] [--no-color]
 
-Show the Ferrix mark beside a few lines about this machine, the shell and
+Show the Xaqu mark beside a few lines about this machine, the shell and
 the session.
 
   --no-logo       the lines alone
@@ -190,7 +190,7 @@ fn names(facts: &mut Facts) {
     if system.is_empty() {
         return;
     }
-    // `#1 Ferrix 0.1.0`: the version names the system, so it is the OS line
+    // `#1 Xaqu 0.1.0`: the version names the system, so it is the OS line
     // when it does; the system's name alone when it does not.
     let version = parse::os_version(field(parse::Uts::Version));
     facts.os = Text::from(if version.starts_with(system) {

@@ -38,7 +38,7 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -111,7 +111,7 @@ dependencies = [
  "compositor-socket",
  "compositor-wire",
  "compositor-xkb",
- "ferrix-fbtext",
+ "xaqu-fbtext",
  "libc",
 ]
 
@@ -131,11 +131,11 @@ name = "compositor-xkb"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-fbtext"
+name = "xaqu-fbtext"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]

@@ -74,7 +74,7 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -83,7 +83,7 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "ferrix-linux-abi",
+ "xaqu-linux-abi",
  "libc",
 ]
 
@@ -275,19 +275,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferrix-fbtext"
+name = "xaqu-fbtext"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-linux-abi"
+name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
-name = "ferrix-lode-capture"
+name = "xaqu-lode-capture"
 version = "0.3.0"
 
 [[package]]
-name = "ferrix-svc-proto"
+name = "xaqu-svc-proto"
 version = "0.3.0"
 
 [[package]]
@@ -416,10 +416,10 @@ dependencies = [
  "compositor-virgl",
  "compositor-wire",
  "compositor-xkb",
- "ferrix-fbtext",
- "ferrix-linux-abi",
- "ferrix-lode-capture",
- "ferrix-svc-proto",
+ "xaqu-fbtext",
+ "xaqu-linux-abi",
+ "xaqu-lode-capture",
+ "xaqu-svc-proto",
  "libc",
 ]
 

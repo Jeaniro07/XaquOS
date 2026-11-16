@@ -1,6 +1,6 @@
 # lode-viewer, an app (docs/APPS.md): lode's log in a desktop window -- a
 # boot's overview, its records with lode's filter language, and lode's
-# state (Ferrix's docs/LOGGING.md).
+# state (Xaqu's docs/LOGGING.md).
 
 [package]
 name = "lode-viewer"
@@ -25,9 +25,9 @@ to = "usr/share/applications/lode-viewer.desktop"
 mode = "644"
 
 [[package.files]]
-from = "share/ferrix-lode.svg"
+from = "share/xaqu-lode.svg"
 source = "folder"
-to = "usr/share/icons/hicolor/scalable/apps/ferrix-lode.svg"
+to = "usr/share/icons/hicolor/scalable/apps/xaqu-lode.svg"
 mode = "644"
 
 # The design's faces, IBM Plex Sans and Mono, where the viewer and the

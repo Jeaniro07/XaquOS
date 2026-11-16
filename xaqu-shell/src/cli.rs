@@ -65,19 +65,19 @@ pub fn render_menubar(width: u32, open: Option<usize>, scale: f32) -> Option<tol
 }
 
 /// The switcher as drawn for a picture: the Settings app's six pictures
-/// from Ferrix's tree in a folder of their own and the Nocturne gradient
+/// from Xaqu's tree in a folder of their own and the Nocturne gradient
 /// in Xaqu's, their colours read, the second in force.
 #[must_use]
 pub fn sample_walls(grid: bool) -> crate::walls::Picker {
     let tree = concat!(env!("CARGO_MANIFEST_DIR"), "/..");
     let mut found = Vec::new();
     for (file, folder) in [
-        ("settings/share/wallpapers/tide.jpg", "Ferrix"),
-        ("settings/share/wallpapers/dune.jpg", "Ferrix"),
-        ("settings/share/wallpapers/fern.jpg", "Ferrix"),
-        ("settings/share/wallpapers/dusk.jpg", "Ferrix"),
-        ("settings/share/wallpapers/ember.jpg", "Ferrix"),
-        ("settings/share/wallpapers/graphite.jpg", "Ferrix"),
+        ("settings/share/wallpapers/tide.jpg", "Xaqu"),
+        ("settings/share/wallpapers/dune.jpg", "Xaqu"),
+        ("settings/share/wallpapers/fern.jpg", "Xaqu"),
+        ("settings/share/wallpapers/dusk.jpg", "Xaqu"),
+        ("settings/share/wallpapers/ember.jpg", "Xaqu"),
+        ("settings/share/wallpapers/graphite.jpg", "Xaqu"),
     ] {
         let path = format!("{tree}/{file}");
         let name = file.rsplit('/').next().unwrap_or(file);
@@ -95,7 +95,7 @@ pub fn sample_walls(grid: bool) -> crate::walls::Picker {
         .unwrap_or_default();
     let mut picker = crate::walls::Picker::new(
         found,
-        vec!["Ferrix".to_owned(), "Mine".to_owned()],
+        vec!["Xaqu".to_owned(), "Mine".to_owned()],
         &current,
     );
     if grid {

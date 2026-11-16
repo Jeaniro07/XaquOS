@@ -5,7 +5,7 @@
 //! every field, and usage is `100 × (1 − Δidle / Δtotal)` since the last
 //! read -- the first read waits 100 ms for a second sample, as waybar
 //! does. `{load}` is the one-minute load average from `getloadavg(3)`,
-//! rounded up to hundredths. Ferrix has no `/proc/loadavg` and its
+//! rounded up to hundredths. Xaqu has no `/proc/loadavg` and its
 //! `sysinfo(2)` reports loads of zero, so there `{load}` is `0` and the bar
 //! says once why; a C library's `getloadavg` would answer the same zeros
 //! (musl's reads `sysinfo`) or fail (glibc's reads `/proc/loadavg`).
@@ -201,7 +201,7 @@ impl Cpu {
         if !real {
             host.diag().once(
                 "cpu-load",
-                "cpu: no /proc/loadavg: Ferrix does not keep load averages, so {load} is 0"
+                "cpu: no /proc/loadavg: Xaqu does not keep load averages, so {load} is 0"
                     .to_owned(),
             );
         }
@@ -510,7 +510,7 @@ mod tests {
     }
 
     #[test]
-    fn the_users_cpu_module_on_ferrix() {
+    fn the_users_cpu_module_on_xaqu() {
         let mut host = Fake::default();
         let _ = host
             .files

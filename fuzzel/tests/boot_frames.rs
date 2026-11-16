@@ -4,7 +4,7 @@
 //! The boot starts fuzzel with `data/boot/fuzzel.ini` over an empty screen,
 //! then has `/bin/vkbd` type `pat`, and requires QEMU's screendump to be
 //! these pictures pixel for pixel. They are made the way the guest makes
-//! them: fuzzel's own drawing of the same entries (the system's, in Ferrix's
+//! them: fuzzel's own drawing of the same entries (the system's, in Xaqu's
 //! `src/user/system/linux/compositor/desktop`) with the same font and icons,
 //! composited by `src/user/system/linux/compositor/render` as the
 //! compositor composites a layer surface on the overlay layer, centred where
@@ -43,7 +43,7 @@ fn data(relative: &str) -> PathBuf {
 }
 
 /// The system's launcher entries and icons, which every desktop installs:
-/// Ferrix's, beside this app's checkout.
+/// Xaqu's, beside this app's checkout.
 fn system(relative: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../system/linux/compositor/desktop")
@@ -54,7 +54,7 @@ fn read(path: &Path) -> String {
     std::fs::read_to_string(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
-/// The boot's configuration, as fuzzel loads it on Ferrix.
+/// The boot's configuration, as fuzzel loads it on Xaqu.
 fn boot_config() -> Config {
     let text = read(&data("boot/fuzzel.ini"));
     let loaded = config::from_text(

@@ -5,7 +5,7 @@
 //! session of its own, the slave for its controlling terminal and for all
 //! three of its standard descriptors, and then it is whatever program the
 //! terminal was asked to run. That is `forkpty` written out, and it is
-//! written out because Ferrix's C library does not have one.
+//! written out because Xaqu's C library does not have one.
 
 use std::ffi::{CString, OsString};
 use std::io;

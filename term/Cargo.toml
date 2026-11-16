@@ -4,16 +4,16 @@ description = "A terminal emulator: a pseudoterminal, a character grid, and a wi
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"
-# The code is Ferrix's licence. The fonts in `font/`, and the coverage cells
+# The code is Xaqu's licence. The fonts in `font/`, and the coverage cells
 # `src/font.rs` holds, are Hack: MIT and the Bitstream Vera License, see
 # LICENSE-hack, which a binary shipping this crate must reproduce (app.toml
 # installs it with the program).
 license = "MIT"
 publish = false
 
-# An app (Ferrix's docs/APPS.md): a workspace of its own, a static Linux
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
 # program built with std against the target's own musl. It builds inside a
-# Ferrix checkout, where the compositor's libraries and fbtext are beside it.
+# Xaqu checkout, where the compositor's libraries and fbtext are beside it.
 [workspace]
 
 [[bin]]
@@ -31,7 +31,7 @@ compositor-shm = { path = "../../system/linux/compositor/shm" }
 compositor-socket = { path = "../../system/linux/compositor/socket" }
 compositor-wire = { path = "../../system/linux/compositor/wire" }
 compositor-xkb = { path = "../../system/linux/compositor/xkb" }
-ferrix-fbtext = { path = "../../../lib/kernel/fbtext" }
+xaqu-fbtext = { path = "../../../lib/kernel/fbtext" }
 # Declarations only: the pseudoterminal's `open`, `ioctl`, `fork` and `execve`.
 libc = "0.2.189"
 

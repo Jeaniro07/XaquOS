@@ -3,7 +3,7 @@
 //!
 //! `lode-receive pair --machine NAME --server-name HOST --json` makes (or
 //! finds) the certificates and says what the machine needs: files to copy,
-//! a line for `/etc/ferrix/lode-upload.conf`, and the command that restarts
+//! a line for `/etc/xaqu/lode-upload.conf`, and the command that restarts
 //! the upload. All of it is shown to the person first, as the commands that
 //! will run; only on their confirm is it done, over ssh, as root on the
 //! machine. Then `lode-receive check` says whether the receiver runs here,
@@ -382,7 +382,7 @@ pub struct Check {
 /// One store's line of [`Check`].
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Receiving {
-    /// The store's directory name under the root (`host-ferrix`).
+    /// The store's directory name under the root (`host-xaqu`).
     pub dir: String,
     /// The records it holds.
     pub records: u64,
@@ -535,19 +535,19 @@ mod tests {
 
     #[test]
     fn the_receivers_check_says_each_stores_records() {
-        let said = r#"{"running":true,"pid":2403839,"listen":"0.0.0.0:19532","server_fingerprint":"sha256:14e3","machines":[{"dir":"host-ferrix","hostname":"ferrix","last_seen":"2026-10-23T20:49:24Z","records":96727},{"dir":"x","hostname":null,"last_seen":null,"records":0}]}"#;
+        let said = r#"{"running":true,"pid":2403839,"listen":"0.0.0.0:19532","server_fingerprint":"sha256:14e3","machines":[{"dir":"host-xaqu","hostname":"xaqu","last_seen":"2026-10-23T20:49:24Z","records":96727},{"dir":"x","hostname":null,"last_seen":null,"records":0}]}"#;
         let check = super::check_of(&super::parse_json(said).expect("JSON"));
         assert!(check.running);
         assert_eq!(check.listen, "0.0.0.0:19532");
         let n150 = check
-            .of(std::path::Path::new("/r/host-ferrix"))
+            .of(std::path::Path::new("/r/host-xaqu"))
             .expect("the store");
         assert_eq!(n150.records, 96_727);
         assert_eq!(n150.last_seen.as_deref(), Some("2026-10-23T20:49:24Z"));
         assert_eq!(check.machines[1].last_seen, None);
     }
 
-    const PAIRED: &str = r#"{"machine":"n150","listen":"0.0.0.0:19532","ca_fingerprint":"SHA256:aa","server_fingerprint":"SHA256:bb","remote_files":[{"local":"/home/u/.local/share/ferrix/lode-receive/.pki/n150/client.crt","remote":"/etc/ferrix/lode-upload/n150.crt","mode":"0644"},{"local":"/k/client.key","remote":"/etc/ferrix/lode-upload/n150.key","mode":"0600"}],"remote_config_file":"/etc/ferrix/lode-upload.conf","remote_config_line":"n150 https://nazuna:19532/upload export ca=/etc/ferrix/lode-upload/ca.crt cert=/etc/ferrix/lode-upload/n150.crt key=/etc/ferrix/lode-upload/n150.key","remote_restart":"svc restart lode-upload.service"}"#;
+    const PAIRED: &str = r#"{"machine":"n150","listen":"0.0.0.0:19532","ca_fingerprint":"SHA256:aa","server_fingerprint":"SHA256:bb","remote_files":[{"local":"/home/u/.local/share/xaqu/lode-receive/.pki/n150/client.crt","remote":"/etc/xaqu/lode-upload/n150.crt","mode":"0644"},{"local":"/k/client.key","remote":"/etc/xaqu/lode-upload/n150.key","mode":"0600"}],"remote_config_file":"/etc/xaqu/lode-upload.conf","remote_config_line":"n150 https://nazuna:19532/upload export ca=/etc/xaqu/lode-upload/ca.crt cert=/etc/xaqu/lode-upload/n150.crt key=/etc/xaqu/lode-upload/n150.key","remote_restart":"svc restart lode-upload.service"}"#;
 
     #[test]
     fn pairing_is_read_and_shown_as_the_commands_it_will_run() {
@@ -558,7 +558,7 @@ mod tests {
         let shown = remote_commands(&plan);
         assert_eq!(shown.len(), 4);
         assert!(shown[0].starts_with(
-            "mkdir -p '/etc/ferrix/lode-upload' && cat > '/etc/ferrix/lode-upload/n150.crt'"
+            "mkdir -p '/etc/xaqu/lode-upload' && cat > '/etc/xaqu/lode-upload/n150.crt'"
         ));
         assert_eq!(shown[3], "svc restart lode-upload.service");
         // lode-receive's restart since it enables the service too.
@@ -586,7 +586,7 @@ mod tests {
             .is_none()
         );
         assert!(
-            plan_of(&PAIRED.replace("/etc/ferrix/lode-upload/n150.key", "/etc/x'; rm -rf /"))
+            plan_of(&PAIRED.replace("/etc/xaqu/lode-upload/n150.key", "/etc/x'; rm -rf /"))
                 .is_none()
         );
     }

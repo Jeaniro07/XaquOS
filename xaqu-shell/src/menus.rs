@@ -1,6 +1,6 @@
 //! The menu bar's menus (spec §5): the mark's, the focused program's and
 //! Window, as data. `menubar.rs` draws them and does what is picked.
-//! A program's own menus come with `ferrix_appmenu_v1` and go between its
+//! A program's own menus come with `xaqu_appmenu_v1` and go between its
 //! name and Window (`with_app`).
 
 use crate::json::Json;
@@ -113,7 +113,7 @@ pub fn standard(app: Option<&str>, own: &str) -> Vec<Menu> {
         label: MARK.to_owned(),
         bold: true,
         entries: vec![
-            item("About Ferrix", "", None),
+            item("About Xaqu", "", None),
             Entry::Line,
             item("Settings…", "", dispatch("exec settings")),
             wallpaper.clone(),

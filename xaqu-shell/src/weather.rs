@@ -1,4 +1,4 @@
-//! Weather, strictly opt-in (Ferrix's docs/DESKTOP.md §6.6, the
+//! Weather, strictly opt-in (Xaqu's docs/DESKTOP.md §6.6, the
 //! customer's terms of 2026-10-24): off until the person turns it on and
 //! types a location; no request of any kind before that, none at start,
 //! no location guessed from the address; the location kept in their own

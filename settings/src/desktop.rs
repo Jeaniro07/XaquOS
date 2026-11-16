@@ -1,4 +1,4 @@
-//! The pages backed by the desktop today (Ferrix's
+//! The pages backed by the desktop today (Xaqu's
 //! `docs/RUNTIME-SETTINGS.md` §3.3, §7): Appearance, Windows, Displays,
 //! Keyboard, Idle and lock -- every change through hyprix, at once and
 //! kept -- and the System pages, shown as they stand until the settings
@@ -84,7 +84,7 @@ impl Idle {
     }
 }
 
-/// The keyboard layouts Ferrix ships (`docs/RUNTIME-SETTINGS.md` §3.3):
+/// The keyboard layouts Xaqu ships (`docs/RUNTIME-SETTINGS.md` §3.3):
 /// `layout(variant)` and the name a person knows.
 pub const LAYOUTS: [(&str, &str); 5] = [
     ("us", "English (US)"),

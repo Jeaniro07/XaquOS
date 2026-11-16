@@ -1045,11 +1045,11 @@ impl Default for General {
 /// `auth { … }`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Auth {
-    /// `pam:enabled`: on Ferrix, the password check of [`crate::auth`].
+    /// `pam:enabled`: on Xaqu, the password check of [`crate::auth`].
     pub pam: bool,
-    /// `pam:module`: the PAM service, which Ferrix has no notion of.
+    /// `pam:module`: the PAM service, which Xaqu has no notion of.
     pub pam_module: String,
-    /// `fingerprint:enabled`: through fprintd over D-Bus, which Ferrix has
+    /// `fingerprint:enabled`: through fprintd over D-Bus, which Xaqu has
     /// neither of.
     pub fingerprint: bool,
     /// `fingerprint:ready_message`.
@@ -1383,20 +1383,20 @@ impl Config {
         }
     }
 
-    /// The lines this program reads and cannot carry out on Ferrix, each
+    /// The lines this program reads and cannot carry out on Xaqu, each
     /// a sentence naming it.
     #[must_use]
     pub fn unsupported(&self) -> Vec<String> {
         let mut lines = Vec::new();
         if self.auth.fingerprint {
             lines.push(
-                "auth:fingerprint:enabled: fingerprints go through fprintd over D-Bus, and Ferrix has neither; only the password unlocks"
+                "auth:fingerprint:enabled: fingerprints go through fprintd over D-Bus, and Xaqu has neither; only the password unlocks"
                     .to_owned(),
             );
         }
         if self.auth.pam_module != "hyprlock" {
             lines.push(format!(
-                "auth:pam:module = {}: Ferrix has no PAM; the password is checked against /etc/shadow whatever the module",
+                "auth:pam:module = {}: Xaqu has no PAM; the password is checked against /etc/shadow whatever the module",
                 self.auth.pam_module
             ));
         }
@@ -1405,7 +1405,7 @@ impl Config {
                 && field.hide_input
             {
                 lines.push(
-                    "input-field:hide_input: drawn as plain dots on Ferrix for now".to_owned(),
+                    "input-field:hide_input: drawn as plain dots on Xaqu for now".to_owned(),
                 );
             }
         }

@@ -7,9 +7,9 @@ rust-version = "1.99"
 license = "MIT"
 publish = false
 
-# An app (Ferrix's docs/APPS.md): a workspace of its own, a static Linux
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
 # program built with std against the target's own musl. It builds inside a
-# Ferrix checkout, where lode's core and the compositor's libraries are
+# Xaqu checkout, where lode's core and the compositor's libraries are
 # beside it.
 [workspace]
 
@@ -26,10 +26,10 @@ bench = false
 [dependencies]
 # lode's own records, segment format, summaries and filter language: the
 # store is read and queried with the same code `lode` reads it with.
-ferrix-lode-core = { path = "../../../lib/log/lode" }
+xaqu-lode-core = { path = "../../../lib/log/lode" }
 # The screenshots lode keeps of a crash, in QOI: read with lode's own
 # decoder.
-ferrix-lode-capture = { path = "../../../lib/proto/lode-capture" }
+xaqu-lode-capture = { path = "../../../lib/proto/lode-capture" }
 # A PNG screenshot from lode's blobs, into pixels: the desktop's decoder.
 compositor-image = { path = "../../system/linux/compositor/image" }
 # Fonts, shaping and glyphs.
@@ -37,7 +37,7 @@ compositor-text = { path = "../../system/linux/compositor/text" }
 # The Wayland client: the window, the keyboard, the pointer, the buffers,
 # and the timer Live follows the store on.
 compositor-toolkit = { path = "../../system/linux/compositor/toolkit" }
-# tole, Ferrix's UI framework: the window's tree, from the markup under
+# tole, Xaqu's UI framework: the window's tree, from the markup under
 # `ui/`, drawn on the CPU with the desktop's own text, or by Vulkan when
 # TOLE_RENDERER asks (`gpu`).
 tole = { path = "../../system/linux/tole/tole", features = ["wayland", "gpu"] }

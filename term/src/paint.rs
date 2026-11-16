@@ -25,7 +25,7 @@
 //! `scale = 2` is handed a buffer twice the size and draws its glyphs twice
 //! as large, which is what a client on a scaled output does.
 
-use ferrix_fbtext::{PixelOrder, Rgb, Surface};
+use xaqu_fbtext::{PixelOrder, Rgb, Surface};
 
 use crate::font;
 use crate::grid::{CellDamage, Grid};

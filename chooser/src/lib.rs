@@ -1,4 +1,4 @@
-//! Ferrix's file chooser (`chooser`): tole's FileDialog -- the customer's
+//! Xaqu's file chooser (`chooser`): tole's FileDialog -- the customer's
 //! Key File Dialog design (`Fx.Controls.FileDialog`) -- in a window of its
 //! own, which portald opens for `org.freedesktop.portal.FileChooser`.
 //!
@@ -92,7 +92,7 @@ fn s(value: impl AsRef<str>) -> Rc<str> {
     Rc::from(value.as_ref())
 }
 
-/// The faces: the system's, and Inter where the image or Ferrix's tree has
+/// The faces: the system's, and Inter where the image or Xaqu's tree has
 /// it.
 fn fonts() -> tole::Fonts {
     let mut fonts = tole::Fonts::system();

@@ -1,5 +1,5 @@
 # sshdt, an app (docs/APPS.md): an SSH server written in Rust, built by its
-# build.sh against ferrousli, with Ferrix's socket activation patched in.
+# build.sh against ferrousli, with Xaqu's socket activation patched in.
 # test-ssh boots it.
 
 [package]

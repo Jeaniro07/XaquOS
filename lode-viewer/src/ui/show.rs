@@ -217,7 +217,7 @@ fn shell(view: &mut View, app: &App) {
         ui,
         s(format!(
             "{} · {} · boot {}",
-            if host.is_empty() { "ferrix" } else { &host },
+            if host.is_empty() { "xaqu" } else { &host },
             app.origin_name,
             app.log.offset_of(app.boot)
         )),
@@ -751,8 +751,8 @@ pub(super) fn field_rows(ui: &mut tole::Ui, app: &App, index: usize) -> Vec<Fiel
     let mut rows = Vec::new();
     let mut group = None;
     for (at, (key, value)) in app.record_fields(index).into_iter().enumerate() {
-        let known = ferrix_lode_core::fields::name_of(&key);
-        let this = known.map_or(ferrix_lode_core::fields::FieldGroup::Other, |f| f.group);
+        let known = xaqu_lode_core::fields::name_of(&key);
+        let this = known.map_or(xaqu_lode_core::fields::FieldGroup::Other, |f| f.group);
         if group != Some(this) {
             group = Some(this);
             rows.push(FieldRow {

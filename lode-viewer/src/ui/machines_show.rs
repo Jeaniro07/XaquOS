@@ -41,7 +41,7 @@ pub(super) fn show(view: &mut View, app: &App) {
     let page = view.machines;
     let ui = &mut view.ui;
     let root = app.machines_root.as_ref().map_or_else(
-        || "~/.local/share/ferrix/lode-receive".to_owned(),
+        || "~/.local/share/xaqu/lode-receive".to_owned(),
         |root| root.display().to_string(),
     );
     let intro = wrap(
@@ -157,7 +157,7 @@ pub(super) fn show(view: &mut View, app: &App) {
     }
     let name = app.form.value(FormField::Name).trim();
     let kept = format!(
-        "Kept in ~/.config/ferrix/lode/keys/{}, mode 0600. A passphrase is never kept.",
+        "Kept in ~/.config/xaqu/lode/keys/{}, mode 0600. A passphrase is never kept.",
         if name.is_empty() { "<name>" } else { name }
     );
     let kept = wrap(ui, &paint::sans(11.5, 400), &kept, note_w);

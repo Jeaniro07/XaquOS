@@ -670,7 +670,7 @@ impl App {
     }
 
     /// Records came: add them, and when Live keep the window at the end.
-    pub fn arrived(&mut self, records: Vec<ferrix_lode_core::record::Record>) -> usize {
+    pub fn arrived(&mut self, records: Vec<xaqu_lode_core::record::Record>) -> usize {
         if records.is_empty() {
             return 0;
         }
@@ -1639,10 +1639,10 @@ impl App {
             Action::CopyJson(index) => {
                 if let Some(entry) = self.log.entries.get(index) {
                     let mut out = Vec::new();
-                    ferrix_lode_core::format::write(
+                    xaqu_lode_core::format::write(
                         &entry.stored(),
-                        ferrix_lode_core::format::Output::Json,
-                        &ferrix_lode_core::time::Zone::utc(),
+                        xaqu_lode_core::format::Output::Json,
+                        &xaqu_lode_core::time::Zone::utc(),
                         &mut out,
                     );
                     self.clipboard = Some(String::from_utf8_lossy(&out).trim_end().to_owned());
@@ -1651,7 +1651,7 @@ impl App {
             }
             Action::CopyCursor(index) => {
                 if let Some(entry) = self.log.entries.get(index) {
-                    self.clipboard = Some(ferrix_lode_core::cursor::of(&entry.record));
+                    self.clipboard = Some(xaqu_lode_core::cursor::of(&entry.record));
                     self.toast = Some("cursor copied".to_owned());
                 }
             }
@@ -1661,7 +1661,7 @@ impl App {
                     .map(|index| self.record_fields(index))
                     .unwrap_or_default();
                 if let Some((key, value)) = fields.into_iter().nth(field) {
-                    let name = ferrix_lode_core::fields::name_of(&key)
+                    let name = xaqu_lode_core::fields::name_of(&key)
                         .map_or(key.clone(), |f| f.name.to_owned());
                     self.clipboard = Some(value);
                     self.toast = Some(format!("{name} copied"));
@@ -1770,7 +1770,7 @@ impl App {
     /// raw keys: its level, what it carries (its message left to the
     /// pane's own box), then lode's own -- its time, host, boot, sequence
     /// and cursor -- each in its group's place
-    /// (`ferrix_lode_core::fields`), whole.
+    /// (`xaqu_lode_core::fields`), whole.
     #[must_use]
     pub fn record_fields(&self, index: usize) -> Vec<(String, String)> {
         let Some(entry) = self.log.entries.get(index) else {
@@ -1791,8 +1791,8 @@ impl App {
             fields.push((field.name.clone(), value));
         }
         let mut boot = String::new();
-        ferrix_lode_core::segment::push_hex(&mut boot, &entry.record.boot_id);
-        let civil = ferrix_lode_core::time::Civil::at(entry.time(), entry.record.utc_offset_s);
+        xaqu_lode_core::segment::push_hex(&mut boot, &entry.record.boot_id);
+        let civil = xaqu_lode_core::time::Civil::at(entry.time(), entry.record.utc_offset_s);
         fields.push((
             "__REALTIME_TIMESTAMP".to_owned(),
             format!(
@@ -1813,15 +1813,15 @@ impl App {
         fields.push(("__SEQNUM".to_owned(), entry.record.seqnum.to_string()));
         fields.push((
             "__CURSOR".to_owned(),
-            ferrix_lode_core::cursor::of(&entry.record),
+            xaqu_lode_core::cursor::of(&entry.record),
         ));
         // By group, then the table's order; unknown keys last, by name.
         fields.sort_by(|a, b| {
             let key = |name: &str| {
-                let known = ferrix_lode_core::fields::name_of(name);
+                let known = xaqu_lode_core::fields::name_of(name);
                 (
-                    known.map_or(ferrix_lode_core::fields::FieldGroup::Other, |f| f.group),
-                    ferrix_lode_core::fields::order_of(name),
+                    known.map_or(xaqu_lode_core::fields::FieldGroup::Other, |f| f.group),
+                    xaqu_lode_core::fields::order_of(name),
                     name.to_owned(),
                 )
             };
@@ -1945,14 +1945,14 @@ impl App {
 /// Time of day of `us` at `offset_s` from UTC: `17:22:43`.
 #[must_use]
 pub fn clock(us: u64, offset_s: i32) -> String {
-    let civil = ferrix_lode_core::time::Civil::at(us, offset_s);
+    let civil = xaqu_lode_core::time::Civil::at(us, offset_s);
     format!("{:02}:{:02}:{:02}", civil.hour, civil.minute, civil.second)
 }
 
 /// The same with milliseconds: `17:21:37.256`.
 #[must_use]
 pub fn clock_ms(us: u64, offset_s: i32) -> String {
-    let civil = ferrix_lode_core::time::Civil::at(us, offset_s);
+    let civil = xaqu_lode_core::time::Civil::at(us, offset_s);
     format!(
         "{:02}:{:02}:{:02}.{:03}",
         civil.hour,
@@ -1965,7 +1965,7 @@ pub fn clock_ms(us: u64, offset_s: i32) -> String {
 /// Hours and minutes: `17:22`.
 #[must_use]
 pub fn clock_hm(us: u64, offset_s: i32) -> String {
-    let civil = ferrix_lode_core::time::Civil::at(us, offset_s);
+    let civil = xaqu_lode_core::time::Civil::at(us, offset_s);
     format!("{:02}:{:02}", civil.hour, civil.minute)
 }
 
@@ -2130,7 +2130,7 @@ impl App {
 mod tests {
     use super::{Action, App, Origin, Page, clock};
     use crate::data::Log;
-    use ferrix_lode_core::record::Record;
+    use xaqu_lode_core::record::Record;
 
     fn app() -> App {
         let records = (0..200)
@@ -2145,7 +2145,7 @@ mod tests {
                     "SYSLOG_IDENTIFIER",
                     if n % 2 == 0 { b"even" } else { b"odd" },
                 );
-                record.push("FERRIX_PRIORITY_SOURCE", b"stated");
+                record.push("XAQU_PRIORITY_SOURCE", b"stated");
                 record.push("MESSAGE", format!("line {n}").as_bytes());
                 record
             })
@@ -2233,7 +2233,7 @@ mod tests {
         assert!(app.remotes.is_empty());
     }
 
-    /// Run by hand against a Ferrix guest with sshd (`run-compositor
+    /// Run by hand against a Xaqu guest with sshd (`run-compositor
     /// --ssh PORT`): the form filled and pressed as a person would, a
     /// pasted key kept and followed live, then the TLS set-up planned and
     /// applied. `LODE_E2E_PORT`, `LODE_E2E_KEY` (a private key the guest
@@ -2338,8 +2338,8 @@ mod tests {
     }
 
     /// The customer's N150, 2026-10-23: paired over TLS from the form
-    /// before the pairing was kept, sending as host `ferrix` with no
-    /// machine id, so lode-receive keeps it in `host-ferrix/` with
+    /// before the pairing was kept, sending as host `xaqu` with no
+    /// machine id, so lode-receive keeps it in `host-xaqu/` with
     /// `paired=n150`. Its row shows that store's records, its settings
     /// show in the form, and Open shows the store.
     #[test]
@@ -2356,10 +2356,10 @@ mod tests {
                 record
             })
             .collect();
-        crate::store::import(&records, &root.join("host-ferrix")).expect("a store");
+        crate::store::import(&records, &root.join("host-xaqu")).expect("a store");
         std::fs::write(
-            root.join("host-ferrix/machine"),
-            "hostname=ferrix\nlast_seen=2026-10-23T20:49:21Z\npaired=n150\n",
+            root.join("host-xaqu/machine"),
+            "hostname=xaqu\nlast_seen=2026-10-23T20:49:21Z\npaired=n150\n",
         )
         .expect("written");
         std::fs::create_dir_all(root.join(".pki")).expect("a directory");
@@ -2378,7 +2378,7 @@ mod tests {
         // server learned from the receiver and kept.
         assert_eq!(
             app.remote_store(0).map(|store| store.dir),
-            Some(root.join("host-ferrix"))
+            Some(root.join("host-xaqu"))
         );
         assert_eq!(app.remotes[0].pairing, Pairing::Paired);
         assert_eq!(app.remotes[0].server.as_deref(), Some("192.0.2.74"));
@@ -2398,7 +2398,7 @@ mod tests {
                 running: true,
                 listen: "0.0.0.0:19532".to_owned(),
                 machines: vec![crate::tls::Receiving {
-                    dir: "host-ferrix".to_owned(),
+                    dir: "host-xaqu".to_owned(),
                     records: 96_242,
                     last_seen: Some("2026-10-23T20:49:24Z".to_owned()),
                 }],
@@ -2428,7 +2428,7 @@ mod tests {
         assert_eq!(app.form.value(FormField::User), "admin");
         // Open shows its store, followed live.
         app.act(&Action::OpenRemote(0));
-        assert_eq!(app.origin_name, "n150 · ferrix");
+        assert_eq!(app.origin_name, "n150 · xaqu");
         assert_eq!(app.log.entries.len(), 3);
         assert!(app.live);
         let _ = std::fs::remove_dir_all(&dir);

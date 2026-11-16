@@ -1,4 +1,4 @@
-//! The window's tree, in tole (Ferrix's `docs/UI-FRAMEWORK.md`): the
+//! The window's tree, in tole (Xaqu's `docs/UI-FRAMEWORK.md`): the
 //! markup under `ui/` is the header, the sidebar and the page's rows;
 //! this module hands it the [`State`] after every change and turns what
 //! was pressed back into [`Action`]s.

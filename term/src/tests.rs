@@ -580,7 +580,7 @@ fn the_keys_a_terminal_sends_are_the_ones_xterm_sends() {
 //
 // What a terminal draws is a grid of glyphs, and the expected image is
 // blessed from the same code the window draws with. `cargo xtask
-// test-compositor` compares a screendump of the terminal on Ferrix against
+// test-compositor` compares a screendump of the terminal on Xaqu against
 // it.
 // ---------------------------------------------------------------------------
 
@@ -692,7 +692,7 @@ fn a_terminal_running_a_program_is_the_expected_image() {
     let mut target = Target::new(&mut pixels, WIDTH, HEIGHT, WIDTH * 4).expect("a target");
     canvas.present(&mut target, &full).expect("the frame fits");
 
-    // The render library's expected pictures, in Ferrix beside this app.
+    // The render library's expected pictures, in Xaqu beside this app.
     let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../system/linux/compositor/render/tests/data");
     compositor_render::golden::check_in(
@@ -719,7 +719,7 @@ fn the_grid_is_drawn_cell_by_cell() {
         ])
     };
     let background = paint::Colours::default().background;
-    let as_pixel = |colour: ferrix_fbtext::Rgb| {
+    let as_pixel = |colour: xaqu_fbtext::Rgb| {
         u32::from(colour.b) | (u32::from(colour.g) << 8) | (u32::from(colour.r) << 16)
     };
     // The corner of the first cell is background: no glyph's top-left pixel
@@ -875,7 +875,7 @@ fn a_prompts_characters_have_glyphs_of_their_own() {
     for present in ["➜", "\u{E0B0}", "\u{E0A0}", "±", "─", "…", "✘", "⚡", "⚙"] {
         assert_ne!(frame(present), missing, "{present:?} is drawn as the box");
     }
-    // Every character Claude Code 2.1.280's TUI drew in a session on Ferrix
+    // Every character Claude Code 2.1.280's TUI drew in a session on Xaqu
     // that Hack lacks: the elbow under a tool call, the mode line's marks,
     // the check mark and the spinner.
     for present in ["⎿", "⏵", "⏸", "⏺", "✔", "✢", "✳", "✶", "✻", "✽"] {
@@ -889,11 +889,11 @@ fn a_prompts_characters_have_glyphs_of_their_own() {
 fn agnosters_prompt_is_two_segments_and_their_separators() {
     let mut grid = Grid::new(32, 1);
     grid.write(
-        "\x1b[39m\x1b[0m\x1b[49m\x1b[40m\x1b[39m root@ferrix \x1b[44m\x1b[30m\u{E0B0}\
+        "\x1b[39m\x1b[0m\x1b[49m\x1b[40m\x1b[39m root@xaqu \x1b[44m\x1b[30m\u{E0B0}\
          \x1b[30m / \x1b[49m\x1b[34m\u{E0B0}\x1b[39m "
             .as_bytes(),
     );
-    assert_eq!(grid.line(0), " root@ferrix \u{E0B0} / \u{E0B0}");
+    assert_eq!(grid.line(0), " root@xaqu \u{E0B0} / \u{E0B0}");
     let cell = |column: usize| grid.cell(column, 0).copied().expect("a cell");
     // The context segment: default text on black.
     assert_eq!(

@@ -1,4 +1,4 @@
-// A widget sidebar, as the design draws it (Ferrix's docs/DESKTOP.md §6,
+// A widget sidebar, as the design draws it (Xaqu's docs/DESKTOP.md §6,
 // Y4): at a screen edge, a strip until the pointer reaches it, then a
 // column 320 wide: a tab for each of its widgets and the pin; the shown
 // widget's name, moved to the other side or taken away; the widget; and

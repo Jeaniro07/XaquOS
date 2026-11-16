@@ -1,6 +1,6 @@
 # chooser
 
-Ferrix's file chooser: tole's `FileDialog` (`Fx.Controls`, after the
+Xaqu's file chooser: tole's `FileDialog` (`Fx.Controls`, after the
 customer's Key File Dialog design) in a window of its own. `portald`, the
 desktop portal, opens it for `org.freedesktop.portal.FileChooser`, so on a
 Xaqu desktop GTK 3 (`GTK_USE_PORTAL=1`), GTK 4 (`GDK_DEBUG=portals`) and

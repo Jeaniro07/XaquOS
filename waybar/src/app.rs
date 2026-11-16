@@ -286,7 +286,7 @@ impl Host for Ctx<'_> {
 }
 
 /// The local time's offset from UTC: `TZ` of the form `UTC±h` or `UTC`,
-/// else none. Ferrix has no zoneinfo; the clock module says what it does
+/// else none. Xaqu has no zoneinfo; the clock module says what it does
 /// not carry out.
 fn local_offset() -> i64 {
     0

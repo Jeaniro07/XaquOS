@@ -101,11 +101,11 @@ pub fn state(
     state.idle = crate::desktop::Idle::read(idle.as_deref());
     state.about = about(var);
     state.machine =
-        crate::machine::Machine::read(&ferrix_settings_client::manifest::Manifest::read());
+        crate::machine::Machine::read(&xaqu_settings_client::manifest::Manifest::read());
     state
 }
 
-/// What the computer runs, for About: Ferrix's version, the kernel's
+/// What the computer runs, for About: Xaqu's version, the kernel's
 /// profile, whether the configuration is the certified one.
 fn about(var: &dyn Fn(&str) -> Option<String>) -> Vec<(String, String)> {
     let release = std::fs::read_to_string("/etc/os-release").unwrap_or_default();
@@ -128,9 +128,9 @@ fn about(var: &dyn Fn(&str) -> Option<String>) -> Vec<(String, String)> {
             .map(str::to_owned)
     };
     let profile = var("SETTINGS_PROFILE")
-        .or_else(|| word("ferrix.profile"))
+        .or_else(|| word("xaqu.profile"))
         .unwrap_or_else(|| "desktop".to_owned());
-    let certified = if word("ferrix.checks").as_deref() == Some("run") {
+    let certified = if word("xaqu.checks").as_deref() == Some("run") {
         "Certified"
     } else {
         "Not certified"

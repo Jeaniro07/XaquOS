@@ -1,4 +1,4 @@
-//! shelf, Ferrix's file manager, after the customer's "File Explorer v2"
+//! shelf, Xaqu's file manager, after the customer's "File Explorer v2"
 //! design: tabs, one pane or two, list or grid, folder sizes, archives
 //! read in place, tags, Quick access, filter chips, a search in three
 //! modes, bulk rename, and a trash that follows the freedesktop.org

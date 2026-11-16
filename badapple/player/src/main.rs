@@ -1,4 +1,4 @@
-//! Bad Apple!!, on Ferrix, with its sound.
+//! Bad Apple!!, on Xaqu, with its sound.
 //!
 //! `badapple VIDEO.bav SONG.m4a [SECONDS]` shows the video on
 //! `/dev/dri/card0` and plays the song through `/dev/snd`, for `SECONDS` or
@@ -34,7 +34,7 @@ fn main() {
     linux::run();
 }
 
-/// Only Linux, and Ferrix through its Linux ABI, have `/dev/dri` and
+/// Only Linux, and Xaqu through its Linux ABI, have `/dev/dri` and
 /// `/dev/snd`; elsewhere the program builds so its arithmetic is tested.
 #[cfg(not(target_os = "linux"))]
 fn main() {}

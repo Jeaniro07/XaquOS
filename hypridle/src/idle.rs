@@ -6,7 +6,7 @@
 //! rules are tested without starting anything.
 //!
 //! One part of upstream is not here: `onInhibit`, the count of D-Bus
-//! `ScreenSaver.Inhibit` and logind `idle` inhibitors. Ferrix has neither, so
+//! `ScreenSaver.Inhibit` and logind `idle` inhibitors. Xaqu has neither, so
 //! nothing could ever raise the count; a Wayland idle inhibitor is the
 //! compositor's to honour, and it does, by not sending `idled` to a
 //! notification made with `get_idle_notification`.

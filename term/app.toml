@@ -1,4 +1,4 @@
-# term, an app (docs/APPS.md): Ferrix's terminal emulator. Every compositor
+# term, an app (docs/APPS.md): Xaqu's terminal emulator. Every compositor
 # image carries it whether or not the app is installed (xtask's compositor):
 # the desktop's keybindings and its launcher start /bin/term. So it is not in
 # an image by default.
@@ -6,7 +6,7 @@
 [package]
 name = "term"
 version = "0.1.0"
-description = "term: Ferrix's terminal emulator, a pseudoterminal, a character grid and a Wayland window"
+description = "term: Xaqu's terminal emulator, a pseudoterminal, a character grid and a Wayland window"
 license = "MIT AND Bitstream-Vera"
 abi = "linux"
 arches = ["x86_64", "aarch64", "armv7a"]

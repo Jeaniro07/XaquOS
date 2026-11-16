@@ -1,16 +1,16 @@
 //! The command line.
 //!
 //! ```text
-//! ferrix-installer                   open the window
-//! ferrix-installer --autostart       open it only on the live system
-//! ferrix-installer --screenshot DIR  draw every page into DIR, no window
-//! ferrix-installer --version
-//! ferrix-installer --help
+//! xaqu-installer                   open the window
+//! xaqu-installer --autostart       open it only on the live system
+//! xaqu-installer --screenshot DIR  draw every page into DIR, no window
+//! xaqu-installer --version
+//! xaqu-installer --help
 //! ```
 //!
 //! `--autostart` is what the live session's hyprland config runs at
 //! sign-in: it reads `/proc/cmdline` and leaves at once, with success,
-//! unless the kernel was started with the word `ferrix.live`.
+//! unless the kernel was started with the word `xaqu.live`.
 //! `--screenshot` draws each page headless against a stand-in daemon on a
 //! socket of its own (`src/fake.rs`), for the README's pictures.
 
@@ -24,11 +24,11 @@ use crate::window::say;
 
 /// What `--help` prints.
 const USAGE: &str = "\
-usage: ferrix-installer [--autostart]
-       ferrix-installer --screenshot DIR
-       ferrix-installer --version | --help
+usage: xaqu-installer [--autostart]
+       xaqu-installer --screenshot DIR
+       xaqu-installer --version | --help
 
-  --autostart       open only when booted live (ferrix.live on the kernel's
+  --autostart       open only when booted live (xaqu.live on the kernel's
                     command line); otherwise exit at once
   --screenshot DIR  draw every page into DIR as PNGs, with a stand-in daemon,
                     and exit
@@ -68,7 +68,7 @@ pub fn parse(arguments: &[String]) -> Asked {
             Some(dir) => Asked::Screenshot(PathBuf::from(dir)),
             None => return Asked::Refused("--screenshot needs a folder".to_owned()),
         },
-        other => return Asked::Refused(format!("{other} is not an option ferrix-installer has")),
+        other => return Asked::Refused(format!("{other} is not an option xaqu-installer has")),
     };
     match words.next() {
         Some(more) => Asked::Refused(format!("{more}: one option at a time")),
@@ -77,12 +77,12 @@ pub fn parse(arguments: &[String]) -> Asked {
 }
 
 /// Whether the kernel's command line `cmdline` says the system is live:
-/// the word `ferrix.live`, alone or with a value.
+/// the word `xaqu.live`, alone or with a value.
 #[must_use]
 pub fn is_live(cmdline: &str) -> bool {
     cmdline
         .split_whitespace()
-        .any(|word| word == "ferrix.live" || word.starts_with("ferrix.live="))
+        .any(|word| word == "xaqu.live" || word.starts_with("xaqu.live="))
 }
 
 /// A page to draw: its file's name, and how the state is made from the
@@ -142,7 +142,7 @@ const SHOTS: [Shot; 12] = [
             s.event(protocol::Event::Log((*step).to_owned()));
         }
         for line in [
-            "mkfs.btrfs -L ferrix /dev/nvme0n1p2",
+            "mkfs.btrfs -L xaqu /dev/nvme0n1p2",
             "mounted /dev/nvme0n1p2 on /mnt/target",
             "copying 41,208 files (2.1 GiB)",
         ] {
@@ -184,7 +184,7 @@ fn fill_you(state: &mut State) {
 /// The stand-in could not be started or asked, in words.
 pub fn shot_state() -> Result<State, String> {
     let socket =
-        std::env::temp_dir().join(format!("ferrix-installer-shot-{}.sock", std::process::id()));
+        std::env::temp_dir().join(format!("xaqu-installer-shot-{}.sock", std::process::id()));
     let fake = Fake::start(&socket, Behaviour::default())
         .map_err(|e| format!("{}: {e}", socket.display()))?;
     let disks = protocol::disks(&fake.socket);
@@ -271,7 +271,7 @@ pub fn main() -> ExitCode {
             }
         },
         Asked::Version => {
-            println!("ferrix-installer {}", env!("CARGO_PKG_VERSION"));
+            println!("xaqu-installer {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
         Asked::Help => {
@@ -309,10 +309,10 @@ mod tests {
     }
 
     #[test]
-    fn live_is_the_word_ferrix_live_on_the_command_line() {
-        assert!(is_live("console=ttyS0 ferrix.live quiet\n"));
-        assert!(is_live("ferrix.live=1"));
-        assert!(!is_live("console=ttyS0 ferrix.liveish quiet"));
+    fn live_is_the_word_xaqu_live_on_the_command_line() {
+        assert!(is_live("console=ttyS0 xaqu.live quiet\n"));
+        assert!(is_live("xaqu.live=1"));
+        assert!(!is_live("console=ttyS0 xaqu.liveish quiet"));
         assert!(!is_live(""));
     }
 }

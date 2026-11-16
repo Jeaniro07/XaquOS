@@ -253,7 +253,7 @@ pub fn clean_model_name(name: &str) -> crate::Text<64> {
 }
 
 /// An Arm core's name from `CPU implementer` and `CPU part`, for the parts
-/// Ferrix's machines and QEMU have, as Linux's `arch/arm64/include/asm/cputype.h`
+/// Xaqu's machines and QEMU have, as Linux's `arch/arm64/include/asm/cputype.h`
 /// and `arch/arm/include/asm/cputype.h` number them.
 #[must_use]
 pub fn arm_core(implementer: u32, part: u32) -> Option<&'static str> {
@@ -402,13 +402,13 @@ pub const UTSNAME: usize = 6 * UTS_FIELD;
 /// A field of `struct new_utsname`, in its order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Uts {
-    /// `sysname`: `Ferrix`.
+    /// `sysname`: `Xaqu`.
     Sysname,
     /// `nodename`: the host's name.
     Nodename,
     /// `release`.
     Release,
-    /// `version`: `#1 Ferrix 0.1.0`.
+    /// `version`: `#1 Xaqu 0.1.0`.
     Version,
     /// `machine`: `x86_64`.
     Machine,
@@ -422,8 +422,8 @@ pub fn uts_field(names: &[u8], field: Uts) -> Option<&str> {
     c_str(names.get(at..at + UTS_FIELD)?)
 }
 
-/// The system's own version, from `uname`'s `version`: `#1 Ferrix 0.1.0` is
-/// `Ferrix 0.1.0`, the build number in front taken off.
+/// The system's own version, from `uname`'s `version`: `#1 Xaqu 0.1.0` is
+/// `Xaqu 0.1.0`, the build number in front taken off.
 #[must_use]
 pub fn os_version(version: &str) -> &str {
     version

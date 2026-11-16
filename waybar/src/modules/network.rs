@@ -6,10 +6,10 @@
 //! the addresses, and it polls `/proc/net/dev` for bytes. Here the route is
 //! `/proc/net/route`'s, the carrier and the IPv4 address and mask are the
 //! `ifreq` ioctls (`SIOCGIFFLAGS`'s `IFF_RUNNING`, `SIOCGIFADDR`,
-//! `SIOCGIFNETMASK`), which Ferrix answers as Linux does, and the bytes are
+//! `SIOCGIFNETMASK`), which Xaqu answers as Linux does, and the bytes are
 //! `/proc/net/dev`'s. What the module shows follows waybar's states:
 //! `disconnected` with no interface or no carrier, `linked` with no address,
-//! `ethernet` with no wireless ESSID -- which is every interface on Ferrix,
+//! `ethernet` with no wireless ESSID -- which is every interface on Xaqu,
 //! which has no nl80211, so `{essid}`, `{signalStrength}` and the other
 //! wireless fields are empty or zero -- and `wifi` never.
 //!
@@ -51,7 +51,7 @@ pub struct Route {
 
 /// The default routes of `/proc/net/route`, best (lowest metric) first.
 /// The file's addresses are hexadecimal in the machine's byte order, which
-/// is little-endian on every Ferrix target.
+/// is little-endian on every Xaqu target.
 #[must_use]
 pub fn default_routes(text: &str) -> Vec<Route> {
     const RTF_UP: u32 = 0x1;
@@ -359,7 +359,7 @@ impl Network {
         }
         host.diag().once(
             "network-wifi",
-            "network: Ferrix has no nl80211, so the wireless fields ({essid}, {signalStrength}, …) are empty and the state is never wifi".to_owned(),
+            "network: Xaqu has no nl80211, so the wireless fields ({essid}, {signalStrength}, …) are empty and the state is never wifi".to_owned(),
         );
     }
 }
@@ -419,7 +419,7 @@ mod tests {
     }
 
     #[test]
-    fn the_users_network_module_on_ferrix() {
+    fn the_users_network_module_on_xaqu() {
         let mut host = Fake::default();
         let _ = host.interfaces.insert(
             "eth0".into(),

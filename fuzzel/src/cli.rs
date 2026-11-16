@@ -944,7 +944,7 @@ fn take(
         "help" => cli.help = true,
         // `--log-colorize` and `--log-no-syslog` change how fuzzel logs to a
         // terminal and to syslog; this logs plainly to standard error, and
-        // Ferrix has no syslog.
+        // Xaqu has no syslog.
         _ => {}
     }
     Ok(())
@@ -953,7 +953,7 @@ fn take(
 /// `--version`'s line.
 #[must_use]
 pub fn version() -> String {
-    "fuzzel version: 1.12.0 (Ferrix) -cairo +png +svg(resvg) -assertions".to_owned()
+    "fuzzel version: 1.12.0 (Xaqu) -cairo +png +svg(resvg) -assertions".to_owned()
 }
 
 /// `--help`'s text: fuzzel's own list of options.

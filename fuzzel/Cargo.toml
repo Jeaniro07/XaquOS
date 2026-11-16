@@ -7,9 +7,9 @@ rust-version = "1.99"
 license = "MIT"
 publish = false
 
-# An app (Ferrix's docs/APPS.md): a workspace of its own, a static Linux
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
 # program built with std against the target's own musl. It builds inside a
-# Ferrix checkout, where the compositor's libraries are beside it.
+# Xaqu checkout, where the compositor's libraries are beside it.
 [workspace]
 
 [[bin]]

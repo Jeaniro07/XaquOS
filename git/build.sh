@@ -8,7 +8,7 @@
 #
 # and copies what app.toml installs into <out>.
 #
-# Installs, under $FERRIX_PORTS (see ferrousli's tools/ports/common.sh):
+# Installs, under $XAQU_PORTS (see ferrousli's tools/ports/common.sh):
 #   <arch>/usr/bin/git, and <arch>/bin/git linking to it
 #   <arch>/usr/libexec/git-core/        the helpers git runs that are not
 #                                       built in: git-remote-http and its
