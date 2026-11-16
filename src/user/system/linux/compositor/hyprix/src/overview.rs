@@ -645,6 +645,36 @@ pub fn dispatch(argument: &str, overview: &mut Overview) -> bool {
     changed
 }
 
+/// What the compositor says when Mission Control comes up: the size of
+/// the screen, how many spaces it shows, and where each card is.
+#[must_use]
+pub fn mission_report(state: &State) -> Vec<String> {
+    let spaces = mission_spaces(state, mission_area(state));
+    let size = state.monitors().next().map_or_else(
+        || "0x0".to_owned(),
+        |monitor| {
+            format!(
+                "{}x{}",
+                monitor.rect.width,
+                monitor.rect.height
+            )
+        },
+    );
+    let mut lines = vec![format!(
+        "hyprix: the mission control is up, {size}, {} spaces",
+        spaces.len()
+    )];
+    for space in &spaces {
+        for card in &space.cards {
+            lines.push(format!(
+                "hyprix: a card at {},{} {}x{}",
+                card.rect.x, card.rect.y, card.rect.width, card.rect.height
+            ));
+        }
+    }
+    lines
+}
+
 /// `mission toggle|on|off|pick`: Mission Control, the overview drawn
 /// anew -- a space per workspace, the windows of a space as its cards.
 /// Gives whether anything changed.

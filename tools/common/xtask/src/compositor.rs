@@ -92,6 +92,7 @@ mod locked;
 mod lode_viewer;
 mod machine;
 mod measure;
+mod mission;
 mod monitors;
 pub(crate) mod n150_box;
 mod notices;
@@ -813,7 +814,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 76] = [
+const BOOTS: [(&str, Boot); 77] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
@@ -871,6 +872,7 @@ const BOOTS: [(&str, Boot); 76] = [
     ("files", files::test_files),
     ("appmenu", appmenu::test_appmenu),
     ("spotlight", spotlight::test_spotlight),
+    ("mission", mission::test_mission),
     ("launchpad", launchpad::test_launchpad),
     ("notices", notices::test_notices),
     ("weather", weather::test_weather),
