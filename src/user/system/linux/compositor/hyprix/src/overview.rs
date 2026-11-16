@@ -15,16 +15,38 @@
 //! is drawn from [`outputs`] in place of the layout's own, so each window
 //! is the same surface stretched into its tile, the animations carry it
 //! there and back, and the damage follows as it follows any move.
+//!
+//! Mission Control is this overview drawn another way ([`Style::Mission`]):
+//! one space per workspace, side by side, and the windows of a space as
+//! cards in it. It is the same surface, drawn the same way, and it is the
+//! same input: a click on a card goes to that window and closes.
 
-use compositor_layout::{MonitorId, MonitorLayout, Placed, Rect, State, WindowId, WorkspaceId};
+use compositor_layout::{
+    Monitor, MonitorId, MonitorLayout, Placed, Rect, State, WindowId, WorkspaceId,
+};
 
 use crate::seat::Action;
+
+/// How the overview is drawn: the classic grid of every window, or
+/// Mission Control's row of spaces.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Style {
+    /// The grid of every window of every monitor, with the other
+    /// workspaces as a strip above it.
+    #[default]
+    Classic,
+    /// Mission Control: one space per workspace, the windows of a space
+    /// as cards in it.
+    Mission,
+}
 
 /// Whether the overview is up, and which window the pointer is over.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Overview {
     /// Whether it is shown.
     pub on: bool,
+    /// How it is drawn.
+    pub style: Style,
     /// The window under the pointer, or the one the keys picked, drawn
     /// with a highlight.
     pub hovered: Option<WindowId>,
@@ -49,8 +71,29 @@ pub struct Tile {
     pub minimized: bool,
 }
 
+/// One space of Mission Control: a workspace, where it is drawn, and
+/// the cards its windows are drawn as.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Space {
+    /// The workspace the space is.
+    pub workspace: WorkspaceId,
+    /// What the space is called, under it: "Desktop 1" for a numbered
+    /// workspace, its own name for a named one.
+    pub label: String,
+    /// Where the space is, in the space every monitor shares.
+    pub rect: Rect,
+    /// The cards in it: the windows of the workspace, scaled to fit.
+    pub cards: Vec<Tile>,
+}
+
 /// The space between tiles, and round the grid, in logical pixels.
 const GAP: i64 = 24;
+
+/// The narrowest a space of Mission Control may be, in logical pixels.
+const MIN_SPACE: i64 = 240;
+
+/// How much of a space its label takes, at its top, in logical pixels.
+const LABEL: i64 = 40;
 
 /// How much of the monitor's height the strip of workspaces takes.
 const STRIP: f64 = 0.12;
@@ -159,6 +202,148 @@ pub(crate) fn fit(cell: Rect, (width, height): (i64, i64)) -> Rect {
     )
 }
 
+/// The spaces of Mission Control: one for every workspace, side by side
+/// in `area` -- a second row below when they do not fit in one -- and the
+/// windows of a workspace as the cards of its space.
+#[must_use]
+pub fn mission_spaces(state: &State, area: Rect) -> Vec<Space> {
+    let workspaces: Vec<WorkspaceId> = state.workspaces().filter(|ws| ws.0 > 0).collect();
+    let count = workspaces.len();
+    if count == 0 || area.width <= 0 || area.height <= 0 {
+        return Vec::new();
+    }
+    let count64 = i64::try_from(count).unwrap_or(i64::MAX);
+    let per_row = count64.min((area.width / MIN_SPACE).max(1));
+    let rows = i64::try_from(count.div_ceil(per_row as usize)).unwrap_or(i64::MAX);
+    let row_height = area.height.saturating_sub(GAP.saturating_mul(rows - 1)) / rows;
+    let slot = area.width.saturating_sub(GAP.saturating_mul(per_row - 1)) / per_row;
+    let mut spaces = Vec::with_capacity(count);
+    for (index, workspace) in workspaces.iter().enumerate() {
+        let row = index / per_row as usize;
+        let in_row = per_row.min(i64::try_from(count - row * per_row as usize).unwrap_or(0));
+        let row_width = in_row
+            .saturating_mul(slot)
+            .saturating_add(GAP.saturating_mul(in_row - 1));
+        let left = area
+            .x
+            .saturating_add(area.width.saturating_sub(row_width) / 2);
+        let x = left.saturating_add(
+            i64::try_from(index % per_row as usize)
+                .unwrap_or(0)
+                .saturating_mul(slot.saturating_add(GAP)),
+        );
+        let y = area.y.saturating_add(
+            i64::try_from(row)
+                .unwrap_or(0)
+                .saturating_mul(row_height.saturating_add(GAP)),
+        );
+        let rect = Rect::new(x, y, slot, row_height);
+        let cards = mission_cards(state, *workspace, rect);
+        spaces.push(Space {
+            workspace: *workspace,
+            label: space_label(state, *workspace),
+            rect,
+            cards,
+        });
+    }
+    spaces
+}
+
+/// The cards of one space: the windows of its workspace, scaled to fit the
+/// space under its label, and the ones minimized from it after them.
+fn mission_cards(state: &State, workspace: WorkspaceId, space: Rect) -> Vec<Tile> {
+    let listing = state.listing();
+    let minimized: Vec<WindowId> = state
+        .minimized_windows()
+        .into_iter()
+        .filter(|(_, back)| *back == workspace)
+        .map(|(window, _)| window)
+        .collect();
+    let size_of = |window: WindowId| {
+        listing
+            .iter()
+            .find(|listed| listed.placed.window == window)
+            .map(|listed| (listed.placed.rect.width, listed.placed.rect.height))
+    };
+    let mut cards: Vec<(WindowId, (i64, i64))> = listing
+        .iter()
+        .filter(|listed| listed.workspace == workspace)
+        .map(|listed| {
+            (
+                listed.placed.window,
+                (listed.placed.rect.width, listed.placed.rect.height),
+            )
+        })
+        .collect();
+    for window in &minimized {
+        if let Some(size) = size_of(*window) {
+            cards.push((*window, size));
+        }
+    }
+    let inner = Rect::new(
+        space.x.saturating_add(GAP),
+        space.y.saturating_add(LABEL),
+        space.width.saturating_sub(GAP.saturating_mul(2)),
+        space.height.saturating_sub(LABEL).saturating_sub(GAP),
+    );
+    let sizes: Vec<(i64, i64)> = cards.iter().map(|(_, size)| *size).collect();
+    cards
+        .iter()
+        .zip(grid(inner, &sizes, GAP))
+        .map(|((window, _), rect)| Tile {
+            window: *window,
+            workspace,
+            rect,
+            thumbnail: false,
+            minimized: minimized.contains(window),
+        })
+        .collect()
+}
+
+/// What a space is called: "Desktop 1" for a workspace numbered, its own
+/// name for a workspace named.
+#[must_use]
+pub fn space_label(state: &State, workspace: WorkspaceId) -> String {
+    let name = state.workspace_name(workspace);
+    if name.parse::<i64>().is_ok() {
+        format!("Desktop {name}")
+    } else {
+        name
+    }
+}
+
+/// The area the spaces of Mission Control are laid out in: the focused
+/// monitor's, without what is reserved on it.
+#[must_use]
+pub fn mission_area(state: &State) -> Rect {
+    let Some(monitor) = state
+        .focused_monitor()
+        .and_then(|id| state.monitors().find(|monitor| monitor.id == id))
+        .or_else(|| state.monitors().next())
+    else {
+        return Rect::new(0, 0, 0, 0);
+    };
+    usable(monitor)
+}
+
+/// A monitor's rectangle without what is reserved on it.
+fn usable(monitor: &Monitor) -> Rect {
+    let whole = monitor.rect;
+    let reserved = monitor.reserved;
+    Rect::new(
+        whole.x.saturating_add(reserved.left),
+        whole.y.saturating_add(reserved.top),
+        whole
+            .width
+            .saturating_sub(reserved.left)
+            .saturating_sub(reserved.right),
+        whole
+            .height
+            .saturating_sub(reserved.top)
+            .saturating_sub(reserved.bottom),
+    )
+}
+
 /// `value`, measured from `from`, in a miniature `to` high of something
 /// `size` high.
 fn shrink(value: i64, from: i64, to: i64, size: i64) -> i64 {
@@ -173,19 +358,7 @@ pub fn tiles(state: &State) -> Vec<(MonitorId, Vec<Tile>)> {
     let mut all = Vec::new();
     for monitor in state.monitors() {
         let whole = monitor.rect;
-        let reserved = monitor.reserved;
-        let usable = Rect::new(
-            whole.x.saturating_add(reserved.left),
-            whole.y.saturating_add(reserved.top),
-            whole
-                .width
-                .saturating_sub(reserved.left)
-                .saturating_sub(reserved.right),
-            whole
-                .height
-                .saturating_sub(reserved.top)
-                .saturating_sub(reserved.bottom),
-        );
+        let usable = usable(monitor);
         #[expect(
             clippy::cast_possible_truncation,
             clippy::cast_precision_loss,
@@ -292,6 +465,9 @@ pub fn tiles(state: &State) -> Vec<(MonitorId, Vec<Tile>)> {
 /// windows, the hovered one outlined.
 #[must_use]
 pub fn outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
+    if overview.style == Style::Mission {
+        return mission_outputs(state, overview);
+    }
     let tiles = tiles(state);
     state
         .layout()
@@ -322,25 +498,65 @@ pub fn outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
         .collect()
 }
 
-/// The windows the overview draws dimmed, at [`MINIMIZED_OPACITY`]: the
-/// minimized ones in a grid.
-#[must_use]
-pub fn dimmed(state: &State) -> Vec<WindowId> {
-    tiles(state)
+/// What the focused monitor draws while Mission Control is up: the
+/// cards of every space, the hovered one outlined. The other monitors are
+/// left as they are.
+fn mission_outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
+    let spaces = mission_spaces(state, mission_area(state));
+    let focused = state.focused_monitor();
+    state
+        .layout()
         .into_iter()
-        .flat_map(|(_, tiles)| tiles)
-        .filter(|tile| tile.minimized)
-        .map(|tile| tile.window)
+        .map(|mut output| {
+            if Some(output.monitor) != focused {
+                return output;
+            }
+            output.windows = spaces
+                .iter()
+                .flat_map(|space| space.cards.iter())
+                .map(|card| {
+                    let lit = overview.hovered == Some(card.window);
+                    Placed {
+                        window: card.window,
+                        rect: card.rect,
+                        border: if lit { HIGHLIGHT } else { 0 },
+                        focused: lit,
+                        floating: true,
+                        fullscreen: false,
+                    }
+                })
+                .collect();
+            output
+        })
         .collect()
+}
+
+/// The windows the overview draws dimmed, at [`MINIMIZED_OPACITY`]: the
+/// minimized ones, in a grid or as a card.
+#[must_use]
+pub fn dimmed(state: &State, style: Style) -> Vec<WindowId> {
+    match style {
+        Style::Classic => tiles(state)
+            .into_iter()
+            .flat_map(|(_, tiles)| tiles)
+            .filter(|tile| tile.minimized)
+            .map(|tile| tile.window)
+            .collect(),
+        Style::Mission => mission_spaces(state, mission_area(state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .filter(|card| card.minimized)
+            .map(|card| card.window)
+            .collect(),
+    }
 }
 
 /// The window the keys pick after `from` -- or before it, `back` -- among
 /// the grids' tiles, wrapping: the first or the last when nothing is
 /// picked yet.
-fn step(state: &State, from: Option<WindowId>, back: bool) -> Option<WindowId> {
-    let order: Vec<WindowId> = tiles(state)
+fn step(state: &State, from: Option<WindowId>, back: bool, style: Style) -> Option<WindowId> {
+    let order: Vec<WindowId> = pickable(state, style)
         .into_iter()
-        .flat_map(|(_, tiles)| tiles)
         .filter(|tile| !tile.thumbnail)
         .map(|tile| tile.window)
         .collect();
@@ -360,14 +576,26 @@ fn step(state: &State, from: Option<WindowId>, back: bool) -> Option<WindowId> {
 
 /// The tile at `point`, the topmost where two overlap.
 #[must_use]
-pub fn hit(state: &State, point: (i64, i64)) -> Option<Tile> {
+pub fn hit(state: &State, point: (i64, i64), style: Style) -> Option<Tile> {
     let (x, y) = point;
-    tiles(state)
-        .into_iter()
-        .flat_map(|(_, tiles)| tiles)
-        .rfind(|tile| {
-            x >= tile.rect.x && x < tile.rect.right() && y >= tile.rect.y && y < tile.rect.bottom()
-        })
+    pickable(state, style).into_iter().rfind(|tile| {
+        x >= tile.rect.x && x < tile.rect.right() && y >= tile.rect.y && y < tile.rect.bottom()
+    })
+}
+
+/// The tiles the overview picks from, in the style it is drawn: the
+/// grid's tiles, or the cards of Mission Control's spaces.
+fn pickable(state: &State, style: Style) -> Vec<Tile> {
+    match style {
+        Style::Classic => tiles(state)
+            .into_iter()
+            .flat_map(|(_, tiles)| tiles)
+            .collect(),
+        Style::Mission => mission_spaces(state, mission_area(state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .collect(),
+    }
 }
 
 /// `overview toggle|on|off|next|prev|pick`: the last three are the keys'
@@ -376,7 +604,12 @@ pub fn hit(state: &State, point: (i64, i64)) -> Option<Tile> {
 pub fn dispatch_in(argument: &str, overview: &mut Overview, state: &mut State) -> bool {
     match argument.trim() {
         "next" | "prev" if overview.on => {
-            let picked = step(state, overview.hovered, argument.trim() == "prev");
+            let picked = step(
+                state,
+                overview.hovered,
+                argument.trim() == "prev",
+                overview.style,
+            );
             let changed = picked != overview.hovered;
             overview.hovered = picked;
             changed
@@ -402,10 +635,76 @@ pub fn dispatch(argument: &str, overview: &mut Overview) -> bool {
     };
     let changed = overview.on != on;
     overview.on = on;
-    if !on {
+    if on {
+        // The classic grid: Mission Control is the other style, and it
+        // comes up with its own dispatcher.
+        overview.style = Style::Classic;
+    } else {
         overview.hovered = None;
     }
     changed
+}
+
+/// What the compositor says when Mission Control comes up: the size of
+/// the screen, how many spaces it shows, and where each card is.
+#[must_use]
+pub fn mission_report(state: &State) -> Vec<String> {
+    let spaces = mission_spaces(state, mission_area(state));
+    let size = state.monitors().next().map_or_else(
+        || "0x0".to_owned(),
+        |monitor| {
+            format!(
+                "{}x{}",
+                monitor.rect.width,
+                monitor.rect.height
+            )
+        },
+    );
+    let mut lines = vec![format!(
+        "hyprix: the mission control is up, {size}, {} spaces",
+        spaces.len()
+    )];
+    for space in &spaces {
+        lines.push(format!(
+            "hyprix: a space {} with {} cards and {} windows",
+            space.workspace.0,
+            space.cards.len(),
+            state.windows(space.workspace).len()
+        ));
+        for card in &space.cards {
+            lines.push(format!(
+                "hyprix: a card at {},{} {}x{}",
+                card.rect.x, card.rect.y, card.rect.width, card.rect.height
+            ));
+        }
+    }
+    lines
+}
+
+/// `mission toggle|on|off|pick`: Mission Control, the overview drawn
+/// anew -- a space per workspace, the windows of a space as its cards.
+/// Gives whether anything changed.
+pub fn mission_dispatch(argument: &str, overview: &mut Overview, state: &mut State) -> bool {
+    match argument.trim() {
+        "pick" if overview.on => dispatch_in("pick", overview, state),
+        "off" | "close" => dispatch("off", overview),
+        "on" | "open" => {
+            let changed = dispatch("on", overview);
+            overview.style = Style::Mission;
+            changed
+        }
+        _ => {
+            // `toggle`: Mission Control comes up, or goes away when it is
+            // the one that is up.
+            if overview.on && overview.style == Style::Mission {
+                dispatch("off", overview)
+            } else {
+                let changed = dispatch("on", overview);
+                overview.style = Style::Mission;
+                changed
+            }
+        }
+    }
 }
 
 /// Take the input while the overview is up: the pointer highlights and
@@ -449,7 +748,7 @@ pub fn take_input(
     for action in actions {
         match action {
             Action::Pointer { .. } => {
-                let hovered = hit(state, at)
+                let hovered = hit(state, at, overview.style)
                     .filter(|tile| !tile.thumbnail)
                     .map(|tile| tile.window);
                 if hovered != overview.hovered {
@@ -461,7 +760,11 @@ pub fn take_input(
                 button: BTN_LEFT,
                 pressed: true,
             } => {
-                if let Some(tile) = hit(state, at) {
+                if let Some(tile) = hit(state, at, overview.style) {
+                    // Ponytail: focusing the window brings its workspace
+                    // with it (`layout::State::focus`), so there is no
+                    // workspace to dispatch. Upgrade path: a card that is
+                    // picked without being focused would need one.
                     let _ = state.focus_window(tile.window);
                 }
                 changed |= dispatch("off", overview);
@@ -508,9 +811,12 @@ pub fn take_input(
 #[cfg(test)]
 mod tests {
     use compositor_config::NoSources;
-    use compositor_layout::{Monitor, MonitorId, Rect, State, WindowId};
+    use compositor_layout::{Monitor, MonitorId, Rect, State, WindowId, WorkspaceId};
 
-    use super::{Overview, dispatch, grid, take_input, tiles};
+    use super::{
+        Overview, Style, dispatch, grid, mission_area, mission_dispatch, mission_spaces,
+        space_label, take_input, tiles,
+    };
     use crate::seat::Action;
 
     /// A floating desktop on one 1280x800 monitor with two windows on
@@ -638,7 +944,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             [(WindowId(2), false), (WindowId(1), true)]
         );
-        assert_eq!(super::dimmed(&state), [WindowId(1)]);
+        assert_eq!(super::dimmed(&state, super::Style::Classic), [WindowId(1)]);
         assert!(
             all[0]
                 .1
@@ -711,9 +1017,152 @@ mod tests {
         assert_eq!(kept, key(30, false));
     }
 
-    /// One window is centred at its own size; one too large is scaled down
-    /// keeping its shape.
+    /// Two workspaces, one of them empty: a space each.
     #[test]
+    fn the_spaces_are_one_for_each_workspace() {
+        let mut state = desktop();
+        let _ = state.dispatch_str("workspace", "3");
+        let spaces = mission_spaces(&state, Rect::new(0, 0, 1280, 800));
+        assert_eq!(
+            spaces
+                .iter()
+                .map(|space| space.workspace)
+                .collect::<Vec<_>>(),
+            [WorkspaceId(1), WorkspaceId(2), WorkspaceId(3)]
+        );
+        let empty = spaces.last().unwrap();
+        assert!(empty.cards.is_empty(), "{empty:?}");
+    }
+
+    /// A window is a card of the workspace it is on, and of no other.
+    #[test]
+    fn a_window_is_a_card_of_its_own_workspace() {
+        let state = desktop();
+        let spaces = mission_spaces(&state, Rect::new(0, 0, 1280, 800));
+        let cards: Vec<_> = spaces
+            .iter()
+            .map(|space| (space.workspace, space.cards.len()))
+            .collect();
+        assert_eq!(
+            cards,
+            [(WorkspaceId(1), 2), (WorkspaceId(2), 1)],
+            "two windows on the first, one on the second"
+        );
+        let second = &spaces[1];
+        assert_eq!(second.cards[0].window, WindowId(3));
+        assert_eq!(second.cards[0].workspace, WorkspaceId(2));
+    }
+
+    /// A window minimized from a workspace is a card of it still, marked.
+    #[test]
+    fn a_minimized_window_is_a_card_of_the_workspace_it_left() {
+        let mut state = desktop();
+        let _ = state.focus_window(WindowId(1)).unwrap();
+        let _ = state.minimize(WindowId(1)).unwrap();
+        let spaces = mission_spaces(&state, Rect::new(0, 0, 1280, 800));
+        let first = &spaces[0];
+        assert_eq!(first.workspace, WorkspaceId(1));
+        let minimized: Vec<_> = first
+            .cards
+            .iter()
+            .filter(|card| card.minimized)
+            .map(|card| card.window)
+            .collect();
+        assert_eq!(minimized, [WindowId(1)]);
+    }
+
+    /// A numbered workspace is called "Desktop 1".
+    #[test]
+    fn the_label_of_a_numbered_workspace_is_desktop_one() {
+        let state = desktop();
+        assert_eq!(space_label(&state, WorkspaceId(1)), "Desktop 1");
+        assert_eq!(space_label(&state, WorkspaceId(2)), "Desktop 2");
+    }
+
+    /// A click on a card brings that window up: its workspace is shown and
+    /// it has the focus.
+    #[test]
+    fn a_click_on_a_card_goes_to_its_workspace_and_focuses_it() {
+        let mut state = desktop();
+        let mut overview = Overview {
+            on: true,
+            style: Style::Mission,
+            ..Overview::default()
+        };
+        let card = mission_spaces(&state, mission_area(&state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .find(|card| card.workspace == WorkspaceId(2))
+            .expect("a card of workspace 2");
+        #[expect(clippy::cast_precision_loss, reason = "a test's screen")]
+        let at = (
+            (card.rect.x + card.rect.width / 2) as f64,
+            (card.rect.y + card.rect.height / 2) as f64,
+        );
+        let (kept, changed) = take_input(
+            vec![Action::Button {
+                button: 0x110,
+                pressed: true,
+            }],
+            &mut overview,
+            &mut state,
+            at,
+        );
+        assert!(kept.is_empty() && changed);
+        assert!(!overview.on, "Mission Control closes");
+        assert_eq!(state.focused_window(), Some(card.window));
+        assert_eq!(state.active_workspace(MonitorId(1)), Some(WorkspaceId(2)));
+    }
+
+    /// A card of a minimized window brings it back when it is clicked.
+    #[test]
+    fn a_click_on_a_minimized_card_brings_it_back() {
+        let mut state = desktop();
+        let _ = state.focus_window(WindowId(1)).unwrap();
+        let _ = state.minimize(WindowId(1)).unwrap();
+        let mut overview = Overview {
+            on: true,
+            style: Style::Mission,
+            ..Overview::default()
+        };
+        let card = mission_spaces(&state, mission_area(&state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .find(|card| card.window == WindowId(1))
+            .expect("a card of the minimized window");
+        assert!(card.minimized);
+        #[expect(clippy::cast_precision_loss, reason = "a test's screen")]
+        let at = (
+            (card.rect.x + card.rect.width / 2) as f64,
+            (card.rect.y + card.rect.height / 2) as f64,
+        );
+        let (_, changed) = take_input(
+            vec![Action::Button {
+                button: 0x110,
+                pressed: true,
+            }],
+            &mut overview,
+            &mut state,
+            at,
+        );
+        assert!(changed && !overview.on);
+        assert!(!state.is_minimized(WindowId(1)));
+        assert_eq!(state.focused_window(), Some(WindowId(1)));
+    }
+
+    /// The mission dispatcher brings Mission Control up, in its own style,
+    /// and takes it down again.
+    #[test]
+    fn the_mission_dispatcher_turns_the_mission_style_on() {
+        let mut state = desktop();
+        let mut overview = Overview::default();
+        assert!(mission_dispatch("toggle", &mut overview, &mut state));
+        assert!(overview.on);
+        assert_eq!(overview.style, Style::Mission);
+        assert!(mission_dispatch("off", &mut overview, &mut state));
+        assert!(!overview.on);
+    }
+
     fn one_window_is_centred_and_never_enlarged() {
         let area = Rect::new(0, 0, 1000, 600);
         assert_eq!(

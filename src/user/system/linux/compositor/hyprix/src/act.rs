@@ -220,6 +220,19 @@ pub fn compositor(
             around.overview,
             state,
         )),
+        "mission" => {
+            let changed = crate::overview::mission_dispatch(argument, around.overview, state);
+            if changed {
+                if around.overview.on {
+                    for line in crate::overview::mission_report(state) {
+                        around.say(&line);
+                    }
+                } else {
+                    around.say("hyprix: the mission control closed");
+                }
+            }
+            Some(changed)
+        }
         "switcher" => Some(crate::switcher::dispatch(
             argument,
             (

@@ -203,6 +203,50 @@ impl Compositor<'_> {
         // of `self` for the frame, since the screens are drawn through it.
         let mut bars = std::mem::take(&mut self.bars);
         bars.restyle(&self.config);
+        // Mission Control's spaces, and the label of each: the compositor
+        // draws them, as it draws the title bars, since the shell may not
+        // draw over the overview.
+        let mut spaces = std::mem::take(&mut self.spaces);
+        if self.overview.on && self.overview.style == crate::overview::Style::Mission {
+            let layout_spaces = crate::overview::mission_spaces(
+                &self.state,
+                crate::overview::mission_area(&self.state),
+            );
+            let scale = self
+                .screens
+                .iter()
+                .map(|screen| screen.scale)
+                .fold(1.0_f64, f64::max);
+            let style = crate::titlebar::Style::from_config(&self.config);
+            spaces.draw(&layout_spaces, scale, &style);
+            if let Some(output) = outputs
+                .iter_mut()
+                .find(|output| Some(output.monitor) == self.state.focused_monitor())
+            {
+                for (id, rect) in spaces.placed() {
+                    output.windows.push(compositor_layout::Placed {
+                        window: *id,
+                        rect: *rect,
+                        border: 0,
+                        focused: false,
+                        floating: true,
+                        fullscreen: false,
+                    });
+                    let _ = drawn_with.insert(
+                        *id,
+                        compositor_render::WindowStyle {
+                            rounding: Some(0),
+                            blur: false,
+                            shadow: false,
+                            dim: false,
+                            decorate: false,
+                            ..compositor_render::WindowStyle::default()
+                        },
+                    );
+                }
+            }
+            bars.merge(spaces.rendered());
+        }
         // `hyprix:titlebars` is live (`hyprctl setting`, `keyword`,
         // `reload`): a client asking to draw its own frame is told yes
         // while the compositor draws bars, from its next `set_mode`.
@@ -225,7 +269,10 @@ impl Compositor<'_> {
             // and a minimized window is dimmed: it is there to be found,
             // and is not on the screen.
             let (lit, dimmed) = if self.overview.on {
-                (self.overview.hovered, crate::overview::dimmed(&self.state))
+                (
+                    self.overview.hovered,
+                    crate::overview::dimmed(&self.state, self.overview.style),
+                )
             } else {
                 (
                     self.switcher.picked(),
@@ -317,6 +364,7 @@ impl Compositor<'_> {
             self.draw_screen(which, output, &with, &mut drew)?;
         }
         self.bars = bars;
+        self.spaces = spaces;
         self.owed |= drew.waiting;
         // The frame has been drawn from them, so the next one starts
         // from what happens next.

@@ -26,7 +26,7 @@ use compositor_text::{FontDescription, Fonts, Rgba, Size, Weight};
 pub const HEIGHT: i64 = 38;
 
 /// The bit every bar's id has, and no client's window.
-const BAR: u64 = 1 << 62;
+pub(crate) const BAR: u64 = 1 << 62;
 
 /// No colour: a theme that sets none keeps the default look.
 const CLEAR: Rgba = Rgba {
@@ -532,6 +532,14 @@ impl Bars {
         double
     }
 
+    /// Add `others` to what is drawn this frame: the Mission Control's
+    /// space labels are drawn like the bars, and go in the same map.
+    pub fn merge(&mut self, others: &BTreeMap<WindowId, Rendered>) {
+        for (id, drawn) in others {
+            let _ = self.rendered.insert(*id, drawn.clone());
+        }
+    }
+
     /// Draw one bar: `width` logical pixels wide, at `scale`.
     fn draw(&mut self, want: &Wanted, focused: bool, width: i64, scale: f64) -> Option<Rendered> {
         let style = &self.style;
@@ -806,7 +814,7 @@ fn button(
 
 /// A tiny-skia pixmap (premultiplied RGBA bytes) as premultiplied
 /// `ARGB8888` in memory order, which is B, G, R, A.
-fn argb(pixmap: &tiny_skia::Pixmap) -> Vec<u8> {
+pub(crate) fn argb(pixmap: &tiny_skia::Pixmap) -> Vec<u8> {
     let mut out = Vec::with_capacity(pixmap.data().len());
     for &[r, g, b, a] in pixmap.data().as_chunks::<4>().0 {
         out.extend([b, g, r, a]);

@@ -24,8 +24,10 @@ fn ferrix_light_parses_and_floats() {
         }
         assert!(
             compositor_layout::Dispatcher::parse(&bind.dispatcher, &bind.arg).is_ok()
-                || ["mouse", "overview", "switcher", "suspend", "resume"]
-                    .contains(&bind.dispatcher.as_str()),
+                || [
+                    "mouse", "overview", "mission", "switcher", "suspend", "resume"
+                ]
+                .contains(&bind.dispatcher.as_str()),
             "{bind:?} names a dispatcher hyprix runs"
         );
     }
@@ -100,8 +102,10 @@ fn xaqu_parses_floats_and_styles_its_frames() {
         }
         assert!(
             compositor_layout::Dispatcher::parse(&bind.dispatcher, &bind.arg).is_ok()
-                || ["exec", "mouse", "overview", "switcher", "suspend", "resume"]
-                    .contains(&bind.dispatcher.as_str()),
+                || [
+                    "exec", "mouse", "overview", "mission", "switcher", "suspend", "resume"
+                ]
+                .contains(&bind.dispatcher.as_str()),
             "{bind:?} names a dispatcher hyprix runs"
         );
     }
@@ -114,6 +118,63 @@ fn xaqu_parses_floats_and_styles_its_frames() {
         "{:?}",
         config.wallpapers
     );
+}
+
+/// Mission Control has its own key: SUPER Tab brings it up, SUPER O the
+/// classic overview, SUPER K walks the windows -- and the plain SUPER key
+/// is free, since the overview moved.
+#[test]
+fn the_mission_control_has_its_own_key() {
+    let parsed = parse(
+        "xaqu-keys.conf",
+        include_str!("../themes/xaqu-keys.conf"),
+        &mut NoSources,
+    );
+    assert_eq!(parsed.diagnostics, [], "the keys parse cleanly");
+    let binds = &parsed.config.binds;
+    let bound = |mods: &str, key: &str| -> Vec<(String, String)> {
+        binds
+            .iter()
+            .filter(|bind| {
+                bind.mods == compositor_config::Mods::parse(mods)
+                    && bind.key == compositor_config::Key::Sym(key.to_owned())
+            })
+            .map(|bind| (bind.dispatcher.clone(), bind.arg.clone()))
+            .collect()
+    };
+    assert_eq!(
+        bound("SUPER", "Tab"),
+        [("mission".to_owned(), "toggle".to_owned())],
+        "SUPER Tab is Mission Control"
+    );
+    assert_eq!(
+        bound("SUPER", "K"),
+        [("switcher".to_owned(), "next".to_owned())],
+        "SUPER K walks the windows"
+    );
+    assert_eq!(
+        bound("SUPER SHIFT", "K"),
+        [("switcher".to_owned(), "prev".to_owned())],
+        "SUPER SHIFT K walks them back"
+    );
+    assert_eq!(
+        bound("SUPER", "O"),
+        [("overview".to_owned(), "toggle".to_owned())],
+        "SUPER O opens the classic overview"
+    );
+    assert!(
+        binds
+            .iter()
+            .all(|bind| bind.key != compositor_config::Key::Sym("Super_L".to_owned())),
+        "the plain SUPER key is free"
+    );
+    for bind in binds {
+        assert_eq!(
+            bind.mods.0 & (compositor_config::Mods::ALT | compositor_config::Mods::CTRL),
+            0,
+            "{bind:?} takes a program's Alt or Ctrl key"
+        );
+    }
 }
 
 /// Xaqu's keys do what xaqu-shell's menu bar says they do: Super Q quits

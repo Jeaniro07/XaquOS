@@ -93,6 +93,7 @@ mod locked;
 mod lode_viewer;
 mod machine;
 mod measure;
+mod mission;
 mod monitors;
 pub(crate) mod n150_box;
 mod notices;
@@ -872,6 +873,7 @@ const BOOTS: [(&str, Boot); 77] = [
     ("files", files::test_files),
     ("appmenu", appmenu::test_appmenu),
     ("spotlight", spotlight::test_spotlight),
+    ("mission", mission::test_mission),
     ("launchpad", launchpad::test_launchpad),
     ("notices", notices::test_notices),
     ("weather", weather::test_weather),
