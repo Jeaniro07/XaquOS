@@ -66,6 +66,7 @@ mod browser;
 mod chrome_save;
 mod chrome_xaqu;
 pub(crate) mod claude_desktop;
+mod control;
 mod desktop;
 mod direct_scanout;
 mod drawing;
@@ -813,7 +814,7 @@ fn gates_busybox(arch: Arch) -> Option<String> {
 /// each takes minutes under emulation and there are twenty of them, so a
 /// change to one is otherwise an hour a try.
 type Boot = fn(Arch, &Programs, &Args) -> Result<()>;
-const BOOTS: [(&str, Boot); 76] = [
+const BOOTS: [(&str, Boot); 77] = [
     ("restart", test_driver_restart),
     ("dispatchers", test_dispatchers),
     ("bar", test_bar),
@@ -875,6 +876,7 @@ const BOOTS: [(&str, Boot); 76] = [
     ("notices", notices::test_notices),
     ("weather", weather::test_weather),
     ("quick", quick::test_quick),
+    ("control", control::test_control),
     ("chrome-xaqu", chrome_xaqu::test_chrome_xaqu),
     ("chrome-save", chrome_save::test_chrome_save),
     ("gtk-chooser", gtk_chooser::test_gtk_chooser),

@@ -77,7 +77,26 @@ fn main() {
         .set_read_timeout(Some(std::time::Duration::from_millis(200)));
     let (done, finished) = std::sync::mpsc::channel::<(String, String, Option<String>)>();
     let mut serial = 0_u64;
+    let appearance = compositor_portald::appearance_file();
     loop {
+        // The menu bar's file says the look; a change is signalled.
+        // Ponytail: the file is read each wake (a few bytes, five times a
+        // second). Upgrade path: inotify on its folder.
+        if let Some(now) = appearance
+            .as_ref()
+            .and_then(|file| std::fs::read_to_string(file).ok())
+            .and_then(|text| compositor_portald::parse_appearance(&text))
+            && now != dark
+        {
+            for signal in compositor_portald::changed(dark, now) {
+                if let Err(error) = connection.send(&signal) {
+                    say(&format!("a signal was not sent: {error}"));
+                    return;
+                }
+            }
+            say(if now { "now dark" } else { "now light" });
+            dark = now;
+        }
         while let Ok((path, sender, chosen)) = finished.try_recv() {
             let signal = compositor_portald::chooser::response(&path, &sender, chosen.as_deref());
             if let Err(error) = connection.send(&signal) {

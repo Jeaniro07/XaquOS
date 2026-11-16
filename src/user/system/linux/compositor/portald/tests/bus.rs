@@ -91,6 +91,7 @@ fn gdbus_reads_what_gtk_reads() {
     let _portald = Killed(
         Command::new(env!("CARGO_BIN_EXE_portald"))
             .env("DBUS_SESSION_BUS_ADDRESS", &address)
+            .env("XDG_CONFIG_HOME", dir.join("config"))
             .stdout(Stdio::null())
             .spawn()
             .expect("portald started"),
@@ -127,5 +128,34 @@ fn gdbus_reads_what_gtk_reads() {
         missing.contains("org.freedesktop.portal.Error.NotFound"),
         "{missing}"
     );
+    // The menu bar's file says light: portald follows, and says dark again
+    // when the file does.
+    let file = dir.join("config/xaqu-shell/appearance");
+    std::fs::create_dir_all(file.parent().expect("its folder")).expect("made");
+    for (text, want) in [
+        (
+            "light
+",
+            "(<uint32 2>,)",
+        ),
+        (
+            "dark
+",
+            "(<uint32 1>,)",
+        ),
+    ] {
+        std::fs::write(&file, text).expect("written");
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let mut now = String::new();
+        while Instant::now() < deadline && now.trim() != want {
+            std::thread::sleep(Duration::from_millis(100));
+            now = gdbus(
+                &address,
+                "org.freedesktop.portal.Settings.ReadOne",
+                &["org.freedesktop.appearance", "color-scheme"],
+            );
+        }
+        assert_eq!(now.trim(), want, "after {text:?}");
+    }
     let _ = std::fs::remove_dir_all(&dir);
 }

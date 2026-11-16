@@ -781,9 +781,15 @@ boot that screenshots it:
 GTK and Chrome in the tokens: a Xaqu desktop carries Nocturne for GTK 3
 and GTK 4 (hyprix's `themes/gtk`, as `/usr/share/themes/Nocturne` and
 `/etc/gtk-{3,4}.0/settings.ini`), and starts `portald`, which answers
-`org.freedesktop.portal.Settings` on the session bus: dark, Nocturne's
-accent, the theme's name -- what GTK 4, libadwaita and Chrome read for
-their own dark mode. It offers no other portal.
+`org.freedesktop.portal.Settings` on the session bus: dark or light as the
+person chose, Nocturne's accent, the theme's name -- what GTK 4, libadwaita
+and Chrome read for their own dark mode. The menu bar writes the look in
+force to `~/.config/xaqu-shell/appearance` (`dark` or `light`) and to
+`~/.config/gtk-{3,4}.0/settings.ini`; portald looks at that file twice a
+second and tells the session `SettingChanged` when it changes, so GTK 4
+and Chrome follow a live change. GTK 3 reads `settings.ini` only when a
+program starts: a running GTK 3 program is not claimed to follow (not
+verified). It offers no other portal.
 
 The file chooser is Ferrix's own on Xaqu: portald answers
 `org.freedesktop.portal.FileChooser` (OpenFile and SaveFile, the filters,
@@ -976,10 +982,11 @@ applications, in `xaqu-shell` -- is still to come (5 points).
   changing, and the dock hands hyprix the frames' and title bars' colours.
   Until a person chooses, the tokens are the markup's own Nocturne, which
   the engine's Nocturne triad comes near but not to. GTK, Chrome and
-  portald's settings stay Nocturne dark (boot `quick`).
+  portald's settings follow the chosen look (the menu bar publishes it,
+  boot `quick`).
 * **GTK and Chrome in the tokens**: Nocturne for GTK 3 and 4 and GTK's
   settings naming it; `portald`, answering `org.freedesktop.portal.Settings`
-  (dark, the accent, the theme) and `FileChooser` with Ferrix's own dialog
+  (dark or light, the accent, the theme) and `FileChooser` with Ferrix's own dialog
   (the `chooser` app, tole's FileDialog), which GTK 3 (`GTK_USE_PORTAL`),
   GTK 4 (`GDK_DEBUG=portals`) and Chrome use on Xaqu; Chrome's volume in
   four versions side by side under `~/.local/share/ferrix` -- 2 GTK 3, 3
@@ -1074,7 +1081,7 @@ Files has File, Edit, View and Go; Settings has View, one item per page.
 The `appmenu` boot opens Files, checks File reaches the bar, drops it and
 picks New Tab.
 
-### 6.9 Spotlight, Launchpad, Notices
+### 6.9 Spotlight, Launchpad, Notices, Control Center
 
 SUPER Space opens Spotlight (`xaqu-shell --spotlight`): the query is read as
 arithmetic first, then matched against the installed applications
@@ -1095,3 +1102,14 @@ own banners. With the shell down, notifyd draws again.
 The `spotlight` boot types "fi" into the card and runs Files; the
 `launchpad` boot clicks the first tile and runs it; the `notices` boot waits
 for a banner, presses the clock and opens the panel behind it.
+
+The Control Center is the icon left of the search in the menu bar
+(`xaqu-shell --control`): a glass card at the top right with the output and
+input volume (a press on a track sets it in steps of 5, a press on the label
+mutes), the quick tiles, the look (Light, Dark, Auto) and the theme colour.
+It reads and changes what the sidebar's quick tab reads and changes
+(`quick::read` and `quick::change`, one list of rows for both), so each shows
+what the other did. A press outside the card, Escape or another press on the
+icon closes it. Wi-Fi, Bluetooth and night light stay faint, as in the quick
+tab. The `control` boot opens the card, counts it on the screen and closes it
+with Escape.
