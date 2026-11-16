@@ -665,6 +665,12 @@ pub fn mission_report(state: &State) -> Vec<String> {
         spaces.len()
     )];
     for space in &spaces {
+        lines.push(format!(
+            "hyprix: a space {} with {} cards and {} windows",
+            space.workspace.0,
+            space.cards.len(),
+            state.windows(space.workspace).len()
+        ));
         for card in &space.cards {
             lines.push(format!(
                 "hyprix: a card at {},{} {}x{}",

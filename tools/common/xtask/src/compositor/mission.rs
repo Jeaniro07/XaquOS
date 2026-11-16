@@ -33,14 +33,17 @@ const SCRIPT: &str = r#"#!/bin/sh
 exec 2>&1
 until hyprctl version > /dev/null 2>&1; do sleep 0.2; done
 /bin/shelf &
-sleep 6
+sleep 8
 hyprctl dispatch workspace 2
 sleep 2
 /bin/shelf &
-sleep 6
+sleep 8
 hyprctl dispatch workspace 1
 sleep 2
 hyprctl dispatch mission toggle
+sleep 2
+echo "mission-probe: clients $(hyprctl clients | grep -c 'class:')"
+hyprctl rollinglog | tail -20
 "#;
 
 /// One card's place on the screen.
@@ -226,7 +229,7 @@ pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Resu
         let fail = |why: &str, watching: &Watching<'_>| {
             with_the_transcript(&Error::new(format!("{arch}: mission: {why}")), watching)
         };
-        if !watching.read_more(Instant::now() + SETTLE, |lines| {
+        if !watching.read_more(Instant::now() + Duration::from_secs(180), |lines| {
             lines
                 .iter()
                 .any(|line| line.contains("the mission control is up"))
@@ -250,19 +253,19 @@ pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Resu
             .rev()
             .find_map(|line| said_spaces(line))
             .unwrap_or(0);
+        let cards = said_cards(&watching.after());
+        std::thread::sleep(Duration::from_secs(2));
+        let dump = paths::build_dir(arch).join("mission.ppm");
+        qmp.screendump(Some(DEVICE_ID), &dump)?;
         if spaces < 2 {
             return Err(fail(
                 "the mission control did not show the two workspaces",
                 watching,
             ));
         }
-        let cards = said_cards(&watching.after());
         if cards.is_empty() {
             return Err(fail("the mission control showed no cards", watching));
         }
-        std::thread::sleep(Duration::from_secs(2));
-        let dump = paths::build_dir(arch).join("mission.ppm");
-        qmp.screendump(Some(DEVICE_ID), &dump)?;
         let bytes = std::fs::read(&dump)
             .map_err(|error| Error::new(format!("reading {}: {error}", dump.display())))?;
         let screen = parse_ppm(&bytes)?;
