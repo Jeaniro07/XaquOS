@@ -1095,3 +1095,35 @@ own banners. With the shell down, notifyd draws again.
 The `spotlight` boot types "fi" into the card and runs Files; the
 `launchpad` boot clicks the first tile and runs it; the `notices` boot waits
 for a banner, presses the clock and opens the panel behind it.
+
+### 6.10 Mission Control
+
+Mission Control is the overview drawn anew: `hyprctl dispatch mission
+toggle`, and SUPER Tab. One space per workspace, side by side (a second row
+when they do not fit; the narrowest space is 240 px), each with its label
+("Desktop 1" for a numbered workspace, its own name for a named one). The
+windows of a workspace are the cards of its space: the window's own
+surface, scaled to fit, so what is on the screen is live and not a picture.
+A minimized window is a card of the workspace it left, drawn dimmed. A
+workspace without windows is a space with a label and no cards.
+
+Clicking a card brings that window up: its workspace is shown and it has
+the focus, and a minimized window comes back. Escape, or a click outside
+the cards, closes Mission Control and changes nothing. The keys walk the
+cards as they walk the overview's tiles.
+
+It is a style of the overview, not a surface of the shell: no new
+process, no socket, no protocol, and `xaqu-shell` is not touched at all.
+The compositor draws the spaces and their labels itself, as it draws the
+title bars, since the shell may not draw over the overview -- the
+compositor takes the pointer and the keys while it is up.
+
+The keys moved with it: SUPER Tab is Mission Control, SUPER O opens the
+classic overview, SUPER K and SUPER SHIFT K walk the windows, and the plain
+SUPER key is free. SUPER Up is still `snapwindow max`. The shell's light
+and dark do not change the compositor, so the cards follow the compositor's
+own theme.
+
+The `mission` boot opens two windows on two workspaces, brings Mission
+Control up and looks for the cards on the screen; Escape brings the
+desktop back.
