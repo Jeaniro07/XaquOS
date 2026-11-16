@@ -10,7 +10,7 @@
 
 use std::io::Read as _;
 use std::os::fd::AsRawFd as _;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use compositor_toolkit::Event;
 use tole::Color;
@@ -23,6 +23,21 @@ use crate::hypr::{self, Hypr};
 use crate::json::Json;
 use crate::model::{self, State};
 use crate::ui::{Action, HEIGHT, View};
+
+/// The compositor is told what the shell hears: the apps that are making
+/// a sound, and the ones that stopped.
+fn tell_sound(hypr: Option<&Hypr>, sounding: &mut Vec<String>) {
+    let Some(hypr) = hypr else {
+        return;
+    };
+    let Ok(now) = crate::sound::playing() else {
+        return;
+    };
+    for what in crate::sound::telling(sounding, &now) {
+        hypr.dispatch(&format!("hemat {what}"));
+    }
+    *sounding = now;
+}
 
 /// The surface's namespace, which `layerrule`s match: Xaqu's theme blurs
 /// what is behind every `xaqu-` surface.
@@ -288,6 +303,11 @@ pub fn run() -> i32 {
         .add_timer(Duration::from_secs(1), Some(Duration::from_secs(1)));
     let mut pending = String::new();
     let mut up = false;
+    // The apps that are making a sound, as the sound server says them: the
+    // compositor is told what changed, so that a sounding app is not put
+    // to sleep.
+    let mut sounding: Vec<String> = Vec::new();
+    let mut asked_sound = Instant::now();
     loop {
         let happened = match window.dispatch(&mut view.ui, None) {
             Ok(happened) => happened,
@@ -317,6 +337,12 @@ pub fn run() -> i32 {
                     if stashed != state.stashed {
                         state.stashed = stashed;
                         changed = true;
+                    }
+                    // What the shell hears, every two seconds: the sound
+                    // server's list of the sink inputs.
+                    if asked_sound.elapsed() >= Duration::from_secs(2) {
+                        asked_sound = Instant::now();
+                        tell_sound(hypr.as_ref(), &mut sounding);
                     }
                     if let Some(tokens) = theme.poll() {
                         tokens.apply(&mut view.ui);

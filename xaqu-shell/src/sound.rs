@@ -14,8 +14,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use pulseaudio::protocol::{
-    self, AuthParams, AuthReply, ChannelVolume, Command, Props, SetClientNameReply,
-    SetDeviceMuteParams, SetDeviceVolumeParams, SinkInfoList, SourceInfoList, Volume,
+    self, AuthParams, AuthReply, ChannelVolume, Command, Prop, Props, SetClientNameReply,
+    SetDeviceMuteParams, SetDeviceVolumeParams, SinkInfoList, SinkInputInfoList, SourceInfoList,
+    Volume,
 };
 
 /// A sink or a source, as the quick settings show it.
@@ -127,6 +128,61 @@ impl Link {
     }
 }
 
+/// The name of the app that is making a sound, from a sink input's
+/// properties: the binary's name, or the media's name when the server did
+/// not say what the binary is.
+#[must_use]
+pub fn name_of(props: &Props) -> Option<String> {
+    let binary = props.get(Prop::ApplicationProcessBinary).map(text);
+    let media = props.get(Prop::MediaName).map(text);
+    binary
+        .filter(|name| !name.is_empty())
+        .or_else(|| media.filter(|name| !name.is_empty()))
+}
+
+/// The text of a property, without the NUL the server writes.
+fn text(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes)
+        .trim_end_matches('\0')
+        .trim()
+        .to_owned()
+}
+
+/// The apps that are making a sound, by the binary's name.
+///
+/// # Errors
+///
+/// No server, or one that answered with something else.
+pub fn playing() -> Result<Vec<String>, String> {
+    let mut link = Link::open()?;
+    link.send(&Command::GetSinkInputInfoList)?;
+    let (_, inputs) =
+        protocol::read_reply_message::<SinkInputInfoList>(&mut link.reader, link.version)
+            .map_err(err)?;
+    Ok(inputs
+        .iter()
+        .filter_map(|input| name_of(&input.props))
+        .collect())
+}
+
+/// What the compositor is told when the list of the sounding apps has
+/// changed: the new ones make a sound, the gone ones do not.
+#[must_use]
+pub fn telling(before: &[String], now: &[String]) -> Vec<String> {
+    let mut said = Vec::new();
+    for name in now {
+        if !before.contains(name) {
+            said.push(format!("sound {name}"));
+        }
+    }
+    for name in before {
+        if !now.contains(name) {
+            said.push(format!("quiet {name}"));
+        }
+    }
+    said
+}
+
 /// The first sink and the first source, as the server lists them; `Err`
 /// when there is no server to ask.
 ///
@@ -208,7 +264,9 @@ pub fn set_mute(which: Which, device: &Device, mute: bool) -> Result<(), String>
 
 #[cfg(test)]
 mod tests {
-    use super::{percent, socket, volume};
+    use pulseaudio::protocol::{Prop, Props};
+
+    use super::{name_of, percent, socket, telling, volume};
 
     #[test]
     fn the_socket_is_the_servers_the_sessions_or_the_desktops() {
@@ -224,6 +282,38 @@ mod tests {
             socket(None, None),
             std::path::PathBuf::from("/run/pulse/native")
         );
+    }
+
+    #[test]
+    fn the_playing_apps_are_named_by_their_binary() {
+        let mut binary = Props::new();
+        binary.set(Prop::ApplicationProcessBinary, c"foot");
+        assert_eq!(name_of(&binary), Some("foot".to_owned()));
+        // A sink input that does not say what it is has no name.
+        assert_eq!(name_of(&Props::new()), None);
+        // A media's name is used when there is no binary.
+        let mut media = Props::new();
+        media.set(Prop::MediaName, c"Music");
+        assert_eq!(name_of(&media), Some("Music".to_owned()));
+    }
+
+    #[test]
+    fn the_sounding_apps_are_told_when_they_change() {
+        assert_eq!(
+            telling(
+                &["foot".to_owned()],
+                &["foot".to_owned(), "zinc".to_owned()]
+            ),
+            vec!["sound zinc".to_owned()]
+        );
+        assert_eq!(
+            telling(
+                &["foot".to_owned(), "zinc".to_owned()],
+                &["foot".to_owned()]
+            ),
+            vec!["quiet zinc".to_owned()]
+        );
+        assert!(telling(&["foot".to_owned()], &["foot".to_owned()]).is_empty());
     }
 
     #[test]
