@@ -24,6 +24,7 @@ use ferrix_procfs::net as procfs_net;
 use ferrix_procfs::partitions::{self, Partition};
 use ferrix_procfs::stat::{self, Stat};
 use ferrix_procfs::status::{self, SignalMasks, State, Status};
+use ferrix_procfs::swaps;
 use ferrix_procfs::sysctl;
 use ferrix_vfs::fd::MAX_LIMIT;
 use ferrix_vfs::{Errno, Location, MountFlags, Namespace, OpenFile, Result};
@@ -237,6 +238,13 @@ pub(super) fn meminfo(_: &Kernel) -> Result<Vec<u8>> {
         available: kib(cache.available(free)).saturating_add(nodes),
         buffers: 0,
         cached: kib(cache.cached()),
+        // The swap of the machine: none. No area is on, so no page has ever
+        // left RAM and there is nothing in swap: the disk area of
+        // `docs/MEMORY-COMPRESSION.md` §2.4 is a library the kernel does not
+        // write to yet.
+        // Ponytail: the three figures are zero while no area is on.
+        // Upgrade path: the area's own size, its free part and its swap
+        // cache, when the area is wired into the page-out path.
         swap_cached: 0,
         swap_total: 0,
         swap_free: 0,
@@ -744,6 +752,21 @@ pub(super) fn partitions(_: &Kernel) -> Result<Vec<u8>> {
         .collect();
     let mut out = Vec::new();
     partitions::render(&mut out, &rows);
+    Ok(out)
+}
+
+/// `/proc/swaps`: the swap areas of the machine.
+///
+/// None: no area is on, since the kernel's page-out path does not write to
+/// the disk area of `docs/MEMORY-COMPRESSION.md` yet. The file is the header
+/// alone, as `swaps_show` in `mm/swapfile.c` prints it with no area.
+///
+/// Ponytail: the list is empty, not a figure to invent.
+/// Upgrade path: the areas the kernel has on, one row each.
+pub(super) fn swaps(_: &Kernel) -> Result<Vec<u8>> {
+    let areas: Vec<swaps::Swap<'_>> = Vec::new();
+    let mut out = Vec::new();
+    swaps::render(&mut out, &areas);
     Ok(out)
 }
 

@@ -56,6 +56,7 @@ members = [
     "src/lib/kernel/heap",
     "src/lib/kernel/kmem",
     "src/lib/kernel/lz4",
+    "src/lib/kernel/swap",
     "src/lib/fs/btrfs/format",
     "src/lib/fs/btrfs/mkfs",
     "src/lib/fs/btrfs/vfs",
@@ -325,6 +326,7 @@ ferrix-restart = { path = "src/lib/init/restart" }
 ferrix-pci = { path = "src/lib/platform/pci" }
 ferrix-sched = { path = "src/lib/kernel/sched" }
 ferrix-lz4 = { path = "src/lib/kernel/lz4" }
+ferrix-swap = { path = "src/lib/kernel/swap" }
 ferrix-sched-edf = { path = "src/lib/kernel/sched-edf" }
 ferrix-pkg = { path = "src/lib/proto/pkg" }
 

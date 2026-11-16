@@ -118,6 +118,13 @@ pub struct MemoryStat {
     /// Bytes of the cgroup's pages in a memory filesystem's files (tmpfs,
     /// `memfd`).
     pub shmem: u64,
+    /// Bytes the compressed pool holds for the cgroup, as it is stored.
+    pub zswap: u64,
+    /// Bytes of the cgroup's pages that sit in the compressed pool, as they
+    /// were before compression.
+    pub zswapped: u64,
+    /// Bytes of its pages that are in swap and also still in RAM.
+    pub swapcached: u64,
     /// Pages reclaim looked at for the cgroup.
     pub pgscan: u64,
     /// Pages reclaim gave back from the cgroup.
@@ -129,7 +136,9 @@ pub struct MemoryStat {
 }
 
 /// Append `memory.stat`. Linux prints some sixty keys; a key with no source
-/// here is left out and not printed as zero.
+/// here is left out and not printed as zero. The swap keys are the
+/// exception: Linux prints them, and they are zero because no page has left
+/// RAM, there being no swap area (`docs/MEMORY-COMPRESSION.md` §2.4).
 pub fn memory_stat(out: &mut Vec<u8>, stat: MemoryStat) {
     let _ = write!(
         Out(out),
@@ -138,6 +147,9 @@ file {}
 kernel {}
 pagetables {}
 shmem {}
+zswap {}
+zswapped {}
+swapcached {}
 pgscan {}
 pgsteal {}
 pgfault {}
@@ -148,6 +160,9 @@ pgmajfault {}
         stat.kernel,
         stat.pagetables,
         stat.shmem,
+        stat.zswap,
+        stat.zswapped,
+        stat.swapcached,
         stat.pgscan,
         stat.pgsteal,
         stat.pgfault,

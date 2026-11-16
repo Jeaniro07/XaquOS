@@ -284,24 +284,84 @@ pub fn parse_memory_max(text: &[u8]) -> Result<Option<u64>, Refusal> {
     ))
 }
 
-/// Parse a write to `memory.reclaim`, as `memory_reclaim` does through
-/// `page_counter_memparse(buf, "", …)`: a size in bytes as `memparse` reads
-/// it, which [`parse_memory_max`] reads too, but with no `max`. What the
-/// stripped text matches is `""`, Linux's name for "max" in that call, so a
-/// write of only whitespace asks for everything. `None` is that.
+/// The swappiness of a reclaim: how willing the reclaim is to send the
+/// anonymous pages out, as `vm.swappiness` counts it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Swappiness {
+    /// A number from 0 to 200, as Linux's `MIN_SWAPPINESS` and
+    /// `MAX_SWAPPINESS` are.
+    Value(u8),
+    /// `max`: only the anonymous memory is reclaimed.
+    AnonOnly,
+}
+
+/// What a write to `memory.reclaim` asks for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Reclaim {
+    /// How many bytes to give back; `None` is all of it.
+    pub bytes: Option<u64>,
+    /// The swappiness to reclaim with; `None` is the cgroup's own.
+    pub swappiness: Option<Swappiness>,
+}
+
+/// The least swappiness Linux takes, its `MIN_SWAPPINESS`.
+const MIN_SWAPPINESS: i32 = 0;
+
+/// The most swappiness Linux takes, its `MAX_SWAPPINESS`.
+const MAX_SWAPPINESS: i32 = 200;
+
+/// Parse a write to `memory.reclaim`, as Linux's `memory_reclaim` parses it:
+/// a size in bytes as `memparse` reads it -- which [`parse_memory_max`] reads
+/// too, but with no `max` -- and then, after the size, the tokens
+/// `swappiness=<0..200>` or `swappiness=max`, separated by spaces, as Linux's
+/// `match_token` reads them. Nothing else may follow.
+///
+/// What the stripped text matches is `""`, Linux's name for "max" in the call
+/// that reads the size, so a write of only whitespace asks for everything:
+/// that is [`Reclaim::bytes`] of `None`.
 ///
 /// # Errors
 ///
-/// [`Refusal::Invalid`] for `max` and for anything else that is not a size.
-pub fn parse_reclaim(text: &[u8]) -> Result<Option<u64>, Refusal> {
+/// [`Refusal::Invalid`] for `max` as a size, for anything that is not a size,
+/// and for a token that is not a `swappiness=`.
+pub fn parse_reclaim(text: &[u8]) -> Result<Reclaim, Refusal> {
     let text = strip(text);
-    if text.is_empty() {
-        return Ok(None);
+    let mut reclaim = Reclaim::default();
+    let mut size_read = false;
+    for token in text.split(u8::is_ascii_whitespace) {
+        if token.is_empty() {
+            continue;
+        }
+        if !size_read && !token.starts_with(b"swappiness=") {
+            reclaim.bytes = Some(parse_memory_max(token)?.ok_or(Refusal::Invalid)?);
+            size_read = true;
+            continue;
+        }
+        reclaim.swappiness = Some(parse_swappiness(token)?);
     }
-    if text == b"max" {
+    Ok(reclaim)
+}
+
+/// Parse the `swappiness=` token of a `memory.reclaim` write: a number from
+/// 0 to 200, as Linux's `MIN_SWAPPINESS` and `MAX_SWAPPINESS` are, or `max`,
+/// which asks for the anonymous memory alone.
+///
+/// # Errors
+///
+/// [`Refusal::Invalid`] for a token that is not a `swappiness=`, and for a
+/// number outside 0 to 200.
+fn parse_swappiness(token: &[u8]) -> Result<Swappiness, Refusal> {
+    let Some(value) = token.strip_prefix(b"swappiness=".as_slice()) else {
+        return Err(Refusal::Invalid);
+    };
+    if value == b"max" {
+        return Ok(Swappiness::AnonOnly);
+    }
+    let number = kstrtoint(value)?;
+    if !(MIN_SWAPPINESS..=MAX_SWAPPINESS).contains(&number) {
         return Err(Refusal::Invalid);
     }
-    parse_memory_max(text)
+    Ok(Swappiness::Value(number as u8))
 }
 
 /// `cpu.weight`'s least value, Linux's `CGROUP_WEIGHT_MIN`.

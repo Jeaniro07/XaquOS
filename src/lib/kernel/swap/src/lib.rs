@@ -1,0 +1,30 @@
+//! Swap, written as a library the kernel will wire in: see
+//! docs/MEMORY-COMPRESSION.md. Nothing here touches a frame or a page table;
+//! it holds the state machine so the rules (a page that cannot leave stays, a
+//! bad read kills the owner and never the kernel) are tested on the host.
+
+#![no_std]
+#![forbid(unsafe_code)]
+
+extern crate alloc;
+
+mod age;
+mod anon;
+mod area;
+mod entry;
+mod pool;
+
+pub use age::Ager;
+pub use anon::{Anon, Slot};
+pub use area::{Area, Device, DeviceError, ReadError, SwapOnError, WriteError};
+pub use entry::Entry;
+pub use pool::{LoadError, PAGE, Pool, Refused, Stats};
+
+#[cfg(test)]
+mod tests;
+#[cfg(test)]
+mod tests_age;
+#[cfg(test)]
+mod tests_area;
+#[cfg(test)]
+mod tests_pool;

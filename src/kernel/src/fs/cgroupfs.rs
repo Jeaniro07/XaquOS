@@ -997,6 +997,15 @@ fn contents(job: &Arc<Job>, kind: Kind) -> Vec<u8> {
             );
         }
         Kind::MemoryStat => render::memory_stat(&mut out, memory_stat(job)),
+        // The swap of the cgroup: none. No swap area is on, so no page of it
+        // has ever left RAM, and there is no limit to set: `max` is what
+        // Linux prints for a limit that is not set.
+        // Ponytail: the two figures are constants while no area is on.
+        // Upgrade path: the cgroup's own swap use, and the limit its
+        // `memory.swap.max` carries, when the area of
+        // `docs/MEMORY-COMPRESSION.md` §2.4 is wired into the page-out path.
+        Kind::MemorySwapCurrent => render::number(&mut out, 0),
+        Kind::MemorySwapMax => render::max(&mut out, None),
         Kind::PidsCurrent => render::number(&mut out, usage(job, Resource::Tasks).used),
         Kind::PidsMax => {
             let limit = usage(job, Resource::Tasks).limit;
@@ -1047,6 +1056,11 @@ fn memory_stat(job: &Job) -> render::MemoryStat {
         kernel,
         pagetables,
         shmem: bytes(shmem),
+        // The compressed pool and the swap cache of the cgroup: none, for
+        // the reason `memory.swap.current` is zero.
+        zswap: 0,
+        zswapped: 0,
+        swapcached: 0,
         pgscan: job.counted(Counter::Scanned),
         pgsteal: job.counted(Counter::Stolen),
         pgfault: job.counted(Counter::Faults),
@@ -1206,9 +1220,24 @@ fn set_mark(job: &Job, kind: Kind, data: &[u8]) -> Result<()> {
 /// one `memory.high` makes, so it never takes a sibling's pages and spares
 /// what `memory.min` protects, and `memory.low`'s unless nothing else gives
 /// (`user::cache::reclaim_asked`).
+///
+/// The `swappiness=` of the write is read and checked, as Linux reads it, but
+/// only the anonymous memory's absence is felt: no anonymous page can leave
+/// RAM while there is no swap area, so the reclaim gives back the clean cache
+/// whatever the swappiness says.
+/// Ponytail: a number swappiness changes nothing here.
+/// Upgrade path: the balance between the file and the anonymous pages, when
+/// the area of `docs/MEMORY-COMPRESSION.md` §2.4 is on.
 fn reclaim(job: &Job, data: &[u8]) -> Result<()> {
-    let want = write::parse_reclaim(data)
-        .map_err(errno)?
+    let ask = write::parse_reclaim(data).map_err(errno)?;
+    // `swappiness=max` asks for the anonymous memory alone, and no anonymous
+    // page can leave RAM while there is no swap area: nothing is given back,
+    // and a write that gives nothing back is `EAGAIN`, as Linux's is.
+    if ask.swappiness == Some(write::Swappiness::AnonOnly) {
+        return Err(Errno::EAGAIN);
+    }
+    let want = ask
+        .bytes
         .map_or(u64::MAX, |bytes| bytes / ferrix_bootinfo::PAGE_SIZE);
     let caller = process::current();
     let interrupted = || {
@@ -1409,6 +1438,11 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
         }
         Kind::MemoryHigh | Kind::MemoryLow | Kind::MemoryMin => set_mark(job, kind, data)?,
         Kind::MemoryReclaim => reclaim(job, data)?,
+        // The most swap the cgroup may use: there is no swap area to limit,
+        // so a limit cannot be kept.
+        // Ponytail: the write is refused rather than stored.
+        // Upgrade path: keep it per cgroup, as `memory.max` keeps its limit.
+        Kind::MemorySwapMax => return Err(Errno::EOPNOTSUPP),
         Kind::CpuWeight => set_weight(job, write::parse_weight(data).map_err(errno)?)?,
         Kind::CpuWeightNice => {
             set_weight(job, ferrix_cgroupfs::cpu::parse_nice(data).map_err(errno)?)?;
@@ -1425,6 +1459,7 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
         | Kind::MemoryCurrent
         | Kind::MemoryEvents
         | Kind::MemoryStat
+        | Kind::MemorySwapCurrent
         | Kind::CpuStat
         | Kind::IoStat
         | Kind::PidsCurrent
