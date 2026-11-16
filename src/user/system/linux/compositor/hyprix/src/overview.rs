@@ -465,6 +465,9 @@ pub fn tiles(state: &State) -> Vec<(MonitorId, Vec<Tile>)> {
 /// windows, the hovered one outlined.
 #[must_use]
 pub fn outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
+    if overview.style == Style::Mission {
+        return mission_outputs(state, overview);
+    }
     let tiles = tiles(state);
     state
         .layout()
@@ -495,16 +498,57 @@ pub fn outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
         .collect()
 }
 
-/// The windows the overview draws dimmed, at [`MINIMIZED_OPACITY`]: the
-/// minimized ones in a grid.
-#[must_use]
-pub fn dimmed(state: &State) -> Vec<WindowId> {
-    tiles(state)
+/// What the focused monitor draws while Mission Control is up: the
+/// cards of every space, the hovered one outlined. The other monitors are
+/// left as they are.
+fn mission_outputs(state: &State, overview: &Overview) -> Vec<MonitorLayout> {
+    let spaces = mission_spaces(state, mission_area(state));
+    let focused = state.focused_monitor();
+    state
+        .layout()
         .into_iter()
-        .flat_map(|(_, tiles)| tiles)
-        .filter(|tile| tile.minimized)
-        .map(|tile| tile.window)
+        .map(|mut output| {
+            if Some(output.monitor) != focused {
+                return output;
+            }
+            output.windows = spaces
+                .iter()
+                .flat_map(|space| space.cards.iter())
+                .map(|card| {
+                    let lit = overview.hovered == Some(card.window);
+                    Placed {
+                        window: card.window,
+                        rect: card.rect,
+                        border: if lit { HIGHLIGHT } else { 0 },
+                        focused: lit,
+                        floating: true,
+                        fullscreen: false,
+                    }
+                })
+                .collect();
+            output
+        })
         .collect()
+}
+
+/// The windows the overview draws dimmed, at [`MINIMIZED_OPACITY`]: the
+/// minimized ones, in a grid or as a card.
+#[must_use]
+pub fn dimmed(state: &State, style: Style) -> Vec<WindowId> {
+    match style {
+        Style::Classic => tiles(state)
+            .into_iter()
+            .flat_map(|(_, tiles)| tiles)
+            .filter(|tile| tile.minimized)
+            .map(|tile| tile.window)
+            .collect(),
+        Style::Mission => mission_spaces(state, mission_area(state))
+            .into_iter()
+            .flat_map(|space| space.cards)
+            .filter(|card| card.minimized)
+            .map(|card| card.window)
+            .collect(),
+    }
 }
 
 /// The window the keys pick after `from` -- or before it, `back` -- among
@@ -811,7 +855,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             [(WindowId(2), false), (WindowId(1), true)]
         );
-        assert_eq!(super::dimmed(&state), [WindowId(1)]);
+        assert_eq!(super::dimmed(&state, super::Style::Classic), [WindowId(1)]);
         assert!(
             all[0]
                 .1

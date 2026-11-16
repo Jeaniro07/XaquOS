@@ -61,6 +61,7 @@ pub mod scope;
 pub mod seat;
 pub mod select;
 pub mod settings;
+pub mod spaces;
 pub mod state;
 pub mod suspend;
 pub mod switcher;

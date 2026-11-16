@@ -443,6 +443,8 @@ struct Compositor<'r> {
     last_monitor: u32,
     /// The title bars the compositor draws (`docs/DESKTOP.md` §2.2).
     bars: crate::titlebar::Bars,
+    /// The labels of Mission Control's spaces (`docs/DESKTOP.md` §6.10).
+    spaces: crate::spaces::Spaces,
     /// The drag a client started with `wl_data_device.start_drag`, while one
     /// is going on. Two clients that cannot see each other, joined by the
     /// compositor.
@@ -754,6 +756,7 @@ impl<'r> Compositor<'r> {
             last_monitor: 0,
             restored: false,
             bars,
+            spaces: crate::spaces::Spaces::default(),
             carried: None,
             quit: false,
             swallow: false,
