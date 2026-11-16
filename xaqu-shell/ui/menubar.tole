@@ -29,12 +29,14 @@ export component MenuBar : Item {
     property real dropX
     property string clock
     property string searchIcon
+    property string controlIcon
     property string checkIcon
 
     signal pick(int index)
     signal choose(int index)
     signal dismiss()
     signal search()
+    signal control()
     signal notices()
 
     Rectangle {
@@ -89,6 +91,19 @@ export component MenuBar : Item {
             x: searchText.x - 6; y: 0
             width: 28; height: 24
             onClicked: bar.search()
+        }
+        Text {
+            id: controlText
+            x: searchText.x - 30
+            y: 4
+            text: bar.controlIcon
+            font: Nocturne.icon(15)
+            color: Nocturne.text
+        }
+        MouseArea {
+            x: controlText.x - 6; y: 0
+            width: 28; height: 24
+            onClicked: bar.control()
         }
 
         // The clock opens the notices.

@@ -638,6 +638,57 @@ impl Default for Live {
     }
 }
 
+/// GTK's own settings for a look: Nocturne dark, or Adwaita light, Inter.
+#[must_use]
+pub fn gtk_settings(light: bool) -> String {
+    format!(
+        "[Settings]
+gtk-theme-name = {}
+gtk-application-prefer-dark-theme = {}
+         gtk-font-name = Inter 11
+gtk-cursor-theme-name = Adwaita
+",
+        if light { "Adwaita" } else { "Nocturne" },
+        u8::from(!light)
+    )
+}
+
+/// Say the look in force to the programs that are not the shell: `appearance`
+/// in the shell's folder (portald follows it) and GTK's `settings.ini`, in
+/// `home`, the configuration folder. True when something was written.
+// Ponytail: GTK's file is written whole; a person's own keys in it are
+// not kept. Upgrade path: change only the two lines, as Settings does.
+pub fn publish_in(home: &Path, light: bool) -> bool {
+    let mut wrote = false;
+    let mut put = |path: PathBuf, text: String| {
+        if std::fs::read_to_string(&path).ok().as_deref() != Some(&text) {
+            crate::widgets::keep(&path, &text);
+            wrote = true;
+        }
+    };
+    put(
+        home.join("xaqu-shell/appearance"),
+        format!(
+            "{}
+",
+            if light { "light" } else { "dark" }
+        ),
+    );
+    for gtk in ["gtk-3.0", "gtk-4.0"] {
+        put(home.join(gtk).join("settings.ini"), gtk_settings(light));
+    }
+    wrote
+}
+
+/// [`publish_in`] for the person's own configuration folder.
+pub fn publish(light: bool) -> bool {
+    crate::widgets::config_file("appearance")
+        .as_deref()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .is_some_and(|home| publish_in(home, light))
+}
+
 /// A line saying what the tokens are, for a boot to read.
 #[must_use]
 pub fn said(theme: &Theme, tokens: &Tokens) -> String {
@@ -781,6 +832,40 @@ mod tests {
         assert_eq!(found.len(), 2, "{found:?}");
         assert!(found[0] < 45.0 || found[0] > 345.0, "red first: {found:?}");
         assert!(found[1] > 230.0 && found[1] < 290.0, "then blue: {found:?}");
+    }
+
+    #[test]
+    fn the_look_is_published_once_for_portald_and_gtk() {
+        let home = std::env::temp_dir().join(format!("xaqu-publish-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        let read = |name: &str| std::fs::read_to_string(home.join(name)).expect(name);
+        assert!(super::publish_in(&home, true));
+        assert_eq!(
+            read("xaqu-shell/appearance"),
+            "light
+"
+        );
+        for gtk in ["gtk-3.0", "gtk-4.0"] {
+            let ini = read(&format!("{gtk}/settings.ini"));
+            assert!(ini.contains("gtk-theme-name = Adwaita"), "{ini}");
+            assert!(
+                ini.contains("gtk-application-prefer-dark-theme = 0"),
+                "{ini}"
+            );
+        }
+        assert!(
+            !super::publish_in(&home, true),
+            "nothing changed, nothing written"
+        );
+        assert!(super::publish_in(&home, false));
+        assert_eq!(
+            read("xaqu-shell/appearance"),
+            "dark
+"
+        );
+        assert!(read("gtk-4.0/settings.ini").contains("gtk-theme-name = Nocturne"));
+        assert!(super::gtk_settings(false).contains("prefer-dark-theme = 1"));
+        let _ = std::fs::remove_dir_all(&home);
     }
 
     #[test]

@@ -1,0 +1,169 @@
+// Xaqu's Control Center (the menu bar's control icon): the quick settings
+// -- sliders, tiles, appearance, theme colour -- in one glass card at the
+// top right. Rust holds the rows (`src/control.rs`, which shares them with
+// the sidebar's quick tab through `ui::quick_rows`); this draws them and
+// says what was pressed. The structs are the sidebar's.
+import Fx
+
+export component Control : FocusScope {
+    id: ctl
+    property list<QuickSlider> sliders
+    property list<QuickTile> tiles
+    property list<QuickAccent> accents
+    property list<QuickLook> looks
+    property string line
+
+    signal slide(int index, real value)
+    signal mute(int index)
+    signal tile(int index)
+    signal accent(int index)
+    signal look(int index)
+    signal dismissed()
+
+    focus: true
+    Keys.onEscapePressed: ctl.dismissed()
+
+    // A press off the card goes away.
+    MouseArea {
+        anchors.fill: parent
+        onClicked: ctl.dismissed()
+    }
+
+    Rectangle {
+        x: ctl.width - 336
+        y: 34
+        width: 320
+        height: 506
+        radius: 14
+        color: alpha(Nocturne.bg, 0.86)
+        border.width: 1
+        border.color: Nocturne.n800
+        MouseArea { anchors.fill: parent }
+
+        Item {
+            x: 16; y: 16
+            width: 288
+            height: 474
+            Column {
+                spacing: 8
+                Repeater {
+                    model: ctl.sliders
+                    Item {
+                        width: 288; height: 38
+                        opacity: modelData.enabled ? 1 : 0.45
+                        Row {
+                            spacing: 8
+                            Text { text: modelData.icon; font: Nocturne.icon(13); color: Nocturne.n400 }
+                            Text { text: modelData.label; font: Nocturne.sans(12, 500); color: Nocturne.n300 }
+                        }
+                        MouseArea {
+                            width: 110; height: 16
+                            enabled: modelData.enabled
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ctl.mute(index)
+                        }
+                        Text { x: 168; width: 120; horizontalAlignment: Text.AlignRight; text: modelData.shown; font: Nocturne.sans(11, 400); color: Nocturne.n500 }
+                        Rectangle { y: 24; width: 288; height: 4; radius: 2; color: Nocturne.n800 }
+                        Rectangle { y: 24; width: 288 * clamp(modelData.value / 100, 0, 1); height: 4; radius: 2; color: Nocturne.a500 }
+                        Rectangle {
+                            visible: modelData.enabled
+                            x: 274 * clamp(modelData.value / 100, 0, 1)
+                            y: 19
+                            width: 14; height: 14; radius: 7
+                            color: Nocturne.a300
+                        }
+                        MouseArea {
+                            id: track
+                            y: 14
+                            width: 288; height: 24
+                            enabled: modelData.enabled
+                            cursorShape: Qt.PointingHandCursor
+                            onPressed: ctl.slide(index, round(clamp(track.mouseX / 288, 0, 1) * 20) * 5)
+                        }
+                    }
+                }
+            }
+            Grid {
+                y: 148
+                columns: 2
+                columnSpacing: 6
+                rowSpacing: 6
+                Repeater {
+                    model: ctl.tiles
+                    Rectangle {
+                        width: 141; height: 50
+                        radius: 12
+                        opacity: modelData.enabled ? 1 : 0.45
+                        color: modelData.on ? alpha(Nocturne.accent, 0.18) : alpha(Nocturne.bg, 0.55)
+                        border.width: 1
+                        border.color: modelData.on ? Nocturne.a600 : (tileArea.containsMouse && modelData.enabled ? Nocturne.n700 : Nocturne.n800)
+                        Rectangle {
+                            x: 9; y: 10
+                            width: 30; height: 30; radius: 15
+                            color: modelData.on ? Nocturne.a600 : Nocturne.n800
+                            Text { width: 30; height: 30; horizontalAlignment: Text.AlignHCenter; text: modelData.icon; font: Nocturne.icon(14); color: modelData.on ? Nocturne.a100 : Nocturne.n400 }
+                        }
+                        Text { x: 47; y: 9; width: 90; text: modelData.label; font: Nocturne.sans(12, 500); color: Nocturne.text }
+                        Text { x: 47; y: 26; width: 90; text: modelData.sub; font: Nocturne.sans(11, 400); color: Nocturne.n500 }
+                        MouseArea {
+                            id: tileArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: modelData.enabled
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ctl.tile(index)
+                        }
+                    }
+                }
+            }
+            Text { y: 324; text: "APPEARANCE"; font: Nocturne.sans(11, 600); color: Nocturne.n500 }
+            Row {
+                y: 342
+                spacing: 6
+                Repeater {
+                    model: ctl.looks
+                    Rectangle {
+                        width: 92; height: 28; radius: 8
+                        color: modelData.on ? alpha(Nocturne.accent, 0.18) : "transparent"
+                        border.width: 1
+                        border.color: modelData.on ? Nocturne.a600 : (lookArea.containsMouse ? Nocturne.n700 : Nocturne.n800)
+                        Text { width: 92; height: 28; horizontalAlignment: Text.AlignHCenter; text: modelData.name; font: Nocturne.sans(12, 500); color: modelData.on ? Nocturne.a200 : Nocturne.n400 }
+                        MouseArea {
+                            id: lookArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ctl.look(index)
+                        }
+                    }
+                }
+            }
+            Text { y: 384; text: "THEME COLOUR"; font: Nocturne.sans(11, 600); color: Nocturne.n500 }
+            Row {
+                y: 402
+                spacing: 8
+                Repeater {
+                    model: ctl.accents
+                    Item {
+                        width: 41; height: 46
+                        Rectangle {
+                            x: 6
+                            width: 28; height: 28; radius: 14
+                            color: modelData.colour
+                            border.width: modelData.on ? 2 : 1
+                            border.color: modelData.on ? Nocturne.text : alpha(Nocturne.text, 0.14)
+                            Text { width: 28; height: 28; horizontalAlignment: Text.AlignHCenter; text: modelData.icon; font: Nocturne.icon(13); color: Nocturne.bg }
+                        }
+                        Text { y: 32; width: 41; horizontalAlignment: Text.AlignHCenter; text: modelData.name; font: Nocturne.sans(9.5, 500); color: modelData.on ? Nocturne.text : Nocturne.n500 }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ctl.accent(index)
+                        }
+                    }
+                }
+            }
+            Text { y: 458; width: 288; text: ctl.line; font: Nocturne.sans(11, 400); color: Nocturne.n600 }
+        }
+    }
+}

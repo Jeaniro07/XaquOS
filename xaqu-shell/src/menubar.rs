@@ -77,6 +77,8 @@ pub enum Asked {
     Do(Does),
     /// The search.
     Search,
+    /// The Control Center.
+    Control,
     /// The clock: the notices.
     Notices,
 }
@@ -107,6 +109,8 @@ impl View {
         let bar = MenuBar::new(&mut ui, None)?;
         bar.search_icon
             .set(&mut ui, s(crate::look::icon("magnifying-glass")));
+        bar.control_icon
+            .set(&mut ui, s(crate::look::icon("sliders-horizontal")));
         bar.check_icon.set(&mut ui, s(crate::look::icon("check")));
         Some(View {
             ui,
@@ -243,6 +247,7 @@ impl View {
                 }
                 MenuBarSignal::Dismiss => out.push(Asked::Close),
                 MenuBarSignal::Search => out.push(Asked::Search),
+                MenuBarSignal::Control => out.push(Asked::Control),
                 MenuBarSignal::Notices => out.push(Asked::Notices),
             }
         }
@@ -317,6 +322,12 @@ fn search(hypr: Option<&Hypr>) {
     dispatch_all(hypr, &["exec /bin/xaqu-shell --spotlight".to_owned()]);
 }
 
+/// The Control Center: the card `xaqu-shell --control` draws.
+fn control(hypr: Option<&Hypr>) {
+    let Some(hypr) = hypr else { return };
+    dispatch_all(hypr, &["exec /bin/xaqu-shell --control".to_owned()]);
+}
+
 /// Run the menu bar until the compositor goes away; the exit status.
 #[must_use]
 pub fn run() -> i32 {
@@ -329,6 +340,8 @@ pub fn run() -> i32 {
     };
     let mut theme = crate::theme::Live::new();
     theme.tokens.apply(&mut view.ui);
+    // The bar is always up: it tells portald and GTK the look.
+    crate::theme::publish(theme.tokens.light);
     let standard = |focused: Option<&Focused>, mine: Option<&tole::appmenu::Tree>| {
         let name = focused.map(|f| menus::app_name(&f.class, &launchers));
         let menus = menus::standard(name.as_deref(), &own);
@@ -395,6 +408,7 @@ pub fn run() -> i32 {
                     }
                     if let Some(tokens) = theme.poll() {
                         tokens.apply(&mut view.ui);
+                        crate::theme::publish(tokens.light);
                         changed = true;
                     }
                 }
@@ -446,6 +460,10 @@ pub fn run() -> i32 {
                 Asked::Search => {
                     open = None;
                     search(hypr.as_ref());
+                }
+                Asked::Control => {
+                    open = None;
+                    control(hypr.as_ref());
                 }
                 Asked::Notices => {
                     open = None;
@@ -582,6 +600,24 @@ mod tests {
             })
             .count();
         assert!(white > 5000, "the dropped menu: {white}");
+    }
+
+    #[test]
+    fn the_control_icon_asks_for_the_center_beside_the_search() {
+        let mut view = View::new(crate::look::fonts()).expect("tree");
+        view.resize((1024, HEIGHT));
+        view.show(Vec::new(), None, "Thu 12 Nov  21:40");
+        view.ui.update();
+        let mut asked = Vec::new();
+        for x in (700..1020).step_by(4) {
+            view.ui
+                .pointer_move(f32::from(u16::try_from(x).unwrap_or(0)), 12.0);
+            view.ui.pointer_press();
+            view.ui.pointer_release();
+            asked.extend(view.asked());
+        }
+        assert!(asked.contains(&Asked::Control), "{asked:?}");
+        assert!(asked.contains(&Asked::Search), "{asked:?}");
     }
 
     #[test]

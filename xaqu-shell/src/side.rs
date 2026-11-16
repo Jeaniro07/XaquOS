@@ -17,10 +17,7 @@ use tole::{Color, Ui};
 
 use crate::look::icon;
 use crate::quick::{Change, Quick};
-use crate::ui::{
-    AddRow, Cell, DayRow, HourRow, QuickAccent, QuickLook, QuickSlider, QuickTile, Sidebar,
-    SidebarSignal, Tab, TaskRow,
-};
+use crate::ui::{AddRow, Cell, DayRow, HourRow, Sidebar, SidebarSignal, Tab, TaskRow};
 use crate::widgets::{self, Arrangement, Kind, Side, Task};
 use crate::window::say;
 
@@ -231,156 +228,13 @@ impl View {
 
     /// The quick settings' part: the sliders, the tiles, the accents.
     fn show_quick(&mut self, quick: &Quick) {
+        let rows = crate::ui::quick_rows(quick);
         let ui = &mut self.ui;
         let v = &self.side;
-        let slider =
-            |name: &str, label: &str, value: u32, shown: String, enabled: bool| QuickSlider {
-                icon: s(icon(name)),
-                label: s(label),
-                value: value as f32,
-                shown: s(shown),
-                enabled,
-            };
-        let brightness = quick
-            .backlight
-            .as_ref()
-            .map(crate::quick::Backlight::percent);
-        let sound_slider =
-            |name: &str, label: &str, device: Option<&crate::sound::Device>, none: &str| {
-                QuickSlider {
-                    icon: s(icon(if device.is_some_and(|d| d.muted) {
-                        if name == "microphone" {
-                            "microphone-slash"
-                        } else {
-                            "speaker-slash"
-                        }
-                    } else {
-                        name
-                    })),
-                    label: s(label),
-                    value: device.map_or(0.0, |d| d.percent.min(100) as f32),
-                    shown: s(device.map_or_else(
-                        || none.to_owned(),
-                        |d| {
-                            if d.muted {
-                                "Muted".to_owned()
-                            } else {
-                                format!("{}%", d.percent)
-                            }
-                        },
-                    )),
-                    enabled: device.is_some(),
-                }
-            };
-        v.q_sliders.set(
-            ui,
-            vec![
-                slider(
-                    "sun",
-                    "Brightness",
-                    brightness.unwrap_or(0),
-                    brightness.map_or_else(|| "No backlight".to_owned(), |p| format!("{p}%")),
-                    brightness.is_some(),
-                ),
-                sound_slider(
-                    "speaker-high",
-                    "Volume",
-                    quick.sink.as_ref(),
-                    quick
-                        .sound
-                        .as_ref()
-                        .map_or("No sound card", |_| "No sound server"),
-                ),
-                sound_slider(
-                    "microphone",
-                    "Microphone",
-                    quick.source.as_ref(),
-                    quick
-                        .sound
-                        .as_ref()
-                        .map_or("No microphone", |_| "No sound server"),
-                ),
-            ],
-        );
-        let on_off = |on: bool| if on { "On" } else { "Off" };
-        let tile = |name: &str, label: &str, sub: &str, on: bool, enabled: bool| QuickTile {
-            icon: s(icon(name)),
-            label: s(label),
-            sub: s(sub),
-            on,
-            enabled,
-        };
-        v.q_tiles.set(
-            ui,
-            vec![
-                tile(
-                    "wifi-high",
-                    "Wi-Fi",
-                    if quick.wireless {
-                        "Not yet"
-                    } else {
-                        "None found"
-                    },
-                    false,
-                    false,
-                ),
-                tile("bluetooth", "Bluetooth", "Not yet", false, false),
-                tile(
-                    "bell-slash",
-                    "Do not disturb",
-                    on_off(quick.quiet),
-                    quick.quiet,
-                    true,
-                ),
-                tile("moon", "Night light", "Not yet", false, false),
-                tile(
-                    "crosshair-simple",
-                    "Focus mode",
-                    on_off(quick.focus),
-                    quick.focus,
-                    true,
-                ),
-                tile(
-                    "squares-four",
-                    "Auto-tile",
-                    if quick.tiled { "Tiling" } else { "Off" },
-                    quick.tiled,
-                    true,
-                ),
-            ],
-        );
-        let theme = &quick.theme;
-        let accents = crate::theme::Mode::all()
-            .into_iter()
-            .map(|mode| {
-                let hue = match mode {
-                    crate::theme::Mode::Named(n) => {
-                        crate::theme::TRIADS.get(n).map_or(289.0, |t| t.1[0])
-                    }
-                    crate::theme::Mode::Wallpaper => 289.0,
-                };
-                let [r, g, b] = crate::quick::oklch(0.72, (0.14 * theme.vibrance).min(0.26), hue);
-                QuickAccent {
-                    name: s(mode.name()),
-                    colour: Color::rgba(r, g, b, 0xff),
-                    icon: s(if mode == crate::theme::Mode::Wallpaper {
-                        icon("image")
-                    } else {
-                        String::new()
-                    }),
-                    on: theme.mode == mode,
-                }
-            })
-            .collect::<Vec<_>>();
-        let looks = crate::theme::Appearance::ALL
-            .into_iter()
-            .map(|look| QuickLook {
-                name: s(look.name()),
-                on: theme.appearance == look,
-            })
-            .collect::<Vec<_>>();
-        v.q_looks.set(ui, looks);
-        v.q_accents.set(ui, accents);
+        v.q_sliders.set(ui, rows.sliders);
+        v.q_tiles.set(ui, rows.tiles);
+        v.q_looks.set(ui, rows.looks);
+        v.q_accents.set(ui, rows.accents);
         v.q_line.set(ui, s(&quick.said));
     }
 
@@ -466,26 +320,15 @@ impl View {
                 }
                 SidebarSignal::WeatherStart(text) => Some(Asked::WeatherOn(text.trim().to_owned())),
                 SidebarSignal::WeatherStop => Some(Asked::WeatherOff),
-                SidebarSignal::QuickSlide(i, value) => {
-                    let percent = value.clamp(0.0, 100.0).round() as u32;
-                    match i {
-                        0 => Some(Asked::Quick(Change::Brightness(percent))),
-                        1 => Some(Asked::Quick(Change::Volume(percent))),
-                        2 => Some(Asked::Quick(Change::Mic(percent))),
-                        _ => None,
-                    }
-                }
-                SidebarSignal::QuickMute(i) => match i {
-                    1 => Some(Asked::Quick(Change::Mute)),
-                    2 => Some(Asked::Quick(Change::MicMute)),
-                    _ => None,
-                },
-                SidebarSignal::QuickTile(i) => match i {
-                    2 => Some(Asked::Quick(Change::Quiet)),
-                    4 => Some(Asked::Quick(Change::Focus)),
-                    5 => Some(Asked::Quick(Change::Tile)),
-                    _ => None,
-                },
+                SidebarSignal::QuickSlide(i, value) => index(i)
+                    .and_then(|n| crate::quick::slide_change(n, value))
+                    .map(Asked::Quick),
+                SidebarSignal::QuickMute(i) => index(i)
+                    .and_then(crate::quick::mute_change)
+                    .map(Asked::Quick),
+                SidebarSignal::QuickTile(i) => index(i)
+                    .and_then(crate::quick::tile_change)
+                    .map(Asked::Quick),
                 SidebarSignal::QuickAccent(i) => index(i).map(|n| Asked::Quick(Change::Theme(n))),
                 SidebarSignal::QuickLook(i) => {
                     index(i).map(|n| Asked::Quick(Change::Appearance(n)))
