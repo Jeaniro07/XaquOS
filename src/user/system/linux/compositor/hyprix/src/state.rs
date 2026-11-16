@@ -2797,11 +2797,23 @@ impl<'r> Compositor<'r> {
     /// Every window there is, as the hemat sees it: the app it belongs
     /// to, its process, and whether the screen shows it.
     fn hemat_windows(&self) -> Vec<crate::hemat::Window> {
-        as_seen(&self.state, &self.slots, &self.sources)
+        let seen = as_seen(&self.state, &self.slots, &self.sources);
+        // What the layout draws is what the screen shows: a window
+        // behind a fullscreen one, on another workspace, or minimized is
+        // not on the screen.
+        let visible: std::collections::BTreeSet<u64> = self
+            .state
+            .layout()
             .iter()
+            .flat_map(|monitor| monitor.windows.iter())
+            .map(|placed| placed.window.0)
+            .collect();
+        seen.iter()
             .map(|seen| crate::hemat::Window {
+                id: seen.window.0,
                 class: seen.class.to_owned(),
                 pid: u32::try_from(seen.pid).unwrap_or(0),
+                visible: visible.contains(&seen.window.0),
             })
             .collect()
     }
@@ -2814,7 +2826,7 @@ impl<'r> Compositor<'r> {
             return;
         }
         let windows = self.hemat_windows();
-        let effects = self.hemat.sync(&windows);
+        let effects = self.hemat.refresh(&windows, Instant::now());
         for why in self.hemat.apply(&effects) {
             (self.report)(&format!("hyprix: the hemat: {why}"));
         }

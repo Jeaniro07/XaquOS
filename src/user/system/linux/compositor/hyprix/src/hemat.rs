@@ -2,8 +2,11 @@
 //!
 //! A desktop running many apps holds the memory of all of them at once,
 //! while most of them are looked at now and then. Hemat is the part of the
-//! desktop that gives each app a group of its own, so that the desktop
-//! knows how much of the memory belongs to whom.
+//! desktop that lets the ones in the background have less: each app gets a
+//! cgroup of its own, an app in the background is given less of the
+//! processor, and an app that has been in the background for five minutes
+//! is put to sleep, which is `memory.reclaim` -- the clean pages it holds
+//! are given back.
 //!
 //! # The tree
 //!
@@ -17,10 +20,11 @@
 //!
 //! # Where an app is
 //!
-//! An app is one class of client, as the client named it with
-//! `xdg_toplevel.set_app_id`: two windows of one app share one group, and
-//! two apps never share a group. The group is made when the app's first
-//! window appears, and it goes when the app has no window left.
+//! An app is **Aktif** while one of its windows is on the screen, **Latar**
+//! while none of them is, and **Tidur** when it has been in the background
+//! for five minutes. A sleeping app is given back its clean pages; a
+//! background app is given a tenth of the processor an active one has. An
+//! app that is making a sound never sleeps.
 //!
 //! # Failing
 //!
@@ -34,6 +38,7 @@ use std::ffi::CString;
 use std::fs;
 use std::io::{self, Write as _};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 /// Where the cgroup v2 tree is mounted.
 pub const CGROUP_ROOT: &str = "/sys/fs/cgroup";
@@ -47,8 +52,29 @@ pub const CONTROLLERS: [&str; 3] = ["+cpu", "+memory", "+pids"];
 /// The controllers the hemat's tree has for its own children.
 pub const TREE_CONTROLLERS: [&str; 2] = ["+cpu", "+memory"];
 
-/// The processor weight of an app.
+/// How long an app may be in the background before it is put to sleep.
+pub const SLEEP_AFTER: Duration = Duration::from_secs(300);
+
+/// What is given back when an app falls asleep: its clean pages, a gigabyte
+/// of them at a time.
+pub const RECLAIM: &str = "1G";
+
+/// The processor weight of an app that is on the screen.
 pub const WEIGHT_ACTIVE: &str = "100";
+
+/// The processor weight of an app in the background.
+pub const WEIGHT_BACKGROUND: &str = "10";
+
+/// Where an app is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum State {
+    /// One of its windows is on the screen.
+    Aktif,
+    /// None of its windows is.
+    Latar,
+    /// It has been in the background for five minutes.
+    Tidur,
+}
 
 /// An app, as the hemat knows it.
 #[derive(Clone, Debug)]
@@ -63,6 +89,13 @@ pub struct App {
     pub dir: PathBuf,
     /// The process behind its windows, or 0 where the kernel would not say.
     pub pid: u32,
+    /// Where it is.
+    pub state: State,
+    /// Since when it was last seen on the screen: the background is
+    /// counted from there.
+    pub since_background: Option<Instant>,
+    /// Whether it is making a sound.
+    pub loud: bool,
     /// The process already moved into its cgroup.
     pub moved: u32,
 }
@@ -70,10 +103,14 @@ pub struct App {
 /// A window, as the hemat sees it.
 #[derive(Clone, Debug)]
 pub struct Window {
+    /// Which window.
+    pub id: u64,
     /// The class it is, which is the app it belongs to.
     pub class: String,
     /// Its process, or 0 where the kernel would not say.
     pub pid: u32,
+    /// Whether the screen shows it.
+    pub visible: bool,
 }
 
 /// One thing to write in a cgroup.
@@ -139,6 +176,28 @@ impl Hemat {
         self.apps.clear();
     }
 
+    /// Where the app of the class `class` is, if the hemat knows it.
+    #[must_use]
+    pub fn state_of(&self, class: &str) -> Option<State> {
+        self.apps.get(class).map(|app| app.state)
+    }
+
+    /// The app of the class `class` is making a sound, or is not.
+    ///
+    /// The name is the one the sound server gives, which is the binary's
+    /// name; it is matched against the class loosely, because the class
+    /// and the binary do not always have the same name.
+    pub fn heard(&mut self, name: &str, loud: bool) {
+        let classes: Vec<String> = self.apps.keys().cloned().collect();
+        for class in classes {
+            if same_class(name, &class)
+                && let Some(app) = self.apps.get_mut(&class)
+            {
+                app.loud = loud;
+            }
+        }
+    }
+
     /// Forget the app of the class `class`, and its group with it.
     pub fn forget(&mut self, class: &str) {
         if let Some(app) = self.apps.remove(class) {
@@ -147,17 +206,17 @@ impl Hemat {
         }
     }
 
-    /// Look at every window there is, and give each app its group.
+    /// Look at every window there is, and say where each app is.
     ///
     /// The writes the change asks for are returned rather than done: a
     /// test can see what would be written without a cgroup to write it
     /// in, and the compositor is the one that does them.
-    pub fn sync(&mut self, windows: &[Window]) -> Vec<Effect> {
+    pub fn refresh(&mut self, windows: &[Window], now: Instant) -> Vec<Effect> {
         let mut effects = Vec::new();
         let classes = by_class(windows);
         self.forget_gone(&classes);
         for (class, of_class) in &classes {
-            effects.extend(self.sync_class(class, of_class));
+            effects.extend(self.refresh_class(class, of_class, now));
         }
         effects
     }
@@ -176,6 +235,16 @@ impl Hemat {
         said
     }
 
+    /// The apps that are asleep, and the ones in the background, as the
+    /// dispatcher says them.
+    #[must_use]
+    pub fn describe(&self) -> Vec<String> {
+        self.apps
+            .values()
+            .map(|app| format!("{} {} {:?}", app.class, app.name, app.state))
+            .collect()
+    }
+
     /// Forget the apps that have no window left.
     fn forget_gone(&mut self, classes: &BTreeMap<String, Vec<&Window>>) {
         let gone: Vec<String> = self
@@ -190,8 +259,9 @@ impl Hemat {
     }
 
     /// Look at the windows of one app.
-    fn sync_class(&mut self, class: &str, windows: &[&Window]) -> Vec<Effect> {
+    fn refresh_class(&mut self, class: &str, windows: &[&Window], now: Instant) -> Vec<Effect> {
         let mut effects = Vec::new();
+        let visible = windows.iter().any(|window| window.visible);
         let pid = windows
             .iter()
             .find_map(|window| (window.pid != 0).then_some(window.pid))
@@ -205,6 +275,9 @@ impl Hemat {
             app.pid = pid;
         }
         effects.extend(self.move_in(class));
+        if let Some(state) = self.change_state(class, visible, now) {
+            effects.extend(self.effects_for(class, state));
+        }
         effects
     }
 
@@ -230,6 +303,9 @@ impl Hemat {
                 number,
                 dir,
                 pid,
+                state: State::Aktif,
+                since_background: None,
+                loud: false,
                 moved: 0,
             },
         );
@@ -251,6 +327,46 @@ impl Hemat {
         vec![effect]
     }
 
+    /// Say where the app of the class `class` is now.
+    fn change_state(&mut self, class: &str, visible: bool, now: Instant) -> Option<State> {
+        let loud = self.apps.get(class).is_some_and(|app| app.loud);
+        let app = self.apps.get_mut(class)?;
+        let before = app.state;
+        if visible {
+            app.since_background = Some(now);
+            app.state = State::Aktif;
+        } else {
+            let since = *app.since_background.get_or_insert(now);
+            app.state = if loud {
+                State::Latar
+            } else if now.duration_since(since) >= SLEEP_AFTER {
+                State::Tidur
+            } else {
+                State::Latar
+            };
+        }
+        (before != app.state).then_some(app.state)
+    }
+
+    /// What the app's new state means for its cgroup.
+    fn effects_for(&self, class: &str, state: State) -> Vec<Effect> {
+        let Some(app) = self.apps.get(class) else {
+            return Vec::new();
+        };
+        let weight = if state == State::Aktif {
+            WEIGHT_ACTIVE
+        } else {
+            WEIGHT_BACKGROUND
+        };
+        let mut effects = vec![self.effect(class, &app.dir, "cpu.weight", weight)];
+        match state {
+            State::Aktif => effects.push(self.effect(class, &app.dir, "memory.high", "max")),
+            State::Tidur => effects.push(self.effect(class, &app.dir, "memory.reclaim", RECLAIM)),
+            State::Latar => {}
+        }
+        effects
+    }
+
     /// One write to be done in the app's group.
     fn effect(&self, class: &str, dir: &Path, file: &'static str, value: &str) -> Effect {
         Effect {
@@ -260,6 +376,22 @@ impl Hemat {
             value: value.to_owned(),
         }
     }
+}
+
+/// Whether two names are the same app's, as far as the hemat is concerned.
+///
+/// The class is what the client said, and the sound server's name is the
+/// binary's; they are the same app when they are equal, or when the class
+/// ends with the name after a dot.
+#[must_use]
+pub fn same_class(one: &str, other: &str) -> bool {
+    let one = one.to_lowercase();
+    let other = other.to_lowercase();
+    if one == other {
+        return true;
+    }
+    other.rsplit('.').next().is_some_and(|last| last == one)
+        || one.rsplit('.').next().is_some_and(|last| last == other)
 }
 
 /// The windows of each app, by class.
@@ -452,10 +584,12 @@ pub fn remove_app(dir: &Path) -> Result<(), String> {
 mod tests {
     use super::*;
 
-    fn window(class: &str, pid: u32) -> Window {
+    fn window(id: u64, class: &str, pid: u32, visible: bool) -> Window {
         Window {
+            id,
             class: class.to_owned(),
             pid,
+            visible,
         }
     }
 
@@ -526,11 +660,15 @@ mod tests {
     #[test]
     fn an_app_is_one_class_and_one_group() {
         let (mut hemat, root) = hemat(true);
-        let _ = hemat.sync(&[
-            window("foot", 100),
-            window("foot", 100),
-            window("zinc", 200),
-        ]);
+        let now = Instant::now();
+        let _ = hemat.refresh(
+            &[
+                window(1, "foot", 100, true),
+                window(2, "foot", 100, false),
+                window(3, "zinc", 200, true),
+            ],
+            now,
+        );
         assert_eq!(hemat.apps.len(), 2, "two classes, two apps");
         assert_eq!(hemat.apps["foot"].dir, root.join("hemat/app-foot-1"));
         assert_eq!(hemat.apps["zinc"].dir, root.join("hemat/app-zinc-2"));
@@ -540,10 +678,11 @@ mod tests {
     #[test]
     fn the_app_of_a_window_is_the_class_it_named() {
         let (mut hemat, root) = hemat(true);
-        let _ = hemat.sync(&[window("foot", 100)]);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert_eq!(hemat.apps["foot"].class, "foot");
         // A client whose process the kernel would not say has no group.
-        let _ = hemat.sync(&[window("foot", 100), window("zinc", 0)]);
+        let _ = hemat.refresh(&[window(2, "zinc", 0, true)], now);
         assert!(!hemat.apps.contains_key("zinc"));
         let _ = fs::remove_dir_all(&root);
     }
@@ -551,12 +690,13 @@ mod tests {
     #[test]
     fn the_first_window_of_an_app_makes_its_group() {
         let (mut hemat, root) = hemat(true);
-        let effects = hemat.sync(&[window("foot", 100)]);
+        let now = Instant::now();
+        let effects = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert!(root.join("hemat/app-foot-1").is_dir());
         assert_eq!(written(&effects, "memory.high"), Some("max".to_owned()));
         assert_eq!(written(&effects, "cpu.weight"), Some("100".to_owned()));
         // A second window of the same app is the same group.
-        let _ = hemat.sync(&[window("foot", 100), window("foot", 100)]);
+        let _ = hemat.refresh(&[window(2, "foot", 100, true)], now);
         assert_eq!(hemat.apps.len(), 1);
         assert!(!root.join("hemat/app-foot-2").exists());
         let _ = fs::remove_dir_all(&root);
@@ -565,11 +705,94 @@ mod tests {
     #[test]
     fn a_window_that_went_away_takes_its_group_with_it() {
         let (mut hemat, root) = hemat(true);
-        let _ = hemat.sync(&[window("foot", 100)]);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let dir = hemat.apps["foot"].dir.clone();
-        let _ = hemat.sync(&[]);
+        let _ = hemat.refresh(&[], now);
         assert!(!hemat.apps.contains_key("foot"));
         assert!(!dir.exists(), "the group goes with the app");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_app_with_a_visible_window_is_active() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        assert_eq!(hemat.state_of("foot"), Some(State::Aktif));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_app_with_every_window_hidden_is_in_the_background() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], now);
+        assert_eq!(hemat.state_of("foot"), Some(State::Latar));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_background_app_falls_asleep_after_five_minutes() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], now);
+        let later = now + Duration::from_secs(299);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], later);
+        assert_eq!(hemat.state_of("foot"), Some(State::Latar));
+        let later = now + Duration::from_secs(301);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], later);
+        assert_eq!(hemat.state_of("foot"), Some(State::Tidur));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_app_never_sleeps_while_it_is_heard() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        hemat.heard("foot", true);
+        let later = now + Duration::from_secs(600);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], later);
+        assert_eq!(hemat.state_of("foot"), Some(State::Latar));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_sleeping_app_is_woken_when_it_is_shown_again() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        let later = now + Duration::from_secs(600);
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], later);
+        assert_eq!(hemat.state_of("foot"), Some(State::Tidur));
+        let effects = hemat.refresh(&[window(1, "foot", 100, true)], later);
+        assert_eq!(hemat.state_of("foot"), Some(State::Aktif));
+        assert_eq!(written(&effects, "memory.high"), Some("max".to_owned()));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_asleep_app_gives_its_clean_cache_back() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        let later = now + Duration::from_secs(600);
+        let effects = hemat.refresh(&[window(1, "foot", 100, false)], later);
+        assert_eq!(written(&effects, "memory.reclaim"), Some("1G".to_owned()));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_background_app_is_quieter_than_the_active_one() {
+        let (mut hemat, root) = hemat(true);
+        let now = Instant::now();
+        let effects = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        assert_eq!(written(&effects, "cpu.weight"), Some("100".to_owned()));
+        let effects = hemat.refresh(&[window(1, "foot", 100, false)], now);
+        assert_eq!(written(&effects, "cpu.weight"), Some("10".to_owned()));
         let _ = fs::remove_dir_all(&root);
     }
 }
