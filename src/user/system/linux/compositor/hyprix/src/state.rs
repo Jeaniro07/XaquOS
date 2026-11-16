@@ -667,7 +667,10 @@ impl<'r> Compositor<'r> {
         // boot has no init to mount it (`docs/AUTH.md` §1.2). A tree
         // that cannot be made leaves the desktop as it was, with the
         // hemat off.
-        let mut hemat = crate::hemat::Hemat::new(true);
+        let mut hemat = crate::hemat::Hemat::new(
+            config.int("general:hemat").unwrap_or(1) != 0,
+            crate::hemat::exceptions(config.str("general:hemat_never").unwrap_or("")),
+        );
         if hemat.enabled
             && let Err(why) = crate::hemat::prepare()
         {

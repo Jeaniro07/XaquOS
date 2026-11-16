@@ -133,6 +133,8 @@ pub struct Hemat {
     pub apps: BTreeMap<String, App>,
     /// Whether the hemat is on at all.
     pub enabled: bool,
+    /// The classes that never sleep.
+    pub exceptions: Vec<String>,
     /// The tree the groups are made under.
     pub root: PathBuf,
     /// The number the next app is given.
@@ -143,17 +145,18 @@ pub struct Hemat {
 
 impl Default for Hemat {
     fn default() -> Self {
-        Self::new(true)
+        Self::new(true, Vec::new())
     }
 }
 
 impl Hemat {
-    /// A hemat that is on.
+    /// A hemat that is on, with the classes that never sleep.
     #[must_use]
-    pub fn new(enabled: bool) -> Self {
+    pub fn new(enabled: bool, exceptions: Vec<String>) -> Self {
         Self {
             apps: BTreeMap::new(),
             enabled,
+            exceptions,
             root: PathBuf::from(CGROUP_ROOT),
             next: 0,
             failed: BTreeSet::new(),
@@ -163,10 +166,10 @@ impl Hemat {
     /// A hemat whose groups are made under `root`, which is a directory in
     /// a test and the mount in a desktop.
     #[must_use]
-    pub fn at(root: PathBuf, enabled: bool) -> Self {
+    pub fn at(root: PathBuf, enabled: bool, exceptions: Vec<String>) -> Self {
         Self {
             root,
-            ..Self::new(enabled)
+            ..Self::new(enabled, exceptions)
         }
     }
 
@@ -180,6 +183,14 @@ impl Hemat {
     #[must_use]
     pub fn state_of(&self, class: &str) -> Option<State> {
         self.apps.get(class).map(|app| app.state)
+    }
+
+    /// Whether the class `class` is on the exception list.
+    #[must_use]
+    pub fn excluded(&self, class: &str) -> bool {
+        self.exceptions
+            .iter()
+            .any(|exception| same_class(exception, class))
     }
 
     /// The app of the class `class` is making a sound, or is not.
@@ -330,6 +341,7 @@ impl Hemat {
     /// Say where the app of the class `class` is now.
     fn change_state(&mut self, class: &str, visible: bool, now: Instant) -> Option<State> {
         let loud = self.apps.get(class).is_some_and(|app| app.loud);
+        let excluded = self.excluded(class);
         let app = self.apps.get_mut(class)?;
         let before = app.state;
         if visible {
@@ -337,7 +349,7 @@ impl Hemat {
             app.state = State::Aktif;
         } else {
             let since = *app.since_background.get_or_insert(now);
-            app.state = if loud {
+            app.state = if loud || excluded {
                 State::Latar
             } else if now.duration_since(since) >= SLEEP_AFTER {
                 State::Tidur
@@ -353,7 +365,7 @@ impl Hemat {
         let Some(app) = self.apps.get(class) else {
             return Vec::new();
         };
-        let weight = if state == State::Aktif {
+        let weight = if state == State::Aktif || self.excluded(class) {
             WEIGHT_ACTIVE
         } else {
             WEIGHT_BACKGROUND
@@ -376,6 +388,16 @@ impl Hemat {
             value: value.to_owned(),
         }
     }
+}
+
+/// The classes that never sleep, from a list separated by commas.
+#[must_use]
+pub fn exceptions(text: &str) -> Vec<String> {
+    text.split(',')
+        .map(|part| part.trim())
+        .filter(|part| !part.is_empty())
+        .map(|part| part.to_owned())
+        .collect()
 }
 
 /// Whether two names are the same app's, as far as the hemat is concerned.
@@ -601,10 +623,14 @@ mod tests {
     }
 
     /// A hemat whose groups are made in a directory of its own.
-    fn hemat(enabled: bool) -> (Hemat, PathBuf) {
+    fn hemat(enabled: bool, exceptions: &[&str]) -> (Hemat, PathBuf) {
         let root = std::env::temp_dir().join(format!("hemat-{}-{}", std::process::id(), number()));
         let _ = fs::remove_dir_all(&root);
-        let hemat = Hemat::at(root.clone(), enabled);
+        let hemat = Hemat::at(
+            root.clone(),
+            enabled,
+            exceptions.iter().map(|name| (*name).to_owned()).collect(),
+        );
         (hemat, root)
     }
 
@@ -659,7 +685,7 @@ mod tests {
 
     #[test]
     fn an_app_is_one_class_and_one_group() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(
             &[
@@ -677,7 +703,7 @@ mod tests {
 
     #[test]
     fn the_app_of_a_window_is_the_class_it_named() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert_eq!(hemat.apps["foot"].class, "foot");
@@ -689,7 +715,7 @@ mod tests {
 
     #[test]
     fn the_first_window_of_an_app_makes_its_group() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let effects = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert!(root.join("hemat/app-foot-1").is_dir());
@@ -704,7 +730,7 @@ mod tests {
 
     #[test]
     fn a_window_that_went_away_takes_its_group_with_it() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let dir = hemat.apps["foot"].dir.clone();
@@ -716,7 +742,7 @@ mod tests {
 
     #[test]
     fn an_app_with_a_visible_window_is_active() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert_eq!(hemat.state_of("foot"), Some(State::Aktif));
@@ -725,7 +751,7 @@ mod tests {
 
     #[test]
     fn an_app_with_every_window_hidden_is_in_the_background() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let _ = hemat.refresh(&[window(1, "foot", 100, false)], now);
@@ -735,7 +761,7 @@ mod tests {
 
     #[test]
     fn a_background_app_falls_asleep_after_five_minutes() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let _ = hemat.refresh(&[window(1, "foot", 100, false)], now);
@@ -750,7 +776,7 @@ mod tests {
 
     #[test]
     fn an_app_never_sleeps_while_it_is_heard() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         hemat.heard("foot", true);
@@ -762,7 +788,7 @@ mod tests {
 
     #[test]
     fn a_sleeping_app_is_woken_when_it_is_shown_again() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let later = now + Duration::from_secs(600);
@@ -776,7 +802,7 @@ mod tests {
 
     #[test]
     fn an_asleep_app_gives_its_clean_cache_back() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
         let later = now + Duration::from_secs(600);
@@ -786,8 +812,44 @@ mod tests {
     }
 
     #[test]
+    fn an_exception_list_is_split_on_commas() {
+        assert_eq!(
+            exceptions("steam, wine"),
+            vec!["steam".to_owned(), "wine".to_owned()]
+        );
+        assert!(exceptions("").is_empty());
+        assert_eq!(
+            exceptions(" steam , wine "),
+            vec!["steam".to_owned(), "wine".to_owned()]
+        );
+    }
+
+    #[test]
+    fn an_excluded_app_never_sleeps() {
+        let (mut hemat, root) = hemat(true, &["steam"]);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "steam", 100, true)], now);
+        let later = now + Duration::from_secs(600);
+        let effects = hemat.refresh(&[window(1, "steam", 100, false)], later);
+        assert_eq!(hemat.state_of("steam"), Some(State::Latar));
+        assert_eq!(written(&effects, "cpu.weight"), Some("100".to_owned()));
+        assert_eq!(written(&effects, "memory.reclaim"), None);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_hemat_off_means_no_cgroup_is_made() {
+        let (mut hemat, root) = hemat(false, &[]);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, true)], now);
+        assert!(hemat.apps.is_empty());
+        assert!(!root.join("hemat/app-foot-1").exists());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn the_background_app_is_quieter_than_the_active_one() {
-        let (mut hemat, root) = hemat(true);
+        let (mut hemat, root) = hemat(true, &[]);
         let now = Instant::now();
         let effects = hemat.refresh(&[window(1, "foot", 100, true)], now);
         assert_eq!(written(&effects, "cpu.weight"), Some("100".to_owned()));

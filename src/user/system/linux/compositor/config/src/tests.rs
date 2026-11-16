@@ -2019,3 +2019,13 @@ fn a_file_read_over_another_keeps_and_overrides() {
         alone("general:gaps_out = 9\n", "general:gaps_out")
     );
 }
+
+#[test]
+fn the_hemat_has_its_own_keys() {
+    let config = Config::default();
+    assert_eq!(config.option("general:hemat"), Some(&OptionValue::Int(1)));
+    assert_eq!(
+        config.option("general:hemat_never"),
+        Some(&OptionValue::Str(String::new()))
+    );
+}
