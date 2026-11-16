@@ -65,6 +65,29 @@ pub const WEIGHT_ACTIVE: &str = "100";
 /// The processor weight of an app in the background.
 pub const WEIGHT_BACKGROUND: &str = "10";
 
+/// The memory of the machine, as `/proc/meminfo` says it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Memory {
+    /// The memory there is, in bytes.
+    pub total: u64,
+    /// The memory that may be used, in bytes.
+    pub available: u64,
+    /// The swap there is, in bytes; zero where there is none.
+    pub swap_total: u64,
+    /// The swap that is free, in bytes; zero where there is none.
+    pub swap_free: u64,
+}
+
+/// The per cent of the memory that has to be gone before the desktop says
+/// it is short.
+pub const LOW: u64 = 10;
+
+/// The per cent that is short enough to be critical.
+pub const CRITICAL: u64 = 5;
+
+/// How long the memory has to be short before the apps give theirs back.
+pub const LOW_FOR: Duration = Duration::from_secs(10);
+
 /// Where an app is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum State {
@@ -141,6 +164,10 @@ pub struct Hemat {
     next: u32,
     /// The apps whose writing has failed, so that it is said once.
     failed: BTreeSet<String>,
+    /// Whether the memory is short.
+    pub pressure: bool,
+    /// Since when the memory has been short.
+    pub low_since: Option<Instant>,
 }
 
 impl Default for Hemat {
@@ -160,6 +187,8 @@ impl Hemat {
             root: PathBuf::from(CGROUP_ROOT),
             next: 0,
             failed: BTreeSet::new(),
+            pressure: false,
+            low_since: None,
         }
     }
 
@@ -263,6 +292,72 @@ impl Hemat {
                 .count()
         ));
         lines
+    }
+
+    /// Look at the memory of the machine, and say whether it is short.
+    ///
+    /// The writes the pressure asks for are returned rather than done, as
+    /// the rest of the hemat's are: the apps in the background give their
+    /// clean pages back, the one that was seen longest ago first.
+    pub fn check_memory(&mut self, now: Instant) -> Vec<Effect> {
+        let Some(memory) = meminfo() else {
+            return Vec::new();
+        };
+        self.check(&memory, now)
+    }
+
+    /// Say whether the memory `memory` is short, and what that asks for.
+    ///
+    /// The memory has to be short for ten seconds before the apps give
+    /// theirs back, so that a moment's use does not empty the desktop;
+    /// a memory that is critically short says so at once.
+    pub fn check(&mut self, memory: &Memory, now: Instant) -> Vec<Effect> {
+        if !under_pressure(memory) {
+            self.low_since = None;
+            self.pressure = false;
+            return Vec::new();
+        }
+        let since = *self.low_since.get_or_insert(now);
+        let was = self.pressure;
+        // The memory is short for long enough, or it is short enough to be
+        // critical: either way the desktop says so.
+        self.pressure = now.duration_since(since) >= LOW_FOR || critical(memory);
+        if self.pressure && !was {
+            return self.reclaim();
+        }
+        Vec::new()
+    }
+
+    /// The apps and the memory they hold, the biggest first.
+    #[must_use]
+    pub fn apps_by_memory(&self) -> Vec<(String, u64)> {
+        let mut apps: Vec<(String, u64)> = self
+            .apps
+            .values()
+            .map(|app| {
+                let bytes = fs::read_to_string(app.dir.join("memory.current"))
+                    .ok()
+                    .and_then(|text| text.trim().parse::<u64>().ok())
+                    .unwrap_or(0);
+                (app.class.clone(), bytes)
+            })
+            .collect();
+        apps.sort_by_key(|one| std::cmp::Reverse(one.1));
+        apps
+    }
+
+    /// The apps in the background give their clean pages back, the one
+    /// that was seen longest ago first.
+    fn reclaim(&self) -> Vec<Effect> {
+        let mut apps: Vec<&App> = self
+            .apps
+            .values()
+            .filter(|app| app.state != State::Aktif)
+            .collect();
+        apps.sort_by_key(|app| app.since_background);
+        apps.iter()
+            .map(|app| self.effect(&app.class, &app.dir, "memory.reclaim", RECLAIM))
+            .collect()
     }
 
     /// Forget the apps that have no window left.
@@ -427,6 +522,52 @@ pub fn dispatch(argument: &str, hemat: &mut Hemat) -> (bool, Vec<String>) {
     };
     hemat.heard(name, loud);
     (false, Vec::new())
+}
+
+/// The memory of the machine, as the text of `/proc/meminfo` says it.
+///
+/// The numbers are in kilobytes, and are bytes here; the swap is zero
+/// where the machine has none, which is the usual case.
+#[must_use]
+pub fn meminfo_of(text: &str) -> Option<Memory> {
+    let total = field(text, "MemTotal:")?;
+    let available = field(text, "MemAvailable:")?;
+    Some(Memory {
+        total,
+        available,
+        swap_total: field(text, "SwapTotal:").unwrap_or(0),
+        swap_free: field(text, "SwapFree:").unwrap_or(0),
+    })
+}
+
+/// The memory of the machine, as `/proc/meminfo` says it.
+#[must_use]
+pub fn meminfo() -> Option<Memory> {
+    let text = fs::read_to_string("/proc/meminfo").ok()?;
+    meminfo_of(&text)
+}
+
+/// Whether the memory is short: less than a tenth of it may be used.
+///
+/// The per cents are compared as they are, with the whole numbers, so that
+/// the answer does not depend on how a float is rounded.
+#[must_use]
+pub fn under_pressure(memory: &Memory) -> bool {
+    memory.total > 0 && memory.available * 100 < memory.total * LOW
+}
+
+/// Whether the memory is critically short: less than a twentieth of it may
+/// be used.
+#[must_use]
+pub fn critical(memory: &Memory) -> bool {
+    memory.total > 0 && memory.available * 100 < memory.total * CRITICAL
+}
+
+/// One number of `/proc/meminfo`, in bytes.
+fn field(text: &str, name: &str) -> Option<u64> {
+    let line = text.lines().find(|line| line.starts_with(name))?;
+    let value = line.split_whitespace().nth(1)?.parse::<u64>().ok()?;
+    Some(value * 1024)
 }
 
 /// The classes that never sleep, from a list separated by commas.
@@ -875,6 +1016,79 @@ mod tests {
                 .is_some_and(|line| line.contains("the apps are asleep: 0")),
             "the count of the sleeping ones: {said:?}"
         );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// The memory of a machine, as `/proc/meminfo` says it.
+    const MEMINFO: &str = "MemTotal:       16316496 kB\nMemFree:         1234 kB\n\
+MemAvailable:    8158248 kB\nBuffers:          1234 kB\n";
+
+    #[test]
+    fn the_available_memory_is_read_from_proc() {
+        let memory = meminfo_of(MEMINFO).expect("the memory is read");
+        assert_eq!(memory.total, 16316496 * 1024);
+        assert_eq!(memory.available, 8158248 * 1024);
+        // There is no swap in Ferrix, and none is said.
+        assert_eq!(memory.swap_total, 0);
+        assert_eq!(memory.swap_free, 0);
+        // A text without the memory in it says nothing.
+        assert_eq!(meminfo_of("Buffers: 1 kB\n"), None);
+    }
+
+    #[test]
+    fn the_pressure_below_a_tenth_holds_for_ten_seconds() {
+        let memory = Memory {
+            total: 1000,
+            available: 99,
+            ..Memory::default()
+        };
+        assert!(under_pressure(&memory), "a tenth is gone");
+        assert!(!critical(&memory), "but it is not critical");
+        let (mut hemat, root) = hemat(true, &[]);
+        let now = Instant::now();
+        let _ = hemat.refresh(&[window(1, "foot", 100, false)], now);
+        // The shortage begins now.
+        let _ = hemat.check(&memory, now);
+        // Nine seconds of it is not enough.
+        let _ = hemat.check(&memory, now + Duration::from_secs(9));
+        assert!(!hemat.pressure, "nine seconds is not ten");
+        // The tenth second is.
+        let _ = hemat.check(&memory, now + Duration::from_secs(10));
+        assert!(hemat.pressure, "ten seconds is enough");
+        // The memory that is there is not short.
+        let whole = Memory {
+            total: 1000,
+            available: 1000,
+            ..Memory::default()
+        };
+        let _ = hemat.check(&whole, now + Duration::from_secs(20));
+        assert!(!hemat.pressure, "the memory came back");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_critical_pressure_lists_the_apps_by_memory() {
+        let (mut hemat, root) = hemat(true, &[]);
+        let now = Instant::now();
+        let _ = hemat.refresh(
+            &[window(1, "foot", 100, true), window(2, "zinc", 200, false)],
+            now,
+        );
+        // The groups hold what the kernel says they hold; here the files
+        // are the test's own.
+        for (class, bytes) in [("foot", "300"), ("zinc", "900")] {
+            let dir = hemat.apps[class].dir.clone();
+            fs::write(dir.join("memory.current"), bytes).expect("the memory is written");
+        }
+        let apps = hemat.apps_by_memory();
+        assert_eq!(apps.len(), 2);
+        assert_eq!(apps[0], ("zinc".to_owned(), 900), "the biggest first");
+        assert_eq!(apps[1], ("foot".to_owned(), 300));
+        // The app that is in the background gives its pages back.
+        let effects = hemat.reclaim();
+        assert_eq!(effects.len(), 1, "only the background one: {effects:?}");
+        assert_eq!(effects[0].class, "zinc");
+        assert_eq!(effects[0].file, "memory.reclaim");
         let _ = fs::remove_dir_all(&root);
     }
 

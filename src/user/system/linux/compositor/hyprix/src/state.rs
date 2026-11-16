@@ -1130,6 +1130,11 @@ impl<'r> Compositor<'r> {
                     .collect();
             }
         }
+        // The hemat: whether the memory is short, and what the apps hold.
+        snapshot.hemat = compositor_ipc::Hemat {
+            pressure: self.hemat.pressure,
+            apps: self.hemat.apps_by_memory(),
+        };
         snapshot
     }
 
@@ -2834,7 +2839,9 @@ impl<'r> Compositor<'r> {
             return;
         }
         let windows = self.hemat_windows();
-        let effects = self.hemat.refresh(&windows, Instant::now());
+        let now = Instant::now();
+        let mut effects = self.hemat.refresh(&windows, now);
+        effects.extend(self.hemat.check_memory(now));
         for why in self.hemat.apply(&effects) {
             (self.report)(&format!("hyprix: the hemat: {why}"));
         }
