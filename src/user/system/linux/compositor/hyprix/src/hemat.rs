@@ -123,6 +123,17 @@ pub struct App {
     pub moved: u32,
 }
 
+impl App {
+    /// The name of the app's group in the tree: `app-foot-1`.
+    ///
+    /// The boot and the diagnosis both look for the group by this name,
+    /// so it is said as the tree has it.
+    #[must_use]
+    pub fn group(&self) -> String {
+        format!("app-{}-{}", self.name, self.number)
+    }
+}
+
 /// A window, as the hemat sees it.
 #[derive(Clone, Debug)]
 pub struct Window {
@@ -282,7 +293,7 @@ impl Hemat {
         let mut lines: Vec<String> = self
             .apps
             .values()
-            .map(|app| format!("hemat: {} {} {:?}", app.class, app.name, app.state))
+            .map(|app| format!("hemat: {} {} {:?}", app.class, app.group(), app.state))
             .collect();
         lines.push(format!(
             "hemat: the apps are asleep: {}",
@@ -1011,6 +1022,10 @@ mod tests {
         assert!(!hemat.apps["foot"].loud);
         let (_, said) = dispatch("state", &mut hemat);
         assert_eq!(said.len(), 3, "every app is named, and the count: {said:?}");
+        assert!(
+            said.iter().any(|line| line.contains("app-foot-1")),
+            "the group is named as the tree has it: {said:?}"
+        );
         assert!(
             said.last()
                 .is_some_and(|line| line.contains("the apps are asleep: 0")),
