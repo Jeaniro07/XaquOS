@@ -1,0 +1,32 @@
+[package]
+name = "bridgeplay"
+description = "Bridgeplay: opens Steam and Windows programs on Ferrix, through Wine, kept small in memory"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+# An app (docs/APPS.md): a workspace of its own, a static Linux program
+# built with std against the target's musl.
+[workspace]
+
+[lib]
+name = "bridgeplay_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bridgeplay"
+path = "src/main.rs"
+test = false
+bench = false
+
+[profile.dev]
+overflow-checks = true
+opt-level = 2
+
+[profile.release]
+overflow-checks = true
+opt-level = "s"
+lto = true
+codegen-units = 1

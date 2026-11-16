@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Bridgeplay
+GenericName=Steam and Windows games
+Comment=Open Steam and Windows programs through Wine
+Exec=/bin/bridgeplay steam
+Icon=bridgeplay
+Terminal=false
+Keywords=steam;windows;wine;game;games;
+Categories=Game;
