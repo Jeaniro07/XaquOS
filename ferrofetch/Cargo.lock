@@ -8,7 +8,7 @@ version = "0.1.0"
 
 [[package]]
 name = "ferrix-native"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "ferrix-linux-abi",
  "ferrix-native-abi",
@@ -23,10 +23,11 @@ dependencies = [
 
 [[package]]
 name = "ferrix-rt"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "ferrix-linux-abi",
  "ferrix-native",
+ "ferrix-native-abi",
 ]
 
 [[package]]

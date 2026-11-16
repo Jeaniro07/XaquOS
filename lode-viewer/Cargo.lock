@@ -54,6 +54,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
+name = "compositor-appmenu"
+version = "0.1.0"
+
+[[package]]
 name = "compositor-image"
 version = "0.1.0"
 dependencies = [
@@ -162,11 +166,11 @@ dependencies = [
 
 [[package]]
 name = "ferrix-lode-capture"
-version = "0.1.0"
+version = "0.3.0"
 
 [[package]]
 name = "ferrix-lode-core"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "ferrix-slots",
  "ruzstd",
@@ -178,7 +182,7 @@ version = "0.1.0"
 
 [[package]]
 name = "ferrix-slots"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "ferrix-sha256",
 ]
@@ -456,6 +460,7 @@ name = "tole"
 version = "0.1.0"
 dependencies = [
  "ash",
+ "compositor-appmenu",
  "compositor-image",
  "compositor-regex",
  "compositor-text",
