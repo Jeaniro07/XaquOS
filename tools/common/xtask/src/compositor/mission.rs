@@ -108,7 +108,7 @@ fn mean_colour(screen: &Image, areas: &[(i64, i64, i64, i64)]) -> Option<(f64, f
     for (left, top, width, height) in areas {
         for y in (*top).max(0)..(*top + *height).min(screen.height as i64) {
             for x in (*left).max(0)..(*left + *width).min(screen.width as i64) {
-                let at = ((y as usize * screen.width + x as usize) * 3) as usize;
+                let at = (y as usize * screen.width + x as usize) * 3;
                 let Some(&[r, g, b]) = screen.pixels.get(at..at + 3) else {
                     continue;
                 };
@@ -195,6 +195,23 @@ fn judge(screen: &Image, cards: &[Card]) -> Result<Judged> {
     }
 }
 
+/// The cards the compositor named, in the dump's own pixels.
+///
+/// The compositor says where the cards are in its own pixels; the dump
+/// may be another size, so the cards are scaled to it.
+fn scaled(cards: &[Card], said_width: u32, dump_width: usize) -> Vec<Card> {
+    let scale = f64::from(dump_width as u32) / f64::from(said_width.max(1));
+    cards
+        .iter()
+        .map(|card| Card {
+            x: (f64::from(card.x as i32) * scale).round() as i64,
+            y: (f64::from(card.y as i32) * scale).round() as i64,
+            width: (f64::from(card.width as i32) * scale).round() as i64,
+            height: (f64::from(card.height as i32) * scale).round() as i64,
+        })
+        .collect()
+}
+
 /// `test-compositor --boot mission`.
 ///
 /// # Errors
@@ -248,7 +265,7 @@ pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Resu
             .rev()
             .find_map(|line| said_spaces(line))
             .unwrap_or(0);
-        let cards = said_cards(&watching.after());
+        let cards = said_cards(watching.after());
         std::thread::sleep(Duration::from_secs(2));
         let dump = paths::build_dir(arch).join("mission.ppm");
         qmp.screendump(Some(DEVICE_ID), &dump)?;
@@ -264,18 +281,7 @@ pub(super) fn test_mission(arch: Arch, programs: &Programs, args: &Args) -> Resu
         let bytes = std::fs::read(&dump)
             .map_err(|error| Error::new(format!("reading {}: {error}", dump.display())))?;
         let screen = parse_ppm(&bytes)?;
-        // The cards the compositor named are in its own pixels; the dump
-        // may be another size.
-        let scale = f64::from(screen.width as u32) / f64::from(said.0.max(1));
-        let scaled: Vec<Card> = cards
-            .iter()
-            .map(|card| Card {
-                x: (f64::from(card.x as i32) * scale).round() as i64,
-                y: (f64::from(card.y as i32) * scale).round() as i64,
-                width: (f64::from(card.width as i32) * scale).round() as i64,
-                height: (f64::from(card.height as i32) * scale).round() as i64,
-            })
-            .collect();
+        let scaled = scaled(&cards, said.0, screen.width);
         if let Err(error) = judge(&screen, &scaled) {
             return Err(fail(&error.to_string(), watching));
         }
