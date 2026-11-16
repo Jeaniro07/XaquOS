@@ -1238,6 +1238,19 @@ fn a_status_in_a_pid_namespace_lists_every_number_from_the_readers_down() {
     );
 }
 
+/// The `/proc/swaps` file of `areas`, rendered into room reserved for its
+/// longest form, as the kernel renders it.
+fn swaps_file(areas: &[Swap<'_>]) -> Vec<u8> {
+    let needed = swaps::header_len()
+        + areas
+            .iter()
+            .map(|area| swaps::longest_row(area.path.len()))
+            .sum::<usize>();
+    let mut out = Vec::with_capacity(needed);
+    swaps::render(&mut out, areas).expect("the rows fit their longest form");
+    out
+}
+
 #[test]
 fn swaps_is_the_header_and_a_row_as_a_real_linux_printed_it() {
     // Copied from /proc/swaps of a Linux 6.6 (WSL2) machine.
@@ -1248,7 +1261,7 @@ fn swaps_is_the_header_and_a_row_as_a_real_linux_printed_it() {
         used_kib: 3864,
         priority: -2,
     }];
-    let out = rendered(|out| swaps::render(out, &host));
+    let out = swaps_file(&host);
     assert_eq!(
         show(&out),
         show(
@@ -1260,7 +1273,7 @@ fn swaps_is_the_header_and_a_row_as_a_real_linux_printed_it() {
 
 #[test]
 fn swaps_with_no_area_is_only_the_header() {
-    let out = rendered(|out| swaps::render(out, &[]));
+    let out = swaps_file(&[]);
     assert_eq!(
         show(&out),
         show(b"Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n")
@@ -1278,7 +1291,7 @@ fn a_swaps_row_of_a_wide_number_drops_the_tab_linux_drops() {
         used_kib: 10_000_000,
         priority: -1,
     }];
-    let out = rendered(|out| swaps::render(out, &host));
+    let out = swaps_file(&host);
     assert_eq!(
         show(&out),
         show(
@@ -1298,7 +1311,7 @@ fn a_swaps_path_of_forty_bytes_or_more_is_followed_by_one_space() {
         used_kib: 0,
         priority: 5,
     }];
-    let out = rendered(|out| swaps::render(out, &host));
+    let out = swaps_file(&host);
     let row = out.split(|b| *b == b'\n').nth(1).unwrap_or(&[]);
     assert!(row.starts_with(&path));
     assert_eq!(row.get(45), Some(&b' '));

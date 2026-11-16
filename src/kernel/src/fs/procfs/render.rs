@@ -766,7 +766,14 @@ pub(super) fn partitions(_: &Kernel) -> Result<Vec<u8>> {
 pub(super) fn swaps(_: &Kernel) -> Result<Vec<u8>> {
     let areas: Vec<swaps::Swap<'_>> = Vec::new();
     let mut out = Vec::new();
-    swaps::render(&mut out, &areas);
+    let mut charge = Charge::bytes(0).map_err(|_| Errno::ENOMEM)?;
+    let needed = swaps::header_len()
+        + areas
+            .iter()
+            .map(|area| swaps::longest_row(area.path.len()))
+            .sum::<usize>();
+    ferrix_kmem::reserve(&mut out, needed, &mut charge).map_err(|_| Errno::ENOMEM)?;
+    swaps::render(&mut out, &areas).map_err(|_| Errno::ENOMEM)?;
     Ok(out)
 }
 

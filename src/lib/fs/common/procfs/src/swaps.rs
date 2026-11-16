@@ -17,7 +17,8 @@
 
 use alloc::vec::Vec;
 
-use crate::text::{pad_to, put};
+pub use crate::text::Full;
+use crate::text::{push_within, put_within};
 
 /// The header line.
 pub const HEADER: &[u8] = b"Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n";
@@ -52,30 +53,64 @@ pub struct Swap<'a> {
     pub priority: i32,
 }
 
-/// Append the header and a row for each of `swaps`.
-pub fn render(out: &mut Vec<u8>, swaps: &[Swap<'_>]) {
-    out.extend_from_slice(HEADER);
+/// Append the header and a row for each of `swaps`, within `out`'s
+/// capacity: nothing here allocates. Reserve [`longest_row`] for every
+/// row, and the header's own bytes, before calling.
+///
+/// # Errors
+///
+/// [`Full`] when a row would not fit in what `out` has room for; part of
+/// it may have been written, and the caller abandons the file.
+pub fn render(out: &mut Vec<u8>, swaps: &[Swap<'_>]) -> Result<(), Full> {
+    push_within(out, HEADER)?;
     for swap in swaps {
         let start = out.len();
-        out.extend_from_slice(swap.path);
+        push_within(out, swap.path)?;
         if out.len().saturating_sub(start) >= TYPE_COLUMN {
-            out.push(b' ');
+            push_within(out, b" ")?;
         } else {
-            pad_to(out, start, TYPE_COLUMN);
+            // The type starts at the fortieth column, so a short path is
+            // followed by spaces until then.
+            while out.len().saturating_sub(start) < TYPE_COLUMN {
+                push_within(out, b" ")?;
+            }
         }
         let kind: &[u8] = match swap.kind {
             SwapKind::Partition => b"partition",
             SwapKind::File => b"file\t",
         };
-        out.extend_from_slice(kind);
-        put(out, format_args!("\t{}", swap.size_kib));
+        push_within(out, kind)?;
+        put_within(out, format_args!("\t{}", swap.size_kib))?;
         if swap.size_kib < WIDE {
-            out.push(b'\t');
+            push_within(out, b"\t")?;
         }
-        put(out, format_args!("\t{}", swap.used_kib));
+        put_within(out, format_args!("\t{}", swap.used_kib))?;
         if swap.used_kib < WIDE {
-            out.push(b'\t');
+            push_within(out, b"\t")?;
         }
-        put(out, format_args!("\t{}\n", swap.priority));
+        put_within(out, format_args!("\t{}\n", swap.priority))?;
     }
+    Ok(())
+}
+
+/// The most bytes a row for a path of `path_len` bytes takes.
+///
+/// The name's field is the path and a space, or the path and the padding
+/// to the fortieth column; then the type, the two numbers with their
+/// tabs, and the priority and the newline.
+pub const fn longest_row(path_len: usize) -> usize {
+    let name = if path_len + 1 > TYPE_COLUMN {
+        path_len + 1
+    } else {
+        TYPE_COLUMN
+    };
+    // "partition" is the longer type, a size and a use are twenty digits,
+    // a priority has a sign, and each number has a tab before it and one
+    // more while it is narrow.
+    name + 9 + 21 + 1 + 21 + 1 + 13
+}
+
+/// The bytes the header takes.
+pub const fn header_len() -> usize {
+    HEADER.len()
 }
