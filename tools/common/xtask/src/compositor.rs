@@ -95,6 +95,7 @@ mod machine;
 mod measure;
 mod mission;
 mod monitors;
+mod multiapp;
 pub(crate) mod n150_box;
 mod notices;
 mod picture;
@@ -874,6 +875,7 @@ const BOOTS: [(&str, Boot); 78] = [
     ("appmenu", appmenu::test_appmenu),
     ("spotlight", spotlight::test_spotlight),
     ("mission", mission::test_mission),
+    ("multiapp", multiapp::test_multiapp),
     ("launchpad", launchpad::test_launchpad),
     ("notices", notices::test_notices),
     ("weather", weather::test_weather),

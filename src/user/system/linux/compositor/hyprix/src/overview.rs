@@ -938,7 +938,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             [(WindowId(2), false), (WindowId(1), true)]
         );
-        assert_eq!(super::dimmed(&state, super::Style::Classic), [WindowId(1)]);
+        assert_eq!(super::dimmed(&state, Style::Classic), [WindowId(1)]);
         assert!(
             all[0]
                 .1
@@ -1157,6 +1157,7 @@ mod tests {
         assert!(!overview.on);
     }
 
+    #[test]
     fn one_window_is_centred_and_never_enlarged() {
         let area = Rect::new(0, 0, 1000, 600);
         assert_eq!(

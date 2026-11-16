@@ -455,6 +455,9 @@ struct Compositor<'r> {
     swallow: bool,
     /// The programs `suspend` froze (`crate::suspend`).
     suspended: crate::suspend::Suspended,
+    /// The desktop's memory saving (`docs/DESKTOP.md` §6.11): one cgroup
+    /// for each app, and the apps' states.
+    hemat: crate::hemat::Hemat,
     /// When the seat was last used: `ext-idle-notify` measures from the
     /// last of this and `forced`.
     last_input: Instant,
@@ -660,6 +663,20 @@ impl<'r> Compositor<'r> {
         let mut wallpapers = crate::wallpaper::Wallpapers::default();
         let _ = wallpapers.follow(&config, options, listener.path(), report);
 
+        // Hemat: the tree it needs is made here, because the desktop's
+        // boot has no init to mount it (`docs/AUTH.md` §1.2). A tree
+        // that cannot be made leaves the desktop as it was, with the
+        // hemat off.
+        let mut hemat = crate::hemat::Hemat::new(
+            config.int("general:hemat").unwrap_or(1) != 0,
+            crate::hemat::exceptions(config.str("general:hemat_never").unwrap_or("")),
+        );
+        if hemat.enabled
+            && let Err(why) = crate::hemat::prepare()
+        {
+            report(&format!("hyprix: the hemat is off: {why}"));
+            hemat.disable();
+        }
         let started = Instant::now();
         let deadline = options.deadline.map(Duration::from_millis);
         let children = watch_children(report);
@@ -761,6 +778,7 @@ impl<'r> Compositor<'r> {
             quit: false,
             swallow: false,
             suspended: crate::suspend::Suspended::new(),
+            hemat,
             last_input: Instant::now(),
             forced: None,
             injected: Vec::new(),
@@ -850,6 +868,9 @@ impl<'r> Compositor<'r> {
         if changed {
             self.rearrange();
         }
+        // The hemat: where every app is, once a second, and what its
+        // cgroup is told about it.
+        self.tick_hemat();
         // The popups, which are drawn over the windows like a layer surface
         // on the top level: a menu is not a window, has no border and no
         // gaps, and belongs where its parent put it.
@@ -1109,6 +1130,11 @@ impl<'r> Compositor<'r> {
                     .collect();
             }
         }
+        // The hemat: whether the memory is short, and what the apps hold.
+        snapshot.hemat = compositor_ipc::Hemat {
+            pressure: self.hemat.pressure,
+            apps: self.hemat.apps_by_memory(),
+        };
         snapshot
     }
 
@@ -1559,6 +1585,7 @@ impl<'r> Compositor<'r> {
                 drag: &mut self.drag,
                 overview: &mut self.overview,
                 switcher: &mut self.switcher,
+                hemat: &mut self.hemat,
                 pending: &mut pending,
                 quit: &mut self.quit,
                 swallow: &mut self.swallow,
@@ -2032,6 +2059,7 @@ impl<'r> Compositor<'r> {
                 drag: &mut self.drag,
                 overview: &mut self.overview,
                 switcher: &mut self.switcher,
+                hemat: &mut self.hemat,
                 pending: &mut pending,
                 quit: &mut self.quit,
                 swallow: &mut self.swallow,
@@ -2776,6 +2804,49 @@ impl<'r> Compositor<'r> {
 
     /// How long the wait may last: until the next frame, idle, test or
     /// device timer, whichever is first, or for ever.
+    /// Every window there is, as the hemat sees it: the app it belongs
+    /// to, its process, and whether the screen shows it.
+    fn hemat_windows(&self) -> Vec<crate::hemat::Window> {
+        let seen = as_seen(&self.state, &self.slots, &self.sources);
+        // What the layout draws is what the screen shows: a window
+        // behind a fullscreen one, on another workspace, or minimized is
+        // not on the screen.
+        let visible: std::collections::BTreeSet<u64> = self
+            .state
+            .layout()
+            .iter()
+            .flat_map(|monitor| monitor.windows.iter())
+            .map(|placed| placed.window.0)
+            .collect();
+        seen.iter()
+            .map(|seen| crate::hemat::Window {
+                id: seen.window.0,
+                class: seen.class.to_owned(),
+                pid: u32::try_from(seen.pid).unwrap_or(0),
+                visible: visible.contains(&seen.window.0),
+            })
+            .collect()
+    }
+
+    /// Look at the apps once a second: where each one is, and what its
+    /// cgroup is told. A write that fails is said once, and the app is
+    /// left as it was (`docs/DESKTOP.md` §7).
+    ///
+    /// The memory of the machine is looked at in the same tick: when it is
+    /// short, the apps in the background give their clean pages back.
+    fn tick_hemat(&mut self) {
+        if !self.hemat.enabled {
+            return;
+        }
+        let windows = self.hemat_windows();
+        let now = Instant::now();
+        let mut effects = self.hemat.refresh(&windows, now);
+        effects.extend(self.hemat.check_memory(now));
+        for why in self.hemat.apply(&effects) {
+            (self.report)(&format!("hyprix: the hemat: {why}"));
+        }
+    }
+
     fn timeout(&self, animating: bool) -> Option<Duration> {
         // A held frame waits for the hold, not for the screen's refresh.
         let frame_wait = match self.held_until {
@@ -2849,6 +2920,10 @@ impl<'r> Compositor<'r> {
             .next_wake()
             .map(|at| at.saturating_duration_since(Instant::now()));
         [
+            // The hemat's tick: the apps are looked at every second, so
+            // that a desktop with nothing happening still lets an app
+            // fall asleep.
+            Some(Duration::from_secs(1)),
             frame_wait,
             idle_wait,
             deadline_wait,

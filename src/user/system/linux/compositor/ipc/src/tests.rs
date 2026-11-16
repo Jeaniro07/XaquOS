@@ -10,8 +10,8 @@ use crate::json::Json;
 use crate::reply::{Reply, Version, answer};
 use crate::request::{Flags, Format, Request};
 use crate::state::{
-    Animation, Bezier, Bind, Device, Devices, Keyboard, Layer, Monitor, Opt, Shortcut, Snapshot,
-    Style, System, Window, Workspace,
+    Animation, Bezier, Bind, Device, Devices, Hemat, Keyboard, Layer, Monitor, Opt, Shortcut,
+    Snapshot, Style, System, Window, Workspace,
 };
 
 /// A small parser, so a test can say "this answer is JSON" and look inside
@@ -381,6 +381,7 @@ fn snapshot() -> Snapshot {
         log: Vec::new(),
         shortcuts: Vec::new(),
         system: System::default(),
+        hemat: Hemat::default(),
     }
 }
 
@@ -573,6 +574,49 @@ fn activewindow_is_the_focused_one_and_an_empty_object_when_there_is_none() {
         panic!("not an answer");
     };
     assert_eq!(written.trim(), "Invalid");
+}
+
+/// The desktop's memory saving, as the shell asks for it: JSON, with the
+/// pressure and the apps that hold the memory.
+#[test]
+fn the_hemat_is_answered_as_json() {
+    let mut snap = snapshot();
+    snap.hemat = Hemat {
+        pressure: true,
+        apps: vec![("foot".to_owned(), 12345)],
+    };
+    let request = Request::parse("hemat");
+    let Reply::Text(written) = answer(&request, &snap, Version::default()) else {
+        panic!("hemat answered with no text");
+    };
+    let value = parse::parse(&written).unwrap_or_else(|error| panic!("{error}\n{written}"));
+    assert_eq!(
+        value.get("pressure").and_then(parse::Value::boolean),
+        Some(true)
+    );
+    let apps = value.get("apps").expect("apps").items();
+    assert_eq!(apps.len(), 1);
+    assert_eq!(
+        apps[0].get("name").and_then(parse::Value::text),
+        Some("foot")
+    );
+    assert_eq!(
+        apps[0].get("bytes").and_then(parse::Value::number),
+        Some(12345.0)
+    );
+    // Without pressure the answer says so, and lists no apps.
+    let mut snap = snapshot();
+    snap.hemat = Hemat::default();
+    let request = Request::parse("hemat");
+    let Reply::Text(written) = answer(&request, &snap, Version::default()) else {
+        panic!("hemat answered with no text");
+    };
+    let value = parse::parse(&written).unwrap_or_else(|error| panic!("{error}\n{written}"));
+    assert_eq!(
+        value.get("pressure").and_then(parse::Value::boolean),
+        Some(false)
+    );
+    assert!(value.get("apps").expect("apps").items().is_empty());
 }
 
 #[test]
@@ -1163,6 +1207,7 @@ fn watched(windows: &[Window], active: Option<u64>) -> Snapshot {
         log: Vec::new(),
         shortcuts: Vec::new(),
         system: System::default(),
+        hemat: Hemat::default(),
     }
 }
 

@@ -199,6 +199,22 @@ pub struct Snapshot {
     pub shortcuts: Vec<Shortcut>,
     /// What the compositor is running on: `hyprctl systeminfo`.
     pub system: System,
+    /// The desktop's memory saving: `hyprctl hemat`.
+    pub hemat: Hemat,
+}
+
+/// The desktop's memory saving: whether the memory is short, and what the
+/// apps hold.
+///
+/// The shell's own command, not one of Hyprland's: the compositor answers it
+/// as JSON whatever the flags say, because the shell reads it with a parser
+/// that wants JSON.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Hemat {
+    /// Whether the memory is short.
+    pub pressure: bool,
+    /// The apps and the memory they hold, the biggest first.
+    pub apps: Vec<(String, u64)>,
 }
 
 /// One option, as `hyprctl getoption` prints it.

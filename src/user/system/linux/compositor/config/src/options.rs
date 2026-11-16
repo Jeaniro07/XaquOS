@@ -218,6 +218,8 @@ pub(crate) static OPTIONS: &[(&str, Initial)] = &[
     ("general:gaps_in", GapsOf(5)),
     ("general:gaps_out", GapsOf(20)),
     ("general:gaps_workspaces", Int(0)),
+    ("general:hemat", Int(1)),
+    ("general:hemat_never", Str("")),
     ("general:hover_icon_on_border", Int(1)),
     ("general:layout", Str("dwindle")),
     ("general:locale", Str("")),

@@ -127,6 +127,9 @@ pub fn answer(request: &Request, snapshot: &Snapshot, version: Version) -> Reply
         "monitors" => text(monitors(flags, &snapshot.monitors)),
         "workspaces" => text(workspaces(flags, snapshot)),
         "clients" => text(clients(flags, snapshot)),
+        // The desktop's memory saving, which the shell asks about: whether
+        // the memory is short, and what the apps hold.
+        "hemat" => text(hemat(&snapshot.hemat)),
         "activewindow" => text(active_window(flags, snapshot)),
         "activeworkspace" => text(active_workspace(flags, snapshot)),
         // `submapRequest`: the name, or `default` for the global map, and in
@@ -1297,6 +1300,28 @@ fn clients(flags: Flags, snapshot: &Snapshot) -> String {
     for window in shown {
         let _ = write!(text, "{}", readable_window(window));
     }
+    text
+}
+
+/// `hyprctl hemat`: the desktop's memory saving, as JSON.
+///
+/// The answer is JSON whatever the flags say: this command is the shell's
+/// own, and the shell reads it with a parser that wants JSON.
+fn hemat(hemat: &crate::state::Hemat) -> String {
+    let mut out = Json::new(false);
+    out.object();
+    out.boolean("pressure", hemat.pressure);
+    out.array_field("apps");
+    for (name, bytes) in &hemat.apps {
+        out.object();
+        out.string("name", name);
+        out.number("bytes", i64::try_from(*bytes).unwrap_or(0));
+        out.end('}');
+    }
+    out.end(']');
+    out.end('}');
+    let mut text = out.finish();
+    text.push('\n');
     text
 }
 

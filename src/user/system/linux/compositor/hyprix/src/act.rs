@@ -111,6 +111,8 @@ pub struct Around<'a> {
     pub overview: &'a mut crate::overview::Overview,
     /// The window switcher, which `switcher` opens and moves on.
     pub switcher: &'a mut crate::switcher::Switcher,
+    /// The desktop's memory saving, which the shell tells what it hears.
+    pub hemat: &'a mut crate::hemat::Hemat,
     /// Actions a dispatcher caused, which the caller delivers.
     pub pending: &'a mut Vec<Action>,
     /// Set when a dispatcher asked the compositor to end.
@@ -230,6 +232,15 @@ pub fn compositor(
                 } else {
                     around.say("hyprix: the mission control closed");
                 }
+            }
+            Some(changed)
+        }
+        // What the shell hears: an app that is making a sound is not put
+        // to sleep.
+        "hemat" => {
+            let (changed, lines) = crate::hemat::dispatch(argument, &mut *around.hemat);
+            for line in lines {
+                around.say(&line);
             }
             Some(changed)
         }

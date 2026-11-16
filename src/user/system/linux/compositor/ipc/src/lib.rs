@@ -52,8 +52,8 @@ pub use json::Json;
 pub use reply::{Reply, Version, answer};
 pub use request::{Flags, Format, Request};
 pub use state::{
-    Animation, Bezier, Bind, Device, Devices, Keyboard, Layer, Monitor, Opt, Plugin, Shortcut,
-    Snapshot, Style, System, Window, Workspace, device_name, new_device_name,
+    Animation, Bezier, Bind, Device, Devices, Hemat, Keyboard, Layer, Monitor, Opt, Plugin,
+    Shortcut, Snapshot, Style, System, Window, Workspace, device_name, new_device_name,
 };
 
 /// Hyprland's own socket names inside its instance directory.
