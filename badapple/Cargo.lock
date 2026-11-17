@@ -55,8 +55,8 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -139,10 +139,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-linux-abi"
-version = "0.1.0"
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -164,8 +160,8 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 name = "media-pcm"
 version = "0.1.0"
 dependencies = [
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -298,3 +294,7 @@ dependencies = [
  "bytemuck",
  "strict-num",
 ]
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"

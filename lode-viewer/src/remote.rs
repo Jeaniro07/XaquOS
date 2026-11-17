@@ -736,8 +736,8 @@ fn rfc3339(seconds: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::{KeySource, Kind, Pairing, Remote, StoreWriter, follow_command, parse, write};
-    use xaqu_lode_core::record::Record;
     use std::rc::Rc;
+    use xaqu_lode_core::record::Record;
 
     fn n150() -> Remote {
         Remote {

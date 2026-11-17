@@ -60,7 +60,7 @@ fn the_lines_are_fastfetchs_in_its_order() {
     assert_eq!(
         out.as_str(),
         "xaqu@xaqu\n\
-         -------------\n\
+         ---------\n\
          OS: Xaqu 0.1.0 x86_64\n\
          Kernel: Xaqu 6.1.0-xaqu\n\
          Uptime: 3 hours, 25 mins\n\
@@ -88,7 +88,7 @@ fn a_fact_not_found_has_no_line() {
     };
     assert_eq!(
         rendered(&facts, PLAIN).as_str(),
-        "xaqu\n------\nOS: Xaqu 0.1.0\nCPU: (2)\n"
+        "xaqu\n----\nOS: Xaqu 0.1.0\nCPU: (2)\n"
     );
 }
 
@@ -316,13 +316,13 @@ fn the_n150s_line_has_its_model_and_its_top_rate() {
     // Without a top rate, the first `cpu MHz`.
     assert_eq!(
         rendered(&facts(cpu), PLAIN).as_str(),
-        "xaqu\n------\nCPU: Intel N150 (4) @ 1.30 GHz\n"
+        "xaqu\n----\nCPU: Intel N150 (4) @ 1.30 GHz\n"
     );
     // With one, from cpufreq or `CPUID` leaf 0x16, that.
     cpu.max_khz = parse::cpufreq_khz("3600000\n");
     assert_eq!(
         rendered(&facts(cpu), PLAIN).as_str(),
-        "xaqu\n------\nCPU: Intel N150 (4) @ 3.60 GHz\n"
+        "xaqu\n----\nCPU: Intel N150 (4) @ 3.60 GHz\n"
     );
     assert_eq!(parse::cpufreq_khz("0\n"), None);
     assert_eq!(parse::cpufreq_khz("fast"), None);
@@ -396,7 +396,7 @@ fn dirents_walks_getdents64s_records() {
 #[test]
 fn uname_fields_end_at_their_nul() {
     let mut field = [0_u8; 65];
-    field[..6].copy_from_slice(b"Xaqu");
+    field[..4].copy_from_slice(b"Xaqu");
     assert_eq!(parse::c_str(&field), Some("Xaqu"));
     assert_eq!(parse::c_str(&[0; 65]), None);
     let mut names = [0_u8; parse::UTSNAME];
@@ -409,14 +409,8 @@ fn uname_fields_end_at_their_nul() {
     ] {
         names[at..at + text.len()].copy_from_slice(text.as_bytes());
     }
-    assert_eq!(
-        parse::uts_field(&names, parse::Uts::Sysname),
-        Some("Xaqu")
-    );
-    assert_eq!(
-        parse::uts_field(&names, parse::Uts::Nodename),
-        Some("xaqu")
-    );
+    assert_eq!(parse::uts_field(&names, parse::Uts::Sysname), Some("Xaqu"));
+    assert_eq!(parse::uts_field(&names, parse::Uts::Nodename), Some("xaqu"));
     assert_eq!(
         parse::uts_field(&names, parse::Uts::Release),
         Some("6.1.0-xaqu")

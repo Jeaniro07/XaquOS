@@ -165,29 +165,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-lode-capture"
-version = "0.3.0"
-
-[[package]]
-name = "xaqu-lode-core"
-version = "0.3.0"
-dependencies = [
- "xaqu-slots",
- "ruzstd",
-]
-
-[[package]]
-name = "xaqu-sha256"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-slots"
-version = "0.3.0"
-dependencies = [
- "xaqu-sha256",
-]
-
-[[package]]
 name = "flate2"
 version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -251,10 +228,10 @@ dependencies = [
  "compositor-image",
  "compositor-text",
  "compositor-toolkit",
- "xaqu-lode-capture",
- "xaqu-lode-core",
  "tole",
  "tole-compiler",
+ "xaqu-lode-capture",
+ "xaqu-lode-core",
 ]
 
 [[package]]
@@ -530,6 +507,29 @@ name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+
+[[package]]
+name = "xaqu-lode-capture"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-lode-core"
+version = "0.3.0"
+dependencies = [
+ "ruzstd",
+ "xaqu-slots",
+]
+
+[[package]]
+name = "xaqu-sha256"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-slots"
+version = "0.3.0"
+dependencies = [
+ "xaqu-sha256",
+]
 
 [[package]]
 name = "zlib-rs"

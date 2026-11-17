@@ -35,10 +35,10 @@ use core::fmt::{self, Write};
 
 mod sys;
 
-use xaqu_rt::{Bootstrap, linux};
 use ferrofetch::Text;
 use ferrofetch::parse::{self, Command, Dirents};
 use ferrofetch::render::{self, Display, Facts, MAX_DISPLAYS};
+use xaqu_rt::{Bootstrap, linux};
 
 xaqu_rt::entry!(main);
 

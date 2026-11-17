@@ -93,11 +93,8 @@ pub fn sample_walls(grid: bool) -> crate::walls::Picker {
         .get(1)
         .map(|wall| wall.path.clone())
         .unwrap_or_default();
-    let mut picker = crate::walls::Picker::new(
-        found,
-        vec!["Xaqu".to_owned(), "Mine".to_owned()],
-        &current,
-    );
+    let mut picker =
+        crate::walls::Picker::new(found, vec!["Xaqu".to_owned(), "Mine".to_owned()], &current);
     if grid {
         picker.flip();
     }

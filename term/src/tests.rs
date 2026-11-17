@@ -901,14 +901,14 @@ fn agnosters_prompt_is_two_segments_and_their_separators() {
         ('r', Some(0), 7)
     );
     // Its separator: black on the blue of the segment after it.
-    assert_eq!((cell(13).background, cell(13).colour), (Some(4), 0));
+    assert_eq!((cell(11).background, cell(11).colour), (Some(4), 0));
     // The directory: black on blue.
     assert_eq!(
-        (cell(15).ch, cell(15).background, cell(15).colour),
+        (cell(13).ch, cell(13).background, cell(13).colour),
         ('/', Some(4), 0)
     );
     // The last separator: blue on the terminal's own background.
-    assert_eq!((cell(17).background, cell(17).colour), (None, 4));
+    assert_eq!((cell(15).background, cell(15).colour), (None, 4));
 }
 
 /// A row that scrolls off the top is kept, and the screen can look back at

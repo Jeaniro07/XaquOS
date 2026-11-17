@@ -77,10 +77,10 @@ dependencies = [
  "compositor-render",
  "compositor-text",
  "compositor-toolkit",
- "xaqu-auth-client",
- "xaqu-auth-proto",
  "libc",
  "tiny-skia",
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
@@ -214,18 +214,6 @@ checksum = "1e6853b52649d4ac5c0bd02320cddc5ba956bdb407c4b75a2c6b75bf51500f8c"
 dependencies = [
  "simd-adler32",
 ]
-
-[[package]]
-name = "xaqu-auth-client"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-proto",
- "libc",
-]
-
-[[package]]
-name = "xaqu-auth-proto"
-version = "0.1.0"
 
 [[package]]
 name = "flate2"
@@ -517,6 +505,18 @@ dependencies = [
  "svgtypes",
  "tiny-skia-path",
 ]
+
+[[package]]
+name = "xaqu-auth-client"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-proto",
+]
+
+[[package]]
+name = "xaqu-auth-proto"
+version = "0.1.0"
 
 [[package]]
 name = "zlib-rs"

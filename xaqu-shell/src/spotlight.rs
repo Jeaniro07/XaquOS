@@ -197,7 +197,7 @@ impl State {
                     }
                     quoted.push(c);
                 }
-                Some(Outcome::Dispatch(format!("exec /bin/xdg-open {quoted}\"")))
+                Some(Outcome::Dispatch(format!("exec /bin/xaqu-open {quoted}\"")))
             }
             Hit::Value(_) => None,
         }
@@ -641,7 +641,7 @@ mod tests {
         let command = line.strip_prefix("exec ").expect("an exec line");
         assert_eq!(
             hyprix_words(command),
-            vec!["/bin/xdg-open", r#"/home/a b/my "x" file.txt"#]
+            vec!["/bin/xaqu-open", r#"/home/a b/my "x" file.txt"#]
         );
     }
 

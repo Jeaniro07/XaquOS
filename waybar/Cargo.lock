@@ -74,8 +74,8 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -83,8 +83,8 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -275,22 +275,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-fbtext"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-linux-abi"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-lode-capture"
-version = "0.3.0"
-
-[[package]]
-name = "xaqu-svc-proto"
-version = "0.3.0"
-
-[[package]]
 name = "flate2"
 version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -416,11 +400,11 @@ dependencies = [
  "compositor-virgl",
  "compositor-wire",
  "compositor-xkb",
+ "libc",
  "xaqu-fbtext",
  "xaqu-linux-abi",
  "xaqu-lode-capture",
  "xaqu-svc-proto",
- "libc",
 ]
 
 [[package]]
@@ -823,6 +807,22 @@ checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
 ]
+
+[[package]]
+name = "xaqu-fbtext"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-lode-capture"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-svc-proto"
+version = "0.3.0"
 
 [[package]]
 name = "zlib-rs"

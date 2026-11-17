@@ -1404,9 +1404,8 @@ impl Config {
             if let Widget::InputField(field) = widget
                 && field.hide_input
             {
-                lines.push(
-                    "input-field:hide_input: drawn as plain dots on Xaqu for now".to_owned(),
-                );
+                lines
+                    .push("input-field:hide_input: drawn as plain dots on Xaqu for now".to_owned());
             }
         }
         lines

@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "ferrofetch"
+version = "0.1.0"
+dependencies = [
+ "xaqu-rt",
+]
+
+[[package]]
 name = "xaqu-linux-abi"
 version = "0.1.0"
 
@@ -28,11 +35,4 @@ dependencies = [
  "xaqu-linux-abi",
  "xaqu-native",
  "xaqu-native-abi",
-]
-
-[[package]]
-name = "ferrofetch"
-version = "0.1.0"
-dependencies = [
- "xaqu-rt",
 ]

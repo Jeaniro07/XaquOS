@@ -1165,15 +1165,38 @@ impl App {
             }
             return;
         }
-        let opened = std::process::Command::new("xdg-open")
+        // The world's opener: a Linux program runs by itself, a Windows one
+        // by the runtime that world names, a document by `xdg-open`.
+        let opened = std::process::Command::new("xaqu-open")
             .arg(&item.path)
             .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
             .spawn();
         match opened {
-            Ok(_) => self.say(format!("Opening {}", item.name)),
-            Err(_) => self.say(format!("Nothing here opens {} (no xdg-open)", item.name)),
+            // `xaqu-open` starts the program and comes back at once, so what
+            // it says is whether the world had a runtime to run it by.
+            Ok(mut child) => {
+                let done = child.wait().map(|status| status.success()).unwrap_or(false);
+                if done {
+                    self.say(format!("Opening {}", item.name));
+                } else {
+                    self.say(format!("Nothing here opens {}", item.name));
+                }
+            }
+            // No `xaqu-open`: the desktop's own opener, for a document.
+            Err(_) => {
+                let opened = std::process::Command::new("xdg-open")
+                    .arg(&item.path)
+                    .stdin(std::process::Stdio::null())
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .spawn();
+                match opened {
+                    Ok(_) => self.say(format!("Opening {}", item.name)),
+                    Err(_) => {
+                        self.say(format!("Nothing here opens {} (no xdg-open)", item.name));
+                    }
+                }
+            }
         }
     }
 

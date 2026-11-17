@@ -38,8 +38,8 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -111,8 +111,8 @@ dependencies = [
  "compositor-socket",
  "compositor-wire",
  "compositor-xkb",
- "xaqu-fbtext",
  "libc",
+ "xaqu-fbtext",
 ]
 
 [[package]]
@@ -128,14 +128,6 @@ version = "0.1.0"
 
 [[package]]
 name = "compositor-xkb"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-fbtext"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-linux-abi"
 version = "0.1.0"
 
 [[package]]
@@ -180,3 +172,11 @@ dependencies = [
  "bytemuck",
  "strict-num",
 ]
+
+[[package]]
+name = "xaqu-fbtext"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"

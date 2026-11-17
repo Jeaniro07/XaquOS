@@ -1,8 +1,8 @@
 //! The stash panel on the screen (`xaqu-shell --stash-panel`, the dock's
 //! Stash button): an overlay layer whose panel sits over the dock, the
 //! stash's files as tiles (`ui/stash.tole`). A pick opens the file -- a
-//! folder in Files (shelf), anything else with `xdg-open` -- and closes the
-//! panel; the folder button opens the stash's folder in Files; clear
+//! folder in Files (shelf), anything else with `xaqu-open`, which runs what
+//! belongs to a world -- and closes the panel; the folder button opens the stash's folder in Files; clear
 //! empties it. Started again while it is up, it
 //! closes, as the switcher does.
 
@@ -180,27 +180,41 @@ impl View {
 /// customer's choice: Files is shelf).
 pub const FILES: &str = "/bin/shelf";
 
-/// What opens `path`: shelf for a folder where the image has it, else
-/// `xdg-open`.
+/// The opener for the worlds: a Linux program, a Windows one, an Android
+/// one, a macOS one (`xaqu-open`).
+pub const WORLDS: &str = "/bin/xaqu-open";
+
+/// What opens `path`: shelf for a folder where the image has it, else the
+/// world's opener where the desktop has it, else `xdg-open`.
 #[must_use]
-pub fn opener(path: &Path, files: &Path) -> std::path::PathBuf {
+pub fn opener(path: &Path, files: &Path, worlds: &Path) -> std::path::PathBuf {
     if path.is_dir() && files.is_file() {
         files.to_path_buf()
+    } else if worlds.is_file() {
+        worlds.to_path_buf()
     } else {
         std::path::PathBuf::from("xdg-open")
     }
 }
 
-/// Open `path`, a folder in Files, anything else with `xdg-open`; whether
-/// it started.
+/// Open `path`, a folder in Files, anything else with `xaqu-open`; whether
+/// it opened.
 fn open(path: &Path) -> bool {
-    std::process::Command::new(opener(path, Path::new(FILES)))
+    let opener = opener(path, Path::new(FILES), Path::new(WORLDS));
+    let Ok(mut child) = std::process::Command::new(&opener)
         .arg(path)
         .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
         .spawn()
-        .is_ok()
+    else {
+        return false;
+    };
+    // `xaqu-open` starts the program and comes back at once, so what it
+    // says is whether the world had a runtime to run it by. `xdg-open`
+    // becomes the program it opens, and is left to run.
+    if opener == Path::new(WORLDS) {
+        return child.wait().map(|status| status.success()).unwrap_or(true);
+    }
+    true
 }
 
 /// Open `item`'s file, saying so; whether it opened.
@@ -209,7 +223,7 @@ fn opened(item: &Item) -> bool {
     say(&format!(
         "stash: open {}: {}",
         item.target.display(),
-        if done { "ok" } else { "no xdg-open" }
+        if done { "ok" } else { "nothing opens it" }
     ));
     done
 }
@@ -312,7 +326,7 @@ fn shown(listener: Option<&UnixListener>) -> i32 {
                     say(&format!(
                         "stash: open the folder {}: {}",
                         dir.display(),
-                        if done { "ok" } else { "no xdg-open" }
+                        if done { "ok" } else { "nothing opens it" }
                     ));
                     if done {
                         return 0;
@@ -375,14 +389,20 @@ mod opens {
     use super::opener;
     use std::path::Path;
 
-    /// A folder opens in Files where shelf is there, a file with xdg-open.
+    /// A folder opens in Files where shelf is there, a file with the
+    /// world's opener where the desktop has it, else with `xdg-open`.
     #[test]
     fn a_folder_opens_in_files() {
         let dir = std::env::temp_dir();
         let me = std::env::current_exe().expect("this test");
-        assert_eq!(opener(&dir, &me), me);
-        assert_eq!(opener(&dir, Path::new("/no/shelf")), Path::new("xdg-open"));
-        assert_eq!(opener(&me, &me), Path::new("xdg-open"));
+        let worlds = std::env::temp_dir().join("xaqu-open");
+        assert_eq!(opener(&dir, &me, &worlds), me);
+        assert_eq!(
+            opener(&dir, Path::new("/no/shelf"), &worlds),
+            Path::new("xdg-open")
+        );
+        assert_eq!(opener(&me, &me, &worlds), Path::new("xdg-open"));
+        assert_eq!(opener(&me, &me, &me), me);
     }
 }
 

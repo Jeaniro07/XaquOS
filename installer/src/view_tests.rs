@@ -41,10 +41,8 @@ impl System for Test {
 
 /// A stand-in on a socket of the test's own.
 fn fake(name: &str, behaviour: Behaviour) -> (Fake, Test) {
-    let socket = std::env::temp_dir().join(format!(
-        "xaqu-installer-{name}-{}.sock",
-        std::process::id()
-    ));
+    let socket =
+        std::env::temp_dir().join(format!("xaqu-installer-{name}-{}.sock", std::process::id()));
     let fake = Fake::start(&socket, behaviour).expect("the stand-in starts");
     let test = Test {
         socket: socket.clone(),

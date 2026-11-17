@@ -11,7 +11,8 @@ const USAGE: &str = "usage: bridgeplay steam | run PROGRAM.exe [ARGS] | doctor |
 
 fn start(plan: &Plan) -> ExitCode {
     let mut c = Command::new(&plan.program);
-    c.args(&plan.args).envs(plan.env.iter().map(|(k, v)| (k, v)));
+    c.args(&plan.args)
+        .envs(plan.env.iter().map(|(k, v)| (k, v)));
     match c.status() {
         Ok(s) if s.success() => ExitCode::SUCCESS,
         Ok(s) => {
@@ -28,7 +29,11 @@ fn start(plan: &Plan) -> ExitCode {
 fn doctor() -> ExitCode {
     println!("bridgeplay doctor");
     let row = |name: &str, path: &str| {
-        let s = if Path::new(path).exists() { "present" } else { "missing" };
+        let s = if Path::new(path).exists() {
+            "present"
+        } else {
+            "missing"
+        };
         println!("  {name:<8} {s:<8} {path}");
     };
     row("steam", STEAM_SCRIPT);

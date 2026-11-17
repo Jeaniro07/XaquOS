@@ -169,34 +169,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-auth-client"
-version = "0.3.0"
-dependencies = [
- "xaqu-auth-proto",
- "libc",
-]
-
-[[package]]
-name = "xaqu-auth-proto"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-settings-client"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-client",
- "xaqu-settings-proto",
- "libc",
-]
-
-[[package]]
-name = "xaqu-settings-proto"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-proto",
-]
-
-[[package]]
 name = "flate2"
 version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -379,9 +351,9 @@ version = "0.1.0"
 dependencies = [
  "compositor-desktop",
  "compositor-toolkit",
- "xaqu-settings-client",
  "tole",
  "tole-compiler",
+ "xaqu-settings-client",
 ]
 
 [[package]]
@@ -531,6 +503,34 @@ name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+
+[[package]]
+name = "xaqu-auth-client"
+version = "0.3.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-proto",
+]
+
+[[package]]
+name = "xaqu-auth-proto"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-settings-client"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-client",
+ "xaqu-settings-proto",
+]
+
+[[package]]
+name = "xaqu-settings-proto"
+version = "0.1.0"
+dependencies = [
+ "xaqu-auth-proto",
+]
 
 [[package]]
 name = "zlib-rs"

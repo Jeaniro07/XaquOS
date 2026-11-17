@@ -287,11 +287,11 @@ mod tests {
     #[test]
     fn typing_backspace_escape_and_enter() {
         let mut session = Session::new(true, 2000, 0, 0);
-        typed(&mut session, "ferrjx", 0);
-        assert_eq!(session.length(), 6);
+        typed(&mut session, "xajx", 0);
+        assert_eq!(session.length(), 4);
         let _ = tap(&mut session, 14, "BackSpace", "", 0);
         let _ = tap(&mut session, 14, "BackSpace", "", 0);
-        typed(&mut session, "ix", 0);
+        typed(&mut session, "qu", 0);
         assert_eq!(
             tap(&mut session, 28, "Return", "", 0),
             Keyed::Submit("xaqu".to_owned())

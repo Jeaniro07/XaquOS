@@ -1,0 +1,33 @@
+# xaqu-open, an app (docs/APPS.md): the desktop's opener for the files that
+# belong to a world -- a Linux program, a Windows one, an Android one, a
+# macOS one -- each run by the runtime that world is run by. Xaqu runs a
+# Linux program itself; the other worlds need what the user installs, and
+# /etc/xaqu/app-worlds.conf says where it is. Every desktop carries it
+# (xtask's compositor), so it is not in an image by default.
+
+[package]
+name = "xaqu-open"
+version = "0.1.0"
+description = "xaqu-open: opens a file in the world that owns it"
+license = "MIT"
+abi = "linux"
+arches = ["x86_64", "aarch64", "armv7a"]
+depends = []
+
+[[package.files]]
+from = "xaqu-open"
+to = "bin/xaqu-open"
+mode = "755"
+
+[build]
+kind = "cargo"
+
+[image]
+default = false
+
+[check]
+host-tests = true
+
+[[smoke]]
+run = "xaqu-open --worlds"
+expect = "windows: none"
