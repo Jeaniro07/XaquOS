@@ -1,25 +1,23 @@
 {
   "configuration": {
-    "accel": "kvm",
+    "accel": null,
     "against_sel4": false,
-    "alternate": "main",
+    "alternate": "31d8aa40c",
     "command": "bench-ipc",
     "init": "busybox.static",
-    "kernel_options": [
-      "xaqu.fastpath=on"
-    ],
+    "kernel_options": [],
     "memory_mib": 512,
     "mitigations": "on",
     "pin": "11",
-    "release": true,
-    "rounds": 6,
+    "release": false,
+    "rounds": 5,
     "smp": 1
   },
-  "configuration_hash": "9c3d175dd88cf16dfd5700e8bf4ee43ea48985994a762c71289d0b3ba358880d",
+  "configuration_hash": "9543e183fe136e6814227c91a941c9a725eda24cdada37b32d835e5728d0bb39",
   "cpu_hash": "2291b09857f1b58dde3edb099203527542da83284d33e3809c718f6c8c2f493c",
   "xaqu": {
-    "commit": "c8977bf4847e0a8fa341e61088736532a9b35a15",
-    "dirty": false
+    "commit": "9196e4635b2fc052d9c0f9f10dbf194c19247e9b",
+    "dirty": true
   },
   "figure": {
     "line": "domain-call",
@@ -231,7 +229,7 @@
     }
   },
   "host_hash": "8f71a3ca9c7fe85216ffdbd1e2de79d39fabaaf984f67528c2cde7b26896264b",
-  "hw_hash": "6bc2646211ca995c223a306c099f81deb592a85eb8072a48b283a26dc5411fb1",
+  "hw_hash": "a32fd8234b3e619cf21dcfb8b9b2b2554902bc796d8ca39c4721b89322f93669",
   "kernel_view": [
     "cpu ring 0 kept out of user pages: SMEP on, SMAP on",
     "cpu descriptor table addresses kept from ring 3: UMIP on",
@@ -240,232 +238,195 @@
     "cpu speculation defences: clamped indices, SWAPGS fence, entry registers cleared, AutoIBRS, STIBP, SSBD, predictor barrier on switch, RSB fill on switch, ERAPS empties the RSB on switch",
     "cpu speculation exposure: Spectre v2 into ring 0 covered; between programs covered; store bypass covered; Meltdown not affected (AMD)"
   ],
-  "log": "~/.local/share/xaqu/logs/po9-obj/c1-record.log",
+  "log": null,
   "path": "ipc-round-trip",
   "reference": {
-    "commit": "4c9c078cc2363c434c5f66149561429b29ec54c7",
+    "commit": "31d8aa40c00864116197623ac5fcc195780e9f01",
     "kind": "xaqu tree",
-    "ref": "main",
+    "ref": "31d8aa40c",
     "runs": [
       {
-        "host": "host load 2.02 before, 1.66 after, SMT sibling cpu23 0% busy",
+        "host": "host load 1.31 before, 1.08 after, SMT sibling cpu23 0% busy",
         "stats": {
           "call": {
-            "mean": 4175,
-            "min": 3985,
+            "mean": 17214,
+            "min": 15111,
+            "n": 20000,
+            "p50": 16550,
+            "p90": 16630,
+            "p99": 31092
+          },
+          "domain-call": {
+            "mean": 4302,
+            "min": 3955,
+            "n": 20000,
+            "p50": 4005,
+            "p90": 4015,
+            "p99": 16929
+          },
+          "floor": {
+            "mean": 1052,
+            "min": 968,
+            "n": 20000,
+            "p50": 988,
+            "p90": 998,
+            "p99": 1008
+          },
+          "trip": {
+            "mean": 37493,
+            "min": 28266,
+            "n": 20000,
+            "p50": 38313,
+            "p90": 42998,
+            "p99": 63493
+          }
+        }
+      },
+      {
+        "host": "host load 0.99 before, 0.85 after, SMT sibling cpu23 0% busy",
+        "stats": {
+          "call": {
+            "mean": 17266,
+            "min": 15181,
+            "n": 20000,
+            "p50": 16659,
+            "p90": 16709,
+            "p99": 31102
+          },
+          "domain-call": {
+            "mean": 4306,
+            "min": 3965,
+            "n": 20000,
+            "p50": 4015,
+            "p90": 4035,
+            "p99": 16779
+          },
+          "floor": {
+            "mean": 1038,
+            "min": 968,
+            "n": 20000,
+            "p50": 988,
+            "p90": 998,
+            "p99": 1008
+          },
+          "trip": {
+            "mean": 35553,
+            "min": 28176,
+            "n": 20000,
+            "p50": 31432,
+            "p90": 39272,
+            "p99": 59178
+          }
+        }
+      },
+      {
+        "host": "host load 0.78 before, 0.56 after, SMT sibling cpu23 0% busy",
+        "stats": {
+          "call": {
+            "mean": 17225,
+            "min": 15151,
+            "n": 20000,
+            "p50": 16610,
+            "p90": 16649,
+            "p99": 30763
+          },
+          "domain-call": {
+            "mean": 4309,
+            "min": 3975,
             "n": 20000,
             "p50": 4025,
             "p90": 4035,
-            "p99": 11056
-          },
-          "domain-call": {
-            "mean": 1675,
-            "min": 1518,
-            "n": 20000,
-            "p50": 1548,
-            "p90": 1797,
-            "p99": 1997
+            "p99": 17259
           },
           "floor": {
-            "mean": 405,
-            "min": 389,
+            "mean": 1040,
+            "min": 968,
             "n": 20000,
-            "p50": 389,
-            "p90": 399,
-            "p99": 399
+            "p50": 988,
+            "p90": 998,
+            "p99": 1008
           },
           "trip": {
-            "mean": 15474,
-            "min": 13533,
+            "mean": 38136,
+            "min": 28296,
             "n": 20000,
-            "p50": 15031,
-            "p90": 15301,
-            "p99": 25818
+            "p50": 38313,
+            "p90": 43777,
+            "p99": 62784
           }
         }
       },
       {
-        "host": "host load 1.36 before, 1.20 after, SMT sibling cpu23 0% busy",
+        "host": "host load 0.59 before, 0.62 after, SMT sibling cpu23 0% busy",
         "stats": {
           "call": {
-            "mean": 3351,
-            "min": 3226,
+            "mean": 17140,
+            "min": 15121,
             "n": 20000,
-            "p50": 3266,
-            "p90": 3276,
-            "p99": 4884
+            "p50": 16520,
+            "p90": 16570,
+            "p99": 30683
           },
           "domain-call": {
-            "mean": 1287,
-            "min": 1228,
+            "mean": 4266,
+            "min": 3945,
             "n": 20000,
-            "p50": 1248,
-            "p90": 1258,
-            "p99": 1308
+            "p50": 3995,
+            "p90": 4015,
+            "p99": 16090
           },
           "floor": {
-            "mean": 324,
-            "min": 309,
+            "mean": 1043,
+            "min": 968,
             "n": 20000,
-            "p50": 319,
-            "p90": 319,
-            "p99": 319
+            "p50": 988,
+            "p90": 998,
+            "p99": 1008
           },
           "trip": {
-            "mean": 12345,
-            "min": 10886,
+            "mean": 38015,
+            "min": 28286,
             "n": 20000,
-            "p50": 12045,
-            "p90": 12265,
-            "p99": 20025
+            "p50": 38194,
+            "p90": 43108,
+            "p99": 62554
           }
         }
       },
       {
-        "host": "host load 1.02 before, 1.01 after, SMT sibling cpu23 0% busy",
+        "host": "host load 0.70 before, 0.63 after, SMT sibling cpu23 0% busy",
         "stats": {
           "call": {
-            "mean": 4127,
-            "min": 3975,
+            "mean": 17276,
+            "min": 15231,
             "n": 20000,
-            "p50": 4035,
-            "p90": 4045,
-            "p99": 4544
+            "p50": 16649,
+            "p90": 16699,
+            "p99": 30743
           },
           "domain-call": {
-            "mean": 1591,
-            "min": 1508,
-            "n": 20000,
-            "p50": 1538,
-            "p90": 1548,
-            "p99": 1697
-          },
-          "floor": {
-            "mean": 403,
-            "min": 389,
-            "n": 20000,
-            "p50": 389,
-            "p90": 399,
-            "p99": 399
-          },
-          "trip": {
-            "mean": 15294,
-            "min": 13433,
-            "n": 20000,
-            "p50": 14902,
-            "p90": 15171,
-            "p99": 25659
-          }
-        }
-      },
-      {
-        "host": "host load 0.93 before, 1.10 after, SMT sibling cpu23 0% busy",
-        "stats": {
-          "call": {
-            "mean": 4149,
-            "min": 3985,
-            "n": 20000,
-            "p50": 4025,
-            "p90": 4045,
-            "p99": 10577
-          },
-          "domain-call": {
-            "mean": 1597,
-            "min": 1528,
-            "n": 20000,
-            "p50": 1548,
-            "p90": 1558,
-            "p99": 1648
-          },
-          "floor": {
-            "mean": 406,
-            "min": 389,
-            "n": 20000,
-            "p50": 389,
-            "p90": 399,
-            "p99": 399
-          },
-          "trip": {
-            "mean": 15389,
-            "min": 13503,
-            "n": 20000,
-            "p50": 14962,
-            "p90": 15231,
-            "p99": 25539
-          }
-        }
-      },
-      {
-        "host": "host load 1.08 before, 0.99 after, SMT sibling cpu23 0% busy",
-        "stats": {
-          "call": {
-            "mean": 4147,
+            "mean": 4341,
             "min": 3995,
             "n": 20000,
-            "p50": 4045,
+            "p50": 4035,
             "p90": 4055,
-            "p99": 10407
-          },
-          "domain-call": {
-            "mean": 1592,
-            "min": 1518,
-            "n": 20000,
-            "p50": 1538,
-            "p90": 1558,
-            "p99": 1608
+            "p99": 17758
           },
           "floor": {
-            "mean": 403,
-            "min": 389,
+            "mean": 1035,
+            "min": 968,
             "n": 20000,
-            "p50": 389,
-            "p90": 399,
-            "p99": 399
+            "p50": 988,
+            "p90": 998,
+            "p99": 1008
           },
           "trip": {
-            "mean": 15362,
-            "min": 13513,
+            "mean": 38451,
+            "min": 28625,
             "n": 20000,
-            "p50": 14972,
-            "p90": 15231,
-            "p99": 25868
-          }
-        }
-      },
-      {
-        "host": "host load 0.85 before, 0.87 after, SMT sibling cpu23 0% busy",
-        "stats": {
-          "call": {
-            "mean": 4145,
-            "min": 3955,
-            "n": 20000,
-            "p50": 4025,
-            "p90": 4045,
-            "p99": 10996
-          },
-          "domain-call": {
-            "mean": 1601,
-            "min": 1508,
-            "n": 20000,
-            "p50": 1548,
-            "p90": 1558,
-            "p99": 1628
-          },
-          "floor": {
-            "mean": 405,
-            "min": 389,
-            "n": 20000,
-            "p50": 389,
-            "p90": 399,
-            "p99": 399
-          },
-          "trip": {
-            "mean": 15446,
-            "min": 13363,
-            "n": 20000,
-            "p50": 15021,
-            "p90": 15291,
-            "p99": 25339
+            "p50": 38583,
+            "p90": 45275,
+            "p99": 62494
           }
         }
       }
@@ -473,238 +434,201 @@
   },
   "runs": [
     {
-      "host": "host load 2.30 before, 2.02 after, SMT sibling cpu23 0% busy",
+      "host": "host load 1.52 before, 1.31 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 3911,
-          "min": 3755,
+          "mean": 17240,
+          "min": 15221,
           "n": 20000,
-          "p50": 3785,
-          "p90": 3805,
-          "p99": 10597
+          "p50": 16530,
+          "p90": 17159,
+          "p99": 30842
         },
         "domain-call": {
-          "mean": 1575,
-          "min": 1488,
+          "mean": 4333,
+          "min": 3965,
           "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1687
+          "p50": 4025,
+          "p90": 4045,
+          "p99": 17638
         },
         "floor": {
-          "mean": 404,
-          "min": 389,
+          "mean": 1034,
+          "min": 968,
           "n": 20000,
-          "p50": 389,
-          "p90": 399,
-          "p99": 399
+          "p50": 978,
+          "p90": 988,
+          "p99": 1038
         },
         "trip": {
-          "mean": 15513,
-          "min": 13423,
+          "mean": 40209,
+          "min": 32151,
           "n": 20000,
-          "p50": 15031,
-          "p90": 15291,
-          "p99": 26008
+          "p50": 38583,
+          "p90": 47063,
+          "p99": 65101
         }
       }
     },
     {
-      "host": "host load 1.60 before, 1.36 after, SMT sibling cpu23 0% busy",
+      "host": "host load 1.08 before, 0.99 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 3891,
-          "min": 3735,
+          "mean": 17135,
+          "min": 15051,
           "n": 20000,
-          "p50": 3775,
-          "p90": 3785,
-          "p99": 10417
+          "p50": 16520,
+          "p90": 16580,
+          "p99": 30882
         },
         "domain-call": {
-          "mean": 1569,
-          "min": 1488,
+          "mean": 4311,
+          "min": 3965,
           "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1628
+          "p50": 4015,
+          "p90": 4045,
+          "p99": 17089
         },
         "floor": {
-          "mean": 406,
-          "min": 389,
+          "mean": 1038,
+          "min": 968,
           "n": 20000,
-          "p50": 389,
-          "p90": 399,
-          "p99": 399
+          "p50": 978,
+          "p90": 988,
+          "p99": 998
         },
         "trip": {
-          "mean": 15414,
-          "min": 13533,
+          "mean": 38456,
+          "min": 28156,
           "n": 20000,
-          "p50": 14922,
-          "p90": 15181,
-          "p99": 26088
+          "p50": 38303,
+          "p90": 45035,
+          "p99": 63893
         }
       }
     },
     {
-      "host": "host load 1.20 before, 1.02 after, SMT sibling cpu23 0% busy",
+      "host": "host load 0.85 before, 0.78 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 3882,
-          "min": 3745,
+          "mean": 16968,
+          "min": 14972,
           "n": 20000,
-          "p50": 3775,
-          "p90": 3785,
-          "p99": 9628
+          "p50": 16360,
+          "p90": 16420,
+          "p99": 30663
         },
         "domain-call": {
-          "mean": 1552,
-          "min": 1488,
+          "mean": 4292,
+          "min": 3965,
           "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1558
+          "p50": 4015,
+          "p90": 4025,
+          "p99": 16899
         },
         "floor": {
-          "mean": 402,
-          "min": 389,
+          "mean": 1036,
+          "min": 968,
           "n": 20000,
-          "p50": 389,
-          "p90": 399,
-          "p99": 419
+          "p50": 978,
+          "p90": 988,
+          "p99": 998
         },
         "trip": {
-          "mean": 15543,
-          "min": 13593,
+          "mean": 38256,
+          "min": 28246,
           "n": 20000,
-          "p50": 15071,
-          "p90": 15331,
-          "p99": 25189
+          "p50": 38054,
+          "p90": 44686,
+          "p99": 64981
         }
       }
     },
     {
-      "host": "host load 1.01 before, 0.93 after, SMT sibling cpu23 0% busy",
+      "host": "host load 0.56 before, 0.59 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 3885,
-          "min": 3745,
+          "mean": 17122,
+          "min": 15151,
           "n": 20000,
-          "p50": 3775,
-          "p90": 3785,
-          "p99": 10527
+          "p50": 16510,
+          "p90": 16570,
+          "p99": 30523
         },
         "domain-call": {
-          "mean": 1565,
-          "min": 1488,
+          "mean": 4354,
+          "min": 3985,
           "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1638
+          "p50": 4035,
+          "p90": 4055,
+          "p99": 17598
         },
         "floor": {
-          "mean": 402,
-          "min": 389,
+          "mean": 1038,
+          "min": 968,
           "n": 20000,
-          "p50": 389,
-          "p90": 399,
-          "p99": 399
+          "p50": 978,
+          "p90": 988,
+          "p99": 998
         },
         "trip": {
-          "mean": 15511,
-          "min": 13563,
+          "mean": 38573,
+          "min": 29095,
           "n": 20000,
-          "p50": 15021,
-          "p90": 15281,
-          "p99": 25289
+          "p50": 38313,
+          "p90": 45265,
+          "p99": 63793
         }
       }
     },
     {
-      "host": "host load 1.10 before, 1.09 after, SMT sibling cpu23 0% busy",
+      "host": "host load 0.62 before, 0.70 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 3881,
-          "min": 3715,
+          "mean": 17132,
+          "min": 15151,
           "n": 20000,
-          "p50": 3765,
-          "p90": 3785,
-          "p99": 10627
+          "p50": 16500,
+          "p90": 16560,
+          "p99": 30653
         },
         "domain-call": {
-          "mean": 1567,
-          "min": 1478,
+          "mean": 4272,
+          "min": 3955,
           "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1628
+          "p50": 4005,
+          "p90": 4015,
+          "p99": 16180
         },
         "floor": {
-          "mean": 353,
-          "min": 339,
+          "mean": 1032,
+          "min": 968,
           "n": 20000,
-          "p50": 349,
-          "p90": 349,
-          "p99": 349
+          "p50": 978,
+          "p90": 988,
+          "p99": 998
         },
         "trip": {
-          "mean": 15250,
-          "min": 12355,
+          "mean": 38561,
+          "min": 28046,
           "n": 20000,
-          "p50": 15031,
-          "p90": 15291,
-          "p99": 25539
-        }
-      }
-    },
-    {
-      "host": "host load 0.99 before, 0.83 after, SMT sibling cpu23 0% busy",
-      "stats": {
-        "call": {
-          "mean": 3902,
-          "min": 3735,
-          "n": 20000,
-          "p50": 3765,
-          "p90": 3785,
-          "p99": 10826
-        },
-        "domain-call": {
-          "mean": 1573,
-          "min": 1488,
-          "n": 20000,
-          "p50": 1508,
-          "p90": 1518,
-          "p99": 1667
-        },
-        "floor": {
-          "mean": 402,
-          "min": 389,
-          "n": 20000,
-          "p50": 389,
-          "p90": 399,
-          "p99": 399
-        },
-        "trip": {
-          "mean": 15526,
-          "min": 13573,
-          "n": 20000,
-          "p50": 15051,
-          "p90": 15301,
-          "p99": 25349
+          "p50": 38423,
+          "p90": 45465,
+          "p99": 61655
         }
       }
     }
   ],
   "schema": "xaqu-hotpath-result/1",
   "summary": {
-    "p50_ns_median": 1508,
+    "p50_ns_median": 4015,
     "ratio_milli": {
-      "least": 974,
-      "median": 980,
-      "most": 1208
+      "least": 993,
+      "median": 1000,
+      "most": 1010
     },
-    "reference_p50_ns_median": 1548,
-    "rounds": 6
+    "reference_p50_ns_median": 4015,
+    "rounds": 5
   },
-  "taken": "2026-10-07T10:03:59Z"
+  "taken": "2026-10-16T11:14:33Z"
 }

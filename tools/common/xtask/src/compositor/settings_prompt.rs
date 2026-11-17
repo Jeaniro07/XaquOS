@@ -332,8 +332,7 @@ fn drive(
     }
     type_in(&mut qmp, "wrong")?;
     let s1 = ended(watching, from, "s1")?;
-    if !has(&s1, "settingsctl: refused: authentication-failed")
-        || !has(&s1, "end names xaqu xaqu")
+    if !has(&s1, "settingsctl: refused: authentication-failed") || !has(&s1, "end names xaqu xaqu")
     {
         failures.push(format!(
             "a wrong password in the prompt was not refused: {s1:?}"

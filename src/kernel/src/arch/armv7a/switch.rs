@@ -95,15 +95,15 @@ pub(crate) unsafe fn prepare_stack(
     // argument, because the trampoline named by the last word is the only
     // code that runs before Rust does and has nowhere else to read them from.
     let frame: [u32; 10] = [
-        0,                                              // the alignment padding word
-        entry as usize as u32,                          // r4
-        argument as u32,                                // r5
-        0,                                              // r6
-        0,                                              // r7
-        0,                                              // r8
-        0,                                              // r9
-        0,                                              // r10
-        0,                                              // r11
+        0,                                            // the alignment padding word
+        entry as usize as u32,                        // r4
+        argument as u32,                              // r5
+        0,                                            // r6
+        0,                                            // r7
+        0,                                            // r8
+        0,                                            // r9
+        0,                                            // r10
+        0,                                            // r11
         xaqu_task_entry as *const () as usize as u32, // lr, popped into pc
     ];
 

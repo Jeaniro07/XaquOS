@@ -66,16 +66,10 @@ fn the_word_is_found_among_the_others() {
         choice::wanted(b"xaqu.nvidia=03:00.0", WORD),
         Wanted::At(RTX_3090)
     );
-    assert_eq!(
-        choice::wanted(b"xaqu.nvidia=3090", WORD),
-        Wanted::Unparsed
-    );
+    assert_eq!(choice::wanted(b"xaqu.nvidia=3090", WORD), Wanted::Unparsed);
     assert_eq!(choice::wanted(b"xaqu.nvidia=", WORD), Wanted::Unparsed);
     // A longer word that only starts the same is not it.
-    assert_eq!(
-        choice::wanted(b"xaqu.nvidiax=01:00.0", WORD),
-        Wanted::First
-    );
+    assert_eq!(choice::wanted(b"xaqu.nvidiax=01:00.0", WORD), Wanted::First);
     // The first word counts.
     assert_eq!(
         choice::wanted(b"xaqu.nvidia=01:00.0 xaqu.nvidia=03:00.0", WORD),

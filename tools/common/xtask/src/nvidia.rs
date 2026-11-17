@@ -1121,13 +1121,8 @@ pub(crate) fn run_nvidia(args: &Args) -> Result<()> {
     let archive = initramfs::build(None, &natives, Some(&shell_bytes), &files)?;
     // The boot's self-checks are `test-boot`'s evidence, not this domain's;
     // two vCPUs on a loaded host make the timing ones flake here.
-    let image = fat::write_image_with(
-        arch,
-        &loader,
-        &kernel,
-        &archive,
-        Some("xaqu.checks=skip\n"),
-    )?;
+    let image =
+        fat::write_image_with(arch, &loader, &kernel, &archive, Some("xaqu.checks=skip\n"))?;
     place(&image, &dir, "xaqu.img")?;
     place(&test_disk::ensure()?, &dir, "pattern.img")?;
     place(&btrfs_disk::ensure()?, &dir, "btrfs.img")?;
@@ -1668,8 +1663,7 @@ nvrm: quiesce: done in 1840 ms
     #[cfg(unix)]
     #[test]
     fn a_merge_keeps_the_nvidia_volumes_own_files() {
-        let base =
-            std::env::temp_dir().join(format!("xaqu-merge-keeping-{}", std::process::id()));
+        let base = std::env::temp_dir().join(format!("xaqu-merge-keeping-{}", std::process::id()));
         let (tree, from) = (base.join("tree"), base.join("from"));
         let lib = |root: &Path| root.join("usr/lib/x86_64-linux-gnu");
         for root in [&tree, &from] {

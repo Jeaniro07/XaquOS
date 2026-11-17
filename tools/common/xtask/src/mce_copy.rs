@@ -58,9 +58,7 @@ pub(crate) const TASKS: &[Task] = &[
     Task {
         name: "test-mce-copy-off",
         help_at: 236,
-        help: &[
-            "test-mce-copy-off  test-mce-copy with xaqu.mce.recover=off: the kernel must stop",
-        ],
+        help: &["test-mce-copy-off  test-mce-copy with xaqu.mce.recover=off: the kernel must stop"],
         run: |_, args| test_copy(args, Mode::RecoverOff),
     },
     Task {

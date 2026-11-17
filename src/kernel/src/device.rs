@@ -2654,9 +2654,7 @@ impl DeviceNode {
         rights: xaqu_native_abi::rights::Rights,
     ) -> xaqu_native_abi::rights::Rights {
         if self.needs_certified() {
-            xaqu_native_abi::rights::Rights(
-                rights.0 & !xaqu_native_abi::rights::Rights::TRANSFER.0,
-            )
+            xaqu_native_abi::rights::Rights(rights.0 & !xaqu_native_abi::rights::Rights::TRANSFER.0)
         } else {
             rights
         }

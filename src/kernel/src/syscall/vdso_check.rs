@@ -27,11 +27,7 @@ const PROGRAM_STATUS: i32 = 120;
 /// Where the program calls each function, in bytes from the image's start:
 /// the slots the architecture's code puts them in.
 const SLOTS: [(&str, &str, usize); 3] = [
-    (
-        "__vdso_clock_gettime",
-        "clock_gettime",
-        xaqu_vdso::CODE_AT,
-    ),
+    ("__vdso_clock_gettime", "clock_gettime", xaqu_vdso::CODE_AT),
     (
         "__vdso_gettimeofday",
         "gettimeofday",

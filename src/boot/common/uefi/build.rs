@@ -154,9 +154,7 @@ fn trust_policy() -> Result<(), Box<dyn Error>> {
         }
     }
     let (Some(profile), Some(claimed), Some(families)) = (profile, claimed, families) else {
-        return Err(
-            format!("XAQU_SLOT_BUILD {line:?} lacks profile, claimed or families").into(),
-        );
+        return Err(format!("XAQU_SLOT_BUILD {line:?} lacks profile, claimed or families").into());
     };
     let ours: Vec<String> = families
         .iter()

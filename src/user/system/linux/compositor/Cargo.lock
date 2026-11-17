@@ -152,8 +152,8 @@ version = "0.1.0"
 dependencies = [
  "compositor-seat",
  "compositor-virgl",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -161,8 +161,8 @@ name = "compositor-evecho"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -326,12 +326,12 @@ dependencies = [
  "compositor-seat",
  "compositor-socket",
  "compositor-wire",
+ "libc",
  "xaqu-auth-proto",
  "xaqu-lode-core",
  "xaqu-native",
  "xaqu-native-abi",
  "xaqu-svc-proto",
- "libc",
 ]
 
 [[package]]
@@ -374,8 +374,8 @@ name = "compositor-tone"
 version = "0.1.0"
 dependencies = [
  "compositor-evecho",
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -400,8 +400,8 @@ dependencies = [
  "compositor-protocol",
  "compositor-socket",
  "compositor-wire",
- "xaqu-vdagent",
  "libc",
+ "xaqu-vdagent",
 ]
 
 [[package]]
@@ -505,64 +505,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-auth-proto"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-fbtext"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-linux-abi"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-lode-capture"
-version = "0.3.0"
-
-[[package]]
-name = "xaqu-lode-core"
-version = "0.3.0"
-dependencies = [
- "xaqu-slots",
- "ruzstd",
-]
-
-[[package]]
-name = "xaqu-native"
-version = "0.3.0"
-dependencies = [
- "xaqu-linux-abi",
- "xaqu-native-abi",
-]
-
-[[package]]
-name = "xaqu-native-abi"
-version = "0.1.0"
-dependencies = [
- "xaqu-linux-abi",
-]
-
-[[package]]
-name = "xaqu-sha256"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-slots"
-version = "0.3.0"
-dependencies = [
- "xaqu-sha256",
-]
-
-[[package]]
-name = "xaqu-svc-proto"
-version = "0.3.0"
-
-[[package]]
-name = "xaqu-vdagent"
-version = "0.3.0"
-
-[[package]]
 name = "find-msvc-tools"
 version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -631,11 +573,11 @@ dependencies = [
  "compositor-virgl",
  "compositor-wire",
  "compositor-xkb",
+ "libc",
  "xaqu-fbtext",
  "xaqu-linux-abi",
  "xaqu-lode-capture",
  "xaqu-svc-proto",
- "libc",
 ]
 
 [[package]]
@@ -1107,6 +1049,64 @@ name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+
+[[package]]
+name = "xaqu-auth-proto"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-fbtext"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-lode-capture"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-lode-core"
+version = "0.3.0"
+dependencies = [
+ "ruzstd",
+ "xaqu-slots",
+]
+
+[[package]]
+name = "xaqu-native"
+version = "0.3.0"
+dependencies = [
+ "xaqu-linux-abi",
+ "xaqu-native-abi",
+]
+
+[[package]]
+name = "xaqu-native-abi"
+version = "0.1.0"
+dependencies = [
+ "xaqu-linux-abi",
+]
+
+[[package]]
+name = "xaqu-sha256"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-slots"
+version = "0.3.0"
+dependencies = [
+ "xaqu-sha256",
+]
+
+[[package]]
+name = "xaqu-svc-proto"
+version = "0.3.0"
+
+[[package]]
+name = "xaqu-vdagent"
+version = "0.3.0"
 
 [[package]]
 name = "zerocopy"

@@ -60,8 +60,8 @@ mod tests;
 
 pub use call::{Raw, Syscall};
 pub use error::Error;
+pub use handle::{Deadline, Object, OwnedHandle};
 pub use xaqu_native_abi::handle::Handle;
 pub use xaqu_native_abi::rights::{Requested, Rights};
 pub use xaqu_native_abi::signals::Signals;
 pub use xaqu_native_abi::types::{IoMappingSpec, PortPacket};
-pub use handle::{Deadline, Object, OwnedHandle};

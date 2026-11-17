@@ -827,13 +827,7 @@ fn reads_the_interpreter_path_without_its_nul() {
     let image = Builder::new()
         .elf_type(ET_DYN)
         .segment(PT_LOAD, PF_R | PF_X, 0x1000, vec![0x90; 0x100], 0)
-        .segment(
-            PT_INTERP,
-            PF_R,
-            0x2000,
-            b"/lib/ld-xaqu.so.1\0".to_vec(),
-            0,
-        )
+        .segment(PT_INTERP, PF_R, 0x2000, b"/lib/ld-xaqu.so.1\0".to_vec(), 0)
         .build();
     let elf = Elf::parse(&image).unwrap();
     assert_eq!(elf.interpreter(), Some(Ok(&b"/lib/ld-xaqu.so.1"[..])));

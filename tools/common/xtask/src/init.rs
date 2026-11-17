@@ -3086,13 +3086,9 @@ fn judge_units(after: &[String]) -> std::result::Result<(), String> {
         .iter()
         .map(|line| line.trim())
         .filter(|line| {
-            [
-                "/lib/xaqu/units/",
-                "/etc/xaqu/units/",
-                "/run/xaqu/units/",
-            ]
-            .iter()
-            .any(|directory| line.starts_with(&format!("init     {directory}")))
+            ["/lib/xaqu/units/", "/etc/xaqu/units/", "/run/xaqu/units/"]
+                .iter()
+                .any(|directory| line.starts_with(&format!("init     {directory}")))
         })
         .collect();
     if warned.is_empty() {
@@ -3441,9 +3437,8 @@ mod tests {
     fn a_warning_about_a_unit_file_fails() {
         let clean = lines(&["  init     booting default.target"]);
         assert_eq!(judge_units(&clean), Ok(()));
-        let warned = lines(&[
-            "  init     /etc/xaqu/units/getty@.service.d/test.conf:2: Failed to resolve",
-        ]);
+        let warned =
+            lines(&["  init     /etc/xaqu/units/getty@.service.d/test.conf:2: Failed to resolve"]);
         assert!(judge_units(&warned).unwrap_err().contains("test.conf"));
     }
 

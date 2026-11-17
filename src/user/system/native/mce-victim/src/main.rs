@@ -92,8 +92,8 @@ fn main(bootstrap: Bootstrap) -> i32 {
         return FAILED;
     };
     // SAFETY: no pointer argument; `getpid` reads nothing of ours.
-    let pid = unsafe { xaqu_rt::linux::call(xaqu_rt::linux::numbers::GETPID, [0; 6]) }
-        .unwrap_or(0) as u64;
+    let pid = unsafe { xaqu_rt::linux::call(xaqu_rt::linux::numbers::GETPID, [0; 6]) }.unwrap_or(0)
+        as u64;
     let words = at as *mut u64;
     for n in 0..PAGE / 8 {
         // SAFETY: `at` is a fresh read-write mapping of `PAGE` bytes this

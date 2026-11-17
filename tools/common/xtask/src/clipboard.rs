@@ -116,10 +116,8 @@ fn one(arch: Arch, args: &Args) -> Result<()> {
     // In the temporary directory: a Unix socket's path must fit in 108
     // bytes, which a worktree's build directory does not. Named by process
     // and architecture, so two gates at once do not meet.
-    let socket = std::env::temp_dir().join(format!(
-        "xaqu-clipboard-{}-{arch}.sock",
-        std::process::id()
-    ));
+    let socket =
+        std::env::temp_dir().join(format!("xaqu-clipboard-{}-{arch}.sock", std::process::id()));
     let _ = std::fs::remove_file(&socket);
     let listener = UnixListener::bind(&socket)
         .map_err(|error| Error::new(format!("binding {}: {error}", socket.display())))?;

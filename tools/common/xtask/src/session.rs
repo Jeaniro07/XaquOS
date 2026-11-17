@@ -563,13 +563,15 @@ mod tests {
                 .iter()
                 .any(|file| file.path == "etc/skel/.config/waybar/config.jsonc")
         );
-        assert!(ports.iter().any(
-            |file| file.path == "usr/share/xaqu/home/sebastian/.local/bin/hypr-launcher"
-        ));
         assert!(
-            ports.iter().any(
-                |file| file.path == "etc/xaqu/units/graphical.target.wants/data-home.service"
-            )
+            ports
+                .iter()
+                .any(|file| file.path == "usr/share/xaqu/home/sebastian/.local/bin/hypr-launcher")
+        );
+        assert!(
+            ports
+                .iter()
+                .any(|file| file.path == "etc/xaqu/units/graphical.target.wants/data-home.service")
         );
     }
     #[test]

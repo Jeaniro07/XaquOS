@@ -244,11 +244,7 @@ pub(crate) fn carried(arch: Arch, sabotage: Option<&str>) -> Result<Vec<File>> {
         if !writer && name.starts_with("settings.") {
             continue;
         }
-        files.push(file(
-            format!("lib/xaqu/auth/services/{name}"),
-            0o644,
-            bytes,
-        ));
+        files.push(file(format!("lib/xaqu/auth/services/{name}"), 0o644, bytes));
     }
     for (name, bytes) in shipped(UNITS)? {
         files.push(file(format!("lib/xaqu/units/{name}"), 0o644, bytes));
@@ -592,8 +588,7 @@ fn seeded(
 ) -> Result<()> {
     // The seed was imported, and authd became auth to answer.
     let status = run(at, "authctl status xaqu", "st")?;
-    if answer(&status, "authctl: xaqu:")
-        != Some("authctl: xaqu: a password is set; not throttled")
+    if answer(&status, "authctl: xaqu:") != Some("authctl: xaqu: a password is set; not throttled")
     {
         failures.push(format!(
             "authctl status xaqu did not find the seeded password: {status:?}"
@@ -622,9 +617,7 @@ fn wrong_and_unknown(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Resul
         "ok",
     )?;
     if answer(&right, "authctl: ") != Some(ACCEPTED) {
-        failures.push(format!(
-            "the seeded password did not open xaqu: {right:?}"
-        ));
+        failures.push(format!("the seeded password did not open xaqu: {right:?}"));
     }
     let wrong = run(
         at,
@@ -733,9 +726,7 @@ fn throttle(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> {
         ));
     }
     let reset = run(at, "authctl reset xaqu", "rs")?;
-    if answer(&reset, "authctl: xaqu:")
-        != Some("authctl: xaqu: a password is set; not throttled")
-    {
+    if answer(&reset, "authctl: xaqu:") != Some("authctl: xaqu: a password is set; not throttled") {
         failures.push(format!("root could not reset xaqu's throttle: {reset:?}"));
     }
     Ok(())

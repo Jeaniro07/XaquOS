@@ -16,7 +16,7 @@ use super::{
 fn cksum_matches_the_one_posix_specifies() {
     assert_eq!(cksum(b""), 4_294_967_295);
     assert_eq!(cksum(b"a"), 1_220_704_766);
-    assert_eq!(cksum(b"xaqu"), 216_309_028);
+    assert_eq!(cksum(b"xaqu"), 2_065_512_976);
     assert_eq!(cksum(b"The quick brown fox"), 2_672_498_166);
 }
 
@@ -42,10 +42,10 @@ fn a_request_line_gives_up_its_path() {
 
 #[test]
 fn a_name_is_read_out_of_its_labels() {
-    let query = b"\x06xaqu\x04test\x00rest";
+    let query = b"\x04xaqu\x04test\x00rest";
     let (name, after) = read_name(query, 0).unwrap();
     assert_eq!(name, "xaqu.test");
-    assert_eq!(after, 13);
+    assert_eq!(after, 11);
     // A label that runs off the end is not a name.
     assert_eq!(read_name(b"\x06fer", 0), None);
 }
@@ -56,7 +56,7 @@ fn a_name_is_read_out_of_its_labels() {
 #[test]
 fn the_stub_answers_the_name_it_knows_and_nothing_else() {
     let mut query = vec![0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    query.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x01\x00\x01");
+    query.extend_from_slice(b"\x04xaqu\x04test\x00\x00\x01\x00\x01");
     let mut out = Vec::new();
     assert!(answer_query(&query, &mut out));
     assert_eq!(out.get(..2), Some([0x12, 0x34].as_slice()));
@@ -75,7 +75,7 @@ fn the_stub_answers_the_name_it_knows_and_nothing_else() {
     // NXDOMAIN either, because the name exists. `getaddrinfo` asks A and AAAA
     // together and takes NXDOMAIN to either as the name not existing at all.
     let mut quad_a = vec![0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    quad_a.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x1C\x00\x01");
+    quad_a.extend_from_slice(b"\x04xaqu\x04test\x00\x00\x1C\x00\x01");
     out.clear();
     assert!(answer_query(&quad_a, &mut out));
     assert_eq!(out.get(6..8), Some([0x00, 0x00].as_slice()));
@@ -111,7 +111,7 @@ fn the_stubs_serve_what_the_commands_expect() {
         .set_read_timeout(Some(Duration::from_secs(5)))
         .unwrap();
     let mut query = vec![0xAB, 0xCD, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
-    query.extend_from_slice(b"\x06xaqu\x04test\x00\x00\x01\x00\x01");
+    query.extend_from_slice(b"\x04xaqu\x04test\x00\x00\x01\x00\x01");
     let _ = asking.send_to(&query, servers.dns()).unwrap();
     let mut answer = [0_u8; 512];
     let (read, _) = asking.recv_from(&mut answer).unwrap();

@@ -453,11 +453,7 @@ fn case_n3(gate: &Gate<'_>, loader: &[u8]) -> Result<()> {
 /// R1: no slot starts, and a signed RESCUE.SLT does.
 fn case_r1(gate: &Gate<'_>, loader: &[u8]) -> Result<()> {
     let slots = gate.slots;
-    let bench = gate.bench(
-        loader,
-        &[("XAQU/RESCUE.SLT", &slots.rescue)],
-        "rescue.img",
-    )?;
+    let bench = gate.bench(loader, &[("XAQU/RESCUE.SLT", &slots.rescue)], "rescue.img")?;
     let (panicked, lines) = gate.boot(
         &bench,
         "R1, both slots refused, a signed rescue image",

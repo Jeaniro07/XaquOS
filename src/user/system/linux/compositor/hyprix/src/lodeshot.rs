@@ -192,15 +192,13 @@ impl Provider {
         let message = match picture {
             Ok((width, height, stride, pixels)) => match qoi::encode(width, height, stride, pixels)
             {
-                Some(bytes) if bytes.len() < xaqu_lode_capture::FRAME_MAX - 64 => {
-                    Message::Image {
-                        request: request.request,
-                        format: FORMAT_QOI,
-                        width,
-                        height,
-                        bytes,
-                    }
-                }
+                Some(bytes) if bytes.len() < xaqu_lode_capture::FRAME_MAX - 64 => Message::Image {
+                    request: request.request,
+                    format: FORMAT_QOI,
+                    width,
+                    height,
+                    bytes,
+                },
                 _ => Message::Declined {
                     request: request.request,
                     why: "the screen did not encode".to_owned(),

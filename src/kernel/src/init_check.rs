@@ -92,10 +92,7 @@ pub fn check() -> Result<CheckReport, &'static str> {
             1,
         ),
         (
-            &[
-                made_up(b".xaqu/init/other", true, false, 1, b"x"),
-                program,
-            ],
+            &[made_up(b".xaqu/init/other", true, false, 1, b"x"), program],
             b"P",
             b"",
             b"",

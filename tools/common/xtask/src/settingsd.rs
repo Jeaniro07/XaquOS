@@ -601,11 +601,7 @@ fn clock_and_zone(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<(
     }
     let zone = run(
         at,
-        &as_user(
-            "xaqu",
-            Some(XAQU_PASSWORD),
-            "set-timezone Europe/Berlin",
-        ),
+        &as_user("xaqu", Some(XAQU_PASSWORD), "set-timezone Europe/Berlin"),
         "z1",
     )?;
     let link = run(
@@ -784,11 +780,7 @@ fn no_password(at: &mut Watching<'_>, failures: &mut Vec<String>) -> Result<()> 
             "Methods=none for settings.hostname let guest past wheel: {refused:?}"
         ));
     }
-    let other = run(
-        at,
-        "echo 'not it' | authctl try gate-mechanism xaqu",
-        "n5",
-    )?;
+    let other = run(at, "echo 'not it' | authctl try gate-mechanism xaqu", "n5")?;
     let asked = answer(&other, "authctl: ").is_some_and(|line| line.starts_with("authctl: failed"));
     if !asked {
         failures.push(format!(
@@ -844,7 +836,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    use super::{XAQU_PASSWORD, GUEST_PASSWORD, NO_PASSWORD, WRONG_PASSWORD, as_user};
+    use super::{GUEST_PASSWORD, NO_PASSWORD, WRONG_PASSWORD, XAQU_PASSWORD, as_user};
 
     /// Each password is typed inside single quotes inside double ones.
     #[test]

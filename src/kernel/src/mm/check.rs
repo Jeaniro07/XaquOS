@@ -952,8 +952,8 @@ fn fresh_free_frame() -> Result<super::Frame, &'static str> {
 ///
 /// Verifies: L.mm.101, L.mm.102, L.mm.104, L.mm.105
 pub fn check_scrubber(view: &BootView<'_>, memory: mm::scrub::Memory) -> Result<(), &'static str> {
-    use xaqu_frame::State;
     use mm::scrub;
+    use xaqu_frame::State;
     let verdict = scrub::verdict(view, memory);
     if !verdict.runs() {
         println!(
@@ -988,8 +988,8 @@ pub fn check_scrubber(view: &BootView<'_>, memory: mm::scrub::Memory) -> Result<
 /// [`check_scrubber`]'s cases; the two frames retired, for the caller to
 /// free once forgotten.
 fn scrubber_cases() -> Result<(super::Frame, super::Frame), &'static str> {
-    use xaqu_frame::State;
     use mm::scrub;
+    use xaqu_frame::State;
     let blocks = || super::with_frames(|frames| frames.free_blocks());
     let kept = |frame| {
         mm::frame_state(frame) == Some(State::Allocated)
@@ -1602,8 +1602,7 @@ pub fn check_the_heap_killer_draws_outside_a_section() -> Result<u64, &'static s
         let served = if in_section {
             fallible::try_arc([0x5A_u8; 200]).is_ok_and(|made| made.iter().all(|&b| b == 0x5A))
         } else {
-            xaqu_fallible::try_box([0x5A_u8; 200])
-                .is_ok_and(|made| made.iter().all(|&b| b == 0x5A))
+            xaqu_fallible::try_box([0x5A_u8; 200]).is_ok_and(|made| made.iter().all(|&b| b == 0x5A))
         };
         let (after, _) = mm::reserve_counts();
         super::reserve::refuse_heap_for(0);

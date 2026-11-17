@@ -837,13 +837,8 @@ fn check_a_program_ended_by_its_fault_is_heard_and_freed(
         image::Shape::Good,
         arch::USER_FAULT_PROGRAM,
     );
-    let faulting = process::load(
-        &file,
-        &[b"/fault"],
-        &[],
-        [0x3b; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a program that faults could not be loaded")?;
+    let faulting = process::load(&file, &[b"/fault"], &[], [0x3b; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a program that faults could not be loaded")?;
 
     let watcher = Side::new()?;
     let handle = watcher
@@ -2245,13 +2240,8 @@ fn native_program(role: u8) -> Result<Arc<Process>, &'static str> {
         image::Shape::Good,
         &program,
     );
-    process::load(
-        &file,
-        &[b"/native"],
-        &[],
-        [0x39; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "the native program could not be loaded")
+    process::load(&file, &[b"/native"], &[], [0x39; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "the native program could not be loaded")
 }
 
 /// What the device checks measured, for the boot log.

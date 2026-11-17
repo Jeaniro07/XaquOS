@@ -1312,8 +1312,7 @@ impl Drop for Endpoint {
 /// §2.3).
 #[doc(hidden)]
 pub fn heap_footprint() -> usize {
-    xaqu_kmem::arc_footprint::<Channel>()
-        .saturating_add(2 * xaqu_kmem::arc_footprint::<Endpoint>())
+    xaqu_kmem::arc_footprint::<Channel>().saturating_add(2 * xaqu_kmem::arc_footprint::<Endpoint>())
 }
 
 impl Endpoint {

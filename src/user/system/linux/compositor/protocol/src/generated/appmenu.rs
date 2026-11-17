@@ -67,8 +67,8 @@ pub static XAQU_APPMENU_MANAGER_V1: Interface = Interface {
 
 /// The opcodes and enumerations of `xaqu_appmenu_manager_v1`.
 pub mod xaqu_appmenu_manager_v1 {
-    /// The request opcodes of `xaqu_appmenu_manager_v1`, in the
-    /// protocol's order.
+    /// The request opcodes of `xaqu_appmenu_manager_v1`, in the protocol's
+    /// order.
     pub mod request {
         /// destroy
         /// `xaqu_appmenu_manager_v1.destroy`

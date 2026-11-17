@@ -92,11 +92,11 @@ const WHITE_PERCENT: usize = 70;
 /// `z`, which a German layout swaps.
 const LINE: &str = "hello xaqu";
 /// See [`LINE`].
-const LINE_KEYS: &[&str] = &["h", "e", "l", "l", "o", "spc", "f", "e", "r", "r", "i", "x"];
+const LINE_KEYS: &[&str] = &["h", "e", "l", "l", "o", "spc", "x", "a", "q", "u"];
 /// The first word of [`LINE`], which the double click selects.
 const WORD: &str = "hello";
 
-/// Dark pixels a typed line of [`LINE`]'s twelve characters puts on the
+/// Dark pixels a typed line of [`LINE`]'s ten characters puts on the
 /// page at the least: about 300 were drawn on 2026-10-12.
 const LINE_PIXELS: usize = 60;
 

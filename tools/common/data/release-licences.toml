@@ -190,6 +190,8 @@ paths = [
     "bin/dmesg",
     "bin/settingsctl",
     "bin/lode-upload",
+    # The event log's reader (xtask's eventlog.rs, src/lib/proto/eventlog).
+    "bin/xaqu-eventlog",
 ]
 
 # Third-party material inside Xaqu's own sources, built into its programs.

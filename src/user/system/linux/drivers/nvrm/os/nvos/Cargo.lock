@@ -20,7 +20,7 @@ version = "0.1.0"
 
 [[package]]
 name = "xaqu-native"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "xaqu-linux-abi",
  "xaqu-native-abi",

@@ -455,9 +455,7 @@ fn good(ab: &AbDisk, booted: &Booted) -> Result<(), String> {
         .record()
         .ok_or("the control record is uninitialised")?;
     let Some(slot) = booted.slot else {
-        return Err(
-            "no xaqu.slot= on the command line: this boot did not come from a slot".into(),
-        );
+        return Err("no xaqu.slot= on the command line: this boot did not come from a slot".into());
     };
     if !booted.is_trial() {
         if slot == r.good {

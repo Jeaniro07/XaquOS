@@ -1914,25 +1914,24 @@ pub(super) fn net_udp6(_: &Kernel) -> Result<Vec<u8>> {
 /// owns it; both are looked up after the net core is let go.
 fn inet_sockets(stream: bool, six: bool) -> Vec<procfs_net::Socket> {
     let reader = crate::net::acting();
-    let mut rows: Vec<(xaqu_net::SocketId, procfs_net::Socket)> =
-        reader.core().with(|stack, _| {
-            stack
-                .sockets()
-                .filter(|(_, socket)| {
-                    let is_stream = matches!(
-                        socket,
-                        xaqu_net::Socket::Stream(_) | xaqu_net::Socket::Listen(_)
-                    );
-                    let is_six = matches!(socket.family(), xaqu_net::Family::V6);
-                    // A raw socket is neither TCP's nor UDP's: Linux lists it in
-                    // `/proc/net/raw`, which this file tree does not have yet.
-                    let is_raw = matches!(socket, xaqu_net::Socket::Raw(_));
-                    !is_raw && is_stream == stream && is_six == six
-                })
-                .enumerate()
-                .map(|(slot, (id, socket))| (id, socket_row(slot, socket)))
-                .collect()
-        });
+    let mut rows: Vec<(xaqu_net::SocketId, procfs_net::Socket)> = reader.core().with(|stack, _| {
+        stack
+            .sockets()
+            .filter(|(_, socket)| {
+                let is_stream = matches!(
+                    socket,
+                    xaqu_net::Socket::Stream(_) | xaqu_net::Socket::Listen(_)
+                );
+                let is_six = matches!(socket.family(), xaqu_net::Family::V6);
+                // A raw socket is neither TCP's nor UDP's: Linux lists it in
+                // `/proc/net/raw`, which this file tree does not have yet.
+                let is_raw = matches!(socket, xaqu_net::Socket::Raw(_));
+                !is_raw && is_stream == stream && is_six == six
+            })
+            .enumerate()
+            .map(|(slot, (id, socket))| (id, socket_row(slot, socket)))
+            .collect()
+    });
     for (id, row) in &mut rows {
         if let Some(file) = crate::net::socket::file_of(reader.id(), *id) {
             row.inode = file.ino;

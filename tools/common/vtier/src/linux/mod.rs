@@ -4,13 +4,13 @@ mod ocl;
 mod verify;
 mod watch;
 
-use xaqu_vtier::store::{BLOCK, Backend, Layout, Ram, Store};
-use xaqu_vtier::tree::Tree;
-use xaqu_vtier::wire::{MAX_WRITE, serve};
 use std::fs::File;
 use std::io::{ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use xaqu_vtier::store::{BLOCK, Backend, Layout, Ram, Store};
+use xaqu_vtier::tree::Tree;
+use xaqu_vtier::wire::{MAX_WRITE, serve};
 
 struct Options {
     backend: String,

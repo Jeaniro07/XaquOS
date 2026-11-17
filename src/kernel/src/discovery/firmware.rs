@@ -179,13 +179,11 @@ pub(crate) fn window_combining(virt: u64, len: u64) -> bool {
     let root = crate::mm::root_table();
     len != 0
         && (0..len.div_ceil(xaqu_bootinfo::PAGE_SIZE)).all(|page| {
-            crate::mm::flags_in(root, virt + page * xaqu_bootinfo::PAGE_SIZE).is_some_and(
-                |flags| {
-                    MemoryType::of(false, flags.write_combining && !flags.device) == KERNEL_MAPPING
-                        && flags.write
-                        && !flags.user
-                },
-            )
+            crate::mm::flags_in(root, virt + page * xaqu_bootinfo::PAGE_SIZE).is_some_and(|flags| {
+                MemoryType::of(false, flags.write_combining && !flags.device) == KERNEL_MAPPING
+                    && flags.write
+                    && !flags.user
+            })
         })
 }
 

@@ -153,11 +153,7 @@ pub(crate) fn kernel_span(elf: &Elf<'_>) -> Result<(u64, u64)> {
 pub(crate) fn place_kernel(services: &Services, elf: &Elf<'_>, virt: u64) -> Result<KernelImage> {
     let (low, len) = kernel_span(elf)?;
 
-    let memory = services.allocate(
-        "allocating the kernel image",
-        len,
-        MemoryType::XAQU_KERNEL,
-    )?;
+    let memory = services.allocate("allocating the kernel image", len, MemoryType::XAQU_KERNEL)?;
 
     for segment in elf.loadable() {
         copy_segment(elf, &segment, memory.address, low)?;

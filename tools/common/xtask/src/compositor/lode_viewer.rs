@@ -528,8 +528,7 @@ mod tests {
     fn a_second_pull_must_go_on_where_the_first_stopped() {
         use super::judge_ssh;
         let pulls = vec![
-            "lode-viewer: pull root@127.0.0.1:5555: 175 records kept in /x/host-xaqu\n"
-                .to_owned(),
+            "lode-viewer: pull root@127.0.0.1:5555: 175 records kept in /x/host-xaqu\n".to_owned(),
             "lode-viewer: pull root@127.0.0.1:5555: 2 records kept in /x/host-xaqu\n".to_owned(),
         ];
         assert!(judge_ssh(Arch::X86_64, &pulls, (177, true)).is_ok());

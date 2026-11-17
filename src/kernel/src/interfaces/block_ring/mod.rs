@@ -85,9 +85,7 @@ use xaqu_native_abi::nr::NativeCall;
 use xaqu_native_abi::rights::Rights;
 use xaqu_native_abi::signals::Signals;
 use xaqu_native_abi::status;
-use xaqu_native_abi::types::{
-    CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, PACKET_SIGNAL, PACKET_USER,
-};
+use xaqu_native_abi::types::{CHANNEL_MAX_BYTES, CHANNEL_MAX_HANDLES, PACKET_SIGNAL, PACKET_USER};
 use xaqu_vfs::Errno;
 
 use crate::device::{self, DeviceNode};
@@ -1865,12 +1863,7 @@ impl RingDisk {
             let now = timer::now_nanos();
             if state.ended
                 || state.offline
-                || !xaqu_blkring::kernel::gone_silent(
-                    now,
-                    state.last_answer,
-                    outstanding,
-                    patience,
-                )
+                || !xaqu_blkring::kernel::gone_silent(now, state.last_answer, outstanding, patience)
             {
                 return;
             }

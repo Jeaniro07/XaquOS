@@ -2863,13 +2863,8 @@ fn hangup_revokes_reading() -> Result<(), &'static str> {
     // A reader waiting on `before` when the hangup comes.
     *REVOKE_ANSWER.lock() = None;
     *REVOKE_READER.lock() = Some(Arc::clone(&before));
-    let reader = crate::sched::spawn(
-        "revoke-reader",
-        revoke_reader,
-        0,
-        xaqu_sched::NICE_0_WEIGHT,
-    )
-    .map_err(|_| "could not start the revoke check's reader")?;
+    let reader = crate::sched::spawn("revoke-reader", revoke_reader, 0, xaqu_sched::NICE_0_WEIGHT)
+        .map_err(|_| "could not start the revoke check's reader")?;
     crate::sched::sleep_for(20_000_000);
     if REVOKE_ANSWER.lock().is_some() {
         return Err("the revoke check's reader came back before the hangup");
@@ -6232,13 +6227,8 @@ fn kill_a_reader_blocked_in_syslog() -> Result<(), &'static str> {
         image::Shape::Good,
         arch::USER_SYSLOG_PROGRAM,
     );
-    let reader = process::load(
-        &file,
-        &[b"/klogd"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a program that reads syslog could not be loaded")?;
+    let reader = process::load(&file, &[b"/klogd"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a program that reads syslog could not be loaded")?;
     let task =
         process::start(&reader).map_err(|_| "a program that reads syslog could not be started")?;
     // Killed only once its task is blocked, so that the kill meets the read's
@@ -6943,13 +6933,8 @@ fn check_a_handler_runs_and_returns() -> Result<Option<i32>, &'static str> {
         image::Shape::Good,
         arch::USER_SIGNAL_PROGRAM,
     );
-    let status = exec::run(
-        &file,
-        &[b"/signal"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a program that handles a signal could not be started")?;
+    let status = exec::run(&file, &[b"/signal"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a program that handles a signal could not be started")?;
     match status {
         SIGNAL_STATUS => Ok(Some(status)),
         7 => Err(
@@ -7000,13 +6985,8 @@ fn check_a_poisoned_xsave_header_comes_back_safely() -> Result<(), &'static str>
         image::Shape::Good,
         arch::USER_XSTATE_PROGRAM,
     );
-    let status = exec::run(
-        &file,
-        &[b"/xstate"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a program that poisons its signal frame could not be started")?;
+    let status = exec::run(&file, &[b"/xstate"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a program that poisons its signal frame could not be started")?;
     match status {
         XSTATE_POISONED => {
             println!(
@@ -7698,13 +7678,8 @@ fn check_a_shared_mapping_is_shared_across_fork() -> Result<Option<i32>, &'stati
         image::Shape::Good,
         arch::USER_SHARED_PROGRAM,
     );
-    let status = exec::run(
-        &file,
-        &[b"/shared"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a program that shares a mapping with its child could not be started")?;
+    let status = exec::run(&file, &[b"/shared"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a program that shares a mapping with its child could not be started")?;
     match status {
         SHARED_STATUS => Ok(Some(status)),
         2 => Err("a child's write to a MAP_SHARED anonymous page did not reach its parent"),
@@ -9303,12 +9278,7 @@ fn check_limits_are_refused_as_linux_refuses_them(
         Errno::EINVAL,
         "a soft limit above its hard limit was not EINVAL",
     )?;
-    stage_rlimit64(
-        process,
-        page,
-        1024,
-        u64::from(xaqu_vfs::fd::MAX_LIMIT) + 1,
-    )?;
+    stage_rlimit64(process, page, 1024, u64::from(xaqu_vfs::fd::MAX_LIMIT) + 1)?;
     refuses(
         sys_prlimit64(process, 0, NOFILE, page, 0),
         Errno::EPERM,
@@ -12727,13 +12697,8 @@ fn kernel_time_program(calls: u32, pages: u32, spins: u32) -> Result<Arc<Process
         image::Shape::Good,
         &program,
     );
-    process::load(
-        &file,
-        &[b"/times"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "a kernel-time program could not be loaded")
+    process::load(&file, &[b"/times"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "a kernel-time program could not be loaded")
 }
 
 /// What one run of a kernel-time program was charged: its runtime and the

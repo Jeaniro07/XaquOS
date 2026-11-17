@@ -965,14 +965,10 @@ mod protocols {
         assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("stated"));
         assert_eq!(record.message(), b"hello");
         assert_eq!(record.get("_PID"), None);
-        let unsaid =
-            protocols::native(b"MESSAGE=hi\nXAQU_PRIORITY_SOURCE=stated\n", 1, 2).unwrap();
+        let unsaid = protocols::native(b"MESSAGE=hi\nXAQU_PRIORITY_SOURCE=stated\n", 1, 2).unwrap();
         assert_eq!(unsaid.priority, crate::record::UNSPECIFIED);
         // The sender's own claim is dropped; lode says what it found.
-        assert_eq!(
-            unsaid.get_str("XAQU_PRIORITY_SOURCE"),
-            Some("unspecified")
-        );
+        assert_eq!(unsaid.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         assert_eq!(record.get_str("CODE_LINE"), Some("12"));
         assert_eq!(record.get("BLOB"), Some(&b"a\nb\0c"[..]));
         assert_eq!(record.get_str("_TRANSPORT"), Some("journal"));
@@ -1126,10 +1122,7 @@ mod field_quality {
         assert_eq!(record.priority, UNSPECIFIED);
         let record = ingest::from_kernel(&kernel(1, b"net: 0 dropped, 0 lost"), NOW);
         assert_eq!(record.priority, UNSPECIFIED);
-        assert_eq!(
-            record.get_str("XAQU_PRIORITY_SOURCE"),
-            Some("unspecified")
-        );
+        assert_eq!(record.get_str("XAQU_PRIORITY_SOURCE"), Some("unspecified"));
         assert_eq!(record.get_str("XAQU_PRIORITY_WORD"), None);
         // The kernel's boot checks say what they refused on purpose.
         let record = ingest::from_kernel(&kernel(0, b"check: a bad pointer was refused"), NOW);

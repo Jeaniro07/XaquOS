@@ -775,9 +775,7 @@ impl Vtest {
         self.header(1, XAQU_DMABUF_MODIFIERS)?;
         self.words(&[fourcc])?;
         let [len, command, count] = self.reply_words::<3>()?;
-        if command != XAQU_DMABUF_MODIFIERS
-            || count > DMABUF_MODIFIERS_MAX
-            || len != 1 + 3 * count
+        if command != XAQU_DMABUF_MODIFIERS || count > DMABUF_MODIFIERS_MAX || len != 1 + 3 * count
         {
             return Err(io::Error::other("the server's modifier answer is not one"));
         }

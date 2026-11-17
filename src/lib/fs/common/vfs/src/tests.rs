@@ -2003,14 +2003,7 @@ fn pid_1s_inputs_are_read_from_the_archive_and_never_unpacked() {
     archive.entry(".", 0o040_700, 1, 2, (0, 0), b"");
     archive.entry("./.xaqu/", 0o040_755, 2, 2, (0, 0), b"");
     archive.entry(".xaqu/init", 0o040_755, 3, 2, (0, 0), b"");
-    archive.entry(
-        "./.xaqu/init/program",
-        0o100_755,
-        4,
-        1,
-        (0, 0),
-        b"\x7fELF",
-    );
+    archive.entry("./.xaqu/init/program", 0o100_755, 4, 1, (0, 0), b"\x7fELF");
     archive.entry(".xaqu/init/script", 0o100_644, 5, 1, (0, 0), b"echo hi");
     archive.entry("bin", 0o040_755, 6, 2, (0, 0), b"");
     archive.entry("bin/true", 0o100_755, 7, 1, (0, 0), b"t");

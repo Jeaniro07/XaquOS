@@ -75,10 +75,7 @@ const FLAGS: [Flag; 17 + 2 * cfg!(xaqu_personality = "user") as usize] = [
         name: "partition_speculation",
         values: &[
             (cfg!(xaqu_partition_speculation = "exit"), "exit"),
-            (
-                cfg!(xaqu_partition_speculation = "partition"),
-                "partition",
-            ),
+            (cfg!(xaqu_partition_speculation = "partition"), "partition"),
             (
                 cfg!(xaqu_partition_speculation = "not_applicable"),
                 "not_applicable",
@@ -145,10 +142,7 @@ const FLAGS: [Flag; 17 + 2 * cfg!(xaqu_personality = "user") as usize] = [
         values: &[
             (cfg!(xaqu_fault_ahead = "off"), "off"),
             (cfg!(xaqu_fault_ahead = "on"), "on"),
-            (
-                cfg!(xaqu_fault_ahead = "not_applicable"),
-                "not_applicable",
-            ),
+            (cfg!(xaqu_fault_ahead = "not_applicable"), "not_applicable"),
         ],
     },
     #[cfg(xaqu_personality = "user")]

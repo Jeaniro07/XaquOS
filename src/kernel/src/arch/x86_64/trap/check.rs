@@ -1057,13 +1057,8 @@ fn check_forged_frames() -> Result<u32, &'static str> {
             crate::syscall::image::Shape::Good,
             &code,
         );
-        crate::syscall::exec::run(
-            &file,
-            &[b"/forged"],
-            &[],
-            [0x7e; xaqu_ustack::RANDOM_BYTES],
-        )
-        .map_err(|_| "the forged-frame program could not be started")
+        crate::syscall::exec::run(&file, &[b"/forged"], &[], [0x7e; xaqu_ustack::RANDOM_BYTES])
+            .map_err(|_| "the forged-frame program could not be started")
     };
     // The control first: a frame changed only where a handler may change it
     // returns, or the refusals below would prove nothing.

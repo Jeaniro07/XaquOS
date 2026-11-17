@@ -14,13 +14,46 @@ dependencies = [
 name = "authd"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "xaqu-argon2",
  "xaqu-auth-client",
  "xaqu-auth-proto",
  "xaqu-native",
  "xaqu-native-abi",
  "xaqu-svc",
+]
+
+[[package]]
+name = "libc"
+version = "0.2.189"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+
+[[package]]
+name = "login"
+version = "0.1.0"
+dependencies = [
  "libc",
+ "xaqu-auth-account",
+ "xaqu-auth-client",
+ "xaqu-svc-proto",
+]
+
+[[package]]
+name = "passwd"
+version = "0.1.0"
+dependencies = [
+ "xaqu-auth-client",
+ "xaqu-auth-proto",
+]
+
+[[package]]
+name = "su"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-account",
+ "xaqu-auth-client",
 ]
 
 [[package]]
@@ -38,8 +71,8 @@ dependencies = [
 name = "xaqu-auth-client"
 version = "0.1.0"
 dependencies = [
- "xaqu-auth-proto",
  "libc",
+ "xaqu-auth-proto",
 ]
 
 [[package]]
@@ -79,36 +112,3 @@ dependencies = [
 [[package]]
 name = "xaqu-svc-proto"
 version = "0.3.0"
-
-[[package]]
-name = "libc"
-version = "0.2.189"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
-
-[[package]]
-name = "login"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-account",
- "xaqu-auth-client",
- "xaqu-svc-proto",
- "libc",
-]
-
-[[package]]
-name = "passwd"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-client",
- "xaqu-auth-proto",
-]
-
-[[package]]
-name = "su"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-account",
- "xaqu-auth-client",
- "libc",
-]

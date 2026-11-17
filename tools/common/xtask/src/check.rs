@@ -1529,10 +1529,7 @@ fn cross_target_clippy() -> Result<()> {
         step(&format!("clippy (loader, {arch})"), || {
             let env = crate::signing::loader_env()?;
             let env: Vec<(&str, String)> = env.into_iter().collect();
-            clippy_with(
-                &["-p", "xaqu-boot", "--target", arch.loader_target()],
-                &env,
-            )
+            clippy_with(&["-p", "xaqu-boot", "--target", arch.loader_target()], &env)
         })?;
         step(
             &format!("the loader's bad-frame mode, both ways ({arch})"),

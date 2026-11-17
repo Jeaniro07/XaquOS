@@ -41,12 +41,7 @@ pub use xaqu_linux_abi::nr::x86_64 as numbers;
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
 pub(crate) extern "C" fn _start() -> ! {
-    naked_asm!(
-        "xor ebp, ebp",
-        "and rsp, -16",
-        "call xaqu_rt_start",
-        "ud2",
-    )
+    naked_asm!("xor ebp, ebp", "and rsp, -16", "call xaqu_rt_start", "ud2",)
 }
 
 /// Make the call `raw` describes.

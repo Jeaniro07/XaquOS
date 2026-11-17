@@ -255,11 +255,7 @@ fn files() -> Vec<File> {
         text(PROBE_PATH, 0o755, PROBE),
         text(AFTER_PATH, 0o755, AFTER),
         text(FONTS_PATH, 0o644, FONTS),
-        text(
-            "etc/xaqu/units/gnome-gate-after.service",
-            0o644,
-            AFTER_UNIT,
-        ),
+        text("etc/xaqu/units/gnome-gate-after.service", 0o644, AFTER_UNIT),
         File {
             path: "etc/xaqu/units/graphical.target.wants/gnome-gate-after.service".to_owned(),
             mode: 0o777,

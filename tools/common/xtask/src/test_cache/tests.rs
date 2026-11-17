@@ -43,18 +43,11 @@ workspace = true
     let names = |set: &BTreeSet<String>| set.iter().cloned().collect::<Vec<_>>();
     assert_eq!(
         names(&linked),
-        ["xaqu-b", "xaqu-c", "xaqu-e", "xaqu-f", "plain"]
+        ["plain", "xaqu-b", "xaqu-c", "xaqu-e", "xaqu-f"]
     );
     assert_eq!(
         names(&named),
-        [
-            "xaqu-b",
-            "xaqu-c",
-            "xaqu-e",
-            "xaqu-f",
-            "xaqu-heap",
-            "plain"
-        ]
+        ["plain", "xaqu-b", "xaqu-c", "xaqu-e", "xaqu-f", "xaqu-heap"]
     );
     assert_eq!(unread, None);
 }
@@ -181,8 +174,7 @@ fn the_real_workspace_keeps_the_item_s_test_binaries_running() {
                 .cloned()
                 .flatten()
                 .is_some_and(|why| why.starts_with("it verifies")
-                    || (package == "xaqu-native"
-                        && why == "linked by the item's xaqu-lift-core")),
+                    || (package == "xaqu-native" && why == "linked by the item's xaqu-lift-core")),
             "{package}: {:?}",
             verdicts.get(package)
         );

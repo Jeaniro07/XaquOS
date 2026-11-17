@@ -1089,8 +1089,7 @@ pub(super) fn check_trap_flag_entry() {
         syscall::image::Shape::Good,
         arch::USER_STEP_PROGRAM,
     );
-    let Ok(status) =
-        syscall::exec::run(&file, &[b"/step"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+    let Ok(status) = syscall::exec::run(&file, &[b"/step"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
     else {
         fatal!(
             catalog::STAGE7_SYSCALLS,

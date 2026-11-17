@@ -168,7 +168,7 @@ fn boxed_slices_and_strs_are_exact_and_allocated_once() {
 
     let (text, log) = record(|| try_boxed_str("xaqu"));
     assert_eq!(&*text.unwrap(), "xaqu");
-    assert_eq!(log, vec![(6, 1)]);
+    assert_eq!(log, vec![(4, 1)]);
 
     refuse_in(0);
     assert_eq!(try_boxed_slice(&[1u8]), Err(AllocError));
@@ -279,8 +279,8 @@ fn deques_push_at_both_ends_and_report_a_refusal() {
 
 #[test]
 fn strings_copy_append_and_format() {
-    let mut text = try_string("fer").unwrap();
-    try_push_str(&mut text, "rix").unwrap();
+    let mut text = try_string("xa").unwrap();
+    try_push_str(&mut text, "qu").unwrap();
     assert_eq!(text, "xaqu");
 
     let formatted = try_format(format_args!("{text} {} {:#x}", 3, 255)).unwrap();

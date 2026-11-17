@@ -5,7 +5,9 @@
     "alternate": null,
     "command": "bench-ipc",
     "init": "busybox.static",
-    "kernel_options": [],
+    "kernel_options": [
+      "xaqu.fastpath=on"
+    ],
     "memory_mib": 512,
     "mitigations": "on",
     "pin": "11",
@@ -13,10 +15,10 @@
     "rounds": 1,
     "smp": 1
   },
-  "configuration_hash": "32a704550cd7e2d666990be5465417c182251433a48887062fc0606e8106e6c7",
+  "configuration_hash": "d086d663008840ecaeba46aa011c7bef4ba7ddbcf345e078ca9a165eed0929e3",
   "cpu_hash": "2291b09857f1b58dde3edb099203527542da83284d33e3809c718f6c8c2f493c",
   "xaqu": {
-    "commit": "204bd3505d94b976625f0f73125456a137b28413",
+    "commit": "d250b62673d30aee1d96c0fa1f36756e0c0a4f09",
     "dirty": false
   },
   "figure": {
@@ -184,7 +186,7 @@
           "avx2": true,
           "avx512f": false,
           "constant_tsc": true,
-          "eraps": false,
+          "eraps": true,
           "fred": false,
           "fsgsbase": false,
           "hypervisor": true,
@@ -212,7 +214,7 @@
           "umip": true,
           "virt_ssbd": false,
           "x2apic": true,
-          "xgetbv1": false,
+          "xgetbv1": true,
           "xsave": true,
           "xsavec": false,
           "xsaveopt": true,
@@ -222,70 +224,70 @@
         "stepping": 1,
         "vendor": "AuthenticAMD"
       },
-      "cpu_model": "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand,+rdseed,+ssse3,+sse4.1,+sse4.2,+popcnt,+cx16,+movbe,+xsave,+xsaveopt,+avx,+avx2,+f16c,+fma,+bmi1,+bmi2,+abm,+pclmulqdq,+aes,+x2apic,+spec-ctrl,+stibp,+ssbd,+arch-capabilities,+auto-ibrs,+invtsc",
+      "cpu_model": "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand,+rdseed,+ssse3,+sse4.1,+sse4.2,+popcnt,+cx16,+movbe,+xsave,+xsaveopt,+avx,+avx2,+f16c,+fma,+bmi1,+bmi2,+abm,+pclmulqdq,+aes,+x2apic,+spec-ctrl,+stibp,+ssbd,+arch-capabilities,+auto-ibrs,+invtsc,+eraps,+xgetbv1",
       "probe": "qom-get",
       "qemu": "10.2.1",
       "qemu_package": "xaqu-cfi"
     }
   },
   "host_hash": "8f71a3ca9c7fe85216ffdbd1e2de79d39fabaaf984f67528c2cde7b26896264b",
-  "hw_hash": "597370d08a90e747060f0d9281e266ef9c2e1b9e5a84c1e7bc6aa056c3c6e571",
+  "hw_hash": "a32fd8234b3e619cf21dcfb8b9b2b2554902bc796d8ca39c4721b89322f93669",
   "kernel_view": [
     "cpu ring 0 kept out of user pages: SMEP on, SMAP on",
     "cpu descriptor table addresses kept from ring 3: UMIP on",
     "cpu page attribute table: entry 1 write-combining",
     "cpu program register state: x87, SSE and AVX, saved with XSAVE; vector registers: Zenbleed and GDS do not apply",
-    "cpu speculation defences: clamped indices, SWAPGS fence, entry registers cleared, AutoIBRS, STIBP, SSBD, predictor barrier on switch, RSB fill on switch",
+    "cpu speculation defences: clamped indices, SWAPGS fence, entry registers cleared, AutoIBRS, STIBP, SSBD, predictor barrier on switch, RSB fill on switch, ERAPS empties the RSB on switch",
     "cpu speculation exposure: Spectre v2 into ring 0 covered; between programs covered; store bypass covered; Meltdown not affected (AMD)"
   ],
-  "log": "~/.local/share/xaqu/logs/po7-hotpaths/bench-record-1.log",
+  "log": null,
   "path": "ipc-round-trip",
   "reference": null,
   "runs": [
     {
-      "host": "host load 8.71 before, 6.90 after, SMT sibling cpu23 0% busy",
+      "host": "host load 0.68 before, 0.57 after, SMT sibling cpu23 0% busy",
       "stats": {
         "call": {
-          "mean": 8642,
-          "min": 5593,
+          "mean": 3291,
+          "min": 3146,
           "n": 20000,
-          "p50": 6032,
-          "p90": 16040,
-          "p99": 18507
+          "p50": 3186,
+          "p90": 3296,
+          "p99": 5583
         },
         "domain-call": {
-          "mean": 4193,
-          "min": 2227,
+          "mean": 1194,
+          "min": 1108,
           "n": 20000,
-          "p50": 2247,
-          "p90": 15301,
-          "p99": 16210
+          "p50": 1158,
+          "p90": 1168,
+          "p99": 1308
         },
         "floor": {
-          "mean": 324,
+          "mean": 327,
           "min": 309,
           "n": 20000,
           "p50": 319,
           "p90": 319,
-          "p99": 319
+          "p99": 329
         },
         "trip": {
-          "mean": 16482,
-          "min": 10737,
+          "mean": 12354,
+          "min": 10916,
           "n": 20000,
-          "p50": 12175,
-          "p90": 23631,
-          "p99": 28256
+          "p50": 12035,
+          "p90": 12265,
+          "p99": 20934
         }
       }
     }
   ],
   "schema": "xaqu-hotpath-result/1",
   "summary": {
-    "p50_ns_median": 2247,
+    "p50_ns_median": 1158,
     "ratio_milli": null,
     "reference_p50_ns_median": null,
     "rounds": 1
   },
-  "taken": "2026-10-06T11:00:27Z"
+  "taken": "2026-10-07T09:34:20Z"
 }

@@ -137,6 +137,10 @@ pub struct Listing {
     segments: Vec<Segment>,
     /// How many times the directories were read.
     pub reads: u64,
+    /// Read the directories again, whatever their timestamps say. A
+    /// directory's timestamp does not change for every file added to it,
+    /// so a segment added in the same tick as the last read was missed.
+    pub again: bool,
 }
 
 impl Listing {
@@ -149,7 +153,8 @@ impl Listing {
             .map(|(path, _)| path)
             .take(dirs.len())
             .eq(dirs.iter());
-        let unchanged = same_dirs
+        let unchanged = !self.again
+            && same_dirs
             && self.reads > 0
             && self
                 .stamps
@@ -169,6 +174,7 @@ impl Listing {
             self.segments = segments(dirs);
             self.stamps = stamps;
             self.reads += 1;
+            self.again = false;
         }
         &self.segments
     }

@@ -33,10 +33,8 @@ struct Keys {
 fn keys() -> &'static Keys {
     static KEYS: OnceLock<Keys> = OnceLock::new();
     KEYS.get_or_init(|| {
-        let dir = std::env::temp_dir().join(std::format!(
-            "xaqu-boot-policy-test-{}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(std::format!("xaqu-boot-policy-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let mut token = SoftToken::open(&dir, Vec::new()).unwrap();
         let slot = token
@@ -155,7 +153,7 @@ fn body() -> Body {
         arch: X86,
         family: PC,
         release: 1,
-        label: *b"xaqu policy test 000000000000\0",
+        label: *b"xaqu policy test 00000000000000\0",
         payload_len: 4064,
         ..Body::default()
     }

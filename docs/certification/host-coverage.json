@@ -6,6 +6,10 @@
     "the gate (--check) fails a stale file or an unargued gap."
   ],
   "argued": {
+    "src/lib/crypto/sigverify/src/lms.rs:363": "the ? that can fail is the only thing on this line: the statement it ends is covered on the line above, and the error path the ? stands for is never taken in the host tests",
+    "src/lib/crypto/sigverify/src/manifest.rs:338": "the ? that can fail is the only thing on this line: the statement it ends is covered on the line above, and the error path the ? stands for is never taken in the host tests",
+    "src/lib/crypto/sigverify/src/manifest.rs:453": "the ? that can fail is the only thing on this line: the statement it ends is covered on the line above, and the error path the ? stands for is never taken in the host tests",
+    "src/lib/proto/boot-policy/src/lib.rs:205": "the ? that can fail is the only thing on this line: the statement it ends is covered on the line above, and the error path the ? stands for is never taken in the host tests",
     "src/lib/proto/boot-policy/src/lib.rs:257:24:false": "accepted takes at most MAX_FAMILIES of the build's families, so n never reaches the end of the MAX_FAMILIES-long out and get_mut never returns None",
     "src/lib/proto/boot-policy/src/lib.rs:329": "SlotHeader::decode returns only headers of version 1 or 2 (L.slots.11; a_version_2_header_refuses_a_generation_and_a_blob_in_the_manifest refuses 0 and 3), so decide's other arm is never taken; it refuses rather than starts",
     "src/lib/proto/slots/src/gpt.rs:165:12:false": "region is copy[..size] with size checked to be at least 92 on line 158, so bytes 16..20 always exist and get_mut never returns None; the defensive form is the crate's no-indexing rule",
@@ -21,15 +25,16 @@
     "src/lib/proto/slots/src/gpt.rs:30": "guid is a const fn evaluated at compile time for the type GUIDs (SLOT_TYPE, CONTROL_TYPE, EVENTS_TYPE) and the tests' DISK, so no run reaches its body; its results are checked by value: the GPT scan finds each partition by the GUID xaqu-partition writes (the_gpt_scan_finds_the_layout_by_type) and GuidText prints DISK as written",
     "src/lib/proto/slots/src/lib.rs:116:12:false": "put's callers write fixed fields inside fixed-size buffers (the header, the record, the words), so the slice always fits and the nothing-written arm is never taken; the round-trip tests show every field lands where it is read",
     "src/lib/proto/slots/src/lib.rs:117:16:false": "put's callers write fixed fields inside fixed-size buffers (the header, the record, the words), so the slice always fits and the nothing-written arm is never taken; the round-trip tests show every field lands where it is read",
-    "src/lib/proto/slots/src/lib.rs:120": "put's callers write fixed fields inside fixed-size buffers (the header, the record, the words), so the slice always fits and the nothing-written arm is never taken; the round-trip tests show every field lands where it is read"
+    "src/lib/proto/slots/src/lib.rs:120": "put's callers write fixed fields inside fixed-size buffers (the header, the record, the words), so the slice always fits and the nothing-written arm is never taken; the round-trip tests show every field lands where it is read",
+    "src/lib/proto/slots/src/record.rs:313": "the ? that can fail is the only thing on this line: the statement it ends is covered on the line above, and the error path the ? stands for is never taken in the host tests"
   },
   "files": {
     "src/lib/crypto/sha256/src/lib.rs": {
       "branch_outcomes": 6,
       "branch_outcomes_hit": 6,
-      "lines": 137,
-      "lines_hit": 137,
-      "sha256": "3456ee2c13db62e1ce9d8e79fa333aed626ac036dde61a2b1852780b83b93e0c",
+      "lines": 142,
+      "lines_hit": 142,
+      "sha256": "0c71735cd70f9af3623a2e946331ec4193851016f505640d608fa717ff3ce6a5",
       "unreached_branches": [],
       "unreached_lines": []
     },
@@ -38,38 +43,44 @@
       "branch_outcomes_hit": 0,
       "lines": 0,
       "lines_hit": 0,
-      "sha256": "d9dc795a9abe5b04c68c39143d76941226722120834304ca6025c725d35412cb",
+      "sha256": "893ebd7158af03acce28f759b7bbdd361586e93fbd6551970f39050f6196a5ef",
       "unreached_branches": [],
       "unreached_lines": []
     },
     "src/lib/crypto/sigverify/src/lms.rs": {
       "branch_outcomes": 26,
       "branch_outcomes_hit": 26,
-      "lines": 210,
-      "lines_hit": 210,
-      "sha256": "863b83abd846bf99c34f8e51fc932a733426370ff33c94769f093bdea76df769",
+      "lines": 208,
+      "lines_hit": 207,
+      "sha256": "4b32ffeb812f0c238217401bee03b6d1f73a01ab2ae15e01ac2179ef36e27a76",
       "unreached_branches": [],
-      "unreached_lines": []
+      "unreached_lines": [
+        363
+      ]
     },
     "src/lib/crypto/sigverify/src/manifest.rs": {
       "branch_outcomes": 68,
       "branch_outcomes_hit": 68,
-      "lines": 200,
-      "lines_hit": 200,
+      "lines": 199,
+      "lines_hit": 197,
       "sha256": "f2815aae798068df7094493710565f203e3bd728c3c6644cf9f7e76ba2a2f38e",
       "unreached_branches": [],
-      "unreached_lines": []
+      "unreached_lines": [
+        338,
+        453
+      ]
     },
     "src/lib/proto/boot-policy/src/lib.rs": {
       "branch_outcomes": 24,
       "branch_outcomes_hit": 23,
-      "lines": 122,
+      "lines": 123,
       "lines_hit": 121,
-      "sha256": "efc10e78eea3cb72b44d0e3282dbc57e802c088179278d2e1c1eda0787d28d83",
+      "sha256": "f188386bb2fca011eca7ba048f30c1af5e6cdf599693e3ee4acf72ce6c516a95",
       "unreached_branches": [
         "257:24:false"
       ],
       "unreached_lines": [
+        205,
         329
       ]
     },
@@ -85,9 +96,9 @@
     "src/lib/proto/slots/src/gpt.rs": {
       "branch_outcomes": 110,
       "branch_outcomes_hit": 109,
-      "lines": 201,
-      "lines_hit": 191,
-      "sha256": "7ac5ef33bb5574ab4bf0cccfee1b3bcfec08cde4463bfe629d6e791dc1fd3eed",
+      "lines": 196,
+      "lines_hit": 186,
+      "sha256": "8cabecfada523a66bfa31b4a0c12816b7a680a9a24fb9ec0307f9e8773bc4031",
       "unreached_branches": [
         "165:12:false"
       ],
@@ -107,9 +118,9 @@
     "src/lib/proto/slots/src/lib.rs": {
       "branch_outcomes": 4,
       "branch_outcomes_hit": 2,
-      "lines": 46,
-      "lines_hit": 45,
-      "sha256": "c5a1190416c5ca0d20d63fb46237d51c78c79e7b4d4ae59720430adc5efb087b",
+      "lines": 45,
+      "lines_hit": 44,
+      "sha256": "c6b67d6d11a255963a93a3886272388f016b9ff49b86a8dca7f2f24b74fe4f7d",
       "unreached_branches": [
         "116:12:false",
         "117:16:false"
@@ -121,26 +132,28 @@
     "src/lib/proto/slots/src/plan.rs": {
       "branch_outcomes": 8,
       "branch_outcomes_hit": 8,
-      "lines": 90,
-      "lines_hit": 90,
-      "sha256": "eb1a42e1dae5277b9e9522e8e4e93c26bb4c4c14d232758bacd51d7010b9ce14",
+      "lines": 89,
+      "lines_hit": 89,
+      "sha256": "d22c37bb4b7266377713c5c88da9ad94d76e3bc9ff0b6d43d01cb46b6458a52f",
       "unreached_branches": [],
       "unreached_lines": []
     },
     "src/lib/proto/slots/src/record.rs": {
       "branch_outcomes": 34,
       "branch_outcomes_hit": 34,
-      "lines": 136,
-      "lines_hit": 136,
+      "lines": 138,
+      "lines_hit": 137,
       "sha256": "74517a428fde9cb93177135f0bf4faeae80a6a188eae1a77940dbf1c28232379",
       "unreached_branches": [],
-      "unreached_lines": []
+      "unreached_lines": [
+        313
+      ]
     },
     "src/lib/proto/slots/src/slot.rs": {
       "branch_outcomes": 46,
       "branch_outcomes_hit": 46,
-      "lines": 143,
-      "lines_hit": 143,
+      "lines": 137,
+      "lines_hit": 137,
       "sha256": "fb01bedd67c40508fc0dee2aa36a3d36acd5ebbffc8947e733650b1eaed1ffa9",
       "unreached_branches": [],
       "unreached_lines": []
@@ -151,17 +164,17 @@
     "src/lib/crypto/sha256/src/cavp/SHA256Monte.rsp": "bf577cba16823c78e580403b247dabb03b393ba47c0eb32db42dec5a19b175af",
     "src/lib/crypto/sha256/src/cavp/SHA256ShortMsg.rsp": "aaf8115ef18263c52a7d2478d72b37dea30b25a1f7d0497136fbf7950715c587",
     "src/lib/crypto/sha256/src/tests.rs": "8db0286bd1e576a1d460d6aca9ed35b935c20c943eeed3f6fa6cf27a5aecbf0c",
-    "src/lib/crypto/sigverify/src/tests.rs": "e55b4c7693c661f749a2a5437c8ee242af0c26bfa307bb5394777c444922d298",
+    "src/lib/crypto/sigverify/src/tests.rs": "c84c4acdd5c5cd3d9cab7605fb7cca148eb894dbd201c6dc7960e6703af23b8e",
     "src/lib/crypto/sigverify/src/vectors.rs": "fb9b27c7d898819c8bb7780e51830ba451b306bb917b4fde6ed62a2ac7ac3147",
-    "src/lib/proto/boot-policy/src/tests.rs": "3c9862a14ac0afe560000b0d19a6a8e4b05b9243a1a6112dce66222fe18bf8fd",
-    "src/lib/proto/slots/src/tests.rs": "b1b87d239c120f341a3b8f281f6e2582878d3a062cd687f5c96e268543a2eead",
-    "tools/common/release/softsign/src/ci.rs": "ff064745be4a8b14b08fa963f19854aa463939b04bb1ef02914e3af1acf65769",
-    "tools/common/release/softsign/src/lib.rs": "4b073f34b2d7bb8036e0fbec98c3d60ccc6cedb45c9a433acae66f4d85833a4d",
-    "tools/common/release/softsign/src/lms.rs": "bcaa4788c52a51090991fbe82bde1953b4bfa5ead451b5cbde8f169493c09d3c",
-    "tools/common/release/softsign/src/main.rs": "8466a576c596791e08b377f7572febb626e5d6e201d6dd85bdad3a104a514b2c",
-    "tools/common/release/softsign/src/manifest.rs": "e2e71b0657c87b71269e5d8747ebd5b9495f81b8a02879768f95c6c7603980f7",
-    "tools/common/release/softsign/src/tests.rs": "99af75e2deb865df261550b2139cf46bd08385a1a97bda39e9ec6b5e419225bc",
-    "tools/common/release/softsign/src/token.rs": "615e7b12794268a80883563691edec39c9535a447c258b8779de10f3fbc55982"
+    "src/lib/proto/boot-policy/src/tests.rs": "7cc97bd90e978231cec1c4a842b554e99517aebec2afc2fe1b557cfebe8ba7f1",
+    "src/lib/proto/slots/src/tests.rs": "2cc5dc8e92e5383fa9ff57ba3dcc6d8d0a639e8d31e228e97484aee168997a17",
+    "tools/common/release/softsign/src/ci.rs": "82fc25c16637a1e555ac4a4eca3807793c8e8dc5b7547f3b7120679e93b6c86b",
+    "tools/common/release/softsign/src/lib.rs": "2728ae0613ddc4eff48110ced2e0a95660f6342947d3f7c5a863b89be3a54f29",
+    "tools/common/release/softsign/src/lms.rs": "b51847795a053a8275259e6b1980666b03c33a63c5b64e9a3c5a72e8c0b0d234",
+    "tools/common/release/softsign/src/main.rs": "cc421d74a480b43290bbed363d7bb89eebd51b959f60fbc323aa6b3daa2643cf",
+    "tools/common/release/softsign/src/manifest.rs": "368981df3980bd0eb9ee1ef27bf2d7e03e11677345cbdfcb518588b54c6a0fe9",
+    "tools/common/release/softsign/src/tests.rs": "267a4f8faae65d13542a011dcfe7a5492d8b22bd0b4f4b4c8318d05374060c02",
+    "tools/common/release/softsign/src/token.rs": "ec52fb74bd460b2c9402d61fc48387f44fea2ba54d20c92171377b542d21529a"
   },
-  "toolchain": "rustc 1.99.0-nightly (84b36a78a 2026-08-06)"
+  "toolchain": "rustc 1.102.0-nightly (5f4effd57 2026-11-13)"
 }

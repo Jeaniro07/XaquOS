@@ -340,10 +340,7 @@ const SUITE: &[Gate] = &[
         .only(Arch::X86_64)
         .with_env(&[
             ("XAQU_X86_MACHINE", "hpet=off"),
-            (
-                "XAQU_X86_CPU",
-                "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand",
-            ),
+            ("XAQU_X86_CPU", "qemu64,+pdpe1gb,+smep,+smap,+umip,+rdrand"),
         ]),
     // `xaqu.onexit=reset`: the reset through the FADT's register, which
     // every other gate's power-off never takes.

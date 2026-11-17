@@ -300,13 +300,13 @@ mod tests {
         let mut setup = [0u8; 12];
         stream.read_exact(&mut setup).unwrap();
         assert_eq!(setup[0], b'l');
-        // A body: 32 bytes of fixed fields, a vendor of 6 bytes (padded to
-        // 8), one format, then the screen with its root first.
+        // A body: 32 bytes of fixed fields, a vendor of 4 bytes (padded to
+        // 4), one format, then the screen with its root first.
         let mut body = vec![0u8; 32];
-        body[16..18].copy_from_slice(&6u16.to_le_bytes());
+        body[16..18].copy_from_slice(&4u16.to_le_bytes());
         body[20] = 1; // screens
         body[21] = 1; // formats
-        body.extend_from_slice(b"Xaqu\0\0");
+        body.extend_from_slice(b"Xaqu");
         body.extend_from_slice(&[0u8; 8]);
         body.extend_from_slice(&0x1234u32.to_le_bytes());
         body.resize(body.len().div_ceil(4) * 4 + 36, 0);

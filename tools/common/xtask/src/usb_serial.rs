@@ -458,8 +458,7 @@ pub(crate) fn test(args: &Args) -> Result<()> {
     // A Unix socket's path is at most 107 bytes, which a worktree's build
     // directory is past: the socket and its trace go in the temporary
     // directory, named for this process.
-    let socket =
-        std::env::temp_dir().join(format!("xaqu-usb-serial-{}.sock", std::process::id()));
+    let socket = std::env::temp_dir().join(format!("xaqu-usb-serial-{}.sock", std::process::id()));
     let trace = crate::qemu::usb_serial_trace(&socket);
     for stale in [&socket, &trace] {
         if stale.exists() {

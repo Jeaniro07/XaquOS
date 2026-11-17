@@ -539,10 +539,7 @@ struct Started {
 
 fn started(boot: &Channel<Kernel>) -> Result<Started, Step> {
     let _signalled = boot
-        .wait_one(
-            xaqu_native_abi::signals::Signals::READABLE,
-            Deadline::Never,
-        )
+        .wait_one(xaqu_native_abi::signals::Signals::READABLE, Deadline::Never)
         .map_err(|_| Step::Start)?;
     let mut bytes = [0_u8; START_BYTES];
     let mut handles = [Handle::INVALID; 2];

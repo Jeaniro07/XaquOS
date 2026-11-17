@@ -1013,9 +1013,7 @@ pub(crate) fn sys_waitid(
             let child = change.child();
             let (code, status) = match (change, child.ended_by_signal()) {
                 (Change::Stopped(_, signal), _) => (CLD_STOPPED, *signal as i32),
-                (Change::Continued(_), _) => {
-                    (CLD_CONTINUED, xaqu_linux_abi::types::SIGCONT as i32)
-                }
+                (Change::Continued(_), _) => (CLD_CONTINUED, xaqu_linux_abi::types::SIGCONT as i32),
                 (Change::Ended(_), Some(signal)) => (CLD_KILLED, signal as i32),
                 (Change::Ended(_), None) => (CLD_EXITED, child.exit_status().unwrap_or(0) & 0xFF),
             };

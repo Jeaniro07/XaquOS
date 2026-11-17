@@ -137,10 +137,7 @@ pub(crate) fn files(arch: Arch) -> Result<Option<Vec<ports::File>>> {
     };
     println!("  building xaqu-install for {target}");
     let target_dir = paths::target_dir().join("installer");
-    let program = target_dir
-        .join(target)
-        .join("release")
-        .join("xaqu-install");
+    let program = target_dir.join(target).join("release").join("xaqu-install");
     crate::builds::Build::cargo(
         format!("cargo build (xaqu-install) --target {target}"),
         paths::workspace_root().join("src/user/system/linux/installer"),

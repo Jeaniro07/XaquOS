@@ -170,11 +170,7 @@ pub(crate) enum Plan {
 /// no RAM, no frame the allocator holds, none overlapping another of the
 /// function's. An all-peripherals IVMD, one naming a devid this unit does
 /// not name as its own, or any that is refused, holds the unit.
-pub(crate) fn plan(
-    table: &Ivrs<'_>,
-    unit: &Placing,
-    memory: &[xaqu_bootinfo::MemRegion],
-) -> Plan {
+pub(crate) fn plan(table: &Ivrs<'_>, unit: &Placing, memory: &[xaqu_bootinfo::MemRegion]) -> Plan {
     let ram = || {
         memory
             .iter()

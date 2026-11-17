@@ -357,8 +357,7 @@ impl NetCore {
         self.with(|stack, _| {
             if let Some(interface) = stack.interface_mut(index) {
                 if up {
-                    interface.flags |=
-                        xaqu_net::iface::IFF_RUNNING | xaqu_net::iface::IFF_LOWER_UP;
+                    interface.flags |= xaqu_net::iface::IFF_RUNNING | xaqu_net::iface::IFF_LOWER_UP;
                 } else {
                     interface.flags &=
                         !(xaqu_net::iface::IFF_RUNNING | xaqu_net::iface::IFF_LOWER_UP);

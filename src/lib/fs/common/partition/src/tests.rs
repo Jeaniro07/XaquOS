@@ -128,8 +128,7 @@ fn sgdisk_agrees_where_the_host_has_it() {
     assert!(output.status.success());
     let writes =
         write_table(SECTORS, 512, Guid::random([9; 16]), &two_partitions()).expect("a table");
-    let path =
-        std::env::temp_dir().join(std::format!("xaqu-partition-{}.img", std::process::id()));
+    let path = std::env::temp_dir().join(std::format!("xaqu-partition-{}.img", std::process::id()));
     std::fs::write(&path, disk_with(&writes)).expect("the image");
     let verify = Command::new("sgdisk")
         .arg("-v")

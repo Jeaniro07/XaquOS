@@ -198,25 +198,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-lode-core"
-version = "0.3.0"
-dependencies = [
- "xaqu-slots",
- "ruzstd",
-]
-
-[[package]]
-name = "xaqu-sha256"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-slots"
-version = "0.3.0"
-dependencies = [
- "xaqu-sha256",
-]
-
-[[package]]
 name = "fiat-crypto"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -279,7 +260,6 @@ version = "0.1.0"
 dependencies = [
  "chacha20poly1305",
  "ed25519-dalek",
- "xaqu-lode-core",
  "hmac",
  "libc",
  "rcgen",
@@ -287,6 +267,7 @@ dependencies = [
  "sha2",
  "time",
  "x25519-dalek",
+ "xaqu-lode-core",
  "zeroize",
 ]
 
@@ -691,6 +672,25 @@ dependencies = [
  "curve25519-dalek",
  "rand_core",
  "zeroize",
+]
+
+[[package]]
+name = "xaqu-lode-core"
+version = "0.3.0"
+dependencies = [
+ "ruzstd",
+ "xaqu-slots",
+]
+
+[[package]]
+name = "xaqu-sha256"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-slots"
+version = "0.3.0"
+dependencies = [
+ "xaqu-sha256",
 ]
 
 [[package]]

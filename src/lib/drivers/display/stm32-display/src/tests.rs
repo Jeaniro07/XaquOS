@@ -895,7 +895,7 @@ fn eeprom(hdmi: bool) -> [u8; 256] {
     bytes[..8].copy_from_slice(&edid::HEADER);
     bytes[54..72].copy_from_slice(&DTD_720P60);
     bytes[72..77].copy_from_slice(&[0, 0, 0, 0xFC, 0]);
-    bytes[77..90].copy_from_slice(b"XAQU TEST\n ");
+    bytes[77..90].copy_from_slice(b"XAQU TEST\n   ");
     bytes[126] = 1;
     let sum = bytes[..127].iter().fold(0_u8, |s, b| s.wrapping_add(*b));
     bytes[127] = 0_u8.wrapping_sub(sum);

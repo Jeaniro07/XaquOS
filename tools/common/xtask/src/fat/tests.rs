@@ -294,7 +294,7 @@ fn the_volume_label_is_in_the_root_directory() {
         .filter(|entry| entry[11] & ATTR_VOLUME_ID != 0)
         .collect();
     assert_eq!(labels.len(), 1);
-    assert_eq!(&labels[0][0..11], b"XAQU     ");
+    assert_eq!(&labels[0][0..11], b"XAQU       ");
 }
 
 #[test]

@@ -94,18 +94,18 @@ pub(crate) unsafe fn prepare_stack(
     // argument, because the trampoline the link register names is the only
     // code that runs before Rust does and has nowhere else to read them from.
     let frame: [u64; 12] = [
-        0,                                              // x29
+        0,                                            // x29
         xaqu_task_entry as *const () as usize as u64, // x30, the link register
-        0,                                              // x27
-        0,                                              // x28
-        0,                                              // x25
-        0,                                              // x26
-        0,                                              // x23
-        0,                                              // x24
-        0,                                              // x21
-        0,                                              // x22
-        entry as usize as u64,                          // x19
-        argument as u64,                                // x20
+        0,                                            // x27
+        0,                                            // x28
+        0,                                            // x25
+        0,                                            // x26
+        0,                                            // x23
+        0,                                            // x24
+        0,                                            // x21
+        0,                                            // x22
+        entry as usize as u64,                        // x19
+        argument as u64,                              // x20
     ];
 
     let stack_pointer = top - FRAME_BYTES;

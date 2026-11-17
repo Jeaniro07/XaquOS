@@ -6,12 +6,12 @@
 //! ```text
 //! vtier verify --status FILE [--since SEQ --instance ID] [--allow-inject] MOUNTPOINT
 //! ```
-use xaqu_vtier::store::BLOCK;
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::fd::AsRawFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
+use xaqu_vtier::store::BLOCK;
 
 unsafe extern "C" {
     fn syncfs(fd: i32) -> i32;

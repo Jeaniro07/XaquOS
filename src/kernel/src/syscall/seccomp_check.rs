@@ -298,12 +298,7 @@ fn step_cost() -> u64 {
 
     let mut insns =
         alloc::vec![xaqu_seccomp::Insn::new(LOAD, 0, 0, 0); xaqu_seccomp::MAX_INSNS - 1];
-    insns.push(xaqu_seccomp::Insn::new(
-        RETURN,
-        0,
-        0,
-        xaqu_seccomp::ALLOW,
-    ));
+    insns.push(xaqu_seccomp::Insn::new(RETURN, 0, 0, xaqu_seccomp::ALLOW));
     let Ok(program) = xaqu_seccomp::verify(&insns) else {
         return 0;
     };

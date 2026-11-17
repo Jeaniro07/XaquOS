@@ -899,8 +899,7 @@ fn check_entry_never_rewritten() -> Result<usize, &'static str> {
 
 /// The region [`check_rmrr_identity`] honoured on QEMU's unit, for
 /// [`check_rmrr_frames`] to read again after the reclaim.
-static CHECKED_RMRR: xaqu_sync::Once<xaqu_paging::vtd::rmrr::Identity> =
-    xaqu_sync::Once::new();
+static CHECKED_RMRR: xaqu_sync::Once<xaqu_paging::vtd::rmrr::Identity> = xaqu_sync::Once::new();
 
 /// Stage 10: an RMRR's identity domain, on the first translating VT-d unit,
 /// unless the boot skips its checks (`vtd-design.md` §3.9(b)).

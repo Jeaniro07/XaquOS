@@ -308,6 +308,9 @@ fn firmware_search_path() -> Vec<PathBuf> {
     {
         roots.push(dir.join("share"));
         roots.push(dir.to_path_buf());
+        // Under the binary's prefix, which is how a Linux build installs
+        // them: fetch-qemu-linux.sh's `<prefix>/bin` beside `<prefix>/share/qemu`.
+        roots.push(dir.join("../share/qemu"));
     }
 
     roots.extend(

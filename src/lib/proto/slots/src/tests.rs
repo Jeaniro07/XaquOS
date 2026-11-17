@@ -847,7 +847,7 @@ fn a_slot_command_line_is_composed_whole_or_not_at_all() {
     let mut out = [0u8; 200];
     let len = compose(&words, b"  xaqu.root=tmpfs\n", &mut out);
     assert_eq!(len.map(|len| &out[..len]), Some(full));
-    assert_eq!(compose(&words, b"", &mut out), Some(full.len() - 18));
+    assert_eq!(compose(&words, b"", &mut out), Some(full.len() - 16));
     // Exactly enough room, and one byte short: refused, never cut.
     let mut exact = vec![0u8; full.len()];
     assert_eq!(

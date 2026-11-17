@@ -220,10 +220,7 @@ fn a_flag_the_kernel_did_not_enable_is_not_claimed() {
     }
     assert!(xaqu.contains(&"avx2"));
     // No AVX state: AVX goes, and AVX2, which needs it, with it.
-    let sse = flags(Enabled {
-        xcr0: 0b11,
-        ..XAQU
-    });
+    let sse = flags(Enabled { xcr0: 0b11, ..XAQU });
     assert!(!sse.contains(&"avx") && !sse.contains(&"avx2"), "{sse:?}");
     assert!(sse.contains(&"xsave"));
     // No XSAVE at all: xsave goes too.

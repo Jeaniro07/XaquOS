@@ -24,38 +24,6 @@ name = "compositor-wire"
 version = "0.3.0"
 
 [[package]]
-name = "xaqu-auth-client"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-proto",
- "libc",
-]
-
-[[package]]
-name = "xaqu-auth-proto"
-version = "0.1.0"
-
-[[package]]
-name = "xaqu-settings-client"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-client",
- "xaqu-settings-proto",
- "libc",
-]
-
-[[package]]
-name = "xaqu-settings-proto"
-version = "0.1.0"
-dependencies = [
- "xaqu-auth-proto",
-]
-
-[[package]]
-name = "xaqu-svc-proto"
-version = "0.3.0"
-
-[[package]]
 name = "libc"
 version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -74,9 +42,41 @@ name = "settingsd"
 version = "0.1.0"
 dependencies = [
  "compositor-seat",
+ "libc",
  "xaqu-auth-client",
  "xaqu-auth-proto",
  "xaqu-settings-proto",
  "xaqu-svc-proto",
- "libc",
 ]
+
+[[package]]
+name = "xaqu-auth-client"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-proto",
+]
+
+[[package]]
+name = "xaqu-auth-proto"
+version = "0.1.0"
+
+[[package]]
+name = "xaqu-settings-client"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-auth-client",
+ "xaqu-settings-proto",
+]
+
+[[package]]
+name = "xaqu-settings-proto"
+version = "0.1.0"
+dependencies = [
+ "xaqu-auth-proto",
+]
+
+[[package]]
+name = "xaqu-svc-proto"
+version = "0.3.0"

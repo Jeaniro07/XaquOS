@@ -749,9 +749,7 @@ fn restricted_fault_kind(
     /// `BUS_MCEERR_AR`.
     const BUS_MCEERR_AR: i32 = 4;
     match trap {
-        _ if signal == xaqu_linux_abi::types::SIGBUS && code == BUS_MCEERR_AR => {
-            FaultKind::Poison
-        }
+        _ if signal == xaqu_linux_abi::types::SIGBUS && code == BUS_MCEERR_AR => FaultKind::Poison,
         _ if signal == xaqu_linux_abi::types::SIGBUS => FaultKind::PastEnd,
         Trap::PageFault(fault) if fault.present => FaultKind::Protection,
         Trap::PageFault(_) => FaultKind::NoMapping,

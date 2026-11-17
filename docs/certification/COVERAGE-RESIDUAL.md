@@ -8,9 +8,9 @@ The statements in the certified item that the measured suite did not reach, on e
 
 | Architecture | Profile | Unreached | Argued | Hardware absent | Needs a test |
 |---|---|---:|---:|---:|---:|
-| x86_64 | coverage | 1910 | 395 | 271 | **1244** |
-| aarch64 | debug | 627 | 308 | 157 | **162** |
-| armv7a | debug | 970 | 409 | 346 | **215** |
+| x86_64 | coverage | 1899 | 395 | 271 | **1233** |
+| aarch64 | debug | 625 | 306 | 157 | **162** |
+| armv7a | debug | 967 | 406 | 346 | **215** |
 
 *Argued* is the first four categories below; *hardware absent* is a statement about which machine was measured rather than an argument; *needs a test* is the gap.
 
@@ -18,7 +18,7 @@ The statements in the certified item that the measured suite did not reach, on e
 
 ## x86_64
 
-**1910** unreached statements, coverage profile.
+**1899** unreached statements, coverage profile.
 
 | Category | Statements | Share |
 |---|---:|---:|
@@ -27,7 +27,7 @@ The statements in the certified item that the measured suite did not reach, on e
 | Reached only when something has already failed | 64 | 3% |
 | Run, and credited to another line | 5 | 0% |
 | Hardware the measured machine does not have | 271 | 14% |
-| Needs a test | 1244 | 65% |
+| Needs a test | 1233 | 65% |
 
 ### x86_64: Unreachable on the measured architecture — 186 statements
 
@@ -130,7 +130,7 @@ Justified, line by line. The statement runs, and a test shows what it does, but 
 | 1 | `item` | `discovery/smbios.rs` |
 | 1 | `item` | `syscall/native.rs` |
 
-### x86_64: Needs a test — 1244 statements
+### x86_64: Needs a test — 1233 statements
 
 **The real gap.** No argument covers these; they are reachable on the measured configuration and nothing exercised them. This is the number that has to reach zero for DO-178C table A-7 objective 5. [COVERAGE-WORKLIST.md](COVERAGE-WORKLIST.md) groups them by module.
 
@@ -140,12 +140,12 @@ Justified, line by line. The statement runs, and a test shows what it does, but 
 | 93 | `core` | `arch/x86_64/powerctl.rs` |
 | 84 | `core` | `iommu.rs` |
 | 65 | `core` | `arch/x86_64/msrlog.rs` |
-| 65 | `item` | `main.rs` |
-| 48 | `core` | `user/vmo.rs` |
+| 63 | `item` | `main.rs` |
 | 46 | `item` | `discovery/firmware.rs` |
+| 46 | `core` | `user/vmo.rs` |
 | 40 | `item` | `discovery/pci/virtio.rs` |
-| 39 | `core` | `sched/direct.rs` |
-| 38 | `core` | `arch/x86_64/mod.rs` |
+| 38 | `core` | `sched/direct.rs` |
+| 37 | `core` | `arch/x86_64/mod.rs` |
 | 32 | `core` | `object/channel.rs` |
 | 30 | `core` | `arch/x86_64/speculation.rs` |
 | 28 | `core` | `arch/x86_64/clock.rs` |
@@ -156,12 +156,12 @@ Justified, line by line. The statement runs, and a test shows what it does, but 
 | 24 | `item` | `discovery/devmgr.rs` |
 | 24 | `item` | `init.rs` |
 | 23 | `core` | `arch/x86_64/cpu.rs` |
-| 23 | `core` | `user/space.rs` |
+| 22 | `core` | `user/space.rs` |
 | 21 | `core` | `arch/x86_64/msrlog/decode.rs` |
 | 21 | `core` | `arch/x86_64/syscall.rs` |
 | 21 | `core` | `discovery/tree.rs` |
 | 20 | `core` | `sched/mod.rs` |
-| 247 | | *and 44 more files* |
+| 243 | | *and 44 more files* |
 
 ### x86_64: argued line by line — 267 statements
 
@@ -285,10 +285,10 @@ From `coverage-argued-x86_64.json`. Each row is one argument, for the lines it n
 | `main.rs` | 2088 | Hardware the measured machine does not have | The layout moved by the loader without a random source: a machine whose firmware offers the loader neither RNG protocol nor instruction. Every QEMU machine the suite boots gives it one (EFI_RNG_PROTOCOL from virtio-rng, or RDRAND/RNDR), so KASLR is always random there. |
 | `mm.rs` | 431 | Reached only when something has already failed | The head of the host region in front of the per-frame array. `BootView::page_array_host` places the array at the front of the usable region it chooses, so on every machine the region has a tail after the array and no head before it; the branch keeps a later placement policy from silently losing the head. Reaching it would take the array placed other than where `init` puts it. |
 | `mm.rs` | 1121 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
-| `mm.rs` | 2545 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
-| `mm.rs` | 3340-3342 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
-| `mm.rs` | 3358-3361 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
-| `mm.rs` | 3371-3377 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 2541 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
+| `mm.rs` | 3336-3338 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
+| `mm.rs` | 3354-3357 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 3367-3373 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
 | `object/interrupt.rs` | 302-303 | Reached only when something has already failed | The interrupt controller refused to unmask a line it had just registered a handler for. A vector is minted by its device node only for a line the controller can route (`device::DeviceNode::vector`), and unmasking one is a register write the controller does not refuse; the branch unclaims the line so a controller that did refuse would not leave it claimed. |
 | `object/job.rs` | 142 | Reached only when the kernel is stopping | The root job is made once, by bring-up, before any program exists to be told memory ran out; the allocation is FATAL-ALLOC by design (`tools/common/check/check-fallible-alloc.py` lists it) and this is the panic it ends in. A run reaching it is a boot that ran out of memory before its first program. |
 | `object/pin.rs` | 746 | Reached only when something has already failed | `Pin::new` fills both fields, and only this `drop` takes them, once; they are `Option`s so that the drop can move them out. The `else` is the pattern's other half, reached only if a pin were dropped twice. |
@@ -339,11 +339,11 @@ From `coverage-argued-x86_64.json`. Each row is one argument, for the lines it n
 | `trap.rs` | 156 | Reached only when the kernel is stopping | The stop when the architecture cannot read a system call trap's registers. On x86-64 only `int $0x80` classifies as one, and its gate is not open to ring 3. |
 | `trap.rs` | 159, 164 | Reached only when the kernel is stopping | An invalid opcode or an unexpected exception taken in the kernel, which stops it. The same exceptions from a program are reached, by the stage 3 fault check, through the arm above these. |
 | `trap.rs` | 514 | Reached only when something has already failed | A system call with no dispatcher registered. `main.rs` registers the item's dispatcher before anything can enter user mode, and the first registration stands, so in this item every call finds one. The arm is what the core answers when built without a dispatcher above it, rather than a panic in a trap vector. |
-| `trap.rs` | 805 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
-| `trap.rs` | 861 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
-| `trap.rs` | 898 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
-| `trap.rs` | 1030, 1032, 1035-1038 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
-| `trap.rs` | 1052, 1057, 1136, 1153, 1155 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
+| `trap.rs` | 803 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
+| `trap.rs` | 859 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
+| `trap.rs` | 896 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
+| `trap.rs` | 1028, 1030, 1033-1036 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
+| `trap.rs` | 1050, 1055, 1134, 1151, 1153 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
 | `user/space.rs` | 595 | Reached only when something has already failed | `xaqu_vma::AddressSpace::new` refuses a window whose ends are not page aligned or out of order, and the window here is `MMAP_MIN_ADDR..USER_VIRT_END`, two constants of the layout that are both. Reported rather than panicked on, as the comment says. |
 | `user/space.rs` | 1537 | Reached only when something has already failed | A page found held by a device between the fault reading its reference count and taking it. A pin makes a shared page the object's own first (`Vmo::hold` copies it), so a copy-on-write fault finds a held page only if a pin lands in those few instructions on another processor, which no check can place deterministically. |
 | `user/space.rs` | 1753 | Run, and credited to another line | Run whenever a mapping is abandoned part-way: the allocation sweep's `fork` scenario fails the file mapping's table insert after a native object is mapped, and `abandon_region` runs (its lines 637 and 641 are reached). The line's only statement row is on the removal of an entry the set holds, and `abandon_region` is only called for an id that never went into the native set -- a native mapping whose insert failed, or a file mapping -- so the search always ends empty-handed, under the inlined `BTreeSet::remove`'s rows. |
@@ -363,18 +363,18 @@ From `coverage-argued-x86_64.json`. Each row is one argument, for the lines it n
 
 ## aarch64
 
-**627** unreached statements, debug profile.
+**625** unreached statements, debug profile.
 
 | Category | Statements | Share |
 |---|---:|---:|
-| Unreachable on the measured architecture | 104 | 17% |
+| Unreachable on the measured architecture | 103 | 16% |
 | Reached only when the kernel is stopping | 117 | 19% |
 | Reached only when something has already failed | 78 | 12% |
-| Run, and credited to another line | 9 | 1% |
+| Run, and credited to another line | 8 | 1% |
 | Hardware the measured machine does not have | 157 | 25% |
 | Needs a test | 162 | 26% |
 
-### aarch64: Unreachable on the measured architecture — 104 statements
+### aarch64: Unreachable on the measured architecture — 103 statements
 
 Justified. These statements belong to another architecture or another board, and no run on aarch64 can reach them. The same code is ordinary covered code where it belongs, so this justification is per configuration and the other architectures owe their own.
 
@@ -382,7 +382,7 @@ Justified. These statements belong to another architecture or another board, and
 |---:|---|---|
 | 72 | `core` | `iommu/vtd.rs` |
 | 20 | `core` | `iommu.rs` |
-| 11 | `core` | `platform/google/gs201/watchdog.rs` |
+| 10 | `core` | `platform/google/gs201/watchdog.rs` |
 | 1 | `core` | `arch/speculation.rs` |
 
 ### aarch64: Reached only when the kernel is stopping — 117 statements
@@ -436,7 +436,7 @@ Justified, line by line. Each of these runs only when hardware misbehaves or an 
 | 1 | `core` | `sched/mod.rs` |
 | 1 | `core` | `user/vmo.rs` |
 
-### aarch64: Run, and credited to another line — 9 statements
+### aarch64: Run, and credited to another line — 8 statements
 
 Justified, line by line. The statement runs, and a test shows what it does, but the line table gives it a statement row only in an inlined copy that cannot execute it; the copy that does run carries its instructions under another line's row. No run can credit the line, and no test could make one. Each argument names the test and the row that carries it.
 
@@ -444,7 +444,6 @@ Justified, line by line. The statement runs, and a test shows what it does, but 
 |---:|---|---|
 | 2 | `core` | `hooks.rs` |
 | 2 | `core` | `iommu/smmuv3.rs` |
-| 1 | `core` | `arch/aarch64/signal.rs` |
 | 1 | `core` | `console/input.rs` |
 | 1 | `core` | `mm.rs` |
 | 1 | `core` | `sched/wait.rs` |
@@ -503,7 +502,7 @@ Justified, line by line. The statement runs, and a test shows what it does, but 
 | 1 | `core` | `mm.rs` |
 | 1 | `core` | `object/pin.rs` |
 
-### aarch64: argued line by line — 276 statements
+### aarch64: argued line by line — 275 statements
 
 From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it names and no others; the category is the one it is counted in above.
 
@@ -536,7 +535,6 @@ From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it 
 | `arch/aarch64/gic/gicv3_its.rs` | 620 | Hardware the measured machine does not have | The wait for the ITS to consume the command queue taking a second turn. QEMU's ITS processes commands when `GITS_CWRITER` is written, so `GITS_CREADR` has caught up by the first read. |
 | `arch/aarch64/gic/gicv3_its.rs` | 632 | Reached only when something has already failed | An ITS that stalled on a command (`GITS_CREADR.Stalled`) or never finished one within the bound: the driver stops using it, and every later request is refused (line 500). QEMU's ITS completes every command. |
 | `arch/aarch64/mod.rs` | 1334 | Reached only when something has already failed | Firmware whose PSCI `SYSTEM_RESET` returned instead of resetting: the machine is powered off rather than carrying on as though it had reset. The suite's `boot-reset` gate takes the reset, and QEMU resets. |
-| `arch/aarch64/signal.rs` | 116 | Run, and credited to another line | The stage 3 machine check rewinds a system call with `restart_block` set and requires `x8` to be `restart_syscall`'s number, which runs this statement in the copy the check inlines, under line 113's row. The line's only statement rows are in `syscall::deliver::return_to_user`'s copies, run when a `clock_nanosleep` a stop interrupted resumes, which no gate does. |
 | `arch/aarch64/smp.rs` | 145 | Hardware the measured machine does not have | A `/cpus` node with no `enable-method`, taken to mean PSCI where the tree has a `/psci` node, as Linux does. QEMU's tree names `psci` on every processor, and so does the Pixel 7's; the STM32MP157's does not, and ARMv7-A runs the same rule there. |
 | `arch/aarch64/smp.rs` | 427 | Hardware the measured machine does not have | A device tree with no `/psci` node: a machine whose secondaries are started by spin table, which this kernel does not speak, so it stays on one processor. QEMU and the Pixel 7 both describe PSCI. |
 | `arch/aarch64/smp.rs` | 440 | Hardware the measured machine does not have | An FADT whose ARM boot flags do not say PSCI: a machine using the ACPI parking protocol, which this kernel does not speak. QEMU's FADT says PSCI. |
@@ -578,7 +576,7 @@ From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it 
 | `discovery/devmgr.rs` | 1492 | Reached only when the kernel is stopping | A failure return of the boot self-check `devmgr::start's wait for REPORT`: taken only when the property its sentence names is broken, and main.rs then stops the machine with XAQU-PANIC. A passing boot never takes it. |
 | `discovery/devmgr.rs` | 1503 | Reached only when the kernel is stopping | A failure return of the boot self-check `devmgr::start's wait for REPORT`: taken only when the property its sentence names is broken, and main.rs then stops the machine with XAQU-PANIC. A passing boot never takes it. |
 | `discovery/devmgr.rs` | 1559 | Reached only when something has already failed | The listener's end when devmgr's channel closes: devmgr does not exit in a running system, so the loop never meets a closed channel. |
-| `early.rs` | 234 | Reached only when something has already failed | A device window firmware describes over the kernel's own image. Refused so that a console or framebuffer whose address the device tree or the loader got wrong cannot open a writable window onto the kernel's text. Every machine measured describes its UART and framebuffer apart from the image, and the image is placed by the loader, not by firmware; reaching it needs firmware to describe a device where the kernel was loaded. |
+| `early.rs` | 232 | Reached only when something has already failed | A device window firmware describes over the kernel's own image. Refused so that a console or framebuffer whose address the device tree or the loader got wrong cannot open a writable window onto the kernel's text. Every machine measured describes its UART and framebuffer apart from the image, and the image is placed by the loader, not by firmware; reaching it needs firmware to describe a device where the kernel was loaded. |
 | `hooks.rs` | 62 | Run, and credited to another line | Run by every registration the boot makes -- board bindings, flushes, the quiesce servers -- and by the service check's list of two, which takes two and refuses a third. The loop over the slots is unrolled, and the first slots' call_once is inlined with its closure, under line 48's and 50's rows, which are reached; these lines' rows are only in the out-of-line call of the unrolled tail of Hooks<BoardBinding, 8>, for a slot past the ones the boards fill. |
 | `hooks.rs` | 64 | Run, and credited to another line | Run by every registration the boot makes -- board bindings, flushes, the quiesce servers -- and by the service check's list of two, which takes two and refuses a third. The loop over the slots is unrolled, and the first slots' call_once is inlined with its closure, under line 48's and 50's rows, which are reached; these lines' rows are only in the out-of-line call of the unrolled tail of Hooks<BoardBinding, 8>, for a slot past the ones the boards fill. |
 | `init.rs` | 734 | Hardware the measured machine does not have | A named init that opened and then would not start: an image whose named program is there and is not one the loader takes. The suite's options boot names one that is not there, which is the refusal's other arm. |
@@ -648,13 +646,13 @@ From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it 
 | `mm.rs` | 1115 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
 | `mm.rs` | 1121 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
 | `mm.rs` | 1124 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
-| `mm.rs` | 2545 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
-| `mm.rs` | 3340-3342 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
-| `mm.rs` | 3358-3361 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 2541 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
+| `mm.rs` | 3336-3338 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
+| `mm.rs` | 3354-3357 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 3367 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 3369 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
 | `mm.rs` | 3371 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
 | `mm.rs` | 3373 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
-| `mm.rs` | 3375 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
-| `mm.rs` | 3377 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
 | `object/interrupt.rs` | 302-303 | Reached only when something has already failed | The interrupt controller refused to unmask a line it had just registered a handler for. A vector is minted by its device node only for a line the controller can route (`device::DeviceNode::vector`), and unmasking one is a register write the controller does not refuse; the branch unclaims the line so a controller that did refuse would not leave it claimed. |
 | `object/job.rs` | 142 | Reached only when the kernel is stopping | The root job is made once, by bring-up, before any program exists to be told memory ran out; the allocation is FATAL-ALLOC by design (`tools/common/check/check-fallible-alloc.py` lists it) and this is the panic it ends in. A run reaching it is a boot that ran out of memory before its first program. |
 | `object/pin.rs` | 746 | Reached only when something has already failed | `Pin::new` fills both fields, and only this `drop` takes them, once; they are `Option`s so that the drop can move them out. The `else` is the pattern's other half, reached only if a pin were dropped twice. |
@@ -703,11 +701,11 @@ From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it 
 | `trap.rs` | 156 | Reached only when the kernel is stopping | The stop when the architecture refuses a system call trap. On this architecture `system_call` (arch/aarch64/trap.rs) refuses only an `svc` taken from EL1, and the kernel issues no `svc` of its own: every `svc` in the tree is in a program's bytes. |
 | `trap.rs` | 159, 164 | Reached only when the kernel is stopping | An undefined instruction or an unexpected exception taken in the kernel, which stops it. The same exceptions from a program are reached, by the trap check's programs (arch/aarch64/trap/check.rs), through the arm above these. |
 | `trap.rs` | 514 | Reached only when something has already failed | A system call with no dispatcher registered. `main.rs` registers the item's dispatcher before anything can enter user mode, and the first registration stands, so in this item every call finds one. The arm is what the core answers when built without a dispatcher above it, rather than a panic in a trap vector. |
-| `trap.rs` | 805 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
-| `trap.rs` | 861 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
-| `trap.rs` | 898 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
-| `trap.rs` | 1030, 1032, 1035-1038 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
-| `trap.rs` | 1052, 1057, 1136, 1151-1153, 1155 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
+| `trap.rs` | 803 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
+| `trap.rs` | 859 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
+| `trap.rs` | 896 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
+| `trap.rs` | 1028, 1030, 1033-1036 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
+| `trap.rs` | 1050, 1055, 1134, 1149-1151, 1153 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
 | `user/space.rs` | 595 | Reached only when something has already failed | `xaqu_vma::AddressSpace::new` refuses a window whose ends are not page aligned or out of order, and the window here is `MMAP_MIN_ADDR..USER_VIRT_END`, two constants of the layout that are both. Reported rather than panicked on, as the comment says. |
 | `user/space.rs` | 1537 | Reached only when something has already failed | A page found held by a device between the fault reading its reference count and taking it. A pin makes a shared page the object's own first (`Vmo::hold` copies it), so a copy-on-write fault finds a held page only if a pin lands in those few instructions on another processor, which no check can place deterministically. |
 | `user/space.rs` | 2337 | Reached only when something has already failed | A private file mapping's region whose file object or shadow is missing from the tables. `map_file` records both under the region's id before the region can fault, and they leave together as the region's id leaves; a fault finding one missing would be the tables and the map disagreeing. |
@@ -725,12 +723,12 @@ From `coverage-argued-aarch64.json`. Each row is one argument, for the lines it 
 
 ## armv7a
 
-**970** unreached statements, debug profile.
+**967** unreached statements, debug profile.
 
 | Category | Statements | Share |
 |---|---:|---:|
 | Unreachable on the measured architecture | 156 | 16% |
-| Reached only when the kernel is stopping | 169 | 17% |
+| Reached only when the kernel is stopping | 166 | 17% |
 | Reached only when something has already failed | 65 | 7% |
 | Run, and credited to another line | 19 | 2% |
 | Hardware the measured machine does not have | 346 | 36% |
@@ -749,13 +747,13 @@ Justified. These statements belong to another architecture or another board, and
 | 2 | `core` | `arch/armv7a/console.rs` |
 | 1 | `core` | `arch/speculation.rs` |
 
-### armv7a: Reached only when the kernel is stopping — 169 statements
+### armv7a: Reached only when the kernel is stopping — 166 statements
 
 Justified. The panic report, its catalogue and the backtrace walker run when the kernel has already decided to stop. Exercising them means crashing deliberately, which only `test-shell`'s `xaqu.onexit=panic` boot does -- and a passing run that reached the rest would be a failing run.
 
 | Statements | Ring | File |
 |---:|---|---|
-| 50 | `core` | `panic/screen.rs` |
+| 47 | `core` | `panic/screen.rs` |
 | 19 | `item` | `main.rs` |
 | 19 | `core` | `sched/mod.rs` |
 | 18 | `core` | `trap.rs` |
@@ -950,7 +948,7 @@ From `coverage-argued-armv7a.json`. Each row is one argument, for the lines it n
 | `discovery/devmgr.rs` | 1559 | Reached only when something has already failed | The listener's end when devmgr's channel closes: devmgr does not exit in a running system, so the loop never meets a closed channel. |
 | `early.rs` | 165 | Run, and credited to another line | `EarlyMemory::translate` runs at every boot: stage 1's `check_early_mapper` and `check_no_early_window_wraps` (main.rs) call it, inlined, and its body's rows there are reached. Its opening and closing lines have their only statement rows in the out-of-line copy, which on this machine no caller uses. |
 | `early.rs` | 168 | Run, and credited to another line | `EarlyMemory::translate` runs at every boot: stage 1's `check_early_mapper` and `check_no_early_window_wraps` (main.rs) call it, inlined, and its body's rows there are reached. Its opening and closing lines have their only statement rows in the out-of-line copy, which on this machine no caller uses. |
-| `early.rs` | 234 | Reached only when something has already failed | A device window firmware describes over the kernel's own image. Refused so that a console or framebuffer whose address the device tree or the loader got wrong cannot open a writable window onto the kernel's text. Every machine measured describes its UART and framebuffer apart from the image, and the image is placed by the loader, not by firmware; reaching it needs firmware to describe a device where the kernel was loaded. |
+| `early.rs` | 232 | Reached only when something has already failed | A device window firmware describes over the kernel's own image. Refused so that a console or framebuffer whose address the device tree or the loader got wrong cannot open a writable window onto the kernel's text. Every machine measured describes its UART and framebuffer apart from the image, and the image is placed by the loader, not by firmware; reaching it needs firmware to describe a device where the kernel was loaded. |
 | `hooks.rs` | 62 | Run, and credited to another line | Run by every registration the boot makes -- board bindings, flushes, the quiesce servers -- and by the service check's list of two, which takes two and refuses a third. The loop over the slots is unrolled, and the first slots' call_once is inlined with its closure, under line 48's and 50's rows, which are reached; these lines' rows are only in the out-of-line call of the unrolled tail of Hooks<BoardBinding, 8>, for a slot past the ones the boards fill. |
 | `hooks.rs` | 64 | Run, and credited to another line | Run by every registration the boot makes -- board bindings, flushes, the quiesce servers -- and by the service check's list of two, which takes two and refuses a third. The loop over the slots is unrolled, and the first slots' call_once is inlined with its closure, under line 48's and 50's rows, which are reached; these lines' rows are only in the out-of-line call of the unrolled tail of Hooks<BoardBinding, 8>, for a slot past the ones the boards fill. |
 | `init.rs` | 734 | Hardware the measured machine does not have | A named init that opened and then would not start: an image whose named program is there and is not one the loader takes. The suite's options boot names one that is not there, which is the refusal's other arm. |
@@ -1058,13 +1056,13 @@ From `coverage-argued-armv7a.json`. Each row is one argument, for the lines it n
 | `mm.rs` | 1115 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
 | `mm.rs` | 1121 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
 | `mm.rs` | 1124 | Reached only when the kernel is stopping | Prints which way a frame window moved, and is called only by a self-check that has just found its count wrong and is about to return the error that stops the boot (`fatal!` in `main.rs`). A passing run never calls it; a run that did would be a failing boot. |
-| `mm.rs` | 2316 | Hardware the measured machine does not have | The IOMMU page tables: only a translating unit's domain maps, unmaps and translates through them. ARMv7-A's `virt` is given no SMMU (COVERAGE-RESIDUAL.md files `iommu/smmuv3.rs` under hardware absent for the same reason), so every device domain here is untranslated and these are never asked; AArch64's GICv3 boot has the SMMU and reaches them. |
-| `mm.rs` | 2477 | Hardware the measured machine does not have | The IOMMU page tables: only a translating unit's domain maps, unmaps and translates through them. ARMv7-A's `virt` is given no SMMU (COVERAGE-RESIDUAL.md files `iommu/smmuv3.rs` under hardware absent for the same reason), so every device domain here is untranslated and these are never asked; AArch64's GICv3 boot has the SMMU and reaches them. |
-| `mm.rs` | 2545 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
-| `mm.rs` | 2638 | Reached only when something has already failed | The return of a piece the kernel's tables refused to unmap. `unmap_range` refuses only a range that is not page aligned or that would cut a block mapping in half, and the arena maps every stack and buffer page by page at page-aligned addresses, so no piece is refused; the row on this build is that error's way out of the function. |
-| `mm.rs` | 3340-3342 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
-| `mm.rs` | 3358-3361 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
-| `mm.rs` | 3371-3377 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 2312 | Hardware the measured machine does not have | The IOMMU page tables: only a translating unit's domain maps, unmaps and translates through them. ARMv7-A's `virt` is given no SMMU (COVERAGE-RESIDUAL.md files `iommu/smmuv3.rs` under hardware absent for the same reason), so every device domain here is untranslated and these are never asked; AArch64's GICv3 boot has the SMMU and reaches them. |
+| `mm.rs` | 2473 | Hardware the measured machine does not have | The IOMMU page tables: only a translating unit's domain maps, unmaps and translates through them. ARMv7-A's `virt` is given no SMMU (COVERAGE-RESIDUAL.md files `iommu/smmuv3.rs` under hardware absent for the same reason), so every device domain here is untranslated and these are never asked; AArch64's GICv3 boot has the SMMU and reaches them. |
+| `mm.rs` | 2541 | Run, and credited to another line | The statement runs in every kernel unmap, and its refusal runs too: the allocation sweep's `stacks` scenario (`user/alloc_check.rs`) frees two stacks under one shootdown, whose table reservation spills past the eight inline slots, and on the run that fails that reservation the unmap goes on in pieces (seen with a print on the branch, `8 12`, and in `unmap_kernel_in_pieces`'s rows, which are reached). The line's only statement rows are on the other way the reservation fails -- the heap refusing after the injection let it through, which needs the size class out of slab pages at that moment -- inside the inlined `try_reserve`. |
+| `mm.rs` | 2634 | Reached only when something has already failed | The return of a piece the kernel's tables refused to unmap. `unmap_range` refuses only a range that is not page aligned or that would cut a block mapping in half, and the arena maps every stack and buffer page by page at page-aligned addresses, so no piece is refused; the row on this build is that error's way out of the function. |
+| `mm.rs` | 3336-3338 | Reached only when the kernel is stopping | `FrameWindow::report`, called only by a self-check whose frame count came out wrong, just before it returns the error that stops the boot. A passing run never calls it. |
+| `mm.rs` | 3354-3357 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
+| `mm.rs` | 3367-3373 | Reached only when the kernel is stopping | The body of `FrameWindow::report_at`, which only `report` calls, only from a self-check about to fail the boot on its frame count. |
 | `object/interrupt.rs` | 302-303 | Reached only when something has already failed | The interrupt controller refused to unmask a line it had just registered a handler for. A vector is minted by its device node only for a line the controller can route (`device::DeviceNode::vector`), and unmasking one is a register write the controller does not refuse; the branch unclaims the line so a controller that did refuse would not leave it claimed. |
 | `object/job.rs` | 142 | Reached only when the kernel is stopping | The root job is made once, by bring-up, before any program exists to be told memory ran out; the allocation is FATAL-ALLOC by design (`tools/common/check/check-fallible-alloc.py` lists it) and this is the panic it ends in. A run reaching it is a boot that ran out of memory before its first program. |
 | `object/pin.rs` | 746 | Reached only when something has already failed | `Pin::new` fills both fields, and only this `drop` takes them, once; they are `Option`s so that the drop can move them out. The `else` is the pattern's other half, reached only if a pin were dropped twice. |
@@ -1114,11 +1112,11 @@ From `coverage-argued-armv7a.json`. Each row is one argument, for the lines it n
 | `trap.rs` | 156 | Reached only when the kernel is stopping | The stop when the architecture refuses a system call trap. On this architecture `system_call` (arch/armv7a/trap.rs) refuses only an `svc` taken from SVC mode, and the kernel issues no `svc` of its own: every `svc` in the tree is in a program's bytes. |
 | `trap.rs` | 159, 164 | Reached only when the kernel is stopping | An undefined instruction or an unexpected exception taken in the kernel, which stops it. The same exceptions from a program are reached, by the trap check's programs (arch/armv7a/trap/check.rs), through the arm above these. |
 | `trap.rs` | 514 | Reached only when something has already failed | A system call with no dispatcher registered. `main.rs` registers the item's dispatcher before anything can enter user mode, and the first registration stands, so in this item every call finds one. The arm is what the core answers when built without a dispatcher above it, rather than a panic in a trap vector. |
-| `trap.rs` | 805 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
-| `trap.rs` | 861 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
-| `trap.rs` | 898 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
-| `trap.rs` | 1030, 1032, 1035-1038 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
-| `trap.rs` | 1052, 1057, 1136, 1151-1153, 1155 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
+| `trap.rs` | 803 | Reached only when the kernel is stopping | A fault from user mode with no personality registered, which the kernel stops on; `main.rs` registers the Linux personality's return path before the first program. |
+| `trap.rs` | 859 | Reached only when the kernel is stopping | A fault from user mode that the personality finds no process for, which the kernel stops on: every task that enters ring 3 is a process's thread. |
+| `trap.rs` | 896 | Reached only when something has already failed | A fault from user mode on a task with no address space. `sched` gives a task made for a thread its process's space before it first runs, so this would be the kernel having entered ring 3 without recording who was running; it is reported as fatal rather than resolved. |
+| `trap.rs` | 1028, 1030, 1033-1036 | Reached only when the kernel is stopping | The report of a page fault the kernel could not resolve -- one in the kernel outside the demand window, or a user one with no program to blame -- printed as the kernel stops. |
+| `trap.rs` | 1050, 1055, 1134, 1149-1151, 1153 | Reached only when the kernel is stopping | `fatal` and `report`, the trap path's stop: the architecture's register dump, the abridged report for a second failure, and the panic's conclusion. Reached only when the kernel stops on a trap. |
 | `user/space.rs` | 595 | Reached only when something has already failed | `xaqu_vma::AddressSpace::new` refuses a window whose ends are not page aligned or out of order, and the window here is `MMAP_MIN_ADDR..USER_VIRT_END`, two constants of the layout that are both. Reported rather than panicked on, as the comment says. |
 | `user/space.rs` | 1537 | Reached only when something has already failed | A page found held by a device between the fault reading its reference count and taking it. A pin makes a shared page the object's own first (`Vmo::hold` copies it), so a copy-on-write fault finds a held page only if a pin lands in those few instructions on another processor, which no check can place deterministically. |
 | `user/space.rs` | 2328 | Reached only when something has already failed | The region `resolve` found to be a private file mapping is gone, or is no longer one, when this takes the space's lock again: `resolve` lets the lock go to call here. Reached only if another thread of the process unmaps or replaces the region in that gap, while this one faults on it; the fault then answers as for an address with nothing mapped, which is what it has become. |

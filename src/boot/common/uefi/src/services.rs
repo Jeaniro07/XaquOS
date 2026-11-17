@@ -1103,10 +1103,7 @@ impl Disk {
     }
 
     /// The aligned one-block buffer, if `len` is one block.
-    fn bounce(
-        &self,
-        len: usize,
-    ) -> core::result::Result<*mut u8, xaqu_slots::record::DeviceError> {
+    fn bounce(&self, len: usize) -> core::result::Result<*mut u8, xaqu_slots::record::DeviceError> {
         if len == self.block_size as usize {
             Ok(self.buffer.address as *mut u8)
         } else {

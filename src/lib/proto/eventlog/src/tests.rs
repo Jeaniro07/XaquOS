@@ -326,11 +326,11 @@ fn the_text_is_the_report_then_the_log_before_it() {
         text[separator..].ends_with(b"  init     started\n\n"),
         "the log before"
     );
-    assert!(text[separator..].windows(6).any(|w| w == b"Xaqu"));
+    assert!(text[separator..].windows(4).any(|w| w == b"Xaqu"));
     assert_eq!(event.flags, flags::UNCHECKED, "whole, unchecked");
     assert_eq!(event.boot, 3);
     assert_eq!(event.identity >> 32, 3);
-    assert_eq!(first_line(text, 13), b"XAQU_PANIC ");
+    assert_eq!(first_line(text, 11), b"XAQU_PANIC ");
 }
 
 #[test]

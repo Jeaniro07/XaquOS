@@ -376,11 +376,7 @@ fn copy_device_tree(services: &Services) -> Result<Option<(Allocation, u64)>> {
         ));
     }
 
-    let copy = services.allocate(
-        "copying the device tree",
-        len,
-        MemoryType::XAQU_DEVICE_TREE,
-    )?;
+    let copy = services.allocate("copying the device tree", len, MemoryType::XAQU_DEVICE_TREE)?;
     // SAFETY: firmware's tree is `len` bytes long by its own header, the copy
     // is a fresh allocation of at least that many, and the two cannot overlap.
     unsafe { ptr::copy_nonoverlapping(tree as *const u8, copy.address as *mut u8, len as usize) };

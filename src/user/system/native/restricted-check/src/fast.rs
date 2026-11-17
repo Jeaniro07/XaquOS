@@ -371,8 +371,7 @@ fn vectors_in_the_gap(given: &Given) -> Result<(), i32> {
     counted(given, LAZY, 1, 176)?;
 
     syscall_exit(&enter(&context), arch::GETPPID, 177)?;
-    let _ =
-        xaqu_rt::native::region::vectors_read(xaqu_rt::Kernel, &mut image).map_err(|_| 177)?;
+    let _ = xaqu_rt::native::region::vectors_read(xaqu_rt::Kernel, &mut image).map_err(|_| 177)?;
     image
         .get_mut(XMM5_AT..XMM5_AT + 8)
         .ok_or(177)?

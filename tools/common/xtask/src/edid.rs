@@ -446,10 +446,7 @@ mod tests {
     #[test]
     fn what_an_image_carries_is_the_file_the_argument_names() {
         let carried = carry(&stand_in(), Some(REGISTRY_LINES.to_owned()));
-        assert_eq!(
-            carried.argument,
-            "drm.edid_firmware=edid/FRX-Xaqu-Test.bin"
-        );
+        assert_eq!(carried.argument, "drm.edid_firmware=edid/FRX-Xaqu-Test.bin");
         let paths: Vec<&str> = carried
             .files
             .iter()

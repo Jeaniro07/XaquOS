@@ -6,17 +6,53 @@ version = 4
 name = "dirclient"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "xaqu-native",
  "xaqu-native-abi",
- "libc",
 ]
 
 [[package]]
 name = "drvupdate"
 version = "0.1.0"
 dependencies = [
- "xaqu-drvupdate-proto",
  "libc",
+ "xaqu-drvupdate-proto",
+]
+
+[[package]]
+name = "getty"
+version = "0.1.0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "init"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "xaqu-audit",
+ "xaqu-log-shed",
+ "xaqu-native",
+ "xaqu-native-abi",
+ "xaqu-process-builder",
+ "xaqu-settings-proto",
+ "xaqu-svc",
+ "xaqu-svc-proto",
+]
+
+[[package]]
+name = "libc"
+version = "0.2.189"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+
+[[package]]
+name = "svc"
+version = "0.1.0"
+dependencies = [
+ "xaqu-audit",
+ "xaqu-svc-proto",
 ]
 
 [[package]]
@@ -93,39 +129,3 @@ dependencies = [
 [[package]]
 name = "xaqu-svc-proto"
 version = "0.3.0"
-
-[[package]]
-name = "getty"
-version = "0.1.0"
-dependencies = [
- "libc",
-]
-
-[[package]]
-name = "init"
-version = "0.1.0"
-dependencies = [
- "xaqu-audit",
- "xaqu-log-shed",
- "xaqu-native",
- "xaqu-native-abi",
- "xaqu-process-builder",
- "xaqu-settings-proto",
- "xaqu-svc",
- "xaqu-svc-proto",
- "libc",
-]
-
-[[package]]
-name = "libc"
-version = "0.2.189"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
-
-[[package]]
-name = "svc"
-version = "0.1.0"
-dependencies = [
- "xaqu-audit",
- "xaqu-svc-proto",
-]

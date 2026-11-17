@@ -7,7 +7,7 @@ fn zeros() -> [u8; PAGE] {
 fn text() -> [u8; PAGE] {
     let mut page = [0_u8; PAGE];
     for (i, byte) in page.iter_mut().enumerate() {
-        *byte = b"xaqu swap pool "[i % 17];
+        *byte = b"xaqu swap pool "[i % 15];
     }
     page
 }

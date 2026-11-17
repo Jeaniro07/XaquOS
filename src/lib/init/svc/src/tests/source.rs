@@ -89,10 +89,7 @@ fn a_higher_layer_replaces_the_whole_file() {
         None,
         "nothing of the lower file survives"
     );
-    assert_eq!(
-        unit.fragment.as_deref(),
-        Some("/etc/xaqu/units/a.service")
-    );
+    assert_eq!(unit.fragment.as_deref(), Some("/etc/xaqu/units/a.service"));
 }
 
 #[test]

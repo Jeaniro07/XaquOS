@@ -550,12 +550,12 @@ fn image(path: &Path) -> Vec<u8> {
             .expect("in range");
         u32::from_le_bytes(slice)
     };
-    assert_eq!(bytes.get(..16), Some(&b"xaqu-xrgb-rle\n"[..]));
-    let (width, height) = (word(16), word(20));
+    assert_eq!(bytes.get(..14), Some(&b"xaqu-xrgb-rle\n"[..]));
+    let (width, height) = (word(14), word(18));
     assert_eq!((width, height), (WIDTH, HEIGHT));
 
     let mut out = Vec::with_capacity((width * height * 3) as usize);
-    let mut at = 24;
+    let mut at = 22;
     let mut previous: Vec<u8> = Vec::new();
     for _ in 0..height {
         let tag = *bytes.get(at).expect("a row tag");
@@ -3275,9 +3275,9 @@ fn an_event_socket_too_long_for_sun_path_is_refused_as_the_request_socket_is() {
 /// lode's acceptance, and answers a capture with its whole screen, in QOI.
 #[test]
 fn answers_lode_with_the_screen() {
-    use xaqu_lode_capture::{FORMAT_QOI, Message, qoi};
     use std::io::{Read as _, Write as _};
     use std::os::unix::net::UnixListener;
+    use xaqu_lode_capture::{FORMAT_QOI, Message, qoi};
 
     let desk = Desk::new("lodeshot", "");
     let socket = desk.work.join("lode-capture");

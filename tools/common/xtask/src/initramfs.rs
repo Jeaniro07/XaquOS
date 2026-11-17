@@ -1048,11 +1048,8 @@ fn build_with_shell(
     ports: &[ports::File],
 ) -> Result<Vec<u8>> {
     crate::kernel_shape::refuse_executable_copies(natives)?;
-    let served = crate::kernel_shape::server_description(natives)?.filter(|_| {
-        !ports
-            .iter()
-            .any(|file| file.path == "etc/xaqu/partitions")
-    });
+    let served = crate::kernel_shape::server_description(natives)?
+        .filter(|_| !ports.iter().any(|file| file.path == "etc/xaqu/partitions"));
     let listed = certified_list(natives)?;
     let with_server: Vec<ports::File>;
     let ports = if served.is_some() || listed.is_some() {

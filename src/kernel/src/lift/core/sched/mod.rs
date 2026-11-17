@@ -66,11 +66,11 @@ use core::alloc::Layout;
 use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 pub use affinity::{AffinityRefusal, effective_mask, set_affinity};
-use xaqu_sched::CpuSet;
 pub use preempt::Preempt;
 pub use preempt::counting as records_kept;
 pub use task::{SleepSlot, Task, TaskId, UserThread};
 pub use wait::{Mark, ReadyList, WaitQueue};
+use xaqu_sched::CpuSet;
 
 use crate::arch;
 use crate::fallible;

@@ -341,9 +341,7 @@ impl Driver {
             let current = self.serial.line.baud;
             let line = termios.line(current);
             if let Err(error) = self.serial.modem(&mut self.link, !hang_up, !hang_up) {
-                xaqu_rt::warn!(
-                    "usbserial: serial {number}'s DTR and RTS were not set: {error:?}"
-                );
+                xaqu_rt::warn!("usbserial: serial {number}'s DTR and RTS were not set: {error:?}");
             }
             match self.serial.configure(&mut self.link, &line) {
                 Ok(()) => xaqu_rt::info!(
@@ -485,9 +483,7 @@ impl Driver {
                             );
                         }
                         Tap::Bypass => {
-                            xaqu_rt::info!(
-                                "usbserial: jtag {number} tap {tap}: bypass, no idcode"
-                            );
+                            xaqu_rt::info!("usbserial: jtag {number} tap {tap}: bypass, no idcode");
                         }
                     }
                 }

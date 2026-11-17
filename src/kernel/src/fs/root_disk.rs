@@ -271,13 +271,7 @@ pub(crate) fn start_committer() -> bool {
         crate::syscall::time::now_nanos().saturating_add(COMMIT_INTERVAL),
         Ordering::SeqCst,
     );
-    let spawned = sched::spawn(
-        "disk commit",
-        commit_forever,
-        0,
-        xaqu_sched::NICE_0_WEIGHT,
-    )
-    .is_ok();
+    let spawned = sched::spawn("disk commit", commit_forever, 0, xaqu_sched::NICE_0_WEIGHT).is_ok();
     if !spawned {
         COMMITTER.store(false, Ordering::SeqCst);
     }

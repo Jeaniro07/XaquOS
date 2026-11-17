@@ -32,9 +32,7 @@ use xaqu_native::channel::{self, Channel, ReadError};
 use xaqu_native::job::{self, Job};
 use xaqu_native::pending::{self, Process};
 use xaqu_native::port::{self, Port};
-use xaqu_native::{
-    Deadline, Error, Handle, Object, OwnedHandle, Requested, Rights, Signals, vmo,
-};
+use xaqu_native::{Deadline, Error, Handle, Object, OwnedHandle, Requested, Rights, Signals, vmo};
 use xaqu_native_abi::bootstrap::{
     AUDIT_MAGIC, CPU_SERVICE_MAGIC, DEVMGR_STARTER_MAGIC, MEMORY_SCRUB_MAGIC, ROOT_MAGIC,
     ROOT_SWITCHED, init_hello_version, read_after_hello,

@@ -255,18 +255,10 @@ mod tests {
         let header = SlotHeader::decode(&bytes, bytes.len() as u64).unwrap();
         let cmdline = header.cmdline;
         let at = usize::try_from(cmdline.offset).unwrap();
-        assert_eq!(&bytes[at..at + 17], b"xaqu.root=btrfs");
+        assert_eq!(&bytes[at..at + 15], b"xaqu.root=btrfs");
         assert_eq!(header.label_text(), "xaqu test");
         // Version 2: the blobs after the manifest block, which stays zero.
-        let signed = write(
-            &path,
-            VERSION_2,
-            "xaqu test",
-            &[1; 5000],
-            &[2; 9000],
-            b"x",
-        )
-        .unwrap();
+        let signed = write(&path, VERSION_2, "xaqu test", &[1; 5000], &[2; 9000], b"x").unwrap();
         let bytes = std::fs::read(&path).unwrap();
         assert_eq!(signed.kernel.offset, 8192);
         assert!(bytes[4096..8192].iter().all(|&b| b == 0));

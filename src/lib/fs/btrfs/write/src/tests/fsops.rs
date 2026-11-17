@@ -10,9 +10,7 @@ use xaqu_btrfs::chunk::ChunkMapEntry;
 use xaqu_btrfs::compress::MAX_UNCOMPRESSED;
 use xaqu_btrfs::compress::zstd::Workspace;
 use xaqu_btrfs::fs::{ReadBuffers, Target};
-use xaqu_btrfs::items::{
-    FS_TREE_OBJECTID, S_IFCHR, S_IFDIR, S_IFIFO, S_IFLNK, S_IFREG, Timespec,
-};
+use xaqu_btrfs::items::{FS_TREE_OBJECTID, S_IFCHR, S_IFDIR, S_IFIFO, S_IFLNK, S_IFREG, Timespec};
 use xaqu_btrfs::tree::BtrfsKey;
 use xaqu_btrfs::volume::Volume;
 

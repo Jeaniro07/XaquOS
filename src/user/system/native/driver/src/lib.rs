@@ -47,8 +47,6 @@ pub mod virtio;
 
 // The driver model (`docs/DRIVER-MODEL.md`; [`model`]): what a driver of a
 // generic device-tree node is written against.
-pub use xaqu_devmgr_proto::requirements;
-pub use xaqu_driver_derive::{PinStates, Resources, bitfields, register_map};
 pub use model::{
     BindContext, DeviceHandle, DeviceInfo, Driver, Errno, Event, Flow, FromNode, Interrupt,
     InterruptOccurrence, Node, PinControl, PinStateName, PinStates, ProviderLost, Reference,
@@ -57,6 +55,8 @@ pub use model::{
 pub use registers::{
     Access, OffsetByOne, OutOfRange, ReadOnly, ReadWrite, RegisterMap, Registers, Value, WriteOnly,
 };
+pub use xaqu_devmgr_proto::requirements;
+pub use xaqu_driver_derive::{PinStates, Resources, bitfields, register_map};
 
 /// The process entry of a driver written against [`model`]: keeps the
 /// bootstrap channel for [`run`], then calls the crate's `fn main()`, which

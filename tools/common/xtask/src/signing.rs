@@ -728,7 +728,7 @@ mod tests {
     fn a_kernel_holding_the_verifier_is_refused() {
         let mut elf = vec![0u8; 4096];
         assert!(refuse_verifier_in_kernel("k", &elf).is_ok());
-        elf.extend_from_slice(b"_ZN16xaqu_sigverify8manifest6verify17h0123456789abcdefE");
+        elf.extend_from_slice(b"_ZN14xaqu_sigverify8manifest6verify17h0123456789abcdefE");
         assert!(refuse_verifier_in_kernel("k", &elf).is_err());
         let mut elf = vec![0u8; 64];
         elf.extend_from_slice(b"src/lib/crypto/sigverify/src/lms.rs");

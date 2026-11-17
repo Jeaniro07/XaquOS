@@ -96,11 +96,11 @@ pub fn load(path: &str) -> Result<Image, String> {
             from: format!("the slot image {path} ({})", header.label_text()),
         });
     }
-    if head.get(3..11) == Some(b"XAQU  ") && head.get(82..90) == Some(b"FAT32   ") {
+    if head.get(3..11) == Some(b"XAQU    ") && head.get(82..90) == Some(b"FAT32   ") {
         let fat = Fat::read(&mut file, 0).map_err(on)?;
         let mut take = |name: &[u8; 11]| -> Result<Option<Vec<u8>>, String> {
             match fat
-                .open_path(&mut file, &[b"XAQU     ", name])
+                .open_path(&mut file, &[b"XAQU       ", name])
                 .map_err(on)?
             {
                 Some(entry) => fat.read_file(&mut file, &entry).map(Some).map_err(on),

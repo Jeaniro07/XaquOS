@@ -1700,11 +1700,8 @@ mod tests {
             .map(|(path, bytes)| (*path, 0o755, *bytes))
             .collect();
         entries.push((&path, 0o644, text.as_bytes()));
-        crate::initramfs::plain(
-            &["bin", "lib", "lib/xaqu", "lib/xaqu/packages"],
-            &entries,
-        )
-        .expect("an archive")
+        crate::initramfs::plain(&["bin", "lib", "lib/xaqu", "lib/xaqu/packages"], &entries)
+            .expect("an archive")
     }
 
     #[test]

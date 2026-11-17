@@ -236,9 +236,7 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
                 .iter()
                 .any(|(flag, _): &(String, String)| flag == name)
         {
-            return Err(
-                format!("XAQU_BUILD_FLAGS: `{word}` is undeclared or given twice").into(),
-            );
+            return Err(format!("XAQU_BUILD_FLAGS: `{word}` is undeclared or given twice").into());
         }
         // linuxd carries no boot checks of the kernel's: the load's own checks
         // drive a ring-0 harness (docs/microkernel/M5-LIFT.md §1).
@@ -287,9 +285,7 @@ fn build_flags() -> Result<Vec<(String, String)>, Box<dyn Error>> {
 /// that holds it, `none` in one that does not, `lift` in the crates built for
 /// linuxd, whichever the package says.
 fn load_built(personality: &str) -> Result<(), Box<dyn Error>> {
-    println!(
-        "cargo::rustc-check-cfg=cfg(xaqu_load_built, values(\"ring0\", \"none\", \"lift\"))"
-    );
+    println!("cargo::rustc-check-cfg=cfg(xaqu_load_built, values(\"ring0\", \"none\", \"lift\"))");
     let package = std::env::var("CARGO_PKG_NAME")?;
     let built = if package.starts_with("xaqu-lift-") {
         "lift"

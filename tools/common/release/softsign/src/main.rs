@@ -32,10 +32,10 @@
     reason = "a command-line tool: its answers and refusals are its output"
 )]
 
-#[cfg(test)]
-use xaqu_sigverify as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
+#[cfg(test)]
+use xaqu_sigverify as _;
 
 use xaqu_softsign::ci;
 use xaqu_softsign::lms::{

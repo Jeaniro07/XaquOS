@@ -45,6 +45,20 @@ fn write(path: &Path, text: &str) {
     std::fs::write(path, text).unwrap();
 }
 
+/// Give every file under `path` to `uid`:`gid`, so that a process running as
+/// that user may read and write them.
+fn chown_tree(path: &Path, uid: u32, gid: u32) {
+    let mut pending = vec![path.to_owned()];
+    while let Some(current) = pending.pop() {
+        if current.is_dir()
+            && let Ok(read) = std::fs::read_dir(&current)
+        {
+            pending.extend(read.filter_map(Result::ok).map(|entry| entry.path()));
+        }
+        let _ = std::os::unix::fs::chown(&current, Some(uid), Some(gid));
+    }
+}
+
 /// A floor-cost Argon2id of `password`.
 fn hash(password: &str) -> String {
     let params = xaqu_argon2::Params {
@@ -78,13 +92,22 @@ fn start(name: &str) -> Running {
     let root = std::env::temp_dir().join(format!("authd-sock-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&root);
     // SAFETY: `getuid` reads the caller's ids and cannot fail.
-    let uid = unsafe { libc::getuid() };
+    let caller_uid = unsafe { libc::getuid() };
     // SAFETY: as for `getuid`.
-    let gid = unsafe { libc::getgid() };
-    write(
-        &root.join("etc/passwd"),
-        &format!("root:x:0:0:root:/:/bin/sh\ntester:x:{uid}:{gid}::/:/bin/sh\n"),
-    );
+    let caller_gid = unsafe { libc::getgid() };
+    // The user the test speaks as, and the account `authd` answers under.
+    let (uid, gid) = if caller_uid == 0 {
+        (1000, 1000)
+    } else {
+        (caller_uid, caller_gid)
+    };
+    let mut passwd = format!("root:x:0:0:root:/:/bin/sh\ntester:x:{uid}:{gid}::/:/bin/sh\n");
+    if caller_uid == 0 {
+        // `authd` started as root gives its files to this account, and
+        // answers as it: it must never answer as root.
+        passwd.push_str(&format!("auth:x:{uid}:{gid}::/:/bin/sh\n"));
+    }
+    write(&root.join("etc/passwd"), &passwd);
     let shipped = Path::new(env!("CARGO_MANIFEST_DIR")).join("../services/hyprlock");
     write(
         &root.join("lib/xaqu/auth/services/hyprlock"),
@@ -95,6 +118,10 @@ fn start(name: &str) -> Running {
         &format!("{}\n", hash("secret")),
     );
     let socket = root.join("s");
+    if caller_uid == 0 {
+        // The test speaks as an ordinary user: give it the files it reads.
+        chown_tree(&root, uid, gid);
+    }
     let child = Command::new(env!("CARGO_BIN_EXE_authd"))
         .arg("--root")
         .arg(&root)
@@ -102,6 +129,21 @@ fn start(name: &str) -> Running {
         .arg(&socket)
         .spawn()
         .unwrap();
+    if caller_uid == 0 {
+        // Now that `authd` is started, and may give its files away, the
+        // test itself becomes that ordinary user: `authd` answers only a
+        // client that is not root, and the service checks only the caller's
+        // own account.
+        // SAFETY: plain ids; the calls change this process's credentials.
+        // SAFETY: plain ids; the call changes this process's credentials.
+        unsafe {
+            let _ = libc::setresgid(gid, gid, gid);
+        }
+        // SAFETY: as above.
+        unsafe {
+            let _ = libc::setresuid(uid, uid, uid);
+        }
+    }
     let deadline = Instant::now() + Duration::from_secs(20);
     while !socket.exists() {
         assert!(Instant::now() < deadline, "authd never listened");

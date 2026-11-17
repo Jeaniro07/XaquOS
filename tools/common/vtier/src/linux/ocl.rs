@@ -1,8 +1,8 @@
 //! Buffers on one card through `OpenCL`, loaded at run time: a host without the
 //! library builds this and only fails if asked to use it.
-use xaqu_vtier::store::{BLOCK, Backend, Layout};
 use std::ffi::{CStr, c_char, c_void};
 use std::ptr::null_mut;
+use xaqu_vtier::store::{BLOCK, Backend, Layout};
 
 unsafe extern "C" {
     fn dlopen(name: *const c_char, flags: i32) -> *mut c_void;

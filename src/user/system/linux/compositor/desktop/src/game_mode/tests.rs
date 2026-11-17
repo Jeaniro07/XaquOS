@@ -204,10 +204,7 @@ fn a_launch_reads_the_users_file_afresh() {
     assert!(!mark.is_game());
     assert!(complaints.is_empty());
 
-    let _ = dir.write(
-        ".config/xaqu/game-mode.conf",
-        "steam.desktop\nnot an id\n",
-    );
+    let _ = dir.write(".config/xaqu/game-mode.conf", "steam.desktop\nnot an id\n");
     let (mark, complaints) = mark_for_launch(Some("steam.desktop"), &var);
     assert!(mark.is_game());
     assert_eq!(complaints.len(), 1);

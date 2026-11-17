@@ -932,7 +932,7 @@ fn forwards_a_host_connection_to_the_guest_and_closes_it() {
 
     // A server speaks first in SSH, so the guest does here.
     stream.write(b"SSH-2.0-xaqu\r\n");
-    let mut banner = [0_u8; 16];
+    let mut banner = [0_u8; 14];
     host.read_exact(&mut banner).unwrap();
     assert_eq!(
         &banner, b"SSH-2.0-xaqu\r\n",

@@ -1331,7 +1331,7 @@ impl Xhci {
             // INQUIRY.
             0x12 => {
                 let mut data = vec![0, 0x80, 4, 2, 31, 0, 0, 0];
-                data.extend_from_slice(b"XAQU  MODEL DISK      0001");
+                data.extend_from_slice(b"XAQU    MODEL DISK      0001");
                 Some(data)
             }
             // READ CAPACITY (10).

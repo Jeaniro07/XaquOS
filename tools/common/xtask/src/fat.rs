@@ -341,7 +341,7 @@ impl Fat32 {
         // UEFI, which reads the filesystem rather than executing sector 0 — but
         // firmware checks the first byte is a plausible jump.
         sector[0..3].copy_from_slice(&[0xEB, 0x58, 0x90]);
-        sector[3..11].copy_from_slice(b"XAQU  ");
+        sector[3..11].copy_from_slice(b"XAQU    ");
 
         sector[11..13].copy_from_slice(&(SECTOR as u16).to_le_bytes());
         sector[13] = self.sectors_per_cluster as u8;
@@ -360,7 +360,7 @@ impl Fat32 {
         sector[64] = 0x80; // drive number
         sector[66] = 0x29; // extended boot signature
         sector[67..71].copy_from_slice(&0xFE22_1000u32.to_le_bytes()); // volume id
-        sector[71..82].copy_from_slice(b"XAQU     ");
+        sector[71..82].copy_from_slice(b"XAQU       ");
         sector[82..90].copy_from_slice(b"FAT32   ");
         sector[510] = 0x55;
         sector[511] = 0xAA;

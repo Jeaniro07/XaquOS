@@ -196,11 +196,7 @@ fn a_well_formed_superblock_parses() {
     assert_eq!(superblock.root_level(), 1);
     assert_eq!(superblock.chunk_root_level(), 0);
     assert_eq!(superblock.csum_type(), ChecksumType::Crc32c);
-    assert_eq!(
-        superblock.label(),
-        Some("xaqu"),
-        "the label is NUL padded"
-    );
+    assert_eq!(superblock.label(), Some("xaqu"), "the label is NUL padded");
     assert_eq!(superblock.total_bytes(), 1 << 30);
 }
 

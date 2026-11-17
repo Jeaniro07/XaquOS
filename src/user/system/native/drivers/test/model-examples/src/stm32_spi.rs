@@ -24,6 +24,7 @@ mod no_memory;
 
 use alloc::vec;
 
+use linux_uapi::spi::{SPI_IOC_MESSAGE_BASE, SPI_IOC_WR_MAX_SPEED_HZ, SpiTransfer};
 use xaqu_driver::class::{
     CharacterDevice, CommandTable, Direction, File, Readiness, UserMemory, UserMemoryReader,
     UserMemoryWriter,
@@ -33,7 +34,6 @@ use xaqu_driver::{
     Registers, Resources, Result, WriteOnly, bitfields, register_map, run,
 };
 use xaqu_platform::{ClockClient, ResetClient};
-use linux_uapi::spi::{SPI_IOC_MESSAGE_BASE, SPI_IOC_WR_MAX_SPEED_HZ, SpiTransfer};
 
 xaqu_driver::entry!();
 

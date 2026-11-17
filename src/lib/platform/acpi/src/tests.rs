@@ -85,8 +85,8 @@ impl TableBuilder {
         let mut table = vec![0u8; SDT_HEADER_LEN];
         table[0..4].copy_from_slice(&self.signature);
         table[8] = self.revision;
-        table[10..16].copy_from_slice(b"XAQU");
-        table[16..24].copy_from_slice(b"XAQUOS");
+        table[10..16].copy_from_slice(b"XAQU  ");
+        table[16..24].copy_from_slice(b"XAQUOS  ");
         table[24..28].copy_from_slice(&1u32.to_le_bytes());
         table[28..32].copy_from_slice(b"FRRX");
         table[32..36].copy_from_slice(&1u32.to_le_bytes());
@@ -110,7 +110,7 @@ fn build_rsdp(revision: u8, rsdt_address: u32, xsdt_address: u64) -> Vec<u8> {
     };
     let mut rsdp = vec![0u8; len];
     rsdp[0..8].copy_from_slice(&RSDP_SIGNATURE);
-    rsdp[9..15].copy_from_slice(b"XAQU");
+    rsdp[9..15].copy_from_slice(b"XAQU  ");
     rsdp[15] = revision;
     rsdp[16..20].copy_from_slice(&rsdt_address.to_le_bytes());
     if revision >= 2 {
@@ -388,7 +388,7 @@ fn parses_a_revision_two_rsdp() {
         rsdp.rsdt_address, 0x000E_0000,
         "the RSDT address must survive"
     );
-    assert_eq!(&rsdp.oem_id, b"XAQU", "the OEM id must survive");
+    assert_eq!(&rsdp.oem_id, b"XAQU  ", "the OEM id must survive");
     assert!(rsdp.is_valid(), "a freshly built RSDP must checksum");
     assert_eq!(
         rsdp.root_table().unwrap(),
@@ -521,9 +521,9 @@ fn parses_an_sdt_header() {
         bytes.len(),
         "the builder's length must cover the whole table"
     );
-    assert_eq!(&header.oem_id, b"XAQU", "the OEM id must survive");
+    assert_eq!(&header.oem_id, b"XAQU  ", "the OEM id must survive");
     assert_eq!(
-        &header.oem_table_id, b"XAQUOS",
+        &header.oem_table_id, b"XAQUOS  ",
         "the OEM table id must survive"
     );
     assert_eq!(header.oem_revision, 1, "the OEM revision must survive");

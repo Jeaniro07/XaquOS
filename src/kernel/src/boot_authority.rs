@@ -441,8 +441,7 @@ fn try_start_manager() -> Result<Option<Served>, &'static str> {
     };
     // Read back whole from the archive, and parsed by the one parser.
     let bytes = crate::mm::with_initrd(|archive| {
-        xaqu_cpio::file_named(archive, DESCRIPTION)
-            .and_then(|file| fallible::try_to_vec(file).ok())
+        xaqu_cpio::file_named(archive, DESCRIPTION).and_then(|file| fallible::try_to_vec(file).ok())
     })
     .flatten()
     .ok_or("the description could not be read")?;

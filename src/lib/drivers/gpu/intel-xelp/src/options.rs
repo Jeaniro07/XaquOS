@@ -173,8 +173,7 @@ mod tests {
 
     #[test]
     fn frequency_words() {
-        let options =
-            parse(b"xaqu.intelgpu.freq=650 xaqu.intelgpu.freqlog xaqu.intelgpu.freqtest");
+        let options = parse(b"xaqu.intelgpu.freq=650 xaqu.intelgpu.freqlog xaqu.intelgpu.freqtest");
         assert_eq!(options.freq_mhz, Some(650));
         assert!(options.freqlog && options.freqtest);
         assert!(!options.uapitrace && !options.trace);
@@ -209,9 +208,6 @@ mod tests {
             assert_eq!(options.reset_seconds, None, "{line:?}");
             assert!(options.reset_refused, "{line:?}");
         }
-        assert_eq!(
-            parse(b"xaqu.intelgpu.reset=3600").reset_seconds,
-            Some(3600)
-        );
+        assert_eq!(parse(b"xaqu.intelgpu.reset=3600").reset_seconds, Some(3600));
     }
 }

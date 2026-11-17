@@ -391,3 +391,44 @@ packages. None is started; each waits on the customer's order.
 
 The root checkout's `main`, left at c1bd87fb on 2026-09-30 because another
 session had staged changes there, has since been moved past the rename.
+
+## 11. The worlds: a file from another system
+
+A desktop opens a file by handing it to `xdg-open`, which opens what it
+knows by: a folder in Files, a page in the browser. What is not a document
+-- a program, a package, a disc image -- belongs to a world, and each world
+is run by a runtime the user installs.
+
+`xaqu-open`, an app of its own, is that plumbing, and it is all the
+plumbing there is:
+
+| a file             | the world | it is run by                        |
+|--------------------|-----------|-------------------------------------|
+| an ELF image       | linux     | itself, or the loader `linux` names |
+| an `.AppImage`     | linux     | itself                              |
+| a `.fxpkg`         | linux     | `/bin/pkg install`                  |
+| a `.exe`, a `.msi` | windows   | the runtime `windows` names         |
+| an `.apk`          | android   | the runtime `android` names         |
+| a `.app`, a `.dmg` | macos     | the runtime `macos` names           |
+| a `.deb`, a `.rpm` | --        | refused: `pkg` takes `.fxpkg`       |
+| anything else      | --        | `xdg-open`, the desktop's own       |
+
+Where the runtimes are is written in `/etc/xaqu/app-worlds.conf`, which
+every desktop carries with every world saying nothing:
+
+```
+linux = /data/linux/lib64/ld-linux-x86-64.so.2
+windows = /data/proton/files/bin/wine
+android = /data/usr/bin/anbox-runner
+macos = /data/usr/bin/darling
+```
+
+A world with no runtime is refused, and the refusal says how to give it
+one. Nothing is guessed and nothing is run that the user did not ask for:
+Xaqu runs a Linux program itself, and the other worlds are the user's to
+bring. A Linux program that asks for a loader this system has not got is
+refused too, with the loader named.
+
+Files (shelf), the launcher's file hits and the stash hand a file to
+`xaqu-open`; where the desktop has no `xaqu-open`, they fall back to
+`xdg-open`, as they did before.

@@ -134,18 +134,8 @@ fn a_listener_answers_a_request_with_the_numbers_it_was_given() {
     let answer = server
         .poll_transmit(0, &mut payload)
         .expect("the answer goes out at once");
-    assert!(
-        answer
-            .header
-            .flags
-            .contains(xaqu_netwire::tcp::Flags::SYN)
-    );
-    assert!(
-        answer
-            .header
-            .flags
-            .contains(xaqu_netwire::tcp::Flags::ACK)
-    );
+    assert!(answer.header.flags.contains(xaqu_netwire::tcp::Flags::SYN));
+    assert!(answer.header.flags.contains(xaqu_netwire::tcp::Flags::ACK));
     assert_eq!(answer.header.sequence, 77);
     assert_eq!(answer.header.acknowledgment, 5_001);
     assert_eq!(server.segment_size(), 1_400);

@@ -171,9 +171,7 @@ pub fn find(disk: &str, table: &Table) -> Result<Option<AbDisk>, String> {
 }
 
 /// `xaqu-slots`' reading of `table`: the loader's.
-fn loaders_reading(
-    table: &Table,
-) -> Result<xaqu_slots::gpt::Layout, xaqu_slots::gpt::GptError> {
+fn loaders_reading(table: &Table) -> Result<xaqu_slots::gpt::Layout, xaqu_slots::gpt::GptError> {
     let block = SECTOR as u32;
     let header = xaqu_slots::gpt::parse_header(&table.raw_header, table.sectors, block)?;
     xaqu_slots::gpt::find(&header, &table.raw_array, table.sectors, block)

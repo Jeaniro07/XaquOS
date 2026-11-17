@@ -633,9 +633,7 @@ fn bind_interrupt(
         Ok(interrupt) => match interrupt.bind(port, serve::KEY_INTERRUPT) {
             Ok(()) => Some(interrupt),
             Err(error) => {
-                xaqu_rt::warn!(
-                    "intel: the interrupt could not be bound ({error:?}); polling only"
-                );
+                xaqu_rt::warn!("intel: the interrupt could not be bound ({error:?}); polling only");
                 None
             }
         },
@@ -990,9 +988,7 @@ fn serving_power(
     }
     if steps.freqlog {
         backend.set_freqlog(true, xaqu_rt::linux::monotonic_nanos().unwrap_or(0));
-        xaqu_rt::notice!(
-            "intel: freqlog: one line a second while serving (xaqu.intelgpu.freqlog)"
-        );
+        xaqu_rt::notice!("intel: freqlog: one line a second while serving (xaqu.intelgpu.freqlog)");
     }
 }
 

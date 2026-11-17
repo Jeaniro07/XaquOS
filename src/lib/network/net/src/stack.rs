@@ -807,9 +807,7 @@ impl Stack {
                 stream.connection.failure().map(|failure| match failure {
                     xaqu_nettcp::Failure::Refused => Error::Refused,
                     xaqu_nettcp::Failure::TimedOut => Error::TimedOut,
-                    xaqu_nettcp::Failure::Reset | xaqu_nettcp::Failure::Protocol => {
-                        Error::Reset
-                    }
+                    xaqu_nettcp::Failure::Reset | xaqu_nettcp::Failure::Protocol => Error::Reset,
                 })
             }),
             Socket::Listen(_) => None,

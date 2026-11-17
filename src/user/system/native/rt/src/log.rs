@@ -97,8 +97,7 @@ pub fn line(level: Level, arguments: fmt::Arguments<'_>) {
     let debug = DEBUG_LOG.load(Ordering::Relaxed);
     if debug != 0 {
         let _ = text.write_str("\n");
-        let _ =
-            xaqu_native::lift_calls::debug_write(crate::Kernel, Handle(debug), text.as_bytes());
+        let _ = xaqu_native::lift_calls::debug_write(crate::Kernel, Handle(debug), text.as_bytes());
         return;
     }
     let Some(fd) = kmsg() else {

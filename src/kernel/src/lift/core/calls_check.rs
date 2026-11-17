@@ -128,8 +128,7 @@ fn arch_prctl_answers_nosys() -> Result<(), &'static str> {
         const ARCH_PRCTL: usize = 158;
         const ARCH_SET_FS: usize = 0x1002;
         // SAFETY: a call that writes no memory of this program's, whatever it answers.
-        let answer =
-            unsafe { xaqu_rt::linux::call(ARCH_PRCTL, [ARCH_SET_FS, 0x1000, 0, 0, 0, 0]) };
+        let answer = unsafe { xaqu_rt::linux::call(ARCH_PRCTL, [ARCH_SET_FS, 0x1000, 0, 0, 0, 0]) };
         if answer != Err(xaqu_linux_abi::errno::Errno::ENOSYS) {
             crate::println!("  lift-calls arch_prctl from normal mode: {answer:?}, not ENOSYS");
             return Err("arch_prctl from normal mode");
@@ -149,9 +148,8 @@ fn reserve(job: Handle, arena: Handle) -> Result<(), &'static str> {
         return expect("THREAD_RESERVE, no edf", asked(job), Error::Unsupported);
     }
     expect("THREAD_RESERVE on a VMO", asked(arena), Error::WrongType)?;
-    let child = xaqu_native::job::Job::from_owned(xaqu_native::handle::OwnedHandle::from_raw(
-        Kernel, job,
-    ));
+    let child =
+        xaqu_native::job::Job::from_owned(xaqu_native::handle::OwnedHandle::from_raw(Kernel, job));
     let held = core::mem::ManuallyDrop::new(child);
     let below = held
         .create_child()

@@ -3520,13 +3520,13 @@ Each system-level requirement, and the high-level requirements that name it as t
 | `src/lib/kernel/paging/src/amdvi/tests.rs::commands` | host | L.iommu.86, L.iommu.88, L.iommu.89 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::device_table_entries` | host | L.iommu.84, L.iommu.85 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::events_decode_as_hardware_and_qemu_write_them` | host | L.iommu.90 |
-| `src/lib/kernel/paging/src/amdvi/tests.rs::xaqu_amdvi_off_is_the_bare_word` | host | L.iommu.98 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::interrupt_entries_messages_and_redirection_entries` | host | L.iommu.91, L.iommu.93 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::leaf_flags_round_trip` | host | L.iommu.85 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::retarget_changes_only_the_destination` | host | L.iommu.101 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::table_descriptor_at_is_table_descriptor_for_every_other_encoding` | host | L.iommu.85 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::the_dma_half_and_the_interrupt_half_never_share_a_word` | host | L.iommu.84, L.iommu.91 |
 | `src/lib/kernel/paging/src/amdvi/tests.rs::units_are_accepted_by_hat_disabled_first_then_hats` | host | L.iommu.82, L.iommu.83 |
+| `src/lib/kernel/paging/src/amdvi/tests.rs::xaqu_amdvi_off_is_the_bare_word` | host | L.iommu.98 |
 | `src/lib/kernel/paging/src/tests.rs::a_coherent_walker_cleans_nothing` | host | L.iommu.56 |
 | `src/lib/kernel/paging/src/tests.rs::an_unmap_cleans_what_it_clears` | host | L.iommu.56 |
 | `src/lib/kernel/paging/src/tests.rs::an_unpublished_write_is_seen_and_a_full_record_cleans_early` | host | L.iommu.56 |
@@ -3743,7 +3743,6 @@ Each system-level requirement, and the high-level requirements that name it as t
 | `src/lib/proto/native-abi/src/tests.rs::every_native_call_has_a_row_from_restricted_mode` | host | L.trap.29 |
 | `src/lib/proto/native-abi/src/tests.rs::timers_have_their_numbers_rights_and_a_whole_spec` | host | L.object.214 |
 | `src/lib/proto/native/src/tests.rs::a_device_reports_an_aperture_whole_and_reaches_its_configuration_window` | host | L.device.24 |
-| `src/lib/proto/slots/src/tests.rs::a_xaqu_partition_outside_the_usable_blocks_is_refused` | host | L.slots.14 |
 | `src/lib/proto/slots/src/tests.rs::a_record_refuses_every_bad_field` | host | L.slots.2 |
 | `src/lib/proto/slots/src/tests.rs::a_record_round_trips` | host | L.slots.2, L.slots.16 |
 | `src/lib/proto/slots/src/tests.rs::a_record_write_counts_only_when_read_back` | host | L.slots.5 |
@@ -3754,6 +3753,7 @@ Each system-level requirement, and the high-level requirements that name it as t
 | `src/lib/proto/slots/src/tests.rs::a_version_2_header_puts_blobs_after_the_manifest_and_zeroes_the_generation` | host | L.slots.12 |
 | `src/lib/proto/slots/src/tests.rs::a_version_2_header_refuses_a_generation_and_a_blob_in_the_manifest` | host | L.slots.12, L.slots.11 |
 | `src/lib/proto/slots/src/tests.rs::a_write_torn_anywhere_leaves_the_old_record_or_the_new` | host | L.slots.3 |
+| `src/lib/proto/slots/src/tests.rs::a_xaqu_partition_outside_the_usable_blocks_is_refused` | host | L.slots.14 |
 | `src/lib/proto/slots/src/tests.rs::an_inconsistent_record_is_never_written` | host | L.slots.5 |
 | `src/lib/proto/slots/src/tests.rs::blobs_apart_in_any_order_decode` | host | L.slots.10, L.slots.13 |
 | `src/lib/proto/slots/src/tests.rs::checksums_match_their_check_values` | host | L.slots.1 |

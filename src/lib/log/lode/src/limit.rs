@@ -62,15 +62,10 @@ fn class_of(priority: u8) -> usize {
 /// A record's source, as the limiter counts it.
 #[must_use]
 pub fn source(record: &Record) -> Vec<u8> {
-    [
-        "UNIT",
-        "SYSLOG_IDENTIFIER",
-        "XAQU_SUBSYSTEM",
-        "_TRANSPORT",
-    ]
-    .iter()
-    .find_map(|name| record.get(name))
-    .map_or_else(|| Vec::from(&b"unknown"[..]), Vec::from)
+    ["UNIT", "SYSLOG_IDENTIFIER", "XAQU_SUBSYSTEM", "_TRANSPORT"]
+        .iter()
+        .find_map(|name| record.get(name))
+        .map_or_else(|| Vec::from(&b"unknown"[..]), Vec::from)
 }
 
 /// Whether a record is the kernel's own, which nothing holds back.

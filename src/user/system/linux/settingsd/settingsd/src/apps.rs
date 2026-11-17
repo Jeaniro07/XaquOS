@@ -110,14 +110,7 @@ mod tests {
         for dir in ["bin", "lib/xaqu/settings", "home"] {
             std::fs::create_dir_all(root.join(dir)).unwrap();
         }
-        for dir in [
-            "",
-            "bin",
-            "lib",
-            "lib/xaqu",
-            "lib/xaqu/settings",
-            "home",
-        ] {
+        for dir in ["", "bin", "lib", "lib/xaqu", "lib/xaqu/settings", "home"] {
             std::fs::set_permissions(root.join(dir), std::fs::Permissions::from_mode(0o755))
                 .unwrap();
         }

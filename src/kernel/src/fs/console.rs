@@ -251,12 +251,7 @@ impl Inode for Console {
     /// on it, but there is nothing here that can be short: a writer that
     /// finds the console's transmit ring full waits for room, as a Linux tty's
     /// does, rather than returning what fitted (`console::output`).
-    fn write_at(
-        &self,
-        _offset: u64,
-        data: &[u8],
-        _append: bool,
-    ) -> xaqu_vfs::Result<(usize, u64)> {
+    fn write_at(&self, _offset: u64, data: &[u8], _append: bool) -> xaqu_vfs::Result<(usize, u64)> {
         terminal::write(data);
         Ok((data.len(), 0))
     }

@@ -20,7 +20,7 @@
 use crate::Shot;
 
 /// The file's first bytes.
-const MAGIC: &[u8; 16] = b"xaqu-xrgb-rle\n";
+const MAGIC: &[u8; 14] = b"xaqu-xrgb-rle\n";
 
 /// How a screenshot compares with an expected image.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

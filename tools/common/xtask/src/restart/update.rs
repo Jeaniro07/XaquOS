@@ -69,8 +69,7 @@ pub(super) fn carried(arch: Arch, release: bool) -> Result<Carried> {
         .drvupdate;
     let version = |version: &str| -> Result<Vec<u8>> {
         let target = paths::target_dir().join(format!("drv-{version}"));
-        let path =
-            cargo::build_native_version(arch, release, "xaqu-gpu", "gpu", &target, version)?;
+        let path = cargo::build_native_version(arch, release, "xaqu-gpu", "gpu", &target, version)?;
         std::fs::read(&path)
             .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))
     };

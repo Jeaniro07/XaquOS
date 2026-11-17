@@ -149,12 +149,7 @@ fn wait_through_the_releases(
     *WAITER_ANSWER.lock() = None;
     *WAITER_SET.lock() = Some(Arc::clone(set));
     let ended_before = watching.queue().waits_ended_by_a_wake();
-    let waiter = crate::sched::spawn(
-        "cgroup-events-waiter",
-        waiter,
-        0,
-        xaqu_sched::NICE_0_WEIGHT,
-    )?;
+    let waiter = crate::sched::spawn("cgroup-events-waiter", waiter, 0, xaqu_sched::NICE_0_WEIGHT)?;
     // The release must find the waiter on the queue: a fixed sleep would
     // only assume it got there (see the eventfd check's `until_listed`).
     let deadline = crate::timer::now_nanos().saturating_add(PATIENCE_NANOS);

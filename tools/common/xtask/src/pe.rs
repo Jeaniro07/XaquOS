@@ -236,8 +236,7 @@ pub(crate) fn check_switch(elf_image: &[u8]) -> Result<()> {
             .find(|symbol| symbol.name == name)
             .map(|symbol| symbol.value)
     };
-    let (Some(start), Some(end)) = (find(b"xaqu_switch_start"), find(b"xaqu_switch_end"))
-    else {
+    let (Some(start), Some(end)) = (find(b"xaqu_switch_start"), find(b"xaqu_switch_end")) else {
         return Err(fail(
             "the loader has no xaqu_switch_start/xaqu_switch_end block",
         ));

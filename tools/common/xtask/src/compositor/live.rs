@@ -98,8 +98,7 @@ fn live_config() -> String {
 /// 2026-10-28). The installed system never keeps it: the installer blanks
 /// it with `xaqu.live` and keeps the rest. None of these is a
 /// configuration a claim is made of.
-const LIVE_WORDS: &str =
-    "xaqu.root=tmpfs xaqu.live xaqu.unisolated xaqu.efifb xaqu.fbcon";
+const LIVE_WORDS: &str = "xaqu.root=tmpfs xaqu.live xaqu.unisolated xaqu.efifb xaqu.fbcon";
 
 /// What the kernel says at stage 10 when `xaqu.unisolated` is on.
 const UNISOLATED_SAID: &str = "xaqu.unisolated: devmgr may start drivers";
@@ -1275,8 +1274,7 @@ fn install_unattended(
     let hook = |watching: &mut Watching<'_>| -> Result<()> {
         let _ = watching.read_more(Instant::now() + Duration::from_secs(900), |lines| {
             lines.iter().any(|line| {
-                line.contains("xaqu-installd: powering off")
-                    || line.contains("the install failed")
+                line.contains("xaqu-installd: powering off") || line.contains("the install failed")
             })
         })?;
         said = watching
@@ -1297,10 +1295,7 @@ fn install_unattended(
             "xaqu-install: the answers are in XAQU/SETUP.TXT",
             "the answers never reached the ESP",
         ),
-        (
-            "xaqu-installd: powering off",
-            "the install did not finish",
-        ),
+        ("xaqu-installd: powering off", "the install did not finish"),
     ] {
         if !said.iter().any(|line| line.contains(wanted)) {
             return Err(Error::new(format!(

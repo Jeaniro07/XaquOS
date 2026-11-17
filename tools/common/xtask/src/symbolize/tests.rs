@@ -92,27 +92,27 @@ const V0_NAMES: &[(&str, &str)] = &[
         "core::panicking::panic_fmt",
     ),
     (
-        "_RNvCs6hdX3FSbJSK_13xaqu_kernel5kmain",
+        "_RNvCs6hdX3FSbJSK_11xaqu_kernel5kmain",
         "xaqu_kernel::kmain",
     ),
     (
-        "_RNvNtNtCs11Es365otsQ_18xaqu_kernel_core2mm5check12memory_check",
+        "_RNvNtNtCs11Es365otsQ_16xaqu_kernel_core2mm5check12memory_check",
         "xaqu_kernel_core::mm::check::memory_check",
     ),
     (
-        "_RINvNtCs11Es365otsQ_18xaqu_kernel_core9backtrace4walkNCNvNtB4_5panic16report_backtrace0EB4_",
+        "_RINvNtCs11Es365otsQ_16xaqu_kernel_core9backtrace4walkNCNvNtB4_5panic16report_backtrace0EB4_",
         "xaqu_kernel_core::backtrace::walk",
     ),
     (
-        "_RINvMs1_CsbCleW4jqUNW_11xaqu_heapNtB6_4Heap10deallocateNtNtCs11Es365otsQ_18xaqu_kernel_core2mm11KernelPagesEBX_",
+        "_RINvMs1_CsbCleW4jqUNW_9xaqu_heapNtB6_4Heap10deallocateNtNtCs11Es365otsQ_16xaqu_kernel_core2mm11KernelPagesEBX_",
         "xaqu_heap::Heap::deallocate",
     ),
     (
-        "_RINvMs5_Cs5I2HcVrCRTN_13xaqu_pagingINtB6_6MapperNtNtB6_6x86_646X86_64E9map_rangeNtNtCs11Es365otsQ_18xaqu_kernel_core2mm13KernelPhysMemEB1m_",
+        "_RINvMs5_Cs5I2HcVrCRTN_11xaqu_pagingINtB6_6MapperNtNtB6_6x86_646X86_64E9map_rangeNtNtCs11Es365otsQ_16xaqu_kernel_core2mm13KernelPhysMemEB1m_",
         "xaqu_paging::Mapper::map_range",
     ),
     (
-        "_RINvNtCs8ROlWsJZPDz_4core3ptr9drop_glueNtNtCs11Es365otsQ_18xaqu_kernel_core4vmap5ArenaEBF_",
+        "_RINvNtCs8ROlWsJZPDz_4core3ptr9drop_glueNtNtCs11Es365otsQ_16xaqu_kernel_core4vmap5ArenaEBF_",
         "core::ptr::drop_glue",
     ),
 ];

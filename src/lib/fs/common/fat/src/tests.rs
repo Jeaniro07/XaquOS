@@ -57,7 +57,7 @@ fn image(text: &[u8], checksum_off: bool) -> Vec<u8> {
         raw
     };
     let root = data;
-    disk[root..root + 32].copy_from_slice(&entry(b"XAQU     ", 0x10, 3, 0));
+    disk[root..root + 32].copy_from_slice(&entry(b"XAQU       ", 0x10, 3, 0));
     let short = *b"LASTKE~1TXT";
     let mut sum = super::checksum(&short);
     if checksum_off {
@@ -221,10 +221,7 @@ fn a_volume_longer_than_its_table_reads_the_clusters_the_table_numbers() {
     let claimed = RESERVED + FAT_SECTORS + 1500;
     long[32..36].copy_from_slice(&(claimed as u32).to_le_bytes());
     let mut volume = Volume::open(long.as_slice()).expect("opens, clamped");
-    assert_eq!(
-        volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20),
-        Ok(text())
-    );
+    assert_eq!(volume.read_file("XAQU/LASTKERNEL.TXT", 1 << 20), Ok(text()));
     // The file's first cluster pointed at 1024, the first past the table.
     let mut past = long.clone();
     let data = (RESERVED + FAT_SECTORS) * 512;

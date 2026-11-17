@@ -1062,8 +1062,7 @@ mod tests {
         );
     }
 
-    const PASSWD: &str =
-        "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n";
+    const PASSWD: &str = "root:x:0:0:root:/:/bin/sh\nxaqu:x:1000:1000:xaqu:/home/xaqu:/bin/zsh\n";
     const GROUP: &str = "root:x:0:\nxaqu:x:1000:\naudio:x:29:xaqu,other\nvideo:x:44:other\n";
 
     #[test]

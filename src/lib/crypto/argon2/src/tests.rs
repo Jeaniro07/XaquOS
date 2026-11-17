@@ -238,7 +238,7 @@ fn argon2id_at_the_floor() {
         1,
         b"xaqu",
         b"0123456789abcdef",
-        "99261f0377abb9fc3f51662b61b141016639a1ac1acb124b21e2a57706cd506f",
+        "e9ac02b7dfd09643653d83c0c13627a521236db052f15a72002b72949ab4ceef",
     );
     assert_eq!(hex(&run(&floor)), floor.tag);
 }

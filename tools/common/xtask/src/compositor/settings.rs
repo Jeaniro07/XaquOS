@@ -475,10 +475,9 @@ mod tests {
     fn a_launcher_that_gives_no_mark_fails() {
         // The negative control's transcript: the switch is on, the file has
         // the ID, and the program was started without the mark.
-        let unmarked = with(
-            "XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop",
-            |_| Some("game-probe: XAQU_GAME_MODE= XAQU_GAME_MODE_APP= .".to_owned()),
-        );
+        let unmarked = with("XAQU_GAME_MODE=1 XAQU_GAME_MODE_APP=probe.desktop", |_| {
+            Some("game-probe: XAQU_GAME_MODE= XAQU_GAME_MODE_APP= .".to_owned())
+        });
         assert!(
             refusal(&unmarked).contains("was not started in game mode by the launcher"),
             "{}",

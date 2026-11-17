@@ -270,7 +270,7 @@ fn find() -> Result<Option<Filled>, String> {
 }
 
 /// Where the file is on the volume, as 8.3 names.
-pub const SETUP: &[&[u8; 11]] = &[b"XAQU     ", b"SETUP   TXT"];
+pub const SETUP: &[&[u8; 11]] = &[b"XAQU       ", b"SETUP   TXT"];
 
 /// Apply `filled` to the system whose `/` is `root`. Every step leaves a
 /// file as it was when it already says what it should.

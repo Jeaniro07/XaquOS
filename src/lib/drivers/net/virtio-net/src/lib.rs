@@ -1398,11 +1398,7 @@ where
     }
 
     /// Account for one completed chain.
-    fn finish(
-        &mut self,
-        queue: u16,
-        used: xaqu_virtio::Completion,
-    ) -> Result<Event, DeviceError> {
+    fn finish(&mut self, queue: u16, used: xaqu_virtio::Completion) -> Result<Event, DeviceError> {
         let record = self
             .slot(queue, used.head)
             .and_then(|slot| slot.chain)

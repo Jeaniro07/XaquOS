@@ -109,7 +109,6 @@ pub(crate) type SpinLockGuard<'a, T> =
 
 pub use access::Access;
 pub use dentry::Dentry;
-pub use xaqu_linux_abi::errno::Errno;
 pub use file::{OpenFile, OpenFlags, Whence};
 pub use namespace::{
     Context, DEFAULT_CACHE, Location, MOUNT_MAX, Mount, MountFlags, Namespace, RenameMode, Stat,
@@ -119,6 +118,7 @@ pub use node::{
     SetAttributes, StatFs, Timespec, WakeSource,
 };
 pub use walk::Resolve;
+pub use xaqu_linux_abi::errno::Errno;
 
 /// The result every operation here returns: a value, or the error number a
 /// program would be given.

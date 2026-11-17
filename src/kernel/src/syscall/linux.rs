@@ -316,10 +316,7 @@ pub mod plain_calls {
 /// address space and is `ESRCH` without one. `ESRCH` rather than `EFAULT`
 /// because the honest failure is "there is no process here", which is true of
 /// every call today and will be true of none once stage 6's transition lands.
-#[cfg_attr(
-    xaqu_load_built = "lift",
-    unsafe(link_section = ".text.xaqu_straight")
-)]
+#[cfg_attr(xaqu_load_built = "lift", unsafe(link_section = ".text.xaqu_straight"))]
 pub(crate) fn handle(
     call: Syscall,
     args: &SyscallArgs,

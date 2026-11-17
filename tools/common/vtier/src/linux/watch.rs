@@ -1,10 +1,10 @@
 //! A device call that never returns gives no error: every process using the store
 //! would wait for ever. This thread gives it a deadline.
-use xaqu_vtier::store::{Backend, Health};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use xaqu_vtier::store::{Backend, Health};
 
 /// How long one device call may take. A block is 128 KiB; a loaded card takes
 /// milliseconds, and nothing short of a lost device takes this.

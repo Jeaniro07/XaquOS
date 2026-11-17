@@ -59,15 +59,15 @@ pub(super) fn expected(relative: &str) -> Result<Vec<u8>> {
             .ok_or_else(|| Error::new(format!("{} ends inside a word", path.display())))?;
         Ok(u32::from_le_bytes(slice))
     };
-    if bytes.get(..16) != Some(b"xaqu-xrgb-rle\n") {
+    if bytes.get(..14) != Some(b"xaqu-xrgb-rle\n") {
         return Err(Error::new(format!(
             "{} is not an expected image",
             path.display()
         )));
     }
-    let (width, height) = (word(16)?, word(20)?);
+    let (width, height) = (word(14)?, word(18)?);
     let mut out = Vec::with_capacity((width * height * 3) as usize);
-    let mut at = 24;
+    let mut at = 22;
     let mut previous: Vec<u8> = Vec::new();
     for _ in 0..height {
         let tag = *bytes

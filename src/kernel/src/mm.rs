@@ -2254,11 +2254,7 @@ pub(crate) fn unmap_placed(root: u64, virt: u64, len: u64) -> crate::smp::TlbPag
 /// write that dropped its entries. Its tables go back at once.
 ///
 /// Anything else is [`unmap_in`]'s, for the reason it gives.
-pub(crate) fn unmap_unwalked(
-    root: u64,
-    virt: u64,
-    len: u64,
-) -> Result<(), xaqu_paging::MapError> {
+pub(crate) fn unmap_unwalked(root: u64, virt: u64, len: u64) -> Result<(), xaqu_paging::MapError> {
     let mapper: Mapper<crate::arch::PageEncoding> = Mapper::new(PhysAddr(root));
     let _ = mapper.unmap_range(
         &mut KernelPhysMem,

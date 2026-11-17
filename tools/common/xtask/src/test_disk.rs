@@ -221,7 +221,7 @@ mod tests {
         let line = describe();
         for part in [
             "131072 sectors of 512 bytes",
-            "XAQUBLK",
+            "XAQU-BLKS",
             "0x9e3779b97f4a7c15",
         ] {
             assert!(line.contains(part), "`{part}` missing from `{line}`");
@@ -230,8 +230,7 @@ mod tests {
 
     #[test]
     fn a_stale_or_short_image_is_not_current() {
-        let directory =
-            std::env::temp_dir().join(format!("xaqu-test-disk-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("xaqu-test-disk-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let path = directory.join("disk.img");
         assert!(!is_current(&path), "a missing image");

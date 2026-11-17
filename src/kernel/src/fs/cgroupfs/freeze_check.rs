@@ -77,13 +77,8 @@ pub(super) fn start(harness: &Harness, tail: &[u8]) -> Checked<Running> {
         image::Shape::Good,
         arch::USER_STOPPED_PROGRAM,
     );
-    let process = exec::load(
-        &file,
-        &[b"/freeze"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "freeze check: the program could not be loaded")?;
+    let process = exec::load(&file, &[b"/freeze"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "freeze check: the program could not be loaded")?;
     let mut procs = Vec::from(tail);
     procs.extend_from_slice(b"/cgroup.procs");
     let listed = alloc::format!("{}\n", process.pid());

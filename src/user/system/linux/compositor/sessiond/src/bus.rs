@@ -187,10 +187,7 @@ mod tests {
             })
         );
         // The program's own words, after `--`, are its own.
-        assert_eq!(
-            rest,
-            words("--user xaqu -- /bin/hyprix --session-bus x y")
-        );
+        assert_eq!(rest, words("--user xaqu -- /bin/hyprix --session-bus x y"));
         let (none, rest) = split(&words("--user xaqu -- /bin/hyprix")).unwrap();
         assert_eq!(none, None);
         assert_eq!(rest.len(), 4);

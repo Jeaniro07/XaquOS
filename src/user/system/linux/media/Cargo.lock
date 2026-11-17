@@ -32,10 +32,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xaqu-linux-abi"
-version = "0.1.0"
-
-[[package]]
 name = "futures"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -146,8 +142,8 @@ dependencies = [
 name = "media-pcm"
 version = "0.1.0"
 dependencies = [
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
 
 [[package]]
@@ -311,3 +307,7 @@ checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
 ]
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"

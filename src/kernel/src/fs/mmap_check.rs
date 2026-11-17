@@ -983,13 +983,8 @@ fn check_a_program_writes_privately(file: &Arc<OpenFile>) -> Result<(), &'static
         image::Shape::Good,
         arch::USER_RMAP_PROGRAM,
     );
-    let program = process::load(
-        &image,
-        &[b"/rmap"],
-        &[],
-        [0x5a; xaqu_ustack::RANDOM_BYTES],
-    )
-    .map_err(|_| "the private write program could not be loaded")?;
+    let program = process::load(&image, &[b"/rmap"], &[], [0x5a; xaqu_ustack::RANDOM_BYTES])
+        .map_err(|_| "the private write program could not be loaded")?;
     let object = file
         .inode()
         .mapping()

@@ -87,14 +87,8 @@ mod tests {
     #[test]
     fn the_word_is_read_and_anything_else_is_persist() {
         assert_eq!(choice("console=ttyS0"), Choice::Absent);
-        assert_eq!(
-            choice("xaqu.badframes=reset"),
-            Choice::Chosen(Mode::Reset)
-        );
-        assert_eq!(
-            choice("a xaqu.badframes=off b"),
-            Choice::Chosen(Mode::Off)
-        );
+        assert_eq!(choice("xaqu.badframes=reset"), Choice::Chosen(Mode::Reset));
+        assert_eq!(choice("a xaqu.badframes=off b"), Choice::Chosen(Mode::Off));
         assert_eq!(
             choice("xaqu.badframes=persist"),
             Choice::Chosen(Mode::Persist)

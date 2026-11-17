@@ -192,7 +192,12 @@ fn the_right_password_is_accepted_and_a_wrong_one_fails_after_the_delay() {
         failed(0)
     );
     let log = m.audit();
-    assert!(log.contains("service=hyprlock account=xaqu peer-pid=2 peer-uid=1000 method=password result=accepted"), "{log}");
+    assert!(
+        log.contains(
+            "service=hyprlock account=xaqu peer-pid=2 peer-uid=1000 method=password result=accepted"
+        ),
+        "{log}"
+    );
     assert!(log.contains("result=failed why=failures:1"), "{log}");
     assert!(
         !log.contains("correct"),
@@ -727,10 +732,7 @@ fn su_takes_a_wheel_members_own_password() {
     let mut m = Machine::new("su");
     m.set("xaqu", 1000, "mine");
     m.set("other", 1001, "theirs");
-    assert_eq!(
-        m.verdict(XAQU, "su", "", &["mine"]),
-        accepted("xaqu", 1000)
-    );
+    assert_eq!(m.verdict(XAQU, "su", "", &["mine"]), accepted("xaqu", 1000));
     assert!(matches!(
         m.verdict(XAQU, "su", "", &["guess"]).reply,
         Reply::Failed { .. }

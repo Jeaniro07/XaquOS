@@ -26,12 +26,12 @@ use std::time::{Duration, Instant};
 
 use std::collections::VecDeque;
 
+use rustls::pki_types::ServerName;
 use xaqu_lode_core::blob::{self, BlobId, Reference};
 use xaqu_lode_core::record::Record;
 use xaqu_lode_core::segment;
 use xaqu_lode_core::time::Zone;
 use xaqu_lode_core::upload::{self, Backoff, Destination};
-use rustls::pki_types::ServerName;
 
 use crate::store::{self, Segment};
 
@@ -74,12 +74,21 @@ struct Reader {
     sealed: Vec<(String, u64)>,
     /// The store's segments, listed again only when a directory changed.
     listing: store::Listing,
+    /// Whether every segment the last pass saw is sealed: the writer may
+    /// start a new one at any time, and a directory's timestamp does not
+    /// change for every file added to it.
+    sealed_only: bool,
 }
 
 impl Reader {
     /// Append to `out`, in order, the records after `high` and at most
     /// [`WINDOW`] past it.
     fn more(&mut self, dirs: &[PathBuf], out: &mut Vec<Record>) {
+        // A store whose every segment is sealed may get a new one at any
+        // time: the writer starts it after the seal. The listing is read
+        // again, since a directory's timestamp does not change for every
+        // file added to it.
+        self.listing.again = self.sealed_only;
         let segments = self.listing.segments(dirs).to_vec();
         // A sealed segment's records were read when it was first seen
         // sealed, and it gains none: it is not looked at again, its size
@@ -141,6 +150,10 @@ impl Reader {
             }
         }
         self.seen = if cut { Vec::new() } else { sizes };
+        self.sealed_only = !segments.is_empty()
+            && segments
+                .iter()
+                .all(|each| self.sealed.iter().any(|(name, _)| *name == each.name));
         out.extend(fresh);
     }
 

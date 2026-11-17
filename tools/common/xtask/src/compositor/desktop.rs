@@ -32,7 +32,39 @@ const DESKTOP_APPS: &[(&str, &str)] = &[
     ("xaqu-shell", "xaqu-shell"),
     // The file chooser portald opens for GTK and Chrome on Xaqu.
     ("chooser", "chooser"),
+    // The world's opener: a Linux program, a Windows one, an Android one,
+    // a macOS one (`xaqu-open`).
+    ("xaqu-open", "xaqu-open"),
 ];
+
+/// Where the runtimes of the worlds are named, in a desktop's image.
+const APP_WORLDS_PATH: &str = "etc/xaqu/app-worlds.conf";
+
+/// The file that says which runtime each world is run by, so that a user
+/// who installs one writes a line and not a program. Windows is run by
+/// bridgeplay, which says so, without a crash, when the Wine volume is
+/// missing; the other worlds say nothing, so that a desktop without their
+/// runtime refuses instead of guessing.
+fn app_worlds() -> crate::ports::File {
+    crate::ports::File {
+        path: APP_WORLDS_PATH.to_owned(),
+        mode: 0o644,
+        content: crate::ports::Content::Bytes(
+            "# The runtime each world is run by (docs/APPS.md §11). Xaqu runs a\n\
+             # Linux program itself; the other worlds need what the user installs,\n\
+             # and this file says where it is. A line is a world's name, an `=`, and\n\
+             # the program that runs it (a path, or a name found in PATH), with the\n\
+             # words it takes before the file.\n\
+             #\n\
+             windows = /bin/bridgeplay run\n\
+             # linux = /data/linux/lib64/ld-linux-x86-64.so.2\n\
+             # android = /data/usr/bin/android-translation-layer\n\
+             # macos = /data/usr/bin/darling\n"
+                .as_bytes()
+                .to_vec(),
+        ),
+    }
+}
 
 /// Where `run-compositor` puts the wallpaper it carries.
 const WALLPAPER_PATH: &str = "etc/wallpaper.fxwall";
@@ -169,6 +201,8 @@ pub(super) fn desktop(
     let programs = desktop_programs(arch, &carried.ports)?;
     carried.ports.extend(programs);
     carried.ports.extend(desktop_auth(arch, args)?);
+    // Where the runtimes of the worlds are named (`xaqu-open`).
+    carried.ports.push(app_worlds());
     // The DHCP client, which `--net`'s `exec-once` and the N150 box's
     // script run (`crate::dhcp`).
     carried.ports.extend(crate::dhcp::carried(arch)?);

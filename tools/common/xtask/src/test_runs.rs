@@ -85,9 +85,7 @@ pub(crate) fn launch(
     // (`crate::test_cache`), before any binary starts.
     if let Some(plan) = cache {
         std::fs::write(directory.join(crate::test_cache::FILE), plan)?;
-        println!(
-            "   the test binaries outside the item may be cached passes (XAQU_STEP_CACHE=on)"
-        );
+        println!("   the test binaries outside the item may be cached passes (XAQU_STEP_CACHE=on)");
     }
     let exe = std::env::current_exe()?;
     let exe = exe

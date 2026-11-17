@@ -470,9 +470,7 @@ fn every_other_verdict_writes_nothing() {
         (
             "unavailable",
             Script {
-                verdict: Some(Ok(Verdict::Unavailable(
-                    "xaqu is not in wheel".to_owned(),
-                ))),
+                verdict: Some(Ok(Verdict::Unavailable("xaqu is not in wheel".to_owned()))),
                 ..Script::default()
             },
             RefusalKind::NotPermitted,
@@ -487,14 +485,7 @@ fn every_other_verdict_writes_nothing() {
         ),
     ];
     for (name, script, kind) in scripts {
-        let run = run(
-            name,
-            XAQU,
-            hostname("box"),
-            false,
-            script,
-            Client::Answers,
-        );
+        let run = run(name, XAQU, hostname("box"), false, script, Client::Answers);
         assert_eq!(run.refused(), kind, "{name}");
         assert_eq!(run.hostname(), "xaqu\n", "{name} wrote");
     }

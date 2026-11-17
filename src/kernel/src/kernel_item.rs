@@ -32,8 +32,7 @@ extern crate alloc;
     unused_qualifications,
     reason = "named by its crate's path, so the interface's list sees the core's fn used here"
 )]
-pub const ITEM_FLAG_WORD: u64 =
-    xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
+pub const ITEM_FLAG_WORD: u64 = xaqu_kernel_core::flag_word(&xaqu_kernel_core::build_flag_word!());
 
 pub use xaqu_kernel_core::*;
 

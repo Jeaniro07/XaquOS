@@ -11,8 +11,7 @@ use crate::fat::Fat32;
 /// A small FAT32 volume with a file in it, as `xtask` writes its images.
 fn volume() -> Vec<u8> {
     let mut fs = Fat32::new(64 << 20).unwrap();
-    fs.add_file("XAQU/CMDLINE.TXT", b"xaqu.root=tmpfs")
-        .unwrap();
+    fs.add_file("XAQU/CMDLINE.TXT", b"xaqu.root=tmpfs").unwrap();
     fs.finish()
 }
 
@@ -68,7 +67,7 @@ fn the_live_medium_holds_the_volume_in_its_one_partition() {
     let start = usize::try_from(LIVE_FIRST * SECTOR).unwrap();
     let placed = &medium[start..start + volume.len()];
     let hidden = u32::try_from(LIVE_FIRST).unwrap().to_le_bytes();
-    assert_eq!(&placed[3..11], b"XAQU  ", "the boot sector");
+    assert_eq!(&placed[3..11], b"XAQU    ", "the boot sector");
     assert_eq!(&placed[28..32], &hidden, "the boot sector's hidden sectors");
     assert_eq!(&placed[6 * 512 + 28..6 * 512 + 32], &hidden, "the backup's");
     let mut expected = volume.clone();

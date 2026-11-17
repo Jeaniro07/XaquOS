@@ -193,8 +193,7 @@ fn served(_argument: usize) {
     });
     xaqu_kernel_core::device::set_devices((0..page.devices as usize).map(|index| {
         let start = core::ptr::from_ref(page).cast::<u8>().wrapping_add(
-            xaqu_native_abi::lift::DEVICES_AT
-                + index * xaqu_native_abi::lift::DeviceFact::BYTES,
+            xaqu_native_abi::lift::DEVICES_AT + index * xaqu_native_abi::lift::DeviceFact::BYTES,
         );
         // SAFETY: inside the boot page, which the kernel mapped here and stays.
         let bytes = unsafe { &*start.cast::<[u8; xaqu_native_abi::lift::DeviceFact::BYTES]>() };
@@ -212,8 +211,7 @@ fn served(_argument: usize) {
         return;
     }
     // SAFETY: a hand-off record of integers, read as zeros: nothing to report.
-    let info =
-        unsafe { core::mem::MaybeUninit::<xaqu_bootinfo::BootInfo>::zeroed().assume_init() };
+    let info = unsafe { core::mem::MaybeUninit::<xaqu_bootinfo::BootInfo>::zeroed().assume_init() };
     let start = core::ptr::from_ref(page)
         .cast::<u8>()
         .wrapping_add(COMMAND_LINE_AT);

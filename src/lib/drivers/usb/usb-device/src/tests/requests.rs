@@ -188,7 +188,7 @@ fn strings() {
     );
     assert_eq!(
         ask(&mut port, 0x80, 6, 0x0302, 0x0409, 2),
-        Got::In(vec![30, 3]),
+        Got::In(vec![26, 3]),
         "just the length"
     );
     assert_eq!(

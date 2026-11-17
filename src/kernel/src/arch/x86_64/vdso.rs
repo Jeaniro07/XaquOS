@@ -36,9 +36,7 @@
 
 use core::arch::global_asm;
 
-use xaqu_vdso::{
-    CODE_AT, Function, IMAGE_BYTES, VVAR_COUNTER_HZ, VVAR_MODE, VVAR_REALTIME_OFFSET,
-};
+use xaqu_vdso::{CODE_AT, Function, IMAGE_BYTES, VVAR_COUNTER_HZ, VVAR_MODE, VVAR_REALTIME_OFFSET};
 
 /// `CLOCK_MONOTONIC`, `CLOCK_MONOTONIC_RAW`, `CLOCK_MONOTONIC_COARSE` and
 /// `CLOCK_BOOTTIME`, as bits.

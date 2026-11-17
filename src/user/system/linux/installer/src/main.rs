@@ -283,7 +283,7 @@ fn is_xtask_volume(disk: &mut File, lba: u64) -> bool {
     let mut sector = [0_u8; 512];
     disk.seek(SeekFrom::Start(lba * SECTOR)).is_ok()
         && disk.read_exact(&mut sector).is_ok()
-        && &sector[3..11] == b"XAQU  "
+        && &sector[3..11] == b"XAQU    "
         && &sector[82..90] == b"FAT32   "
 }
 
@@ -324,7 +324,7 @@ fn holds(target: &str, live: &str) -> bool {
 /// takes its place.
 pub(crate) fn installed_cmdline(disk: &mut File, at: u64) -> io::Result<bool> {
     let volume = Fat::read(disk, at)?;
-    let Some(directory) = volume.find(disk, volume.root, b"XAQU     ")? else {
+    let Some(directory) = volume.find(disk, volume.root, b"XAQU       ")? else {
         return Ok(false);
     };
     let Some(file) = volume.find(disk, directory.cluster, b"CMDLINE TXT")? else {
@@ -522,7 +522,7 @@ mod live_words {
         blank_live_words(&mut text);
         assert_eq!(
             &text[..],
-            b"xaqu.lively xaqu.unisolated.x xxaqu.live            "
+            b"xaqu.lively xaqu.unisolated.x xxaqu.live          "
         );
     }
 }

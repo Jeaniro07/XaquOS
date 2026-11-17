@@ -15,13 +15,13 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use lode_net::pki::Pki;
+use lode_net::receive::{self, Receiver};
+use lode_net::store;
 use xaqu_lode_core::format::{Output, write};
 use xaqu_lode_core::record::Record;
 use xaqu_lode_core::time::Zone;
 use xaqu_lode_core::upload::{self, Format};
-use lode_net::pki::Pki;
-use lode_net::receive::{self, Receiver};
-use lode_net::store;
 
 /// A directory of its own for one test, under the target directory.
 fn scratch(name: &str) -> PathBuf {

@@ -3,11 +3,11 @@
 > Generated from src/kernel/src/panic/catalog.rs by tools/common/gen/gen-panic-catalog.py. Do not edit: change the catalog and regenerate with `python3 tools/common/gen/gen-panic-catalog.py`.
 
 When the kernel stops on a fatal condition it prints a report beginning with a
-`XAQU-PANIC` line that carries the failing site's own message. A site that
-names a catalog entry adds, below the trace, the entry's code and title on a
-`code` line, then `means`, `causes` and `see` lines with the text below. The
-message says what happened this time; the entry says what the check was for and
-where to look.
+`XAQU-PANIC` line that carries the failing site's own message. A site that names
+a catalog entry adds, below the trace, the entry's code and title on a `code`
+line, then `means`, `causes` and `see` lines with the text below. The message
+says what happened this time; the entry says what the check was for and where to
+look.
 
 A code is `FX-SSNN`. `SS` is the stage of `docs/ROADMAP.md` whose check or
 bring-up failed: `00` for anything before stage 1 or outside any stage, `90` for
@@ -2580,8 +2580,8 @@ make one; and once the objects are gone every byte charged must have come back.
 A kernel failing this lets one job take the kernel heap from the rest through a
 path its memory limit does not see (certification finding F-37, T.EXHAUST).
 
-1. An allocation site stopped carrying a `xaqu_kmem::Charge`, or made the
-   object before charging it, so a refusal left something behind.
+1. An allocation site stopped carrying a `xaqu_kmem::Charge`, or made the object
+   before charging it, so a refusal left something behind.
 2. A charge was made to the wrong job: a buffer's growth to the running task
    where it belongs to the object's maker, or the other way round.
 3. An object outlived what held it -- a cached dentry, a weak reference, a queue
@@ -2877,8 +2877,8 @@ message names the case.
 4. `quota::charging_to` no longer moves the target-side half of a by-handle copy
    to the space's owner.
 5. `AddressSpace::fork` no longer takes the source's writable translations down
-   before it answers, or `xaqu_vma`'s `protect` no longer marks a private
-   region made writable copy-on-write (F-41).
+   before it answers, or `xaqu_vma`'s `protect` no longer marks a private region
+   made writable copy-on-write (F-41).
 
 See: src/kernel/src/object/space_check.rs; src/kernel/src/object/space.rs;
 src/kernel/src/user/space.rs; src/kernel/src/syscall/native.rs;
@@ -3197,8 +3197,8 @@ See: src/kernel/src/boot_authority.rs; docs/microkernel/BOOT-AUTHORITY.md.
 
 ## FX-0953 — the partitions' description cannot be honoured
 
-`.xaqu/partitions` is malformed, or names a device no node matches, or one
-that shares its requester id or its pages with something it does not also name.
+`.xaqu/partitions` is malformed, or names a device no node matches, or one that
+shares its requester id or its pages with something it does not also name.
 Reading it as empty would hand a safety partition's device to `devmgr`, so the
 boot stops.
 
@@ -3704,8 +3704,8 @@ another driver's control, every call waiting out a copy in flight, the 257th
 request refused, the queue to a driver that reads nothing bounded (F-63), and a
 program woken with ENODEV when its driver goes.
 
-1. A refusal, or its absence: `xaqu_chardevctl::session::judge` or `publish`
-   no longer refuses what the message names.
+1. A refusal, or its absence: `xaqu_chardevctl::session::judge` or `publish` no
+   longer refuses what the message names.
 2. The driver's end was made with `DUPLICATE` or `TRANSFER`: `DRIVER_RIGHTS`
    changed.
 3. A copy reached a request it must not: `control_of` stopped matching the
@@ -3753,8 +3753,8 @@ refresh, to refuse a listed size at a refresh nobody listed and a size nobody
 listed, a list sent in two pages to be taken, and a list with two preferred
 modes to be refused.
 
-1. `xaqu_displayctl::listed::listed_match` was widened to take a size or
-   refresh no entry has.
+1. `xaqu_displayctl::listed::listed_match` was widened to take a size or refresh
+   no entry has.
 2. The session's page checks (`Session::receive` of MODE_LIST) stopped counting
    preferred entries or tracking the page order.
 
@@ -3972,8 +3972,8 @@ file held open and mapped across the release reading as before.
    src/kernel/src/mm.rs gave back other frames than the archive's whole pages,
    or left the watermark as it was.
 2. `init::set_inputs` kept a slice of the archive instead of a copy.
-3. `xaqu_vfs::initramfs::remove` left a name of the archive, or removed a
-   spared one.
+3. `xaqu_vfs::initramfs::remove` left a name of the archive, or removed a spared
+   one.
 
 See: src/kernel/src/fs/release_check.rs; docs/RAM-RELEASE.md §2.
 
@@ -4194,8 +4194,8 @@ disks were committed before this panic, as they are before a power-off.
    that finished.
 2. Init failed and exited: the `init ... exited with` line above this report
    gives its status, and its own output above that says why.
-3. Nothing could be started at all: no program is built in, `xaqu.init=` named
-   a file that would not start, and the image carries no /sbin/init.
+3. Nothing could be started at all: no program is built in, `xaqu.init=` named a
+   file that would not start, and the image carries no /sbin/init.
 
 See: src/kernel/src/power.rs finish; src/kernel/src/init.rs run; docs/INIT.md
 §8.3.
@@ -4267,14 +4267,14 @@ docs/INIT.md §6, §9, §11, §16.
 
 ## FX-1503 — init took or refused an input other than set_inputs says
 
-`init::check` judges sets of entries under `.xaqu/init/` made up as an
-initramfs could carry them, as `fs::init` hands the boot archive's to
-`init::set_inputs`: the program, the script and the commands are each taken when
-one regular file with one link carries them, and refused -- the input taken as
-absent -- for a second entry of the name, a directory, a second link, a script
-with a NUL and a command list that does not end in two NULs; any other name, and
-a file where the inputs' directory belongs, are refused and change nothing else.
-A second `set_inputs` must be refused and leave pid 1's inputs as they were.
+`init::check` judges sets of entries under `.xaqu/init/` made up as an initramfs
+could carry them, as `fs::init` hands the boot archive's to `init::set_inputs`:
+the program, the script and the commands are each taken when one regular file
+with one link carries them, and refused -- the input taken as absent -- for a
+second entry of the name, a directory, a second link, a script with a NUL and a
+command list that does not end in two NULs; any other name, and a file where the
+inputs' directory belongs, are refused and change nothing else. A second
+`set_inputs` must be refused and leave pid 1's inputs as they were.
 
 1. `init::judge` lost a refusal, or refuses an entry it should take.
 2. `init::set_inputs` took a second call, so what pid 1 runs could change after

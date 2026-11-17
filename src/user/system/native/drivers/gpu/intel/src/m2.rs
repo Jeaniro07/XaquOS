@@ -502,9 +502,10 @@ impl M2<'_> {
         let pat_lost = gt::verify_private_pat(self.bar).count();
         let mut engines = [ENGINES[0]; 5];
         let mut count = 0;
-        for engine in ENGINES.iter().filter(|e| {
-            firmware.engine_mask & xaqu_intel_xelp::device_info::engine::bit(e.id) != 0
-        }) {
+        for engine in ENGINES
+            .iter()
+            .filter(|e| firmware.engine_mask & xaqu_intel_xelp::device_info::engine::bit(e.id) != 0)
+        {
             if let Some(slot) = engines.get_mut(count) {
                 *slot = *engine;
                 count += 1;
@@ -1078,10 +1079,7 @@ impl M2<'_> {
         let info = engine.info;
         let render = info.class == xaqu_intel_xelp::engine::RENDER_CLASS;
         let timestamp = xaqu_intel_xelp::engine::ring_timestamp(info.mmio_base).offset();
-        let hz = u64::from(xaqu_intel_xelp::clock::gen11_read_clock_frequency(
-            self.bar,
-        ))
-        .max(1);
+        let hz = u64::from(xaqu_intel_xelp::clock::gen11_read_clock_frequency(self.bar)).max(1);
         let seqno_at = scratch.ggtt + 0x100;
         let preempt_at = scratch.ggtt + 0x200;
         let full = |cs: &mut Cs<'_>| cs_::gen12_emit_flush(&info, cs_::EMIT_INVALIDATE, cs);
@@ -1375,8 +1373,7 @@ impl M2<'_> {
         )
         .map_err(|_| Step::Memory)?;
         for page in page0..page1 {
-            let Some(device) =
-                xaqu_intel_xelp::gtt::gen8_ggtt_pte_decode(self.bar.read_pte(page))
+            let Some(device) = xaqu_intel_xelp::gtt::gen8_ggtt_pte_decode(self.bar.read_pte(page))
             else {
                 xaqu_rt::warn!(
                     "intel: M2: the plane's GGTT entry {page:#x} is not present; no screen blit"

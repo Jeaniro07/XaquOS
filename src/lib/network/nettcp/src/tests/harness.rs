@@ -220,12 +220,7 @@ impl Link {
             let _ = server.on_segment(self.now, segment);
             return;
         }
-        if !self.listening
-            || !segment
-                .header
-                .flags
-                .contains(xaqu_netwire::tcp::Flags::SYN)
-        {
+        if !self.listening || !segment.header.flags.contains(xaqu_netwire::tcp::Flags::SYN) {
             return;
         }
         let request = Request {

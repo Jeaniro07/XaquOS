@@ -6,16 +6,16 @@ version = 4
 name = "dmesg"
 version = "0.3.0"
 dependencies = [
- "xaqu-linux-abi",
  "libc",
+ "xaqu-linux-abi",
 ]
-
-[[package]]
-name = "xaqu-linux-abi"
-version = "0.1.0"
 
 [[package]]
 name = "libc"
 version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
+
+[[package]]
+name = "xaqu-linux-abi"
+version = "0.1.0"

@@ -302,7 +302,7 @@ fn slot_body() -> Body {
         arch: 1,
         family: 0x0101,
         release: 42,
-        label: *b"xaqu test 0000000000000000000\0",
+        label: *b"xaqu test 000000000000000000000\0",
         payload_len: 4096,
         payload_sha256: [0xAB; 32],
         floors: [5, 2, 1, 0],

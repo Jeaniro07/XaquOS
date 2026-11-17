@@ -1312,10 +1312,7 @@ where
 
     /// Account for one completed chain, and return its request's completion
     /// if that was the request's last.
-    fn finish(
-        &mut self,
-        used: xaqu_virtio::Completion,
-    ) -> Result<Option<Completion>, DeviceError> {
+    fn finish(&mut self, used: xaqu_virtio::Completion) -> Result<Option<Completion>, DeviceError> {
         let record = self
             .slots
             .as_mut()

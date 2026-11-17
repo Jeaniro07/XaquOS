@@ -227,9 +227,7 @@ impl EarlyMemory {
         let span = len
             .checked_next_multiple_of(PAGE_SIZE)
             .filter(|&span| phys.checked_add(span).is_some())
-            .ok_or(EarlyError::MapFailed(
-                xaqu_paging::MapError::RangeOverflow,
-            ))?;
+            .ok_or(EarlyError::MapFailed(xaqu_paging::MapError::RangeOverflow))?;
         if crate::mm::image_span_overlaps(self.kernel_phys, self.kernel_len, phys, len) {
             return Err(EarlyError::KernelImage(phys));
         }

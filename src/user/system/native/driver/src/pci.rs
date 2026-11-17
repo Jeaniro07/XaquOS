@@ -78,9 +78,7 @@ impl<F: Function> Bind for Device<F> {
             Ok(interrupt)
         });
         let Ok(interrupt) = vector else {
-            xaqu_rt::err!(
-                "pci      the function's first MSI-X or MSI vector could not be claimed"
-            );
+            xaqu_rt::err!("pci      the function's first MSI-X or MSI vector could not be claimed");
             return Err(Step::Events);
         };
         Ok(Device {

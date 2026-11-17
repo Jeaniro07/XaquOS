@@ -698,7 +698,7 @@ fn a_stick_is_a_disk_that_reads_writes_and_flushes() {
         assert_eq!(outputs(&mut bus), vec![Got::Disk(0)]);
         let disk = *bus.disk(0).expect("the disk");
         assert_eq!((disk.blocks, disk.block_bytes), (300, 512));
-        assert_eq!(&disk.vendor, b"XAQU  ");
+        assert_eq!(&disk.vendor, b"XAQU    ");
 
         // 200 blocks: two commands, and a page at a time within each.
         let mut read = vec![0_u8; 200 * 512];
