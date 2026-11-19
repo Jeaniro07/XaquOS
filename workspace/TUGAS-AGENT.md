@@ -95,6 +95,13 @@ Release `v0.3.0-live`: `xaqu-live.iso` 218.103.808 byte di
 `https://github.com/Jeaniro07/XaquOS/releases/download/v0.3.0-live/xaqu-live.iso`; token GitHub hanya
 dipakai lewat askpass sementara lalu dihapus, tidak ada token di URL remote. Salinan lokal
 `C:\Users\jeani\Downloads\OS\XaquOS` disegarkan ke `8a22d13dc` (sisa ruang C: 2,43 GB).
+**Verifikasi kepindahan (2026-11-19):** clone bersih dari GitHub berisi `769fd12da`, **4.469 commit,
+10.498 berkas**; selisih terhadap sumber **0** untuk ferrix (4.714), apps (465) dan LORDOS (4.882);
+sisa berkas harness ada di `workspace/` (437 berkas, termasuk `TUGAS-AGENT.md`, 9 rencana,
+`docs/acpi`, staging dan skrip). Enam berkas LORDOS yang disembunyikan `.gitignore`-nya sendiri
+(`apps/logs/*`, `server/src/logs/*`) ikut di-commit dengan `git add -f`. ISO di Release `v0.3.0-live`
+diunduh ulang: 218.103.808 byte, sha256 `619cce1a…89e20`, **identik** dengan ISO lokal. Folder
+kosong (`s`, `sed`, `.uvc-prog-staging`) tidak membawa berkas apa pun sehingga tidak masuk git.
 
 **Keputusan pengguna (2026-11-15): usul "menambahkan Hyprland" tidak diterapkan** — compositor
 desktop sudah `hyprix`, yang kompatibel Hyprland (IPC `hyprctl`/`dispatch`, sintaks `bind =` di
