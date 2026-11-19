@@ -1,0 +1,266 @@
+45:pub(crate) const PROGRAMS: &[Program] = &[
+46-    Program {
+47-        package: "xaqu-restricted-check",
+48-        binary: "restricted-check",
+49-        directory: DIRECTORY,
+50-    },
+51-    Program {
+52-        package: "xaqu-channel-echo",
+53-        binary: "channel-echo",
+54-        directory: DIRECTORY,
+55-    },
+56-    Program {
+57-        package: "xaqu-pong",
+58-        binary: "pong",
+59-        directory: DIRECTORY,
+60-    },
+61-    Program {
+62-        package: "xaqu-ipc-bench",
+63-        binary: "ipc-bench",
+64-        directory: DIRECTORY,
+65-    },
+66-    Program {
+67-        package: "xaqu-ipc-equiv",
+68-        binary: "ipc-equiv",
+69-        directory: DIRECTORY,
+70-    },
+71-    Program {
+72-        package: "xaqu-devmgr",
+73-        binary: "devmgr",
+74-        directory: DIRECTORY,
+75-    },
+76-    Program {
+77-        package: "xaqu-blk",
+78-        binary: "blk",
+79-        directory: DRIVERS,
+80-    },
+81-    Program {
+82-        package: "xaqu-nvme-driver",
+83-        binary: "nvme",
+84-        directory: DRIVERS,
+85-    },
+--
+236:    PROGRAMS
+237-        .iter()
+238-        .chain(lifted.then_some(&LINUXD))
+239-        .chain(lifted.then_some(&PARTMGR))
+240-        .chain(served.then_some(&BTRFSD))
+241-        .chain(
+242-            std::env::var_os("XAQU_TEST_NETD")
+243-                .is_some()
+244-                .then_some(&NETD),
+245-        )
+246-        .map(|program| build_one(arch, release, target_dir, program))
+247-        .collect()
+248-}
+249-
+250-/// `drvupdated`, the helper that takes driver updates for `devmgr`
+251:/// (`docs/DEVMGR.md` §4.1). Not in [`PROGRAMS`]: until the image's
+252-/// verification has its review, only the images
+253-/// `cargo xtask test-restart --update` boots carry it (the certification
+254-/// consultant's C1, 2026-10-07), which [`refuse_updater`] holds.
+255-pub(crate) const UPDATER: Program = Program {
+256-    package: "xaqu-drvupdated",
+257-    binary: "drvupdated",
+258-    directory: DRIVERS,
+259-};
+260-
+261-/// The partition manager (`docs/microkernel/BOOT-AUTHORITY.md` §8), likewise.
+262-pub(crate) const PARTMGR: Program = Program {
+263-    package: "xaqu-partmgr",
+264-    binary: "partmgr",
+265-    directory: DIRECTORY,
+266-};
+267-
+268-/// A program that ends at once: under a first process's name in
+269-/// `test-first-processes`' images.
+270-pub(crate) const CRASH_AT_START: Program = Program {
+271-    package: "xaqu-crash-at-start",
+272-    binary: "crash-at-start",
+273-    directory: DRIVERS,
+274-};
+275-
+276-/// The filesystem server (`docs/microkernel/BTRFSD.md`), in an `fs=server` image alone.
+277-pub(crate) const BTRFSD: Program = Program {
+278-    package: "xaqu-btrfsd",
+279-    binary: "btrfsd",
+280-    directory: DIRECTORY,
+281-};
+282-
+283-/// The network switch (`docs/microkernel/M8.md` §2): only `test-netd`'s image for now,
+284-/// until the row's review.
+285-pub(crate) const NETD: Program = Program {
+286-    package: "xaqu-netd",
+287-    binary: "netd",
+288-    directory: DRIVERS,
+289-};
+290-
+291-/// A partition's `linuxd` that dies at once: only `test-partitions`' images.
+--
+314:/// Not in [`PROGRAMS`]: its crates take the kernel's flags, and no other image
+315-/// carries it.
+316-pub(crate) const LINUXD: Program = Program {
+317-    package: "xaqu-linuxd",
+318-    binary: "linuxd",
+319-    directory: DIRECTORY,
+320-};
+321-
+322-/// One program of the tree, built and checked.
+323-pub(crate) fn build_one(
+324-    arch: Arch,
+325-    release: bool,
+326-    target_dir: &Path,
+327-    program: &Program,
+328-) -> Result<Built> {
+329-    let path = cargo::build_native(arch, release, program.package, program.binary, target_dir)?;
+330-    let bytes = std::fs::read(&path)
+331-        .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))?;
+332-    verify(arch, &bytes).map_err(|why| {
+333-        Error::new(format!(
+334-            "{} for {arch} is not a program the kernel can start: {why}",
+335-            program.binary
+336-        ))
+337-    })?;
+338-    refuse_armed(program.binary, &bytes)?;
+339-    crate::intel_uapi::refuse_fake(program.binary, &bytes)?;
+340-    Ok(Built {
+341-        name: program.binary,
+342-        directory: program.directory,
+343-        bytes,
+344-    })
+345-}
+346-
+347-/// Replace the virtio-net driver in `natives` with one built fault-armed
+348-/// (`XAQU_NET_FAULT`): a frame it sends holding its marker makes it corrupt
+349-/// its own ring, so that the kernel ends the ring under a live driver, as a
+350-/// torn index once did. `test-net`'s last program asks for that, mid-transfer,
+351-/// and requires the driver to be started again and the transfer to finish
+352-/// (`net::restart_command`). Never in any other image: a frame anyone can
+353-/// send must not be able to take a real machine's network down.
+354-///
+--
+359:    let program = PROGRAMS
+360-        .iter()
+361-        .find(|program| program.binary == "net")
+362-        .ok_or_else(|| Error::new("no virtio-net driver among the native programs"))?;
+363-    let target = paths::target_dir().join("net-fault");
+364-    let path = cargo::build_native_with(
+365-        arch,
+366-        release,
+367-        program.package,
+368-        program.binary,
+369-        &target,
+370-        &[("XAQU_NET_FAULT", "armed")],
+371-    )?;
+372-    let bytes = std::fs::read(&path)
+373-        .map_err(|error| Error::new(format!("reading {}: {error}", path.display())))?;
+374-    verify(arch, &bytes).map_err(|why| {
+375-        Error::new(format!(
+376-            "the fault-armed net for {arch} is not a program the kernel can start: {why}"
+377-        ))
+378-    })?;
+379-    let slot = natives
+380-        .iter_mut()
+381-        .find(|built| built.name == program.binary)
+382-        .ok_or_else(|| Error::new("the native programs carry no net to replace"))?;
+383-    slot.bytes = bytes;
+384-    Ok(())
+385-}
+386-
+387-/// Refuse a `net` that carries [`arm_net_fault`]'s fault: every image but
+388-/// `test-net`'s gets this build, and a driver whose network any sender can
+389-/// take down must not reach one -- through a `XAQU_NET_FAULT` left in the
+390-/// environment, say. An unarmed build compiles the marker out entirely.
+391-///
+392-/// # Errors
+393-///
+394-/// The marker in `net`'s bytes.
+395-fn refuse_armed(binary: &str, bytes: &[u8]) -> Result<()> {
+396-    let marker = crate::net::FAULT_MARKER.as_bytes();
+397-    if binary == "net" && bytes.windows(marker.len()).any(|window| window == marker) {
+398-        return Err(Error::new(
+399-            "net was built fault-armed (XAQU_NET_FAULT is set?): only test-net's images \
+--
+407:/// never named (`docs/DRIVER-MODEL.md` §8). Not in [`PROGRAMS`]: only that
+408-/// test's images carry it, beside a `devmgr` built with its table row
+409-/// ([`TEST_DEVMGR`]), which [`refuse_test_driver`] holds.
+410-pub(crate) const TEST_DRIVER: Program = Program {
+411-    package: "xaqu-test-seconds-driver",
+412-    binary: "testseconds",
+413-    directory: DRIVERS,
+414-};
+415-
+416-/// The variable that compiles `test-driver-model`'s row into `devmgr`'s
+417-/// table of generic nodes' drivers, and its value.
+418-pub(crate) const TEST_DEVMGR: (&str, &str) = ("XAQU_DEVMGR_TEST_DRIVER", "on");
+419-
+420-/// Set by `test-driver-model` alone: the one run whose images may carry
+421-/// [`TEST_DRIVER`].
+422-static TEST_DRIVER_ASKED: AtomicBool = AtomicBool::new(false);
+423-
+424-/// Let this run's images carry [`TEST_DRIVER`]: `test-driver-model` only.
+425-pub(crate) fn allow_test_driver() {
+426-    TEST_DRIVER_ASKED.store(true, Ordering::Relaxed);
+427-}
+428-
+429-/// Refuse a set of native programs that carries [`TEST_DRIVER`], unless
+430-/// `test-driver-model` is building it.
+431-///
+432-/// # Errors
+433-///
+434-/// When `natives` carries it in any other run.
+435-pub(crate) fn refuse_test_driver(natives: &[Built]) -> Result<()> {
+436-    if TEST_DRIVER_ASKED.load(Ordering::Relaxed) {
+437-        return Ok(());
+438-    }
+439-    if natives.iter().any(|built| built.name == TEST_DRIVER.binary) {
+440-        return Err(Error::new(
+441-            "this image carries testseconds, which only test-driver-model's images may carry \
+442-             (docs/DRIVER-MODEL.md section 8)",
+443-        ));
+444-    }
+445-    Ok(())
+446-}
+447-
+--
+701:        for program in PROGRAMS {
+702-            let built = cargo::build_native_every_arch(
+703-                false,
+704-                program.package,
+705-                program.binary,
+706-                &test_target_dir(),
+707-            )
+708-            .unwrap();
+709-            assert_eq!(built.len(), Arch::ALL.len(), "{}", program.binary);
+710-            for (arch, path) in built {
+711-                let bytes = std::fs::read(&path).unwrap();
+712-                assert_eq!(verify(arch, &bytes), Ok(()), "{arch} {}", program.binary);
+713-            }
+714-        }
+715-    }
+716-
+717-    #[test]
+718-    fn the_check_refuses_what_the_kernel_would() {
+719-        let image = built(Arch::X86_64).remove(0).bytes;
+720-
+721-        let wrong_machine = verify(Arch::AArch64, &image).unwrap_err();
+722-        assert!(wrong_machine.contains("machine"), "{wrong_machine}");
+723-
+724-        let mut relocatable = image.clone();
+725-        relocatable[16..18].copy_from_slice(&3_u16.to_le_bytes());
+726-        assert!(
+727-            verify(Arch::X86_64, &relocatable)
+728-                .unwrap_err()
+729-                .contains("ET_EXEC")
+730-        );
+731-
+732-        let elf = Elf::parse(&image).unwrap();
+733-        let text = elf.loadable().find(Segment::is_executable).unwrap();
+734-        let entry_offset = usize::try_from(text.offset + (elf.entry() - text.vaddr)).unwrap();
+735-        let mut other_entry = image.clone();
+736-        other_entry[entry_offset] ^= 0xFF;
+737-        assert!(
+738-            verify(Arch::X86_64, &other_entry)
+739-                .unwrap_err()
+740-                .contains("_start")
+741-        );

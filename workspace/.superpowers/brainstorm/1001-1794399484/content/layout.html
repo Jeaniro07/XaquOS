@@ -1,0 +1,68 @@
+<h2>Arah tata letak desktop: seberapa mirip macOS?</h2>
+<p class="subtitle">Semua di atas hyprix + yoru-shell yang sudah ada. Perkiraan kode baru tertulis di bawah tiap opsi.</p>
+
+<style>
+  .scr{position:relative;height:210px;border-radius:8px;overflow:hidden;background:linear-gradient(160deg,#2b2f4a,#161826 60%,#3a2c4f);font:11px Inter,system-ui,sans-serif;color:#e9e9ed}
+  .top{position:absolute;left:0;right:0;top:0;height:18px;background:rgba(22,24,38,.72);display:flex;align-items:center;gap:10px;padding:0 8px;font-size:10px}
+  .top b{font-weight:700}
+  .top .r{margin-left:auto;display:flex;gap:8px;opacity:.9}
+  .win{position:absolute;background:#232532;border-radius:7px;box-shadow:0 8px 24px rgba(0,0,0,.5);border:1px solid #9184d9}
+  .tb{height:16px;display:flex;align-items:center;gap:4px;padding:0 6px;font-size:9px;color:#b9b9c6}
+  .tl{display:flex;gap:4px}.tl i{width:7px;height:7px;border-radius:50%;display:block}
+  .red{background:#ff5f57}.yel{background:#febc2e}.grn{background:#28c840}
+  .glyph{margin-left:auto;letter-spacing:6px;opacity:.8}
+  .dock{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);height:30px;padding:0 8px;border-radius:12px;background:rgba(35,37,50,.7);display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.08)}
+  .ic{width:20px;height:20px;border-radius:5px;background:linear-gradient(135deg,#9184d9,#5b8def)}
+  .ic.b{background:linear-gradient(135deg,#f59e7b,#e2557a)}.ic.c{background:linear-gradient(135deg,#6fd3a8,#2f9e8f)}.ic.d{background:#555a72}
+  .wide{left:6px;right:6px;transform:none;justify-content:space-between}
+  .side{position:absolute;top:24px;bottom:44px;width:62px;background:rgba(35,37,50,.75);border-radius:8px;padding:5px;font-size:8px}
+  .sep{width:1px;height:18px;background:rgba(255,255,255,.2)}
+  .note{font-size:12px;margin-top:6px;color:inherit;opacity:.85}
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="scr">
+        <div class="side" style="left:6px">Jam<br>Kalender<br><br>To-do</div>
+        <div class="win" style="left:78px;top:24px;width:180px;height:120px"><div class="tb"><span>Terminal</span><span class="glyph">_ □ ×</span></div></div>
+        <div class="dock wide"><span class="ic d"></span><span>1 2 3 4</span><span class="ic"></span><span class="ic b"></span><span class="ic c"></span><span>25:00</span><span>14:02</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Yoru apa adanya</h3>
+      <p>Dok lebar di bawah, sidebar widget, tombol jendela di kanan. Tidak mirip macOS.</p>
+      <p class="note">Kode baru: nol.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="scr">
+        <div class="top"><b>&#9711;</b><b>Terminal</b><span>Berkas</span><span>Edit</span><span>Jendela</span><div class="r"><span>Wi-Fi</span><span>Vol</span><span>&#9776;</span><span>Rab 11 Nov 14:02</span></div></div>
+        <div class="win" style="left:60px;top:30px;width:200px;height:120px"><div class="tb"><span class="tl"><i class="red"></i><i class="yel"></i><i class="grn"></i></span><span style="margin:auto">Terminal</span></div></div>
+        <div class="dock"><span class="ic"></span><span class="ic b"></span><span class="ic c"></span><span class="ic"></span><span class="sep"></span><span class="ic d"></span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Gaya macOS penuh</h3>
+      <p>Menu bar atas dengan nama app dan menu, dok ikon di tengah, tombol bulat merah-kuning-hijau di kiri.</p>
+      <p class="note">Kode baru: besar. Menu aplikasi global butuh protokol menu (dbusmenu) dari tiap app; GTK4 dan Chrome tidak mengekspornya di Wayland. Bagian "Berkas/Edit" sulit diisi sungguhan.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="scr">
+        <div class="top"><b>&#9711;</b><b>Terminal</b><div class="r"><span>Wi-Fi</span><span>Vol</span><span>&#9776;</span><span>Rab 11 Nov 14:02</span></div></div>
+        <div class="win" style="left:60px;top:30px;width:200px;height:120px"><div class="tb"><span class="tl"><i class="red"></i><i class="yel"></i><i class="grn"></i></span><span style="margin:auto">Terminal</span></div></div>
+        <div class="dock"><span class="ic"></span><span class="ic b"></span><span class="ic c"></span><span class="ic"></span><span class="sep"></span><span class="ic d"></span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Gaya macOS, tanpa menu aplikasi global (disarankan)</h3>
+      <p>Bar atas tipis: logo, nama app aktif, status, Control Center, jam. Dok ikon di tengah. Tombol bulat di kiri. Menu tetap di dalam jendela app.</p>
+      <p class="note">Kode baru: kecil-sedang. Bar atas dan dok tengah = mode baru yoru-shell; tombol kiri = satu opsi baru di titlebar.rs hyprix.</p>
+    </div>
+  </div>
+</div>

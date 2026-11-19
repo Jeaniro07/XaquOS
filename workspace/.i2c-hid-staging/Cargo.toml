@@ -1,0 +1,13 @@
+[package]
+name = "xaqu-i2c-hid"
+description = "The HID over I2C protocol: the descriptor a device keeps, the commands, and the reports"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

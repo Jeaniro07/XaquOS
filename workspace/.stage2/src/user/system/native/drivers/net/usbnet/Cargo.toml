@@ -1,0 +1,24 @@
+[package]
+name = "xaqu-usbnet-driver"
+description = "The USB Ethernet class driver process: CDC-ECM and CDC-NCM dongles over the interface channel usbhid exports, on xaqu-rt"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "usbnet"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-native-abi = { workspace = true }
+xaqu-rt = { workspace = true }
+xaqu-usb-serial = { workspace = true }
+xaqu-usbif = { workspace = true }
+xaqu-usbnet = { workspace = true }
+
+[lints]
+workspace = true

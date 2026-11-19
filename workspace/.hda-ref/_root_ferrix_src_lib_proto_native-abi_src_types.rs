@@ -1,0 +1,786 @@
+//! The structures native calls read and write through pointers.
+//!
+//! Every one is laid out so that it has no padding and the same size and
+//! offsets on all three targets. A `u64` is 8-aligned under both the x86-64
+//! System V ABI and AAPCS, so an ARMv7-A program and the kernel agree on
+//! these without a 32-bit variant — which is the property Linux's `stat`
+//! does not have, and why `fstat64` exists.
+
+/// The most bytes one channel message may carry.
+///
+/// Sixty-four kibibytes: large enough for any control message a driver
+/// sends, and small enough that a message is copied through the kernel
+/// rather than mapped. Bulk data belongs in a shared VMO, which is what
+/// `docs/ARCHITECTURE.md` §7 says the data path is.
+pub const CHANNEL_MAX_BYTES: usize = 64 * 1024;
+
+/// The most handles one channel message may carry.
+pub const CHANNEL_MAX_HANDLES: usize = 64;
+
+/// A packet on a port.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct PortPacket {
+    /// Whatever the registrant chose, so one waiter can tell its sources
+    /// apart.
+    pub key: u64,
+    /// Which of the `PACKET_*` kinds this is.
+    pub kind: u32,
+    /// For a signal packet, the signals that were asserted when it fired.
+    /// Zero for the other kinds.
+    pub signals: u32,
+    /// For a user packet, what the sender queued. For an interrupt packet,
+    /// the first word is the time it fired in nanoseconds since boot.
+    pub data: [u64; 2],
+}
+
+/// A packet queued by a program through `port_queue`.
+pub const PACKET_USER: u32 = 0;
+/// A packet an `object_wait_async` registration produced.
+pub const PACKET_SIGNAL: u32 = 1;
+/// A packet a bound interrupt produced.
+pub const PACKET_INTERRUPT: u32 = 2;
+/// A packet a pager-backed VMO's fault produced (`docs/microkernel/K3.md`
+/// §2.2): `key` is the VMO's, `signals` the command and the run's length
+/// ([`page_request`]), `data[0]` the run's first byte offset in the VMO and
+/// `data[1]` the request's id, never reused: the K7 ticket the kernel issued
+/// for it once tickets are wired in, which `pager_op`'s
+/// [`PagerOpSpec::request`] names.
+pub const PACKET_PAGE_REQUEST: u32 = 3;
+
+/// A page request's command: the run is absent; supply it.
+pub const PAGE_REQUEST_READ: u32 = 1;
+/// A page request's command: a Clean page of a [`PAGER_VMO_TRAP_DIRTY`] VMO
+/// is about to be written; mark it dirty or fail it.
+pub const PAGE_REQUEST_DIRTY: u32 = 2;
+
+/// A page request's `signals` word: the command in bits 0-7, the run's
+/// length in pages in bits 8-31.
+#[must_use]
+pub const fn page_request(command: u32, pages: u32) -> u32 {
+    (command & 0xFF) | (pages << 8)
+}
+
+/// The command and the run's length in pages a page request's `signals`
+/// word carries.
+#[must_use]
+pub const fn page_request_parts(signals: u32) -> (u32, u32) {
+    (signals & 0xFF, signals >> 8)
+}
+
+/// The shortest a fault waits for a pager, in nanoseconds: one millisecond.
+pub const PAGER_WAIT_MIN_NS: u64 = 1_000_000;
+/// The longest a fault waits for a pager, in nanoseconds: thirty seconds, the
+/// block layer's own request timeout on Linux. A pager asking for 0 gets it.
+pub const PAGER_WAIT_MAX_NS: u64 = 30_000_000_000;
+
+/// `pager_create_vmo`'s option: a write to a Clean page asks the pager first
+/// (a [`PAGE_REQUEST_DIRTY`]), rather than being marked dirty by the kernel.
+pub const PAGER_VMO_TRAP_DIRTY: u64 = 1 << 0;
+/// `pager_create_vmo`'s option: a kernel copy never waits for this VMO's
+/// pager; an absent page fails the copy at once.
+pub const PAGER_VMO_NO_COPY_WAIT: u64 = 1 << 1;
+
+/// `pager_op`: end the requests touching the range, failed with the errno
+/// number in `value`: `EIO` (5) or `ENOSPC` (28).
+pub const PAGER_OP_FAIL: u64 = 1;
+/// `pager_op`: the range's Clean pages become Dirty, ending their dirty
+/// requests.
+pub const PAGER_OP_DIRTY: u64 = 2;
+/// `pager_op`: Dirty pages become awaiting-clean and lose their writable
+/// translations before the call returns.
+pub const PAGER_OP_WRITEBACK_BEGIN: u64 = 3;
+/// `pager_op`: awaiting-clean pages become Clean.
+pub const PAGER_OP_WRITEBACK_END: u64 = 4;
+/// `pager_op`: the range's Clean pages are taken out.
+pub const PAGER_OP_DECOMMIT: u64 = 5;
+/// `pager_op`: the VMO is detached from the pager, as at the pager's close.
+pub const PAGER_OP_DETACH: u64 = 6;
+
+/// What `pager_create_vmo` reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct PagerVmoSpec {
+    /// The key its page requests carry.
+    pub key: u64,
+    /// Its size in pages.
+    pub pages: u64,
+    /// `PAGER_VMO_*` bits.
+    pub options: u64,
+}
+
+/// What `pager_supply` reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct PagerSupplySpec {
+    /// The first byte of the pager VMO's range, page-aligned.
+    pub offset: u64,
+    /// The range's length in bytes, page-aligned.
+    pub length: u64,
+    /// Where the pages come from in the aux VMO, page-aligned.
+    pub aux_offset: u64,
+    /// Must be 0.
+    pub options: u64,
+}
+
+/// What `pager_op` reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct PagerOpSpec {
+    /// The first byte of the range, page-aligned.
+    pub offset: u64,
+    /// The range's length in bytes, page-aligned.
+    pub length: u64,
+    /// The operation's value: [`PAGER_OP_FAIL`]'s errno, otherwise 0.
+    pub value: u64,
+    /// [`PAGER_OP_FAIL`]: the one request to fail, by the id its packet
+    /// carried, so that one job's failure fails no other job's fault on the
+    /// same pages (the consultant's 2858 (1)); 0 for every request touching
+    /// the range. 0 for every other operation.
+    pub request: u64,
+}
+
+/// A range `pager_query_dirty` reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct PagerRange {
+    /// The first byte, page-aligned.
+    pub offset: u64,
+    /// The length in bytes, page-aligned.
+    pub length: u64,
+}
+
+/// A run `pager_query_dirty` writes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct DirtyRange {
+    /// Its first byte.
+    pub offset: u64,
+    /// Its length in bytes.
+    pub length: u64,
+    /// [`DIRTY_STATE_DIRTY`] or [`DIRTY_STATE_AWAITING_CLEAN`].
+    pub state: u64,
+}
+
+/// A run written since its last write-back began.
+pub const DIRTY_STATE_DIRTY: u64 = 1;
+/// A run whose write-back has begun and not ended.
+pub const DIRTY_STATE_AWAITING_CLEAN: u64 = 2;
+
+/// `port_fd`'s flag: the descriptor is closed on `execve`, as `O_CLOEXEC`
+/// makes one.
+pub const PORT_FD_CLOEXEC: u64 = 1;
+
+/// `timer_create`'s clock: the monotonic counter.
+pub const TIMER_CLOCK_MONOTONIC: u64 = 0;
+/// `timer_create`'s clock: time since boot, counting a suspend. The same
+/// counter as [`TIMER_CLOCK_MONOTONIC`] while nothing suspends; kept apart so
+/// that a suspend, if one comes, changes the kernel and not its callers.
+pub const TIMER_CLOCK_BOOT: u64 = 1;
+/// `timer_set`'s option: the spec's deadline is a delay from the call.
+pub const TIMER_RELATIVE: u64 = 1;
+
+/// What `timer_set` reads through its pointer: both words whole on every
+/// architecture, ARMv7-A's 32-bit registers included.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct TimerSpec {
+    /// The deadline on the timer's clock, in nanoseconds, or with
+    /// [`TIMER_RELATIVE`] the delay to it.
+    pub deadline: u64,
+    /// How long after the deadline it may fire, in nanoseconds.
+    pub slack: u64,
+}
+
+/// The bytes of a [`TimerSpec`].
+pub const TIMER_SPEC_BYTES: usize = 16;
+
+impl TimerSpec {
+    /// The spec in `bytes`, native-endian, or `None` for too few.
+    #[must_use]
+    pub fn from_bytes(bytes: &[u8]) -> Option<TimerSpec> {
+        let word = |at: usize| {
+            bytes
+                .get(at..at + 8)
+                .and_then(|slice| <[u8; 8]>::try_from(slice).ok())
+                .map(u64::from_ne_bytes)
+        };
+        Some(TimerSpec {
+            deadline: word(0)?,
+            slack: word(8)?,
+        })
+    }
+
+    /// The spec as bytes, native-endian.
+    #[must_use]
+    pub fn to_bytes(self) -> [u8; TIMER_SPEC_BYTES] {
+        let mut bytes = [0_u8; TIMER_SPEC_BYTES];
+        let (deadline, slack) = bytes.split_at_mut(8);
+        deadline.copy_from_slice(&self.deadline.to_ne_bytes());
+        slack.copy_from_slice(&self.slack.to_ne_bytes());
+        bytes
+    }
+}
+
+/// `vmo_map`'s protection: the mapping may be read. Every mapping asks for it.
+pub const MAP_READ: u32 = 1 << 0;
+/// `vmo_map`'s protection: the mapping may also be written.
+pub const MAP_WRITE: u32 = 1 << 1;
+/// `space_map`'s and `space_protect`'s protection: instructions may be
+/// fetched from the mapping. Never with [`MAP_WRITE`] (ASR-2), and only
+/// through handles that carry `EXECUTE`.
+pub const MAP_EXECUTE: u32 = 1 << 2;
+
+/// The address waits' flag for a shared key: a word in a shared mapping is
+/// keyed by its VMO and offset, the same word in every process mapping it.
+pub const ADDRESS_SHARED: u64 = 1 << 0;
+/// The address waits' flag for a word named by a VMO handle and a byte
+/// offset rather than a user address; implies [`ADDRESS_SHARED`].
+pub const ADDRESS_BY_VMO: u64 = 1 << 1;
+/// `address_requeue`'s flag: requeue only if the source word still holds
+/// the expected value.
+pub const ADDRESS_COMPARE: u64 = 1 << 2;
+/// The most words one `address_wait_any` sleeps on.
+pub const ADDRESS_WAIT_ANY_MAX: usize = 128;
+
+/// One word of `address_wait_any`'s vector: 16 bytes, the same on every
+/// target.
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct AddressWord {
+    /// The word's user address, 4-aligned.
+    pub address: u64,
+    /// What it must hold for the wait to sleep.
+    pub expected: u32,
+    /// [`ADDRESS_SHARED`] or nothing.
+    pub flags: u32,
+}
+
+/// `vmo_map`'s protection bit: refuse a pager-backed VMO (`WRONG_TYPE`), and
+/// map any other as without it. The kernel's part of the safety-partition
+/// assumption of use (`docs/microkernel/K3.md` §5). Bit 2 is K2's `MAP_EXECUTE`.
+pub const MAP_NO_PAGER: u32 = 1 << 3;
+
+/// `space_allocate`'s protection for a region with no access at all: a guard
+/// (K15). Not a bit: it is the absence of `MAP_READ`, taken by `space_allocate`
+/// alone, and refused by every other mapping call.
+pub const MAP_NONE: u32 = 0;
+
+/// The stack a native process starts on, by the loader library's layout, in
+/// bytes: reserved whole, paid for a page at a time. The Linux loader's
+/// `STACK_SIZE` is the same, and the kernel asserts so.
+pub const NATIVE_STACK_SIZE: u64 = 8 * 1024 * 1024;
+
+/// The guard below that stack, in bytes.
+pub const NATIVE_STACK_GUARD: u64 = 1024 * 1024;
+
+/// What a `channel_read` found.
+///
+/// Written on success, and on `BUFFER_TOO_SMALL` too, when it is how the
+/// caller learns what to allocate.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct ReadActual {
+    /// The message's size in bytes.
+    pub bytes: u32,
+    /// How many handles it carries.
+    pub handles: u32,
+}
+
+/// What a `channel_read_attested` found: a [`ReadActual`]'s sizes, then
+/// who wrote the message (`docs/microkernel/K6.md`).
+///
+/// The sizes are written on success and on `BUFFER_TOO_SMALL`; the writer
+/// only on success. Laid out so that its first eight bytes are a
+/// [`ReadActual`]'s.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct ReadAttested {
+    /// The message's size in bytes.
+    pub bytes: u32,
+    /// How many handles it carries.
+    pub handles: u32,
+    /// The writing process's id, or zero for the kernel.
+    pub process: u64,
+    /// The id of the job the writer was in at the write, or zero for the
+    /// kernel.
+    pub job: u64,
+}
+
+/// [`crate::nr::NativeCall::ChargeTicket`]'s `op`: issue a ticket for the
+/// caller's own job on its end of a channel (`docs/microkernel/K7.md`).
+pub const TICKET_ISSUE: u64 = 1;
+/// `op`: adopt a ticket the other end issued, so that the calling thread's
+/// native calls charge the ticket's job while it is live.
+pub const TICKET_ADOPT: u64 = 2;
+/// `op`: give up the calling thread's adoption.
+pub const TICKET_LEAVE: u64 = 3;
+/// `op`: end a ticket, from either end of its channel.
+pub const TICKET_END: u64 = 4;
+/// The most tickets one end of a channel has live at once.
+pub const MAX_TICKETS: usize = 64;
+
+/// Who issued a ticket, as `charge_ticket`'s `TICKET_ADOPT` writes it: the
+/// issuing process's id and the id of the job it was in at the issue, both
+/// recorded by the kernel, as [`ReadAttested`]'s writer is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct TicketIssuer {
+    /// The issuing process's id.
+    pub process: u64,
+    /// The id of the job it was in at the issue.
+    pub job: u64,
+}
+
+/// `vmo_pin`'s option: the device may read the pinned pages but not write
+/// them.
+pub const PIN_READ_ONLY: u64 = 1;
+
+/// `vmo_pin`'s option: the program and the device must see the pages alike,
+/// as descriptors a controller polls need. Changes nothing for a device that
+/// snoops the caches. For one that does not, such as an STM32MP1's USB host,
+/// the pin covers the whole VMO, which nothing may have mapped yet, and every
+/// mapping of the VMO from then on bypasses the caches.
+pub const PIN_COHERENT: u64 = 2;
+
+/// `vmo_pin`'s option: the pages must be one run of ascending addresses, as
+/// NVIDIA's resource manager asks of some system memory it gives the GPU
+/// (`docs/NVIDIA.md` §4.3). The range must be wholly uncommitted, in an
+/// anonymous VMO, and at most one buddy block long (4 MiB at 4 KiB pages);
+/// the kernel fills it with one run of fresh zeroed frames, charged to the
+/// caller's job, and refuses with `BAD_STATE`, nothing changed, when what it
+/// holds is not one run. Combines with `PIN_READ_ONLY` and `PIN_COHERENT`.
+pub const PIN_CONTIGUOUS: u64 = 4;
+
+/// `vmo_pin`'s option: commit the range's absent pages, before they are
+/// held, in naturally aligned blocks of at most `2^order` pages, the order
+/// in [`PIN_BLOCK_ORDER_MASK`] (1 to the allocator's largest, 10), falling
+/// back to smaller blocks where none is free (`docs/INTEL-GPU.md` §14.3).
+/// Best effort: the pin is an ordinary one, its pages wherever they ended
+/// up, and nothing may rely on getting a block. Combines with
+/// `PIN_READ_ONLY` and `PIN_COHERENT`, never with `PIN_CONTIGUOUS`.
+pub const PIN_BLOCKS: u64 = 8;
+/// Where `PIN_BLOCKS`' order sits in `vmo_pin`'s options.
+pub const PIN_BLOCK_ORDER_SHIFT: u32 = 8;
+/// `PIN_BLOCKS`' order, bits 8-11.
+pub const PIN_BLOCK_ORDER_MASK: u64 = 0xf << PIN_BLOCK_ORDER_SHIFT;
+
+/// `device_clock`'s option: set the rate, rather than only say what it
+/// would be.
+pub const CLOCK_SET: u64 = 1;
+
+/// `device_set_limit` and `device_get_limit`'s limit: the device's pin
+/// budget, in pages (`docs/NVIDIA.md` §12.2).
+pub const DEVICE_LIMIT_PIN_PAGES: u64 = 0;
+/// `device_get_limit`'s: the machine's ceiling, in pages, on twice every
+/// budget raised above the default -- a quarter of RAM.
+pub const DEVICE_LIMIT_PIN_CEILING: u64 = 1;
+/// `device_get_limit`'s: the ceiling less twice every budget other devices
+/// have raised above the default, in pages: the most twice this device's
+/// budget may be raised to.
+pub const DEVICE_LIMIT_PIN_ROOM: u64 = 2;
+
+/// `device_set_limit` and `device_get_limit`'s limit: the isolated-interrupts
+/// mark, set-once (`docs/NVIDIA.md` §12.3). Set, the kernel refuses the
+/// device's vectors and pins while the machine's interrupts are not
+/// isolated; `devmgr` sets it for every device that runs firmware of its
+/// own, and starts no driver for one it could not mark.
+pub const DEVICE_LIMIT_ISOLATED_INTERRUPTS: u64 = 3;
+
+/// `device_isolation`'s bit: an IOMMU translates the device's DMA.
+pub const DEVICE_ISOLATION_DMA_TRANSLATED: u64 = 1 << 0;
+/// `device_isolation`'s bit: the machine's interrupts are isolated -- every
+/// interrupt remapping unit remaps with compatibility format blocked, and
+/// no function bypasses them -- and the device's messages are remapped.
+pub const DEVICE_ISOLATION_INTERRUPTS: u64 = 1 << 1;
+/// `device_isolation`'s bit: the node reaches no memory -- the firmware
+/// framebuffer's node, the x86-64 power node -- so it has no DMA to isolate
+/// (`docs/DMA-GATE.md`, `L.device.57`).
+pub const DEVICE_ISOLATION_NO_DMA: u64 = 1 << 2;
+
+/// `job_set_limit` and `job_get_quota`'s resource: physical memory, in bytes.
+pub const JOB_MEMORY: u64 = 0;
+/// `job_set_limit` and `job_get_quota`'s resource: kernel objects a program
+/// made -- VMOs, channel ends, ports, jobs.
+pub const JOB_OBJECTS: u64 = 1;
+/// `job_set_limit` and `job_get_quota`'s resource: tasks, a process and each
+/// thread beside its first.
+pub const JOB_TASKS: u64 = 2;
+/// `job_set_limit` and `job_get_quota`'s resource: the job's processor
+/// weight, 1 to 10,000.
+pub const JOB_CPU_WEIGHT: u64 = 3;
+/// `job_set_limit` and `job_get_quota`'s resource: the job's reservation,
+/// memory the kernel promises it, in bytes (`docs/microkernel/K12.md`).
+/// Setting it needs `RESERVE`; `job_get_quota` reads its size, what is drawn
+/// from it and the admissions refused.
+pub const JOB_RESERVE: u64 = 4;
+/// `job_set_limit`'s limit that is no limit, and what `job_get_quota` reads
+/// for one.
+pub const UNLIMITED: u64 = u64::MAX;
+
+/// `job_create`'s option: make the new job one speculation domain, whose
+/// programs born in it share predictors with each other, so that a switch
+/// between two of them skips the predictor barrier (`docs/OPAQUE-KERNEL.md`
+/// §9.2). Only as the job is made; any other bit is `INVALID_ARGS`.
+pub const JOB_SPECULATION_DOMAIN: u64 = 1;
+
+/// `job_create`'s option: seal the new job (`H.OBJ.22`, `docs/CGROUPS.md`
+/// §3.3). No cgroupfs write moves a process out of, into or within a sealed
+/// job's tree, whoever writes; its members start processes only in their
+/// own job or beneath it (`clone3`'s `CLONE_INTO_CGROUP` answers `EPERM`,
+/// `process_create` into a job outside the tree `ACCESS_DENIED`); and every
+/// job made inside it is sealed too. The authority is the parent's
+/// `MANAGE`, as for any child; nothing unseals one. devmgr seals each
+/// driver's job, so the driver cannot leave the job whose kill ends it.
+pub const JOB_SEALED: u64 = 2;
+/// `job_create`'s option: the job's criticality level is in [`JOB_LEVEL_SHIFT`]'s
+/// bits, at most its parent's (`docs/microkernel/K17.md`). Without it, its parent's.
+pub const JOB_LEVEL_SET: u64 = 1 << 9;
+/// Where the level is in `job_create`'s options: three bits.
+pub const JOB_LEVEL_SHIFT: u32 = 10;
+/// The highest level: the root job's, and every job's that never asked.
+pub const JOB_LEVEL_TOP: u8 = 4;
+
+/// `job_create`'s option: a **measured** job (`docs/microkernel/K14.md` §3).
+/// Its processes' executable memory comes only from sealed, measured VMOs.
+/// Nothing unmeasures one, and every job made inside it is measured too.
+pub const JOB_MEASURED: u64 = 1 << 8;
+
+/// `vmo_executable`'s option: seal the VMO (`docs/microkernel/K14.md` §2).
+pub const VMO_SEAL: u64 = 1;
+
+/// `process_images`' answer carries this bit when the space is not measured,
+/// so that its digests are not the whole of what it can run: a reader never
+/// takes a partial list for a whole one.
+pub const IMAGES_UNMEASURED: usize = 1 << (usize::BITS - 2);
+
+/// The longest `exception_channel_create`'s `timeout_ms` may be, and the
+/// longest one fault waits for its supervisors in all
+/// (`docs/microkernel/K4.md` §2.4): ten seconds.
+pub const EXCEPTION_TIMEOUT_MAX_MS: u64 = 10_000;
+
+/// [`crate::nr::NativeCall::AuditRead`]'s `which`: the high-value ring --
+/// grants, ends, device events, changes and the system's records.
+pub const AUDIT_HIGH: u64 = 0;
+
+/// [`crate::nr::NativeCall::AuditRead`]'s `which`: the refusal ring.
+pub const AUDIT_REFUSALS: u64 = 1;
+
+/// [`crate::nr::NativeCall::AuditRead`]'s `which`: the first nine system
+/// records, pinned where nothing else reaches them, numbered as the
+/// high-value ring numbered them.
+pub const AUDIT_BOOT: u64 = 2;
+
+/// The words [`crate::nr::NativeCall::AuditRead`] writes to its answer:
+/// copied, next, lost, and the audit id's low and high halves.
+pub const AUDIT_ANSWER_WORDS: usize = 5;
+
+/// The words a `memory_scrub` answers, in order: frames tested, suspects,
+/// bad, retired, held, sweeps completed, and 1 if the batch stopped early
+/// (the watermark or the retired set), else 0.
+pub const MEMORY_SCRUB_ANSWER_WORDS: usize = 7;
+
+/// Where one of a device's virtio register blocks lies, as `device_info`
+/// reports it and a driver's START carries it: the page-aligned physical
+/// start of the pages holding it, inside one of the device's apertures, the
+/// block's first byte within those pages, and its length. A block the device
+/// does not have is all zero.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct DeviceBlock {
+    /// Physical address of the first page, a multiple of the page size.
+    pub phys: u64,
+    /// The block's first byte, from `phys`.
+    pub offset: u32,
+    /// Bytes in the block.
+    pub length: u32,
+}
+
+/// What `device_info` writes: the device as enumeration found it, for
+/// whoever starts a driver on it. [`DEVICE_INFO_BYTES`] long, laid out as
+/// declared with no padding until the end.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct DeviceInfo {
+    /// virtio's common configuration block.
+    pub common: DeviceBlock,
+    /// virtio's notification area.
+    pub notify: DeviceBlock,
+    /// virtio's ISR status block.
+    pub isr: DeviceBlock,
+    /// virtio's device-specific configuration block.
+    pub device: DeviceBlock,
+    /// The PCI address as a word (segment in bits 31:16, bus in 15:8, devfn
+    /// in 7:0), or [`DEVICE_NOT_PCI`] for a device tree node.
+    pub location: u32,
+    /// The PCI class code: base class in bits 23:16, subclass in 15:8, the
+    /// programming interface in 7:0. Zero for a device tree node.
+    pub class: u32,
+    /// Apertures the device has, each an `io_mapping_create` can claim and
+    /// `device_aperture` describes whole.
+    pub apertures: u32,
+    /// Vectors the device has, each an `interrupt_create` can claim.
+    pub vectors: u32,
+    /// virtio's `notify_off_multiplier`.
+    pub notify_off_multiplier: u32,
+    /// The PCI vendor identifier; zero for a device tree node.
+    pub vendor_id: u16,
+    /// The PCI device identifier; for a device tree node, the binding
+    /// [`DEVICE_TREE_BLOCKS`] names, or zero.
+    pub device_id: u16,
+    /// MSI-X table entries; zero for a device with a line only.
+    pub msix_table_size: u16,
+    /// [`DEVICE_VIRTIO_PCI`] when the blocks above describe a virtio PCI
+    /// transport, [`DEVICE_TREE_BLOCKS`] when they are a device tree node's
+    /// registers, else zero and the blocks are zero.
+    pub virtio: u16,
+    /// The PCI subsystem vendor identifier; zero for a device tree node or a
+    /// bridge. Which machine made a virtio device is told by this pair:
+    /// QEMU's are subsystem `0x1af4:0x1100`, crosvm's repeat the device's
+    /// own identifier.
+    pub subsystem_vendor_id: u16,
+    /// The PCI subsystem identifier; zero for a device tree node or a bridge.
+    pub subsystem_id: u16,
+}
+
+/// Bytes `device_info` writes: a [`DeviceInfo`], padded to its alignment.
+///
+/// The size is fixed for good: `device_info` takes no length, so a longer
+/// struct would be written past the buffer of every driver built before it.
+/// What a driver needs beyond it comes from another call, as an aperture's
+/// 64-bit address and length come from `device_aperture`. A device tree
+/// node's blocks carry `u32` lengths cut at 4 GiB; `device_aperture` has
+/// the whole length.
+pub const DEVICE_INFO_BYTES: usize = 96;
+/// [`DeviceInfo::location`] of a device that is not a PCI function.
+pub const DEVICE_NOT_PCI: u32 = u32::MAX;
+/// [`DeviceInfo::virtio`] of a virtio PCI transport.
+pub const DEVICE_VIRTIO_PCI: u16 = 1;
+/// [`DeviceInfo::virtio`] of a device tree node the kernel publishes for a
+/// binding it knows: [`DeviceInfo::device_id`] names the binding, the
+/// vendor is zero, and the blocks are the node's register windows in the
+/// order the binding gives, [`DeviceInfo::common`] first and
+/// [`DeviceInfo::device`] second.
+pub const DEVICE_TREE_BLOCKS: u16 = 2;
+/// [`DeviceInfo::virtio`] of a generic device-tree node: one the kernel
+/// publishes without knowing its binding (`docs/DRIVER-MODEL.md` §3).
+/// [`DeviceInfo::device_id`] holds its identity record's flags
+/// (`xaqu_fdt::identity::FLAG_*`, `FLAG_KERNEL_DEPENDS` among them),
+/// [`DeviceInfo::class`] the record's length in bytes, and the blocks its
+/// first two apertures, whole pages. The record itself -- the `compatible`
+/// list, the path, the references as provider node and specifier cells,
+/// the `*-names` and the subtree -- is read with `device_config_read`, four
+/// bytes at a time from offset 0, as a PCI function's identity is read from
+/// its configuration space; it is read-only, at most 4096 bytes, and reads
+/// zero past its end.
+pub const DEVICE_TREE_GENERIC: u16 = 3;
+/// [`DeviceInfo::device_id`] of an STM32MP15 DK board's HDMI output: the
+/// LTDC's registers in `common`, the HDMI bridge's I2C controller's in
+/// `device`, and the LTDC's interrupt as vector 0.
+pub const TREE_STM32_HDMI: u16 = 1;
+/// [`DeviceInfo::device_id`] of an STM32MP15 board's USB host: the EHCI
+/// controller's registers in `common`, nothing in `device`, and the EHCI
+/// controller's interrupt as vector 0. Its memory is not snooped, so the
+/// driver pins what it shares with `PIN_COHERENT`, and it may make an input
+/// control channel for each keyboard or mouse it finds, up to
+/// [`USB_INPUT_FUNCTIONS`].
+pub const TREE_STM32_USBH: u16 = 2;
+/// [`DeviceInfo::device_id`] of an STM32MP157's GPU, a Vivante GC400T: its
+/// registers in `common`, nothing in `device`, and its interrupt as vector 0.
+/// Its memory is not snooped, so the driver pins what it shares with
+/// `PIN_COHERENT`; and while its MMU is off its front end reads one run of
+/// physical addresses, so a buffer it reads must be physically contiguous
+/// (`docs/GPU.md` §6.3).
+pub const TREE_STM32_GPU: u16 = 3;
+/// [`DeviceInfo::device_id`] of the Pixel 7's USB device controller, a
+/// Synopsys DWC3 on the phone's USB-C port: its registers in `common`,
+/// nothing in `device`, and its interrupt as vector 0. Its memory is not
+/// snooped, so the driver pins what it shares with `PIN_COHERENT`.
+pub const TREE_GS201_DWC3: u16 = 4;
+/// [`DeviceInfo::device_id`] of an STM32MP15 board's SDMMC1, the controller
+/// of a DK board's microSD slot: its registers in `common`, nothing in
+/// `device`, and its interrupt as vector 0. It is served over a block ring,
+/// whose HELLO names it by the location [`DEVICE_NOT_PCI`]; a machine has
+/// at most one such disk at a time. The kernel writes none of its registers
+/// and touches none of its clocks: firmware left it running. Its own
+/// internal DMA writes memory at addresses its registers name, and nothing
+/// in front of it checks them, so a driver that turned it on would be
+/// trusted with all of memory; the driver in this tree leaves it off and
+/// moves every word through the FIFO, which is that driver's property and
+/// not one the kernel holds. The node's clock, through `device_clock`, says
+/// the controller's kernel clock rate and refuses `CLOCK_SET`.
+pub const TREE_STM32_SDMMC: u16 = 5;
+/// [`DeviceInfo::device_id`] of the firmware's framebuffer: the screen the
+/// loader handed the kernel, published as a node only when the command line
+/// says `xaqu.efifb` and the framebuffer is outside the allocator's
+/// memory (`docs/DISPLAY.md` §8). It is no device tree node: its one window
+/// in `common` is the framebuffer's visible lines, whole pages, its first
+/// pixel at the block's `offset`; nothing in `device`; no vector; and no
+/// pin, since nothing behind it reaches memory. The mode is in fields a tree
+/// node leaves zero: [`DeviceInfo::subsystem_vendor_id`] is the width,
+/// [`DeviceInfo::subsystem_id`] the height,
+/// [`DeviceInfo::notify_off_multiplier`] the pixels from one line to the
+/// next, and [`DeviceInfo::msix_table_size`] the layout,
+/// [`FRAMEBUFFER_BGRX`] or [`FRAMEBUFFER_RGBX`]. Its driver shows a card by
+/// copying (displayctl's `copies`), and maps the window as device memory, the
+/// type the kernel holds it at.
+pub const TREE_FIRMWARE_FB: u16 = 6;
+/// [`DeviceInfo::device_id`] of the x86-64 power node (`docs/POWERCTL.md`
+/// §4.1): published only under `xaqu.powerctl` on a processor the
+/// kernel's model table names, or under the test-only
+/// `xaqu.powerctl.fake`. No window, no vector, nothing that reaches
+/// memory: its one use is `power_control_create`.
+pub const TREE_X86_POWER: u16 = 7;
+/// Words `power_read` writes.
+pub const POWER_READ_WORDS: usize = 16;
+/// Bit `n` set: word `n` was read; a register that faulted is absent, not 0.
+pub const POWER_READ_PRESENT: usize = 0;
+/// `CPUID.1:EAX`.
+pub const POWER_READ_SIGNATURE: usize = 1;
+/// Firmware's `MSR_VR_CURRENT_CONFIG`, as the kernel read it at boot.
+pub const POWER_READ_FIRMWARE: usize = 2;
+/// The highest VR current limit the kernel admits, eighths of an ampere.
+pub const POWER_READ_CEILING: usize = 3;
+/// Bit 0: the kernel latched the power core off until reboot; bit 1: it
+/// left the register to firmware, which changed it.
+pub const POWER_READ_FLAGS: usize = 4;
+/// `MSR_VR_CURRENT_CONFIG` as it reads now.
+pub const POWER_READ_VR: usize = 6;
+/// From here, read-only, in order: `MSR_TEMPERATURE_TARGET`,
+/// `IA32_THERM_STATUS` (the boot processor's), `IA32_PACKAGE_THERM_STATUS`,
+/// `IA32_PERF_STATUS`, `CORE_PERF_LIMIT_REASONS`,
+/// `GRAPHICS_PERF_LIMIT_REASONS`, `PKG_ENERGY_STATUS`, `RAPL_POWER_UNIT`,
+/// `MSR_PKG_POWER_LIMIT`.
+pub const POWER_READ_FIRST: usize = 7;
+/// The kernel's lease, in milliseconds: a claim with no `power_set`,
+/// `power_read` or `power_restore` for this long is ended and its raise
+/// taken back.
+pub const POWER_LEASE_MS: u64 = 5000;
+/// The firmware framebuffer's pixels are blue, green, red, unused in memory
+/// order: DRM's `XRGB8888`.
+pub const FRAMEBUFFER_BGRX: u16 = 0;
+/// The firmware framebuffer's pixels are red, green, blue, unused in memory
+/// order: DRM's `XBGR8888`.
+pub const FRAMEBUFFER_RGBX: u16 = 1;
+/// How many input control channels one USB host's node may hold at once: an
+/// STM32MP15 board's ([`TREE_STM32_USBH`]), or a PCI function whose class is
+/// [`PCI_CLASS_XHCI`].
+pub const USB_INPUT_FUNCTIONS: usize = 8;
+/// A bus host's message after START whose handles are its input control channels,
+/// where it cannot ask for them itself (`docs/microkernel/M5-LIFT.md` §11).
+pub const INPUT_CHANNELS_MARK: &[u8] = b"input-channels";
+/// [`DeviceInfo::class`] of an xHCI USB host controller: base class 0C
+/// (serial bus), subclass 03 (USB), programming interface 30 (xHCI). Its
+/// driver may make an input control channel for each keyboard or mouse it
+/// finds, up to [`USB_INPUT_FUNCTIONS`].
+pub const PCI_CLASS_XHCI: u32 = 0x000C_0330;
+
+/// What `process_status` writes: whether the process has ended, and how.
+/// Eight bytes, the same on every target.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct ProcessStatus {
+    /// [`PROCESS_RUNNING`], [`PROCESS_EXITED`] or [`PROCESS_KILLED`].
+    pub state: u32,
+    /// Zero while it runs; the exit code, 0 to 255, once it has exited; the
+    /// signal's number once one has killed it.
+    pub value: u32,
+}
+
+/// [`ProcessStatus::state`]: it has not ended. It may not have started.
+pub const PROCESS_RUNNING: u32 = 0;
+/// [`ProcessStatus::state`]: it ended by `exit` or `exit_group`, or its last
+/// thread's `exit`, and [`ProcessStatus::value`] is the code, as `wait4`'s
+/// `WEXITSTATUS` would read it.
+pub const PROCESS_EXITED: u32 = 1;
+/// [`ProcessStatus::state`]: a signal ended it -- one sent to it, its own
+/// fault, or a kill of its job, which is `SIGKILL` -- and
+/// [`ProcessStatus::value`] is the signal, as `WTERMSIG` would read it.
+pub const PROCESS_KILLED: u32 = 2;
+
+/// What `device_aperture` writes: one of the device's apertures as
+/// enumeration minted it. [`APERTURE_INFO_BYTES`] long, laid out as declared
+/// with no padding.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct ApertureInfo {
+    /// The physical address of its first byte.
+    pub phys: u64,
+    /// Its length in bytes, whole, however far past 4 GiB.
+    pub len: u64,
+    /// The BAR it came from, or [`APERTURE_NOT_BAR`] for a device tree
+    /// node's window. One BAR can give two apertures, either side of the
+    /// MSI-X table's pages, and a BAR whose memory the kernel withheld gives
+    /// none, so this is not the index.
+    pub bar: u8,
+    /// [`APERTURE_PREFETCHABLE`], [`APERTURE_WHOLE_PAGES`] and
+    /// [`APERTURE_BAR_64`], as they hold.
+    pub flags: u8,
+    /// Written zero.
+    pub reserved: [u8; 6],
+    /// Where in its BAR it starts, in bytes; zero for a tree window.
+    pub offset: u64,
+}
+
+/// Bytes `device_aperture` writes.
+pub const APERTURE_INFO_BYTES: usize = 32;
+/// [`ApertureInfo::bar`] of an aperture that is a device tree window.
+pub const APERTURE_NOT_BAR: u8 = 0xFF;
+/// [`ApertureInfo::flags`]: reads have no side effects, so it may be mapped
+/// write-combining (`io_mapping_map_combining`).
+pub const APERTURE_PREFETCHABLE: u8 = 1 << 0;
+/// [`ApertureInfo::flags`]: it starts on a page and is whole pages, so
+/// `io_mapping_create` can claim it whole.
+pub const APERTURE_WHOLE_PAGES: u8 = 1 << 1;
+/// [`ApertureInfo::flags`]: its BAR is 64 bits wide.
+pub const APERTURE_BAR_64: u8 = 1 << 2;
+
+/// The aperture an `io_mapping_create` claims.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(C)]
+pub struct IoMappingSpec {
+    /// The physical address of the first byte.
+    pub phys: u64,
+    /// The length in bytes.
+    pub len: u64,
+}
+
+/// `chardev_dmabuf_install`'s flags: the descriptor is open for reading and
+/// writing, so a program may map it writable. Needs `WRITE` on the VMO;
+/// without it the descriptor is read-only.
+pub const DMABUF_WRITABLE: u64 = 1 << 0;
+/// `chardev_dmabuf_install`'s flags: the descriptor is close-on-exec.
+pub const DMABUF_CLOEXEC: u64 = 1 << 1;
+/// `chardev_dmabuf_install`'s flags: set [`DMABUF_MADE`] in the answer when
+/// the call made the dmabuf rather than finding one alive for the cookie.
+///
+/// What lets a driver count dmabuf objects per cookie, one up for each made
+/// and one down for each `DMABUF_RELEASE`. Without it a driver cannot tell
+/// a dmabuf found alive from one made just after the last went, whose
+/// RELEASE may still be on its way: the release of the old one would then
+/// read as the release of the new.
+pub const DMABUF_TELL_MADE: u64 = 1 << 2;
+/// `chardev_dmabuf_install`'s flags: a name-only dmabuf, for a buffer in
+/// video memory (`docs/NVIDIA.md` §4.4, N3b). No VMO: the VMO register must
+/// be 0 and the sixth register is the buffer's size in bytes (not 0, a
+/// multiple of 4096, at most [`DMABUF_NAME_MAX`]). It cannot be mapped;
+/// only its maker's resolve gives the cookie back.
+pub const DMABUF_NAME_ONLY: u64 = 1 << 3;
+/// The largest size a name-only dmabuf may say it has.
+pub const DMABUF_NAME_MAX: u64 = 1 << 40;
+/// Every flag `chardev_dmabuf_install` knows; any other is `INVALID_ARGS`.
+pub const DMABUF_FLAGS: u64 =
+    DMABUF_WRITABLE | DMABUF_CLOEXEC | DMABUF_TELL_MADE | DMABUF_NAME_ONLY;
+/// In `chardev_dmabuf_install`'s answer, with [`DMABUF_TELL_MADE`]: this call
+/// made the dmabuf. Above every descriptor number, which is at most
+/// `i32::MAX`.
+pub const DMABUF_MADE: usize = 1 << 31;
+/// `chardev_sync_install`'s flag: the descriptor is close-on-exec.
+pub const SYNC_CLOEXEC: u64 = 1 << 0;
+/// Every flag `chardev_sync_install` knows.
+pub const SYNC_FLAGS: u64 = SYNC_CLOEXEC;
+/// A fence's deadline when the driver asks for none: nvidia-drm's own
+/// default timeout.
+pub const SYNC_DEADLINE_DEFAULT_MS: u64 = 5_000;
+/// The longest deadline a fence is given, whatever the driver asks.
+pub const SYNC_DEADLINE_MAX_MS: u64 = 10_000;

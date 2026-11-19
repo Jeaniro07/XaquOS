@@ -1,0 +1,213 @@
+//! The kernel command-line words the driver process reads for the N150
+//! box's runs (`docs/INTEL-GPU.md` §10), none of them i915's: where to stop,
+//! whether to say every register access, when to restart the machine, and
+//! whether to run M2's checks before serving.
+//! Parsed here, apart from the process, so a host test holds them. The words
+//! themselves are the driver's (`drivers/gpu/intel/src/steps.rs`): a library
+//! names no boot option (`check-build-flags.py`, ledger 2208 (2)).
+
+/// The words, as the driver spells them.
+#[derive(Clone, Copy, Debug)]
+pub struct Words<'a> {
+    /// Stop before step `N` (the driver's `steps::At`): `<stop>N`.
+    pub stop: &'a [u8],
+    /// Say every register access before it is made: the whole word.
+    pub trace: &'a [u8],
+    /// Restart the machine `S` seconds after boot: `<reset>S`.
+    pub reset: &'a [u8],
+    /// Run M2's checks (the commands, the blits, a hang) before serving:
+    /// the whole word.
+    pub selftest: &'a [u8],
+    /// A fixed frequency request in MHz, for measurement: `<freq>MHz`.
+    pub freq: &'a [u8],
+    /// Say the GT's frequency, RC6 share and package power each second: the
+    /// whole word.
+    pub freqlog: &'a [u8],
+    /// The box's frequency checkpoint: RP1, then RP0, each held and sampled
+    /// idle and under load, then the policy: the whole word.
+    pub freqtest: &'a [u8],
+    /// Say the render node's held waits, their answers, each failed ioctl,
+    /// and a wait held unanswered too long: the whole word.
+    pub uapitrace: &'a [u8],
+    /// Hold forcewake for the driver's life rather than per access: the
+    /// whole word.
+    pub fwhold: &'a [u8],
+    /// Count the render node's ioctls by type, with the time each took the
+    /// driver, and say the counts every 10 s: the whole word.
+    pub ioctlstat: &'a [u8],
+}
+
+/// The longest a restart may wait: an hour.
+pub const RESET_MAX_SECONDS: u32 = 3600;
+
+/// What the command line asked for.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Options {
+    /// Stop before this step, at least 1.
+    pub stop: Option<u32>,
+    /// Say every register access before it is made.
+    pub trace: bool,
+    /// Restart the machine this many seconds after boot, 1 to
+    /// [`RESET_MAX_SECONDS`].
+    pub reset_seconds: Option<u32>,
+    /// A restart word whose value was not a number in range: said by the
+    /// driver, and no restart.
+    pub reset_refused: bool,
+    /// Run M2's checks before serving.
+    pub selftest: bool,
+    /// A fixed request, in MHz (1 to 9999; clamped by the driver to RPn..RP0).
+    pub freq_mhz: Option<u32>,
+    /// The per-second frequency log.
+    pub freqlog: bool,
+    /// The frequency checkpoint.
+    pub freqtest: bool,
+    /// The render node's trace.
+    pub uapitrace: bool,
+    /// Forcewake held for the driver's life.
+    pub fwhold: bool,
+    /// The ioctl counts.
+    pub ioctlstat: bool,
+}
+
+/// The words of `line` the driver reads. A `stop=` that is not a number is
+/// taken as 1, so a misspelt value touches nothing rather than everything;
+/// a `reset=` that is not a number in range is refused, so a misspelt one
+/// never restarts a machine nobody asked to.
+#[must_use]
+pub fn parse(line: &[u8], words: &Words<'_>) -> Options {
+    let mut options = Options::default();
+    for word in line.split(u8::is_ascii_whitespace) {
+        if word == words.trace {
+            options.trace = true;
+        } else if word == words.selftest {
+            options.selftest = true;
+        } else if word == words.freqlog {
+            options.freqlog = true;
+        } else if word == words.freqtest {
+            options.freqtest = true;
+        } else if word == words.uapitrace {
+            options.uapitrace = true;
+        } else if word == words.fwhold {
+            options.fwhold = true;
+        } else if word == words.ioctlstat {
+            options.ioctlstat = true;
+        } else if let Some(value) = word.strip_prefix(words.freq) {
+            options.freq_mhz = number(value).filter(|&mhz| mhz > 0);
+        } else if let Some(value) = word.strip_prefix(words.stop) {
+            options.stop = Some(number(value).unwrap_or(1).max(1));
+        } else if let Some(value) = word.strip_prefix(words.reset) {
+            match number(value).filter(|s| (1..=RESET_MAX_SECONDS).contains(s)) {
+                Some(seconds) => {
+                    options.reset_seconds = Some(seconds);
+                    options.reset_refused = false;
+                }
+                None => {
+                    options.reset_seconds = None;
+                    options.reset_refused = true;
+                }
+            }
+        }
+    }
+    options
+}
+
+/// A decimal number of at most four digits.
+fn number(digits: &[u8]) -> Option<u32> {
+    if digits.is_empty() || digits.len() > 4 {
+        return None;
+    }
+    digits.iter().try_fold(0_u32, |n, &byte| {
+        byte.is_ascii_digit()
+            .then(|| n * 10 + u32::from(byte - b'0'))
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Options, Words};
+
+    fn parse(line: &[u8]) -> Options {
+        super::parse(
+            line,
+            &Words {
+                stop: b"xaqu.intelgpu.stop=",
+                trace: b"xaqu.intelgpu.trace",
+                reset: b"xaqu.intelgpu.reset=",
+                selftest: b"xaqu.intelgpu.m2",
+                freq: b"xaqu.intelgpu.freq=",
+                freqlog: b"xaqu.intelgpu.freqlog",
+                freqtest: b"xaqu.intelgpu.freqtest",
+                uapitrace: b"xaqu.intelgpu.uapitrace",
+                fwhold: b"xaqu.intelgpu.fwhold",
+                ioctlstat: b"xaqu.intelgpu.ioctlstat",
+            },
+        )
+    }
+
+    #[test]
+    fn nothing_asked() {
+        assert_eq!(
+            parse(b"xaqu.intelgpu xaqu.fbcon xaqu.intelgpu.stopx=3\n"),
+            Options::default()
+        );
+    }
+
+    #[test]
+    fn every_word() {
+        let options = parse(
+            b"xaqu.init=/etc/reset-after.sh xaqu.intelgpu xaqu.intelgpu.trace \
+              xaqu.intelgpu.stop=9 xaqu.intelgpu.reset=60 xaqu.intelgpu.m2\n",
+        );
+        assert_eq!(
+            options,
+            Options {
+                stop: Some(9),
+                trace: true,
+                reset_seconds: Some(60),
+                reset_refused: false,
+                selftest: true,
+                ..Options::default()
+            }
+        );
+    }
+
+    #[test]
+    fn frequency_words() {
+        let options = parse(b"xaqu.intelgpu.freq=650 xaqu.intelgpu.freqlog xaqu.intelgpu.freqtest");
+        assert_eq!(options.freq_mhz, Some(650));
+        assert!(options.freqlog && options.freqtest);
+        assert!(!options.uapitrace && !options.trace);
+        let options = parse(b"xaqu.intelgpu.uapitrace");
+        assert!(options.uapitrace && !options.trace, "{options:?}");
+        assert_eq!(parse(b"xaqu.intelgpu.freq=x").freq_mhz, None);
+        assert_eq!(parse(b"xaqu.intelgpu.freq=0").freq_mhz, None);
+        assert_eq!(parse(b"xaqu.intelgpu.freqlog").freq_mhz, None);
+        assert!(parse(b"xaqu.intelgpu.fwhold").fwhold);
+        assert!(!parse(b"xaqu.intelgpu.fwholdx").fwhold);
+        assert!(parse(b"xaqu.intelgpu.ioctlstat").ioctlstat);
+        assert!(!parse(b"xaqu.intelgpu.fwhold").ioctlstat);
+    }
+
+    #[test]
+    fn a_misspelt_stop_touches_nothing() {
+        assert_eq!(parse(b"xaqu.intelgpu.stop=x").stop, Some(1));
+        assert_eq!(parse(b"xaqu.intelgpu.stop=0").stop, Some(1));
+        assert_eq!(parse(b"xaqu.intelgpu.stop=").stop, Some(1));
+    }
+
+    #[test]
+    fn a_misspelt_reset_restarts_nothing() {
+        for line in [
+            &b"xaqu.intelgpu.reset=0"[..],
+            b"xaqu.intelgpu.reset=3601",
+            b"xaqu.intelgpu.reset=6O",
+            b"xaqu.intelgpu.reset=",
+            b"xaqu.intelgpu.reset=99999",
+        ] {
+            let options = parse(line);
+            assert_eq!(options.reset_seconds, None, "{line:?}");
+            assert!(options.reset_refused, "{line:?}");
+        }
+        assert_eq!(parse(b"xaqu.intelgpu.reset=3600").reset_seconds, Some(3600));
+    }
+}

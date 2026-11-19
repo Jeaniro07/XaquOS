@@ -1,0 +1,28 @@
+[package]
+name = "xaqu-i2c-hid-driver"
+description = "The I2C-HID touchpad driver process: a touchpad on an Intel Serial I/O (LPSS) I2C controller, served to the kernel's input core on xaqu-rt"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "i2c-hid"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-blkring.workspace = true
+xaqu-driver.workspace = true
+xaqu-i2c-hid.workspace = true
+xaqu-inputctl.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-lpss-i2c.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-usb-host.workspace = true
+
+[lints]
+workspace = true

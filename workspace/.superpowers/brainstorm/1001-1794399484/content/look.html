@@ -1,0 +1,73 @@
+<h2>Tampilan bawaan desktop baru</h2>
+<p class="subtitle">Tata letak sama (menu bar, dok tengah, tombol kiri). Yang beda: warna, kaca, aksen. Mode terang/gelap tetap bisa diganti di Control Center; ini hanya bawaan saat pertama boot.</p>
+
+<style>
+  .scr{position:relative;height:220px;border-radius:8px;overflow:hidden;font:11px Inter,system-ui,sans-serif}
+  .top{position:absolute;left:0;right:0;top:0;height:20px;display:flex;align-items:center;gap:10px;padding:0 9px;font-size:10px;backdrop-filter:blur(10px)}
+  .top .r{margin-left:auto;display:flex;gap:9px}
+  .win{position:absolute;left:46px;top:34px;width:230px;height:128px;border-radius:9px}
+  .tb{height:22px;display:flex;align-items:center;padding:0 8px;font-size:10px}
+  .tl{display:flex;gap:5px}.tl i{width:9px;height:9px;border-radius:50%;display:block}
+  .red{background:#ff5f57}.yel{background:#febc2e}.grn{background:#28c840}
+  .body{padding:8px 10px;font-size:10px;line-height:1.6}
+  .menu{position:absolute;left:58px;top:20px;width:120px;border-radius:7px;padding:4px;font-size:10px;z-index:3}
+  .menu div{padding:2px 6px;border-radius:4px}
+  .dock{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);height:34px;padding:0 9px;border-radius:14px;display:flex;align-items:center;gap:7px;backdrop-filter:blur(12px)}
+  .ic{width:22px;height:22px;border-radius:6px}
+  /* A light */
+  .a{background:linear-gradient(160deg,#a9c6f5,#e8d5f2 55%,#f6e3c9)}
+  .a .top{background:rgba(255,255,255,.55);color:#1d1d1f}
+  .a .win{background:#ffffff;box-shadow:0 12px 30px rgba(0,0,0,.18);color:#1d1d1f}
+  .a .tb{background:#f3f3f5;border-bottom:1px solid #e3e3e6;border-radius:9px 9px 0 0}
+  .a .menu{background:rgba(246,246,248,.92);box-shadow:0 8px 24px rgba(0,0,0,.2);color:#1d1d1f}.a .menu .h{background:#0a84ff;color:#fff}
+  .a .dock{background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.6)}
+  .a .ic{background:linear-gradient(135deg,#0a84ff,#64d2ff)}.a .ic:nth-child(2){background:linear-gradient(135deg,#ff9f0a,#ff375f)}.a .ic:nth-child(3){background:linear-gradient(135deg,#30d158,#0fb5ae)}
+  /* B dark */
+  .b{background:linear-gradient(160deg,#1c2541,#0b0c10 60%,#3a1f4d)}
+  .b .top{background:rgba(30,30,32,.55);color:#f5f5f7}
+  .b .win{background:#262629;box-shadow:0 12px 30px rgba(0,0,0,.6);color:#f5f5f7;border:1px solid #3a3a3d}
+  .b .tb{background:#2f2f33;border-bottom:1px solid #1c1c1e;border-radius:9px 9px 0 0}
+  .b .menu{background:rgba(44,44,48,.92);box-shadow:0 8px 24px rgba(0,0,0,.5);color:#f5f5f7}.b .menu .h{background:#0a84ff}
+  .b .dock{background:rgba(60,60,64,.45);border:1px solid rgba(255,255,255,.12)}
+  .b .ic{background:linear-gradient(135deg,#0a84ff,#64d2ff)}.b .ic:nth-child(2){background:linear-gradient(135deg,#ff9f0a,#ff375f)}.b .ic:nth-child(3){background:linear-gradient(135deg,#30d158,#0fb5ae)}
+  /* C nocturne */
+  .c{background:linear-gradient(160deg,#2b2f4a,#161826 60%,#3a2c4f)}
+  .c .top{background:rgba(22,24,38,.6);color:#e9e9ed}
+  .c .win{background:#232532;box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 18px rgba(145,132,217,.25);color:#e9e9ed;border:1px solid #9184d9}
+  .c .tb{background:#232532;border-bottom:1px solid #30324a;border-radius:9px 9px 0 0}
+  .c .menu{background:rgba(35,37,50,.94);box-shadow:0 8px 24px rgba(0,0,0,.5);color:#e9e9ed}.c .menu .h{background:#9184d9}
+  .c .dock{background:rgba(35,37,50,.55);border:1px solid rgba(145,132,217,.3)}
+  .c .ic{background:linear-gradient(135deg,#9184d9,#5b8def)}.c .ic:nth-child(2){background:linear-gradient(135deg,#f59e7b,#e2557a)}.c .ic:nth-child(3){background:linear-gradient(135deg,#6fd3a8,#2f9e8f)}
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="light" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="scr a">
+      <div class="top"><b>&#9711;</b><b>Terminal</b><span>Berkas</span><span>Edit</span><span>Jendela</span><div class="r"><span>&#8776;</span><span>&#9776;</span><span>Rab 14.02</span></div></div>
+      <div class="menu"><div>Jendela Baru</div><div class="h">Tab Baru</div><div>Tutup Jendela</div></div>
+      <div class="win"><div class="tb"><span class="tl"><i class="red"></i><i class="yel"></i><i class="grn"></i></span><span style="margin:auto">Terminal</span></div><div class="body">ferrix@ferrix ~ %</div></div>
+      <div class="dock"><span class="ic"></span><span class="ic"></span><span class="ic"></span><span class="ic"></span></div>
+    </div></div>
+    <div class="card-body"><h3>A. Terang, kaca</h3><p>Paling dekat dengan nuansa macOS. Aksen biru. Wallpaper gradien lembut buatan sendiri.</p></div>
+  </div>
+
+  <div class="card" data-choice="dark" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="scr b">
+      <div class="top"><b>&#9711;</b><b>Terminal</b><span>Berkas</span><span>Edit</span><span>Jendela</span><div class="r"><span>&#8776;</span><span>&#9776;</span><span>Rab 14.02</span></div></div>
+      <div class="menu"><div>Jendela Baru</div><div class="h">Tab Baru</div><div>Tutup Jendela</div></div>
+      <div class="win"><div class="tb"><span class="tl"><i class="red"></i><i class="yel"></i><i class="grn"></i></span><span style="margin:auto">Terminal</span></div><div class="body">ferrix@ferrix ~ %</div></div>
+      <div class="dock"><span class="ic"></span><span class="ic"></span><span class="ic"></span><span class="ic"></span></div>
+    </div></div>
+    <div class="card-body"><h3>B. Gelap, kaca</h3><p>Mode gelap gaya macOS, abu-abu netral dan aksen biru. Cocok untuk game dan terminal.</p></div>
+  </div>
+
+  <div class="card" data-choice="nocturne" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="scr c">
+      <div class="top"><b>&#9711;</b><b>Terminal</b><span>Berkas</span><span>Edit</span><span>Jendela</span><div class="r"><span>&#8776;</span><span>&#9776;</span><span>Rab 14.02</span></div></div>
+      <div class="menu"><div>Jendela Baru</div><div class="h">Tab Baru</div><div>Tutup Jendela</div></div>
+      <div class="win"><div class="tb"><span class="tl"><i class="red"></i><i class="yel"></i><i class="grn"></i></span><span style="margin:auto">Terminal</span></div><div class="body">ferrix@ferrix ~ %</div></div>
+      <div class="dock"><span class="ic"></span><span class="ic"></span><span class="ic"></span><span class="ic"></span></div>
+    </div></div>
+    <div class="card-body"><h3>C. Gelap Nocturne (warna Yoru)</h3><p>Tata letak macOS, tetapi tetap memakai warna ungu Yoru dan glow aksen. Paling sedikit token baru.</p></div>
+  </div>
+</div>

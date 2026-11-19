@@ -1,0 +1,544 @@
+[workspace]
+# v3 makes the `rust-version` pin below bind, so a crate needing a newer
+# compiler is skipped rather than silently attempted.
+resolver = "3"
+# A workspace of its own. Without this, an app reaching this workspace's crates
+# as well as tole's (lode-viewer) finds this root first once it is loaded, and
+# gives tole-compiler these lints: 88 flags where every other app gives it 32, so
+# in their shared check directory it and they rebuilt on every `check`
+# (`docs/TEST-TIME.md`).
+exclude = ["src/user/system/linux/tole"]
+members = [
+    # Architecture-neutral, host-testable logic. Everything that can be a pure
+    # function of bytes lives here rather than in the kernel, because this is
+    # the code `cargo test`, Miri and the fuzzers can actually reach.
+    "src/lib/platform/acpi",
+    "src/lib/fs/common/block",
+    "src/lib/proto/blkring",
+    "src/lib/drivers/block/blkserve",
+    "src/lib/proto/devmgr-proto",
+    "src/lib/proto/drvupdate-proto",
+    "src/lib/proto/devmgr-events",
+    "src/lib/init/svc-proto",
+    "src/lib/proto/auth-proto",
+    "src/lib/proto/displayctl",
+    "src/lib/proto/renderctl",
+    "src/lib/proto/inputctl",
+    "src/lib/proto/sndctl",
+    "src/lib/proto/chardevctl",
+    "src/lib/proto/usbif",
+    "src/lib/proto/adb",
+    "src/lib/proto/logctl",
+    "src/lib/log/lode",
+    "src/lib/log/shed",
+    "src/lib/proto/lode-capture",
+    "src/lib/drivers/power/x86-power",
+    "src/lib/proto/audit",
+    "src/lib/proto/bootinfo",
+    "src/lib/proto/boot-policy",
+    "src/lib/proto/netswitch",
+    "src/user/system/native/netd",
+    "src/user/system/native/linuxd-dies",
+    "src/user/system/native/netd",
+    "src/lib/fs/blkclient",
+    "src/lib/fs/fsproto",
+    "src/user/system/native/btrfsd",
+    "src/user/system/native/blk-victim",
+    "src/lib/proto/slots",
+    "src/lib/proto/eventlog",
+    "src/lib/platform/description",
+    "src/lib/platform/elf",
+    "src/lib/kernel/fbtext",
+    "src/lib/platform/fdt",
+    "src/lib/platform/smbios",
+    "src/lib/kernel/fallible",
+    "src/lib/kernel/frame",
+    "src/lib/kernel/heap",
+    "src/lib/kernel/kmem",
+    "src/lib/kernel/lz4",
+    "src/lib/kernel/swap",
+    "src/lib/fs/btrfs/format",
+    "src/lib/fs/btrfs/mkfs",
+    "src/lib/fs/btrfs/vfs",
+    "src/lib/fs/btrfs/write",
+    "src/lib/fs/common/cpio",
+    "src/lib/fs/common/partition",
+    "src/lib/fs/common/fat",
+    "src/lib/kernel/crng",
+    "src/lib/kernel/seccomp",
+    "src/lib/crypto/argon2",
+    "src/lib/crypto/sha256",
+    "src/lib/crypto/sigverify",
+    "src/lib/proto/linux-abi",
+    "src/lib/network/netwire",
+    "src/lib/network/nettcp",
+    "src/lib/network/net",
+    "src/lib/proto/netring",
+    "src/lib/drivers/net/netserve",
+    "src/lib/network/netlink",
+    "src/lib/proto/native-abi",
+    "src/lib/proto/native",
+    "src/lib/proto/process-builder",
+    "src/lib/kernel/objects",
+    "src/lib/drivers/display/modes",
+    "src/lib/drivers/display/stm32-display",
+    "src/lib/drivers/model-derive",
+    "src/lib/drivers/registers",
+    "src/lib/drivers/usb/usb-host",
+    "src/lib/drivers/usb/usb-serial",
+    "src/lib/drivers/usb/usb-device",
+    "src/lib/drivers/usb/dwc3",
+    "src/lib/drivers/gpu/gc400",
+    "src/lib/drivers/gpu/intel-xelp",
+    "src/lib/kernel/sync",
+    "src/lib/kernel/ustack",
+    "src/lib/kernel/vdso",
+    "src/lib/drivers/console/vdagent",
+    "src/lib/drivers/virtio",
+    "src/lib/drivers/block/virtio-blk",
+    "src/lib/drivers/block/stm32-sdmmc",
+    "src/lib/drivers/block/nvme",
+    "src/lib/drivers/block/ahci",
+    "src/lib/drivers/console/virtio-console",
+    "src/lib/drivers/display/virtio-gpu",
+    "src/lib/drivers/input/virtio-input",
+    "src/lib/drivers/sound/virtio-snd",
+    "src/lib/drivers/net/virtio-net",
+    "src/lib/drivers/net/dwmac",
+    "src/lib/drivers/net/yt6801",
+    "src/lib/drivers/net/rtl8169",
+    "src/lib/kernel/vma",
+    "src/lib/kernel/paging",
+    "src/lib/fs/common/procfs",
+    "src/lib/fs/common/cgroupfs",
+    "src/lib/fs/common/sysfs",
+    "src/lib/init/restart",
+    "src/lib/init/svc",
+    "src/lib/platform/pci",
+    "src/lib/kernel/qr",
+    "src/lib/kernel/sched",
+    "src/lib/kernel/sched-edf",
+    "src/lib/fs/common/vfs",
+    "src/lib/proto/pkg",
+
+    # The UEFI loader. Firmware calls into it with a stack and the MMU on, so
+    # there is no bootstrap assembly on any architecture.
+    "src/boot/common/uefi",
+    "src/boot/vendor/google/pixel7",
+
+    # The kernel proper.
+    "src/kernel",
+    "src/kernel/core",
+    "src/kernel/item",
+    "src/kernel/load",
+    "src/kernel/lift/core",
+    "src/kernel/lift/item",
+    "src/kernel/lift/load",
+    # The optional parts (docs/microkernel/CRATE-SPLIT.md §2.1), each with its
+    # lift twin in its own directory.
+    "src/kernel/extensions/settings",
+    "src/kernel/extensions/settings/lift",
+    "src/kernel/extensions/board/stm32mp1",
+    "src/kernel/extensions/board/gs201-usb",
+    "src/kernel/extensions/device/logctl",
+    "src/kernel/extensions/device/logctl/lift",
+    "src/kernel/extensions/device/net-ring",
+    "src/kernel/extensions/device/net-ring/lift",
+    "src/user/system/native/linuxd",
+    "src/lib/proto/partition-desc",
+    "src/user/system/native/partmgr",
+    "src/user/system/native/partition-hello",
+
+    # Native user-space programs, built for the kernel's own targets and put
+    # in the initramfs. Like the kernel they cannot be built or tested for the
+    # host, so the host gates exclude them; everything about them that can be
+    # a pure function lives in `src/lib/proto/native`.
+    "src/user/system/native/rt",
+    "src/user/system/native/driver",
+    "src/user/system/native/channel-echo",
+    "src/user/system/native/restricted-check",
+    "src/user/system/native/pong",
+    "src/user/system/native/crash-at-start",
+    "src/user/system/native/mce-victim",
+    "src/user/system/native/ipc-bench",
+    "src/user/system/native/ipc-equiv",
+    "src/user/system/native/drivers/block/virtio-blk",
+    "src/user/system/native/drivers/block/stm32-sdmmc",
+    "src/user/system/native/drivers/block/nvme",
+    "src/user/system/native/drivers/block/ahci",
+    "src/user/system/native/drivers/net/virtio-net",
+    "src/user/system/native/drivers/net/yt6801",
+    "src/user/system/native/drivers/net/rtl8169",
+    "src/user/system/native/drivers/display/virtio-gpu",
+    "src/user/system/native/drivers/display/efifb",
+    "src/user/system/native/drivers/display/stm32-ltdc",
+    "src/user/system/native/drivers/input/virtio-input",
+    "src/user/system/native/drivers/sound/virtio-snd",
+    "src/user/system/native/drivers/usb/usbhid",
+    "src/user/system/native/drivers/usb/usbserial",
+    "src/user/system/native/drivers/usb/usbdev",
+    "src/user/system/native/drivers/power/x86",
+    "src/user/system/native/drivers/gpu/gc400",
+    "src/user/system/native/drivers/gpu/intel",
+    "src/user/system/native/drivers/gpu/intel-fake",
+    "src/user/system/native/drivers/console/vport",
+    "src/user/system/native/drivers/test/seconds",
+    "src/user/system/native/drivers/test/model-examples",
+    "src/user/system/native/platform",
+    "src/user/system/native/devmgr",
+    "src/user/system/native/drvupdated",
+    "src/user/system/native/devmgr-events",
+    "src/user/system/native/lode",
+    "src/user/system/native/memscrub",
+
+    # Host-side build and test driver (`cargo xtask ...`).
+    "tools/common/release/softsign",
+    "tools/common/vtier",
+    "tools/common/xtask",
+]
+# So a bare `cargo build` builds the host tool rather than trying to compile
+# freestanding crates for the host target.
+default-members = ["tools/common/xtask"]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+# Matches rust-toolchain.toml: the version the resolver holds dependencies to.
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+xaqu-netswitch = { path = "src/lib/proto/netswitch" }
+xaqu-blkclient = { path = "src/lib/fs/blkclient" }
+xaqu-fsproto = { path = "src/lib/fs/fsproto" }
+xaqu-blk-victim = { path = "src/user/system/native/blk-victim" }
+xaqu-partition-desc = { path = "src/lib/proto/partition-desc" }
+xaqu-acpi = { path = "src/lib/platform/acpi" }
+xaqu-block = { path = "src/lib/fs/common/block" }
+xaqu-blkring = { path = "src/lib/proto/blkring" }
+xaqu-blkserve = { path = "src/lib/drivers/block/blkserve" }
+xaqu-devmgr-proto = { path = "src/lib/proto/devmgr-proto" }
+xaqu-drvupdate-proto = { path = "src/lib/proto/drvupdate-proto" }
+xaqu-devmgr-events-proto = { path = "src/lib/proto/devmgr-events" }
+xaqu-svc-proto = { path = "src/lib/init/svc-proto" }
+xaqu-auth-proto = { path = "src/lib/proto/auth-proto" }
+xaqu-display-modes = { path = "src/lib/drivers/display/modes" }
+xaqu-displayctl = { path = "src/lib/proto/displayctl" }
+xaqu-renderctl = { path = "src/lib/proto/renderctl" }
+xaqu-inputctl = { path = "src/lib/proto/inputctl" }
+xaqu-sndctl = { path = "src/lib/proto/sndctl" }
+xaqu-chardevctl = { path = "src/lib/proto/chardevctl" }
+xaqu-usbif = { path = "src/lib/proto/usbif" }
+xaqu-adb = { path = "src/lib/proto/adb" }
+xaqu-vdagent = { path = "src/lib/drivers/console/vdagent" }
+xaqu-logctl = { path = "src/lib/proto/logctl" }
+xaqu-lode-core = { path = "src/lib/log/lode" }
+xaqu-lode-capture = { path = "src/lib/proto/lode-capture" }
+xaqu-audit = { path = "src/lib/proto/audit" }
+xaqu-bootinfo = { path = "src/lib/proto/bootinfo" }
+xaqu-slots = { path = "src/lib/proto/slots" }
+xaqu-boot-policy = { path = "src/lib/proto/boot-policy" }
+xaqu-eventlog = { path = "src/lib/proto/eventlog" }
+xaqu-description = { path = "src/lib/platform/description" }
+xaqu-elf = { path = "src/lib/platform/elf" }
+xaqu-fbtext = { path = "src/lib/kernel/fbtext" }
+xaqu-fdt = { path = "src/lib/platform/fdt" }
+xaqu-smbios = { path = "src/lib/platform/smbios" }
+xaqu-frame = { path = "src/lib/kernel/frame" }
+xaqu-fallible = { path = "src/lib/kernel/fallible" }
+xaqu-heap = { path = "src/lib/kernel/heap" }
+xaqu-kmem = { path = "src/lib/kernel/kmem" }
+xaqu-btrfs = { path = "src/lib/fs/btrfs/format" }
+xaqu-btrfs-mkfs = { path = "src/lib/fs/btrfs/mkfs" }
+xaqu-btrfs-vfs = { path = "src/lib/fs/btrfs/vfs" }
+xaqu-btrfs-write = { path = "src/lib/fs/btrfs/write" }
+xaqu-cpio = { path = "src/lib/fs/common/cpio" }
+xaqu-partition = { path = "src/lib/fs/common/partition" }
+xaqu-fat = { path = "src/lib/fs/common/fat" }
+xaqu-log-shed = { path = "src/lib/log/shed" }
+xaqu-crng = { path = "src/lib/kernel/crng" }
+xaqu-seccomp = { path = "src/lib/kernel/seccomp" }
+xaqu-argon2 = { path = "src/lib/crypto/argon2" }
+xaqu-sha256 = { path = "src/lib/crypto/sha256" }
+xaqu-sigverify = { path = "src/lib/crypto/sigverify" }
+xaqu-linux-abi = { path = "src/lib/proto/linux-abi" }
+xaqu-native-abi = { path = "src/lib/proto/native-abi" }
+xaqu-native = { path = "src/lib/proto/native" }
+xaqu-process-builder = { path = "src/lib/proto/process-builder" }
+xaqu-stm32-display = { path = "src/lib/drivers/display/stm32-display" }
+xaqu-stm32-sdmmc = { path = "src/lib/drivers/block/stm32-sdmmc" }
+xaqu-nvme = { path = "src/lib/drivers/block/nvme" }
+xaqu-ahci = { path = "src/lib/drivers/block/ahci" }
+xaqu-usb-host = { path = "src/lib/drivers/usb/usb-host" }
+xaqu-usb-serial = { path = "src/lib/drivers/usb/usb-serial" }
+xaqu-usb-device = { path = "src/lib/drivers/usb/usb-device" }
+xaqu-dwc3 = { path = "src/lib/drivers/usb/dwc3" }
+xaqu-gc400 = { path = "src/lib/drivers/gpu/gc400" }
+xaqu-intel-xelp = { path = "src/lib/drivers/gpu/intel-xelp" }
+xaqu-x86-power = { path = "src/lib/drivers/power/x86-power" }
+xaqu-netwire = { path = "src/lib/network/netwire" }
+xaqu-nettcp = { path = "src/lib/network/nettcp" }
+xaqu-net = { path = "src/lib/network/net" }
+xaqu-netring = { path = "src/lib/proto/netring" }
+xaqu-netserve = { path = "src/lib/drivers/net/netserve" }
+xaqu-netlink = { path = "src/lib/network/netlink" }
+xaqu-rt = { path = "src/user/system/native/rt" }
+xaqu-driver = { path = "src/user/system/native/driver" }
+xaqu-driver-derive = { path = "src/lib/drivers/model-derive" }
+xaqu-registers = { path = "src/lib/drivers/registers" }
+xaqu-platform = { path = "src/user/system/native/platform" }
+xaqu-net-driver = { path = "src/user/system/native/drivers/net/virtio-net" }
+xaqu-yt6801-driver = { path = "src/user/system/native/drivers/net/yt6801" }
+xaqu-rtl8169-driver = { path = "src/user/system/native/drivers/net/rtl8169" }
+xaqu-objects = { path = "src/lib/kernel/objects" }
+xaqu-sync = { path = "src/lib/kernel/sync" }
+xaqu-kernel-core = { path = "src/kernel/core" }
+xaqu-kernel-item = { path = "src/kernel/item" }
+xaqu-kernel-load = { path = "src/kernel/load" }
+xaqu-kernel-settings = { path = "src/kernel/extensions/settings" }
+xaqu-kernel-board-stm32mp1 = { path = "src/kernel/extensions/board/stm32mp1" }
+xaqu-kernel-board-gs201-usb = { path = "src/kernel/extensions/board/gs201-usb" }
+xaqu-kernel-logctl = { path = "src/kernel/extensions/device/logctl" }
+xaqu-kernel-net-ring = { path = "src/kernel/extensions/device/net-ring" }
+xaqu-ustack = { path = "src/lib/kernel/ustack" }
+xaqu-vdso = { path = "src/lib/kernel/vdso" }
+xaqu-virtio = { path = "src/lib/drivers/virtio" }
+xaqu-virtio-blk = { path = "src/lib/drivers/block/virtio-blk" }
+xaqu-virtio-gpu = { path = "src/lib/drivers/display/virtio-gpu" }
+xaqu-virtio-console = { path = "src/lib/drivers/console/virtio-console" }
+xaqu-vport = { path = "src/user/system/native/drivers/console/vport" }
+xaqu-virtio-input = { path = "src/lib/drivers/input/virtio-input" }
+xaqu-virtio-snd = { path = "src/lib/drivers/sound/virtio-snd" }
+xaqu-virtio-net = { path = "src/lib/drivers/net/virtio-net" }
+xaqu-dwmac = { path = "src/lib/drivers/net/dwmac" }
+xaqu-yt6801 = { path = "src/lib/drivers/net/yt6801" }
+xaqu-rtl8169 = { path = "src/lib/drivers/net/rtl8169" }
+xaqu-vma = { path = "src/lib/kernel/vma" }
+xaqu-qr = { path = "src/lib/kernel/qr" }
+xaqu-vfs = { path = "src/lib/fs/common/vfs" }
+xaqu-paging = { path = "src/lib/kernel/paging" }
+xaqu-procfs = { path = "src/lib/fs/common/procfs" }
+xaqu-cgroupfs = { path = "src/lib/fs/common/cgroupfs" }
+xaqu-sysfs = { path = "src/lib/fs/common/sysfs" }
+xaqu-svc = { path = "src/lib/init/svc" }
+xaqu-restart = { path = "src/lib/init/restart" }
+xaqu-pci = { path = "src/lib/platform/pci" }
+xaqu-sched = { path = "src/lib/kernel/sched" }
+xaqu-lz4 = { path = "src/lib/kernel/lz4" }
+xaqu-swap = { path = "src/lib/kernel/swap" }
+xaqu-sched-edf = { path = "src/lib/kernel/sched-edf" }
+xaqu-pkg = { path = "src/lib/proto/pkg" }
+
+# ---------------------------------------------------------------------------
+# Workspace-wide lints
+#
+# Ported from the Starling workspace, with the deviations a kernel forces
+# argued below. The rule is the same one: a gate is only real if the build
+# fails, and an exemption is only acceptable if it is argued at the site.
+# ---------------------------------------------------------------------------
+[workspace.lints.rust]
+# **The one gate this tree cannot inherit.** Starling denies `unsafe_code`
+# outright; a kernel writes page tables, MMIO and CPU system registers, so
+# denying unsafe would be denying the program. The principle is kept by moving
+# the burden onto every unsafe site instead:
+#
+#   * `clippy::undocumented_unsafe_blocks` (denied below) requires a `SAFETY:`
+#     comment on every `unsafe` block,
+#   * `clippy::missing_safety_doc` requires a `# Safety` section on every
+#     `unsafe fn`,
+#   * `unsafe_op_in_unsafe_fn` (deny-by-default in edition 2024) stops an
+#     `unsafe fn` body from being an unchecked region,
+#   * `tools/common/check/check-unsafe-audit.py` fails the build on any `unsafe` block
+#     whose justification is missing, so the rule survives a clippy version
+#     that decides to soften a nursery lint.
+#
+# `xtask` needs no unsafe at all and denies it in its own manifest.
+unsafe_code = "allow"
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "deny"
+unused_crate_dependencies = "warn"
+unused_results = "deny"
+missing_debug_implementations = "deny"
+unused_qualifications = "warn"
+unreachable_pub = "warn"
+# Denied (docs/BUILD-FLAGS.md rule 2). The kernel's build flags,
+# `cfg(xaqu_<flag> = "<value>")`, are declared to the kernel crate alone, by
+# its build script from tools/common/data/build-flags.toml through xtask, so a
+# misspelt flag or value fails the kernel's build, and a `xaqu_` cfg in any
+# other crate fails that crate's: flags are read in the kernel crate only
+# (rule 6 b).
+unexpected_cfgs = "deny"
+
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "deny"
+
+[workspace.lints.clippy]
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+
+needless_pass_by_value = "warn"
+redundant_closure_for_method_calls = "warn"
+manual_let_else = "warn"
+cloned_instead_of_copied = "warn"
+implicit_clone = "warn"
+uninlined_format_args = "warn"
+doc_markdown = "warn"
+missing_errors_doc = "allow"
+module_name_repetitions = "allow"
+unwrap_used = "deny"
+excessive_nesting = "deny"
+too_many_lines = "deny"
+allow_attributes_without_reason = "deny"
+branches_sharing_code = "deny"
+collapsible_else_if = "deny"
+expect_used = "deny"
+# Every remaining explicit panic has to be argued at the site. In a kernel this
+# matters more than in a server, not less: there is no supervisor to restart
+# us, so a reachable `unwrap` is an unrecoverable machine. `.clippy.toml`
+# exempts test bodies, and `tools/common/check/check-panic-audit.py` asserts that what is
+# left is argued. In the kernel a fatal condition is `fatal!`, which names the
+# catalog entry that explains it and panics from inside the macro, out of this
+# lint's sight; a bare `panic!` is denied there as everywhere.
+panic = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
+# Same reasoning as Starling: clippy cannot tell a runtime divisor from a
+# constant one, and every division in this tree is by a constant (PAGE_SIZE,
+# entry counts, timer frequencies).
+integer_division = "allow"
+modulo_arithmetic = "allow"
+
+# -- The unsafe discipline, standing in for `unsafe_code = "deny"` ----------
+undocumented_unsafe_blocks = "deny"
+missing_safety_doc = "deny"
+# One unsafe operation per block, so a `SAFETY:` comment describes one claim
+# rather than covering a paragraph of them.
+multiple_unsafe_ops_per_block = "deny"
+# `transmute` between arbitrary types is how a kernel gets a silently wrong
+# layout. Named conversions or `from_bits` instead.
+transmute_ptr_to_ptr = "warn"
+cast_ptr_alignment = "deny"
+# Physical/virtual address confusion is this project's characteristic bug, and
+# these are the casts that hide it.
+ptr_as_ptr = "warn"
+borrow_as_ptr = "warn"
+
+# -- Bugs that are silent when they happen ---------------------------------
+debug_assert_with_mut_call = "deny"
+read_zero_byte_vec = "deny"
+path_buf_push_overwrite = "deny"
+fallible_impl_from = "deny"
+panic_in_result_fn = "deny"
+mem_forget = "deny"
+rc_mutex = "deny"
+rc_buffer = "warn"
+mutex_atomic = "warn"
+
+# -- Hygiene ----------------------------------------------------------------
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+exit = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+
+# -- Consistency ------------------------------------------------------------
+str_to_string = "warn"
+semicolon_if_nothing_returned = "warn"
+redundant_type_annotations = "warn"
+unnecessary_self_imports = "warn"
+try_err = "warn"
+unneeded_field_pattern = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+empty_drop = "warn"
+trailing_empty_array = "warn"
+pathbuf_init_then_push = "warn"
+if_then_some_else_none = "warn"
+missing_assert_message = "warn"
+verbose_file_reads = "warn"
+filetype_is_file = "warn"
+create_dir = "warn"
+lossy_float_literal = "warn"
+while_float = "warn"
+suspicious_xor_used_as_pow = "warn"
+
+# -- Correctness ------------------------------------------------------------
+float_cmp = "warn"
+unwrap_in_result = "warn"
+checked_conversions = "warn"
+unnested_or_patterns = "warn"
+needless_continue = "warn"
+string_slice = "deny"
+iter_over_hash_type = "warn"
+redundant_clone = "warn"
+unused_async = "deny"
+
+# ---------------------------------------------------------------------------
+# Profiles
+# ---------------------------------------------------------------------------
+
+# `panic = "abort"` everywhere: there is no unwinder in a freestanding binary,
+# and `eh_personality` would have to be stubbed out if there were.
+[profile.dev]
+panic = "abort"
+# `opt-level = 0` produces a kernel too large for a comfortable early boot and
+# leans on stack frames a 16 KiB kernel stack cannot afford.
+opt-level = 1
+# Line tables and function names, not the full DWARF: a backtrace, `xtask`'s
+# symbolizer and the coverage reports (`objdump --dwarf=decodedline`) read
+# nothing else. The full DWARF made the x86-64 debug kernel 148 MB, line
+# tables 49 MB, and an incremental rebuild after a one-line kernel edit wrote
+# 476 MB with it and 332 MB without, in 26 s of processor time against 20 s
+# (docs/TEST-TIME.md, "Compile, 2026-10-15"). `--gdb` builds the kernel with
+# the full DWARF (`tools/common/xtask/src/cargo.rs`), for a debugger's locals.
+# The profile is the whole workspace's: the host tests, xtask and the native
+# programs are built with line tables too.
+debug = "line-tables-only"
+# No LTO. rustc's default for an optimised, incremental build is ThinLTO
+# across the crate's own codegen units, which after a one-line kernel edit
+# re-optimised the crate: about 17 of an edit's 20 processor seconds; without
+# it the edit takes about 3 (docs/TEST-TIME.md, "The compile", Cut C2). Calls
+# between codegen units are no longer inlined unless marked `#[inline]`, so
+# the debug kernel is not the code the debug coverage figures measured: a
+# traced boot builds the `coverage` profile below instead.
+lto = "off"
+overflow-checks = true
+
+# The debug kernel `cargo xtask coverage` measures: the dev profile with
+# rustc's crate-local ThinLTO kept (`lto = false` is that default, not "no
+# LTO"), the code every debug coverage figure in docs/certification was
+# measured on. xtask builds it for any boot a TCG plugin traces
+# (`XAQU_QEMU_PLUGIN`), and the coverage scripts name it from the ELF's
+# path (the certification consultant's ruling, ledger line 1472, route B).
+[profile.coverage]
+inherits = "dev"
+lto = false
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = 2
+# Keep symbols: the kernel's own backtraces resolve against them, and a stripped
+# kernel makes a panic report a list of hex numbers.
+strip = "none"
+debug = true
+
+# `--release --iterate`: the release kernel for someone changing it and booting
+# it again, not for a gate. Thin LTO over sixteen units relinks a one-line edit
+# in seconds where fat LTO over one unit took two to three minutes
+# (docs/TEST-TIME.md, C4). The code differs from release, so a gate, a
+# benchmark that is reported, and CI build `release`.
+[profile.iterate]
+inherits = "release"
+lto = "thin"
+codegen-units = 16
+# **Deliberately on**, which is the opposite of Starling's choice and for the
+# opposite reason. Starling is a long-lived server where an abort is an outage;
+# here a wrapped page count or frame number silently corrupts memory and the
+# symptom appears somewhere else entirely. A panic that names the line is
+# strictly better than a machine that limps.
+overflow-checks = true

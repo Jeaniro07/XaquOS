@@ -1,0 +1,25 @@
+[package]
+name = "xaqu-hda-driver"
+description = "The Intel HD Audio driver process: the sound control channel's driver end over an HD Audio controller, on xaqu-rt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "hda"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-blkring.workspace = true
+xaqu-driver.workspace = true
+xaqu-hda.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-sndctl.workspace = true
+
+[lints]
+workspace = true

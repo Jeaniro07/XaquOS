@@ -1,0 +1,13 @@
+[package]
+name = "xaqu-iwl"
+description = "Intel AC 9560 (iwlwifi) firmware file, device table and command framing as pure logic"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

@@ -1,0 +1,14 @@
+[package]
+name = "xaqu-goodix-fp"
+description = "A Goodix fingerprint reader on USB (27c6:5e0a): its HID descriptor, the framing of its reports, and the reassembly of an image -- without the vendor commands, whose opcodes are not published"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+xaqu-usb-host = { workspace = true }
+
+[lints]
+workspace = true

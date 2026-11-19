@@ -1,0 +1,13 @@
+[package]
+name = "xaqu-lpss-i2c"
+description = "The Intel Serial I/O (LPSS) I2C host controller as logic over its registers: the registers themselves, and the transactions a driver makes on them"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

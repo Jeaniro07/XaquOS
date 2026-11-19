@@ -1,0 +1,26 @@
+[package]
+name = "xaqu-usbhid"
+description = "The USB host driver process: an input control channel per keyboard or mouse, and a terminal per FTDI serial adapter or USB-Blaster, found behind an STM32MP15 board's EHCI controller or a PC's xHCI controller, on xaqu-rt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "usbhid"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-blkring.workspace = true
+xaqu-inputctl.workspace = true
+xaqu-linux-abi.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-usb-host.workspace = true
+xaqu-usbif.workspace = true
+
+[lints]
+workspace = true

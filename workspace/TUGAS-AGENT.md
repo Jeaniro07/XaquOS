@@ -85,6 +85,16 @@ tetapi belum masuk `DESKTOP_APPS`, jadi belum terpasang sebagai bawaan; (2) `art
 Xaqu — jejaknya ditemukan di katalog toko LORDOS (`LORDOS/apps/store`, `apt/catalog.json`), jadi harus
 diporting ke Rust; (3) repo XaquOS belum diuji build (komponen `tole`, `ferrousli`, `zinc` tetap
 di-clone xtask saat pertama dipakai); (4) `LORDOS` dan `FERRIX` lama tidak dihapus dari workspace.
+**Pemindahan penuh (2026-11-19, permintaan pemilik "semua file, full"):** `main` di XaquOS kini
+membawa riwayat penuh — 4.465 commit, bukan 2 commit ringkas — dan 10.073 berkas: pohon sistem
+ferrix `rename/xaqu` + `45e4c42e6`, `src/user/apps` (465 berkas, 25 app), `LORDOS/` (4.881 berkas),
+`TUGAS-AGENT.md`, `docs/superpowers/` (9 rencana), `PROVENANCE.md`. Riwayat app dan LordOS ikut
+sebagai branch: `apps/*` (9 branch, termasuk `apps/desktop/a4a-spotlight`) dan `lordos/main`; branch
+sistem `desktop/a1..a5`, `mm/b0-lz4`, `mm/b1-b5`, `rename/xaqu` juga di-push. ISO diunggah sebagai
+Release `v0.3.0-live`: `xaqu-live.iso` 218.103.808 byte di
+`https://github.com/Jeaniro07/XaquOS/releases/download/v0.3.0-live/xaqu-live.iso`; token GitHub hanya
+dipakai lewat askpass sementara lalu dihapus, tidak ada token di URL remote. Salinan lokal
+`C:\Users\jeani\Downloads\OS\XaquOS` disegarkan ke `8a22d13dc` (sisa ruang C: 2,43 GB).
 
 **Keputusan pengguna (2026-11-15): usul "menambahkan Hyprland" tidak diterapkan** — compositor
 desktop sudah `hyprix`, yang kompatibel Hyprland (IPC `hyprctl`/`dispatch`, sintaks `bind =` di

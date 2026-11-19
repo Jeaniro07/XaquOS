@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "agent: claude",
+      "type": "process",
+      "command": "claude",
+      "args": ["Kamu harness 'claude'. Baca TUGAS-AGENT.md lalu kerjakan tugas jalurmu sesuai aturannya."],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "group": "agents", "focus": false, "reveal": "always" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "agent: minimax",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/c", "mcode", "Kamu harness 'minimax'. Baca TUGAS-AGENT.md lalu kerjakan tugas jalurmu sesuai aturannya."],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "group": "agents", "focus": false, "reveal": "always" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "agent: opencode",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/c", "opencode", "--prompt", "Kamu harness 'opencode'. Baca TUGAS-AGENT.md lalu kerjakan tugas jalurmu sesuai aturannya.", "${workspaceFolder}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "group": "agents", "focus": false, "reveal": "always" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "agent: semua",
+      "dependsOn": ["agent: claude", "agent: minimax", "agent: opencode"],
+      "dependsOrder": "parallel",
+      "runOptions": { "runOn": "folderOpen" },
+      "problemMatcher": []
+    }
+  ]
+}

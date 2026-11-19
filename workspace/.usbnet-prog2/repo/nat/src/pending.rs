@@ -1,0 +1,684 @@
+//! Calls whose handlers are not on main.
+//!
+//! Each wrapper makes the real call. A kernel without the handler answers
+//! `ENOSYS`, which arrives as [`Error::Unsupported`], so a program built
+//! today fails cleanly on today's kernel and works unchanged on the one that
+//! implements the call.
+//!
+//! All of them are stage 9's, owned by xaqu-4b.
+//!
+//! * **Process creation**, `0x1030` and `0x1031`. The numbers were copied here
+//!   while `src/lib/proto/native-abi`'s table left `0x1030..=0x1037` free for them;
+//!   they are on the table now and re-exported from it. The argument lists
+//!   are the handler's: `(job, image_vmo, name_ptr, name_len)` and
+//!   `(process, bootstrap or 0)`.
+//! * **A process's bootstrap and its end**, `0x1032` to `0x1034`: init's K3
+//!   and K6 (`docs/INIT.md` §16), `process_give`, `process_bootstrap` and
+//!   `process_status`.
+//! * **`vmo_map`**, `0x1024`, whose number is on main's table and whose handler
+//!   and `MAP_READ`/`MAP_WRITE` constants are not. The constants are copied here
+//!   until they land in `src/lib/proto/native-abi`'s `types`.
+
+use xaqu_native_abi::handle::Handle;
+use xaqu_native_abi::nr;
+use xaqu_native_abi::signals::Signals;
+use xaqu_native_abi::types::{self, ProcessStatus};
+
+use crate::call::{Call, Syscall};
+use crate::error::{Error, decode, decode_handle, decode_unit};
+use crate::handle::{Object, OwnedHandle, object_handle, register};
+use crate::job::Job;
+use crate::port::Port;
+use crate::vmo::Vmo;
+
+/// `process_create`: `(job, image_vmo, name_ptr, name_len)` → process handle.
+pub use xaqu_native_abi::nr::PROCESS_CREATE;
+
+/// `process_start`: `(process, bootstrap)`, the bootstrap a channel handle.
+/// It leaves the caller, becomes the new process's first handle, and its value
+/// arrives in the first argument register at `_start`, zero meaning none.
+pub use xaqu_native_abi::nr::PROCESS_START;
+
+object_handle!(
+    /// A process, made by [`create_process`] and not necessarily started.
+    Process
+);
+
+/// `process_create`: a process in `job`, from the ELF image in `elf`, named
+/// `name`. Not started.
+///
+/// # Errors
+///
+/// [`Error::Unsupported`] on a kernel without the call;
+/// [`Error::AccessDenied`] without `MANAGE` on `job`, or when the caller's
+/// own job is sealed and `job` is outside its tree (`types::JOB_SEALED`).
+pub fn create_process<S: Syscall>(
+    job: &Job<S>,
+    elf: &Vmo<S>,
+    name: &str,
+) -> Result<Process<S>, Error> {
+    let value = Call::new(PROCESS_CREATE)
+        .value(register(job.handle()))
+        .value(register(elf.handle()))
+        .input(name.as_bytes())
+        .value(name.len())
+        .make(job.syscall());
+    let handle = decode_handle(value)?;
+    Ok(Process::from_owned(OwnedHandle::from_raw(
+        job.syscall(),
+        handle,
+    )))
+}
+
+/// What [`Process::images`] answered.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Images {
+    /// How many digests the record holds, whatever fitted the buffer.
+    pub count: usize,
+    /// Whether the space is unmeasured, so that the list is not the whole of
+    /// what it can run.
+    pub unmeasured: bool,
+}
+
+/// `process_make`: a process in `job` with an empty address space, named
+/// `name`. Not started. What it runs is the creator's to map, by
+/// [`Process::space`](crate::space); the loader library
+/// `xaqu-process-builder` does all of it.
+///
+/// # Errors
+///
+/// As [`create_process`], less the image's.
+pub fn make_process<S: Syscall>(job: &Job<S>, name: &str) -> Result<Process<S>, Error> {
+    let value = Call::new(nr::PROCESS_MAKE)
+        .value(register(job.handle()))
+        .input(name.as_bytes())
+        .value(name.len())
+        .make(job.syscall());
+    let handle = decode_handle(value)?;
+    Ok(Process::from_owned(OwnedHandle::from_raw(
+        job.syscall(),
+        handle,
+    )))
+}
+
+impl<S: Syscall> Process<S> {
+    /// `process_run`: run the process at `entry` on `stack`, giving it
+    /// `bootstrap`. The handle leaves this process only if the call succeeds,
+    /// so a failure gives it back.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::InvalidArgs`] for an entry or a stack outside user space, with
+    /// `bootstrap`; [`Error::BadState`] once started.
+    pub fn run(
+        &self,
+        entry: usize,
+        stack: usize,
+        bootstrap: OwnedHandle<S>,
+    ) -> Result<(), (Error, OwnedHandle<S>)> {
+        let value = Call::new(nr::PROCESS_RUN)
+            .value(register(self.handle()))
+            .value(entry)
+            .value(stack)
+            .value(register(bootstrap.raw()))
+            .make(self.syscall());
+        match decode_unit(value) {
+            Ok(()) => {
+                let _ = bootstrap.into_raw();
+                Ok(())
+            }
+            Err(error) => Err((error, bootstrap)),
+        }
+    }
+}
+
+impl<S: Syscall> Process<S> {
+    /// `process_images`: the kernel's record of what it was given to run
+    /// (`docs/microkernel/K14.md` §4).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::AccessDenied`] without `MANAGE`; [`Error::WrongType`].
+    pub fn images(&self, out: &mut [[u8; 32]]) -> Result<Images, Error> {
+        let capacity = out.len();
+        let value = Call::new(nr::PROCESS_IMAGES)
+            .value(register(self.handle()))
+            .output(out.as_flattened_mut())
+            .value(capacity)
+            .make(self.syscall());
+        let answer: usize = decode(value)?;
+        Ok(Images {
+            count: answer & !types::IMAGES_UNMEASURED,
+            unmeasured: answer & types::IMAGES_UNMEASURED != 0,
+        })
+    }
+
+    /// `process_start`: run the process, giving it `bootstrap`.
+    ///
+    /// The handle leaves this process only if the call succeeds, so a failure
+    /// gives it back.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unsupported`] on a kernel without the call, with `bootstrap`.
+    pub fn start(&self, bootstrap: OwnedHandle<S>) -> Result<(), (Error, OwnedHandle<S>)> {
+        let value = Call::new(PROCESS_START)
+            .value(register(self.handle()))
+            .value(register(bootstrap.raw()))
+            .make(self.syscall());
+        match decode_unit(value) {
+            Ok(()) => {
+                let _ = bootstrap.into_raw();
+                Ok(())
+            }
+            Err(error) => Err((error, bootstrap)),
+        }
+    }
+
+    /// `process_status`: whether the process has ended, and how: its exit
+    /// code or the signal that killed it.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::AccessDenied`] without `WAIT`; [`Error::WrongType`].
+    pub fn status(&self) -> Result<ProcessStatus, Error> {
+        let mut out = [0_u8; 8];
+        let value = Call::new(nr::PROCESS_STATUS)
+            .value(register(self.handle()))
+            .output(&mut out)
+            .make(self.syscall());
+        decode_unit(value)?;
+        let [s0, s1, s2, s3, v0, v1, v2, v3] = out;
+        Ok(ProcessStatus {
+            state: u32::from_ne_bytes([s0, s1, s2, s3]),
+            value: u32::from_ne_bytes([v0, v1, v2, v3]),
+        })
+    }
+
+    /// Queue a packet carrying `key` on `port` when the process ends.
+    ///
+    /// No call of its own: `object_wait_async` for `TERMINATED`. The packet is
+    /// a `PACKET_SIGNAL` whose signals include `TERMINATED`, and it arrives
+    /// after the process's handles and descriptors are closed, or at once if
+    /// the process has already ended.
+    ///
+    /// # Errors
+    ///
+    /// As [`Object::wait_async`].
+    pub fn notify_on_exit(&self, port: &Port<S>, key: u64) -> Result<(), Error> {
+        self.wait_async(port, Signals::TERMINATED, key)
+    }
+}
+
+/// `devmgr_start`: ask the kernel to start `devmgr` in `job`, with the
+/// starter the kernel gave pid 1 (`docs/INIT.md` §7.3, L12). The kernel
+/// loads it and hands it its devices itself; what comes back is a handle to
+/// the process, to wait on and read how it ended.
+///
+/// # Errors
+///
+/// [`Error::AlreadyBound`] while a `devmgr` it started lives,
+/// [`Error::BadState`] after one ended and before its drivers have,
+/// [`Error::AccessDenied`] or [`Error::WrongType`] for a handle that is not
+/// the starter or a job it may manage.
+pub fn start_devmgr<S: Syscall>(
+    starter: &OwnedHandle<S>,
+    job: &Job<S>,
+) -> Result<Process<S>, Error> {
+    let value = Call::new(nr::DEVMGR_START)
+        .value(register(starter.raw()))
+        .value(register(job.handle()))
+        .make(job.syscall());
+    let handle = decode_handle(value)?;
+    Ok(Process::from_owned(OwnedHandle::from_raw(
+        job.syscall(),
+        handle,
+    )))
+}
+
+/// `cpu_service`: take processor `cpu` out of service, or with
+/// `in_service` bring it back, through the processor service token
+/// (`docs/CORE-QUARANTINE.md` §4).
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `MANAGE`, [`Error::WrongType`] for a
+/// handle that is not the token or where no processor goes out of service,
+/// [`Error::InvalidArgs`] for a processor past the count,
+/// [`Error::BadState`] for one that may not go, [`Error::TimedOut`] for one
+/// that did not answer.
+pub fn cpu_service<S: Syscall>(
+    sys: S,
+    token: &OwnedHandle<S>,
+    cpu: usize,
+    in_service: bool,
+) -> Result<(), Error> {
+    decode_unit(
+        Call::new(nr::CPU_SERVICE)
+            .value(register(token.raw()))
+            .value(cpu)
+            .value(usize::from(in_service))
+            .make(sys),
+    )
+}
+
+/// A disarmed timer on `clock`, with `Rights::TIMER`'s rights
+/// (`docs/microkernel/K10.md`).
+///
+/// # Errors
+///
+/// [`Error::InvalidArgs`] for another clock, [`Error::NoMemory`] at a limit.
+pub fn timer_create<S: Syscall>(sys: S, clock: u64) -> Result<Handle, Error> {
+    decode_handle(
+        Call::new(nr::TIMER_CREATE)
+            .value(usize::try_from(clock).map_err(|_| Error::InvalidArgs)?)
+            .value(0)
+            .make(sys),
+    )
+}
+
+/// Arm `timer` once at `spec`, from now with `relative`.
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `WRITE`.
+pub fn timer_set<S: Syscall>(
+    sys: S,
+    timer: &OwnedHandle<S>,
+    spec: types::TimerSpec,
+    relative: bool,
+) -> Result<(), Error> {
+    let bytes = spec.to_bytes();
+    decode_unit(
+        Call::new(nr::TIMER_SET)
+            .value(register(timer.raw()))
+            .input(&bytes)
+            .value(if relative {
+                usize::try_from(types::TIMER_RELATIVE).map_err(|_| Error::InvalidArgs)?
+            } else {
+                0
+            })
+            .make(sys),
+    )
+}
+
+/// Disarm `timer`.
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `WRITE`.
+pub fn timer_cancel<S: Syscall>(sys: S, timer: &OwnedHandle<S>) -> Result<(), Error> {
+    decode_unit(
+        Call::new(nr::TIMER_CANCEL)
+            .value(register(timer.raw()))
+            .make(sys),
+    )
+}
+
+/// A pager serving requests on `port`, waited for at most `wait_ns`
+/// (`docs/microkernel/K3.md`).
+///
+/// # Errors
+///
+/// [`Error::InvalidArgs`] for a bound outside 1 ms to 30 s.
+pub fn pager_create<S: Syscall>(
+    sys: S,
+    port: &OwnedHandle<S>,
+    options: usize,
+    wait_ns: &[u8; 8],
+) -> Result<Handle, Error> {
+    decode_handle(
+        Call::new(nr::PAGER_CREATE)
+            .value(register(port.raw()))
+            .input(wait_ns)
+            .value(options)
+            .make(sys),
+    )
+}
+
+/// A VMO of the pager's, from a `PagerVmoSpec`'s bytes.
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `PAGER`.
+pub fn pager_create_vmo<S: Syscall>(
+    sys: S,
+    pager: &OwnedHandle<S>,
+    spec: &[u8],
+) -> Result<Handle, Error> {
+    decode_handle(
+        Call::new(nr::PAGER_CREATE_VMO)
+            .value(register(pager.raw()))
+            .input(spec)
+            .make(sys),
+    )
+}
+
+/// Move `aux`'s committed pages into `vmo`, from a `PagerSupplySpec`'s bytes.
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `PAGER` on the pager or the rights on `aux`.
+pub fn pager_supply<S: Syscall>(
+    sys: S,
+    pager: &OwnedHandle<S>,
+    vmo: &OwnedHandle<S>,
+    aux: &OwnedHandle<S>,
+    spec: &[u8],
+) -> Result<(), Error> {
+    decode_unit(
+        Call::new(nr::PAGER_SUPPLY)
+            .value(register(pager.raw()))
+            .value(register(vmo.raw()))
+            .value(register(aux.raw()))
+            .input(spec)
+            .make(sys),
+    )
+}
+
+/// One `PAGER_OP_*` on a range of `vmo`, from a `PagerOpSpec`'s bytes.
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `PAGER`.
+pub fn pager_op<S: Syscall>(
+    sys: S,
+    pager: &OwnedHandle<S>,
+    vmo: &OwnedHandle<S>,
+    op: usize,
+    spec: &[u8],
+) -> Result<(), Error> {
+    decode_unit(
+        Call::new(nr::PAGER_OP)
+            .value(register(pager.raw()))
+            .value(register(vmo.raw()))
+            .value(op)
+            .input(spec)
+            .make(sys),
+    )
+}
+
+/// The dirty runs of a `PagerRange` of `vmo` into `runs`; how many.
+///
+/// # Errors
+///
+/// [`Error::BufferTooSmall`] with the first ones written when more remain.
+pub fn pager_query_dirty<S: Syscall>(
+    sys: S,
+    pager: &OwnedHandle<S>,
+    vmo: &OwnedHandle<S>,
+    range: &[u8],
+    runs: &mut [u8],
+    capacity: usize,
+) -> Result<usize, Error> {
+    decode(
+        Call::new(nr::PAGER_QUERY_DIRTY)
+            .value(register(pager.raw()))
+            .value(register(vmo.raw()))
+            .input(range)
+            .output(runs)
+            .value(capacity)
+            .make(sys),
+    )
+}
+
+/// What one [`memory_scrub`] batch did (`docs/RAM-SCRUBBER.md` §4).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ScrubBatch {
+    /// Frames tested.
+    pub tested: u64,
+    /// Frames that failed once and passed the retest.
+    pub suspects: u64,
+    /// Frames found bad.
+    pub bad: u64,
+    /// Bad frames retired.
+    pub retired: u64,
+    /// Bad frames held out, the retired set full.
+    pub held: u64,
+    /// Sweeps of all memory completed.
+    pub sweeps: u64,
+    /// Whether the batch stopped early.
+    pub stopped: bool,
+}
+
+/// `memory_scrub`: test up to `budget` free frames through the memory
+/// scrub token.
+///
+/// # Errors
+///
+/// [`Error::InvalidArgs`] for a budget of 0 or past 64,
+/// [`Error::AccessDenied`] without `MANAGE`, [`Error::WrongType`] for
+/// another object or where the scrubber stands down,
+/// [`Error::ShouldWait`] while another batch runs.
+pub fn memory_scrub<S: Syscall>(
+    sys: S,
+    token: &OwnedHandle<S>,
+    budget: usize,
+) -> Result<ScrubBatch, Error> {
+    let mut answer = [0_u8; types::MEMORY_SCRUB_ANSWER_WORDS * 8];
+    decode_unit(
+        Call::new(nr::MEMORY_SCRUB)
+            .value(register(token.raw()))
+            .value(budget)
+            .output(&mut answer)
+            .make(sys),
+    )?;
+    let word = |at: usize| {
+        answer
+            .get(at * 8..at * 8 + 8)
+            .and_then(|bytes| <[u8; 8]>::try_from(bytes).ok())
+            .map_or(0, u64::from_ne_bytes)
+    };
+    Ok(ScrubBatch {
+        tested: word(0),
+        suspects: word(1),
+        bad: word(2),
+        retired: word(3),
+        held: word(4),
+        sweeps: word(5),
+        stopped: word(6) != 0,
+    })
+}
+
+/// What one [`audit_read`] answered.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AuditRead {
+    /// Records copied to the front of the buffer, 64 bytes each.
+    pub copied: usize,
+    /// The number to read from next.
+    pub next: u64,
+    /// Records between the number asked for and the first copied that the
+    /// ring no longer held.
+    pub lost: u64,
+    /// The boot's audit id.
+    pub id: u128,
+}
+
+/// `audit_read`: copy records of the audit ring `which`
+/// (`types::AUDIT_HIGH`, `AUDIT_REFUSALS`, `AUDIT_BOOT`) numbered `from` or
+/// later into `buffer`, as many whole 64-byte records as fit, at most
+/// `nr::AUDIT_READ_MAX` (`docs/certification/AUDIT.md` §4).
+///
+/// # Errors
+///
+/// [`Error::AccessDenied`] without `READ`, [`Error::WrongType`] for a
+/// handle that is not the audit record's, [`Error::InvalidArgs`] for a
+/// `which` that names no ring.
+pub fn audit_read<S: Syscall>(
+    sys: S,
+    audit: &OwnedHandle<S>,
+    which: u64,
+    from: u64,
+    buffer: &mut [u8],
+) -> Result<AuditRead, Error> {
+    let count = (buffer.len() / 64).min(nr::AUDIT_READ_MAX as usize);
+    let mut answer = [0_u8; types::AUDIT_ANSWER_WORDS * 8];
+    if let Some(slot) = answer.get_mut(8..16) {
+        slot.copy_from_slice(&from.to_ne_bytes());
+    }
+    decode_unit(
+        Call::new(nr::AUDIT_READ)
+            .value(register(audit.raw()))
+            .value(which as usize)
+            .output(buffer)
+            .value(count)
+            .output(&mut answer)
+            .make(sys),
+    )?;
+    let word = |at: usize| {
+        answer
+            .get(at * 8..at * 8 + 8)
+            .and_then(|bytes| <[u8; 8]>::try_from(bytes).ok())
+            .map_or(0, u64::from_ne_bytes)
+    };
+    Ok(AuditRead {
+        copied: usize::try_from(word(0)).unwrap_or(0),
+        next: word(1),
+        lost: word(2),
+        id: u128::from(word(3)) | (u128::from(word(4)) << 64),
+    })
+}
+
+/// `process_give`: move `bootstrap` into the bootstrap slot of the caller's
+/// child `pid`, which has not yet completed an `execve`. The handle leaves
+/// this process only if the call succeeds.
+///
+/// # Errors
+///
+/// [`Error::NoProcess`], [`Error::NotChild`], [`Error::AlreadyBound`] for a
+/// child given one before, [`Error::BadState`] for one past its `execve` or
+/// ended, [`Error::AccessDenied`] without `TRANSFER`; with `bootstrap`.
+pub fn give_bootstrap<S: Syscall>(
+    sys: S,
+    pid: u32,
+    bootstrap: OwnedHandle<S>,
+) -> Result<(), (Error, OwnedHandle<S>)> {
+    let value = Call::new(nr::PROCESS_GIVE)
+        .value(pid as usize)
+        .value(register(bootstrap.raw()))
+        .make(sys);
+    match decode_unit(value) {
+        Ok(()) => {
+            let _ = bootstrap.into_raw();
+            Ok(())
+        }
+        Err(error) => Err((error, bootstrap)),
+    }
+}
+
+/// `process_bootstrap`: this process's bootstrap handle, the first time;
+/// `None` after that, or when it was given none.
+///
+/// # Errors
+///
+/// [`Error::NoHandles`] with a full table, and the handle is kept for a later
+/// call.
+pub fn take_bootstrap<S: Syscall>(sys: S) -> Result<Option<OwnedHandle<S>>, Error> {
+    let value = decode(Call::new(nr::PROCESS_BOOTSTRAP).make(sys))?;
+    match u32::try_from(value) {
+        Ok(0) => Ok(None),
+        Ok(raw) => Ok(Some(OwnedHandle::from_raw(sys, Handle(raw)))),
+        Err(_) => Err(Error::Unexpected(value)),
+    }
+}
+
+/// `vmo_map`'s protection bit for a readable mapping.
+///
+/// Owned by stage 9 (xaqu-4b), who adds it to `src/lib/proto/native-abi`'s `types`
+/// with the handler; copied here until then.
+pub const MAP_READ: u32 = 1;
+
+/// `vmo_map`'s protection bit for a writable mapping, only ever with
+/// [`MAP_READ`].
+///
+/// Owned by stage 9 (xaqu-4b), as [`MAP_READ`].
+pub const MAP_WRITE: u32 = 2;
+
+/// What a mapping of a VMO may do.
+///
+/// The only two the handler accepts, so no other can be asked for: every
+/// mapping is readable, none is executable, and a writable one needs `WRITE`
+/// on the handle as well as `READ` and `MAP`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Protection {
+    /// `MAP_READ`.
+    Read,
+    /// `MAP_READ | MAP_WRITE`.
+    ReadWrite,
+}
+
+impl Protection {
+    /// The register value.
+    #[must_use]
+    pub const fn register(self) -> usize {
+        match self {
+            Protection::Read => MAP_READ as usize,
+            Protection::ReadWrite => (MAP_READ | MAP_WRITE) as usize,
+        }
+    }
+}
+
+impl<S: Syscall> Vmo<S> {
+    /// `vmo_map` (0x1024): map `length` bytes of the VMO from `offset`, both
+    /// whole pages, at `at` or wherever the kernel finds room, and return the
+    /// address.
+    ///
+    /// The mapping is always shared, outlives the handle, and refuses Linux's
+    /// `mremap` and `mprotect`. Safe at a fixed address because the handler
+    /// refuses a range overlapping any mapping: it can add memory to this
+    /// process, never replace memory it has.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::WrongType`] for a handle that is not a VMO;
+    /// [`Error::AccessDenied`] without `MAP` and `READ`, or `WRITE` for
+    /// [`Protection::ReadWrite`]; [`Error::InvalidArgs`] for a length or
+    /// offset that is not whole pages, a range past the VMO's end, or an
+    /// address overlapping a mapping; [`Error::NoMemory`] with no address
+    /// space left; [`Error::Unsupported`] until the handler lands.
+    pub fn map(
+        &self,
+        at: Option<usize>,
+        length: usize,
+        protection: Protection,
+        offset: u64,
+    ) -> Result<usize, Error> {
+        let offset = offset.to_ne_bytes();
+        let value = Call::new(nr::VMO_MAP)
+            .value(register(self.handle()))
+            .value(at.unwrap_or(0))
+            .value(length)
+            .value(protection.register())
+            .input(&offset)
+            .make(self.syscall());
+        decode(value)
+    }
+}
+
+/// `pager_keep`, by handle value: the pager's one keeper (K13). The server asks,
+/// and passes it to its supervisor, which takes the pager up after a restart.
+///
+/// # Errors
+///
+/// [`Error::AlreadyBound`] for a second; [`Error::AccessDenied`] without `PAGER`.
+pub fn pager_keep<S: Syscall>(sys: S, pager: Handle) -> Result<OwnedHandle<S>, Error> {
+    let value = Call::new(nr::PAGER_KEEP).value(register(pager)).make(sys);
+    Ok(OwnedHandle::from_raw(sys, decode_handle(value)?))
+}
+
+/// `pager_take_up`: a parked pager's handle again, its requests sent to `port`.
+///
+/// # Errors
+///
+/// [`Error::BadState`] unless parked; [`Error::NoMemory`], still parked.
+pub fn pager_take_up<S: Syscall>(
+    keeper: &OwnedHandle<S>,
+    port: &Port<S>,
+) -> Result<OwnedHandle<S>, Error> {
+    let sys = port.syscall();
+    let value = Call::new(nr::PAGER_TAKE_UP)
+        .value(register(keeper.raw()))
+        .value(register(port.handle()))
+        .make(sys);
+    Ok(OwnedHandle::from_raw(sys, decode_handle(value)?))
+}

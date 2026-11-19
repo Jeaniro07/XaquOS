@@ -1,0 +1,14 @@
+[package]
+name = "xaqu-hda"
+description = "An Intel HD Audio driver, as logic over the register block and the codec it is handed"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license.workspace = true
+publish = false
+
+[dependencies]
+xaqu-native-abi = { workspace = true }
+
+[lints]
+workspace = true

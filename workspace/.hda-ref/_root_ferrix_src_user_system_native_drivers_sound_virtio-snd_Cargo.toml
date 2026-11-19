@@ -1,0 +1,25 @@
+[package]
+name = "xaqu-snd"
+description = "The virtio-snd driver process: the sound control channel's driver end over a virtio-snd PCI device, on xaqu-rt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "snd"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-blkring.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-rt.workspace = true
+xaqu-sndctl.workspace = true
+xaqu-virtio.workspace = true
+xaqu-virtio-snd.workspace = true
+
+[lints]
+workspace = true

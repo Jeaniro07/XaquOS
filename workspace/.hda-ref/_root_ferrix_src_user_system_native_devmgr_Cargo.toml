@@ -1,0 +1,30 @@
+[package]
+name = "xaqu-devmgr"
+description = "devmgr: matches the devices the kernel hands it to the drivers it was given, starts each in a job of its own, and quiesces a device whose driver died"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "devmgr"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+xaqu-blkring.workspace = true
+xaqu-devmgr-proto.workspace = true
+xaqu-devmgr-events-proto.workspace = true
+xaqu-drvupdate-proto.workspace = true
+xaqu-fdt.workspace = true
+xaqu-native-abi.workspace = true
+xaqu-process-builder.workspace = true
+xaqu-netring.workspace = true
+xaqu-restart.workspace = true
+xaqu-rt.workspace = true
+xaqu-usbif.workspace = true
+
+[lints]
+workspace = true
