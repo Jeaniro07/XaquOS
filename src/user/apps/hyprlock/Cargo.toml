@@ -1,0 +1,52 @@
+[package]
+name = "compositor-hyprlock"
+description = "hyprlock for Xaqu: the user's hyprlock.conf, drawn on ext-session-lock-v1 surfaces"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+# An app (Xaqu's docs/APPS.md): a workspace of its own, a static Linux
+# program built with std against the target's own musl. It builds inside a
+# Xaqu checkout, where the compositor's libraries and authd's client are.
+[workspace]
+
+[[bin]]
+name = "hyprlock"
+path = "src/main.rs"
+
+[lib]
+name = "compositor_hyprlock"
+path = "src/lib.rs"
+
+[dependencies]
+compositor-anim = { path = "../../system/linux/compositor/anim" }
+compositor-config = { path = "../../system/linux/compositor/config" }
+compositor-hyprlang = { path = "../../system/linux/compositor/hyprlang" }
+compositor-image = { path = "../../system/linux/compositor/image" }
+compositor-text = { path = "../../system/linux/compositor/text" }
+compositor-toolkit = { path = "../../system/linux/compositor/toolkit" }
+# authd's client and its records (docs/AUTH.md §3.3): the password goes to
+# authd over /run/xaqu/auth, and hyprlock never sees a credential.
+xaqu-auth-client = { path = "../../system/linux/auth/client" }
+xaqu-auth-proto = { path = "../../../lib/proto/auth-proto" }
+# Declarations only: getuid(2).
+libc = "0.2.189"
+# The rasteriser the widgets are drawn with, at the version the workspace
+# pins (Xaqu's src/user/system/linux/compositor/render/Cargo.toml says why exactly); no new crates.
+tiny-skia = { version = "=0.12.0", default-features = false, features = ["std", "simd"] }
+
+[dev-dependencies]
+# The expected images' format and the compositor's own compositing, which is
+# what makes a lock surface the guest's screen.
+compositor-render = { path = "../../system/linux/compositor/render" }
+
+# As the compositor's: overflow checks on everywhere, and the tests built
+# optimised, since they wait on real time.
+[profile.dev]
+overflow-checks = true
+opt-level = 2
+
+[profile.release]
+overflow-checks = true

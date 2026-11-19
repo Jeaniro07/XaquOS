@@ -1,0 +1,80 @@
+# settings, an app (docs/APPS.md): Xaqu's Settings, after the customer's
+# design, drawn with tole. Its pages are Xaqu's docs/RUNTIME-SETTINGS.md
+# settings; game mode is docs/SETTINGS.md.
+
+[package]
+name = "settings"
+version = "0.1.0"
+description = "Settings: the desktop, the session and the system, page by page, after the customer's design"
+license = "MIT AND OFL-1.1"
+abi = "linux"
+arches = ["x86_64", "aarch64", "armv7a"]
+depends = []
+
+[[package.files]]
+from = "settings"
+to = "bin/settings"
+mode = "755"
+
+# Its entry in a launcher and its icon, kept in this folder: fuzzel lists
+# every `.desktop` file in `usr/share/applications`.
+[[package.files]]
+from = "share/settings.desktop"
+source = "folder"
+to = "usr/share/applications/settings.desktop"
+mode = "644"
+
+[[package.files]]
+from = "share/xaqu-settings.svg"
+source = "folder"
+to = "usr/share/icons/hicolor/scalable/apps/xaqu-settings.svg"
+mode = "644"
+
+# The design's faces, Figtree and JetBrains Mono, where Settings and the
+# fonts the desktop scans find them, and their licences, which a package
+# carrying them must reproduce.
+[[package.files]]
+from = "share/fonts"
+source = "folder"
+tree = true
+to = "usr/share/fonts/settings"
+
+[[package.files]]
+from = "LICENSE-figtree"
+source = "folder"
+to = "usr/share/licenses/settings/LICENSE-figtree"
+mode = "644"
+
+[[package.files]]
+from = "LICENSE-jetbrains-mono"
+source = "folder"
+to = "usr/share/licenses/settings/LICENSE-jetbrains-mono"
+mode = "644"
+
+# The design's six wallpapers, drawn from its gradients: where the
+# Wallpaper page offers them and hyprix's wallpaper client reads them.
+[[package.files]]
+from = "share/wallpapers"
+source = "folder"
+tree = true
+to = "usr/share/backgrounds/settings"
+
+[build]
+kind = "cargo"
+
+# In every image a person runs: a desktop has its settings.
+[image]
+default = true
+
+[check]
+host-tests = true
+
+[[smoke]]
+run = "settings --version"
+expect = "settings 0.1.0"
+
+# The list a launcher's is, read with no window: the image's own entry for
+# Settings is in it, and nothing is in game mode on a fresh system.
+[[smoke]]
+run = "settings --list"
+expect = "off settings.desktop Settings"

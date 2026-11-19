@@ -1,0 +1,39 @@
+# bridgeplay, an app (docs/APPS.md): the launcher for Steam and Windows
+# programs. It starts nothing it cannot find: with the Steam or Wine volume
+# missing it says so and leaves with a failure, it never crashes. It has no
+# launcher entry of its own: an image may not offer Steam it does not carry
+# (the live ISO refuses one), a developer's desktop with the Steam volume has
+# steam_window's, and a .exe is opened through xaqu-open, which runs
+# `bridgeplay run`.
+
+[package]
+name = "bridgeplay"
+version = "0.1.0"
+description = "Open Steam and Windows programs on Xaqu, through Wine"
+license = "MIT"
+abi = "linux"
+arches = ["x86_64"]
+depends = []
+
+[[package.files]]
+from = "bridgeplay"
+to = "bin/bridgeplay"
+mode = "755"
+
+[build]
+kind = "cargo"
+
+[image]
+default = true
+
+[check]
+host-tests = true
+
+[[smoke]]
+run = "bridgeplay --version"
+expect = "bridgeplay 0.1.0"
+
+# No Steam or Wine volume in the smoke image: a clear report, not a crash.
+[[smoke]]
+run = "bridgeplay doctor"
+expect = "bridgeplay doctor"

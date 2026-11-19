@@ -32,12 +32,10 @@ path = "docs/website"
 repo = "https://github.com/xaqu-os/xaqu-os.github.io"
 commit = "1d3f1b304d2235adf16292ed473415e2156f540b"
 
-# Every program a person starts: Xaqu's own and those ported onto
-# ferrousli, one folder an app (docs/APPS.md).
-[apps]
-path = "src/user/apps"
-repo = "https://github.com/xaqu-os/apps"
-commit = "3598f84784b224acdbf89bfd784c734635b11837"
+# Every program a person starts -- Xaqu's own and those ported onto
+# ferrousli, one folder an app (docs/APPS.md) -- is part of this tree
+# here, under `src/user/apps`, and not a component of its own: this
+# repository carries them so that one clone builds the whole system.
 
 # tole, the UI framework (docs/UI-FRAMEWORK.md), beside the compositor's
 # workspace, whose `text` and `toolkit` crates it reaches by path. The apps

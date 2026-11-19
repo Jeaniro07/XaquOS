@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Install Xaqu
+GenericName=System Installer
+Comment=Install Xaqu on this computer's disk
+Exec=/bin/xaqu-installer
+Icon=xaqu-installer
+Terminal=false
+Keywords=install;installer;setup;disk;partition;
+Categories=System;
+StartupWMClass=rocks.magical.installer

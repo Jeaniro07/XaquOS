@@ -1,0 +1,181 @@
+// Xaqu's Notices: the desktop's notifications as the shell shows them —
+// the glass banners at the top right, and the history behind the clock.
+// Rust holds the notices, the banners and the panel (`src/notices.rs`);
+// this draws them and says what was pressed.
+import Fx
+
+struct NoticeTile {
+    app: string
+    summary: string
+    body: string
+}
+
+export component Notices : Item {
+    id: notices
+    property list<NoticeTile> banners
+    property list<NoticeTile> tiles
+    property bool open
+    property string status
+    property real bannerH
+    property real tileH
+    property real panelY
+    property real panelH
+    property real panelW
+
+    signal bannered(int index)
+    signal picked(int index)
+    signal cleared()
+
+    // The live banners, at the top of the surface, at most three.
+    Column {
+        x: 0; y: 0
+        width: notices.width
+        spacing: 8
+        Repeater {
+            model: notices.banners
+            Item {
+                width: notices.width
+                height: notices.bannerH + 8
+                Rectangle {
+                    x: 8; y: 0
+                    width: notices.width - 16
+                    height: notices.bannerH
+                    radius: 12
+                    color: alpha(Nocturne.surface, 0.93)
+                    border.width: 1
+                    border.color: alpha(Nocturne.text, 0.12)
+                    Text {
+                        x: 14; y: 9
+                        width: notices.width - 44
+                        text: modelData.app
+                        elide: Text.ElideRight
+                        font: Nocturne.sans(10, 500)
+                        color: Nocturne.n500
+                    }
+                    Text {
+                        x: 14; y: 26
+                        width: notices.width - 44
+                        text: modelData.summary
+                        elide: Text.ElideRight
+                        font: Nocturne.sans(13, 600)
+                        color: Nocturne.text
+                    }
+                    Text {
+                        x: 14; y: 44
+                        width: notices.width - 44
+                        text: modelData.body
+                        elide: Text.ElideRight
+                        font: Nocturne.sans(11, 400)
+                        color: Nocturne.n500
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: notices.bannered(index)
+                    }
+                }
+            }
+        }
+    }
+
+    // The history, behind the clock.
+    Rectangle {
+        visible: notices.open
+        x: 8; y: notices.panelY
+        width: notices.panelW
+        height: notices.panelH
+        radius: 14
+        color: alpha(Nocturne.surface, 0.94)
+        border.width: 1
+        border.color: alpha(Nocturne.text, 0.14)
+        Text {
+            x: 18; y: 14
+            text: "Notifications"
+            font: Nocturne.sans(13, 600)
+            color: Nocturne.text
+        }
+
+        // The Clear button, at the head's right.
+        Rectangle {
+            x: notices.panelW - 84; y: 10
+            width: 64; height: 26
+            radius: 8
+            color: clearArea.containsMouse ? Nocturne.n900 : "transparent"
+            border.width: 1
+            border.color: Nocturne.n700
+            Text {
+                anchors.centerIn: parent
+                text: "Clear"
+                font: Nocturne.sans(12, 500)
+                color: Nocturne.n300
+            }
+            MouseArea {
+                id: clearArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: notices.cleared()
+            }
+        }
+
+        // Notifyd is not there.
+        Text {
+            visible: notices.status != ""
+            x: 18; y: 52
+            width: notices.panelW - 36
+            text: notices.status
+            font: Nocturne.sans(12, 400)
+            color: Nocturne.c400
+        }
+
+        // The tiles, newest first.
+        Column {
+            visible: notices.status == ""
+            x: 8; y: 44
+            width: notices.panelW - 16
+            Repeater {
+                model: notices.tiles
+                Item {
+                    width: notices.panelW - 16
+                    height: notices.tileH
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 10
+                        color: tileArea.containsMouse ? alpha(Nocturne.accent, 0.12) : "transparent"
+                    }
+                    Text {
+                        x: 10; y: 6
+                        width: notices.panelW - 110
+                        text: modelData.summary
+                        elide: Text.ElideRight
+                        font: Nocturne.sans(13, 600)
+                        color: Nocturne.text
+                    }
+                    Text {
+                        x: 10; y: 26
+                        width: notices.panelW - 110
+                        text: modelData.body
+                        elide: Text.ElideRight
+                        font: Nocturne.sans(11, 400)
+                        color: Nocturne.n500
+                    }
+                    Text {
+                        x: 0; y: 8
+                        width: notices.panelW - 26
+                        horizontalAlignment: Text.AlignRight
+                        text: modelData.app
+                        font: Nocturne.sans(10, 500)
+                        color: Nocturne.n500
+                    }
+                    MouseArea {
+                        id: tileArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: notices.picked(index)
+                    }
+                }
+            }
+        }
+    }
+}

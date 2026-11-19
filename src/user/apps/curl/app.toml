@@ -1,0 +1,46 @@
+# curl, an app (docs/APPS.md): a C program ported onto ferrousli with
+# Mbed TLS, built by its build.sh on a Linux host (WSL's on Windows). With it
+# the CA certificates it verifies servers with, and Mbed TLS's test server,
+# its certificate, key and CA, which test-net's TLS checks talk to.
+
+[package]
+name = "curl"
+version = "8.22.0"
+description = "curl, the URL transfer tool, static against ferrousli with Mbed TLS"
+license = "curl AND (Apache-2.0 OR GPL-2.0-or-later) AND MPL-2.0"
+abi = "linux"
+arches = ["x86_64", "aarch64", "armv7a"]
+depends = []
+
+[[package.files]]
+from = "bin/curl"
+to = "bin/curl"
+mode = "755"
+
+[[package.files]]
+from = "etc/ssl/certs/ca-certificates.crt"
+to = "etc/ssl/certs/ca-certificates.crt"
+mode = "644"
+
+[[package.files]]
+from = "usr/libexec/xaqu/ssl_server2"
+to = "usr/libexec/xaqu/ssl_server2"
+mode = "755"
+
+[[package.files]]
+from = "usr/share/xaqu/tls-test"
+tree = true
+to = "usr/share/xaqu/tls-test"
+
+[build]
+kind = "script"
+
+[image]
+default = true
+
+[check]
+host-tests = false
+
+[[smoke]]
+run = "curl --version"
+expect = "curl 8.22.0 "

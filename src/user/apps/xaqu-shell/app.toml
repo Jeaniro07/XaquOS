@@ -1,0 +1,45 @@
+# xaqu-shell, an app (docs/APPS.md): Xaqu's dock, after the customer's
+# design (docs/DESKTOP.md §6). Every desktop drawn in Xaqu carries it
+# whether or not the app is installed (xtask's compositor), as waybar is,
+# so it is not in an image by default.
+
+[package]
+name = "xaqu-shell"
+version = "0.1.0"
+description = "Xaqu's shell: the dock, after the customer's Xaqu WM design, as layer-shell surfaces drawn with tole"
+license = "MIT"
+abi = "linux"
+arches = ["x86_64", "aarch64", "armv7a"]
+depends = []
+
+[[package.files]]
+from = "xaqu-shell"
+to = "bin/xaqu-shell"
+mode = "755"
+
+# Phosphor's icons as a font (MIT, Phosphor Icons 2.1.1), where the shell
+# and the fonts the desktop scans find them, with its licence.
+[[package.files]]
+from = "share/fonts"
+source = "folder"
+tree = true
+to = "usr/share/fonts/xaqu-shell"
+
+[[package.files]]
+from = "LICENSE-phosphor"
+source = "folder"
+to = "usr/share/licenses/xaqu-shell/LICENSE-phosphor"
+mode = "644"
+
+[build]
+kind = "cargo"
+
+[image]
+default = false
+
+[check]
+host-tests = true
+
+[[smoke]]
+run = "xaqu-shell --version"
+expect = "xaqu-shell 0.1.0"

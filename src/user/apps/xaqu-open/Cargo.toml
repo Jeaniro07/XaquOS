@@ -1,0 +1,33 @@
+[package]
+name = "xaqu-open"
+description = "xaqu-open: opens a file in the world that owns it, by the runtime that world is run by"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+# An app: a workspace of its own (docs/APPS.md), a static program against
+# the target's musl.
+[workspace]
+
+[lib]
+name = "xaqu_open"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xaqu-open"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+# The ELF reader, which says what a program asks for: a Linux program that
+# wants a loader this system has not got cannot be run.
+xaqu-elf = { path = "../../../lib/platform/elf" }
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+strip = true

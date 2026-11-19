@@ -1,0 +1,48 @@
+# ferrofetch
+
+![ferrofetch in the desktop's terminal](screenshot.png)
+
+*ferrofetch in the desktop's terminal, with the FX mark. On Xaqu (x86-64 under KVM) at main 2e44fda9d, 2026-10-04; nothing edited after capture.*
+
+Xaqu's fastfetch: the Xaqu mark beside a few lines about the machine,
+the shell and the session.
+
+```
+#####################/  /######/   root@xaqu
+###################/  /######/     -----------
+#####               /######/       OS: Xaqu 0.1.0 x86_64
+#####             /######/         Kernel: Xaqu 6.1.0-xaqu
+################\ \####/           Uptime: 8 secs
+##################\ \/             Processes: 6
+#####       \#######\              Shell: zinc
+#####      /\ \#######\            Terminal: console
+#####    /###\  \#######\          CPU: x86_64 (4)
+#####  /######/   \#######\        Memory: 50 MiB / 471 MiB (10%)
+#####  #####/       \#######\      Load: 0.08 0.02 0.01
+#####  ###/           \#######\
+```
+
+`ferrofetch --no-logo` prints the lines alone, `--no-color` without the
+terminal's colour escapes.
+
+An app (`docs/APPS.md`): everything it is lives in this folder, and xtask
+finds it by its `app.toml`.
+
+* `src/lib.rs`, `parse.rs`, `render.rs`, `logo.rs` -- the lib target: the
+  parsers of what the kernel's `/proc` and `/sys` say, and the layout. It
+  builds on the host, where `cargo test --lib` tests it.
+* `src/main.rs`, `sys.rs` -- the program: native, on the runtime, built for
+  the kernel's targets. It reads `uname`, `/proc` and `/sys/class/drm`
+  through the Linux calls every process has, and writes to the shell's
+  descriptors.
+
+The shell is the parent process and the terminal the first ancestor past it
+that is not a login step, as fastfetch finds them: Xaqu's `/proc` has no
+`environ`, and `$SHELL` names the login shell rather than the running one.
+
+```
+cargo xtask apps                      # is it found, does its manifest read
+cargo xtask check                     # its fmt, clippy (host and targets) and tests
+cargo xtask test-apps --arch x86_64   # a boot that runs its [[smoke]] lines
+cargo xtask run                       # an image with it at /bin/ferrofetch
+```

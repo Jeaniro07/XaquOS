@@ -1,0 +1,71 @@
+# xaqu-shell
+
+Xaqu's shell: the dock of the customer's "Xaqu WM" design (Xaqu's
+[docs/DESKTOP.md](https://github.com/xaqu-os/xaqu/blob/develop/docs/DESKTOP.md)
+§6), a layer-shell surface floating above the foot of the screen, drawn
+with tole in the Nocturne design system's tokens, Inter for words and
+Phosphor for icons. An app (Xaqu's
+[docs/APPS.md](https://github.com/xaqu-os/xaqu/blob/develop/docs/APPS.md)):
+`app.toml` says what it installs and how it is built; its licence is `MIT`, and the Phosphor icon font it carries
+(`share/fonts/Phosphor.ttf`, Phosphor 2.1.1) is MIT too (`LICENSE-phosphor`).
+
+![Xaqu on Xaqu: the theme's windows and the dock](screenshot.png)
+
+![The dock, drawn by `--render`](dock.png)
+
+## The dock and the menu bar
+
+- **Dock** - a bar of glass in the middle of the screen's foot. The launchers
+  (Terminal, Browser, Files, Settings) as tiles, a dot under each that has a
+  window on any desktop or minimized; the other programs with windows after
+  them; a line; the stash, where files can be dropped. A press brings the
+  window used last (a minimized one comes back) or starts the program.
+- **Menu bar** - a strip of glass across the top, on a thread of the same
+  program. At the left the FX menu (Settings, Wallpaper, Restart or Shut
+  Down), the focused program's (About, Hide, Quit) and Window (Minimize,
+  Full Screen, Move to Desktop 1-4, Close); at the right the search and the
+  clock. `--menubar` runs it alone; `--render-menubar FILE [--open N]` draws
+  it to a PNG.
+- **Wallpaper** - the switcher's first card, Default, is the theme's own
+  gradient; pictures (PNG, JPEG, SVG) and videos as before.
+- **Power** - the FX menu's Restart or Shut Down: `xaqu-shell --power`, a
+  card over the dimmed screen with Lock, Restart and Shut down (Lock not in
+  the live session, whose person has no password). Restart and Shut down ask once
+  more, then call `svc reboot` or `svc poweroff`, which the init allows the
+  person at the machine (Xaqu's docs/INIT.md §10.1); a refusal is shown in
+  the card. `--render-power FILE [--live] [--confirm]` draws it.
+
+An application with menus of its own (`xaqu_appmenu_v1`, tole's
+`Window::set_menu`) gets them in the bar between its name and Window while
+it is focused: the bar asks `hyprctl appmenu` when the focus moves or
+socket2 says `appmenu>>`, and a pick goes back as
+`hyprctl dispatch appmenu <address> <id>`. A checked item shows a check.
+
+The sidebars (`--sidebar left|right`) are no longer started by the theme;
+their contents move to Control Center and Notices (A4).
+
+It follows hyprix through Hyprland's IPC: `.socket2.sock`'s events, and
+`j/workspaces`, `j/activeworkspace` and `j/clients` after each one that
+moves something. Xaqu's theme starts it (`exec-once`) and blurs what is
+behind it (`layerrule = blur true, match:namespace ^(xaqu-.*)$`).
+
+`xaqu-shell --render FILE` draws the dock of a sample desktop into a PNG,
+as above; `cargo test` checks the model, the IPC's events and a drawn dock.
+
+## Spotlight, Launchpad and Notices
+
+- **Spotlight** - the search card over the desktop, on SUPER Space:
+  `xaqu-shell --spotlight`. The query is read as arithmetic first and then
+  matched against the installed applications, the open windows and the
+  names under `~` (at most 5000 of them, 300 ms, scanned when the card
+  opens). Enter runs the chosen row; a file opens with its default handler.
+  Started again while it is up, it closes.
+- **Launchpad** - the grid of every installed application over the whole
+  screen, on SUPER L: `xaqu-shell --launchpad`. Eight columns, paged, click
+  to run; it closes on another SUPER L or on a click off the grid.
+- **Notices** - the desktop's notifications as the shell shows them, on a
+  thread of the dock's program, with no argument of its own: the glass
+  banners at the top right (at most three, five seconds each) and the
+  history behind the clock, which the clock opens. notifyd serves the
+  history on `$XDG_RUNTIME_DIR/notifyd.sock`; while the shell is subscribed
+  it draws the banners and notifyd draws none of its own.
