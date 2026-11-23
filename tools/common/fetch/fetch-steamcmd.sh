@@ -22,9 +22,16 @@
 # fails here rather than running something unchecked; take the new file's
 # hash and change STEAMCMD_SHA256.
 #
+# Debian's archive chain is checked as apt checks it, from a pinned key
+# down: the key (the pins are the SHA-256 of the key file and the
+# fingerprints in it, not the download), the signed `InRelease`, the index
+# it lists, and then each package against that signed index. Valve's
+# tarball has no signature and no signed index to check against, so its
+# pinned SHA-256 is the only anchor there is.
+#
 # Writes $XAQU_STEAMCMD_VOLUME/steamcmd.img (default
 # ~/.local/share/xaqu/steamcmd/steamcmd.img). Needs curl, sha256sum,
-# dpkg-deb, tar, readelf and mkfs.btrfs; no root.
+# sha1sum, gpg, gpgv, dpkg-deb, tar, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-steamcmd.sh
 
@@ -44,9 +51,20 @@ CA_CERTIFICATES_SHA256=ef590f89563aa4b46c8260d49d1cea0fc1b181d19e8df3782694706ad
 STEAMCMD=https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
 STEAMCMD_SHA256=cebf0046bfd08cf45da6bc094ae47aa39ebf4155e5ede41373b579b8f1071e7c
 
-for tool in curl sha256sum dpkg-deb tar readelf mkfs.btrfs; do
+for tool in curl sha256sum sha1sum gpg gpgv dpkg-deb tar readelf mkfs.btrfs; do
     command -v "$tool" > /dev/null || { echo "fetch-steamcmd: $tool is not installed" >&2; exit 1; }
 done
+
+# Debian's archive key for trixie, from Debian's own key server: the pins
+# are the trust anchor, not the download.
+DEBIAN_KEY_URL=${DEBIAN_KEY_URL:-https://ftp-master.debian.org/keys/archive-key-13.asc}
+DEBIAN_KEY_SHA256=6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7
+DEBIAN_KEY_FINGERPRINTS="04B54C3CDCA79751B16BC6B5225629DF75B188BD B8E5F13176D2A7A75220028078DBA3BC47EF2265"
+# The snapshot archive's own signed index, for the packages the live one no
+# longer lists: the pins are of 2026-09-27, and the snapshot of that day
+# still names them.
+snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
+snapshot_time=20260927T235959Z
 
 # Download $1 to the pool as $2 unless it is there, and check it against $3.
 fetch() {
@@ -65,6 +83,36 @@ mkdir -p "$out/pool"
 tree="$out/tree"
 rm -rf "$tree"
 mkdir -p "$tree/steamcmd"
+
+# Debian's chain, checked before anything is fetched from it: the key, the
+# signed `InRelease`, and the index it lists. What the signed indexes say
+# about a package is checked against the hash pinned above: the live one,
+# and the snapshot archive's own signed index for the packages the live one
+# no longer lists.
+# shellcheck disable=SC2034
+APT_PREFIX=fetch-steamcmd
+. "$(dirname "$0")/lib-apt-verify.sh"
+debian_keyring=$(apt_verify_key "$DEBIAN_KEY_URL" "$DEBIAN_KEY_SHA256" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-steamcmd: Debian's key is not the one pinned" >&2; exit 1; }
+debian_index=$(apt_verify_index "$debian" trixie main i386 "$debian_keyring" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-steamcmd: Debian's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$debian_index" > "$out/apt/debian/map-i386"
+snapshot_index=$(apt_verify_index "$snapshot/debian/$snapshot_time" trixie main i386 \
+    "$debian_keyring" "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian/$snapshot_time") \
+    || { echo "fetch-steamcmd: the snapshot's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$snapshot_index" > "$out/apt/debian/$snapshot_time/map-i386"
+debian_maps=("$out/apt/debian/map-i386" "$out/apt/debian/$snapshot_time/map-i386")
+
+for entry in "$LIBC6 $LIBC6_SHA256" "$LIBGCC $LIBGCC_SHA256" \
+    "$CA_CERTIFICATES $CA_CERTIFICATES_SHA256"; do
+    read -r path sum <<< "$entry"
+    apt_check_package "pool/$path" "$sum" "${debian_maps[@]}" \
+        || { echo "fetch-steamcmd: $path is not the package the signed indexes name" >&2; exit 1; }
+done
+[ "$APT_SUPERSEDED" = 0 ] \
+    || echo "fetch-steamcmd: $APT_SUPERSEDED of the packages are in no signed index, so their pinned hashes are the only anchor" >&2
 
 dpkg-deb -x "$(fetch "$debian/pool/$LIBC6" "${LIBC6##*/}" "$LIBC6_SHA256")" "$tree"
 dpkg-deb -x "$(fetch "$debian/pool/$LIBGCC" "${LIBGCC##*/}" "$LIBGCC_SHA256")" "$tree"

@@ -34,9 +34,20 @@
 # Packages on 2026-09-28. When Valve replaces it, take the new file's name
 # and hash from https://repo.steampowered.com/steam/dists/stable/steam/binary-amd64/Packages.
 #
+# The repositories' own chains are checked as apt checks them, from a pinned
+# key down: Debian's archive key (the pin is the SHA-256 of the key file and
+# the fingerprints in it, not the download) and Valve's key (the one its
+# repository's page names), then the signed `InRelease` of each, then the
+# index it lists, and then each package against that signed index. A package
+# the index no longer lists -- a superseded version the pool may still hold
+# -- cannot be checked against it, and its pinned hash is then the only
+# anchor; the script says which those were. The hashes below are still
+# checked against the file that is downloaded, so a package both the pin and
+# the signed index name must have the hash they both give.
+#
 # Writes $XAQU_STEAM_VOLUME/steam.img (default
 # ~/.local/share/xaqu/steam-bootstrap/steam.img). Needs curl, sha256sum,
-# dpkg-deb, tar, xz, readelf and mkfs.btrfs; no root.
+# sha1sum, gpg, gpgv, dpkg-deb, tar, xz, readelf and mkfs.btrfs; no root.
 #
 # Usage: tools/common/fetch/fetch-steam.sh
 
@@ -81,7 +92,23 @@ DEBS=(
     pool/main/c/ca-certificates/ca-certificates_20250419_all.deb ef590f89563aa4b46c8260d49d1cea0fc1b181d19e8df3782694706adf05c184
 )
 
-for tool in curl sha256sum dpkg-deb tar xz readelf mkfs.btrfs; do
+# Debian's archive key for trixie, from Debian's own key server: the pins
+# are the trust anchor, not the download. Its two primary keys are the
+# archive's automatic and stable signing keys.
+DEBIAN_KEY_URL=${DEBIAN_KEY_URL:-https://ftp-master.debian.org/keys/archive-key-13.asc}
+DEBIAN_KEY_SHA256=6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7
+DEBIAN_KEY_FINGERPRINTS="04B54C3CDCA79751B16BC6B5225629DF75B188BD B8E5F13176D2A7A75220028078DBA3BC47EF2265"
+# Valve's own key, the one its repository's page names.
+VALVE_KEY_URL=${VALVE_KEY_URL:-https://repo.steampowered.com/steam/archive/stable/steam.gpg}
+VALVE_KEY_SHA256=98e9fc5b108bba854f03021a8ac38a5cbb01c32cb723c37433967c0d5d3db763
+VALVE_KEY_FINGERPRINTS="BA1816EF8E75005FCF5E27A1F24AEA9FB05498B7 DB23C56BF0F377FD02970A2A84706F31879D59CB"
+# The snapshot archive's own signed index, for the packages the live one no
+# longer lists: the pins are of 2026-09-28, and the snapshot of the day
+# before them still names them.
+snapshot=${DEBIAN_SNAPSHOT:-https://snapshot.debian.org/archive}
+snapshot_time=20260927T235959Z
+
+for tool in curl sha256sum sha1sum gpg gpgv dpkg-deb tar xz readelf mkfs.btrfs; do
     command -v "$tool" > /dev/null || { echo "fetch-steam: $tool is not installed" >&2; exit 1; }
 done
 
@@ -104,11 +131,59 @@ tree="$out/tree"
 rm -rf "$tree"
 mkdir -p "$tree/steam" "$tree/home"
 
+# The repositories' chains, checked before anything is fetched from them:
+# the key, the signed `InRelease`, and the index it lists. What the signed
+# indexes say about a package is checked against the hash pinned above: the
+# live ones, and the snapshot archive's own signed index for the packages
+# the live one no longer lists.
+# shellcheck disable=SC2034
+APT_PREFIX=fetch-steam
+. "$(dirname "$0")/lib-apt-verify.sh"
+debian_keyring=$(apt_verify_key "$DEBIAN_KEY_URL" "$DEBIAN_KEY_SHA256" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-steam: Debian's key is not the one pinned" >&2; exit 1; }
+debian_amd64=$(apt_verify_index "$debian" trixie main amd64 "$debian_keyring" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-steam: Debian's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$debian_amd64" > "$out/apt/debian/map-amd64"
+debian_i386=$(apt_verify_index "$debian" trixie main i386 "$debian_keyring" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-steam: Debian's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$debian_i386" > "$out/apt/debian/map-i386"
+# The snapshot's signed index, for the packages the live one no longer
+# lists: the pins are of 2026-09-28, and the snapshot of the day before
+# them still names them.
+snapshot_index=$(apt_verify_index "$snapshot/debian/$snapshot_time" trixie main amd64 \
+    "$debian_keyring" "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian/$snapshot_time") \
+    || { echo "fetch-steam: the snapshot's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$snapshot_index" > "$out/apt/debian/$snapshot_time/map-amd64"
+snapshot_index=$(apt_verify_index "$snapshot/debian/$snapshot_time" trixie main i386 \
+    "$debian_keyring" "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian/$snapshot_time") \
+    || { echo "fetch-steam: the snapshot's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$snapshot_index" > "$out/apt/debian/$snapshot_time/map-i386"
+debian_maps_amd64=("$out/apt/debian/map-amd64" "$out/apt/debian/$snapshot_time/map-amd64")
+debian_maps_i386=("$out/apt/debian/map-i386" "$out/apt/debian/$snapshot_time/map-i386")
+valve_keyring=$(apt_verify_key "$VALVE_KEY_URL" "$VALVE_KEY_SHA256" \
+    "$VALVE_KEY_FINGERPRINTS" "$out/apt/valve") \
+    || { echo "fetch-steam: Valve's key is not the one pinned" >&2; exit 1; }
+valve_index=$(apt_verify_index "$valve" stable steam amd64 "$valve_keyring" \
+    "$VALVE_KEY_FINGERPRINTS" "$out/apt/valve") \
+    || { echo "fetch-steam: Valve's index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$valve_index" > "$out/apt/valve/map-amd64"
+
 set -- "${DEBS[@]}"
 while [ $# -gt 0 ]; do
+    case $1 in
+        *_i386.deb) maps=("${debian_maps_i386[@]}") ;;
+        *) maps=("${debian_maps_amd64[@]}") ;;
+    esac
+    apt_check_package "$1" "$2" "${maps[@]}" \
+        || { echo "fetch-steam: $1 is not the package the signed indexes name" >&2; exit 1; }
     dpkg-deb -x "$(fetch "$debian/$1" "$2")" "$tree"
     shift 2
 done
+[ "$APT_SUPERSEDED" = 0 ] \
+    || echo "fetch-steam: $APT_SUPERSEDED of the packages are in no signed index, so their pinned hashes are the only anchor" >&2
 
 # What installing the packages would have made, and unpacking does not: the
 # alternatives `awk` and `which`, and the certificate bundle
@@ -122,6 +197,8 @@ test -s "$tree/etc/ssl/certs/ca-certificates.crt" \
     || { echo "fetch-steam: the certificate bundle is empty" >&2; exit 1; }
 
 # The bootstrap, as /usr/bin/steam unpacks it into the Steam directory.
+apt_check_package "$LAUNCHER" "$LAUNCHER_SHA256" "$out/apt/valve/map-amd64" \
+    || { echo "fetch-steam: the launcher is not the package Valve's signed index names" >&2; exit 1; }
 launcher="$out/launcher"
 rm -rf "$launcher"
 dpkg-deb -x "$(fetch "$valve/$LAUNCHER" "$LAUNCHER_SHA256")" "$launcher"
