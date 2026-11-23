@@ -84,10 +84,6 @@ pub enum Kind {
     /// Xaqu's root has no memory file, and a reclaim of the whole machine
     /// would not spare what the children's `memory.min` protects.
     MemoryReclaim,
-    /// `memory.swap.current`: bytes of the cgroup's pages that are in swap.
-    MemorySwapCurrent,
-    /// `memory.swap.max`: the most swap the cgroup may use.
-    MemorySwapMax,
     /// `io.stat`.
     IoStat,
     /// `io.max`.
@@ -148,18 +144,6 @@ pub const FILES: &[File] = &[
     controlled(
         "memory.reclaim",
         Kind::MemoryReclaim,
-        Controller::Memory,
-        true,
-    ),
-    controlled(
-        "memory.swap.current",
-        Kind::MemorySwapCurrent,
-        Controller::Memory,
-        false,
-    ),
-    controlled(
-        "memory.swap.max",
-        Kind::MemorySwapMax,
         Controller::Memory,
         true,
     ),

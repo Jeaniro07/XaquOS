@@ -39,7 +39,7 @@ use std::path::Path;
 
 use xaqu_partition::{ESP, Partition, write_table};
 
-use crate::installer::{LIVE_DISK_GUID, LIVE_NAME, LIVE_PART_GUID, hide};
+use crate::installer::{LIVE_NAME, hide, live_disk_guid, live_part_guid};
 use crate::{Error, Result};
 
 /// ISO 9660's logical block.
@@ -58,7 +58,7 @@ const ROOT: u64 = 21;
 const CATALOG: u64 = 22;
 const FIRST_FILE: u64 = 23;
 /// The name the ESP has in the ISO's root, as `xorriso` shows its EFI image.
-const ESP_FILE: &str = "EFIBOOT.IMG";
+const ESP_FILE: &str = "EFIBOOTIMG";
 /// 2026-01-01 00:00:00 UTC, the time every record carries.
 const YEAR: u8 = 126;
 
@@ -193,12 +193,12 @@ pub(crate) fn lay_out<R: Read, W: Write + Seek>(
     // sector, which gives the file its length.
     let partition = Partition::new(
         ESP,
-        LIVE_PART_GUID,
+        live_part_guid(true),
         first,
         first + esp_bytes / SECTOR - 1,
         LIVE_NAME,
     );
-    let table = write_table(sectors, SECTOR as u32, LIVE_DISK_GUID, &[partition])
+    let table = write_table(sectors, SECTOR as u32, live_disk_guid(true), &[partition])
         .map_err(|error| Error::new(format!("the ISO's partition table: {error}")))?;
     for (lba, sector) in table {
         let _ = out.seek(SeekFrom::Start(lba * SECTOR))?;

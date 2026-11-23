@@ -46,7 +46,7 @@ const MIN_FAT32_CLUSTERS: u32 = 65_525;
 /// 256 MiB held until 2026-10-03, when the release x86-64 kernel reached
 /// 94 MB and `run-compositor --everything` failed the same way again.
 /// Doubled once more; `--strip-kernel` remains the way to keep it small.
-const IMAGE_BYTES: usize = 512 * 1024 * 1024;
+const IMAGE_BYTES: usize = 2048 * 1024 * 1024;
 
 /// A frozen timestamp — 2026-01-01 00:00:00 — so that two builds of the same
 /// inputs produce the same image.

@@ -1004,8 +1004,8 @@ fn contents(job: &Arc<Job>, kind: Kind) -> Vec<u8> {
         // Upgrade path: the cgroup's own swap use, and the limit its
         // `memory.swap.max` carries, when the area of
         // `docs/MEMORY-COMPRESSION.md` §2.4 is wired into the page-out path.
-        Kind::MemorySwapCurrent => render::number(&mut out, 0),
-        Kind::MemorySwapMax => render::max(&mut out, None),
+        Kind::MemoryCurrent => render::number(&mut out, 0),
+        Kind::MemoryMax => render::max(&mut out, None),
         Kind::PidsCurrent => render::number(&mut out, usage(job, Resource::Tasks).used),
         Kind::PidsMax => {
             let limit = usage(job, Resource::Tasks).limit;
@@ -1442,7 +1442,7 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
         // so a limit cannot be kept.
         // Ponytail: the write is refused rather than stored.
         // Upgrade path: keep it per cgroup, as `memory.max` keeps its limit.
-        Kind::MemorySwapMax => return Err(Errno::EOPNOTSUPP),
+        Kind::MemoryMax => return Err(Errno::EOPNOTSUPP),
         Kind::CpuWeight => set_weight(job, write::parse_weight(data).map_err(errno)?)?,
         Kind::CpuWeightNice => {
             set_weight(job, xaqu_cgroupfs::cpu::parse_nice(data).map_err(errno)?)?;
@@ -1459,7 +1459,7 @@ fn write_to(job: &Arc<Job>, kind: Kind, data: &[u8], opener: &Writer) -> Result<
         | Kind::MemoryCurrent
         | Kind::MemoryEvents
         | Kind::MemoryStat
-        | Kind::MemorySwapCurrent
+        | Kind::MemoryCurrent
         | Kind::CpuStat
         | Kind::IoStat
         | Kind::PidsCurrent

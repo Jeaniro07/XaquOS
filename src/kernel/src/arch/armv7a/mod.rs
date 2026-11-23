@@ -8,6 +8,13 @@
 //! directory is how this architecture finds them, and everything that is
 //! coprocessor 15 rather than a system register.
 
+/// Whether the machine runs under KVM: an Arm CPU cannot ask, so it says
+/// no, and the check that reads the sectors back is skipped rather than
+/// passed.
+pub(crate) fn hypervisor_is_kvm() -> bool {
+    false
+}
+
 mod check;
 pub(crate) use check::check_stack_entry;
 /// Pages in a kernel stack, not counting the guards: `vmap::STACK_PAGES`.

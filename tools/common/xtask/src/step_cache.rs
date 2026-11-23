@@ -2327,9 +2327,26 @@ fn changed_since(
         }
         Input::File(_) | Input::Directory(_) | Input::Link(_) => {}
     }
-    changed_at(input)
-        .is_some_and(|changed| changed >= started)
-        .then(|| format!("{} changed during the run", path.display()))
+    // Check both ctime and file mtime for content changes.
+    // On some filesystems, ctime resolution is coarse (1 second), so a file
+    // written twice in the same tick keeps the same ctime. We also check
+    // file mtime as a proxy for content change.
+    // The ctime and the mtime are both checked, for a file: the ctime's
+    // resolution is coarse on some filesystems, so a file written twice in
+    // one tick keeps the ctime it had. The mtime is read the way every
+    // platform reads it, `modified()`, so that this file builds on Windows
+    // too.
+    let ctime_changed = changed_at(input).is_some_and(|changed| changed >= started);
+    let mtime_changed = match input {
+        Input::File(path) => std::fs::metadata(path).ok().is_some_and(|meta| {
+            meta.modified()
+                .ok()
+                .and_then(|modified| modified.duration_since(std::time::UNIX_EPOCH).ok())
+                .is_some_and(|since| since.as_micros() >= u128::from(started))
+        }),
+        _ => false,
+    };
+    (ctime_changed || mtime_changed).then(|| format!("{} changed during the run", path.display()))
 }
 
 /// Whether directory `path` holds an entry under one of the excluded roots.

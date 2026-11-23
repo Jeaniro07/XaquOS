@@ -50,6 +50,30 @@ pub use speculation::{
 };
 pub use speculation_check::check as check_speculation;
 
+// CHECKS-ONLY: interfaces/block_ring/driver_check.rs
+/// Whether the machine runs under KVM, so that what a ring-3 driver reads
+/// back is what the device wrote: an emulated machine is slow enough that
+/// the driver's patience runs out before the sectors come back, so the check
+/// that reads them back is skipped there.
+///
+/// x86-64 asks the hypervisor leaf of CPUID, which names KVM. The Arm
+/// architectures cannot ask, and say no: the sectors are then not read back,
+/// which is the safe answer, for the check is skipped rather than passed.
+pub fn hypervisor_is_kvm() -> bool {
+    #[cfg(target_arch = "x86_64")]
+    {
+        x86_64::hypervisor_is_kvm()
+    }
+    #[cfg(target_arch = "aarch64")]
+    {
+        aarch64::hypervisor_is_kvm()
+    }
+    #[cfg(target_arch = "arm")]
+    {
+        armv7a::hypervisor_is_kvm()
+    }
+}
+
 // CHECKS-ONLY: syscall/bare_side_check.rs
 /// The programs of `syscall::bare_side_check`: its work program, its spinner, and the
 /// arguments case's where there is one.

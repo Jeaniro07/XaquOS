@@ -96,13 +96,44 @@ const LIVE_CMDLINE: &str = "xaqu.root=tmpfs";
 const LIVE_FIRST: u64 = 2048;
 /// Bytes in a sector of the medium.
 const SECTOR: u64 = 512;
-/// The medium's disk and partition GUIDs. Fixed, so that two builds of one
-/// tree write the same image, as release media of one version all carry
-/// the same ones; an installed disk gets random ones.
-pub(crate) const LIVE_DISK_GUID: Guid =
-    Guid::from_fields(0x7a3d_6f52, 0x2c1e, 0x4d0b, 0x9e41, 0x4652_5249_584c);
-pub(crate) const LIVE_PART_GUID: Guid =
-    Guid::from_fields(0x7a3d_6f52, 0x2c1e, 0x4d0b, 0x9e42, 0x4652_5249_584c);
+/// The medium's disk and partition GUIDs. Fixed for a release, so that two
+/// builds of one tree write the same image, as release media of one version
+/// all carry the same ones; random for a development build, so that two
+/// media made from one tree do not collide on a machine that has both
+/// attached.
+pub(crate) fn live_disk_guid(release: bool) -> Guid {
+    if release {
+        Guid::from_fields(0x7a3d_6f52, 0x2c1e, 0x4d0b, 0x9e41, 0x4652_5249_584c)
+    } else {
+        random_guid(b"xaqu-live-disk")
+    }
+}
+/// The live medium's partition's GUID: as [`live_disk_guid`], and different
+/// from it, as a partition's GUID is not its disk's.
+pub(crate) fn live_part_guid(release: bool) -> Guid {
+    if release {
+        Guid::from_fields(0x7a3d_6f52, 0x2c1e, 0x4d0b, 0x9e42, 0x4652_5249_584c)
+    } else {
+        random_guid(b"xaqu-live-part")
+    }
+}
+
+/// A random GUID, from the tree's own SHA-256 over the clock, this process
+/// and what the GUID is for: the same shape as `n150`'s, and for the same
+/// reason -- a GUID is sixteen bytes, and a dependency to make them is a
+/// dependency the build tool does not need.
+fn random_guid(what: &[u8]) -> Guid {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |since| since.as_nanos());
+    let mut seed = now.to_le_bytes().to_vec();
+    seed.extend(std::process::id().to_le_bytes());
+    seed.extend(what);
+    let digest = crate::sha256::digest(&seed);
+    let mut bytes = [0_u8; 16];
+    bytes.copy_from_slice(digest.get(..16).unwrap_or(&[0; 16]));
+    Guid::random(bytes)
+}
 
 /// What the install boot's shell runs: first an install onto the disk the
 /// live system is on, which must be refused, then the real one, with the
@@ -196,7 +227,7 @@ pub(crate) fn live(args: &Args) -> Result<()> {
         let initramfs = initramfs::build(None, &natives, None, &carried)?;
         let kernel = cargo::build_kernel(arch, args.release)?;
         let medium = paths::build_dir(arch).join("xaqu-live.img");
-        write_medium(arch, &loader, &kernel, &initramfs, &medium)?;
+        write_medium(arch, &loader, &kernel, &initramfs, &medium, args.release)?;
     }
     Ok(())
 }
@@ -208,6 +239,7 @@ pub(super) fn write_medium(
     kernel: &cargo::Kernel,
     initramfs: &[u8],
     path: &Path,
+    release: bool,
 ) -> Result<()> {
     let volume_path = fat::write_image_with(arch, loader, kernel, initramfs, Some(LIVE_CMDLINE))?;
     let on = |error: std::io::Error| Error::new(format!("{}: {error}", path.display()));
@@ -224,7 +256,7 @@ pub(super) fn write_medium(
         .truncate(true)
         .open(path)
         .map_err(on)?;
-    let sectors = lay_out(&mut volume, bytes, &mut medium)?;
+    let sectors = lay_out(&mut volume, bytes, &mut medium, release)?;
     medium.sync_all().map_err(on)?;
     println!(
         "  live medium {} ({} MiB: a GUID partition table, and the EFI system partition \
@@ -242,7 +274,12 @@ pub(super) fn write_medium(
 ///
 /// Sectors of the volume that are all zeros are not written, so a medium in
 /// a file stays as sparse as the volume was.
-fn lay_out<R: Read, W: Write + Seek>(volume: &mut R, bytes: u64, medium: &mut W) -> Result<u64> {
+fn lay_out<R: Read, W: Write + Seek>(
+    volume: &mut R,
+    bytes: u64,
+    medium: &mut W,
+    release: bool,
+) -> Result<u64> {
     if bytes == 0 || !bytes.is_multiple_of(SECTOR) {
         return Err(Error::new(format!(
             "the live volume is {bytes} bytes, not whole sectors"
@@ -251,9 +288,14 @@ fn lay_out<R: Read, W: Write + Seek>(volume: &mut R, bytes: u64, medium: &mut W)
     let last = LIVE_FIRST + bytes / SECTOR - 1;
     // The partition, then the backup table's 33 sectors, rounded up to a MiB.
     let sectors = (last + 1 + 33).next_multiple_of(LIVE_FIRST);
-    let partition = Partition::new(ESP, LIVE_PART_GUID, LIVE_FIRST, last, LIVE_NAME);
-    let table = write_table(sectors, SECTOR as u32, LIVE_DISK_GUID, &[partition])
-        .map_err(|error| Error::new(format!("the live medium's partition table: {error}")))?;
+    let partition = Partition::new(ESP, live_part_guid(release), LIVE_FIRST, last, LIVE_NAME);
+    let table = write_table(
+        sectors,
+        SECTOR as u32,
+        live_disk_guid(release),
+        &[partition],
+    )
+    .map_err(|error| Error::new(format!("the live medium's partition table: {error}")))?;
 
     let mut buffer = vec![0_u8; 1 << 20];
     let mut done = 0_u64;
@@ -324,7 +366,7 @@ pub(crate) fn test_install(args: &Args) -> Result<()> {
     let kernel = cargo::build_kernel(arch, args.release)?;
     let build = paths::build_dir(arch);
     let live = build.join("install-live.img");
-    write_medium(arch, &loader, &kernel, &initramfs, &live)?;
+    write_medium(arch, &loader, &kernel, &initramfs, &live, args.release)?;
     let mut booted = args.clone();
     booted.boot_virtio = true;
     let lines = qemu::test_boot_lines(arch, &live, &kernel, &booted)?;

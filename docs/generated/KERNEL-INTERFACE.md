@@ -15,7 +15,7 @@ for raised checks, and the type is unobtainable from product API: no pub item
 that is not checks-only names it (ledger line 1630, F2). A module named only by
 checks above is `pub` for raised checks (F3).
 
-3035 declarations in the core's files, 215 in the item's; 246 checks-only.
+3036 declarations in the core's files, 215 in the item's; 247 checks-only.
 
 ## xaqu-kernel-core
 
@@ -73,6 +73,7 @@ checks above is `pub` for raised checks (F3).
 | `check_tsc_aux` | fn | bin (checks) | checks-only |
 | `cpuid` | fn | load |  |
 | `flush_window` | fn | bin |  |
+| `hypervisor_is_kvm` | fn | load (checks) | checks-only |
 | `midr_of` | fn | load |  |
 | `mtrr_type` | fn | item |  |
 | `power_claim` | fn | item |  |
