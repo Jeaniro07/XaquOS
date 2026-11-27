@@ -1081,10 +1081,10 @@
     "arch/armv7a/mod.rs": {
       "ring": "core",
       "lines": [
-        181,
-        1369,
-        1381,
-        1399
+        188,
+        1376,
+        1388,
+        1406
       ]
     },
     "object/channel.rs": {
