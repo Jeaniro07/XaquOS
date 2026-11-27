@@ -23,7 +23,7 @@ Coverage evidence recording the checks: x86-64, AArch64, ARMv7-A.
 |---|---:|
 | Named by a low-level requirement | 3434 |
 | Accessors, covered by the requirement they serve | 1470 |
-| Check code in a product file | 125 |
+| Check code in a product file | 130 |
 | Named by none | 1165 |
 
 Subsystems whose low-level requirements are complete: `arch::aarch64`, `arch::x86_64`, `claim`, `console`, `device`, `early`, `xaqu_boot_policy`, `xaqu_sha256`, `xaqu_sigverify`, `xaqu_slots`, `iommu`, `mm`, `object`, `smp`, `trap`, `user`, `vmap`.
@@ -40,13 +40,18 @@ Functions that are checks, or serve only checks, and live in a product file, so 
 | `arch::aarch64::gic::gicv3::enabled_for_check` | Reads a GICv3 line's enable bit back for the machine check; it needs the register windows private to gicv3.rs. |
 | `arch::aarch64::gic::gicv3::idle_line_for_check` | Finds a GICv3 line nothing has enabled for the machine check; it needs the register windows private to gicv3.rs. |
 | `arch::aarch64::gic::idle_line_for_check` | Finds a line nothing has enabled, for the machine check's masking case; it needs the driver choice private to gic.rs. |
+| `arch::aarch64::hypervisor_is_kvm` | Serves only the block ring driver's read-back check (interfaces/block_ring/driver_check.rs), through arch::hypervisor_is_kvm: an Arm CPU cannot ask whether it is under KVM, so it says no and the check is skipped rather than passed. It is that architecture's answer, so it stays in arch/aarch64/mod.rs; no product code calls it. |
+| `arch::armv7a::hypervisor_is_kvm` | Serves only the block ring driver's read-back check (interfaces/block_ring/driver_check.rs), through arch::hypervisor_is_kvm: an Arm CPU cannot ask whether it is under KVM, so it says no and the check is skipped rather than passed. It is that architecture's answer, so it stays in arch/armv7a/mod.rs; no product code calls it. |
+| `arch::hypervisor_is_kvm` | Serves only the block ring driver's read-back check (interfaces/block_ring/driver_check.rs): it says whether the machine runs under KVM, so that the check reads the sectors back only where the device is fast enough for the driver's patience, and skips them where it is not -- skipped, not passed. It is the one answer each architecture has, so it stays in arch/mod.rs; no product code calls it. |
 | `arch::x86_64::check_machine` | The architecture's entry to its machine checks (arch/x86_64/clock/check.rs, then arch/x86_64/cpu/check.rs), which main.rs calls through the arch interface every architecture provides; it runs the checks and nothing else. |
+| `arch::x86_64::clock::is_kvm` | Serves only the block ring driver's read-back check (interfaces/block_ring/driver_check.rs), through arch::hypervisor_is_kvm: whether this boot is under KVM, the hypervisor leaf of CPUID and KVM's signature in it. It reads the clock's own KVM facts, private to clock.rs, so it stays beside them; no product code calls it. |
 | `arch::x86_64::console::loop_back` | Serves only interrupt remapping's checks R5 and G3's service once (iommu/check.rs): it loops one byte back through the port to its own receiver. It needs the port's registers, private to arch/x86_64/console.rs, so it stays beside them. |
 | `arch::x86_64::cpu::forbid_user_access` | Closes SMAP's window through arch::forbid_user_access, whose only callers are user/check.rs's checks. |
 | `arch::x86_64::cpu::permit_user_access` | Opens SMAP's window through arch::permit_user_access, whose only callers are user/check.rs's checks of the window; the kernel's own user copies do not use it. |
 | `arch::x86_64::cpu::write_breakpoint_address` | Arms a debug register; called only from arch/x86_64/paranoid/check.rs, whose breakpoint checks are its reason to exist. |
 | `arch::x86_64::cpu::write_dr7` | Enables or clears the debug registers' slots; called only from arch/x86_64/paranoid/check.rs. |
 | `arch::x86_64::cpu::xinuse_readable` | Read only by the stage-9 switch-state check, with no product caller: whether XGETBV 1 may be asked, so the check knows whether the x87-left branch and the XINUSE probe can run. |
+| `arch::x86_64::hypervisor_is_kvm` | Serves only the block ring driver's read-back check (interfaces/block_ring/driver_check.rs), through arch::hypervisor_is_kvm: on x86-64 the answer is the clock's own KVM facts, so it stays beside them; no product code calls it. |
 | `arch::x86_64::identity_map_live` | Its only caller is main.rs's stage 2 check, which runs only when the boot checks. |
 | `arch::x86_64::loop_back_console` | The x86-64 hook iommu::remapping::LiveLine::loop_back names for checks R5 and G3 (iommu/check.rs): it runs console::loop_back with the port quiet. Registered from console_receive_irq with the line's other hooks, so it stays beside them. |
 | `arch::x86_64::mce::cmci::hold_window` | Holds the first CMCI-driven round's masked window open for the seconds read_window read, so test-mce-cmci's window mode can inject into it (L.x86_64.253). Compiled into check builds only; a product build's is an empty const fn. |

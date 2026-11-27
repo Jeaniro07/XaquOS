@@ -857,7 +857,7 @@
     "arch/aarch64/mod.rs": {
       "ring": "core",
       "lines": [
-        1334
+        1341
       ]
     },
     "user/vmo.rs": {

@@ -28,7 +28,13 @@ fn sector(bytes: &[u8], lba: u64) -> &[u8] {
 fn the_live_medium_holds_the_volume_in_its_one_partition() {
     let volume = volume();
     let mut medium = Cursor::new(Vec::new());
-    let sectors = lay_out(&mut Cursor::new(&volume), volume.len() as u64, &mut medium).unwrap();
+    let sectors = lay_out(
+        &mut Cursor::new(&volume),
+        volume.len() as u64,
+        &mut medium,
+        true,
+    )
+    .unwrap();
     let medium = medium.into_inner();
     assert_eq!(medium.len() as u64, sectors * SECTOR, "the medium's length");
     assert_eq!(sectors % 2048, 0, "the medium ends on a MiB");
@@ -84,5 +90,38 @@ fn the_live_medium_holds_the_volume_in_its_one_partition() {
 fn a_volume_of_part_sectors_is_refused() {
     let volume = vec![1_u8; 1000];
     let mut medium = Cursor::new(Vec::new());
-    assert!(lay_out(&mut Cursor::new(&volume), 1000, &mut medium).is_err());
+    assert!(lay_out(&mut Cursor::new(&volume), 1000, &mut medium, true).is_err());
+}
+
+/// A release build's medium carries the fixed GUIDs, so that two builds of
+/// one tree write the same image; a development build's carries random
+/// ones, so that two media made from one tree do not collide on a machine
+/// that has both attached.
+#[test]
+fn the_guids_are_fixed_for_a_release_and_random_for_a_development_build() {
+    assert_eq!(
+        super::live_disk_guid(true),
+        super::live_disk_guid(true),
+        "a release build's disk GUID"
+    );
+    assert_eq!(
+        super::live_part_guid(true),
+        super::live_part_guid(true),
+        "a release build's partition GUID"
+    );
+    assert_ne!(
+        super::live_disk_guid(false),
+        super::live_disk_guid(false),
+        "two development builds' disk GUIDs"
+    );
+    assert_ne!(
+        super::live_part_guid(false),
+        super::live_part_guid(false),
+        "two development builds' partition GUIDs"
+    );
+    assert_ne!(
+        super::live_disk_guid(false),
+        super::live_part_guid(false),
+        "a development build's disk and partition GUIDs"
+    );
 }

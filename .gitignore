@@ -20,3 +20,13 @@ __pycache__/
 /tools/vendor/google/pixel7/
 /docs/website/
 /src/user/system/linux/tole/
+
+# Agent/IDE files that should not be committed
+/pinned/
+/workspace/
+agent-session.jsonl
+transcript.json
+usage.json
+feed.json
+opencode.json
+*.jsonl

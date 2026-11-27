@@ -349,7 +349,7 @@ impl<'a> Gate<'a> {
         let kernel = cargo::build_kernel(arch, args.release)?;
         let build = paths::build_dir(arch);
         let live = build.join("install-live.img");
-        write_medium(arch, &loader, &kernel, &initramfs, &live)?;
+        write_medium(arch, &loader, &kernel, &initramfs, &live, args.release)?;
         let zinc = zinc::built(arch)?.ok_or_else(|| Error::new("zinc is not built for x86_64"))?;
         let gate = Gate {
             args,
@@ -425,7 +425,14 @@ impl<'a> Gate<'a> {
         let build = paths::build_dir(arch);
         let system = cargo::build_kernel_with_init(arch, self.args.release, &self.zinc, E2E)?;
         let medium = build.join("ab-e2e-live.img");
-        write_medium(arch, &self.loader, &system, &self.initramfs, &medium)?;
+        write_medium(
+            arch,
+            &self.loader,
+            &system,
+            &self.initramfs,
+            &medium,
+            self.args.release,
+        )?;
         let disk = build.join("ab-e2e.img");
         let _ = fresh(&disk, DISK_BYTES)?;
         let lines = self.run(

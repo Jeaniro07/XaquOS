@@ -13,6 +13,13 @@ pub(crate) const fn check_stack_entry() -> Result<(), &'static str> {
     Ok(())
 }
 
+/// Whether the machine runs under KVM: the hypervisor leaf of CPUID names
+/// it, and KVM's signature is in that leaf -- the clock's own facts, which
+/// ask once and keep.
+pub(crate) fn hypervisor_is_kvm() -> bool {
+    clock::is_kvm()
+}
+
 pub mod apic;
 pub mod clock;
 pub mod console;

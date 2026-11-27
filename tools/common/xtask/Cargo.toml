@@ -22,19 +22,17 @@ xaqu-elf.workspace = true
 # TCP parser in the build tool, disagreeing with the kernel's about a length
 # field at the worst possible moment; this one is already fuzzed.
 xaqu-netwire.workspace = true
-# The kernel's own cpio reader: `flash` reads the archive `initramfs.rs` wrote
+# The tree's own cpio reader: `flash` reads the archive `initramfs.rs` wrote
 # to strip the card's copy of its programs, and the tests read every archive
 # with the code that will unpack it rather than with a second opinion.
 xaqu-cpio.workspace = true
 # adb's message format, for `test-adb`'s check that a forward reaches the
 # guest: it speaks one CNXN through it with the bytes adbd itself decodes.
 xaqu-adb.workspace = true
-# vdagent's framing and messages, for `test-clipboard`'s host half: it speaks
-# the protocol to the guest's agent with the bytes the agent itself decodes.
-xaqu-vdagent.workspace = true
 # The FTDI chips' divisors: `test-ft232h` holds the driver's "on the chip"
 # rates to the arithmetic the driver itself does, not to a second copy.
 xaqu-usb-serial.workspace = true
+xaqu-vdagent.workspace = true
 # The display protocol's EDID reader and checker: `edid.rs` finds this
 # machine's monitor by what its EDID says, and checks the bytes it carries into
 # an image the way the kernel will check them when `drm.edid_firmware` names

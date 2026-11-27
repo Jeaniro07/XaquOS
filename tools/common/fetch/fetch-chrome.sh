@@ -24,10 +24,24 @@
 # on it, so a dependency Debian has and this list lacks fails here rather
 # than on Xaqu.
 #
+# The Debian archive's chain is checked as apt checks it, from a pinned key
+# down: the key (the pins are the SHA-256 of the key file and the
+# fingerprints in it, not the download), the signed `InRelease` of the suite
+# and of the security suite, the index each lists, and then each package
+# against that signed index. A package the index no longer lists -- a
+# superseded version the pool may still hold, or one taken from
+# snapshot.debian.org -- cannot be checked against it, and its pinned hash is
+# then the only anchor; the script says how many those were.
+#
+# Google's own downloads are the exception: Chrome for Testing publishes no
+# signature and no signed index, so there is nothing to verify a signature
+# of. Their SHA-256 pins are the only anchor there is, and they are checked
+# against the file that is downloaded.
+#
 # Writes $XAQU_CHROME_VOLUME/chrome.img (default
-# ~/.local/share/xaqu/chrome-4/chrome.img). Needs curl, sha256sum, dpkg-deb,
-# unzip, readelf, mkfs.btrfs, glib-compile-schemas, update-mime-database and
-# a C compiler (cc); no root.
+# ~/.local/share/xaqu/chrome-4/chrome.img). Needs curl, sha256sum, sha1sum,
+# gpg, gpgv, dpkg-deb, unzip, readelf, mkfs.btrfs, glib-compile-schemas,
+# update-mime-database and a C compiler (cc); no root.
 #
 # Usage: tools/common/fetch/fetch-chrome.sh
 
@@ -236,9 +250,19 @@ security_debs=(
     "updates/main/t/tiff/libtiff6_4.7.0-3+deb13u3_amd64.deb 6bb2038f36817ae1ee6d33df03917b21835dcc2e0f3e3e80a71390e83c171173"
 )
 
-for tool in curl sha256sum dpkg-deb unzip readelf mkfs.btrfs glib-compile-schemas update-mime-database cc; do
+for tool in curl sha256sum sha1sum gpg gpgv dpkg-deb unzip readelf mkfs.btrfs glib-compile-schemas update-mime-database cc; do
     command -v "$tool" > /dev/null || { echo "fetch-chrome: $tool is not installed" >&2; exit 1; }
 done
+
+# Debian's archive keys, from Debian's own key server: the pins are the
+# trust anchor, not the download. The first is the trixie archive's
+# automatic and stable signing keys, the second the security archive's.
+DEBIAN_KEY_URL=${DEBIAN_KEY_URL:-https://ftp-master.debian.org/keys/archive-key-13.asc}
+DEBIAN_KEY_SHA256=6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7
+DEBIAN_KEY_FINGERPRINTS="04B54C3CDCA79751B16BC6B5225629DF75B188BD B8E5F13176D2A7A75220028078DBA3BC47EF2265"
+SECURITY_KEY_URL=${SECURITY_KEY_URL:-https://ftp-master.debian.org/keys/archive-key-13-security.asc}
+SECURITY_KEY_SHA256=844c07d242db37f283afab9d5531270a0550841e90f9f1a9c3bd599722b808b7
+SECURITY_KEY_FINGERPRINTS="5E04A1E3223A19A20706E20F9904613D4CCE68C6"
 
 # Download $2/$1 from snapshot.debian.org into $3, $2 being $debian's or
 # $security's tree, at each of the snapshot times until one has it; fail when
@@ -279,14 +303,59 @@ tree="$out/tree"
 rm -rf "$tree"
 mkdir -p "$tree"
 
+# The Debian archive's chains, checked before anything is fetched from them:
+# the key, the signed `InRelease`, and the index it lists. What the signed
+# indexes say about a package is checked against the hash pinned above: the
+# live ones, and the snapshot archives' own signed indexes for the packages
+# the live ones no longer list.
+# shellcheck disable=SC2034
+APT_PREFIX=fetch-chrome
+. "$(dirname "$0")/lib-apt-verify.sh"
+debian_keyring=$(apt_verify_key "$DEBIAN_KEY_URL" "$DEBIAN_KEY_SHA256" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-chrome: Debian's key is not the one pinned" >&2; exit 1; }
+debian_index=$(apt_verify_index "$debian" trixie main amd64 "$debian_keyring" \
+    "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian") \
+    || { echo "fetch-chrome: Debian's trixie index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$debian_index" > "$out/apt/debian/map-amd64"
+debian_maps=("$out/apt/debian/map-amd64")
+for time in "${snapshot_times[@]}"; do
+    snapshot_index=$(apt_verify_index "$snapshot/debian/$time" trixie main amd64 \
+        "$debian_keyring" "$DEBIAN_KEY_FINGERPRINTS" "$out/apt/debian/$time") \
+        || { echo "fetch-chrome: the snapshot's trixie index is not signed by a pinned key" >&2; exit 1; }
+    apt_index_map "$snapshot_index" > "$out/apt/debian/$time/map-amd64"
+    debian_maps+=("$out/apt/debian/$time/map-amd64")
+done
+security_keyring=$(apt_verify_key "$SECURITY_KEY_URL" "$SECURITY_KEY_SHA256" \
+    "$SECURITY_KEY_FINGERPRINTS" "$out/apt/security") \
+    || { echo "fetch-chrome: Debian's security key is not the one pinned" >&2; exit 1; }
+security_index=$(apt_verify_index "$security" trixie-security main amd64 "$security_keyring" \
+    "$SECURITY_KEY_FINGERPRINTS" "$out/apt/security") \
+    || { echo "fetch-chrome: Debian's security index is not signed by a pinned key" >&2; exit 1; }
+apt_index_map "$security_index" > "$out/apt/security/map-amd64"
+security_maps=("$out/apt/security/map-amd64")
+for time in "${snapshot_times[@]}"; do
+    snapshot_index=$(apt_verify_index "$snapshot/debian-security/$time" trixie-security main amd64 \
+        "$security_keyring" "$SECURITY_KEY_FINGERPRINTS" "$out/apt/security/$time") \
+        || { echo "fetch-chrome: the snapshot's security index is not signed by a pinned key" >&2; exit 1; }
+    apt_index_map "$snapshot_index" > "$out/apt/security/$time/map-amd64"
+    security_maps+=("$out/apt/security/$time/map-amd64")
+done
+
 for entry in "${debs[@]}"; do
     read -r path sum <<< "$entry"
+    apt_check_package "pool/$path" "$sum" "${debian_maps[@]}" \
+        || { echo "fetch-chrome: $path is not the package the signed indexes name" >&2; exit 1; }
     dpkg-deb -x "$(fetch "$path" "$debian/pool" "$sum")" "$tree"
 done
 for entry in "${security_debs[@]}"; do
     read -r path sum <<< "$entry"
+    apt_check_package "pool/$path" "$sum" "${security_maps[@]}" \
+        || { echo "fetch-chrome: $path is not the package the signed indexes name" >&2; exit 1; }
     dpkg-deb -x "$(fetch "$path" "$security/pool" "$sum")" "$tree"
 done
+[ "$APT_SUPERSEDED" = 0 ] \
+    || echo "fetch-chrome: $APT_SUPERSEDED of the packages are in no signed index, so their pinned hashes are the only anchor" >&2
 
 zip=$(fetch "$CHROME_VERSION/linux64/chrome-headless-shell-linux64.zip" "$chrome_dist" "$CHROME_SHA256")
 unpacked=$(mktemp -d)

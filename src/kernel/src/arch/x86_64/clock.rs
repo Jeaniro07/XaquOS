@@ -907,3 +907,12 @@ const COUNTER_MASK: u64 = u64::MAX;
 pub(crate) fn ticks_between(earlier: u64, later: u64) -> u64 {
     hpet::ticks_between(earlier, later, COUNTER_MASK)
 }
+
+/// Whether this boot is running under KVM, the hardware accelerator: the
+/// hypervisor leaf of CPUID says a hypervisor is there, and its signature
+/// says that one is KVM. False under an emulated machine -- QEMU's TCG --
+/// which is what a check that reads a sector back asks before it reads one.
+pub(crate) fn is_kvm() -> bool {
+    let facts = kvm_facts();
+    facts.hypervisor && facts.signature == KVM_SIGNATURE
+}

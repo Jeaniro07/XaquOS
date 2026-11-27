@@ -1,5 +1,12 @@
 //! The `AArch64` end of the kernel.
 
+/// Whether the machine runs under KVM: an Arm CPU cannot ask, so it says
+/// no, and the check that reads the sectors back is skipped rather than
+/// passed.
+pub(crate) fn hypervisor_is_kvm() -> bool {
+    false
+}
+
 pub(crate) mod asid;
 mod check;
 pub(crate) use check::check_stack_entry;

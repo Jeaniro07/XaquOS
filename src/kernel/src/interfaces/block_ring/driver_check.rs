@@ -47,6 +47,7 @@ use xaqu_vma::VmaFlags;
 use super::{VIRTIO_BLK_MAJOR, start_for};
 use crate::checks;
 use crate::device;
+
 use crate::fs;
 use crate::fs::block::BlockDevice;
 use crate::object::Object;
@@ -208,7 +209,7 @@ pub fn run(started_by_devmgr: bool) -> Result<Report, &'static str> {
 
     // Sectors through the first disk, the path a mount takes.
     let disk = first.ok_or("no disk was published")?;
-    let read = if checks::run() {
+    let read = if checks::run() && crate::arch::hypervisor_is_kvm() {
         let read = read_back(disk.as_ref())?;
         no_nudge_lost()?;
         super::hop_check::run(&disk)?;

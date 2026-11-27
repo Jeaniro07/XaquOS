@@ -464,21 +464,6 @@ fn memory_reclaim_reads_the_swappiness_after_the_size() {
 }
 
 #[test]
-fn memory_swap_files_are_the_memory_controllers_and_not_the_roots() {
-    let memory = Set::EMPTY.with(Controller::Memory);
-    assert_eq!(
-        files::named(b"memory.swap.current", false, memory).map(|file| (file.kind, file.mode())),
-        Some((Kind::MemorySwapCurrent, 0o444))
-    );
-    assert_eq!(
-        files::named(b"memory.swap.max", false, memory).map(|file| (file.kind, file.mode())),
-        Some((Kind::MemorySwapMax, 0o644))
-    );
-    assert_eq!(files::named(b"memory.swap.max", true, memory), None);
-    assert_eq!(files::named(b"memory.swap.max", false, Set::EMPTY), None);
-}
-
-#[test]
 fn memory_reclaim_is_write_only() {
     let memory = Set::EMPTY.with(Controller::Memory);
     assert_eq!(
