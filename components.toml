@@ -42,5 +42,5 @@ commit = "1d3f1b304d2235adf16292ed473415e2156f540b"
 # that draw with it (the lode viewer, Settings) reach it by path here.
 [tole]
 path = "src/user/system/linux/tole"
-repo = "https://github.com/ferrix-os/tole"
-commit = "a8b356c50fc9cd00c16f767a392fea355423da90"
+repo = "https://github.com/Jeaniro07/tole"
+commit = "508499bdbaaec0b6ea6e519f64ef3be9efe85a80"
