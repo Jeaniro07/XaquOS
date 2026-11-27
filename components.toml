@@ -43,4 +43,4 @@ commit = "1d3f1b304d2235adf16292ed473415e2156f540b"
 [tole]
 path = "src/user/system/linux/tole"
 repo = "https://github.com/Jeaniro07/tole"
-commit = "508499bdbaaec0b6ea6e519f64ef3be9efe85a80"
+commit = "17351c28f156523a87089a24db5cb1e3b2bc7158"
